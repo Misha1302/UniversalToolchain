@@ -2,7 +2,7 @@
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 
 using System.Text.RegularExpressions;
-using BasicTypesExtensions;
+using ExceptionsManager;
 
 namespace BasicLexer;
 
@@ -41,6 +41,12 @@ public class DefaultLexer(LexerConfiguration configuration)
             // Find the next valid token starting from the current position.
             // ReSharper disable once AccessToModifiedClosure
             (var lexeme, prevFoundIndex) = allMatches.FirstStarts(x => x.StartIndex >= index, prevFoundIndex);
+
+            // Handle unrecognized text.
+            Thrower.AssertAlways(
+                index == lexeme.StartIndex,
+                $"Unknown substr '{Regex.Escape(code[index..lexeme.StartIndex])}'"
+            );
 
             // Update the current processing position to just past the matched token.
             index = lexeme.StartIndex + lexeme.Text.Length;

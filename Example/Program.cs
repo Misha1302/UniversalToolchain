@@ -2,20 +2,23 @@
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 
 using BasicLexer;
+using BasicTypesExtensions;
 
 var patters = (List<LexemePattern>)
 [
-    new LexemePattern(@"\n", LexemeType.CreateNewUnique("NewLine")),
-    new LexemePattern(@"\d+", LexemeType.CreateNewUnique("Number"))
+    new LexemePattern(" ", ExtensibleEnum<LexemeTag>.CreateNewUnique("Space")),
+    new LexemePattern(@"\n", ExtensibleEnum<LexemeTag>.CreateNewUnique("NewLine")),
+    new LexemePattern(@"\d+", ExtensibleEnum<LexemeTag>.CreateNewUnique("Number"))
 ];
-var lexemesToIgnore = (List<LexemeType>)[LexemeType.Get("NewLine")];
+var lexemesToIgnore = (List<ExtensibleEnum<LexemeTag>>)
+    [ExtensibleEnum<LexemeTag>.Get("NewLine"), ExtensibleEnum<LexemeTag>.Get("Space")];
 var configuration = new LexerConfiguration(patters, lexemesToIgnore);
 var lexer = new DefaultLexer(configuration);
 
 const string code =
     """
-    6 9 
-    42
+    6 9  
+    42 5 777
     """;
 
 var lexemes = lexer.Lexemize(code);
