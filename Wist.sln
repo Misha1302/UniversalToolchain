@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Example", "Example\Example.csproj", "{7398C3C1-D9F3-486B-B349-19C47F5EBC20}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BasicTypesExtensions", "BasicTypesExtensions\BasicTypesExtensions.csproj", "{1123887C-7917-4B72-9955-B9B5AB6EED44}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BasicLexer", "BasicLexer\BasicLexer.csproj", "{1E35FAB7-680A-4E47-85AC-A59E9D374877}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExceptionsManager", "ExceptionsManager\ExceptionsManager.csproj", "{CFE5DCFB-2BAD-488D-8C5F-D3D7BF7C185E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7398C3C1-D9F3-486B-B349-19C47F5EBC20}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7398C3C1-D9F3-486B-B349-19C47F5EBC20}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7398C3C1-D9F3-486B-B349-19C47F5EBC20}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7398C3C1-D9F3-486B-B349-19C47F5EBC20}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1123887C-7917-4B72-9955-B9B5AB6EED44}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1123887C-7917-4B72-9955-B9B5AB6EED44}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1123887C-7917-4B72-9955-B9B5AB6EED44}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1123887C-7917-4B72-9955-B9B5AB6EED44}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1E35FAB7-680A-4E47-85AC-A59E9D374877}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1E35FAB7-680A-4E47-85AC-A59E9D374877}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1E35FAB7-680A-4E47-85AC-A59E9D374877}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1E35FAB7-680A-4E47-85AC-A59E9D374877}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CFE5DCFB-2BAD-488D-8C5F-D3D7BF7C185E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CFE5DCFB-2BAD-488D-8C5F-D3D7BF7C185E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CFE5DCFB-2BAD-488D-8C5F-D3D7BF7C185E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CFE5DCFB-2BAD-488D-8C5F-D3D7BF7C185E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
