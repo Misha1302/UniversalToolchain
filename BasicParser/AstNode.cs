@@ -5,17 +5,18 @@ using BasicLexer;
 
 namespace BasicParser;
 
-public record AsgNode(
-    AsgNodeType NodeType,
+public record AstNode(
+    AstNodeType NodeType,
     LexemeValue? LexemeValue,
-    List<AsgNode> Children,
-    int BaseLineNumber = -1)
+    AstNode? Parent,
+    List<AstNode> Children,
+    HashSet<string>? Tags = null)
 {
-    public readonly AsgNodeType NodeType = NodeType;
+    public readonly HashSet<string> Tags = Tags ?? [];
+    public AstNodeType NodeType = NodeType;
 
-    public ExtensibleEnum<LexemeTag>? LexemeType => LexemeValue?.LexemePattern.LexemeType;
+    public LexemeType? LexemeType => LexemeValue?.LexemePattern.LexemeType;
     public string Text => LexemeValue?.Text ?? "";
-    public int LineNumber => BaseLineNumber == -1 ? LexemeValue!.LineNumber : BaseLineNumber;
 
     public override string ToString()
     {

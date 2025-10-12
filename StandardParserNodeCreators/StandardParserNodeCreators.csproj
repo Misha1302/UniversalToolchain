@@ -4,14 +4,10 @@
         <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <OutputType>Exe</OutputType>
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\BasicLexer\BasicLexer.csproj"/>
         <ProjectReference Include="..\BasicParser\BasicParser.csproj"/>
-        <ProjectReference Include="..\BasicTypesExtensions\BasicTypesExtensions.csproj"/>
-        <ProjectReference Include="..\StandardParserNodeCreators\StandardParserNodeCreators.csproj"/>
     </ItemGroup>
 
 </Project>

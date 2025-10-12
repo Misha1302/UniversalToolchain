@@ -10,6 +10,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExceptionsManager", "Except
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BasicParser", "BasicParser\BasicParser.csproj", "{58D3EE90-2235-493A-96AE-DCDE36F512A5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StandardParserNodeCreators", "StandardParserNodeCreators\StandardParserNodeCreators.csproj", "{C91F09E2-0D98-4ED2-90F1-54BED7E8D814}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,5 +38,9 @@ Global
 		{58D3EE90-2235-493A-96AE-DCDE36F512A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{58D3EE90-2235-493A-96AE-DCDE36F512A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{58D3EE90-2235-493A-96AE-DCDE36F512A5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C91F09E2-0D98-4ED2-90F1-54BED7E8D814}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C91F09E2-0D98-4ED2-90F1-54BED7E8D814}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C91F09E2-0D98-4ED2-90F1-54BED7E8D814}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C91F09E2-0D98-4ED2-90F1-54BED7E8D814}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

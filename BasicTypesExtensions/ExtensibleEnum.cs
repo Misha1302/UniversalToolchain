@@ -28,19 +28,14 @@ public class ExtensibleEnum<TTag> : IEquatable<ExtensibleEnum<TTag>>
         return EnumGenerator.Instance<TTag>().Get<TTag>(name);
     }
 
-    public static ExtensibleEnum<TTag> CreateNewUnique(string? name)
+    public static ExtensibleEnum<TTag> CreateOrGet(string name)
     {
-        return EnumGenerator.Instance<TTag>().CreateNewUnique<TTag>(name);
-    }
-
-    public static ExtensibleEnum<TTag> CreateNewUniqueUnnamed()
-    {
-        return CreateNewUnique(null);
+        return EnumGenerator.Instance<TTag>().CreateOrGet<TTag>(name);
     }
 
     public override string ToString()
     {
-        return EnumGenerator.Instance<TTag>().ToString(_value);
+        return EnumGenerator.Instance<TTag>().GetName(_value);
     }
 
     public override bool Equals(object? obj)
@@ -51,8 +46,25 @@ public class ExtensibleEnum<TTag> : IEquatable<ExtensibleEnum<TTag>>
         return Equals((ExtensibleEnum<TTag>)obj);
     }
 
+    public static bool operator ==(ExtensibleEnum<TTag>? lhs, ExtensibleEnum<TTag>? rhs)
+    {
+        if (lhs is null && rhs is null) return true;
+        if (lhs is null || rhs is null) return false;
+        return lhs.Equals(rhs);
+    }
+
+    public static bool operator !=(ExtensibleEnum<TTag> lhs, ExtensibleEnum<TTag> rhs)
+    {
+        return !(lhs == rhs);
+    }
+
     public override int GetHashCode()
     {
         return _value;
+    }
+
+    public string GetName()
+    {
+        return EnumGenerator.Instance<TTag>().GetName(_value);
     }
 }

@@ -3,4 +3,4 @@
 
 namespace BasicParser;
 
-public abstract class AsgNodeTag;
+public abstract class AstNodeTag;
