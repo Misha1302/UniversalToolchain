@@ -14,6 +14,7 @@ public class BasicParserImpl(ParserConfiguration configuration)
         var root = new AstNode(AstNodeType.CreateOrGet("Scope"), null, null, nodes);
         SetAstNodeTypes(root);
         ParseScope(root);
+        Thrower.AssertAlways(new TreeValidator().IsValidTree(root), "Tree is invalid");
         return root;
     }
 

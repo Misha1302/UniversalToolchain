@@ -8,6 +8,8 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\BasicCodeTranslator\BasicCodeTranslator.csproj"/>
+        <ProjectReference Include="..\BasicInterpreter\BasicInterpreter.csproj"/>
         <ProjectReference Include="..\BasicLexer\BasicLexer.csproj"/>
         <ProjectReference Include="..\BasicParser\BasicParser.csproj"/>
         <ProjectReference Include="..\BasicTypesExtensions\BasicTypesExtensions.csproj"/>

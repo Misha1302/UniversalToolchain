@@ -38,14 +38,22 @@ public static class Thrower
             AssertationFail(errorMessage == "" ? expression : errorMessage);
     }
 
+    [return: NotNull]
+    public static T NotNull<T>(this T? obj, string errorMessage = "") where T : class
+    {
+        if (obj == null)
+            NullException<object>(errorMessage);
+        return obj;
+    }
+
     public static void NotImplementedException(string msg = "")
     {
         throw new NotImplementedException(msg);
     }
 
     [DoesNotReturn]
-    public static T NullException<T>()
+    public static T NullException<T>(string errorMessage = "")
     {
-        throw new NullReferenceException();
+        throw new NullReferenceException(errorMessage);
     }
 }
