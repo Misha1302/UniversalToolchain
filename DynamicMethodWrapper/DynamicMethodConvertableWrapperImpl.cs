@@ -43,8 +43,8 @@ public class DynamicMethodConvertableWrapperImpl : IDynamicMethodConvertable
 
     public void Make(string name, Type? returnType, List<Type?> argAbstractTypes, Action<GroboIL> bodyGenerator)
     {
-        _isInitialized = true;
         Name = name;
+        _isInitialized = true;
         _argAbstractTypes = argAbstractTypes;
         _bodyGenerator = bodyGenerator;
         _returnType = returnType;
