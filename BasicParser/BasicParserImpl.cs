@@ -6,7 +6,7 @@ using ExceptionsManager;
 
 namespace BasicParser;
 
-public class BasicParser(ParserConfiguration configuration)
+public class BasicParserImpl(ParserConfiguration configuration)
 {
     public AstNode Parse(List<LexemeValue> lexemes)
     {

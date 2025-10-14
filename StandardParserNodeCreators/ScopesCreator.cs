@@ -32,6 +32,7 @@ public class ScopesCreator : IAstNodeCreator
             {
                 var end = i;
 
+                // trim parentheses
                 var children = root.Children[(start + 1)..end];
                 root.Children.RemoveRange(start, end - start + 1);
                 var scope = new AstNode(AstNodeType.Get("Scope"), null, null, children);

@@ -3,21 +3,20 @@
 
 using BasicLexer;
 using BasicParser;
-using BasicTypesExtensions;
 using StandardParserNodeCreators;
+using LexemeType = BasicTypesExtensions.ExtensibleEnum<BasicLexer.LexemeTag>;
 
 var patters = (List<LexemePattern>)
 [
-    new LexemePattern(" ", ExtensibleEnum<LexemeTag>.CreateOrGet("Space")),
-    new LexemePattern(@"\n", ExtensibleEnum<LexemeTag>.CreateOrGet("NewLine")),
-    new LexemePattern(@"\(", ExtensibleEnum<LexemeTag>.CreateOrGet("OpenPar")),
-    new LexemePattern(@"\)", ExtensibleEnum<LexemeTag>.CreateOrGet("ClosePar")),
-    new LexemePattern(@"\d+", ExtensibleEnum<LexemeTag>.CreateOrGet("Number"))
+    new LexemePattern(" ", LexemeType.CreateOrGet("Space")),
+    new LexemePattern(@"\n", LexemeType.CreateOrGet("NewLine")),
+    new LexemePattern(@"\(", LexemeType.CreateOrGet("OpenPar")),
+    new LexemePattern(@"\)", LexemeType.CreateOrGet("ClosePar")),
+    new LexemePattern(@"\d+", LexemeType.CreateOrGet("Number"))
 ];
-var lexemesToIgnore = (List<ExtensibleEnum<LexemeTag>>)
-    [ExtensibleEnum<LexemeTag>.Get("NewLine"), ExtensibleEnum<LexemeTag>.Get("Space")];
+var lexemesToIgnore = (List<LexemeType>)[LexemeType.Get("NewLine"), LexemeType.Get("Space")];
 var configuration = new LexerConfiguration(patters, lexemesToIgnore);
-var lexer = new DefaultLexer(configuration);
+var lexer = new BasicLexerImpl(configuration);
 
 const string code =
     """
@@ -31,7 +30,7 @@ var creators = new SortedDictionary<float, IAstNodeCreator>
 {
     { -1000f, new ScopesCreator() }
 };
-var root = new BasicParser.BasicParser(new ParserConfiguration(creators)).Parse(lexemes);
+var root = new BasicParserImpl(new ParserConfiguration(creators)).Parse(lexemes);
 
 Console.WriteLine(string.Join("\n", lexemes.Select(x => x.ToString())));
 Console.WriteLine(root);

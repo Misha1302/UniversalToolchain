@@ -6,7 +6,7 @@ using ExceptionsManager;
 
 namespace BasicLexer;
 
-public class DefaultLexer(LexerConfiguration configuration)
+public class BasicLexerImpl(LexerConfiguration configuration)
 {
     // Method that performs lexical analysis on the input code and returns a list of tokens.
     public List<LexemeValue> Lexemize(string code)
