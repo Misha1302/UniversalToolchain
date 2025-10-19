@@ -3,5 +3,5 @@
 // Global using directives
 
 
-global using LexemeType = BasicTypesExtensions.ExtensibleEnum<BasicLexer.LexemeTag>;
+global using LexemeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.LexemeTag>;
 global using BasicTypesExtensions;

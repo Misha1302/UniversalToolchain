@@ -1,12 +1,12 @@
 // This is an independent project of an individual developer. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 
-using BasicLexer;
+using BasicCore;
 using ExceptionsManager;
 
 namespace BasicParser;
 
-public class BasicParserImpl(ParserConfiguration configuration)
+public class BasicParserImpl(ParserConfiguration configuration) : IParser
 {
     public AstNode Parse(List<LexemeValue> lexemes)
     {
@@ -33,5 +33,10 @@ public class BasicParserImpl(ParserConfiguration configuration)
             while (creator.Value.TryCreateNode(scope))
             {
             }
+    }
+
+    public object Parse(object lexemes)
+    {
+        throw new NotImplementedException();
     }
 }

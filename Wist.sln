@@ -18,6 +18,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DynamicMethodWrapper", "Dyn
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BasicInterpreter", "BasicInterpreter\BasicInterpreter.csproj", "{E916E699-D0BB-4198-970D-827A2FA4B71A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SimpleLiteralsModule", "SimpleLiteralsModule\SimpleLiteralsModule.csproj", "{F3B6948B-60B0-4880-95BB-6691F0484633}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BasicCore", "BasicCore\BasicCore.csproj", "{A435A18D-E44C-4C07-AA7B-EBF01E728B1D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -60,5 +64,13 @@ Global
 		{E916E699-D0BB-4198-970D-827A2FA4B71A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E916E699-D0BB-4198-970D-827A2FA4B71A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E916E699-D0BB-4198-970D-827A2FA4B71A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F3B6948B-60B0-4880-95BB-6691F0484633}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F3B6948B-60B0-4880-95BB-6691F0484633}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F3B6948B-60B0-4880-95BB-6691F0484633}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F3B6948B-60B0-4880-95BB-6691F0484633}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A435A18D-E44C-4C07-AA7B-EBF01E728B1D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A435A18D-E44C-4C07-AA7B-EBF01E728B1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A435A18D-E44C-4C07-AA7B-EBF01E728B1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A435A18D-E44C-4C07-AA7B-EBF01E728B1D}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

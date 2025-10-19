@@ -2,11 +2,12 @@
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 
 using System.Text.RegularExpressions;
+using BasicCore;
 using ExceptionsManager;
 
 namespace BasicLexer;
 
-public class BasicLexerImpl(LexerConfiguration configuration)
+public class BasicLexerImpl(LexerConfiguration configuration) : ILexer
 {
     // Method that performs lexical analysis on the input code and returns a list of tokens.
     public List<LexemeValue> Lexemize(string code)

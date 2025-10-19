@@ -1,11 +1,11 @@
 ﻿// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 
-using BasicParser;
+using BasicCore;
 
 namespace BasicCodeTranslator;
 
-public class BasicBytecodeTranslatorImpl(BytecodeTranslatorConfiguration configuration) : IBytecodeTranslator
+public class BasicBytecodeBytecodeTranslatorImpl(BytecodeTranslatorConfiguration configuration) : IBytecodeTranslator
 {
     private readonly Bytecode _code = new([]);
 

@@ -3,4 +3,4 @@
 // Global using directives
 
 global using BasicParser;
-global using AstNodeType = BasicTypesExtensions.ExtensibleEnum<BasicParser.AstNodeTag>;
+global using AstNodeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.AstNodeTag>;

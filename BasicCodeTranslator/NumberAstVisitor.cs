@@ -2,7 +2,7 @@
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 
 using System.Globalization;
-using BasicParser;
+using BasicCore;
 using BasicTypesExtensions;
 using DynamicMethodWrapper;
 using ExceptionsManager;
