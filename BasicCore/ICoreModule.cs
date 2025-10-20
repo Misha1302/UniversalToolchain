@@ -5,5 +5,8 @@ namespace BasicCore;
 
 public interface ICoreModule
 {
-    string PreLexemize(string curCode);
+    string ProcessText(string curCode);
+    List<LexemeValue> ProcessLexemes(List<LexemeValue> current);
+    AstNode ProcessAst(AstNode astRoot);
+    Bytecode ProcessBytecode(Bytecode current);
 }
