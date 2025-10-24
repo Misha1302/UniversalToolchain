@@ -5,7 +5,7 @@ using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
 
-namespace BasicCodeTranslator;
+namespace ScopesModule;
 
 public class ScopeAstVisitor : IAstVisitor
 {

@@ -8,7 +8,7 @@ using BasicTypesExtensions;
 using DynamicMethodWrapper;
 using ExceptionsManager;
 
-namespace BasicCodeTranslator;
+namespace NumbersModule;
 
 public class NumberAstVisitor : IAstVisitor
 {
