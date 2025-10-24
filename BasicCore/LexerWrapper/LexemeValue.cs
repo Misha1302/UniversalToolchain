@@ -3,7 +3,7 @@
 
 using System.Text.RegularExpressions;
 
-namespace BasicCore;
+namespace BasicCore.LexerWrapper;
 
 public class LexemeValue
 {

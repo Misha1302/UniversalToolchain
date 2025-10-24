@@ -2,7 +2,8 @@
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 
 using System.Reflection.Emit;
-using BasicCore;
+using BasicCore.ExecutorWrapper;
+using BasicCore.TranslatorWrapper;
 
 namespace BasicInterpreter;
 

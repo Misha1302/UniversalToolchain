@@ -2,20 +2,27 @@
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 
 using System.Text.RegularExpressions;
-using BasicCore;
+using BasicCore.LexerWrapper;
+using BasicTypesExtensions;
 using ExceptionsManager;
 
 namespace BasicLexer;
 
 public class BasicLexerImpl(LexerConfiguration configuration) : ILexer
 {
+    public BasicLexerImpl() : this(new LexerConfiguration([], []))
+    {
+    }
+
+    public LexerConfiguration Configuration { get; } = configuration;
+
     // Method that performs lexical analysis on the input code and returns a list of tokens.
     public List<LexemeValue> Lexemize(string code)
     {
         var allMatches = new List<LexemeValue>(); // Initialize a list to store all matches found by regex patterns.
 
         // Iterate over each pattern defined in the configuration.
-        foreach (var pattern in configuration.Patterns)
+        foreach (var pattern in Configuration.Patterns)
             // Find all occurrences of the current pattern in the input code using regular expressions.
 
             allMatches.AddRange(
@@ -28,7 +35,7 @@ public class BasicLexerImpl(LexerConfiguration configuration) : ILexer
         // Sort the matches first by their starting position in the code, then by the order of the corresponding pattern in the configuration.
         allMatches = allMatches
             .OrderBy(x => x.StartIndex)
-            .ThenBy(x => configuration.Patterns.IndexOf(x.LexemePattern))
+            .ThenBy(x => Configuration.Patterns.IndexOf(x.LexemePattern))
             .ToList();
 
         var result =
@@ -53,7 +60,7 @@ public class BasicLexerImpl(LexerConfiguration configuration) : ILexer
             index = lexeme.StartIndex + lexeme.Text.Length;
 
             // If the token type is not one to be ignored, add it to the result list.
-            if (!configuration.LexemesToIgnore.Contains(lexeme.LexemePattern.LexemeType))
+            if (!Configuration.LexemesToIgnore.Contains(lexeme.LexemePattern.LexemeType))
                 result.Add(lexeme);
         }
 

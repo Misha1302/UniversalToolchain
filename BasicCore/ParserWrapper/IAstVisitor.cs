@@ -1,8 +1,11 @@
 // This is an independent project of an individual developer. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 
-using BasicCore;
+using BasicCore.TranslatorWrapper;
 
-namespace BasicCodeTranslator;
+namespace BasicCore.ParserWrapper;
 
-public record VisitorData(IBytecodeTranslator BytecodeTranslator, Bytecode Bytecode, AstNode Node);
+public interface IAstVisitor
+{
+    public void TryVisit(BytecodeVisitorData data);
+}

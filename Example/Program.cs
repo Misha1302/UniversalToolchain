@@ -1,37 +1,12 @@
 // This is an independent project of an individual developer. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 
-using BasicCodeTranslator;
-using BasicCore;
-using BasicInterpreter;
-using BasicLexer;
-using BasicParser;
-using StandardParserNodeCreators;
-using LexemeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.LexemeTag>;
-
-var patters = (List<LexemePattern>)
-[
-    new LexemePattern(" ", LexemeType.CreateOrGet("Space")),
-    new LexemePattern(@"\n", LexemeType.CreateOrGet("NewLine")),
-    new LexemePattern(@"\(", LexemeType.CreateOrGet("OpenPar")),
-    new LexemePattern(@"\)", LexemeType.CreateOrGet("ClosePar")),
-    new LexemePattern(@"\d+", LexemeType.CreateOrGet("Number"))
-];
-var lexemesToIgnore = (List<LexemeType>)[LexemeType.Get("NewLine"), LexemeType.Get("Space")];
-var lexerConfiguration = new LexerConfiguration(patters, lexemesToIgnore);
-
-var creators = new SortedDictionary<float, IAstNodeCreator> { { -1000f, new ScopesCreator() } };
-var parserConfiguration = new ParserConfiguration(creators);
-
-var visitors = (List<IAstVisitor>)[new ScopeAstVisitor(), new NumberAstVisitor()];
-var translatorConfiguration = new BytecodeTranslatorConfiguration(visitors);
-
 var core = new BasicCoreImpl(
-    () => new BasicLexerImpl(lexerConfiguration),
-    () => new BasicParserImpl(parserConfiguration),
-    () => new BasicBytecodeBytecodeTranslatorImpl(translatorConfiguration),
+    () => new BasicLexerImpl(),
+    () => new BasicParserImpl(),
+    () => new BasicBytecodeBytecodeTranslatorImpl(),
     () => new BasicInterpreterImpl(),
-    []
+    [new ScopesModuleImpl(), new NumbersModuleImpl(), new WhitespaceModuleImpl()]
 );
 
 var result = core.Execute(
@@ -41,4 +16,5 @@ var result = core.Execute(
     0 9 4)
     """
 );
+
 Console.WriteLine(result);

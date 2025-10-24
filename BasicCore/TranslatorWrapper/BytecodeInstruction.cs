@@ -3,7 +3,7 @@
 
 using DynamicMethodWrapper;
 
-namespace BasicCore;
+namespace BasicCore.TranslatorWrapper;
 
 public record BytecodeInstruction(HashSet<string> Tags, SortedDictionary<float, IDynamicMethodConvertable> Ops)
 {

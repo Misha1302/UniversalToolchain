@@ -2,7 +2,8 @@
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 
 using System.Globalization;
-using BasicCore;
+using BasicCore.ParserWrapper;
+using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
 using DynamicMethodWrapper;
 using ExceptionsManager;
@@ -11,7 +12,7 @@ namespace BasicCodeTranslator;
 
 public class NumberAstVisitor : IAstVisitor
 {
-    public void TryVisit(VisitorData data)
+    public void TryVisit(BytecodeVisitorData data)
     {
         if (data.Node.NodeType != ExtensibleEnum<AstNodeTag>.Get("Number")) return;
 

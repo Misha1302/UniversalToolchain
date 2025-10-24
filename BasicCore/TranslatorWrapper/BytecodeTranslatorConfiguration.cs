@@ -1,9 +1,8 @@
 // This is an independent project of an individual developer. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 
-namespace BasicCore;
+using BasicCore.ParserWrapper;
 
-public interface IParser
-{
-    AstNode Parse(List<LexemeValue> lexemes);
-}
+namespace BasicCore.TranslatorWrapper;
+
+public record BytecodeTranslatorConfiguration(List<IAstVisitor> Visitors);

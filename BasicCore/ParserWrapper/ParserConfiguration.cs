@@ -1,8 +1,6 @@
 // This is an independent project of an individual developer. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 
-using BasicCore;
+namespace BasicCore.ParserWrapper;
 
-namespace BasicLexer;
-
-public record LexerConfiguration(List<LexemePattern> Patterns, List<LexemeType> LexemesToIgnore);
+public record ParserConfiguration(SortedDictionary<float, IAstNodeCreator> NodeCreators);

@@ -1,13 +1,20 @@
 // This is an independent project of an individual developer. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 
-using BasicCore;
+using BasicCore.LexerWrapper;
+using BasicCore.ParserWrapper;
 using ExceptionsManager;
 
 namespace BasicParser;
 
 public class BasicParserImpl(ParserConfiguration configuration) : IParser
 {
+    public BasicParserImpl() : this(new ParserConfiguration([]))
+    {
+    }
+
+    public ParserConfiguration Configuration { get; } = configuration;
+
     public AstNode Parse(List<LexemeValue> lexemes)
     {
         var nodes = lexemes.Select(x => new AstNode(AstNodeType.CreateOrGet("Unknown"), x, null, [])).ToList();
@@ -29,7 +36,7 @@ public class BasicParserImpl(ParserConfiguration configuration) : IParser
     {
         Thrower.AssertAlways(scope.NodeType == AstNodeType.Get("Scope"));
 
-        foreach (var creator in configuration.NodeCreators)
+        foreach (var creator in Configuration.NodeCreators)
             while (creator.Value.TryCreateNode(scope))
             {
             }
