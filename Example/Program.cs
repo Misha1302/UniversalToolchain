@@ -12,13 +12,14 @@ var core = new BasicCoreImpl(
         new WhitespaceModuleImpl(),
         new ArithmeticModuleImpl(),
         new ExecutorDebugLogger(),
-        new CSharpInteropModuleImpl()
+        new CSharpInteropModuleImpl(),
+        new ParserConfigurationModuleImpl(ActionType.Dump)
     ]
 );
 
 var result = core.Execute(
     """
-    Main.Print(Main.ToNum(Main.Input()) * 0.2)
+    Main.Print(Math.Sqrt(5) * 1.5 + 2)
     """
 );
 

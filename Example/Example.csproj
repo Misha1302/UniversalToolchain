@@ -18,6 +18,7 @@
         <ProjectReference Include="..\CSharpInteropModule\CSharpInteropModule.csproj"/>
         <ProjectReference Include="..\ExecutorLoggerModule\ExecutorLoggerModule.csproj"/>
         <ProjectReference Include="..\NumbersModule\NumbersModule.csproj"/>
+        <ProjectReference Include="..\ParserConfigurationModule\ParserConfigurationModule.csproj"/>
         <ProjectReference Include="..\ScopesModule\ScopesModule.csproj"/>
         <ProjectReference Include="..\WhitespacesModule\WhitespacesModule.csproj"/>
     </ItemGroup>

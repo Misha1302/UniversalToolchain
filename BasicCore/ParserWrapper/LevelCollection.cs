@@ -32,4 +32,9 @@ public class LevelCollection<TKey, TValue> : IEnumerable<KeyValuePair<TKey, List
     {
         this[key].Add(value);
     }
+
+    public void Clear()
+    {
+        _map.Clear();
+    }
 }

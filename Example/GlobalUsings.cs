@@ -11,5 +11,6 @@ global using BasicParser;
 global using CSharpInteropModule;
 global using ExecutorLoggerModule;
 global using NumbersModule;
+global using ParserConfigurationModule;
 global using ScopesModule;
 global using WhitespacesModule;
