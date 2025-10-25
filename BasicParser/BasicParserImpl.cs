@@ -51,7 +51,7 @@ public class BasicParserImpl(ParserConfiguration configuration) : IParser
             if (creator.All(x => !x.TryCreateNode(scope, i))) continue;
 
             child.MarkAsParserHandled();
-            i = 0;
+            i = -1;
         }
     }
 }

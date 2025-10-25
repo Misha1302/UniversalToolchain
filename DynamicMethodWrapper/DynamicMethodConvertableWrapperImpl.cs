@@ -10,16 +10,16 @@ namespace DynamicMethodWrapper;
 public class DynamicMethodConvertableWrapperImpl : IDynamicMethodConvertable
 {
     private List<Type?> _argAbstractTypes = null!;
-    private Action<GroboIL> _bodyGenerator = null!;
+    private Action<GroboIL, Type[]> _bodyGenerator = null!;
     private bool _isInitialized;
     private Type? _returnType;
 
     public string Name { get; private set; } = null!;
     public int ParamsCount => _argAbstractTypes.Count;
 
-    public DynamicMethod ToDynamicMethod(Type? returnType, IList<Type> args)
+    public DynamicMethod ToDynamicMethod(Type? preferedReturnType, IList<Type> args)
     {
-        if (_returnType != null) returnType = _returnType;
+        var returnType = _returnType ?? preferedReturnType;
 
         Thrower.AssertAlways(args.Count == ParamsCount);
         Thrower.AssertAlways(_isInitialized, "DynamicMethod Wrapper was not initialized");
@@ -29,9 +29,10 @@ public class DynamicMethodConvertableWrapperImpl : IDynamicMethodConvertable
         );
         Thrower.AssertAlways(returnType != null, "Cannot find return type");
 
-        var m = new DynamicMethod(Name, returnType, args as Type[] ?? args.ToArray(), true);
+        var argsArray = args as Type[] ?? args.ToArray();
+        var m = new DynamicMethod(Name, returnType, argsArray, true);
         using var il = new GroboIL(m);
-        _bodyGenerator.Invoke(il);
+        _bodyGenerator.Invoke(il, argsArray);
 
         return m;
     }
@@ -43,7 +44,7 @@ public class DynamicMethodConvertableWrapperImpl : IDynamicMethodConvertable
             $"and ({string.Join(", ", _argAbstractTypes.Select(x => x?.Name ?? "null"))})";
     }
 
-    public void Make(string name, Type? returnType, List<Type?> argAbstractTypes, Action<GroboIL> bodyGenerator)
+    public void Make(string name, Type? returnType, List<Type?> argAbstractTypes, Action<GroboIL, Type[]> bodyGenerator)
     {
         Name = name;
         _isInitialized = true;

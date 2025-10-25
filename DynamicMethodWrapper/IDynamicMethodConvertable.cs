@@ -10,5 +10,5 @@ public interface IDynamicMethodConvertable
     public string Name { get; }
     int ParamsCount { get; }
 
-    public DynamicMethod ToDynamicMethod(Type? returnType, IList<Type> args);
+    public DynamicMethod ToDynamicMethod(Type? preferedReturnType, IList<Type> args);
 }

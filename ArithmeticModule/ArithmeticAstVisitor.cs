@@ -21,7 +21,7 @@ public class ArithmeticAstVisitor : IAstVisitor
 
         var method = new DynamicMethodConvertableWrapperImpl();
         var op = (data.Node.LexemeValue?.Text).NotNull();
-        method.Make($"Op_{op}", typeof(double), [typeof(double), typeof(double)], il =>
+        method.Make($"Op_{op}", typeof(double), [typeof(double), typeof(double)], (il, _) =>
         {
             il.Ldarg(0);
             il.Ldarg(1);

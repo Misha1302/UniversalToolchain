@@ -28,6 +28,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArithmeticModule", "Arithme
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ExecutorLoggerModule", "ExecutorLoggerModule\ExecutorLoggerModule.csproj", "{77510009-2FC9-4D1C-922E-2C87B5A91BE5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharpInteropModule", "CSharpInteropModule\CSharpInteropModule.csproj", "{65159621-3140-427A-9BB2-437DD7660A8E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -90,5 +92,9 @@ Global
 		{77510009-2FC9-4D1C-922E-2C87B5A91BE5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{77510009-2FC9-4D1C-922E-2C87B5A91BE5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{77510009-2FC9-4D1C-922E-2C87B5A91BE5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{65159621-3140-427A-9BB2-437DD7660A8E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{65159621-3140-427A-9BB2-437DD7660A8E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{65159621-3140-427A-9BB2-437DD7660A8E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{65159621-3140-427A-9BB2-437DD7660A8E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

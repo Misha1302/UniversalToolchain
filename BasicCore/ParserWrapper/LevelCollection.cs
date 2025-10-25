@@ -7,7 +7,7 @@ namespace BasicCore.ParserWrapper;
 
 public class LevelCollection<TKey, TValue> : IEnumerable<KeyValuePair<TKey, List<TValue>>> where TKey : notnull
 {
-    private readonly Dictionary<TKey, List<TValue>> _map = new();
+    private readonly SortedDictionary<TKey, List<TValue>> _map = new();
 
     public List<TValue> this[TKey key]
     {

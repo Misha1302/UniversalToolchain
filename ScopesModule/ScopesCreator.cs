@@ -12,6 +12,9 @@ public class ScopesCreator : IAstNodeCreator
 
     public bool TryCreateNode(AstNode scope, int childIndex)
     {
+        if (scope.Children[childIndex].NodeType != AstNodeType.CreateOrGet("OpenPar"))
+            return false;
+
         return FormScopes(scope);
     }
 

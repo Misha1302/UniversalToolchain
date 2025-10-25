@@ -15,6 +15,7 @@
         <ProjectReference Include="..\BasicLexer\BasicLexer.csproj"/>
         <ProjectReference Include="..\BasicParser\BasicParser.csproj"/>
         <ProjectReference Include="..\BasicTypesExtensions\BasicTypesExtensions.csproj"/>
+        <ProjectReference Include="..\CSharpInteropModule\CSharpInteropModule.csproj"/>
         <ProjectReference Include="..\ExecutorLoggerModule\ExecutorLoggerModule.csproj"/>
         <ProjectReference Include="..\NumbersModule\NumbersModule.csproj"/>
         <ProjectReference Include="..\ScopesModule\ScopesModule.csproj"/>

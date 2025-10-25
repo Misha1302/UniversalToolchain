@@ -55,7 +55,8 @@ public class BasicInterpreterImpl : IExecutor
             var args = stack.Take(convertable.ParamsCount).ToList();
             var method = convertable.ToDynamicMethod(stack.Count != 0 ? stack[^1] : null, args);
             for (var i = 0; i < convertable.ParamsCount; i++) stack.RemoveAt(stack.Count - 1);
-            stack.Add(method.ReturnType);
+            if (method.ReturnType != typeof(void))
+                stack.Add(method.ReturnType);
             _methods.Add(method);
         }
 
