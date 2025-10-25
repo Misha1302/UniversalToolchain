@@ -11,13 +11,13 @@ public class WhitespaceModuleImpl : ICoreModule
 {
     public void InitLexer(ILexer lexer)
     {
-        var lexemes = (Span<LexemePattern>)
+        var lexemes = (List<LexemePattern>)
         [
             new LexemePattern(" ", LexemeType.CreateOrGet("Space")),
             new LexemePattern(@"\n", LexemeType.CreateOrGet("NewLine"))
         ];
 
         lexer.Configuration.Patterns.AddRange(lexemes);
-        lexer.Configuration.Patterns.AddRange(lexemes);
+        lexer.Configuration.LexemesToIgnore.AddRange(lexemes.Select(x => x.LexemeType));
     }
 }

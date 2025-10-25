@@ -6,14 +6,14 @@ var core = new BasicCoreImpl(
     () => new BasicParserImpl(),
     () => new BasicBytecodeBytecodeTranslatorImpl(),
     () => new BasicInterpreterImpl(),
-    [new ScopesModuleImpl(), new NumbersModuleImpl(), new WhitespaceModuleImpl()]
+    [new ScopesModuleImpl(), new NumbersModuleImpl(), new WhitespaceModuleImpl(), new ArithmeticModuleImpl()]
 );
 
 var result = core.Execute(
     """
-    6 (9  
-    (42 (2 6)) 5) (777) (()
-    0 9 4)
+    (1 + 9 - 4 * 2 / (2 + 1) - 7) 
+    * 
+    (1 / (1 / 3))
     """
 );
 

@@ -3,4 +3,4 @@
 
 namespace BasicCore.ParserWrapper;
 
-public record ParserConfiguration(SortedDictionary<float, IAstNodeCreator> NodeCreators);
+public record ParserConfiguration(LevelCollection<float, IAstNodeCreator> NodeCreators);

@@ -1,6 +1,7 @@
 ﻿// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 
@@ -15,6 +16,8 @@ public static class Thrower
     }
 
     [DoesNotReturn]
+    [DebuggerStepThrough]
+    [DebuggerHidden]
     public static void AssertationFail(string errorMessage = "")
     {
         InvalidOpEx($"Assertion failed: {errorMessage}");
@@ -27,6 +30,8 @@ public static class Thrower
     }
 
     // [Conditional("DEBUG")]
+    [DebuggerStepThrough]
+    [DebuggerHidden]
     public static void AssertAlways(
         [DoesNotReturnIf(false)] bool cond,
         string errorMessage = "",

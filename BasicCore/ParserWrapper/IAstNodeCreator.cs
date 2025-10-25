@@ -7,5 +7,5 @@ public interface IAstNodeCreator
 {
     public AstNodeType AstNodeType { get; }
 
-    public bool TryCreateNode(AstNode scope);
+    public bool TryCreateNode(AstNode scope, int childIndex);
 }

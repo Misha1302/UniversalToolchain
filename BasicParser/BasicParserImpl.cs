@@ -20,7 +20,7 @@ public class BasicParserImpl(ParserConfiguration configuration) : IParser
         var nodes = lexemes.Select(x => new AstNode(AstNodeType.CreateOrGet("Unknown"), x, null, [])).ToList();
         var root = new AstNode(AstNodeType.CreateOrGet("Scope"), null, null, nodes);
         SetAstNodeTypes(root);
-        ParseScope(root);
+        ParseInternal(root);
         Thrower.AssertAlways(new TreeValidator().IsValidTree(root), "Tree is invalid");
         return root;
     }
@@ -32,18 +32,26 @@ public class BasicParserImpl(ParserConfiguration configuration) : IParser
                 node.NodeType = AstNodeType.CreateOrGet(node.LexemeType.GetName());
     }
 
-    private void ParseScope(AstNode scope)
+    private void ParseInternal(AstNode root)
     {
-        Thrower.AssertAlways(scope.NodeType == AstNodeType.Get("Scope"));
-
         foreach (var creator in Configuration.NodeCreators)
-            while (creator.Value.TryCreateNode(scope))
-            {
-            }
+            ParseScope(root, creator.Value);
     }
 
-    public object Parse(object lexemes)
+    private void ParseScope(AstNode scope, List<IAstNodeCreator> creator)
     {
-        throw new NotImplementedException();
+        foreach (var node in ((IEnumerable<AstNode>)scope.Children).Reverse())
+            ParseScope(node, creator);
+
+
+        for (var i = 0; i < scope.Children.Count; i++)
+        {
+            var child = scope.Children[i];
+            if (child.IsParserHandled()) continue;
+            if (creator.All(x => !x.TryCreateNode(scope, i))) continue;
+
+            child.MarkAsParserHandled();
+            i = 0;
+        }
     }
 }

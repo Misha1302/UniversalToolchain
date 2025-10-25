@@ -10,7 +10,7 @@ public class ScopesCreator : IAstNodeCreator
 {
     public AstNodeType AstNodeType => AstNodeType.CreateOrGet("Scope");
 
-    public bool TryCreateNode(AstNode scope)
+    public bool TryCreateNode(AstNode scope, int childIndex)
     {
         return FormScopes(scope);
     }
@@ -25,8 +25,8 @@ public class ScopesCreator : IAstNodeCreator
         for (var i = 0; i < root.Children.Count; i++)
         {
             var child = root.Children[i];
-            if (child.NodeType == AstNodeType.Get("OpenPar")) opensCount++;
-            else if (child.NodeType == AstNodeType.Get("ClosePar")) opensCount--;
+            if (child.NodeType == AstNodeType.CreateOrGet("OpenPar")) opensCount++;
+            else if (child.NodeType == AstNodeType.CreateOrGet("ClosePar")) opensCount--;
 
             if (opensCount == 1 && start == -1)
                 start = i;

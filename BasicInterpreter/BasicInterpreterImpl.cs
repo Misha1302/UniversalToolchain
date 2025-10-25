@@ -2,6 +2,7 @@
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 
 using System.Reflection.Emit;
+using System.Runtime.InteropServices;
 using BasicCore.ExecutorWrapper;
 using BasicCore.TranslatorWrapper;
 
@@ -29,8 +30,13 @@ public class BasicInterpreterImpl : IExecutor
     {
         for (_ip = 0; _ip < _methods.Count; _ip++)
         {
-            var args = _stack[^_methods[_ip].GetParameters().Length..].ToArray();
-            var ans = _methods[_ip].Invoke(this, args);
+            var span = CollectionsMarshal.AsSpan(_stack);
+            var argsCount = _methods[_ip].GetParameters().Length;
+            var args = span[^argsCount..];
+            var ans = _methods[_ip].Invoke(this, args.ToArray());
+
+            _stack.RemoveRange(_stack.Count - argsCount, argsCount);
+
             _stack.Add(ans!);
         }
     }
@@ -44,8 +50,12 @@ public class BasicInterpreterImpl : IExecutor
         var stack = new List<Type>();
         foreach (var instruction in bytecode.Instructions)
         foreach (var op in instruction.Ops)
+        foreach (var convertable in op.Value)
         {
-            var method = op.Value.ToDynamicMethod(stack.Count != 0 ? stack[^1] : null, stack);
+            var args = stack.Take(convertable.ParamsCount).ToList();
+            var method = convertable.ToDynamicMethod(stack.Count != 0 ? stack[^1] : null, args);
+            for (var i = 0; i < convertable.ParamsCount; i++) stack.RemoveAt(stack.Count - 1);
+            stack.Add(method.ReturnType);
             _methods.Add(method);
         }
 
