@@ -18,10 +18,7 @@ var core = new BasicCoreImpl(
 
 var result = core.Execute(
     """
-    Main.Print(2 + 3)
-    Main.Print(Math.Sqrt(2 + 3))
-    Main.Print(Math.Sqrt(2 + 3) * Math.Sqrt(5))
-    Main.Print(Main.Log(2.718281828459045, 3.141592653589793))
+    Main.Print(Main.ToNum(Main.Input()) * 0.2)
     """
 );
 
