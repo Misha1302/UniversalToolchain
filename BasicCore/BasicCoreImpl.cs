@@ -23,20 +23,20 @@ public class BasicCoreImpl(
         var translator = translatorFactory();
         var executor = executorFactory();
 
-        var targetCode = modules.Aggregate(code, (current, module) => module.ProcessText(current));
         modules.ForEach(module => module.InitLexer(lexer));
+        var targetCode = modules.Aggregate(code, (current, module) => module.ProcessText(current));
         var lexemes = lexer.Lexemize(targetCode);
 
-        var targetLexemes = modules.Aggregate(lexemes, (current, module) => module.ProcessLexemes(current));
         modules.ForEach(module => module.InitParser(parser));
+        var targetLexemes = modules.Aggregate(lexemes, (current, module) => module.ProcessLexemes(current));
         var astRoot = parser.Parse(targetLexemes);
 
-        var targetRoot = modules.Aggregate(astRoot, (current, module) => module.ProcessAst(current));
         modules.ForEach(module => module.InitTranslator(translator));
+        var targetRoot = modules.Aggregate(astRoot, (current, module) => module.ProcessAst(current));
         var bytecode = translator.Translate(targetRoot);
 
-        var targetBytecode = modules.Aggregate(bytecode, (current, module) => module.ProcessBytecode(current));
         modules.ForEach(module => module.InitExecutor(executor));
+        var targetBytecode = modules.Aggregate(bytecode, (current, module) => module.ProcessBytecode(current));
         var result = executor.Execute(targetBytecode);
 
         return result;

@@ -8,6 +8,7 @@ global using BasicCore;
 global using BasicInterpreter;
 global using BasicLexer;
 global using BasicParser;
+global using ExecutorLoggerModule;
 global using NumbersModule;
 global using ScopesModule;
 global using WhitespacesModule;
