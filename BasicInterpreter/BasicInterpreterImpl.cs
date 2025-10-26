@@ -5,11 +5,13 @@ using System.Reflection.Emit;
 using System.Runtime.InteropServices;
 using BasicCore.ExecutorWrapper;
 using BasicCore.TranslatorWrapper;
+using ExceptionsManager;
 
 namespace BasicInterpreter;
 
 public class BasicInterpreterImpl : IExecutor
 {
+    private readonly Dictionary<string, int> _labels = [];
     private readonly List<DynamicMethod> _methods = [];
     private readonly List<object> _stack = [];
     private int _ip;
@@ -31,14 +33,30 @@ public class BasicInterpreterImpl : IExecutor
         for (_ip = 0; _ip < _methods.Count; _ip++)
         {
             var span = CollectionsMarshal.AsSpan(_stack);
-            var argsCount = _methods[_ip].GetParameters().Length;
+            var method = _methods[_ip];
+            if (method.Name.Contains("!Intrinsic"))
+            {
+                ExecuteInternal(method);
+                continue;
+            }
+
+            var argsCount = method.GetParameters().Length;
             var args = span[^argsCount..];
-            var ans = _methods[_ip].Invoke(this, args.ToArray());
+            var ans = method.Invoke(this, args.ToArray());
 
             _stack.RemoveRange(_stack.Count - argsCount, argsCount);
 
             _stack.Add(ans!);
         }
+    }
+
+    private void ExecuteInternal(DynamicMethod method)
+    {
+        if (method.Name.Contains("Label_!Intrinsic"))
+            _labels[method.Name[(method.Name.LastIndexOf('_') + 1)..]] = _ip;
+        else if (method.Name.Contains("Goto_!Intrinsic"))
+            _ip = _labels[method.Name[(method.Name.LastIndexOf('_') + 1)..]];
+        else Thrower.InvalidOpEx($"Unknown intrinsic {method.Name}");
     }
 
     /// <summary>

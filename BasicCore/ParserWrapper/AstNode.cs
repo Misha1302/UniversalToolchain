@@ -8,7 +8,6 @@ namespace BasicCore.ParserWrapper;
 public record AstNode(
     AstNodeType NodeType,
     LexemeValue? LexemeValue,
-    AstNode? Parent,
     List<AstNode> Children,
     HashSet<string>? Tags = null)
 {
@@ -17,6 +16,12 @@ public record AstNode(
 
     public LexemeType? LexemeType => LexemeValue?.LexemePattern.LexemeType;
     public string Text => LexemeValue?.Text ?? "";
+
+    public AstNode this[int index]
+    {
+        get => Children[index];
+        set => Children[index] = value;
+    }
 
     public override string ToString()
     {

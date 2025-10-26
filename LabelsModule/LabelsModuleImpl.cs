@@ -7,29 +7,33 @@ using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using LexemeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.LexerWrapper.LexemeTag>;
 
-namespace CSharpInteropModule;
+namespace LabelsModule;
 
-public class CSharpInteropModuleImpl : ICoreModule
+public class LabelsModuleImpl : ICoreModule
 {
     public void InitLexer(ILexer lexer)
     {
         lexer.Configuration.TryAddPattern(
             new LexemePattern(@"[a-zA-Z_][a-zA-Z_\.1-9]*", LexemeType.CreateOrGet("Identifier"))
         );
-
         lexer.Configuration.TryAddPattern(
-            new LexemePattern(",", LexemeType.CreateOrGet("Comma")),
-            true
+            new LexemePattern(":", LexemeType.CreateOrGet("Colon"))
+        );
+        lexer.Configuration.TryAddPattern(
+            new LexemePattern("goto", LexemeType.CreateOrGet("Goto")),
+            insertToStart: true
         );
     }
 
     public void InitParser(IParser parser)
     {
-        parser.Configuration.NodeCreators.Add(-10, new CSharpFunctionCallsNodeCreator());
+        parser.Configuration.NodeCreators.Add(-2, new LabelsNodeCreator());
+        parser.Configuration.NodeCreators.Add(-2, new GotoNodeCreator());
     }
 
     public void InitTranslator(IBytecodeTranslator translator)
     {
-        translator.Configuration.Visitors.Add(new CSharpFunctionCallsAstVisitor());
+        translator.Configuration.Visitors.Add(new LabelsVisitor());
+        translator.Configuration.Visitors.Add(new GotoVisitor());
     }
 }

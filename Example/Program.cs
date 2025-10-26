@@ -1,6 +1,8 @@
 // This is an independent project of an individual developer. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 
+using LabelsModule;
+
 var core = new BasicCoreImpl(
     () => new BasicLexerImpl(),
     () => new BasicParserImpl(),
@@ -13,13 +15,16 @@ var core = new BasicCoreImpl(
         new ArithmeticModuleImpl(),
         new ExecutorDebugLogger(),
         new CSharpInteropModuleImpl(),
+        new LabelsModuleImpl(),
         new ParserConfigurationModuleImpl(ActionType.Dump)
     ]
 );
 
 var result = core.Execute(
     """
-    Main.Print(Math.Sqrt(5) * 1.5 + 2)
+    label:
+        Main.Print(Math.Sqrt(5) * Math.Sqrt(5 * 5 * 5))
+    goto label
     """
 );
 

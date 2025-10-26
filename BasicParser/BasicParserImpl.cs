@@ -17,8 +17,8 @@ public class BasicParserImpl(ParserConfiguration configuration) : IParser
 
     public AstNode Parse(List<LexemeValue> lexemes)
     {
-        var nodes = lexemes.Select(x => new AstNode(AstNodeType.CreateOrGet("Unknown"), x, null, [])).ToList();
-        var root = new AstNode(AstNodeType.CreateOrGet("Scope"), null, null, nodes);
+        var nodes = lexemes.Select(x => new AstNode(AstNodeType.CreateOrGet("Unknown"), x, [])).ToList();
+        var root = new AstNode(AstNodeType.CreateOrGet("Scope"), null, nodes);
         SetAstNodeTypes(root);
         ParseInternal(root);
         Thrower.AssertAlways(new TreeValidator().IsValidTree(root), "Tree is invalid");
