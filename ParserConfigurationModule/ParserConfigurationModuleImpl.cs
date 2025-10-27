@@ -2,6 +2,7 @@
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 
 using System.Diagnostics;
+using System.Text;
 using BasicCore;
 using BasicCore.ParserWrapper;
 using ExceptionsManager;
@@ -43,16 +44,31 @@ public class ParserConfigurationModuleImpl(ActionType actionType, string path = 
         parser.Configuration.NodeCreators.Clear();
 
         var i = 0;
-        foreach (var fullName in text.Split("\n"))
-            parser.Configuration.NodeCreators.Add(i++, dict[fullName]);
+        var list = new List<IAstNodeCreator>();
+        foreach (var str in text.Split("\n"))
+        {
+            var trimmed = str.Trim();
+            if (string.IsNullOrEmpty(trimmed)) continue;
+
+            if (trimmed == "{") list.Clear();
+            else if (trimmed == "}") i++;
+            else parser.Configuration.NodeCreators.Add(i++, dict[trimmed]);
+        }
     }
 
     private string ConfigurationToString(IParser parser)
     {
-        var names = parser.Configuration.NodeCreators
-            .SelectMany(x =>
-                x.Value.Select(y => y.GetType().FullName.NotNull())
-            );
-        return string.Join("\n", names);
+        var builder = new StringBuilder();
+        foreach (var l in parser.Configuration.NodeCreators)
+        {
+            builder.AppendLine("{");
+
+            foreach (var creator in l.Value)
+                builder.AppendLine("    " + creator);
+
+            builder.AppendLine("}");
+        }
+
+        return builder.ToString();
     }
 }

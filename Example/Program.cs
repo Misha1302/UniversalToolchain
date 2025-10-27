@@ -23,7 +23,7 @@ var core = new BasicCoreImpl(
 var result = core.Execute(
     """
     label:
-        Main.Print(Math.Sqrt(5) * Math.Sqrt(5 * 5 * 5))
+        Main.Print(Math.Sqrt(5) * Math.Sqrt(5 * 5 * 5) + 1)
     goto label
     """
 );
