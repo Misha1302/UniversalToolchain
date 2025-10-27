@@ -16,17 +16,14 @@ public class NumberAstVisitor : IAstVisitor
     {
         if (data.Node.NodeType != ExtensibleEnum<AstNodeTag>.Get("Number")) return;
 
-        var pushNumber = new DynamicMethodConvertableWrapperImpl();
+        var method = new DynamicMethodConvertableWrapperImpl();
         var numText = (data.Node.LexemeValue?.Text).NotNull();
         var num = double.Parse(numText, NumberStyles.Any);
-        pushNumber.Make($"PushNumber_{num}", typeof(double), [], (il, _) =>
+        method.Make($"PushNumber_{num}", typeof(double), [], (il, _) =>
         {
             il.Ldc_R8(num);
             il.Ret();
         });
-        data.Bytecode.Instructions.Add(new BytecodeInstruction(
-            [],
-            new LevelCollection<float, IDynamicMethodConvertable> { { 0, pushNumber } })
-        );
+        data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
     }
 }

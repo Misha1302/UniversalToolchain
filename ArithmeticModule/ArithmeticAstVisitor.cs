@@ -31,9 +31,6 @@ public class ArithmeticAstVisitor : IAstVisitor
             else if (op == "/") il.Div(false);
             il.Ret();
         });
-        data.Bytecode.Instructions.Add(new BytecodeInstruction(
-            [],
-            new LevelCollection<float, IDynamicMethodConvertable> { { 0, method } })
-        );
+        data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
     }
 }

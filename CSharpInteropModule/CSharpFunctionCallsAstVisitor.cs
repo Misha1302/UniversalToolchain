@@ -6,6 +6,7 @@ using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
 using DynamicMethodWrapper;
 using ExceptionsManager;
+using IlCodeGeneratorFactory;
 
 namespace CSharpInteropModule;
 
@@ -22,24 +23,17 @@ public class CSharpFunctionCallsAstVisitor : IAstVisitor
         var method = new DynamicMethodConvertableWrapperImpl();
         var fullName = (data.Node.LexemeValue?.Text).NotNull();
         var call = MethodsFinder.GetMethod(fullName).NotNull();
-        var parameters = call.GetParameters();
         var argsCount = data.Node.Children[0].Children.Count;
         method.Make($"Call_{fullName}", call.ReturnType, Enumerable.Repeat<Type?>(null, argsCount).ToList(),
             (il, argsArray) =>
             {
-                for (var i = 0; i < argsCount; i++)
+                il.LdArgsAndCall(call, i =>
                 {
                     il.Ldarg(i);
-                    if (parameters[i].ParameterType == typeof(object) && argsArray[i].IsValueType)
-                        il.Box(argsArray[i]);
-                }
-
-                il.Call(call);
+                    return argsArray[i];
+                });
                 il.Ret();
             });
-        data.Bytecode.Instructions.Add(new BytecodeInstruction(
-            [],
-            new LevelCollection<float, IDynamicMethodConvertable> { { 0, method } })
-        );
+        data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
     }
 }

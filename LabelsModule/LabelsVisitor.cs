@@ -5,6 +5,7 @@ using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
 using DynamicMethodWrapper;
+using IlCodeGeneratorFactory;
 
 namespace LabelsModule;
 
@@ -15,15 +16,9 @@ public class LabelsVisitor : IAstVisitor
         if (data.Node.NodeType != ExtensibleEnum<AstNodeTag>.Get("Label")) return;
 
         var method = new DynamicMethodConvertableWrapperImpl();
-        method.Make($"Label_!Intrinsic_{data.Node.Text}", typeof(double), [], (il, _) =>
-        {
-            il.Ldstr("Intrinsic function was not overloaded");
-            il.Newobj(typeof(NotImplementedException).GetConstructor([typeof(string)]));
-            il.Throw();
-        });
-        data.Bytecode.Instructions.Add(new BytecodeInstruction(
-            [],
-            new LevelCollection<float, IDynamicMethodConvertable> { { 0, method } })
+        method.Make($"Label_!Intrinsic_{data.Node.Text}", typeof(double), [],
+            (il, _) => il.IntrinsicNotImplemented()
         );
+        data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
     }
 }
