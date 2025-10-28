@@ -44,14 +44,13 @@ public class ParserConfigurationModuleImpl(ActionType actionType, string path = 
         parser.Configuration.NodeCreators.Clear();
 
         var i = 0;
-        var list = new List<IAstNodeCreator>();
         foreach (var str in text.Split("\n"))
         {
             var trimmed = str.Trim();
             if (string.IsNullOrEmpty(trimmed)) continue;
 
-            if (trimmed == "{") list.Clear();
-            else if (trimmed == "}") i++;
+            if (trimmed == "{") continue;
+            if (trimmed == "}") i++;
             else parser.Configuration.NodeCreators.Add(i++, dict[trimmed]);
         }
     }
