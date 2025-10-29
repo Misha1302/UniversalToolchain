@@ -19,9 +19,10 @@ public class NumberAstVisitor : IAstVisitor
         var method = new DynamicMethodConvertableWrapperImpl();
         var numText = (data.Node.LexemeValue?.Text).NotNull();
         var num = double.Parse(numText, NumberStyles.Any);
-        method.Make($"PushNumber_{num}", typeof(double), [], (il, _) =>
+        method.Make($"PushNumber_{num}", typeof(RealNumberImpl), [], (il, _) =>
         {
             il.Ldc_R8(num);
+            il.Newobj(typeof(RealNumberImpl).GetConstructor([typeof(double)]));
             il.Ret();
         });
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));

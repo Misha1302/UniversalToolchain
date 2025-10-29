@@ -5,16 +5,19 @@ namespace GenericMath;
 
 public interface IBinaryOperation<TSelf> where TSelf : IBinaryOperation<TSelf>
 {
+    // x * y = y * x
     public static virtual bool IsCommutative()
     {
         return false;
     }
 
+    // (a * b) * c = a * (b * c)
     public static virtual bool IsAssociative()
     {
         return false;
     }
 
+    // a(b + c) = ab + ac
     public static virtual bool IsDistributive<TOther>() where TOther : IBinaryOperation<TOther>
     {
         return false;

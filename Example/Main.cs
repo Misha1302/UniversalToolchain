@@ -1,9 +1,9 @@
 // This is an independent project of an individual developer. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 
-using System.Globalization;
 using System.Reflection;
 using ExceptionsManager;
+using GenericMath;
 
 namespace Example;
 
@@ -19,18 +19,19 @@ public static class Main
         return Console.ReadLine().NotNull();
     }
 
-    public static double ToNum(string str)
-    {
-        return double.Parse(str, NumberStyles.Any);
-    }
-
     public static void ImportAssembly(string path)
     {
         Assembly.LoadFile(path);
     }
 
-    public static double Log(double x, double b)
+    public static TSelf Log<TSelf>(ICustomNumber<TSelf, double> a, ICustomNumber<TSelf, double> newBase)
+        where TSelf : ICustomNumber<TSelf, double>
     {
-        return Math.Log(x, b);
+        return TSelf.Create(Math.Log(a.GetValue(), newBase.GetValue()));
+    }
+
+    public static TSelf Sqrt<TSelf>(ICustomNumber<TSelf, double> x) where TSelf : ICustomNumber<TSelf, double>
+    {
+        return TSelf.Create(Math.Sqrt(x.GetValue()));
     }
 }

@@ -23,13 +23,47 @@ public static class IlCodeGenerator
     public static void LdArgsAndCall(this GroboIL il, MethodInfo call, Func<int, Type> ldArg)
     {
         var parameters = call.GetParameters();
+        var argTypes = new List<Type>();
         for (var i = 0; i < parameters.Length; i++)
         {
-            var type = ldArg(i);
-            if (parameters[i].ParameterType == typeof(object) && type.IsValueType)
-                il.Box(type);
+            var sourceType = ldArg(i);
+            argTypes.Add(sourceType);
+
+            var targetType = parameters[i].ParameterType.ContainsGenericParameters
+                ? MakeGeneric(parameters[i], sourceType)
+                : parameters[i].ParameterType;
+
+            if (sourceType.IsAssignableTo(targetType) && sourceType != targetType && sourceType.IsValueType)
+            {
+                il.Box(sourceType);
+                il.Castclass(targetType);
+            }
+            else if (sourceType.IsAssignableTo(targetType) && sourceType != targetType && !sourceType.IsValueType)
+            {
+                il.Castclass(targetType);
+            }
         }
 
-        il.Call(call);
+        il.Call(MakeGenericMethod(call, argTypes));
+    }
+
+    private static MethodInfo MakeGenericMethod(MethodInfo call, List<Type> argTypes)
+    {
+        if (!call.ContainsGenericParameters) return call;
+
+        var genericTypes = call.GetGenericArguments()
+            .Select((x, i) => x.FullName == null ? argTypes[i] : x)
+            .ToArray();
+
+        return call.GetGenericMethodDefinition().MakeGenericMethod(genericTypes);
+    }
+
+    private static Type MakeGeneric(ParameterInfo parameter, Type sourceType)
+    {
+        var genericTypes = parameter.ParameterType.GenericTypeArguments
+            .Select(x => x.FullName == null ? sourceType : x)
+            .ToArray();
+
+        return parameter.ParameterType.GetGenericTypeDefinition().MakeGenericType(genericTypes);
     }
 }

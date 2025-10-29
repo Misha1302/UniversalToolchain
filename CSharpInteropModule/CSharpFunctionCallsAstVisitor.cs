@@ -24,7 +24,9 @@ public class CSharpFunctionCallsAstVisitor : IAstVisitor
         var fullName = (data.Node.LexemeValue?.Text).NotNull();
         var call = MethodsFinder.GetMethod(fullName).NotNull();
         var argsCount = data.Node.Children[0].Children.Count;
-        method.Make($"Call_{fullName}", call.ReturnType, Enumerable.Repeat<Type?>(null, argsCount).ToList(),
+        method.Make($"Call_{fullName}",
+            !call.ReturnType.IsGenericParameter ? call.ReturnType : null,
+            Enumerable.Repeat<Type?>(null, argsCount).ToList(),
             (il, argsArray) =>
             {
                 il.LdArgsAndCall(call, i =>

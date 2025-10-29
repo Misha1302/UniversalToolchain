@@ -13,9 +13,9 @@ var core = new BasicCoreImpl(
         new NumbersModuleImpl(),
         new WhitespaceModuleImpl(),
         new ArithmeticModuleImpl(),
-        new ExecutorDebugLogger(),
         new CSharpInteropModuleImpl(),
         new LabelsModuleImpl(),
+        new ExecutorDebugLogger(),
         new ParserConfigurationModuleImpl(ActionType.Dump)
     ]
 );
@@ -23,7 +23,7 @@ var core = new BasicCoreImpl(
 var result = core.Execute(
     """
     label:
-        Main.Print(Math.Sqrt(5) * Math.Sqrt(5 * 5 * 5) + 1)
+        Main.Print(Main.Sqrt(5) * Main.Sqrt(5 * 5 * 5) + 1)
     goto label
     """
 );

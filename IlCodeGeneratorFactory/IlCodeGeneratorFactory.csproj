@@ -10,4 +10,8 @@
         <PackageReference Include="GrEmit" Version="3.5.1"/>
     </ItemGroup>
 
+    <ItemGroup>
+        <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj"/>
+    </ItemGroup>
+
 </Project>

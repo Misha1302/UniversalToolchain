@@ -52,10 +52,11 @@ public class DynamicMethodConvertableWrapperImpl : IDynamicMethodConvertable
         _bodyGenerator = bodyGenerator;
         _returnType = returnType;
 
-        Thrower.AssertAlways(
-            returnType != null && (returnType.IsClass || returnType.IsValueType),
-            "return type is not a concrete type"
-        );
+        if (returnType != null)
+            Thrower.AssertAlways(
+                returnType.IsClass || returnType.IsValueType,
+                "return type is not a concrete type"
+            );
     }
 
     public override string ToString()

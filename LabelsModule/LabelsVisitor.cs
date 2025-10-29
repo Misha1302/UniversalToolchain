@@ -16,7 +16,7 @@ public class LabelsVisitor : IAstVisitor
         if (data.Node.NodeType != ExtensibleEnum<AstNodeTag>.Get("Label")) return;
 
         var method = new DynamicMethodConvertableWrapperImpl();
-        method.Make($"Label_!Intrinsic_{data.Node.Text}", typeof(double), [],
+        method.Make($"Label_!Intrinsic_{data.Node.Text}", typeof(void), [],
             (il, _) => il.IntrinsicNotImplemented()
         );
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));

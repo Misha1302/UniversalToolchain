@@ -9,7 +9,6 @@ using BasicTypesExtensions;
 
 namespace ArithmeticModule;
 
-// TODO: generic Math interfaces and impls
 public class ArithmeticModuleImpl : ICoreModule
 {
     public static IReadOnlyList<string> Ops => ["Addition", "Substraction", "Multiplication", "Division"];

@@ -6,6 +6,7 @@ using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
 using DynamicMethodWrapper;
 using ExceptionsManager;
+using IlCodeGeneratorFactory;
 
 namespace ArithmeticModule;
 
@@ -21,14 +22,23 @@ public class ArithmeticAstVisitor : IAstVisitor
 
         var method = new DynamicMethodConvertableWrapperImpl();
         var op = (data.Node.LexemeValue?.Text).NotNull();
-        method.Make($"Op_{op}", typeof(double), [typeof(double), typeof(double)], (il, _) =>
+        method.Make($"Op_{op}", null, [null, null], (il, args) =>
         {
-            il.Ldarg(0);
-            il.Ldarg(1);
-            if (op == "+") il.Add();
-            else if (op == "-") il.Sub();
-            else if (op == "*") il.Mul();
-            else if (op == "/") il.Div(false);
+            il.LdArgsAndCall(
+                args[0].GetMethod(op switch
+                    {
+                        "+" => "Add",
+                        "-" => "Sub",
+                        "*" => "Mul",
+                        "/" => "Div",
+                        _ => Thrower.InvalidOpEx<string>()
+                    }
+                ).NotNull(),
+                i =>
+                {
+                    il.Ldarg(i);
+                    return args[i];
+                });
             il.Ret();
         });
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));

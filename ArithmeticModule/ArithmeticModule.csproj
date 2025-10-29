@@ -8,6 +8,8 @@
 
     <ItemGroup>
         <ProjectReference Include="..\BasicCore\BasicCore.csproj"/>
+        <ProjectReference Include="..\GenericMath\GenericMath.csproj"/>
+        <ProjectReference Include="..\IlCodeGeneratorFactory\IlCodeGeneratorFactory.csproj"/>
     </ItemGroup>
 
 </Project>
