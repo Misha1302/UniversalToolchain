@@ -14,6 +14,7 @@ public class BasicCoreImpl(
     Func<IParser> parserFactory,
     Func<IBytecodeTranslator> translatorFactory,
     Func<IExecutor> executorFactory,
+    Func<IBytecodeDynamicMethodsCompiler> dynamicMethodsCompilerFactory,
     IReadOnlyList<ICoreModule> modules)
 {
     public object Execute(string code)
@@ -22,6 +23,7 @@ public class BasicCoreImpl(
         var parser = parserFactory();
         var translator = translatorFactory();
         var executor = executorFactory();
+        var dynamicMethodsCompiler = dynamicMethodsCompilerFactory();
 
         modules.ForEach(module => module.InitLexer(lexer));
         var targetCode = modules.Aggregate(code, (current, module) => module.ProcessText(current));
@@ -35,15 +37,15 @@ public class BasicCoreImpl(
         var targetRoot = modules.Aggregate(astRoot, (current, module) => module.ProcessAst(current));
         var bytecode = translator.Translate(targetRoot);
 
-        modules.ForEach(module => module.InitExecutor(executor));
+        modules.ForEach(module => module.InitDynamicMethodsCompiler(dynamicMethodsCompiler));
         var targetBytecode = modules.Aggregate(bytecode, (current, module) => module.ProcessBytecode(current));
-        var result = executor.Execute(targetBytecode);
+        var methods = dynamicMethodsCompiler.Compile(targetBytecode);
+
+        modules.ForEach(module => module.InitExecutor(executor));
+        var targetDynamicMethods =
+            modules.Aggregate(methods, (current, module) => module.ProcessDynamicMethods(current));
+        var result = executor.Execute(targetDynamicMethods);
 
         return result;
-    }
-
-    public T Execute<T>(string code)
-    {
-        return (T)Execute(code);
     }
 }

@@ -4,26 +4,21 @@
 using System.Reflection.Emit;
 using System.Runtime.InteropServices;
 using BasicCore.ExecutorWrapper;
-using BasicCore.TranslatorWrapper;
 using ExceptionsManager;
+using GrEmit;
 
 namespace BasicInterpreter;
 
 public class BasicInterpreterImpl : IExecutor
 {
     private readonly Dictionary<string, int> _labels = [];
-    private readonly List<DynamicMethod> _methods = [];
     private readonly List<object> _stack = [];
     private int _ip;
+    private List<(GroboIL, DynamicMethod)> _methods = [];
 
-    public object Execute(Bytecode bytecode)
+    public object Execute(List<(GroboIL, DynamicMethod)> targetDynamicMethods)
     {
-        return Interpret(bytecode);
-    }
-
-    public object Interpret(Bytecode bytecode)
-    {
-        Initialize(bytecode);
+        _methods = targetDynamicMethods;
         InterpretInternal();
         return _stack[^1];
     }
@@ -34,15 +29,15 @@ public class BasicInterpreterImpl : IExecutor
         {
             var span = CollectionsMarshal.AsSpan(_stack);
             var method = _methods[_ip];
-            if (method.Name.Contains("!Intrinsic"))
+            if (method.Item2.Name.Contains("!Intrinsic"))
             {
-                ExecuteInternal(method);
+                ExecuteInternal(method.Item2);
                 continue;
             }
 
-            var argsCount = method.GetParameters().Length;
+            var argsCount = method.Item2.GetParameters().Length;
             var args = span[^argsCount..];
-            var ans = method.Invoke(this, args.ToArray());
+            var ans = method.Item2.Invoke(this, args.ToArray());
 
             _stack.RemoveRange(_stack.Count - argsCount, argsCount);
 
@@ -57,27 +52,5 @@ public class BasicInterpreterImpl : IExecutor
         else if (method.Name.Contains("Goto_!Intrinsic"))
             _ip = _labels[method.Name[(method.Name.LastIndexOf('_') + 1)..]];
         else Thrower.InvalidOpEx($"Unknown intrinsic {method.Name}");
-    }
-
-    /// <summary>
-    ///     Initialize _methods and _stack
-    /// </summary>
-    /// <param name="bytecode"></param>
-    private void Initialize(Bytecode bytecode)
-    {
-        var stack = new List<Type>();
-        foreach (var instruction in bytecode.Instructions)
-        foreach (var op in instruction.Ops)
-        foreach (var convertable in op.Value)
-        {
-            var args = stack.Take(convertable.ParamsCount).ToList();
-            var method = convertable.ToDynamicMethod(stack.Count != 0 ? stack[^1] : null, args);
-            for (var i = 0; i < convertable.ParamsCount; i++) stack.RemoveAt(stack.Count - 1);
-            if (method.ReturnType != typeof(void))
-                stack.Add(method.ReturnType);
-            _methods.Add(method);
-        }
-
-        _stack.Clear();
     }
 }

@@ -1,10 +1,12 @@
 // This is an independent project of an individual developer. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 
+using System.Reflection.Emit;
 using BasicCore.ExecutorWrapper;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
+using GrEmit;
 
 namespace BasicCore;
 
@@ -19,6 +21,10 @@ public interface ICoreModule
     }
 
     void InitTranslator(IBytecodeTranslator translator)
+    {
+    }
+
+    void InitDynamicMethodsCompiler(IBytecodeDynamicMethodsCompiler dynamicMethodsCompiler)
     {
     }
 
@@ -42,6 +48,11 @@ public interface ICoreModule
     }
 
     Bytecode ProcessBytecode(Bytecode current)
+    {
+        return current;
+    }
+
+    List<(GroboIL, DynamicMethod)> ProcessDynamicMethods(List<(GroboIL, DynamicMethod)> current)
     {
         return current;
     }

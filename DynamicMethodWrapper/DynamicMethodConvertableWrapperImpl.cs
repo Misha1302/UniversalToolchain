@@ -17,7 +17,7 @@ public class DynamicMethodConvertableWrapperImpl : IDynamicMethodConvertable
     public string Name { get; private set; } = null!;
     public int ParamsCount => _argAbstractTypes.Count;
 
-    public DynamicMethod ToDynamicMethod(Type? preferedReturnType, IList<Type> args)
+    public (GroboIL, DynamicMethod) ToDynamicMethod(Type? preferedReturnType, IList<Type> args)
     {
         var returnType = _returnType ?? preferedReturnType;
 
@@ -31,10 +31,10 @@ public class DynamicMethodConvertableWrapperImpl : IDynamicMethodConvertable
 
         var argsArray = args as Type[] ?? args.ToArray();
         var m = new DynamicMethod(Name, returnType, argsArray, true);
-        using var il = new GroboIL(m);
+        var il = new GroboIL(m);
         _bodyGenerator.Invoke(il, argsArray);
 
-        return m;
+        return (il, m);
     }
 
     private string MakeArgsInconsistencyErrorMessage(IList<Type> args)

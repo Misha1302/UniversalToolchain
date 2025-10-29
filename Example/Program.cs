@@ -1,6 +1,7 @@
 // This is an independent project of an individual developer. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 
+using BytecodeDynamicMethodsCompiler;
 using LabelsModule;
 
 var core = new BasicCoreImpl(
@@ -8,6 +9,7 @@ var core = new BasicCoreImpl(
     () => new BasicParserImpl(),
     () => new BasicBytecodeBytecodeTranslatorImpl(),
     () => new BasicInterpreterImpl(),
+    () => new BytecodeDynamicMethodsCompilerImpl(),
     [
         new ScopesModuleImpl(),
         new NumbersModuleImpl(),
