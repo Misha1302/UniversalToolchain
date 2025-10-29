@@ -30,7 +30,7 @@ public static class IlCodeGenerator
             argTypes.Add(sourceType);
 
             var targetType = parameters[i].ParameterType.ContainsGenericParameters
-                ? MakeGeneric(parameters[i], sourceType)
+                ? MakeGenericType(parameters[i].ParameterType, ((IEnumerable<Type>)argTypes).Reverse().ToList())
                 : parameters[i].ParameterType;
 
             if (sourceType.IsAssignableTo(targetType) && sourceType != targetType && sourceType.IsValueType)
@@ -58,12 +58,12 @@ public static class IlCodeGenerator
         return call.GetGenericMethodDefinition().MakeGenericMethod(genericTypes);
     }
 
-    private static Type MakeGeneric(ParameterInfo parameter, Type sourceType)
+    private static Type MakeGenericType(Type parameterType, List<Type> sourceTypes)
     {
-        var genericTypes = parameter.ParameterType.GenericTypeArguments
-            .Select(x => x.FullName == null ? sourceType : x)
+        var genericTypes = parameterType.GetGenericArguments()
+            .Select((x, i) => x.FullName == null ? sourceTypes[i] : x)
             .ToArray();
 
-        return parameter.ParameterType.GetGenericTypeDefinition().MakeGenericType(genericTypes);
+        return parameterType.GetGenericTypeDefinition().MakeGenericType(genericTypes);
     }
 }
