@@ -3,7 +3,7 @@
 
 namespace GenericMath;
 
-public interface IGettable<out TValue>
+public interface ISubAble<TSelf> : IBinaryOperation<TSelf> where TSelf : IMulAble<TSelf>
 {
-    public TValue GetValue();
+    public static abstract TSelf Sub(TSelf a, TSelf b);
 }

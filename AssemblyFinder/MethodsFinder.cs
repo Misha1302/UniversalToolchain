@@ -3,19 +3,16 @@
 
 using System.Reflection;
 
-namespace CSharpInteropModule;
+namespace AssemblyFinder;
 
 public static class MethodsFinder
 {
-    private static readonly IReadOnlyList<Type> _allTypes = AppDomain.CurrentDomain.GetAssemblies()
-        .SelectMany(x => x.GetTypes()).ToArray();
-
     public static MethodInfo? GetMethod(string fullName)
     {
         var split = fullName.Split('.');
         if (split.Length != 2) return null;
 
-        var types = _allTypes
+        var types = TypesFinder.AllTypes
             .Where(x => x.Name == split[0])
             .Take(1)
             .ToArray();

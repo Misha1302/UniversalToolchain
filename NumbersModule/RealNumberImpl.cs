@@ -42,19 +42,4 @@ public readonly struct RealNumberImpl(double value) : ICustomNumber<RealNumberIm
     {
         return value.ToString(CultureInfo.InvariantCulture);
     }
-
-    public static bool IsCommutative()
-    {
-        throw new NotImplementedException();
-    }
-
-    public static bool IsAssociative()
-    {
-        throw new NotImplementedException();
-    }
-
-    public static bool IsDistributive<TOther>() where TOther : IBinaryOperation<TOther>
-    {
-        throw new NotImplementedException();
-    }
 }

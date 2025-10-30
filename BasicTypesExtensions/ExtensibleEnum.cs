@@ -53,7 +53,7 @@ public class ExtensibleEnum<TTag> : IEquatable<ExtensibleEnum<TTag>>
         return lhs.Equals(rhs);
     }
 
-    public static bool operator !=(ExtensibleEnum<TTag> lhs, ExtensibleEnum<TTag> rhs)
+    public static bool operator !=(ExtensibleEnum<TTag>? lhs, ExtensibleEnum<TTag>? rhs)
     {
         return !(lhs == rhs);
     }

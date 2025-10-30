@@ -14,9 +14,9 @@ public class LabelsNodeCreator : IAstNodeCreator
     {
         if (scope[childIndex].NodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("Identifier"))
             return false;
-        if (childIndex + 1 >= scope.Children.Count)
+        if (scope.SafeGet(childIndex + 1)?.NodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("Colon"))
             return false;
-        if (scope[childIndex + 1].NodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("Colon"))
+        if (!scope[childIndex].Text.StartsWith('@'))
             return false;
 
         scope[childIndex].NodeType = AstNodeType;

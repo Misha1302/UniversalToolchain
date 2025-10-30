@@ -14,16 +14,23 @@ public record LexerConfiguration(List<LexemePattern> Patterns, List<LexemeType> 
 
         Thrower.AssertAlways(
             Patterns.All(x => x.Pattern != pattern.Pattern),
-            $"{pattern.Pattern} always added"
+            $"{pattern.Pattern} always added (pattern != inserting)"
         );
         Thrower.AssertAlways(
             Patterns.All(x => x.LexemeType.GetName() != pattern.LexemeType.GetName()),
-            $"{pattern.LexemeType} always added"
+            $"{pattern.LexemeType} always added (pattern != inserting)"
         );
 
         if (!insertToStart) Patterns.Add(pattern);
         else Patterns.Insert(0, pattern);
         if (ignore) LexemesToIgnore.Add(pattern.LexemeType);
         return true;
+    }
+
+
+    public void AddPattern(LexemePattern pattern, bool ignore = false, bool insertToStart = false)
+    {
+        if (!TryAddPattern(pattern, ignore, insertToStart))
+            Thrower.InvalidOpEx("Pattern always added");
     }
 }

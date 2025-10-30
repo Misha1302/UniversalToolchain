@@ -24,10 +24,12 @@ public static class IlCodeGenerator
     {
         var parameters = call.GetParameters();
         var argTypes = new List<Type>();
-        for (var i = 0; i < parameters.Length; i++)
+        for (var i = 0; i < parameters.Length + (call.IsStatic ? 0 : 1); i++)
         {
             var sourceType = ldArg(i);
             argTypes.Add(sourceType);
+
+            if (!call.IsStatic && i == parameters.Length) continue;
 
             var targetType = parameters[i].ParameterType.ContainsGenericParameters
                 ? MakeGenericType(parameters[i].ParameterType, ((IEnumerable<Type>)argTypes).Reverse().ToList())

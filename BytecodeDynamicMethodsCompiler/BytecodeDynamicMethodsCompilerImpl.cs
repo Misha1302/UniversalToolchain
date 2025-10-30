@@ -18,7 +18,7 @@ public class BytecodeDynamicMethodsCompilerImpl : IBytecodeDynamicMethodsCompile
         foreach (var op in instruction.Ops)
         foreach (var convertable in op.Value)
         {
-            var args = stack.Take(convertable.ParamsCount).ToList();
+            var args = stack.TakeLast(convertable.ParamsCount).ToList();
             var method = convertable.ToDynamicMethod(stack.Count != 0 ? stack[^1] : null, args);
             for (var i = 0; i < convertable.ParamsCount; i++) stack.RemoveAt(stack.Count - 1);
             if (method.Item2.ReturnType != typeof(void))

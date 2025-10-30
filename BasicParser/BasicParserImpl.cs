@@ -40,9 +40,8 @@ public class BasicParserImpl(ParserConfiguration configuration) : IParser
 
     private void ParseScope(AstNode scope, List<IAstNodeCreator> creator)
     {
-        foreach (var node in ((IEnumerable<AstNode>)scope.Children).Reverse())
+        foreach (var node in scope.Children)
             ParseScope(node, creator);
-
 
         for (var i = 0; i < scope.Children.Count; i++)
         {
@@ -53,5 +52,8 @@ public class BasicParserImpl(ParserConfiguration configuration) : IParser
             child.MarkAsParserHandled();
             i = -1;
         }
+
+        foreach (var node in scope.Children)
+            ParseScope(node, creator);
     }
 }

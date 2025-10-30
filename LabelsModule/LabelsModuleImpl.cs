@@ -14,9 +14,6 @@ public class LabelsModuleImpl : ICoreModule
     public void InitLexer(ILexer lexer)
     {
         lexer.Configuration.TryAddPattern(
-            new LexemePattern(@"[a-zA-Z_][a-zA-Z_\.1-9]*", LexemeType.CreateOrGet("Identifier"))
-        );
-        lexer.Configuration.TryAddPattern(
             new LexemePattern(":", LexemeType.CreateOrGet("Colon"))
         );
         lexer.Configuration.TryAddPattern(

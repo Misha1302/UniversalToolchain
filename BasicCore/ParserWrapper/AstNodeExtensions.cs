@@ -9,11 +9,11 @@ public static class AstNodeExtensions
 
     public static bool IsParserHandled(this AstNode node)
     {
-        return node.Tags.Contains(ParserHandledTag);
+        return node.CurrentTags.Contains(ParserHandledTag);
     }
 
     public static void MarkAsParserHandled(this AstNode node)
     {
-        node.Tags.Add(ParserHandledTag);
+        node.AddTag(ParserHandledTag);
     }
 }
