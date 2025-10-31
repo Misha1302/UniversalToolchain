@@ -1,9 +1,14 @@
 // This is an independent project of an individual developer. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 
-namespace EqualityModule;
+using EqualityModule;
 
-public interface ISettable<in TValue>
+namespace VariablesModule;
+
+public class VariableReference<T>(Action<T> set) : ISettable<T>
 {
-    public void SetValue(TValue value);
+    public void SetValue(T value)
+    {
+        set(value);
+    }
 }

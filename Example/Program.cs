@@ -2,6 +2,7 @@
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 
 using BytecodeDynamicMethodsCompiler;
+using EqualityModule;
 using IdentifierModule;
 using LabelsModule;
 using VariablesModule;
@@ -21,6 +22,7 @@ var core = new BasicCoreImpl(
         new CSharpInteropModuleImpl(),
         new LabelsModuleImpl(),
         new VariablesModuleImpl(),
+        new EqualityModuleImpl(),
         new ExecutorDebugLogger(),
         new ParserConfigurationModuleImpl(ActionType.Dump)
     ]

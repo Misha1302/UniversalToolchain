@@ -6,4 +6,9 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+    <ItemGroup>
+        <ProjectReference Include="..\BasicCore\BasicCore.csproj"/>
+        <ProjectReference Include="..\IlCodeGeneratorFactory\IlCodeGeneratorFactory.csproj"/>
+    </ItemGroup>
+
 </Project>
