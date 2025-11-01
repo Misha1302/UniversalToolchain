@@ -12,11 +12,11 @@ using GrEmit;
 
 namespace ExecutorLoggerModule;
 
-public class ExecutorDebugLogger(string filePath) : ICoreModule
+public class ExecutorDebugLoggerImpl(string filePath) : ICoreModule
 {
     private static readonly string _separator = "\n\n" + new string('-', 100) + "\n\n";
 
-    public ExecutorDebugLogger() : this("logs.txt")
+    public ExecutorDebugLoggerImpl() : this("logs.txt")
     {
     }
 

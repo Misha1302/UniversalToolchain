@@ -23,7 +23,7 @@ var core = new BasicCoreImpl(
         new LabelsModuleImpl(),
         new VariablesModuleImpl(),
         new EqualityModuleImpl(),
-        new ExecutorDebugLogger(),
+        new ExecutorDebugLoggerImpl(),
         new ParserConfigurationModuleImpl(ActionType.Dump)
     ]
 );
