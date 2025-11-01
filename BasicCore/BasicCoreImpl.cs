@@ -13,8 +13,8 @@ public class BasicCoreImpl(
     Func<ILexer> lexerFactory,
     Func<IParser> parserFactory,
     Func<IBytecodeTranslator> translatorFactory,
-    Func<IExecutor> executorFactory,
     Func<IBytecodeDynamicMethodsCompiler> dynamicMethodsCompilerFactory,
+    Func<IExecutor> executorFactory,
     IReadOnlyList<ICoreModule> modules)
 {
     public object Execute(string code)
@@ -22,8 +22,8 @@ public class BasicCoreImpl(
         var lexer = lexerFactory();
         var parser = parserFactory();
         var translator = translatorFactory();
-        var executor = executorFactory();
         var dynamicMethodsCompiler = dynamicMethodsCompilerFactory();
+        var executor = executorFactory();
 
         modules.ForEach(module => module.InitLexer(lexer));
         var targetCode = modules.Aggregate(code, (current, module) => module.ProcessText(current));

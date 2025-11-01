@@ -11,8 +11,8 @@ var core = new BasicCoreImpl(
     () => new BasicLexerImpl(),
     () => new BasicParserImpl(),
     () => new BasicBytecodeBytecodeTranslatorImpl(),
-    () => new BasicInterpreterImpl(),
     () => new BytecodeDynamicMethodsCompilerImpl(),
+    () => new BasicInterpreterImpl(),
     [
         new IdentifierModuleImpl(),
         new ScopesModuleImpl(),
