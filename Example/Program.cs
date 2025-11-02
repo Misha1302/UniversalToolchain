@@ -10,7 +10,7 @@ using VariablesModule;
 var core = new BasicCoreImpl(
     () => new BasicLexerImpl(),
     () => new BasicParserImpl(),
-    () => new BasicBytecodeBytecodeTranslatorImpl(),
+    () => new BasicBytecodeTranslatorImpl(),
     () => new BytecodeDynamicMethodsCompilerImpl(),
     () => new BasicInterpreterImpl(),
     [
@@ -34,7 +34,7 @@ var result = core.Execute(
     a : RealNumberImpl = -5
     @label:
         a = a + 1
-        Main.Print(a)
+        
     goto @label
     """
 );

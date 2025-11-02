@@ -6,11 +6,11 @@ using BasicCore.TranslatorWrapper;
 
 namespace BasicCodeTranslator;
 
-public class BasicBytecodeBytecodeTranslatorImpl(BytecodeTranslatorConfiguration configuration) : IBytecodeTranslator
+public class BasicBytecodeTranslatorImpl(BytecodeTranslatorConfiguration configuration) : IBytecodeTranslator
 {
     private readonly Bytecode _code = new([]);
 
-    public BasicBytecodeBytecodeTranslatorImpl() : this(new BytecodeTranslatorConfiguration([]))
+    public BasicBytecodeTranslatorImpl() : this(new BytecodeTranslatorConfiguration([]))
     {
     }
 
