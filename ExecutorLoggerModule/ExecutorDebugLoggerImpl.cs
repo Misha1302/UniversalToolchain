@@ -32,7 +32,7 @@ public class ExecutorDebugLoggerImpl(string filePath) : ICoreModule
 
     public List<LexemeValue> ProcessLexemes(List<LexemeValue> current)
     {
-        File.AppendAllText(filePath, "CODE:\n" + string.Join("\n", current) + _separator);
+        File.AppendAllText(filePath, "LEXEMES:\n" + string.Join("\n", current) + _separator);
         return current;
     }
 
