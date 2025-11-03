@@ -1,0 +1,153 @@
+/* Стили для визуализации CIL кода */
+.cil-container {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 15px;
+    max-height: 70vh;
+    overflow-y: auto;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.9rem;
+}
+
+.cil-method {
+    margin-bottom: 20px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.cil-method-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 12px 15px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.cil-method-header:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+.cil-method-name {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.cil-method-toggle {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cil-method-body {
+    padding: 0;
+}
+
+.cil-instruction {
+    display: grid;
+    grid-template-columns: 50px 100px 1fr auto;
+    gap: 12px;
+    padding: 6px 12px;
+    align-items: center;
+    transition: background-color 0.2s ease;
+    line-height: 1.3;
+    min-height: 28px;
+}
+
+.cil-instruction:hover {
+    background-color: #f8f9fa;
+}
+
+.cil-instruction:not(:last-child) {
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.cil-address {
+    color: #6c757d;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-align: right;
+}
+
+.cil-opcode {
+    color: #e74c3c;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.cil-operand {
+    color: #2c3e50;
+    word-break: break-word;
+    font-size: 0.9rem;
+}
+
+.cil-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 120px;
+}
+
+.stack-type {
+    background: #e8f5e8;
+    color: #27ae60;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.8rem;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    border: 1px solid #c8e6c9;
+}
+
+.cil-method.collapsed .cil-method-body {
+    display: none;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .cil-instruction {
+        grid-template-columns: 40px 80px 1fr;
+        gap: 8px;
+        font-size: 0.8rem;
+        padding: 4px 8px;
+    }
+    
+    .cil-stack {
+        grid-column: 1 / -1;
+        text-align: left;
+        padding-left: 40px;
+        min-width: auto;
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    
+    .cil-method-header {
+        padding: 10px 12px;
+    }
+    
+    .cil-method-name {
+        font-size: 0.9rem;
+    }
+}
+
+/* Подсветка связанных элементов */
+.cil-instruction.highlighted {
+    background-color: #fff3cd;
+    border-left: 3px solid #ffc107;
+}
+
+.cil-instruction.related {
+    background-color: #e8f4fd;
+}

@@ -32,9 +32,10 @@ var core = new BasicCoreImpl(
 var result = core.Execute(
     """
     a : RealNumberImpl = -5
+    b : RealNumberImpl = 7
     @label:
+        Main.Print(a + b)
         a = a + 1
-        
     goto @label
     """
 );

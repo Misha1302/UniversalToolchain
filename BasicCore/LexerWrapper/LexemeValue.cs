@@ -35,6 +35,6 @@ public class LexemeValue
     public override string ToString()
     {
         return
-            $"{Regex.Escape(Text)} ({LexemePattern.LexemeType}:\"{LexemePattern.Pattern}\") at {StartIndex}:{CharNumber}";
+            $"{Regex.Escape(Text)} ({LexemePattern.LexemeType}:\"{LexemePattern.Pattern}\") at {LineNumber}:{CharNumber}";
     }
 }

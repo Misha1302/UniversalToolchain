@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Компилятор Log Viewer</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/ast-tree.css">
+    <link rel="stylesheet" href="styles/lexemes.css">
+    <link rel="stylesheet" href="styles/controls.css">
+    <link rel="stylesheet" href="styles/bytecode.css">
+    <link rel="stylesheet" href="styles/cil.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Компилятор Log Viewer</h1>
+            <p>Структурированный просмотр логов компилятора</p>
+        </header>
+
+        <div class="upload-section">
+            <input type="file" id="log-file" accept=".txt,.log">
+            <label for="log-file" class="upload-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M14 2H6C4.9 2 4 2.9 4 4V20C4 21.1 4.9 22 6 22H18C19.1 22 20 21.1 20 20V8L14 2Z" stroke="currentColor" stroke-width="2"/>
+                    <path d="M14 2V8H20" stroke="currentColor" stroke-width="2"/>
+                    <path d="M16 13H8" stroke="currentColor" stroke-width="2"/>
+                    <path d="M16 17H8" stroke="currentColor" stroke-width="2"/>
+                    <path d="M10 9H9H8" stroke="currentColor" stroke-width="2"/>
+                </svg>
+                Загрузить логи
+            </label>
+            <div class="file-info" id="file-info"></div>
+        </div>
+
+        <nav class="section-nav">
+            <button class="nav-btn active" data-section="code">Исходный код</button>
+            <button class="nav-btn" data-section="lexemes">Лексемы</button>
+            <button class="nav-btn" data-section="ast">AST</button>
+            <button class="nav-btn" data-section="bytecode">Байткод</button>
+            <button class="nav-btn" data-section="dotnet">.NET код</button>
+        </nav>
+
+        <main>
+            <section id="code" class="content-section active">
+                <h2>Исходный код</h2>
+                <div class="code-block">
+                    <div class="line-numbers" id="code-line-numbers"></div>
+                    <pre id="code-content"></pre>
+                </div>
+            </section>
+
+            <section id="lexemes" class="content-section">
+                <h2>Лексемы</h2>
+                <div class="lexemes-container" id="lexemes-content"></div>
+            </section>
+
+            <section id="ast" class="content-section">
+                <h2>AST (Abstract Syntax Tree)</h2>
+                <div class="ast-controls">
+                    <button id="zoom-in" class="control-btn">+</button>
+                    <button id="zoom-out" class="control-btn">-</button>
+                    <button id="reset-view" class="control-btn">Сброс</button>
+                </div>
+                <div class="ast-container">
+                    <div id="ast-tree" class="ast-tree"></div>
+                </div>
+            </section>
+
+            <section id="bytecode" class="content-section">
+                <h2>Байткод</h2>
+                <div id="bytecode-content">
+                    <!-- Визуализация байткода будет вставлена здесь -->
+                </div>
+            </section>
+
+            <section id="dotnet" class="content-section">
+                <h2>.NET код (CIL)</h2>
+                <div id="dotnet-content">
+                    <!-- Визуализация CIL будет вставлена здесь -->
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="scripts/cil-builder.js"></script>
+    <script src="scripts/bytecode-builder.js"></script>
+    <script src="scripts/file-handler.js"></script>
+    <script src="scripts/log-parser.js"></script>
+    <script src="scripts/lexemes-builder.js"></script>
+    <script src="scripts/ast-builder.js"></script>
+    <script src="scripts/ui-controller.js"></script>
+    <script src="scripts/main.js"></script>
+</body>
+</html>

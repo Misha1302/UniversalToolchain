@@ -1,0 +1,140 @@
+/* Стили для визуализации байткода */
+.bytecode-container {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 15px;
+    max-height: 70vh;
+    overflow-y: auto;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.9rem;
+}
+
+.bytecode-line {
+    display: flex;
+    align-items: center;
+    padding: 6px 8px;
+    margin-bottom: 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.bytecode-line:hover {
+    background-color: rgba(52, 152, 219, 0.05);
+}
+
+.bytecode-address {
+    color: #95a5a6;
+    font-size: 0.8rem;
+    min-width: 40px;
+    text-align: right;
+    padding-right: 12px;
+    user-select: none;
+}
+
+.bytecode-instruction {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+}
+
+.bytecode-mnemonic {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    position: relative;
+    cursor: help;
+    transition: all 0.2s ease;
+    border-left: 3px solid;
+}
+
+.bytecode-mnemonic:hover {
+    transform: translateY(-1px);
+}
+
+.bytecode-args {
+    color: #2c3e50;
+    font-weight: 500;
+}
+
+/* Уменьшенное количество категорий инструкций */
+.bytecode-memory {
+    background-color: rgba(52, 152, 219, 0.08);
+    color: #2980b9;
+    border-left-color: #3498db;
+}
+
+.bytecode-operation {
+    background-color: rgba(46, 204, 113, 0.08);
+    color: #27ae60;
+    border-left-color: #2ecc71;
+}
+
+.bytecode-control {
+    background-color: rgba(155, 89, 182, 0.08);
+    color: #8e44ad;
+    border-left-color: #9b59b6;
+}
+
+.bytecode-other {
+    background-color: rgba(149, 165, 166, 0.08);
+    color: #7f8c8d;
+    border-left-color: #95a5a6;
+}
+
+/* Подсказки */
+.bytecode-tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2c3e50;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.bytecode-mnemonic:hover .bytecode-tooltip {
+    opacity: 1;
+}
+
+.bytecode-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #2c3e50;
+}
+
+/* Компактный вид для мобильных */
+@media (max-width: 768px) {
+    .bytecode-container {
+        padding: 10px;
+        font-size: 0.8rem;
+    }
+    
+    .bytecode-line {
+        padding: 4px 6px;
+    }
+    
+    .bytecode-address {
+        min-width: 30px;
+        font-size: 0.7rem;
+    }
+    
+    .bytecode-mnemonic {
+        padding: 3px 6px;
+        font-size: 0.8rem;
+    }
+}
