@@ -48,6 +48,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EqualityModule", "EqualityM
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AssemblyFinder", "AssemblyFinder\AssemblyFinder.csproj", "{C60C2D5F-110E-42B0-B37D-BA7AC829C378}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wistc", "Wistc\Wistc.csproj", "{D62CCD79-F4B6-4A27-875D-FE9DA78A8854}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -150,5 +152,9 @@ Global
 		{C60C2D5F-110E-42B0-B37D-BA7AC829C378}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C60C2D5F-110E-42B0-B37D-BA7AC829C378}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C60C2D5F-110E-42B0-B37D-BA7AC829C378}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D62CCD79-F4B6-4A27-875D-FE9DA78A8854}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D62CCD79-F4B6-4A27-875D-FE9DA78A8854}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D62CCD79-F4B6-4A27-875D-FE9DA78A8854}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D62CCD79-F4B6-4A27-875D-FE9DA78A8854}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
