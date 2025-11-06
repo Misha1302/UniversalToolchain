@@ -1,19 +1,22 @@
-// Модуль для построения AST дерева
 class ASTBuilder {
-    constructor() {
+    constructor(containerId = 'ast-tree') {
         this.zoomLevel = 1;
+        this.containerId = containerId;
     }
 
-    display(astContent) {
+    display(astContent, customContainer) {
         const astData = LogParser.parseAST(astContent);
-        this.renderTree(astData);
+        this.renderTree(astData, customContainer);
         this.setupEventListeners();
     }
 
-    renderTree(astData) {
-        const astTree = document.getElementById('ast-tree');
+    renderTree(astData, customContainer) {
+        const astTree = customContainer || document.getElementById(this.containerId);
         
-        if (!astTree) return;
+        if (!astTree) {
+            console.error('AST container not found:', this.containerId);
+            return;
+        }
         
         astTree.innerHTML = '';
         
@@ -163,9 +166,12 @@ class ASTBuilder {
     }
 
     applyZoom() {
-        const astTree = document.getElementById('ast-tree');
-        if (astTree) {
+        // Применяем масштаб ко всем деревьям AST на странице
+        document.querySelectorAll('.ast-tree').forEach(astTree => {
             astTree.style.transform = `scale(${this.zoomLevel})`;
-        }
+            // Убираем фиксированную высоту после применения масштаба
+            astTree.style.height = 'auto';
+            astTree.style.maxHeight = 'none';
+        });
     }
 }

@@ -1,7 +1,7 @@
 // Модуль для построения секции лексем
 class LexemesBuilder {
-    static display(lexemesContent, sourceCode) {
-        const lexemesContainer = document.getElementById('lexemes-content');
+    static display(lexemesContent, sourceCode, customContainer) {
+        const lexemesContainer = customContainer || document.getElementById('lexemes-content');
         
         if (!lexemesContainer) return;
         
@@ -15,7 +15,6 @@ class LexemesBuilder {
                 this.createLineElement(lexemesContainer, lineNumber, lexemesByLine[lineNumber]);
             });
     }
-
     static groupLexemesByLine(lexemesContent, sourceCode) {
         const lines = lexemesContent.split('\n').filter(line => line.trim() !== '');
         const lexemesByLine = {};

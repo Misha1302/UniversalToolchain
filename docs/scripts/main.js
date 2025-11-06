@@ -1,13 +1,17 @@
-// Основной модуль приложения
+// scripts/main.js
 class LogViewer {
     constructor() {
         this.currentLogs = null;
         this.astBuilder = new ASTBuilder();
         this.cilBuilder = new CILBuilder();
+        this.splitViewManager = new SplitViewManager();
         this.init();
     }
 
     init() {
+        // Сохраняем экземпляр в глобальной области
+        window.logViewer = this;
+        
         UIController.setupNavigation();
         UIController.setupFileUpload((content) => this.parseLogFile(content));
         
@@ -40,6 +44,9 @@ class LogViewer {
         this.astBuilder.display(this.currentLogs.ast);
         BytecodeBuilder.display(this.currentLogs.bytecode);
         this.cilBuilder.display(this.currentLogs.dotnet);
+        
+        // Обновляем разделенный просмотр, если активен
+        this.splitViewManager.updateContent();
     }
 }
 
