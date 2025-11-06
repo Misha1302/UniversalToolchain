@@ -33,33 +33,6 @@
             <div class="file-info" id="file-info"></div>
         </div>
 
-        <!-- Простая панель разделенного просмотра -->
-        <div class="split-controls">
-            <div class="split-selectors">
-                <select id="left-panel-select">
-                    <option value="code">Исходный код</option>
-                    <option value="lexemes">Лексемы</option>
-                    <option value="ast" selected>AST</option>
-                    <option value="bytecode">Байткод</option>
-                    <option value="dotnet">.NET код</option>
-                </select>
-                <span class="split-and">и</span>
-                <select id="right-panel-select">
-                    <option value="code">Исходный код</option>
-                    <option value="lexemes">Лексемы</option>
-                    <option value="ast">AST</option>
-                    <option value="bytecode" selected>Байткод</option>
-                    <option value="dotnet">.NET код</option>
-                </select>
-            </div>
-            <button id="split-view-btn" class="split-btn">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M3 15h8v-2H3v2zm0 4h8v-2H3v2zm0 4h8v-2H3v2zM3 7h8V5H3v2zm10 0h8V5h-8v2zm10 10h-8v-2h8v2zm0 4h-8v-2h8v2z"/>
-                </svg>
-                Разделить просмотр
-            </button>
-        </div>
-
         <nav class="section-nav">
             <button class="nav-btn active" data-section="code">Исходный код</button>
             <button class="nav-btn" data-section="lexemes">Лексемы</button>
@@ -69,25 +42,6 @@
         </nav>
 
         <main>
-            <!-- Контейнер для разделенного просмотра -->
-            <div id="split-view-container" class="split-view-container" style="display: none;">
-                <div class="split-panel">
-                    <div class="split-panel-header">
-                        <h3 id="left-panel-title">AST</h3>
-                        <button class="close-split-view">× Закрыть</button>
-                    </div>
-                    <div id="left-panel-content" class="split-panel-content"></div>
-                </div>
-                <div class="split-panel">
-                    <div class="split-panel-header">
-                        <h3 id="right-panel-title">Байткод</h3>
-                        <button class="close-split-view">× Закрыть</button>
-                    </div>
-                    <div id="right-panel-content" class="split-panel-content"></div>
-                </div>
-            </div>
-
-            <!-- Обычные секции -->
             <section id="code" class="content-section active">
                 <h2>Исходный код</h2>
                 <div class="code-block">
@@ -115,24 +69,27 @@
 
             <section id="bytecode" class="content-section">
                 <h2>Байткод</h2>
-                <div id="bytecode-content"></div>
+                <div id="bytecode-content">
+                    <!-- Визуализация байткода будет вставлена здесь -->
+                </div>
             </section>
 
             <section id="dotnet" class="content-section">
                 <h2>.NET код (CIL)</h2>
-                <div id="dotnet-content"></div>
+                <div id="dotnet-content">
+                    <!-- Визуализация CIL будет вставлена здесь -->
+                </div>
             </section>
         </main>
     </div>
 
-    <script src="scripts/log-parser.js"></script>
+    <script src="scripts/cil-builder.js"></script>
+    <script src="scripts/bytecode-builder.js"></script>
     <script src="scripts/file-handler.js"></script>
-    <script src="scripts/ui-controller.js"></script>
+    <script src="scripts/log-parser.js"></script>
     <script src="scripts/lexemes-builder.js"></script>
     <script src="scripts/ast-builder.js"></script>
-    <script src="scripts/bytecode-builder.js"></script>
-    <script src="scripts/cil-builder.js"></script>
-    <script src="scripts/split-view.js"></script>
+    <script src="scripts/ui-controller.js"></script>
     <script src="scripts/main.js"></script>
 </body>
 </html>

@@ -1,7 +1,7 @@
 // Модуль для построения визуализации байткода
 class BytecodeBuilder {
-    static display(bytecodeContent, customContainer) {
-        const container = customContainer || document.getElementById('bytecode-content');
+    static display(bytecodeContent) {
+        const container = document.getElementById('bytecode-content');
         if (!container) return;
         
         container.innerHTML = '';

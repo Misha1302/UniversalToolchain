@@ -5,8 +5,9 @@ class CILBuilder {
         this.currentCILContent = '';
     }
 
-    display(cilContent, customContainer) {
-        const container = customContainer || document.getElementById('dotnet-content');
+    display(cilContent) {
+        this.currentCILContent = cilContent;
+        const container = document.getElementById('dotnet-content');
         if (!container) return;
         
         container.innerHTML = '';

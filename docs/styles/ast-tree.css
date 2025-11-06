@@ -1,4 +1,3 @@
-/* styles/ast-tree.css */
 :root {
     --node-bg: #ffffff;
     --node-border: #3498db;
@@ -27,33 +26,17 @@
     background: var(--code-bg);
     border: 1px solid var(--border);
     border-radius: 6px;
-    padding: 15px;
-    position: relative;
-    /* Для одиночного режима оставляем прокрутку */
+    overflow: auto;
     max-height: 70vh;
-    overflow-y: auto;
+    position: relative;
 }
 
 .ast-tree {
-    min-height: 400px;
+    min-height: 500px;
     position: relative;
     padding: 20px;
     transform-origin: top left;
     transition: transform 0.3s ease;
-    height: auto;
-}
-
-/* Для разделенного режима убираем ограничения */
-.split-panel-content .ast-container {
-    max-height: none !important;
-    height: auto !important;
-    overflow: visible !important;
-    padding: 0;
-}
-
-.split-panel-content .ast-tree {
-    max-height: none !important;
-    height: auto !important;
 }
 
 /* Стили для узлов дерева */
