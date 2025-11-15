@@ -50,6 +50,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AssemblyFinder", "AssemblyF
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wistc", "Wistc\Wistc.csproj", "{D62CCD79-F4B6-4A27-875D-FE9DA78A8854}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BasicCilCompiler", "BasicCilCompiler\BasicCilCompiler.csproj", "{9C007AC9-FA6D-4625-8E95-A867C510D525}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -156,5 +158,9 @@ Global
 		{D62CCD79-F4B6-4A27-875D-FE9DA78A8854}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D62CCD79-F4B6-4A27-875D-FE9DA78A8854}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D62CCD79-F4B6-4A27-875D-FE9DA78A8854}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9C007AC9-FA6D-4625-8E95-A867C510D525}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9C007AC9-FA6D-4625-8E95-A867C510D525}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9C007AC9-FA6D-4625-8E95-A867C510D525}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9C007AC9-FA6D-4625-8E95-A867C510D525}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

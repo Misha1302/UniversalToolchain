@@ -8,5 +8,5 @@ namespace BasicCore.ExecutorWrapper;
 
 public interface IExecutor
 {
-    object Execute(List<(GroboIL, DynamicMethod)> targetDynamicMethods);
+    object Execute(List<(GroboIL, DynamicMethod)> methods);
 }

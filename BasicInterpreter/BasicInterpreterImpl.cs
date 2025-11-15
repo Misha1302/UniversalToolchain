@@ -17,10 +17,10 @@ public class BasicInterpreterImpl : IExecutor
     private bool[] _isIntrinsic = [];
     private List<(GroboIL, DynamicMethod)> _methods = [];
 
-    public object Execute(List<(GroboIL, DynamicMethod)> targetDynamicMethods)
+    public object Execute(List<(GroboIL, DynamicMethod)> methods)
     {
-        _methods = targetDynamicMethods;
-        Preprocess(targetDynamicMethods);
+        _methods = methods;
+        Preprocess(methods);
         InterpretInternal();
         return _stack[^1];
     }

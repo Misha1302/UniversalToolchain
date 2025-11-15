@@ -1,6 +1,7 @@
 // This is an independent project of an individual developer. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 
+using BasicCilCompiler;
 using BytecodeDynamicMethodsCompiler;
 using EqualityModule;
 using IdentifierModule;
@@ -12,7 +13,7 @@ var core = new BasicCoreImpl(
     () => new BasicParserImpl(),
     () => new BasicBytecodeTranslatorImpl(),
     () => new BytecodeDynamicMethodsCompilerImpl(),
-    () => new BasicInterpreterImpl(),
+    () => new BasicCilCompilerImpl(),
     [
         new IdentifierModuleImpl(),
         new ScopesModuleImpl(),
@@ -29,6 +30,7 @@ var core = new BasicCoreImpl(
 );
 
 
+// TODO: basic type-resolving
 var result = core.Execute(
     """
     a : RealNumberImpl = -5
