@@ -16,6 +16,9 @@ public class VariablesModuleImpl : ICoreModule
         lexer.Configuration.TryAddPattern(
             new LexemePattern(":", LexemeType.CreateOrGet("Colon"))
         );
+        lexer.Configuration.TryAddPattern(
+            new LexemePattern("let", LexemeType.CreateOrGet("Let"))
+        );
     }
 
     public void InitParser(IParser parser)

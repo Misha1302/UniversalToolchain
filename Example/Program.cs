@@ -6,6 +6,7 @@ using ConditionsModule;
 using EqualityModule;
 using IdentifierModule;
 using LabelsModule;
+using TypeInference;
 using VariablesModule;
 
 var core = new BasicCoreImpl(
@@ -27,24 +28,25 @@ var core = new BasicCoreImpl(
         new ConditionsModuleImpl(),
         new ComparisonOperations(),
         new BooleanOperations(),
+        new TypeInferenceModuleImpl(),
         new ExecutorDebugLoggerImpl(),
         new ParserConfigurationModuleImpl(ActionType.Dump)
     ]
 );
 
 
-// TODO: basic type-resolving
 // TODO: fix parser configuration
 var result = core.Execute(
     """
-    a : RealNumberImpl = -2
-    @label:
-        Main.Print(a)
-        a = a + 1
-        
-        if a < 5 or a == 5 (
-            goto @label
-        )
+    let a = Main.Input()
+    Main.Print(a)
+
+    let b = -10
+    let c = 123 * 4 - 2
+    let d = b * c - 5
+    Main.Print(b)
+    Main.Print(c)
+    Main.Print(d)
     """
 );
 

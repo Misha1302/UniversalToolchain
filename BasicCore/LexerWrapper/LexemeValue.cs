@@ -9,16 +9,19 @@ public class LexemeValue
 {
     private readonly Lazy<(int, int)> _lineAndChar;
 
-    public readonly LexemePattern LexemePattern;
+    public readonly LexemePattern? LexemePattern;
     public readonly int StartIndex;
     public readonly string Text;
 
-    public LexemeValue(string text, LexemePattern lexemePattern, int startIndex, string code)
+    public LexemeValue(string text, LexemePattern? lexemePattern, int startIndex, string? code)
     {
         Text = text;
         LexemePattern = lexemePattern;
         StartIndex = startIndex;
-        _lineAndChar = new Lazy<(int, int)>(() => CalcLineAndCharNums(code, StartIndex));
+
+        if (StartIndex >= 0 && code != null)
+            _lineAndChar = new Lazy<(int, int)>(() => CalcLineAndCharNums(code, StartIndex));
+        else _lineAndChar = new Lazy<(int, int)>(() => (-1, -1));
     }
 
     public int LineNumber => _lineAndChar.Value.Item1;
@@ -34,7 +37,9 @@ public class LexemeValue
 
     public override string ToString()
     {
-        return
-            $"{Regex.Escape(Text)} ({LexemePattern.LexemeType}:\"{LexemePattern.Pattern}\") at {LineNumber}:{CharNumber}";
+        if (LexemePattern != null)
+            return
+                $"{Regex.Escape(Text)} ({LexemePattern.LexemeType}:\"{LexemePattern.Pattern}\") at {LineNumber}:{CharNumber}";
+        return Regex.Escape(Text);
     }
 }

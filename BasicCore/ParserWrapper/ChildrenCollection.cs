@@ -57,4 +57,9 @@ public class ChildrenCollection(List<AstNode> children, AstNode parent) : IEnume
     {
         children.AddRange(astNodes);
     }
+
+    public void Clear()
+    {
+        RemoveRange(0, children.Count);
+    }
 }

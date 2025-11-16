@@ -54,6 +54,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BasicCilCompiler", "BasicCi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConditionsModule", "ConditionsModule\ConditionsModule.csproj", "{8505D524-BAC6-4FA6-8F1D-7417EB948B8C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TypeInference", "TypeInference\TypeInference.csproj", "{5A94F1CB-3C44-46FD-B384-6BB297813F7E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -168,5 +170,9 @@ Global
 		{8505D524-BAC6-4FA6-8F1D-7417EB948B8C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8505D524-BAC6-4FA6-8F1D-7417EB948B8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8505D524-BAC6-4FA6-8F1D-7417EB948B8C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5A94F1CB-3C44-46FD-B384-6BB297813F7E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5A94F1CB-3C44-46FD-B384-6BB297813F7E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5A94F1CB-3C44-46FD-B384-6BB297813F7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5A94F1CB-3C44-46FD-B384-6BB297813F7E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

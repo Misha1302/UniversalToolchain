@@ -14,7 +14,7 @@ public class NumberAstVisitor : IAstVisitor
 {
     public void TryVisit(BytecodeVisitorData data)
     {
-        if (data.Node.NodeType != ExtensibleEnum<AstNodeTag>.Get("Number")) return;
+        if (data.Node.NodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("Number")) return;
 
         var method = new DynamicMethodConvertableWrapperImpl();
         var numText = (data.Node.LexemeValue?.Text).NotNull();

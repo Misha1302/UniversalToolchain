@@ -33,6 +33,7 @@
         <ProjectReference Include="..\NumbersModule\NumbersModule.csproj"/>
         <ProjectReference Include="..\ParserConfigurationModule\ParserConfigurationModule.csproj"/>
         <ProjectReference Include="..\ScopesModule\ScopesModule.csproj"/>
+        <ProjectReference Include="..\TypeInference\TypeInference.csproj"/>
         <ProjectReference Include="..\VariablesModule\VariablesModule.csproj"/>
         <ProjectReference Include="..\WhitespacesModule\WhitespacesModule.csproj"/>
     </ItemGroup>

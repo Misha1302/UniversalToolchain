@@ -25,7 +25,7 @@ public class ArithmeticAstVisitor : IAstVisitor
         method.Make($"Op_{op}", null, [null, null], (il, args) =>
         {
             il.LdArgsAndCall(
-                args[0].GetMethod(op switch
+                args[^1].GetMethod(op switch
                     {
                         "+" => "Add",
                         "-" => "Sub",

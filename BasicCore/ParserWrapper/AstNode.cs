@@ -10,6 +10,7 @@ public class AstNode
 {
     private readonly HashSet<string> _currentTags = [];
     public readonly LexemeValue? LexemeValue;
+    public DynamicCollection Data = new();
     public AstNodeType NodeType;
 
     public AstNode(AstNodeType nodeType, LexemeValue? lexemeValue, List<AstNode> children)
@@ -23,7 +24,7 @@ public class AstNode
 
     public AstNode? Parent { get; internal set; }
 
-    public LexemeType? LexemeType => LexemeValue?.LexemePattern.LexemeType;
+    public LexemeType? LexemeType => LexemeValue?.LexemePattern?.LexemeType;
     public string Text => LexemeValue?.Text ?? "";
 
     public ChildrenCollection Children { get; }

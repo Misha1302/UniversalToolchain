@@ -6,7 +6,7 @@ using ExceptionsManager;
 
 namespace BasicCore.LexerWrapper;
 
-public class LexerConfiguration(List<LexemePattern> patterns, List<LexemeType> lexemesToIgnore)
+public class LexerConfiguration(List<LexemeType> lexemesToIgnore)
 {
     private readonly LevelCollection<float, LexemePattern> _patterns = new();
 

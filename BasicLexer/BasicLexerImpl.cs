@@ -10,7 +10,7 @@ namespace BasicLexer;
 
 public class BasicLexerImpl(LexerConfiguration configuration) : ILexer
 {
-    public BasicLexerImpl() : this(new LexerConfiguration([], []))
+    public BasicLexerImpl() : this(new LexerConfiguration([]))
     {
     }
 
@@ -37,7 +37,7 @@ public class BasicLexerImpl(LexerConfiguration configuration) : ILexer
         // Sort the matches first by their starting position in the code, then by the order of the corresponding pattern in the configuration.
         allMatches = allMatches
             .OrderBy(x => x.StartIndex)
-            .ThenBy(x => patterns.IndexOf(x.LexemePattern))
+            .ThenBy(x => patterns.IndexOf(x.LexemePattern.NotNull()))
             .ToList();
 
         var result =
@@ -62,7 +62,7 @@ public class BasicLexerImpl(LexerConfiguration configuration) : ILexer
             index = lexeme.StartIndex + lexeme.Text.Length;
 
             // If the token type is not one to be ignored, add it to the result list.
-            if (!Configuration.LexemesToIgnore.Contains(lexeme.LexemePattern.LexemeType))
+            if (!Configuration.LexemesToIgnore.Contains(lexeme.LexemePattern.NotNull().LexemeType))
                 result.Add(lexeme);
         }
 
