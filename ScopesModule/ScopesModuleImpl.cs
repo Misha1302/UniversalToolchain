@@ -13,8 +13,8 @@ public class ScopesModuleImpl : ICoreModule
 {
     public void InitLexer(ILexer lexer)
     {
-        lexer.Configuration.Patterns.Add(new LexemePattern(@"\(", LexemeType.CreateOrGet("OpenPar")));
-        lexer.Configuration.Patterns.Add(new LexemePattern(@"\)", LexemeType.CreateOrGet("ClosePar")));
+        lexer.Configuration.TryAddPattern(new LexemePattern(@"\(", LexemeType.CreateOrGet("OpenPar")));
+        lexer.Configuration.TryAddPattern(new LexemePattern(@"\)", LexemeType.CreateOrGet("ClosePar")));
     }
 
     public void InitParser(IParser parser)

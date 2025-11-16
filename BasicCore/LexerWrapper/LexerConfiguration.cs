@@ -1,13 +1,19 @@
 // This is an independent project of an individual developer. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 
+using BasicCore.ParserWrapper;
 using ExceptionsManager;
 
 namespace BasicCore.LexerWrapper;
 
-public record LexerConfiguration(List<LexemePattern> Patterns, List<LexemeType> LexemesToIgnore)
+public class LexerConfiguration(List<LexemePattern> patterns, List<LexemeType> lexemesToIgnore)
 {
-    public bool TryAddPattern(LexemePattern pattern, bool ignore = false, bool insertToStart = false)
+    private readonly LevelCollection<float, LexemePattern> _patterns = new();
+
+    public IReadOnlyList<LexemePattern> Patterns => _patterns.SelectMany(x => x.Value).ToList();
+    public List<LexemeType> LexemesToIgnore { get; } = lexemesToIgnore;
+
+    public bool TryAddPattern(LexemePattern pattern, bool ignore = false, float priority = 0)
     {
         var find = Patterns.Any(x => x == pattern);
         if (find) return false;
@@ -21,16 +27,16 @@ public record LexerConfiguration(List<LexemePattern> Patterns, List<LexemeType> 
             $"{pattern.LexemeType} always added (pattern != inserting)"
         );
 
-        if (!insertToStart) Patterns.Add(pattern);
-        else Patterns.Insert(0, pattern);
+        _patterns[priority].Add(pattern);
+
         if (ignore) LexemesToIgnore.Add(pattern.LexemeType);
         return true;
     }
 
 
-    public void AddPattern(LexemePattern pattern, bool ignore = false, bool insertToStart = false)
+    public void AddPattern(LexemePattern pattern, bool ignore = false, float priority = 0)
     {
-        if (!TryAddPattern(pattern, ignore, insertToStart))
+        if (!TryAddPattern(pattern, ignore, priority))
             Thrower.InvalidOpEx("Pattern always added");
     }
 }

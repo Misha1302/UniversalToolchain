@@ -6,7 +6,7 @@ using GenericMath;
 
 namespace NumbersModule;
 
-public readonly struct RealNumberImpl(double value) : ICustomNumber<RealNumberImpl, double>
+public readonly struct RealNumberImpl(double value) : ICustomNumber<RealNumberImpl, double>, IComparable<RealNumberImpl>
 {
     public static RealNumberImpl Sub(RealNumberImpl a, RealNumberImpl b)
     {
@@ -41,5 +41,24 @@ public readonly struct RealNumberImpl(double value) : ICustomNumber<RealNumberIm
     public override string ToString()
     {
         return value.ToString(CultureInfo.InvariantCulture);
+    }
+
+    public int CompareTo(RealNumberImpl other)
+    {
+        var v1 = GetValue();
+        var v2 = other.GetValue();
+        if (Math.Sign(v1) == Math.Sign(v2))
+        {
+            var a1 = Math.Abs(v1);
+            var a2 = Math.Abs(v2);
+
+            const double error = 1e-10;
+            if (Math.Abs(a1 - a2) < error)
+                return 0;
+            if (a1 > double.Epsilon && a2 > double.Epsilon && Math.Max(a1, a2) / Math.Min(a1, a2) < 1 + error)
+                return 0;
+        }
+
+        return GetValue().CompareTo(other.GetValue());
     }
 }

@@ -15,7 +15,8 @@ public class IdentifierModuleImpl : ICoreModule
             new LexemePattern(
                 @"[@a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*(?:<[^<>]*(?:<(?:[^<>]|<<|>>)*>[^<>]*)*>)?",
                 LexemeType.CreateOrGet("Identifier")
-            )
+            ),
+            priority: 100
         );
     }
 }

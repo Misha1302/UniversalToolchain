@@ -15,11 +15,11 @@ public class ArithmeticModuleImpl : ICoreModule
 
     public void InitLexer(ILexer lexer)
     {
-        var patterns = lexer.Configuration.Patterns;
-        patterns.Add(new LexemePattern(@"\+", ExtensibleEnum<LexemeTag>.CreateOrGet(Ops[0])));
-        patterns.Add(new LexemePattern(@"\-", ExtensibleEnum<LexemeTag>.CreateOrGet(Ops[1])));
-        patterns.Add(new LexemePattern(@"\*", ExtensibleEnum<LexemeTag>.CreateOrGet(Ops[2])));
-        patterns.Add(new LexemePattern(@"\/", ExtensibleEnum<LexemeTag>.CreateOrGet(Ops[3])));
+        var config = lexer.Configuration;
+        config.TryAddPattern(new LexemePattern(@"\+", ExtensibleEnum<LexemeTag>.CreateOrGet(Ops[0])));
+        config.TryAddPattern(new LexemePattern(@"\-", ExtensibleEnum<LexemeTag>.CreateOrGet(Ops[1])));
+        config.TryAddPattern(new LexemePattern(@"\*", ExtensibleEnum<LexemeTag>.CreateOrGet(Ops[2])));
+        config.TryAddPattern(new LexemePattern(@"\/", ExtensibleEnum<LexemeTag>.CreateOrGet(Ops[3])));
     }
 
     public void InitParser(IParser parser)

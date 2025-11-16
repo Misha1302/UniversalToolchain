@@ -14,7 +14,7 @@ public class EqualityModuleImpl : ICoreModule
     public void InitLexer(ILexer lexer)
     {
         lexer.Configuration.TryAddPattern(
-            new LexemePattern("=", LexemeType.CreateOrGet("Equality"))
+            new LexemePattern(@"\=", LexemeType.CreateOrGet("Equality")), priority: 100
         );
     }
 

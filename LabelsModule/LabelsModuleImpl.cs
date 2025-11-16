@@ -18,7 +18,7 @@ public class LabelsModuleImpl : ICoreModule
         );
         lexer.Configuration.TryAddPattern(
             new LexemePattern("goto", LexemeType.CreateOrGet("Goto")),
-            insertToStart: true
+            priority: -10f
         );
     }
 

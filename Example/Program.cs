@@ -1,8 +1,8 @@
 // This is an independent project of an individual developer. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 
-using BasicCilCompiler;
 using BytecodeDynamicMethodsCompiler;
+using ConditionsModule;
 using EqualityModule;
 using IdentifierModule;
 using LabelsModule;
@@ -13,7 +13,7 @@ var core = new BasicCoreImpl(
     () => new BasicParserImpl(),
     () => new BasicBytecodeTranslatorImpl(),
     () => new BytecodeDynamicMethodsCompilerImpl(),
-    () => new BasicCilCompilerImpl(),
+    () => new BasicInterpreterImpl(),
     [
         new IdentifierModuleImpl(),
         new ScopesModuleImpl(),
@@ -24,6 +24,9 @@ var core = new BasicCoreImpl(
         new LabelsModuleImpl(),
         new VariablesModuleImpl(),
         new EqualityModuleImpl(),
+        new ConditionsModuleImpl(),
+        new ComparisonOperations(),
+        new BooleanOperations(),
         new ExecutorDebugLoggerImpl(),
         new ParserConfigurationModuleImpl(ActionType.Dump)
     ]
@@ -31,14 +34,17 @@ var core = new BasicCoreImpl(
 
 
 // TODO: basic type-resolving
+// TODO: fix parser configuration
 var result = core.Execute(
     """
-    a : RealNumberImpl = -5
-    b : RealNumberImpl = 7
+    a : RealNumberImpl = -2
     @label:
-        Main.Print(a + b)
+        Main.Print(a)
         a = a + 1
-    goto @label
+        
+        if a < 5 or a == 5 (
+            goto @label
+        )
     """
 );
 

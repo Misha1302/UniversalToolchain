@@ -21,7 +21,7 @@ public class CSharpInteropModuleImpl : ICoreModule
 
     public void InitParser(IParser parser)
     {
-        parser.Configuration.NodeCreators.Add(-10, new CSharpFunctionCallsNodeCreator());
+        parser.Configuration.NodeCreators.Add(-1000, new CSharpFunctionCallsNodeCreator());
     }
 
     public void InitTranslator(IBytecodeTranslator translator)

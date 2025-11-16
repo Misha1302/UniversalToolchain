@@ -35,6 +35,16 @@ public class BasicInterpreterImpl : IExecutor
             if (method.Item2.Name.Contains("!Intrinsic"))
                 _isIntrinsic[index] = true;
         }
+
+        for (var index = 0; index < targetDynamicMethods.Count; index++)
+        {
+            var method = targetDynamicMethods[index];
+            var dm = method.Item2;
+            if (!dm.Name.Contains("Label_!Intrinsic")) continue;
+
+            var name = dm.Name[(dm.Name.LastIndexOf('_') + 1)..];
+            _labels[name] = index;
+        }
     }
 
 
@@ -64,10 +74,26 @@ public class BasicInterpreterImpl : IExecutor
 
     private void ExecuteInternal(DynamicMethod method)
     {
-        if (method.Name.Contains("Label_!Intrinsic"))
-            _labels[method.Name[(method.Name.LastIndexOf('_') + 1)..]] = _ip;
-        else if (method.Name.Contains("Goto_!Intrinsic"))
-            _ip = _labels[method.Name[(method.Name.LastIndexOf('_') + 1)..]];
-        else Thrower.InvalidOpEx($"Unknown intrinsic {method.Name}");
+        if (method.Name.StartsWith("Label_!Intrinsic"))
+        {
+            // nothing to do
+        }
+        else if (method.Name.StartsWith("Goto_!Intrinsic"))
+        {
+            var name = method.Name[(method.Name.LastIndexOf('_') + 1)..];
+            _ip = _labels[name];
+        }
+        else if (method.Name.StartsWith("CondFGoto_!Intrinsic"))
+        {
+            var name = method.Name[(method.Name.LastIndexOf('_') + 1)..];
+            Thrower.AssertAlways(_stack[^1] is bool);
+            if (_stack[^1] is false)
+                _ip = _labels[name];
+            _stack.RemoveAt(_stack.Count - 1);
+        }
+        else
+        {
+            Thrower.InvalidOpEx($"Unknown intrinsic {method.Name}");
+        }
     }
 }

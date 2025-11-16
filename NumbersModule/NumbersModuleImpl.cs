@@ -12,8 +12,10 @@ public class NumbersModuleImpl : ICoreModule
 {
     public void InitLexer(ILexer lexer)
     {
-        lexer.Configuration.Patterns.Add(new LexemePattern(@"(\+|-)?([0-9]+)(\.[0-9]+)?",
-            LexemeType.CreateOrGet("Number")));
+        lexer.Configuration.TryAddPattern(
+            new LexemePattern(@"(\+|-)?([0-9]+)(\.[0-9]+)?",
+                LexemeType.CreateOrGet("Number"))
+        );
     }
 
     public void InitTranslator(IBytecodeTranslator translator)

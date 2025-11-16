@@ -19,10 +19,12 @@ public class BasicLexerImpl(LexerConfiguration configuration) : ILexer
     // Method that performs lexical analysis on the input code and returns a list of tokens.
     public List<LexemeValue> Lexemize(string code)
     {
+        var patterns = Configuration.Patterns.ToList();
+
         var allMatches = new List<LexemeValue>(); // Initialize a list to store all matches found by regex patterns.
 
         // Iterate over each pattern defined in the configuration.
-        foreach (var pattern in Configuration.Patterns)
+        foreach (var pattern in patterns)
             // Find all occurrences of the current pattern in the input code using regular expressions.
 
             allMatches.AddRange(
@@ -35,7 +37,7 @@ public class BasicLexerImpl(LexerConfiguration configuration) : ILexer
         // Sort the matches first by their starting position in the code, then by the order of the corresponding pattern in the configuration.
         allMatches = allMatches
             .OrderBy(x => x.StartIndex)
-            .ThenBy(x => Configuration.Patterns.IndexOf(x.LexemePattern))
+            .ThenBy(x => patterns.IndexOf(x.LexemePattern))
             .ToList();
 
         var result =

@@ -62,7 +62,11 @@ public static class IlCodeGenerator
 
     private static Type MakeGenericType(Type parameterType, List<Type> sourceTypes)
     {
-        var genericTypes = parameterType.GetGenericArguments()
+        var gArgs = parameterType.GetGenericArguments();
+        if (!parameterType.IsGenericType)
+            return sourceTypes[0];
+
+        var genericTypes = gArgs
             .Select((x, i) => x.FullName == null ? sourceTypes[i] : x)
             .ToArray();
 

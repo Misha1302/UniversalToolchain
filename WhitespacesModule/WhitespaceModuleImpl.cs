@@ -17,7 +17,7 @@ public class WhitespaceModuleImpl : ICoreModule
             new LexemePattern(@"\n", LexemeType.CreateOrGet("NewLine"))
         ];
 
-        lexer.Configuration.Patterns.AddRange(lexemes);
+        foreach (var lexemePattern in lexemes) lexer.Configuration.TryAddPattern(lexemePattern);
         lexer.Configuration.LexemesToIgnore.AddRange(lexemes.Select(x => x.LexemeType));
     }
 }

@@ -1,0 +1,44 @@
+// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
+
+using BasicCore;
+using BasicCore.LexerWrapper;
+using BasicCore.ParserWrapper;
+using BasicCore.TranslatorWrapper;
+using BasicTypesExtensions;
+
+namespace ConditionsModule;
+
+public class ComparisonOperations : ICoreModule
+{
+    public void InitLexer(ILexer lexer)
+    {
+        lexer.Configuration.TryAddPattern(new LexemePattern(@"\=\=",
+            ExtensibleEnum<LexemeTag>.CreateOrGet("Equal")));
+        lexer.Configuration.TryAddPattern(new LexemePattern(@"\!\=",
+            ExtensibleEnum<LexemeTag>.CreateOrGet("NotEqual")));
+        lexer.Configuration.TryAddPattern(new LexemePattern(@"\>",
+            ExtensibleEnum<LexemeTag>.CreateOrGet("Greater")));
+        lexer.Configuration.TryAddPattern(new LexemePattern(@"\<",
+            ExtensibleEnum<LexemeTag>.CreateOrGet("Less")));
+        lexer.Configuration.TryAddPattern(new LexemePattern(@"\>\=",
+            ExtensibleEnum<LexemeTag>.CreateOrGet("GreaterOrEqual")));
+        lexer.Configuration.TryAddPattern(new LexemePattern(@"\<\=",
+            ExtensibleEnum<LexemeTag>.CreateOrGet("LessOrEqual")));
+    }
+
+    public void InitParser(IParser parser)
+    {
+        parser.Configuration.NodeCreators.Add(-20f, new ComparisonNodeCreator("Equal"));
+        parser.Configuration.NodeCreators.Add(-20f, new ComparisonNodeCreator("NotEqual"));
+        parser.Configuration.NodeCreators.Add(-20f, new ComparisonNodeCreator("Greater"));
+        parser.Configuration.NodeCreators.Add(-20f, new ComparisonNodeCreator("Less"));
+        parser.Configuration.NodeCreators.Add(-20f, new ComparisonNodeCreator("GreaterOrEqual"));
+        parser.Configuration.NodeCreators.Add(-20f, new ComparisonNodeCreator("LessOrEqual"));
+    }
+
+    public void InitTranslator(IBytecodeTranslator translator)
+    {
+        translator.Configuration.Visitors.Add(new ComparisonVisitor());
+    }
+}
