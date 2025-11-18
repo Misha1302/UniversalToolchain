@@ -6,7 +6,6 @@ using ConditionsModule;
 using EqualityModule;
 using IdentifierModule;
 using LabelsModule;
-using TypeInference;
 using VariablesModule;
 
 var core = new BasicCoreImpl(
@@ -28,7 +27,6 @@ var core = new BasicCoreImpl(
         new ConditionsModuleImpl(),
         new ComparisonOperations(),
         new BooleanOperations(),
-        new TypeInferenceModuleImpl(),
         new ExecutorDebugLoggerImpl(),
         new ParserConfigurationModuleImpl(ActionType.Dump)
     ]
@@ -44,6 +42,8 @@ var result = core.Execute(
     let b = -10
     let c = 123 * 4 - 2
     let d = b * c - 5
+    b = b + 1
+    d = d - 105
     Main.Print(b)
     Main.Print(c)
     Main.Print(d)

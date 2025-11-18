@@ -9,54 +9,39 @@ namespace DynamicMethodWrapper;
 
 public class DynamicMethodConvertableWrapperImpl : IDynamicMethodConvertable
 {
-    private List<Type?> _argAbstractTypes = null!;
-    private Action<GroboIL, Type[]> _bodyGenerator = null!;
+    private Action<GroboIL, IDynamicMethodConvertable.Context> _bodyGenerator = null!;
     private bool _isInitialized;
-    private Type? _returnType;
+    private Func<IDynamicMethodConvertable.Context, Type> _returnType = null!;
+    public int ParamsCount { get; private set; } = -1;
 
     public string Name { get; private set; } = null!;
-    public int ParamsCount => _argAbstractTypes.Count;
 
-    public (GroboIL, DynamicMethod) ToDynamicMethod(Type? preferedReturnType, IList<Type> args)
+    public (GroboIL, DynamicMethod) ToDynamicMethod(IDynamicMethodConvertable.Context context)
     {
-        var returnType = _returnType ?? preferedReturnType;
-
-        Thrower.AssertAlways(args.Count == ParamsCount);
+        Thrower.AssertAlways(context.Args.Count == ParamsCount);
         Thrower.AssertAlways(_isInitialized, "DynamicMethod Wrapper was not initialized");
-        Thrower.AssertAlways(
-            args.Select((x, i) => _argAbstractTypes[i] == null || x.IsAssignableTo(_argAbstractTypes[i])).All(x => x),
-            MakeArgsInconsistencyErrorMessage(args)
-        );
-        Thrower.AssertAlways(returnType != null, "Cannot find return type");
 
-        var argsArray = args as Type[] ?? args.ToArray();
-        var m = new DynamicMethod(Name, returnType, argsArray, true);
+        var retType = _returnType(context).NotNull();
+        var argsArray = context.Args as Type[] ?? context.Args.ToArray();
+        var m = new DynamicMethod(Name, retType, argsArray, true);
         var il = new GroboIL(m);
-        _bodyGenerator.Invoke(il, argsArray);
+        _bodyGenerator.Invoke(il, context);
 
         return (il, m);
     }
 
-    private string MakeArgsInconsistencyErrorMessage(IList<Type> args)
-    {
-        return
-            $"Inconsistency of arg types and param types: ({string.Join(", ", args.Select(x => x.Name))}) " +
-            $"and ({string.Join(", ", _argAbstractTypes.Select(x => x?.Name ?? "null"))})";
-    }
-
-    public void Make(string name, Type? returnType, List<Type?> argAbstractTypes, Action<GroboIL, Type[]> bodyGenerator)
+    public void Make(
+        string name,
+        int argsCount,
+        Action<GroboIL, IDynamicMethodConvertable.Context> bodyGenerator,
+        Func<IDynamicMethodConvertable.Context, Type> returnType
+    )
     {
         Name = name;
         _isInitialized = true;
-        _argAbstractTypes = argAbstractTypes;
+        ParamsCount = argsCount;
         _bodyGenerator = bodyGenerator;
         _returnType = returnType;
-
-        if (returnType != null)
-            Thrower.AssertAlways(
-                returnType.IsClass || returnType.IsValueType,
-                "return type is not a concrete type"
-            );
     }
 
     public override string ToString()

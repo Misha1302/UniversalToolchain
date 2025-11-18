@@ -22,7 +22,7 @@ public class BasicInterpreterImpl : IExecutor
         _methods = methods;
         Preprocess(methods);
         InterpretInternal();
-        return _stack[^1];
+        return _stack[0];
     }
 
     private void Preprocess(List<(GroboIL, DynamicMethod)> targetDynamicMethods)
@@ -64,12 +64,12 @@ public class BasicInterpreterImpl : IExecutor
     private void ExecuteBasic(DynamicMethod method, Span<object> span)
     {
         var argsCount = method.GetParameters().Length;
-        var args = span[^argsCount..];
+        var args = span[..argsCount];
         var ans = method.Invoke(this, args.ToArray());
 
-        _stack.RemoveRange(_stack.Count - argsCount, argsCount);
+        _stack.RemoveRange(0, argsCount);
 
-        _stack.Add(ans!);
+        _stack.Insert(0, ans!);
     }
 
     private void ExecuteInternal(DynamicMethod method)
@@ -86,10 +86,10 @@ public class BasicInterpreterImpl : IExecutor
         else if (method.Name.StartsWith("CondFGoto_!Intrinsic"))
         {
             var name = method.Name[(method.Name.LastIndexOf('_') + 1)..];
-            Thrower.AssertAlways(_stack[^1] is bool);
-            if (_stack[^1] is false)
+            Thrower.AssertAlways(_stack[0] is bool);
+            if (_stack[0] is false)
                 _ip = _labels[name];
-            _stack.RemoveAt(_stack.Count - 1);
+            _stack.RemoveAt(0);
         }
         else
         {

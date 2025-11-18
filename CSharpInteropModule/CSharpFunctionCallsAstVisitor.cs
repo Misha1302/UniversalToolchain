@@ -26,17 +26,16 @@ public class CSharpFunctionCallsAstVisitor : IAstVisitor
         var call = MethodsFinder.GetMethod(fullName).NotNull();
         var argsCount = data.Node.Children[0].Children.Count;
         method.Make($"Call_{fullName}",
-            !call.ReturnType.IsGenericParameter ? call.ReturnType : null,
-            Enumerable.Repeat<Type?>(null, argsCount).ToList(),
-            (il, argsArray) =>
+            argsCount,
+            (il, context) =>
             {
                 il.LdArgsAndCall(call, i =>
                 {
                     il.Ldarg(i);
-                    return argsArray[i];
+                    return context.Args[i];
                 });
                 il.Ret();
-            });
+            }, context => !call.ReturnType.IsGenericParameter ? call.ReturnType : context.Stack[0]);
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
     }
 }

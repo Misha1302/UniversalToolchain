@@ -30,17 +30,17 @@ public class ComparisonVisitor : IAstVisitor
         var method = new DynamicMethodConvertableWrapperImpl();
         var op = data.Node.LexemeValue?.Text ?? GetOperatorFromNodeType(nodeType);
 
-        method.Make($"Comparison_{op}", typeof(bool), [null, null], (il, args) =>
+        method.Make($"Comparison_{op}", 2, (il, context) =>
         {
             il.LdArgsAndCall(
                 typeof(Comparisons).GetMethod(GetComparisonMethodName(op)).NotNull(),
                 i =>
                 {
                     il.Ldarg(i);
-                    return args[i];
+                    return context.Args[i];
                 });
             il.Ret();
-        });
+        }, _ => typeof(bool));
 
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
     }

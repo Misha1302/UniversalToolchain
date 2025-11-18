@@ -22,25 +22,27 @@ public class ArithmeticAstVisitor : IAstVisitor
 
         var method = new DynamicMethodConvertableWrapperImpl();
         var op = (data.Node.LexemeValue?.Text).NotNull();
-        method.Make($"Op_{op}", null, [null, null], (il, args) =>
-        {
-            il.LdArgsAndCall(
-                args[^1].GetMethod(op switch
+        method.Make($"Op_{op}", 2, (il, context) =>
+            {
+                il.LdArgsAndCall(
+                    context.Args[0].GetMethod(op switch
+                        {
+                            "+" => "Add",
+                            "-" => "Sub",
+                            "*" => "Mul",
+                            "/" => "Div",
+                            _ => Thrower.InvalidOpEx<string>()
+                        }
+                    ).NotNull(),
+                    i =>
                     {
-                        "+" => "Add",
-                        "-" => "Sub",
-                        "*" => "Mul",
-                        "/" => "Div",
-                        _ => Thrower.InvalidOpEx<string>()
-                    }
-                ).NotNull(),
-                i =>
-                {
-                    il.Ldarg(i);
-                    return args[i];
-                });
-            il.Ret();
-        });
+                        il.Ldarg(context.Args.Count - 1 - i);
+                        return context.Args[context.Args.Count - 1 - i];
+                    });
+                il.Ret();
+            },
+            context => context.Stack[0]
+        );
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
     }
 }

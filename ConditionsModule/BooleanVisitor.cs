@@ -28,11 +28,12 @@ public class BooleanVisitor : IAstVisitor
         var value = data.Node.NodeType == ExtensibleEnum<AstNodeTag>.Get("True");
         var method = new DynamicMethodConvertableWrapperImpl();
 
-        method.Make($"PushBoolean_{value}", typeof(bool), [], (il, _) =>
-        {
-            il.Ldc_I4(value ? 1 : 0);
-            il.Ret();
-        });
+        method.Make($"PushBoolean_{value}", 0, (il, _) =>
+            {
+                il.Ldc_I4(value ? 1 : 0);
+                il.Ret();
+            }, _ => typeof(bool)
+        );
 
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
     }
@@ -45,8 +46,8 @@ public class BooleanVisitor : IAstVisitor
         var method = new DynamicMethodConvertableWrapperImpl();
         var op = data.Node.NodeType;
 
-        method.Make($"Boolean_{op}", typeof(bool),
-            data.Node.Children.Count == 1 ? [null] : [null, null],
+        method.Make($"Boolean_{op}",
+            data.Node.Children.Count == 1 ? 1 : 2,
             (il, _) =>
             {
                 if (op == ExtensibleEnum<AstNodeTag>.Get("And"))
@@ -73,7 +74,8 @@ public class BooleanVisitor : IAstVisitor
                 }
 
                 il.Ret();
-            });
+            }, _ => typeof(bool)
+        );
 
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
     }

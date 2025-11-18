@@ -1,8 +1,4 @@
 # /home/micodiy/Unity/Wist2Copy/BasicParser/TreeValidator.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.ParserWrapper;
 
 namespace BasicParser;
@@ -17,10 +13,6 @@ public class TreeValidator
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/BasicParser/BasicParserImpl.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using ExceptionsManager;
@@ -79,21 +71,13 @@ public class BasicParserImpl(ParserConfiguration configuration) : IParser
 }
 -----------------------------------
 
-# /home/micodiy/Unity/Wist2Copy/BasicParser/GlobalUsings.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-// Global using directives
+# /home/micodiy/Unity/Wist2Copy/BasicParser/GlobalUsings.cs// Global using directives
 
 global using AstNodeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.ParserWrapper.AstNodeTag>;
 global using LexemeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.LexerWrapper.LexemeTag>;
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/BasicCore/IBytecodeDynamicMethodsCompiler.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using System.Reflection.Emit;
 using BasicCore.TranslatorWrapper;
 using GrEmit;
@@ -107,10 +91,6 @@ public interface IBytecodeDynamicMethodsCompiler
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/BasicCore/BasicCoreImpl.cs
-# содержание:
-﻿// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.ExecutorWrapper;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
@@ -162,10 +142,6 @@ public class BasicCoreImpl(
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/BasicCore/ICoreModule.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using System.Reflection.Emit;
 using BasicCore.ExecutorWrapper;
 using BasicCore.LexerWrapper;
@@ -224,11 +200,7 @@ public interface ICoreModule
 }
 -----------------------------------
 
-# /home/micodiy/Unity/Wist2Copy/BasicCore/GlobalUsings.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-// Global using directives
+# /home/micodiy/Unity/Wist2Copy/BasicCore/GlobalUsings.cs// Global using directives
 
 
 global using AstNodeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.ParserWrapper.AstNodeTag>;
@@ -236,10 +208,6 @@ global using LexemeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.LexerWra
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/BasicCore/ExecutorWrapper/IExecutor.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using System.Reflection.Emit;
 using GrEmit;
 
@@ -252,10 +220,6 @@ public interface IExecutor
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/BasicCore/ParserWrapper/AstNode.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.LexerWrapper;
 using ExceptionsManager;
 
@@ -265,6 +229,7 @@ public class AstNode
 {
     private readonly HashSet<string> _currentTags = [];
     public readonly LexemeValue? LexemeValue;
+    public DynamicCollection Data = new();
     public AstNodeType NodeType;
 
     public AstNode(AstNodeType nodeType, LexemeValue? lexemeValue, List<AstNode> children)
@@ -316,20 +281,12 @@ public class AstNode
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/BasicCore/ParserWrapper/AstNodeTag.cs
-# содержание:
-﻿// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 namespace BasicCore.ParserWrapper;
 
 public abstract class AstNodeTag;
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/BasicCore/ParserWrapper/IAstNodeCreator.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 namespace BasicCore.ParserWrapper;
 
 public interface IAstNodeCreator
@@ -341,10 +298,6 @@ public interface IAstNodeCreator
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/BasicCore/ParserWrapper/ChildrenCollection.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using System.Collections;
 
 namespace BasicCore.ParserWrapper;
@@ -410,10 +363,6 @@ public class ChildrenCollection(List<AstNode> children, AstNode parent) : IEnume
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/BasicCore/ParserWrapper/AstNodeExtensions.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 namespace BasicCore.ParserWrapper;
 
 public static class AstNodeExtensions
@@ -433,10 +382,6 @@ public static class AstNodeExtensions
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/BasicCore/ParserWrapper/IParser.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.LexerWrapper;
 
 namespace BasicCore.ParserWrapper;
@@ -449,21 +394,31 @@ public interface IParser
 }
 -----------------------------------
 
-# /home/micodiy/Unity/Wist2Copy/BasicCore/ParserWrapper/ParserConfiguration.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
+# /home/micodiy/Unity/Wist2Copy/BasicCore/ParserWrapper/DynamicCollection.csnamespace BasicCore.ParserWrapper;
 
+public class DynamicCollection
+{
+    private readonly Dictionary<string, object?> _collection = [];
+
+    public T Get<T>(string key)
+    {
+        return (T)_collection[key]!;
+    }
+
+    public void Set<T>(string key, T value)
+    {
+        _collection[key] = value;
+    }
+}
+-----------------------------------
+
+# /home/micodiy/Unity/Wist2Copy/BasicCore/ParserWrapper/ParserConfiguration.cs
 namespace BasicCore.ParserWrapper;
 
 public record ParserConfiguration(LevelCollection<float, IAstNodeCreator> NodeCreators);
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/BasicCore/ParserWrapper/LevelCollection.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using System.Collections;
 
 namespace BasicCore.ParserWrapper;
@@ -504,10 +459,6 @@ public class LevelCollection<TKey, TValue> : IEnumerable<KeyValuePair<TKey, List
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/BasicCore/ParserWrapper/IAstVisitor.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.TranslatorWrapper;
 
 namespace BasicCore.ParserWrapper;
@@ -519,10 +470,6 @@ public interface IAstVisitor
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/BasicCore/TranslatorWrapper/BytecodeInstruction.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.ParserWrapper;
 using DynamicMethodWrapper;
 
@@ -544,10 +491,6 @@ public record BytecodeInstruction(HashSet<string> Tags, LevelCollection<float, I
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/BasicCore/TranslatorWrapper/BytecodeVisitorData.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.ParserWrapper;
 
 namespace BasicCore.TranslatorWrapper;
@@ -556,10 +499,6 @@ public record BytecodeVisitorData(IBytecodeTranslator BytecodeTranslator, Byteco
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/BasicCore/TranslatorWrapper/IBytecodeTranslator.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.ParserWrapper;
 
 namespace BasicCore.TranslatorWrapper;
@@ -572,10 +511,6 @@ public interface IBytecodeTranslator
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/BasicCore/TranslatorWrapper/Bytecode.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 namespace BasicCore.TranslatorWrapper;
 
 public record Bytecode(List<BytecodeInstruction> Instructions)
@@ -588,10 +523,6 @@ public record Bytecode(List<BytecodeInstruction> Instructions)
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/BasicCore/TranslatorWrapper/BytecodeTranslatorConfiguration.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.ParserWrapper;
 
 namespace BasicCore.TranslatorWrapper;
@@ -600,10 +531,6 @@ public record BytecodeTranslatorConfiguration(List<IAstVisitor> Visitors);
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/BasicCore/LexerWrapper/ILexer.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 namespace BasicCore.LexerWrapper;
 
 public interface ILexer
@@ -614,10 +541,6 @@ public interface ILexer
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/BasicCore/LexerWrapper/LexerConfiguration.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.ParserWrapper;
 using ExceptionsManager;
 
@@ -660,10 +583,6 @@ public class LexerConfiguration(List<LexemeType> lexemesToIgnore)
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/BasicCore/LexerWrapper/LexemeValue.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using System.Text.RegularExpressions;
 
 namespace BasicCore.LexerWrapper;
@@ -709,10 +628,6 @@ public class LexemeValue
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/BasicCore/LexerWrapper/LexemePattern.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 namespace BasicCore.LexerWrapper;
 
 // If somebody disagrees that lexemes shouldn't be parsed using regex-expressions, let him write his own working lexer without it and Antlr4
@@ -722,20 +637,12 @@ public record LexemePattern(string Pattern, LexemeType LexemeType);
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/BasicCore/LexerWrapper/LexemeTag.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 namespace BasicCore.LexerWrapper;
 
 public abstract class LexemeTag;
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/BytecodeDynamicMethodsCompiler/BytecodeDynamicMethodsCompilerImpl.cs
-# содержание:
-﻿// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using System.Reflection.Emit;
 using BasicCore;
 using BasicCore.TranslatorWrapper;
@@ -767,10 +674,6 @@ public class BytecodeDynamicMethodsCompilerImpl : IBytecodeDynamicMethodsCompile
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/GenericMath/ISubAble.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 namespace GenericMath;
 
 public interface ISubAble<TSelf> : IBinaryOperation<TSelf> where TSelf : IMulAble<TSelf>
@@ -780,10 +683,6 @@ public interface ISubAble<TSelf> : IBinaryOperation<TSelf> where TSelf : IMulAbl
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/GenericMath/IDivisible.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 namespace GenericMath;
 
 public interface IDivisible<TSelf> : IBinaryOperation<TSelf> where TSelf : IMulAble<TSelf>
@@ -793,10 +692,6 @@ public interface IDivisible<TSelf> : IBinaryOperation<TSelf> where TSelf : IMulA
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/GenericMath/ICustomNumber.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using EqualityModule;
 
 namespace GenericMath;
@@ -810,10 +705,6 @@ public interface ICustomNumber<TSelf, TValue>
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/GenericMath/IMulAble.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 namespace GenericMath;
 
 public interface IMulAble<TSelf> : IBinaryOperation<TSelf> where TSelf : IMulAble<TSelf>
@@ -823,10 +714,6 @@ public interface IMulAble<TSelf> : IBinaryOperation<TSelf> where TSelf : IMulAbl
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/GenericMath/IAddable.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 namespace GenericMath;
 
 public interface IAddable<TSelf> : IBinaryOperation<TSelf> where TSelf : IAddable<TSelf>
@@ -836,10 +723,6 @@ public interface IAddable<TSelf> : IBinaryOperation<TSelf> where TSelf : IAddabl
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/BasicInterpreter/BasicInterpreterImpl.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using System.Reflection.Emit;
 using System.Runtime.InteropServices;
 using BasicCore.ExecutorWrapper;
@@ -939,10 +822,6 @@ public class BasicInterpreterImpl : IExecutor
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/BasicLexer/BasicLexerImpl.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using System.Text.RegularExpressions;
 using BasicCore.LexerWrapper;
 using BasicTypesExtensions;
@@ -1014,10 +893,6 @@ public class BasicLexerImpl(LexerConfiguration configuration) : ILexer
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/BasicCilCompiler/BasicCilCompilerImpl.cs
-# содержание:
-﻿// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using System.Reflection.Emit;
 using BasicCore.ExecutorWrapper;
 using GrEmit;
@@ -1079,10 +954,6 @@ public class BasicCilCompilerImpl : IExecutor
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/VariablesModule/VariableReference.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using EqualityModule;
 
 namespace VariablesModule;
@@ -1097,10 +968,6 @@ public class VariableReference<T>(Action<T> set) : ISettable<T>
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/VariablesModule/VariablesModuleImpl.cs
-# содержание:
-﻿// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
@@ -1115,6 +982,9 @@ public class VariablesModuleImpl : ICoreModule
     {
         lexer.Configuration.TryAddPattern(
             new LexemePattern(":", LexemeType.CreateOrGet("Colon"))
+        );
+        lexer.Configuration.TryAddPattern(
+            new LexemePattern("let", LexemeType.CreateOrGet("Let"))
         );
     }
 
@@ -1131,11 +1001,6 @@ public class VariablesModuleImpl : ICoreModule
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/VariablesModule/VariablesVisitor.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
-using AssemblyFinder;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
@@ -1152,14 +1017,10 @@ public class VariablesVisitor : IAstVisitor
         if (data.Node.NodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("Variable"))
             return;
 
-        if (data.Node.AllTags.Contains("VariableDefinitionWithoutType"))
-            // Пропускаем обработку, так как тип будет выведен позже
-            return;
-
         var varName = data.Node.Text;
 
         if (data.Node.AllTags.Contains("VariableDefinition"))
-            _variableTypes[varName] = TypesFinder.GetType(data.Node.Children[^1].Text);
+            _variableTypes[varName] = data.Node.Data.Get<Type>("Type");
 
         if (data.Node.AllTags.Contains("ExpectingSettableReference"))
         {
@@ -1197,10 +1058,6 @@ public class VariablesVisitor : IAstVisitor
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/VariablesModule/VariablesContainer.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 namespace VariablesModule;
 
 public static class VariablesContainer<T>
@@ -1225,10 +1082,6 @@ public static class VariablesContainer<T>
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/VariablesModule/VariablesNodeCreator.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.ParserWrapper;
 using BasicTypesExtensions;
 
@@ -1246,17 +1099,32 @@ public class VariablesNodeCreator : IAstNodeCreator
         if (scope.SafeGet(childIndex)?.NodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("Identifier"))
             return false;
 
-        if (scope.SafeGet(childIndex + 1)?.NodeType == ExtensibleEnum<AstNodeTag>.CreateOrGet("Colon")
-            && scope.SafeGet(childIndex + 2)?.NodeType == ExtensibleEnum<AstNodeTag>.CreateOrGet("Identifier"))
+        if (scope.SafeGet(childIndex - 1)?.NodeType == ExtensibleEnum<AstNodeTag>.CreateOrGet("Let"))
         {
-            scope[childIndex].Children.Add(scope[childIndex + 1]);
-            scope[childIndex].Children.Add(scope[childIndex + 2]);
-            scope[childIndex].NodeType = AstNodeType;
-            scope[childIndex].AddTag("VariableDefinition");
-            scope.Children.RemoveAt(childIndex + 2);
-            scope.Children.RemoveAt(childIndex + 1);
+            if (scope.SafeGet(childIndex + 1)?.NodeType == ExtensibleEnum<AstNodeTag>.CreateOrGet("Colon")
+                && scope.SafeGet(childIndex + 2)?.NodeType == ExtensibleEnum<AstNodeTag>.CreateOrGet("Identifier"))
+            {
+                scope[childIndex].Children.Add(scope[childIndex + 1]);
+                scope[childIndex].Children.Add(scope[childIndex + 2]);
+                scope[childIndex].NodeType = AstNodeType;
+                scope[childIndex].AddTag("VariableDefinition");
+                scope[childIndex].AddTag("VariableDefinitionWithType");
+                scope.Children.RemoveAt(childIndex + 2);
+                scope.Children.RemoveAt(childIndex + 1);
 
-            _variables.Add(scope[childIndex].Text);
+                _variables.Add(scope[childIndex].Text);
+
+                scope.Children.RemoveAt(childIndex - 1);
+            }
+            else
+            {
+                scope[childIndex].NodeType = AstNodeType;
+                scope[childIndex].AddTag("VariableDefinition");
+                scope[childIndex].AddTag("VariableDefinitionWithoutType");
+                _variables.Add(scope[childIndex].Text);
+
+                scope.Children.RemoveAt(childIndex - 1);
+            }
         }
         else
         {
@@ -1271,10 +1139,6 @@ public class VariablesNodeCreator : IAstNodeCreator
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/ExceptionsManager/Thrower.cs
-# содержание:
-﻿// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
@@ -1339,10 +1203,6 @@ public static class Thrower
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/IlCodeGeneratorFactory/IlCodeGenerator.cs
-# содержание:
-﻿// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using System.Reflection;
 using GrEmit;
 
@@ -1418,10 +1278,6 @@ public static class IlCodeGenerator
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/WhitespacesModule/WhitespaceModuleImpl.cs
-# содержание:
-﻿// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore;
 using BasicCore.LexerWrapper;
 using LexemeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.LexerWrapper.LexemeTag>;
@@ -1445,10 +1301,6 @@ public class WhitespaceModuleImpl : ICoreModule
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/AssemblyFinder/MethodsFinder.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using System.Reflection;
 
 namespace AssemblyFinder;
@@ -1473,10 +1325,6 @@ public static class MethodsFinder
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/AssemblyFinder/TypesFinder.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using System.Reflection;
 using ExceptionsManager;
 
@@ -1535,10 +1383,6 @@ public static class TypesFinder
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/ExecutorLoggerModule/ExecutorDebugLoggerImpl.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using System.Diagnostics;
 using System.Reflection.Emit;
 using System.Text;
@@ -1609,10 +1453,6 @@ public class ExecutorDebugLoggerImpl(string filePath) : ICoreModule
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/IdentifierModule/IdentifierModuleImpl.cs
-# содержание:
-﻿// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore;
 using BasicCore.LexerWrapper;
 using LexemeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.LexerWrapper.LexemeTag>;
@@ -1635,10 +1475,6 @@ public class IdentifierModuleImpl : ICoreModule
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/Wistc/Program.cs
-# содержание:
-﻿// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 Parser.Default.ParseArguments<Options>(args).WithParsed(Main);
 
 return;
@@ -1687,11 +1523,7 @@ void Main(Options options)
 }
 -----------------------------------
 
-# /home/micodiy/Unity/Wist2Copy/Wistc/GlobalUsings.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-// Global using directives
+# /home/micodiy/Unity/Wist2Copy/Wistc/GlobalUsings.cs// Global using directives
 
 global using ArithmeticModule;
 global using BasicCodeTranslator;
@@ -1716,10 +1548,6 @@ global using Wistc;
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/Wistc/Options.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 namespace Wistc;
 
 // ReSharper disable once ClassNeverInstantiated.Global
@@ -1745,10 +1573,6 @@ public class Options
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/ScopesModule/ScopeAstVisitor.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
@@ -1768,10 +1592,6 @@ public class ScopeAstVisitor : IAstVisitor
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/ScopesModule/ScopesCreator.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.ParserWrapper;
 using AstNodeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.ParserWrapper.AstNodeTag>;
 
@@ -1828,10 +1648,6 @@ public class ScopesCreator : IAstNodeCreator
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/ScopesModule/ScopesModuleImpl.cs
-# содержание:
-﻿// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
@@ -1861,10 +1677,6 @@ public class ScopesModuleImpl : ICoreModule
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/TypeInference/TypeInferenceModuleImpl.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore;
 using BasicCore.ParserWrapper;
 
@@ -1874,7 +1686,7 @@ public class TypeInferenceModuleImpl : ICoreModule
 {
     public void InitParser(IParser parser)
     {
-        parser.Configuration.NodeCreators.Add(9f, new TypeInferenceNodeCreator());
+        // parser.Configuration.NodeCreators.Add(100f, new TypeInferenceNodeCreator());
     }
 
     public AstNode ProcessAst(AstNode astRoot)
@@ -1891,10 +1703,6 @@ public class TypeInferenceModuleImpl : ICoreModule
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/TypeInference/TypeInferenceNodeCreator.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.ParserWrapper;
 using BasicTypesExtensions;
 
@@ -1926,16 +1734,20 @@ public class TypeInferenceNodeCreator : IAstNodeCreator
                 n.Text == identifierNode.Text))
             return false;
 
-        // Создаем узел переменной без типа, но НЕ удаляем узлы равенства и выражения
-        // Вместо этого просто меняем тип узла идентификатора и добавляем тег
-        identifierNode.NodeType = AstNodeType;
-        identifierNode.AddTag("VariableDefinitionWithoutType");
+        // Создаем новый узел переменной без типа вместо изменения существующего
+        var variableNode = new AstNode(
+            AstNodeType,
+            identifierNode.LexemeValue,
+            [expressionNode]
+        );
+        variableNode.AddTag("VariableDefinitionWithoutType");
 
-        // Добавляем выражение как дочерний узел для последующего вывода типа
-        identifierNode.Children.Add(expressionNode);
+        // Заменяем идентификатор на новый узел переменной
+        scope.Children[childIndex] = variableNode;
 
-        // Удаляем только узел равенства, выражение остается в AST
-        scope.Children.RemoveAt(childIndex + 1);
+        // Удаляем узел равенства и выражение из scope
+        scope.Children.RemoveAt(childIndex + 1); // Удаляем equality
+        scope.Children.RemoveAt(childIndex + 1); // Удаляем expression
 
         return true;
     }
@@ -1943,10 +1755,6 @@ public class TypeInferenceNodeCreator : IAstNodeCreator
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/TypeInference/TypeInferenceException.cs
-# содержание:
-﻿// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 namespace TypeInference;
 
 public class TypeInferenceException : Exception
@@ -1962,11 +1770,6 @@ public class TypeInferenceException : Exception
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/TypeInference/TypeInferer.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
-using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using BasicTypesExtensions;
 using TypeInference.Rules;
@@ -1980,8 +1783,11 @@ public class TypeInferer
     public TypeInferer()
     {
         _resolver = new ExpressionTypeResolver();
-        // Регистрируем правило для унарных операций
+        // Регистрируем правила
         _resolver.RegisterRule(new UnaryOperationTypeInferenceRule());
+        _resolver.RegisterRule(new BinaryOperationTypeInferenceRule());
+        _resolver.RegisterRule(new FunctionCallTypeInferenceRule());
+        _resolver.RegisterRule(new ScopeTypeInferenceRule());
     }
 
     public void RegisterRule(ITypeInferenceRule rule)
@@ -1997,47 +1803,38 @@ public class TypeInferer
 
     private AstNode InferTypesRecursive(AstNode node, TypeInferenceContext context)
     {
-        if (node.NodeType == ExtensibleEnum<AstNodeTag>.Get("Scope"))
+        for (var i = 0; i < node.Children.Count; i++)
         {
-            var childContext = context.CreateChildContext();
-            for (var i = 0; i < node.Children.Count; i++)
-                node.Children[i] = InferTypesRecursive(node.Children[i], childContext);
+            node.Children[i] = InferTypesRecursive(node.Children[i], context);
 
-            return node;
+            if (node.NodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("Equality")) continue;
+            if (!node.SafeGet(0)?.CurrentTags.Contains("VariableDefinitionWithoutType") ?? false) continue;
+            if (node[0].CurrentTags.Contains("Type")) continue;
+            if (i + 1 >= node.Children.Count) continue;
+
+            ProcessVariableWithoutType(node.Children[i], node.Children[i + 1], context);
         }
 
-        // Обрабатываем объявления переменных без типа
-        if (node.NodeType == ExtensibleEnum<AstNodeTag>.Get("VariableDefinitionWithoutType"))
-            return ProcessVariableWithoutType(node, context);
-
-        for (var i = 0; i < node.Children.Count; i++) node.Children[i] = InferTypesRecursive(node.Children[i], context);
+        if (_resolver.TryResolveExpressionType(node, context, out var type))
+        {
+            node.Data.Set("Type", type);
+            node.Data.Set("TypeAsStr", GetTypeDisplayName(type));
+        }
 
         return node;
     }
 
-    private AstNode ProcessVariableWithoutType(AstNode node, TypeInferenceContext context)
+    private AstNode ProcessVariableWithoutType(AstNode node, AstNode initExpression, TypeInferenceContext context)
     {
-        if (node.Children.Count < 1)
-            throw new TypeInferenceException("Variable declaration without type must have initialization expression");
-
         var variableName = node.Text;
-        var initExpression = node.Children[0];
 
         try
         {
             var inferredType = _resolver.ResolveExpressionType(initExpression, context);
             context.DeclareVariable(variableName, inferredType);
 
-            // Создаем узел типа
-            var typeNode = CreateTypeNode(inferredType);
-
-            // Преобразуем текущий узел в обычную переменную с типом
-            node.NodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("Variable");
-            node.AddTag("VariableDefinition");
-
-            // Очищаем детей и добавляем тип
-            node.Children.Clear();
-            node.Children.Add(typeNode);
+            node.Data.Set("Type", inferredType);
+            node.Data.Set("TypeAsStr", GetTypeDisplayName(inferredType));
 
             return node;
         }
@@ -2046,16 +1843,6 @@ public class TypeInferer
             throw new TypeInferenceException($"Cannot infer type for variable '{variableName}'. " +
                                              $"Please specify type explicitly. Reason: {ex.Message}");
         }
-    }
-
-    private AstNode CreateTypeNode(Type type)
-    {
-        var typeName = GetTypeDisplayName(type);
-        return new AstNode(
-            ExtensibleEnum<AstNodeTag>.CreateOrGet("Type"),
-            new LexemeValue(typeName, null!, -1, null!),
-            new List<AstNode>()
-        );
     }
 
     private string GetTypeDisplayName(Type type)
@@ -2070,10 +1857,6 @@ public class TypeInferer
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/TypeInference/ITypeInferenceRule.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.ParserWrapper;
 
 namespace TypeInference;
@@ -2081,16 +1864,13 @@ namespace TypeInference;
 public interface ITypeInferenceRule
 {
     int Priority { get; }
-    bool CanInferType(AstNode node, TypeInferenceContext context);
-    Type? InferType(AstNode node, TypeInferenceContext context);
+    bool CanTryToInferType(AstNode node, TypeInferenceContext context);
+    Type? TryInferType(AstNode node, TypeInferenceContext context);
 }
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/TypeInference/ExpressionTypeResolver.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
+using System.Diagnostics.CodeAnalysis;
 using BasicCore.ParserWrapper;
 using ExceptionsManager;
 using TypeInference.Rules;
@@ -2113,26 +1893,35 @@ public class ExpressionTypeResolver
         _rules.Sort((a, b) => b.Priority.CompareTo(a.Priority));
     }
 
-    public Type ResolveExpressionType(AstNode node, TypeInferenceContext context)
+    public Type? ResolveExpressionType(AstNode node, TypeInferenceContext context)
     {
-        Thrower.AssertAlways(node != null, "Node cannot be null");
+        return !TryResolveExpressionType(node, context, out var type)
+            ? null
+            : type;
+    }
+
+    public bool TryResolveExpressionType(AstNode node, TypeInferenceContext context, [NotNullWhen(true)] out Type? type)
+    {
+        node.NotNull("Node cannot be null");
+
+        type = null;
 
         var cacheKey = CreateCacheKey(node, context);
-        if (_expressionTypeCache.TryGetValue(cacheKey, out var cachedType))
-            return cachedType;
+        if (_expressionTypeCache.TryGetValue(cacheKey, out type))
+            return true;
 
         foreach (var rule in _rules)
-            if (rule.CanInferType(node, context))
+            if (rule.CanTryToInferType(node, context))
             {
-                var type = rule.InferType(node, context);
+                type = rule.TryInferType(node, context);
                 if (type != null)
                 {
                     _expressionTypeCache[cacheKey] = type;
-                    return type;
+                    return true;
                 }
             }
 
-        throw new TypeInferenceException($"Cannot infer type for expression: {node.NodeType}");
+        return false;
     }
 
     private string CreateCacheKey(AstNode node, TypeInferenceContext context)
@@ -2149,15 +1938,12 @@ public class ExpressionTypeResolver
         RegisterRule(new BinaryOperationTypeInferenceRule());
         RegisterRule(new FunctionCallTypeInferenceRule());
         RegisterRule(new ScopeTypeInferenceRule());
+        RegisterRule(new UnaryOperationTypeInferenceRule());
     }
 }
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/TypeInference/TypeInferenceContext.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 namespace TypeInference;
 
 public class TypeInferenceContext(TypeInferenceContext? parent = null)
@@ -2186,17 +1972,13 @@ public class TypeInferenceContext(TypeInferenceContext? parent = null)
 
     public IEnumerable<KeyValuePair<string, Type>> GetAllVariables()
     {
-        var parentVars = parent?.GetAllVariables() ?? Enumerable.Empty<KeyValuePair<string, Type>>();
+        var parentVars = parent?.GetAllVariables() ?? [];
         return parentVars.Concat(_variableTypes);
     }
 }
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/TypeInference/Rules/VariableTypeInferenceRule.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.ParserWrapper;
 using BasicTypesExtensions;
 
@@ -2206,32 +1988,25 @@ public class VariableTypeInferenceRule : ITypeInferenceRule
 {
     public int Priority => 900;
 
-    public bool CanInferType(AstNode node, TypeInferenceContext context)
+    public bool CanTryToInferType(AstNode node, TypeInferenceContext context)
     {
         return node.NodeType == ExtensibleEnum<AstNodeTag>.Get("Variable") ||
                node.NodeType == ExtensibleEnum<AstNodeTag>.Get("Identifier");
     }
 
-    public Type? InferType(AstNode node, TypeInferenceContext context)
+    public Type? TryInferType(AstNode node, TypeInferenceContext context)
     {
         var variableName = node.Text;
 
-        if (context.TryGetVariableType(variableName, out var type))
-            return type;
-
-        throw new TypeInferenceException(
-            $"Cannot infer type for variable '{variableName}'. Variable not found in context");
+        return context.TryGetVariableType(variableName, out var type) ? type : null;
     }
 }
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/TypeInference/Rules/LiteralTypeInferenceRule.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.ParserWrapper;
 using BasicTypesExtensions;
+using NumbersModule;
 
 namespace TypeInference.Rules;
 
@@ -2239,7 +2014,7 @@ public class LiteralTypeInferenceRule : ITypeInferenceRule
 {
     public int Priority => 1000;
 
-    public bool CanInferType(AstNode node, TypeInferenceContext context)
+    public bool CanTryToInferType(AstNode node, TypeInferenceContext context)
     {
         return node.NodeType == ExtensibleEnum<AstNodeTag>.CreateOrGet("Number") ||
                node.NodeType == ExtensibleEnum<AstNodeTag>.CreateOrGet("String") ||
@@ -2247,12 +2022,13 @@ public class LiteralTypeInferenceRule : ITypeInferenceRule
                node.NodeType == ExtensibleEnum<AstNodeTag>.CreateOrGet("False");
     }
 
-    public Type? InferType(AstNode node, TypeInferenceContext context)
+    public Type? TryInferType(AstNode node, TypeInferenceContext context)
     {
         var nodeType = node.NodeType;
 
+        // TODO: infer from bytecode
         if (nodeType == ExtensibleEnum<AstNodeTag>.Get("Number"))
-            return typeof(double);
+            return typeof(RealNumberImpl);
 
         if (nodeType == ExtensibleEnum<AstNodeTag>.Get("String"))
             return typeof(string);
@@ -2267,10 +2043,6 @@ public class LiteralTypeInferenceRule : ITypeInferenceRule
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/TypeInference/Rules/UnaryOperationTypeInferenceRule.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.ParserWrapper;
 using BasicTypesExtensions;
 
@@ -2280,14 +2052,14 @@ public class UnaryOperationTypeInferenceRule : ITypeInferenceRule
 {
     public int Priority => 850;
 
-    public bool CanInferType(AstNode node, TypeInferenceContext context)
+    public bool CanTryToInferType(AstNode node, TypeInferenceContext context)
     {
         // Проверяем унарный минус и другие унарные операции
         return node.NodeType == ExtensibleEnum<AstNodeTag>.Get("Substraction") &&
                node.Children.Count == 1;
     }
 
-    public Type InferType(AstNode node, TypeInferenceContext context)
+    public Type TryInferType(AstNode node, TypeInferenceContext context)
     {
         var resolver = new ExpressionTypeResolver();
         var operandType = resolver.ResolveExpressionType(node.Children[0], context);
@@ -2299,10 +2071,6 @@ public class UnaryOperationTypeInferenceRule : ITypeInferenceRule
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/TypeInference/Rules/ScopeTypeInferenceRule.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.ParserWrapper;
 using BasicTypesExtensions;
 
@@ -2312,12 +2080,12 @@ public class ScopeTypeInferenceRule : ITypeInferenceRule
 {
     public int Priority => 100;
 
-    public bool CanInferType(AstNode node, TypeInferenceContext context)
+    public bool CanTryToInferType(AstNode node, TypeInferenceContext context)
     {
         return node.NodeType == ExtensibleEnum<AstNodeTag>.Get("Scope");
     }
 
-    public Type InferType(AstNode node, TypeInferenceContext context)
+    public Type? TryInferType(AstNode node, TypeInferenceContext context)
     {
         if (node.Children.Count > 0)
         {
@@ -2332,10 +2100,6 @@ public class ScopeTypeInferenceRule : ITypeInferenceRule
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/TypeInference/Rules/FunctionCallTypeInferenceRule.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using AssemblyFinder;
 using BasicCore.ParserWrapper;
 using BasicTypesExtensions;
@@ -2346,12 +2110,12 @@ public class FunctionCallTypeInferenceRule : ITypeInferenceRule
 {
     public int Priority => 700;
 
-    public bool CanInferType(AstNode node, TypeInferenceContext context)
+    public bool CanTryToInferType(AstNode node, TypeInferenceContext context)
     {
         return node.NodeType == ExtensibleEnum<AstNodeTag>.Get("CSharpFunctionCall");
     }
 
-    public Type InferType(AstNode node, TypeInferenceContext context)
+    public Type TryInferType(AstNode node, TypeInferenceContext context)
     {
         var methodName = node.Text;
         var method = MethodsFinder.GetMethod(methodName);
@@ -2365,10 +2129,6 @@ public class FunctionCallTypeInferenceRule : ITypeInferenceRule
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/BasicCodeTranslator/BasicBytecodeTranslatorImpl.cs
-# содержание:
-﻿// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 
@@ -2395,10 +2155,6 @@ public class BasicBytecodeTranslatorImpl(BytecodeTranslatorConfiguration configu
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/BasicTypesExtensions/EnumerableExtensions.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 namespace BasicTypesExtensions;
 
 public static class EnumerableExtensions
@@ -2412,10 +2168,6 @@ public static class EnumerableExtensions
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/BasicTypesExtensions/ListExtensions.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 namespace BasicTypesExtensions;
 
 public static class ListExtensions
@@ -2431,10 +2183,6 @@ public static class ListExtensions
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/BasicTypesExtensions/ExtensibleEnum.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using ExceptionsManager;
 
 namespace BasicTypesExtensions;
@@ -2505,10 +2253,6 @@ public class ExtensibleEnum<TTag> : IEquatable<ExtensibleEnum<TTag>>
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/BasicTypesExtensions/EnumGenerator.cs
-# содержание:
-﻿// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using ExceptionsManager;
 
 namespace BasicTypesExtensions;
@@ -2556,10 +2300,6 @@ public class EnumGenerator
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/ArithmeticModule/SubstractionOperationNodeCreator.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.ParserWrapper;
 using BasicTypesExtensions;
 
@@ -2572,10 +2312,6 @@ public class SubstractionOperationNodeCreator : BinaryOperationBase
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/ArithmeticModule/ArithmeticAstVisitor.cs
-# содержание:
-﻿// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
@@ -2622,10 +2358,6 @@ public class ArithmeticAstVisitor : IAstVisitor
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/ArithmeticModule/ArithmeticModuleImpl.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
@@ -2664,10 +2396,6 @@ public class ArithmeticModuleImpl : ICoreModule
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/ArithmeticModule/MultiplicationOperationNodeCreator.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.ParserWrapper;
 using BasicTypesExtensions;
 
@@ -2680,10 +2408,6 @@ public class MultiplicationOperationNodeCreator : BinaryOperationBase
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/ArithmeticModule/AdditionOperationNodeCreator.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.ParserWrapper;
 using BasicTypesExtensions;
 
@@ -2696,10 +2420,6 @@ public class AdditionOperationNodeCreator : BinaryOperationBase
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/ArithmeticModule/DivisionOperationNodeCreator.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.ParserWrapper;
 using BasicTypesExtensions;
 
@@ -2712,10 +2432,6 @@ public class DivisionOperationNodeCreator : BinaryOperationBase
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/ConditionsModule/BooleanVisitor.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
@@ -2796,10 +2512,6 @@ public class BooleanVisitor : IAstVisitor
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/ConditionsModule/IfNodeCreator.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.ParserWrapper;
 using BasicTypesExtensions;
 
@@ -2837,10 +2549,6 @@ public class IfNodeCreator : IAstNodeCreator
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/ConditionsModule/ConditionsModuleImpl.cs
-# содержание:
-﻿// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
@@ -2883,10 +2591,6 @@ public class ConditionsModuleImpl : ICoreModule
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/ConditionsModule/ElifNodeCreator.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.ParserWrapper;
 using BasicTypesExtensions;
 
@@ -2924,10 +2628,6 @@ public class ElifNodeCreator : IAstNodeCreator
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/ConditionsModule/ComparisonVisitor.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
@@ -3003,10 +2703,6 @@ public class ComparisonVisitor : IAstVisitor
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/ConditionsModule/ComparisonNodeCreator.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.ParserWrapper;
 using BasicTypesExtensions;
 
@@ -3045,10 +2741,6 @@ public class ComparisonNodeCreator(string nodeType) : IAstNodeCreator
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/ConditionsModule/ConditionsVisitor.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
@@ -3139,10 +2831,6 @@ public class ConditionsVisitor : IAstVisitor
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/ConditionsModule/Comparisons.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 namespace ConditionsModule;
 
 public static class Comparisons
@@ -3180,10 +2868,6 @@ public static class Comparisons
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/ConditionsModule/ElseNodeCreator.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.ParserWrapper;
 using BasicTypesExtensions;
 
@@ -3213,10 +2897,6 @@ public class ElseNodeCreator : IAstNodeCreator
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/ConditionsModule/BooleanOperations.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
@@ -3258,10 +2938,6 @@ public class BooleanOperations : ICoreModule
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/ConditionsModule/ComparisonOperations.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
@@ -3306,10 +2982,6 @@ public class ComparisonOperations : ICoreModule
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/ConditionsModule/BooleanNodeCreator.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.ParserWrapper;
 using BasicTypesExtensions;
 
@@ -3363,10 +3035,6 @@ public class BooleanNodeCreator(string nodeType, BooleanNodeCreator.BooleanState
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/ParserConfigurationModule/ParserConfigurationModuleImpl.cs
-# содержание:
-﻿// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using System.Diagnostics;
 using System.Text;
 using BasicCore;
@@ -3440,10 +3108,6 @@ public class ParserConfigurationModuleImpl(ActionType actionType, string path = 
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/ParserConfigurationModule/ActionType.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 namespace ParserConfigurationModule;
 
 public enum ActionType
@@ -3454,10 +3118,6 @@ public enum ActionType
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/EqualityModule/ValuesSetNodeCreator.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.ParserWrapper;
 using BasicTypesExtensions;
 
@@ -3487,10 +3147,6 @@ public class ValuesSetNodeCreator : IAstNodeCreator
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/EqualityModule/EqualityModuleImpl.cs
-# содержание:
-﻿// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
@@ -3521,10 +3177,6 @@ public class EqualityModuleImpl : ICoreModule
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/EqualityModule/EqualityAstVisitor.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using System.Reflection;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
@@ -3568,10 +3220,6 @@ public class EqualityAstVisitor : IAstVisitor
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/EqualityModule/IGettable.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 namespace EqualityModule;
 
 public interface IGettable<out TValue>
@@ -3581,10 +3229,6 @@ public interface IGettable<out TValue>
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/EqualityModule/ISettable.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 namespace EqualityModule;
 
 public interface ISettable<in TValue>
@@ -3594,10 +3238,6 @@ public interface ISettable<in TValue>
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/Example/Program.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BytecodeDynamicMethodsCompiler;
 using ConditionsModule;
 using EqualityModule;
@@ -3635,8 +3275,15 @@ var core = new BasicCoreImpl(
 // TODO: fix parser configuration
 var result = core.Execute(
     """
-    a = Main.Input()
-    Main.PrintLn(a)
+    let a = Main.Input()
+    Main.Print(a)
+
+    let b = -10
+    let c = 123 * 4 - 2
+    let d = b * c - 5
+    Main.Print(b)
+    Main.Print(c)
+    Main.Print(d)
     """
 );
 
@@ -3644,10 +3291,6 @@ Console.WriteLine(result);
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/Example/Main.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using System.Reflection;
 using ExceptionsManager;
 using GenericMath;
@@ -3684,11 +3327,7 @@ public static class Main
 }
 -----------------------------------
 
-# /home/micodiy/Unity/Wist2Copy/Example/GlobalUsings.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-// Global using directives
+# /home/micodiy/Unity/Wist2Copy/Example/GlobalUsings.cs// Global using directives
 
 global using ArithmeticModule;
 global using BasicCodeTranslator;
@@ -3705,10 +3344,6 @@ global using WhitespacesModule;
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/NumbersModule/RealNumberImpl.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using System.Globalization;
 using GenericMath;
 
@@ -3773,10 +3408,6 @@ public readonly struct RealNumberImpl(double value) : ICustomNumber<RealNumberIm
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/NumbersModule/NumbersModuleImpl.cs
-# содержание:
-﻿// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore;
 using BasicCore.LexerWrapper;
 using BasicCore.TranslatorWrapper;
@@ -3802,10 +3433,6 @@ public class NumbersModuleImpl : ICoreModule
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/NumbersModule/NumberAstVisitor.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using System.Globalization;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
@@ -3819,7 +3446,7 @@ public class NumberAstVisitor : IAstVisitor
 {
     public void TryVisit(BytecodeVisitorData data)
     {
-        if (data.Node.NodeType != ExtensibleEnum<AstNodeTag>.Get("Number")) return;
+        if (data.Node.NodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("Number")) return;
 
         var method = new DynamicMethodConvertableWrapperImpl();
         var numText = (data.Node.LexemeValue?.Text).NotNull();
@@ -3836,10 +3463,6 @@ public class NumberAstVisitor : IAstVisitor
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/LabelsModule/LabelsNodeCreator.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.ParserWrapper;
 using BasicTypesExtensions;
 
@@ -3867,10 +3490,6 @@ public class LabelsNodeCreator : IAstNodeCreator
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/LabelsModule/LabelsVisitor.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
@@ -3895,10 +3514,6 @@ public class LabelsVisitor : IAstVisitor
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/LabelsModule/LabelsModuleImpl.cs
-# содержание:
-﻿// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
@@ -3935,10 +3550,6 @@ public class LabelsModuleImpl : ICoreModule
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/LabelsModule/GotoVisitor.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
@@ -3963,10 +3574,6 @@ public class GotoVisitor : IAstVisitor
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/LabelsModule/GotoNodeCreator.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore.ParserWrapper;
 using BasicTypesExtensions;
 
@@ -3990,10 +3597,6 @@ public class GotoNodeCreator : IAstNodeCreator
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/CSharpInteropModule/CSharpFunctionCallsAstVisitor.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using AssemblyFinder;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
@@ -4036,10 +3639,6 @@ public class CSharpFunctionCallsAstVisitor : IAstVisitor
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/CSharpInteropModule/CSharpInteropModuleImpl.cs
-# содержание:
-﻿// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using BasicCore;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
@@ -4071,10 +3670,6 @@ public class CSharpInteropModuleImpl : ICoreModule
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/CSharpInteropModule/CSharpFunctionCallsNodeCreator.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using AssemblyFinder;
 using BasicCore.ParserWrapper;
 using BasicTypesExtensions;
@@ -4105,10 +3700,6 @@ public class CSharpFunctionCallsNodeCreator : IAstNodeCreator
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/DynamicMethodWrapper/DynamicMethodConvertableWrapperImpl.cs
-# содержание:
-﻿// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using System.Reflection.Emit;
 using ExceptionsManager;
 using GrEmit;
@@ -4175,10 +3766,6 @@ public class DynamicMethodConvertableWrapperImpl : IDynamicMethodConvertable
 -----------------------------------
 
 # /home/micodiy/Unity/Wist2Copy/DynamicMethodWrapper/IDynamicMethodConvertable.cs
-# содержание:
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 using System.Reflection.Emit;
 using GrEmit;
 

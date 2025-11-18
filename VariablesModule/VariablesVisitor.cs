@@ -19,38 +19,35 @@ public class VariablesVisitor : IAstVisitor
 
         var varName = data.Node.Text;
 
-        if (data.Node.AllTags.Contains("VariableDefinition"))
-            _variableTypes[varName] = data.Node.Data.Get<Type>("Type");
-
         if (data.Node.AllTags.Contains("ExpectingSettableReference"))
         {
             var method = new DynamicMethodConvertableWrapperImpl();
             method.Make(
                 $"LoadReferenceToLocalVar_{varName}",
-                typeof(VariableReference<>).MakeGenericType(_variableTypes[varName]),
-                [],
-                (il, _) =>
+                0,
+                (il, context) =>
                 {
+                    var type = _variableTypes[varName] = context.Stack[0];
                     il.Ldstr(varName);
-                    var variablesContainer = typeof(VariablesContainer<>).MakeGenericType(_variableTypes[varName]);
+                    var variablesContainer = typeof(VariablesContainer<>).MakeGenericType(type);
                     var getRefMethod = variablesContainer.GetMethod("GetRef");
                     il.Call(getRefMethod);
                     il.Ret();
-                }
+                },
+                context => typeof(VariableReference<>).MakeGenericType(context.Stack[0])
             );
             data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
         }
         else
         {
             var method = new DynamicMethodConvertableWrapperImpl();
-            method.Make($"LoadValueOfLocalVar_{varName}", _variableTypes[varName], [],
+            method.Make($"LoadValueOfLocalVar_{varName}", 0,
                 (il, _) =>
                 {
                     il.Ldstr(varName);
                     il.Call(typeof(VariablesContainer<>).MakeGenericType(_variableTypes[varName]).GetMethod("Get"));
                     il.Ret();
-                }
-            );
+                }, _ => _variableTypes[varName]);
             data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
         }
     }

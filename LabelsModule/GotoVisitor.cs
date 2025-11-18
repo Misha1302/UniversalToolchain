@@ -16,8 +16,9 @@ public class GotoVisitor : IAstVisitor
         if (data.Node.NodeType != ExtensibleEnum<AstNodeTag>.Get("Goto")) return;
 
         var method = new DynamicMethodConvertableWrapperImpl();
-        method.Make($"Goto_!Intrinsic_{data.Node.Children[0].Text}", typeof(void), [],
-            (il, _) => il.IntrinsicNotImplemented()
+        method.Make($"Goto_!Intrinsic_{data.Node.Children[0].Text}", 0,
+            (il, _) => il.IntrinsicNotImplemented(),
+            _ => typeof(void)
         );
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
     }

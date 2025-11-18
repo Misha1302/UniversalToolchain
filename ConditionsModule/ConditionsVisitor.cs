@@ -34,13 +34,13 @@ public class ConditionsVisitor : IAstVisitor
 
         // Условный переход если false
         var condJumpMethod = new DynamicMethodConvertableWrapperImpl();
-        condJumpMethod.Make($"CondFGoto_!Intrinsic_{elseLabel}", typeof(void), [typeof(bool)],
+        condJumpMethod.Make($"CondFGoto_!Intrinsic_{elseLabel}", 1,
             (il, _) =>
             {
                 il.Ldarg(0);
                 il.Brfalse(il.DefineLabel(elseLabel));
                 il.Ret();
-            });
+            }, _ => typeof(void));
         data.Bytecode.Instructions.Add(new BytecodeInstruction(condJumpMethod));
 
         // Тело if
@@ -48,22 +48,22 @@ public class ConditionsVisitor : IAstVisitor
 
         // Безусловный переход в конец
         var jumpMethod = new DynamicMethodConvertableWrapperImpl();
-        jumpMethod.Make($"Goto_!Intrinsic_{endLabel}", typeof(void), [],
+        jumpMethod.Make($"Goto_!Intrinsic_{endLabel}", 0,
             (il, _) =>
             {
                 il.Br(il.DefineLabel(endLabel));
                 il.Ret();
-            });
+            }, _ => typeof(void));
         data.Bytecode.Instructions.Add(new BytecodeInstruction(jumpMethod));
 
         // Метка else
         var elseLabelMethod = new DynamicMethodConvertableWrapperImpl();
-        elseLabelMethod.Make($"Label_!Intrinsic_{elseLabel}", typeof(void), [],
+        elseLabelMethod.Make($"Label_!Intrinsic_{elseLabel}", 0,
             (il, _) =>
             {
                 il.MarkLabel(il.DefineLabel(elseLabel));
                 il.Ret();
-            });
+            }, _ => typeof(void));
         data.Bytecode.Instructions.Add(new BytecodeInstruction(elseLabelMethod));
 
         // Обработка elif/else если есть
@@ -73,12 +73,12 @@ public class ConditionsVisitor : IAstVisitor
 
         // Метка конца
         var endLabelMethod = new DynamicMethodConvertableWrapperImpl();
-        endLabelMethod.Make($"Label_!Intrinsic_{endLabel}", typeof(void), [],
+        endLabelMethod.Make($"Label_!Intrinsic_{endLabel}", 0,
             (il, _) =>
             {
                 il.MarkLabel(il.DefineLabel(endLabel));
                 il.Ret();
-            });
+            }, _ => typeof(void));
         data.Bytecode.Instructions.Add(new BytecodeInstruction(endLabelMethod));
     }
 

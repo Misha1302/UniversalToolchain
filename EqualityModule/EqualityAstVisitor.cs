@@ -18,25 +18,25 @@ public class EqualityAstVisitor : IAstVisitor
         if (data.Node.NodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("Equality"))
             return;
 
-        data.BytecodeTranslator.Translate(data.Node.Children[0]);
-        data.BytecodeTranslator.Translate(data.Node.Children[1]);
+        data.BytecodeTranslator.Translate(data.Node.Children[1]); // value
+        data.BytecodeTranslator.Translate(data.Node.Children[0]); // ref
 
         var method = new DynamicMethodConvertableWrapperImpl();
         method.Make(
             $"Set_{data.Node.Children[0].LexemeValue?.Text}={data.Node.Children[1].LexemeValue?.Text}",
-            typeof(void),
-            [null, null],
-            (il, args) =>
+            2,
+            (il, context) =>
             {
                 il.LdArgsAndCall(
-                    args[0].GetMethod("SetValue", BindingFlags.Instance | BindingFlags.Public).NotNull(),
+                    context.Args[0].GetMethod("SetValue", BindingFlags.Instance | BindingFlags.Public).NotNull(),
                     i =>
                     {
                         il.Ldarg(i);
-                        return args[i];
-                    });
+                        return context.Args[1 - i];
+                    }
+                );
                 il.Ret();
-            }
+            }, _ => typeof(void)
         );
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
     }
