@@ -3,6 +3,7 @@
 
 using System.Reflection.Emit;
 using BasicCore.ExecutorWrapper;
+using ExceptionsManager;
 using GrEmit;
 
 namespace BasicCilCompiler;
@@ -11,6 +12,7 @@ public class BasicCilCompilerImpl : IExecutor
 {
     public object Execute(List<(GroboIL, DynamicMethod)> methods)
     {
+        throw new NotImplementedException("Waiting for SSA implementation");
         var main = CompileToOneMethod(methods);
         return ExecuteInternal(main);
     }
@@ -52,6 +54,10 @@ public class BasicCilCompilerImpl : IExecutor
             {
                 var labelName = name[(name.LastIndexOf('_') + 1)..];
                 il.MarkLabel(labels[labelName]);
+            }
+            else
+            {
+                Thrower.InvalidOpEx($"Unknown method {name}");
             }
         }
 

@@ -6,6 +6,7 @@ using ConditionsModule;
 using EqualityModule;
 using IdentifierModule;
 using LabelsModule;
+using SemicolonAsNewLineModule;
 using VariablesModule;
 
 var core = new BasicCoreImpl(
@@ -19,6 +20,7 @@ var core = new BasicCoreImpl(
         new ScopesModuleImpl(),
         new NumbersModuleImpl(),
         new WhitespaceModuleImpl(),
+        new SemicolonAsNewLineModuleImpl(),
         new ArithmeticModuleImpl(),
         new CSharpInteropModuleImpl(),
         new LabelsModuleImpl(),
@@ -36,17 +38,13 @@ var core = new BasicCoreImpl(
 // TODO: fix parser configuration
 var result = core.Execute(
     """
-    let a = Main.Input()
-    Main.Print(a)
-
-    let b = -10
-    let c = 123 * 4 - 2
-    let d = b * c - 5
-    b = b + 1
-    d = d - 105
-    Main.Print(b)
-    Main.Print(c)
-    Main.Print(d)
+    let a = 1
+    let b = -3
+    let c = 2
+    let discriminant = b * b - 4 * a * c
+    let root1 = (-b + discriminant) / (2 * a)
+    let root2 = (-b - discriminant) / (2 * a)
+    root1 + root2
     """
 );
 

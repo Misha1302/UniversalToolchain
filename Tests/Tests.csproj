@@ -2,18 +2,23 @@
 
     <PropertyGroup>
         <TargetFramework>net9.0</TargetFramework>
+        <LangVersion>latest</LangVersion>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <OutputType>Exe</OutputType>
+        <IsPackable>false</IsPackable>
     </PropertyGroup>
 
-    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-        <OutputPath>bin</OutputPath>
-    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="coverlet.collector" Version="6.0.2"/>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0"/>
+        <PackageReference Include="NUnit" Version="4.2.2"/>
+        <PackageReference Include="NUnit.Analyzers" Version="4.4.0"/>
+        <PackageReference Include="NUnit3TestAdapter" Version="4.6.0"/>
+    </ItemGroup>
 
-    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-        <OutputPath>bin</OutputPath>
-    </PropertyGroup>
+    <ItemGroup>
+        <Using Include="NUnit.Framework"/>
+    </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\ArithmeticModule\ArithmeticModule.csproj"/>
@@ -23,15 +28,11 @@
         <ProjectReference Include="..\BasicInterpreter\BasicInterpreter.csproj"/>
         <ProjectReference Include="..\BasicLexer\BasicLexer.csproj"/>
         <ProjectReference Include="..\BasicParser\BasicParser.csproj"/>
-        <ProjectReference Include="..\BasicTypesExtensions\BasicTypesExtensions.csproj"/>
         <ProjectReference Include="..\BytecodeDynamicMethodsCompiler\BytecodeDynamicMethodsCompiler.csproj"/>
         <ProjectReference Include="..\ConditionsModule\ConditionsModule.csproj"/>
         <ProjectReference Include="..\CSharpInteropModule\CSharpInteropModule.csproj"/>
-        <ProjectReference Include="..\ExecutorLoggerModule\ExecutorLoggerModule.csproj"/>
         <ProjectReference Include="..\IdentifierModule\IdentifierModule.csproj"/>
-        <ProjectReference Include="..\LabelsModule\LabelsModule.csproj"/>
         <ProjectReference Include="..\NumbersModule\NumbersModule.csproj"/>
-        <ProjectReference Include="..\ParserConfigurationModule\ParserConfigurationModule.csproj"/>
         <ProjectReference Include="..\ScopesModule\ScopesModule.csproj"/>
         <ProjectReference Include="..\SemicolonAsNewLineModule\SemicolonAsNewLineModule.csproj"/>
         <ProjectReference Include="..\VariablesModule\VariablesModule.csproj"/>
