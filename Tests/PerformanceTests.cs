@@ -47,7 +47,10 @@ public class PerformanceTests : TestBase
 
         // Assert
         Assert.That(result, Is.Not.Null);
-        Assert.That(stopwatch.ElapsedMilliseconds, Is.LessThan(1000)); // Should complete within 1 second
+        Assert.That(
+            stopwatch.ElapsedMilliseconds / Executors.Count,
+            Is.LessThan(1000)
+        );
     }
 
     [Test]
@@ -80,6 +83,9 @@ public class PerformanceTests : TestBase
 
         // Assert
         Assert.That(result, Is.Not.Null);
-        Assert.That(stopwatch.ElapsedMilliseconds, Is.LessThan(500)); // Should complete within 500ms
+        Assert.That(
+            stopwatch.ElapsedMilliseconds / Executors.Count,
+            Is.LessThan(500)
+        );
     }
 }

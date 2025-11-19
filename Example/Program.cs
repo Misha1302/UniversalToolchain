@@ -1,6 +1,7 @@
 // This is an independent project of an individual developer. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 
+using BasicCilCompiler;
 using BytecodeDynamicMethodsCompiler;
 using ConditionsModule;
 using EqualityModule;
@@ -14,7 +15,7 @@ var core = new BasicCoreImpl(
     () => new BasicParserImpl(),
     () => new BasicBytecodeTranslatorImpl(),
     () => new BytecodeDynamicMethodsCompilerImpl(),
-    () => new BasicInterpreterImpl(),
+    () => new BasicCilCompilerImpl(),
     [
         new IdentifierModuleImpl(),
         new ScopesModuleImpl(),
@@ -42,8 +43,8 @@ var result = core.Execute(
     let b = -3
     let c = 2
     let discriminant = b * b - 4 * a * c
-    let root1 = (-b + discriminant) / (2 * a)
-    let root2 = (-b - discriminant) / (2 * a)
+    let root1 = (0-b + discriminant) / (2 * a)
+    let root2 = (0-b - discriminant) / (2 * a)
     root1 + root2
     """
 );
