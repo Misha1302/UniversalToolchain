@@ -18,7 +18,7 @@ public class ElseNodeCreator : IAstNodeCreator
         var elseNode = scope[childIndex];
 
         // Добавляем тело else (следующий scope)
-        if (scope.SafeGet(childIndex + 1)?.NodeType == ExtensibleEnum<AstNodeTag>.CreateOrGet("Scope"))
+        if (scope.SafeGet(childIndex + 1)?.NodeType != null)
         {
             elseNode.Children.Add(scope[childIndex + 1]);
             scope.Children.RemoveAt(childIndex + 1);

@@ -1,5 +1,9 @@
+// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
+
 using ArithmeticModule;
 using BasicCore;
+using ConditionsModule;
 using EqualityModule;
 using IdentifierModule;
 using NumbersModule;
@@ -23,15 +27,16 @@ public class FullPipelineTests : TestBase
             new ScopesModuleImpl(),
             new NumbersModuleImpl(),
             new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl()
+            new ArithmeticModuleImpl(),
+            new ConditionsModuleImpl()
         };
 
         // Act
         var result = ExecuteCode(code, modules);
 
         // Assert
-        // Note: Actual assertion depends on how numbers are represented
-        Assert.That(result, Is.Not.Null);
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(14).Within(1e-9));
     }
 
     [Test]
@@ -51,14 +56,16 @@ public class FullPipelineTests : TestBase
             new WhitespaceModuleImpl(),
             new ArithmeticModuleImpl(),
             new VariablesModuleImpl(),
-            new EqualityModuleImpl()
+            new EqualityModuleImpl(),
+            new ConditionsModuleImpl()
         };
 
         // Act
         var result = ExecuteCode(code, modules);
 
         // Assert
-        Assert.That(result, Is.Not.Null);
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(30).Within(1e-9));
     }
 
     [Test]
@@ -72,14 +79,16 @@ public class FullPipelineTests : TestBase
             new ScopesModuleImpl(),
             new NumbersModuleImpl(),
             new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl()
+            new ArithmeticModuleImpl(),
+            new ConditionsModuleImpl()
         };
 
         // Act
         var result = ExecuteCode(code, modules);
 
         // Assert
-        Assert.That(result, Is.Not.Null);
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(15).Within(1e-9));
     }
 
     [Test]
@@ -100,14 +109,18 @@ public class FullPipelineTests : TestBase
             new WhitespaceModuleImpl(),
             new ArithmeticModuleImpl(),
             new VariablesModuleImpl(),
-            new EqualityModuleImpl()
+            new EqualityModuleImpl(),
+            new ConditionsModuleImpl()
         };
 
         // Act
         var result = ExecuteCode(code, modules);
 
         // Assert
-        Assert.That(result, Is.Not.Null);
+        // c = 5*3 + 2 = 15 + 2 = 17
+        // c - 1 = 16
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(16).Within(1e-9));
     }
 
     [Test]
@@ -130,13 +143,18 @@ public class FullPipelineTests : TestBase
             new WhitespaceModuleImpl(),
             new ArithmeticModuleImpl(),
             new VariablesModuleImpl(),
-            new EqualityModuleImpl()
+            new EqualityModuleImpl(),
+            new ConditionsModuleImpl()
         };
 
         // Act
         var result = ExecuteCode(code, modules);
 
         // Assert
-        Assert.That(result, Is.Not.Null);
+        // c = 10*20 - 5 = 200 - 5 = 195
+        // b = 20 + 1 = 21
+        // c = 195 - 15 = 180
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(180).Within(1e-9));
     }
 }

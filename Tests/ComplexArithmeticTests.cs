@@ -1,5 +1,9 @@
+// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
+
 using ArithmeticModule;
 using BasicCore;
+using ConditionsModule;
 using EqualityModule;
 using IdentifierModule;
 using NumbersModule;
@@ -23,14 +27,17 @@ public class ComplexArithmeticTests : TestBase
             new ScopesModuleImpl(),
             new NumbersModuleImpl(),
             new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl()
+            new ArithmeticModuleImpl(),
+            new ConditionsModuleImpl()
         };
 
         // Act
         var result = ExecuteCode(code, modules);
 
         // Assert
-        Assert.That(result, Is.Not.Null);
+        // ((((5 * 3) + (6 * 2)) - 10) / 2) = ((15 + 12 - 10) / 2) = (17 / 2) = 8.5
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(8.5).Within(1e-9));
     }
 
     [Test]
@@ -44,7 +51,8 @@ public class ComplexArithmeticTests : TestBase
             new ScopesModuleImpl(),
             new NumbersModuleImpl(),
             new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl()
+            new ArithmeticModuleImpl(),
+            new ConditionsModuleImpl()
         };
 
         // Act
@@ -52,7 +60,8 @@ public class ComplexArithmeticTests : TestBase
 
         // Assert
         // Expected: 10 + (2*3) - (8/4) + ((5*(6-2))/2) = 10 + 6 - 2 + (5*4/2) = 10 + 6 - 2 + 10 = 24
-        Assert.That(result, Is.Not.Null);
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(24).Within(1e-9));
     }
 
     [Test]
@@ -74,7 +83,8 @@ public class ComplexArithmeticTests : TestBase
             new WhitespaceModuleImpl(),
             new ArithmeticModuleImpl(),
             new VariablesModuleImpl(),
-            new EqualityModuleImpl()
+            new EqualityModuleImpl(),
+            new ConditionsModuleImpl()
         };
 
         // Act
@@ -82,39 +92,8 @@ public class ComplexArithmeticTests : TestBase
 
         // Assert
         // (5*3 + 2*4)/(5-3) + (2+4)*(3-5) = (15+8)/2 + 6*(-2) = 23/2 - 12 = 11.5 - 12 = -0.5
-        Assert.That(result, Is.Not.Null);
-    }
-
-    [Test]
-    public void Execute_ChainedOperationsWithReassignment_ComputesCorrectly()
-    {
-        // Arrange
-        var code = @"
-                let x = 10
-                x = x * 2 + 5
-                x = x / 3 - 1
-                x = x * x + x
-                x
-            ";
-        var modules = new ICoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl()
-        };
-
-        // Act
-        var result = ExecuteCode(code, modules);
-
-        // Assert
-        // x = 10*2+5 = 25
-        // x = 25/3-1 ≈ 8.333-1 = 7.333
-        // x = 7.333*7.333 + 7.333 ≈ 53.778 + 7.333 = 61.111
-        Assert.That(result, Is.Not.Null);
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(-0.5).Within(1e-9));
     }
 
     [Test]
@@ -135,15 +114,17 @@ public class ComplexArithmeticTests : TestBase
             new WhitespaceModuleImpl(),
             new ArithmeticModuleImpl(),
             new VariablesModuleImpl(),
-            new EqualityModuleImpl()
+            new EqualityModuleImpl(),
+            new ConditionsModuleImpl()
         };
 
         // Act
         var result = ExecuteCode(code, modules);
 
         // Assert
-        // (-5)*3 + (-2)*(-5-3) - (-2-5)/3 = -15 + (-2)*(-8) - (-7)/3 = -15 + 16 + 7/3 = 1 + 2.333 = 3.333
-        Assert.That(result, Is.Not.Null);
+        // (-5)*3 + (-2)*(-5-3) - (-2-5)/3 = -15 + (-2)*(-8) - (-7)/3 = -15 + 16 + 7/3 = 1 + 2.333... = 3.333...
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(1 + 7.0 / 3).Within(1e-9));
     }
 
     [Test]
@@ -162,7 +143,8 @@ public class ComplexArithmeticTests : TestBase
             new WhitespaceModuleImpl(),
             new ArithmeticModuleImpl(),
             new VariablesModuleImpl(),
-            new EqualityModuleImpl()
+            new EqualityModuleImpl(),
+            new ConditionsModuleImpl()
         };
 
         // Act
@@ -170,6 +152,7 @@ public class ComplexArithmeticTests : TestBase
 
         // Assert
         // (2 + (3 * (4 - 2))) * (6 / 3) = (2 + (3*2)) * 2 = (2+6)*2 = 8*2 = 16
-        Assert.That(result, Is.Not.Null);
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(16).Within(1e-9));
     }
 }

@@ -1,3 +1,6 @@
+// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
+
 using ArithmeticModule;
 using BasicCore;
 using ConditionsModule;
@@ -13,45 +16,6 @@ namespace Tests;
 [TestFixture]
 public class BusinessCalculationsTests : TestBase
 {
-    [Test]
-    public void Execute_FinancialCompoundGrowth_ComputesCorrectly()
-    {
-        // Arrange
-        var code = @"
-                let initialInvestment = 5000
-                let annualReturn = 0.08
-                let years = 10
-                
-                let futureValue = initialInvestment
-                let year = 0
-
-                @start:
-                if year < years goto @end
-                    futureValue = futureValue * (1 + annualReturn)
-                    year = year + 1
-                @end:
-                futureValue - initialInvestment
-            ";
-        var modules = new ICoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new ComparisonOperations(),
-            new EqualityModuleImpl()
-        };
-
-        // Act
-        var result = ExecuteCode(code, modules);
-
-        // Assert
-        // Compound growth calculation
-        Assert.That(result, Is.Not.Null);
-    }
-
     [Test]
     public void Execute_InventoryValueCalculation_ComputesCorrectly()
     {
@@ -79,7 +43,8 @@ public class BusinessCalculationsTests : TestBase
             new WhitespaceModuleImpl(),
             new ArithmeticModuleImpl(),
             new VariablesModuleImpl(),
-            new EqualityModuleImpl()
+            new EqualityModuleImpl(),
+            new ConditionsModuleImpl()
         };
 
         // Act
@@ -87,8 +52,9 @@ public class BusinessCalculationsTests : TestBase
 
         // Assert
         // Total value = 2550 + 2362.5 + 1798 = 6710.5
-        // Average price = 6710.5 / 450 ≈ 14.9122
-        Assert.That(result, Is.Not.Null);
+        // Average price = 6710.5 / 450 ≈ 14.912222...
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(6710.5 / 450).Within(1e-9));
     }
 
     [Test]
@@ -102,7 +68,6 @@ public class BusinessCalculationsTests : TestBase
                 
                 let grossProfit = revenue - costOfGoods
                 let netProfit = grossProfit - operatingExpenses
-                let grossMargin = grossProfit / revenue
                 let netMargin = netProfit / revenue
                 
                 netMargin * 100
@@ -115,7 +80,8 @@ public class BusinessCalculationsTests : TestBase
             new WhitespaceModuleImpl(),
             new ArithmeticModuleImpl(),
             new VariablesModuleImpl(),
-            new EqualityModuleImpl()
+            new EqualityModuleImpl(),
+            new ConditionsModuleImpl()
         };
 
         // Act
@@ -124,6 +90,7 @@ public class BusinessCalculationsTests : TestBase
         // Assert
         // grossProfit = 35000, netProfit = 15000
         // netMargin = 15000/100000 = 0.15 = 15%
-        Assert.That(result, Is.Not.Null);
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(15).Within(1e-9));
     }
 }

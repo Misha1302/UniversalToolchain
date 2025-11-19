@@ -42,7 +42,7 @@ public class BasicInterpreterImpl : IExecutor
             var dm = method.Item2;
             if (!dm.Name.Contains("Label_!Intrinsic")) continue;
 
-            var name = dm.Name[(dm.Name.LastIndexOf('_') + 1)..];
+            var name = ExtractLabelName(dm.Name).NotNull();
             _labels[name] = index;
         }
     }
@@ -80,12 +80,12 @@ public class BasicInterpreterImpl : IExecutor
         }
         else if (method.Name.StartsWith("Goto_!Intrinsic"))
         {
-            var name = method.Name[(method.Name.LastIndexOf('_') + 1)..];
+            var name = ExtractLabelName(method.Name).NotNull();
             _ip = _labels[name];
         }
         else if (method.Name.StartsWith("CondFGoto_!Intrinsic"))
         {
-            var name = method.Name[(method.Name.LastIndexOf('_') + 1)..];
+            var name = ExtractLabelName(method.Name).NotNull();
             Thrower.AssertAlways(_stack[0] is bool);
             if (_stack[0] is false)
                 _ip = _labels[name];
@@ -95,5 +95,13 @@ public class BasicInterpreterImpl : IExecutor
         {
             Thrower.InvalidOpEx($"Unknown intrinsic {method.Name}");
         }
+    }
+
+
+    private string? ExtractLabelName(string methodName)
+    {
+        const string intrinsicMarker = "_!Intrinsic_";
+        var markerIndex = methodName.IndexOf(intrinsicMarker, StringComparison.Ordinal);
+        return markerIndex >= 0 ? methodName[(markerIndex + intrinsicMarker.Length)..] : null;
     }
 }

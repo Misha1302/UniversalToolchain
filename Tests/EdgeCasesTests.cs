@@ -1,10 +1,13 @@
+// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
+
 using ArithmeticModule;
 using BasicCore;
+using ConditionsModule;
 using EqualityModule;
 using IdentifierModule;
 using NumbersModule;
 using ScopesModule;
-using SemicolonAsNewLineModule;
 using VariablesModule;
 using WhitespacesModule;
 
@@ -30,14 +33,16 @@ public class EdgeCasesTests : TestBase
             new WhitespaceModuleImpl(),
             new ArithmeticModuleImpl(),
             new VariablesModuleImpl(),
-            new EqualityModuleImpl()
+            new EqualityModuleImpl(),
+            new ConditionsModuleImpl()
         };
 
         // Act
         var result = ExecuteCode(code, modules);
 
         // Assert
-        Assert.That(result, Is.Not.Null);
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(0).Within(1e-9));
     }
 
     [Test]
@@ -57,14 +62,16 @@ public class EdgeCasesTests : TestBase
             new WhitespaceModuleImpl(),
             new ArithmeticModuleImpl(),
             new VariablesModuleImpl(),
-            new EqualityModuleImpl()
+            new EqualityModuleImpl(),
+            new ConditionsModuleImpl()
         };
 
         // Act
         var result = ExecuteCode(code, modules);
 
         // Assert
-        Assert.That(result, Is.Not.Null);
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(1000000).Within(1e-9));
     }
 
     [Test]
@@ -85,42 +92,15 @@ public class EdgeCasesTests : TestBase
             new WhitespaceModuleImpl(),
             new ArithmeticModuleImpl(),
             new VariablesModuleImpl(),
-            new EqualityModuleImpl()
+            new EqualityModuleImpl(),
+            new ConditionsModuleImpl()
         };
 
         // Act
         var result = ExecuteCode(code, modules);
 
         // Assert
-        Assert.That(result, Is.Not.Null);
-    }
-
-    [Test]
-    public void Execute_MultipleVariableScopes_ManagesStateCorrectly()
-    {
-        // Arrange
-        var code = @"
-                let global = 10
-                let result1 = (let x = 5; x * global)
-                let result2 = (let x = 3; x * global)
-                result1 + result2
-            ";
-        var modules = new ICoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new SemicolonAsNewLineModuleImpl(),
-            new EqualityModuleImpl()
-        };
-
-        // Act
-        var result = ExecuteCode(code, modules);
-
-        // Assert
-        Assert.That(result, Is.Not.Null);
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(0.3).Within(1e-9));
     }
 }

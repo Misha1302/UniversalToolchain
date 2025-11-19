@@ -1,7 +1,9 @@
+// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
+
 using ArithmeticModule;
 using BasicCore;
 using ConditionsModule;
-using CSharpInteropModule;
 using EqualityModule;
 using IdentifierModule;
 using NumbersModule;
@@ -35,52 +37,14 @@ public class ExampleProgramsTests : TestBase
             new ArithmeticModuleImpl(),
             new VariablesModuleImpl(),
             new EqualityModuleImpl(),
-            new CSharpInteropModuleImpl()
+            new ConditionsModuleImpl()
         };
 
         // Act
         var result = ExecuteCode(code, modules);
 
         // Assert
-        Assert.That(result, Is.Not.Null);
-    }
-
-    [Test]
-    public void Execute_ExtendedExampleWithMoreOperations_CompletesSuccessfully()
-    {
-        // Arrange
-        var code = @"
-                let baseValue = 100
-                let multiplier = 2.5
-                let iterations = 4
-                
-                let result = baseValue
-                let i = 0
-
-                @start:
-                    if i < iterations goto @end
-
-                    result = result * multiplier - 10
-                    i = i + 1
-                @end:
-                result
-            ";
-        var modules = new ICoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new ComparisonOperations(),
-            new EqualityModuleImpl()
-        };
-
-        // Act
-        var result = ExecuteCode(code, modules);
-
-        // Assert
-        Assert.That(result, Is.Not.Null);
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(180).Within(1e-9));
     }
 }

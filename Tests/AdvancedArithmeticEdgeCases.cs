@@ -4,23 +4,28 @@
 using ArithmeticModule;
 using BasicCore;
 using ConditionsModule;
+using EqualityModule;
 using IdentifierModule;
 using NumbersModule;
 using ScopesModule;
+using VariablesModule;
 using WhitespacesModule;
 
 namespace Tests;
 
 [TestFixture]
-public class ArithmeticModuleTests : TestBase
+public class AdvancedArithmeticEdgeCases : TestBase
 {
-    [TestCase("2 + 3", 5)]
-    [TestCase("10 - 4", 6)]
-    [TestCase("3 * 4", 12)]
-    [TestCase("15 / 3", 5)]
-    public void Execute_BasicArithmeticOperations_ReturnsExpectedResult(string code, double expected)
+    [Test]
+    public void Execute_VerySmallNumbersPrecision_HandlesTinyValues()
     {
         // Arrange
+        var code = @"
+                let a = 1e-15
+                let b = 2e-15
+                let c = 3e-15
+                (a + b) * 1e15 - c * 1e15
+            ";
         var modules = new ICoreModule[]
         {
             new IdentifierModuleImpl(),
@@ -28,6 +33,8 @@ public class ArithmeticModuleTests : TestBase
             new NumbersModuleImpl(),
             new WhitespaceModuleImpl(),
             new ArithmeticModuleImpl(),
+            new VariablesModuleImpl(),
+            new EqualityModuleImpl(),
             new ConditionsModuleImpl()
         };
 
@@ -35,15 +42,21 @@ public class ArithmeticModuleTests : TestBase
         var result = ExecuteCode(code, modules);
 
         // Assert
+        // (1e-15 + 2e-15) * 1e15 - 3e-15 * 1e15 = (3e-15)*1e15 - 3e-15*1e15 = 3 - 3 = 0
         var numberResult = (RealNumberImpl)result;
-        Assert.That(numberResult.GetValue(), Is.EqualTo(expected).Within(1e-9));
+        Assert.That(numberResult.GetValue(), Is.EqualTo(0).Within(1e-12));
     }
 
     [Test]
-    public void Execute_OperatorPrecedence_MultiplicationBeforeAddition()
+    public void Execute_LargeExponentOperations_HandlesScientificNotation()
     {
         // Arrange
-        var code = "2 + 3 * 4";
+        var code = @"
+                let avogadro = 6.022e23
+                let moles = 2.5
+                let molecules = avogadro * moles
+                molecules / avogadro
+            ";
         var modules = new ICoreModule[]
         {
             new IdentifierModuleImpl(),
@@ -51,6 +64,8 @@ public class ArithmeticModuleTests : TestBase
             new NumbersModuleImpl(),
             new WhitespaceModuleImpl(),
             new ArithmeticModuleImpl(),
+            new VariablesModuleImpl(),
+            new EqualityModuleImpl(),
             new ConditionsModuleImpl()
         };
 
@@ -58,16 +73,20 @@ public class ArithmeticModuleTests : TestBase
         var result = ExecuteCode(code, modules);
 
         // Assert
-        // Should be 14, not 20
+        // Should return 2.5
         var numberResult = (RealNumberImpl)result;
-        Assert.That(numberResult.GetValue(), Is.EqualTo(14).Within(1e-9));
+        Assert.That(numberResult.GetValue(), Is.EqualTo(2.5).Within(1e-9));
     }
 
     [Test]
-    public void Execute_WithParentheses_RespectsGrouping()
+    public void Execute_ComplexPolynomial_ComputesHigherOrderEquation()
     {
         // Arrange
-        var code = "(2 + 3) * 4";
+        var code = @"
+                let x = 2.5
+                let result = 3*x*x*x - 2*x*x + 5*x - 7
+                result
+            ";
         var modules = new ICoreModule[]
         {
             new IdentifierModuleImpl(),
@@ -75,6 +94,8 @@ public class ArithmeticModuleTests : TestBase
             new NumbersModuleImpl(),
             new WhitespaceModuleImpl(),
             new ArithmeticModuleImpl(),
+            new VariablesModuleImpl(),
+            new EqualityModuleImpl(),
             new ConditionsModuleImpl()
         };
 
@@ -82,8 +103,8 @@ public class ArithmeticModuleTests : TestBase
         var result = ExecuteCode(code, modules);
 
         // Assert
-        // Should be 20, not 14
+        // 3*(2.5)^3 - 2*(2.5)^2 + 5*2.5 - 7 = 46.875 - 12.5 + 12.5 - 7 = 39.375
         var numberResult = (RealNumberImpl)result;
-        Assert.That(numberResult.GetValue(), Is.EqualTo(20).Within(1e-9));
+        Assert.That(numberResult.GetValue(), Is.EqualTo(39.875).Within(1e-9));
     }
 }

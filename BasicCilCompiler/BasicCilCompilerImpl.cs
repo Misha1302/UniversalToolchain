@@ -1,6 +1,9 @@
-﻿using System.Reflection.Emit;
+﻿// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
+// ./BasicCilCompiler/BasicCilCompilerImpl.cs
+
+using System.Reflection.Emit;
 using BasicCore.ExecutorWrapper;
-using ExceptionsManager;
 using GrEmit;
 
 namespace BasicCilCompiler;
@@ -18,148 +21,193 @@ public class BasicCilCompilerImpl : IExecutor
         return main.Invoke(null, [])!;
     }
 
+    private string? ExtractLabelName(string methodName)
+    {
+        const string intrinsicMarker = "_!Intrinsic_";
+        var markerIndex = methodName.IndexOf(intrinsicMarker, StringComparison.Ordinal);
+        return markerIndex >= 0 ? methodName[(markerIndex + intrinsicMarker.Length)..] : null;
+    }
+
     private DynamicMethod CompileToOneMethod(List<(GroboIL, DynamicMethod)> methods)
     {
-        var method = new DynamicMethod("main", typeof(object), []);
-        var il = new GroboIL(method);
+        var mainMethod = new DynamicMethod("MainMethod", typeof(object), Type.EmptyTypes);
+        var il = new GroboIL(mainMethod);
 
-        // SSA: Создаем словарь для хранения SSA переменных
-        var ssaVariables = new Dictionary<string, GroboIL.Local>();
-        var ssaCounter = new Dictionary<string, int>();
+        // Стек для хранения значений во время выполнения
+        var localStack = il.DeclareLocal(typeof(List<object>));
 
-        // Словарь для меток
+        // Инициализация стека
+        il.Newobj(typeof(List<object>).GetConstructor(Type.EmptyTypes)!);
+        il.Stloc(localStack);
+
+        // Словарь для хранения меток
         var labels = new Dictionary<string, GroboIL.Label>();
 
-        // Функция для получения SSA имени переменной
-        string GetSSAName(string baseName)
+        // Предварительная обработка для создания меток
+        foreach (var (_, method) in methods)
         {
-            if (!ssaCounter.ContainsKey(baseName))
+            var labelName = ExtractLabelName(method.Name);
+            if (labelName != null) labels[labelName] = il.DefineLabel(Guid.NewGuid().ToString());
+        }
+
+        // Компиляция всех методов
+        foreach (var (_, method) in methods)
+        {
+            var labelName = ExtractLabelName(method.Name);
+
+            if (method.Name.StartsWith("Label_!Intrinsic"))
             {
-                ssaCounter[baseName] = 0;
-                return $"{baseName}_0";
+                // Отмечаем метку
+                il.MarkLabel(labels[labelName]);
             }
-
-            ssaCounter[baseName]++;
-            return $"{baseName}_{ssaCounter[baseName]}";
-        }
-
-        // Функция для создания SSA переменной
-        GroboIL.Local CreateSSAVariable(string baseName, Type type)
-        {
-            var ssaName = GetSSAName(baseName);
-            var local = il.DeclareLocal(type);
-            ssaVariables[ssaName] = local;
-            return local;
-        }
-
-        // Функция для получения текущей SSA переменной
-        GroboIL.Local GetCurrentSSAVariable(string baseName)
-        {
-            var currentVersion = ssaCounter.ContainsKey(baseName) ? ssaCounter[baseName] : 0;
-            var ssaName = $"{baseName}_{currentVersion}";
-
-            if (!ssaVariables.ContainsKey(ssaName))
-                throw new InvalidOperationException($"SSA variable {ssaName} not found");
-
-            return ssaVariables[ssaName];
-        }
-
-        // Обратная передача аргументов: стек для хранения аргументов в обратном порядке
-        var reverseArgsStack = new Stack<GroboIL.Local>();
-
-        foreach (var m in methods)
-        {
-            var name = m.Item2.Name;
-
-            if (!name.Contains("!Intrinsic"))
+            else if (method.Name.StartsWith("Goto_!Intrinsic"))
             {
-                // Обычный метод - обрабатываем с обратной передачей аргументов
-                var parameters = m.Item2.GetParameters();
-                var argsCount = parameters.Length;
-
-                // Помещаем аргументы в обратном порядке
-                var args = new GroboIL.Local[argsCount];
-                for (var i = 0; i < argsCount; i++)
-                {
-                    if (reverseArgsStack.Count == 0)
-                        Thrower.InvalidOpEx("Not enough arguments on reverse stack");
-
-                    args[i] = reverseArgsStack.Pop();
-                }
-
-                // Загружаем аргументы в обратном порядке
-                foreach (var arg in args) il.Ldloc(arg);
-
-                il.Call(m.Item2);
-
-                // Сохраняем результат в SSA переменную
-                if (m.Item2.ReturnType != typeof(void))
-                {
-                    var resultVar = CreateSSAVariable("result", m.Item2.ReturnType);
-                    il.Stloc(resultVar);
-                    reverseArgsStack.Push(resultVar); // Помещаем результат в стек для обратной передачи
-                }
-            }
-            else if (name.Contains("Goto_!Intrinsic"))
-            {
-                var labelName = name[(name.LastIndexOf('_') + 1)..];
-                if (!labels.ContainsKey(labelName))
-                    labels[labelName] = il.DefineLabel(labelName);
+                // Безусловный переход
                 il.Br(labels[labelName]);
             }
-            else if (name.Contains("Label_!Intrinsic"))
+            else if (method.Name.StartsWith("CondFGoto_!Intrinsic"))
             {
-                var labelName = name[(name.LastIndexOf('_') + 1)..];
-                if (!labels.ContainsKey(labelName))
-                    labels[labelName] = il.DefineLabel(labelName);
-                il.MarkLabel(labels[labelName]);
+                // Условный переход если false
 
-                // SSA: При входе в блок создаем новые версии переменных
-                var varsToUpdate = ssaVariables.Keys
-                    .Where(k => !k.EndsWith("_0")) // Сохраняем только начальные версии
-                    .ToList();
+                // Берем значение с вершины стека и сохраняем в локальную переменную
+                il.Ldloc(localStack);
+                il.Ldc_I4(0);
+                il.Call(typeof(List<object>).GetMethod("get_Item")!);
+                var conditionValue = il.DeclareLocal(typeof(object));
+                il.Stloc(conditionValue);
 
-                foreach (var varKey in varsToUpdate)
-                {
-                    var baseName = varKey.Substring(0, varKey.LastIndexOf('_'));
-                    var newVar = CreateSSAVariable(baseName, ssaVariables[varKey].Type);
+                // Удаляем значение из стека
+                il.Ldloc(localStack);
+                il.Ldc_I4(0);
+                il.Call(typeof(List<object>).GetMethod("RemoveAt")!);
 
-                    // φ-функция: копируем значение из предыдущей версии
-                    il.Ldloc(ssaVariables[varKey]);
-                    il.Stloc(newVar);
-                }
-            }
-            else if (name.Contains("CondFGoto_!Intrinsic"))
-            {
-                var labelName = name[(name.LastIndexOf('_') + 1)..];
-                if (!labels.ContainsKey(labelName))
-                    labels[labelName] = il.DefineLabel(labelName);
+                // Преобразуем значение к bool
+                il.Ldloc(conditionValue);
 
-                // Берем условие из стека обратных аргументов
-                if (reverseArgsStack.Count == 0)
-                    Thrower.InvalidOpEx("No condition on reverse stack for conditional goto");
+                // Создаем метки для преобразования
+                var isBoolLabel = il.DefineLabel(Guid.NewGuid().ToString());
+                var endConvertLabel = il.DefineLabel(Guid.NewGuid().ToString());
 
-                var conditionVar = reverseArgsStack.Pop();
-                il.Ldloc(conditionVar);
+                // Проверяем, является ли значение bool
+                il.Dup();
+                il.Isinst(typeof(bool));
+                il.Brtrue(isBoolLabel);
+
+                // Если не bool, преобразуем через Convert.ToBoolean
+                il.Call(typeof(Convert).GetMethod("ToBoolean", [typeof(object)])!);
+                il.Br(endConvertLabel);
+
+                // Если bool, распаковываем
+                il.MarkLabel(isBoolLabel);
+                il.Unbox_Any(typeof(bool));
+
+                il.MarkLabel(endConvertLabel);
+
+                // Теперь на стеке bool, используем для условного перехода
                 il.Brfalse(labels[labelName]);
             }
             else
             {
-                Thrower.InvalidOpEx($"Unknown method {name}");
+                // Обычный метод - вызываем его
+                CompileMethodCall(il, localStack, method);
             }
         }
 
-        // Возвращаем результат с вершины стека обратных аргументов
-        if (reverseArgsStack.Count > 0)
+        // Возвращаем результат с вершины стека (если есть)
+        il.Ldloc(localStack);
+        il.Call(typeof(List<object>).GetProperty("Count")!.GetGetMethod()!);
+        il.Ldc_I4(0);
+        var hasResult = il.DefineLabel(Guid.NewGuid().ToString());
+        il.Bgt(hasResult, false);
+
+        // Если стек пуст, возвращаем null
+        il.Ldnull();
+        il.Ret();
+
+        il.MarkLabel(hasResult);
+        il.Ldloc(localStack);
+        il.Ldc_I4(0);
+        il.Call(typeof(List<object>).GetMethod("get_Item")!);
+        il.Ret();
+
+        return mainMethod;
+    }
+
+    private void CompileMethodCall(GroboIL il, GroboIL.Local localStack, DynamicMethod method)
+    {
+        var parameters = method.GetParameters();
+        var paramCount = parameters.Length;
+
+        // Временные локальные переменные для хранения параметров
+        var paramLocals = new GroboIL.Local[paramCount];
+
+        // Сохраняем параметры из стека во временные переменные
+        for (var i = 0; i < paramCount; i++)
         {
-            var loc = reverseArgsStack.Pop();
-            il.Ldloc(loc);
-            if (loc.Type.IsValueType) il.Box(loc.Type);
+            il.Ldloc(localStack);
+            il.Ldc_I4(i);
+            il.Call(typeof(List<object>).GetMethod("get_Item")!);
+            paramLocals[i] = il.DeclareLocal(typeof(object));
+            il.Stloc(paramLocals[i]);
+        }
+
+        // Загружаем параметры в правильном порядке и преобразуем типы
+        for (var i = 0; i < paramCount; i++)
+        {
+            il.Ldloc(paramLocals[i]);
+            var paramType = parameters[i].ParameterType;
+
+            if (paramType.IsValueType)
+                il.Unbox_Any(paramType);
+            else if (paramType != typeof(object)) il.Castclass(paramType);
+        }
+
+        // Вызываем метод
+        if (method.IsStatic)
+        {
+            il.Call(method);
         }
         else
+        {
             il.Ldnull();
+            il.Call(method);
+        }
 
-        il.Ret();
-        return method;
+        // Обрабатываем возвращаемое значение
+        if (method.ReturnType != typeof(void))
+        {
+            // Упаковываем value types
+            if (method.ReturnType.IsValueType) il.Box(method.ReturnType);
+
+            // Сохраняем результат во временную переменную
+            var resultLocal = il.DeclareLocal(typeof(object));
+            il.Stloc(resultLocal);
+
+            // Удаляем использованные аргументы из стека
+            if (paramCount > 0)
+            {
+                il.Ldloc(localStack);
+                il.Ldc_I4(0);
+                il.Ldc_I4(paramCount);
+                il.Call(typeof(List<object>).GetMethod("RemoveRange")!);
+            }
+
+            // Добавляем результат в начало стека
+            il.Ldloc(localStack);
+            il.Ldc_I4(0);
+            il.Ldloc(resultLocal);
+            il.Call(typeof(List<object>).GetMethod("Insert")!);
+        }
+        else
+        {
+            // Для void методов просто удаляем аргументы
+            if (paramCount > 0)
+            {
+                il.Ldloc(localStack);
+                il.Ldc_I4(0);
+                il.Ldc_I4(paramCount);
+                il.Call(typeof(List<object>).GetMethod("RemoveRange")!);
+            }
+        }
     }
 }

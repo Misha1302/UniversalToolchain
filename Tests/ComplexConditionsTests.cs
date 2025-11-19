@@ -14,83 +14,26 @@ using WhitespacesModule;
 namespace Tests;
 
 [TestFixture]
-public class AdvancedArithmeticTests : TestBase
+public class ComplexConditionsTests : TestBase
 {
     [Test]
-    public void Execute_FloatingPointPrecision_HandlesDecimalsCorrectly()
+    public void Execute_NestedIfElseConditions_ReturnsCorrectBranch()
     {
         // Arrange
         var code = @"
-                let a = 0.1
-                let b = 0.2
-                let c = 0.3
-                (a + b) * 10 - c * 10
-            ";
-        var modules = new ICoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl(),
-            new ConditionsModuleImpl()
-        };
-
-        // Act
-        var result = ExecuteCode(code, modules);
-
-        // Assert
-        // (0.1 + 0.2) * 10 - 0.3 * 10 = 0.3 * 10 - 3 = 3 - 3 = 0
-        var numberResult = (RealNumberImpl)result;
-        Assert.That(numberResult.GetValue(), Is.EqualTo(0).Within(1e-9));
-    }
-
-    [Test]
-    public void Execute_LargeNumberOperations_HandlesCorrectly()
-    {
-        // Arrange
-        var code = @"
-                let big = 1000000
-                let veryBig = big * big
-                let huge = veryBig / big * 2
-                huge - big
-            ";
-        var modules = new ICoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl(),
-            new ConditionsModuleImpl()
-        };
-
-        // Act
-        var result = ExecuteCode(code, modules);
-
-        // Assert
-        // 1000000 * 1000000 = 1000000000000
-        // 1000000000000 / 1000000 * 2 = 1000000 * 2 = 2000000
-        // 2000000 - 1000000 = 1000000
-        var numberResult = (RealNumberImpl)result;
-        Assert.That(numberResult.GetValue(), Is.EqualTo(1000000).Within(1e-9));
-    }
-
-    [Test]
-    public void Execute_ComplexExpressionWithAllDataTypes_WorksCorrectly()
-    {
-        // Arrange
-        var code = @"
-                let intVal = 10
-                let decimalVal = 2.5
-                let negativeVal = -3
-                let zero = 0
+                let x = 15
+                let result = 0
                 
-                (intVal * decimalVal + negativeVal * 2) / (decimalVal - 1) + zero
+                if x > 10 (
+                    if x < 20
+                        result = 1
+                    else
+                        result = 2
+                )
+                else
+                    result = 3
+                
+                result
             ";
         var modules = new ICoreModule[]
         {
@@ -101,15 +44,99 @@ public class AdvancedArithmeticTests : TestBase
             new ArithmeticModuleImpl(),
             new VariablesModuleImpl(),
             new EqualityModuleImpl(),
-            new ConditionsModuleImpl()
+            new ConditionsModuleImpl(),
+            new ComparisonOperations()
         };
 
         // Act
         var result = ExecuteCode(code, modules);
 
         // Assert
-        // (10*2.5 + (-3)*2) / (2.5-1) + 0 = (25 - 6) / 1.5 = 19 / 1.5 = 12.666...
+        // x=15 is between 10 and 20, so result should be 1
         var numberResult = (RealNumberImpl)result;
-        Assert.That(numberResult.GetValue(), Is.EqualTo(19.0 / 1.5).Within(1e-9));
+        Assert.That(numberResult.GetValue(), Is.EqualTo(1).Within(1e-9));
+    }
+
+    [Test]
+    public void Execute_ComplexBooleanLogic_CombinesMultipleConditions()
+    {
+        // Arrange
+        var code = @"
+                let a = 5
+                let b = 10
+                let c = 15
+                let result = 0
+                
+                if (a < b) and (b < c)
+                    result = 1
+                else
+                    result = 0
+                
+                result
+            ";
+        var modules = new ICoreModule[]
+        {
+            new IdentifierModuleImpl(),
+            new ScopesModuleImpl(),
+            new NumbersModuleImpl(),
+            new WhitespaceModuleImpl(),
+            new ArithmeticModuleImpl(),
+            new VariablesModuleImpl(),
+            new EqualityModuleImpl(),
+            new ConditionsModuleImpl(),
+            new ComparisonOperations(),
+            new BooleanOperations()
+        };
+
+        // Act
+        var result = ExecuteCode(code, modules);
+
+        // Assert
+        // 5 < 10 and 10 < 15 is true, so result should be 1
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(1).Within(1e-9));
+    }
+
+    [Test]
+    public void Execute_ElifChain_SelectsCorrectCondition()
+    {
+        // Arrange
+        var code = @"
+                let score = 85
+                let grade = 0
+                
+                if score >= 90
+                    grade = 5
+                elif score >= 80
+                    grade = 4
+                elif score >= 70
+                    grade = 3
+                elif score >= 60
+                    grade = 2
+                else
+                    grade = 1
+                
+                grade
+            ";
+        var modules = new ICoreModule[]
+        {
+            new IdentifierModuleImpl(),
+            new ScopesModuleImpl(),
+            new NumbersModuleImpl(),
+            new WhitespaceModuleImpl(),
+            new ArithmeticModuleImpl(),
+            new VariablesModuleImpl(),
+            new EqualityModuleImpl(),
+            new ConditionsModuleImpl(),
+            new ComparisonOperations()
+        };
+
+        // Act
+        var result = ExecuteCode(code, modules);
+
+        // Assert
+        // score=85 should give grade=4
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(4).Within(1e-9));
     }
 }

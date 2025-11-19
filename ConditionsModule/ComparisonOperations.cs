@@ -22,9 +22,9 @@ public class ComparisonOperations : ICoreModule
         lexer.Configuration.TryAddPattern(new LexemePattern(@"\<",
             ExtensibleEnum<LexemeTag>.CreateOrGet("Less")));
         lexer.Configuration.TryAddPattern(new LexemePattern(@"\>\=",
-            ExtensibleEnum<LexemeTag>.CreateOrGet("GreaterOrEqual")));
+            ExtensibleEnum<LexemeTag>.CreateOrGet("GreaterOrEqual")), priority: -1);
         lexer.Configuration.TryAddPattern(new LexemePattern(@"\<\=",
-            ExtensibleEnum<LexemeTag>.CreateOrGet("LessOrEqual")));
+            ExtensibleEnum<LexemeTag>.CreateOrGet("LessOrEqual")), priority: -1);
     }
 
     public void InitParser(IParser parser)

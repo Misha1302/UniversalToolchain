@@ -1,5 +1,9 @@
+// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
+
 using ArithmeticModule;
 using BasicCore;
+using ConditionsModule;
 using EqualityModule;
 using IdentifierModule;
 using NumbersModule;
@@ -29,14 +33,16 @@ public class VariablesModuleTests : TestBase
             new WhitespaceModuleImpl(),
             new ArithmeticModuleImpl(),
             new VariablesModuleImpl(),
-            new EqualityModuleImpl()
+            new EqualityModuleImpl(),
+            new ConditionsModuleImpl()
         };
 
         // Act
         var result = ExecuteCode(code, modules);
 
         // Assert
-        Assert.That(result, Is.Not.Null);
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(10).Within(1e-9));
     }
 
     [Test]
@@ -56,14 +62,16 @@ public class VariablesModuleTests : TestBase
             new WhitespaceModuleImpl(),
             new ArithmeticModuleImpl(),
             new VariablesModuleImpl(),
-            new EqualityModuleImpl()
+            new EqualityModuleImpl(),
+            new ConditionsModuleImpl()
         };
 
         // Act
         var result = ExecuteCode(code, modules);
 
         // Assert
-        Assert.That(result, Is.Not.Null);
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(10).Within(1e-9));
     }
 
     [Test]
@@ -83,13 +91,15 @@ public class VariablesModuleTests : TestBase
             new WhitespaceModuleImpl(),
             new ArithmeticModuleImpl(),
             new VariablesModuleImpl(),
-            new EqualityModuleImpl()
+            new EqualityModuleImpl(),
+            new ConditionsModuleImpl()
         };
 
         // Act
         var result = ExecuteCode(code, modules);
 
         // Assert
-        Assert.That(result, Is.Not.Null);
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(15).Within(1e-9));
     }
 }

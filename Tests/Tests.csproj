@@ -32,6 +32,7 @@
         <ProjectReference Include="..\ConditionsModule\ConditionsModule.csproj"/>
         <ProjectReference Include="..\CSharpInteropModule\CSharpInteropModule.csproj"/>
         <ProjectReference Include="..\IdentifierModule\IdentifierModule.csproj"/>
+        <ProjectReference Include="..\LabelsModule\LabelsModule.csproj"/>
         <ProjectReference Include="..\NumbersModule\NumbersModule.csproj"/>
         <ProjectReference Include="..\ScopesModule\ScopesModule.csproj"/>
         <ProjectReference Include="..\SemicolonAsNewLineModule\SemicolonAsNewLineModule.csproj"/>

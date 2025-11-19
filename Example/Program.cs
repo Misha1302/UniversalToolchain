@@ -1,7 +1,6 @@
 // This is an independent project of an individual developer. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 
-using BasicCilCompiler;
 using BytecodeDynamicMethodsCompiler;
 using ConditionsModule;
 using EqualityModule;
@@ -15,7 +14,7 @@ var core = new BasicCoreImpl(
     () => new BasicParserImpl(),
     () => new BasicBytecodeTranslatorImpl(),
     () => new BytecodeDynamicMethodsCompilerImpl(),
-    () => new BasicCilCompilerImpl(),
+    () => new BasicInterpreterImpl(),
     [
         new IdentifierModuleImpl(),
         new ScopesModuleImpl(),
@@ -39,13 +38,53 @@ var core = new BasicCoreImpl(
 // TODO: fix parser configuration
 var result = core.Execute(
     """
-    let a = 1
-    let b = -3
-    let c = 2
-    let discriminant = b * b - 4 * a * c
-    let root1 = (0-b + discriminant) / (2 * a)
-    let root2 = (0-b - discriminant) / (2 * a)
-    root1 + root2
+    let a = 5
+                   let b = 3  
+                   let c = 8
+                   let d = 1
+                   let e = 2
+                   let temp = 0
+                   let swapped = 1
+                   let i = 0
+                   
+                   @outer_loop:
+                   if swapped == 1 goto @end
+                       Main.Print(a)
+                       Main.Print(b)
+                       Main.Print(c)
+                       Main.Print(d)
+                       Main.Print(e)
+                       Main.Print(0)
+                       swapped = 0
+                       
+                       if a > b
+                           temp = a
+                           a = b
+                           b = temp
+                           swapped = 1
+                       
+                       if b > c
+                           temp = b
+                           b = c
+                           c = temp
+                           swapped = 1
+                       
+                       if c > d
+                           temp = c
+                           c = d
+                           d = temp
+                           swapped = 1
+                       
+                       if d > e
+                           temp = d
+                           d = e
+                           e = temp
+                           swapped = 1
+                       
+                       goto @outer_loop
+                   @end:
+                   
+                   a + b + c + d + e
     """
 );
 

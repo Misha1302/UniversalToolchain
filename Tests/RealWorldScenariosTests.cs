@@ -1,5 +1,9 @@
+// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
+
 using ArithmeticModule;
 using BasicCore;
+using ConditionsModule;
 using EqualityModule;
 using IdentifierModule;
 using NumbersModule;
@@ -32,14 +36,19 @@ public class RealWorldScenariosTests : TestBase
             new WhitespaceModuleImpl(),
             new ArithmeticModuleImpl(),
             new VariablesModuleImpl(),
-            new EqualityModuleImpl()
+            new EqualityModuleImpl(),
+            new ConditionsModuleImpl()
         };
 
         // Act
         var result = ExecuteCode(code, modules);
 
         // Assert
-        Assert.That(result, Is.Not.Null);
+        // total = 100 * 3 = 300
+        // discount = 300 * 0.1 = 30
+        // finalPrice = 300 - 30 = 270
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(270).Within(1e-9));
     }
 
     [Test]
@@ -47,10 +56,9 @@ public class RealWorldScenariosTests : TestBase
     {
         // Arrange
         var code = @"
-                let radius = 5
-                let pi = 3.14159
+                let radius = 7
+                let pi = 3.141592653589793
                 let area = pi * radius * radius
-                let circumference = 2 * pi * radius
                 area
             ";
         var modules = new ICoreModule[]
@@ -61,14 +69,17 @@ public class RealWorldScenariosTests : TestBase
             new WhitespaceModuleImpl(),
             new ArithmeticModuleImpl(),
             new VariablesModuleImpl(),
-            new EqualityModuleImpl()
+            new EqualityModuleImpl(),
+            new ConditionsModuleImpl()
         };
 
         // Act
         var result = ExecuteCode(code, modules);
 
         // Assert
-        Assert.That(result, Is.Not.Null);
+        // area = π * r² = 3.141592653589793 * 49 ≈ 153.93804
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(Math.PI * 49).Within(1e-9));
     }
 
     [Test]
@@ -96,13 +107,19 @@ public class RealWorldScenariosTests : TestBase
             new WhitespaceModuleImpl(),
             new ArithmeticModuleImpl(),
             new VariablesModuleImpl(),
-            new EqualityModuleImpl()
+            new EqualityModuleImpl(),
+            new ConditionsModuleImpl()
         };
 
         // Act
         var result = ExecuteCode(code, modules);
 
         // Assert
-        Assert.That(result, Is.Not.Null);
+        // overtimePay = 10 * (1000/160) * 1.5 = 10 * 6.25 * 1.5 = 93.75
+        // grossSalary = 1000 + 93.75 = 1093.75
+        // taxAmount = 1093.75 * 0.2 = 218.75
+        // netSalary = 1093.75 - 218.75 = 875
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(875).Within(1e-9));
     }
 }

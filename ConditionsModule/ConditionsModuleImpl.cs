@@ -23,10 +23,10 @@ public class ConditionsModuleImpl : ICoreModule
     public void InitParser(IParser parser)
     {
         _parser = parser;
-        parser.Configuration.NodeCreators.Add(-5f, new IfNodeCreator());
-        parser.Configuration.NodeCreators.Add(-5f, new ElifNodeCreator());
-        parser.Configuration.NodeCreators.Add(-5f, new ElseNodeCreator());
-        parser.Configuration.NodeCreators.Add(-4.9f, new CondNodesCombiner());
+        parser.Configuration.NodeCreators.Add(15f, new IfNodeCreator());
+        parser.Configuration.NodeCreators.Add(15f, new ElifNodeCreator());
+        parser.Configuration.NodeCreators.Add(15f, new ElseNodeCreator());
+        parser.Configuration.NodeCreators.Add(16f, new CondNodesCombiner());
     }
 
     public void InitTranslator(IBytecodeTranslator translator)

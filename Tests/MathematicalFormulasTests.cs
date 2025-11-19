@@ -1,5 +1,9 @@
+// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
+
 using ArithmeticModule;
 using BasicCore;
+using ConditionsModule;
 using EqualityModule;
 using IdentifierModule;
 using NumbersModule;
@@ -33,7 +37,8 @@ public class MathematicalFormulasTests : TestBase
             new WhitespaceModuleImpl(),
             new ArithmeticModuleImpl(),
             new VariablesModuleImpl(),
-            new EqualityModuleImpl()
+            new EqualityModuleImpl(),
+            new ConditionsModuleImpl()
         };
 
         // Act
@@ -41,7 +46,8 @@ public class MathematicalFormulasTests : TestBase
 
         // Assert
         // For x² - 3x + 2 = 0, roots are 2 and 1, sum = 3
-        Assert.That(result, Is.Not.Null);
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(3).Within(1e-9));
     }
 
     [Test]
@@ -63,7 +69,8 @@ public class MathematicalFormulasTests : TestBase
             new WhitespaceModuleImpl(),
             new ArithmeticModuleImpl(),
             new VariablesModuleImpl(),
-            new EqualityModuleImpl()
+            new EqualityModuleImpl(),
+            new ConditionsModuleImpl()
         };
 
         // Act
@@ -71,7 +78,8 @@ public class MathematicalFormulasTests : TestBase
 
         // Assert
         // 10*5 + 0.5*2*25 = 50 + 25 = 75
-        Assert.That(result, Is.Not.Null);
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(75).Within(1e-9));
     }
 
     [Test]
@@ -93,7 +101,8 @@ public class MathematicalFormulasTests : TestBase
             new WhitespaceModuleImpl(),
             new ArithmeticModuleImpl(),
             new VariablesModuleImpl(),
-            new EqualityModuleImpl()
+            new EqualityModuleImpl(),
+            new ConditionsModuleImpl()
         };
 
         // Act
@@ -101,6 +110,7 @@ public class MathematicalFormulasTests : TestBase
 
         // Assert
         // area/circumference = (πr²)/(2πr) = r/2 = 3.5
-        Assert.That(result, Is.Not.Null);
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(3.5).Within(1e-9));
     }
 }
