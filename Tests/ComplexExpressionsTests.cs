@@ -40,7 +40,8 @@ public class ComplexExpressionsTests : TestBase
         var result = ExecuteCode(code, modules);
 
         // Assert
-        Assert.That(result, Is.Not.Null);
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(55).Within(1e-9));
     }
 
     [Test]
@@ -70,7 +71,8 @@ public class ComplexExpressionsTests : TestBase
         var result = ExecuteCode(code, modules);
 
         // Assert
-        Assert.That(result, Is.Not.Null);
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(6).Within(1e-9));
     }
 
     [Test]
@@ -98,6 +100,7 @@ public class ComplexExpressionsTests : TestBase
         var result = ExecuteCode(code, modules);
 
         // Assert
-        Assert.That(result, Is.Not.Null);
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(18).Within(1e-9));
     }
 }

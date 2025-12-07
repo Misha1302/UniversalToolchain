@@ -1,0 +1,257 @@
+Документация проекта Wist (Wire Interpreter Stack)
+🏗 ОБЗОР АРХИТЕКТУРЫ
+
+Многослойный конвейер выполнения:
+text
+
+Исходный код → Лексер → Лексемы → Парсер → AST → Транслятор → Байткод → Компилятор → Динамические методы → Исполнитель → Результат
+
+Ключевые компоненты:
+
+    BasicCoreImpl - координатор всего процесса выполнения
+
+    ICoreModule - контракт для функциональных модулей
+
+    Фабричный паттерн для инверсии зависимостей
+
+🔄 СЛОИ ВЫПОЛНЕНИЯ
+1. Лексический анализ (Lexer)
+
+    ILexer/BasicLexerImpl - преобразование текста в лексемы
+
+    LexerConfiguration - конфигурация паттернов
+
+    Проблема: Квадратичная сложность O(n²) из-за FirstStarts
+
+2. Синтаксический анализ (Parser)
+
+    IParser/BasicParserImpl - построение AST из лексем
+
+    IAstNodeCreator - создатели узлов AST с приоритетами
+
+    AstNode - узел AST с тегами и динамическими данными
+
+3. Трансляция в байткод (Translator)
+
+    IBytecodeTranslator/BasicBytecodeTranslatorImpl - преобразование AST в байткод
+
+    IAstVisitor - посетители для генерации байткода
+
+    Bytecode/BytecodeInstruction - представление байткода
+
+4. Компиляция в динамические методы (Compiler)
+
+    IBytecodeDynamicMethodsCompiler/BytecodeDynamicMethodsCompilerImpl - компиляция в .NET DynamicMethod
+
+    IDynamicMethodConvertable - операции, конвертируемые в методы
+
+    IlCodeGenerator - утилиты генерации IL кода
+
+5. Исполнение (Executor)
+
+    IExecutor - контракт исполнителя
+
+    BasicInterpreterImpl - интерпретатор с управлением через метки
+
+    BasicCilCompilerImpl - JIT-компилятор в один DynamicMethod
+
+🔌 СИСТЕМА МОДУЛЕЙ
+ICoreModule - Универсальный контракт расширения
+csharp
+
+void InitLexer(ILexer), InitParser(IParser), InitTranslator(IBytecodeTranslator), etc.
+string ProcessText(string), List<LexemeValue> ProcessLexemes(List<LexemeValue>), etc.
+
+Категории модулей:
+
+Базовые модули языка:
+
+    IdentifierModuleImpl - идентификаторы (переменные, функции)
+
+    ScopesModuleImpl - области видимости и скобки
+
+    NumbersModuleImpl - числовые литералы
+
+    ArithmeticModuleImpl - арифметические операции
+
+Модули управления потоком:
+
+    ConditionsModuleImpl - if/elif/else конструкции
+
+    LabelsModuleImpl - метки и goto
+
+    ComparisonOperations - операции сравнения
+
+    BooleanOperations - булевы операции
+
+Модули работы с данными:
+
+    VariablesModuleImpl - переменные и присваивание
+
+    EqualityModuleImpl - оператор присваивания =
+
+Модули интеграции:
+
+    CSharpInteropModuleImpl - вызов статических методов C#
+
+Сервисные модули:
+
+    WhitespaceModuleImpl - игнорирование пробелов
+
+    SemicolonAsNewLineModuleImpl - точки с запятой как разделители
+
+    ExecutorDebugLoggerImpl - подробное логирование
+
+    ParserConfigurationModuleImpl - дамп/загрузка конфигурации парсера
+
+🌳 AST СИСТЕМА
+AstNode - Фундаментальный узел
+csharp
+
+public class AstNode {
+    AstNodeType NodeType;           // Тип из ExtensibleEnum
+    LexemeValue? LexemeValue;       // Исходная лексема
+    ChildrenCollection Children;    // Дочерние узлы (с автоматическим Parent)
+    DynamicCollection Data;         // Произвольные данные
+    HashSet<string> _currentTags;   // Теги для управления парсингом
+}
+
+ExtensibleEnum<TTag> - Расширяемые перечисления
+
+    Динамическое создание типов во время выполнения
+
+    EnumGenerator - централизованное управление
+
+Процесс построения AST:
+
+    Создание узлов "Unknown" из лексем
+
+    Установка типов на основе лексем
+
+    Рекурсивное применение создателей узлов
+
+    Валидация через TreeValidator
+
+🔢 СИСТЕМА ТИПОВ И ЗНАЧЕНИЙ
+Числовая система
+
+    RealNumberImpl - основной числовой тип (double)
+
+    Реализует ICustomNumber<TSelf, TValue> с Generic Math интерфейсами:
+
+        IAddable<TSelf>, ISubAble<TSelf>, IMulAble<TSelf>, IDivisible<TSelf>
+
+Система переменных
+
+    VariablesContainer<T> - глобальное хранилище (статическое - проблема!)
+
+    VariableReference<T> - ссылки для присваивания
+
+    IGettable<TValue>/ISettable<TValue> - контракты доступа
+
+Интеграция с C#
+
+    MethodsFinder - поиск статических методов по полному имени
+
+    TypesFinder - рекурсивное сканирование сборок
+
+⚙️ БАЙТКОД И КОМПИЛЯЦИЯ
+Представление байткода
+
+    Bytecode - список инструкций
+
+    BytecodeInstruction - инструкция с тегами и операциями с приоритетами
+
+Динамические методы
+
+    IDynamicMethodConvertable - конвертируемые операции
+
+    DynamicMethodConvertableWrapperImpl - создание DynamicMethod с вычисляемыми типами
+
+Intrinsic-функции
+
+    Label_!Intrinsic_* - метки для переходов
+
+    Goto_!Intrinsic_* - безусловные переходы
+
+    CondFGoto_!Intrinsic_* - условные переходы если false
+
+🛠 ИНФРАСТРУКТУРА
+Система исключений
+
+    Thrower - централизованная обработка
+
+    AssertAlways - проверки с автоматическими сообщениями
+
+    Проблема: Избыточное использование вместо нормальной обработки ошибок
+
+Утилиты
+
+    ListExtensions.FirstStarts - поиск в списках (проблема производительности)
+
+    LevelCollection<TKey, TValue> - коллекции с приоритетами
+
+    TreeValidator - валидация AST
+
+Тестирование
+
+    TestBase - базовый класс для тестов
+
+    Тесты для всех слоев и модулей
+
+    Поддержка обоих исполнителей (интерпретатор и компилятор)
+
+🚀 РУКОВОДСТВО РАЗРАБОТЧИКА
+Добавление нового модуля
+
+    Реализовать ICoreModule с инициализацией компонентов
+
+    Создать создателей узлов (IAstNodeCreator) с правильными приоритетами
+
+    Создать посетителей AST (IAstVisitor) для генерации байткода
+
+    Зарегистрировать модуль в BasicCoreImpl
+
+Пример создания посетителя:
+csharp
+
+public class MyAstVisitor : IAstVisitor {
+    public void TryVisit(BytecodeVisitorData data) {
+        if (data.Node.NodeType != ExtensibleEnum<AstNodeTag>.Get("MyNode")) return;
+        
+        foreach (var child in data.Node.Children)
+            data.BytecodeTranslator.Translate(child);
+            
+        var method = new DynamicMethodConvertableWrapperImpl();
+        method.Make($"MyOperation", argsCount, (il, context) => {
+            il.LdArgsAndCall(targetMethod, i => { il.Ldarg(i); return context.Args[i]; });
+            il.Ret();
+        }, context => context.Stack[0]);
+        
+        data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
+    }
+}
+
+Отладка и логирование
+
+    ExecutorDebugLoggerImpl - логирование всех этапов выполнения
+
+    ParserConfigurationModuleImpl - анализ порядка создателей узлов
+
+    Thrower.AssertAlways - проверки с детальной информацией
+
+Критические проблемы архитектуры:
+
+    Глобальное состояние: VariablesContainer<T> препятствует параллельному выполнению
+
+    Обработка ошибок: Ее нет
+    
+Рекомендации по оптимизации:
+
+    Внедрить систему пулинга для часто создаваемых объектов
+
+    Добавить специализированные типы исключений
+    
+    Внедрить dependency injection для устранения глобального состояния
+
+Эта документация предоставляет полное понимание архитектуры Wist для новых разработчиков, охватывая все ключевые аспекты системы от лексического анализа до выполнения, а также выявляя основные проблемы и направления для улучшения.

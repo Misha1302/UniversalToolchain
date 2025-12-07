@@ -39,10 +39,8 @@ public class BasicParserImplTests
     {
         // Arrange
         var validator = new TreeValidator();
-        var root = new AstNode(ExtensibleEnum<AstNodeTag>.CreateOrGet("Scope"), null, new List<AstNode>
-        {
-            new(ExtensibleEnum<AstNodeTag>.CreateOrGet("Number"), null, new List<AstNode>())
-        });
+        var root = new AstNode(ExtensibleEnum<AstNodeTag>.CreateOrGet("Scope"), null,
+            [new AstNode(ExtensibleEnum<AstNodeTag>.CreateOrGet("Number"), null, [])]);
 
         // Act
         var isValid = validator.IsValidTree(root);

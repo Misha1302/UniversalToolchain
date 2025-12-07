@@ -5,10 +5,13 @@ using System.Diagnostics;
 using ArithmeticModule;
 using BasicCore;
 using ConditionsModule;
+using CSharpInteropModule;
 using EqualityModule;
 using IdentifierModule;
+using LabelsModule;
 using NumbersModule;
 using ScopesModule;
+using SemicolonAsNewLineModule;
 using VariablesModule;
 using WhitespacesModule;
 
@@ -22,12 +25,14 @@ public class PerformanceTests : TestBase
     {
         // Arrange
         var code = @"
-                let result = 0
-                let i = 0
-                while i < 100
-                    result = result + i
-                    i = i + 1
-                result
+            let result = 0
+            let i = 0
+            @start:
+                result = result + i
+                i = i + 1
+                if i < 100
+                    goto @start
+            result
             ";
         var modules = new ICoreModule[]
         {
@@ -35,10 +40,15 @@ public class PerformanceTests : TestBase
             new ScopesModuleImpl(),
             new NumbersModuleImpl(),
             new WhitespaceModuleImpl(),
+            new SemicolonAsNewLineModuleImpl(),
             new ArithmeticModuleImpl(),
+            new CSharpInteropModuleImpl(),
+            new LabelsModuleImpl(),
             new VariablesModuleImpl(),
+            new EqualityModuleImpl(),
+            new ConditionsModuleImpl(),
             new ComparisonOperations(),
-            new EqualityModuleImpl()
+            new BooleanOperations(),
         };
 
         var stopwatch = new Stopwatch();
@@ -49,7 +59,8 @@ public class PerformanceTests : TestBase
         stopwatch.Stop();
 
         // Assert
-        Assert.That(result, Is.Not.Null);
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(4950).Within(1e-9));
         Assert.That(
             stopwatch.ElapsedMilliseconds / Executors.Count,
             Is.LessThan(1000)
@@ -85,7 +96,8 @@ public class PerformanceTests : TestBase
         stopwatch.Stop();
 
         // Assert
-        Assert.That(result, Is.Not.Null);
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(591.2).Within(1e-9));
         Assert.That(
             stopwatch.ElapsedMilliseconds / Executors.Count,
             Is.LessThan(500)

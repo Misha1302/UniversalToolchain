@@ -34,58 +34,18 @@ var core = new BasicCoreImpl(
     ]
 );
 
-
+var code = @"
+            let result = 0
+            let i = 0
+            @start:
+                result = result + i
+                i = i + 1
+                if i < 100
+                    goto @start
+            result
+            ";
 // TODO: fix parser configuration
-var result = core.Execute(
-    """
-    let a = 5
-                   let b = 3  
-                   let c = 8
-                   let d = 1
-                   let e = 2
-                   let temp = 0
-                   let swapped = 1
-                   let i = 0
-                   
-                   @outer_loop:
-                   if swapped == 1 goto @end
-                       Main.Print(a)
-                       Main.Print(b)
-                       Main.Print(c)
-                       Main.Print(d)
-                       Main.Print(e)
-                       Main.Print(0)
-                       swapped = 0
-                       
-                       if a > b
-                           temp = a
-                           a = b
-                           b = temp
-                           swapped = 1
-                       
-                       if b > c
-                           temp = b
-                           b = c
-                           c = temp
-                           swapped = 1
-                       
-                       if c > d
-                           temp = c
-                           c = d
-                           d = temp
-                           swapped = 1
-                       
-                       if d > e
-                           temp = d
-                           d = e
-                           e = temp
-                           swapped = 1
-                       
-                       goto @outer_loop
-                   @end:
-                   
-                   a + b + c + d + e
-    """
+var result = core.Execute(code
 );
 
 Console.WriteLine(result);

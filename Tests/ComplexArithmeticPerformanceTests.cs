@@ -53,7 +53,8 @@ public class ComplexArithmeticPerformanceTests : TestBase
         stopwatch.Stop();
 
         // Assert
-        Assert.That(result, Is.Not.Null);
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.GreaterThan(0).Within(1e-9));
         Assert.That(stopwatch.ElapsedMilliseconds, Is.LessThan(2000));
     }
 
@@ -104,7 +105,8 @@ public class ComplexArithmeticPerformanceTests : TestBase
         stopwatch.Stop();
 
         // Assert
-        Assert.That(result, Is.Not.Null);
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(621).Within(1e-9));
         Assert.That(stopwatch.ElapsedMilliseconds, Is.LessThan(1000));
     }
 }

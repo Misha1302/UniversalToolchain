@@ -42,7 +42,8 @@ public class ModuleCombinationsTests : TestBase
         var result = ExecuteCode(code, modules);
 
         // Assert
-        Assert.That(result, Is.Not.Null);
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(13.5).Within(1e-9));
     }
 
     [Test]
@@ -70,6 +71,7 @@ public class ModuleCombinationsTests : TestBase
         var result = ExecuteCode(code, modules);
 
         // Assert
-        Assert.That(result, Is.Not.Null);
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(54).Within(1e-9));
     }
 }
