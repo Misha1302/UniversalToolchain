@@ -34,18 +34,18 @@ var core = new BasicCoreImpl(
     ]
 );
 
-var code = @"
-            let result = 0
-            let i = 0
-            @start:
-                result = result + i
-                i = i + 1
-                if i < 100
-                    goto @start
-            result
-            ";
 // TODO: fix parser configuration
-var result = core.Execute(code
+var result = core.Execute(
+    """
+    let result = 0
+    let i = 0
+    @start:
+        result = result + i
+        i = i + 1
+        if i < 100
+            goto @start
+    result
+    """
 );
 
 Console.WriteLine(result);
