@@ -31,7 +31,7 @@ var core = new BasicCoreImpl(
         new BooleanOperations(),
         new ExecutorDebugLoggerImpl(),
         new ParserConfigurationModuleImpl(ActionType.DumpConfiguration),
-        new LexerConfigurationModuleImpl(ActionType.ReadConfiguration)
+        new LexerConfigurationModuleImpl(ActionType.DumpConfiguration)
     ]
 );
 
