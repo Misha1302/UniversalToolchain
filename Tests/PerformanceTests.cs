@@ -48,7 +48,7 @@ public class PerformanceTests : TestBase
             new EqualityModuleImpl(),
             new ConditionsModuleImpl(),
             new ComparisonOperations(),
-            new BooleanOperations(),
+            new BooleanOperations()
         };
 
         var stopwatch = new Stopwatch();

@@ -30,21 +30,14 @@ var core = new BasicCoreImpl(
         new ComparisonOperations(),
         new BooleanOperations(),
         new ExecutorDebugLoggerImpl(),
-        new ParserConfigurationModuleImpl(ActionType.Dump)
+        new ParserConfigurationModuleImpl(ActionType.DumpConfiguration)
     ]
 );
 
 // TODO: fix parser configuration
 var result = core.Execute(
     """
-    let result = 0
-    let i = 0
-    @start:
-        result = result + i
-        i = i + 1
-        if i < 100
-            goto @start
-    result
+    2 + 3 * 4
     """
 );
 

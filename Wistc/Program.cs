@@ -30,7 +30,7 @@ void Main(Options options)
         modules.Add(new ParserConfigurationModuleImpl(
             options.NeedToReadParserConfiguration
                 ? ActionType.ReadConfiguration
-                : ActionType.Dump)
+                : ActionType.DumpConfiguration)
         );
 
 
