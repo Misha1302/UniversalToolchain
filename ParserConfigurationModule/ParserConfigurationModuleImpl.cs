@@ -1,8 +1,7 @@
-﻿﻿// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
+﻿// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 
 using System.Diagnostics;
-using System.Text;
 using BasicCore;
 using BasicCore.ParserWrapper;
 using ExceptionsManager;
@@ -24,18 +23,20 @@ public class ParserConfigurationModuleImpl(ActionType actionType, string path = 
 
     public void InitParser(IParser parser)
     {
-        if (_isInitialized)
-            return;
-
+        if (_isInitialized) return;
         _isInitialized = true;
-        
-        if (actionType == ActionType.DumpConfiguration)
+
+        switch (actionType)
         {
-            DumpConfiguration(parser);
-        }
-        else
-        {
-            LoadConfiguration(parser);
+            case ActionType.DumpConfiguration:
+                DumpConfiguration(parser);
+                break;
+            case ActionType.ReadConfiguration:
+                LoadConfiguration(parser);
+                break;
+            default:
+                Thrower.InvalidOpEx($"Unknown action type: {actionType}");
+                break;
         }
     }
 
@@ -43,14 +44,14 @@ public class ParserConfigurationModuleImpl(ActionType actionType, string path = 
     {
         try
         {
-            var configurationText = SerializeConfiguration(parser);
+            var configurationText = new ConfigurationDumper(parser).Dump();
             File.WriteAllText(path, configurationText);
             Debug.WriteLine($"Parser configuration dumped to {Path.GetFullPath(path)}");
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"Failed to dump parser configuration: {ex.Message}");
-            throw;
+            Thrower.InvalidOpEx($"Failed to dump parser configuration: {ex.Message}");
         }
     }
 
@@ -65,231 +66,273 @@ public class ParserConfigurationModuleImpl(ActionType actionType, string path = 
             }
 
             var configText = File.ReadAllText(path);
-            LoadConfigurationFromText(parser, configText);
-            
+            new ConfigurationLoader(parser).Load(configText);
             Debug.WriteLine($"Parser configuration loaded from {Path.GetFullPath(path)}");
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"Failed to load parser configuration: {ex.Message}");
-            throw new InvalidOperationException($"Failed to load parser configuration: {ex.Message}", ex);
+            Thrower.InvalidOpEx($"Failed to load parser configuration: {ex.Message}");
         }
     }
 
-    private string SerializeConfiguration(IParser parser)
+    // Вспомогательные классы для инкапсуляции логики
+    private class ConfigurationDumper(IParser parser)
     {
-        var builder = new StringBuilder();
-        builder.AppendLine("# Parser Configuration Dump");
-        builder.AppendLine("# Generated: " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
-        builder.AppendLine("# Format: <priority>|<type_full_name>|<instance_hash>|<ast_node_type>");
-        builder.AppendLine("# Instance hash helps identify different instances of the same type");
-        builder.AppendLine();
-        
-        // Собираем все существующие NodeCreators
-        var allCreators = new List<(float Priority, IAstNodeCreator Creator)>();
-        
-        foreach (var level in parser.Configuration.NodeCreators)
+        public string Dump()
         {
-            foreach (var creator in level.Value)
-            {
-                allCreators.Add((level.Key, creator));
-            }
+            var creators = CollectAllCreators();
+            return GenerateDumpContent(creators);
         }
-        
-        // Группируем по типу для генерации уникальных идентификаторов
-        var typeGroups = allCreators.GroupBy(x => x.Creator.GetType()).ToList();
-        var instanceIdentifiers = new Dictionary<IAstNodeCreator, string>();
-        
-        foreach (var group in typeGroups)
+
+        private List<(float Priority, IAstNodeCreator Creator)> CollectAllCreators()
         {
-            var creators = group.ToList();
-            if (creators.Count == 1)
+            var result = new List<(float, IAstNodeCreator)>();
+
+            foreach (var level in parser.Configuration.NodeCreators)
             {
-                instanceIdentifiers[creators[0].Creator] = "0";
-            }
-            else
-            {
-                for (int i = 0; i < creators.Count; i++)
+                foreach (var creator in level.Value)
                 {
-                    instanceIdentifiers[creators[i].Creator] = i.ToString();
+                    result.Add((level.Key, creator));
                 }
             }
+
+            return result;
         }
-        
-        // Записываем в файл
-        foreach (var (priority, creator) in allCreators.OrderBy(x => x.Priority))
+
+        private string GenerateDumpContent(List<(float Priority, IAstNodeCreator Creator)> creators)
         {
-            var type = creator.GetType();
-            var instanceId = instanceIdentifiers[creator];
-            var astNodeType = creator.AstNodeType?.ToString() ?? "null";
-            
-            builder.AppendLine($"{priority:F2}|{type.FullName}|{instanceId}|{astNodeType}");
+            var instanceIdentifiers = CreateInstanceIdentifiers(creators);
+
+            var lines = new List<string>
+            {
+                "# Parser Configuration Dump",
+                $"# Generated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}",
+                "# Format: <priority>|<type_full_name>|<instance_hash>|<ast_node_type>",
+                "# Instance hash helps identify different instances of the same type",
+                ""
+            };
+
+            lines.AddRange(creators
+                .OrderBy(x => x.Priority)
+                .Select(x => FormatCreatorLine(x, instanceIdentifiers)));
+
+            return string.Join(Environment.NewLine, lines);
         }
-        
-        return builder.ToString();
+
+        private Dictionary<IAstNodeCreator, string> CreateInstanceIdentifiers(
+            List<(float Priority, IAstNodeCreator Creator)> creators)
+        {
+            var result = new Dictionary<IAstNodeCreator, string>();
+
+            foreach (var group in creators.GroupBy(x => x.Creator.GetType()))
+            {
+                var items = group.ToList();
+                for (var i = 0; i < items.Count; i++)
+                {
+                    result[items[i].Creator] = i.ToString();
+                }
+            }
+
+            return result;
+        }
+
+        private string FormatCreatorLine(
+            (float Priority, IAstNodeCreator Creator) item,
+            Dictionary<IAstNodeCreator, string> instanceIdentifiers)
+        {
+            var type = item.Creator.GetType();
+            var instanceId = instanceIdentifiers[item.Creator];
+            var astNodeType = item.Creator.AstNodeType.ToString();
+
+            return $"{item.Priority:F2}|{type.FullName}|{instanceId}|{astNodeType}";
+        }
     }
 
-    private void LoadConfigurationFromText(IParser parser, string configText)
+    private class ConfigurationLoader
     {
-        // Собираем все существующие NodeCreators в список
-        var allExistingCreators = new List<IAstNodeCreator>();
-        var existingCreatorsByType = new Dictionary<Type, List<IAstNodeCreator>>();
-        
-        foreach (var level in parser.Configuration.NodeCreators)
+        private readonly IParser _parser;
+
+        public ConfigurationLoader(IParser parser)
         {
-            foreach (var creator in level.Value)
-            {
-                allExistingCreators.Add(creator);
-                var type = creator.GetType();
-                if (!existingCreatorsByType.ContainsKey(type))
-                    existingCreatorsByType[type] = new List<IAstNodeCreator>();
-                existingCreatorsByType[type].Add(creator);
-            }
+            _parser = parser;
         }
-        
-        // Парсим конфигурационный файл
-        var lines = configText.Split('\n');
-        var newConfiguration = new List<(float Priority, IAstNodeCreator Creator)>();
-        var usedCreators = new HashSet<IAstNodeCreator>();
-        
-        foreach (var line in lines)
+
+        public void Load(string configText)
         {
-            var trimmedLine = line.Trim();
-            
-            // Пропускаем пустые строки и комментарии
-            if (string.IsNullOrEmpty(trimmedLine) || trimmedLine.StartsWith('#'))
-                continue;
-            
-            var parts = trimmedLine.Split('|', 4);
-            if (parts.Length < 3)
+            var lines = ParseConfigurationLines(configText);
+            var newConfiguration = BuildNewConfiguration(lines);
+            ApplyNewConfiguration(newConfiguration);
+        }
+
+        private List<ConfigLine> ParseConfigurationLines(string configText)
+        {
+            var lines = new List<ConfigLine>();
+            var lineNumber = 0;
+
+            foreach (var rawLine in configText.Split('\n'))
             {
-                Debug.WriteLine($"Warning: Invalid format in line: {trimmedLine}");
-                continue;
-            }
-            
-            if (!float.TryParse(parts[0].Trim(), out float priority))
-            {
-                Debug.WriteLine($"Warning: Invalid priority in line: {trimmedLine}");
-                continue;
-            }
-            
-            var typeName = parts[1].Trim();
-            var instanceId = parts.Length > 2 ? parts[2].Trim() : "0";
-            var astNodeTypeStr = parts.Length > 3 ? parts[3].Trim() : "";
-            
-            // Находим соответствующий тип
-            var type = Type.GetType(typeName);
-            if (type == null)
-            {
-                // Пробуем найти тип в загруженных сборках
-                type = AppDomain.CurrentDomain.GetAssemblies()
-                    .SelectMany(a => a.GetTypes())
-                    .FirstOrDefault(t => t.FullName == typeName);
-            }
-            
-            if (type == null)
-            {
-                Debug.WriteLine($"Warning: Type not found: {typeName}");
-                continue;
-            }
-            
-            // Получаем список экземпляров этого типа
-            if (!existingCreatorsByType.TryGetValue(type, out var typeCreators) || typeCreators.Count == 0)
-            {
-                Debug.WriteLine($"Warning: No instances found for type: {typeName}");
-                continue;
-            }
-            
-            // Выбираем конкретный экземпляр
-            IAstNodeCreator? selectedCreator = null;
-            
-            if (typeCreators.Count == 1)
-            {
-                selectedCreator = typeCreators[0];
-            }
-            else
-            {
-                // Пытаемся сопоставить по instanceId
-                if (int.TryParse(instanceId, out int index) && index >= 0 && index < typeCreators.Count)
+                lineNumber++;
+                var line = rawLine.Trim();
+
+                if (string.IsNullOrEmpty(line) || line.StartsWith('#'))
+                    continue;
+
+                var parts = line.Split('|', 4);
+                if (parts.Length < 3)
                 {
-                    selectedCreator = typeCreators[index];
+                    Debug.WriteLine($"Warning: Invalid format in line {lineNumber}: {line}");
+                    continue;
                 }
-                else
+
+                if (!float.TryParse(parts[0].Trim(), out var priority))
                 {
-                    // Если не нашли по индексу, пробуем найти по AstNodeType
-                    if (!string.IsNullOrEmpty(astNodeTypeStr))
+                    Debug.WriteLine($"Warning: Invalid priority in line {lineNumber}: {line}");
+                    continue;
+                }
+
+                lines.Add(new ConfigLine(
+                    priority,
+                    parts[1].Trim(),
+                    parts.Length > 2 ? parts[2].Trim() : "0",
+                    parts.Length > 3 ? parts[3].Trim() : ""
+                ));
+            }
+
+            return lines;
+        }
+
+        private List<(float Priority, IAstNodeCreator Creator)> BuildNewConfiguration(List<ConfigLine> lines)
+        {
+            var existingCreators = CollectExistingCreators();
+            var usedCreators = new HashSet<IAstNodeCreator>();
+            var result = new List<(float Priority, IAstNodeCreator Creator)>();
+
+            foreach (var line in lines)
+            {
+                var creator = FindMatchingCreator(line, existingCreators, usedCreators);
+                if (creator != null)
+                {
+                    result.Add((line.Priority, creator));
+                    usedCreators.Add(creator);
+                }
+            }
+
+            // Add remaining creators with their original priorities
+            AddRemainingCreators(result, usedCreators, existingCreators);
+            return result;
+        }
+
+        private Dictionary<Type, List<IAstNodeCreator>> CollectExistingCreators()
+        {
+            var result = new Dictionary<Type, List<IAstNodeCreator>>();
+
+            foreach (var level in _parser.Configuration.NodeCreators)
+            {
+                foreach (var creator in level.Value)
+                {
+                    var type = creator.GetType();
+                    if (!result.ContainsKey(type))
+                        result[type] = new List<IAstNodeCreator>();
+                    result[type].Add(creator);
+                }
+            }
+
+            return result;
+        }
+
+        private IAstNodeCreator? FindMatchingCreator(
+            ConfigLine line,
+            Dictionary<Type, List<IAstNodeCreator>> existingCreators,
+            HashSet<IAstNodeCreator> usedCreators)
+        {
+            var type = FindType(line.TypeName);
+            if (type == null || !existingCreators.TryGetValue(type, out var typeCreators))
+                return null;
+
+            return SelectCreator(line, typeCreators, usedCreators);
+        }
+
+        private Type? FindType(string typeName)
+        {
+            return Type.GetType(typeName) ??
+                   AppDomain.CurrentDomain.GetAssemblies()
+                       .SelectMany(a => a.GetTypes())
+                       .FirstOrDefault(t => t.FullName == typeName);
+        }
+
+        private IAstNodeCreator? SelectCreator(
+            ConfigLine line,
+            List<IAstNodeCreator> typeCreators,
+            HashSet<IAstNodeCreator> usedCreators)
+        {
+            // Try by instance ID
+            if (int.TryParse(line.InstanceId, out var index) && index >= 0 && index < typeCreators.Count)
+            {
+                var creator = typeCreators[index];
+                if (!usedCreators.Contains(creator))
+                    return creator;
+            }
+
+            // Try by AstNodeType
+            if (!string.IsNullOrEmpty(line.AstNodeType))
+            {
+                var creator = typeCreators.FirstOrDefault(c =>
+                    !usedCreators.Contains(c) &&
+                    c.AstNodeType.ToString() == line.AstNodeType);
+                if (creator != null)
+                    return creator;
+            }
+
+            // Fallback to first available
+            return typeCreators.FirstOrDefault(c => !usedCreators.Contains(c));
+        }
+
+        private void AddRemainingCreators(
+            List<(float Priority, IAstNodeCreator Creator)> result,
+            HashSet<IAstNodeCreator> usedCreators,
+            Dictionary<Type, List<IAstNodeCreator>> existingCreators)
+        {
+            var originalPriorities = GetOriginalPriorities();
+
+            foreach (var typeCreators in existingCreators.Values)
+            {
+                foreach (var creator in typeCreators)
+                {
+                    if (!usedCreators.Contains(creator))
                     {
-                        selectedCreator = typeCreators.FirstOrDefault(c => 
-                            c.AstNodeType?.ToString() == astNodeTypeStr);
-                    }
-                    
-                    // Если всё еще не нашли, берем первый доступный
-                    if (selectedCreator == null)
-                    {
-                        selectedCreator = typeCreators.FirstOrDefault(c => !usedCreators.Contains(c));
+                        var priority = originalPriorities.GetValueOrDefault(creator, 0f);
+                        result.Add((priority, creator));
                     }
                 }
             }
-            
-            if (selectedCreator == null || usedCreators.Contains(selectedCreator))
-            {
-                Debug.WriteLine($"Warning: Could not find available creator for type: {typeName}");
-                continue;
-            }
-            
-            newConfiguration.Add((priority, selectedCreator));
-            usedCreators.Add(selectedCreator);
         }
-        
-        // Добавляем оставшиеся (не упомянутые в файле) креаторы с их исходными приоритетами
-        // Но сначала нужно восстановить исходные приоритеты
-        var originalPriorities = new Dictionary<IAstNodeCreator, float>();
-        foreach (var level in parser.Configuration.NodeCreators)
-        {
-            foreach (var creator in level.Value)
-            {
-                originalPriorities[creator] = level.Key;
-            }
-        }
-        
-        foreach (var creator in allExistingCreators)
-        {
-            if (!usedCreators.Contains(creator))
-            {
-                var priority = originalPriorities.GetValueOrDefault(creator, 0f);
-                newConfiguration.Add((priority, creator));
-            }
-        }
-        
-        // Очищаем старую конфигурацию и добавляем новую
-        parser.Configuration.NodeCreators.Clear();
-        
-        foreach (var (priority, creator) in newConfiguration)
-        {
-            parser.Configuration.NodeCreators.Add(priority, creator);
-        }
-    }
 
-    /// <summary>
-    /// Валидирует конфигурационный файл без применения изменений
-    /// </summary>
-    public bool ValidateConfigurationFile()
-    {
-        try
+        private Dictionary<IAstNodeCreator, float> GetOriginalPriorities()
         {
-            if (!File.Exists(path))
-                return false;
-            
-            var configText = File.ReadAllText(path);
-            
-            // Просто проверяем, что файл можно распарсить
-            var parser = new BasicParser.BasicParserImpl();
-            LoadConfigurationFromText(parser, configText);
-            return true;
+            var result = new Dictionary<IAstNodeCreator, float>();
+
+            foreach (var level in _parser.Configuration.NodeCreators)
+            {
+                foreach (var creator in level.Value)
+                {
+                    result[creator] = level.Key;
+                }
+            }
+
+            return result;
         }
-        catch
+
+        private void ApplyNewConfiguration(List<(float Priority, IAstNodeCreator Creator)> newConfiguration)
         {
-            return false;
+            _parser.Configuration.NodeCreators.Clear();
+
+            foreach (var (priority, creator) in newConfiguration)
+            {
+                _parser.Configuration.NodeCreators.Add(priority, creator);
+            }
         }
+
+        private record ConfigLine(float Priority, string TypeName, string InstanceId, string AstNodeType);
     }
 }
