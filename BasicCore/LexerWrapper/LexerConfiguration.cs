@@ -10,6 +10,7 @@ public class LexerConfiguration(List<LexemeType> lexemesToIgnore)
 {
     private readonly LevelCollection<float, LexemePattern> _patterns = new();
 
+    public IReadOnlyLevelCollection<float, LexemePattern> LevelCollectionPatterns => _patterns;
     public IReadOnlyList<LexemePattern> Patterns => _patterns.SelectMany(x => x.Value).ToList();
     public List<LexemeType> LexemesToIgnore { get; } = lexemesToIgnore;
 

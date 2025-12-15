@@ -42,7 +42,7 @@ public class BasicLexerImplTests
         // Arrange
         var lexer = new BasicLexerImpl();
         lexer.Configuration.AddPattern(
-            new LexemePattern(@"[a-zA-Z_][a-zA-Z0-9_]*",
+            new LexemePattern("[a-zA-Z_][a-zA-Z0-9_]*",
                 ExtensibleEnum<LexemeTag>.CreateOrGet("Identifier")),
             priority: 100
         );
@@ -67,11 +67,11 @@ public class BasicLexerImplTests
         // Arrange
         var lexer = new BasicLexerImpl();
         lexer.Configuration.AddPattern(
-            new LexemePattern(@" ", ExtensibleEnum<LexemeTag>.CreateOrGet("Space")),
+            new LexemePattern(" ", ExtensibleEnum<LexemeTag>.CreateOrGet("Space")),
             true
         );
         lexer.Configuration.AddPattern(
-            new LexemePattern(@"[a-zA-Z]+", ExtensibleEnum<LexemeTag>.CreateOrGet("Word")),
+            new LexemePattern("[a-zA-Z]+", ExtensibleEnum<LexemeTag>.CreateOrGet("Word")),
             priority: 100
         );
 

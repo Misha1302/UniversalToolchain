@@ -5,7 +5,12 @@ using System.Collections;
 
 namespace BasicCore.ParserWrapper;
 
-public class LevelCollection<TKey, TValue> : IEnumerable<KeyValuePair<TKey, List<TValue>>> where TKey : notnull
+public interface IReadOnlyLevelCollection<TKey, TValue> : IEnumerable<KeyValuePair<TKey, List<TValue>>> where TKey : notnull
+{
+    public List<TValue> this[TKey key] { get; }
+}
+
+public class LevelCollection<TKey, TValue> : IReadOnlyLevelCollection<TKey, TValue> where TKey : notnull
 {
     private readonly SortedDictionary<TKey, List<TValue>> _map = new();
 

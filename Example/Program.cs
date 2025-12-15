@@ -30,14 +30,16 @@ var core = new BasicCoreImpl(
         new ComparisonOperations(),
         new BooleanOperations(),
         new ExecutorDebugLoggerImpl(),
-        new ParserConfigurationModuleImpl(ActionType.DumpConfiguration)
+        new ParserConfigurationModuleImpl(ActionType.DumpConfiguration),
+        new LexerConfigurationModuleImpl(ActionType.ReadConfiguration)
     ]
 );
 
 // TODO: fix parser configuration
 var result = core.Execute(
     """
-    2 + 3 * 4
+    let a = 5
+    a
     """
 );
 
