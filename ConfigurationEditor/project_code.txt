@@ -1,0 +1,3524 @@
+# Код проекта: ConfigurationEditor
+
+
+================================================================================
+ФАЙЛ: .gitignore
+================================================================================
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+
+================================================================================
+ФАЙЛ: src/App.css
+================================================================================
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.main-content {
+  flex: 1;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.95);
+  margin: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  overflow: auto;
+}
+
+.empty-state {
+  text-align: center;
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 2rem;
+}
+
+.welcome-header {
+  margin-bottom: 3rem;
+}
+
+.welcome-header h1 {
+  margin-bottom: 1rem;
+  color: #2d3748;
+  font-size: 2.5rem;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  color: #718096;
+  font-size: 1.1rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+  margin: 3rem 0;
+}
+
+.feature-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  transition: transform 0.3s, box-shadow 0.3s;
+  border: 1px solid #e2e8f0;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.feature-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.feature-card h3 {
+  margin-bottom: 1rem;
+  color: #2d3748;
+}
+
+.feature-card p {
+  color: #718096;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.feature-btn {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: transform 0.2s;
+}
+
+.feature-btn:hover {
+  transform: scale(1.05);
+}
+
+.quick-actions {
+  margin-top: 3rem;
+  padding: 2rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.quick-actions h3 {
+  margin-bottom: 1.5rem;
+  color: #2d3748;
+  text-align: center;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.quick-btn {
+  padding: 1rem 2rem;
+  background: white;
+  color: #667eea;
+  border: 2px solid #667eea;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.quick-btn:hover {
+  background: #667eea;
+  color: white;
+}
+
+.editor-container {
+  height: calc(100vh - 180px);
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.footer {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1rem 2rem;
+  margin-top: auto;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.footer-links {
+  display: flex;
+  gap: 2rem;
+  font-size: 0.9rem;
+}
+
+.footer-links span {
+  opacity: 0.9;
+  transition: opacity 0.2s;
+}
+
+.footer-links span:hover {
+  opacity: 1;
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding: 1rem;
+    margin: 0.5rem;
+  }
+  
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .footer-content {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .footer-links {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .header-center {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .search-box {
+    max-width: 100%;
+  }
+}
+
+/* Загрузочный экран */
+.loading-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s ease-in-out infinite;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Основной контейнер */
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+
+.main-content {
+  flex: 1;
+  padding: 1.5rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Экран приветствия */
+.welcome-screen {
+  background: white;
+  border-radius: 12px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.welcome-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.welcome-header h1 {
+  color: #2d3748;
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  color: #718096;
+  font-size: 1.1rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.upload-section {
+  margin: 2rem 0;
+  padding: 2rem;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.upload-section h2 {
+  color: #2d3748;
+  margin-bottom: 1rem;
+}
+
+.file-examples {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.example {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.example h4 {
+  margin-bottom: 1rem;
+  color: #2d3748;
+}
+
+.example pre {
+  background: #1a202c;
+  color: #cbd5e0;
+  padding: 1rem;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.quick-start {
+  margin-top: 2rem;
+  padding: 2rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.quick-start h3 {
+  margin-bottom: 1.5rem;
+  color: #2d3748;
+}
+
+.quick-buttons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.quick-btn {
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.quick-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* Экран редактора */
+.editor-screen {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  height: calc(100vh - 180px);
+  display: flex;
+  flex-direction: column;
+}
+
+.editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.editor-header h2 {
+  color: #2d3748;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.file-stats {
+  font-size: 1rem;
+  color: #718096;
+  font-weight: normal;
+  margin-left: 0.5rem;
+}
+
+.editor-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.editor-actions .action-btn {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.editor-actions .action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.editor-actions .action-btn.export {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.editor-actions .action-btn.export:hover {
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.no-config {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #718096;
+  font-size: 1.2rem;
+}
+
+/* Футер */
+.footer {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1rem 1.5rem;
+  margin-top: auto;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.footer-stats {
+  display: flex;
+  gap: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.footer-stats span {
+  opacity: 0.9;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .main-content {
+    padding: 1rem;
+  }
+  
+  .welcome-header h1 {
+    font-size: 2rem;
+  }
+  
+  .editor-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .editor-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .footer-content {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .footer-stats {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
+
+================================================================================
+ФАЙЛ: src/components/ConfigurationTable/ConfigurationTable.css
+================================================================================
+
+.configuration-table-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.table-actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.action-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.add-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.add-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.export-btn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+}
+
+.export-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.table-stats {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  color: #4a5568;
+  font-size: 0.9rem;
+  background: white;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.delete-btn {
+  padding: 0.25rem 0.75rem;
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.delete-btn:hover {
+  background: #dc2626;
+  color: white;
+}
+
+.empty-table {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+  color: #718096;
+  background: white;
+  border-radius: 8px;
+  border: 2px dashed #e2e8f0;
+}
+
+.empty-table p {
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+.pattern-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pattern-text {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.85rem;
+  background: #f8fafc;
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.regex-error {
+  color: #dc2626;
+  cursor: help;
+  font-size: 1.1rem;
+}
+
+.base64-code {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.8rem;
+  background: #f8fafc;
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  color: #4a5568;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* AG Grid кастомизация */
+.ag-theme-alpine {
+  --ag-header-background-color: #f8fafc;
+  --ag-header-foreground-color: #2d3748;
+  --ag-border-color: #e2e8f0;
+  --ag-row-hover-color: rgba(102, 126, 234, 0.1);
+  --ag-font-size: 14px;
+  --ag-font-family: inherit;
+  --ag-border-radius: 6px;
+}
+
+.ag-header-cell {
+  font-weight: 600;
+  border-right: 1px solid var(--ag-border-color);
+}
+
+.ag-header-cell:last-child {
+  border-right: none;
+}
+
+.ag-cell {
+  padding: 0.75rem;
+  border-right: 1px solid var(--ag-border-color);
+  display: flex;
+  align-items: center;
+}
+
+.ag-cell:last-child {
+  border-right: none;
+}
+
+.ag-row {
+  border-bottom: 1px solid var(--ag-border-color);
+}
+
+.ag-row:hover {
+  background-color: var(--ag-row-hover-color);
+}
+
+.ag-paging-panel {
+  border-top: 1px solid var(--ag-border-color);
+  padding: 0.75rem;
+  background: #f8fafc;
+}
+
+
+================================================================================
+ФАЙЛ: src/components/EditorPanel/EditorPanel.css
+================================================================================
+
+.editor-panel {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1rem;
+    background: white;
+}
+
+.editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.editor-content {
+    min-height: 200px;
+}
+
+================================================================================
+ФАЙЛ: src/components/FileUploader/FileUploader.css
+================================================================================
+
+.file-uploader {
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 3rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: white;
+  margin: 1rem 0;
+}
+
+.file-uploader:hover {
+  border-color: #667eea;
+  background: rgba(102, 126, 234, 0.05);
+}
+
+.file-uploader.drag-active {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.upload-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.upload-icon {
+  font-size: 3rem;
+  opacity: 0.7;
+}
+
+.file-uploader h3 {
+  margin: 0;
+  color: #2d3748;
+  font-size: 1.25rem;
+}
+
+.file-uploader p {
+  margin: 0;
+  color: #718096;
+}
+
+.file-types {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.file-type {
+  padding: 0.5rem 1rem;
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: #4a5568;
+}
+
+
+================================================================================
+ФАЙЛ: src/components/Header/Header.css
+================================================================================
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-left .logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 0;
+  background: linear-gradient(90deg, #ff7e5f, #feb47b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.header-center {
+  display: flex;
+  flex: 1;
+  gap: 2rem;
+  margin: 0 2rem;
+  align-items: center;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.25rem;
+  border-radius: 8px;
+}
+
+.tab {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.8);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.tab:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+}
+
+.tab.active {
+  background: white;
+  color: #667eea;
+  font-weight: 500;
+}
+
+.badge {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border-radius: 10px;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.75rem;
+}
+
+.tab.active .badge {
+  background: #667eea;
+  color: white;
+}
+
+.search-box {
+  flex: 1;
+  max-width: 300px;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 0.9rem;
+}
+
+.search-input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.search-input:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.header-right {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.example-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.btn-primary {
+  background: #4CAF50;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #45a049;
+}
+
+.btn-danger {
+  background: #f44336;
+  color: white;
+}
+
+.btn-danger:hover {
+  background: #d32f2f;
+}
+
+.btn-example {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  font-size: 0.8rem;
+  padding: 0.4rem 0.8rem;
+}
+
+.btn-example:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+
+================================================================================
+ФАЙЛ: src/components/ValidationPanel/ValidationPanel.css
+================================================================================
+
+.validation-panel {
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 2px solid;
+}
+
+.validation-panel.valid {
+  border-color: #10b981;
+  background-color: rgba(16, 185, 129, 0.1);
+}
+
+.validation-panel.has-errors {
+  border-color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.validation-panel.has-warnings {
+  border-color: #f59e0b;
+  background-color: rgba(245, 158, 11, 0.1);
+}
+
+.validation-header {
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.validation-summary {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 500;
+}
+
+.summary-icon {
+  font-size: 1.25rem;
+}
+
+.valid .summary-icon {
+  color: #10b981;
+}
+
+.has-errors .summary-icon {
+  color: #ef4444;
+}
+
+.has-warnings .summary-icon {
+  color: #f59e0b;
+}
+
+.validation-errors {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.validation-error {
+  padding: 0.75rem;
+  border-radius: 6px;
+  background: white;
+  border-left: 4px solid;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.validation-error:hover {
+  transform: translateX(2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.validation-error.error {
+  border-left-color: #ef4444;
+}
+
+.validation-error.warning {
+  border-left-color: #f59e0b;
+}
+
+.error-header {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.error-type {
+  font-weight: 600;
+}
+
+.validation-error.error .error-type {
+  color: #ef4444;
+}
+
+.validation-error.warning .error-type {
+  color: #f59e0b;
+}
+
+.error-field, .error-row {
+  color: #6b7280;
+}
+
+.error-message {
+  color: #374151;
+  line-height: 1.4;
+}
+
+
+================================================================================
+ФАЙЛ: src/index.css
+================================================================================
+
+/* Reset и базовые стили */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  /* Цветовая схема */
+  --primary-color: #2563eb;
+  --secondary-color: #7c3aed;
+  --success-color: #10b981;
+  --warning-color: #f59e0b;
+  --error-color: #ef4444;
+  --background-color: #ffffff;
+  --surface-color: #f8fafc;
+  --border-color: #e2e8f0;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  
+  /* Тени */
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  
+  /* Размеры */
+  --border-radius: 6px;
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  background-color: var(--background-color);
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+/* Утилитные классы */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-md);
+}
+
+.text-error {
+  color: var(--error-color);
+}
+
+.text-success {
+  color: var(--success-color);
+}
+
+.text-warning {
+  color: var(--warning-color);
+}
+
+/* Прокрутка */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
+/* Анимации */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(-20px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Интерактивные элементы */
+button {
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+input, textarea, select {
+  font-family: inherit;
+  font-size: inherit;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  transition: border-color 0.2s;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Классы для состояний */
+.loading {
+  position: relative;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 2px solid var(--border-color);
+  border-top-color: var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Уведомления */
+.toast {
+  font-family: inherit;
+}
+
+/* Вспомогательные классы */
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.text-mono {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.flex {
+  display: flex;
+}
+
+.flex-col {
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-center {
+  justify-content: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.gap-1 {
+  gap: 0.25rem;
+}
+
+.gap-2 {
+  gap: 0.5rem;
+}
+
+.gap-3 {
+  gap: 1rem;
+}
+
+.mt-1 {
+  margin-top: 0.25rem;
+}
+
+.mt-2 {
+  margin-top: 0.5rem;
+}
+
+.mt-3 {
+  margin-top: 1rem;
+}
+
+.mb-1 {
+  margin-bottom: 0.25rem;
+}
+
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+
+.mb-3 {
+  margin-bottom: 1rem;
+}
+
+.p-1 {
+  padding: 0.25rem;
+}
+
+.p-2 {
+  padding: 0.5rem;
+}
+
+.p-3 {
+  padding: 1rem;
+}
+
+.border {
+  border: 1px solid var(--border-color);
+}
+
+.rounded {
+  border-radius: var(--border-radius);
+}
+
+.shadow {
+  box-shadow: var(--shadow-sm);
+}
+
+.shadow-md {
+  box-shadow: var(--shadow-md);
+}
+
+
+================================================================================
+ФАЙЛ: index.html
+================================================================================
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>configurationeditor</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+
+
+================================================================================
+ФАЙЛ: eslint.config.js
+================================================================================
+
+import js from '@eslint/js'
+import globals from 'globals'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
+import tseslint from 'typescript-eslint'
+import { defineConfig, globalIgnores } from 'eslint/config'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      js.configs.recommended,
+      tseslint.configs.recommended,
+      reactHooks.configs.flat.recommended,
+      reactRefresh.configs.vite,
+    ],
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+    },
+  },
+])
+
+
+================================================================================
+ФАЙЛ: package.json
+================================================================================
+
+{
+  "name": "configurationeditor",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.3.6",
+    "@mui/material": "^7.3.6",
+    "ag-grid-community": "^35.0.0",
+    "ag-grid-react": "^35.0.0",
+    "js-base64": "^3.7.8",
+    "lodash-es": "^4.17.21",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-dropzone": "^14.3.8",
+    "react-hot-toast": "^2.6.0",
+    "react-virtualized-auto-sizer": "^1.0.26",
+    "react-window": "^2.2.3",
+    "regexp-tree": "^0.1.27",
+    "regexpp": "^3.2.0",
+    "zustand": "^5.0.9"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.1",
+    "typescript": "~5.9.3",
+    "vite": "^7.2.4"
+  }
+}
+
+
+================================================================================
+ФАЙЛ: tsconfig.json
+================================================================================
+
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noFallthroughCasesInSwitch": false,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@components/*": ["src/components/*"],
+      "@utils/*": ["src/utils/*"],
+      "@hooks/*": ["src/hooks/*"],
+      "@types/*": ["src/types/*"],
+      "@stores/*": ["src/stores/*"]
+    },
+    "types": ["vite/client"]
+  },
+  "include": ["src", "vite.config.ts"],
+  "references": []
+}
+
+
+================================================================================
+ФАЙЛ: README.md
+================================================================================
+
+# React + TypeScript + Vite
+
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+
+Currently, two official plugins are available:
+
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+
+## React Compiler
+
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+
+## Expanding the ESLint configuration
+
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+
+```js
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+
+      // Remove tseslint.configs.recommended and replace with this
+      tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      tseslint.configs.stylisticTypeChecked,
+
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```
+
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```
+
+
+================================================================================
+ФАЙЛ: make_single_file.py
+================================================================================
+
+#!/usr/bin/env python3
+import os
+from pathlib import Path
+
+def quick_collect(root_dir='.', output_file='project_code.txt'):
+    """Быстрый сборщик - игнорирует все ненужное"""
+    root = Path(root_dir).resolve()
+    output = Path(output_file)
+    
+    # Все что нужно игнорировать
+    IGNORE = {
+        # Директории
+        'node_modules', '.git', '.vscode', '.idea',
+        'dist', 'build', '.next', '.nuxt', '.astro',
+        'coverage', '__pycache__', '.cache', 'public',
+        'static', 'assets', 'images', 'fonts',
+        
+        # Файлы
+        'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml',
+        'bun.lockb', 'composer.lock', 'Gemfile.lock',
+        'go.sum', 'Cargo.lock', '.DS_Store', 'Thumbs.db',
+        '*.log', '.env.local', '.env.production',
+        
+        # Расширения
+        '.png', '.jpg', '.jpeg', '.gif', '.svg',
+        '.woff', '.woff2', '.ttf', '.eot', '.otf',
+        '.mp4', '.mp3', '.wav', '.zip', '.tar',
+        '.gz', '.rar', '.exe', '.dll', '.so',
+        '.dylib', '.pdf', '.doc', '.docx',
+        '.map', '.snap', '.min.js', '.min.css',
+    }
+    
+    files = []
+    for file_path in root.rglob('*'):
+        if file_path.is_file():
+            skip = False
+            
+            # Проверяем директории в пути
+            for part in file_path.parts:
+                if part in IGNORE:
+                    skip = True
+                    break
+            
+            # Проверяем файлы
+            if file_path.name in IGNORE:
+                skip = True
+            
+            # Проверяем расширения
+            if file_path.suffix.lower() in IGNORE:
+                skip = True
+            
+            # Пропускаем скрытые файлы
+            if file_path.name.startswith('.'):
+                if file_path.name not in ['.env', '.gitignore']:
+                    skip = True
+            
+            # Пропускаем большие файлы
+            if file_path.stat().st_size > 2 * 1024 * 1024:
+                skip = True
+            
+            if not skip:
+                files.append(file_path)
+    
+    # Сортируем
+    files.sort(key=lambda x: (x.suffix, str(x)))
+    
+    # Записываем
+    with open(output, 'w', encoding='utf-8') as f:
+        f.write(f"# Код проекта: {root.name}\n\n")
+        
+        for file_path in files:
+            rel_path = file_path.relative_to(root)
+            f.write(f"\n{'='*80}\n")
+            f.write(f"ФАЙЛ: {rel_path}\n")
+            f.write(f"{'='*80}\n\n")
+            
+            try:
+                content = file_path.read_text(encoding='utf-8')
+                f.write(content)
+            except:
+                try:
+                    content = file_path.read_text(encoding='cp1251')
+                    f.write(content)
+                except:
+                    f.write("[БИНАРНЫЙ ФАЙЛ]\n")
+            
+            f.write("\n")
+    
+    print(f"✅ Собрано {len(files)} файлов в {output}")
+
+if __name__ == '__main__':
+    import sys
+    root = sys.argv[1] if len(sys.argv) > 1 else '.'
+    output = sys.argv[2] if len(sys.argv) > 2 else 'project_code.txt'
+    quick_collect(root, output)
+
+
+================================================================================
+ФАЙЛ: src/hooks/useConfiguration.ts
+================================================================================
+
+import { useConfigStore } from '@/stores/configStore';
+import { ConfigType, ConfigRow } from '@/types/config';
+
+export function useConfiguration() {
+  const {
+    updateRow,
+    addRow,
+    deleteRow,
+    getCurrentConfig,
+    getFilteredRows,
+    activeTab,
+  } = useConfigStore();
+
+  const currentConfig = getCurrentConfig();
+  const rows = getFilteredRows(activeTab);
+
+  return {
+    currentConfig,
+    rows,
+    activeTab,
+    updateRow: (rowId: string, updates: Partial<ConfigRow>) =>
+      updateRow(activeTab, rowId, updates),
+    addRow: () => addRow(activeTab),
+    deleteRow: (rowId: string) => deleteRow(activeTab, rowId),
+  };
+}
+
+================================================================================
+ФАЙЛ: src/hooks/useValidation.ts
+================================================================================
+
+import { useCallback } from 'react';
+import { ConfigRow, ValidationError } from '@/types/config';
+import { validateLexerRow, validateParserRow } from '@/services/regexValidator';
+
+export function useValidation() {
+  const validateRow = useCallback((row: ConfigRow): ValidationError[] => {
+    const errors: ValidationError[] = [];
+    
+    // Проверка приоритета для всех типов
+    if (typeof row.priority !== 'number' || isNaN(row.priority)) {
+      errors.push({
+        rowId: row.id,
+        field: 'priority',
+        message: 'Приоритет должен быть числом',
+        severity: 'error'
+      });
+    } else if (row.priority < -1000000 || row.priority > 1000000) {
+      errors.push({
+        rowId: row.id,
+        field: 'priority',
+        message: 'Приоритет должен быть в диапазоне от -1000000 до 1000000',
+        severity: 'error'
+      });
+    }
+    
+    // Специфичные проверки
+    if ('type_full_name' in row) {
+      // Parser row
+      const parserErrors = validateParserRow(row);
+      parserErrors.forEach(message => {
+        errors.push({
+          rowId: row.id,
+          field: 'type_full_name',
+          message,
+          severity: 'error'
+        });
+      });
+    } else if ('decodedPattern' in row) {
+      // Lexer row
+      const lexerErrors = validateLexerRow(row);
+      lexerErrors.forEach(message => {
+        errors.push({
+          rowId: row.id,
+          field: 'decodedPattern',
+          message,
+          severity: 'error'
+        });
+      });
+    }
+    
+    return errors;
+  }, []);
+  
+  const validateAllRows = useCallback((rows: ConfigRow[]): ValidationError[] => {
+    const errors: ValidationError[] = [];
+    
+    rows.forEach(row => {
+      const rowErrors = validateRow(row);
+      errors.push(...rowErrors);
+    });
+    
+    // Проверка дубликатов приоритетов
+    const priorityMap = new Map<number, string[]>();
+    rows.forEach(row => {
+      if (!priorityMap.has(row.priority)) {
+        priorityMap.set(row.priority, []);
+      }
+      priorityMap.get(row.priority)!.push(row.id);
+    });
+    
+    priorityMap.forEach((ids, priority) => {
+      if (ids.length > 1) {
+        errors.push({
+          rowId: ids[0],
+          field: 'priority',
+          message: `Дублирующийся приоритет ${priority} в ${ids.length} строках`,
+          severity: 'warning'
+        });
+      }
+    });
+    
+    return errors;
+  }, [validateRow]);
+  
+  const getErrorSummary = useCallback((errors: ValidationError[]) => {
+    const summary = {
+      errors: errors.filter(e => e.severity === 'error').length,
+      warnings: errors.filter(e => e.severity === 'warning').length,
+      hasErrors: false,
+      hasWarnings: false
+    };
+    
+    summary.hasErrors = summary.errors > 0;
+    summary.hasWarnings = summary.warnings > 0;
+    
+    return summary;
+  }, []);
+  
+  return {
+    validateRow,
+    validateAllRows,
+    getErrorSummary
+  };
+}
+
+
+================================================================================
+ФАЙЛ: src/services/regexValidator.ts
+================================================================================
+
+export class RegexValidator {
+  static validate(pattern: string): { valid: boolean; error?: string } {
+    if (!pattern.trim()) {
+      return { valid: false, error: 'Паттерн не может быть пустым' };
+    }
+    
+    try {
+      new RegExp(pattern);
+      return { valid: true };
+    } catch (error) {
+      if (error instanceof SyntaxError) {
+        return { 
+          valid: false, 
+          error: error.message.replace(/^.*?: /, '') 
+        };
+      }
+      return { valid: false, error: 'Неизвестная ошибка' };
+    }
+  }
+  
+  static testPattern(pattern: string, testString: string): RegExpMatchArray | null {
+    try {
+      const regex = new RegExp(pattern);
+      return testString.match(regex);
+    } catch {
+      return null;
+    }
+  }
+  
+  static getCaptureGroups(pattern: string): string[] {
+    try {
+      const regex = new RegExp(pattern);
+      const source = regex.source;
+      const groups: string[] = [];
+      
+      // Простая проверка на группы захвата (неполная, но для базового использования)
+      const groupRegex = /\((?!\?[:=!<])/g;
+      let match;
+      while ((match = groupRegex.exec(source)) !== null) {
+        groups.push(`Группа ${groups.length + 1}`);
+      }
+      
+      return groups;
+    } catch {
+      return [];
+    }
+  }
+  
+  static isPotentiallyDangerous(pattern: string): boolean {
+    // Проверка на потенциально опасные паттерны (редукция катастрофы)
+    const dangerousPatterns = [
+      /\(.*\)*\+/,  // Вложенные повторы
+      /\*\{.*,\}.*\*/,  // Большие диапазоны повторов
+      /\\d\+\+/,  // Жадные повторы с цифрами
+    ];
+    
+    return dangerousPatterns.some(dangerous => dangerous.test(pattern));
+  }
+  
+  static simplifyForPreview(pattern: string, maxLength: number = 50): string {
+    if (pattern.length <= maxLength) return pattern;
+    
+    const half = Math.floor(maxLength / 2) - 2;
+    return pattern.substring(0, half) + '...' + pattern.substring(pattern.length - half);
+  }
+}
+
+export function validateLexerRow(row: any) {
+  const errors: string[] = [];
+  
+  // Проверка приоритета
+  if (typeof row.priority !== 'number' || isNaN(row.priority)) {
+    errors.push('Приоритет должен быть числом');
+  } else if (row.priority < -1000000 || row.priority > 1000000) {
+    errors.push('Приоритет должен быть в диапазоне от -1000000 до 1000000');
+  }
+  
+  // Проверка паттерна
+  if (!row.decodedPattern || row.decodedPattern.trim() === '') {
+    errors.push('Паттерн не может быть пустым');
+  } else {
+    const validation = RegexValidator.validate(row.decodedPattern);
+    if (!validation.valid) {
+      errors.push(`Некорректный регулярный выражение: ${validation.error}`);
+    }
+  }
+  
+  // Проверка типа лексемы
+  if (!row.lexeme_type || row.lexeme_type.trim() === '') {
+    errors.push('Тип лексемы не может быть пустым');
+  }
+  
+  return errors;
+}
+
+export function validateParserRow(row: any) {
+  const errors: string[] = [];
+  
+  // Проверка приоритета
+  if (typeof row.priority !== 'number' || isNaN(row.priority)) {
+    errors.push('Приоритет должен быть числом');
+  }
+  
+  // Проверка полного имени типа
+  if (!row.type_full_name || row.type_full_name.trim() === '') {
+    errors.push('Полное имя типа не может быть пустым');
+  } else if (!row.type_full_name.includes('.')) {
+    errors.push('Полное имя типа должно содержать точку (Module.TypeName)');
+  }
+  
+  // Проверка хэша экземпляра
+  if (typeof row.instance_hash !== 'number' || isNaN(row.instance_hash)) {
+    errors.push('Хэш экземпляра должен быть числом');
+  }
+  
+  // Проверка типа AST-узла
+  if (!row.ast_node_type || row.ast_node_type.trim() === '') {
+    errors.push('Тип AST-узла не может быть пустым');
+  }
+  
+  return errors;
+}
+
+
+================================================================================
+ФАЙЛ: src/stores/configStore.ts
+================================================================================
+
+import { create } from 'zustand';
+import { devtools, persist } from 'zustand/middleware';
+import { ConfigType, ConfigFile, ConfigRow } from '@/types/config';
+import { parseParserConfig, parseLexerConfig, detectConfigType, formatToOriginal } from '@/utils/parser';
+import { toast } from 'react-hot-toast';
+
+interface ConfigStore {
+  // Данные
+  parserConfig: ConfigFile | null;
+  lexerConfig: ConfigFile | null;
+  
+  // UI состояние
+  activeTab: ConfigType;
+  searchQuery: string;
+  
+  // Действия
+  setActiveTab: (tab: ConfigType) => void;
+  setSearchQuery: (query: string) => void;
+  loadFile: (file: File) => Promise<void>;
+  updateRow: (configType: ConfigType, rowId: string, updates: Partial<ConfigRow>) => void;
+  addRow: (configType: ConfigType) => void;
+  deleteRow: (configType: ConfigType, rowId: string) => void;
+  clearConfig: (configType: ConfigType) => void;
+  exportConfig: (configType: ConfigType) => void;
+  getFilteredRows: (configType: ConfigType) => ConfigRow[];
+  getCurrentConfig: () => ConfigFile | null;
+}
+
+export const useConfigStore = create<ConfigStore>()(
+  devtools(
+    persist(
+      (set, get) => ({
+        parserConfig: null,
+        lexerConfig: null,
+        activeTab: ConfigType.PARSER,
+        searchQuery: '',
+        
+        setActiveTab: (tab) => set({ activeTab: tab }),
+        setSearchQuery: (query) => set({ searchQuery: query }),
+        
+        loadFile: async (file) => {
+          try {
+            const content = await file.text();
+            const type = detectConfigType(content);
+            
+            let config: ConfigFile;
+            if (type === ConfigType.PARSER) {
+              config = parseParserConfig(content);
+            } else {
+              config = parseLexerConfig(content);
+            }
+            
+            config.fileName = file.name;
+            config.fileSize = file.size;
+            
+            if (type === ConfigType.PARSER) {
+              set({ 
+                parserConfig: config,
+                activeTab: ConfigType.PARSER,
+                searchQuery: ''
+              });
+              toast.success(`Загружен файл парсера: ${file.name} (${config.rows.length} строк)`);
+            } else {
+              set({ 
+                lexerConfig: config,
+                activeTab: ConfigType.LEXER,
+                searchQuery: ''
+              });
+              toast.success(`Загружен файл лексера: ${file.name} (${config.rows.length} строк)`);
+            }
+          } catch (error) {
+            console.error('Error loading file:', error);
+            toast.error(`Ошибка загрузки: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
+          }
+        },
+        
+        updateRow: (configType, rowId, updates) => {
+          const state = get();
+          const config = configType === ConfigType.PARSER 
+            ? state.parserConfig 
+            : state.lexerConfig;
+          
+          if (!config) return;
+          
+          const updatedRows = config.rows.map(row => 
+            row.id === rowId ? { ...row, ...updates } : row
+          );
+          
+          const updatedConfig = {
+            ...config,
+            rows: updatedRows,
+            lastModified: new Date(),
+          };
+          
+          if (configType === ConfigType.PARSER) {
+            set({ parserConfig: updatedConfig });
+          } else {
+            set({ lexerConfig: updatedConfig });
+          }
+          
+          toast.success('Строка обновлена');
+        },
+        
+        addRow: (configType) => {
+          const state = get();
+          const config = configType === ConfigType.PARSER 
+            ? state.parserConfig 
+            : state.lexerConfig;
+          
+          if (!config) return;
+          
+          const newRow: ConfigRow = configType === ConfigType.PARSER ? {
+            id: `parser-new-${Date.now()}`,
+            priority: 0,
+            type_full_name: 'NewModule.NewType',
+            instance_hash: 0,
+            ast_node_type: 'NewNode',
+            lineNumber: config.rows.length + 1,
+            originalLine: '',
+          } : {
+            id: `lexer-new-${Date.now()}`,
+            priority: 0,
+            encodedPattern: 'IA==',
+            decodedPattern: ' ',
+            lexeme_type: 'NewLexeme',
+            ignore_flag: false,
+            lineNumber: config.rows.length + 1,
+            originalLine: '',
+          };
+          
+          const updatedConfig = {
+            ...config,
+            rows: [...config.rows, newRow],
+            lastModified: new Date(),
+          };
+          
+          if (configType === ConfigType.PARSER) {
+            set({ parserConfig: updatedConfig });
+          } else {
+            set({ lexerConfig: updatedConfig });
+          }
+          
+          toast.success('Добавлена новая строка');
+        },
+        
+        deleteRow: (configType, rowId) => {
+          const state = get();
+          const config = configType === ConfigType.PARSER 
+            ? state.parserConfig 
+            : state.lexerConfig;
+          
+          if (!config) return;
+          
+          const row = config.rows.find(r => r.id === rowId);
+          if (!row) return;
+          
+          if (window.confirm(`Удалить строку ${row.lineNumber}?`)) {
+            const updatedRows = config.rows.filter(row => row.id !== rowId);
+            
+            const updatedConfig = {
+              ...config,
+              rows: updatedRows,
+              lastModified: new Date(),
+            };
+            
+            if (configType === ConfigType.PARSER) {
+              set({ parserConfig: updatedConfig });
+            } else {
+              set({ lexerConfig: updatedConfig });
+            }
+            
+            toast.success('Строка удалена');
+          }
+        },
+        
+        clearConfig: (configType) => {
+          if (window.confirm('Удалить текущую конфигурацию?')) {
+            if (configType === ConfigType.PARSER) {
+              set({ parserConfig: null });
+              toast.success('Конфигурация парсера очищена');
+            } else {
+              set({ lexerConfig: null });
+              toast.success('Конфигурация лексера очищена');
+            }
+          }
+        },
+        
+        exportConfig: (configType) => {
+          const state = get();
+          const config = configType === ConfigType.PARSER 
+            ? state.parserConfig 
+            : state.lexerConfig;
+          
+          if (!config) {
+            toast.error('Нет данных для экспорта');
+            return;
+          }
+          
+          try {
+            const content = formatToOriginal(config);
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = config.fileName || `config_export_${new Date().toISOString().slice(0, 10)}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            toast.success('Конфигурация экспортирована');
+          } catch (error) {
+            console.error('Export error:', error);
+            toast.error('Ошибка при экспорте');
+          }
+        },
+        
+        getFilteredRows: (configType) => {
+          const state = get();
+          const config = configType === ConfigType.PARSER 
+            ? state.parserConfig 
+            : state.lexerConfig;
+          
+          if (!config) return [];
+          
+          const query = state.searchQuery.toLowerCase().trim();
+          if (!query) return config.rows;
+          
+          return config.rows.filter(row => {
+            if (configType === ConfigType.PARSER) {
+              const parserRow = row as any;
+              return (
+                parserRow.priority.toString().includes(query) ||
+                parserRow.type_full_name.toLowerCase().includes(query) ||
+                parserRow.ast_node_type.toLowerCase().includes(query) ||
+                parserRow.module?.toLowerCase().includes(query) || false ||
+                parserRow.instance_hash.toString().includes(query)
+              );
+            } else {
+              const lexerRow = row as any;
+              return (
+                lexerRow.priority.toString().includes(query) ||
+                lexerRow.decodedPattern.toLowerCase().includes(query) ||
+                lexerRow.lexeme_type.toLowerCase().includes(query) ||
+                lexerRow.encodedPattern.toLowerCase().includes(query) ||
+                lexerRow.ignore_flag.toString().includes(query)
+              );
+            }
+          });
+        },
+        
+        getCurrentConfig: () => {
+          const state = get();
+          return state.activeTab === ConfigType.PARSER 
+            ? state.parserConfig 
+            : state.lexerConfig;
+        },
+      }),
+      {
+        name: 'config-editor-storage',
+        partialize: (state) => ({
+          parserConfig: state.parserConfig,
+          lexerConfig: state.lexerConfig,
+          activeTab: state.activeTab,
+        }),
+      }
+    )
+  )
+);
+
+
+
+================================================================================
+ФАЙЛ: src/types/config.ts
+================================================================================
+
+export enum ConfigType {
+  PARSER = 'parser',
+  LEXER = 'lexer'
+}
+
+export interface BaseConfigRow {
+  id: string;
+  priority: number;
+  originalLine?: string;
+  lineNumber: number;
+  errors?: ValidationError[];
+}
+
+export interface ParserConfigRow extends BaseConfigRow {
+  type_full_name: string;
+  instance_hash: number;
+  ast_node_type: string;
+  module?: string;
+}
+
+export interface LexerConfigRow extends BaseConfigRow {
+  encodedPattern: string;
+  decodedPattern: string;
+  lexeme_type: string;
+  ignore_flag: boolean;
+  isValidRegex?: boolean;
+  regexError?: string;
+}
+
+export type ConfigRow = ParserConfigRow | LexerConfigRow;
+
+export interface ConfigFile {
+  type: ConfigType;
+  rows: ConfigRow[];
+  fileName: string;
+  fileSize: number;
+  originalContent: string;
+  comments: Map<number, string>;
+  lastModified: Date;
+}
+
+export interface ValidationError {
+  rowId: string;
+  field: string;
+  message: string;
+  severity: 'error' | 'warning';
+}
+
+
+================================================================================
+ФАЙЛ: src/types/ui.ts
+================================================================================
+
+export interface UIState {
+  isSidebarOpen: boolean;
+  theme: 'light' | 'dark';
+  fontSize: number;
+}
+
+export interface TableState {
+  sortColumn: string;
+  sortDirection: 'asc' | 'desc';
+  pageSize: number;
+  currentPage: number;
+}
+
+================================================================================
+ФАЙЛ: src/utils/base64.ts
+================================================================================
+
+export function decodeBase64Pattern(encoded: string): string {
+  try {
+    // Используем decodeURIComponent для правильной работы с Unicode
+    return decodeURIComponent(atob(encoded).split('').map(c =>
+      '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+    ).join(''));
+  } catch (error) {
+    console.error('Ошибка декодирования Base64:', error);
+    return '';
+  }
+}
+
+export function encodeBase64Pattern(decoded: string): string {
+  try {
+    return btoa(encodeURIComponent(decoded).replace(/%([0-9A-F]{2})/g,
+      (match, p1) => String.fromCharCode(parseInt(p1, 16))));
+  } catch (error) {
+    console.error('Ошибка кодирования Base64:', error);
+    return '';
+  }
+}
+
+export function isBase64(str: string): boolean {
+  try {
+    return btoa(atob(str)) === str;
+  } catch (error) {
+    return false;
+  }
+}
+
+
+================================================================================
+ФАЙЛ: src/utils/formatter.ts
+================================================================================
+
+export function formatNumber(value: number, decimals: number = 2): string {
+  return value.toFixed(decimals);
+}
+
+export function truncateText(text: string, maxLength: number = 50): string {
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength) + '...';
+}
+
+export function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 Bytes';
+  const k = 1024;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+
+================================================================================
+ФАЙЛ: src/utils/parser.ts
+================================================================================
+
+import { ConfigType, ConfigFile, ParserConfigRow, LexerConfigRow } from '@/types/config';
+import { decodeBase64Pattern, encodeBase64Pattern } from './base64';
+
+export function detectConfigType(content: string): ConfigType {
+  if (content.includes('|type_full_name|') || content.includes('ScopesModule')) {
+    return ConfigType.PARSER;
+  }
+  if (content.includes('|lexeme_type|') || content.includes('base64_encoded_pattern')) {
+    return ConfigType.LEXER;
+  }
+  throw new Error('Неизвестный формат конфигурации');
+}
+
+// В функции parseParserConfig, исправьте:
+export function parseParserConfig(content: string): ConfigFile {
+  const lines = content.split('\n');
+  const rows: ParserConfigRow[] = [];
+  const comments = new Map<number, string>();
+
+  let lineNumber = 0;
+  lines.forEach((line, index) => {
+    const trimmed = line.trim();
+
+    // Сохраняем комментарии
+    if (trimmed.startsWith('#')) {
+      comments.set(index, trimmed);
+      return;
+    }
+
+    // Пропускаем пустые строки
+    if (!trimmed) return;
+
+    lineNumber++;
+
+    // Парсим строку формата: priority|type_full_name|instance_hash|ast_node_type
+    const parts = trimmed.split('|');
+    if (parts.length !== 4) {
+      // Попробуем парсить даже если формат не идеален
+      if (parts.length >= 4) {
+        // Берем первые 4 части
+        const priority = parseFloat(parts[0]);
+        const type_full_name = parts[1] || '';
+        const instance_hash = parseInt(parts[2], 10) || 0;
+        const ast_node_type = parts[3] || '';
+
+        const module = type_full_name.split('.')[0];
+
+        rows.push({
+          id: `parser-${index}-${Date.now()}`,
+          priority: isNaN(priority) ? 0 : priority,
+          type_full_name,
+          instance_hash: isNaN(instance_hash) ? 0 : instance_hash,
+          ast_node_type,
+          module,
+          originalLine: trimmed,
+          lineNumber,
+        });
+      }
+      return;
+    }
+
+    const priority = parseFloat(parts[0]);
+    const type_full_name = parts[1];
+    const instance_hash = parseInt(parts[2], 10);
+    const ast_node_type = parts[3];
+
+    // Извлекаем модуль из type_full_name
+    const module = type_full_name.split('.')[0];
+
+    rows.push({
+      id: `parser-${index}-${Date.now()}`,
+      priority: isNaN(priority) ? 0 : priority,
+      type_full_name,
+      instance_hash: isNaN(instance_hash) ? 0 : instance_hash,
+      ast_node_type,
+      module,
+      originalLine: trimmed,
+      lineNumber,
+    });
+  });
+
+  return {
+    type: ConfigType.PARSER,
+    rows,
+    fileName: '',
+    fileSize: content.length,
+    originalContent: content,
+    comments,
+    lastModified: new Date(),
+  };
+}
+
+export function parseLexerConfig(content: string): ConfigFile {
+  const lines = content.split('\n');
+  const rows: LexerConfigRow[] = [];
+  const comments = new Map<number, string>();
+  
+  lines.forEach((line, index) => {
+    const trimmed = line.trim();
+    
+    // Сохраняем комментарии
+    if (trimmed.startsWith('#')) {
+      comments.set(index, trimmed);
+      return;
+    }
+    
+    // Пропускаем пустые строки
+    if (!trimmed) return;
+    
+    // Парсим строку формата: priority|base64_encoded_pattern|lexeme_type|ignore_flag
+    const parts = trimmed.split('|');
+    if (parts.length !== 4) {
+      throw new Error(`Некорректный формат строки ${index + 1}: ${trimmed}`);
+    }
+    
+    const priority = parseFloat(parts[0]);
+    const encodedPattern = parts[1];
+    const lexeme_type = parts[2];
+    const ignore_flag = parts[3].toLowerCase() === 'true';
+    
+    // Декодируем паттерн из base64
+    const decodedPattern = decodeBase64Pattern(encodedPattern);
+    
+    rows.push({
+      id: `lexer-${index}-${Date.now()}`,
+      priority,
+      encodedPattern,
+      decodedPattern,
+      lexeme_type,
+      ignore_flag,
+      originalLine: trimmed,
+      lineNumber: index + 1,
+    });
+  });
+  
+  return {
+    type: ConfigType.LEXER,
+    rows,
+    fileName: '',
+    fileSize: content.length,
+    originalContent: content,
+    comments,
+    lastModified: new Date(),
+  };
+}
+
+export function formatToOriginal(config: ConfigFile): string {
+  const lines: string[] = [];
+  const maxLine = Math.max(...config.rows.map(r => r.lineNumber), ...Array.from(config.comments.keys()));
+  
+  for (let i = 0; i <= maxLine; i++) {
+    if (config.comments.has(i)) {
+      lines.push(config.comments.get(i)!);
+      continue;
+    }
+    
+    const row = config.rows.find(r => r.lineNumber === i);
+    if (!row) {
+      lines.push('');
+      continue;
+    }
+    
+    if (config.type === ConfigType.PARSER) {
+      const parserRow = row as ParserConfigRow;
+      lines.push(`${parserRow.priority.toFixed(2)}|${parserRow.type_full_name}|${parserRow.instance_hash}|${parserRow.ast_node_type}`);
+    } else {
+      const lexerRow = row as LexerConfigRow;
+      lines.push(`${lexerRow.priority.toFixed(2)}|${encodeBase64Pattern(lexerRow.decodedPattern)}|${lexerRow.lexeme_type}|${lexerRow.ignore_flag ? 'True' : 'False'}`);
+    }
+  }
+  
+  return lines.join('\n');
+}
+
+
+================================================================================
+ФАЙЛ: src/utils/validator.ts
+================================================================================
+
+import { ConfigRow, ParserConfigRow, LexerConfigRow, ValidationError } from '@/types/config';
+import { RegexValidator } from '@/services/regexValidator';
+
+export function validateParserRow(row: ParserConfigRow): ValidationError[] {
+  const errors: ValidationError[] = [];
+  
+  // Проверка приоритета
+  if (typeof row.priority !== 'number' || isNaN(row.priority)) {
+    errors.push({
+      rowId: row.id,
+      field: 'priority',
+      message: 'Приоритет должен быть числом',
+      severity: 'error'
+    });
+  } else if (row.priority < -1000000 || row.priority > 1000000) {
+    errors.push({
+      rowId: row.id,
+      field: 'priority',
+      message: 'Приоритет должен быть в диапазоне от -1000000 до 1000000',
+      severity: 'error'
+    });
+  }
+  
+  // Проверка полного имени типа
+  if (!row.type_full_name || row.type_full_name.trim() === '') {
+    errors.push({
+      rowId: row.id,
+      field: 'type_full_name',
+      message: 'Полное имя типа не может быть пустым',
+      severity: 'error'
+    });
+  } else if (!row.type_full_name.includes('.')) {
+    errors.push({
+      rowId: row.id,
+      field: 'type_full_name',
+      message: 'Полное имя типа должно содержать точку (Module.TypeName)',
+      severity: 'warning'
+    });
+  }
+  
+  // Проверка хэша экземпляра
+  if (typeof row.instance_hash !== 'number' || isNaN(row.instance_hash)) {
+    errors.push({
+      rowId: row.id,
+      field: 'instance_hash',
+      message: 'Хэш экземпляра должен быть числом',
+      severity: 'error'
+    });
+  }
+  
+  // Проверка типа AST-узла
+  if (!row.ast_node_type || row.ast_node_type.trim() === '') {
+    errors.push({
+      rowId: row.id,
+      field: 'ast_node_type',
+      message: 'Тип AST-узла не может быть пустым',
+      severity: 'error'
+    });
+  }
+  
+  return errors;
+}
+
+export function validateLexerRow(row: LexerConfigRow): ValidationError[] {
+  const errors: ValidationError[] = [];
+  
+  // Проверка приоритета
+  if (typeof row.priority !== 'number' || isNaN(row.priority)) {
+    errors.push({
+      rowId: row.id,
+      field: 'priority',
+      message: 'Приоритет должен быть числом',
+      severity: 'error'
+    });
+  } else if (row.priority < -1000000 || row.priority > 1000000) {
+    errors.push({
+      rowId: row.id,
+      field: 'priority',
+      message: 'Приоритет должен быть в диапазоне от -1000000 до 1000000',
+      severity: 'error'
+    });
+  }
+  
+  // Проверка паттерна
+  if (!row.decodedPattern || row.decodedPattern.trim() === '') {
+    errors.push({
+      rowId: row.id,
+      field: 'decodedPattern',
+      message: 'Паттерн не может быть пустым',
+      severity: 'error'
+    });
+  } else {
+    const validation = RegexValidator.validate(row.decodedPattern);
+    if (!validation.valid) {
+      errors.push({
+        rowId: row.id,
+        field: 'decodedPattern',
+        message: `Некорректный регулярный выражение: ${validation.error}`,
+        severity: 'error'
+      });
+    }
+  }
+  
+  // Проверка типа лексемы
+  if (!row.lexeme_type || row.lexeme_type.trim() === '') {
+    errors.push({
+      rowId: row.id,
+      field: 'lexeme_type',
+      message: 'Тип лексемы не может быть пустым',
+      severity: 'error'
+    });
+  }
+  
+  // Проверка флага игнорирования
+  if (typeof row.ignore_flag !== 'boolean') {
+    errors.push({
+      rowId: row.id,
+      field: 'ignore_flag',
+      message: 'Флаг игнорирования должен быть true или false',
+      severity: 'error'
+    });
+  }
+  
+  return errors;
+}
+
+export function validateConfigRow(row: ConfigRow): ValidationError[] {
+  if ('type_full_name' in row) {
+    return validateParserRow(row);
+  } else {
+    return validateLexerRow(row);
+  }
+}
+
+
+
+================================================================================
+ФАЙЛ: src/vite-env.d.ts
+================================================================================
+
+/// <reference types="vite/client" />
+
+declare module '*.css';
+declare module '*.svg';
+declare module '*.png';
+declare module '*.jpg';
+declare module '*.jpeg';
+
+================================================================================
+ФАЙЛ: vite.config.ts
+================================================================================
+
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import path from 'path';
+
+export default defineConfig({
+  plugins: [react()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+      '@components': path.resolve(__dirname, './src/components'),
+      '@utils': path.resolve(__dirname, './src/utils'),
+      '@hooks': path.resolve(__dirname, './src/hooks'),
+      '@stores': path.resolve(__dirname, './src/stores'),
+      '@types': path.resolve(__dirname, './src/types'),
+    },
+  },
+  server: {
+    port: 3000,
+    open: true,
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          grid: ['ag-grid-community', 'ag-grid-react'],
+          ui: ['@mui/material', '@emotion/react', '@emotion/styled'],
+        },
+      },
+    },
+  },
+});
+
+
+================================================================================
+ФАЙЛ: src/App.tsx
+================================================================================
+
+import React, { useEffect, useState } from 'react';
+import { Toaster } from 'react-hot-toast';
+import { useConfigStore } from '@/stores/configStore';
+import { ConfigType } from '@/types/config';
+import Header from '@/components/Header/Header';
+import FileUploader from '@/components/FileUploader/FileUploader';
+import ConfigurationTable from '@/components/ConfigurationTable/ConfigurationTable';
+import './App.css';
+
+function App() {
+  const {
+    parserConfig,
+    lexerConfig,
+    activeTab,
+    getCurrentConfig
+  } = useConfigStore();
+
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  useEffect(() => {
+    setIsInitialized(true);
+  }, []);
+
+  const currentConfig = getCurrentConfig();
+  const hasConfig = parserConfig || lexerConfig;
+
+  useEffect(() => {
+    console.log('App state:', {
+      hasConfig,
+      parserConfig: parserConfig ? {
+        fileName: parserConfig.fileName,
+        rowsCount: parserConfig.rows.length,
+        firstRow: parserConfig.rows[0]
+      } : null,
+      lexerConfig: lexerConfig ? {
+        fileName: lexerConfig.fileName,
+        rowsCount: lexerConfig.rows.length,
+        firstRow: lexerConfig.rows[0]
+      } : null,
+      activeTab,
+      currentConfig: currentConfig ? {
+        fileName: currentConfig.fileName,
+        rowsCount: currentConfig.rows.length
+      } : null
+    });
+  }, [hasConfig, parserConfig, lexerConfig, activeTab, currentConfig]);
+
+  if (!isInitialized) {
+    return (
+      <div className="loading-screen">
+        <div className="loading-spinner"></div>
+        <p>Загрузка приложения...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="app">
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: '#363636',
+            color: '#fff',
+            fontSize: '14px',
+          },
+          success: {
+            duration: 2000,
+            style: {
+              background: '#10b981',
+            },
+          },
+          error: {
+            duration: 4000,
+            style: {
+              background: '#ef4444',
+            },
+          },
+        }}
+      />
+
+      <Header />
+
+      <main className="main-content">
+        {!hasConfig ? (
+          <div className="welcome-screen">
+            <div className="welcome-header">
+              <h1>⚙️ Конфигурационный редактор</h1>
+              <p className="subtitle">Удобный инструмент для редактирования конфигураций лексера и парсера</p>
+            </div>
+
+            <div className="upload-section">
+              <h2>📁 Начните с загрузки файла</h2>
+              <FileUploader />
+              <div className="file-examples">
+                <p>Поддерживаемые форматы:</p>
+                <div className="example">
+                  <h4>ParserConfiguration.txt</h4>
+                  <pre>{`-100000.00|ScopesModule.ScopesCreator|0|Scope
+-1000.00|CSharpInteropModule.CSharpFunctionCallsNodeCreator|0|CSharpFunctionCall
+-100.00|ConditionsModule.BooleanNodeCreator|0|True`}</pre>
+                </div>
+                <div className="example">
+                  <h4>LexerConfiguration.txt</h4>
+                  <pre>{`100.00|W0BhLXpBLVpfXVthLXpBLVowLTlfXSo=|Identifier|False
+0.00|IA==|Space|True
+0.00|XG4=|NewLine|True`}</pre>
+                </div>
+              </div>
+            </div>
+
+            <div className="quick-start">
+              <h3>🚀 Быстрый старт:</h3>
+              <div className="quick-buttons">
+                <button
+                  className="quick-btn"
+                  onClick={async () => {
+                    const example = `# Parser Configuration Example
+-100000.00|ScopesModule.ScopesCreator|0|Scope
+-1000.00|CSharpInteropModule.CSharpFunctionCallsNodeCreator|0|CSharpFunctionCall
+-100.00|ConditionsModule.BooleanNodeCreator|0|True
+-100.00|ConditionsModule.BooleanNodeCreator|1|False
+-20.00|ConditionsModule.ComparisonNodeCreator|0|Equal`;
+                    const blob = new Blob([example], { type: 'text/plain' });
+                    const file = new File([blob], 'ParserExample.txt', { type: 'text/plain' });
+                    await useConfigStore.getState().loadFile(file);
+                  }}
+                >
+                  📋 Создать пример парсера
+                </button>
+                <button
+                  className="quick-btn"
+                  onClick={async () => {
+                    const example = `# Lexer Configuration Example
+100.00|W0BhLXpBLVpfXVthLXpBLVowLTlfXSo=|Identifier|False
+0.00|IA==|Space|True
+0.00|XG4=|NewLine|True
+0.00|XCg=|OpenPar|False
+0.00|XCk=|ClosePar|False`;
+                    const blob = new Blob([example], { type: 'text/plain' });
+                    const file = new File([blob], 'LexerExample.txt', { type: 'text/plain' });
+                    await useConfigStore.getState().loadFile(file);
+                  }}
+                >
+                  📋 Создать пример лексера
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="editor-screen">
+            {currentConfig ? (
+              <>
+                <div className="editor-header">
+                  <h2>
+                    {activeTab === ConfigType.PARSER ? '📄' : '🔤'}
+                    {currentConfig.fileName}
+                    <span className="file-stats">
+                      ({currentConfig.rows.length} строк, {currentConfig.fileSize} байт)
+                    </span>
+                  </h2>
+                  <div className="editor-actions">
+                    <button
+                      className="action-btn"
+                      onClick={() => useConfigStore.getState().addRow(activeTab)}
+                    >
+                      + Добавить строку
+                    </button>
+                    <button
+                      className="action-btn export"
+                      onClick={() => useConfigStore.getState().exportConfig(activeTab)}
+                    >
+                      💾 Экспорт
+                    </button>
+                  </div>
+                </div>
+                <ConfigurationTable configType={activeTab} />
+              </>
+            ) : (
+              <div className="no-config">
+                <p>Конфигурация не загружена</p>
+              </div>
+            )}
+          </div>
+        )}
+      </main>
+
+      <footer className="footer">
+        <div className="footer-content">
+          <p>⚡ Конфигурационный редактор v1.0.0</p>
+          <div className="footer-stats">
+            {hasConfig && (
+              <>
+                <span>Парсер: {parserConfig?.rows.length || 0} строк</span>
+                <span>Лексер: {lexerConfig?.rows.length || 0} строк</span>
+                <span>Активная вкладка: {activeTab}</span>
+              </>
+            )}
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+export default App;
+
+
+================================================================================
+ФАЙЛ: src/components/ConfigurationTable/ConfigurationTable.tsx
+================================================================================
+
+import React, { useCallback, useState, useEffect } from 'react';
+import { AgGridReact } from 'ag-grid-react';
+import { ColDef, ICellRendererParams, CellValueChangedEvent } from 'ag-grid-community';
+import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
+import 'ag-grid-community/styles/ag-grid.css';
+import 'ag-grid-community/styles/ag-theme-alpine.css';
+import { useConfigStore } from '@/stores/configStore';
+import { ConfigType, ParserConfigRow, LexerConfigRow } from '@/types/config';
+import { encodeBase64Pattern } from '@/utils/base64';
+import './ConfigurationTable.css';
+
+// Регистрируем модули AG Grid
+ModuleRegistry.registerModules([AllCommunityModule]);
+
+interface ConfigurationTableProps {
+  configType: ConfigType;
+}
+
+const ConfigurationTable: React.FC<ConfigurationTableProps> = ({ configType }) => {
+  const {
+    getFilteredRows,
+    updateRow,
+    deleteRow,
+    addRow,
+    exportConfig,
+    searchQuery
+  } = useConfigStore();
+
+  const [gridApi, setGridApi] = useState<any>(null);
+  const [rows, setRows] = useState<any[]>([]);
+
+  useEffect(() => {
+    const filteredRows = getFilteredRows(configType);
+    console.log('ConfigurationTable - configType:', configType);
+    console.log('ConfigurationTable - rows count:', filteredRows.length);
+    console.log('ConfigurationTable - first row:', filteredRows[0]);
+    console.log('ConfigurationTable - searchQuery:', searchQuery);
+    setRows(filteredRows);
+  }, [configType, getFilteredRows, searchQuery]);
+
+  // Колонки для парсера
+  const parserColumns: ColDef[] = [
+    {
+      headerName: 'Приоритет',
+      field: 'priority',
+      width: 120,
+      editable: true,
+      cellEditor: 'agNumberCellEditor',
+      cellEditorParams: {
+        min: -1000000,
+        max: 1000000,
+        precision: 2,
+      },
+      sortable: true,
+      filter: 'agNumberColumnFilter',
+    },
+    {
+      headerName: 'Тип',
+      field: 'type_full_name',
+      width: 300,
+      editable: true,
+      sortable: true,
+      filter: 'agTextColumnFilter',
+    },
+    {
+      headerName: 'Хэш',
+      field: 'instance_hash',
+      width: 100,
+      editable: true,
+      cellEditor: 'agNumberCellEditor',
+      sortable: true,
+      filter: 'agNumberColumnFilter',
+    },
+    {
+      headerName: 'AST-узел',
+      field: 'ast_node_type',
+      width: 200,
+      editable: true,
+      sortable: true,
+      filter: 'agTextColumnFilter',
+    },
+    {
+      headerName: 'Модуль',
+      field: 'module',
+      width: 150,
+      sortable: true,
+      filter: 'agTextColumnFilter',
+    },
+    {
+      headerName: 'Действия',
+      width: 120,
+      cellRenderer: (params: ICellRendererParams) => (
+        <button
+          className="delete-btn"
+          onClick={() => deleteRow(configType, params.data.id)}
+        >
+          Удалить
+        </button>
+      ),
+    },
+  ];
+
+  // Колонки для лексера
+  const lexerColumns: ColDef[] = [
+    {
+      headerName: 'Приоритет',
+      field: 'priority',
+      width: 120,
+      editable: true,
+      cellEditor: 'agNumberCellEditor',
+      cellEditorParams: {
+        min: -1000000,
+        max: 1000000,
+        precision: 2,
+      },
+      sortable: true,
+      filter: 'agNumberColumnFilter',
+    },
+    {
+      headerName: 'Паттерн (декодированный)',
+      field: 'decodedPattern',
+      width: 300,
+      editable: true,
+      sortable: true,
+      filter: 'agTextColumnFilter',
+      cellRenderer: (params: ICellRendererParams) => (
+        <div className="pattern-cell">
+          <span className="pattern-text">{params.value}</span>
+          {params.data.regexError && (
+            <span className="regex-error" title={params.data.regexError}>⚠</span>
+          )}
+        </div>
+      ),
+    },
+    {
+      headerName: 'Тип лексемы',
+      field: 'lexeme_type',
+      width: 150,
+      editable: true,
+      sortable: true,
+      filter: 'agTextColumnFilter',
+    },
+    {
+      headerName: 'Игнорировать',
+      field: 'ignore_flag',
+      width: 120,
+      editable: true,
+      cellEditor: 'agCheckboxCellEditor',
+      cellRenderer: (params: ICellRendererParams) => (
+        <input
+          type="checkbox"
+          checked={params.value}
+          readOnly
+        />
+      ),
+    },
+    {
+      headerName: 'Base64',
+      field: 'encodedPattern',
+      width: 200,
+      cellRenderer: (params: ICellRendererParams) => (
+        <code className="base64-code">{params.value}</code>
+      ),
+    },
+    {
+      headerName: 'Действия',
+      width: 120,
+      cellRenderer: (params: ICellRendererParams) => (
+        <button
+          className="delete-btn"
+          onClick={() => deleteRow(configType, params.data.id)}
+        >
+          Удалить
+        </button>
+      ),
+    },
+  ];
+
+  const columns = configType === ConfigType.PARSER ? parserColumns : lexerColumns;
+
+  const handleCellValueChanged = useCallback((event: CellValueChangedEvent) => {
+    const { data, colDef } = event;
+    const field = colDef.field as string;
+
+    // Проверяем, является ли это поле decodedPattern и есть ли оно в данных
+    if (field === 'decodedPattern' && 'decodedPattern' in data) {
+      // Это лексер строка
+      const newValue = event.newValue;
+      updateRow(configType, data.id, {
+        [field]: newValue,
+        encodedPattern: encodeBase64Pattern(newValue),
+      });
+    } else {
+      // Для всех остальных полей
+      updateRow(configType, data.id, { [field]: event.newValue });
+    }
+  }, [configType, updateRow]);
+
+  const handleAddRow = () => {
+    addRow(configType);
+    setTimeout(() => {
+      if (gridApi) {
+        gridApi.ensureIndexVisible(rows.length, 'bottom');
+      }
+    }, 0);
+  };
+
+  const handleExport = () => {
+    exportConfig(configType);
+  };
+
+  const onGridReady = (params: any) => {
+    setGridApi(params.api);
+  };
+
+
+  if (rows.length === 0) {
+    return (
+      <div className="empty-table">
+        <p>Нет данных для отображения</p>
+        <button onClick={handleAddRow} className="action-btn add-btn">
+          + Добавить строку
+        </button>
+        <p style={{ fontSize: '0.9rem', color: '#718096', marginTop: '1rem' }}>
+          Загрузите файл или создайте пример через меню выше
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="configuration-table-container">
+      <div className="table-actions">
+        <button onClick={handleAddRow} className="action-btn add-btn">
+          + Добавить строку
+        </button>
+        <button onClick={handleExport} className="action-btn export-btn">
+          📥 Экспорт
+        </button>
+        <div className="table-stats">
+          Показано: {rows.length} строк | Поиск: {searchQuery || '(нет)'}
+        </div>
+      </div>
+
+      <div className="ag-theme-alpine" style={{ height: 'calc(100vh - 200px)', width: '100%' }}>
+        <AgGridReact
+          rowData={rows}
+          columnDefs={columns}
+          defaultColDef={{
+            resizable: true,
+            sortable: true,
+            filter: true,
+            editable: false, // временно отключаем редактирование для дебага
+          }}
+          onGridReady={onGridReady}
+          onCellValueChanged={handleCellValueChanged}
+          rowSelection="multiple"
+          animateRows={true}
+          pagination={true}
+          paginationPageSize={50}
+          suppressMovableColumns={true}
+          suppressDragLeaveHidesColumns={true}
+        />
+      </div>
+    </div>
+  );
+};
+
+export default ConfigurationTable;
+
+================================================================================
+ФАЙЛ: src/components/EditorPanel/EditorPanel.tsx
+================================================================================
+
+import React from 'react';
+import './EditorPanel.css';
+
+interface EditorPanelProps {
+  title?: string;
+  children?: React.ReactNode;
+}
+
+const EditorPanel: React.FC<EditorPanelProps> = ({ title, children }) => {
+  return (
+    <div className="editor-panel">
+      {title && (
+        <div className="editor-header">
+          <h3>{title}</h3>
+        </div>
+      )}
+      <div className="editor-content">
+        {children}
+      </div>
+    </div>
+  );
+};
+
+export default EditorPanel;
+
+================================================================================
+ФАЙЛ: src/components/FileUploader/FileUploader.tsx
+================================================================================
+
+import React, { useCallback } from 'react';
+import { useDropzone } from 'react-dropzone';
+import { useConfigStore } from '@/stores/configStore';
+import { toast } from 'react-hot-toast';
+import './FileUploader.css';
+
+interface FileUploaderProps {
+  onUploadStart?: () => void;
+  onUploadEnd?: () => void;
+}
+
+const FileUploader: React.FC<FileUploaderProps> = ({ 
+  onUploadStart, 
+  onUploadEnd 
+}) => {
+  const { loadFile } = useConfigStore();
+  
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    if (acceptedFiles.length === 0) return;
+    
+    const file = acceptedFiles[0];
+    
+    // Проверка размера (2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Файл слишком большой (максимум 2MB)');
+      return;
+    }
+    
+    try {
+      onUploadStart?.();
+      await loadFile(file);
+      toast.success(`Файл "${file.name}" успешно загружен`);
+    } catch (error) {
+      console.error('Ошибка загрузки файла:', error);
+      toast.error(`Ошибка загрузки: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
+    } finally {
+      onUploadEnd?.();
+    }
+  }, [loadFile, onUploadStart, onUploadEnd]);
+  
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'text/plain': ['.txt'],
+    },
+    multiple: false,
+    maxSize: 2 * 1024 * 1024, // 2MB
+  });
+  
+  return (
+    <div
+      {...getRootProps()}
+      className={`file-uploader ${isDragActive ? 'drag-active' : ''}`}
+    >
+      <input {...getInputProps()} />
+      
+      <div className="upload-content">
+        <div className="upload-icon">📁</div>
+        <h3>Перетащите файл сюда или кликните для выбора</h3>
+        <p>Поддерживаются файлы .txt до 2MB</p>
+        <div className="file-types">
+          <span className="file-type">ParserConfiguration.txt</span>
+          <span className="file-type">LexerConfiguration.txt</span>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default FileUploader;
+
+
+================================================================================
+ФАЙЛ: src/components/Header/Header.tsx
+================================================================================
+
+import React, { useRef } from 'react';
+import { ConfigType } from '@/types/config';
+import { useConfigStore } from '@/stores/configStore';
+import './Header.css';
+
+const Header: React.FC = () => {
+  const { activeTab, setActiveTab, parserConfig, lexerConfig, exportConfig, clearConfig } = useConfigStore();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      useConfigStore.getState().loadFile(file);
+    }
+  };
+  
+  const handleExport = () => {
+    exportConfig(activeTab);
+  };
+  
+  const handleClear = () => {
+    if (window.confirm('Удалить текущую конфигурацию?')) {
+      clearConfig(activeTab);
+    }
+  };
+  
+  const handleExampleClick = async (type: ConfigType) => {
+    const exampleContent = type === ConfigType.PARSER 
+      ? `# Parser Configuration Dump
+# Generated: 2025-12-15 19:56:18
+# Format: <priority>|<type_full_name>|<instance_hash>|<ast_node_type>
+
+-100000.00|ScopesModule.ScopesCreator|0|Scope
+-1000.00|CSharpInteropModule.CSharpFunctionCallsNodeCreator|0|CSharpFunctionCall
+-100.00|ConditionsModule.BooleanNodeCreator|0|True
+-100.00|ConditionsModule.BooleanNodeCreator|1|False
+-20.00|ConditionsModule.ComparisonNodeCreator|0|Equal`
+      : `# Lexer Configuration Dump
+# Generated: 2025-12-15 19:38:19
+# Format: <priority>|<base64_encoded_pattern>|<lexeme_type>|<ignore_flag>
+
+100.00|W0BhLXpBLVpfXVthLXpBLVowLTlfXSo=|Identifier|False
+0.00|IA==|Space|True
+0.00|XG4=|NewLine|True
+0.00|XCg=|OpenPar|False
+0.00|XCk=|ClosePar|False`;
+    
+    const blob = new Blob([exampleContent], { type: 'text/plain' });
+    const file = new File([blob], `${type === ConfigType.PARSER ? 'Parser' : 'Lexer'}Configuration.txt`, { type: 'text/plain' });
+    await useConfigStore.getState().loadFile(file);
+  };
+  
+  return (
+    <header className="header">
+      <div className="header-left">
+        <h1 className="logo">⚙️ Config Editor</h1>
+      </div>
+      
+      <div className="header-center">
+        <div className="tabs">
+          <button
+            className={`tab ${activeTab === ConfigType.PARSER ? 'active' : ''}`}
+            onClick={() => setActiveTab(ConfigType.PARSER)}
+          >
+            📄 Парсер
+            {parserConfig && <span className="badge">{parserConfig.rows.length}</span>}
+          </button>
+          <button
+            className={`tab ${activeTab === ConfigType.LEXER ? 'active' : ''}`}
+            onClick={() => setActiveTab(ConfigType.LEXER)}
+          >
+            🔤 Лексер
+            {lexerConfig && <span className="badge">{lexerConfig.rows.length}</span>}
+          </button>
+        </div>
+        
+        <div className="search-box">
+          <input
+            type="text"
+            placeholder="Поиск..."
+            value={useConfigStore.getState().searchQuery}
+            onChange={(e) => useConfigStore.getState().setSearchQuery(e.target.value)}
+            className="search-input"
+          />
+        </div>
+      </div>
+      
+      <div className="header-right">
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileSelect}
+          accept=".txt"
+          style={{ display: 'none' }}
+        />
+        
+        <div className="example-buttons">
+          <button 
+            className="btn btn-example"
+            onClick={() => handleExampleClick(ConfigType.PARSER)}
+            title="Загрузить пример парсера"
+          >
+            📋 Парсер
+          </button>
+          <button 
+            className="btn btn-example"
+            onClick={() => handleExampleClick(ConfigType.LEXER)}
+            title="Загрузить пример лексера"
+          >
+            📋 Лексер
+          </button>
+        </div>
+        
+        <button 
+          className="btn btn-secondary"
+          onClick={() => fileInputRef.current?.click()}
+        >
+          📁 Загрузить
+        </button>
+        
+        {(parserConfig || lexerConfig) && (
+          <>
+            <button className="btn btn-primary" onClick={handleExport}>
+              💾 Экспорт
+            </button>
+            <button className="btn btn-danger" onClick={handleClear}>
+              🗑️ Очистить
+            </button>
+          </>
+        )}
+      </div>
+    </header>
+  );
+};
+
+export default Header;
+
+
+================================================================================
+ФАЙЛ: src/components/ValidationPanel/ValidationPanel.tsx
+================================================================================
+
+import React from 'react';
+import { ValidationError } from '@/types/config';
+import { useValidation } from '@/hooks/useValidation';
+import './ValidationPanel.css';
+
+interface ValidationPanelProps {
+  errors: ValidationError[];
+  onErrorClick?: (rowId: string) => void;
+}
+
+const ValidationPanel: React.FC<ValidationPanelProps> = ({ errors, onErrorClick }) => {
+  const { getErrorSummary } = useValidation();
+  const summary = getErrorSummary(errors);
+  
+  if (errors.length === 0) {
+    return (
+      <div className="validation-panel valid">
+        <div className="validation-status">
+          <span className="status-icon">✅</span>
+          <span className="status-text">Все проверки пройдены успешно</span>
+        </div>
+      </div>
+    );
+  }
+  
+  const handleErrorClick = (rowId: string) => {
+    if (onErrorClick) {
+      onErrorClick(rowId);
+    }
+  };
+  
+  return (
+    <div className={`validation-panel ${summary.hasErrors ? 'has-errors' : 'has-warnings'}`}>
+      <div className="validation-header">
+        <div className="validation-summary">
+          <span className="summary-icon">
+            {summary.hasErrors ? '❌' : '⚠️'}
+          </span>
+          <span className="summary-text">
+            Найдено {summary.errors} ошибок и {summary.warnings} предупреждений
+          </span>
+        </div>
+      </div>
+      
+      <div className="validation-errors">
+        {errors.map((error, index) => (
+          <div 
+            key={index} 
+            className={`validation-error ${error.severity}`}
+            onClick={() => handleErrorClick(error.rowId)}
+            style={{ cursor: onErrorClick ? 'pointer' : 'default' }}
+          >
+            <div className="error-header">
+              <span className="error-type">
+                {error.severity === 'error' ? 'Ошибка' : 'Предупреждение'}
+              </span>
+              <span className="error-field">Поле: {error.field}</span>
+              <span className="error-row">Строка: {error.rowId.split('-')[1] || '?'}</span>
+            </div>
+            <div className="error-message">{error.message}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default ValidationPanel;
+
+
+================================================================================
+ФАЙЛ: src/main.tsx
+================================================================================
+
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App'
+import './index.css'
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+)
+
+
+================================================================================
+ФАЙЛ: project_code.txt
+================================================================================
+
+

@@ -1,0 +1,42 @@
+{
+  "name": "configurationeditor",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@mui/icons-material": "^7.3.6",
+    "@mui/material": "^7.3.6",
+    "ag-grid-community": "^35.0.0",
+    "ag-grid-react": "^35.0.0",
+    "js-base64": "^3.7.8",
+    "lodash-es": "^4.17.21",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-dropzone": "^14.3.8",
+    "react-hot-toast": "^2.6.0",
+    "react-virtualized-auto-sizer": "^1.0.26",
+    "react-window": "^2.2.3",
+    "regexp-tree": "^0.1.27",
+    "regexpp": "^3.2.0",
+    "zustand": "^5.0.9"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "@types/react": "^19.2.5",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.1",
+    "typescript": "~5.9.3",
+    "vite": "^7.2.4"
+  }
+}
