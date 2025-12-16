@@ -5,13 +5,13 @@
 }
 
 .table-actions {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  padding: 1rem;
-  background: #f8fafc;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
 }
 
 .action-btn {
@@ -191,4 +191,49 @@
 
 .ag-row-over {
     background-color: rgba(102, 126, 234, 0.05);
+}
+
+
+/* Улучшение отображения при редактировании */
+.ag-cell-inline-editing {
+    z-index: 100;
+}
+
+.ag-popup-editor {
+    min-width: 200px;
+}
+
+/* Улучшение отображения текста в ячейках */
+.ag-cell {
+    padding: 0.5rem !important;
+    line-height: 1.4;
+}
+
+/* Устранение горизонтальной прокрутки */
+.ag-center-cols-viewport {
+    overflow-x: hidden !important;
+}
+
+/* Улучшение отображения заголовков */
+.ag-header-cell {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .configuration-table-container {
+        height: calc(100vh - 250px);
+    }
+
+    .table-actions {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .table-stats {
+        margin-left: 0;
+        width: 100%;
+        justify-content: center;
+    }
 }

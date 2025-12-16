@@ -82,9 +82,9 @@ function App() {
 
       <Header />
 
-      <main className="main-content">
+      <main className="main-content" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         {!hasConfig ? (
-          <div className="welcome-screen">
+          <div className="welcome-screen" style={{ flex: 1 }}>
             <div className="welcome-header">
               <h1>⚙️ Конфигурационный редактор</h1>
               <p className="subtitle">Удобный инструмент для редактирования конфигураций лексера и парсера</p>
@@ -160,19 +160,6 @@ function App() {
                       ({currentConfig.rows.length} строк, {currentConfig.fileSize} байт)
                     </span>
                   </h2>
-                  <div className="editor-actions">
-                    // В кнопке "Добавить строку" в App.tsx добавить сортировку после добавления:
-                    <button
-                      className="action-btn"
-                      onClick={() => {
-                        const store = useConfigStore.getState();
-                        store.addRow(activeTab);
-                        store.sortRowsByPriority(activeTab);
-                      }}
-                    >
-                      + Добавить строку
-                    </button>
-                  </div>
                 </div>
                 <ConfigurationTable configType={activeTab} />
               </>

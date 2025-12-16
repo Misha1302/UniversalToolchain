@@ -1976,6 +1976,7 @@ interface ConfigStore {
   getCurrentConfig: () => ConfigFile | null;
 
   reorderRow: (configType: ConfigType, dragIndex: number, hoverIndex: number) => void;
+  sortRowsByPriority: (configType: ConfigType) => void;
 }
 
 export const useConfigStore = create<ConfigStore>()(
@@ -2283,6 +2284,47 @@ export const useConfigStore = create<ConfigStore>()(
           return state.activeTab === ConfigType.PARSER
             ? state.parserConfig
             : state.lexerConfig;
+        },
+
+        sortRowsByPriority: (configType) => {
+          const state = get();
+          const config = configType === ConfigType.PARSER
+            ? state.parserConfig
+            : state.lexerConfig;
+
+          if (!config || config.rows.length === 0) return;
+
+          // Создаем глубокую копию строк
+          const rows = [...config.rows];
+
+          // Сортируем в зависимости от типа конфигурации
+          if (configType === ConfigType.PARSER) {
+            // Для парсера: по убыванию (больший приоритет = выше)
+            rows.sort((a, b) => b.priority - a.priority);
+          } else {
+            // Для лексера: по возрастанию (меньший приоритет = выше)
+            rows.sort((a, b) => a.priority - b.priority);
+          }
+
+          // Обновляем lineNumber для корректного отображения
+          const updatedRows = rows.map((row, index) => ({
+            ...row,
+            lineNumber: index + 1
+          }));
+
+          const updatedConfig = {
+            ...config,
+            rows: updatedRows,
+            lastModified: new Date(),
+          };
+
+          if (configType === ConfigType.PARSER) {
+            set({ parserConfig: updatedConfig });
+          } else {
+            set({ lexerConfig: updatedConfig });
+          }
+
+          toast.success('Строки пересортированы по приоритету');
         },
       }),
       {
@@ -2842,7 +2884,7 @@ function App() {
     parserConfig,
     lexerConfig,
     activeTab,
-    getCurrentConfig
+    getCurrentConfig,
   } = useConfigStore();
 
   const [isInitialized, setIsInitialized] = useState(false);
@@ -2860,18 +2902,18 @@ function App() {
       parserConfig: parserConfig ? {
         fileName: parserConfig.fileName,
         rowsCount: parserConfig.rows.length,
-        firstRow: parserConfig.rows[0]
+        firstRow: parserConfig.rows[0],
       } : null,
       lexerConfig: lexerConfig ? {
         fileName: lexerConfig.fileName,
         rowsCount: lexerConfig.rows.length,
-        firstRow: lexerConfig.rows[0]
+        firstRow: lexerConfig.rows[0],
       } : null,
       activeTab,
       currentConfig: currentConfig ? {
         fileName: currentConfig.fileName,
-        rowsCount: currentConfig.rows.length
-      } : null
+        rowsCount: currentConfig.rows.length,
+      } : null,
     });
   }, [hasConfig, parserConfig, lexerConfig, activeTab, currentConfig]);
 
@@ -2991,9 +3033,14 @@ function App() {
                     </span>
                   </h2>
                   <div className="editor-actions">
+                    // В кнопке "Добавить строку" в App.tsx добавить сортировку после добавления:
                     <button
                       className="action-btn"
-                      onClick={() => useConfigStore.getState().addRow(activeTab)}
+                      onClick={() => {
+                        const store = useConfigStore.getState();
+                        store.addRow(activeTab);
+                        store.sortRowsByPriority(activeTab);
+                      }}
                     >
                       + Добавить строку
                     </button>
@@ -3035,7 +3082,7 @@ export default App;
 ФАЙЛ: src/components/ConfigurationTable/ConfigurationTable.tsx
 ================================================================================
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { AgGridReact } from 'ag-grid-react';
 import {
@@ -3047,10 +3094,10 @@ import {
 } from 'ag-grid-community';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
+import './ConfigurationTable.css';
 import { useConfigStore } from '@/stores/configStore';
 import { ConfigType } from '@/types/config';
 import { encodeBase64Pattern } from '@/utils/base64';
-import './ConfigurationTable.css';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -3064,11 +3111,15 @@ const ConfigurationTable: React.FC<ConfigurationTableProps> = ({ configType }) =
     updateRow,
     addRow,
     reorderRow,
+    sortRowsByPriority,
     searchQuery,
+    parserConfig,
+    lexerConfig,
   } = useConfigStore();
 
-  const [gridApi, setGridApi] = useState<any>(null);
-  const [rows, setRows] = useState<any[]>([]);
+  const rows = useMemo(() => {
+    return getFilteredRows(configType);
+  }, [configType, getFilteredRows, searchQuery, parserConfig, lexerConfig]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -3077,11 +3128,6 @@ const ConfigurationTable: React.FC<ConfigurationTableProps> = ({ configType }) =
       },
     }),
   );
-
-  useEffect(() => {
-    const filteredRows = getFilteredRows(configType);
-    setRows(filteredRows);
-  }, [configType, getFilteredRows, searchQuery]);
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
@@ -3096,20 +3142,7 @@ const ConfigurationTable: React.FC<ConfigurationTableProps> = ({ configType }) =
     }
   }, [configType, rows, reorderRow]);
 
-  // Добавить колонку с иконкой перетаскивания
-  const dragColumn: ColDef = {
-    headerName: '↕️',
-    width: 60,
-    sortable: false,
-    filter: false,
-    editable: false,
-    cellRenderer: (params: ICellRendererParams) => (
-      <div style={{ cursor: 'move', padding: '5px' }}>
-        ⋮⋮
-      </div>
-    ),
-  };
-
+  // Колонки для парсера
   const parserColumns: ColDef[] = [
     {
       headerName: 'Приоритет',
@@ -3222,12 +3255,18 @@ const ConfigurationTable: React.FC<ConfigurationTableProps> = ({ configType }) =
       ),
     },
   ];
-  // Обновить контейнер для поддержки DnD
+
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       <div className="configuration-table-container">
         <div className="table-actions">
-          <button onClick={() => addRow(configType)} className="action-btn add-btn">
+          <button
+            onClick={() => {
+              addRow(configType);
+              sortRowsByPriority(configType);
+            }}
+            className="action-btn add-btn"
+          >
             + Добавить строку
           </button>
           <div className="table-stats">
@@ -3244,7 +3283,6 @@ const ConfigurationTable: React.FC<ConfigurationTableProps> = ({ configType }) =
               sortable: true,
               filter: true,
             }}
-            onGridReady={setGridApi}
             onCellValueChanged={(event: CellValueChangedEvent) => {
               const { data, colDef } = event;
               const field = colDef.field as string;
@@ -3257,11 +3295,17 @@ const ConfigurationTable: React.FC<ConfigurationTableProps> = ({ configType }) =
               } else {
                 updateRow(configType, data.id, { [field]: event.newValue });
               }
+
+              // Если изменилось поле priority, запускаем сортировку
+              if (field === 'priority') {
+                sortRowsByPriority(configType);
+              }
             }}
             rowDragManaged={true}
             animateRows={true}
             pagination={true}
             paginationPageSize={50}
+            // theme="legacy" // можно убрать или оставить, если нужно
           />
         </div>
       </div>

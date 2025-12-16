@@ -1,10 +1,9 @@
 import { useConfigStore } from '@/stores/configStore';
-import { ConfigType, ConfigRow } from '@/types/config';
+import { ConfigRow } from '@/types/config';
 
 export function useConfiguration() {
   const {
     updateRow,
-    addRow,
     deleteRow,
     getCurrentConfig,
     getFilteredRows,
@@ -20,7 +19,6 @@ export function useConfiguration() {
     activeTab,
     updateRow: (rowId: string, updates: Partial<ConfigRow>) =>
       updateRow(activeTab, rowId, updates),
-    addRow: () => addRow(activeTab),
     deleteRow: (rowId: string) => deleteRow(activeTab, rowId),
   };
 }

@@ -25,7 +25,6 @@ const ConfigurationTable: React.FC<ConfigurationTableProps> = ({ configType }) =
   const {
     getFilteredRows,
     updateRow,
-    addRow,
     reorderRow,
     sortRowsByPriority,
     searchQuery,
@@ -63,7 +62,7 @@ const ConfigurationTable: React.FC<ConfigurationTableProps> = ({ configType }) =
     {
       headerName: 'Приоритет',
       field: 'priority',
-      width: 120,
+      width: 100, // Уменьшено с 120
       editable: true,
       cellEditor: 'agNumberCellEditor',
       cellEditorParams: {
@@ -77,15 +76,16 @@ const ConfigurationTable: React.FC<ConfigurationTableProps> = ({ configType }) =
     {
       headerName: 'Тип',
       field: 'type_full_name',
-      width: 300,
+      width: 250, // Уменьшено с 300
       editable: true,
       sortable: true,
       filter: 'agTextColumnFilter',
+      flex: 1, // Добавлено для гибкого заполнения
     },
     {
       headerName: 'Хэш',
       field: 'instance_hash',
-      width: 100,
+      width: 80, // Уменьшено с 100
       editable: true,
       cellEditor: 'agNumberCellEditor',
       sortable: true,
@@ -94,7 +94,7 @@ const ConfigurationTable: React.FC<ConfigurationTableProps> = ({ configType }) =
     {
       headerName: 'AST-узел',
       field: 'ast_node_type',
-      width: 200,
+      width: 150, // Уменьшено с 200
       editable: true,
       sortable: true,
       filter: 'agTextColumnFilter',
@@ -102,7 +102,7 @@ const ConfigurationTable: React.FC<ConfigurationTableProps> = ({ configType }) =
     {
       headerName: 'Модуль',
       field: 'module',
-      width: 150,
+      width: 120, // Уменьшено с 150
       sortable: true,
       filter: 'agTextColumnFilter',
     },
@@ -113,7 +113,7 @@ const ConfigurationTable: React.FC<ConfigurationTableProps> = ({ configType }) =
     {
       headerName: 'Приоритет',
       field: 'priority',
-      width: 120,
+      width: 100, // Уменьшено с 120
       editable: true,
       cellEditor: 'agNumberCellEditor',
       cellEditorParams: {
@@ -127,10 +127,11 @@ const ConfigurationTable: React.FC<ConfigurationTableProps> = ({ configType }) =
     {
       headerName: 'Паттерн (декодированный)',
       field: 'decodedPattern',
-      width: 300,
+      width: 250, // Уменьшено с 300
       editable: true,
       sortable: true,
       filter: 'agTextColumnFilter',
+      flex: 1, // Добавлено для гибкого заполнения
       cellRenderer: (params: ICellRendererParams) => (
         <div className="pattern-cell">
           <span className="pattern-text">{params.value}</span>
@@ -143,7 +144,7 @@ const ConfigurationTable: React.FC<ConfigurationTableProps> = ({ configType }) =
     {
       headerName: 'Тип лексемы',
       field: 'lexeme_type',
-      width: 150,
+      width: 120, // Уменьшено с 150
       editable: true,
       sortable: true,
       filter: 'agTextColumnFilter',
@@ -151,7 +152,7 @@ const ConfigurationTable: React.FC<ConfigurationTableProps> = ({ configType }) =
     {
       headerName: 'Игнорировать',
       field: 'ignore_flag',
-      width: 120,
+      width: 100, // Уменьшено с 120
       editable: true,
       cellEditor: 'agCheckboxCellEditor',
       cellRenderer: (params: ICellRendererParams) => (
@@ -165,7 +166,7 @@ const ConfigurationTable: React.FC<ConfigurationTableProps> = ({ configType }) =
     {
       headerName: 'Base64',
       field: 'encodedPattern',
-      width: 200,
+      width: 150, // Уменьшено с 200
       cellRenderer: (params: ICellRendererParams) => (
         <code className="base64-code">{params.value}</code>
       ),
@@ -175,22 +176,7 @@ const ConfigurationTable: React.FC<ConfigurationTableProps> = ({ configType }) =
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       <div className="configuration-table-container">
-        <div className="table-actions">
-          <button
-            onClick={() => {
-              addRow(configType);
-              sortRowsByPriority(configType);
-            }}
-            className="action-btn add-btn"
-          >
-            + Добавить строку
-          </button>
-          <div className="table-stats">
-            Показано: {rows.length} строк | Поиск: {searchQuery || '(нет)'}
-          </div>
-        </div>
-
-        <div className="ag-theme-alpine" style={{ height: 'calc(100vh - 200px)', width: '100%' }}>
+        <div className="ag-theme-alpine" style={{ height: '100%', width: '100%', minHeight: '400px' }}>
           <AgGridReact
             rowData={rows}
             columnDefs={configType === ConfigType.PARSER ? parserColumns : lexerColumns}

@@ -256,3 +256,42 @@ input:focus, textarea:focus, select:focus {
 .shadow-md {
   box-shadow: var(--shadow-md);
 }
+
+
+/* Улучшение отображения для всего приложения */
+#root {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Улучшение скроллбаров */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+}
+
+/* Улучшение фокуса для доступности */
+*:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Улучшение отображения таблицы */
+.ag-root-wrapper {
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
