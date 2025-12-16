@@ -35,7 +35,6 @@ var core = new BasicCoreImpl(
     ]
 );
 
-// TODO: fix parser configuration
 var result = core.Execute(
     """
     let a = 5
