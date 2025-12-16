@@ -27,6 +27,7 @@ interface ConfigStore {
   getCurrentConfig: () => ConfigFile | null;
 
   reorderRow: (configType: ConfigType, dragIndex: number, hoverIndex: number) => void;
+  sortRowsByPriority: (configType: ConfigType) => void;
 }
 
 export const useConfigStore = create<ConfigStore>()(
@@ -334,6 +335,47 @@ export const useConfigStore = create<ConfigStore>()(
           return state.activeTab === ConfigType.PARSER
             ? state.parserConfig
             : state.lexerConfig;
+        },
+
+        sortRowsByPriority: (configType) => {
+          const state = get();
+          const config = configType === ConfigType.PARSER
+            ? state.parserConfig
+            : state.lexerConfig;
+
+          if (!config || config.rows.length === 0) return;
+
+          // Создаем глубокую копию строк
+          const rows = [...config.rows];
+
+          // Сортируем в зависимости от типа конфигурации
+          if (configType === ConfigType.PARSER) {
+            // Для парсера: по убыванию (больший приоритет = выше)
+            rows.sort((a, b) => b.priority - a.priority);
+          } else {
+            // Для лексера: по возрастанию (меньший приоритет = выше)
+            rows.sort((a, b) => a.priority - b.priority);
+          }
+
+          // Обновляем lineNumber для корректного отображения
+          const updatedRows = rows.map((row, index) => ({
+            ...row,
+            lineNumber: index + 1
+          }));
+
+          const updatedConfig = {
+            ...config,
+            rows: updatedRows,
+            lastModified: new Date(),
+          };
+
+          if (configType === ConfigType.PARSER) {
+            set({ parserConfig: updatedConfig });
+          } else {
+            set({ lexerConfig: updatedConfig });
+          }
+
+          toast.success('Строки пересортированы по приоритету');
         },
       }),
       {

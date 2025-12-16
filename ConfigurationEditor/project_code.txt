@@ -709,6 +709,26 @@ dist-ssr
 }
 
 
+/* Добавить в конец файла */
+.drag-handle {
+    cursor: move;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.drag-handle:hover {
+    opacity: 1;
+}
+
+.ag-row-dragging {
+    opacity: 0.5;
+    background: rgba(102, 126, 234, 0.1);
+}
+
+.ag-row-over {
+    background-color: rgba(102, 126, 234, 0.05);
+}
+
 ================================================================================
 ФАЙЛ: src/components/EditorPanel/EditorPanel.css
 ================================================================================
@@ -1405,6 +1425,9 @@ export default defineConfig([
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.6",
@@ -1929,16 +1952,17 @@ import { devtools, persist } from 'zustand/middleware';
 import { ConfigType, ConfigFile, ConfigRow } from '@/types/config';
 import { parseParserConfig, parseLexerConfig, detectConfigType, formatToOriginal } from '@/utils/parser';
 import { toast } from 'react-hot-toast';
+import { arrayMove } from '@dnd-kit/sortable';
 
 interface ConfigStore {
   // Данные
   parserConfig: ConfigFile | null;
   lexerConfig: ConfigFile | null;
-  
+
   // UI состояние
   activeTab: ConfigType;
   searchQuery: string;
-  
+
   // Действия
   setActiveTab: (tab: ConfigType) => void;
   setSearchQuery: (query: string) => void;
@@ -1950,6 +1974,8 @@ interface ConfigStore {
   exportConfig: (configType: ConfigType) => void;
   getFilteredRows: (configType: ConfigType) => ConfigRow[];
   getCurrentConfig: () => ConfigFile | null;
+
+  reorderRow: (configType: ConfigType, dragIndex: number, hoverIndex: number) => void;
 }
 
 export const useConfigStore = create<ConfigStore>()(
@@ -1960,37 +1986,81 @@ export const useConfigStore = create<ConfigStore>()(
         lexerConfig: null,
         activeTab: ConfigType.PARSER,
         searchQuery: '',
-        
+
+        reorderRow: (configType, dragIndex, hoverIndex) => {
+          const state = get();
+          const config = configType === ConfigType.PARSER
+            ? state.parserConfig
+            : state.lexerConfig;
+
+          if (!config) return;
+
+          const rows = [...config.rows];
+          const draggedRow = rows[dragIndex];
+
+          // Удаляем из старой позиции
+          rows.splice(dragIndex, 1);
+          // Вставляем в новую позицию
+          rows.splice(hoverIndex, 0, draggedRow);
+
+          // Пересчитываем приоритеты
+          const updatedRows = rows.map((row, index) => {
+            if (configType === ConfigType.PARSER) {
+              // Для парсера: приоритет уменьшается на 1000 при перемещении вверх
+              const priority = 100000 - (index * 1000);
+              return { ...row, priority };
+            } else {
+              // Для лексера: приоритет увеличивается на 100 при перемещении вниз
+              const priority = index * 100;
+              return { ...row, priority };
+            }
+          });
+
+          const updatedConfig = {
+            ...config,
+            rows: updatedRows,
+            lastModified: new Date(),
+          };
+
+          if (configType === ConfigType.PARSER) {
+            set({ parserConfig: updatedConfig });
+          } else {
+            set({ lexerConfig: updatedConfig });
+          }
+
+          toast.success('Порядок строк обновлен');
+        },
+
         setActiveTab: (tab) => set({ activeTab: tab }),
         setSearchQuery: (query) => set({ searchQuery: query }),
-        
+
         loadFile: async (file) => {
           try {
             const content = await file.text();
             const type = detectConfigType(content);
-            
+
             let config: ConfigFile;
             if (type === ConfigType.PARSER) {
               config = parseParserConfig(content);
             } else {
               config = parseLexerConfig(content);
             }
-            
+
             config.fileName = file.name;
             config.fileSize = file.size;
-            
+
             if (type === ConfigType.PARSER) {
-              set({ 
+              set({
                 parserConfig: config,
                 activeTab: ConfigType.PARSER,
-                searchQuery: ''
+                searchQuery: '',
               });
               toast.success(`Загружен файл парсера: ${file.name} (${config.rows.length} строк)`);
             } else {
-              set({ 
+              set({
                 lexerConfig: config,
                 activeTab: ConfigType.LEXER,
-                searchQuery: ''
+                searchQuery: '',
               });
               toast.success(`Загружен файл лексера: ${file.name} (${config.rows.length} строк)`);
             }
@@ -1999,42 +2069,42 @@ export const useConfigStore = create<ConfigStore>()(
             toast.error(`Ошибка загрузки: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
           }
         },
-        
+
         updateRow: (configType, rowId, updates) => {
           const state = get();
-          const config = configType === ConfigType.PARSER 
-            ? state.parserConfig 
+          const config = configType === ConfigType.PARSER
+            ? state.parserConfig
             : state.lexerConfig;
-          
+
           if (!config) return;
-          
-          const updatedRows = config.rows.map(row => 
-            row.id === rowId ? { ...row, ...updates } : row
+
+          const updatedRows = config.rows.map(row =>
+            row.id === rowId ? { ...row, ...updates } : row,
           );
-          
+
           const updatedConfig = {
             ...config,
             rows: updatedRows,
             lastModified: new Date(),
           };
-          
+
           if (configType === ConfigType.PARSER) {
             set({ parserConfig: updatedConfig });
           } else {
             set({ lexerConfig: updatedConfig });
           }
-          
+
           toast.success('Строка обновлена');
         },
-        
+
         addRow: (configType) => {
           const state = get();
-          const config = configType === ConfigType.PARSER 
-            ? state.parserConfig 
+          const config = configType === ConfigType.PARSER
+            ? state.parserConfig
             : state.lexerConfig;
-          
+
           if (!config) return;
-          
+
           const newRow: ConfigRow = configType === ConfigType.PARSER ? {
             id: `parser-new-${Date.now()}`,
             priority: 0,
@@ -2053,52 +2123,52 @@ export const useConfigStore = create<ConfigStore>()(
             lineNumber: config.rows.length + 1,
             originalLine: '',
           };
-          
+
           const updatedConfig = {
             ...config,
             rows: [...config.rows, newRow],
             lastModified: new Date(),
           };
-          
+
           if (configType === ConfigType.PARSER) {
             set({ parserConfig: updatedConfig });
           } else {
             set({ lexerConfig: updatedConfig });
           }
-          
+
           toast.success('Добавлена новая строка');
         },
-        
+
         deleteRow: (configType, rowId) => {
           const state = get();
-          const config = configType === ConfigType.PARSER 
-            ? state.parserConfig 
+          const config = configType === ConfigType.PARSER
+            ? state.parserConfig
             : state.lexerConfig;
-          
+
           if (!config) return;
-          
+
           const row = config.rows.find(r => r.id === rowId);
           if (!row) return;
-          
+
           if (window.confirm(`Удалить строку ${row.lineNumber}?`)) {
             const updatedRows = config.rows.filter(row => row.id !== rowId);
-            
+
             const updatedConfig = {
               ...config,
               rows: updatedRows,
               lastModified: new Date(),
             };
-            
+
             if (configType === ConfigType.PARSER) {
               set({ parserConfig: updatedConfig });
             } else {
               set({ lexerConfig: updatedConfig });
             }
-            
+
             toast.success('Строка удалена');
           }
         },
-        
+
         clearConfig: (configType) => {
           if (window.confirm('Удалить текущую конфигурацию?')) {
             if (configType === ConfigType.PARSER) {
@@ -2110,47 +2180,81 @@ export const useConfigStore = create<ConfigStore>()(
             }
           }
         },
-        
+
         exportConfig: (configType) => {
           const state = get();
-          const config = configType === ConfigType.PARSER 
-            ? state.parserConfig 
+          const config = configType === ConfigType.PARSER
+            ? state.parserConfig
             : state.lexerConfig;
-          
+
           if (!config) {
             toast.error('Нет данных для экспорта');
             return;
           }
-          
+
+          console.log('Экспорт конфигурации:', {
+            type: config.type,
+            rows: config.rows.length,
+            fileName: config.fileName,
+            commentsType: typeof config.comments,
+            comments: config.comments
+          });
+
           try {
             const content = formatToOriginal(config);
-            const blob = new Blob([content], { type: 'text/plain' });
+
+            console.log('Содержимое для экспорта:');
+            console.log(content);
+
+            // Создаем Blob
+            const blob = new Blob([content], {
+              type: 'text/plain;charset=utf-8'
+            });
+
+            // Формируем имя файла
+            const fileName = config.fileName ||
+              `${config.type === ConfigType.PARSER ? 'Parser' : 'Lexer'}Configuration_${new Date().toISOString().slice(0, 10)}.txt`;
+
+            // Создаем URL для Blob
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = config.fileName || `config_export_${new Date().toISOString().slice(0, 10)}.txt`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            toast.success('Конфигурация экспортирована');
+
+            // Создаем временную ссылку для скачивания
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = fileName;
+            link.style.display = 'none';
+
+            // Добавляем ссылку в DOM
+            document.body.appendChild(link);
+
+            // Имитируем клик
+            link.click();
+
+            // Очищаем
+            setTimeout(() => {
+              document.body.removeChild(link);
+              URL.revokeObjectURL(url);
+            }, 100);
+
+            toast.success(`Конфигурация экспортирована как ${fileName}`);
+
           } catch (error) {
-            console.error('Export error:', error);
-            toast.error('Ошибка при экспорте');
+            console.error('Ошибка экспорта:', error);
+            toast.error(`Ошибка при экспорте: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
           }
         },
-        
+
         getFilteredRows: (configType) => {
           const state = get();
-          const config = configType === ConfigType.PARSER 
-            ? state.parserConfig 
+          const config = configType === ConfigType.PARSER
+            ? state.parserConfig
             : state.lexerConfig;
-          
+
           if (!config) return [];
-          
+
           const query = state.searchQuery.toLowerCase().trim();
           if (!query) return config.rows;
-          
+
           return config.rows.filter(row => {
             if (configType === ConfigType.PARSER) {
               const parserRow = row as any;
@@ -2173,11 +2277,11 @@ export const useConfigStore = create<ConfigStore>()(
             }
           });
         },
-        
+
         getCurrentConfig: () => {
           const state = get();
-          return state.activeTab === ConfigType.PARSER 
-            ? state.parserConfig 
+          return state.activeTab === ConfigType.PARSER
+            ? state.parserConfig
             : state.lexerConfig;
         },
       }),
@@ -2188,9 +2292,9 @@ export const useConfigStore = create<ConfigStore>()(
           lexerConfig: state.lexerConfig,
           activeTab: state.activeTab,
         }),
-      }
-    )
-  )
+      },
+    ),
+  ),
 );
 
 
@@ -2247,6 +2351,11 @@ export interface ValidationError {
   severity: 'error' | 'warning';
 }
 
+export interface DnDContext {
+  dragIndex: number;
+  hoverIndex: number;
+  configType: ConfigType;
+}
 
 ================================================================================
 ФАЙЛ: src/types/ui.ts
@@ -2474,29 +2583,51 @@ export function parseLexerConfig(content: string): ConfigFile {
 
 export function formatToOriginal(config: ConfigFile): string {
   const lines: string[] = [];
-  const maxLine = Math.max(...config.rows.map(r => r.lineNumber), ...Array.from(config.comments.keys()));
-  
-  for (let i = 0; i <= maxLine; i++) {
-    if (config.comments.has(i)) {
-      lines.push(config.comments.get(i)!);
-      continue;
-    }
-    
-    const row = config.rows.find(r => r.lineNumber === i);
-    if (!row) {
-      lines.push('');
-      continue;
-    }
-    
-    if (config.type === ConfigType.PARSER) {
-      const parserRow = row as ParserConfigRow;
-      lines.push(`${parserRow.priority.toFixed(2)}|${parserRow.type_full_name}|${parserRow.instance_hash}|${parserRow.ast_node_type}`);
+
+  // Преобразуем comments из объекта обратно в Map, если нужно
+  let commentsMap: Map<number, string>;
+
+  if (config.comments && typeof config.comments === 'object') {
+    if (config.comments instanceof Map) {
+      commentsMap = config.comments;
     } else {
-      const lexerRow = row as LexerConfigRow;
-      lines.push(`${lexerRow.priority.toFixed(2)}|${encodeBase64Pattern(lexerRow.decodedPattern)}|${lexerRow.lexeme_type}|${lexerRow.ignore_flag ? 'True' : 'False'}`);
+      // Если это обычный объект, конвертируем в Map
+      commentsMap = new Map();
+      Object.entries(config.comments).forEach(([key, value]) => {
+        commentsMap.set(parseInt(key), String(value));
+      });
+    }
+  } else {
+    commentsMap = new Map();
+  }
+
+  // Собираем все строки в правильном порядке
+  const maxLineNumber = Math.max(
+    ...config.rows.map(row => row.lineNumber),
+    ...Array.from(commentsMap.keys())
+  );
+
+  for (let lineNum = 1; lineNum <= maxLineNumber; lineNum++) {
+    // Сначала добавляем комментарии для этой строки
+    if (commentsMap.has(lineNum)) {
+      lines.push(commentsMap.get(lineNum)!);
+    }
+
+    // Затем добавляем строку конфигурации (если есть)
+    const row = config.rows.find(r => r.lineNumber === lineNum);
+    if (row) {
+      if (config.type === ConfigType.PARSER) {
+        const parserRow = row as ParserConfigRow;
+        lines.push(`${parserRow.priority.toFixed(2)}|${parserRow.type_full_name}|${parserRow.instance_hash}|${parserRow.ast_node_type}`);
+      } else {
+        const lexerRow = row as LexerConfigRow;
+        // Используем оригинальную encodedPattern или кодируем заново
+        const encodedPattern = lexerRow.encodedPattern || encodeBase64Pattern(lexerRow.decodedPattern);
+        lines.push(`${lexerRow.priority.toFixed(2)}|${encodedPattern}|${lexerRow.lexeme_type}|${lexerRow.ignore_flag ? 'True' : 'False'}`);
+      }
     }
   }
-  
+
   return lines.join('\n');
 }
 
@@ -2866,12 +2997,6 @@ function App() {
                     >
                       + Добавить строку
                     </button>
-                    <button
-                      className="action-btn export"
-                      onClick={() => useConfigStore.getState().exportConfig(activeTab)}
-                    >
-                      💾 Экспорт
-                    </button>
                   </div>
                 </div>
                 <ConfigurationTable configType={activeTab} />
@@ -2910,18 +3035,23 @@ export default App;
 ФАЙЛ: src/components/ConfigurationTable/ConfigurationTable.tsx
 ================================================================================
 
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { AgGridReact } from 'ag-grid-react';
-import { ColDef, ICellRendererParams, CellValueChangedEvent } from 'ag-grid-community';
-import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
+import {
+  AllCommunityModule,
+  CellValueChangedEvent,
+  ColDef,
+  ICellRendererParams,
+  ModuleRegistry,
+} from 'ag-grid-community';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import { useConfigStore } from '@/stores/configStore';
-import { ConfigType, ParserConfigRow, LexerConfigRow } from '@/types/config';
+import { ConfigType } from '@/types/config';
 import { encodeBase64Pattern } from '@/utils/base64';
 import './ConfigurationTable.css';
 
-// Регистрируем модули AG Grid
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 interface ConfigurationTableProps {
@@ -2932,25 +3062,54 @@ const ConfigurationTable: React.FC<ConfigurationTableProps> = ({ configType }) =
   const {
     getFilteredRows,
     updateRow,
-    deleteRow,
     addRow,
-    exportConfig,
-    searchQuery
+    reorderRow,
+    searchQuery,
   } = useConfigStore();
 
   const [gridApi, setGridApi] = useState<any>(null);
   const [rows, setRows] = useState<any[]>([]);
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+  );
+
   useEffect(() => {
     const filteredRows = getFilteredRows(configType);
-    console.log('ConfigurationTable - configType:', configType);
-    console.log('ConfigurationTable - rows count:', filteredRows.length);
-    console.log('ConfigurationTable - first row:', filteredRows[0]);
-    console.log('ConfigurationTable - searchQuery:', searchQuery);
     setRows(filteredRows);
   }, [configType, getFilteredRows, searchQuery]);
 
-  // Колонки для парсера
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = rows.findIndex(row => row.id === active.id);
+      const newIndex = rows.findIndex(row => row.id === over.id);
+
+      if (oldIndex !== -1 && newIndex !== -1) {
+        reorderRow(configType, oldIndex, newIndex);
+      }
+    }
+  }, [configType, rows, reorderRow]);
+
+  // Добавить колонку с иконкой перетаскивания
+  const dragColumn: ColDef = {
+    headerName: '↕️',
+    width: 60,
+    sortable: false,
+    filter: false,
+    editable: false,
+    cellRenderer: (params: ICellRendererParams) => (
+      <div style={{ cursor: 'move', padding: '5px' }}>
+        ⋮⋮
+      </div>
+    ),
+  };
+
   const parserColumns: ColDef[] = [
     {
       headerName: 'Приоритет',
@@ -2997,18 +3156,6 @@ const ConfigurationTable: React.FC<ConfigurationTableProps> = ({ configType }) =
       width: 150,
       sortable: true,
       filter: 'agTextColumnFilter',
-    },
-    {
-      headerName: 'Действия',
-      width: 120,
-      cellRenderer: (params: ICellRendererParams) => (
-        <button
-          className="delete-btn"
-          onClick={() => deleteRow(configType, params.data.id)}
-        >
-          Удалить
-        </button>
-      ),
     },
   ];
 
@@ -3074,107 +3221,51 @@ const ConfigurationTable: React.FC<ConfigurationTableProps> = ({ configType }) =
         <code className="base64-code">{params.value}</code>
       ),
     },
-    {
-      headerName: 'Действия',
-      width: 120,
-      cellRenderer: (params: ICellRendererParams) => (
-        <button
-          className="delete-btn"
-          onClick={() => deleteRow(configType, params.data.id)}
-        >
-          Удалить
-        </button>
-      ),
-    },
   ];
-
-  const columns = configType === ConfigType.PARSER ? parserColumns : lexerColumns;
-
-  const handleCellValueChanged = useCallback((event: CellValueChangedEvent) => {
-    const { data, colDef } = event;
-    const field = colDef.field as string;
-
-    // Проверяем, является ли это поле decodedPattern и есть ли оно в данных
-    if (field === 'decodedPattern' && 'decodedPattern' in data) {
-      // Это лексер строка
-      const newValue = event.newValue;
-      updateRow(configType, data.id, {
-        [field]: newValue,
-        encodedPattern: encodeBase64Pattern(newValue),
-      });
-    } else {
-      // Для всех остальных полей
-      updateRow(configType, data.id, { [field]: event.newValue });
-    }
-  }, [configType, updateRow]);
-
-  const handleAddRow = () => {
-    addRow(configType);
-    setTimeout(() => {
-      if (gridApi) {
-        gridApi.ensureIndexVisible(rows.length, 'bottom');
-      }
-    }, 0);
-  };
-
-  const handleExport = () => {
-    exportConfig(configType);
-  };
-
-  const onGridReady = (params: any) => {
-    setGridApi(params.api);
-  };
-
-
-  if (rows.length === 0) {
-    return (
-      <div className="empty-table">
-        <p>Нет данных для отображения</p>
-        <button onClick={handleAddRow} className="action-btn add-btn">
-          + Добавить строку
-        </button>
-        <p style={{ fontSize: '0.9rem', color: '#718096', marginTop: '1rem' }}>
-          Загрузите файл или создайте пример через меню выше
-        </p>
-      </div>
-    );
-  }
-
+  // Обновить контейнер для поддержки DnD
   return (
-    <div className="configuration-table-container">
-      <div className="table-actions">
-        <button onClick={handleAddRow} className="action-btn add-btn">
-          + Добавить строку
-        </button>
-        <button onClick={handleExport} className="action-btn export-btn">
-          📥 Экспорт
-        </button>
-        <div className="table-stats">
-          Показано: {rows.length} строк | Поиск: {searchQuery || '(нет)'}
+    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+      <div className="configuration-table-container">
+        <div className="table-actions">
+          <button onClick={() => addRow(configType)} className="action-btn add-btn">
+            + Добавить строку
+          </button>
+          <div className="table-stats">
+            Показано: {rows.length} строк | Поиск: {searchQuery || '(нет)'}
+          </div>
+        </div>
+
+        <div className="ag-theme-alpine" style={{ height: 'calc(100vh - 200px)', width: '100%' }}>
+          <AgGridReact
+            rowData={rows}
+            columnDefs={configType === ConfigType.PARSER ? parserColumns : lexerColumns}
+            defaultColDef={{
+              resizable: true,
+              sortable: true,
+              filter: true,
+            }}
+            onGridReady={setGridApi}
+            onCellValueChanged={(event: CellValueChangedEvent) => {
+              const { data, colDef } = event;
+              const field = colDef.field as string;
+
+              if (field === 'decodedPattern' && 'decodedPattern' in data) {
+                updateRow(configType, data.id, {
+                  [field]: event.newValue,
+                  encodedPattern: encodeBase64Pattern(event.newValue),
+                });
+              } else {
+                updateRow(configType, data.id, { [field]: event.newValue });
+              }
+            }}
+            rowDragManaged={true}
+            animateRows={true}
+            pagination={true}
+            paginationPageSize={50}
+          />
         </div>
       </div>
-
-      <div className="ag-theme-alpine" style={{ height: 'calc(100vh - 200px)', width: '100%' }}>
-        <AgGridReact
-          rowData={rows}
-          columnDefs={columns}
-          defaultColDef={{
-            resizable: true,
-            sortable: true,
-            filter: true,
-            editable: false, // временно отключаем редактирование для дебага
-          }}
-          onGridReady={onGridReady}
-          onCellValueChanged={handleCellValueChanged}
-          rowSelection="multiple"
-          animateRows={true}
-          pagination={true}
-          paginationPageSize={50}
-          suppressMovableColumns={true}
-          suppressDragLeaveHidesColumns={true}
-        />
-      </div>
-    </div>
+    </DndContext>
   );
 };
 
@@ -3293,6 +3384,7 @@ import React, { useRef } from 'react';
 import { ConfigType } from '@/types/config';
 import { useConfigStore } from '@/stores/configStore';
 import './Header.css';
+import { toast } from 'react-hot-toast';
 
 const Header: React.FC = () => {
   const { activeTab, setActiveTab, parserConfig, lexerConfig, exportConfig, clearConfig } = useConfigStore();
@@ -3304,9 +3396,24 @@ const Header: React.FC = () => {
       useConfigStore.getState().loadFile(file);
     }
   };
-  
+
+
   const handleExport = () => {
-    exportConfig(activeTab);
+    const { activeTab, exportConfig, parserConfig, lexerConfig } = useConfigStore.getState();
+
+    const config = activeTab === ConfigType.PARSER ? parserConfig : lexerConfig;
+
+    if (!config) {
+      toast.error('Нет данных для экспорта');
+      return;
+    }
+
+    try {
+      exportConfig(activeTab);
+    } catch (error) {
+      console.error('Export error in Header:', error);
+      toast.error('Ошибка при экспорте');
+    }
   };
   
   const handleClear = () => {
@@ -3426,6 +3533,49 @@ const Header: React.FC = () => {
 
 export default Header;
 
+
+================================================================================
+ФАЙЛ: src/components/SortableRow.tsx
+================================================================================
+
+import React from 'react';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { ConfigRow } from '@/types/config';
+
+interface SortableRowProps {
+  row: ConfigRow;
+  children: React.ReactNode;
+}
+
+export const SortableRow: React.FC<SortableRowProps> = ({ row, children }) => {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: row.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    cursor: 'move',
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+    >
+      {children}
+    </div>
+  );
+};
 
 ================================================================================
 ФАЙЛ: src/components/ValidationPanel/ValidationPanel.tsx

@@ -12,7 +12,7 @@ function App() {
     parserConfig,
     lexerConfig,
     activeTab,
-    getCurrentConfig
+    getCurrentConfig,
   } = useConfigStore();
 
   const [isInitialized, setIsInitialized] = useState(false);
@@ -30,18 +30,18 @@ function App() {
       parserConfig: parserConfig ? {
         fileName: parserConfig.fileName,
         rowsCount: parserConfig.rows.length,
-        firstRow: parserConfig.rows[0]
+        firstRow: parserConfig.rows[0],
       } : null,
       lexerConfig: lexerConfig ? {
         fileName: lexerConfig.fileName,
         rowsCount: lexerConfig.rows.length,
-        firstRow: lexerConfig.rows[0]
+        firstRow: lexerConfig.rows[0],
       } : null,
       activeTab,
       currentConfig: currentConfig ? {
         fileName: currentConfig.fileName,
-        rowsCount: currentConfig.rows.length
-      } : null
+        rowsCount: currentConfig.rows.length,
+      } : null,
     });
   }, [hasConfig, parserConfig, lexerConfig, activeTab, currentConfig]);
 
@@ -161,9 +161,14 @@ function App() {
                     </span>
                   </h2>
                   <div className="editor-actions">
+                    // В кнопке "Добавить строку" в App.tsx добавить сортировку после добавления:
                     <button
                       className="action-btn"
-                      onClick={() => useConfigStore.getState().addRow(activeTab)}
+                      onClick={() => {
+                        const store = useConfigStore.getState();
+                        store.addRow(activeTab);
+                        store.sortRowsByPriority(activeTab);
+                      }}
                     >
                       + Добавить строку
                     </button>

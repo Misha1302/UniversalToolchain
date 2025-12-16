@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { AgGridReact } from 'ag-grid-react';
 import {
@@ -10,10 +10,10 @@ import {
 } from 'ag-grid-community';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
+import './ConfigurationTable.css';
 import { useConfigStore } from '@/stores/configStore';
 import { ConfigType } from '@/types/config';
 import { encodeBase64Pattern } from '@/utils/base64';
-import './ConfigurationTable.css';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -27,11 +27,15 @@ const ConfigurationTable: React.FC<ConfigurationTableProps> = ({ configType }) =
     updateRow,
     addRow,
     reorderRow,
+    sortRowsByPriority,
     searchQuery,
+    parserConfig,
+    lexerConfig,
   } = useConfigStore();
 
-  const [gridApi, setGridApi] = useState<any>(null);
-  const [rows, setRows] = useState<any[]>([]);
+  const rows = useMemo(() => {
+    return getFilteredRows(configType);
+  }, [configType, getFilteredRows, searchQuery, parserConfig, lexerConfig]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -40,11 +44,6 @@ const ConfigurationTable: React.FC<ConfigurationTableProps> = ({ configType }) =
       },
     }),
   );
-
-  useEffect(() => {
-    const filteredRows = getFilteredRows(configType);
-    setRows(filteredRows);
-  }, [configType, getFilteredRows, searchQuery]);
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
@@ -59,20 +58,7 @@ const ConfigurationTable: React.FC<ConfigurationTableProps> = ({ configType }) =
     }
   }, [configType, rows, reorderRow]);
 
-  // Добавить колонку с иконкой перетаскивания
-  const dragColumn: ColDef = {
-    headerName: '↕️',
-    width: 60,
-    sortable: false,
-    filter: false,
-    editable: false,
-    cellRenderer: (params: ICellRendererParams) => (
-      <div style={{ cursor: 'move', padding: '5px' }}>
-        ⋮⋮
-      </div>
-    ),
-  };
-
+  // Колонки для парсера
   const parserColumns: ColDef[] = [
     {
       headerName: 'Приоритет',
@@ -185,12 +171,18 @@ const ConfigurationTable: React.FC<ConfigurationTableProps> = ({ configType }) =
       ),
     },
   ];
-  // Обновить контейнер для поддержки DnD
+
   return (
     <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
       <div className="configuration-table-container">
         <div className="table-actions">
-          <button onClick={() => addRow(configType)} className="action-btn add-btn">
+          <button
+            onClick={() => {
+              addRow(configType);
+              sortRowsByPriority(configType);
+            }}
+            className="action-btn add-btn"
+          >
             + Добавить строку
           </button>
           <div className="table-stats">
@@ -207,7 +199,6 @@ const ConfigurationTable: React.FC<ConfigurationTableProps> = ({ configType }) =
               sortable: true,
               filter: true,
             }}
-            onGridReady={setGridApi}
             onCellValueChanged={(event: CellValueChangedEvent) => {
               const { data, colDef } = event;
               const field = colDef.field as string;
@@ -220,11 +211,17 @@ const ConfigurationTable: React.FC<ConfigurationTableProps> = ({ configType }) =
               } else {
                 updateRow(configType, data.id, { [field]: event.newValue });
               }
+
+              // Если изменилось поле priority, запускаем сортировку
+              if (field === 'priority') {
+                sortRowsByPriority(configType);
+              }
             }}
             rowDragManaged={true}
             animateRows={true}
             pagination={true}
             paginationPageSize={50}
+            // theme="legacy" // можно убрать или оставить, если нужно
           />
         </div>
       </div>
