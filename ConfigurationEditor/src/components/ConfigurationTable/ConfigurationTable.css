@@ -171,3 +171,24 @@
   padding: 0.75rem;
   background: #f8fafc;
 }
+
+
+/* Добавить в конец файла */
+.drag-handle {
+    cursor: move;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.drag-handle:hover {
+    opacity: 1;
+}
+
+.ag-row-dragging {
+    opacity: 0.5;
+    background: rgba(102, 126, 234, 0.1);
+}
+
+.ag-row-over {
+    background-color: rgba(102, 126, 234, 0.05);
+}

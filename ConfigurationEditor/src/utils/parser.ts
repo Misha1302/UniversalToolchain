@@ -146,28 +146,50 @@ export function parseLexerConfig(content: string): ConfigFile {
 
 export function formatToOriginal(config: ConfigFile): string {
   const lines: string[] = [];
-  const maxLine = Math.max(...config.rows.map(r => r.lineNumber), ...Array.from(config.comments.keys()));
-  
-  for (let i = 0; i <= maxLine; i++) {
-    if (config.comments.has(i)) {
-      lines.push(config.comments.get(i)!);
-      continue;
-    }
-    
-    const row = config.rows.find(r => r.lineNumber === i);
-    if (!row) {
-      lines.push('');
-      continue;
-    }
-    
-    if (config.type === ConfigType.PARSER) {
-      const parserRow = row as ParserConfigRow;
-      lines.push(`${parserRow.priority.toFixed(2)}|${parserRow.type_full_name}|${parserRow.instance_hash}|${parserRow.ast_node_type}`);
+
+  // Преобразуем comments из объекта обратно в Map, если нужно
+  let commentsMap: Map<number, string>;
+
+  if (config.comments && typeof config.comments === 'object') {
+    if (config.comments instanceof Map) {
+      commentsMap = config.comments;
     } else {
-      const lexerRow = row as LexerConfigRow;
-      lines.push(`${lexerRow.priority.toFixed(2)}|${encodeBase64Pattern(lexerRow.decodedPattern)}|${lexerRow.lexeme_type}|${lexerRow.ignore_flag ? 'True' : 'False'}`);
+      // Если это обычный объект, конвертируем в Map
+      commentsMap = new Map();
+      Object.entries(config.comments).forEach(([key, value]) => {
+        commentsMap.set(parseInt(key), String(value));
+      });
+    }
+  } else {
+    commentsMap = new Map();
+  }
+
+  // Собираем все строки в правильном порядке
+  const maxLineNumber = Math.max(
+    ...config.rows.map(row => row.lineNumber),
+    ...Array.from(commentsMap.keys())
+  );
+
+  for (let lineNum = 1; lineNum <= maxLineNumber; lineNum++) {
+    // Сначала добавляем комментарии для этой строки
+    if (commentsMap.has(lineNum)) {
+      lines.push(commentsMap.get(lineNum)!);
+    }
+
+    // Затем добавляем строку конфигурации (если есть)
+    const row = config.rows.find(r => r.lineNumber === lineNum);
+    if (row) {
+      if (config.type === ConfigType.PARSER) {
+        const parserRow = row as ParserConfigRow;
+        lines.push(`${parserRow.priority.toFixed(2)}|${parserRow.type_full_name}|${parserRow.instance_hash}|${parserRow.ast_node_type}`);
+      } else {
+        const lexerRow = row as LexerConfigRow;
+        // Используем оригинальную encodedPattern или кодируем заново
+        const encodedPattern = lexerRow.encodedPattern || encodeBase64Pattern(lexerRow.decodedPattern);
+        lines.push(`${lexerRow.priority.toFixed(2)}|${encodedPattern}|${lexerRow.lexeme_type}|${lexerRow.ignore_flag ? 'True' : 'False'}`);
+      }
     }
   }
-  
+
   return lines.join('\n');
 }

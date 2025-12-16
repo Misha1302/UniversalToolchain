@@ -1,15 +1,20 @@
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { AgGridReact } from 'ag-grid-react';
-import { ColDef, ICellRendererParams, CellValueChangedEvent } from 'ag-grid-community';
-import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
+import {
+  AllCommunityModule,
+  CellValueChangedEvent,
+  ColDef,
+  ICellRendererParams,
+  ModuleRegistry,
+} from 'ag-grid-community';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 import { useConfigStore } from '@/stores/configStore';
-import { ConfigType, ParserConfigRow, LexerConfigRow } from '@/types/config';
+import { ConfigType } from '@/types/config';
 import { encodeBase64Pattern } from '@/utils/base64';
 import './ConfigurationTable.css';
 
-// Регистрируем модули AG Grid
 ModuleRegistry.registerModules([AllCommunityModule]);
 
 interface ConfigurationTableProps {
@@ -20,25 +25,54 @@ const ConfigurationTable: React.FC<ConfigurationTableProps> = ({ configType }) =
   const {
     getFilteredRows,
     updateRow,
-    deleteRow,
     addRow,
-    exportConfig,
-    searchQuery
+    reorderRow,
+    searchQuery,
   } = useConfigStore();
 
   const [gridApi, setGridApi] = useState<any>(null);
   const [rows, setRows] = useState<any[]>([]);
 
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+  );
+
   useEffect(() => {
     const filteredRows = getFilteredRows(configType);
-    console.log('ConfigurationTable - configType:', configType);
-    console.log('ConfigurationTable - rows count:', filteredRows.length);
-    console.log('ConfigurationTable - first row:', filteredRows[0]);
-    console.log('ConfigurationTable - searchQuery:', searchQuery);
     setRows(filteredRows);
   }, [configType, getFilteredRows, searchQuery]);
 
-  // Колонки для парсера
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      const oldIndex = rows.findIndex(row => row.id === active.id);
+      const newIndex = rows.findIndex(row => row.id === over.id);
+
+      if (oldIndex !== -1 && newIndex !== -1) {
+        reorderRow(configType, oldIndex, newIndex);
+      }
+    }
+  }, [configType, rows, reorderRow]);
+
+  // Добавить колонку с иконкой перетаскивания
+  const dragColumn: ColDef = {
+    headerName: '↕️',
+    width: 60,
+    sortable: false,
+    filter: false,
+    editable: false,
+    cellRenderer: (params: ICellRendererParams) => (
+      <div style={{ cursor: 'move', padding: '5px' }}>
+        ⋮⋮
+      </div>
+    ),
+  };
+
   const parserColumns: ColDef[] = [
     {
       headerName: 'Приоритет',
@@ -85,18 +119,6 @@ const ConfigurationTable: React.FC<ConfigurationTableProps> = ({ configType }) =
       width: 150,
       sortable: true,
       filter: 'agTextColumnFilter',
-    },
-    {
-      headerName: 'Действия',
-      width: 120,
-      cellRenderer: (params: ICellRendererParams) => (
-        <button
-          className="delete-btn"
-          onClick={() => deleteRow(configType, params.data.id)}
-        >
-          Удалить
-        </button>
-      ),
     },
   ];
 
@@ -162,107 +184,51 @@ const ConfigurationTable: React.FC<ConfigurationTableProps> = ({ configType }) =
         <code className="base64-code">{params.value}</code>
       ),
     },
-    {
-      headerName: 'Действия',
-      width: 120,
-      cellRenderer: (params: ICellRendererParams) => (
-        <button
-          className="delete-btn"
-          onClick={() => deleteRow(configType, params.data.id)}
-        >
-          Удалить
-        </button>
-      ),
-    },
   ];
-
-  const columns = configType === ConfigType.PARSER ? parserColumns : lexerColumns;
-
-  const handleCellValueChanged = useCallback((event: CellValueChangedEvent) => {
-    const { data, colDef } = event;
-    const field = colDef.field as string;
-
-    // Проверяем, является ли это поле decodedPattern и есть ли оно в данных
-    if (field === 'decodedPattern' && 'decodedPattern' in data) {
-      // Это лексер строка
-      const newValue = event.newValue;
-      updateRow(configType, data.id, {
-        [field]: newValue,
-        encodedPattern: encodeBase64Pattern(newValue),
-      });
-    } else {
-      // Для всех остальных полей
-      updateRow(configType, data.id, { [field]: event.newValue });
-    }
-  }, [configType, updateRow]);
-
-  const handleAddRow = () => {
-    addRow(configType);
-    setTimeout(() => {
-      if (gridApi) {
-        gridApi.ensureIndexVisible(rows.length, 'bottom');
-      }
-    }, 0);
-  };
-
-  const handleExport = () => {
-    exportConfig(configType);
-  };
-
-  const onGridReady = (params: any) => {
-    setGridApi(params.api);
-  };
-
-
-  if (rows.length === 0) {
-    return (
-      <div className="empty-table">
-        <p>Нет данных для отображения</p>
-        <button onClick={handleAddRow} className="action-btn add-btn">
-          + Добавить строку
-        </button>
-        <p style={{ fontSize: '0.9rem', color: '#718096', marginTop: '1rem' }}>
-          Загрузите файл или создайте пример через меню выше
-        </p>
-      </div>
-    );
-  }
-
+  // Обновить контейнер для поддержки DnD
   return (
-    <div className="configuration-table-container">
-      <div className="table-actions">
-        <button onClick={handleAddRow} className="action-btn add-btn">
-          + Добавить строку
-        </button>
-        <button onClick={handleExport} className="action-btn export-btn">
-          📥 Экспорт
-        </button>
-        <div className="table-stats">
-          Показано: {rows.length} строк | Поиск: {searchQuery || '(нет)'}
+    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+      <div className="configuration-table-container">
+        <div className="table-actions">
+          <button onClick={() => addRow(configType)} className="action-btn add-btn">
+            + Добавить строку
+          </button>
+          <div className="table-stats">
+            Показано: {rows.length} строк | Поиск: {searchQuery || '(нет)'}
+          </div>
+        </div>
+
+        <div className="ag-theme-alpine" style={{ height: 'calc(100vh - 200px)', width: '100%' }}>
+          <AgGridReact
+            rowData={rows}
+            columnDefs={configType === ConfigType.PARSER ? parserColumns : lexerColumns}
+            defaultColDef={{
+              resizable: true,
+              sortable: true,
+              filter: true,
+            }}
+            onGridReady={setGridApi}
+            onCellValueChanged={(event: CellValueChangedEvent) => {
+              const { data, colDef } = event;
+              const field = colDef.field as string;
+
+              if (field === 'decodedPattern' && 'decodedPattern' in data) {
+                updateRow(configType, data.id, {
+                  [field]: event.newValue,
+                  encodedPattern: encodeBase64Pattern(event.newValue),
+                });
+              } else {
+                updateRow(configType, data.id, { [field]: event.newValue });
+              }
+            }}
+            rowDragManaged={true}
+            animateRows={true}
+            pagination={true}
+            paginationPageSize={50}
+          />
         </div>
       </div>
-
-      <div className="ag-theme-alpine" style={{ height: 'calc(100vh - 200px)', width: '100%' }}>
-        <AgGridReact
-          rowData={rows}
-          columnDefs={columns}
-          defaultColDef={{
-            resizable: true,
-            sortable: true,
-            filter: true,
-            editable: false, // временно отключаем редактирование для дебага
-          }}
-          onGridReady={onGridReady}
-          onCellValueChanged={handleCellValueChanged}
-          rowSelection="multiple"
-          animateRows={true}
-          pagination={true}
-          paginationPageSize={50}
-          suppressMovableColumns={true}
-          suppressDragLeaveHidesColumns={true}
-        />
-      </div>
-    </div>
+    </DndContext>
   );
 };
 

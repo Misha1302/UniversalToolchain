@@ -45,3 +45,9 @@ export interface ValidationError {
   message: string;
   severity: 'error' | 'warning';
 }
+
+export interface DnDContext {
+  dragIndex: number;
+  hoverIndex: number;
+  configType: ConfigType;
+}

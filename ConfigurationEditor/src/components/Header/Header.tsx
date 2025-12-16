@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import { ConfigType } from '@/types/config';
 import { useConfigStore } from '@/stores/configStore';
 import './Header.css';
+import { toast } from 'react-hot-toast';
 
 const Header: React.FC = () => {
   const { activeTab, setActiveTab, parserConfig, lexerConfig, exportConfig, clearConfig } = useConfigStore();
@@ -13,9 +14,24 @@ const Header: React.FC = () => {
       useConfigStore.getState().loadFile(file);
     }
   };
-  
+
+
   const handleExport = () => {
-    exportConfig(activeTab);
+    const { activeTab, exportConfig, parserConfig, lexerConfig } = useConfigStore.getState();
+
+    const config = activeTab === ConfigType.PARSER ? parserConfig : lexerConfig;
+
+    if (!config) {
+      toast.error('Нет данных для экспорта');
+      return;
+    }
+
+    try {
+      exportConfig(activeTab);
+    } catch (error) {
+      console.error('Export error in Header:', error);
+      toast.error('Ошибка при экспорте');
+    }
   };
   
   const handleClear = () => {

@@ -167,12 +167,6 @@ function App() {
                     >
                       + Добавить строку
                     </button>
-                    <button
-                      className="action-btn export"
-                      onClick={() => useConfigStore.getState().exportConfig(activeTab)}
-                    >
-                      💾 Экспорт
-                    </button>
                   </div>
                 </div>
                 <ConfigurationTable configType={activeTab} />

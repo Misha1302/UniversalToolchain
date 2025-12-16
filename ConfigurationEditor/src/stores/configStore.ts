@@ -25,6 +25,8 @@ interface ConfigStore {
   exportConfig: (configType: ConfigType) => void;
   getFilteredRows: (configType: ConfigType) => ConfigRow[];
   getCurrentConfig: () => ConfigFile | null;
+
+  reorderRow: (configType: ConfigType, dragIndex: number, hoverIndex: number) => void;
 }
 
 export const useConfigStore = create<ConfigStore>()(
@@ -35,6 +37,50 @@ export const useConfigStore = create<ConfigStore>()(
         lexerConfig: null,
         activeTab: ConfigType.PARSER,
         searchQuery: '',
+
+        reorderRow: (configType, dragIndex, hoverIndex) => {
+          const state = get();
+          const config = configType === ConfigType.PARSER
+            ? state.parserConfig
+            : state.lexerConfig;
+
+          if (!config) return;
+
+          const rows = [...config.rows];
+          const draggedRow = rows[dragIndex];
+
+          // Удаляем из старой позиции
+          rows.splice(dragIndex, 1);
+          // Вставляем в новую позицию
+          rows.splice(hoverIndex, 0, draggedRow);
+
+          // Пересчитываем приоритеты
+          const updatedRows = rows.map((row, index) => {
+            if (configType === ConfigType.PARSER) {
+              // Для парсера: приоритет уменьшается на 1000 при перемещении вверх
+              const priority = 100000 - (index * 1000);
+              return { ...row, priority };
+            } else {
+              // Для лексера: приоритет увеличивается на 100 при перемещении вниз
+              const priority = index * 100;
+              return { ...row, priority };
+            }
+          });
+
+          const updatedConfig = {
+            ...config,
+            rows: updatedRows,
+            lastModified: new Date(),
+          };
+
+          if (configType === ConfigType.PARSER) {
+            set({ parserConfig: updatedConfig });
+          } else {
+            set({ lexerConfig: updatedConfig });
+          }
+
+          toast.success('Порядок строк обновлен');
+        },
 
         setActiveTab: (tab) => set({ activeTab: tab }),
         setSearchQuery: (query) => set({ searchQuery: query }),
@@ -197,21 +243,55 @@ export const useConfigStore = create<ConfigStore>()(
             return;
           }
 
+          console.log('Экспорт конфигурации:', {
+            type: config.type,
+            rows: config.rows.length,
+            fileName: config.fileName,
+            commentsType: typeof config.comments,
+            comments: config.comments
+          });
+
           try {
             const content = formatToOriginal(config);
-            const blob = new Blob([content], { type: 'text/plain' });
+
+            console.log('Содержимое для экспорта:');
+            console.log(content);
+
+            // Создаем Blob
+            const blob = new Blob([content], {
+              type: 'text/plain;charset=utf-8'
+            });
+
+            // Формируем имя файла
+            const fileName = config.fileName ||
+              `${config.type === ConfigType.PARSER ? 'Parser' : 'Lexer'}Configuration_${new Date().toISOString().slice(0, 10)}.txt`;
+
+            // Создаем URL для Blob
             const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = config.fileName || `config_export_${new Date().toISOString().slice(0, 10)}.txt`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            toast.success('Конфигурация экспортирована');
+
+            // Создаем временную ссылку для скачивания
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = fileName;
+            link.style.display = 'none';
+
+            // Добавляем ссылку в DOM
+            document.body.appendChild(link);
+
+            // Имитируем клик
+            link.click();
+
+            // Очищаем
+            setTimeout(() => {
+              document.body.removeChild(link);
+              URL.revokeObjectURL(url);
+            }, 100);
+
+            toast.success(`Конфигурация экспортирована как ${fileName}`);
+
           } catch (error) {
-            console.error('Export error:', error);
-            toast.error('Ошибка при экспорте');
+            console.error('Ошибка экспорта:', error);
+            toast.error(`Ошибка при экспорте: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
           }
         },
 
