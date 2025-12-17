@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Toolchain - Мета-система для создания языков программирования</title>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --accent: #58a6ff;
+            --accent-secondary: #238636;
+            --border: #30363d;
+            --code-bg: #1e1e1e;
+            --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --font-mono: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        .header {
+            padding: 4rem 0 3rem;
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .title {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #58a6ff, #2ea043);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 2rem;
+        }
+
+        .highlight {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* Sections */
+        .section {
+            padding: 4rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section-title {
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            color: var(--text-primary);
+        }
+
+        .section-content {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+        }
+
+        .section-content p {
+            margin-bottom: 1.5rem;
+        }
+
+        /* Code blocks */
+        .code-block {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            overflow-x: auto;
+            font-family: var(--font-mono);
+            font-size: 0.95rem;
+        }
+
+        .code-title {
+            color: var(--accent);
+            margin-bottom: 1rem;
+            font-family: var(--font-sans);
+            font-weight: 600;
+        }
+
+        .code-keyword { color: #569cd6; }
+        .code-type { color: #4ec9b0; }
+        .code-string { color: #ce9178; }
+        .code-number { color: #b5cea8; }
+        .code-comment { color: #6a9955; }
+
+        /* Features grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .feature-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent);
+        }
+
+        .feature-title {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            color: var(--accent);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-block;
+            background: var(--accent-secondary);
+            color: white;
+            padding: 0.8rem 1.5rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin: 0.5rem;
+        }
+
+        .btn:hover {
+            background: #2ea043;
+        }
+
+        .btn-gh {
+            background: #21262d;
+            border: 1px solid var(--border);
+        }
+
+        .btn-gh:hover {
+            background: #30363d;
+            border-color: #8b949e;
+        }
+
+        /* Logs Viewer */
+        .screenshot {
+            width: 100%;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin: 2rem 0;
+        }
+
+        /* Footer */
+        .footer {
+            padding: 3rem 0;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .title { font-size: 2.2rem; }
+            .section-title { font-size: 1.8rem; }
+            .section { padding: 3rem 0; }
+        }
+
+        /* Interactive elements */
+        .collapsible {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .collapsible-header {
+            padding: 1rem 1.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+        }
+
+        .collapsible-content {
+            padding: 0 1.5rem;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            border-top: 1px solid transparent;
+        }
+
+        .collapsible-content.open {
+            padding: 1.5rem;
+            max-height: 2000px;
+            border-top-color: var(--border);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <h1 class="title">Universal Toolchain</h1>
+            <p class="subtitle">
+                Мета-система для создания расширяемых языков программирования, решающая <span class="highlight">трилему языкового дизайна</span> через модульную архитектуру и расширяемое промежуточное представление
+            </p>
+            <div>
+                <a href="#repo" class="btn">Исходный код</a>
+                <a href="#demo" class="btn btn-gh">Демо Wist</a>
+            </div>
+        </header>
+
+        <!-- Problem -->
+        <section class="section">
+            <h2 class="section-title">Проблема: трилема языков программирования</h2>
+            <div class="section-content">
+                <p>Фиксированные языки программирования не могут одновременно обеспечивать:</p>
+                <ul style="margin-left: 2rem; margin-bottom: 1.5rem;">
+                    <li><strong>Выразительность</strong> — интуитивные абстракции, минимизация boilerplate-кода</li>
+                    <li><strong>Производительность</strong> — генерация оптимального машинного кода</li>
+                    <li><strong>Специализацию</strong> — адаптация под конкретные предметные области</li>
+                </ul>
+                <p>Python и JavaScript жертвуют производительностью ради выразительности. C++ и Rust требуют сложности для высокой производительности. Создание предметно-ориентированных языков (DSL) остается неподъемной задачей для большинства проектов.</p>
+                
+                <div class="collapsible">
+                    <div class="collapsible-header" onclick="toggleCollapse(this)">
+                        Пример: семантический разрыв в C#
+                        <span>▼</span>
+                    </div>
+                    <div class="collapsible-content">
+                        <div class="code-block">
+                            <div class="code-title">Проблема: отсутствие обобщенной арифметики в C# 9.0 (используется в unity на момент 17.12.2025)</div>
+                            <pre><span class="code-comment">// В идеальном мире unity:</span>
+<span class="code-keyword">T</span> SquareMagnitude&lt;<span class="code-keyword">T</span>&gt;(<span class="code-keyword">T</span> a, <span class="code-keyword">T</span> b) <span class="code-keyword">where</span> <span class="code-keyword">T</span> : Number => a * a + b * b;
+
+<span class="code-comment">// В реальности приходится:</span>
+<span class="code-keyword">double</span> SquareMagnitude(<span class="code-keyword">double</span> a, <span class="code-keyword">double</span> b) => a * a + b * b;
+<span class="code-keyword">float</span> SquareMagnitude(<span class="code-keyword">float</span> a, <span class="code-keyword">float</span> b) => a * a + b * b;
+<span class="code-comment">// Дублирование для каждого числового типа...</span></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Solution -->
+        <section class="section">
+            <h2 class="section-title">Решение: модульная архитектура и шитый код</h2>
+            <div class="section-content">
+                <p>Universal Toolchain декомпозирует традиционный компилятор на независимые модули:</p>
+                
+                <div class="code-block">
+                    <div class="code-title">Ядро системы — интерфейс ICoreModule</div>
+                    <pre><span class="code-keyword">public interface</span> <span class="code-type">ICoreModule</span>
+{
+    <span class="code-keyword">void</span> InitLexer(<span class="code-type">ILexer</span> lexer);
+    <span class="code-keyword">void</span> InitParser(<span class="code-type">IParser</span> parser);
+    <span class="code-keyword">void</span> InitTranslator(<span class="code-type">IBytecodeTranslator</span> translator);
+    <span class="code-keyword">void</span> InitExecutor(<span class="code-type">IExecutor</span> executor);
+    <span class="code-comment">// Каждый этап компиляции — отдельный модуль</span>
+}</pre>
+                </div>
+
+                <p><strong>Шитый код (Threaded Code)</strong> — универсальное промежуточное представление, сохраняющее семантику на всех этапах компиляции:</p>
+                
+                <div class="code-block">
+                    <div class="code-title">Структура байткода</div>
+                    <pre><span class="code-keyword">public record</span> <span class="code-type">BytecodeInstruction</span>(
+    <span class="code-type">HashSet</span>&lt;<span class="code-keyword">string</span>&gt; Tags,
+    <span class="code-type">LevelCollection</span>&lt;<span class="code-keyword">float</span>, <span class="code-type">IDynamicMethodConvertable</span>&gt; Ops
+);</pre>
+                </div>
+
+                <p>Модули добавляют операции в слоты с приоритетами (например, проверка границ в ops[-1.0f], логирование в ops[1.0f]), не зная о существовании друг друга. Это решает проблему O(N²) связности.</p>
+            </div>
+        </section>
+
+        <!-- Implementation -->
+        <section class="section" id="demo">
+            <h2 class="section-title">Язык Wist: реализация и демонстрация</h2>
+            <div class="section-content">
+                <p>На базе Universal Toolchain создан полнофункциональный язык Wist с поддержкой переменных, условий, циклов и интероперабельности с C#.</p>
+                
+                <div class="code-block">
+                    <div class="code-title">Пример кода на Wist: сумма чисел от 0 до 99</div>
+                    <pre><span class="code-comment">// Классический цикл с метками</span>
+<span class="code-keyword">let</span> result = <span class="code-number">0</span>
+<span class="code-keyword">let</span> i = <span class="code-number">0</span>
+@start:
+    result = result + i
+    i = i + <span class="code-number">1</span>
+    <span class="code-keyword">if</span> i &lt; <span class="code-number">100</span>
+    <span class="code-keyword">goto</span> @start
+result</pre>
+                </div>
+
+                <p><strong>Logs Viewer</strong> — веб-инструмент для визуализации всего процесса компиляции:</p>
+                
+                <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 8px; margin: 2rem 0;">
+                    <h3 style="color: var(--accent); margin-bottom: 1rem;">Визуализация этапов компиляции:</h3>
+                    <ul style="margin-left: 1.5rem;">
+                        <li>Исходный код → лексемы</li>
+                        <li>Лексемы → абстрактное синтаксическое дерево (AST)</li>
+                        <li>AST → промежуточный байткод Universal Toolchain</li>
+                        <li>Байткод → CIL (.NET) или интерпретация</li>
+                    </ul>
+                    <p style="margin-top: 1rem; font-style: italic;">Интерактивная связь между этапами: клик на CIL инструкции подсвечивает соответствующий байткод.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features -->
+        <section class="section">
+            <h2 class="section-title">Ключевые особенности</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3 class="feature-title">Модульность</h3>
+                    <p>ICoreModule позволяет подключать независимые модули для каждого этапа компиляции. Язык Wist — композиция 15+ модулей.</p>
+                </div>
+                <div class="feature-card">
+                    <h3 class="feature-title">Расширяемое представление</h3>
+                    <p>Шитый код (Threaded Code) сохраняет семантику и обеспечивает линейную связность между модулями (O(N) вместо O(N²)).</p>
+                </div>
+                <div class="feature-card">
+                    <h3 class="feature-title">Двойная система исполнения</h3>
+                    <p>Интерпретатор для отладки + CIL-компилятор для производительности. Оба работают с единым байткодом.</p>
+                </div>
+                <div class="feature-card">
+                    <h3 class="feature-title">Расширяемая система типов</h3>
+                    <p>Интерфейсы и система контрактов позволяют добавлять новые типы без изменения ядра.</p>
+                </div>
+                <div class="feature-card">
+                    <h3 class="feature-title">Готовый язык Wist</h3>
+                    <p>Поддержка переменных, условий, циклов, goto, вызовов C#. Реализованы простейшие алгоритмы (Фибоначчи, сортировка).</p>
+                </div>
+                <div class="feature-card">
+                    <h3 class="feature-title">Инструменты отладки</h3>
+                    <p>Logs Viewer, логгер компиляции, 74 теста с покрытием 85%, система обработки ошибок.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Links -->
+        <section class="section" id="repo">
+            <h2 class="section-title">Исходный код и документация</h2>
+            <div class="section-content" style="text-align: center;">
+                <p>Проект полностью открыт и доступен на GitHub:</p>
+                <div style="margin: 2rem 0;">
+                    <a href="https://github.com/Misha1302/Wist2" class="btn" target="_blank" style="font-size: 1.2rem; padding: 1rem 2rem;">
+                        📦 Репозиторий Universal Toolchain
+                    </a>
+                </div>
+                <p style="color: var(--text-secondary);">
+                    Более 7000 строк кода на C#, модульная архитектура<br>
+                    Примеры использования, тесты и демонстрационные программы.
+                </p>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Universal Toolchain — исследовательский проект в области языкового дизайна и метапрограммирования</p>
+            <p style="margin-top: 1rem; font-size: 0.9rem;">© 17.12.2025 Разработка: Михаил Разаков</p>
+        </footer>
+    </div>
+
+    <script>
+        // Collapsible sections
+        function toggleCollapse(header) {
+            const content = header.nextElementSibling;
+            const arrow = header.querySelector('span');
+            
+            content.classList.toggle('open');
+            arrow.textContent = content.classList.contains('open') ? '▲' : '▼';
+        }
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') return;
+                
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 20,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
