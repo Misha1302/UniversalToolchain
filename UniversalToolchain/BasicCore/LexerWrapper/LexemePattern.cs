@@ -1,6 +1,3 @@
-// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
 namespace BasicCore.LexerWrapper;
 
 // If somebody disagrees that lexemes shouldn't be parsed using regex-expressions, let him write his own working lexer without it and Antlr4

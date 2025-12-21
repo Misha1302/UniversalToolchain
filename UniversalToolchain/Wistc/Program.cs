@@ -1,7 +1,4 @@
-﻿// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-
-Parser.Default.ParseArguments<Options>(args).WithParsed(Main);
+﻿Parser.Default.ParseArguments<Options>(args).WithParsed(Main);
 
 return;
 
