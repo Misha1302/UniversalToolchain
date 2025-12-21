@@ -4,6 +4,7 @@
 
 using System.Reflection.Emit;
 using BasicCore.ExecutorWrapper;
+using ExceptionsManager;
 using GrEmit;
 
 namespace BasicCilCompiler;
@@ -53,7 +54,7 @@ public class BasicCilCompilerImpl : IExecutor
         // Компиляция всех методов
         foreach (var (_, method) in methods)
         {
-            var labelName = ExtractLabelName(method.Name);
+            var labelName = ExtractLabelName(method.Name).NotNull();
 
             if (method.Name.StartsWith("Label_!Intrinsic"))
             {

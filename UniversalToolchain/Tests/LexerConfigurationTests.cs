@@ -7,6 +7,7 @@ using BasicCore;
 using BasicCore.LexerWrapper;
 using BasicLexer;
 using BasicTypesExtensions;
+using ExceptionsManager;
 using IdentifierModule;
 using NumbersModule;
 using ParserConfigurationModule;
@@ -476,12 +477,12 @@ public class LexerConfigurationTests
 
         // Act
         var originalTokens = originalLexer.Lexemize(code)
-            .Where(t => !originalLexer.Configuration.LexemesToIgnore.Contains(t.LexemePattern?.LexemeType))
+            .Where(t => !originalLexer.Configuration.LexemesToIgnore.Contains(t.LexemePattern.NotNull().LexemeType.NotNull()))
             .Select(t => t.Text)
             .ToList();
 
         var loadedTokens = loadedLexer.Lexemize(code)
-            .Where(t => !loadedLexer.Configuration.LexemesToIgnore.Contains(t.LexemePattern?.LexemeType))
+            .Where(t => !loadedLexer.Configuration.LexemesToIgnore.Contains(t.LexemePattern.NotNull().LexemeType.NotNull()))
             .Select(t => t.Text)
             .ToList();
 

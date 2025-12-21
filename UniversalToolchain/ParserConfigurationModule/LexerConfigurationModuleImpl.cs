@@ -2,7 +2,6 @@
 // PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
 
 using System.Diagnostics;
-using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using BasicCore;
@@ -175,9 +174,7 @@ public class LexerConfigurationModuleImpl(ActionType actionType, string path = "
 
                 var encodedPattern = parts[1].Trim();
                 var lexemeType = parts[2].Trim();
-                var ignore = parts.Length > 3 && bool.TryParse(parts[3].Trim(), out var ignoreFlag)
-                    ? ignoreFlag
-                    : false;
+                var ignore = parts.Length > 3 && bool.TryParse(parts[3].Trim(), out var ignoreFlag) && ignoreFlag;
 
                 try
                 {
@@ -233,7 +230,7 @@ public class LexerConfigurationModuleImpl(ActionType actionType, string path = "
                     try
                     {
                         // Создаем Regex для проверки синтаксиса
-                        var regex = new Regex(line.Pattern, RegexOptions.None, TimeSpan.FromMilliseconds(100));
+                        _ = new Regex(line.Pattern, RegexOptions.None, TimeSpan.FromMilliseconds(100));
                     }
                     catch (RegexParseException ex)
                     {
