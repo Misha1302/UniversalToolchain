@@ -37,10 +37,13 @@ var core = new BasicCoreImpl<DynamicMethod>(
 
 var result = core.Execute(
     """
-    let a = 1e-15
-    let b = 2e-15
-    let c = 3e-15
-    (a + b) * 1e15 - c * 1e15
+    let i = 0
+    @start:
+        if i == 5 goto @end
+        Main.Print(i)
+        i = i + 1
+        goto @start
+    @end:
     """
 );
 

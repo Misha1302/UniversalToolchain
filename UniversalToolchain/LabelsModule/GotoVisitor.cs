@@ -6,7 +6,7 @@ using UniversalIntermediateRepresentation;
 
 namespace LabelsModule;
 
-public class GotoVisitor : IAstVisitor
+public class GotoVisitor(LabelsSharedData labelsSharedData) : IAstVisitor
 {
     public void TryVisit(BytecodeVisitorData data)
     {
@@ -16,7 +16,7 @@ public class GotoVisitor : IAstVisitor
         var method = new AbstractMethodImpl(
             $"Goto_!Intrinsic_{name}",
             0,
-            (il, _) => il.Jmp(Guid.Parse(name)),
+            (il, _) => il.Jmp(labelsSharedData.GetIdByName(name)),
             _ => typeof(void)
         );
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));

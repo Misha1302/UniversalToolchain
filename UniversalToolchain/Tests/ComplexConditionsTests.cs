@@ -3,8 +3,10 @@ using BasicCore;
 using ConditionsModule;
 using EqualityModule;
 using IdentifierModule;
+using LabelsModule;
 using NumbersModule;
 using ScopesModule;
+using SemicolonAsNewLineModule;
 using VariablesModule;
 using WhitespacesModule;
 
@@ -38,11 +40,14 @@ public class ComplexConditionsTests : TestBase
             new ScopesModuleImpl(),
             new NumbersModuleImpl(),
             new WhitespaceModuleImpl(),
+            new SemicolonAsNewLineModuleImpl(),
             new ArithmeticModuleImpl(),
+            new LabelsModuleImpl(),
             new VariablesModuleImpl(),
             new EqualityModuleImpl(),
             new ConditionsModuleImpl(),
-            new ComparisonOperations()
+            new ComparisonOperations(),
+            new BooleanOperations(),
         };
 
         // Act
@@ -77,12 +82,14 @@ public class ComplexConditionsTests : TestBase
             new ScopesModuleImpl(),
             new NumbersModuleImpl(),
             new WhitespaceModuleImpl(),
+            new SemicolonAsNewLineModuleImpl(),
             new ArithmeticModuleImpl(),
+            new LabelsModuleImpl(),
             new VariablesModuleImpl(),
             new EqualityModuleImpl(),
             new ConditionsModuleImpl(),
             new ComparisonOperations(),
-            new BooleanOperations()
+            new BooleanOperations(),
         };
 
         // Act
@@ -121,11 +128,14 @@ public class ComplexConditionsTests : TestBase
             new ScopesModuleImpl(),
             new NumbersModuleImpl(),
             new WhitespaceModuleImpl(),
+            new SemicolonAsNewLineModuleImpl(),
             new ArithmeticModuleImpl(),
+            new LabelsModuleImpl(),
             new VariablesModuleImpl(),
             new EqualityModuleImpl(),
             new ConditionsModuleImpl(),
-            new ComparisonOperations()
+            new ComparisonOperations(),
+            new BooleanOperations(),
         };
 
         // Act

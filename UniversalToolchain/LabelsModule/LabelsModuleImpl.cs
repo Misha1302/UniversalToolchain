@@ -27,7 +27,8 @@ public class LabelsModuleImpl : IFrontendCoreModule
 
     public void InitTranslator(IBytecodeTranslator translator)
     {
-        translator.Configuration.Visitors.Add(new LabelsVisitor());
-        translator.Configuration.Visitors.Add(new GotoVisitor());
+        var labelsSharedData = new LabelsSharedData();
+        translator.Configuration.Visitors.Add(new LabelsVisitor(labelsSharedData));
+        translator.Configuration.Visitors.Add(new GotoVisitor(labelsSharedData));
     }
 }

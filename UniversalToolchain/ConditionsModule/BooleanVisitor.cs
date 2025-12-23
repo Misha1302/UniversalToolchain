@@ -49,11 +49,32 @@ public class BooleanVisitor : IAstVisitor
             {
                 // args always pushed
                 Thrower.AssertAlways(op.GetName() is "And" or "Or" or "Not");
-                il.CallCSharp(context.Stack[^1].GetMethod(op.GetName()).NotNull());
+                Thrower.AssertAlways(context.Stack[^1] == context.Stack[^2]);
+                if (context.Stack[^1] != typeof(bool))
+                    il.CallCSharp(context.Stack[^1].GetMethod(op.GetName()).NotNull());
+                else il.CallCSharp(typeof(BooleanOperations).GetMethod(op.GetName()).NotNull());
             },
             _ => typeof(bool)
         );
 
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
+    }
+
+    private static class BooleanOperations
+    {
+        public static bool And(bool a, bool b)
+        {
+            return a && b;
+        }
+
+        public static bool Or(bool a, bool b)
+        {
+            return a || b;
+        }
+
+        public static bool Not(bool a)
+        {
+            return !a;
+        }
     }
 }

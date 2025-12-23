@@ -21,37 +21,24 @@ public class GenericAbstractIR<TIdentifier>
         _instructions.Add(new Instruction(OpCode.Drop));
     }
 
-    public void Jmp()
+    public void Jmp(TIdentifier identifier)
     {
-        // on stack should be:
-        // 1. Where to jump
-        _instructions.Add(new Instruction(OpCode.Jmp));
+        _instructions.Add(new Instruction(OpCode.Jmp, [Value.Create(identifier)]));
     }
 
-    public void JmpIf()
+    public void JmpIf(TIdentifier identifier)
     {
-        // on stack should be:
-        // 1. Where to jump
-        // 2. Boolean - jump or not
-        _instructions.Add(new Instruction(OpCode.JmpIf));
+        _instructions.Add(new Instruction(OpCode.JmpIf, [Value.Create(identifier)]));
     }
 
-    public void JmpIfNot()
+    public void JmpIfNot(TIdentifier identifier)
     {
-        // on stack should be:
-        // 1. Where to jump
-        // 2. Boolean - jump or not
-        _instructions.Add(new Instruction(OpCode.JmpIfNot));
+        _instructions.Add(new Instruction(OpCode.JmpIfNot, [Value.Create(identifier)]));
     }
 
     public void SetLabel(TIdentifier label)
     {
         _instructions.Add(new Instruction(OpCode.Label, [Value.Create(label)]));
-    }
-
-    public void LoadIp()
-    {
-        _instructions.Add(new Instruction(OpCode.LoadIp));
     }
 
     public void Annotate(params List<Value>[] annotations)

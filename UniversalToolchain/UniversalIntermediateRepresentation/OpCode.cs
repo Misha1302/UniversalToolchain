@@ -13,7 +13,6 @@ public enum OpCode : byte
     JmpIf = 0x21,
     JmpIfNot = 0x22,
     Label = 0x23,
-    LoadIp = 0x24,
     
     // Управление данными
     StLoc = 0x30,

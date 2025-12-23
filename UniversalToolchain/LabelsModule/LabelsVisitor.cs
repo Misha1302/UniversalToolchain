@@ -5,7 +5,7 @@ using DynamicMethodWrapper;
 
 namespace LabelsModule;
 
-public class LabelsVisitor : IAstVisitor
+public class LabelsVisitor(LabelsSharedData labelsSharedData) : IAstVisitor
 {
     public void TryVisit(BytecodeVisitorData data)
     {
@@ -14,7 +14,7 @@ public class LabelsVisitor : IAstVisitor
         var name = data.Node.Text;
         var method = new AbstractMethodImpl(
             $"Label_!Intrinsic_{name}", 0,
-            (il, _) => il.SetLabel(Guid.Parse(name)),
+            (il, _) => il.SetLabel(labelsSharedData.GetGuidByName(name)),
             _ => typeof(void)
         );
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));

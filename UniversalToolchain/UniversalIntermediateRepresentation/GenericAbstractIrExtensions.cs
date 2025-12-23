@@ -15,24 +15,6 @@ public static class GenericAbstractIrExtensions
         air.SetLabel(labelId);
     }
 
-    public static void Jmp<TIdentifier>(this GenericAbstractIR<TIdentifier> air, TIdentifier labelId)
-    {
-        air.LoadLabel(labelId);
-        air.Jmp();
-    }
-
-    public static void JmpIf<TIdentifier>(this GenericAbstractIR<TIdentifier> air, TIdentifier labelId)
-    {
-        air.LoadLabel(labelId);
-        air.JmpIf();
-    }
-
-    public static void JmpIfNot<TIdentifier>(this GenericAbstractIR<TIdentifier> air, TIdentifier labelId)
-    {
-        air.LoadLabel(labelId);
-        air.JmpIfNot();
-    }
-
     public static void CallCSharp<TIdentifier>(this GenericAbstractIR<TIdentifier> air, MethodInfo methodBody)
     {
         air.Intrinsic(Value.Create("call C#"), Value.Create(methodBody));

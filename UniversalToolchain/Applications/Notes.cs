@@ -4,3 +4,4 @@
 // push reference to a
 // set
 
+// Jmp, JmpIf, JmpIfNot - all branches are Directional
