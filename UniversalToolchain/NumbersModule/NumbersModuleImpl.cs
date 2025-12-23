@@ -10,7 +10,7 @@ public class NumbersModuleImpl : IFrontendCoreModule
     public void InitLexer(ILexer lexer)
     {
         lexer.Configuration.TryAddPattern(
-            new LexemePattern(@"(\+|-)?([0-9]+)(\.[0-9]+)?",
+            new LexemePattern(@"[+-]?\d+(\.\d+)?([eE][+-]?\d+)?",
                 LexemeType.CreateOrGet("Number"))
         );
     }

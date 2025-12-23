@@ -18,7 +18,7 @@ public class AbstractMethodsCompilerImpl : IAbstractMethodsCompiler<DynamicMetho
 
     public DynamicMethod Compile(Bytecode bytecode)
     {
-        var method = new DynamicMethod("main", typeof(Value), []);
+        var method = new DynamicMethod("main", typeof(object), []);
         using var il = new GroboIL(method);
 
         var typesStack = new List<Type>();
@@ -40,6 +40,10 @@ public class AbstractMethodsCompilerImpl : IAbstractMethodsCompiler<DynamicMetho
         }
 
         if (typesStack.Count == 0) il.Ldnull();
+        if (typesStack.Count != 0)
+        {
+            il.Ldfld(typeof(Value).GetField("Data"));
+        }
         il.Ret();
         
         Debug.WriteLine(il.GetILCode());
