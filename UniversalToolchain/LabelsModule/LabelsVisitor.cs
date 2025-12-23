@@ -2,7 +2,6 @@ using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
 using DynamicMethodWrapper;
-using IlCodeGeneratorFactory;
 
 namespace LabelsModule;
 
@@ -12,9 +11,10 @@ public class LabelsVisitor : IAstVisitor
     {
         if (data.Node.NodeType != ExtensibleEnum<AstNodeTag>.Get("Label")) return;
 
-        var method = new DynamicMethodConvertableWrapperImpl();
-        method.Make($"Label_!Intrinsic_{data.Node.Text}", 0,
-            (il, _) => il.IntrinsicNotImplemented(),
+        var name = data.Node.Text;
+        var method = new AbstractMethodImpl(
+            $"Label_!Intrinsic_{name}", 0,
+            (il, _) => il.SetLabel(Guid.Parse(name)),
             _ => typeof(void)
         );
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));

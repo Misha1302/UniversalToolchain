@@ -18,7 +18,7 @@ public class ArithmeticModuleTests : TestBase
     public void Execute_BasicArithmeticOperations_ReturnsExpectedResult(string code, double expected)
     {
         // Arrange
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new ScopesModuleImpl(),
@@ -41,7 +41,7 @@ public class ArithmeticModuleTests : TestBase
     {
         // Arrange
         var code = "2 + 3 * 4";
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new ScopesModuleImpl(),
@@ -65,7 +65,7 @@ public class ArithmeticModuleTests : TestBase
     {
         // Arrange
         var code = "(2 + 3) * 4";
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new ScopesModuleImpl(),

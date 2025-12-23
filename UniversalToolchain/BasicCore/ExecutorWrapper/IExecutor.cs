@@ -1,9 +1,6 @@
-using System.Reflection.Emit;
-using GrEmit;
-
 namespace BasicCore.ExecutorWrapper;
 
-public interface IExecutor
+public interface IExecutor<TCompilationOutput>
 {
-    object Execute(List<(GroboIL, DynamicMethod)> methods);
+    object Execute(TCompilationOutput compilation);
 }

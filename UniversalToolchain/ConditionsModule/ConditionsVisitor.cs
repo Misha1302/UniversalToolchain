@@ -2,6 +2,7 @@ using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
 using DynamicMethodWrapper;
+using UniversalIntermediateRepresentation;
 
 namespace ConditionsModule;
 
@@ -26,41 +27,38 @@ public class ConditionsVisitor : IAstVisitor
         // Условие if
         data.BytecodeTranslator.Translate(data.Node.Children[0]);
 
-        var endLabel = Guid.NewGuid().ToString("N");
-        var elseLabel = Guid.NewGuid().ToString("N");
+        var endLabel = Guid.NewGuid();
+        var elseLabel = Guid.NewGuid();
 
         // Условный переход если false
-        var condJumpMethod = new DynamicMethodConvertableWrapperImpl();
-        condJumpMethod.Make($"CondFGoto_!Intrinsic_{elseLabel}", 1,
-            (il, _) =>
-            {
-                il.Ldarg(0);
-                il.Brfalse(il.DefineLabel(elseLabel));
-                il.Ret();
-            }, _ => typeof(void));
+        var condJumpMethod = new AbstractMethodImpl(
+            $"CondFGoto_!Intrinsic_{elseLabel}",
+            1,
+            (il, _) => il.JmpIfNot(elseLabel),
+            _ => typeof(void)
+        );
         data.Bytecode.Instructions.Add(new BytecodeInstruction(condJumpMethod));
 
         // Тело if
         data.BytecodeTranslator.Translate(data.Node.Children[1]);
 
         // Безусловный переход в конец
-        var jumpMethod = new DynamicMethodConvertableWrapperImpl();
-        jumpMethod.Make($"Goto_!Intrinsic_{endLabel}", 0,
-            (il, _) =>
-            {
-                il.Br(il.DefineLabel(endLabel));
-                il.Ret();
-            }, _ => typeof(void));
+        var jumpMethod = new AbstractMethodImpl(
+            $"Goto_!Intrinsic_{endLabel}",
+            0,
+            (il, _) => il.Jmp(endLabel),
+            _ => typeof(void)
+        );
+
         data.Bytecode.Instructions.Add(new BytecodeInstruction(jumpMethod));
 
         // Метка else
-        var elseLabelMethod = new DynamicMethodConvertableWrapperImpl();
-        elseLabelMethod.Make($"Label_!Intrinsic_{elseLabel}", 0,
-            (il, _) =>
-            {
-                il.MarkLabel(il.DefineLabel(elseLabel));
-                il.Ret();
-            }, _ => typeof(void));
+        var elseLabelMethod = new AbstractMethodImpl(
+            $"Label_!Intrinsic_{elseLabel}",
+            0,
+            (il, _) => il.SetLabel(elseLabel),
+            _ => typeof(void)
+        );
         data.Bytecode.Instructions.Add(new BytecodeInstruction(elseLabelMethod));
 
         // Обработка elif/else если есть
@@ -69,13 +67,12 @@ public class ConditionsVisitor : IAstVisitor
                 data.BytecodeTranslator.Translate(data.Node.Children[i]);
 
         // Метка конца
-        var endLabelMethod = new DynamicMethodConvertableWrapperImpl();
-        endLabelMethod.Make($"Label_!Intrinsic_{endLabel}", 0,
-            (il, _) =>
-            {
-                il.MarkLabel(il.DefineLabel(endLabel));
-                il.Ret();
-            }, _ => typeof(void));
+        var endLabelMethod = new AbstractMethodImpl(
+            $"Label_!Intrinsic_{endLabel}",
+            0,
+            (il, _) => il.SetLabel(endLabel),
+            _ => typeof(void)
+        );
         data.Bytecode.Instructions.Add(new BytecodeInstruction(endLabelMethod));
     }
 

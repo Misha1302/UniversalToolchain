@@ -14,7 +14,7 @@ namespace ParserConfigurationModule;
 /// </summary>
 /// <param name="actionType">dump or read configuration</param>
 /// <param name="path">path to file</param>
-public class ParserConfigurationModuleImpl(ActionType actionType, string path = "ParserConfiguration.txt") : ICoreModule
+public class ParserConfigurationModuleImpl(ActionType actionType, string path = "ParserConfiguration.txt") : IFrontendCoreModule
 {
     private bool _isInitialized;
 

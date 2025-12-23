@@ -7,7 +7,7 @@ void Main(Options options)
     Thrower.AssertAlways(options.SourcePath != null, "SourcePath is required");
 
 
-    var modules = (List<ICoreModule>)
+    var modules = (List<IFrontendCoreModule>)
     [
         new IdentifierModuleImpl(),
         new ScopesModuleImpl(),
@@ -31,16 +31,16 @@ void Main(Options options)
         );
 
 
-    var core = new BasicCoreImpl(
-        () => new BasicLexerImpl(),
-        () => new BasicParserImpl(),
-        () => new BasicBytecodeTranslatorImpl(),
-        () => new BytecodeDynamicMethodsCompilerImpl(),
-        () => new BasicInterpreterImpl(),
-        modules
-    );
+    // var core = new BasicCoreImpl(
+    //     () => new BasicLexerImpl(),
+    //     () => new BasicParserImpl(),
+    //     () => new BasicBytecodeTranslatorImpl(),
+    //     () => new AbstractMethodsCompilerImpl(),
+    //     () => new BasicInterpreterImpl(),
+    //     modules
+    // );
 
     var code = File.ReadAllText(options.SourcePath);
-    var result = core.Execute(code);
-    Console.WriteLine(result);
+    // var result = core.Execute(code);
+    // Console.WriteLine(result);
 }

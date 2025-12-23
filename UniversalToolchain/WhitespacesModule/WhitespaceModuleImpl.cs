@@ -4,7 +4,7 @@ using LexemeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.LexerWrapper.Le
 
 namespace WhitespacesModule;
 
-public class WhitespaceModuleImpl : ICoreModule
+public class WhitespaceModuleImpl : IFrontendCoreModule
 {
     public void InitLexer(ILexer lexer)
     {

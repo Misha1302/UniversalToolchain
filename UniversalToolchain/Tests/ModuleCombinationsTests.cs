@@ -23,7 +23,7 @@ public class ModuleCombinationsTests : TestBase
                 y = y - 3
                 y / 2
             ";
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new ScopesModuleImpl(),
@@ -53,7 +53,7 @@ public class ModuleCombinationsTests : TestBase
                 let c = a + b * 2
                 c
             ";
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new ScopesModuleImpl(),

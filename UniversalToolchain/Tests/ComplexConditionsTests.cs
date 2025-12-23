@@ -32,7 +32,7 @@ public class ComplexConditionsTests : TestBase
                 
                 result
             ";
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new ScopesModuleImpl(),
@@ -71,7 +71,7 @@ public class ComplexConditionsTests : TestBase
                 
                 result
             ";
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new ScopesModuleImpl(),
@@ -115,7 +115,7 @@ public class ComplexConditionsTests : TestBase
                 
                 grade
             ";
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new ScopesModuleImpl(),

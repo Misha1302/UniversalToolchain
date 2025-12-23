@@ -6,7 +6,7 @@ using BasicTypesExtensions;
 
 namespace ConditionsModule;
 
-public class ConditionsModuleImpl : ICoreModule
+public class ConditionsModuleImpl : IFrontendCoreModule
 {
     private IParser _parser = null!;
 

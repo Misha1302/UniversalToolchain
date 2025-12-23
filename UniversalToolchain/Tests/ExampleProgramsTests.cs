@@ -25,7 +25,7 @@ public class ExampleProgramsTests : TestBase
                 c = c - 15
                 c
             ";
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new ScopesModuleImpl(),

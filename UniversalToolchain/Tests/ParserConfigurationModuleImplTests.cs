@@ -180,7 +180,7 @@ public class ParserConfigurationModuleImplTests
         var parser = new BasicParserImpl();
 
         // Инициализируем парсер разными модулями (как в реальном использовании)
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new ScopesModuleImpl(),
             new ArithmeticModuleImpl(),

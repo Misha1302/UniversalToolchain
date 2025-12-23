@@ -3,7 +3,7 @@ using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
 using DynamicMethodWrapper;
 using ExceptionsManager;
-using IlCodeGeneratorFactory;
+using UniversalIntermediateRepresentation;
 
 namespace ArithmeticModule;
 
@@ -17,12 +17,16 @@ public class ArithmeticAstVisitor : IAstVisitor
         foreach (var child in data.Node.Children)
             data.BytecodeTranslator.Translate(child);
 
-        var method = new DynamicMethodConvertableWrapperImpl();
         var op = (data.Node.LexemeValue?.Text).NotNull();
-        method.Make($"Op_{op}", 2, (il, context) =>
+
+        var method = new AbstractMethodImpl(
+            $"Op_{op}",
+            2,
+            (il, context) =>
             {
-                il.LdArgsAndCall(
-                    context.Args[0].GetMethod(op switch
+                // arguments already pushed
+                il.CallCSharp(
+                    context.Stack[^1].GetMethod(op switch
                         {
                             "+" => "Add",
                             "-" => "Sub",
@@ -30,13 +34,8 @@ public class ArithmeticAstVisitor : IAstVisitor
                             "/" => "Div",
                             _ => Thrower.InvalidOpEx<string>()
                         }
-                    ).NotNull(),
-                    i =>
-                    {
-                        il.Ldarg(context.Args.Count - 1 - i);
-                        return context.Args[context.Args.Count - 1 - i];
-                    });
-                il.Ret();
+                    ).NotNull()
+                );
             },
             context => context.Stack[0]
         );

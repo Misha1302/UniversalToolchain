@@ -6,7 +6,7 @@ using BasicTypesExtensions;
 
 namespace ConditionsModule;
 
-public class ComparisonOperations : ICoreModule
+public class ComparisonOperations : IFrontendCoreModule
 {
     public void InitLexer(ILexer lexer)
     {

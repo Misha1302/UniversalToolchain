@@ -2,7 +2,7 @@ using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
 using DynamicMethodWrapper;
-using IlCodeGeneratorFactory;
+using UniversalIntermediateRepresentation;
 
 namespace LabelsModule;
 
@@ -12,9 +12,11 @@ public class GotoVisitor : IAstVisitor
     {
         if (data.Node.NodeType != ExtensibleEnum<AstNodeTag>.Get("Goto")) return;
 
-        var method = new DynamicMethodConvertableWrapperImpl();
-        method.Make($"Goto_!Intrinsic_{data.Node.Children[0].Text}", 0,
-            (il, _) => il.IntrinsicNotImplemented(),
+        var name = data.Node.Children[0].Text;
+        var method = new AbstractMethodImpl(
+            $"Goto_!Intrinsic_{name}",
+            0,
+            (il, _) => il.Jmp(Guid.Parse(name)),
             _ => typeof(void)
         );
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));

@@ -23,7 +23,7 @@ public class AdvancedArithmeticEdgeCases : TestBase
                 let c = 3e-15
                 (a + b) * 1e15 - c * 1e15
             ";
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new ScopesModuleImpl(),
@@ -54,7 +54,7 @@ public class AdvancedArithmeticEdgeCases : TestBase
                 let molecules = avogadro * moles
                 molecules / avogadro
             ";
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new ScopesModuleImpl(),
@@ -84,7 +84,7 @@ public class AdvancedArithmeticEdgeCases : TestBase
                 let result = 3*x*x*x - 2*x*x + 5*x - 7
                 result
             ";
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new ScopesModuleImpl(),

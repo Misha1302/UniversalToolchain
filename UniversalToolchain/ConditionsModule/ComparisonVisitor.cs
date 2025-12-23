@@ -3,7 +3,7 @@ using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
 using DynamicMethodWrapper;
 using ExceptionsManager;
-using IlCodeGeneratorFactory;
+using UniversalIntermediateRepresentation;
 
 namespace ConditionsModule;
 
@@ -24,20 +24,18 @@ public class ComparisonVisitor : IAstVisitor
         data.BytecodeTranslator.Translate(data.Node.Children[1]);
         data.BytecodeTranslator.Translate(data.Node.Children[0]);
 
-        var method = new DynamicMethodConvertableWrapperImpl();
         var op = data.Node.LexemeValue?.Text ?? GetOperatorFromNodeType(nodeType);
 
-        method.Make($"Comparison_{op}", 2, (il, context) =>
-        {
-            il.LdArgsAndCall(
-                typeof(Comparisons).GetMethod(GetComparisonMethodName(op)).NotNull(),
-                i =>
-                {
-                    il.Ldarg(i);
-                    return context.Args[i];
-                });
-            il.Ret();
-        }, _ => typeof(bool));
+        var method = new AbstractMethodImpl(
+            $"Comparison_{op}",
+            2,
+            (il, _) =>
+            {
+                // args already pushed
+                il.CallCSharp(
+                    typeof(Comparisons).GetMethod(GetComparisonMethodName(op)).NotNull()
+                );
+            }, _ => typeof(bool));
 
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
     }
@@ -52,7 +50,7 @@ public class ComparisonVisitor : IAstVisitor
             "Less" => "<",
             "GreaterOrEqual" => ">=",
             "LessOrEqual" => "<=",
-            _ => "=="
+            _ => Thrower.InvalidOpEx<string>()
         };
     }
 
@@ -66,7 +64,7 @@ public class ComparisonVisitor : IAstVisitor
             "<" => "Less",
             ">=" => "GreaterOrEqual",
             "<=" => "LessOrEqual",
-            _ => "Equal"
+            _ => Thrower.InvalidOpEx<string>()
         };
     }
 }

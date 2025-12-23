@@ -4,6 +4,7 @@ using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
 using DynamicMethodWrapper;
 using ExceptionsManager;
+using UniversalIntermediateRepresentation;
 
 namespace NumbersModule;
 
@@ -13,15 +14,17 @@ public class NumberAstVisitor : IAstVisitor
     {
         if (data.Node.NodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("Number")) return;
 
-        var method = new DynamicMethodConvertableWrapperImpl();
         var numText = (data.Node.LexemeValue?.Text).NotNull();
         var num = double.Parse(numText, NumberStyles.Any);
-        method.Make($"PushNumber_{num}", 0, (il, _) =>
-        {
-            il.Ldc_R8(num);
-            il.Newobj(typeof(RealNumberImpl).GetConstructor([typeof(double)]));
-            il.Ret();
-        }, _ => typeof(RealNumberImpl));
+
+        var method = new AbstractMethodImpl(
+            $"PushNumber_{num}",
+            0,
+            (il, _) =>
+            {
+                il.Push(Value.Create(num));
+                il.CallCSharp(typeof(RealNumberImpl).GetConstructor([typeof(double)]).NotNull());
+            }, _ => typeof(RealNumberImpl));
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
     }
 }

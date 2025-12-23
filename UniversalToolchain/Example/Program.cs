@@ -1,3 +1,5 @@
+using System.Reflection.Emit;
+using BasicCilCompiler;
 using BytecodeDynamicMethodsCompiler;
 using ConditionsModule;
 using EqualityModule;
@@ -6,12 +8,12 @@ using LabelsModule;
 using SemicolonAsNewLineModule;
 using VariablesModule;
 
-var core = new BasicCoreImpl(
+var core = new BasicCoreImpl<DynamicMethod>(
     () => new BasicLexerImpl(),
     () => new BasicParserImpl(),
     () => new BasicBytecodeTranslatorImpl(),
-    () => new BytecodeDynamicMethodsCompilerImpl(),
-    () => new BasicInterpreterImpl(),
+    () => new AbstractMethodsCompilerImpl(),
+    () => new DynamicMethodExecutor(),
     [
         new IdentifierModuleImpl(),
         new ScopesModuleImpl(),
@@ -29,7 +31,8 @@ var core = new BasicCoreImpl(
         new ExecutorDebugLoggerImpl(),
         new ParserConfigurationModuleImpl(ActionType.DumpConfiguration),
         new LexerConfigurationModuleImpl(ActionType.DumpConfiguration)
-    ]
+    ],
+    []
 );
 
 var result = core.Execute(

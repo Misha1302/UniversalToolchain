@@ -4,7 +4,7 @@ using BasicTypesExtensions;
 
 namespace SemicolonAsNewLineModule;
 
-public class SemicolonAsNewLineModuleImpl : ICoreModule
+public class SemicolonAsNewLineModuleImpl : IFrontendCoreModule
 {
     public void InitLexer(ILexer lexer)
     {

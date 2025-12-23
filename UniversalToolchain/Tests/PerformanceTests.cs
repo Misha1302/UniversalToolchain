@@ -31,7 +31,7 @@ public class PerformanceTests : TestBase
                     goto @start
             result
             ";
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new ScopesModuleImpl(),
@@ -74,7 +74,7 @@ public class PerformanceTests : TestBase
                 let c = b * a - b / a + (a + b) * 2
                 c
             ";
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new ScopesModuleImpl(),

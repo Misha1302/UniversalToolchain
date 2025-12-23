@@ -5,11 +5,13 @@ using BasicCore;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
+using ExceptionsManager;
 using GrEmit;
+using Mono.Reflection;
 
 namespace ExecutorLoggerModule;
 
-public class ExecutorDebugLoggerImpl(string filePath) : ICoreModule
+public class ExecutorDebugLoggerImpl(string filePath) : IFrontendCoreModule
 {
     private static readonly string _separator = "\n\n" + new string('-', 100) + "\n\n";
 
@@ -43,25 +45,5 @@ public class ExecutorDebugLoggerImpl(string filePath) : ICoreModule
     {
         File.AppendAllText(filePath, "BYTECODE:\n" + current + _separator);
         return current;
-    }
-
-    public List<(GroboIL, DynamicMethod)> ProcessDynamicMethods(List<(GroboIL, DynamicMethod)> current)
-    {
-        File.AppendAllText(filePath, "Dotnet code:\n" + MethodsToStr() + _separator);
-        return current;
-
-        string MethodsToStr()
-        {
-            var sb = new StringBuilder();
-
-            foreach (var dynamicMethod in current)
-            {
-                sb.Append(dynamicMethod.Item2.Name).Append(":\n");
-                sb.AppendLine(dynamicMethod.Item1.GetILCode());
-                sb.AppendLine();
-            }
-
-            return sb.ToString();
-        }
     }
 }

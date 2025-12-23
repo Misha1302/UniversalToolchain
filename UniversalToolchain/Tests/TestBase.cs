@@ -1,7 +1,6 @@
-﻿// This is an independent project of an individual developer. Dear PVS-Studio, please check it.
-// PVS-Studio Static Code Analyzer for C, C++, C#, and Java: https://pvs-studio.com
-// BasicCore.Tests/TestBase.cs
+﻿// BasicCore.Tests/TestBase.cs
 
+using System.Reflection.Emit;
 using BasicCilCompiler;
 using BasicCodeTranslator;
 using BasicCore;
@@ -17,23 +16,26 @@ namespace Tests;
 [TestFixture]
 public abstract class TestBase
 {
-    protected readonly List<Func<IExecutor>> Executors =
-        [() => new BasicCilCompilerImpl(), () => new BasicInterpreterImpl()];
+    // TODO: remade to others compilations
+    protected readonly List<Func<IExecutor<DynamicMethod>>> Executors =
+        [() => new DynamicMethodExecutor()];
+    // , () => new BasicInterpreterImpl()
 
-    protected IEnumerable<BasicCoreImpl> CreateCores(params ICoreModule[] modules)
+    protected IEnumerable<BasicCoreImpl<DynamicMethod>> CreateCores(params IFrontendCoreModule[] modules)
     {
-        return Executors.Select(createExecutor => new BasicCoreImpl(
+        return Executors.Select(executorFactory => new BasicCoreImpl<DynamicMethod>(
                 () => new BasicLexerImpl(),
                 () => new BasicParserImpl(),
                 () => new BasicBytecodeTranslatorImpl(),
-                () => new BytecodeDynamicMethodsCompilerImpl(),
-                createExecutor,
-                modules
+                () => new AbstractMethodsCompilerImpl(),
+                executorFactory,
+                modules,
+                []
             )
         );
     }
 
-    protected object ExecuteCode(string code, params ICoreModule[] modules)
+    protected object ExecuteCode(string code, params IFrontendCoreModule[] modules)
     {
         var values = CreateCores(modules).Select(core => core.Execute(code)).ToList();
         Thrower.AssertAlways(values.All(value => value.Equals(values[0])));

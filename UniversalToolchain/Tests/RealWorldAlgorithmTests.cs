@@ -42,7 +42,7 @@ public class RealWorldAlgorithmTests : TestBase
                 )
                 b
             ";
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new ScopesModuleImpl(),
@@ -82,7 +82,7 @@ public class RealWorldAlgorithmTests : TestBase
                 @end:
                 result
             ";
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new ScopesModuleImpl(),
@@ -152,7 +152,7 @@ public class RealWorldAlgorithmTests : TestBase
                 
                 a + b + c + d + e
             ";
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new ScopesModuleImpl(),

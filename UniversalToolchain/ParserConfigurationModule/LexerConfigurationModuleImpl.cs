@@ -18,7 +18,7 @@ namespace ParserConfigurationModule;
 /// </summary>
 /// <param name="actionType">dump or read configuration</param>
 /// <param name="path">path to file</param>
-public class LexerConfigurationModuleImpl(ActionType actionType, string path = "LexerConfiguration.txt") : ICoreModule
+public class LexerConfigurationModuleImpl(ActionType actionType, string path = "LexerConfiguration.txt") : IFrontendCoreModule
 {
     private bool _isInitialized;
 
