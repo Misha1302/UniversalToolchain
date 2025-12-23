@@ -2,7 +2,6 @@ using System.Diagnostics;
 using ArithmeticModule;
 using BasicCore;
 using ConditionsModule;
-using CSharpInteropModule;
 using EqualityModule;
 using IdentifierModule;
 using LabelsModule;
@@ -46,7 +45,7 @@ public class ComplexArithmeticPerformanceTests : TestBase
             new EqualityModuleImpl(),
             new ConditionsModuleImpl(),
             new ComparisonOperations(),
-            new BooleanOperations(),
+            new BooleanOperations()
         };
 
         var stopwatch = new Stopwatch();

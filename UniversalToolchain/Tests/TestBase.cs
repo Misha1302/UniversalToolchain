@@ -5,7 +5,6 @@ using BasicCilCompiler;
 using BasicCodeTranslator;
 using BasicCore;
 using BasicCore.ExecutorWrapper;
-using BasicInterpreter;
 using BasicLexer;
 using BasicParser;
 using BytecodeDynamicMethodsCompiler;

@@ -47,7 +47,7 @@ public class ComplexConditionsTests : TestBase
             new EqualityModuleImpl(),
             new ConditionsModuleImpl(),
             new ComparisonOperations(),
-            new BooleanOperations(),
+            new BooleanOperations()
         };
 
         // Act
@@ -89,7 +89,7 @@ public class ComplexConditionsTests : TestBase
             new EqualityModuleImpl(),
             new ConditionsModuleImpl(),
             new ComparisonOperations(),
-            new BooleanOperations(),
+            new BooleanOperations()
         };
 
         // Act
@@ -135,7 +135,7 @@ public class ComplexConditionsTests : TestBase
             new EqualityModuleImpl(),
             new ConditionsModuleImpl(),
             new ComparisonOperations(),
-            new BooleanOperations(),
+            new BooleanOperations()
         };
 
         // Act

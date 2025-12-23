@@ -2,7 +2,6 @@ using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
 using DynamicMethodWrapper;
-using UniversalIntermediateRepresentation;
 
 namespace LabelsModule;
 

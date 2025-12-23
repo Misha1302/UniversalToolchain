@@ -1,5 +1,4 @@
-﻿using System.Reflection.Emit;
-using ExceptionsManager;
+﻿using ExceptionsManager;
 using UniversalIntermediateRepresentation;
 
 namespace DynamicMethodWrapper;

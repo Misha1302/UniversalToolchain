@@ -1,13 +1,8 @@
 using System.Diagnostics;
-using System.Reflection.Emit;
-using System.Text;
 using BasicCore;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
-using ExceptionsManager;
-using GrEmit;
-using Mono.Reflection;
 
 namespace ExecutorLoggerModule;
 
