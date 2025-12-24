@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Reflection;
 using ExceptionsManager;
 
@@ -47,8 +48,15 @@ public static class TypesFinder
             foreach (var reference in asm.GetReferencedAssemblies())
                 if (!list.Contains(reference.FullName))
                 {
-                    stack.Push(Assembly.Load(reference));
-                    list.Add(reference.FullName);
+                    try
+                    {
+                        stack.Push(Assembly.Load(reference));
+                        list.Add(reference.FullName);
+                    }
+                    catch
+                    {
+                        Debug.WriteLine($"Could not load {reference} assembly");
+                    }
                 }
         } while (stack.Count > 0);
     }

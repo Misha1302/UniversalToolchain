@@ -3,6 +3,7 @@ using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
+using ExceptionsManager;
 
 namespace BasicCore;
 
@@ -14,10 +15,17 @@ public class BasicCoreImpl<TCompilationOutput>(
     Func<IExecutor<TCompilationOutput>> executorFactory,
     IReadOnlyList<IFrontendCoreModule> modules,
     IReadOnlyList<IMiddleEndCoreModule<TCompilationOutput>> middleEndModules
-) : ICoreRunnable
+) : ICoreRunnable, ICoreOptimizedRunnable
 {
-    public object? Run(string code)
+    private string _code = null!;
+    private IExecutor<TCompilationOutput> _executor = null!;
+    private TCompilationOutput _targetDynamicMethods = default!;
+
+    public void PrepareToRun(string code)
     {
+        if (_code == code)
+            return;
+
         var lexer = lexerFactory();
         var parser = parserFactory();
         var translator = translatorFactory();
@@ -42,8 +50,21 @@ public class BasicCoreImpl<TCompilationOutput>(
 
         var targetDynamicMethods = middleEndModules.Aggregate(compiled, (current, module) => module.ProcessCompilation(current));
         middleEndModules.ForEach(module => module.InitExecutor(executor));
-        var result = executor.Execute(targetDynamicMethods);
 
-        return result;
+        _executor = executor;
+        _targetDynamicMethods = targetDynamicMethods;
+        _code = code;
+    }
+
+    public object? RunPrepared()
+    {
+        Thrower.AssertAlways(_code != null);
+        return _executor.Execute(_targetDynamicMethods);
+    }
+
+    public object? Run(string code)
+    {
+        PrepareToRun(code);
+        return RunPrepared();
     }
 }
