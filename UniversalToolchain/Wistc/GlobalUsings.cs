@@ -1,21 +1,21 @@
-// Global using directives
-
-global using ArithmeticModule;
-global using BasicCodeTranslator;
 global using BasicCore;
 global using BasicLexer;
 global using BasicParser;
+global using BasicCodeTranslator;
 global using BytecodeDynamicMethodsCompiler;
-global using CommandLine;
-global using CSharpInteropModule;
-global using EqualityModule;
-global using ExceptionsManager;
-global using ExecutorLoggerModule;
+global using UniversalIntermediateRepresentation;
 global using IdentifierModule;
-global using LabelsModule;
-global using NumbersModule;
-global using ParserConfigurationModule;
 global using ScopesModule;
-global using VariablesModule;
+global using NumbersModule;
 global using WhitespacesModule;
-global using Wistc;
+global using SemicolonAsNewLineModule;
+global using ArithmeticModule;
+global using CSharpInteropModule;
+global using LabelsModule;
+global using VariablesModule;
+global using EqualityModule;
+global using ConditionsModule;
+global using ParserConfigurationModule;
+global using ExecutorLoggerModule;
+global using CommandLine;
+global using System.Reflection;

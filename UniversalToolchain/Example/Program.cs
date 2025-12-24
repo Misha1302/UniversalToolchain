@@ -1,3 +1,4 @@
+using BasicInterpreter;
 using BytecodeDynamicMethodsCompiler;
 using ConditionsModule;
 using EqualityModule;
@@ -36,17 +37,15 @@ var core = new BasicCoreImpl<AbstractIR>(
 
 var result = core.Run(
     """
-    let a = 5
-    let b = 10
-    let c = 15
-    let result = 0
+    let i = 0
 
-    if (a < b) and (b < c)
-        result = 1
-    else
-        result = 0
+    @start:
+        if i >= 5 goto @end
+        i = i + 1
+        Main.Print(i)
+        goto @start
+    @end:
 
-    result
     """
 );
 

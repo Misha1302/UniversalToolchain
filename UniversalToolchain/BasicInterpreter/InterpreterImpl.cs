@@ -1,86 +1,12 @@
-// ./BasicInterpreter/InterpreterState.cs
-
-
 using System.Reflection;
-using BasicCore;
 using BasicCore.ExecutorWrapper;
-using BasicCore.TranslatorWrapper;
-using DynamicMethodWrapper;
 using UniversalIntermediateRepresentation;
 
-public class InterpreterState
-{
-    private readonly Dictionary<Guid, int> _labelPositions = new();
-    private bool _labelsBuilt;
-    public Stack<Value> ValueStack { get; } = new();
-    public Dictionary<Guid, Value> Locals { get; } = new();
-
-    public int InstructionPointer { get; set; }
-
-    public void BuildLabelPositions(IReadOnlyList<Instruction> instructions)
-    {
-        if (_labelsBuilt) return;
-
-        _labelPositions.Clear();
-        for (var i = 0; i < instructions.Count; i++)
-        {
-            if (instructions[i].OpCode == OpCode.Label)
-            {
-                var labelId = instructions[i].Operands[0].Get<Guid>();
-                _labelPositions[labelId] = i;
-            }
-        }
-
-        _labelsBuilt = true;
-    }
-
-    public int GetLabelPosition(Guid labelId)
-    {
-        if (!_labelPositions.ContainsKey(labelId))
-            throw new InvalidOperationException($"Label {labelId} not found");
-
-        return _labelPositions[labelId];
-    }
-} // ./BasicInterpreter/IRCompilerImpl.cs
-
-
-public class IRCompilerImpl : IAbstractMethodsCompiler<AbstractIR>
-{
-    public AbstractIR Compile(Bytecode bytecode)
-    {
-        var air = new AbstractIR();
-        var typesStack = new List<Type>();
-
-        foreach (var instruction in bytecode.Instructions)
-        {
-            foreach (var op in instruction.Ops)
-            {
-                foreach (var convertable in op.Value)
-                {
-                    var context = new IAbstractMethodConvertable.Context(typesStack);
-                    var methodIR = convertable.GetAbstractIR(context);
-
-                    air.AppendInstructions(methodIR);
-
-                    // Обновляем стек типов
-                    for (var i = 0; i < convertable.ParamsCount; i++)
-                        typesStack.RemoveAt(typesStack.Count - 1);
-
-                    var returnType = convertable.GetReturnType(context);
-                    if (returnType != typeof(void))
-                        typesStack.Add(returnType);
-                }
-            }
-        }
-
-        return air;
-    }
-} // ./BasicInterpreter/InterpreterImpl.cs
-
+namespace BasicInterpreter;
 
 public class InterpreterImpl : IExecutor<AbstractIR>
 {
-    public object Execute(AbstractIR air)
+    public object? Execute(AbstractIR air)
     {
         var state = new InterpreterState();
         state.BuildLabelPositions(air.Instructions);
@@ -88,7 +14,7 @@ public class InterpreterImpl : IExecutor<AbstractIR>
         return ExecuteInstructions(air.Instructions, state);
     }
 
-    private object ExecuteInstructions(
+    private object? ExecuteInstructions(
         IReadOnlyList<Instruction> instructions,
         InterpreterState state)
     {
@@ -103,96 +29,86 @@ public class InterpreterImpl : IExecutor<AbstractIR>
         if (state.ValueStack.Count == 0)
             return null!;
 
-        return state.ValueStack.Peek().Data;
+        return state.ValueStack.Count != 0 ? state.ValueStack.Peek().Data : null;
     }
 
     private void ExecuteInstruction(Instruction instruction, InterpreterState state)
     {
-        try
+        switch (instruction.OpCode)
         {
-            switch (instruction.OpCode)
-            {
-                case OpCode.Nop:
-                    // Ничего не делаем
-                    break;
+            case OpCode.Nop:
+                // Ничего не делаем
+                break;
 
-                case OpCode.Push:
-                    state.ValueStack.Push(instruction.Operands[0]);
-                    break;
+            case OpCode.Push:
+                state.ValueStack.Push(instruction.Operands[0]);
+                break;
 
-                case OpCode.Drop:
-                    if (state.ValueStack.Count > 0)
-                        state.ValueStack.Pop();
-                    break;
+            case OpCode.Drop:
+                if (state.ValueStack.Count > 0)
+                    state.ValueStack.Pop();
+                break;
 
-                case OpCode.Jmp:
-                    var labelId = instruction.Operands[0].Get<Guid>();
-                    state.InstructionPointer = state.GetLabelPosition(labelId);
-                    break;
+            case OpCode.Jmp:
+                var labelId = instruction.Operands[0].Get<Guid>();
+                state.InstructionPointer = state.GetLabelPosition(labelId);
+                break;
 
-                case OpCode.JmpIf:
-                    if (state.ValueStack.Count > 0)
+            case OpCode.JmpIf:
+                if (state.ValueStack.Count > 0)
+                {
+                    var condition = state.ValueStack.Pop().Get<bool>();
+                    if (condition)
                     {
-                        var condition = state.ValueStack.Pop().Get<bool>();
-                        if (condition)
-                        {
-                            labelId = instruction.Operands[0].Get<Guid>();
-                            state.InstructionPointer = state.GetLabelPosition(labelId);
-                        }
+                        labelId = instruction.Operands[0].Get<Guid>();
+                        state.InstructionPointer = state.GetLabelPosition(labelId);
                     }
-                    break;
+                }
+                break;
 
-                case OpCode.JmpIfNot:
-                    if (state.ValueStack.Count > 0)
+            case OpCode.JmpIfNot:
+                if (state.ValueStack.Count > 0)
+                {
+                    var condition = state.ValueStack.Pop().Get<bool>();
+                    if (!condition)
                     {
-                        var condition = state.ValueStack.Pop().Get<bool>();
-                        if (!condition)
-                        {
-                            labelId = instruction.Operands[0].Get<Guid>();
-                            state.InstructionPointer = state.GetLabelPosition(labelId);
-                        }
+                        labelId = instruction.Operands[0].Get<Guid>();
+                        state.InstructionPointer = state.GetLabelPosition(labelId);
                     }
-                    break;
+                }
+                break;
 
-                case OpCode.Label:
-                    // Метка - ничего не делаем, просто пропускаем
-                    break;
+            case OpCode.Label:
+                // Метка - ничего не делаем, просто пропускаем
+                break;
 
-                case OpCode.StLoc:
-                    if (state.ValueStack.Count > 0)
-                    {
-                        var localId = instruction.Operands[0].Get<Guid>();
-                        var value = state.ValueStack.Pop();
-                        state.Locals[localId] = value;
-                    }
-                    break;
+            case OpCode.StLoc:
+                if (state.ValueStack.Count > 0)
+                {
+                    var localId = instruction.Operands[0].Get<Guid>();
+                    var value = state.ValueStack.Pop();
+                    state.Locals[localId] = value;
+                }
+                break;
 
-                case OpCode.LdLoc:
-                    var loadId = instruction.Operands[0].Get<Guid>();
-                    if (state.Locals.ContainsKey(loadId))
-                    {
-                        state.ValueStack.Push(state.Locals[loadId]);
-                    }
-                    break;
+            case OpCode.LdLoc:
+                var loadId = instruction.Operands[0].Get<Guid>();
+                if (state.Locals.ContainsKey(loadId))
+                {
+                    state.ValueStack.Push(state.Locals[loadId]);
+                }
+                break;
 
-                case OpCode.Annotate:
-                    // Аннотация - ничего не делаем
-                    break;
+            case OpCode.Annotate:
+                // Аннотация - ничего не делаем
+                break;
 
-                case OpCode.Intrinsic:
-                    ExecuteIntrinsic(instruction, state);
-                    break;
+            case OpCode.Intrinsic:
+                ExecuteIntrinsic(instruction, state);
+                break;
 
-                default:
-                    throw new InvalidOperationException($"Unknown opcode: {instruction.OpCode}");
-            }
-        }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException(
-                $"Error executing instruction at position {state.InstructionPointer - 1}: {instruction}",
-                ex
-            );
+            default:
+                throw new InvalidOperationException($"Unknown opcode: {instruction.OpCode}");
         }
     }
 
@@ -323,11 +239,13 @@ public class InterpreterImpl : IExecutor<AbstractIR>
     private object ConvertValue(Value value, Type targetType)
     {
         var data = value.Data;
-        if (data.GetType() == targetType)
-            return data;
 
+        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
         if (data == null)
             return null!;
+
+        if (data.GetType() == targetType)
+            return data;
 
         if (targetType.IsInstanceOfType(data))
             return data;

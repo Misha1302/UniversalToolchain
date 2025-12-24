@@ -4,6 +4,7 @@ using System.Reflection.Emit;
 using BasicCilCompiler;
 using BasicCodeTranslator;
 using BasicCore;
+using BasicInterpreter;
 using BasicLexer;
 using BasicParser;
 using BytecodeDynamicMethodsCompiler;

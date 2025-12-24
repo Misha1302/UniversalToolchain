@@ -16,7 +16,7 @@ public class BasicCoreImpl<TCompilationOutput>(
     IReadOnlyList<IMiddleEndCoreModule<TCompilationOutput>> middleEndModules
 ) : ICoreRunnable
 {
-    public object Run(string code)
+    public object? Run(string code)
     {
         var lexer = lexerFactory();
         var parser = parserFactory();

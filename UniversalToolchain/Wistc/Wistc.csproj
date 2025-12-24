@@ -13,6 +13,7 @@
         <ProjectReference Include="..\BasicCore\BasicCore.csproj"/>
         <ProjectReference Include="..\BasicInterpreter\BasicInterpreter.csproj"/>
         <ProjectReference Include="..\BytecodeDynamicMethodsCompiler\BytecodeDynamicMethodsCompiler.csproj"/>
+        <ProjectReference Include="..\ConditionsModule\ConditionsModule.csproj"/>
         <ProjectReference Include="..\CSharpInteropModule\CSharpInteropModule.csproj"/>
         <ProjectReference Include="..\ExecutorLoggerModule\ExecutorLoggerModule.csproj"/>
         <ProjectReference Include="..\IdentifierModule\IdentifierModule.csproj"/>
@@ -20,6 +21,7 @@
         <ProjectReference Include="..\NumbersModule\NumbersModule.csproj"/>
         <ProjectReference Include="..\ParserConfigurationModule\ParserConfigurationModule.csproj"/>
         <ProjectReference Include="..\ScopesModule\ScopesModule.csproj"/>
+        <ProjectReference Include="..\SemicolonAsNewLineModule\SemicolonAsNewLineModule.csproj"/>
         <ProjectReference Include="..\VariablesModule\VariablesModule.csproj"/>
         <ProjectReference Include="..\WhitespacesModule\WhitespacesModule.csproj"/>
     </ItemGroup>

@@ -7,7 +7,6 @@ public class AstNode
 {
     private readonly HashSet<string> _currentTags = [];
     public readonly LexemeValue? LexemeValue;
-    public DynamicCollection Data = new();
     public AstNodeType NodeType;
 
     public AstNode(AstNodeType nodeType, LexemeValue? lexemeValue, List<AstNode> children)
