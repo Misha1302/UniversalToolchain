@@ -41,7 +41,63 @@ def matches_pattern(filename, pattern=None, extension=None):
     
     return False
 
-def process_files(root_dir, extension, exclude_dirs, output_file, pattern=None, exclude_pattern=None):
+def compress_content(content):
+    """Удаляет двойные пробелы и переносы строк из содержимого."""
+    # Заменяем все переносы строк на пробелы
+    content = content.replace('\n', ' ')
+    content = content.replace('\r', ' ')
+    
+    # Заменяем множественные пробелы на один пробел
+    content = re.sub(r'\s+', ' ', content)
+    
+    # Удаляем пробелы в начале и конце
+    content = content.strip()
+    
+    return content
+
+def remove_using_directives(content):
+    """Удаляет директивы using из C# кода."""
+    # Разбиваем содержимое на строки
+    lines = content.split('\n')
+    filtered_lines = []
+    
+    # Флаг для отслеживания многострочных комментариев
+    in_block_comment = False
+    
+    for line in lines:
+        # Обработка многострочных комментариев /* ... */
+        if '/*' in line and '*/' not in line:
+            in_block_comment = True
+            filtered_lines.append(line)
+            continue
+        
+        if in_block_comment:
+            if '*/' in line:
+                in_block_comment = False
+            filtered_lines.append(line)
+            continue
+        
+        # Игнорируем однострочные комментарии
+        stripped_line = line.strip()
+        if stripped_line.startswith('//'):
+            filtered_lines.append(line)
+            continue
+        
+        # Проверяем, является ли строка using директивой
+        # Шаблон для using директив: начинается с 'using', заканчивается ';'
+        # Но не является using statement (using (var x = ...))
+        if (re.match(r'^\s*(global )?using\s+[^;]+;\s*(\/\/.*)?$', line)
+                and not re.match(r'^\s*using\s*\(', line)):
+            # Это using директива, пропускаем ее
+            continue
+        
+        # Если это не using директива, добавляем строку
+        filtered_lines.append(line)
+    
+    return '\n'.join(filtered_lines)
+
+def process_files(root_dir, extension, exclude_dirs, output_file, pattern=None, 
+                  exclude_pattern=None, compress=False, remove_using=False):
     """Обрабатывает все файлы по заданному критерию и записывает результат."""
     with open(output_file, 'w', encoding='utf-8') as out_f:
         for root, dirs, files in os.walk(root_dir):
@@ -74,9 +130,16 @@ def process_files(root_dir, extension, exclude_dirs, output_file, pattern=None, 
                     print(f"Ошибка чтения файла {file_path}: {str(e)}")
                     continue
                 
+                # Удаляем using директивы из всех файлов, если флаг установлен
+                if remove_using:
+                    content = remove_using_directives(content)
+                
+                # Сжимаем содержимое, если включен флаг compress
+                if compress:
+                    content = compress_content(content)
+                
                 # Записываем в выходной файл
                 out_f.write(f"# {file_path}\n")
-                out_f.write("# содержание:\n")
                 out_f.write(content)
                 out_f.write("\n" + "-" * 40 + "\n\n")
 
@@ -90,12 +153,16 @@ if __name__ == "__main__":
   По регулярному выражению для имени файла:
                       python script.py --pattern '.*\\.(py|js)$' --exclude-pattern '.*/test.*' --output result.txt
   По конкретному имени: python script.py --pattern '^config\\.py$' --output result.txt
+  Со сжатием:         python script.py --ext .py --compress --output compressed_result.txt
+  Без using директив: python script.py --ext .cs --remove-using --output result.txt
   
 Примечание:
   • Используйте --ext для фильтрации по расширению (старый способ)
   • Используйте --pattern для фильтрации по регулярному выражению для имени файла
   • Используйте --exclude для исключения директорий
   • Используйте --exclude-pattern для исключения по регулярному выражению для пути
+  • Используйте --compress для сжатия содержимого (удаление двойных пробелов и переносов строк)
+  • Используйте --remove-using для удаления using директив из всех C# файлов
         """
     )
     
@@ -108,6 +175,8 @@ if __name__ == "__main__":
     parser.add_argument('--exclude', nargs='*', default=[], help='Директории для исключения (например: tests node_modules)')
     parser.add_argument('--exclude-pattern', help='Регулярное выражение для исключения путей (например: .*/test.*)')
     parser.add_argument('--output', default='combined_files.txt', help='Выходной файл (по умолчанию: combined_files.txt)')
+    parser.add_argument('--compress', action='store_true', help='Сжимать содержимое файлов (удалять двойные пробелы и переносы строк)')
+    parser.add_argument('--remove-using', action='store_true', help='Удалять using директивы из всех C# файлов')
     
     args = parser.parse_args()
     
@@ -115,5 +184,6 @@ if __name__ == "__main__":
     if not args.ext and not args.pattern:
         parser.error("Необходимо указать либо --ext, либо --pattern")
     
-    process_files(args.root, args.ext, args.exclude, args.output, args.pattern, args.exclude_pattern)
+    process_files(args.root, args.ext, args.exclude, args.output, args.pattern, 
+                  args.exclude_pattern, args.compress, args.remove_using)
     print(f"Обработка завершена. Результат сохранен в {args.output}")

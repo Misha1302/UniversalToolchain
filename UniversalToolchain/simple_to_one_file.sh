@@ -1,1 +1,38 @@
-python3 script_to_one_file.py --pattern '\.cs(?![a-zA-Z0-9])' --root . --exclude-pattern ".*?Tests.*?|.*?bin.*?|.*?obj.*?" --output text.txt
+#!/bin/bash
+
+# Парсинг аргументов
+COMPRESS_FLAG=""
+REMOVE_USING_FLAG=""
+OUTPUT_FILE="text.txt"
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --compress)
+            COMPRESS_FLAG="--compress"
+            shift
+            ;;
+        --remove-using)
+            REMOVE_USING_FLAG="--remove-using"
+            shift
+            ;;
+        --output)
+            OUTPUT_FILE="$2"
+            shift 2
+            ;;
+        *)
+            echo "Неизвестный аргумент: $1"
+            echo "Использование: $0 [--compress] [--remove-using] [--output ИМЯ_ФАЙЛА]"
+            exit 1
+            ;;
+    esac
+done
+
+if [[ -n "$COMPRESS_FLAG" ]]; then
+    echo "Режим сжатия включен"
+fi
+
+if [[ -n "$REMOVE_USING_FLAG" ]]; then
+    echo "Режим удаления using директив включен"
+fi
+
+python3 script_to_one_file.py --pattern '\.cs(?![a-zA-Z0-9])' --root . --exclude-pattern ".*?Tests.*?|.*?bin.*?|.*?obj.*?" --output "$OUTPUT_FILE" $COMPRESS_FLAG $REMOVE_USING_FLAG
