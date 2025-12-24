@@ -401,7 +401,7 @@ public class LexerConfigurationTests
     public void LexerConfiguration_IntegrationWithExistingModules_WorksCorrectly()
     {
         // Arrange
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new NumbersModuleImpl(),

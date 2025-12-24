@@ -12,6 +12,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj"/>
+        <ProjectReference Include="..\UniversalIntermediateRepresentation\UniversalIntermediateRepresentation.csproj"/>
     </ItemGroup>
 
 </Project>

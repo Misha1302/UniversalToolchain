@@ -6,7 +6,7 @@ using LexemeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.LexerWrapper.Le
 
 namespace LabelsModule;
 
-public class LabelsModuleImpl : ICoreModule
+public class LabelsModuleImpl : IFrontendCoreModule
 {
     public void InitLexer(ILexer lexer)
     {
@@ -27,7 +27,8 @@ public class LabelsModuleImpl : ICoreModule
 
     public void InitTranslator(IBytecodeTranslator translator)
     {
-        translator.Configuration.Visitors.Add(new LabelsVisitor());
-        translator.Configuration.Visitors.Add(new GotoVisitor());
+        var labelsSharedData = new LabelsSharedData();
+        translator.Configuration.Visitors.Add(new LabelsVisitor(labelsSharedData));
+        translator.Configuration.Visitors.Add(new GotoVisitor(labelsSharedData));
     }
 }

@@ -6,7 +6,7 @@ using BasicTypesExtensions;
 
 namespace ArithmeticModule;
 
-public class ArithmeticModuleImpl : ICoreModule
+public class ArithmeticModuleImpl : IFrontendCoreModule
 {
     public static IReadOnlyList<string> Ops => ["Addition", "Substraction", "Multiplication", "Division"];
 

@@ -22,7 +22,7 @@ public class VariablesModuleTests : TestBase
             let x = 5
             x * 2
             """;
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new ScopesModuleImpl(),
@@ -51,7 +51,7 @@ public class VariablesModuleTests : TestBase
                    x = 10
                    x
                    """;
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new ScopesModuleImpl(),
@@ -80,7 +80,7 @@ public class VariablesModuleTests : TestBase
                    let b = 3
                    a * b
                    """;
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new ScopesModuleImpl(),

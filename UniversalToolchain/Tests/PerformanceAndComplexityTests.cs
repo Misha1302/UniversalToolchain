@@ -49,7 +49,7 @@ public class PerformanceAndComplexityTests : TestBase
                 
                 total
             ";
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new ScopesModuleImpl(),
@@ -98,7 +98,7 @@ public class PerformanceAndComplexityTests : TestBase
                 
                 sum
             ";
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new ScopesModuleImpl(),

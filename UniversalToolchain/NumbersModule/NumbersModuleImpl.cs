@@ -5,12 +5,12 @@ using LexemeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.LexerWrapper.Le
 
 namespace NumbersModule;
 
-public class NumbersModuleImpl : ICoreModule
+public class NumbersModuleImpl : IFrontendCoreModule
 {
     public void InitLexer(ILexer lexer)
     {
         lexer.Configuration.TryAddPattern(
-            new LexemePattern(@"(\+|-)?([0-9]+)(\.[0-9]+)?",
+            new LexemePattern(@"[+-]?\d+(\.\d+)?([eE][+-]?\d+)?",
                 LexemeType.CreateOrGet("Number"))
         );
     }

@@ -4,6 +4,7 @@ using BasicCore;
 using ConditionsModule;
 using EqualityModule;
 using IdentifierModule;
+using LabelsModule;
 using NumbersModule;
 using ScopesModule;
 using SemicolonAsNewLineModule;
@@ -19,27 +20,32 @@ public class ComplexArithmeticPerformanceTests : TestBase
     public void Execute_ManyNestedOperations_PerformsEfficiently()
     {
         // Arrange
-        var code = @"
-                let result = 0
-                let i = 0
+        var code = """
+                   let result = 0
+                   let i = 0
 
-                @start:
-                if i < 50 goto @end
-                    result = result + (i * (i + 1) - (i / 2)) * ((i * 2) - (i / 3)) / (i + 1)
-                    i = i + 1
-                @end
-                result
-            ";
-        var modules = new ICoreModule[]
+                   @start:
+                   if i >= 50 goto @end
+                       result = result + (i * (i + 1) - (i / 2)) * ((i * 2) - (i / 3)) / (i + 1)
+                       i = i + 1
+                       goto @start
+                   @end:
+                   result
+                   """;
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new ScopesModuleImpl(),
             new NumbersModuleImpl(),
             new WhitespaceModuleImpl(),
+            new SemicolonAsNewLineModuleImpl(),
             new ArithmeticModuleImpl(),
+            new LabelsModuleImpl(),
             new VariablesModuleImpl(),
+            new EqualityModuleImpl(),
+            new ConditionsModuleImpl(),
             new ComparisonOperations(),
-            new EqualityModuleImpl()
+            new BooleanOperations()
         };
 
         var stopwatch = new Stopwatch();
@@ -82,7 +88,7 @@ public class ComplexArithmeticPerformanceTests : TestBase
                 
                 c11 + c12 + c13 + c21 + c22 + c23 + c31 + c32 + c33
             ";
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new ScopesModuleImpl(),

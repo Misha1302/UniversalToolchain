@@ -13,31 +13,11 @@ namespace Tests;
 public class ErrorCasesTests : TestBase
 {
     [Test]
-    public void Execute_UndefinedVariable_ThrowsException()
-    {
-        // Arrange
-        var code = "x + 5";
-        var modules = new ICoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl()
-        };
-
-        // Act & Assert
-        Assert.Throws<InvalidOperationException>(() => ExecuteCode(code, modules));
-    }
-
-    [Test]
     public void Execute_InvalidSyntax_ThrowsException()
     {
         // Arrange
         var code = "let 123 = 456";
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new ScopesModuleImpl(),

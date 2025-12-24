@@ -30,7 +30,7 @@ public class LoopTests : TestBase
                 @end:
                 sum
             ";
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new ScopesModuleImpl(),
@@ -77,7 +77,7 @@ public class LoopTests : TestBase
                 @outer_end:
                 result
             ";
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new ScopesModuleImpl(),
@@ -119,7 +119,7 @@ public class LoopTests : TestBase
                 @end:
                 total
             ";
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new ScopesModuleImpl(),

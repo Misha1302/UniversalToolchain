@@ -59,6 +59,9 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SemicolonAsNewLineModule", "SemicolonAsNewLineModule\SemicolonAsNewLineModule.csproj", "{2B2C94D6-09D8-4713-80C9-C57478FBE9DC}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Applications", "Applications", "{53FB9EA9-6487-401D-89E3-7319C961F807}"
+	ProjectSection(SolutionItems) = preProject
+		Applications\Notes.cs = Applications\Notes.cs
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Frontend", "Frontend", "{B5946FA0-D71B-4BB0-B36D-4D521769691E}"
 EndProject
@@ -69,6 +72,10 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Modules", "Modules", "{88C5710D-F6DC-410E-BEC0-195979447E14}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{5D47DC15-D240-422C-BC38-8DDCD02AF505}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "UnIR", "UnIR", "{9AEBC4F8-C781-4571-ADAA-0EF51805A59D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniversalIntermediateRepresentation", "UniversalIntermediateRepresentation\UniversalIntermediateRepresentation.csproj", "{3C3223CF-A7FC-4922-98AA-84F9F615903C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -192,6 +199,10 @@ Global
 		{2B2C94D6-09D8-4713-80C9-C57478FBE9DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2B2C94D6-09D8-4713-80C9-C57478FBE9DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2B2C94D6-09D8-4713-80C9-C57478FBE9DC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3C3223CF-A7FC-4922-98AA-84F9F615903C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3C3223CF-A7FC-4922-98AA-84F9F615903C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3C3223CF-A7FC-4922-98AA-84F9F615903C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3C3223CF-A7FC-4922-98AA-84F9F615903C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{D62CCD79-F4B6-4A27-875D-FE9DA78A8854} = {53FB9EA9-6487-401D-89E3-7319C961F807}
@@ -223,5 +234,6 @@ Global
 		{23FE22EC-F772-4E35-95DA-10D00D36D12A} = {88C5710D-F6DC-410E-BEC0-195979447E14}
 		{40379251-44F7-4648-9557-8C6976A822D3} = {88C5710D-F6DC-410E-BEC0-195979447E14}
 		{DC15ACA8-0791-4171-A934-6268ABD3143C} = {5D47DC15-D240-422C-BC38-8DDCD02AF505}
+		{3C3223CF-A7FC-4922-98AA-84F9F615903C} = {9AEBC4F8-C781-4571-ADAA-0EF51805A59D}
 	EndGlobalSection
 EndGlobal

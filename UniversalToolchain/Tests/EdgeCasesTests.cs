@@ -22,7 +22,7 @@ public class EdgeCasesTests : TestBase
                 let result = zero * 100 + zero / 1
                 result
             ";
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new ScopesModuleImpl(),
@@ -51,7 +51,7 @@ public class EdgeCasesTests : TestBase
                 let veryBig = big * big
                 veryBig / big
             ";
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new ScopesModuleImpl(),
@@ -81,7 +81,7 @@ public class EdgeCasesTests : TestBase
                 let c = a + b
                 c
             ";
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new ScopesModuleImpl(),

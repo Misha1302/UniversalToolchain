@@ -2,19 +2,20 @@ using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
 using DynamicMethodWrapper;
-using IlCodeGeneratorFactory;
 
 namespace LabelsModule;
 
-public class GotoVisitor : IAstVisitor
+public class GotoVisitor(LabelsSharedData labelsSharedData) : IAstVisitor
 {
     public void TryVisit(BytecodeVisitorData data)
     {
         if (data.Node.NodeType != ExtensibleEnum<AstNodeTag>.Get("Goto")) return;
 
-        var method = new DynamicMethodConvertableWrapperImpl();
-        method.Make($"Goto_!Intrinsic_{data.Node.Children[0].Text}", 0,
-            (il, _) => il.IntrinsicNotImplemented(),
+        var name = data.Node.Children[0].Text;
+        var method = new AbstractMethodImpl(
+            $"Goto_!Intrinsic_{name}",
+            0,
+            (il, _) => il.Jmp(labelsSharedData.GetIdByName(name)),
             _ => typeof(void)
         );
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));

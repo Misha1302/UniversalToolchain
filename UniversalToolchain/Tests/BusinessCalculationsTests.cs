@@ -32,7 +32,7 @@ public class BusinessCalculationsTests : TestBase
                 let averagePrice = totalValue / (item1Quantity + item2Quantity + item3Quantity)
                 averagePrice
             ";
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new ScopesModuleImpl(),
@@ -69,7 +69,7 @@ public class BusinessCalculationsTests : TestBase
                 
                 netMargin * 100
             ";
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new ScopesModuleImpl(),

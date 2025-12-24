@@ -6,7 +6,7 @@ using LexemeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.LexerWrapper.Le
 
 namespace CSharpInteropModule;
 
-public class CSharpInteropModuleImpl : ICoreModule
+public class CSharpInteropModuleImpl : IFrontendCoreModule
 {
     public void InitLexer(ILexer lexer)
     {

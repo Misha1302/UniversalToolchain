@@ -1,31 +1,17 @@
-using System.Reflection.Emit;
 using BasicCore.ExecutorWrapper;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
-using GrEmit;
 
 namespace BasicCore;
 
-public interface ICoreModule
+public interface IFrontendCoreModule
 {
     void InitLexer(ILexer lexer)
     {
     }
 
     void InitParser(IParser parser)
-    {
-    }
-
-    void InitTranslator(IBytecodeTranslator translator)
-    {
-    }
-
-    void InitDynamicMethodsCompiler(IBytecodeDynamicMethodsCompiler dynamicMethodsCompiler)
-    {
-    }
-
-    void InitExecutor(IExecutor executor)
     {
     }
 
@@ -44,13 +30,29 @@ public interface ICoreModule
         return astRoot;
     }
 
+
     Bytecode ProcessBytecode(Bytecode current)
     {
         return current;
     }
 
-    List<(GroboIL, DynamicMethod)> ProcessDynamicMethods(List<(GroboIL, DynamicMethod)> current)
+    void InitTranslator(IBytecodeTranslator translator)
+    {
+    }
+}
+
+public interface IMiddleEndCoreModule<TCompilationOutput>
+{
+    TCompilationOutput ProcessCompilation(TCompilationOutput current)
     {
         return current;
+    }
+
+    void InitMethodsCompiler(IAbstractMethodsCompiler<TCompilationOutput> compiler)
+    {
+    }
+
+    void InitExecutor(IExecutor<TCompilationOutput> executor)
+    {
     }
 }

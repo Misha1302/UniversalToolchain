@@ -3,10 +3,10 @@ using DynamicMethodWrapper;
 
 namespace BasicCore.TranslatorWrapper;
 
-public record BytecodeInstruction(HashSet<string> Tags, LevelCollection<float, IDynamicMethodConvertable> Ops)
+public record BytecodeInstruction(HashSet<string> Tags, LevelCollection<float, IAbstractMethodConvertable> Ops)
 {
-    public BytecodeInstruction(IDynamicMethodConvertable op)
-        : this([], new LevelCollection<float, IDynamicMethodConvertable> { { 0, op } })
+    public BytecodeInstruction(IAbstractMethodConvertable op)
+        : this([], new LevelCollection<float, IAbstractMethodConvertable> { { 0, op } })
     {
     }
 

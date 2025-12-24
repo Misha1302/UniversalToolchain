@@ -3,6 +3,7 @@ using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
 using DynamicMethodWrapper;
 using ExceptionsManager;
+using UniversalIntermediateRepresentation;
 
 namespace ConditionsModule;
 
@@ -23,13 +24,11 @@ public class BooleanVisitor : IAstVisitor
     private void VisitBooleanLiteral(BytecodeVisitorData data)
     {
         var value = data.Node.NodeType == ExtensibleEnum<AstNodeTag>.Get("True");
-        var method = new DynamicMethodConvertableWrapperImpl();
-
-        method.Make($"PushBoolean_{value}", 0, (il, _) =>
-            {
-                il.Ldc_I4(value ? 1 : 0);
-                il.Ret();
-            }, _ => typeof(bool)
+        var method = new AbstractMethodImpl(
+            $"PushBoolean_{value}",
+            0,
+            (il, _) => il.Push(Value.Create(value ? 1 : 0)),
+            _ => typeof(bool)
         );
 
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
@@ -40,40 +39,42 @@ public class BooleanVisitor : IAstVisitor
         // Сначала вычисляем операнды
         foreach (var child in data.Node.Children) data.BytecodeTranslator.Translate(child);
 
-        var method = new DynamicMethodConvertableWrapperImpl();
         var op = data.Node.NodeType;
 
-        method.Make($"Boolean_{op}",
-            data.Node.Children.Count == 1 ? 1 : 2,
-            (il, _) =>
-            {
-                if (op == ExtensibleEnum<AstNodeTag>.Get("And"))
-                {
-                    il.Ldarg(0);
-                    il.Ldarg(1);
-                    il.And();
-                }
-                else if (op == ExtensibleEnum<AstNodeTag>.Get("Or"))
-                {
-                    il.Ldarg(0);
-                    il.Ldarg(1);
-                    il.Or();
-                }
-                else if (op == ExtensibleEnum<AstNodeTag>.Get("Not"))
-                {
-                    il.Ldarg(0);
-                    il.Ldc_I4(0);
-                    il.Ceq();
-                }
-                else
-                {
-                    Thrower.InvalidOpEx($"Unknown operator {op}");
-                }
 
-                il.Ret();
-            }, _ => typeof(bool)
+        var method = new AbstractMethodImpl(
+            $"Boolean_{op}",
+            data.Node.Children.Count == 1 ? 1 : 2,
+            (il, context) =>
+            {
+                // args always pushed
+                Thrower.AssertAlways(op.GetName() is "And" or "Or" or "Not");
+                Thrower.AssertAlways(context.Stack[^1] == context.Stack[^2]);
+                if (context.Stack[^1] != typeof(bool))
+                    il.CallCSharp(context.Stack[^1].GetMethod(op.GetName()).NotNull());
+                else il.CallCSharp(typeof(BooleanOperations).GetMethod(op.GetName()).NotNull());
+            },
+            _ => typeof(bool)
         );
 
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
+    }
+
+    private static class BooleanOperations
+    {
+        public static bool And(bool a, bool b)
+        {
+            return a && b;
+        }
+
+        public static bool Or(bool a, bool b)
+        {
+            return a || b;
+        }
+
+        public static bool Not(bool a)
+        {
+            return !a;
+        }
     }
 }

@@ -4,7 +4,7 @@ using LexemeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.LexerWrapper.Le
 
 namespace IdentifierModule;
 
-public class IdentifierModuleImpl : ICoreModule
+public class IdentifierModuleImpl : IFrontendCoreModule
 {
     public void InitLexer(ILexer lexer)
     {

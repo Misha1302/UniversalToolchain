@@ -31,7 +31,7 @@ public class PerformanceTests : TestBase
                     goto @start
             result
             ";
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new ScopesModuleImpl(),
@@ -59,7 +59,7 @@ public class PerformanceTests : TestBase
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(4950).Within(1e-9));
         Assert.That(
-            stopwatch.ElapsedMilliseconds / Executors.Count,
+            stopwatch.ElapsedMilliseconds / CoresCount,
             Is.LessThan(1000)
         );
     }
@@ -74,7 +74,7 @@ public class PerformanceTests : TestBase
                 let c = b * a - b / a + (a + b) * 2
                 c
             ";
-        var modules = new ICoreModule[]
+        var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
             new ScopesModuleImpl(),
@@ -96,7 +96,7 @@ public class PerformanceTests : TestBase
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(591.2).Within(1e-9));
         Assert.That(
-            stopwatch.ElapsedMilliseconds / Executors.Count,
+            stopwatch.ElapsedMilliseconds / CoresCount,
             Is.LessThan(500)
         );
     }

@@ -2,6 +2,8 @@ using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
 using DynamicMethodWrapper;
+using ExceptionsManager;
+using UniversalIntermediateRepresentation;
 
 namespace VariablesModule;
 
@@ -18,18 +20,17 @@ public class VariablesVisitor : IAstVisitor
 
         if (data.Node.AllTags.Contains("ExpectingSettableReference"))
         {
-            var method = new DynamicMethodConvertableWrapperImpl();
-            method.Make(
+            var method = new AbstractMethodImpl(
                 $"LoadReferenceToLocalVar_{varName}",
                 0,
                 (il, context) =>
                 {
                     var type = _variableTypes[varName] = context.Stack[0];
-                    il.Ldstr(varName);
                     var variablesContainer = typeof(VariablesContainer<>).MakeGenericType(type);
-                    var getRefMethod = variablesContainer.GetMethod("GetRef");
-                    il.Call(getRefMethod);
-                    il.Ret();
+                    var getRefMethod = variablesContainer.GetMethod("GetRef").NotNull();
+
+                    il.Push(Value.Create(varName));
+                    il.CallCSharp(getRefMethod);
                 },
                 context => typeof(VariableReference<>).MakeGenericType(context.Stack[0])
             );
@@ -37,13 +38,15 @@ public class VariablesVisitor : IAstVisitor
         }
         else
         {
-            var method = new DynamicMethodConvertableWrapperImpl();
-            method.Make($"LoadValueOfLocalVar_{varName}", 0,
+            var method = new AbstractMethodImpl(
+                $"LoadValueOfLocalVar_{varName}",
+                0,
                 (il, _) =>
                 {
-                    il.Ldstr(varName);
-                    il.Call(typeof(VariablesContainer<>).MakeGenericType(_variableTypes[varName]).GetMethod("Get"));
-                    il.Ret();
+                    var get = typeof(VariablesContainer<>).MakeGenericType(_variableTypes[varName]).GetMethod("Get");
+
+                    il.Push(Value.Create(varName));
+                    il.CallCSharp(get.NotNull());
                 }, _ => _variableTypes[varName]);
             data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
         }
