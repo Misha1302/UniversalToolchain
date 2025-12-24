@@ -30,18 +30,4 @@ public static class GenericTypeResolver
         }
         return types;
     }
-
-
-    private static Type MakeGenericType(Type parameterType, List<Type> sourceTypes)
-    {
-        var gArgs = parameterType.GetGenericArguments();
-        if (!parameterType.IsGenericType)
-            return sourceTypes[0];
-
-        var genericTypes = gArgs
-            .Select((x, i) => x.IsGenericMethodParameter ? sourceTypes[i] : x)
-            .ToArray();
-
-        return parameterType.GetGenericTypeDefinition().MakeGenericType(genericTypes);
-    }
 }

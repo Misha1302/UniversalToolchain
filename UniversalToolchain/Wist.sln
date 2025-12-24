@@ -60,7 +60,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SemicolonAsNewLineModule", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Applications", "Applications", "{53FB9EA9-6487-401D-89E3-7319C961F807}"
 	ProjectSection(SolutionItems) = preProject
-		Applications\Notes.cs = Applications\Notes.cs
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Frontend", "Frontend", "{B5946FA0-D71B-4BB0-B36D-4D521769691E}"
