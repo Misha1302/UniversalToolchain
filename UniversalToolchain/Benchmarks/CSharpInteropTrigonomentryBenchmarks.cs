@@ -8,15 +8,15 @@ namespace Benchmarks;
 [RankColumn]
 public class CSharpInteropTrigonomentryBenchmarks
 {
-    private ICoreOptimizedRunnable _interpreterCore = null!;
-    private ICoreOptimizedRunnable _compilerCore = null!;
-
     private readonly string _trigonometry = @"
         let angle = 0.5
         let sinVal = Main.Sin(angle)
         let cosVal = Main.Cos(angle)
         let tanVal = sinVal / cosVal
         sinVal * sinVal + cosVal * cosVal";
+
+    private ICoreOptimizedRunnable _compilerCore = null!;
+    private ICoreOptimizedRunnable _interpreterCore = null!;
 
     [GlobalSetup]
     public void Setup()
@@ -60,7 +60,7 @@ public class CSharpInteropTrigonomentryBenchmarks
             []
         );
     }
-    
+
     [Benchmark]
     public object? Interpreter_Trigonometry()
     {

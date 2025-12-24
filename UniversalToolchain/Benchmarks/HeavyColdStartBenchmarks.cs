@@ -8,9 +8,6 @@ namespace Benchmarks;
 [RankColumn]
 public class HeavyColdStartBenchmarks
 {
-    private ICoreOptimizedRunnable _interpreterCore = null!;
-    private ICoreOptimizedRunnable _compilerCore = null!;
-
     private readonly string _heavyLoop = @"
         let sum = 0
         let i = 1
@@ -27,6 +24,9 @@ public class HeavyColdStartBenchmarks
             goto @loop
         @end:
         sum";
+
+    private ICoreOptimizedRunnable _compilerCore = null!;
+    private ICoreOptimizedRunnable _interpreterCore = null!;
 
     [GlobalSetup]
     public void Setup()
@@ -69,15 +69,15 @@ public class HeavyColdStartBenchmarks
             []
         );
     }
-    
+
     [Benchmark(Baseline = true)]
     public object? Interpreter_ColdStart()
     {
         _interpreterCore.PrepareToRun("");
         _interpreterCore.PrepareToRun(_heavyLoop);
         return _interpreterCore.RunPrepared();
-    }                           
-                                                                                                                    
+    }
+
     [Benchmark]
     public object? Compiler_ColdStart()
     {
