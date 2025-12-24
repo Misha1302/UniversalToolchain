@@ -1,19 +1,18 @@
-using System.Reflection.Emit;
-using BasicCilCompiler;
 using BytecodeDynamicMethodsCompiler;
 using ConditionsModule;
 using EqualityModule;
 using IdentifierModule;
 using LabelsModule;
 using SemicolonAsNewLineModule;
+using UniversalIntermediateRepresentation;
 using VariablesModule;
 
-var core = new BasicCoreImpl<DynamicMethod>(
+var core = new BasicCoreImpl<AbstractIR>(
     () => new BasicLexerImpl(),
     () => new BasicParserImpl(),
     () => new BasicBytecodeTranslatorImpl(),
-    () => new AbstractMethodsCompilerImpl(),
-    () => new DynamicMethodExecutor(),
+    () => new AbstractMethodsStubImpl(),
+    () => new InterpreterImpl(),
     [
         new IdentifierModuleImpl(),
         new ScopesModuleImpl(),
@@ -35,15 +34,19 @@ var core = new BasicCoreImpl<DynamicMethod>(
     []
 );
 
-var result = core.Execute(
+var result = core.Run(
     """
-    let i = 0
-    @start:
-        if i == 5 goto @end
-        Main.Print(i)
-        i = i + 1
-        goto @start
-    @end:
+    let a = 5
+    let b = 10
+    let c = 15
+    let result = 0
+
+    if (a < b) and (b < c)
+        result = 1
+    else
+        result = 0
+
+    result
     """
 );
 

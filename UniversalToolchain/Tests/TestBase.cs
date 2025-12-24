@@ -4,40 +4,69 @@ using System.Reflection.Emit;
 using BasicCilCompiler;
 using BasicCodeTranslator;
 using BasicCore;
-using BasicCore.ExecutorWrapper;
 using BasicLexer;
 using BasicParser;
 using BytecodeDynamicMethodsCompiler;
 using ExceptionsManager;
+using UniversalIntermediateRepresentation;
 
 namespace Tests;
 
 [TestFixture]
 public abstract class TestBase
 {
-    // TODO: remade to others compilations
-    protected readonly List<Func<IExecutor<DynamicMethod>>> Executors =
-        [() => new DynamicMethodExecutor()];
-    // , () => new BasicInterpreterImpl()
+    public static int CoresCount = 2;
 
-    protected IEnumerable<BasicCoreImpl<DynamicMethod>> CreateCores(params IFrontendCoreModule[] modules)
+    private static IEnumerable<ICoreRunnable> CreateCores(
+        IFrontendCoreModule[]? modules = null,
+        Dictionary<Type, object>? middleEndModules = null
+    )
     {
-        return Executors.Select(executorFactory => new BasicCoreImpl<DynamicMethod>(
+        modules ??= [];
+        middleEndModules ??= [];
+
+        return
+        [
+            new BasicCoreImpl<DynamicMethod>(
                 () => new BasicLexerImpl(),
                 () => new BasicParserImpl(),
                 () => new BasicBytecodeTranslatorImpl(),
                 () => new AbstractMethodsCompilerImpl(),
-                executorFactory,
+                () => new DynamicMethodExecutor(),
                 modules,
-                []
+                middleEndModules.TryGetValue(typeof(DynamicMethod), out var dmModules)
+                    ? (List<IMiddleEndCoreModule<DynamicMethod>>)dmModules
+                    : []
+            ),
+            new BasicCoreImpl<AbstractIR>(
+                () => new BasicLexerImpl(),
+                () => new BasicParserImpl(),
+                () => new BasicBytecodeTranslatorImpl(),
+                () => new AbstractMethodsStubImpl(),
+                () => new InterpreterImpl(),
+                modules,
+                middleEndModules.TryGetValue(typeof(AbstractIR), out var airModules)
+                    ? (List<IMiddleEndCoreModule<AbstractIR>>)airModules
+                    : []
             )
-        );
+        ];
     }
 
-    protected object ExecuteCode(string code, params IFrontendCoreModule[] modules)
+    protected object ExecuteCode(
+        string code,
+        IFrontendCoreModule[]? modules = null,
+        Dictionary<Type, object>? middleEndModules = null
+    )
     {
-        var values = CreateCores(modules).Select(core => core.Execute(code)).ToList();
+        modules ??= [];
+        middleEndModules ??= [];
+
+        var values = CreateCores(modules, middleEndModules)
+            .Select(core => core.Run(code))
+            .ToList();
+
         Thrower.AssertAlways(values.All(value => value.Equals(values[0])));
+
         return values[0];
     }
 }

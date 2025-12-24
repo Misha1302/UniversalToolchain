@@ -59,7 +59,7 @@ public class PerformanceTests : TestBase
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(4950).Within(1e-9));
         Assert.That(
-            stopwatch.ElapsedMilliseconds / Executors.Count,
+            stopwatch.ElapsedMilliseconds / CoresCount,
             Is.LessThan(1000)
         );
     }
@@ -96,7 +96,7 @@ public class PerformanceTests : TestBase
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(591.2).Within(1e-9));
         Assert.That(
-            stopwatch.ElapsedMilliseconds / Executors.Count,
+            stopwatch.ElapsedMilliseconds / CoresCount,
             Is.LessThan(500)
         );
     }

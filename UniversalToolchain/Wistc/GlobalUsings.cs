@@ -3,7 +3,6 @@
 global using ArithmeticModule;
 global using BasicCodeTranslator;
 global using BasicCore;
-global using BasicInterpreter;
 global using BasicLexer;
 global using BasicParser;
 global using BytecodeDynamicMethodsCompiler;

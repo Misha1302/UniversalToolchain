@@ -13,9 +13,10 @@ public class BasicCoreImpl<TCompilationOutput>(
     Func<IAbstractMethodsCompiler<TCompilationOutput>> compilerFactory,
     Func<IExecutor<TCompilationOutput>> executorFactory,
     IReadOnlyList<IFrontendCoreModule> modules,
-    IReadOnlyList<IMiddleEndCoreModule<TCompilationOutput>> middleEndModules)
+    IReadOnlyList<IMiddleEndCoreModule<TCompilationOutput>> middleEndModules
+) : ICoreRunnable
 {
-    public object Execute(string code)
+    public object Run(string code)
     {
         var lexer = lexerFactory();
         var parser = parserFactory();

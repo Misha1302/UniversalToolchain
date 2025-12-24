@@ -60,4 +60,10 @@ public class GenericAbstractIR<TIdentifier>
     {
         _instructions.Add(new Instruction(OpCode.Intrinsic, [instructionIdentifier, ..operands]));
     }
+
+
+    public void AppendInstructions(GenericAbstractIR<TIdentifier> air)
+    {
+        _instructions.AddRange(air.Instructions);
+    }
 }
