@@ -144,8 +144,6 @@ public class AbstractMethodsCompilerImpl : IAbstractMethodsCompiler<DynamicMetho
                 Thrower.InvalidOpEx();
             }
         }
-
-        data.InstructionIndex++;
     }
 
     private void PushValue(CompilationData data, Value value)
@@ -173,14 +171,21 @@ public class AbstractMethodsCompilerImpl : IAbstractMethodsCompiler<DynamicMetho
             // TODO: refactor this!
 
             // TODO: fix generics in parameters
-            var targetTypes = GetParameterTypes(method, stack).ToList();
-            if (!method.IsStatic) targetTypes.Insert(0, method.DeclaringType);
+            var methodParams = method.GetParameters().Select(x => x.ParameterType).ToList();
+            var targetTypes = GenericTypeResolver.GetParameterTypes(method, stack.TakeLast(methodParams.Count).Reverse().ToList()).ToList();
+            if (!method.IsStatic)
+            {
+                targetTypes.Insert(0, method.DeclaringType);
+                methodParams.Insert(0, method.DeclaringType);
+            }
             CastValuesToTypes(
                 data,
                 targetTypes,
+                targetTypes.Select((x, i) => methodParams[i].IsByRef && targetTypes[i].IsValueType).ToList(),
                 !method.IsStatic && method.DeclaringType.IsValueType && method.IsVirtual
             );
-            data.Il.Call(MakeGenericMethod(method, targetTypes));
+            method = GenericTypeResolver.MakeGenericMethod(method, targetTypes);
+            data.Il.Call(method);
             if (method.ReturnType != typeof(void) && method.ReturnType != typeof(Value))
             {
                 if (method.ReturnType.IsValueType)
@@ -193,12 +198,15 @@ public class AbstractMethodsCompilerImpl : IAbstractMethodsCompiler<DynamicMetho
             var method = instruction.Operands[1].Get<ConstructorInfo>();
             Thrower.AssertAlways(method.DeclaringType != null);
 
+            var methodParams = method.GetParameters();
             var targetTypes = method.GetParameters().Select(x => x.ParameterType).ToList();
             CastValuesToTypes(
                 data,
                 targetTypes,
+                targetTypes.Select((x, i) => methodParams[i].ParameterType.IsByRef && targetTypes[i].IsValueType).ToList(),
                 !method.IsStatic && method.DeclaringType.IsValueType && method.IsVirtual
             );
+
             data.Il.Newobj(method);
             if (method.DeclaringType != typeof(Value))
             {
@@ -213,35 +221,8 @@ public class AbstractMethodsCompilerImpl : IAbstractMethodsCompiler<DynamicMetho
         }
     }
 
-    private IReadOnlyList<Type> GetParameterTypes(MethodInfo method, List<Type> stack)
-    {
-        var types = (List<Type>)[];
-        var parameters = method.GetParameters();
-        foreach (var parameter in parameters)
-        {
-            var targetType = parameter.ParameterType.ContainsGenericParameters
-                ? MakeGenericType(parameter.ParameterType, stack.TakeLast(parameters.Length).Reverse().ToList())
-                : parameter.ParameterType;
-            types.Add(targetType);
-        }
-        return types;
-    }
 
-
-    private static Type MakeGenericType(Type parameterType, List<Type> sourceTypes)
-    {
-        var gArgs = parameterType.GetGenericArguments();
-        if (!parameterType.IsGenericType)
-            return sourceTypes[0];
-
-        var genericTypes = gArgs
-            .Select((x, i) => x.FullName == null ? sourceTypes[i] : x)
-            .ToArray();
-
-        return parameterType.GetGenericTypeDefinition().MakeGenericType(genericTypes);
-    }
-
-    private void CastValuesToTypes(CompilationData data, IReadOnlyList<Type> targetTypes, bool needLoadReference)
+    private void CastValuesToTypes(CompilationData data, IReadOnlyList<Type> targetTypes, IReadOnlyList<bool> argsByRef, bool needLoadReference)
     {
         var n = targetTypes.Count;
         var locals = new GroboIL.Local[n];
@@ -257,6 +238,11 @@ public class AbstractMethodsCompilerImpl : IAbstractMethodsCompiler<DynamicMetho
                 _getMethod.MakeGenericMethod(targetTypes[i])
             );
 
+            if (argsByRef[i])
+            {
+                data.Il.Box(targetTypes[i]);
+            }
+
             if (i == 0 && needLoadReference)
             {
                 var loc = data.Il.DeclareLocal(targetTypes[i]);
@@ -266,22 +252,8 @@ public class AbstractMethodsCompilerImpl : IAbstractMethodsCompiler<DynamicMetho
         }
     }
 
-    private static MethodInfo MakeGenericMethod(MethodInfo call, List<Type> argTypes)
-    {
-        if (!call.ContainsGenericParameters) return call;
-
-        var genericTypes = call.GetGenericArguments()
-            .Select((x, i) => x.FullName == null ? argTypes[i] : x)
-            .ToArray();
-
-        return call.GetGenericMethodDefinition().MakeGenericMethod(genericTypes);
-    }
-
     private record CompilationData(GroboIL Il, List<(Guid id, GroboIL.Local local)> Locals, List<(Guid id, GroboIL.Label label)> InstructionLabels)
     {
-        public int InstructionIndex;
-
-
         public GroboIL.Local GetLocal(Guid id)
         {
             TryAddLocal(id);

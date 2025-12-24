@@ -21,13 +21,13 @@ public static class Main
         Assembly.LoadFile(path);
     }
 
-    public static TSelf Log<TSelf>(ICustomNumber<TSelf, double> a, ICustomNumber<TSelf, double> newBase)
+    public static TSelf Log<TSelf>(TSelf a, TSelf newBase)
         where TSelf : ICustomNumber<TSelf, double>
     {
         return TSelf.Create(Math.Log(a.GetValue(), newBase.GetValue()));
     }
 
-    public static TSelf Sqrt<TSelf>(ICustomNumber<TSelf, double> x) where TSelf : ICustomNumber<TSelf, double>
+    public static TSelf Sqrt<TSelf>(TSelf x) where TSelf : ICustomNumber<TSelf, double>
     {
         return TSelf.Create(Math.Sqrt(x.GetValue()));
     }

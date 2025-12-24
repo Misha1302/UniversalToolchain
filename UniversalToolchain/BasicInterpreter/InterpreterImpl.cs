@@ -133,10 +133,11 @@ public class InterpreterImpl : IExecutor<AbstractIR>
     private void ExecuteCSharpCall(Instruction instruction, InterpreterState state)
     {
         var method = instruction.Operands[1].Get<MethodInfo>();
-        var parametersTypes = GetParameterTypes(method, state.ValueStack.Reverse().Select(x => x.Data.GetType()).ToList());
+        var parametersTypes = GenericTypeResolver.GetParameterTypes(method, state.ValueStack.Take(method.GetParameters().Length).Select(x => x.Data.GetType()).ToList());
 
         // Извлекаем аргументы из стека
         var args = new object[parametersTypes.Count];
+        var argsTypes = new Type[parametersTypes.Count];
         for (var i = parametersTypes.Count - 1; i >= 0; i--)
         {
             if (state.ValueStack.Count == 0)
@@ -144,9 +145,10 @@ public class InterpreterImpl : IExecutor<AbstractIR>
 
             var value = state.ValueStack.Pop();
             args[i] = ConvertValue(value, parametersTypes[i]);
+            argsTypes[i] = args[i].GetType();
         }
 
-        method = MakeGenericMethod(method, parametersTypes);
+        method = GenericTypeResolver.MakeGenericMethod(method, argsTypes);
 
         // Вызываем метод
         object result;
@@ -170,46 +172,6 @@ public class InterpreterImpl : IExecutor<AbstractIR>
         {
             state.ValueStack.Push(Value.Create(result));
         }
-    }
-
-
-    private static MethodInfo MakeGenericMethod(MethodInfo call, IReadOnlyList<Type> argTypes)
-    {
-        if (!call.ContainsGenericParameters) return call;
-
-        var genericTypes = call.GetGenericArguments()
-            .Select((x, i) => x.FullName == null ? argTypes[i] : x)
-            .ToArray();
-
-        return call.GetGenericMethodDefinition().MakeGenericMethod(genericTypes);
-    }
-
-    private IReadOnlyList<Type> GetParameterTypes(MethodInfo method, List<Type> stack)
-    {
-        var types = (List<Type>)[];
-        var parameters = method.GetParameters();
-        foreach (var parameter in parameters)
-        {
-            var targetType = parameter.ParameterType.ContainsGenericParameters
-                ? MakeGenericType(parameter.ParameterType, stack.TakeLast(parameters.Length).Reverse().ToList())
-                : parameter.ParameterType;
-            types.Add(targetType);
-        }
-        return types;
-    }
-
-
-    private static Type MakeGenericType(Type parameterType, List<Type> sourceTypes)
-    {
-        var gArgs = parameterType.GetGenericArguments();
-        if (!parameterType.IsGenericType)
-            return sourceTypes[0];
-
-        var genericTypes = gArgs
-            .Select((x, i) => x.FullName == null ? sourceTypes[i] : x)
-            .ToArray();
-
-        return parameterType.GetGenericTypeDefinition().MakeGenericType(genericTypes);
     }
 
 
