@@ -8,6 +8,8 @@ public static class Program
 
     public static int Main(string[] args)
     {
+        BasicStdLib.Main.LoadStdLibToThisAssembly();
+
         try
         {
             var parser = new Parser(with =>

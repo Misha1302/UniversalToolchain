@@ -1,17 +1,3 @@
-using System.Diagnostics;
-using ArithmeticModule;
-using BasicCore;
-using ConditionsModule;
-using CSharpInteropModule;
-using EqualityModule;
-using IdentifierModule;
-using LabelsModule;
-using NumbersModule;
-using ScopesModule;
-using SemicolonAsNewLineModule;
-using VariablesModule;
-using WhitespacesModule;
-
 namespace Tests;
 
 [TestFixture]

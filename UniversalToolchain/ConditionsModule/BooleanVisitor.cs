@@ -27,7 +27,7 @@ public class BooleanVisitor : IAstVisitor
         var method = new AbstractMethodImpl(
             $"PushBoolean_{value}",
             0,
-            (il, _) => il.Push(Value.Create(value ? 1 : 0)),
+            (il, _) => il.Push(Value.Create(value)),
             _ => typeof(bool)
         );
 

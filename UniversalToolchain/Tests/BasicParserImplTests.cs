@@ -1,9 +1,3 @@
-using ArithmeticModule;
-using BasicCore.LexerWrapper;
-using BasicCore.ParserWrapper;
-using BasicParser;
-using BasicTypesExtensions;
-
 namespace Tests;
 
 [TestFixture]

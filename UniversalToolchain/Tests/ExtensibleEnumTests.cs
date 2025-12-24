@@ -1,5 +1,3 @@
-using BasicTypesExtensions;
-
 namespace Tests;
 
 [TestFixture]

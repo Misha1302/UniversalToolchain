@@ -1,22 +1,18 @@
 ﻿// BasicCore.Tests/TestBase.cs
 
-using System.Reflection.Emit;
-using BasicCilCompiler;
-using BasicCodeTranslator;
-using BasicCore;
-using BasicInterpreter;
-using BasicLexer;
-using BasicParser;
-using BytecodeDynamicMethodsCompiler;
-using ExceptionsManager;
-using UniversalIntermediateRepresentation;
+using BasicStdLib;
 
 namespace Tests;
 
 [TestFixture]
 public abstract class TestBase
 {
-    public static int CoresCount = 2;
+    protected const int CoresCount = 2;
+
+    protected TestBase()
+    {
+        Main.LoadStdLibToThisAssembly();
+    }
 
     private static IEnumerable<ICoreRunnable> CreateCores(
         IFrontendCoreModule[]? modules = null,
@@ -66,8 +62,8 @@ public abstract class TestBase
             .Select(core => core.Run(code))
             .ToList();
 
-        Thrower.AssertAlways(values.All(value => value.Equals(values[0])));
+        Thrower.AssertAlways(values.All(value => value?.Equals(values[0]) ?? value == values[0]));
 
-        return values[0];
+        return values[0]!;
     }
 }

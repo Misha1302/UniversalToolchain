@@ -1,15 +1,3 @@
-using ArithmeticModule;
-using BasicCore;
-using BasicCore.ParserWrapper;
-using BasicParser;
-using ConditionsModule;
-using CSharpInteropModule;
-using EqualityModule;
-using LabelsModule;
-using ParserConfigurationModule;
-using ScopesModule;
-using VariablesModule;
-
 namespace Tests;
 
 [TestFixture]

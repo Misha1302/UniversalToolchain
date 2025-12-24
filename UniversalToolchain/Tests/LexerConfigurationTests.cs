@@ -1,15 +1,3 @@
-using System.Text;
-using ArithmeticModule;
-using BasicCore;
-using BasicCore.LexerWrapper;
-using BasicLexer;
-using BasicTypesExtensions;
-using ExceptionsManager;
-using IdentifierModule;
-using NumbersModule;
-using ParserConfigurationModule;
-using WhitespacesModule;
-
 namespace Tests;
 
 [TestFixture]

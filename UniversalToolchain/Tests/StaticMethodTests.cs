@@ -1,17 +1,17 @@
 namespace Tests;
 
 [TestFixture]
-public class ModuleCombinationsTests : TestBase
+public class StaticMethodTests : TestBase
 {
     [Test]
-    public void Execute_AllCoreModulesTogether_WorksCorrectly()
+    public void Execute_StaticMethodWithGenericParameters_HandlesGenericsCorrectly()
     {
         // Arrange
         var code = @"
-                let x = 10
-                let y = (x + 5) * 2
-                y = y - 3
-                y / 2
+                let number = 100
+                let logResult = Main.Log(number, 10)
+                let sqrtResult = Main.Sqrt(number)
+                logResult + sqrtResult
             ";
         var modules = new IFrontendCoreModule[]
         {
@@ -19,29 +19,33 @@ public class ModuleCombinationsTests : TestBase
             new ScopesModuleImpl(),
             new NumbersModuleImpl(),
             new WhitespaceModuleImpl(),
+            new SemicolonAsNewLineModuleImpl(),
             new ArithmeticModuleImpl(),
+            new CSharpInteropModuleImpl(),
+            new LabelsModuleImpl(),
             new VariablesModuleImpl(),
             new EqualityModuleImpl(),
-            new CSharpInteropModuleImpl()
+            new ConditionsModuleImpl(),
+            new ComparisonOperations(),
+            new BooleanOperations()
         };
 
         // Act
         var result = ExecuteCode(code, modules);
 
         // Assert
+        // log₁₀(100) = 2, sqrt(100) = 10, sum = 12
         var numberResult = (RealNumberImpl)result;
-        Assert.That(numberResult.GetValue(), Is.EqualTo(13.5).Within(1e-9));
+        Assert.That(numberResult.GetValue(), Is.EqualTo(12).Within(1e-9));
     }
 
     [Test]
-    public void Execute_MixedOperationsWithDifferentPrecedence_RespectsOrder()
+    public void Execute_StaticMethodWithVoidReturn_HandlesVoidCorrectly()
     {
         // Arrange
         var code = @"
-                let a = 2 + 3 * 4
-                let b = (2 + 3) * 4
-                let c = a + b * 2
-                c
+                Main.Print(2)
+                Main.Get42()
             ";
         var modules = new IFrontendCoreModule[]
         {
@@ -50,6 +54,7 @@ public class ModuleCombinationsTests : TestBase
             new NumbersModuleImpl(),
             new WhitespaceModuleImpl(),
             new ArithmeticModuleImpl(),
+            new CSharpInteropModuleImpl(),
             new VariablesModuleImpl(),
             new EqualityModuleImpl()
         };
@@ -59,6 +64,6 @@ public class ModuleCombinationsTests : TestBase
 
         // Assert
         var numberResult = (RealNumberImpl)result;
-        Assert.That(numberResult.GetValue(), Is.EqualTo(54).Within(1e-9));
+        Assert.That(numberResult.GetValue(), Is.EqualTo(42).Within(1e-9));
     }
 }

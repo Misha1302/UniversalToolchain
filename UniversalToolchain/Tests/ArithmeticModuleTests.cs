@@ -1,11 +1,3 @@
-using ArithmeticModule;
-using BasicCore;
-using ConditionsModule;
-using IdentifierModule;
-using NumbersModule;
-using ScopesModule;
-using WhitespacesModule;
-
 namespace Tests;
 
 [TestFixture]

@@ -20,6 +20,7 @@ public class ConditionsModuleImpl : IFrontendCoreModule
     public void InitParser(IParser parser)
     {
         _parser = parser;
+
         parser.Configuration.NodeCreators.Add(15f, new IfNodeCreator());
         parser.Configuration.NodeCreators.Add(15f, new ElifNodeCreator());
         parser.Configuration.NodeCreators.Add(15f, new ElseNodeCreator());
