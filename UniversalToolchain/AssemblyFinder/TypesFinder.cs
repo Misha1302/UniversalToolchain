@@ -67,7 +67,7 @@ public static class TypesFinder
                     stack.Push(Assembly.Load(reference));
                     visited.Add(reference.FullName);
                 }
-                catch (SecurityException e)
+                catch (Exception e)
                 {
                     Debug.WriteLine($"Could not load {reference} assembly 'cause {e}");
                 }
