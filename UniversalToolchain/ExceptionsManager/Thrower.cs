@@ -26,7 +26,6 @@ public static class Thrower
         throw new InvalidOperationException(message);
     }
 
-    // [Conditional("DEBUG")]
     [DebuggerStepThrough]
     [DebuggerHidden]
     public static void AssertAlways(
@@ -48,6 +47,7 @@ public static class Thrower
         return obj;
     }
 
+    [DoesNotReturn]
     public static void NotImplementedException(string msg = "")
     {
         throw new NotImplementedException(msg);

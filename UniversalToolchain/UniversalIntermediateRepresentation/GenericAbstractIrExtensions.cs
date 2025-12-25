@@ -27,7 +27,7 @@ public static class GenericAbstractIrExtensions
 
     public static void Rotate(this GenericAbstractIR<Guid> air, int count)
     {
-        var locals = Enumerable.Range(0, count).Select(i => Guid.NewGuid()).ToArray();
+        var locals = Enumerable.Range(0, count).Select(_ => Guid.NewGuid()).ToArray();
         foreach (var local in locals)
         {
             air.StLoc(local);

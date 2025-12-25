@@ -47,8 +47,6 @@ public class AbstractMethodsCompilerImpl : IAbstractMethodsCompiler<DynamicMetho
         }
         il.Ret();
 
-        GlobalExecutionConstants.Initialize(data.Locals.Select((x, i) => (x.id, i)).ToDictionary());
-
         return method;
     }
 
@@ -181,7 +179,7 @@ public class AbstractMethodsCompilerImpl : IAbstractMethodsCompiler<DynamicMetho
             CastValuesToTypes(
                 data,
                 targetTypes,
-                targetTypes.Select((x, i) => methodParams[i].IsByRef && targetTypes[i].IsValueType).ToList(),
+                targetTypes.Select((_, i) => methodParams[i].IsByRef && targetTypes[i].IsValueType).ToList(),
                 !method.IsStatic && method.DeclaringType.IsValueType && method.IsVirtual
             );
             method = GenericTypeResolver.MakeGenericMethod(method, targetTypes);
@@ -203,7 +201,7 @@ public class AbstractMethodsCompilerImpl : IAbstractMethodsCompiler<DynamicMetho
             CastValuesToTypes(
                 data,
                 targetTypes,
-                targetTypes.Select((x, i) => methodParams[i].ParameterType.IsByRef && targetTypes[i].IsValueType).ToList(),
+                targetTypes.Select((_, i) => methodParams[i].ParameterType.IsByRef && targetTypes[i].IsValueType).ToList(),
                 !method.IsStatic && method.DeclaringType.IsValueType && method.IsVirtual
             );
 
@@ -280,13 +278,7 @@ public class AbstractMethodsCompilerImpl : IAbstractMethodsCompiler<DynamicMetho
 
     private static class GlobalExecutionConstants
     {
-        private static Dictionary<Guid, int> _guidToLabelIndex = [];
         private static readonly List<Value> _values = [];
-
-        public static void Initialize(Dictionary<Guid, int> guidToLabelIndex)
-        {
-            _guidToLabelIndex = guidToLabelIndex;
-        }
 
         public static int AddValue(Value value)
         {
@@ -297,11 +289,6 @@ public class AbstractMethodsCompilerImpl : IAbstractMethodsCompiler<DynamicMetho
         public static Value GetValue(int index)
         {
             return _values[index];
-        }
-
-        public static int ValueGuidToLabelIndex(Value label)
-        {
-            return _guidToLabelIndex[label.Get<Guid>()];
         }
     }
 }

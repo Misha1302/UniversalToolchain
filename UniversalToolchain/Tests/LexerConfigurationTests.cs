@@ -192,13 +192,13 @@ public class LexerConfigurationTests
         var lines = fileContent.Split('\n')
             .Where(l => !l.StartsWith('#') && !string.IsNullOrWhiteSpace(l))
             .Select(l => l.Split('|')[0])
-            .Select(p => float.Parse(p))
+            .Select(float.Parse)
             .ToList();
 
-        // Проверяем, что приоритеты отсортированы по убыванию
+        // Проверяем, что приоритеты отсортированы по возрастанию
         for (var i = 0; i < lines.Count - 1; i++)
         {
-            Assert.That(lines[i], Is.GreaterThanOrEqualTo(lines[i + 1]));
+            Assert.That(lines[i], Is.LessThanOrEqualTo(lines[i + 1]));
         }
     }
 

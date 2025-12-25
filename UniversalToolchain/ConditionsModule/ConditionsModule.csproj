@@ -12,4 +12,10 @@
         <ProjectReference Include="..\IlCodeGeneratorFactory\IlCodeGeneratorFactory.csproj"/>
     </ItemGroup>
 
+    <ItemGroup>
+      <Reference Include="JetBrains.Annotations">
+        <HintPath>..\..\..\..\..\.nuget\packages\jetbrains.annotations\2025.2.4\lib\netstandard2.0\JetBrains.Annotations.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
 </Project>

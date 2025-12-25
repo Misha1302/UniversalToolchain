@@ -162,8 +162,8 @@ public static class Program
         // Модуль конфигурации парсера
         if (!string.IsNullOrWhiteSpace(options.ParserConfigPath))
         {
-            var actionType = options.ParserConfigRead ? ActionType.ReadConfiguration
-                : options.ParserConfigDump ? ActionType.DumpConfiguration
+            var actionType = options.ParserConfigRead
+                ? ActionType.ReadConfiguration
                 : ActionType.DumpConfiguration; // По умолчанию дамп
 
             frontendModules.Add(new ParserConfigurationModuleImpl(actionType, options.ParserConfigPath));
@@ -173,8 +173,8 @@ public static class Program
         // Модуль конфигурации лексера
         if (!string.IsNullOrWhiteSpace(options.LexerConfigPath))
         {
-            var actionType = options.LexerConfigRead ? ActionType.ReadConfiguration
-                : options.LexerConfigDump ? ActionType.DumpConfiguration
+            var actionType = options.LexerConfigRead
+                ? ActionType.ReadConfiguration
                 : ActionType.DumpConfiguration; // По умолчанию дамп
 
             frontendModules.Add(new LexerConfigurationModuleImpl(actionType, options.LexerConfigPath));
@@ -224,28 +224,28 @@ public static class Program
         {
             try
             {
-                if (!type.IsAbstract && !type.IsInterface)
+                if (type is not { IsAbstract: false, IsInterface: false })
+                    continue;
+
+
+                if (typeof(IFrontendCoreModule).IsAssignableFrom(type))
                 {
-                    // Проверяем IFrontendCoreModule
-                    if (typeof(IFrontendCoreModule).IsAssignableFrom(type))
+                    if (Activator.CreateInstance(type) is IFrontendCoreModule module)
                     {
-                        var module = Activator.CreateInstance(type) as IFrontendCoreModule;
-                        if (module != null)
-                        {
-                            modules.Add(module);
-                        }
+                        modules.Add(module);
                     }
-                    // Проверяем IMiddleEndCoreModule<AbstractIR>
-                    else if (type.GetInterfaces().Any(i =>
-                                 i.IsGenericType &&
-                                 i.GetGenericTypeDefinition() == typeof(IMiddleEndCoreModule<>) &&
-                                 i.GetGenericArguments()[0] == typeof(AbstractIR)))
+                }
+
+
+                else if (type.GetInterfaces().Any(i =>
+                             i.IsGenericType &&
+                             i.GetGenericTypeDefinition() == typeof(IMiddleEndCoreModule<>) &&
+                             i.GetGenericArguments()[0] == typeof(AbstractIR)))
+                {
+                    var module = Activator.CreateInstance(type);
+                    if (module != null)
                     {
-                        var module = Activator.CreateInstance(type);
-                        if (module != null)
-                        {
-                            modules.Add(module);
-                        }
+                        modules.Add(module);
                     }
                 }
             }

@@ -9,6 +9,14 @@ namespace ArithmeticModule;
 
 public class ArithmeticAstVisitor : IAstVisitor
 {
+    private readonly Dictionary<string, string> _opToName = new()
+    {
+        ["+"] = "Add",
+        ["-"] = "Sub",
+        ["*"] = "Mul",
+        ["/"] = "Div"
+    };
+
     public void TryVisit(BytecodeVisitorData data)
     {
         if (ArithmeticModuleImpl.Ops.All(op => data.Node.NodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet(op)))
@@ -18,27 +26,15 @@ public class ArithmeticAstVisitor : IAstVisitor
             data.BytecodeTranslator.Translate(child);
 
         var op = (data.Node.LexemeValue?.Text).NotNull();
+        var methodName = _opToName[op];
 
         var method = new AbstractMethodImpl(
             $"Op_{op}",
             2,
-            (il, context) =>
-            {
-                // arguments already pushed
-                il.CallCSharp(
-                    context.Stack[^1].GetMethod(op switch
-                        {
-                            "+" => "Add",
-                            "-" => "Sub",
-                            "*" => "Mul",
-                            "/" => "Div",
-                            _ => Thrower.InvalidOpEx<string>()
-                        }
-                    ).NotNull()
-                );
-            },
+            (il, context) => { il.CallCSharp(context.Stack[^1].GetMethod(methodName).NotNull()); },
             context => context.Stack[0]
         );
+
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
     }
 }

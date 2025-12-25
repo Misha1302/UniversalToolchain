@@ -118,7 +118,7 @@ public class LexerConfigurationModuleImpl(ActionType actionType, string path = "
             };
 
             lines.AddRange(patterns
-                .OrderByDescending(x => x.Priority)
+                .OrderBy(x => x.Priority)
                 .Select(FormatPatternLine));
 
             return string.Join(Environment.NewLine, lines);

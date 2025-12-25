@@ -2,15 +2,13 @@ namespace LabelsModule;
 
 public class LabelsSharedData
 {
-    private readonly Dictionary<Guid, string> _idToName = [];
     private readonly Dictionary<string, Guid> _nameToId = [];
 
     public Guid GetGuidByName(string name)
     {
-        if (_nameToId.TryGetValue(name, out var existsingId)) return existsingId;
+        if (_nameToId.TryGetValue(name, out var existingId)) return existingId;
 
         var id = Guid.NewGuid();
-        _idToName[id] = name;
         _nameToId[name] = id;
         return id;
     }

@@ -3,6 +3,7 @@ using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
 using DynamicMethodWrapper;
 using ExceptionsManager;
+using JetBrains.Annotations;
 using UniversalIntermediateRepresentation;
 
 namespace ConditionsModule;
@@ -60,18 +61,22 @@ public class BooleanVisitor : IAstVisitor
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
     }
 
+    [UsedImplicitly]
     private static class BooleanOperations
     {
+        [UsedImplicitly]
         public static bool And(bool a, bool b)
         {
             return a && b;
         }
 
+        [UsedImplicitly]
         public static bool Or(bool a, bool b)
         {
             return a || b;
         }
 
+        [UsedImplicitly]
         public static bool Not(bool a)
         {
             return !a;
