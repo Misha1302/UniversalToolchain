@@ -1,0 +1,117 @@
+﻿using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
+using ArithmeticModule;
+using BasicCilCompiler;
+using BasicCodeTranslator;
+using BasicCore;
+using BasicInterpreter;
+using BasicLexer;
+using BasicParser;
+using BasicStdLib;
+using BenchmarkDotNet.Attributes;
+using BytecodeDynamicMethodsCompiler;
+using ConditionsModule;
+using EqualityModule;
+using IdentifierModule;
+using LabelsModule;
+using NumbersModule;
+using ScopesModule;
+using SemicolonAsNewLineModule;
+using UniversalIntermediateRepresentation;
+using VariablesModule;
+using WhitespacesModule;
+
+namespace WistVsCSharp;
+
+[MemoryDiagnoser]
+[RankColumn]
+public class BasicLoopBenchmarks
+{
+    private readonly string _loopSum = @"
+        let sum = 0
+        let i = 1
+        @loop:
+        if i > 100 goto @end
+            sum = sum + i
+            i = i + 1
+            goto @loop
+        @end:
+        sum";
+
+    private ICoreOptimizedRunnable _compilerCore = null!;
+    private ICoreOptimizedRunnable _interpreterCore = null!;
+
+    [GlobalSetup]
+    public void Setup()
+    {
+        Main.LoadStdLibToThisAssembly();
+
+        var commonModules = new IFrontendCoreModule[]
+        {
+            new IdentifierModuleImpl(),
+            new ScopesModuleImpl(),
+            new NumbersModuleImpl(),
+            new WhitespaceModuleImpl(),
+            new SemicolonAsNewLineModuleImpl(),
+            new ArithmeticModuleImpl(),
+            new LabelsModuleImpl(),
+            new VariablesModuleImpl(),
+            new EqualityModuleImpl(),
+            new ConditionsModuleImpl(),
+            new ComparisonOperations(),
+            new BooleanOperations()
+        };
+
+        _interpreterCore = new BasicCoreImpl<AbstractIR>(
+            () => new BasicLexerImpl(),
+            () => new BasicParserImpl(),
+            () => new BasicBytecodeTranslatorImpl(),
+            () => new AbstractMethodsStubImpl(),
+            () => new InterpreterImpl(),
+            commonModules,
+            []
+        );
+
+        _compilerCore = new BasicCoreImpl<DynamicMethod>(
+            () => new BasicLexerImpl(),
+            () => new BasicParserImpl(),
+            () => new BasicBytecodeTranslatorImpl(),
+            () => new AbstractMethodsCompilerImpl(),
+            () => new DynamicMethodExecutor(),
+            commonModules,
+            []
+        );
+    }
+
+    [Benchmark]
+    public object? Interpreter_BasicLoop()
+    {
+        _interpreterCore.PrepareToRun(_loopSum);
+        return _interpreterCore.RunPrepared();
+    }
+
+    [Benchmark]
+    public object? Compiler_BasicLoop()
+    {
+        _compilerCore.PrepareToRun(_loopSum);
+        return _compilerCore.RunPrepared();
+    }
+
+    [Benchmark(Baseline = true)]
+    [MethodImpl(MethodImplOptions.NoOptimization | MethodImplOptions.NoInlining)]
+    public object NativeCSharp_BasicLoop()
+    {
+        var sum = 0;
+        var i = 1;
+
+        loop:
+        if (i > 100) goto end;
+        {
+            sum += i;
+            i += 1;
+            goto loop;
+        }
+        end:
+        return sum;
+    }
+}
