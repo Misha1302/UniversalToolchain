@@ -27,9 +27,7 @@ public class BooleanVisitor : IAstVisitor
         var value = data.Node.NodeType == ExtensibleEnum<AstNodeTag>.Get("True");
         var method = new AbstractMethodImpl(
             $"PushBoolean_{value}",
-            0,
-            (il, _) => il.Push(value),
-            _ => typeof(bool)
+            (il, _) => il.Push(value)
         );
 
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
@@ -45,7 +43,6 @@ public class BooleanVisitor : IAstVisitor
 
         var method = new AbstractMethodImpl(
             $"Boolean_{op}",
-            data.Node.Children.Count == 1 ? 1 : 2,
             (il, context) =>
             {
                 // args always pushed
@@ -54,8 +51,7 @@ public class BooleanVisitor : IAstVisitor
                 if (context.Stack[^1] != typeof(bool))
                     il.CallCSharp(context.Stack[^1].GetMethod(op.GetName()).NotNull());
                 else il.CallCSharp(typeof(BooleanOperations).GetMethod(op.GetName()).NotNull());
-            },
-            _ => typeof(bool)
+            }
         );
 
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));

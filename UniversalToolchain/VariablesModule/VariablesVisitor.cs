@@ -3,7 +3,6 @@ using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
 using DynamicMethodWrapper;
-using SettableGettableModule;
 
 namespace VariablesModule;
 
@@ -22,13 +21,11 @@ public class VariablesVisitor : IAstVisitor
         {
             var method = new AbstractMethodImpl(
                 $"LoadReferenceToLocalVar_{varName}",
-                0,
                 (il, context) =>
                 {
                     var type = _variableTypes[varName] = context.Stack[0];
                     il.LdLocRef(varName, type);
-                },
-                context => typeof(VariableReference<>).MakeGenericType(context.Stack[0])
+                }
             );
             data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
         }
@@ -36,9 +33,7 @@ public class VariablesVisitor : IAstVisitor
         {
             var method = new AbstractMethodImpl(
                 $"LoadValueOfLocalVar_{varName}",
-                0,
-                (il, _) => il.LdLoc(varName, _variableTypes[varName]),
-                _ => _variableTypes[varName]
+                (il, _) => il.LdLoc(varName, _variableTypes[varName])
             );
             data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
         }

@@ -19,12 +19,11 @@ public class NumberAstVisitor : IAstVisitor
 
         var method = new AbstractMethodImpl(
             $"PushNumber_{num}",
-            0,
             (il, _) =>
             {
                 il.Push(num);
                 il.CallCSharp(typeof(RealNumberImpl).GetConstructor([typeof(double)]).NotNull());
-            }, _ => typeof(RealNumberImpl));
+            });
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
     }
 }

@@ -1,12 +1,14 @@
+using AbstractIrExtensions;
 using BasicCore;
 using BasicCore.TranslatorWrapper;
+using DotnetAirHelper;
 using DynamicMethodWrapper;
 using IntermediateRepresentationAbstractions;
 using UniversalIntermediateRepresentation;
 
 namespace BytecodeDynamicMethodsCompiler;
 
-public class AbstractMethodsStubImpl : IAbstractMethodsCompiler<IAbstractIR>
+public class BytecodeToAbstractIrConverterImpl : IAbstractMethodsCompiler<IAbstractIR>
 {
     public IAbstractIR Compile(Bytecode bytecode)
     {
@@ -18,15 +20,10 @@ public class AbstractMethodsStubImpl : IAbstractMethodsCompiler<IAbstractIR>
         {
             var context = new IAbstractMethodConvertable.Context(typesStack);
             var air = convertable.GetAbstractIR(context);
-            var returnType = convertable.GetReturnType(context);
 
             ir.AppendInstructions(air);
 
-            for (var i = 0; i < convertable.ParamsCount; i++)
-                typesStack.RemoveAt(typesStack.Count - 1);
-
-            if (returnType != typeof(void))
-                typesStack.Add(returnType);
+            air.ManipulateTypesStack(typesStack, AirTypes.ProcessTypesIntrinsic);
         }
         return ir;
     }

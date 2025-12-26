@@ -24,9 +24,7 @@ public class CSharpFunctionCallsAstVisitor : IAstVisitor
 
         var method = new AbstractMethodImpl(
             $"Call_{fullName}",
-            argsCount,
-            (il, _) => il.CallCSharp(call),
-            context => !call.ReturnType.IsGenericParameter ? call.ReturnType : context.Stack[0]
+            (il, _) => il.CallCSharp(call)
         );
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
     }

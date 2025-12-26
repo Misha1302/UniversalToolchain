@@ -32,9 +32,7 @@ public class ConditionsVisitor : IAstVisitor
         // Условный переход если false
         var condJumpMethod = new AbstractMethodImpl(
             $"CondFGoto_!Intrinsic_{elseLabel}",
-            1,
-            (il, _) => il.JmpIfNot(elseLabel),
-            _ => typeof(void)
+            (il, _) => il.JmpIfNot(elseLabel)
         );
         data.Bytecode.Instructions.Add(new BytecodeInstruction(condJumpMethod));
 
@@ -44,9 +42,7 @@ public class ConditionsVisitor : IAstVisitor
         // Безусловный переход в конец
         var jumpMethod = new AbstractMethodImpl(
             $"Goto_!Intrinsic_{endLabel}",
-            0,
-            (il, _) => il.Jmp(endLabel),
-            _ => typeof(void)
+            (il, _) => il.Jmp(endLabel)
         );
 
         data.Bytecode.Instructions.Add(new BytecodeInstruction(jumpMethod));
@@ -54,9 +50,7 @@ public class ConditionsVisitor : IAstVisitor
         // Метка else
         var elseLabelMethod = new AbstractMethodImpl(
             $"Label_!Intrinsic_{elseLabel}",
-            0,
-            (il, _) => il.SetLabel(elseLabel),
-            _ => typeof(void)
+            (il, _) => il.SetLabel(elseLabel)
         );
         data.Bytecode.Instructions.Add(new BytecodeInstruction(elseLabelMethod));
 
@@ -68,9 +62,7 @@ public class ConditionsVisitor : IAstVisitor
         // Метка конца
         var endLabelMethod = new AbstractMethodImpl(
             $"Label_!Intrinsic_{endLabel}",
-            0,
-            (il, _) => il.SetLabel(endLabel),
-            _ => typeof(void)
+            (il, _) => il.SetLabel(endLabel)
         );
         data.Bytecode.Instructions.Add(new BytecodeInstruction(endLabelMethod));
     }

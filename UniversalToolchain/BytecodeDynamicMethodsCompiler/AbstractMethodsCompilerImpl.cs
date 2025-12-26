@@ -1,12 +1,15 @@
 ﻿using System.Reflection;
 using System.Reflection.Emit;
+using AbstractIrExtensions;
 using BasicCore;
 using BasicCore.TranslatorWrapper;
+using DotnetAirHelper;
 using DotnetHelper;
 using DynamicMethodWrapper;
 using ExceptionsManager;
 using GrEmit;
 using IntermediateRepresentationAbstractions;
+using ListExtensions;
 
 namespace BytecodeDynamicMethodsCompiler;
 
@@ -26,15 +29,8 @@ public class AbstractMethodsCompilerImpl : IAbstractMethodsCompiler<DynamicMetho
         {
             var context = new IAbstractMethodConvertable.Context(typesStack);
             var air = convertable.GetAbstractIR(context);
-            var returnType = convertable.GetReturnType(context);
 
             CompileAir(data, air, typesStack);
-
-            for (var i = 0; i < convertable.ParamsCount; i++)
-                typesStack.RemoveAt(typesStack.Count - 1);
-
-            if (returnType != typeof(void))
-                typesStack.Add(returnType);
         }
 
         if (typesStack.Count == 0)
@@ -55,7 +51,6 @@ public class AbstractMethodsCompilerImpl : IAbstractMethodsCompiler<DynamicMetho
         {
             var context = new IAbstractMethodConvertable.Context(typesStack);
             var air = convertable.GetAbstractIR(context);
-            var returnType = convertable.GetReturnType(context);
 
             foreach (var label in air.Instructions.Where(x => x.UOpCode == UOpCode.Label))
             {
@@ -63,16 +58,12 @@ public class AbstractMethodsCompilerImpl : IAbstractMethodsCompiler<DynamicMetho
                 data.InstructionLabels.Add((id, data.Il.DefineLabel($"Instruction {id}")));
             }
 
-            for (var i = 0; i < convertable.ParamsCount; i++)
-                typesStack.RemoveAt(typesStack.Count - 1);
-
-            if (returnType != typeof(void))
-                typesStack.Add(returnType);
+            air.ManipulateTypesStack(typesStack, AirTypes.ProcessTypesIntrinsic);
         }
     }
 
 
-    private void CompileAir(CompilationData data, IAbstractIR air, IReadOnlyList<Type> stack)
+    private void CompileAir(CompilationData data, IAbstractIR air, List<Type> stack)
     {
         foreach (var instruction in air.Instructions)
         {
@@ -84,10 +75,12 @@ public class AbstractMethodsCompilerImpl : IAbstractMethodsCompiler<DynamicMetho
             {
                 var obj = instruction.Operands[0];
                 PushValue(data, obj);
+                stack.Push(obj.GetType());
             }
             else if (instruction.UOpCode == UOpCode.Drop)
             {
                 data.Il.Pop();
+                stack.Pop();
             }
             else if (instruction.UOpCode == UOpCode.Jmp)
             {
@@ -100,12 +93,14 @@ public class AbstractMethodsCompilerImpl : IAbstractMethodsCompiler<DynamicMetho
                 data.Il.Brtrue(
                     data.InstructionLabels.First(x => x.id == instruction.Operands[0].Get<Guid>()).label
                 );
+                stack.Pop();
             }
             else if (instruction.UOpCode == UOpCode.JmpIfNot)
             {
                 data.Il.Brfalse(
                     data.InstructionLabels.First(x => x.id == instruction.Operands[0].Get<Guid>()).label
                 );
+                stack.Pop();
             }
             else if (instruction.UOpCode == UOpCode.Label)
             {
@@ -138,7 +133,7 @@ public class AbstractMethodsCompilerImpl : IAbstractMethodsCompiler<DynamicMetho
         data.Il.Call(loadMethod);
     }
 
-    private void CompileIntrinsic(Instruction instruction, CompilationData data, IReadOnlyList<Type> stack)
+    private void CompileIntrinsic(Instruction instruction, CompilationData data, List<Type> stack)
     {
         Thrower.AssertAlways(instruction.UOpCode == UOpCode.Intrinsic);
         Thrower.AssertAlways(instruction.Operands[0] is string);
@@ -161,6 +156,11 @@ public class AbstractMethodsCompilerImpl : IAbstractMethodsCompiler<DynamicMetho
             CastValuesToTypes(data, targetTypes, stackTypes);
             method = GenericTypeResolver.MakeGenericMethod(method, targetTypes);
             data.Il.Call(method);
+
+            for (var i = 0; i < targetTypes.Count; i++)
+                stack.Pop();
+            if (method.ReturnType != typeof(void))
+                stack.Push(method.ReturnType);
         }
         else if (name == "call C# ctor")
         {
@@ -171,6 +171,10 @@ public class AbstractMethodsCompilerImpl : IAbstractMethodsCompiler<DynamicMetho
             var stackTypes = stack.TakeLast(targetTypes.Count).Reverse().ToList();
             CastValuesToTypes(data, targetTypes, stackTypes);
             data.Il.Newobj(method);
+
+            for (var i = 0; i < targetTypes.Count; i++)
+                stack.Pop();
+            stack.Push(method.DeclaringType);
         }
         else
         {
@@ -189,7 +193,7 @@ public class AbstractMethodsCompilerImpl : IAbstractMethodsCompiler<DynamicMetho
             if (stackTypes[i] != locType)
             {
                 if (stackTypes[i].IsValueType && !locType.IsValueType)
-                    data.Il.Box(locType);
+                    data.Il.Box(stackTypes[i]);
                 else Thrower.InvalidOpEx($"Cannot cast {stackTypes[i]} to {locType}");
             }
 

@@ -8,8 +8,11 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\AbstractIrExtensions\AbstractIrExtensions.csproj"/>
         <ProjectReference Include="..\BasicCore\BasicCore.csproj"/>
+        <ProjectReference Include="..\DotnetAirHelper\DotnetAirHelper.csproj"/>
         <ProjectReference Include="..\DotnetHelper\DotnetHelper.csproj"/>
+        <ProjectReference Include="..\ListExtensions\ListExtensions.csproj"/>
         <ProjectReference Include="..\UniversalIntermediateRepresentation\UniversalIntermediateRepresentation.csproj"/>
     </ItemGroup>
 

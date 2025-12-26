@@ -13,9 +13,8 @@ public class LabelsVisitor(LabelsSharedData labelsSharedData) : IAstVisitor
 
         var name = data.Node.Text;
         var method = new AbstractMethodImpl(
-            $"Label_!Intrinsic_{name}", 0,
-            (il, _) => il.SetLabel(labelsSharedData.GetGuidByName(name)),
-            _ => typeof(void)
+            $"Label_!Intrinsic_{name}",
+            (il, _) => il.SetLabel(labelsSharedData.GetGuidByName(name))
         );
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
     }

@@ -79,7 +79,7 @@ public static class Program
                 () => new BasicLexerImpl(),
                 () => new BasicParserImpl(),
                 () => new BasicBytecodeTranslatorImpl(),
-                () => new AbstractMethodsStubImpl(),
+                () => new BytecodeToAbstractIrConverterImpl(),
                 () => new InterpreterImpl(),
                 frontendModules,
                 middleEndModules

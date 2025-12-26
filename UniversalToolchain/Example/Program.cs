@@ -40,8 +40,15 @@ Main.LoadStdLibToThisAssembly();
 
 var result = core.Run(
     """
-    Main.Print(2)
-    Main.Get42()
+    let a = 2.0
+    let b = 3.0
+    let c = 4.0
+
+    let result = Main.Pow(a, b) + 
+               (Main.Sqrt(c) * a) - 
+               Main.Log(b, a) 
+
+    result
     """
 );
 

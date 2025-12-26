@@ -28,14 +28,13 @@ public class ComparisonVisitor : IAstVisitor
 
         var method = new AbstractMethodImpl(
             $"Comparison_{op}",
-            2,
             (il, _) =>
             {
                 // args already pushed
                 il.CallCSharp(
                     typeof(Comparisons).GetMethod(GetComparisonMethodName(op)).NotNull()
                 );
-            }, _ => typeof(bool));
+            });
 
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
     }

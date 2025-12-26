@@ -40,7 +40,7 @@ public abstract class TestBase
                 () => new BasicLexerImpl(),
                 () => new BasicParserImpl(),
                 () => new BasicBytecodeTranslatorImpl(),
-                () => new AbstractMethodsStubImpl(),
+                () => new BytecodeToAbstractIrConverterImpl(),
                 () => new InterpreterImpl(),
                 modules,
                 middleEndModules.TryGetValue(typeof(IAbstractIR), out var airModules)

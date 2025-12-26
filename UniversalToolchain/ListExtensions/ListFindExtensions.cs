@@ -1,6 +1,6 @@
 namespace BasicTypesExtensions;
 
-public static class ListExtensions
+public static class ListFindExtensions
 {
     public static (T item, int index) FirstStarts<T>(this List<T> list, Func<T, bool> predicate, int startIndex)
     {

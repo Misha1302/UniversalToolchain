@@ -30,9 +30,7 @@ public class ArithmeticAstVisitor : IAstVisitor
 
         var method = new AbstractMethodImpl(
             $"Op_{op}",
-            2,
-            (il, context) => { il.CallCSharp(context.Stack[^1].GetMethod(methodName).NotNull()); },
-            context => context.Stack[0]
+            (il, context) => il.CallCSharp(context.Stack[^1].GetMethod(methodName).NotNull())
         );
 
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));

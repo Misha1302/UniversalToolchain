@@ -1,6 +1,6 @@
-namespace BytecodeDynamicMethodsCompiler;
+namespace ListExtensions;
 
-public static class ListExtensions
+public static class ListStackExtensions
 {
     public static void Push<T>(this List<T> list, T value)
     {

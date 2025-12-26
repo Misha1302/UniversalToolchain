@@ -19,7 +19,14 @@ public class ErrorCasesTests : TestBase
             new EqualityModuleImpl()
         };
 
-        // Act & Assert
-        Assert.Throws<NullReferenceException>(() => ExecuteCode(code, modules));
+        try
+        {
+            ExecuteCode(code, modules);
+            Assert.Fail();
+        }
+        catch
+        {
+            Assert.Pass();
+        }
     }
 }

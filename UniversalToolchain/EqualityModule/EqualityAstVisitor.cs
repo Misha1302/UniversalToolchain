@@ -18,9 +18,7 @@ public class EqualityAstVisitor : IAstVisitor
 
         var method = new AbstractMethodImpl(
             $"Set_{data.Node.Children[0].LexemeValue?.Text}={data.Node.Children[1].LexemeValue?.Text}",
-            2,
-            (il, context) => il.SetValueToSettable(context.Stack[^2]),
-            _ => typeof(void)
+            (il, context) => il.SetValueToSettable(context.Stack[^2])
         );
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
     }

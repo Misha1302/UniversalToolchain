@@ -54,7 +54,7 @@ public class HeavyLoopBenchmarks
             () => new BasicLexerImpl(),
             () => new BasicParserImpl(),
             () => new BasicBytecodeTranslatorImpl(),
-            () => new AbstractMethodsStubImpl(),
+            () => new BytecodeToAbstractIrConverterImpl(),
             () => new InterpreterImpl(),
             modules,
             []

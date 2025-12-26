@@ -9,6 +9,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\IntermediateRepresentationAbstractions\IntermediateRepresentationAbstractions.csproj"/>
+        <ProjectReference Include="..\ListExtensions\ListExtensions.csproj"/>
         <ProjectReference Include="..\SettableGettableModule\SettableGettableModule.csproj"/>
     </ItemGroup>
 

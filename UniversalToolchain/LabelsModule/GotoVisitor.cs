@@ -14,9 +14,7 @@ public class GotoVisitor(LabelsSharedData labelsSharedData) : IAstVisitor
         var name = data.Node.Children[0].Text;
         var method = new AbstractMethodImpl(
             $"Goto_!Intrinsic_{name}",
-            0,
-            (il, _) => il.Jmp(labelsSharedData.GetIdByName(name)),
-            _ => typeof(void)
+            (il, _) => il.Jmp(labelsSharedData.GetIdByName(name))
         );
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
     }
