@@ -1,6 +1,7 @@
 ﻿// BasicCore.Tests/TestBase.cs
 
 using BasicStdLib;
+using IntermediateRepresentationAbstractions;
 
 namespace Tests;
 
@@ -35,15 +36,15 @@ public abstract class TestBase
                     ? (List<IMiddleEndCoreModule<DynamicMethod>>)dmModules
                     : []
             ),
-            new BasicCoreImpl<AbstractIR>(
+            new BasicCoreImpl<IAbstractIR>(
                 () => new BasicLexerImpl(),
                 () => new BasicParserImpl(),
                 () => new BasicBytecodeTranslatorImpl(),
                 () => new AbstractMethodsStubImpl(),
                 () => new InterpreterImpl(),
                 modules,
-                middleEndModules.TryGetValue(typeof(AbstractIR), out var airModules)
-                    ? (List<IMiddleEndCoreModule<AbstractIR>>)airModules
+                middleEndModules.TryGetValue(typeof(IAbstractIR), out var airModules)
+                    ? (List<IMiddleEndCoreModule<IAbstractIR>>)airModules
                     : []
             )
         ];

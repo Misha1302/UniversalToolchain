@@ -1,4 +1,5 @@
-using UniversalIntermediateRepresentation;
+using BytecodeDynamicMethodsCompiler;
+using IntermediateRepresentationAbstractions;
 
 namespace BasicInterpreter;
 
@@ -6,8 +7,8 @@ public class InterpreterState
 {
     private readonly Dictionary<Guid, int> _labelPositions = new();
     private bool _labelsBuilt;
-    public Stack<Value> ValueStack { get; } = new();
-    public Dictionary<Guid, Value> Locals { get; } = new();
+    public Stack<object> ValueStack { get; } = new();
+    public Dictionary<Guid, object> Locals { get; } = new();
 
     public int InstructionPointer { get; set; }
 
@@ -18,7 +19,7 @@ public class InterpreterState
         _labelPositions.Clear();
         for (var i = 0; i < instructions.Count; i++)
         {
-            if (instructions[i].OpCode == OpCode.Label)
+            if (instructions[i].UOpCode == UOpCode.Label)
             {
                 var labelId = instructions[i].Operands[0].Get<Guid>();
                 _labelPositions[labelId] = i;

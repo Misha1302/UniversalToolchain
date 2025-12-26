@@ -1,4 +1,4 @@
-namespace VariablesModule;
+namespace SettableGettableModule;
 
 public static class VariablesContainer<T>
 {

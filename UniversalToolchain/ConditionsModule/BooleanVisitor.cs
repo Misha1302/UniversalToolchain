@@ -1,10 +1,10 @@
+using AbstractIrExtensions;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
 using DynamicMethodWrapper;
 using ExceptionsManager;
 using JetBrains.Annotations;
-using UniversalIntermediateRepresentation;
 
 namespace ConditionsModule;
 
@@ -28,7 +28,7 @@ public class BooleanVisitor : IAstVisitor
         var method = new AbstractMethodImpl(
             $"PushBoolean_{value}",
             0,
-            (il, _) => il.Push(Value.Create(value)),
+            (il, _) => il.Push(value),
             _ => typeof(bool)
         );
 

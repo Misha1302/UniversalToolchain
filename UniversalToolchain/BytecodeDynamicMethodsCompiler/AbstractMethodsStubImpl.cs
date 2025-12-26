@@ -1,13 +1,14 @@
 using BasicCore;
 using BasicCore.TranslatorWrapper;
 using DynamicMethodWrapper;
+using IntermediateRepresentationAbstractions;
 using UniversalIntermediateRepresentation;
 
 namespace BytecodeDynamicMethodsCompiler;
 
-public class AbstractMethodsStubImpl : IAbstractMethodsCompiler<AbstractIR>
+public class AbstractMethodsStubImpl : IAbstractMethodsCompiler<IAbstractIR>
 {
-    public AbstractIR Compile(Bytecode bytecode)
+    public IAbstractIR Compile(Bytecode bytecode)
     {
         var ir = new AbstractIR();
         var typesStack = new List<Type>();

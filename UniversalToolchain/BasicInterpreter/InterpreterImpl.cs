@@ -1,12 +1,14 @@
 using System.Reflection;
 using BasicCore.ExecutorWrapper;
-using UniversalIntermediateRepresentation;
+using BytecodeDynamicMethodsCompiler;
+using DotnetHelper;
+using IntermediateRepresentationAbstractions;
 
 namespace BasicInterpreter;
 
-public class InterpreterImpl : IExecutor<AbstractIR>
+public class InterpreterImpl : IExecutor<IAbstractIR>
 {
-    public object? Execute(AbstractIR air)
+    public object? Execute(IAbstractIR air)
     {
         var state = new InterpreterState();
         state.BuildLabelPositions(air.Instructions);
@@ -29,32 +31,32 @@ public class InterpreterImpl : IExecutor<AbstractIR>
         if (state.ValueStack.Count == 0)
             return null!;
 
-        return state.ValueStack.Count != 0 ? state.ValueStack.Peek().Data : null;
+        return state.ValueStack.Count != 0 ? state.ValueStack.Peek() : null;
     }
 
     private void ExecuteInstruction(Instruction instruction, InterpreterState state)
     {
-        switch (instruction.OpCode)
+        switch (instruction.UOpCode)
         {
-            case OpCode.Nop:
+            case UOpCode.Nop:
                 // Ничего не делаем
                 break;
 
-            case OpCode.Push:
+            case UOpCode.Push:
                 state.ValueStack.Push(instruction.Operands[0]);
                 break;
 
-            case OpCode.Drop:
+            case UOpCode.Drop:
                 if (state.ValueStack.Count > 0)
                     state.ValueStack.Pop();
                 break;
 
-            case OpCode.Jmp:
+            case UOpCode.Jmp:
                 var labelId = instruction.Operands[0].Get<Guid>();
                 state.InstructionPointer = state.GetLabelPosition(labelId);
                 break;
 
-            case OpCode.JmpIf:
+            case UOpCode.JmpIf:
                 if (state.ValueStack.Count > 0)
                 {
                     var condition = state.ValueStack.Pop().Get<bool>();
@@ -66,7 +68,7 @@ public class InterpreterImpl : IExecutor<AbstractIR>
                 }
                 break;
 
-            case OpCode.JmpIfNot:
+            case UOpCode.JmpIfNot:
                 if (state.ValueStack.Count > 0)
                 {
                     var condition = state.ValueStack.Pop().Get<bool>();
@@ -78,37 +80,20 @@ public class InterpreterImpl : IExecutor<AbstractIR>
                 }
                 break;
 
-            case OpCode.Label:
+            case UOpCode.Label:
                 // Метка - ничего не делаем, просто пропускаем
                 break;
 
-            case OpCode.StLoc:
-                if (state.ValueStack.Count > 0)
-                {
-                    var localId = instruction.Operands[0].Get<Guid>();
-                    var value = state.ValueStack.Pop();
-                    state.Locals[localId] = value;
-                }
-                break;
-
-            case OpCode.LdLoc:
-                var loadId = instruction.Operands[0].Get<Guid>();
-                if (state.Locals.ContainsKey(loadId))
-                {
-                    state.ValueStack.Push(state.Locals[loadId]);
-                }
-                break;
-
-            case OpCode.Annotate:
+            case UOpCode.Annotate:
                 // Аннотация - ничего не делаем
                 break;
 
-            case OpCode.Intrinsic:
+            case UOpCode.Intrinsic:
                 ExecuteIntrinsic(instruction, state);
                 break;
 
             default:
-                throw new InvalidOperationException($"Unknown opcode: {instruction.OpCode}");
+                throw new InvalidOperationException($"Unknown opcode: {instruction.UOpCode}");
         }
     }
 
@@ -133,7 +118,9 @@ public class InterpreterImpl : IExecutor<AbstractIR>
     private void ExecuteCSharpCall(Instruction instruction, InterpreterState state)
     {
         var method = instruction.Operands[1].Get<MethodInfo>();
-        var parametersTypes = GenericTypeResolver.GetParameterTypes(method, state.ValueStack.Take(method.GetParameters().Length).Select(x => x.Data.GetType()).ToList());
+        var parametersTypes =
+            GenericTypeResolver.GetParameterTypes(method, state.ValueStack.Take(method.GetParameters().Length)
+                .Select(x => x.GetType()).ToList());
 
         // Извлекаем аргументы из стека
         var args = new object[parametersTypes.Count];
@@ -144,7 +131,7 @@ public class InterpreterImpl : IExecutor<AbstractIR>
                 throw new InvalidOperationException("Not enough arguments on stack");
 
             var value = state.ValueStack.Pop();
-            args[i] = ConvertValue(value, parametersTypes[i]);
+            args[i] = value;
             argsTypes[i] = args[i].GetType();
         }
 
@@ -163,14 +150,14 @@ public class InterpreterImpl : IExecutor<AbstractIR>
                 throw new InvalidOperationException("No instance on stack for instance method");
 
             var instanceValue = state.ValueStack.Pop();
-            var instance = ConvertValue(instanceValue, method.DeclaringType ?? throw new InvalidOperationException("Method has no declaring type"));
+            var instance = instanceValue;
             result = method.Invoke(instance, args) ?? new object();
         }
 
         // Если метод возвращает значение, кладем его в стек
         if (method.ReturnType != typeof(void))
         {
-            state.ValueStack.Push(Value.Create(result));
+            state.ValueStack.Push(result);
         }
     }
 
@@ -188,49 +175,14 @@ public class InterpreterImpl : IExecutor<AbstractIR>
                 throw new InvalidOperationException("Not enough arguments on stack");
 
             var value = state.ValueStack.Pop();
-            args[i] = ConvertValue(value, parameters[i].ParameterType);
+            args[i] = value;
         }
 
         // Создаем экземпляр
         var instance = ctor.Invoke(args);
 
         // Кладем экземпляр в стек
-        state.ValueStack.Push(Value.Create(instance));
-    }
-
-    private object ConvertValue(Value value, Type targetType)
-    {
-        var data = value.Data;
-
-        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
-        if (data == null)
-            return null!;
-
-        if (data.GetType() == targetType)
-            return data;
-
-        if (targetType.IsInstanceOfType(data))
-            return data;
-
-        // Попробуем преобразовать типы
-        if (targetType == typeof(bool) && data is int intValue)
-            return intValue != 0;
-
-        if (targetType == typeof(int) && data is bool boolValue)
-            return boolValue ? 1 : 0;
-
-        if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(Value))
-            return value;
-
-        // Для числовых типов
-        if (IsNumericType(targetType) && IsNumericType(data.GetType()))
-        {
-            return Convert.ChangeType(data, targetType);
-        }
-
-        throw new InvalidOperationException(
-            $"Cannot convert value of type {data.GetType()} to {targetType}"
-        );
+        state.ValueStack.Push(instance);
     }
 
     private bool IsNumericType(Type type)

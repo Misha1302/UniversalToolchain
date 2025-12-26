@@ -1,4 +1,5 @@
 ﻿using ExceptionsManager;
+using IntermediateRepresentationAbstractions;
 using UniversalIntermediateRepresentation;
 
 namespace DynamicMethodWrapper;
@@ -6,7 +7,7 @@ namespace DynamicMethodWrapper;
 public class AbstractMethodImpl(
     string name,
     int argsCount,
-    Action<AbstractIR, IAbstractMethodConvertable.Context> bodyGenerator,
+    Action<IAbstractIR, IAbstractMethodConvertable.Context> bodyGenerator,
     Func<IAbstractMethodConvertable.Context, Type> returnType
 ) : IAbstractMethodConvertable
 {
@@ -18,7 +19,7 @@ public class AbstractMethodImpl(
         return returnType(context).NotNull();
     }
 
-    public AbstractIR GetAbstractIR(IAbstractMethodConvertable.Context context)
+    public IAbstractIR GetAbstractIR(IAbstractMethodConvertable.Context context)
     {
         var air = new AbstractIR();
         bodyGenerator(air, context);

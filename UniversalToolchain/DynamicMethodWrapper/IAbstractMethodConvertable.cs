@@ -1,4 +1,4 @@
-using UniversalIntermediateRepresentation;
+using IntermediateRepresentationAbstractions;
 
 namespace DynamicMethodWrapper;
 
@@ -10,7 +10,7 @@ public interface IAbstractMethodConvertable
     public Type GetReturnType(Context context);
 
     // ReSharper disable once InconsistentNaming
-    public AbstractIR GetAbstractIR(Context context);
+    public IAbstractIR GetAbstractIR(Context context);
 
     public record Context(IReadOnlyList<Type> Stack);
 }

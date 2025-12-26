@@ -4,10 +4,13 @@
         <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <LangVersion>14</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\BasicCodeTranslator\BasicCodeTranslator.csproj"/>
+        <ProjectReference Include="..\BytecodeDynamicMethodsCompiler\BytecodeDynamicMethodsCompiler.csproj"/>
+        <ProjectReference Include="..\UniversalIntermediateRepresentation\UniversalIntermediateRepresentation.csproj"/>
     </ItemGroup>
 
 </Project>

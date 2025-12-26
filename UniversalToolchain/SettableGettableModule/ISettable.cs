@@ -1,4 +1,4 @@
-namespace EqualityModule;
+namespace SettableGettableModule;
 
 public interface ISettable<in TValue>
 {

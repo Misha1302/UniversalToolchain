@@ -1,4 +1,5 @@
 ﻿using BasicInterpreter;
+using IntermediateRepresentationAbstractions;
 
 namespace Wistc;
 
@@ -74,7 +75,7 @@ public static class Program
             }
 
             // Создаем ядро
-            var core = new BasicCoreImpl<AbstractIR>(
+            var core = new BasicCoreImpl<IAbstractIR>(
                 () => new BasicLexerImpl(),
                 () => new BasicParserImpl(),
                 () => new BasicBytecodeTranslatorImpl(),
@@ -110,11 +111,11 @@ public static class Program
         }
     }
 
-    private static (List<IFrontendCoreModule> frontend, List<IMiddleEndCoreModule<AbstractIR>> middleEnd)
+    private static (List<IFrontendCoreModule> frontend, List<IMiddleEndCoreModule<IAbstractIR>> middleEnd)
         CreateModules(Options options)
     {
         var frontendModules = new List<IFrontendCoreModule>();
-        var middleEndModules = new List<IMiddleEndCoreModule<AbstractIR>>();
+        var middleEndModules = new List<IMiddleEndCoreModule<IAbstractIR>>();
 
         // Базовые модули (включаем все по умолчанию)
         var baseModules = new Dictionary<string, IFrontendCoreModule>
@@ -197,7 +198,7 @@ public static class Program
                             frontendModules.Add(frontendModule);
                             if (_verbose) Console.WriteLine($"Added custom frontend module from {Path.GetFileName(dllPath)}: {module.GetType().Name}");
                         }
-                        else if (module is IMiddleEndCoreModule<AbstractIR> middleEndModule)
+                        else if (module is IMiddleEndCoreModule<IAbstractIR> middleEndModule)
                         {
                             middleEndModules.Add(middleEndModule);
                             if (_verbose) Console.WriteLine($"Added custom middle-end module from {Path.GetFileName(dllPath)}: {module.GetType().Name}");
@@ -240,7 +241,7 @@ public static class Program
                 else if (type.GetInterfaces().Any(i =>
                              i.IsGenericType &&
                              i.GetGenericTypeDefinition() == typeof(IMiddleEndCoreModule<>) &&
-                             i.GetGenericArguments()[0] == typeof(AbstractIR)))
+                             i.GetGenericArguments()[0] == typeof(IAbstractIR)))
                 {
                     var module = Activator.CreateInstance(type);
                     if (module != null)

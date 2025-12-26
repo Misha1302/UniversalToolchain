@@ -4,18 +4,20 @@
         <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <LangVersion>14</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\AbstractIrExtensions\AbstractIrExtensions.csproj"/>
         <ProjectReference Include="..\BasicCore\BasicCore.csproj"/>
         <ProjectReference Include="..\BasicTypesExtensions\BasicTypesExtensions.csproj"/>
-        <ProjectReference Include="..\IlCodeGeneratorFactory\IlCodeGeneratorFactory.csproj"/>
+        <ProjectReference Include="..\UniversalIntermediateRepresentation\UniversalIntermediateRepresentation.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-      <Reference Include="JetBrains.Annotations">
-        <HintPath>..\..\..\..\..\.nuget\packages\jetbrains.annotations\2025.2.4\lib\netstandard2.0\JetBrains.Annotations.dll</HintPath>
-      </Reference>
+        <Reference Include="JetBrains.Annotations">
+            <HintPath>..\..\..\..\..\.nuget\packages\jetbrains.annotations\2025.2.4\lib\netstandard2.0\JetBrains.Annotations.dll</HintPath>
+        </Reference>
     </ItemGroup>
 
 </Project>

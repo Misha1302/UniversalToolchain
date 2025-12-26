@@ -1,10 +1,10 @@
 using System.Globalization;
+using AbstractIrExtensions;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
 using DynamicMethodWrapper;
 using ExceptionsManager;
-using UniversalIntermediateRepresentation;
 
 namespace NumbersModule;
 
@@ -22,7 +22,7 @@ public class NumberAstVisitor : IAstVisitor
             0,
             (il, _) =>
             {
-                il.Push(Value.Create(num));
+                il.Push(num);
                 il.CallCSharp(typeof(RealNumberImpl).GetConstructor([typeof(double)]).NotNull());
             }, _ => typeof(RealNumberImpl));
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));

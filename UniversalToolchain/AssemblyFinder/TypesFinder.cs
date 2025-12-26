@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Reflection;
-using System.Security;
 using ExceptionsManager;
 
 namespace AssemblyFinder;

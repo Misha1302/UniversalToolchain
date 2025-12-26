@@ -4,11 +4,13 @@
         <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
+        <LangVersion>14</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\AbstractIrExtensions\AbstractIrExtensions.csproj"/>
         <ProjectReference Include="..\BasicCore\BasicCore.csproj"/>
-        <ProjectReference Include="..\IlCodeGeneratorFactory\IlCodeGeneratorFactory.csproj"/>
+        <ProjectReference Include="..\UniversalIntermediateRepresentation\UniversalIntermediateRepresentation.csproj"/>
     </ItemGroup>
 
 </Project>

@@ -1,6 +1,4 @@
-using EqualityModule;
-
-namespace VariablesModule;
+namespace SettableGettableModule;
 
 public class VariableReference<T>(Action<T> set) : ISettable<T>
 {

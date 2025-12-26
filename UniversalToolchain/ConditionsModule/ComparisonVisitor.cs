@@ -1,9 +1,9 @@
+using AbstractIrExtensions;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
 using DynamicMethodWrapper;
 using ExceptionsManager;
-using UniversalIntermediateRepresentation;
 
 namespace ConditionsModule;
 

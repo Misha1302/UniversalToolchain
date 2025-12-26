@@ -1,6 +1,6 @@
-﻿namespace UniversalIntermediateRepresentation;
+﻿namespace IntermediateRepresentationAbstractions;
 
-public enum OpCode : byte
+public enum UOpCode : byte
 {
     Nop = 0x00,
 
@@ -13,10 +13,6 @@ public enum OpCode : byte
     JmpIf = 0x21,
     JmpIfNot = 0x22,
     Label = 0x23,
-
-    // Управление данными
-    StLoc = 0x30,
-    LdLoc = 0x31,
 
     // Мета-инструкции
     Annotate = 0x50,

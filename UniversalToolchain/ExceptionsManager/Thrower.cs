@@ -40,7 +40,7 @@ public static class Thrower
     }
 
     [return: NotNull]
-    public static T NotNull<T>(this T? obj, string errorMessage = "") where T : class
+    public static T NotNull<T>(this T? obj, string errorMessage = "")
     {
         if (obj == null)
             NullException<object>(errorMessage);

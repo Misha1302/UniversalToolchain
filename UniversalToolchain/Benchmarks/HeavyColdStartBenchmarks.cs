@@ -1,5 +1,6 @@
 using BasicStdLib;
 using BenchmarkDotNet.Attributes;
+using IntermediateRepresentationAbstractions;
 using WhitespacesModule;
 
 namespace Benchmarks;
@@ -49,7 +50,7 @@ public class HeavyColdStartBenchmarks
             new BooleanOperations()
         };
 
-        _interpreterCore = new BasicCoreImpl<AbstractIR>(
+        _interpreterCore = new BasicCoreImpl<IAbstractIR>(
             () => new BasicLexerImpl(),
             () => new BasicParserImpl(),
             () => new BasicBytecodeTranslatorImpl(),

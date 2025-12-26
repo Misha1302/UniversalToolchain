@@ -13,11 +13,11 @@ using BytecodeDynamicMethodsCompiler;
 using ConditionsModule;
 using EqualityModule;
 using IdentifierModule;
+using IntermediateRepresentationAbstractions;
 using LabelsModule;
 using NumbersModule;
 using ScopesModule;
 using SemicolonAsNewLineModule;
-using UniversalIntermediateRepresentation;
 using VariablesModule;
 using WhitespacesModule;
 
@@ -62,7 +62,7 @@ public class BasicLoopBenchmarks
             new BooleanOperations()
         };
 
-        _interpreterCore = new BasicCoreImpl<AbstractIR>(
+        _interpreterCore = new BasicCoreImpl<IAbstractIR>(
             () => new BasicLexerImpl(),
             () => new BasicParserImpl(),
             () => new BasicBytecodeTranslatorImpl(),

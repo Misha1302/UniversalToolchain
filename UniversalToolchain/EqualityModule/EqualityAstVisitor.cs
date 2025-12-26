@@ -1,10 +1,8 @@
-using System.Reflection;
+using AbstractIrExtensions;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
 using DynamicMethodWrapper;
-using ExceptionsManager;
-using UniversalIntermediateRepresentation;
 
 namespace EqualityModule;
 
@@ -21,11 +19,7 @@ public class EqualityAstVisitor : IAstVisitor
         var method = new AbstractMethodImpl(
             $"Set_{data.Node.Children[0].LexemeValue?.Text}={data.Node.Children[1].LexemeValue?.Text}",
             2,
-            (il, context) =>
-            {
-                il.Rotate(2);
-                il.CallCSharp(context.Stack[^1].GetMethod("SetValue", BindingFlags.Instance | BindingFlags.Public).NotNull());
-            },
+            (il, context) => il.SetValueToSettable(context.Stack[^2]),
             _ => typeof(void)
         );
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));

@@ -8,7 +8,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\BasicCore\BasicCore.csproj"/>
+        <ProjectReference Include="..\IntermediateRepresentationAbstractions\IntermediateRepresentationAbstractions.csproj"/>
+        <ProjectReference Include="..\SettableGettableModule\SettableGettableModule.csproj"/>
     </ItemGroup>
 
 </Project>

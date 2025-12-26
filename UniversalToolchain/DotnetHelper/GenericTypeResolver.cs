@@ -1,6 +1,6 @@
 using System.Reflection;
 
-namespace UniversalIntermediateRepresentation;
+namespace DotnetHelper;
 
 public static class GenericTypeResolver
 {
@@ -15,7 +15,7 @@ public static class GenericTypeResolver
         return call.GetGenericMethodDefinition().MakeGenericMethod(genericTypes);
     }
 
-    public static IReadOnlyList<Type> GetParameterTypes(MethodInfo method, List<Type> stack)
+    public static IReadOnlyList<Type> GetParameterTypes(MethodInfo method, IReadOnlyList<Type> stack)
     {
         var types = (List<Type>)[];
         var parameters = method.GetParameters();

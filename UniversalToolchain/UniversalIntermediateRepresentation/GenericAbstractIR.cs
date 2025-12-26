@@ -1,68 +1,59 @@
+using IntermediateRepresentationAbstractions;
+
 namespace UniversalIntermediateRepresentation;
 
-// ReSharper disable once InconsistentNaming
-public class GenericAbstractIR<TIdentifier>
+public class GenericAbstractIR<TIdentifier> : IGenericAbstractIR<TIdentifier>
 {
     private readonly List<Instruction> _instructions = [];
     public IReadOnlyList<Instruction> Instructions => _instructions;
 
     public void Nop()
     {
-        _instructions.Add(new Instruction(OpCode.Nop));
+        _instructions.Add(new Instruction(UOpCode.Nop));
     }
 
-    public void Push(Value value)
+    public void Push<T>(T value)
     {
-        _instructions.Add(new Instruction(OpCode.Push, [value]));
+        _instructions.Add(new Instruction(UOpCode.Push, [value!]));
     }
 
     public void Drop()
     {
-        _instructions.Add(new Instruction(OpCode.Drop));
+        _instructions.Add(new Instruction(UOpCode.Drop));
     }
 
     public void Jmp(TIdentifier identifier)
     {
-        _instructions.Add(new Instruction(OpCode.Jmp, [Value.Create(identifier)]));
+        _instructions.Add(new Instruction(UOpCode.Jmp, [identifier!]));
     }
 
     public void JmpIf(TIdentifier identifier)
     {
-        _instructions.Add(new Instruction(OpCode.JmpIf, [Value.Create(identifier)]));
+        _instructions.Add(new Instruction(UOpCode.JmpIf, [identifier!]));
     }
 
     public void JmpIfNot(TIdentifier identifier)
     {
-        _instructions.Add(new Instruction(OpCode.JmpIfNot, [Value.Create(identifier)]));
+        _instructions.Add(new Instruction(UOpCode.JmpIfNot, [identifier!]));
     }
 
     public void SetLabel(TIdentifier label)
     {
-        _instructions.Add(new Instruction(OpCode.Label, [Value.Create(label)]));
+        _instructions.Add(new Instruction(UOpCode.Label, [label!]));
     }
 
-    public void Annotate(params List<Value>[] annotations)
+    public void Annotate(params List<object>[] annotations)
     {
-        _instructions.AddRange(annotations.Select(ann => new Instruction(OpCode.Annotate, ann)));
+        _instructions.AddRange(annotations.Select(ann => new Instruction(UOpCode.Annotate, ann)));
     }
 
-    public void StLoc(TIdentifier index)
+    public void Intrinsic(object instructionIdentifier, params List<object> operands)
     {
-        _instructions.Add(new Instruction(OpCode.StLoc, [Value.Create(index)]));
-    }
-
-    public void LdLoc(TIdentifier index)
-    {
-        _instructions.Add(new Instruction(OpCode.LdLoc, [Value.Create(index)]));
-    }
-
-    public void Intrinsic(Value instructionIdentifier, params List<Value> operands)
-    {
-        _instructions.Add(new Instruction(OpCode.Intrinsic, [instructionIdentifier, ..operands]));
+        _instructions.Add(new Instruction(UOpCode.Intrinsic, [instructionIdentifier, ..operands]));
     }
 
 
-    public void AppendInstructions(GenericAbstractIR<TIdentifier> air)
+    public void AppendInstructions(IGenericAbstractIR<TIdentifier> air)
     {
         _instructions.AddRange(air.Instructions);
     }
