@@ -21,21 +21,6 @@ public class ModuleInteractionTests : TestBase
                 )
                 else 0
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new CSharpInteropModuleImpl(),
-            new LabelsModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl(),
-            new ConditionsModuleImpl(),
-            new ComparisonOperations(),
-            new BooleanOperations()
-        };
 
         // Act
         var result = ExecuteCode(code);
@@ -62,17 +47,6 @@ public class ModuleInteractionTests : TestBase
                 
                 result
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new CSharpInteropModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl()
-        };
 
         // Act
         var result = ExecuteCode(code);

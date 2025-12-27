@@ -12,17 +12,6 @@ public class EdgeCasesTests : TestBase
                 let result = zero * 100 + zero / 1
                 result
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl(),
-            new ConditionsModuleImpl()
-        };
 
         // Act
         var result = ExecuteCode(code);
@@ -41,17 +30,6 @@ public class EdgeCasesTests : TestBase
                 let veryBig = big * big
                 veryBig / big
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl(),
-            new ConditionsModuleImpl()
-        };
 
         // Act
         var result = ExecuteCode(code);
@@ -71,17 +49,6 @@ public class EdgeCasesTests : TestBase
                 let c = a + b
                 c
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl(),
-            new ConditionsModuleImpl()
-        };
 
         // Act
         var result = ExecuteCode(code);

@@ -17,22 +17,6 @@ public class PerformanceTests : TestBase
                     goto @start
             result
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new SemicolonAsNewLineModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new CSharpInteropModuleImpl(),
-            new LabelsModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl(),
-            new ConditionsModuleImpl(),
-            new ComparisonOperations(),
-            new BooleanOperations()
-        };
 
         var stopwatch = new Stopwatch();
 
@@ -60,16 +44,6 @@ public class PerformanceTests : TestBase
                 let c = b * a - b / a + (a + b) * 2
                 c
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl()
-        };
 
         var stopwatch = new Stopwatch();
 

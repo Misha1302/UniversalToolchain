@@ -8,9 +8,9 @@
 
     <ItemGroup>
         <ProjectReference Include="..\BasicCore\BasicCore.csproj"/>
-        <ProjectReference Include="..\DotnetAirHelper\DotnetAirHelper.csproj" />
+        <ProjectReference Include="..\DotnetAirHelper\DotnetAirHelper.csproj"/>
         <ProjectReference Include="..\IntermediateRepresentationAbstractions\IntermediateRepresentationAbstractions.csproj"/>
-        <ProjectReference Include="..\ObjectExtensions\ObjectExtensions.csproj" />
+        <ProjectReference Include="..\ObjectExtensions\ObjectExtensions.csproj"/>
         <ProjectReference Include="..\SettableGettableModule\SettableGettableModule.csproj"/>
     </ItemGroup>
 

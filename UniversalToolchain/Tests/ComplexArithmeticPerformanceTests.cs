@@ -19,21 +19,6 @@ public class ComplexArithmeticPerformanceTests : TestBase
                    @end:
                    result
                    """;
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new SemicolonAsNewLineModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new LabelsModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl(),
-            new ConditionsModuleImpl(),
-            new ComparisonOperations(),
-            new BooleanOperations()
-        };
 
         var stopwatch = new Stopwatch();
 
@@ -75,17 +60,6 @@ public class ComplexArithmeticPerformanceTests : TestBase
                 
                 c11 + c12 + c13 + c21 + c22 + c23 + c31 + c32 + c33
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new SemicolonAsNewLineModuleImpl(),
-            new EqualityModuleImpl()
-        };
 
         var stopwatch = new Stopwatch();
 

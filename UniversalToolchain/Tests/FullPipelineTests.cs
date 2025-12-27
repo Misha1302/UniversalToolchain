@@ -8,15 +8,6 @@ public class FullPipelineTests : TestBase
     {
         // Arrange
         var code = "2 + 3 * 4";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new ConditionsModuleImpl()
-        };
 
         // Act
         var result = ExecuteCode(code);
@@ -35,17 +26,6 @@ public class FullPipelineTests : TestBase
                 let y = 20
                 x + y
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl(),
-            new ConditionsModuleImpl()
-        };
 
         // Act
         var result = ExecuteCode(code);
@@ -60,15 +40,6 @@ public class FullPipelineTests : TestBase
     {
         // Arrange
         var code = "(2 + 3) * (4 - 1)";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new ConditionsModuleImpl()
-        };
 
         // Act
         var result = ExecuteCode(code);
@@ -88,17 +59,6 @@ public class FullPipelineTests : TestBase
                 let c = a * b + 2
                 c - 1
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl(),
-            new ConditionsModuleImpl()
-        };
 
         // Act
         var result = ExecuteCode(code);
@@ -122,17 +82,6 @@ public class FullPipelineTests : TestBase
                 c = c - 15
                 c
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl(),
-            new ConditionsModuleImpl()
-        };
 
         // Act
         var result = ExecuteCode(code);

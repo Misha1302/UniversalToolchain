@@ -19,17 +19,6 @@ public class StackAndTypeTests : TestBase
                 let h = (a + b) * (c - d / e) + f
                 h
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new CSharpInteropModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl()
-        };
 
         // Act
         var result = ExecuteCode(code);
@@ -60,17 +49,6 @@ public class StackAndTypeTests : TestBase
                 )
                 result
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new CSharpInteropModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl()
-        };
 
         // Act
         var result = ExecuteCode(code);
@@ -110,21 +88,6 @@ public class StackAndTypeTests : TestBase
                 
                 stackTest
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new CSharpInteropModuleImpl(),
-            new LabelsModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl(),
-            new ConditionsModuleImpl(),
-            new ComparisonOperations(),
-            new BooleanOperations()
-        };
 
         // Act
         var result = ExecuteCode(code);

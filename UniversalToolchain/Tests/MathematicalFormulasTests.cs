@@ -16,17 +16,6 @@ public class MathematicalFormulasTests : TestBase
                 let root2 = (0-b - discriminant) / (2 * a)
                 root1 + root2
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl(),
-            new ConditionsModuleImpl()
-        };
 
         // Act
         var result = ExecuteCode(code);
@@ -48,17 +37,6 @@ public class MathematicalFormulasTests : TestBase
                 let displacement = initialVelocity * time + 0.5 * acceleration * time * time
                 displacement
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl(),
-            new ConditionsModuleImpl()
-        };
 
         // Act
         var result = ExecuteCode(code);
@@ -80,17 +58,6 @@ public class MathematicalFormulasTests : TestBase
                 let area = pi * radius * radius
                 area / circumference
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl(),
-            new ConditionsModuleImpl()
-        };
 
         // Act
         var result = ExecuteCode(code);

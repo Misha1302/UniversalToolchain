@@ -1,214 +1,311 @@
 # Project Rules and Conventions
 
-This document describes **implicit rules** used throughout the project that **must be followed** when developing new modules, nodes, and visitors.
+This document describes the implicit rules used throughout the project, which must be followed when developing new
+modules, nodes, and visitors.
 
----
+## General Principles
 
-## Priorities (Lexer / Parser / Bytecode)
+### Priorities
 
-### General Rule
-**Priorities are always sorted in ascending order from left to right**  
-(smaller value — processed earlier).
+Priorities are sorted in ascending order from left to right (lower value → higher priority).
 
-### Example
-```text
-[-2] [-1] [0] [1]
- ^ highest priority
+### Stack (LIFO)
+
+Data is added to the end of the stack and removed from the end. This applies to both the value stack and the type stack.
+
+### Extensible Enums (ExtensibleEnum)
+
+It is forbidden to create instances via the constructor. Use only `CreateOrGet`.
+
+```csharp
+// Correct
+AstNodeType.CreateOrGet("Addition");
+// Incorrect
+new ExtensibleEnum<AstNodeTag>(5);
 ```
 
----
+### Tags in AST
+
+Nodes can contain tags to mark states:
+
+* `CurrentTags` — tags added directly to the node.
+* `AllTags` — the union of the node's tags and all its parents' tags.
 
 ## Lexer
 
-- The `priority` property of a `LexemePattern`
-- Smaller value → higher priority
-- More specific patterns should come first
+### Pattern Priorities
+
+* Patterns with higher priority (lower number) are processed first.
+* Specific patterns must have higher priority than general ones.
 
 ```csharp
-TryAddPattern(">=", Token.GreaterOrEqual, priority: -1);
-TryAddPattern(">",  Token.Greater,        priority: 0);
+// Pattern ">=" is processed before ">"
+lexer.Configuration.TryAddPattern(
+    new LexemePattern(@"\>\=", lexemeType),
+    priority: -1
+);
+lexer.Configuration.TryAddPattern(
+    new LexemePattern(@"\>", lexemeType),
+    priority: 0
+);
 ```
 
----
+## Parser and AST
 
-## Parser / NodeCreators
+### Node Creation (AstNodeCreator)
 
-### Rules
-1. `NodeCreators` — `SortedDictionary`
-2. Traversal from left to right
-3. Smaller value → higher priority
+**Forbidden:**
 
-```csharp
-NodeCreators.Add(-1, new Multiply());
-NodeCreators.Add( 0, new Add());
-```
+* Modifying the tree structure upper than parent.
 
----
+**Allowed:**
 
-## AST NodeCreators
+* Changing the `NodeType` of existing nodes.
+* Moving existing nodes between parents.
+* Creating new nodes.
+* Adding tags to nodes.
 
-### Forbidden
-❌ Create new `AstNode` instances
+### Safe Access to Child Nodes
 
-### Allowed
-✅ Change `NodeType` <br>
-✅ Reorder existing nodes
+Always use `SafeGet` to check child nodes.
 
-```csharp
-node.NodeType = AstNodeType.Addition;
-```
-
-### Safe Access
 ```csharp
 var left = scope.SafeGet(i - 1);
 if (left == null) return false;
 ```
 
----
+### Marking Processed Nodes
 
-## ParserHandled
-
-If a node has been processed by the parser — **must** be marked:
+If a node has been processed by the parser, it must be marked.
 
 ```csharp
 child.MarkAsParserHandled();
 ```
 
----
+### Working with Child Nodes
 
-## Working with Children
-
-### Adding
-`Parent` is set automatically
+When adding a node to a parent, the `Parent` property is set automatically.
 
 ```csharp
-node.Children.Add(child);
+parent.Children.Add(child); // Parent of child is set to parent
 ```
 
-### Removing
-Indexes shift — adjust manually
+When removing nodes, indices shift. The index must be adjusted manually.
 
 ```csharp
 scope.Children.RemoveAt(i - 1);
-i--;
+i--; // Adjustment after removal
 ```
 
----
+### NodeCreator Priorities
 
-## Bytecode Visitor
-
-### Template
-1. Translate children first
-2. Then translate the current node
+`NodeCreators` are processed in order of priority (from lower to higher).
 
 ```csharp
-foreach (var child in data.Node.Children)
-    data.BytecodeTranslator.Translate(child);
+// First multiplication and division (priority -1)
+parser.Configuration.NodeCreators.Add(-1, new MultiplicationOperationNodeCreator());
+parser.Configuration.NodeCreators.Add(-1, new DivisionOperationNodeCreator());
+// Then addition and subtraction (priority 0)
+parser.Configuration.NodeCreators.Add(0, new AdditionOperationNodeCreator());
+parser.Configuration.NodeCreators.Add(0, new SubstractionOperationNodeCreator());
 ```
 
----
+## AST Visitors (Bytecode Visitors)
 
-## Stack
+### Processing Order
 
-### Main Rule
-Arguments are placed so that the type can be deduced
-
-```text
-a = 5
-```
-
-```text
-push 5
-push ref(a)
-set
-```
-
----
-
-## Types
-
-The result type:
-- either known explicitly
-- or taken from the `Stack`
+First, all child nodes are processed, then the current node.
 
 ```csharp
-context.Stack[0]
+public void TryVisit(BytecodeVisitorData data)
+{
+    // First, process children
+    foreach (var child in data.Node.Children)
+        data.AstToBytecodeTranslator.Translate(child);
+
+    // Then the current node
+    // ...
+}
 ```
 
----
+### Type Stack in Context
+
+Access to types on the stack is through `context.Stack`. Types are added to the end of the stack.
+
+```csharp
+// For a binary operation: two arguments are already on the stack
+var arg1Type = context.Stack[^2]; // First argument
+var arg2Type = context.Stack[^1]; // Second argument
+```
+
+## Type System and Stack
+
+### Argument Order
+
+Arguments are placed on the stack in direct order (left to right), but are accessed from the end.
+
+```
+Expression: a + b
+Stack order: push a, push b
+Type access: Stack[^2] = a, Stack[^1] = b
+```
+
+### Determining the Result Type
+
+The result type of an operation:
+
+* Either known explicitly (for literals, method calls).
+* Or inferred from the types of arguments on the stack.
+
+### Working with Generic Types
+
+Use `GenericTypeResolver` to resolve generic method parameters. Constraints of generic methods must be compatible with
+the project's type system.
 
 ## C# Interop
 
 ### Limitations
-❌ Interfaces <br>
-✅ Generic methods with constraints
+
+**Supported:**
+
+* Static and instance methods.
+* Generic methods with constraints.
+* Constructors.
+
+**Not Supported:**
+
+* Interfaces as parameters (only concrete types).
+* Overloaded methods with the same number of parameters.
+
+### Example of a Generic Method
 
 ```csharp
-Add<T>(T a, T b) where T : IAddable<T>
+// Supported
+public static T Add<T>(T a, T b) where T : IAddable<T>
+{
+    return T.Add(a, b);
+}
 ```
 
----
+### Calling C# Methods
 
-## Exceptions
+Methods are called via the intrinsic "call C#". The method signature must match the types on the stack.
 
-### Forbidden
-```csharp
-throw new Exception();
-```
+## Intrinsics and Backends
 
-### Mandatory
-```csharp
-Thrower.InvalidOpEx();
-Thrower.AssertAlways(cond);
-obj.NotNull();
-```
+### The Set of Intrinsics Depends on the Backend
 
----
+Different backends support different intrinsics.
 
-## AssertAlways
+| Backend      | Supported Intrinsics                             | Not Supported           |
+|:-------------|:-------------------------------------------------|:------------------------|
+| CIL Compiler | call C#, store_local, load_local, load_local_ref | -                       |
+| Interpreter  | call C#, call C# ctor                            | store_local, load_local |
 
-Used **instead of** `Debug.Assert`
+### Registering New Intrinsics
 
-```csharp
-Thrower.AssertAlways(stack.Count > 0);
-```
-
----
-
-## ExtensibleEnum
-
-### Rules
-❌ Hardcoding int values <br>
-✅ Only `CreateOrGet`
+When adding a new intrinsic, its handler must be registered in `AirTypes`.
 
 ```csharp
-AstNodeType.CreateOrGet("If");
+AirTypes.TryRegisterIntrinsic(
+    "new_intrinsic",
+    (instruction, stack) => {
+        // Processing types on the stack
+    }
+);
 ```
 
----
+## Peephole Optimizations
 
-## Jumps / Labels
+### General Principles
 
-- All jumps are directional
-- Labels via `Guid`
+* Optimizations are performed at the intermediate representation (AIR) level.
+* Instruction patterns are recognized and replaced with more efficient ones.
+* Optimizations must not change program semantics.
+
+### Example Variable Optimization
+
+Pattern `Push(string) + GetRef` → `load_local_ref`:
+
+```
+Before optimization:
+  Push "varName"
+  Intrinsic "call C#", VariablesContainer<>.GetRef
+
+After optimization:
+  Intrinsic "load_local_ref", "varName", varType
+```
+
+### Rules for Optimizations
+
+* Optimization must preserve the order and number of stack operations.
+* Types on the stack must remain consistent.
+* Instructions affecting side effects cannot be removed.
+
+## Error Handling
+
+### Using Thrower
+
+All exceptions must be thrown via `Thrower`.
 
 ```csharp
-var label = Guid.NewGuid();
-il.Jmp(label);
+// For condition checks
+Thrower.AssertAlways(stack.Count > 0, "Stack is empty");
+
+// For unimplemented functionality
+Thrower.NotImplementedException("Method not implemented");
+
+// For invalid operations
+Thrower.InvalidOpEx("Invalid operation");
+
+// For null checks
+obj.NotNull("Object cannot be null");
 ```
 
----
+**Important:** Do not use direct calls to `throw new Exception()`.
+
+### Error Messages
+
+The message format is not strictly regulated, but it is recommended to provide:
+
+* A clear description of the problem.
+* Error context (if appropriate).
+* Do not reveal internal implementation details.
 
 ## Forbidden Practices
 
-❌ New AST creation <br>
-❌ Direct throw <br>
-❌ Violating stack order <br>
-❌ Hardcoding enum values <br>
-
----
+* Directly throwing exceptions — use only `Thrower`.
+* Violating stack order — arguments must be in the correct order.
+* Hardcoding enumeration values — use only `CreateOrGet`.
+* Using interfaces in C# interop — only concrete types.
+* Modifying tree structure in visitors — only in `NodeCreator`.
+* Ignoring marking of processed nodes — always use `MarkAsParserHandled`.
+* Creating Jump/Label without Guid — all labels must be unique.
 
 ## If a Rule is Missing
 
-➡ Look at existing code and follow the style <br>
-➡ This file is a **living document**
+* Study the existing code in the relevant module.
+* Follow the general style and architectural principles.
+* This is a living document; propose changes when inconsistencies are found.
+
+## Architecture Notes
+
+### Modularity
+
+Each module should be independent and perform one clear task. Modules register their handlers via the
+`IFrontendCoreModule`/`IMiddleEndCoreModule` interfaces.
+
+### Extensibility
+
+New features are added through modules, not by modifying the core. Use existing extension points:
+
+* `InitLexer`, `InitParser`, `InitAstTranslator`
+* `ProcessAst`, `ProcessBytecode`, `ProcessIr`
+
+### Performance
+
+Keep in mind that the parser can traverse the tree multiple times. Avoid complex operations in `TryCreateNode`.
+
+---
+*This document is current based on analysis of the codebase. Last checked: all code examples are taken from existing
+modules.*

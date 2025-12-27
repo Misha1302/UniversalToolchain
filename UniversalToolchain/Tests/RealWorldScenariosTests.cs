@@ -15,17 +15,6 @@ public class RealWorldScenariosTests : TestBase
                 let finalPrice = total - (total * discount)
                 finalPrice
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl(),
-            new ConditionsModuleImpl()
-        };
 
         // Act
         var result = ExecuteCode(code);
@@ -48,17 +37,6 @@ public class RealWorldScenariosTests : TestBase
                 let area = pi * radius * radius
                 area
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl(),
-            new ConditionsModuleImpl()
-        };
 
         // Act
         var result = ExecuteCode(code);
@@ -86,17 +64,6 @@ public class RealWorldScenariosTests : TestBase
                 
                 netSalary
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl(),
-            new ConditionsModuleImpl()
-        };
 
         // Act
         var result = ExecuteCode(code);

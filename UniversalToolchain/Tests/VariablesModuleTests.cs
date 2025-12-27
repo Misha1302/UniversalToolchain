@@ -12,17 +12,6 @@ public class VariablesModuleTests : TestBase
             let x = 5
             x * 2
             """;
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl(),
-            new ConditionsModuleImpl()
-        };
 
         // Act
         var result = ExecuteCode(code);
@@ -41,17 +30,6 @@ public class VariablesModuleTests : TestBase
                    x = 10
                    x
                    """;
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl(),
-            new ConditionsModuleImpl()
-        };
 
         // Act
         var result = ExecuteCode(code);
@@ -70,17 +48,6 @@ public class VariablesModuleTests : TestBase
                    let b = 3
                    a * b
                    """;
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl(),
-            new ConditionsModuleImpl()
-        };
 
         // Act
         var result = ExecuteCode(code);

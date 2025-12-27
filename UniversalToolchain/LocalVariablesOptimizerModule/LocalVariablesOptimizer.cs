@@ -27,7 +27,7 @@ public class LocalVariablesOptimizer : IFrontendCoreModule
             (instruction, stack) => stack.Push(typeof(VariableReference<>).MakeGenericType(instruction.Operands[2].Get<Type>()))
         );
     }
-    
+
 
     public IAbstractIR ProcessIr(IAbstractIR current)
     {

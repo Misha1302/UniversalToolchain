@@ -31,19 +31,6 @@ public class RealWorldAlgorithmTests : TestBase
                 )
                 b
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl(),
-            new LabelsModuleImpl(),
-            new ConditionsModuleImpl(),
-            new ComparisonOperations()
-        };
 
         // Act
         var result = ExecuteCode(code);
@@ -71,19 +58,6 @@ public class RealWorldAlgorithmTests : TestBase
                 @end:
                 result
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl(),
-            new LabelsModuleImpl(),
-            new ConditionsModuleImpl(),
-            new ComparisonOperations()
-        };
 
         // Act
         var result = ExecuteCode(code);
@@ -141,19 +115,6 @@ public class RealWorldAlgorithmTests : TestBase
                 
                 a + b + c + d + e
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl(),
-            new LabelsModuleImpl(),
-            new ConditionsModuleImpl(),
-            new ComparisonOperations()
-        };
 
         // Act
         var result = ExecuteCode(code);

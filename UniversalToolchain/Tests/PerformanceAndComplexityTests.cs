@@ -38,19 +38,6 @@ public class PerformanceAndComplexityTests : TestBase
                 
                 total
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl(),
-            new LabelsModuleImpl(),
-            new ConditionsModuleImpl(),
-            new ComparisonOperations()
-        };
 
         // Act
         var result = ExecuteCode(code);
@@ -87,19 +74,6 @@ public class PerformanceAndComplexityTests : TestBase
                 
                 sum
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl(),
-            new LabelsModuleImpl(),
-            new ConditionsModuleImpl(),
-            new ComparisonOperations()
-        };
 
         // Act
         var result = ExecuteCode(code);

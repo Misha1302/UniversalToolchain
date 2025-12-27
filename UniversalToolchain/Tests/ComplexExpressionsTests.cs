@@ -13,16 +13,6 @@ public class ComplexExpressionsTests : TestBase
                 let c = 5
                 (a + b) * c - (a / b)
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl()
-        };
 
         // Act
         var result = ExecuteCode(code);
@@ -44,16 +34,6 @@ public class ComplexExpressionsTests : TestBase
                 x = y - x
                 y
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl()
-        };
 
         // Act
         var result = ExecuteCode(code);
@@ -73,16 +53,6 @@ public class ComplexExpressionsTests : TestBase
                 let c = 2
                 a + b * c - (a / c) + b
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl()
-        };
 
         // Act
         var result = ExecuteCode(code);

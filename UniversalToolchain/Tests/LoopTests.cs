@@ -19,19 +19,6 @@ public class LoopTests : TestBase
                 @end:
                 sum
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl(),
-            new LabelsModuleImpl(),
-            new ConditionsModuleImpl(),
-            new ComparisonOperations()
-        };
 
         // Act
         var result = ExecuteCode(code);
@@ -66,19 +53,6 @@ public class LoopTests : TestBase
                 @outer_end:
                 result
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl(),
-            new LabelsModuleImpl(),
-            new ConditionsModuleImpl(),
-            new ComparisonOperations()
-        };
 
         // Act
         var result = ExecuteCode(code);
@@ -108,19 +82,6 @@ public class LoopTests : TestBase
                 @end:
                 total
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl(),
-            new LabelsModuleImpl(),
-            new ConditionsModuleImpl(),
-            new ComparisonOperations()
-        };
 
         // Act
         var result = ExecuteCode(code);

@@ -13,17 +13,6 @@ public class ModuleCombinationsTests : TestBase
                 y = y - 3
                 y / 2
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl(),
-            new CSharpInteropModuleImpl()
-        };
 
         // Act
         var result = ExecuteCode(code);
@@ -43,16 +32,6 @@ public class ModuleCombinationsTests : TestBase
                 let c = a + b * 2
                 c
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl()
-        };
 
         // Act
         var result = ExecuteCode(code);

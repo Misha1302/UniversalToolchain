@@ -12,16 +12,6 @@ public class ArithmeticEdgeCasesTests : TestBase
                 let veryTiny = 0.0000000001
                 (tiny * 1000000000) + (veryTiny * 10000000000)
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl()
-        };
 
         // Act
         var result = ExecuteCode(code);
@@ -43,16 +33,6 @@ public class ArithmeticEdgeCasesTests : TestBase
                 let minPrecision = 0.99999999999999
                 (maxPrecision - 1) * 100000000000000 + (1 - minPrecision) * 100000000000000
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl()
-        };
 
         // Act
         var result = ExecuteCode(code);
@@ -71,16 +51,6 @@ public class ArithmeticEdgeCasesTests : TestBase
                 let verySmall = 0.000000001
                 number / verySmall
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl()
-        };
 
         // Act
         var result = ExecuteCode(code);
@@ -102,16 +72,6 @@ public class ArithmeticEdgeCasesTests : TestBase
                 let result = a / b / c * b * c
                 result
             ";
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl()
-        };
 
         // Act
         var result = ExecuteCode(code);
