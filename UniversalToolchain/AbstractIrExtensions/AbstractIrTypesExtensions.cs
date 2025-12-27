@@ -6,13 +6,22 @@ namespace AbstractIrExtensions;
 
 public static class AbstractIrTypesExtensions
 {
-    public static void ManipulateTypesStack<TIdentifier>(
-        this IGenericAbstractIR<TIdentifier> air,
+    public static void ManipulateTypesStack(
+        this Instruction instructions,
         List<Type> stack,
         Action<Instruction, List<Type>> processIntrinsic
     )
     {
-        foreach (var instruction in air.Instructions)
+        ((IReadOnlyList<Instruction>)[instructions]).ManipulateTypesStack(stack, processIntrinsic);
+    }
+
+    public static void ManipulateTypesStack(
+        this IReadOnlyList<Instruction> instructions,
+        List<Type> stack,
+        Action<Instruction, List<Type>> processIntrinsic
+    )
+    {
+        foreach (var instruction in instructions)
         {
             // ReSharper disable RedundantJumpStatement
             // ReSharper disable RedundantIfElseBlock

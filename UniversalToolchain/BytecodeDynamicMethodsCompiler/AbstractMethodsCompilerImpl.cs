@@ -2,10 +2,8 @@
 using System.Reflection.Emit;
 using AbstractIrExtensions;
 using BasicCore;
-using BasicCore.TranslatorWrapper;
 using DotnetAirHelper;
 using DotnetHelper;
-using DynamicMethodWrapper;
 using ExceptionsManager;
 using GrEmit;
 using IntermediateRepresentationAbstractions;
@@ -14,24 +12,19 @@ using ObjectExtensions;
 
 namespace BytecodeDynamicMethodsCompiler;
 
-public class AbstractMethodsCompilerImpl : IAbstractMethodsCompiler<DynamicMethod>
+public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
 {
-    public DynamicMethod Compile(Bytecode bytecode)
+    public DynamicMethod Compile(IAbstractIR air)
     {
         var method = new DynamicMethod("main", typeof(object), []);
         using var il = new GroboIL(method);
         var data = new CompilationData(il, []);
-        InitializeLabels(data, bytecode);
+        InitializeLabels(data, air);
 
         var typesStack = new List<Type>();
-        foreach (var instruction in bytecode.Instructions)
-        foreach (var op in instruction.Ops)
-        foreach (var convertable in op.Value)
+        foreach (var instruction in air.Instructions)
         {
-            var context = new IAbstractMethodConvertable.Context(typesStack);
-            var air = convertable.GetAbstractIR(context);
-
-            CompileAir(data, air, typesStack);
+            CompileInstruction(data, instruction, typesStack);
         }
 
         if (typesStack.Count == 0)
@@ -43,81 +36,73 @@ public class AbstractMethodsCompilerImpl : IAbstractMethodsCompiler<DynamicMetho
         return method;
     }
 
-    private void InitializeLabels(CompilationData data, Bytecode bytecode)
+    private void InitializeLabels(CompilationData data, IAbstractIR bytecode)
     {
         var typesStack = new List<Type>();
         foreach (var instruction in bytecode.Instructions)
-        foreach (var op in instruction.Ops)
-        foreach (var convertable in op.Value)
         {
-            var context = new IAbstractMethodConvertable.Context(typesStack);
-            var air = convertable.GetAbstractIR(context);
-
-            foreach (var label in air.Instructions.Where(x => x.UOpCode == UOpCode.Label))
+            if (instruction.UOpCode == UOpCode.Label)
             {
-                var id = label.Operands[0].Get<Guid>();
+                var id = instruction.Operands[0].Get<Guid>();
                 data.InstructionLabels.Add((id, data.Il.DefineLabel($"Instruction {id}")));
             }
 
-            air.ManipulateTypesStack(typesStack, AirTypes.ProcessTypesIntrinsic);
+            instruction.ManipulateTypesStack(typesStack, AirTypes.ProcessTypesIntrinsic);
         }
     }
 
 
-    private void CompileAir(CompilationData data, IAbstractIR air, List<Type> stack)
+    private void CompileInstruction(CompilationData data, Instruction instruction, List<Type> stack)
     {
-        foreach (var instruction in air.Instructions)
+        if (instruction.UOpCode == UOpCode.Nop)
         {
-            if (instruction.UOpCode == UOpCode.Nop)
-            {
-                data.Il.Nop();
-            }
-            else if (instruction.UOpCode == UOpCode.Push)
-            {
-                var obj = instruction.Operands[0];
-                PushValue(data, obj);
-                stack.Push(obj.GetType());
-            }
-            else if (instruction.UOpCode == UOpCode.Drop)
-            {
-                data.Il.Pop();
-                stack.Pop();
-            }
-            else if (instruction.UOpCode == UOpCode.Jmp)
-            {
-                data.Il.Br(
-                    data.InstructionLabels.First(x => x.id == instruction.Operands[0].Get<Guid>()).label
-                );
-            }
-            else if (instruction.UOpCode == UOpCode.JmpIf)
-            {
-                data.Il.Brtrue(
-                    data.InstructionLabels.First(x => x.id == instruction.Operands[0].Get<Guid>()).label
-                );
-                stack.Pop();
-            }
-            else if (instruction.UOpCode == UOpCode.JmpIfNot)
-            {
-                data.Il.Brfalse(
-                    data.InstructionLabels.First(x => x.id == instruction.Operands[0].Get<Guid>()).label
-                );
-                stack.Pop();
-            }
-            else if (instruction.UOpCode == UOpCode.Label)
-            {
-                data.Il.MarkLabel(data.InstructionLabels.First(x => x.id == instruction.Operands[0].Get<Guid>()).label);
-            }
-            else if (instruction.UOpCode == UOpCode.Annotate)
-            {
-            }
-            else if (instruction.UOpCode == UOpCode.Intrinsic)
-            {
-                CompileIntrinsic(instruction, data, stack);
-            }
-            else
-            {
-                Thrower.InvalidOpEx();
-            }
+            data.Il.Nop();
+        }
+        else if (instruction.UOpCode == UOpCode.Push)
+        {
+            var obj = instruction.Operands[0];
+            PushValue(data, obj);
+            stack.Push(obj.GetType());
+        }
+        else if (instruction.UOpCode == UOpCode.Drop)
+        {
+            data.Il.Pop();
+            stack.Pop();
+        }
+        else if (instruction.UOpCode == UOpCode.Jmp)
+        {
+            data.Il.Br(
+                data.InstructionLabels.First(x => x.id == instruction.Operands[0].Get<Guid>()).label
+            );
+        }
+        else if (instruction.UOpCode == UOpCode.JmpIf)
+        {
+            data.Il.Brtrue(
+                data.InstructionLabels.First(x => x.id == instruction.Operands[0].Get<Guid>()).label
+            );
+            stack.Pop();
+        }
+        else if (instruction.UOpCode == UOpCode.JmpIfNot)
+        {
+            data.Il.Brfalse(
+                data.InstructionLabels.First(x => x.id == instruction.Operands[0].Get<Guid>()).label
+            );
+            stack.Pop();
+        }
+        else if (instruction.UOpCode == UOpCode.Label)
+        {
+            data.Il.MarkLabel(data.InstructionLabels.First(x => x.id == instruction.Operands[0].Get<Guid>()).label);
+        }
+        else if (instruction.UOpCode == UOpCode.Annotate)
+        {
+        }
+        else if (instruction.UOpCode == UOpCode.Intrinsic)
+        {
+            CompileIntrinsic(instruction, data, stack);
+        }
+        else
+        {
+            Thrower.InvalidOpEx();
         }
     }
 
@@ -177,6 +162,85 @@ public class AbstractMethodsCompilerImpl : IAbstractMethodsCompiler<DynamicMetho
                 stack.Pop();
             stack.Push(method.DeclaringType);
         }
+
+        else if (name == "store_local")
+        {
+            // Новый intrinsic: store_local "varName", varType
+            var varName = instruction.Operands[1].Get<string>();
+            var varType = instruction.Operands[2].Get<Type>();
+
+            // Получаем или создаем локальную переменную
+            if (!data.LocalVariables.TryGetValue(varName, out var local))
+            {
+                local = data.Il.DeclareLocal(varType);
+                data.LocalVariables[varName] = local;
+            }
+
+            // Значение уже должно быть на стеке
+            data.Il.Stloc(local);
+
+            // Удаляем значение из стека
+            stack.Pop();
+        }
+        else if (name == "load_local")
+        {
+            // Новый intrinsic: load_local "varName", varType
+            var varName = instruction.Operands[1].Get<string>();
+            var varType = instruction.Operands[2].Get<Type>();
+
+            // Получаем локальную переменную
+            if (!data.LocalVariables.TryGetValue(varName, out var local))
+            {
+                // Если переменная не объявлена, создаем ее с значением по умолчанию
+                local = data.Il.DeclareLocal(varType);
+                data.LocalVariables[varName] = local;
+
+                // Инициализируем значением по умолчанию
+                data.Il.Ldloca(local);
+                if (varType.IsValueType)
+                {
+                    data.Il.Initobj(varType);
+                }
+                else
+                {
+                    data.Il.Ldnull();
+                    data.Il.Stloc(local);
+                }
+            }
+
+            // Загружаем значение переменной в стек
+            data.Il.Ldloc(local);
+            stack.Push(varType);
+        }
+        else if (name == "load_local_ref")
+        {
+            // Новый intrinsic: load_local_ref "varName", varType
+            var varName = instruction.Operands[1].Get<string>();
+            var varType = instruction.Operands[2].Get<Type>();
+
+            // Получаем локальную переменную
+            if (!data.LocalVariables.TryGetValue(varName, out var local))
+            {
+                local = data.Il.DeclareLocal(varType);
+                data.LocalVariables[varName] = local;
+
+                // Инициализируем значением по умолчанию
+                data.Il.Ldloca(local);
+                if (varType.IsValueType)
+                {
+                    data.Il.Initobj(varType);
+                }
+                else
+                {
+                    data.Il.Ldnull();
+                    data.Il.Stloc(local);
+                }
+            }
+
+            // Загружаем адрес переменной в стек
+            data.Il.Ldloca(local);
+            stack.Push(varType.MakeByRefType());
+        }
         else
         {
             Thrower.InvalidOpEx();
@@ -208,7 +272,12 @@ public class AbstractMethodsCompilerImpl : IAbstractMethodsCompiler<DynamicMetho
         }
     }
 
-    private record CompilationData(GroboIL Il, List<(Guid id, GroboIL.Label label)> InstructionLabels);
+    private class CompilationData(GroboIL il, List<(Guid id, GroboIL.Label label)> instructionLabels)
+    {
+        public Dictionary<string, GroboIL.Local> LocalVariables { get; } = new();
+        public GroboIL Il { get; } = il;
+        public List<(Guid id, GroboIL.Label label)> InstructionLabels { get; } = instructionLabels;
+    }
 
     private static class GlobalExecutionConstants<T>
     {

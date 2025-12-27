@@ -13,8 +13,8 @@ public class EqualityAstVisitor : IAstVisitor
         if (data.Node.NodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("Equality"))
             return;
 
-        data.BytecodeTranslator.Translate(data.Node.Children[1]); // value
-        data.BytecodeTranslator.Translate(data.Node.Children[0]); // ref
+        data.AstToBytecodeTranslator.Translate(data.Node.Children[1]); // value
+        data.AstToBytecodeTranslator.Translate(data.Node.Children[0]); // ref
 
         var method = new AbstractMethodImpl(
             $"Set_{data.Node.Children[0].LexemeValue?.Text}={data.Node.Children[1].LexemeValue?.Text}",

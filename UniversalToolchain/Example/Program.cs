@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Reflection.Emit;
+using AbstractIrConverters;
 using BasicCilCompiler;
 using BasicStdLib;
 using BytecodeDynamicMethodsCompiler;
@@ -13,7 +14,8 @@ using VariablesModule;
 var core = new BasicCoreImpl<DynamicMethod>(
     () => new BasicLexerImpl(),
     () => new BasicParserImpl(),
-    () => new BasicBytecodeTranslatorImpl(),
+    () => new BasicAstToBytecodeTranslatorImpl(),
+    () => new BytecodeToAbstractIrConverterImpl(),
     () => new AbstractMethodsCompilerImpl(),
     () => new DynamicMethodExecutor(),
     [

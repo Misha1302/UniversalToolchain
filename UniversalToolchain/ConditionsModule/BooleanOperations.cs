@@ -31,7 +31,7 @@ public class BooleanOperations : IFrontendCoreModule
             new BooleanNodeCreator("Or", BooleanNodeCreator.BooleanStatementType.BinaryOperation));
     }
 
-    public void InitTranslator(IBytecodeTranslator translator)
+    public void InitAstTranslator(IAstToBytecodeTranslator translator)
     {
         translator.Configuration.Visitors.Add(new BooleanVisitor());
     }

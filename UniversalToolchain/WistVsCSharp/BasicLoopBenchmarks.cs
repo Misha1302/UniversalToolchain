@@ -1,5 +1,6 @@
 ﻿using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
+using AbstractIrConverters;
 using ArithmeticModule;
 using BasicCilCompiler;
 using BasicCodeTranslator;
@@ -65,8 +66,9 @@ public class BasicLoopBenchmarks
         _interpreterCore = new BasicCoreImpl<IAbstractIR>(
             () => new BasicLexerImpl(),
             () => new BasicParserImpl(),
-            () => new BasicBytecodeTranslatorImpl(),
+            () => new BasicAstToBytecodeTranslatorImpl(),
             () => new BytecodeToAbstractIrConverterImpl(),
+            () => new AbstractIrToAbstractIrStub(),
             () => new InterpreterImpl(),
             commonModules,
             []
@@ -75,13 +77,14 @@ public class BasicLoopBenchmarks
         _compilerCore = new BasicCoreImpl<DynamicMethod>(
             () => new BasicLexerImpl(),
             () => new BasicParserImpl(),
-            () => new BasicBytecodeTranslatorImpl(),
+            () => new BasicAstToBytecodeTranslatorImpl(),
+            () => new BytecodeToAbstractIrConverterImpl(),
             () => new AbstractMethodsCompilerImpl(),
             () => new DynamicMethodExecutor(),
             commonModules,
             []
         );
-        
+
         _interpreterCore.PrepareToRun(_loopSum);
         _compilerCore.PrepareToRun(_loopSum);
     }

@@ -36,7 +36,7 @@ public class BooleanVisitor : IAstVisitor
     private void VisitBooleanOperation(BytecodeVisitorData data)
     {
         // Сначала вычисляем операнды
-        foreach (var child in data.Node.Children) data.BytecodeTranslator.Translate(child);
+        foreach (var child in data.Node.Children) data.AstToBytecodeTranslator.Translate(child);
 
         var op = data.Node.NodeType;
 

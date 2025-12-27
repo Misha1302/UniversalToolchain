@@ -1,4 +1,4 @@
-using AbstractIrExtensions;
+﻿using AbstractIrExtensions;
 using BasicCore;
 using BasicCore.TranslatorWrapper;
 using DotnetAirHelper;
@@ -6,11 +6,11 @@ using DynamicMethodWrapper;
 using IntermediateRepresentationAbstractions;
 using UniversalIntermediateRepresentation;
 
-namespace BytecodeDynamicMethodsCompiler;
+namespace AbstractIrConverters;
 
-public class BytecodeToAbstractIrConverterImpl : IAbstractMethodsCompiler<IAbstractIR>
+public class BytecodeToAbstractIrConverterImpl : IAbstractMethodsTranslator
 {
-    public IAbstractIR Compile(Bytecode bytecode)
+    public IAbstractIR Translate(Bytecode bytecode)
     {
         var ir = new AbstractIR();
         var typesStack = new List<Type>();
@@ -23,7 +23,7 @@ public class BytecodeToAbstractIrConverterImpl : IAbstractMethodsCompiler<IAbstr
 
             ir.AppendInstructions(air);
 
-            air.ManipulateTypesStack(typesStack, AirTypes.ProcessTypesIntrinsic);
+            air.Instructions.ManipulateTypesStack(typesStack, AirTypes.ProcessTypesIntrinsic);
         }
         return ir;
     }

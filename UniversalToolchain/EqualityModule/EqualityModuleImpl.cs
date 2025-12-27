@@ -20,7 +20,7 @@ public class EqualityModuleImpl : IFrontendCoreModule
         parser.Configuration.NodeCreators.Add(10f, new ValuesSetNodeCreator());
     }
 
-    public void InitTranslator(IBytecodeTranslator translator)
+    public void InitAstTranslator(IAstToBytecodeTranslator translator)
     {
         translator.Configuration.Visitors.Add(new EqualityAstVisitor());
     }

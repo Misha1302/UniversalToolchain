@@ -19,7 +19,7 @@ public class ScopesModuleImpl : IFrontendCoreModule
         parser.Configuration.NodeCreators.Add(-100_000f, new ScopesCreator());
     }
 
-    public void InitTranslator(IBytecodeTranslator translator)
+    public void InitAstTranslator(IAstToBytecodeTranslator translator)
     {
         translator.Configuration.Visitors.Add(new ScopeAstVisitor());
     }

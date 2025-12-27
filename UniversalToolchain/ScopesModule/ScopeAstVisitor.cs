@@ -11,6 +11,6 @@ public class ScopeAstVisitor : IAstVisitor
         if (data.Node.NodeType != ExtensibleEnum<AstNodeTag>.Get("Scope")) return;
 
         foreach (var child in data.Node.Children)
-            data.BytecodeTranslator.Translate(child);
+            data.AstToBytecodeTranslator.Translate(child);
     }
 }

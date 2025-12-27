@@ -21,8 +21,8 @@ public class ComparisonVisitor : IAstVisitor
             return;
 
         // Сначала вычисляем оба операнда
-        data.BytecodeTranslator.Translate(data.Node.Children[0]);
-        data.BytecodeTranslator.Translate(data.Node.Children[1]);
+        data.AstToBytecodeTranslator.Translate(data.Node.Children[0]);
+        data.AstToBytecodeTranslator.Translate(data.Node.Children[1]);
 
         var op = data.Node.LexemeValue?.Text ?? GetOperatorFromNodeType(nodeType);
 

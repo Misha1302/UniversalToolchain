@@ -1,3 +1,4 @@
+using AbstractIrConverters;
 using BasicStdLib;
 using BenchmarkDotNet.Attributes;
 using IntermediateRepresentationAbstractions;
@@ -39,11 +40,13 @@ public class CSharpInteropMathBenchmarks
             new BooleanOperations()
         };
 
+
         _interpreterCore = new BasicCoreImpl<IAbstractIR>(
             () => new BasicLexerImpl(),
             () => new BasicParserImpl(),
-            () => new BasicBytecodeTranslatorImpl(),
+            () => new BasicAstToBytecodeTranslatorImpl(),
             () => new BytecodeToAbstractIrConverterImpl(),
+            () => new AbstractIrToAbstractIrStub(),
             () => new InterpreterImpl(),
             modulesWithCSharp,
             []
@@ -52,7 +55,8 @@ public class CSharpInteropMathBenchmarks
         _compilerCore = new BasicCoreImpl<DynamicMethod>(
             () => new BasicLexerImpl(),
             () => new BasicParserImpl(),
-            () => new BasicBytecodeTranslatorImpl(),
+            () => new BasicAstToBytecodeTranslatorImpl(),
+            () => new BytecodeToAbstractIrConverterImpl(),
             () => new AbstractMethodsCompilerImpl(),
             () => new DynamicMethodExecutor(),
             modulesWithCSharp,

@@ -9,11 +9,11 @@ public interface IMiddleEndCoreModule<TCompilationOutput>
         return current;
     }
 
-    void InitMethodsCompiler(IAbstractMethodsCompiler<TCompilationOutput> compiler)
+    void InitExecutor(IExecutor<TCompilationOutput> executor)
     {
     }
 
-    void InitExecutor(IExecutor<TCompilationOutput> executor)
+    void InitMethodsCompiler(IAbstractIrCompiler<TCompilationOutput> compiler)
     {
     }
 }

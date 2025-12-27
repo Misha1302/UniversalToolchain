@@ -15,7 +15,7 @@ public class NumbersModuleImpl : IFrontendCoreModule
         );
     }
 
-    public void InitTranslator(IBytecodeTranslator translator)
+    public void InitAstTranslator(IAstToBytecodeTranslator translator)
     {
         translator.Configuration.Visitors.Add(new NumberAstVisitor());
     }

@@ -3,11 +3,11 @@ using BasicCore.TranslatorWrapper;
 
 namespace BasicCodeTranslator;
 
-public class BasicBytecodeTranslatorImpl(BytecodeTranslatorConfiguration configuration) : IBytecodeTranslator
+public class BasicAstToBytecodeTranslatorImpl(BytecodeTranslatorConfiguration configuration) : IAstToBytecodeTranslator
 {
     private readonly Bytecode _code = new([]);
 
-    public BasicBytecodeTranslatorImpl() : this(new BytecodeTranslatorConfiguration([]))
+    public BasicAstToBytecodeTranslatorImpl() : this(new BytecodeTranslatorConfiguration([]))
     {
     }
 

@@ -34,7 +34,7 @@ public class ComparisonOperations : IFrontendCoreModule
         parser.Configuration.NodeCreators.Add(-20f, new ComparisonNodeCreator("LessOrEqual"));
     }
 
-    public void InitTranslator(IBytecodeTranslator translator)
+    public void InitAstTranslator(IAstToBytecodeTranslator translator)
     {
         translator.Configuration.Visitors.Add(new ComparisonVisitor());
     }

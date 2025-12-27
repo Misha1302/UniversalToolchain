@@ -10,8 +10,9 @@ namespace BasicCore;
 public class BasicCoreImpl<TCompilationOutput>(
     Func<ILexer> lexerFactory,
     Func<IParser> parserFactory,
-    Func<IBytecodeTranslator> translatorFactory,
-    Func<IAbstractMethodsCompiler<TCompilationOutput>> compilerFactory,
+    Func<IAstToBytecodeTranslator> astTranslatorFactory,
+    Func<IAbstractMethodsTranslator> abstractMethodsTranslatorFactory,
+    Func<IAbstractIrCompiler<TCompilationOutput>> compilerFactory,
     Func<IExecutor<TCompilationOutput>> executorFactory,
     IReadOnlyList<IFrontendCoreModule> modules,
     IReadOnlyList<IMiddleEndCoreModule<TCompilationOutput>> middleEndModules
@@ -28,7 +29,8 @@ public class BasicCoreImpl<TCompilationOutput>(
 
         var lexer = lexerFactory();
         var parser = parserFactory();
-        var translator = translatorFactory();
+        var astTranslator = astTranslatorFactory();
+        var methodsTranslator = abstractMethodsTranslatorFactory();
         var compiler = compilerFactory();
         var executor = executorFactory();
 
@@ -41,12 +43,16 @@ public class BasicCoreImpl<TCompilationOutput>(
         var astRoot = parser.Parse(targetLexemes);
 
         var targetRoot = modules.Aggregate(astRoot, (current, module) => module.ProcessAst(current));
-        modules.ForEach(module => module.InitTranslator(translator));
-        var bytecode = translator.Translate(targetRoot);
+        modules.ForEach(module => module.InitAstTranslator(astTranslator));
+        var bytecode = astTranslator.Translate(targetRoot);
 
         var targetBytecode = modules.Aggregate(bytecode, (current, module) => module.ProcessBytecode(current));
+        modules.ForEach(module => module.InitMethodsTranslator(methodsTranslator));
+        var air = methodsTranslator.Translate(targetBytecode);
+
+        var targetIr = modules.Aggregate(air, (current, module) => module.ProcessIr(current));
         middleEndModules.ForEach(module => module.InitMethodsCompiler(compiler));
-        var compiled = compiler.Compile(targetBytecode);
+        var compiled = compiler.Compile(targetIr);
 
         var targetDynamicMethods = middleEndModules.Aggregate(compiled, (current, module) => module.ProcessCompilation(current));
         middleEndModules.ForEach(module => module.InitExecutor(executor));

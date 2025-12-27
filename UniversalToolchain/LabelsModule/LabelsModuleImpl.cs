@@ -25,7 +25,7 @@ public class LabelsModuleImpl : IFrontendCoreModule
         parser.Configuration.NodeCreators.Add(-2, new GotoNodeCreator());
     }
 
-    public void InitTranslator(IBytecodeTranslator translator)
+    public void InitAstTranslator(IAstToBytecodeTranslator translator)
     {
         var labelsSharedData = new LabelsSharedData();
         translator.Configuration.Visitors.Add(new LabelsVisitor(labelsSharedData));

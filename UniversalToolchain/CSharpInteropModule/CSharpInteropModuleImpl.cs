@@ -21,7 +21,7 @@ public class CSharpInteropModuleImpl : IFrontendCoreModule
         parser.Configuration.NodeCreators.Add(-1000, new CSharpFunctionCallsNodeCreator());
     }
 
-    public void InitTranslator(IBytecodeTranslator translator)
+    public void InitAstTranslator(IAstToBytecodeTranslator translator)
     {
         translator.Configuration.Visitors.Add(new CSharpFunctionCallsAstVisitor());
     }

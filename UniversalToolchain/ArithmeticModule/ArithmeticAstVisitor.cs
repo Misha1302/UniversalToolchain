@@ -23,7 +23,7 @@ public class ArithmeticAstVisitor : IAstVisitor
             return;
 
         foreach (var child in data.Node.Children)
-            data.BytecodeTranslator.Translate(child);
+            data.AstToBytecodeTranslator.Translate(child);
 
         var op = (data.Node.LexemeValue?.Text).NotNull();
         var methodName = _opToName[op];

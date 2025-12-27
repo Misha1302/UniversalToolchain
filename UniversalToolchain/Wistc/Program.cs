@@ -1,4 +1,5 @@
-﻿using BasicInterpreter;
+﻿using AbstractIrConverters;
+using BasicInterpreter;
 using IntermediateRepresentationAbstractions;
 
 namespace Wistc;
@@ -78,8 +79,9 @@ public static class Program
             var core = new BasicCoreImpl<IAbstractIR>(
                 () => new BasicLexerImpl(),
                 () => new BasicParserImpl(),
-                () => new BasicBytecodeTranslatorImpl(),
+                () => new BasicAstToBytecodeTranslatorImpl(),
                 () => new BytecodeToAbstractIrConverterImpl(),
+                () => new AbstractIrToAbstractIrStub(),
                 () => new InterpreterImpl(),
                 frontendModules,
                 middleEndModules

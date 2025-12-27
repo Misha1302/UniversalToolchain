@@ -28,7 +28,7 @@ public class ArithmeticModuleImpl : IFrontendCoreModule
         parser.Configuration.NodeCreators.Add(0, new SubstractionOperationNodeCreator());
     }
 
-    public void InitTranslator(IBytecodeTranslator translator)
+    public void InitAstTranslator(IAstToBytecodeTranslator translator)
     {
         translator.Configuration.Visitors.Add(new ArithmeticAstVisitor());
     }

@@ -1,5 +1,6 @@
 ﻿// BasicCore.Tests/TestBase.cs
 
+using AbstractIrConverters;
 using BasicStdLib;
 using IntermediateRepresentationAbstractions;
 
@@ -28,7 +29,8 @@ public abstract class TestBase
             new BasicCoreImpl<DynamicMethod>(
                 () => new BasicLexerImpl(),
                 () => new BasicParserImpl(),
-                () => new BasicBytecodeTranslatorImpl(),
+                () => new BasicAstToBytecodeTranslatorImpl(),
+                () => new BytecodeToAbstractIrConverterImpl(),
                 () => new AbstractMethodsCompilerImpl(),
                 () => new DynamicMethodExecutor(),
                 modules,
@@ -39,8 +41,9 @@ public abstract class TestBase
             new BasicCoreImpl<IAbstractIR>(
                 () => new BasicLexerImpl(),
                 () => new BasicParserImpl(),
-                () => new BasicBytecodeTranslatorImpl(),
+                () => new BasicAstToBytecodeTranslatorImpl(),
                 () => new BytecodeToAbstractIrConverterImpl(),
+                () => new AbstractIrToAbstractIrStub(),
                 () => new InterpreterImpl(),
                 modules,
                 middleEndModules.TryGetValue(typeof(IAbstractIR), out var airModules)

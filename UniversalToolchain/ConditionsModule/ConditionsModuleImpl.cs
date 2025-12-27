@@ -27,7 +27,7 @@ public class ConditionsModuleImpl : IFrontendCoreModule
         parser.Configuration.NodeCreators.Add(16f, new CondNodesCombiner());
     }
 
-    public void InitTranslator(IBytecodeTranslator translator)
+    public void InitAstTranslator(IAstToBytecodeTranslator translator)
     {
         translator.Configuration.Visitors.Add(new ConditionsVisitor());
     }

@@ -16,7 +16,7 @@ public class CSharpFunctionCallsAstVisitor : IAstVisitor
             return;
 
         foreach (var child in data.Node.Children)
-            data.BytecodeTranslator.Translate(child);
+            data.AstToBytecodeTranslator.Translate(child);
 
         var fullName = (data.Node.LexemeValue?.Text).NotNull();
         var call = MethodsFinder.GetMethod(fullName).NotNull();

@@ -1,3 +1,4 @@
+using AbstractIrConverters;
 using BasicStdLib;
 using BenchmarkDotNet.Attributes;
 using IntermediateRepresentationAbstractions;
@@ -50,11 +51,13 @@ public class HeavyColdStartBenchmarks
             new BooleanOperations()
         };
 
+
         _interpreterCore = new BasicCoreImpl<IAbstractIR>(
             () => new BasicLexerImpl(),
             () => new BasicParserImpl(),
-            () => new BasicBytecodeTranslatorImpl(),
+            () => new BasicAstToBytecodeTranslatorImpl(),
             () => new BytecodeToAbstractIrConverterImpl(),
+            () => new AbstractIrToAbstractIrStub(),
             () => new InterpreterImpl(),
             modules,
             []
@@ -63,7 +66,8 @@ public class HeavyColdStartBenchmarks
         _compilerCore = new BasicCoreImpl<DynamicMethod>(
             () => new BasicLexerImpl(),
             () => new BasicParserImpl(),
-            () => new BasicBytecodeTranslatorImpl(),
+            () => new BasicAstToBytecodeTranslatorImpl(),
+            () => new BytecodeToAbstractIrConverterImpl(),
             () => new AbstractMethodsCompilerImpl(),
             () => new DynamicMethodExecutor(),
             modules,

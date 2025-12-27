@@ -24,7 +24,7 @@ public class ConditionsVisitor : IAstVisitor
     private void VisitIf(BytecodeVisitorData data)
     {
         // Условие if
-        data.BytecodeTranslator.Translate(data.Node.Children[0]);
+        data.AstToBytecodeTranslator.Translate(data.Node.Children[0]);
 
         var endLabel = Guid.NewGuid();
         var elseLabel = Guid.NewGuid();
@@ -37,7 +37,7 @@ public class ConditionsVisitor : IAstVisitor
         data.Bytecode.Instructions.Add(new BytecodeInstruction(condJumpMethod));
 
         // Тело if
-        data.BytecodeTranslator.Translate(data.Node.Children[1]);
+        data.AstToBytecodeTranslator.Translate(data.Node.Children[1]);
 
         // Безусловный переход в конец
         var jumpMethod = new AbstractMethodImpl(
@@ -57,7 +57,7 @@ public class ConditionsVisitor : IAstVisitor
         // Обработка elif/else если есть
         if (data.Node.Children.Count > 2)
             for (var i = 2; i < data.Node.Children.Count; i++)
-                data.BytecodeTranslator.Translate(data.Node.Children[i]);
+                data.AstToBytecodeTranslator.Translate(data.Node.Children[i]);
 
         // Метка конца
         var endLabelMethod = new AbstractMethodImpl(
@@ -70,6 +70,6 @@ public class ConditionsVisitor : IAstVisitor
     private void VisitElse(BytecodeVisitorData data)
     {
         // Просто выполняем тело else
-        data.BytecodeTranslator.Translate(data.Node.Children[0]);
+        data.AstToBytecodeTranslator.Translate(data.Node.Children[0]);
     }
 }
