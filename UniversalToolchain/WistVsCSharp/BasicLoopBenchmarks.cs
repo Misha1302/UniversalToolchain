@@ -81,19 +81,20 @@ public class BasicLoopBenchmarks
             commonModules,
             []
         );
+        
+        _interpreterCore.PrepareToRun(_loopSum);
+        _compilerCore.PrepareToRun(_loopSum);
     }
 
     [Benchmark]
     public object? Interpreter_BasicLoop()
     {
-        _interpreterCore.PrepareToRun(_loopSum);
         return _interpreterCore.RunPrepared();
     }
 
     [Benchmark]
     public object? Compiler_BasicLoop()
     {
-        _compilerCore.PrepareToRun(_loopSum);
         return _compilerCore.RunPrepared();
     }
 

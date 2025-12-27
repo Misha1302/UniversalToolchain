@@ -1,4 +1,4 @@
-namespace BytecodeDynamicMethodsCompiler;
+namespace ObjectExtensions;
 
 public static class ObjectExtension
 {

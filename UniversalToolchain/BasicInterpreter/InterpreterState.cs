@@ -1,5 +1,5 @@
-using BytecodeDynamicMethodsCompiler;
 using IntermediateRepresentationAbstractions;
+using ObjectExtensions;
 
 namespace BasicInterpreter;
 

@@ -10,6 +10,7 @@ using ExceptionsManager;
 using GrEmit;
 using IntermediateRepresentationAbstractions;
 using ListExtensions;
+using ObjectExtensions;
 
 namespace BytecodeDynamicMethodsCompiler;
 

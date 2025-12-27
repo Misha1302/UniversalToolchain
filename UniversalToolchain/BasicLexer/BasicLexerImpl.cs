@@ -1,7 +1,7 @@
 using System.Text.RegularExpressions;
 using BasicCore.LexerWrapper;
-using BasicTypesExtensions;
 using ExceptionsManager;
+using ListExtensions;
 
 namespace BasicLexer;
 

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Reflection.Emit;
 using BasicCilCompiler;
 using BasicStdLib;
@@ -38,18 +39,23 @@ var core = new BasicCoreImpl<DynamicMethod>(
 
 Main.LoadStdLibToThisAssembly();
 
-var result = core.Run(
+core.PrepareToRun(
     """
-    let a = 2.0
-    let b = 3.0
-    let c = 4.0
-
-    let result = Main.Pow(a, b) + 
-               (Main.Sqrt(c) * a) - 
-               Main.Log(b, a) 
-
-    result
+    let sum = 0
+    let i = 1
+    @loop:
+    if i > 1000000 goto @end
+        sum = sum + i
+        i = i + 1
+        goto @loop
+    @end:
+    sum
     """
 );
+
+var sw = Stopwatch.StartNew();
+var result = core.RunPrepared();
+Console.WriteLine(sw.ElapsedMilliseconds);
+
 
 Console.WriteLine(result);

@@ -1,8 +1,8 @@
 using System.Reflection;
 using BasicCore.ExecutorWrapper;
-using BytecodeDynamicMethodsCompiler;
 using DotnetHelper;
 using IntermediateRepresentationAbstractions;
+using ObjectExtensions;
 
 namespace BasicInterpreter;
 
@@ -183,12 +183,5 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
 
         // Кладем экземпляр в стек
         state.ValueStack.Push(instance);
-    }
-
-    private bool IsNumericType(Type type)
-    {
-        return type == typeof(int) || type == typeof(double) ||
-               type == typeof(float) || type == typeof(decimal) ||
-               type == typeof(long) || type == typeof(short);
     }
 }

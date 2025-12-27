@@ -1,4 +1,4 @@
-namespace BasicTypesExtensions;
+namespace ListExtensions;
 
 public static class ListFindExtensions
 {

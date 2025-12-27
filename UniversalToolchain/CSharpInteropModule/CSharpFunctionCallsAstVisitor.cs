@@ -20,7 +20,6 @@ public class CSharpFunctionCallsAstVisitor : IAstVisitor
 
         var fullName = (data.Node.LexemeValue?.Text).NotNull();
         var call = MethodsFinder.GetMethod(fullName).NotNull();
-        var argsCount = data.Node.Children[0].Children.Count;
 
         var method = new AbstractMethodImpl(
             $"Call_{fullName}",

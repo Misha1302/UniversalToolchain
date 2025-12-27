@@ -1,3 +1,5 @@
+using System.Runtime.InteropServices;
+
 namespace SettableGettableModule;
 
 public static class VariablesContainer<T>
@@ -6,16 +8,17 @@ public static class VariablesContainer<T>
 
     public static void Set(string key, T value)
     {
-        _variables[key] = value;
+        CollectionsMarshal.GetValueRefOrAddDefault(_variables, key, out _) = value;
     }
 
     public static T Get(string key)
     {
-        return _variables[key];
+        var value = CollectionsMarshal.GetValueRefOrNullRef(_variables, key);
+        return value;
     }
 
     public static VariableReference<T> GetRef(string key)
     {
-        return new VariableReference<T>(value => _variables[key] = value);
+        return new VariableReference<T>(value => CollectionsMarshal.GetValueRefOrAddDefault(_variables, key, out _) = value);
     }
 }

@@ -2,6 +2,7 @@ using IntermediateRepresentationAbstractions;
 
 namespace UniversalIntermediateRepresentation;
 
+// ReSharper disable once InconsistentNaming
 public class GenericAbstractIR<TIdentifier> : IGenericAbstractIR<TIdentifier>
 {
     private readonly List<Instruction> _instructions = [];
