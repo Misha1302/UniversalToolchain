@@ -53,7 +53,7 @@ public class PerformanceAndComplexityTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // Sum of all combinations: i=0-4, j=0-3, k=0-2
@@ -102,7 +102,7 @@ public class PerformanceAndComplexityTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // Sum of i*j for i=1..1000, j=1..100

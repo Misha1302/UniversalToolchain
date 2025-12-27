@@ -26,7 +26,7 @@ public class AdvancedArithmeticEdgeCases : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // (1e-15 + 2e-15) * 1e15 - 3e-15 * 1e15 = (3e-15)*1e15 - 3e-15*1e15 = 3 - 3 = 0
@@ -57,7 +57,7 @@ public class AdvancedArithmeticEdgeCases : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // Should return 2.5
@@ -87,7 +87,7 @@ public class AdvancedArithmeticEdgeCases : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // 3*(2.5)^3 - 2*(2.5)^2 + 5*2.5 - 7 = 46.875 - 12.5 + 12.5 - 7 = 39.375

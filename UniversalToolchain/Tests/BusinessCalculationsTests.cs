@@ -35,7 +35,7 @@ public class BusinessCalculationsTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // Total value = 2550 + 2362.5 + 1798 = 6710.5
@@ -72,7 +72,7 @@ public class BusinessCalculationsTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // grossProfit = 35000, netProfit = 15000

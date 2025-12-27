@@ -28,7 +28,7 @@ public class RealWorldScenariosTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // total = 100 * 3 = 300
@@ -61,7 +61,7 @@ public class RealWorldScenariosTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // area = π * r² = 3.141592653589793 * 49 ≈ 153.93804
@@ -99,7 +99,7 @@ public class RealWorldScenariosTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // overtimePay = 10 * (1000/160) * 1.5 = 10 * 6.25 * 1.5 = 93.75

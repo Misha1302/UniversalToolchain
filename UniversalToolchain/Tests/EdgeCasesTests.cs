@@ -25,7 +25,7 @@ public class EdgeCasesTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         var numberResult = (RealNumberImpl)result;
@@ -54,7 +54,7 @@ public class EdgeCasesTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         var numberResult = (RealNumberImpl)result;
@@ -84,7 +84,7 @@ public class EdgeCasesTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         var numberResult = (RealNumberImpl)result;

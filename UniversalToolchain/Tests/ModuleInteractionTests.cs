@@ -38,7 +38,7 @@ public class ModuleInteractionTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // baseValue = 10, calculated = 20, rounded = round(20 * π) ≈ round(62.83185) = 63
@@ -75,7 +75,7 @@ public class ModuleInteractionTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // 2^3 = 8

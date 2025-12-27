@@ -8,6 +8,7 @@ using ConditionsModule;
 using EqualityModule;
 using IdentifierModule;
 using LabelsModule;
+using LocalVariablesOptimizerModule;
 using SemicolonAsNewLineModule;
 using VariablesModule;
 
@@ -32,6 +33,7 @@ var core = new BasicCoreImpl<DynamicMethod>(
         new ConditionsModuleImpl(),
         new ComparisonOperations(),
         new BooleanOperations(),
+        new LocalVariablesOptimizer(),
         new ExecutorDebugLoggerImpl(),
         new ParserConfigurationModuleImpl(ActionType.DumpConfiguration),
         new LexerConfigurationModuleImpl(ActionType.DumpConfiguration)

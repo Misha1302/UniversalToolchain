@@ -29,7 +29,7 @@ public class MathematicalFormulasTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // For x² - 3x + 2 = 0, roots are 2 and 1, sum = 3
@@ -61,7 +61,7 @@ public class MathematicalFormulasTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // 10*5 + 0.5*2*25 = 50 + 25 = 75
@@ -93,7 +93,7 @@ public class MathematicalFormulasTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // area/circumference = (πr²)/(2πr) = r/2 = 3.5

@@ -21,7 +21,7 @@ public class BytecodeToAbstractIrConverterImpl : IAbstractMethodsTranslator
             var context = new IAbstractMethodConvertable.Context(typesStack);
             var air = convertable.GetAbstractIR(context);
 
-            ir.AppendInstructions(air);
+            ir.AppendInstructions(air.Instructions);
 
             air.Instructions.ManipulateTypesStack(typesStack, AirTypes.ProcessTypesIntrinsic);
         }

@@ -13,5 +13,5 @@ public interface IGenericAbstractIR<TIdentifier>
     void SetLabel(TIdentifier label);
     void Annotate(params List<object>[] annotations);
     void Intrinsic(object instructionIdentifier, params List<object> operands);
-    void AppendInstructions(IGenericAbstractIR<TIdentifier> air);
+    void AppendInstructions(IReadOnlyList<Instruction> instructions);
 }

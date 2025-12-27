@@ -16,6 +16,7 @@ using EqualityModule;
 using IdentifierModule;
 using IntermediateRepresentationAbstractions;
 using LabelsModule;
+using LocalVariablesOptimizerModule;
 using NumbersModule;
 using ScopesModule;
 using SemicolonAsNewLineModule;
@@ -26,7 +27,7 @@ namespace WistVsCSharp;
 
 [MemoryDiagnoser]
 [RankColumn]
-public class BasicLoopBenchmarks
+public class CSharpVsCompilerVsInterpreterBasicLoopBenchmarks
 {
     private readonly string _loopSum = @"
         let sum = 0
@@ -40,6 +41,7 @@ public class BasicLoopBenchmarks
         sum";
 
     private ICoreOptimizedRunnable _compilerCore = null!;
+    private ICoreOptimizedRunnable _compilerOptimizedCore = null!;
     private ICoreOptimizedRunnable _interpreterCore = null!;
 
     [GlobalSetup]
@@ -85,8 +87,20 @@ public class BasicLoopBenchmarks
             []
         );
 
+        _compilerOptimizedCore = new BasicCoreImpl<DynamicMethod>(
+            () => new BasicLexerImpl(),
+            () => new BasicParserImpl(),
+            () => new BasicAstToBytecodeTranslatorImpl(),
+            () => new BytecodeToAbstractIrConverterImpl(),
+            () => new AbstractMethodsCompilerImpl(),
+            () => new DynamicMethodExecutor(),
+            commonModules.Union([new LocalVariablesOptimizer()]).ToList(),
+            []
+        );
+
         _interpreterCore.PrepareToRun(_loopSum);
         _compilerCore.PrepareToRun(_loopSum);
+        _compilerOptimizedCore.PrepareToRun(_loopSum);
     }
 
     [Benchmark]
@@ -99,6 +113,12 @@ public class BasicLoopBenchmarks
     public object? Compiler_BasicLoop()
     {
         return _compilerCore.RunPrepared();
+    }
+
+    [Benchmark]
+    public object? CompilerOptimized_BasicLoop()
+    {
+        return _compilerOptimizedCore.RunPrepared();
     }
 
     [Benchmark(Baseline = true)]

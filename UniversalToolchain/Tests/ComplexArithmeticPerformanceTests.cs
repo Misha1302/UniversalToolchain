@@ -39,7 +39,7 @@ public class ComplexArithmeticPerformanceTests : TestBase
 
         // Act
         stopwatch.Start();
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
         stopwatch.Stop();
 
         // Assert
@@ -91,7 +91,7 @@ public class ComplexArithmeticPerformanceTests : TestBase
 
         // Act
         stopwatch.Start();
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
         stopwatch.Stop();
 
         // Assert

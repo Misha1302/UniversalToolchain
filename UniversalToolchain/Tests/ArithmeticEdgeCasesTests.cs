@@ -24,7 +24,7 @@ public class ArithmeticEdgeCasesTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // 0.000000001 * 1000000000 = 1
@@ -55,7 +55,7 @@ public class ArithmeticEdgeCasesTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         var numberResult = (RealNumberImpl)result;
@@ -83,7 +83,7 @@ public class ArithmeticEdgeCasesTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // 100 / 0.000000001 = 100000000000
@@ -114,7 +114,7 @@ public class ArithmeticEdgeCasesTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // Should be approximately 100 (may have floating point errors)

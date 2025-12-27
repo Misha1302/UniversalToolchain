@@ -19,7 +19,7 @@ public class FullPipelineTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         var numberResult = (RealNumberImpl)result;
@@ -48,7 +48,7 @@ public class FullPipelineTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         var numberResult = (RealNumberImpl)result;
@@ -71,7 +71,7 @@ public class FullPipelineTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         var numberResult = (RealNumberImpl)result;
@@ -101,7 +101,7 @@ public class FullPipelineTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // c = 5*3 + 2 = 15 + 2 = 17
@@ -135,7 +135,7 @@ public class FullPipelineTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // c = 10*20 - 5 = 200 - 5 = 195

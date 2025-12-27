@@ -34,7 +34,7 @@ public class LoopTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // Sum of 1 to 10 = 55
@@ -81,7 +81,7 @@ public class LoopTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // Sum of multiplication table 3x3: 
@@ -123,7 +123,7 @@ public class LoopTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // Sum of numbers 1 to 5 = 15

@@ -2,8 +2,6 @@ global using BasicCore;
 global using BasicLexer;
 global using BasicParser;
 global using BasicCodeTranslator;
-global using BytecodeDynamicMethodsCompiler;
-global using UniversalIntermediateRepresentation;
 global using IdentifierModule;
 global using ScopesModule;
 global using NumbersModule;

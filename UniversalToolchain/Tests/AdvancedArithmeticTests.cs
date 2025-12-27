@@ -26,7 +26,7 @@ public class AdvancedArithmeticTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // (0.1 + 0.2) * 10 - 0.3 * 10 = 0.3 * 10 - 3 = 3 - 3 = 0
@@ -57,7 +57,7 @@ public class AdvancedArithmeticTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // 1000000 * 1000000 = 1000000000000
@@ -92,7 +92,7 @@ public class AdvancedArithmeticTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // (10*2.5 + (-3)*2) / (2.5-1) + 0 = (25 - 6) / 1.5 = 19 / 1.5 = 12.666...

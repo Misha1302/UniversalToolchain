@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\BasicCore\BasicCore.csproj"/>
+        <ProjectReference Include="..\DotnetAirHelper\DotnetAirHelper.csproj" />
+        <ProjectReference Include="..\IntermediateRepresentationAbstractions\IntermediateRepresentationAbstractions.csproj"/>
+        <ProjectReference Include="..\ObjectExtensions\ObjectExtensions.csproj" />
+        <ProjectReference Include="..\SettableGettableModule\SettableGettableModule.csproj"/>
+    </ItemGroup>
+
+</Project>

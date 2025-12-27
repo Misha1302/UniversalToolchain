@@ -54,8 +54,8 @@ public class GenericAbstractIR<TIdentifier> : IGenericAbstractIR<TIdentifier>
     }
 
 
-    public void AppendInstructions(IGenericAbstractIR<TIdentifier> air)
+    public void AppendInstructions(IReadOnlyList<Instruction> instructions)
     {
-        _instructions.AddRange(air.Instructions);
+        _instructions.AddRange(instructions);
     }
 }

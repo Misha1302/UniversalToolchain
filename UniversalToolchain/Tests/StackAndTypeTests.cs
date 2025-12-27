@@ -32,7 +32,7 @@ public class StackAndTypeTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert - проверяем сложное вычисление
         // a=10, b=20.5, c=30.5, d=61.0, e=61.0, f=21.0, g=40.0
@@ -73,7 +73,7 @@ public class StackAndTypeTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // sqrt(2) ≈ 1.41421356
@@ -127,7 +127,7 @@ public class StackAndTypeTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert - sin² + cos² должно быть равно 1 для всех i
         var numberResult = (RealNumberImpl)result;

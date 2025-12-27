@@ -3,6 +3,7 @@
 using AbstractIrConverters;
 using BasicStdLib;
 using IntermediateRepresentationAbstractions;
+using LocalVariablesOptimizerModule;
 
 namespace Tests;
 
@@ -17,11 +18,10 @@ public abstract class TestBase
     }
 
     private static IEnumerable<ICoreRunnable> CreateCores(
-        IFrontendCoreModule[]? modules = null,
         Dictionary<Type, object>? middleEndModules = null
     )
     {
-        modules ??= [];
+        var modules = CreateDefaultModules();
         middleEndModules ??= [];
 
         return
@@ -33,7 +33,7 @@ public abstract class TestBase
                 () => new BytecodeToAbstractIrConverterImpl(),
                 () => new AbstractMethodsCompilerImpl(),
                 () => new DynamicMethodExecutor(),
-                modules,
+                modules.Union(CreateOptimizers()).ToList(),
                 middleEndModules.TryGetValue(typeof(DynamicMethod), out var dmModules)
                     ? (List<IMiddleEndCoreModule<DynamicMethod>>)dmModules
                     : []
@@ -53,16 +53,39 @@ public abstract class TestBase
         ];
     }
 
+    private static List<IFrontendCoreModule> CreateDefaultModules()
+    {
+        return
+        [
+            new IdentifierModuleImpl(),
+            new ScopesModuleImpl(),
+            new NumbersModuleImpl(),
+            new WhitespaceModuleImpl(),
+            new SemicolonAsNewLineModuleImpl(),
+            new ArithmeticModuleImpl(),
+            new CSharpInteropModuleImpl(),
+            new LabelsModuleImpl(),
+            new VariablesModuleImpl(),
+            new EqualityModuleImpl(),
+            new ConditionsModuleImpl(),
+            new ComparisonOperations(),
+            new BooleanOperations()
+        ];
+    }
+
+    private static List<IFrontendCoreModule> CreateOptimizers()
+    {
+        return [new LocalVariablesOptimizer()];
+    }
+
     protected object ExecuteCode(
         string code,
-        IFrontendCoreModule[]? modules = null,
         Dictionary<Type, object>? middleEndModules = null
     )
     {
-        modules ??= [];
         middleEndModules ??= [];
 
-        var values = CreateCores(modules, middleEndModules)
+        var values = CreateCores(middleEndModules)
             .Select(core => core.Run(code))
             .ToList();
 

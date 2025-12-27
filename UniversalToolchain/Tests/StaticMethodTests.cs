@@ -31,7 +31,7 @@ public class StaticMethodTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // log₁₀(100) = 2, sqrt(100) = 10, sum = 12
@@ -60,7 +60,7 @@ public class StaticMethodTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         var numberResult = (RealNumberImpl)result;

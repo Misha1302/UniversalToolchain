@@ -19,7 +19,7 @@ public class ComplexArithmeticTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // ((((5 * 3) + (6 * 2)) - 10) / 2) = ((15 + 12 - 10) / 2) = (17 / 2) = 8.5
@@ -43,7 +43,7 @@ public class ComplexArithmeticTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // Expected: 10 + (2*3) - (8/4) + ((5*(6-2))/2) = 10 + 6 - 2 + (5*4/2) = 10 + 6 - 2 + 10 = 24
@@ -75,7 +75,7 @@ public class ComplexArithmeticTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // (5*3 + 2*4)/(5-3) + (2+4)*(3-5) = (15+8)/2 + 6*(-2) = 23/2 - 12 = 11.5 - 12 = -0.5
@@ -106,7 +106,7 @@ public class ComplexArithmeticTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // (-5)*3 + (-2)*(-5-3) - (-2-5)/3 = -15 + (-2)*(-8) - (-7)/3 = -15 + 16 + 7/3 = 1 + 2.333... = 3.333...
@@ -135,7 +135,7 @@ public class ComplexArithmeticTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // (2 + (3 * (4 - 2))) * (6 / 3) = (2 + (3*2)) * 2 = (2+6)*2 = 8*2 = 16

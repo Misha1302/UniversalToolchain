@@ -39,7 +39,7 @@ public class ComplexConditionsTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // x=15 is between 10 and 20, so result should be 1
@@ -81,7 +81,7 @@ public class ComplexConditionsTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // 5 < 10 and 10 < 15 is true, so result should be 1
@@ -127,7 +127,7 @@ public class ComplexConditionsTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // score=85 should give grade=4

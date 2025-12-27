@@ -46,7 +46,7 @@ public class RealWorldAlgorithmTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // Fibonacci(10) = 55
@@ -86,7 +86,7 @@ public class RealWorldAlgorithmTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // 6! = 720
@@ -156,7 +156,7 @@ public class RealWorldAlgorithmTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // Sum of sorted array [1, 2, 3, 5, 8] = 19

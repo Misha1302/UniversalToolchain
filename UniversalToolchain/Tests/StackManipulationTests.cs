@@ -46,7 +46,7 @@ public class StackManipulationTests : TestBase
             new BooleanOperations()
         };
 
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(2500).Within(1e-9));
     }
@@ -104,7 +104,7 @@ public class StackManipulationTests : TestBase
             new BooleanOperations()
         };
 
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(60).Within(1e-9));
     }
@@ -179,7 +179,7 @@ public class StackManipulationTests : TestBase
             new BooleanOperations()
         };
 
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(430).Within(1e-9));
     }

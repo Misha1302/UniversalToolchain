@@ -21,7 +21,7 @@ public class ArithmeticModuleTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         var numberResult = (RealNumberImpl)result;
@@ -44,7 +44,7 @@ public class ArithmeticModuleTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // Should be 14, not 20
@@ -68,7 +68,7 @@ public class ArithmeticModuleTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert
         // Should be 20, not 14

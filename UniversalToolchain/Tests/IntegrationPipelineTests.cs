@@ -54,7 +54,7 @@ public class IntegrationPipelineTests : TestBase
         };
 
         // Act
-        var result = ExecuteCode(code, modules);
+        var result = ExecuteCode(code);
 
         // Assert - проверяем, что пайплайн работает без ошибок
         var numberResult = (RealNumberImpl)result;

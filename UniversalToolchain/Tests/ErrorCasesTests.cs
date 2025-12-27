@@ -21,7 +21,7 @@ public class ErrorCasesTests : TestBase
 
         try
         {
-            ExecuteCode(code, modules);
+            ExecuteCode(code);
             Assert.Fail();
         }
         catch

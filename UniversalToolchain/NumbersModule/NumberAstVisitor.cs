@@ -14,7 +14,7 @@ public class NumberAstVisitor : IAstVisitor
     {
         if (data.Node.NodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("Number")) return;
 
-        var numText = (data.Node.LexemeValue?.Text).NotNull();
+        var numText = (data.Node.LexemeValue?.Text).NotNull().Replace("_", "");
         var num = double.Parse(numText, NumberStyles.Any);
 
         var method = new AbstractMethodImpl(
