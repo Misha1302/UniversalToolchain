@@ -14,15 +14,15 @@ public class ComparisonNodeCreator(string nodeType) : IAstNodeCreator
 
         var opNode = scope[childIndex];
 
-        // Левый операнд
+        // Left operand
         if (scope.SafeGet(childIndex - 1) != null)
         {
             opNode.Children.Add(scope[childIndex - 1]);
             scope.Children.RemoveAt(childIndex - 1);
-            childIndex--; // Индекс изменился после удаления
+            childIndex--; // Index changed after removal
         }
 
-        // Правый операнд
+        // Right operand
         if (scope.SafeGet(childIndex + 1) != null)
         {
             opNode.Children.Add(scope[childIndex + 1]);

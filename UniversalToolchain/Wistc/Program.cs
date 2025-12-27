@@ -66,7 +66,7 @@ public static class Program
 
         try
         {
-            // Создаем модули
+            // Create modules
             var (frontendModules, middleEndModules) = CreateModules(options);
 
             if (_verbose)
@@ -75,7 +75,7 @@ public static class Program
                 Console.WriteLine($"Loaded {middleEndModules.Count} middle-end modules");
             }
 
-            // Создаем ядро
+            // Create core
             var core = new BasicCoreImpl<IAbstractIR>(
                 () => new BasicLexerImpl(),
                 () => new BasicParserImpl(),
@@ -87,7 +87,7 @@ public static class Program
                 middleEndModules
             );
 
-            // Читаем исходный код
+            // Read source code
             var code = File.ReadAllText(options.SourcePath);
 
             if (_verbose)
@@ -96,7 +96,7 @@ public static class Program
                 Console.WriteLine("Starting execution...");
             }
 
-            // Выполняем код
+            // Execute code
             var result = core.Run(code);
 
             Console.WriteLine(result?.ToString() ?? "(null)");
@@ -119,7 +119,7 @@ public static class Program
         var frontendModules = new List<IFrontendCoreModule>();
         var middleEndModules = new List<IMiddleEndCoreModule<IAbstractIR>>();
 
-        // Базовые модули (включаем все по умолчанию)
+        // Base modules (include all by default)
         var baseModules = new Dictionary<string, IFrontendCoreModule>
         {
             ["Identifier"] = new IdentifierModuleImpl(),
@@ -137,11 +137,11 @@ public static class Program
             ["Boolean"] = new BooleanOperations()
         };
 
-        // Определяем, какие модули отключить
+        // Determine which modules to disable
         var disabledModules = options.DisableModules?.Select(m => m.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase)
                               ?? new HashSet<string>();
 
-        // Добавляем базовые модули (кроме отключенных)
+        // Add base modules (except disabled ones)
         foreach (var (name, module) in baseModules)
         {
             if (disabledModules.Contains(name))
@@ -154,7 +154,7 @@ public static class Program
             if (_verbose) Console.WriteLine($"Added module: {name}");
         }
 
-        // Модуль логирования
+        // Logging module
         if (!options.NoLogging && !disabledModules.Contains("Logger"))
         {
             var logsPath = options.LogsPath ?? "wistc.log";
@@ -162,29 +162,29 @@ public static class Program
             if (_verbose) Console.WriteLine($"Added logging module (output: {logsPath})");
         }
 
-        // Модуль конфигурации парсера
+        // Parser configuration module
         if (!string.IsNullOrWhiteSpace(options.ParserConfigPath))
         {
             var actionType = options.ParserConfigRead
                 ? ActionType.ReadConfiguration
-                : ActionType.DumpConfiguration; // По умолчанию дамп
+                : ActionType.DumpConfiguration; // Default dump
 
             frontendModules.Add(new ParserConfigurationModuleImpl(actionType, options.ParserConfigPath));
             if (_verbose) Console.WriteLine($"Added parser config module ({actionType})");
         }
 
-        // Модуль конфигурации лексера
+        // Lexer configuration module
         if (!string.IsNullOrWhiteSpace(options.LexerConfigPath))
         {
             var actionType = options.LexerConfigRead
                 ? ActionType.ReadConfiguration
-                : ActionType.DumpConfiguration; // По умолчанию дамп
+                : ActionType.DumpConfiguration; // Default dump
 
             frontendModules.Add(new LexerConfigurationModuleImpl(actionType, options.LexerConfigPath));
             if (_verbose) Console.WriteLine($"Added lexer config module ({actionType})");
         }
 
-        // Кастомные модули из DLL
+        // Custom modules from DLL
         if (options.CustomModuleDlls != null)
         {
             foreach (var dllPath in options.CustomModuleDlls)

@@ -6,17 +6,16 @@ public class ArithmeticEdgeCasesTests : TestBase
     [Test]
     public void Execute_VerySmallNumbers_HandlesPrecision()
     {
-        // Arrange
         var code = @"
                 let tiny = 0.000000001
                 let veryTiny = 0.0000000001
                 (tiny * 1000000000) + (veryTiny * 10000000000)
             ";
 
-        // Act
+
         var result = ExecuteCode(code);
 
-        // Assert
+
         // 0.000000001 * 1000000000 = 1
         // 0.0000000001 * 10000000000 = 1
         // 1 + 1 = 2
@@ -27,17 +26,16 @@ public class ArithmeticEdgeCasesTests : TestBase
     [Test]
     public void Execute_ExpressionAtPrecisionLimits_HandlesCorrectly()
     {
-        // Arrange
         var code = @"
                 let maxPrecision = 1.00000000000001
                 let minPrecision = 0.99999999999999
                 (maxPrecision - 1) * 100000000000000 + (1 - minPrecision) * 100000000000000
             ";
 
-        // Act
+
         var result = ExecuteCode(code);
 
-        // Assert
+
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(2).Within(1e-2));
     }
@@ -45,17 +43,16 @@ public class ArithmeticEdgeCasesTests : TestBase
     [Test]
     public void Execute_DivisionByVerySmallNumber_HandlesCorrectly()
     {
-        // Arrange
         var code = @"
                 let number = 100
                 let verySmall = 0.000000001
                 number / verySmall
             ";
 
-        // Act
+
         var result = ExecuteCode(code);
 
-        // Assert
+
         // 100 / 0.000000001 = 100000000000
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(100000000000).Within(1e-9));
@@ -64,7 +61,6 @@ public class ArithmeticEdgeCasesTests : TestBase
     [Test]
     public void Execute_ChainedDivisionOperations_PreservesPrecision()
     {
-        // Arrange
         var code = @"
                 let a = 100
                 let b = 3
@@ -73,10 +69,10 @@ public class ArithmeticEdgeCasesTests : TestBase
                 result
             ";
 
-        // Act
+
         var result = ExecuteCode(code);
 
-        // Assert
+
         // Should be approximately 100 (may have floating point errors)
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(100).Within(1e-6));

@@ -23,23 +23,23 @@ public class ConditionsVisitor : IAstVisitor
 
     private void VisitIf(BytecodeVisitorData data)
     {
-        // Условие if
+        // If condition
         data.AstToBytecodeTranslator.Translate(data.Node.Children[0]);
 
         var endLabel = Guid.NewGuid();
         var elseLabel = Guid.NewGuid();
 
-        // Условный переход если false
+        // Conditional jump if false
         var condJumpMethod = new AbstractMethodImpl(
             $"CondFGoto_!Intrinsic_{elseLabel}",
             (il, _) => il.JmpIfNot(elseLabel)
         );
         data.Bytecode.Instructions.Add(new BytecodeInstruction(condJumpMethod));
 
-        // Тело if
+        // If body
         data.AstToBytecodeTranslator.Translate(data.Node.Children[1]);
 
-        // Безусловный переход в конец
+        // Unconditional jump to end
         var jumpMethod = new AbstractMethodImpl(
             $"Goto_!Intrinsic_{endLabel}",
             (il, _) => il.Jmp(endLabel)
@@ -47,19 +47,19 @@ public class ConditionsVisitor : IAstVisitor
 
         data.Bytecode.Instructions.Add(new BytecodeInstruction(jumpMethod));
 
-        // Метка else
+        // Else label
         var elseLabelMethod = new AbstractMethodImpl(
             $"Label_!Intrinsic_{elseLabel}",
             (il, _) => il.SetLabel(elseLabel)
         );
         data.Bytecode.Instructions.Add(new BytecodeInstruction(elseLabelMethod));
 
-        // Обработка elif/else если есть
+        // Process elif/else if present
         if (data.Node.Children.Count > 2)
             for (var i = 2; i < data.Node.Children.Count; i++)
                 data.AstToBytecodeTranslator.Translate(data.Node.Children[i]);
 
-        // Метка конца
+        // End label
         var endLabelMethod = new AbstractMethodImpl(
             $"Label_!Intrinsic_{endLabel}",
             (il, _) => il.SetLabel(endLabel)
@@ -69,7 +69,7 @@ public class ConditionsVisitor : IAstVisitor
 
     private void VisitElse(BytecodeVisitorData data)
     {
-        // Просто выполняем тело else
+        // Simply execute else body
         data.AstToBytecodeTranslator.Translate(data.Node.Children[0]);
     }
 }

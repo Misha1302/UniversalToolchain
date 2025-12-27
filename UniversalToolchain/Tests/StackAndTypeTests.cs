@@ -6,7 +6,6 @@ public class StackAndTypeTests : TestBase
     [Test]
     public void Execute_ComplexStackOperationsWithMixedTypes_PreservesStackIntegrity()
     {
-        // Arrange
         var code = @"
                 let a = 10
                 let b = 20.5
@@ -20,10 +19,10 @@ public class StackAndTypeTests : TestBase
                 h
             ";
 
-        // Act
+
         var result = ExecuteCode(code);
 
-        // Assert - проверяем сложное вычисление
+
         // a=10, b=20.5, c=30.5, d=61.0, e=61.0, f=21.0, g=40.0
         // h = (10 + 20.5) * (30.5 - 61.0 / 61.0) + 21.0
         //   = 30.5 * (30.5 - 1.0) + 21.0
@@ -36,7 +35,6 @@ public class StackAndTypeTests : TestBase
     [Test]
     public void Execute_NestedMethodCalls_MaintainsStackCorrectly()
     {
-        // Arrange
         var code = @"
                 let x = 2.0
                 let y = 3.0
@@ -50,10 +48,10 @@ public class StackAndTypeTests : TestBase
                 result
             ";
 
-        // Act
+
         var result = ExecuteCode(code);
 
-        // Assert
+
         // sqrt(2) ≈ 1.41421356
         // ln(3) ≈ 1.09861229
         // sum ≈ 2.51282585
@@ -66,7 +64,6 @@ public class StackAndTypeTests : TestBase
     [Test]
     public void Execute_StackHeavyOperationsWithConditionals_HandlesComplexFlow()
     {
-        // Arrange
         var code = @"
                 let stackTest = 0
                 let i = 0
@@ -89,10 +86,10 @@ public class StackAndTypeTests : TestBase
                 stackTest
             ";
 
-        // Act
+
         var result = ExecuteCode(code);
 
-        // Assert - sin² + cos² должно быть равно 1 для всех i
+
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(5).Within(1e-9));
     }

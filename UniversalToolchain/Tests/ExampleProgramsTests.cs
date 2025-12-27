@@ -6,7 +6,6 @@ public class ExampleProgramsTests : TestBase
     [Test]
     public void Execute_CompleteExampleLikeInProgramCs_WorksCorrectly()
     {
-        // Arrange
         var code = @"
                 let a = 10
                 let b = 20
@@ -16,10 +15,10 @@ public class ExampleProgramsTests : TestBase
                 c
             ";
 
-        // Act
+
         var result = ExecuteCode(code);
 
-        // Assert
+
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(180).Within(1e-9));
     }

@@ -14,7 +14,7 @@ public class ElseNodeCreator : IAstNodeCreator
 
         var elseNode = scope[childIndex];
 
-        // Добавляем тело else (следующий scope)
+        // Add else body (next scope)
         if (scope.SafeGet(childIndex + 1)?.NodeType != null)
         {
             elseNode.Children.Add(scope[childIndex + 1]);

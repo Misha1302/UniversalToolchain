@@ -6,13 +6,12 @@ public class FullPipelineTests : TestBase
     [Test]
     public void Execute_SimpleArithmetic_ReturnsCorrectResult()
     {
-        // Arrange
         var code = "2 + 3 * 4";
 
-        // Act
+
         var result = ExecuteCode(code);
 
-        // Assert
+
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(14).Within(1e-9));
     }
@@ -20,17 +19,16 @@ public class FullPipelineTests : TestBase
     [Test]
     public void Execute_VariableAssignmentAndUsage_WorksCorrectly()
     {
-        // Arrange
         var code = @"
                 let x = 10
                 let y = 20
                 x + y
             ";
 
-        // Act
+
         var result = ExecuteCode(code);
 
-        // Assert
+
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(30).Within(1e-9));
     }
@@ -38,13 +36,12 @@ public class FullPipelineTests : TestBase
     [Test]
     public void Execute_ComplexExpressionWithParentheses_ReturnsCorrectResult()
     {
-        // Arrange
         var code = "(2 + 3) * (4 - 1)";
 
-        // Act
+
         var result = ExecuteCode(code);
 
-        // Assert
+
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(15).Within(1e-9));
     }
@@ -52,7 +49,6 @@ public class FullPipelineTests : TestBase
     [Test]
     public void Execute_MultipleOperationsWithVariables_WorksCorrectly()
     {
-        // Arrange
         var code = @"
                 let a = 5
                 let b = 3
@@ -60,10 +56,10 @@ public class FullPipelineTests : TestBase
                 c - 1
             ";
 
-        // Act
+
         var result = ExecuteCode(code);
 
-        // Assert
+
         // c = 5*3 + 2 = 15 + 2 = 17
         // c - 1 = 16
         var numberResult = (RealNumberImpl)result;
@@ -73,7 +69,6 @@ public class FullPipelineTests : TestBase
     [Test]
     public void Execute_ExampleProgramFromDocumentation_CompletesSuccessfully()
     {
-        // Arrange
         var code = @"
                 let a = 10
                 let b = 20
@@ -83,10 +78,10 @@ public class FullPipelineTests : TestBase
                 c
             ";
 
-        // Act
+
         var result = ExecuteCode(code);
 
-        // Assert
+
         // c = 10*20 - 5 = 200 - 5 = 195
         // b = 20 + 1 = 21
         // c = 195 - 15 = 180

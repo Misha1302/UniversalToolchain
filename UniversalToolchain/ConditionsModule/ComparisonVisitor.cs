@@ -20,7 +20,7 @@ public class ComparisonVisitor : IAstVisitor
             nodeType != ExtensibleEnum<AstNodeTag>.Get("LessOrEqual"))
             return;
 
-        // Сначала вычисляем оба операнда
+        // First, evaluate both operands
         data.AstToBytecodeTranslator.Translate(data.Node.Children[0]);
         data.AstToBytecodeTranslator.Translate(data.Node.Children[1]);
 

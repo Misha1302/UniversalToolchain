@@ -77,7 +77,7 @@ public class LexerConfigurationModuleImpl(ActionType actionType, string path = "
         }
     }
 
-    // Вспомогательные классы для инкапсуляции логики
+    // Helper classes for logic encapsulation
     private class ConfigurationDumper(ILexer lexer)
     {
         public string Dump()
@@ -126,7 +126,7 @@ public class LexerConfigurationModuleImpl(ActionType actionType, string path = "
 
         private string FormatPatternLine((float Priority, LexemePattern Pattern, bool Ignore) item)
         {
-            // Кодируем паттерн в base64, чтобы избежать проблем с символом |
+            // Encode pattern in base64 to avoid issues with | character
             var encodedPattern = Convert.ToBase64String(Encoding.UTF8.GetBytes(item.Pattern.Pattern));
             var lexemeType = item.Pattern.LexemeType.GetName();
 
@@ -189,7 +189,7 @@ public class LexerConfigurationModuleImpl(ActionType actionType, string path = "
 
         private string DecodePattern(string encodedPattern)
         {
-            // Декодируем из base64
+            // Decode from base64
             var bytes = Convert.FromBase64String(encodedPattern);
             return Encoding.UTF8.GetString(bytes);
         }
@@ -204,13 +204,13 @@ public class LexerConfigurationModuleImpl(ActionType actionType, string path = "
                     levelCollection.Clear();
                 }
 
-                // Очищаем список игнорируемых лексем
+                // Clear list of ignored lexemes
                 lexer.Configuration.LexemesToIgnore.Clear();
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"Warning: Could not clear lexer configuration: {ex.Message}");
-                // Продолжаем работу
+                // Continue operation
             }
         }
 
@@ -220,13 +220,13 @@ public class LexerConfigurationModuleImpl(ActionType actionType, string path = "
             {
                 try
                 {
-                    // Создаем тип лексемы
+                    // Create lexeme type
                     var lexemeType = ExtensibleEnum<LexemeTag>.CreateOrGet(line.LexemeType);
 
-                    // Проверяем паттерн на валидность
+                    // Check pattern validity
                     try
                     {
-                        // Создаем Regex для проверки синтаксиса
+                        // Create Regex for syntax checking
                         _ = new Regex(line.Pattern, RegexOptions.None, TimeSpan.FromMilliseconds(100));
                     }
                     catch (RegexParseException ex)
@@ -235,10 +235,10 @@ public class LexerConfigurationModuleImpl(ActionType actionType, string path = "
                         continue;
                     }
 
-                    // Создаем паттерн
+                    // Create pattern
                     var pattern = new LexemePattern(line.Pattern, lexemeType);
 
-                    // Добавляем в конфигурацию
+                    // Add to configuration
                     lexer.Configuration.TryUncheckedRewritePattern(pattern, line.Ignore, line.Priority);
                 }
                 catch (Exception ex)

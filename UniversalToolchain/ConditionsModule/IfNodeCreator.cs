@@ -14,15 +14,15 @@ public class IfNodeCreator : IAstNodeCreator
 
         var ifNode = scope[childIndex];
 
-        // Следующий узел должен быть условием (scope)
+        // Next node should be a condition (scope)
         if (scope.SafeGet(childIndex + 1) == null)
             return false;
 
-        // Добавляем условие как дочерний узел
+        // Add condition as child node
         ifNode.Children.Add(scope[childIndex + 1]);
         scope.Children.RemoveAt(childIndex + 1);
 
-        // Добавляем тело if (следующий scope)
+        // Add if body (next scope)
         if (scope.SafeGet(childIndex + 1) != null)
         {
             ifNode.Children.Add(scope[childIndex + 1]);

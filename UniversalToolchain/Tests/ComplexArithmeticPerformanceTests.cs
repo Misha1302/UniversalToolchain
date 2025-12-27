@@ -6,7 +6,6 @@ public class ComplexArithmeticPerformanceTests : TestBase
     [Test]
     public void Execute_ManyNestedOperations_PerformsEfficiently()
     {
-        // Arrange
         var code = """
                    let result = 0
                    let i = 0
@@ -22,12 +21,12 @@ public class ComplexArithmeticPerformanceTests : TestBase
 
         var stopwatch = new Stopwatch();
 
-        // Act
+
         stopwatch.Start();
         var result = ExecuteCode(code);
         stopwatch.Stop();
 
-        // Assert
+
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.GreaterThan(0).Within(1e-9));
         Assert.That(stopwatch.ElapsedMilliseconds, Is.LessThan(2000));
@@ -36,7 +35,6 @@ public class ComplexArithmeticPerformanceTests : TestBase
     [Test]
     public void Execute_ComplexMatrixLikeOperations_PerformsWell()
     {
-        // Arrange
         var code = @"
                 let a11 = 1; let a12 = 2; let a13 = 3
                 let a21 = 4; let a22 = 5; let a23 = 6
@@ -63,12 +61,12 @@ public class ComplexArithmeticPerformanceTests : TestBase
 
         var stopwatch = new Stopwatch();
 
-        // Act
+
         stopwatch.Start();
         var result = ExecuteCode(code);
         stopwatch.Stop();
 
-        // Assert
+
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(621).Within(1e-9));
         Assert.That(stopwatch.ElapsedMilliseconds, Is.LessThan(1000));

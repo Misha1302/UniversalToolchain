@@ -6,7 +6,6 @@ public class IntegrationPipelineTests : TestBase
     [Test]
     public void Execute_FullPipelineWithAllModules_CompletesSuccessfully()
     {
-        // Arrange
         var code = @"
                 let counter = 0
                 let total = 0
@@ -37,10 +36,10 @@ public class IntegrationPipelineTests : TestBase
                 result
             ";
 
-        // Act
+
         var result = ExecuteCode(code);
 
-        // Assert - проверяем, что пайплайн работает без ошибок
+
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.GreaterThan(0));
     }

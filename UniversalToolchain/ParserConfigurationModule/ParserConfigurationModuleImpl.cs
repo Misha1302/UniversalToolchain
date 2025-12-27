@@ -73,7 +73,7 @@ public class ParserConfigurationModuleImpl(ActionType actionType, string path = 
         }
     }
 
-    // Вспомогательные классы для инкапсуляции логики
+    // Helper classes for logic encapsulation
     private class ConfigurationDumper(IParser parser)
     {
         public string Dump()

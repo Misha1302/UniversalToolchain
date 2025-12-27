@@ -6,7 +6,6 @@ public class ComplexConditionsTests : TestBase
     [Test]
     public void Execute_NestedIfElseConditions_ReturnsCorrectBranch()
     {
-        // Arrange
         var code = @"
                 let x = 15
                 let result = 0
@@ -23,10 +22,10 @@ public class ComplexConditionsTests : TestBase
                 result
             ";
 
-        // Act
+
         var result = ExecuteCode(code);
 
-        // Assert
+
         // x=15 is between 10 and 20, so result should be 1
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(1).Within(1e-9));
@@ -35,7 +34,6 @@ public class ComplexConditionsTests : TestBase
     [Test]
     public void Execute_ComplexBooleanLogic_CombinesMultipleConditions()
     {
-        // Arrange
         var code = @"
                 let a = 5
                 let b = 10
@@ -50,10 +48,10 @@ public class ComplexConditionsTests : TestBase
                 result
             ";
 
-        // Act
+
         var result = ExecuteCode(code);
 
-        // Assert
+
         // 5 < 10 and 10 < 15 is true, so result should be 1
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(1).Within(1e-9));
@@ -62,7 +60,6 @@ public class ComplexConditionsTests : TestBase
     [Test]
     public void Execute_ElifChain_SelectsCorrectCondition()
     {
-        // Arrange
         var code = @"
                 let score = 85
                 let grade = 0
@@ -81,10 +78,10 @@ public class ComplexConditionsTests : TestBase
                 grade
             ";
 
-        // Act
+
         var result = ExecuteCode(code);
 
-        // Assert
+
         // score=85 should give grade=4
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(4).Within(1e-9));

@@ -75,7 +75,7 @@ public class HeavyLoopBenchmarks
         );
     }
 
-    // Однократное исполнение (компиляция + исполнение)
+
     [Benchmark]
     public object? Interpreter_HeavyLoop()
     {

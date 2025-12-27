@@ -1,5 +1,3 @@
-// Global using directives
-
 global using ArithmeticModule;
 global using BasicCodeTranslator;
 global using BasicCore;

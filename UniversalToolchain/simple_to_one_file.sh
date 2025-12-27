@@ -35,4 +35,4 @@ if [[ -n "$REMOVE_USING_FLAG" ]]; then
     echo "Режим удаления using директив включен"
 fi
 
-python3 script_to_one_file.py --pattern '\.cs(?![a-zA-Z0-9])|\.md' --root . --exclude-pattern ".*?(Tests|Benchmark).*?|.*?(?<![a-zA-Z])(bin|obj)(?![a-zA-Z]).*?" --output "$OUTPUT_FILE" $COMPRESS_FLAG $REMOVE_USING_FLAG
+python3 script_to_one_file.py --pattern '\.cs(?![a-zA-Z0-9])|\.md' --root . --exclude-pattern '.*?(Tests|Benchmark).*?|.*?(?<![a-zA-Z])(bin|obj)(?![a-zA-Z]).*?' --output "$OUTPUT_FILE" $COMPRESS_FLAG $REMOVE_USING_FLAG

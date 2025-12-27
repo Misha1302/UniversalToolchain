@@ -23,7 +23,6 @@ public class LexerConfigurationTests
     [Test]
     public void LexerConfiguration_DumpAndLoad_SimplePatterns_RestoresCorrectly()
     {
-        // Arrange
         var lexer = new BasicLexerImpl();
 
         // Добавляем простые паттерны
@@ -40,23 +39,23 @@ public class LexerConfigurationTests
             true
         );
 
-        // Act - Дамп
+
         var dumpModule = new LexerConfigurationModuleImpl(ActionType.DumpConfiguration, _testConfigPath);
         dumpModule.InitLexer(lexer);
 
-        // Assert - Файл создан
+
         Assert.That(File.Exists(_testConfigPath), Is.True);
         var fileContent = File.ReadAllText(_testConfigPath);
         Assert.That(fileContent, Does.Contain("# Lexer Configuration Dump"));
         Assert.That(fileContent, Does.Contain("Number"));
         Assert.That(fileContent, Does.Contain("Plus"));
 
-        // Act - Загрузка в новый лексер
+
         var newLexer = new BasicLexerImpl();
         var loadModule = new LexerConfigurationModuleImpl(ActionType.ReadConfiguration, _testConfigPath);
         loadModule.InitLexer(newLexer);
 
-        // Assert - Лексер работает корректно
+
         var tokens = newLexer.Lexemize("123+456");
         var tokenTypes = tokens.Select(t => t.LexemePattern?.LexemeType.GetName()).ToList();
 
@@ -70,7 +69,6 @@ public class LexerConfigurationTests
     [Test]
     public void LexerConfiguration_DumpAndLoad_PatternsWithPipeCharacter_RestoresCorrectly()
     {
-        // Arrange
         var lexer = new BasicLexerImpl();
 
         // Паттерн с символом | (ИЛИ в regex)
@@ -79,21 +77,21 @@ public class LexerConfigurationTests
             priority: 10f
         );
 
-        // Act
+
         var dumpModule = new LexerConfigurationModuleImpl(ActionType.DumpConfiguration, _testConfigPath);
         dumpModule.InitLexer(lexer);
 
-        // Assert - Файл создан и содержит base64
+
         var fileContent = File.ReadAllText(_testConfigPath);
         Assert.That(fileContent, Does.Contain("Choice"));
         Assert.That(fileContent, Does.Not.Contain("(a|b|c)")); // Должно быть в base64
 
-        // Act - Загрузка
+
         var newLexer = new BasicLexerImpl();
         var loadModule = new LexerConfigurationModuleImpl(ActionType.ReadConfiguration, _testConfigPath);
         loadModule.InitLexer(newLexer);
 
-        // Assert
+
         var tokens = newLexer.Lexemize("abc");
         Assert.That(tokens, Has.Count.EqualTo(3));
         Assert.That(tokens.All(t => t.LexemePattern?.LexemeType.GetName() == "Choice"));
@@ -102,7 +100,6 @@ public class LexerConfigurationTests
     [Test]
     public void LexerConfiguration_DumpAndLoad_ComplexRegexPatterns_RestoresCorrectly()
     {
-        // Arrange
         var lexer = new BasicLexerImpl();
 
         // Сложные паттерны с разными спецсимволами
@@ -127,7 +124,7 @@ public class LexerConfigurationTests
             priority: 30f
         );
 
-        // Act
+
         var dumpModule = new LexerConfigurationModuleImpl(ActionType.DumpConfiguration, _testConfigPath);
         dumpModule.InitLexer(lexer);
         var loadModule = new LexerConfigurationModuleImpl(ActionType.ReadConfiguration, _testConfigPath);
@@ -135,7 +132,7 @@ public class LexerConfigurationTests
         var newLexer = new BasicLexerImpl();
         loadModule.InitLexer(newLexer);
 
-        // Assert
+
         var tokens = newLexer.Lexemize("""if x == "test" else y""");
         Assert.That(tokens, Has.Count.GreaterThan(0));
 
@@ -147,7 +144,6 @@ public class LexerConfigurationTests
     [Test]
     public void LexerConfiguration_IgnoreFlag_PreservedCorrectly()
     {
-        // Arrange
         var lexer = new BasicLexerImpl();
 
         lexer.Configuration.TryAddPattern(
@@ -158,7 +154,7 @@ public class LexerConfigurationTests
             new LexemePattern(@"\n", ExtensibleEnum<LexemeTag>.CreateOrGet("NewLine"))
         );
 
-        // Act
+
         var dumpModule = new LexerConfigurationModuleImpl(ActionType.DumpConfiguration, _testConfigPath);
         dumpModule.InitLexer(lexer);
 
@@ -176,14 +172,13 @@ public class LexerConfigurationTests
     [Test]
     public void LexerConfiguration_Priorities_PreservedCorrectly()
     {
-        // Arrange
         var lexer = new BasicLexerImpl();
 
         lexer.Configuration.TryAddPattern(new LexemePattern(@"\.", ExtensibleEnum<LexemeTag>.CreateOrGet("Dot")), priority: 100f);
         lexer.Configuration.TryAddPattern(new LexemePattern(@"\d+\.\d+", ExtensibleEnum<LexemeTag>.CreateOrGet("Float")), priority: 90f);
         lexer.Configuration.TryAddPattern(new LexemePattern(@"\d+", ExtensibleEnum<LexemeTag>.CreateOrGet("Integer")), priority: 80f);
 
-        // Act
+
         var dumpModule = new LexerConfigurationModuleImpl(ActionType.DumpConfiguration, _testConfigPath);
         dumpModule.InitLexer(lexer);
 
@@ -205,14 +200,13 @@ public class LexerConfigurationTests
     [Test]
     public void LexerConfiguration_EmptyConfiguration_DumpsEmptyFile()
     {
-        // Arrange
         var lexer = new BasicLexerImpl(); // Пустая конфигурация
 
-        // Act
+
         var dumpModule = new LexerConfigurationModuleImpl(ActionType.DumpConfiguration, _testConfigPath);
         dumpModule.InitLexer(lexer);
 
-        // Assert
+
         var fileContent = File.ReadAllText(_testConfigPath);
         Assert.That(fileContent, Does.Contain("# Lexer Configuration Dump"));
 
@@ -224,11 +218,10 @@ public class LexerConfigurationTests
     [Test]
     public void LexerConfiguration_LoadNonExistentFile_DoesNotThrow()
     {
-        // Arrange
         var nonExistentPath = Path.Combine(Path.GetTempPath(), $"nonexistent_{Guid.NewGuid()}.txt");
         var lexer = new BasicLexerImpl();
 
-        // Act & Assert - Не должно бросать исключение
+
         Assert.DoesNotThrow(() =>
         {
             var loadModule = new LexerConfigurationModuleImpl(ActionType.ReadConfiguration, nonExistentPath);
@@ -239,13 +232,12 @@ public class LexerConfigurationTests
     [Test]
     public void LexerConfiguration_InvalidBase64InFile_HandledGracefully()
     {
-        // Arrange
         File.WriteAllText(_testConfigPath, @"# Invalid config
 100.00|NOT_VALID_BASE64|Number|false");
 
         var lexer = new BasicLexerImpl();
 
-        // Act & Assert
+
         Assert.DoesNotThrow(() =>
         {
             var loadModule = new LexerConfigurationModuleImpl(ActionType.ReadConfiguration, _testConfigPath);
@@ -256,7 +248,6 @@ public class LexerConfigurationTests
     [Test]
     public void LexerConfiguration_InvalidRegexPattern_HandledGracefully()
     {
-        // Arrange
         // Некорректный regex: незакрытая скобка
         var invalidPattern = "(";
         var encodedPattern = Convert.ToBase64String(Encoding.UTF8.GetBytes(invalidPattern));
@@ -265,7 +256,7 @@ public class LexerConfigurationTests
 
         var lexer = new BasicLexerImpl();
 
-        // Act & Assert - Не должно бросать исключение при загрузке
+
         Assert.DoesNotThrow(() =>
         {
             var loadModule = new LexerConfigurationModuleImpl(ActionType.ReadConfiguration, _testConfigPath);
@@ -276,7 +267,6 @@ public class LexerConfigurationTests
     [Test]
     public void LexerConfiguration_MissingFieldsInLine_HandledGracefully()
     {
-        // Arrange
         File.WriteAllText(_testConfigPath, @"# Config with missing fields
 100.00|pattern_only
 |missing_priority|Type|false
@@ -284,7 +274,7 @@ public class LexerConfigurationTests
 
         var lexer = new BasicLexerImpl();
 
-        // Act & Assert
+
         Assert.DoesNotThrow(() =>
         {
             var loadModule = new LexerConfigurationModuleImpl(ActionType.ReadConfiguration, _testConfigPath);
@@ -295,7 +285,6 @@ public class LexerConfigurationTests
     [Test]
     public void LexerConfiguration_CommentsAndEmptyLines_Ignored()
     {
-        // Arrange
         var configContent = @"# This is a comment
 
 # Another comment
@@ -308,11 +297,11 @@ public class LexerConfigurationTests
 
         var lexer = new BasicLexerImpl();
 
-        // Act
+
         var loadModule = new LexerConfigurationModuleImpl(ActionType.ReadConfiguration, _testConfigPath);
         loadModule.InitLexer(lexer);
 
-        // Assert - Должны загрузиться 2 паттерна
+
         var tokens = lexer.Lexemize("123+456");
         Assert.That(tokens, Has.Count.EqualTo(3));
     }
@@ -320,7 +309,6 @@ public class LexerConfigurationTests
     [Test]
     public void LexerConfiguration_SpecialRegexCharacters_HandledCorrectly()
     {
-        // Arrange
         var lexer = new BasicLexerImpl();
 
         // Паттерны со специальными символами regex
@@ -338,7 +326,7 @@ public class LexerConfigurationTests
             10f
         );
 
-        // Act
+
         var dumpModule = new LexerConfigurationModuleImpl(ActionType.DumpConfiguration, _testConfigPath);
         dumpModule.InitLexer(lexer);
 
@@ -346,7 +334,7 @@ public class LexerConfigurationTests
         var loadModule = new LexerConfigurationModuleImpl(ActionType.ReadConfiguration, _testConfigPath);
         loadModule.InitLexer(newLexer);
 
-        // Assert
+
         var tokens = newLexer.Lexemize("[test] \\escaped\\");
         Assert.That(tokens, Has.Count.EqualTo(2));
         Assert.That(tokens[0].Text, Is.EqualTo("[test]"));
@@ -356,7 +344,6 @@ public class LexerConfigurationTests
     [Test]
     public void LexerConfiguration_PreservesPatternOrderForSamePriority()
     {
-        // Arrange
         var lexer = new BasicLexerImpl();
 
         // Паттерны с одинаковым приоритетом
@@ -373,11 +360,11 @@ public class LexerConfigurationTests
             priority: 10f
         );
 
-        // Act
+
         var dumpModule = new LexerConfigurationModuleImpl(ActionType.DumpConfiguration, _testConfigPath);
         dumpModule.InitLexer(lexer);
 
-        // Assert - Порядок сохранения в файле может быть разный, но это нормально
+
         // Главное, чтобы загрузка работала
         var fileContent = File.ReadAllText(_testConfigPath);
         Assert.That(fileContent, Does.Contain("LetterA"));
@@ -388,7 +375,6 @@ public class LexerConfigurationTests
     [Test]
     public void LexerConfiguration_IntegrationWithExistingModules_WorksCorrectly()
     {
-        // Arrange
         var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
@@ -404,11 +390,11 @@ public class LexerConfigurationTests
             module.InitLexer(lexer);
         }
 
-        // Act - Дамп конфигурации после инициализации модулями
+
         var dumpModule = new LexerConfigurationModuleImpl(ActionType.DumpConfiguration, _testConfigPath);
         dumpModule.InitLexer(lexer);
 
-        // Assert - Проверяем, что все паттерны из модулей сохранены
+
         var fileContent = File.ReadAllText(_testConfigPath);
         Assert.That(fileContent, Does.Contain("Identifier"));
         Assert.That(fileContent, Does.Contain("Number"));
@@ -419,7 +405,6 @@ public class LexerConfigurationTests
     [Test]
     public void LexerConfiguration_RoundTripWithComplexCode_ProducesSameTokens()
     {
-        // Arrange
         var originalLexer = new BasicLexerImpl();
 
         // Настраиваем как типичный лексер
@@ -460,7 +445,7 @@ public class LexerConfigurationTests
         // Complex code
         var code = "if x > 5 else y = 3.14";
 
-        // Act
+
         var originalTokens = originalLexer.Lexemize(code)
             .Where(t => !originalLexer.Configuration.LexemesToIgnore.Contains(t.LexemePattern.NotNull().LexemeType.NotNull()))
             .Select(t => t.Text)
@@ -471,7 +456,7 @@ public class LexerConfigurationTests
             .Select(t => t.Text)
             .ToList();
 
-        // Assert
+
         Assert.That(loadedTokens, Is.EqualTo(originalTokens));
     }
 }

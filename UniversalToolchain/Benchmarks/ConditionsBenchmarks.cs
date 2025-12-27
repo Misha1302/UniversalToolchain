@@ -75,7 +75,7 @@ public class ConditionsBenchmarks
         );
     }
 
-    // Однократное исполнение (компиляция + исполнение)
+
     [Benchmark]
     public object? Interpreter_Conditions()
     {

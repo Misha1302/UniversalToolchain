@@ -24,13 +24,13 @@ public class BooleanNodeCreator(string nodeType, BooleanNodeCreator.BooleanState
 
         if (type == BooleanStatementType.UnaryOperation && scope.SafeGet(childIndex + 1) != null)
         {
-            // Унарная операция NOT
+            // Unary NOT operation
             node.Children.Add(scope[childIndex + 1]);
             scope.Children.RemoveAt(childIndex + 1);
         }
         else if (type == BooleanStatementType.BinaryOperation)
         {
-            // Бинарные операции
+            // Binary operations
             if (scope.SafeGet(childIndex - 1) != null)
             {
                 node.Children.Add(scope[childIndex - 1]);

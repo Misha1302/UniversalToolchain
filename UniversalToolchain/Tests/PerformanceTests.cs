@@ -6,7 +6,6 @@ public class PerformanceTests : TestBase
     [Test]
     public void Execute_ManySimpleOperations_PerformsWithinReasonableTime()
     {
-        // Arrange
         var code = @"
             let result = 0
             let i = 0
@@ -20,12 +19,12 @@ public class PerformanceTests : TestBase
 
         var stopwatch = new Stopwatch();
 
-        // Act
+
         stopwatch.Start();
         var result = ExecuteCode(code);
         stopwatch.Stop();
 
-        // Assert
+
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(4950).Within(1e-9));
         Assert.That(
@@ -37,7 +36,6 @@ public class PerformanceTests : TestBase
     [Test]
     public void Execute_ComplexNestedExpressions_PerformsWell()
     {
-        // Arrange
         var code = @"
                 let a = 1 + 2 * 3 - 4 / 2 + (5 * (6 - 2)) / 4
                 let b = a * 2 - a / 2 + (a + 1) * 3
@@ -47,12 +45,12 @@ public class PerformanceTests : TestBase
 
         var stopwatch = new Stopwatch();
 
-        // Act
+
         stopwatch.Start();
         var result = ExecuteCode(code);
         stopwatch.Stop();
 
-        // Assert
+
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(591.2).Within(1e-9));
         Assert.That(

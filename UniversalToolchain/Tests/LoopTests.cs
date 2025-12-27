@@ -6,7 +6,6 @@ public class LoopTests : TestBase
     [Test]
     public void Execute_SimpleLoopWithLabels_ComputesSumCorrectly()
     {
-        // Arrange
         var code = @"
                 let sum = 0
                 let i = 1
@@ -20,10 +19,10 @@ public class LoopTests : TestBase
                 sum
             ";
 
-        // Act
+
         var result = ExecuteCode(code);
 
-        // Assert
+
         // Sum of 1 to 10 = 55
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(55).Within(1e-9));
@@ -32,7 +31,6 @@ public class LoopTests : TestBase
     [Test]
     public void Execute_NestedLoops_ComputesMultiplicationTable()
     {
-        // Arrange
         var code = @"
                 let result = 0
                 let i = 1
@@ -54,10 +52,10 @@ public class LoopTests : TestBase
                 result
             ";
 
-        // Act
+
         var result = ExecuteCode(code);
 
-        // Assert
+
         // Sum of multiplication table 3x3: 
         // 1*1 + 1*2 + 1*3 + 2*1 + 2*2 + 2*3 + 3*1 + 3*2 + 3*3 = 36
         var numberResult = (RealNumberImpl)result;
@@ -67,7 +65,6 @@ public class LoopTests : TestBase
     [Test]
     public void Execute_ConditionalLoopBreak_StopsWhenConditionMet()
     {
-        // Arrange
         var code = @"
                 let counter = 0
                 let total = 0
@@ -83,10 +80,10 @@ public class LoopTests : TestBase
                 total
             ";
 
-        // Act
+
         var result = ExecuteCode(code);
 
-        // Assert
+
         // Sum of numbers 1 to 5 = 15
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(15).Within(1e-9));

@@ -14,15 +14,15 @@ public class ElifNodeCreator : IAstNodeCreator
 
         var elifNode = scope[childIndex];
 
-        // Следующий узел должен быть условием (scope)
+        // Next node should be a condition (scope)
         if (scope.SafeGet(childIndex + 1) == null)
             return false;
 
-        // Добавляем условие как дочерний узел
+        // Add condition as child node
         elifNode.Children.Add(scope[childIndex + 1]);
         scope.Children.RemoveAt(childIndex + 1);
 
-        // Добавляем тело elif (следующий scope)
+        // Add elif body (next scope)
         if (scope.SafeGet(childIndex + 1) != null)
         {
             elifNode.Children.Add(scope[childIndex + 1]);

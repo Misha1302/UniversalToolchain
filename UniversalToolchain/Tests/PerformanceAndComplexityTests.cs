@@ -6,7 +6,6 @@ public class PerformanceAndComplexityTests : TestBase
     [Test]
     public void Execute_ComplexNestedLoops_HandlesDeepRecursion()
     {
-        // Arrange
         var code = @"
                 let total = 0
                 let i = 0
@@ -39,10 +38,10 @@ public class PerformanceAndComplexityTests : TestBase
                 total
             ";
 
-        // Act
+
         var result = ExecuteCode(code);
 
-        // Assert
+
         // Sum of all combinations: i=0-4, j=0-3, k=0-2
         // This is a complex calculation that tests loop performance
         var numberResult = (RealNumberImpl)result;
@@ -52,7 +51,6 @@ public class PerformanceAndComplexityTests : TestBase
     [Test]
     public void Execute_MemoryIntensiveCalculation_HandlesLargeIterations()
     {
-        // Arrange
         var code = @"
                 let sum = 0
                 let i = 1
@@ -75,10 +73,10 @@ public class PerformanceAndComplexityTests : TestBase
                 sum
             ";
 
-        // Act
+
         var result = ExecuteCode(code);
 
-        // Assert
+
         // Sum of i*j for i=1..1000, j=1..100
         // = (sum i=1..100) * (sum j=1..100) = (1000*1001/2) * (100*101/2)
         // = 5050 * 5050 = 25502500

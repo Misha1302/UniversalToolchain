@@ -6,7 +6,6 @@ public class ComplexExpressionsTests : TestBase
     [Test]
     public void Execute_NestedArithmeticWithVariables_ReturnsCorrectResult()
     {
-        // Arrange
         var code = @"
                 let a = 10
                 let b = 2
@@ -14,10 +13,10 @@ public class ComplexExpressionsTests : TestBase
                 (a + b) * c - (a / b)
             ";
 
-        // Act
+
         var result = ExecuteCode(code);
 
-        // Assert
+
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(55).Within(1e-9));
     }
@@ -25,7 +24,6 @@ public class ComplexExpressionsTests : TestBase
     [Test]
     public void Execute_MultipleVariableReassignments_UpdatesValuesCorrectly()
     {
-        // Arrange
         var code = @"
                 let x = 1
                 let y = 2
@@ -35,10 +33,10 @@ public class ComplexExpressionsTests : TestBase
                 y
             ";
 
-        // Act
+
         var result = ExecuteCode(code);
 
-        // Assert
+
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(6).Within(1e-9));
     }
@@ -46,7 +44,6 @@ public class ComplexExpressionsTests : TestBase
     [Test]
     public void Execute_ComplexExpressionWithAllOperators_WorksCorrectly()
     {
-        // Arrange
         var code = @"
                 let a = 12
                 let b = 4
@@ -54,10 +51,10 @@ public class ComplexExpressionsTests : TestBase
                 a + b * c - (a / c) + b
             ";
 
-        // Act
+
         var result = ExecuteCode(code);
 
-        // Assert
+
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(18).Within(1e-9));
     }

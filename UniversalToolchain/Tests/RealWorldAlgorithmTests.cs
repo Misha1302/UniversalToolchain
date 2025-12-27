@@ -6,7 +6,6 @@ public class RealWorldAlgorithmTests : TestBase
     [Test]
     public void Execute_FibonacciSequence_ComputesCorrectValue()
     {
-        // Arrange
         var code = @"
                 let n = 10
                 let a = 0
@@ -32,10 +31,10 @@ public class RealWorldAlgorithmTests : TestBase
                 b
             ";
 
-        // Act
+
         var result = ExecuteCode(code);
 
-        // Assert
+
         // Fibonacci(10) = 55
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(55).Within(1e-9));
@@ -44,7 +43,6 @@ public class RealWorldAlgorithmTests : TestBase
     [Test]
     public void Execute_FactorialCalculation_ComputesLargeFactorial()
     {
-        // Arrange
         var code = @"
                 let n = 6
                 let result = 1
@@ -59,10 +57,10 @@ public class RealWorldAlgorithmTests : TestBase
                 result
             ";
 
-        // Act
+
         var result = ExecuteCode(code);
 
-        // Assert
+
         // 6! = 720
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(720).Within(1e-9));
@@ -71,7 +69,6 @@ public class RealWorldAlgorithmTests : TestBase
     [Test]
     public void Execute_BubbleSortSimulation_SortsNumbers()
     {
-        // Arrange
         var code = @"
                 let a = 5
                 let b = 3  
@@ -116,10 +113,10 @@ public class RealWorldAlgorithmTests : TestBase
                 a + b + c + d + e
             ";
 
-        // Act
+
         var result = ExecuteCode(code);
 
-        // Assert
+
         // Sum of sorted array [1, 2, 3, 5, 8] = 19
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(19).Within(1e-9));

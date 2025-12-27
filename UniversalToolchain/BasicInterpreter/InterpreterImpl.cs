@@ -39,7 +39,7 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
         switch (instruction.UOpCode)
         {
             case UOpCode.Nop:
-                // Ничего не делаем
+
                 break;
 
             case UOpCode.Push:
@@ -81,11 +81,11 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
                 break;
 
             case UOpCode.Label:
-                // Метка - ничего не делаем, просто пропускаем
+                // Label - do nothing, just skip
                 break;
 
             case UOpCode.Annotate:
-                // Аннотация - ничего не делаем
+                // Annotation - do nothing
                 break;
 
             case UOpCode.Intrinsic:
@@ -122,7 +122,7 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
             GenericTypeResolver.GetParameterTypes(method, state.ValueStack.Take(method.GetParameters().Length)
                 .Select(x => x.GetType()).ToList());
 
-        // Извлекаем аргументы из стека
+        // Extract arguments from the stack
         var args = new object[parametersTypes.Count];
         var argsTypes = new Type[parametersTypes.Count];
         for (var i = parametersTypes.Count - 1; i >= 0; i--)
@@ -137,7 +137,7 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
 
         method = GenericTypeResolver.MakeGenericMethod(method, argsTypes);
 
-        // Вызываем метод
+        // Call the method
         object result;
         if (method.IsStatic)
         {
@@ -145,7 +145,7 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
         }
         else
         {
-            // Для нестатических методов нужен экземпляр
+            // For non-static methods, an instance is required
             if (state.ValueStack.Count == 0)
                 throw new InvalidOperationException("No instance on stack for instance method");
 
@@ -154,7 +154,7 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
             result = method.Invoke(instance, args) ?? new object();
         }
 
-        // Если метод возвращает значение, кладем его в стек
+        // If the method returns a value, push it onto the stack
         if (method.ReturnType != typeof(void))
         {
             state.ValueStack.Push(result);
@@ -167,7 +167,7 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
         var ctor = instruction.Operands[1].Get<ConstructorInfo>();
         var parameters = ctor.GetParameters();
 
-        // Извлекаем аргументы из стека
+        // Extract arguments from the stack
         var args = new object[parameters.Length];
         for (var i = parameters.Length - 1; i >= 0; i--)
         {
@@ -178,10 +178,10 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
             args[i] = value;
         }
 
-        // Создаем экземпляр
+        // Create an instance
         var instance = ctor.Invoke(args);
 
-        // Кладем экземпляр в стек
+        // Push the instance onto the stack
         state.ValueStack.Push(instance);
     }
 }

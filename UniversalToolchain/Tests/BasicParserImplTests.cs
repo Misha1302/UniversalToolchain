@@ -6,7 +6,6 @@ public class BasicParserImplTests
     [Test]
     public void Parse_WithSimpleTokens_CreatesAST()
     {
-        // Arrange
         var parser = new BasicParserImpl();
         parser.Configuration.NodeCreators.Add(0, new AdditionOperationNodeCreator());
 
@@ -17,10 +16,10 @@ public class BasicParserImplTests
             new("456", new LexemePattern("\\d+", ExtensibleEnum<LexemeTag>.CreateOrGet("Number")), 6, null)
         };
 
-        // Act
+
         var result = parser.Parse(lexemes);
 
-        // Assert
+
         Assert.That(result, Is.Not.Null);
         Assert.That(result.Children, Has.Count.GreaterThan(0));
     }
@@ -28,15 +27,14 @@ public class BasicParserImplTests
     [Test]
     public void TreeValidator_WithValidTree_ReturnsTrue()
     {
-        // Arrange
         var validator = new TreeValidator();
         var root = new AstNode(ExtensibleEnum<AstNodeTag>.CreateOrGet("Scope"), null,
             [new AstNode(ExtensibleEnum<AstNodeTag>.CreateOrGet("Number"), null, [])]);
 
-        // Act
+
         var isValid = validator.IsValidTree(root);
 
-        // Assert
+
         Assert.That(isValid, Is.True);
     }
 }

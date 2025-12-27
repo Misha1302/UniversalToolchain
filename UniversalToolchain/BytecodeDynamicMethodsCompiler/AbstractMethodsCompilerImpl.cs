@@ -165,37 +165,37 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
 
         else if (name == "store_local")
         {
-            // Новый intrinsic: store_local "varName", varType
+            // New intrinsic: store_local "varName", varType
             var varName = instruction.Operands[1].Get<string>();
             var varType = instruction.Operands[2].Get<Type>();
 
-            // Получаем или создаем локальную переменную
+            // Get or create local variable
             if (!data.LocalVariables.TryGetValue(varName, out var local))
             {
                 local = data.Il.DeclareLocal(varType);
                 data.LocalVariables[varName] = local;
             }
 
-            // Значение уже должно быть на стеке
+            // Value should already be on the stack
             data.Il.Stloc(local);
 
-            // Удаляем значение из стека
+            // Remove value from stack
             stack.Pop();
         }
         else if (name == "load_local")
         {
-            // Новый intrinsic: load_local "varName", varType
+            // New intrinsic: load_local "varName", varType
             var varName = instruction.Operands[1].Get<string>();
             var varType = instruction.Operands[2].Get<Type>();
 
-            // Получаем локальную переменную
+            // Get local variable
             if (!data.LocalVariables.TryGetValue(varName, out var local))
             {
-                // Если переменная не объявлена, создаем ее с значением по умолчанию
+                // If variable is not declared, create it with default value
                 local = data.Il.DeclareLocal(varType);
                 data.LocalVariables[varName] = local;
 
-                // Инициализируем значением по умолчанию
+                // Initialize with default value
                 data.Il.Ldloca(local);
                 if (varType.IsValueType)
                 {
@@ -208,23 +208,23 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
                 }
             }
 
-            // Загружаем значение переменной в стек
+            // Load variable value onto stack
             data.Il.Ldloc(local);
             stack.Push(varType);
         }
         else if (name == "load_local_ref")
         {
-            // Новый intrinsic: load_local_ref "varName", varType
+            // New intrinsic: load_local_ref "varName", varType
             var varName = instruction.Operands[1].Get<string>();
             var varType = instruction.Operands[2].Get<Type>();
 
-            // Получаем локальную переменную
+            // Get local variable
             if (!data.LocalVariables.TryGetValue(varName, out var local))
             {
                 local = data.Il.DeclareLocal(varType);
                 data.LocalVariables[varName] = local;
 
-                // Инициализируем значением по умолчанию
+                // Initialize with default value
                 data.Il.Ldloca(local);
                 if (varType.IsValueType)
                 {
@@ -237,7 +237,7 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
                 }
             }
 
-            // Загружаем адрес переменной в стек
+            // Load variable address onto stack
             data.Il.Ldloca(local);
             stack.Push(varType.MakeByRefType());
         }

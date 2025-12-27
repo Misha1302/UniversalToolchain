@@ -6,7 +6,6 @@ public class BusinessCalculationsTests : TestBase
     [Test]
     public void Execute_InventoryValueCalculation_ComputesCorrectly()
     {
-        // Arrange
         var code = @"
                 let item1Price = 25.5
                 let item1Quantity = 100
@@ -23,10 +22,10 @@ public class BusinessCalculationsTests : TestBase
                 averagePrice
             ";
 
-        // Act
+
         var result = ExecuteCode(code);
 
-        // Assert
+
         // Total value = 2550 + 2362.5 + 1798 = 6710.5
         // Average price = 6710.5 / 450 ≈ 14.912222...
         var numberResult = (RealNumberImpl)result;
@@ -36,7 +35,6 @@ public class BusinessCalculationsTests : TestBase
     [Test]
     public void Execute_ProfitMarginCalculation_ComputesCorrectly()
     {
-        // Arrange
         var code = @"
                 let revenue = 100000
                 let costOfGoods = 65000
@@ -49,10 +47,10 @@ public class BusinessCalculationsTests : TestBase
                 netMargin * 100
             ";
 
-        // Act
+
         var result = ExecuteCode(code);
 
-        // Assert
+
         // grossProfit = 35000, netProfit = 15000
         // netMargin = 15000/100000 = 0.15 = 15%
         var numberResult = (RealNumberImpl)result;

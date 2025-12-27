@@ -21,14 +21,13 @@ public class ParserConfigurationModuleImplTests
     [Test]
     public void DumpConfiguration_CreatesFile_WithCorrectFormat()
     {
-        // Arrange
         var parser = CreateParserWithModules();
         var module = new ParserConfigurationModuleImpl(ActionType.DumpConfiguration, _testConfigPath);
 
-        // Act
+
         module.InitParser(parser);
 
-        // Assert
+
         Assert.That(File.Exists(_testConfigPath), Is.True);
 
         var content = File.ReadAllText(_testConfigPath);
@@ -43,7 +42,6 @@ public class ParserConfigurationModuleImplTests
     [Test]
     public void LoadConfiguration_ChangesOrder_WhenFileExists()
     {
-        // Arrange
         var parser1 = CreateParserWithModules();
         var dumpModule = new ParserConfigurationModuleImpl(ActionType.DumpConfiguration, _testConfigPath);
         dumpModule.InitParser(parser1);
@@ -59,10 +57,10 @@ public class ParserConfigurationModuleImplTests
         var parser2 = CreateParserWithModules();
         var loadModule = new ParserConfigurationModuleImpl(ActionType.ReadConfiguration, _testConfigPath);
 
-        // Act
+
         loadModule.InitParser(parser2);
 
-        // Assert
+
         var scopesCreatorPriority = GetCreatorPriority(parser2, "ScopesModule.ScopesCreator");
         var equalityCreatorPriority = GetCreatorPriority(parser2, "EqualityModule.ValuesSetNodeCreator");
 
@@ -73,12 +71,11 @@ public class ParserConfigurationModuleImplTests
     [Test]
     public void LoadConfiguration_UsesDefault_WhenFileNotFound()
     {
-        // Arrange
         var nonExistentPath = Path.Combine(Path.GetTempPath(), $"nonexistent_{Guid.NewGuid():N}.txt");
         var parser = CreateParserWithModules();
         var module = new ParserConfigurationModuleImpl(ActionType.ReadConfiguration, nonExistentPath);
 
-        // Act & Assert - не должно быть исключения
+
         Assert.DoesNotThrow(() => module.InitParser(parser));
 
         // Проверяем, что конфигурация осталась по умолчанию
@@ -89,7 +86,6 @@ public class ParserConfigurationModuleImplTests
     [Test]
     public void DumpAndLoad_PreservesAllCreators()
     {
-        // Arrange
         var parser1 = CreateParserWithModules();
         var originalCount = CountAllCreators(parser1);
 
@@ -99,18 +95,17 @@ public class ParserConfigurationModuleImplTests
         var parser2 = CreateParserWithModules();
         var loadModule = new ParserConfigurationModuleImpl(ActionType.ReadConfiguration, _testConfigPath);
 
-        // Act
+
         loadModule.InitParser(parser2);
         var loadedCount = CountAllCreators(parser2);
 
-        // Assert
+
         Assert.That(loadedCount, Is.EqualTo(originalCount));
     }
 
     [Test]
     public void LoadConfiguration_HandlesDuplicateTypes_Correctly()
     {
-        // Arrange
         var parser = CreateParserWithModules();
 
         // Создаем файл конфигурации с несколькими экземплярами одного типа
@@ -128,7 +123,7 @@ public class ParserConfigurationModuleImplTests
 
         var loadModule = new ParserConfigurationModuleImpl(ActionType.ReadConfiguration, _testConfigPath);
 
-        // Act & Assert - не должно быть исключения
+
         Assert.DoesNotThrow(() => loadModule.InitParser(parser));
 
         // Проверяем, что все креаторы добавлены
@@ -140,15 +135,14 @@ public class ParserConfigurationModuleImplTests
     [Test]
     public void DumpConfiguration_IncludesAstNodeType_ForEachCreator()
     {
-        // Arrange
         var parser = CreateParserWithModules();
         var module = new ParserConfigurationModuleImpl(ActionType.DumpConfiguration, _testConfigPath);
 
-        // Act
+
         module.InitParser(parser);
         var content = File.ReadAllText(_testConfigPath);
 
-        // Assert
+
         // Проверяем, что для каждого креатора указан AstNodeType
         var lines = content.Split('\n')
             .Where(l => !string.IsNullOrWhiteSpace(l) && !l.StartsWith('#'))

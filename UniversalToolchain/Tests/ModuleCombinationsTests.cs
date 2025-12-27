@@ -6,7 +6,6 @@ public class ModuleCombinationsTests : TestBase
     [Test]
     public void Execute_AllCoreModulesTogether_WorksCorrectly()
     {
-        // Arrange
         var code = @"
                 let x = 10
                 let y = (x + 5) * 2
@@ -14,10 +13,10 @@ public class ModuleCombinationsTests : TestBase
                 y / 2
             ";
 
-        // Act
+
         var result = ExecuteCode(code);
 
-        // Assert
+
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(13.5).Within(1e-9));
     }
@@ -25,7 +24,6 @@ public class ModuleCombinationsTests : TestBase
     [Test]
     public void Execute_MixedOperationsWithDifferentPrecedence_RespectsOrder()
     {
-        // Arrange
         var code = @"
                 let a = 2 + 3 * 4
                 let b = (2 + 3) * 4
@@ -33,10 +31,10 @@ public class ModuleCombinationsTests : TestBase
                 c
             ";
 
-        // Act
+
         var result = ExecuteCode(code);
 
-        // Assert
+
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(54).Within(1e-9));
     }
