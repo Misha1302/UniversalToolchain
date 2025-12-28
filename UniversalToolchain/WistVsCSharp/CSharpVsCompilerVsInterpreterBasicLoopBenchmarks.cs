@@ -122,17 +122,35 @@ public class CSharpVsCompilerVsInterpreterBasicLoopBenchmarks
     }
 
     [Benchmark(Baseline = true)]
-    [MethodImpl(MethodImplOptions.NoOptimization | MethodImplOptions.NoInlining)]
-    public object NativeCSharp_BasicLoop()
+    [MethodImpl(MethodImplOptions.AggressiveOptimization | MethodImplOptions.NoInlining)]
+    public object NativeCSharp_Optimized_BasicLoop()
     {
-        var sum = 0;
-        var i = 1;
+        var sum = new RealNumberImpl(0);
+        var i = new RealNumberImpl(1);
 
         loop:
-        if (i > 100) goto end;
+        if (Comparisons.Greater(i, new RealNumberImpl(100))) goto end;
         {
-            sum += i;
-            i += 1;
+            sum = RealNumberImpl.Add(sum, i);
+            i = RealNumberImpl.Add(i, new RealNumberImpl(1));
+            goto loop;
+        }
+        end:
+        return sum;
+    }
+
+    [Benchmark]
+    [MethodImpl(MethodImplOptions.NoOptimization | MethodImplOptions.NoInlining)]
+    public object NativeCSharp_NoOptimizations_BasicLoop()
+    {
+        var sum = new RealNumberImpl(0);
+        var i = new RealNumberImpl(1);
+
+        loop:
+        if (Comparisons.Greater(i, new RealNumberImpl(100))) goto end;
+        {
+            sum = RealNumberImpl.Add(sum, i);
+            i = RealNumberImpl.Add(i, new RealNumberImpl(1));
             goto loop;
         }
         end:
