@@ -7,3 +7,6 @@ text.txt
 /UniversalToolchain/.idea
 /.idea
 UniversalToolchain/__pycache__/fffffffffffffffffffffffffffffffffffffffff.cpython-314.pyc
+UniversalToolchain/project_as_file/benchmarks.txt
+UniversalToolchain/project_as_file/main_code.txt
+UniversalToolchain/project_as_file/tests.txt
