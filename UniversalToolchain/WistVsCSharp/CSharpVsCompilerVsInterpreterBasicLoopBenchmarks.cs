@@ -8,7 +8,6 @@ using ExceptionsManager;
 using IntermediateRepresentationAbstractions;
 using LocalVariablesOptimizerModule;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 using NumbersModule;
 
 namespace WistVsCSharp;

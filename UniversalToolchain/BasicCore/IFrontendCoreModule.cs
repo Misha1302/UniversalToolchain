@@ -1,8 +1,6 @@
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
-using IntermediateRepresentationAbstractions;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace BasicCore;
 

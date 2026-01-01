@@ -1,10 +1,8 @@
-using System.Runtime.CompilerServices;
 using BasicCore;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace ArithmeticModule;
 
@@ -12,7 +10,7 @@ namespace ArithmeticModule;
 public class ArithmeticModuleImpl : IFrontendCoreModule
 {
     public static readonly IReadOnlyList<string> Ops = ["Addition", "Substraction", "Multiplication", "Division"];
-    
+
     public void InitLexer(ILexer lexer)
     {
         lexer.Configuration.TryAddPattern(new LexemePattern(@"\+", ExtensibleEnum<LexemeTag>.CreateOrGet("Addition")));

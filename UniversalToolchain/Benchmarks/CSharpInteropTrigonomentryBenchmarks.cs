@@ -1,8 +1,4 @@
-using AbstractIrConverters;
-using BasicStdLib;
 using BenchmarkDotNet.Attributes;
-using IntermediateRepresentationAbstractions;
-using WhitespacesModule;
 
 namespace Benchmarks;
 

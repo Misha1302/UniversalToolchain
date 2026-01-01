@@ -1,3 +1,5 @@
+// ./../DependencyInjection/ServiceCollectionExtensions.cs (дополнение)
+
 using System.Reflection.Emit;
 using AbstractIrConverters;
 using AssemblyFinder;
@@ -20,9 +22,11 @@ namespace DependencyInjection;
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Registers all Wist services with automatic discovery
+    ///     Registers all Wist services with automatic discovery
     /// </summary>
-    public static IServiceCollection AddWistServices(this IServiceCollection services, string? servicesDirectory = null)
+    public static IServiceCollection AddWistServices(
+        this IServiceCollection services,
+        string? servicesDirectory = null)
     {
         // Core factories
         services.AddTransient<Func<ILexer>>(_ => () => new BasicLexerImpl());
@@ -43,8 +47,16 @@ public static class ServiceCollectionExtensions
                 : TypesFinder.Assemblies
         );
 
-        // Register core runnables
-        var compilerCore = (Func<IServiceProvider, BasicCoreImpl<DynamicMethod>>)(provider =>
+        // Register both compiler and interpreter cores
+        RegisterCompilerCore(services);
+        RegisterInterpreterCore(services);
+
+        return services;
+    }
+
+    private static void RegisterCompilerCore(IServiceCollection services)
+    {
+        services.AddTransient<ICoreRunnable>(provider =>
         {
             var modules = provider.GetServices<IFrontendCoreModule>().ToList();
             var irProcessors = provider.GetServices<IIRProcessingModule>().ToList();
@@ -61,13 +73,11 @@ public static class ServiceCollectionExtensions
                 []
             );
         });
+    }
 
-        services.AddTransient<ICoreRunnable>(compilerCore);
-        services.AddTransient<ICoreOptimizedRunnable>(compilerCore);
-        services.AddTransient(compilerCore);
-
-
-        var interpreterCore = (Func<IServiceProvider, BasicCoreImpl<IAbstractIR>>)(provider =>
+    private static void RegisterInterpreterCore(IServiceCollection services)
+    {
+        services.AddTransient<ICoreRunnable>(provider =>
         {
             var modules = provider.GetServices<IFrontendCoreModule>().ToList();
             var irProcessors = provider.GetServices<IIRProcessingModule>().ToList();
@@ -84,11 +94,36 @@ public static class ServiceCollectionExtensions
                 []
             );
         });
+    }
 
-        services.AddTransient<ICoreRunnable>(interpreterCore);
-        services.AddTransient<ICoreOptimizedRunnable>(interpreterCore);
-        services.AddTransient(interpreterCore);
+    /// <summary>
+    ///     Removes all services of specific type from the collection
+    /// </summary>
+    public static IServiceCollection RemoveAll<T>(this IServiceCollection services)
+    {
+        var descriptors = services.Where(d => d.ServiceType == typeof(T)).ToList();
+        foreach (var descriptor in descriptors)
+        {
+            services.Remove(descriptor);
+        }
+        return services;
+    }
 
+    /// <summary>
+    ///     Removes services where implementation type name matches predicate
+    /// </summary>
+    public static IServiceCollection RemoveWhere(
+        this IServiceCollection services,
+        Func<Type?, bool> predicate)
+    {
+        var descriptors = services
+            .Where(d => predicate(d.ImplementationType))
+            .ToList();
+
+        foreach (var descriptor in descriptors)
+        {
+            services.Remove(descriptor);
+        }
         return services;
     }
 }

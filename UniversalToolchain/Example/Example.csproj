@@ -30,7 +30,7 @@
         <ProjectReference Include="..\AbstractIrConverters\AbstractIrConverters.csproj"/>
         <ProjectReference Include="..\ConditionsModule\ConditionsModule.csproj"/>
         <ProjectReference Include="..\CSharpInteropModule\CSharpInteropModule.csproj"/>
-        <ProjectReference Include="..\DependencyInjection\DependencyInjection.csproj" />
+        <ProjectReference Include="..\DependencyInjection\DependencyInjection.csproj"/>
         <ProjectReference Include="..\ExecutorLoggerModule\ExecutorLoggerModule.csproj"/>
         <ProjectReference Include="..\IdentifierModule\IdentifierModule.csproj"/>
         <ProjectReference Include="..\LabelsModule\LabelsModule.csproj"/>
@@ -48,12 +48,12 @@
             <HintPath>..\..\..\..\..\.nuget\packages\jetbrains.annotations\2025.2.4\lib\netstandard2.0\JetBrains.Annotations.dll</HintPath>
         </Reference>
         <Reference Include="Microsoft.Extensions.DependencyInjection.Abstractions">
-          <HintPath>..\..\..\..\..\.nuget\packages\microsoft.extensions.dependencyinjection.abstractions\10.0.1\lib\net9.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll</HintPath>
+            <HintPath>..\..\..\..\..\.nuget\packages\microsoft.extensions.dependencyinjection.abstractions\10.0.1\lib\net9.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll</HintPath>
         </Reference>
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1"/>
     </ItemGroup>
 
 </Project>

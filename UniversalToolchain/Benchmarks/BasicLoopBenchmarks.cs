@@ -1,8 +1,4 @@
 using BenchmarkDotNet.Attributes;
-using DependencyInjection;
-using ExceptionsManager;
-using IntermediateRepresentationAbstractions;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Benchmarks;
 

@@ -1,5 +1,4 @@
 using DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
 
 // Setup DI with auto-registration
 var services = new ServiceCollection();

@@ -1,5 +1,4 @@
-﻿using BasicStdLib;
-using DependencyInjection;
+﻿using DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Tests;
@@ -11,23 +10,23 @@ public abstract class TestBase
     private IServiceProvider? _serviceProvider;
 
     /// <summary>
-    /// Builds service provider with default configuration
+    ///     Builds service provider with default configuration
     /// </summary>
     protected IServiceProvider BuildServiceProvider()
     {
         var services = new ServiceCollection();
-        
+
         // Auto-register all services
         services.AddWistServices();
-        
+
         // Configure modules
         _serviceProvider = services.BuildServiceProvider();
-        
+
         return _serviceProvider;
     }
 
     /// <summary>
-    /// Executes code using the core runnable
+    ///     Executes code using the core runnable
     /// </summary>
     protected object ExecuteCode(string code)
     {
@@ -44,7 +43,7 @@ public abstract class TestBase
     }
 
     /// <summary>
-    /// Creates a core instance of specific type
+    ///     Creates a core instance of specific type
     /// </summary>
     protected T CreateCore<T>() where T : ICoreRunnable
     {

@@ -1,8 +1,4 @@
-using AbstractIrConverters;
-using BasicStdLib;
 using BenchmarkDotNet.Attributes;
-using IntermediateRepresentationAbstractions;
-using WhitespacesModule;
 
 namespace Benchmarks;
 
@@ -26,7 +22,7 @@ public class ConditionsBenchmarks : BenchmarkBase
             result = 1
         
         result";
-    
+
     [Benchmark]
     public object? Interpreter_Conditions()
     {
