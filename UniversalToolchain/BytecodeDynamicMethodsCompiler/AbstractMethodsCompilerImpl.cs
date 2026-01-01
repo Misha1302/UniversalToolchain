@@ -14,6 +14,15 @@ namespace BytecodeDynamicMethodsCompiler;
 
 public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
 {
+    public IReadOnlyList<string> SupportedIntrinsics =>
+    [
+        "call C#",
+        "call C# ctor",
+        "store_local",
+        "load_local",
+        "load_local_ref"
+    ];
+
     public DynamicMethod Compile(IAbstractIR air)
     {
         var method = new DynamicMethod("main", typeof(object), []);

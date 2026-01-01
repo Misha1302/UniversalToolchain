@@ -26,8 +26,7 @@ public static class TestServiceProvider
         var services = new ServiceCollection();
 
         // Add default Wist test services
-        services.AddWistTestServices();
-        services.AddCoreRunnables();
+        services.AddWistServices();
 
         // Allow additional configuration
         configureServices?.Invoke(services);

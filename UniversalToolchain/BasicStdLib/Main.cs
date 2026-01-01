@@ -84,8 +84,4 @@ public static class Main
     {
         return TSelf.Create(Math.Round(x.GetValue()));
     }
-
-    public static void LoadStdLibToThisAssembly()
-    {
-    }
 }

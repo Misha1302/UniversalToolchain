@@ -2,6 +2,7 @@ using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using IntermediateRepresentationAbstractions;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace BasicCore;
 
@@ -38,14 +39,5 @@ public interface IFrontendCoreModule
 
     void InitAstTranslator(IAstToBytecodeTranslator translator)
     {
-    }
-
-    void InitMethodsTranslator(IAbstractMethodsTranslator methodsTranslator)
-    {
-    }
-
-    IAbstractIR ProcessIr(IAbstractIR current)
-    {
-        return current;
     }
 }

@@ -6,6 +6,7 @@ using LexemeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.LexerWrapper.Le
 
 namespace EqualityModule;
 
+[AutoRegisterService]
 public class EqualityModuleImpl : IFrontendCoreModule
 {
     public void InitLexer(ILexer lexer)

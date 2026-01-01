@@ -1,9 +1,6 @@
-using BasicCore.ParserWrapper;
-using BasicTypesExtensions;
+using BasicCore;
 
 namespace ArithmeticModule;
 
-public class SubstractionOperationNodeCreator : BinaryOperationBase
-{
-    public override ExtensibleEnum<AstNodeTag> AstNodeType => ExtensibleEnum<AstNodeTag>.CreateOrGet("Substraction");
-}
+[AutoRegisterService]
+public class SubstractionOperationNodeCreator() : BinaryOperationBase("Substraction");

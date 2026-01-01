@@ -21,6 +21,7 @@
         <ProjectReference Include="..\BytecodeDynamicMethodsCompiler\BytecodeDynamicMethodsCompiler.csproj"/>
         <ProjectReference Include="..\ConditionsModule\ConditionsModule.csproj"/>
         <ProjectReference Include="..\CSharpInteropModule\CSharpInteropModule.csproj"/>
+        <ProjectReference Include="..\DependencyInjection\DependencyInjection.csproj" />
         <ProjectReference Include="..\IdentifierModule\IdentifierModule.csproj"/>
         <ProjectReference Include="..\LabelsModule\LabelsModule.csproj"/>
         <ProjectReference Include="..\LocalVariablesOptimizerModule\LocalVariablesOptimizerModule.csproj"/>

@@ -4,6 +4,7 @@ using LexemeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.LexerWrapper.Le
 
 namespace WhitespacesModule;
 
+[AutoRegisterService]
 public class WhitespaceModuleImpl : IFrontendCoreModule
 {
     public void InitLexer(ILexer lexer)
@@ -14,7 +15,7 @@ public class WhitespaceModuleImpl : IFrontendCoreModule
             new LexemePattern(@"\n", LexemeType.CreateOrGet("NewLine"))
         ];
 
-        foreach (var lexemePattern in lexemes) lexer.Configuration.TryAddPattern(lexemePattern);
+        foreach (var lexemePattern in lexemes) lexer.Configuration.TryUncheckedAddPattern(lexemePattern);
         lexer.Configuration.LexemesToIgnore.AddRange(lexemes.Select(x => x.LexemeType));
     }
 }

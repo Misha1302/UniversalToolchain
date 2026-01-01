@@ -239,7 +239,7 @@ public class LexerConfigurationModuleImpl(ActionType actionType, string path = "
                     var pattern = new LexemePattern(line.Pattern, lexemeType);
 
                     // Add to configuration
-                    lexer.Configuration.TryUncheckedRewritePattern(pattern, line.Ignore, line.Priority);
+                    lexer.Configuration.TryUncheckedAddPattern(pattern, line.Ignore, line.Priority);
                 }
                 catch (Exception ex)
                 {

@@ -1,4 +1,5 @@
-﻿using AbstractIrExtensions;
+using AbstractIrExtensions;
+using BasicCore;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
@@ -7,9 +8,10 @@ using ExceptionsManager;
 
 namespace ArithmeticModule;
 
+[AutoRegisterService]
 public class ArithmeticAstVisitor : IAstVisitor
 {
-    private readonly Dictionary<string, string> _opToName = new()
+    private static readonly Dictionary<string, string> _opToName = new()
     {
         ["+"] = "Add",
         ["-"] = "Sub",

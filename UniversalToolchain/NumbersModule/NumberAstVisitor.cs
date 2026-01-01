@@ -1,5 +1,6 @@
 using System.Globalization;
 using AbstractIrExtensions;
+using BasicCore;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
@@ -8,11 +9,13 @@ using ExceptionsManager;
 
 namespace NumbersModule;
 
+[AutoRegisterService]
 public class NumberAstVisitor : IAstVisitor
 {
     public void TryVisit(BytecodeVisitorData data)
     {
-        if (data.Node.NodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("Number")) return;
+        if (data.Node.NodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("Number"))
+            return;
 
         var numText = (data.Node.LexemeValue?.Text).NotNull().Replace("_", "");
         var num = double.Parse(numText, NumberStyles.Any);

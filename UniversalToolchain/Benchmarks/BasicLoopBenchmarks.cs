@@ -1,14 +1,14 @@
-using AbstractIrConverters;
-using BasicStdLib;
 using BenchmarkDotNet.Attributes;
+using DependencyInjection;
+using ExceptionsManager;
 using IntermediateRepresentationAbstractions;
-using WhitespacesModule;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Benchmarks;
 
 [MemoryDiagnoser]
 [RankColumn]
-public class BasicLoopBenchmarks
+public class BasicLoopBenchmarks : BenchmarkBase
 {
     private readonly string _loopSum = @"
         let sum = 0
@@ -21,64 +21,17 @@ public class BasicLoopBenchmarks
         @end:
         sum";
 
-    private ICoreOptimizedRunnable _compilerCore = null!;
-    private ICoreOptimizedRunnable _interpreterCore = null!;
-
-    [GlobalSetup]
-    public void Setup()
-    {
-        Main.LoadStdLibToThisAssembly();
-
-        var commonModules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new SemicolonAsNewLineModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new LabelsModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl(),
-            new ConditionsModuleImpl(),
-            new ComparisonOperations(),
-            new BooleanOperations()
-        };
-
-        _interpreterCore = new BasicCoreImpl<IAbstractIR>(
-            () => new BasicLexerImpl(),
-            () => new BasicParserImpl(),
-            () => new BasicAstToBytecodeTranslatorImpl(),
-            () => new BytecodeToAbstractIrConverterImpl(),
-            () => new AbstractIrToAbstractIrStub(),
-            () => new InterpreterImpl(),
-            commonModules,
-            []
-        );
-
-        _compilerCore = new BasicCoreImpl<DynamicMethod>(
-            () => new BasicLexerImpl(),
-            () => new BasicParserImpl(),
-            () => new BasicAstToBytecodeTranslatorImpl(),
-            () => new BytecodeToAbstractIrConverterImpl(),
-            () => new AbstractMethodsCompilerImpl(),
-            () => new DynamicMethodExecutor(),
-            commonModules,
-            []
-        );
-    }
-
     [Benchmark]
     public object? Interpreter_BasicLoop()
     {
-        _interpreterCore.PrepareToRun(_loopSum);
-        return _interpreterCore.RunPrepared();
+        InterpreterCore.PrepareToRun(_loopSum);
+        return InterpreterCore.RunPrepared();
     }
 
     [Benchmark(Baseline = true)]
     public object? Compiler_BasicLoop()
     {
-        _compilerCore.PrepareToRun(_loopSum);
-        return _compilerCore.RunPrepared();
+        CompilerCore.PrepareToRun(_loopSum);
+        return CompilerCore.RunPrepared();
     }
 }

@@ -3,9 +3,9 @@ using BasicTypesExtensions;
 
 namespace ArithmeticModule;
 
-public abstract class BinaryOperationBase : IAstNodeCreator
+public abstract class BinaryOperationBase(string enumStr) : IAstNodeCreator
 {
-    public abstract ExtensibleEnum<AstNodeTag> AstNodeType { get; }
+    public virtual ExtensibleEnum<AstNodeTag> AstNodeType => ExtensibleEnum<AstNodeTag>.CreateOrGet(enumStr);
 
     public bool TryCreateNode(AstNode scope, int childIndex)
     {

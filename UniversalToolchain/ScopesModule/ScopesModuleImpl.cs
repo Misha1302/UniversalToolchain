@@ -6,6 +6,7 @@ using LexemeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.LexerWrapper.Le
 
 namespace ScopesModule;
 
+[AutoRegisterService]
 public class ScopesModuleImpl : IFrontendCoreModule
 {
     public void InitLexer(ILexer lexer)

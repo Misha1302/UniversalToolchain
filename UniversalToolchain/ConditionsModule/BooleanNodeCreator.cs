@@ -1,8 +1,10 @@
+using BasicCore;
 using BasicCore.ParserWrapper;
 using BasicTypesExtensions;
 
 namespace ConditionsModule;
 
+[AutoRegisterService]
 public class BooleanNodeCreator(string nodeType, BooleanNodeCreator.BooleanStatementType type) : IAstNodeCreator
 {
     public enum BooleanStatementType

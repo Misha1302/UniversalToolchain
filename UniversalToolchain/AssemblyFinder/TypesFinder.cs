@@ -7,7 +7,7 @@ namespace AssemblyFinder;
 
 public static class TypesFinder
 {
-    private static readonly Lazy<IReadOnlyList<Assembly>> _assemblies = new(() => GetAssemblies().ToArray());
+    private static readonly Lazy<IReadOnlyList<Assembly>> _assemblies = new(() => GetAllAssemblies());
     private static readonly Lazy<IReadOnlyList<Type>> _allTypes = new(() => GetAllTypes().ToArray());
     private static readonly ConcurrentDictionary<string, Type> _typeCache = new();
 
@@ -43,10 +43,11 @@ public static class TypesFinder
         return simpleName + "<" + string.Join(", ", type.GetGenericArguments().Select(MakeSimpleName)) + ">";
     }
 
-    private static IEnumerable<Assembly> GetAssemblies()
+    private static IReadOnlyList<Assembly> GetAssembliesFromExistingInternal()
     {
         var visited = new HashSet<string>();
         var stack = new Stack<Assembly>();
+        var assemblies = new List<Assembly>();
 
         foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
             stack.Push(assembly);
@@ -54,7 +55,7 @@ public static class TypesFinder
         while (stack.Count > 0)
         {
             var asm = stack.Pop();
-            yield return asm;
+            assemblies.Add(asm);
 
             foreach (var reference in asm.GetReferencedAssemblies())
             {
@@ -72,5 +73,28 @@ public static class TypesFinder
                 }
             }
         }
+
+        return assemblies.DistinctBy(x => x.FullName).ToList();
+    }
+
+    public static IReadOnlyList<Assembly> GetAllAssemblies(string? directoryPath = null)
+    {
+        var path = directoryPath ?? AppDomain.CurrentDomain.BaseDirectory;
+        path = Path.GetFullPath(path);
+        var dlls = Directory.GetFiles(path, "*.dll", SearchOption.AllDirectories);
+
+        foreach (var dllPath in dlls)
+        {
+            try
+            {
+                Assembly.LoadFrom(dllPath);
+            }
+            catch
+            {
+                // ignored
+            }
+        }
+
+        return GetAssembliesFromExistingInternal();
     }
 }

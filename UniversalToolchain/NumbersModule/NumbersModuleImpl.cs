@@ -5,6 +5,7 @@ using LexemeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.LexerWrapper.Le
 
 namespace NumbersModule;
 
+[AutoRegisterService]
 public class NumbersModuleImpl : IFrontendCoreModule
 {
     public void InitLexer(ILexer lexer)

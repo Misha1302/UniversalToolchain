@@ -15,6 +15,7 @@ public class BasicCoreImpl<TCompilationOutput>(
     Func<IAbstractIrCompiler<TCompilationOutput>> compilerFactory,
     Func<IExecutor<TCompilationOutput>> executorFactory,
     IReadOnlyList<IFrontendCoreModule> modules,
+    IReadOnlyList<IIRProcessingModule> optimizers,
     IReadOnlyList<IMiddleEndCoreModule<TCompilationOutput>> middleEndModules
 ) : ICoreRunnable, ICoreOptimizedRunnable
 {
@@ -47,10 +48,10 @@ public class BasicCoreImpl<TCompilationOutput>(
         var bytecode = astTranslator.Translate(targetRoot);
 
         var targetBytecode = modules.Aggregate(bytecode, (current, module) => module.ProcessBytecode(current));
-        modules.ForEach(module => module.InitMethodsTranslator(methodsTranslator));
+        optimizers.ForEach(module => module.InitMethodsTranslator(methodsTranslator));
         var air = methodsTranslator.Translate(targetBytecode);
 
-        var targetIr = modules.Aggregate(air, (current, module) => module.ProcessIr(current));
+        var targetIr = optimizers.Aggregate(air, (current, module) => module.ProcessIr(current, compiler));
         middleEndModules.ForEach(module => module.InitMethodsCompiler(compiler));
         var compiled = compiler.Compile(targetIr);
 

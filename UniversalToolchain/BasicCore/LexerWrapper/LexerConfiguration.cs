@@ -31,7 +31,7 @@ public class LexerConfiguration(List<LexemeType> lexemesToIgnore)
         return true;
     }
 
-    public bool TryUncheckedRewritePattern(LexemePattern pattern, bool ignore = false, float priority = 0)
+    public bool TryUncheckedAddPattern(LexemePattern pattern, bool ignore = false, float priority = 0)
     {
         var find = Patterns.Any(x => x == pattern);
         if (find) return false;

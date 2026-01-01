@@ -6,6 +6,7 @@ using BasicTypesExtensions;
 
 namespace ConditionsModule;
 
+[AutoRegisterService]
 public class ConditionsModuleImpl : IFrontendCoreModule
 {
     private IParser _parser = null!;

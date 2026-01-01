@@ -8,7 +8,7 @@ namespace Benchmarks;
 
 [MemoryDiagnoser]
 [RankColumn]
-public class ConditionsBenchmarks
+public class ConditionsBenchmarks : BenchmarkBase
 {
     private readonly string _conditions = @"
         let x = 75
@@ -26,67 +26,18 @@ public class ConditionsBenchmarks
             result = 1
         
         result";
-
-    private ICoreOptimizedRunnable _compilerCore = null!;
-    private ICoreOptimizedRunnable _interpreterCore = null!;
-
-    [GlobalSetup]
-    public void Setup()
-    {
-        Main.LoadStdLibToThisAssembly();
-
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new SemicolonAsNewLineModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new LabelsModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl(),
-            new ConditionsModuleImpl(),
-            new ComparisonOperations(),
-            new BooleanOperations()
-        };
-
-
-        _interpreterCore = new BasicCoreImpl<IAbstractIR>(
-            () => new BasicLexerImpl(),
-            () => new BasicParserImpl(),
-            () => new BasicAstToBytecodeTranslatorImpl(),
-            () => new BytecodeToAbstractIrConverterImpl(),
-            () => new AbstractIrToAbstractIrStub(),
-            () => new InterpreterImpl(),
-            modules,
-            []
-        );
-
-        _compilerCore = new BasicCoreImpl<DynamicMethod>(
-            () => new BasicLexerImpl(),
-            () => new BasicParserImpl(),
-            () => new BasicAstToBytecodeTranslatorImpl(),
-            () => new BytecodeToAbstractIrConverterImpl(),
-            () => new AbstractMethodsCompilerImpl(),
-            () => new DynamicMethodExecutor(),
-            modules,
-            []
-        );
-    }
-
-
+    
     [Benchmark]
     public object? Interpreter_Conditions()
     {
-        _interpreterCore.PrepareToRun(_conditions);
-        return _interpreterCore.RunPrepared();
+        InterpreterCore.PrepareToRun(_conditions);
+        return InterpreterCore.RunPrepared();
     }
 
     [Benchmark(Baseline = true)]
     public object? Compiler_Conditions()
     {
-        _compilerCore.PrepareToRun(_conditions);
-        return _compilerCore.RunPrepared();
+        CompilerCore.PrepareToRun(_conditions);
+        return CompilerCore.RunPrepared();
     }
 }

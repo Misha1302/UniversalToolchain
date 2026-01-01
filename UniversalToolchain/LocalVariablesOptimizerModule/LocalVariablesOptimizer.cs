@@ -10,9 +10,27 @@ using UniversalIntermediateRepresentation;
 
 namespace LocalVariablesOptimizerModule;
 
-public class LocalVariablesOptimizer : IFrontendCoreModule
+[AutoRegisterService]
+public class LocalVariablesOptimizer : IIRProcessingModule
 {
-    public LocalVariablesOptimizer()
+    private readonly IReadOnlyList<string> _intrinsics =
+    [
+        "store_local",
+        "load_local",
+        "load_local_ref"
+    ];
+
+    public IAbstractIR ProcessIr<TCompilationOutput>(IAbstractIR current, IAbstractIrCompiler<TCompilationOutput> compiler)
+    {
+        if (!_intrinsics.All(x => compiler.SupportedIntrinsics.Contains(x)))
+            return current;
+
+        InitIntrinsics();
+        var optimized = OptimizeVariables(current);
+        return optimized;
+    }
+
+    private void InitIntrinsics()
     {
         AirTypes.TryRegisterIntrinsic(
             "store_local",
@@ -26,13 +44,6 @@ public class LocalVariablesOptimizer : IFrontendCoreModule
             "load_local_ref",
             (instruction, stack) => stack.Push(typeof(VariableReference<>).MakeGenericType(instruction.Operands[2].Get<Type>()))
         );
-    }
-
-
-    public IAbstractIR ProcessIr(IAbstractIR current)
-    {
-        var optimized = OptimizeVariables(current);
-        return optimized;
     }
 
     private IAbstractIR OptimizeVariables(IAbstractIR air)

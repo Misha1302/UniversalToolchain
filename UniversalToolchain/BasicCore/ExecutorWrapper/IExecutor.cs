@@ -1,6 +1,6 @@
 namespace BasicCore.ExecutorWrapper;
 
-public interface IExecutor<TCompilationOutput>
+public interface IExecutor<in TCompilationOutput>
 {
     object? Execute(TCompilationOutput compilation);
 }

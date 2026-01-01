@@ -2,5 +2,5 @@ namespace BasicCore;
 
 public interface ICoreRunnable
 {
-    object? Run(string code);
+    public object? Run(string code);
 }

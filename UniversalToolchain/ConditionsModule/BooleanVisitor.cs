@@ -1,4 +1,5 @@
 using AbstractIrExtensions;
+using BasicCore;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
@@ -8,6 +9,7 @@ using JetBrains.Annotations;
 
 namespace ConditionsModule;
 
+[AutoRegisterService]
 public class BooleanVisitor : IAstVisitor
 {
     public void TryVisit(BytecodeVisitorData data)

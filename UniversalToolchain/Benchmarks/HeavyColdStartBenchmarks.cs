@@ -1,14 +1,10 @@
-using AbstractIrConverters;
-using BasicStdLib;
 using BenchmarkDotNet.Attributes;
-using IntermediateRepresentationAbstractions;
-using WhitespacesModule;
 
 namespace Benchmarks;
 
 [MemoryDiagnoser]
 [RankColumn]
-public class HeavyColdStartBenchmarks
+public class HeavyColdStartBenchmarks : BenchmarkBase
 {
     private readonly string _heavyLoop = @"
         let sum = 0
@@ -27,67 +23,19 @@ public class HeavyColdStartBenchmarks
         @end:
         sum";
 
-    private ICoreOptimizedRunnable _compilerCore = null!;
-    private ICoreOptimizedRunnable _interpreterCore = null!;
-
-    [GlobalSetup]
-    public void Setup()
-    {
-        Main.LoadStdLibToThisAssembly();
-
-        var modules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new SemicolonAsNewLineModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new LabelsModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl(),
-            new ConditionsModuleImpl(),
-            new ComparisonOperations(),
-            new BooleanOperations()
-        };
-
-
-        _interpreterCore = new BasicCoreImpl<IAbstractIR>(
-            () => new BasicLexerImpl(),
-            () => new BasicParserImpl(),
-            () => new BasicAstToBytecodeTranslatorImpl(),
-            () => new BytecodeToAbstractIrConverterImpl(),
-            () => new AbstractIrToAbstractIrStub(),
-            () => new InterpreterImpl(),
-            modules,
-            []
-        );
-
-        _compilerCore = new BasicCoreImpl<DynamicMethod>(
-            () => new BasicLexerImpl(),
-            () => new BasicParserImpl(),
-            () => new BasicAstToBytecodeTranslatorImpl(),
-            () => new BytecodeToAbstractIrConverterImpl(),
-            () => new AbstractMethodsCompilerImpl(),
-            () => new DynamicMethodExecutor(),
-            modules,
-            []
-        );
-    }
-
     [Benchmark(Baseline = true)]
     public object? Interpreter_ColdStart()
     {
-        _interpreterCore.PrepareToRun("");
-        _interpreterCore.PrepareToRun(_heavyLoop);
-        return _interpreterCore.RunPrepared();
+        InterpreterCore.PrepareToRun("");
+        InterpreterCore.PrepareToRun(_heavyLoop);
+        return InterpreterCore.Run(_heavyLoop);
     }
 
     [Benchmark]
     public object? Compiler_ColdStart()
     {
-        _compilerCore.PrepareToRun("");
-        _compilerCore.PrepareToRun(_heavyLoop);
-        return _compilerCore.RunPrepared();
+        CompilerCore.PrepareToRun("");
+        CompilerCore.PrepareToRun(_heavyLoop);
+        return CompilerCore.RunPrepared();
     }
 }

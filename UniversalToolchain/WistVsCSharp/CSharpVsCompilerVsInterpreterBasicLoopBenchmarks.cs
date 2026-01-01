@@ -1,27 +1,15 @@
 ﻿using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
-using AbstractIrConverters;
-using ArithmeticModule;
-using BasicCilCompiler;
-using BasicCodeTranslator;
 using BasicCore;
-using BasicInterpreter;
-using BasicLexer;
-using BasicParser;
-using BasicStdLib;
 using BenchmarkDotNet.Attributes;
-using BytecodeDynamicMethodsCompiler;
 using ConditionsModule;
-using EqualityModule;
-using IdentifierModule;
+using DependencyInjection;
+using ExceptionsManager;
 using IntermediateRepresentationAbstractions;
-using LabelsModule;
 using LocalVariablesOptimizerModule;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using NumbersModule;
-using ScopesModule;
-using SemicolonAsNewLineModule;
-using VariablesModule;
-using WhitespacesModule;
 
 namespace WistVsCSharp;
 
@@ -40,67 +28,27 @@ public class CSharpVsCompilerVsInterpreterBasicLoopBenchmarks
         @end:
         sum";
 
-    private ICoreOptimizedRunnable _compilerCore = null!;
-    private ICoreOptimizedRunnable _compilerOptimizedCore = null!;
-    private ICoreOptimizedRunnable _interpreterCore = null!;
+    private BasicCoreImpl<DynamicMethod> _compilerCore = null!;
+    private BasicCoreImpl<DynamicMethod> _compilerNotOptimizedCore = null!;
+    private BasicCoreImpl<IAbstractIR> _interpreterCore = null!;
+
 
     [GlobalSetup]
     public void Setup()
     {
-        Main.LoadStdLibToThisAssembly();
+        var services = new ServiceCollection().AddWistServices("./../../../../../../../..");
 
-        var commonModules = new IFrontendCoreModule[]
-        {
-            new IdentifierModuleImpl(),
-            new ScopesModuleImpl(),
-            new NumbersModuleImpl(),
-            new WhitespaceModuleImpl(),
-            new SemicolonAsNewLineModuleImpl(),
-            new ArithmeticModuleImpl(),
-            new LabelsModuleImpl(),
-            new VariablesModuleImpl(),
-            new EqualityModuleImpl(),
-            new ConditionsModuleImpl(),
-            new ComparisonOperations(),
-            new BooleanOperations()
-        };
+        var provider = services.BuildServiceProvider();
+        _compilerCore = provider.GetService<BasicCoreImpl<DynamicMethod>>().NotNull();
+        _interpreterCore = provider.GetService<BasicCoreImpl<IAbstractIR>>().NotNull();
 
-        _interpreterCore = new BasicCoreImpl<IAbstractIR>(
-            () => new BasicLexerImpl(),
-            () => new BasicParserImpl(),
-            () => new BasicAstToBytecodeTranslatorImpl(),
-            () => new BytecodeToAbstractIrConverterImpl(),
-            () => new AbstractIrToAbstractIrStub(),
-            () => new InterpreterImpl(),
-            commonModules,
-            []
-        );
+        services.Remove(services.First(x => x.ImplementationType == typeof(LocalVariablesOptimizer)));
+        var providerNotOptimized = services.BuildServiceProvider();
+        _compilerNotOptimizedCore = providerNotOptimized.GetService<BasicCoreImpl<DynamicMethod>>().NotNull();
 
-        _compilerCore = new BasicCoreImpl<DynamicMethod>(
-            () => new BasicLexerImpl(),
-            () => new BasicParserImpl(),
-            () => new BasicAstToBytecodeTranslatorImpl(),
-            () => new BytecodeToAbstractIrConverterImpl(),
-            () => new AbstractMethodsCompilerImpl(),
-            () => new DynamicMethodExecutor(),
-            commonModules,
-            []
-        );
-
-        _compilerOptimizedCore = new BasicCoreImpl<DynamicMethod>(
-            () => new BasicLexerImpl(),
-            () => new BasicParserImpl(),
-            () => new BasicAstToBytecodeTranslatorImpl(),
-            () => new BytecodeToAbstractIrConverterImpl(),
-            () => new AbstractMethodsCompilerImpl(),
-            () => new DynamicMethodExecutor(),
-            commonModules.Union([new LocalVariablesOptimizer()]).ToList(),
-            []
-        );
-
-        _interpreterCore.PrepareToRun(_loopSum);
         _compilerCore.PrepareToRun(_loopSum);
-        _compilerOptimizedCore.PrepareToRun(_loopSum);
+        _compilerNotOptimizedCore.PrepareToRun(_loopSum);
+        _interpreterCore.PrepareToRun(_loopSum);
     }
 
     [Benchmark]
@@ -112,18 +60,12 @@ public class CSharpVsCompilerVsInterpreterBasicLoopBenchmarks
     [Benchmark]
     public object? Compiler_BasicLoop()
     {
-        return _compilerCore.RunPrepared();
+        return _compilerNotOptimizedCore.RunPrepared();
     }
 
     [Benchmark]
-    public object? CompilerOptimized_BasicLoop()
-    {
-        return _compilerOptimizedCore.RunPrepared();
-    }
-
-    [Benchmark(Baseline = true)]
-    [MethodImpl(MethodImplOptions.AggressiveOptimization | MethodImplOptions.NoInlining)]
-    public object NativeCSharp_Optimized_BasicLoop()
+    [MethodImpl(MethodImplOptions.NoOptimization | MethodImplOptions.NoInlining)]
+    public object NativeCSharp_NoOptimizations_BasicLoop()
     {
         var sum = new RealNumberImpl(0);
         var i = new RealNumberImpl(1);
@@ -140,8 +82,14 @@ public class CSharpVsCompilerVsInterpreterBasicLoopBenchmarks
     }
 
     [Benchmark]
-    [MethodImpl(MethodImplOptions.NoOptimization | MethodImplOptions.NoInlining)]
-    public object NativeCSharp_NoOptimizations_BasicLoop()
+    public object? CompilerOptimized_BasicLoop()
+    {
+        return _compilerCore.RunPrepared();
+    }
+
+    [Benchmark(Baseline = true)]
+    [MethodImpl(MethodImplOptions.AggressiveOptimization | MethodImplOptions.NoInlining)]
+    public object NativeCSharp_Optimized_BasicLoop()
     {
         var sum = new RealNumberImpl(0);
         var i = new RealNumberImpl(1);
