@@ -1,368 +1,198 @@
-﻿using AbstractIrConverters;
-using BasicInterpreter;
+﻿using System.Diagnostics;
+using System.Reflection.Emit;
+using AssemblyFinder;
+using DependencyInjection;
 using IntermediateRepresentationAbstractions;
+using Microsoft.Extensions.DependencyInjection;
+using Wistc;
 
-namespace Wistc;
+return Parser.Default.ParseArguments<RunOptions, ReplOptions>(args)
+    .MapResult(
+        (RunOptions opts) => RunCommand(opts),
+        (ReplOptions opts) => ReplCommand(opts),
+        _ => 1
+    );
 
-public static class Program
+int RunCommand(RunOptions options)
 {
-    private static bool _verbose;
-
-    public static int Main(string[] args)
+    try
     {
-        BasicStdLib.Main.LoadStdLibToThisAssembly();
-
-        try
+        if (options.ListModules)
         {
-            var parser = new Parser(with =>
-            {
-                with.AutoHelp = false;
-                with.AutoVersion = false;
-                with.HelpWriter = null;
-            });
-
-            var parserResult = parser.ParseArguments<Options>(args);
-
-            return parserResult.MapResult(Run, HandleErrors);
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"Fatal error: {ex.Message}");
-            if (_verbose)
-            {
-                Console.Error.WriteLine($"Stack trace: {ex.StackTrace}");
-            }
-            return 1;
-        }
-    }
-
-    private static int Run(Options options)
-    {
-        _verbose = options.Verbose;
-
-        if (options.Help)
-        {
-            DisplayHelp();
+            ListAllModules();
             return 0;
         }
 
-        if (options.Version)
+        var code = GetCode(options);
+        if (string.IsNullOrEmpty(code))
         {
-            DisplayVersion();
-            return 0;
-        }
-
-        if (!options.Validate(out var errorMessage))
-        {
-            Console.Error.WriteLine($"Error: {errorMessage}");
+            Console.Error.WriteLine("Error: No code provided. Use --file, --eval, or provide code as argument.");
             return 1;
         }
 
-        if (_verbose)
-        {
-            Console.WriteLine("Verbose mode enabled");
-            Console.WriteLine($"Source file: {options.SourcePath}");
-        }
+        var provider = BuildServiceProvider(options);
+        var core = GetCoreRunnable(provider, options.Mode);
 
-        try
-        {
-            // Create modules
-            var (frontendModules, middleEndModules) = CreateModules(options);
+        var result = core.Run(code);
+        if (result != null)
+            Console.WriteLine(result);
 
-            if (_verbose)
-            {
-                Console.WriteLine($"Loaded {frontendModules.Count} frontend modules");
-                Console.WriteLine($"Loaded {middleEndModules.Count} middle-end modules");
-            }
-
-            // Create core
-            var core = new BasicCoreImpl<IAbstractIR>(
-                () => new BasicLexerImpl(),
-                () => new BasicParserImpl(),
-                () => new BasicAstToBytecodeTranslatorImpl(),
-                () => new BytecodeToAbstractIrConverterImpl(),
-                () => new AbstractIrToAbstractIrStub(),
-                () => new InterpreterImpl(),
-                frontendModules,
-                middleEndModules
-            );
-
-            // Read source code
-            var code = File.ReadAllText(options.SourcePath);
-
-            if (_verbose)
-            {
-                Console.WriteLine($"Code length: {code.Length} characters");
-                Console.WriteLine("Starting execution...");
-            }
-
-            // Execute code
-            var result = core.Run(code);
-
-            Console.WriteLine(result?.ToString() ?? "(null)");
-            return 0;
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"Execution error: {ex.Message}");
-            if (_verbose)
-            {
-                Console.Error.WriteLine($"Stack trace: {ex.StackTrace}");
-            }
-            return 1;
-        }
+        return 0;
     }
-
-    private static (List<IFrontendCoreModule> frontend, List<IMiddleEndCoreModule<IAbstractIR>> middleEnd)
-        CreateModules(Options options)
+    catch (Exception ex)
     {
-        var frontendModules = new List<IFrontendCoreModule>();
-        var middleEndModules = new List<IMiddleEndCoreModule<IAbstractIR>>();
-
-        // Base modules (include all by default)
-        var baseModules = new Dictionary<string, IFrontendCoreModule>
-        {
-            ["Identifier"] = new IdentifierModuleImpl(),
-            ["Scopes"] = new ScopesModuleImpl(),
-            ["Numbers"] = new NumbersModuleImpl(),
-            ["Whitespace"] = new WhitespaceModuleImpl(),
-            ["SemicolonAsNewLine"] = new SemicolonAsNewLineModuleImpl(),
-            ["Arithmetic"] = new ArithmeticModuleImpl(),
-            ["CSharpInterop"] = new CSharpInteropModuleImpl(),
-            ["Labels"] = new LabelsModuleImpl(),
-            ["Variables"] = new VariablesModuleImpl(),
-            ["Equality"] = new EqualityModuleImpl(),
-            ["Conditions"] = new ConditionsModuleImpl(),
-            ["Comparison"] = new ComparisonOperations(),
-            ["Boolean"] = new BooleanOperations()
-        };
-
-        // Determine which modules to disable
-        var disabledModules = options.DisableModules?.Select(m => m.Trim()).ToHashSet(StringComparer.OrdinalIgnoreCase)
-                              ?? new HashSet<string>();
-
-        // Add base modules (except disabled ones)
-        foreach (var (name, module) in baseModules)
-        {
-            if (disabledModules.Contains(name))
-            {
-                if (_verbose) Console.WriteLine($"Skipping disabled module: {name}");
-                continue;
-            }
-
-            frontendModules.Add(module);
-            if (_verbose) Console.WriteLine($"Added module: {name}");
-        }
-
-        // Logging module
-        if (!options.NoLogging && !disabledModules.Contains("Logger"))
-        {
-            var logsPath = options.LogsPath ?? "wistc.log";
-            frontendModules.Add(new ExecutorDebugLoggerImpl(logsPath));
-            if (_verbose) Console.WriteLine($"Added logging module (output: {logsPath})");
-        }
-
-        // Parser configuration module
-        if (!string.IsNullOrWhiteSpace(options.ParserConfigPath))
-        {
-            var actionType = options.ParserConfigRead
-                ? ActionType.ReadConfiguration
-                : ActionType.DumpConfiguration; // Default dump
-
-            frontendModules.Add(new ParserConfigurationModuleImpl(actionType, options.ParserConfigPath));
-            if (_verbose) Console.WriteLine($"Added parser config module ({actionType})");
-        }
-
-        // Lexer configuration module
-        if (!string.IsNullOrWhiteSpace(options.LexerConfigPath))
-        {
-            var actionType = options.LexerConfigRead
-                ? ActionType.ReadConfiguration
-                : ActionType.DumpConfiguration; // Default dump
-
-            frontendModules.Add(new LexerConfigurationModuleImpl(actionType, options.LexerConfigPath));
-            if (_verbose) Console.WriteLine($"Added lexer config module ({actionType})");
-        }
-
-        // Custom modules from DLL
-        if (options.CustomModuleDlls != null)
-        {
-            foreach (var dllPath in options.CustomModuleDlls)
-            {
-                try
-                {
-                    var customModules = LoadCustomModules(dllPath);
-
-                    foreach (var module in customModules)
-                    {
-                        if (module is IFrontendCoreModule frontendModule)
-                        {
-                            frontendModules.Add(frontendModule);
-                            if (_verbose) Console.WriteLine($"Added custom frontend module from {Path.GetFileName(dllPath)}: {module.GetType().Name}");
-                        }
-                        else if (module is IMiddleEndCoreModule<IAbstractIR> middleEndModule)
-                        {
-                            middleEndModules.Add(middleEndModule);
-                            if (_verbose) Console.WriteLine($"Added custom middle-end module from {Path.GetFileName(dllPath)}: {module.GetType().Name}");
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.Error.WriteLine($"Warning: Failed to load modules from {dllPath}: {ex.Message}");
-                    if (_verbose) Console.Error.WriteLine($"Details: {ex}");
-                }
-            }
-        }
-
-        return (frontendModules, middleEndModules);
-    }
-
-    private static List<object> LoadCustomModules(string dllPath)
-    {
-        var modules = new List<object>();
-        var assembly = Assembly.LoadFrom(dllPath);
-
-        foreach (var type in assembly.GetTypes())
-        {
-            try
-            {
-                if (type is not { IsAbstract: false, IsInterface: false })
-                    continue;
-
-
-                if (typeof(IFrontendCoreModule).IsAssignableFrom(type))
-                {
-                    if (Activator.CreateInstance(type) is IFrontendCoreModule module)
-                    {
-                        modules.Add(module);
-                    }
-                }
-
-
-                else if (type.GetInterfaces().Any(i =>
-                             i.IsGenericType &&
-                             i.GetGenericTypeDefinition() == typeof(IMiddleEndCoreModule<>) &&
-                             i.GetGenericArguments()[0] == typeof(IAbstractIR)))
-                {
-                    var module = Activator.CreateInstance(type);
-                    if (module != null)
-                    {
-                        modules.Add(module);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                if (_verbose) Console.WriteLine($"Warning: Failed to load type {type.Name}: {ex.Message}");
-            }
-        }
-
-        return modules;
-    }
-
-    private static int HandleErrors(IEnumerable<Error> errors)
-    {
-        var errorList = errors.ToList();
-
-        if (errorList.Any(e => e is HelpRequestedError))
-        {
-            DisplayHelp();
-            return 0;
-        }
-
-        if (errorList.Any(e => e is VersionRequestedError))
-        {
-            DisplayVersion();
-            return 0;
-        }
-
-        Console.Error.WriteLine("Error parsing command line arguments:");
-        foreach (var error in errorList)
-        {
-            Console.Error.WriteLine($"  {error.Tag}");
-        }
-
-        Console.Error.WriteLine();
-        DisplayUsage();
-
+        Console.Error.WriteLine($"Error: {ex.Message}");
+        if (Debugger.IsAttached)
+            Console.Error.WriteLine(ex.StackTrace);
         return 1;
     }
+}
 
-    private static void DisplayHelp()
+int ReplCommand(ReplOptions options)
+{
+    try
     {
-        DisplayVersion();
-        Console.WriteLine();
-        DisplayUsage();
-        Console.WriteLine();
-        DisplayExamples();
+        var provider = BuildServiceProvider(options);
+        var core = GetCoreRunnable(provider, options.Mode);
+
+        Console.WriteLine("Wist REPL (Ctrl+C to exit)");
+        Console.WriteLine($"Mode: {options.Mode}");
+
+        var repl = new Repl(core, options.HistoryFile);
+        return repl.Run();
+    }
+    catch (Exception ex)
+    {
+        Console.Error.WriteLine($"Error: {ex.Message}");
+        return 1;
+    }
+}
+
+string GetCode(RunOptions options)
+{
+    if (!string.IsNullOrEmpty(options.File))
+    {
+        if (!File.Exists(options.File))
+            throw new FileNotFoundException($"File not found: {options.File}");
+        return File.ReadAllText(options.File);
     }
 
-    private static void DisplayVersion()
-    {
-        var assembly = Assembly.GetExecutingAssembly();
-        var version = assembly.GetName().Version ?? new Version(1, 0, 0);
+    if (options.Evaluate && !string.IsNullOrEmpty(options.Code))
+        return options.Code;
 
-        Console.WriteLine($"Wistc Compiler v{version.Major}.{version.Minor}.{version.Build}");
-        Console.WriteLine("A flexible compiler/interpreter with modular architecture");
+    return options.Code ?? string.Empty;
+}
+
+IServiceProvider BuildServiceProvider(CommonOptions options)
+{
+    var services = new ServiceCollection();
+
+    // Register core services
+    services.AddWistServices();
+
+    // Filter modules based on options
+    var frontendModules = services
+        .Where(s => s.ServiceType == typeof(IFrontendCoreModule))
+        .ToList();
+
+    var modulesToRemove = new List<ServiceDescriptor>();
+    var modulesToAdd = new List<IFrontendCoreModule>();
+
+    // Process exclusions
+    if (options.ExcludeModules != null && options.ExcludeModules.Any())
+    {
+        var excludeSet = new HashSet<string>(options.ExcludeModules.Select(m => m.Trim()));
+        foreach (var module in frontendModules)
+        {
+            var typeName = module.ImplementationType?.FullName;
+            if (typeName != null && excludeSet.Contains(typeName))
+            {
+                modulesToRemove.Add(module);
+            }
+        }
     }
 
-    private static void DisplayUsage()
+    // Process inclusions
+    if (options.IncludeModules != null && options.IncludeModules.Any())
     {
-        Console.WriteLine("USAGE:");
-        Console.WriteLine("  wistc --source <file> [OPTIONS]");
-        Console.WriteLine();
-        Console.WriteLine("REQUIRED:");
-        Console.WriteLine("  -s, --source <file>     Path to source code file");
-        Console.WriteLine();
-        Console.WriteLine("OPTIONS:");
-        Console.WriteLine("  -l, --logs <file>       Path to log file (default: wistc.log)");
-        Console.WriteLine("      --no-logging        Disable logging");
-        Console.WriteLine();
-        Console.WriteLine("  Parser Configuration:");
-        Console.WriteLine("      --parser-config <file>      Path to parser configuration file");
-        Console.WriteLine("      --parser-config-read        Read parser configuration from file");
-        Console.WriteLine("      --parser-config-dump        Dump parser configuration to file");
-        Console.WriteLine();
-        Console.WriteLine("  Lexer Configuration:");
-        Console.WriteLine("      --lexer-config <file>      Path to lexer configuration file");
-        Console.WriteLine("      --lexer-config-read        Read lexer configuration from file");
-        Console.WriteLine("      --lexer-config-dump        Dump lexer configuration to file");
-        Console.WriteLine();
-        Console.WriteLine("  Module Management:");
-        Console.WriteLine("      --disable-modules <list>    Disable specific modules (comma-separated)");
-        Console.WriteLine("      --custom-modules <list>     Paths to custom module DLLs (comma-separated)");
-        Console.WriteLine();
-        Console.WriteLine("  Other Options:");
-        Console.WriteLine("  -h, --help              Show this help message");
-        Console.WriteLine("  -v, --verbose           Enable verbose output");
-        Console.WriteLine("      --version           Show version information");
-        Console.WriteLine();
-        Console.WriteLine("DEFAULT MODULES:");
-        Console.WriteLine("  Identifier, Scopes, Numbers, Whitespace, SemicolonAsNewLine,");
-        Console.WriteLine("  Arithmetic, CSharpInterop, Labels, Variables, Equality,");
-        Console.WriteLine("  Conditions, Comparison, Boolean");
+        foreach (var moduleName in options.IncludeModules)
+        {
+            var type = Type.GetType(moduleName.Trim()) ??
+                       AppDomain.CurrentDomain.GetAssemblies()
+                           .SelectMany(a => a.GetTypes())
+                           .FirstOrDefault(t => t.FullName == moduleName.Trim());
+
+            if (type != null && typeof(IFrontendCoreModule).IsAssignableFrom(type))
+            {
+                var module = Activator.CreateInstance(type) as IFrontendCoreModule;
+                if (module != null)
+                    modulesToAdd.Add(module);
+            }
+            else
+            {
+                Console.WriteLine($"Warning: Module '{moduleName}' not found or not a valid IFrontendCoreModule");
+            }
+        }
     }
 
-    private static void DisplayExamples()
+    // Apply changes
+    foreach (var module in modulesToRemove)
+        services.Remove(module);
+
+    foreach (var module in modulesToAdd)
+        services.AddSingleton(module);
+
+    return services.BuildServiceProvider();
+}
+
+ICoreRunnable GetCoreRunnable(IServiceProvider provider, string mode)
+{
+    var runnables = provider.GetServices<ICoreRunnable>().ToList();
+
+    if (mode.Equals("compiler", StringComparison.OrdinalIgnoreCase))
     {
-        Console.WriteLine("EXAMPLES:");
-        Console.WriteLine("  # Basic usage");
-        Console.WriteLine("  wistc --source program.wt");
-        Console.WriteLine();
-        Console.WriteLine("  # With logging");
-        Console.WriteLine("  wistc --source program.wt --logs output.log");
-        Console.WriteLine();
-        Console.WriteLine("  # Disable specific modules");
-        Console.WriteLine("  wistc --source program.wt --disable-modules Conditions,Boolean");
-        Console.WriteLine();
-        Console.WriteLine("  # Use parser configuration");
-        Console.WriteLine("  wistc --source program.wt --parser-config parser.txt --parser-config-dump");
-        Console.WriteLine();
-        Console.WriteLine("  # Load custom modules");
-        Console.WriteLine("  wistc --source program.wt --custom-modules MyModule.dll");
-        Console.WriteLine();
-        Console.WriteLine("  # Verbose mode");
-        Console.WriteLine("  wistc --source program.wt --verbose");
+        // Find compiler-based implementation (DynamicMethod)
+        var compiler = runnables.FirstOrDefault(r =>
+            r.GetType().IsGenericType &&
+            r.GetType().GetGenericTypeDefinition() == typeof(BasicCoreImpl<>) &&
+            r.GetType().GetGenericArguments()[0] == typeof(DynamicMethod));
+
+        return compiler ?? runnables.First();
+    }
+    if (mode.Equals("interpreter", StringComparison.OrdinalIgnoreCase))
+    {
+        // Find interpreter-based implementation (IAbstractIR)
+        var interpreter = runnables.FirstOrDefault(r =>
+            r.GetType().IsGenericType &&
+            r.GetType().GetGenericTypeDefinition() == typeof(BasicCoreImpl<>) &&
+            r.GetType().GetGenericArguments()[0] == typeof(IAbstractIR));
+
+        return interpreter ?? runnables.Last();
+    }
+    throw new ArgumentException($"Unknown mode: {mode}. Use 'compiler' or 'interpreter'.");
+}
+
+void ListAllModules()
+{
+    Console.WriteLine("Available modules:");
+    Console.WriteLine("==================");
+
+    var assemblies = TypesFinder.Assemblies;
+    foreach (var assembly in assemblies)
+    {
+        var modules = assembly.GetTypes()
+            .Where(t => !t.IsAbstract && t.IsClass && typeof(IFrontendCoreModule).IsAssignableFrom(t))
+            .ToList();
+
+        if (modules.Any())
+        {
+            Console.WriteLine($"\nAssembly: {assembly.GetName().Name}");
+            foreach (var module in modules)
+            {
+                var attr = module.GetCustomAttribute<AutoRegisterServiceAttribute>();
+                var lifetime = attr?.Lifetime.ToString() ?? "Transient";
+                Console.WriteLine($"  {module.FullName} [{lifetime}]");
+            }
+        }
     }
 }
