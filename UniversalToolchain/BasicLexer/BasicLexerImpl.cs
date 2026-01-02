@@ -51,8 +51,8 @@ public class BasicLexerImpl(LexerConfiguration configuration) : ILexer
 
             // Handle unrecognized text.
             Thrower.AssertAlways(
-                index == lexeme.StartIndex,
-                $"Unknown substr '{Regex.Escape(code[index..lexeme.StartIndex])}'"
+                index == lexeme?.StartIndex,
+                $"Unknown substr '{Regex.Escape(code[index..(lexeme?.StartIndex ?? code.Length)])}'"
             );
 
             // Update the current processing position to just past the matched token.

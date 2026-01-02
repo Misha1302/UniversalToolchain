@@ -20,7 +20,11 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
         "call C# ctor",
         "store_local",
         "load_local",
-        "load_local_ref"
+        "load_local_ref",
+        "load_i32",
+        "load_i64",
+        "load_f32",
+        "load_f64"
     ];
 
     public DynamicMethod Compile(IAbstractIR air)
@@ -250,9 +254,43 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
             data.Il.Ldloca(local);
             stack.Push(varType.MakeByRefType());
         }
+        else if (name is "load_i32" or "load_i64" or "load_f32" or "load_f64")
+        {
+            LoadNativeNumber(instruction, data, stack);
+        }
         else
         {
             Thrower.InvalidOpEx();
+        }
+    }
+
+    private void LoadNativeNumber(Instruction instruction, CompilationData data, List<Type> stack)
+    {
+        var name = instruction.Operands[0].Get<string>();
+        var arg = instruction.Operands[1];
+        if (name == "load_i32")
+        {
+            data.Il.Ldc_I4(arg.Get<int>());
+            stack.Push(typeof(int));
+        }
+        else if (name == "load_i64")
+        {
+            data.Il.Ldc_I8(arg.Get<long>());
+            stack.Push(typeof(long));
+        }
+        else if (name == "load_f32")
+        {
+            data.Il.Ldc_R4(arg.Get<float>());
+            stack.Push(typeof(float));
+        }
+        else if (name == "load_f64")
+        {
+            data.Il.Ldc_R8(arg.Get<double>());
+            stack.Push(typeof(double));
+        }
+        else
+        {
+            Thrower.InvalidOpEx($"Unknown native number loading {name}");
         }
     }
 

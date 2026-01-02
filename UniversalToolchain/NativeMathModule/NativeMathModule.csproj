@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\AbstractIrExtensions\AbstractIrExtensions.csproj" />
+      <ProjectReference Include="..\BasicCore\BasicCore.csproj" />
+      <ProjectReference Include="..\BasicTypesExtensions\BasicTypesExtensions.csproj" />
+      <ProjectReference Include="..\DotnetAirHelper\DotnetAirHelper.csproj" />
+      <ProjectReference Include="..\ObjectExtensions\ObjectExtensions.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Reference Include="Microsoft.Extensions.DependencyInjection.Abstractions">
+        <HintPath>..\..\..\..\..\.nuget\packages\microsoft.extensions.dependencyinjection.abstractions\10.0.1\lib\net9.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
+</Project>

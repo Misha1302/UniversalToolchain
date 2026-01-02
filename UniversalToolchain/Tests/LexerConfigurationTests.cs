@@ -378,8 +378,8 @@ public class LexerConfigurationTests
         var modules = new IFrontendCoreModule[]
         {
             new IdentifierModuleImpl(),
-            new NumbersModuleImpl(),
             new WhitespaceModuleImpl(),
+            new NumbersModuleImpl(),
             new ArithmeticModuleImpl()
         };
 

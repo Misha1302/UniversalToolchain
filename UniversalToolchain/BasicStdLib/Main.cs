@@ -1,4 +1,6 @@
-﻿using GenericMath;
+﻿using System.Runtime.CompilerServices;
+using ExceptionsManager;
+using GenericMath;
 using JetBrains.Annotations;
 using NumbersModule;
 
@@ -83,5 +85,35 @@ public static class Main
     public static TSelf Round<TSelf>(TSelf x) where TSelf : ICustomNumber<TSelf, double>
     {
         return TSelf.Create(Math.Round(x.GetValue()));
+    }
+
+    [UsedImplicitly]
+    public static float ToFloat<TSelf>(TSelf x)
+    {
+        if (typeof(TSelf) == typeof(int)) return Unsafe.BitCast<TSelf, int>(x);
+        if (typeof(TSelf) == typeof(float)) return Unsafe.BitCast<TSelf, float>(x);
+        if (typeof(TSelf) == typeof(decimal)) return (float)Unsafe.BitCast<TSelf, decimal>(x);
+        if (typeof(TSelf) == typeof(string)) return float.Parse(Unsafe.BitCast<TSelf, string>(x));
+        return Thrower.InvalidOpEx<float>($"Unknown type {typeof(TSelf)}");
+    }
+
+    [UsedImplicitly]
+    public static double ToDouble<TSelf>(TSelf x)
+    {
+        if (typeof(TSelf) == typeof(int)) return Unsafe.BitCast<TSelf, int>(x);
+        if (typeof(TSelf) == typeof(float)) return Unsafe.BitCast<TSelf, float>(x);
+        if (typeof(TSelf) == typeof(decimal)) return (double)Unsafe.BitCast<TSelf, decimal>(x);
+        if (typeof(TSelf) == typeof(string)) return double.Parse(Unsafe.BitCast<TSelf, string>(x));
+        return Thrower.InvalidOpEx<double>($"Unknown type {typeof(TSelf)}");
+    }
+
+    [UsedImplicitly]
+    public static decimal ToDecimal<TSelf>(TSelf x)
+    {
+        if (typeof(TSelf) == typeof(int)) return Unsafe.BitCast<TSelf, int>(x);
+        if (typeof(TSelf) == typeof(float)) return (decimal)Unsafe.BitCast<TSelf, float>(x);
+        if (typeof(TSelf) == typeof(decimal)) return Unsafe.BitCast<TSelf, decimal>(x);
+        if (typeof(TSelf) == typeof(string)) return decimal.Parse(Unsafe.BitCast<TSelf, string>(x));
+        return Thrower.InvalidOpEx<decimal>($"Unknown type {typeof(TSelf)}");
     }
 }

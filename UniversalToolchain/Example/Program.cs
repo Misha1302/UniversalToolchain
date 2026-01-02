@@ -1,7 +1,11 @@
+using System.Diagnostics;
 using DependencyInjection;
+using NativeMathModule;
+using ObjectExtensions;
 
 // Setup DI with auto-registration
 var services = new ServiceCollection();
+
 services.AddWistServices();
 
 // Add optional modules
@@ -10,21 +14,28 @@ services.AddSingleton<IFrontendCoreModule>(new ParserConfigurationModuleImpl(Act
 services.AddSingleton<IFrontendCoreModule>(new LexerConfigurationModuleImpl(ActionType.DumpConfiguration));
 
 var provider = services.BuildServiceProvider();
-var core = provider.GetServices<ICoreRunnable>().First();
+var core = provider.GetServices<ICoreOptimizedRunnable>().First();
 
 
-var result = core.Run(
+core.PrepareToRun(
     """
+    let i = 0
     let sum = 0
-    let i = 1
-    @loop:
-    if i > 1000000 goto @end
+    @start:
+    if i > 100 goto @end
         sum = sum + i
         i = i + 1
-        goto @loop
+        goto @start
     @end:
     sum
     """
 );
 
-Console.WriteLine(result);
+var sw = Stopwatch.StartNew();
+var w = 0.0;
+for (int i = 0; i < 1_000_000_000; i++)
+{
+    w += core.RunPrepared()!.Get<RealNumberImpl>().GetValue();
+}
+Console.WriteLine(w);
+Console.WriteLine("Elapsed time: " + sw.Elapsed);
