@@ -336,9 +336,6 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
             return _values.Count - 1;
         }
 
-        public static T GetValue(int index)
-        {
-            return _values[index];
-        }
+        public static T GetValue(int index) => _values[index];
     }
 }

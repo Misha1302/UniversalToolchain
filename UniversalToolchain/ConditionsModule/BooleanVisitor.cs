@@ -63,21 +63,12 @@ public class BooleanVisitor : IAstVisitor
     private static class BooleanOperations
     {
         [UsedImplicitly]
-        public static bool And(bool a, bool b)
-        {
-            return a && b;
-        }
+        public static bool And(bool a, bool b) => a && b;
 
         [UsedImplicitly]
-        public static bool Or(bool a, bool b)
-        {
-            return a || b;
-        }
+        public static bool Or(bool a, bool b) => a || b;
 
         [UsedImplicitly]
-        public static bool Not(bool a)
-        {
-            return !a;
-        }
+        public static bool Not(bool a) => !a;
     }
 }

@@ -51,16 +51,10 @@ public class CSharpVsCompilerVsInterpreterBasicLoopBenchmarks
     }
 
     [Benchmark]
-    public object? Interpreter_BasicLoop()
-    {
-        return _interpreterCore.RunPrepared();
-    }
+    public object? Interpreter_BasicLoop() => _interpreterCore.RunPrepared();
 
     [Benchmark]
-    public object? Compiler_BasicLoop()
-    {
-        return _compilerNotOptimizedCore.RunPrepared();
-    }
+    public object? Compiler_BasicLoop() => _compilerNotOptimizedCore.RunPrepared();
 
     [Benchmark]
     [MethodImpl(MethodImplOptions.NoOptimization | MethodImplOptions.NoInlining)]
@@ -81,10 +75,7 @@ public class CSharpVsCompilerVsInterpreterBasicLoopBenchmarks
     }
 
     [Benchmark]
-    public object? CompilerOptimized_BasicLoop()
-    {
-        return _compilerCore.RunPrepared();
-    }
+    public object? CompilerOptimized_BasicLoop() => _compilerCore.RunPrepared();
 
     [Benchmark(Baseline = true)]
     [MethodImpl(MethodImplOptions.AggressiveOptimization | MethodImplOptions.NoInlining)]

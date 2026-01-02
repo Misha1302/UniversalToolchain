@@ -17,8 +17,5 @@ public class AbstractMethodImpl(
         return air;
     }
 
-    public override string ToString()
-    {
-        return Name;
-    }
+    public override string ToString() => Name;
 }

@@ -95,12 +95,10 @@ public class LocalVariablesOptimizer : IIRProcessingModule
         return resultAir;
     }
 
-    private bool IsPushString(Instruction instr)
-    {
-        return instr.UOpCode == UOpCode.Push &&
-               instr.Operands.Count == 1 &&
-               instr.Operands[0] is string;
-    }
+    private bool IsPushString(Instruction instr) =>
+        instr.UOpCode == UOpCode.Push &&
+        instr.Operands.Count == 1 &&
+        instr.Operands[0] is string;
 
     private bool IsIntrinsicCallCSharp(Instruction instr, out MethodInfo methodInfo)
     {
@@ -116,31 +114,22 @@ public class LocalVariablesOptimizer : IIRProcessingModule
         return false;
     }
 
-    private bool IsGetRefMethod(MethodInfo method)
-    {
-        return method.Name == "GetRef" &&
-               method.DeclaringType.IsGenericType &&
-               method.DeclaringType.GetGenericTypeDefinition() == typeof(VariablesContainer<>);
-    }
+    private bool IsGetRefMethod(MethodInfo method) =>
+        method.Name == "GetRef" &&
+        method.DeclaringType.IsGenericType &&
+        method.DeclaringType.GetGenericTypeDefinition() == typeof(VariablesContainer<>);
 
-    private bool IsSetValueMethod(MethodInfo method)
-    {
-        return method.Name == "SetValue" &&
-               method.DeclaringType.IsGenericType &&
-               method.DeclaringType.GetGenericTypeDefinition() == typeof(VariableReference<>);
-    }
+    private bool IsSetValueMethod(MethodInfo method) =>
+        method.Name == "SetValue" &&
+        method.DeclaringType.IsGenericType &&
+        method.DeclaringType.GetGenericTypeDefinition() == typeof(VariableReference<>);
 
-    private bool IsSetValueToMethod(MethodInfo method)
-    {
-        return method.Name == "SetValueTo" && method.IsGenericMethod;
-    }
+    private bool IsSetValueToMethod(MethodInfo method) => method.Name == "SetValueTo" && method.IsGenericMethod;
 
-    private bool IsGetMethod(MethodInfo method)
-    {
-        return method.Name == "Get" &&
-               method.DeclaringType.IsGenericType &&
-               method.DeclaringType.GetGenericTypeDefinition() == typeof(VariablesContainer<>);
-    }
+    private bool IsGetMethod(MethodInfo method) =>
+        method.Name == "Get" &&
+        method.DeclaringType.IsGenericType &&
+        method.DeclaringType.GetGenericTypeDefinition() == typeof(VariablesContainer<>);
 
     private bool IsStorePattern(Instruction pushInstr, Instruction getRefInstr, Instruction setValueInstr)
     {

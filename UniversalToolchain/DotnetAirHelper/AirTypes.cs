@@ -49,10 +49,7 @@ public static class AirTypes
         );
     }
 
-    public static bool TryRegisterIntrinsic(string name, Action<Instruction, List<Type>> processIntrinsic)
-    {
-        return _intrinsicsProcessors.TryAdd(name, processIntrinsic);
-    }
+    public static bool TryRegisterIntrinsic(string name, Action<Instruction, List<Type>> processIntrinsic) => _intrinsicsProcessors.TryAdd(name, processIntrinsic);
 
     public static void ProcessTypesIntrinsic(Instruction instruction, List<Type> stack)
     {

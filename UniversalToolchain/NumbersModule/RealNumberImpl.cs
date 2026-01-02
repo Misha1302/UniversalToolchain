@@ -5,40 +5,19 @@ namespace NumbersModule;
 
 public readonly struct RealNumberImpl(double value) : ICustomNumber<RealNumberImpl, double>, IComparable<RealNumberImpl>
 {
-    public static RealNumberImpl Sub(RealNumberImpl a, RealNumberImpl b)
-    {
-        return new RealNumberImpl(a.GetValue() - b.GetValue());
-    }
+    public static RealNumberImpl Sub(RealNumberImpl a, RealNumberImpl b) => new(a.GetValue() - b.GetValue());
 
-    public static RealNumberImpl Mul(RealNumberImpl a, RealNumberImpl b)
-    {
-        return new RealNumberImpl(a.GetValue() * b.GetValue());
-    }
+    public static RealNumberImpl Mul(RealNumberImpl a, RealNumberImpl b) => new(a.GetValue() * b.GetValue());
 
-    public static RealNumberImpl Add(RealNumberImpl a, RealNumberImpl b)
-    {
-        return new RealNumberImpl(a.GetValue() + b.GetValue());
-    }
+    public static RealNumberImpl Add(RealNumberImpl a, RealNumberImpl b) => new(a.GetValue() + b.GetValue());
 
-    public static RealNumberImpl Div(RealNumberImpl a, RealNumberImpl b)
-    {
-        return new RealNumberImpl(a.GetValue() / b.GetValue());
-    }
+    public static RealNumberImpl Div(RealNumberImpl a, RealNumberImpl b) => new(a.GetValue() / b.GetValue());
 
-    public double GetValue()
-    {
-        return value;
-    }
+    public double GetValue() => value;
 
-    public static RealNumberImpl Create(double value)
-    {
-        return new RealNumberImpl(value);
-    }
+    public static RealNumberImpl Create(double value) => new(value);
 
-    public override string ToString()
-    {
-        return value.ToString(CultureInfo.InvariantCulture);
-    }
+    public override string ToString() => value.ToString(CultureInfo.InvariantCulture);
 
     public int CompareTo(RealNumberImpl other)
     {

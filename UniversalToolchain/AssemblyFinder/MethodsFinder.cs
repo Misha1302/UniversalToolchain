@@ -7,10 +7,7 @@ public static class MethodsFinder
 {
     private static readonly ConcurrentDictionary<string, MethodInfo?> _methodCache = new();
 
-    public static MethodInfo? GetMethod(string fullName)
-    {
-        return _methodCache.GetOrAdd(fullName, FindMethod);
-    }
+    public static MethodInfo? GetMethod(string fullName) => _methodCache.GetOrAdd(fullName, FindMethod);
 
     private static MethodInfo? FindMethod(string fullName)
     {

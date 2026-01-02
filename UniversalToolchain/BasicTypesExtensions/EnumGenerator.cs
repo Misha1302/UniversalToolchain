@@ -37,8 +37,5 @@ public class EnumGenerator
         return new ExtensibleEnum<T>(_num++);
     }
 
-    public string GetName(int value)
-    {
-        return _names[value] ?? value.ToString();
-    }
+    public string GetName(int value) => _names[value] ?? value.ToString();
 }

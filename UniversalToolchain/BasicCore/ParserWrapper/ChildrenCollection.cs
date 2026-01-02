@@ -18,15 +18,9 @@ public class ChildrenCollection(List<AstNode> children, AstNode parent) : IEnume
 
     public int Count => children.Count;
 
-    public IEnumerator<AstNode> GetEnumerator()
-    {
-        return children.GetEnumerator();
-    }
+    public IEnumerator<AstNode> GetEnumerator() => children.GetEnumerator();
 
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return GetEnumerator();
-    }
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     public void Add(AstNode node)
     {

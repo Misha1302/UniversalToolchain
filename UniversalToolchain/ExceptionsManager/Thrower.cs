@@ -21,10 +21,7 @@ public static class Thrower
     }
 
     [DoesNotReturn]
-    public static T InvalidOpEx<T>(string message = "")
-    {
-        throw new InvalidOperationException(message);
-    }
+    public static T InvalidOpEx<T>(string message = "") => throw new InvalidOperationException(message);
 
     [DebuggerStepThrough]
     [DebuggerHidden]
@@ -54,8 +51,5 @@ public static class Thrower
     }
 
     [DoesNotReturn]
-    public static T NullException<T>(string errorMessage = "")
-    {
-        throw new NullReferenceException(errorMessage);
-    }
+    public static T NullException<T>(string errorMessage = "") => throw new NullReferenceException(errorMessage);
 }

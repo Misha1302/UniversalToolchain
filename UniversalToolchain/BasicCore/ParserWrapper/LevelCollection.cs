@@ -15,15 +15,9 @@ public class LevelCollection<TKey, TValue> : IReadOnlyLevelCollection<TKey, TVal
         }
     }
 
-    public IEnumerator<KeyValuePair<TKey, List<TValue>>> GetEnumerator()
-    {
-        return ((IEnumerable<KeyValuePair<TKey, List<TValue>>>)_map).GetEnumerator();
-    }
+    public IEnumerator<KeyValuePair<TKey, List<TValue>>> GetEnumerator() => ((IEnumerable<KeyValuePair<TKey, List<TValue>>>)_map).GetEnumerator();
 
-    IEnumerator IEnumerable.GetEnumerator()
-    {
-        return GetEnumerator();
-    }
+    IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
     public void Add(TKey key, TValue value)
     {

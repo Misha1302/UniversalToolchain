@@ -14,26 +14,14 @@ public interface IFrontendCoreModule
     {
     }
 
-    string ProcessText(string curCode)
-    {
-        return curCode;
-    }
+    string ProcessText(string curCode) => curCode;
 
-    List<LexemeValue> ProcessLexemes(List<LexemeValue> current)
-    {
-        return current;
-    }
+    List<LexemeValue> ProcessLexemes(List<LexemeValue> current) => current;
 
-    AstNode ProcessAst(AstNode astRoot)
-    {
-        return astRoot;
-    }
+    AstNode ProcessAst(AstNode astRoot) => astRoot;
 
 
-    Bytecode ProcessBytecode(Bytecode current)
-    {
-        return current;
-    }
+    Bytecode ProcessBytecode(Bytecode current) => current;
 
     void InitAstTranslator(IAstToBytecodeTranslator translator)
     {

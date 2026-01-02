@@ -15,7 +15,7 @@ public class CommentsModuleImpl : IFrontendCoreModule
             true,
             -100
         );
-        
+
         lexer.Configuration.TryAddPattern(
             new LexemePattern(@"/\*[\s\S]*?\*/", ExtensibleEnum<LexemeTag>.CreateOrGet("MultiLineComment")),
             true,
@@ -30,10 +30,8 @@ public class CommentsModuleImpl : IFrontendCoreModule
     }
 
     // Метод ProcessText для предварительной обработки (опционально)
-    public string ProcessText(string curCode)
-    {
+    public string ProcessText(string curCode) =>
         // Можно добавить предварительную обработку для удаления комментариев,
         // но лучше оставить это лексеру
-        return curCode;
-    }
+        curCode;
 }

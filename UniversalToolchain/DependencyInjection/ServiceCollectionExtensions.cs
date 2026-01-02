@@ -25,10 +25,8 @@ public static class ServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddWistServices(
         this IServiceCollection services,
-        string? servicesDirectory = null)
-    {
-        return services.AddWistServices(null, servicesDirectory);
-    }
+        string? servicesDirectory = null) =>
+        services.AddWistServices(null, servicesDirectory);
 
     /// <summary>
     ///     Регистрирует все сервисы Wist с конфигурируемыми опциями

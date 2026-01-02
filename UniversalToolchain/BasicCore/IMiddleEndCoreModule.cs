@@ -4,10 +4,7 @@ namespace BasicCore;
 
 public interface IMiddleEndCoreModule<TCompilationOutput>
 {
-    TCompilationOutput ProcessCompilation(TCompilationOutput current)
-    {
-        return current;
-    }
+    TCompilationOutput ProcessCompilation(TCompilationOutput current) => current;
 
     void InitExecutor(IExecutor<TCompilationOutput> executor)
     {

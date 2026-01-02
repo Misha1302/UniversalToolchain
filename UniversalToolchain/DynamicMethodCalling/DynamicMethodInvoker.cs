@@ -39,10 +39,7 @@ public unsafe class DynamicMethodInvoker<TDelegate> where TDelegate : Delegate
         ForceAggressiveJitCompilation();
     }
 
-    public object? Invoke()
-    {
-        return _delegate.Method.Invoke(null, null);
-    }
+    public object? Invoke() => _delegate.Method.Invoke(null, null);
 
     /// <summary>
     ///     Получаем указатель на функцию через нестандартные методы
@@ -115,8 +112,5 @@ public unsafe class DynamicMethodInvoker<TDelegate> where TDelegate : Delegate
     /// <summary>
     ///     Фабричный метод для удобного создания инвокера
     /// </summary>
-    public static DynamicMethodInvoker<TDelegate> Create(DynamicMethod method)
-    {
-        return new DynamicMethodInvoker<TDelegate>(method);
-    }
+    public static DynamicMethodInvoker<TDelegate> Create(DynamicMethod method) => new(method);
 }

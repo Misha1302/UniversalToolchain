@@ -38,15 +38,9 @@ public class AstNode
         _currentTags.Add(tag);
     }
 
-    public AstNode? SafeGet(int index)
-    {
-        return index >= 0 && index < Children.Count ? Children[index] : null;
-    }
+    public AstNode? SafeGet(int index) => index >= 0 && index < Children.Count ? Children[index] : null;
 
-    public override string ToString()
-    {
-        return ToStringCustom(0);
-    }
+    public override string ToString() => ToStringCustom(0);
 
     private string ToStringCustom(int offset)
     {
