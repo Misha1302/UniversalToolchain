@@ -1,6 +1,4 @@
-using System.Diagnostics;
 using DependencyInjection;
-using ObjectExtensions;
 
 // Setup DI with auto-registration
 var services = new ServiceCollection();
@@ -13,20 +11,24 @@ services.AddSingleton<IFrontendCoreModule>(new ParserConfigurationModuleImpl(Act
 services.AddSingleton<IFrontendCoreModule>(new LexerConfigurationModuleImpl(ActionType.DumpConfiguration));
 
 var provider = services.BuildServiceProvider();
-var core = provider.GetServices<ICoreOptimizedRunnable>().First();
+var core = provider.GetServices<ICoreRunnable>().First();
 
-
-core.PrepareToRun(
-    """
-    3 + 4 * 5
-    """
+Console.WriteLine(
+    core.Run(
+        """
+        let iterations = 1000
+        let pi = 3.141592653589793
+        let e = 2.718281828459045
+        let sum = 0.0
+        let i = 0
+        @loop:
+            if i >= iterations goto @end
+            let angle = Main.ToDouble(i) * pi / Main.ToDouble(iterations)
+            sum = sum + DoubleMath.Sin(angle) * DoubleMath.Cos(angle) * DoubleMath.Exp((0.0 - angle) / e)
+            i = i + 1
+            goto @loop
+        @end:
+        sum
+        """
+    )
 );
-
-var sw = Stopwatch.StartNew();
-var w = 0.0;
-for (var i = 0; i < 10_000_000; i++)
-{
-    w += core.RunPrepared()!.Get<int>();
-}
-Console.WriteLine(w);
-Console.WriteLine("Elapsed time: " + sw.Elapsed);

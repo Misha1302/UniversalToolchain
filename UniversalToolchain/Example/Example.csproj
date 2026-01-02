@@ -42,6 +42,7 @@
         <ProjectReference Include="..\SemicolonAsNewLineModule\SemicolonAsNewLineModule.csproj"/>
         <ProjectReference Include="..\VariablesModule\VariablesModule.csproj"/>
         <ProjectReference Include="..\WhitespacesModule\WhitespacesModule.csproj"/>
+        <ProjectReference Include="..\CommentsModule\CommentsModule.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

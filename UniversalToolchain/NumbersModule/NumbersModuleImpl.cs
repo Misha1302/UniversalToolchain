@@ -12,7 +12,8 @@ public class NumbersModuleImpl : IFrontendCoreModule
     {
         lexer.Configuration.TryAddPattern(
             new LexemePattern(@"[+-]?\d+(?:_?\d+)*(?:\.\d+(?:_?\d+)*)?(?:[eE][+-]?\d+(?:_?\d+)*)?",
-                LexemeType.CreateOrGet("Number"))
+                LexemeType.CreateOrGet("Number")),
+            priority: -20f
         );
     }
 

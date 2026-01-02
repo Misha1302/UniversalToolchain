@@ -21,10 +21,10 @@ public class ArithmeticModuleImpl : IFrontendCoreModule
 
     public void InitParser(IParser parser)
     {
-        parser.Configuration.NodeCreators.Add(-1, new MultiplicationOperationNodeCreator());
-        parser.Configuration.NodeCreators.Add(-1, new DivisionOperationNodeCreator());
-        parser.Configuration.NodeCreators.Add(0, new AdditionOperationNodeCreator());
-        parser.Configuration.NodeCreators.Add(0, new SubstractionOperationNodeCreator());
+        parser.Configuration.NodeCreators.Add(-31, new MultiplicationOperationNodeCreator());
+        parser.Configuration.NodeCreators.Add(-31, new DivisionOperationNodeCreator());
+        parser.Configuration.NodeCreators.Add(-30, new AdditionOperationNodeCreator());
+        parser.Configuration.NodeCreators.Add(-30, new SubstractionOperationNodeCreator());
     }
 
     public void InitAstTranslator(IAstToBytecodeTranslator translator)

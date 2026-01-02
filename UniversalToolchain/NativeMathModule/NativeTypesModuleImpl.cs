@@ -10,62 +10,12 @@ namespace NativeMathModule;
 [AutoRegisterService]
 public class NativeTypesModuleImpl : IFrontendCoreModule
 {
-    private static readonly HashSet<string> _nativeTypeKeywords = new()
-    {
-        "int", "long", "float", "double", "decimal"
-    };
-
-    private static readonly Dictionary<string, Type> _typeMap = new()
-    {
-        ["int"] = typeof(int),
-        ["long"] = typeof(long),
-        ["float"] = typeof(float),
-        ["double"] = typeof(double),
-        ["decimal"] = typeof(decimal)
-    };
-
-    private static readonly Dictionary<string, string> _suffixToType = new()
-    {
-        ["L"] = "long",
-        ["F"] = "float",
-        ["D"] = "double",
-        ["M"] = "decimal"
-    };
-
     public void InitLexer(ILexer lexer)
     {
-        // Ключевые слова для явного приведения типов
-        foreach (var type in _nativeTypeKeywords)
-        {
-            lexer.Configuration.TryAddPattern(
-                new LexemePattern(
-                    $@"{type}",
-                    ExtensibleEnum<LexemeTag>.CreateOrGet($"NativeType_{type}")
-                )
-            );
-        }
-
-
         lexer.Configuration.TryAddPattern(
-            new LexemePattern(
-                @"[+-]?\d+(?:_?\d+)*(?:\.\d+(?:_?\d+)*)?[eE][+-]?\d+(?:_?\d+)*[FDMfdm]?",
-                ExtensibleEnum<LexemeTag>.CreateOrGet("NativeScientific")
-            )
-        );
-
-        lexer.Configuration.TryAddPattern(
-            new LexemePattern(
-                @"[+-]?\d+(?:_?\d+)*\.\d+(?:_?\d+)*[FDMfdm]?",
-                ExtensibleEnum<LexemeTag>.CreateOrGet("NativeFloat")
-            )
-        );
-
-
-        lexer.Configuration.TryAddPattern(
-            new LexemePattern(
-                @"[+-]?\d+(?:_?\d+)*[LFDlfd]?",
-                ExtensibleEnum<LexemeTag>.CreateOrGet("NativeInteger")
-            )
+            new LexemePattern(@"[+-]?\d+(?:_?\d+)*(?:\.\d+(?:_?\d+)*)?(?:[eE][+-]?\d+(?:_?\d+)*)?[fdmFDM]?",
+                ExtensibleEnum<LexemeTag>.CreateOrGet("NativeNumber")),
+            priority: -20f
         );
 
         // Арифметические операции (используем существующие, но переопределяем поведение)
@@ -77,14 +27,10 @@ public class NativeTypesModuleImpl : IFrontendCoreModule
 
     public void InitParser(IParser parser)
     {
-        // Сначала обрабатываем явные приведения типов
-        parser.Configuration.NodeCreators.Add(-1000, new TypeCastNodeCreator());
-
-        // Затем операции
-        parser.Configuration.NodeCreators.Add(-1, new NativeMultiplicationOperationNodeCreator());
-        parser.Configuration.NodeCreators.Add(-1, new NativeDivisionOperationNodeCreator());
-        parser.Configuration.NodeCreators.Add(0, new NativeAdditionOperationNodeCreator());
-        parser.Configuration.NodeCreators.Add(0, new NativeSubtractionOperationNodeCreator());
+        parser.Configuration.NodeCreators.Add(-31, new NativeMultiplicationOperationNodeCreator());
+        parser.Configuration.NodeCreators.Add(-31, new NativeDivisionOperationNodeCreator());
+        parser.Configuration.NodeCreators.Add(-30, new NativeAdditionOperationNodeCreator());
+        parser.Configuration.NodeCreators.Add(-30, new NativeSubtractionOperationNodeCreator());
     }
 
     public void InitAstTranslator(IAstToBytecodeTranslator translator)
@@ -95,32 +41,33 @@ public class NativeTypesModuleImpl : IFrontendCoreModule
 
     public static object ParseNumber(string text)
     {
-        var cleanText = text.Replace("_", "");
+        var cleanedText = text.Replace("_", "");
+        var suffix = char.ToLower(cleanedText[^1]);
 
         // Определяем тип по суффиксу
-        if (text.EndsWith('M') || text.EndsWith('m'))
+        if (suffix == 'm')
         {
-            return decimal.Parse(cleanText.TrimEnd('M', 'm'), CultureInfo.InvariantCulture);
+            return decimal.Parse(cleanedText[..^1], NumberStyles.Any);
         }
-        if (text.EndsWith('F') || text.EndsWith('f'))
+        if (suffix == 'f')
         {
-            return float.Parse(cleanText.TrimEnd('F', 'f'), CultureInfo.InvariantCulture);
+            return float.Parse(cleanedText[..^1], NumberStyles.Any);
         }
-        if (text.EndsWith('D') || text.EndsWith('d'))
+        if (suffix == 'd')
         {
-            return double.Parse(cleanText.TrimEnd('D', 'd'), CultureInfo.InvariantCulture);
+            return double.Parse(cleanedText[..^1], NumberStyles.Any);
         }
-        if (text.EndsWith('L') || text.EndsWith('l'))
+        if (suffix == 'l')
         {
-            return long.Parse(cleanText.TrimEnd('L', 'l'));
+            return long.Parse(cleanedText[..^1], NumberStyles.Any);
         }
 
         // Если нет суффикса
-        if (cleanText.Contains('.') || cleanText.Contains('e') || cleanText.Contains('E'))
+        if (cleanedText.Contains('.') || cleanedText.Contains('e') || cleanedText.Contains('E'))
         {
-            return double.Parse(cleanText, CultureInfo.InvariantCulture);
+            return double.Parse(cleanedText, NumberStyles.Any);
         }
 
-        return int.Parse(cleanText);
+        return int.Parse(cleanedText);
     }
 }

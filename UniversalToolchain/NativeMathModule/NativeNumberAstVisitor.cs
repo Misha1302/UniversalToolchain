@@ -13,12 +13,8 @@ public class NativeNumberAstVisitor : IAstVisitor
     {
         var nodeType = data.Node.NodeType;
 
-        if (nodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("NativeInteger") &&
-            nodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("NativeFloat") &&
-            nodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("NativeScientific"))
-        {
+        if (nodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("NativeNumber"))
             return;
-        }
 
         var numText = data.Node.LexemeValue.Text;
         var value = NativeTypesModuleImpl.ParseNumber(numText);

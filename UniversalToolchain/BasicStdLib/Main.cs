@@ -88,10 +88,22 @@ public static class Main
     }
 
     [UsedImplicitly]
+    public static int ToInt<TSelf>(TSelf x)
+    {
+        if (typeof(TSelf) == typeof(int)) return Unsafe.BitCast<TSelf, int>(x);
+        if (typeof(TSelf) == typeof(float)) return (int)Unsafe.BitCast<TSelf, float>(x);
+        if (typeof(TSelf) == typeof(double)) return (int)Unsafe.BitCast<TSelf, double>(x);
+        if (typeof(TSelf) == typeof(decimal)) return (int)Unsafe.BitCast<TSelf, decimal>(x);
+        if (typeof(TSelf) == typeof(string)) return int.Parse(Unsafe.BitCast<TSelf, string>(x));
+        return Thrower.InvalidOpEx<int>($"Unknown type {typeof(TSelf)}");
+    }
+
+    [UsedImplicitly]
     public static float ToFloat<TSelf>(TSelf x)
     {
         if (typeof(TSelf) == typeof(int)) return Unsafe.BitCast<TSelf, int>(x);
         if (typeof(TSelf) == typeof(float)) return Unsafe.BitCast<TSelf, float>(x);
+        if (typeof(TSelf) == typeof(double)) return (float)Unsafe.BitCast<TSelf, double>(x);
         if (typeof(TSelf) == typeof(decimal)) return (float)Unsafe.BitCast<TSelf, decimal>(x);
         if (typeof(TSelf) == typeof(string)) return float.Parse(Unsafe.BitCast<TSelf, string>(x));
         return Thrower.InvalidOpEx<float>($"Unknown type {typeof(TSelf)}");
@@ -102,6 +114,7 @@ public static class Main
     {
         if (typeof(TSelf) == typeof(int)) return Unsafe.BitCast<TSelf, int>(x);
         if (typeof(TSelf) == typeof(float)) return Unsafe.BitCast<TSelf, float>(x);
+        if (typeof(TSelf) == typeof(double)) return Unsafe.BitCast<TSelf, double>(x);
         if (typeof(TSelf) == typeof(decimal)) return (double)Unsafe.BitCast<TSelf, decimal>(x);
         if (typeof(TSelf) == typeof(string)) return double.Parse(Unsafe.BitCast<TSelf, string>(x));
         return Thrower.InvalidOpEx<double>($"Unknown type {typeof(TSelf)}");
@@ -112,6 +125,7 @@ public static class Main
     {
         if (typeof(TSelf) == typeof(int)) return Unsafe.BitCast<TSelf, int>(x);
         if (typeof(TSelf) == typeof(float)) return (decimal)Unsafe.BitCast<TSelf, float>(x);
+        if (typeof(TSelf) == typeof(double)) return (decimal)Unsafe.BitCast<TSelf, double>(x);
         if (typeof(TSelf) == typeof(decimal)) return Unsafe.BitCast<TSelf, decimal>(x);
         if (typeof(TSelf) == typeof(string)) return decimal.Parse(Unsafe.BitCast<TSelf, string>(x));
         return Thrower.InvalidOpEx<decimal>($"Unknown type {typeof(TSelf)}");

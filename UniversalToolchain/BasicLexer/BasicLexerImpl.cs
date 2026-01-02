@@ -25,7 +25,7 @@ public class BasicLexerImpl(LexerConfiguration configuration) : ILexer
             // Find all occurrences of the current pattern in the input code using regular expressions.
 
             allMatches.AddRange(
-                Regex.Matches(code, pattern.Pattern)
+                Regex.Matches(code, pattern.Pattern, options: RegexOptions.Compiled, TimeSpan.FromMilliseconds(1000))
                     .Select(match =>
                         // Create a LexemeValue object for each match.
                         new LexemeValue(match.Value, pattern, match.Index, code))

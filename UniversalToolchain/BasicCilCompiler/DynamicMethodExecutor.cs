@@ -1,6 +1,6 @@
 ﻿using System.Reflection.Emit;
 using BasicCore.ExecutorWrapper;
-using UltraFastDynamicInvocation;
+using DynamicMethodCalling;
 
 namespace BasicCilCompiler;
 

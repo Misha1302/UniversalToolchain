@@ -3,7 +3,7 @@ using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using ExceptionsManager;
 
-namespace UltraFastDynamicInvocation;
+namespace DynamicMethodCalling;
 
 /// <summary>
 ///     Обертка для максимально быстрого вызова динамических методов
