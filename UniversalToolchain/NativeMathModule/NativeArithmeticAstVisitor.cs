@@ -23,7 +23,7 @@ public class NativeArithmeticAstVisitor : IAstVisitor
     public void TryVisit(BytecodeVisitorData data)
     {
         var nodeType = data.Node.NodeType;
-        
+
         if (nodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("NativeAddition") &&
             nodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("NativeSubtraction") &&
             nodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("NativeMultiplication") &&
@@ -46,16 +46,16 @@ public class NativeArithmeticAstVisitor : IAstVisitor
                 // Используем обобщенные методы из INumber<T>
                 var leftType = context.Stack[^2];
                 var rightType = context.Stack[^1];
-                
+
                 // В нашей системе типы должны совпадать или быть приведены явно
                 // Используем тип левого операнда как целевой
                 var targetType = leftType;
-                
+
                 var genericMethod = typeof(NativeArithmetic)
                     .GetMethod(methodName, BindingFlags.Static | BindingFlags.Public)
                     .NotNull()
                     .MakeGenericMethod(targetType);
-                
+
                 il.CallCSharp(genericMethod);
             }
         );

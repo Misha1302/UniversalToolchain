@@ -21,7 +21,7 @@ namespace DependencyInjection;
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    /// Регистрирует все сервисы Wist с автоматическим обнаружением модулей
+    ///     Регистрирует все сервисы Wist с автоматическим обнаружением модулей
     /// </summary>
     public static IServiceCollection AddWistServices(
         this IServiceCollection services,
@@ -31,7 +31,7 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Регистрирует все сервисы Wist с конфигурируемыми опциями
+    ///     Регистрирует все сервисы Wist с конфигурируемыми опциями
     /// </summary>
     public static IServiceCollection AddWistServices(
         this IServiceCollection services,
@@ -60,7 +60,7 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Регистрирует минимальный набор сервисов для работы ядра (без модулей)
+    ///     Регистрирует минимальный набор сервисов для работы ядра (без модулей)
     /// </summary>
     public static IServiceCollection AddWistCoreServices(
         this IServiceCollection services)
@@ -81,7 +81,7 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Явно добавляет модуль для работы (без автоматического обнаружения)
+    ///     Явно добавляет модуль для работы (без автоматического обнаружения)
     /// </summary>
     public static IServiceCollection AddModule<TModule>(this IServiceCollection services)
         where TModule : class, IFrontendCoreModule
@@ -91,7 +91,7 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Явно добавляет модуль оптимизации IR (без автоматического обнаружения)
+    ///     Явно добавляет модуль оптимизации IR (без автоматического обнаружения)
     /// </summary>
     public static IServiceCollection AddIROptimizerModule<TOptimizer>(this IServiceCollection services)
         where TOptimizer : class, IIRProcessingModule
@@ -101,7 +101,7 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Удаляет все сервисы из указанного пространства имен
+    ///     Удаляет все сервисы из указанного пространства имен
     /// </summary>
     public static IServiceCollection RemoveAllByNamespace(
         this IServiceCollection services,
@@ -120,7 +120,7 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
-    /// Удаляет все сервисы, реализующие указанный интерфейс
+    ///     Удаляет все сервисы, реализующие указанный интерфейс
     /// </summary>
     public static IServiceCollection RemoveAllByServiceType<TService>(
         this IServiceCollection services)
@@ -326,53 +326,53 @@ public static class ServiceCollectionExtensions
 }
 
 /// <summary>
-/// Опции для конфигурации Wist
+///     Опции для конфигурации Wist
 /// </summary>
 public class WistOptions
 {
     /// <summary>
-    /// Режим работы арифметического модуля
+    ///     Режим работы арифметического модуля
     /// </summary>
     public enum ArithmeticModeEnum
     {
         /// <summary>
-        /// Не использовать арифметический модуль
+        ///     Не использовать арифметический модуль
         /// </summary>
         None,
 
         /// <summary>
-        /// Использовать универсальную арифметику (ICustomNumber)
+        ///     Использовать универсальную арифметику (ICustomNumber)
         /// </summary>
         Universal,
 
         /// <summary>
-        /// Использовать нативную арифметику (INumber<T>)
+        ///     Использовать нативную арифметику (INumber<T>)
         /// </summary>
         Native
     }
 
     /// <summary>
-    /// Выбранный режим арифметики
+    ///     Выбранный режим арифметики
     /// </summary>
     public ArithmeticModeEnum ArithmeticMode { get; set; } = ArithmeticModeEnum.Universal;
 
     /// <summary>
-    /// Пространства имен, которые следует исключить из автоматической регистрации
+    ///     Пространства имен, которые следует исключить из автоматической регистрации
     /// </summary>
     public IReadOnlyList<string>? ExcludedNamespaces { get; set; }
 
     /// <summary>
-    /// Пространства имен, которые следует включить (все остальные будут исключены)
+    ///     Пространства имен, которые следует включить (все остальные будут исключены)
     /// </summary>
     public IReadOnlyList<string>? IncludedNamespaces { get; set; }
 
     /// <summary>
-    /// Конкретные типы модулей, которые следует удалить
+    ///     Конкретные типы модулей, которые следует удалить
     /// </summary>
     public IReadOnlyList<Type>? ModulesToRemove { get; set; }
 
     /// <summary>
-    /// Использовать ли автоматическое обнаружение модулей
+    ///     Использовать ли автоматическое обнаружение модулей
     /// </summary>
     public bool AutoDiscoverModules { get; set; } = true;
 }

@@ -1,4 +1,4 @@
 namespace NativeMathModule;
 
-public class NativeDivisionOperationNodeCreator() 
+public class NativeDivisionOperationNodeCreator()
     : NativeBinaryOperationBase("NativeDivision");

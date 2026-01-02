@@ -15,9 +15,14 @@ public class NativeTypesOptimizerModule : IIRProcessingModule
     {
         // Регистрируем обработку наших интринсиков
         InitIntrinsics();
-        
+
         // Простая оптимизация: объединение последовательных операций
         return OptimizeNativeOperations(current);
+    }
+
+    public void InitMethodsTranslator(IAbstractMethodsTranslator methodsTranslator)
+    {
+        // Инициализация не требуется
     }
 
     private void InitIntrinsics()
@@ -31,17 +36,17 @@ public class NativeTypesOptimizerModule : IIRProcessingModule
         var instructions = air.Instructions.ToList();
         var optimizedInstructions = new List<Instruction>();
 
-        for (int i = 0; i < instructions.Count; i++)
+        for (var i = 0; i < instructions.Count; i++)
         {
             // Ищем паттерн: две push-инструкции + вызов NativeArithmetic
-            if (i + 2 < instructions.Count && 
+            if (i + 2 < instructions.Count &&
                 IsNativeArithmeticPattern(instructions[i], instructions[i + 1], instructions[i + 2]))
             {
                 // Оптимизируем: заменяем на одну инструкцию с предварительно вычисленным значением
                 var left = instructions[i].Operands[0];
                 var right = instructions[i + 1].Operands[0];
                 var method = (MethodInfo)instructions[i + 2].Operands[1];
-                
+
                 try
                 {
                     var result = method.Invoke(null, new[] { left, right });
@@ -74,10 +79,5 @@ public class NativeTypesOptimizerModule : IIRProcessingModule
                name == "call C#" &&
                inst3.Operands[1] is MethodInfo method &&
                method.DeclaringType == typeof(NativeArithmetic);
-    }
-
-    public void InitMethodsTranslator(IAbstractMethodsTranslator methodsTranslator)
-    {
-        // Инициализация не требуется
     }
 }

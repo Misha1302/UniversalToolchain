@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using DependencyInjection;
-using NativeMathModule;
 using ObjectExtensions;
 
 // Setup DI with auto-registration
@@ -25,7 +24,7 @@ core.PrepareToRun(
 
 var sw = Stopwatch.StartNew();
 var w = 0.0;
-for (int i = 0; i < 10_000_000; i++)
+for (var i = 0; i < 10_000_000; i++)
 {
     w += core.RunPrepared()!.Get<int>();
 }

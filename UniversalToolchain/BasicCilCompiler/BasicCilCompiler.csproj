@@ -10,7 +10,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\BasicCore\BasicCore.csproj"/>
-        <ProjectReference Include="..\DynamicMethodCalling\DynamicMethodCalling.csproj" />
+        <ProjectReference Include="..\DynamicMethodCalling\DynamicMethodCalling.csproj"/>
     </ItemGroup>
 
 </Project>
