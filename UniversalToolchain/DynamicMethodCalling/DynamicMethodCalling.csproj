@@ -4,13 +4,11 @@
         <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <LangVersion>14</LangVersion>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\BasicCore\BasicCore.csproj"/>
-        <ProjectReference Include="..\DynamicMethodCalling\DynamicMethodCalling.csproj" />
+      <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj" />
     </ItemGroup>
 
 </Project>

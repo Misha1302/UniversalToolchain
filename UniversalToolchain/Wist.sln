@@ -106,6 +106,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DependencyInjection", "Depe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NativeMathModule", "NativeMathModule\NativeMathModule.csproj", "{F2191BA5-D994-4B4B-99D9-6926AA83CAB6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DynamicMethodCalling", "DynamicMethodCalling\DynamicMethodCalling.csproj", "{AEB21BBE-639B-4625-BD58-C16C4AC38F25}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -284,6 +286,10 @@ Global
 		{F2191BA5-D994-4B4B-99D9-6926AA83CAB6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F2191BA5-D994-4B4B-99D9-6926AA83CAB6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F2191BA5-D994-4B4B-99D9-6926AA83CAB6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AEB21BBE-639B-4625-BD58-C16C4AC38F25}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AEB21BBE-639B-4625-BD58-C16C4AC38F25}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AEB21BBE-639B-4625-BD58-C16C4AC38F25}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AEB21BBE-639B-4625-BD58-C16C4AC38F25}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{D62CCD79-F4B6-4A27-875D-FE9DA78A8854} = {53FB9EA9-6487-401D-89E3-7319C961F807}
