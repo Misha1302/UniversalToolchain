@@ -88,7 +88,7 @@ public static class MethodsFinder
             var parameters = candidate.GetParameters();
             var allCompatible = true;
 
-            for (int i = 0; i < parameters.Length; i++)
+            for (var i = 0; i < parameters.Length; i++)
             {
                 if (!IsTypeCompatible(parameterTypes[i], parameters[i].ParameterType))
                 {

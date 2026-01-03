@@ -25,7 +25,7 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
             state.InstructionPointer++;
             ExecuteInstruction(instruction, state);
         }
-        
+
         if (state.ValueStack.Count == 0) return null!;
         return state.ValueStack.Count != 0 ? state.ValueStack.Peek() : null;
     }
@@ -111,27 +111,27 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
     private void ExecuteCSharpCall(Instruction instruction, InterpreterState state)
     {
         var method = instruction.Operands[1].Get<MethodInfo>();
-        
+
         // Получаем типы аргументов из стека
         var parameters = method.GetParameters();
         var args = new object[parameters.Length];
         var argsTypes = new Type[parameters.Length];
-        
+
         // Собираем аргументы в обратном порядке (последний аргумент первым в стеке)
         for (var i = parameters.Length - 1; i >= 0; i--)
         {
             if (state.ValueStack.Count == 0)
                 throw new InvalidOperationException("Not enough arguments on stack");
-                
+
             var value = state.ValueStack.Pop();
             args[i] = value;
             argsTypes[i] = value.GetType();
         }
-        
+
         // Используем ту же логику, что и в компиляторе
         var stackTypes = argsTypes.AsReadOnly().Reverse().ToList(); // Восстанавливаем порядок как в стеках компилятора
         var targetTypes = GenericTypeResolver.GetParameterTypes(method, stackTypes).ToList();
-        
+
         // Приводим аргументы к нужным типам, если необходимо
         for (var i = 0; i < args.Length; i++)
         {
@@ -148,10 +148,10 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
                 }
             }
         }
-        
+
         // Создаем конкретный generic-метод, если нужно (используем ту же логику, что и в компиляторе)
         method = GenericTypeResolver.MakeGenericMethod(method, targetTypes.ToArray());
-        
+
         // Вызов метода
         object result;
         if (method.IsStatic)
@@ -163,11 +163,11 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
             // Для нестатических методов, экземпляр должен быть в стеке перед аргументами
             if (state.ValueStack.Count == 0)
                 throw new InvalidOperationException("No instance on stack for instance method");
-                
+
             var instance = state.ValueStack.Pop();
             result = method.Invoke(instance, args) ?? new object();
         }
-        
+
         // Если метод возвращает значение, кладем его в стек
         if (method.ReturnType != typeof(void))
         {
@@ -179,24 +179,24 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
     {
         var ctor = instruction.Operands[1].Get<ConstructorInfo>();
         var parameters = ctor.GetParameters();
-        
+
         // Собираем аргументы в обратном порядке
         var args = new object[parameters.Length];
         var argsTypes = new Type[parameters.Length];
-        
+
         for (var i = parameters.Length - 1; i >= 0; i--)
         {
             if (state.ValueStack.Count == 0)
                 throw new InvalidOperationException("Not enough arguments on stack");
-                
+
             var value = state.ValueStack.Pop();
             args[i] = value;
             argsTypes[i] = value.GetType();
         }
-        
+
         // Создаем экземпляр
         var instance = ctor.Invoke(args);
-        
+
         // Кладем экземпляр в стек
         state.ValueStack.Push(instance);
     }
@@ -205,18 +205,18 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
     {
         var varName = instruction.Operands[1].Get<string>();
         var varType = instruction.Operands[2].Get<Type>();
-        
+
         switch (intrinsicName)
         {
             case "store_local":
                 // Значение должно быть на вершине стека
                 if (state.ValueStack.Count == 0)
                     throw new InvalidOperationException("No value on stack to store");
-                    
+
                 var value = state.ValueStack.Pop();
                 state.Locals[Guid.NewGuid()] = value; // Упрощенная реализация
                 break;
-                
+
             case "load_local":
                 // Ищем переменную по имени (упрощенная реализация)
                 var localEntry = state.Locals.FirstOrDefault(kv => kv.Key.ToString().Contains(varName));
@@ -230,7 +230,7 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
                     state.ValueStack.Push(localEntry.Value);
                 }
                 break;
-                
+
             case "load_local_ref":
                 // В интерпретаторе работа с ссылками сложнее, используем упрощенный вариант
                 var localEntryRef = state.Locals.FirstOrDefault(kv => kv.Key.ToString().Contains(varName));
@@ -249,11 +249,11 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
                 break;
         }
     }
-    
+
     private void ExecuteLoadNativeNumber(Instruction instruction, InterpreterState state, string intrinsicName)
     {
         var arg = instruction.Operands[1];
-        
+
         switch (intrinsicName)
         {
             case "load_i32":
@@ -272,28 +272,28 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
                 throw new InvalidOperationException($"Unknown native number loading {intrinsicName}");
         }
     }
-    
+
     private object GetDefaultValue(Type type)
     {
         if (type.IsValueType)
             return Activator.CreateInstance(type) ?? new object();
         return null!;
     }
-    
+
     // Вспомогательный класс для работы с ссылками на переменные в интерпретаторе
     private class VariableReferenceWrapper
     {
-        private readonly Guid _variableId;
         private readonly Dictionary<Guid, object> _locals;
-        
+        private readonly Guid _variableId;
+
         public VariableReferenceWrapper(Guid variableId, Dictionary<Guid, object> locals)
         {
             _variableId = variableId;
             _locals = locals;
         }
-        
+
         public object GetValue() => _locals[_variableId];
-        
+
         public void SetValue(object value) => _locals[_variableId] = value;
     }
 }
