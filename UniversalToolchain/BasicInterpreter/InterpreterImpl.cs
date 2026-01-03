@@ -94,14 +94,6 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
         {
             ExecuteCSharpConstructor(instruction, state);
         }
-        else if (intrinsicName is "store_local" or "load_local" or "load_local_ref")
-        {
-            ExecuteLocalVariableIntrinsic(instruction, state, intrinsicName);
-        }
-        else if (intrinsicName is "load_i32" or "load_i64" or "load_f32" or "load_f64")
-        {
-            ExecuteLoadNativeNumber(instruction, state, intrinsicName);
-        }
         else
         {
             throw new InvalidOperationException($"Unknown intrinsic: {intrinsicName}");
@@ -199,101 +191,5 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
 
         // Кладем экземпляр в стек
         state.ValueStack.Push(instance);
-    }
-
-    private void ExecuteLocalVariableIntrinsic(Instruction instruction, InterpreterState state, string intrinsicName)
-    {
-        var varName = instruction.Operands[1].Get<string>();
-        var varType = instruction.Operands[2].Get<Type>();
-
-        switch (intrinsicName)
-        {
-            case "store_local":
-                // Значение должно быть на вершине стека
-                if (state.ValueStack.Count == 0)
-                    throw new InvalidOperationException("No value on stack to store");
-
-                var value = state.ValueStack.Pop();
-                state.Locals[Guid.NewGuid()] = value; // Упрощенная реализация
-                break;
-
-            case "load_local":
-                // Ищем переменную по имени (упрощенная реализация)
-                var localEntry = state.Locals.FirstOrDefault(kv => kv.Key.ToString().Contains(varName));
-                if (localEntry.Key == Guid.Empty)
-                {
-                    // Если переменная не найдена, создаем со значением по умолчанию
-                    state.ValueStack.Push(GetDefaultValue(varType));
-                }
-                else
-                {
-                    state.ValueStack.Push(localEntry.Value);
-                }
-                break;
-
-            case "load_local_ref":
-                // В интерпретаторе работа с ссылками сложнее, используем упрощенный вариант
-                var localEntryRef = state.Locals.FirstOrDefault(kv => kv.Key.ToString().Contains(varName));
-                if (localEntryRef.Key == Guid.Empty)
-                {
-                    // Создаем новую переменную со значением по умолчанию
-                    var newId = Guid.NewGuid();
-                    var defaultValue = GetDefaultValue(varType);
-                    state.Locals[newId] = defaultValue;
-                    state.ValueStack.Push(new VariableReferenceWrapper(newId, state.Locals));
-                }
-                else
-                {
-                    state.ValueStack.Push(new VariableReferenceWrapper(localEntryRef.Key, state.Locals));
-                }
-                break;
-        }
-    }
-
-    private void ExecuteLoadNativeNumber(Instruction instruction, InterpreterState state, string intrinsicName)
-    {
-        var arg = instruction.Operands[1];
-
-        switch (intrinsicName)
-        {
-            case "load_i32":
-                state.ValueStack.Push(arg.Get<int>());
-                break;
-            case "load_i64":
-                state.ValueStack.Push(arg.Get<long>());
-                break;
-            case "load_f32":
-                state.ValueStack.Push(arg.Get<float>());
-                break;
-            case "load_f64":
-                state.ValueStack.Push(arg.Get<double>());
-                break;
-            default:
-                throw new InvalidOperationException($"Unknown native number loading {intrinsicName}");
-        }
-    }
-
-    private object GetDefaultValue(Type type)
-    {
-        if (type.IsValueType)
-            return Activator.CreateInstance(type) ?? new object();
-        return null!;
-    }
-
-    // Вспомогательный класс для работы с ссылками на переменные в интерпретаторе
-    private class VariableReferenceWrapper
-    {
-        private readonly Dictionary<Guid, object> _locals;
-        private readonly Guid _variableId;
-
-        public VariableReferenceWrapper(Guid variableId, Dictionary<Guid, object> locals)
-        {
-            _variableId = variableId;
-            _locals = locals;
-        }
-
-        public object GetValue() => _locals[_variableId];
-
-        public void SetValue(object value) => _locals[_variableId] = value;
     }
 }

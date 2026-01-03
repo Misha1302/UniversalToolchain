@@ -18,17 +18,7 @@ var core = provider.GetServices<ICoreRunnable>().First();
 Console.WriteLine(
     core.Run(
         """
-        let a = 5
-        let b = 10
-        let c = 15
-        let result = 0
-        
-        if (a < b) and (b < c)
-            result = 1
-        else
-            result = 0
-        
-        result
+        3 + 4 * 5
         """
     )
 );

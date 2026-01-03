@@ -96,8 +96,136 @@ def remove_using_directives(content):
     
     return '\n'.join(filtered_lines)
 
+def remove_single_line_comments(content):
+    """
+    Удаляет однострочные комментарии (//), но учитывает специфические случаи:
+    1. Комментарии внутри строковых литералов не удаляются
+    2. Сырые строковые литералы (raw string literals) не обрабатываются для комментариев внутри них
+    3. Безопасное удаление комментариев с учетом экранирования кавычек
+    """
+    if not content:
+        return content
+    
+    lines = content.split('\n')
+    result_lines = []
+    
+    # Флаги для отслеживания состояния
+    in_string = False          # Находимся внутри обычной строки ""
+    in_raw_string = False      # Находимся внутри сырой строки (raw string literal)
+    raw_string_delimiter = 0   # Количество кавычек для сырой строки
+    in_char = False            # Находимся внутри символьного литерала ''
+    escape_next = False        # Следующий символ экранирован
+    in_block_comment = False   # Находимся внутри многострочного комментария /* ... */
+    
+    for line in lines:
+        i = 0
+        result = []
+        line_len = len(line)
+        
+        while i < line_len:
+            ch = line[i]
+            ch_next = line[i+1] if i+1 < line_len else ''
+            ch_prev = line[i-1] if i > 0 else ''
+            
+            # Обработка экранирования для обычных строк
+            if not in_raw_string and not in_block_comment and not in_char:
+                if ch == '\\' and in_string:
+                    escape_next = not escape_next
+                    result.append(ch)
+                    i += 1
+                    continue
+                elif escape_next:
+                    escape_next = False
+                    result.append(ch)
+                    i += 1
+                    continue
+            
+            # Проверка начала/конца сырой строки (raw string literal)
+            if not in_block_comment and not in_string and not in_char:
+                # Проверяем начало сырой строки
+                if ch == '"' and i+2 < line_len and line[i+1:i+3] == '""':
+                    # Считаем количество открывающих кавычек
+                    j = i
+                    while j < line_len and line[j] == '"':
+                        j += 1
+                    quote_count = j - i
+                    
+                    if not in_raw_string:
+                        # Начало сырой строки
+                        in_raw_string = True
+                        raw_string_delimiter = quote_count
+                        result.append(line[i:j])
+                        i = j
+                        continue
+                    else:
+                        # Проверяем конец сырой строки
+                        if quote_count >= raw_string_delimiter:
+                            # Конец сырой строки
+                            in_raw_string = False
+                            result.append(line[i:j])
+                            i = j
+                            continue
+            
+            # Если мы внутри сырой строки, просто копируем символы
+            if in_raw_string:
+                result.append(ch)
+                i += 1
+                continue
+            
+            # Проверка начала/конца многострочного комментария
+            if not in_string and not in_char and not in_raw_string:
+                if ch == '/' and ch_next == '*':
+                    in_block_comment = True
+                    result.append(ch)
+                    result.append(ch_next)
+                    i += 2
+                    continue
+                elif ch == '*' and ch_next == '/' and in_block_comment:
+                    in_block_comment = False
+                    result.append(ch)
+                    result.append(ch_next)
+                    i += 2
+                    continue
+            
+            # Если внутри многострочного комментария, просто копируем
+            if in_block_comment:
+                result.append(ch)
+                i += 1
+                continue
+            
+            # Проверка начала/конца строкового литерала
+            if not in_block_comment and not in_raw_string:
+                if ch == '"' and not in_char and not (in_string and escape_next):
+                    in_string = not in_string
+                    result.append(ch)
+                    i += 1
+                    continue
+                elif ch == "'" and not in_string and not (in_char and escape_next):
+                    in_char = not in_char
+                    result.append(ch)
+                    i += 1
+                    continue
+            
+            # Проверка на однострочный комментарий
+            if not in_string and not in_char and not in_block_comment and not in_raw_string:
+                if ch == '/' and ch_next == '/':
+                    # Найден однострочный комментарий, пропускаем остаток строки
+                    break
+                elif ch == '/' and ch_next == '*':
+                    # Начало многострочного комментария (уже обработано выше)
+                    pass
+            
+            # Копируем текущий символ
+            result.append(ch)
+            i += 1
+        
+        result_lines.append(''.join(result))
+    
+    return '\n'.join(result_lines)
+
 def process_files(root_dir, extension, exclude_dirs, output_file, pattern=None, 
-                  exclude_pattern=None, compress=False, remove_using=False):
+                  exclude_pattern=None, compress=False, remove_using=False,
+                  remove_comments=False):
     """Обрабатывает все файлы по заданному критерию и записывает результат."""
     with open(output_file, 'w', encoding='utf-8') as out_f:
         for root, dirs, files in os.walk(root_dir):
@@ -134,6 +262,10 @@ def process_files(root_dir, extension, exclude_dirs, output_file, pattern=None,
                 if remove_using:
                     content = remove_using_directives(content)
                 
+                # Удаляем однострочные комментарии, если флаг установлен
+                if remove_comments:
+                    content = remove_single_line_comments(content)
+                
                 # Сжимаем содержимое, если включен флаг compress
                 if compress:
                     content = compress_content(content)
@@ -155,6 +287,7 @@ if __name__ == "__main__":
   По конкретному имени: python script.py --pattern '^config\\.py$' --output result.txt
   Со сжатием:         python script.py --ext .py --compress --output compressed_result.txt
   Без using директив: python script.py --ext .cs --remove-using --output result.txt
+  Без комментариев:   python script.py --ext .cs --remove-comments --output no_comments.txt
   
 Примечание:
   • Используйте --ext для фильтрации по расширению (старый способ)
@@ -163,6 +296,7 @@ if __name__ == "__main__":
   • Используйте --exclude-pattern для исключения по регулярному выражению для пути
   • Используйте --compress для сжатия содержимого (удаление двойных пробелов и переносов строк)
   • Используйте --remove-using для удаления using директив из всех C# файлов
+  • Используйте --remove-comments для удаления однострочных комментариев (//) с учетом строковых литералов
         """
     )
     
@@ -177,6 +311,7 @@ if __name__ == "__main__":
     parser.add_argument('--output', default='combined_files.txt', help='Выходной файл (по умолчанию: combined_files.txt)')
     parser.add_argument('--compress', action='store_true', help='Сжимать содержимое файлов (удалять двойные пробелы и переносы строк)')
     parser.add_argument('--remove-using', action='store_true', help='Удалять using директивы из всех C# файлов')
+    parser.add_argument('--remove-comments', action='store_true', help='Удалять однострочные комментарии (//) с учетом строковых литералов')
     
     args = parser.parse_args()
     
@@ -185,5 +320,6 @@ if __name__ == "__main__":
         parser.error("Необходимо указать либо --ext, либо --pattern")
     
     process_files(args.root, args.ext, args.exclude, args.output, args.pattern, 
-                  args.exclude_pattern, args.compress, args.remove_using)
+                  args.exclude_pattern, args.compress, args.remove_using,
+                  args.remove_comments)
     print(f"Обработка завершена. Результат сохранен в {args.output}")

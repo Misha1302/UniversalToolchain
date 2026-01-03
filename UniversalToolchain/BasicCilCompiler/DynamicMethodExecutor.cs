@@ -6,12 +6,12 @@ namespace BasicCilCompiler;
 
 public class DynamicMethodExecutor : IExecutor<DynamicMethod>
 {
-    private readonly Dictionary<DynamicMethod, DynamicMethodInvoker<Func<object>>> _cache = [];
+    private readonly Dictionary<DynamicMethod, DynamicMethodInvoker<object>> _cache = [];
 
-    public object? Execute(DynamicMethod compilation)
+    public object Execute(DynamicMethod compilation)
     {
         if (!_cache.TryGetValue(compilation, out var del))
-            _cache.Add(compilation, del = new DynamicMethodInvoker<Func<object>>(compilation));
+            _cache.Add(compilation, del = new DynamicMethodInvoker<object>(compilation));
         return del.Invoke();
     }
 }
