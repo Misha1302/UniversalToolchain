@@ -12,7 +12,6 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
     {
         var state = new InterpreterState();
         state.BuildLabelPositions(air.Instructions);
-
         return ExecuteInstructions(air.Instructions, state);
     }
 
@@ -24,13 +23,10 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
         {
             var instruction = instructions[state.InstructionPointer];
             state.InstructionPointer++;
-
             ExecuteInstruction(instruction, state);
         }
-
-        if (state.ValueStack.Count == 0)
-            return null!;
-
+        
+        if (state.ValueStack.Count == 0) return null!;
         return state.ValueStack.Count != 0 ? state.ValueStack.Peek() : null;
     }
 
@@ -39,23 +35,18 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
         switch (instruction.UOpCode)
         {
             case UOpCode.Nop:
-
                 break;
-
             case UOpCode.Push:
                 state.ValueStack.Push(instruction.Operands[0]);
                 break;
-
             case UOpCode.Drop:
                 if (state.ValueStack.Count > 0)
                     state.ValueStack.Pop();
                 break;
-
             case UOpCode.Jmp:
                 var labelId = instruction.Operands[0].Get<Guid>();
                 state.InstructionPointer = state.GetLabelPosition(labelId);
                 break;
-
             case UOpCode.JmpIf:
                 if (state.ValueStack.Count > 0)
                 {
@@ -67,7 +58,6 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
                     }
                 }
                 break;
-
             case UOpCode.JmpIfNot:
                 if (state.ValueStack.Count > 0)
                 {
@@ -79,19 +69,15 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
                     }
                 }
                 break;
-
             case UOpCode.Label:
                 // Label - do nothing, just skip
                 break;
-
             case UOpCode.Annotate:
                 // Annotation - do nothing
                 break;
-
             case UOpCode.Intrinsic:
                 ExecuteIntrinsic(instruction, state);
                 break;
-
             default:
                 throw new InvalidOperationException($"Unknown opcode: {instruction.UOpCode}");
         }
@@ -100,7 +86,6 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
     private void ExecuteIntrinsic(Instruction instruction, InterpreterState state)
     {
         var intrinsicName = instruction.Operands[0].Get<string>();
-
         if (intrinsicName == "call C#")
         {
             ExecuteCSharpCall(instruction, state);
@@ -108,6 +93,14 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
         else if (intrinsicName == "call C# ctor")
         {
             ExecuteCSharpConstructor(instruction, state);
+        }
+        else if (intrinsicName is "store_local" or "load_local" or "load_local_ref")
+        {
+            ExecuteLocalVariableIntrinsic(instruction, state, intrinsicName);
+        }
+        else if (intrinsicName is "load_i32" or "load_i64" or "load_f32" or "load_f64")
+        {
+            ExecuteLoadNativeNumber(instruction, state, intrinsicName);
         }
         else
         {
@@ -118,26 +111,48 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
     private void ExecuteCSharpCall(Instruction instruction, InterpreterState state)
     {
         var method = instruction.Operands[1].Get<MethodInfo>();
-        var parametersTypes =
-            GenericTypeResolver.GetParameterTypes(method, state.ValueStack.Take(method.GetParameters().Length)
-                .Select(x => x.GetType()).ToList());
-
-        // Extract arguments from the stack
-        var args = new object[parametersTypes.Count];
-        var argsTypes = new Type[parametersTypes.Count];
-        for (var i = parametersTypes.Count - 1; i >= 0; i--)
+        
+        // Получаем типы аргументов из стека
+        var parameters = method.GetParameters();
+        var args = new object[parameters.Length];
+        var argsTypes = new Type[parameters.Length];
+        
+        // Собираем аргументы в обратном порядке (последний аргумент первым в стеке)
+        for (var i = parameters.Length - 1; i >= 0; i--)
         {
             if (state.ValueStack.Count == 0)
                 throw new InvalidOperationException("Not enough arguments on stack");
-
+                
             var value = state.ValueStack.Pop();
             args[i] = value;
-            argsTypes[i] = args[i].GetType();
+            argsTypes[i] = value.GetType();
         }
-
-        method = GenericTypeResolver.MakeGenericMethod(method, argsTypes);
-
-        // Call the method
+        
+        // Используем ту же логику, что и в компиляторе
+        var stackTypes = argsTypes.AsReadOnly().Reverse().ToList(); // Восстанавливаем порядок как в стеках компилятора
+        var targetTypes = GenericTypeResolver.GetParameterTypes(method, stackTypes).ToList();
+        
+        // Приводим аргументы к нужным типам, если необходимо
+        for (var i = 0; i < args.Length; i++)
+        {
+            if (args[i] != null && args[i].GetType() != targetTypes[i])
+            {
+                try
+                {
+                    args[i] = Convert.ChangeType(args[i], targetTypes[i]);
+                }
+                catch
+                {
+                    // Если не удалось преобразовать, оставляем как есть
+                    // Это может привести к исключению при вызове, что корректно
+                }
+            }
+        }
+        
+        // Создаем конкретный generic-метод, если нужно (используем ту же логику, что и в компиляторе)
+        method = GenericTypeResolver.MakeGenericMethod(method, targetTypes.ToArray());
+        
+        // Вызов метода
         object result;
         if (method.IsStatic)
         {
@@ -145,43 +160,140 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
         }
         else
         {
-            // For non-static methods, an instance is required
+            // Для нестатических методов, экземпляр должен быть в стеке перед аргументами
             if (state.ValueStack.Count == 0)
                 throw new InvalidOperationException("No instance on stack for instance method");
-
-            var instanceValue = state.ValueStack.Pop();
-            var instance = instanceValue;
+                
+            var instance = state.ValueStack.Pop();
             result = method.Invoke(instance, args) ?? new object();
         }
-
-        // If the method returns a value, push it onto the stack
+        
+        // Если метод возвращает значение, кладем его в стек
         if (method.ReturnType != typeof(void))
         {
             state.ValueStack.Push(result);
         }
     }
 
-
     private void ExecuteCSharpConstructor(Instruction instruction, InterpreterState state)
     {
         var ctor = instruction.Operands[1].Get<ConstructorInfo>();
         var parameters = ctor.GetParameters();
-
-        // Extract arguments from the stack
+        
+        // Собираем аргументы в обратном порядке
         var args = new object[parameters.Length];
+        var argsTypes = new Type[parameters.Length];
+        
         for (var i = parameters.Length - 1; i >= 0; i--)
         {
             if (state.ValueStack.Count == 0)
                 throw new InvalidOperationException("Not enough arguments on stack");
-
+                
             var value = state.ValueStack.Pop();
             args[i] = value;
+            argsTypes[i] = value.GetType();
         }
-
-        // Create an instance
+        
+        // Создаем экземпляр
         var instance = ctor.Invoke(args);
-
-        // Push the instance onto the stack
+        
+        // Кладем экземпляр в стек
         state.ValueStack.Push(instance);
+    }
+
+    private void ExecuteLocalVariableIntrinsic(Instruction instruction, InterpreterState state, string intrinsicName)
+    {
+        var varName = instruction.Operands[1].Get<string>();
+        var varType = instruction.Operands[2].Get<Type>();
+        
+        switch (intrinsicName)
+        {
+            case "store_local":
+                // Значение должно быть на вершине стека
+                if (state.ValueStack.Count == 0)
+                    throw new InvalidOperationException("No value on stack to store");
+                    
+                var value = state.ValueStack.Pop();
+                state.Locals[Guid.NewGuid()] = value; // Упрощенная реализация
+                break;
+                
+            case "load_local":
+                // Ищем переменную по имени (упрощенная реализация)
+                var localEntry = state.Locals.FirstOrDefault(kv => kv.Key.ToString().Contains(varName));
+                if (localEntry.Key == Guid.Empty)
+                {
+                    // Если переменная не найдена, создаем со значением по умолчанию
+                    state.ValueStack.Push(GetDefaultValue(varType));
+                }
+                else
+                {
+                    state.ValueStack.Push(localEntry.Value);
+                }
+                break;
+                
+            case "load_local_ref":
+                // В интерпретаторе работа с ссылками сложнее, используем упрощенный вариант
+                var localEntryRef = state.Locals.FirstOrDefault(kv => kv.Key.ToString().Contains(varName));
+                if (localEntryRef.Key == Guid.Empty)
+                {
+                    // Создаем новую переменную со значением по умолчанию
+                    var newId = Guid.NewGuid();
+                    var defaultValue = GetDefaultValue(varType);
+                    state.Locals[newId] = defaultValue;
+                    state.ValueStack.Push(new VariableReferenceWrapper(newId, state.Locals));
+                }
+                else
+                {
+                    state.ValueStack.Push(new VariableReferenceWrapper(localEntryRef.Key, state.Locals));
+                }
+                break;
+        }
+    }
+    
+    private void ExecuteLoadNativeNumber(Instruction instruction, InterpreterState state, string intrinsicName)
+    {
+        var arg = instruction.Operands[1];
+        
+        switch (intrinsicName)
+        {
+            case "load_i32":
+                state.ValueStack.Push(arg.Get<int>());
+                break;
+            case "load_i64":
+                state.ValueStack.Push(arg.Get<long>());
+                break;
+            case "load_f32":
+                state.ValueStack.Push(arg.Get<float>());
+                break;
+            case "load_f64":
+                state.ValueStack.Push(arg.Get<double>());
+                break;
+            default:
+                throw new InvalidOperationException($"Unknown native number loading {intrinsicName}");
+        }
+    }
+    
+    private object GetDefaultValue(Type type)
+    {
+        if (type.IsValueType)
+            return Activator.CreateInstance(type) ?? new object();
+        return null!;
+    }
+    
+    // Вспомогательный класс для работы с ссылками на переменные в интерпретаторе
+    private class VariableReferenceWrapper
+    {
+        private readonly Guid _variableId;
+        private readonly Dictionary<Guid, object> _locals;
+        
+        public VariableReferenceWrapper(Guid variableId, Dictionary<Guid, object> locals)
+        {
+            _variableId = variableId;
+            _locals = locals;
+        }
+        
+        public object GetValue() => _locals[_variableId];
+        
+        public void SetValue(object value) => _locals[_variableId] = value;
     }
 }

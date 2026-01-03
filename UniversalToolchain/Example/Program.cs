@@ -3,7 +3,9 @@ using DependencyInjection;
 // Setup DI with auto-registration
 var services = new ServiceCollection();
 
-services.AddWistServices(options => options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native);
+services.AddWistServices(options =>
+    options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Universal
+);
 
 // Add optional modules
 services.AddSingleton<IFrontendCoreModule>(new ExecutorDebugLoggerImpl());
@@ -16,19 +18,33 @@ var core = provider.GetServices<ICoreRunnable>().First();
 Console.WriteLine(
     core.Run(
         """
-        let iterations = 1000
-        let pi = 3.141592653589793
-        let e = 2.718281828459045
-        let sum = 0.0
-        let i = 0
-        @loop:
-            if i >= iterations goto @end
-            let angle = Main.ToDouble(i) * pi / Main.ToDouble(iterations)
-            sum = sum + DoubleMath.Sin(angle) * DoubleMath.Cos(angle) * DoubleMath.Exp((0.0 - angle) / e)
-            i = i + 1
-            goto @loop
-        @end:
-        sum
+        let counter = 0
+        let total = 0
+
+        @outer:
+        if counter >= 3 goto @done
+            let inner = 0
+            
+            @inner:
+            if inner >= 3 goto @inner_done
+                let x = counter * 10 + inner
+                let y = Main.Pow(x, 2)
+                
+                if y > 100
+                    total = total + Main.Sqrt(y)
+                else
+                    total = total + y
+                
+                inner = inner + 1
+                goto @inner
+            @inner_done:
+            
+            counter = counter + 1
+            goto @outer
+        @done:
+
+        let result = Main.Round(total * 100) / 100
+        result
         """
     )
 );
