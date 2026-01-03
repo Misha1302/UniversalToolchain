@@ -18,7 +18,7 @@ public class EqualityModuleImpl : IFrontendCoreModule
 
     public void InitParser(IParser parser)
     {
-        parser.Configuration.NodeCreators.Add(30f, new ValuesSetNodeCreator());
+        parser.Configuration.NodeCreators.Add(10f, new ValuesSetNodeCreator());
     }
 
     public void InitAstTranslator(IAstToBytecodeTranslator translator)

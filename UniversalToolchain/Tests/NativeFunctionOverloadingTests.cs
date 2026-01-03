@@ -277,10 +277,12 @@ public class NativeFunctionOverloadingTests : TestBase
             let value = 25.0
             let threshold = 20.0
             
-            let result = if value > threshold (
-                System.Math.Sqrt(value) + System.Math.Abs(-5.0)
-            ) else (
-                System.Math.Pow(value, 2.0)
+            let result = (
+                if value > threshold (
+                    System.Math.Sqrt(value) + System.Math.Abs(-5.0)
+                ) else (
+                    System.Math.Pow(value, 2.0)
+                )
             )
             
             result
