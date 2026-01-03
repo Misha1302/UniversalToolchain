@@ -22,23 +22,26 @@ public class BasicParserImpl(ParserConfiguration configuration) : IParser
         return root;
     }
 
-    public void ParseScope(AstNode scope, List<IAstNodeCreator> creator, Predicate<AstNode> needToVisit)
+    public void ParseScope(AstNode scope, List<IAstNodeCreator> creators, Predicate<AstNode> needToVisit)
     {
         foreach (var node in scope.Children)
-            ParseScope(node, creator, needToVisit);
+            ParseScope(node, creators, needToVisit);
 
         for (var i = 0; i < scope.Children.Count; i++)
         {
             var child = scope.Children[i];
-            if (!needToVisit(child)) continue;
-            if (creator.All(x => !x.TryCreateNode(scope, i))) continue;
+            if (
+                !creators.Any(x =>
+                    (x.NeedToVisitPredicate ?? needToVisit)(child) && x.TryCreateNode(scope, i)
+                )
+            ) continue;
 
             child.MarkAsParserHandled();
             i = -1;
         }
 
         foreach (var node in scope.Children)
-            ParseScope(node, creator, needToVisit);
+            ParseScope(node, creators, needToVisit);
     }
 
     private void SetAstNodeTypes(AstNode root)

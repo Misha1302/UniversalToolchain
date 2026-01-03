@@ -139,17 +139,6 @@ public static class MethodsFinder
         if (source == target) return true;
         if (target.IsAssignableFrom(source)) return true;
 
-        // Проверка на числовые преобразования
-        var numericTypes = new HashSet<Type>
-        {
-            typeof(int), typeof(long), typeof(float), typeof(double),
-            typeof(decimal), typeof(short), typeof(byte), typeof(ushort),
-            typeof(uint), typeof(ulong), typeof(sbyte), typeof(char)
-        };
-
-        if (numericTypes.Contains(source) && numericTypes.Contains(target))
-            return true;
-
         // Проверка на nullable типы
         if (target.IsGenericType && target.GetGenericTypeDefinition() == typeof(Nullable<>))
         {
@@ -179,14 +168,16 @@ public static class MethodsFinder
 
     public static bool ContainsAnyMethod(string name)
     {
-        var dotIndex = name.IndexOf('.');
+        var dotIndex = name.LastIndexOf('.');
         if (dotIndex == -1) return false;
         var leftPart = name[..dotIndex];
         var methodName = name[(dotIndex + 1)..];
         var type = FindTypeByName(leftPart);
         if (type == null) return false;
 
-        var method = type.GetMethod(methodName, BindingFlags.Static | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
-        return method != null;
+        var method = type
+            .GetMethods(BindingFlags.Static | BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
+            .Where(x => x.Name == methodName);
+        return method.Any();
     }
 }

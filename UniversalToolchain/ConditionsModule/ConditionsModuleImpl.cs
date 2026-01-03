@@ -32,10 +32,4 @@ public class ConditionsModuleImpl : IFrontendCoreModule
     {
         translator.Configuration.Visitors.Add(new ConditionsVisitor());
     }
-
-    public AstNode ProcessAst(AstNode astRoot)
-    {
-        _parser.ParseScope(astRoot, [new CondNodesCombiner()], _ => true);
-        return astRoot;
-    }
 }

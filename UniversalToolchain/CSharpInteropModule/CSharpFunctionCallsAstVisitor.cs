@@ -28,7 +28,7 @@ public class CSharpFunctionCallsAstVisitor : IAstVisitor
                 // Используем типы из стека для разрешения перегрузки
                 // Количество аргументов = количество детей узла
                 var argCount = data.Node.Children[0].Children.Count;
-                var stackTypes = context.Stack.TakeLast(argCount).Reverse().ToList();
+                var stackTypes = context.Stack.TakeLast(argCount).ToList();
 
                 // Пытаемся найти метод с учетом типов параметров
                 var methodInfo = MethodsFinder.GetMethod(fullName, stackTypes.ToArray())

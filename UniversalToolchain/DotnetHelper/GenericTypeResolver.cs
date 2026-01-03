@@ -73,17 +73,6 @@ public static class GenericTypeResolver
         {
             return true;
         }
-
-        // Проверка на числовые преобразования
-        var numericTypes = new HashSet<Type>
-        {
-            typeof(int), typeof(long), typeof(float), typeof(double),
-            typeof(decimal), typeof(short), typeof(byte)
-        };
-
-        if (numericTypes.Contains(source) && numericTypes.Contains(target))
-            return true;
-
         return false;
     }
 }

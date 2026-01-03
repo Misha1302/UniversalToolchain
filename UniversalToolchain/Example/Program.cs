@@ -4,7 +4,7 @@ using DependencyInjection;
 var services = new ServiceCollection();
 
 services.AddWistServices(options =>
-    options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Universal
+    options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native
 );
 
 // Add optional modules
@@ -18,33 +18,8 @@ var core = provider.GetServices<ICoreRunnable>().First();
 Console.WriteLine(
     core.Run(
         """
-        let counter = 0
-        let total = 0
-
-        @outer:
-        if counter >= 3 goto @done
-            let inner = 0
-            
-            @inner:
-            if inner >= 3 goto @inner_done
-                let x = counter * 10 + inner
-                let y = Main.Pow(x, 2)
-                
-                if y > 100
-                    total = total + Main.Sqrt(y)
-                else
-                    total = total + y
-                
-                inner = inner + 1
-                goto @inner
-            @inner_done:
-            
-            counter = counter + 1
-            goto @outer
-        @done:
-
-        let result = Main.Round(total * 100) / 100
-        result
+        if true 0 else 1
         """
     )
 );
+

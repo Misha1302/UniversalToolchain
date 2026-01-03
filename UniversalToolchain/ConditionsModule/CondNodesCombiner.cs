@@ -7,6 +7,7 @@ namespace ConditionsModule;
 public class CondNodesCombiner : IAstNodeCreator
 {
     public ExtensibleEnum<AstNodeTag> AstNodeType { get; } = ExtensibleEnum<AstNodeTag>.CreateOrGet("If");
+    public Predicate<AstNode> NeedToVisitPredicate => _ => true;
 
     public bool TryCreateNode(AstNode scope, int childIndex)
     {
