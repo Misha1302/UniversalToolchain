@@ -22,4 +22,3 @@ Console.WriteLine(
         """
     )
 );
-
