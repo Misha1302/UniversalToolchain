@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using DependencyInjection;
 using DynamicMethodCalling;
-using ObjectExtensions;
 
 // Setup DI with auto-registration
 var services = new ServiceCollection();
@@ -19,10 +18,10 @@ var provider = services.BuildServiceProvider();
 var core = provider.GetServices<IExecutableGiver<DynamicMethod>>().First();
 var dynamicMethod = core.GetExecutable("3 + 4 * 5");
 var fastCallable = new DynamicMethodInvoker<int>(dynamicMethod);
-    
+
 var w = 0.0;
-Stopwatch sw = Stopwatch.StartNew();
-for (int i = 0; i < 1_000_000_000; i++)
+var sw = Stopwatch.StartNew();
+for (var i = 0; i < 1_000_000_000; i++)
 {
     w += fastCallable.Invoke();
 }

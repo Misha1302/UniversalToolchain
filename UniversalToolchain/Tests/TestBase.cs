@@ -44,9 +44,10 @@ public abstract class TestBase
         var cores = _serviceProvider!.GetServices<ICoreRunnable>().ToList();
         var values = cores.Select(core => core.Run(code)).ToList();
 
-        // Проверяем, что все ядра возвращают одинаковый результат
-        Thrower.AssertAlways(values.All(value =>
-            value?.Equals(values[0]) ?? value == values[0]));
+        foreach (var value in values)
+        {
+            Assert.That(value, Is.EqualTo(values[0]));
+        }
 
         return values[0]!;
     }
