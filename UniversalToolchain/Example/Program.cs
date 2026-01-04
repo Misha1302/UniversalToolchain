@@ -1,4 +1,7 @@
+using System.Diagnostics;
 using DependencyInjection;
+using DynamicMethodCalling;
+using ObjectExtensions;
 
 // Setup DI with auto-registration
 var services = new ServiceCollection();
@@ -13,12 +16,15 @@ services.AddSingleton<IFrontendCoreModule>(new ParserConfigurationModuleImpl(Act
 services.AddSingleton<IFrontendCoreModule>(new LexerConfigurationModuleImpl(ActionType.DumpConfiguration));
 
 var provider = services.BuildServiceProvider();
-var core = provider.GetServices<ICoreRunnable>().First();
-
-Console.WriteLine(
-    core.Run(
-        """
-        3 + 4 * 5
-        """
-    )
-);
+var core = provider.GetServices<IExecutableGiver<DynamicMethod>>().First();
+var dynamicMethod = core.GetExecutable("3 + 4 * 5");
+var fastCallable = new DynamicMethodInvoker<int>(dynamicMethod);
+    
+var w = 0.0;
+Stopwatch sw = Stopwatch.StartNew();
+for (int i = 0; i < 1_000_000_000; i++)
+{
+    w += fastCallable.Invoke();
+}
+Console.WriteLine(w);
+Console.WriteLine("Elapsed time: " + sw.Elapsed);

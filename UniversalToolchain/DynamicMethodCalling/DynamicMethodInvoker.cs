@@ -30,6 +30,7 @@ public unsafe class DynamicMethodInvoker<TReturn>
         _functionPointer = GetFunctionPointerInternal(dynamicMethod);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public TReturn Invoke() => _functionPointer();
 
     /// <summary>

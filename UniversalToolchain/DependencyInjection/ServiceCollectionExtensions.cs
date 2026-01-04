@@ -12,7 +12,6 @@ using BasicInterpreter;
 using BasicLexer;
 using BasicParser;
 using BytecodeDynamicMethodsCompiler;
-using ExceptionsManager;
 using IntermediateRepresentationAbstractions;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -52,7 +51,7 @@ public static class ServiceCollectionExtensions
         RegisterCompilers(services);
 
         // Регистрация ядер с учетом выбранных модулей
-        RegisterCoreRunnables(services, options);
+        RegisterCoreRunnables(services);
 
         return services;
     }
@@ -255,71 +254,64 @@ public static class ServiceCollectionExtensions
         services.AddTransient<AbstractIrToAbstractIrStub>();
     }
 
-    private static void RegisterCoreRunnables(
-        IServiceCollection services,
-        WistOptions options)
+    private static void RegisterCoreRunnables(IServiceCollection services)
     {
-        // Компиляторное ядро (DynamicMethod)
-        services.AddTransient<ICoreRunnable>(provider =>
-        {
-            var modules = provider.GetServices<IFrontendCoreModule>().ToList();
-            var irProcessors = provider.GetServices<IIRProcessingModule>().ToList();
+        var cores = (List<Func<IServiceProvider, ICoreRunnable>>)
+        [
+            (Func<IServiceProvider, BasicCoreImpl<DynamicMethod>>)(provider =>
+            {
+                var modules = provider.GetServices<IFrontendCoreModule>().ToList();
+                var irProcessors = provider.GetServices<IIRProcessingModule>().ToList();
 
-            return new BasicCoreImpl<DynamicMethod>(
-                provider.GetRequiredService<Func<ILexer>>(),
-                provider.GetRequiredService<Func<IParser>>(),
-                provider.GetRequiredService<Func<IAstToBytecodeTranslator>>(),
-                provider.GetRequiredService<Func<IAbstractMethodsTranslator>>(),
-                () => provider.GetRequiredService<AbstractMethodsCompilerImpl>(),
-                provider.GetRequiredService<Func<IExecutor<DynamicMethod>>>(),
-                modules,
-                irProcessors,
-                []
-            );
-        });
+                return new BasicCoreImpl<DynamicMethod>(
+                    provider.GetRequiredService<Func<ILexer>>(),
+                    provider.GetRequiredService<Func<IParser>>(),
+                    provider.GetRequiredService<Func<IAstToBytecodeTranslator>>(),
+                    provider.GetRequiredService<Func<IAbstractMethodsTranslator>>(),
+                    () => provider.GetRequiredService<AbstractMethodsCompilerImpl>(),
+                    provider.GetRequiredService<Func<IExecutor<DynamicMethod>>>(),
+                    modules,
+                    irProcessors,
+                    []
+                );
+            }),
+            (Func<IServiceProvider, BasicCoreImpl<IAbstractIR>>)(provider =>
+            {
+                var modules = provider.GetServices<IFrontendCoreModule>().ToList();
+                var irProcessors = provider.GetServices<IIRProcessingModule>().ToList();
 
-        // Интерпретаторное ядро (IAbstractIR)
-        services.AddTransient<ICoreRunnable>(provider =>
-        {
-            var modules = provider.GetServices<IFrontendCoreModule>().ToList();
-            var irProcessors = provider.GetServices<IIRProcessingModule>().ToList();
+                return new BasicCoreImpl<IAbstractIR>(
+                    provider.GetRequiredService<Func<ILexer>>(),
+                    provider.GetRequiredService<Func<IParser>>(),
+                    provider.GetRequiredService<Func<IAstToBytecodeTranslator>>(),
+                    provider.GetRequiredService<Func<IAbstractMethodsTranslator>>(),
+                    () => provider.GetRequiredService<AbstractIrToAbstractIrStub>(),
+                    provider.GetRequiredService<Func<IExecutor<IAbstractIR>>>(),
+                    modules,
+                    irProcessors,
+                    []
+                );
+            })
+        ];
 
-            return new BasicCoreImpl<IAbstractIR>(
-                provider.GetRequiredService<Func<ILexer>>(),
-                provider.GetRequiredService<Func<IParser>>(),
-                provider.GetRequiredService<Func<IAstToBytecodeTranslator>>(),
-                provider.GetRequiredService<Func<IAbstractMethodsTranslator>>(),
-                () => provider.GetRequiredService<AbstractIrToAbstractIrStub>(),
-                provider.GetRequiredService<Func<IExecutor<IAbstractIR>>>(),
-                modules,
-                irProcessors,
-                []
-            );
-        });
-
-        // Также регистрируем оптимизированные версии
-        RegisterOptimizedRunnables(services);
+        RegisterWithInterface<ICoreRunnable>(services, cores);
+        RegisterWithInterface<ICoreOptimizedRunnable>(services, cores);
+        RegisterWithInterface<IExecutableGiver<IAbstractIR>>(
+            services,
+            cores.Where(x => x.GetType() == typeof(Func<IServiceProvider, BasicCoreImpl<IAbstractIR>>))
+        );
+        RegisterWithInterface<IExecutableGiver<DynamicMethod>>(
+            services,
+            cores.Where(x => x.GetType() == typeof(Func<IServiceProvider, BasicCoreImpl<DynamicMethod>>))
+        );
     }
 
-    private static void RegisterOptimizedRunnables(IServiceCollection services)
+    private static void RegisterWithInterface<T>(IServiceCollection services, IEnumerable<Func<IServiceProvider, ICoreRunnable>> cores) where T : class
     {
-        services.AddTransient<ICoreOptimizedRunnable>(provider =>
+        foreach (var core in cores)
         {
-            var core = provider.GetServices<ICoreRunnable>()
-                .FirstOrDefault(c => c.GetType().GetGenericTypeDefinition() == typeof(BasicCoreImpl<>) &&
-                                     c.GetType().GetGenericArguments()[0] == typeof(DynamicMethod));
-
-            return (ICoreOptimizedRunnable)core.NotNull();
-        });
-
-        services.AddTransient<ICoreOptimizedRunnable>(provider =>
-        {
-            var core = provider.GetServices<ICoreRunnable>()
-                .FirstOrDefault(c => c.GetType().GetGenericTypeDefinition() == typeof(BasicCoreImpl<>) &&
-                                     c.GetType().GetGenericArguments()[0] == typeof(IAbstractIR));
-
-            return (ICoreOptimizedRunnable)core.NotNull();
-        });
+            services.AddTransient<T>(provider => (T)core(provider));
+        }
     }
 }
 
@@ -368,9 +360,4 @@ public class WistOptions
     ///     Конкретные типы модулей, которые следует удалить
     /// </summary>
     public IReadOnlyList<Type>? ModulesToRemove { get; set; }
-
-    /// <summary>
-    ///     Использовать ли автоматическое обнаружение модулей
-    /// </summary>
-    public bool AutoDiscoverModules { get; set; } = true;
 }

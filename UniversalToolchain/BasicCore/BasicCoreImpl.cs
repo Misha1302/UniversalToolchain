@@ -17,11 +17,11 @@ public class BasicCoreImpl<TCompilationOutput>(
     IReadOnlyList<IFrontendCoreModule> modules,
     IReadOnlyList<IIRProcessingModule> optimizers,
     IReadOnlyList<IMiddleEndCoreModule<TCompilationOutput>> middleEndModules
-) : ICoreRunnable, ICoreOptimizedRunnable
+) : ICoreRunnable, ICoreOptimizedRunnable, IExecutableGiver<TCompilationOutput>
 {
     private string _code = null!;
+    private TCompilationOutput _compilationOutput = default!;
     private IExecutor<TCompilationOutput> _executor = null!;
-    private TCompilationOutput _targetDynamicMethods = default!;
 
     public void PrepareToRun(string code)
     {
@@ -55,23 +55,29 @@ public class BasicCoreImpl<TCompilationOutput>(
         middleEndModules.ForEach(module => module.InitMethodsCompiler(compiler));
         var compiled = compiler.Compile(targetIr);
 
-        var targetDynamicMethods = middleEndModules.Aggregate(compiled, (current, module) => module.ProcessCompilation(current));
+        var compilationOutput = middleEndModules.Aggregate(compiled, (current, module) => module.ProcessCompilation(current));
         middleEndModules.ForEach(module => module.InitExecutor(executor));
 
         _executor = executor;
-        _targetDynamicMethods = targetDynamicMethods;
+        _compilationOutput = compilationOutput;
         _code = code;
     }
 
     public object? RunPrepared()
     {
         Thrower.AssertAlways(_code != null);
-        return _executor.Execute(_targetDynamicMethods);
+        return _executor.Execute(_compilationOutput);
     }
 
     public object? Run(string code)
     {
         PrepareToRun(code);
         return RunPrepared();
+    }
+
+    public TCompilationOutput GetExecutable(string code)
+    {
+        PrepareToRun(code);
+        return _compilationOutput;
     }
 }

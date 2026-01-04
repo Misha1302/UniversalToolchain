@@ -29,7 +29,8 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
 
     public DynamicMethod Compile(IAbstractIR air)
     {
-        var method = new DynamicMethod("main", typeof(object), []);
+        var returnType = GetReturnType(air);
+        var method = new DynamicMethod("main", returnType, []);
         using var il = new GroboIL(method);
         var data = new CompilationData(il, []);
         InitializeLabels(data, air);
@@ -40,13 +41,20 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
             CompileInstruction(data, instruction, typesStack);
         }
 
-        if (typesStack.Count == 0)
-            il.Ldnull();
-        else if (typesStack[0].IsValueType)
+        if (typesStack[0].IsValueType && !returnType.IsValueType)
             il.Box(typesStack[0]);
         il.Ret();
 
         return method;
+    }
+
+    private static Type GetReturnType(IAbstractIR air)
+    {
+        var stack = (List<Type>)[];
+        foreach (var instruction in air.Instructions)
+            instruction.ManipulateTypesStack(stack, AirTypes.ProcessTypesIntrinsic);
+        var returnType = stack.Any() ? stack[0] : typeof(void);
+        return returnType;
     }
 
     private void InitializeLabels(CompilationData data, IAbstractIR bytecode)
