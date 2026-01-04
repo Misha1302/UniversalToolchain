@@ -1,306 +1,112 @@
 # UniversalToolchain & Wist Language
 
-Documentation for 20 december 2025
+Readme for January 4 2026 
 
-## 1. Project Overview
+---
 
-**UniversalToolchain** is a modular, extensible framework for building domain-specific languages (DSLs) and scripting
-languages in C#. At its core is **Wist** - a dynamically-typed language designed for embedding and extensibility, with
-its compiler **Wistc** providing command-line access.
+UniversalToolchain is a modular, extensible compiler and interpreter framework for the **Wist** programming language, built on .NET 9.0. It provides a complete toolchain from source code parsing to execution, featuring both a high-performance compiler (generating dynamic methods) and a flexible interpreter.
 
-The framework implements a complete compilation pipeline: lexical analysis, syntax parsing, bytecode translation, IL
-compilation, and execution. Its plugin architecture allows developers to add language features incrementally, making it
-suitable for creating custom DSLs for various domains.
+## Key Features
 
-### Key Capabilities:
+- **Modular & Extensible Architecture**: Every language feature (lexing, parsing, IR generation, optimization, execution) is implemented as a pluggable module.
+- **Dual Execution Modes**:
+  - **Compiler**: Translates Wist code to .NET dynamic methods for near-native performance.
+  - **Interpreter**: Executes intermediate representation (IR) directly for flexibility and debugging.
+- **Extensible Types & Operations**: Core type system and operations are designed for extension via custom modules.
+- **Standard Modules**: Includes arithmetic, conditions, variables, scopes, functions, and native C# interop (not full).
+- **Optimization Pipeline**: Supports IR-level optimizations (e.g., local variable optimization, native values optimization).
+- **REPL & CLI Tools**: Interactive REPL and command-line runner for rapid development and testing.
+- **Comprehensive Diagnostics**: Configurable logging, AST/bytecode dumps, and error reporting.
 
-- Modular language feature system
-- Full compilation pipeline implementation
-- Runtime IL generation and execution
-- Extensible AST and bytecode visitors
-- C# interoperability
-- Detailed debugging and logging tools
-
-## 2. Core Architecture
-
-### Pipeline Architecture
-
-The compilation process follows a strict pipeline:
-
-```
-Source Code
--> Lexical Analysis (Lexer)
--> Syntax Parsing (Parser)
--> AST Transformation
--> Bytecode Generation
--> IL Compilation
--> Execution/Interpretation
-```
-
-Each stage can be modified or extended by registered modules.
-
-### Component Breakdown
-
-- **BasicCore** - The central orchestrator coordinating the pipeline execution. It manages module registration and data
-  flow between stages.
-- **ExtensibleEnum System** - A dynamic enumeration system for lexeme and AST node types that allows runtime extension
-  without recompilation.
-- **Module System** - Each feature (arithmetic, variables, conditions) is implemented as an `ICoreModule` that can hook
-  into any pipeline stage.
-
-## 3. Available Modules
-
-The framework includes these core language modules:
-
-### Basic Language Features:
-
-- **IdentifierModule** - Recognizes identifiers with support for namespaces and generics
-- **NumbersModule** - Numeric literals with RealNumberImpl type
-- **WhitespacesModule** - Whitespace handling and newline recognition
-- **SemicolonAsNewLineModule** - Treats semicolons as statement terminators
-
-### Arithmetic & Logic:
-
-- **ArithmeticModule** - Basic arithmetic operations (+, -, *, /)
-- **ConditionsModule** - Conditional statements (if/elif/else)
-- **ComparisonOperations** - Relational operators (==, !=, >, <, >=, <=)
-- **BooleanOperations** - Boolean logic (and, or, not, true, false)
-
-### Data & Control Flow:
-
-- **VariablesModule** - Variable declaration with let syntax and type inference
-- **EqualityModule** - Assignment operations
-- **LabelsModule** - Labels and goto statements
-- **ScopesModule** - Parentheses and scope boundaries
-
-### Interoperability:
-
-- **CSharpInteropModule** - Direct calling of static C# methods
-
-### Development Tools:
-
-- **ExecutorLoggerModule** - Comprehensive logging of all pipeline stages
-- **ParserConfigurationModule** - Dump/load parser configuration for debugging
-- **LexerConfigurationModule** - Manage lexer pattern priorities
-
-## 4. Getting Started
+## Getting Started
 
 ### Installation
 
-**As a Library:**
+Clone the repository and build with .NET 9.0 SDK:
 
-```bash
-# Clone the repository
-git clone <repository-url>
-cd UniversalToolchain
+~~~bash
+git clone https://github.com/Misha1302/Wist2
+cd Wist2
+dotnet build
+~~~
 
-# Build the solution
-dotnet build Wist.sln
-```
+### Running Wist Code
 
-**Using the CLI Tool:**
+Use the `wistc` command-line tool (after building):
 
-```bash
-# Navigate to Wistc directory and build
-cd Wistc
-dotnet publish -c Release -o ./dist
-```
+~~~bash
+# Run a Wist file
+dotnet run --project ./Wistc --run program.wist
 
-### Basic Usage Examples
+# Run a one-liner
+dotnet run --project ./Wistc --run "let x = 5 + 3; x * 2"
 
-**Simple Arithmetic:**
+# Start REPL
+dotnet run --project ./Wistc --repl
+~~~
 
-```js
-// Basic arithmetic expression
-2 + 3 * (4 - 1)
-```
+### Example Wist Program
 
-**Variables and Assignment:**:
+~~~js
+// Variables and arithmetic
+let a = 10
+let b = 20
+let sum = a + b
 
-```js
-// Variable declaration and usage
-let x = 5
-let y = x * 2
-y = y + 3
-y
-```
+// Conditions
+if sum > 25
+    sum = sum * 2
+else 
+    sum = sum / 2
 
-**Conditional Logic:**
+// Function call (C# interop)
+System.Console.WriteLine(sum)
 
-You may not write parenthesis if the **condition** and the **body** can be parsed as a **single** expression
+// Native arithmetic with type suffixes
+let precise = 3.14f * 2.0f
+~~~
 
-```js
-// If-else with comparisons
-if x > 3 and y < 20
-    "small"
-elif x == 5
-    "five"
-else
-    "other"
-```
+## Architecture Overview
 
-## 5. Extending the Language
+UniversalToolchain is built around a pipeline of modular stages:
 
-### Creating a Custom Module
+1. **Lexing & Parsing**: Tokenization and AST construction via pluggable lexer/parser modules.
+2. **AST to Bytecode**: Translates AST into a platform-independent bytecode.
+3. **Bytecode to IR**: Converts bytecode into an intermediate representation (IR) for optimization.
+4. **Optimization**: Applies IR-level optimizations via `IIRProcessingModule` implementations.
+5. **Compilation/Interpretation**:
+   - **Compiler**: Lowers IR to .NET dynamic methods using `System.Reflection.Emit`.
+   - **Interpreter**: Directly executes IR instructions.
+6. **Execution**: Runs the compiled method or interpreted IR, returning the result.
 
-Implement the ICoreModule interface to add new language features:
+Each stage is configurable via dependency injection and module registration.
 
-```c#
-public class CustomModule : ICoreModule
+## Extending the Language
+
+New language features are added by implementing `IFrontendCoreModule` (lexer, parser, AST translator) and/or `IIRProcessingModule` (IR optimizations). Modules are auto-discovered via `AutoRegisterServiceAttribute` or manually registered.
+
+Example module skeleton:
+
+~~~csharp
+[AutoRegisterService]
+public class MyFeatureModule : IFrontendCoreModule
 {
-    public void InitLexer(ILexer lexer)
-    {
-        // Register new lexeme patterns
-        lexer.Configuration.TryAddPattern(
-            new LexemePattern(@"custom", 
-                ExtensibleEnum<LexemeTag>.CreateOrGet("CustomKeyword"))
-        );
-    }
-    
-    public void InitParser(IParser parser)
-    {
-        // Register AST node creators
-        parser.Configuration.NodeCreators.Add(
-            10f, new CustomNodeCreator()
-        );
-    }
-    
-    public void InitTranslator(IBytecodeTranslator translator)
-    {
-        // Register bytecode visitors
-        translator.Configuration.Visitors.Add(
-            new CustomAstVisitor()
-        );
-    }
-
-    // ...other interface methods...
+    public void InitLexer(ILexer lexer) { /* Add lexeme patterns */ }
+    public void InitParser(IParser parser) { /* Add AST node creators */ }
+    public void InitAstTranslator(IAstToBytecodeTranslator translator) { /* Add AST visitors */ }
 }
-```
+~~~
 
-### Module Registration
+## Performance
 
-Add your module to the core initialization:
+- **Compiler mode** leverages .NET's JIT for high-performance execution, suitable for production workloads.
+- **Interpreter mode** prioritizes flexibility and is ideal for debugging, scripting, and educational use.
+- Optimizations like local variable caching, and native arithmetic intrinsics are applied where supported.
 
-```c#
-var core = new BasicCoreImpl(
-    () => new BasicLexerImpl(),
-    () => new BasicParserImpl(),
-    () => new BasicBytecodeTranslatorImpl(),
-    () => new BytecodeDynamicMethodsCompilerImpl(),
-    () => new BasicInterpreterImpl(),
-    [
-        new CustomModule(),
-        // Other modules...
-    ]
-);
-```
+## License
 
-## 6. Advanced Features
+Licensed under the Apache License 2.0. See [LICENSE](LICENSE) for details.
 
-### Debugging Tools
+## Project Rules
 
-* Configuration Editor - A web-based tool for inspecting and modifying lexer/parser configurations.
-* Logs Viewer - Visualizes compilation logs including:
-    1. Source code with syntax highlighting
-    2. Lexeme tokenization results
-    3. AST tree visualization
-    4. Bytecode instruction listing
-    5. Generated CIL code
-
-### Configuration Management
-
-Parser and lexer module execution order can be serialized, edited, and reloaded, enabling precise control over language
-feature interactions.
-Generic Method Support
-
-### AST Tagging System
-
-AST nodes support custom tags for metadata propagation through the compilation pipeline.
-
-## 7. CLI Tool (Wistc)
-
-The Wistc compiler provides command-line access:
-
-```bash
-# Basic compilation and execution
-wistc -s source.wist
-
-# With detailed logging
-wistc -s source.wist -l logs.txt
-
-# Dump parser configuration for debugging
-wistc -s source.wist --parser-configuration-dump
-
-# Load custom parser configuration
-wistc -s source.wist --parser-configuration-read --parser-configuration config.txt
-```
-
-Options:
-
-* `-s, --source`: Path to source file (required)
-* `-l, --logs`: Path for log output
-* `--parser-configuration`: Configuration file path
-* `--parser-configuration-read`: Load configuration from file
-* `--parser-configuration-dump`: Save current configuration to file
-
-## 8. Development & Contribution
-
-### Requirements
-
-* .NET 9.0 SDK or later
-* Understanding of compiler construction concepts
-* Familiarity with C# and IL generation
-
-### Building from Source
-
-```bash
-# Clone the repository
-git clone <repository-url>
-
-# Restore dependencies
-dotnet restore Wist.sln
-
-# Build all projects
-dotnet build Wist.sln -c Release
-
-# Run tests
-dotnet test Tests/Tests.csproj
-```
-
-### Code Style Guidelines
-
-* Use explicit null checks with NotNull() extension
-* Prefer immutability where possible
-* Document public APIs with XML comments
-* Follow existing naming conventions
-
-### Testing
-
-The test suite includes:
-
-* Unit tests for individual modules
-* Integration tests for the full pipeline
-* Performance and edge case tests
-* Real-world scenario simulations
-
-## 9. Limitations & Future Work
-
-Planned Enhancements:
-
-* Switching from CIL to a new simplified final high-level stack-based bytecode
-* Add advanced type system (more basic types, structures, classes, system-F and others)
-* Advanced error reporting
-* Implement good compiler/jit with optimization
-* Add IDE support
-* Implement more plugins for better ecosystem
-* Implement standard libraries
-
-## 10. License
-
-Licensed under the Apache License, Version 2.0;
-you may not use this project except in compliance with the License.
-
-## 11. Rules & Guidelines
-
-If you want to write code using this project, please read our project rules:
-- **[Project Rules](PROJECT_RULES.md)** - Main rules to write code
+**[Project Rules](PROJECT_RULES.md)** - Main rules to write code.
