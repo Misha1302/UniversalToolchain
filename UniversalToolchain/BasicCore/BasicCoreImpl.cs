@@ -1,4 +1,6 @@
-﻿using BasicCore.ExecutorWrapper;
+﻿using System.Net.Sockets;
+using System.Text;
+using BasicCore.ExecutorWrapper;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
@@ -16,17 +18,21 @@ public class BasicCoreImpl<TCompilationOutput>(
     Func<IExecutor<TCompilationOutput>> executorFactory,
     IReadOnlyList<IFrontendCoreModule> modules,
     IReadOnlyList<IIRProcessingModule> optimizers,
-    IReadOnlyList<IMiddleEndCoreModule<TCompilationOutput>> middleEndModules
+    IReadOnlyList<IMiddleEndCoreModule<TCompilationOutput>> middleEndModules,
+    Func<string, Dictionary<string, Type>, string>? codeWithParamsFactory = null
 ) : ICoreRunnable, ICoreOptimizedRunnable, IExecutableGiver<TCompilationOutput>
 {
     private string _code = null!;
     private TCompilationOutput _compilationOutput = default!;
     private IExecutor<TCompilationOutput> _executor = null!;
+    private Dictionary<string, Type> _parametersTypes = null!;
 
-    public void PrepareToRun(string code)
+    public void PrepareToRun(string code, Dictionary<string, Type> parameters)
     {
-        if (_code == code)
+        if (_code == code && _parametersTypes == parameters)
             return;
+
+        code = (codeWithParamsFactory ?? GetCodeWithParametersDefault)(code, parameters);
 
         var lexer = lexerFactory();
         var parser = parserFactory();
@@ -53,7 +59,7 @@ public class BasicCoreImpl<TCompilationOutput>(
 
         var targetIr = optimizers.Aggregate(air, (current, module) => module.ProcessIr(current, compiler));
         middleEndModules.ForEach(module => module.InitMethodsCompiler(compiler));
-        var compiled = compiler.Compile(targetIr);
+        var compiled = compiler.Compile(targetIr, parameters);
 
         var compilationOutput = middleEndModules.Aggregate(compiled, (current, module) => module.ProcessCompilation(current));
         middleEndModules.ForEach(module => module.InitExecutor(executor));
@@ -61,6 +67,16 @@ public class BasicCoreImpl<TCompilationOutput>(
         _executor = executor;
         _compilationOutput = compilationOutput;
         _code = code;
+        _parametersTypes = parameters;
+    }
+
+    private string GetCodeWithParametersDefault(string code, Dictionary<string, Type> parameters)
+    {
+        var sb = new StringBuilder();
+        foreach (var param in parameters)
+            sb.AppendLine($"#![define {param.Key} as {param.Value}]");
+        sb.AppendLine();
+        return sb + code;
     }
 
     public object? RunPrepared()
@@ -69,15 +85,21 @@ public class BasicCoreImpl<TCompilationOutput>(
         return _executor.Execute(_compilationOutput);
     }
 
-    public object? Run(string code)
+    public object? Run(string code, Dictionary<string, object> parameters)
     {
-        PrepareToRun(code);
+        PrepareToRun(
+            code,
+            parameters.ToDictionary(
+                x => x.Key,
+                x => x.Value.GetType()
+            )
+        );
         return RunPrepared();
     }
 
-    public TCompilationOutput GetExecutable(string code)
+    public TCompilationOutput GetExecutable(string code, Dictionary<string, Type> parameters)
     {
-        PrepareToRun(code);
+        PrepareToRun(code, parameters);
         return _compilationOutput;
     }
 }

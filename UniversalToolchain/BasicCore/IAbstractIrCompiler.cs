@@ -10,5 +10,5 @@ public interface IAbstractIrCompiler<out TCompilationOutput>
         "call C# ctor"
     ];
 
-    public TCompilationOutput Compile(IAbstractIR air);
+    public TCompilationOutput Compile(IAbstractIR air, Dictionary<string, Type> parameters);
 }

@@ -12,7 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using NCalc;
 using NCalc.LambdaCompilation;
 
-namespace NCalcVsWist;
+namespace NCalcVsWistBenchmark;
 
 [MemoryDiagnoser]
 [RankColumn]

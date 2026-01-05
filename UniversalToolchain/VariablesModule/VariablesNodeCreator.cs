@@ -44,9 +44,7 @@ public class VariablesNodeCreator : IAstNodeCreator
         }
         else
         {
-            if (_variables.Contains(scope[childIndex].Text))
-                scope[childIndex].NodeType = AstNodeType;
-            else return false;
+            scope[childIndex].NodeType = AstNodeType;
         }
 
         return true;

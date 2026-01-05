@@ -6,6 +6,7 @@
         <Nullable>enable</Nullable>
         <OutputType>Exe</OutputType>
         <LangVersion>14</LangVersion>
+        <RootNamespace>WistVsCSharp</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>

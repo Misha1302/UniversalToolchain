@@ -1,20 +1,57 @@
 using AbstractIrExtensions;
+using AssemblyFinder;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
+using DotnetAirHelper;
 using DynamicMethodWrapper;
+using ListExtensions;
+using ObjectExtensions;
 
 namespace VariablesModule;
 
 public class VariablesVisitor : IAstVisitor
 {
     private readonly Dictionary<string, Type> _variableTypes = [];
+    private int _argumentIndex;
+
+    static VariablesVisitor()
+    {
+        AirTypes.TryRegisterIntrinsic(
+            "load_argument_by_index",
+            (instr, stack) => stack.Push(instr.Operands[2].Get<Type>())
+        );
+    }
 
     public void TryVisit(BytecodeVisitorData data)
     {
-        if (data.Node.NodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("Variable"))
-            return;
+        if (data.Node.NodeType == ExtensibleEnum<AstNodeTag>.CreateOrGet("Variable"))
+            HandleVariable(data);
+        if (data.Node.NodeType == ExtensibleEnum<AstNodeTag>.CreateOrGet("Preprocessor lexeme"))
+            HandlePreprocessorLexeme(data);
+    }
 
+    private void HandlePreprocessorLexeme(BytecodeVisitorData data)
+    {
+        var text = data.Node.Text[3..^1].Split();
+        if (text is not ["define", _, "as", _]) return;
+
+        var paramName = text[1];
+        var type = TypesFinder.GetType(text[3]);
+        _variableTypes[paramName] = type;
+        var method = new AbstractMethodImpl(
+            $"DefineArgument_{paramName}_{type.FullName}",
+            (il, _) =>
+            {
+                il.LdArg(_argumentIndex, type);
+                il.SetValueToLocal(paramName, type);
+                _argumentIndex++;
+            });
+        data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
+    }
+
+    private void HandleVariable(BytecodeVisitorData data)
+    {
         var varName = data.Node.Text;
 
         if (data.Node.AllTags.Contains("ExpectingSettableReference"))

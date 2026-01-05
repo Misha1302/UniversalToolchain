@@ -50,6 +50,7 @@ public class GenericAbstractIR<TIdentifier> : IGenericAbstractIR<TIdentifier>
 
     public void Intrinsic(object instructionIdentifier, params List<object> operands)
     {
+        // TODO: check for intrinsics support
         _instructions.Add(new Instruction(UOpCode.Intrinsic, [instructionIdentifier, ..operands]));
     }
 

@@ -24,21 +24,24 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
         "load_i32",
         "load_i64",
         "load_f32",
-        "load_f64"
+        "load_f64",
+        "load_argument_by_index"
     ];
 
-    public DynamicMethod Compile(IAbstractIR air)
+    public DynamicMethod Compile(IAbstractIR air, Dictionary<string, Type> parameters)
     {
         var returnType = GetReturnType(air);
-        var method = new DynamicMethod("main", returnType, []);
+        var argsTypes = parameters.Select(x => x.Value).ToArray();
+        var method = new DynamicMethod("main", returnType, argsTypes);
         using var il = new GroboIL(method);
         var data = new CompilationData(il, []);
+
         InitializeLabels(data, air);
 
         var typesStack = new List<Type>();
         foreach (var instruction in air.Instructions)
         {
-            CompileInstruction(data, instruction, typesStack);
+            CompileInstruction(data, instruction, typesStack, parameters);
         }
 
         if (typesStack[0].IsValueType && !returnType.IsValueType)
@@ -73,7 +76,7 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
     }
 
 
-    private void CompileInstruction(CompilationData data, Instruction instruction, List<Type> stack)
+    private void CompileInstruction(CompilationData data, Instruction instruction, List<Type> stack, Dictionary<string, Type> parameters)
     {
         if (instruction.UOpCode == UOpCode.Nop)
         {
@@ -119,7 +122,7 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
         }
         else if (instruction.UOpCode == UOpCode.Intrinsic)
         {
-            CompileIntrinsic(instruction, data, stack);
+            CompileIntrinsic(instruction, data, stack, parameters);
         }
         else
         {
@@ -140,7 +143,7 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
         data.Il.Call(loadMethod);
     }
 
-    private void CompileIntrinsic(Instruction instruction, CompilationData data, List<Type> stack)
+    private void CompileIntrinsic(Instruction instruction, CompilationData data, List<Type> stack, Dictionary<string, Type> parameters)
     {
         Thrower.AssertAlways(instruction.UOpCode == UOpCode.Intrinsic);
         Thrower.AssertAlways(instruction.Operands[0] is string);
@@ -261,6 +264,12 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
             // Load variable address onto stack
             data.Il.Ldloca(local);
             stack.Push(varType.MakeByRefType());
+        }
+        else if (name == "load_argument_by_index")
+        {
+            var argIndex = instruction.Operands[1].Get<int>();
+            data.Il.Ldarg(argIndex);
+            stack.Push(parameters.ElementAt(argIndex).Value);
         }
         else if (name is "load_i32" or "load_i64" or "load_f32" or "load_f64")
         {

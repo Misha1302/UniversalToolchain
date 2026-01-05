@@ -16,9 +16,12 @@ public static class TypesFinder
 
     public static Type GetType(string name)
     {
-        return _typeCache.GetOrAdd(name, n =>
-            AllTypes.FirstOrDefault(x => MakeSimpleName(x) == n)
-                .NotNull($"Cannot find type: {n}"));
+        return _typeCache.GetOrAdd(
+            name,
+            static typeNameToFind => AllTypes.FirstOrDefault(x =>
+                x.FullName == typeNameToFind
+            ).NotNull($"Cannot find type: {typeNameToFind}")
+        );
     }
 
     private static IEnumerable<Type> GetAllTypes()
@@ -26,21 +29,6 @@ public static class TypesFinder
         return Assemblies
             .SelectMany(x => x.GetTypes().Union(x.GetTypes().SelectMany(y => y.GetInterfaces())))
             .Distinct();
-    }
-
-    private static string MakeSimpleName(Type type)
-    {
-        if (!type.ContainsGenericParameters)
-            return type.Name;
-
-        var simpleName = type.Name.Contains('`')
-            ? type.Name[..type.Name.IndexOf('`')]
-            : type.Name;
-
-        if (type.GetGenericArguments().Length == 0)
-            return simpleName;
-
-        return simpleName + "<" + string.Join(", ", type.GetGenericArguments().Select(MakeSimpleName)) + ">";
     }
 
     private static IReadOnlyList<Assembly> GetAssembliesFromExistingInternal()

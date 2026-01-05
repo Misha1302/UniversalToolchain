@@ -80,7 +80,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Benchmarks", "Benchmarks", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Benchmarks", "Benchmarks\Benchmarks.csproj", "{63411917-D50F-4291-AF61-99A27F3A220F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WistVsCSharp", "WistVsCSharp\WistVsCSharp.csproj", "{65E43773-A7A1-4191-86A2-CD929BD7F01B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WistVsCSharpBenchmark", "WistVsCSharpBenchmark\WistVsCSharpBenchmark.csproj", "{65E43773-A7A1-4191-86A2-CD929BD7F01B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IntermediateRepresentationAbstractions", "IntermediateRepresentationAbstractions\IntermediateRepresentationAbstractions.csproj", "{E477DB2B-E8F9-48CC-A871-1DC24646A34D}"
 EndProject
@@ -110,7 +110,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DynamicMethodCalling", "Dyn
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommentsModule", "CommentsModule\CommentsModule.csproj", "{49C4715B-4442-482B-BA44-E9494D02550D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NCalcVsWist", "NCalcVsWist\NCalcVsWist.csproj", "{B7B8EE71-E6B6-4DEF-AD3C-49095264E474}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NCalcVsWistBenchmark", "NCalcVsWistBenchmark\NCalcVsWistBenchmark.csproj", "{B7B8EE71-E6B6-4DEF-AD3C-49095264E474}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InternalPreprocessorLexemesModule", "InternalPreprocessorLexemesModule\InternalPreprocessorLexemesModule.csproj", "{02D0DAF6-D85C-4B23-B6D3-30557CC7B83C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ParametersSetterModule", "ParametersSetterModule\ParametersSetterModule.csproj", "{A93F4388-5196-41F3-B8DB-4319FBFA9A27}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -302,6 +306,14 @@ Global
 		{B7B8EE71-E6B6-4DEF-AD3C-49095264E474}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B7B8EE71-E6B6-4DEF-AD3C-49095264E474}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B7B8EE71-E6B6-4DEF-AD3C-49095264E474}.Release|Any CPU.Build.0 = Release|Any CPU
+		{02D0DAF6-D85C-4B23-B6D3-30557CC7B83C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{02D0DAF6-D85C-4B23-B6D3-30557CC7B83C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{02D0DAF6-D85C-4B23-B6D3-30557CC7B83C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{02D0DAF6-D85C-4B23-B6D3-30557CC7B83C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A93F4388-5196-41F3-B8DB-4319FBFA9A27}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A93F4388-5196-41F3-B8DB-4319FBFA9A27}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A93F4388-5196-41F3-B8DB-4319FBFA9A27}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A93F4388-5196-41F3-B8DB-4319FBFA9A27}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{D62CCD79-F4B6-4A27-875D-FE9DA78A8854} = {53FB9EA9-6487-401D-89E3-7319C961F807}
@@ -348,5 +360,7 @@ Global
 		{F2191BA5-D994-4B4B-99D9-6926AA83CAB6} = {88C5710D-F6DC-410E-BEC0-195979447E14}
 		{49C4715B-4442-482B-BA44-E9494D02550D} = {88C5710D-F6DC-410E-BEC0-195979447E14}
 		{B7B8EE71-E6B6-4DEF-AD3C-49095264E474} = {1FF26DB1-1526-4E5F-B793-3AC09248A329}
+		{02D0DAF6-D85C-4B23-B6D3-30557CC7B83C} = {88C5710D-F6DC-410E-BEC0-195979447E14}
+		{A93F4388-5196-41F3-B8DB-4319FBFA9A27} = {88C5710D-F6DC-410E-BEC0-195979447E14}
 	EndGlobalSection
 EndGlobal
