@@ -75,7 +75,7 @@ UniversalToolchain is built around a pipeline of modular stages:
 3. **Bytecode to IR**: Converts bytecode into an intermediate representation (IR) for optimization.
 4. **Optimization**: Applies IR-level optimizations via `IIRProcessingModule` implementations.
 5. **Compilation/Interpretation**:
-   - **Compiler**: Lowers IR to .NET dynamic methods using `System.Reflection.Emit`.
+   - **Compiler**: Lowers IR to .NET dynamic methods using `GrEmit`.
    - **Interpreter**: Directly executes IR instructions.
 6. **Execution**: Runs the compiled method or interpreted IR, returning the result.
 
