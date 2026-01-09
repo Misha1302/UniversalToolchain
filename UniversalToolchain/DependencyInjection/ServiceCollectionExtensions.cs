@@ -172,7 +172,7 @@ public static class ServiceCollectionExtensions
         string? servicesDirectory)
     {
         var assemblies = servicesDirectory != null
-            ? TypesFinder.GetAllAssemblies(servicesDirectory).ToList()
+            ? TypesFinder.LoadAllAssemblies(servicesDirectory).ToList()
             : TypesFinder.Assemblies;
 
         services.AddAutoRegisteredServices(assemblies);

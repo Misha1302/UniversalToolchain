@@ -25,12 +25,10 @@ public class BasicCoreImpl<TCompilationOutput>(
     private string _code = null!;
     private TCompilationOutput _compilationOutput = default!;
     private IExecutor<TCompilationOutput> _executor = null!;
-    private Dictionary<string, Type> _parametersTypes = null!;
 
-    public void PrepareToRun(string code, Dictionary<string, Type> parameters)
+    public void PrepareToRun(string code, Dictionary<string, Type>? parameters = null)
     {
-        if (_code == code && _parametersTypes == parameters)
-            return;
+        parameters ??= [];
 
         code = (codeWithParamsFactory ?? GetCodeWithParametersDefault)(code, parameters);
 
@@ -67,7 +65,6 @@ public class BasicCoreImpl<TCompilationOutput>(
         _executor = executor;
         _compilationOutput = compilationOutput;
         _code = code;
-        _parametersTypes = parameters;
     }
 
     private string GetCodeWithParametersDefault(string code, Dictionary<string, Type> parameters)
@@ -85,8 +82,9 @@ public class BasicCoreImpl<TCompilationOutput>(
         return _executor.Execute(_compilationOutput);
     }
 
-    public object? Run(string code, Dictionary<string, object> parameters)
+    public object? Run(string code, Dictionary<string, object>? parameters = null)
     {
+        parameters ??= [];
         PrepareToRun(
             code,
             parameters.ToDictionary(
@@ -97,8 +95,9 @@ public class BasicCoreImpl<TCompilationOutput>(
         return RunPrepared();
     }
 
-    public TCompilationOutput GetExecutable(string code, Dictionary<string, Type> parameters)
+    public TCompilationOutput GetExecutable(string code, Dictionary<string, Type>? parameters = null)
     {
+        parameters ??= [];
         PrepareToRun(code, parameters);
         return _compilationOutput;
     }

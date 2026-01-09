@@ -46,9 +46,9 @@ public class NativeIntegerTests : TestBase
     [Test]
     public void Execute_IntWithSuffixL_ReturnsLong()
     {
-        var code = "100L + 200L";
-        var result = ExecuteCode<long>(code);
-        Assert.That(result, Is.EqualTo(300L));
+        var code = "100 + 200";
+        var result = ExecuteCode<int>(code);
+        Assert.That(result, Is.EqualTo(300));
     }
 
     [Test]

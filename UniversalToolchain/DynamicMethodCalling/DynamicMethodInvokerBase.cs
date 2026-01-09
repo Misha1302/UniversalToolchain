@@ -2,11 +2,13 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using ExceptionsManager;
+using ObjectExtensions;
 
 namespace DynamicMethodCalling;
 
-public class DynamicMethodInvokerBase
+public class DynamicMethodInvokerBase<TReturn>
 {
+    // ReSharper disable once StaticMemberInGenericType
     private static readonly MethodInfo _getMethodDescriptorMethod;
     protected readonly nint FunctionPointer;
 
@@ -21,6 +23,9 @@ public class DynamicMethodInvokerBase
     public DynamicMethodInvokerBase(DynamicMethod dynamicMethod)
     {
         dynamicMethod.NotNull();
+
+        Thrower.AssertAlways(dynamicMethod.ReturnType == typeof(TReturn), $"Return type must be {typeof(TReturn)}");
+
         CompileMethod(dynamicMethod);
         FunctionPointer = GetFunctionPointerInternal(dynamicMethod);
     }
@@ -31,6 +36,10 @@ public class DynamicMethodInvokerBase
         var functionPtr = handle.GetFunctionPointer();
 
         Thrower.AssertAlways(functionPtr != IntPtr.Zero);
+
+        dynamicMethod.MakeImmortal();
+        handle.MakeImmortal();
+        functionPtr.MakeImmortal();
 
         return functionPtr;
     }

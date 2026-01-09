@@ -88,38 +88,4 @@ public abstract class TestBase
             .FirstOrDefault()
             .NotNull($"Core of type {typeof(T).Name} not found");
     }
-
-    /// <summary>
-    ///     Вспомогательный метод для сравнения чисел с учетом типа
-    /// </summary>
-    static protected void AssertNumbersEqual(object expected, object actual, double tolerance = 1e-9)
-    {
-        if (expected is double expectedDouble && actual is double actualDouble)
-        {
-            Assert.That(actualDouble, Is.EqualTo(expectedDouble).Within(tolerance));
-        }
-        else if (expected is float expectedFloat && actual is float actualFloat)
-        {
-            Assert.That(actualFloat, Is.EqualTo(expectedFloat).Within((float)tolerance));
-        }
-        else if (expected is decimal expectedDecimal && actual is decimal actualDecimal)
-        {
-            // Для decimal используем более высокую точность
-            var decimalTolerance = (decimal)tolerance;
-            Assert.That(actualDecimal, Is.EqualTo(expectedDecimal).Within(decimalTolerance));
-        }
-        else if (expected is int expectedInt && actual is int actualInt)
-        {
-            Assert.That(actualInt, Is.EqualTo(expectedInt));
-        }
-        else if (expected is long expectedLong && actual is long actualLong)
-        {
-            Assert.That(actualLong, Is.EqualTo(expectedLong));
-        }
-        else
-        {
-            // Для остальных типов используем стандартное сравнение
-            Assert.That(actual, Is.EqualTo(expected));
-        }
-    }
 }

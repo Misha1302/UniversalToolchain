@@ -19,12 +19,8 @@
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.1"/>
     </ItemGroup>
 
-    <ItemGroup>
-        <Using Include="NUnit.Framework"/>
-    </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\AbstractIrConverters\AbstractIrConverters.csproj"/>
         <ProjectReference Include="..\ArithmeticModule\ArithmeticModule.csproj"/>
         <ProjectReference Include="..\BasicCilCompiler\BasicCilCompiler.csproj"/>
         <ProjectReference Include="..\BasicCodeTranslator\BasicCodeTranslator.csproj"/>
@@ -33,12 +29,15 @@
         <ProjectReference Include="..\BasicLexer\BasicLexer.csproj"/>
         <ProjectReference Include="..\BasicParser\BasicParser.csproj"/>
         <ProjectReference Include="..\BasicStdLib\BasicStdLib.csproj"/>
+        <ProjectReference Include="..\BasicTypesExtensions\BasicTypesExtensions.csproj"/>
         <ProjectReference Include="..\BytecodeDynamicMethodsCompiler\BytecodeDynamicMethodsCompiler.csproj"/>
-        <ProjectReference Include="..\CommentsModule\CommentsModule.csproj"/>
+        <ProjectReference Include="..\AbstractIrConverters\AbstractIrConverters.csproj"/>
         <ProjectReference Include="..\ConditionsModule\ConditionsModule.csproj"/>
         <ProjectReference Include="..\CSharpInteropModule\CSharpInteropModule.csproj"/>
         <ProjectReference Include="..\DependencyInjection\DependencyInjection.csproj"/>
+        <ProjectReference Include="..\ExecutorLoggerModule\ExecutorLoggerModule.csproj"/>
         <ProjectReference Include="..\IdentifierModule\IdentifierModule.csproj"/>
+        <ProjectReference Include="..\InternalPreprocessorLexemesModule\InternalPreprocessorLexemesModule.csproj"/>
         <ProjectReference Include="..\LabelsModule\LabelsModule.csproj"/>
         <ProjectReference Include="..\LocalVariablesOptimizerModule\LocalVariablesOptimizerModule.csproj"/>
         <ProjectReference Include="..\NativeMathModule\NativeMathModule.csproj"/>
@@ -48,6 +47,10 @@
         <ProjectReference Include="..\SemicolonAsNewLineModule\SemicolonAsNewLineModule.csproj"/>
         <ProjectReference Include="..\VariablesModule\VariablesModule.csproj"/>
         <ProjectReference Include="..\WhitespacesModule\WhitespacesModule.csproj"/>
+        <ProjectReference Include="..\CommentsModule\CommentsModule.csproj"/>
     </ItemGroup>
-
+    
+    <ItemGroup>
+        <Using Include="NUnit.Framework"/>
+    </ItemGroup>
 </Project>

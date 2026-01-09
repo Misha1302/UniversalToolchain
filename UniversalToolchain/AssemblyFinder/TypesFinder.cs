@@ -1,88 +1,277 @@
-using System.Collections.Concurrent;
-using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
-using ExceptionsManager;
+using System.Runtime.Loader;
 
 namespace AssemblyFinder;
 
 public static class TypesFinder
 {
-    private static readonly Lazy<IReadOnlyList<Assembly>> _assemblies = new(() => GetAllAssemblies());
-    private static readonly Lazy<IReadOnlyList<Type>> _allTypes = new(() => GetAllTypes().ToArray());
-    private static readonly ConcurrentDictionary<string, Type> _typeCache = new();
+    private static readonly object _syncLock = new();
+    private static readonly HashSet<Assembly> _loadedAssemblies = new();
+    private static readonly Dictionary<string, Assembly> _assemblyCache = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly HashSet<string> _badAssemblies = new(StringComparer.OrdinalIgnoreCase);
 
-    public static IReadOnlyList<Assembly> Assemblies => _assemblies.Value;
-    public static IReadOnlyList<Type> AllTypes => _allTypes.Value;
+    // Публичные свойства с ленивой инициализацией
+    private static readonly Lazy<IReadOnlyList<Assembly>> _allAssemblies = new(() => LoadAllAssemblies(), isThreadSafe: true);
+    private static readonly Lazy<IReadOnlyList<Type>> _allTypes = new(LoadAllTypes, isThreadSafe: true);
+
+    public static IEnumerable<Assembly> Assemblies => _allAssemblies.Value;
+    public static IEnumerable<Type> AllTypes => _allTypes.Value;
+
+    static TypesFinder()
+    {
+        Initialize();
+    }
+
+    private static void Initialize()
+    {
+        lock (_syncLock)
+        {
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                if (IsValidAssembly(assembly))
+                {
+                    _loadedAssemblies.Add(assembly);
+                    CacheAssembly(assembly);
+                }
+            }
+        }
+    }
 
     public static Type GetType(string name)
     {
-        return _typeCache.GetOrAdd(
-            name,
-            static typeNameToFind => AllTypes.FirstOrDefault(x =>
-                x.FullName == typeNameToFind
-            ).NotNull($"Cannot find type: {typeNameToFind}")
-        );
+        var type = AllTypes.FirstOrDefault(x => x.FullName == name);
+        if (type == null)
+            throw new InvalidOperationException($"Cannot find type: {name}");
+        return type;
     }
 
-    private static IEnumerable<Type> GetAllTypes()
+    private static bool IsValidAssembly(Assembly assembly)
     {
-        return Assemblies
-            .SelectMany(x => x.GetTypes().Union(x.GetTypes().SelectMany(y => y.GetInterfaces())))
-            .Distinct();
-    }
+        if (assembly.IsDynamic) return false;
 
-    private static IReadOnlyList<Assembly> GetAssembliesFromExistingInternal()
-    {
-        var visited = new HashSet<string>();
-        var stack = new Stack<Assembly>();
-        var assemblies = new List<Assembly>();
-
-        foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
-            stack.Push(assembly);
-
-        while (stack.Count > 0)
+        try
         {
-            var asm = stack.Pop();
-            assemblies.Add(asm);
-
-            foreach (var reference in asm.GetReferencedAssemblies())
+            // Быстрая проверка - пытаемся получить минимальную информацию
+            var name = assembly.GetName();
+            // Полная проверка - загрузка типов (но только если еще не проверяли)
+            if (!_badAssemblies.Contains(assembly.FullName ?? ""))
             {
-                if (visited.Contains(reference.FullName))
-                    continue;
+                _ = assembly.GetExportedTypes();
+            }
+            return true;
+        }
+        catch (BadImageFormatException)
+        {
+            // Битая сборка
+            if (assembly.FullName != null)
+                _badAssemblies.Add(assembly.FullName);
+            return false;
+        }
+        catch (FileLoadException)
+        {
+            // Защищенная или недоступная сборка
+            if (assembly.FullName != null)
+                _badAssemblies.Add(assembly.FullName);
+            return false;
+        }
+        catch (ReflectionTypeLoadException)
+        {
+            // Частично загруженная сборка
+            return true; // Все еще может содержать полезные типы
+        }
+        catch
+        {
+            // Любая другая ошибка
+            return false;
+        }
+    }
 
-                try
+    private static bool TryLoadAssembly(string path, [NotNullWhen(true)] out Assembly? assembly)
+    {
+        assembly = null;
+
+        try
+        {
+            var assemblyName = AssemblyName.GetAssemblyName(path);
+            return TryLoadAssembly(assemblyName, path, out assembly);
+        }
+        catch (BadImageFormatException)
+        {
+            // Битый файл
+            _badAssemblies.Add(Path.GetFileName(path));
+            return false;
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // Нет прав доступа
+            return false;
+        }
+        catch (IOException)
+        {
+            // Файл занят или недоступен
+            return false;
+        }
+    }
+
+    private static bool TryLoadAssembly(AssemblyName assemblyName, string? path, [NotNullWhen(true)] out Assembly? assembly)
+    {
+        assembly = null;
+        var fullName = assemblyName.FullName;
+
+        lock (_syncLock)
+        {
+            // Проверяем кэш
+            if (_assemblyCache.TryGetValue(fullName, out assembly))
+                return assembly != null;
+
+            // Проверяем плохие сборки
+            if (_badAssemblies.Contains(fullName))
+                return false;
+
+            try
+            {
+                // Загружаем сборку
+                assembly = path != null
+                    ? AssemblyLoadContext.Default.LoadFromAssemblyPath(path)
+                    : Assembly.Load(assemblyName);
+
+                // Валидируем сборку
+                if (!IsValidAssembly(assembly))
                 {
-                    stack.Push(Assembly.Load(reference));
-                    visited.Add(reference.FullName);
+                    _badAssemblies.Add(fullName);
+                    assembly = null;
+                    return false;
                 }
-                catch (Exception e)
+
+                // Кэшируем успешную загрузку
+                CacheAssembly(assembly);
+                _loadedAssemblies.Add(assembly);
+
+                return true;
+            }
+            catch (BadImageFormatException)
+            {
+                _badAssemblies.Add(fullName);
+                return false;
+            }
+            catch (FileLoadException ex) when (ex.Message.Contains("administrator") || ex.Message.Contains("elevated"))
+            {
+                // Требуются повышенные права
+                _badAssemblies.Add(fullName);
+                return false;
+            }
+            catch (Exception ex) when (ex is FileNotFoundException or
+                                           DirectoryNotFoundException or
+                                           UnauthorizedAccessException or
+                                           PathTooLongException)
+            {
+                // Другие ошибки файловой системы
+                _badAssemblies.Add(fullName);
+                return false;
+            }
+        }
+    }
+
+    private static void CacheAssembly(Assembly assembly)
+    {
+        var fullName = assembly.FullName;
+        if (fullName != null && !_assemblyCache.ContainsKey(fullName))
+        {
+            _assemblyCache[fullName] = assembly;
+        }
+    }
+
+    private static void LoadDependencies(Assembly assembly)
+    {
+        foreach (var reference in assembly.GetReferencedAssemblies())
+        {
+            // Игнорируем системные сборки
+            if (reference.Name?.StartsWith("System.") == true ||
+                reference.Name?.StartsWith("Microsoft.") == true ||
+                reference.Name == "netstandard" ||
+                reference.Name == "mscorlib")
+                continue;
+
+            lock (_syncLock)
+            {
+                if (!_assemblyCache.ContainsKey(reference.FullName))
                 {
-                    Debug.WriteLine($"Could not load {reference} assembly 'cause {e}");
+                    TryLoadAssembly(reference, path: null, out _);
                 }
             }
         }
-
-        return assemblies.DistinctBy(x => x.FullName).ToList();
     }
 
-    public static IReadOnlyList<Assembly> GetAllAssemblies(string? directoryPath = null)
+    public static IReadOnlyList<Assembly> LoadAllAssemblies(string? path = null)
     {
-        var path = directoryPath ?? AppDomain.CurrentDomain.BaseDirectory;
-        path = Path.GetFullPath(path);
-        var dlls = Directory.GetFiles(path, "*.dll", SearchOption.AllDirectories);
+        var assemblies = new List<Assembly>();
+
+        // Загружаем сборки из текущего домена
+        lock (_syncLock)
+        {
+            assemblies.AddRange(_loadedAssemblies);
+        }
+
+        // Загружаем сборки из текущей директории и поддиректорий
+        var currentPath = path ?? AppDomain.CurrentDomain.BaseDirectory;
+        var dlls = Directory.EnumerateFiles(currentPath, "*.dll", SearchOption.AllDirectories);
 
         foreach (var dllPath in dlls)
         {
-            try
+            if (TryLoadAssembly(dllPath, out var assembly))
             {
-                Assembly.LoadFrom(dllPath);
-            }
-            catch
-            {
-                // ignored
+                assemblies.Add(assembly);
+                // Загружаем зависимости
+                LoadDependencies(assembly);
             }
         }
 
-        return GetAssembliesFromExistingInternal();
+        // Убираем дубликаты (на всякий случай)
+        var distinctAssemblies = new HashSet<Assembly>(assemblies);
+
+        return distinctAssemblies.ToArray();
+    }
+
+    private static IReadOnlyList<Type> LoadAllTypes()
+    {
+        var types = new List<Type>();
+
+        foreach (var assembly in Assemblies)
+        {
+            try
+            {
+                types.AddRange(assembly.GetTypes());
+            }
+            catch (ReflectionTypeLoadException ex)
+            {
+                // Частично загруженные типы
+                var loadedTypes = ex.Types.Where(t => t != null);
+                types.AddRange(loadedTypes!);
+            }
+            catch
+            {
+                // Пропускаем сборки, которые не могут загрузить типы
+                continue;
+            }
+        }
+
+        return types.Distinct().ToArray();
+    }
+
+    // Метод для добавления сборок вручную (например, для тестирования)
+    public static void RegisterAssembly(Assembly assembly)
+    {
+        if (assembly == null) throw new ArgumentNullException(nameof(assembly));
+
+        lock (_syncLock)
+        {
+            if (IsValidAssembly(assembly))
+            {
+                _loadedAssemblies.Add(assembly);
+                CacheAssembly(assembly);
+                LoadDependencies(assembly);
+            }
+        }
     }
 }

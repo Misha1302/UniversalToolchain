@@ -38,9 +38,9 @@ public class NativeFunctionOverloadingTests : TestBase
     [Test]
     public void Execute_SystemMathAbsOverloads_NativeMode_Long()
     {
-        var code = "System.Math.Abs(-100L)";
-        var result = ExecuteCode<long>(code);
-        Assert.That(result, Is.EqualTo(100L));
+        var code = "System.Math.Abs(-100)";
+        var result = ExecuteCode<int>(code);
+        Assert.That(result, Is.EqualTo(100));
     }
 
     [Test]

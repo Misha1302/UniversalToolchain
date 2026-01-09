@@ -13,17 +13,11 @@ public static class AutoRegistration
     /// </summary>
     public static IServiceCollection AddAutoRegisteredServices(
         this IServiceCollection services,
-        params IReadOnlyList<Assembly> assemblies)
+        params IEnumerable<Assembly> assemblies)
     {
-        if (assemblies.Count == 0)
-        {
-            assemblies = TypesFinder.Assemblies;
-        }
+        var types = !assemblies.Any() ? TypesFinder.AllTypes : assemblies.SelectMany(x => x.GetTypes());
 
-        foreach (var assembly in assemblies)
-        {
-            RegisterServices(services, assembly);
-        }
+        RegisterServices(services, types);
 
         return services;
     }
@@ -31,9 +25,9 @@ public static class AutoRegistration
     /// <summary>
     ///     Registers all services marked with AutoRegisterServiceAttribute
     /// </summary>
-    private static void RegisterServices(IServiceCollection services, Assembly assembly)
+    private static void RegisterServices(IServiceCollection services, IEnumerable<Type> types)
     {
-        var serviceTypes = assembly.GetTypes()
+        var serviceTypes = types
             .Where(t => t.IsClass && !t.IsAbstract)
             .Select(t => (Type: t, Attr: t.GetCustomAttribute<AutoRegisterServiceAttribute>()))
             .Where(x => x.Attr != null)
