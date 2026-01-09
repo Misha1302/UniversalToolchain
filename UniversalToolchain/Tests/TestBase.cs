@@ -37,17 +37,13 @@ public abstract class TestBase
     internal object ExecuteCode(string code)
     {
         if (_serviceProvider == null)
-        {
             BuildServiceProvider();
-        }
 
         var cores = _serviceProvider!.GetServices<ICoreRunnable>().ToList();
         var values = cores.Select(core => core.Run(code)).ToList();
 
         foreach (var value in values)
-        {
             Assert.That(value, Is.EqualTo(values[0]));
-        }
 
         return values[0]!;
     }
@@ -79,9 +75,7 @@ public abstract class TestBase
     protected T CreateCore<T>() where T : ICoreRunnable
     {
         if (_serviceProvider == null)
-        {
             BuildServiceProvider();
-        }
 
         return _serviceProvider!.GetServices<ICoreRunnable>()
             .OfType<T>()

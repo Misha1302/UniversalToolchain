@@ -69,7 +69,6 @@ public class Repl
     private void LoadHistory()
     {
         if (_historyFile != null && File.Exists(_historyFile))
-        {
             try
             {
                 _history.AddRange(File.ReadAllLines(_historyFile));
@@ -78,13 +77,11 @@ public class Repl
             {
                 /* Ignore */
             }
-        }
     }
 
     private void SaveHistory()
     {
         if (_historyFile != null && _history.Any())
-        {
             try
             {
                 File.WriteAllLines(_historyFile, _history.TakeLast(100));
@@ -93,7 +90,6 @@ public class Repl
             {
                 /* Ignore */
             }
-        }
     }
 
     private void ShowHistory()

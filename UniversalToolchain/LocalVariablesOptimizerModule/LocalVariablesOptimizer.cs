@@ -58,9 +58,7 @@ public class LocalVariablesOptimizer : IIRProcessingModule
             {
                 // Remove the last two instructions from newInstructions (push string and GetRef)
                 if (newInstructions.Count >= 2)
-                {
                     newInstructions.RemoveRange(newInstructions.Count - 2, 2);
-                }
 
                 // Create new store_local intrinsic
                 var storeLocalInstr = CreateStoreLocalIntrinsic(instructions[i - 2], instructions[i - 1]);
@@ -75,9 +73,7 @@ public class LocalVariablesOptimizer : IIRProcessingModule
             {
                 // Remove the last instruction from newInstructions (push string)
                 if (newInstructions.Count >= 1)
-                {
                     newInstructions.RemoveAt(newInstructions.Count - 1);
-                }
 
                 // Create new load_local intrinsic
                 var loadLocalInstr = CreateLoadLocalIntrinsic(instructions[i - 1], instructions[i]);

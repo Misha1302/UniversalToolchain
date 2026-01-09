@@ -46,27 +46,17 @@ public class NativeTypesModuleImpl : IFrontendCoreModule
 
         // Определяем тип по суффиксу
         if (suffix == 'm')
-        {
             return decimal.Parse(cleanedText[..^1], NumberStyles.Any);
-        }
         if (suffix == 'f')
-        {
             return float.Parse(cleanedText[..^1], NumberStyles.Any);
-        }
         if (suffix == 'd')
-        {
             return double.Parse(cleanedText[..^1], NumberStyles.Any);
-        }
         if (suffix == 'l')
-        {
             return long.Parse(cleanedText[..^1], NumberStyles.Any);
-        }
 
         // Если нет суффикса
         if (cleanedText.Contains('.') || cleanedText.Contains('e') || cleanedText.Contains('E'))
-        {
             return double.Parse(cleanedText, NumberStyles.Any);
-        }
 
         return int.Parse(cleanedText);
     }

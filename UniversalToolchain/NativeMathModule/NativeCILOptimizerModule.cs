@@ -47,10 +47,8 @@ public class NativeCilOptimizerModule : IIRProcessingModule
             !compiler.SupportedIntrinsics.Contains("load_i64") &&
             !compiler.SupportedIntrinsics.Contains("load_f32") &&
             !compiler.SupportedIntrinsics.Contains("load_f64"))
-        {
             // Если компилятор не поддерживает наши интринсики, возвращаем как есть
             return current;
-        }
 
         InitializeAirTypes();
         return OptimizeNativeLoads(current);

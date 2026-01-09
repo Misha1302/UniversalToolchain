@@ -87,17 +87,11 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
     {
         var intrinsicName = instruction.Operands[0].Get<string>();
         if (intrinsicName == "call C#")
-        {
             ExecuteCSharpCall(instruction, state);
-        }
         else if (intrinsicName == "call C# ctor")
-        {
             ExecuteCSharpConstructor(instruction, state);
-        }
         else
-        {
             throw new InvalidOperationException($"Unknown intrinsic: {intrinsicName}");
-        }
     }
 
     private void ExecuteCSharpCall(Instruction instruction, InterpreterState state)
@@ -128,7 +122,6 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
         for (var i = 0; i < args.Length; i++)
         {
             if (args[i] != null && args[i].GetType() != targetTypes[i])
-            {
                 try
                 {
                     args[i] = Convert.ChangeType(args[i], targetTypes[i]);
@@ -138,7 +131,6 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
                     // Если не удалось преобразовать, оставляем как есть
                     // Это может привести к исключению при вызове, что корректно
                 }
-            }
         }
 
         // Создаем конкретный generic-метод, если нужно (используем ту же логику, что и в компиляторе)
@@ -162,9 +154,7 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
 
         // Если метод возвращает значение, кладем его в стек
         if (method.ReturnType != typeof(void))
-        {
             state.ValueStack.Push(result);
-        }
     }
 
     private void ExecuteCSharpConstructor(Instruction instruction, InterpreterState state)

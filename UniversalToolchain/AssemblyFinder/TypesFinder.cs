@@ -12,16 +12,16 @@ public static class TypesFinder
     private static readonly HashSet<string> _badAssemblies = new(StringComparer.OrdinalIgnoreCase);
 
     // Публичные свойства с ленивой инициализацией
-    private static readonly Lazy<IReadOnlyList<Assembly>> _allAssemblies = new(() => LoadAllAssemblies(), isThreadSafe: true);
-    private static readonly Lazy<IReadOnlyList<Type>> _allTypes = new(LoadAllTypes, isThreadSafe: true);
-
-    public static IEnumerable<Assembly> Assemblies => _allAssemblies.Value;
-    public static IEnumerable<Type> AllTypes => _allTypes.Value;
+    private static readonly Lazy<IReadOnlyList<Assembly>> _allAssemblies = new(() => LoadAllAssemblies(), true);
+    private static readonly Lazy<IReadOnlyList<Type>> _allTypes = new(LoadAllTypes, true);
 
     static TypesFinder()
     {
         Initialize();
     }
+
+    public static IEnumerable<Assembly> Assemblies => _allAssemblies.Value;
+    public static IEnumerable<Type> AllTypes => _allTypes.Value;
 
     private static void Initialize()
     {
@@ -56,9 +56,7 @@ public static class TypesFinder
             var name = assembly.GetName();
             // Полная проверка - загрузка типов (но только если еще не проверяли)
             if (!_badAssemblies.Contains(assembly.FullName ?? ""))
-            {
                 _ = assembly.GetExportedTypes();
-            }
             return true;
         }
         catch (BadImageFormatException)
@@ -177,9 +175,7 @@ public static class TypesFinder
     {
         var fullName = assembly.FullName;
         if (fullName != null && !_assemblyCache.ContainsKey(fullName))
-        {
             _assemblyCache[fullName] = assembly;
-        }
     }
 
     private static void LoadDependencies(Assembly assembly)
@@ -196,9 +192,7 @@ public static class TypesFinder
             lock (_syncLock)
             {
                 if (!_assemblyCache.ContainsKey(reference.FullName))
-                {
-                    TryLoadAssembly(reference, path: null, out _);
-                }
+                    TryLoadAssembly(reference, null, out _);
             }
         }
     }
@@ -252,7 +246,6 @@ public static class TypesFinder
             catch
             {
                 // Пропускаем сборки, которые не могут загрузить типы
-                continue;
             }
         }
 

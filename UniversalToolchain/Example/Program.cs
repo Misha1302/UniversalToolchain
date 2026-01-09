@@ -29,9 +29,7 @@ var fastCallable = new DynamicMethodInvoker<double, double, double>(dynamicMetho
 
 var sw = Stopwatch.StartNew();
 for (var i = 0; i < 1_000_000; i++)
-{
     fastCallable.Invoke(1.0, 1.001);
-}
 Console.WriteLine(sw.Elapsed);
 
 

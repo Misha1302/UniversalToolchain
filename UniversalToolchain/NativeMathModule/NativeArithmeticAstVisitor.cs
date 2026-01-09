@@ -28,9 +28,7 @@ public class NativeArithmeticAstVisitor : IAstVisitor
             nodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("NativeSubtraction") &&
             nodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("NativeMultiplication") &&
             nodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("NativeDivision"))
-        {
             return;
-        }
 
         // Обрабатываем оба операнда
         data.AstToBytecodeTranslator.Translate(data.Node.Children[0]);

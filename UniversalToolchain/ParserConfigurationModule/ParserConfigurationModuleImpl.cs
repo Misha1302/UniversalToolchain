@@ -89,9 +89,7 @@ public class ParserConfigurationModuleImpl(ActionType actionType, string path = 
             foreach (var level in parser.Configuration.NodeCreators)
             {
                 foreach (var creator in level.Value)
-                {
                     result.Add((level.Key, creator));
-                }
             }
 
             return result;
@@ -126,9 +124,7 @@ public class ParserConfigurationModuleImpl(ActionType actionType, string path = 
             {
                 var items = group.ToList();
                 for (var i = 0; i < items.Count; i++)
-                {
                     result[items[i].Creator] = i.ToString();
-                }
             }
 
             return result;
@@ -312,9 +308,7 @@ public class ParserConfigurationModuleImpl(ActionType actionType, string path = 
             foreach (var level in _parser.Configuration.NodeCreators)
             {
                 foreach (var creator in level.Value)
-                {
                     result[creator] = level.Key;
-                }
             }
 
             return result;
@@ -325,9 +319,7 @@ public class ParserConfigurationModuleImpl(ActionType actionType, string path = 
             _parser.Configuration.NodeCreators.Clear();
 
             foreach (var (priority, creator) in newConfiguration)
-            {
                 _parser.Configuration.NodeCreators.Add(priority, creator);
-            }
         }
 
         private record ConfigLine(float Priority, string TypeName, string InstanceId, string AstNodeType);

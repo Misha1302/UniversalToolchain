@@ -1,5 +1,4 @@
-﻿using System.Net.Sockets;
-using System.Text;
+﻿using System.Text;
 using BasicCore.ExecutorWrapper;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
@@ -67,15 +66,6 @@ public class BasicCoreImpl<TCompilationOutput>(
         _code = code;
     }
 
-    private string GetCodeWithParametersDefault(string code, Dictionary<string, Type> parameters)
-    {
-        var sb = new StringBuilder();
-        foreach (var param in parameters)
-            sb.AppendLine($"#![define {param.Key} as {param.Value}]");
-        sb.AppendLine();
-        return sb + code;
-    }
-
     public object? RunPrepared()
     {
         Thrower.AssertAlways(_code != null);
@@ -100,5 +90,14 @@ public class BasicCoreImpl<TCompilationOutput>(
         parameters ??= [];
         PrepareToRun(code, parameters);
         return _compilationOutput;
+    }
+
+    private string GetCodeWithParametersDefault(string code, Dictionary<string, Type> parameters)
+    {
+        var sb = new StringBuilder();
+        foreach (var param in parameters)
+            sb.AppendLine($"#![define {param.Key} as {param.Value}]");
+        sb.AppendLine();
+        return sb + code;
     }
 }

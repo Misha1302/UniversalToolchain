@@ -109,9 +109,7 @@ public static class ServiceCollectionExtensions
             .ToList();
 
         foreach (var descriptor in descriptors)
-        {
             services.Remove(descriptor);
-        }
 
         return services;
     }
@@ -128,9 +126,7 @@ public static class ServiceCollectionExtensions
             .ToList();
 
         foreach (var descriptor in descriptors)
-        {
             services.Remove(descriptor);
-        }
 
         return services;
     }
@@ -184,12 +180,8 @@ public static class ServiceCollectionExtensions
     {
         // Применяем фильтры исключения
         if (options.ExcludedNamespaces?.Any() == true)
-        {
             foreach (var ns in options.ExcludedNamespaces)
-            {
                 services.RemoveAllByNamespace(ns);
-            }
-        }
 
         // Применяем фильтры включения
         if (options.IncludedNamespaces?.Any() == true)
@@ -206,9 +198,7 @@ public static class ServiceCollectionExtensions
             {
                 if (module.ImplementationType?.Namespace == null ||
                     !options.IncludedNamespaces.Contains(module.ImplementationType.Namespace))
-                {
                     services.Remove(module);
-                }
             }
         }
 
@@ -233,7 +223,6 @@ public static class ServiceCollectionExtensions
 
         // Удаляем модули, отмеченные как удаляемые
         if (options.ModulesToRemove?.Any() == true)
-        {
             foreach (var moduleType in options.ModulesToRemove)
             {
                 var moduleTypes = services
@@ -241,11 +230,8 @@ public static class ServiceCollectionExtensions
                     .ToList();
 
                 foreach (var module in moduleTypes)
-                {
                     services.Remove(module);
-                }
             }
-        }
     }
 
     private static void RegisterCompilers(IServiceCollection services)
@@ -309,9 +295,7 @@ public static class ServiceCollectionExtensions
     private static void RegisterWithInterface<T>(IServiceCollection services, IEnumerable<Func<IServiceProvider, ICoreRunnable>> cores) where T : class
     {
         foreach (var core in cores)
-        {
             services.AddTransient<T>(provider => (T)core(provider));
-        }
     }
 }
 

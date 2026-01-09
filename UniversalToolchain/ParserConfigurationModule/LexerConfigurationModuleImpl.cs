@@ -92,7 +92,6 @@ public class LexerConfigurationModuleImpl(ActionType actionType, string path = "
 
             var patternsCollection = lexer.Configuration.LevelCollectionPatterns;
             if (patternsCollection is LevelCollection<float, LexemePattern> levelCollection)
-            {
                 foreach (var level in levelCollection)
                 {
                     foreach (var pattern in level.Value)
@@ -101,7 +100,6 @@ public class LexerConfigurationModuleImpl(ActionType actionType, string path = "
                         result.Add((level.Key, pattern, ignore));
                     }
                 }
-            }
 
             return result;
         }
@@ -200,9 +198,7 @@ public class LexerConfigurationModuleImpl(ActionType actionType, string path = "
             {
                 var patternsCollection = lexer.Configuration.LevelCollectionPatterns;
                 if (patternsCollection is LevelCollection<float, LexemePattern> levelCollection)
-                {
                     levelCollection.Clear();
-                }
 
                 // Clear list of ignored lexemes
                 lexer.Configuration.LexemesToIgnore.Clear();

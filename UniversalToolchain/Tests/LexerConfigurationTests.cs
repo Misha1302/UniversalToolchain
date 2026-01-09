@@ -13,9 +13,7 @@ public class LexerConfigurationTests
     public void Teardown()
     {
         if (File.Exists(_testConfigPath))
-        {
             File.Delete(_testConfigPath);
-        }
     }
 
     private string _testConfigPath;
@@ -192,9 +190,7 @@ public class LexerConfigurationTests
 
         // Проверяем, что приоритеты отсортированы по возрастанию
         for (var i = 0; i < lines.Count - 1; i++)
-        {
             Assert.That(lines[i], Is.LessThanOrEqualTo(lines[i + 1]));
-        }
     }
 
     [Test]
@@ -386,9 +382,7 @@ public class LexerConfigurationTests
         // Создаем core с этими модулями
         var lexer = new BasicLexerImpl();
         foreach (var module in modules)
-        {
             module.InitLexer(lexer);
-        }
 
 
         var dumpModule = new LexerConfigurationModuleImpl(ActionType.DumpConfiguration, _testConfigPath);

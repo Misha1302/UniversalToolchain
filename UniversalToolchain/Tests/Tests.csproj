@@ -49,7 +49,7 @@
         <ProjectReference Include="..\WhitespacesModule\WhitespacesModule.csproj"/>
         <ProjectReference Include="..\CommentsModule\CommentsModule.csproj"/>
     </ItemGroup>
-    
+
     <ItemGroup>
         <Using Include="NUnit.Framework"/>
     </ItemGroup>

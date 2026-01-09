@@ -106,15 +106,12 @@ IServiceProvider BuildServiceProvider(CommonOptions options)
         {
             var typeName = module.ImplementationType?.FullName;
             if (typeName != null && excludeSet.Contains(typeName))
-            {
                 modulesToRemove.Add(module);
-            }
         }
     }
 
     // Process inclusions
     if (options.IncludeModules != null && options.IncludeModules.Any())
-    {
         foreach (var moduleName in options.IncludeModules)
         {
             var type = Type.GetType(moduleName.Trim()) ??
@@ -133,7 +130,6 @@ IServiceProvider BuildServiceProvider(CommonOptions options)
                 Console.WriteLine($"Warning: Module '{moduleName}' not found or not a valid IFrontendCoreModule");
             }
         }
-    }
 
     // Apply changes
     foreach (var module in modulesToRemove)

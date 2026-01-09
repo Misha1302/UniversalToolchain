@@ -47,8 +47,10 @@ public class BasicParserImpl(ParserConfiguration configuration) : IParser
     private void SetAstNodeTypes(AstNode root)
     {
         foreach (var node in root.Children)
+        {
             if (node.LexemeType is not null)
                 node.NodeType = AstNodeType.CreateOrGet(node.LexemeType.GetName());
+        }
     }
 
     public void ParseRoot(AstNode root)

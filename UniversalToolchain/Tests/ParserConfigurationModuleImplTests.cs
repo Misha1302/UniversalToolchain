@@ -176,9 +176,7 @@ public class ParserConfigurationModuleImplTests
         };
 
         foreach (var module in modules)
-        {
             module.InitParser(parser);
-        }
 
         return parser;
     }
@@ -205,9 +203,7 @@ public class ParserConfigurationModuleImplTests
     {
         var result = new List<IAstNodeCreator>();
         foreach (var level in parser.Configuration.NodeCreators)
-        {
             result.AddRange(level.Value);
-        }
         return result;
     }
 }

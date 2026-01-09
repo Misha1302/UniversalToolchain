@@ -24,12 +24,14 @@ public class BasicLexerImpl(LexerConfiguration configuration) : ILexer
         foreach (var pattern in patterns)
             // Find all occurrences of the current pattern in the input code using regular expressions.
 
+        {
             allMatches.AddRange(
                 Regex.Matches(code, pattern.Pattern, RegexOptions.Compiled, TimeSpan.FromMilliseconds(1000))
                     .Select(match =>
                         // Create a LexemeValue object for each match.
                         new LexemeValue(match.Value, pattern, match.Index, code))
             );
+        }
 
         // Sort the matches first by their starting position in the code, then by the order of the corresponding pattern in the configuration.
         allMatches = allMatches

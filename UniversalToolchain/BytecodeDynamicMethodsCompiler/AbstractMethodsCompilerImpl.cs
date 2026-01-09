@@ -40,9 +40,7 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
 
         var typesStack = new List<Type>();
         foreach (var instruction in air.Instructions)
-        {
             CompileInstruction(data, instruction, typesStack, parameters);
-        }
 
         if (typesStack[0].IsValueType && !returnType.IsValueType)
             il.Box(typesStack[0]);
@@ -331,9 +329,7 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
         }
 
         for (var i = locals.Length - 1; i >= 0; i--)
-        {
             data.Il.Ldloc(locals[i]);
-        }
     }
 
     private class CompilationData(GroboIL il, List<(Guid id, GroboIL.Label label)> instructionLabels)

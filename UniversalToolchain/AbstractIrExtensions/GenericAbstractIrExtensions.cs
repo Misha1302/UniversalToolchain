@@ -30,12 +30,8 @@ public static class GenericAbstractIrExtensions
     {
         var locals = types.Select(_ => Guid.NewGuid().ToString()).ToArray();
         for (var i = 0; i < locals.Length; i++)
-        {
             air.SetValueToLocal(locals[i], types[i]);
-        }
         for (var i = 0; i < locals.Length; i++)
-        {
             air.LdLoc(locals[i], types[i]);
-        }
     }
 }
