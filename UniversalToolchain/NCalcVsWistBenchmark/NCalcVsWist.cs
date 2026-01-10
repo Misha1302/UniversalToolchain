@@ -52,14 +52,12 @@ public class NCalcVsWist
 }
 
 [MemoryDiagnoser]
-public class SimpleArithmeticBenchmark
+[RankColumn]
+public class SimpleAdditionBenchmark
 {
-    private NCalcContext _context;
     private Func<NCalcContext, int> _ncalcAddFunc;
-    private Func<NCalcContext, double> _ncalcComplexArithmeticFunc;
-
+    private NCalcContext _ncalcContext;
     private DynamicMethodInvoker<int, int, int> _wistAddInvoker;
-    private DynamicMethodInvoker<double, double, double> _wistComplexArithmeticInvoker;
 
     [GlobalSetup]
     public void Setup()
@@ -76,66 +74,81 @@ public class SimpleArithmeticBenchmark
             new Dictionary<string, Type> { { "a", typeof(int) }, { "b", typeof(int) } });
         _wistAddInvoker = new DynamicMethodInvoker<int, int, int>(addMethod);
 
+        // NCalc
+        var addExpr = new Expression("[Int1] + [Int2]");
+        _ncalcAddFunc = addExpr.ToLambda<NCalcContext, int>();
+
+        _ncalcContext = new NCalcContext
+        {
+            Int1 = 5,
+            Int2 = 3
+        };
+
+        // Проверка эквивалентности
+        Thrower.AssertAlways(_wistAddInvoker.Invoke(5, 3) == _ncalcAddFunc(_ncalcContext));
+    }
+
+    [Benchmark(Baseline = true)]
+    public int Wist_SimpleAddition() => _wistAddInvoker.Invoke(5, 3);
+
+    [Benchmark]
+    public int NCalc_SimpleAddition() => _ncalcAddFunc(_ncalcContext);
+}
+
+[MemoryDiagnoser]
+[RankColumn]
+public class ComplexArithmeticBenchmark
+{
+    private Func<NCalcContext, double> _ncalcComplexArithmeticFunc;
+    private NCalcContext _ncalcContext;
+    private DynamicMethodInvoker<double, double, double> _wistComplexArithmeticInvoker;
+
+    [GlobalSetup]
+    public void Setup()
+    {
+        // Wist
+        var services = new ServiceCollection();
+        services.AddWistServices(
+            options => options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native,
+            GlobalPath.PathToDlls);
+        var provider = services.BuildServiceProvider();
+        var core = provider.GetRequiredService<IExecutableGiver<DynamicMethod>>();
+
         // Для комплексного выражения используем double, чтобы избежать целочисленного деления
         var complexMethod = core.GetExecutable("(a * 3.0 + b * 2.0) / (a - b + 1.0)",
             new Dictionary<string, Type> { { "a", typeof(double) }, { "b", typeof(double) } });
         _wistComplexArithmeticInvoker = new DynamicMethodInvoker<double, double, double>(complexMethod);
 
         // NCalc
-        var addExpr = new Expression("[Int1] + [Int2]");
-        _ncalcAddFunc = addExpr.ToLambda<NCalcContext, int>();
-
         var complexExpr = new Expression("([Int1] * 3.0 + [Int2] * 2.0) / ([Int1] - [Int2] + 1.0)");
         _ncalcComplexArithmeticFunc = complexExpr.ToLambda<NCalcContext, double>();
 
-        _context = new NCalcContext();
+        _ncalcContext = new NCalcContext
+        {
+            Int1 = 10,
+            Int2 = 4
+        };
 
         // Проверка эквивалентности
-        _context.Int1 = 5;
-        _context.Int2 = 3;
-        Thrower.AssertAlways(_wistAddInvoker.Invoke(5, 3) == _ncalcAddFunc(_context));
-
-        _context.Int1 = 10;
-        _context.Int2 = 4;
         var wistComplex = _wistComplexArithmeticInvoker.Invoke(10.0, 4.0);
-        var ncalcComplex = _ncalcComplexArithmeticFunc(_context);
+        var ncalcComplex = _ncalcComplexArithmeticFunc(_ncalcContext);
         Thrower.AssertAlways(Math.Abs(wistComplex - ncalcComplex) < 1e-10);
     }
 
-    [Benchmark]
-    public int Wist_SimpleAddition() => _wistAddInvoker.Invoke(5, 3);
-
-    [Benchmark]
-    public int NCalc_SimpleAddition()
-    {
-        _context.Int1 = 5;
-        _context.Int2 = 3;
-        return _ncalcAddFunc(_context);
-    }
-
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public double Wist_ComplexArithmetic() => _wistComplexArithmeticInvoker.Invoke(10.0, 4.0);
 
     [Benchmark]
-    public double NCalc_ComplexArithmetic()
-    {
-        _context.Int1 = 10;
-        _context.Int2 = 4;
-        return _ncalcComplexArithmeticFunc(_context);
-    }
+    public double NCalc_ComplexArithmetic() => _ncalcComplexArithmeticFunc(_ncalcContext);
 }
 
 [MemoryDiagnoser]
-public class FloatingPointBenchmark
+[RankColumn]
+public class DoubleAdditionBenchmark
 {
-    private NCalcContext _context;
-    private Func<NCalcContext, decimal> _ncalcDecimalAddFunc;
+    private NCalcContext _ncalcContext;
     private Func<NCalcContext, double> _ncalcDoubleAddFunc;
-    private Func<NCalcContext, double> _ncalcDoubleComplexFunc;
-
-    private DynamicMethodInvoker<decimal, decimal, decimal> _wistDecimalAddInvoker;
     private DynamicMethodInvoker<double, double, double> _wistDoubleAddInvoker;
-    private DynamicMethodInvoker<double, double, double, double> _wistDoubleComplexInvoker;
 
     [GlobalSetup]
     public void Setup()
@@ -152,6 +165,45 @@ public class FloatingPointBenchmark
             new Dictionary<string, Type> { { "a", typeof(double) }, { "b", typeof(double) } });
         _wistDoubleAddInvoker = new DynamicMethodInvoker<double, double, double>(doubleAdd);
 
+        // NCalc
+        var doubleAddExpr = new Expression("[Double1] + [Double2]");
+        _ncalcDoubleAddFunc = doubleAddExpr.ToLambda<NCalcContext, double>();
+
+        _ncalcContext = new NCalcContext
+        {
+            Double1 = 3.14159,
+            Double2 = 2.71828
+        };
+
+        // Проверка эквивалентности
+        Thrower.AssertAlways(Math.Abs(_wistDoubleAddInvoker.Invoke(3.14159, 2.71828) - _ncalcDoubleAddFunc(_ncalcContext)) < 1e-10);
+    }
+
+    [Benchmark(Baseline = true)]
+    public double Wist_DoubleAddition() => _wistDoubleAddInvoker.Invoke(3.14159, 2.71828);
+
+    [Benchmark]
+    public double NCalc_DoubleAddition() => _ncalcDoubleAddFunc(_ncalcContext);
+}
+
+[MemoryDiagnoser]
+[RankColumn]
+public class ComplexDoubleExpressionBenchmark
+{
+    private NCalcContext _ncalcContext;
+    private Func<NCalcContext, double> _ncalcDoubleComplexFunc;
+    private DynamicMethodInvoker<double, double, double, double> _wistDoubleComplexInvoker;
+
+    [GlobalSetup]
+    public void Setup()
+    {
+        var services = new ServiceCollection();
+        services.AddWistServices(
+            options => options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native,
+            GlobalPath.PathToDlls);
+        var provider = services.BuildServiceProvider();
+        var core = provider.GetRequiredService<IExecutableGiver<DynamicMethod>>();
+
         // Complex double expression
         var doubleComplex = core.GetExecutable("(a * b) / (c + 1.0) + System.Math.Sin(a)",
             new Dictionary<string, Type>
@@ -162,77 +214,77 @@ public class FloatingPointBenchmark
             });
         _wistDoubleComplexInvoker = new DynamicMethodInvoker<double, double, double, double>(doubleComplex);
 
+        // NCalc
+        var doubleComplexExpr = new Expression("([Double1] * [Double2]) / ([Double3] + 1.0) + Sin([Double1])");
+        _ncalcDoubleComplexFunc = doubleComplexExpr.ToLambda<NCalcContext, double>();
+
+        _ncalcContext = new NCalcContext
+        {
+            Double1 = 2.0,
+            Double2 = 3.0,
+            Double3 = 4.0
+        };
+
+        // Проверка эквивалентности
+        Thrower.AssertAlways(Math.Abs(_wistDoubleComplexInvoker.Invoke(2.0, 3.0, 4.0) - _ncalcDoubleComplexFunc(_ncalcContext)) < 1e-10);
+    }
+
+    [Benchmark(Baseline = true)]
+    public double Wist_ComplexDoubleExpression() => _wistDoubleComplexInvoker.Invoke(2.0, 3.0, 4.0);
+
+    [Benchmark]
+    public double NCalc_ComplexDoubleExpression() => _ncalcDoubleComplexFunc(_ncalcContext);
+}
+
+[MemoryDiagnoser]
+[RankColumn]
+public class DecimalAdditionBenchmark
+{
+    private NCalcContext _ncalcContext;
+    private Func<NCalcContext, decimal> _ncalcDecimalAddFunc;
+    private DynamicMethodInvoker<decimal, decimal, decimal> _wistDecimalAddInvoker;
+
+    [GlobalSetup]
+    public void Setup()
+    {
+        var services = new ServiceCollection();
+        services.AddWistServices(
+            options => options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native,
+            GlobalPath.PathToDlls);
+        var provider = services.BuildServiceProvider();
+        var core = provider.GetRequiredService<IExecutableGiver<DynamicMethod>>();
+
         // Decimal addition
         var decimalAdd = core.GetExecutable("a + b",
             new Dictionary<string, Type> { { "a", typeof(decimal) }, { "b", typeof(decimal) } });
         _wistDecimalAddInvoker = new DynamicMethodInvoker<decimal, decimal, decimal>(decimalAdd);
 
         // NCalc
-        var doubleAddExpr = new Expression("[Double1] + [Double2]");
-        _ncalcDoubleAddFunc = doubleAddExpr.ToLambda<NCalcContext, double>();
-
-        var doubleComplexExpr = new Expression("([Double1] * [Double2]) / ([Double3] + 1.0) + Sin([Double1])");
-        _ncalcDoubleComplexFunc = doubleComplexExpr.ToLambda<NCalcContext, double>();
-
         var decimalAddExpr = new Expression("[Decimal1] + [Decimal2]");
         _ncalcDecimalAddFunc = decimalAddExpr.ToLambda<NCalcContext, decimal>();
 
-        _context = new NCalcContext();
+        _ncalcContext = new NCalcContext
+        {
+            Decimal1 = 123.456m,
+            Decimal2 = 789.123m
+        };
 
         // Проверка эквивалентности
-        _context.Double1 = 3.14159;
-        _context.Double2 = 2.71828;
-        Thrower.AssertAlways(Math.Abs(_wistDoubleAddInvoker.Invoke(3.14159, 2.71828) - _ncalcDoubleAddFunc(_context)) < 1e-10);
-
-        _context.Double1 = 2.0;
-        _context.Double2 = 3.0;
-        _context.Double3 = 4.0;
-        Thrower.AssertAlways(Math.Abs(_wistDoubleComplexInvoker.Invoke(2.0, 3.0, 4.0) - _ncalcDoubleComplexFunc(_context)) < 1e-10);
-
-        _context.Decimal1 = 123.456m;
-        _context.Decimal2 = 789.123m;
-        Thrower.AssertAlways(_wistDecimalAddInvoker.Invoke(123.456m, 789.123m) == _ncalcDecimalAddFunc(_context));
+        Thrower.AssertAlways(_wistDecimalAddInvoker.Invoke(123.456m, 789.123m) == _ncalcDecimalAddFunc(_ncalcContext));
     }
 
-    [Benchmark]
-    public double Wist_DoubleAddition() => _wistDoubleAddInvoker.Invoke(3.14159, 2.71828);
-
-    [Benchmark]
-    public double NCalc_DoubleAddition()
-    {
-        _context.Double1 = 3.14159;
-        _context.Double2 = 2.71828;
-        return _ncalcDoubleAddFunc(_context);
-    }
-
-    [Benchmark]
-    public double Wist_ComplexDoubleExpression() => _wistDoubleComplexInvoker.Invoke(2.0, 3.0, 4.0);
-
-    [Benchmark]
-    public double NCalc_ComplexDoubleExpression()
-    {
-        _context.Double1 = 2.0;
-        _context.Double2 = 3.0;
-        _context.Double3 = 4.0;
-        return _ncalcDoubleComplexFunc(_context);
-    }
-
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public decimal Wist_DecimalAddition() => _wistDecimalAddInvoker.Invoke(123.456m, 789.123m);
 
     [Benchmark]
-    public decimal NCalc_DecimalAddition()
-    {
-        _context.Decimal1 = 123.456m;
-        _context.Decimal2 = 789.123m;
-        return _ncalcDecimalAddFunc(_context);
-    }
+    public decimal NCalc_DecimalAddition() => _ncalcDecimalAddFunc(_ncalcContext);
 }
 
 [MemoryDiagnoser]
-public class FunctionCallBenchmark
+[RankColumn]
+public class MathFunctionsBenchmark
 {
-    private NCalcContext _context;
+    private NCalcContext _ncalcContext;
     private Func<NCalcContext, double> _ncalcMathFunctionsFunc;
     private DynamicMethodInvoker<double, double, double, double> _wistMathFunctionsInvoker;
 
@@ -258,36 +310,30 @@ public class FunctionCallBenchmark
         var mathExpr = new Expression("Pow([Double1], [Double2]) + Sqrt([Double3])");
         _ncalcMathFunctionsFunc = mathExpr.ToLambda<NCalcContext, double>();
 
-        _context = new NCalcContext();
+        _ncalcContext = new NCalcContext
+        {
+            Double1 = 2.0,
+            Double2 = 3.0,
+            Double3 = 16.0
+        };
 
         // Проверка эквивалентности
-        _context.Double1 = 2.0;
-        _context.Double2 = 3.0;
-        _context.Double3 = 16.0;
-        Thrower.AssertAlways(Math.Abs(_wistMathFunctionsInvoker.Invoke(2.0, 3.0, 16.0) - _ncalcMathFunctionsFunc(_context)) < 1e-10);
+        Thrower.AssertAlways(Math.Abs(_wistMathFunctionsInvoker.Invoke(2.0, 3.0, 16.0) - _ncalcMathFunctionsFunc(_ncalcContext)) < 1e-10);
     }
 
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public double Wist_MathFunctions() => _wistMathFunctionsInvoker.Invoke(2.0, 3.0, 16.0);
 
     [Benchmark]
-    public double NCalc_MathFunctions()
-    {
-        _context.Double1 = 2.0;
-        _context.Double2 = 3.0;
-        _context.Double3 = 16.0;
-        return _ncalcMathFunctionsFunc(_context);
-    }
+    public double NCalc_MathFunctions() => _ncalcMathFunctionsFunc(_ncalcContext);
 }
 
 [MemoryDiagnoser]
-public class ConditionalBenchmark
+[RankColumn]
+public class SimpleConditionalBenchmark
 {
-    private NCalcContext _context;
-    private Func<NCalcContext, double> _ncalcComplexConditionalFunc;
     private Func<NCalcContext, int> _ncalcConditionalFunc;
-    private DynamicMethodInvoker<double, double, double> _wistComplexConditionalInvoker;
-
+    private NCalcContext _ncalcContext;
     private DynamicMethodInvoker<int, int, int> _wistConditionalInvoker;
 
     [GlobalSetup]
@@ -306,6 +352,45 @@ public class ConditionalBenchmark
             new Dictionary<string, Type> { { "a", typeof(int) }, { "b", typeof(int) } });
         _wistConditionalInvoker = new DynamicMethodInvoker<int, int, int>(conditionalMethod);
 
+        // NCalc
+        var conditionalExpr = new Expression("if([Int1] > [Int2], [Int1], [Int2])");
+        _ncalcConditionalFunc = conditionalExpr.ToLambda<NCalcContext, int>();
+
+        _ncalcContext = new NCalcContext
+        {
+            Int1 = 8,
+            Int2 = 12
+        };
+
+        // Проверка эквивалентности
+        Thrower.AssertAlways(_wistConditionalInvoker.Invoke(8, 12) == _ncalcConditionalFunc(_ncalcContext));
+    }
+
+    [Benchmark(Baseline = true)]
+    public int Wist_SimpleConditional() => _wistConditionalInvoker.Invoke(8, 12);
+
+    [Benchmark]
+    public int NCalc_SimpleConditional() => _ncalcConditionalFunc(_ncalcContext);
+}
+
+[MemoryDiagnoser]
+[RankColumn]
+public class ComplexConditionalBenchmark
+{
+    private Func<NCalcContext, double> _ncalcComplexConditionalFunc;
+    private NCalcContext _ncalcContext;
+    private DynamicMethodInvoker<double, double, double> _wistComplexConditionalInvoker;
+
+    [GlobalSetup]
+    public void Setup()
+    {
+        var services = new ServiceCollection();
+        services.AddWistServices(
+            options => options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native,
+            GlobalPath.PathToDlls);
+        var provider = services.BuildServiceProvider();
+        var core = provider.GetRequiredService<IExecutableGiver<DynamicMethod>>();
+
         // Сложное условие
         var complexConditionalCode = """
                                      if a + b > 10.0 and a * b < 50.0
@@ -320,9 +405,6 @@ public class ConditionalBenchmark
         _wistComplexConditionalInvoker = new DynamicMethodInvoker<double, double, double>(complexMethod);
 
         // NCalc
-        var conditionalExpr = new Expression("if([Int1] > [Int2], [Int1], [Int2])");
-        _ncalcConditionalFunc = conditionalExpr.ToLambda<NCalcContext, int>();
-
         var complexExpr = new Expression(
             "if([Double1] + [Double2] > 10 and [Double1] * [Double2] < 50, " +
             "Sqrt([Double1] + [Double2]), " +
@@ -331,45 +413,28 @@ public class ConditionalBenchmark
             "[Double1] * [Double2]))");
         _ncalcComplexConditionalFunc = complexExpr.ToLambda<NCalcContext, double>();
 
-        _context = new NCalcContext();
+        _ncalcContext = new NCalcContext
+        {
+            Double1 = 3.0,
+            Double2 = 4.0
+        };
 
         // Проверка эквивалентности
-        _context.Int1 = 8;
-        _context.Int2 = 12;
-        Thrower.AssertAlways(_wistConditionalInvoker.Invoke(8, 12) == _ncalcConditionalFunc(_context));
-
-        _context.Double1 = 3.0;
-        _context.Double2 = 4.0;
-        Thrower.AssertAlways(Math.Abs(_wistComplexConditionalInvoker.Invoke(3.0, 4.0) - _ncalcComplexConditionalFunc(_context)) < 1e-10);
+        Thrower.AssertAlways(Math.Abs(_wistComplexConditionalInvoker.Invoke(3.0, 4.0) - _ncalcComplexConditionalFunc(_ncalcContext)) < 1e-10);
     }
 
-    [Benchmark]
-    public int Wist_SimpleConditional() => _wistConditionalInvoker.Invoke(8, 12);
-
-    [Benchmark]
-    public int NCalc_SimpleConditional()
-    {
-        _context.Int1 = 8;
-        _context.Int2 = 12;
-        return _ncalcConditionalFunc(_context);
-    }
-
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public double Wist_ComplexConditional() => _wistComplexConditionalInvoker.Invoke(3.0, 4.0);
 
     [Benchmark]
-    public double NCalc_ComplexConditional()
-    {
-        _context.Double1 = 3.0;
-        _context.Double2 = 4.0;
-        return _ncalcComplexConditionalFunc(_context);
-    }
+    public double NCalc_ComplexConditional() => _ncalcComplexConditionalFunc(_ncalcContext);
 }
 
 [MemoryDiagnoser]
-public class MultipleVariablesBenchmark
+[RankColumn]
+public class MultipleIntegerVariablesBenchmark
 {
-    private NCalcContext _context;
+    private NCalcContext _ncalcContext;
     private Func<NCalcContext, int> _ncalcMultiVarFunc;
     private DynamicMethodInvoker<int, int, int, int, int, int> _wistMultiVarInvoker;
 
@@ -397,41 +462,33 @@ public class MultipleVariablesBenchmark
         var multiVarExpr = new Expression("([Int1] + [Int2]) * ([Int3] - [Int4]) / [Int5]");
         _ncalcMultiVarFunc = multiVarExpr.ToLambda<NCalcContext, int>();
 
-        _context = new NCalcContext();
+        _ncalcContext = new NCalcContext
+        {
+            Int1 = 10,
+            Int2 = 20,
+            Int3 = 30,
+            Int4 = 5,
+            Int5 = 2
+        };
 
         // Проверка эквивалентности
-        _context.Int1 = 10;
-        _context.Int2 = 20;
-        _context.Int3 = 30;
-        _context.Int4 = 5;
-        _context.Int5 = 2;
-        Thrower.AssertAlways(_wistMultiVarInvoker.Invoke(10, 20, 30, 5, 2) == _ncalcMultiVarFunc(_context));
+        Thrower.AssertAlways(_wistMultiVarInvoker.Invoke(10, 20, 30, 5, 2) == _ncalcMultiVarFunc(_ncalcContext));
     }
 
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public int Wist_MultipleIntegerVariables() => _wistMultiVarInvoker.Invoke(10, 20, 30, 5, 2);
 
     [Benchmark]
-    public int NCalc_MultipleIntegerVariables()
-    {
-        _context.Int1 = 10;
-        _context.Int2 = 20;
-        _context.Int3 = 30;
-        _context.Int4 = 5;
-        _context.Int5 = 2;
-        return _ncalcMultiVarFunc(_context);
-    }
+    public int NCalc_MultipleIntegerVariables() => _ncalcMultiVarFunc(_ncalcContext);
 }
 
 [MemoryDiagnoser]
+[RankColumn]
 public class BooleanLogicBenchmark
 {
-    private NCalcContext _context;
     private Func<NCalcContext, bool> _ncalcBooleanLogicFunc;
-    private Func<NCalcContext, bool> _ncalcComplexBooleanFunc;
-
-    private DynamicMethodInvoker<int, int, int, bool> _wistBooleanLogicInvoker;
-    private DynamicMethodInvoker<double, double, bool> _wistComplexBooleanInvoker;
+    private NCalcContext _ncalcContext;
+    private DynamicMethodInvoker<int, int, int, int> _wistBooleanLogicInvoker;
 
     [GlobalSetup]
     public void Setup()
@@ -451,7 +508,47 @@ public class BooleanLogicBenchmark
                 { "b", typeof(int) },
                 { "c", typeof(int) }
             });
-        _wistBooleanLogicInvoker = new DynamicMethodInvoker<int, int, int, bool>(booleanMethod);
+        _wistBooleanLogicInvoker = new DynamicMethodInvoker<int, int, int, int>(booleanMethod);
+
+        var booleanExpr = new Expression("([Int1] > [Int2]) and ([Int3] > 10) or ([Int1] + [Int2] > [Int3])");
+        _ncalcBooleanLogicFunc = booleanExpr.ToLambda<NCalcContext, bool>();
+
+        _ncalcContext = new NCalcContext
+        {
+            Int1 = 15,
+            Int2 = 8,
+            Int3 = 20
+        };
+
+        // Проверка эквивалентности
+        // ReSharper disable once ArrangeRedundantParentheses
+        Thrower.AssertAlways((_wistBooleanLogicInvoker.Invoke(15, 8, 20) == 1) == _ncalcBooleanLogicFunc(_ncalcContext));
+    }
+
+    [Benchmark(Baseline = true)]
+    public int Wist_BooleanLogic() => _wistBooleanLogicInvoker.Invoke(15, 8, 20);
+
+    [Benchmark]
+    public bool NCalc_BooleanLogic() => _ncalcBooleanLogicFunc(_ncalcContext);
+}
+
+[MemoryDiagnoser]
+[RankColumn]
+public class ComplexBooleanBenchmark
+{
+    private Func<NCalcContext, bool> _ncalcComplexBooleanFunc;
+    private NCalcContext _ncalcContext;
+    private DynamicMethodInvoker<double, double, int> _wistComplexBooleanInvoker;
+
+    [GlobalSetup]
+    public void Setup()
+    {
+        var services = new ServiceCollection();
+        services.AddWistServices(
+            options => options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native,
+            GlobalPath.PathToDlls);
+        var provider = services.BuildServiceProvider();
+        var core = provider.GetRequiredService<IExecutableGiver<DynamicMethod>>();
 
         var complexBooleanCode = """
                                  (System.Math.Abs(a - b) < 0.001) and
@@ -461,10 +558,7 @@ public class BooleanLogicBenchmark
                                  """;
         var complexMethod = core.GetExecutable(complexBooleanCode,
             new Dictionary<string, Type> { { "a", typeof(double) }, { "b", typeof(double) } });
-        _wistComplexBooleanInvoker = new DynamicMethodInvoker<double, double, bool>(complexMethod);
-
-        var booleanExpr = new Expression("([Int1] > [Int2]) and ([Int3] > 10) or ([Int1] + [Int2] > [Int3])");
-        _ncalcBooleanLogicFunc = booleanExpr.ToLambda<NCalcContext, bool>();
+        _wistComplexBooleanInvoker = new DynamicMethodInvoker<double, double, int>(complexMethod);
 
         var complexExpr = new Expression(
             "(Abs([Double1] - [Double2]) < 0.001) and " +
@@ -473,51 +567,30 @@ public class BooleanLogicBenchmark
             "([Double1] * [Double2] > 10.0)");
         _ncalcComplexBooleanFunc = complexExpr.ToLambda<NCalcContext, bool>();
 
-        _context = new NCalcContext();
+        _ncalcContext = new NCalcContext
+        {
+            Double1 = 1.0,
+            Double2 = 1.001
+        };
 
         // Проверка эквивалентности
-        _context.Int1 = 15;
-        _context.Int2 = 8;
-        _context.Int3 = 20;
-        Thrower.AssertAlways(_wistBooleanLogicInvoker.Invoke(15, 8, 20) == _ncalcBooleanLogicFunc(_context));
-
-        _context.Double1 = 1.0;
-        _context.Double2 = 1.001;
-        Thrower.AssertAlways(_wistComplexBooleanInvoker.Invoke(1.0, 1.001) == _ncalcComplexBooleanFunc(_context));
+        // ReSharper disable once ArrangeRedundantParentheses
+        Thrower.AssertAlways((_wistComplexBooleanInvoker.Invoke(1.0, 1.001) == 1) == _ncalcComplexBooleanFunc(_ncalcContext));
     }
 
-    [Benchmark]
-    public bool Wist_BooleanLogic() => _wistBooleanLogicInvoker.Invoke(15, 8, 20);
+    [Benchmark(Baseline = true)]
+    public int Wist_ComplexBoolean() => _wistComplexBooleanInvoker.Invoke(1.0, 1.001);
 
     [Benchmark]
-    public bool NCalc_BooleanLogic()
-    {
-        _context.Int1 = 15;
-        _context.Int2 = 8;
-        _context.Int3 = 20;
-        return _ncalcBooleanLogicFunc(_context);
-    }
-
-    [Benchmark]
-    public bool Wist_ComplexBoolean() => _wistComplexBooleanInvoker.Invoke(1.0, 1.001);
-
-    [Benchmark]
-    public bool NCalc_ComplexBoolean()
-    {
-        _context.Double1 = 1.0;
-        _context.Double2 = 1.001;
-        return _ncalcComplexBooleanFunc(_context);
-    }
+    public bool NCalc_ComplexBoolean() => _ncalcComplexBooleanFunc(_ncalcContext);
 }
 
 [MemoryDiagnoser]
-public class BusinessLogicBenchmark
+[RankColumn]
+public class TaxCalculationBenchmark
 {
-    private NCalcContext _context;
-    private Func<NCalcContext, double> _ncalcFinancialFunc;
+    private NCalcContext _ncalcContext;
     private Func<NCalcContext, double> _ncalcTaxCalculationFunc;
-    private DynamicMethodInvoker<double, double, double, double, double> _wistFinancialInvoker;
-
     private DynamicMethodInvoker<double, double, double> _wistTaxCalculationInvoker;
 
     [GlobalSetup]
@@ -542,6 +615,47 @@ public class BusinessLogicBenchmark
             new Dictionary<string, Type> { { "amount", typeof(double) }, { "rate", typeof(double) } });
         _wistTaxCalculationInvoker = new DynamicMethodInvoker<double, double, double>(taxMethod);
 
+        var taxExpr = new Expression(
+            "if([Double1] > 1000.0, " +
+            "([Double1] + [Double1] * [Double2]) * 0.95, " +
+            "[Double1] + [Double1] * [Double2])");
+        _ncalcTaxCalculationFunc = taxExpr.ToLambda<NCalcContext, double>();
+
+        _ncalcContext = new NCalcContext
+        {
+            Double1 = 1500.0,
+            Double2 = 0.2
+        };
+
+        // Проверка эквивалентности
+        Thrower.AssertAlways(Math.Abs(_wistTaxCalculationInvoker.Invoke(1500.0, 0.2) - _ncalcTaxCalculationFunc(_ncalcContext)) < 1e-10);
+    }
+
+    [Benchmark(Baseline = true)]
+    public double Wist_TaxCalculation() => _wistTaxCalculationInvoker.Invoke(1500.0, 0.2);
+
+    [Benchmark]
+    public double NCalc_TaxCalculation() => _ncalcTaxCalculationFunc(_ncalcContext);
+}
+
+[MemoryDiagnoser]
+[RankColumn]
+public class CompoundInterestBenchmark
+{
+    private NCalcContext _ncalcContext;
+    private Func<NCalcContext, double> _ncalcFinancialFunc;
+    private DynamicMethodInvoker<double, double, double, double, double> _wistFinancialInvoker;
+
+    [GlobalSetup]
+    public void Setup()
+    {
+        var services = new ServiceCollection();
+        services.AddWistServices(
+            options => options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native,
+            GlobalPath.PathToDlls);
+        var provider = services.BuildServiceProvider();
+        var core = provider.GetRequiredService<IExecutableGiver<DynamicMethod>>();
+
         var financialCode = """
                             let result = principal * System.Math.Pow(1.0 + rate / periods, periods * years)
                             System.Math.Round(result, 2)
@@ -556,56 +670,31 @@ public class BusinessLogicBenchmark
             });
         _wistFinancialInvoker = new DynamicMethodInvoker<double, double, double, double, double>(financialMethod);
 
-        var taxExpr = new Expression(
-            "if([Double1] > 1000.0, " +
-            "([Double1] + [Double1] * [Double2]) * 0.95, " +
-            "[Double1] + [Double1] * [Double2])");
-        _ncalcTaxCalculationFunc = taxExpr.ToLambda<NCalcContext, double>();
-
         var financialExpr = new Expression(
             "Round([Double1] * Pow(1.0 + [Double2] / [Double3], [Double3] * [Double4]), 2)");
         _ncalcFinancialFunc = financialExpr.ToLambda<NCalcContext, double>();
 
-        _context = new NCalcContext();
+        _ncalcContext = new NCalcContext
+        {
+            Double1 = 1000.0,
+            Double2 = 0.05,
+            Double3 = 12.0,
+            Double4 = 10.0
+        };
 
         // Проверка эквивалентности
-        _context.Double1 = 1500.0;
-        _context.Double2 = 0.2;
-        Thrower.AssertAlways(Math.Abs(_wistTaxCalculationInvoker.Invoke(1500.0, 0.2) - _ncalcTaxCalculationFunc(_context)) < 1e-10);
-
-        _context.Double1 = 1000.0;
-        _context.Double2 = 0.05;
-        _context.Double3 = 12.0;
-        _context.Double4 = 10.0;
-        Thrower.AssertAlways(Math.Abs(_wistFinancialInvoker.Invoke(1000.0, 0.05, 12.0, 10.0) - _ncalcFinancialFunc(_context)) < 1e-10);
+        Thrower.AssertAlways(Math.Abs(_wistFinancialInvoker.Invoke(1000.0, 0.05, 12.0, 10.0) - _ncalcFinancialFunc(_ncalcContext)) < 1e-10);
     }
 
-    [Benchmark]
-    public double Wist_TaxCalculation() => _wistTaxCalculationInvoker.Invoke(1500.0, 0.2);
-
-    [Benchmark]
-    public double NCalc_TaxCalculation()
-    {
-        _context.Double1 = 1500.0;
-        _context.Double2 = 0.2;
-        return _ncalcTaxCalculationFunc(_context);
-    }
-
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public double Wist_CompoundInterest() => _wistFinancialInvoker.Invoke(1000.0, 0.05, 12.0, 10.0);
 
     [Benchmark]
-    public double NCalc_CompoundInterest()
-    {
-        _context.Double1 = 1000.0;
-        _context.Double2 = 0.05;
-        _context.Double3 = 12.0;
-        _context.Double4 = 10.0;
-        return _ncalcFinancialFunc(_context);
-    }
+    public double NCalc_CompoundInterest() => _ncalcFinancialFunc(_ncalcContext);
 }
 
 [MemoryDiagnoser]
+[RankColumn]
 public class LargeExpressionBenchmark
 {
     private LargeExpressionContext _context;
@@ -650,28 +739,23 @@ public class LargeExpressionBenchmark
         var ncalcExpr = new Expression(ncalcExpression);
         _ncalcLargeExpressionFunc = ncalcExpr.ToLambda<LargeExpressionContext, double>();
 
-        _context = new LargeExpressionContext();
+        _context = new LargeExpressionContext
+        {
+            a = 1.5,
+            b = 2.5,
+            c = 3.5,
+            d = 4.5
+        };
 
         // Проверка эквивалентности
-        _context.a = 1.5;
-        _context.b = 2.5;
-        _context.c = 3.5;
-        _context.d = 4.5;
         Thrower.AssertAlways(Math.Abs(_wistLargeExpressionInvoker.Invoke(1.5, 2.5, 3.5, 4.5) - _ncalcLargeExpressionFunc(_context)) < 1e-10);
     }
 
-    [Benchmark]
+    [Benchmark(Baseline = true)]
     public double Wist_LargeExpression() => _wistLargeExpressionInvoker.Invoke(1.5, 2.5, 3.5, 4.5);
 
     [Benchmark]
-    public double NCalc_LargeExpression()
-    {
-        _context.a = 1.5;
-        _context.b = 2.5;
-        _context.c = 3.5;
-        _context.d = 4.5;
-        return _ncalcLargeExpressionFunc(_context);
-    }
+    public double NCalc_LargeExpression() => _ncalcLargeExpressionFunc(_context);
 }
 
 public class LargeExpressionContext
@@ -693,16 +777,6 @@ public class NCalcContext
     public double Double2 { get; set; }
     public double Double3 { get; set; }
     public double Double4 { get; set; }
-    public double Double5 { get; set; }
     public decimal Decimal1 { get; set; }
     public decimal Decimal2 { get; set; }
-    public bool Bool1 { get; set; }
-    public bool Bool2 { get; set; }
-    public string String1 { get; set; }
-
-    public int AddInts(int a, int b) => a + b;
-    public double AddDoubles(double a, double b) => a + b;
-    public double CalculateHypotenuse(double a, double b) => Math.Sqrt(a * a + b * b);
-    public bool IsPositive(int x) => x > 0;
-    public double CalculateTax(double amount, double rate) => amount * rate;
 }

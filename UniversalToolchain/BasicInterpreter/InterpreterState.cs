@@ -8,7 +8,6 @@ public class InterpreterState
     private readonly Dictionary<Guid, int> _labelPositions = new();
     private bool _labelsBuilt;
     public Stack<object> ValueStack { get; } = new();
-    public Dictionary<Guid, object> Locals { get; } = new();
 
     public int InstructionPointer { get; set; }
 

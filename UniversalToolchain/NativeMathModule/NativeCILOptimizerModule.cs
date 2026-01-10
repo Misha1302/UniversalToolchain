@@ -13,27 +13,32 @@ public class NativeCilOptimizerModule : IIRProcessingModule
     // Словарь для маппинга типов на методы генерации CIL
     private static readonly Dictionary<Type, Action<Instruction, CompilationContext>> _cilGenerators = new();
 
+    private static readonly IReadOnlyList<string> _standardModuleIntrinsics =
+    [
+        "load_i32",
+        "load_i64",
+        "load_f32",
+        "load_f64"
+    ];
+
+
+    private static readonly IReadOnlyList<string> _decimalModuleIntrinsics =
+    [
+        "load_decimal"
+    ];
+
+
     // Поддерживаемые нативные типы для оптимизации
     private static readonly HashSet<Type> _supportedTypes =
     [
         typeof(int),
-        typeof(uint),
-
         typeof(long),
-        typeof(ulong),
-
         typeof(float),
         typeof(double),
-
-        typeof(bool),
-        typeof(byte),
-        typeof(sbyte),
-
-        typeof(short),
-        typeof(ushort),
-
-        typeof(char)
+        typeof(decimal)
     ];
+
+    private bool _isDecimalsSupported;
 
     static NativeCilOptimizerModule()
     {
@@ -42,13 +47,9 @@ public class NativeCilOptimizerModule : IIRProcessingModule
 
     public IAbstractIR ProcessIr<TCompilationOutput>(IAbstractIR current, IAbstractIrCompiler<TCompilationOutput> compiler)
     {
-        // Проверяем, поддерживает ли компилятор наши интринсики
-        if (!compiler.SupportedIntrinsics.Contains("load_i32") &&
-            !compiler.SupportedIntrinsics.Contains("load_i64") &&
-            !compiler.SupportedIntrinsics.Contains("load_f32") &&
-            !compiler.SupportedIntrinsics.Contains("load_f64"))
-            // Если компилятор не поддерживает наши интринсики, возвращаем как есть
+        if (_standardModuleIntrinsics.Any(x => !compiler.SupportedIntrinsics.Contains(x)))
             return current;
+        _isDecimalsSupported = _decimalModuleIntrinsics.All(x => compiler.SupportedIntrinsics.Contains(x));
 
         InitializeAirTypes();
         return OptimizeNativeLoads(current);
@@ -72,6 +73,12 @@ public class NativeCilOptimizerModule : IIRProcessingModule
             "load_f64",
             (_, stack) => stack.Push(typeof(double))
         );
+
+        if (_isDecimalsSupported)
+            AirTypes.TryRegisterIntrinsic(
+                "load_decimal",
+                (_, stack) => stack.Push(typeof(decimal))
+            );
     }
 
     private static void InitializeCilGenerators()
@@ -113,76 +120,12 @@ public class NativeCilOptimizerModule : IIRProcessingModule
             ));
         };
 
-        _cilGenerators[typeof(bool)] = (instruction, context) =>
+        _cilGenerators[typeof(decimal)] = (instruction, context) =>
         {
-            var value = instruction.Operands[0].Get<bool>();
+            var value = instruction.Operands[0].Get<decimal>();
             context.NewInstructions.Add(new Instruction(
                 UOpCode.Intrinsic,
-                ["load_i32", value ? 1 : 0]
-            ));
-        };
-
-        _cilGenerators[typeof(byte)] = (instruction, context) =>
-        {
-            var value = instruction.Operands[0].Get<byte>();
-            context.NewInstructions.Add(new Instruction(
-                UOpCode.Intrinsic,
-                ["load_i32", (int)value]
-            ));
-        };
-
-        _cilGenerators[typeof(sbyte)] = (instruction, context) =>
-        {
-            var value = instruction.Operands[0].Get<sbyte>();
-            context.NewInstructions.Add(new Instruction(
-                UOpCode.Intrinsic,
-                ["load_i32", (int)value]
-            ));
-        };
-
-        _cilGenerators[typeof(short)] = (instruction, context) =>
-        {
-            var value = instruction.Operands[0].Get<short>();
-            context.NewInstructions.Add(new Instruction(
-                UOpCode.Intrinsic,
-                ["load_i32", (int)value]
-            ));
-        };
-
-        _cilGenerators[typeof(ushort)] = (instruction, context) =>
-        {
-            var value = instruction.Operands[0].Get<ushort>();
-            context.NewInstructions.Add(new Instruction(
-                UOpCode.Intrinsic,
-                ["load_i32", (int)value]
-            ));
-        };
-
-        _cilGenerators[typeof(char)] = (instruction, context) =>
-        {
-            var value = instruction.Operands[0].Get<char>();
-            context.NewInstructions.Add(new Instruction(
-                UOpCode.Intrinsic,
-                ["load_i32", (int)value]
-            ));
-        };
-
-        _cilGenerators[typeof(uint)] = (instruction, context) =>
-        {
-            var value = instruction.Operands[0].Get<uint>();
-            context.NewInstructions.Add(new Instruction(
-                UOpCode.Intrinsic,
-                ["load_i32", (int)value]
-            ));
-        };
-
-        _cilGenerators[typeof(ulong)] = (instruction, context) =>
-        {
-            // Для ulong преобразуем в два int32
-            var value = instruction.Operands[0].Get<ulong>();
-            context.NewInstructions.Add(new Instruction(
-                UOpCode.Intrinsic,
-                ["load_i64", (long)value]
+                ["load_decimal", value]
             ));
         };
     }
@@ -201,6 +144,9 @@ public class NativeCilOptimizerModule : IIRProcessingModule
             {
                 var value = instruction.Operands[0];
                 var valueType = value.GetType();
+
+                if (valueType == typeof(decimal) && !_isDecimalsSupported)
+                    continue;
 
                 if (_supportedTypes.Contains(valueType) && _cilGenerators.TryGetValue(valueType, out var generator))
                 {

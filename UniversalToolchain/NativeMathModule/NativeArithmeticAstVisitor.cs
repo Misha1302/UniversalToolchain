@@ -44,17 +44,25 @@ public class NativeArithmeticAstVisitor : IAstVisitor
                 // Используем обобщенные методы из INumber<T>
                 var leftType = context.Stack[^2];
                 var rightType = context.Stack[^1];
+                Thrower.AssertAlways(leftType == rightType);
 
-                // В нашей системе типы должны совпадать или быть приведены явно
-                // Используем тип левого операнда как целевой
-                var targetType = leftType;
+                if (leftType == typeof(decimal))
+                {
+                    var decimalMethod = typeof(NativeArithmetic)
+                        .GetMethod(methodName + "Decimal", BindingFlags.Static | BindingFlags.Public)
+                        .NotNull();
 
-                var genericMethod = typeof(NativeArithmetic)
-                    .GetMethod(methodName, BindingFlags.Static | BindingFlags.Public)
-                    .NotNull()
-                    .MakeGenericMethod(targetType);
+                    il.CallCSharp(decimalMethod);
+                }
+                else
+                {
+                    var genericMethod = typeof(NativeArithmetic)
+                        .GetMethod(methodName, BindingFlags.Static | BindingFlags.Public)
+                        .NotNull()
+                        .MakeGenericMethod(leftType);
 
-                il.CallCSharp(genericMethod);
+                    il.CallCSharp(genericMethod);
+                }
             }
         );
 

@@ -16,15 +16,11 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
 {
     public IReadOnlyList<string> SupportedIntrinsics =>
     [
-        "call C#",
-        "call C# ctor",
-        "store_local",
-        "load_local",
-        "load_local_ref",
-        "load_i32",
-        "load_i64",
-        "load_f32",
-        "load_f64",
+        "call C#", "call C# ctor",
+        "store_local", "load_local", "load_local_ref",
+        "load_i32", "load_i64", "load_f32", "load_f64", "load_decimal",
+        "load_bool", "bool_and", "bool_or", "bool_not",
+        "bool_eq", "bool_neq", "bool_to_i32",
         "load_argument_by_index"
     ];
 
@@ -269,7 +265,55 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
             data.Il.Ldarg(argIndex);
             stack.Push(parameters.ElementAt(argIndex).Value);
         }
-        else if (name is "load_i32" or "load_i64" or "load_f32" or "load_f64")
+        else if (name == "load_bool")
+        {
+            var value = instruction.Operands[1].Get<bool>();
+            data.Il.Ldc_I4(value ? 1 : 0);
+            stack.Push(typeof(int)); // bool как int32
+        }
+        else if (name == "bool_and")
+        {
+            data.Il.And();
+            stack.Pop();
+            stack.Pop();
+            stack.Push(typeof(int));
+        }
+        else if (name == "bool_or")
+        {
+            data.Il.Or();
+            stack.Pop();
+            stack.Pop();
+            stack.Push(typeof(int));
+        }
+        else if (name == "bool_not")
+        {
+            // В CIL для NOT используется xor с -1 (0xFFFFFFFF)
+            data.Il.Ldc_I4(-1);
+            data.Il.Xor();
+            stack.Pop();
+            stack.Push(typeof(int));
+        }
+        else if (name == "bool_eq")
+        {
+            data.Il.Ceq();
+            stack.Pop();
+            stack.Pop();
+            stack.Push(typeof(int));
+        }
+        else if (name == "bool_neq")
+        {
+            data.Il.Ceq();
+            data.Il.Ldc_I4(0);
+            data.Il.Ceq();
+            stack.Pop();
+            stack.Pop();
+            stack.Push(typeof(int));
+        }
+        else if (name == "bool_to_i32")
+        {
+            // Ничего не делаем - уже int32
+        }
+        else if (name is "load_i32" or "load_i64" or "load_f32" or "load_f64" or "load_decimal")
         {
             LoadNativeNumber(instruction, data, stack);
         }
@@ -303,6 +347,23 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
             data.Il.Ldc_R8(arg.Get<double>());
             stack.Push(typeof(double));
         }
+        else if (name == "load_decimal")
+        {
+            var dec = arg.Get<decimal>();
+
+            var bits = decimal.GetBits(dec);
+            var sign = (bits[3] & 0x80000000) != 0;
+            var scale = (byte)(bits[3] >> 16 & 0x7f);
+            data.Il.Ldc_I4(bits[0]);
+            data.Il.Ldc_I4(bits[1]);
+            data.Il.Ldc_I4(bits[2]);
+            data.Il.Ldc_I4(sign ? 1 : 0);
+            data.Il.Ldc_I4(scale);
+            var ctor = typeof(decimal).GetConstructor([typeof(int), typeof(int), typeof(int), typeof(bool), typeof(byte)]);
+            data.Il.Newobj(ctor);
+
+            stack.Push(typeof(decimal));
+        }
         else
         {
             Thrower.InvalidOpEx($"Unknown native number loading {name}");
@@ -320,8 +381,15 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
             if (stackTypes[i] != locType)
             {
                 if (stackTypes[i].IsValueType && !locType.IsValueType)
-                    data.Il.Box(stackTypes[i]);
-                else Thrower.InvalidOpEx($"Cannot cast {stackTypes[i]} to {locType}");
+                {
+                    var locToLoadRef = data.Il.DeclareLocal(stackTypes[i]);
+                    data.Il.Stloc(locToLoadRef);
+                    data.Il.Ldloca(locToLoadRef);
+                }
+                else
+                {
+                    Thrower.InvalidOpEx($"Cannot cast {stackTypes[i]} to {locType}");
+                }
             }
 
             locals[i] = data.Il.DeclareLocal(locType);
