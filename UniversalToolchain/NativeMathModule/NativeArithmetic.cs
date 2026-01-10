@@ -6,19 +6,19 @@ namespace NativeMathModule;
 
 public static class NativeArithmetic
 {
-    [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     [UsedImplicitly]
     public static T Add<T>(T a, T b) where T : INumber<T> => a + b;
 
-    [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     [UsedImplicitly]
     public static T Subtract<T>(T a, T b) where T : INumber<T> => a - b;
 
-    [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     [UsedImplicitly]
     public static T Multiply<T>(T a, T b) where T : INumber<T> => a * b;
 
-    [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.AggressiveOptimization)]
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     [UsedImplicitly]
     public static T Divide<T>(T a, T b) where T : INumber<T> => a / b;
 
