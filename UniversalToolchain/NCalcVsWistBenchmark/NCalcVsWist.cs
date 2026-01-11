@@ -242,7 +242,7 @@ public class DecimalAdditionBenchmark
 {
     private NCalcContext _ncalcContext;
     private Func<NCalcContext, decimal> _ncalcDecimalAddFunc;
-    private DynamicMethodInvoker<decimal, decimal, decimal> _wistDecimalAddInvoker;
+    private DynamicMethodInvoker<decimal, decimal> _wistDecimalAddInvoker;
 
     [GlobalSetup]
     public void Setup()
@@ -254,27 +254,63 @@ public class DecimalAdditionBenchmark
         var provider = services.BuildServiceProvider();
         var core = provider.GetRequiredService<IExecutableGiver<DynamicMethod>>();
 
-        // Decimal addition
-        var decimalAdd = core.GetExecutable("a + b",
-            new Dictionary<string, Type> { { "a", typeof(decimal) }, { "b", typeof(decimal) } });
-        _wistDecimalAddInvoker = new DynamicMethodInvoker<decimal, decimal, decimal>(decimalAdd);
+        var decimalAdd = core.GetExecutable(
+            MakeCode("a"),
+            new Dictionary<string, Type> { { "a", typeof(decimal) } }
+        );
+
+        _wistDecimalAddInvoker = new DynamicMethodInvoker<decimal, decimal>(decimalAdd);
 
         // NCalc
-        var decimalAddExpr = new Expression("[Decimal1] + [Decimal2]");
+        var decimalAddExpr = new Expression(MakeCode("[Decimal1]"));
         _ncalcDecimalAddFunc = decimalAddExpr.ToLambda<NCalcContext, decimal>();
 
         _ncalcContext = new NCalcContext
         {
-            Decimal1 = 123.456m,
-            Decimal2 = 789.123m
+            Decimal1 = 123.456m
         };
 
         // Проверка эквивалентности
-        Thrower.AssertAlways(_wistDecimalAddInvoker.Invoke(123.456m, 789.123m) == _ncalcDecimalAddFunc(_ncalcContext));
+        Thrower.AssertAlways(_wistDecimalAddInvoker.Invoke(123.456m) == _ncalcDecimalAddFunc(_ncalcContext));
+
+
+        string MakeCode(string paramName)
+        {
+            const int additionsCountA = 3;
+            const int additionsCountScopes1 = 3;
+            const int additionsCountScopes2 = 3;
+            const int additionsCountScopes3 = 4;
+            const int additionsCountScopes4 = 4;
+
+            return string.Join(" + ",
+                Enumerable.Repeat(
+                    "(" + string.Join(
+                        " + ",
+                        Enumerable.Repeat(
+                            "(" + string.Join(
+                                " + ",
+                                Enumerable.Repeat(
+                                    "(" + string.Join(
+                                        " + ",
+                                        Enumerable.Repeat(
+                                            "(" + string.Join(" + ", Enumerable.Repeat(paramName, additionsCountA)) + ")",
+                                            additionsCountScopes1
+                                        )
+                                    ) + ")",
+                                    additionsCountScopes2
+                                )
+                            ) + ")",
+                            additionsCountScopes3
+                        )
+                    ) + ")",
+                    additionsCountScopes4
+                )
+            );
+        }
     }
 
     [Benchmark(Baseline = true)]
-    public decimal Wist_DecimalAddition() => _wistDecimalAddInvoker.Invoke(123.456m, 789.123m);
+    public decimal Wist_DecimalAddition() => _wistDecimalAddInvoker.Invoke(123.456m);
 
     [Benchmark]
     public decimal NCalc_DecimalAddition() => _ncalcDecimalAddFunc(_ncalcContext);
@@ -778,5 +814,4 @@ public class NCalcContext
     public double Double3 { get; set; }
     public double Double4 { get; set; }
     public decimal Decimal1 { get; set; }
-    public decimal Decimal2 { get; set; }
 }
