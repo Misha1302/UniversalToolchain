@@ -20,10 +20,26 @@ var core = provider.GetServices<IExecutableGiver<DynamicMethod>>().First();
 
 var executable = core.GetExecutable(
     """
-    (System.Math.Abs(a - b) < 0.001) and
-    (System.Math.Sin(a) > 0.5) and
-    (System.Math.Cos(b) < 0.5) or
-    (a * b > 10.0)
+    // Variables, native arithmetic, conditions
+    let x = 42
+    let y = 3.14f * 2.0f // Native float arithmetic
+    
+    if x > 10 and y < 10.0f (
+        let result = (x + 5) * 2
+        System.Console.WriteLine(result)
+    )
+    else (
+        System.Console.WriteLine(-1)
+    )
+    
+    // Loop via labels and goto
+    @loop_start:
+    if x > 0 (
+        x = x - 1
+        goto @loop_start
+    )
+    
+    x // Implicit return
     """,
     new Dictionary<string, Type>
     {
@@ -33,7 +49,8 @@ var executable = core.GetExecutable(
 );
 
 var fastCallable = new DynamicMethodInvoker<double, double, int>(executable);
-
+Console.WriteLine(fastCallable.Invoke(5, 6));
+return;
 
 const int runsCount = 100_000_000;
 Run(fastCallable,

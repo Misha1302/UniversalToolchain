@@ -16,8 +16,8 @@ public class NCalcVsWist
 {
     private readonly string _code = "3 + 4 * 5";
 
-    private Func<int> _ncalcInvoker;
-    private DynamicMethodInvoker<int> _wistInvoker;
+    private Func<int> _ncalcInvoker = null!;
+    private DynamicMethodInvoker<int> _wistInvoker = null!;
 
     [GlobalSetup]
     public void Setup()
@@ -55,9 +55,9 @@ public class NCalcVsWist
 [RankColumn]
 public class SimpleAdditionBenchmark
 {
-    private Func<NCalcContext, int> _ncalcAddFunc;
-    private NCalcContext _ncalcContext;
-    private DynamicMethodInvoker<int, int, int> _wistAddInvoker;
+    private Func<NCalcContext, int> _ncalcAddFunc = null!;
+    private NCalcContext _ncalcContext = null!;
+    private DynamicMethodInvoker<int, int, int> _wistAddInvoker = null!;
 
     [GlobalSetup]
     public void Setup()
@@ -99,9 +99,9 @@ public class SimpleAdditionBenchmark
 [RankColumn]
 public class ComplexArithmeticBenchmark
 {
-    private Func<NCalcContext, double> _ncalcComplexArithmeticFunc;
-    private NCalcContext _ncalcContext;
-    private DynamicMethodInvoker<double, double, double> _wistComplexArithmeticInvoker;
+    private Func<NCalcContext, double> _ncalcComplexArithmeticFunc = null!;
+    private NCalcContext _ncalcContext = null!;
+    private DynamicMethodInvoker<double, double, double> _wistComplexArithmeticInvoker = null!;
 
     [GlobalSetup]
     public void Setup()
@@ -146,9 +146,9 @@ public class ComplexArithmeticBenchmark
 [RankColumn]
 public class DoubleAdditionBenchmark
 {
-    private NCalcContext _ncalcContext;
-    private Func<NCalcContext, double> _ncalcDoubleAddFunc;
-    private DynamicMethodInvoker<double, double, double> _wistDoubleAddInvoker;
+    private NCalcContext _ncalcContext = null!;
+    private Func<NCalcContext, double> _ncalcDoubleAddFunc = null!;
+    private DynamicMethodInvoker<double, double, double> _wistDoubleAddInvoker = null!;
 
     [GlobalSetup]
     public void Setup()
@@ -190,9 +190,9 @@ public class DoubleAdditionBenchmark
 [RankColumn]
 public class ComplexDoubleExpressionBenchmark
 {
-    private NCalcContext _ncalcContext;
-    private Func<NCalcContext, double> _ncalcDoubleComplexFunc;
-    private DynamicMethodInvoker<double, double, double, double> _wistDoubleComplexInvoker;
+    private NCalcContext _ncalcContext = null!;
+    private Func<NCalcContext, double> _ncalcDoubleComplexFunc = null!;
+    private DynamicMethodInvoker<double, double, double, double> _wistDoubleComplexInvoker = null!;
 
     [GlobalSetup]
     public void Setup()
@@ -240,9 +240,9 @@ public class ComplexDoubleExpressionBenchmark
 [RankColumn]
 public class DecimalAdditionBenchmark
 {
-    private NCalcContext _ncalcContext;
-    private Func<NCalcContext, decimal> _ncalcDecimalAddFunc;
-    private DynamicMethodInvoker<decimal, decimal> _wistDecimalAddInvoker;
+    private NCalcContext _ncalcContext = null!;
+    private Func<NCalcContext, decimal> _ncalcDecimalAddFunc = null!;
+    private DynamicMethodInvoker<decimal, decimal> _wistDecimalAddInvoker = null!;
 
     [GlobalSetup]
     public void Setup()
@@ -320,9 +320,9 @@ public class DecimalAdditionBenchmark
 [RankColumn]
 public class MathFunctionsBenchmark
 {
-    private NCalcContext _ncalcContext;
-    private Func<NCalcContext, double> _ncalcMathFunctionsFunc;
-    private DynamicMethodInvoker<double, double, double, double> _wistMathFunctionsInvoker;
+    private NCalcContext _ncalcContext = null!;
+    private Func<NCalcContext, double> _ncalcMathFunctionsFunc = null!;
+    private DynamicMethodInvoker<double, double, double, double> _wistMathFunctionsInvoker = null!;
 
     [GlobalSetup]
     public void Setup()
@@ -368,9 +368,9 @@ public class MathFunctionsBenchmark
 [RankColumn]
 public class SimpleConditionalBenchmark
 {
-    private Func<NCalcContext, int> _ncalcConditionalFunc;
-    private NCalcContext _ncalcContext;
-    private DynamicMethodInvoker<int, int, int> _wistConditionalInvoker;
+    private Func<NCalcContext, int> _ncalcConditionalFunc = null!;
+    private NCalcContext _ncalcContext = null!;
+    private DynamicMethodInvoker<int, int, int> _wistConditionalInvoker = null!;
 
     [GlobalSetup]
     public void Setup()
@@ -413,9 +413,9 @@ public class SimpleConditionalBenchmark
 [RankColumn]
 public class ComplexConditionalBenchmark
 {
-    private Func<NCalcContext, double> _ncalcComplexConditionalFunc;
-    private NCalcContext _ncalcContext;
-    private DynamicMethodInvoker<double, double, double> _wistComplexConditionalInvoker;
+    private Func<NCalcContext, double> _ncalcComplexConditionalFunc = null!;
+    private NCalcContext _ncalcContext = null!;
+    private DynamicMethodInvoker<double, double, double> _wistComplexConditionalInvoker = null!;
 
     [GlobalSetup]
     public void Setup()
@@ -470,9 +470,9 @@ public class ComplexConditionalBenchmark
 [RankColumn]
 public class MultipleIntegerVariablesBenchmark
 {
-    private NCalcContext _ncalcContext;
-    private Func<NCalcContext, int> _ncalcMultiVarFunc;
-    private DynamicMethodInvoker<int, int, int, int, int, int> _wistMultiVarInvoker;
+    private NCalcContext _ncalcContext = null!;
+    private Func<NCalcContext, int> _ncalcMultiVarFunc = null!;
+    private DynamicMethodInvoker<int, int, int, int, int, int> _wistMultiVarInvoker = null!;
 
     [GlobalSetup]
     public void Setup()
@@ -522,9 +522,9 @@ public class MultipleIntegerVariablesBenchmark
 [RankColumn]
 public class BooleanLogicBenchmark
 {
-    private Func<NCalcContext, bool> _ncalcBooleanLogicFunc;
-    private NCalcContext _ncalcContext;
-    private DynamicMethodInvoker<int, int, int, int> _wistBooleanLogicInvoker;
+    private Func<NCalcContext, bool> _ncalcBooleanLogicFunc = null!;
+    private NCalcContext _ncalcContext = null!;
+    private DynamicMethodInvoker<int, int, int, int> _wistBooleanLogicInvoker = null!;
 
     [GlobalSetup]
     public void Setup()
@@ -572,9 +572,9 @@ public class BooleanLogicBenchmark
 [RankColumn]
 public class ComplexBooleanBenchmark
 {
-    private Func<NCalcContext, bool> _ncalcComplexBooleanFunc;
-    private NCalcContext _ncalcContext;
-    private DynamicMethodInvoker<double, double, int> _wistComplexBooleanInvoker;
+    private Func<NCalcContext, bool> _ncalcComplexBooleanFunc = null!;
+    private NCalcContext _ncalcContext = null!;
+    private DynamicMethodInvoker<double, double, int> _wistComplexBooleanInvoker = null!;
 
     [GlobalSetup]
     public void Setup()
@@ -625,9 +625,9 @@ public class ComplexBooleanBenchmark
 [RankColumn]
 public class TaxCalculationBenchmark
 {
-    private NCalcContext _ncalcContext;
-    private Func<NCalcContext, double> _ncalcTaxCalculationFunc;
-    private DynamicMethodInvoker<double, double, double> _wistTaxCalculationInvoker;
+    private NCalcContext _ncalcContext = null!;
+    private Func<NCalcContext, double> _ncalcTaxCalculationFunc = null!;
+    private DynamicMethodInvoker<double, double, double> _wistTaxCalculationInvoker = null!;
 
     [GlobalSetup]
     public void Setup()
@@ -678,9 +678,9 @@ public class TaxCalculationBenchmark
 [RankColumn]
 public class CompoundInterestBenchmark
 {
-    private NCalcContext _ncalcContext;
-    private Func<NCalcContext, double> _ncalcFinancialFunc;
-    private DynamicMethodInvoker<double, double, double, double, double> _wistFinancialInvoker;
+    private NCalcContext _ncalcContext = null!;
+    private Func<NCalcContext, double> _ncalcFinancialFunc = null!;
+    private DynamicMethodInvoker<double, double, double, double, double> _wistFinancialInvoker = null!;
 
     [GlobalSetup]
     public void Setup()
@@ -733,9 +733,9 @@ public class CompoundInterestBenchmark
 [RankColumn]
 public class LargeExpressionBenchmark
 {
-    private LargeExpressionContext _context;
-    private Func<LargeExpressionContext, double> _ncalcLargeExpressionFunc;
-    private DynamicMethodInvoker<double, double, double, double, double> _wistLargeExpressionInvoker;
+    private LargeExpressionContext _context = null!;
+    private Func<LargeExpressionContext, double> _ncalcLargeExpressionFunc = null!;
+    private DynamicMethodInvoker<double, double, double, double, double> _wistLargeExpressionInvoker = null!;
 
     [GlobalSetup]
     public void Setup()
@@ -794,6 +794,8 @@ public class LargeExpressionBenchmark
     public double NCalc_LargeExpression() => _ncalcLargeExpressionFunc(_context);
 }
 
+// ReSharper disable InconsistentNaming
+// ReSharper disable UnusedAutoPropertyAccessor.Global
 public class LargeExpressionContext
 {
     public double a { get; set; }
