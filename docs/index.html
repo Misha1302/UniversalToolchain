@@ -1,420 +1,788 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Universal Toolchain - Мета-система для создания языков программирования</title>
+    <title>UniversalToolchain — Modular Compiler Architecture</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github-dark-dimmed.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script>hljs.highlightAll();</script>
     <style>
         :root {
-            --bg-primary: #0d1117;
-            --bg-secondary: #161b22;
-            --text-primary: #c9d1d9;
-            --text-secondary: #8b949e;
-            --accent: #58a6ff;
-            --accent-secondary: #238636;
+            --bg-primary: #0a0e14;
+            --bg-secondary: #0d1117;
+            --bg-tertiary: #161b22;
             --border: #30363d;
-            --code-bg: #1e1e1e;
-            --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            --font-mono: 'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', monospace;
+            --text-primary: #e6edf3;
+            --text-secondary: #7d8590;
+            --accent: #238636;
+            --accent-light: #2ea043;
+            --warning: #d29922;
+            --code-bg: #161b22;
+            --card-shadow: rgba(1, 4, 9, 0.8);
         }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
-            font-family: var(--font-sans);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: var(--bg-primary);
             color: var(--text-primary);
             line-height: 1.6;
         }
-
+        
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 0 20px;
+            padding: 0 2rem;
         }
-
+        
         /* Header */
-        .header {
-            padding: 4rem 0 3rem;
+        header {
+            background: linear-gradient(135deg, var(--bg-secondary), #0c2d6b);
             border-bottom: 1px solid var(--border);
-            text-align: center;
+            padding: 4rem 0 6rem;
+            position: relative;
+            overflow: hidden;
         }
-
-        .title {
-            font-size: 3rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-            background: linear-gradient(90deg, #58a6ff, #2ea043);
+        
+        .header-badge {
+            display: inline-block;
+            background: rgba(35, 134, 54, 0.1);
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        h1 {
+            font-size: 3.2rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(90deg, #58a6ff, var(--accent));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
-
+        
         .subtitle {
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             color: var(--text-secondary);
-            max-width: 600px;
-            margin: 0 auto 2rem;
+            max-width: 800px;
+            margin-bottom: 2.5rem;
         }
-
-        .highlight {
-            color: var(--accent);
-            font-weight: 600;
-        }
-
-        /* Sections */
-        .section {
-            padding: 4rem 0;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .section-title {
-            font-size: 2rem;
-            margin-bottom: 2rem;
-            color: var(--text-primary);
-        }
-
-        .section-content {
-            font-size: 1.1rem;
-            color: var(--text-secondary);
-        }
-
-        .section-content p {
-            margin-bottom: 1.5rem;
-        }
-
-        /* Code blocks */
-        .code-block {
-            background: var(--code-bg);
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            padding: 1.5rem;
-            margin: 2rem 0;
-            overflow-x: auto;
-            font-family: var(--font-mono);
-            font-size: 0.95rem;
-        }
-
-        .code-title {
-            color: var(--accent);
-            margin-bottom: 1rem;
-            font-family: var(--font-sans);
-            font-weight: 600;
-        }
-
-        .code-keyword { color: #569cd6; }
-        .code-type { color: #4ec9b0; }
-        .code-string { color: #ce9178; }
-        .code-number { color: #b5cea8; }
-        .code-comment { color: #6a9955; }
-
-        /* Features grid */
-        .features-grid {
+        
+        .cta-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 2rem;
-            margin-top: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 3rem;
         }
-
-        .feature-card {
-            background: var(--bg-secondary);
+        
+        .cta-card {
+            background: var(--bg-tertiary);
             border: 1px solid var(--border);
             border-radius: 8px;
             padding: 1.5rem;
-            transition: transform 0.2s, border-color 0.2s;
+            transition: transform 0.2s;
         }
-
-        .feature-card:hover {
-            transform: translateY(-4px);
+        
+        .cta-card:hover {
+            transform: translateY(-3px);
             border-color: var(--accent);
         }
-
-        .feature-title {
-            font-size: 1.2rem;
-            margin-bottom: 1rem;
+        
+        .cta-card h3 {
             color: var(--accent);
+            margin-bottom: 0.5rem;
         }
-
-        /* Buttons */
-        .btn {
-            display: inline-block;
-            background: var(--accent-secondary);
-            color: white;
-            padding: 0.8rem 1.5rem;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-            transition: background 0.2s;
-            margin: 0.5rem;
+        
+        /* Sections */
+        section {
+            padding: 5rem 0;
+            border-bottom: 1px solid var(--border);
         }
-
-        .btn:hover {
-            background: #2ea043;
+        
+        section:nth-child(even) {
+            background: var(--bg-secondary);
         }
-
-        .btn-gh {
-            background: #21262d;
-            border: 1px solid var(--border);
+        
+        h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
         }
-
-        .btn-gh:hover {
-            background: #30363d;
-            border-color: #8b949e;
+        
+        .section-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: 3rem;
+            max-width: 800px;
         }
-
-        /* Logs Viewer */
-        .screenshot {
-            width: 100%;
+        
+        /* Architecture Visualization */
+        .pipeline {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 3rem 0;
+        }
+        
+        .pipeline-stage {
+            background: var(--bg-tertiary);
             border: 1px solid var(--border);
             border-radius: 8px;
+            padding: 1.5rem;
+            position: relative;
+        }
+        
+        .pipeline-stage::after {
+            content: '→';
+            position: absolute;
+            right: -0.9rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--accent);
+            font-weight: bold;
+        }
+        
+        .pipeline-stage:last-child::after {
+            display: none;
+        }
+        
+        .stage-number {
+            display: inline-block;
+            background: var(--accent);
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 28px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+        
+        /* Code Comparison */
+        .comparison-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: -1px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .tab {
+            padding: 1rem 2rem;
+            background: none;
+            border: 1px solid transparent;
+            border-bottom: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 1rem;
+        }
+        
+        .tab.active {
+            background: var(--code-bg);
+            border-color: var(--border);
+            border-bottom-color: var(--code-bg);
+            color: var(--text-primary);
+            position: relative;
+        }
+        
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--accent);
+        }
+        
+        .code-panel {
+            display: none;
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 0 8px 8px 8px;
+            overflow: hidden;
+        }
+        
+        .code-panel.active {
+            display: block;
+        }
+        
+        .code-header {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        /* Trade-offs */
+        .tradeoffs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+        
+        .tradeoff-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 2rem;
+        }
+        
+        .tradeoff-card.warning {
+            border-color: var(--warning);
+        }
+        
+        .tradeoff-card.warning h3 {
+            color: var(--warning);
+        }
+        
+        .tradeoff-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+        
+        /* Module Demo */
+        .module-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
             margin: 2rem 0;
         }
-
-        /* Footer */
-        .footer {
-            padding: 3rem 0;
-            text-align: center;
-            color: var(--text-secondary);
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .title { font-size: 2.2rem; }
-            .section-title { font-size: 1.8rem; }
-            .section { padding: 3rem 0; }
-        }
-
-        /* Interactive elements */
-        .collapsible {
-            background: var(--bg-secondary);
+        
+        .module-tag {
+            background: var(--bg-tertiary);
             border: 1px solid var(--border);
-            border-radius: 6px;
-            margin: 1rem 0;
-            overflow: hidden;
-        }
-
-        .collapsible-header {
-            padding: 1rem 1.5rem;
+            color: var(--text-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
             cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .module-tag.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+        
+        .module-output {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+            min-height: 200px;
+            overflow-x: auto;
+        }
+        
+        /* Technical Details */
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+        
+        .tech-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 2rem;
+        }
+        
+        .complexity-badge {
+            display: inline-block;
+            background: rgba(110, 118, 129, 0.2);
+            color: var(--text-secondary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            margin-top: 1rem;
+        }
+        
+        /* Footer */
+        footer {
+            background: var(--bg-tertiary);
+            padding: 4rem 0;
+            text-align: center;
+        }
+        
+        .footer-links {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+        
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+        
+        .footer-links a:hover {
+            color: var(--accent);
+        }
+        
+        .telegram-link {
+            color: var(--accent) !important;
             font-weight: 600;
         }
-
-        .collapsible-content {
-            padding: 0 1.5rem;
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-out;
-            border-top: 1px solid transparent;
-        }
-
-        .collapsible-content.open {
-            padding: 1.5rem;
-            max-height: 2000px;
-            border-top-color: var(--border);
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 1rem;
+            }
+            
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .pipeline {
+                grid-template-columns: 1fr;
+            }
+            
+            .pipeline-stage::after {
+                display: none;
+            }
+            
+            .comparison-tabs {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Header -->
-        <header class="header">
-            <h1 class="title">Universal Toolchain</h1>
+    <header>
+        <div class="container">
+            <div class="header-badge">RESEARCH PROJECT</div>
+            <h1>UniversalToolchain</h1>
             <p class="subtitle">
-                Мета-система для создания расширяемых языков программирования, решающая <span class="highlight">трилему языкового дизайна</span> через модульную архитектуру и расширяемое промежуточное представление
+                A modular compiler architecture for building extensible languages. Not a single language—a framework 
+                where every language feature is implemented as an independent, composable module.
             </p>
-            <div>
-                <a href="#repo" class="btn">Исходный код</a>
-                <a href="#demo" class="btn btn-gh">Демо Wist</a>
-            </div>
-        </header>
-
-        <!-- Problem -->
-        <section class="section">
-            <h2 class="section-title">Проблема: трилема языков программирования</h2>
-            <div class="section-content">
-                <p>Фиксированные языки программирования не могут одновременно обеспечивать:</p>
-                <ul style="margin-left: 2rem; margin-bottom: 1.5rem;">
-                    <li><strong>Выразительность</strong> — интуитивные абстракции, минимизация boilerplate-кода</li>
-                    <li><strong>Производительность</strong> — генерация оптимального машинного кода</li>
-                    <li><strong>Специализацию</strong> — адаптация под конкретные предметные области</li>
-                </ul>
-                <p>Python и JavaScript жертвуют производительностью ради выразительности. C++ и Rust требуют сложности для высокой производительности. Создание предметно-ориентированных языков (DSL) остается неподъемной задачей для большинства проектов.</p>
-                
-                <div class="collapsible">
-                    <div class="collapsible-header" onclick="toggleCollapse(this)">
-                        Пример: семантический разрыв в C#
-                        <span>▼</span>
-                    </div>
-                    <div class="collapsible-content">
-                        <div class="code-block">
-                            <div class="code-title">Проблема: отсутствие обобщенной арифметики в C# 9.0 (используется в unity на момент 17.12.2025)</div>
-                            <pre><span class="code-comment">// В идеальном мире unity:</span>
-<span class="code-keyword">T</span> SquareMagnitude&lt;<span class="code-keyword">T</span>&gt;(<span class="code-keyword">T</span> a, <span class="code-keyword">T</span> b) <span class="code-keyword">where</span> <span class="code-keyword">T</span> : Number => a * a + b * b;
-
-<span class="code-comment">// В реальности приходится:</span>
-<span class="code-keyword">double</span> SquareMagnitude(<span class="code-keyword">double</span> a, <span class="code-keyword">double</span> b) => a * a + b * b;
-<span class="code-keyword">float</span> SquareMagnitude(<span class="code-keyword">float</span> a, <span class="code-keyword">float</span> b) => a * a + b * b;
-<span class="code-comment">// Дублирование для каждого числового типа...</span></pre>
-                        </div>
-                    </div>
+            
+            <div class="cta-grid">
+                <div class="cta-card">
+                    <h3>Real Implementation</h3>
+                    <p>Proven with Wist language: 7,000+ lines of production-grade C#, 85% test coverage</p>
+                </div>
+                <div class="cta-card">
+                    <h3>Dual Execution</h3>
+                    <p>Interpreter for debugging + CIL compiler for performance. Same bytecode, two backends</p>
+                </div>
+                <div class="cta-card">
+                    <h3>Open Architecture</h3>
+                    <p>Clear interfaces, not magic. Every component can be replaced or extended</p>
                 </div>
             </div>
-        </section>
+        </div>
+    </header>
 
-        <!-- Solution -->
-        <section class="section">
-            <h2 class="section-title">Решение: модульная архитектура и шитый код</h2>
-            <div class="section-content">
-                <p>Universal Toolchain декомпозирует традиционный компилятор на независимые модули:</p>
-                
-                <div class="code-block">
-                    <div class="code-title">Ядро системы — интерфейс ICoreModule</div>
-                    <pre><span class="code-keyword">public interface</span> <span class="code-type">ICoreModule</span>
-{
-    <span class="code-keyword">void</span> InitLexer(<span class="code-type">ILexer</span> lexer);
-    <span class="code-keyword">void</span> InitParser(<span class="code-type">IParser</span> parser);
-    <span class="code-keyword">void</span> InitTranslator(<span class="code-type">IBytecodeTranslator</span> translator);
-    <span class="code-keyword">void</span> InitExecutor(<span class="code-type">IExecutor</span> executor);
-    <span class="code-comment">// Каждый этап компиляции — отдельный модуль</span>
-}</pre>
+    <section id="problem">
+        <div class="container">
+            <h2>The Compiler Trilemma</h2>
+            <p class="section-subtitle">
+                Fixed languages must trade off between expressiveness, performance, and specialization. 
+                UniversalToolchain addresses this through modular architecture—not by creating yet another language.
+            </p>
+            
+            <div class="pipeline">
+                <div class="pipeline-stage">
+                    <div class="stage-number">1</div>
+                    <h3>Semantic Gap</h3>
+                    <p>Domain concepts don't map cleanly to language primitives. Example: generic math in C# before .NET 7.</p>
                 </div>
-
-                <p><strong>Шитый код (Threaded Code)</strong> — универсальное промежуточное представление, сохраняющее семантику на всех этапах компиляции:</p>
-                
-                <div class="code-block">
-                    <div class="code-title">Структура байткода</div>
-                    <pre><span class="code-keyword">public record</span> <span class="code-type">BytecodeInstruction</span>(
-    <span class="code-type">HashSet</span>&lt;<span class="code-keyword">string</span>&gt; Tags,
-    <span class="code-type">LevelCollection</span>&lt;<span class="code-keyword">float</span>, <span class="code-type">IDynamicMethodConvertable</span>&gt; Ops
-);</pre>
+                <div class="pipeline-stage">
+                    <div class="stage-number">2</div>
+                    <h3>Static Ecosystems</h3>
+                    <p>Language evolution requires committee approval and compiler updates. Async/await took years to become mainstream.</p>
                 </div>
-
-                <p>Модули добавляют операции в слоты с приоритетами (например, проверка границ в ops[-1.0f], логирование в ops[1.0f]), не зная о существовании друг друга. Это решает проблему O(N²) связности.</p>
-            </div>
-        </section>
-
-        <!-- Implementation -->
-        <section class="section" id="demo">
-            <h2 class="section-title">Язык Wist: реализация и демонстрация</h2>
-            <div class="section-content">
-                <p>На базе Universal Toolchain создан полнофункциональный язык Wist с поддержкой переменных, условий, циклов и интероперабельности с C#.</p>
-                
-                <div class="code-block">
-                    <div class="code-title">Пример кода на Wist: сумма чисел от 0 до 99</div>
-                    <pre><span class="code-comment">// Классический цикл с метками</span>
-<span class="code-keyword">let</span> result = <span class="code-number">0</span>
-<span class="code-keyword">let</span> i = <span class="code-number">0</span>
-@start:
-    result = result + i
-    i = i + <span class="code-number">1</span>
-    <span class="code-keyword">if</span> i &lt; <span class="code-number">100</span>
-    <span class="code-keyword">goto</span> @start
-result</pre>
-                </div>
-
-                <p><strong>Logs Viewer</strong> — веб-инструмент для визуализации всего процесса компиляции:</p>
-                
-                <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 8px; margin: 2rem 0;">
-                    <h3 style="color: var(--accent); margin-bottom: 1rem;">Визуализация этапов компиляции:</h3>
-                    <ul style="margin-left: 1.5rem;">
-                        <li>Исходный код → лексемы</li>
-                        <li>Лексемы → абстрактное синтаксическое дерево (AST)</li>
-                        <li>AST → промежуточный байткод Universal Toolchain</li>
-                        <li>Байткод → CIL (.NET) или интерпретация</li>
-                    </ul>
-                    <p style="margin-top: 1rem; font-style: italic;">Интерактивная связь между этапами: клик на CIL инструкции подсвечивает соответствующий байткод.</p>
+                <div class="pipeline-stage">
+                    <div class="stage-number">3</div>
+                    <h3>DSL Complexity</h3>
+                    <p>Creating domain-specific languages requires building entire toolchains from scratch or awkward host-language metaprogramming.</p>
                 </div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <!-- Features -->
-        <section class="section">
-            <h2 class="section-title">Ключевые особенности</h2>
-            <div class="features-grid">
-                <div class="feature-card">
-                    <h3 class="feature-title">Модульность</h3>
-                    <p>ICoreModule позволяет подключать независимые модули для каждого этапа компиляции. Язык Wist — композиция 15+ модулей.</p>
+    <section id="architecture">
+        <div class="container">
+            <h2>Architecture: No Black Boxes</h2>
+            <p class="section-subtitle">
+                Clear separation of concerns through standardized interfaces. Each stage is replaceable.
+            </p>
+            
+            <div class="pipeline">
+                <div class="pipeline-stage">
+                    <div class="stage-number">1</div>
+                    <h3>Source → Lexemes</h3>
+                    <p><code>IFrontendCoreModule.InitLexer()</code></p>
+                    <p>Each module registers patterns. Priority-based resolution prevents conflicts.</p>
                 </div>
-                <div class="feature-card">
-                    <h3 class="feature-title">Расширяемое представление</h3>
-                    <p>Шитый код (Threaded Code) сохраняет семантику и обеспечивает линейную связность между модулями (O(N) вместо O(N²)).</p>
+                <div class="pipeline-stage">
+                    <div class="stage-number">2</div>
+                    <h3>Lexemes → AST</h3>
+                    <p><code>IFrontendCoreModule.InitParser()</code></p>
+                    <p>Node creators transform token sequences into tree structures with explicit priorities.</p>
                 </div>
-                <div class="feature-card">
-                    <h3 class="feature-title">Двойная система исполнения</h3>
-                    <p>Интерпретатор для отладки + CIL-компилятор для производительности. Оба работают с единым байткодом.</p>
+                <div class="pipeline-stage">
+                    <div class="stage-number">3</div>
+                    <h3>AST → Bytecode</h3>
+                    <p><code>IFrontendCoreModule.InitAstTranslator()</code></p>
+                    <p>Visitors generate platform-independent bytecode with tags for cross-cutting concerns.</p>
                 </div>
-                <div class="feature-card">
-                    <h3 class="feature-title">Расширяемая система типов</h3>
-                    <p>Интерфейсы и система контрактов позволяют добавлять новые типы без изменения ядра.</p>
+                <div class="pipeline-stage">
+                    <div class="stage-number">4</div>
+                    <h3>Bytecode → IR</h3>
+                    <p><code>IAbstractMethodsTranslator</code></p>
+                    <p>Convert to intermediate representation for optimization passes.</p>
                 </div>
-                <div class="feature-card">
-                    <h3 class="feature-title">Готовый язык Wist</h3>
-                    <p>Поддержка переменных, условий, циклов, goto, вызовов C#. Реализованы простейшие алгоритмы (Фибоначчи, сортировка).</p>
-                </div>
-                <div class="feature-card">
-                    <h3 class="feature-title">Инструменты отладки</h3>
-                    <p>Logs Viewer, логгер компиляции, 74 теста с покрытием 85%, система обработки ошибок.</p>
+                <div class="pipeline-stage">
+                    <div class="stage-number">5</div>
+                    <h3>IR → Execution</h3>
+                    <p><code>IAbstractIrCompiler&lt;T&gt;</code></p>
+                    <p>Compile to .NET DynamicMethods or interpret directly. Same IR, multiple backends.</p>
                 </div>
             </div>
-        </section>
+            
+            <div style="margin-top: 3rem; padding: 2rem; background: rgba(35, 134, 54, 0.05); border: 1px solid var(--accent); border-radius: 8px;">
+                <h3 style="color: var(--accent); margin-bottom: 1rem;">Key Insight: Threaded Code IR</h3>
+                <p>The intermediate representation uses <code>(Tags, LevelCollection&lt;float, IAbstractMethodConvertable&gt;)</code> structure.
+                Modules add operations at specific priority levels without knowledge of other modules. This enables <strong>linear coupling in practice</strong> when modules communicate only through defined interfaces.</p>
+                <pre style="margin-top: 1rem; background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 4px;"><code>// Module A adds bounds checking
+bytecode.Ops[-100.0f].Add(new BoundsCheckOperation());
 
-        <!-- Links -->
-        <section class="section" id="repo">
-            <h2 class="section-title">Исходный код и документация</h2>
-            <div class="section-content" style="text-align: center;">
-                <p>Проект полностью открыт и доступен на GitHub:</p>
-                <div style="margin: 2rem 0;">
-                    <a href="https://github.com/Misha1302/Wist2" class="btn" target="_blank" style="font-size: 1.2rem; padding: 1rem 2rem;">
-                        📦 Репозиторий Universal Toolchain
-                    </a>
+// Module B adds logging  
+bytecode.Ops[100.0f].Add(new LogOperation());
+
+// Module C adds actual computation
+bytecode.Ops[0.0f].Add(new ArithmeticOperation());
+
+// Execution order: -100 → 0 → 100
+// No direct dependencies between modules</code></pre>
+            </div>
+        </div>
+    </section>
+
+    <section id="demo">
+        <div class="container">
+            <h2>Live Configuration: See The Difference</h2>
+            <p class="section-subtitle">
+                The same source code compiles differently based on module configuration. 
+                Compare Universal arithmetic (extensible) vs Native arithmetic (optimized).
+            </p>
+            
+            <div class="comparison-tabs">
+                <button class="tab active" onclick="switchTab('universal')">Universal Mode</button>
+                <button class="tab" onclick="switchTab('native')">Native Mode</button>
+                <button class="tab" onclick="switchTab('config')">Configuration</button>
+            </div>
+            
+            <div id="universal-panel" class="code-panel active">
+                <div class="code-header">services.AddWistServices(options => options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Universal)</div>
+                <pre><code class="language-csharp">// Source code (same for both modes)
+let squaredMagnitude = 3 * 3 + 4 * 4
+squaredMagnitude</code></pre>
+                
+                <div style="margin-top: 2rem;">
+                    <div class="code-header">Generated Bytecode (Universal arithmetic with RealNumberImpl)</div>
+                    <pre><code>[] [0=PushNumber_3]
+[] [0=PushNumber_3]
+[] [0=Op_*]
+[] [0=PushNumber_4]
+[] [0=PushNumber_4]
+[] [0=Op_*]
+[] [0=Op_+]
+[] [0=LoadReferenceToLocalVar_squaredMagnitude]
+[] [0=Set_squaredMagnitude=+]
+[] [0=LoadValueOfLocalVar_squaredMagnitude]</code></pre>
                 </div>
-                <p style="color: var(--text-secondary);">
-                    Более 7000 строк кода на C#, модульная архитектура<br>
-                    Примеры использования, тесты и демонстрационные программы.
+                
+                <div style="margin-top: 2rem; padding: 1rem; background: rgba(210, 153, 34, 0.1); border-left: 4px solid var(--warning);">
+                    <strong>Note:</strong> Universal arithmetic works with any type implementing <code>ICustomNumber&lt;TSelf, TValue&gt;</code>, 
+                    but has abstraction overhead. Optimizations like constant folding are possible but not yet implemented.
+                </div>
+            </div>
+            
+            <div id="native-panel" class="code-panel">
+                <div class="code-header">services.AddWistServices(options => options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native)</div>
+                <pre><code class="language-csharp">// Same source code
+let squaredMagnitude = 3 * 3 + 4 * 4
+squaredMagnitude</code></pre>
+                
+                <div style="margin-top: 2rem;">
+                    <div class="code-header">Generated Bytecode (Native arithmetic with int32)</div>
+                    <pre><code>[] [0=PushNative_Int32_3]
+[] [0=PushNative_Int32_3]
+[] [0=NativeArithmetic_Multiply]
+[] [0=PushNative_Int32_4]
+[] [0=PushNative_Int32_4]
+[] [0=NativeArithmetic_Multiply]
+[] [0=NativeArithmetic_Add]
+[] [0=LoadReferenceToLocalVar_squaredMagnitude]
+[] [0=Set_squaredMagnitude=+]
+[] [0=LoadValueOfLocalVar_squaredMagnitude]</code></pre>
+                </div>
+                
+                <div style="margin-top: 2rem; padding: 1rem; background: rgba(35, 134, 54, 0.1); border-left: 4px solid var(--accent);">
+                    <strong>Performance:</strong> Native mode compiles to direct CIL instructions (<code>ldc.i4, mul, add</code>). 
+                    For primitive types (int, float, double), performance is within 10-30% of hand-written C#.
+                </div>
+            </div>
+            
+            <div id="config-panel" class="code-panel">
+                <div class="code-header">Parser Configuration (partial extract)</div>
+                <pre><code>-100000.00|ScopesModule.ScopesCreator|0|Scope
+-1000.00|CSharpInteropModule.CSharpFunctionCallsNodeCreator|0|CSharpFunctionCall
+-100.00|ConditionsModule.BooleanNodeCreator|0|True
+-100.00|ConditionsModule.BooleanNodeCreator|1|False
+-31.00|ArithmeticModule.MultiplicationOperationNodeCreator|0|Multiplication
+-31.00|ArithmeticModule.DivisionOperationNodeCreator|0|Division
+-30.00|ArithmeticModule.AdditionOperationNodeCreator|0|Addition
+-30.00|ArithmeticModule.SubtractionOperationNodeCreator|0|Subtraction
+-20.00|ComparisonNodeCreator|0|Equal
+-11.00|ConditionsModule.BooleanNodeCreator|2|Not
+-10.00|ConditionsModule.BooleanNodeCreator|3|And
+-9.00|ConditionsModule.BooleanNodeCreator|4|Or</code></pre>
+                
+                <div style="margin-top: 2rem; padding: 1rem; background: rgba(110, 118, 129, 0.1); border-left: 4px solid #6e7681;">
+                    <strong>Debugging:</strong> All module priorities are explicitly logged. Execution order is deterministic and inspectable.
+                    Each module solves one specific problem, reducing debugging complexity despite the modular architecture.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="tradeoffs">
+        <div class="container">
+            <h2>Architectural Trade-offs</h2>
+            <p class="section-subtitle">
+                Every design decision has consequences. Here's what UniversalToolchain gains—and what it costs.
+            </p>
+            
+            <div class="tradeoffs-grid">
+                <div class="tradeoff-card">
+                    <div class="tradeoff-icon">⚡</div>
+                    <h3>Performance Profile</h3>
+                    <p><strong>Primitive types:</strong> Near C# speed (10-30% overhead) when using NativeMathModule with CIL compilation.</p>
+                    <p><strong>Complex abstractions:</strong> Slower due to virtual calls and abstraction layers. Similar to typical .NET reflection-based systems.</p>
+                    <p><strong>Operator fusion:</strong> <code>and</code>/<code>or</code> operators can be slower due to generic resolution overhead.</p>
+                </div>
+                
+                <div class="tradeoff-card">
+                    <div class="tradeoff-icon">🔧</div>
+                    <h3>Debugging Experience</h3>
+                    <p><strong>Module isolation:</strong> Each module has a single responsibility. Failures are typically contained.</p>
+                    <p><strong>Explicit configuration:</strong> All priorities and dependencies are logged and inspectable.</p>
+                    <p><strong>Complex interactions:</strong> Modules that need to coordinate state (e.g., type information) require careful design.</p>
+                </div>
+                
+                <div class="tradeoff-card warning">
+                    <div class="tradeoff-icon">⚠️</div>
+                    <h3>Current Limitations</h3>
+                    <p><strong>.NET ecosystem lock-in:</strong> All modules must be written in C# and run in the same process.</p>
+                    <p><strong>Optimization ceiling:</strong> JIT limitations apply. No low-level optimizations (vectorization, stack allocation of structs across modules).</p>
+                    <p><strong>Learning curve:</strong> Requires understanding of both compiler architecture and .NET reflection/IL generation.</p>
+                </div>
+            </div>
+            
+            <div style="margin-top: 3rem; text-align: center;">
+                <p style="color: var(--text-secondary); font-style: italic;">
+                    "The architecture achieves linear coupling (O(n)) when modules communicate only through defined interfaces. 
+                    Interaction outside interfaces reintroduces complexity—a conscious design constraint, not an oversight."
                 </p>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <!-- Footer -->
-        <footer class="footer">
-            <p>Universal Toolchain — исследовательский проект в области языкового дизайна и метапрограммирования</p>
-            <p style="margin-top: 1rem; font-size: 0.9rem;">© 17.12.2025 Разработка: Михаил Разаков</p>
-        </footer>
-    </div>
+    <section id="technical">
+        <div class="container">
+            <h2>Technical Implementation</h2>
+            <p class="section-subtitle">
+                Concrete details matter. Here's how the system actually works.
+            </p>
+            
+            <div class="tech-grid">
+                <div class="tech-card">
+                    <h3>Dual Backend Strategy</h3>
+                    <p><strong>Interpreter (BasicInterpreterImpl):</strong> Direct execution of IR for debugging. Handles all intrinsics including <code>call C#</code> via reflection.</p>
+                    <p><strong>Compiler (AbstractMethodsCompilerImpl):</strong> Generates .NET DynamicMethods using GrEmit. Supports specialized intrinsics like <code>load_i32</code>, <code>load_f64</code> for primitive types.</p>
+                    <p><strong>Shared IR:</strong> Both backends use the same <code>IAbstractIR</code> interface, ensuring consistent semantics.</p>
+                </div>
+                
+                <div class="tech-card">
+                    <h3>Type System Design</h3>
+                    <p><strong>Contract-first:</strong> Operations defined against <code>IAddable&lt;T&gt;</code>, <code>IGettable&lt;T&gt;</code> rather than concrete types.</p>
+                    <p><strong>Dual arithmetic systems:</strong> 
+                        <br>• Universal: <code>RealNumberImpl : ICustomNumber&lt;RealNumberImpl, double&gt;</code>
+                        <br>• Native: Direct <code>int</code>, <code>float</code>, <code>double</code> via <code>INumber&lt;T&gt;</code>
+                    </p>
+                    <p><strong>Runtime resolution:</strong> Generic method resolution via <code>GenericTypeResolver</code> with type compatibility checking.</p>
+                </div>
+                
+                <div class="tech-card">
+                    <h3>Module Coordination</h3>
+                    <p><strong>Priority-based execution:</strong> <code>LevelCollection&lt;float, T&gt;</code> ensures deterministic ordering.</p>
+                    <p><strong>State management:</strong> Modules share context through <code>BytecodeVisitorData</code> and type stacks. No global mutable state.</p>
+                    <p><strong>Dependency injection:</strong> Auto-registration via <code>[AutoRegisterService]</code> with explicit lifetime management.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="modules">
+        <div class="container">
+            <h2>Module Ecosystem</h2>
+            <p class="section-subtitle">
+                Wist language is composed of these independent modules. Click to see their responsibilities.
+            </p>
+            
+            <div class="module-selector">
+                <div class="module-tag active" onclick="showModule('arithmetic')">ArithmeticModule</div>
+                <div class="module-tag" onclick="showModule('variables')">VariablesModule</div>
+                <div class="module-tag" onclick="showModule('conditions')">ConditionsModule</div>
+                <div class="module-tag" onclick="showModule('comparison')">ComparisonOperations</div>
+                <div class="module-tag" onclick="showModule('csharp')">CSharpInteropModule</div>
+                <div class="module-tag" onclick="showModule('native')">NativeMathModule</div>
+                <div class="module-tag" onclick="showModule('labels')">LabelsModule</div>
+                <div class="module-tag" onclick="showModule('optimizer')">LocalVariablesOptimizer</div>
+            </div>
+            
+            <div class="module-output" id="module-output">
+                <h3>ArithmeticModule</h3>
+                <p><strong>Purpose:</strong> Adds +, -, *, / operators with correct precedence</p>
+                <p><strong>Key files:</strong></p>
+                <ul style="color: var(--text-secondary); margin-left: 1.5rem;">
+                    <li><code>ArithmeticModuleImpl.cs</code> - Registers lexer patterns and parser nodes</li>
+                    <li><code>ArithmeticAstVisitor.cs</code> - Generates bytecode for operations</li>
+                    <li><code>BinaryOperationBase.cs</code> - Base class for all binary operators</li>
+                </ul>
+                <p><strong>Dependencies:</strong> Works with any type implementing <code>IAddable&lt;T&gt;</code>, <code>IMulAble&lt;T&gt;</code>, etc.</p>
+                <p><strong>Priority:</strong> Multiplication/Division at -31, Addition/Subtraction at -30</p>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <h2>UniversalToolchain</h2>
+            <p style="color: var(--text-secondary); max-width: 800px; margin: 1rem auto 2rem;">
+                A research project in extensible compiler architecture. Not a production-ready framework, 
+                but a working proof-of-concept with clear interfaces and explicit trade-offs.
+            </p>
+            
+            <div class="footer-links">
+                <a href="https://github.com/Misha1302/Wist2">GitHub Repository</a>
+                <a href="https://github.com/Misha1302/Wist2/blob/master/PROJECT_RULES.md">Project Rules</a>
+                <a href="https://t.me/shizaicompilers" class="telegram-link">Telegram Channel</a>
+                <a href="#architecture">Architecture</a>
+                <a href="#tradeoffs">Trade-offs</a>
+            </div>
+            
+            <p style="margin-top: 3rem; color: var(--text-secondary); font-size: 0.9rem;">
+                Built with .NET 9.0. Not affiliated with Microsoft or .NET Foundation.<br>
+                UniversalToolchain and Wist are research projects by Mikhail Razakov.
+            </p>
+        </div>
+    </footer>
 
     <script>
-        // Collapsible sections
-        function toggleCollapse(header) {
-            const content = header.nextElementSibling;
-            const arrow = header.querySelector('span');
-            
-            content.classList.toggle('open');
-            arrow.textContent = content.classList.contains('open') ? '▲' : '▼';
-        }
-
-        // Smooth scroll for anchor links
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function(e) {
-                e.preventDefault();
-                const targetId = this.getAttribute('href');
-                if (targetId === '#') return;
-                
-                const targetElement = document.querySelector(targetId);
-                if (targetElement) {
-                    window.scrollTo({
-                        top: targetElement.offsetTop - 20,
-                        behavior: 'smooth'
-                    });
+        function switchTab(tabName) {
+            // Update tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+                if (tab.textContent.toLowerCase().includes(tabName)) {
+                    tab.classList.add('active');
                 }
             });
+            
+            // Update panels
+            document.querySelectorAll('.code-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            document.getElementById(`${tabName}-panel`).classList.add('active');
+        }
+        
+        function showModule(moduleName) {
+            const modules = {
+                arithmetic: {
+                    title: "ArithmeticModule",
+                    content: `<h3>ArithmeticModule</h3>
+                    <p><strong>Purpose:</strong> Adds +, -, *, / operators with correct precedence</p>
+                    <p><strong>Key files:</strong></p>
+                    <ul style="color: var(--text-secondary); margin-left: 1.5rem;">
+                        <li><code>ArithmeticModuleImpl.cs</code> - Registers lexer patterns and parser nodes</li>
+                        <li><code>ArithmeticAstVisitor.cs</code> - Generates bytecode for operations</li>
+                        <li><code>BinaryOperationBase.cs</code> - Base class for all binary operators</li>
+                    </ul>
+                    <p><strong>Dependencies:</strong> Works with any type implementing <code>IAddable&lt;T&gt;</code>, <code>IMulAble&lt;T&gt;</code>, etc.</p>
+                    <p><strong>Priority:</strong> Multiplication/Division at -31, Addition/Subtraction at -30</p>`
+                },
+                variables: {
+                    title: "VariablesModule",
+                    content: `<h3>VariablesModule</h3>
+                    <p><strong>Purpose:</strong> Variable declaration with <code>let</code>, scoping, and assignment</p>
+                    <p><strong>Features:</strong></p>
+                    <ul style="color: var(--text-secondary); margin-left: 1.5rem;">
+                        <li>Type inference via <code>VariablesContainer&lt;T&gt;</code></li>
+                        <li>Reference/Value semantics through <code>VariableReference&lt;T&gt;</code></li>
+                        <li>Optimized local variable access via LocalVariablesOptimizer module</li>
+                    </ul>
+                    <p><strong>Bytecode intrinsics:</strong> <code>store_local</code>, <code>load_local</code>, <code>load_local_ref</code></p>`
+                },
+                native: {
+                    title: "NativeMathModule",
+                    content: `<h3>NativeMathModule</h3>
+                    <p><strong>Purpose:</strong> High-performance arithmetic for primitive types (int, float, double, decimal)</p>
+                    <p><strong>Key optimizations:</strong></p>
+                    <ul style="color: var(--text-secondary); margin-left: 1.5rem;">
+                        <li>Direct CIL generation via <code>NativeCILOptimizerModule</code></li>
+                        <li>Specialized bytecode: <code>PushNative_Int32_3</code> → <code>ldc.i4 3</code></li>
+                        <li>Constant folding opportunities</li>
+                    </ul>
+                    <p><strong>Performance:</strong> Within 10-30% of hand-written C# for numeric code</p>
+                    <p><strong>Limitation:</strong> Only works with types implementing <code>INumber&lt;T&gt;</code></p>`
+                },
+                optimizer: {
+                    title: "LocalVariablesOptimizer",
+                    content: `<h3>LocalVariablesOptimizer (IIRProcessingModule)</h3>
+                    <p><strong>Purpose:</strong> IR-level optimization of variable access patterns</p>
+                    <p><strong>Transformation:</strong></p>
+                    <pre style="background: rgba(0,0,0,0.3); padding: 1rem; margin: 1rem 0;"><code>// Before optimization:
+[Push "x"] [CallCSharp GetRef] [CallCSharp SetValueTo]
+
+// After optimization:
+[Intrinsic "store_local", "x", typeof(T)]</code></pre>
+                    <p><strong>Condition:</strong> Only activates when compiler supports <code>store_local</code> intrinsic</p>
+                    <p><strong>Architecture:</strong> Demonstrates how IR processing modules can specialize bytecode for specific backends</p>`
+                }
+            };
+            
+            const module = modules[moduleName] || modules.arithmetic;
+            
+            // Update tags
+            document.querySelectorAll('.module-tag').forEach(tag => {
+                tag.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update content
+            document.getElementById('module-output').innerHTML = module.content;
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            showModule('arithmetic');
         });
     </script>
 </body>
