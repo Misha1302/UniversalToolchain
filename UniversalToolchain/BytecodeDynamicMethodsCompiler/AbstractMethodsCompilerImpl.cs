@@ -383,8 +383,15 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
                 if (stackTypes[i].IsValueType && !locType.IsValueType)
                 {
                     var locToLoadRef = data.Il.DeclareLocal(stackTypes[i]);
-                    data.Il.Stloc(locToLoadRef);
-                    data.Il.Ldloca(locToLoadRef);
+                    if (stackTypes[i].IsByRef)
+                    {
+                        data.Il.Stloc(locToLoadRef);
+                        data.Il.Ldloca(locToLoadRef);
+                    }
+                    else
+                    {
+                        data.Il.Box(stackTypes[i]);
+                    }
                 }
                 else
                 {

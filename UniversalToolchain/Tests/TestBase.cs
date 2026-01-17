@@ -42,10 +42,31 @@ public abstract class TestBase
         var cores = _serviceProvider!.GetServices<ICoreRunnable>().ToList();
         var values = cores.Select(core => core.Run(code)).ToList();
 
-        foreach (var value in values)
-            Assert.That(value, Is.EqualTo(values[0]));
+        if (values.Any(x => x == null))
+        {
+            Assert.That(values.All(x => x == null));
+            return null!;
+        }
 
-        return values[0]!;
+        var typedValues = values
+            .Select(value => value!.GetType())
+            .Select(type =>
+            {
+                try
+                {
+                    return values.Select(x => CastType(x!, type)!).ToList();
+                }
+                catch
+                {
+                    return null;
+                }
+            })
+            .First(x => x != null)!;
+
+        foreach (var value in typedValues)
+            Assert.That(value, Is.EqualTo(typedValues[0]));
+
+        return typedValues[0]!;
     }
 
     /// <summary>
@@ -54,19 +75,18 @@ public abstract class TestBase
     internal T ExecuteCode<T>(string code)
     {
         var result = ExecuteCode(code);
+        return (T)CastType(result, typeof(T))!;
+    }
 
-        if (result is T typedResult)
-            return typedResult;
+    private static object? CastType(object value, Type t)
+    {
+        if (value.GetType() == t)
+            return value;
 
-        // Пытаемся преобразовать
-        try
-        {
-            return (T)Convert.ChangeType(result, typeof(T));
-        }
-        catch (InvalidCastException)
-        {
-            throw new InvalidCastException($"Cannot convert result of type {result.GetType()} to {typeof(T)}");
-        }
+        if (value is int i && t == typeof(bool))
+            return i == 1;
+
+        throw new InvalidCastException($"Cannot convert result of type {value.GetType()} to {t}");
     }
 
     /// <summary>

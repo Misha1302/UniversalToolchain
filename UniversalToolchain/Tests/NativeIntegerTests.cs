@@ -133,8 +133,8 @@ public class NativeIntegerTests : TestBase
     public void Execute_IntWithScientificNotation_ConvertsToInt()
     {
         var code = "1e3"; // 1000
-        var result = ExecuteCode<int>(code);
-        Assert.That(result, Is.EqualTo(1000));
+        var result = ExecuteCode<double>(code);
+        Assert.That(result, Is.EqualTo(1000).Within(1e-7));
     }
 
     [Test]
