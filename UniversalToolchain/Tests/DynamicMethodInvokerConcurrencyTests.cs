@@ -1,0 +1,615 @@
+using System.Collections.Concurrent;
+using System.Reflection;
+using DynamicMethodCalling;
+using GrEmit;
+
+namespace Tests;
+
+[TestFixture]
+[Category("Concurrency")]
+[Parallelizable(ParallelScope.None)] // Эти тесты не должны выполняться параллельно
+public class DynamicMethodInvokerConcurrencyTests
+{
+    private const int THREAD_COUNT = 8;
+    private const int ITERATIONS_PER_THREAD = 10000;
+    private const int TIMEOUT_MS = 30000;
+
+    [Test]
+    [CancelAfter(TIMEOUT_MS)]
+    public void Invoker_ConcurrentCalls_NoRaceConditions()
+    {
+        // Arrange: Создаем потокобезопасный счетчик через DynamicMethod
+        var dynamicMethod = new DynamicMethod("ConcurrentCounter", typeof(int),
+            new[] { typeof(int), typeof(int) });
+
+        var il = dynamicMethod.GetILGenerator();
+        // Симуляция атомарной операции: (a + b) * 2
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldarg_1);
+        il.Emit(OpCodes.Add);
+        il.Emit(OpCodes.Ldc_I4_2);
+        il.Emit(OpCodes.Mul);
+        il.Emit(OpCodes.Ret);
+
+        var invoker = new DynamicMethodInvoker<int, int, int>(dynamicMethod);
+
+        // Act: Запускаем несколько потоков
+        var results = new ConcurrentBag<int>();
+        var exceptions = new ConcurrentBag<Exception>();
+        var barrier = new Barrier(THREAD_COUNT);
+
+        var threads = Enumerable.Range(0, THREAD_COUNT).Select(threadId => new Thread(() =>
+        {
+            try
+            {
+                barrier.SignalAndWait(); // Синхронизируем старт всех потоков
+
+                for (var i = 0; i < ITERATIONS_PER_THREAD; i++)
+                {
+                    // Каждый поток вычисляет уникальное значение
+                    var result = invoker.Invoke(threadId, i);
+                    results.Add(result);
+
+                    // Малые задержки для увеличения вероятности переключения потоков
+                    if (i % 100 == 0)
+                        Thread.Yield();
+                }
+            }
+            catch (Exception ex)
+            {
+                exceptions.Add(ex);
+            }
+        })).ToArray();
+
+        // Запускаем все потоки
+        foreach (var thread in threads) thread.Start();
+        foreach (var thread in threads) thread.Join();
+
+        // Assert
+        Assert.That(exceptions, Is.Empty, "Исключения в потоках");
+        Assert.That(results.Count, Is.EqualTo(THREAD_COUNT * ITERATIONS_PER_THREAD));
+
+        // Проверяем, что все результаты корректны
+        var expectedResults = Enumerable.Range(0, THREAD_COUNT)
+            .SelectMany(threadId => Enumerable.Range(0, ITERATIONS_PER_THREAD)
+                .Select(i => (threadId + i) * 2));
+
+        Assert.That(results, Is.EquivalentTo(expectedResults));
+    }
+
+    [Test]
+    [CancelAfter(TIMEOUT_MS)]
+    public void Invoker_ParallelFor_ThreadSafety()
+    {
+        // Arrange: Динамический метод с состоянием (счетчик через параметры)
+        var dynamicMethod = new DynamicMethod("ParallelAccumulator", typeof(long),
+            new[] { typeof(long), typeof(long) });
+
+        var il = dynamicMethod.GetILGenerator();
+        // Аккумулирующая операция: a + b^2
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldarg_1);
+        il.Emit(OpCodes.Ldarg_1);
+        il.Emit(OpCodes.Mul);
+        il.Emit(OpCodes.Add);
+        il.Emit(OpCodes.Ret);
+
+        var invoker = new DynamicMethodInvoker<long, long, long>(dynamicMethod);
+
+        // Act: Используем Parallel.For для конкурентных вызовов
+        long totalSum = 0;
+        var lockObj = new object();
+
+        Parallel.For(0, THREAD_COUNT * ITERATIONS_PER_THREAD, i =>
+        {
+            // Каждая итерация независима, но мы аккумулируем результат
+            var result = invoker.Invoke(i, i % 100);
+
+            lock (lockObj)
+            {
+                totalSum += result;
+            }
+        });
+
+        // Assert: Проверяем корректность суммы
+        long expectedSum = 0;
+        for (long i = 0; i < THREAD_COUNT * ITERATIONS_PER_THREAD; i++)
+            expectedSum += i + i % 100 * (i % 100);
+
+        Assert.That(totalSum, Is.EqualTo(expectedSum));
+    }
+
+    [Test]
+    [CancelAfter(TIMEOUT_MS)]
+    public void Invoker_MultipleInstances_ConcurrentCreationAndExecution()
+    {
+        // Arrange: Создаем несколько разных динамических методов
+        var methods = Enumerable.Range(0, 4).Select(i =>
+        {
+            var dm = new DynamicMethod($"Method_{i}", typeof(int), new[] { typeof(int) });
+            var il = dm.GetILGenerator();
+            il.Emit(OpCodes.Ldarg_0);
+            il.Emit(OpCodes.Ldc_I4, i + 1); // Множитель 1, 2, 3, 4
+            il.Emit(OpCodes.Mul);
+            il.Emit(OpCodes.Ret);
+            return dm;
+        }).ToArray();
+
+        // Act: Потоки создают инвокеры и выполняют их конкурентно
+        var exceptions = new ConcurrentBag<Exception>();
+        var results = new ConcurrentBag<int>();
+
+        var threads = Enumerable.Range(0, THREAD_COUNT).Select(threadId => new Thread(() =>
+        {
+            try
+            {
+                var random = new Random(threadId);
+                for (var i = 0; i < ITERATIONS_PER_THREAD; i++)
+                {
+                    // Случайно выбираем метод
+                    var methodIndex = random.Next(methods.Length);
+                    var invokerType = typeof(DynamicMethodInvoker<,>).MakeGenericType(typeof(int), typeof(int));
+                    var invoker = Activator.CreateInstance(invokerType, methods[methodIndex]);
+
+                    // Вызываем через reflection, так как тип инвокера разный
+                    var invokeMethod = invokerType.GetMethod("Invoke");
+                    var result = (int)invokeMethod.Invoke(invoker, new object[] { threadId * 1000 + i });
+
+                    results.Add(result);
+
+                    // Правильный ожидаемый результат
+                    var expected = (threadId * 1000 + i) * (methodIndex + 1);
+                    if (result != expected)
+                        throw new InvalidOperationException($"Некорректный результат: {result}, ожидалось: {expected}");
+                }
+            }
+            catch (Exception ex)
+            {
+                exceptions.Add(ex);
+            }
+        })).ToArray();
+
+        // Запускаем потоки
+        foreach (var thread in threads) thread.Start();
+        foreach (var thread in threads) thread.Join();
+
+        // Assert
+        Assert.That(exceptions, Is.Empty, "Исключения в потоках");
+    }
+
+    [Test]
+    [CancelAfter(TIMEOUT_MS)]
+    public void Invoker_SharedInstance_ConcurrentCallsWithMemoryBarriers_Simple()
+    {
+        // Arrange: Простой метод без ref параметров
+        var dynamicMethod = new DynamicMethod("AtomicIncrement", typeof(long), Type.EmptyTypes);
+
+        using (var il = new GroboIL(dynamicMethod))
+        {
+            // Загружаем статическое поле
+            il.Ldflda(typeof(TestClass).GetField("_sharedValue",
+                BindingFlags.Static | BindingFlags.NonPublic));
+            // Загружаем 1
+            il.Ldc_I8(1);
+            // Атомарно добавляем
+            il.Call(typeof(Interlocked).GetMethod("Add",
+                [typeof(long).MakeByRefType(), typeof(long)]));
+            // Возвращаем результат
+            il.Ret();
+        }
+
+        var invoker = new DynamicMethodInvoker<object[], long, long>(dynamicMethod);
+
+        // Статическая переменная для всех потоков
+        TestClass.ResetSharedValue();
+
+        // Act
+        var exceptions = new ConcurrentBag<Exception>();
+        var spinWait = new SpinWait();
+
+        var threads = Enumerable.Range(0, THREAD_COUNT).Select(_ => new Thread(() =>
+        {
+            try
+            {
+                for (var i = 0; i < ITERATIONS_PER_THREAD; i++)
+                {
+                    invoker.Invoke(new object[0], 1);
+
+                    if (i % 100 == 0)
+                        spinWait.SpinOnce();
+                }
+            }
+            catch (Exception ex)
+            {
+                exceptions.Add(ex);
+            }
+        })).ToArray();
+
+        foreach (var thread in threads) thread.Start();
+        foreach (var thread in threads) thread.Join();
+
+        // Assert
+        Assert.That(exceptions, Is.Empty);
+        Assert.That(TestClass.SharedValue, Is.EqualTo((long)THREAD_COUNT * ITERATIONS_PER_THREAD));
+    }
+
+    // Вспомогательный класс
+    private static class TestClass
+    {
+        public static long SharedValue { get; private set; }
+
+        public static void ResetSharedValue() => SharedValue = 0;
+    }
+
+    [Test]
+    [CancelAfter(TIMEOUT_MS)]
+    public void Invoker_ThreadPool_QueueUserWorkItem()
+    {
+        // Arrange: Простой метод для выполнения в пуле потоков
+        var dynamicMethod = new DynamicMethod("ThreadPoolTest", typeof(int),
+            new[] { typeof(int), typeof(int) });
+
+        var il = dynamicMethod.GetILGenerator();
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldarg_1);
+        il.Emit(OpCodes.Mul);
+        il.Emit(OpCodes.Ldc_I4_2);
+        il.Emit(OpCodes.Div);
+        il.Emit(OpCodes.Ret);
+
+        var invoker = new DynamicMethodInvoker<int, int, int>(dynamicMethod);
+
+        // Act: Используем ThreadPool для асинхронных вызовов
+        var completionEvents = new ManualResetEvent[THREAD_COUNT];
+        var results = new int[THREAD_COUNT];
+        var exceptions = new ConcurrentBag<Exception>();
+
+        for (var i = 0; i < THREAD_COUNT; i++)
+        {
+            completionEvents[i] = new ManualResetEvent(false);
+            var threadId = i;
+
+            ThreadPool.QueueUserWorkItem(_ =>
+            {
+                try
+                {
+                    var result = invoker.Invoke(threadId * 100, threadId + 1);
+                    results[threadId] = result;
+                }
+                catch (Exception ex)
+                {
+                    exceptions.Add(ex);
+                }
+                finally
+                {
+                    completionEvents[threadId].Set();
+                }
+            });
+        }
+
+        // Ждем завершения всех задач
+        WaitHandle.WaitAll(completionEvents, TIMEOUT_MS);
+
+        // Assert
+        Assert.That(exceptions, Is.Empty, "Исключения в пуле потоков");
+
+        for (var i = 0; i < THREAD_COUNT; i++)
+        {
+            var expected = i * 100 * (i + 1) / 2;
+            Assert.That(results[i], Is.EqualTo(expected), $"Некорректный результат для потока {i}");
+        }
+    }
+
+    [Test]
+    [CancelAfter(TIMEOUT_MS)]
+    public void Invoker_TaskParallelLibrary_AsyncAwaitPattern()
+    {
+        // Arrange: Асинхронный метод
+        var dynamicMethod = new DynamicMethod("AsyncTest", typeof(double),
+            new[] { typeof(double), typeof(int) });
+
+        var il = dynamicMethod.GetILGenerator();
+        // Вычисление: a * sqrt(b)
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldarg_1);
+        il.Emit(OpCodes.Conv_R8);
+
+        var sqrtMethod = typeof(Math).GetMethod("Sqrt", new[] { typeof(double) });
+        il.Emit(OpCodes.Call, sqrtMethod);
+
+        il.Emit(OpCodes.Mul);
+        il.Emit(OpCodes.Ret);
+
+        var invoker = new DynamicMethodInvoker<double, int, double>(dynamicMethod);
+
+        // Act: Создаем задачи через TPL
+        var tasks = Enumerable.Range(0, THREAD_COUNT).Select(async threadId =>
+        {
+            double sum = 0;
+            for (var i = 0; i < ITERATIONS_PER_THREAD; i++)
+            {
+                // Асинхронное выполнение
+                var result = await Task.Run(() => invoker.Invoke(threadId * 1.5, i + 1));
+                sum += result;
+
+                // Имитация асинхронной работы
+                if (i % 100 == 0)
+                    await Task.Yield();
+            }
+            return sum;
+        }).ToArray();
+
+        // Ждем завершения всех задач
+        var taskResults = Task.WhenAll(tasks).GetAwaiter().GetResult();
+
+        // Assert
+        Assert.That(taskResults.Length, Is.EqualTo(THREAD_COUNT));
+
+        for (var threadId = 0; threadId < THREAD_COUNT; threadId++)
+        {
+            // Проверяем корректность вычислений
+            double expectedSum = 0;
+            for (var i = 0; i < ITERATIONS_PER_THREAD; i++)
+                expectedSum += threadId * 1.5 * Math.Sqrt(i + 1);
+
+            Assert.That(taskResults[threadId], Is.EqualTo(expectedSum).Within(1e-9),
+                $"Некорректная сумма для потока {threadId}");
+        }
+    }
+
+    [Test]
+    [CancelAfter(TIMEOUT_MS)]
+    public void Invoker_ProducerConsumerPattern_ConcurrentQueue()
+    {
+        // Arrange: Метод для обработки элементов
+        var dynamicMethod = new DynamicMethod("ProcessItem", typeof(string),
+            new[] { typeof(int), typeof(string) });
+
+        var il = dynamicMethod.GetILGenerator();
+        // Конкатенация: $"{prefix}_{value * 2}"
+        il.Emit(OpCodes.Ldarg_1); // prefix
+        il.Emit(OpCodes.Ldstr, "_");
+        var concatMethod = typeof(string).GetMethod("Concat", new[] { typeof(string), typeof(string) });
+        il.Emit(OpCodes.Call, concatMethod);
+
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldc_I4_2);
+        il.Emit(OpCodes.Mul);
+        il.Emit(OpCodes.Box, typeof(int));
+        var toStringMethod = typeof(object).GetMethod("ToString");
+        il.Emit(OpCodes.Callvirt, toStringMethod);
+
+        il.Emit(OpCodes.Call, concatMethod);
+        il.Emit(OpCodes.Ret);
+
+        var invoker = new DynamicMethodInvoker<int, string, string>(dynamicMethod);
+
+        // Act: Producer-Consumer паттерн
+        var queue = new ConcurrentQueue<int>();
+        var results = new ConcurrentBag<string>();
+        var exceptions = new ConcurrentBag<Exception>();
+
+        // Producer потоки
+        var producerThreads = Enumerable.Range(0, THREAD_COUNT / 2).Select(threadId => new Thread(() =>
+        {
+            try
+            {
+                for (var i = 0; i < ITERATIONS_PER_THREAD; i++)
+                {
+                    queue.Enqueue(threadId * 1000 + i);
+                    Thread.Sleep(0); // Yield
+                }
+            }
+            catch (Exception ex)
+            {
+                exceptions.Add(ex);
+            }
+        })).ToArray();
+
+        // Consumer потоки
+        var consumerThreads = Enumerable.Range(0, THREAD_COUNT / 2).Select(threadId => new Thread(() =>
+        {
+            try
+            {
+                while (queue.TryDequeue(out var item) || producerThreads.Any(t => t.IsAlive))
+                {
+                    if (queue.TryDequeue(out item))
+                    {
+                        var result = invoker.Invoke(item, $"Thread{threadId}");
+                        results.Add(result);
+                    }
+                    else
+                    {
+                        Thread.Yield();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                exceptions.Add(ex);
+            }
+        })).ToArray();
+
+        // Запускаем producers
+        foreach (var thread in producerThreads) thread.Start();
+        Thread.Sleep(10); // Даем producers немного поработать
+
+        // Запускаем consumers
+        foreach (var thread in consumerThreads) thread.Start();
+
+        // Ждем завершения
+        foreach (var thread in producerThreads) thread.Join();
+        foreach (var thread in consumerThreads) thread.Join();
+
+        // Assert
+        Assert.That(exceptions, Is.Empty, "Исключения в producer/consumer потоках");
+        Assert.That(results, Is.Not.Empty);
+
+        // Проверяем формат результатов
+        foreach (var result in results)
+        {
+            Assert.That(result, Does.StartWith("Thread"));
+            Assert.That(result, Does.Contain("_"));
+        }
+    }
+
+    [Test]
+    [CancelAfter(TIMEOUT_MS)]
+    [Category("Stress")]
+    public void Invoker_StressTest_HeavyConcurrency()
+    {
+        // Arrange: Стресс-тест с большим количеством потоков
+        var stressThreadCount = Environment.ProcessorCount * 4;
+        var stressIterations = 5000;
+
+        var dynamicMethod = new DynamicMethod("StressOperation", typeof(long),
+            new[] { typeof(long), typeof(long), typeof(long) });
+
+        var il = dynamicMethod.GetILGenerator();
+        // Сложная операция: (a * b) / (c + 1) + a % b
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldarg_1);
+        il.Emit(OpCodes.Mul);
+
+        il.Emit(OpCodes.Ldarg_2);
+        il.Emit(OpCodes.Ldc_I4_1);
+        il.Emit(OpCodes.Add);
+        il.Emit(OpCodes.Conv_I8);
+
+        il.Emit(OpCodes.Div);
+
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldarg_1);
+        il.Emit(OpCodes.Rem);
+        il.Emit(OpCodes.Add);
+
+        il.Emit(OpCodes.Ret);
+
+        var invoker = new DynamicMethodInvoker<long, long, long, long>(dynamicMethod);
+
+        // Act: Запускаем множество потоков
+        long totalOperations = 0;
+        var exceptions = new ConcurrentBag<Exception>();
+        var spinWait = new SpinWait();
+
+        var threads = Enumerable.Range(0, stressThreadCount).Select(threadId => new Thread(() =>
+        {
+            try
+            {
+                long localCount = 0;
+                var random = new Random(threadId);
+
+                for (var i = 0; i < stressIterations; i++)
+                {
+                    var a = random.Next(1, 1000);
+                    var b = random.Next(1, 100);
+                    var c = random.Next(1, 50);
+
+                    var result = invoker.Invoke(a, b, c);
+                    localCount++;
+
+                    // Частая смена контекста
+                    if (i % 10 == 0)
+                        spinWait.SpinOnce();
+                }
+
+                Interlocked.Add(ref totalOperations, localCount);
+            }
+            catch (Exception ex)
+            {
+                exceptions.Add(ex);
+            }
+        })).ToArray();
+
+        // Запускаем все потоки
+        var sw = Stopwatch.StartNew();
+        foreach (var thread in threads) thread.Start();
+        foreach (var thread in threads) thread.Join();
+        sw.Stop();
+
+        // Assert
+        Assert.That(exceptions, Is.Empty, "Исключения в стресс-тесте");
+        Assert.That(totalOperations, Is.EqualTo(stressThreadCount * stressIterations));
+
+        Console.WriteLine($"Стресс-тест: {stressThreadCount} потоков, {stressIterations} итераций, время: {sw.ElapsedMilliseconds}ms");
+        Assert.That(sw.ElapsedMilliseconds, Is.LessThan(TIMEOUT_MS), "Стресс-тест превысил таймаут");
+    }
+
+    [Test]
+    [CancelAfter(TIMEOUT_MS)]
+    public void Invoker_DeadlockDetection_SafeReentrancy()
+    {
+        // Arrange: Метод, который может вызывать себя рекурсивно
+        var dynamicMethod = new DynamicMethod("RecursiveSafe", typeof(int),
+            new[] { typeof(int), typeof(int) });
+
+        using var il = new GroboIL(dynamicMethod);
+
+        var endLabel = il.DefineLabel(Guid.NewGuid().ToString());
+
+        // Базовый случай: если depth <= 0, возвращаем value
+        il.Ldarg(1);
+        il.Ldc_I4(0);
+        il.Ble(endLabel, false);
+
+        // Рекурсивный случай: value + recursive(value, depth-1)
+        il.Ldarg(0);
+        il.Ldarg(0);
+        il.Ldarg(1);
+        il.Ldc_I4(1);
+        il.Sub();
+
+        // Рекурсивный вызов (имитация)
+        il.Add();
+        il.Add();
+        il.Ret();
+
+        il.MarkLabel(endLabel);
+        il.Ldarg(0);
+        il.Ret();
+
+        var invoker = new DynamicMethodInvoker<int, int, int>(dynamicMethod);
+
+        // Act: Пытаемся создать потенциальный deadlock через мониторы
+        var lockObject = new object();
+        var deadlockDetected = false;
+        var exceptions = new ConcurrentBag<Exception>();
+
+        var threads = Enumerable.Range(0, 2).Select(threadId => new Thread(() =>
+        {
+            try
+            {
+                if (Monitor.TryEnter(lockObject, 1000))
+                    try
+                    {
+                        // Выполняем вызов под lock'ом
+                        var result = invoker.Invoke(threadId * 10, 5);
+
+                        // Другой поток попытается взять тот же lock
+                        Thread.Sleep(100);
+                    }
+                    finally
+                    {
+                        Monitor.Exit(lockObject);
+                    }
+                else
+                    deadlockDetected = true;
+            }
+            catch (Exception ex)
+            {
+                exceptions.Add(ex);
+            }
+        })).ToArray();
+
+        // Запускаем с небольшой задержкой между потоками
+        threads[0].Start();
+        Thread.Sleep(50);
+        threads[1].Start();
+
+        foreach (var thread in threads) thread.Join();
+
+        // Assert
+        Assert.That(exceptions, Is.Empty, "Исключения в тесте на deadlock");
+        Assert.That(deadlockDetected, Is.False, "Обнаружен потенциальный deadlock");
+    }
+}
