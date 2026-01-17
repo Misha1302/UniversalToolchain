@@ -10,12 +10,12 @@ namespace Tests;
 [Parallelizable(ParallelScope.None)] // Эти тесты не должны выполняться параллельно
 public class DynamicMethodInvokerConcurrencyTests
 {
-    private const int THREAD_COUNT = 8;
-    private const int ITERATIONS_PER_THREAD = 10000;
-    private const int TIMEOUT_MS = 30000;
+    private const int ThreadCount = 8;
+    private const int IterationsPerThread = 10000;
+    private const int TimeoutMs = 30000;
 
     [Test]
-    [CancelAfter(TIMEOUT_MS)]
+    [CancelAfter(TimeoutMs)]
     public void Invoker_ConcurrentCalls_NoRaceConditions()
     {
         // Arrange: Создаем потокобезопасный счетчик через DynamicMethod
@@ -36,15 +36,15 @@ public class DynamicMethodInvokerConcurrencyTests
         // Act: Запускаем несколько потоков
         var results = new ConcurrentBag<int>();
         var exceptions = new ConcurrentBag<Exception>();
-        var barrier = new Barrier(THREAD_COUNT);
+        var barrier = new Barrier(ThreadCount);
 
-        var threads = Enumerable.Range(0, THREAD_COUNT).Select(threadId => new Thread(() =>
+        var threads = Enumerable.Range(0, ThreadCount).Select(threadId => new Thread(() =>
         {
             try
             {
                 barrier.SignalAndWait(); // Синхронизируем старт всех потоков
 
-                for (var i = 0; i < ITERATIONS_PER_THREAD; i++)
+                for (var i = 0; i < IterationsPerThread; i++)
                 {
                     // Каждый поток вычисляет уникальное значение
                     var result = invoker.Invoke(threadId, i);
@@ -67,18 +67,18 @@ public class DynamicMethodInvokerConcurrencyTests
 
         // Assert
         Assert.That(exceptions, Is.Empty, "Исключения в потоках");
-        Assert.That(results.Count, Is.EqualTo(THREAD_COUNT * ITERATIONS_PER_THREAD));
+        Assert.That(results.Count, Is.EqualTo(ThreadCount * IterationsPerThread));
 
         // Проверяем, что все результаты корректны
-        var expectedResults = Enumerable.Range(0, THREAD_COUNT)
-            .SelectMany(threadId => Enumerable.Range(0, ITERATIONS_PER_THREAD)
+        var expectedResults = Enumerable.Range(0, ThreadCount)
+            .SelectMany(threadId => Enumerable.Range(0, IterationsPerThread)
                 .Select(i => (threadId + i) * 2));
 
         Assert.That(results, Is.EquivalentTo(expectedResults));
     }
 
     [Test]
-    [CancelAfter(TIMEOUT_MS)]
+    [CancelAfter(TimeoutMs)]
     public void Invoker_ParallelFor_ThreadSafety()
     {
         // Arrange: Динамический метод с состоянием (счетчик через параметры)
@@ -100,7 +100,7 @@ public class DynamicMethodInvokerConcurrencyTests
         long totalSum = 0;
         var lockObj = new object();
 
-        Parallel.For(0, THREAD_COUNT * ITERATIONS_PER_THREAD, i =>
+        Parallel.For(0, ThreadCount * IterationsPerThread, i =>
         {
             // Каждая итерация независима, но мы аккумулируем результат
             var result = invoker.Invoke(i, i % 100);
@@ -113,14 +113,14 @@ public class DynamicMethodInvokerConcurrencyTests
 
         // Assert: Проверяем корректность суммы
         long expectedSum = 0;
-        for (long i = 0; i < THREAD_COUNT * ITERATIONS_PER_THREAD; i++)
+        for (long i = 0; i < ThreadCount * IterationsPerThread; i++)
             expectedSum += i + i % 100 * (i % 100);
 
         Assert.That(totalSum, Is.EqualTo(expectedSum));
     }
 
     [Test]
-    [CancelAfter(TIMEOUT_MS)]
+    [CancelAfter(TimeoutMs)]
     public void Invoker_MultipleInstances_ConcurrentCreationAndExecution()
     {
         // Arrange: Создаем несколько разных динамических методов
@@ -139,12 +139,12 @@ public class DynamicMethodInvokerConcurrencyTests
         var exceptions = new ConcurrentBag<Exception>();
         var results = new ConcurrentBag<int>();
 
-        var threads = Enumerable.Range(0, THREAD_COUNT).Select(threadId => new Thread(() =>
+        var threads = Enumerable.Range(0, ThreadCount).Select(threadId => new Thread(() =>
         {
             try
             {
                 var random = new Random(threadId);
-                for (var i = 0; i < ITERATIONS_PER_THREAD; i++)
+                for (var i = 0; i < IterationsPerThread; i++)
                 {
                     // Случайно выбираем метод
                     var methodIndex = random.Next(methods.Length);
@@ -178,7 +178,7 @@ public class DynamicMethodInvokerConcurrencyTests
     }
 
     [Test]
-    [CancelAfter(TIMEOUT_MS)]
+    [CancelAfter(TimeoutMs)]
     public void Invoker_SharedInstance_ConcurrentCallsWithMemoryBarriers_Simple()
     {
         // Arrange: Простой метод без ref параметров
@@ -207,11 +207,11 @@ public class DynamicMethodInvokerConcurrencyTests
         var exceptions = new ConcurrentBag<Exception>();
         var spinWait = new SpinWait();
 
-        var threads = Enumerable.Range(0, THREAD_COUNT).Select(_ => new Thread(() =>
+        var threads = Enumerable.Range(0, ThreadCount).Select(_ => new Thread(() =>
         {
             try
             {
-                for (var i = 0; i < ITERATIONS_PER_THREAD; i++)
+                for (var i = 0; i < IterationsPerThread; i++)
                 {
                     invoker.Invoke(new object[0], 1);
 
@@ -230,19 +230,22 @@ public class DynamicMethodInvokerConcurrencyTests
 
         // Assert
         Assert.That(exceptions, Is.Empty);
-        Assert.That(TestClass.SharedValue, Is.EqualTo((long)THREAD_COUNT * ITERATIONS_PER_THREAD));
+        Assert.That(TestClass.SharedValue, Is.EqualTo((long)ThreadCount * IterationsPerThread));
     }
 
     // Вспомогательный класс
     private static class TestClass
     {
-        public static long SharedValue { get; private set; }
+        private static long _sharedValue;
 
-        public static void ResetSharedValue() => SharedValue = 0;
+        // ReSharper disable once ConvertToAutoPropertyWithPrivateSetter
+        public static long SharedValue => _sharedValue;
+
+        public static void ResetSharedValue() => _sharedValue = 0;
     }
 
     [Test]
-    [CancelAfter(TIMEOUT_MS)]
+    [CancelAfter(TimeoutMs)]
     public void Invoker_ThreadPool_QueueUserWorkItem()
     {
         // Arrange: Простой метод для выполнения в пуле потоков
@@ -260,11 +263,11 @@ public class DynamicMethodInvokerConcurrencyTests
         var invoker = new DynamicMethodInvoker<int, int, int>(dynamicMethod);
 
         // Act: Используем ThreadPool для асинхронных вызовов
-        var completionEvents = new ManualResetEvent[THREAD_COUNT];
-        var results = new int[THREAD_COUNT];
+        var completionEvents = new ManualResetEvent[ThreadCount];
+        var results = new int[ThreadCount];
         var exceptions = new ConcurrentBag<Exception>();
 
-        for (var i = 0; i < THREAD_COUNT; i++)
+        for (var i = 0; i < ThreadCount; i++)
         {
             completionEvents[i] = new ManualResetEvent(false);
             var threadId = i;
@@ -288,12 +291,12 @@ public class DynamicMethodInvokerConcurrencyTests
         }
 
         // Ждем завершения всех задач
-        WaitHandle.WaitAll(completionEvents, TIMEOUT_MS);
+        WaitHandle.WaitAll(completionEvents, TimeoutMs);
 
         // Assert
         Assert.That(exceptions, Is.Empty, "Исключения в пуле потоков");
 
-        for (var i = 0; i < THREAD_COUNT; i++)
+        for (var i = 0; i < ThreadCount; i++)
         {
             var expected = i * 100 * (i + 1) / 2;
             Assert.That(results[i], Is.EqualTo(expected), $"Некорректный результат для потока {i}");
@@ -301,7 +304,7 @@ public class DynamicMethodInvokerConcurrencyTests
     }
 
     [Test]
-    [CancelAfter(TIMEOUT_MS)]
+    [CancelAfter(TimeoutMs)]
     public void Invoker_TaskParallelLibrary_AsyncAwaitPattern()
     {
         // Arrange: Асинхронный метод
@@ -323,10 +326,10 @@ public class DynamicMethodInvokerConcurrencyTests
         var invoker = new DynamicMethodInvoker<double, int, double>(dynamicMethod);
 
         // Act: Создаем задачи через TPL
-        var tasks = Enumerable.Range(0, THREAD_COUNT).Select(async threadId =>
+        var tasks = Enumerable.Range(0, ThreadCount).Select(async threadId =>
         {
             double sum = 0;
-            for (var i = 0; i < ITERATIONS_PER_THREAD; i++)
+            for (var i = 0; i < IterationsPerThread; i++)
             {
                 // Асинхронное выполнение
                 var result = await Task.Run(() => invoker.Invoke(threadId * 1.5, i + 1));
@@ -343,13 +346,13 @@ public class DynamicMethodInvokerConcurrencyTests
         var taskResults = Task.WhenAll(tasks).GetAwaiter().GetResult();
 
         // Assert
-        Assert.That(taskResults.Length, Is.EqualTo(THREAD_COUNT));
+        Assert.That(taskResults.Length, Is.EqualTo(ThreadCount));
 
-        for (var threadId = 0; threadId < THREAD_COUNT; threadId++)
+        for (var threadId = 0; threadId < ThreadCount; threadId++)
         {
             // Проверяем корректность вычислений
             double expectedSum = 0;
-            for (var i = 0; i < ITERATIONS_PER_THREAD; i++)
+            for (var i = 0; i < IterationsPerThread; i++)
                 expectedSum += threadId * 1.5 * Math.Sqrt(i + 1);
 
             Assert.That(taskResults[threadId], Is.EqualTo(expectedSum).Within(1e-9),
@@ -358,7 +361,7 @@ public class DynamicMethodInvokerConcurrencyTests
     }
 
     [Test]
-    [CancelAfter(TIMEOUT_MS)]
+    [CancelAfter(TimeoutMs)]
     public void Invoker_ProducerConsumerPattern_ConcurrentQueue()
     {
         // Arrange: Метод для обработки элементов
@@ -390,11 +393,11 @@ public class DynamicMethodInvokerConcurrencyTests
         var exceptions = new ConcurrentBag<Exception>();
 
         // Producer потоки
-        var producerThreads = Enumerable.Range(0, THREAD_COUNT / 2).Select(threadId => new Thread(() =>
+        var producerThreads = Enumerable.Range(0, ThreadCount / 2).Select(threadId => new Thread(() =>
         {
             try
             {
-                for (var i = 0; i < ITERATIONS_PER_THREAD; i++)
+                for (var i = 0; i < IterationsPerThread; i++)
                 {
                     queue.Enqueue(threadId * 1000 + i);
                     Thread.Sleep(0); // Yield
@@ -407,7 +410,7 @@ public class DynamicMethodInvokerConcurrencyTests
         })).ToArray();
 
         // Consumer потоки
-        var consumerThreads = Enumerable.Range(0, THREAD_COUNT / 2).Select(threadId => new Thread(() =>
+        var consumerThreads = Enumerable.Range(0, ThreadCount / 2).Select(threadId => new Thread(() =>
         {
             try
             {
@@ -454,7 +457,7 @@ public class DynamicMethodInvokerConcurrencyTests
     }
 
     [Test]
-    [CancelAfter(TIMEOUT_MS)]
+    [CancelAfter(TimeoutMs)]
     [Category("Stress")]
     public void Invoker_StressTest_HeavyConcurrency()
     {
@@ -532,11 +535,11 @@ public class DynamicMethodInvokerConcurrencyTests
         Assert.That(totalOperations, Is.EqualTo(stressThreadCount * stressIterations));
 
         Console.WriteLine($"Стресс-тест: {stressThreadCount} потоков, {stressIterations} итераций, время: {sw.ElapsedMilliseconds}ms");
-        Assert.That(sw.ElapsedMilliseconds, Is.LessThan(TIMEOUT_MS), "Стресс-тест превысил таймаут");
+        Assert.That(sw.ElapsedMilliseconds, Is.LessThan(TimeoutMs), "Стресс-тест превысил таймаут");
     }
 
     [Test]
-    [CancelAfter(TIMEOUT_MS)]
+    [CancelAfter(TimeoutMs)]
     public void Invoker_DeadlockDetection_SafeReentrancy()
     {
         // Arrange: Метод, который может вызывать себя рекурсивно

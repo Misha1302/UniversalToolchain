@@ -23,7 +23,7 @@ var executable = core.GetExecutable(
     // Variables, native arithmetic, conditions
     let x = 42
     let y = 3.14f * 2.0f // Native float arithmetic
-    
+
     if x > 10 and y < 10.0f (
         let result = (x + 5) * 2
         System.Console.WriteLine(result)
@@ -31,14 +31,14 @@ var executable = core.GetExecutable(
     else (
         System.Console.WriteLine(-1)
     )
-    
+
     // Loop via labels and goto
     @loop_start:
     if x > 0 (
         x = x - 1
         goto @loop_start
     )
-    
+
     x // Implicit return
     """,
     new Dictionary<string, Type>

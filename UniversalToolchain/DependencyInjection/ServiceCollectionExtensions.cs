@@ -90,7 +90,7 @@ public static class ServiceCollectionExtensions
     /// <summary>
     ///     Явно добавляет модуль оптимизации IR (без автоматического обнаружения)
     /// </summary>
-    public static IServiceCollection AddIROptimizerModule<TOptimizer>(this IServiceCollection services)
+    public static IServiceCollection AddIrOptimizerModule<TOptimizer>(this IServiceCollection services)
         where TOptimizer : class, IIRProcessingModule
     {
         services.AddTransient<IIRProcessingModule, TOptimizer>();

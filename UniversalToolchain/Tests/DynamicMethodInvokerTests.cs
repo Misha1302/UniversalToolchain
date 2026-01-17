@@ -566,16 +566,14 @@ public class DynamicMethodInvokerTests
         var invoker = new DynamicMethodInvoker<int>(dynamicMethod);
 
         // Act
-        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var stopwatch = Stopwatch.StartNew();
         var result = invoker.Invoke();
         stopwatch.Stop();
 
         // Assert
         var expectedSum = 0;
-        for (int i = 0; i < 1000; i++)
-        {
+        for (var i = 0; i < 1000; i++)
             expectedSum += i * i;
-        }
 
         Assert.That(result, Is.EqualTo(expectedSum));
 
