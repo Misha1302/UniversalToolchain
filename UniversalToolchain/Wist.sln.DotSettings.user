@@ -128,6 +128,9 @@
     &lt;Project Location="/home/micodiy/razakov/sharp/Wist2/UniversalToolchain/Tests" Presentation="&amp;lt;Tests&amp;gt;\&amp;lt;Tests&amp;gt;" /&gt;
   &lt;/And&gt;
 &lt;/SessionState&gt;</s:String>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=b8866c95_002D523d_002D48fc_002D8168_002Da25e526e011f/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="All tests from Solution" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
+  &lt;Solution /&gt;
+&lt;/SessionState&gt;</s:String>
 	
 	
 	

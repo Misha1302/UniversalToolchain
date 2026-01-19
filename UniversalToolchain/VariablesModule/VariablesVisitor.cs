@@ -60,7 +60,7 @@ public class VariablesVisitor : IAstVisitor
                 $"LoadReferenceToLocalVar_{varName}",
                 (il, context) =>
                 {
-                    var type = _variableTypes[varName] = context.Stack[0];
+                    var type = _variableTypes[varName] = context.Stack.Last();
                     il.LdLocRef(varName, type);
                 }
             );

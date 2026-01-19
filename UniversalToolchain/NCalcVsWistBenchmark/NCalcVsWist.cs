@@ -524,7 +524,7 @@ public class BooleanLogicBenchmark
 {
     private Func<NCalcContext, bool> _ncalcBooleanLogicFunc = null!;
     private NCalcContext _ncalcContext = null!;
-    private DynamicMethodInvoker<int, int, int, int> _wistBooleanLogicInvoker = null!;
+    private DynamicMethodInvoker<int, int, int, bool> _wistBooleanLogicInvoker = null!;
 
     [GlobalSetup]
     public void Setup()
@@ -544,7 +544,7 @@ public class BooleanLogicBenchmark
                 { "b", typeof(int) },
                 { "c", typeof(int) }
             });
-        _wistBooleanLogicInvoker = new DynamicMethodInvoker<int, int, int, int>(booleanMethod);
+        _wistBooleanLogicInvoker = new DynamicMethodInvoker<int, int, int, bool>(booleanMethod);
 
         var booleanExpr = new Expression("([Int1] > [Int2]) and ([Int3] > 10) or ([Int1] + [Int2] > [Int3])");
         _ncalcBooleanLogicFunc = booleanExpr.ToLambda<NCalcContext, bool>();
@@ -558,11 +558,11 @@ public class BooleanLogicBenchmark
 
         // Проверка эквивалентности
         // ReSharper disable once ArrangeRedundantParentheses
-        Thrower.AssertAlways((_wistBooleanLogicInvoker.Invoke(15, 8, 20) == 1) == _ncalcBooleanLogicFunc(_ncalcContext));
+        Thrower.AssertAlways(_wistBooleanLogicInvoker.Invoke(15, 8, 20) == _ncalcBooleanLogicFunc(_ncalcContext));
     }
 
     [Benchmark(Baseline = true)]
-    public int Wist_BooleanLogic() => _wistBooleanLogicInvoker.Invoke(15, 8, 20);
+    public bool Wist_BooleanLogic() => _wistBooleanLogicInvoker.Invoke(15, 8, 20);
 
     [Benchmark]
     public bool NCalc_BooleanLogic() => _ncalcBooleanLogicFunc(_ncalcContext);
@@ -574,7 +574,7 @@ public class ComplexBooleanBenchmark
 {
     private Func<NCalcContext, bool> _ncalcComplexBooleanFunc = null!;
     private NCalcContext _ncalcContext = null!;
-    private DynamicMethodInvoker<double, double, int> _wistComplexBooleanInvoker = null!;
+    private DynamicMethodInvoker<double, double, bool> _wistComplexBooleanInvoker = null!;
 
     [GlobalSetup]
     public void Setup()
@@ -594,7 +594,7 @@ public class ComplexBooleanBenchmark
                                  """;
         var complexMethod = core.GetExecutable(complexBooleanCode,
             new Dictionary<string, Type> { { "a", typeof(double) }, { "b", typeof(double) } });
-        _wistComplexBooleanInvoker = new DynamicMethodInvoker<double, double, int>(complexMethod);
+        _wistComplexBooleanInvoker = new DynamicMethodInvoker<double, double, bool>(complexMethod);
 
         var complexExpr = new Expression(
             "(Abs([Double1] - [Double2]) < 0.001) and " +
@@ -611,11 +611,11 @@ public class ComplexBooleanBenchmark
 
         // Проверка эквивалентности
         // ReSharper disable once ArrangeRedundantParentheses
-        Thrower.AssertAlways((_wistComplexBooleanInvoker.Invoke(1.0, 1.001) == 1) == _ncalcComplexBooleanFunc(_ncalcContext));
+        Thrower.AssertAlways(_wistComplexBooleanInvoker.Invoke(1.0, 1.001) == _ncalcComplexBooleanFunc(_ncalcContext));
     }
 
     [Benchmark(Baseline = true)]
-    public int Wist_ComplexBoolean() => _wistComplexBooleanInvoker.Invoke(1.0, 1.001);
+    public bool Wist_ComplexBoolean() => _wistComplexBooleanInvoker.Invoke(1.0, 1.001);
 
     [Benchmark]
     public bool NCalc_ComplexBoolean() => _ncalcComplexBooleanFunc(_ncalcContext);

@@ -19,8 +19,6 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
         "call C#", "call C# ctor",
         "store_local", "load_local", "load_local_ref",
         "load_i32", "load_i64", "load_f32", "load_f64", "load_decimal",
-        "load_bool", "bool_and", "bool_or", "bool_not",
-        "bool_eq", "bool_neq", "bool_to_i32",
         "load_argument_by_index"
     ];
 
@@ -35,24 +33,65 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
         InitializeLabels(data, air);
 
         var typesStack = new List<Type>();
-        foreach (var instruction in air.Instructions)
-            CompileInstruction(data, instruction, typesStack, parameters);
+        var labelStacks = new Dictionary<Guid, List<Type>>();
 
-        if (typesStack[0].IsValueType && !returnType.IsValueType)
-            il.Box(typesStack[0]);
+        foreach (var instruction in air.Instructions)
+            CompileInstruction(data, instruction, typesStack, parameters, labelStacks);
+
+
+        var type = typesStack.Last();
+        if (type.IsValueType && !returnType.IsValueType)
+            il.Box(type);
         il.Ret();
+        
+        
 
         return method;
     }
 
     private static Type GetReturnType(IAbstractIR air)
     {
-        var stack = (List<Type>)[];
+        var stack = new List<Type>();
+        var labelStacks = new Dictionary<Guid, List<Type>>();
+
         foreach (var instruction in air.Instructions)
+        {
+            // сначала восстанавливаем стек, если это label
+            if (instruction.UOpCode == UOpCode.Label)
+            {
+                var labelId = instruction.Operands[0].Get<Guid>();
+                if (labelStacks.TryGetValue(labelId, out var saved))
+                {
+                    stack.Clear();
+                    stack.AddRange(saved);
+                }
+            }
+
+            // симуляция инструкции
             instruction.ManipulateTypesStack(stack, AirTypes.ProcessTypesIntrinsic);
-        var returnType = stack.Any() ? stack[0] : typeof(void);
-        return returnType;
+
+            // обработка ветвлений
+            ProcessBranchingStack(instruction, stack, labelStacks);
+        }
+
+        return stack.Count > 0 ? stack[^1] : typeof(void);
     }
+
+    private static void ProcessBranchingStack(
+        Instruction instruction,
+        List<Type> stack,
+        Dictionary<Guid, List<Type>> labelStacks
+    )
+    {
+        if (!instruction.UOpCode.IsAnyJump())
+            return;
+
+        var labelId = instruction.Operands[0].Get<Guid>();
+
+        // JmpIf / JmpIfNot уже съели condition в ManipulateTypesStack
+        labelStacks[labelId] = new List<Type>(stack);
+    }
+
 
     private void InitializeLabels(CompilationData data, IAbstractIR bytecode)
     {
@@ -70,8 +109,15 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
     }
 
 
-    private void CompileInstruction(CompilationData data, Instruction instruction, List<Type> stack, Dictionary<string, Type> parameters)
+    private void CompileInstruction(
+        CompilationData data,
+        Instruction instruction,
+        List<Type> stack,
+        Dictionary<string, Type> parameters,
+        Dictionary<Guid, List<Type>> labelStacks
+    )
     {
+        // TODO: add stack tree in branching
         if (instruction.UOpCode == UOpCode.Nop)
         {
             data.Il.Nop();
@@ -89,27 +135,56 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
         }
         else if (instruction.UOpCode == UOpCode.Jmp)
         {
+            var labelId = instruction.Operands[0].Get<Guid>();
+
+            // фиксируем стек для точки входа в label
+            labelStacks[labelId] = new List<Type>(stack);
+
             data.Il.Br(
-                data.InstructionLabels.First(x => x.id == instruction.Operands[0].Get<Guid>()).label
+                data.InstructionLabels.First(x => x.id == labelId).label
             );
         }
         else if (instruction.UOpCode == UOpCode.JmpIf)
         {
-            data.Il.Brtrue(
-                data.InstructionLabels.First(x => x.id == instruction.Operands[0].Get<Guid>()).label
-            );
+            // условие съедается
             stack.Pop();
+
+            var labelId = instruction.Operands[0].Get<Guid>();
+
+            // стек для ветки прыжка
+            labelStacks[labelId] = new List<Type>(stack);
+
+            data.Il.Brtrue(
+                data.InstructionLabels.First(x => x.id == labelId).label
+            );
         }
         else if (instruction.UOpCode == UOpCode.JmpIfNot)
         {
-            data.Il.Brfalse(
-                data.InstructionLabels.First(x => x.id == instruction.Operands[0].Get<Guid>()).label
-            );
+            // условие съедается
             stack.Pop();
+
+            var labelId = instruction.Operands[0].Get<Guid>();
+
+            // стек для ветки прыжка
+            labelStacks[labelId] = new List<Type>(stack);
+
+            data.Il.Brfalse(
+                data.InstructionLabels.First(x => x.id == labelId).label
+            );
         }
         else if (instruction.UOpCode == UOpCode.Label)
         {
-            data.Il.MarkLabel(data.InstructionLabels.First(x => x.id == instruction.Operands[0].Get<Guid>()).label);
+            var labelId = instruction.Operands[0].Get<Guid>();
+
+            if (labelStacks.TryGetValue(labelId, out var savedStack))
+            {
+                stack.Clear();
+                stack.AddRange(savedStack);
+            }
+
+            data.Il.MarkLabel(
+                data.InstructionLabels.First(x => x.id == labelId).label
+            );
         }
         else if (instruction.UOpCode == UOpCode.Annotate)
         {
@@ -270,48 +345,6 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
             var value = instruction.Operands[1].Get<bool>();
             data.Il.Ldc_I4(value ? 1 : 0);
             stack.Push(typeof(int)); // bool как int32
-        }
-        else if (name == "bool_and")
-        {
-            data.Il.And();
-            stack.Pop();
-            stack.Pop();
-            stack.Push(typeof(int));
-        }
-        else if (name == "bool_or")
-        {
-            data.Il.Or();
-            stack.Pop();
-            stack.Pop();
-            stack.Push(typeof(int));
-        }
-        else if (name == "bool_not")
-        {
-            // В CIL для NOT используется xor с -1 (0xFFFFFFFF)
-            data.Il.Ldc_I4(-1);
-            data.Il.Xor();
-            stack.Pop();
-            stack.Push(typeof(int));
-        }
-        else if (name == "bool_eq")
-        {
-            data.Il.Ceq();
-            stack.Pop();
-            stack.Pop();
-            stack.Push(typeof(int));
-        }
-        else if (name == "bool_neq")
-        {
-            data.Il.Ceq();
-            data.Il.Ldc_I4(0);
-            data.Il.Ceq();
-            stack.Pop();
-            stack.Pop();
-            stack.Push(typeof(int));
-        }
-        else if (name == "bool_to_i32")
-        {
-            // Ничего не делаем - уже int32
         }
         else if (name is "load_i32" or "load_i64" or "load_f32" or "load_f64" or "load_decimal")
         {

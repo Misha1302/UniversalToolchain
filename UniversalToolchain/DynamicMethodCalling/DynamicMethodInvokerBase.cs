@@ -24,7 +24,7 @@ public class DynamicMethodInvokerBase<TReturn>
     {
         dynamicMethod.NotNull();
 
-        Thrower.AssertAlways(dynamicMethod.ReturnType == typeof(TReturn), $"Return type must be {typeof(TReturn)}");
+        Thrower.AssertAlways(dynamicMethod.ReturnType == typeof(TReturn), $"Return type must be {typeof(TReturn)} but it is {dynamicMethod.ReturnType}");
 
         CompileMethod(dynamicMethod);
         FunctionPointer = GetFunctionPointerInternal(dynamicMethod);
