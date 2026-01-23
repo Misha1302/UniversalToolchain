@@ -65,15 +65,15 @@ public class ComplexConditionsTests : TestBase
                 let grade = 0
                 
                 if score >= 90
-                    grade = 5
+                    (grade = 5)
                 elif score >= 80
-                    grade = 4
+                    (grade = 4)
                 elif score >= 70
-                    grade = 3
+                    (grade = 3)
                 elif score >= 60
-                    grade = 2
+                    (grade = 2)
                 else
-                    grade = 1
+                    (grade = 1)
                 
                 grade
             ";

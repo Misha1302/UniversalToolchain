@@ -20,9 +20,9 @@ public class IntegrationPipelineTests : TestBase
                         let y = Main.Pow(x, 2)
                         
                         if y > 100
-                            total = total + Main.Sqrt(y)
+                            (total = total + Main.Sqrt(y))
                         else
-                            total = total + y
+                            (total = total + y)
                         
                         inner = inner + 1
                         goto @inner
@@ -41,6 +41,6 @@ public class IntegrationPipelineTests : TestBase
 
 
         var numberResult = (RealNumberImpl)result;
-        Assert.That(numberResult.GetValue(), Is.GreaterThan(0));
+        Assert.That(numberResult.GetValue(), Is.EqualTo(191.0).Within(1e-7));
     }
 }

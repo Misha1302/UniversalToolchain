@@ -14,11 +14,11 @@ public class RealWorldAlgorithmTests : TestBase
                 let i = 2
                 
                 if n == 0
-                    a = 0
+                    (a = 0)
                 else (
                     if n == 1
-                        a = 1
-                    else
+                        (a = 1)
+                    else (
                         @loop:
                         if i > n goto @end
                             temp = a + b
@@ -27,6 +27,7 @@ public class RealWorldAlgorithmTests : TestBase
                             i = i + 1
                             goto @loop
                         @end:
+                    )
                 )
                 b
             ";
@@ -83,30 +84,33 @@ public class RealWorldAlgorithmTests : TestBase
                 if swapped == 1 goto @end
                     swapped = 0
                     
-                    if a > b
+                    if a > b (
                         temp = a
                         a = b
                         b = temp
                         swapped = 1
+                    )
                     
-                    if b > c
+                    if b > c (
                         temp = b
                         b = c
                         c = temp
                         swapped = 1
+                    )
                     
-                    if c > d
+                    if c > d (
                         temp = c
                         c = d
                         d = temp
                         swapped = 1
-                    
-                    if d > e
+                    )
+
+                    if d > e (
                         temp = d
                         d = e
                         e = temp
                         swapped = 1
-                    
+                    )
                     goto @outer_loop
                 @end:
                 
