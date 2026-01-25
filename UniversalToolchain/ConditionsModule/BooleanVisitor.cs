@@ -19,9 +19,8 @@ public class BooleanVisitor : IAstVisitor
             nodeType == ExtensibleEnum<AstNodeTag>.Get("False"))
             VisitBooleanLiteral(data);
         else if (nodeType == ExtensibleEnum<AstNodeTag>.Get("And") ||
-                 nodeType == ExtensibleEnum<AstNodeTag>.Get("Or"))
-            VisitBooleanOperationWithShortCircuit(data);
-        else if (nodeType == ExtensibleEnum<AstNodeTag>.Get("Not"))
+                 nodeType == ExtensibleEnum<AstNodeTag>.Get("Or") ||
+                 nodeType == ExtensibleEnum<AstNodeTag>.Get("Not"))
             VisitBooleanOperation(data);
     }
 
@@ -167,7 +166,7 @@ public class BooleanVisitor : IAstVisitor
     }
 
     [UsedImplicitly]
-    private static class BooleanOperations
+    public static class BooleanOperations
     {
         [UsedImplicitly]
         public static bool And(bool a, bool b) => a && b;

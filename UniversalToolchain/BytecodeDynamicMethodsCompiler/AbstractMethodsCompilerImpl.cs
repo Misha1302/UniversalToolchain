@@ -18,7 +18,8 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
     [
         "call C#", "call C# ctor",
         "store_local", "load_local", "load_local_ref",
-        "load_i32", "load_i64", "load_f32", "load_f64", "load_decimal"
+        "load_i32", "load_i64", "load_f32", "load_f64", "load_decimal",
+        "boolean_and", "boolean_or", "boolean_not"
     ];
 
     public DynamicMethod Compile(IAbstractIR air, OrderedDictionary<string, Type> parameters)
@@ -352,7 +353,43 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
         {
             var value = instruction.Operands[1].Get<bool>();
             data.Il.Ldc_I4(value ? 1 : 0);
-            stack.Push(typeof(int)); // bool как int32
+            stack.Push(typeof(bool));
+        }
+        else if (name == "boolean_and")
+        {
+            // Стек: [int, int] -> [int]
+            Thrower.AssertAlways(stack.Count >= 2);
+            Thrower.AssertAlways(stack[^1] == typeof(bool) && stack[^2] == typeof(bool));
+
+            data.Il.And();
+            stack.Pop();
+            stack.Pop();
+            stack.Push(typeof(bool));
+        }
+        else if (name == "boolean_or")
+        {
+            // Стек: [int, int] -> [int]
+            Thrower.AssertAlways(stack.Count >= 2);
+            Thrower.AssertAlways(stack[^1] == typeof(bool) && stack[^2] == typeof(bool));
+
+            data.Il.Or();
+            stack.Pop();
+            stack.Pop();
+            stack.Push(typeof(bool));
+        }
+        else if (name == "boolean_not")
+        {
+            // Стек: [int] -> [int]
+            Thrower.AssertAlways(stack.Count >= 1);
+            Thrower.AssertAlways(stack[^1] == typeof(bool));
+
+            // Логическое NOT через XOR с 1
+            data.Il.Ldc_I4(1);
+            data.Il.Xor();
+
+            // Обновляем стек: удаляем старый int, добавляем результат
+            stack.Pop();
+            stack.Push(typeof(bool));
         }
         else if (name is "load_i32" or "load_i64" or "load_f32" or "load_f64" or "load_decimal")
         {
