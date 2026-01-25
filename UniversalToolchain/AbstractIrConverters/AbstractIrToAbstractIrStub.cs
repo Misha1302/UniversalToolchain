@@ -11,5 +11,5 @@ public class AbstractIrToAbstractIrStub : IAbstractIrCompiler<IAbstractIR>
         "call C# ctor"
     ];
 
-    public IAbstractIR Compile(IAbstractIR air, Dictionary<string, Type> parameters) => air;
+    public IAbstractIR Compile(IAbstractIR air, OrderedDictionary<string, Type> parameters) => air;
 }

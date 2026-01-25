@@ -12,16 +12,7 @@ namespace VariablesModule;
 
 public class VariablesVisitor : IAstVisitor
 {
-    private readonly Dictionary<string, Type> _variableTypes = [];
-    private int _argumentIndex;
-
-    static VariablesVisitor()
-    {
-        AirTypes.TryRegisterIntrinsic(
-            "load_argument_by_index",
-            (instr, stack) => stack.Push(instr.Operands[2].Get<Type>())
-        );
-    }
+    private readonly OrderedDictionary<string, Type> _variablesTypes = [];
 
     public void TryVisit(BytecodeVisitorData data)
     {
@@ -38,15 +29,11 @@ public class VariablesVisitor : IAstVisitor
 
         var paramName = text[1];
         var type = TypesFinder.GetType(text[3]);
-        _variableTypes[paramName] = type;
+        _variablesTypes[paramName] = type;
         var method = new AbstractMethodImpl(
             $"DefineArgument_{paramName}_{type.FullName}",
-            (il, _) =>
-            {
-                il.LdArg(_argumentIndex, type);
-                il.SetValueToLocal(paramName, type);
-                _argumentIndex++;
-            });
+            (_, _) => _variablesTypes[paramName] = type
+        );
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
     }
 
@@ -60,7 +47,7 @@ public class VariablesVisitor : IAstVisitor
                 $"LoadReferenceToLocalVar_{varName}",
                 (il, context) =>
                 {
-                    var type = _variableTypes[varName] = context.Stack.Last();
+                    var type = _variablesTypes[varName] = context.Stack.Last();
                     il.LdLocRef(varName, type);
                 }
             );
@@ -70,7 +57,7 @@ public class VariablesVisitor : IAstVisitor
         {
             var method = new AbstractMethodImpl(
                 $"LoadValueOfLocalVar_{varName}",
-                (il, _) => il.LdLoc(varName, _variableTypes[varName])
+                (il, _) => il.LdLoc(varName, _variablesTypes[varName])
             );
             data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
         }

@@ -71,7 +71,7 @@ public class SimpleAdditionBenchmark
         var core = provider.GetRequiredService<IExecutableGiver<DynamicMethod>>();
 
         var addMethod = core.GetExecutable("a + b",
-            new Dictionary<string, Type> { { "a", typeof(int) }, { "b", typeof(int) } });
+            new OrderedDictionary<string, Type> { { "a", typeof(int) }, { "b", typeof(int) } });
         _wistAddInvoker = new DynamicMethodInvoker<int, int, int>(addMethod);
 
         // NCalc
@@ -116,7 +116,7 @@ public class ComplexArithmeticBenchmark
 
         // Для комплексного выражения используем double, чтобы избежать целочисленного деления
         var complexMethod = core.GetExecutable("(a * 3.0 + b * 2.0) / (a - b + 1.0)",
-            new Dictionary<string, Type> { { "a", typeof(double) }, { "b", typeof(double) } });
+            new OrderedDictionary<string, Type> { { "a", typeof(double) }, { "b", typeof(double) } });
         _wistComplexArithmeticInvoker = new DynamicMethodInvoker<double, double, double>(complexMethod);
 
         // NCalc
@@ -162,7 +162,7 @@ public class DoubleAdditionBenchmark
 
         // Double addition
         var doubleAdd = core.GetExecutable("a + b",
-            new Dictionary<string, Type> { { "a", typeof(double) }, { "b", typeof(double) } });
+            new OrderedDictionary<string, Type> { { "a", typeof(double) }, { "b", typeof(double) } });
         _wistDoubleAddInvoker = new DynamicMethodInvoker<double, double, double>(doubleAdd);
 
         // NCalc
@@ -206,7 +206,7 @@ public class ComplexDoubleExpressionBenchmark
 
         // Complex double expression
         var doubleComplex = core.GetExecutable("(a * b) / (c + 1.0) + System.Math.Sin(a)",
-            new Dictionary<string, Type>
+            new OrderedDictionary<string, Type>
             {
                 { "a", typeof(double) },
                 { "b", typeof(double) },
@@ -256,7 +256,7 @@ public class DecimalAdditionBenchmark
 
         var decimalAdd = core.GetExecutable(
             MakeCode("a"),
-            new Dictionary<string, Type> { { "a", typeof(decimal) } }
+            new OrderedDictionary<string, Type> { { "a", typeof(decimal) } }
         );
 
         _wistDecimalAddInvoker = new DynamicMethodInvoker<decimal, decimal>(decimalAdd);
@@ -335,7 +335,7 @@ public class MathFunctionsBenchmark
         var core = provider.GetRequiredService<IExecutableGiver<DynamicMethod>>();
 
         var mathFuncs = core.GetExecutable("System.Math.Pow(a, b) + System.Math.Sqrt(c)",
-            new Dictionary<string, Type>
+            new OrderedDictionary<string, Type>
             {
                 { "a", typeof(double) },
                 { "b", typeof(double) },
@@ -385,7 +385,7 @@ public class SimpleConditionalBenchmark
         // Простое условие
         var conditionalCode = "if a > b a else b";
         var conditionalMethod = core.GetExecutable(conditionalCode,
-            new Dictionary<string, Type> { { "a", typeof(int) }, { "b", typeof(int) } });
+            new OrderedDictionary<string, Type> { { "a", typeof(int) }, { "b", typeof(int) } });
         _wistConditionalInvoker = new DynamicMethodInvoker<int, int, int>(conditionalMethod);
 
         // NCalc
@@ -437,7 +437,7 @@ public class ComplexConditionalBenchmark
                                          a * b
                                      """;
         var complexMethod = core.GetExecutable(complexConditionalCode,
-            new Dictionary<string, Type> { { "a", typeof(double) }, { "b", typeof(double) } });
+            new OrderedDictionary<string, Type> { { "a", typeof(double) }, { "b", typeof(double) } });
         _wistComplexConditionalInvoker = new DynamicMethodInvoker<double, double, double>(complexMethod);
 
         // NCalc
@@ -485,7 +485,7 @@ public class MultipleIntegerVariablesBenchmark
         var core = provider.GetRequiredService<IExecutableGiver<DynamicMethod>>();
 
         var multiVarMethod = core.GetExecutable("(a + b) * (c - d) / e",
-            new Dictionary<string, Type>
+            new OrderedDictionary<string, Type>
             {
                 { "a", typeof(int) },
                 { "b", typeof(int) },
@@ -538,7 +538,7 @@ public class BooleanLogicBenchmark
 
         var booleanLogicCode = "(a > b) and (c > 10) or (a + b > c)";
         var booleanMethod = core.GetExecutable(booleanLogicCode,
-            new Dictionary<string, Type>
+            new OrderedDictionary<string, Type>
             {
                 { "a", typeof(int) },
                 { "b", typeof(int) },
@@ -593,7 +593,7 @@ public class ComplexBooleanBenchmark
                                  (a * b > 10.0)
                                  """;
         var complexMethod = core.GetExecutable(complexBooleanCode,
-            new Dictionary<string, Type> { { "a", typeof(double) }, { "b", typeof(double) } });
+            new OrderedDictionary<string, Type> { { "a", typeof(double) }, { "b", typeof(double) } });
         _wistComplexBooleanInvoker = new DynamicMethodInvoker<double, double, bool>(complexMethod);
 
         var complexExpr = new Expression(
@@ -648,7 +648,7 @@ public class TaxCalculationBenchmark
                           total
                       """;
         var taxMethod = core.GetExecutable(taxCode,
-            new Dictionary<string, Type> { { "amount", typeof(double) }, { "rate", typeof(double) } });
+            new OrderedDictionary<string, Type> { { "amount", typeof(double) }, { "rate", typeof(double) } });
         _wistTaxCalculationInvoker = new DynamicMethodInvoker<double, double, double>(taxMethod);
 
         var taxExpr = new Expression(
@@ -693,11 +693,10 @@ public class CompoundInterestBenchmark
         var core = provider.GetRequiredService<IExecutableGiver<DynamicMethod>>();
 
         var financialCode = """
-                            let result = principal * System.Math.Pow(1.0 + rate / periods, periods * years)
-                            System.Math.Round(result, 2)
+                            System.Math.Round(principal * System.Math.Pow(1.0 + rate / periods, periods * years), 2)
                             """;
         var financialMethod = core.GetExecutable(financialCode,
-            new Dictionary<string, Type>
+            new OrderedDictionary<string, Type>
             {
                 { "principal", typeof(double) },
                 { "rate", typeof(double) },
@@ -755,7 +754,7 @@ public class LargeExpressionBenchmark
                                        (System.Math.Sqrt(x * x + y * y + z * z) + 1e-10)
                                        """;
         var largeMethod = core.GetExecutable(largeExpression,
-            new Dictionary<string, Type>
+            new OrderedDictionary<string, Type>
             {
                 { "a", typeof(double) },
                 { "b", typeof(double) },

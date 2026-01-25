@@ -18,14 +18,14 @@ public class BasicCoreImpl<TCompilationOutput>(
     IReadOnlyList<IFrontendCoreModule> modules,
     IReadOnlyList<IIRProcessingModule> optimizers,
     IReadOnlyList<IMiddleEndCoreModule<TCompilationOutput>> middleEndModules,
-    Func<string, Dictionary<string, Type>, string>? codeWithParamsFactory = null
+    Func<string, OrderedDictionary<string, Type>, string>? codeWithParamsFactory = null
 ) : ICoreRunnable, ICoreOptimizedRunnable, IExecutableGiver<TCompilationOutput>
 {
     private string _code = null!;
     private TCompilationOutput _compilationOutput = default!;
     private IExecutor<TCompilationOutput> _executor = null!;
 
-    public void PrepareToRun(string code, Dictionary<string, Type>? parameters = null)
+    public void PrepareToRun(string code, OrderedDictionary<string, Type>? parameters = null)
     {
         parameters ??= [];
 
@@ -77,22 +77,24 @@ public class BasicCoreImpl<TCompilationOutput>(
         parameters ??= [];
         PrepareToRun(
             code,
-            parameters.ToDictionary(
-                x => x.Key,
-                x => x.Value.GetType()
+            new OrderedDictionary<string, Type>(
+                parameters.ToDictionary(
+                    x => x.Key,
+                    x => x.Value.GetType()
+                )
             )
         );
         return RunPrepared();
     }
 
-    public TCompilationOutput GetExecutable(string code, Dictionary<string, Type>? parameters = null)
+    public TCompilationOutput GetExecutable(string code, OrderedDictionary<string, Type>? parameters = null)
     {
         parameters ??= [];
         PrepareToRun(code, parameters);
         return _compilationOutput;
     }
 
-    private string GetCodeWithParametersDefault(string code, Dictionary<string, Type> parameters)
+    private string GetCodeWithParametersDefault(string code, OrderedDictionary<string, Type> parameters)
     {
         var sb = new StringBuilder();
         foreach (var param in parameters)

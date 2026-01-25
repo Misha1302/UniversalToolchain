@@ -2,6 +2,6 @@ namespace BasicCore;
 
 public interface ICoreOptimizedRunnable
 {
-    void PrepareToRun(string code, Dictionary<string, Type>? parameters = null);
+    void PrepareToRun(string code, OrderedDictionary<string, Type>? parameters = null);
     object? RunPrepared();
 }

@@ -46,11 +46,6 @@ public static class AbstractIrExtensions
         );
     }
 
-    public static void LdArg<TIdentifier>(this IGenericAbstractIR<TIdentifier> air, int argIndex, Type type)
-    {
-        air.Intrinsic("load_argument_by_index", argIndex, type);
-    }
-
     private static void ActWithLoc<TIdentifier>(
         this IGenericAbstractIR<TIdentifier> air,
         Type locType,

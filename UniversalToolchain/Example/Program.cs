@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using DependencyInjection;
 using DynamicMethodCalling;
 
@@ -20,11 +19,11 @@ var core = provider.GetServices<IExecutableGiver<DynamicMethod>>().First();
 
 var complexMethod = core.GetExecutable(
     """
-    if a > b a else b
+    (a > b) and (c > 10) or (a + b > c)
     """,
-    new Dictionary<string, Type> { { "a", typeof(int) }, { "b", typeof(int) } }
+    new OrderedDictionary<string, Type> { { "a", typeof(int) }, { "b", typeof(int) }, { "c", typeof(int) } }
 );
 
 
-var fastCallable = new DynamicMethodInvoker<int, int, int>(complexMethod);
-Console.WriteLine(fastCallable.Invoke(3, 6));
+var fastCallable = new DynamicMethodInvoker<int, int, int, bool>(complexMethod);
+Console.WriteLine(fastCallable.Invoke(8, 15, 20));

@@ -18,17 +18,17 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
     [
         "call C#", "call C# ctor",
         "store_local", "load_local", "load_local_ref",
-        "load_i32", "load_i64", "load_f32", "load_f64", "load_decimal",
-        "load_argument_by_index"
+        "load_i32", "load_i64", "load_f32", "load_f64", "load_decimal"
     ];
 
-    public DynamicMethod Compile(IAbstractIR air, Dictionary<string, Type> parameters)
+    public DynamicMethod Compile(IAbstractIR air, OrderedDictionary<string, Type> parameters)
     {
         var returnType = GetReturnType(air);
         var argsTypes = parameters.Select(x => x.Value).ToArray();
+        var paramsIndices = parameters.ToDictionary(y => y.Key, x => parameters.IndexOf(x.Key));
         var method = new DynamicMethod("main", returnType, argsTypes);
         using var il = new GroboIL(method);
-        var data = new CompilationData(il, []);
+        var data = new CompilationData(il, [], paramsIndices);
 
         InitializeLabels(data, air);
 
@@ -36,15 +36,14 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
         var labelStacks = new Dictionary<Guid, List<Type>>();
 
         foreach (var instruction in air.Instructions)
-            CompileInstruction(data, instruction, typesStack, parameters, labelStacks);
+            CompileInstruction(data, instruction, typesStack, labelStacks);
 
 
         var type = typesStack.Last();
         if (type.IsValueType && !returnType.IsValueType)
             il.Box(type);
         il.Ret();
-        
-        
+
 
         return method;
     }
@@ -113,11 +112,11 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
         CompilationData data,
         Instruction instruction,
         List<Type> stack,
-        Dictionary<string, Type> parameters,
         Dictionary<Guid, List<Type>> labelStacks
     )
     {
         // TODO: add stack tree in branching
+        // TODO: this is necessary 'cause parallel blocks are able to leave >= 1 values on the stack 
         if (instruction.UOpCode == UOpCode.Nop)
         {
             data.Il.Nop();
@@ -191,7 +190,7 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
         }
         else if (instruction.UOpCode == UOpCode.Intrinsic)
         {
-            CompileIntrinsic(instruction, data, stack, parameters);
+            CompileIntrinsic(instruction, data, stack);
         }
         else
         {
@@ -212,7 +211,7 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
         data.Il.Call(loadMethod);
     }
 
-    private void CompileIntrinsic(Instruction instruction, CompilationData data, List<Type> stack, Dictionary<string, Type> parameters)
+    private void CompileIntrinsic(Instruction instruction, CompilationData data, List<Type> stack)
     {
         Thrower.AssertAlways(instruction.UOpCode == UOpCode.Intrinsic);
         Thrower.AssertAlways(instruction.Operands[0] is string);
@@ -255,25 +254,32 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
                 stack.Pop();
             stack.Push(method.DeclaringType);
         }
-
         else if (name == "store_local")
         {
             // New intrinsic: store_local "varName", varType
             var varName = instruction.Operands[1].Get<string>();
             var varType = instruction.Operands[2].Get<Type>();
 
-            // Get or create local variable
-            if (!data.LocalVariables.TryGetValue(varName, out var local))
+            if (data.ParametersIndices.TryGetValue(varName, out var argIndex))
             {
-                local = data.Il.DeclareLocal(varType);
-                data.LocalVariables[varName] = local;
+                data.Il.Starg(argIndex);
+                stack.Pop();
             }
+            else
+            {
+                // Get or create local variable
+                if (!data.LocalVariables.TryGetValue(varName, out var local))
+                {
+                    local = data.Il.DeclareLocal(varType);
+                    data.LocalVariables[varName] = local;
+                }
 
-            // Value should already be on the stack
-            data.Il.Stloc(local);
+                // Value should already be on the stack
+                data.Il.Stloc(local);
 
-            // Remove value from stack
-            stack.Pop();
+                // Remove value from stack
+                stack.Pop();
+            }
         }
         else if (name == "load_local")
         {
@@ -281,29 +287,37 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
             var varName = instruction.Operands[1].Get<string>();
             var varType = instruction.Operands[2].Get<Type>();
 
-            // Get local variable
-            if (!data.LocalVariables.TryGetValue(varName, out var local))
+            if (data.ParametersIndices.TryGetValue(varName, out var argIndex))
             {
-                // If variable is not declared, create it with default value
-                local = data.Il.DeclareLocal(varType);
-                data.LocalVariables[varName] = local;
-
-                // Initialize with default value
-                data.Il.Ldloca(local);
-                if (varType.IsValueType)
-                {
-                    data.Il.Initobj(varType);
-                }
-                else
-                {
-                    data.Il.Ldnull();
-                    data.Il.Stloc(local);
-                }
+                data.Il.Ldarg(argIndex);
+                stack.Push(varType);
             }
+            else
+            {
+                // Get local variable
+                if (!data.LocalVariables.TryGetValue(varName, out var local))
+                {
+                    // If variable is not declared, create it with default value
+                    local = data.Il.DeclareLocal(varType);
+                    data.LocalVariables[varName] = local;
 
-            // Load variable value onto stack
-            data.Il.Ldloc(local);
-            stack.Push(varType);
+                    // Initialize with default value
+                    data.Il.Ldloca(local);
+                    if (varType.IsValueType)
+                    {
+                        data.Il.Initobj(varType);
+                    }
+                    else
+                    {
+                        data.Il.Ldnull();
+                        data.Il.Stloc(local);
+                    }
+                }
+
+                // Load variable value onto stack
+                data.Il.Ldloc(local);
+                stack.Push(varType);
+            }
         }
         else if (name == "load_local_ref")
         {
@@ -333,12 +347,6 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
             // Load variable address onto stack
             data.Il.Ldloca(local);
             stack.Push(varType.MakeByRefType());
-        }
-        else if (name == "load_argument_by_index")
-        {
-            var argIndex = instruction.Operands[1].Get<int>();
-            data.Il.Ldarg(argIndex);
-            stack.Push(parameters.ElementAt(argIndex).Value);
         }
         else if (name == "load_bool")
         {
@@ -440,8 +448,9 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
             data.Il.Ldloc(locals[i]);
     }
 
-    private class CompilationData(GroboIL il, List<(Guid id, GroboIL.Label label)> instructionLabels)
+    private class CompilationData(GroboIL il, List<(Guid id, GroboIL.Label label)> instructionLabels, Dictionary<string, int> parametersIndices)
     {
+        public Dictionary<string, int> ParametersIndices { get; } = parametersIndices;
         public Dictionary<string, GroboIL.Local> LocalVariables { get; } = new();
         public GroboIL Il { get; } = il;
         public List<(Guid id, GroboIL.Label label)> InstructionLabels { get; } = instructionLabels;

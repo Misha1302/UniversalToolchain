@@ -326,7 +326,7 @@ public class DynamicMethodInvokerTests
             let result = (x + 5) * 2
             result
             """,
-            new Dictionary<string, Type>()
+            new OrderedDictionary<string, Type>()
         );
 
         var invoker = new DynamicMethodInvoker<int>(dynamicMethod);
@@ -360,7 +360,7 @@ public class DynamicMethodInvokerTests
                 0
             )
             """,
-            new Dictionary<string, Type>()
+            new OrderedDictionary<string, Type>()
         );
 
         var invoker = new DynamicMethodInvoker<int>(dynamicMethod);
@@ -395,7 +395,7 @@ public class DynamicMethodInvokerTests
             @loop_end:
             sum
             """,
-            new Dictionary<string, Type>()
+            new OrderedDictionary<string, Type>()
         );
 
         var invoker = new DynamicMethodInvoker<int>(dynamicMethod);
@@ -429,7 +429,7 @@ public class DynamicMethodInvokerTests
                 -1
             )
             """,
-            new Dictionary<string, Type>()
+            new OrderedDictionary<string, Type>()
         );
 
         var invoker = new DynamicMethodInvoker<int>(dynamicMethod);
@@ -459,7 +459,7 @@ public class DynamicMethodInvokerTests
             let absResult = System.Math.Abs(-5.0)
             sqrtResult + absResult
             """,
-            new Dictionary<string, Type>()
+            new OrderedDictionary<string, Type>()
         );
 
         var invoker = new DynamicMethodInvoker<double>(dynamicMethod);
@@ -486,7 +486,7 @@ public class DynamicMethodInvokerTests
             // Используем внешние параметры
             a + b * 2.0
             """,
-            new Dictionary<string, Type>
+            new OrderedDictionary<string, Type>
             {
                 { "a", typeof(double) },
                 { "b", typeof(double) }
@@ -523,7 +523,7 @@ public class DynamicMethodInvokerTests
 
             powResult + sqrtResult * a - logResult / System.Math.Abs(a - b)
             """,
-            new Dictionary<string, Type>()
+            new OrderedDictionary<string, Type>()
         );
 
         var invoker = new DynamicMethodInvoker<double>(dynamicMethod);
@@ -560,7 +560,7 @@ public class DynamicMethodInvokerTests
             @end:
             sum
             """,
-            new Dictionary<string, Type>()
+            new OrderedDictionary<string, Type>()
         );
 
         var invoker = new DynamicMethodInvoker<int>(dynamicMethod);
@@ -600,7 +600,7 @@ public class DynamicMethodInvokerTests
             let y = 0
             x / y  // Деление на ноль
             """,
-            new Dictionary<string, Type>()
+            new OrderedDictionary<string, Type>()
         );
 
         var invoker = new DynamicMethodInvoker<int>(dynamicMethod);
@@ -628,7 +628,7 @@ public class DynamicMethodInvokerTests
             let c = a + b
             c * 10.0
             """,
-            new Dictionary<string, Type>()
+            new OrderedDictionary<string, Type>()
         );
 
         var invokerUniversal = new DynamicMethodInvoker<double>(dynamicMethodUniversal);
@@ -651,7 +651,7 @@ public class DynamicMethodInvokerTests
             let c = a + b
             c * 10.0
             """,
-            new Dictionary<string, Type>()
+            new OrderedDictionary<string, Type>()
         );
 
         var invokerNative = new DynamicMethodInvoker<double>(dynamicMethodNative);
