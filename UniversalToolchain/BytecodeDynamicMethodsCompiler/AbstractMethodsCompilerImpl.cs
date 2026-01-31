@@ -19,7 +19,12 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
         "call C#", "call C# ctor",
         "store_local", "load_local", "load_local_ref",
         "load_i32", "load_i64", "load_f32", "load_f64", "load_decimal",
-        "boolean_and", "boolean_or", "boolean_not"
+        "boolean_and", "boolean_or", "boolean_not",
+        "add_i32", "sub_i32", "mul_i32", "div_i32",
+        "add_i64", "sub_i64", "mul_i64", "div_i64",
+        "add_f32", "sub_f32", "mul_f32", "div_f32",
+        "add_f64", "sub_f64", "mul_f64", "div_f64",
+        "add_decimal", "sub_decimal", "mul_decimal", "div_decimal"
     ];
 
     public DynamicMethod Compile(IAbstractIR air, OrderedDictionary<string, Type> parameters)
@@ -391,6 +396,11 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
             stack.Pop();
             stack.Push(typeof(bool));
         }
+        else if (name.StartsWith("add_") || name.StartsWith("sub_") ||
+                 name.StartsWith("mul_") || name.StartsWith("div_"))
+        {
+            CompileArithmeticIntrinsic(name, data, stack);
+        }
         else if (name is "load_i32" or "load_i64" or "load_f32" or "load_f64" or "load_decimal")
         {
             LoadNativeNumber(instruction, data, stack);
@@ -448,9 +458,85 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
         }
     }
 
+    private void CompileArithmeticIntrinsic(string name, CompilationData data, List<Type> stack)
+    {
+        var parts = name.Split('_');
+        var operation = parts[0]; // "add", "sub", "mul", "div"
+        var typeStr = parts[1]; // "i32", "i64", "f32", "f64", "decimal"
+
+        // Проверяем, что на стеке есть два значения
+        if (stack.Count < 2)
+            Thrower.InvalidOpEx("Not enough values on stack for binary operation");
+
+        // Для decimal используем вызовы методов Decimal
+        if (typeStr == "decimal")
+        {
+            var methodName = operation switch
+            {
+                "add" => "Add",
+                "sub" => "Subtract",
+                "mul" => "Multiply",
+                "div" => "Divide",
+                _ => throw new NotSupportedException($"Unknown decimal operation: {operation}")
+            };
+
+            var method = typeof(decimal).GetMethod(methodName, [typeof(decimal), typeof(decimal)]);
+            data.Il.Call(method);
+
+            // Снимаем два аргумента, кладем один результат
+            stack.Pop();
+            stack.Pop();
+            stack.Push(typeof(decimal));
+        }
+        else
+        {
+            // Для примитивных типов генерируем IL-инструкции
+            var resultType = GetTypeFromString(typeStr);
+
+            // Проверяем типы на стеке
+            if (stack[^1] != resultType || stack[^2] != resultType)
+                Thrower.InvalidOpEx($"Type mismatch for operation {name}");
+
+            // Генерация IL-инструкции
+            switch (operation)
+            {
+                case "add":
+                    data.Il.Add();
+                    break;
+                case "sub":
+                    data.Il.Sub();
+                    break;
+                case "mul":
+                    data.Il.Mul();
+                    break;
+                case "div":
+                    data.Il.Div(false);
+                    break;
+                default:
+                    Thrower.InvalidOpEx($"Unknown operation: {operation}");
+                    break;
+            }
+
+            // Обновляем стек: снимаем два значения, кладем один
+            stack.Pop();
+            stack.Pop();
+            stack.Push(resultType);
+        }
+    }
+
+    private static Type GetTypeFromString(string typeStr) => typeStr switch
+    {
+        "i32" => typeof(int),
+        "i64" => typeof(long),
+        "f32" => typeof(float),
+        "f64" => typeof(double),
+        "decimal" => typeof(decimal),
+        _ => throw new NotSupportedException($"Unsupported type string: {typeStr}")
+    };
 
     private void CastValuesToTypes(CompilationData data, IReadOnlyList<Type> targetTypes, IReadOnlyList<Type> stackTypes)
     {
+        return;
         var n = targetTypes.Count;
         var locals = new GroboIL.Local[n];
         for (var i = 0; i < locals.Length; i++)

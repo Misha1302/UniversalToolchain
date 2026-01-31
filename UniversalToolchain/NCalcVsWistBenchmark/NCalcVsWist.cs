@@ -588,7 +588,7 @@ public class ComplexBooleanBenchmark
 
         var complexBooleanCode = """
                                  (System.Math.Abs(a - b) < 0.001) and
-                                 (System.Math.Sin(a) > 0.5) and
+                                 (System.Math.Sin(a) > 0.5) and 
                                  (System.Math.Cos(b) < 0.5) or
                                  (a * b > 10.0)
                                  """;

@@ -69,5 +69,3 @@ public class NativeArithmeticAstVisitor : IAstVisitor
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
     }
 }
-
-// Статический класс для арифметических операций с использованием INumber<T>

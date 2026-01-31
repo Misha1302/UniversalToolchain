@@ -19,11 +19,11 @@ var core = provider.GetServices<IExecutableGiver<DynamicMethod>>().First();
 
 var complexMethod = core.GetExecutable(
     """
-    (a > b) and (c > 10) or (a + b > c)
+    if a > b a else b
     """,
-    new OrderedDictionary<string, Type> { { "a", typeof(int) }, { "b", typeof(int) }, { "c", typeof(int) } }
+    new OrderedDictionary<string, Type> { { "a", typeof(int) }, { "b", typeof(int) } }
 );
 
 
-var fastCallable = new DynamicMethodInvoker<int, int, int, bool>(complexMethod);
-Console.WriteLine(fastCallable.Invoke(8, 15, 20));
+var fastCallable = new DynamicMethodInvoker<int, int, int>(complexMethod);
+Console.WriteLine(fastCallable.Invoke(8, 15));
