@@ -4,6 +4,7 @@ using AssemblyFinder;
 using DependencyInjection;
 using IntermediateRepresentationAbstractions;
 using Microsoft.Extensions.DependencyInjection;
+using NativeMathModule;
 using Wistc;
 
 return Parser.Default.ParseArguments<RunOptions, ReplOptions>(args)
@@ -88,7 +89,12 @@ IServiceProvider BuildServiceProvider(CommonOptions options)
     var services = new ServiceCollection();
 
     // Register core services
-    services.AddWistServices();
+    services.AddWistServices(wistOptions =>
+        wistOptions.ArithmeticMode = options.UseNativeMath
+            ? WistOptions.ArithmeticModeEnum.Native
+            : WistOptions.ArithmeticModeEnum.Universal
+    );
+
 
     // Filter modules based on options
     var frontendModules = services

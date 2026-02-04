@@ -19,7 +19,7 @@ var core = provider.GetServices<IExecutableGiver<DynamicMethod>>().First();
 
 var complexMethod = core.GetExecutable(
     """
-    if a > b a else b
+    if a < b a else b
     """,
     new OrderedDictionary<string, Type> { { "a", typeof(int) }, { "b", typeof(int) } }
 );

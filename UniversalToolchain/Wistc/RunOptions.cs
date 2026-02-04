@@ -1,6 +1,6 @@
 namespace Wistc;
 
-[Verb("run", true, HelpText = "Run Wist code")]
+[Verb("run", HelpText = "Run Wist code")]
 public class RunOptions : CommonOptions
 {
     [Value(0, MetaName = "code", Required = false, HelpText = "Code to execute")]

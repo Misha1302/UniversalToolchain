@@ -13,4 +13,7 @@ public class CommonOptions
 
     [Option("list-modules", Default = false, HelpText = "List all available modules and exit")]
     public bool ListModules { get; set; }
+
+    [Option("use-native-math", Default = false, HelpText = "Using native math instead of generic math")]
+    public bool UseNativeMath { get; set; }
 }
