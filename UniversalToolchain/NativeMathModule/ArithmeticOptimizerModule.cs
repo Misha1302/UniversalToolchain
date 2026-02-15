@@ -45,39 +45,87 @@ public class ArithmeticOptimizerModule : IIRProcessingModule
         // Регистрация интринсиков для целых чисел
         foreach (var type in new[] { "i32", "i64" })
         {
-            AirTypes.TryRegisterIntrinsic($"add_{type}", (_, stack) => 
-                { stack.Pop(); stack.Pop(); stack.Push(GetTypeFromSuffix(type)); });
-            AirTypes.TryRegisterIntrinsic($"sub_{type}", (_, stack) => 
-                { stack.Pop(); stack.Pop(); stack.Push(GetTypeFromSuffix(type)); });
-            AirTypes.TryRegisterIntrinsic($"mul_{type}", (_, stack) => 
-                { stack.Pop(); stack.Pop(); stack.Push(GetTypeFromSuffix(type)); });
-            AirTypes.TryRegisterIntrinsic($"div_{type}", (_, stack) => 
-                { stack.Pop(); stack.Pop(); stack.Push(GetTypeFromSuffix(type)); });
+            AirTypes.TryRegisterIntrinsic($"add_{type}", (_, stack) =>
+            {
+                stack.Pop();
+                stack.Pop();
+                stack.Push(GetTypeFromSuffix(type));
+            });
+            AirTypes.TryRegisterIntrinsic($"sub_{type}", (_, stack) =>
+            {
+                stack.Pop();
+                stack.Pop();
+                stack.Push(GetTypeFromSuffix(type));
+            });
+            AirTypes.TryRegisterIntrinsic($"mul_{type}", (_, stack) =>
+            {
+                stack.Pop();
+                stack.Pop();
+                stack.Push(GetTypeFromSuffix(type));
+            });
+            AirTypes.TryRegisterIntrinsic($"div_{type}", (_, stack) =>
+            {
+                stack.Pop();
+                stack.Pop();
+                stack.Push(GetTypeFromSuffix(type));
+            });
         }
 
         // Регистрация интринсиков для чисел с плавающей точкой
         foreach (var type in new[] { "f32", "f64" })
         {
-            AirTypes.TryRegisterIntrinsic($"add_{type}", (_, stack) => 
-                { stack.Pop(); stack.Pop(); stack.Push(GetTypeFromSuffix(type)); });
-            AirTypes.TryRegisterIntrinsic($"sub_{type}", (_, stack) => 
-                { stack.Pop(); stack.Pop(); stack.Push(GetTypeFromSuffix(type)); });
-            AirTypes.TryRegisterIntrinsic($"mul_{type}", (_, stack) => 
-                { stack.Pop(); stack.Pop(); stack.Push(GetTypeFromSuffix(type)); });
-            AirTypes.TryRegisterIntrinsic($"div_{type}", (_, stack) => 
-                { stack.Pop(); stack.Pop(); stack.Push(GetTypeFromSuffix(type)); });
+            AirTypes.TryRegisterIntrinsic($"add_{type}", (_, stack) =>
+            {
+                stack.Pop();
+                stack.Pop();
+                stack.Push(GetTypeFromSuffix(type));
+            });
+            AirTypes.TryRegisterIntrinsic($"sub_{type}", (_, stack) =>
+            {
+                stack.Pop();
+                stack.Pop();
+                stack.Push(GetTypeFromSuffix(type));
+            });
+            AirTypes.TryRegisterIntrinsic($"mul_{type}", (_, stack) =>
+            {
+                stack.Pop();
+                stack.Pop();
+                stack.Push(GetTypeFromSuffix(type));
+            });
+            AirTypes.TryRegisterIntrinsic($"div_{type}", (_, stack) =>
+            {
+                stack.Pop();
+                stack.Pop();
+                stack.Push(GetTypeFromSuffix(type));
+            });
         }
 
         if (_isDecimalsSupported)
         {
-            AirTypes.TryRegisterIntrinsic("add_decimal", (_, stack) => 
-                { stack.Pop(); stack.Pop(); stack.Push(typeof(decimal)); });
-            AirTypes.TryRegisterIntrinsic("sub_decimal", (_, stack) => 
-                { stack.Pop(); stack.Pop(); stack.Push(typeof(decimal)); });
-            AirTypes.TryRegisterIntrinsic("mul_decimal", (_, stack) => 
-                { stack.Pop(); stack.Pop(); stack.Push(typeof(decimal)); });
-            AirTypes.TryRegisterIntrinsic("div_decimal", (_, stack) => 
-                { stack.Pop(); stack.Pop(); stack.Push(typeof(decimal)); });
+            AirTypes.TryRegisterIntrinsic("add_decimal", (_, stack) =>
+            {
+                stack.Pop();
+                stack.Pop();
+                stack.Push(typeof(decimal));
+            });
+            AirTypes.TryRegisterIntrinsic("sub_decimal", (_, stack) =>
+            {
+                stack.Pop();
+                stack.Pop();
+                stack.Push(typeof(decimal));
+            });
+            AirTypes.TryRegisterIntrinsic("mul_decimal", (_, stack) =>
+            {
+                stack.Pop();
+                stack.Pop();
+                stack.Push(typeof(decimal));
+            });
+            AirTypes.TryRegisterIntrinsic("div_decimal", (_, stack) =>
+            {
+                stack.Pop();
+                stack.Pop();
+                stack.Push(typeof(decimal));
+            });
         }
     }
 
@@ -90,12 +138,12 @@ public class ArithmeticOptimizerModule : IIRProcessingModule
         {
             var instruction = instructions[i];
 
-            if (instruction.UOpCode == UOpCode.Intrinsic && 
-                instruction.Operands.Count >= 2 && 
+            if (instruction.UOpCode == UOpCode.Intrinsic &&
+                instruction.Operands.Count >= 2 &&
                 (string)instruction.Operands[0] == "call C#")
             {
                 var method = instruction.Operands[1].Get<MethodInfo>();
-                
+
                 if (method.DeclaringType == typeof(NativeArithmetic))
                 {
                     var intrinsicName = GetIntrinsicName(method);
@@ -142,9 +190,7 @@ public class ArithmeticOptimizerModule : IIRProcessingModule
         {
             var genericType = method.GetGenericArguments()[0];
             if (typeMap.TryGetValue(genericType, out typeSuffix))
-            {
                 operation = opMap.GetValueOrDefault(method.Name);
-            }
         }
         // Обработка методов для decimal
         else if (method.Name.EndsWith("Decimal"))

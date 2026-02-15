@@ -1,4 +1,5 @@
 // Setup DI with auto-registration
+
 var services = new ServiceCollection();
 
 services.AddWistServices(options =>

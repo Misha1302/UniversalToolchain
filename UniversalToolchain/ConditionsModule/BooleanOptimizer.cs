@@ -74,7 +74,6 @@ public class BooleanOptimizerModule : IIRProcessingModule
             var instruction = instructions[i];
 
             if (instruction.UOpCode == UOpCode.Intrinsic)
-            {
                 if (instruction.Operands.Count >= 2 && instruction.Operands[0] == "call C#")
                 {
                     var m = instruction.Operands[1].Get<MethodInfo>();
@@ -86,7 +85,6 @@ public class BooleanOptimizerModule : IIRProcessingModule
                             continue;
                         }
                 }
-            }
 
             context.NewInstructions.Add(instruction);
         }

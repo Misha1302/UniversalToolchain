@@ -1,5 +1,4 @@
 using System.Reflection;
-using ExceptionsManager;
 using AbstractIrExtensions;
 using DotnetAirHelper;
 using IntermediateRepresentationAbstractions;
@@ -148,9 +147,6 @@ public class OptimizerRegressionTests
     {
         public IReadOnlyList<string> SupportedIntrinsics => intrinsics;
 
-        public object Compile(IAbstractIR air, OrderedDictionary<string, Type> parameters)
-        {
-            return Thrower.NotSupported<object>("Fake compiler cannot compile IR in this test scenario.");
-        }
+        public object Compile(IAbstractIR air, OrderedDictionary<string, Type> parameters) => Thrower.NotSupported<object>("Fake compiler cannot compile IR in this test scenario.");
     }
 }

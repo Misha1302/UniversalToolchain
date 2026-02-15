@@ -4,15 +4,9 @@ public class LabelsSharedData
 {
     private readonly Dictionary<string, Guid> _nameToId = [];
 
-    public Guid GetGuidByName(string name)
-    {
-        return GetOrCreateIdByName(name);
-    }
+    public Guid GetGuidByName(string name) => GetOrCreateIdByName(name);
 
-    public Guid GetIdByName(string name)
-    {
-        return GetOrCreateIdByName(name);
-    }
+    public Guid GetIdByName(string name) => GetOrCreateIdByName(name);
 
     private Guid GetOrCreateIdByName(string name)
     {

@@ -244,7 +244,7 @@ public static class ServiceCollectionExtensions
     {
         var cores = (List<CoreFactory>)
         [
-            new(typeof(DynamicMethod), provider =>
+            new CoreFactory(typeof(DynamicMethod), provider =>
                 {
                     var modules = provider.GetServices<IFrontendCoreModule>().ToList();
                     var irProcessors = provider.GetServices<IIRProcessingModule>().ToList();
@@ -262,7 +262,7 @@ public static class ServiceCollectionExtensions
                     );
                 }
             ),
-            new(typeof(IAbstractIR), provider =>
+            new CoreFactory(typeof(IAbstractIR), provider =>
                 {
                     var modules = provider.GetServices<IFrontendCoreModule>().ToList();
                     var irProcessors = provider.GetServices<IIRProcessingModule>().ToList();

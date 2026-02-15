@@ -72,19 +72,10 @@ public static class Thrower
     }
 
     [DoesNotReturn]
-    public static T NotSupported<T>(string message = "")
-    {
-        throw new NotSupportedException(FormatMessage(message, "Operation is not supported."));
-    }
+    public static T NotSupported<T>(string message = "") => throw new NotSupportedException(FormatMessage(message, "Operation is not supported."));
 
     [DoesNotReturn]
-    public static T InvalidCast<T>(string message = "")
-    {
-        throw new InvalidCastException(FormatMessage(message, "Value cannot be converted to target type."));
-    }
+    public static T InvalidCast<T>(string message = "") => throw new InvalidCastException(FormatMessage(message, "Value cannot be converted to target type."));
 
-    private static string FormatMessage(string message, string fallback)
-    {
-        return string.IsNullOrWhiteSpace(message) ? fallback : message;
-    }
+    private static string FormatMessage(string message, string fallback) => string.IsNullOrWhiteSpace(message) ? fallback : message;
 }

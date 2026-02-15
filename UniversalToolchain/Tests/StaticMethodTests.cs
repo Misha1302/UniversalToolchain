@@ -68,5 +68,4 @@ public class StaticMethodTests : TestBase
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(42).Within(1e-9));
     }
-
 }

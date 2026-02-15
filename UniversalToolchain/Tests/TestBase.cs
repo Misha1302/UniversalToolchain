@@ -1,5 +1,4 @@
 ﻿using DependencyInjection;
-using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Tests;

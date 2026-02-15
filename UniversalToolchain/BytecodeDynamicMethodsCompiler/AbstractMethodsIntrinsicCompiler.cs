@@ -10,8 +10,6 @@ namespace BytecodeDynamicMethodsCompiler;
 
 internal sealed class AbstractMethodsIntrinsicCompiler
 {
-    private delegate void IntrinsicHandler(CompilationContext context, Instruction instruction, List<Type> stack);
-
     private readonly Dictionary<string, IntrinsicHandler> _intrinsicHandlers;
 
     public AbstractMethodsIntrinsicCompiler()
@@ -128,7 +126,7 @@ internal sealed class AbstractMethodsIntrinsicCompiler
         if (context.ParametersIndices.TryGetValue(varName, out var argIndex))
             context.Il.Ldarg(argIndex);
         else
-            context.Il.Ldloc(context.GetOrCreateLocal(varName, varType, initializeWithDefault: true));
+            context.Il.Ldloc(context.GetOrCreateLocal(varName, varType, true));
 
         stack.Push(varType);
     }
@@ -138,7 +136,7 @@ internal sealed class AbstractMethodsIntrinsicCompiler
         var varName = instruction.Operands[1].Get<string>();
         var varType = instruction.Operands[2].Get<Type>();
 
-        context.Il.Ldloca(context.GetOrCreateLocal(varName, varType, initializeWithDefault: true));
+        context.Il.Ldloca(context.GetOrCreateLocal(varName, varType, true));
         stack.Push(varType.MakeByRefType());
     }
 
@@ -260,13 +258,21 @@ internal sealed class AbstractMethodsIntrinsicCompiler
     {
         string methodName;
         if (operation == "add")
+        {
             methodName = "Add";
+        }
         else if (operation == "sub")
+        {
             methodName = "Subtract";
+        }
         else if (operation == "mul")
+        {
             methodName = "Multiply";
+        }
         else if (operation == "div")
+        {
             methodName = "Divide";
+        }
         else
         {
             Thrower.InvalidOpEx($"Unknown decimal operation: {operation}");
@@ -409,4 +415,6 @@ internal sealed class AbstractMethodsIntrinsicCompiler
         for (var i = 0; i < count; i++)
             stack.Pop();
     }
+
+    private delegate void IntrinsicHandler(CompilationContext context, Instruction instruction, List<Type> stack);
 }

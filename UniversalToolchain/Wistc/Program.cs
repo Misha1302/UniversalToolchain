@@ -5,7 +5,6 @@ using DependencyInjection;
 using ExceptionsManager;
 using IntermediateRepresentationAbstractions;
 using Microsoft.Extensions.DependencyInjection;
-using NativeMathModule;
 using Wistc;
 
 return Parser.Default.ParseArguments<RunOptions, ReplOptions>(args)

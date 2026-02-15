@@ -1,5 +1,5 @@
-﻿using ExceptionsManager;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
+using ExceptionsManager;
 
 namespace BasicTypesExtensions;
 
@@ -39,22 +39,26 @@ public class EnumGenerator
 public class SetAndList<T> where T : notnull
 {
     private readonly List<T> _list = [];
-    private readonly Dictionary<T, int> _valueToIndex = [];
     private readonly Lock _lock = new();
+    private readonly Dictionary<T, int> _valueToIndex = [];
 
     public T this[int value]
     {
         get
         {
             lock (_lock)
+            {
                 return _list[value];
+            }
         }
     }
 
     public int IndexOf(T name)
     {
         lock (_lock)
+        {
             return _valueToIndex.GetValueOrDefault(name, -1);
+        }
     }
 
     public void Add(T name)

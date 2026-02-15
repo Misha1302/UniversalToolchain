@@ -56,7 +56,6 @@ public class LocalVariablesOptimizer : IIRProcessingModule
         {
             // Store pattern: Push value, Push "varName", GetRef, SetValue
             if (i >= 2 && IsStorePattern(instructions[i - 2], instructions[i - 1], instructions[i]))
-            {
                 // Remove only instructions that were really appended for this exact pattern.
                 if (sourceIndexes.Count >= 2 &&
                     sourceIndexes[^2] == i - 2 &&
@@ -73,11 +72,9 @@ public class LocalVariablesOptimizer : IIRProcessingModule
                     // Skip the SetValue instruction
                     continue;
                 }
-            }
 
             // Load pattern: Push "varName", Get
             if (i >= 1 && IsLoadPattern(instructions[i - 1], instructions[i]))
-            {
                 // Remove only instruction that was really appended for this exact pattern.
                 if (sourceIndexes.Count >= 1 && sourceIndexes[^1] == i - 1)
                 {
@@ -92,7 +89,6 @@ public class LocalVariablesOptimizer : IIRProcessingModule
                     // Skip the Get instruction
                     continue;
                 }
-            }
 
             newInstructions.Add(instructions[i]);
             sourceIndexes.Add(i);

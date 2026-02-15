@@ -1,5 +1,5 @@
-using IntermediateRepresentationAbstractions;
 using ExceptionsManager;
+using IntermediateRepresentationAbstractions;
 using ObjectExtensions;
 
 namespace BasicInterpreter;
