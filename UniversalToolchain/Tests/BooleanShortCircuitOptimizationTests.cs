@@ -33,7 +33,6 @@ public class BooleanShortCircuitOptimizationTests : TestBase
     }
 
 
-
     [Test]
     public void Execute_ShortCircuitAnd_WhenLeftTrue_EvaluatesRightOperand()
     {
@@ -123,7 +122,7 @@ public class BooleanShortCircuitOptimizationTests : TestBase
 
             var code = $"((({x} > {y}) and ({y} > {z})) or (not ({x} > {z}))) and (({x} > 0) or ({z} > 0))";
             var wistResult = ExecuteCode<bool>(code);
-            var expected = (((x > y) && (y > z)) || !(x > z)) && ((x > 0) || (z > 0));
+            var expected = (x > y && y > z || !(x > z)) && (x > 0 || z > 0);
 
             Assert.That(wistResult, Is.EqualTo(expected), $"Mismatch for x={x}, y={y}, z={z}");
         }

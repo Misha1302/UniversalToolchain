@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using AbstractIrExtensions;
 using BasicCore;
 using BasicCore.ParserWrapper;
@@ -5,9 +6,8 @@ using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
 using DynamicMethodWrapper;
 using ExceptionsManager;
-using JetBrains.Annotations;
 using IntermediateRepresentationAbstractions;
-using System.Diagnostics;
+using JetBrains.Annotations;
 
 namespace ConditionsModule;
 
@@ -136,11 +136,11 @@ public class BooleanVisitor : IAstVisitor
         // Базовый случай: вычисляем bool-значение на стеке ровно один раз,
         // затем делаем один условный и один безусловный переход.
         data.AstToBytecodeTranslator.Translate(node);
-        EmitConditionalJump(data, $"BoolCondTrueJump_{trueLabel}", trueLabel, jumpIfTrue: true);
+        EmitConditionalJump(data, $"BoolCondTrueJump_{trueLabel}", trueLabel, true);
         EmitJump(data, $"BoolCondFalseJump_{falseLabel}", falseLabel);
     }
 
-    private void EmitInstruction(BytecodeVisitorData data, string name, Action<IntermediateRepresentationAbstractions.IAbstractIR, IAbstractMethodConvertable.Context> emit)
+    private void EmitInstruction(BytecodeVisitorData data, string name, Action<IAbstractIR, IAbstractMethodConvertable.Context> emit)
     {
         var method = new AbstractMethodImpl(name, emit);
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
