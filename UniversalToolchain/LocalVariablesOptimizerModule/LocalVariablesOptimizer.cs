@@ -27,7 +27,14 @@ public class LocalVariablesOptimizer : IIRProcessingModule
 
         InitIntrinsics();
         var optimized = OptimizeVariables(current);
-        return optimized;
+        var instructions = optimized.Instructions.ToList();
+        var changed = RemoveRedundantLocalRoundtrips(instructions);
+        if (!changed)
+            return optimized;
+
+        var result = new AbstractIR();
+        result.AppendInstructions(instructions);
+        return result;
     }
 
     private void InitIntrinsics()
@@ -181,5 +188,260 @@ public class LocalVariablesOptimizer : IIRProcessingModule
         var varName = (string)pushInstr.Operands[0];
         var varType = getRefInstr.Operands[1].Get<MethodInfo>().DeclaringType.NotNull().GetGenericArguments()[0];
         return new Instruction(UOpCode.Intrinsic, ["load_local_ref", varName, varType]);
+    }
+
+    private static bool RemoveRedundantLocalRoundtrips(List<Instruction> instructions)
+    {
+        var changed = false;
+
+        var labelToIndex = new Dictionary<object, int>();
+        for (var i = 0; i < instructions.Count; i++)
+            if (IsLabel(instructions[i], out var label))
+                labelToIndex[label] = i;
+
+        var branchTargets = CollectBranchTargets(instructions, labelToIndex);
+        var hasBackwardBranches = HasBackwardBranch(instructions, labelToIndex);
+
+        var iIndex = 0;
+        while (iIndex < instructions.Count - 1)
+        {
+            if (!hasBackwardBranches && CanApplyRule3(instructions, iIndex, branchTargets, out var replacement))
+            {
+                instructions[iIndex] = replacement;
+                instructions.RemoveRange(iIndex + 1, 2);
+                changed = true;
+                continue;
+            }
+
+            if (!hasBackwardBranches && CanApplyRule2(instructions, iIndex, branchTargets))
+            {
+                instructions.RemoveRange(iIndex, 2);
+                changed = true;
+                continue;
+            }
+
+            if (CanApplyRule1(instructions, iIndex, branchTargets))
+            {
+                instructions.RemoveRange(iIndex, 2);
+                changed = true;
+                continue;
+            }
+
+            iIndex++;
+        }
+
+        return changed;
+    }
+
+    private static bool CanApplyRule1(IReadOnlyList<Instruction> instructions, int start, HashSet<int> branchTargets)
+    {
+        if (!CanRewriteSlice(instructions, start, 2, branchTargets))
+            return false;
+
+        return TryGetLoadLocalKey(instructions[start], out var loadKey) &&
+               TryGetStoreLocalKey(instructions[start + 1], out var storeKey) &&
+               loadKey == storeKey;
+    }
+
+    private static bool CanApplyRule2(IReadOnlyList<Instruction> instructions, int start, HashSet<int> branchTargets)
+    {
+        if (!CanRewriteSlice(instructions, start, 2, branchTargets))
+            return false;
+
+        if (!TryGetStoreLocalKey(instructions[start], out var localKey) ||
+            !TryGetLoadLocalKey(instructions[start + 1], out var loadedKey) ||
+            loadedKey != localKey)
+            return false;
+
+        return !HasLoadBeforeBoundary(instructions, start + 2, localKey);
+    }
+
+    private static bool CanApplyRule3(IReadOnlyList<Instruction> instructions, int start, HashSet<int> branchTargets, out Instruction replacement)
+    {
+        replacement = null!;
+        if (start + 2 >= instructions.Count)
+            return false;
+
+        if (!CanRewriteSlice(instructions, start, 3, branchTargets))
+            return false;
+
+        if (!TryGetStoreLocalKey(instructions[start], out var localKey) ||
+            !TryGetLoadLocalKey(instructions[start + 1], out var loadedKey) ||
+            loadedKey != localKey ||
+            !TryGetStoreLocalKey(instructions[start + 2], out _))
+            return false;
+
+        if (HasLoadBeforeBoundary(instructions, start + 3, localKey))
+            return false;
+
+        replacement = instructions[start + 2];
+        return true;
+    }
+
+    private static bool CanRewriteSlice(IReadOnlyList<Instruction> instructions, int start, int length, HashSet<int> branchTargets)
+    {
+        if (start + length > instructions.Count)
+            return false;
+
+        for (var i = start; i < start + length; i++)
+        {
+            if (branchTargets.Contains(i))
+                return false;
+            if (i > 0 && instructions[i - 1].UOpCode == UOpCode.Label)
+                return false;
+        }
+
+        return true;
+    }
+
+    private static bool HasLoadBeforeBoundary(IReadOnlyList<Instruction> instructions, int start, string localKey)
+    {
+        for (var i = start; i < instructions.Count; i++)
+        {
+            if (IsBlockBoundary(instructions[i]))
+                return false;
+            if (TryGetLoadLocalKey(instructions[i], out var key) && key == localKey)
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool IsBlockBoundary(Instruction instruction) =>
+        instruction.UOpCode == UOpCode.Label ||
+        instruction.UOpCode == UOpCode.Jmp ||
+        instruction.UOpCode == UOpCode.JmpIf ||
+        instruction.UOpCode == UOpCode.JmpIfNot ||
+        IsIntrinsicName(instruction, "ret") ||
+        IsIntrinsicName(instruction, "throw") ||
+        IsIntrinsicBranch(instruction);
+
+    private static bool IsIntrinsicBranch(Instruction instruction)
+    {
+        if (instruction.UOpCode != UOpCode.Intrinsic || instruction.Operands.Count == 0 || instruction.Operands[0] is not string name)
+            return false;
+
+        return name == "switch" ||
+               name == "leave" ||
+               name.StartsWith("br", StringComparison.Ordinal);
+    }
+
+    private static bool IsIntrinsicName(Instruction instruction, string name) =>
+        instruction.UOpCode == UOpCode.Intrinsic &&
+        instruction.Operands.Count > 0 &&
+        instruction.Operands[0] is string intrinsicName &&
+        intrinsicName == name;
+
+    private static HashSet<int> CollectBranchTargets(IReadOnlyList<Instruction> instructions, IReadOnlyDictionary<object, int> labelToIndex)
+    {
+        var result = new HashSet<int>();
+        for (var i = 0; i < instructions.Count; i++)
+        {
+            foreach (var target in ExtractBranchTargets(instructions[i]))
+                if (labelToIndex.TryGetValue(target, out var index))
+                    result.Add(index);
+        }
+
+        return result;
+    }
+
+    private static bool HasBackwardBranch(IReadOnlyList<Instruction> instructions, IReadOnlyDictionary<object, int> labelToIndex)
+    {
+        for (var i = 0; i < instructions.Count; i++)
+        {
+            foreach (var target in ExtractBranchTargets(instructions[i]))
+            {
+                if (labelToIndex.TryGetValue(target, out var targetIndex) && targetIndex <= i)
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static IEnumerable<object> ExtractBranchTargets(Instruction instruction)
+    {
+        if ((instruction.UOpCode == UOpCode.Jmp || instruction.UOpCode == UOpCode.JmpIf || instruction.UOpCode == UOpCode.JmpIfNot) &&
+            instruction.Operands.Count > 0)
+        {
+            yield return instruction.Operands[0];
+        }
+
+        if (instruction.UOpCode == UOpCode.Intrinsic && instruction.Operands.Count > 1 && instruction.Operands[0] is string name)
+        {
+            if (name == "switch" && instruction.Operands[1] is IEnumerable<object> labels)
+            {
+                foreach (var label in labels)
+                    yield return label;
+            }
+            else if ((name == "leave" || name.StartsWith("br", StringComparison.Ordinal)) && instruction.Operands[1] is not null)
+            {
+                yield return instruction.Operands[1];
+            }
+        }
+    }
+
+    private static bool IsLabel(Instruction instruction, out object label)
+    {
+        if (instruction.UOpCode == UOpCode.Label && instruction.Operands.Count > 0)
+        {
+            label = instruction.Operands[0];
+            return true;
+        }
+
+        label = null!;
+        return false;
+    }
+
+    private static bool TryGetLoadLocalKey(Instruction instruction, out string localKey)
+    {
+        localKey = string.Empty;
+        if (instruction.UOpCode != UOpCode.Intrinsic || instruction.Operands.Count == 0 || instruction.Operands[0] is not string name)
+            return false;
+
+        if (name == "load_local" && instruction.Operands.Count > 1)
+        {
+            localKey = instruction.Operands[1].ToString().NotNull();
+            return true;
+        }
+
+        return TryGetNormalizedLocalFromCilName(name, instruction.Operands, "ldloc", out localKey);
+    }
+
+    private static bool TryGetStoreLocalKey(Instruction instruction, out string localKey)
+    {
+        localKey = string.Empty;
+        if (instruction.UOpCode != UOpCode.Intrinsic || instruction.Operands.Count == 0 || instruction.Operands[0] is not string name)
+            return false;
+
+        if (name == "store_local" && instruction.Operands.Count > 1)
+        {
+            localKey = instruction.Operands[1].ToString().NotNull();
+            return true;
+        }
+
+        return TryGetNormalizedLocalFromCilName(name, instruction.Operands, "stloc", out localKey);
+    }
+
+    private static bool TryGetNormalizedLocalFromCilName(string name, IReadOnlyList<object> operands, string prefix, out string localKey)
+    {
+        localKey = string.Empty;
+        if (name == prefix || name == $"{prefix}.s")
+        {
+            if (operands.Count < 2)
+                return false;
+
+            localKey = operands[1].ToString().NotNull();
+            return true;
+        }
+
+        if (name.StartsWith($"{prefix}.", StringComparison.Ordinal) &&
+            int.TryParse(name[(prefix.Length + 1)..], out var shortIndex))
+        {
+            localKey = shortIndex.ToString();
+            return true;
+        }
+
+        return false;
     }
 }

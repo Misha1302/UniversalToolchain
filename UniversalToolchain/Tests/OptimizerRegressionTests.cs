@@ -129,6 +129,227 @@ public class OptimizerRegressionTests
         Assert.That(optimized.Instructions[5].UOpCode, Is.EqualTo(UOpCode.Push));
     }
 
+
+    [Test]
+    public void LocalRoundtripPass_ShouldRemoveAdjacentStoreLoad_WhenValueIsNotReadLater()
+    {
+        var module = new LocalVariablesOptimizer();
+        var compiler = new FakeCompiler(["store_local", "load_local", "load_local_ref"]);
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [1]),
+            new Instruction(UOpCode.Intrinsic, ["store_local", "x", typeof(int)]),
+            new Instruction(UOpCode.Intrinsic, ["load_local", "x", typeof(int)]),
+            new Instruction(UOpCode.Drop)
+        );
+
+        var optimized = module.ProcessIr(ir, compiler);
+
+        Assert.That(optimized.Instructions.Select(x => x.ToString()), Is.EqualTo(new[]
+        {
+            new Instruction(UOpCode.Push, [1]).ToString(),
+            new Instruction(UOpCode.Drop).ToString()
+        }));
+    }
+
+    [Test]
+    public void LocalRoundtripPass_ShouldFoldStoreLoadStoreIntoDirectStore()
+    {
+        var module = new LocalVariablesOptimizer();
+        var compiler = new FakeCompiler(["store_local", "load_local", "load_local_ref"]);
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [5]),
+            new Instruction(UOpCode.Intrinsic, ["store_local", "x", typeof(int)]),
+            new Instruction(UOpCode.Intrinsic, ["load_local", "x", typeof(int)]),
+            new Instruction(UOpCode.Intrinsic, ["store_local", "y", typeof(int)])
+        );
+
+        var optimized = module.ProcessIr(ir, compiler);
+
+        Assert.That(optimized.Instructions, Has.Count.EqualTo(2));
+        Assert.That(optimized.Instructions[1].Operands[0], Is.EqualTo("store_local"));
+        Assert.That(optimized.Instructions[1].Operands[1], Is.EqualTo("y"));
+    }
+
+    [Test]
+    public void LocalRoundtripPass_ShouldNotOptimize_WhenLocalIsReadBeforeBoundary()
+    {
+        var module = new LocalVariablesOptimizer();
+        var compiler = new FakeCompiler(["store_local", "load_local", "load_local_ref"]);
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [7]),
+            new Instruction(UOpCode.Intrinsic, ["store_local", "x", typeof(int)]),
+            new Instruction(UOpCode.Intrinsic, ["load_local", "x", typeof(int)]),
+            new Instruction(UOpCode.Drop),
+            new Instruction(UOpCode.Intrinsic, ["load_local", "x", typeof(int)])
+        );
+
+        var optimized = module.ProcessIr(ir, compiler);
+
+        Assert.That(optimized.Instructions, Has.Count.EqualTo(ir.Instructions.Count));
+        Assert.That(optimized.Instructions[1].Operands[0], Is.EqualTo("store_local"));
+        Assert.That(optimized.Instructions[2].Operands[0], Is.EqualTo("load_local"));
+    }
+
+    [Test]
+    public void LocalRoundtripPass_ShouldNotOptimize_WhenPatternTouchesBranchTarget()
+    {
+        var module = new LocalVariablesOptimizer();
+        var compiler = new FakeCompiler(["store_local", "load_local", "load_local_ref"]);
+        var label = Guid.NewGuid();
+        var ir = BuildIr(
+            new Instruction(UOpCode.Jmp, [label]),
+            new Instruction(UOpCode.Label, [label]),
+            new Instruction(UOpCode.Intrinsic, ["store_local", "x", typeof(int)]),
+            new Instruction(UOpCode.Intrinsic, ["load_local", "x", typeof(int)])
+        );
+
+        var optimized = module.ProcessIr(ir, compiler);
+
+        Assert.That(optimized.Instructions, Has.Count.EqualTo(ir.Instructions.Count));
+    }
+
+    [Test]
+    public void LocalRoundtripPass_ShouldKeepStackNonNegative_OnStraightLineSequence()
+    {
+        var module = new LocalVariablesOptimizer();
+        var compiler = new FakeCompiler(["store_local", "load_local", "load_local_ref"]);
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [11]),
+            new Instruction(UOpCode.Intrinsic, ["store_local", "x", typeof(int)]),
+            new Instruction(UOpCode.Intrinsic, ["load_local", "x", typeof(int)]),
+            new Instruction(UOpCode.Intrinsic, ["store_local", "y", typeof(int)]),
+            new Instruction(UOpCode.Intrinsic, ["load_local", "y", typeof(int)]),
+            new Instruction(UOpCode.Drop)
+        );
+
+        var optimized = module.ProcessIr(ir, compiler);
+        var stack = new List<Type>();
+
+        Assert.DoesNotThrow(() => optimized.Instructions.ManipulateTypesStack(stack, AirTypes.ProcessTypesIntrinsic));
+        Assert.That(stack, Is.Empty);
+    }
+
+    [Test]
+    public void LocalRoundtripPass_ShouldNotOptimizeRoundtripInsideLoop()
+    {
+        var module = new LocalVariablesOptimizer();
+        var compiler = new FakeCompiler(["store_local", "load_local", "load_local_ref"]);
+        var loopLabel = Guid.NewGuid();
+        var ir = BuildIr(
+            new Instruction(UOpCode.Label, [loopLabel]),
+            new Instruction(UOpCode.Push, [1]),
+            new Instruction(UOpCode.Intrinsic, ["store_local", "x", typeof(int)]),
+            new Instruction(UOpCode.Intrinsic, ["load_local", "x", typeof(int)]),
+            new Instruction(UOpCode.Drop),
+            new Instruction(UOpCode.Jmp, [loopLabel])
+        );
+
+        var optimized = module.ProcessIr(ir, compiler);
+
+        Assert.That(optimized.Instructions, Has.Count.EqualTo(ir.Instructions.Count));
+        Assert.That(optimized.Instructions[2].Operands[0], Is.EqualTo("store_local"));
+        Assert.That(optimized.Instructions[3].Operands[0], Is.EqualTo("load_local"));
+    }
+
+    [Test]
+    public void LocalRoundtripPass_ShouldNotOptimizeLdlocStloc_WhenImmediatelyAfterLabel()
+    {
+        var module = new LocalVariablesOptimizer();
+        var compiler = new FakeCompiler(["store_local", "load_local", "load_local_ref"]);
+        var loopLabel = Guid.NewGuid();
+        var ir = BuildIr(
+            new Instruction(UOpCode.Label, [loopLabel]),
+            new Instruction(UOpCode.Intrinsic, ["load_local", "x", typeof(int)]),
+            new Instruction(UOpCode.Intrinsic, ["store_local", "x", typeof(int)]),
+            new Instruction(UOpCode.Jmp, [loopLabel])
+        );
+
+        var optimized = module.ProcessIr(ir, compiler);
+
+        Assert.That(optimized.Instructions, Has.Count.EqualTo(ir.Instructions.Count));
+        Assert.That(optimized.Instructions[1].Operands[0], Is.EqualTo("load_local"));
+        Assert.That(optimized.Instructions[2].Operands[0], Is.EqualTo("store_local"));
+    }
+
+    [Test]
+    public void LocalRoundtripPass_ShouldNotOptimizeStoreLoadStoreInsideLoop()
+    {
+        var module = new LocalVariablesOptimizer();
+        var compiler = new FakeCompiler(["store_local", "load_local", "load_local_ref"]);
+        var loopLabel = Guid.NewGuid();
+        var ir = BuildIr(
+            new Instruction(UOpCode.Label, [loopLabel]),
+            new Instruction(UOpCode.Push, [2]),
+            new Instruction(UOpCode.Intrinsic, ["store_local", "x", typeof(int)]),
+            new Instruction(UOpCode.Intrinsic, ["load_local", "x", typeof(int)]),
+            new Instruction(UOpCode.Intrinsic, ["store_local", "y", typeof(int)]),
+            new Instruction(UOpCode.Jmp, [loopLabel])
+        );
+
+        var optimized = module.ProcessIr(ir, compiler);
+
+        Assert.That(optimized.Instructions, Has.Count.EqualTo(ir.Instructions.Count));
+        Assert.That(optimized.Instructions[2].Operands[0], Is.EqualTo("store_local"));
+        Assert.That(optimized.Instructions[3].Operands[0], Is.EqualTo("load_local"));
+        Assert.That(optimized.Instructions[4].Operands[0], Is.EqualTo("store_local"));
+    }
+
+    [Test]
+    public void LocalRoundtripPass_ShouldRecognizeCilStyleLocalAliases()
+    {
+        var module = new LocalVariablesOptimizer();
+        var compiler = new FakeCompiler(["store_local", "load_local", "load_local_ref"]);
+        var ir = BuildIr(
+            new Instruction(UOpCode.Intrinsic, ["ldloc.0"]),
+            new Instruction(UOpCode.Intrinsic, ["stloc.0"])
+        );
+
+        var optimized = module.ProcessIr(ir, compiler);
+
+        Assert.That(optimized.Instructions, Is.Empty);
+    }
+
+    [Test]
+    public void LocalRoundtripPass_ShouldNotOptimizeCilStyleStoreLoad_WhenLocalReadBeforeBoundary()
+    {
+        var module = new LocalVariablesOptimizer();
+        var compiler = new FakeCompiler(["store_local", "load_local", "load_local_ref"]);
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [5]),
+            new Instruction(UOpCode.Intrinsic, ["stloc.s", "0"]),
+            new Instruction(UOpCode.Intrinsic, ["ldloc.s", "0"]),
+            new Instruction(UOpCode.Drop),
+            new Instruction(UOpCode.Intrinsic, ["ldloc.s", "0"])
+        );
+
+        var optimized = module.ProcessIr(ir, compiler);
+
+        Assert.That(optimized.Instructions, Has.Count.EqualTo(ir.Instructions.Count));
+        Assert.That(optimized.Instructions[1].Operands[0], Is.EqualTo("stloc.s"));
+        Assert.That(optimized.Instructions[2].Operands[0], Is.EqualTo("ldloc.s"));
+    }
+
+    [Test]
+    public void LocalRoundtripPass_ShouldOptimizeLdlocStloc_WhenNotNearLabelOrTarget()
+    {
+        var module = new LocalVariablesOptimizer();
+        var compiler = new FakeCompiler(["store_local", "load_local", "load_local_ref"]);
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [10]),
+            new Instruction(UOpCode.Intrinsic, ["store_local", "x", typeof(int)]),
+            new Instruction(UOpCode.Intrinsic, ["load_local", "x", typeof(int)]),
+            new Instruction(UOpCode.Intrinsic, ["store_local", "x", typeof(int)]),
+            new Instruction(UOpCode.Drop)
+        );
+
+        var optimized = module.ProcessIr(ir, compiler);
+
+        Assert.That(optimized.Instructions, Has.Count.EqualTo(3));
+        Assert.That(optimized.Instructions[0].UOpCode, Is.EqualTo(UOpCode.Push));
+        Assert.That(optimized.Instructions[1].Operands[0], Is.EqualTo("store_local"));
+        Assert.That(optimized.Instructions[2].UOpCode, Is.EqualTo(UOpCode.Drop));
+    }
+
     private static MethodInfo GetSetValueToMethod()
     {
         var helperType = typeof(AbstractIrExtensions.AbstractIrExtensions)
