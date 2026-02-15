@@ -229,7 +229,7 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
             Thrower.AssertAlways(method.DeclaringType != null);
 
             var methodParams = method.GetParameters().Select(x => x.ParameterType).ToList();
-            var stackTypes = stack.TakeLast(methodParams.Count).Reverse().ToList();
+            var stackTypes = stack.TakeLast(methodParams.Count).ToList();
             var targetTypes = GenericTypeResolver.GetParameterTypes(method, stackTypes).ToList();
             if (!method.IsStatic)
             {
@@ -252,7 +252,7 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
             Thrower.AssertAlways(method.DeclaringType != null);
 
             var targetTypes = method.GetParameters().Select(x => x.ParameterType).ToList();
-            var stackTypes = stack.TakeLast(targetTypes.Count).Reverse().ToList();
+            var stackTypes = stack.TakeLast(targetTypes.Count).ToList();
             CastValuesToTypes(data, targetTypes, stackTypes);
             data.Il.Newobj(method);
 
@@ -536,39 +536,81 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
 
     private void CastValuesToTypes(CompilationData data, IReadOnlyList<Type> targetTypes, IReadOnlyList<Type> stackTypes)
     {
-        return;
-        var n = targetTypes.Count;
-        var locals = new GroboIL.Local[n];
-        for (var i = 0; i < locals.Length; i++)
-        {
-            var locType = targetTypes[locals.Length - 1 - i];
-            if (stackTypes[i] != locType)
-            {
-                if (stackTypes[i].IsValueType && !locType.IsValueType)
-                {
-                    var locToLoadRef = data.Il.DeclareLocal(stackTypes[i]);
-                    if (stackTypes[i].IsByRef)
-                    {
-                        data.Il.Stloc(locToLoadRef);
-                        data.Il.Ldloca(locToLoadRef);
-                    }
-                    else
-                    {
-                        data.Il.Box(stackTypes[i]);
-                    }
-                }
-                else
-                {
-                    Thrower.InvalidOpEx($"Cannot cast {stackTypes[i]} to {locType}");
-                }
-            }
+        Thrower.AssertAlways(targetTypes.Count == stackTypes.Count);
 
-            locals[i] = data.Il.DeclareLocal(locType);
+        var needCasting = false;
+        for (var i = 0; i < targetTypes.Count; i++)
+        {
+            if (!NeedsCast(targetTypes[i], stackTypes[i]))
+                continue;
+
+            needCasting = true;
+            break;
+        }
+
+        if (!needCasting)
+            return;
+
+        var locals = new GroboIL.Local[targetTypes.Count];
+        for (var i = targetTypes.Count - 1; i >= 0; i--)
+        {
+            var sourceType = stackTypes[i];
+            locals[i] = data.Il.DeclareLocal(sourceType);
             data.Il.Stloc(locals[i]);
         }
 
-        for (var i = locals.Length - 1; i >= 0; i--)
+        for (var i = 0; i < targetTypes.Count; i++)
+        {
+            var sourceType = stackTypes[i];
+            var targetType = targetTypes[i];
+
             data.Il.Ldloc(locals[i]);
+            EmitCast(data, sourceType, targetType);
+        }
+    }
+
+    private static bool NeedsCast(Type targetType, Type sourceType)
+    {
+        if (targetType == sourceType)
+            return false;
+
+        if (targetType.IsByRef || sourceType.IsByRef)
+        {
+            Thrower.AssertAlways(targetType == sourceType, $"Cannot cast {sourceType} to {targetType}");
+            return false;
+        }
+
+        if (sourceType.IsValueType && !targetType.IsValueType)
+            return true;
+
+        if (!sourceType.IsValueType && !targetType.IsValueType && targetType.IsAssignableFrom(sourceType))
+            return false;
+
+        Thrower.InvalidOpEx($"Cannot cast {sourceType} to {targetType}");
+        return false;
+    }
+
+    private static void EmitCast(CompilationData data, Type sourceType, Type targetType)
+    {
+        if (targetType == sourceType)
+            return;
+
+        if (targetType.IsByRef || sourceType.IsByRef)
+        {
+            Thrower.AssertAlways(targetType == sourceType, $"Cannot cast {sourceType} to {targetType}");
+            return;
+        }
+
+        if (sourceType.IsValueType && !targetType.IsValueType)
+        {
+            data.Il.Box(sourceType);
+            return;
+        }
+
+        if (!sourceType.IsValueType && !targetType.IsValueType && targetType.IsAssignableFrom(sourceType))
+            return;
+
+        Thrower.InvalidOpEx($"Cannot cast {sourceType} to {targetType}");
     }
 
     private class CompilationData(GroboIL il, List<(Guid id, GroboIL.Label label)> instructionLabels, Dictionary<string, int> parametersIndices)

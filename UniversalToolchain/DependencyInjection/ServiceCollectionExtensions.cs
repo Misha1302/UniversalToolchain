@@ -242,7 +242,7 @@ public static class ServiceCollectionExtensions
 
     private static void RegisterCoreRunnables(IServiceCollection services)
     {
-        var cores = new List<CoreFactory>
+        var cores = (List<CoreFactory>)
         [
             new(typeof(DynamicMethod), provider =>
                 {

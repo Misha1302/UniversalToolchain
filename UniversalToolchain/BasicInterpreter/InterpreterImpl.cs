@@ -115,7 +115,7 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
         }
 
         // Используем ту же логику, что и в компиляторе
-        var stackTypes = argsTypes.AsReadOnly().Reverse().ToList(); // Восстанавливаем порядок как в стеках компилятора
+        var stackTypes = argsTypes.AsReadOnly().ToList(); // Восстанавливаем порядок как в стеках компилятора
         var targetTypes = GenericTypeResolver.GetParameterTypes(method, stackTypes).ToList();
 
         // Приводим аргументы к нужным типам, если необходимо

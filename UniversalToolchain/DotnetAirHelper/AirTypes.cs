@@ -20,7 +20,7 @@ public static class AirTypes
                 var method = instruction.Operands[1].Get<MethodInfo>();
 
                 var methodParams = method.GetParameters().Select(x => x.ParameterType).ToList();
-                var stackTypes = stack.TakeLast(methodParams.Count).Reverse().ToList();
+                var stackTypes = stack.TakeLast(methodParams.Count).ToList();
                 var targetTypes = GenericTypeResolver.GetParameterTypes(method, stackTypes).ToList();
                 if (!method.IsStatic)
                 {

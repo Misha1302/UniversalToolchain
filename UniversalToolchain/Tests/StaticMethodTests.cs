@@ -37,4 +37,36 @@ public class StaticMethodTests : TestBase
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(42).Within(1e-9));
     }
+
+    [Test]
+    public void Execute_StaticMethodWithObjectArgs_ReturnsExpectedString()
+    {
+        var code = @"
+                System.String.Concat(1, 2)
+            ";
+
+
+        var result = ExecuteCode(code);
+
+
+        Assert.That(result, Is.EqualTo("12"));
+    }
+
+    [Test]
+    public void Execute_StaticMethodWithVoidReturn_AndValueFromVariable_HandlesVoidCorrectly()
+    {
+        var code = @"
+                let value = 2
+                Main.Print(value)
+                Main.Get42()
+            ";
+
+
+        var result = ExecuteCode(code);
+
+
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(42).Within(1e-9));
+    }
+
 }

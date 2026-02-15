@@ -52,6 +52,13 @@ public class NativeFunctionOverloadingTests : TestBase
     }
 
     [Test]
+    public void Execute_SystemMathPowOverloads_NativeMode_IntAndDouble_WidensIntToDouble()
+    {
+        var code = "System.Math.Pow(2, 3.0)";
+        Assert.Throws<InvalidOperationException>(() => ExecuteCode<double>(code));
+    }
+
+    [Test]
     public void Execute_SystemMathSqrtOverloads_NativeMode_Double()
     {
         var code = "System.Math.Sqrt(25.0)";
