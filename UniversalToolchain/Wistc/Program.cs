@@ -2,6 +2,7 @@
 using System.Reflection.Emit;
 using AssemblyFinder;
 using DependencyInjection;
+using ExceptionsManager;
 using IntermediateRepresentationAbstractions;
 using Microsoft.Extensions.DependencyInjection;
 using NativeMathModule;
@@ -74,7 +75,7 @@ string GetCode(RunOptions options)
     if (!string.IsNullOrEmpty(options.File))
     {
         if (!File.Exists(options.File))
-            throw new FileNotFoundException($"File not found: {options.File}");
+            Thrower.FileNotFound(options.File);
         return File.ReadAllText(options.File);
     }
 
@@ -171,7 +172,8 @@ ICoreRunnable GetCoreRunnable(IServiceProvider provider, string mode)
 
         return interpreter ?? runnables.Last();
     }
-    throw new ArgumentException($"Unknown mode: {mode}. Use 'compiler' or 'interpreter'.");
+    Thrower.Argument(nameof(mode), $"Unknown execution mode '{mode}'. Supported modes: 'compiler', 'interpreter'.");
+    return null;
 }
 
 void ListAllModules()

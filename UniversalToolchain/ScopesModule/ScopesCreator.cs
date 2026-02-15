@@ -1,4 +1,5 @@
 using BasicCore.ParserWrapper;
+using ExceptionsManager;
 using AstNodeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.ParserWrapper.AstNodeTag>;
 
 namespace ScopesModule;
@@ -29,7 +30,7 @@ public class ScopesCreator : IAstNodeCreator
             else if (child.NodeType == AstNodeType.CreateOrGet("ClosePar")) opensCount--;
 
             if (opensCount < 0)
-                throw new InvalidOperationException("Unexpected closing bracket without matching opening bracket.");
+                Thrower.InvalidOpEx("Scope parsing failed: found closing bracket without a matching opening bracket.");
 
             if (opensCount == 1 && start == -1)
                 start = i;
@@ -52,7 +53,7 @@ public class ScopesCreator : IAstNodeCreator
         }
 
         if (opensCount != 0)
-            throw new InvalidOperationException("Unclosed opening bracket in scope.");
+            Thrower.InvalidOpEx("Scope parsing failed: at least one opening bracket was not closed.");
 
         return done;
     }

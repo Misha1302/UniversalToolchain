@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using ExceptionsManager;
 using System.Reflection;
 using DynamicMethodCalling;
 using GrEmit;
@@ -160,7 +161,7 @@ public class DynamicMethodInvokerConcurrencyTests
                     // Правильный ожидаемый результат
                     var expected = (threadId * 1000 + i) * (methodIndex + 1);
                     if (result != expected)
-                        throw new InvalidOperationException($"Некорректный результат: {result}, ожидалось: {expected}");
+                        Thrower.InvalidOpEx($"Некорректный результат конкурентного вызова: {result}, ожидалось: {expected}.");
                 }
             }
             catch (Exception ex)

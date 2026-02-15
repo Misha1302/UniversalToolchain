@@ -1,4 +1,5 @@
 using IntermediateRepresentationAbstractions;
+using ExceptionsManager;
 using ObjectExtensions;
 
 namespace BasicInterpreter;
@@ -31,7 +32,7 @@ public class InterpreterState
     public int GetLabelPosition(Guid labelId)
     {
         if (!_labelPositions.TryGetValue(labelId, out var position))
-            throw new InvalidOperationException($"Label {labelId} not found");
+            Thrower.InvalidOpEx($"Label with id '{labelId}' was not found in the instruction stream.");
 
         return position;
     }

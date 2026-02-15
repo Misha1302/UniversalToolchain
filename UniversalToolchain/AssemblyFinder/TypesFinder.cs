@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.Loader;
+using ExceptionsManager;
 
 namespace AssemblyFinder;
 
@@ -42,7 +43,7 @@ public static class TypesFinder
     {
         var type = AllTypes.FirstOrDefault(x => x.FullName == name);
         if (type == null)
-            throw new InvalidOperationException($"Cannot find type: {name}");
+            Thrower.InvalidOpEx($"Type '{name}' was not found among loaded assemblies.");
         return type;
     }
 
@@ -255,7 +256,8 @@ public static class TypesFinder
     // Метод для добавления сборок вручную (например, для тестирования)
     public static void RegisterAssembly(Assembly assembly)
     {
-        if (assembly == null) throw new ArgumentNullException(nameof(assembly));
+        if (assembly == null)
+            Thrower.ArgumentNull(nameof(assembly));
 
         lock (_syncLock)
         {

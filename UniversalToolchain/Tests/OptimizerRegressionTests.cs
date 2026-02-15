@@ -1,4 +1,5 @@
 using System.Reflection;
+using ExceptionsManager;
 using AbstractIrExtensions;
 using DotnetAirHelper;
 using IntermediateRepresentationAbstractions;
@@ -68,7 +69,7 @@ public class OptimizerRegressionTests
         );
 
         var exception = Assert.Throws<InvalidOperationException>(() => creator.TryCreateNode(root, 0));
-        Assert.That(exception!.Message, Does.Contain("Unclosed opening bracket"));
+        Assert.That(exception!.Message, Does.Contain("opening bracket was not closed"));
     }
 
     [Test]
@@ -149,7 +150,7 @@ public class OptimizerRegressionTests
 
         public object Compile(IAbstractIR air, OrderedDictionary<string, Type> parameters)
         {
-            throw new NotSupportedException();
+            return Thrower.NotSupported<object>("Fake compiler cannot compile IR in this test scenario.");
         }
     }
 }

@@ -1,6 +1,7 @@
 using System.Reflection;
 using BasicCore.ExecutorWrapper;
 using DotnetHelper;
+using ExceptionsManager;
 using IntermediateRepresentationAbstractions;
 using ObjectExtensions;
 
@@ -79,7 +80,8 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
                 ExecuteIntrinsic(instruction, state);
                 break;
             default:
-                throw new InvalidOperationException($"Unknown opcode: {instruction.UOpCode}");
+                Thrower.InvalidOpEx($"Unsupported opcode encountered: {instruction.UOpCode}.");
+                break;
         }
     }
 
@@ -91,7 +93,7 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
         else if (intrinsicName == "call C# ctor")
             ExecuteCSharpConstructor(instruction, state);
         else
-            throw new InvalidOperationException($"Unknown intrinsic: {intrinsicName}");
+            Thrower.InvalidOpEx($"Unsupported intrinsic call: {intrinsicName}.");
     }
 
     private void ExecuteCSharpCall(Instruction instruction, InterpreterState state)
@@ -107,7 +109,7 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
         for (var i = parameters.Length - 1; i >= 0; i--)
         {
             if (state.ValueStack.Count == 0)
-                throw new InvalidOperationException("Not enough arguments on stack");
+                Thrower.InvalidOpEx("Cannot call method: not enough arguments on the interpreter stack.");
 
             var value = state.ValueStack.Pop();
             args[i] = value;
@@ -146,7 +148,7 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
         {
             // Для нестатических методов, экземпляр должен быть в стеке перед аргументами
             if (state.ValueStack.Count == 0)
-                throw new InvalidOperationException("No instance on stack for instance method");
+                Thrower.InvalidOpEx("Cannot call instance method: object instance is missing on the interpreter stack.");
 
             var instance = state.ValueStack.Pop();
             result = method.Invoke(instance, args) ?? new object();
@@ -169,7 +171,7 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
         for (var i = parameters.Length - 1; i >= 0; i--)
         {
             if (state.ValueStack.Count == 0)
-                throw new InvalidOperationException("Not enough arguments on stack");
+                Thrower.InvalidOpEx("Cannot call constructor: not enough arguments on the interpreter stack.");
 
             var value = state.ValueStack.Pop();
             args[i] = value;

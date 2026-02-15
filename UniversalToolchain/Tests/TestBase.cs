@@ -1,4 +1,5 @@
 ﻿using DependencyInjection;
+using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Tests;
@@ -86,7 +87,7 @@ public abstract class TestBase
         if (value is int i && t == typeof(bool))
             return i == 1;
 
-        throw new InvalidCastException($"Cannot convert result of type {value.GetType()} to {t}");
+        return Thrower.InvalidCast<object?>($"Cannot convert test result from type {value.GetType()} to {t}.");
     }
 
     /// <summary>

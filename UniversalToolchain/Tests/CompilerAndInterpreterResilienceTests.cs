@@ -93,7 +93,7 @@ public class CompilerAndInterpreterResilienceTests
 
         var exception = Assert.Throws<InvalidOperationException>(() => ExecuteInInterpreter(ir));
 
-        Assert.That(exception!.Message, Does.Contain("No instance on stack"));
+        Assert.That(exception!.Message, Does.Contain("instance is missing"));
     }
 
     [Test]
@@ -109,7 +109,7 @@ public class CompilerAndInterpreterResilienceTests
 
         var exception = Assert.Throws<InvalidOperationException>(() => ExecuteInInterpreter(ir));
 
-        Assert.That(exception!.Message, Does.Contain("Not enough arguments on stack"));
+        Assert.That(exception!.Message, Does.Contain("not enough arguments"));
     }
 
     [Test]
@@ -119,7 +119,7 @@ public class CompilerAndInterpreterResilienceTests
 
         var exception = Assert.Throws<InvalidOperationException>(() => ExecuteInInterpreter(ir));
 
-        Assert.That(exception!.Message, Does.Contain("Unknown intrinsic"));
+        Assert.That(exception!.Message, Does.Contain("unknown intrinsic"));
     }
 
     [Test]

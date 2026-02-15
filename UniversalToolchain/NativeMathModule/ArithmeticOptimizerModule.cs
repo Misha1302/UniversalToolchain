@@ -1,6 +1,7 @@
 using System.Reflection;
 using BasicCore;
 using DotnetAirHelper;
+using ExceptionsManager;
 using IntermediateRepresentationAbstractions;
 using JetBrains.Annotations;
 using ListExtensions;
@@ -162,7 +163,7 @@ public class ArithmeticOptimizerModule : IIRProcessingModule
         "f32" => typeof(float),
         "f64" => typeof(double),
         "decimal" => typeof(decimal),
-        _ => throw new NotSupportedException($"Unknown type suffix: {suffix}")
+        _ => Thrower.NotSupported<Type>($"Type suffix '{suffix}' is not supported.")
     };
 
     private class CompilationContext
