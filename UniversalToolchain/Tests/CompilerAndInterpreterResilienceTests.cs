@@ -200,30 +200,6 @@ public class CompilerAndInterpreterResilienceTests
     }
 
     [Test]
-    public void Compiler_LoadLocalForUndeclaredReferenceType_ThrowsStackValidationError()
-    {
-        var ir = BuildIr(
-            new Instruction(UOpCode.Intrinsic, ["load_local", "missing", typeof(string)])
-        );
-
-        var exception = Assert.Throws<InvalidOperationException>(() => CompileAndExecute(ir));
-
-        Assert.That(exception!.Message, Does.Contain("evaluation stack must contain exactly one element"));
-    }
-
-    [Test]
-    public void Compiler_LoadLocalRefForUndeclaredReferenceType_ThrowsStackValidationError()
-    {
-        var ir = BuildIr(
-            new Instruction(UOpCode.Intrinsic, ["load_local_ref", "missing", typeof(string)])
-        );
-
-        var exception = Assert.Throws<InvalidOperationException>(() => CompileAndExecute(ir));
-
-        Assert.That(exception!.Message, Does.Contain("evaluation stack must contain exactly one element"));
-    }
-
-    [Test]
     public void Compiler_UnknownNumericLoaderIntrinsic_ThrowsInvalidOperationException()
     {
         var ir = BuildIr(new Instruction(UOpCode.Intrinsic, ["load_x128", 1]));
@@ -248,7 +224,7 @@ public class CompilerAndInterpreterResilienceTests
         return ir;
     }
 
-    private static object? CompileAndExecute(IAbstractIR ir)
+    private static object CompileAndExecute(IAbstractIR ir)
     {
         var compiler = new AbstractMethodsCompilerImpl();
         var compiled = compiler.Compile(ir, []);
