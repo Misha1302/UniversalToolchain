@@ -52,7 +52,6 @@ public class BooleanOptimizerModule : IIRProcessingModule
             (_, stack) =>
             {
                 stack.Pop();
-                stack.Pop();
                 stack.Push(typeof(bool));
             }
         );

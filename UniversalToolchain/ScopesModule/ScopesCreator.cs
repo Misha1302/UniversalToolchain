@@ -28,6 +28,9 @@ public class ScopesCreator : IAstNodeCreator
             if (child.NodeType == AstNodeType.CreateOrGet("OpenPar")) opensCount++;
             else if (child.NodeType == AstNodeType.CreateOrGet("ClosePar")) opensCount--;
 
+            if (opensCount < 0)
+                throw new InvalidOperationException("Unexpected closing bracket without matching opening bracket.");
+
             if (opensCount == 1 && start == -1)
                 start = i;
 
@@ -47,6 +50,9 @@ public class ScopesCreator : IAstNodeCreator
                 start = -1;
             }
         }
+
+        if (opensCount != 0)
+            throw new InvalidOperationException("Unclosed opening bracket in scope.");
 
         return done;
     }

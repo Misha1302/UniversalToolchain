@@ -146,7 +146,10 @@ public class NativeCilOptimizerModule : IIRProcessingModule
                 var valueType = value.GetType();
 
                 if (valueType == typeof(decimal) && !_isDecimalsSupported)
+                {
+                    context.NewInstructions.Add(instruction);
                     continue;
+                }
 
                 if (_supportedTypes.Contains(valueType) && _cilGenerators.TryGetValue(valueType, out var generator))
                 {

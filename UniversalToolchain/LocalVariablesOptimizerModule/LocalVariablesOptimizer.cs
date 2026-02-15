@@ -50,40 +50,52 @@ public class LocalVariablesOptimizer : IIRProcessingModule
     {
         var instructions = air.Instructions.ToList();
         var newInstructions = new List<Instruction>();
+        var sourceIndexes = new List<int>();
 
         for (var i = 0; i < instructions.Count; i++)
         {
             // Store pattern: Push value, Push "varName", GetRef, SetValue
             if (i >= 2 && IsStorePattern(instructions[i - 2], instructions[i - 1], instructions[i]))
             {
-                // Remove the last two instructions from newInstructions (push string and GetRef)
-                if (newInstructions.Count >= 2)
+                // Remove only instructions that were really appended for this exact pattern.
+                if (sourceIndexes.Count >= 2 &&
+                    sourceIndexes[^2] == i - 2 &&
+                    sourceIndexes[^1] == i - 1)
+                {
                     newInstructions.RemoveRange(newInstructions.Count - 2, 2);
+                    sourceIndexes.RemoveRange(sourceIndexes.Count - 2, 2);
 
-                // Create new store_local intrinsic
-                var storeLocalInstr = CreateStoreLocalIntrinsic(instructions[i - 2], instructions[i - 1]);
-                newInstructions.Add(storeLocalInstr);
+                    // Create new store_local intrinsic
+                    var storeLocalInstr = CreateStoreLocalIntrinsic(instructions[i - 2], instructions[i - 1]);
+                    newInstructions.Add(storeLocalInstr);
+                    sourceIndexes.Add(i);
 
-                // Skip the SetValue instruction
-                continue;
+                    // Skip the SetValue instruction
+                    continue;
+                }
             }
 
             // Load pattern: Push "varName", Get
             if (i >= 1 && IsLoadPattern(instructions[i - 1], instructions[i]))
             {
-                // Remove the last instruction from newInstructions (push string)
-                if (newInstructions.Count >= 1)
+                // Remove only instruction that was really appended for this exact pattern.
+                if (sourceIndexes.Count >= 1 && sourceIndexes[^1] == i - 1)
+                {
                     newInstructions.RemoveAt(newInstructions.Count - 1);
+                    sourceIndexes.RemoveAt(sourceIndexes.Count - 1);
 
-                // Create new load_local intrinsic
-                var loadLocalInstr = CreateLoadLocalIntrinsic(instructions[i - 1], instructions[i]);
-                newInstructions.Add(loadLocalInstr);
+                    // Create new load_local intrinsic
+                    var loadLocalInstr = CreateLoadLocalIntrinsic(instructions[i - 1], instructions[i]);
+                    newInstructions.Add(loadLocalInstr);
+                    sourceIndexes.Add(i);
 
-                // Skip the Get instruction
-                continue;
+                    // Skip the Get instruction
+                    continue;
+                }
             }
 
             newInstructions.Add(instructions[i]);
+            sourceIndexes.Add(i);
         }
 
         var resultAir = new AbstractIR();
