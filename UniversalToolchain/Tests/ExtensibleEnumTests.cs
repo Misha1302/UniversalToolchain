@@ -35,4 +35,27 @@ public class ExtensibleEnumTests
 
         Assert.That(name, Is.EqualTo("TestName"));
     }
+
+    [Test]
+    public void CreateOrGet_ConcurrentAccess_DoesNotBreakNameToIdMapping()
+    {
+        var names = Enumerable.Range(0, 100)
+            .Select(x => $"ConcurrentType_{Guid.NewGuid()}_{x}")
+            .ToArray();
+
+        Parallel.ForEach(
+            names,
+            name =>
+            {
+                for (var i = 0; i < 20; i++)
+                    _ = ExtensibleEnum<object>.CreateOrGet(name);
+            }
+        );
+
+        foreach (var name in names)
+        {
+            var enumValue = ExtensibleEnum<object>.CreateOrGet(name);
+            Assert.That(enumValue.GetName(), Is.EqualTo(name));
+        }
+    }
 }

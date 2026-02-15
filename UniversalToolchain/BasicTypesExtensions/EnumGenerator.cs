@@ -1,12 +1,12 @@
 ﻿using ExceptionsManager;
+using System.Collections.Concurrent;
 
 namespace BasicTypesExtensions;
 
 public class EnumGenerator
 {
-    private static readonly Dictionary<Type, EnumGenerator> _dict = [];
+    private static readonly ConcurrentDictionary<Type, EnumGenerator> _dict = [];
     private readonly SetAndList<string> _setAndList = new();
-    private int _num;
 
     private EnumGenerator()
     {
@@ -16,9 +16,7 @@ public class EnumGenerator
     {
         Thrower.AssertAlways(!typeof(T).Name.Contains("ExtensibleEnum"));
 
-        return _dict.TryGetValue(typeof(T), out var value)
-            ? value
-            : _dict[typeof(T)] = new EnumGenerator();
+        return _dict.GetOrAdd(typeof(T), _ => new EnumGenerator());
     }
 
     public ExtensibleEnum<T> Get<T>(string name)
@@ -31,9 +29,8 @@ public class EnumGenerator
 
     public ExtensibleEnum<T> CreateOrGet<T>(string name)
     {
-        if (_setAndList.IndexOf(name) != -1) return Get<T>(name);
-        _setAndList.Add(name);
-        return new ExtensibleEnum<T>(_num++);
+        var index = _setAndList.GetOrAdd(name);
+        return new ExtensibleEnum<T>(index);
     }
 
     public string GetName(int value) => _setAndList[value];
@@ -43,14 +40,43 @@ public class SetAndList<T> where T : notnull
 {
     private readonly List<T> _list = [];
     private readonly Dictionary<T, int> _valueToIndex = [];
+    private readonly Lock _lock = new();
 
-    public T this[int value] => _list[value];
+    public T this[int value]
+    {
+        get
+        {
+            lock (_lock)
+                return _list[value];
+        }
+    }
 
-    public int IndexOf(T name) => _valueToIndex.GetValueOrDefault(name, -1);
+    public int IndexOf(T name)
+    {
+        lock (_lock)
+            return _valueToIndex.GetValueOrDefault(name, -1);
+    }
 
     public void Add(T name)
     {
-        _list.Add(name);
-        _valueToIndex[name] = _list.Count - 1;
+        lock (_lock)
+        {
+            _list.Add(name);
+            _valueToIndex[name] = _list.Count - 1;
+        }
+    }
+
+    public int GetOrAdd(T name)
+    {
+        lock (_lock)
+        {
+            if (_valueToIndex.TryGetValue(name, out var existingIndex))
+                return existingIndex;
+
+            var newIndex = _list.Count;
+            _list.Add(name);
+            _valueToIndex[name] = newIndex;
+            return newIndex;
+        }
     }
 }

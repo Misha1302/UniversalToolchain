@@ -242,61 +242,59 @@ public static class ServiceCollectionExtensions
 
     private static void RegisterCoreRunnables(IServiceCollection services)
     {
-        var cores = (List<Func<IServiceProvider, ICoreRunnable>>)
+        var cores = new List<CoreFactory>
         [
-            (Func<IServiceProvider, BasicCoreImpl<DynamicMethod>>)(provider =>
-            {
-                var modules = provider.GetServices<IFrontendCoreModule>().ToList();
-                var irProcessors = provider.GetServices<IIRProcessingModule>().ToList();
+            new(typeof(DynamicMethod), provider =>
+                {
+                    var modules = provider.GetServices<IFrontendCoreModule>().ToList();
+                    var irProcessors = provider.GetServices<IIRProcessingModule>().ToList();
 
-                return new BasicCoreImpl<DynamicMethod>(
-                    provider.GetRequiredService<Func<ILexer>>(),
-                    provider.GetRequiredService<Func<IParser>>(),
-                    provider.GetRequiredService<Func<IAstToBytecodeTranslator>>(),
-                    provider.GetRequiredService<Func<IAbstractMethodsTranslator>>(),
-                    () => provider.GetRequiredService<AbstractMethodsCompilerImpl>(),
-                    provider.GetRequiredService<Func<IExecutor<DynamicMethod>>>(),
-                    modules,
-                    irProcessors,
-                    []
-                );
-            }),
-            (Func<IServiceProvider, BasicCoreImpl<IAbstractIR>>)(provider =>
-            {
-                var modules = provider.GetServices<IFrontendCoreModule>().ToList();
-                var irProcessors = provider.GetServices<IIRProcessingModule>().ToList();
+                    return new BasicCoreImpl<DynamicMethod>(
+                        provider.GetRequiredService<Func<ILexer>>(),
+                        provider.GetRequiredService<Func<IParser>>(),
+                        provider.GetRequiredService<Func<IAstToBytecodeTranslator>>(),
+                        provider.GetRequiredService<Func<IAbstractMethodsTranslator>>(),
+                        () => provider.GetRequiredService<AbstractMethodsCompilerImpl>(),
+                        provider.GetRequiredService<Func<IExecutor<DynamicMethod>>>(),
+                        modules,
+                        irProcessors,
+                        []
+                    );
+                }
+            ),
+            new(typeof(IAbstractIR), provider =>
+                {
+                    var modules = provider.GetServices<IFrontendCoreModule>().ToList();
+                    var irProcessors = provider.GetServices<IIRProcessingModule>().ToList();
 
-                return new BasicCoreImpl<IAbstractIR>(
-                    provider.GetRequiredService<Func<ILexer>>(),
-                    provider.GetRequiredService<Func<IParser>>(),
-                    provider.GetRequiredService<Func<IAstToBytecodeTranslator>>(),
-                    provider.GetRequiredService<Func<IAbstractMethodsTranslator>>(),
-                    () => provider.GetRequiredService<AbstractIrToAbstractIrStub>(),
-                    provider.GetRequiredService<Func<IExecutor<IAbstractIR>>>(),
-                    modules,
-                    irProcessors,
-                    []
-                );
-            })
+                    return new BasicCoreImpl<IAbstractIR>(
+                        provider.GetRequiredService<Func<ILexer>>(),
+                        provider.GetRequiredService<Func<IParser>>(),
+                        provider.GetRequiredService<Func<IAstToBytecodeTranslator>>(),
+                        provider.GetRequiredService<Func<IAbstractMethodsTranslator>>(),
+                        () => provider.GetRequiredService<AbstractIrToAbstractIrStub>(),
+                        provider.GetRequiredService<Func<IExecutor<IAbstractIR>>>(),
+                        modules,
+                        irProcessors,
+                        []
+                    );
+                }
+            )
         ];
 
         RegisterWithInterface<ICoreRunnable>(services, cores);
         RegisterWithInterface<ICoreOptimizedRunnable>(services, cores);
-        RegisterWithInterface<IExecutableGiver<IAbstractIR>>(
-            services,
-            cores.Where(x => x.GetType() == typeof(Func<IServiceProvider, BasicCoreImpl<IAbstractIR>>))
-        );
-        RegisterWithInterface<IExecutableGiver<DynamicMethod>>(
-            services,
-            cores.Where(x => x.GetType() == typeof(Func<IServiceProvider, BasicCoreImpl<DynamicMethod>>))
-        );
+        RegisterWithInterface<IExecutableGiver<IAbstractIR>>(services, cores.Where(x => x.CompilationType == typeof(IAbstractIR)));
+        RegisterWithInterface<IExecutableGiver<DynamicMethod>>(services, cores.Where(x => x.CompilationType == typeof(DynamicMethod)));
     }
 
-    private static void RegisterWithInterface<T>(IServiceCollection services, IEnumerable<Func<IServiceProvider, ICoreRunnable>> cores) where T : class
+    private static void RegisterWithInterface<T>(IServiceCollection services, IEnumerable<CoreFactory> cores) where T : class
     {
         foreach (var core in cores)
-            services.AddTransient<T>(provider => (T)core(provider));
+            services.AddTransient<T>(provider => (T)core.Factory(provider));
     }
+
+    private sealed record CoreFactory(Type CompilationType, Func<IServiceProvider, ICoreRunnable> Factory);
 }
 
 /// <summary>
