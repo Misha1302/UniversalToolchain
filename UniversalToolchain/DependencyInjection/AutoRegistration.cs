@@ -28,9 +28,19 @@ public static class AutoRegistration
     private static void RegisterServices(IServiceCollection services, IEnumerable<Type> types)
     {
         var serviceTypes = types
-            .Where(t => t.IsClass && !t.IsAbstract)
-            .Select(t => (Type: t, Attr: t.GetCustomAttribute<AutoRegisterServiceAttribute>()))
-            .Where(x => x.Attr != null)
+            .Where(t => t is { IsClass: true, IsAbstract: false })
+            .Select(t =>
+            {
+                try
+                {
+                    return (Type: t, Attr: t.GetCustomAttribute<AutoRegisterServiceAttribute>());
+                }
+                catch
+                {
+                    return default;
+                }
+            })
+            .Where(x => x is { Type: not null, Attr: not null })
             .ToList();
 
         foreach (var (type, attribute) in serviceTypes)

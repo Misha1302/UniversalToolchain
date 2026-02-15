@@ -14,6 +14,8 @@ global using BasicStdLib;
 global using BytecodeDynamicMethodsCompiler;
 global using ConditionsModule;
 global using CSharpInteropModule;
+global using DependencyInjection;
+global using DynamicMethodCalling;
 global using EqualityModule;
 global using ExecutorLoggerModule;
 global using IdentifierModule;

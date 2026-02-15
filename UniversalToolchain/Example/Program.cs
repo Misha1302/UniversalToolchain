@@ -1,6 +1,3 @@
-using DependencyInjection;
-using DynamicMethodCalling;
-
 // Setup DI with auto-registration
 var services = new ServiceCollection();
 
@@ -17,13 +14,20 @@ var provider = services.BuildServiceProvider();
 var core = provider.GetServices<IExecutableGiver<DynamicMethod>>().First();
 
 
-var complexMethod = core.GetExecutable(
+var method = core.GetExecutable(
     """
-    if a < b a else b
+    let i = a, sum = 0
+    @start:
+        if i > b goto @end
+        System.Console.WriteLine(i)
+        sum = sum + i; i = i + 1 
+        goto @start
+    @end:
+    sum
     """,
     new OrderedDictionary<string, Type> { { "a", typeof(int) }, { "b", typeof(int) } }
 );
 
 
-var fastCallable = new DynamicMethodInvoker<int, int, int>(complexMethod);
-Console.WriteLine(fastCallable.Invoke(8, 15));
+var fastCallable = new DynamicMethodInvoker<int, int, int>(method);
+Console.WriteLine("Result: " + fastCallable.Invoke(7, 15));
