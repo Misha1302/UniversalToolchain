@@ -6,6 +6,8 @@ using BasicTypesExtensions;
 using DynamicMethodWrapper;
 using ExceptionsManager;
 using JetBrains.Annotations;
+using IntermediateRepresentationAbstractions;
+using System.Diagnostics;
 
 namespace ConditionsModule;
 
@@ -56,114 +58,133 @@ public class BooleanVisitor : IAstVisitor
 
     private void VisitBooleanOperationWithShortCircuit(BytecodeVisitorData data)
     {
-        var op = data.Node.NodeType;
-        var isAnd = op.GetName() == "And";
+        var labelsBefore = DebugMetrics.Labels;
+        var condJumpsBefore = DebugMetrics.ConditionalJumps;
+        var jumpsBefore = DebugMetrics.Jumps;
 
-        // Генерируем уникальные метки для управления потоком
         var falseLabel = Guid.NewGuid();
         var trueLabel = Guid.NewGuid();
         var endLabel = Guid.NewGuid();
 
-        // 1. Вычисляем левый операнд
-        data.AstToBytecodeTranslator.Translate(data.Node.Children[0]);
+        EmitCond(data, data.Node, trueLabel, falseLabel);
 
-        // 2. Условный переход в зависимости от операции
-        if (isAnd)
+        EmitLabel(data, $"BoolTrueLabel_{trueLabel}", trueLabel);
+        EmitInstruction(data, $"PushBoolean_true_{trueLabel}", (il, _) => il.Push(true));
+        EmitJump(data, $"BoolJumpEnd_{endLabel}", endLabel);
+
+        EmitLabel(data, $"BoolFalseLabel_{falseLabel}", falseLabel);
+        EmitInstruction(data, $"PushBoolean_false_{falseLabel}", (il, _) => il.Push(false));
+
+        EmitLabel(data, $"BoolEndLabel_{endLabel}", endLabel);
+
+        DebugLogMetrics(labelsBefore, condJumpsBefore, jumpsBefore);
+    }
+
+    /// <summary>
+    ///     Генерирует булево выражение через управление потоком без materialize bool на стеке.
+    ///     Переходит в trueLabel если node истинно, иначе в falseLabel.
+    /// </summary>
+    private void EmitCond(BytecodeVisitorData data, AstNode node, Guid trueLabel, Guid falseLabel)
+    {
+        var nodeType = node.NodeType;
+
+        if (nodeType == ExtensibleEnum<AstNodeTag>.Get("And"))
         {
-            var condJumpMethod = new AbstractMethodImpl(
-                $"BoolCondJump_{op.GetName()}_{falseLabel}",
-                (il, _) => il.JmpIfNot(falseLabel)
-            );
-            data.Bytecode.Instructions.Add(new BytecodeInstruction(condJumpMethod));
-        }
-        else
-        {
-            var condJumpMethod = new AbstractMethodImpl(
-                $"BoolCondJump_{op.GetName()}_{trueLabel}",
-                (il, _) => il.JmpIf(trueLabel)
-            );
-            data.Bytecode.Instructions.Add(new BytecodeInstruction(condJumpMethod));
-        }
-
-
-        // 3. Вычисляем правый операнд
-        data.AstToBytecodeTranslator.Translate(data.Node.Children[1]);
-
-        // 4. Для AND: если оба true -> true, иначе -> false
-        //    Для OR: если оба false -> false, иначе -> true
-        if (isAnd)
-        {
-            // После вычисления правого операнда для AND
-            // Если правый false -> переход к false
-            var rightFalseJump = new AbstractMethodImpl(
-                $"BoolAndRightFalse_{falseLabel}",
-                (il, _) => il.JmpIfNot(falseLabel)
-            );
-            data.Bytecode.Instructions.Add(new BytecodeInstruction(rightFalseJump));
-
-            // Оба true - переход к true
-            var jumpToTrue = new AbstractMethodImpl(
-                $"BoolAndJumpTrue_{trueLabel}",
-                (il, _) => il.Jmp(trueLabel)
-            );
-            data.Bytecode.Instructions.Add(new BytecodeInstruction(jumpToTrue));
-        }
-        else // OR
-        {
-            // После вычисления правого операнда для OR
-            // Если правый true -> переход к true
-            var rightTrueJump = new AbstractMethodImpl(
-                $"BoolOrRightTrue_{trueLabel}",
-                (il, _) => il.JmpIf(trueLabel)
-            );
-            data.Bytecode.Instructions.Add(new BytecodeInstruction(rightTrueJump));
-
-            // Оба false - переход к false
-            var jumpToFalse = new AbstractMethodImpl(
-                $"BoolOrJumpFalse_{falseLabel}",
-                (il, _) => il.Jmp(falseLabel)
-            );
-            data.Bytecode.Instructions.Add(new BytecodeInstruction(jumpToFalse));
+            // A && B:
+            // EmitCond(A, mid, false)
+            // mid:
+            // EmitCond(B, true, false)
+            var midLabel = Guid.NewGuid();
+            EmitCond(data, node.Children[0], midLabel, falseLabel);
+            EmitLabel(data, $"BoolAndMidLabel_{midLabel}", midLabel);
+            EmitCond(data, node.Children[1], trueLabel, falseLabel);
+            return;
         }
 
-        // 5. Метка false (результат false)
-        var falseLabelMethod = new AbstractMethodImpl(
-            $"BoolFalseLabel_{falseLabel}",
-            (il, _) => il.SetLabel(falseLabel)
-        );
-        data.Bytecode.Instructions.Add(new BytecodeInstruction(falseLabelMethod));
+        if (nodeType == ExtensibleEnum<AstNodeTag>.Get("Or"))
+        {
+            // A || B:
+            // EmitCond(A, true, mid)
+            // mid:
+            // EmitCond(B, true, false)
+            var midLabel = Guid.NewGuid();
+            EmitCond(data, node.Children[0], trueLabel, midLabel);
+            EmitLabel(data, $"BoolOrMidLabel_{midLabel}", midLabel);
+            EmitCond(data, node.Children[1], trueLabel, falseLabel);
+            return;
+        }
 
-        var pushFalseMethod = new AbstractMethodImpl(
-            $"PushBoolean_false_{falseLabel}",
-            (il, _) => il.Push(false)
-        );
-        data.Bytecode.Instructions.Add(new BytecodeInstruction(pushFalseMethod));
+        if (nodeType == ExtensibleEnum<AstNodeTag>.Get("Not"))
+        {
+            // !A == swap(true, false)
+            EmitCond(data, node.Children[0], falseLabel, trueLabel);
+            return;
+        }
 
-        var jumpToEnd = new AbstractMethodImpl(
-            $"BoolJumpEnd_{endLabel}",
-            (il, _) => il.Jmp(endLabel)
-        );
-        data.Bytecode.Instructions.Add(new BytecodeInstruction(jumpToEnd));
+        if (nodeType == ExtensibleEnum<AstNodeTag>.Get("True"))
+        {
+            EmitJump(data, $"BoolConstTrueJump_{trueLabel}", trueLabel);
+            return;
+        }
 
-        // 6. Метка true (результат true)
-        var trueLabelMethod = new AbstractMethodImpl(
-            $"BoolTrueLabel_{trueLabel}",
-            (il, _) => il.SetLabel(trueLabel)
-        );
-        data.Bytecode.Instructions.Add(new BytecodeInstruction(trueLabelMethod));
+        if (nodeType == ExtensibleEnum<AstNodeTag>.Get("False"))
+        {
+            EmitJump(data, $"BoolConstFalseJump_{falseLabel}", falseLabel);
+            return;
+        }
 
-        var pushTrueMethod = new AbstractMethodImpl(
-            $"PushBoolean_true_{trueLabel}",
-            (il, _) => il.Push(true)
-        );
-        data.Bytecode.Instructions.Add(new BytecodeInstruction(pushTrueMethod));
+        // Базовый случай: вычисляем bool-значение на стеке ровно один раз,
+        // затем делаем один условный и один безусловный переход.
+        data.AstToBytecodeTranslator.Translate(node);
+        EmitConditionalJump(data, $"BoolCondTrueJump_{trueLabel}", trueLabel, jumpIfTrue: true);
+        EmitJump(data, $"BoolCondFalseJump_{falseLabel}", falseLabel);
+    }
 
-        // 7. Метка конца
-        var endLabelMethod = new AbstractMethodImpl(
-            $"BoolEndLabel_{endLabel}",
-            (il, _) => il.SetLabel(endLabel)
-        );
-        data.Bytecode.Instructions.Add(new BytecodeInstruction(endLabelMethod));
+    private void EmitInstruction(BytecodeVisitorData data, string name, Action<IntermediateRepresentationAbstractions.IAbstractIR, IAbstractMethodConvertable.Context> emit)
+    {
+        var method = new AbstractMethodImpl(name, emit);
+        data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
+    }
+
+    private void EmitLabel(BytecodeVisitorData data, string name, Guid label)
+    {
+        EmitInstruction(data, name, (il, _) => il.SetLabel(label));
+        DebugMetrics.Labels++;
+    }
+
+    private void EmitJump(BytecodeVisitorData data, string name, Guid label)
+    {
+        EmitInstruction(data, name, (il, _) => il.Jmp(label));
+        DebugMetrics.Jumps++;
+    }
+
+    private void EmitConditionalJump(BytecodeVisitorData data, string name, Guid label, bool jumpIfTrue)
+    {
+        EmitInstruction(
+            data,
+            name,
+            (il, _) =>
+            {
+                if (jumpIfTrue)
+                    il.JmpIf(label);
+                else
+                    il.JmpIfNot(label);
+            });
+        DebugMetrics.ConditionalJumps++;
+    }
+
+    [Conditional("DEBUG")]
+    private static void DebugLogMetrics(int labelsBefore, int condJumpsBefore, int jumpsBefore)
+    {
+        Debug.WriteLine(
+            $"[BooleanVisitor] labels={DebugMetrics.Labels - labelsBefore}, condJumps={DebugMetrics.ConditionalJumps - condJumpsBefore}, jumps={DebugMetrics.Jumps - jumpsBefore}");
+    }
+
+    private static class DebugMetrics
+    {
+        public static int Labels;
+        public static int ConditionalJumps;
+        public static int Jumps;
     }
 
     [UsedImplicitly]

@@ -47,4 +47,4 @@ python3 script_to_one_file.py --pattern '\.cs(?![a-zA-Z0-9])|\.md' --root ./.. -
 
 python3 script_to_one_file.py --pattern '\.cs(?![a-zA-Z0-9])|\.md' --root ./.. --exclude-pattern '^(?!.*Tests).+$|.*?(?<![a-zA-Z])(bin|obj)(?![a-zA-Z]).*?' --output "tests.txt" $COMPRESS_FLAG $REMOVE_USING_FLAG $REMOVE_COMMENTS_FLAG
 
-
+python3 script_to_one_file.py --pattern '\.cs(?![a-zA-Z0-9])|\.md' --root ./.. --exclude-pattern '.*?(?<![a-zA-Z])(bin|obj)(?![a-zA-Z]).*?' --output "all.txt" $COMPRESS_FLAG $REMOVE_USING_FLAG
