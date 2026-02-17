@@ -196,8 +196,10 @@ public class LocalVariablesOptimizer : IIRProcessingModule
 
         var labelToIndex = new Dictionary<object, int>();
         for (var i = 0; i < instructions.Count; i++)
+        {
             if (IsLabel(instructions[i], out var label))
                 labelToIndex[label] = i;
+        }
 
         var branchTargets = CollectBranchTargets(instructions, labelToIndex);
         var hasBackwardBranches = HasBackwardBranch(instructions, labelToIndex);
@@ -338,8 +340,10 @@ public class LocalVariablesOptimizer : IIRProcessingModule
         for (var i = 0; i < instructions.Count; i++)
         {
             foreach (var target in ExtractBranchTargets(instructions[i]))
+            {
                 if (labelToIndex.TryGetValue(target, out var index))
                     result.Add(index);
+            }
         }
 
         return result;
@@ -363,21 +367,15 @@ public class LocalVariablesOptimizer : IIRProcessingModule
     {
         if ((instruction.UOpCode == UOpCode.Jmp || instruction.UOpCode == UOpCode.JmpIf || instruction.UOpCode == UOpCode.JmpIfNot) &&
             instruction.Operands.Count > 0)
-        {
             yield return instruction.Operands[0];
-        }
 
         if (instruction.UOpCode == UOpCode.Intrinsic && instruction.Operands.Count > 1 && instruction.Operands[0] is string name)
         {
             if (name == "switch" && instruction.Operands[1] is IEnumerable<object> labels)
-            {
                 foreach (var label in labels)
                     yield return label;
-            }
             else if ((name == "leave" || name.StartsWith("br", StringComparison.Ordinal)) && instruction.Operands[1] is not null)
-            {
                 yield return instruction.Operands[1];
-            }
         }
     }
 
