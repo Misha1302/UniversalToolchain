@@ -1,8 +1,0 @@
-let i = 0
-
-@start:
-    if i >= 5 goto @end
-    i = i + 1
-    Main.Print(i)
-    goto @start
-@end:

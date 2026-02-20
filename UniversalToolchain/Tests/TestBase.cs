@@ -1,6 +1,3 @@
-﻿using DependencyInjection;
-using Microsoft.Extensions.DependencyInjection;
-
 namespace Tests;
 
 [TestFixture]
