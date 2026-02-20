@@ -88,6 +88,31 @@ public class ArithmeticModuleImpl : IFrontendCoreModule
 }
 ----------------------------------------
 
+# ./../ArithmeticModule/BinaryOperationBase.cs
+using BasicCore.ParserWrapper;
+using BasicTypesExtensions;
+
+namespace ArithmeticModule;
+
+public abstract class BinaryOperationBase(string enumStr) : IAstNodeCreator
+{
+    public virtual ExtensibleEnum<AstNodeTag> AstNodeType => ExtensibleEnum<AstNodeTag>.CreateOrGet(enumStr);
+
+    public bool TryCreateNode(AstNode scope, int childIndex)
+    {
+        var child = scope.Children[childIndex];
+        if (child.NodeType != AstNodeType) return false;
+
+        child.Children.Add(scope.Children[childIndex - 1]);
+        child.Children.Add(scope.Children[childIndex + 1]);
+        scope.Children.RemoveAt(childIndex + 1);
+        scope.Children.RemoveAt(childIndex - 1);
+
+        return true;
+    }
+}
+----------------------------------------
+
 # ./../ArithmeticModule/AdditionOperationNodeCreator.cs
 using BasicCore;
 
@@ -163,31 +188,6 @@ public class ArithmeticAstVisitor : IAstVisitor
         );
 
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
-    }
-}
-----------------------------------------
-
-# ./../ArithmeticModule/BinaryOperationBase.cs
-using BasicCore.ParserWrapper;
-using BasicTypesExtensions;
-
-namespace ArithmeticModule;
-
-public abstract class BinaryOperationBase(string enumStr) : IAstNodeCreator
-{
-    public virtual ExtensibleEnum<AstNodeTag> AstNodeType => ExtensibleEnum<AstNodeTag>.CreateOrGet(enumStr);
-
-    public bool TryCreateNode(AstNode scope, int childIndex)
-    {
-        var child = scope.Children[childIndex];
-        if (child.NodeType != AstNodeType) return false;
-
-        child.Children.Add(scope.Children[childIndex - 1]);
-        child.Children.Add(scope.Children[childIndex + 1]);
-        scope.Children.RemoveAt(childIndex + 1);
-        scope.Children.RemoveAt(childIndex - 1);
-
-        return true;
     }
 }
 ----------------------------------------
@@ -2835,6 +2835,46 @@ public static class Comparisons
 }
 ----------------------------------------
 
+# ./../ConditionsModule/CondNodesCombiner.cs
+using BasicCore.ParserWrapper;
+using BasicTypesExtensions;
+using ExceptionsManager;
+
+namespace ConditionsModule;
+
+public class CondNodesCombiner : IAstNodeCreator
+{
+    public ExtensibleEnum<AstNodeTag> AstNodeType { get; } = ExtensibleEnum<AstNodeTag>.CreateOrGet("If");
+    public Predicate<AstNode> NeedToVisitPredicate => _ => true;
+
+    public bool TryCreateNode(AstNode scope, int childIndex)
+    {
+        if (scope.SafeGet(childIndex)?.NodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("If"))
+            return false;
+
+        var condNode = scope.SafeGet(childIndex).NotNull();
+        var changed = false;
+        while (true)
+        {
+            var nextNode = scope.SafeGet(childIndex + 1);
+            if (nextNode == null) break;
+
+            var type = nextNode.NodeType;
+            if (type != ExtensibleEnum<AstNodeTag>.CreateOrGet("Elif") &&
+                type != ExtensibleEnum<AstNodeTag>.CreateOrGet("Else"))
+                break;
+
+            condNode.Children.Add(nextNode);
+            scope.Children.RemoveAt(childIndex + 1);
+            condNode = nextNode;
+            changed = true;
+        }
+
+        return changed;
+    }
+}
+----------------------------------------
+
 # ./../ConditionsModule/ConditionsModuleImpl.cs
 ﻿using BasicCore;
 using BasicCore.LexerWrapper;
@@ -3092,6 +3132,167 @@ public class ComparisonNodeCreator(string nodeType) : IAstNodeCreator
 }
 ----------------------------------------
 
+# ./../ConditionsModule/BooleanNodeCreator.cs
+using BasicCore;
+using BasicCore.ParserWrapper;
+using BasicTypesExtensions;
+
+namespace ConditionsModule;
+
+[AutoRegisterService]
+public class BooleanNodeCreator(string nodeType, BooleanNodeCreator.BooleanStatementType type) : IAstNodeCreator
+{
+    public enum BooleanStatementType
+    {
+        Constant,
+        UnaryOperation,
+        BinaryOperation
+    }
+
+    public ExtensibleEnum<AstNodeTag> AstNodeType { get; } = ExtensibleEnum<AstNodeTag>.CreateOrGet(nodeType);
+
+    public bool TryCreateNode(AstNode scope, int childIndex)
+    {
+        var currentNode = scope.SafeGet(childIndex);
+        if (currentNode?.NodeType != AstNodeType)
+            return false;
+
+        var node = scope[childIndex];
+
+        if (type == BooleanStatementType.UnaryOperation && scope.SafeGet(childIndex + 1) != null)
+        {
+            // Unary NOT operation
+            node.Children.Add(scope[childIndex + 1]);
+            scope.Children.RemoveAt(childIndex + 1);
+        }
+        else if (type == BooleanStatementType.BinaryOperation)
+        {
+            // Binary operations
+            if (scope.SafeGet(childIndex - 1) != null)
+            {
+                node.Children.Add(scope[childIndex - 1]);
+                scope.Children.RemoveAt(childIndex - 1);
+                childIndex--;
+            }
+
+            if (scope.SafeGet(childIndex + 1) != null)
+            {
+                node.Children.Add(scope[childIndex + 1]);
+                scope.Children.RemoveAt(childIndex + 1);
+            }
+        }
+
+        return true;
+    }
+}
+----------------------------------------
+
+# ./../ConditionsModule/BooleanOptimizer.cs
+using System.Reflection;
+using BasicCore;
+using DotnetAirHelper;
+using IntermediateRepresentationAbstractions;
+using JetBrains.Annotations;
+using ListExtensions;
+using ObjectExtensions;
+using UniversalIntermediateRepresentation;
+
+namespace ConditionsModule;
+
+[AutoRegisterService]
+[UsedImplicitly]
+public class BooleanOptimizerModule : IIRProcessingModule
+{
+    private static readonly IReadOnlyList<string> _standardModuleIntrinsics =
+    [
+        "boolean_and", "boolean_or", "boolean_not"
+    ];
+
+    public IAbstractIR ProcessIr<TCompilationOutput>(IAbstractIR current, IAbstractIrCompiler<TCompilationOutput> compiler)
+    {
+        if (_standardModuleIntrinsics.Any(x => !compiler.SupportedIntrinsics.Contains(x)))
+            return current;
+
+        InitializeAirTypes();
+        return OptimizeNativeLoads(current);
+    }
+
+    private void InitializeAirTypes()
+    {
+        AirTypes.TryRegisterIntrinsic(
+            "boolean_and",
+            (_, stack) =>
+            {
+                stack.Pop();
+                stack.Pop();
+                stack.Push(typeof(bool));
+            }
+        );
+        AirTypes.TryRegisterIntrinsic(
+            "boolean_or",
+            (_, stack) =>
+            {
+                stack.Pop();
+                stack.Pop();
+                stack.Push(typeof(bool));
+            }
+        );
+        AirTypes.TryRegisterIntrinsic(
+            "boolean_not",
+            (_, stack) =>
+            {
+                stack.Pop();
+                stack.Push(typeof(bool));
+            }
+        );
+    }
+
+    private IAbstractIR OptimizeNativeLoads(IAbstractIR air)
+    {
+        var instructions = air.Instructions.ToList();
+        var context = new CompilationContext();
+
+        var methodToIntrinsic = new Dictionary<string, string>
+        {
+            [nameof(BooleanVisitor.BooleanOperations.And)] = "boolean_and",
+            [nameof(BooleanVisitor.BooleanOperations.Or)] = "boolean_or",
+            [nameof(BooleanVisitor.BooleanOperations.Not)] = "boolean_not"
+        };
+
+        for (var i = 0; i < instructions.Count; i++)
+        {
+            var instruction = instructions[i];
+
+            if (instruction.UOpCode == UOpCode.Intrinsic)
+                if (instruction.Operands.Count >= 2 && instruction.Operands[0] == "call C#")
+                {
+                    var m = instruction.Operands[1].Get<MethodInfo>();
+
+                    if (m.DeclaringType == typeof(BooleanVisitor.BooleanOperations))
+                        if (methodToIntrinsic.TryGetValue(m.Name, out var intrinsicName))
+                        {
+                            context.NewInstructions.Add(new Instruction(UOpCode.Intrinsic, [intrinsicName]));
+                            continue;
+                        }
+                }
+
+            context.NewInstructions.Add(instruction);
+        }
+
+        var result = new AbstractIR();
+        result.AppendInstructions(context.NewInstructions);
+        return result;
+    }
+
+    private class CompilationContext
+    {
+        public List<Instruction> NewInstructions { get; } =
+        [
+        ];
+    }
+}
+----------------------------------------
+
 # ./../ConditionsModule/BooleanVisitor.cs
 using AbstractIrExtensions;
 using BasicCore;
@@ -3272,207 +3473,6 @@ public class BooleanVisitor : IAstVisitor
 
         [UsedImplicitly]
         public static bool Not(bool a) => !a;
-    }
-}
-----------------------------------------
-
-# ./../ConditionsModule/BooleanNodeCreator.cs
-using BasicCore;
-using BasicCore.ParserWrapper;
-using BasicTypesExtensions;
-
-namespace ConditionsModule;
-
-[AutoRegisterService]
-public class BooleanNodeCreator(string nodeType, BooleanNodeCreator.BooleanStatementType type) : IAstNodeCreator
-{
-    public enum BooleanStatementType
-    {
-        Constant,
-        UnaryOperation,
-        BinaryOperation
-    }
-
-    public ExtensibleEnum<AstNodeTag> AstNodeType { get; } = ExtensibleEnum<AstNodeTag>.CreateOrGet(nodeType);
-
-    public bool TryCreateNode(AstNode scope, int childIndex)
-    {
-        var currentNode = scope.SafeGet(childIndex);
-        if (currentNode?.NodeType != AstNodeType)
-            return false;
-
-        var node = scope[childIndex];
-
-        if (type == BooleanStatementType.UnaryOperation && scope.SafeGet(childIndex + 1) != null)
-        {
-            // Unary NOT operation
-            node.Children.Add(scope[childIndex + 1]);
-            scope.Children.RemoveAt(childIndex + 1);
-        }
-        else if (type == BooleanStatementType.BinaryOperation)
-        {
-            // Binary operations
-            if (scope.SafeGet(childIndex - 1) != null)
-            {
-                node.Children.Add(scope[childIndex - 1]);
-                scope.Children.RemoveAt(childIndex - 1);
-                childIndex--;
-            }
-
-            if (scope.SafeGet(childIndex + 1) != null)
-            {
-                node.Children.Add(scope[childIndex + 1]);
-                scope.Children.RemoveAt(childIndex + 1);
-            }
-        }
-
-        return true;
-    }
-}
-----------------------------------------
-
-# ./../ConditionsModule/CondNodesCombiner.cs
-using BasicCore.ParserWrapper;
-using BasicTypesExtensions;
-using ExceptionsManager;
-
-namespace ConditionsModule;
-
-public class CondNodesCombiner : IAstNodeCreator
-{
-    public ExtensibleEnum<AstNodeTag> AstNodeType { get; } = ExtensibleEnum<AstNodeTag>.CreateOrGet("If");
-    public Predicate<AstNode> NeedToVisitPredicate => _ => true;
-
-    public bool TryCreateNode(AstNode scope, int childIndex)
-    {
-        if (scope.SafeGet(childIndex)?.NodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("If"))
-            return false;
-
-        var condNode = scope.SafeGet(childIndex).NotNull();
-        var changed = false;
-        while (true)
-        {
-            var nextNode = scope.SafeGet(childIndex + 1);
-            if (nextNode == null) break;
-
-            var type = nextNode.NodeType;
-            if (type != ExtensibleEnum<AstNodeTag>.CreateOrGet("Elif") &&
-                type != ExtensibleEnum<AstNodeTag>.CreateOrGet("Else"))
-                break;
-
-            condNode.Children.Add(nextNode);
-            scope.Children.RemoveAt(childIndex + 1);
-            condNode = nextNode;
-            changed = true;
-        }
-
-        return changed;
-    }
-}
-----------------------------------------
-
-# ./../ConditionsModule/BooleanOptimizer.cs
-using System.Reflection;
-using BasicCore;
-using DotnetAirHelper;
-using IntermediateRepresentationAbstractions;
-using JetBrains.Annotations;
-using ListExtensions;
-using ObjectExtensions;
-using UniversalIntermediateRepresentation;
-
-namespace ConditionsModule;
-
-[AutoRegisterService]
-[UsedImplicitly]
-public class BooleanOptimizerModule : IIRProcessingModule
-{
-    private static readonly IReadOnlyList<string> _standardModuleIntrinsics =
-    [
-        "boolean_and", "boolean_or", "boolean_not"
-    ];
-
-    public IAbstractIR ProcessIr<TCompilationOutput>(IAbstractIR current, IAbstractIrCompiler<TCompilationOutput> compiler)
-    {
-        if (_standardModuleIntrinsics.Any(x => !compiler.SupportedIntrinsics.Contains(x)))
-            return current;
-
-        InitializeAirTypes();
-        return OptimizeNativeLoads(current);
-    }
-
-    private void InitializeAirTypes()
-    {
-        AirTypes.TryRegisterIntrinsic(
-            "boolean_and",
-            (_, stack) =>
-            {
-                stack.Pop();
-                stack.Pop();
-                stack.Push(typeof(bool));
-            }
-        );
-        AirTypes.TryRegisterIntrinsic(
-            "boolean_or",
-            (_, stack) =>
-            {
-                stack.Pop();
-                stack.Pop();
-                stack.Push(typeof(bool));
-            }
-        );
-        AirTypes.TryRegisterIntrinsic(
-            "boolean_not",
-            (_, stack) =>
-            {
-                stack.Pop();
-                stack.Push(typeof(bool));
-            }
-        );
-    }
-
-    private IAbstractIR OptimizeNativeLoads(IAbstractIR air)
-    {
-        var instructions = air.Instructions.ToList();
-        var context = new CompilationContext();
-
-        var methodToIntrinsic = new Dictionary<string, string>
-        {
-            [nameof(BooleanVisitor.BooleanOperations.And)] = "boolean_and",
-            [nameof(BooleanVisitor.BooleanOperations.Or)] = "boolean_or",
-            [nameof(BooleanVisitor.BooleanOperations.Not)] = "boolean_not"
-        };
-
-        for (var i = 0; i < instructions.Count; i++)
-        {
-            var instruction = instructions[i];
-
-            if (instruction.UOpCode == UOpCode.Intrinsic)
-                if (instruction.Operands.Count >= 2 && instruction.Operands[0] == "call C#")
-                {
-                    var m = instruction.Operands[1].Get<MethodInfo>();
-
-                    if (m.DeclaringType == typeof(BooleanVisitor.BooleanOperations))
-                        if (methodToIntrinsic.TryGetValue(m.Name, out var intrinsicName))
-                        {
-                            context.NewInstructions.Add(new Instruction(UOpCode.Intrinsic, [intrinsicName]));
-                            continue;
-                        }
-                }
-
-            context.NewInstructions.Add(instruction);
-        }
-
-        var result = new AbstractIR();
-        result.AppendInstructions(context.NewInstructions);
-        return result;
-    }
-
-    private class CompilationContext
-    {
-        public List<Instruction> NewInstructions { get; } =
-        [
-        ];
     }
 }
 ----------------------------------------
@@ -3916,6 +3916,12 @@ public interface IAddable<TSelf> : IBinaryOperation<TSelf> where TSelf : IAddabl
 }
 ----------------------------------------
 
+# ./../GenericMath/IBinaryOperation.cs
+﻿namespace GenericMath;
+
+public interface IBinaryOperation<TSelf> where TSelf : IBinaryOperation<TSelf>;
+----------------------------------------
+
 # ./../GenericMath/ICustomNumber.cs
 using SettableGettableModule;
 
@@ -3954,12 +3960,6 @@ public interface ISubAble<TSelf> : IBinaryOperation<TSelf> where TSelf : ISubAbl
 {
     public static abstract TSelf Sub(TSelf a, TSelf b);
 }
-----------------------------------------
-
-# ./../GenericMath/IBinaryOperation.cs
-﻿namespace GenericMath;
-
-public interface IBinaryOperation<TSelf> where TSelf : IBinaryOperation<TSelf>;
 ----------------------------------------
 
 # ./../IdentifierModule/IdentifierModuleImpl.cs
@@ -5801,6 +5801,33 @@ public static class AutoRegistration
 }
 ----------------------------------------
 
+# ./../NativeMathModule/NativeBinaryOperationBase.cs
+﻿using BasicCore.ParserWrapper;
+using BasicTypesExtensions;
+
+namespace NativeMathModule;
+
+// Базовый класс для бинарных операций (как в ArithmeticModule)
+public abstract class NativeBinaryOperationBase(string enumStr) : IAstNodeCreator
+{
+    public virtual ExtensibleEnum<AstNodeTag> AstNodeType =>
+        ExtensibleEnum<AstNodeTag>.CreateOrGet(enumStr);
+
+    public bool TryCreateNode(AstNode scope, int childIndex)
+    {
+        var child = scope.Children[childIndex];
+        if (child.NodeType != AstNodeType)
+            return false;
+
+        child.Children.Add(scope.Children[childIndex - 1]);
+        child.Children.Add(scope.Children[childIndex + 1]);
+        scope.Children.RemoveAt(childIndex + 1);
+        scope.Children.RemoveAt(childIndex - 1);
+        return true;
+    }
+}
+----------------------------------------
+
 # ./../NativeMathModule/NativeNumberAstVisitor.cs
 using BasicCore;
 using BasicCore.ParserWrapper;
@@ -6060,33 +6087,6 @@ public static class NativeArithmetic
     [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
     [UsedImplicitly]
     public static decimal DivideDecimal(decimal a, decimal b) => a / b;
-}
-----------------------------------------
-
-# ./../NativeMathModule/NativeBinaryOperationBase.cs
-﻿using BasicCore.ParserWrapper;
-using BasicTypesExtensions;
-
-namespace NativeMathModule;
-
-// Базовый класс для бинарных операций (как в ArithmeticModule)
-public abstract class NativeBinaryOperationBase(string enumStr) : IAstNodeCreator
-{
-    public virtual ExtensibleEnum<AstNodeTag> AstNodeType =>
-        ExtensibleEnum<AstNodeTag>.CreateOrGet(enumStr);
-
-    public bool TryCreateNode(AstNode scope, int childIndex)
-    {
-        var child = scope.Children[childIndex];
-        if (child.NodeType != AstNodeType)
-            return false;
-
-        child.Children.Add(scope.Children[childIndex - 1]);
-        child.Children.Add(scope.Children[childIndex + 1]);
-        scope.Children.RemoveAt(childIndex + 1);
-        scope.Children.RemoveAt(childIndex - 1);
-        return true;
-    }
 }
 ----------------------------------------
 

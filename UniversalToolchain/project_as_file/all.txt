@@ -243,6 +243,31 @@ public class ArithmeticModuleImpl : IFrontendCoreModule
 }
 ----------------------------------------
 
+# ./../ArithmeticModule/BinaryOperationBase.cs
+using BasicCore.ParserWrapper;
+using BasicTypesExtensions;
+
+namespace ArithmeticModule;
+
+public abstract class BinaryOperationBase(string enumStr) : IAstNodeCreator
+{
+    public virtual ExtensibleEnum<AstNodeTag> AstNodeType => ExtensibleEnum<AstNodeTag>.CreateOrGet(enumStr);
+
+    public bool TryCreateNode(AstNode scope, int childIndex)
+    {
+        var child = scope.Children[childIndex];
+        if (child.NodeType != AstNodeType) return false;
+
+        child.Children.Add(scope.Children[childIndex - 1]);
+        child.Children.Add(scope.Children[childIndex + 1]);
+        scope.Children.RemoveAt(childIndex + 1);
+        scope.Children.RemoveAt(childIndex - 1);
+
+        return true;
+    }
+}
+----------------------------------------
+
 # ./../ArithmeticModule/AdditionOperationNodeCreator.cs
 using BasicCore;
 
@@ -318,31 +343,6 @@ public class ArithmeticAstVisitor : IAstVisitor
         );
 
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
-    }
-}
-----------------------------------------
-
-# ./../ArithmeticModule/BinaryOperationBase.cs
-using BasicCore.ParserWrapper;
-using BasicTypesExtensions;
-
-namespace ArithmeticModule;
-
-public abstract class BinaryOperationBase(string enumStr) : IAstNodeCreator
-{
-    public virtual ExtensibleEnum<AstNodeTag> AstNodeType => ExtensibleEnum<AstNodeTag>.CreateOrGet(enumStr);
-
-    public bool TryCreateNode(AstNode scope, int childIndex)
-    {
-        var child = scope.Children[childIndex];
-        if (child.NodeType != AstNodeType) return false;
-
-        child.Children.Add(scope.Children[childIndex - 1]);
-        child.Children.Add(scope.Children[childIndex + 1]);
-        scope.Children.RemoveAt(childIndex + 1);
-        scope.Children.RemoveAt(childIndex - 1);
-
-        return true;
     }
 }
 ----------------------------------------
@@ -3459,6 +3459,46 @@ public static class Comparisons
 }
 ----------------------------------------
 
+# ./../ConditionsModule/CondNodesCombiner.cs
+using BasicCore.ParserWrapper;
+using BasicTypesExtensions;
+using ExceptionsManager;
+
+namespace ConditionsModule;
+
+public class CondNodesCombiner : IAstNodeCreator
+{
+    public ExtensibleEnum<AstNodeTag> AstNodeType { get; } = ExtensibleEnum<AstNodeTag>.CreateOrGet("If");
+    public Predicate<AstNode> NeedToVisitPredicate => _ => true;
+
+    public bool TryCreateNode(AstNode scope, int childIndex)
+    {
+        if (scope.SafeGet(childIndex)?.NodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("If"))
+            return false;
+
+        var condNode = scope.SafeGet(childIndex).NotNull();
+        var changed = false;
+        while (true)
+        {
+            var nextNode = scope.SafeGet(childIndex + 1);
+            if (nextNode == null) break;
+
+            var type = nextNode.NodeType;
+            if (type != ExtensibleEnum<AstNodeTag>.CreateOrGet("Elif") &&
+                type != ExtensibleEnum<AstNodeTag>.CreateOrGet("Else"))
+                break;
+
+            condNode.Children.Add(nextNode);
+            scope.Children.RemoveAt(childIndex + 1);
+            condNode = nextNode;
+            changed = true;
+        }
+
+        return changed;
+    }
+}
+----------------------------------------
+
 # ./../ConditionsModule/ConditionsModuleImpl.cs
 ﻿using BasicCore;
 using BasicCore.LexerWrapper;
@@ -3716,6 +3756,167 @@ public class ComparisonNodeCreator(string nodeType) : IAstNodeCreator
 }
 ----------------------------------------
 
+# ./../ConditionsModule/BooleanNodeCreator.cs
+using BasicCore;
+using BasicCore.ParserWrapper;
+using BasicTypesExtensions;
+
+namespace ConditionsModule;
+
+[AutoRegisterService]
+public class BooleanNodeCreator(string nodeType, BooleanNodeCreator.BooleanStatementType type) : IAstNodeCreator
+{
+    public enum BooleanStatementType
+    {
+        Constant,
+        UnaryOperation,
+        BinaryOperation
+    }
+
+    public ExtensibleEnum<AstNodeTag> AstNodeType { get; } = ExtensibleEnum<AstNodeTag>.CreateOrGet(nodeType);
+
+    public bool TryCreateNode(AstNode scope, int childIndex)
+    {
+        var currentNode = scope.SafeGet(childIndex);
+        if (currentNode?.NodeType != AstNodeType)
+            return false;
+
+        var node = scope[childIndex];
+
+        if (type == BooleanStatementType.UnaryOperation && scope.SafeGet(childIndex + 1) != null)
+        {
+            // Unary NOT operation
+            node.Children.Add(scope[childIndex + 1]);
+            scope.Children.RemoveAt(childIndex + 1);
+        }
+        else if (type == BooleanStatementType.BinaryOperation)
+        {
+            // Binary operations
+            if (scope.SafeGet(childIndex - 1) != null)
+            {
+                node.Children.Add(scope[childIndex - 1]);
+                scope.Children.RemoveAt(childIndex - 1);
+                childIndex--;
+            }
+
+            if (scope.SafeGet(childIndex + 1) != null)
+            {
+                node.Children.Add(scope[childIndex + 1]);
+                scope.Children.RemoveAt(childIndex + 1);
+            }
+        }
+
+        return true;
+    }
+}
+----------------------------------------
+
+# ./../ConditionsModule/BooleanOptimizer.cs
+using System.Reflection;
+using BasicCore;
+using DotnetAirHelper;
+using IntermediateRepresentationAbstractions;
+using JetBrains.Annotations;
+using ListExtensions;
+using ObjectExtensions;
+using UniversalIntermediateRepresentation;
+
+namespace ConditionsModule;
+
+[AutoRegisterService]
+[UsedImplicitly]
+public class BooleanOptimizerModule : IIRProcessingModule
+{
+    private static readonly IReadOnlyList<string> _standardModuleIntrinsics =
+    [
+        "boolean_and", "boolean_or", "boolean_not"
+    ];
+
+    public IAbstractIR ProcessIr<TCompilationOutput>(IAbstractIR current, IAbstractIrCompiler<TCompilationOutput> compiler)
+    {
+        if (_standardModuleIntrinsics.Any(x => !compiler.SupportedIntrinsics.Contains(x)))
+            return current;
+
+        InitializeAirTypes();
+        return OptimizeNativeLoads(current);
+    }
+
+    private void InitializeAirTypes()
+    {
+        AirTypes.TryRegisterIntrinsic(
+            "boolean_and",
+            (_, stack) =>
+            {
+                stack.Pop();
+                stack.Pop();
+                stack.Push(typeof(bool));
+            }
+        );
+        AirTypes.TryRegisterIntrinsic(
+            "boolean_or",
+            (_, stack) =>
+            {
+                stack.Pop();
+                stack.Pop();
+                stack.Push(typeof(bool));
+            }
+        );
+        AirTypes.TryRegisterIntrinsic(
+            "boolean_not",
+            (_, stack) =>
+            {
+                stack.Pop();
+                stack.Push(typeof(bool));
+            }
+        );
+    }
+
+    private IAbstractIR OptimizeNativeLoads(IAbstractIR air)
+    {
+        var instructions = air.Instructions.ToList();
+        var context = new CompilationContext();
+
+        var methodToIntrinsic = new Dictionary<string, string>
+        {
+            [nameof(BooleanVisitor.BooleanOperations.And)] = "boolean_and",
+            [nameof(BooleanVisitor.BooleanOperations.Or)] = "boolean_or",
+            [nameof(BooleanVisitor.BooleanOperations.Not)] = "boolean_not"
+        };
+
+        for (var i = 0; i < instructions.Count; i++)
+        {
+            var instruction = instructions[i];
+
+            if (instruction.UOpCode == UOpCode.Intrinsic)
+                if (instruction.Operands.Count >= 2 && instruction.Operands[0] == "call C#")
+                {
+                    var m = instruction.Operands[1].Get<MethodInfo>();
+
+                    if (m.DeclaringType == typeof(BooleanVisitor.BooleanOperations))
+                        if (methodToIntrinsic.TryGetValue(m.Name, out var intrinsicName))
+                        {
+                            context.NewInstructions.Add(new Instruction(UOpCode.Intrinsic, [intrinsicName]));
+                            continue;
+                        }
+                }
+
+            context.NewInstructions.Add(instruction);
+        }
+
+        var result = new AbstractIR();
+        result.AppendInstructions(context.NewInstructions);
+        return result;
+    }
+
+    private class CompilationContext
+    {
+        public List<Instruction> NewInstructions { get; } =
+        [
+        ];
+    }
+}
+----------------------------------------
+
 # ./../ConditionsModule/BooleanVisitor.cs
 using AbstractIrExtensions;
 using BasicCore;
@@ -3896,207 +4097,6 @@ public class BooleanVisitor : IAstVisitor
 
         [UsedImplicitly]
         public static bool Not(bool a) => !a;
-    }
-}
-----------------------------------------
-
-# ./../ConditionsModule/BooleanNodeCreator.cs
-using BasicCore;
-using BasicCore.ParserWrapper;
-using BasicTypesExtensions;
-
-namespace ConditionsModule;
-
-[AutoRegisterService]
-public class BooleanNodeCreator(string nodeType, BooleanNodeCreator.BooleanStatementType type) : IAstNodeCreator
-{
-    public enum BooleanStatementType
-    {
-        Constant,
-        UnaryOperation,
-        BinaryOperation
-    }
-
-    public ExtensibleEnum<AstNodeTag> AstNodeType { get; } = ExtensibleEnum<AstNodeTag>.CreateOrGet(nodeType);
-
-    public bool TryCreateNode(AstNode scope, int childIndex)
-    {
-        var currentNode = scope.SafeGet(childIndex);
-        if (currentNode?.NodeType != AstNodeType)
-            return false;
-
-        var node = scope[childIndex];
-
-        if (type == BooleanStatementType.UnaryOperation && scope.SafeGet(childIndex + 1) != null)
-        {
-            // Unary NOT operation
-            node.Children.Add(scope[childIndex + 1]);
-            scope.Children.RemoveAt(childIndex + 1);
-        }
-        else if (type == BooleanStatementType.BinaryOperation)
-        {
-            // Binary operations
-            if (scope.SafeGet(childIndex - 1) != null)
-            {
-                node.Children.Add(scope[childIndex - 1]);
-                scope.Children.RemoveAt(childIndex - 1);
-                childIndex--;
-            }
-
-            if (scope.SafeGet(childIndex + 1) != null)
-            {
-                node.Children.Add(scope[childIndex + 1]);
-                scope.Children.RemoveAt(childIndex + 1);
-            }
-        }
-
-        return true;
-    }
-}
-----------------------------------------
-
-# ./../ConditionsModule/CondNodesCombiner.cs
-using BasicCore.ParserWrapper;
-using BasicTypesExtensions;
-using ExceptionsManager;
-
-namespace ConditionsModule;
-
-public class CondNodesCombiner : IAstNodeCreator
-{
-    public ExtensibleEnum<AstNodeTag> AstNodeType { get; } = ExtensibleEnum<AstNodeTag>.CreateOrGet("If");
-    public Predicate<AstNode> NeedToVisitPredicate => _ => true;
-
-    public bool TryCreateNode(AstNode scope, int childIndex)
-    {
-        if (scope.SafeGet(childIndex)?.NodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("If"))
-            return false;
-
-        var condNode = scope.SafeGet(childIndex).NotNull();
-        var changed = false;
-        while (true)
-        {
-            var nextNode = scope.SafeGet(childIndex + 1);
-            if (nextNode == null) break;
-
-            var type = nextNode.NodeType;
-            if (type != ExtensibleEnum<AstNodeTag>.CreateOrGet("Elif") &&
-                type != ExtensibleEnum<AstNodeTag>.CreateOrGet("Else"))
-                break;
-
-            condNode.Children.Add(nextNode);
-            scope.Children.RemoveAt(childIndex + 1);
-            condNode = nextNode;
-            changed = true;
-        }
-
-        return changed;
-    }
-}
-----------------------------------------
-
-# ./../ConditionsModule/BooleanOptimizer.cs
-using System.Reflection;
-using BasicCore;
-using DotnetAirHelper;
-using IntermediateRepresentationAbstractions;
-using JetBrains.Annotations;
-using ListExtensions;
-using ObjectExtensions;
-using UniversalIntermediateRepresentation;
-
-namespace ConditionsModule;
-
-[AutoRegisterService]
-[UsedImplicitly]
-public class BooleanOptimizerModule : IIRProcessingModule
-{
-    private static readonly IReadOnlyList<string> _standardModuleIntrinsics =
-    [
-        "boolean_and", "boolean_or", "boolean_not"
-    ];
-
-    public IAbstractIR ProcessIr<TCompilationOutput>(IAbstractIR current, IAbstractIrCompiler<TCompilationOutput> compiler)
-    {
-        if (_standardModuleIntrinsics.Any(x => !compiler.SupportedIntrinsics.Contains(x)))
-            return current;
-
-        InitializeAirTypes();
-        return OptimizeNativeLoads(current);
-    }
-
-    private void InitializeAirTypes()
-    {
-        AirTypes.TryRegisterIntrinsic(
-            "boolean_and",
-            (_, stack) =>
-            {
-                stack.Pop();
-                stack.Pop();
-                stack.Push(typeof(bool));
-            }
-        );
-        AirTypes.TryRegisterIntrinsic(
-            "boolean_or",
-            (_, stack) =>
-            {
-                stack.Pop();
-                stack.Pop();
-                stack.Push(typeof(bool));
-            }
-        );
-        AirTypes.TryRegisterIntrinsic(
-            "boolean_not",
-            (_, stack) =>
-            {
-                stack.Pop();
-                stack.Push(typeof(bool));
-            }
-        );
-    }
-
-    private IAbstractIR OptimizeNativeLoads(IAbstractIR air)
-    {
-        var instructions = air.Instructions.ToList();
-        var context = new CompilationContext();
-
-        var methodToIntrinsic = new Dictionary<string, string>
-        {
-            [nameof(BooleanVisitor.BooleanOperations.And)] = "boolean_and",
-            [nameof(BooleanVisitor.BooleanOperations.Or)] = "boolean_or",
-            [nameof(BooleanVisitor.BooleanOperations.Not)] = "boolean_not"
-        };
-
-        for (var i = 0; i < instructions.Count; i++)
-        {
-            var instruction = instructions[i];
-
-            if (instruction.UOpCode == UOpCode.Intrinsic)
-                if (instruction.Operands.Count >= 2 && instruction.Operands[0] == "call C#")
-                {
-                    var m = instruction.Operands[1].Get<MethodInfo>();
-
-                    if (m.DeclaringType == typeof(BooleanVisitor.BooleanOperations))
-                        if (methodToIntrinsic.TryGetValue(m.Name, out var intrinsicName))
-                        {
-                            context.NewInstructions.Add(new Instruction(UOpCode.Intrinsic, [intrinsicName]));
-                            continue;
-                        }
-                }
-
-            context.NewInstructions.Add(instruction);
-        }
-
-        var result = new AbstractIR();
-        result.AppendInstructions(context.NewInstructions);
-        return result;
-    }
-
-    private class CompilationContext
-    {
-        public List<Instruction> NewInstructions { get; } =
-        [
-        ];
     }
 }
 ----------------------------------------
@@ -4540,6 +4540,12 @@ public interface IAddable<TSelf> : IBinaryOperation<TSelf> where TSelf : IAddabl
 }
 ----------------------------------------
 
+# ./../GenericMath/IBinaryOperation.cs
+﻿namespace GenericMath;
+
+public interface IBinaryOperation<TSelf> where TSelf : IBinaryOperation<TSelf>;
+----------------------------------------
+
 # ./../GenericMath/ICustomNumber.cs
 using SettableGettableModule;
 
@@ -4578,12 +4584,6 @@ public interface ISubAble<TSelf> : IBinaryOperation<TSelf> where TSelf : ISubAbl
 {
     public static abstract TSelf Sub(TSelf a, TSelf b);
 }
-----------------------------------------
-
-# ./../GenericMath/IBinaryOperation.cs
-﻿namespace GenericMath;
-
-public interface IBinaryOperation<TSelf> where TSelf : IBinaryOperation<TSelf>;
 ----------------------------------------
 
 # ./../IdentifierModule/IdentifierModuleImpl.cs
@@ -7893,6 +7893,50 @@ public class MathematicalFormulasTests : TestBase
 }
 ----------------------------------------
 
+# ./../Tests/ModuleCombinationsTests.cs
+namespace Tests;
+
+[TestFixture]
+public class ModuleCombinationsTests : TestBase
+{
+    [Test]
+    public void Execute_AllCoreModulesTogether_WorksCorrectly()
+    {
+        var code = @"
+                let x = 10
+                let y = (x + 5) * 2
+                y = y - 3
+                y / 2
+            ";
+
+
+        var result = ExecuteCode(code);
+
+
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(13.5).Within(1e-9));
+    }
+
+    [Test]
+    public void Execute_MixedOperationsWithDifferentPrecedence_RespectsOrder()
+    {
+        var code = @"
+                let a = 2 + 3 * 4
+                let b = (2 + 3) * 4
+                let c = a + b * 2
+                c
+            ";
+
+
+        var result = ExecuteCode(code);
+
+
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(54).Within(1e-9));
+    }
+}
+----------------------------------------
+
 # ./../Tests/ModuleInteractionTests.cs
 namespace Tests;
 
@@ -9681,50 +9725,6 @@ public class FunctionOverloadingTests : TestBase
         var numberResult = (RealNumberImpl)result;
         // value > threshold, so sqrt(25) + abs(-5) = 5 + 5 = 10
         Assert.That(numberResult.GetValue(), Is.EqualTo(10.0).Within(1e-9));
-    }
-}
-----------------------------------------
-
-# ./../Tests/ModuleCombinationsTests.cs
-namespace Tests;
-
-[TestFixture]
-public class ModuleCombinationsTests : TestBase
-{
-    [Test]
-    public void Execute_AllCoreModulesTogether_WorksCorrectly()
-    {
-        var code = @"
-                let x = 10
-                let y = (x + 5) * 2
-                y = y - 3
-                y / 2
-            ";
-
-
-        var result = ExecuteCode(code);
-
-
-        var numberResult = (RealNumberImpl)result;
-        Assert.That(numberResult.GetValue(), Is.EqualTo(13.5).Within(1e-9));
-    }
-
-    [Test]
-    public void Execute_MixedOperationsWithDifferentPrecedence_RespectsOrder()
-    {
-        var code = @"
-                let a = 2 + 3 * 4
-                let b = (2 + 3) * 4
-                let c = a + b * 2
-                c
-            ";
-
-
-        var result = ExecuteCode(code);
-
-
-        var numberResult = (RealNumberImpl)result;
-        Assert.That(numberResult.GetValue(), Is.EqualTo(54).Within(1e-9));
     }
 }
 ----------------------------------------
@@ -12805,6 +12805,113 @@ public class WhitespaceModuleImpl : IFrontendCoreModule
 }
 ----------------------------------------
 
+# ./../WistVsCSharpBenchmark/Program.cs
+using BenchmarkDotNet.Running;
+using WistVsCSharp;
+
+BenchmarkRunner.Run<CSharpVsCompilerVsInterpreterBasicLoopBenchmarks>();
+----------------------------------------
+
+# ./../WistVsCSharpBenchmark/CSharpVsCompilerVsInterpreterBasicLoopBenchmarks.cs
+﻿using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
+using BasicCore;
+using BenchmarkDotNet.Attributes;
+using ConditionsModule;
+using DependencyInjection;
+using ExceptionsManager;
+using IntermediateRepresentationAbstractions;
+using LocalVariablesOptimizerModule;
+using Microsoft.Extensions.DependencyInjection;
+using NumbersModule;
+
+namespace WistVsCSharp;
+
+[MemoryDiagnoser]
+[RankColumn]
+public class CSharpVsCompilerVsInterpreterBasicLoopBenchmarks
+{
+    private readonly string _loopSum = @"
+        let sum = 0
+        let i = 1
+        @loop:
+        if i > 100 goto @end
+            sum = sum + i
+            i = i + 1
+            goto @loop
+        @end:
+        sum";
+
+    private BasicCoreImpl<DynamicMethod> _compilerCore = null!;
+    private BasicCoreImpl<DynamicMethod> _compilerNotOptimizedCore = null!;
+    private BasicCoreImpl<IAbstractIR> _interpreterCore = null!;
+
+
+    [GlobalSetup]
+    public void Setup()
+    {
+        var services = new ServiceCollection().AddWistServices("./../../../../../../../..");
+
+        var provider = services.BuildServiceProvider();
+        _compilerCore = provider.GetService<BasicCoreImpl<DynamicMethod>>().NotNull();
+        _interpreterCore = provider.GetService<BasicCoreImpl<IAbstractIR>>().NotNull();
+
+        services.Remove(services.First(x => x.ImplementationType == typeof(LocalVariablesOptimizer)));
+        var providerNotOptimized = services.BuildServiceProvider();
+        _compilerNotOptimizedCore = providerNotOptimized.GetService<BasicCoreImpl<DynamicMethod>>().NotNull();
+
+        _compilerCore.PrepareToRun(_loopSum);
+        _compilerNotOptimizedCore.PrepareToRun(_loopSum);
+        _interpreterCore.PrepareToRun(_loopSum);
+    }
+
+    [Benchmark]
+    public object? Interpreter_BasicLoop() => _interpreterCore.RunPrepared();
+
+    [Benchmark]
+    public object? Compiler_BasicLoop() => _compilerNotOptimizedCore.RunPrepared();
+
+    [Benchmark]
+    [MethodImpl(MethodImplOptions.NoOptimization | MethodImplOptions.NoInlining)]
+    public object NativeCSharp_NoOptimizations_BasicLoop()
+    {
+        var sum = new RealNumberImpl(0);
+        var i = new RealNumberImpl(1);
+
+        loop:
+        if (Comparisons.Greater(i, new RealNumberImpl(100))) goto end;
+        {
+            sum = RealNumberImpl.Add(sum, i);
+            i = RealNumberImpl.Add(i, new RealNumberImpl(1));
+            goto loop;
+        }
+        end:
+        return sum;
+    }
+
+    [Benchmark]
+    public object? CompilerOptimized_BasicLoop() => _compilerCore.RunPrepared();
+
+    [Benchmark(Baseline = true)]
+    [MethodImpl(MethodImplOptions.AggressiveOptimization | MethodImplOptions.NoInlining)]
+    public object NativeCSharp_Optimized_BasicLoop()
+    {
+        var sum = new RealNumberImpl(0);
+        var i = new RealNumberImpl(1);
+
+        loop:
+        if (Comparisons.Greater(i, new RealNumberImpl(100))) goto end;
+        {
+            sum = RealNumberImpl.Add(sum, i);
+            i = RealNumberImpl.Add(i, new RealNumberImpl(1));
+            goto loop;
+        }
+        end:
+        return sum;
+    }
+}
+----------------------------------------
+
 # ./../Wistc/GlobalUsings.cs
 global using BasicCore;
 global using BasicLexer;
@@ -12825,6 +12932,28 @@ global using ParserConfigurationModule;
 global using ExecutorLoggerModule;
 global using CommandLine;
 global using System.Reflection;
+----------------------------------------
+
+# ./../Wistc/CommonOptions.cs
+namespace Wistc;
+
+public class CommonOptions
+{
+    [Option('m', "mode", Default = "compiler", HelpText = "Execution mode: 'compiler' or 'interpreter'")]
+    public string Mode { get; set; } = "compiler";
+
+    [Option("exclude-module", Separator = ',', HelpText = "Comma-separated list of module type names to exclude (e.g., 'WhitespacesModule.WhitespaceModuleImpl,ArithmeticModule.ArithmeticModuleImpl')")]
+    public IEnumerable<string>? ExcludeModules { get; set; }
+
+    [Option("include-module", Separator = ',', HelpText = "Comma-separated list of additional module type names to include (must be in loaded assemblies)")]
+    public IEnumerable<string>? IncludeModules { get; set; }
+
+    [Option("list-modules", Default = false, HelpText = "List all available modules and exit")]
+    public bool ListModules { get; set; }
+
+    [Option("use-native-math", Default = false, HelpText = "Using native math instead of generic math")]
+    public bool UseNativeMath { get; set; }
+}
 ----------------------------------------
 
 # ./../Wistc/Repl.cs
@@ -12928,28 +13057,6 @@ public class Repl
         foreach (var line in _history.TakeLast(20))
             Console.WriteLine($"  {line}");
     }
-}
-----------------------------------------
-
-# ./../Wistc/CommonOptions.cs
-namespace Wistc;
-
-public class CommonOptions
-{
-    [Option('m', "mode", Default = "compiler", HelpText = "Execution mode: 'compiler' or 'interpreter'")]
-    public string Mode { get; set; } = "compiler";
-
-    [Option("exclude-module", Separator = ',', HelpText = "Comma-separated list of module type names to exclude (e.g., 'WhitespacesModule.WhitespaceModuleImpl,ArithmeticModule.ArithmeticModuleImpl')")]
-    public IEnumerable<string>? ExcludeModules { get; set; }
-
-    [Option("include-module", Separator = ',', HelpText = "Comma-separated list of additional module type names to include (must be in loaded assemblies)")]
-    public IEnumerable<string>? IncludeModules { get; set; }
-
-    [Option("list-modules", Default = false, HelpText = "List all available modules and exit")]
-    public bool ListModules { get; set; }
-
-    [Option("use-native-math", Default = false, HelpText = "Using native math instead of generic math")]
-    public bool UseNativeMath { get; set; }
 }
 ----------------------------------------
 
@@ -13654,6 +13761,33 @@ public class WistOptions
 }
 ----------------------------------------
 
+# ./../NativeMathModule/NativeBinaryOperationBase.cs
+﻿using BasicCore.ParserWrapper;
+using BasicTypesExtensions;
+
+namespace NativeMathModule;
+
+// Базовый класс для бинарных операций (как в ArithmeticModule)
+public abstract class NativeBinaryOperationBase(string enumStr) : IAstNodeCreator
+{
+    public virtual ExtensibleEnum<AstNodeTag> AstNodeType =>
+        ExtensibleEnum<AstNodeTag>.CreateOrGet(enumStr);
+
+    public bool TryCreateNode(AstNode scope, int childIndex)
+    {
+        var child = scope.Children[childIndex];
+        if (child.NodeType != AstNodeType)
+            return false;
+
+        child.Children.Add(scope.Children[childIndex - 1]);
+        child.Children.Add(scope.Children[childIndex + 1]);
+        scope.Children.RemoveAt(childIndex + 1);
+        scope.Children.RemoveAt(childIndex - 1);
+        return true;
+    }
+}
+----------------------------------------
+
 # ./../NativeMathModule/NativeNumberAstVisitor.cs
 using BasicCore;
 using BasicCore.ParserWrapper;
@@ -13913,33 +14047,6 @@ public static class NativeArithmetic
     [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
     [UsedImplicitly]
     public static decimal DivideDecimal(decimal a, decimal b) => a / b;
-}
-----------------------------------------
-
-# ./../NativeMathModule/NativeBinaryOperationBase.cs
-﻿using BasicCore.ParserWrapper;
-using BasicTypesExtensions;
-
-namespace NativeMathModule;
-
-// Базовый класс для бинарных операций (как в ArithmeticModule)
-public abstract class NativeBinaryOperationBase(string enumStr) : IAstNodeCreator
-{
-    public virtual ExtensibleEnum<AstNodeTag> AstNodeType =>
-        ExtensibleEnum<AstNodeTag>.CreateOrGet(enumStr);
-
-    public bool TryCreateNode(AstNode scope, int childIndex)
-    {
-        var child = scope.Children[childIndex];
-        if (child.NodeType != AstNodeType)
-            return false;
-
-        child.Children.Add(scope.Children[childIndex - 1]);
-        child.Children.Add(scope.Children[childIndex + 1]);
-        scope.Children.RemoveAt(childIndex + 1);
-        scope.Children.RemoveAt(childIndex - 1);
-        return true;
-    }
 }
 ----------------------------------------
 
@@ -15425,113 +15532,6 @@ BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args);
 public static class GlobalPath
 {
     public static string PathToDlls = null!;
-}
-----------------------------------------
-
-# ./../WistVsCSharpBenchmark/Program.cs
-using BenchmarkDotNet.Running;
-using WistVsCSharp;
-
-BenchmarkRunner.Run<CSharpVsCompilerVsInterpreterBasicLoopBenchmarks>();
-----------------------------------------
-
-# ./../WistVsCSharpBenchmark/CSharpVsCompilerVsInterpreterBasicLoopBenchmarks.cs
-﻿using System.Reflection.Emit;
-using System.Runtime.CompilerServices;
-using BasicCore;
-using BenchmarkDotNet.Attributes;
-using ConditionsModule;
-using DependencyInjection;
-using ExceptionsManager;
-using IntermediateRepresentationAbstractions;
-using LocalVariablesOptimizerModule;
-using Microsoft.Extensions.DependencyInjection;
-using NumbersModule;
-
-namespace WistVsCSharp;
-
-[MemoryDiagnoser]
-[RankColumn]
-public class CSharpVsCompilerVsInterpreterBasicLoopBenchmarks
-{
-    private readonly string _loopSum = @"
-        let sum = 0
-        let i = 1
-        @loop:
-        if i > 100 goto @end
-            sum = sum + i
-            i = i + 1
-            goto @loop
-        @end:
-        sum";
-
-    private BasicCoreImpl<DynamicMethod> _compilerCore = null!;
-    private BasicCoreImpl<DynamicMethod> _compilerNotOptimizedCore = null!;
-    private BasicCoreImpl<IAbstractIR> _interpreterCore = null!;
-
-
-    [GlobalSetup]
-    public void Setup()
-    {
-        var services = new ServiceCollection().AddWistServices("./../../../../../../../..");
-
-        var provider = services.BuildServiceProvider();
-        _compilerCore = provider.GetService<BasicCoreImpl<DynamicMethod>>().NotNull();
-        _interpreterCore = provider.GetService<BasicCoreImpl<IAbstractIR>>().NotNull();
-
-        services.Remove(services.First(x => x.ImplementationType == typeof(LocalVariablesOptimizer)));
-        var providerNotOptimized = services.BuildServiceProvider();
-        _compilerNotOptimizedCore = providerNotOptimized.GetService<BasicCoreImpl<DynamicMethod>>().NotNull();
-
-        _compilerCore.PrepareToRun(_loopSum);
-        _compilerNotOptimizedCore.PrepareToRun(_loopSum);
-        _interpreterCore.PrepareToRun(_loopSum);
-    }
-
-    [Benchmark]
-    public object? Interpreter_BasicLoop() => _interpreterCore.RunPrepared();
-
-    [Benchmark]
-    public object? Compiler_BasicLoop() => _compilerNotOptimizedCore.RunPrepared();
-
-    [Benchmark]
-    [MethodImpl(MethodImplOptions.NoOptimization | MethodImplOptions.NoInlining)]
-    public object NativeCSharp_NoOptimizations_BasicLoop()
-    {
-        var sum = new RealNumberImpl(0);
-        var i = new RealNumberImpl(1);
-
-        loop:
-        if (Comparisons.Greater(i, new RealNumberImpl(100))) goto end;
-        {
-            sum = RealNumberImpl.Add(sum, i);
-            i = RealNumberImpl.Add(i, new RealNumberImpl(1));
-            goto loop;
-        }
-        end:
-        return sum;
-    }
-
-    [Benchmark]
-    public object? CompilerOptimized_BasicLoop() => _compilerCore.RunPrepared();
-
-    [Benchmark(Baseline = true)]
-    [MethodImpl(MethodImplOptions.AggressiveOptimization | MethodImplOptions.NoInlining)]
-    public object NativeCSharp_Optimized_BasicLoop()
-    {
-        var sum = new RealNumberImpl(0);
-        var i = new RealNumberImpl(1);
-
-        loop:
-        if (Comparisons.Greater(i, new RealNumberImpl(100))) goto end;
-        {
-            sum = RealNumberImpl.Add(sum, i);
-            i = RealNumberImpl.Add(i, new RealNumberImpl(1));
-            goto loop;
-        }
-        end:
-        return sum;
-    }
 }
 ----------------------------------------
 
