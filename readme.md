@@ -30,6 +30,11 @@ cd Wist2
 dotnet build
 ~~~
 
+
+### Repository Hygiene
+
+Generated text snapshots (for example files in `UniversalToolchain/project_as_file/*.txt`, `UniversalToolchain/Wistc/code.txt`, and `ConfigurationEditor/project_code.txt`) are local helper artifacts and are intentionally ignored by git.
+
 ### Running Wist Code
 
 Use the `wistc` command-line tool (after building):

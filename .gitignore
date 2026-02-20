@@ -1,13 +1,20 @@
+# Build artifacts
 bin/
 obj/
 /packages/
-riderModule.iml
+
+# IDE/editor files
+/.idea/
+/UniversalToolchain/.idea/
 /_ReSharper.Caches/
+riderModule.iml
+
+# Local scratch files
 text.txt
-/UniversalToolchain/.idea
-/.idea
-UniversalToolchain/__pycache__/fffffffffffffffffffffffffffffffffffffffff.cpython-314.pyc
-UniversalToolchain/project_as_file/benchmarks.txt
-UniversalToolchain/project_as_file/main_code.txt
-UniversalToolchain/project_as_file/tests.txt
-UniversalToolchain/project_as_file/partial_main_code.txt
+__pycache__/
+*.pyc
+
+# Generated one-file/code dump artifacts (do not commit)
+UniversalToolchain/project_as_file/*.txt
+UniversalToolchain/Wistc/code.txt
+ConfigurationEditor/project_code.txt

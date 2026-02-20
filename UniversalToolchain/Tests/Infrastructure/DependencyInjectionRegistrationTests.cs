@@ -1,7 +1,3 @@
-using DependencyInjection;
-using IntermediateRepresentationAbstractions;
-using Microsoft.Extensions.DependencyInjection;
-
 namespace Tests;
 
 [TestFixture]

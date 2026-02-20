@@ -80,3 +80,60 @@ We need to make some another DI logic, which will:
 1. Remove all.txt, partial_main.txt, other txt with code from git
 2. Move to gitignore
 3. Update readme and the site
+
+---
+## Prioritization by complexity (ascending)
+
+### Low complexity
+1. **#16 Split tests to groups, folders** — mostly repository structure and test project updates.
+2. **#17 Move ALL usings to global usings** — mostly mechanical refactor with compile-time verification.
+3. **#19 Fix git** — cleanup and `.gitignore`/docs updates.
+4. **#9 Write summary** — documentation-first task, low technical risk.
+5. **#8 Fix configurations** — medium-low if introduced incrementally with adapters.
+
+### Medium complexity
+6. **#2 Remove extra boilerplate code** — requires codegen strategy and integration.
+7. **#7 Add normal thrower service** — cross-cutting changes in error paths.
+8. **#10 Fix projects** — broad structural changes in solution/project layout.
+9. **#13 Analyze code-base for bugs** — bounded, but can uncover hard issues.
+10. **#15 Fix small abstractions leaks** — small scope but can affect parsing semantics.
+12. **#12 Use reflection only via one center** — architectural consistency effort.
+
+### High complexity
+11. **#3 Find logical difference between interpreter and compiler** — deep semantic alignment work.
+13. **#4 Fix intrinsics** — requires backend-safe API and central orchestration.
+14. **#5 Fix BasicCoreImpl** — large foundational refactor across abstractions.
+15. **#6 Fix modules abstractions** — redesign module graph, grouping, and dialect system.
+16. **#11 Implement CIL optimizer** — compiler-level optimization pipeline (SSA/PGO/inlining).
+17. **#14 Add sandbox execution** — security-sensitive architecture and policy enforcement.
+18. **#18 Think about frontend remade** — potentially separate parser/runtime architecture redesign.
+19. **#1 Dependency Injection redesign** — cross-project architectural rewrite with determinism guarantees.
+
+## Tasks to start first (lowest-risk execution)
+1. **#16 Split tests to groups, folders**
+2. **#17 Move ALL usings to global usings**
+3. **#19 Fix git**
+
+## Detailed implementation plan for selected tasks
+
+### Task #16 — Split tests to groups, folders
+1. Audit current test files and map each test class to a category (lexer, parser, modules, integration, perf).
+2. Create folder structure in `UniversalToolchain/Tests` and move files without changing namespaces first.
+3. Fix project includes (if needed) and ensure IDE/test discovery still works.
+4. Run full test suite to ensure no regressions.
+5. Optional: align naming conventions (`*UnitTests`, `*IntegrationTests`, etc.).
+
+### Task #17 — Move ALL usings to global usings
+1. Add/extend `GlobalUsings.cs` in each project with stable shared imports.
+2. Remove duplicate local `using` directives file-by-file.
+3. Build after each project chunk to catch missing/ambiguous imports early.
+4. Resolve collisions with aliases where required.
+5. Run tests to confirm behavior is unchanged.
+
+### Task #19 — Fix git
+1. Identify generated/temporary text artifacts (`all.txt`, `partial_main.txt`, etc.).
+2. Remove tracked artifacts that should not be versioned.
+3. Update `.gitignore` with explicit patterns and comments.
+4. Update README/site docs with clean source-of-truth instructions.
+5. Verify git status stays clean after build/test commands.
+

@@ -1,12 +1,3 @@
-using System.Reflection;
-using AbstractIrExtensions;
-using DotnetAirHelper;
-using IntermediateRepresentationAbstractions;
-using LocalVariablesOptimizerModule;
-using NativeMathModule;
-using SettableGettableModule;
-using UniversalIntermediateRepresentation;
-
 namespace Tests;
 
 public class OptimizerRegressionTests

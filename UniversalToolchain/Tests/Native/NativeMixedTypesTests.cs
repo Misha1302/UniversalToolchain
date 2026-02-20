@@ -1,5 +1,3 @@
-using DependencyInjection;
-
 namespace Tests;
 
 [TestFixture]
