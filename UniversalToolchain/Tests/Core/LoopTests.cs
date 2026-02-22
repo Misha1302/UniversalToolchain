@@ -194,4 +194,91 @@ public class LoopTests : TestBase
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(0).Within(1e-9));
     }
+    
+    
+    [Test]
+    public void Execute_ForLoop_NegativeStep_ComputesDescendingSum()
+    {
+        var sumCode = @"
+                let sum = 0
+
+                for (let i = 5) (i >= 1) (i = i - 1) (
+                    sum = sum + i
+                )
+
+                sum
+            ";
+
+        var counterCode = @"
+                let i = 0
+
+                for (i = 5) (i >= 1) (i = i - 1) (
+                )
+
+                i
+            ";
+
+        var sumResult = ExecuteCode(sumCode);
+        var counterResult = ExecuteCode(counterCode);
+
+        var sumNumber = (RealNumberImpl)sumResult;
+        Assert.That(sumNumber.GetValue(), Is.EqualTo(15).Within(1e-9));
+
+        var counterNumber = (RealNumberImpl)counterResult;
+        Assert.That(counterNumber.GetValue(), Is.EqualTo(0).Within(1e-9));
+    }
+
+    [Test]
+    public void Execute_ForLoop_FractionalStep_ComputesExpectedCount()
+    {
+        var code = @"
+                let count = 0
+
+                for (let i = 0) (i <= 1) (i = i + 0.25) (
+                    count = count + 1
+                )
+
+                count
+            ";
+
+        var result = ExecuteCode(code);
+
+        // Inclusive range [0, 1] with step 0.25 gives ((1 - 0) / 0.25) + 1 = 5 iterations.
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(5).Within(1e-9));
+    }
+
+    [Test]
+    public void Execute_ForLoop_LargeStep_SkipsValuesCorrectly()
+    {
+        var sumCode = @"
+                let sum = 0
+
+                for (let i = 0) (i <= 9) (i = i + 3) (
+                    sum = sum + i
+                )
+
+                sum
+            ";
+
+        var counterCode = @"
+                let i = 0
+
+                for (i = 0) (i <= 9) (i = i + 3) (
+                )
+
+                i
+            ";
+
+        var sumResult = ExecuteCode(sumCode);
+        var counterResult = ExecuteCode(counterCode);
+
+        // Iterations should include only 0, 3, 6, 9.
+        var sumNumber = (RealNumberImpl)sumResult;
+        Assert.That(sumNumber.GetValue(), Is.EqualTo(18).Within(1e-9));
+
+        var counterNumber = (RealNumberImpl)counterResult;
+        Assert.That(counterNumber.GetValue(), Is.EqualTo(12).Within(1e-9));
+    }
+
 }
