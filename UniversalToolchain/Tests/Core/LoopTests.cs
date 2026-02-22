@@ -128,4 +128,70 @@ public class LoopTests : TestBase
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(55).Within(1e-9));
     }
+
+    [Test]
+    public void Execute_ForLoop_ConditionFalseInitially_DoesNotRunBodyOrStep()
+    {
+        var code = @"
+                let accumulator = 100
+
+                for (let i = 10) (i < 0) (i = i + 1) (
+                    accumulator = accumulator + 1
+                )
+
+                accumulator
+            ";
+
+        var result = ExecuteCode(code);
+
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(100).Within(1e-9));
+    }
+
+    [Test]
+    public void Execute_ForLoop_InitRunsExactlyOnce()
+    {
+        var code = @"
+                let initCounter = 0
+                let iterations = 0
+                let result = -1
+
+                for (initCounter = initCounter + 1) (iterations < 3) (iterations = iterations + 1) (
+                    result = 0
+                )
+
+                result = initCounter
+                result
+            ";
+
+        var result = ExecuteCode(code);
+
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(1).Within(1e-9));
+    }
+
+    [Test]
+    public void Execute_ForLoop_StepRunsOnlyAfterBody()
+    {
+        var code = @"
+                let bodyRuns = 0
+                let stepBeforeBody = 0
+                let i = 0
+
+                for (i = 0) (i < 3) (i = i + 1) (
+                    if i > bodyRuns (
+                        stepBeforeBody = 1
+                    )
+
+                    bodyRuns = bodyRuns + 1
+                )
+
+                stepBeforeBody
+            ";
+
+        var result = ExecuteCode(code);
+
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(0).Within(1e-9));
+    }
 }
