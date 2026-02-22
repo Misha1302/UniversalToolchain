@@ -1,5 +1,7 @@
 // Setup DI with auto-registration
 
+using LoopsModule;
+
 var services = new ServiceCollection();
 
 services.AddWistServices(options =>
@@ -14,16 +16,14 @@ services.AddSingleton<IFrontendCoreModule>(new LexerConfigurationModuleImpl(Acti
 var provider = services.BuildServiceProvider();
 var core = provider.GetServices<IExecutableGiver<DynamicMethod>>().First();
 
-
 var method = core.GetExecutable(
     """
-    let i = a, sum = 0
-    @start:
-        if i > b goto @end
-        System.Console.WriteLine(i)
-        sum = sum + i; i = i + 1 
-        goto @start
-    @end:
+    let sum = 0
+    
+    for (let i = 1) (i <= 5) (i = i + 1) (
+        sum = sum + i
+    )
+    
     sum
     """,
     new OrderedDictionary<string, Type> { { "a", typeof(int) }, { "b", typeof(int) } }

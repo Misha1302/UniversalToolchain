@@ -36,6 +36,7 @@
         <ProjectReference Include="..\InternalPreprocessorLexemesModule\InternalPreprocessorLexemesModule.csproj"/>
         <ProjectReference Include="..\LabelsModule\LabelsModule.csproj"/>
         <ProjectReference Include="..\LocalVariablesOptimizerModule\LocalVariablesOptimizerModule.csproj"/>
+        <ProjectReference Include="..\LoopsModule\LoopsModule.csproj" />
         <ProjectReference Include="..\NativeMathModule\NativeMathModule.csproj"/>
         <ProjectReference Include="..\NumbersModule\NumbersModule.csproj"/>
         <ProjectReference Include="..\ParserConfigurationModule\ParserConfigurationModule.csproj"/>
