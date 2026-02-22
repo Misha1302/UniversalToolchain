@@ -1,24 +1,22 @@
-﻿using BasicCore;
+using BasicCore;
 using BasicCore.LexerWrapper;
 using BasicCore.TranslatorWrapper;
-using LexemeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.LexerWrapper.LexemeTag>;
 
 namespace NumbersModule;
 
 [AutoRegisterService]
 public class NumbersModuleImpl : IFrontendCoreModule
 {
-    public void InitLexer(ILexer lexer)
-    {
-        lexer.Configuration.TryAddPattern(
-            new LexemePattern(@"[+-]?\d+(?:_?\d+)*(?:\.\d+(?:_?\d+)*)?(?:[eE][+-]?\d+(?:_?\d+)*)?",
-                LexemeType.CreateOrGet("Number")),
-            priority: -20f
-        );
-    }
+    private static readonly IReadOnlyList<LexemeRegistration> LexemeRegistrations =
+    [
+        new(
+            @"[+-]?\d+(?:_?\d+)*(?:\.\d+(?:_?\d+)*)?(?:[eE][+-]?\d+(?:_?\d+)*)?",
+            "Number",
+            Priority: -20f
+        )
+    ];
 
-    public void InitAstTranslator(IAstToBytecodeTranslator translator)
-    {
-        translator.Configuration.Visitors.Add(new NumberAstVisitor());
-    }
+    public void InitLexer(ILexer lexer) => lexer.AddLexemes(LexemeRegistrations);
+
+    public void InitAstTranslator(IAstToBytecodeTranslator translator) => translator.AddVisitors(new NumberAstVisitor());
 }

@@ -2,41 +2,35 @@ using BasicCore;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
-using BasicTypesExtensions;
 
 namespace ConditionsModule;
 
 [AutoRegisterService]
 public class ComparisonOperations : IFrontendCoreModule
 {
-    public void InitLexer(ILexer lexer)
-    {
-        lexer.Configuration.TryAddPattern(new LexemePattern(@"\=\=",
-            ExtensibleEnum<LexemeTag>.CreateOrGet("Equal")));
-        lexer.Configuration.TryAddPattern(new LexemePattern(@"\!\=",
-            ExtensibleEnum<LexemeTag>.CreateOrGet("NotEqual")));
-        lexer.Configuration.TryAddPattern(new LexemePattern(@"\>",
-            ExtensibleEnum<LexemeTag>.CreateOrGet("Greater")));
-        lexer.Configuration.TryAddPattern(new LexemePattern(@"\<",
-            ExtensibleEnum<LexemeTag>.CreateOrGet("Less")));
-        lexer.Configuration.TryAddPattern(new LexemePattern(@"\>\=",
-            ExtensibleEnum<LexemeTag>.CreateOrGet("GreaterOrEqual")), priority: -1);
-        lexer.Configuration.TryAddPattern(new LexemePattern(@"\<\=",
-            ExtensibleEnum<LexemeTag>.CreateOrGet("LessOrEqual")), priority: -1);
-    }
+    private static readonly IReadOnlyList<LexemeRegistration> LexemeRegistrations =
+    [
+        new(@"\=\=", "Equal"),
+        new(@"\!\=", "NotEqual"),
+        new(@"\>", "Greater"),
+        new(@"\<", "Less"),
+        new(@"\>\=", "GreaterOrEqual", Priority: -1f),
+        new(@"\<\=", "LessOrEqual", Priority: -1f)
+    ];
 
-    public void InitParser(IParser parser)
-    {
-        parser.Configuration.NodeCreators.Add(-20f, new ComparisonNodeCreator("Equal"));
-        parser.Configuration.NodeCreators.Add(-20f, new ComparisonNodeCreator("NotEqual"));
-        parser.Configuration.NodeCreators.Add(-20f, new ComparisonNodeCreator("Greater"));
-        parser.Configuration.NodeCreators.Add(-20f, new ComparisonNodeCreator("Less"));
-        parser.Configuration.NodeCreators.Add(-20f, new ComparisonNodeCreator("GreaterOrEqual"));
-        parser.Configuration.NodeCreators.Add(-20f, new ComparisonNodeCreator("LessOrEqual"));
-    }
+    private static readonly IReadOnlyList<NodeCreatorRegistration> NodeCreatorRegistrations =
+    [
+        new(-20f, new ComparisonNodeCreator("Equal")),
+        new(-20f, new ComparisonNodeCreator("NotEqual")),
+        new(-20f, new ComparisonNodeCreator("Greater")),
+        new(-20f, new ComparisonNodeCreator("Less")),
+        new(-20f, new ComparisonNodeCreator("GreaterOrEqual")),
+        new(-20f, new ComparisonNodeCreator("LessOrEqual"))
+    ];
 
-    public void InitAstTranslator(IAstToBytecodeTranslator translator)
-    {
-        translator.Configuration.Visitors.Add(new ComparisonVisitor());
-    }
+    public void InitLexer(ILexer lexer) => lexer.AddLexemes(LexemeRegistrations);
+
+    public void InitParser(IParser parser) => parser.AddNodeCreators(NodeCreatorRegistrations);
+
+    public void InitAstTranslator(IAstToBytecodeTranslator translator) => translator.AddVisitors(new ComparisonVisitor());
 }

@@ -1,20 +1,19 @@
-﻿using BasicCore;
+using BasicCore;
 using BasicCore.LexerWrapper;
-using LexemeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.LexerWrapper.LexemeTag>;
 
 namespace IdentifierModule;
 
 [AutoRegisterService]
 public class IdentifierModuleImpl : IFrontendCoreModule
 {
-    public void InitLexer(ILexer lexer)
-    {
-        lexer.Configuration.TryAddPattern(
-            new LexemePattern(
-                @"[@a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*(?:<[^<>]*(?:<(?:[^<>]|<<|>>)*>[^<>]*)*>)?",
-                LexemeType.CreateOrGet("Identifier")
-            ),
-            priority: 100
-        );
-    }
+    private static readonly IReadOnlyList<LexemeRegistration> LexemeRegistrations =
+    [
+        new(
+            @"[@a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*(?:<[^<>]*(?:<(?:[^<>]|<<|>>)*>[^<>]*)*>)?",
+            "Identifier",
+            Priority: 100f
+        )
+    ];
+
+    public void InitLexer(ILexer lexer) => lexer.AddLexemes(LexemeRegistrations);
 }

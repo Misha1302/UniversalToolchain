@@ -1,28 +1,19 @@
-﻿using BasicCore;
+using BasicCore;
 using BasicCore.LexerWrapper;
 using BasicCore.TranslatorWrapper;
-using BasicTypesExtensions;
 
 namespace CommentsModule;
 
 [AutoRegisterService]
 public class CommentsModuleImpl : IFrontendCoreModule
 {
-    public void InitLexer(ILexer lexer)
-    {
-        lexer.Configuration.TryAddPattern(
-            new LexemePattern(@"//[^\n]*", ExtensibleEnum<LexemeTag>.CreateOrGet("SingleLineComment")),
-            true,
-            -100
-        );
+    private static readonly IReadOnlyList<LexemeRegistration> LexemeRegistrations =
+    [
+        new(@"//[^\n]*", "SingleLineComment", Ignore: true, Priority: -100f),
+        new(@"/\*[\s\S]*?\*/", "MultiLineComment", Ignore: true, Priority: -100f)
+    ];
 
-        lexer.Configuration.TryAddPattern(
-            new LexemePattern(@"/\*[\s\S]*?\*/", ExtensibleEnum<LexemeTag>.CreateOrGet("MultiLineComment")),
-            true,
-            -100
-        );
-    }
-
+    public void InitLexer(ILexer lexer) => lexer.AddLexemes(LexemeRegistrations);
 
     public void InitAstTranslator(IAstToBytecodeTranslator translator)
     {

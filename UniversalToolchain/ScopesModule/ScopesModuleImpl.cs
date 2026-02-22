@@ -1,27 +1,27 @@
-﻿using BasicCore;
+using BasicCore;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
-using LexemeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.LexerWrapper.LexemeTag>;
 
 namespace ScopesModule;
 
 [AutoRegisterService]
 public class ScopesModuleImpl : IFrontendCoreModule
 {
-    public void InitLexer(ILexer lexer)
-    {
-        lexer.Configuration.TryAddPattern(new LexemePattern(@"\(", LexemeType.CreateOrGet("OpenPar")));
-        lexer.Configuration.TryAddPattern(new LexemePattern(@"\)", LexemeType.CreateOrGet("ClosePar")));
-    }
+    private static readonly IReadOnlyList<LexemeRegistration> LexemeRegistrations =
+    [
+        new(@"\(", "OpenPar"),
+        new(@"\)", "ClosePar")
+    ];
 
-    public void InitParser(IParser parser)
-    {
-        parser.Configuration.NodeCreators.Add(-100_000f, new ScopesCreator());
-    }
+    private static readonly IReadOnlyList<NodeCreatorRegistration> NodeCreatorRegistrations =
+    [
+        new(-100_000f, new ScopesCreator())
+    ];
 
-    public void InitAstTranslator(IAstToBytecodeTranslator translator)
-    {
-        translator.Configuration.Visitors.Add(new ScopeAstVisitor());
-    }
+    public void InitLexer(ILexer lexer) => lexer.AddLexemes(LexemeRegistrations);
+
+    public void InitParser(IParser parser) => parser.AddNodeCreators(NodeCreatorRegistrations);
+
+    public void InitAstTranslator(IAstToBytecodeTranslator translator) => translator.AddVisitors(new ScopeAstVisitor());
 }

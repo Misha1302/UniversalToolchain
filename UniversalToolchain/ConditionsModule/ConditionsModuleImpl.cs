@@ -1,35 +1,31 @@
-﻿using BasicCore;
+using BasicCore;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
-using BasicTypesExtensions;
 
 namespace ConditionsModule;
 
 [AutoRegisterService]
 public class ConditionsModuleImpl : IFrontendCoreModule
 {
-    private IParser _parser = null!;
+    private static readonly IReadOnlyList<LexemeRegistration> LexemeRegistrations =
+    [
+        new("if", "If"),
+        new("elif", "Elif"),
+        new("else", "Else")
+    ];
 
-    public void InitLexer(ILexer lexer)
-    {
-        lexer.Configuration.TryAddPattern(new LexemePattern("if", ExtensibleEnum<LexemeTag>.CreateOrGet("If")));
-        lexer.Configuration.TryAddPattern(new LexemePattern("elif", ExtensibleEnum<LexemeTag>.CreateOrGet("Elif")));
-        lexer.Configuration.TryAddPattern(new LexemePattern("else", ExtensibleEnum<LexemeTag>.CreateOrGet("Else")));
-    }
+    private static readonly IReadOnlyList<NodeCreatorRegistration> NodeCreatorRegistrations =
+    [
+        new(15f, new IfNodeCreator()),
+        new(15f, new ElifNodeCreator()),
+        new(15f, new ElseNodeCreator()),
+        new(16f, new CondNodesCombiner())
+    ];
 
-    public void InitParser(IParser parser)
-    {
-        _parser = parser;
+    public void InitLexer(ILexer lexer) => lexer.AddLexemes(LexemeRegistrations);
 
-        parser.Configuration.NodeCreators.Add(15f, new IfNodeCreator());
-        parser.Configuration.NodeCreators.Add(15f, new ElifNodeCreator());
-        parser.Configuration.NodeCreators.Add(15f, new ElseNodeCreator());
-        parser.Configuration.NodeCreators.Add(16f, new CondNodesCombiner());
-    }
+    public void InitParser(IParser parser) => parser.AddNodeCreators(NodeCreatorRegistrations);
 
-    public void InitAstTranslator(IAstToBytecodeTranslator translator)
-    {
-        translator.Configuration.Visitors.Add(new ConditionsVisitor());
-    }
+    public void InitAstTranslator(IAstToBytecodeTranslator translator) => translator.AddVisitors(new ConditionsVisitor());
 }

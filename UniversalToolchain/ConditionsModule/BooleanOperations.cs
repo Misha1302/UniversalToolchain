@@ -2,38 +2,33 @@ using BasicCore;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
-using BasicTypesExtensions;
 
 namespace ConditionsModule;
 
 [AutoRegisterService]
 public class BooleanOperations : IFrontendCoreModule
 {
-    public void InitLexer(ILexer lexer)
-    {
-        lexer.Configuration.TryAddPattern(new LexemePattern("true", ExtensibleEnum<LexemeTag>.CreateOrGet("True")));
-        lexer.Configuration.TryAddPattern(new LexemePattern("false", ExtensibleEnum<LexemeTag>.CreateOrGet("False")));
-        lexer.Configuration.TryAddPattern(new LexemePattern("and", ExtensibleEnum<LexemeTag>.CreateOrGet("And")));
-        lexer.Configuration.TryAddPattern(new LexemePattern("or", ExtensibleEnum<LexemeTag>.CreateOrGet("Or")));
-        lexer.Configuration.TryAddPattern(new LexemePattern("not", ExtensibleEnum<LexemeTag>.CreateOrGet("Not")));
-    }
+    private static readonly IReadOnlyList<LexemeRegistration> LexemeRegistrations =
+    [
+        new("true", "True"),
+        new("false", "False"),
+        new("and", "And"),
+        new("or", "Or"),
+        new("not", "Not")
+    ];
 
-    public void InitParser(IParser parser)
-    {
-        parser.Configuration.NodeCreators.Add(-100f,
-            new BooleanNodeCreator("True", BooleanNodeCreator.BooleanStatementType.Constant));
-        parser.Configuration.NodeCreators.Add(-100f,
-            new BooleanNodeCreator("False", BooleanNodeCreator.BooleanStatementType.Constant));
-        parser.Configuration.NodeCreators.Add(-11f,
-            new BooleanNodeCreator("Not", BooleanNodeCreator.BooleanStatementType.UnaryOperation));
-        parser.Configuration.NodeCreators.Add(-10f,
-            new BooleanNodeCreator("And", BooleanNodeCreator.BooleanStatementType.BinaryOperation));
-        parser.Configuration.NodeCreators.Add(-9f,
-            new BooleanNodeCreator("Or", BooleanNodeCreator.BooleanStatementType.BinaryOperation));
-    }
+    private static readonly IReadOnlyList<NodeCreatorRegistration> NodeCreatorRegistrations =
+    [
+        new(-100f, new BooleanNodeCreator("True", BooleanNodeCreator.BooleanStatementType.Constant)),
+        new(-100f, new BooleanNodeCreator("False", BooleanNodeCreator.BooleanStatementType.Constant)),
+        new(-11f, new BooleanNodeCreator("Not", BooleanNodeCreator.BooleanStatementType.UnaryOperation)),
+        new(-10f, new BooleanNodeCreator("And", BooleanNodeCreator.BooleanStatementType.BinaryOperation)),
+        new(-9f, new BooleanNodeCreator("Or", BooleanNodeCreator.BooleanStatementType.BinaryOperation))
+    ];
 
-    public void InitAstTranslator(IAstToBytecodeTranslator translator)
-    {
-        translator.Configuration.Visitors.Add(new BooleanVisitor());
-    }
+    public void InitLexer(ILexer lexer) => lexer.AddLexemes(LexemeRegistrations);
+
+    public void InitParser(IParser parser) => parser.AddNodeCreators(NodeCreatorRegistrations);
+
+    public void InitAstTranslator(IAstToBytecodeTranslator translator) => translator.AddVisitors(new BooleanVisitor());
 }

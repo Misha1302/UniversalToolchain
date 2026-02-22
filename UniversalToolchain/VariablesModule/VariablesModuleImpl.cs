@@ -1,31 +1,27 @@
-﻿using BasicCore;
+using BasicCore;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
-using LexemeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.LexerWrapper.LexemeTag>;
 
 namespace VariablesModule;
 
 [AutoRegisterService]
 public class VariablesModuleImpl : IFrontendCoreModule
 {
-    public void InitLexer(ILexer lexer)
-    {
-        lexer.Configuration.TryAddPattern(
-            new LexemePattern(":", LexemeType.CreateOrGet("Colon"))
-        );
-        lexer.Configuration.TryAddPattern(
-            new LexemePattern("let", LexemeType.CreateOrGet("Let"))
-        );
-    }
+    private static readonly IReadOnlyList<LexemeRegistration> LexemeRegistrations =
+    [
+        new(":", "Colon"),
+        new("let", "Let")
+    ];
 
-    public void InitParser(IParser parser)
-    {
-        parser.Configuration.NodeCreators.Add(-1.5f, new VariablesNodeCreator());
-    }
+    private static readonly IReadOnlyList<NodeCreatorRegistration> NodeCreatorRegistrations =
+    [
+        new(-1.5f, new VariablesNodeCreator())
+    ];
 
-    public void InitAstTranslator(IAstToBytecodeTranslator translator)
-    {
-        translator.Configuration.Visitors.Add(new VariablesVisitor());
-    }
+    public void InitLexer(ILexer lexer) => lexer.AddLexemes(LexemeRegistrations);
+
+    public void InitParser(IParser parser) => parser.AddNodeCreators(NodeCreatorRegistrations);
+
+    public void InitAstTranslator(IAstToBytecodeTranslator translator) => translator.AddVisitors(new VariablesVisitor());
 }

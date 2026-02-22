@@ -1,28 +1,26 @@
-﻿using BasicCore;
+using BasicCore;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
-using LexemeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.LexerWrapper.LexemeTag>;
 
 namespace EqualityModule;
 
 [AutoRegisterService]
 public class EqualityModuleImpl : IFrontendCoreModule
 {
-    public void InitLexer(ILexer lexer)
-    {
-        lexer.Configuration.TryAddPattern(
-            new LexemePattern(@"\=", LexemeType.CreateOrGet("Equality")), priority: 100
-        );
-    }
+    private static readonly IReadOnlyList<LexemeRegistration> LexemeRegistrations =
+    [
+        new(@"\=", "Equality", Priority: 100f)
+    ];
 
-    public void InitParser(IParser parser)
-    {
-        parser.Configuration.NodeCreators.Add(10f, new ValuesSetNodeCreator());
-    }
+    private static readonly IReadOnlyList<NodeCreatorRegistration> NodeCreatorRegistrations =
+    [
+        new(10f, new ValuesSetNodeCreator())
+    ];
 
-    public void InitAstTranslator(IAstToBytecodeTranslator translator)
-    {
-        translator.Configuration.Visitors.Add(new EqualityAstVisitor());
-    }
+    public void InitLexer(ILexer lexer) => lexer.AddLexemes(LexemeRegistrations);
+
+    public void InitParser(IParser parser) => parser.AddNodeCreators(NodeCreatorRegistrations);
+
+    public void InitAstTranslator(IAstToBytecodeTranslator translator) => translator.AddVisitors(new EqualityAstVisitor());
 }
