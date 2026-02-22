@@ -471,4 +471,78 @@ public class LoopTests : TestBase
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(297).Within(1e-9));
     }
+    
+    [Test]
+    public void Execute_ForLoop_LargeIterationCount_StableAndDeterministic()
+    {
+        const int iterations = 10_000;
+        var expectedSum = iterations * (iterations + 1) / 2.0;
+
+        var code = $@"
+                let sum = 0
+
+                for (let i = 1) (i <= {iterations}) (i = i + 1) (
+                    sum = sum + i
+                )
+
+                sum
+            ";
+
+        var result = ExecuteCode(code);
+
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(expectedSum).Within(1e-9));
+    }
+    
+    [Test]
+    public void Execute_MultipleForLoop_LargeIterationCount_StableAndDeterministic()
+    {
+        const int iterations = 1000;
+        var expectedSum = iterations * (iterations + 1) / 2.0 * 3;
+
+        var code = $@"
+                let sum = 0
+
+                for (let i = 1) (i <= {iterations}) (i = i + 1) (
+                    sum = sum + i
+                )
+                for (let i = 1) (i <= {iterations}) (i = i + 1) (
+                    sum = sum + i
+                )
+                for (let i = 1) (i <= {iterations}) (i = i + 1) (
+                    sum = sum + i
+                )
+
+                sum
+            ";
+
+        var result = ExecuteCode(code);
+
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(expectedSum).Within(1e-9));
+    }
+
+    [Test]
+    public void Execute_WhileLoop_LargeIterationCount_StableAndDeterministic()
+    {
+        const int iterations = 10_000;
+        var expectedSum = iterations * (iterations + 1) / 2.0;
+
+        var code = $@"
+                let sum = 0
+                let i = 1
+
+                while (i <= {iterations}) (
+                    sum = sum + i
+                    i = i + 1
+                )
+
+                sum
+            ";
+
+        var result = ExecuteCode(code);
+
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(expectedSum).Within(1e-9));
+    }
 }
