@@ -281,4 +281,194 @@ public class LoopTests : TestBase
         Assert.That(counterNumber.GetValue(), Is.EqualTo(12).Within(1e-9));
     }
 
+    
+    [Test]
+    public void Execute_WhileLoop_ConditionFalseInitially_SkipsBody()
+    {
+        var resultCode = @"
+                let i = 11
+                let sum = 0
+
+                while (i <= 10) (
+                    sum = sum + i
+                    i = i + 1
+                )
+
+                sum
+            ";
+
+        var controlCode = @"
+                let i = 11
+                let sum = 0
+
+                while (i <= 10) (
+                    sum = sum + i
+                    i = i + 1
+                )
+
+                i
+            ";
+
+        var result = ExecuteCode(resultCode);
+        var controlResult = ExecuteCode(controlCode);
+
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(0).Within(1e-9));
+
+        var controlNumberResult = (RealNumberImpl)controlResult;
+        Assert.That(controlNumberResult.GetValue(), Is.EqualTo(11).Within(1e-9));
+    }
+
+    [Test]
+    public void Execute_WhileLoop_ConditionVariableMutatesInBody_StopsCorrectly()
+    {
+        var resultCode = @"
+                let i = 0
+                let total = 0
+
+                while (i < 7) (
+                    total = total + i
+                    i = i + 2
+                )
+
+                total
+            ";
+
+        var controlCode = @"
+                let i = 0
+                let total = 0
+
+                while (i < 7) (
+                    total = total + i
+                    i = i + 2
+                )
+
+                i
+            ";
+
+        var result = ExecuteCode(resultCode);
+        var controlResult = ExecuteCode(controlCode);
+
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(12).Within(1e-9));
+
+        var controlNumberResult = (RealNumberImpl)controlResult;
+        Assert.That(controlNumberResult.GetValue(), Is.EqualTo(8).Within(1e-9));
+    }
+
+    [Test]
+    public void Execute_WhileLoop_BreakLikePattern_ProducesExpectedResult()
+    {
+        var resultCode = @"
+                let i = 0
+                let total = 0
+                let keepGoing = 1
+
+                while (keepGoing == 1) (
+                    i = i + 1
+                    if i > 4
+                        keepGoing = 0
+                    else
+                        total = total + i
+                )
+
+                total
+            ";
+
+        var controlCode = @"
+                let i = 0
+                let total = 0
+                let keepGoing = 1
+
+                while (keepGoing == 1) (
+                    i = i + 1
+                    if i > 4
+                        keepGoing = 0
+                    else
+                        total = total + i
+                )
+
+                i
+            ";
+
+        var flagCode = @"
+                let i = 0
+                let total = 0
+                let keepGoing = 1
+
+                while (keepGoing == 1) (
+                    i = i + 1
+                    if i > 4
+                        keepGoing = 0
+                    else
+                        total = total + i
+                )
+
+                keepGoing
+            ";
+
+        var result = ExecuteCode(resultCode);
+        var controlResult = ExecuteCode(controlCode);
+        var flagResult = ExecuteCode(flagCode);
+
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(10).Within(1e-9));
+
+        var controlNumberResult = (RealNumberImpl)controlResult;
+        Assert.That(controlNumberResult.GetValue(), Is.EqualTo(5).Within(1e-9));
+
+        var flagNumberResult = (RealNumberImpl)flagResult;
+        Assert.That(flagNumberResult.GetValue(), Is.EqualTo(0).Within(1e-9));
+    }
+    
+    
+    [Test]
+    public void Execute_Nested_ForInsideWhile_ComputesExpectedMatrixAggregation()
+    {
+        var code = @"
+                let aggregate = 0
+                let rowIndex = 2
+
+                while (rowIndex <= 4) (
+                    for (let columnIndex = 2) (columnIndex <= 4) (columnIndex = columnIndex + 1) (
+                        aggregate = aggregate + (rowIndex * columnIndex)
+                    )
+
+                    rowIndex = rowIndex + 1
+                )
+
+                aggregate
+            ";
+
+        var result = ExecuteCode(code);
+
+        // (2*2 + 2*3 + 2*4) + (3*2 + 3*3 + 3*4) + (4*2 + 4*3 + 4*4) = 81
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(81).Within(1e-9));
+    }
+
+    [Test]
+    public void Execute_Nested_WhileInsideFor_ComputesExpectedMatrixAggregation()
+    {
+        var code = @"
+                let aggregate = 0
+
+                for (let majorStep = 2) (majorStep <= 4) (majorStep = majorStep + 1) (
+                    let minorStep = 2
+
+                    while (minorStep <= 4) (
+                        aggregate = aggregate + (majorStep * 10 + minorStep)
+                        minorStep = minorStep + 1
+                    )
+                )
+
+                aggregate
+            ";
+
+        var result = ExecuteCode(code);
+
+        // (22 + 23 + 24) + (32 + 33 + 34) + (42 + 43 + 44) = 297
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(297).Within(1e-9));
+    }
 }
