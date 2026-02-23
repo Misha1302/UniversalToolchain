@@ -18,16 +18,13 @@ var core = provider.GetServices<IExecutableGiver<DynamicMethod>>().First();
 
 var method = core.GetExecutable(
     """
-    let sum = 0
-    
-    for (let i = 1) (i <= 5) (i = i + 1) (
-        sum = sum + i
+    fn add(a, b) (
+        return a + b
     )
     
-    sum
+    add(2, 3)
     """,
-    new OrderedDictionary<string, Type> { { "a", typeof(int) }, { "b", typeof(int) } }
-);
+    new OrderedDictionary<string, Type>());
 
 
 var fastCallable = new DynamicMethodInvoker<int, int, int>(method);

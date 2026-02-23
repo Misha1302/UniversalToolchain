@@ -118,6 +118,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ParametersSetterModule", "P
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LoopsModule", "LoopsModule\LoopsModule.csproj", "{7EE5859B-1B43-4E02-B195-4E1CD1FC8AF6}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserFunctionsModule", "UserFunctionsModule\UserFunctionsModule.csproj", "{27D71AF8-91E9-4090-A1EF-3295549D7BA5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -320,6 +322,10 @@ Global
 		{7EE5859B-1B43-4E02-B195-4E1CD1FC8AF6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7EE5859B-1B43-4E02-B195-4E1CD1FC8AF6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7EE5859B-1B43-4E02-B195-4E1CD1FC8AF6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{27D71AF8-91E9-4090-A1EF-3295549D7BA5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{27D71AF8-91E9-4090-A1EF-3295549D7BA5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{27D71AF8-91E9-4090-A1EF-3295549D7BA5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{27D71AF8-91E9-4090-A1EF-3295549D7BA5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{D62CCD79-F4B6-4A27-875D-FE9DA78A8854} = {53FB9EA9-6487-401D-89E3-7319C961F807}
