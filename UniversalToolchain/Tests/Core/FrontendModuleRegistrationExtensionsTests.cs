@@ -11,8 +11,8 @@ public class FrontendModuleRegistrationExtensionsTests
         var lexer = new BasicLexerImpl();
 
         lexer.AddLexemes(
-            [new(@"\>\=", "GreaterOrEqual", Priority: -1f)],
-            [new(@"\>", "Greater")]
+            [new LexemeRegistration(@"\>\=", "GreaterOrEqual", Priority: -1f)],
+            [new LexemeRegistration(@"\>", "Greater")]
         );
 
         var tokens = lexer.Lexemize(">=");
@@ -30,8 +30,8 @@ public class FrontendModuleRegistrationExtensionsTests
         var second = new TestNodeCreator("Second");
 
         parser.AddNodeCreators(
-            [new(-10f, first)],
-            [new(5f, second)]
+            [new NodeCreatorRegistration(-10f, first)],
+            [new NodeCreatorRegistration(5f, second)]
         );
 
         Assert.That(parser.Configuration.NodeCreators[-10f], Contains.Item(first));

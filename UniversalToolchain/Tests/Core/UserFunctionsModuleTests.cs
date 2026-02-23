@@ -1,5 +1,3 @@
-using UserFunctionsModule;
-
 namespace Tests;
 
 [TestFixture]

@@ -1,7 +1,5 @@
 // Setup DI with auto-registration
 
-using LoopsModule;
-
 var services = new ServiceCollection();
 
 services.AddWistServices(options =>
@@ -21,7 +19,7 @@ var method = core.GetExecutable(
     fn add(a, b) (
         return a + b
     )
-    
+
     add(2, 3)
     """,
     new OrderedDictionary<string, Type>());

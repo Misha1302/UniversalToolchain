@@ -1,7 +1,6 @@
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
-using BasicTypesExtensions;
 
 namespace BasicCore;
 
@@ -11,11 +10,13 @@ public static class FrontendModuleRegistrationExtensions
     {
         foreach (var registrationSet in registrations)
         foreach (var registration in registrationSet)
+        {
             lexer.Configuration.TryAddPattern(
-                new LexemePattern(registration.Pattern, ExtensibleEnum<LexemeTag>.CreateOrGet(registration.Tag)),
+                new LexemePattern(registration.Pattern, LexemeType.CreateOrGet(registration.Tag)),
                 registration.Ignore,
                 registration.Priority
             );
+        }
     }
 
     public static void AddNodeCreators(this IParser parser, params IReadOnlyList<NodeCreatorRegistration>[] registrations)

@@ -9,8 +9,8 @@ public class CommentsModuleImpl : IFrontendCoreModule
 {
     private static readonly IReadOnlyList<LexemeRegistration> LexemeRegistrations =
     [
-        new(@"//[^\n]*", "SingleLineComment", Ignore: true, Priority: -100f),
-        new(@"/\*[\s\S]*?\*/", "MultiLineComment", Ignore: true, Priority: -100f)
+        new(@"//[^\n]*", "SingleLineComment", true, -100f),
+        new(@"/\*[\s\S]*?\*/", "MultiLineComment", true, -100f)
     ];
 
     public void InitLexer(ILexer lexer) => lexer.AddLexemes(LexemeRegistrations);

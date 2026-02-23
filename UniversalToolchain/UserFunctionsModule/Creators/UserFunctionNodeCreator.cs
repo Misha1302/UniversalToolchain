@@ -5,21 +5,18 @@ namespace UserFunctionsModule;
 
 public class UserFunctionNodeCreator : IAstNodeCreator
 {
-    private readonly HashSet<string> _declaredFunctions = [];
-
     private static readonly ExtensibleEnum<AstNodeTag> FnNodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("Fn");
     private static readonly ExtensibleEnum<AstNodeTag> IdentifierNodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("Identifier");
     private static readonly ExtensibleEnum<AstNodeTag> ScopeNodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("Scope");
     private static readonly ExtensibleEnum<AstNodeTag> ReturnNodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("Return");
+    private readonly HashSet<string> _declaredFunctions = [];
 
     public ExtensibleEnum<AstNodeTag> AstNodeType { get; } = ExtensibleEnum<AstNodeTag>.CreateOrGet("FunctionDeclaration");
 
-    public bool TryCreateNode(AstNode scope, int childIndex)
-    {
-        return TryCreateFunctionDeclaration(scope, childIndex)
-               || TryCreateReturn(scope, childIndex)
-               || TryCreateFunctionCall(scope, childIndex);
-    }
+    public bool TryCreateNode(AstNode scope, int childIndex) =>
+        TryCreateFunctionDeclaration(scope, childIndex)
+        || TryCreateReturn(scope, childIndex)
+        || TryCreateFunctionCall(scope, childIndex);
 
     private bool TryCreateFunctionDeclaration(AstNode scope, int childIndex)
     {

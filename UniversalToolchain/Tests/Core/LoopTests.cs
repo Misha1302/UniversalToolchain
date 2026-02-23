@@ -194,8 +194,8 @@ public class LoopTests : TestBase
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(0).Within(1e-9));
     }
-    
-    
+
+
     [Test]
     public void Execute_ForLoop_NegativeStep_ComputesDescendingSum()
     {
@@ -281,7 +281,7 @@ public class LoopTests : TestBase
         Assert.That(counterNumber.GetValue(), Is.EqualTo(12).Within(1e-9));
     }
 
-    
+
     [Test]
     public void Execute_WhileLoop_ConditionFalseInitially_SkipsBody()
     {
@@ -420,8 +420,8 @@ public class LoopTests : TestBase
         var flagNumberResult = (RealNumberImpl)flagResult;
         Assert.That(flagNumberResult.GetValue(), Is.EqualTo(0).Within(1e-9));
     }
-    
-    
+
+
     [Test]
     public void Execute_Nested_ForInsideWhile_ComputesExpectedMatrixAggregation()
     {
@@ -471,7 +471,7 @@ public class LoopTests : TestBase
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(297).Within(1e-9));
     }
-    
+
     [Test]
     public void Execute_ForLoop_LargeIterationCount_StableAndDeterministic()
     {
@@ -493,7 +493,7 @@ public class LoopTests : TestBase
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(expectedSum).Within(1e-9));
     }
-    
+
     [Test]
     public void Execute_MultipleForLoop_LargeIterationCount_StableAndDeterministic()
     {
