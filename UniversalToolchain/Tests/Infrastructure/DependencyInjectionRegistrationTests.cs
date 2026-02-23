@@ -1,4 +1,6 @@
-namespace Tests;
+using BasicCore.Contracts;
+
+namespace Tests.Infrastructure;
 
 [TestFixture]
 public class DependencyInjectionRegistrationTests

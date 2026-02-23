@@ -1,4 +1,6 @@
-namespace Tests;
+using NumbersModule.Core;
+
+namespace Tests.Performance;
 
 [TestFixture]
 public class PerformanceAndComplexityTests : TestBase

@@ -1,4 +1,6 @@
-namespace Tests;
+using NumbersModule.Core;
+
+namespace Tests.Integration;
 
 [TestFixture]
 public class IntegrationPipelineTests : TestBase

@@ -1,3 +1,3 @@
-namespace BasicCore;
+namespace BasicCore.Attributes;
 
 public class ServiceInitializerAttribute : Attribute;

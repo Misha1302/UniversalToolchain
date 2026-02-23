@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace SettableGettableModule;
+namespace SettableGettableModule.Core;
 
 public static class VariablesContainer<T>
 {

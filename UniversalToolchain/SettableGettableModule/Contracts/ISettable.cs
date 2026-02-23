@@ -1,4 +1,4 @@
-namespace SettableGettableModule;
+namespace SettableGettableModule.Contracts;
 
 public interface ISettable<in TValue>
 {

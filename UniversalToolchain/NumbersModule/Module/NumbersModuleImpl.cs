@@ -1,8 +1,11 @@
-using BasicCore;
+using BasicCore.Attributes;
+using BasicCore.Contracts;
 using BasicCore.LexerWrapper;
+using BasicCore.Registration;
 using BasicCore.TranslatorWrapper;
+using NumbersModule.Visitors;
 
-namespace NumbersModule;
+namespace NumbersModule.Module;
 
 [AutoRegisterService]
 public class NumbersModuleImpl : IFrontendCoreModule

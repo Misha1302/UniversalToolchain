@@ -2,8 +2,9 @@ using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
 using DynamicMethodWrapper;
+using LabelsModule.Core;
 
-namespace LabelsModule;
+namespace LabelsModule.Visitors;
 
 public class LabelsVisitor(LabelsSharedData labelsSharedData) : IAstVisitor
 {

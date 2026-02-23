@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using BasicCore.Contracts;
 using BasicCore.ExecutorWrapper;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
@@ -6,7 +7,7 @@ using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
 using ExceptionsManager;
 
-namespace BasicCore;
+namespace BasicCore.Core;
 
 public class BasicCoreImpl<TCompilationOutput>(
     Func<ILexer> lexerFactory,

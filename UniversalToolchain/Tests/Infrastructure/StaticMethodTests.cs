@@ -1,4 +1,6 @@
-namespace Tests;
+using NumbersModule.Core;
+
+namespace Tests.Infrastructure;
 
 [TestFixture]
 public class StaticMethodTests : TestBase

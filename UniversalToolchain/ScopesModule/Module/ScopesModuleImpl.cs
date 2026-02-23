@@ -1,9 +1,13 @@
-using BasicCore;
+using BasicCore.Attributes;
+using BasicCore.Contracts;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
+using BasicCore.Registration;
 using BasicCore.TranslatorWrapper;
+using ScopesModule.Core;
+using ScopesModule.Visitors;
 
-namespace ScopesModule;
+namespace ScopesModule.Module;
 
 [AutoRegisterService]
 public class ScopesModuleImpl : IFrontendCoreModule

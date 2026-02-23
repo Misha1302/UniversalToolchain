@@ -1,4 +1,7 @@
-namespace Tests;
+using BasicCore.Contracts;
+using DynamicMethodCalling.Core;
+
+namespace Tests.Infrastructure;
 
 [TestFixture]
 public class DynamicMethodInvokerTests

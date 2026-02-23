@@ -1,4 +1,4 @@
-namespace Tests;
+namespace Tests.Core;
 
 [TestFixture]
 public class ExtensibleEnumTests

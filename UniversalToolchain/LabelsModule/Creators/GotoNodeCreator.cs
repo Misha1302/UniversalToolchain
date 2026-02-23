@@ -1,7 +1,7 @@
 using BasicCore.ParserWrapper;
 using BasicTypesExtensions;
 
-namespace LabelsModule;
+namespace LabelsModule.Creators;
 
 public class GotoNodeCreator : IAstNodeCreator
 {

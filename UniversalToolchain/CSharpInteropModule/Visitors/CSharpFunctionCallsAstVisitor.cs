@@ -6,7 +6,7 @@ using BasicTypesExtensions;
 using DynamicMethodWrapper;
 using ExceptionsManager;
 
-namespace CSharpInteropModule;
+namespace CSharpInteropModule.Visitors;
 
 public class CSharpFunctionCallsAstVisitor : IAstVisitor
 {

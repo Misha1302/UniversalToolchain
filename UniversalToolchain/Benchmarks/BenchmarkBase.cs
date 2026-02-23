@@ -1,3 +1,4 @@
+using BasicCore.Core;
 using BenchmarkDotNet.Attributes;
 using DependencyInjection;
 using ExceptionsManager;

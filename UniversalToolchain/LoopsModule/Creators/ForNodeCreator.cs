@@ -1,7 +1,7 @@
 using BasicCore.ParserWrapper;
 using BasicTypesExtensions;
 
-namespace LoopsModule;
+namespace LoopsModule.Creators;
 
 public class ForNodeCreator : IAstNodeCreator
 {

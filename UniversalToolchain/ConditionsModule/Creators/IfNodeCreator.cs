@@ -1,7 +1,7 @@
 using BasicCore.ParserWrapper;
 using BasicTypesExtensions;
 
-namespace ConditionsModule;
+namespace ConditionsModule.Creators;
 
 public class IfNodeCreator : IAstNodeCreator
 {

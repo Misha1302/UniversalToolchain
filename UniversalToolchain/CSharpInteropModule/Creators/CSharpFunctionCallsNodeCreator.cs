@@ -2,7 +2,7 @@ using AssemblyFinder;
 using BasicCore.ParserWrapper;
 using BasicTypesExtensions;
 
-namespace CSharpInteropModule;
+namespace CSharpInteropModule.Creators;
 
 public class CSharpFunctionCallsNodeCreator : IAstNodeCreator
 {

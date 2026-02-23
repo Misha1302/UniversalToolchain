@@ -1,8 +1,9 @@
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
+using BasicParser.Validation;
 using ExceptionsManager;
 
-namespace BasicParser;
+namespace BasicParser.Core;
 
 public class BasicParserImpl(ParserConfiguration configuration) : IParser
 {

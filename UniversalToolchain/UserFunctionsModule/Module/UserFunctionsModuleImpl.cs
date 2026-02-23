@@ -1,9 +1,13 @@
-using BasicCore;
+using BasicCore.Attributes;
+using BasicCore.Contracts;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
+using BasicCore.Registration;
 using BasicCore.TranslatorWrapper;
+using UserFunctionsModule.Creators;
+using UserFunctionsModule.Visitors;
 
-namespace UserFunctionsModule;
+namespace UserFunctionsModule.Module;
 
 [AutoRegisterService]
 public class UserFunctionsModuleImpl : IFrontendCoreModule

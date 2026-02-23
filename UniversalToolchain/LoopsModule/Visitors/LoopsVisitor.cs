@@ -3,7 +3,7 @@ using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
 using DynamicMethodWrapper;
 
-namespace LoopsModule;
+namespace LoopsModule.Visitors;
 
 public class LoopsVisitor : IAstVisitor
 {

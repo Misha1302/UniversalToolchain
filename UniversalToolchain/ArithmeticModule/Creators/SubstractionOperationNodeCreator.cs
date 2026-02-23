@@ -1,6 +1,7 @@
-using BasicCore;
+using ArithmeticModule.Core;
+using BasicCore.Attributes;
 
-namespace ArithmeticModule;
+namespace ArithmeticModule.Creators;
 
 [AutoRegisterService]
 public class SubstractionOperationNodeCreator() : BinaryOperationBase("Substraction");

@@ -1,7 +1,7 @@
 using BasicCore.ParserWrapper;
 using BasicTypesExtensions;
 
-namespace ArithmeticModule;
+namespace ArithmeticModule.Core;
 
 public abstract class BinaryOperationBase(string enumStr) : IAstNodeCreator
 {

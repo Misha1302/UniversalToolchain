@@ -1,5 +1,7 @@
 using System.Reflection;
-using BasicCore;
+using BasicCore.Attributes;
+using BasicCore.Contracts;
+using ConditionsModule.Visitors;
 using DotnetAirHelper;
 using IntermediateRepresentationAbstractions;
 using JetBrains.Annotations;
@@ -7,7 +9,7 @@ using ListExtensions;
 using ObjectExtensions;
 using UniversalIntermediateRepresentation;
 
-namespace ConditionsModule;
+namespace ConditionsModule.Optimizers;
 
 [AutoRegisterService]
 [UsedImplicitly]

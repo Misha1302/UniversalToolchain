@@ -1,5 +1,10 @@
 // Setup DI with auto-registration
 
+using BasicCore.Contracts;
+using DynamicMethodCalling.Core;
+using ParserConfigurationModule.Core;
+using ParserConfigurationModule.Module;
+
 var services = new ServiceCollection();
 
 services.AddWistServices(options =>

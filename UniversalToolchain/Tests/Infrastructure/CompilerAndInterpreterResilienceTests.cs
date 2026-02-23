@@ -1,4 +1,7 @@
-namespace Tests;
+using BasicCilCompiler.Execution;
+using BytecodeDynamicMethodsCompiler.Compilers;
+
+namespace Tests.Infrastructure;
 
 [TestFixture]
 public class CompilerAndInterpreterResilienceTests

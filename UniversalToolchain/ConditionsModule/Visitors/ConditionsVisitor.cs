@@ -3,7 +3,7 @@ using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
 using DynamicMethodWrapper;
 
-namespace ConditionsModule;
+namespace ConditionsModule.Visitors;
 
 public class ConditionsVisitor : IAstVisitor
 {

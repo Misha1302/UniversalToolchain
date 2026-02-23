@@ -2,8 +2,9 @@ using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
 using ExceptionsManager;
+using UserFunctionsModule.Core;
 
-namespace UserFunctionsModule;
+namespace UserFunctionsModule.Visitors;
 
 public class UserFunctionsAstVisitor : IAstVisitor
 {

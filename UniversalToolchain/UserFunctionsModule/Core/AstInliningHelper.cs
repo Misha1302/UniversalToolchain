@@ -1,7 +1,7 @@
 using BasicCore.ParserWrapper;
 using BasicTypesExtensions;
 
-namespace UserFunctionsModule;
+namespace UserFunctionsModule.Core;
 
 internal static class AstInliningHelper
 {

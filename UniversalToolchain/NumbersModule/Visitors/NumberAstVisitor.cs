@@ -1,13 +1,14 @@
 using System.Globalization;
 using AbstractIrExtensions;
-using BasicCore;
+using BasicCore.Attributes;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
 using DynamicMethodWrapper;
 using ExceptionsManager;
+using NumbersModule.Core;
 
-namespace NumbersModule;
+namespace NumbersModule.Visitors;
 
 [AutoRegisterService]
 public class NumberAstVisitor : IAstVisitor

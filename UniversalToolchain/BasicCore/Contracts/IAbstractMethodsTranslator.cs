@@ -1,7 +1,7 @@
 using BasicCore.TranslatorWrapper;
 using IntermediateRepresentationAbstractions;
 
-namespace BasicCore;
+namespace BasicCore.Contracts;
 
 public interface IAbstractMethodsTranslator
 {

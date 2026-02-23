@@ -1,7 +1,7 @@
 ﻿using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 
-namespace DynamicMethodCalling;
+namespace DynamicMethodCalling.Core;
 
 public unsafe class DynamicMethodInvoker<TReturn>(DynamicMethod dynamicMethod) : DynamicMethodInvokerBase<TReturn>(dynamicMethod)
 {

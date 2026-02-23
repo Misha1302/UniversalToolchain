@@ -1,4 +1,4 @@
-namespace Tests;
+namespace Tests.Native;
 
 [TestFixture]
 public class NativeFloatDoubleTests : TestBase

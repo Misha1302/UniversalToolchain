@@ -1,6 +1,6 @@
 using BasicCore.ExecutorWrapper;
 
-namespace BasicCore;
+namespace BasicCore.Contracts;
 
 public interface IMiddleEndCoreModule<TCompilationOutput>
 {

@@ -1,5 +1,6 @@
 ﻿using AbstractIrExtensions;
 using BasicCore;
+using BasicCore.Contracts;
 using BasicCore.TranslatorWrapper;
 using DotnetAirHelper;
 using DynamicMethodWrapper;

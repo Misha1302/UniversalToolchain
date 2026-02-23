@@ -1,4 +1,11 @@
-namespace Tests;
+using ArithmeticModule.Module;
+using BasicCore.Contracts;
+using BasicLexer.Core;
+using NumbersModule.Module;
+using ParserConfigurationModule.Core;
+using ParserConfigurationModule.Module;
+
+namespace Tests.Core;
 
 [TestFixture]
 public class LexerConfigurationTests

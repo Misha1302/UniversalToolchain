@@ -1,4 +1,6 @@
-namespace Tests;
+using DynamicMethodCalling.Core;
+
+namespace Tests.Infrastructure;
 
 [TestFixture]
 [Category("Concurrency")]

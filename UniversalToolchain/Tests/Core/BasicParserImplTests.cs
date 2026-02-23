@@ -1,4 +1,8 @@
-namespace Tests;
+using ArithmeticModule.Creators;
+using BasicParser.Core;
+using BasicParser.Validation;
+
+namespace Tests.Core;
 
 [TestFixture]
 public class BasicParserImplTests

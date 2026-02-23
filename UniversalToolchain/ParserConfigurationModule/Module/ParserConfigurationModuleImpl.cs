@@ -1,9 +1,10 @@
 ﻿using System.Diagnostics;
-using BasicCore;
+using BasicCore.Contracts;
 using BasicCore.ParserWrapper;
 using ExceptionsManager;
+using ParserConfigurationModule.Core;
 
-namespace ParserConfigurationModule;
+namespace ParserConfigurationModule.Module;
 
 /// <summary>
 ///     <para> You can fix parser-modules execution order like this: </para>

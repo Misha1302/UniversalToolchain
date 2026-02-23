@@ -1,6 +1,8 @@
 using ExceptionsManager;
 using IntermediateRepresentationAbstractions;
 using SettableGettableModule;
+using SettableGettableModule.Contracts;
+using SettableGettableModule.Core;
 
 namespace AbstractIrExtensions;
 

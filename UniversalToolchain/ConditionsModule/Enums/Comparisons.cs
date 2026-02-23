@@ -1,4 +1,4 @@
-namespace ConditionsModule;
+namespace ConditionsModule.Enums;
 
 public static class Comparisons
 {

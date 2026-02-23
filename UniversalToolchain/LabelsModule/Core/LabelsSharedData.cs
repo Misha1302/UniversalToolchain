@@ -1,4 +1,4 @@
-namespace LabelsModule;
+namespace LabelsModule.Core;
 
 public class LabelsSharedData
 {
