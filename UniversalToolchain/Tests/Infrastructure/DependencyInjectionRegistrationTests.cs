@@ -1,22 +1,58 @@
 using BasicCore.Contracts;
+using Tests.Infrastructure;
 
-namespace Tests.Infrastructure;
-
-[TestFixture]
-public class DependencyInjectionRegistrationTests
+namespace Tests.Infrastructure
 {
-    [Test]
-    public void AddWistServices_RegistersExecutableGiversForDynamicMethodAndAbstractIr()
+    [TestFixture]
+    public class DependencyInjectionRegistrationTests
     {
-        var services = new ServiceCollection();
-        services.AddWistServices();
+        [Test]
+        public void AddWistServices_RegistersExecutableGiversForDynamicMethodAndAbstractIr()
+        {
+            var services = new ServiceCollection();
+            services.AddWistServices();
 
-        using var provider = services.BuildServiceProvider();
+            using var provider = services.BuildServiceProvider();
 
-        var dynamicMethodExecutableGivers = provider.GetServices<IExecutableGiver<DynamicMethod>>().ToList();
-        var abstractIrExecutableGivers = provider.GetServices<IExecutableGiver<IAbstractIR>>().ToList();
+            var dynamicMethodExecutableGivers = provider.GetServices<IExecutableGiver<DynamicMethod>>().ToList();
+            var abstractIrExecutableGivers = provider.GetServices<IExecutableGiver<IAbstractIR>>().ToList();
 
-        Assert.That(dynamicMethodExecutableGivers, Is.Not.Empty);
-        Assert.That(abstractIrExecutableGivers, Is.Not.Empty);
+            Assert.That(dynamicMethodExecutableGivers, Is.Not.Empty);
+            Assert.That(abstractIrExecutableGivers, Is.Not.Empty);
+        }
+
+        [Test]
+        public void RemoveAllByNamespace_RemovesServices_WhenNamespaceFilterMatchesSuffix()
+        {
+            var services = new ServiceCollection();
+            services.AddSingleton<ITestDependency, global::Tests.DependencyInjection.Nested.ArithmeticModule.TestDependency>();
+
+            services.RemoveAllByNamespace("ArithmeticModule");
+
+            Assert.That(services.Any(d => d.ImplementationType == typeof(global::Tests.DependencyInjection.Nested.ArithmeticModule.TestDependency)), Is.False);
+        }
+
+        [Test]
+        public void RemoveAllByNamespace_RemovesServices_WhenNamespaceFilterMatchesParentNamespace()
+        {
+            var services = new ServiceCollection();
+            services.AddSingleton<ITestDependency, global::Tests.DependencyInjection.Nested.ArithmeticModule.Internal.TestDependency>();
+
+            services.RemoveAllByNamespace("Tests.DependencyInjection.Nested.ArithmeticModule");
+
+            Assert.That(services.Any(d => d.ImplementationType == typeof(global::Tests.DependencyInjection.Nested.ArithmeticModule.Internal.TestDependency)), Is.False);
+        }
+
+        public interface ITestDependency;
     }
+}
+
+namespace Tests.DependencyInjection.Nested.ArithmeticModule
+{
+    public sealed class TestDependency : DependencyInjectionRegistrationTests.ITestDependency;
+}
+
+namespace Tests.DependencyInjection.Nested.ArithmeticModule.Internal
+{
+    public sealed class TestDependency : DependencyInjectionRegistrationTests.ITestDependency;
 }
