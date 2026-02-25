@@ -1,6 +1,6 @@
 using IntermediateRepresentationAbstractions;
 
-namespace BasicCore;
+namespace BasicCore.Contracts;
 
 // ReSharper disable once InconsistentNaming
 public interface IIRProcessingModule

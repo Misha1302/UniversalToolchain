@@ -20,16 +20,69 @@ UniversalToolchain is a modular, extensible compiler and interpreter framework f
 
 ## Getting Started
 
-### Installation
+### Installation from scratch (.NET 10, official installers)
 
-Clone the repository and build with .NET 9.0 SDK:
+Choose your OS and install **.NET 10 SDK** using official Microsoft instructions.
+
+#### Windows
+
+~~~powershell
+# Install official .NET 10 SDK via winget
+winget install Microsoft.DotNet.SDK.10
+
+# Verify
+dotnet --version
+~~~
+
+#### macOS
+
+Install the official .NET 10 SDK package from Microsoft:
+
+- https://dotnet.microsoft.com/download/dotnet/10.0
+
+Then verify in terminal:
+
+~~~bash
+dotnet --version
+~~~
+
+#### Linux (Ubuntu 24.04)
+
+~~~bash
+# Add official Microsoft package feed
+wget https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+sudo dpkg -i packages-microsoft-prod.deb
+rm packages-microsoft-prod.deb
+
+# Install .NET 10 SDK
+sudo apt-get update
+sudo apt-get install -y dotnet-sdk-10.0
+
+# Verify
+dotnet --version
+~~~
+
+#### Linux (Fedora)
+
+~~~bash
+# Add official Microsoft package feed
+sudo rpm -Uvh https://packages.microsoft.com/config/fedora/$(rpm -E %fedora)/packages-microsoft-prod.rpm
+
+# Install .NET 10 SDK
+sudo dnf install -y dotnet-sdk-10.0
+
+# Verify
+dotnet --version
+~~~
+
+#### Build and run tests
 
 ~~~bash
 git clone https://github.com/Misha1302/Wist2
 cd Wist2
-dotnet build
+dotnet restore UniversalToolchain/Wist.sln
+DOTNET_ROLL_FORWARD=Major dotnet test UniversalToolchain/Tests/Tests.csproj --configuration Release
 ~~~
-
 
 ### Repository Hygiene
 

@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 
-namespace BasicCore;
+namespace BasicCore.Attributes;
 
 /// <summary>
 ///     Marks a class as a service that should be automatically registered

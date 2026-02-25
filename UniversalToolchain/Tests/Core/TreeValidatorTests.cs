@@ -1,4 +1,6 @@
-namespace Tests;
+using BasicParser.Validation;
+
+namespace Tests.Core;
 
 [TestFixture]
 public class TreeValidatorTests

@@ -3,7 +3,7 @@ using BasicCore.LexerWrapper;
 using ExceptionsManager;
 using ListExtensions;
 
-namespace BasicLexer;
+namespace BasicLexer.Core;
 
 public class BasicLexerImpl(LexerConfiguration configuration) : ILexer
 {

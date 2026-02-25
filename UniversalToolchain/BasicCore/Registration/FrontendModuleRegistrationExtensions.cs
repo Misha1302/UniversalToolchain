@@ -2,7 +2,7 @@ using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 
-namespace BasicCore;
+namespace BasicCore.Registration;
 
 public static class FrontendModuleRegistrationExtensions
 {

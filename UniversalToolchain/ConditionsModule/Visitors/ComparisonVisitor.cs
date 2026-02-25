@@ -2,10 +2,11 @@ using AbstractIrExtensions;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
+using ConditionsModule.Enums;
 using DynamicMethodWrapper;
 using ExceptionsManager;
 
-namespace ConditionsModule;
+namespace ConditionsModule.Visitors;
 
 public class ComparisonVisitor : IAstVisitor
 {

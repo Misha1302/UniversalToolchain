@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using BytecodeDynamicMethodsCompiler.Core;
 using DotnetHelper;
 using ExceptionsManager;
 using GrEmit;
@@ -6,7 +7,7 @@ using IntermediateRepresentationAbstractions;
 using ListExtensions;
 using ObjectExtensions;
 
-namespace BytecodeDynamicMethodsCompiler;
+namespace BytecodeDynamicMethodsCompiler.Compilers;
 
 internal sealed class AbstractMethodsIntrinsicCompiler
 {

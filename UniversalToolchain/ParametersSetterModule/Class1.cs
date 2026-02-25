@@ -1,4 +1,6 @@
 ﻿using BasicCore;
+using BasicCore.Attributes;
+using BasicCore.Contracts;
 
 namespace ParametersSetterModule;
 

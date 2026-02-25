@@ -2,7 +2,7 @@ using BasicCore.ParserWrapper;
 using BasicTypesExtensions;
 using ExceptionsManager;
 
-namespace ConditionsModule;
+namespace ConditionsModule.Core;
 
 public class CondNodesCombiner : IAstNodeCreator
 {

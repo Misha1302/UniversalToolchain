@@ -1,4 +1,6 @@
-namespace Tests;
+using BasicLexer.Core;
+
+namespace Tests.Core;
 
 [TestFixture]
 public class BasicLexerImplTests

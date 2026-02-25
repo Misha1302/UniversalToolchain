@@ -1,6 +1,9 @@
+using BasicCore.Registration;
 using BasicCore.TranslatorWrapper;
+using BasicLexer.Core;
+using BasicParser.Core;
 
-namespace Tests;
+namespace Tests.Core;
 
 [TestFixture]
 public class FrontendModuleRegistrationExtensionsTests

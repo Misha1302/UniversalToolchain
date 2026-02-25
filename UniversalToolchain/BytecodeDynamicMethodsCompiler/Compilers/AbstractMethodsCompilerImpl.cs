@@ -1,6 +1,7 @@
 ﻿using System.Reflection.Emit;
 using AbstractIrExtensions;
-using BasicCore;
+using BasicCore.Contracts;
+using BytecodeDynamicMethodsCompiler.Core;
 using DotnetAirHelper;
 using ExceptionsManager;
 using GrEmit;
@@ -8,7 +9,7 @@ using IntermediateRepresentationAbstractions;
 using ListExtensions;
 using ObjectExtensions;
 
-namespace BytecodeDynamicMethodsCompiler;
+namespace BytecodeDynamicMethodsCompiler.Compilers;
 
 public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
 {

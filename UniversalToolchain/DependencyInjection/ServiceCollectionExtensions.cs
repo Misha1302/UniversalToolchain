@@ -2,16 +2,22 @@ using System.Reflection.Emit;
 using AbstractIrConverters;
 using AssemblyFinder;
 using BasicCilCompiler;
+using BasicCilCompiler.Execution;
 using BasicCodeTranslator;
 using BasicCore;
+using BasicCore.Contracts;
+using BasicCore.Core;
 using BasicCore.ExecutorWrapper;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using BasicInterpreter;
 using BasicLexer;
+using BasicLexer.Core;
 using BasicParser;
+using BasicParser.Core;
 using BytecodeDynamicMethodsCompiler;
+using BytecodeDynamicMethodsCompiler.Compilers;
 using IntermediateRepresentationAbstractions;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -105,7 +111,8 @@ public static class ServiceCollectionExtensions
         string namespaceName)
     {
         var descriptors = services
-            .Where(d => d.ImplementationType?.Namespace == namespaceName || d.ServiceType.Namespace == namespaceName)
+            .Where(d => NamespaceMatches(d.ImplementationType?.Namespace, namespaceName) ||
+                        NamespaceMatches(d.ServiceType.Namespace, namespaceName))
             .ToList();
 
         foreach (var descriptor in descriptors)
@@ -197,7 +204,7 @@ public static class ServiceCollectionExtensions
             foreach (var module in allModules)
             {
                 if (module.ImplementationType?.Namespace == null ||
-                    !options.IncludedNamespaces.Contains(module.ImplementationType.Namespace))
+                    !options.IncludedNamespaces.Any(ns => NamespaceMatches(module.ImplementationType.Namespace, ns)))
                     services.Remove(module);
             }
         }
@@ -232,6 +239,18 @@ public static class ServiceCollectionExtensions
                 foreach (var module in moduleTypes)
                     services.Remove(module);
             }
+    }
+
+
+    private static bool NamespaceMatches(string? candidateNamespace, string namespaceFilter)
+    {
+        if (string.IsNullOrWhiteSpace(candidateNamespace) || string.IsNullOrWhiteSpace(namespaceFilter))
+            return false;
+
+        return candidateNamespace.Equals(namespaceFilter, StringComparison.Ordinal) ||
+               candidateNamespace.StartsWith($"{namespaceFilter}.", StringComparison.Ordinal) ||
+               candidateNamespace.EndsWith($".{namespaceFilter}", StringComparison.Ordinal) ||
+               candidateNamespace.Contains($".{namespaceFilter}.", StringComparison.Ordinal);
     }
 
     private static void RegisterCompilers(IServiceCollection services)

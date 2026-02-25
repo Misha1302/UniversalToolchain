@@ -1,9 +1,13 @@
-using BasicCore;
+using BasicCore.Attributes;
+using BasicCore.Contracts;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
+using BasicCore.Registration;
 using BasicCore.TranslatorWrapper;
+using UserFunctionsModule.Creators;
+using UserFunctionsModule.Visitors;
 
-namespace UserFunctionsModule;
+namespace UserFunctionsModule.Module;
 
 [AutoRegisterService]
 public class UserFunctionsModuleImpl : IFrontendCoreModule
@@ -17,7 +21,8 @@ public class UserFunctionsModuleImpl : IFrontendCoreModule
 
     private static readonly IReadOnlyList<NodeCreatorRegistration> NodeCreatorRegistrations =
     [
-        new(-1.75f, new UserFunctionNodeCreator())
+        new(-40f, new UserFunctionNodeCreator(handleReturnNodes: false)),
+        new(-1.75f, new UserFunctionReturnNodeCreator())
     ];
 
     public void InitLexer(ILexer lexer) => lexer.AddLexemes(LexemeRegistrations);

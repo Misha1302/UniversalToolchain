@@ -11,6 +11,10 @@ public static class MethodsFinder
     public static MethodInfo? GetMethod(string fullName) =>
         _methodCache.GetOrAdd(fullName, FindMethod);
 
+    public static MethodInfo? GetMethod(string fullName, int parameterCount) =>
+        _methodWithParamsCache.GetOrAdd($"{fullName}[argc:{parameterCount}]",
+            _ => FindMethod(fullName, parameterCount));
+
     public static MethodInfo? GetMethod(string fullName, Type[] parameterTypes) =>
         _methodWithParamsCache.GetOrAdd($"{fullName}[{string.Join(",", parameterTypes.Select(t => t.FullName))}]",
             _ => FindMethod(fullName, parameterTypes));
@@ -34,6 +38,22 @@ public static class MethodsFinder
         // Если не нашли, пробуем найти по короткому имени (Class)
         var shortTypeName = typeNameParts.Last();
         return FindMethodInType(shortTypeName, methodName, null);
+    }
+
+    private static MethodInfo? FindMethod(string fullName, int parameterCount)
+    {
+        var split = fullName.Split('.');
+        if (split.Length < 2) return null;
+
+        var methodName = split.Last();
+        var typeNameParts = split.Take(split.Length - 1).ToList();
+
+        var fullTypeName = string.Join(".", typeNameParts);
+        var method = FindMethodInTypeByParameterCount(fullTypeName, methodName, parameterCount);
+        if (method != null) return method;
+
+        var shortTypeName = typeNameParts.Last();
+        return FindMethodInTypeByParameterCount(shortTypeName, methodName, parameterCount);
     }
 
     private static MethodInfo? FindMethod(string fullName, Type[] parameterTypes)
@@ -63,7 +83,14 @@ public static class MethodsFinder
         var type = FindTypeByName(typeName);
         if (type == null) return null;
 
-        parameterTypes ??= [];
+        if (parameterTypes == null)
+        {
+            var anyCandidates = type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
+                .Where(m => m.Name == methodName)
+                .ToList();
+
+            return anyCandidates.FirstOrDefault(m => !m.IsGenericMethod) ?? anyCandidates.FirstOrDefault();
+        }
 
         // Ищем метод с определенными параметрами
         // Сначала точное совпадение
@@ -101,6 +128,23 @@ public static class MethodsFinder
         }
 
         return null;
+    }
+
+    private static MethodInfo? FindMethodInTypeByParameterCount(string typeName, string methodName, int parameterCount)
+    {
+        var type = FindTypeByName(typeName);
+        if (type == null) return null;
+
+        var candidates = type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
+            .Where(m => m.Name == methodName && m.GetParameters().Length == parameterCount)
+            .ToList();
+
+        return candidates.Count switch
+        {
+            0 => null,
+            1 => candidates[0],
+            _ => candidates.FirstOrDefault(m => !m.IsGenericMethod) ?? candidates[0]
+        };
     }
 
     private static Type? FindTypeByName(string typeName)

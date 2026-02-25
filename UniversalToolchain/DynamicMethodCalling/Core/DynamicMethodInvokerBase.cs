@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 using ExceptionsManager;
 using ObjectExtensions;
 
-namespace DynamicMethodCalling;
+namespace DynamicMethodCalling.Core;
 
 public class DynamicMethodInvokerBase<TReturn>
 {

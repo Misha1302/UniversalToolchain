@@ -1,4 +1,6 @@
-namespace Tests;
+using NumbersModule.Core;
+
+namespace Tests.Core;
 
 [TestFixture]
 public class StackAndTypeTests : TestBase

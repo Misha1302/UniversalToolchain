@@ -1,4 +1,4 @@
-namespace ParserConfigurationModule;
+namespace ParserConfigurationModule.Core;
 
 public enum ActionType
 {

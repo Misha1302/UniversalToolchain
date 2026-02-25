@@ -1,8 +1,8 @@
-using BasicCore;
+using BasicCore.Attributes;
 using BasicCore.ParserWrapper;
 using BasicTypesExtensions;
 
-namespace ConditionsModule;
+namespace ConditionsModule.Creators;
 
 [AutoRegisterService]
 public class BooleanNodeCreator(string nodeType, BooleanNodeCreator.BooleanStatementType type) : IAstNodeCreator

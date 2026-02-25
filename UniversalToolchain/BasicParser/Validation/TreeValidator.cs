@@ -1,6 +1,6 @@
 using BasicCore.ParserWrapper;
 
-namespace BasicParser;
+namespace BasicParser.Validation;
 
 public class TreeValidator
 {

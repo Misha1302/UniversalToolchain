@@ -1,6 +1,9 @@
 ﻿using System.Diagnostics;
 using System.Reflection.Emit;
 using AssemblyFinder;
+using BasicCore.Attributes;
+using BasicCore.Contracts;
+using BasicCore.Core;
 using DependencyInjection;
 using ExceptionsManager;
 using IntermediateRepresentationAbstractions;

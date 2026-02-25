@@ -1,4 +1,6 @@
-namespace Tests;
+using NumbersModule.Core;
+
+namespace Tests.Arithmetic;
 
 [TestFixture]
 public class AdvancedArithmeticTests : TestBase

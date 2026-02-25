@@ -1,4 +1,4 @@
-namespace BasicCore;
+namespace BasicCore.Contracts;
 
 public interface IExecutableGiver<out T>
 {

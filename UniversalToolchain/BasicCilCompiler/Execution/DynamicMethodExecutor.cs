@@ -1,7 +1,7 @@
 ﻿using System.Reflection.Emit;
 using BasicCore.ExecutorWrapper;
 
-namespace BasicCilCompiler;
+namespace BasicCilCompiler.Execution;
 
 public class DynamicMethodExecutor : IExecutor<DynamicMethod>
 {
