@@ -19,13 +19,14 @@ services.AddSingleton<IFrontendCoreModule>(new LexerConfigurationModuleImpl(Acti
 var provider = services.BuildServiceProvider();
 var core = provider.GetServices<IExecutableGiver<DynamicMethod>>().First();
 
+
 var method = core.GetExecutable(
     """
     fn add(a, b) (
         return a + b
     )
 
-    add(2, 3)
+    add(2, 8) + add(2, 2)
     """,
     new OrderedDictionary<string, Type>());
 

@@ -145,4 +145,21 @@ public class UserFunctionsModuleTests : TestBase
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(0).Within(1e-9));
     }
+
+    [Test]
+    public void Execute_FunctionsAddition_ReturnExpected()
+    {
+        var code =
+            """
+            fn add(x, y) (
+                return x + y
+            )
+
+            add(1, 2) + add(3, 4)
+            """;
+
+        var result = ExecuteCode(code);
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(10).Within(1e-9));
+    }
 }
