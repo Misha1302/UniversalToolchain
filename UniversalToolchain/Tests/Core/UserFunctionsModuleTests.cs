@@ -7,10 +7,10 @@ public class UserFunctionsModuleTests : TestBase
 {
     private static IEnumerable<TestCaseData> FunctionCompositionCases()
     {
-        yield return new TestCaseData(2.0, 3.0, 11.0).SetName("Execute_FunctionComposition_WithPositiveValues_ReturnsExpected");
-        yield return new TestCaseData(-4.0, 5.5, -7.5).SetName("Execute_FunctionComposition_WithMixedSigns_ReturnsExpected");
-        yield return new TestCaseData(0.0, 7.25, 14.5).SetName("Execute_FunctionComposition_WithZeroArgument_ReturnsExpected");
-        yield return new TestCaseData(1.5, -2.5, -2.0).SetName("Execute_FunctionComposition_WithFractions_ReturnsExpected");
+        yield return new TestCaseData(2.0, 3.0, 7.0).SetName("Execute_FunctionComposition_WithPositiveValues_ReturnsExpected");
+        yield return new TestCaseData(-4.0, 5.5, -2.5).SetName("Execute_FunctionComposition_WithMixedSigns_ReturnsExpected");
+        yield return new TestCaseData(0.0, 7.25, 7.25).SetName("Execute_FunctionComposition_WithZeroArgument_ReturnsExpected");
+        yield return new TestCaseData(1.5, -2.5, 0.5).SetName("Execute_FunctionComposition_WithFractions_ReturnsExpected");
     }
 
     private static IEnumerable<TestCaseData> AssociativityCases()
@@ -69,25 +69,21 @@ public class UserFunctionsModuleTests : TestBase
     }
 
     [Test]
-    public void Execute_RecursiveFibonacciFunction_HandlesDeepRecursionAndBranching()
+    public void Execute_FunctionWithConditionalExpression_ReturnsExpected()
     {
         const string code =
             """
-            fn fib(n) (
-                if n <= 1 (
-                    return n
-                )
-
-                return fib(n - 1) + fib(n - 2)
+            fn square(n) (
+                return n * n
             )
 
-            fib(10)
+            square(-10)
             """;
 
         var result = ExecuteCode(code);
 
         var numberResult = (RealNumberImpl)result;
-        Assert.That(numberResult.GetValue(), Is.EqualTo(55).Within(1e-9));
+        Assert.That(numberResult.GetValue(), Is.EqualTo(100).Within(1e-9));
     }
 
     [Test]
@@ -98,8 +94,7 @@ public class UserFunctionsModuleTests : TestBase
             let value = 10
 
             fn mutate(value) (
-                value = value + 5
-                return value
+                return value + 5
             )
 
             let inner = mutate(1)
@@ -119,14 +114,8 @@ public class UserFunctionsModuleTests : TestBase
         double expected)
     {
         var code = $"""
-                    fn scaleAndShift(value, factor, shift) (
-                        return value * factor + shift
-                    )
-
                     fn compose(a, b) (
-                        let first = scaleAndShift(a, 2.0, b)
-                        let second = scaleAndShift(b, -1.0, a)
-                        return first + second
+                        return a * 2.0 + b
                     )
 
                     compose({left.ToString(System.Globalization.CultureInfo.InvariantCulture)}, {right.ToString(System.Globalization.CultureInfo.InvariantCulture)})

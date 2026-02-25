@@ -36,12 +36,13 @@ public class UserFunctionsAstVisitor : IAstVisitor
         var parameters = AstInliningHelper.ExtractParameters(declarationNode.Children[1]);
         var bodyScope = declarationNode.Children[2];
 
-        Thrower.AssertAlways(bodyScope.Children.Count == 1, $"Function '{functionName}' body must contain exactly one statement in MVP implementation.");
-        var returnNode = bodyScope.Children[0];
-        Thrower.AssertAlways(returnNode.NodeType == ExtensibleEnum<AstNodeTag>.CreateOrGet("Return"),
-            $"Function '{functionName}' must end with explicit return in MVP implementation.");
+        var returnNode = bodyScope.Children
+            .LastOrDefault(node => node.NodeType == ExtensibleEnum<AstNodeTag>.CreateOrGet("Return"));
 
-        _functions[functionName] = new UserFunctionDefinition(functionName, parameters, returnNode.Children[0]);
+        Thrower.AssertAlways(returnNode != null,
+            $"Function '{functionName}' must contain explicit return in MVP implementation.");
+
+        _functions[functionName] = new UserFunctionDefinition(functionName, parameters, returnNode!.Children[0]);
     }
 
     private void TranslateFunctionCall(BytecodeVisitorData data)

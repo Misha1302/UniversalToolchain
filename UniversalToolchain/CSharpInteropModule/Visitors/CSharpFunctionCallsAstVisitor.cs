@@ -15,9 +15,12 @@ public class CSharpFunctionCallsAstVisitor : IAstVisitor
         if (data.Node.NodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("CSharpFunctionCall"))
             return;
 
+        var argsScope = data.Node.Children[0];
+        var arguments = argsScope.Children;
+
         // Обрабатываем аргументы - они будут положены в стек
-        foreach (var child in data.Node.Children)
-            data.AstToBytecodeTranslator.Translate(child);
+        foreach (var argument in arguments)
+            data.AstToBytecodeTranslator.Translate(argument);
 
         var fullName = (data.Node.LexemeValue?.Text).NotNull();
 
@@ -27,11 +30,12 @@ public class CSharpFunctionCallsAstVisitor : IAstVisitor
             {
                 // Используем типы из стека для разрешения перегрузки
                 // Количество аргументов = количество детей узла
-                var argCount = data.Node.Children[0].Children.Count;
+                var argCount = arguments.Count;
                 var stackTypes = context.Stack.TakeLast(argCount).ToList();
 
                 // Пытаемся найти метод с учетом типов параметров
                 var methodInfo = MethodsFinder.GetMethod(fullName, stackTypes.ToArray())
+                                 ?? MethodsFinder.GetMethod(fullName, argCount)
                                  ?? MethodsFinder.GetMethod(fullName);
 
                 il.CallCSharp(methodInfo.NotNull());
