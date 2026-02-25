@@ -46,8 +46,8 @@ public class ParserConfigurationModuleImplTests
         Assert.That(content, Does.Contain("# Format: <priority>|<type_full_name>|<instance_hash>|<ast_node_type>"));
 
         // Проверяем наличие хотя бы некоторых ожидаемых строк
-        Assert.That(content, Does.Contain("ScopesModule.ScopesCreator"));
-        Assert.That(content, Does.Contain("ArithmeticModule.AdditionOperationNodeCreator"));
+        Assert.That(content, Does.Contain("ScopesCreator"));
+        Assert.That(content, Does.Contain("AdditionOperationNodeCreator"));
     }
 
     [Test]
@@ -72,8 +72,8 @@ public class ParserConfigurationModuleImplTests
         loadModule.InitParser(parser2);
 
 
-        var scopesCreatorPriority = GetCreatorPriority(parser2, "ScopesModule.ScopesCreator");
-        var equalityCreatorPriority = GetCreatorPriority(parser2, "EqualityModule.ValuesSetNodeCreator");
+        var scopesCreatorPriority = GetCreatorPriority(parser2, "ScopesCreator");
+        var equalityCreatorPriority = GetCreatorPriority(parser2, "ValuesSetNodeCreator");
 
         Assert.That(scopesCreatorPriority, Is.EqualTo(99999f));
         Assert.That(equalityCreatorPriority, Is.EqualTo(-50f));
@@ -90,7 +90,7 @@ public class ParserConfigurationModuleImplTests
         Assert.DoesNotThrow(() => module.InitParser(parser));
 
         // Проверяем, что конфигурация осталась по умолчанию
-        var scopesCreatorPriority = GetCreatorPriority(parser, "ScopesModule.ScopesCreator");
+        var scopesCreatorPriority = GetCreatorPriority(parser, "ScopesCreator");
         Assert.That(scopesCreatorPriority, Is.EqualTo(-100000f)); // Оригинальный приоритет
     }
 
@@ -126,7 +126,7 @@ public class ParserConfigurationModuleImplTests
             -10.00|ConditionsModule.ComparisonNodeCreator|0|Equal
             -10.00|ConditionsModule.ComparisonNodeCreator|1|NotEqual
             -10.00|ConditionsModule.ComparisonNodeCreator|2|Greater
-            20.00|ArithmeticModule.AdditionOperationNodeCreator|0|Addition
+            20.00|ArithmeticModule.Creators.AdditionOperationNodeCreator|0|Addition
             20.00|ArithmeticModule.SubstractionOperationNodeCreator|0|Substraction
             """;
 
@@ -192,16 +192,18 @@ public class ParserConfigurationModuleImplTests
         return parser;
     }
 
-    private float GetCreatorPriority(IParser parser, string typeFullName)
+    private float GetCreatorPriority(IParser parser, string typeName)
     {
         foreach (var level in parser.Configuration.NodeCreators)
         {
             foreach (var creator in level.Value)
             {
-                if (creator.GetType().FullName == typeFullName)
+                var fullName = creator.GetType().FullName;
+                if (fullName == typeName || fullName?.EndsWith($".{typeName}") == true || creator.GetType().Name == typeName)
                     return level.Key;
             }
         }
+
         return 0;
     }
 
