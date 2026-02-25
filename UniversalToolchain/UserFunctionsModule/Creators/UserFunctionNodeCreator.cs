@@ -5,17 +5,22 @@ namespace UserFunctionsModule.Creators;
 
 public class UserFunctionNodeCreator : IAstNodeCreator
 {
+    public UserFunctionNodeCreator(bool handleReturnNodes = true)
+    {
+        _handleReturnNodes = handleReturnNodes;
+    }
+
     private static readonly ExtensibleEnum<AstNodeTag> FnNodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("Fn");
     private static readonly ExtensibleEnum<AstNodeTag> IdentifierNodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("Identifier");
     private static readonly ExtensibleEnum<AstNodeTag> ScopeNodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("Scope");
-    private static readonly ExtensibleEnum<AstNodeTag> ReturnNodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("Return");
     private readonly HashSet<string> _declaredFunctions = [];
+    private readonly bool _handleReturnNodes;
 
     public ExtensibleEnum<AstNodeTag> AstNodeType { get; } = ExtensibleEnum<AstNodeTag>.CreateOrGet("FunctionDeclaration");
 
     public bool TryCreateNode(AstNode scope, int childIndex) =>
         TryCreateFunctionDeclaration(scope, childIndex)
-        || TryCreateReturn(scope, childIndex)
+        || (_handleReturnNodes && UserFunctionReturnNodeCreator.TryCreateReturn(scope, childIndex))
         || TryCreateFunctionCall(scope, childIndex);
 
     private bool TryCreateFunctionDeclaration(AstNode scope, int childIndex)
@@ -40,21 +45,6 @@ public class UserFunctionNodeCreator : IAstNodeCreator
 
         scope.Children.RemoveAt(childIndex + 3);
         scope.Children.RemoveAt(childIndex + 2);
-        scope.Children.RemoveAt(childIndex + 1);
-        return true;
-    }
-
-    private static bool TryCreateReturn(AstNode scope, int childIndex)
-    {
-        if (scope.SafeGet(childIndex)?.NodeType != ReturnNodeType)
-            return false;
-
-        var expressionNode = scope.SafeGet(childIndex + 1);
-        if (expressionNode == null)
-            return false;
-
-        var returnNode = scope[childIndex];
-        returnNode.Children.Add(expressionNode);
         scope.Children.RemoveAt(childIndex + 1);
         return true;
     }

@@ -146,6 +146,99 @@ public class UserFunctionsModuleTests : TestBase
         Assert.That(numberResult.GetValue(), Is.EqualTo(0).Within(1e-9));
     }
 
+
+    private static IEnumerable<TestCaseData> DeepCompositionCases()
+    {
+        yield return new TestCaseData(5.0, 2.0, 59.0)
+            .SetName("Execute_DeepFunctionComposition_WithIntegerArguments_ReturnsExpected");
+        yield return new TestCaseData(-1.5, 4.0, 3.25)
+            .SetName("Execute_DeepFunctionComposition_WithMixedSigns_ReturnsExpected");
+        yield return new TestCaseData(0.0, 3.25, 10.5625)
+            .SetName("Execute_DeepFunctionComposition_WithFractionalArguments_ReturnsExpected");
+    }
+
+    [TestCaseSource(nameof(DeepCompositionCases))]
+    public void Execute_DeepFunctionComposition_WithMultipleFunctionLayers_ReturnsExpected(
+        double x,
+        double y,
+        double expected)
+    {
+        var toCode = (double value) => value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+        var code = $"""
+                    fn add(a, b) (
+                        return a + b
+                    )
+
+                    fn scale(v, factor) (
+                        return v * factor
+                    )
+
+                    fn square(n) (
+                        return n * n
+                    )
+
+                    fn pipeline(p, q) (
+                        return add(square(add(p, q)), scale(p, 2.0))
+                    )
+
+                    pipeline({toCode(x)}, {toCode(y)})
+                    """;
+
+        var result = ExecuteCode(code);
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(expected).Within(1e-9));
+    }
+
+    [Test]
+    public void Execute_FunctionCallArguments_AsExpressionsIncludingFunctionCalls_ReturnsExpected()
+    {
+        const string code =
+            """
+            fn add(a, b) (
+                return a + b
+            )
+
+            fn mul(a, b) (
+                return a * b
+            )
+
+            fn adjust(base, delta) (
+                return base - delta
+            )
+
+            adjust(add(1, mul(2, 3)) + add(4, 5), mul(add(1, 1), 2))
+            """;
+
+        var result = ExecuteCode(code);
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(12).Within(1e-9));
+    }
+
+    [Test]
+    public void Execute_FunctionParameterShadowing_AcrossNestedCalls_KeepsOuterStateStable()
+    {
+        const string code =
+            """
+            let value = 100
+
+            fn addToValue(value, increment) (
+                return value + increment
+            )
+
+            fn calc(value) (
+                return addToValue(value, 5) + addToValue(1, value)
+            )
+
+            let computed = calc(10)
+            value + computed
+            """;
+
+        var result = ExecuteCode(code);
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(126).Within(1e-9));
+    }
+
     [Test]
     public void Execute_FunctionsAddition_ReturnExpected()
     {

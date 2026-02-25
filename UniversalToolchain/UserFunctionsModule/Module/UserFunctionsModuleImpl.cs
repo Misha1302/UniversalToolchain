@@ -21,7 +21,8 @@ public class UserFunctionsModuleImpl : IFrontendCoreModule
 
     private static readonly IReadOnlyList<NodeCreatorRegistration> NodeCreatorRegistrations =
     [
-        new(-1.75f, new UserFunctionNodeCreator())
+        new(-40f, new UserFunctionNodeCreator(handleReturnNodes: false)),
+        new(-1.75f, new UserFunctionReturnNodeCreator())
     ];
 
     public void InitLexer(ILexer lexer) => lexer.AddLexemes(LexemeRegistrations);
