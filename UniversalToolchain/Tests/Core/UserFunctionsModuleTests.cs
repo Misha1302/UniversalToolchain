@@ -54,7 +54,7 @@ public class UserFunctionsModuleTests : TestBase
             add(2)
             """;
 
-        Assert.That(() => ExecuteCode(code), Throws.Exception.With.Message.Contains("expects 2 args"));
+        Assert.That(() => ExecuteCode(code), Throws.Exception.With.Message.Contains("Неверное число аргументов"));
     }
 
     [Test]
@@ -255,4 +255,94 @@ public class UserFunctionsModuleTests : TestBase
         var numberResult = (RealNumberImpl)result;
         Assert.That(numberResult.GetValue(), Is.EqualTo(10).Within(1e-9));
     }
+
+
+    [Test]
+    public void Execute_RecursiveFactorial_ReturnsExpected()
+    {
+        const string code =
+            """
+            fn factorial(n) (
+                if (n <= 1) (
+                    return 1
+                )
+
+                return n * factorial(n - 1)
+            )
+
+            factorial(5)
+            """;
+
+        var result = ExecuteCode(code);
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(120).Within(1e-9));
+    }
+
+    [Test]
+    public void Execute_RecursiveFibonacci_ReturnsExpected()
+    {
+        const string code =
+            """
+            fn fib(n) (
+                if (n <= 1) (
+                    return n
+                )
+
+                return fib(n - 1) + fib(n - 2)
+            )
+
+            fib(8)
+            """;
+
+        var result = ExecuteCode(code);
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(21).Within(1e-9));
+    }
+
+    [Test]
+    public void Execute_FunctionBodyWithMultipleStatementsAndLocalVariable_ReturnsExpected()
+    {
+        const string code =
+            """
+            fn calc(value) (
+                let doubled = value * 2
+                let shifted = doubled + 3
+                return shifted
+            )
+
+            calc(7)
+            """;
+
+        var result = ExecuteCode(code);
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(17).Within(1e-9));
+    }
+
+    [Test]
+    public void Execute_MutualRecursion_IsEvenAndIsOdd_ReturnsExpected()
+    {
+        const string code =
+            """
+            fn isEven(n) (
+                if (n == 0) (
+                    return 1
+                )
+                return isOdd(n - 1)
+            )
+
+            fn isOdd(n) (
+                if (n == 0) (
+                    return 0
+                )
+                return isEven(n - 1)
+            )
+
+            isEven(10)
+            """;
+
+        var result = ExecuteCode(code);
+        var numberResult = (RealNumberImpl)result;
+        Assert.That(numberResult.GetValue(), Is.EqualTo(1).Within(1e-9));
+    }
+
 }

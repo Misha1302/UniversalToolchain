@@ -60,6 +60,7 @@ public class UserFunctionNodeCreator : IAstNodeCreator
         if (identifierNode?.NodeType != IdentifierNodeType || argsNode?.NodeType != ScopeNodeType)
             return false;
 
+        DiscoverFunctionNames(scope);
         if (!_declaredFunctions.Contains(identifierNode.Text))
             return false;
 
@@ -68,4 +69,18 @@ public class UserFunctionNodeCreator : IAstNodeCreator
         scope.Children.RemoveAt(childIndex + 1);
         return true;
     }
+    private void DiscoverFunctionNames(AstNode scope)
+    {
+        for (var i = 0; i <= scope.Children.Count - 4; i++)
+        {
+            if (scope.Children[i].NodeType == FnNodeType &&
+                scope.Children[i + 1].NodeType == IdentifierNodeType &&
+                scope.Children[i + 2].NodeType == ScopeNodeType &&
+                scope.Children[i + 3].NodeType == ScopeNodeType)
+            {
+                _declaredFunctions.Add(scope.Children[i + 1].Text);
+            }
+        }
+    }
+
 }

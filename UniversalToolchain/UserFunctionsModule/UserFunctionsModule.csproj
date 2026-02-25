@@ -8,6 +8,8 @@
 
     <ItemGroup>
         <ProjectReference Include="..\BasicCore\BasicCore.csproj"/>
+        <ProjectReference Include="..\NumbersModule\NumbersModule.csproj"/>
+        <ProjectReference Include="..\AbstractIrExtensions\AbstractIrExtensions.csproj"/>
     </ItemGroup>
 
 </Project>
