@@ -206,7 +206,140 @@ public class CompilerAndInterpreterResilienceTests
         Assert.Throws<InvalidOperationException>(() => CompileAndExecute(ir));
     }
 
+    [Test]
+    public void Interpreter_ManualStackManipulationWithDropsAndNestedBranches_RemainsDeterministic()
+    {
+        var outerTrue = Guid.NewGuid();
+        var innerTrue = Guid.NewGuid();
+        var endInner = Guid.NewGuid();
+
+        var combineMethod = typeof(CompilerAndInterpreterResilienceTests)
+            .GetMethod(nameof(CombineDigits), BindingFlags.NonPublic | BindingFlags.Static);
+        Assert.That(combineMethod, Is.Not.Null);
+
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [1]),
+            new Instruction(UOpCode.Push, [777]),
+            new Instruction(UOpCode.Drop),
+
+            new Instruction(UOpCode.Push, [true]),
+            new Instruction(UOpCode.JmpIf, [outerTrue]),
+            new Instruction(UOpCode.Push, [999]),
+
+            new Instruction(UOpCode.Label, [outerTrue]),
+            new Instruction(UOpCode.Push, [false]),
+            new Instruction(UOpCode.JmpIf, [innerTrue]),
+            new Instruction(UOpCode.Push, [2]),
+            new Instruction(UOpCode.Intrinsic, ["call C#", combineMethod!]),
+            new Instruction(UOpCode.Jmp, [endInner]),
+
+            new Instruction(UOpCode.Label, [innerTrue]),
+            new Instruction(UOpCode.Push, [9]),
+            new Instruction(UOpCode.Intrinsic, ["call C#", combineMethod!]),
+
+            new Instruction(UOpCode.Label, [endInner]),
+            new Instruction(UOpCode.Push, [3]),
+            new Instruction(UOpCode.Intrinsic, ["call C#", combineMethod!])
+        );
+
+        var result = ExecuteInInterpreter(ir);
+
+        Assert.That(result, Is.EqualTo(123));
+    }
+
+    [Test]
+    public void Compiler_DeepNestedConditionsWithSharedStackState_HandlesComplexControlFlow()
+    {
+        var branch1 = Guid.NewGuid();
+        var branch2 = Guid.NewGuid();
+        var branch3 = Guid.NewGuid();
+        var afterInner = Guid.NewGuid();
+        var finish = Guid.NewGuid();
+
+        var combineMethod = typeof(CompilerAndInterpreterResilienceTests)
+            .GetMethod(nameof(CombineDigits), BindingFlags.NonPublic | BindingFlags.Static);
+        Assert.That(combineMethod, Is.Not.Null);
+
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [0]),
+
+            new Instruction(UOpCode.Push, [true]),
+            new Instruction(UOpCode.JmpIf, [branch1]),
+            new Instruction(UOpCode.Push, [999]),
+            new Instruction(UOpCode.Drop),
+
+            new Instruction(UOpCode.Label, [branch1]),
+            new Instruction(UOpCode.Push, [1]),
+            new Instruction(UOpCode.Intrinsic, ["call C#", combineMethod!]),
+
+            new Instruction(UOpCode.Push, [true]),
+            new Instruction(UOpCode.JmpIf, [branch2]),
+            new Instruction(UOpCode.Jmp, [finish]),
+
+            new Instruction(UOpCode.Label, [branch2]),
+            new Instruction(UOpCode.Push, [2]),
+            new Instruction(UOpCode.Intrinsic, ["call C#", combineMethod!]),
+
+            new Instruction(UOpCode.Push, [false]),
+            new Instruction(UOpCode.JmpIf, [branch3]),
+            new Instruction(UOpCode.Push, [3]),
+            new Instruction(UOpCode.Intrinsic, ["call C#", combineMethod!]),
+            new Instruction(UOpCode.Jmp, [afterInner]),
+
+            new Instruction(UOpCode.Label, [branch3]),
+            new Instruction(UOpCode.Push, [8]),
+            new Instruction(UOpCode.Intrinsic, ["call C#", combineMethod!]),
+
+            new Instruction(UOpCode.Label, [afterInner]),
+            new Instruction(UOpCode.Push, [4]),
+            new Instruction(UOpCode.Intrinsic, ["call C#", combineMethod!]),
+
+            new Instruction(UOpCode.Label, [finish])
+        );
+
+        var result = CompileAndExecute(ir);
+
+        Assert.That(result, Is.EqualTo(1234));
+    }
+
+    [Test]
+    public void Compiler_BranchingAndDropPipeline_CombinesStackOperationsWithoutLeakingGarbage()
+    {
+        var toBranch = Guid.NewGuid();
+        var end = Guid.NewGuid();
+
+        var combineMethod = typeof(CompilerAndInterpreterResilienceTests)
+            .GetMethod(nameof(CombineDigits), BindingFlags.NonPublic | BindingFlags.Static);
+        Assert.That(combineMethod, Is.Not.Null);
+
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [10]),
+            new Instruction(UOpCode.Push, [111]),
+            new Instruction(UOpCode.Drop),
+
+            new Instruction(UOpCode.Push, [true]),
+            new Instruction(UOpCode.JmpIf, [toBranch]),
+            new Instruction(UOpCode.Push, [77]),
+            new Instruction(UOpCode.Intrinsic, ["call C#", combineMethod!]),
+            new Instruction(UOpCode.Jmp, [end]),
+
+            new Instruction(UOpCode.Label, [toBranch]),
+            new Instruction(UOpCode.Push, [5]),
+            new Instruction(UOpCode.Intrinsic, ["call C#", combineMethod!]),
+
+            new Instruction(UOpCode.Label, [end]),
+            new Instruction(UOpCode.Push, [6]),
+            new Instruction(UOpCode.Intrinsic, ["call C#", combineMethod!])
+        );
+
+        var result = CompileAndExecute(ir);
+
+        Assert.That(result, Is.EqualTo(1056));
+    }
+
     private static int AddOne(int value) => value + 1;
+
+    private static int CombineDigits(int acc, int nextDigit) => acc * 10 + nextDigit;
 
     private static T Echo<T>(T value) => value;
 
