@@ -5,11 +5,6 @@ namespace Tests.Infrastructure;
 [TestFixture]
 public class WistProgramGenerationSharpFuzzTests : TestBase
 {
-    private const int RandomProgramCount = 320;
-    private const int MutatedInputCount = 240;
-    private const int MaxDepth = 3;
-    private readonly ConcurrentDictionary<string, byte> _observedBranches = new();
-
     [SetUp]
     public void SetUp()
     {
@@ -23,6 +18,11 @@ public class WistProgramGenerationSharpFuzzTests : TestBase
         SharpTrace.OnBranch = null!;
     }
 
+    private const int RandomProgramCount = 320;
+    private const int MutatedInputCount = 240;
+    private const int MaxDepth = 3;
+    private readonly ConcurrentDictionary<string, byte> _observedBranches = new();
+
     [Test]
     public void GeneratedPrograms_DoNotCauseUnexpectedFailures()
     {
@@ -30,7 +30,7 @@ public class WistProgramGenerationSharpFuzzTests : TestBase
 
         for (var i = 0; i < RandomProgramCount; i++)
         {
-            var code = GenerateProgram(random, maxStatements: random.Next(3, 11));
+            var code = GenerateProgram(random, random.Next(3, 11));
             AssertProgramIsHandled(code, $"generated-{i}");
         }
     }
@@ -42,7 +42,7 @@ public class WistProgramGenerationSharpFuzzTests : TestBase
 
         var seedPrograms = Enumerable
             .Range(0, 16)
-            .Select(i => GenerateProgram(new Random(i + 17), maxStatements: 8))
+            .Select(i => GenerateProgram(new Random(i + 17), 8))
             .ToArray();
 
         for (var i = 0; i < MutatedInputCount; i++)
@@ -59,7 +59,7 @@ public class WistProgramGenerationSharpFuzzTests : TestBase
         var random = new Random(1337);
 
         for (var i = 0; i < 50; i++)
-            _ = GenerateProgram(random, maxStatements: random.Next(4, 9));
+            _ = GenerateProgram(random, random.Next(4, 9));
 
         Assert.That(_observedBranches.Count, Is.GreaterThan(18),
             "Expected branch probes from SharpFuzz.Common.Trace to be triggered by generators and mutators.");
@@ -93,7 +93,7 @@ public class WistProgramGenerationSharpFuzzTests : TestBase
             or NullReferenceException
             or TargetInvocationException
             or KeyNotFoundException
-            or NUnit.Framework.AssertionException)
+            or AssertionException)
             return true;
 
         return exception.Message.Contains("Assertion failed", StringComparison.OrdinalIgnoreCase);
@@ -244,10 +244,7 @@ public class WistProgramGenerationSharpFuzzTests : TestBase
         return new string(chars.ToArray());
     }
 
-    private static T Pick<T>(Random random, IReadOnlyList<T> choices)
-    {
-        return choices[random.Next(choices.Count)];
-    }
+    private static T Pick<T>(Random random, IReadOnlyList<T> choices) => choices[random.Next(choices.Count)];
 
     private static void Probe(int location, string marker)
     {

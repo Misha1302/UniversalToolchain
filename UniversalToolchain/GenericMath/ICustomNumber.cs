@@ -1,4 +1,3 @@
-using SettableGettableModule;
 using SettableGettableModule.Contracts;
 
 namespace GenericMath;

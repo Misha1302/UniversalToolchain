@@ -22,7 +22,9 @@ var core = provider.GetServices<IExecutableGiver<DynamicMethod>>().First();
 
 var method = core.GetExecutable(
     """
-    a + b * a
+    i = -5
+    while i < 0 (i = i + 1)
+    i
     """,
     new OrderedDictionary<string, Type> { ["a"] = typeof(int), ["b"] = typeof(int) });
 

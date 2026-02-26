@@ -1,4 +1,5 @@
 using BasicCore.Contracts;
+using Tests.DependencyInjection.Nested.ArithmeticModule;
 using Tests.Infrastructure;
 
 namespace Tests.Infrastructure
@@ -25,22 +26,22 @@ namespace Tests.Infrastructure
         public void RemoveAllByNamespace_RemovesServices_WhenNamespaceFilterMatchesSuffix()
         {
             var services = new ServiceCollection();
-            services.AddSingleton<ITestDependency, global::Tests.DependencyInjection.Nested.ArithmeticModule.TestDependency>();
+            services.AddSingleton<ITestDependency, TestDependency>();
 
             services.RemoveAllByNamespace("ArithmeticModule");
 
-            Assert.That(services.Any(d => d.ImplementationType == typeof(global::Tests.DependencyInjection.Nested.ArithmeticModule.TestDependency)), Is.False);
+            Assert.That(services.Any(d => d.ImplementationType == typeof(TestDependency)), Is.False);
         }
 
         [Test]
         public void RemoveAllByNamespace_RemovesServices_WhenNamespaceFilterMatchesParentNamespace()
         {
             var services = new ServiceCollection();
-            services.AddSingleton<ITestDependency, global::Tests.DependencyInjection.Nested.ArithmeticModule.Internal.TestDependency>();
+            services.AddSingleton<ITestDependency, DependencyInjection.Nested.ArithmeticModule.Internal.TestDependency>();
 
             services.RemoveAllByNamespace("Tests.DependencyInjection.Nested.ArithmeticModule");
 
-            Assert.That(services.Any(d => d.ImplementationType == typeof(global::Tests.DependencyInjection.Nested.ArithmeticModule.Internal.TestDependency)), Is.False);
+            Assert.That(services.Any(d => d.ImplementationType == typeof(DependencyInjection.Nested.ArithmeticModule.Internal.TestDependency)), Is.False);
         }
 
         public interface ITestDependency;

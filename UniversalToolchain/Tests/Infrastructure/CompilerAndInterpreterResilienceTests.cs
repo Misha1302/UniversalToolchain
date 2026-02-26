@@ -221,22 +221,18 @@ public class CompilerAndInterpreterResilienceTests
             new Instruction(UOpCode.Push, [1]),
             new Instruction(UOpCode.Push, [777]),
             new Instruction(UOpCode.Drop),
-
             new Instruction(UOpCode.Push, [true]),
             new Instruction(UOpCode.JmpIf, [outerTrue]),
             new Instruction(UOpCode.Push, [999]),
-
             new Instruction(UOpCode.Label, [outerTrue]),
             new Instruction(UOpCode.Push, [false]),
             new Instruction(UOpCode.JmpIf, [innerTrue]),
             new Instruction(UOpCode.Push, [2]),
             new Instruction(UOpCode.Intrinsic, ["call C#", combineMethod!]),
             new Instruction(UOpCode.Jmp, [endInner]),
-
             new Instruction(UOpCode.Label, [innerTrue]),
             new Instruction(UOpCode.Push, [9]),
             new Instruction(UOpCode.Intrinsic, ["call C#", combineMethod!]),
-
             new Instruction(UOpCode.Label, [endInner]),
             new Instruction(UOpCode.Push, [3]),
             new Instruction(UOpCode.Intrinsic, ["call C#", combineMethod!])
@@ -262,38 +258,30 @@ public class CompilerAndInterpreterResilienceTests
 
         var ir = BuildIr(
             new Instruction(UOpCode.Push, [0]),
-
             new Instruction(UOpCode.Push, [true]),
             new Instruction(UOpCode.JmpIf, [branch1]),
             new Instruction(UOpCode.Push, [999]),
             new Instruction(UOpCode.Drop),
-
             new Instruction(UOpCode.Label, [branch1]),
             new Instruction(UOpCode.Push, [1]),
             new Instruction(UOpCode.Intrinsic, ["call C#", combineMethod!]),
-
             new Instruction(UOpCode.Push, [true]),
             new Instruction(UOpCode.JmpIf, [branch2]),
             new Instruction(UOpCode.Jmp, [finish]),
-
             new Instruction(UOpCode.Label, [branch2]),
             new Instruction(UOpCode.Push, [2]),
             new Instruction(UOpCode.Intrinsic, ["call C#", combineMethod!]),
-
             new Instruction(UOpCode.Push, [false]),
             new Instruction(UOpCode.JmpIf, [branch3]),
             new Instruction(UOpCode.Push, [3]),
             new Instruction(UOpCode.Intrinsic, ["call C#", combineMethod!]),
             new Instruction(UOpCode.Jmp, [afterInner]),
-
             new Instruction(UOpCode.Label, [branch3]),
             new Instruction(UOpCode.Push, [8]),
             new Instruction(UOpCode.Intrinsic, ["call C#", combineMethod!]),
-
             new Instruction(UOpCode.Label, [afterInner]),
             new Instruction(UOpCode.Push, [4]),
             new Instruction(UOpCode.Intrinsic, ["call C#", combineMethod!]),
-
             new Instruction(UOpCode.Label, [finish])
         );
 
@@ -316,17 +304,14 @@ public class CompilerAndInterpreterResilienceTests
             new Instruction(UOpCode.Push, [10]),
             new Instruction(UOpCode.Push, [111]),
             new Instruction(UOpCode.Drop),
-
             new Instruction(UOpCode.Push, [true]),
             new Instruction(UOpCode.JmpIf, [toBranch]),
             new Instruction(UOpCode.Push, [77]),
             new Instruction(UOpCode.Intrinsic, ["call C#", combineMethod!]),
             new Instruction(UOpCode.Jmp, [end]),
-
             new Instruction(UOpCode.Label, [toBranch]),
             new Instruction(UOpCode.Push, [5]),
             new Instruction(UOpCode.Intrinsic, ["call C#", combineMethod!]),
-
             new Instruction(UOpCode.Label, [end]),
             new Instruction(UOpCode.Push, [6]),
             new Instruction(UOpCode.Intrinsic, ["call C#", combineMethod!])
