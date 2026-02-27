@@ -1,33 +1,34 @@
-// Setup DI with auto-registration
-
-using BasicCore.Contracts;
-using DynamicMethodCalling.Core;
-using ParserConfigurationModule.Core;
-using ParserConfigurationModule.Module;
-
 var services = new ServiceCollection();
 
 services.AddWistServices(options =>
     options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native
 );
 
-// Add optional modules
 services.AddSingleton<IFrontendCoreModule>(new ExecutorDebugLoggerImpl());
 services.AddSingleton<IFrontendCoreModule>(new ParserConfigurationModuleImpl(ActionType.DumpConfiguration));
 services.AddSingleton<IFrontendCoreModule>(new LexerConfigurationModuleImpl(ActionType.DumpConfiguration));
 
 var provider = services.BuildServiceProvider();
-var core = provider.GetServices<IExecutableGiver<DynamicMethod>>().First();
 
-
-var method = core.GetExecutable(
+const string code =
     """
-    i = -5
-    while i < 0 (i = i + 1)
+    i = 5
+    while i < 25 ( i = i * 2 )
     i
-    """,
-    new OrderedDictionary<string, Type> { ["a"] = typeof(int), ["b"] = typeof(int) });
+    """;
 
 
+// INTERPRETER
+var core = provider.GetService<ICoreRunnable>().NotNull();
+Console.WriteLine("Runned: " + core.Run(code));
+
+
+
+/*
+// COMPILER
+var core = provider.GetService<IExecutableGiver<DynamicMethod>>().NotNull();
+var method = core.GetExecutable(code, new());
 var fastCallable = new DynamicMethodInvoker<int, int, int>(method);
+
 Console.WriteLine("Result: " + fastCallable.Invoke(7, 15));
+*/
