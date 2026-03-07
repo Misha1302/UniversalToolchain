@@ -26,15 +26,18 @@ The project’s own TODO explicitly acknowledges multiple foundational issues (D
 
 The core execution pipeline is implemented in `BasicCoreImpl<TCompilationOutput>` and is structurally:
 
-1. (Optional) inject parameter definitions into source text  
-2. `ProcessText` across all frontend modules  
-3. `InitLexer` for modules → lexing → `ProcessLexemes` across modules  
-4. `InitParser` for modules → parsing into AST → `ProcessAst` across modules  
-5. `InitAstTranslator` for modules → AST→Bytecode → `ProcessBytecode` across modules  
-6. `InitMethodsTranslator` for IR-processing modules → Bytecode→Abstract IR  
-7. IR optimizers (`IIRProcessingModule`) run, with visibility into compiler backend capabilities  
-8. Compile to backend output (`DynamicMethod` or `IAbstractIR`)  
-9. Execute via backend executor (`DynamicMethodExecutor` or interpreter) fileciteturn76file3 fileciteturn12file10
+1. `ProcessText` across all frontend modules  
+2. `InitLexer` for modules → lexing → `ProcessLexemes` across modules  
+3. `InitParser` for modules → parsing → `ProcessNodes` across modules  
+4. AST validation  
+5. AST → Bytecode lowering  
+6. IR optimizers (`IIRProcessingModule`)  
+7. Compile to backend output (`DynamicMethod` or `IAbstractIR`)  
+8. Execute via backend executor (`DynamicMethodExecutor` or interpreter) fileciteturn76file3 fileciteturn12file10
+
+External parameters are passed through `CompilationInput.ExternalBindings` and are resolved during the binding stage rather than being injected into the source text.
+
+In the default configuration the compiled `DynamicMethod` is executed through `DynamicMethod.Invoke(...)`. Specialized invokers may be used in optimized scenarios.
 
 In code, this pipeline is explicitly “module-aggregated”: each stage is a fold/aggregate over module lists, so order matters wherever a module mutates the stream (text/lexemes/AST/bytecode). fileciteturn19file0
 
@@ -133,13 +136,7 @@ Assignment is implemented by:
 - Variables lowering (`VariablesVisitor`) interprets that tag to emit *reference* loads rather than value loads, inferring the variable’s type from the RHS type on the type stack. fileciteturn62file0
 - the actual store is emitted via a helper call (`SetValueToSettable`), which is later optimized into backend-supported `store_local` / `load_local` intrinsics when available. fileciteturn122file0 fileciteturn117file0 fileciteturn52file0
 
-Additionally, “parameter definition” isn’t a separate compile phase; instead the core injects `#![define ... as ...]` preprocessor directives into the source by default, and the `VariablesVisitor` interprets those directives during lowering to seed `_variablesTypes`. fileciteturn76file3 fileciteturn62file0 fileciteturn69file0
-
-This is clever (it avoids building a separate parameter system), but the project TODO explicitly calls it “very-very-very bad” abstraction leakage and recommends refactoring it into a cleaner model. The pain is real:
-
-- you’re mixing *code generation* with *side-effectful compiler state updates*
-- parameters become “magic syntax” in the language rather than a stable API
-- static analysis, tooling, and education become harder because semantics are hidden in a preprocessor convention fileciteturn44file9 fileciteturn76file3 fileciteturn62file0
+Parameter definitions are not implemented as a preprocessing directive stage in the current pipeline. Instead, parameters are provided through `CompilationInput.ExternalBindings`, which are passed into the binding stage. The binder resolves identifiers using these external bindings, allowing runtime values to be supplied without modifying the source text. fileciteturn76file3 fileciteturn62file0
 
 ### C# interop: power feature and primary risk vector
 
@@ -179,7 +176,7 @@ The TODO recognizes this and proposes a dedicated intrinsic “center” with sa
 
 Current project files show `Wistc` targets **net10.0** (C# LangVersion 14) and uses `Microsoft.Extensions.DependencyInjection.Abstractions` 10.0.1. fileciteturn106file0
 
-The website claims “Built with .NET 9.0” (likely older) and frames the project as research/poc rather than production-ready. This mismatch should be addressed in documentation to avoid confusion for developers and stakeholders about supported runtimes. fileciteturn107file1 fileciteturn106file0
+The current project targets .NET 10.0 (with C# LangVersion 14). The project also depends on `Microsoft.Extensions.DependencyInjection.Abstractions` from the Microsoft.Extensions DI ecosystem. fileciteturn106file0
 
 ### Tests and regression posture
 
@@ -227,7 +224,7 @@ These are not abstract “could be improved” points; they are concrete constra
 
   These issues are not “style” problems; they are operational risks (memory growth, cross-run contamination, hard-to-reproduce bugs).
 
-- **Core abstraction leakage is known and documented by the project itself.** The parameter embedding mechanism (`#![define ...]` inserted into code by default) is explicitly called out as a problematic approach in the TODO. This directly impacts teaching, documentation, semantic clarity, and eventually tooling (formatters, linters, IDE integrations). fileciteturn76file3 fileciteturn44file9
+- **Core abstraction leakage is known and documented by the project itself.** Parameter handling has been moved to external bindings resolved in the binding stage, and the TODO still calls out this area as requiring cleaner core abstraction boundaries. This directly impacts teaching, documentation, semantic clarity, and eventually tooling (formatters, linters, IDE integrations). fileciteturn76file3 fileciteturn44file9
 
 - **Backend parity is partial and requires discipline.** The interpreter supports a smaller intrinsic set and uses reflection; the compiler supports many optimized intrinsics. The system’s current strategy is “optimizers only fire when compiler supports them,” which is workable, but it means semantic drift is always one careless optimizer away. The TODO explicitly calls out the need to reconcile interpreter vs compiler semantics and design platform-independent APIs. fileciteturn22file0 fileciteturn26file0 fileciteturn44file9
 
