@@ -1,4 +1,5 @@
 using IntermediateRepresentationAbstractions;
+using BasicCore.Compilation;
 
 namespace BasicCore.Contracts;
 
@@ -10,5 +11,5 @@ public interface IAbstractIrCompiler<out TCompilationOutput>
         "call C# ctor"
     ];
 
-    public TCompilationOutput Compile(IAbstractIR air, OrderedDictionary<string, Type> parameters);
+    public TCompilationOutput Compile(IAbstractIR air, CompilationInput input);
 }

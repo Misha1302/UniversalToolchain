@@ -1,5 +1,7 @@
 using AbstractIrExtensions;
 using AssemblyFinder;
+using BasicCore.Binding;
+using BasicCore.Binding.Symbols;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
@@ -13,10 +15,48 @@ public class VariablesVisitor : IAstVisitor
 
     public void TryVisit(BytecodeVisitorData data)
     {
-        if (data.Node.NodeType == ExtensibleEnum<AstNodeTag>.CreateOrGet("Variable"))
-            HandleVariable(data);
         if (data.Node.NodeType == ExtensibleEnum<AstNodeTag>.CreateOrGet("Preprocessor lexeme"))
+        {
             HandlePreprocessorLexeme(data);
+            return;
+        }
+
+        if (data.Node.NodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("Variable"))
+            return;
+
+        if (data.Node is BoundAstNode bound)
+            HandleBoundVariable(data, bound.Symbol);
+        else
+            HandleVariable(data);
+    }
+
+    private void HandleBoundVariable(BytecodeVisitorData data, Symbol symbol)
+    {
+        var varName = symbol.Name;
+        if (symbol.Type != typeof(object) || !_variablesTypes.ContainsKey(varName))
+            _variablesTypes[varName] = symbol.Type;
+
+        if (data.Node.AllTags.Contains("ExpectingSettableReference"))
+        {
+            var method = new AbstractMethodImpl(
+                $"LoadReferenceToVar_{varName}",
+                (il, context) =>
+                {
+                    var type = symbol.Type != typeof(object) ? symbol.Type : context.Stack.Last();
+                    _variablesTypes[varName] = type;
+                    il.LdLocRef(varName, type);
+                }
+            );
+            data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
+            return;
+        }
+
+        var loadName = symbol is ExternalVariableSymbol or ExternalConstantSymbol ? "LoadValueOfExternalVar" : "LoadValueOfLocalVar";
+        var loadMethod = new AbstractMethodImpl(
+            $"{loadName}_{varName}",
+            (il, _) => il.LdLoc(varName, _variablesTypes[varName])
+        );
+        data.Bytecode.Instructions.Add(new BytecodeInstruction(loadMethod));
     }
 
     private void HandlePreprocessorLexeme(BytecodeVisitorData data)

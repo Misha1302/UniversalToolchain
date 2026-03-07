@@ -1,6 +1,7 @@
 using System.Reflection;
 using BasicCore.ExecutorWrapper;
 using DotnetHelper;
+using BasicCore.Execution;
 using ExceptionsManager;
 using IntermediateRepresentationAbstractions;
 using ObjectExtensions;
@@ -9,7 +10,7 @@ namespace BasicInterpreter;
 
 public class InterpreterImpl : IExecutor<IAbstractIR>
 {
-    public object? Execute(IAbstractIR air)
+    public object? Execute(IAbstractIR air, IExecutionEnvironment environment)
     {
         var state = new InterpreterState();
         state.BuildLabelPositions(air.Instructions);

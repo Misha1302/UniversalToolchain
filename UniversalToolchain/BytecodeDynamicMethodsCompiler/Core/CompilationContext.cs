@@ -1,10 +1,10 @@
-﻿using GrEmit;
+using GrEmit;
 
 namespace BytecodeDynamicMethodsCompiler.Core;
 
-internal sealed class CompilationContext(GroboIL il, Dictionary<string, int> parametersIndices)
+internal sealed class CompilationContext(GroboIL il, Dictionary<string, int> externalSlots)
 {
-    public Dictionary<string, int> ParametersIndices { get; } = parametersIndices;
+    public Dictionary<string, int> ExternalSlots { get; } = externalSlots;
     public Dictionary<string, GroboIL.Local> LocalVariables { get; } = new();
     public Dictionary<Guid, GroboIL.Label> InstructionLabels { get; } = new();
     public GroboIL Il { get; } = il;

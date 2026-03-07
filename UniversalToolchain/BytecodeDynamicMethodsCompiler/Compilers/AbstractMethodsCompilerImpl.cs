@@ -1,6 +1,7 @@
 ﻿using System.Reflection.Emit;
 using AbstractIrExtensions;
 using BasicCore.Contracts;
+using BasicCore.Compilation;
 using BytecodeDynamicMethodsCompiler.Core;
 using DotnetAirHelper;
 using ExceptionsManager;
@@ -22,15 +23,17 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
 
     public IReadOnlyList<string> SupportedIntrinsics => _intrinsicCompiler.SupportedIntrinsics;
 
-    public DynamicMethod Compile(IAbstractIR air, OrderedDictionary<string, Type> parameters)
+    public DynamicMethod Compile(IAbstractIR air, CompilationInput input)
     {
         var returnType = GetReturnType(air);
-        var argsTypes = parameters.Select(x => x.Value).ToArray();
-        var paramsIndices = parameters.ToDictionary(y => y.Key, x => parameters.IndexOf(x.Key));
+        var argsTypes = input.ExternalBindings.Select(x => x.Type).ToArray();
+        var externalSlots = input.ExternalBindings
+            .Select((binding, slot) => new { binding.Name, Slot = slot })
+            .ToDictionary(x => x.Name, x => x.Slot);
         var method = new DynamicMethod("main", returnType, argsTypes);
         using var il = new GroboIL(method);
 
-        var context = new CompilationContext(il, paramsIndices);
+        var context = new CompilationContext(il, externalSlots);
         InitializeLabels(context, air);
 
         var typesStack = new List<Type>();

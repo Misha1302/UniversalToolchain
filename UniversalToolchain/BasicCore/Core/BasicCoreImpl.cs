@@ -1,5 +1,7 @@
-﻿using System.Text;
+using BasicCore.Binding;
+using BasicCore.Compilation;
 using BasicCore.Contracts;
+using BasicCore.Execution;
 using BasicCore.ExecutorWrapper;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
@@ -18,20 +20,33 @@ public class BasicCoreImpl<TCompilationOutput>(
     Func<IExecutor<TCompilationOutput>> executorFactory,
     IReadOnlyList<IFrontendCoreModule> modules,
     IReadOnlyList<IIRProcessingModule> optimizers,
-    IReadOnlyList<IMiddleEndCoreModule<TCompilationOutput>> middleEndModules,
-    Func<string, OrderedDictionary<string, Type>, string>? codeWithParamsFactory = null
+    IReadOnlyList<IMiddleEndCoreModule<TCompilationOutput>> middleEndModules
 ) : ICoreRunnable, ICoreOptimizedRunnable, IExecutableGiver<TCompilationOutput>
 {
     private string _code = null!;
     private TCompilationOutput _compilationOutput = default!;
     private IExecutor<TCompilationOutput> _executor = null!;
+    private IExecutionEnvironment _executionEnvironment = null!;
 
     public void PrepareToRun(string code, OrderedDictionary<string, Type>? parameters = null)
     {
         parameters ??= [];
+        var input = new CompilationInput
+        {
+            SourceText = code,
+            ExternalBindings = parameters.Select(x => new ExternalBinding
+            {
+                Name = x.Key,
+                Type = x.Value,
+                Kind = ExternalBindingKind.Variable
+            }).ToList(),
+            Options = new CompilationOptions()
+        };
+        PrepareToRun(input);
+    }
 
-        code = (codeWithParamsFactory ?? GetCodeWithParametersDefault)(code, parameters);
-
+    public void PrepareToRun(CompilationInput input)
+    {
         var lexer = lexerFactory();
         var parser = parserFactory();
         var astTranslator = astTranslatorFactory();
@@ -39,7 +54,7 @@ public class BasicCoreImpl<TCompilationOutput>(
         var compiler = compilerFactory();
         var executor = executorFactory();
 
-        var targetCode = modules.Aggregate(code, (current, module) => module.ProcessText(current));
+        var targetCode = modules.Aggregate(input.SourceText, (current, module) => module.ProcessText(current));
         modules.ForEach(module => module.InitLexer(lexer));
         var lexemes = lexer.Lexemize(targetCode);
 
@@ -48,8 +63,10 @@ public class BasicCoreImpl<TCompilationOutput>(
         var astRoot = parser.Parse(targetLexemes);
 
         var targetRoot = modules.Aggregate(astRoot, (current, module) => module.ProcessAst(current));
+        var boundRoot = new Binder(input.ExternalBindings).Bind(targetRoot);
+
         modules.ForEach(module => module.InitAstTranslator(astTranslator));
-        var bytecode = astTranslator.Translate(targetRoot);
+        var bytecode = astTranslator.Translate(boundRoot);
 
         var targetBytecode = modules.Aggregate(bytecode, (current, module) => module.ProcessBytecode(current));
         optimizers.ForEach(module => module.InitMethodsTranslator(methodsTranslator));
@@ -57,50 +74,45 @@ public class BasicCoreImpl<TCompilationOutput>(
 
         var targetIr = optimizers.Aggregate(air, (current, module) => module.ProcessIr(current, compiler));
         middleEndModules.ForEach(module => module.InitMethodsCompiler(compiler));
-        var compiled = compiler.Compile(targetIr, parameters);
+        var compiled = compiler.Compile(targetIr, input);
 
         var compilationOutput = middleEndModules.Aggregate(compiled, (current, module) => module.ProcessCompilation(current));
         middleEndModules.ForEach(module => module.InitExecutor(executor));
 
         _executor = executor;
         _compilationOutput = compilationOutput;
-        _code = code;
+        _executionEnvironment = new ExecutionEnvironment(input.ExternalBindings);
+        _code = input.SourceText;
     }
 
     public object? RunPrepared()
     {
         Thrower.AssertAlways(_code != null);
-        return _executor.Execute(_compilationOutput);
+        return _executor.Execute(_compilationOutput, _executionEnvironment);
     }
 
     public object? Run(string code, Dictionary<string, object>? parameters = null)
     {
         parameters ??= [];
-        PrepareToRun(
-            code,
-            new OrderedDictionary<string, Type>(
-                parameters.ToDictionary(
-                    x => x.Key,
-                    x => x.Value.GetType()
-                )
-            )
-        );
+        var input = new CompilationInput
+        {
+            SourceText = code,
+            ExternalBindings = parameters.Select(x => new ExternalBinding
+            {
+                Name = x.Key,
+                Type = x.Value.GetType(),
+                Value = x.Value,
+                Kind = ExternalBindingKind.Variable
+            }).ToList(),
+            Options = new CompilationOptions()
+        };
+        PrepareToRun(input);
         return RunPrepared();
     }
 
     public TCompilationOutput GetExecutable(string code, OrderedDictionary<string, Type>? parameters = null)
     {
-        parameters ??= [];
         PrepareToRun(code, parameters);
         return _compilationOutput;
-    }
-
-    private string GetCodeWithParametersDefault(string code, OrderedDictionary<string, Type> parameters)
-    {
-        var sb = new StringBuilder();
-        foreach (var param in parameters)
-            sb.AppendLine($"#![define {param.Key} as {param.Value}]");
-        sb.AppendLine();
-        return sb + code;
     }
 }

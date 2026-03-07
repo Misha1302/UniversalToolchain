@@ -1,4 +1,6 @@
 using BasicCilCompiler.Execution;
+using BasicCore.Compilation;
+using BasicCore.Execution;
 using BytecodeDynamicMethodsCompiler.Compilers;
 
 namespace Tests.Infrastructure;
@@ -331,7 +333,7 @@ public class CompilerAndInterpreterResilienceTests
     private static object? ExecuteInInterpreter(IAbstractIR ir)
     {
         var interpreter = new InterpreterImpl();
-        return interpreter.Execute(ir);
+        return interpreter.Execute(ir, new ExecutionEnvironment([]));
     }
 
     private static IAbstractIR BuildIr(params Instruction[] instructions)
@@ -344,9 +346,10 @@ public class CompilerAndInterpreterResilienceTests
     private static object CompileAndExecute(IAbstractIR ir)
     {
         var compiler = new AbstractMethodsCompilerImpl();
-        var compiled = compiler.Compile(ir, []);
+        var input = new CompilationInput { SourceText = string.Empty };
+        var compiled = compiler.Compile(ir, input);
         var executor = new DynamicMethodExecutor();
-        return executor.Execute(compiled);
+        return executor.Execute(compiled, new ExecutionEnvironment([]));
     }
 
     private static void AssertReflectionMembersExist(params MethodBase?[] members)

@@ -111,8 +111,8 @@ internal sealed class AbstractMethodsIntrinsicCompiler
         var varName = instruction.Operands[1].Get<string>();
         var varType = instruction.Operands[2].Get<Type>();
 
-        if (context.ParametersIndices.TryGetValue(varName, out var argIndex))
-            context.Il.Starg(argIndex);
+        if (context.ExternalSlots.TryGetValue(varName, out var slot))
+            context.Il.Starg(slot);
         else
             context.Il.Stloc(context.GetOrCreateLocal(varName, varType));
 
@@ -124,8 +124,8 @@ internal sealed class AbstractMethodsIntrinsicCompiler
         var varName = instruction.Operands[1].Get<string>();
         var varType = instruction.Operands[2].Get<Type>();
 
-        if (context.ParametersIndices.TryGetValue(varName, out var argIndex))
-            context.Il.Ldarg(argIndex);
+        if (context.ExternalSlots.TryGetValue(varName, out var slot))
+            context.Il.Ldarg(slot);
         else
             context.Il.Ldloc(context.GetOrCreateLocal(varName, varType, true));
 
@@ -140,6 +140,7 @@ internal sealed class AbstractMethodsIntrinsicCompiler
         context.Il.Ldloca(context.GetOrCreateLocal(varName, varType, true));
         stack.Push(varType.MakeByRefType());
     }
+
 
     private static void CompileLoadBool(CompilationContext context, Instruction instruction, List<Type> stack)
     {

@@ -1,5 +1,6 @@
 using BasicCore.Contracts;
 using IntermediateRepresentationAbstractions;
+using BasicCore.Compilation;
 
 namespace AbstractIrConverters;
 
@@ -11,5 +12,5 @@ public class AbstractIrToAbstractIrStub : IAbstractIrCompiler<IAbstractIR>
         "call C# ctor"
     ];
 
-    public IAbstractIR Compile(IAbstractIR air, OrderedDictionary<string, Type> parameters) => air;
+    public IAbstractIR Compile(IAbstractIR air, CompilationInput input) => air;
 }

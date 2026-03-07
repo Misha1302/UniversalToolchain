@@ -1,3 +1,4 @@
+using BasicCore.Compilation;
 using BasicCore.Contracts;
 using ConditionsModule.Optimizers;
 using LabelsModule.Core;
@@ -433,6 +434,6 @@ public class OptimizerRegressionTests
     {
         public IReadOnlyList<string> SupportedIntrinsics => intrinsics;
 
-        public object Compile(IAbstractIR air, OrderedDictionary<string, Type> parameters) => Thrower.NotSupported<object>("Fake compiler cannot compile IR in this test scenario.");
+        public object Compile(IAbstractIR air, CompilationInput input) => Thrower.NotSupported<object>("Fake compiler cannot compile IR in this test scenario.");
     }
 }
