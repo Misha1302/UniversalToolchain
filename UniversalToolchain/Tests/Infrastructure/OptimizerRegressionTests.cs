@@ -27,6 +27,74 @@ public class OptimizerRegressionTests
     }
 
     [Test]
+    public void BooleanOptimizer_ShouldFoldLiteralNotToPush()
+    {
+        var module = new BooleanOptimizerModule();
+        var compiler = new FakeCompiler(["boolean_and", "boolean_or", "boolean_not"]);
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [true]),
+            new Instruction(UOpCode.Intrinsic, ["boolean_not"])
+        );
+
+        var optimized = module.ProcessIr(ir, compiler);
+
+        Assert.That(optimized.Instructions, Has.Count.EqualTo(1));
+        Assert.That(optimized.Instructions[0].UOpCode, Is.EqualTo(UOpCode.Push));
+        Assert.That(optimized.Instructions[0].Operands[0], Is.EqualTo(false));
+    }
+
+    [Test]
+    public void BooleanOptimizer_ShouldFoldLiteralAndAndOr()
+    {
+        var module = new BooleanOptimizerModule();
+        var compiler = new FakeCompiler(["boolean_and", "boolean_or", "boolean_not"]);
+        var andIr = BuildIr(
+            new Instruction(UOpCode.Push, [true]),
+            new Instruction(UOpCode.Push, [false]),
+            new Instruction(UOpCode.Intrinsic, ["boolean_and"])
+        );
+        var orIr = BuildIr(
+            new Instruction(UOpCode.Push, [false]),
+            new Instruction(UOpCode.Push, [true]),
+            new Instruction(UOpCode.Intrinsic, ["boolean_or"])
+        );
+
+        var andOptimized = module.ProcessIr(andIr, compiler);
+        var orOptimized = module.ProcessIr(orIr, compiler);
+
+        Assert.That(andOptimized.Instructions, Has.Count.EqualTo(1));
+        Assert.That(andOptimized.Instructions[0].Operands[0], Is.EqualTo(false));
+        Assert.That(orOptimized.Instructions, Has.Count.EqualTo(1));
+        Assert.That(orOptimized.Instructions[0].Operands[0], Is.EqualTo(true));
+    }
+
+    [Test]
+    public void BooleanOptimizer_ShouldApplyOnlySafeIdentityRules()
+    {
+        var module = new BooleanOptimizerModule();
+        var compiler = new FakeCompiler(["boolean_and", "boolean_or", "boolean_not"]);
+        var andTrueIr = BuildIr(
+            new Instruction(UOpCode.Intrinsic, ["load_local", "flag", typeof(bool)]),
+            new Instruction(UOpCode.Push, [true]),
+            new Instruction(UOpCode.Intrinsic, ["boolean_and"])
+        );
+        var andFalseIr = BuildIr(
+            new Instruction(UOpCode.Intrinsic, ["load_local", "flag", typeof(bool)]),
+            new Instruction(UOpCode.Push, [false]),
+            new Instruction(UOpCode.Intrinsic, ["boolean_and"])
+        );
+
+        var andTrueOptimized = module.ProcessIr(andTrueIr, compiler);
+        var andFalseOptimized = module.ProcessIr(andFalseIr, compiler);
+
+        Assert.That(andTrueOptimized.Instructions, Has.Count.EqualTo(1));
+        Assert.That(andTrueOptimized.Instructions[0].Operands[0], Is.EqualTo("load_local"));
+
+        Assert.That(andFalseOptimized.Instructions, Has.Count.EqualTo(3));
+        Assert.That(andFalseOptimized.Instructions[2].Operands[0], Is.EqualTo("boolean_and"));
+    }
+
+    [Test]
     public void NativeCilOptimizer_ShouldKeepDecimalPush_WhenDecimalIntrinsicUnsupported()
     {
         var module = new NativeCilOptimizerModule();
