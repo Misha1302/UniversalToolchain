@@ -291,6 +291,7 @@ public class DynamicMethodInvokerTests
 
         // Call string.Concat(string, string)
         var concatMethod = typeof(string).GetMethod("Concat", new[] { typeof(string), typeof(string) });
+        Assert.That(concatMethod, Is.Not.Null);
         il.Emit(OpCodes.Call, concatMethod);
 
         il.Emit(OpCodes.Ret);
@@ -299,9 +300,9 @@ public class DynamicMethodInvokerTests
 
         // Act & Assert
         Assert.That(invoker.Invoke("Hello, ", "World!"), Is.EqualTo("Hello, World!"));
-        Assert.That(invoker.Invoke(null, "World!"), Is.EqualTo("World!"));
-        Assert.That(invoker.Invoke("Hello, ", null), Is.EqualTo("Hello, "));
-        Assert.That(invoker.Invoke(null, null), Is.EqualTo(string.Empty));
+        Assert.That(invoker.Invoke(null!, "World!"), Is.EqualTo("World!"));
+        Assert.That(invoker.Invoke("Hello, ", null!), Is.EqualTo("Hello, "));
+        Assert.That(invoker.Invoke(null!, null!), Is.EqualTo(string.Empty));
     }
 
 

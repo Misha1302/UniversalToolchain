@@ -57,6 +57,8 @@ public class BasicLexerImpl(LexerConfiguration configuration) : ILexer
                 $"Unknown substr '{Regex.Escape(code[index..(lexeme?.StartIndex ?? code.Length)])}'"
             );
 
+            Thrower.AssertAlways(lexeme != null, "Internal lexer invariant violated: expected lexeme at current index.");
+
             // Update the current processing position to just past the matched token.
             index = lexeme.StartIndex + lexeme.Text.Length;
 

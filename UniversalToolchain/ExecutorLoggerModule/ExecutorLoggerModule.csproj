@@ -11,9 +11,4 @@
         <ProjectReference Include="..\BasicCore\BasicCore.csproj"/>
     </ItemGroup>
 
-    <ItemGroup>
-        <PackageReference Include="ILDisassembler" Version="1.0.1"/>
-        <PackageReference Include="Mono.Reflection" Version="2.0.0"/>
-    </ItemGroup>
-
 </Project>

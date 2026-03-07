@@ -112,7 +112,7 @@ public class LocalVariablesOptimizer : IIRProcessingModule
         instr.Operands.Count == 1 &&
         instr.Operands[0] is string;
 
-    private bool IsIntrinsicCallCSharp(Instruction instr, out MethodInfo methodInfo)
+    private bool IsIntrinsicCallCSharp(Instruction instr, out MethodInfo? methodInfo)
     {
         if (instr.UOpCode == UOpCode.Intrinsic &&
             instr.Operands.Count >= 2 &&
@@ -128,11 +128,13 @@ public class LocalVariablesOptimizer : IIRProcessingModule
 
     private bool IsGetRefMethod(MethodInfo method) =>
         method.Name == "GetRef" &&
+        method.DeclaringType != null &&
         method.DeclaringType.IsGenericType &&
         method.DeclaringType.GetGenericTypeDefinition() == typeof(VariablesContainer<>);
 
     private bool IsSetValueMethod(MethodInfo method) =>
         method.Name == "SetValue" &&
+        method.DeclaringType != null &&
         method.DeclaringType.IsGenericType &&
         method.DeclaringType.GetGenericTypeDefinition() == typeof(VariableReference<>);
 
@@ -140,14 +142,15 @@ public class LocalVariablesOptimizer : IIRProcessingModule
 
     private bool IsGetMethod(MethodInfo method) =>
         method.Name == "Get" &&
+        method.DeclaringType != null &&
         method.DeclaringType.IsGenericType &&
         method.DeclaringType.GetGenericTypeDefinition() == typeof(VariablesContainer<>);
 
     private bool IsStorePattern(Instruction pushInstr, Instruction getRefInstr, Instruction setValueInstr)
     {
         if (!IsPushString(pushInstr)) return false;
-        if (!IsIntrinsicCallCSharp(getRefInstr, out var getRefMethod) || !IsGetRefMethod(getRefMethod)) return false;
-        if (!IsIntrinsicCallCSharp(setValueInstr, out var setValueMethod) || !IsSetValueToMethod(setValueMethod)) return false;
+        if (!IsIntrinsicCallCSharp(getRefInstr, out var getRefMethod) || getRefMethod is null || !IsGetRefMethod(getRefMethod)) return false;
+        if (!IsIntrinsicCallCSharp(setValueInstr, out var setValueMethod) || setValueMethod is null || !IsSetValueToMethod(setValueMethod)) return false;
 
         // Verify that the types match
         Thrower.AssertAlways(getRefMethod.DeclaringType != null);
@@ -159,14 +162,14 @@ public class LocalVariablesOptimizer : IIRProcessingModule
     private bool IsLoadPattern(Instruction pushInstr, Instruction getInstr)
     {
         if (!IsPushString(pushInstr)) return false;
-        if (!IsIntrinsicCallCSharp(getInstr, out var getMethod) || !IsGetMethod(getMethod)) return false;
+        if (!IsIntrinsicCallCSharp(getInstr, out var getMethod) || getMethod is null || !IsGetMethod(getMethod)) return false;
         return true;
     }
 
     private bool IsLoadRefPattern(Instruction pushInstr, Instruction getRefInstr)
     {
         if (!IsPushString(pushInstr)) return false;
-        if (!IsIntrinsicCallCSharp(getRefInstr, out var getRefMethod) || !IsGetRefMethod(getRefMethod)) return false;
+        if (!IsIntrinsicCallCSharp(getRefInstr, out var getRefMethod) || getRefMethod is null || !IsGetRefMethod(getRefMethod)) return false;
         return true;
     }
 

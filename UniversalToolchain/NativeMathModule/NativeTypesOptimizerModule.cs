@@ -51,8 +51,15 @@ public class NativeTypesOptimizerModule : IIRProcessingModule
                 try
                 {
                     var result = method.Invoke(null, new[] { left, right });
-                    optimizedInstructions.Add(new Instruction(UOpCode.Push, [result]));
-                    i += 2; // Пропускаем оптимизированные инструкции
+                    if (result is not null)
+                    {
+                        optimizedInstructions.Add(new Instruction(UOpCode.Push, [result]));
+                        i += 2; // Пропускаем оптимизированные инструкции
+                    }
+                    else
+                    {
+                        optimizedInstructions.Add(instructions[i]);
+                    }
                 }
                 catch
                 {

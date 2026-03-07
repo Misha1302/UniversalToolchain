@@ -164,7 +164,7 @@ public class ArithmeticOptimizerModule : IIRProcessingModule
         return result;
     }
 
-    private string GetIntrinsicName(MethodInfo method)
+    private string? GetIntrinsicName(MethodInfo method)
     {
         var typeMap = new Dictionary<Type, string>
         {
@@ -183,15 +183,18 @@ public class ArithmeticOptimizerModule : IIRProcessingModule
             ["Divide"] = "div"
         };
 
-        string typeSuffix = null;
-        string operation = null;
+        string? typeSuffix = null;
+        string? operation = null;
 
         // Обработка обобщенных методов (int, long, float, double)
         if (method.IsGenericMethod)
         {
             var genericType = method.GetGenericArguments()[0];
-            if (typeMap.TryGetValue(genericType, out typeSuffix))
+            if (typeMap.TryGetValue(genericType, out var resolvedTypeSuffix))
+            {
+                typeSuffix = resolvedTypeSuffix;
                 operation = opMap.GetValueOrDefault(method.Name);
+            }
         }
         // Обработка методов для decimal
         else if (method.Name.EndsWith("Decimal"))
@@ -200,7 +203,7 @@ public class ArithmeticOptimizerModule : IIRProcessingModule
             operation = opMap.GetValueOrDefault(method.Name.Replace("Decimal", ""));
         }
 
-        return operation != null && typeSuffix != null ? $"{operation}_{typeSuffix}" : null;
+        return operation is not null && typeSuffix is not null ? $"{operation}_{typeSuffix}" : null;
     }
 
     private Type GetTypeFromSuffix(string suffix) => suffix switch

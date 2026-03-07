@@ -3,6 +3,7 @@ using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
 using DynamicMethodWrapper;
+using ExceptionsManager;
 
 namespace NativeMathModule;
 
@@ -16,7 +17,9 @@ public class NativeNumberAstVisitor : IAstVisitor
         if (nodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("NativeNumber"))
             return;
 
-        var numText = data.Node.LexemeValue.Text;
+        var lexeme = data.Node.LexemeValue;
+        Thrower.AssertAlways(lexeme != null, "NativeNumber node must contain lexeme value.");
+        var numText = lexeme.Text;
         var value = NativeTypesModuleImpl.ParseNumber(numText);
         var valueType = value.GetType();
 

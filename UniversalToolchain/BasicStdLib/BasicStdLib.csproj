@@ -8,10 +8,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="JetBrains.Annotations" Version="2025.2.4"/>
-    </ItemGroup>
-
-    <ItemGroup>
         <ProjectReference Include="..\NumbersModule\NumbersModule.csproj"/>
     </ItemGroup>
 

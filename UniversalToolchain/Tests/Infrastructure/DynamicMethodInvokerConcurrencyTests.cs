@@ -150,7 +150,10 @@ public class DynamicMethodInvokerConcurrencyTests
 
                     // Вызываем через reflection, так как тип инвокера разный
                     var invokeMethod = invokerType.GetMethod("Invoke");
-                    var result = (int)invokeMethod.Invoke(invoker, new object[] { threadId * 1000 + i });
+                    Assert.That(invokeMethod, Is.Not.Null);
+                    var resultObj = invokeMethod!.Invoke(invoker, new object[] { threadId * 1000 + i });
+                    Assert.That(resultObj, Is.TypeOf<int>());
+                    var result = (int)resultObj;
 
                     results.Add(result);
 
@@ -315,6 +318,7 @@ public class DynamicMethodInvokerConcurrencyTests
         il.Emit(OpCodes.Conv_R8);
 
         var sqrtMethod = typeof(Math).GetMethod("Sqrt", new[] { typeof(double) });
+        Assert.That(sqrtMethod, Is.Not.Null);
         il.Emit(OpCodes.Call, sqrtMethod);
 
         il.Emit(OpCodes.Mul);
@@ -370,6 +374,7 @@ public class DynamicMethodInvokerConcurrencyTests
         il.Emit(OpCodes.Ldarg_1); // prefix
         il.Emit(OpCodes.Ldstr, "_");
         var concatMethod = typeof(string).GetMethod("Concat", new[] { typeof(string), typeof(string) });
+        Assert.That(concatMethod, Is.Not.Null);
         il.Emit(OpCodes.Call, concatMethod);
 
         il.Emit(OpCodes.Ldarg_0);
@@ -377,6 +382,7 @@ public class DynamicMethodInvokerConcurrencyTests
         il.Emit(OpCodes.Mul);
         il.Emit(OpCodes.Box, typeof(int));
         var toStringMethod = typeof(object).GetMethod("ToString");
+        Assert.That(toStringMethod, Is.Not.Null);
         il.Emit(OpCodes.Callvirt, toStringMethod);
 
         il.Emit(OpCodes.Call, concatMethod);
