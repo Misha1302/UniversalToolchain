@@ -38,11 +38,17 @@ public class BasicParserImpl(ParserConfiguration configuration) : IParser
             ) continue;
 
             child.MarkAsParserHandled();
+
+            // Парсим только изменённый / собранный узел, а не весь scope заново
+            if (i >= 0 && i < scope.Children.Count)
+            {
+                var changedNode = scope.Children[i];
+                if (!ReferenceEquals(changedNode, scope))
+                    ParseScope(changedNode, creators, needToVisit);
+            }
+
             i = -1;
         }
-
-        foreach (var node in scope.Children)
-            ParseScope(node, creators, needToVisit);
     }
 
     private void SetAstNodeTypes(AstNode root)
