@@ -15,6 +15,8 @@ namespace NativeMathModule;
 [UsedImplicitly]
 public class ArithmeticOptimizerModule : IIRProcessingModule
 {
+    // Lightweight e-graph-inspired symbolic simplifier for straight-line postfix IR.
+    // This is intentionally not a full equality-saturation e-graph engine.
     private static readonly IReadOnlyList<string> _standardModuleIntrinsics =
     [
         "add_i32", "sub_i32", "mul_i32", "div_i32",
@@ -159,9 +161,232 @@ public class ArithmeticOptimizerModule : IIRProcessingModule
             context.NewInstructions.Add(instruction);
         }
 
+        var optimizedInstructions = ApplyArithmeticPeepholes(context.NewInstructions);
+
         var result = new AbstractIR();
-        result.AppendInstructions(context.NewInstructions);
+        result.AppendInstructions(optimizedInstructions);
         return result;
+    }
+
+    private static IReadOnlyList<Instruction> ApplyArithmeticPeepholes(IReadOnlyList<Instruction> instructions)
+    {
+        var optimized = instructions.ToList();
+        var changed = true;
+
+        while (changed)
+        {
+            changed = false;
+            for (var i = 0; i < optimized.Count; i++)
+            {
+                if (TryFoldAddMulReassociation(optimized, i))
+                {
+                    changed = true;
+                    break;
+                }
+
+                if (TrySimplifyIdentity(optimized, i))
+                {
+                    changed = true;
+                    break;
+                }
+
+                if (TryCanonicalizeCommutativeOperands(optimized, i))
+                {
+                    changed = true;
+                    break;
+                }
+            }
+        }
+
+        return optimized;
+    }
+
+    private static bool TrySimplifyIdentity(List<Instruction> instructions, int index)
+    {
+        if (index + 2 >= instructions.Count)
+            return false;
+
+        var left = instructions[index];
+        var right = instructions[index + 1];
+        var op = instructions[index + 2];
+
+        if (!TryGetArithmeticIntrinsic(op, out var name, out var suffix))
+            return false;
+
+        if (name == "sub" && IsSingleValueProducer(left) && TryGetNumericConstant(right, out var rightValue) && IsZero(rightValue))
+            return Replace3With1(instructions, index, left);
+
+        if (name == "div" && IsSingleValueProducer(left) && TryGetNumericConstant(right, out rightValue) && IsOne(rightValue))
+            return Replace3With1(instructions, index, left);
+
+        if (name == "add")
+        {
+            if (TryGetNumericConstant(left, out var leftValue) && IsZero(leftValue) && IsSingleValueProducer(right))
+                return Replace3With1(instructions, index, right);
+
+            if (TryGetNumericConstant(right, out rightValue) && IsZero(rightValue) && IsSingleValueProducer(left))
+                return Replace3With1(instructions, index, left);
+        }
+
+        if (name == "mul")
+        {
+            if (TryGetNumericConstant(left, out var leftValue))
+            {
+                if (IsOne(leftValue) && IsSingleValueProducer(right))
+                    return Replace3With1(instructions, index, right);
+                if (IsIntegerSuffix(suffix) && IsZero(leftValue))
+                    return Replace3With1(instructions, index, new Instruction(UOpCode.Push, [GetTypedZero(suffix)]));
+            }
+
+            if (TryGetNumericConstant(right, out rightValue))
+            {
+                if (IsOne(rightValue) && IsSingleValueProducer(left))
+                    return Replace3With1(instructions, index, left);
+                if (IsIntegerSuffix(suffix) && IsZero(rightValue))
+                    return Replace3With1(instructions, index, new Instruction(UOpCode.Push, [GetTypedZero(suffix)]));
+            }
+        }
+
+        return false;
+    }
+
+    private static bool TryFoldAddMulReassociation(List<Instruction> instructions, int index)
+    {
+        if (index + 4 >= instructions.Count)
+            return false;
+
+        var x = instructions[index];
+        var c1 = instructions[index + 1];
+        var op1 = instructions[index + 2];
+        var c2 = instructions[index + 3];
+        var op2 = instructions[index + 4];
+
+        if (!IsSingleValueProducer(x) ||
+            !TryGetArithmeticIntrinsic(op1, out var name1, out var suffix1) ||
+            !TryGetArithmeticIntrinsic(op2, out var name2, out var suffix2) ||
+            name1 != name2 ||
+            suffix1 != suffix2 ||
+            !IsIntegerSuffix(suffix1) ||
+            !TryGetNumericConstant(c1, out var v1) ||
+            !TryGetNumericConstant(c2, out var v2))
+            return false;
+
+        object? combined = null;
+        if (name1 == "add")
+            combined = CombineIntegerConstants(v1, v2, isMultiply: false, suffix1);
+        else if (name1 == "mul")
+            combined = CombineIntegerConstants(v1, v2, isMultiply: true, suffix1);
+
+        if (combined is null)
+            return false;
+
+        instructions[index + 1] = new Instruction(UOpCode.Push, [combined]);
+        instructions.RemoveAt(index + 3);
+        instructions.RemoveAt(index + 3);
+        return true;
+    }
+
+    private static bool TryCanonicalizeCommutativeOperands(List<Instruction> instructions, int index)
+    {
+        if (index + 2 >= instructions.Count)
+            return false;
+
+        var left = instructions[index];
+        var right = instructions[index + 1];
+        var op = instructions[index + 2];
+        if (!TryGetArithmeticIntrinsic(op, out var name, out _) || (name != "add" && name != "mul"))
+            return false;
+
+        if (!TryGetNumericConstant(left, out _) || TryGetNumericConstant(right, out _) || !IsSingleValueProducer(right))
+            return false;
+
+        instructions[index] = right;
+        instructions[index + 1] = left;
+        return true;
+    }
+
+
+    private static bool IsSingleValueProducer(Instruction instruction)
+    {
+        if (instruction.UOpCode == UOpCode.Push)
+            return true;
+
+        return instruction.UOpCode == UOpCode.Intrinsic &&
+               instruction.Operands.Count > 0 &&
+               instruction.Operands[0] is string intrinsicName &&
+               (intrinsicName == "load_local" || intrinsicName == "load_local_ref" || intrinsicName.StartsWith("ldloc", StringComparison.Ordinal));
+    }
+
+    private static bool Replace3With1(List<Instruction> instructions, int index, Instruction replacement)
+    {
+        instructions[index] = replacement;
+        instructions.RemoveAt(index + 1);
+        instructions.RemoveAt(index + 1);
+        return true;
+    }
+
+    private static bool TryGetArithmeticIntrinsic(Instruction instruction, out string operation, out string suffix)
+    {
+        operation = string.Empty;
+        suffix = string.Empty;
+        if (instruction.UOpCode != UOpCode.Intrinsic || instruction.Operands.Count == 0 || instruction.Operands[0] is not string name)
+            return false;
+
+        var split = name.Split('_');
+        if (split.Length != 2)
+            return false;
+
+        operation = split[0];
+        suffix = split[1];
+        return operation is "add" or "sub" or "mul" or "div";
+    }
+
+    private static bool TryGetNumericConstant(Instruction instruction, out object value)
+    {
+        value = null!;
+        if (instruction.UOpCode != UOpCode.Push || instruction.Operands.Count != 1)
+            return false;
+
+        value = instruction.Operands[0];
+        return value is int or long or float or double or decimal;
+    }
+
+    private static bool IsIntegerSuffix(string suffix) => suffix is "i32" or "i64";
+
+    private static bool IsZero(object value) => value switch
+    {
+        int i => i == 0,
+        long l => l == 0,
+        float f => f == 0f,
+        double d => d == 0d,
+        decimal m => m == 0m,
+        _ => false
+    };
+
+    private static bool IsOne(object value) => value switch
+    {
+        int i => i == 1,
+        long l => l == 1,
+        float f => f == 1f,
+        double d => d == 1d,
+        decimal m => m == 1m,
+        _ => false
+    };
+
+    private static object GetTypedZero(string suffix) => suffix switch
+    {
+        "i32" => 0,
+        "i64" => 0L,
+        _ => 0
+    };
+
+    private static object? CombineIntegerConstants(object left, object right, bool isMultiply, string suffix)
+    {
+        if (suffix == "i32" && left is int li && right is int ri)
+            return isMultiply ? li * ri : li + ri;
+        if (suffix == "i64" && left is long ll && right is long rl)
+            return isMultiply ? ll * rl : ll + rl;
+        return null;
     }
 
     private string? GetIntrinsicName(MethodInfo method)

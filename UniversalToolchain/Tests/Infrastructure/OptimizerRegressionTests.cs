@@ -288,6 +288,32 @@ public class OptimizerRegressionTests
         Assert.That(optimized.Instructions[1].Operands[1], Is.EqualTo("y"));
     }
 
+
+    [Test]
+    public void LocalRoundtripPass_ShouldRemoveStoreLoad_WhenUsedInPureArithmeticAndNotReadLater()
+    {
+        var module = new LocalVariablesOptimizer();
+        var compiler = new FakeCompiler(["store_local", "load_local", "load_local_ref"]);
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [3]),
+            new Instruction(UOpCode.Intrinsic, ["store_local", "x", typeof(int)]),
+            new Instruction(UOpCode.Intrinsic, ["load_local", "x", typeof(int)]),
+            new Instruction(UOpCode.Push, [4]),
+            new Instruction(UOpCode.Intrinsic, ["add_i32"]),
+            new Instruction(UOpCode.Drop)
+        );
+
+        var optimized = module.ProcessIr(ir, compiler);
+
+        Assert.That(optimized.Instructions.Select(x => x.ToString()), Is.EqualTo(new[]
+        {
+            new Instruction(UOpCode.Push, [3]).ToString(),
+            new Instruction(UOpCode.Push, [4]).ToString(),
+            new Instruction(UOpCode.Intrinsic, ["add_i32"]).ToString(),
+            new Instruction(UOpCode.Drop).ToString()
+        }));
+    }
+
     [Test]
     public void LocalRoundtripPass_ShouldNotOptimize_WhenLocalIsReadBeforeBoundary()
     {
