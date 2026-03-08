@@ -200,6 +200,35 @@ public class CompilerAndInterpreterResilienceTests
         Assert.That(result, Is.EqualTo(42));
     }
 
+
+    [Test]
+    public void Compiler_ComparisonIntrinsicI32_ProducesCorrectResult()
+    {
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [7]),
+            new Instruction(UOpCode.Push, [3]),
+            new Instruction(UOpCode.Intrinsic, ["cmp_gt_i32"])
+        );
+
+        var result = CompileAndExecute(ir);
+
+        Assert.That(result, Is.EqualTo(true));
+    }
+
+    [Test]
+    public void Compiler_ComparisonIntrinsicF64_ProducesCorrectResult()
+    {
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [2.5d]),
+            new Instruction(UOpCode.Push, [2.5d]),
+            new Instruction(UOpCode.Intrinsic, ["cmp_le_f64"])
+        );
+
+        var result = CompileAndExecute(ir);
+
+        Assert.That(result, Is.EqualTo(true));
+    }
+
     [Test]
     public void Compiler_UnknownNumericLoaderIntrinsic_ThrowsInvalidOperationException()
     {

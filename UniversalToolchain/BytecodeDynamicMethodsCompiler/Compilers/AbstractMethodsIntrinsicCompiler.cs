@@ -44,7 +44,11 @@ internal sealed class AbstractMethodsIntrinsicCompiler
         "add_i64", "sub_i64", "mul_i64", "div_i64",
         "add_f32", "sub_f32", "mul_f32", "div_f32",
         "add_f64", "sub_f64", "mul_f64", "div_f64",
-        "add_decimal", "sub_decimal", "mul_decimal", "div_decimal"
+        "add_decimal", "sub_decimal", "mul_decimal", "div_decimal",
+        "cmp_eq_i32", "cmp_ne_i32", "cmp_gt_i32", "cmp_ge_i32", "cmp_lt_i32", "cmp_le_i32",
+        "cmp_eq_i64", "cmp_ne_i64", "cmp_gt_i64", "cmp_ge_i64", "cmp_lt_i64", "cmp_le_i64",
+        "cmp_eq_f32", "cmp_ne_f32", "cmp_gt_f32", "cmp_ge_f32", "cmp_lt_f32", "cmp_le_f32",
+        "cmp_eq_f64", "cmp_ne_f64", "cmp_gt_f64", "cmp_ge_f64", "cmp_lt_f64", "cmp_le_f64"
     ];
 
     public void Compile(CompilationContext context, Instruction instruction, List<Type> stack)
@@ -62,6 +66,12 @@ internal sealed class AbstractMethodsIntrinsicCompiler
         if (IsArithmeticIntrinsic(name))
         {
             CompileArithmeticIntrinsic(context, name, stack);
+            return;
+        }
+
+        if (IsComparisonIntrinsic(name))
+        {
+            CompileComparisonIntrinsic(context, name, stack);
             return;
         }
 
@@ -299,6 +309,51 @@ internal sealed class AbstractMethodsIntrinsicCompiler
             Thrower.InvalidOpEx($"Unknown operation: {operation}");
     }
 
+    private static void CompileComparisonIntrinsic(CompilationContext context, string name, List<Type> stack)
+    {
+        var parts = name.Split('_');
+        var operation = parts[1];
+        var typeStr = parts[2];
+
+        Thrower.AssertAlways(stack.Count >= 2, $"Not enough values on stack for comparison {name}");
+
+        var operandType = GetTypeFromString(typeStr);
+        Thrower.AssertAlways(stack[^1] == operandType && stack[^2] == operandType, $"Type mismatch for operation {name}");
+
+        CompilePrimitiveComparison(context.Il, operation);
+        PopTwoPush(stack, typeof(bool));
+    }
+
+    private static void CompilePrimitiveComparison(GroboIL il, string operation)
+    {
+        if (operation == "eq")
+            il.Ceq();
+        else if (operation == "ne")
+        {
+            il.Ceq();
+            il.Ldc_I4(0);
+            il.Ceq();
+        }
+        else if (operation == "gt")
+            il.Cgt(false);
+        else if (operation == "ge")
+        {
+            il.Clt(false);
+            il.Ldc_I4(0);
+            il.Ceq();
+        }
+        else if (operation == "lt")
+            il.Clt(false);
+        else if (operation == "le")
+        {
+            il.Cgt(false);
+            il.Ldc_I4(0);
+            il.Ceq();
+        }
+        else
+            Thrower.InvalidOpEx($"Unknown comparison operation: {operation}");
+    }
+
     private static Type GetTypeFromString(string typeStr)
     {
         if (typeStr == "i32")
@@ -397,6 +452,9 @@ internal sealed class AbstractMethodsIntrinsicCompiler
 
     private static bool IsArithmeticIntrinsic(string name)
         => name.StartsWith("add_") || name.StartsWith("sub_") || name.StartsWith("mul_") || name.StartsWith("div_");
+
+    private static bool IsComparisonIntrinsic(string name)
+        => name.StartsWith("cmp_");
 
     private static void EnsureBinaryBoolOperands(List<Type> stack, string intrinsicName)
     {

@@ -1,5 +1,6 @@
 using BasicCore.Compilation;
 using BasicCore.Contracts;
+using ConditionsModule.Enums;
 using ConditionsModule.Optimizers;
 using LabelsModule.Core;
 using ScopesModule.Core;
@@ -107,6 +108,57 @@ public class OptimizerRegressionTests
         Assert.That(optimized.Instructions, Has.Count.EqualTo(1));
         Assert.That(optimized.Instructions[0].UOpCode, Is.EqualTo(UOpCode.Push));
         Assert.That(optimized.Instructions[0].Operands[0], Is.EqualTo(1.25m));
+    }
+
+    [Test]
+    public void ComparisonIntrinsicOptimizer_ShouldReplaceCallAndPreserveStackTyping()
+    {
+        var module = new ComparisonIntrinsicOptimizerModule();
+        var compiler = new FakeCompiler([
+            "cmp_eq_i32", "cmp_ne_i32", "cmp_gt_i32", "cmp_ge_i32", "cmp_lt_i32", "cmp_le_i32",
+            "cmp_eq_i64", "cmp_ne_i64", "cmp_gt_i64", "cmp_ge_i64", "cmp_lt_i64", "cmp_le_i64",
+            "cmp_eq_f32", "cmp_ne_f32", "cmp_gt_f32", "cmp_ge_f32", "cmp_lt_f32", "cmp_le_f32",
+            "cmp_eq_f64", "cmp_ne_f64", "cmp_gt_f64", "cmp_ge_f64", "cmp_lt_f64", "cmp_le_f64"
+        ]);
+        var lessMethod = typeof(Comparisons).GetMethod(nameof(Comparisons.Less))!;
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [5]),
+            new Instruction(UOpCode.Push, [8]),
+            new Instruction(UOpCode.Intrinsic, ["call C#", lessMethod])
+        );
+
+        var optimized = module.ProcessIr(ir, compiler);
+        var stack = new List<Type>();
+
+        Assert.That(optimized.Instructions[^1].UOpCode, Is.EqualTo(UOpCode.Intrinsic));
+        Assert.That(optimized.Instructions[^1].Operands[0], Is.EqualTo("cmp_lt_i32"));
+        Assert.DoesNotThrow(() => optimized.Instructions.ManipulateTypesStack(stack, AirTypes.ProcessTypesIntrinsic));
+        Assert.That(stack, Has.Count.EqualTo(1));
+        Assert.That(stack[0], Is.EqualTo(typeof(bool)));
+    }
+
+    [Test]
+    public void ComparisonIntrinsicOptimizer_ShouldUseGenericMethodType_WhenStackTypesUnavailable()
+    {
+        var module = new ComparisonIntrinsicOptimizerModule();
+        var compiler = new FakeCompiler([
+            "cmp_eq_i32", "cmp_ne_i32", "cmp_gt_i32", "cmp_ge_i32", "cmp_lt_i32", "cmp_le_i32",
+            "cmp_eq_i64", "cmp_ne_i64", "cmp_gt_i64", "cmp_ge_i64", "cmp_lt_i64", "cmp_le_i64",
+            "cmp_eq_f32", "cmp_ne_f32", "cmp_gt_f32", "cmp_ge_f32", "cmp_lt_f32", "cmp_le_f32",
+            "cmp_eq_f64", "cmp_ne_f64", "cmp_gt_f64", "cmp_ge_f64", "cmp_lt_f64", "cmp_le_f64"
+        ]);
+        var equalIntMethod = typeof(Comparisons).GetMethod(nameof(Comparisons.Equal))!.MakeGenericMethod(typeof(int));
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [1]),
+            new Instruction(UOpCode.Push, [2L]),
+            new Instruction(UOpCode.Intrinsic, ["call C#", equalIntMethod])
+        );
+
+        var optimized = module.ProcessIr(ir, compiler);
+
+        Assert.That(optimized.Instructions, Has.Count.EqualTo(3));
+        Assert.That(optimized.Instructions[^1].UOpCode, Is.EqualTo(UOpCode.Intrinsic));
+        Assert.That(optimized.Instructions[^1].Operands[0], Is.EqualTo("cmp_eq_i32"));
     }
 
     [Test]
