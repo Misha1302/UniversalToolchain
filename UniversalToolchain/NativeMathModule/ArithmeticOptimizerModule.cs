@@ -273,9 +273,9 @@ public class ArithmeticOptimizerModule : IIRProcessingModule
 
         object? combined = null;
         if (name1 == "add")
-            combined = CombineIntegerConstants(v1, v2, isMultiply: false, suffix1);
+            combined = CombineIntegerConstants(v1, v2, false, suffix1);
         else if (name1 == "mul")
-            combined = CombineIntegerConstants(v1, v2, isMultiply: true, suffix1);
+            combined = CombineIntegerConstants(v1, v2, true, suffix1);
 
         if (combined is null)
             return false;
@@ -294,7 +294,7 @@ public class ArithmeticOptimizerModule : IIRProcessingModule
         var left = instructions[index];
         var right = instructions[index + 1];
         var op = instructions[index + 2];
-        if (!TryGetArithmeticIntrinsic(op, out var name, out _) || (name != "add" && name != "mul"))
+        if (!TryGetArithmeticIntrinsic(op, out var name, out _) || name != "add" && name != "mul")
             return false;
 
         if (!TryGetNumericConstant(left, out _) || TryGetNumericConstant(right, out _) || !IsSingleValueProducer(right))

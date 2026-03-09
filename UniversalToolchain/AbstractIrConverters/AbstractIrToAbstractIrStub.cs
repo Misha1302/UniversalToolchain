@@ -1,6 +1,6 @@
+using BasicCore.Compilation;
 using BasicCore.Contracts;
 using IntermediateRepresentationAbstractions;
-using BasicCore.Compilation;
 
 namespace AbstractIrConverters;
 

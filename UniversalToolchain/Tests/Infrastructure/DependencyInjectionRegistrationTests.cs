@@ -1,7 +1,5 @@
 using BasicCore.Attributes;
 using BasicCore.Contracts;
-using BasicCore.LexerWrapper;
-using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using Tests.DependencyInjection.Nested.ArithmeticModule;
 using Tests.Infrastructure;
@@ -71,6 +69,7 @@ namespace Tests.Infrastructure
         }
 
         public interface ITestDependency;
+
         public interface IUnsupportedAutoRegistration;
 
         [AutoRegisterService]
@@ -84,9 +83,9 @@ namespace Tests.Infrastructure
             public string Author => "tests";
 
             public string ProcessText(string text) => text;
-            public IEnumerable<LexemeValue> ProcessLexemes(IEnumerable<LexemeValue> lexemes) => lexemes;
             public AstNode ProcessAst(AstNode root) => root;
             public Bytecode ProcessBytecode(Bytecode bytecode) => bytecode;
+
             public void InitLexer(ILexer lexer)
             {
             }
@@ -98,6 +97,8 @@ namespace Tests.Infrastructure
             public void InitAstTranslator(IAstToBytecodeTranslator translator)
             {
             }
+
+            public IEnumerable<LexemeValue> ProcessLexemes(IEnumerable<LexemeValue> lexemes) => lexemes;
         }
     }
 }

@@ -78,10 +78,7 @@ public class ComparisonIntrinsicOptimizerModule : IIRProcessingModule
         }
 
         if (instruction.UOpCode == UOpCode.Intrinsic)
-        {
             AirTypes.ProcessTypesIntrinsic(instruction, stack);
-            return;
-        }
     }
 
     private static void InitializeAirTypes()

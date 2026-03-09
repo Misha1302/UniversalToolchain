@@ -1,5 +1,5 @@
-using IntermediateRepresentationAbstractions;
 using BasicCore.Compilation;
+using IntermediateRepresentationAbstractions;
 
 namespace BasicCore.Contracts;
 

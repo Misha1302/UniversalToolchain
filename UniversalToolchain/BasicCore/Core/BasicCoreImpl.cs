@@ -20,6 +20,8 @@ public class BasicCoreImpl<TCompilationOutput>(
     IReadOnlyList<IMiddleEndCoreModule<TCompilationOutput>> middleEndModules
 ) : ICoreRunnable, ICoreOptimizedRunnable, IExecutableGiver<TCompilationOutput>
 {
+    private readonly CompilationInputNormalizer _inputNormalizer = new();
+
     private readonly PreparedExecutionBuilder<TCompilationOutput> _preparedExecutionBuilder =
         new(
             lexerFactory,
@@ -32,17 +34,11 @@ public class BasicCoreImpl<TCompilationOutput>(
             optimizers,
             middleEndModules);
 
-    private readonly CompilationInputNormalizer _inputNormalizer = new();
     private PreparedExecution<TCompilationOutput>? _prepared;
 
     public void PrepareToRun(string code, OrderedDictionary<string, Type>? parameters = null)
     {
         PrepareToRun(_inputNormalizer.NormalizeDeclaredInput(code, parameters));
-    }
-
-    public void PrepareToRun(CompilationInput input)
-    {
-        _prepared = _preparedExecutionBuilder.Build(input);
     }
 
     public object? RunPrepared()
@@ -62,5 +58,10 @@ public class BasicCoreImpl<TCompilationOutput>(
     {
         PrepareToRun(code, parameters);
         return _prepared!.CompilationOutput;
+    }
+
+    public void PrepareToRun(CompilationInput input)
+    {
+        _prepared = _preparedExecutionBuilder.Build(input);
     }
 }

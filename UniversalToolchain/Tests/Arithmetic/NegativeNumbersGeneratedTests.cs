@@ -59,9 +59,7 @@ public class NegativeNumbersGeneratedTests : TestBase
                 foreach (var op in operations)
                 {
                     if (op == "/" && Math.Abs(right) < Tolerance)
-                    {
                         continue;
-                    }
 
                     var expression = $"({left}) {op} ({right})";
                     var expected = op switch

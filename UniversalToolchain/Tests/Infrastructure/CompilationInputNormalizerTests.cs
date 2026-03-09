@@ -47,7 +47,7 @@ public class CompilationInputNormalizerTests
     {
         var normalizer = new CompilationInputNormalizer();
 
-        var input = normalizer.NormalizeRuntimeInput("40 + 2", null);
+        var input = normalizer.NormalizeRuntimeInput("40 + 2");
 
         Assert.That(input.ExternalBindings, Is.Empty);
         Assert.That(input.SourceText, Is.EqualTo("40 + 2"));
@@ -59,7 +59,7 @@ public class CompilationInputNormalizerTests
     {
         var normalizer = new CompilationInputNormalizer();
 
-        var input = normalizer.NormalizeDeclaredInput("40 + 2", null);
+        var input = normalizer.NormalizeDeclaredInput("40 + 2");
 
         Assert.That(input.ExternalBindings, Is.Empty);
         Assert.That(input.SourceText, Is.EqualTo("40 + 2"));

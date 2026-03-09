@@ -1,14 +1,9 @@
 using AbstractIrConverters;
-using System.Reflection;
 using BasicCilCompiler.Execution;
 using BasicCore.Compilation;
 using BasicCore.Contracts;
 using BasicCore.Core;
-using BasicCore.ExecutorWrapper;
-using BasicCore.LexerWrapper;
-using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
-using BasicInterpreter;
 using BytecodeDynamicMethodsCompiler.Compilers;
 using DynamicMethodCalling.Core;
 
@@ -58,9 +53,9 @@ internal static class ParameterTestHost
     }
 
     public static string ProgramFor(string expression) => $"""
-        let result = {expression}
-        result
-        """;
+                                                           let result = {expression}
+                                                           result
+                                                           """;
 }
 
 [TestFixture]
@@ -83,7 +78,7 @@ public class RuntimeParameterHandlingTests
         using var provider = ParameterTestHost.CreateProvider() as ServiceProvider;
         var core = ParameterTestHost.CreateDynamicCore(provider!);
 
-        var result = core.Run(ParameterTestHost.ProgramFor("40 + 2"), null);
+        var result = core.Run(ParameterTestHost.ProgramFor("40 + 2"));
 
         Assert.That(result, Is.EqualTo(42));
     }
@@ -481,13 +476,13 @@ public class ParameterOrderingAndConsistencyTests
         var compiledCore = ParameterTestHost.CreateDynamicCore(provider!);
 
         var code = """
-            if a > b (
-                a - b
-            )
-            else (
-                b - a
-            )
-            """;
+                   if a > b (
+                       a - b
+                   )
+                   else (
+                       b - a
+                   )
+                   """;
 
         var runtime = runtimeCore.Run(code, new Dictionary<string, object> { ["a"] = 3, ["b"] = 10 });
         var method = compiledCore.GetExecutable(code, new OrderedDictionary<string, Type>
@@ -528,7 +523,6 @@ public class ParameterOrderingAndConsistencyTests
         Assert.That(runtime, Is.EqualTo(234));
         Assert.That(compiled, Is.EqualTo(234));
     }
-
 }
 
 [TestFixture]

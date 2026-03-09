@@ -66,27 +66,6 @@ public static class BenchState
     private static readonly Lazy<Func<Heavy20Context, double>> _nHeavy = new(() => new Expression(ScenarioFactory.ParameterHeavyNCalc).ToLambda<Heavy20Context, double>());
     private static readonly Lazy<Func<int>> _nParseStress = new(() => new Expression(ScenarioFactory.PathologicalNCalc).ToLambda<int>());
 
-
-    public static int WistParseOnlyHash(string code)
-    {
-        // Closest fair boundary available through public Wist APIs: text preprocessing + lexer + parser.
-        // We intentionally stop before AST->bytecode translation and compilation.
-        var lexer = _lexerFactory();
-        var parser = _parserFactory();
-
-        var processedCode = _frontendModules.Aggregate(code, (current, module) => module.ProcessText(current));
-        foreach (var module in _frontendModules)
-            module.InitLexer(lexer);
-
-        var lexemes = lexer.Lexemize(processedCode);
-        var processedLexemes = _frontendModules.Aggregate(lexemes, (current, module) => module.ProcessLexemes(current));
-        foreach (var module in _frontendModules)
-            module.InitParser(parser);
-
-        var ast = parser.Parse(processedLexemes);
-        return ast.GetHashCode();
-    }
-
     public static readonly IReadOnlyDictionary<ScenarioId, ScenarioSpec> Scenarios = new Dictionary<ScenarioId, ScenarioSpec>
     {
         [ScenarioId.ConstantArithmetic] = new(
@@ -167,6 +146,27 @@ public static class BenchState
             0,
             false)
     };
+
+
+    public static int WistParseOnlyHash(string code)
+    {
+        // Closest fair boundary available through public Wist APIs: text preprocessing + lexer + parser.
+        // We intentionally stop before AST->bytecode translation and compilation.
+        var lexer = _lexerFactory();
+        var parser = _parserFactory();
+
+        var processedCode = _frontendModules.Aggregate(code, (current, module) => module.ProcessText(current));
+        foreach (var module in _frontendModules)
+            module.InitLexer(lexer);
+
+        var lexemes = lexer.Lexemize(processedCode);
+        var processedLexemes = _frontendModules.Aggregate(lexemes, (current, module) => module.ProcessLexemes(current));
+        foreach (var module in _frontendModules)
+            module.InitParser(parser);
+
+        var ast = parser.Parse(processedLexemes);
+        return ast.GetHashCode();
+    }
 }
 
 [MemoryDiagnoser]
@@ -313,13 +313,13 @@ public class MultiThreadExecuteDefaultBenchmarks
     [Benchmark(Baseline = true)]
     public double Wist_ExecuteSharedCompiled()
     {
-        return RunParallel((i) => _wInvoker.Invoke(_wData[i].A, _wData[i].B));
+        return RunParallel(i => _wInvoker.Invoke(_wData[i].A, _wData[i].B));
     }
 
     [Benchmark]
     public double NCalc_ExecuteSharedCompiled()
     {
-        return RunParallel((i) => _nInvoker(_nData[i]));
+        return RunParallel(i => _nInvoker(_nData[i]));
     }
 
     private double RunParallel(Func<int, double> invoker)
@@ -371,12 +371,10 @@ public static class ScenarioFactory
         return string.Join(" + ", Enumerable.Range(0, 20).Select(i => $"[P{i}]"));
     }
 
-    private static string BuildPathological(string start, string append, int depth)
-    {
+    private static string BuildPathological(string start, string append, int depth) =>
         // Deeply nested parentheses can trigger parser pathologies in some engines/versions.
         // Use a long linear chain to keep stress high while guaranteeing termination.
-        return string.Join(" + ", Enumerable.Repeat(start, depth + 1));
-    }
+        string.Join(" + ", Enumerable.Repeat(start, depth + 1));
 }
 
 public sealed class BinaryIntContext

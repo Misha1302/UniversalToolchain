@@ -8,6 +8,7 @@ public sealed class CompilationInputNormalizer
         var bindings = new List<ExternalBinding>(parameters.Count);
 
         foreach (var pair in parameters)
+        {
             bindings.Add(new ExternalBinding
             {
                 Name = pair.Key,
@@ -15,6 +16,7 @@ public sealed class CompilationInputNormalizer
                 Value = pair.Value,
                 Kind = ExternalBindingKind.Variable
             });
+        }
 
         return new CompilationInput
         {
@@ -30,12 +32,14 @@ public sealed class CompilationInputNormalizer
         var bindings = new List<ExternalBinding>(parameters.Count);
 
         foreach (var pair in parameters)
+        {
             bindings.Add(new ExternalBinding
             {
                 Name = pair.Key,
                 Type = pair.Value,
                 Kind = ExternalBindingKind.Variable
             });
+        }
 
         return new CompilationInput
         {

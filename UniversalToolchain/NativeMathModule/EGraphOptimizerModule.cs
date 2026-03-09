@@ -241,7 +241,7 @@ public class EGraphOptimizerModule : IIRProcessingModule
         CollectTerms(ExprOp.Add, left, type, terms);
         CollectTerms(ExprOp.Add, right, type, terms);
 
-        object constValue = ZeroOf(type);
+        var constValue = ZeroOf(type);
         var nonConst = new List<Expr>();
         foreach (var term in terms)
         {
@@ -274,7 +274,7 @@ public class EGraphOptimizerModule : IIRProcessingModule
         CollectTerms(ExprOp.Mul, left, type, terms);
         CollectTerms(ExprOp.Mul, right, type, terms);
 
-        object constValue = OneOf(type);
+        var constValue = OneOf(type);
         var nonConst = new List<Expr>();
         foreach (var term in terms)
         {
@@ -350,7 +350,7 @@ public class EGraphOptimizerModule : IIRProcessingModule
         if (left.Operation != ExprOp.Const || right.Operation != ExprOp.Const)
             return false;
 
-        if ((operation == ExprOp.Div) && IsZero(right))
+        if (operation == ExprOp.Div && IsZero(right))
             return false;
 
         var value = FoldBinaryRaw(operation, left.Value!, right.Value!, type);
@@ -366,9 +366,9 @@ public class EGraphOptimizerModule : IIRProcessingModule
             var r = (int)right;
             return operation switch
             {
-                ExprOp.Add => unchecked(l + r),
-                ExprOp.Sub => unchecked(l - r),
-                ExprOp.Mul => unchecked(l * r),
+                ExprOp.Add => unchecked (l + r),
+                ExprOp.Sub => unchecked (l - r),
+                ExprOp.Mul => unchecked (l * r),
                 ExprOp.Div => l / r,
                 _ => left
             };
@@ -380,9 +380,9 @@ public class EGraphOptimizerModule : IIRProcessingModule
             var r = (long)right;
             return operation switch
             {
-                ExprOp.Add => unchecked(l + r),
-                ExprOp.Sub => unchecked(l - r),
-                ExprOp.Mul => unchecked(l * r),
+                ExprOp.Add => unchecked (l + r),
+                ExprOp.Sub => unchecked (l - r),
+                ExprOp.Mul => unchecked (l * r),
                 ExprOp.Div => l / r,
                 _ => left
             };

@@ -3,8 +3,6 @@ using BasicCore.Contracts;
 using BasicCore.Core;
 using BasicCore.Execution;
 using BasicCore.ExecutorWrapper;
-using BasicCore.LexerWrapper;
-using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 
 namespace Tests.Infrastructure;
@@ -80,7 +78,7 @@ public class BasicCoreImplOrchestrationTests
     public void Should_PropagateStageException_When_ParserFails()
     {
         var calls = new List<string>();
-        var parser = new TrackingParser(calls, shouldThrow: true);
+        var parser = new TrackingParser(calls, true);
 
         var core = new BasicCoreImpl<string>(
             () => new TrackingLexer(calls),
@@ -121,6 +119,7 @@ public class BasicCoreImplOrchestrationTests
         }
 
         public void InitLexer(ILexer lexer) => calls.Add("module.InitLexer");
+
         public List<LexemeValue> ProcessLexemes(List<LexemeValue> current)
         {
             calls.Add("module.ProcessLexemes");
@@ -128,6 +127,7 @@ public class BasicCoreImplOrchestrationTests
         }
 
         public void InitParser(IParser parser) => calls.Add("module.InitParser");
+
         public AstNode ProcessAst(AstNode astRoot)
         {
             calls.Add("module.ProcessAst");
@@ -135,6 +135,7 @@ public class BasicCoreImplOrchestrationTests
         }
 
         public void InitAstTranslator(IAstToBytecodeTranslator translator) => calls.Add("module.InitAstTranslator");
+
         public Bytecode ProcessBytecode(Bytecode current)
         {
             calls.Add("module.ProcessBytecode");
@@ -156,6 +157,7 @@ public class BasicCoreImplOrchestrationTests
     private sealed class TrackingMiddleEnd(List<string> calls) : IMiddleEndCoreModule<string>
     {
         public void InitMethodsCompiler(IAbstractIrCompiler<string> compiler) => calls.Add("middle.InitMethodsCompiler");
+
         public string ProcessCompilation(string current)
         {
             calls.Add("middle.ProcessCompilation");

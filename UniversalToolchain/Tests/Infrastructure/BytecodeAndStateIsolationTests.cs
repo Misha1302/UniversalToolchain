@@ -1,5 +1,5 @@
-using BasicCore.TranslatorWrapper;
 using AbstractIrConverters;
+using BasicCore.TranslatorWrapper;
 using DynamicMethodWrapper;
 using SettableGettableModule.Core;
 
@@ -50,7 +50,7 @@ public class BytecodeAndStateIsolationTests : TestBase
         var converter = new BytecodeToAbstractIrConverterImpl();
         var bytecode = new Bytecode([
             new BytecodeInstruction(new StubConvertable("bad", _ =>
-                CreateIr(new Instruction(UOpCode.Intrinsic, ["not_registered"])) ))
+                CreateIr(new Instruction(UOpCode.Intrinsic, ["not_registered"]))))
         ]);
 
         Assert.Throws<InvalidOperationException>(() => converter.Translate(bytecode));
@@ -100,7 +100,7 @@ public class BytecodeAndStateIsolationTests : TestBase
     [Test]
     public void Should_NotAccumulateBytecodeAcrossTranslateCalls_When_TranslatorIsReused()
     {
-        var translator = new BasicCodeTranslator.BasicAstToBytecodeTranslatorImpl(
+        var translator = new BasicAstToBytecodeTranslatorImpl(
             new BytecodeTranslatorConfiguration([new AppendingVisitor()]));
         var ast = new AstNode(ExtensibleEnum<AstNodeTag>.CreateOrGet("Root"), null, []);
 
@@ -118,7 +118,7 @@ public class BytecodeAndStateIsolationTests : TestBase
         var rootTag = ExtensibleEnum<AstNodeTag>.CreateOrGet("NestedRoot");
         var childTag = ExtensibleEnum<AstNodeTag>.CreateOrGet("NestedChild");
 
-        var translator = new BasicCodeTranslator.BasicAstToBytecodeTranslatorImpl(
+        var translator = new BasicAstToBytecodeTranslatorImpl(
             new BytecodeTranslatorConfiguration([new NestedAppendingVisitor(rootTag, childTag)]));
         var ast = new AstNode(rootTag, null, [new AstNode(childTag, null, [])]);
 

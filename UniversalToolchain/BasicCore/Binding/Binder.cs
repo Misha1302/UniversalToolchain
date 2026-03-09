@@ -1,15 +1,14 @@
 using BasicCore.Binding.Symbols;
 using BasicCore.Compilation;
 using BasicCore.ParserWrapper;
-using BasicTypesExtensions;
 using ExceptionsManager;
 
 namespace BasicCore.Binding;
 
 public sealed class Binder
 {
-    private readonly Dictionary<string, Symbol> _locals = new();
     private readonly Dictionary<string, Symbol> _externals;
+    private readonly Dictionary<string, Symbol> _locals = new();
 
     public Binder(IReadOnlyList<ExternalBinding> externalBindings)
     {
@@ -22,7 +21,7 @@ public sealed class Binder
 
     private AstNode BindNode(AstNode node)
     {
-        if (node.NodeType == ExtensibleEnum<AstNodeTag>.CreateOrGet("Variable"))
+        if (node.NodeType == AstNodeType.CreateOrGet("Variable"))
             return BindVariable(node);
 
         for (var i = 0; i < node.Children.Count; i++)

@@ -327,7 +327,9 @@ internal sealed class AbstractMethodsIntrinsicCompiler
     private static void CompilePrimitiveComparison(GroboIL il, string operation)
     {
         if (operation == "eq")
+        {
             il.Ceq();
+        }
         else if (operation == "ne")
         {
             il.Ceq();
@@ -335,7 +337,9 @@ internal sealed class AbstractMethodsIntrinsicCompiler
             il.Ceq();
         }
         else if (operation == "gt")
+        {
             il.Cgt(false);
+        }
         else if (operation == "ge")
         {
             il.Clt(false);
@@ -343,7 +347,9 @@ internal sealed class AbstractMethodsIntrinsicCompiler
             il.Ceq();
         }
         else if (operation == "lt")
+        {
             il.Clt(false);
+        }
         else if (operation == "le")
         {
             il.Cgt(false);
@@ -351,7 +357,9 @@ internal sealed class AbstractMethodsIntrinsicCompiler
             il.Ceq();
         }
         else
+        {
             Thrower.InvalidOpEx($"Unknown comparison operation: {operation}");
+        }
     }
 
     private static Type GetTypeFromString(string typeStr)

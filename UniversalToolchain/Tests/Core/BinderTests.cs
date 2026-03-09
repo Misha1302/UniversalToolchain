@@ -1,6 +1,7 @@
 using BasicCore.Binding;
 using BasicCore.Binding.Symbols;
 using BasicCore.Compilation;
+using Binder = BasicCore.Binding.Binder;
 
 namespace Tests.Core;
 
@@ -10,7 +11,7 @@ public class BinderTests
     [Test]
     public void Should_BindExternalVariable_When_ExternalVariableExists()
     {
-        var binder = new BasicCore.Binding.Binder([
+        var binder = new Binder([
             new ExternalBinding { Name = "x", Type = typeof(int), Kind = ExternalBindingKind.Variable }
         ]);
 
@@ -23,7 +24,7 @@ public class BinderTests
     [Test]
     public void Should_BindExternalConstant_When_ExternalConstantExists()
     {
-        var binder = new BasicCore.Binding.Binder([
+        var binder = new Binder([
             new ExternalBinding { Name = "pi", Type = typeof(double), Kind = ExternalBindingKind.Constant }
         ]);
 
@@ -36,7 +37,7 @@ public class BinderTests
     [Test]
     public void Should_CreateLocalReference_When_VariableDefinitionIsEncountered()
     {
-        var binder = new BasicCore.Binding.Binder([]);
+        var binder = new Binder([]);
 
         var result = binder.Bind(CreateVariableNode("v", ["VariableDefinition"]));
 
@@ -46,7 +47,7 @@ public class BinderTests
     [Test]
     public void Should_ShadowExternal_When_LocalDefinitionWithSameNameExists()
     {
-        var binder = new BasicCore.Binding.Binder([
+        var binder = new Binder([
             new ExternalBinding { Name = "v", Type = typeof(int), Kind = ExternalBindingKind.Variable }
         ]);
 
@@ -63,7 +64,7 @@ public class BinderTests
     [Test]
     public void Should_InferObjectLocal_When_VariableIsUnknown()
     {
-        var binder = new BasicCore.Binding.Binder([]);
+        var binder = new Binder([]);
 
         var result = binder.Bind(CreateVariableNode("newLocal"));
 
@@ -73,7 +74,7 @@ public class BinderTests
     [Test]
     public void Should_ResolveClrType_When_VariableDefinitionContainsTypeTag()
     {
-        var binder = new BasicCore.Binding.Binder([]);
+        var binder = new Binder([]);
         var variable = CreateVariableNode(
             "typed",
             ["VariableDefinition", "VariableDefinitionWithType"],
@@ -87,7 +88,7 @@ public class BinderTests
     [Test]
     public void Should_FallbackToObject_When_VariableDefinitionTypeIsInvalid()
     {
-        var binder = new BasicCore.Binding.Binder([]);
+        var binder = new Binder([]);
         var variable = CreateVariableNode(
             "typed",
             ["VariableDefinition", "VariableDefinitionWithType"],
@@ -101,7 +102,7 @@ public class BinderTests
     [Test]
     public void Should_RewriteChildrenRecursively_When_VariablesAreNested()
     {
-        var binder = new BasicCore.Binding.Binder([]);
+        var binder = new Binder([]);
         var root = CreateNode("Root", "", [CreateNode("Scope", "", [CreateVariableNode("nested")])]);
 
         var result = binder.Bind(root);
@@ -112,7 +113,7 @@ public class BinderTests
     [Test]
     public void Should_UseConsistentSymbol_When_MultipleReferencesPointToSameLocal()
     {
-        var binder = new BasicCore.Binding.Binder([]);
+        var binder = new Binder([]);
         var root = CreateNode("Root", "", [
             CreateVariableNode("a", ["VariableDefinition"]),
             CreateVariableNode("a"),
@@ -132,7 +133,7 @@ public class BinderTests
     [Test]
     public void Should_BindMixedLocalsAndExternals_When_AstContainsBothKinds()
     {
-        var binder = new BasicCore.Binding.Binder([
+        var binder = new Binder([
             new ExternalBinding { Name = "ext", Type = typeof(string), Kind = ExternalBindingKind.Variable }
         ]);
 
