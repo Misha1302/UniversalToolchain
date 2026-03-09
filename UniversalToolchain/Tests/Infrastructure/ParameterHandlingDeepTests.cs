@@ -209,15 +209,17 @@ public class RuntimeParameterHandlingTests
     }
 
     [Test]
-    public void Run_WithNullRuntimeValue_ThrowsNullReferenceException()
+    public void Run_WithNullRuntimeValue_DoesNotThrowAndReturnsNull()
     {
         using var provider = ParameterTestHost.CreateProvider() as ServiceProvider;
         var core = ParameterTestHost.CreateDynamicCore(provider!);
 
-        Assert.Throws<NullReferenceException>(() => core.Run(ParameterTestHost.ProgramFor("a"), new Dictionary<string, object>
+        var result = core.Run(ParameterTestHost.ProgramFor("a"), new Dictionary<string, object>
         {
             ["a"] = null!
-        }));
+        });
+
+        Assert.That(result, Is.Null);
     }
 }
 

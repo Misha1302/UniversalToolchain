@@ -12,7 +12,7 @@ public sealed class CompilationInputNormalizer
             bindings.Add(new ExternalBinding
             {
                 Name = pair.Key,
-                Type = pair.Value.GetType(),
+                Type = pair.Value?.GetType() ?? typeof(object),
                 Value = pair.Value,
                 Kind = ExternalBindingKind.Variable
             });

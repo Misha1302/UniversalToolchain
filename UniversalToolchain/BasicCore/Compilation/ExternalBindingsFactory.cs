@@ -19,7 +19,7 @@ internal static class ExternalBindingsFactory
         return parameters.Select(x => new ExternalBinding
         {
             Name = x.Key,
-            Type = x.Value.GetType(),
+            Type = x.Value?.GetType() ?? typeof(object),
             Value = x.Value,
             Kind = ExternalBindingKind.Variable
         }).ToList();

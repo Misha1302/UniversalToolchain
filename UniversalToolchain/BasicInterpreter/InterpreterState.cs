@@ -1,3 +1,4 @@
+using BasicCore.Execution;
 using ExceptionsManager;
 using IntermediateRepresentationAbstractions;
 using ObjectExtensions;
@@ -9,8 +10,11 @@ public class InterpreterState
     private readonly Dictionary<Guid, int> _labelPositions = new();
     private bool _labelsBuilt;
     public Stack<object> ValueStack { get; } = new();
+    public Dictionary<string, int> ExternalSlotsByName { get; } = new();
+    public HashSet<string> LocalVariables { get; } = [];
 
     public int InstructionPointer { get; set; }
+    public IExecutionEnvironment? ExecutionEnvironment { get; set; }
 
     public void BuildLabelPositions(IReadOnlyList<Instruction> instructions)
     {

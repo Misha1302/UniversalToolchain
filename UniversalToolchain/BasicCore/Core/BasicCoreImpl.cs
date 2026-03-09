@@ -6,6 +6,8 @@ using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using ExceptionsManager;
 
+using System.Threading;
+
 namespace BasicCore.Core;
 
 public class BasicCoreImpl<TCompilationOutput>(
@@ -34,7 +36,7 @@ public class BasicCoreImpl<TCompilationOutput>(
             optimizers,
             middleEndModules);
 
-    private PreparedExecution<TCompilationOutput>? _prepared;
+    private readonly AsyncLocal<PreparedExecution<TCompilationOutput>?> _prepared = new();
 
     public void PrepareToRun(string code, OrderedDictionary<string, Type>? parameters = null)
     {
@@ -43,8 +45,9 @@ public class BasicCoreImpl<TCompilationOutput>(
 
     public object? RunPrepared()
     {
-        Thrower.AssertAlways(_prepared != null);
-        return _prepared.Executor.Execute(_prepared.CompilationOutput, _prepared.ExecutionEnvironment);
+        var prepared = _prepared.Value;
+        Thrower.AssertAlways(prepared != null);
+        return prepared.Executor.Execute(prepared.CompilationOutput, prepared.ExecutionEnvironment);
     }
 
     public object? Run(string code, Dictionary<string, object>? parameters = null)
@@ -57,11 +60,11 @@ public class BasicCoreImpl<TCompilationOutput>(
     public TCompilationOutput GetExecutable(string code, OrderedDictionary<string, Type>? parameters = null)
     {
         PrepareToRun(code, parameters);
-        return _prepared!.CompilationOutput;
+        return _prepared.Value!.CompilationOutput;
     }
 
     public void PrepareToRun(CompilationInput input)
     {
-        _prepared = _preparedExecutionBuilder.Build(input);
+        _prepared.Value = _preparedExecutionBuilder.Build(input);
     }
 }
