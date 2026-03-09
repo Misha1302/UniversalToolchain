@@ -14,12 +14,7 @@ namespace BytecodeDynamicMethodsCompiler.Compilers;
 
 public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
 {
-    private readonly AbstractMethodsIntrinsicCompiler _intrinsicCompiler;
-
-    public AbstractMethodsCompilerImpl()
-    {
-        _intrinsicCompiler = new AbstractMethodsIntrinsicCompiler();
-    }
+    private readonly AbstractMethodsIntrinsicCompiler _intrinsicCompiler = new();
 
     public IReadOnlyList<string> SupportedIntrinsics => _intrinsicCompiler.SupportedIntrinsics;
 
@@ -208,14 +203,14 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
 
     private static class GlobalExecutionConstants<T>
     {
-        private static readonly List<T> Values = [];
+        private static readonly List<T> _values = [];
 
         public static int AddValue(T value)
         {
-            Values.Add(value);
-            return Values.Count - 1;
+            _values.Add(value);
+            return _values.Count - 1;
         }
 
-        public static T GetValue(int index) => Values[index];
+        public static T GetValue(int index) => _values[index];
     }
 }

@@ -14,7 +14,7 @@ public class ArithmeticModuleImpl : IFrontendCoreModule
 {
     public static readonly IReadOnlyList<string> Ops = ["Addition", "Substraction", "Multiplication", "Division"];
 
-    private static readonly IReadOnlyList<LexemeRegistration> LexemeRegistrations =
+    private static readonly IReadOnlyList<LexemeRegistration> _lexemeRegistrations =
     [
         new(@"\+", "Addition"),
         new(@"\-", "Substraction"),
@@ -22,7 +22,7 @@ public class ArithmeticModuleImpl : IFrontendCoreModule
         new(@"\/", "Division")
     ];
 
-    private static readonly IReadOnlyList<NodeCreatorRegistration> NodeCreatorRegistrations =
+    private static readonly IReadOnlyList<NodeCreatorRegistration> _nodeCreatorRegistrations =
     [
         new(-31f, new MultiplicationOperationNodeCreator()),
         new(-31f, new DivisionOperationNodeCreator()),
@@ -30,9 +30,9 @@ public class ArithmeticModuleImpl : IFrontendCoreModule
         new(-30f, new SubstractionOperationNodeCreator())
     ];
 
-    public void InitLexer(ILexer lexer) => lexer.AddLexemes(LexemeRegistrations);
+    public void InitLexer(ILexer lexer) => lexer.AddLexemes(_lexemeRegistrations);
 
-    public void InitParser(IParser parser) => parser.AddNodeCreators(NodeCreatorRegistrations);
+    public void InitParser(IParser parser) => parser.AddNodeCreators(_nodeCreatorRegistrations);
 
     public void InitAstTranslator(IAstToBytecodeTranslator translator) => translator.AddVisitors(new ArithmeticAstVisitor());
 }

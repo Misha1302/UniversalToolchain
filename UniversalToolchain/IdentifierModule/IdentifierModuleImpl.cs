@@ -8,7 +8,7 @@ namespace IdentifierModule;
 [AutoRegisterService]
 public class IdentifierModuleImpl : IFrontendCoreModule
 {
-    private static readonly IReadOnlyList<LexemeRegistration> LexemeRegistrations =
+    private static readonly IReadOnlyList<LexemeRegistration> _lexemeRegistrations =
     [
         new(
             @"[@a-zA-Z_][a-zA-Z0-9_]*(?:\.[a-zA-Z_][a-zA-Z0-9_]*)*(?:<[^<>]*(?:<(?:[^<>]|<<|>>)*>[^<>]*)*>)?",
@@ -17,5 +17,5 @@ public class IdentifierModuleImpl : IFrontendCoreModule
         )
     ];
 
-    public void InitLexer(ILexer lexer) => lexer.AddLexemes(LexemeRegistrations);
+    public void InitLexer(ILexer lexer) => lexer.AddLexemes(_lexemeRegistrations);
 }

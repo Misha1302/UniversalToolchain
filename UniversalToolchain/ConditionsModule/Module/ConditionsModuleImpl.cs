@@ -13,14 +13,14 @@ namespace ConditionsModule.Module;
 [AutoRegisterService]
 public class ConditionsModuleImpl : IFrontendCoreModule
 {
-    private static readonly IReadOnlyList<LexemeRegistration> LexemeRegistrations =
+    private static readonly IReadOnlyList<LexemeRegistration> _lexemeRegistrations =
     [
         new("if", "If"),
         new("elif", "Elif"),
         new("else", "Else")
     ];
 
-    private static readonly IReadOnlyList<NodeCreatorRegistration> NodeCreatorRegistrations =
+    private static readonly IReadOnlyList<NodeCreatorRegistration> _nodeCreatorRegistrations =
     [
         new(15f, new IfNodeCreator()),
         new(15f, new ElifNodeCreator()),
@@ -28,9 +28,9 @@ public class ConditionsModuleImpl : IFrontendCoreModule
         new(16f, new CondNodesCombiner())
     ];
 
-    public void InitLexer(ILexer lexer) => lexer.AddLexemes(LexemeRegistrations);
+    public void InitLexer(ILexer lexer) => lexer.AddLexemes(_lexemeRegistrations);
 
-    public void InitParser(IParser parser) => parser.AddNodeCreators(NodeCreatorRegistrations);
+    public void InitParser(IParser parser) => parser.AddNodeCreators(_nodeCreatorRegistrations);
 
     public void InitAstTranslator(IAstToBytecodeTranslator translator) => translator.AddVisitors(new ConditionsVisitor());
 }

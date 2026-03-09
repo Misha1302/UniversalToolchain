@@ -9,13 +9,13 @@ namespace CommentsModule;
 [AutoRegisterService]
 public class CommentsModuleImpl : IFrontendCoreModule
 {
-    private static readonly IReadOnlyList<LexemeRegistration> LexemeRegistrations =
+    private static readonly IReadOnlyList<LexemeRegistration> _lexemeRegistrations =
     [
         new(@"//[^\n]*", "SingleLineComment", true, -100f),
         new(@"/\*[\s\S]*?\*/", "MultiLineComment", true, -100f)
     ];
 
-    public void InitLexer(ILexer lexer) => lexer.AddLexemes(LexemeRegistrations);
+    public void InitLexer(ILexer lexer) => lexer.AddLexemes(_lexemeRegistrations);
 
     public void InitAstTranslator(IAstToBytecodeTranslator translator)
     {

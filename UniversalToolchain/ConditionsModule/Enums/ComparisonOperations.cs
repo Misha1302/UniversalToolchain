@@ -12,7 +12,7 @@ namespace ConditionsModule.Enums;
 [AutoRegisterService]
 public class ComparisonOperations : IFrontendCoreModule
 {
-    private static readonly IReadOnlyList<LexemeRegistration> LexemeRegistrations =
+    private static readonly IReadOnlyList<LexemeRegistration> _lexemeRegistrations =
     [
         new(@"\=\=", "Equal"),
         new(@"\!\=", "NotEqual"),
@@ -22,7 +22,7 @@ public class ComparisonOperations : IFrontendCoreModule
         new(@"\<\=", "LessOrEqual", Priority: -1f)
     ];
 
-    private static readonly IReadOnlyList<NodeCreatorRegistration> NodeCreatorRegistrations =
+    private static readonly IReadOnlyList<NodeCreatorRegistration> _nodeCreatorRegistrations =
     [
         new(-20f, new ComparisonNodeCreator("Equal")),
         new(-20f, new ComparisonNodeCreator("NotEqual")),
@@ -32,9 +32,9 @@ public class ComparisonOperations : IFrontendCoreModule
         new(-20f, new ComparisonNodeCreator("LessOrEqual"))
     ];
 
-    public void InitLexer(ILexer lexer) => lexer.AddLexemes(LexemeRegistrations);
+    public void InitLexer(ILexer lexer) => lexer.AddLexemes(_lexemeRegistrations);
 
-    public void InitParser(IParser parser) => parser.AddNodeCreators(NodeCreatorRegistrations);
+    public void InitParser(IParser parser) => parser.AddNodeCreators(_nodeCreatorRegistrations);
 
     public void InitAstTranslator(IAstToBytecodeTranslator translator) => translator.AddVisitors(new ComparisonVisitor());
 }

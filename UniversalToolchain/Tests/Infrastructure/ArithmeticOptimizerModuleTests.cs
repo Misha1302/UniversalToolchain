@@ -8,8 +8,8 @@ namespace Tests.Infrastructure;
 
 public class ArithmeticOptimizerModuleTests
 {
-    private static readonly MethodInfo AddInt = typeof(NativeArithmetic).GetMethod(nameof(NativeArithmetic.Add))!.MakeGenericMethod(typeof(int));
-    private static readonly MethodInfo MultiplyInt = typeof(NativeArithmetic).GetMethod(nameof(NativeArithmetic.Multiply))!.MakeGenericMethod(typeof(int));
+    private static readonly MethodInfo _addInt = typeof(NativeArithmetic).GetMethod(nameof(NativeArithmetic.Add))!.MakeGenericMethod(typeof(int));
+    private static readonly MethodInfo _multiplyInt = typeof(NativeArithmetic).GetMethod(nameof(NativeArithmetic.Multiply))!.MakeGenericMethod(typeof(int));
 
     [Test]
     public void ShouldSimplify_XMinusZero_ToX()
@@ -130,11 +130,11 @@ public class ArithmeticOptimizerModuleTests
         var source = BuildIr(
             new Instruction(UOpCode.Intrinsic, ["load_local", "x", typeof(int)]),
             new Instruction(UOpCode.Push, [2]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", AddInt]),
+            new Instruction(UOpCode.Intrinsic, ["call C#", _addInt]),
             new Instruction(UOpCode.Push, [3]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", AddInt]),
+            new Instruction(UOpCode.Intrinsic, ["call C#", _addInt]),
             new Instruction(UOpCode.Push, [1]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", MultiplyInt]));
+            new Instruction(UOpCode.Intrinsic, ["call C#", _multiplyInt]));
 
         var optimized = Optimize(source);
 

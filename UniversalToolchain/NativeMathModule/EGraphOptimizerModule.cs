@@ -10,7 +10,7 @@ namespace NativeMathModule;
 [AutoRegisterService]
 public class EGraphOptimizerModule : IIRProcessingModule
 {
-    private static readonly string[] SupportedArithmeticIntrinsics =
+    private static readonly string[] _supportedArithmeticIntrinsics =
     [
         "add_i32", "sub_i32", "mul_i32", "div_i32",
         "add_i64", "sub_i64", "mul_i64", "div_i64",
@@ -20,7 +20,7 @@ public class EGraphOptimizerModule : IIRProcessingModule
 
     public IAbstractIR ProcessIr<TCompilationOutput>(IAbstractIR current, IAbstractIrCompiler<TCompilationOutput> compiler)
     {
-        if (SupportedArithmeticIntrinsics.Any(x => !compiler.SupportedIntrinsics.Contains(x)))
+        if (_supportedArithmeticIntrinsics.Any(x => !compiler.SupportedIntrinsics.Contains(x)))
             return current;
 
         RegisterAirTypes();

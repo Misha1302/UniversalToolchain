@@ -9,7 +9,7 @@ namespace Tests.Infrastructure;
 [TestFixture]
 public class EGraphOptimizerModuleTests
 {
-    private static readonly IReadOnlyList<string> FullIntrinsicSet =
+    private static readonly IReadOnlyList<string> _fullIntrinsicSet =
     [
         "add_i32", "sub_i32", "mul_i32", "div_i32",
         "add_i64", "sub_i64", "mul_i64", "div_i64",
@@ -186,7 +186,7 @@ public class EGraphOptimizerModuleTests
     private static IAbstractIR Optimize(IAbstractIR ir)
     {
         var module = new EGraphOptimizerModule();
-        var compiler = new FakeCompiler(FullIntrinsicSet);
+        var compiler = new FakeCompiler(_fullIntrinsicSet);
         return module.ProcessIr(ir, compiler);
     }
 
