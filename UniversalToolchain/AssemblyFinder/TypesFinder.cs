@@ -54,7 +54,7 @@ public static class TypesFinder
         try
         {
             // Быстрая проверка - пытаемся получить минимальную информацию
-            var name = assembly.GetName();
+            _ = assembly.GetName();
             // Полная проверка - загрузка типов (но только если еще не проверяли)
             if (!_badAssemblies.Contains(assembly.FullName ?? ""))
                 _ = assembly.GetExportedTypes();
@@ -122,7 +122,7 @@ public static class TypesFinder
         {
             // Проверяем кэш
             if (_assemblyCache.TryGetValue(fullName, out assembly))
-                return assembly != null;
+                return true;
 
             // Проверяем плохие сборки
             if (_badAssemblies.Contains(fullName))
@@ -256,17 +256,18 @@ public static class TypesFinder
     // Метод для добавления сборок вручную (например, для тестирования)
     public static void RegisterAssembly(Assembly assembly)
     {
+        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
         if (assembly == null)
             Thrower.ArgumentNull(nameof(assembly));
 
         lock (_syncLock)
         {
-            if (IsValidAssembly(assembly))
-            {
-                _loadedAssemblies.Add(assembly);
-                CacheAssembly(assembly);
-                LoadDependencies(assembly);
-            }
+            if (!IsValidAssembly(assembly))
+                return;
+
+            _loadedAssemblies.Add(assembly);
+            CacheAssembly(assembly);
+            LoadDependencies(assembly);
         }
     }
 }

@@ -65,7 +65,7 @@ public abstract class TestBase
         foreach (var value in typedValues)
             Assert.That(value, Is.EqualTo(typedValues[0]));
 
-        return typedValues[0]!;
+        return typedValues[0];
     }
 
     /// <summary>

@@ -78,10 +78,6 @@ namespace Tests.Infrastructure
         [AutoRegisterService]
         private sealed class FrontendModuleAutoRegistrationService : IFrontendCoreModule
         {
-            public string Name => "auto-registration-test";
-            public int Priority => 0;
-            public string Author => "tests";
-
             public string ProcessText(string text) => text;
             public AstNode ProcessAst(AstNode root) => root;
             public Bytecode ProcessBytecode(Bytecode bytecode) => bytecode;
@@ -97,8 +93,6 @@ namespace Tests.Infrastructure
             public void InitAstTranslator(IAstToBytecodeTranslator translator)
             {
             }
-
-            public IEnumerable<LexemeValue> ProcessLexemes(IEnumerable<LexemeValue> lexemes) => lexemes;
         }
     }
 }

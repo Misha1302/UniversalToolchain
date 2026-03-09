@@ -132,12 +132,6 @@ public class LocalVariablesOptimizer : IIRProcessingModule
         method.DeclaringType.IsGenericType &&
         method.DeclaringType.GetGenericTypeDefinition() == typeof(VariablesContainer<>);
 
-    private bool IsSetValueMethod(MethodInfo method) =>
-        method.Name == "SetValue" &&
-        method.DeclaringType != null &&
-        method.DeclaringType.IsGenericType &&
-        method.DeclaringType.GetGenericTypeDefinition() == typeof(VariableReference<>);
-
     private bool IsSetValueToMethod(MethodInfo method) => method.Name == "SetValueTo" && method.IsGenericMethod;
 
     private bool IsGetMethod(MethodInfo method) =>
@@ -166,13 +160,6 @@ public class LocalVariablesOptimizer : IIRProcessingModule
         return true;
     }
 
-    private bool IsLoadRefPattern(Instruction pushInstr, Instruction getRefInstr)
-    {
-        if (!IsPushString(pushInstr)) return false;
-        if (!IsIntrinsicCallCSharp(getRefInstr, out var getRefMethod) || getRefMethod is null || !IsGetRefMethod(getRefMethod)) return false;
-        return true;
-    }
-
     private Instruction CreateStoreLocalIntrinsic(Instruction pushInstr, Instruction getRefInstr)
     {
         var varName = (string)pushInstr.Operands[0];
@@ -185,13 +172,6 @@ public class LocalVariablesOptimizer : IIRProcessingModule
         var varName = (string)pushInstr.Operands[0];
         var varType = getInstr.Operands[1].Get<MethodInfo>().DeclaringType.NotNull().GetGenericArguments()[0];
         return new Instruction(UOpCode.Intrinsic, ["load_local", varName, varType]);
-    }
-
-    private Instruction CreateLoadLocalRefIntrinsic(Instruction pushInstr, Instruction getRefInstr)
-    {
-        var varName = (string)pushInstr.Operands[0];
-        var varType = getRefInstr.Operands[1].Get<MethodInfo>().DeclaringType.NotNull().GetGenericArguments()[0];
-        return new Instruction(UOpCode.Intrinsic, ["load_local_ref", varName, varType]);
     }
 
     private static bool RemoveRedundantLocalRoundtrips(List<Instruction> instructions)
@@ -378,6 +358,7 @@ public class LocalVariablesOptimizer : IIRProcessingModule
             if (name == "switch" && instruction.Operands[1] is IEnumerable<object> labels)
                 foreach (var label in labels)
                     yield return label;
+            // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
             else if ((name == "leave" || name.StartsWith("br", StringComparison.Ordinal)) && instruction.Operands[1] is not null)
                 yield return instruction.Operands[1];
         }

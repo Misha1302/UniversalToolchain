@@ -54,6 +54,7 @@ public class BasicLexerImpl(LexerConfiguration configuration) : ILexer
             // Handle unrecognized text.
             Thrower.AssertAlways(
                 index == lexeme?.StartIndex,
+                // ReSharper disable once ConditionalAccessQualifierIsNonNullableAccordingToAPIContract
                 $"Unknown substr '{Regex.Escape(code[index..(lexeme?.StartIndex ?? code.Length)])}'"
             );
 

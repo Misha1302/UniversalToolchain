@@ -40,7 +40,7 @@ public static class ServiceCollectionExtensions
         configureOptions?.Invoke(options);
 
         // Регистрация фабрик базовых сервисов
-        RegisterCoreFactories(services, options);
+        RegisterCoreFactories(services);
 
         // Автоматическая регистрация всех сервисов с атрибутом AutoRegisterService
         RegisterAutoDiscoveredServices(services, servicesDirectory);
@@ -134,8 +134,7 @@ public static class ServiceCollectionExtensions
     }
 
     private static void RegisterCoreFactories(
-        IServiceCollection services,
-        WistOptions options)
+        IServiceCollection services)
     {
         // Лексер и парсер
         services.AddTransient<Func<ILexer>>(_ =>
@@ -332,7 +331,7 @@ public class WistOptions
         Universal,
 
         /// <summary>
-        ///     Использовать нативную арифметику (INumber<T>)
+        ///     Использовать нативную арифметику (INumber&lt;T&gt;)
         /// </summary>
         Native
     }

@@ -16,6 +16,7 @@ public static class AutoRegistration
         this IServiceCollection services,
         params IEnumerable<Assembly> assemblies)
     {
+        // ReSharper disable PossibleMultipleEnumeration
         var types = !assemblies.Any() ? TypesFinder.AllTypes : assemblies.SelectMany(x => x.GetTypes());
 
         RegisterServices(services, types);

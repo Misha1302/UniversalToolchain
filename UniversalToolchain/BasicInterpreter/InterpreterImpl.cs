@@ -103,7 +103,7 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
 
         // Получаем типы аргументов из стека
         var parameters = method.GetParameters();
-        var args = new object[parameters.Length];
+        var args = new object?[parameters.Length];
         var argsTypes = new Type[parameters.Length];
 
         // Собираем аргументы в обратном порядке (последний аргумент первым в стеке)
@@ -124,16 +124,18 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
         // Приводим аргументы к нужным типам, если необходимо
         for (var i = 0; i < args.Length; i++)
         {
-            if (args[i] != null && args[i].GetType() != targetTypes[i])
-                try
-                {
-                    args[i] = Convert.ChangeType(args[i], targetTypes[i]);
-                }
-                catch
-                {
-                    // Если не удалось преобразовать, оставляем как есть
-                    // Это может привести к исключению при вызове, что корректно
-                }
+            if (args[i]?.GetType() == targetTypes[i])
+                continue;
+
+            try
+            {
+                args[i] = Convert.ChangeType(args[i], targetTypes[i]);
+            }
+            catch
+            {
+                // Если не удалось преобразовать, оставляем как есть
+                // Это может привести к исключению при вызове, что корректно
+            }
         }
 
         // Создаем конкретный generic-метод, если нужно (используем ту же логику, что и в компиляторе)
@@ -167,16 +169,13 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
 
         // Собираем аргументы в обратном порядке
         var args = new object[parameters.Length];
-        var argsTypes = new Type[parameters.Length];
 
         for (var i = parameters.Length - 1; i >= 0; i--)
         {
             if (state.ValueStack.Count == 0)
                 Thrower.InvalidOpEx("Cannot call constructor: not enough arguments on the interpreter stack.");
 
-            var value = state.ValueStack.Pop();
-            args[i] = value;
-            argsTypes[i] = value.GetType();
+            args[i] = state.ValueStack.Pop();
         }
 
         // Создаем экземпляр

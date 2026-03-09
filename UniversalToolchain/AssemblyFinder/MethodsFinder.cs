@@ -154,7 +154,7 @@ public static class MethodsFinder
         if (type != null) return type;
 
         // Поиск во всех сборках
-        var allTypes = TypesFinder.AllTypes;
+        var allTypes = TypesFinder.AllTypes.ToArray();
 
         // Сначала ищем по полному имени (включая namespace)
         var foundTypes = allTypes

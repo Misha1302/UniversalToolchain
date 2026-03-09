@@ -134,7 +134,6 @@ public class DynamicMethodInvokerConcurrencyTests
 
         // Act: Потоки создают инвокеры и выполняют их конкурентно
         var exceptions = new ConcurrentBag<Exception>();
-        var results = new ConcurrentBag<int>();
 
         var threads = Enumerable.Range(0, ThreadCount).Select(threadId => new Thread(() =>
         {
@@ -154,8 +153,6 @@ public class DynamicMethodInvokerConcurrencyTests
                     var resultObj = invokeMethod!.Invoke(invoker, new object[] { threadId * 1000 + i });
                     Assert.That(resultObj, Is.TypeOf<int>());
                     var result = (int)resultObj;
-
-                    results.Add(result);
 
                     // Правильный ожидаемый результат
                     var expected = (threadId * 1000 + i) * (methodIndex + 1);
@@ -291,7 +288,7 @@ public class DynamicMethodInvokerConcurrencyTests
         }
 
         // Ждем завершения всех задач
-        WaitHandle.WaitAll(completionEvents, TimeoutMs);
+        WaitHandle.WaitAll(completionEvents.Cast<WaitHandle>().ToArray(), TimeoutMs);
 
         // Assert
         Assert.That(exceptions, Is.Empty, "Исключения в пуле потоков");
@@ -511,7 +508,7 @@ public class DynamicMethodInvokerConcurrencyTests
                     var b = random.Next(1, 100);
                     var c = random.Next(1, 50);
 
-                    var result = invoker.Invoke(a, b, c);
+                    invoker.Invoke(a, b, c);
                     localCount++;
 
                     // Частая смена контекста
@@ -589,7 +586,7 @@ public class DynamicMethodInvokerConcurrencyTests
                     try
                     {
                         // Выполняем вызов под lock'ом
-                        var result = invoker.Invoke(threadId * 10, 5);
+                        invoker.Invoke(threadId * 10, 5);
 
                         // Другой поток попытается взять тот же lock
                         Thread.Sleep(100);

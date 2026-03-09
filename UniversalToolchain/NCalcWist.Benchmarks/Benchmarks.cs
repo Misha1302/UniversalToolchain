@@ -241,7 +241,7 @@ public class ExecuteOnlyBenchmarks
             if (diff > 1e-9 * scale)
                 throw new InvalidOperationException($"Mismatch for {scenario}: Wist={w}, NCalc={n}");
         }
-        else if (w != n)
+        else if (Math.Abs(w - n) > 1e-9)
         {
             throw new InvalidOperationException($"Mismatch for {scenario}: Wist={w}, NCalc={n}");
         }
@@ -356,8 +356,8 @@ public static class ScenarioFactory
 {
     public static readonly string ParameterHeavyWist = BuildWistHeavy();
     public static readonly string ParameterHeavyNCalc = BuildNCalcHeavy();
-    public static readonly string PathologicalWist = BuildPathological("1", " + 1", 5);
-    public static readonly string PathologicalNCalc = BuildPathological("1", " + 1", 5);
+    public static readonly string PathologicalWist = BuildPathological("1", 5);
+    public static readonly string PathologicalNCalc = BuildPathological("1", 5);
 
     private static string BuildWistHeavy()
     {
@@ -371,7 +371,7 @@ public static class ScenarioFactory
         return string.Join(" + ", Enumerable.Range(0, 20).Select(i => $"[P{i}]"));
     }
 
-    private static string BuildPathological(string start, string append, int depth) =>
+    private static string BuildPathological(string start, int depth) =>
         // Deeply nested parentheses can trigger parser pathologies in some engines/versions.
         // Use a long linear chain to keep stress high while guaranteeing termination.
         string.Join(" + ", Enumerable.Repeat(start, depth + 1));

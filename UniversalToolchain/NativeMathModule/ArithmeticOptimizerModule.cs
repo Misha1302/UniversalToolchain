@@ -367,8 +367,8 @@ public class ArithmeticOptimizerModule : IIRProcessingModule
     {
         int i => i == 1,
         long l => l == 1,
-        float f => f == 1f,
-        double d => d == 1d,
+        float f => Math.Abs(f - 1f) < 1e-9,
+        double d => Math.Abs(d - 1d) < 1e-9,
         decimal m => m == 1m,
         _ => false
     };

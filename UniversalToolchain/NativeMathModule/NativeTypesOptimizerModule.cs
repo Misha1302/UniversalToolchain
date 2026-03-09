@@ -9,9 +9,6 @@ namespace NativeMathModule;
 [AutoRegisterService]
 public class NativeTypesOptimizerModule : IIRProcessingModule
 {
-    // Кэш для скомпилированных операций
-    private static readonly Dictionary<(Type, string), Delegate> _operationCache = new();
-
     public IAbstractIR ProcessIr<TCompilationOutput>(IAbstractIR current, IAbstractIrCompiler<TCompilationOutput> compiler)
     {
         // Регистрируем обработку наших интринсиков

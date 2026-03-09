@@ -5,8 +5,6 @@ namespace VariablesModule;
 
 public class VariablesNodeCreator : IAstNodeCreator
 {
-    private readonly HashSet<string> _variables = [];
-
     public ExtensibleEnum<AstNodeTag> AstNodeType { get; } =
         ExtensibleEnum<AstNodeTag>.CreateOrGet("Variable");
 
@@ -28,8 +26,6 @@ public class VariablesNodeCreator : IAstNodeCreator
                 scope.Children.RemoveAt(childIndex + 2);
                 scope.Children.RemoveAt(childIndex + 1);
 
-                _variables.Add(scope[childIndex].Text);
-
                 scope.Children.RemoveAt(childIndex - 1);
             }
             else
@@ -37,7 +33,6 @@ public class VariablesNodeCreator : IAstNodeCreator
                 scope[childIndex].NodeType = AstNodeType;
                 scope[childIndex].AddTag("VariableDefinition");
                 scope[childIndex].AddTag("VariableDefinitionWithoutType");
-                _variables.Add(scope[childIndex].Text);
 
                 scope.Children.RemoveAt(childIndex - 1);
             }

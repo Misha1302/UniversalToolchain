@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using BasicCore.Attributes;
 using BasicCore.Contracts;
 using DotnetAirHelper;
@@ -161,13 +162,13 @@ public class EGraphOptimizerModule : IIRProcessingModule
     private static bool IsSupportedType(Type type) =>
         type == typeof(int) || type == typeof(long) || type == typeof(float) || type == typeof(double);
 
-    private static bool TryGetBinaryOp(string intrinsic, out ExprOp operation, out Type type)
+    private static bool TryGetBinaryOp(string intrinsic, out ExprOp operation, [NotNullWhen(true)] out Type? type)
     {
         var parts = intrinsic.Split('_');
         if (parts.Length != 2)
         {
             operation = ExprOp.Const;
-            type = null!;
+            type = null;
             return false;
         }
 
@@ -186,7 +187,7 @@ public class EGraphOptimizerModule : IIRProcessingModule
             "i64" => typeof(long),
             "f32" => typeof(float),
             "f64" => typeof(double),
-            _ => null!
+            _ => null
         };
 
         if (parsedOperation is null || type is null)
@@ -455,8 +456,8 @@ public class EGraphOptimizerModule : IIRProcessingModule
     {
         int v => v == 1,
         long v => v == 1L,
-        float v => v == 1f,
-        double v => v == 1d,
+        float v => Math.Abs(v - 1f) < 1e-9,
+        double v => Math.Abs(v - 1d) < 1e-9,
         _ => false
     };
 

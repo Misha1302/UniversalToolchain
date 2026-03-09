@@ -226,7 +226,7 @@ public class BasicCoreImplOrchestrationTests
 
     private sealed class TrackingExecutor(List<string> calls) : IExecutor<string>
     {
-        public object? Execute(string compilation, IExecutionEnvironment environment)
+        public object Execute(string compilation, IExecutionEnvironment environment)
         {
             calls.Add("executor.Execute");
             return "exec:" + compilation;
