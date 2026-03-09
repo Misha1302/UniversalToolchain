@@ -21,7 +21,7 @@ namespace DependencyInjection;
 public static class ServiceCollectionExtensions
 {
     /// <summary>
-    ///     Регистрирует все сервисы Wist с автоматическим обнаружением модулей
+    ///     Registers all Wist services with automatic module discovery.
     /// </summary>
     public static IServiceCollection AddWistServices(
         this IServiceCollection services,
@@ -29,7 +29,7 @@ public static class ServiceCollectionExtensions
         services.AddWistServices(null, servicesDirectory);
 
     /// <summary>
-    ///     Регистрирует все сервисы Wist с конфигурируемыми опциями
+    ///     Registers all Wist services with configurable options.
     /// </summary>
     public static IServiceCollection AddWistServices(
         this IServiceCollection services,
@@ -39,31 +39,31 @@ public static class ServiceCollectionExtensions
         var options = new WistOptions();
         configureOptions?.Invoke(options);
 
-        // Регистрация фабрик базовых сервисов
+        // Register core service factories.
         RegisterCoreFactories(services);
 
-        // Автоматическая регистрация всех сервисов с атрибутом AutoRegisterService
+        // Automatically register all services marked with AutoRegisterService.
         RegisterAutoDiscoveredServices(services, servicesDirectory);
 
-        // Применение фильтров и опций
+        // Apply filters and options.
         ApplyOptionsFilters(services, options);
 
-        // Явная регистрация компиляторов
+        // Register compilers explicitly.
         RegisterCompilers(services);
 
-        // Регистрация ядер с учетом выбранных модулей
+        // Register runnable cores based on selected modules.
         RegisterCoreRunnables(services);
 
         return services;
     }
 
     /// <summary>
-    ///     Регистрирует минимальный набор сервисов для работы ядра (без модулей)
+    ///     Registers the minimal service set required for core execution (without modules).
     /// </summary>
     public static IServiceCollection AddWistCoreServices(
         this IServiceCollection services)
     {
-        // Базовые фабрики
+        // Core factories.
         services.AddTransient<Func<ILexer>>(_ => () => new BasicLexerImpl());
         services.AddTransient<Func<IParser>>(_ => () => new BasicParserImpl());
         services.AddTransient<Func<IAstToBytecodeTranslator>>(_ => () => new BasicAstToBytecodeTranslatorImpl());
@@ -71,7 +71,7 @@ public static class ServiceCollectionExtensions
         services.AddTransient<Func<IExecutor<DynamicMethod>>>(_ => () => new DynamicMethodExecutor());
         services.AddTransient<Func<IExecutor<IAbstractIR>>>(_ => () => new InterpreterImpl());
 
-        // Компиляторы
+        // Compilers.
         services.AddTransient<AbstractMethodsCompilerImpl>();
         services.AddTransient<AbstractIrToAbstractIrStub>();
 
@@ -79,7 +79,7 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
-    ///     Явно добавляет модуль для работы (без автоматического обнаружения)
+    ///     Explicitly adds a frontend module (without automatic discovery).
     /// </summary>
     public static IServiceCollection AddModule<TModule>(this IServiceCollection services)
         where TModule : class, IFrontendCoreModule
@@ -89,7 +89,7 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
-    ///     Явно добавляет модуль оптимизации IR (без автоматического обнаружения)
+    ///     Explicitly adds an IR optimization module (without automatic discovery).
     /// </summary>
     public static IServiceCollection AddIrOptimizerModule<TOptimizer>(this IServiceCollection services)
         where TOptimizer : class, IIRProcessingModule
@@ -99,7 +99,7 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
-    ///     Удаляет все сервисы из указанного пространства имен
+    ///     Removes all services from the specified namespace.
     /// </summary>
     public static IServiceCollection RemoveAllByNamespace(
         this IServiceCollection services,
@@ -117,7 +117,7 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
-    ///     Удаляет все сервисы, реализующие указанный интерфейс
+    ///     Removes all services implementing the specified interface.
     /// </summary>
     public static IServiceCollection RemoveAllByServiceType<TService>(
         this IServiceCollection services)
@@ -136,7 +136,7 @@ public static class ServiceCollectionExtensions
     private static void RegisterCoreFactories(
         IServiceCollection services)
     {
-        // Лексер и парсер
+        // Lexer and parser.
         services.AddTransient<Func<ILexer>>(_ =>
         {
             var config = new LexerConfiguration([]);
@@ -149,14 +149,14 @@ public static class ServiceCollectionExtensions
             return () => new BasicParserImpl(config);
         });
 
-        // Трансляторы
+        // Translators.
         services.AddTransient<Func<IAstToBytecodeTranslator>>(_ =>
             () => new BasicAstToBytecodeTranslatorImpl());
 
         services.AddTransient<Func<IAbstractMethodsTranslator>>(_ =>
             () => new BytecodeToAbstractIrConverterImpl());
 
-        // Исполнители
+        // Executors.
         services.AddTransient<Func<IExecutor<DynamicMethod>>>(_ =>
             () => new DynamicMethodExecutor());
 
@@ -179,22 +179,22 @@ public static class ServiceCollectionExtensions
         IServiceCollection services,
         WistOptions options)
     {
-        // Применяем фильтры исключения
+        // Apply exclusion filters.
         if (options.ExcludedNamespaces?.Any() == true)
             foreach (var ns in options.ExcludedNamespaces)
                 services.RemoveAllByNamespace(ns);
 
-        // Применяем фильтры включения
+        // Apply inclusion filters.
         if (options.IncludedNamespaces?.Any() == true)
         {
-            // Находим все зарегистрированные модули
+            // Find all registered modules.
             var allModules = services
                 .Where(d => typeof(IFrontendCoreModule).IsAssignableFrom(d.ServiceType) ||
                             typeof(IIRProcessingModule).IsAssignableFrom(d.ServiceType))
                 .Where(d => d.ImplementationType != null)
                 .ToList();
 
-            // Удаляем те, что не входят в список включения
+            // Remove modules that are not in the inclusion list.
             foreach (var module in allModules)
             {
                 if (module.ImplementationType?.Namespace == null ||
@@ -203,7 +203,7 @@ public static class ServiceCollectionExtensions
             }
         }
 
-        // Обрабатываем арифметический модуль в соответствии с опциями
+        // Process arithmetic modules according to options.
         switch (options.ArithmeticMode)
         {
             case WistOptions.ArithmeticModeEnum.None:
@@ -222,7 +222,7 @@ public static class ServiceCollectionExtensions
                 break;
         }
 
-        // Удаляем модули, отмеченные как удаляемые
+        // Remove modules explicitly marked for removal.
         if (options.ModulesToRemove?.Any() == true)
             foreach (var moduleType in options.ModulesToRemove)
             {
@@ -311,48 +311,48 @@ public static class ServiceCollectionExtensions
 }
 
 /// <summary>
-///     Опции для конфигурации Wist
+///     Options for Wist configuration.
 /// </summary>
 public class WistOptions
 {
     /// <summary>
-    ///     Режим работы арифметического модуля
+    ///     Arithmetic module mode.
     /// </summary>
     public enum ArithmeticModeEnum
     {
         /// <summary>
-        ///     Не использовать арифметический модуль
+        ///     Do not use arithmetic modules.
         /// </summary>
         None,
 
         /// <summary>
-        ///     Использовать универсальную арифметику (ICustomNumber)
+        ///     Use universal arithmetic (ICustomNumber).
         /// </summary>
         Universal,
 
         /// <summary>
-        ///     Использовать нативную арифметику (INumber&lt;T&gt;)
+        ///     Use native arithmetic (INumber&lt;T&gt;).
         /// </summary>
         Native
     }
 
     /// <summary>
-    ///     Выбранный режим арифметики
+    ///     Selected arithmetic mode.
     /// </summary>
     public ArithmeticModeEnum ArithmeticMode { get; set; } = ArithmeticModeEnum.Universal;
 
     /// <summary>
-    ///     Пространства имен, которые следует исключить из автоматической регистрации
+    ///     Namespaces that should be excluded from automatic registration.
     /// </summary>
     public IReadOnlyList<string>? ExcludedNamespaces { get; set; }
 
     /// <summary>
-    ///     Пространства имен, которые следует включить (все остальные будут исключены)
+    ///     Namespaces that should be included (all others will be excluded).
     /// </summary>
     public IReadOnlyList<string>? IncludedNamespaces { get; set; }
 
     /// <summary>
-    ///     Конкретные типы модулей, которые следует удалить
+    ///     Concrete module types that should be removed.
     /// </summary>
     public IReadOnlyList<Type>? ModulesToRemove { get; set; }
 }
