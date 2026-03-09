@@ -1,12 +1,9 @@
-using BasicCore.Binding;
 using BasicCore.Compilation;
 using BasicCore.Contracts;
-using BasicCore.Execution;
 using BasicCore.ExecutorWrapper;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
-using BasicTypesExtensions;
 using ExceptionsManager;
 
 namespace BasicCore.Core;
@@ -23,21 +20,29 @@ public class BasicCoreImpl<TCompilationOutput>(
     IReadOnlyList<IMiddleEndCoreModule<TCompilationOutput>> middleEndModules
 ) : ICoreRunnable, ICoreOptimizedRunnable, IExecutableGiver<TCompilationOutput>
 {
+    private readonly PreparedExecutionBuilder<TCompilationOutput> _preparedExecutionBuilder =
+        new(
+            lexerFactory,
+            parserFactory,
+            astTranslatorFactory,
+            abstractMethodsTranslatorFactory,
+            compilerFactory,
+            executorFactory,
+            modules,
+            optimizers,
+            middleEndModules);
+
+    private readonly CompilationInputNormalizer _inputNormalizer = new();
     private PreparedExecution<TCompilationOutput>? _prepared;
 
     public void PrepareToRun(string code, OrderedDictionary<string, Type>? parameters = null)
     {
-        PrepareToRun(new CompilationInput
-        {
-            SourceText = code,
-            ExternalBindings = ExternalBindingsFactory.FromDeclaredTypes(parameters),
-            Options = new CompilationOptions()
-        });
+        PrepareToRun(_inputNormalizer.NormalizeDeclaredInput(code, parameters));
     }
 
     public void PrepareToRun(CompilationInput input)
     {
-        _prepared = BuildPreparedExecution(input);
+        _prepared = _preparedExecutionBuilder.Build(input);
     }
 
     public object? RunPrepared()
@@ -48,12 +53,7 @@ public class BasicCoreImpl<TCompilationOutput>(
 
     public object? Run(string code, Dictionary<string, object>? parameters = null)
     {
-        PrepareToRun(new CompilationInput
-        {
-            SourceText = code,
-            ExternalBindings = ExternalBindingsFactory.FromRuntimeValues(parameters),
-            Options = new CompilationOptions()
-        });
+        PrepareToRun(_inputNormalizer.NormalizeRuntimeInput(code, parameters));
 
         return RunPrepared();
     }
@@ -62,46 +62,5 @@ public class BasicCoreImpl<TCompilationOutput>(
     {
         PrepareToRun(code, parameters);
         return _prepared!.CompilationOutput;
-    }
-
-    private PreparedExecution<TCompilationOutput> BuildPreparedExecution(CompilationInput input)
-    {
-        var lexer = lexerFactory();
-        var parser = parserFactory();
-        var astTranslator = astTranslatorFactory();
-        var methodsTranslator = abstractMethodsTranslatorFactory();
-        var compiler = compilerFactory();
-        var executor = executorFactory();
-
-        var targetCode = modules.Aggregate(input.SourceText, (current, module) => module.ProcessText(current));
-        modules.ForEach(module => module.InitLexer(lexer));
-        var lexemes = lexer.Lexemize(targetCode);
-
-        var targetLexemes = modules.Aggregate(lexemes, (current, module) => module.ProcessLexemes(current));
-        modules.ForEach(module => module.InitParser(parser));
-        var astRoot = parser.Parse(targetLexemes);
-
-        var targetRoot = modules.Aggregate(astRoot, (current, module) => module.ProcessAst(current));
-        var boundRoot = new Binder(input.ExternalBindings).Bind(targetRoot);
-
-        modules.ForEach(module => module.InitAstTranslator(astTranslator));
-        var bytecode = astTranslator.Translate(boundRoot);
-
-        var targetBytecode = modules.Aggregate(bytecode, (current, module) => module.ProcessBytecode(current));
-        optimizers.ForEach(module => module.InitMethodsTranslator(methodsTranslator));
-        var air = methodsTranslator.Translate(targetBytecode);
-
-        var targetIr = optimizers.Aggregate(air, (current, module) => module.ProcessIr(current, compiler));
-        middleEndModules.ForEach(module => module.InitMethodsCompiler(compiler));
-        var compiled = compiler.Compile(targetIr, input);
-
-        var compilationOutput = middleEndModules.Aggregate(compiled, (current, module) => module.ProcessCompilation(current));
-        middleEndModules.ForEach(module => module.InitExecutor(executor));
-
-        return new PreparedExecution<TCompilationOutput>(
-            input.SourceText,
-            compilationOutput,
-            executor,
-            new ExecutionEnvironment(input.ExternalBindings));
     }
 }

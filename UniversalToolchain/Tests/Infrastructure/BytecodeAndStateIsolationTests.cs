@@ -111,6 +111,22 @@ public class BytecodeAndStateIsolationTests : TestBase
         Assert.That(second.Instructions.Count, Is.EqualTo(1));
     }
 
+
+    [Test]
+    public void Should_AppendNestedTranslationIntoSameRequestBytecode()
+    {
+        var rootTag = ExtensibleEnum<AstNodeTag>.CreateOrGet("NestedRoot");
+        var childTag = ExtensibleEnum<AstNodeTag>.CreateOrGet("NestedChild");
+
+        var translator = new BasicCodeTranslator.BasicAstToBytecodeTranslatorImpl(
+            new BytecodeTranslatorConfiguration([new NestedAppendingVisitor(rootTag, childTag)]));
+        var ast = new AstNode(rootTag, null, [new AstNode(childTag, null, [])]);
+
+        var translated = translator.Translate(ast);
+
+        Assert.That(translated.Instructions.Count, Is.EqualTo(2));
+    }
+
     [Test]
     public void Should_RegisterAirIntrinsicPredictably_When_RegisteringSameNameTwice()
     {
@@ -121,6 +137,21 @@ public class BytecodeAndStateIsolationTests : TestBase
 
         Assert.That(first, Is.True);
         Assert.That(second, Is.False);
+    }
+
+    private sealed class NestedAppendingVisitor(
+        ExtensibleEnum<AstNodeTag> rootTag,
+        ExtensibleEnum<AstNodeTag> childTag) : IAstVisitor
+    {
+        public void TryVisit(BytecodeVisitorData data)
+        {
+            if (data.Node.NodeType == rootTag)
+                data.AstToBytecodeTranslator.Translate(data.Node.Children[0]);
+
+            if (data.Node.NodeType == rootTag || data.Node.NodeType == childTag)
+                data.Bytecode.Instructions.Add(new BytecodeInstruction(
+                    new StubConvertable("nested", _ => CreateIr(new Instruction(UOpCode.Nop)))));
+        }
     }
 
     private sealed class AppendingVisitor : IAstVisitor

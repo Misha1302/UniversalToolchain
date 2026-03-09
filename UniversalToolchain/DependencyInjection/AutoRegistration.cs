@@ -84,7 +84,6 @@ public static class AutoRegistration
         if (interfaces.Contains(typeof(IIRProcessingModule)))
             return typeof(IIRProcessingModule);
 
-        // Return the first interface, or null if none
-        return interfaces.FirstOrDefault();
+        return null;
     }
 }

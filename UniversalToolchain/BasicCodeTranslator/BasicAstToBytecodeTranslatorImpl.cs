@@ -5,9 +5,6 @@ namespace BasicCodeTranslator;
 
 public class BasicAstToBytecodeTranslatorImpl(BytecodeTranslatorConfiguration configuration) : IAstToBytecodeTranslator
 {
-    private readonly Bytecode _code = new([]);
-    private int _translationDepth;
-
     public BasicAstToBytecodeTranslatorImpl() : this(new BytecodeTranslatorConfiguration([]))
     {
     }
@@ -16,21 +13,26 @@ public class BasicAstToBytecodeTranslatorImpl(BytecodeTranslatorConfiguration co
 
     public Bytecode Translate(AstNode root)
     {
-        if (_translationDepth == 0)
-            _code.Instructions.Clear();
+        var bytecode = new Bytecode([]);
+        var requestTranslator = new RequestTranslator(Configuration, bytecode);
 
-        _translationDepth++;
-        try
+        requestTranslator.Translate(root);
+
+        return bytecode;
+    }
+
+    private sealed class RequestTranslator(BytecodeTranslatorConfiguration configuration, Bytecode bytecode)
+        : IAstToBytecodeTranslator
+    {
+        public BytecodeTranslatorConfiguration Configuration { get; } = configuration;
+
+        public Bytecode Translate(AstNode root)
         {
-            var data = new BytecodeVisitorData(this, _code, root);
+            var data = new BytecodeVisitorData(this, bytecode, root);
             foreach (var visitor in Configuration.Visitors)
                 visitor.TryVisit(data);
 
-            return _code;
-        }
-        finally
-        {
-            _translationDepth--;
+            return bytecode;
         }
     }
 }
