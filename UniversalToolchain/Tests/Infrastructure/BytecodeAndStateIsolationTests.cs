@@ -96,6 +96,21 @@ public class BytecodeAndStateIsolationTests : TestBase
         Assert.That(second, Is.EqualTo(first));
     }
 
+
+    [Test]
+    public void Should_NotAccumulateBytecodeAcrossTranslateCalls_When_TranslatorIsReused()
+    {
+        var translator = new BasicCodeTranslator.BasicAstToBytecodeTranslatorImpl(
+            new BytecodeTranslatorConfiguration([new AppendingVisitor()]));
+        var ast = new AstNode(ExtensibleEnum<AstNodeTag>.CreateOrGet("Root"), null, []);
+
+        var first = translator.Translate(ast);
+        var second = translator.Translate(ast);
+
+        Assert.That(first.Instructions.Count, Is.EqualTo(1));
+        Assert.That(second.Instructions.Count, Is.EqualTo(1));
+    }
+
     [Test]
     public void Should_RegisterAirIntrinsicPredictably_When_RegisteringSameNameTwice()
     {
@@ -106,6 +121,14 @@ public class BytecodeAndStateIsolationTests : TestBase
 
         Assert.That(first, Is.True);
         Assert.That(second, Is.False);
+    }
+
+    private sealed class AppendingVisitor : IAstVisitor
+    {
+        public void TryVisit(BytecodeVisitorData data)
+        {
+            data.Bytecode.Instructions.Add(new BytecodeInstruction(new StubConvertable("append", _ => CreateIr(new Instruction(UOpCode.Nop)))));
+        }
     }
 
     private static IAbstractIR CreateIr(params Instruction[] instructions)
