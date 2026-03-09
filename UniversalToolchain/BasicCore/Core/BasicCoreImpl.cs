@@ -1,4 +1,3 @@
-using System.Numerics;
 using BasicCore.Binding;
 using BasicCore.Compilation;
 using BasicCore.Contracts;
@@ -24,29 +23,48 @@ public class BasicCoreImpl<TCompilationOutput>(
     IReadOnlyList<IMiddleEndCoreModule<TCompilationOutput>> middleEndModules
 ) : ICoreRunnable, ICoreOptimizedRunnable, IExecutableGiver<TCompilationOutput>
 {
-    private string _code = null!;
-    private TCompilationOutput _compilationOutput = default!;
-    private IExecutor<TCompilationOutput> _executor = null!;
-    private IExecutionEnvironment _executionEnvironment = null!;
+    private PreparedExecution<TCompilationOutput>? _prepared;
 
     public void PrepareToRun(string code, OrderedDictionary<string, Type>? parameters = null)
     {
-        parameters ??= [];
-        var input = new CompilationInput
+        PrepareToRun(new CompilationInput
         {
             SourceText = code,
-            ExternalBindings = parameters.Select(x => new ExternalBinding
-            {
-                Name = x.Key,
-                Type = x.Value,
-                Kind = ExternalBindingKind.Variable
-            }).ToList(),
+            ExternalBindings = ExternalBindingsFactory.FromDeclaredTypes(parameters),
             Options = new CompilationOptions()
-        };
-        PrepareToRun(input);
+        });
     }
 
     public void PrepareToRun(CompilationInput input)
+    {
+        _prepared = BuildPreparedExecution(input);
+    }
+
+    public object? RunPrepared()
+    {
+        Thrower.AssertAlways(_prepared != null);
+        return _prepared.Executor.Execute(_prepared.CompilationOutput, _prepared.ExecutionEnvironment);
+    }
+
+    public object? Run(string code, Dictionary<string, object>? parameters = null)
+    {
+        PrepareToRun(new CompilationInput
+        {
+            SourceText = code,
+            ExternalBindings = ExternalBindingsFactory.FromRuntimeValues(parameters),
+            Options = new CompilationOptions()
+        });
+
+        return RunPrepared();
+    }
+
+    public TCompilationOutput GetExecutable(string code, OrderedDictionary<string, Type>? parameters = null)
+    {
+        PrepareToRun(code, parameters);
+        return _prepared!.CompilationOutput;
+    }
+
+    private PreparedExecution<TCompilationOutput> BuildPreparedExecution(CompilationInput input)
     {
         var lexer = lexerFactory();
         var parser = parserFactory();
@@ -80,40 +98,10 @@ public class BasicCoreImpl<TCompilationOutput>(
         var compilationOutput = middleEndModules.Aggregate(compiled, (current, module) => module.ProcessCompilation(current));
         middleEndModules.ForEach(module => module.InitExecutor(executor));
 
-        _executor = executor;
-        _compilationOutput = compilationOutput;
-        _executionEnvironment = new ExecutionEnvironment(input.ExternalBindings);
-        _code = input.SourceText;
-    }
-
-    public object? RunPrepared()
-    {
-        Thrower.AssertAlways(_code != null);
-        return _executor.Execute(_compilationOutput, _executionEnvironment);
-    }
-
-    public object? Run(string code, Dictionary<string, object>? parameters = null)
-    {
-        parameters ??= [];
-        var input = new CompilationInput
-        {
-            SourceText = code,
-            ExternalBindings = parameters.Select(x => new ExternalBinding
-            {
-                Name = x.Key,
-                Type = x.Value.GetType(),
-                Value = x.Value,
-                Kind = ExternalBindingKind.Variable
-            }).ToList(),
-            Options = new CompilationOptions()
-        };
-        PrepareToRun(input);
-        return RunPrepared();
-    }
-
-    public TCompilationOutput GetExecutable(string code, OrderedDictionary<string, Type>? parameters = null)
-    {
-        PrepareToRun(code, parameters);
-        return _compilationOutput;
+        return new PreparedExecution<TCompilationOutput>(
+            input.SourceText,
+            compilationOutput,
+            executor,
+            new ExecutionEnvironment(input.ExternalBindings));
     }
 }
