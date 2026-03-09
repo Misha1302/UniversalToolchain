@@ -4,6 +4,7 @@ using BasicCore.Core;
 using BasicCore.Execution;
 using BasicCore.ExecutorWrapper;
 using BasicCore.TranslatorWrapper;
+using ExceptionsManager;
 
 namespace Tests.Infrastructure;
 
@@ -186,7 +187,7 @@ public class BasicCoreImplOrchestrationTests
         {
             calls.Add("parser.Parse");
             if (shouldThrow)
-                throw new InvalidOperationException("parse failed");
+                Thrower.InvalidOpEx("parse failed");
             return new AstNode(ExtensibleEnum<AstNodeTag>.CreateOrGet("Root"), null, []);
         }
 

@@ -1,4 +1,5 @@
 using NumbersModule.Core;
+using ExceptionsManager;
 
 namespace Tests.Arithmetic;
 
@@ -68,7 +69,7 @@ public class NegativeNumbersGeneratedTests : TestBase
                         "-" => left - right,
                         "*" => left * right,
                         "/" => left / right,
-                        _ => throw new InvalidOperationException("Unsupported operation")
+                        _ => Thrower.InvalidOpEx<object>("Unsupported operation")
                     };
 
                     yield return new TestCaseData(expression, expected)

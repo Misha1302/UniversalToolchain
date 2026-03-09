@@ -72,6 +72,9 @@ public static class Thrower
     }
 
     [DoesNotReturn]
+    public static T ArgumentOutOfRange<T>(string paramName = "", string message = "") => throw new ArgumentOutOfRangeException(paramName, FormatMessage(message, "Argument value is out of range."));
+
+    [DoesNotReturn]
     public static T NotSupported<T>(string message = "") => throw new NotSupportedException(FormatMessage(message, "Operation is not supported."));
 
     [DoesNotReturn]
