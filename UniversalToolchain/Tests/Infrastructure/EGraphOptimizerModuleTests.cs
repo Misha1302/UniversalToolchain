@@ -3,6 +3,7 @@ using BasicCore.Compilation;
 using BasicCore.Contracts;
 using BasicCore.Execution;
 using BytecodeDynamicMethodsCompiler.Compilers;
+using ExceptionsManager;
 
 namespace Tests.Infrastructure;
 
@@ -216,6 +217,6 @@ public class EGraphOptimizerModuleTests
     {
         public IReadOnlyList<string> SupportedIntrinsics => intrinsics;
 
-        public object Compile(IAbstractIR air, CompilationInput input) => throw new NotSupportedException();
+        public object Compile(IAbstractIR air, CompilationInput input) => Thrower.NotSupported<object>();
     }
 }

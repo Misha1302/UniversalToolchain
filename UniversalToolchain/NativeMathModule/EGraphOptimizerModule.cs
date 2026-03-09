@@ -5,6 +5,7 @@ using DotnetAirHelper;
 using IntermediateRepresentationAbstractions;
 using ListExtensions;
 using UniversalIntermediateRepresentation;
+using ExceptionsManager;
 
 namespace NativeMathModule;
 
@@ -490,7 +491,7 @@ public class EGraphOptimizerModule : IIRProcessingModule
             ExprOp.Sub => "sub",
             ExprOp.Mul => "mul",
             ExprOp.Div => "div",
-            _ => throw new InvalidOperationException("Unsupported expression operation")
+            _ => Thrower.InvalidOpEx<string>("Unsupported expression operation")
         };
 
         var suffix = type == typeof(int)
@@ -501,7 +502,7 @@ public class EGraphOptimizerModule : IIRProcessingModule
                     ? "f32"
                     : type == typeof(double)
                         ? "f64"
-                        : throw new InvalidOperationException("Unsupported expression type");
+                        : Thrower.InvalidOpEx<string>("Unsupported expression type");
 
         return $"{prefix}_{suffix}";
     }

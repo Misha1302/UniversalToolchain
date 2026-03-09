@@ -8,6 +8,7 @@ using DynamicMethodCalling.Core;
 using Microsoft.Extensions.DependencyInjection;
 using NCalc;
 using NCalc.LambdaCompilation;
+using ExceptionsManager;
 
 namespace NCalcWist.Benchmarks;
 
@@ -239,11 +240,11 @@ public class ExecuteOnlyBenchmarks
             var diff = Math.Abs(w - n);
             var scale = Math.Max(1.0, Math.Max(Math.Abs(w), Math.Abs(n)));
             if (diff > 1e-9 * scale)
-                throw new InvalidOperationException($"Mismatch for {scenario}: Wist={w}, NCalc={n}");
+                Thrower.InvalidOpEx($"Mismatch for {scenario}: Wist={w}, NCalc={n}");
         }
         else if (Math.Abs(w - n) > 1e-9)
         {
-            throw new InvalidOperationException($"Mismatch for {scenario}: Wist={w}, NCalc={n}");
+            Thrower.InvalidOpEx($"Mismatch for {scenario}: Wist={w}, NCalc={n}");
         }
     }
 }
@@ -281,7 +282,7 @@ public class ColdStartBenchmarks
             ScenarioId.Conditional => new DynamicMethodInvoker<int, int, int>(method).Invoke(7, 3),
             ScenarioId.ParameterHeavy20 => new DynamicMethodInvoker<double>(method).Invoke(),
             ScenarioId.PathologicalParseStress => new DynamicMethodInvoker<int>(method).Invoke(),
-            _ => throw new ArgumentOutOfRangeException()
+            _ => Thrower.ArgumentOutOfRange<ScenarioSpec>(nameof(id), $"Unknown scenario id: {id}")
         };
     }
 }
@@ -307,7 +308,7 @@ public class MultiThreadExecuteDefaultBenchmarks
         var w = _wInvoker.Invoke(_wData[0].A, _wData[0].B);
         var n = _nInvoker(_nData[0]);
         if (Math.Abs(w - n) > 1e-9)
-            throw new InvalidOperationException("MT validation failed");
+            Thrower.InvalidOpEx("MT validation failed");
     }
 
     [Benchmark(Baseline = true)]
