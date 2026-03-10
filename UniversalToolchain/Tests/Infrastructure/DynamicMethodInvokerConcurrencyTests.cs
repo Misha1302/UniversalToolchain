@@ -1,5 +1,3 @@
-using DynamicMethodCalling.Core;
-
 namespace Tests.Infrastructure;
 
 [TestFixture]

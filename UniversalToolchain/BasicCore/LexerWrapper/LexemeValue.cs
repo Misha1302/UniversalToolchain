@@ -1,5 +1,3 @@
-using System.Text.RegularExpressions;
-
 namespace BasicCore.LexerWrapper;
 
 public class LexemeValue

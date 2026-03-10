@@ -1,6 +1,3 @@
-using BasicCore.TranslatorWrapper;
-using IntermediateRepresentationAbstractions;
-
 namespace BasicCore.Contracts;
 
 public interface IAbstractMethodsTranslator

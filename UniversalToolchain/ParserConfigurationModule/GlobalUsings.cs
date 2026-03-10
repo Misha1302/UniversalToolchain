@@ -1,0 +1,9 @@
+global using BasicCore.Contracts;
+global using BasicCore.LexerWrapper;
+global using BasicCore.ParserWrapper;
+global using BasicTypesExtensions;
+global using ExceptionsManager;
+global using ParserConfigurationModule.Core;
+global using System.Diagnostics;
+global using System.Text;
+global using System.Text.RegularExpressions;

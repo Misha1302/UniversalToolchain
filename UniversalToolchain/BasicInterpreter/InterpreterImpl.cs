@@ -1,11 +1,3 @@
-using System.Reflection;
-using BasicCore.Execution;
-using BasicCore.ExecutorWrapper;
-using DotnetHelper;
-using ExceptionsManager;
-using IntermediateRepresentationAbstractions;
-using ObjectExtensions;
-
 namespace BasicInterpreter;
 
 public class InterpreterImpl : IExecutor<IAbstractIR>

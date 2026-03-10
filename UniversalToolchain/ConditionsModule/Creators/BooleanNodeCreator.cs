@@ -1,7 +1,3 @@
-using BasicCore.Attributes;
-using BasicCore.ParserWrapper;
-using BasicTypesExtensions;
-
 namespace ConditionsModule.Creators;
 
 [AutoRegisterService]

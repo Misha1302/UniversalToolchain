@@ -1,0 +1,9 @@
+global using BasicCore.Contracts;
+global using BenchmarkDotNet.Attributes;
+global using DependencyInjection;
+global using DynamicMethodCalling.Core;
+global using ExceptionsManager;
+global using Microsoft.Extensions.DependencyInjection;
+global using NCalc;
+global using NCalc.LambdaCompilation;
+global using System.Reflection.Emit;

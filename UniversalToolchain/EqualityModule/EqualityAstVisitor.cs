@@ -1,9 +1,3 @@
-using AbstractIrExtensions;
-using BasicCore.ParserWrapper;
-using BasicCore.TranslatorWrapper;
-using BasicTypesExtensions;
-using DynamicMethodWrapper;
-
 namespace EqualityModule;
 
 public class EqualityAstVisitor : IAstVisitor

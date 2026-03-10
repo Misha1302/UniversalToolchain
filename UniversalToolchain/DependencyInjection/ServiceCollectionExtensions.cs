@@ -1,21 +1,3 @@
-using System.Reflection.Emit;
-using AbstractIrConverters;
-using AssemblyFinder;
-using BasicCilCompiler.Execution;
-using BasicCodeTranslator;
-using BasicCore.Contracts;
-using BasicCore.Core;
-using BasicCore.ExecutorWrapper;
-using BasicCore.LexerWrapper;
-using BasicCore.ParserWrapper;
-using BasicCore.TranslatorWrapper;
-using BasicInterpreter;
-using BasicLexer.Core;
-using BasicParser.Core;
-using BytecodeDynamicMethodsCompiler.Compilers;
-using IntermediateRepresentationAbstractions;
-using Microsoft.Extensions.DependencyInjection;
-
 namespace DependencyInjection;
 
 public static class ServiceCollectionExtensions

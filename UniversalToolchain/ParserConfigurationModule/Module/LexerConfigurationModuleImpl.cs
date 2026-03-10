@@ -1,13 +1,3 @@
-using System.Diagnostics;
-using System.Text;
-using System.Text.RegularExpressions;
-using BasicCore.Contracts;
-using BasicCore.LexerWrapper;
-using BasicCore.ParserWrapper;
-using BasicTypesExtensions;
-using ExceptionsManager;
-using ParserConfigurationModule.Core;
-
 namespace ParserConfigurationModule.Module;
 
 /// <summary>

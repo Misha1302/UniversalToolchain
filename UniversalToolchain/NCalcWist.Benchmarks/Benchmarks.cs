@@ -1,15 +1,3 @@
-using System.Reflection.Emit;
-using BasicCore.Contracts;
-using BasicCore.LexerWrapper;
-using BasicCore.ParserWrapper;
-using BenchmarkDotNet.Attributes;
-using DependencyInjection;
-using DynamicMethodCalling.Core;
-using Microsoft.Extensions.DependencyInjection;
-using NCalc;
-using NCalc.LambdaCompilation;
-using ExceptionsManager;
-
 namespace NCalcWist.Benchmarks;
 
 public enum ScenarioId

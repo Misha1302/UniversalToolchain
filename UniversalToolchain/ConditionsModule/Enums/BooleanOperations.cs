@@ -1,12 +1,3 @@
-using BasicCore.Attributes;
-using BasicCore.Contracts;
-using BasicCore.LexerWrapper;
-using BasicCore.ParserWrapper;
-using BasicCore.Registration;
-using BasicCore.TranslatorWrapper;
-using ConditionsModule.Creators;
-using ConditionsModule.Visitors;
-
 namespace ConditionsModule.Enums;
 
 [AutoRegisterService]

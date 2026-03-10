@@ -1,7 +1,3 @@
-using BasicCore.Compilation;
-using BasicCore.Contracts;
-using IntermediateRepresentationAbstractions;
-
 namespace AbstractIrConverters;
 
 public class AbstractIrToAbstractIrStub : IAbstractIrCompiler<IAbstractIR>

@@ -1,5 +1,3 @@
-using ExceptionsManager;
-
 namespace BasicTypesExtensions;
 
 /// <typeparam name="TTag">Tag ('name') of your enum. LexemeTag or NodeTag, for example</typeparam>

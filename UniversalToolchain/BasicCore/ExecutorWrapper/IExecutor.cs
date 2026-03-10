@@ -1,5 +1,3 @@
-using BasicCore.Execution;
-
 namespace BasicCore.ExecutorWrapper;
 
 public interface IExecutor<in TCompilationOutput>

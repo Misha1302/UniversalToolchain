@@ -1,11 +1,3 @@
-using System.Globalization;
-using BasicCore.Attributes;
-using BasicCore.Contracts;
-using BasicCore.LexerWrapper;
-using BasicCore.ParserWrapper;
-using BasicCore.TranslatorWrapper;
-using BasicTypesExtensions;
-
 namespace NativeMathModule;
 
 [AutoRegisterService]

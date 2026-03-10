@@ -1,5 +1,3 @@
-using BasicCore.TranslatorWrapper;
-
 namespace BasicCore.ParserWrapper;
 
 public interface IAstVisitor

@@ -1,12 +1,3 @@
-using AbstractIrConverters;
-using BasicCilCompiler.Execution;
-using BasicCore.Compilation;
-using BasicCore.Contracts;
-using BasicCore.Core;
-using BasicCore.TranslatorWrapper;
-using BytecodeDynamicMethodsCompiler.Compilers;
-using DynamicMethodCalling.Core;
-
 namespace Tests.Infrastructure;
 
 internal static class ParameterTestHost

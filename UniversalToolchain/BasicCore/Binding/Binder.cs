@@ -1,8 +1,3 @@
-using BasicCore.Binding.Symbols;
-using BasicCore.Compilation;
-using BasicCore.ParserWrapper;
-using ExceptionsManager;
-
 namespace BasicCore.Binding;
 
 public sealed class Binder

@@ -1,12 +1,3 @@
-using AbstractIrExtensions;
-using AssemblyFinder;
-using BasicCore.Binding;
-using BasicCore.Binding.Symbols;
-using BasicCore.ParserWrapper;
-using BasicCore.TranslatorWrapper;
-using BasicTypesExtensions;
-using DynamicMethodWrapper;
-
 namespace VariablesModule;
 
 public class VariablesVisitor : IAstVisitor

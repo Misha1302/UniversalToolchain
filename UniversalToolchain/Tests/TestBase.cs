@@ -1,5 +1,3 @@
-using BasicCore.Contracts;
-
 namespace Tests;
 
 [TestFixture]

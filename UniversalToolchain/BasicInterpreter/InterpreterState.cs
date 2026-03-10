@@ -1,7 +1,3 @@
-using ExceptionsManager;
-using IntermediateRepresentationAbstractions;
-using ObjectExtensions;
-
 namespace BasicInterpreter;
 
 public class InterpreterState

@@ -1,7 +1,3 @@
-using BenchmarkDotNet.Configs;
-using BenchmarkDotNet.Diagnosers;
-using BenchmarkDotNet.Running;
-
 namespace NCalcWist.Benchmarks;
 
 public static class Program

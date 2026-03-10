@@ -1,5 +1,3 @@
-using BasicLexer.Core;
-
 namespace Tests.Core;
 
 [TestFixture]

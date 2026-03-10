@@ -1,5 +1,3 @@
-using System.Collections;
-
 namespace BasicCore.ParserWrapper;
 
 public class ChildrenCollection(List<AstNode> children, AstNode parent) : IEnumerable<AstNode>
