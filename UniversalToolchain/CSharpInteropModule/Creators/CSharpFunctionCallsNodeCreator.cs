@@ -10,11 +10,17 @@ public class CSharpFunctionCallsNodeCreator : IAstNodeCreator
 
     public bool TryCreateNode(AstNode scope, int childIndex)
     {
+        if (childIndex < 0 || childIndex >= scope.Children.Count)
+            return false;
+
         var child = scope.Children[childIndex];
         if (child.NodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("Identifier"))
             return false;
 
         if (!MethodsFinder.ContainsAnyMethod(child.Text)) return false;
+
+        if (childIndex + 1 >= scope.Children.Count)
+            return false;
 
         child.NodeType = AstNodeType;
 

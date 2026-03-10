@@ -12,7 +12,7 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
 {
     public object? Execute(IAbstractIR air, IExecutionEnvironment environment)
     {
-        var state = new InterpreterState();
+        var state = new InterpreterState { ExecutionEnvironment = environment };
         state.BuildLabelPositions(air.Instructions);
         return ExecuteInstructions(air.Instructions, state);
     }
@@ -97,6 +97,46 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
             Thrower.InvalidOpEx($"Unsupported intrinsic call: {intrinsicName}.");
     }
 
+
+    private static bool IsVariablesContainerGet(MethodInfo method)
+    {
+        var declaringType = method.DeclaringType;
+        return declaringType != null
+               && declaringType.IsGenericType
+               && declaringType.GetGenericTypeDefinition().FullName == "SettableGettableModule.Core.VariablesContainer`1"
+               && method.Name == "Get"
+               && method.GetParameters().Length == 1
+               && method.GetParameters()[0].ParameterType == typeof(string);
+    }
+
+    private static object? ResolveVariableValue(string key, InterpreterState state)
+    {
+        if (state.ExternalSlotsByName.TryGetValue(key, out var existingSlot))
+            return state.ExecutionEnvironment?.GetExternalValue(existingSlot);
+
+        if (state.LocalVariables.Contains(key))
+            return null;
+
+        if (state.ExecutionEnvironment == null)
+            return null;
+
+        var slot = state.ExternalSlotsByName.Count;
+        try
+        {
+            var value = state.ExecutionEnvironment.GetExternalValue(slot);
+            state.ExternalSlotsByName[key] = slot;
+            return value;
+        }
+        catch (IndexOutOfRangeException)
+        {
+            return null;
+        }
+        catch (ArgumentOutOfRangeException)
+        {
+            return null;
+        }
+    }
+
     private void ExecuteCSharpCall(Instruction instruction, InterpreterState state)
     {
         var method = instruction.Operands[1].Get<MethodInfo>();
@@ -114,11 +154,24 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
 
             var value = state.ValueStack.Pop();
             args[i] = value;
-            argsTypes[i] = value.GetType();
+            argsTypes[i] = value?.GetType() ?? typeof(object);
         }
 
-        // Используем ту же логику, что и в компиляторе
-        var stackTypes = argsTypes.AsReadOnly().ToList(); // Восстанавливаем порядок как в стеках компилятора
+        if (IsVariablesContainerGet(method) && args[0] is string key)
+        {
+            var value = ResolveVariableValue(key, state);
+            if (value != null || state.ExternalSlotsByName.ContainsKey(key))
+            {
+                state.ValueStack.Push(value!);
+                return;
+            }
+        }
+
+        if (method.Name == "Set" && method.GetParameters().Length == 2 && args[0] is string localVariable)
+            state.LocalVariables.Add(localVariable);
+
+        // Use the same logic as in compiler
+        var stackTypes = argsTypes.AsReadOnly().ToList();
         var targetTypes = GenericTypeResolver.GetParameterTypes(method, stackTypes).ToList();
 
         // Приводим аргументы к нужным типам, если необходимо

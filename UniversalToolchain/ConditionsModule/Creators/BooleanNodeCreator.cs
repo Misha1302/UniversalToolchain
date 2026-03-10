@@ -24,27 +24,30 @@ public class BooleanNodeCreator(string nodeType, BooleanNodeCreator.BooleanState
 
         var node = scope[childIndex];
 
-        if (type == BooleanStatementType.UnaryOperation && scope.SafeGet(childIndex + 1) != null)
+        if (type == BooleanStatementType.UnaryOperation)
         {
-            // Unary NOT operation
-            node.Children.Add(scope[childIndex + 1]);
-            scope.Children.RemoveAt(childIndex + 1);
-        }
-        else if (type == BooleanStatementType.BinaryOperation)
-        {
-            // Binary operations
-            if (scope.SafeGet(childIndex - 1) != null)
-            {
-                node.Children.Add(scope[childIndex - 1]);
-                scope.Children.RemoveAt(childIndex - 1);
-                childIndex--;
-            }
+            var operand = scope.SafeGet(childIndex + 1);
+            if (operand == null)
+                return false;
 
-            if (scope.SafeGet(childIndex + 1) != null)
-            {
-                node.Children.Add(scope[childIndex + 1]);
-                scope.Children.RemoveAt(childIndex + 1);
-            }
+            // Unary NOT operation
+            node.Children.Add(operand);
+            scope.Children.RemoveAt(childIndex + 1);
+            return true;
+        }
+
+        if (type == BooleanStatementType.BinaryOperation)
+        {
+            var leftOperand = scope.SafeGet(childIndex - 1);
+            var rightOperand = scope.SafeGet(childIndex + 1);
+            if (leftOperand == null || rightOperand == null)
+                return false;
+
+            node.Children.Add(leftOperand);
+            node.Children.Add(rightOperand);
+            scope.Children.RemoveAt(childIndex + 1);
+            scope.Children.RemoveAt(childIndex - 1);
+            return true;
         }
 
         return true;
