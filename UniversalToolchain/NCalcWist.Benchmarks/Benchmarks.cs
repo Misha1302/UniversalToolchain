@@ -282,7 +282,7 @@ public class ColdStartBenchmarks
             ScenarioId.Conditional => new DynamicMethodInvoker<int, int, int>(method).Invoke(7, 3),
             ScenarioId.ParameterHeavy20 => new DynamicMethodInvoker<double>(method).Invoke(),
             ScenarioId.PathologicalParseStress => new DynamicMethodInvoker<int>(method).Invoke(),
-            _ => Thrower.ArgumentOutOfRange<ScenarioSpec>(nameof(id), $"Unknown scenario id: {id}")
+            _ => Thrower.ArgumentOutOfRange<double>(nameof(spec.Id), $"Unknown scenario id: {spec.Id}")
         };
     }
 }
