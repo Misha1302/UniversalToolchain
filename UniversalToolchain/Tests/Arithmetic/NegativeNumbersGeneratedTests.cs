@@ -1,5 +1,4 @@
 using NumbersModule.Core;
-using ExceptionsManager;
 
 namespace Tests.Arithmetic;
 

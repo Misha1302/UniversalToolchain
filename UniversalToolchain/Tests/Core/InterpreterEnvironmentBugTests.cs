@@ -1,7 +1,6 @@
 using AbstractIrConverters;
 using BasicCore.Contracts;
 using BasicCore.Core;
-using BasicCore.Execution;
 using BasicCore.TranslatorWrapper;
 
 namespace Tests.Core;

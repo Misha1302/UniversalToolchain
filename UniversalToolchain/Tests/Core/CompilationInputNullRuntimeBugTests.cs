@@ -1,9 +1,9 @@
-using BasicCore.Contracts;
-using BasicCore.TranslatorWrapper;
 using BasicCore.Compilation;
+using BasicCore.Contracts;
 using BasicCore.Core;
 using BasicCore.Execution;
 using BasicCore.ExecutorWrapper;
+using BasicCore.TranslatorWrapper;
 
 namespace Tests.Core;
 

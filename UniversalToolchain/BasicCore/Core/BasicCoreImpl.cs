@@ -6,8 +6,6 @@ using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using ExceptionsManager;
 
-using System.Threading;
-
 namespace BasicCore.Core;
 
 public class BasicCoreImpl<TCompilationOutput>(
@@ -24,6 +22,8 @@ public class BasicCoreImpl<TCompilationOutput>(
 {
     private readonly CompilationInputNormalizer _inputNormalizer = new();
 
+    private readonly AsyncLocal<PreparedExecution<TCompilationOutput>?> _prepared = new();
+
     private readonly PreparedExecutionBuilder<TCompilationOutput> _preparedExecutionBuilder =
         new(
             lexerFactory,
@@ -35,8 +35,6 @@ public class BasicCoreImpl<TCompilationOutput>(
             modules,
             optimizers,
             middleEndModules);
-
-    private readonly AsyncLocal<PreparedExecution<TCompilationOutput>?> _prepared = new();
 
     public void PrepareToRun(string code, OrderedDictionary<string, Type>? parameters = null)
     {
