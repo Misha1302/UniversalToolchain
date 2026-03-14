@@ -4,7 +4,7 @@ Readme for January 4 2026
 
 ---
 
-UniversalToolchain is a modular, extensible compiler and interpreter framework for the **Wist** programming language, built on .NET 9.0. It provides a complete toolchain from source code parsing to execution, featuring both a high-performance compiler (generating dynamic methods) and a flexible interpreter.
+UniversalToolchain is a modular, extensible compiler and interpreter framework for the **Wist** programming language, built on .NET 10. It provides a complete toolchain from source code parsing to execution, featuring both a high-performance compiler (generating dynamic methods) and a flexible interpreter.
 
 ## Key Features
 
@@ -94,13 +94,13 @@ Use the `wistc` command-line tool (after building):
 
 ~~~bash
 # Run a Wist file
-dotnet run --project ./Wistc --run program.wist
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --file program.wist
 
 # Run a one-liner
-dotnet run --project ./Wistc --run "let x = 5 + 3; x * 2"
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run "let x = 5 + 3; x * 2"
 
 # Start REPL
-dotnet run --project ./Wistc --repl
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- repl
 ~~~
 
 ### Example Wist Program

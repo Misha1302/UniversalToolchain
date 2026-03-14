@@ -35,14 +35,18 @@ Because this switch can be process-level, run categories in separate benchmark r
 ## Run
 
 ```bash
-dotnet run -c Release --project UniversalToolchain/NCalcWist.Benchmarks -- --modulesPath=/path/to/wist/modules
+dotnet run -c Release --project UniversalToolchain/NCalcWist.Benchmarks/NCalcWist.Benchmarks.csproj -- --modulesPath=/path/to/modules-directory
 ```
 
 Filter example:
 
 ```bash
-dotnet run -c Release --project UniversalToolchain/NCalcWist.Benchmarks -- --filter "*ParseOnly*"
+dotnet run -c Release --project UniversalToolchain/NCalcWist.Benchmarks/NCalcWist.Benchmarks.csproj -- --filter "*ParseOnly*"
 ```
+
+
+`--modulesPath` is optional. If omitted, benchmarks use assemblies already loaded by the runtime.
+You can also set `WIST_MODULES_PATH` instead of passing `--modulesPath`.
 
 ## Optional disassembly
 
