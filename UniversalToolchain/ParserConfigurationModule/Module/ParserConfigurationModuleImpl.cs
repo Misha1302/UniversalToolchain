@@ -1,8 +1,3 @@
-﻿using System.Diagnostics;
-using BasicCore.Contracts;
-using BasicCore.ParserWrapper;
-using ExceptionsManager;
-using ParserConfigurationModule.Core;
 
 namespace ParserConfigurationModule.Module;
 

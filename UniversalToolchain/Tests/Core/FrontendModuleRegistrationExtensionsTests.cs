@@ -1,8 +1,3 @@
-using BasicCore.Registration;
-using BasicCore.TranslatorWrapper;
-using BasicLexer.Core;
-using BasicParser.Core;
-
 namespace Tests.Core;
 
 [TestFixture]

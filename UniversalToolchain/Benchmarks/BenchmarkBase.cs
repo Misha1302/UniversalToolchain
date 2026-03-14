@@ -1,10 +1,3 @@
-using BasicCore.Core;
-using BenchmarkDotNet.Attributes;
-using DependencyInjection;
-using ExceptionsManager;
-using IntermediateRepresentationAbstractions;
-using Microsoft.Extensions.DependencyInjection;
-
 namespace Benchmarks;
 
 public abstract class BenchmarkBase

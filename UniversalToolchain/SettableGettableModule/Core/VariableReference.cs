@@ -1,5 +1,3 @@
-using SettableGettableModule.Contracts;
-
 namespace SettableGettableModule.Core;
 
 public class VariableReference<T>(Action<T> set) : ISettable<T>

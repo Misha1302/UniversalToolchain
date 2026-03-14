@@ -1,7 +1,3 @@
-using ExceptionsManager;
-using IntermediateRepresentationAbstractions;
-using ListExtensions;
-
 namespace AbstractIrExtensions;
 
 public static class AbstractIrTypesExtensions

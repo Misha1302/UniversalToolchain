@@ -1,5 +1,3 @@
-using AssemblyFinder;
-
 namespace Tests.Infrastructure;
 
 [TestFixture]

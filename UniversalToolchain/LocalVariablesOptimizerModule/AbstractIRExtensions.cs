@@ -1,5 +1,3 @@
-using IntermediateRepresentationAbstractions;
-
 namespace LocalVariablesOptimizerModule;
 
 // ReSharper disable once InconsistentNaming

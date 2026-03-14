@@ -1,8 +1,3 @@
-using System.Text.RegularExpressions;
-using BasicCore.LexerWrapper;
-using ExceptionsManager;
-using ListExtensions;
-
 namespace BasicLexer.Core;
 
 public class BasicLexerImpl(LexerConfiguration configuration) : ILexer

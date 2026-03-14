@@ -1,12 +1,3 @@
-using System.Reflection;
-using AbstractIrExtensions;
-using BasicCore.Attributes;
-using BasicCore.ParserWrapper;
-using BasicCore.TranslatorWrapper;
-using BasicTypesExtensions;
-using DynamicMethodWrapper;
-using ExceptionsManager;
-
 namespace NativeMathModule;
 
 [AutoRegisterService]

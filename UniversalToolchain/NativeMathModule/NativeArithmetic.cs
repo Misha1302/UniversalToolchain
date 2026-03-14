@@ -1,7 +1,3 @@
-using System.Numerics;
-using System.Runtime.CompilerServices;
-using JetBrains.Annotations;
-
 namespace NativeMathModule;
 
 public static class NativeArithmetic

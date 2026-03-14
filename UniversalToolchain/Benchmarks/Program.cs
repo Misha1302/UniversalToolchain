@@ -1,6 +1,3 @@
-using BenchmarkDotNet.Running;
-using Benchmarks;
-
 Console.WriteLine("================================================================");
 BenchmarkRunner.Run<BasicLoopBenchmarks>();
 

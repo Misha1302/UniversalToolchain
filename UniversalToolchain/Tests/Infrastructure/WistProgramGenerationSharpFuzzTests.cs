@@ -1,5 +1,3 @@
-using SharpTrace = SharpFuzz.Common.Trace;
-
 namespace Tests.Infrastructure;
 
 [TestFixture]

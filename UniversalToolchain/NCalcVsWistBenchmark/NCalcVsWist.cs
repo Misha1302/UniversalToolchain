@@ -1,13 +1,3 @@
-using System.Reflection.Emit;
-using BasicCore.Contracts;
-using BenchmarkDotNet.Attributes;
-using DependencyInjection;
-using DynamicMethodCalling.Core;
-using ExceptionsManager;
-using Microsoft.Extensions.DependencyInjection;
-using NCalc;
-using NCalc.LambdaCompilation;
-
 namespace NCalcVsWistBenchmark;
 
 [MemoryDiagnoser]

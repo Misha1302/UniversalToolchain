@@ -1,11 +1,3 @@
-﻿using BasicCore.Attributes;
-using BasicCore.Contracts;
-using BasicCore.LexerWrapper;
-using BasicCore.ParserWrapper;
-using BasicCore.TranslatorWrapper;
-using CSharpInteropModule.Creators;
-using CSharpInteropModule.Visitors;
-using LexemeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.LexerWrapper.LexemeTag>;
 
 namespace CSharpInteropModule.Module;
 

@@ -1,7 +1,3 @@
-﻿using BasicCore.Attributes;
-using BasicCore.Contracts;
-using BasicCore.LexerWrapper;
-using LexemeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.LexerWrapper.LexemeTag>;
 
 namespace WhitespacesModule;
 

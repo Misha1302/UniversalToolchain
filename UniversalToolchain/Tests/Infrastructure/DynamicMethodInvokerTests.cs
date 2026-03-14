@@ -1,6 +1,3 @@
-using BasicCore.Contracts;
-using DynamicMethodCalling.Core;
-
 namespace Tests.Infrastructure;
 
 [TestFixture]

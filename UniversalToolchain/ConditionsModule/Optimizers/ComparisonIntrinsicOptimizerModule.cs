@@ -1,14 +1,3 @@
-using System.Reflection;
-using BasicCore.Attributes;
-using BasicCore.Contracts;
-using ConditionsModule.Enums;
-using DotnetAirHelper;
-using IntermediateRepresentationAbstractions;
-using JetBrains.Annotations;
-using ListExtensions;
-using ObjectExtensions;
-using UniversalIntermediateRepresentation;
-
 namespace ConditionsModule.Optimizers;
 
 [AutoRegisterService]

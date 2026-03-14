@@ -1,5 +1,3 @@
-using SettableGettableModule.Contracts;
-
 namespace GenericMath;
 
 public interface ICustomNumber<TSelf, TValue>
