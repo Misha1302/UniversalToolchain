@@ -3,6 +3,14 @@ bin/
 obj/
 /packages/
 
+# .NET user/IDE files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+.vscode/
+
 # IDE/editor files
 /.idea/
 /UniversalToolchain/.idea/
