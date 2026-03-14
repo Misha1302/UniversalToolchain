@@ -1,5 +1,3 @@
-using BasicCore.Compilation;
-
 namespace BasicCore.Execution;
 
 public sealed class ExecutionEnvironment : IExecutionEnvironment

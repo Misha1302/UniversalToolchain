@@ -1,0 +1,13 @@
+global using System.Reflection;
+global using System.Reflection.Emit;
+global using AbstractIrExtensions;
+global using BasicCore.Compilation;
+global using BasicCore.Contracts;
+global using BytecodeDynamicMethodsCompiler.Core;
+global using DotnetAirHelper;
+global using DotnetHelper;
+global using ExceptionsManager;
+global using GrEmit;
+global using IntermediateRepresentationAbstractions;
+global using ListExtensions;
+global using ObjectExtensions;

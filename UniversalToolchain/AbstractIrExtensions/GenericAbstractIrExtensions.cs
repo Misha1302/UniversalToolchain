@@ -1,6 +1,3 @@
-using System.Reflection;
-using IntermediateRepresentationAbstractions;
-
 namespace AbstractIrExtensions;
 
 public static class GenericAbstractIrExtensions

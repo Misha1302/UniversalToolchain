@@ -1,0 +1,13 @@
+global using System.Reflection.Emit;
+global using System.Runtime.CompilerServices;
+global using BasicCore.Core;
+global using BenchmarkDotNet.Attributes;
+global using BenchmarkDotNet.Running;
+global using ConditionsModule.Enums;
+global using DependencyInjection;
+global using ExceptionsManager;
+global using IntermediateRepresentationAbstractions;
+global using LocalVariablesOptimizerModule;
+global using Microsoft.Extensions.DependencyInjection;
+global using NumbersModule.Core;
+global using WistVsCSharp;

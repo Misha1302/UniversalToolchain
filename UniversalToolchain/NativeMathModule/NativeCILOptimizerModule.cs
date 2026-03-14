@@ -1,11 +1,3 @@
-using BasicCore.Attributes;
-using BasicCore.Contracts;
-using DotnetAirHelper;
-using IntermediateRepresentationAbstractions;
-using ListExtensions;
-using ObjectExtensions;
-using UniversalIntermediateRepresentation;
-
 namespace NativeMathModule;
 
 [AutoRegisterService]

@@ -1,5 +1,3 @@
-using NumbersModule.Core;
-
 namespace Tests.Core;
 
 [TestFixture]

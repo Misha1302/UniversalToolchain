@@ -1,0 +1,14 @@
+global using System.Reflection.Emit;
+global using BasicCore.Contracts;
+global using BasicCore.LexerWrapper;
+global using BasicCore.ParserWrapper;
+global using BenchmarkDotNet.Attributes;
+global using BenchmarkDotNet.Configs;
+global using BenchmarkDotNet.Diagnosers;
+global using BenchmarkDotNet.Running;
+global using DependencyInjection;
+global using DynamicMethodCalling.Core;
+global using ExceptionsManager;
+global using Microsoft.Extensions.DependencyInjection;
+global using NCalc;
+global using NCalc.LambdaCompilation;

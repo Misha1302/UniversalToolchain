@@ -1,0 +1,10 @@
+global using System.Reflection;
+global using BasicCore.Attributes;
+global using BasicCore.Contracts;
+global using DotnetAirHelper;
+global using ExceptionsManager;
+global using IntermediateRepresentationAbstractions;
+global using ListExtensions;
+global using ObjectExtensions;
+global using SettableGettableModule.Core;
+global using UniversalIntermediateRepresentation;

@@ -1,8 +1,3 @@
-using BasicCore.Attributes;
-using BasicCore.Contracts;
-using BasicCore.LexerWrapper;
-using BasicCore.Registration;
-
 namespace IdentifierModule;
 
 [AutoRegisterService]

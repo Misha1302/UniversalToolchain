@@ -1,14 +1,3 @@
-using ArithmeticModule.Module;
-using BasicCore.Contracts;
-using BasicParser.Core;
-using ConditionsModule.Enums;
-using ConditionsModule.Module;
-using CSharpInteropModule.Module;
-using LabelsModule.Module;
-using ParserConfigurationModule.Core;
-using ParserConfigurationModule.Module;
-using ScopesModule.Module;
-
 namespace Tests.Core;
 
 [TestFixture]

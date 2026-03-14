@@ -1,8 +1,3 @@
-﻿using System.Runtime.CompilerServices;
-using ExceptionsManager;
-using GenericMath;
-using JetBrains.Annotations;
-using NumbersModule.Core;
 
 namespace BasicStdLib;
 

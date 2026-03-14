@@ -1,11 +1,3 @@
-using BasicCore.Compilation;
-using BasicCore.Contracts;
-using ConditionsModule.Enums;
-using ConditionsModule.Optimizers;
-using LabelsModule.Core;
-using ScopesModule.Core;
-using SettableGettableModule.Core;
-
 namespace Tests.Infrastructure;
 
 public class OptimizerRegressionTests

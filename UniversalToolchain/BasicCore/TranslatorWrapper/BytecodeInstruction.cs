@@ -1,6 +1,3 @@
-using BasicCore.ParserWrapper;
-using DynamicMethodWrapper;
-
 namespace BasicCore.TranslatorWrapper;
 
 public record BytecodeInstruction(HashSet<string> Tags, LevelCollection<float, IAbstractMethodConvertable> Ops)

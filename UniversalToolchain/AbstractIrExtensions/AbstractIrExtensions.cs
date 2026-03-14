@@ -1,8 +1,3 @@
-using ExceptionsManager;
-using IntermediateRepresentationAbstractions;
-using SettableGettableModule.Contracts;
-using SettableGettableModule.Core;
-
 namespace AbstractIrExtensions;
 
 public static class AbstractIrExtensions

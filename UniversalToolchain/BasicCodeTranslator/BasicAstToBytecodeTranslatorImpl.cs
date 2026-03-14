@@ -1,5 +1,3 @@
-﻿using BasicCore.ParserWrapper;
-using BasicCore.TranslatorWrapper;
 
 namespace BasicCodeTranslator;
 

@@ -1,5 +1,3 @@
-using IntermediateRepresentationAbstractions;
-
 namespace DynamicMethodWrapper;
 
 public interface IAbstractMethodConvertable

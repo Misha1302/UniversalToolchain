@@ -1,12 +1,3 @@
-using AbstractIrExtensions;
-using ArithmeticModule.Module;
-using BasicCore.Attributes;
-using BasicCore.ParserWrapper;
-using BasicCore.TranslatorWrapper;
-using BasicTypesExtensions;
-using DynamicMethodWrapper;
-using ExceptionsManager;
-
 namespace ArithmeticModule.Visitors;
 
 [AutoRegisterService]

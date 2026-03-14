@@ -1,0 +1,14 @@
+global using AbstractIrExtensions;
+global using ArithmeticModule.Core;
+global using ArithmeticModule.Creators;
+global using ArithmeticModule.Module;
+global using ArithmeticModule.Visitors;
+global using BasicCore.Attributes;
+global using BasicCore.Contracts;
+global using BasicCore.LexerWrapper;
+global using BasicCore.ParserWrapper;
+global using BasicCore.Registration;
+global using BasicCore.TranslatorWrapper;
+global using BasicTypesExtensions;
+global using DynamicMethodWrapper;
+global using ExceptionsManager;

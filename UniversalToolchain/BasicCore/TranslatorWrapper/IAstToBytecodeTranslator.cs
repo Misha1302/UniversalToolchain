@@ -1,5 +1,3 @@
-using BasicCore.ParserWrapper;
-
 namespace BasicCore.TranslatorWrapper;
 
 public interface IAstToBytecodeTranslator

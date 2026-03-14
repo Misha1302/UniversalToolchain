@@ -1,11 +1,3 @@
-using AbstractIrExtensions;
-using AssemblyFinder;
-using BasicCore.ParserWrapper;
-using BasicCore.TranslatorWrapper;
-using BasicTypesExtensions;
-using DynamicMethodWrapper;
-using ExceptionsManager;
-
 namespace CSharpInteropModule.Visitors;
 
 public class CSharpFunctionCallsAstVisitor : IAstVisitor

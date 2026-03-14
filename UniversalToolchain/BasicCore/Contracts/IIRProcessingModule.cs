@@ -1,5 +1,3 @@
-using IntermediateRepresentationAbstractions;
-
 namespace BasicCore.Contracts;
 
 // ReSharper disable once InconsistentNaming

@@ -1,5 +1,3 @@
-using GrEmit;
-
 namespace BytecodeDynamicMethodsCompiler.Core;
 
 internal sealed class CompilationContext(GroboIL il, Dictionary<string, int> externalSlots)

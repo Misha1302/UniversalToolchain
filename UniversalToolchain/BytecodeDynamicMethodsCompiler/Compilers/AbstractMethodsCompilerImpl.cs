@@ -1,14 +1,3 @@
-﻿using System.Reflection.Emit;
-using AbstractIrExtensions;
-using BasicCore.Compilation;
-using BasicCore.Contracts;
-using BytecodeDynamicMethodsCompiler.Core;
-using DotnetAirHelper;
-using ExceptionsManager;
-using GrEmit;
-using IntermediateRepresentationAbstractions;
-using ListExtensions;
-using ObjectExtensions;
 
 namespace BytecodeDynamicMethodsCompiler.Compilers;
 

@@ -1,6 +1,3 @@
-using BasicCore.ParserWrapper;
-using ExceptionsManager;
-
 namespace BasicCore.LexerWrapper;
 
 public class LexerConfiguration(List<LexemeType> lexemesToIgnore)

@@ -1,5 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-
 namespace BasicCore.LexerWrapper;
 
 // If somebody disagrees that lexemes shouldn't be parsed using regex-expressions, let him write his own working lexer without it and Antlr4

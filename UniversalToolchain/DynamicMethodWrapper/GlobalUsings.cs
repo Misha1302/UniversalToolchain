@@ -1,0 +1,2 @@
+global using IntermediateRepresentationAbstractions;
+global using UniversalIntermediateRepresentation;

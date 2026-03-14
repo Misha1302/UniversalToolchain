@@ -1,6 +1,3 @@
-using System.Globalization;
-using GenericMath;
-
 namespace NumbersModule.Core;
 
 public readonly struct RealNumberImpl(double value) : ICustomNumber<RealNumberImpl, double>, IComparable<RealNumberImpl>

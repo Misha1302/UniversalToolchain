@@ -1,7 +1,3 @@
-using BasicCore.ParserWrapper;
-using BasicCore.TranslatorWrapper;
-using BasicTypesExtensions;
-
 namespace ScopesModule.Visitors;
 
 public class ScopeAstVisitor : IAstVisitor

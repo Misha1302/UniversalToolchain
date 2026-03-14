@@ -1,6 +1,3 @@
-using BasicCore.Compilation;
-using IntermediateRepresentationAbstractions;
-
 namespace BasicCore.Contracts;
 
 public interface IAbstractIrCompiler<out TCompilationOutput>
