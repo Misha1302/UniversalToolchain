@@ -72,4 +72,21 @@ public class BasicLexerImplTests
         Assert.That(result, Has.Count.EqualTo(4));
         Assert.That(result.All(x => x.Text != " "), Is.True);
     }
+
+
+
+    [Test]
+    public void Lexemize_WithUnknownToken_ThrowsLexerException()
+    {
+        var lexer = new BasicLexerImpl();
+        lexer.Configuration.AddPattern(
+            new LexemePattern("[a-zA-Z_][a-zA-Z0-9_]*", ExtensibleEnum<LexemeTag>.CreateOrGet("Identifier")),
+            priority: 100
+        );
+
+        var exception = Assert.Throws<LexerException>(() => lexer.Lexemize("ok @ bad"));
+
+        Assert.That(exception, Is.Not.Null);
+        Assert.That(exception!.Message, Does.Contain("Invalid token"));
+    }
 }
