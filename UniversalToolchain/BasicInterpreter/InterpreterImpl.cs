@@ -16,8 +16,19 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
         while (state.InstructionPointer < instructions.Count)
         {
             var instruction = instructions[state.InstructionPointer];
+            var programCounter = state.InstructionPointer;
             state.InstructionPointer++;
-            ExecuteInstruction(instruction, state);
+            try
+            {
+                ExecuteInstruction(instruction, state);
+            }
+            catch (Exception ex) when (ex is not RuntimeExecutionException)
+            {
+                WistThrower.Runtime(
+                    $"Error executing instruction '{instruction.UOpCode}' at pc={programCounter}, stack={state.ValueStack.Count}. {ex.Message}",
+                    ex
+                );
+            }
         }
 
         if (state.ValueStack.Count == 0) return null!;
@@ -73,7 +84,7 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
                 ExecuteIntrinsic(instruction, state);
                 break;
             default:
-                Thrower.InvalidOpEx($"Unsupported opcode encountered: {instruction.UOpCode}.");
+                CompilerAssert.Unreachable($"Unknown instruction '{instruction.UOpCode}'.");
                 break;
         }
     }
@@ -86,7 +97,7 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
         else if (intrinsicName == "call C# ctor")
             ExecuteCSharpConstructor(instruction, state);
         else
-            Thrower.InvalidOpEx($"Unsupported intrinsic call: {intrinsicName}.");
+            Thrower.InvalidOpEx($"Unknown intrinsic call: {intrinsicName}.");
     }
 
 

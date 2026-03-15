@@ -1,3 +1,4 @@
+global using CommonExceptions;
 global using AstNodeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.ParserWrapper.AstNodeTag>;
 global using BasicCore.Attributes;
 global using BasicCore.Contracts;

@@ -177,8 +177,8 @@ public class OptimizerRegressionTests
             [new AstNode(ExtensibleEnum<AstNodeTag>.CreateOrGet("OpenPar"), null, [])]
         );
 
-        var exception = Assert.Throws<InvalidOperationException>(() => creator.TryCreateNode(root, 0));
-        Assert.That(exception!.Message, Does.Contain("opening bracket was not closed"));
+        var exception = Assert.Throws<ParserException>(() => creator.TryCreateNode(root, 0));
+        Assert.That(exception!.Message, Does.Contain("Expected: ')' to close scope"));
     }
 
     [Test]

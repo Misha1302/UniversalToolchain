@@ -26,7 +26,13 @@ public class ScopesCreator : IAstNodeCreator
             else if (child.NodeType == AstNodeType.CreateOrGet("ClosePar")) opensCount--;
 
             if (opensCount < 0)
-                Thrower.InvalidOpEx("Scope parsing failed: found closing bracket without a matching opening bracket.");
+            {
+                var lexeme = child.LexemeValue;
+                WistThrower.Parser(
+                    "Unexpected token '}'. Expected: identifier or '('.",
+                    new SourceLocation { Line = lexeme?.LineNumber ?? -1, Column = lexeme?.CharNumber ?? -1 }
+                );
+            }
 
             if (opensCount == 1 && start == -1)
                 start = i;
@@ -49,7 +55,7 @@ public class ScopesCreator : IAstNodeCreator
         }
 
         if (opensCount != 0)
-            Thrower.InvalidOpEx("Scope parsing failed: at least one opening bracket was not closed.");
+            WistThrower.Parser("Unexpected end of input. Expected: ')' to close scope.");
 
         return done;
     }

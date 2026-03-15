@@ -32,6 +32,13 @@ int RunCommand(RunOptions options)
 
         return 0;
     }
+    catch (WistException ex)
+    {
+        Console.Error.WriteLine(ex.ToString());
+        if (Debugger.IsAttached)
+            Console.Error.WriteLine(ex.StackTrace);
+        return 1;
+    }
     catch (Exception ex)
     {
         Console.Error.WriteLine($"Error: {ex.Message}");
@@ -53,6 +60,11 @@ int ReplCommand(ReplOptions options)
 
         var repl = new Repl(core, options.HistoryFile);
         return repl.Run();
+    }
+    catch (WistException ex)
+    {
+        Console.Error.WriteLine(ex.ToString());
+        return 1;
     }
     catch (Exception ex)
     {

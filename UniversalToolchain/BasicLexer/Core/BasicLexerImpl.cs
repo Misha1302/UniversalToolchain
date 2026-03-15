@@ -53,6 +53,14 @@ public class BasicLexerImpl(LexerConfiguration configuration) : ILexer
                 $"Unknown substr '{Regex.Escape(code[index..(lexeme?.StartIndex ?? code.Length)])}'"
             );
 
+            if (index != lexeme?.StartIndex)
+            {
+                WistThrower.Lexer(
+                    $"Invalid token '{code[index..(lexeme?.StartIndex ?? code.Length)]}'.",
+                    new SourceLocation { Line = lexeme?.LineNumber ?? -1, Column = lexeme?.CharNumber ?? -1 }
+                );
+            }
+
             Thrower.AssertAlways(lexeme != null, "Internal lexer invariant violated: expected lexeme at current index.");
 
             // Update the current processing position to just past the matched token.

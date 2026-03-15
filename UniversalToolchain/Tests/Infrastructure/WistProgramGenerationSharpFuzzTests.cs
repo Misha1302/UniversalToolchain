@@ -83,6 +83,7 @@ public class WistProgramGenerationSharpFuzzTests : TestBase
     private static bool IsExpectedFuzzException(Exception exception)
     {
         if (exception is InvalidOperationException
+            or WistException
             or ArgumentException
             or FormatException
             or OverflowException
