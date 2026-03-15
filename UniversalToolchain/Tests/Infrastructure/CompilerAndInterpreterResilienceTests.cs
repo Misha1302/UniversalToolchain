@@ -87,7 +87,7 @@ public class CompilerAndInterpreterResilienceTests
 
         var ir = BuildIr(new Instruction(UOpCode.Intrinsic, ["call C#", toString!]));
 
-        var exception = Assert.Throws<InvalidOperationException>(() => ExecuteInInterpreter(ir));
+        var exception = Assert.Throws<RuntimeExecutionException>(() => ExecuteInInterpreter(ir));
 
         Assert.That(exception!.Message, Does.Contain("instance is missing"));
     }
@@ -103,7 +103,7 @@ public class CompilerAndInterpreterResilienceTests
             new Instruction(UOpCode.Intrinsic, ["call C#", compareMethod!])
         );
 
-        var exception = Assert.Throws<InvalidOperationException>(() => ExecuteInInterpreter(ir));
+        var exception = Assert.Throws<RuntimeExecutionException>(() => ExecuteInInterpreter(ir));
 
         Assert.That(exception!.Message, Does.Contain("not enough arguments"));
     }
@@ -113,7 +113,7 @@ public class CompilerAndInterpreterResilienceTests
     {
         var ir = BuildIr(new Instruction(UOpCode.Intrinsic, ["unknown intrinsic"]));
 
-        var exception = Assert.Throws<InvalidOperationException>(() => ExecuteInInterpreter(ir));
+        var exception = Assert.Throws<RuntimeExecutionException>(() => ExecuteInInterpreter(ir));
 
         Assert.That(exception!.Message, Does.Contain("unknown intrinsic"));
     }

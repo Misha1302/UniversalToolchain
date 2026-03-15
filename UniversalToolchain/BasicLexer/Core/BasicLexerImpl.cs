@@ -46,12 +46,15 @@ public class BasicLexerImpl(LexerConfiguration configuration) : ILexer
             // ReSharper disable once AccessToModifiedClosure
             (var lexeme, prevFoundIndex) = allMatches.FirstStarts(x => x.StartIndex >= index, prevFoundIndex);
 
-            // Handle unrecognized text.
-            Thrower.AssertAlways(
-                index == lexeme?.StartIndex,
-                // ReSharper disable once ConditionalAccessQualifierIsNonNullableAccordingToAPIContract
-                $"Unknown substr '{Regex.Escape(code[index..(lexeme?.StartIndex ?? code.Length)])}'"
-            );
+            if (index != lexeme?.StartIndex)
+            {
+                var invalidSegment = code[index..(lexeme?.StartIndex ?? code.Length)];
+                var invalidLexeme = new LexemeValue(invalidSegment, null, index, code);
+                WistThrower.Lexer(
+                    $"Invalid token '{invalidSegment}'.",
+                    new SourceLocation { Line = invalidLexeme.LineNumber, Column = invalidLexeme.CharNumber }
+                );
+            }
 
             Thrower.AssertAlways(lexeme != null, "Internal lexer invariant violated: expected lexeme at current index.");
 

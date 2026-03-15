@@ -1,3 +1,4 @@
+global using CommonExceptions;
 global using System.Reflection;
 global using BasicCore.Execution;
 global using BasicCore.ExecutorWrapper;

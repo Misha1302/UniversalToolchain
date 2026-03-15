@@ -1,3 +1,4 @@
+global using CommonExceptions;
 global using AbstractIrExtensions;
 global using AssemblyFinder;
 global using BasicCore.Attributes;

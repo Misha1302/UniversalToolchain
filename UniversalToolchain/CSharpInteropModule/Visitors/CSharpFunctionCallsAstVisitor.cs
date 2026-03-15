@@ -30,6 +30,9 @@ public class CSharpFunctionCallsAstVisitor : IAstVisitor
                                  ?? MethodsFinder.GetMethod(fullName, argCount)
                                  ?? MethodsFinder.GetMethod(fullName);
 
+                if (methodInfo == null)
+                    WistThrower.Import($"Method '{fullName}({argCount} args)' not found in imported assemblies.");
+
                 il.CallCSharp(methodInfo.NotNull());
             }
         );

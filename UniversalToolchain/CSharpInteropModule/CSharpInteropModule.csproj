@@ -8,10 +8,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\AbstractIrExtensions\AbstractIrExtensions.csproj"/>
-        <ProjectReference Include="..\AssemblyFinder\AssemblyFinder.csproj"/>
-        <ProjectReference Include="..\BasicCore\BasicCore.csproj"/>
-        <ProjectReference Include="..\UniversalIntermediateRepresentation\UniversalIntermediateRepresentation.csproj"/>
+        <ProjectReference Include="..\AbstractIrExtensions\AbstractIrExtensions.csproj" />
+        <ProjectReference Include="..\AssemblyFinder\AssemblyFinder.csproj" />
+        <ProjectReference Include="..\BasicCore\BasicCore.csproj" />
+        <ProjectReference Include="..\UniversalIntermediateRepresentation\UniversalIntermediateRepresentation.csproj" />
+        <ProjectReference Include="..\CommonExceptions\CommonExceptions.csproj" />
     </ItemGroup>
 
 </Project>

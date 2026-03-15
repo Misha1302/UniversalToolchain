@@ -1,3 +1,4 @@
+global using CommonExceptions;
 global using System.Diagnostics;
 global using System.Reflection;
 global using System.Reflection.Emit;
