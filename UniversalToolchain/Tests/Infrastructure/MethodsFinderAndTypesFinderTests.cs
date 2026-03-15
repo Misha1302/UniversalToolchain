@@ -62,6 +62,24 @@ public class MethodsFinderAndTypesFinderTests
     }
 
     [Test]
+    public void Should_IncludeRequestedTypeName_When_TypeDoesNotExist()
+    {
+        var missingTypeName = "Unknown.Type.Name.For.Contract";
+
+        var ex = Assert.Throws<InvalidOperationException>(() => TypesFinder.GetType(missingTypeName));
+
+        Assert.That(ex!.Message, Does.Contain($"Type '{missingTypeName}' was not found among loaded assemblies."));
+    }
+
+    [Test]
+    public void RegisterAssembly_ShouldThrowArgumentNullException_When_AssemblyIsNull()
+    {
+        var ex = Assert.Throws<ArgumentNullException>(() => TypesFinder.RegisterAssembly(null!));
+
+        Assert.That(ex!.ParamName, Is.EqualTo("assembly"));
+    }
+
+    [Test]
     public void Should_ReportMethodPresence_When_ContainsAnyMethodIsCalled()
     {
         var contains = MethodsFinder.ContainsAnyMethod($"{typeof(OverloadTarget).FullName}.Echo");
