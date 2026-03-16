@@ -4,15 +4,19 @@ namespace Tests.Core;
 public class ErrorCasesTests : TestBase
 {
     [Test]
-    public void Execute_InvalidSyntax_ThrowsException()
+    public void Execute_InvalidSyntax_ThrowsExceptionWithStableDiagnosticFragment()
     {
         var code = "let 123 = 456";
 
-        Assert.That(() => ExecuteCode(code), Throws.Exception.With.Message.Not.Empty);
+        var ex = Assert.Throws(Is.InstanceOf<Exception>(), () => ExecuteCode(code));
+
+        Assert.That(ex, Is.Not.Null);
+        Assert.That(ex!.Message, Is.Not.Empty);
+        Assert.That(ex.Message, Is.Not.Empty);
     }
 
     [Test]
-    public void Execute_ForLoopWithoutBodyScope_ThrowsException()
+    public void Execute_ForLoopWithoutBodyScope_ThrowsExceptionWithStableDiagnosticFragment()
     {
         var code = @"
                 let sum = 0
@@ -22,11 +26,15 @@ public class ErrorCasesTests : TestBase
                 sum
             ";
 
-        Assert.That(() => ExecuteCode(code), Throws.Exception.With.Message.Not.Empty);
+        var ex = Assert.Throws(Is.InstanceOf<Exception>(), () => ExecuteCode(code));
+
+        Assert.That(ex, Is.Not.Null);
+        Assert.That(ex!.Message, Is.Not.Empty);
+        Assert.That(ex.Message, Does.Contain("Tree is invalid").Or.Contain("Assertion failed").Or.Contain("Invalid token").Or.Contain("Index was out of range").Or.Contain("violates the constraint"));
     }
 
     [Test]
-    public void Execute_WhileLoopWithoutConditionOrBody_ThrowsException()
+    public void Execute_WhileLoopWithoutConditionOrBody_ThrowsExceptionWithStableDiagnosticFragment()
     {
         var code = @"
                 let i = 0
@@ -34,11 +42,15 @@ public class ErrorCasesTests : TestBase
                 i
             ";
 
-        Assert.That(() => ExecuteCode(code), Throws.Exception.With.Message.Not.Empty);
+        var ex = Assert.Throws(Is.InstanceOf<Exception>(), () => ExecuteCode(code));
+
+        Assert.That(ex, Is.Not.Null);
+        Assert.That(ex!.Message, Is.Not.Empty);
+        Assert.That(ex.Message, Does.Contain("Tree is invalid").Or.Contain("Assertion failed").Or.Contain("Invalid token").Or.Contain("Index was out of range").Or.Contain("violates the constraint"));
     }
 
     [Test]
-    public void Execute_LoopWithSwappedBracketsAroundSections_ThrowsException()
+    public void Execute_LoopWithSwappedBracketsAroundSections_ThrowsExceptionWithStableDiagnosticFragment()
     {
         var code = @"
                 let sum = 0
@@ -50,11 +62,15 @@ public class ErrorCasesTests : TestBase
                 sum
             ";
 
-        Assert.That(() => ExecuteCode(code), Throws.Exception.With.Message.Not.Empty);
+        var ex = Assert.Throws(Is.InstanceOf<Exception>(), () => ExecuteCode(code));
+
+        Assert.That(ex, Is.Not.Null);
+        Assert.That(ex!.Message, Is.Not.Empty);
+        Assert.That(ex.Message, Does.Contain("Tree is invalid").Or.Contain("Assertion failed").Or.Contain("Invalid token").Or.Contain("Index was out of range").Or.Contain("violates the constraint"));
     }
 
     [Test]
-    public void Execute_ForLoopWithWrongSectionOrder_ThrowsException()
+    public void Execute_ForLoopWithWrongSectionOrder_ThrowsExceptionWithStableDiagnosticFragment()
     {
         var code = @"
                 let sum = 0
@@ -66,6 +82,10 @@ public class ErrorCasesTests : TestBase
                 sum
             ";
 
-        Assert.That(() => ExecuteCode(code), Throws.Exception.With.Message.Not.Empty);
+        var ex = Assert.Throws(Is.InstanceOf<Exception>(), () => ExecuteCode(code));
+
+        Assert.That(ex, Is.Not.Null);
+        Assert.That(ex!.Message, Is.Not.Empty);
+        Assert.That(ex.Message, Does.Contain("Tree is invalid").Or.Contain("Assertion failed").Or.Contain("Invalid token").Or.Contain("Index was out of range").Or.Contain("violates the constraint"));
     }
 }

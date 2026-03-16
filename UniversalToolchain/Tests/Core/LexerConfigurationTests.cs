@@ -453,4 +453,66 @@ public class LexerConfigurationTests
 
         Assert.That(loadedTokens, Is.EqualTo(originalTokens));
     }
+    [Test]
+    public void AddPattern_WithSamePatternReferenceTwice_ShouldThrowInvalidOperationException()
+    {
+        var lexer = new BasicLexerImpl();
+        var pattern = new LexemePattern(@"\\d+", ExtensibleEnum<LexemeTag>.CreateOrGet("NumberDuplicateRef"));
+
+        lexer.Configuration.AddPattern(pattern);
+
+        var ex = Assert.Throws<InvalidOperationException>(() => lexer.Configuration.AddPattern(pattern));
+
+        Assert.That(ex!.Message, Does.Contain("Pattern always added"));
+    }
+
+    [Test]
+    public void TryAddPattern_WithSamePatternReferenceTwice_ShouldReturnFalse()
+    {
+        var lexer = new BasicLexerImpl();
+        var pattern = new LexemePattern(@"[a-z]+", ExtensibleEnum<LexemeTag>.CreateOrGet("WordDuplicateRef"));
+
+        var first = lexer.Configuration.TryAddPattern(pattern);
+        var second = lexer.Configuration.TryAddPattern(pattern);
+
+        Assert.That(first, Is.True);
+        Assert.That(second, Is.False);
+    }
+
+    [Test]
+    public void TryAddPattern_WithSameRegexDifferentPatternInstance_ShouldThrow()
+    {
+        var lexer = new BasicLexerImpl();
+        lexer.Configuration.TryAddPattern(new LexemePattern(@"same-regex", ExtensibleEnum<LexemeTag>.CreateOrGet("RegexA")));
+
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            lexer.Configuration.TryAddPattern(new LexemePattern(@"same-regex", ExtensibleEnum<LexemeTag>.CreateOrGet("RegexB"))));
+
+        Assert.That(ex!.Message, Does.Contain("always added"));
+    }
+
+    [Test]
+    public void TryAddPattern_WithSameLexemeTypeNameDifferentPattern_ShouldThrow()
+    {
+        var lexer = new BasicLexerImpl();
+        var sameType = ExtensibleEnum<LexemeTag>.CreateOrGet("SharedType");
+        lexer.Configuration.TryAddPattern(new LexemePattern(@"alpha", sameType));
+
+        var ex = Assert.Throws<InvalidOperationException>(() =>
+            lexer.Configuration.TryAddPattern(new LexemePattern(@"beta", sameType)));
+
+        Assert.That(ex!.Message, Does.Contain("always added"));
+    }
+
+    [Test]
+    public void TryUncheckedAddPattern_ShouldAllowDuplicatesRejectedByCheckedPath()
+    {
+        var lexer = new BasicLexerImpl();
+        lexer.Configuration.TryUncheckedAddPattern(new LexemePattern(@"x", ExtensibleEnum<LexemeTag>.CreateOrGet("UncheckedTypeA")));
+
+        Assert.DoesNotThrow(() => lexer.Configuration.TryUncheckedAddPattern(
+            new LexemePattern(@"x", ExtensibleEnum<LexemeTag>.CreateOrGet("UncheckedTypeB"))));
+
+        Assert.That(lexer.Configuration.Patterns.Count(x => x.Pattern == "x"), Is.EqualTo(2));
+    }
 }

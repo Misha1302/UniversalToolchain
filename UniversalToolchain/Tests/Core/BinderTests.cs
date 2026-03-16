@@ -145,6 +145,20 @@ public class BinderTests
         Assert.That(result[2], Is.TypeOf<BoundLocalReference>());
     }
 
+
+    [Test]
+    public void Constructor_WithUnsupportedExternalBindingKind_ShouldThrowInvalidOperationException()
+    {
+        var invalidKind = (ExternalBindingKind)999;
+
+        var ex = Assert.Throws<InvalidOperationException>(() => new Binder([
+            new ExternalBinding { Name = "bad", Type = typeof(int), Kind = invalidKind }
+        ]));
+
+        Assert.That(ex, Is.TypeOf<InvalidOperationException>());
+        Assert.That(ex!.Message, Does.Contain("Unsupported external binding kind"));
+    }
+
     private static AstNode CreateVariableNode(string name, string[]? tags = null, List<AstNode>? children = null)
     {
         var node = CreateNode("Variable", name, children ?? []);
