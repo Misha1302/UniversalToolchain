@@ -43,18 +43,21 @@ public class GenericAbstractIR<TIdentifier> : IGenericAbstractIR<TIdentifier>
 
     public void Annotate(params List<object>[] annotations)
     {
+        ArgumentNullException.ThrowIfNull(annotations);
         _instructions.AddRange(annotations.Select(ann => new Instruction(UOpCode.Annotate, ann)));
     }
 
     public void Intrinsic(object instructionIdentifier, params List<object> operands)
     {
-        // TODO: check for intrinsics support
+        ArgumentNullException.ThrowIfNull(instructionIdentifier);
+        ArgumentNullException.ThrowIfNull(operands);
         _instructions.Add(new Instruction(UOpCode.Intrinsic, [instructionIdentifier, ..operands]));
     }
 
 
     public void AppendInstructions(IReadOnlyList<Instruction> instructions)
     {
+        ArgumentNullException.ThrowIfNull(instructions);
         _instructions.AddRange(instructions);
     }
 }

@@ -23,7 +23,7 @@ export function parseParserConfig(content: string): ConfigFile {
 
     // Сохраняем комментарии
     if (trimmed.startsWith('#')) {
-      comments.set(index, trimmed);
+      comments.set(index + 1, trimmed);
       return;
     }
 
@@ -100,7 +100,7 @@ export function parseLexerConfig(content: string): ConfigFile {
     
     // Сохраняем комментарии
     if (trimmed.startsWith('#')) {
-      comments.set(index, trimmed);
+      comments.set(index + 1, trimmed);
       return;
     }
     
@@ -165,10 +165,16 @@ export function formatToOriginal(config: ConfigFile): string {
   }
 
   // Собираем все строки в правильном порядке
-  const maxLineNumber = Math.max(
+  const allLineNumbers = [
     ...config.rows.map(row => row.lineNumber),
-    ...Array.from(commentsMap.keys())
-  );
+    ...Array.from(commentsMap.keys()),
+  ];
+
+  if (allLineNumbers.length === 0) {
+    return '';
+  }
+
+  const maxLineNumber = Math.max(...allLineNumbers);
 
   for (let lineNum = 1; lineNum <= maxLineNumber; lineNum++) {
     // Сначала добавляем комментарии для этой строки

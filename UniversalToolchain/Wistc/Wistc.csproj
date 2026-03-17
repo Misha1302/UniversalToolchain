@@ -24,6 +24,8 @@
         <ProjectReference Include="..\LabelsModule\LabelsModule.csproj" />
         <ProjectReference Include="..\LoopsModule\LoopsModule.csproj" />
         <ProjectReference Include="..\NativeMathModule\NativeMathModule.csproj" />
+        <ProjectReference Include="..\LocalVariablesOptimizerModule\LocalVariablesOptimizerModule.csproj" />
+        <ProjectReference Include="..\UniversalToolchain.Dialects.Integration\UniversalToolchain.Dialects.Integration.csproj" />
         <ProjectReference Include="..\NumbersModule\NumbersModule.csproj" />
         <ProjectReference Include="..\ParserConfigurationModule\ParserConfigurationModule.csproj" />
         <ProjectReference Include="..\ScopesModule\ScopesModule.csproj" />

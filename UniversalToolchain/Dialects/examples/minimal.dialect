@@ -1,0 +1,7 @@
+dialect Minimal version "1.0"
+use Arithmetic
+backend interpreter enable
+allow intrinsic "add_i32" for any
+enable optimizer LocalVariablesOptimization for any
+security trusted
+capability safe-mode = true

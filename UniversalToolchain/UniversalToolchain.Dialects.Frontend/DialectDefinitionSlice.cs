@@ -1,0 +1,102 @@
+using System.Collections.ObjectModel;
+using ExceptionsManager;
+
+namespace UniversalToolchain.Dialects.Frontend;
+
+public sealed class DialectDefinitionSlice
+{
+    private readonly ReadOnlyCollection<string> _useModules;
+    private readonly ReadOnlyCollection<string> _excludeModules;
+    private readonly ReadOnlyCollection<DialectOrderDirective> _orderDirectives;
+    private readonly ReadOnlyCollection<DialectBackendDirective> _backendDirectives;
+    private readonly ReadOnlyCollection<DialectIntrinsicDirective> _intrinsicDirectives;
+    private readonly ReadOnlyCollection<DialectOptimizerDirective> _optimizerDirectives;
+    private readonly ReadOnlyCollection<DialectCapabilityDirective> _capabilityDirectives;
+
+    public DialectDefinitionSlice(
+        string name,
+        IEnumerable<string> useModules,
+        IEnumerable<string> excludeModules,
+        IEnumerable<DialectOrderDirective> orderDirectives,
+        IEnumerable<DialectBackendDirective> backendDirectives,
+        IEnumerable<DialectIntrinsicDirective> intrinsicDirectives,
+        IEnumerable<DialectOptimizerDirective> optimizerDirectives,
+        DialectSecurityProfile? securityProfile,
+        IEnumerable<DialectCapabilityDirective> capabilityDirectives)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            Thrower.Argument(nameof(name), "Dialect name must not be empty.");
+        }
+
+        Name = name;
+        _useModules = new ReadOnlyCollection<string>(SnapshotStrings(useModules, nameof(useModules), "Module names must not be empty."));
+        _excludeModules = new ReadOnlyCollection<string>(SnapshotStrings(excludeModules, nameof(excludeModules), "Module names must not be empty."));
+        _orderDirectives = new ReadOnlyCollection<DialectOrderDirective>(Snapshot(orderDirectives, nameof(orderDirectives)));
+        _backendDirectives = new ReadOnlyCollection<DialectBackendDirective>(Snapshot(backendDirectives, nameof(backendDirectives)));
+        _intrinsicDirectives = new ReadOnlyCollection<DialectIntrinsicDirective>(Snapshot(intrinsicDirectives, nameof(intrinsicDirectives)));
+        _optimizerDirectives = new ReadOnlyCollection<DialectOptimizerDirective>(Snapshot(optimizerDirectives, nameof(optimizerDirectives)));
+        SecurityProfile = securityProfile;
+        _capabilityDirectives = new ReadOnlyCollection<DialectCapabilityDirective>(Snapshot(capabilityDirectives, nameof(capabilityDirectives)));
+    }
+
+    public string Name { get; }
+
+    public IReadOnlyList<string> UseModules => _useModules;
+
+    public IReadOnlyList<string> ExcludeModules => _excludeModules;
+
+    public IReadOnlyList<DialectOrderDirective> OrderDirectives => _orderDirectives;
+
+    public IReadOnlyList<DialectBackendDirective> BackendDirectives => _backendDirectives;
+
+    public IReadOnlyList<DialectIntrinsicDirective> IntrinsicDirectives => _intrinsicDirectives;
+
+    public IReadOnlyList<DialectOptimizerDirective> OptimizerDirectives => _optimizerDirectives;
+
+    public DialectSecurityProfile? SecurityProfile { get; }
+
+    public IReadOnlyList<DialectCapabilityDirective> CapabilityDirectives => _capabilityDirectives;
+
+    private static List<string> SnapshotStrings(IEnumerable<string> values, string paramName, string emptyMessage)
+    {
+        if (values == null)
+        {
+            Thrower.ArgumentNull(paramName);
+        }
+
+        var result = new List<string>();
+        foreach (var value in values)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                Thrower.Argument(paramName, emptyMessage);
+            }
+
+            result.Add(value);
+        }
+
+        return result;
+    }
+
+    private static List<T> Snapshot<T>(IEnumerable<T> values, string paramName)
+    {
+        if (values == null)
+        {
+            Thrower.ArgumentNull(paramName);
+        }
+
+        var result = new List<T>();
+        foreach (var value in values)
+        {
+            if (value == null)
+            {
+                Thrower.Argument(paramName, "Collection must not contain null values.");
+            }
+
+            result.Add(value);
+        }
+
+        return result;
+    }
+}

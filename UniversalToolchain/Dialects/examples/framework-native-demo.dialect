@@ -1,0 +1,8 @@
+dialect FrameworkNativeDemo
+use Arithmetic
+use Variables
+before Arithmetic -> Variables
+backend interpreter enable
+allow intrinsic "add_i32" for any
+enable optimizer LocalVariablesOptimization for interpreter
+security trusted

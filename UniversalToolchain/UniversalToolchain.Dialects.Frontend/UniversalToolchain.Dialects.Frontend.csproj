@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <LangVersion>14</LangVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\BasicCore\BasicCore.csproj" />
+        <ProjectReference Include="..\BasicLexer\BasicLexer.csproj" />
+        <ProjectReference Include="..\BasicParser\BasicParser.csproj" />
+        <ProjectReference Include="..\BasicCodeTranslator\BasicCodeTranslator.csproj" />
+        <ProjectReference Include="..\AbstractIrConverters\AbstractIrConverters.csproj" />
+        <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj" />
+        <ProjectReference Include="..\CommonExceptions\CommonExceptions.csproj" />
+    </ItemGroup>
+
+</Project>
