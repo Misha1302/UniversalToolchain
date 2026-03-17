@@ -16,7 +16,7 @@ public class PolicyModelTests
     public void BackendPolicy_RejectsOverlap()
     {
         Assert.That(
-            () => new BackendPolicy(["cil"], ["cil"]),
+            () => new BackendPolicy([DialectBackendTarget.Cil], [DialectBackendTarget.Cil]),
             Throws.TypeOf<ArgumentException>());
     }
 

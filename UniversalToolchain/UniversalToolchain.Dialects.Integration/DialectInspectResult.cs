@@ -65,7 +65,7 @@ public sealed class DialectInspectResult
             sb.AppendLine($"  Dialect: {BuildPlan.Name}");
             sb.AppendLine($"  Version: {(BuildPlan.Version ?? "<none>")}");
             sb.AppendLine($"  Ordered modules: {JoinPreserveOrder(BuildPlan.OrderedModules)}");
-            sb.AppendLine($"  Enabled backends: {JoinSorted(BuildPlan.EnabledBackends)}");
+            sb.AppendLine($"  Enabled backends: {JoinSorted(BuildPlan.EnabledBackends.Select(DialectBackendTargetText.ToText))}");
             sb.AppendLine($"  Enabled optimizers: {JoinSorted(BuildPlan.OptimizerDirectives.Where(x => x.Enabled).Select(x => $"{x.Name}@{DialectBackendTargetText.ToText(x.Target)}"))}");
             sb.AppendLine($"  Allowed intrinsics: {JoinSorted(BuildPlan.IntrinsicDirectives.Where(x => x.Allowed).Select(x => $"{x.Name}@{DialectBackendTargetText.ToText(x.Target)}"))}");
         }

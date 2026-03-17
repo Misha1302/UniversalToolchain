@@ -8,36 +8,27 @@ export function detectConfigType(content: string): ConfigType {
   if (content.includes('|lexeme_type|') || content.includes('base64_encoded_pattern')) {
     return ConfigType.LEXER;
   }
-  throw new Error('Неизвестный формат конфигурации');
+  throw new Error('Unknown configuration format');
 }
 
-// В функции parseParserConfig, исправьте:
 export function parseParserConfig(content: string): ConfigFile {
   const lines = content.split('\n');
   const rows: ParserConfigRow[] = [];
   const comments = new Map<number, string>();
 
-  let lineNumber = 0;
   lines.forEach((line, index) => {
     const trimmed = line.trim();
 
-    // Сохраняем комментарии
     if (trimmed.startsWith('#')) {
       comments.set(index + 1, trimmed);
       return;
     }
 
-    // Пропускаем пустые строки
     if (!trimmed) return;
 
-    lineNumber++;
-
-    // Парсим строку формата: priority|type_full_name|instance_hash|ast_node_type
     const parts = trimmed.split('|');
     if (parts.length !== 4) {
-      // Попробуем парсить даже если формат не идеален
       if (parts.length >= 4) {
-        // Берем первые 4 части
         const priority = parseFloat(parts[0]);
         const type_full_name = parts[1] || '';
         const instance_hash = parseInt(parts[2], 10) || 0;
@@ -53,7 +44,7 @@ export function parseParserConfig(content: string): ConfigFile {
           ast_node_type,
           module,
           originalLine: trimmed,
-          lineNumber,
+          lineNumber: index + 1,
         });
       }
       return;
@@ -63,8 +54,6 @@ export function parseParserConfig(content: string): ConfigFile {
     const type_full_name = parts[1];
     const instance_hash = parseInt(parts[2], 10);
     const ast_node_type = parts[3];
-
-    // Извлекаем модуль из type_full_name
     const module = type_full_name.split('.')[0];
 
     rows.push({
@@ -75,7 +64,7 @@ export function parseParserConfig(content: string): ConfigFile {
       ast_node_type,
       module,
       originalLine: trimmed,
-      lineNumber,
+      lineNumber: index + 1,
     });
   });
 
@@ -94,33 +83,28 @@ export function parseLexerConfig(content: string): ConfigFile {
   const lines = content.split('\n');
   const rows: LexerConfigRow[] = [];
   const comments = new Map<number, string>();
-  
+
   lines.forEach((line, index) => {
     const trimmed = line.trim();
-    
-    // Сохраняем комментарии
+
     if (trimmed.startsWith('#')) {
       comments.set(index + 1, trimmed);
       return;
     }
-    
-    // Пропускаем пустые строки
+
     if (!trimmed) return;
-    
-    // Парсим строку формата: priority|base64_encoded_pattern|lexeme_type|ignore_flag
+
     const parts = trimmed.split('|');
     if (parts.length !== 4) {
-      throw new Error(`Некорректный формат строки ${index + 1}: ${trimmed}`);
+      throw new Error(`Invalid line format ${index + 1}: ${trimmed}`);
     }
-    
+
     const priority = parseFloat(parts[0]);
     const encodedPattern = parts[1];
     const lexeme_type = parts[2];
     const ignore_flag = parts[3].toLowerCase() === 'true';
-    
-    // Декодируем паттерн из base64
     const decodedPattern = decodeBase64Pattern(encodedPattern);
-    
+
     rows.push({
       id: `lexer-${index}-${Date.now()}`,
       priority,
@@ -132,7 +116,7 @@ export function parseLexerConfig(content: string): ConfigFile {
       lineNumber: index + 1,
     });
   });
-  
+
   return {
     type: ConfigType.LEXER,
     rows,
@@ -144,27 +128,28 @@ export function parseLexerConfig(content: string): ConfigFile {
   };
 }
 
-export function formatToOriginal(config: ConfigFile): string {
-  const lines: string[] = [];
-
-  // Преобразуем comments из объекта обратно в Map, если нужно
-  let commentsMap: Map<number, string>;
-
-  if (config.comments && typeof config.comments === 'object') {
-    if (config.comments instanceof Map) {
-      commentsMap = config.comments;
-    } else {
-      // Если это обычный объект, конвертируем в Map
-      commentsMap = new Map();
-      Object.entries(config.comments).forEach(([key, value]) => {
-        commentsMap.set(parseInt(key), String(value));
-      });
+function normalizeCommentsMap(comments: ConfigFile['comments']): Map<number, string> {
+  if (comments && typeof comments === 'object') {
+    if (comments instanceof Map) {
+      return comments;
     }
-  } else {
-    commentsMap = new Map();
+
+    const map = new Map<number, string>();
+    Object.entries(comments).forEach(([key, value]) => {
+      map.set(parseInt(key, 10), String(value));
+    });
+
+    return map;
   }
 
-  // Собираем все строки в правильном порядке
+  return new Map<number, string>();
+}
+
+export function formatToOriginal(config: ConfigFile): string {
+  const lines: string[] = [];
+  const commentsMap = normalizeCommentsMap(config.comments);
+  const rowsByLine = new Map(config.rows.map(row => [row.lineNumber, row]));
+
   const allLineNumbers = [
     ...config.rows.map(row => row.lineNumber),
     ...Array.from(commentsMap.keys()),
@@ -177,20 +162,17 @@ export function formatToOriginal(config: ConfigFile): string {
   const maxLineNumber = Math.max(...allLineNumbers);
 
   for (let lineNum = 1; lineNum <= maxLineNumber; lineNum++) {
-    // Сначала добавляем комментарии для этой строки
     if (commentsMap.has(lineNum)) {
       lines.push(commentsMap.get(lineNum)!);
     }
 
-    // Затем добавляем строку конфигурации (если есть)
-    const row = config.rows.find(r => r.lineNumber === lineNum);
+    const row = rowsByLine.get(lineNum);
     if (row) {
       if (config.type === ConfigType.PARSER) {
         const parserRow = row as ParserConfigRow;
         lines.push(`${parserRow.priority.toFixed(2)}|${parserRow.type_full_name}|${parserRow.instance_hash}|${parserRow.ast_node_type}`);
       } else {
         const lexerRow = row as LexerConfigRow;
-        // Используем оригинальную encodedPattern или кодируем заново
         const encodedPattern = lexerRow.encodedPattern || encodeBase64Pattern(lexerRow.decodedPattern);
         lines.push(`${lexerRow.priority.toFixed(2)}|${encodedPattern}|${lexerRow.lexeme_type}|${lexerRow.ignore_flag ? 'True' : 'False'}`);
       }

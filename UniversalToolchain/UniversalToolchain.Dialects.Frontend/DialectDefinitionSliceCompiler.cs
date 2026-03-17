@@ -24,6 +24,11 @@ public sealed class DialectDefinitionSliceCompiler : IAbstractIrCompiler<Dialect
             Thrower.ArgumentNull(nameof(input));
         }
 
+        if (DialectCompilationTokenContext.TryTake(out var tokensFromPipeline))
+        {
+            return _sliceParser.Parse(tokensFromPipeline);
+        }
+
         var lexer = CreateLexer();
         var tokens = lexer.Lexemize(input.SourceText);
         return _sliceParser.Parse(tokens);

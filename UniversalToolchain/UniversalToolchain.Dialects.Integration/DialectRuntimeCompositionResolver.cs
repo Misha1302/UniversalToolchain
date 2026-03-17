@@ -35,22 +35,16 @@ public sealed class DialectRuntimeCompositionResolver : IDialectRuntimeCompositi
         }
 
         var enabledBackends = new List<RuntimeBackendDescriptor>();
-        foreach (var backendName in buildPlan.EnabledBackends.OrderBy(x => x, StringComparer.Ordinal))
+        var enabledBackendTargets = new HashSet<DialectBackendTarget>();
+        foreach (var backendTarget in buildPlan.EnabledBackends.OrderBy(DialectBackendTargetText.ToText, StringComparer.Ordinal))
         {
-            if (!TryParseBackendTarget(backendName, out var target))
-            {
-                diagnostics.Add(new DialectDiagnostic(
-                    "R005",
-                    $"Build plan contains unsupported backend token '{backendName}'.",
-                    DialectDiagnosticSeverity.Error));
-                continue;
-            }
+            enabledBackendTargets.Add(backendTarget);
 
-            if (!registry.Backends.TryGetValue(target, out var backendDescriptor))
+            if (!registry.Backends.TryGetValue(backendTarget, out var backendDescriptor))
             {
                 diagnostics.Add(new DialectDiagnostic(
                     "R002",
-                    $"Runtime backend descriptor '{backendName}' was not registered.",
+                    $"Runtime backend descriptor '{DialectBackendTargetText.ToText(backendTarget)}' was not registered.",
                     DialectDiagnosticSeverity.Error));
                 continue;
             }
@@ -61,6 +55,9 @@ public sealed class DialectRuntimeCompositionResolver : IDialectRuntimeCompositi
         var enabledOptimizers = new List<RuntimeOptimizerDescriptor>();
         foreach (var optimizer in buildPlan.OptimizerDirectives.Where(x => x.Enabled).OrderBy(x => x.Name, StringComparer.Ordinal).ThenBy(x => x.Target))
         {
+            if (!IsDirectiveTargetEnabled(optimizer.Target, enabledBackendTargets))
+                continue;
+
             if (!registry.Optimizers.TryGetValue(optimizer.Name, out var descriptor))
             {
                 diagnostics.Add(new DialectDiagnostic(
@@ -76,6 +73,9 @@ public sealed class DialectRuntimeCompositionResolver : IDialectRuntimeCompositi
         var allowedIntrinsics = new List<RuntimeIntrinsicDescriptor>();
         foreach (var intrinsic in buildPlan.IntrinsicDirectives.Where(x => x.Allowed).OrderBy(x => x.Name, StringComparer.Ordinal).ThenBy(x => x.Target))
         {
+            if (!IsDirectiveTargetEnabled(intrinsic.Target, enabledBackendTargets))
+                continue;
+
             if (!TryResolveIntrinsic(registry, intrinsic.Name, intrinsic.Target, out var resolved))
             {
                 diagnostics.Add(new DialectDiagnostic(
@@ -99,6 +99,16 @@ public sealed class DialectRuntimeCompositionResolver : IDialectRuntimeCompositi
             validation);
     }
 
+    private static bool IsDirectiveTargetEnabled(
+        DialectBackendTarget target,
+        IReadOnlySet<DialectBackendTarget> enabledBackendTargets)
+    {
+        if (target == DialectBackendTarget.Any)
+            return enabledBackendTargets.Count > 0;
+
+        return enabledBackendTargets.Contains(target);
+    }
+
     private static bool TryResolveIntrinsic(
         DialectRuntimeDescriptorRegistry registry,
         string name,
@@ -115,8 +125,4 @@ public sealed class DialectRuntimeCompositionResolver : IDialectRuntimeCompositi
         return false;
     }
 
-    private static bool TryParseBackendTarget(string backendName, out DialectBackendTarget target)
-    {
-        return DialectBackendTargetText.TryParse(backendName, allowAny: false, out target);
-    }
 }

@@ -8,8 +8,6 @@ namespace UniversalToolchain.Dialects.Frontend;
 
 public sealed class DialectDslFrontendModule : IFrontendCoreModule
 {
-    private readonly DialectDefinitionSliceParser _sliceParser = new();
-
     public void InitLexer(ILexer lexer)
     {
         if (lexer == null)
@@ -20,7 +18,6 @@ public sealed class DialectDslFrontendModule : IFrontendCoreModule
         lexer.AddLexemes(DialectDslLexemeRegistry.Registrations);
     }
 
-
     public void InitParser(IParser parser)
     {
         if (parser == null)
@@ -30,6 +27,7 @@ public sealed class DialectDslFrontendModule : IFrontendCoreModule
 
         parser.AddNodeCreators(DialectDslParserNodeRegistry.Registrations);
     }
+
     public AstNode ProcessAst(AstNode astRoot)
     {
         if (astRoot == null)
@@ -37,7 +35,7 @@ public sealed class DialectDslFrontendModule : IFrontendCoreModule
             Thrower.ArgumentNull(nameof(astRoot));
         }
 
-        _sliceParser.Parse(astRoot);
+        // Dialect slice compilation consumes captured lexer tokens in compiler stage.
         return astRoot;
     }
 

@@ -8,38 +8,39 @@ namespace UniversalToolchain.Dialects.Abstractions;
 /// </summary>
 public sealed class BackendPolicy
 {
-    private readonly ReadOnlyCollection<string> _enabledBackends;
-    private readonly ReadOnlyCollection<string> _disabledBackends;
+    private readonly ReadOnlyCollection<DialectBackendTarget> _enabledBackends;
+    private readonly ReadOnlyCollection<DialectBackendTarget> _disabledBackends;
 
-    public BackendPolicy(IEnumerable<string>? enabledBackends = null, IEnumerable<string>? disabledBackends = null)
+    public BackendPolicy(IEnumerable<DialectBackendTarget>? enabledBackends = null, IEnumerable<DialectBackendTarget>? disabledBackends = null)
     {
         var enabled = NormalizeNames(enabledBackends, nameof(enabledBackends));
         var disabled = NormalizeNames(disabledBackends, nameof(disabledBackends));
 
-        var overlap = enabled.Intersect(disabled, StringComparer.Ordinal).FirstOrDefault();
-        if (overlap != null)
-            Thrower.Argument(nameof(disabledBackends), $"Backend '{overlap}' cannot be both enabled and disabled.");
+        var enabledSet = new HashSet<DialectBackendTarget>(enabled);
+        var overlap = disabled.FirstOrDefault(enabledSet.Contains);
+        if (enabledSet.Contains(overlap))
+            Thrower.Argument(nameof(disabledBackends), $"Backend '{DialectBackendTargetText.ToText(overlap)}' cannot be both enabled and disabled.");
 
-        _enabledBackends = new ReadOnlyCollection<string>(enabled);
-        _disabledBackends = new ReadOnlyCollection<string>(disabled);
+        _enabledBackends = new ReadOnlyCollection<DialectBackendTarget>(enabled);
+        _disabledBackends = new ReadOnlyCollection<DialectBackendTarget>(disabled);
     }
 
-    public IReadOnlyList<string> EnabledBackends => _enabledBackends;
+    public IReadOnlyList<DialectBackendTarget> EnabledBackends => _enabledBackends;
 
-    public IReadOnlyList<string> DisabledBackends => _disabledBackends;
+    public IReadOnlyList<DialectBackendTarget> DisabledBackends => _disabledBackends;
 
-    private static List<string> NormalizeNames(IEnumerable<string>? values, string paramName)
+    private static List<DialectBackendTarget> NormalizeNames(IEnumerable<DialectBackendTarget>? values, string paramName)
     {
         if (values == null)
             return [];
 
-        var unique = new HashSet<string>(StringComparer.Ordinal);
-        var normalized = new List<string>();
+        var unique = new HashSet<DialectBackendTarget>();
+        var normalized = new List<DialectBackendTarget>();
 
         foreach (var value in values)
         {
-            if (string.IsNullOrWhiteSpace(value))
-                Thrower.Argument(paramName, "Policy entries must not be null or empty.");
+            if (!Enum.IsDefined(value) || value == DialectBackendTarget.Any)
+                Thrower.Argument(paramName, "Policy entries must be defined backend targets without 'any'.");
 
             if (!unique.Add(value))
                 continue;

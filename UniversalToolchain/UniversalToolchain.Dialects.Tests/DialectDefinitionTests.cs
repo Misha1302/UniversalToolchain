@@ -67,7 +67,7 @@ public class DialectDefinitionTests
         return new DialectDefinition(
             name,
             new ModulePolicy(["Arithmetic"], ["Interop"]),
-            new BackendPolicy(["cil"], ["interp"]),
+            new BackendPolicy([DialectBackendTarget.Cil], [DialectBackendTarget.Interpreter]),
             new IntrinsicPolicy(["add_i32"], ["unsafe_reflect"]),
             new OptimizerPolicy(["const_fold"], ["unsafe_inline"]),
             new SecurityPolicy(SecurityProfile.Restricted),

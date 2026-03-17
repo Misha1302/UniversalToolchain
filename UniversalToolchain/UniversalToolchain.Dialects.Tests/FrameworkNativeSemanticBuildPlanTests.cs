@@ -1,6 +1,8 @@
 using UniversalToolchain.Dialects.Core;
 using UniversalToolchain.Dialects.Frontend;
+using UniversalToolchain.Dialects.Parsing;
 
+using UniversalToolchain.Dialects.Abstractions;
 namespace UniversalToolchain.Dialects.Tests;
 
 public class FrameworkNativeSemanticBuildPlanTests
@@ -90,8 +92,8 @@ public class FrameworkNativeSemanticBuildPlanTests
         {
             Assert.That(first.CanBuild, Is.True);
             Assert.That(first.OrderedModules, Is.EqualTo(new[] { "A", "B" }));
-            Assert.That(first.EnabledBackends, Is.EqualTo(new[] { "interpreter" }));
-            Assert.That(first.DisabledBackends, Is.EqualTo(new[] { "cil" }));
+            Assert.That(first.EnabledBackends, Is.EqualTo(new[] { DialectBackendTarget.Interpreter }));
+            Assert.That(first.DisabledBackends, Is.EqualTo(new[] { DialectBackendTarget.Cil }));
             Assert.That(first.Capabilities.Select(x => x.Key), Is.EqualTo(new[] { "cap1", "cap2" }));
 
             Assert.That(first.OrderedModules, Is.EqualTo(second.OrderedModules));
@@ -106,6 +108,47 @@ public class FrameworkNativeSemanticBuildPlanTests
         });
     }
 
+
+
+    [Test]
+    public void BuildPlan_FrameworkPipelineAndDslParser_ProduceEquivalentSemantics()
+    {
+        var source =
+            """
+            dialect D
+            use B
+            use A
+            before A -> B
+            backend interpreter enable
+            backend cil disable
+            allow intrinsic "i1" for any
+            enable optimizer O1 for interpreter
+            security trusted
+            capability cap2 = false
+            capability cap1 = true
+            """;
+
+        var frameworkPlan = new DialectCompiledDialectBuildPlanBuilder().Build(Compile(source));
+
+        var parserResult = new DialectDefinitionParser().Parse(source);
+        Assert.That(parserResult.IsSuccess, Is.True);
+
+        var parserPlan = new DialectBuildPlanBuilder().Build(parserResult.Document!);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(frameworkPlan.OrderedModules, Is.EqualTo(parserPlan.OrderedModules));
+            Assert.That(frameworkPlan.EnabledBackends, Is.EqualTo(parserPlan.EnabledBackends));
+            Assert.That(frameworkPlan.DisabledBackends, Is.EqualTo(parserPlan.DisabledBackends));
+            Assert.That(frameworkPlan.IntrinsicDirectives.Select(x => (x.Name, x.Allowed, x.Target)),
+                Is.EqualTo(parserPlan.IntrinsicDirectives.Select(x => (x.Name, x.Allowed, x.Target))));
+            Assert.That(frameworkPlan.OptimizerDirectives.Select(x => (x.Name, x.Enabled, x.Target)),
+                Is.EqualTo(parserPlan.OptimizerDirectives.Select(x => (x.Name, x.Enabled, x.Target))));
+            Assert.That(frameworkPlan.SecurityProfile, Is.EqualTo(parserPlan.SecurityProfile));
+            Assert.That(frameworkPlan.Capabilities.Select(x => (x.Key, x.Value)),
+                Is.EqualTo(parserPlan.Capabilities.Select(x => (x.Key, x.Value))));
+        });
+    }
 
     [Test]
     public void BuildPlan_BackendContradictionDiagnostic_HasClearMessage()

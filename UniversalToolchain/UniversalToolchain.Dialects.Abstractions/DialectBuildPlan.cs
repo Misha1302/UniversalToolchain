@@ -9,8 +9,8 @@ namespace UniversalToolchain.Dialects.Abstractions;
 public sealed class DialectBuildPlan
 {
     private readonly ReadOnlyCollection<string> _orderedModules;
-    private readonly ReadOnlyCollection<string> _enabledBackends;
-    private readonly ReadOnlyCollection<string> _disabledBackends;
+    private readonly ReadOnlyCollection<DialectBackendTarget> _enabledBackends;
+    private readonly ReadOnlyCollection<DialectBackendTarget> _disabledBackends;
     private readonly ReadOnlyCollection<IntrinsicBuildDirective> _intrinsicDirectives;
     private readonly ReadOnlyCollection<OptimizerBuildDirective> _optimizerDirectives;
     private readonly ReadOnlyDictionary<string, bool> _capabilities;
@@ -19,8 +19,8 @@ public sealed class DialectBuildPlan
         string name,
         string? version,
         IEnumerable<string> orderedModules,
-        IEnumerable<string> enabledBackends,
-        IEnumerable<string> disabledBackends,
+        IEnumerable<DialectBackendTarget> enabledBackends,
+        IEnumerable<DialectBackendTarget> disabledBackends,
         IEnumerable<IntrinsicBuildDirective> intrinsicDirectives,
         IEnumerable<OptimizerBuildDirective> optimizerDirectives,
         SecurityProfile? securityProfile,
@@ -36,8 +36,8 @@ public sealed class DialectBuildPlan
         Name = name;
         Version = version;
         _orderedModules = new ReadOnlyCollection<string>(Snapshot(orderedModules, nameof(orderedModules)));
-        _enabledBackends = new ReadOnlyCollection<string>(Snapshot(enabledBackends, nameof(enabledBackends)));
-        _disabledBackends = new ReadOnlyCollection<string>(Snapshot(disabledBackends, nameof(disabledBackends)));
+        _enabledBackends = new ReadOnlyCollection<DialectBackendTarget>(Snapshot(enabledBackends, nameof(enabledBackends)));
+        _disabledBackends = new ReadOnlyCollection<DialectBackendTarget>(Snapshot(disabledBackends, nameof(disabledBackends)));
         _intrinsicDirectives = new ReadOnlyCollection<IntrinsicBuildDirective>(Snapshot(intrinsicDirectives, nameof(intrinsicDirectives)));
         _optimizerDirectives = new ReadOnlyCollection<OptimizerBuildDirective>(Snapshot(optimizerDirectives, nameof(optimizerDirectives)));
         _capabilities = new ReadOnlyDictionary<string, bool>(SnapshotDictionary(capabilities));
@@ -51,9 +51,9 @@ public sealed class DialectBuildPlan
 
     public IReadOnlyList<string> OrderedModules => _orderedModules;
 
-    public IReadOnlyList<string> EnabledBackends => _enabledBackends;
+    public IReadOnlyList<DialectBackendTarget> EnabledBackends => _enabledBackends;
 
-    public IReadOnlyList<string> DisabledBackends => _disabledBackends;
+    public IReadOnlyList<DialectBackendTarget> DisabledBackends => _disabledBackends;
 
     public IReadOnlyList<IntrinsicBuildDirective> IntrinsicDirectives => _intrinsicDirectives;
 

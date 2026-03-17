@@ -2,6 +2,7 @@ using ATarget = UniversalToolchain.Dialects.Abstractions.DialectBackendTarget;
 using UniversalToolchain.Dialects.Core;
 using UniversalToolchain.Dialects.Parsing;
 
+using UniversalToolchain.Dialects.Abstractions;
 namespace UniversalToolchain.Dialects.Tests;
 
 public class SemanticValidationTests
@@ -182,7 +183,7 @@ public class SemanticValidationTests
             Assert.That(plan.CanBuild, Is.True);
             Assert.That(plan.Name, Is.EqualTo("Valid"));
             Assert.That(plan.OrderedModules, Is.EqualTo(new[] { "A", "B" }));
-            Assert.That(plan.EnabledBackends, Is.EqualTo(new[] { "cil" }));
+            Assert.That(plan.EnabledBackends, Is.EqualTo(new[] { DialectBackendTarget.Cil }));
             Assert.That(plan.IntrinsicDirectives, Has.Count.EqualTo(1));
             Assert.That(plan.OptimizerDirectives, Has.Count.EqualTo(1));
         });

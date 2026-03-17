@@ -91,42 +91,13 @@ public class RuntimeCompositionResolverTests
 
 
     [Test]
-    public void Resolve_UnsupportedBackendToken_AddsDiagnostic()
-    {
-        var plan = new DialectBuildPlan(
-            "dialect",
-            "1",
-            ["A"],
-            ["wasm"],
-            [],
-            [],
-            [],
-            SecurityProfile.Trusted,
-            [],
-            new DialectValidationResult());
-
-        var registry = new DialectRuntimeDescriptorRegistryBuilder()
-            .RegisterModule(new RuntimeModuleDescriptor("A", typeof(FakeFrontendModule)))
-            .Build();
-
-        var resolver = new DialectRuntimeCompositionResolver();
-        var composition = resolver.Resolve(plan, registry);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(composition.IsResolved, Is.False);
-            Assert.That(composition.Diagnostics.Diagnostics.Any(x => x.Code == "R005"), Is.True);
-        });
-    }
-
-    [Test]
     public void Resolve_DualBackendModelCompatibility_ResolvesInterpreterAndCil()
     {
         var plan = new DialectBuildPlan(
             "dialect",
             "1",
             ["A"],
-            ["cil", "interpreter"],
+            [DialectBackendTarget.Cil, DialectBackendTarget.Interpreter],
             [],
             [new IntrinsicBuildDirective("intrinsic-a", true, DialectBackendTarget.Any)],
             [new OptimizerBuildDirective("opt-a", true, DialectBackendTarget.Any)],
@@ -152,13 +123,76 @@ public class RuntimeCompositionResolverTests
         });
     }
 
+
+    [Test]
+    public void Resolve_DisabledBackendOptimizerDirective_IsIgnored()
+    {
+        var plan = new DialectBuildPlan(
+            "dialect",
+            "1",
+            ["A"],
+            [DialectBackendTarget.Interpreter],
+            [],
+            [],
+            [new OptimizerBuildDirective("opt-cil", true, DialectBackendTarget.Cil)],
+            SecurityProfile.Trusted,
+            [],
+            new DialectValidationResult());
+
+        var registry = new DialectRuntimeDescriptorRegistryBuilder()
+            .RegisterModule(new RuntimeModuleDescriptor("A", typeof(FakeFrontendModule)))
+            .RegisterBackend(new RuntimeBackendDescriptor(DialectBackendTarget.Interpreter, "InterpreterBackend"))
+            .Build();
+
+        var resolver = new DialectRuntimeCompositionResolver();
+        var composition = resolver.Resolve(plan, registry);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(composition.IsResolved, Is.True);
+            Assert.That(composition.EnabledOptimizers, Is.Empty);
+            Assert.That(composition.Diagnostics.Diagnostics.Any(x => x.Code == "R003"), Is.False);
+        });
+    }
+
+    [Test]
+    public void Resolve_DisabledBackendIntrinsicDirective_IsIgnored()
+    {
+        var plan = new DialectBuildPlan(
+            "dialect",
+            "1",
+            ["A"],
+            [DialectBackendTarget.Interpreter],
+            [],
+            [new IntrinsicBuildDirective("intrinsic-cil", true, DialectBackendTarget.Cil)],
+            [],
+            SecurityProfile.Trusted,
+            [],
+            new DialectValidationResult());
+
+        var registry = new DialectRuntimeDescriptorRegistryBuilder()
+            .RegisterModule(new RuntimeModuleDescriptor("A", typeof(FakeFrontendModule)))
+            .RegisterBackend(new RuntimeBackendDescriptor(DialectBackendTarget.Interpreter, "InterpreterBackend"))
+            .Build();
+
+        var resolver = new DialectRuntimeCompositionResolver();
+        var composition = resolver.Resolve(plan, registry);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(composition.IsResolved, Is.True);
+            Assert.That(composition.AllowedIntrinsics, Is.Empty);
+            Assert.That(composition.Diagnostics.Diagnostics.Any(x => x.Code == "R004"), Is.False);
+        });
+    }
+
     private static DialectBuildPlan CreateValidPlan()
     {
         return new DialectBuildPlan(
             "dialect",
             "1",
             ["A", "B"],
-            ["interpreter"],
+            [DialectBackendTarget.Interpreter],
             [],
             [new IntrinsicBuildDirective("intrinsic-a", true, DialectBackendTarget.Any)],
             [new OptimizerBuildDirective("opt-a", true, DialectBackendTarget.Any)],

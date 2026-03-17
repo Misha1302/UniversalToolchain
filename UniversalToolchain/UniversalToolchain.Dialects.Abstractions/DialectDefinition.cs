@@ -6,7 +6,7 @@ namespace UniversalToolchain.Dialects.Abstractions;
 /// <summary>
 /// Represents an immutable dialect definition source model for the v1 DSL surface.
 /// </summary>
-public sealed class DialectDefinition : IDialectDefinition
+public sealed class DialectDefinition
 {
     private readonly ReadOnlyCollection<OrderRule> _orderRules;
 

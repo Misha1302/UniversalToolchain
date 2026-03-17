@@ -1,4 +1,5 @@
 using ExceptionsManager;
+using UniversalToolchain.Dialects.Abstractions;
 
 namespace UniversalToolchain.Dialects.Frontend;
 

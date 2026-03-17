@@ -7,7 +7,7 @@ namespace UniversalToolchain.Dialects.Core;
 /// <summary>
 /// Default semantic validator adapter backed by build-plan builder diagnostics.
 /// </summary>
-public sealed class DialectPolicyValidator : IDialectPolicyValidator
+public sealed class DialectPolicyValidator
 {
     private readonly IDialectBuildPlanBuilder _buildPlanBuilder;
 

@@ -61,7 +61,7 @@ public sealed class DialectFrameworkDemoReport
             sb.AppendLine("Build plan:");
             sb.AppendLine($"  Dialect: {result.BuildPlan.Name}");
             sb.AppendLine($"  Ordered modules: {JoinPreserveOrder(result.BuildPlan.OrderedModules)}");
-            sb.AppendLine($"  Enabled backends: {JoinSorted(result.BuildPlan.EnabledBackends)}");
+            sb.AppendLine($"  Enabled backends: {JoinSorted(result.BuildPlan.EnabledBackends.Select(DialectBackendTargetText.ToText))}");
         }
 
         if (result.RuntimeComposition != null)

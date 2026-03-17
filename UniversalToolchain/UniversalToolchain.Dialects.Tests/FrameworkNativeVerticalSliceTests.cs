@@ -3,6 +3,7 @@ using BasicCodeTranslator;
 using BasicCore.Core;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
+using BasicCore.Registration;
 using BasicCore.TranslatorWrapper;
 using BasicLexer.Core;
 using BasicParser.Core;
@@ -11,6 +12,7 @@ using UniversalIntermediateRepresentation;
 using BasicCore.Compilation;
 using UniversalToolchain.Dialects.Frontend;
 
+using UniversalToolchain.Dialects.Abstractions;
 namespace UniversalToolchain.Dialects.Tests;
 
 public class FrameworkNativeVerticalSliceTests
@@ -167,6 +169,31 @@ public class FrameworkNativeVerticalSliceTests
             Assert.That(first.SecurityProfile, Is.EqualTo(second.SecurityProfile));
             Assert.That(first.CapabilityDirectives.Select(x => (x.Name, x.Value)),
                 Is.EqualTo(second.CapabilityDirectives.Select(x => (x.Name, x.Value))));
+        });
+    }
+
+
+    [Test]
+    public void SliceCompiler_UsesPipelineTokenContext_WithoutFallbackRelexing()
+    {
+        var compiler = new DialectDefinitionSliceCompiler();
+        var lexer = new BasicLexerImpl(new LexerConfiguration([]));
+        lexer.AddLexemes(DialectDslLexemeRegistry.Registrations);
+        var tokens = lexer.Lexemize("dialect FromContext\nuse Arithmetic\n");
+
+        DialectCompilationTokenContext.Set(tokens);
+
+        var result = compiler.Compile(
+            new AbstractIR(),
+            new CompilationInput
+            {
+                SourceText = "%%% this is not valid dialect text %%%"
+            });
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Name, Is.EqualTo("FromContext"));
+            Assert.That(result.UseModules, Is.EqualTo(new[] { "Arithmetic" }));
         });
     }
 

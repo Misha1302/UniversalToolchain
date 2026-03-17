@@ -102,7 +102,7 @@ public class DialectInspectWorkflowTests
             "dialect",
             "1",
             ["Z", "A"],
-            ["interpreter"],
+            [DialectBackendTarget.Interpreter],
             [],
             [],
             [],
