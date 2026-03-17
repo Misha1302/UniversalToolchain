@@ -31,9 +31,9 @@ public class BuildPlanCollaboratorsTests
     public void OrderConstraintMapper_MapsCompiledDirectiveKindsToSemanticKinds()
     {
         var constraints = DialectOrderConstraintMapper.FromCompiledDirectives([
-            new DialectOrderDirective("requires", "A", "B"),
-            new DialectOrderDirective("before", "C", "D"),
-            new DialectOrderDirective("after", "E", "F")
+            new DialectOrderDirective(DialectOrderDirectiveKind.Requires, "A", "B"),
+            new DialectOrderDirective(DialectOrderDirectiveKind.Before, "C", "D"),
+            new DialectOrderDirective(DialectOrderDirectiveKind.After, "E", "F")
         ]);
 
         Assert.That(

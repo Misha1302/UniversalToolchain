@@ -4,13 +4,8 @@ namespace UniversalToolchain.Dialects.Frontend;
 
 public sealed class DialectOrderDirective
 {
-    public DialectOrderDirective(string directive, string sourceModule, string targetModule)
+    public DialectOrderDirective(DialectOrderDirectiveKind kind, string sourceModule, string targetModule)
     {
-        if (string.IsNullOrWhiteSpace(directive))
-        {
-            Thrower.Argument(nameof(directive), "Directive name must not be empty.");
-        }
-
         if (string.IsNullOrWhiteSpace(sourceModule))
         {
             Thrower.Argument(nameof(sourceModule), "Source module must not be empty.");
@@ -21,12 +16,20 @@ public sealed class DialectOrderDirective
             Thrower.Argument(nameof(targetModule), "Target module must not be empty.");
         }
 
-        Directive = directive;
+        Kind = kind;
         SourceModule = sourceModule;
         TargetModule = targetModule;
     }
 
-    public string Directive { get; }
+    public DialectOrderDirectiveKind Kind { get; }
+
+    public string Directive => Kind switch
+    {
+        DialectOrderDirectiveKind.Requires => "requires",
+        DialectOrderDirectiveKind.Before => "before",
+        DialectOrderDirectiveKind.After => "after",
+        _ => Thrower.InvalidOpEx<string>("Unknown order directive kind.")
+    };
 
     public string SourceModule { get; }
 

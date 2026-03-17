@@ -1,6 +1,9 @@
+using AbstractIrConverters;
+using BasicCodeTranslator;
 using BasicCore.LexerWrapper;
 using BasicCore.Registration;
 using BasicCore.ParserWrapper;
+using BasicCore.TranslatorWrapper;
 using BasicParser.Core;
 using BasicLexer.Core;
 using CommonExceptions;
@@ -62,12 +65,41 @@ public class FrontendLayerServiceTests
         });
     }
 
+
+    [Test]
+    public void FrontendModule_AstTranslator_EmitsDialectSliceAnnotationBytecode()
+    {
+        var module = new DialectDslFrontendModule();
+        var parser = new BasicParserImpl(new ParserConfiguration([]));
+        var lexer = new BasicLexerImpl(new LexerConfiguration([]));
+        var translator = new BasicAstToBytecodeTranslatorImpl(new BytecodeTranslatorConfiguration([]));
+
+        module.InitLexer(lexer);
+        module.InitParser(parser);
+        module.InitAstTranslator(translator);
+
+        var ast = parser.Parse(lexer.Lexemize("dialect Tiny\nuse Arithmetic\n"));
+        var bytecode = translator.Translate(module.ProcessAst(ast));
+        var ir = new BytecodeToAbstractIrConverterImpl().Translate(bytecode);
+        var slice = DialectDefinitionSliceAirReader.Read(ir);
+
+        Assert.That(slice.Name, Is.EqualTo("Tiny"));
+        Assert.That(slice.UseModules, Is.EqualTo(new[] { "Arithmetic" }));
+    }
+
     [Test]
     public void DefinitionSliceParser_InvalidHeader_ThrowsParserException()
     {
         var parser = new DialectDefinitionSliceParser();
 
-        var ex = Assert.Throws<ParserException>(() => parser.Parse(Lex("use Arithmetic\n")));
+        var parserCore = new BasicParserImpl(new ParserConfiguration([]));
+        var module = new DialectDslFrontendModule();
+        var lexer = new BasicLexerImpl(new LexerConfiguration([]));
+        module.InitLexer(lexer);
+        module.InitParser(parserCore);
+        var ast = parserCore.Parse(lexer.Lexemize("use Arithmetic\n"));
+
+        var ex = Assert.Throws<ParserException>(() => parser.Parse(ast));
 
         Assert.That(ex!.Message, Does.Contain("dialect <Name>"));
     }

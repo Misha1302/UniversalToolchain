@@ -114,8 +114,29 @@ public sealed class DialectDirectiveLineParser
             DialectDefinitionSliceParseErrors.Fail("Expected order directive format: requires|before|after <Left> -> <Right>.", line[0]);
         }
 
-        directives.Add(new DialectOrderDirective(line[0].Text, line[1].Text, line[3].Text));
+        directives.Add(new DialectOrderDirective(ParseOrderDirectiveKind(line[0]), line[1].Text, line[3].Text));
         return true;
+    }
+
+    private static DialectOrderDirectiveKind ParseOrderDirectiveKind(LexemeValue token)
+    {
+        if (DialectLexemeTags.IsTag(token, DialectLexemeTags.RequiresKeyword))
+        {
+            return DialectOrderDirectiveKind.Requires;
+        }
+
+        if (DialectLexemeTags.IsTag(token, DialectLexemeTags.BeforeKeyword))
+        {
+            return DialectOrderDirectiveKind.Before;
+        }
+
+        if (DialectLexemeTags.IsTag(token, DialectLexemeTags.AfterKeyword))
+        {
+            return DialectOrderDirectiveKind.After;
+        }
+
+        DialectDefinitionSliceParseErrors.Fail("Order directive must be requires|before|after.", token);
+        return DialectOrderDirectiveKind.Requires;
     }
 
     private static bool TryParseBackendDirective(IReadOnlyList<LexemeValue> line, List<DialectBackendDirective> directives)

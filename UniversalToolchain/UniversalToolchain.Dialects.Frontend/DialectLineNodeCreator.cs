@@ -41,9 +41,14 @@ public sealed class DialectLineNodeCreator : IAstNodeCreator
             return true;
         }
 
-        if (childIndex > 0 && !IsNewLineToken(scope.Children[childIndex - 1]))
+        if (childIndex > 0)
         {
-            return false;
+            var previousNode = scope.Children[childIndex - 1];
+            var previousIsBoundary = IsNewLineToken(previousNode) || previousNode.NodeType == AstNodeType;
+            if (!previousIsBoundary)
+            {
+                return false;
+            }
         }
 
         var end = childIndex;

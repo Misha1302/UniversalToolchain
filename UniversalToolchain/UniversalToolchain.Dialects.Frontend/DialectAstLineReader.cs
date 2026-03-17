@@ -16,23 +16,29 @@ public static class DialectAstLineReader
             Thrower.ArgumentNull(nameof(astRoot));
         }
 
-        var lines = astRoot.Children
+        var lines = EnumerateNodes(astRoot)
             .Where(node => node.NodeType == DialectLineType)
             .Select(ReadLine)
             .ToList();
 
         if (lines.Count == 0)
         {
-            var tokens = astRoot.Children
-                .Select(node => node.LexemeValue)
-                .Where(lexeme => lexeme != null)
-                .Select(lexeme => lexeme!)
-                .ToList();
-
-            return DialectTokenLineSplitter.Split(tokens);
+            DialectDefinitionSliceParseErrors.Fail("Dialect parser did not produce any directive line nodes.", null);
         }
 
         return lines;
+    }
+
+    private static IEnumerable<AstNode> EnumerateNodes(AstNode root)
+    {
+        yield return root;
+        foreach (var child in root.Children)
+        {
+            foreach (var nested in EnumerateNodes(child))
+            {
+                yield return nested;
+            }
+        }
     }
 
     private static List<LexemeValue> ReadLine(AstNode lineNode)

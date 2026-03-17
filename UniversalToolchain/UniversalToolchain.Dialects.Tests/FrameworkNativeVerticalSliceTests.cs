@@ -8,6 +8,7 @@ using BasicCore.TranslatorWrapper;
 using BasicLexer.Core;
 using BasicParser.Core;
 using CommonExceptions;
+using IntermediateRepresentationAbstractions;
 using UniversalIntermediateRepresentation;
 using BasicCore.Compilation;
 using UniversalToolchain.Dialects.Frontend;
@@ -174,56 +175,39 @@ public class FrameworkNativeVerticalSliceTests
 
 
     [Test]
-    public void SliceCompiler_UsesPipelineTokenContext_WithoutFallbackRelexing()
+    public void SliceCompiler_ReadsDialectSliceFromAirAnnotation()
     {
         var compiler = new DialectDefinitionSliceCompiler();
-        var lexer = new BasicLexerImpl(new LexerConfiguration([]));
-        lexer.AddLexemes(DialectDslLexemeRegistry.Registrations);
-        var tokens = lexer.Lexemize("dialect FromContext\nuse Arithmetic\n");
+        var ir = new AbstractIR();
+        var expected = new DialectDefinitionSlice(
+            "Tiny",
+            ["Arithmetic"],
+            [],
+            [new DialectOrderDirective(DialectOrderDirectiveKind.Requires, "Arithmetic", "Scopes")],
+            [new DialectBackendDirective(DialectBackendTarget.Interpreter, true)],
+            [],
+            [],
+            null,
+            []);
+        ir.AppendInstructions([new Instruction(UOpCode.Annotate, metadata: [expected])]);
 
-        DialectCompilationTokenContext.Set(tokens);
+        var result = compiler.Compile(ir, new CompilationInput { SourceText = "ignored" });
 
-        var result = compiler.Compile(
-            new AbstractIR(),
-            new CompilationInput
-            {
-                SourceText = "%%% this is not valid dialect text %%%"
-            });
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.Name, Is.EqualTo("FromContext"));
-            Assert.That(result.UseModules, Is.EqualTo(new[] { "Arithmetic" }));
-        });
+        Assert.That(result.Name, Is.EqualTo("Tiny"));
+        Assert.That(result.UseModules, Is.EqualTo(new[] { "Arithmetic" }));
     }
 
     [Test]
-    public void SliceCompiler_BuildsOutputFromCompilationInputWithoutSharedContext()
+    public void SliceCompiler_Throws_WhenAirDoesNotContainDialectSlice()
     {
         var compiler = new DialectDefinitionSliceCompiler();
-        var input = new CompilationInput
-        {
-            SourceText =
-                """
-                dialect Tiny
-                use Arithmetic
-                backend interpreter enable
-                """
-        };
+        var ir = new AbstractIR();
+        ir.AppendInstructions([new Instruction(UOpCode.Nop)]);
 
-        var result = compiler.Compile(new AbstractIR(), input);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.Name, Is.EqualTo("Tiny"));
-            Assert.That(result.UseModules, Is.EqualTo(new[] { "Arithmetic" }));
-            Assert.That(result.BackendDirectives.Select(x => (x.Backend, x.Enabled)),
-                Is.EqualTo(new[] { (DialectBackendTarget.Interpreter, true) }));
-        });
+        Assert.Throws<InvalidOperationException>(() => compiler.Compile(ir, new CompilationInput { SourceText = "ignored" }));
     }
 
-
-    [Test]
+[Test]
     public void Compile_RequiresFrontendModulePipeline_WithoutModuleLexingFails()
     {
         var coreWithoutDialectModule = new BasicCoreImpl<DialectDefinitionSlice>(

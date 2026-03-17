@@ -18,16 +18,6 @@ public sealed class DialectDefinitionSliceParser
         return ParseLines(DialectAstLineReader.ReadLines(astRoot));
     }
 
-    public DialectDefinitionSlice Parse(IReadOnlyList<LexemeValue> tokens)
-    {
-        if (tokens == null)
-        {
-            Thrower.ArgumentNull(nameof(tokens));
-        }
-
-        return ParseLines(DialectTokenLineSplitter.Split(tokens));
-    }
-
     private DialectDefinitionSlice ParseLines(IReadOnlyList<IReadOnlyList<LexemeValue>> lines)
     {
         if (lines.Count == 0)

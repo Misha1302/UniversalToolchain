@@ -2,6 +2,7 @@ using BasicCore.Contracts;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using BasicCore.Registration;
+using BasicCore.TranslatorWrapper;
 using ExceptionsManager;
 
 namespace UniversalToolchain.Dialects.Frontend;
@@ -30,13 +31,16 @@ public sealed class DialectDslFrontendModule : IFrontendCoreModule
 
     public AstNode ProcessAst(AstNode astRoot)
     {
-        if (astRoot == null)
-        {
-            Thrower.ArgumentNull(nameof(astRoot));
-        }
-
-        // Dialect slice compilation consumes captured lexer tokens in compiler stage.
-        return astRoot;
+        return DialectAstPipelineValidator.Validate(astRoot);
     }
 
+    public void InitAstTranslator(IAstToBytecodeTranslator translator)
+    {
+        if (translator == null)
+        {
+            Thrower.ArgumentNull(nameof(translator));
+        }
+
+        translator.AddVisitors(new DialectAstToBytecodeVisitor());
+    }
 }

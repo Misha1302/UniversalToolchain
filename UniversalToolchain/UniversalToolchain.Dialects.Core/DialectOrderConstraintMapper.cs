@@ -27,7 +27,7 @@ internal static class DialectOrderConstraintMapper
     private static DialectOrderConstraint ToOrderConstraint(DialectOrderDirective directive)
     {
         return new DialectOrderConstraint(
-            ToConstraintKind(directive.Directive),
+            ToConstraintKind(directive.Kind),
             directive.SourceModule,
             directive.TargetModule);
     }
@@ -42,12 +42,12 @@ internal static class DialectOrderConstraintMapper
         };
     }
 
-    private static DialectOrderConstraintKind ToConstraintKind(string directive)
+    private static DialectOrderConstraintKind ToConstraintKind(DialectOrderDirectiveKind kind)
     {
-        return directive switch
+        return kind switch
         {
-            "before" => DialectOrderConstraintKind.Before,
-            "after" => DialectOrderConstraintKind.After,
+            DialectOrderDirectiveKind.Before => DialectOrderConstraintKind.Before,
+            DialectOrderDirectiveKind.After => DialectOrderConstraintKind.After,
             _ => DialectOrderConstraintKind.Requires,
         };
     }

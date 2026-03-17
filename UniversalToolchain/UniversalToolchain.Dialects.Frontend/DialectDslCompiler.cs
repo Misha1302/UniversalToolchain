@@ -19,7 +19,7 @@ public sealed class DialectDslCompiler
         var compiler = new DialectDefinitionSliceCompiler();
 
         _core = new BasicCoreImpl<DialectDefinitionSlice>(
-            () => new DialectCaptureLexer(new BasicLexerImpl(new LexerConfiguration([]))),
+            () => new BasicLexerImpl(new LexerConfiguration([])),
             () => new BasicParserImpl(new ParserConfiguration([])),
             () => new BasicAstToBytecodeTranslatorImpl(new BytecodeTranslatorConfiguration([])),
             () => new BytecodeToAbstractIrConverterImpl(),
@@ -32,14 +32,6 @@ public sealed class DialectDslCompiler
 
     public DialectDefinitionSlice Compile(string sourceText)
     {
-        DialectCompilationTokenContext.Clear();
-        try
-        {
-            return _core.GetExecutable(sourceText);
-        }
-        finally
-        {
-            DialectCompilationTokenContext.Clear();
-        }
+        return _core.GetExecutable(sourceText);
     }
 }
