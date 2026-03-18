@@ -50,9 +50,6 @@ public sealed class DialectDefinition
         if (optimizerPolicy == null)
             Thrower.ArgumentNull(nameof(optimizerPolicy));
 
-        if (securityPolicy == null)
-            Thrower.ArgumentNull(nameof(securityPolicy));
-
         if (capabilityPolicy == null)
             Thrower.ArgumentNull(nameof(capabilityPolicy));
 
@@ -92,7 +89,7 @@ public sealed class DialectDefinition
 
     public OptimizerPolicy OptimizerPolicy { get; }
 
-    public SecurityPolicy SecurityPolicy { get; }
+    public SecurityPolicy? SecurityPolicy { get; }
 
     public CapabilityPolicy CapabilityPolicy { get; }
 

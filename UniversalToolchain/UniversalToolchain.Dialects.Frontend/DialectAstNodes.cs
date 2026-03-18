@@ -76,19 +76,26 @@ public sealed class DialectDeclarationAstNode : DialectAstNode
 
 public abstract class DialectDirectiveAstNode : DialectAstNode
 {
-    protected DialectDirectiveAstNode(AstNodeType nodeType, DialectDirectiveKind directiveKind, LexemeValue? lexemeValue, List<AstNode> children) : base(nodeType, lexemeValue, children)
+    protected DialectDirectiveAstNode(AstNodeType nodeType, IDialectDirectiveFeature feature, LexemeValue? lexemeValue, List<AstNode> children) : base(nodeType, lexemeValue, children)
     {
-        DirectiveKind = directiveKind;
+        if (feature == null)
+        {
+            Thrower.ArgumentNull(nameof(feature));
+        }
+
+        Feature = feature;
     }
 
-    public DialectDirectiveKind DirectiveKind { get; }
+    public IDialectDirectiveFeature Feature { get; }
+
+    public DialectDirectiveKind DirectiveKind => Feature.Kind;
 }
 
 public abstract class IdentifierListDirectiveAstNode : DialectDirectiveAstNode
 {
-    protected IdentifierListDirectiveAstNode(AstNodeType nodeType, DialectDirectiveKind directiveKind, LexemeValue? lexemeValue, IdentifierListAstNode identifiers) : base(
+    protected IdentifierListDirectiveAstNode(AstNodeType nodeType, IDialectDirectiveFeature feature, LexemeValue? lexemeValue, IdentifierListAstNode identifiers) : base(
         nodeType,
-        directiveKind,
+        feature,
         lexemeValue,
         [identifiers])
     {
@@ -99,9 +106,9 @@ public abstract class IdentifierListDirectiveAstNode : DialectDirectiveAstNode
 
 public abstract class SingleIdentifierDirectiveAstNode : DialectDirectiveAstNode
 {
-    protected SingleIdentifierDirectiveAstNode(AstNodeType nodeType, DialectDirectiveKind directiveKind, LexemeValue? lexemeValue, IdentifierValueAstNode identifier) : base(
+    protected SingleIdentifierDirectiveAstNode(AstNodeType nodeType, IDialectDirectiveFeature feature, LexemeValue? lexemeValue, IdentifierValueAstNode identifier) : base(
         nodeType,
-        directiveKind,
+        feature,
         lexemeValue,
         [identifier])
     {
@@ -110,41 +117,41 @@ public abstract class SingleIdentifierDirectiveAstNode : DialectDirectiveAstNode
     public IdentifierValueAstNode Identifier => (IdentifierValueAstNode)Children[0];
 }
 
-public sealed class UseModulesDirectiveAstNode(LexemeValue? lexemeValue, IdentifierListAstNode identifiers)
-    : IdentifierListDirectiveAstNode(DialectAstNodeTypes.UseModulesDirective, DialectDirectiveKind.UseModules, lexemeValue, identifiers);
+public sealed class UseModulesDirectiveAstNode(IDialectDirectiveFeature feature, LexemeValue? lexemeValue, IdentifierListAstNode identifiers)
+    : IdentifierListDirectiveAstNode(DialectAstNodeTypes.UseModulesDirective, feature, lexemeValue, identifiers);
 
-public sealed class ExcludeModulesDirectiveAstNode(LexemeValue? lexemeValue, IdentifierListAstNode identifiers)
-    : IdentifierListDirectiveAstNode(DialectAstNodeTypes.ExcludeModulesDirective, DialectDirectiveKind.ExcludeModules, lexemeValue, identifiers);
+public sealed class ExcludeModulesDirectiveAstNode(IDialectDirectiveFeature feature, LexemeValue? lexemeValue, IdentifierListAstNode identifiers)
+    : IdentifierListDirectiveAstNode(DialectAstNodeTypes.ExcludeModulesDirective, feature, lexemeValue, identifiers);
 
-public sealed class RequiresModulesDirectiveAstNode(LexemeValue? lexemeValue, IdentifierListAstNode identifiers)
-    : IdentifierListDirectiveAstNode(DialectAstNodeTypes.RequiresModulesDirective, DialectDirectiveKind.RequiresModules, lexemeValue, identifiers);
+public sealed class RequiresModulesDirectiveAstNode(IDialectDirectiveFeature feature, LexemeValue? lexemeValue, IdentifierListAstNode identifiers)
+    : IdentifierListDirectiveAstNode(DialectAstNodeTypes.RequiresModulesDirective, feature, lexemeValue, identifiers);
 
-public sealed class BeforeModulesDirectiveAstNode(LexemeValue? lexemeValue, IdentifierListAstNode identifiers)
-    : IdentifierListDirectiveAstNode(DialectAstNodeTypes.BeforeModulesDirective, DialectDirectiveKind.BeforeModules, lexemeValue, identifiers);
+public sealed class BeforeModulesDirectiveAstNode(IDialectDirectiveFeature feature, LexemeValue? lexemeValue, IdentifierListAstNode identifiers)
+    : IdentifierListDirectiveAstNode(DialectAstNodeTypes.BeforeModulesDirective, feature, lexemeValue, identifiers);
 
-public sealed class AfterModulesDirectiveAstNode(LexemeValue? lexemeValue, IdentifierListAstNode identifiers)
-    : IdentifierListDirectiveAstNode(DialectAstNodeTypes.AfterModulesDirective, DialectDirectiveKind.AfterModules, lexemeValue, identifiers);
+public sealed class AfterModulesDirectiveAstNode(IDialectDirectiveFeature feature, LexemeValue? lexemeValue, IdentifierListAstNode identifiers)
+    : IdentifierListDirectiveAstNode(DialectAstNodeTypes.AfterModulesDirective, feature, lexemeValue, identifiers);
 
-public sealed class BackendDirectiveAstNode(LexemeValue? lexemeValue, IdentifierListAstNode identifiers)
-    : IdentifierListDirectiveAstNode(DialectAstNodeTypes.BackendDirective, DialectDirectiveKind.Backend, lexemeValue, identifiers);
+public sealed class BackendDirectiveAstNode(IDialectDirectiveFeature feature, LexemeValue? lexemeValue, IdentifierListAstNode identifiers)
+    : IdentifierListDirectiveAstNode(DialectAstNodeTypes.BackendDirective, feature, lexemeValue, identifiers);
 
-public sealed class CapabilityDirectiveAstNode(LexemeValue? lexemeValue, IdentifierListAstNode identifiers)
-    : IdentifierListDirectiveAstNode(DialectAstNodeTypes.CapabilityDirective, DialectDirectiveKind.Capability, lexemeValue, identifiers);
+public sealed class CapabilityDirectiveAstNode(IDialectDirectiveFeature feature, LexemeValue? lexemeValue, IdentifierListAstNode identifiers)
+    : IdentifierListDirectiveAstNode(DialectAstNodeTypes.CapabilityDirective, feature, lexemeValue, identifiers);
 
-public sealed class AllowIntrinsicDirectiveAstNode(LexemeValue? lexemeValue, IdentifierValueAstNode identifier)
-    : SingleIdentifierDirectiveAstNode(DialectAstNodeTypes.AllowIntrinsicDirective, DialectDirectiveKind.AllowIntrinsic, lexemeValue, identifier);
+public sealed class AllowIntrinsicDirectiveAstNode(IDialectDirectiveFeature feature, LexemeValue? lexemeValue, IdentifierValueAstNode identifier)
+    : SingleIdentifierDirectiveAstNode(DialectAstNodeTypes.AllowIntrinsicDirective, feature, lexemeValue, identifier);
 
-public sealed class ForbidIntrinsicDirectiveAstNode(LexemeValue? lexemeValue, IdentifierValueAstNode identifier)
-    : SingleIdentifierDirectiveAstNode(DialectAstNodeTypes.ForbidIntrinsicDirective, DialectDirectiveKind.ForbidIntrinsic, lexemeValue, identifier);
+public sealed class ForbidIntrinsicDirectiveAstNode(IDialectDirectiveFeature feature, LexemeValue? lexemeValue, IdentifierValueAstNode identifier)
+    : SingleIdentifierDirectiveAstNode(DialectAstNodeTypes.ForbidIntrinsicDirective, feature, lexemeValue, identifier);
 
-public sealed class EnableIntrinsicDirectiveAstNode(LexemeValue? lexemeValue, IdentifierValueAstNode identifier)
-    : SingleIdentifierDirectiveAstNode(DialectAstNodeTypes.EnableIntrinsicDirective, DialectDirectiveKind.EnableIntrinsic, lexemeValue, identifier);
+public sealed class EnableIntrinsicDirectiveAstNode(IDialectDirectiveFeature feature, LexemeValue? lexemeValue, IdentifierValueAstNode identifier)
+    : SingleIdentifierDirectiveAstNode(DialectAstNodeTypes.EnableIntrinsicDirective, feature, lexemeValue, identifier);
 
-public sealed class DisableIntrinsicDirectiveAstNode(LexemeValue? lexemeValue, IdentifierValueAstNode identifier)
-    : SingleIdentifierDirectiveAstNode(DialectAstNodeTypes.DisableIntrinsicDirective, DialectDirectiveKind.DisableIntrinsic, lexemeValue, identifier);
+public sealed class DisableIntrinsicDirectiveAstNode(IDialectDirectiveFeature feature, LexemeValue? lexemeValue, IdentifierValueAstNode identifier)
+    : SingleIdentifierDirectiveAstNode(DialectAstNodeTypes.DisableIntrinsicDirective, feature, lexemeValue, identifier);
 
-public sealed class SecurityDirectiveAstNode(LexemeValue? lexemeValue, IdentifierValueAstNode identifier)
-    : SingleIdentifierDirectiveAstNode(DialectAstNodeTypes.SecurityDirective, DialectDirectiveKind.Security, lexemeValue, identifier);
+public sealed class SecurityDirectiveAstNode(IDialectDirectiveFeature feature, LexemeValue? lexemeValue, IdentifierValueAstNode identifier)
+    : SingleIdentifierDirectiveAstNode(DialectAstNodeTypes.SecurityDirective, feature, lexemeValue, identifier);
 
 public sealed class IdentifierValueAstNode : DialectAstNode
 {

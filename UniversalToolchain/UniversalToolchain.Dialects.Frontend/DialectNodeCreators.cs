@@ -1,3 +1,4 @@
+using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using ExceptionsManager;
 using AstNodeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.ParserWrapper.AstNodeTag>;
@@ -229,7 +230,7 @@ public sealed class DialectDeclarationNodeCreator : DialectLineConstructNodeCrea
 {
     public override AstNodeType AstNodeType => DialectAstNodeTypes.DialectDeclaration;
 
-    protected override string Keyword => DialectDirectiveSyntax.DialectKeyword;
+    protected override string Keyword => DialectDslKeywords.Dialect;
 
     protected override AstNode CreateNode(AstNode lineNode)
     {
@@ -268,113 +269,136 @@ public abstract class SingleIdentifierDirectiveNodeCreator<TNode> : DialectLineC
     protected abstract TNode CreateTypedNode(AstNode lineNode, IdentifierValueAstNode identifier);
 }
 
-public sealed class UseModulesDirectiveNodeCreator : IdentifierListDirectiveNodeCreator<UseModulesDirectiveAstNode>
+public class IdentifierListDialectDirectiveNodeCreator : IdentifierListDirectiveNodeCreator<DialectDirectiveAstNode>
 {
-    public override AstNodeType AstNodeType => DialectAstNodeTypes.UseModulesDirective;
+    private readonly IDialectDirectiveFeature _feature;
+    private readonly Func<LexemeValue?, IdentifierListAstNode, DialectDirectiveAstNode> _factory;
 
-    protected override string Keyword => DialectDirectiveDescriptors.Get(DialectDirectiveKind.UseModules).Keyword;
+    public IdentifierListDialectDirectiveNodeCreator(IDialectDirectiveFeature feature)
+    {
+        if (feature == null)
+        {
+            Thrower.ArgumentNull(nameof(feature));
+        }
 
-    protected override UseModulesDirectiveAstNode CreateTypedNode(AstNode lineNode, IdentifierListAstNode identifiers) => new(lineNode.Children[0].LexemeValue, identifiers);
+        if (feature.ArgumentShape != DialectDirectiveArgumentShape.IdentifierList)
+        {
+            Thrower.Argument(nameof(feature), $"Feature '{feature.Keyword}' must use identifier-list syntax.");
+        }
+
+        _feature = feature;
+        _factory = DialectDirectiveNodeFactory.CreateIdentifierListFactory(feature);
+    }
+
+    public override AstNodeType AstNodeType => DialectDirectiveNodeFactory.GetNodeType(_feature.Kind);
+
+    protected override string Keyword => _feature.Keyword;
+
+    protected override DialectDirectiveAstNode CreateTypedNode(AstNode lineNode, IdentifierListAstNode identifiers) => _factory(lineNode.Children[0].LexemeValue, identifiers);
 }
 
-public sealed class ExcludeModulesDirectiveNodeCreator : IdentifierListDirectiveNodeCreator<ExcludeModulesDirectiveAstNode>
+public class SingleIdentifierDialectDirectiveNodeCreator : SingleIdentifierDirectiveNodeCreator<DialectDirectiveAstNode>
 {
-    public override AstNodeType AstNodeType => DialectAstNodeTypes.ExcludeModulesDirective;
+    private readonly IDialectDirectiveFeature _feature;
+    private readonly Func<LexemeValue?, IdentifierValueAstNode, DialectDirectiveAstNode> _factory;
 
-    protected override string Keyword => DialectDirectiveDescriptors.Get(DialectDirectiveKind.ExcludeModules).Keyword;
+    public SingleIdentifierDialectDirectiveNodeCreator(IDialectDirectiveFeature feature)
+    {
+        if (feature == null)
+        {
+            Thrower.ArgumentNull(nameof(feature));
+        }
 
-    protected override ExcludeModulesDirectiveAstNode CreateTypedNode(AstNode lineNode, IdentifierListAstNode identifiers) => new(lineNode.Children[0].LexemeValue, identifiers);
+        if (feature.ArgumentShape != DialectDirectiveArgumentShape.Identifier)
+        {
+            Thrower.Argument(nameof(feature), $"Feature '{feature.Keyword}' must use single-identifier syntax.");
+        }
+
+        _feature = feature;
+        _factory = DialectDirectiveNodeFactory.CreateSingleIdentifierFactory(feature);
+    }
+
+    public override AstNodeType AstNodeType => DialectDirectiveNodeFactory.GetNodeType(_feature.Kind);
+
+    protected override string Keyword => _feature.Keyword;
+
+    protected override DialectDirectiveAstNode CreateTypedNode(AstNode lineNode, IdentifierValueAstNode identifier) => _factory(lineNode.Children[0].LexemeValue, identifier);
 }
 
-public sealed class RequiresModulesDirectiveNodeCreator : IdentifierListDirectiveNodeCreator<RequiresModulesDirectiveAstNode>
+internal static class DialectDirectiveNodeFactory
 {
-    public override AstNodeType AstNodeType => DialectAstNodeTypes.RequiresModulesDirective;
+    public static AstNodeType GetNodeType(DialectDirectiveKind kind)
+    {
+        return kind switch
+        {
+            DialectDirectiveKind.UseModules => DialectAstNodeTypes.UseModulesDirective,
+            DialectDirectiveKind.ExcludeModules => DialectAstNodeTypes.ExcludeModulesDirective,
+            DialectDirectiveKind.RequiresModules => DialectAstNodeTypes.RequiresModulesDirective,
+            DialectDirectiveKind.BeforeModules => DialectAstNodeTypes.BeforeModulesDirective,
+            DialectDirectiveKind.AfterModules => DialectAstNodeTypes.AfterModulesDirective,
+            DialectDirectiveKind.Backend => DialectAstNodeTypes.BackendDirective,
+            DialectDirectiveKind.AllowIntrinsic => DialectAstNodeTypes.AllowIntrinsicDirective,
+            DialectDirectiveKind.ForbidIntrinsic => DialectAstNodeTypes.ForbidIntrinsicDirective,
+            DialectDirectiveKind.EnableIntrinsic => DialectAstNodeTypes.EnableIntrinsicDirective,
+            DialectDirectiveKind.DisableIntrinsic => DialectAstNodeTypes.DisableIntrinsicDirective,
+            DialectDirectiveKind.Security => DialectAstNodeTypes.SecurityDirective,
+            DialectDirectiveKind.Capability => DialectAstNodeTypes.CapabilityDirective,
+            _ => Thrower.InvalidOpEx<AstNodeType>($"Unknown dialect directive kind '{kind}'.")
+        };
+    }
 
-    protected override string Keyword => DialectDirectiveDescriptors.Get(DialectDirectiveKind.RequiresModules).Keyword;
+    public static Func<LexemeValue?, IdentifierListAstNode, DialectDirectiveAstNode> CreateIdentifierListFactory(IDialectDirectiveFeature feature)
+    {
+        return feature.Kind switch
+        {
+            DialectDirectiveKind.UseModules => (lexeme, identifiers) => new UseModulesDirectiveAstNode(feature, lexeme, identifiers),
+            DialectDirectiveKind.ExcludeModules => (lexeme, identifiers) => new ExcludeModulesDirectiveAstNode(feature, lexeme, identifiers),
+            DialectDirectiveKind.RequiresModules => (lexeme, identifiers) => new RequiresModulesDirectiveAstNode(feature, lexeme, identifiers),
+            DialectDirectiveKind.BeforeModules => (lexeme, identifiers) => new BeforeModulesDirectiveAstNode(feature, lexeme, identifiers),
+            DialectDirectiveKind.AfterModules => (lexeme, identifiers) => new AfterModulesDirectiveAstNode(feature, lexeme, identifiers),
+            DialectDirectiveKind.Backend => (lexeme, identifiers) => new BackendDirectiveAstNode(feature, lexeme, identifiers),
+            DialectDirectiveKind.Capability => (lexeme, identifiers) => new CapabilityDirectiveAstNode(feature, lexeme, identifiers),
+            _ => Thrower.InvalidOpEx<Func<LexemeValue?, IdentifierListAstNode, DialectDirectiveAstNode>>($"Feature '{feature.Keyword}' does not support identifier-list directives.")
+        };
+    }
 
-    protected override RequiresModulesDirectiveAstNode CreateTypedNode(AstNode lineNode, IdentifierListAstNode identifiers) => new(lineNode.Children[0].LexemeValue, identifiers);
+    public static Func<LexemeValue?, IdentifierValueAstNode, DialectDirectiveAstNode> CreateSingleIdentifierFactory(IDialectDirectiveFeature feature)
+    {
+        return feature.Kind switch
+        {
+            DialectDirectiveKind.AllowIntrinsic => (lexeme, identifier) => new AllowIntrinsicDirectiveAstNode(feature, lexeme, identifier),
+            DialectDirectiveKind.ForbidIntrinsic => (lexeme, identifier) => new ForbidIntrinsicDirectiveAstNode(feature, lexeme, identifier),
+            DialectDirectiveKind.EnableIntrinsic => (lexeme, identifier) => new EnableIntrinsicDirectiveAstNode(feature, lexeme, identifier),
+            DialectDirectiveKind.DisableIntrinsic => (lexeme, identifier) => new DisableIntrinsicDirectiveAstNode(feature, lexeme, identifier),
+            DialectDirectiveKind.Security => (lexeme, identifier) => new SecurityDirectiveAstNode(feature, lexeme, identifier),
+            _ => Thrower.InvalidOpEx<Func<LexemeValue?, IdentifierValueAstNode, DialectDirectiveAstNode>>($"Feature '{feature.Keyword}' does not support single-identifier directives.")
+        };
+    }
 }
 
-public sealed class BeforeModulesDirectiveNodeCreator : IdentifierListDirectiveNodeCreator<BeforeModulesDirectiveAstNode>
-{
-    public override AstNodeType AstNodeType => DialectAstNodeTypes.BeforeModulesDirective;
+public sealed class UseModulesDirectiveNodeCreator() : IdentifierListDialectDirectiveNodeCreator(DialectDslFeatureCatalog.GetFeature(DialectDirectiveKind.UseModules));
 
-    protected override string Keyword => DialectDirectiveDescriptors.Get(DialectDirectiveKind.BeforeModules).Keyword;
+public sealed class ExcludeModulesDirectiveNodeCreator() : IdentifierListDialectDirectiveNodeCreator(DialectDslFeatureCatalog.GetFeature(DialectDirectiveKind.ExcludeModules));
 
-    protected override BeforeModulesDirectiveAstNode CreateTypedNode(AstNode lineNode, IdentifierListAstNode identifiers) => new(lineNode.Children[0].LexemeValue, identifiers);
-}
+public sealed class RequiresModulesDirectiveNodeCreator() : IdentifierListDialectDirectiveNodeCreator(DialectDslFeatureCatalog.GetFeature(DialectDirectiveKind.RequiresModules));
 
-public sealed class AfterModulesDirectiveNodeCreator : IdentifierListDirectiveNodeCreator<AfterModulesDirectiveAstNode>
-{
-    public override AstNodeType AstNodeType => DialectAstNodeTypes.AfterModulesDirective;
+public sealed class BeforeModulesDirectiveNodeCreator() : IdentifierListDialectDirectiveNodeCreator(DialectDslFeatureCatalog.GetFeature(DialectDirectiveKind.BeforeModules));
 
-    protected override string Keyword => DialectDirectiveDescriptors.Get(DialectDirectiveKind.AfterModules).Keyword;
+public sealed class AfterModulesDirectiveNodeCreator() : IdentifierListDialectDirectiveNodeCreator(DialectDslFeatureCatalog.GetFeature(DialectDirectiveKind.AfterModules));
 
-    protected override AfterModulesDirectiveAstNode CreateTypedNode(AstNode lineNode, IdentifierListAstNode identifiers) => new(lineNode.Children[0].LexemeValue, identifiers);
-}
+public sealed class BackendDirectiveNodeCreator() : IdentifierListDialectDirectiveNodeCreator(DialectDslFeatureCatalog.GetFeature(DialectDirectiveKind.Backend));
 
-public sealed class BackendDirectiveNodeCreator : IdentifierListDirectiveNodeCreator<BackendDirectiveAstNode>
-{
-    public override AstNodeType AstNodeType => DialectAstNodeTypes.BackendDirective;
+public sealed class AllowIntrinsicDirectiveNodeCreator() : SingleIdentifierDialectDirectiveNodeCreator(DialectDslFeatureCatalog.GetFeature(DialectDirectiveKind.AllowIntrinsic));
 
-    protected override string Keyword => DialectDirectiveDescriptors.Get(DialectDirectiveKind.Backend).Keyword;
+public sealed class ForbidIntrinsicDirectiveNodeCreator() : SingleIdentifierDialectDirectiveNodeCreator(DialectDslFeatureCatalog.GetFeature(DialectDirectiveKind.ForbidIntrinsic));
 
-    protected override BackendDirectiveAstNode CreateTypedNode(AstNode lineNode, IdentifierListAstNode identifiers) => new(lineNode.Children[0].LexemeValue, identifiers);
-}
+public sealed class EnableIntrinsicDirectiveNodeCreator() : SingleIdentifierDialectDirectiveNodeCreator(DialectDslFeatureCatalog.GetFeature(DialectDirectiveKind.EnableIntrinsic));
 
-public sealed class AllowIntrinsicDirectiveNodeCreator : SingleIdentifierDirectiveNodeCreator<AllowIntrinsicDirectiveAstNode>
-{
-    public override AstNodeType AstNodeType => DialectAstNodeTypes.AllowIntrinsicDirective;
+public sealed class DisableIntrinsicDirectiveNodeCreator() : SingleIdentifierDialectDirectiveNodeCreator(DialectDslFeatureCatalog.GetFeature(DialectDirectiveKind.DisableIntrinsic));
 
-    protected override string Keyword => DialectDirectiveDescriptors.Get(DialectDirectiveKind.AllowIntrinsic).Keyword;
+public sealed class SecurityDirectiveNodeCreator() : SingleIdentifierDialectDirectiveNodeCreator(DialectDslFeatureCatalog.GetFeature(DialectDirectiveKind.Security));
 
-    protected override AllowIntrinsicDirectiveAstNode CreateTypedNode(AstNode lineNode, IdentifierValueAstNode identifier) => new(lineNode.Children[0].LexemeValue, identifier);
-}
-
-public sealed class ForbidIntrinsicDirectiveNodeCreator : SingleIdentifierDirectiveNodeCreator<ForbidIntrinsicDirectiveAstNode>
-{
-    public override AstNodeType AstNodeType => DialectAstNodeTypes.ForbidIntrinsicDirective;
-
-    protected override string Keyword => DialectDirectiveDescriptors.Get(DialectDirectiveKind.ForbidIntrinsic).Keyword;
-
-    protected override ForbidIntrinsicDirectiveAstNode CreateTypedNode(AstNode lineNode, IdentifierValueAstNode identifier) => new(lineNode.Children[0].LexemeValue, identifier);
-}
-
-public sealed class EnableIntrinsicDirectiveNodeCreator : SingleIdentifierDirectiveNodeCreator<EnableIntrinsicDirectiveAstNode>
-{
-    public override AstNodeType AstNodeType => DialectAstNodeTypes.EnableIntrinsicDirective;
-
-    protected override string Keyword => DialectDirectiveDescriptors.Get(DialectDirectiveKind.EnableIntrinsic).Keyword;
-
-    protected override EnableIntrinsicDirectiveAstNode CreateTypedNode(AstNode lineNode, IdentifierValueAstNode identifier) => new(lineNode.Children[0].LexemeValue, identifier);
-}
-
-public sealed class DisableIntrinsicDirectiveNodeCreator : SingleIdentifierDirectiveNodeCreator<DisableIntrinsicDirectiveAstNode>
-{
-    public override AstNodeType AstNodeType => DialectAstNodeTypes.DisableIntrinsicDirective;
-
-    protected override string Keyword => DialectDirectiveDescriptors.Get(DialectDirectiveKind.DisableIntrinsic).Keyword;
-
-    protected override DisableIntrinsicDirectiveAstNode CreateTypedNode(AstNode lineNode, IdentifierValueAstNode identifier) => new(lineNode.Children[0].LexemeValue, identifier);
-}
-
-public sealed class SecurityDirectiveNodeCreator : SingleIdentifierDirectiveNodeCreator<SecurityDirectiveAstNode>
-{
-    public override AstNodeType AstNodeType => DialectAstNodeTypes.SecurityDirective;
-
-    protected override string Keyword => DialectDirectiveDescriptors.Get(DialectDirectiveKind.Security).Keyword;
-
-    protected override SecurityDirectiveAstNode CreateTypedNode(AstNode lineNode, IdentifierValueAstNode identifier) => new(lineNode.Children[0].LexemeValue, identifier);
-}
-
-public sealed class CapabilityDirectiveNodeCreator : IdentifierListDirectiveNodeCreator<CapabilityDirectiveAstNode>
-{
-    public override AstNodeType AstNodeType => DialectAstNodeTypes.CapabilityDirective;
-
-    protected override string Keyword => DialectDirectiveDescriptors.Get(DialectDirectiveKind.Capability).Keyword;
-
-    protected override CapabilityDirectiveAstNode CreateTypedNode(AstNode lineNode, IdentifierListAstNode identifiers) => new(lineNode.Children[0].LexemeValue, identifiers);
-}
+public sealed class CapabilityDirectiveNodeCreator() : IdentifierListDialectDirectiveNodeCreator(DialectDslFeatureCatalog.GetFeature(DialectDirectiveKind.Capability));
 
 public sealed class DialectDocumentNodeCreator : IAstNodeCreator
 {
@@ -441,5 +465,5 @@ public sealed class DialectDocumentNodeCreator : IAstNodeCreator
 
 internal static class DialectDirectiveSyntax
 {
-    public const string DialectKeyword = "dialect";
+    public const string DialectKeyword = DialectDslKeywords.Dialect;
 }
