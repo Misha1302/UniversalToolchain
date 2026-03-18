@@ -47,25 +47,6 @@ public sealed class DialectDslCompiler
 
     private static DialectDslFrontendModule CreateDefaultFrontendModule()
     {
-        var registry = new DialectDslRegistry(
-            [
-                new UseModulesDialectDirectiveFeature(),
-                new ExcludeModulesDialectDirectiveFeature(),
-                new RequiresModulesDialectDirectiveFeature(),
-                new BeforeModulesDialectDirectiveFeature(),
-                new AfterModulesDialectDirectiveFeature(),
-                new BackendDialectDirectiveFeature(),
-                new AllowIntrinsicDialectDirectiveFeature(),
-                new ForbidIntrinsicDialectDirectiveFeature(),
-                new EnableOptimizerDialectDirectiveFeature(),
-                new DisableOptimizerDialectDirectiveFeature(),
-                new SecurityDialectDirectiveFeature(),
-                new CapabilityDialectDirectiveFeature()
-            ],
-            [
-                new UseExcludeConflictDocumentValidationRule()
-            ]);
-
-        return new DialectDslFrontendModule(registry);
+        return DialectDslStandaloneComposition.CreateFrontendModule();
     }
 }

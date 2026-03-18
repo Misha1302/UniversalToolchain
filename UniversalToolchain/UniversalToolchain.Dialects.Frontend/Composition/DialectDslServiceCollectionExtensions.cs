@@ -7,6 +7,18 @@ namespace UniversalToolchain.Dialects.Frontend;
 
 public static class DialectDslServiceCollectionExtensions
 {
+    public static IServiceCollection AddDialectDslDefaultComposition(this IServiceCollection services)
+    {
+        if (services == null)
+        {
+            Thrower.ArgumentNull(nameof(services));
+        }
+
+        return services
+            .AddDialectDsl()
+            .AddDialectDslBuiltIns();
+    }
+
     public static IServiceCollection AddDialectDsl(this IServiceCollection services)
     {
         if (services == null)
