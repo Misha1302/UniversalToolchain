@@ -8,9 +8,9 @@ public sealed class DialectAstToBytecodeVisitor : IAstVisitor
 {
     private readonly DialectDslRegistry _registry;
 
-    public DialectAstToBytecodeVisitor(DialectDslRegistry? registry = null)
+    public DialectAstToBytecodeVisitor(DialectDslRegistry registry)
     {
-        _registry = registry ?? DialectDslBuiltInFeatures.CreateRegistry();
+        _registry = registry ?? throw new ArgumentNullException(nameof(registry));
     }
 
     public void TryVisit(BytecodeVisitorData data)

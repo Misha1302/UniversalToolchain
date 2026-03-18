@@ -1,3 +1,4 @@
+using BasicCore.ParserWrapper;
 using BasicCore.Registration;
 using ExceptionsManager;
 
@@ -12,14 +13,24 @@ public static class DialectDslParserNodeRegistry
             Thrower.ArgumentNull(nameof(registry));
         }
 
-        var registrations = new List<NodeCreatorRegistration>
+        var entries = new List<(DialectParserOrder Order, IAstNodeCreator Creator, string Description)>
         {
-            new(DialectParserOrders.LineSplitter.Encode(), new DialectLineNodeCreator()),
-            new(DialectParserOrders.Declaration.Encode(), new DialectDeclarationNodeCreator())
+            (DialectParserOrders.LineSplitter, new DialectLineNodeCreator(), nameof(DialectLineNodeCreator)),
+            (DialectParserOrders.Declaration, new DialectDeclarationNodeCreator(), nameof(DialectDeclarationNodeCreator))
         };
 
-        registrations.AddRange(registry.DirectiveFeatures.Select(x => new NodeCreatorRegistration(DialectParserOrder.Directive(x.ParserOrder).Encode(), new FeatureDialectDirectiveNodeCreator(x))));
-        registrations.Add(new NodeCreatorRegistration(DialectParserOrders.Document.Encode(), new DialectDocumentNodeCreator()));
-        return registrations;
+        entries.AddRange(registry.DirectiveFeatures.Select(x => (DialectParserOrder.Directive(x.ParserOrder), (IAstNodeCreator)new FeatureDialectDirectiveNodeCreator(x), $"{x.Id}:{x.Keyword}")));
+        entries.Add((DialectParserOrders.Document, new DialectDocumentNodeCreator(), nameof(DialectDocumentNodeCreator)));
+
+        var orderedEntries = entries
+            .OrderBy(x => x.Order)
+            .ThenBy(x => x.Description, StringComparer.Ordinal)
+            .ToList();
+
+        DialectParserOrderValidation.EnsureNoCollisions(orderedEntries, static x => x.Order, static x => x.Description, "parser node creators");
+
+        return orderedEntries
+            .Select((entry, index) => new NodeCreatorRegistration(index, entry.Creator))
+            .ToList();
     }
 }

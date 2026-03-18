@@ -85,7 +85,7 @@ public class FrameworkNativeRuntimeCompositionWorkflowTests
     private static DialectFrameworkCompositionWorkflow CreateWorkflow()
     {
         return new DialectFrameworkCompositionWorkflow(
-            new DialectDslCompiler(),
+            DialectDslTestComposition.CreateCompiler(),
             new DialectCompiledDialectBuildPlanBuilder(),
             new DialectRuntimeCompositionResolver());
     }

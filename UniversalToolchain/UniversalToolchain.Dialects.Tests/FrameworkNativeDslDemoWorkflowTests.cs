@@ -66,7 +66,7 @@ public class FrameworkNativeDslDemoWorkflowTests
     {
         return new DialectFrameworkDemoWorkflow(
             new DialectFrameworkCompositionWorkflow(
-                new DialectDslCompiler(),
+                DialectDslTestComposition.CreateCompiler(),
                 new DialectCompiledDialectBuildPlanBuilder(),
                 new DialectRuntimeCompositionResolver()));
     }

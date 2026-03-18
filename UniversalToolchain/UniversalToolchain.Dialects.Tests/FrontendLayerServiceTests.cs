@@ -30,7 +30,7 @@ public class FrontendLayerServiceTests
     [Test]
     public void DirectiveLineParser_ParsesUseDirectiveIdentifierList()
     {
-        var parser = new DialectDirectiveLineParser();
+        var parser = new DialectDirectiveLineParser(DialectDslTestComposition.CreateRegistry());
         var accumulation = new DialectDirectiveAccumulation();
         var line = DialectTokenLineSplitter.Split(Lex("use Arithmetic,Variables\n"))[0];
 
@@ -46,7 +46,7 @@ public class FrontendLayerServiceTests
     [Test]
     public void FrontendModule_InitParser_CreatesFeatureOwnedDocumentTree()
     {
-        var module = new DialectDslFrontendModule();
+        var module = DialectDslTestComposition.CreateFrontendModule();
         var ast = ParseWithFrontendModule(module, "\n dialect Tiny\n\nuse Arithmetic,Variables\nallow add_i32\n");
         var document = DialectDslAstValidator.Validate(ast, module.Registry);
 
@@ -70,7 +70,7 @@ public class FrontendLayerServiceTests
     [Test]
     public void FrontendModule_AstTranslator_EmitsTypedDialectAnnotations()
     {
-        var module = new DialectDslFrontendModule();
+        var module = DialectDslTestComposition.CreateFrontendModule();
         var parser = new BasicParserImpl(new ParserConfiguration([]));
         var lexer = new BasicLexerImpl(new LexerConfiguration([]));
         var translator = new BasicAstToBytecodeTranslatorImpl(new BytecodeTranslatorConfiguration([]));
@@ -96,7 +96,8 @@ public class FrontendLayerServiceTests
     [Test]
     public void DefinitionSliceParser_InvalidHeader_ThrowsParserException()
     {
-        var ex = Assert.Throws<ParserException>(() => ParseWithFrontendModule(new DialectDslFrontendModule(), "use Arithmetic\n"));
+        var module = DialectDslTestComposition.CreateFrontendModule();
+        var ex = Assert.Throws<ParserException>(() => ParseWithFrontendModule(module, "use Arithmetic\n"));
 
         Assert.That(ex!.Message, Does.Contain("dialect <name>").IgnoreCase);
     }
@@ -130,7 +131,7 @@ public class FrontendLayerServiceTests
     private static List<LexemeValue> Lex(string source)
     {
         var lexer = new BasicLexerImpl(new LexerConfiguration([]));
-        lexer.AddLexemes(DialectDslLexemeRegistry.CreateRegistrations(DialectDslBuiltInFeatures.CreateRegistry()));
+        lexer.AddLexemes(DialectDslLexemeRegistry.CreateRegistrations(DialectDslTestComposition.CreateRegistry()));
         return lexer.Lexemize(source);
     }
 }

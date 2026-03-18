@@ -6,6 +6,7 @@ using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using BasicLexer.Core;
 using BasicParser.Core;
+using ExceptionsManager;
 
 namespace UniversalToolchain.Dialects.Frontend;
 
@@ -13,9 +14,13 @@ public sealed class DialectDslCompiler
 {
     private readonly BasicCoreImpl<DialectDefinitionSlice> _core;
 
-    public DialectDslCompiler(DialectDslRegistry? registry = null)
+    public DialectDslCompiler(DialectDslFrontendModule frontendModule)
     {
-        var frontendModule = new DialectDslFrontendModule(registry);
+        if (frontendModule == null)
+        {
+            Thrower.ArgumentNull(nameof(frontendModule));
+        }
+
         var compiler = new DialectDefinitionSliceCompiler();
 
         _core = new BasicCoreImpl<DialectDefinitionSlice>(
