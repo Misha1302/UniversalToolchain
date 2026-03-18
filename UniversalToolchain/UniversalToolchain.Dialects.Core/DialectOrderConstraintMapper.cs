@@ -16,6 +16,16 @@ internal static class DialectOrderConstraintMapper
         return directives.Select(ToOrderConstraint).ToList();
     }
 
+    public static List<DialectOrderConstraint> FromDefinitionRules(IReadOnlyList<OrderRule> rules)
+    {
+        return rules.Select(ToOrderConstraint).ToList();
+    }
+
+    public static List<OrderRule> ToDefinitionRules(IReadOnlyList<DialectOrderConstraint> constraints)
+    {
+        return constraints.Select(ToDefinitionRule).ToList();
+    }
+
     private static DialectOrderConstraint ToOrderConstraint(OrderRule rule)
     {
         return new DialectOrderConstraint(
@@ -30,6 +40,11 @@ internal static class DialectOrderConstraintMapper
             ToConstraintKind(directive.Kind),
             directive.SourceModule,
             directive.TargetModule);
+    }
+
+    private static OrderRule ToDefinitionRule(DialectOrderConstraint constraint)
+    {
+        return new OrderRule(ToDefinitionKind(constraint.Kind), constraint.SourceModule, constraint.TargetModule);
     }
 
     private static DialectOrderConstraintKind ToConstraintKind(OrderRuleKind kind)
@@ -49,6 +64,16 @@ internal static class DialectOrderConstraintMapper
             DialectOrderDirectiveKind.Before => DialectOrderConstraintKind.Before,
             DialectOrderDirectiveKind.After => DialectOrderConstraintKind.After,
             _ => DialectOrderConstraintKind.Requires,
+        };
+    }
+
+    private static OrderRuleKind ToDefinitionKind(DialectOrderConstraintKind kind)
+    {
+        return kind switch
+        {
+            DialectOrderConstraintKind.Before => OrderRuleKind.Before,
+            DialectOrderConstraintKind.After => OrderRuleKind.After,
+            _ => OrderRuleKind.Requires,
         };
     }
 }

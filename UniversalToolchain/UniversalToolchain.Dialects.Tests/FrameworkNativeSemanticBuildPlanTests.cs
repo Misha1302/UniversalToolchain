@@ -69,14 +69,29 @@ public class FrameworkNativeSemanticBuildPlanTests
     public void ParserRegistry_ContainsMultipleSpecializedCreators()
     {
         var creatorTypes = DialectDslParserNodeRegistry.Registrations.Select(x => x.Creator.GetType().Name).ToArray();
+        var featureKinds = DialectDslFeatureCatalog.Features.Select(x => x.Kind).ToArray();
 
         Assert.Multiple(() =>
         {
             Assert.That(creatorTypes, Does.Contain(nameof(DialectDeclarationNodeCreator)));
-            Assert.That(creatorTypes, Does.Contain(nameof(UseModulesDirectiveNodeCreator)));
-            Assert.That(creatorTypes, Does.Contain(nameof(SecurityDirectiveNodeCreator)));
+            Assert.That(creatorTypes, Does.Contain(nameof(IdentifierListDialectDirectiveNodeCreator)));
+            Assert.That(creatorTypes, Does.Contain(nameof(SingleIdentifierDialectDirectiveNodeCreator)));
             Assert.That(creatorTypes, Does.Contain(nameof(DialectDocumentNodeCreator)));
-            Assert.That(creatorTypes.Distinct().Count(), Is.GreaterThan(8));
+            Assert.That(featureKinds, Is.EqualTo(new[]
+            {
+                DialectDirectiveKind.UseModules,
+                DialectDirectiveKind.ExcludeModules,
+                DialectDirectiveKind.RequiresModules,
+                DialectDirectiveKind.BeforeModules,
+                DialectDirectiveKind.AfterModules,
+                DialectDirectiveKind.Backend,
+                DialectDirectiveKind.AllowIntrinsic,
+                DialectDirectiveKind.ForbidIntrinsic,
+                DialectDirectiveKind.EnableIntrinsic,
+                DialectDirectiveKind.DisableIntrinsic,
+                DialectDirectiveKind.Security,
+                DialectDirectiveKind.Capability
+            }));
         });
     }
 

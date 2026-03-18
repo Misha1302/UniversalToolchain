@@ -17,9 +17,13 @@ public sealed class BackendPolicy
         var disabled = NormalizeNames(disabledBackends, nameof(disabledBackends));
 
         var enabledSet = new HashSet<DialectBackendTarget>(enabled);
-        var overlap = disabled.FirstOrDefault(enabledSet.Contains);
-        if (enabledSet.Contains(overlap))
-            Thrower.Argument(nameof(disabledBackends), $"Backend '{DialectBackendTargetText.ToText(overlap)}' cannot be both enabled and disabled.");
+        foreach (var disabledBackend in disabled)
+        {
+            if (enabledSet.Contains(disabledBackend))
+            {
+                Thrower.Argument(nameof(disabledBackends), $"Backend '{DialectBackendTargetText.ToText(disabledBackend)}' cannot be both enabled and disabled.");
+            }
+        }
 
         _enabledBackends = new ReadOnlyCollection<DialectBackendTarget>(enabled);
         _disabledBackends = new ReadOnlyCollection<DialectBackendTarget>(disabled);
