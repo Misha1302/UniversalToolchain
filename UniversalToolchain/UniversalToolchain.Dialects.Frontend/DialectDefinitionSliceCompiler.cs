@@ -10,15 +10,16 @@ public sealed class DialectDefinitionSliceCompiler : IAbstractIrCompiler<Dialect
     public DialectDefinitionSlice Compile(IAbstractIR air, CompilationInput input)
     {
         if (air == null)
-        {
             Thrower.ArgumentNull(nameof(air));
-        }
 
         if (input == null)
-        {
             Thrower.ArgumentNull(nameof(input));
-        }
 
-        return DialectDefinitionSliceAirReader.Read(air);
+        var annotations = DialectDefinitionSliceAirReader.Read(air);
+        var builder = new DialectDefinitionSliceBuilder();
+        foreach (var annotation in annotations)
+            builder.Apply(annotation);
+
+        return builder.Build();
     }
 }

@@ -189,7 +189,8 @@ public class FrameworkNativeVerticalSliceTests
             [],
             null,
             []);
-        ir.AppendInstructions([new Instruction(UOpCode.Annotate, metadata: [expected])]);
+        ir.AppendInstructions([new Instruction(UOpCode.Annotate, metadata: [new DialectNameAirAnnotation("Tiny")])]);
+        ir.AppendInstructions([new Instruction(UOpCode.Annotate, metadata: [new UseModulesAirAnnotation(["Arithmetic"])])]);
 
         var result = compiler.Compile(ir, new CompilationInput { SourceText = "ignored" });
 
