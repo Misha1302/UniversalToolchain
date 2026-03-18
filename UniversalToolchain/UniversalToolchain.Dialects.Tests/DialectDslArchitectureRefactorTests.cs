@@ -1,7 +1,11 @@
+using AbstractIrConverters;
+using BasicCodeTranslator;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using BasicCore.Registration;
+using BasicCore.TranslatorWrapper;
 using BasicLexer.Core;
+using BasicParser.Core;
 using CommonExceptions;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Frontend;
@@ -30,6 +34,23 @@ public class DialectDslArchitectureRefactorTests
     }
 
     [Test]
+    public void AddDialectDslDefaultComposition_RegistersSharedBuiltInComposition()
+    {
+        var services = new ServiceCollection();
+        services.AddDialectDslDefaultComposition();
+
+        using var provider = services.BuildServiceProvider();
+        var registry = provider.GetRequiredService<DialectDslRegistry>();
+        var compiler = provider.GetRequiredService<DialectDslCompiler>();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(registry.DirectiveFeatures.Select(x => x.Keyword), Does.Contain("capability"));
+            Assert.That(compiler.Compile("dialect Demo\nuse Arithmetic\n").UseModules, Is.EqualTo(new[] { "Arithmetic" }));
+        });
+    }
+
+    [Test]
     public void Compiler_DefaultConstructor_PreservesBuiltInStandaloneUsage()
     {
         var compiler = new DialectDslCompiler();
@@ -37,6 +58,63 @@ public class DialectDslArchitectureRefactorTests
         var slice = compiler.Compile("dialect Demo\nuse Arithmetic\n");
 
         Assert.That(slice.UseModules, Is.EqualTo(new[] { "Arithmetic" }));
+    }
+
+    [Test]
+    public void Compiler_DefaultConstructor_UsesSameBuiltInCompositionAsDiCompiler()
+    {
+        const string source =
+            """
+            dialect Demo
+            use Arithmetic,Variables
+            exclude Experimental
+            requires Core
+            before Parsing
+            after Lowering
+            backend cil
+            allow add_i32
+            forbid sub_i32
+            enable Ssa
+            disable Inlining
+            security trusted
+            capability sandbox
+            """;
+
+        var standaloneSlice = new DialectDslCompiler().Compile(source);
+        var diSlice = DialectDslTestComposition.CreateCompiler().Compile(source);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(standaloneSlice.Name, Is.EqualTo(diSlice.Name));
+            Assert.That(standaloneSlice.UseModules, Is.EqualTo(diSlice.UseModules));
+            Assert.That(standaloneSlice.ExcludeModules, Is.EqualTo(diSlice.ExcludeModules));
+            Assert.That(
+                standaloneSlice.OrderDirectives.Select(x => (x.Kind, x.SourceModule, x.TargetModule)),
+                Is.EqualTo(diSlice.OrderDirectives.Select(x => (x.Kind, x.SourceModule, x.TargetModule))));
+            Assert.That(
+                standaloneSlice.BackendDirectives.Select(x => (x.Backend, x.Enabled)),
+                Is.EqualTo(diSlice.BackendDirectives.Select(x => (x.Backend, x.Enabled))));
+            Assert.That(
+                standaloneSlice.IntrinsicDirectives.Select(x => (x.Name, x.Allowed)),
+                Is.EqualTo(diSlice.IntrinsicDirectives.Select(x => (x.Name, x.Allowed))));
+            Assert.That(
+                standaloneSlice.OptimizerDirectives.Select(x => (x.Name, x.Enabled)),
+                Is.EqualTo(diSlice.OptimizerDirectives.Select(x => (x.Name, x.Enabled))));
+            Assert.That(standaloneSlice.SecurityProfile, Is.EqualTo(diSlice.SecurityProfile));
+            Assert.That(
+                standaloneSlice.CapabilityDirectives.Select(x => x.Name),
+                Is.EqualTo(diSlice.CapabilityDirectives.Select(x => x.Name)));
+        });
+    }
+
+    [Test]
+    public void Compiler_DefaultConstructor_PreservesBuiltInDocumentValidationRules()
+    {
+        var compiler = new DialectDslCompiler();
+
+        var ex = Assert.Throws<ParserException>(() => compiler.Compile("dialect Demo\nuse Arithmetic\nexclude Arithmetic\n"));
+
+        Assert.That(ex!.Message, Does.Contain("use").And.Contain("exclude"));
     }
 
     [Test]
@@ -161,6 +239,45 @@ public class DialectDslArchitectureRefactorTests
             Assert.That(slice.OptimizerDirectives.Select(x => (x.Name, x.Enabled)), Is.EqualTo(new[] { ("Ssa", true) }));
             Assert.That(slice.SecurityProfile, Is.Null);
         });
+    }
+
+    [Test]
+    public void DefaultCompilerAndDefaultFrontendModule_RemainCompositionallyEquivalent()
+    {
+        const string source =
+            """
+            dialect Demo
+            use Arithmetic
+            capability sandbox
+            """;
+
+        var standaloneSlice = new DialectDslCompiler().Compile(source);
+        var frontendModuleSlice = ParseWithFrontendModule(DialectDslTestComposition.CreateFrontendModule(), source);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(standaloneSlice.Name, Is.EqualTo(frontendModuleSlice.Name));
+            Assert.That(standaloneSlice.UseModules, Is.EqualTo(frontendModuleSlice.UseModules));
+            Assert.That(
+                standaloneSlice.CapabilityDirectives.Select(x => x.Name),
+                Is.EqualTo(frontendModuleSlice.CapabilityDirectives.Select(x => x.Name)));
+        });
+    }
+
+    private static DialectDefinitionSlice ParseWithFrontendModule(DialectDslFrontendModule module, string source)
+    {
+        var parser = new BasicParserImpl(new ParserConfiguration([]));
+        var lexer = new BasicLexerImpl(new LexerConfiguration([]));
+        var translator = new BasicAstToBytecodeTranslatorImpl(new BytecodeTranslatorConfiguration([]));
+
+        module.InitLexer(lexer);
+        module.InitParser(parser);
+        module.InitAstTranslator(translator);
+
+        var ast = parser.Parse(lexer.Lexemize(source));
+        var bytecode = translator.Translate(module.ProcessAst(ast));
+        var ir = new BytecodeToAbstractIrConverterImpl().Translate(bytecode);
+        return DialectDefinitionSliceAirReader.Read(ir);
     }
 
     private sealed class ProviderExecutionRecorder

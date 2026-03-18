@@ -8,8 +8,7 @@ internal static class DialectDslTestComposition
     public static ServiceProvider CreateProvider(Action<IServiceCollection>? configure = null)
     {
         var services = new ServiceCollection();
-        services.AddDialectDsl();
-        services.AddDialectDslBuiltIns();
+        services.AddDialectDslDefaultComposition();
         configure?.Invoke(services);
         return services.BuildServiceProvider();
     }
