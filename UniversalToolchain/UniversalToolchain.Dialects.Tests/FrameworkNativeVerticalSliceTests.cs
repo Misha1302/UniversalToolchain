@@ -1,16 +1,14 @@
 using AbstractIrConverters;
 using BasicCodeTranslator;
+using BasicCore.Compilation;
 using BasicCore.Core;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
-using BasicCore.Registration;
 using BasicCore.TranslatorWrapper;
 using BasicLexer.Core;
 using BasicParser.Core;
 using CommonExceptions;
 using IntermediateRepresentationAbstractions;
-using UniversalIntermediateRepresentation;
-using BasicCore.Compilation;
 using UniversalToolchain.Dialects.Frontend;
 
 using UniversalToolchain.Dialects.Abstractions;
@@ -19,121 +17,64 @@ namespace UniversalToolchain.Dialects.Tests;
 public class FrameworkNativeVerticalSliceTests
 {
     [Test]
-    public void Compile_ValidDialectHeader_ProducesDialectName()
-    {
-        var compiler = new DialectDslCompiler();
-
-        var result = compiler.Compile("dialect Tiny\n");
-
-        Assert.That(result.Name, Is.EqualTo("Tiny"));
-    }
-
-    [Test]
-    public void Compile_OrderingAndBackendDirectives_AreCaptured()
+    public void Compile_FullValidDialect_ProducesExpectedSlice()
     {
         var compiler = new DialectDslCompiler();
 
         var result = compiler.Compile(
             """
+            
             dialect Tiny
-            use Arithmetic
-            exclude Loops
-            requires Arithmetic -> Variables
-            before Variables -> Scopes
-            after Labels -> Loops
-            backend interpreter enable
-            backend cil disable
+
+            use Arithmetic,Variables,Scopes
+            exclude Legacy
+            requires Arithmetic,Variables,Scopes
+            before Arithmetic,Variables
+            after Variables,Scopes
+            backend interpreter,cil
+            allow add_i32
+            forbid unsafe_reflect
+            enable Ssa
+            disable Fold
+            security restricted
+            capability sandbox,safeInterop
+
             """);
 
         Assert.Multiple(() =>
         {
-            Assert.That(result.OrderDirectives.Count, Is.EqualTo(3));
-            Assert.That(result.OrderDirectives[0].Directive, Is.EqualTo("requires"));
-            Assert.That(result.OrderDirectives[1].Directive, Is.EqualTo("before"));
-            Assert.That(result.OrderDirectives[2].Directive, Is.EqualTo("after"));
-            Assert.That(result.BackendDirectives.Select(x => (x.Backend, x.Enabled)).ToArray(), Is.EqualTo(new[]
+            Assert.That(result.Name, Is.EqualTo("Tiny"));
+            Assert.That(result.UseModules, Is.EqualTo(new[] { "Arithmetic", "Variables", "Scopes" }));
+            Assert.That(result.ExcludeModules, Is.EqualTo(new[] { "Legacy" }));
+            Assert.That(result.OrderDirectives.Select(x => (x.Directive, x.SourceModule, x.TargetModule)), Is.EquivalentTo(new[]
+            {
+                ("requires", "Arithmetic", "Variables"),
+                ("requires", "Variables", "Scopes"),
+                ("before", "Arithmetic", "Variables"),
+                ("after", "Variables", "Scopes")
+            }));
+            Assert.That(result.BackendDirectives.Select(x => (x.Backend, x.Enabled)), Is.EqualTo(new[]
             {
                 (DialectBackendTarget.Interpreter, true),
-                (DialectBackendTarget.Cil, false)
+                (DialectBackendTarget.Cil, true)
             }));
-        });
-    }
-
-    [Test]
-    public void Compile_IntrinsicOptimizerSecurityCapability_AreCaptured()
-    {
-        var compiler = new DialectDslCompiler();
-
-        var result = compiler.Compile(
-            """
-            dialect Tiny
-            allow intrinsic "add_i32" for any
-            forbid intrinsic "unsafe" for cil
-            enable optimizer Ssa for interpreter
-            disable optimizer Fold for any
-            security restricted
-            capability sandbox = true
-            capability unsafeInterop = false
-            """);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.IntrinsicDirectives.Select(x => (x.Name, x.Allowed, x.Target)).ToArray(), Is.EqualTo(new[]
+            Assert.That(result.IntrinsicDirectives.Select(x => (x.Name, x.Allowed, x.Target)), Is.EqualTo(new[]
             {
                 ("add_i32", true, DialectBackendTarget.Any),
-                ("unsafe", false, DialectBackendTarget.Cil)
+                ("unsafe_reflect", false, DialectBackendTarget.Any)
             }));
-            Assert.That(result.OptimizerDirectives.Select(x => (x.Name, x.Enabled, x.Target)).ToArray(), Is.EqualTo(new[]
+            Assert.That(result.OptimizerDirectives.Select(x => (x.Name, x.Enabled, x.Target)), Is.EqualTo(new[]
             {
-                ("Ssa", true, DialectBackendTarget.Interpreter),
+                ("Ssa", true, DialectBackendTarget.Any),
                 ("Fold", false, DialectBackendTarget.Any)
             }));
             Assert.That(result.SecurityProfile, Is.EqualTo(DialectSecurityProfile.Restricted));
-            Assert.That(result.CapabilityDirectives.Select(x => (x.Name, x.Value)).ToArray(), Is.EqualTo(new[]
+            Assert.That(result.CapabilityDirectives.Select(x => (x.Name, x.Value)), Is.EqualTo(new[]
             {
                 ("sandbox", true),
-                ("unsafeInterop", false)
+                ("safeInterop", true)
             }));
         });
-    }
-
-    [Test]
-    public void Compile_InvalidSyntax_ThrowsParserExceptionWithMessage()
-    {
-        var compiler = new DialectDslCompiler();
-
-        var ex = Assert.Throws<ParserException>(() => compiler.Compile("dialect\nuse A\n"));
-
-        Assert.That(ex!.Message, Does.Contain("dialect <Name>"));
-    }
-
-    [Test]
-    public void Compile_InvalidNewDirectiveSyntax_ThrowsParserException()
-    {
-        var compiler = new DialectDslCompiler();
-
-        var ex = Assert.Throws<ParserException>(() => compiler.Compile(
-            """
-            dialect Tiny
-            allow intrinsic add_i32 for any
-            """));
-
-        Assert.That(ex!.Message, Does.Contain("allow|forbid intrinsic \"name\""));
-    }
-
-    [Test]
-    public void Compile_DuplicateSecurityDirective_ThrowsParserException()
-    {
-        var compiler = new DialectDslCompiler();
-
-        var ex = Assert.Throws<ParserException>(() => compiler.Compile(
-            """
-            dialect Tiny
-            security trusted
-            security restricted
-            """));
-
-        Assert.That(ex!.Message, Does.Contain("only once"));
     }
 
     [Test]
@@ -143,13 +84,13 @@ public class FrameworkNativeVerticalSliceTests
         const string source =
             """
             dialect Tiny
-            use Variables
-            requires Variables -> Scopes
-            backend interpreter enable
-            allow intrinsic "add_i32" for any
-            enable optimizer Ssa for interpreter
+            use Variables,Scopes
+            requires Variables,Scopes
+            backend interpreter
+            allow add_i32
+            enable Ssa
             security trusted
-            capability sandbox = true
+            capability sandbox
             """;
 
         var first = compiler.Compile(source);
@@ -173,41 +114,102 @@ public class FrameworkNativeVerticalSliceTests
         });
     }
 
-
     [Test]
-    public void SliceCompiler_ReadsDialectSliceFromAirAnnotation()
+    public void Compile_MissingDialectDeclaration_ThrowsParserException()
     {
-        var compiler = new DialectDefinitionSliceCompiler();
-        var ir = new AbstractIR();
-        var expected = new DialectDefinitionSlice(
-            "Tiny",
-            ["Arithmetic"],
-            [],
-            [new DialectOrderDirective(DialectOrderDirectiveKind.Requires, "Arithmetic", "Scopes")],
-            [new DialectBackendDirective(DialectBackendTarget.Interpreter, true)],
-            [],
-            [],
-            null,
-            []);
-        ir.AppendInstructions([new Instruction(UOpCode.Annotate, metadata: [expected])]);
+        var compiler = new DialectDslCompiler();
 
-        var result = compiler.Compile(ir, new CompilationInput { SourceText = "ignored" });
+        var ex = Assert.Throws<ParserException>(() => compiler.Compile("use A\n"));
 
-        Assert.That(result.Name, Is.EqualTo("Tiny"));
-        Assert.That(result.UseModules, Is.EqualTo(new[] { "Arithmetic" }));
+        Assert.That(ex!.Message, Does.Contain("dialect"));
     }
 
     [Test]
-    public void SliceCompiler_Throws_WhenAirDoesNotContainDialectSlice()
+    public void Compile_MalformedIdentifierList_ThrowsParserException()
     {
-        var compiler = new DialectDefinitionSliceCompiler();
-        var ir = new AbstractIR();
-        ir.AppendInstructions([new Instruction(UOpCode.Nop)]);
+        var compiler = new DialectDslCompiler();
 
-        Assert.Throws<InvalidOperationException>(() => compiler.Compile(ir, new CompilationInput { SourceText = "ignored" }));
+        var ex = Assert.Throws<ParserException>(() => compiler.Compile("dialect Tiny\nuse A,,B\n"));
+
+        Assert.That(ex!.Message, Does.Contain("invalid identifier list item"));
     }
 
-[Test]
+    [Test]
+    public void Compile_UnknownDirective_ThrowsParserException()
+    {
+        var compiler = new DialectDslCompiler();
+
+        var ex = Assert.Throws<ParserException>(() => compiler.Compile("dialect Tiny\nwat unknown\n"));
+
+        Assert.That(ex!.Message, Does.Contain("Unknown dialect directive 'wat'"));
+    }
+
+    [Test]
+    public void Compile_DuplicateSecurityDirective_ThrowsParserException()
+    {
+        var compiler = new DialectDslCompiler();
+
+        var ex = Assert.Throws<ParserException>(() => compiler.Compile("dialect Tiny\nsecurity trusted\nsecurity restricted\n"));
+
+        Assert.That(ex!.Message, Does.Contain("only be declared once"));
+    }
+
+    [Test]
+    public void Compile_ConflictingIntrinsicPolicies_ThrowParserException()
+    {
+        var compiler = new DialectDslCompiler();
+
+        var ex = Assert.Throws<ParserException>(() => compiler.Compile("dialect Tiny\nallow add_i32\nforbid add_i32\n"));
+
+        Assert.That(ex!.Message, Does.Contain("cannot be both allowed and forbidden"));
+    }
+
+    [Test]
+    public void SliceCompiler_RejectsMissingDialectNameAnnotation()
+    {
+        var compiler = new DialectDefinitionSliceCompiler();
+        var ir = new UniversalIntermediateRepresentation.AbstractIR();
+        ir.AppendInstructions([new Instruction(UOpCode.Annotate, metadata: [new UseModulesAirAnnotation(new[] { "Arithmetic" })])]);
+
+        var ex = Assert.Throws<InvalidOperationException>(() => compiler.Compile(ir, new CompilationInput { SourceText = "ignored" }));
+
+        Assert.That(ex!.Message, Does.Contain("missing a DialectNameAirAnnotation"));
+    }
+
+    [Test]
+    public void SliceCompiler_RejectsDuplicateSingletonAnnotation()
+    {
+        var compiler = new DialectDefinitionSliceCompiler();
+        var ir = new UniversalIntermediateRepresentation.AbstractIR();
+        ir.AppendInstructions([new Instruction(UOpCode.Annotate, metadata:
+        [
+            new DialectNameAirAnnotation("Tiny"),
+            new SecurityAirAnnotation(DialectSecurityProfile.Trusted),
+            new SecurityAirAnnotation(DialectSecurityProfile.Restricted)
+        ])]);
+
+        var ex = Assert.Throws<InvalidOperationException>(() => compiler.Compile(ir, new CompilationInput { SourceText = "ignored" }));
+
+        Assert.That(ex!.Message, Does.Contain("duplicate singleton annotation"));
+    }
+
+    [Test]
+    public void SliceCompiler_RejectsDuplicateDialectNameAnnotation()
+    {
+        var compiler = new DialectDefinitionSliceCompiler();
+        var ir = new UniversalIntermediateRepresentation.AbstractIR();
+        ir.AppendInstructions([new Instruction(UOpCode.Annotate, metadata:
+        [
+            new DialectNameAirAnnotation("Tiny"),
+            new DialectNameAirAnnotation("Other")
+        ])]);
+
+        var ex = Assert.Throws<InvalidOperationException>(() => compiler.Compile(ir, new CompilationInput { SourceText = "ignored" }));
+
+        Assert.That(ex!.Message, Does.Contain("duplicate DialectNameAirAnnotation"));
+    }
+
+    [Test]
     public void Compile_RequiresFrontendModulePipeline_WithoutModuleLexingFails()
     {
         var coreWithoutDialectModule = new BasicCoreImpl<DialectDefinitionSlice>(

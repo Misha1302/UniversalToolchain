@@ -1,18 +1,11 @@
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using ExceptionsManager;
-using AstNodeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.ParserWrapper.AstNodeTag>;
 
 namespace UniversalToolchain.Dialects.Frontend;
 
-/// <summary>
-/// Materializes dialect AST semantics into bytecode so later stages can consume framework-native outputs.
-/// </summary>
 public sealed class DialectAstToBytecodeVisitor : IAstVisitor
 {
-    private static readonly AstNodeType ScopeType = AstNodeType.CreateOrGet("Scope");
-    private readonly DialectDefinitionSliceParser _sliceParser = new();
-
     public void TryVisit(BytecodeVisitorData data)
     {
         if (data == null)
@@ -20,13 +13,56 @@ public sealed class DialectAstToBytecodeVisitor : IAstVisitor
             Thrower.ArgumentNull(nameof(data));
         }
 
-        var isRootScope = data.Node.NodeType == ScopeType && data.Node.Parent == null;
-        if (!isRootScope)
+        var document = DialectDslAstValidator.Validate(data.Node);
+        var annotations = DialectAstLowering.Lower(document);
+        data.Bytecode.Instructions.Add(new BytecodeInstruction(new DialectSliceToAirConvertable(annotations)));
+    }
+}
+
+internal static class DialectAstLowering
+{
+    public static IReadOnlyList<object> Lower(DialectDocumentAstNode document)
+    {
+        if (document == null)
         {
-            return;
+            Thrower.ArgumentNull(nameof(document));
         }
 
-        var slice = _sliceParser.Parse(data.Node);
-        data.Bytecode.Instructions.Add(new BytecodeInstruction(new DialectSliceToAirConvertable(slice)));
+        var annotations = new List<object>
+        {
+            new DialectNameAirAnnotation(document.Declaration.NameNode.Identifier)
+        };
+
+        foreach (var directive in document.Directives)
+        {
+            annotations.Add(LowerDirective(directive));
+        }
+
+        return annotations;
+    }
+
+    private static object LowerDirective(DialectDirectiveAstNode directive)
+    {
+        return directive switch
+        {
+            UseModulesDirectiveAstNode useDirective => new UseModulesAirAnnotation(GetIdentifiers(useDirective.Identifiers)),
+            ExcludeModulesDirectiveAstNode excludeDirective => new ExcludeModulesAirAnnotation(GetIdentifiers(excludeDirective.Identifiers)),
+            RequiresModulesDirectiveAstNode requiresDirective => new RequiresModulesAirAnnotation(GetIdentifiers(requiresDirective.Identifiers)),
+            BeforeModulesDirectiveAstNode beforeDirective => new BeforeModulesAirAnnotation(GetIdentifiers(beforeDirective.Identifiers)),
+            AfterModulesDirectiveAstNode afterDirective => new AfterModulesAirAnnotation(GetIdentifiers(afterDirective.Identifiers)),
+            BackendDirectiveAstNode backendDirective => new BackendAirAnnotation(GetIdentifiers(backendDirective.Identifiers)),
+            AllowIntrinsicDirectiveAstNode allowDirective => new AllowIntrinsicAirAnnotation(allowDirective.Identifier.Identifier),
+            ForbidIntrinsicDirectiveAstNode forbidDirective => new ForbidIntrinsicAirAnnotation(forbidDirective.Identifier.Identifier),
+            EnableIntrinsicDirectiveAstNode enableDirective => new EnableIntrinsicAirAnnotation(enableDirective.Identifier.Identifier),
+            DisableIntrinsicDirectiveAstNode disableDirective => new DisableIntrinsicAirAnnotation(disableDirective.Identifier.Identifier),
+            SecurityDirectiveAstNode securityDirective => new SecurityAirAnnotation(DialectAnnotationValueGuard.ParseSecurityProfile(securityDirective.Identifier.Identifier)),
+            CapabilityDirectiveAstNode capabilityDirective => new CapabilityAirAnnotation(GetIdentifiers(capabilityDirective.Identifiers)),
+            _ => Thrower.InvalidOpEx<object>($"Dialect lowering does not support AST node type '{directive.GetType().Name}'.")
+        };
+    }
+
+    private static IReadOnlyList<string> GetIdentifiers(IdentifierListAstNode identifiers)
+    {
+        return identifiers.Identifiers.Select(x => x.Identifier).ToList();
     }
 }

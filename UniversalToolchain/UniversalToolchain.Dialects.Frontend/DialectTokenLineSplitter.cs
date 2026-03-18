@@ -1,4 +1,5 @@
 using BasicCore.LexerWrapper;
+using ExceptionsManager;
 
 namespace UniversalToolchain.Dialects.Frontend;
 
@@ -6,15 +7,24 @@ public static class DialectTokenLineSplitter
 {
     public static List<List<LexemeValue>> Split(IReadOnlyList<LexemeValue> tokens)
     {
-        var lines = new List<List<LexemeValue>>();
+        if (tokens == null)
+        {
+            Thrower.ArgumentNull(nameof(tokens));
+        }
+
+        var result = new List<List<LexemeValue>>();
         var current = new List<LexemeValue>();
 
         foreach (var token in tokens)
         {
             if (DialectLexemeTags.IsTag(token, DialectLexemeTags.NewLine))
             {
-                lines.Add(current);
-                current = new List<LexemeValue>();
+                if (current.Count > 0)
+                {
+                    result.Add(current);
+                    current = [];
+                }
+
                 continue;
             }
 
@@ -23,9 +33,9 @@ public static class DialectTokenLineSplitter
 
         if (current.Count > 0)
         {
-            lines.Add(current);
+            result.Add(current);
         }
 
-        return lines;
+        return result;
     }
 }

@@ -6,15 +6,23 @@ public sealed class DialectDirectiveAccumulation
 
     public List<string> ExcludeModules { get; } = [];
 
-    public List<DialectOrderDirective> OrderDirectives { get; } = [];
+    public List<string> RequiresModules { get; } = [];
 
-    public List<DialectBackendDirective> BackendDirectives { get; } = [];
+    public List<string> BeforeModules { get; } = [];
 
-    public List<DialectIntrinsicDirective> IntrinsicDirectives { get; } = [];
+    public List<string> AfterModules { get; } = [];
 
-    public List<DialectOptimizerDirective> OptimizerDirectives { get; } = [];
+    public List<string> Backends { get; } = [];
 
-    public List<DialectCapabilityDirective> CapabilityDirectives { get; } = [];
+    public List<string> AllowedIntrinsics { get; } = [];
+
+    public List<string> ForbiddenIntrinsics { get; } = [];
+
+    public List<string> EnabledIntrinsics { get; } = [];
+
+    public List<string> DisabledIntrinsics { get; } = [];
+
+    public List<string> Capabilities { get; } = [];
 
     public DialectSecurityProfile? SecurityProfile { get; set; }
 }

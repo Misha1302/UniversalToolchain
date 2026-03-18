@@ -1,8 +1,9 @@
+using CommonExceptions;
 using BasicCore.Contracts;
+using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core;
 using UniversalToolchain.Dialects.Frontend;
 using UniversalToolchain.Dialects.Integration;
-using ATarget = UniversalToolchain.Dialects.Abstractions.DialectBackendTarget;
 
 namespace UniversalToolchain.Dialects.Tests;
 
@@ -16,12 +17,11 @@ public class FrameworkNativeRuntimeCompositionWorkflowTests
         var source =
             """
             dialect D
-            use A
-            use B
-            before A -> B
-            backend interpreter enable
-            allow intrinsic "intrinsic-a" for any
-            enable optimizer opt-a for interpreter
+            use A,B
+            before A,B
+            backend interpreter
+            allow intrinsic_a
+            enable opt_a
             """;
 
         var first = workflow.ComposeText(source, registry, "first");
@@ -33,17 +33,9 @@ public class FrameworkNativeRuntimeCompositionWorkflowTests
             Assert.That(first.RuntimeComposition, Is.Not.Null);
             Assert.That(first.RuntimeComposition!.OrderedModules.Select(x => x.Name), Is.EqualTo(new[] { "A", "B" }));
             Assert.That(first.RuntimeComposition.EnabledBackends.Select(x => x.RuntimeName), Is.EqualTo(new[] { "InterpreterBackend" }));
-            Assert.That(first.RuntimeComposition.EnabledOptimizers.Select(x => x.Name), Is.EqualTo(new[] { "opt-a" }));
-            Assert.That(first.RuntimeComposition.AllowedIntrinsics.Select(x => x.Name), Is.EqualTo(new[] { "intrinsic-a" }));
-
-            Assert.That(first.RuntimeComposition.OrderedModules.Select(x => x.Name),
-                Is.EqualTo(second.RuntimeComposition!.OrderedModules.Select(x => x.Name)));
-            Assert.That(first.RuntimeComposition.EnabledBackends.Select(x => x.RuntimeName),
-                Is.EqualTo(second.RuntimeComposition!.EnabledBackends.Select(x => x.RuntimeName)));
-            Assert.That(first.RuntimeComposition.EnabledOptimizers.Select(x => x.Name),
-                Is.EqualTo(second.RuntimeComposition!.EnabledOptimizers.Select(x => x.Name)));
-            Assert.That(first.RuntimeComposition.AllowedIntrinsics.Select(x => x.Name),
-                Is.EqualTo(second.RuntimeComposition!.AllowedIntrinsics.Select(x => x.Name)));
+            Assert.That(first.RuntimeComposition.EnabledOptimizers.Select(x => x.Name), Is.EqualTo(new[] { "opt_a" }));
+            Assert.That(first.RuntimeComposition.AllowedIntrinsics.Select(x => x.Name), Is.EqualTo(new[] { "intrinsic_a" }));
+            Assert.That(first.RuntimeComposition.OrderedModules.Select(x => x.Name), Is.EqualTo(second.RuntimeComposition!.OrderedModules.Select(x => x.Name)));
         });
     }
 
@@ -56,9 +48,9 @@ public class FrameworkNativeRuntimeCompositionWorkflowTests
             """
             dialect D
             use A
-            backend interpreter enable
-            allow intrinsic "intrinsic-a" for any
-            enable optimizer opt-a for interpreter
+            backend interpreter
+            allow intrinsic_a
+            enable opt_a
             """;
 
         var result = workflow.ComposeText(source, registry);
@@ -75,7 +67,7 @@ public class FrameworkNativeRuntimeCompositionWorkflowTests
     }
 
     [Test]
-    public void ComposeText_SemanticConflict_ReturnsSemanticDiagnosticsWithoutResolution()
+    public void ComposeText_SemanticConflict_FailsDuringDslValidation()
     {
         var workflow = CreateWorkflow();
         var source =
@@ -85,16 +77,9 @@ public class FrameworkNativeRuntimeCompositionWorkflowTests
             exclude A
             """;
 
-        var result = workflow.ComposeText(source, CreateRegistry());
+        var ex = Assert.Throws<ParserException>(() => workflow.ComposeText(source, CreateRegistry()));
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.IsSuccess, Is.False);
-            Assert.That(result.BuildPlan, Is.Not.Null);
-            Assert.That(result.RuntimeComposition, Is.Null);
-            Assert.That(result.SemanticDiagnostics.Any(x => x.Code == "S101"), Is.True);
-            Assert.That(result.ResolutionDiagnostics, Is.Empty);
-        });
+        Assert.That(ex!.Message, Does.Contain("both use and exclude"));
     }
 
     private static DialectFrameworkCompositionWorkflow CreateWorkflow()
@@ -110,9 +95,9 @@ public class FrameworkNativeRuntimeCompositionWorkflowTests
         return new DialectRuntimeDescriptorRegistryBuilder()
             .RegisterModule(new RuntimeModuleDescriptor("A", typeof(FakeFrontendModule)))
             .RegisterModule(new RuntimeModuleDescriptor("B", typeof(FakeFrontendModule)))
-            .RegisterBackend(new RuntimeBackendDescriptor(ATarget.Interpreter, "InterpreterBackend"))
-            .RegisterOptimizer(new RuntimeOptimizerDescriptor("opt-a", typeof(FakeOptimizerModule)))
-            .RegisterIntrinsic(new RuntimeIntrinsicDescriptor("intrinsic-a", ATarget.Any))
+            .RegisterBackend(new RuntimeBackendDescriptor(DialectBackendTarget.Interpreter, "InterpreterBackend"))
+            .RegisterOptimizer(new RuntimeOptimizerDescriptor("opt_a", typeof(FakeOptimizerModule)))
+            .RegisterIntrinsic(new RuntimeIntrinsicDescriptor("intrinsic_a", DialectBackendTarget.Any))
             .Build();
     }
 

@@ -4,17 +4,14 @@ using UniversalIntermediateRepresentation;
 
 namespace UniversalToolchain.Dialects.Frontend;
 
-/// <summary>
-/// Converts the parsed dialect definition slice into explicit AIR annotation payload.
-/// </summary>
-public sealed class DialectSliceToAirConvertable(DialectDefinitionSlice slice) : IAbstractMethodConvertable
+public sealed class DialectSliceToAirConvertable(IReadOnlyList<object> annotations) : IAbstractMethodConvertable
 {
-    public string Name => "dialect_slice_annotation";
+    public string Name => "dialect_annotations";
 
     public IAbstractIR GetAbstractIR(IAbstractMethodConvertable.Context context)
     {
         var ir = new AbstractIR();
-        ir.AppendInstructions([new Instruction(UOpCode.Annotate, metadata: [slice], comment: "dialect definition slice")]);
+        ir.AppendInstructions([new Instruction(UOpCode.Annotate, metadata: annotations.ToList(), comment: "dialect definition annotations")]);
         return ir;
     }
 }

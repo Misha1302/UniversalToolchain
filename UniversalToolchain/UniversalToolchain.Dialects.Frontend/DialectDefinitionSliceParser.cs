@@ -1,4 +1,3 @@
-using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using ExceptionsManager;
 
@@ -6,8 +5,6 @@ namespace UniversalToolchain.Dialects.Frontend;
 
 public sealed class DialectDefinitionSliceParser
 {
-    private readonly DialectDirectiveLineParser _lineParser = new();
-
     public DialectDefinitionSlice Parse(AstNode astRoot)
     {
         if (astRoot == null)
@@ -15,48 +12,58 @@ public sealed class DialectDefinitionSliceParser
             Thrower.ArgumentNull(nameof(astRoot));
         }
 
-        return ParseLines(DialectAstLineReader.ReadLines(astRoot));
-    }
-
-    private DialectDefinitionSlice ParseLines(IReadOnlyList<IReadOnlyList<LexemeValue>> lines)
-    {
-        if (lines.Count == 0)
+        var document = DialectDslAstValidator.Validate(astRoot);
+        var annotations = DialectAstLowering.Lower(document);
+        var aggregation = new DialectDefinitionAggregation();
+        foreach (var annotation in annotations)
         {
-            DialectDefinitionSliceParseErrors.Fail("Dialect source is empty.", null);
-        }
-
-        var dialectName = ParseHeader(lines[0]);
-        var accumulation = new DialectDirectiveAccumulation();
-
-        foreach (var line in lines.Skip(1))
-        {
-            if (!_lineParser.TryParse(line, accumulation))
+            switch (annotation)
             {
-                DialectDefinitionSliceParseErrors.Fail("Unknown directive in dialect source.", line[0]);
+                case DialectNameAirAnnotation dialectName:
+                    aggregation.SetDialectName(dialectName.Name);
+                    break;
+                case UseModulesAirAnnotation useModules:
+                    aggregation.AddUseModules(useModules.Modules);
+                    break;
+                case ExcludeModulesAirAnnotation excludeModules:
+                    aggregation.AddExcludeModules(excludeModules.Modules);
+                    break;
+                case RequiresModulesAirAnnotation requiresModules:
+                    aggregation.AddRequiresModules(requiresModules.Modules);
+                    break;
+                case BeforeModulesAirAnnotation beforeModules:
+                    aggregation.AddBeforeModules(beforeModules.Modules);
+                    break;
+                case AfterModulesAirAnnotation afterModules:
+                    aggregation.AddAfterModules(afterModules.Modules);
+                    break;
+                case BackendAirAnnotation backend:
+                    aggregation.AddBackends(backend.Backends);
+                    break;
+                case AllowIntrinsicAirAnnotation allowIntrinsic:
+                    aggregation.AddAllowedIntrinsic(allowIntrinsic.IntrinsicName);
+                    break;
+                case ForbidIntrinsicAirAnnotation forbidIntrinsic:
+                    aggregation.AddForbiddenIntrinsic(forbidIntrinsic.IntrinsicName);
+                    break;
+                case EnableIntrinsicAirAnnotation enableIntrinsic:
+                    aggregation.AddEnabledIntrinsic(enableIntrinsic.IntrinsicName);
+                    break;
+                case DisableIntrinsicAirAnnotation disableIntrinsic:
+                    aggregation.AddDisabledIntrinsic(disableIntrinsic.IntrinsicName);
+                    break;
+                case SecurityAirAnnotation security:
+                    aggregation.SetSecurityProfile(security.Profile);
+                    break;
+                case CapabilityAirAnnotation capability:
+                    aggregation.AddCapabilities(capability.Capabilities);
+                    break;
+                default:
+                    Thrower.InvalidOpEx($"Dialect lowering produced unsupported annotation type '{annotation.GetType().FullName}'.");
+                    break;
             }
         }
 
-        return new DialectDefinitionSlice(
-            dialectName,
-            accumulation.UseModules,
-            accumulation.ExcludeModules,
-            accumulation.OrderDirectives,
-            accumulation.BackendDirectives,
-            accumulation.IntrinsicDirectives,
-            accumulation.OptimizerDirectives,
-            accumulation.SecurityProfile,
-            accumulation.CapabilityDirectives);
-    }
-
-    private static string ParseHeader(IReadOnlyList<LexemeValue> headerLine)
-    {
-        if (headerLine.Count != 2 ||
-            !DialectLexemeTags.IsTag(headerLine[0], DialectLexemeTags.DialectKeyword) ||
-            !DialectLexemeTags.IsTag(headerLine[1], DialectLexemeTags.Identifier))
-        {
-            DialectDefinitionSliceParseErrors.Fail("Expected header: dialect <Name>.", headerLine.FirstOrDefault());
-        }
-
-        return headerLine[1].Text;
+        return new DialectDefinitionSliceBuilder().Build(aggregation);
     }
 }
