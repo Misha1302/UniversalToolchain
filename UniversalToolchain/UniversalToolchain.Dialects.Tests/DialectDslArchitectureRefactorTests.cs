@@ -30,6 +30,16 @@ public class DialectDslArchitectureRefactorTests
     }
 
     [Test]
+    public void Compiler_DefaultConstructor_PreservesBuiltInStandaloneUsage()
+    {
+        var compiler = new DialectDslCompiler();
+
+        var slice = compiler.Compile("dialect Demo\nuse Arithmetic\n");
+
+        Assert.That(slice.UseModules, Is.EqualTo(new[] { "Arithmetic" }));
+    }
+
+    [Test]
     public void ProviderCompositionOrder_IsDeterministic_WhenProvidersShareOrder()
     {
         using var provider = DialectDslTestComposition.CreateProvider(services =>
