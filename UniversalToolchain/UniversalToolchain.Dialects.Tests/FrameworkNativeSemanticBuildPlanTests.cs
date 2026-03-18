@@ -68,7 +68,7 @@ public class FrameworkNativeSemanticBuildPlanTests
     [Test]
     public void ParserRegistry_UsesFeatureOwnedCreators_AndStagedDirectiveSlots()
     {
-        var registry = DialectDslBuiltInFeatures.CreateRegistry();
+        var registry = DialectDslTestComposition.CreateRegistry();
         var creatorTypes = DialectDslParserNodeRegistry.CreateRegistrations(registry).Select(x => x.Creator.GetType().Name).ToArray();
         var descriptors = DialectDirectiveDescriptors.CreateOrdered(registry);
 
@@ -112,6 +112,6 @@ public class FrameworkNativeSemanticBuildPlanTests
 
     private static DialectBuildPlan BuildPlan(string source)
     {
-        return new DialectCompiledDialectBuildPlanBuilder().Build(new DialectDslCompiler().Compile(source));
+        return new DialectCompiledDialectBuildPlanBuilder().Build(DialectDslTestComposition.CreateCompiler().Compile(source));
     }
 }

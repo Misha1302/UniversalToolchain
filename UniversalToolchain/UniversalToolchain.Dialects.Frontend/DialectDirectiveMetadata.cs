@@ -11,6 +11,8 @@ public sealed class DialectDirectiveDescriptor
     public required DialectDirectiveParserOrder ParserOrder { get; init; }
 
     public bool IsSingleton { get; init; }
+
+    public required string SingletonViolationMessage { get; init; }
 }
 
 public static class DialectDirectiveDescriptors
@@ -28,7 +30,8 @@ public static class DialectDirectiveDescriptors
                 Id = x.Id,
                 Keyword = x.Keyword,
                 ParserOrder = x.ParserOrder,
-                IsSingleton = x.IsSingleton
+                IsSingleton = x.IsSingleton,
+                SingletonViolationMessage = x.SingletonViolationMessage
             })
             .ToList();
     }

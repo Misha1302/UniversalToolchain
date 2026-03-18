@@ -7,9 +7,9 @@ public sealed class DialectDirectiveLineParser
 {
     private readonly DialectDslRegistry _registry;
 
-    public DialectDirectiveLineParser(DialectDslRegistry? registry = null)
+    public DialectDirectiveLineParser(DialectDslRegistry registry)
     {
-        _registry = registry ?? DialectDslBuiltInFeatures.CreateRegistry();
+        _registry = registry ?? throw new ArgumentNullException(nameof(registry));
     }
 
     public bool TryParse(IReadOnlyList<LexemeValue> line, DialectDirectiveAccumulation accumulation)

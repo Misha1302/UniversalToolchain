@@ -5,6 +5,13 @@ namespace UniversalToolchain.Dialects.Frontend;
 
 public sealed class DialectDefinitionSliceParser
 {
+    private readonly DialectDslRegistry _registry;
+
+    public DialectDefinitionSliceParser(DialectDslRegistry registry)
+    {
+        _registry = registry ?? throw new ArgumentNullException(nameof(registry));
+    }
+
     public DialectDefinitionSlice Parse(AstNode astRoot)
     {
         if (astRoot == null)
@@ -12,7 +19,7 @@ public sealed class DialectDefinitionSliceParser
             Thrower.ArgumentNull(nameof(astRoot));
         }
 
-        var document = DialectDslAstValidator.Validate(astRoot);
+        var document = DialectDslAstValidator.Validate(astRoot, _registry);
         var annotations = DialectAstLowering.Lower(document);
         var aggregation = new DialectDefinitionAggregation();
         foreach (var annotation in annotations)

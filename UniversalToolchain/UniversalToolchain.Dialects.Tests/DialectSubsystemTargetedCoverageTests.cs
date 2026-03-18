@@ -12,7 +12,7 @@ public class DialectSubsystemTargetedCoverageTests
     [Test]
     public void Compiler_ParsesCompleteDialectSurface()
     {
-        var result = new DialectDslCompiler().Compile(
+        var result = DialectDslTestComposition.CreateCompiler().Compile(
             """
             dialect Coverage
             use A,B
@@ -38,7 +38,7 @@ public class DialectSubsystemTargetedCoverageTests
     [Test]
     public void Compiler_InvalidDirective_ReportsMeaningfulError()
     {
-        var ex = Assert.Throws<ParserException>(() => new DialectDslCompiler().Compile("dialect A\nwat unknown\n"));
+        var ex = Assert.Throws<ParserException>(() => DialectDslTestComposition.CreateCompiler().Compile("dialect A\nwat unknown\n"));
 
         Assert.That(ex!.Message, Does.Contain("Unknown dialect directive"));
     }
@@ -79,8 +79,8 @@ public class DialectSubsystemTargetedCoverageTests
         const string source = "dialect D\nuse B,A\nbefore A,B\nbackend interpreter\nallow i1\nenable O1\n";
         var builder = new DialectCompiledDialectBuildPlanBuilder();
 
-        var first = builder.Build(new DialectDslCompiler().Compile(source));
-        var second = builder.Build(new DialectDslCompiler().Compile(source));
+        var first = builder.Build(DialectDslTestComposition.CreateCompiler().Compile(source));
+        var second = builder.Build(DialectDslTestComposition.CreateCompiler().Compile(source));
 
         Assert.Multiple(() =>
         {

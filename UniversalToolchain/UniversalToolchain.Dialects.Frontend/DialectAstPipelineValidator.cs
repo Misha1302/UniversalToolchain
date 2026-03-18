@@ -5,11 +5,16 @@ namespace UniversalToolchain.Dialects.Frontend;
 
 public static class DialectAstPipelineValidator
 {
-    public static AstNode Validate(AstNode astRoot, DialectDslRegistry? registry = null)
+    public static AstNode Validate(AstNode astRoot, DialectDslRegistry registry)
     {
         if (astRoot == null)
         {
             Thrower.ArgumentNull(nameof(astRoot));
+        }
+
+        if (registry == null)
+        {
+            Thrower.ArgumentNull(nameof(registry));
         }
 
         DialectDslAstValidator.Validate(astRoot, registry);
@@ -19,11 +24,16 @@ public static class DialectAstPipelineValidator
 
 public static class DialectDslAstValidator
 {
-    public static DialectDocumentAstNode Validate(AstNode astRoot, DialectDslRegistry? registry = null)
+    public static DialectDocumentAstNode Validate(AstNode astRoot, DialectDslRegistry registry)
     {
         if (astRoot == null)
         {
             Thrower.ArgumentNull(nameof(astRoot));
+        }
+
+        if (registry == null)
+        {
+            Thrower.ArgumentNull(nameof(registry));
         }
 
         if (astRoot.Children.Count != 1 || astRoot.Children[0] is not DialectDocumentAstNode)
@@ -32,7 +42,7 @@ public static class DialectDslAstValidator
         }
 
         var document = (DialectDocumentAstNode)astRoot.Children[0];
-        ValidateDocument(document, registry ?? DialectDslBuiltInFeatures.CreateRegistry());
+        ValidateDocument(document, registry);
         return document;
     }
 
@@ -54,6 +64,11 @@ public static class DialectDslAstValidator
         var context = new DialectDirectiveValidationContext();
         foreach (var directive in document.Directives)
         {
+            if (directive.Feature.IsSingleton)
+            {
+                context.EnsureSingleton(directive.Feature, directive.LexemeValue);
+            }
+
             directive.Feature.ValidateSemantic(directive, context);
         }
 

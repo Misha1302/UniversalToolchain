@@ -3,6 +3,7 @@ using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using BasicTypesExtensions;
 using IntermediateRepresentationAbstractions;
+using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core;
 using UniversalToolchain.Dialects.Frontend;
@@ -15,10 +16,10 @@ namespace UniversalToolchain.Dialects.Tests;
 public class FrameworkNativeExtensionSeamsTests
 {
     [Test]
-    public void ExplicitRegistryComposition_IsDeterministic_AndUsesStagedOrdering()
+    public void DiBuiltInComposition_IsDeterministic_AndUsesStagedOrdering()
     {
-        var first = DialectDslBuiltInFeatures.CreateRegistry();
-        var second = DialectDslBuiltInFeatures.CreateRegistry();
+        var first = DialectDslTestComposition.CreateRegistry();
+        var second = DialectDslTestComposition.CreateRegistry();
         var parserCreators = DialectDslParserNodeRegistry.CreateRegistrations(first).Select(x => x.Creator.GetType().Name).ToArray();
 
         Assert.Multiple(() =>
@@ -49,10 +50,10 @@ public class FrameworkNativeExtensionSeamsTests
     }
 
     [Test]
-    public void CustomDirectiveFeature_CanBeAddedWithoutEditingCentralDirectivePlumbing()
+    public void CustomDirectiveFeature_CanBeAddedThroughProviderRegistration_WithoutEditingCentralDirectivePlumbing()
     {
-        var registry = DialectDslBuiltInFeatures.CreateRegistry([new AliasDirectiveFeatureProvider()]);
-        var compiler = new DialectDslCompiler(registry);
+        var registry = DialectDslTestComposition.CreateRegistry(services => services.AddDialectDirectiveFeatureProvider<AliasDirectiveFeatureProvider>());
+        var compiler = DialectDslTestComposition.CreateCompiler(services => services.AddDialectDirectiveFeatureProvider<AliasDirectiveFeatureProvider>());
 
         var slice = compiler.Compile(
             """
@@ -74,9 +75,23 @@ public class FrameworkNativeExtensionSeamsTests
     }
 
     [Test]
+    public void CustomDirectiveFeature_CanBeAddedThroughFeatureRegistration()
+    {
+        var compiler = DialectDslTestComposition.CreateCompiler(services => services.AddDialectDirectiveFeature<DirectAliasDirectiveFeature>());
+
+        var slice = compiler.Compile(
+            """
+            dialect Tiny
+            direct-alias math arithmetic
+            """);
+
+        Assert.That(slice.CapabilityDirectives.Select(x => x.Name), Is.EqualTo(new[] { "direct-alias:math->arithmetic" }));
+    }
+
+    [Test]
     public void SemanticBinder_BindsCompiledSliceIntoNormalizedDialectDefinition()
     {
-        var slice = new DialectDslCompiler().Compile(
+        var slice = DialectDslTestComposition.CreateCompiler().Compile(
             """
             dialect Tiny
             use B,A
@@ -182,34 +197,46 @@ public class FrameworkNativeExtensionSeamsTests
 
         public void Register(DialectDslRegistryBuilder builder)
         {
-            builder.RegisterFeature(new AliasDirectiveFeature());
+            builder.RegisterFeature(new AliasDirectiveFeature("alias", "tests.alias", "alias:"));
         }
     }
 
-    private sealed class AliasDirectiveFeature : IDialectDirectiveFeature
+    private sealed class DirectAliasDirectiveFeature : AliasDirectiveFeature
     {
-        public string Id => "tests.alias";
+        public DirectAliasDirectiveFeature() : base("direct-alias", "tests.direct-alias", "direct-alias:")
+        {
+        }
+    }
 
-        public string Keyword => "alias";
+    private class AliasDirectiveFeature(string keyword, string id, string capabilityPrefix) : IDialectDirectiveFeature
+    {
+        private static readonly DialectListStateKey<string> AccumulationKey = new("AliasMappings");
+        private static readonly DialectSetStateKey<string> ValidationKey = new("AliasMappings", StringComparer.Ordinal);
 
-        public string LexemeTag => "DialectDirectiveKeyword.alias";
+        public string Id => id;
+
+        public string Keyword => keyword;
+
+        public string LexemeTag => $"DialectDirectiveKeyword.{keyword}";
 
         public DialectDirectiveParserOrder ParserOrder => new(DialectDirectiveSlot.Extension, 0);
 
         public bool IsSingleton => false;
 
+        public string SingletonViolationMessage => $"Directive '{keyword}' can only be declared once.";
+
         public DialectDirectiveAstNode ParseDirective(AstNode lineNode)
         {
             if (lineNode.Children.Count != 3)
             {
-                DialectDefinitionSliceParseErrors.Fail("Directive 'alias' expects exactly two identifiers.", lineNode.Children[0].LexemeValue);
+                DialectDefinitionSliceParseErrors.Fail($"Directive '{keyword}' expects exactly two identifiers.", lineNode.Children[0].LexemeValue);
             }
 
             var source = lineNode.Children[1];
             var target = lineNode.Children[2];
             if (!DialectLexemeTags.IsTag(source.LexemeValue, DialectLexemeTags.Identifier) || !DialectLexemeTags.IsTag(target.LexemeValue, DialectLexemeTags.Identifier))
             {
-                DialectDefinitionSliceParseErrors.Fail("Directive 'alias' expects identifier arguments.", source.LexemeValue ?? target.LexemeValue);
+                DialectDefinitionSliceParseErrors.Fail($"Directive '{keyword}' expects identifier arguments.", source.LexemeValue ?? target.LexemeValue);
             }
 
             return new DialectDirectiveAstNode(this, lineNode.Children[0].LexemeValue,
@@ -222,10 +249,10 @@ public class FrameworkNativeExtensionSeamsTests
         {
             if (line.Count != 3)
             {
-                DialectDefinitionSliceParseErrors.Fail("Directive 'alias' expects exactly two identifiers.", line[0]);
+                DialectDefinitionSliceParseErrors.Fail($"Directive '{keyword}' expects exactly two identifiers.", line[0]);
             }
 
-            accumulation.GetOrCreateList("AliasMappings").Add($"{line[1].Text}->{line[2].Text}");
+            accumulation.GetOrCreateList(AccumulationKey).Add($"{line[1].Text}->{line[2].Text}");
         }
 
         public void ValidateSemantic(DialectDirectiveAstNode directive, DialectDirectiveValidationContext context)
@@ -236,13 +263,13 @@ public class FrameworkNativeExtensionSeamsTests
                 DialectDefinitionSliceParseErrors.Fail("Alias source and target must differ.", directive.LexemeValue);
             }
 
-            context.AddValue(Id, $"{payload.Source.Identifier}->{payload.Target.Identifier}", "Duplicate alias directive is not allowed.", directive.LexemeValue);
+            context.AddValue(ValidationKey, $"{payload.Source.Identifier}->{payload.Target.Identifier}", "Duplicate alias directive is not allowed.", directive.LexemeValue);
         }
 
         public IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive)
         {
             var payload = GetPayload(directive);
-            return [new CapabilityAirAnnotation([ $"alias:{payload.Source.Identifier}->{payload.Target.Identifier}" ])];
+            return [new CapabilityAirAnnotation([$"{capabilityPrefix}{payload.Source.Identifier}->{payload.Target.Identifier}"])];
         }
 
         private static AliasDirectivePayloadAstNode GetPayload(DialectDirectiveAstNode directive)

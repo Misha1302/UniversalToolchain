@@ -19,7 +19,7 @@ public class FrameworkNativeVerticalSliceTests
     [Test]
     public void Compile_FullValidDialect_ProducesExpectedSlice()
     {
-        var compiler = new DialectDslCompiler();
+        var compiler = DialectDslTestComposition.CreateCompiler();
 
         var result = compiler.Compile(
             """
@@ -80,7 +80,7 @@ public class FrameworkNativeVerticalSliceTests
     [Test]
     public void Compile_IsDeterministic_ForSameInput()
     {
-        var compiler = new DialectDslCompiler();
+        var compiler = DialectDslTestComposition.CreateCompiler();
         const string source =
             """
             dialect Tiny
@@ -117,7 +117,7 @@ public class FrameworkNativeVerticalSliceTests
     [Test]
     public void Compile_MissingDialectDeclaration_ThrowsParserException()
     {
-        var compiler = new DialectDslCompiler();
+        var compiler = DialectDslTestComposition.CreateCompiler();
 
         var ex = Assert.Throws<ParserException>(() => compiler.Compile("use A\n"));
 
@@ -127,7 +127,7 @@ public class FrameworkNativeVerticalSliceTests
     [Test]
     public void Compile_MalformedIdentifierList_ThrowsParserException()
     {
-        var compiler = new DialectDslCompiler();
+        var compiler = DialectDslTestComposition.CreateCompiler();
 
         var ex = Assert.Throws<ParserException>(() => compiler.Compile("dialect Tiny\nuse A,,B\n"));
 
@@ -137,7 +137,7 @@ public class FrameworkNativeVerticalSliceTests
     [Test]
     public void Compile_UnknownDirective_ThrowsParserException()
     {
-        var compiler = new DialectDslCompiler();
+        var compiler = DialectDslTestComposition.CreateCompiler();
 
         var ex = Assert.Throws<ParserException>(() => compiler.Compile("dialect Tiny\nwat unknown\n"));
 
@@ -147,7 +147,7 @@ public class FrameworkNativeVerticalSliceTests
     [Test]
     public void Compile_DuplicateSecurityDirective_ThrowsParserException()
     {
-        var compiler = new DialectDslCompiler();
+        var compiler = DialectDslTestComposition.CreateCompiler();
 
         var ex = Assert.Throws<ParserException>(() => compiler.Compile("dialect Tiny\nsecurity trusted\nsecurity restricted\n"));
 
@@ -157,7 +157,7 @@ public class FrameworkNativeVerticalSliceTests
     [Test]
     public void Compile_ConflictingIntrinsicPolicies_ThrowParserException()
     {
-        var compiler = new DialectDslCompiler();
+        var compiler = DialectDslTestComposition.CreateCompiler();
 
         var ex = Assert.Throws<ParserException>(() => compiler.Compile("dialect Tiny\nallow add_i32\nforbid add_i32\n"));
 

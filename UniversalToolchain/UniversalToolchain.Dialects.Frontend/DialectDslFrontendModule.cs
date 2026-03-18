@@ -11,9 +11,9 @@ public sealed class DialectDslFrontendModule : IFrontendCoreModule
 {
     private readonly DialectDslRegistry _registry;
 
-    public DialectDslFrontendModule(DialectDslRegistry? registry = null)
+    public DialectDslFrontendModule(DialectDslRegistry registry)
     {
-        _registry = registry ?? DialectDslBuiltInFeatures.CreateRegistry();
+        _registry = registry ?? throw new ArgumentNullException(nameof(registry));
     }
 
     public DialectDslRegistry Registry => _registry;
