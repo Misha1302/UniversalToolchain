@@ -44,10 +44,11 @@ public class FrontendLayerServiceTests
     }
 
     [Test]
-    public void FrontendModule_InitParser_CreatesExplicitDocumentTree()
+    public void FrontendModule_InitParser_CreatesFeatureOwnedDocumentTree()
     {
-        var ast = ParseWithFrontendModule("\n dialect Tiny\n\nuse Arithmetic,Variables\nallow add_i32\n");
-        var document = DialectDslAstValidator.Validate(ast);
+        var module = new DialectDslFrontendModule();
+        var ast = ParseWithFrontendModule(module, "\n dialect Tiny\n\nuse Arithmetic,Variables\nallow add_i32\n");
+        var document = DialectDslAstValidator.Validate(ast, module.Registry);
 
         Assert.Multiple(() =>
         {
@@ -55,12 +56,14 @@ public class FrontendLayerServiceTests
             Assert.That(document.Children.Select(x => x.GetType()).ToArray(), Is.EqualTo(new[]
             {
                 typeof(DialectDeclarationAstNode),
-                typeof(UseModulesDirectiveAstNode),
-                typeof(AllowIntrinsicDirectiveAstNode)
+                typeof(DialectDirectiveAstNode),
+                typeof(DialectDirectiveAstNode)
             }));
             Assert.That(document.Declaration.NameNode.Identifier, Is.EqualTo("Tiny"));
-            Assert.That(((UseModulesDirectiveAstNode)document.Directives[0]).Identifiers.Identifiers.Select(x => x.Identifier),
+            Assert.That(document.Directives.Select(x => x.Feature.Keyword), Is.EqualTo(new[] { "use", "allow" }));
+            Assert.That(((IdentifierListAstNode)document.Directives[0].Payload).Identifiers.Select(x => x.Identifier),
                 Is.EqualTo(new[] { "Arithmetic", "Variables" }));
+            Assert.That(((IdentifierValueAstNode)document.Directives[1].Payload).Identifier, Is.EqualTo("add_i32"));
         });
     }
 
@@ -93,25 +96,30 @@ public class FrontendLayerServiceTests
     [Test]
     public void DefinitionSliceParser_InvalidHeader_ThrowsParserException()
     {
-        var ex = Assert.Throws<ParserException>(() => ParseWithFrontendModule("use Arithmetic\n"));
+        var ex = Assert.Throws<ParserException>(() => ParseWithFrontendModule(new DialectDslFrontendModule(), "use Arithmetic\n"));
 
         Assert.That(ex!.Message, Does.Contain("dialect <name>").IgnoreCase);
     }
 
     [Test]
-    public void AirReader_RejectsUnknownAnnotationType_Explicitly()
+    public void AirReader_IgnoresUnrelatedAnnotationTypes()
     {
         var ir = new UniversalIntermediateRepresentation.AbstractIR();
-        ir.AppendInstructions([new Instruction(UOpCode.Annotate, metadata: [new object()])]);
+        ir.AppendInstructions([
+            new Instruction(UOpCode.Annotate, metadata: [new object(), new DialectNameAirAnnotation("Tiny"), new UseModulesAirAnnotation(new[] { "Arithmetic" })])
+        ]);
 
-        var ex = Assert.Throws<InvalidOperationException>(() => DialectDefinitionSliceAirReader.Read(ir));
+        var result = DialectDefinitionSliceAirReader.Read(ir);
 
-        Assert.That(ex!.Message, Does.Contain("unsupported annotation type"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Name, Is.EqualTo("Tiny"));
+            Assert.That(result.UseModules, Is.EqualTo(new[] { "Arithmetic" }));
+        });
     }
 
-    private static AstNode ParseWithFrontendModule(string source)
+    private static AstNode ParseWithFrontendModule(DialectDslFrontendModule module, string source)
     {
-        var module = new DialectDslFrontendModule();
         var parser = new BasicParserImpl(new ParserConfiguration([]));
         var lexer = new BasicLexerImpl(new LexerConfiguration([]));
         module.InitLexer(lexer);
@@ -122,7 +130,7 @@ public class FrontendLayerServiceTests
     private static List<LexemeValue> Lex(string source)
     {
         var lexer = new BasicLexerImpl(new LexerConfiguration([]));
-        lexer.AddLexemes(DialectDslLexemeRegistry.Registrations);
+        lexer.AddLexemes(DialectDslLexemeRegistry.CreateRegistrations(DialectDslBuiltInFeatures.CreateRegistry()));
         return lexer.Lexemize(source);
     }
 }

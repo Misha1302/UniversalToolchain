@@ -1,53 +1,71 @@
-using System.Reflection;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
-using BasicCore.Registration;
 using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
 
 namespace UniversalToolchain.Dialects.Frontend;
 
-public enum DialectDirectiveKind
+public enum DialectParserStage
 {
-    UseModules,
-    ExcludeModules,
-    RequiresModules,
-    BeforeModules,
-    AfterModules,
-    Backend,
-    AllowIntrinsic,
-    ForbidIntrinsic,
-    EnableIntrinsic,
-    DisableIntrinsic,
-    Security,
-    Capability
+    LineSplitting = 0,
+    Declaration = 1,
+    Directives = 2,
+    Document = 3
 }
 
-public enum DialectDirectiveArgumentShape
+public enum DialectDirectiveSlot
 {
-    Identifier,
-    IdentifierList
+    ModuleSelection = 0,
+    ModuleOrdering = 1,
+    BackendSelection = 2,
+    IntrinsicPolicy = 3,
+    OptimizerPolicy = 4,
+    Security = 5,
+    Capabilities = 6,
+    Extension = 100
+}
+
+public readonly record struct DialectDirectiveParserOrder(DialectDirectiveSlot Slot, int Sequence);
+
+public readonly record struct DialectParserOrder(DialectParserStage Stage, int Slot, int Sequence)
+{
+    internal float Encode()
+    {
+        return ((int)Stage * 100000f) + (Slot * 100f) + Sequence;
+    }
+
+    public static DialectParserOrder Directive(DialectDirectiveParserOrder order)
+    {
+        return new DialectParserOrder(DialectParserStage.Directives, (int)order.Slot, order.Sequence);
+    }
+}
+
+public static class DialectParserOrders
+{
+    public static DialectParserOrder LineSplitter { get; } = new(DialectParserStage.LineSplitting, 0, 0);
+
+    public static DialectParserOrder Declaration { get; } = new(DialectParserStage.Declaration, 0, 0);
+
+    public static DialectParserOrder Document { get; } = new(DialectParserStage.Document, 0, 0);
 }
 
 public interface IDialectDirectiveFeature
 {
-    DialectDirectiveKind Kind { get; }
+    string Id { get; }
 
     string Keyword { get; }
 
     string LexemeTag { get; }
 
-    DialectDirectiveArgumentShape ArgumentShape { get; }
-
-    float ParserPriority { get; }
+    DialectDirectiveParserOrder ParserOrder { get; }
 
     bool IsSingleton { get; }
 
-    IAstNodeCreator CreateNodeCreator();
+    DialectDirectiveAstNode ParseDirective(AstNode lineNode);
 
     void Accumulate(IReadOnlyList<LexemeValue> line, DialectDirectiveAccumulation accumulation);
 
-    void ValidateSemantic(DialectDirectiveAstNode directive, DialectDirectiveValidationState state);
+    void ValidateSemantic(DialectDirectiveAstNode directive, DialectDirectiveValidationContext context);
 
     IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive);
 }
@@ -56,80 +74,150 @@ public interface IDialectDocumentValidationRule
 {
     int Order { get; }
 
-    void Validate(DialectDocumentAstNode document, DialectDirectiveValidationState state);
+    void Validate(DialectDocumentAstNode document, DialectDirectiveValidationContext context);
 }
 
-public static class DialectDslFeatureCatalog
+public interface IDialectDslFeatureProvider
 {
-    private static readonly Lazy<IReadOnlyList<IDialectDirectiveFeature>> _features = new(DiscoverFeatures);
-    private static readonly Lazy<IReadOnlyDictionary<DialectDirectiveKind, IDialectDirectiveFeature>> _featuresByKind = new(() =>
-        _features.Value.ToDictionary(x => x.Kind));
-    private static readonly Lazy<IReadOnlyDictionary<string, IDialectDirectiveFeature>> _featuresByKeyword = new(() =>
-        _features.Value.ToDictionary(x => x.Keyword, StringComparer.Ordinal));
-    private static readonly Lazy<IReadOnlyList<IDialectDocumentValidationRule>> _documentRules = new(DiscoverDocumentRules);
+    int Order { get; }
 
-    public static IReadOnlyList<IDialectDirectiveFeature> Features => _features.Value;
+    void Register(DialectDslRegistryBuilder builder);
+}
 
-    public static IReadOnlyList<IDialectDocumentValidationRule> DocumentRules => _documentRules.Value;
+public sealed class DialectDslRegistryBuilder
+{
+    private readonly List<IDialectDirectiveFeature> _features = [];
+    private readonly List<IDialectDocumentValidationRule> _documentRules = [];
 
-    public static IDialectDirectiveFeature GetFeature(DialectDirectiveKind kind)
+    public DialectDslRegistryBuilder RegisterFeature(IDialectDirectiveFeature feature)
     {
-        if (!_featuresByKind.Value.TryGetValue(kind, out var feature))
+        if (feature == null)
         {
-            Thrower.Argument(nameof(kind), $"Unknown dialect directive kind '{kind}'.");
+            Thrower.ArgumentNull(nameof(feature));
         }
 
-        return feature;
+        _features.Add(feature);
+        return this;
     }
 
-    public static bool TryGetFeature(string keyword, out IDialectDirectiveFeature feature)
+    public DialectDslRegistryBuilder RegisterDocumentRule(IDialectDocumentValidationRule rule)
+    {
+        if (rule == null)
+        {
+            Thrower.ArgumentNull(nameof(rule));
+        }
+
+        _documentRules.Add(rule);
+        return this;
+    }
+
+    public DialectDslRegistry Build()
+    {
+        return new DialectDslRegistry(_features, _documentRules);
+    }
+}
+
+public sealed class DialectDslRegistry
+{
+    private readonly IReadOnlyList<IDialectDirectiveFeature> _directiveFeatures;
+    private readonly IReadOnlyList<IDialectDocumentValidationRule> _documentRules;
+    private readonly IReadOnlyDictionary<string, IDialectDirectiveFeature> _featuresByKeyword;
+    private readonly IReadOnlyDictionary<string, IDialectDirectiveFeature> _featuresById;
+
+    public DialectDslRegistry(
+        IEnumerable<IDialectDirectiveFeature> directiveFeatures,
+        IEnumerable<IDialectDocumentValidationRule> documentRules)
+    {
+        var features = Snapshot(directiveFeatures, nameof(directiveFeatures))
+            .OrderBy(x => x.ParserOrder.Slot)
+            .ThenBy(x => x.ParserOrder.Sequence)
+            .ThenBy(x => x.Keyword, StringComparer.Ordinal)
+            .ThenBy(x => x.GetType().FullName, StringComparer.Ordinal)
+            .ToList();
+
+        ValidateFeatures(features);
+
+        _directiveFeatures = features;
+        _documentRules = Snapshot(documentRules, nameof(documentRules))
+            .OrderBy(x => x.Order)
+            .ThenBy(x => x.GetType().FullName, StringComparer.Ordinal)
+            .ToList();
+        _featuresByKeyword = _directiveFeatures.ToDictionary(x => x.Keyword, StringComparer.Ordinal);
+        _featuresById = _directiveFeatures.ToDictionary(x => x.Id, StringComparer.Ordinal);
+    }
+
+    public IReadOnlyList<IDialectDirectiveFeature> DirectiveFeatures => _directiveFeatures;
+
+    public IReadOnlyList<IDialectDocumentValidationRule> DocumentRules => _documentRules;
+
+    public bool TryGetFeature(string keyword, out IDialectDirectiveFeature feature)
     {
         if (string.IsNullOrWhiteSpace(keyword))
         {
             Thrower.Argument(nameof(keyword), "Directive keyword must not be empty.");
         }
 
-        return _featuresByKeyword.Value.TryGetValue(keyword, out feature!);
+        return _featuresByKeyword.TryGetValue(keyword, out feature!);
     }
 
-    private static IReadOnlyList<IDialectDirectiveFeature> DiscoverFeatures()
+    public IDialectDirectiveFeature GetFeatureById(string id)
     {
-        var features = typeof(DialectDslFeatureCatalog).Assembly
-            .GetTypes()
-            .Where(x => x is { IsClass: true, IsAbstract: false } && typeof(IDialectDirectiveFeature).IsAssignableFrom(x))
-            .Select(Create<IDialectDirectiveFeature>)
-            .OrderBy(x => x.ParserPriority)
-            .ThenBy(x => x.Keyword, StringComparer.Ordinal)
-            .ThenBy(x => x.GetType().FullName, StringComparer.Ordinal)
-            .ToList();
+        if (string.IsNullOrWhiteSpace(id))
+        {
+            Thrower.Argument(nameof(id), "Directive identifier must not be empty.");
+        }
 
-        ValidateFeatureSet(features);
-        return features;
+        if (!_featuresById.TryGetValue(id, out var feature))
+        {
+            Thrower.Argument(nameof(id), $"Unknown dialect directive identifier '{id}'.");
+        }
+
+        return feature;
     }
 
-    private static IReadOnlyList<IDialectDocumentValidationRule> DiscoverDocumentRules()
+    public static DialectDslRegistry BuildFromProviders(IEnumerable<IDialectDslFeatureProvider> providers)
     {
-        return typeof(DialectDslFeatureCatalog).Assembly
-            .GetTypes()
-            .Where(x => x is { IsClass: true, IsAbstract: false } && typeof(IDialectDocumentValidationRule).IsAssignableFrom(x))
-            .Select(Create<IDialectDocumentValidationRule>)
+        if (providers == null)
+        {
+            Thrower.ArgumentNull(nameof(providers));
+        }
+
+        var orderedProviders = Snapshot(providers, nameof(providers))
             .OrderBy(x => x.Order)
             .ThenBy(x => x.GetType().FullName, StringComparer.Ordinal)
             .ToList();
-    }
 
-    private static T Create<T>(Type type)
-    {
-        var instance = Activator.CreateInstance(type);
-        if (instance is not T)
+        var builder = new DialectDslRegistryBuilder();
+        foreach (var provider in orderedProviders)
         {
-            Thrower.InvalidOpEx<T>($"Could not create dialect feature instance '{type.FullName}'.");
+            provider.Register(builder);
         }
 
-        return (T)instance;
+        return builder.Build();
     }
 
-    private static void ValidateFeatureSet(IReadOnlyList<IDialectDirectiveFeature> features)
+    private static List<T> Snapshot<T>(IEnumerable<T> values, string paramName)
+    {
+        if (values == null)
+        {
+            Thrower.ArgumentNull(paramName);
+        }
+
+        var result = new List<T>();
+        foreach (var value in values)
+        {
+            if (value == null)
+            {
+                Thrower.Argument(paramName, "Collection must not contain null values.");
+            }
+
+            result.Add(value);
+        }
+
+        return result;
+    }
+
+    private static void ValidateFeatures(IReadOnlyList<IDialectDirectiveFeature> features)
     {
         var duplicateKeyword = features
             .GroupBy(x => x.Keyword, StringComparer.Ordinal)
@@ -139,382 +227,583 @@ public static class DialectDslFeatureCatalog
             Thrower.InvalidOpEx($"Dialect DSL keyword '{duplicateKeyword.Key}' is implemented by multiple features.");
         }
 
-        var duplicateKind = features
-            .GroupBy(x => x.Kind)
+        var duplicateId = features
+            .GroupBy(x => x.Id, StringComparer.Ordinal)
             .FirstOrDefault(x => x.Count() > 1);
-        if (duplicateKind != null)
+        if (duplicateId != null)
         {
-            Thrower.InvalidOpEx($"Dialect directive kind '{duplicateKind.Key}' is implemented by multiple features.");
+            Thrower.InvalidOpEx($"Dialect directive identifier '{duplicateId.Key}' is implemented by multiple features.");
         }
     }
 }
 
-public sealed class DialectDirectiveValidationState
+public static class DialectDslBuiltInFeatures
 {
-    private readonly HashSet<string> _useModules = new(StringComparer.Ordinal);
-    private readonly HashSet<string> _excludeModules = new(StringComparer.Ordinal);
-    private readonly HashSet<string> _requiresModules = new(StringComparer.Ordinal);
-    private readonly HashSet<string> _beforeModules = new(StringComparer.Ordinal);
-    private readonly HashSet<string> _afterModules = new(StringComparer.Ordinal);
-    private readonly HashSet<string> _backends = new(StringComparer.Ordinal);
-    private readonly HashSet<string> _capabilities = new(StringComparer.Ordinal);
-    private readonly HashSet<string> _allowedIntrinsics = new(StringComparer.Ordinal);
-    private readonly HashSet<string> _forbiddenIntrinsics = new(StringComparer.Ordinal);
-    private readonly HashSet<string> _enabledOptimizers = new(StringComparer.Ordinal);
-    private readonly HashSet<string> _disabledOptimizers = new(StringComparer.Ordinal);
-
-    public IReadOnlySet<string> UseModules => _useModules;
-
-    public IReadOnlySet<string> ExcludeModules => _excludeModules;
-
-    public bool HasSecurityDirective { get; private set; }
-
-    public void AddUseModules(IEnumerable<string> modules, LexemeValue? token) => AddMany(_useModules, modules, "Duplicate use module is not allowed.", token);
-
-    public void AddExcludeModules(IEnumerable<string> modules, LexemeValue? token) => AddMany(_excludeModules, modules, "Duplicate exclude module is not allowed.", token);
-
-    public void AddRequiresModules(IEnumerable<string> modules, LexemeValue? token) => AddMany(_requiresModules, modules, "Duplicate requires module is not allowed.", token);
-
-    public void AddBeforeModules(IEnumerable<string> modules, LexemeValue? token) => AddMany(_beforeModules, modules, "Duplicate before module is not allowed.", token);
-
-    public void AddAfterModules(IEnumerable<string> modules, LexemeValue? token) => AddMany(_afterModules, modules, "Duplicate after module is not allowed.", token);
-
-    public void AddBackends(IEnumerable<string> backends, LexemeValue? token) => AddMany(_backends, backends, "Duplicate backend identifier is not allowed.", token);
-
-    public void AddCapabilities(IEnumerable<string> capabilities, LexemeValue? token) => AddMany(_capabilities, capabilities, "Duplicate capability identifier is not allowed.", token);
-
-    public void AddAllowedIntrinsic(string name, LexemeValue? token)
+    public static DialectDslRegistry CreateRegistry(IEnumerable<IDialectDslFeatureProvider>? additionalProviders = null)
     {
-        AddSingle(_allowedIntrinsics, name, "Duplicate allow intrinsic directive is not allowed.", token);
-        if (_forbiddenIntrinsics.Contains(name))
+        var providers = new List<IDialectDslFeatureProvider>
         {
-            DialectDefinitionSliceParseErrors.Fail($"Intrinsic '{name}' cannot be both allowed and forbidden.", token);
-        }
-    }
+            new BuiltInDialectDslFeatureProvider()
+        };
 
-    public void AddForbiddenIntrinsic(string name, LexemeValue? token)
-    {
-        AddSingle(_forbiddenIntrinsics, name, "Duplicate forbid intrinsic directive is not allowed.", token);
-        if (_allowedIntrinsics.Contains(name))
+        if (additionalProviders != null)
         {
-            DialectDefinitionSliceParseErrors.Fail($"Intrinsic '{name}' cannot be both allowed and forbidden.", token);
-        }
-    }
-
-    public void AddEnabledOptimizer(string name, LexemeValue? token)
-    {
-        AddSingle(_enabledOptimizers, name, "Duplicate enable directive is not allowed.", token);
-        if (_disabledOptimizers.Contains(name))
-        {
-            DialectDefinitionSliceParseErrors.Fail($"Optimizer '{name}' cannot be both enabled and disabled.", token);
-        }
-    }
-
-    public void AddDisabledOptimizer(string name, LexemeValue? token)
-    {
-        AddSingle(_disabledOptimizers, name, "Duplicate disable directive is not allowed.", token);
-        if (_enabledOptimizers.Contains(name))
-        {
-            DialectDefinitionSliceParseErrors.Fail($"Optimizer '{name}' cannot be both enabled and disabled.", token);
-        }
-    }
-
-    public void MarkSecurity(LexemeValue? token)
-    {
-        if (HasSecurityDirective)
-        {
-            DialectDefinitionSliceParseErrors.Fail("Security directive can only be declared once.", token);
+            providers.AddRange(additionalProviders);
         }
 
-        HasSecurityDirective = true;
+        return DialectDslRegistry.BuildFromProviders(providers);
+    }
+}
+
+public sealed class DialectDirectiveValidationContext
+{
+    private readonly Dictionary<string, HashSet<string>> _sets = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, object> _state = new(StringComparer.Ordinal);
+
+    public IReadOnlySet<string> GetValues(string key)
+    {
+        return GetOrCreateSet(key);
     }
 
-    private static void AddMany(HashSet<string> set, IEnumerable<string> values, string duplicateMessage, LexemeValue? token)
+    public void AddValues(string key, IEnumerable<string> values, string duplicateMessage, LexemeValue? token)
     {
         foreach (var value in values)
         {
-            AddSingle(set, value, duplicateMessage, token);
+            AddValue(key, value, duplicateMessage, token);
         }
     }
 
-    private static void AddSingle(HashSet<string> set, string value, string duplicateMessage, LexemeValue? token)
+    public void AddValue(string key, string value, string duplicateMessage, LexemeValue? token)
     {
-        if (!set.Add(value))
+        if (!GetOrCreateSet(key).Add(value))
         {
             DialectDefinitionSliceParseErrors.Fail(duplicateMessage, token);
         }
+    }
+
+    public void EnsureSingleton(string key, string duplicateMessage, LexemeValue? token)
+    {
+        if (_state.ContainsKey(key))
+        {
+            DialectDefinitionSliceParseErrors.Fail(duplicateMessage, token);
+        }
+
+        _state[key] = SingletonMarker.Instance;
+    }
+
+    public TState GetOrAddState<TState>(string key, Func<TState> factory) where TState : class
+    {
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            Thrower.Argument(nameof(key), "Validation state key must not be empty.");
+        }
+
+        if (factory == null)
+        {
+            Thrower.ArgumentNull(nameof(factory));
+        }
+
+        if (_state.TryGetValue(key, out var existing))
+        {
+            if (existing is not TState)
+            {
+                Thrower.InvalidOpEx<TState>($"Validation state '{key}' has incompatible runtime type '{existing.GetType().FullName}'.");
+            }
+
+            return (TState)existing;
+        }
+
+        var created = factory();
+        if (created == null)
+        {
+            Thrower.InvalidOpEx<TState>($"Validation state factory for '{key}' returned null.");
+        }
+
+        _state[key] = created;
+        return created;
+    }
+
+    private HashSet<string> GetOrCreateSet(string key)
+    {
+        if (string.IsNullOrWhiteSpace(key))
+        {
+            Thrower.Argument(nameof(key), "Validation set key must not be empty.");
+        }
+
+        if (_sets.TryGetValue(key, out var existing))
+        {
+            return existing;
+        }
+
+        var created = new HashSet<string>(StringComparer.Ordinal);
+        _sets[key] = created;
+        return created;
+    }
+
+    private sealed class SingletonMarker
+    {
+        public static SingletonMarker Instance { get; } = new();
     }
 }
 
 internal abstract class DialectDirectiveFeatureBase : IDialectDirectiveFeature
 {
-    public abstract DialectDirectiveKind Kind { get; }
+    public abstract string Id { get; }
 
     public abstract string Keyword { get; }
 
     public string LexemeTag => $"DialectDirectiveKeyword.{Keyword}";
 
-    public abstract DialectDirectiveArgumentShape ArgumentShape { get; }
-
-    public abstract float ParserPriority { get; }
+    public abstract DialectDirectiveParserOrder ParserOrder { get; }
 
     public virtual bool IsSingleton => false;
 
-    public virtual IAstNodeCreator CreateNodeCreator()
-    {
-        return ArgumentShape switch
-        {
-            DialectDirectiveArgumentShape.Identifier => new SingleIdentifierDialectDirectiveNodeCreator(this),
-            _ => new IdentifierListDialectDirectiveNodeCreator(this)
-        };
-    }
+    public abstract DialectDirectiveAstNode ParseDirective(AstNode lineNode);
 
     public virtual void Accumulate(IReadOnlyList<LexemeValue> line, DialectDirectiveAccumulation accumulation)
     {
         Thrower.InvalidOpEx($"Dialect feature '{GetType().Name}' does not support line accumulation.");
-        return;
     }
 
-    public virtual void ValidateSemantic(DialectDirectiveAstNode directive, DialectDirectiveValidationState state)
+    public virtual void ValidateSemantic(DialectDirectiveAstNode directive, DialectDirectiveValidationContext context)
     {
     }
 
     public abstract IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive);
 
-    protected static IReadOnlyList<string> GetIdentifierList(DialectDirectiveAstNode directive)
+    protected static IReadOnlyList<string> GetIdentifierListArgument(DialectDirectiveAstNode directive)
     {
-        if (directive is not IdentifierListDirectiveAstNode)
+        if (directive.Payload is not IdentifierListAstNode)
         {
-            Thrower.Argument(nameof(directive), $"Directive '{directive.GetType().Name}' must provide an identifier list.");
+            Thrower.Argument(nameof(directive), $"Directive '{directive.Feature.Keyword}' must provide an identifier list payload.");
         }
 
-        return ((IdentifierListDirectiveAstNode)directive).Identifiers.Identifiers.Select(x => x.Identifier).ToList();
+        var identifierList = (IdentifierListAstNode)directive.Payload;
+        if (identifierList.Identifiers.Count == 0)
+        {
+            DialectDefinitionSliceParseErrors.Fail($"Directive '{directive.Feature.Keyword}' must contain at least one identifier.", directive.LexemeValue);
+        }
+
+        foreach (var identifier in identifierList.Identifiers)
+        {
+            ValidateIdentifier(identifier, $"Directive '{directive.Feature.Keyword}' contains an empty identifier.");
+        }
+
+        ValidateNoDuplicates(identifierList.Identifiers.Select(x => x.Identifier), $"Directive '{directive.Feature.Keyword}' contains duplicate identifiers.", directive.LexemeValue);
+        return identifierList.Identifiers.Select(x => x.Identifier).ToList();
     }
 
-    protected static string GetSingleIdentifier(DialectDirectiveAstNode directive)
+    protected static string GetSingleIdentifierArgument(DialectDirectiveAstNode directive)
     {
-        if (directive is not SingleIdentifierDirectiveAstNode)
+        if (directive.Payload is not IdentifierValueAstNode)
         {
-            Thrower.Argument(nameof(directive), $"Directive '{directive.GetType().Name}' must provide one identifier.");
+            Thrower.Argument(nameof(directive), $"Directive '{directive.Feature.Keyword}' must provide a single identifier payload.");
         }
 
-        return ((SingleIdentifierDirectiveAstNode)directive).Identifier.Identifier;
+        var identifier = (IdentifierValueAstNode)directive.Payload;
+        ValidateIdentifier(identifier, $"Directive '{directive.Feature.Keyword}' must not be empty.");
+        return identifier.Identifier;
+    }
+
+    protected static void ValidateIdentifier(IdentifierValueAstNode identifier, string message)
+    {
+        if (identifier == null)
+        {
+            Thrower.ArgumentNull(nameof(identifier));
+        }
+
+        if (string.IsNullOrWhiteSpace(identifier.Identifier))
+        {
+            DialectDefinitionSliceParseErrors.Fail(message, identifier.LexemeValue);
+        }
+    }
+
+    protected static void ValidateNoDuplicates(IEnumerable<string> values, string message, LexemeValue? token)
+    {
+        var set = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var value in values)
+        {
+            if (!set.Add(value))
+            {
+                DialectDefinitionSliceParseErrors.Fail(message, token);
+            }
+        }
+    }
+
+    protected static DialectDirectiveAstNode CreateDirectiveNode(IDialectDirectiveFeature feature, LexemeValue? lexemeValue, AstNode payload)
+    {
+        return new DialectDirectiveAstNode(feature, lexemeValue, [payload]);
     }
 }
 
-internal sealed class UseModulesDialectDirectiveFeature : DialectDirectiveFeatureBase
+internal abstract class IdentifierListDialectDirectiveFeatureBase : DialectDirectiveFeatureBase
 {
-    public override DialectDirectiveKind Kind => DialectDirectiveKind.UseModules;
+    public sealed override DialectDirectiveAstNode ParseDirective(AstNode lineNode)
+    {
+        var identifiers = DialectNodeCreatorSupport.ParseIdentifierList(lineNode, Keyword);
+        return CreateDirectiveNode(this, lineNode.Children[0].LexemeValue, identifiers);
+    }
+
+    public sealed override void Accumulate(IReadOnlyList<LexemeValue> line, DialectDirectiveAccumulation accumulation)
+    {
+        AccumulateIdentifiers(accumulation, DialectDirectiveParserSupport.ParseIdentifierList(line, Keyword));
+    }
+
+    protected abstract void AccumulateIdentifiers(DialectDirectiveAccumulation accumulation, IReadOnlyList<string> values);
+}
+
+internal abstract class SingleIdentifierDialectDirectiveFeatureBase : DialectDirectiveFeatureBase
+{
+    public sealed override DialectDirectiveAstNode ParseDirective(AstNode lineNode)
+    {
+        var identifier = DialectNodeCreatorSupport.ParseSingleIdentifier(lineNode, Keyword);
+        return CreateDirectiveNode(this, lineNode.Children[0].LexemeValue, identifier);
+    }
+
+    public sealed override void Accumulate(IReadOnlyList<LexemeValue> line, DialectDirectiveAccumulation accumulation)
+    {
+        AccumulateIdentifier(accumulation, DialectDirectiveParserSupport.ParseSingleIdentifier(line, Keyword));
+    }
+
+    protected abstract void AccumulateIdentifier(DialectDirectiveAccumulation accumulation, string value);
+}
+
+internal sealed class UseModulesDialectDirectiveFeature : IdentifierListDialectDirectiveFeatureBase
+{
+    public const string FeatureId = "builtin.modules.use";
+    public const string ValidationKey = FeatureId;
+
+    public override string Id => FeatureId;
+
     public override string Keyword => DialectDslKeywords.Use;
-    public override DialectDirectiveArgumentShape ArgumentShape => DialectDirectiveArgumentShape.IdentifierList;
-    public override float ParserPriority => 11f;
 
-    public override void Accumulate(IReadOnlyList<LexemeValue> line, DialectDirectiveAccumulation accumulation)
+    public override DialectDirectiveParserOrder ParserOrder => new(DialectDirectiveSlot.ModuleSelection, 0);
+
+    protected override void AccumulateIdentifiers(DialectDirectiveAccumulation accumulation, IReadOnlyList<string> values)
     {
-        accumulation.UseModules.AddRange(DialectDirectiveParserSupport.ParseIdentifierList(line, Keyword));
+        accumulation.UseModules.AddRange(values);
     }
 
-    public override void ValidateSemantic(DialectDirectiveAstNode directive, DialectDirectiveValidationState state)
+    public override void ValidateSemantic(DialectDirectiveAstNode directive, DialectDirectiveValidationContext context)
     {
-        state.AddUseModules(GetIdentifierList(directive), directive.LexemeValue);
-    }
-
-    public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive) => [new UseModulesAirAnnotation(GetIdentifierList(directive))];
-}
-
-internal sealed class ExcludeModulesDialectDirectiveFeature : DialectDirectiveFeatureBase
-{
-    public override DialectDirectiveKind Kind => DialectDirectiveKind.ExcludeModules;
-    public override string Keyword => DialectDslKeywords.Exclude;
-    public override DialectDirectiveArgumentShape ArgumentShape => DialectDirectiveArgumentShape.IdentifierList;
-    public override float ParserPriority => 12f;
-
-    public override void Accumulate(IReadOnlyList<LexemeValue> line, DialectDirectiveAccumulation accumulation)
-    {
-        accumulation.ExcludeModules.AddRange(DialectDirectiveParserSupport.ParseIdentifierList(line, Keyword));
-    }
-
-    public override void ValidateSemantic(DialectDirectiveAstNode directive, DialectDirectiveValidationState state)
-    {
-        state.AddExcludeModules(GetIdentifierList(directive), directive.LexemeValue);
-    }
-
-    public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive) => [new ExcludeModulesAirAnnotation(GetIdentifierList(directive))];
-}
-
-internal abstract class OrderDialectDirectiveFeatureBase : DialectDirectiveFeatureBase
-{
-    protected abstract DialectOrderDirectiveKind OrderKind { get; }
-
-    protected abstract Action<DialectDirectiveValidationState, IReadOnlyList<string>, LexemeValue?> ValidationAction { get; }
-
-    public override void Accumulate(IReadOnlyList<LexemeValue> line, DialectDirectiveAccumulation accumulation)
-    {
-        GetTargetList(accumulation).AddRange(DialectDirectiveParserSupport.ParseIdentifierList(line, Keyword));
-    }
-
-    public override void ValidateSemantic(DialectDirectiveAstNode directive, DialectDirectiveValidationState state)
-    {
-        ValidationAction(state, GetIdentifierList(directive), directive.LexemeValue);
+        context.AddValues(ValidationKey, GetIdentifierListArgument(directive), "Duplicate use module is not allowed.", directive.LexemeValue);
     }
 
     public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive)
     {
-        return [new OrderAirAnnotation(OrderKind, GetIdentifierList(directive))];
+        return [new UseModulesAirAnnotation(GetIdentifierListArgument(directive))];
+    }
+}
+
+internal sealed class ExcludeModulesDialectDirectiveFeature : IdentifierListDialectDirectiveFeatureBase
+{
+    public const string FeatureId = "builtin.modules.exclude";
+    public const string ValidationKey = FeatureId;
+
+    public override string Id => FeatureId;
+
+    public override string Keyword => DialectDslKeywords.Exclude;
+
+    public override DialectDirectiveParserOrder ParserOrder => new(DialectDirectiveSlot.ModuleSelection, 1);
+
+    protected override void AccumulateIdentifiers(DialectDirectiveAccumulation accumulation, IReadOnlyList<string> values)
+    {
+        accumulation.ExcludeModules.AddRange(values);
     }
 
-    protected abstract List<string> GetTargetList(DialectDirectiveAccumulation accumulation);
+    public override void ValidateSemantic(DialectDirectiveAstNode directive, DialectDirectiveValidationContext context)
+    {
+        context.AddValues(ValidationKey, GetIdentifierListArgument(directive), "Duplicate exclude module is not allowed.", directive.LexemeValue);
+    }
+
+    public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive)
+    {
+        return [new ExcludeModulesAirAnnotation(GetIdentifierListArgument(directive))];
+    }
+}
+
+internal abstract class OrderDialectDirectiveFeatureBase : IdentifierListDialectDirectiveFeatureBase
+{
+    protected abstract DialectOrderDirectiveKind OrderKind { get; }
+
+    protected abstract string ValidationKey { get; }
+
+    protected abstract string DuplicateMessage { get; }
+
+    protected abstract List<string> GetAccumulationTarget(DialectDirectiveAccumulation accumulation);
+
+    protected override void AccumulateIdentifiers(DialectDirectiveAccumulation accumulation, IReadOnlyList<string> values)
+    {
+        GetAccumulationTarget(accumulation).AddRange(values);
+    }
+
+    public override void ValidateSemantic(DialectDirectiveAstNode directive, DialectDirectiveValidationContext context)
+    {
+        context.AddValues(ValidationKey, GetIdentifierListArgument(directive), DuplicateMessage, directive.LexemeValue);
+    }
+
+    public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive)
+    {
+        return [new OrderAirAnnotation(OrderKind, GetIdentifierListArgument(directive))];
+    }
 }
 
 internal sealed class RequiresModulesDialectDirectiveFeature : OrderDialectDirectiveFeatureBase
 {
-    public override DialectDirectiveKind Kind => DialectDirectiveKind.RequiresModules;
+    public override string Id => "builtin.order.requires";
+
     public override string Keyword => DialectDslKeywords.Requires;
-    public override DialectDirectiveArgumentShape ArgumentShape => DialectDirectiveArgumentShape.IdentifierList;
-    public override float ParserPriority => 13f;
+
+    public override DialectDirectiveParserOrder ParserOrder => new(DialectDirectiveSlot.ModuleOrdering, 0);
+
     protected override DialectOrderDirectiveKind OrderKind => DialectOrderDirectiveKind.Requires;
-    protected override Action<DialectDirectiveValidationState, IReadOnlyList<string>, LexemeValue?> ValidationAction => static (state, values, token) => state.AddRequiresModules(values, token);
-    protected override List<string> GetTargetList(DialectDirectiveAccumulation accumulation) => accumulation.RequiresModules;
+
+    protected override string ValidationKey => Id;
+
+    protected override string DuplicateMessage => "Duplicate requires module is not allowed.";
+
+    protected override List<string> GetAccumulationTarget(DialectDirectiveAccumulation accumulation) => accumulation.RequiresModules;
 }
 
 internal sealed class BeforeModulesDialectDirectiveFeature : OrderDialectDirectiveFeatureBase
 {
-    public override DialectDirectiveKind Kind => DialectDirectiveKind.BeforeModules;
+    public override string Id => "builtin.order.before";
+
     public override string Keyword => DialectDslKeywords.Before;
-    public override DialectDirectiveArgumentShape ArgumentShape => DialectDirectiveArgumentShape.IdentifierList;
-    public override float ParserPriority => 14f;
+
+    public override DialectDirectiveParserOrder ParserOrder => new(DialectDirectiveSlot.ModuleOrdering, 1);
+
     protected override DialectOrderDirectiveKind OrderKind => DialectOrderDirectiveKind.Before;
-    protected override Action<DialectDirectiveValidationState, IReadOnlyList<string>, LexemeValue?> ValidationAction => static (state, values, token) => state.AddBeforeModules(values, token);
-    protected override List<string> GetTargetList(DialectDirectiveAccumulation accumulation) => accumulation.BeforeModules;
+
+    protected override string ValidationKey => Id;
+
+    protected override string DuplicateMessage => "Duplicate before module is not allowed.";
+
+    protected override List<string> GetAccumulationTarget(DialectDirectiveAccumulation accumulation) => accumulation.BeforeModules;
 }
 
 internal sealed class AfterModulesDialectDirectiveFeature : OrderDialectDirectiveFeatureBase
 {
-    public override DialectDirectiveKind Kind => DialectDirectiveKind.AfterModules;
+    public override string Id => "builtin.order.after";
+
     public override string Keyword => DialectDslKeywords.After;
-    public override DialectDirectiveArgumentShape ArgumentShape => DialectDirectiveArgumentShape.IdentifierList;
-    public override float ParserPriority => 15f;
+
+    public override DialectDirectiveParserOrder ParserOrder => new(DialectDirectiveSlot.ModuleOrdering, 2);
+
     protected override DialectOrderDirectiveKind OrderKind => DialectOrderDirectiveKind.After;
-    protected override Action<DialectDirectiveValidationState, IReadOnlyList<string>, LexemeValue?> ValidationAction => static (state, values, token) => state.AddAfterModules(values, token);
-    protected override List<string> GetTargetList(DialectDirectiveAccumulation accumulation) => accumulation.AfterModules;
+
+    protected override string ValidationKey => Id;
+
+    protected override string DuplicateMessage => "Duplicate after module is not allowed.";
+
+    protected override List<string> GetAccumulationTarget(DialectDirectiveAccumulation accumulation) => accumulation.AfterModules;
 }
 
-internal sealed class BackendDialectDirectiveFeature : DialectDirectiveFeatureBase
+internal sealed class BackendDialectDirectiveFeature : IdentifierListDialectDirectiveFeatureBase
 {
-    public override DialectDirectiveKind Kind => DialectDirectiveKind.Backend;
+    public override string Id => "builtin.backends.enable";
+
     public override string Keyword => DialectDslKeywords.Backend;
-    public override DialectDirectiveArgumentShape ArgumentShape => DialectDirectiveArgumentShape.IdentifierList;
-    public override float ParserPriority => 16f;
 
-    public override void Accumulate(IReadOnlyList<LexemeValue> line, DialectDirectiveAccumulation accumulation)
+    public override DialectDirectiveParserOrder ParserOrder => new(DialectDirectiveSlot.BackendSelection, 0);
+
+    protected override void AccumulateIdentifiers(DialectDirectiveAccumulation accumulation, IReadOnlyList<string> values)
     {
-        accumulation.Backends.AddRange(DialectDirectiveParserSupport.ParseIdentifierList(line, Keyword));
+        accumulation.Backends.AddRange(values);
     }
 
-    public override void ValidateSemantic(DialectDirectiveAstNode directive, DialectDirectiveValidationState state)
+    public override void ValidateSemantic(DialectDirectiveAstNode directive, DialectDirectiveValidationContext context)
     {
-        state.AddBackends(GetIdentifierList(directive), directive.LexemeValue);
+        context.AddValues(Id, GetIdentifierListArgument(directive), "Duplicate backend identifier is not allowed.", directive.LexemeValue);
     }
 
-    public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive) => [new BackendAirAnnotation(GetIdentifierList(directive))];
+    public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive)
+    {
+        return [new BackendAirAnnotation(GetIdentifierListArgument(directive))];
+    }
 }
 
-internal abstract class ToggleDirectiveFeatureBase : DialectDirectiveFeatureBase
+internal abstract class IntrinsicPolicyDialectDirectiveFeatureBase : SingleIdentifierDialectDirectiveFeatureBase
 {
-    public override DialectDirectiveArgumentShape ArgumentShape => DialectDirectiveArgumentShape.Identifier;
+    private const string ToggleStateKey = "builtin.intrinsics.toggle";
 
-    public override void Accumulate(IReadOnlyList<LexemeValue> line, DialectDirectiveAccumulation accumulation)
+    protected abstract bool Allowed { get; }
+
+    protected abstract string DuplicateMessage { get; }
+
+    protected abstract string ContradictionMessageTemplate { get; }
+
+    public override void ValidateSemantic(DialectDirectiveAstNode directive, DialectDirectiveValidationContext context)
     {
-        AddAccumulatedValue(accumulation, DialectDirectiveParserSupport.ParseSingleIdentifier(line, Keyword));
+        var value = GetSingleIdentifierArgument(directive);
+        var state = context.GetOrAddState(ToggleStateKey, static () => new ToggleValidationState());
+        state.Add(value, Allowed, DuplicateMessage, ContradictionMessageTemplate, directive.LexemeValue);
     }
 
-    protected abstract void AddAccumulatedValue(DialectDirectiveAccumulation accumulation, string value);
+    public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive)
+    {
+        return [new IntrinsicAirAnnotation(GetSingleIdentifierArgument(directive), Allowed)];
+    }
+
+    private sealed class ToggleValidationState
+    {
+        private readonly HashSet<string> _allowed = new(StringComparer.Ordinal);
+        private readonly HashSet<string> _forbidden = new(StringComparer.Ordinal);
+
+        public void Add(string value, bool allowed, string duplicateMessage, string contradictionMessageTemplate, LexemeValue? token)
+        {
+            var current = allowed ? _allowed : _forbidden;
+            var opposite = allowed ? _forbidden : _allowed;
+
+            if (!current.Add(value))
+            {
+                DialectDefinitionSliceParseErrors.Fail(duplicateMessage, token);
+            }
+
+            if (opposite.Contains(value))
+            {
+                DialectDefinitionSliceParseErrors.Fail(string.Format(contradictionMessageTemplate, value), token);
+            }
+        }
+    }
 }
 
-internal sealed class AllowIntrinsicDialectDirectiveFeature : ToggleDirectiveFeatureBase
+internal sealed class AllowIntrinsicDialectDirectiveFeature : IntrinsicPolicyDialectDirectiveFeatureBase
 {
-    public override DialectDirectiveKind Kind => DialectDirectiveKind.AllowIntrinsic;
+    public override string Id => "builtin.intrinsics.allow";
+
     public override string Keyword => DialectDslKeywords.Allow;
-    public override float ParserPriority => 17f;
 
-    protected override void AddAccumulatedValue(DialectDirectiveAccumulation accumulation, string value)
+    public override DialectDirectiveParserOrder ParserOrder => new(DialectDirectiveSlot.IntrinsicPolicy, 0);
+
+    protected override bool Allowed => true;
+
+    protected override string DuplicateMessage => "Duplicate allow intrinsic directive is not allowed.";
+
+    protected override string ContradictionMessageTemplate => "Intrinsic '{0}' cannot be both allowed and forbidden.";
+
+    protected override void AccumulateIdentifier(DialectDirectiveAccumulation accumulation, string value)
     {
         accumulation.AllowedIntrinsics.Add(value);
     }
-
-    public override void ValidateSemantic(DialectDirectiveAstNode directive, DialectDirectiveValidationState state)
-    {
-        state.AddAllowedIntrinsic(GetSingleIdentifier(directive), directive.LexemeValue);
-    }
-
-    public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive) => [new IntrinsicAirAnnotation(GetSingleIdentifier(directive), allowed: true)];
 }
 
-internal sealed class ForbidIntrinsicDialectDirectiveFeature : ToggleDirectiveFeatureBase
+internal sealed class ForbidIntrinsicDialectDirectiveFeature : IntrinsicPolicyDialectDirectiveFeatureBase
 {
-    public override DialectDirectiveKind Kind => DialectDirectiveKind.ForbidIntrinsic;
-    public override string Keyword => DialectDslKeywords.Forbid;
-    public override float ParserPriority => 18f;
+    public override string Id => "builtin.intrinsics.forbid";
 
-    protected override void AddAccumulatedValue(DialectDirectiveAccumulation accumulation, string value)
+    public override string Keyword => DialectDslKeywords.Forbid;
+
+    public override DialectDirectiveParserOrder ParserOrder => new(DialectDirectiveSlot.IntrinsicPolicy, 1);
+
+    protected override bool Allowed => false;
+
+    protected override string DuplicateMessage => "Duplicate forbid intrinsic directive is not allowed.";
+
+    protected override string ContradictionMessageTemplate => "Intrinsic '{0}' cannot be both allowed and forbidden.";
+
+    protected override void AccumulateIdentifier(DialectDirectiveAccumulation accumulation, string value)
     {
         accumulation.ForbiddenIntrinsics.Add(value);
     }
-
-    public override void ValidateSemantic(DialectDirectiveAstNode directive, DialectDirectiveValidationState state)
-    {
-        state.AddForbiddenIntrinsic(GetSingleIdentifier(directive), directive.LexemeValue);
-    }
-
-    public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive) => [new IntrinsicAirAnnotation(GetSingleIdentifier(directive), allowed: false)];
 }
 
-internal sealed class EnableIntrinsicDialectDirectiveFeature : ToggleDirectiveFeatureBase
+internal abstract class OptimizerPolicyDialectDirectiveFeatureBase : SingleIdentifierDialectDirectiveFeatureBase
 {
-    public override DialectDirectiveKind Kind => DialectDirectiveKind.EnableIntrinsic;
+    private const string ToggleStateKey = "builtin.optimizers.toggle";
+
+    protected abstract bool Enabled { get; }
+
+    protected abstract string DuplicateMessage { get; }
+
+    protected abstract string ContradictionMessageTemplate { get; }
+
+    public override void ValidateSemantic(DialectDirectiveAstNode directive, DialectDirectiveValidationContext context)
+    {
+        var value = GetSingleIdentifierArgument(directive);
+        var state = context.GetOrAddState(ToggleStateKey, static () => new ToggleValidationState());
+        state.Add(value, Enabled, DuplicateMessage, ContradictionMessageTemplate, directive.LexemeValue);
+    }
+
+    public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive)
+    {
+        return [new OptimizerAirAnnotation(GetSingleIdentifierArgument(directive), Enabled)];
+    }
+
+    private sealed class ToggleValidationState
+    {
+        private readonly HashSet<string> _enabled = new(StringComparer.Ordinal);
+        private readonly HashSet<string> _disabled = new(StringComparer.Ordinal);
+
+        public void Add(string value, bool enabled, string duplicateMessage, string contradictionMessageTemplate, LexemeValue? token)
+        {
+            var current = enabled ? _enabled : _disabled;
+            var opposite = enabled ? _disabled : _enabled;
+
+            if (!current.Add(value))
+            {
+                DialectDefinitionSliceParseErrors.Fail(duplicateMessage, token);
+            }
+
+            if (opposite.Contains(value))
+            {
+                DialectDefinitionSliceParseErrors.Fail(string.Format(contradictionMessageTemplate, value), token);
+            }
+        }
+    }
+}
+
+internal sealed class EnableOptimizerDialectDirectiveFeature : OptimizerPolicyDialectDirectiveFeatureBase
+{
+    public override string Id => "builtin.optimizers.enable";
+
     public override string Keyword => DialectDslKeywords.Enable;
-    public override float ParserPriority => 19f;
 
-    protected override void AddAccumulatedValue(DialectDirectiveAccumulation accumulation, string value)
+    public override DialectDirectiveParserOrder ParserOrder => new(DialectDirectiveSlot.OptimizerPolicy, 0);
+
+    protected override bool Enabled => true;
+
+    protected override string DuplicateMessage => "Duplicate enable optimizer directive is not allowed.";
+
+    protected override string ContradictionMessageTemplate => "Optimizer '{0}' cannot be both enabled and disabled.";
+
+    protected override void AccumulateIdentifier(DialectDirectiveAccumulation accumulation, string value)
     {
-        accumulation.EnabledIntrinsics.Add(value);
+        accumulation.EnabledOptimizers.Add(value);
     }
-
-    public override void ValidateSemantic(DialectDirectiveAstNode directive, DialectDirectiveValidationState state)
-    {
-        state.AddEnabledOptimizer(GetSingleIdentifier(directive), directive.LexemeValue);
-    }
-
-    public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive) => [new OptimizerAirAnnotation(GetSingleIdentifier(directive), enabled: true)];
 }
 
-internal sealed class DisableIntrinsicDialectDirectiveFeature : ToggleDirectiveFeatureBase
+internal sealed class DisableOptimizerDialectDirectiveFeature : OptimizerPolicyDialectDirectiveFeatureBase
 {
-    public override DialectDirectiveKind Kind => DialectDirectiveKind.DisableIntrinsic;
+    public override string Id => "builtin.optimizers.disable";
+
     public override string Keyword => DialectDslKeywords.Disable;
-    public override float ParserPriority => 20f;
 
-    protected override void AddAccumulatedValue(DialectDirectiveAccumulation accumulation, string value)
+    public override DialectDirectiveParserOrder ParserOrder => new(DialectDirectiveSlot.OptimizerPolicy, 1);
+
+    protected override bool Enabled => false;
+
+    protected override string DuplicateMessage => "Duplicate disable optimizer directive is not allowed.";
+
+    protected override string ContradictionMessageTemplate => "Optimizer '{0}' cannot be both enabled and disabled.";
+
+    protected override void AccumulateIdentifier(DialectDirectiveAccumulation accumulation, string value)
     {
-        accumulation.DisabledIntrinsics.Add(value);
+        accumulation.DisabledOptimizers.Add(value);
     }
-
-    public override void ValidateSemantic(DialectDirectiveAstNode directive, DialectDirectiveValidationState state)
-    {
-        state.AddDisabledOptimizer(GetSingleIdentifier(directive), directive.LexemeValue);
-    }
-
-    public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive) => [new OptimizerAirAnnotation(GetSingleIdentifier(directive), enabled: false)];
 }
 
-internal sealed class SecurityDialectDirectiveFeature : ToggleDirectiveFeatureBase
+internal sealed class SecurityDialectDirectiveFeature : SingleIdentifierDialectDirectiveFeatureBase
 {
-    public override DialectDirectiveKind Kind => DialectDirectiveKind.Security;
+    public override string Id => "builtin.security.profile";
+
     public override string Keyword => DialectDslKeywords.Security;
-    public override float ParserPriority => 21f;
+
+    public override DialectDirectiveParserOrder ParserOrder => new(DialectDirectiveSlot.Security, 0);
+
     public override bool IsSingleton => true;
 
-    protected override void AddAccumulatedValue(DialectDirectiveAccumulation accumulation, string value)
+    protected override void AccumulateIdentifier(DialectDirectiveAccumulation accumulation, string value)
     {
         if (accumulation.SecurityProfile != null)
         {
@@ -524,47 +813,75 @@ internal sealed class SecurityDialectDirectiveFeature : ToggleDirectiveFeatureBa
         accumulation.SecurityProfile = DialectAnnotationValueGuard.ParseSecurityProfile(value);
     }
 
-    public override void ValidateSemantic(DialectDirectiveAstNode directive, DialectDirectiveValidationState state)
+    public override void ValidateSemantic(DialectDirectiveAstNode directive, DialectDirectiveValidationContext context)
     {
-        state.MarkSecurity(directive.LexemeValue);
+        context.EnsureSingleton(Id, "Security directive can only be declared once.", directive.LexemeValue);
+        GetSingleIdentifierArgument(directive);
     }
 
     public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive)
     {
-        return [new SecurityAirAnnotation(DialectAnnotationValueGuard.ParseSecurityProfile(GetSingleIdentifier(directive)))];
+        return [new SecurityAirAnnotation(DialectAnnotationValueGuard.ParseSecurityProfile(GetSingleIdentifierArgument(directive)))];
     }
 }
 
-internal sealed class CapabilityDialectDirectiveFeature : DialectDirectiveFeatureBase
+internal sealed class CapabilityDialectDirectiveFeature : IdentifierListDialectDirectiveFeatureBase
 {
-    public override DialectDirectiveKind Kind => DialectDirectiveKind.Capability;
+    public override string Id => "builtin.capabilities.enable";
+
     public override string Keyword => DialectDslKeywords.Capability;
-    public override DialectDirectiveArgumentShape ArgumentShape => DialectDirectiveArgumentShape.IdentifierList;
-    public override float ParserPriority => 22f;
 
-    public override void Accumulate(IReadOnlyList<LexemeValue> line, DialectDirectiveAccumulation accumulation)
+    public override DialectDirectiveParserOrder ParserOrder => new(DialectDirectiveSlot.Capabilities, 0);
+
+    protected override void AccumulateIdentifiers(DialectDirectiveAccumulation accumulation, IReadOnlyList<string> values)
     {
-        accumulation.Capabilities.AddRange(DialectDirectiveParserSupport.ParseIdentifierList(line, Keyword));
+        accumulation.Capabilities.AddRange(values);
     }
 
-    public override void ValidateSemantic(DialectDirectiveAstNode directive, DialectDirectiveValidationState state)
+    public override void ValidateSemantic(DialectDirectiveAstNode directive, DialectDirectiveValidationContext context)
     {
-        state.AddCapabilities(GetIdentifierList(directive), directive.LexemeValue);
+        context.AddValues(Id, GetIdentifierListArgument(directive), "Duplicate capability identifier is not allowed.", directive.LexemeValue);
     }
 
-    public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive) => [new CapabilityAirAnnotation(GetIdentifierList(directive))];
+    public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive)
+    {
+        return [new CapabilityAirAnnotation(GetIdentifierListArgument(directive))];
+    }
 }
 
 internal sealed class UseExcludeConflictDocumentValidationRule : IDialectDocumentValidationRule
 {
     public int Order => 0;
 
-    public void Validate(DialectDocumentAstNode document, DialectDirectiveValidationState state)
+    public void Validate(DialectDocumentAstNode document, DialectDirectiveValidationContext context)
     {
-        foreach (var conflict in state.UseModules.Intersect(state.ExcludeModules, StringComparer.Ordinal))
+        foreach (var conflict in context.GetValues(UseModulesDialectDirectiveFeature.ValidationKey).Intersect(context.GetValues(ExcludeModulesDialectDirectiveFeature.ValidationKey), StringComparer.Ordinal))
         {
             DialectDefinitionSliceParseErrors.Fail($"Module '{conflict}' cannot appear in both use and exclude directives.", document.Declaration.NameNode.LexemeValue);
         }
+    }
+}
+
+internal sealed class BuiltInDialectDslFeatureProvider : IDialectDslFeatureProvider
+{
+    public int Order => 0;
+
+    public void Register(DialectDslRegistryBuilder builder)
+    {
+        builder
+            .RegisterFeature(new UseModulesDialectDirectiveFeature())
+            .RegisterFeature(new ExcludeModulesDialectDirectiveFeature())
+            .RegisterFeature(new RequiresModulesDialectDirectiveFeature())
+            .RegisterFeature(new BeforeModulesDialectDirectiveFeature())
+            .RegisterFeature(new AfterModulesDialectDirectiveFeature())
+            .RegisterFeature(new BackendDialectDirectiveFeature())
+            .RegisterFeature(new AllowIntrinsicDialectDirectiveFeature())
+            .RegisterFeature(new ForbidIntrinsicDialectDirectiveFeature())
+            .RegisterFeature(new EnableOptimizerDialectDirectiveFeature())
+            .RegisterFeature(new DisableOptimizerDialectDirectiveFeature())
+            .RegisterFeature(new SecurityDialectDirectiveFeature())
+            .RegisterFeature(new CapabilityDialectDirectiveFeature())
+            .RegisterDocumentRule(new UseExcludeConflictDocumentValidationRule());
     }
 }
 

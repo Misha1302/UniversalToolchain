@@ -23,7 +23,7 @@ public class FrameworkNativeSemanticBuildPlanTests
     [Test]
     public void BuildPlan_ListBasedOrdering_IsNormalizedDeterministically()
     {
-        var source =
+        const string source =
             """
             dialect D
             use C,B,A
@@ -66,31 +66,46 @@ public class FrameworkNativeSemanticBuildPlanTests
     }
 
     [Test]
-    public void ParserRegistry_ContainsMultipleSpecializedCreators()
+    public void ParserRegistry_UsesFeatureOwnedCreators_AndStagedDirectiveSlots()
     {
-        var creatorTypes = DialectDslParserNodeRegistry.Registrations.Select(x => x.Creator.GetType().Name).ToArray();
-        var featureKinds = DialectDslFeatureCatalog.Features.Select(x => x.Kind).ToArray();
+        var registry = DialectDslBuiltInFeatures.CreateRegistry();
+        var creatorTypes = DialectDslParserNodeRegistry.CreateRegistrations(registry).Select(x => x.Creator.GetType().Name).ToArray();
+        var descriptors = DialectDirectiveDescriptors.CreateOrdered(registry);
 
         Assert.Multiple(() =>
         {
             Assert.That(creatorTypes, Does.Contain(nameof(DialectDeclarationNodeCreator)));
-            Assert.That(creatorTypes, Does.Contain(nameof(IdentifierListDialectDirectiveNodeCreator)));
-            Assert.That(creatorTypes, Does.Contain(nameof(SingleIdentifierDialectDirectiveNodeCreator)));
+            Assert.That(creatorTypes, Does.Contain(nameof(FeatureDialectDirectiveNodeCreator)));
             Assert.That(creatorTypes, Does.Contain(nameof(DialectDocumentNodeCreator)));
-            Assert.That(featureKinds, Is.EqualTo(new[]
+            Assert.That(descriptors.Select(x => x.Id), Is.EqualTo(new[]
             {
-                DialectDirectiveKind.UseModules,
-                DialectDirectiveKind.ExcludeModules,
-                DialectDirectiveKind.RequiresModules,
-                DialectDirectiveKind.BeforeModules,
-                DialectDirectiveKind.AfterModules,
-                DialectDirectiveKind.Backend,
-                DialectDirectiveKind.AllowIntrinsic,
-                DialectDirectiveKind.ForbidIntrinsic,
-                DialectDirectiveKind.EnableIntrinsic,
-                DialectDirectiveKind.DisableIntrinsic,
-                DialectDirectiveKind.Security,
-                DialectDirectiveKind.Capability
+                "builtin.modules.use",
+                "builtin.modules.exclude",
+                "builtin.order.requires",
+                "builtin.order.before",
+                "builtin.order.after",
+                "builtin.backends.enable",
+                "builtin.intrinsics.allow",
+                "builtin.intrinsics.forbid",
+                "builtin.optimizers.enable",
+                "builtin.optimizers.disable",
+                "builtin.security.profile",
+                "builtin.capabilities.enable"
+            }));
+            Assert.That(descriptors.Select(x => x.ParserOrder.Slot), Is.EqualTo(new[]
+            {
+                DialectDirectiveSlot.ModuleSelection,
+                DialectDirectiveSlot.ModuleSelection,
+                DialectDirectiveSlot.ModuleOrdering,
+                DialectDirectiveSlot.ModuleOrdering,
+                DialectDirectiveSlot.ModuleOrdering,
+                DialectDirectiveSlot.BackendSelection,
+                DialectDirectiveSlot.IntrinsicPolicy,
+                DialectDirectiveSlot.IntrinsicPolicy,
+                DialectDirectiveSlot.OptimizerPolicy,
+                DialectDirectiveSlot.OptimizerPolicy,
+                DialectDirectiveSlot.Security,
+                DialectDirectiveSlot.Capabilities
             }));
         });
     }

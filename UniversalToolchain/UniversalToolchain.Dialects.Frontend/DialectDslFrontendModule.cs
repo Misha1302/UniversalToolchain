@@ -9,6 +9,15 @@ namespace UniversalToolchain.Dialects.Frontend;
 
 public sealed class DialectDslFrontendModule : IFrontendCoreModule
 {
+    private readonly DialectDslRegistry _registry;
+
+    public DialectDslFrontendModule(DialectDslRegistry? registry = null)
+    {
+        _registry = registry ?? DialectDslBuiltInFeatures.CreateRegistry();
+    }
+
+    public DialectDslRegistry Registry => _registry;
+
     public void InitLexer(ILexer lexer)
     {
         if (lexer == null)
@@ -16,7 +25,7 @@ public sealed class DialectDslFrontendModule : IFrontendCoreModule
             Thrower.ArgumentNull(nameof(lexer));
         }
 
-        lexer.AddLexemes(DialectDslLexemeRegistry.Registrations);
+        lexer.AddLexemes(DialectDslLexemeRegistry.CreateRegistrations(_registry));
     }
 
     public void InitParser(IParser parser)
@@ -26,12 +35,12 @@ public sealed class DialectDslFrontendModule : IFrontendCoreModule
             Thrower.ArgumentNull(nameof(parser));
         }
 
-        parser.AddNodeCreators(DialectDslParserNodeRegistry.Registrations);
+        parser.AddNodeCreators(DialectDslParserNodeRegistry.CreateRegistrations(_registry));
     }
 
     public AstNode ProcessAst(AstNode astRoot)
     {
-        return DialectAstPipelineValidator.Validate(astRoot);
+        return DialectAstPipelineValidator.Validate(astRoot, _registry);
     }
 
     public void InitAstTranslator(IAstToBytecodeTranslator translator)
@@ -41,6 +50,6 @@ public sealed class DialectDslFrontendModule : IFrontendCoreModule
             Thrower.ArgumentNull(nameof(translator));
         }
 
-        translator.AddVisitors(new DialectAstToBytecodeVisitor());
+        translator.AddVisitors(new DialectAstToBytecodeVisitor(_registry));
     }
 }

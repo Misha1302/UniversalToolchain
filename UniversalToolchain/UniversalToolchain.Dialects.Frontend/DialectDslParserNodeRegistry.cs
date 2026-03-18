@@ -1,23 +1,25 @@
 using BasicCore.Registration;
+using ExceptionsManager;
 
 namespace UniversalToolchain.Dialects.Frontend;
 
 public static class DialectDslParserNodeRegistry
 {
-    private static readonly Lazy<IReadOnlyList<NodeCreatorRegistration>> _registrations = new(BuildRegistrations);
-
-    public static IReadOnlyList<NodeCreatorRegistration> Registrations => _registrations.Value;
-
-    private static IReadOnlyList<NodeCreatorRegistration> BuildRegistrations()
+    public static IReadOnlyList<NodeCreatorRegistration> CreateRegistrations(DialectDslRegistry registry)
     {
+        if (registry == null)
+        {
+            Thrower.ArgumentNull(nameof(registry));
+        }
+
         var registrations = new List<NodeCreatorRegistration>
         {
-            new(0f, new DialectLineNodeCreator()),
-            new(10f, new DialectDeclarationNodeCreator())
+            new(DialectParserOrders.LineSplitter.Encode(), new DialectLineNodeCreator()),
+            new(DialectParserOrders.Declaration.Encode(), new DialectDeclarationNodeCreator())
         };
 
-        registrations.AddRange(DialectDslFeatureCatalog.Features.Select(x => new NodeCreatorRegistration(x.ParserPriority, x.CreateNodeCreator())));
-        registrations.Add(new NodeCreatorRegistration(100f, new DialectDocumentNodeCreator()));
+        registrations.AddRange(registry.DirectiveFeatures.Select(x => new NodeCreatorRegistration(DialectParserOrder.Directive(x.ParserOrder).Encode(), new FeatureDialectDirectiveNodeCreator(x))));
+        registrations.Add(new NodeCreatorRegistration(DialectParserOrders.Document.Encode(), new DialectDocumentNodeCreator()));
         return registrations;
     }
 }

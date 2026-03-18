@@ -16,17 +16,15 @@ public static class DialectDefinitionSliceAirReader
         var aggregation = new DialectDefinitionAggregation();
         foreach (var annotation in air.Instructions.SelectMany(x => x.Metadata))
         {
-            if (annotation is not IDialectDefinitionSliceAnnotation)
+            if (annotation == null)
             {
-                if (annotation == null)
-                {
-                    Thrower.InvalidOpEx("Dialect AIR contained a null annotation entry.");
-                }
-
-                Thrower.InvalidOpEx($"Dialect AIR contained unsupported annotation type '{annotation.GetType().FullName}'.");
+                Thrower.InvalidOpEx("Dialect AIR contained a null annotation entry.");
             }
 
-            ((IDialectDefinitionSliceAnnotation)annotation).Apply(aggregation);
+            if (annotation is IDialectDefinitionSliceAnnotation dialectAnnotation)
+            {
+                dialectAnnotation.Apply(aggregation);
+            }
         }
 
         return new DialectDefinitionSliceBuilder().Build(aggregation);
