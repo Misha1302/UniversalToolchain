@@ -13,9 +13,9 @@ public sealed class DialectDslCompiler
 {
     private readonly BasicCoreImpl<DialectDefinitionSlice> _core;
 
-    public DialectDslCompiler()
+    public DialectDslCompiler(DialectDslRegistry? registry = null)
     {
-        var frontendModule = new DialectDslFrontendModule();
+        var frontendModule = new DialectDslFrontendModule(registry);
         var compiler = new DialectDefinitionSliceCompiler();
 
         _core = new BasicCoreImpl<DialectDefinitionSlice>(

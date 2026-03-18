@@ -29,7 +29,7 @@ public sealed class DialectDefinition
         BackendPolicy backendPolicy,
         IntrinsicPolicy intrinsicPolicy,
         OptimizerPolicy optimizerPolicy,
-        SecurityPolicy securityPolicy,
+        SecurityPolicy? securityPolicy,
         CapabilityPolicy capabilityPolicy,
         IEnumerable<OrderRule>? orderRules = null,
         string? version = null,

@@ -5,6 +5,13 @@ namespace UniversalToolchain.Dialects.Frontend;
 
 public sealed class DialectDirectiveLineParser
 {
+    private readonly DialectDslRegistry _registry;
+
+    public DialectDirectiveLineParser(DialectDslRegistry? registry = null)
+    {
+        _registry = registry ?? DialectDslBuiltInFeatures.CreateRegistry();
+    }
+
     public bool TryParse(IReadOnlyList<LexemeValue> line, DialectDirectiveAccumulation accumulation)
     {
         if (line == null)
@@ -23,7 +30,7 @@ public sealed class DialectDirectiveLineParser
         }
 
         var keyword = line[0].Text;
-        if (!DialectDslFeatureCatalog.TryGetFeature(keyword, out var feature))
+        if (!_registry.TryGetFeature(keyword, out var feature))
         {
             return false;
         }

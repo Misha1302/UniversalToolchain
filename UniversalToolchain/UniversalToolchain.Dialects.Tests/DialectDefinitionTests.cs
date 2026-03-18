@@ -34,6 +34,22 @@ public class DialectDefinitionTests
         Assert.That(definition.OrderRules.Count, Is.EqualTo(1));
     }
 
+
+    [Test]
+    public void Constructor_AllowsMissingSecurityPolicy()
+    {
+        var definition = new DialectDefinition(
+            "dialect",
+            new ModulePolicy(),
+            new BackendPolicy(),
+            new IntrinsicPolicy(),
+            new OptimizerPolicy(),
+            null,
+            new CapabilityPolicy());
+
+        Assert.That(definition.SecurityPolicy, Is.Null);
+    }
+
     [Test]
     public void Constructor_ExposesCapabilityLookup()
     {

@@ -60,7 +60,7 @@ internal static class DialectDefinitionSemanticBinder
             new OptimizerPolicy(
                 optimizerDirectives.Where(x => x.Enabled).Select(FormatRuleName),
                 optimizerDirectives.Where(x => !x.Enabled).Select(FormatRuleName)),
-            syntaxDocument.SecurityProfile.HasValue ? new SecurityPolicy(syntaxDocument.SecurityProfile.Value) : null!,
+            syntaxDocument.SecurityProfile.HasValue ? new SecurityPolicy(syntaxDocument.SecurityProfile.Value) : null,
             new CapabilityPolicy(syntaxDocument.Capabilities.OrderBy(x => x.Key, StringComparer.Ordinal)),
             DialectOrderConstraintMapper.ToDefinitionRules(DialectOrderConstraintMapper.FromSyntaxRules(syntaxDocument.OrderRules)),
             syntaxDocument.Version);
@@ -123,7 +123,7 @@ internal static class DialectDefinitionSemanticBinder
             new OptimizerPolicy(
                 optimizerDirectives.Where(x => x.Enabled).Select(FormatRuleName),
                 optimizerDirectives.Where(x => !x.Enabled).Select(FormatRuleName)),
-            compiledDialect.SecurityProfile.HasValue ? new SecurityPolicy(ToSecurityProfile(compiledDialect.SecurityProfile.Value)) : null!,
+            compiledDialect.SecurityProfile.HasValue ? new SecurityPolicy(ToSecurityProfile(compiledDialect.SecurityProfile.Value)) : null,
             new CapabilityPolicy(capabilities),
             DialectOrderConstraintMapper.ToDefinitionRules(DialectOrderConstraintMapper.FromCompiledDirectives(compiledDialect.OrderDirectives)));
     }

@@ -6,6 +6,13 @@ namespace UniversalToolchain.Dialects.Frontend;
 
 public sealed class DialectAstToBytecodeVisitor : IAstVisitor
 {
+    private readonly DialectDslRegistry _registry;
+
+    public DialectAstToBytecodeVisitor(DialectDslRegistry? registry = null)
+    {
+        _registry = registry ?? DialectDslBuiltInFeatures.CreateRegistry();
+    }
+
     public void TryVisit(BytecodeVisitorData data)
     {
         if (data == null)
@@ -13,7 +20,7 @@ public sealed class DialectAstToBytecodeVisitor : IAstVisitor
             Thrower.ArgumentNull(nameof(data));
         }
 
-        var document = DialectDslAstValidator.Validate(data.Node);
+        var document = DialectDslAstValidator.Validate(data.Node, _registry);
         var annotations = DialectAstLowering.Lower(document);
         data.Bytecode.Instructions.Add(new BytecodeInstruction(new DialectSliceToAirConvertable(annotations.Cast<object>().ToList())));
     }

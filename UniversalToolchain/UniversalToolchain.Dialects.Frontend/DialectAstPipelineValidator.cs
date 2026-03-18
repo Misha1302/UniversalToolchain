@@ -1,4 +1,3 @@
-using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using ExceptionsManager;
 
@@ -6,21 +5,21 @@ namespace UniversalToolchain.Dialects.Frontend;
 
 public static class DialectAstPipelineValidator
 {
-    public static AstNode Validate(AstNode astRoot)
+    public static AstNode Validate(AstNode astRoot, DialectDslRegistry? registry = null)
     {
         if (astRoot == null)
         {
             Thrower.ArgumentNull(nameof(astRoot));
         }
 
-        DialectDslAstValidator.Validate(astRoot);
+        DialectDslAstValidator.Validate(astRoot, registry);
         return astRoot;
     }
 }
 
 public static class DialectDslAstValidator
 {
-    public static DialectDocumentAstNode Validate(AstNode astRoot)
+    public static DialectDocumentAstNode Validate(AstNode astRoot, DialectDslRegistry? registry = null)
     {
         if (astRoot == null)
         {
@@ -33,11 +32,11 @@ public static class DialectDslAstValidator
         }
 
         var document = (DialectDocumentAstNode)astRoot.Children[0];
-        ValidateDocument(document);
+        ValidateDocument(document, registry ?? DialectDslBuiltInFeatures.CreateRegistry());
         return document;
     }
 
-    private static void ValidateDocument(DialectDocumentAstNode document)
+    private static void ValidateDocument(DialectDocumentAstNode document, DialectDslRegistry registry)
     {
         if (document.Children.Count == 0)
         {
@@ -52,24 +51,15 @@ public static class DialectDslAstValidator
         var declaration = (DialectDeclarationAstNode)document.Children[0];
         ValidateDeclaration(declaration);
 
-        var state = new DialectDirectiveValidationState();
-        foreach (var node in document.Children.Skip(1))
+        var context = new DialectDirectiveValidationContext();
+        foreach (var directive in document.Directives)
         {
-            if (node is not DialectDirectiveAstNode)
-            {
-                DialectDefinitionSliceParseErrors.Fail(
-                    $"Dialect document contains an unexpected child node of type '{node.NodeType.GetName()}'.",
-                    node.LexemeValue ?? node.Children.FirstOrDefault()?.LexemeValue);
-            }
-
-            var directive = (DialectDirectiveAstNode)node;
-            ValidateDirectiveShape(directive);
-            directive.Feature.ValidateSemantic(directive, state);
+            directive.Feature.ValidateSemantic(directive, context);
         }
 
-        foreach (var rule in DialectDslFeatureCatalog.DocumentRules)
+        foreach (var rule in registry.DocumentRules)
         {
-            rule.Validate(document, state);
+            rule.Validate(document, context);
         }
     }
 
@@ -80,68 +70,10 @@ public static class DialectDslAstValidator
             DialectDefinitionSliceParseErrors.Fail("Dialect declaration must contain exactly one identifier child.", declaration.LexemeValue);
         }
 
-        ValidateIdentifier((IdentifierValueAstNode)declaration.Children[0], "Dialect name must not be empty.");
-    }
-
-    private static void ValidateDirectiveShape(DialectDirectiveAstNode directive)
-    {
-        if (directive.Feature.ArgumentShape == DialectDirectiveArgumentShape.IdentifierList)
-        {
-            if (directive.Children.Count != 1 || directive.Children[0] is not IdentifierListAstNode)
-            {
-                DialectDefinitionSliceParseErrors.Fail(
-                    $"Directive '{directive.Feature.Keyword}' must contain exactly one identifier-list child.",
-                    directive.LexemeValue ?? directive.Children.FirstOrDefault()?.LexemeValue);
-            }
-
-            var listNode = (IdentifierListAstNode)directive.Children[0];
-            if (listNode.Identifiers.Count == 0)
-            {
-                DialectDefinitionSliceParseErrors.Fail($"Directive '{directive.Feature.Keyword}' must contain at least one identifier.", directive.LexemeValue);
-            }
-
-            foreach (var identifier in listNode.Identifiers)
-            {
-                ValidateIdentifier(identifier, $"Directive '{directive.Feature.Keyword}' contains an empty identifier.");
-            }
-
-            ValidateNoDuplicates(listNode.Identifiers.Select(x => x.Identifier), $"Directive '{directive.Feature.Keyword}' contains duplicate identifiers.", directive.LexemeValue);
-            return;
-        }
-
-        if (directive.Children.Count != 1 || directive.Children[0] is not IdentifierValueAstNode)
-        {
-            DialectDefinitionSliceParseErrors.Fail(
-                $"Directive '{directive.Feature.Keyword}' must contain exactly one identifier child.",
-                directive.LexemeValue ?? directive.Children.FirstOrDefault()?.LexemeValue);
-        }
-
-        var identifierNode = (IdentifierValueAstNode)directive.Children[0];
-        ValidateIdentifier(identifierNode, $"Directive '{directive.Feature.Keyword}' must not be empty.");
-    }
-
-    private static void ValidateIdentifier(IdentifierValueAstNode identifier, string message)
-    {
-        if (identifier == null)
-        {
-            Thrower.ArgumentNull(nameof(identifier));
-        }
-
+        var identifier = (IdentifierValueAstNode)declaration.Children[0];
         if (string.IsNullOrWhiteSpace(identifier.Identifier))
         {
-            DialectDefinitionSliceParseErrors.Fail(message, identifier.LexemeValue);
-        }
-    }
-
-    private static void ValidateNoDuplicates(IEnumerable<string> values, string message, LexemeValue? token)
-    {
-        var set = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var value in values)
-        {
-            if (!set.Add(value))
-            {
-                DialectDefinitionSliceParseErrors.Fail(message, token);
-            }
+            DialectDefinitionSliceParseErrors.Fail("Dialect name must not be empty.", identifier.LexemeValue);
         }
     }
 }

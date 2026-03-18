@@ -1,30 +1,75 @@
 using System.Reflection;
+using BasicCore.LexerWrapper;
+using BasicCore.ParserWrapper;
+using BasicTypesExtensions;
+using IntermediateRepresentationAbstractions;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core;
 using UniversalToolchain.Dialects.Frontend;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Parsing;
+using AstNodeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.ParserWrapper.AstNodeTag>;
 
 namespace UniversalToolchain.Dialects.Tests;
 
 public class FrameworkNativeExtensionSeamsTests
 {
     [Test]
-    public void DirectiveFeatures_AreDiscoveredDeterministically_AndDriveParserRegistrations()
+    public void ExplicitRegistryComposition_IsDeterministic_AndUsesStagedOrdering()
     {
-        var first = DialectDslFeatureCatalog.Features.Select(x => (x.Kind, x.Keyword, x.ParserPriority, x.GetType().Name)).ToArray();
-        var second = DialectDslFeatureCatalog.Features.Select(x => (x.Kind, x.Keyword, x.ParserPriority, x.GetType().Name)).ToArray();
-        var parserCreatorTypes = DialectDslParserNodeRegistry.Registrations.Select(x => x.Creator.GetType().Name).ToArray();
+        var first = DialectDslBuiltInFeatures.CreateRegistry();
+        var second = DialectDslBuiltInFeatures.CreateRegistry();
+        var parserCreators = DialectDslParserNodeRegistry.CreateRegistrations(first).Select(x => x.Creator.GetType().Name).ToArray();
 
         Assert.Multiple(() =>
         {
-            Assert.That(first, Is.EqualTo(second));
-            Assert.That(first.Select(x => x.Keyword), Is.EqualTo(new[]
+            Assert.That(first.DirectiveFeatures.Select(x => (x.Id, x.Keyword, x.ParserOrder.Slot, x.ParserOrder.Sequence)),
+                Is.EqualTo(second.DirectiveFeatures.Select(x => (x.Id, x.Keyword, x.ParserOrder.Slot, x.ParserOrder.Sequence))));
+            Assert.That(first.DirectiveFeatures.Select(x => x.Keyword), Is.EqualTo(new[]
             {
                 "use", "exclude", "requires", "before", "after", "backend", "allow", "forbid", "enable", "disable", "security", "capability"
             }));
-            Assert.That(parserCreatorTypes, Does.Contain(nameof(IdentifierListDialectDirectiveNodeCreator)));
-            Assert.That(parserCreatorTypes, Does.Contain(nameof(SingleIdentifierDialectDirectiveNodeCreator)));
+            Assert.That(first.DirectiveFeatures.Select(x => x.ParserOrder.Slot), Is.EqualTo(new[]
+            {
+                DialectDirectiveSlot.ModuleSelection,
+                DialectDirectiveSlot.ModuleSelection,
+                DialectDirectiveSlot.ModuleOrdering,
+                DialectDirectiveSlot.ModuleOrdering,
+                DialectDirectiveSlot.ModuleOrdering,
+                DialectDirectiveSlot.BackendSelection,
+                DialectDirectiveSlot.IntrinsicPolicy,
+                DialectDirectiveSlot.IntrinsicPolicy,
+                DialectDirectiveSlot.OptimizerPolicy,
+                DialectDirectiveSlot.OptimizerPolicy,
+                DialectDirectiveSlot.Security,
+                DialectDirectiveSlot.Capabilities
+            }));
+            Assert.That(parserCreators, Does.Contain(nameof(FeatureDialectDirectiveNodeCreator)));
+        });
+    }
+
+    [Test]
+    public void CustomDirectiveFeature_CanBeAddedWithoutEditingCentralDirectivePlumbing()
+    {
+        var registry = DialectDslBuiltInFeatures.CreateRegistry([new AliasDirectiveFeatureProvider()]);
+        var compiler = new DialectDslCompiler(registry);
+
+        var slice = compiler.Compile(
+            """
+            dialect Tiny
+            alias math arithmetic
+            use arithmetic
+            """);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(slice.Name, Is.EqualTo("Tiny"));
+            Assert.That(slice.UseModules, Is.EqualTo(new[] { "arithmetic" }));
+            Assert.That(slice.CapabilityDirectives.Select(x => (x.Name, x.Value)), Is.EqualTo(new[]
+            {
+                ("alias:math->arithmetic", true)
+            }));
+            Assert.That(registry.DirectiveFeatures.Select(x => x.Keyword), Does.Contain("alias"));
         });
     }
 
@@ -59,6 +104,7 @@ public class FrameworkNativeExtensionSeamsTests
             Assert.That(definition.IntrinsicPolicy.ForbiddenIntrinsics, Is.EqualTo(new[] { "sub_i32" }));
             Assert.That(definition.OptimizerPolicy.EnabledOptimizers, Is.EqualTo(new[] { "Ssa" }));
             Assert.That(definition.OptimizerPolicy.DisabledOptimizers, Is.EqualTo(new[] { "Fold" }));
+            Assert.That(definition.SecurityPolicy, Is.Null);
             Assert.That(definition.OrderRules.Select(x => (x.Kind, x.ModuleName, x.RelatedModuleName)), Is.EqualTo(new[]
             {
                 (OrderRuleKind.Before, "A", "B")
@@ -130,6 +176,95 @@ public class FrameworkNativeExtensionSeamsTests
         }
     }
 
+    private sealed class AliasDirectiveFeatureProvider : IDialectDslFeatureProvider
+    {
+        public int Order => 100;
+
+        public void Register(DialectDslRegistryBuilder builder)
+        {
+            builder.RegisterFeature(new AliasDirectiveFeature());
+        }
+    }
+
+    private sealed class AliasDirectiveFeature : IDialectDirectiveFeature
+    {
+        public string Id => "tests.alias";
+
+        public string Keyword => "alias";
+
+        public string LexemeTag => "DialectDirectiveKeyword.alias";
+
+        public DialectDirectiveParserOrder ParserOrder => new(DialectDirectiveSlot.Extension, 0);
+
+        public bool IsSingleton => false;
+
+        public DialectDirectiveAstNode ParseDirective(AstNode lineNode)
+        {
+            if (lineNode.Children.Count != 3)
+            {
+                DialectDefinitionSliceParseErrors.Fail("Directive 'alias' expects exactly two identifiers.", lineNode.Children[0].LexemeValue);
+            }
+
+            var source = lineNode.Children[1];
+            var target = lineNode.Children[2];
+            if (!DialectLexemeTags.IsTag(source.LexemeValue, DialectLexemeTags.Identifier) || !DialectLexemeTags.IsTag(target.LexemeValue, DialectLexemeTags.Identifier))
+            {
+                DialectDefinitionSliceParseErrors.Fail("Directive 'alias' expects identifier arguments.", source.LexemeValue ?? target.LexemeValue);
+            }
+
+            return new DialectDirectiveAstNode(this, lineNode.Children[0].LexemeValue,
+            [
+                new AliasDirectivePayloadAstNode(new IdentifierValueAstNode(source.LexemeValue!), new IdentifierValueAstNode(target.LexemeValue!))
+            ]);
+        }
+
+        public void Accumulate(IReadOnlyList<LexemeValue> line, DialectDirectiveAccumulation accumulation)
+        {
+            if (line.Count != 3)
+            {
+                DialectDefinitionSliceParseErrors.Fail("Directive 'alias' expects exactly two identifiers.", line[0]);
+            }
+
+            accumulation.GetOrCreateList("AliasMappings").Add($"{line[1].Text}->{line[2].Text}");
+        }
+
+        public void ValidateSemantic(DialectDirectiveAstNode directive, DialectDirectiveValidationContext context)
+        {
+            var payload = GetPayload(directive);
+            if (string.Equals(payload.Source.Identifier, payload.Target.Identifier, StringComparison.Ordinal))
+            {
+                DialectDefinitionSliceParseErrors.Fail("Alias source and target must differ.", directive.LexemeValue);
+            }
+
+            context.AddValue(Id, $"{payload.Source.Identifier}->{payload.Target.Identifier}", "Duplicate alias directive is not allowed.", directive.LexemeValue);
+        }
+
+        public IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive)
+        {
+            var payload = GetPayload(directive);
+            return [new CapabilityAirAnnotation([ $"alias:{payload.Source.Identifier}->{payload.Target.Identifier}" ])];
+        }
+
+        private static AliasDirectivePayloadAstNode GetPayload(DialectDirectiveAstNode directive)
+        {
+            return directive.Payload as AliasDirectivePayloadAstNode
+                ?? throw new ArgumentException("Alias directive payload is invalid.", nameof(directive));
+        }
+    }
+
+    private sealed class AliasDirectivePayloadAstNode : DialectAstNode
+    {
+        private static readonly AstNodeType PayloadNodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("AliasDirectivePayload");
+
+        public AliasDirectivePayloadAstNode(IdentifierValueAstNode source, IdentifierValueAstNode target) : base(PayloadNodeType, null, [source, target])
+        {
+        }
+
+        public IdentifierValueAstNode Source => (IdentifierValueAstNode)Children[0];
+
+        public IdentifierValueAstNode Target => (IdentifierValueAstNode)Children[1];
+    }
+
     private sealed class FakeFrontendModule : BasicCore.Contracts.IFrontendCoreModule
     {
         public void InitLexer(BasicCore.LexerWrapper.ILexer lexer)
@@ -152,7 +287,7 @@ public class FrameworkNativeExtensionSeamsTests
 
     private sealed class FakeOptimizerModule : BasicCore.Contracts.IIRProcessingModule
     {
-        public IntermediateRepresentationAbstractions.IAbstractIR Process(IntermediateRepresentationAbstractions.IAbstractIR air)
+        public IAbstractIR Process(IAbstractIR air)
         {
             return air;
         }
