@@ -16,9 +16,7 @@ public sealed class DialectAstToBytecodeVisitor : IAstVisitor
     public void TryVisit(BytecodeVisitorData data)
     {
         if (data == null)
-        {
             Thrower.ArgumentNull(nameof(data));
-        }
 
         var document = DialectDslAstValidator.Validate(data.Node, _registry);
         var annotations = DialectAstLowering.Lower(document);
@@ -31,9 +29,7 @@ internal static class DialectAstLowering
     public static IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDocumentAstNode document)
     {
         if (document == null)
-        {
             Thrower.ArgumentNull(nameof(document));
-        }
 
         var annotations = new List<IDialectDefinitionSliceAnnotation>
         {
@@ -41,9 +37,7 @@ internal static class DialectAstLowering
         };
 
         foreach (var directive in document.Directives)
-        {
             annotations.AddRange(directive.Feature.Lower(directive));
-        }
 
         return annotations;
     }

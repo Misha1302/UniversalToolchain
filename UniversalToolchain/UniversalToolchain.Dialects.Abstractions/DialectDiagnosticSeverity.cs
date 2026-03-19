@@ -1,7 +1,7 @@
 namespace UniversalToolchain.Dialects.Abstractions;
 
 /// <summary>
-/// Diagnostic message severity.
+///     Diagnostic message severity.
 /// </summary>
 public enum DialectDiagnosticSeverity
 {

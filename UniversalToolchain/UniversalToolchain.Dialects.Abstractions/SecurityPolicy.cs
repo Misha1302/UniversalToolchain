@@ -3,7 +3,7 @@ using ExceptionsManager;
 namespace UniversalToolchain.Dialects.Abstractions;
 
 /// <summary>
-/// Defines selected security profile for a dialect.
+///     Defines selected security profile for a dialect.
 /// </summary>
 public sealed class SecurityPolicy
 {

@@ -3,7 +3,7 @@ using ExceptionsManager;
 namespace UniversalToolchain.Dialects.Abstractions;
 
 /// <summary>
-/// Provides deterministic textual mapping for dialect backend targets.
+///     Provides deterministic textual mapping for dialect backend targets.
 /// </summary>
 public static class DialectBackendTargetText
 {
@@ -20,9 +20,7 @@ public static class DialectBackendTargetText
     public static bool TryParse(string text, bool allowAny, out DialectBackendTarget target)
     {
         if (string.IsNullOrWhiteSpace(text))
-        {
             Thrower.Argument(nameof(text), "Backend token must not be empty.");
-        }
 
         var normalized = text.Trim();
         if (string.Equals(normalized, "interpreter", StringComparison.Ordinal))

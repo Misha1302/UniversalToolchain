@@ -9,47 +9,36 @@ namespace UniversalToolchain.Dialects.Frontend;
 
 public sealed class DialectDslFrontendModule : IFrontendCoreModule
 {
-    private readonly DialectDslRegistry _registry;
-
     public DialectDslFrontendModule(DialectDslRegistry registry)
     {
-        _registry = registry ?? throw new ArgumentNullException(nameof(registry));
+        Registry = registry ?? throw new ArgumentNullException(nameof(registry));
     }
 
-    public DialectDslRegistry Registry => _registry;
+    public DialectDslRegistry Registry { get; }
 
     public void InitLexer(ILexer lexer)
     {
         if (lexer == null)
-        {
             Thrower.ArgumentNull(nameof(lexer));
-        }
 
-        lexer.AddLexemes(DialectDslLexemeRegistry.CreateRegistrations(_registry));
+        lexer.AddLexemes(DialectDslLexemeRegistry.CreateRegistrations(Registry));
     }
 
     public void InitParser(IParser parser)
     {
         if (parser == null)
-        {
             Thrower.ArgumentNull(nameof(parser));
-        }
 
-        parser.AddNodeCreators(DialectDslParserNodeRegistry.CreateRegistrations(_registry));
+        parser.AddNodeCreators(DialectDslParserNodeRegistry.CreateRegistrations(Registry));
     }
 
-    public AstNode ProcessAst(AstNode astRoot)
-    {
-        return DialectAstPipelineValidator.Validate(astRoot, _registry);
-    }
+    public AstNode ProcessAst(AstNode astRoot) => DialectAstPipelineValidator.Validate(astRoot, Registry);
 
     public void InitAstTranslator(IAstToBytecodeTranslator translator)
     {
         if (translator == null)
-        {
             Thrower.ArgumentNull(nameof(translator));
-        }
 
-        translator.AddVisitors(new DialectAstToBytecodeVisitor(_registry));
+        translator.AddVisitors(new DialectAstToBytecodeVisitor(Registry));
     }
 }

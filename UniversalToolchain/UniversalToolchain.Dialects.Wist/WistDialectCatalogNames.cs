@@ -1,7 +1,7 @@
 namespace UniversalToolchain.Dialects.Wist;
 
 /// <summary>
-/// Stable descriptor names exposed to the dialect-definition DSL for real Wist integration.
+///     Stable descriptor names exposed to the dialect-definition DSL for real Wist integration.
 /// </summary>
 public static class WistDialectCatalogNames
 {

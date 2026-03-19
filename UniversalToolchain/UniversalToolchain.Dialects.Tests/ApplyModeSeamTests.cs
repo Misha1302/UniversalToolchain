@@ -1,6 +1,5 @@
 using BasicCore.Contracts;
 using UniversalToolchain.Dialects.Abstractions;
-using UniversalToolchain.Dialects.Core;
 using UniversalToolchain.Dialects.Integration;
 using ATarget = UniversalToolchain.Dialects.Abstractions.DialectBackendTarget;
 
@@ -15,7 +14,7 @@ public class ApplyModeSeamTests
             "FrameworkNative",
             "v1",
             ["Arithmetic", "Variables"],
-            [DialectBackendTarget.Interpreter],
+            [ATarget.Interpreter],
             [],
             [new IntrinsicBuildDirective("add_i32", true, ATarget.Any)],
             [new OptimizerBuildDirective("LocalVariablesOptimization", true, ATarget.Any)],
@@ -95,9 +94,8 @@ public class ApplyModeSeamTests
         Assert.That(first, Is.EqualTo(second));
     }
 
-    private static DialectRuntimeDescriptorRegistry CreateRegistry()
-    {
-        return new DialectRuntimeDescriptorRegistryBuilder()
+    private static DialectRuntimeDescriptorRegistry CreateRegistry() =>
+        new DialectRuntimeDescriptorRegistryBuilder()
             .RegisterModule(new RuntimeModuleDescriptor("Arithmetic", typeof(FakeFrontendModule)))
             .RegisterModule(new RuntimeModuleDescriptor("Variables", typeof(FakeFrontendModule2)))
             .RegisterBackend(new RuntimeBackendDescriptor(ATarget.Interpreter, "InterpreterBackend"))
@@ -107,7 +105,6 @@ public class ApplyModeSeamTests
             .RegisterIntrinsic(new RuntimeIntrinsicDescriptor("add_i32", ATarget.Any))
             .RegisterIntrinsic(new RuntimeIntrinsicDescriptor("sub_i32", ATarget.Any))
             .Build();
-    }
 
     private sealed class FakeFrontendModule : IFrontendCoreModule
     {

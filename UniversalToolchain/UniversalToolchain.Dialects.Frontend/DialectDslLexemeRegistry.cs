@@ -11,9 +11,7 @@ public static class DialectDslLexemeRegistry
     public static IReadOnlyList<LexemeRegistration> CreateRegistrations(DialectDslRegistry registry)
     {
         if (registry == null)
-        {
             Thrower.ArgumentNull(nameof(registry));
-        }
 
         var registrations = new List<LexemeRegistration>
         {
@@ -22,19 +20,18 @@ public static class DialectDslLexemeRegistry
 
         registrations.AddRange(registry.DirectiveFeatures.Select(x => new LexemeRegistration(CreateKeywordPattern(x.Keyword), x.LexemeTag)));
         registrations.Add(new LexemeRegistration(@",", DialectLexemeTags.CommaToken));
-        registrations.Add(new LexemeRegistration(@"?
+        registrations.Add(new LexemeRegistration(@"
+?
 ", DialectLexemeTags.NewLine));
         registrations.Add(new LexemeRegistration(@"[A-Za-z_][A-Za-z0-9_\.-]*", DialectLexemeTags.Identifier));
-        registrations.Add(new LexemeRegistration(@"[ 	]+", "Whitespace", Ignore: true));
+        registrations.Add(new LexemeRegistration(@"[ 	]+", "Whitespace", true));
         return registrations;
     }
 
     internal static string CreateKeywordPattern(string keyword)
     {
         if (string.IsNullOrWhiteSpace(keyword))
-        {
             Thrower.Argument(nameof(keyword), "Dialect directive keyword must not be empty.");
-        }
 
         return $@"(?<!{KeywordBoundary}){Regex.Escape(keyword)}(?!{KeywordBoundary})";
     }

@@ -28,9 +28,7 @@ public readonly record struct DialectDirectiveParserOrder(DialectDirectiveSlot S
     {
         var slotComparison = Slot.CompareTo(other.Slot);
         if (slotComparison != 0)
-        {
             return slotComparison;
-        }
 
         return Sequence.CompareTo(other.Sequence);
     }
@@ -44,23 +42,16 @@ public readonly record struct DialectParserOrder(DialectParserStage Stage, int S
     {
         var stageComparison = Stage.CompareTo(other.Stage);
         if (stageComparison != 0)
-        {
             return stageComparison;
-        }
 
         var slotComparison = Slot.CompareTo(other.Slot);
         if (slotComparison != 0)
-        {
             return slotComparison;
-        }
 
         return Sequence.CompareTo(other.Sequence);
     }
 
-    public static DialectParserOrder Directive(DialectDirectiveParserOrder order)
-    {
-        return new DialectParserOrder(DialectParserStage.Directives, (int)order.Slot, order.Sequence);
-    }
+    public static DialectParserOrder Directive(DialectDirectiveParserOrder order) => new(DialectParserStage.Directives, (int)order.Slot, order.Sequence);
 
     public override string ToString() => $"{Stage}:{Slot}:{Sequence}";
 }
@@ -79,17 +70,13 @@ internal static class DialectParserOrderValidation
     public static void EnsureNoCollisions<T>(IReadOnlyList<T> items, Func<T, DialectParserOrder> orderSelector, Func<T, string> describeItem, string scope)
     {
         if (items == null)
-        {
             Thrower.ArgumentNull(nameof(items));
-        }
 
         var collision = items
             .GroupBy(orderSelector)
             .FirstOrDefault(group => group.Count() > 1);
         if (collision == null)
-        {
             return;
-        }
 
         var members = string.Join(", ", collision.Select(describeItem).OrderBy(x => x, StringComparer.Ordinal));
         Thrower.InvalidOpEx($"Dialect parser order collision in {scope} at '{collision.Key}'. Registered items: {members}.");

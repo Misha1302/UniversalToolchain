@@ -1,49 +1,46 @@
+using System.Reflection.Emit;
 using AbstractIrConverters;
 using BasicCore.Contracts;
+using BasicCore.Core;
 using BasicCore.ExecutorWrapper;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
-using BasicCore.Core;
 using BytecodeDynamicMethodsCompiler.Compilers;
-using IntermediateRepresentationAbstractions;
-using System.Reflection.Emit;
 using DependencyInjection;
+using ExceptionsManager;
+using IntermediateRepresentationAbstractions;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
-using ExceptionsManager;
+using ServiceLifetime = Microsoft.Extensions.DependencyInjection.ServiceLifetime;
 
 namespace UniversalToolchain.Dialects.Wist;
 
 /// <summary>
-/// Builds a real Wist runtime service provider from resolved dialect execution configuration.
+///     Builds a real Wist runtime service provider from resolved dialect execution configuration.
 /// </summary>
 public sealed class WistDialectServiceProviderFactory
 {
     public IServiceProvider Create(WistDialectExecutionConfiguration configuration)
     {
         if (configuration == null)
-        {
             Thrower.ArgumentNull(nameof(configuration));
-        }
 
         var services = new ServiceCollection();
         services.AddWistCoreServices();
 
-        RegisterModules(services, configuration.FrontendModules, typeof(IFrontendCoreModule), Microsoft.Extensions.DependencyInjection.ServiceLifetime.Singleton);
-        RegisterModules(services, configuration.IrModules, typeof(IIRProcessingModule), Microsoft.Extensions.DependencyInjection.ServiceLifetime.Transient);
-        RegisterModules(services, configuration.Optimizers, typeof(IIRProcessingModule), Microsoft.Extensions.DependencyInjection.ServiceLifetime.Transient);
+        RegisterModules(services, configuration.FrontendModules, typeof(IFrontendCoreModule), ServiceLifetime.Singleton);
+        RegisterModules(services, configuration.IrModules, typeof(IIRProcessingModule), ServiceLifetime.Transient);
+        RegisterModules(services, configuration.Optimizers, typeof(IIRProcessingModule), ServiceLifetime.Transient);
         RegisterCores(services, configuration);
 
         return services.BuildServiceProvider();
     }
 
-    private static void RegisterModules(IServiceCollection services, IEnumerable<Type> types, Type serviceType, Microsoft.Extensions.DependencyInjection.ServiceLifetime lifetime)
+    private static void RegisterModules(IServiceCollection services, IEnumerable<Type> types, Type serviceType, ServiceLifetime lifetime)
     {
         foreach (var type in types.OrderBy(x => x.FullName, StringComparer.Ordinal))
-        {
             services.Add(new ServiceDescriptor(serviceType, type, lifetime));
-        }
     }
 
     private static void RegisterCores(IServiceCollection services, WistDialectExecutionConfiguration configuration)

@@ -46,9 +46,7 @@ public class DialectProjectsSmokeTests
     {
         var root = Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "Dialects", "examples", "wist"));
         if (!Directory.Exists(root))
-        {
             Thrower.FileNotFound(root);
-        }
 
         return Directory.EnumerateDirectories(root)
             .OrderBy(Path.GetFileName, StringComparer.Ordinal)

@@ -9,9 +9,7 @@ public static class DialectDslParserNodeRegistry
     public static IReadOnlyList<NodeCreatorRegistration> CreateRegistrations(DialectDslRegistry registry)
     {
         if (registry == null)
-        {
             Thrower.ArgumentNull(nameof(registry));
-        }
 
         var entries = new List<(DialectParserOrder Order, IAstNodeCreator Creator, string Description)>
         {

@@ -1,10 +1,10 @@
-using UniversalToolchain.Dialects.Abstractions;
 using ExceptionsManager;
+using UniversalToolchain.Dialects.Abstractions;
 
 namespace UniversalToolchain.Dialects.Integration;
 
 /// <summary>
-/// Describes one explicitly available intrinsic capability.
+///     Describes one explicitly available intrinsic capability.
 /// </summary>
 public sealed class RuntimeIntrinsicDescriptor
 {

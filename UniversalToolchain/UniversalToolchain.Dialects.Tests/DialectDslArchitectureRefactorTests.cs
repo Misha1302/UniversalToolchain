@@ -1,5 +1,6 @@
 using AbstractIrConverters;
 using BasicCodeTranslator;
+using BasicCore.Contracts;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using BasicCore.Registration;
@@ -22,7 +23,7 @@ public class DialectDslArchitectureRefactorTests
         var registry = provider.GetRequiredService<DialectDslRegistry>();
         var module = provider.GetRequiredService<DialectDslFrontendModule>();
         var compiler = provider.GetRequiredService<DialectDslCompiler>();
-        var frontendModules = provider.GetServices<BasicCore.Contracts.IFrontendCoreModule>().ToList();
+        var frontendModules = provider.GetServices<IFrontendCoreModule>().ToList();
 
         Assert.Multiple(() =>
         {
@@ -348,9 +349,7 @@ public class DialectDslArchitectureRefactorTests
         public DialectDirectiveAstNode ParseDirective(AstNode lineNode)
         {
             if (lineNode.Children.Count != 2 || !DialectLexemeTags.IsTag(lineNode.Children[1].LexemeValue, DialectLexemeTags.Identifier))
-            {
                 DialectDefinitionSliceParseErrors.Fail($"Directive '{Keyword}' expects a single identifier.", lineNode.Children.ElementAtOrDefault(1)?.LexemeValue ?? lineNode.Children[0].LexemeValue);
-            }
 
             return new DialectDirectiveAstNode(this, lineNode.Children[0].LexemeValue, [new IdentifierValueAstNode(lineNode.Children[1].LexemeValue!)]);
         }
@@ -358,18 +357,14 @@ public class DialectDslArchitectureRefactorTests
         public void Accumulate(IReadOnlyList<LexemeValue> line, DialectDirectiveAccumulation accumulation)
         {
             if (line.Count != 2)
-            {
                 DialectDefinitionSliceParseErrors.Fail($"Directive '{Keyword}' expects a single identifier.", line[0]);
-            }
         }
 
         public void ValidateSemantic(DialectDirectiveAstNode directive, DialectDirectiveValidationContext context)
         {
         }
 
-        public IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive)
-        {
-            return [];
-        }
+        public IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive) =>
+            [];
     }
 }

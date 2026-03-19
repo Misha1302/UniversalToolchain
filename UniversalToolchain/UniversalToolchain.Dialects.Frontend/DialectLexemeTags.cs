@@ -21,8 +21,5 @@ public static class DialectLexemeTags
     public const string CommaToken = "CommaToken";
     public const string Identifier = "Identifier";
 
-    public static bool IsTag(LexemeValue? token, string tag)
-    {
-        return token?.LexemePattern?.LexemeType.GetName() == tag;
-    }
+    public static bool IsTag(LexemeValue? token, string tag) => token?.LexemePattern?.LexemeType.GetName() == tag;
 }

@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Integration;
 
@@ -73,9 +74,9 @@ public class ApplyModeGuardContractsTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(description.FrontendModules, Is.InstanceOf<System.Collections.ObjectModel.ReadOnlyCollection<Type>>());
-            Assert.That(description.RuntimeBackends, Is.InstanceOf<System.Collections.ObjectModel.ReadOnlyCollection<string>>());
-            Assert.That(description.Intrinsics, Is.InstanceOf<System.Collections.ObjectModel.ReadOnlyCollection<DialectApplyIntrinsicPermission>>());
+            Assert.That(description.FrontendModules, Is.InstanceOf<ReadOnlyCollection<Type>>());
+            Assert.That(description.RuntimeBackends, Is.InstanceOf<ReadOnlyCollection<string>>());
+            Assert.That(description.Intrinsics, Is.InstanceOf<ReadOnlyCollection<DialectApplyIntrinsicPermission>>());
         });
     }
 

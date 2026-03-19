@@ -1,4 +1,3 @@
-
 namespace BasicTypesExtensions;
 
 public class EnumGenerator

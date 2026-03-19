@@ -7,9 +7,7 @@ public sealed class DialectCapabilityDirective
     public DialectCapabilityDirective(string name, bool value)
     {
         if (string.IsNullOrWhiteSpace(name))
-        {
             Thrower.Argument(nameof(name), "Capability name must not be empty.");
-        }
 
         Name = name;
         Value = value;

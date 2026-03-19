@@ -9,9 +9,10 @@ using BasicLexer.Core;
 using BasicParser.Core;
 using CommonExceptions;
 using IntermediateRepresentationAbstractions;
+using UniversalIntermediateRepresentation;
+using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Frontend;
 
-using UniversalToolchain.Dialects.Abstractions;
 namespace UniversalToolchain.Dialects.Tests;
 
 public class FrameworkNativeVerticalSliceTests
@@ -23,7 +24,7 @@ public class FrameworkNativeVerticalSliceTests
 
         var result = compiler.Compile(
             """
-            
+
             dialect Tiny
 
             use Arithmetic,Variables,Scopes
@@ -168,7 +169,7 @@ public class FrameworkNativeVerticalSliceTests
     public void SliceCompiler_RejectsMissingDialectNameAnnotation()
     {
         var compiler = new DialectDefinitionSliceCompiler();
-        var ir = new UniversalIntermediateRepresentation.AbstractIR();
+        var ir = new AbstractIR();
         ir.AppendInstructions([new Instruction(UOpCode.Annotate, metadata: [new UseModulesAirAnnotation(new[] { "Arithmetic" })])]);
 
         var ex = Assert.Throws<InvalidOperationException>(() => compiler.Compile(ir, new CompilationInput { SourceText = "ignored" }));
@@ -180,13 +181,15 @@ public class FrameworkNativeVerticalSliceTests
     public void SliceCompiler_RejectsDuplicateSingletonAnnotation()
     {
         var compiler = new DialectDefinitionSliceCompiler();
-        var ir = new UniversalIntermediateRepresentation.AbstractIR();
-        ir.AppendInstructions([new Instruction(UOpCode.Annotate, metadata:
-        [
-            new DialectNameAirAnnotation("Tiny"),
-            new SecurityAirAnnotation(DialectSecurityProfile.Trusted),
-            new SecurityAirAnnotation(DialectSecurityProfile.Restricted)
-        ])]);
+        var ir = new AbstractIR();
+        ir.AppendInstructions([
+            new Instruction(UOpCode.Annotate, metadata:
+            [
+                new DialectNameAirAnnotation("Tiny"),
+                new SecurityAirAnnotation(DialectSecurityProfile.Trusted),
+                new SecurityAirAnnotation(DialectSecurityProfile.Restricted)
+            ])
+        ]);
 
         var ex = Assert.Throws<InvalidOperationException>(() => compiler.Compile(ir, new CompilationInput { SourceText = "ignored" }));
 
@@ -197,12 +200,14 @@ public class FrameworkNativeVerticalSliceTests
     public void SliceCompiler_RejectsDuplicateDialectNameAnnotation()
     {
         var compiler = new DialectDefinitionSliceCompiler();
-        var ir = new UniversalIntermediateRepresentation.AbstractIR();
-        ir.AppendInstructions([new Instruction(UOpCode.Annotate, metadata:
-        [
-            new DialectNameAirAnnotation("Tiny"),
-            new DialectNameAirAnnotation("Other")
-        ])]);
+        var ir = new AbstractIR();
+        ir.AppendInstructions([
+            new Instruction(UOpCode.Annotate, metadata:
+            [
+                new DialectNameAirAnnotation("Tiny"),
+                new DialectNameAirAnnotation("Other")
+            ])
+        ]);
 
         var ex = Assert.Throws<InvalidOperationException>(() => compiler.Compile(ir, new CompilationInput { SourceText = "ignored" }));
 

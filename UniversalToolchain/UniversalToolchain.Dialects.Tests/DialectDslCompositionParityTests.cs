@@ -1,3 +1,4 @@
+using BasicCore.Contracts;
 using CommonExceptions;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Frontend;
@@ -56,7 +57,7 @@ public class DialectDslCompositionParityTests
         var registry = provider.GetRequiredService<DialectDslRegistry>();
         var frontendModule = provider.GetRequiredService<DialectDslFrontendModule>();
         var compiler = provider.GetRequiredService<DialectDslCompiler>();
-        var frontendCoreModules = provider.GetServices<BasicCore.Contracts.IFrontendCoreModule>().ToArray();
+        var frontendCoreModules = provider.GetServices<IFrontendCoreModule>().ToArray();
 
         Assert.Multiple(() =>
         {

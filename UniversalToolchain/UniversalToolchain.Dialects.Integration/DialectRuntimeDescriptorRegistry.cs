@@ -1,18 +1,18 @@
 using System.Collections.ObjectModel;
-using UniversalToolchain.Dialects.Abstractions;
 using ExceptionsManager;
+using UniversalToolchain.Dialects.Abstractions;
 
 namespace UniversalToolchain.Dialects.Integration;
 
 /// <summary>
-/// Immutable runtime descriptor registry used for deterministic dialect resolution.
+///     Immutable runtime descriptor registry used for deterministic dialect resolution.
 /// </summary>
 public sealed class DialectRuntimeDescriptorRegistry
 {
-    private readonly ReadOnlyDictionary<string, RuntimeModuleDescriptor> _modules;
-    private readonly ReadOnlyDictionary<string, RuntimeOptimizerDescriptor> _optimizers;
     private readonly ReadOnlyDictionary<DialectBackendTarget, RuntimeBackendDescriptor> _backends;
     private readonly ReadOnlyDictionary<(string Name, DialectBackendTarget Target), RuntimeIntrinsicDescriptor> _intrinsics;
+    private readonly ReadOnlyDictionary<string, RuntimeModuleDescriptor> _modules;
+    private readonly ReadOnlyDictionary<string, RuntimeOptimizerDescriptor> _optimizers;
 
     public DialectRuntimeDescriptorRegistry(
         IDictionary<string, RuntimeModuleDescriptor> modules,

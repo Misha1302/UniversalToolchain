@@ -42,7 +42,7 @@
         <ProjectReference Include="..\ParserConfigurationModule\ParserConfigurationModule.csproj"/>
         <ProjectReference Include="..\ScopesModule\ScopesModule.csproj"/>
         <ProjectReference Include="..\SemicolonAsNewLineModule\SemicolonAsNewLineModule.csproj"/>
-        <ProjectReference Include="..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj" />
+        <ProjectReference Include="..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj"/>
         <ProjectReference Include="..\VariablesModule\VariablesModule.csproj"/>
         <ProjectReference Include="..\WhitespacesModule\WhitespacesModule.csproj"/>
         <ProjectReference Include="..\CommentsModule\CommentsModule.csproj"/>
@@ -54,79 +54,79 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Content Include="..\Dialects\AbstractionCleanup.md">
-        <Link>Dialects\AbstractionCleanup.md</Link>
-      </Content>
-      <Content Include="..\Dialects\ApplyModeSeam.md">
-        <Link>Dialects\ApplyModeSeam.md</Link>
-      </Content>
-      <Content Include="..\Dialects\Architecture.md">
-        <Link>Dialects\Architecture.md</Link>
-      </Content>
-      <Content Include="..\Dialects\examples\framework-native-demo.dialect">
-        <Link>Dialects\examples\framework-native-demo.dialect</Link>
-      </Content>
-      <Content Include="..\Dialects\examples\full.dialect">
-        <Link>Dialects\examples\full.dialect</Link>
-      </Content>
-      <Content Include="..\Dialects\examples\minimal.dialect">
-        <Link>Dialects\examples\minimal.dialect</Link>
-      </Content>
-      <Content Include="..\Dialects\examples\wist\full-default\dialect.wistdialect">
-        <Link>Dialects\examples\wist\full-default\dialect.wistdialect</Link>
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <Content Include="..\Dialects\examples\wist\full-default\program.wist">
-        <Link>Dialects\examples\wist\full-default\program.wist</Link>
-      </Content>
-      <Content Include="..\Dialects\examples\wist\full-default\README.md">
-        <Link>Dialects\examples\wist\full-default\README.md</Link>
-      </Content>
-      <Content Include="..\Dialects\examples\wist\minimal-arithmetic\dialect.wistdialect">
-        <Link>Dialects\examples\wist\minimal-arithmetic\dialect.wistdialect</Link>
-      </Content>
-      <Content Include="..\Dialects\examples\wist\minimal-arithmetic\program.wist">
-        <Link>Dialects\examples\wist\minimal-arithmetic\program.wist</Link>
-      </Content>
-      <Content Include="..\Dialects\examples\wist\minimal-arithmetic\README.md">
-        <Link>Dialects\examples\wist\minimal-arithmetic\README.md</Link>
-      </Content>
-      <Content Include="..\Dialects\examples\wist\restricted-sandbox\dialect.wistdialect">
-        <Link>Dialects\examples\wist\restricted-sandbox\dialect.wistdialect</Link>
-      </Content>
-      <Content Include="..\Dialects\examples\wist\restricted-sandbox\forbidden-program.wist">
-        <Link>Dialects\examples\wist\restricted-sandbox\forbidden-program.wist</Link>
-      </Content>
-      <Content Include="..\Dialects\examples\wist\restricted-sandbox\program.wist">
-        <Link>Dialects\examples\wist\restricted-sandbox\program.wist</Link>
-      </Content>
-      <Content Include="..\Dialects\examples\wist\restricted-sandbox\README.md">
-        <Link>Dialects\examples\wist\restricted-sandbox\README.md</Link>
-      </Content>
-      <Content Include="..\Dialects\FinalBranchReview.md">
-        <Link>Dialects\FinalBranchReview.md</Link>
-      </Content>
-      <Content Include="..\Dialects\FrameworkNativeDialectDslArchitecture.md">
-        <Link>Dialects\FrameworkNativeDialectDslArchitecture.md</Link>
-      </Content>
-      <Content Include="..\Dialects\FrameworkNativeDslProofPoint.md">
-        <Link>Dialects\FrameworkNativeDslProofPoint.md</Link>
-      </Content>
-      <Content Include="..\Dialects\FrameworkPipelineSourceOfTruth.md">
-        <Link>Dialects\FrameworkPipelineSourceOfTruth.md</Link>
-      </Content>
-      <Content Include="..\Dialects\PolicyValidationExtensibility.md">
-        <Link>Dialects\PolicyValidationExtensibility.md</Link>
-      </Content>
-      <Content Include="..\Dialects\RuntimeIntegrationSeams.md">
-        <Link>Dialects\RuntimeIntegrationSeams.md</Link>
-      </Content>
-      <Content Include="..\Dialects\SemanticValidationAndBuildPlan.md">
-        <Link>Dialects\SemanticValidationAndBuildPlan.md</Link>
-      </Content>
-      <Content Include="..\Dialects\V1_Hardening_And_Limits.md">
-        <Link>Dialects\V1_Hardening_And_Limits.md</Link>
-      </Content>
+        <Content Include="..\Dialects\AbstractionCleanup.md">
+            <Link>Dialects\AbstractionCleanup.md</Link>
+        </Content>
+        <Content Include="..\Dialects\ApplyModeSeam.md">
+            <Link>Dialects\ApplyModeSeam.md</Link>
+        </Content>
+        <Content Include="..\Dialects\Architecture.md">
+            <Link>Dialects\Architecture.md</Link>
+        </Content>
+        <Content Include="..\Dialects\examples\framework-native-demo.dialect">
+            <Link>Dialects\examples\framework-native-demo.dialect</Link>
+        </Content>
+        <Content Include="..\Dialects\examples\full.dialect">
+            <Link>Dialects\examples\full.dialect</Link>
+        </Content>
+        <Content Include="..\Dialects\examples\minimal.dialect">
+            <Link>Dialects\examples\minimal.dialect</Link>
+        </Content>
+        <Content Include="..\Dialects\examples\wist\full-default\dialect.wistdialect">
+            <Link>Dialects\examples\wist\full-default\dialect.wistdialect</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\Dialects\examples\wist\full-default\program.wist">
+            <Link>Dialects\examples\wist\full-default\program.wist</Link>
+        </Content>
+        <Content Include="..\Dialects\examples\wist\full-default\README.md">
+            <Link>Dialects\examples\wist\full-default\README.md</Link>
+        </Content>
+        <Content Include="..\Dialects\examples\wist\minimal-arithmetic\dialect.wistdialect">
+            <Link>Dialects\examples\wist\minimal-arithmetic\dialect.wistdialect</Link>
+        </Content>
+        <Content Include="..\Dialects\examples\wist\minimal-arithmetic\program.wist">
+            <Link>Dialects\examples\wist\minimal-arithmetic\program.wist</Link>
+        </Content>
+        <Content Include="..\Dialects\examples\wist\minimal-arithmetic\README.md">
+            <Link>Dialects\examples\wist\minimal-arithmetic\README.md</Link>
+        </Content>
+        <Content Include="..\Dialects\examples\wist\restricted-sandbox\dialect.wistdialect">
+            <Link>Dialects\examples\wist\restricted-sandbox\dialect.wistdialect</Link>
+        </Content>
+        <Content Include="..\Dialects\examples\wist\restricted-sandbox\forbidden-program.wist">
+            <Link>Dialects\examples\wist\restricted-sandbox\forbidden-program.wist</Link>
+        </Content>
+        <Content Include="..\Dialects\examples\wist\restricted-sandbox\program.wist">
+            <Link>Dialects\examples\wist\restricted-sandbox\program.wist</Link>
+        </Content>
+        <Content Include="..\Dialects\examples\wist\restricted-sandbox\README.md">
+            <Link>Dialects\examples\wist\restricted-sandbox\README.md</Link>
+        </Content>
+        <Content Include="..\Dialects\FinalBranchReview.md">
+            <Link>Dialects\FinalBranchReview.md</Link>
+        </Content>
+        <Content Include="..\Dialects\FrameworkNativeDialectDslArchitecture.md">
+            <Link>Dialects\FrameworkNativeDialectDslArchitecture.md</Link>
+        </Content>
+        <Content Include="..\Dialects\FrameworkNativeDslProofPoint.md">
+            <Link>Dialects\FrameworkNativeDslProofPoint.md</Link>
+        </Content>
+        <Content Include="..\Dialects\FrameworkPipelineSourceOfTruth.md">
+            <Link>Dialects\FrameworkPipelineSourceOfTruth.md</Link>
+        </Content>
+        <Content Include="..\Dialects\PolicyValidationExtensibility.md">
+            <Link>Dialects\PolicyValidationExtensibility.md</Link>
+        </Content>
+        <Content Include="..\Dialects\RuntimeIntegrationSeams.md">
+            <Link>Dialects\RuntimeIntegrationSeams.md</Link>
+        </Content>
+        <Content Include="..\Dialects\SemanticValidationAndBuildPlan.md">
+            <Link>Dialects\SemanticValidationAndBuildPlan.md</Link>
+        </Content>
+        <Content Include="..\Dialects\V1_Hardening_And_Limits.md">
+            <Link>Dialects\V1_Hardening_And_Limits.md</Link>
+        </Content>
     </ItemGroup>
 
 </Project>

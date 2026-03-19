@@ -1,4 +1,3 @@
-
 namespace DynamicMethodCalling.Core;
 
 public unsafe class DynamicMethodInvoker<TReturn>(DynamicMethod dynamicMethod) : DynamicMethodInvokerBase<TReturn>(dynamicMethod)

@@ -4,12 +4,12 @@ using ExceptionsManager;
 namespace UniversalToolchain.Dialects.Abstractions;
 
 /// <summary>
-/// Describes include/exclude module directives.
+///     Describes include/exclude module directives.
 /// </summary>
 public sealed class ModulePolicy
 {
-    private readonly ReadOnlyCollection<string> _includedModules;
     private readonly ReadOnlyCollection<string> _excludedModules;
+    private readonly ReadOnlyCollection<string> _includedModules;
 
     public ModulePolicy(IEnumerable<string>? includedModules = null, IEnumerable<string>? excludedModules = null)
     {

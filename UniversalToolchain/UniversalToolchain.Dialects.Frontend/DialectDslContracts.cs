@@ -1,6 +1,5 @@
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
-using UniversalToolchain.Dialects.Abstractions;
 
 namespace UniversalToolchain.Dialects.Frontend;
 

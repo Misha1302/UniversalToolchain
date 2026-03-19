@@ -1,10 +1,10 @@
-using UniversalToolchain.Dialects.Abstractions;
 using ExceptionsManager;
+using UniversalToolchain.Dialects.Abstractions;
 
 namespace UniversalToolchain.Dialects.Integration;
 
 /// <summary>
-/// Default deterministic resolver for runtime composition.
+///     Default deterministic resolver for runtime composition.
 /// </summary>
 public sealed class DialectRuntimeCompositionResolver : IDialectRuntimeCompositionResolver
 {
@@ -124,5 +124,4 @@ public sealed class DialectRuntimeCompositionResolver : IDialectRuntimeCompositi
         descriptor = null!;
         return false;
     }
-
 }

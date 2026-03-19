@@ -1,7 +1,7 @@
 namespace UniversalToolchain.Dialects.Abstractions;
 
 /// <summary>
-/// Backend target scope for dialect policies and build plans.
+///     Backend target scope for dialect policies and build plans.
 /// </summary>
 public enum DialectBackendTarget
 {

@@ -3,6 +3,7 @@
 This example approximates the practical default Wist runtime using the dialect DSL.
 
 Enabled:
+
 - arithmetic, equality, identifiers, variables, scopes, conditions, labels, loops, and semicolon handling
 - both real backends: `cil` for compiled execution and `interpreter`
 - `LocalVariablesOptimization`

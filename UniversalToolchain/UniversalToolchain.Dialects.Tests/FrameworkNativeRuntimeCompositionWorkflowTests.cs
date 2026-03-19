@@ -1,8 +1,7 @@
-using CommonExceptions;
 using BasicCore.Contracts;
+using CommonExceptions;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core;
-using UniversalToolchain.Dialects.Frontend;
 using UniversalToolchain.Dialects.Integration;
 
 namespace UniversalToolchain.Dialects.Tests;
@@ -82,24 +81,20 @@ public class FrameworkNativeRuntimeCompositionWorkflowTests
         Assert.That(ex!.Message, Does.Contain("both use and exclude"));
     }
 
-    private static DialectFrameworkCompositionWorkflow CreateWorkflow()
-    {
-        return new DialectFrameworkCompositionWorkflow(
+    private static DialectFrameworkCompositionWorkflow CreateWorkflow() =>
+        new(
             DialectDslTestComposition.CreateCompiler(),
             new DialectCompiledDialectBuildPlanBuilder(),
             new DialectRuntimeCompositionResolver());
-    }
 
-    private static DialectRuntimeDescriptorRegistry CreateRegistry()
-    {
-        return new DialectRuntimeDescriptorRegistryBuilder()
+    private static DialectRuntimeDescriptorRegistry CreateRegistry() =>
+        new DialectRuntimeDescriptorRegistryBuilder()
             .RegisterModule(new RuntimeModuleDescriptor("A", typeof(FakeFrontendModule)))
             .RegisterModule(new RuntimeModuleDescriptor("B", typeof(FakeFrontendModule)))
             .RegisterBackend(new RuntimeBackendDescriptor(DialectBackendTarget.Interpreter, "InterpreterBackend"))
             .RegisterOptimizer(new RuntimeOptimizerDescriptor("opt_a", typeof(FakeOptimizerModule)))
             .RegisterIntrinsic(new RuntimeIntrinsicDescriptor("intrinsic_a", DialectBackendTarget.Any))
             .Build();
-    }
 
     private sealed class FakeFrontendModule : IFrontendCoreModule
     {

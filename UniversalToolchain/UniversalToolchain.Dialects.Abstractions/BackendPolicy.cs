@@ -4,12 +4,12 @@ using ExceptionsManager;
 namespace UniversalToolchain.Dialects.Abstractions;
 
 /// <summary>
-/// Defines explicit backend enable/disable directives.
+///     Defines explicit backend enable/disable directives.
 /// </summary>
 public sealed class BackendPolicy
 {
-    private readonly ReadOnlyCollection<DialectBackendTarget> _enabledBackends;
     private readonly ReadOnlyCollection<DialectBackendTarget> _disabledBackends;
+    private readonly ReadOnlyCollection<DialectBackendTarget> _enabledBackends;
 
     public BackendPolicy(IEnumerable<DialectBackendTarget>? enabledBackends = null, IEnumerable<DialectBackendTarget>? disabledBackends = null)
     {
@@ -20,9 +20,7 @@ public sealed class BackendPolicy
         foreach (var disabledBackend in disabled)
         {
             if (enabledSet.Contains(disabledBackend))
-            {
                 Thrower.Argument(nameof(disabledBackends), $"Backend '{DialectBackendTargetText.ToText(disabledBackend)}' cannot be both enabled and disabled.");
-            }
         }
 
         _enabledBackends = new ReadOnlyCollection<DialectBackendTarget>(enabled);

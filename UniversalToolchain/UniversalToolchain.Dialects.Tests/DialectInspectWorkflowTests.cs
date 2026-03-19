@@ -1,10 +1,10 @@
-using ATarget = UniversalToolchain.Dialects.Abstractions.DialectBackendTarget;
 using BasicCore.Contracts;
+using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Parsing;
-using ExceptionsManager;
+using ATarget = UniversalToolchain.Dialects.Abstractions.DialectBackendTarget;
 
 namespace UniversalToolchain.Dialects.Tests;
 
@@ -102,7 +102,7 @@ public class DialectInspectWorkflowTests
             "dialect",
             "1",
             ["Z", "A"],
-            [DialectBackendTarget.Interpreter],
+            [ATarget.Interpreter],
             [],
             [],
             [],
@@ -129,17 +129,14 @@ public class DialectInspectWorkflowTests
         Assert.That(first, Is.EqualTo(second));
     }
 
-    private static DialectInspectWorkflow CreateWorkflow()
-    {
-        return new DialectInspectWorkflow(
+    private static DialectInspectWorkflow CreateWorkflow() =>
+        new(
             new DialectDefinitionParser(),
             new DialectBuildPlanBuilder(),
             new DialectRuntimeCompositionResolver());
-    }
 
-    private static DialectRuntimeDescriptorRegistry CreateRegistry()
-    {
-        return new DialectRuntimeDescriptorRegistryBuilder()
+    private static DialectRuntimeDescriptorRegistry CreateRegistry() =>
+        new DialectRuntimeDescriptorRegistryBuilder()
             .RegisterModule(new RuntimeModuleDescriptor("Arithmetic", typeof(FakeFrontendModule)))
             .RegisterModule(new RuntimeModuleDescriptor("Variables", typeof(FakeFrontendModule)))
             .RegisterModule(new RuntimeModuleDescriptor("Scopes", typeof(FakeFrontendModule)))
@@ -151,7 +148,6 @@ public class DialectInspectWorkflowTests
             .RegisterOptimizer(new RuntimeOptimizerDescriptor("LocalVariablesOptimization", typeof(FakeOptimizerModule)))
             .RegisterIntrinsic(new RuntimeIntrinsicDescriptor("add_i32", ATarget.Any))
             .Build();
-    }
 
     private static string ResolveExampleFile(string fileName)
     {

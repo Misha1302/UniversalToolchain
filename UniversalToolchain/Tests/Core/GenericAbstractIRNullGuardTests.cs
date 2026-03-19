@@ -8,7 +8,7 @@ public class GenericAbstractIrNullGuardTests
     {
         var air = new GenericAbstractIR<int>();
 
-        Assert.Throws<ArgumentNullException>(() => air.Intrinsic(null!, []));
+        Assert.Throws<ArgumentNullException>(() => air.Intrinsic(null!));
     }
 
     [Test]

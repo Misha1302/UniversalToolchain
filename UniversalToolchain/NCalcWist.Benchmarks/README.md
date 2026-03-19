@@ -44,7 +44,6 @@ Filter example:
 dotnet run -c Release --project UniversalToolchain/NCalcWist.Benchmarks/NCalcWist.Benchmarks.csproj -- --filter "*ParseOnly*"
 ```
 
-
 `--modulesPath` is optional. If omitted, benchmarks use assemblies already loaded by the runtime.
 You can also set `WIST_MODULES_PATH` instead of passing `--modulesPath`.
 

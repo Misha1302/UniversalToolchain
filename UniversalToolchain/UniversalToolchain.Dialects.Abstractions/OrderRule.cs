@@ -3,7 +3,7 @@ using ExceptionsManager;
 namespace UniversalToolchain.Dialects.Abstractions;
 
 /// <summary>
-/// Defines one module dependency or ordering relation.
+///     Defines one module dependency or ordering relation.
 /// </summary>
 public sealed class OrderRule
 {

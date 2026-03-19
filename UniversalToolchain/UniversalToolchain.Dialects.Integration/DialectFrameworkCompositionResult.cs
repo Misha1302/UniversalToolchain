@@ -1,17 +1,18 @@
 using System.Collections.ObjectModel;
+using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Frontend;
-using ExceptionsManager;
 
 namespace UniversalToolchain.Dialects.Integration;
 
 /// <summary>
-/// Represents end-to-end composition result from framework-native DSL source through semantic build-plan to runtime composition.
+///     Represents end-to-end composition result from framework-native DSL source through semantic build-plan to runtime
+///     composition.
 /// </summary>
 public sealed class DialectFrameworkCompositionResult
 {
-    private readonly ReadOnlyCollection<DialectDiagnostic> _semanticDiagnostics;
     private readonly ReadOnlyCollection<DialectDiagnostic> _resolutionDiagnostics;
+    private readonly ReadOnlyCollection<DialectDiagnostic> _semanticDiagnostics;
 
     public DialectFrameworkCompositionResult(
         string sourceName,
@@ -22,9 +23,7 @@ public sealed class DialectFrameworkCompositionResult
         IEnumerable<DialectDiagnostic> resolutionDiagnostics)
     {
         if (string.IsNullOrWhiteSpace(sourceName))
-        {
             Thrower.Argument(nameof(sourceName), "Source name must not be empty.");
-        }
 
         SourceName = sourceName;
         CompiledDialect = compiledDialect;
@@ -56,17 +55,13 @@ public sealed class DialectFrameworkCompositionResult
     private static List<DialectDiagnostic> Snapshot(IEnumerable<DialectDiagnostic> diagnostics, string paramName)
     {
         if (diagnostics == null)
-        {
             Thrower.ArgumentNull(paramName);
-        }
 
         var result = new List<DialectDiagnostic>();
         foreach (var diagnostic in diagnostics)
         {
             if (diagnostic == null)
-            {
                 Thrower.Argument(paramName, "Diagnostics collection must not contain null values.");
-            }
 
             result.Add(diagnostic);
         }

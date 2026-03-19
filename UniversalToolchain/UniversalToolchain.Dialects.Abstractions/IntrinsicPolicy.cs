@@ -4,7 +4,7 @@ using ExceptionsManager;
 namespace UniversalToolchain.Dialects.Abstractions;
 
 /// <summary>
-/// Defines intrinsic allow/forbid directives.
+///     Defines intrinsic allow/forbid directives.
 /// </summary>
 public sealed class IntrinsicPolicy
 {

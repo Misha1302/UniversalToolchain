@@ -1,4 +1,3 @@
-
 namespace ExceptionsManager;
 
 public static class Thrower

@@ -8,12 +8,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj" />
-        <ProjectReference Include="..\UniversalToolchain.Dialects.Abstractions\UniversalToolchain.Dialects.Abstractions.csproj" />
+        <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Dialects.Abstractions\UniversalToolchain.Dialects.Abstractions.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <Compile Remove="DialectBackendTarget.cs" />
+        <Compile Remove="DialectBackendTarget.cs"/>
     </ItemGroup>
 
 </Project>

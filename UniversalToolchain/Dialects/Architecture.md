@@ -16,18 +16,18 @@ High-level outputs:
 ## Layering (intended dependency direction)
 
 - **UniversalToolchain.Dialects.Parsing**
-  - Lexes/parses dialect text.
-  - Produces syntax-level objects only.
+    - Lexes/parses dialect text.
+    - Produces syntax-level objects only.
 - **UniversalToolchain.Dialects.Core**
-  - Performs semantic normalization/validation.
-  - Produces deterministic build plan + diagnostics.
+    - Performs semantic normalization/validation.
+    - Produces deterministic build plan + diagnostics.
 - **UniversalToolchain.Dialects.Integration**
-  - Resolves build plans against explicit runtime descriptors.
-  - Produces runtime composition and optional apply description.
+    - Resolves build plans against explicit runtime descriptors.
+    - Produces runtime composition and optional apply description.
 - **UniversalToolchain.Dialects.Abstractions**
-  - Shared immutable contracts and models used by all layers.
+    - Shared immutable contracts and models used by all layers.
 - **UniversalToolchain.Dialects.Tests**
-  - Covers parser/core/integration behavior and deterministic contracts.
+    - Covers parser/core/integration behavior and deterministic contracts.
 
 ## Architectural guardrails
 
@@ -37,4 +37,6 @@ High-level outputs:
 
 ## Why this lives in UniversalToolchain
 
-Dialect DSL directly configures UniversalToolchain composition policies (modules/backends/optimizers/intrinsics). Keeping it in the same solution preserves contract parity and lets contributors evolve it together with the host pipeline.
+Dialect DSL directly configures UniversalToolchain composition policies (modules/backends/optimizers/intrinsics).
+Keeping it in the same solution preserves contract parity and lets contributors evolve it together with the host
+pipeline.

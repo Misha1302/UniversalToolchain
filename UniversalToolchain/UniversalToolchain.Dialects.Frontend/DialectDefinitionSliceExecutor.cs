@@ -1,5 +1,5 @@
-using BasicCore.ExecutorWrapper;
 using BasicCore.Execution;
+using BasicCore.ExecutorWrapper;
 using ExceptionsManager;
 
 namespace UniversalToolchain.Dialects.Frontend;
@@ -9,9 +9,7 @@ public sealed class DialectDefinitionSliceExecutor : IExecutor<DialectDefinition
     public object? Execute(DialectDefinitionSlice compilation, IExecutionEnvironment environment)
     {
         if (compilation == null)
-        {
             Thrower.ArgumentNull(nameof(compilation));
-        }
 
         return compilation;
     }

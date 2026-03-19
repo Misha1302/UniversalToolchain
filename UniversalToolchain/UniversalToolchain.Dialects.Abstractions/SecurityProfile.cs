@@ -1,7 +1,7 @@
 namespace UniversalToolchain.Dialects.Abstractions;
 
 /// <summary>
-/// Security profile selected for dialect execution.
+///     Security profile selected for dialect execution.
 /// </summary>
 public enum SecurityProfile
 {

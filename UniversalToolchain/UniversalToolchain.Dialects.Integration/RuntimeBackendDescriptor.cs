@@ -1,10 +1,10 @@
-using UniversalToolchain.Dialects.Abstractions;
 using ExceptionsManager;
+using UniversalToolchain.Dialects.Abstractions;
 
 namespace UniversalToolchain.Dialects.Integration;
 
 /// <summary>
-/// Describes one explicitly registered runtime backend.
+///     Describes one explicitly registered runtime backend.
 /// </summary>
 public sealed class RuntimeBackendDescriptor
 {

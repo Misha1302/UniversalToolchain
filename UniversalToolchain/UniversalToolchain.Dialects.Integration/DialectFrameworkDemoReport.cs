@@ -1,20 +1,18 @@
 using System.Text;
-using UniversalToolchain.Dialects.Abstractions;
 using ExceptionsManager;
+using UniversalToolchain.Dialects.Abstractions;
 
 namespace UniversalToolchain.Dialects.Integration;
 
 /// <summary>
-/// Represents deterministic demo output for a framework-native dialect pipeline run.
+///     Represents deterministic demo output for a framework-native dialect pipeline run.
 /// </summary>
 public sealed class DialectFrameworkDemoReport
 {
     public DialectFrameworkDemoReport(string sourceName, DialectFrameworkCompositionResult? compositionResult, string? compilationError)
     {
         if (string.IsNullOrWhiteSpace(sourceName))
-        {
             Thrower.Argument(nameof(sourceName), "Source name must not be empty.");
-        }
 
         SourceName = sourceName;
         CompositionResult = compositionResult;
@@ -86,9 +84,7 @@ public sealed class DialectFrameworkDemoReport
 
         sb.AppendLine($"{title}:");
         foreach (var diagnostic in diagnostics.OrderBy(x => x.Code, StringComparer.Ordinal).ThenBy(x => x.Message, StringComparer.Ordinal))
-        {
             sb.AppendLine($"  - {diagnostic.Code} [{diagnostic.Severity}] {diagnostic.Message}");
-        }
     }
 
     private static string JoinPreserveOrder(IEnumerable<string> values)

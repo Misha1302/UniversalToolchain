@@ -3,7 +3,7 @@ using ExceptionsManager;
 namespace UniversalToolchain.Dialects.Integration;
 
 /// <summary>
-/// Provides minimal demo sources that exercise the framework-native dialect pipeline.
+///     Provides minimal demo sources that exercise the framework-native dialect pipeline.
 /// </summary>
 public static class DialectFrameworkDemoSources
 {

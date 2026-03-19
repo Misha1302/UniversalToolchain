@@ -1,17 +1,17 @@
+using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core;
 using UniversalToolchain.Dialects.Parsing;
-using ExceptionsManager;
 
 namespace UniversalToolchain.Dialects.Integration;
 
 /// <summary>
-/// Provides a minimal end-to-end inspect workflow for dialect DSL sources.
+///     Provides a minimal end-to-end inspect workflow for dialect DSL sources.
 /// </summary>
 public sealed class DialectInspectWorkflow
 {
-    private readonly IDialectDefinitionParser _parser;
     private readonly IDialectBuildPlanBuilder _buildPlanBuilder;
+    private readonly IDialectDefinitionParser _parser;
     private readonly IDialectRuntimeCompositionResolver _resolver;
 
     public DialectInspectWorkflow(

@@ -87,9 +87,7 @@ public class WistDialectExecutionIntegrationTests
     {
         var path = Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "Dialects", "examples", "wist", name));
         if (!Directory.Exists(path))
-        {
             Thrower.FileNotFound(path);
-        }
 
         return path;
     }

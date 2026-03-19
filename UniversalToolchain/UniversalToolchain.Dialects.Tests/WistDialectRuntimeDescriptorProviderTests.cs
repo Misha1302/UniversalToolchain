@@ -43,8 +43,5 @@ public class WistDialectRuntimeDescriptorProviderTests
         });
     }
 
-    private static DialectRuntimeDescriptorRegistry BuildRegistry()
-    {
-        return DialectRuntimeDescriptorRegistryFactory.BuildFromProviders([new WistDialectRuntimeDescriptorProvider()]);
-    }
+    private static DialectRuntimeDescriptorRegistry BuildRegistry() => DialectRuntimeDescriptorRegistryFactory.BuildFromProviders([new WistDialectRuntimeDescriptorProvider()]);
 }

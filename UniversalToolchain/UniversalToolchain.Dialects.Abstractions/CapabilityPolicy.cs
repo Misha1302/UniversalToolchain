@@ -4,7 +4,7 @@ using ExceptionsManager;
 namespace UniversalToolchain.Dialects.Abstractions;
 
 /// <summary>
-/// Defines named boolean capabilities for a dialect.
+///     Defines named boolean capabilities for a dialect.
 /// </summary>
 public sealed class CapabilityPolicy
 {
@@ -14,7 +14,6 @@ public sealed class CapabilityPolicy
     {
         var dictionary = new Dictionary<string, bool>(StringComparer.Ordinal);
         if (capabilities != null)
-        {
             foreach (var capability in capabilities)
             {
                 if (string.IsNullOrWhiteSpace(capability.Key))
@@ -22,7 +21,6 @@ public sealed class CapabilityPolicy
 
                 dictionary[capability.Key] = capability.Value;
             }
-        }
 
         _capabilities = new ReadOnlyDictionary<string, bool>(dictionary);
     }

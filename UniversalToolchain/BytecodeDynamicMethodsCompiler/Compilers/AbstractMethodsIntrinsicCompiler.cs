@@ -1,4 +1,3 @@
-
 namespace BytecodeDynamicMethodsCompiler.Compilers;
 
 internal sealed class AbstractMethodsIntrinsicCompiler

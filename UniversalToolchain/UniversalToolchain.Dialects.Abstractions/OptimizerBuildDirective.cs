@@ -3,7 +3,7 @@ using ExceptionsManager;
 namespace UniversalToolchain.Dialects.Abstractions;
 
 /// <summary>
-/// Represents a normalized optimizer directive in a build plan.
+///     Represents a normalized optimizer directive in a build plan.
 /// </summary>
 public sealed class OptimizerBuildDirective
 {

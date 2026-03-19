@@ -4,12 +4,12 @@ using ExceptionsManager;
 namespace UniversalToolchain.Dialects.Abstractions;
 
 /// <summary>
-/// Defines optimizer enable/disable directives.
+///     Defines optimizer enable/disable directives.
 /// </summary>
 public sealed class OptimizerPolicy
 {
-    private readonly ReadOnlyCollection<string> _enabledOptimizers;
     private readonly ReadOnlyCollection<string> _disabledOptimizers;
+    private readonly ReadOnlyCollection<string> _enabledOptimizers;
 
     public OptimizerPolicy(IEnumerable<string>? enabledOptimizers = null, IEnumerable<string>? disabledOptimizers = null)
     {

@@ -1,4 +1,3 @@
-
 namespace NativeMathModule;
 
 // Базовый класс для бинарных операций (как в ArithmeticModule)

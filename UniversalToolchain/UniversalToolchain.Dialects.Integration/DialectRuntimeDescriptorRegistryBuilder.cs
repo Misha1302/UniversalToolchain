@@ -1,17 +1,17 @@
-using UniversalToolchain.Dialects.Abstractions;
 using ExceptionsManager;
+using UniversalToolchain.Dialects.Abstractions;
 
 namespace UniversalToolchain.Dialects.Integration;
 
 /// <summary>
-/// Explicit builder for runtime descriptor registration used by dialect resolution.
+///     Explicit builder for runtime descriptor registration used by dialect resolution.
 /// </summary>
 public sealed class DialectRuntimeDescriptorRegistryBuilder
 {
-    private readonly Dictionary<string, RuntimeModuleDescriptor> _modules = new(StringComparer.Ordinal);
-    private readonly Dictionary<string, RuntimeOptimizerDescriptor> _optimizers = new(StringComparer.Ordinal);
     private readonly Dictionary<DialectBackendTarget, RuntimeBackendDescriptor> _backends = [];
     private readonly Dictionary<(string Name, DialectBackendTarget Target), RuntimeIntrinsicDescriptor> _intrinsics = [];
+    private readonly Dictionary<string, RuntimeModuleDescriptor> _modules = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, RuntimeOptimizerDescriptor> _optimizers = new(StringComparer.Ordinal);
 
     public DialectRuntimeDescriptorRegistryBuilder RegisterModule(RuntimeModuleDescriptor descriptor)
     {
@@ -62,8 +62,5 @@ public sealed class DialectRuntimeDescriptorRegistryBuilder
         return this;
     }
 
-    public DialectRuntimeDescriptorRegistry Build()
-    {
-        return new DialectRuntimeDescriptorRegistry(_modules, _optimizers, _backends, _intrinsics);
-    }
+    public DialectRuntimeDescriptorRegistry Build() => new(_modules, _optimizers, _backends, _intrinsics);
 }

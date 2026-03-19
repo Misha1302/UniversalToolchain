@@ -1,4 +1,3 @@
-
 namespace BytecodeDynamicMethodsCompiler.Compilers;
 
 public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>

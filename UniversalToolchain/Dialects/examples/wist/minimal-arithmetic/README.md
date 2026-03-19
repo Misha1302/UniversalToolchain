@@ -3,6 +3,7 @@
 This example shows the smallest practical Wist dialect in this repository.
 
 Enabled:
+
 - `Whitespaces`
 - `Scopes`
 - `Numbers`
@@ -10,6 +11,7 @@ Enabled:
 - the `interpreter` backend
 
 Disabled by omission:
+
 - variables
 - labels
 - loops

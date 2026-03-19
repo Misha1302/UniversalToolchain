@@ -8,14 +8,10 @@ internal static class DialectDefinitionBuildPlanProjector
     public static DialectBuildPlan Project(DialectDefinition definition, List<DialectDiagnostic> diagnostics, string cycleCode, string cycleMessagePrefix, string? missingReferenceCode = null, string? missingReferenceMessagePrefix = null)
     {
         if (definition == null)
-        {
             Thrower.ArgumentNull(nameof(definition));
-        }
 
         if (diagnostics == null)
-        {
             Thrower.ArgumentNull(nameof(diagnostics));
-        }
 
         var securityProfile = definition.SecurityPolicy?.Profile;
         var capabilities = definition.CapabilityPolicy.Capabilities
@@ -45,13 +41,13 @@ internal static class DialectDefinitionBuildPlanProjector
             orderedModules,
             ExpandBackendPolicy(definition.BackendPolicy.EnabledBackends),
             ExpandBackendPolicy(definition.BackendPolicy.DisabledBackends),
-            ExpandIntrinsicPolicy(definition.IntrinsicPolicy.AllowedIntrinsics, allowed: true)
-                .Concat(ExpandIntrinsicPolicy(definition.IntrinsicPolicy.ForbiddenIntrinsics, allowed: false))
+            ExpandIntrinsicPolicy(definition.IntrinsicPolicy.AllowedIntrinsics, true)
+                .Concat(ExpandIntrinsicPolicy(definition.IntrinsicPolicy.ForbiddenIntrinsics, false))
                 .OrderBy(x => x.Name, StringComparer.Ordinal)
                 .ThenBy(x => x.Target)
                 .ToList(),
-            ExpandOptimizerPolicy(definition.OptimizerPolicy.EnabledOptimizers, enabled: true)
-                .Concat(ExpandOptimizerPolicy(definition.OptimizerPolicy.DisabledOptimizers, enabled: false))
+            ExpandOptimizerPolicy(definition.OptimizerPolicy.EnabledOptimizers, true)
+                .Concat(ExpandOptimizerPolicy(definition.OptimizerPolicy.DisabledOptimizers, false))
                 .OrderBy(x => x.Name, StringComparer.Ordinal)
                 .ThenBy(x => x.Target)
                 .ToList(),
@@ -91,14 +87,10 @@ internal static class DialectDefinitionBuildPlanProjector
     {
         var parts = value.Split('@', 2, StringSplitOptions.TrimEntries);
         if (parts.Length == 1)
-        {
             return (value, DialectBackendTarget.Any);
-        }
 
-        if (!DialectBackendTargetText.TryParse(parts[1], allowAny: false, out var target))
-        {
+        if (!DialectBackendTargetText.TryParse(parts[1], false, out var target))
             Thrower.Argument(nameof(value), $"Scoped backend target '{parts[1]}' is not supported.");
-        }
 
         return (parts[0], target);
     }

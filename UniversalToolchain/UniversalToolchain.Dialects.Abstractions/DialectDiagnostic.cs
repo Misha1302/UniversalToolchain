@@ -3,7 +3,7 @@ using ExceptionsManager;
 namespace UniversalToolchain.Dialects.Abstractions;
 
 /// <summary>
-/// Represents one validation or planning diagnostic for the dialect subsystem.
+///     Represents one validation or planning diagnostic for the dialect subsystem.
 /// </summary>
 public sealed record DialectDiagnostic
 {

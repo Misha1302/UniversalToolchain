@@ -1,5 +1,5 @@
-using UniversalToolchain.Dialects.Abstractions;
 using ExceptionsManager;
+using UniversalToolchain.Dialects.Abstractions;
 
 namespace UniversalToolchain.Dialects.Parsing;
 
@@ -86,9 +86,7 @@ internal static class DialectLexer
                     }
 
                     if (ch == '\n')
-                    {
                         break;
-                    }
 
                     value += ch;
                     index++;

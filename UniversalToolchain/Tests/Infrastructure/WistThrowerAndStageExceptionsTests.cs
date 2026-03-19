@@ -67,7 +67,6 @@ public class WistThrowerAndStageExceptionsTests
     }
 
 
-
     [Test]
     public void LexerException_Constructor_ShouldSetLexerStage()
     {

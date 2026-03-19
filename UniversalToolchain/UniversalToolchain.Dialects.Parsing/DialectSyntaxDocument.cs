@@ -1,21 +1,21 @@
 using System.Collections.ObjectModel;
-using UniversalToolchain.Dialects.Abstractions;
 using ExceptionsManager;
+using UniversalToolchain.Dialects.Abstractions;
 
 namespace UniversalToolchain.Dialects.Parsing;
 
 /// <summary>
-/// Represents parsed DSL directives as immutable syntax data.
+///     Represents parsed DSL directives as immutable syntax data.
 /// </summary>
 public sealed class DialectSyntaxDocument
 {
-    private readonly ReadOnlyCollection<string> _useModules;
-    private readonly ReadOnlyCollection<string> _excludeModules;
-    private readonly ReadOnlyCollection<OrderRule> _orderRules;
     private readonly ReadOnlyCollection<BackendDirectiveSyntax> _backendDirectives;
+    private readonly ReadOnlyDictionary<string, bool> _capabilities;
+    private readonly ReadOnlyCollection<string> _excludeModules;
     private readonly ReadOnlyCollection<IntrinsicDirectiveSyntax> _intrinsicDirectives;
     private readonly ReadOnlyCollection<OptimizerDirectiveSyntax> _optimizerDirectives;
-    private readonly ReadOnlyDictionary<string, bool> _capabilities;
+    private readonly ReadOnlyCollection<OrderRule> _orderRules;
+    private readonly ReadOnlyCollection<string> _useModules;
 
     public DialectSyntaxDocument(
         string name,

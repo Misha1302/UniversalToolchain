@@ -2,7 +2,8 @@
 
 ## Runtime resolution seam
 
-`IDialectRuntimeCompositionResolver` resolves a validated `DialectBuildPlan` against an explicit `DialectRuntimeDescriptorRegistry`.
+`IDialectRuntimeCompositionResolver` resolves a validated `DialectBuildPlan` against an explicit
+`DialectRuntimeDescriptorRegistry`.
 
 Result: `DialectRuntimeComposition`.
 

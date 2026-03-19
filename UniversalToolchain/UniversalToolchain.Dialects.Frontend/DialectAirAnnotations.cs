@@ -15,9 +15,7 @@ public sealed class DialectNameAirAnnotation(string name) : IDialectDefinitionSl
     public void Apply(DialectDefinitionAggregation aggregation)
     {
         if (aggregation == null)
-        {
             Thrower.ArgumentNull(nameof(aggregation));
-        }
 
         aggregation.SetDialectName(Name);
     }
@@ -25,9 +23,7 @@ public sealed class DialectNameAirAnnotation(string name) : IDialectDefinitionSl
     private static string RequireValue(string value, string paramName, string message)
     {
         if (string.IsNullOrWhiteSpace(value))
-        {
             Thrower.Argument(paramName, message);
-        }
 
         return value;
     }
@@ -55,17 +51,15 @@ public sealed class ExcludeModulesAirAnnotation(IReadOnlyList<string> modules) :
 
 public sealed class OrderAirAnnotation : IDialectDefinitionSliceAnnotation
 {
-    private readonly IReadOnlyList<string> _modules;
-
     public OrderAirAnnotation(DialectOrderDirectiveKind kind, IReadOnlyList<string> modules)
     {
         Kind = kind;
-        _modules = DialectAnnotationValueGuard.RequireList(modules, nameof(modules), "Order annotation must not contain empty values.");
+        Modules = DialectAnnotationValueGuard.RequireList(modules, nameof(modules), "Order annotation must not contain empty values.");
     }
 
     public DialectOrderDirectiveKind Kind { get; }
 
-    public IReadOnlyList<string> Modules => _modules;
+    public IReadOnlyList<string> Modules { get; }
 
     public void Apply(DialectDefinitionAggregation aggregation)
     {
@@ -76,9 +70,7 @@ public sealed class OrderAirAnnotation : IDialectDefinitionSliceAnnotation
     {
         var result = new List<DialectOrderDirective>();
         for (var i = 0; i + 1 < modules.Count; i++)
-        {
             result.Add(new DialectOrderDirective(kind, modules[i], modules[i + 1]));
-        }
 
         return result;
     }
@@ -86,18 +78,16 @@ public sealed class OrderAirAnnotation : IDialectDefinitionSliceAnnotation
 
 public sealed class BackendAirAnnotation : IDialectDefinitionSliceAnnotation
 {
-    private readonly IReadOnlyList<string> _backends;
-
     public BackendAirAnnotation(IReadOnlyList<string> backends)
     {
-        _backends = DialectAnnotationValueGuard.RequireList(backends, nameof(backends), "Backend annotation must not contain empty values.");
+        Backends = DialectAnnotationValueGuard.RequireList(backends, nameof(backends), "Backend annotation must not contain empty values.");
     }
 
-    public IReadOnlyList<string> Backends => _backends;
+    public IReadOnlyList<string> Backends { get; }
 
     public void Apply(DialectDefinitionAggregation aggregation)
     {
-        aggregation.AddBackends(_backends.Select(x => new DialectBackendDirective(DialectAnnotationValueGuard.ParseBackend(x), true)).ToList());
+        aggregation.AddBackends(Backends.Select(x => new DialectBackendDirective(DialectAnnotationValueGuard.ParseBackend(x), true)).ToList());
     }
 }
 
@@ -168,9 +158,7 @@ internal static class DialectAnnotationValueGuard
     public static string RequireValue(string value, string paramName, string message)
     {
         if (string.IsNullOrWhiteSpace(value))
-        {
             Thrower.Argument(paramName, message);
-        }
 
         return value;
     }
@@ -178,25 +166,19 @@ internal static class DialectAnnotationValueGuard
     public static IReadOnlyList<string> RequireList(IReadOnlyList<string> values, string paramName, string message)
     {
         if (values == null)
-        {
             Thrower.ArgumentNull(paramName);
-        }
 
         var result = new List<string>(values.Count);
         foreach (var value in values)
-        {
             result.Add(RequireValue(value, paramName, message));
-        }
 
         return result;
     }
 
     public static DialectBackendTarget ParseBackend(string value)
     {
-        if (!DialectBackendTargetText.TryParse(value, allowAny: false, out var target))
-        {
+        if (!DialectBackendTargetText.TryParse(value, false, out var target))
             Thrower.Argument(nameof(value), $"Backend '{value}' is not supported. Expected one of: interpreter, cil.");
-        }
 
         return target;
     }
@@ -204,14 +186,10 @@ internal static class DialectAnnotationValueGuard
     public static DialectSecurityProfile ParseSecurityProfile(string value)
     {
         if (string.Equals(value, "trusted", StringComparison.Ordinal))
-        {
             return DialectSecurityProfile.Trusted;
-        }
 
         if (string.Equals(value, "restricted", StringComparison.Ordinal))
-        {
             return DialectSecurityProfile.Restricted;
-        }
 
         Thrower.Argument(nameof(value), $"Security profile '{value}' is not supported. Expected 'trusted' or 'restricted'.");
         return DialectSecurityProfile.Trusted;

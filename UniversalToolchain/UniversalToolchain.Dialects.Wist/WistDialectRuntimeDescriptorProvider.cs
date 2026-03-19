@@ -1,13 +1,11 @@
-using UniversalToolchain.Dialects.Abstractions;
-using UniversalToolchain.Dialects.Integration;
 using ArithmeticModule.Module;
 using CommentsModule;
 using ConditionsModule.Enums;
 using ConditionsModule.Module;
-using ExceptionsManager;
 using ConditionsModule.Optimizers;
 using CSharpInteropModule.Module;
 using EqualityModule;
+using ExceptionsManager;
 using IdentifierModule;
 using InternalPreprocessorLexemesModule;
 using LabelsModule.Module;
@@ -18,13 +16,15 @@ using NumbersModule.Module;
 using ParametersSetterModule;
 using ScopesModule.Module;
 using SemicolonAsNewLineModule;
+using UniversalToolchain.Dialects.Abstractions;
+using UniversalToolchain.Dialects.Integration;
 using VariablesModule;
 using WhitespacesModule;
 
 namespace UniversalToolchain.Dialects.Wist;
 
 /// <summary>
-/// Registers the real Wist runtime descriptor catalog used by dialect resolution.
+///     Registers the real Wist runtime descriptor catalog used by dialect resolution.
 /// </summary>
 public sealed class WistDialectRuntimeDescriptorProvider : IDialectRuntimeDescriptorProvider
 {
@@ -33,9 +33,7 @@ public sealed class WistDialectRuntimeDescriptorProvider : IDialectRuntimeDescri
     public void Register(DialectRuntimeDescriptorRegistryBuilder builder)
     {
         if (builder == null)
-        {
             Thrower.ArgumentNull(nameof(builder));
-        }
 
         RegisterModules(builder);
         RegisterBackends(builder);
@@ -88,8 +86,6 @@ public sealed class WistDialectRuntimeDescriptorProvider : IDialectRuntimeDescri
     private static void RegisterIntrinsics(DialectRuntimeDescriptorRegistryBuilder builder)
     {
         foreach (var intrinsic in WistDialectRuntimeIntrinsics.All)
-        {
             builder.RegisterIntrinsic(intrinsic);
-        }
     }
 }

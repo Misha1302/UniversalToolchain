@@ -22,9 +22,7 @@ public sealed class DialectDslCompiler
     public DialectDslCompiler(DialectDslFrontendModule frontendModule)
     {
         if (frontendModule == null)
-        {
             Thrower.ArgumentNull(nameof(frontendModule));
-        }
 
         var compiler = new DialectDefinitionSliceCompiler();
 
@@ -40,13 +38,7 @@ public sealed class DialectDslCompiler
             []);
     }
 
-    public DialectDefinitionSlice Compile(string sourceText)
-    {
-        return _core.GetExecutable(sourceText);
-    }
+    public DialectDefinitionSlice Compile(string sourceText) => _core.GetExecutable(sourceText);
 
-    private static DialectDslFrontendModule CreateDefaultFrontendModule()
-    {
-        return DialectDslStandaloneComposition.CreateFrontendModule();
-    }
+    private static DialectDslFrontendModule CreateDefaultFrontendModule() => DialectDslStandaloneComposition.CreateFrontendModule();
 }

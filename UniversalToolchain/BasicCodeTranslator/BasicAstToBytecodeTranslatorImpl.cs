@@ -1,4 +1,3 @@
-
 namespace BasicCodeTranslator;
 
 public class BasicAstToBytecodeTranslatorImpl(BytecodeTranslatorConfiguration configuration) : IAstToBytecodeTranslator

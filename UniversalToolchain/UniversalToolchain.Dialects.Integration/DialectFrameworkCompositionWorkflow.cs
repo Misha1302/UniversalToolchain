@@ -1,17 +1,18 @@
+using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core;
 using UniversalToolchain.Dialects.Frontend;
-using ExceptionsManager;
 
 namespace UniversalToolchain.Dialects.Integration;
 
 /// <summary>
-/// End-to-end framework-native workflow: compile DSL source through UniversalToolchain, build validated plan, resolve runtime composition.
+///     End-to-end framework-native workflow: compile DSL source through UniversalToolchain, build validated plan, resolve
+///     runtime composition.
 /// </summary>
 public sealed class DialectFrameworkCompositionWorkflow
 {
-    private readonly DialectDslCompiler _compiler;
     private readonly IDialectCompiledDialectBuildPlanBuilder _buildPlanBuilder;
+    private readonly DialectDslCompiler _compiler;
     private readonly IDialectRuntimeCompositionResolver _resolver;
 
     public DialectFrameworkCompositionWorkflow(
@@ -20,19 +21,13 @@ public sealed class DialectFrameworkCompositionWorkflow
         IDialectRuntimeCompositionResolver resolver)
     {
         if (compiler == null)
-        {
             Thrower.ArgumentNull(nameof(compiler));
-        }
 
         if (buildPlanBuilder == null)
-        {
             Thrower.ArgumentNull(nameof(buildPlanBuilder));
-        }
 
         if (resolver == null)
-        {
             Thrower.ArgumentNull(nameof(resolver));
-        }
 
         _compiler = compiler;
         _buildPlanBuilder = buildPlanBuilder;
@@ -45,19 +40,13 @@ public sealed class DialectFrameworkCompositionWorkflow
         string sourceName = "inline")
     {
         if (sourceText == null)
-        {
             Thrower.ArgumentNull(nameof(sourceText));
-        }
 
         if (registry == null)
-        {
             Thrower.ArgumentNull(nameof(registry));
-        }
 
         if (string.IsNullOrWhiteSpace(sourceName))
-        {
             Thrower.Argument(nameof(sourceName), "Source name must not be empty.");
-        }
 
         var compiled = _compiler.Compile(sourceText);
         var buildPlan = _buildPlanBuilder.Build(compiled);
@@ -67,9 +56,7 @@ public sealed class DialectFrameworkCompositionWorkflow
             .ToList();
 
         if (!buildPlan.CanBuild)
-        {
             return new DialectFrameworkCompositionResult(sourceName, compiled, buildPlan, null, semanticErrors, []);
-        }
 
         var composition = _resolver.Resolve(buildPlan, registry);
         var resolutionErrors = composition.Diagnostics.Diagnostics

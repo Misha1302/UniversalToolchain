@@ -12,7 +12,9 @@ This note describes the current framework-native path used by the Dialect Defini
 
 ## Why this is framework-native
 
-The DSL is implemented through the existing UniversalToolchain extension points, not as a side parser disconnected from the toolchain architecture. Contributors can reason about dialect compilation using the same staging model used by the rest of the system.
+The DSL is implemented through the existing UniversalToolchain extension points, not as a side parser disconnected from
+the toolchain architecture. Contributors can reason about dialect compilation using the same staging model used by the
+rest of the system.
 
 ## Deliberate boundaries
 

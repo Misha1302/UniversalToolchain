@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using UniversalToolchain.Dialects.Abstractions;
 
 namespace UniversalToolchain.Dialects.Tests;
@@ -9,8 +10,8 @@ public class ReadOnlyExposureTests
     {
         var policy = new ModulePolicy(["A"], ["B"]);
 
-        Assert.That(policy.IncludedModules, Is.InstanceOf<System.Collections.ObjectModel.ReadOnlyCollection<string>>());
-        Assert.That(policy.ExcludedModules, Is.InstanceOf<System.Collections.ObjectModel.ReadOnlyCollection<string>>());
+        Assert.That(policy.IncludedModules, Is.InstanceOf<ReadOnlyCollection<string>>());
+        Assert.That(policy.ExcludedModules, Is.InstanceOf<ReadOnlyCollection<string>>());
     }
 
     [Test]
@@ -20,7 +21,7 @@ public class ReadOnlyExposureTests
             new KeyValuePair<string, bool>("capability-x", true)
         ]);
 
-        Assert.That(policy.Capabilities, Is.InstanceOf<System.Collections.ObjectModel.ReadOnlyDictionary<string, bool>>());
+        Assert.That(policy.Capabilities, Is.InstanceOf<ReadOnlyDictionary<string, bool>>());
     }
 
     [Test]
@@ -30,6 +31,6 @@ public class ReadOnlyExposureTests
             new DialectDiagnostic("D001", "warning", DialectDiagnosticSeverity.Warning)
         ]);
 
-        Assert.That(result.Diagnostics, Is.InstanceOf<System.Collections.ObjectModel.ReadOnlyCollection<DialectDiagnostic>>());
+        Assert.That(result.Diagnostics, Is.InstanceOf<ReadOnlyCollection<DialectDiagnostic>>());
     }
 }

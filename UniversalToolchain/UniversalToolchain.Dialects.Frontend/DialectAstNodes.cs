@@ -38,17 +38,13 @@ public sealed class DialectDocumentAstNode : DialectAstNode
     private static List<AstNode> CreateChildren(DialectDeclarationAstNode declaration, IReadOnlyList<DialectDirectiveAstNode> directives)
     {
         if (declaration == null)
-        {
             Thrower.ArgumentNull(nameof(declaration));
-        }
 
         if (directives == null)
-        {
             Thrower.ArgumentNull(nameof(directives));
-        }
 
         var children = new List<AstNode> { declaration };
-        children.AddRange(directives.Cast<AstNode>());
+        children.AddRange(directives);
         return children;
     }
 }
@@ -70,9 +66,7 @@ public sealed class DialectDirectiveAstNode : DialectAstNode
         CreateChildren(payloadNodes))
     {
         if (feature == null)
-        {
             Thrower.ArgumentNull(nameof(feature));
-        }
 
         Feature = feature;
     }
@@ -84,19 +78,13 @@ public sealed class DialectDirectiveAstNode : DialectAstNode
     private static List<AstNode> CreateChildren(IReadOnlyList<AstNode> payloadNodes)
     {
         if (payloadNodes == null)
-        {
             Thrower.ArgumentNull(nameof(payloadNodes));
-        }
 
         if (payloadNodes.Count != 1)
-        {
             Thrower.Argument(nameof(payloadNodes), "Dialect directives must contain exactly one payload node.");
-        }
 
         if (payloadNodes[0] == null)
-        {
             Thrower.Argument(nameof(payloadNodes), "Dialect directive payload must not be null.");
-        }
 
         return payloadNodes.ToList();
     }
@@ -107,9 +95,7 @@ public sealed class IdentifierValueAstNode : DialectAstNode
     public IdentifierValueAstNode(LexemeValue lexemeValue) : base(DialectAstNodeTypes.IdentifierValue, lexemeValue, [])
     {
         if (lexemeValue == null)
-        {
             Thrower.ArgumentNull(nameof(lexemeValue));
-        }
     }
 
     public string Identifier => Text;
@@ -126,9 +112,7 @@ public sealed class IdentifierListAstNode : DialectAstNode
     private static List<AstNode> CreateChildren(IReadOnlyList<IdentifierValueAstNode> identifiers)
     {
         if (identifiers == null)
-        {
             Thrower.ArgumentNull(nameof(identifiers));
-        }
 
         return identifiers.Cast<AstNode>().ToList();
     }

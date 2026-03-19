@@ -28,7 +28,7 @@ public class DialectDefinitionTests
             new(OrderRuleKind.Requires, "B", "A")
         };
 
-        var definition = CreateDefinition("dialect", orderRules: source);
+        var definition = CreateDefinition("dialect", source);
         source.Add(new OrderRule(OrderRuleKind.After, "C", "D"));
 
         Assert.That(definition.OrderRules.Count, Is.EqualTo(1));
@@ -78,9 +78,8 @@ public class DialectDefinitionTests
     private static DialectDefinition CreateDefinition(
         string name,
         IEnumerable<OrderRule>? orderRules = null,
-        string? baseDialectName = null)
-    {
-        return new DialectDefinition(
+        string? baseDialectName = null) =>
+        new(
             name,
             new ModulePolicy(["Arithmetic"], ["Interop"]),
             new BackendPolicy([DialectBackendTarget.Cil], [DialectBackendTarget.Interpreter]),
@@ -93,5 +92,4 @@ public class DialectDefinitionTests
             orderRules,
             "1.0",
             baseDialectName);
-    }
 }

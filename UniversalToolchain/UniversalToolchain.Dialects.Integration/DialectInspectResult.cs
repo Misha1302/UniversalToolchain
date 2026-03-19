@@ -1,18 +1,18 @@
 using System.Collections.ObjectModel;
 using System.Text;
-using UniversalToolchain.Dialects.Abstractions;
 using ExceptionsManager;
+using UniversalToolchain.Dialects.Abstractions;
 
 namespace UniversalToolchain.Dialects.Integration;
 
 /// <summary>
-/// Represents inspect/dry-run workflow output for one dialect source.
+///     Represents inspect/dry-run workflow output for one dialect source.
 /// </summary>
 public sealed class DialectInspectResult
 {
     private readonly ReadOnlyCollection<DialectDiagnostic> _parseDiagnostics;
-    private readonly ReadOnlyCollection<DialectDiagnostic> _semanticDiagnostics;
     private readonly ReadOnlyCollection<DialectDiagnostic> _resolutionDiagnostics;
+    private readonly ReadOnlyCollection<DialectDiagnostic> _semanticDiagnostics;
 
     public DialectInspectResult(
         string source,
@@ -63,7 +63,7 @@ public sealed class DialectInspectResult
         {
             sb.AppendLine("Build plan:");
             sb.AppendLine($"  Dialect: {BuildPlan.Name}");
-            sb.AppendLine($"  Version: {(BuildPlan.Version ?? "<none>")}");
+            sb.AppendLine($"  Version: {BuildPlan.Version ?? "<none>"}");
             sb.AppendLine($"  Ordered modules: {JoinPreserveOrder(BuildPlan.OrderedModules)}");
             sb.AppendLine($"  Enabled backends: {JoinSorted(BuildPlan.EnabledBackends.Select(DialectBackendTargetText.ToText))}");
             sb.AppendLine($"  Enabled optimizers: {JoinSorted(BuildPlan.OptimizerDirectives.Where(x => x.Enabled).Select(x => $"{x.Name}@{DialectBackendTargetText.ToText(x.Target)}"))}");
@@ -106,6 +106,7 @@ public sealed class DialectInspectResult
         var list = values.OrderBy(x => x, StringComparer.Ordinal).ToList();
         return list.Count == 0 ? "<none>" : string.Join(", ", list);
     }
+
     private static List<DialectDiagnostic> Snapshot(IEnumerable<DialectDiagnostic> source, string paramName)
     {
         if (source == null)
@@ -122,5 +123,4 @@ public sealed class DialectInspectResult
 
         return list;
     }
-
 }

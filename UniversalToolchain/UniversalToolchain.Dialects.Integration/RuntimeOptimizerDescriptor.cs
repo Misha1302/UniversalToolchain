@@ -4,7 +4,7 @@ using ExceptionsManager;
 namespace UniversalToolchain.Dialects.Integration;
 
 /// <summary>
-/// Describes one explicitly registered optimizer entity resolvable by dialect optimizer name.
+///     Describes one explicitly registered optimizer entity resolvable by dialect optimizer name.
 /// </summary>
 public sealed class RuntimeOptimizerDescriptor
 {

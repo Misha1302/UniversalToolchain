@@ -4,7 +4,7 @@ using ExceptionsManager;
 namespace UniversalToolchain.Dialects.Integration;
 
 /// <summary>
-/// Describes one explicitly registered runtime module that can be resolved by dialect module name.
+///     Describes one explicitly registered runtime module that can be resolved by dialect module name.
 /// </summary>
 public sealed class RuntimeModuleDescriptor
 {

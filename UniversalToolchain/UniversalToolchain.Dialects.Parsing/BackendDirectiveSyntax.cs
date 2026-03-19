@@ -1,10 +1,10 @@
-using UniversalToolchain.Dialects.Abstractions;
 using ExceptionsManager;
+using UniversalToolchain.Dialects.Abstractions;
 
 namespace UniversalToolchain.Dialects.Parsing;
 
 /// <summary>
-/// Represents one backend enable or disable directive.
+///     Represents one backend enable or disable directive.
 /// </summary>
 public sealed class BackendDirectiveSyntax
 {

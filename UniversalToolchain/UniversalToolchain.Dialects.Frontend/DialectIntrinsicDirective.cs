@@ -8,9 +8,7 @@ public sealed class DialectIntrinsicDirective
     public DialectIntrinsicDirective(string name, bool allowed, DialectBackendTarget target)
     {
         if (string.IsNullOrWhiteSpace(name))
-        {
             Thrower.Argument(nameof(name), "Intrinsic name must not be empty.");
-        }
 
         Name = name;
         Allowed = allowed;

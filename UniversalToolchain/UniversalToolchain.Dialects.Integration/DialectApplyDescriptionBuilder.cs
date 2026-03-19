@@ -3,7 +3,7 @@ using ExceptionsManager;
 namespace UniversalToolchain.Dialects.Integration;
 
 /// <summary>
-/// Converts resolved runtime composition to explicit apply-mode description without mutating runtime services.
+///     Converts resolved runtime composition to explicit apply-mode description without mutating runtime services.
 /// </summary>
 public sealed class DialectApplyDescriptionBuilder
 {

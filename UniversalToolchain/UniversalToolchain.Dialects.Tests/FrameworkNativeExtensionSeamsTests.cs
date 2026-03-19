@@ -1,9 +1,9 @@
 using System.Reflection;
+using BasicCore.Contracts;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
-using BasicTypesExtensions;
+using BasicCore.TranslatorWrapper;
 using IntermediateRepresentationAbstractions;
-using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core;
 using UniversalToolchain.Dialects.Frontend;
@@ -228,16 +228,12 @@ public class FrameworkNativeExtensionSeamsTests
         public DialectDirectiveAstNode ParseDirective(AstNode lineNode)
         {
             if (lineNode.Children.Count != 3)
-            {
                 DialectDefinitionSliceParseErrors.Fail($"Directive '{keyword}' expects exactly two identifiers.", lineNode.Children[0].LexemeValue);
-            }
 
             var source = lineNode.Children[1];
             var target = lineNode.Children[2];
             if (!DialectLexemeTags.IsTag(source.LexemeValue, DialectLexemeTags.Identifier) || !DialectLexemeTags.IsTag(target.LexemeValue, DialectLexemeTags.Identifier))
-            {
                 DialectDefinitionSliceParseErrors.Fail($"Directive '{keyword}' expects identifier arguments.", source.LexemeValue ?? target.LexemeValue);
-            }
 
             return new DialectDirectiveAstNode(this, lineNode.Children[0].LexemeValue,
             [
@@ -248,9 +244,7 @@ public class FrameworkNativeExtensionSeamsTests
         public void Accumulate(IReadOnlyList<LexemeValue> line, DialectDirectiveAccumulation accumulation)
         {
             if (line.Count != 3)
-            {
                 DialectDefinitionSliceParseErrors.Fail($"Directive '{keyword}' expects exactly two identifiers.", line[0]);
-            }
 
             accumulation.GetOrCreateList(AccumulationKey).Add($"{line[1].Text}->{line[2].Text}");
         }
@@ -259,9 +253,7 @@ public class FrameworkNativeExtensionSeamsTests
         {
             var payload = GetPayload(directive);
             if (string.Equals(payload.Source.Identifier, payload.Target.Identifier, StringComparison.Ordinal))
-            {
                 DialectDefinitionSliceParseErrors.Fail("Alias source and target must differ.", directive.LexemeValue);
-            }
 
             context.AddValue(ValidationKey, $"{payload.Source.Identifier}->{payload.Target.Identifier}", "Duplicate alias directive is not allowed.", directive.LexemeValue);
         }
@@ -272,16 +264,14 @@ public class FrameworkNativeExtensionSeamsTests
             return [new CapabilityAirAnnotation([$"{capabilityPrefix}{payload.Source.Identifier}->{payload.Target.Identifier}"])];
         }
 
-        private static AliasDirectivePayloadAstNode GetPayload(DialectDirectiveAstNode directive)
-        {
-            return directive.Payload as AliasDirectivePayloadAstNode
-                ?? throw new ArgumentException("Alias directive payload is invalid.", nameof(directive));
-        }
+        private static AliasDirectivePayloadAstNode GetPayload(DialectDirectiveAstNode directive) =>
+            directive.Payload as AliasDirectivePayloadAstNode
+            ?? throw new ArgumentException("Alias directive payload is invalid.", nameof(directive));
     }
 
     private sealed class AliasDirectivePayloadAstNode : DialectAstNode
     {
-        private static readonly AstNodeType PayloadNodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("AliasDirectivePayload");
+        private static readonly AstNodeType PayloadNodeType = AstNodeType.CreateOrGet("AliasDirectivePayload");
 
         public AliasDirectivePayloadAstNode(IdentifierValueAstNode source, IdentifierValueAstNode target) : base(PayloadNodeType, null, [source, target])
         {
@@ -292,31 +282,25 @@ public class FrameworkNativeExtensionSeamsTests
         public IdentifierValueAstNode Target => (IdentifierValueAstNode)Children[1];
     }
 
-    private sealed class FakeFrontendModule : BasicCore.Contracts.IFrontendCoreModule
+    private sealed class FakeFrontendModule : IFrontendCoreModule
     {
-        public void InitLexer(BasicCore.LexerWrapper.ILexer lexer)
+        public void InitLexer(ILexer lexer)
         {
         }
 
-        public void InitParser(BasicCore.ParserWrapper.IParser parser)
+        public void InitParser(IParser parser)
         {
         }
 
-        public BasicCore.ParserWrapper.AstNode ProcessAst(BasicCore.ParserWrapper.AstNode astRoot)
-        {
-            return astRoot;
-        }
+        public AstNode ProcessAst(AstNode astRoot) => astRoot;
 
-        public void InitAstTranslator(BasicCore.TranslatorWrapper.IAstToBytecodeTranslator translator)
+        public void InitAstTranslator(IAstToBytecodeTranslator translator)
         {
         }
     }
 
-    private sealed class FakeOptimizerModule : BasicCore.Contracts.IIRProcessingModule
+    private sealed class FakeOptimizerModule : IIRProcessingModule
     {
-        public IAbstractIR Process(IAbstractIR air)
-        {
-            return air;
-        }
+        public IAbstractIR Process(IAbstractIR air) => air;
     }
 }

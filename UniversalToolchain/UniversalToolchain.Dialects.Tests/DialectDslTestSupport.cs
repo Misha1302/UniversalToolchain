@@ -7,7 +7,6 @@ using BasicCore.TranslatorWrapper;
 using BasicLexer.Core;
 using BasicParser.Core;
 using CommonExceptions;
-using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core;
 using UniversalToolchain.Dialects.Frontend;
@@ -89,9 +88,7 @@ internal static class DialectDslTestSupport
         Assert.Multiple(() =>
         {
             foreach (var fragment in fragments)
-            {
                 Assert.That(exception!.Message, Does.Contain(fragment), $"Expected parser exception to contain '{fragment}'.");
-            }
         });
     }
 
@@ -164,16 +161,12 @@ internal class AliasDirectiveFeature(string keyword, string id, string capabilit
     public DialectDirectiveAstNode ParseDirective(AstNode lineNode)
     {
         if (lineNode.Children.Count != 3)
-        {
             DialectDefinitionSliceParseErrors.Fail($"Directive '{keyword}' expects exactly two identifiers.", lineNode.Children[0].LexemeValue);
-        }
 
         var source = lineNode.Children[1];
         var target = lineNode.Children[2];
         if (!DialectLexemeTags.IsTag(source.LexemeValue, DialectLexemeTags.Identifier) || !DialectLexemeTags.IsTag(target.LexemeValue, DialectLexemeTags.Identifier))
-        {
             DialectDefinitionSliceParseErrors.Fail($"Directive '{keyword}' expects identifier arguments.", source.LexemeValue ?? target.LexemeValue);
-        }
 
         return new DialectDirectiveAstNode(this, lineNode.Children[0].LexemeValue,
         [
@@ -184,9 +177,7 @@ internal class AliasDirectiveFeature(string keyword, string id, string capabilit
     public void Accumulate(IReadOnlyList<LexemeValue> line, DialectDirectiveAccumulation accumulation)
     {
         if (line.Count != 3)
-        {
             DialectDefinitionSliceParseErrors.Fail($"Directive '{keyword}' expects exactly two identifiers.", line[0]);
-        }
 
         accumulation.GetOrCreateList(AccumulationKey).Add($"{line[1].Text}->{line[2].Text}");
     }
@@ -195,9 +186,7 @@ internal class AliasDirectiveFeature(string keyword, string id, string capabilit
     {
         var payload = GetPayload(directive);
         if (string.Equals(payload.Source.Identifier, payload.Target.Identifier, StringComparison.Ordinal))
-        {
             DialectDefinitionSliceParseErrors.Fail("Alias source and target must differ.", directive.LexemeValue);
-        }
 
         context.AddValue(ValidationKey, $"{payload.Source.Identifier}->{payload.Target.Identifier}", "Duplicate alias directive is not allowed.", directive.LexemeValue);
     }
@@ -208,11 +197,9 @@ internal class AliasDirectiveFeature(string keyword, string id, string capabilit
         return [new CapabilityAirAnnotation([$"{capabilityPrefix}{payload.Source.Identifier}->{payload.Target.Identifier}"])];
     }
 
-    private static AliasDirectivePayloadAstNode GetPayload(DialectDirectiveAstNode directive)
-    {
-        return directive.Payload as AliasDirectivePayloadAstNode
-            ?? throw new ArgumentException("Alias directive payload is invalid.", nameof(directive));
-    }
+    private static AliasDirectivePayloadAstNode GetPayload(DialectDirectiveAstNode directive) =>
+        directive.Payload as AliasDirectivePayloadAstNode
+        ?? throw new ArgumentException("Alias directive payload is invalid.", nameof(directive));
 }
 
 internal sealed class DuplicateAliasDirectiveFeature : AliasDirectiveFeature
@@ -265,9 +252,7 @@ internal abstract class SimpleIdentifierDirectiveFeatureBase : IDialectDirective
     public DialectDirectiveAstNode ParseDirective(AstNode lineNode)
     {
         if (lineNode.Children.Count != 2 || !DialectLexemeTags.IsTag(lineNode.Children[1].LexemeValue, DialectLexemeTags.Identifier))
-        {
             DialectDefinitionSliceParseErrors.Fail($"Directive '{Keyword}' expects a single identifier.", lineNode.Children.ElementAtOrDefault(1)?.LexemeValue ?? lineNode.Children[0].LexemeValue);
-        }
 
         return new DialectDirectiveAstNode(this, lineNode.Children[0].LexemeValue, [new IdentifierValueAstNode(lineNode.Children[1].LexemeValue!)]);
     }
@@ -275,9 +260,7 @@ internal abstract class SimpleIdentifierDirectiveFeatureBase : IDialectDirective
     public void Accumulate(IReadOnlyList<LexemeValue> line, DialectDirectiveAccumulation accumulation)
     {
         if (line.Count != 2)
-        {
             DialectDefinitionSliceParseErrors.Fail($"Directive '{Keyword}' expects a single identifier.", line[0]);
-        }
 
         accumulation.GetOrCreateList(new DialectListStateKey<string>($"accumulation.{Keyword}")).Add(line[1].Text);
     }
@@ -285,18 +268,16 @@ internal abstract class SimpleIdentifierDirectiveFeatureBase : IDialectDirective
     public virtual void ValidateSemantic(DialectDirectiveAstNode directive, DialectDirectiveValidationContext context)
     {
         var payload = directive.Payload as IdentifierValueAstNode
-            ?? throw new ArgumentException("Directive payload is invalid.", nameof(directive));
+                      ?? throw new ArgumentException("Directive payload is invalid.", nameof(directive));
 
         if (string.IsNullOrWhiteSpace(payload.Identifier))
-        {
             DialectDefinitionSliceParseErrors.Fail($"Directive '{Keyword}' identifier must not be empty.", directive.LexemeValue);
-        }
     }
 
     public virtual IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive)
     {
         var payload = directive.Payload as IdentifierValueAstNode
-            ?? throw new ArgumentException("Directive payload is invalid.", nameof(directive));
+                      ?? throw new ArgumentException("Directive payload is invalid.", nameof(directive));
         return [new CapabilityAirAnnotation([$"{Keyword}:{payload.Identifier}"])];
     }
 }

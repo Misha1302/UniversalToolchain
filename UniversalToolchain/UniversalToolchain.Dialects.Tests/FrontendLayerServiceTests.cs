@@ -8,6 +8,7 @@ using BasicLexer.Core;
 using BasicParser.Core;
 using CommonExceptions;
 using IntermediateRepresentationAbstractions;
+using UniversalIntermediateRepresentation;
 using UniversalToolchain.Dialects.Frontend;
 
 namespace UniversalToolchain.Dialects.Tests;
@@ -105,7 +106,7 @@ public class FrontendLayerServiceTests
     [Test]
     public void AirReader_IgnoresUnrelatedAnnotationTypes()
     {
-        var ir = new UniversalIntermediateRepresentation.AbstractIR();
+        var ir = new AbstractIR();
         ir.AppendInstructions([
             new Instruction(UOpCode.Annotate, metadata: [new object(), new DialectNameAirAnnotation("Tiny"), new UseModulesAirAnnotation(new[] { "Arithmetic" })])
         ]);

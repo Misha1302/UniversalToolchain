@@ -1,5 +1,3 @@
-using UniversalToolchain.Dialects.Abstractions;
-
 namespace UniversalToolchain.Dialects.Frontend;
 
 internal sealed class UseModulesDialectDirectiveFeature : IdentifierListDialectDirectiveFeatureBase
@@ -12,7 +10,7 @@ internal sealed class UseModulesDialectDirectiveFeature : IdentifierListDialectD
 
     public override DialectDirectiveParserOrder ParserOrder => new(DialectDirectiveSlot.ModuleSelection, 0);
 
-    protected override void AccumulateIdentifiers(DialectDirectiveAccumulation accumulation, IReadOnlyList<string> values)
+    override protected void AccumulateIdentifiers(DialectDirectiveAccumulation accumulation, IReadOnlyList<string> values)
     {
         accumulation.UseModules.AddRange(values);
     }
@@ -22,10 +20,8 @@ internal sealed class UseModulesDialectDirectiveFeature : IdentifierListDialectD
         context.AddValues(DialectDirectiveValidationKeys.UseModules, GetIdentifierListArgument(directive), "Duplicate use module is not allowed.", directive.LexemeValue);
     }
 
-    public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive)
-    {
-        return [new UseModulesAirAnnotation(GetIdentifierListArgument(directive))];
-    }
+    public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive) =>
+        [new UseModulesAirAnnotation(GetIdentifierListArgument(directive))];
 }
 
 internal sealed class ExcludeModulesDialectDirectiveFeature : IdentifierListDialectDirectiveFeatureBase
@@ -38,7 +34,7 @@ internal sealed class ExcludeModulesDialectDirectiveFeature : IdentifierListDial
 
     public override DialectDirectiveParserOrder ParserOrder => new(DialectDirectiveSlot.ModuleSelection, 1);
 
-    protected override void AccumulateIdentifiers(DialectDirectiveAccumulation accumulation, IReadOnlyList<string> values)
+    override protected void AccumulateIdentifiers(DialectDirectiveAccumulation accumulation, IReadOnlyList<string> values)
     {
         accumulation.ExcludeModules.AddRange(values);
     }
@@ -48,10 +44,8 @@ internal sealed class ExcludeModulesDialectDirectiveFeature : IdentifierListDial
         context.AddValues(DialectDirectiveValidationKeys.ExcludeModules, GetIdentifierListArgument(directive), "Duplicate exclude module is not allowed.", directive.LexemeValue);
     }
 
-    public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive)
-    {
-        return [new ExcludeModulesAirAnnotation(GetIdentifierListArgument(directive))];
-    }
+    public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive) =>
+        [new ExcludeModulesAirAnnotation(GetIdentifierListArgument(directive))];
 }
 
 internal abstract class OrderDialectDirectiveFeatureBase : IdentifierListDialectDirectiveFeatureBase
@@ -64,7 +58,7 @@ internal abstract class OrderDialectDirectiveFeatureBase : IdentifierListDialect
 
     protected abstract List<string> GetAccumulationTarget(DialectDirectiveAccumulation accumulation);
 
-    protected override void AccumulateIdentifiers(DialectDirectiveAccumulation accumulation, IReadOnlyList<string> values)
+    override protected void AccumulateIdentifiers(DialectDirectiveAccumulation accumulation, IReadOnlyList<string> values)
     {
         GetAccumulationTarget(accumulation).AddRange(values);
     }
@@ -74,10 +68,8 @@ internal abstract class OrderDialectDirectiveFeatureBase : IdentifierListDialect
         context.AddValues(ValidationKey, GetIdentifierListArgument(directive), DuplicateMessage, directive.LexemeValue);
     }
 
-    public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive)
-    {
-        return [new OrderAirAnnotation(OrderKind, GetIdentifierListArgument(directive))];
-    }
+    public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive) =>
+        [new OrderAirAnnotation(OrderKind, GetIdentifierListArgument(directive))];
 }
 
 internal sealed class RequiresModulesDialectDirectiveFeature : OrderDialectDirectiveFeatureBase
@@ -90,13 +82,13 @@ internal sealed class RequiresModulesDialectDirectiveFeature : OrderDialectDirec
 
     public override DialectDirectiveParserOrder ParserOrder => new(DialectDirectiveSlot.ModuleOrdering, 0);
 
-    protected override DialectOrderDirectiveKind OrderKind => DialectOrderDirectiveKind.Requires;
+    override protected DialectOrderDirectiveKind OrderKind => DialectOrderDirectiveKind.Requires;
 
-    protected override DialectSetStateKey<string> ValidationKey => ValidationStateKey;
+    override protected DialectSetStateKey<string> ValidationKey => ValidationStateKey;
 
-    protected override string DuplicateMessage => "Duplicate requires module is not allowed.";
+    override protected string DuplicateMessage => "Duplicate requires module is not allowed.";
 
-    protected override List<string> GetAccumulationTarget(DialectDirectiveAccumulation accumulation) => accumulation.RequiresModules;
+    override protected List<string> GetAccumulationTarget(DialectDirectiveAccumulation accumulation) => accumulation.RequiresModules;
 }
 
 internal sealed class BeforeModulesDialectDirectiveFeature : OrderDialectDirectiveFeatureBase
@@ -109,13 +101,13 @@ internal sealed class BeforeModulesDialectDirectiveFeature : OrderDialectDirecti
 
     public override DialectDirectiveParserOrder ParserOrder => new(DialectDirectiveSlot.ModuleOrdering, 1);
 
-    protected override DialectOrderDirectiveKind OrderKind => DialectOrderDirectiveKind.Before;
+    override protected DialectOrderDirectiveKind OrderKind => DialectOrderDirectiveKind.Before;
 
-    protected override DialectSetStateKey<string> ValidationKey => ValidationStateKey;
+    override protected DialectSetStateKey<string> ValidationKey => ValidationStateKey;
 
-    protected override string DuplicateMessage => "Duplicate before module is not allowed.";
+    override protected string DuplicateMessage => "Duplicate before module is not allowed.";
 
-    protected override List<string> GetAccumulationTarget(DialectDirectiveAccumulation accumulation) => accumulation.BeforeModules;
+    override protected List<string> GetAccumulationTarget(DialectDirectiveAccumulation accumulation) => accumulation.BeforeModules;
 }
 
 internal sealed class AfterModulesDialectDirectiveFeature : OrderDialectDirectiveFeatureBase
@@ -128,13 +120,13 @@ internal sealed class AfterModulesDialectDirectiveFeature : OrderDialectDirectiv
 
     public override DialectDirectiveParserOrder ParserOrder => new(DialectDirectiveSlot.ModuleOrdering, 2);
 
-    protected override DialectOrderDirectiveKind OrderKind => DialectOrderDirectiveKind.After;
+    override protected DialectOrderDirectiveKind OrderKind => DialectOrderDirectiveKind.After;
 
-    protected override DialectSetStateKey<string> ValidationKey => ValidationStateKey;
+    override protected DialectSetStateKey<string> ValidationKey => ValidationStateKey;
 
-    protected override string DuplicateMessage => "Duplicate after module is not allowed.";
+    override protected string DuplicateMessage => "Duplicate after module is not allowed.";
 
-    protected override List<string> GetAccumulationTarget(DialectDirectiveAccumulation accumulation) => accumulation.AfterModules;
+    override protected List<string> GetAccumulationTarget(DialectDirectiveAccumulation accumulation) => accumulation.AfterModules;
 }
 
 internal sealed class BackendDialectDirectiveFeature : IdentifierListDialectDirectiveFeatureBase
@@ -147,7 +139,7 @@ internal sealed class BackendDialectDirectiveFeature : IdentifierListDialectDire
 
     public override DialectDirectiveParserOrder ParserOrder => new(DialectDirectiveSlot.BackendSelection, 0);
 
-    protected override void AccumulateIdentifiers(DialectDirectiveAccumulation accumulation, IReadOnlyList<string> values)
+    override protected void AccumulateIdentifiers(DialectDirectiveAccumulation accumulation, IReadOnlyList<string> values)
     {
         accumulation.Backends.AddRange(values);
     }
@@ -157,10 +149,8 @@ internal sealed class BackendDialectDirectiveFeature : IdentifierListDialectDire
         context.AddValues(ValidationKey, GetIdentifierListArgument(directive), "Duplicate backend identifier is not allowed.", directive.LexemeValue);
     }
 
-    public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive)
-    {
-        return [new BackendAirAnnotation(GetIdentifierListArgument(directive))];
-    }
+    public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive) =>
+        [new BackendAirAnnotation(GetIdentifierListArgument(directive))];
 }
 
 internal sealed class CapabilityDialectDirectiveFeature : IdentifierListDialectDirectiveFeatureBase
@@ -173,7 +163,7 @@ internal sealed class CapabilityDialectDirectiveFeature : IdentifierListDialectD
 
     public override DialectDirectiveParserOrder ParserOrder => new(DialectDirectiveSlot.Capabilities, 0);
 
-    protected override void AccumulateIdentifiers(DialectDirectiveAccumulation accumulation, IReadOnlyList<string> values)
+    override protected void AccumulateIdentifiers(DialectDirectiveAccumulation accumulation, IReadOnlyList<string> values)
     {
         accumulation.Capabilities.AddRange(values);
     }
@@ -183,10 +173,8 @@ internal sealed class CapabilityDialectDirectiveFeature : IdentifierListDialectD
         context.AddValues(ValidationKey, GetIdentifierListArgument(directive), "Duplicate capability identifier is not allowed.", directive.LexemeValue);
     }
 
-    public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive)
-    {
-        return [new CapabilityAirAnnotation(GetIdentifierListArgument(directive))];
-    }
+    public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive) =>
+        [new CapabilityAirAnnotation(GetIdentifierListArgument(directive))];
 }
 
 internal sealed class UseExcludeConflictDocumentValidationRule : IDialectDocumentValidationRule
@@ -196,8 +184,6 @@ internal sealed class UseExcludeConflictDocumentValidationRule : IDialectDocumen
     public void Validate(DialectDocumentAstNode document, DialectDirectiveValidationContext context)
     {
         foreach (var conflict in context.GetValues(DialectDirectiveValidationKeys.UseModules).Intersect(context.GetValues(DialectDirectiveValidationKeys.ExcludeModules), StringComparer.Ordinal))
-        {
             DialectDefinitionSliceParseErrors.Fail($"Module '{conflict}' cannot appear in both use and exclude directives.", document.Declaration.NameNode.LexemeValue);
-        }
     }
 }

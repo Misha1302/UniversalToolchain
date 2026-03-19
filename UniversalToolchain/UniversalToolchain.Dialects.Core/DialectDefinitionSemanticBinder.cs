@@ -10,27 +10,23 @@ internal static class DialectDefinitionSemanticBinder
     public static DialectDefinition Bind(DialectSyntaxDocument syntaxDocument, List<DialectDiagnostic> diagnostics)
     {
         if (syntaxDocument == null)
-        {
             Thrower.ArgumentNull(nameof(syntaxDocument));
-        }
 
         if (diagnostics == null)
-        {
             Thrower.ArgumentNull(nameof(diagnostics));
-        }
 
         var activeModules = DialectSemanticNormalization.NormalizeActiveModules(
             syntaxDocument.UseModules,
             syntaxDocument.ExcludeModules,
             diagnostics,
-            conflictCode: "S001");
+            "S001");
 
         var backendMap = DialectSemanticNormalization.NormalizeBackendRules(
             syntaxDocument.BackendDirectives,
             x => x.Backend,
             x => x.Enabled,
             diagnostics,
-            contradictionCode: "S003");
+            "S003");
 
         var intrinsicDirectives = DialectSemanticNormalization.NormalizeIntrinsicRules(
             syntaxDocument.IntrinsicDirectives,
@@ -38,7 +34,7 @@ internal static class DialectDefinitionSemanticBinder
             x => x.Target,
             x => x.Allowed,
             diagnostics,
-            contradictionCode: "S004");
+            "S004");
 
         var optimizerDirectives = DialectSemanticNormalization.NormalizeOptimizerRules(
             syntaxDocument.OptimizerDirectives,
@@ -46,7 +42,7 @@ internal static class DialectDefinitionSemanticBinder
             x => x.Target,
             x => x.Enabled,
             diagnostics,
-            contradictionCode: "S005");
+            "S005");
 
         return new DialectDefinition(
             syntaxDocument.Name,
@@ -69,27 +65,23 @@ internal static class DialectDefinitionSemanticBinder
     public static DialectDefinition Bind(DialectDefinitionSlice compiledDialect, List<DialectDiagnostic> diagnostics)
     {
         if (compiledDialect == null)
-        {
             Thrower.ArgumentNull(nameof(compiledDialect));
-        }
 
         if (diagnostics == null)
-        {
             Thrower.ArgumentNull(nameof(diagnostics));
-        }
 
         var activeModules = DialectSemanticNormalization.NormalizeActiveModules(
             compiledDialect.UseModules,
             compiledDialect.ExcludeModules,
             diagnostics,
-            conflictCode: "S101");
+            "S101");
 
         var backendMap = DialectSemanticNormalization.NormalizeBackendRules(
             compiledDialect.BackendDirectives,
             x => x.Backend,
             x => x.Enabled,
             diagnostics,
-            contradictionCode: "S102");
+            "S102");
 
         var intrinsicDirectives = DialectSemanticNormalization.NormalizeIntrinsicRules(
             compiledDialect.IntrinsicDirectives,
@@ -97,7 +89,7 @@ internal static class DialectDefinitionSemanticBinder
             x => x.Target,
             x => x.Allowed,
             diagnostics,
-            contradictionCode: "S103");
+            "S103");
 
         var optimizerDirectives = DialectSemanticNormalization.NormalizeOptimizerRules(
             compiledDialect.OptimizerDirectives,
@@ -105,7 +97,7 @@ internal static class DialectDefinitionSemanticBinder
             x => x.Target,
             x => x.Enabled,
             diagnostics,
-            contradictionCode: "S104");
+            "S104");
 
         var capabilities = compiledDialect.CapabilityDirectives
             .OrderBy(x => x.Name, StringComparer.Ordinal)
@@ -128,20 +120,11 @@ internal static class DialectDefinitionSemanticBinder
             DialectOrderConstraintMapper.ToDefinitionRules(DialectOrderConstraintMapper.FromCompiledDirectives(compiledDialect.OrderDirectives)));
     }
 
-    private static string FormatRuleName(IntrinsicBuildDirective directive)
-    {
-        return FormatRuleName(directive.Name, directive.Target);
-    }
+    private static string FormatRuleName(IntrinsicBuildDirective directive) => FormatRuleName(directive.Name, directive.Target);
 
-    private static string FormatRuleName(OptimizerBuildDirective directive)
-    {
-        return FormatRuleName(directive.Name, directive.Target);
-    }
+    private static string FormatRuleName(OptimizerBuildDirective directive) => FormatRuleName(directive.Name, directive.Target);
 
-    private static string FormatRuleName(string name, DialectBackendTarget target)
-    {
-        return target == DialectBackendTarget.Any ? name : $"{name}@{DialectBackendTargetText.ToText(target)}";
-    }
+    private static string FormatRuleName(string name, DialectBackendTarget target) => target == DialectBackendTarget.Any ? name : $"{name}@{DialectBackendTargetText.ToText(target)}";
 
     private static SecurityProfile ToSecurityProfile(DialectSecurityProfile profile)
     {

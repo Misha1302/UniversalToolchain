@@ -1,7 +1,6 @@
 using BasicCore.Contracts;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core;
-using UniversalToolchain.Dialects.Frontend;
 using UniversalToolchain.Dialects.Integration;
 
 namespace UniversalToolchain.Dialects.Tests;
@@ -62,25 +61,21 @@ public class FrameworkNativeDslDemoWorkflowTests
         Assert.That(first, Is.EqualTo(second));
     }
 
-    private static DialectFrameworkDemoWorkflow CreateWorkflow()
-    {
-        return new DialectFrameworkDemoWorkflow(
+    private static DialectFrameworkDemoWorkflow CreateWorkflow() =>
+        new(
             new DialectFrameworkCompositionWorkflow(
                 DialectDslTestComposition.CreateCompiler(),
                 new DialectCompiledDialectBuildPlanBuilder(),
                 new DialectRuntimeCompositionResolver()));
-    }
 
-    private static DialectRuntimeDescriptorRegistry CreateRegistry()
-    {
-        return new DialectRuntimeDescriptorRegistryBuilder()
+    private static DialectRuntimeDescriptorRegistry CreateRegistry() =>
+        new DialectRuntimeDescriptorRegistryBuilder()
             .RegisterModule(new RuntimeModuleDescriptor("Arithmetic", typeof(FakeFrontendModule)))
             .RegisterModule(new RuntimeModuleDescriptor("Variables", typeof(FakeFrontendModule)))
             .RegisterBackend(new RuntimeBackendDescriptor(DialectBackendTarget.Interpreter, "InterpreterBackend"))
             .RegisterOptimizer(new RuntimeOptimizerDescriptor("LocalVariablesOptimization", typeof(FakeOptimizerModule)))
             .RegisterIntrinsic(new RuntimeIntrinsicDescriptor("add_i32", DialectBackendTarget.Any))
             .Build();
-    }
 
     private sealed class FakeFrontendModule : IFrontendCoreModule
     {

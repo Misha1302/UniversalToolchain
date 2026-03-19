@@ -110,8 +110,5 @@ public class FrameworkNativeSemanticBuildPlanTests
         });
     }
 
-    private static DialectBuildPlan BuildPlan(string source)
-    {
-        return new DialectCompiledDialectBuildPlanBuilder().Build(DialectDslTestComposition.CreateCompiler().Compile(source));
-    }
+    private static DialectBuildPlan BuildPlan(string source) => new DialectCompiledDialectBuildPlanBuilder().Build(DialectDslTestComposition.CreateCompiler().Compile(source));
 }

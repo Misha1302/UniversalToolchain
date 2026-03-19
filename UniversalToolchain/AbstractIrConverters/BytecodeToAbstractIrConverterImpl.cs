@@ -1,4 +1,3 @@
-
 namespace AbstractIrConverters;
 
 public class BytecodeToAbstractIrConverterImpl : IAbstractMethodsTranslator

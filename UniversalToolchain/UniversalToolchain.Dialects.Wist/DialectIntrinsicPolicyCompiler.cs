@@ -1,16 +1,15 @@
 using BasicCore.Compilation;
-using IntermediateRepresentationAbstractions;
 using BasicCore.Contracts;
 using ExceptionsManager;
+using IntermediateRepresentationAbstractions;
 
 namespace UniversalToolchain.Dialects.Wist;
 
 internal sealed class DialectIntrinsicPolicyCompiler<TCompilationOutput> : IAbstractIrCompiler<TCompilationOutput>
 {
-    private readonly IAbstractIrCompiler<TCompilationOutput> _inner;
     private readonly HashSet<string> _allowedIntrinsics;
     private readonly HashSet<string> _forbiddenIntrinsics;
-    private readonly IReadOnlyList<string> _supportedIntrinsics;
+    private readonly IAbstractIrCompiler<TCompilationOutput> _inner;
 
     public DialectIntrinsicPolicyCompiler(
         IAbstractIrCompiler<TCompilationOutput> inner,
@@ -18,32 +17,26 @@ internal sealed class DialectIntrinsicPolicyCompiler<TCompilationOutput> : IAbst
         IEnumerable<string> forbiddenIntrinsics)
     {
         if (inner == null)
-        {
             Thrower.ArgumentNull(nameof(inner));
-        }
 
         _inner = inner;
         _allowedIntrinsics = CreateSet(allowedIntrinsics, nameof(allowedIntrinsics));
         _forbiddenIntrinsics = CreateSet(forbiddenIntrinsics, nameof(forbiddenIntrinsics));
-        _supportedIntrinsics = _inner.SupportedIntrinsics
+        SupportedIntrinsics = _inner.SupportedIntrinsics
             .Where(x => !_forbiddenIntrinsics.Contains(x))
             .OrderBy(x => x, StringComparer.Ordinal)
             .ToList();
     }
 
-    public IReadOnlyList<string> SupportedIntrinsics => _supportedIntrinsics;
+    public IReadOnlyList<string> SupportedIntrinsics { get; }
 
     public TCompilationOutput Compile(IAbstractIR air, CompilationInput input)
     {
         if (air == null)
-        {
             Thrower.ArgumentNull(nameof(air));
-        }
 
         if (input == null)
-        {
             Thrower.ArgumentNull(nameof(input));
-        }
 
         ValidateIntrinsics(air);
         return _inner.Compile(air, input);
@@ -54,33 +47,23 @@ internal sealed class DialectIntrinsicPolicyCompiler<TCompilationOutput> : IAbst
         foreach (var instruction in air.Instructions)
         {
             if (instruction.UOpCode != UOpCode.Intrinsic)
-            {
                 continue;
-            }
 
             if (instruction.Operands.Count == 0 || instruction.Operands[0] is not string intrinsicName)
-            {
                 continue;
-            }
 
             if (_forbiddenIntrinsics.Contains(intrinsicName))
-            {
                 Thrower.InvalidOpEx($"Intrinsic '{intrinsicName}' is forbidden by the selected dialect.");
-            }
 
             if (_allowedIntrinsics.Count > 0 && !_allowedIntrinsics.Contains(intrinsicName))
-            {
                 Thrower.InvalidOpEx($"Intrinsic '{intrinsicName}' is not allowed by the selected dialect.");
-            }
         }
     }
 
     private static HashSet<string> CreateSet(IEnumerable<string> values, string paramName)
     {
         if (values == null)
-        {
             Thrower.ArgumentNull(paramName);
-        }
 
         return values
             .Select(x => x.NotNull(paramName))

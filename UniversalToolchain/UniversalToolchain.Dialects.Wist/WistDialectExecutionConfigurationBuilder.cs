@@ -1,30 +1,24 @@
+using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Integration;
-using ExceptionsManager;
 
 namespace UniversalToolchain.Dialects.Wist;
 
 /// <summary>
-/// Converts resolved dialect composition into explicit Wist execution wiring.
+///     Converts resolved dialect composition into explicit Wist execution wiring.
 /// </summary>
 public sealed class WistDialectExecutionConfigurationBuilder
 {
     public WistDialectExecutionConfiguration Build(DialectBuildPlan buildPlan, DialectRuntimeComposition runtimeComposition)
     {
         if (buildPlan == null)
-        {
             Thrower.ArgumentNull(nameof(buildPlan));
-        }
 
         if (runtimeComposition == null)
-        {
             Thrower.ArgumentNull(nameof(runtimeComposition));
-        }
 
         if (!runtimeComposition.IsResolved)
-        {
             Thrower.Argument(nameof(runtimeComposition), "Runtime composition must be resolved before execution wiring is built.");
-        }
 
         var frontendModules = runtimeComposition.OrderedModules
             .Where(x => x.IsFrontendModule)

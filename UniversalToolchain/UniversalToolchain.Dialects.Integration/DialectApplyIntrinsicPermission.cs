@@ -1,10 +1,10 @@
-using UniversalToolchain.Dialects.Abstractions;
 using ExceptionsManager;
+using UniversalToolchain.Dialects.Abstractions;
 
 namespace UniversalToolchain.Dialects.Integration;
 
 /// <summary>
-/// Represents one intrinsic permission in apply-mode output.
+///     Represents one intrinsic permission in apply-mode output.
 /// </summary>
 public sealed class DialectApplyIntrinsicPermission
 {

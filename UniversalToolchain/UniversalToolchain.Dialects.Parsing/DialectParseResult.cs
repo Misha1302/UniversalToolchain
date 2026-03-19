@@ -1,11 +1,11 @@
 using System.Collections.ObjectModel;
-using UniversalToolchain.Dialects.Abstractions;
 using ExceptionsManager;
+using UniversalToolchain.Dialects.Abstractions;
 
 namespace UniversalToolchain.Dialects.Parsing;
 
 /// <summary>
-/// Represents deterministic parser output and diagnostics.
+///     Represents deterministic parser output and diagnostics.
 /// </summary>
 public sealed class DialectParseResult
 {

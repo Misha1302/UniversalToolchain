@@ -1,5 +1,5 @@
-using UniversalToolchain.Dialects.Abstractions;
 using ExceptionsManager;
+using UniversalToolchain.Dialects.Abstractions;
 using ATarget = UniversalToolchain.Dialects.Abstractions.DialectBackendTarget;
 
 namespace UniversalToolchain.Dialects.Core;
@@ -50,9 +50,7 @@ internal static class DialectSemanticNormalization
             }
 
             if (!map.ContainsKey(target))
-            {
                 map[target] = value;
-            }
         }
 
         return map;
@@ -83,9 +81,7 @@ internal static class DialectSemanticNormalization
             }
 
             if (!map.ContainsKey(key))
-            {
                 map[key] = value;
-            }
         }
 
         return map.OrderBy(x => x.Key.Name, StringComparer.Ordinal)
@@ -119,9 +115,7 @@ internal static class DialectSemanticNormalization
             }
 
             if (!map.ContainsKey(key))
-            {
                 map[key] = value;
-            }
         }
 
         return map.OrderBy(x => x.Key.Name, StringComparer.Ordinal)
@@ -149,12 +143,10 @@ internal static class DialectSemanticNormalization
             if (!activeSet.Contains(constraint.SourceModule) || !activeSet.Contains(constraint.TargetModule))
             {
                 if (!string.IsNullOrWhiteSpace(missingReferenceCode) && !string.IsNullOrWhiteSpace(missingReferenceMessagePrefix))
-                {
                     diagnostics.Add(new DialectDiagnostic(
                         missingReferenceCode,
                         $"{missingReferenceMessagePrefix}: '{constraint.SourceModule}' and '{constraint.TargetModule}'.",
                         DialectDiagnosticSeverity.Error));
-                }
 
                 continue;
             }
@@ -167,9 +159,7 @@ internal static class DialectSemanticNormalization
             };
 
             if (!edges[from].Add(to))
-            {
                 continue;
-            }
 
             indegree[to]++;
         }
@@ -182,9 +172,7 @@ internal static class DialectSemanticNormalization
         {
             var current = queue.Min;
             if (current == null)
-            {
                 Thrower.InvalidOpEx("Queue minimum should exist.");
-            }
             queue.Remove(current);
             ordered.Add(current);
 
@@ -192,16 +180,12 @@ internal static class DialectSemanticNormalization
             {
                 indegree[next]--;
                 if (indegree[next] == 0)
-                {
                     queue.Add(next);
-                }
             }
         }
 
         if (ordered.Count == nodes.Count)
-        {
             return ordered;
-        }
 
         var cycleNodes = nodes.Except(ordered, StringComparer.Ordinal).OrderBy(x => x, StringComparer.Ordinal);
         diagnostics.Add(new DialectDiagnostic(

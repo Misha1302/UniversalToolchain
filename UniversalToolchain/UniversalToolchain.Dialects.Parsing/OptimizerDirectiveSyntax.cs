@@ -1,10 +1,10 @@
-using UniversalToolchain.Dialects.Abstractions;
 using ExceptionsManager;
+using UniversalToolchain.Dialects.Abstractions;
 
 namespace UniversalToolchain.Dialects.Parsing;
 
 /// <summary>
-/// Represents one optimizer enable/disable directive with backend scope.
+///     Represents one optimizer enable/disable directive with backend scope.
 /// </summary>
 public sealed class OptimizerDirectiveSyntax
 {

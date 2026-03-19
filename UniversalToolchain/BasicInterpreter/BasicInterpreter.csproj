@@ -8,10 +8,10 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\BasicCodeTranslator\BasicCodeTranslator.csproj" />
-        <ProjectReference Include="..\BytecodeDynamicMethodsCompiler\BytecodeDynamicMethodsCompiler.csproj" />
-        <ProjectReference Include="..\UniversalIntermediateRepresentation\UniversalIntermediateRepresentation.csproj" />
-        <ProjectReference Include="..\CommonExceptions\CommonExceptions.csproj" />
+        <ProjectReference Include="..\BasicCodeTranslator\BasicCodeTranslator.csproj"/>
+        <ProjectReference Include="..\BytecodeDynamicMethodsCompiler\BytecodeDynamicMethodsCompiler.csproj"/>
+        <ProjectReference Include="..\UniversalIntermediateRepresentation\UniversalIntermediateRepresentation.csproj"/>
+        <ProjectReference Include="..\CommonExceptions\CommonExceptions.csproj"/>
     </ItemGroup>
 
 </Project>

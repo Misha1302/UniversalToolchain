@@ -3,7 +3,7 @@ namespace Tests.Infrastructure;
 [TestFixture]
 public class TestBaseContractsTests : TestBase
 {
-    protected override IServiceProvider BuildServiceProvider()
+    override protected IServiceProvider BuildServiceProvider()
     {
         var services = new ServiceCollection();
         services.AddSingleton<ICoreRunnable>(new FixedResultCore("string-result"));
@@ -25,8 +25,15 @@ public class TestBaseContractsTests : TestBase
     private sealed class FixedResultCore(object result) : ICoreRunnable
     {
         public object? Run(string code, Dictionary<string, object>? parameters = null) => result;
-        public void PrepareToRun(string code, OrderedDictionary<string, Type>? parameters = null) { }
+
+        public void PrepareToRun(string code, OrderedDictionary<string, Type>? parameters = null)
+        {
+        }
+
         public object? RunPrepared() => result;
-        public void PrepareToRun(CompilationInput input) { }
+
+        public void PrepareToRun(CompilationInput input)
+        {
+        }
     }
 }

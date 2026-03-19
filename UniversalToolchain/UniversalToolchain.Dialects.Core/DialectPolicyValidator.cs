@@ -1,11 +1,11 @@
+using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Parsing;
-using ExceptionsManager;
 
 namespace UniversalToolchain.Dialects.Core;
 
 /// <summary>
-/// Default semantic validator adapter backed by build-plan builder diagnostics.
+///     Default semantic validator adapter backed by build-plan builder diagnostics.
 /// </summary>
 public sealed class DialectPolicyValidator
 {

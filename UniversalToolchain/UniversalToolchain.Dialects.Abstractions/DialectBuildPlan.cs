@@ -4,16 +4,16 @@ using ExceptionsManager;
 namespace UniversalToolchain.Dialects.Abstractions;
 
 /// <summary>
-/// Represents a validated and normalized dialect build plan ready for later runtime resolution.
+///     Represents a validated and normalized dialect build plan ready for later runtime resolution.
 /// </summary>
 public sealed class DialectBuildPlan
 {
-    private readonly ReadOnlyCollection<string> _orderedModules;
-    private readonly ReadOnlyCollection<DialectBackendTarget> _enabledBackends;
+    private readonly ReadOnlyDictionary<string, bool> _capabilities;
     private readonly ReadOnlyCollection<DialectBackendTarget> _disabledBackends;
+    private readonly ReadOnlyCollection<DialectBackendTarget> _enabledBackends;
     private readonly ReadOnlyCollection<IntrinsicBuildDirective> _intrinsicDirectives;
     private readonly ReadOnlyCollection<OptimizerBuildDirective> _optimizerDirectives;
-    private readonly ReadOnlyDictionary<string, bool> _capabilities;
+    private readonly ReadOnlyCollection<string> _orderedModules;
 
     public DialectBuildPlan(
         string name,

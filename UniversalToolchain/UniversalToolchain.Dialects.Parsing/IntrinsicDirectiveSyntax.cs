@@ -1,10 +1,10 @@
-using UniversalToolchain.Dialects.Abstractions;
 using ExceptionsManager;
+using UniversalToolchain.Dialects.Abstractions;
 
 namespace UniversalToolchain.Dialects.Parsing;
 
 /// <summary>
-/// Represents one intrinsic allow/forbid directive with backend scope.
+///     Represents one intrinsic allow/forbid directive with backend scope.
 /// </summary>
 public sealed class IntrinsicDirectiveSyntax
 {

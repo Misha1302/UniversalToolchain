@@ -1,5 +1,6 @@
 using CommonExceptions;
 using IntermediateRepresentationAbstractions;
+using UniversalIntermediateRepresentation;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core;
 using UniversalToolchain.Dialects.Frontend;
@@ -50,7 +51,7 @@ public class DialectDslRegressionTests
     [Test]
     public void AirReader_ShouldIgnoreUnrelatedMetadata_WhilePreservingDialectAnnotationsAcrossInstructions()
     {
-        var air = new UniversalIntermediateRepresentation.AbstractIR();
+        var air = new AbstractIR();
         air.AppendInstructions([
             new Instruction(UOpCode.Annotate, metadata: [new object(), new DialectNameAirAnnotation("Demo")]),
             new Instruction(UOpCode.Annotate, metadata: [new SecurityAirAnnotation(DialectSecurityProfile.Restricted), new object()]),
@@ -71,7 +72,7 @@ public class DialectDslRegressionTests
     [Test]
     public void AirReader_ShouldRejectNullMetadataEntries_WithMeaningfulError()
     {
-        var air = new UniversalIntermediateRepresentation.AbstractIR();
+        var air = new AbstractIR();
         air.AppendInstructions([
             new Instruction(UOpCode.Annotate, metadata: [new DialectNameAirAnnotation("Demo"), null!])
         ]);
@@ -84,7 +85,7 @@ public class DialectDslRegressionTests
     [Test]
     public void AirReader_ShouldRejectDuplicateSingletonSecurityAnnotations()
     {
-        var air = new UniversalIntermediateRepresentation.AbstractIR();
+        var air = new AbstractIR();
         air.AppendInstructions([
             new Instruction(UOpCode.Annotate, metadata: [new DialectNameAirAnnotation("Demo"), new SecurityAirAnnotation(DialectSecurityProfile.Trusted)]),
             new Instruction(UOpCode.Annotate, metadata: [new SecurityAirAnnotation(DialectSecurityProfile.Restricted)])

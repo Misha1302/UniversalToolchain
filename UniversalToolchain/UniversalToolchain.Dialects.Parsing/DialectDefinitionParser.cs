@@ -1,10 +1,10 @@
-using UniversalToolchain.Dialects.Abstractions;
 using ExceptionsManager;
+using UniversalToolchain.Dialects.Abstractions;
 
 namespace UniversalToolchain.Dialects.Parsing;
 
 /// <summary>
-/// Deterministic parser for v1 dialect DSL.
+///     Deterministic parser for v1 dialect DSL.
 /// </summary>
 public sealed class DialectDefinitionParser : IDialectDefinitionParser
 {
@@ -119,7 +119,7 @@ public sealed class DialectDefinitionParser : IDialectDefinitionParser
 
             if (state.MatchKeyword("backend"))
             {
-                var backend = state.ExpectBackendTarget(allowAny: false);
+                var backend = state.ExpectBackendTarget(false);
                 var enabled = state.ExpectEnableDisable();
 
                 if (seenBackend.TryGetValue(backend, out var existing) && existing != enabled)
@@ -141,7 +141,7 @@ public sealed class DialectDefinitionParser : IDialectDefinitionParser
                 state.ExpectKeyword("intrinsic");
                 var intrinsicName = state.ExpectString();
                 state.ExpectKeyword("for");
-                var target = state.ExpectBackendTarget(allowAny: true);
+                var target = state.ExpectBackendTarget(true);
 
                 if (!string.IsNullOrWhiteSpace(intrinsicName))
                     intrinsicDirectives.Add(new IntrinsicDirectiveSyntax(intrinsicName, allow, target));
@@ -156,7 +156,7 @@ public sealed class DialectDefinitionParser : IDialectDefinitionParser
                 state.ExpectKeyword("optimizer");
                 var optimizerName = state.ExpectIdentifier();
                 state.ExpectKeyword("for");
-                var target = state.ExpectBackendTarget(allowAny: true);
+                var target = state.ExpectBackendTarget(true);
 
                 if (!string.IsNullOrWhiteSpace(optimizerName))
                     optimizerDirectives.Add(new OptimizerDirectiveSyntax(optimizerName, enabled, target));

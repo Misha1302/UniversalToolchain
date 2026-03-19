@@ -1,3 +1,4 @@
+using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Parsing;
 
 namespace UniversalToolchain.Dialects.Tests;
@@ -55,7 +56,7 @@ public class ParserTests
             Assert.That(result.Document.BackendDirectives, Has.Count.EqualTo(2));
             Assert.That(result.Document.IntrinsicDirectives, Has.Count.EqualTo(2));
             Assert.That(result.Document.OptimizerDirectives, Has.Count.EqualTo(2));
-            Assert.That(result.Document.SecurityProfile, Is.EqualTo(UniversalToolchain.Dialects.Abstractions.SecurityProfile.Restricted));
+            Assert.That(result.Document.SecurityProfile, Is.EqualTo(SecurityProfile.Restricted));
             Assert.That(result.Document.Capabilities["supports-floats"], Is.True);
         });
     }

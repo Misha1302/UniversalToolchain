@@ -63,6 +63,7 @@ public class CompilationInputNormalizerTests
         Assert.That(input.SourceText, Is.EqualTo("40 + 2"));
         Assert.That(input.Options, Is.Not.Null);
     }
+
     [Test]
     public void NormalizeRuntimeInput_WithNullExternalValue_ShouldKeepNullAndMapTypeToObject()
     {

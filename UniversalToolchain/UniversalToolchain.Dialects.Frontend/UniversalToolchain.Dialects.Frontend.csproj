@@ -8,19 +8,19 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1" />
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.1" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.1"/>
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\BasicCore\BasicCore.csproj" />
-        <ProjectReference Include="..\BasicLexer\BasicLexer.csproj" />
-        <ProjectReference Include="..\BasicParser\BasicParser.csproj" />
-        <ProjectReference Include="..\BasicCodeTranslator\BasicCodeTranslator.csproj" />
-        <ProjectReference Include="..\AbstractIrConverters\AbstractIrConverters.csproj" />
-        <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj" />
-        <ProjectReference Include="..\CommonExceptions\CommonExceptions.csproj" />
-        <ProjectReference Include="..\UniversalToolchain.Dialects.Abstractions\UniversalToolchain.Dialects.Abstractions.csproj" />
+        <ProjectReference Include="..\BasicCore\BasicCore.csproj"/>
+        <ProjectReference Include="..\BasicLexer\BasicLexer.csproj"/>
+        <ProjectReference Include="..\BasicParser\BasicParser.csproj"/>
+        <ProjectReference Include="..\BasicCodeTranslator\BasicCodeTranslator.csproj"/>
+        <ProjectReference Include="..\AbstractIrConverters\AbstractIrConverters.csproj"/>
+        <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj"/>
+        <ProjectReference Include="..\CommonExceptions\CommonExceptions.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Dialects.Abstractions\UniversalToolchain.Dialects.Abstractions.csproj"/>
     </ItemGroup>
 
 </Project>

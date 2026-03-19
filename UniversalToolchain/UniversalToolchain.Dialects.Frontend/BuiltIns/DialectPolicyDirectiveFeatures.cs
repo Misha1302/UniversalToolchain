@@ -1,5 +1,3 @@
-using UniversalToolchain.Dialects.Abstractions;
-
 namespace UniversalToolchain.Dialects.Frontend;
 
 internal abstract class IntrinsicPolicyDialectDirectiveFeatureBase : SingleIdentifierDialectDirectiveFeatureBase
@@ -17,10 +15,8 @@ internal abstract class IntrinsicPolicyDialectDirectiveFeatureBase : SingleIdent
         state.Add(value, Allowed, DuplicateMessage, ContradictionMessageTemplate, directive.LexemeValue);
     }
 
-    public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive)
-    {
-        return [new IntrinsicAirAnnotation(GetSingleIdentifierArgument(directive), Allowed)];
-    }
+    public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive) =>
+        [new IntrinsicAirAnnotation(GetSingleIdentifierArgument(directive), Allowed)];
 }
 
 internal sealed class AllowIntrinsicDialectDirectiveFeature : IntrinsicPolicyDialectDirectiveFeatureBase
@@ -31,13 +27,13 @@ internal sealed class AllowIntrinsicDialectDirectiveFeature : IntrinsicPolicyDia
 
     public override DialectDirectiveParserOrder ParserOrder => new(DialectDirectiveSlot.IntrinsicPolicy, 0);
 
-    protected override bool Allowed => true;
+    override protected bool Allowed => true;
 
-    protected override string DuplicateMessage => "Duplicate allow intrinsic directive is not allowed.";
+    override protected string DuplicateMessage => "Duplicate allow intrinsic directive is not allowed.";
 
-    protected override string ContradictionMessageTemplate => "Intrinsic '{0}' cannot be both allowed and forbidden.";
+    override protected string ContradictionMessageTemplate => "Intrinsic '{0}' cannot be both allowed and forbidden.";
 
-    protected override void AccumulateIdentifier(DialectDirectiveAccumulation accumulation, string value)
+    override protected void AccumulateIdentifier(DialectDirectiveAccumulation accumulation, string value)
     {
         accumulation.AllowedIntrinsics.Add(value);
     }
@@ -51,13 +47,13 @@ internal sealed class ForbidIntrinsicDialectDirectiveFeature : IntrinsicPolicyDi
 
     public override DialectDirectiveParserOrder ParserOrder => new(DialectDirectiveSlot.IntrinsicPolicy, 1);
 
-    protected override bool Allowed => false;
+    override protected bool Allowed => false;
 
-    protected override string DuplicateMessage => "Duplicate forbid intrinsic directive is not allowed.";
+    override protected string DuplicateMessage => "Duplicate forbid intrinsic directive is not allowed.";
 
-    protected override string ContradictionMessageTemplate => "Intrinsic '{0}' cannot be both allowed and forbidden.";
+    override protected string ContradictionMessageTemplate => "Intrinsic '{0}' cannot be both allowed and forbidden.";
 
-    protected override void AccumulateIdentifier(DialectDirectiveAccumulation accumulation, string value)
+    override protected void AccumulateIdentifier(DialectDirectiveAccumulation accumulation, string value)
     {
         accumulation.ForbiddenIntrinsics.Add(value);
     }
@@ -78,10 +74,8 @@ internal abstract class OptimizerPolicyDialectDirectiveFeatureBase : SingleIdent
         state.Add(value, Enabled, DuplicateMessage, ContradictionMessageTemplate, directive.LexemeValue);
     }
 
-    public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive)
-    {
-        return [new OptimizerAirAnnotation(GetSingleIdentifierArgument(directive), Enabled)];
-    }
+    public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive) =>
+        [new OptimizerAirAnnotation(GetSingleIdentifierArgument(directive), Enabled)];
 }
 
 internal sealed class EnableOptimizerDialectDirectiveFeature : OptimizerPolicyDialectDirectiveFeatureBase
@@ -92,13 +86,13 @@ internal sealed class EnableOptimizerDialectDirectiveFeature : OptimizerPolicyDi
 
     public override DialectDirectiveParserOrder ParserOrder => new(DialectDirectiveSlot.OptimizerPolicy, 0);
 
-    protected override bool Enabled => true;
+    override protected bool Enabled => true;
 
-    protected override string DuplicateMessage => "Duplicate enable optimizer directive is not allowed.";
+    override protected string DuplicateMessage => "Duplicate enable optimizer directive is not allowed.";
 
-    protected override string ContradictionMessageTemplate => "Optimizer '{0}' cannot be both enabled and disabled.";
+    override protected string ContradictionMessageTemplate => "Optimizer '{0}' cannot be both enabled and disabled.";
 
-    protected override void AccumulateIdentifier(DialectDirectiveAccumulation accumulation, string value)
+    override protected void AccumulateIdentifier(DialectDirectiveAccumulation accumulation, string value)
     {
         accumulation.EnabledOptimizers.Add(value);
     }
@@ -112,13 +106,13 @@ internal sealed class DisableOptimizerDialectDirectiveFeature : OptimizerPolicyD
 
     public override DialectDirectiveParserOrder ParserOrder => new(DialectDirectiveSlot.OptimizerPolicy, 1);
 
-    protected override bool Enabled => false;
+    override protected bool Enabled => false;
 
-    protected override string DuplicateMessage => "Duplicate disable optimizer directive is not allowed.";
+    override protected string DuplicateMessage => "Duplicate disable optimizer directive is not allowed.";
 
-    protected override string ContradictionMessageTemplate => "Optimizer '{0}' cannot be both enabled and disabled.";
+    override protected string ContradictionMessageTemplate => "Optimizer '{0}' cannot be both enabled and disabled.";
 
-    protected override void AccumulateIdentifier(DialectDirectiveAccumulation accumulation, string value)
+    override protected void AccumulateIdentifier(DialectDirectiveAccumulation accumulation, string value)
     {
         accumulation.DisabledOptimizers.Add(value);
     }
@@ -136,7 +130,7 @@ internal sealed class SecurityDialectDirectiveFeature : SingleIdentifierDialectD
 
     public override string SingletonViolationMessage => "Security directive can only be declared once.";
 
-    protected override void AccumulateIdentifier(DialectDirectiveAccumulation accumulation, string value)
+    override protected void AccumulateIdentifier(DialectDirectiveAccumulation accumulation, string value)
     {
         accumulation.SetSingletonValue(DialectDirectiveAccumulation.Keys.SecurityProfile, DialectAnnotationValueGuard.ParseSecurityProfile(value), SingletonViolationMessage);
     }
@@ -146,8 +140,6 @@ internal sealed class SecurityDialectDirectiveFeature : SingleIdentifierDialectD
         GetSingleIdentifierArgument(directive);
     }
 
-    public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive)
-    {
-        return [new SecurityAirAnnotation(DialectAnnotationValueGuard.ParseSecurityProfile(GetSingleIdentifierArgument(directive)))];
-    }
+    public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive) =>
+        [new SecurityAirAnnotation(DialectAnnotationValueGuard.ParseSecurityProfile(GetSingleIdentifierArgument(directive)))];
 }

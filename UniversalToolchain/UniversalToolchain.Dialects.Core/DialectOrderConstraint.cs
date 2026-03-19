@@ -4,7 +4,7 @@ internal enum DialectOrderConstraintKind
 {
     Before,
     After,
-    Requires,
+    Requires
 }
 
 internal readonly record struct DialectOrderConstraint(

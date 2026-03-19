@@ -3,7 +3,7 @@ using ExceptionsManager;
 namespace UniversalToolchain.Dialects.Integration;
 
 /// <summary>
-/// Executes a minimal framework-native dialect demo and returns deterministic output data.
+///     Executes a minimal framework-native dialect demo and returns deterministic output data.
 /// </summary>
 public sealed class DialectFrameworkDemoWorkflow
 {
@@ -12,9 +12,7 @@ public sealed class DialectFrameworkDemoWorkflow
     public DialectFrameworkDemoWorkflow(DialectFrameworkCompositionWorkflow compositionWorkflow)
     {
         if (compositionWorkflow == null)
-        {
             Thrower.ArgumentNull(nameof(compositionWorkflow));
-        }
 
         _compositionWorkflow = compositionWorkflow;
     }
@@ -22,14 +20,10 @@ public sealed class DialectFrameworkDemoWorkflow
     public DialectFrameworkDemoReport RunSource(string sourceText, DialectRuntimeDescriptorRegistry registry, string sourceName = "inline")
     {
         if (sourceText == null)
-        {
             Thrower.ArgumentNull(nameof(sourceText));
-        }
 
         if (registry == null)
-        {
             Thrower.ArgumentNull(nameof(registry));
-        }
 
         try
         {

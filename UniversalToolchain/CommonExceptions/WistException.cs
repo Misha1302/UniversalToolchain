@@ -2,9 +2,6 @@ namespace CommonExceptions;
 
 public class WistException : Exception
 {
-    public string? Stage { get; protected set; }
-    public SourceLocation? Location { get; protected set; }
-
     public WistException(string message) : base(message)
     {
     }
@@ -12,6 +9,9 @@ public class WistException : Exception
     public WistException(string message, Exception inner) : base(message, inner)
     {
     }
+
+    public string? Stage { get; protected set; }
+    public SourceLocation? Location { get; protected set; }
 
     public override string ToString()
     {

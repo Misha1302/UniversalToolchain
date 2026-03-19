@@ -1,18 +1,18 @@
 using System.Collections.ObjectModel;
-using UniversalToolchain.Dialects.Abstractions;
 using ExceptionsManager;
+using UniversalToolchain.Dialects.Abstractions;
 
 namespace UniversalToolchain.Dialects.Integration;
 
 /// <summary>
-/// Deterministic runtime composition description resolved from a validated dialect build plan.
+///     Deterministic runtime composition description resolved from a validated dialect build plan.
 /// </summary>
 public sealed class DialectRuntimeComposition
 {
-    private readonly ReadOnlyCollection<RuntimeModuleDescriptor> _orderedModules;
+    private readonly ReadOnlyCollection<RuntimeIntrinsicDescriptor> _allowedIntrinsics;
     private readonly ReadOnlyCollection<RuntimeBackendDescriptor> _enabledBackends;
     private readonly ReadOnlyCollection<RuntimeOptimizerDescriptor> _enabledOptimizers;
-    private readonly ReadOnlyCollection<RuntimeIntrinsicDescriptor> _allowedIntrinsics;
+    private readonly ReadOnlyCollection<RuntimeModuleDescriptor> _orderedModules;
 
     public DialectRuntimeComposition(
         string dialectName,

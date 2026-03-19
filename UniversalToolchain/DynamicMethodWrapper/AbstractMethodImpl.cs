@@ -1,4 +1,3 @@
-
 namespace DynamicMethodWrapper;
 
 public class AbstractMethodImpl(

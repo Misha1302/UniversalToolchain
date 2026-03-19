@@ -39,7 +39,10 @@ public class BasicCoreLifecycleContractsTests
     {
         public ParserConfiguration Configuration { get; } = new(new LevelCollection<float, IAstNodeCreator>());
         public AstNode Parse(List<LexemeValue> lexemes) => new(ExtensibleEnum<AstNodeTag>.CreateOrGet("Root"), null, []);
-        public void ParseScope(AstNode scope, List<IAstNodeCreator> creators, Predicate<AstNode> needToVisit) { }
+
+        public void ParseScope(AstNode scope, List<IAstNodeCreator> creators, Predicate<AstNode> needToVisit)
+        {
+        }
     }
 
     private sealed class PassthroughAstTranslator : IAstToBytecodeTranslator

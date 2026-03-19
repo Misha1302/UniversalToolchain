@@ -1,4 +1,3 @@
-
 namespace DotnetAirHelper;
 
 public static class AirTypes

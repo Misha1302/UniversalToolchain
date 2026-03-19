@@ -4,7 +4,7 @@ using ExceptionsManager;
 namespace UniversalToolchain.Dialects.Abstractions;
 
 /// <summary>
-/// Represents semantic validation result for one dialect definition.
+///     Represents semantic validation result for one dialect definition.
 /// </summary>
 public sealed class DialectValidationResult
 {
@@ -14,7 +14,6 @@ public sealed class DialectValidationResult
     {
         var list = new List<DialectDiagnostic>();
         if (diagnostics != null)
-        {
             foreach (var diagnostic in diagnostics)
             {
                 if (diagnostic == null)
@@ -22,7 +21,6 @@ public sealed class DialectValidationResult
 
                 list.Add(diagnostic);
             }
-        }
 
         _diagnostics = new ReadOnlyCollection<DialectDiagnostic>(list);
     }

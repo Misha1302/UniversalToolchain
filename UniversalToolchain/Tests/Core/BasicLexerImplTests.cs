@@ -74,7 +74,6 @@ public class BasicLexerImplTests
     }
 
 
-
     [Test]
     public void Lexemize_WithUnknownToken_ThrowsLexerException()
     {

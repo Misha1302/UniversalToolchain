@@ -1,4 +1,3 @@
-
 Console.WriteLine("Enter path to dlls with modules to use: ");
 GlobalPath.PathToDlls = Console.ReadLine()!;
 

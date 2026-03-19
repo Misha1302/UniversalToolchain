@@ -11,14 +11,14 @@ internal static class DialectSyntaxSemanticNormalizer
             syntaxDocument.UseModules,
             syntaxDocument.ExcludeModules,
             diagnostics,
-            conflictCode: "S001");
+            "S001");
 
         var backendMap = DialectSemanticNormalization.NormalizeBackendRules(
             syntaxDocument.BackendDirectives,
             x => x.Backend,
             x => x.Enabled,
             diagnostics,
-            contradictionCode: "S003");
+            "S003");
 
         var intrinsicDirectives = DialectSemanticNormalization.NormalizeIntrinsicRules(
             syntaxDocument.IntrinsicDirectives,
@@ -26,7 +26,7 @@ internal static class DialectSyntaxSemanticNormalizer
             x => x.Target,
             x => x.Allowed,
             diagnostics,
-            contradictionCode: "S004");
+            "S004");
 
         var optimizerDirectives = DialectSemanticNormalization.NormalizeOptimizerRules(
             syntaxDocument.OptimizerDirectives,
@@ -34,7 +34,7 @@ internal static class DialectSyntaxSemanticNormalizer
             x => x.Target,
             x => x.Enabled,
             diagnostics,
-            contradictionCode: "S005");
+            "S005");
 
         return new DialectSyntaxNormalizationResult
         {

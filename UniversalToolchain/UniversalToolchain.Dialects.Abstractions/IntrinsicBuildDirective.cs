@@ -3,7 +3,7 @@ using ExceptionsManager;
 namespace UniversalToolchain.Dialects.Abstractions;
 
 /// <summary>
-/// Represents a normalized intrinsic directive in a build plan.
+///     Represents a normalized intrinsic directive in a build plan.
 /// </summary>
 public sealed class IntrinsicBuildDirective
 {

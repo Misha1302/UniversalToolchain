@@ -453,6 +453,7 @@ public class LexerConfigurationTests
 
         Assert.That(loadedTokens, Is.EqualTo(originalTokens));
     }
+
     [Test]
     public void AddPattern_WithSamePatternReferenceTwice_ShouldThrowInvalidOperationException()
     {

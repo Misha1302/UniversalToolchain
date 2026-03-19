@@ -21,13 +21,9 @@ internal static class DialectTypedStateGuards
     public static void EnsureKey(DialectTypedStateKey? key, string paramName)
     {
         if (key == null)
-        {
             Thrower.ArgumentNull(paramName);
-        }
 
         if (string.IsNullOrWhiteSpace(key.Name))
-        {
             Thrower.Argument(paramName, "Typed dialect state key name must not be empty.");
-        }
     }
 }

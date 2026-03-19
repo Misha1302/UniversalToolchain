@@ -4,14 +4,14 @@ using ExceptionsManager;
 namespace UniversalToolchain.Dialects.Abstractions;
 
 /// <summary>
-/// Represents an immutable dialect definition source model for the v1 DSL surface.
+///     Represents an immutable dialect definition source model for the v1 DSL surface.
 /// </summary>
 public sealed class DialectDefinition
 {
     private readonly ReadOnlyCollection<OrderRule> _orderRules;
 
     /// <summary>
-    /// Creates a new dialect definition instance.
+    ///     Creates a new dialect definition instance.
     /// </summary>
     /// <param name="name">Unique dialect name.</param>
     /// <param name="modulePolicy">Module include/exclude policy.</param>

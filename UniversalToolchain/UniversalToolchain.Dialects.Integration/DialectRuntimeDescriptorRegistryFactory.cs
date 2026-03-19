@@ -4,24 +4,20 @@ using ExceptionsManager;
 namespace UniversalToolchain.Dialects.Integration;
 
 /// <summary>
-/// Discovers runtime descriptor providers deterministically and builds immutable runtime descriptor registries.
+///     Discovers runtime descriptor providers deterministically and builds immutable runtime descriptor registries.
 /// </summary>
 public static class DialectRuntimeDescriptorRegistryFactory
 {
     public static DialectRuntimeDescriptorRegistry BuildFromProviders(IEnumerable<IDialectRuntimeDescriptorProvider> providers)
     {
         if (providers == null)
-        {
             Thrower.ArgumentNull(nameof(providers));
-        }
 
         var orderedProviders = providers
             .Select(x =>
             {
                 if (x == null)
-                {
                     Thrower.Argument(nameof(providers), "Provider collection must not contain null entries.");
-                }
 
                 return x;
             })
@@ -31,9 +27,7 @@ public static class DialectRuntimeDescriptorRegistryFactory
 
         var builder = new DialectRuntimeDescriptorRegistryBuilder();
         foreach (var provider in orderedProviders)
-        {
             provider.Register(builder);
-        }
 
         return builder.Build();
     }
@@ -41,9 +35,7 @@ public static class DialectRuntimeDescriptorRegistryFactory
     public static DialectRuntimeDescriptorRegistry BuildFromAssemblies(params Assembly[] assemblies)
     {
         if (assemblies == null)
-        {
             Thrower.ArgumentNull(nameof(assemblies));
-        }
 
         var providers = assemblies
             .Where(x => x != null)

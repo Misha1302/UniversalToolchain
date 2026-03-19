@@ -5,13 +5,13 @@ namespace UniversalToolchain.Dialects.Frontend;
 
 public sealed class DialectDefinitionSlice
 {
-    private readonly ReadOnlyCollection<string> _useModules;
-    private readonly ReadOnlyCollection<string> _excludeModules;
-    private readonly ReadOnlyCollection<DialectOrderDirective> _orderDirectives;
     private readonly ReadOnlyCollection<DialectBackendDirective> _backendDirectives;
+    private readonly ReadOnlyCollection<DialectCapabilityDirective> _capabilityDirectives;
+    private readonly ReadOnlyCollection<string> _excludeModules;
     private readonly ReadOnlyCollection<DialectIntrinsicDirective> _intrinsicDirectives;
     private readonly ReadOnlyCollection<DialectOptimizerDirective> _optimizerDirectives;
-    private readonly ReadOnlyCollection<DialectCapabilityDirective> _capabilityDirectives;
+    private readonly ReadOnlyCollection<DialectOrderDirective> _orderDirectives;
+    private readonly ReadOnlyCollection<string> _useModules;
 
     public DialectDefinitionSlice(
         string name,
@@ -25,9 +25,7 @@ public sealed class DialectDefinitionSlice
         IEnumerable<DialectCapabilityDirective> capabilityDirectives)
     {
         if (string.IsNullOrWhiteSpace(name))
-        {
             Thrower.Argument(nameof(name), "Dialect name must not be empty.");
-        }
 
         Name = name;
         _useModules = new ReadOnlyCollection<string>(SnapshotStrings(useModules, nameof(useModules), "Module names must not be empty."));
@@ -61,17 +59,13 @@ public sealed class DialectDefinitionSlice
     private static List<string> SnapshotStrings(IEnumerable<string> values, string paramName, string emptyMessage)
     {
         if (values == null)
-        {
             Thrower.ArgumentNull(paramName);
-        }
 
         var result = new List<string>();
         foreach (var value in values)
         {
             if (string.IsNullOrWhiteSpace(value))
-            {
                 Thrower.Argument(paramName, emptyMessage);
-            }
 
             result.Add(value);
         }
@@ -82,17 +76,13 @@ public sealed class DialectDefinitionSlice
     private static List<T> Snapshot<T>(IEnumerable<T> values, string paramName)
     {
         if (values == null)
-        {
             Thrower.ArgumentNull(paramName);
-        }
 
         var result = new List<T>();
         foreach (var value in values)
         {
             if (value == null)
-            {
                 Thrower.Argument(paramName, "Collection must not contain null values.");
-            }
 
             result.Add(value);
         }

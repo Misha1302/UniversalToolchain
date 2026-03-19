@@ -7,14 +7,10 @@ public sealed class DialectOrderDirective
     public DialectOrderDirective(DialectOrderDirectiveKind kind, string sourceModule, string targetModule)
     {
         if (string.IsNullOrWhiteSpace(sourceModule))
-        {
             Thrower.Argument(nameof(sourceModule), "Source module must not be empty.");
-        }
 
         if (string.IsNullOrWhiteSpace(targetModule))
-        {
             Thrower.Argument(nameof(targetModule), "Target module must not be empty.");
-        }
 
         Kind = kind;
         SourceModule = sourceModule;

@@ -131,6 +131,7 @@ public class BuildPlanCollaboratorsTests
             Assert.That(normalized.OptimizerDirectives, Has.Count.EqualTo(1));
         });
     }
+
     private sealed class RequireCapabilityRule : IDialectPolicyValidationRule
     {
         private readonly string _capability;

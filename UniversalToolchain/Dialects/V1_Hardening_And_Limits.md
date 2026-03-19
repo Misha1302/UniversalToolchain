@@ -31,4 +31,5 @@ Not implemented yet:
 
 ## Recommended contributor practice
 
-When adding features, keep the stage boundaries intact and document the change in the nearest subsystem note before extending integration behavior.
+When adding features, keep the stage boundaries intact and document the change in the nearest subsystem note before
+extending integration behavior.

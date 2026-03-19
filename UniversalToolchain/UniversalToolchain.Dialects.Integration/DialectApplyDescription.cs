@@ -1,19 +1,19 @@
 using System.Collections.ObjectModel;
-using UniversalToolchain.Dialects.Abstractions;
 using ExceptionsManager;
+using UniversalToolchain.Dialects.Abstractions;
 
 namespace UniversalToolchain.Dialects.Integration;
 
 /// <summary>
-/// Explicit and deterministic description of what apply-mode would wire for a resolved dialect.
+///     Explicit and deterministic description of what apply-mode would wire for a resolved dialect.
 /// </summary>
 public sealed class DialectApplyDescription
 {
     private readonly ReadOnlyCollection<Type> _frontendModules;
+    private readonly ReadOnlyCollection<DialectApplyIntrinsicPermission> _intrinsics;
     private readonly ReadOnlyCollection<Type> _irProcessingModules;
     private readonly ReadOnlyCollection<Type> _optimizers;
     private readonly ReadOnlyCollection<string> _runtimeBackends;
-    private readonly ReadOnlyCollection<DialectApplyIntrinsicPermission> _intrinsics;
 
     public DialectApplyDescription(
         string dialectName,

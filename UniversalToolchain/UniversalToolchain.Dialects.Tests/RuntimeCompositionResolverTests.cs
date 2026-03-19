@@ -186,9 +186,8 @@ public class RuntimeCompositionResolverTests
         });
     }
 
-    private static DialectBuildPlan CreateValidPlan()
-    {
-        return new DialectBuildPlan(
+    private static DialectBuildPlan CreateValidPlan() =>
+        new(
             "dialect",
             "1",
             ["A", "B"],
@@ -199,17 +198,14 @@ public class RuntimeCompositionResolverTests
             SecurityProfile.Trusted,
             [new KeyValuePair<string, bool>("c", true)],
             new DialectValidationResult());
-    }
 
-    private static DialectRuntimeDescriptorRegistryBuilder CreateRegistryBuilder()
-    {
-        return new DialectRuntimeDescriptorRegistryBuilder()
+    private static DialectRuntimeDescriptorRegistryBuilder CreateRegistryBuilder() =>
+        new DialectRuntimeDescriptorRegistryBuilder()
             .RegisterModule(new RuntimeModuleDescriptor("A", typeof(FakeFrontendModule)))
             .RegisterModule(new RuntimeModuleDescriptor("B", typeof(FakeIrModule)))
             .RegisterBackend(new RuntimeBackendDescriptor(DialectBackendTarget.Interpreter, "InterpreterBackend"))
             .RegisterIntrinsic(new RuntimeIntrinsicDescriptor("intrinsic-a", DialectBackendTarget.Any))
             .RegisterOptimizer(new RuntimeOptimizerDescriptor("opt-a", typeof(FakeOptimizerModule)));
-    }
 
     private sealed class FakeFrontendModule : IFrontendCoreModule
     {

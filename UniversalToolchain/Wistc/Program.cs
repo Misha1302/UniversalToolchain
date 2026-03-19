@@ -32,9 +32,7 @@ int RunCommand(RunOptions options)
             using var host = CreateDialectHost(options.DialectFile);
             var result = host.Run(code, options.Mode);
             if (result != null)
-            {
                 Console.WriteLine(result);
-            }
 
             return 0;
         }
@@ -44,9 +42,7 @@ int RunCommand(RunOptions options)
 
         var legacyResult = core.Run(code);
         if (legacyResult != null)
-        {
             Console.WriteLine(legacyResult);
-        }
 
         return 0;
     }
@@ -54,9 +50,7 @@ int RunCommand(RunOptions options)
     {
         Console.Error.WriteLine(ex.ToString());
         if (Debugger.IsAttached)
-        {
             Console.Error.WriteLine(ex.StackTrace);
-        }
 
         return 1;
     }
@@ -64,9 +58,7 @@ int RunCommand(RunOptions options)
     {
         Console.Error.WriteLine($"Error: {ex.Message}");
         if (Debugger.IsAttached)
-        {
             Console.Error.WriteLine(ex.StackTrace);
-        }
 
         return 1;
     }
@@ -140,9 +132,7 @@ DialectFrameworkDemoReport CreateDemoReport(
     if (!string.IsNullOrWhiteSpace(options.File))
     {
         if (!File.Exists(options.File))
-        {
             Thrower.FileNotFound(options.File);
-        }
 
         return demoWorkflow.RunSource(File.ReadAllText(options.File), registry, options.File);
     }
@@ -154,9 +144,7 @@ DialectFrameworkDemoReport CreateDemoReport(
 DialectFrameworkDemoScenario ParseDemoScenario(string scenarioText)
 {
     if (string.IsNullOrWhiteSpace(scenarioText))
-    {
         return DialectFrameworkDemoScenario.Valid;
-    }
 
     return scenarioText.Trim().ToLowerInvariant() switch
     {
@@ -201,17 +189,13 @@ string GetCode(RunOptions options)
     if (!string.IsNullOrEmpty(options.File))
     {
         if (!File.Exists(options.File))
-        {
             Thrower.FileNotFound(options.File);
-        }
 
         return File.ReadAllText(options.File);
     }
 
     if (options.Evaluate && !string.IsNullOrEmpty(options.Code))
-    {
         return options.Code;
-    }
 
     return options.Code ?? string.Empty;
 }
@@ -238,14 +222,11 @@ IServiceProvider BuildDefaultServiceProvider(CommonOptions options)
         {
             var typeName = module.ImplementationType?.FullName;
             if (typeName != null && excludeSet.Contains(typeName))
-            {
                 modulesToRemove.Add(module);
-            }
         }
     }
 
     if (options.IncludeModules != null && options.IncludeModules.Any())
-    {
         foreach (var moduleName in options.IncludeModules)
         {
             var type = Type.GetType(moduleName.Trim()) ??
@@ -257,26 +238,19 @@ IServiceProvider BuildDefaultServiceProvider(CommonOptions options)
             {
                 var module = Activator.CreateInstance(type) as IFrontendCoreModule;
                 if (module != null)
-                {
                     modulesToAdd.Add(module);
-                }
             }
             else
             {
                 Console.WriteLine($"Warning: Module '{moduleName}' not found or not a valid IFrontendCoreModule");
             }
         }
-    }
 
     foreach (var module in modulesToRemove)
-    {
         services.Remove(module);
-    }
 
     foreach (var module in modulesToAdd)
-    {
         services.AddSingleton(module);
-    }
 
     return services.BuildServiceProvider();
 }
@@ -286,22 +260,18 @@ ICoreRunnable GetLegacyCoreRunnable(IServiceProvider provider, string mode)
     var runnables = provider.GetServices<ICoreRunnable>().ToList();
 
     if (mode.Equals("compiler", StringComparison.OrdinalIgnoreCase))
-    {
         return runnables.FirstOrDefault(r =>
                    r.GetType().IsGenericType &&
                    r.GetType().GetGenericTypeDefinition() == typeof(BasicCoreImpl<>) &&
                    r.GetType().GetGenericArguments()[0] == typeof(DynamicMethod))
                ?? runnables.First();
-    }
 
     if (mode.Equals("interpreter", StringComparison.OrdinalIgnoreCase))
-    {
         return runnables.FirstOrDefault(r =>
                    r.GetType().IsGenericType &&
                    r.GetType().GetGenericTypeDefinition() == typeof(BasicCoreImpl<>) &&
                    r.GetType().GetGenericArguments()[0] == typeof(IAbstractIR))
                ?? runnables.Last();
-    }
 
     Thrower.Argument(nameof(mode), $"Unknown execution mode '{mode}'. Supported modes: 'compiler', 'interpreter'.");
     return null!;
@@ -310,19 +280,13 @@ ICoreRunnable GetLegacyCoreRunnable(IServiceProvider provider, string mode)
 void ValidateDialectExecutionOptions(CommonOptions options)
 {
     if (options.UseNativeMath)
-    {
         Thrower.Argument(nameof(options.UseNativeMath), "The --use-native-math option cannot be combined with --dialect-file. Configure arithmetic through the dialect definition instead.");
-    }
 
     if (options.IncludeModules != null && options.IncludeModules.Any())
-    {
         Thrower.Argument(nameof(options.IncludeModules), "The --include-module option cannot be combined with --dialect-file. Configure modules through the dialect definition instead.");
-    }
 
     if (options.ExcludeModules != null && options.ExcludeModules.Any())
-    {
         Thrower.Argument(nameof(options.ExcludeModules), "The --exclude-module option cannot be combined with --dialect-file. Configure modules through the dialect definition instead.");
-    }
 }
 
 WistDialectExecutionHost CreateDialectHost(string dialectFile)
@@ -332,9 +296,7 @@ WistDialectExecutionHost CreateDialectHost(string dialectFile)
     var result = workflow.ComposeFile(dialectFile);
 
     if (!result.IsSuccess)
-    {
         Thrower.InvalidOpEx(result.ToDeterministicText());
-    }
 
     return workflow.CreateHost(result);
 }
@@ -359,9 +321,7 @@ void ListAllModules()
             .ToList();
 
         if (!modules.Any())
-        {
             continue;
-        }
 
         Console.WriteLine($"\nAssembly: {assembly.GetName().Name}");
         foreach (var module in modules)

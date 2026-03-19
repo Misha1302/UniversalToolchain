@@ -47,13 +47,13 @@ public class DialectDslOrderingTests
     public void Registry_ShouldSortFeaturesDeterministically_ByParserOrderKeywordAndId()
     {
         var registry = new DialectDslRegistry(
-        [
-            new OrderedFeature("tests.zzz", "zzz", new DialectDirectiveParserOrder(DialectDirectiveSlot.Extension, 5)),
-            new OrderedFeature("tests.gamma", "gamma", new DialectDirectiveParserOrder(DialectDirectiveSlot.Extension, 1)),
-            new OrderedFeature("tests.alpha", "alpha", new DialectDirectiveParserOrder(DialectDirectiveSlot.Extension, 0)),
-            new OrderedFeature("tests.beta", "beta", new DialectDirectiveParserOrder(DialectDirectiveSlot.Extension, 2))
-        ],
-        []);
+            [
+                new OrderedFeature("tests.zzz", "zzz", new DialectDirectiveParserOrder(DialectDirectiveSlot.Extension, 5)),
+                new OrderedFeature("tests.gamma", "gamma", new DialectDirectiveParserOrder(DialectDirectiveSlot.Extension, 1)),
+                new OrderedFeature("tests.alpha", "alpha", new DialectDirectiveParserOrder(DialectDirectiveSlot.Extension, 0)),
+                new OrderedFeature("tests.beta", "beta", new DialectDirectiveParserOrder(DialectDirectiveSlot.Extension, 2))
+            ],
+            []);
 
         Assert.That(registry.DirectiveFeatures.Select(x => (x.Keyword, x.Id, x.ParserOrder.Sequence)), Is.EqualTo(new[]
         {
@@ -71,8 +71,8 @@ public class DialectDslOrderingTests
         var services = new ServiceCollection();
         services.AddDialectDsl();
         services.AddSingleton(executionLog);
-        services.AddSingleton<IDialectDslFeatureProvider>(provider => new RecordingProviderOmega(builder => builder.RegisterFeature(new OrderedFeature("tests.provider.omega", "omega", new(DialectDirectiveSlot.Extension, 2))), executionLog));
-        services.AddSingleton<IDialectDslFeatureProvider>(provider => new RecordingProviderAlpha(builder => builder.RegisterFeature(new OrderedFeature("tests.provider.alpha", "alpha", new(DialectDirectiveSlot.Extension, 1))), executionLog));
+        services.AddSingleton<IDialectDslFeatureProvider>(provider => new RecordingProviderOmega(builder => builder.RegisterFeature(new OrderedFeature("tests.provider.omega", "omega", new DialectDirectiveParserOrder(DialectDirectiveSlot.Extension, 2))), executionLog));
+        services.AddSingleton<IDialectDslFeatureProvider>(provider => new RecordingProviderAlpha(builder => builder.RegisterFeature(new OrderedFeature("tests.provider.alpha", "alpha", new DialectDirectiveParserOrder(DialectDirectiveSlot.Extension, 1))), executionLog));
 
         using var provider = services.BuildServiceProvider();
         var registry = provider.GetRequiredService<DialectDslRegistry>();
@@ -109,8 +109,8 @@ public class DialectDslOrderingTests
     public void Registry_ShouldRejectDirectiveOrderCollisions_WithMeaningfulMessage()
     {
         var ex = Assert.Throws<InvalidOperationException>(() => new DialectDslRegistry(
-        [new CollisionFeatureA(), new CollisionFeatureB()],
-        []));
+            [new CollisionFeatureA(), new CollisionFeatureB()],
+            []));
 
         Assert.That(ex!.Message, Does.Contain("collision").And.Contain("tests.collision.a").And.Contain("tests.collision.b"));
     }
@@ -119,11 +119,11 @@ public class DialectDslOrderingTests
     public void Registry_ShouldRejectDuplicateKeywordAndDuplicateIdRegistrations()
     {
         var duplicateKeyword = Assert.Throws<InvalidOperationException>(() => new DialectDslRegistry(
-        [new OrderedFeature("tests.alpha", "dup", new(DialectDirectiveSlot.Extension, 1)), new OrderedFeature("tests.beta", "dup", new(DialectDirectiveSlot.Extension, 2))],
-        []));
+            [new OrderedFeature("tests.alpha", "dup", new DialectDirectiveParserOrder(DialectDirectiveSlot.Extension, 1)), new OrderedFeature("tests.beta", "dup", new DialectDirectiveParserOrder(DialectDirectiveSlot.Extension, 2))],
+            []));
         var duplicateId = Assert.Throws<InvalidOperationException>(() => new DialectDslRegistry(
-        [new OrderedFeature("tests.same", "alpha", new(DialectDirectiveSlot.Extension, 1)), new OrderedFeature("tests.same", "beta", new(DialectDirectiveSlot.Extension, 2))],
-        []));
+            [new OrderedFeature("tests.same", "alpha", new DialectDirectiveParserOrder(DialectDirectiveSlot.Extension, 1)), new OrderedFeature("tests.same", "beta", new DialectDirectiveParserOrder(DialectDirectiveSlot.Extension, 2))],
+            []));
 
         Assert.Multiple(() =>
         {

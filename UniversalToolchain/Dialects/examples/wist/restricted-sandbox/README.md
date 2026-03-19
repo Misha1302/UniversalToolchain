@@ -3,10 +3,12 @@
 This example demonstrates a deliberately constrained runtime.
 
 Enabled:
+
 - arithmetic-only execution through the `interpreter` backend
 - `Scopes`, `Numbers`, `Arithmetic`, and `Whitespaces`
 
 Disabled by omission:
+
 - the compiler backend
 - identifiers and variables
 - conditions, labels, loops, and interop

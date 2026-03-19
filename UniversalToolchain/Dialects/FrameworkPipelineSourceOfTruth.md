@@ -2,12 +2,14 @@
 
 ## What changed
 
-The framework-native dialect path now reuses lexer output from the UniversalToolchain pipeline instead of lexing source text a second time inside the dialect compiler stage:
+The framework-native dialect path now reuses lexer output from the UniversalToolchain pipeline instead of lexing source
+text a second time inside the dialect compiler stage:
 
 1. `DialectDslCompiler` now wires `DialectCaptureLexer` as the lexer used by `BasicCore`.
 2. `DialectCaptureLexer` stores the pipeline-produced token list in `DialectCompilationTokenContext`.
 3. `DialectDefinitionSliceCompiler` first consumes these captured tokens and builds `DialectDefinitionSlice` from them.
-4. A local lexer fallback is still kept only for direct `DialectDefinitionSliceCompiler` usage outside the full framework pipeline.
+4. A local lexer fallback is still kept only for direct `DialectDefinitionSliceCompiler` usage outside the full
+   framework pipeline.
 
 `DialectDslCompiler` clears token context before and after each compile call to avoid cross-run leakage.
 
@@ -24,5 +26,6 @@ The framework-native dialect path now reuses lexer output from the UniversalTool
 
 ## Deferred follow-up
 
-- `UniversalToolchain.Dialects.Parsing` still exists for compatibility/diagnostics workflows; complete parser unification is intentionally deferred.
+- `UniversalToolchain.Dialects.Parsing` still exists for compatibility/diagnostics workflows; complete parser
+  unification is intentionally deferred.
 - `DialectDefinitionSliceCompiler` fallback lexing path remains for non-pipeline callers and targeted tests.

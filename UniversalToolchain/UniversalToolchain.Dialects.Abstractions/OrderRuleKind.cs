@@ -1,7 +1,7 @@
 namespace UniversalToolchain.Dialects.Abstractions;
 
 /// <summary>
-/// Specifies how one module relates to another module for deterministic ordering.
+///     Specifies how one module relates to another module for deterministic ordering.
 /// </summary>
 public enum OrderRuleKind
 {

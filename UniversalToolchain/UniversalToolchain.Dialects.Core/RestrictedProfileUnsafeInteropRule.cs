@@ -13,11 +13,9 @@ internal sealed class RestrictedProfileUnsafeInteropRule : IDialectPolicyValidat
             return;
 
         if (capabilities.TryGetValue("unsafe-interop", out var enabled) && enabled)
-        {
             diagnostics.Add(new DialectDiagnostic(
                 "S006",
                 "Capability 'unsafe-interop' cannot be enabled under restricted security profile.",
                 DialectDiagnosticSeverity.Error));
-        }
     }
 }

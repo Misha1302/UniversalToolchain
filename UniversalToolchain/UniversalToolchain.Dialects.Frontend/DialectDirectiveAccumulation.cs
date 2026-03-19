@@ -4,22 +4,6 @@ namespace UniversalToolchain.Dialects.Frontend;
 
 public sealed class DialectDirectiveAccumulation
 {
-    internal static class Keys
-    {
-        public static DialectListStateKey<string> UseModules { get; } = new(nameof(UseModules));
-        public static DialectListStateKey<string> ExcludeModules { get; } = new(nameof(ExcludeModules));
-        public static DialectListStateKey<string> RequiresModules { get; } = new(nameof(RequiresModules));
-        public static DialectListStateKey<string> BeforeModules { get; } = new(nameof(BeforeModules));
-        public static DialectListStateKey<string> AfterModules { get; } = new(nameof(AfterModules));
-        public static DialectListStateKey<string> Backends { get; } = new(nameof(Backends));
-        public static DialectListStateKey<string> AllowedIntrinsics { get; } = new(nameof(AllowedIntrinsics));
-        public static DialectListStateKey<string> ForbiddenIntrinsics { get; } = new(nameof(ForbiddenIntrinsics));
-        public static DialectListStateKey<string> EnabledOptimizers { get; } = new(nameof(EnabledOptimizers));
-        public static DialectListStateKey<string> DisabledOptimizers { get; } = new(nameof(DisabledOptimizers));
-        public static DialectListStateKey<string> Capabilities { get; } = new(nameof(Capabilities));
-        public static DialectValueStateKey<DialectSecurityProfile?> SecurityProfile { get; } = new(nameof(SecurityProfile));
-    }
-
     private readonly Dictionary<DialectTypedStateKey, object> _lists = [];
     private readonly Dictionary<DialectTypedStateKey, object?> _values = [];
 
@@ -58,9 +42,7 @@ public sealed class DialectDirectiveAccumulation
         if (_lists.TryGetValue(key, out var existing))
         {
             if (existing is not List<TValue>)
-            {
                 Thrower.InvalidOpEx<List<TValue>>($"Accumulation list '{key.Name}' has incompatible runtime type '{existing.GetType().FullName}'.");
-            }
 
             return (List<TValue>)existing;
         }
@@ -75,14 +57,10 @@ public sealed class DialectDirectiveAccumulation
         DialectTypedStateGuards.EnsureKey(key, nameof(key));
 
         if (!_values.TryGetValue(key, out var value) || value == null)
-        {
             return default!;
-        }
 
         if (value is not TValue)
-        {
             Thrower.InvalidOpEx<TValue>($"Accumulation value '{key.Name}' has incompatible runtime type '{value.GetType().FullName}'.");
-        }
 
         return (TValue)value;
     }
@@ -98,10 +76,24 @@ public sealed class DialectDirectiveAccumulation
         DialectTypedStateGuards.EnsureKey(key, nameof(key));
 
         if (_values.ContainsKey(key))
-        {
             DialectDefinitionSliceParseErrors.Fail(duplicateMessage, null);
-        }
 
         _values[key] = value;
+    }
+
+    internal static class Keys
+    {
+        public static DialectListStateKey<string> UseModules { get; } = new(nameof(UseModules));
+        public static DialectListStateKey<string> ExcludeModules { get; } = new(nameof(ExcludeModules));
+        public static DialectListStateKey<string> RequiresModules { get; } = new(nameof(RequiresModules));
+        public static DialectListStateKey<string> BeforeModules { get; } = new(nameof(BeforeModules));
+        public static DialectListStateKey<string> AfterModules { get; } = new(nameof(AfterModules));
+        public static DialectListStateKey<string> Backends { get; } = new(nameof(Backends));
+        public static DialectListStateKey<string> AllowedIntrinsics { get; } = new(nameof(AllowedIntrinsics));
+        public static DialectListStateKey<string> ForbiddenIntrinsics { get; } = new(nameof(ForbiddenIntrinsics));
+        public static DialectListStateKey<string> EnabledOptimizers { get; } = new(nameof(EnabledOptimizers));
+        public static DialectListStateKey<string> DisabledOptimizers { get; } = new(nameof(DisabledOptimizers));
+        public static DialectListStateKey<string> Capabilities { get; } = new(nameof(Capabilities));
+        public static DialectValueStateKey<DialectSecurityProfile?> SecurityProfile { get; } = new(nameof(SecurityProfile));
     }
 }

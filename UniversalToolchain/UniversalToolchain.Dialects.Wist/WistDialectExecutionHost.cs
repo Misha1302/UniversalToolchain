@@ -1,15 +1,15 @@
+using System.Reflection.Emit;
 using BasicCore.Contracts;
 using BasicCore.Core;
+using ExceptionsManager;
 using IntermediateRepresentationAbstractions;
 using Microsoft.Extensions.DependencyInjection;
-using System.Reflection.Emit;
 using UniversalToolchain.Dialects.Abstractions;
-using ExceptionsManager;
 
 namespace UniversalToolchain.Dialects.Wist;
 
 /// <summary>
-/// Provides backend-aware access to a dialect-configured Wist runtime.
+///     Provides backend-aware access to a dialect-configured Wist runtime.
 /// </summary>
 public sealed class WistDialectExecutionHost : IDisposable
 {
@@ -18,14 +18,10 @@ public sealed class WistDialectExecutionHost : IDisposable
     public WistDialectExecutionHost(IServiceProvider serviceProvider, WistDialectExecutionConfiguration configuration)
     {
         if (serviceProvider == null)
-        {
             Thrower.ArgumentNull(nameof(serviceProvider));
-        }
 
         if (configuration == null)
-        {
             Thrower.ArgumentNull(nameof(configuration));
-        }
 
         _serviceProvider = serviceProvider;
         Configuration = configuration;
@@ -33,18 +29,20 @@ public sealed class WistDialectExecutionHost : IDisposable
 
     public WistDialectExecutionConfiguration Configuration { get; }
 
+    public void Dispose()
+    {
+        if (_serviceProvider is IDisposable disposable)
+            disposable.Dispose();
+    }
+
     public ICoreRunnable GetCore(string mode)
     {
         if (string.IsNullOrWhiteSpace(mode))
-        {
             Thrower.Argument(nameof(mode), "Execution mode must not be empty.");
-        }
 
         var target = ParseMode(mode);
         if (!Configuration.EnabledBackends.Contains(target))
-        {
             Thrower.InvalidOpEx($"Dialect '{Configuration.DialectName}' does not enable the '{mode}' backend.");
-        }
 
         var runnables = _serviceProvider.GetServices(typeof(ICoreRunnable)).Cast<ICoreRunnable>().ToList();
         return target switch
@@ -57,18 +55,7 @@ public sealed class WistDialectExecutionHost : IDisposable
         };
     }
 
-    public object? Run(string code, string mode)
-    {
-        return GetCore(mode).Run(code);
-    }
-
-    public void Dispose()
-    {
-        if (_serviceProvider is IDisposable disposable)
-        {
-            disposable.Dispose();
-        }
-    }
+    public object? Run(string code, string mode) => GetCore(mode).Run(code);
 
     private static DialectBackendTarget ParseMode(string mode)
     {

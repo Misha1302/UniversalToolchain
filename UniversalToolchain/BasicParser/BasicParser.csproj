@@ -8,8 +8,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\BasicLexer\BasicLexer.csproj" />
-        <ProjectReference Include="..\CommonExceptions\CommonExceptions.csproj" />
+        <ProjectReference Include="..\BasicLexer\BasicLexer.csproj"/>
+        <ProjectReference Include="..\CommonExceptions\CommonExceptions.csproj"/>
     </ItemGroup>
 
 </Project>

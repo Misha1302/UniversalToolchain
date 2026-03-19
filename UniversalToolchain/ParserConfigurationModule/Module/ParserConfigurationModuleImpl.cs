@@ -1,4 +1,3 @@
-
 namespace ParserConfigurationModule.Module;
 
 /// <summary>
