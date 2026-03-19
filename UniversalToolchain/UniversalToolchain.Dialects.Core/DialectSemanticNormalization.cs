@@ -1,6 +1,5 @@
 using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
-using ATarget = UniversalToolchain.Dialects.Abstractions.DialectBackendTarget;
 
 namespace UniversalToolchain.Dialects.Core;
 
@@ -26,14 +25,14 @@ internal static class DialectSemanticNormalization
         return sortedUseModules.Where(x => !sortedExcludeModules.Contains(x, StringComparer.Ordinal)).ToList();
     }
 
-    public static Dictionary<ATarget, bool> NormalizeBackendRules<TDirective>(
+    public static Dictionary<DialectBackendId, bool> NormalizeBackendRules<TDirective>(
         IReadOnlyList<TDirective> directives,
-        Func<TDirective, ATarget> targetSelector,
+        Func<TDirective, DialectBackendId> targetSelector,
         Func<TDirective, bool> valueSelector,
         List<DialectDiagnostic> diagnostics,
         string contradictionCode)
     {
-        var map = new Dictionary<ATarget, bool>();
+        var map = new Dictionary<DialectBackendId, bool>();
 
         foreach (var directive in directives)
         {
@@ -44,7 +43,7 @@ internal static class DialectSemanticNormalization
             {
                 diagnostics.Add(new DialectDiagnostic(
                     contradictionCode,
-                    $"Contradictory backend directives for '{DialectBackendTargetText.ToText(target)}'.",
+                    $"Contradictory backend directives for '{DialectBackendSelectorText.ToText(target)}'.",
                     DialectDiagnosticSeverity.Error));
                 continue;
             }
@@ -59,12 +58,12 @@ internal static class DialectSemanticNormalization
     public static List<IntrinsicBuildDirective> NormalizeIntrinsicRules<TDirective>(
         IReadOnlyList<TDirective> directives,
         Func<TDirective, string> nameSelector,
-        Func<TDirective, ATarget> targetSelector,
+        Func<TDirective, DialectBackendSelector> targetSelector,
         Func<TDirective, bool> valueSelector,
         List<DialectDiagnostic> diagnostics,
         string contradictionCode)
     {
-        var map = new Dictionary<(string Name, ATarget Target), bool>();
+        var map = new Dictionary<(string Name, DialectBackendSelector Target), bool>();
 
         foreach (var directive in directives)
         {
@@ -75,7 +74,7 @@ internal static class DialectSemanticNormalization
             {
                 diagnostics.Add(new DialectDiagnostic(
                     contradictionCode,
-                    $"Contradictory intrinsic directives for '{key.Name}' on '{DialectBackendTargetText.ToText(key.Target)}'.",
+                    $"Contradictory intrinsic directives for '{key.Name}' on '{DialectBackendSelectorText.ToText(key.Target)}'.",
                     DialectDiagnosticSeverity.Error));
                 continue;
             }
@@ -93,12 +92,12 @@ internal static class DialectSemanticNormalization
     public static List<OptimizerBuildDirective> NormalizeOptimizerRules<TDirective>(
         IReadOnlyList<TDirective> directives,
         Func<TDirective, string> nameSelector,
-        Func<TDirective, ATarget> targetSelector,
+        Func<TDirective, DialectBackendSelector> targetSelector,
         Func<TDirective, bool> valueSelector,
         List<DialectDiagnostic> diagnostics,
         string contradictionCode)
     {
-        var map = new Dictionary<(string Name, ATarget Target), bool>();
+        var map = new Dictionary<(string Name, DialectBackendSelector Target), bool>();
 
         foreach (var directive in directives)
         {
@@ -109,7 +108,7 @@ internal static class DialectSemanticNormalization
             {
                 diagnostics.Add(new DialectDiagnostic(
                     contradictionCode,
-                    $"Contradictory optimizer directives for '{key.Name}' on '{DialectBackendTargetText.ToText(key.Target)}'.",
+                    $"Contradictory optimizer directives for '{key.Name}' on '{DialectBackendSelectorText.ToText(key.Target)}'.",
                     DialectDiagnosticSeverity.Error));
                 continue;
             }
@@ -164,7 +163,6 @@ internal static class DialectSemanticNormalization
             indegree[to]++;
         }
 
-        // Deterministic tie-breaker: lexicographically smallest module name is selected first.
         var queue = new SortedSet<string>(nodes.Where(x => indegree[x] == 0), StringComparer.Ordinal);
         var ordered = new List<string>();
 

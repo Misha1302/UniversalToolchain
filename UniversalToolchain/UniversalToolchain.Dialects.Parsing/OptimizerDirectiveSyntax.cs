@@ -4,17 +4,19 @@ using UniversalToolchain.Dialects.Abstractions;
 namespace UniversalToolchain.Dialects.Parsing;
 
 /// <summary>
-///     Represents one optimizer enable/disable directive with backend scope.
+///     Represents one optimizer enable or disable directive with backend scope.
 /// </summary>
 public sealed class OptimizerDirectiveSyntax
 {
-    public OptimizerDirectiveSyntax(string name, bool enabled, DialectBackendTarget target)
+    public OptimizerDirectiveSyntax(string name, bool enabled, DialectBackendId target)
+        : this(name, enabled, DialectBackendSelector.For(target))
+    {
+    }
+
+    public OptimizerDirectiveSyntax(string name, bool enabled, DialectBackendSelector target)
     {
         if (string.IsNullOrWhiteSpace(name))
             Thrower.Argument(nameof(name), "Optimizer name must not be empty.");
-
-        if (!Enum.IsDefined(target))
-            Thrower.Argument(nameof(target), "Backend target is not defined.");
 
         Name = name;
         Enabled = enabled;
@@ -25,5 +27,5 @@ public sealed class OptimizerDirectiveSyntax
 
     public bool Enabled { get; }
 
-    public DialectBackendTarget Target { get; }
+    public DialectBackendSelector Target { get; }
 }

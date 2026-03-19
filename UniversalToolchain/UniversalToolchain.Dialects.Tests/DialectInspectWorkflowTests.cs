@@ -4,7 +4,6 @@ using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Parsing;
-using ATarget = UniversalToolchain.Dialects.Abstractions.DialectBackendTarget;
 
 namespace UniversalToolchain.Dialects.Tests;
 
@@ -102,7 +101,7 @@ public class DialectInspectWorkflowTests
             "dialect",
             "1",
             ["Z", "A"],
-            [ATarget.Interpreter],
+            [TestBackendIds.Interpreter],
             [],
             [],
             [],
@@ -143,10 +142,10 @@ public class DialectInspectWorkflowTests
             .RegisterModule(new RuntimeModuleDescriptor("Conditions", typeof(FakeFrontendModule)))
             .RegisterModule(new RuntimeModuleDescriptor("Labels", typeof(FakeFrontendModule)))
             .RegisterModule(new RuntimeModuleDescriptor("Loops", typeof(FakeFrontendModule)))
-            .RegisterBackend(new RuntimeBackendDescriptor(ATarget.Interpreter, "InterpreterBackend"))
-            .RegisterBackend(new RuntimeBackendDescriptor(ATarget.Cil, "CilBackend"))
+            .RegisterBackend(new RuntimeBackendDescriptor(TestBackendIds.Interpreter, "InterpreterBackend"))
+            .RegisterBackend(new RuntimeBackendDescriptor(TestBackendIds.Cil, "CilBackend"))
             .RegisterOptimizer(new RuntimeOptimizerDescriptor("LocalVariablesOptimization", typeof(FakeOptimizerModule)))
-            .RegisterIntrinsic(new RuntimeIntrinsicDescriptor("add_i32", ATarget.Any))
+            .RegisterIntrinsic(new RuntimeIntrinsicDescriptor("add_i32", TestBackendIds.Any))
             .Build();
 
     private static string ResolveExampleFile(string fileName)

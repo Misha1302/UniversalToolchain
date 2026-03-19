@@ -1,6 +1,5 @@
 using UniversalToolchain.Dialects.Core;
 using UniversalToolchain.Dialects.Parsing;
-using ATarget = UniversalToolchain.Dialects.Abstractions.DialectBackendTarget;
 
 namespace UniversalToolchain.Dialects.Tests;
 
@@ -84,8 +83,8 @@ public class SemanticValidationTests
             [],
             [],
             [
-                new IntrinsicDirectiveSyntax("intrinsic-x", true, ATarget.Any),
-                new IntrinsicDirectiveSyntax("intrinsic-x", false, ATarget.Any)
+                new IntrinsicDirectiveSyntax("intrinsic-x", true, TestBackendIds.Any),
+                new IntrinsicDirectiveSyntax("intrinsic-x", false, TestBackendIds.Any)
             ],
             [],
             null,
@@ -113,8 +112,8 @@ public class SemanticValidationTests
             [],
             [],
             [
-                new OptimizerDirectiveSyntax("opt-x", true, ATarget.Any),
-                new OptimizerDirectiveSyntax("opt-x", false, ATarget.Any)
+                new OptimizerDirectiveSyntax("opt-x", true, TestBackendIds.Any),
+                new OptimizerDirectiveSyntax("opt-x", false, TestBackendIds.Any)
             ],
             null,
             []);
@@ -139,8 +138,8 @@ public class SemanticValidationTests
             [],
             [],
             [
-                new BackendDirectiveSyntax(ATarget.Interpreter, true),
-                new BackendDirectiveSyntax(ATarget.Interpreter, false)
+                new BackendDirectiveSyntax(TestBackendIds.Interpreter, true),
+                new BackendDirectiveSyntax(TestBackendIds.Interpreter, false)
             ],
             [],
             [],
@@ -182,7 +181,7 @@ public class SemanticValidationTests
             Assert.That(plan.CanBuild, Is.True);
             Assert.That(plan.Name, Is.EqualTo("Valid"));
             Assert.That(plan.OrderedModules, Is.EqualTo(new[] { "A", "B" }));
-            Assert.That(plan.EnabledBackends, Is.EqualTo(new[] { ATarget.Cil }));
+            Assert.That(plan.EnabledBackends, Is.EqualTo(new[] { TestBackendIds.Cil }));
             Assert.That(plan.IntrinsicDirectives, Has.Count.EqualTo(1));
             Assert.That(plan.OptimizerDirectives, Has.Count.EqualTo(1));
         });

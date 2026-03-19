@@ -5,7 +5,12 @@ namespace UniversalToolchain.Dialects.Frontend;
 
 public sealed class DialectOptimizerDirective
 {
-    public DialectOptimizerDirective(string name, bool enabled, DialectBackendTarget target)
+    public DialectOptimizerDirective(string name, bool enabled, DialectBackendId target)
+        : this(name, enabled, DialectBackendSelector.For(target))
+    {
+    }
+
+    public DialectOptimizerDirective(string name, bool enabled, DialectBackendSelector target)
     {
         if (string.IsNullOrWhiteSpace(name))
             Thrower.Argument(nameof(name), "Optimizer name must not be empty.");
@@ -19,5 +24,5 @@ public sealed class DialectOptimizerDirective
 
     public bool Enabled { get; }
 
-    public DialectBackendTarget Target { get; }
+    public DialectBackendSelector Target { get; }
 }

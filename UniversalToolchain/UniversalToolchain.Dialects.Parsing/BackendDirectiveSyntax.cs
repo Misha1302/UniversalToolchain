@@ -8,16 +8,16 @@ namespace UniversalToolchain.Dialects.Parsing;
 /// </summary>
 public sealed class BackendDirectiveSyntax
 {
-    public BackendDirectiveSyntax(DialectBackendTarget backend, bool enabled)
+    public BackendDirectiveSyntax(DialectBackendId backend, bool enabled)
     {
-        if (backend == DialectBackendTarget.Any)
-            Thrower.Argument(nameof(backend), "Backend directive supports only interpreter or cil targets.");
+        if (string.IsNullOrWhiteSpace(backend.Value))
+            Thrower.Argument(nameof(backend), "Backend directive must contain a backend identifier.");
 
         Backend = backend;
         Enabled = enabled;
     }
 
-    public DialectBackendTarget Backend { get; }
+    public DialectBackendId Backend { get; }
 
     public bool Enabled { get; }
 }

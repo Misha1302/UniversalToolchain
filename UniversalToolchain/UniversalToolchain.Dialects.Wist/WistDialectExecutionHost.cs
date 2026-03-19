@@ -1,10 +1,6 @@
-using System.Reflection.Emit;
 using BasicCore.Contracts;
-using BasicCore.Core;
 using ExceptionsManager;
-using IntermediateRepresentationAbstractions;
 using Microsoft.Extensions.DependencyInjection;
-using UniversalToolchain.Dialects.Abstractions;
 
 namespace UniversalToolchain.Dialects.Wist;
 
@@ -40,38 +36,22 @@ public sealed class WistDialectExecutionHost : IDisposable
         if (string.IsNullOrWhiteSpace(mode))
             Thrower.Argument(nameof(mode), "Execution mode must not be empty.");
 
-        var target = ParseMode(mode);
-        if (!Configuration.EnabledBackends.Contains(target))
+        if (!Configuration.TryResolveKnownBackendId(mode, out var backendId))
+        {
+            var supportedModes = string.Join(", ", Configuration.EnabledBackends.SelectMany(x => x.AllNames).Distinct(StringComparer.Ordinal).OrderBy(x => x, StringComparer.Ordinal));
+            Thrower.InvalidOpEx($"Unknown execution mode '{mode}'. Supported modes: {supportedModes}.");
+        }
+
+        if (!Configuration.TryGetEnabledBackend(backendId, out var backendConfiguration))
             Thrower.InvalidOpEx($"Dialect '{Configuration.DialectName}' does not enable the '{mode}' backend.");
 
-        var runnables = _serviceProvider.GetServices(typeof(ICoreRunnable)).Cast<ICoreRunnable>().ToList();
-        return target switch
-        {
-            DialectBackendTarget.Cil => runnables.FirstOrDefault(x => IsCoreForCompilationType(x, typeof(DynamicMethod)))
-                                        ?? Thrower.InvalidOpEx<ICoreRunnable>("Compiler backend core was not registered."),
-            DialectBackendTarget.Interpreter => runnables.FirstOrDefault(x => IsCoreForCompilationType(x, typeof(IAbstractIR)))
-                                                ?? Thrower.InvalidOpEx<ICoreRunnable>("Interpreter backend core was not registered."),
-            _ => Thrower.InvalidOpEx<ICoreRunnable>($"Unsupported backend '{target}'.")
-        };
+        var runtime = _serviceProvider.GetServices<WistDialectBackendRuntime>()
+            .FirstOrDefault(x => x.Descriptor.BackendId == backendConfiguration.BackendDescriptor.BackendId);
+        if (runtime == null)
+            Thrower.InvalidOpEx<ICoreRunnable>($"Backend core '{backendConfiguration.BackendDescriptor.CanonicalId}' was not registered.");
+
+        return runtime.Core;
     }
 
     public object? Run(string code, string mode) => GetCore(mode).Run(code);
-
-    private static DialectBackendTarget ParseMode(string mode)
-    {
-        return mode.Trim().ToLowerInvariant() switch
-        {
-            "compiler" => DialectBackendTarget.Cil,
-            "interpreter" => DialectBackendTarget.Interpreter,
-            _ => Thrower.InvalidOpEx<DialectBackendTarget>($"Unknown execution mode '{mode}'. Supported modes: 'compiler', 'interpreter'.")
-        };
-    }
-
-    private static bool IsCoreForCompilationType(ICoreRunnable runnable, Type compilationType)
-    {
-        var type = runnable.GetType();
-        return type.IsGenericType &&
-               type.GetGenericTypeDefinition() == typeof(BasicCoreImpl<>) &&
-               type.GetGenericArguments()[0] == compilationType;
-    }
 }

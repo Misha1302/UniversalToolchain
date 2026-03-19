@@ -48,7 +48,7 @@ public sealed class DialectDefinitionParser : IDialectDefinitionParser
 
         var seenUse = new HashSet<string>(StringComparer.Ordinal);
         var seenExclude = new HashSet<string>(StringComparer.Ordinal);
-        var seenBackend = new Dictionary<DialectBackendTarget, bool>();
+        var seenBackend = new Dictionary<DialectBackendId, bool>();
         var seenCapabilities = new HashSet<string>(StringComparer.Ordinal);
         var seenSecurity = false;
 
@@ -119,16 +119,17 @@ public sealed class DialectDefinitionParser : IDialectDefinitionParser
 
             if (state.MatchKeyword("backend"))
             {
-                var backend = state.ExpectBackendTarget(false);
+                var backend = state.ExpectBackendId();
                 var enabled = state.ExpectEnableDisable();
 
+                var backendText = DialectBackendSelectorText.ToText(backend);
                 if (seenBackend.TryGetValue(backend, out var existing) && existing != enabled)
-                    state.AddError("P103", $"Conflicting backend directive for '{backend.ToString().ToLowerInvariant()}'.");
+                    state.AddError("P103", $"Conflicting backend directive for '{backendText}'.");
 
                 if (!seenBackend.ContainsKey(backend))
                     seenBackend[backend] = enabled;
                 else if (seenBackend[backend] == enabled)
-                    state.AddError("P104", $"Duplicate backend directive for '{backend.ToString().ToLowerInvariant()}'.");
+                    state.AddError("P104", $"Duplicate backend directive for '{backendText}'.");
 
                 backendDirectives.Add(new BackendDirectiveSyntax(backend, enabled));
                 state.ExpectLineEnd();
@@ -141,7 +142,7 @@ public sealed class DialectDefinitionParser : IDialectDefinitionParser
                 state.ExpectKeyword("intrinsic");
                 var intrinsicName = state.ExpectString();
                 state.ExpectKeyword("for");
-                var target = state.ExpectBackendTarget(true);
+                var target = state.ExpectBackendSelector(true);
 
                 if (!string.IsNullOrWhiteSpace(intrinsicName))
                     intrinsicDirectives.Add(new IntrinsicDirectiveSyntax(intrinsicName, allow, target));
@@ -156,7 +157,7 @@ public sealed class DialectDefinitionParser : IDialectDefinitionParser
                 state.ExpectKeyword("optimizer");
                 var optimizerName = state.ExpectIdentifier();
                 state.ExpectKeyword("for");
-                var target = state.ExpectBackendTarget(true);
+                var target = state.ExpectBackendSelector(true);
 
                 if (!string.IsNullOrWhiteSpace(optimizerName))
                     optimizerDirectives.Add(new OptimizerDirectiveSyntax(optimizerName, enabled, target));

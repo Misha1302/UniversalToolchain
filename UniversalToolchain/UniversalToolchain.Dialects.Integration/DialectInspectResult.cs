@@ -65,18 +65,18 @@ public sealed class DialectInspectResult
             sb.AppendLine($"  Dialect: {BuildPlan.Name}");
             sb.AppendLine($"  Version: {BuildPlan.Version ?? "<none>"}");
             sb.AppendLine($"  Ordered modules: {JoinPreserveOrder(BuildPlan.OrderedModules)}");
-            sb.AppendLine($"  Enabled backends: {JoinSorted(BuildPlan.EnabledBackends.Select(DialectBackendTargetText.ToText))}");
-            sb.AppendLine($"  Enabled optimizers: {JoinSorted(BuildPlan.OptimizerDirectives.Where(x => x.Enabled).Select(x => $"{x.Name}@{DialectBackendTargetText.ToText(x.Target)}"))}");
-            sb.AppendLine($"  Allowed intrinsics: {JoinSorted(BuildPlan.IntrinsicDirectives.Where(x => x.Allowed).Select(x => $"{x.Name}@{DialectBackendTargetText.ToText(x.Target)}"))}");
+            sb.AppendLine($"  Enabled backends: {JoinSorted(BuildPlan.EnabledBackends.Select(DialectBackendSelectorText.ToText))}");
+            sb.AppendLine($"  Enabled optimizers: {JoinSorted(BuildPlan.OptimizerDirectives.Where(x => x.Enabled).Select(x => $"{x.Name}@{DialectBackendSelectorText.ToText(x.Target)}"))}");
+            sb.AppendLine($"  Allowed intrinsics: {JoinSorted(BuildPlan.IntrinsicDirectives.Where(x => x.Allowed).Select(x => $"{x.Name}@{DialectBackendSelectorText.ToText(x.Target)}"))}");
         }
 
         if (RuntimeComposition != null)
         {
             sb.AppendLine("Runtime composition:");
-            sb.AppendLine($"  Modules: {JoinPreserveOrder(RuntimeComposition.OrderedModules.Select(x => x.Name))}");
-            sb.AppendLine($"  Backends: {JoinPreserveOrder(RuntimeComposition.EnabledBackends.Select(x => x.RuntimeName))}");
-            sb.AppendLine($"  Optimizers: {JoinPreserveOrder(RuntimeComposition.EnabledOptimizers.Select(x => x.Name))}");
-            sb.AppendLine($"  Intrinsics: {JoinPreserveOrder(RuntimeComposition.AllowedIntrinsics.Select(x => $"{x.Name}@{DialectBackendTargetText.ToText(x.Target)}"))}");
+            sb.AppendLine($"  Modules: {JoinPreserveOrder(RuntimeComposition.OrderedModules.Select(x => x.CanonicalId))}");
+            sb.AppendLine($"  Backends: {JoinPreserveOrder(RuntimeComposition.EnabledBackends.Select(x => x.CanonicalId))}");
+            sb.AppendLine($"  Optimizers: {JoinPreserveOrder(RuntimeComposition.EnabledOptimizers.Select(x => x.CanonicalId))}");
+            sb.AppendLine($"  Intrinsics: {JoinPreserveOrder(RuntimeComposition.AllowedIntrinsics.Select(x => $"{x.Name}@{DialectBackendSelectorText.ToText(x.Target)}"))}");
         }
 
         return sb.ToString().TrimEnd();

@@ -114,7 +114,7 @@ public class FrameworkNativeExtensionSeamsTests
             Assert.That(definition.Name, Is.EqualTo("Tiny"));
             Assert.That(definition.ModulePolicy.IncludedModules, Is.EqualTo(new[] { "A", "B" }));
             Assert.That(definition.ModulePolicy.ExcludedModules, Is.EqualTo(new[] { "Legacy" }));
-            Assert.That(definition.BackendPolicy.EnabledBackends, Is.EqualTo(new[] { DialectBackendTarget.Interpreter, DialectBackendTarget.Cil }));
+            Assert.That(definition.BackendPolicy.EnabledBackends, Is.EqualTo(new[] { TestBackendIds.Cil, TestBackendIds.Interpreter }));
             Assert.That(definition.IntrinsicPolicy.AllowedIntrinsics, Is.EqualTo(new[] { "add_i32" }));
             Assert.That(definition.IntrinsicPolicy.ForbiddenIntrinsics, Is.EqualTo(new[] { "sub_i32" }));
             Assert.That(definition.OptimizerPolicy.EnabledOptimizers, Is.EqualTo(new[] { "Ssa" }));
@@ -141,8 +141,8 @@ public class FrameworkNativeExtensionSeamsTests
             Assert.That(first.Intrinsics.Keys, Is.EqualTo(second.Intrinsics.Keys));
             Assert.That(first.Modules.Keys, Does.Contain("DemoFrontend"));
             Assert.That(first.Optimizers.Keys, Does.Contain("DemoOptimizer"));
-            Assert.That(first.Intrinsics.Keys, Does.Contain(("add_i32", DialectBackendTarget.Any)));
-            Assert.That(first.Backends.Keys, Does.Contain(DialectBackendTarget.Interpreter));
+            Assert.That(first.Intrinsics.Keys, Does.Contain(("add_i32", TestBackendIds.Any)));
+            Assert.That(first.Backends.Keys, Does.Contain(TestBackendIds.Interpreter));
         });
     }
 
@@ -155,9 +155,9 @@ public class FrameworkNativeExtensionSeamsTests
             ["A"],
             [],
             [],
-            [new BackendDirectiveSyntax(DialectBackendTarget.Interpreter, true)],
-            [new IntrinsicDirectiveSyntax("add_i32", true, DialectBackendTarget.Interpreter)],
-            [new OptimizerDirectiveSyntax("Ssa", true, DialectBackendTarget.Any)],
+            [new BackendDirectiveSyntax(TestBackendIds.Interpreter, true)],
+            [new IntrinsicDirectiveSyntax("add_i32", true, TestBackendIds.InterpreterSelector)],
+            [new OptimizerDirectiveSyntax("Ssa", true, TestBackendIds.Any)],
             null,
             []);
 
@@ -168,11 +168,11 @@ public class FrameworkNativeExtensionSeamsTests
             Assert.That(plan.CanBuild, Is.True);
             Assert.That(plan.IntrinsicDirectives.Select(x => (x.Name, x.Allowed, x.Target)), Is.EqualTo(new[]
             {
-                ("add_i32", true, DialectBackendTarget.Interpreter)
+                ("add_i32", true, TestBackendIds.InterpreterSelector)
             }));
             Assert.That(plan.OptimizerDirectives.Select(x => (x.Name, x.Enabled, x.Target)), Is.EqualTo(new[]
             {
-                ("Ssa", true, DialectBackendTarget.Any)
+                ("Ssa", true, TestBackendIds.Any)
             }));
         });
     }
@@ -185,9 +185,9 @@ public class FrameworkNativeExtensionSeamsTests
         {
             builder
                 .RegisterModule(new RuntimeModuleDescriptor("DemoFrontend", typeof(FakeFrontendModule)))
-                .RegisterBackend(new RuntimeBackendDescriptor(DialectBackendTarget.Interpreter, "InterpreterBackend"))
+                .RegisterBackend(new RuntimeBackendDescriptor(TestBackendIds.Interpreter, "InterpreterBackend"))
                 .RegisterOptimizer(new RuntimeOptimizerDescriptor("DemoOptimizer", typeof(FakeOptimizerModule)))
-                .RegisterIntrinsic(new RuntimeIntrinsicDescriptor("add_i32", DialectBackendTarget.Any));
+                .RegisterIntrinsic(new RuntimeIntrinsicDescriptor("add_i32", TestBackendIds.Any));
         }
     }
 

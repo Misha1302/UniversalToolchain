@@ -117,23 +117,36 @@ internal sealed class ParserState
         return false;
     }
 
-    public DialectBackendTarget ExpectBackendTarget(bool allowAny)
+    public DialectBackendId ExpectBackendId()
     {
-        if (MatchKeyword("interpreter"))
-            return DialectBackendTarget.Interpreter;
+        if (Current.Kind == DialectTokenKind.Identifier)
+        {
+            var value = Current.Text;
+            Advance();
+            return new DialectBackendId(value);
+        }
 
-        if (MatchKeyword("cil"))
-            return DialectBackendTarget.Cil;
+        AddError("P207", $"Expected backend identifier at line {Current.Line}, column {Current.Column}.");
+        return new DialectBackendId("invalid-backend");
+    }
 
-        if (allowAny && MatchKeyword("any"))
-            return DialectBackendTarget.Any;
+    public DialectBackendSelector ExpectBackendSelector(bool allowAny)
+    {
+        if (Current.Kind == DialectTokenKind.Identifier)
+        {
+            var value = Current.Text;
+            Advance();
+
+            if (DialectBackendSelectorText.TryParseSelector(value, allowAny, out var selector))
+                return selector;
+        }
 
         AddError(
             "P207",
             allowAny
-                ? $"Expected backend target 'interpreter', 'cil', or 'any' at line {Current.Line}, column {Current.Column}."
-                : $"Expected backend target 'interpreter' or 'cil' at line {Current.Line}, column {Current.Column}.");
-        return allowAny ? DialectBackendTarget.Any : DialectBackendTarget.Interpreter;
+                ? $"Expected backend identifier or wildcard 'any' at line {Current.Line}, column {Current.Column}."
+                : $"Expected backend identifier at line {Current.Line}, column {Current.Column}.");
+        return allowAny ? DialectBackendSelector.Any : DialectBackendSelector.For(new DialectBackendId("invalid-backend"));
     }
 
     public SecurityProfile ExpectSecurityProfile()

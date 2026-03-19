@@ -110,11 +110,11 @@ public class BuildPlanCollaboratorsTests
             ["Z"],
             [new OrderRule(OrderRuleKind.Before, "A", "B")],
             [
-                new BackendDirectiveSyntax(DialectBackendTarget.Cil, false),
-                new BackendDirectiveSyntax(DialectBackendTarget.Interpreter, true)
+                new BackendDirectiveSyntax(TestBackendIds.Cil, false),
+                new BackendDirectiveSyntax(TestBackendIds.Interpreter, true)
             ],
-            [new IntrinsicDirectiveSyntax("i1", true, DialectBackendTarget.Any)],
-            [new OptimizerDirectiveSyntax("o1", true, DialectBackendTarget.Interpreter)],
+            [new IntrinsicDirectiveSyntax("i1", true, TestBackendIds.Any)],
+            [new OptimizerDirectiveSyntax("o1", true, TestBackendIds.Interpreter)],
             null,
             []);
 
@@ -124,8 +124,8 @@ public class BuildPlanCollaboratorsTests
         {
             Assert.That(diagnostics, Is.Empty);
             Assert.That(normalized.ActiveModules, Is.EqualTo(new[] { "A", "B" }));
-            Assert.That(normalized.BackendMap[DialectBackendTarget.Interpreter], Is.True);
-            Assert.That(normalized.BackendMap[DialectBackendTarget.Cil], Is.False);
+            Assert.That(normalized.BackendMap[TestBackendIds.Interpreter], Is.True);
+            Assert.That(normalized.BackendMap[TestBackendIds.Cil], Is.False);
             Assert.That(normalized.OrderConstraints.Select(x => x.Kind), Is.EqualTo(new[] { DialectOrderConstraintKind.Before }));
             Assert.That(normalized.IntrinsicDirectives, Has.Count.EqualTo(1));
             Assert.That(normalized.OptimizerDirectives, Has.Count.EqualTo(1));

@@ -1,4 +1,3 @@
 dialect MinimalArithmetic
 use Arithmetic,Numbers,Scopes,Whitespaces
 backend interpreter
-security trusted

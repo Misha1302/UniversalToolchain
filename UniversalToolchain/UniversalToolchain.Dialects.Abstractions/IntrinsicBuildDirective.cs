@@ -7,13 +7,15 @@ namespace UniversalToolchain.Dialects.Abstractions;
 /// </summary>
 public sealed class IntrinsicBuildDirective
 {
-    public IntrinsicBuildDirective(string name, bool allowed, DialectBackendTarget target)
+    public IntrinsicBuildDirective(string name, bool allowed, DialectBackendId target)
+        : this(name, allowed, DialectBackendSelector.For(target))
+    {
+    }
+
+    public IntrinsicBuildDirective(string name, bool allowed, DialectBackendSelector target)
     {
         if (string.IsNullOrWhiteSpace(name))
             Thrower.Argument(nameof(name), "Intrinsic name must not be empty.");
-
-        if (!Enum.IsDefined(target))
-            Thrower.Argument(nameof(target), "Backend target is not defined.");
 
         Name = name;
         Allowed = allowed;
@@ -24,5 +26,5 @@ public sealed class IntrinsicBuildDirective
 
     public bool Allowed { get; }
 
-    public DialectBackendTarget Target { get; }
+    public DialectBackendSelector Target { get; }
 }

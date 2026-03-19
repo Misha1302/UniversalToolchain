@@ -1,7 +1,6 @@
 using BasicCore.Contracts;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Integration;
-using ATarget = UniversalToolchain.Dialects.Abstractions.DialectBackendTarget;
 
 namespace UniversalToolchain.Dialects.Tests;
 
@@ -14,10 +13,10 @@ public class ApplyModeSeamTests
             "FrameworkNative",
             "v1",
             ["Arithmetic", "Variables"],
-            [ATarget.Interpreter],
+            [TestBackendIds.Interpreter],
             [],
-            [new IntrinsicBuildDirective("add_i32", true, ATarget.Any)],
-            [new OptimizerBuildDirective("LocalVariablesOptimization", true, ATarget.Any)],
+            [new IntrinsicBuildDirective("add_i32", true, TestBackendIds.Any)],
+            [new OptimizerBuildDirective("LocalVariablesOptimization", true, TestBackendIds.Any)],
             SecurityProfile.Trusted,
             [],
             new DialectValidationResult());
@@ -34,8 +33,8 @@ public class ApplyModeSeamTests
             Assert.That(applyDescription.FrontendModules.Select(x => x.Name), Is.EqualTo(new[] { nameof(FakeFrontendModule), nameof(FakeFrontendModule2) }));
             Assert.That(applyDescription.IrProcessingModules, Is.Empty);
             Assert.That(applyDescription.Optimizers.Select(x => x.Name), Is.EqualTo(new[] { nameof(FakeOptimizerModule) }));
-            Assert.That(applyDescription.RuntimeBackends, Is.EqualTo(new[] { "InterpreterBackend" }));
-            Assert.That(applyDescription.Intrinsics.Select(x => $"{x.Name}@{DialectBackendTargetText.ToText(x.Target)}"), Is.EqualTo(new[] { "add_i32@any" }));
+            Assert.That(applyDescription.RuntimeBackends, Is.EqualTo(new[] { "interpreter" }));
+            Assert.That(applyDescription.Intrinsics.Select(x => $"{x.Name}@{DialectBackendSelectorText.ToText(x.Target)}"), Is.EqualTo(new[] { "add_i32@any" }));
         });
     }
 
@@ -46,7 +45,7 @@ public class ApplyModeSeamTests
             "FrameworkNative",
             "v1",
             ["MissingModule"],
-            [DialectBackendTarget.Interpreter],
+            [TestBackendIds.Interpreter],
             [],
             [],
             [],
@@ -70,15 +69,15 @@ public class ApplyModeSeamTests
             "FrameworkNative",
             "v1",
             ["Arithmetic", "Variables"],
-            [DialectBackendTarget.Interpreter, DialectBackendTarget.Cil],
+            [TestBackendIds.Interpreter, TestBackendIds.Cil],
             [],
             [
-                new IntrinsicBuildDirective("add_i32", true, ATarget.Any),
-                new IntrinsicBuildDirective("sub_i32", true, ATarget.Any)
+                new IntrinsicBuildDirective("add_i32", true, TestBackendIds.Any),
+                new IntrinsicBuildDirective("sub_i32", true, TestBackendIds.Any)
             ],
             [
-                new OptimizerBuildDirective("AlgebraicSimplification", true, ATarget.Any),
-                new OptimizerBuildDirective("LocalVariablesOptimization", true, ATarget.Any)
+                new OptimizerBuildDirective("AlgebraicSimplification", true, TestBackendIds.Any),
+                new OptimizerBuildDirective("LocalVariablesOptimization", true, TestBackendIds.Any)
             ],
             SecurityProfile.Trusted,
             [],
@@ -98,12 +97,12 @@ public class ApplyModeSeamTests
         new DialectRuntimeDescriptorRegistryBuilder()
             .RegisterModule(new RuntimeModuleDescriptor("Arithmetic", typeof(FakeFrontendModule)))
             .RegisterModule(new RuntimeModuleDescriptor("Variables", typeof(FakeFrontendModule2)))
-            .RegisterBackend(new RuntimeBackendDescriptor(ATarget.Interpreter, "InterpreterBackend"))
-            .RegisterBackend(new RuntimeBackendDescriptor(ATarget.Cil, "CilBackend"))
+            .RegisterBackend(new RuntimeBackendDescriptor(TestBackendIds.Interpreter, "interpreter"))
+            .RegisterBackend(new RuntimeBackendDescriptor(TestBackendIds.Cil, "CilBackend"))
             .RegisterOptimizer(new RuntimeOptimizerDescriptor("LocalVariablesOptimization", typeof(FakeOptimizerModule)))
             .RegisterOptimizer(new RuntimeOptimizerDescriptor("AlgebraicSimplification", typeof(FakeOptimizerModule2)))
-            .RegisterIntrinsic(new RuntimeIntrinsicDescriptor("add_i32", ATarget.Any))
-            .RegisterIntrinsic(new RuntimeIntrinsicDescriptor("sub_i32", ATarget.Any))
+            .RegisterIntrinsic(new RuntimeIntrinsicDescriptor("add_i32", TestBackendIds.Any))
+            .RegisterIntrinsic(new RuntimeIntrinsicDescriptor("sub_i32", TestBackendIds.Any))
             .Build();
 
     private sealed class FakeFrontendModule : IFrontendCoreModule

@@ -8,19 +8,18 @@ namespace UniversalToolchain.Dialects.Integration;
 /// </summary>
 public sealed class DialectApplyIntrinsicPermission
 {
-    public DialectApplyIntrinsicPermission(string name, DialectBackendTarget target)
+    public DialectApplyIntrinsicPermission(string canonicalId, DialectBackendSelector target)
     {
-        if (string.IsNullOrWhiteSpace(name))
-            Thrower.Argument(nameof(name), "Intrinsic name must not be empty.");
+        if (string.IsNullOrWhiteSpace(canonicalId))
+            Thrower.Argument(nameof(canonicalId), "Intrinsic canonical identifier must not be empty.");
 
-        if (!Enum.IsDefined(target))
-            Thrower.Argument(nameof(target), "Backend target is not defined.");
-
-        Name = name;
+        CanonicalId = canonicalId;
         Target = target;
     }
 
-    public string Name { get; }
+    public string CanonicalId { get; }
 
-    public DialectBackendTarget Target { get; }
+    public string Name => CanonicalId;
+
+    public DialectBackendSelector Target { get; }
 }

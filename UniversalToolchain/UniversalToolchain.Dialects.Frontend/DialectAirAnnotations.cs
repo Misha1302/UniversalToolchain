@@ -93,18 +93,18 @@ public sealed class BackendAirAnnotation : IDialectDefinitionSliceAnnotation
 
 public sealed class IntrinsicAirAnnotation : IDialectDefinitionSliceAnnotation
 {
-    public IntrinsicAirAnnotation(string intrinsicName, bool allowed, DialectBackendTarget target = DialectBackendTarget.Any)
+    public IntrinsicAirAnnotation(string intrinsicName, bool allowed, DialectBackendSelector? target = null)
     {
         IntrinsicName = DialectAnnotationValueGuard.RequireValue(intrinsicName, nameof(intrinsicName), "Intrinsic annotation must not be empty.");
         Allowed = allowed;
-        Target = target;
+        Target = target ?? DialectBackendSelector.Any;
     }
 
     public string IntrinsicName { get; }
 
     public bool Allowed { get; }
 
-    public DialectBackendTarget Target { get; }
+    public DialectBackendSelector Target { get; }
 
     public void Apply(DialectDefinitionAggregation aggregation)
     {
@@ -114,18 +114,18 @@ public sealed class IntrinsicAirAnnotation : IDialectDefinitionSliceAnnotation
 
 public sealed class OptimizerAirAnnotation : IDialectDefinitionSliceAnnotation
 {
-    public OptimizerAirAnnotation(string optimizerName, bool enabled, DialectBackendTarget target = DialectBackendTarget.Any)
+    public OptimizerAirAnnotation(string optimizerName, bool enabled, DialectBackendSelector? target = null)
     {
         OptimizerName = DialectAnnotationValueGuard.RequireValue(optimizerName, nameof(optimizerName), "Optimizer annotation must not be empty.");
         Enabled = enabled;
-        Target = target;
+        Target = target ?? DialectBackendSelector.Any;
     }
 
     public string OptimizerName { get; }
 
     public bool Enabled { get; }
 
-    public DialectBackendTarget Target { get; }
+    public DialectBackendSelector Target { get; }
 
     public void Apply(DialectDefinitionAggregation aggregation)
     {
@@ -175,12 +175,12 @@ internal static class DialectAnnotationValueGuard
         return result;
     }
 
-    public static DialectBackendTarget ParseBackend(string value)
+    public static DialectBackendId ParseBackend(string value)
     {
-        if (!DialectBackendTargetText.TryParse(value, false, out var target))
-            Thrower.Argument(nameof(value), $"Backend '{value}' is not supported. Expected one of: interpreter, cil.");
+        if (!DialectBackendSelectorText.TryParseId(value, out var backendId))
+            Thrower.Argument(nameof(value), $"Backend '{value}' is not supported.");
 
-        return target;
+        return backendId;
     }
 
     public static DialectSecurityProfile ParseSecurityProfile(string value)

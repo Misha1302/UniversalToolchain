@@ -72,9 +72,9 @@ public class FrameworkNativeDslDemoWorkflowTests
         new DialectRuntimeDescriptorRegistryBuilder()
             .RegisterModule(new RuntimeModuleDescriptor("Arithmetic", typeof(FakeFrontendModule)))
             .RegisterModule(new RuntimeModuleDescriptor("Variables", typeof(FakeFrontendModule)))
-            .RegisterBackend(new RuntimeBackendDescriptor(DialectBackendTarget.Interpreter, "InterpreterBackend"))
+            .RegisterBackend(new RuntimeBackendDescriptor(TestBackendIds.Interpreter, "InterpreterBackend"))
             .RegisterOptimizer(new RuntimeOptimizerDescriptor("LocalVariablesOptimization", typeof(FakeOptimizerModule)))
-            .RegisterIntrinsic(new RuntimeIntrinsicDescriptor("add_i32", DialectBackendTarget.Any))
+            .RegisterIntrinsic(new RuntimeIntrinsicDescriptor("add_i32", TestBackendIds.Any))
             .Build();
 
     private sealed class FakeFrontendModule : IFrontendCoreModule

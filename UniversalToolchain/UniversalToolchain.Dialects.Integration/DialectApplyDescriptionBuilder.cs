@@ -32,11 +32,11 @@ public sealed class DialectApplyDescriptionBuilder
             .ToList();
 
         var runtimeBackends = runtimeComposition.EnabledBackends
-            .Select(x => x.RuntimeName)
+            .Select(x => x.CanonicalId)
             .ToList();
 
         var intrinsics = runtimeComposition.AllowedIntrinsics
-            .Select(x => new DialectApplyIntrinsicPermission(x.Name, x.Target))
+            .Select(x => new DialectApplyIntrinsicPermission(x.CanonicalId, x.Target))
             .ToList();
 
         return new DialectApplyDescription(

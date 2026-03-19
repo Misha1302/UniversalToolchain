@@ -38,7 +38,7 @@ public class ApplyModeGuardContractsTests
         var backends = new List<string> { "InterpreterBackend" };
         var intrinsics = new List<DialectApplyIntrinsicPermission>
         {
-            new("add_i32", DialectBackendTarget.Any)
+            new("add_i32", TestBackendIds.Any)
         };
 
         var description = new DialectApplyDescription(
@@ -51,7 +51,7 @@ public class ApplyModeGuardContractsTests
 
         frontendModules.Add(typeof(FakeOptimizerModule));
         backends.Add("CilBackend");
-        intrinsics.Add(new DialectApplyIntrinsicPermission("sub_i32", DialectBackendTarget.Any));
+        intrinsics.Add(new DialectApplyIntrinsicPermission("sub_i32", TestBackendIds.Any));
 
         Assert.Multiple(() =>
         {
@@ -70,7 +70,7 @@ public class ApplyModeGuardContractsTests
             [],
             [],
             ["InterpreterBackend"],
-            [new DialectApplyIntrinsicPermission("add_i32", DialectBackendTarget.Any)]);
+            [new DialectApplyIntrinsicPermission("add_i32", TestBackendIds.Any)]);
 
         Assert.Multiple(() =>
         {

@@ -61,8 +61,8 @@ public class DialectDslBuiltInDirectiveTests
         {
             Assert.That(success.BackendDirectives.Select(x => (x.Backend, x.Enabled)), Is.EqualTo(new[]
             {
-                (DialectBackendTarget.Cil, true),
-                (DialectBackendTarget.Interpreter, true)
+                (TestBackendIds.Cil, true),
+                (TestBackendIds.Interpreter, true)
             }));
             DialectDslTestSupport.AssertParserExceptionContains(duplicate!, "Duplicate backend identifier is not allowed");
         });
@@ -147,7 +147,7 @@ public class DialectDslBuiltInDirectiveTests
                 (DialectOrderDirectiveKind.Before, "Lowering"),
                 (DialectOrderDirectiveKind.After, "Binding")
             }));
-            Assert.That(slice.BackendDirectives.Select(x => x.Backend), Is.EqualTo(new[] { DialectBackendTarget.Cil }));
+            Assert.That(slice.BackendDirectives.Select(x => x.Backend), Is.EqualTo(new[] { TestBackendIds.Cil }));
             Assert.That(slice.IntrinsicDirectives.Select(x => (x.Name, x.Allowed)), Is.EqualTo(new[] { ("add_i32", true), ("sub_i32", false) }));
             Assert.That(slice.OptimizerDirectives.Select(x => (x.Name, x.Enabled)), Is.EqualTo(new[] { ("Ssa", true), ("Inlining", false) }));
             Assert.That(slice.SecurityProfile, Is.EqualTo(DialectSecurityProfile.Restricted));
