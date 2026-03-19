@@ -16,4 +16,7 @@ public class CommonOptions
 
     [Option("use-native-math", Default = false, HelpText = "Using native math instead of generic math")]
     public bool UseNativeMath { get; set; }
+
+    [Option("dialect-file", HelpText = "Path to a dialect-definition file that configures the Wist runtime")]
+    public string? DialectFile { get; set; }
 }
