@@ -82,7 +82,7 @@ public class DialectDefinitionTests
         new(
             name,
             new ModulePolicy(["Arithmetic"], ["Interop"]),
-            new BackendPolicy([DialectBackendTarget.Cil], [DialectBackendTarget.Interpreter]),
+            new BackendPolicy([TestBackendIds.Cil], [TestBackendIds.Interpreter]),
             new IntrinsicPolicy(["add_i32"], ["unsafe_reflect"]),
             new OptimizerPolicy(["const_fold"], ["unsafe_inline"]),
             new SecurityPolicy(SecurityProfile.Restricted),

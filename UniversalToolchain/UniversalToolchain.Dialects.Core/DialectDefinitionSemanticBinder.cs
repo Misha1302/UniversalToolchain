@@ -48,8 +48,8 @@ internal static class DialectDefinitionSemanticBinder
             syntaxDocument.Name,
             new ModulePolicy(activeModules, syntaxDocument.ExcludeModules.Distinct(StringComparer.Ordinal).OrderBy(x => x, StringComparer.Ordinal)),
             new BackendPolicy(
-                backendMap.Where(x => x.Value).Select(x => x.Key).OrderBy(x => x),
-                backendMap.Where(x => !x.Value).Select(x => x.Key).OrderBy(x => x)),
+                backendMap.Where(x => x.Value).Select(x => x.Key).OrderBy(x => x, Comparer<DialectBackendId>.Default),
+                backendMap.Where(x => !x.Value).Select(x => x.Key).OrderBy(x => x, Comparer<DialectBackendId>.Default)),
             new IntrinsicPolicy(
                 intrinsicDirectives.Where(x => x.Allowed).Select(FormatRuleName),
                 intrinsicDirectives.Where(x => !x.Allowed).Select(FormatRuleName)),
@@ -107,8 +107,8 @@ internal static class DialectDefinitionSemanticBinder
             compiledDialect.Name,
             new ModulePolicy(activeModules, compiledDialect.ExcludeModules.Distinct(StringComparer.Ordinal).OrderBy(x => x, StringComparer.Ordinal)),
             new BackendPolicy(
-                backendMap.Where(x => x.Value).Select(x => x.Key).OrderBy(x => x),
-                backendMap.Where(x => !x.Value).Select(x => x.Key).OrderBy(x => x)),
+                backendMap.Where(x => x.Value).Select(x => x.Key).OrderBy(x => x, Comparer<DialectBackendId>.Default),
+                backendMap.Where(x => !x.Value).Select(x => x.Key).OrderBy(x => x, Comparer<DialectBackendId>.Default)),
             new IntrinsicPolicy(
                 intrinsicDirectives.Where(x => x.Allowed).Select(FormatRuleName),
                 intrinsicDirectives.Where(x => !x.Allowed).Select(FormatRuleName)),
@@ -124,7 +124,7 @@ internal static class DialectDefinitionSemanticBinder
 
     private static string FormatRuleName(OptimizerBuildDirective directive) => FormatRuleName(directive.Name, directive.Target);
 
-    private static string FormatRuleName(string name, DialectBackendTarget target) => target == DialectBackendTarget.Any ? name : $"{name}@{DialectBackendTargetText.ToText(target)}";
+    private static string FormatRuleName(string name, DialectBackendSelector target) => target.IsAny ? name : $"{name}@{DialectBackendSelectorText.ToText(target.BackendId)}";
 
     private static SecurityProfile ToSecurityProfile(DialectSecurityProfile profile)
     {

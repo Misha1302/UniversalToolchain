@@ -56,7 +56,7 @@ internal static class DialectDefinitionBuildPlanProjector
             validationResult);
     }
 
-    private static IReadOnlyList<DialectBackendTarget> ExpandBackendPolicy(IReadOnlyList<DialectBackendTarget> backends)
+    private static IReadOnlyList<DialectBackendId> ExpandBackendPolicy(IReadOnlyList<DialectBackendId> backends)
     {
         return backends.OrderBy(x => x).ToList();
     }
@@ -83,13 +83,13 @@ internal static class DialectDefinitionBuildPlanProjector
         return new OptimizerBuildDirective(name, enabled, target);
     }
 
-    private static (string Name, DialectBackendTarget Target) ParseScopedTarget(string value)
+    private static (string Name, DialectBackendSelector Target) ParseScopedTarget(string value)
     {
         var parts = value.Split('@', 2, StringSplitOptions.TrimEntries);
         if (parts.Length == 1)
-            return (value, DialectBackendTarget.Any);
+            return (value, DialectBackendSelector.Any);
 
-        if (!DialectBackendTargetText.TryParse(parts[1], false, out var target))
+        if (!DialectBackendSelectorText.TryParseSelector(parts[1], false, out var target))
             Thrower.Argument(nameof(value), $"Scoped backend target '{parts[1]}' is not supported.");
 
         return (parts[0], target);

@@ -55,7 +55,7 @@ public sealed class DialectApplyDescription
             $"IR modules: {JoinTypeNames(IrProcessingModules)}",
             $"Optimizers: {JoinTypeNames(Optimizers)}",
             $"Backends: {JoinStrings(RuntimeBackends)}",
-            $"Intrinsics: {JoinStrings(Intrinsics.Select(x => $"{x.Name}@{DialectBackendTargetText.ToText(x.Target)}"))}");
+            $"Intrinsics: {JoinStrings(Intrinsics.Select(x => $"{x.CanonicalId}@{DialectBackendSelectorText.ToText(x.Target)}"))}");
     }
 
     private static List<T> Snapshot<T>(IEnumerable<T> source, string paramName)

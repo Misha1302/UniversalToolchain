@@ -1,5 +1,3 @@
 dialect RestrictedSandbox
 use Arithmetic,Numbers,Scopes,Whitespaces
 backend interpreter
-security restricted
-capability sandbox

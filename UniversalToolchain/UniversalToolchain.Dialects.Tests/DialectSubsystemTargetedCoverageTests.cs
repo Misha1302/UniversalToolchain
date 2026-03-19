@@ -28,9 +28,9 @@ public class DialectSubsystemTargetedCoverageTests
         {
             Assert.That(result.UseModules, Is.EqualTo(new[] { "A", "B" }));
             Assert.That(result.ExcludeModules, Is.EqualTo(new[] { "Z" }));
-            Assert.That(result.BackendDirectives.Select(x => (x.Backend, x.Enabled)), Is.EqualTo(new[] { (DialectBackendTarget.Interpreter, true) }));
-            Assert.That(result.IntrinsicDirectives.Select(x => (x.Name, x.Target)), Is.EqualTo(new[] { ("i_add", DialectBackendTarget.Any) }));
-            Assert.That(result.OptimizerDirectives.Select(x => (x.Name, x.Target)), Is.EqualTo(new[] { ("O1", DialectBackendTarget.Any) }));
+            Assert.That(result.BackendDirectives.Select(x => (x.Backend, x.Enabled)), Is.EqualTo(new[] { (TestBackendIds.Interpreter, true) }));
+            Assert.That(result.IntrinsicDirectives.Select(x => (x.Name, x.Target)), Is.EqualTo(new[] { ("i_add", TestBackendIds.Any) }));
+            Assert.That(result.OptimizerDirectives.Select(x => (x.Name, x.Target)), Is.EqualTo(new[] { ("O1", TestBackendIds.Any) }));
         });
     }
 
@@ -49,17 +49,17 @@ public class DialectSubsystemTargetedCoverageTests
             "dialect",
             "1",
             ["A"],
-            [DialectBackendTarget.Interpreter],
+            [TestBackendIds.Interpreter],
             [],
-            [new IntrinsicBuildDirective("intr-cil", true, DialectBackendTarget.Cil)],
-            [new OptimizerBuildDirective("opt-cil", true, DialectBackendTarget.Cil)],
+            [new IntrinsicBuildDirective("intr-cil", true, TestBackendIds.Cil)],
+            [new OptimizerBuildDirective("opt-cil", true, TestBackendIds.Cil)],
             SecurityProfile.Trusted,
             [],
             new DialectValidationResult());
 
         var registry = new DialectRuntimeDescriptorRegistryBuilder()
             .RegisterModule(new RuntimeModuleDescriptor("A", typeof(FakeFrontendModule)))
-            .RegisterBackend(new RuntimeBackendDescriptor(DialectBackendTarget.Interpreter, "InterpreterBackend"))
+            .RegisterBackend(new RuntimeBackendDescriptor(TestBackendIds.Interpreter, "InterpreterBackend"))
             .Build();
 
         var composition = new DialectRuntimeCompositionResolver().Resolve(plan, registry);

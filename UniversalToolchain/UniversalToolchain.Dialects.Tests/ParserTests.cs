@@ -90,7 +90,7 @@ public class ParserTests
     }
 
     [Test]
-    public void Parse_InvalidBackendToken_AddsDiagnostic()
+    public void Parse_OpenEndedBackendIdentifier_IsAccepted()
     {
         var parser = new DialectDefinitionParser();
 
@@ -98,8 +98,8 @@ public class ParserTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(result.IsSuccess, Is.False);
-            Assert.That(result.Diagnostics.Any(x => x.Code == "P207"), Is.True);
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Document!.BackendDirectives.Select(x => x.Backend.Value), Is.EqualTo(new[] { "wasm" }));
         });
     }
 

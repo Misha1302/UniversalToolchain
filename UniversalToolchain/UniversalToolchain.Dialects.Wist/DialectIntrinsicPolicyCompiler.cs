@@ -9,12 +9,14 @@ internal sealed class DialectIntrinsicPolicyCompiler<TCompilationOutput> : IAbst
 {
     private readonly HashSet<string> _allowedIntrinsics;
     private readonly HashSet<string> _forbiddenIntrinsics;
+    private readonly bool _hasExplicitAllowList;
     private readonly IAbstractIrCompiler<TCompilationOutput> _inner;
 
     public DialectIntrinsicPolicyCompiler(
         IAbstractIrCompiler<TCompilationOutput> inner,
         IEnumerable<string> allowedIntrinsics,
-        IEnumerable<string> forbiddenIntrinsics)
+        IEnumerable<string> forbiddenIntrinsics,
+        bool hasExplicitAllowList = false)
     {
         if (inner == null)
             Thrower.ArgumentNull(nameof(inner));
@@ -22,6 +24,7 @@ internal sealed class DialectIntrinsicPolicyCompiler<TCompilationOutput> : IAbst
         _inner = inner;
         _allowedIntrinsics = CreateSet(allowedIntrinsics, nameof(allowedIntrinsics));
         _forbiddenIntrinsics = CreateSet(forbiddenIntrinsics, nameof(forbiddenIntrinsics));
+        _hasExplicitAllowList = hasExplicitAllowList;
         SupportedIntrinsics = _inner.SupportedIntrinsics
             .Where(x => !_forbiddenIntrinsics.Contains(x))
             .OrderBy(x => x, StringComparer.Ordinal)
@@ -55,7 +58,7 @@ internal sealed class DialectIntrinsicPolicyCompiler<TCompilationOutput> : IAbst
             if (_forbiddenIntrinsics.Contains(intrinsicName))
                 Thrower.InvalidOpEx($"Intrinsic '{intrinsicName}' is forbidden by the selected dialect.");
 
-            if (_allowedIntrinsics.Count > 0 && !_allowedIntrinsics.Contains(intrinsicName))
+            if (_hasExplicitAllowList && !_allowedIntrinsics.Contains(intrinsicName))
                 Thrower.InvalidOpEx($"Intrinsic '{intrinsicName}' is not allowed by the selected dialect.");
         }
     }

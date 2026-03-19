@@ -1,5 +1,4 @@
 using Microsoft.Extensions.DependencyInjection;
-using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
 
@@ -19,11 +18,14 @@ public class WistDialectRuntimeDescriptorProviderTests
             Assert.That(first.Optimizers.Keys, Is.EqualTo(second.Optimizers.Keys));
             Assert.That(first.Backends.Keys, Is.EqualTo(second.Backends.Keys));
             Assert.That(first.Intrinsics.Keys, Is.EqualTo(second.Intrinsics.Keys));
-            Assert.That(first.Modules.Keys, Does.Contain(WistDialectCatalogNames.Modules.Arithmetic));
-            Assert.That(first.Modules.Keys, Does.Contain(WistDialectCatalogNames.Modules.Variables));
-            Assert.That(first.Optimizers.Keys, Does.Contain(WistDialectCatalogNames.Optimizers.LocalVariables));
-            Assert.That(first.Backends.Keys, Is.EqualTo(new[] { DialectBackendTarget.Cil, DialectBackendTarget.Interpreter }));
-            Assert.That(first.Intrinsics.Keys, Does.Contain(("add_i32", DialectBackendTarget.Any)));
+            Assert.That(first.TryResolveModule("Arithmetic", out var arithmeticModule), Is.True);
+            Assert.That(arithmeticModule!.CanonicalId, Does.Contain("ArithmeticModuleImpl"));
+            Assert.That(first.TryResolveModule("Variables", out var variablesModule), Is.True);
+            Assert.That(variablesModule!.CanonicalId, Does.Contain("VariablesModuleImpl"));
+            Assert.That(first.TryResolveOptimizer("LocalVariablesOptimization", out var localVariablesOptimizer), Is.True);
+            Assert.That(localVariablesOptimizer!.CanonicalId, Does.Contain("LocalVariablesOptimizer"));
+            Assert.That(first.Backends.Keys, Is.EqualTo(new[] { TestBackendIds.Cil, TestBackendIds.Interpreter }));
+            Assert.That(first.Intrinsics.Keys, Does.Contain(("add_i32", TestBackendIds.CilSelector)));
         });
     }
 
@@ -34,10 +36,11 @@ public class WistDialectRuntimeDescriptorProviderTests
         services.AddWistDialectServices();
 
         using var provider = services.BuildServiceProvider();
+        var registry = provider.GetRequiredService<DialectRuntimeDescriptorRegistry>();
 
         Assert.Multiple(() =>
         {
-            Assert.That(provider.GetRequiredService<DialectRuntimeDescriptorRegistry>().Modules.Keys, Does.Contain(WistDialectCatalogNames.Modules.Whitespaces));
+            Assert.That(registry.TryResolveModule("Whitespaces", out _), Is.True);
             Assert.That(provider.GetRequiredService<WistDialectExecutionWorkflow>(), Is.Not.Null);
             Assert.That(provider.GetRequiredService<WistDialectServiceProviderFactory>(), Is.Not.Null);
         });

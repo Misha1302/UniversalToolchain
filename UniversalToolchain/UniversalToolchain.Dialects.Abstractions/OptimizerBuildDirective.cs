@@ -7,13 +7,15 @@ namespace UniversalToolchain.Dialects.Abstractions;
 /// </summary>
 public sealed class OptimizerBuildDirective
 {
-    public OptimizerBuildDirective(string name, bool enabled, DialectBackendTarget target)
+    public OptimizerBuildDirective(string name, bool enabled, DialectBackendId target)
+        : this(name, enabled, DialectBackendSelector.For(target))
+    {
+    }
+
+    public OptimizerBuildDirective(string name, bool enabled, DialectBackendSelector target)
     {
         if (string.IsNullOrWhiteSpace(name))
             Thrower.Argument(nameof(name), "Optimizer name must not be empty.");
-
-        if (!Enum.IsDefined(target))
-            Thrower.Argument(nameof(target), "Backend target is not defined.");
 
         Name = name;
         Enabled = enabled;
@@ -24,5 +26,5 @@ public sealed class OptimizerBuildDirective
 
     public bool Enabled { get; }
 
-    public DialectBackendTarget Target { get; }
+    public DialectBackendSelector Target { get; }
 }

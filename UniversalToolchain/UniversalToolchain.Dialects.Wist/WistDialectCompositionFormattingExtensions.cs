@@ -25,14 +25,14 @@ public static class WistDialectCompositionFormattingExtensions
         if (result.BuildPlan != null)
         {
             builder.AppendLine($"Ordered modules: {Join(result.BuildPlan.OrderedModules)}");
-            builder.AppendLine($"Enabled backends: {Join(result.BuildPlan.EnabledBackends.Select(DialectBackendTargetText.ToText))}");
+            builder.AppendLine($"Enabled backends: {Join(result.BuildPlan.EnabledBackends.Select(DialectBackendSelectorText.ToText))}");
             builder.AppendLine($"Enabled optimizers: {Join(result.BuildPlan.OptimizerDirectives.Where(x => x.Enabled).Select(x => x.Name))}");
         }
 
         if (result.RuntimeComposition != null)
         {
             builder.AppendLine($"Runtime modules: {Join(result.RuntimeComposition.OrderedModules.Select(x => x.Name))}");
-            builder.AppendLine($"Runtime backends: {Join(result.RuntimeComposition.EnabledBackends.Select(x => x.RuntimeName))}");
+            builder.AppendLine($"Runtime backends: {Join(result.RuntimeComposition.EnabledBackends.Select(x => x.Name))}");
             builder.AppendLine($"Runtime optimizers: {Join(result.RuntimeComposition.EnabledOptimizers.Select(x => x.Name))}");
         }
 

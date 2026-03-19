@@ -59,16 +59,16 @@ public sealed class DialectFrameworkDemoReport
             sb.AppendLine("Build plan:");
             sb.AppendLine($"  Dialect: {result.BuildPlan.Name}");
             sb.AppendLine($"  Ordered modules: {JoinPreserveOrder(result.BuildPlan.OrderedModules)}");
-            sb.AppendLine($"  Enabled backends: {JoinSorted(result.BuildPlan.EnabledBackends.Select(DialectBackendTargetText.ToText))}");
+            sb.AppendLine($"  Enabled backends: {JoinSorted(result.BuildPlan.EnabledBackends.Select(DialectBackendSelectorText.ToText))}");
         }
 
         if (result.RuntimeComposition != null)
         {
             sb.AppendLine("Runtime composition:");
-            sb.AppendLine($"  Modules: {JoinPreserveOrder(result.RuntimeComposition.OrderedModules.Select(x => x.Name))}");
-            sb.AppendLine($"  Backends: {JoinPreserveOrder(result.RuntimeComposition.EnabledBackends.Select(x => x.RuntimeName))}");
-            sb.AppendLine($"  Optimizers: {JoinPreserveOrder(result.RuntimeComposition.EnabledOptimizers.Select(x => x.Name))}");
-            sb.AppendLine($"  Intrinsics: {JoinPreserveOrder(result.RuntimeComposition.AllowedIntrinsics.Select(x => x.Name))}");
+            sb.AppendLine($"  Modules: {JoinPreserveOrder(result.RuntimeComposition.OrderedModules.Select(x => x.CanonicalId))}");
+            sb.AppendLine($"  Backends: {JoinPreserveOrder(result.RuntimeComposition.EnabledBackends.Select(x => x.CanonicalId))}");
+            sb.AppendLine($"  Optimizers: {JoinPreserveOrder(result.RuntimeComposition.EnabledOptimizers.Select(x => x.CanonicalId))}");
+            sb.AppendLine($"  Intrinsics: {JoinPreserveOrder(result.RuntimeComposition.AllowedIntrinsics.Select(x => x.CanonicalId))}");
         }
 
         return sb.ToString().TrimEnd();

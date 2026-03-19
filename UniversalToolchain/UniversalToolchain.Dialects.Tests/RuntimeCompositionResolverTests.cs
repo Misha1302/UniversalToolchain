@@ -32,8 +32,8 @@ public class RuntimeCompositionResolverTests
     {
         var plan = CreateValidPlan();
         var registry = new DialectRuntimeDescriptorRegistryBuilder()
-            .RegisterBackend(new RuntimeBackendDescriptor(DialectBackendTarget.Interpreter, "InterpreterBackend"))
-            .RegisterIntrinsic(new RuntimeIntrinsicDescriptor("intrinsic-a", DialectBackendTarget.Any))
+            .RegisterBackend(new RuntimeBackendDescriptor(TestBackendIds.Interpreter, "InterpreterBackend"))
+            .RegisterIntrinsic(new RuntimeIntrinsicDescriptor("intrinsic-a", TestBackendIds.Any))
             .RegisterOptimizer(new RuntimeOptimizerDescriptor("opt-a", typeof(FakeOptimizerModule)))
             .Build();
 
@@ -54,7 +54,7 @@ public class RuntimeCompositionResolverTests
         var registry = new DialectRuntimeDescriptorRegistryBuilder()
             .RegisterModule(new RuntimeModuleDescriptor("A", typeof(FakeFrontendModule)))
             .RegisterModule(new RuntimeModuleDescriptor("B", typeof(FakeIrModule)))
-            .RegisterIntrinsic(new RuntimeIntrinsicDescriptor("intrinsic-a", DialectBackendTarget.Any))
+            .RegisterIntrinsic(new RuntimeIntrinsicDescriptor("intrinsic-a", TestBackendIds.Any))
             .RegisterOptimizer(new RuntimeOptimizerDescriptor("opt-a", typeof(FakeOptimizerModule)))
             .Build();
 
@@ -75,7 +75,7 @@ public class RuntimeCompositionResolverTests
         var registry = new DialectRuntimeDescriptorRegistryBuilder()
             .RegisterModule(new RuntimeModuleDescriptor("A", typeof(FakeFrontendModule)))
             .RegisterModule(new RuntimeModuleDescriptor("B", typeof(FakeIrModule)))
-            .RegisterBackend(new RuntimeBackendDescriptor(DialectBackendTarget.Interpreter, "InterpreterBackend"))
+            .RegisterBackend(new RuntimeBackendDescriptor(TestBackendIds.Interpreter, "InterpreterBackend"))
             .RegisterOptimizer(new RuntimeOptimizerDescriptor("opt-a", typeof(FakeOptimizerModule)))
             .Build();
 
@@ -97,19 +97,19 @@ public class RuntimeCompositionResolverTests
             "dialect",
             "1",
             ["A"],
-            [DialectBackendTarget.Cil, DialectBackendTarget.Interpreter],
+            [TestBackendIds.Cil, TestBackendIds.Interpreter],
             [],
-            [new IntrinsicBuildDirective("intrinsic-a", true, DialectBackendTarget.Any)],
-            [new OptimizerBuildDirective("opt-a", true, DialectBackendTarget.Any)],
+            [new IntrinsicBuildDirective("intrinsic-a", true, TestBackendIds.Any)],
+            [new OptimizerBuildDirective("opt-a", true, TestBackendIds.Any)],
             SecurityProfile.Trusted,
             [],
             new DialectValidationResult());
 
         var registry = new DialectRuntimeDescriptorRegistryBuilder()
             .RegisterModule(new RuntimeModuleDescriptor("A", typeof(FakeFrontendModule)))
-            .RegisterBackend(new RuntimeBackendDescriptor(DialectBackendTarget.Interpreter, "InterpreterBackend"))
-            .RegisterBackend(new RuntimeBackendDescriptor(DialectBackendTarget.Cil, "CilBackend"))
-            .RegisterIntrinsic(new RuntimeIntrinsicDescriptor("intrinsic-a", DialectBackendTarget.Any))
+            .RegisterBackend(new RuntimeBackendDescriptor(TestBackendIds.Interpreter, "InterpreterBackend"))
+            .RegisterBackend(new RuntimeBackendDescriptor(TestBackendIds.Cil, "CilBackend"))
+            .RegisterIntrinsic(new RuntimeIntrinsicDescriptor("intrinsic-a", TestBackendIds.Any))
             .RegisterOptimizer(new RuntimeOptimizerDescriptor("opt-a", typeof(FakeOptimizerModule)))
             .Build();
 
@@ -131,17 +131,17 @@ public class RuntimeCompositionResolverTests
             "dialect",
             "1",
             ["A"],
-            [DialectBackendTarget.Interpreter],
+            [TestBackendIds.Interpreter],
             [],
             [],
-            [new OptimizerBuildDirective("opt-cil", true, DialectBackendTarget.Cil)],
+            [new OptimizerBuildDirective("opt-cil", true, TestBackendIds.Cil)],
             SecurityProfile.Trusted,
             [],
             new DialectValidationResult());
 
         var registry = new DialectRuntimeDescriptorRegistryBuilder()
             .RegisterModule(new RuntimeModuleDescriptor("A", typeof(FakeFrontendModule)))
-            .RegisterBackend(new RuntimeBackendDescriptor(DialectBackendTarget.Interpreter, "InterpreterBackend"))
+            .RegisterBackend(new RuntimeBackendDescriptor(TestBackendIds.Interpreter, "InterpreterBackend"))
             .Build();
 
         var resolver = new DialectRuntimeCompositionResolver();
@@ -162,9 +162,9 @@ public class RuntimeCompositionResolverTests
             "dialect",
             "1",
             ["A"],
-            [DialectBackendTarget.Interpreter],
+            [TestBackendIds.Interpreter],
             [],
-            [new IntrinsicBuildDirective("intrinsic-cil", true, DialectBackendTarget.Cil)],
+            [new IntrinsicBuildDirective("intrinsic-cil", true, TestBackendIds.Cil)],
             [],
             SecurityProfile.Trusted,
             [],
@@ -172,7 +172,7 @@ public class RuntimeCompositionResolverTests
 
         var registry = new DialectRuntimeDescriptorRegistryBuilder()
             .RegisterModule(new RuntimeModuleDescriptor("A", typeof(FakeFrontendModule)))
-            .RegisterBackend(new RuntimeBackendDescriptor(DialectBackendTarget.Interpreter, "InterpreterBackend"))
+            .RegisterBackend(new RuntimeBackendDescriptor(TestBackendIds.Interpreter, "InterpreterBackend"))
             .Build();
 
         var resolver = new DialectRuntimeCompositionResolver();
@@ -191,10 +191,10 @@ public class RuntimeCompositionResolverTests
             "dialect",
             "1",
             ["A", "B"],
-            [DialectBackendTarget.Interpreter],
+            [TestBackendIds.Interpreter],
             [],
-            [new IntrinsicBuildDirective("intrinsic-a", true, DialectBackendTarget.Any)],
-            [new OptimizerBuildDirective("opt-a", true, DialectBackendTarget.Any)],
+            [new IntrinsicBuildDirective("intrinsic-a", true, TestBackendIds.Any)],
+            [new OptimizerBuildDirective("opt-a", true, TestBackendIds.Any)],
             SecurityProfile.Trusted,
             [new KeyValuePair<string, bool>("c", true)],
             new DialectValidationResult());
@@ -203,8 +203,8 @@ public class RuntimeCompositionResolverTests
         new DialectRuntimeDescriptorRegistryBuilder()
             .RegisterModule(new RuntimeModuleDescriptor("A", typeof(FakeFrontendModule)))
             .RegisterModule(new RuntimeModuleDescriptor("B", typeof(FakeIrModule)))
-            .RegisterBackend(new RuntimeBackendDescriptor(DialectBackendTarget.Interpreter, "InterpreterBackend"))
-            .RegisterIntrinsic(new RuntimeIntrinsicDescriptor("intrinsic-a", DialectBackendTarget.Any))
+            .RegisterBackend(new RuntimeBackendDescriptor(TestBackendIds.Interpreter, "InterpreterBackend"))
+            .RegisterIntrinsic(new RuntimeIntrinsicDescriptor("intrinsic-a", TestBackendIds.Any))
             .RegisterOptimizer(new RuntimeOptimizerDescriptor("opt-a", typeof(FakeOptimizerModule)));
 
     private sealed class FakeFrontendModule : IFrontendCoreModule

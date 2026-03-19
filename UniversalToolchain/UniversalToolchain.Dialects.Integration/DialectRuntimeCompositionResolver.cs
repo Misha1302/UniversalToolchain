@@ -22,7 +22,7 @@ public sealed class DialectRuntimeCompositionResolver : IDialectRuntimeCompositi
         var orderedModules = new List<RuntimeModuleDescriptor>();
         foreach (var moduleName in buildPlan.OrderedModules)
         {
-            if (!registry.Modules.TryGetValue(moduleName, out var descriptor))
+            if (!registry.TryResolveModule(moduleName, out var descriptor))
             {
                 diagnostics.Add(new DialectDiagnostic(
                     "R001",
@@ -35,30 +35,34 @@ public sealed class DialectRuntimeCompositionResolver : IDialectRuntimeCompositi
         }
 
         var enabledBackends = new List<RuntimeBackendDescriptor>();
-        var enabledBackendTargets = new HashSet<DialectBackendTarget>();
-        foreach (var backendTarget in buildPlan.EnabledBackends.OrderBy(DialectBackendTargetText.ToText, StringComparer.Ordinal))
+        var enabledBackendMap = new Dictionary<DialectBackendId, RuntimeBackendDescriptor>();
+        foreach (var backendId in buildPlan.EnabledBackends.OrderBy(x => x))
         {
-            enabledBackendTargets.Add(backendTarget);
-
-            if (!registry.Backends.TryGetValue(backendTarget, out var backendDescriptor))
+            if (!registry.TryResolveBackend(backendId, out var backendDescriptor))
             {
                 diagnostics.Add(new DialectDiagnostic(
                     "R002",
-                    $"Runtime backend descriptor '{DialectBackendTargetText.ToText(backendTarget)}' was not registered.",
+                    $"Runtime backend descriptor '{DialectBackendSelectorText.ToText(backendId)}' was not registered.",
                     DialectDiagnosticSeverity.Error));
                 continue;
             }
 
+            if (enabledBackendMap.ContainsKey(backendDescriptor.BackendId))
+                continue;
+
+            enabledBackendMap.Add(backendDescriptor.BackendId, backendDescriptor);
             enabledBackends.Add(backendDescriptor);
         }
+
+        enabledBackends = enabledBackends.OrderBy(x => x.BackendId).ToList();
 
         var enabledOptimizers = new List<RuntimeOptimizerDescriptor>();
         foreach (var optimizer in buildPlan.OptimizerDirectives.Where(x => x.Enabled).OrderBy(x => x.Name, StringComparer.Ordinal).ThenBy(x => x.Target))
         {
-            if (!IsDirectiveTargetEnabled(optimizer.Target, enabledBackendTargets))
+            if (!HasApplicableEnabledBackend(optimizer.Target, enabledBackendMap.Values))
                 continue;
 
-            if (!registry.Optimizers.TryGetValue(optimizer.Name, out var descriptor))
+            if (!registry.TryResolveOptimizer(optimizer.Name, out var descriptor))
             {
                 diagnostics.Add(new DialectDiagnostic(
                     "R003",
@@ -67,25 +71,30 @@ public sealed class DialectRuntimeCompositionResolver : IDialectRuntimeCompositi
                 continue;
             }
 
-            enabledOptimizers.Add(descriptor);
+            if (!enabledOptimizers.Contains(descriptor))
+                enabledOptimizers.Add(descriptor);
         }
 
         var allowedIntrinsics = new List<RuntimeIntrinsicDescriptor>();
+        var allowedIntrinsicKeys = new HashSet<(string CanonicalId, DialectBackendSelector Target)>();
         foreach (var intrinsic in buildPlan.IntrinsicDirectives.Where(x => x.Allowed).OrderBy(x => x.Name, StringComparer.Ordinal).ThenBy(x => x.Target))
         {
-            if (!IsDirectiveTargetEnabled(intrinsic.Target, enabledBackendTargets))
-                continue;
-
-            if (!TryResolveIntrinsic(registry, intrinsic.Name, intrinsic.Target, out var resolved))
+            var applicableBackends = GetApplicableEnabledBackends(intrinsic.Target, enabledBackendMap.Values, registry, diagnostics, intrinsic.Name, "R004");
+            foreach (var backend in applicableBackends)
             {
-                diagnostics.Add(new DialectDiagnostic(
-                    "R004",
-                    $"Runtime intrinsic descriptor '{intrinsic.Name}' for '{DialectBackendTargetText.ToText(intrinsic.Target)}' was not registered.",
-                    DialectDiagnosticSeverity.Error));
-                continue;
-            }
+                if (!TryResolveIntrinsicForBackend(registry, intrinsic.Name, backend.BackendId, out var resolved))
+                {
+                    diagnostics.Add(new DialectDiagnostic(
+                        "R004",
+                        $"Runtime intrinsic descriptor '{intrinsic.Name}' for '{DialectBackendSelectorText.ToText(backend.BackendId)}' was not registered.",
+                        DialectDiagnosticSeverity.Error));
+                    continue;
+                }
 
-            allowedIntrinsics.Add(resolved);
+                var key = (resolved.CanonicalId, resolved.Target);
+                if (allowedIntrinsicKeys.Add(key))
+                    allowedIntrinsics.Add(resolved);
+            }
         }
 
         var validation = new DialectValidationResult(diagnostics);
@@ -95,33 +104,41 @@ public sealed class DialectRuntimeCompositionResolver : IDialectRuntimeCompositi
             orderedModules,
             enabledBackends,
             enabledOptimizers,
-            allowedIntrinsics,
+            allowedIntrinsics.OrderBy(x => x.CanonicalId, StringComparer.Ordinal).ThenBy(x => x.Target).ToList(),
             validation);
     }
 
-    private static bool IsDirectiveTargetEnabled(
-        DialectBackendTarget target,
-        IReadOnlySet<DialectBackendTarget> enabledBackendTargets)
+    private static bool HasApplicableEnabledBackend(DialectBackendSelector selector, IEnumerable<RuntimeBackendDescriptor> enabledBackends)
     {
-        if (target == DialectBackendTarget.Any)
-            return enabledBackendTargets.Count > 0;
-
-        return enabledBackendTargets.Contains(target);
+        return enabledBackends.Any(x => selector.Matches(x.BackendId));
     }
 
-    private static bool TryResolveIntrinsic(
+    private static IReadOnlyList<RuntimeBackendDescriptor> GetApplicableEnabledBackends(
+        DialectBackendSelector selector,
+        IEnumerable<RuntimeBackendDescriptor> enabledBackends,
+        DialectRuntimeDescriptorRegistry registry,
+        List<DialectDiagnostic> diagnostics,
+        string intrinsicName,
+        string code)
+    {
+        if (selector.IsAny)
+            return enabledBackends.OrderBy(x => x.BackendId).ToList();
+
+        var enabledMatches = enabledBackends.Where(x => selector.Matches(x.BackendId)).OrderBy(x => x.BackendId).ToList();
+        if (enabledMatches.Count > 0)
+            return enabledMatches;
+
+        return [];
+    }
+
+    private static bool TryResolveIntrinsicForBackend(
         DialectRuntimeDescriptorRegistry registry,
         string name,
-        DialectBackendTarget target,
+        DialectBackendId backendId,
         out RuntimeIntrinsicDescriptor descriptor)
     {
-        if (registry.Intrinsics.TryGetValue((name, target), out descriptor!))
-            return true;
-
-        if (target != DialectBackendTarget.Any && registry.Intrinsics.TryGetValue((name, DialectBackendTarget.Any), out descriptor!))
-            return true;
-
-        descriptor = null!;
-        return false;
+        var candidates = registry.GetIntrinsicDescriptors(name);
+        descriptor = candidates.FirstOrDefault(x => x.Target.IsAny || x.Target.BackendId == backendId)!;
+        return descriptor != null;
     }
 }

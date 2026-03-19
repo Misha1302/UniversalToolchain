@@ -56,11 +56,11 @@ public sealed class DialectDefinitionAggregation
     private readonly List<DialectIntrinsicDirective> _intrinsicDirectives = [];
     private readonly List<DialectOptimizerDirective> _optimizerDirectives = [];
     private readonly List<DialectOrderDirective> _orderDirectives = [];
-    private readonly HashSet<DialectBackendTarget> _seenBackends = [];
+    private readonly HashSet<DialectBackendId> _seenBackends = [];
     private readonly HashSet<string> _seenCapabilities = new(StringComparer.Ordinal);
     private readonly HashSet<string> _seenExcludeModules = new(StringComparer.Ordinal);
-    private readonly HashSet<(string Name, DialectBackendTarget Target)> _seenIntrinsics = [];
-    private readonly HashSet<(string Name, DialectBackendTarget Target)> _seenOptimizers = [];
+    private readonly HashSet<(string Name, DialectBackendSelector Target)> _seenIntrinsics = [];
+    private readonly HashSet<(string Name, DialectBackendSelector Target)> _seenOptimizers = [];
     private readonly HashSet<(DialectOrderDirectiveKind Kind, string Source, string Target)> _seenOrderDirectives = [];
     private readonly HashSet<string> _seenUseModules = new(StringComparer.Ordinal);
     private readonly List<string> _useModules = [];
@@ -120,7 +120,7 @@ public sealed class DialectDefinitionAggregation
         foreach (var value in values)
         {
             if (!_seenBackends.Add(value.Backend))
-                Thrower.InvalidOpEx($"Duplicate backend annotation value '{DialectBackendTargetText.ToText(value.Backend)}'.");
+                Thrower.InvalidOpEx($"Duplicate backend annotation value '{DialectBackendSelectorText.ToText(value.Backend)}'.");
 
             _backends.Add(value);
         }
@@ -132,7 +132,7 @@ public sealed class DialectDefinitionAggregation
         {
             var key = (value.Name, value.Target);
             if (!_seenIntrinsics.Add(key))
-                Thrower.InvalidOpEx($"Duplicate intrinsic annotation value '{value.Name}' for '{DialectBackendTargetText.ToText(value.Target)}'.");
+                Thrower.InvalidOpEx($"Duplicate intrinsic annotation value '{value.Name}' for '{DialectBackendSelectorText.ToText(value.Target)}'.");
 
             _intrinsicDirectives.Add(value);
         }
@@ -144,7 +144,7 @@ public sealed class DialectDefinitionAggregation
         {
             var key = (value.Name, value.Target);
             if (!_seenOptimizers.Add(key))
-                Thrower.InvalidOpEx($"Duplicate optimizer annotation value '{value.Name}' for '{DialectBackendTargetText.ToText(value.Target)}'.");
+                Thrower.InvalidOpEx($"Duplicate optimizer annotation value '{value.Name}' for '{DialectBackendSelectorText.ToText(value.Target)}'.");
 
             _optimizerDirectives.Add(value);
         }

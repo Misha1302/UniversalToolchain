@@ -67,7 +67,7 @@ public sealed class WistDialectExecutionWorkflow
         if (!compositionResult.IsSuccess || compositionResult.BuildPlan == null || compositionResult.RuntimeComposition == null)
             Thrower.Argument(nameof(compositionResult), "Dialect composition result must be successful before a runtime host can be created.");
 
-        var configuration = _configurationBuilder.Build(compositionResult.BuildPlan, compositionResult.RuntimeComposition);
+        var configuration = _configurationBuilder.Build(compositionResult.BuildPlan, compositionResult.RuntimeComposition, _registry);
         var provider = _serviceProviderFactory.Create(configuration);
         return new WistDialectExecutionHost(provider, configuration);
     }

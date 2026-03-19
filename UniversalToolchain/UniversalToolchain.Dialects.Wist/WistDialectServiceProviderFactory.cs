@@ -11,7 +11,6 @@ using DependencyInjection;
 using ExceptionsManager;
 using IntermediateRepresentationAbstractions;
 using Microsoft.Extensions.DependencyInjection;
-using UniversalToolchain.Dialects.Abstractions;
 using ServiceLifetime = Microsoft.Extensions.DependencyInjection.ServiceLifetime;
 
 namespace UniversalToolchain.Dialects.Wist;
@@ -32,7 +31,7 @@ public sealed class WistDialectServiceProviderFactory
         RegisterModules(services, configuration.FrontendModules, typeof(IFrontendCoreModule), ServiceLifetime.Singleton);
         RegisterModules(services, configuration.IrModules, typeof(IIRProcessingModule), ServiceLifetime.Transient);
         RegisterModules(services, configuration.Optimizers, typeof(IIRProcessingModule), ServiceLifetime.Transient);
-        RegisterCores(services, configuration);
+        RegisterBackendRuntimes(services, configuration);
 
         return services.BuildServiceProvider();
     }
@@ -43,24 +42,25 @@ public sealed class WistDialectServiceProviderFactory
             services.Add(new ServiceDescriptor(serviceType, type, lifetime));
     }
 
-    private static void RegisterCores(IServiceCollection services, WistDialectExecutionConfiguration configuration)
+    private static void RegisterBackendRuntimes(IServiceCollection services, WistDialectExecutionConfiguration configuration)
     {
-        foreach (var backend in configuration.EnabledBackends.OrderBy(x => x))
+        foreach (var backend in configuration.BackendConfigurations.OrderBy(x => x.BackendDescriptor.BackendId))
         {
-            switch (backend)
+            if (backend.BackendDescriptor.BackendId == WistDialectBackendIds.Cil)
             {
-                case DialectBackendTarget.Cil:
-                    RegisterCore<DynamicMethod>(services, provider => CreateCompilerCore(provider, configuration));
-                    break;
-
-                case DialectBackendTarget.Interpreter:
-                    RegisterCore<IAbstractIR>(services, provider => CreateInterpreterCore(provider, configuration));
-                    break;
-
-                default:
-                    Thrower.InvalidOpEx($"Unsupported backend '{backend}'.");
-                    break;
+                RegisterCore<DynamicMethod>(services, provider => CreateCompilerCore(provider, backend));
+                services.AddTransient(provider => new WistDialectBackendRuntime(backend.BackendDescriptor, CreateCompilerCore(provider, backend)));
+                continue;
             }
+
+            if (backend.BackendDescriptor.BackendId == WistDialectBackendIds.Interpreter)
+            {
+                RegisterCore<IAbstractIR>(services, provider => CreateInterpreterCore(provider, backend));
+                services.AddTransient(provider => new WistDialectBackendRuntime(backend.BackendDescriptor, CreateInterpreterCore(provider, backend)));
+                continue;
+            }
+
+            Thrower.InvalidOpEx($"Unsupported backend '{backend.BackendDescriptor.CanonicalId}'.");
         }
     }
 
@@ -73,7 +73,7 @@ public sealed class WistDialectServiceProviderFactory
         services.AddTransient<IExecutableGiver<TCompilationOutput>>(provider => factory(provider));
     }
 
-    private static BasicCoreImpl<DynamicMethod> CreateCompilerCore(IServiceProvider provider, WistDialectExecutionConfiguration configuration)
+    private static BasicCoreImpl<DynamicMethod> CreateCompilerCore(IServiceProvider provider, WistDialectBackendConfiguration backend)
     {
         return new BasicCoreImpl<DynamicMethod>(
             provider.GetRequiredService<Func<ILexer>>(),
@@ -82,15 +82,16 @@ public sealed class WistDialectServiceProviderFactory
             provider.GetRequiredService<Func<IAbstractMethodsTranslator>>(),
             () => new DialectIntrinsicPolicyCompiler<DynamicMethod>(
                 provider.GetRequiredService<AbstractMethodsCompilerImpl>(),
-                configuration.AllowedIntrinsics,
-                configuration.ForbiddenIntrinsics),
+                backend.AllowedIntrinsics,
+                backend.ForbiddenIntrinsics,
+                backend.HasExplicitAllowList),
             provider.GetRequiredService<Func<IExecutor<DynamicMethod>>>(),
             provider.GetServices<IFrontendCoreModule>().ToList(),
             provider.GetServices<IIRProcessingModule>().ToList(),
             []);
     }
 
-    private static BasicCoreImpl<IAbstractIR> CreateInterpreterCore(IServiceProvider provider, WistDialectExecutionConfiguration configuration)
+    private static BasicCoreImpl<IAbstractIR> CreateInterpreterCore(IServiceProvider provider, WistDialectBackendConfiguration backend)
     {
         return new BasicCoreImpl<IAbstractIR>(
             provider.GetRequiredService<Func<ILexer>>(),
@@ -99,8 +100,9 @@ public sealed class WistDialectServiceProviderFactory
             provider.GetRequiredService<Func<IAbstractMethodsTranslator>>(),
             () => new DialectIntrinsicPolicyCompiler<IAbstractIR>(
                 provider.GetRequiredService<AbstractIrToAbstractIrStub>(),
-                configuration.AllowedIntrinsics,
-                configuration.ForbiddenIntrinsics),
+                backend.AllowedIntrinsics,
+                backend.ForbiddenIntrinsics,
+                backend.HasExplicitAllowList),
             provider.GetRequiredService<Func<IExecutor<IAbstractIR>>>(),
             provider.GetServices<IFrontendCoreModule>().ToList(),
             provider.GetServices<IIRProcessingModule>().ToList(),

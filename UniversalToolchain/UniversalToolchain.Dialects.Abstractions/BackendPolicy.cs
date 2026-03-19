@@ -4,45 +4,45 @@ using ExceptionsManager;
 namespace UniversalToolchain.Dialects.Abstractions;
 
 /// <summary>
-///     Defines explicit backend enable/disable directives.
+///     Defines explicit backend enable or disable directives.
 /// </summary>
 public sealed class BackendPolicy
 {
-    private readonly ReadOnlyCollection<DialectBackendTarget> _disabledBackends;
-    private readonly ReadOnlyCollection<DialectBackendTarget> _enabledBackends;
+    private readonly ReadOnlyCollection<DialectBackendId> _disabledBackends;
+    private readonly ReadOnlyCollection<DialectBackendId> _enabledBackends;
 
-    public BackendPolicy(IEnumerable<DialectBackendTarget>? enabledBackends = null, IEnumerable<DialectBackendTarget>? disabledBackends = null)
+    public BackendPolicy(IEnumerable<DialectBackendId>? enabledBackends = null, IEnumerable<DialectBackendId>? disabledBackends = null)
     {
         var enabled = NormalizeNames(enabledBackends, nameof(enabledBackends));
         var disabled = NormalizeNames(disabledBackends, nameof(disabledBackends));
 
-        var enabledSet = new HashSet<DialectBackendTarget>(enabled);
+        var enabledSet = new HashSet<DialectBackendId>(enabled);
         foreach (var disabledBackend in disabled)
         {
             if (enabledSet.Contains(disabledBackend))
-                Thrower.Argument(nameof(disabledBackends), $"Backend '{DialectBackendTargetText.ToText(disabledBackend)}' cannot be both enabled and disabled.");
+                Thrower.Argument(nameof(disabledBackends), $"Backend '{DialectBackendSelectorText.ToText(disabledBackend)}' cannot be both enabled and disabled.");
         }
 
-        _enabledBackends = new ReadOnlyCollection<DialectBackendTarget>(enabled);
-        _disabledBackends = new ReadOnlyCollection<DialectBackendTarget>(disabled);
+        _enabledBackends = new ReadOnlyCollection<DialectBackendId>(enabled);
+        _disabledBackends = new ReadOnlyCollection<DialectBackendId>(disabled);
     }
 
-    public IReadOnlyList<DialectBackendTarget> EnabledBackends => _enabledBackends;
+    public IReadOnlyList<DialectBackendId> EnabledBackends => _enabledBackends;
 
-    public IReadOnlyList<DialectBackendTarget> DisabledBackends => _disabledBackends;
+    public IReadOnlyList<DialectBackendId> DisabledBackends => _disabledBackends;
 
-    private static List<DialectBackendTarget> NormalizeNames(IEnumerable<DialectBackendTarget>? values, string paramName)
+    private static List<DialectBackendId> NormalizeNames(IEnumerable<DialectBackendId>? values, string paramName)
     {
         if (values == null)
             return [];
 
-        var unique = new HashSet<DialectBackendTarget>();
-        var normalized = new List<DialectBackendTarget>();
+        var unique = new HashSet<DialectBackendId>();
+        var normalized = new List<DialectBackendId>();
 
         foreach (var value in values)
         {
-            if (!Enum.IsDefined(value) || value == DialectBackendTarget.Any)
-                Thrower.Argument(paramName, "Policy entries must be defined backend targets without 'any'.");
+            if (string.IsNullOrWhiteSpace(value.Value))
+                Thrower.Argument(paramName, "Policy entries must contain backend identifiers.");
 
             if (!unique.Add(value))
                 continue;
@@ -50,6 +50,7 @@ public sealed class BackendPolicy
             normalized.Add(value);
         }
 
+        normalized.Sort();
         return normalized;
     }
 }

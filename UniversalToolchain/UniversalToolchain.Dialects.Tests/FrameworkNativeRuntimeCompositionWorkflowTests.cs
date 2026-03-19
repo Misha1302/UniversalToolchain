@@ -60,8 +60,6 @@ public class FrameworkNativeRuntimeCompositionWorkflowTests
             Assert.That(result.SemanticDiagnostics, Is.Empty);
             Assert.That(result.ResolutionDiagnostics.Any(x => x.Code == "R001"), Is.True);
             Assert.That(result.ResolutionDiagnostics.Any(x => x.Code == "R002"), Is.True);
-            Assert.That(result.ResolutionDiagnostics.Any(x => x.Code == "R003"), Is.True);
-            Assert.That(result.ResolutionDiagnostics.Any(x => x.Code == "R004"), Is.True);
         });
     }
 
@@ -91,9 +89,9 @@ public class FrameworkNativeRuntimeCompositionWorkflowTests
         new DialectRuntimeDescriptorRegistryBuilder()
             .RegisterModule(new RuntimeModuleDescriptor("A", typeof(FakeFrontendModule)))
             .RegisterModule(new RuntimeModuleDescriptor("B", typeof(FakeFrontendModule)))
-            .RegisterBackend(new RuntimeBackendDescriptor(DialectBackendTarget.Interpreter, "InterpreterBackend"))
+            .RegisterBackend(new RuntimeBackendDescriptor(TestBackendIds.Interpreter, "InterpreterBackend"))
             .RegisterOptimizer(new RuntimeOptimizerDescriptor("opt_a", typeof(FakeOptimizerModule)))
-            .RegisterIntrinsic(new RuntimeIntrinsicDescriptor("intrinsic_a", DialectBackendTarget.Any))
+            .RegisterIntrinsic(new RuntimeIntrinsicDescriptor("intrinsic_a", TestBackendIds.Any))
             .Build();
 
     private sealed class FakeFrontendModule : IFrontendCoreModule

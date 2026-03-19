@@ -56,18 +56,18 @@ public class FrameworkNativeVerticalSliceTests
             }));
             Assert.That(result.BackendDirectives.Select(x => (x.Backend, x.Enabled)), Is.EqualTo(new[]
             {
-                (DialectBackendTarget.Interpreter, true),
-                (DialectBackendTarget.Cil, true)
+                (TestBackendIds.Interpreter, true),
+                (TestBackendIds.Cil, true)
             }));
             Assert.That(result.IntrinsicDirectives.Select(x => (x.Name, x.Allowed, x.Target)), Is.EqualTo(new[]
             {
-                ("add_i32", true, DialectBackendTarget.Any),
-                ("unsafe_reflect", false, DialectBackendTarget.Any)
+                ("add_i32", true, TestBackendIds.Any),
+                ("unsafe_reflect", false, TestBackendIds.Any)
             }));
             Assert.That(result.OptimizerDirectives.Select(x => (x.Name, x.Enabled, x.Target)), Is.EqualTo(new[]
             {
-                ("Ssa", true, DialectBackendTarget.Any),
-                ("Fold", false, DialectBackendTarget.Any)
+                ("Ssa", true, TestBackendIds.Any),
+                ("Fold", false, TestBackendIds.Any)
             }));
             Assert.That(result.SecurityProfile, Is.EqualTo(DialectSecurityProfile.Restricted));
             Assert.That(result.CapabilityDirectives.Select(x => (x.Name, x.Value)), Is.EqualTo(new[]

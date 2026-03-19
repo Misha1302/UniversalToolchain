@@ -9,13 +9,16 @@ namespace UniversalToolchain.Dialects.Wist;
 /// </summary>
 public sealed class WistDialectExecutionConfigurationBuilder
 {
-    public WistDialectExecutionConfiguration Build(DialectBuildPlan buildPlan, DialectRuntimeComposition runtimeComposition)
+    public WistDialectExecutionConfiguration Build(DialectBuildPlan buildPlan, DialectRuntimeComposition runtimeComposition, DialectRuntimeDescriptorRegistry registry)
     {
         if (buildPlan == null)
             Thrower.ArgumentNull(nameof(buildPlan));
 
         if (runtimeComposition == null)
             Thrower.ArgumentNull(nameof(runtimeComposition));
+
+        if (registry == null)
+            Thrower.ArgumentNull(nameof(registry));
 
         if (!runtimeComposition.IsResolved)
             Thrower.Argument(nameof(runtimeComposition), "Runtime composition must be resolved before execution wiring is built.");
@@ -28,20 +31,35 @@ public sealed class WistDialectExecutionConfigurationBuilder
             .Select(x => x.ImplementationType);
         var optimizers = runtimeComposition.EnabledOptimizers
             .Select(x => x.ImplementationType);
-        var allowedIntrinsics = buildPlan.IntrinsicDirectives
-            .Where(x => x.Allowed)
-            .Select(x => x.Name);
-        var forbiddenIntrinsics = buildPlan.IntrinsicDirectives
-            .Where(x => !x.Allowed)
-            .Select(x => x.Name);
+        var backends = runtimeComposition.EnabledBackends
+            .Select(backend => BuildBackendConfiguration(backend, buildPlan, runtimeComposition))
+            .ToList();
 
         return new WistDialectExecutionConfiguration(
             buildPlan.Name,
             frontendModules,
             irModules,
             optimizers,
-            runtimeComposition.EnabledBackends.Select(x => x.BackendTarget),
-            allowedIntrinsics,
-            forbiddenIntrinsics);
+            backends,
+            registry.Backends.Values);
+    }
+
+    private static WistDialectBackendConfiguration BuildBackendConfiguration(
+        RuntimeBackendDescriptor backend,
+        DialectBuildPlan buildPlan,
+        DialectRuntimeComposition runtimeComposition)
+    {
+        var allowedIntrinsics = runtimeComposition.AllowedIntrinsics
+            .Where(x => x.AppliesTo(backend.BackendId))
+            .Select(x => x.CanonicalId);
+        var hasExplicitAllowList = buildPlan.IntrinsicDirectives.Any(x => x.Allowed && x.Target.Matches(backend.BackendId));
+        var forbiddenIntrinsics = buildPlan.IntrinsicDirectives
+            .Where(x => !x.Allowed && x.Target.Matches(backend.BackendId))
+            .Select(x => x.Name)
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(x => x, StringComparer.Ordinal)
+            .ToList();
+
+        return new WistDialectBackendConfiguration(backend, allowedIntrinsics, forbiddenIntrinsics, hasExplicitAllowList);
     }
 }

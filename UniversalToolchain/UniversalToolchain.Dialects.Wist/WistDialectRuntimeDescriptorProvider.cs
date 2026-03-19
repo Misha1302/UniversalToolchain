@@ -16,7 +16,6 @@ using NumbersModule.Module;
 using ParametersSetterModule;
 using ScopesModule.Module;
 using SemicolonAsNewLineModule;
-using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Integration;
 using VariablesModule;
 using WhitespacesModule;
@@ -44,48 +43,48 @@ public sealed class WistDialectRuntimeDescriptorProvider : IDialectRuntimeDescri
     private static void RegisterModules(DialectRuntimeDescriptorRegistryBuilder builder)
     {
         builder
-            .RegisterModule(new RuntimeModuleDescriptor(WistDialectCatalogNames.Modules.Arithmetic, typeof(ArithmeticModuleImpl)))
-            .RegisterModule(new RuntimeModuleDescriptor(WistDialectCatalogNames.Modules.BooleanConditions, typeof(BooleanOperations)))
-            .RegisterModule(new RuntimeModuleDescriptor(WistDialectCatalogNames.Modules.Comments, typeof(CommentsModuleImpl)))
-            .RegisterModule(new RuntimeModuleDescriptor(WistDialectCatalogNames.Modules.ComparisonConditions, typeof(ComparisonOperations)))
-            .RegisterModule(new RuntimeModuleDescriptor(WistDialectCatalogNames.Modules.Conditions, typeof(ConditionsModuleImpl)))
-            .RegisterModule(new RuntimeModuleDescriptor(WistDialectCatalogNames.Modules.CSharpInterop, typeof(CSharpInteropModuleImpl)))
-            .RegisterModule(new RuntimeModuleDescriptor(WistDialectCatalogNames.Modules.Equality, typeof(EqualityModuleImpl)))
-            .RegisterModule(new RuntimeModuleDescriptor(WistDialectCatalogNames.Modules.Identifier, typeof(IdentifierModuleImpl)))
-            .RegisterModule(new RuntimeModuleDescriptor(WistDialectCatalogNames.Modules.InternalPreprocessorLexemes, typeof(InternalPreprocessorLexemesModuleImpl)))
-            .RegisterModule(new RuntimeModuleDescriptor(WistDialectCatalogNames.Modules.Labels, typeof(LabelsModuleImpl)))
-            .RegisterModule(new RuntimeModuleDescriptor(WistDialectCatalogNames.Modules.Loops, typeof(LoopsModuleImpl)))
-            .RegisterModule(new RuntimeModuleDescriptor(WistDialectCatalogNames.Modules.NativeTypes, typeof(NativeTypesModuleImpl)))
-            .RegisterModule(new RuntimeModuleDescriptor(WistDialectCatalogNames.Modules.Numbers, typeof(NumbersModuleImpl)))
-            .RegisterModule(new RuntimeModuleDescriptor(WistDialectCatalogNames.Modules.ParametersSetter, typeof(ParametersSetterModuleImpl)))
-            .RegisterModule(new RuntimeModuleDescriptor(WistDialectCatalogNames.Modules.Scopes, typeof(ScopesModuleImpl)))
-            .RegisterModule(new RuntimeModuleDescriptor(WistDialectCatalogNames.Modules.SemicolonAsNewLine, typeof(SemicolonAsNewLineModuleImpl)))
-            .RegisterModule(new RuntimeModuleDescriptor(WistDialectCatalogNames.Modules.Variables, typeof(VariablesModuleImpl)))
-            .RegisterModule(new RuntimeModuleDescriptor(WistDialectCatalogNames.Modules.Whitespaces, typeof(WhitespaceModuleImpl)));
+            .RegisterModule(new RuntimeModuleDescriptor(typeof(ArithmeticModuleImpl), ["Arithmetic"]))
+            .RegisterModule(new RuntimeModuleDescriptor(typeof(BooleanOperations), ["BooleanConditions"]))
+            .RegisterModule(new RuntimeModuleDescriptor(typeof(CommentsModuleImpl), ["Comments"]))
+            .RegisterModule(new RuntimeModuleDescriptor(typeof(ComparisonOperations), ["ComparisonConditions"]))
+            .RegisterModule(new RuntimeModuleDescriptor(typeof(ConditionsModuleImpl), ["Conditions"]))
+            .RegisterModule(new RuntimeModuleDescriptor(typeof(CSharpInteropModuleImpl), ["CSharpInterop"]))
+            .RegisterModule(new RuntimeModuleDescriptor(typeof(EqualityModuleImpl), ["Equality"]))
+            .RegisterModule(new RuntimeModuleDescriptor(typeof(IdentifierModuleImpl), ["Identifier"]))
+            .RegisterModule(new RuntimeModuleDescriptor(typeof(InternalPreprocessorLexemesModuleImpl), ["InternalPreprocessorLexemes"]))
+            .RegisterModule(new RuntimeModuleDescriptor(typeof(LabelsModuleImpl), ["Labels"]))
+            .RegisterModule(new RuntimeModuleDescriptor(typeof(LoopsModuleImpl), ["Loops"]))
+            .RegisterModule(new RuntimeModuleDescriptor(typeof(NativeTypesModuleImpl), ["NativeTypes"]))
+            .RegisterModule(new RuntimeModuleDescriptor(typeof(NumbersModuleImpl), ["Numbers"]))
+            .RegisterModule(new RuntimeModuleDescriptor(typeof(ParametersSetterModuleImpl), ["ParametersSetter"]))
+            .RegisterModule(new RuntimeModuleDescriptor(typeof(ScopesModuleImpl), ["Scopes"]))
+            .RegisterModule(new RuntimeModuleDescriptor(typeof(SemicolonAsNewLineModuleImpl), ["SemicolonAsNewLine"]))
+            .RegisterModule(new RuntimeModuleDescriptor(typeof(VariablesModuleImpl), ["Variables"]))
+            .RegisterModule(new RuntimeModuleDescriptor(typeof(WhitespaceModuleImpl), ["Whitespaces"]));
     }
 
     private static void RegisterBackends(DialectRuntimeDescriptorRegistryBuilder builder)
     {
         builder
-            .RegisterBackend(new RuntimeBackendDescriptor(DialectBackendTarget.Cil, "compiler"))
-            .RegisterBackend(new RuntimeBackendDescriptor(DialectBackendTarget.Interpreter, "interpreter"));
+            .RegisterBackend(new RuntimeBackendDescriptor(WistDialectBackendIds.Cil, ["compiler"]))
+            .RegisterBackend(new RuntimeBackendDescriptor(WistDialectBackendIds.Interpreter));
     }
 
     private static void RegisterOptimizers(DialectRuntimeDescriptorRegistryBuilder builder)
     {
         builder
-            .RegisterOptimizer(new RuntimeOptimizerDescriptor(WistDialectCatalogNames.Optimizers.Arithmetic, typeof(ArithmeticOptimizerModule)))
-            .RegisterOptimizer(new RuntimeOptimizerDescriptor(WistDialectCatalogNames.Optimizers.Boolean, typeof(BooleanOptimizerModule)))
-            .RegisterOptimizer(new RuntimeOptimizerDescriptor(WistDialectCatalogNames.Optimizers.ComparisonIntrinsic, typeof(ComparisonIntrinsicOptimizerModule)))
-            .RegisterOptimizer(new RuntimeOptimizerDescriptor(WistDialectCatalogNames.Optimizers.EGraph, typeof(EGraphOptimizerModule)))
-            .RegisterOptimizer(new RuntimeOptimizerDescriptor(WistDialectCatalogNames.Optimizers.LocalVariables, typeof(LocalVariablesOptimizer)))
-            .RegisterOptimizer(new RuntimeOptimizerDescriptor(WistDialectCatalogNames.Optimizers.NativeCil, typeof(NativeCilOptimizerModule)))
-            .RegisterOptimizer(new RuntimeOptimizerDescriptor(WistDialectCatalogNames.Optimizers.NativeTypes, typeof(NativeTypesOptimizerModule)));
+            .RegisterOptimizer(new RuntimeOptimizerDescriptor(typeof(ArithmeticOptimizerModule), ["ArithmeticOptimization"]))
+            .RegisterOptimizer(new RuntimeOptimizerDescriptor(typeof(BooleanOptimizerModule), ["BooleanOptimization"]))
+            .RegisterOptimizer(new RuntimeOptimizerDescriptor(typeof(ComparisonIntrinsicOptimizerModule), ["ComparisonIntrinsicOptimization"]))
+            .RegisterOptimizer(new RuntimeOptimizerDescriptor(typeof(EGraphOptimizerModule), ["EGraphOptimization"]))
+            .RegisterOptimizer(new RuntimeOptimizerDescriptor(typeof(LocalVariablesOptimizer), ["LocalVariablesOptimization"]))
+            .RegisterOptimizer(new RuntimeOptimizerDescriptor(typeof(NativeCilOptimizerModule), ["NativeCilOptimization"]))
+            .RegisterOptimizer(new RuntimeOptimizerDescriptor(typeof(NativeTypesOptimizerModule), ["NativeTypesOptimization"]));
     }
 
     private static void RegisterIntrinsics(DialectRuntimeDescriptorRegistryBuilder builder)
     {
-        foreach (var intrinsic in WistDialectRuntimeIntrinsics.All)
+        foreach (var intrinsic in WistDialectIntrinsicRegistry.CreateDescriptors())
             builder.RegisterIntrinsic(intrinsic);
     }
 }

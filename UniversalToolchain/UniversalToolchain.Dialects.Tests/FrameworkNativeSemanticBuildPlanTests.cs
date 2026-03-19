@@ -42,7 +42,7 @@ public class FrameworkNativeSemanticBuildPlanTests
         {
             Assert.That(first.CanBuild, Is.True);
             Assert.That(first.OrderedModules, Is.EqualTo(new[] { "A", "B", "C" }));
-            Assert.That(first.EnabledBackends, Is.EqualTo(new[] { DialectBackendTarget.Interpreter, DialectBackendTarget.Cil }));
+            Assert.That(first.EnabledBackends, Is.EqualTo(new[] { TestBackendIds.Cil, TestBackendIds.Interpreter }));
             Assert.That(first.Capabilities.Select(x => (x.Key, x.Value)), Is.EqualTo(new[] { ("cap1", true), ("cap2", true) }));
             Assert.That(first.OrderedModules, Is.EqualTo(second.OrderedModules));
             Assert.That(first.EnabledBackends, Is.EqualTo(second.EnabledBackends));
