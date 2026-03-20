@@ -1,5 +1,6 @@
 namespace ConditionsModule.Enums;
 
+[UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("ComparisonConditions")]
 [AutoRegisterService]
 public class ComparisonOperations : IFrontendCoreModule
 {

@@ -1,5 +1,6 @@
 namespace ConditionsModule.Module;
 
+[UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("Conditions")]
 [AutoRegisterService]
 public class ConditionsModuleImpl : IFrontendCoreModule
 {

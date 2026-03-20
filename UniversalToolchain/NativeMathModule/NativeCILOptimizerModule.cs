@@ -1,5 +1,6 @@
 namespace NativeMathModule;
 
+[UniversalToolchain.Dialects.Abstractions.DialectOptimizerAlias("NativeCilOptimization")]
 [AutoRegisterService]
 public class NativeCilOptimizerModule : IIRProcessingModule
 {

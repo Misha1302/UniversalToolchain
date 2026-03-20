@@ -1,5 +1,6 @@
 namespace VariablesModule;
 
+[UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("Variables")]
 [AutoRegisterService]
 public class VariablesModuleImpl : IFrontendCoreModule
 {

@@ -1,5 +1,6 @@
 namespace NativeMathModule;
 
+[UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("NativeTypes")]
 [AutoRegisterService]
 public class NativeTypesModuleImpl : IFrontendCoreModule
 {

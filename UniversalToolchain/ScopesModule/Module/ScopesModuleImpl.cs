@@ -1,5 +1,6 @@
 namespace ScopesModule.Module;
 
+[UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("Scopes")]
 [AutoRegisterService]
 public class ScopesModuleImpl : IFrontendCoreModule
 {

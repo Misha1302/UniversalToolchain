@@ -1,3 +1,4 @@
+using System.Reflection;
 using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
 
@@ -17,12 +18,60 @@ public sealed class DialectRuntimeDescriptorRegistryBuilder
     private readonly Dictionary<string, RuntimeOptimizerDescriptor> _optimizerNameMap = new(StringComparer.Ordinal);
     private readonly Dictionary<string, RuntimeOptimizerDescriptor> _optimizers = new(StringComparer.Ordinal);
 
+    public DialectRuntimeDescriptorRegistryBuilder RegisterAttributedModulesFromAssemblies(params Assembly[] assemblies)
+    {
+        foreach (var descriptor in DialectRuntimeDescriptorAttributeDiscovery.DiscoverModules(assemblies))
+            RegisterModule(descriptor);
+
+        return this;
+    }
+
+    public DialectRuntimeDescriptorRegistryBuilder RegisterAttributedModules(params Type[] types)
+    {
+        foreach (var descriptor in DialectRuntimeDescriptorAttributeDiscovery.DiscoverModules(types))
+            RegisterModule(descriptor);
+
+        return this;
+    }
+
+    public DialectRuntimeDescriptorRegistryBuilder RegisterAttributedOptimizersFromAssemblies(params Assembly[] assemblies)
+    {
+        foreach (var descriptor in DialectRuntimeDescriptorAttributeDiscovery.DiscoverOptimizers(assemblies))
+            RegisterOptimizer(descriptor);
+
+        return this;
+    }
+
+    public DialectRuntimeDescriptorRegistryBuilder RegisterAttributedOptimizers(params Type[] types)
+    {
+        foreach (var descriptor in DialectRuntimeDescriptorAttributeDiscovery.DiscoverOptimizers(types))
+            RegisterOptimizer(descriptor);
+
+        return this;
+    }
+
+    public DialectRuntimeDescriptorRegistryBuilder RegisterAttributedBackendsFromAssemblies(params Assembly[] assemblies)
+    {
+        foreach (var descriptor in DialectRuntimeDescriptorAttributeDiscovery.DiscoverBackends(assemblies))
+            RegisterBackend(descriptor);
+
+        return this;
+    }
+
+    public DialectRuntimeDescriptorRegistryBuilder RegisterAttributedBackends(params Type[] types)
+    {
+        foreach (var descriptor in DialectRuntimeDescriptorAttributeDiscovery.DiscoverBackends(types))
+            RegisterBackend(descriptor);
+
+        return this;
+    }
+
     public DialectRuntimeDescriptorRegistryBuilder RegisterModule(RuntimeModuleDescriptor descriptor)
     {
         if (descriptor == null)
             Thrower.ArgumentNull(nameof(descriptor));
 
-        RegisterUniqueDescriptor(descriptor.CanonicalId, descriptor.AllNames, descriptor, _modules, _moduleNameMap, "module");
+        RegisterUniqueDescriptor(descriptor.CanonicalId, descriptor.AllNames, descriptor, _modules, _moduleNameMap, "module", static x => x.MetadataOwnerType);
         return this;
     }
 
@@ -31,7 +80,7 @@ public sealed class DialectRuntimeDescriptorRegistryBuilder
         if (descriptor == null)
             Thrower.ArgumentNull(nameof(descriptor));
 
-        RegisterUniqueDescriptor(descriptor.CanonicalId, descriptor.AllNames, descriptor, _optimizers, _optimizerNameMap, "optimizer");
+        RegisterUniqueDescriptor(descriptor.CanonicalId, descriptor.AllNames, descriptor, _optimizers, _optimizerNameMap, "optimizer", static x => x.MetadataOwnerType);
         return this;
     }
 
@@ -41,10 +90,15 @@ public sealed class DialectRuntimeDescriptorRegistryBuilder
             Thrower.ArgumentNull(nameof(descriptor));
 
         if (_backends.ContainsKey(descriptor.BackendId))
-            Thrower.Argument(nameof(descriptor), $"Backend descriptor for '{descriptor.CanonicalId}' is already registered.");
+        {
+            var existing = _backends[descriptor.BackendId];
+            Thrower.Argument(
+                nameof(descriptor),
+                $"backend canonical identifier '{descriptor.CanonicalId}' is declared by both '{existing.MetadataOwnerType.FullName}' and '{descriptor.MetadataOwnerType.FullName}'.");
+        }
 
         _backends.Add(descriptor.BackendId, descriptor);
-        RegisterNames(descriptor.AllNames, descriptor, _backendNameMap, "backend");
+        RegisterNames(descriptor.AllNames, descriptor, _backendNameMap, "backend", static x => x.MetadataOwnerType);
         return this;
     }
 
@@ -81,21 +135,37 @@ public sealed class DialectRuntimeDescriptorRegistryBuilder
         TDescriptor descriptor,
         IDictionary<string, TDescriptor> canonicalMap,
         IDictionary<string, TDescriptor> nameMap,
-        string kind)
+        string kind,
+        Func<TDescriptor, Type> getMetadataOwnerType)
     {
         if (canonicalMap.ContainsKey(canonicalId))
-            Thrower.Argument(nameof(descriptor), $"{kind} descriptor '{canonicalId}' is already registered.");
+        {
+            var existing = canonicalMap[canonicalId];
+            Thrower.Argument(
+                nameof(descriptor),
+                $"{kind} canonical identifier '{canonicalId}' is declared by both '{getMetadataOwnerType(existing).FullName}' and '{getMetadataOwnerType(descriptor).FullName}'.");
+        }
 
         canonicalMap.Add(canonicalId, descriptor);
-        RegisterNames(allNames, descriptor, nameMap, kind);
+        RegisterNames(allNames, descriptor, nameMap, kind, getMetadataOwnerType);
     }
 
-    private static void RegisterNames<TDescriptor>(IReadOnlyList<string> names, TDescriptor descriptor, IDictionary<string, TDescriptor> nameMap, string kind)
+    private static void RegisterNames<TDescriptor>(
+        IReadOnlyList<string> names,
+        TDescriptor descriptor,
+        IDictionary<string, TDescriptor> nameMap,
+        string kind,
+        Func<TDescriptor, Type> getMetadataOwnerType)
     {
         foreach (var name in names)
         {
             if (nameMap.ContainsKey(name))
-                Thrower.Argument(nameof(descriptor), $"{kind} alias '{name}' is already registered.");
+            {
+                var existing = nameMap[name];
+                Thrower.Argument(
+                    nameof(descriptor),
+                    $"{kind} alias '{name}' is declared by both '{getMetadataOwnerType(existing).FullName}' and '{getMetadataOwnerType(descriptor).FullName}'.");
+            }
 
             nameMap.Add(name, descriptor);
         }
