@@ -49,6 +49,8 @@ public sealed class RuntimeOptimizerDescriptor
 
     public Type ImplementationType { get; }
 
+    public Type MetadataOwnerType => ImplementationType;
+
     private static List<string> SnapshotAliases(IEnumerable<string>? aliases, string paramName, string canonicalId)
     {
         if (aliases == null)

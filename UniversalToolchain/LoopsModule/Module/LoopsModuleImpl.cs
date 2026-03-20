@@ -1,5 +1,6 @@
 namespace LoopsModule.Module;
 
+[UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("Loops")]
 [AutoRegisterService]
 public class LoopsModuleImpl : IFrontendCoreModule
 {

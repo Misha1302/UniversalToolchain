@@ -1,5 +1,6 @@
 namespace SemicolonAsNewLineModule;
 
+[UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("SemicolonAsNewLine")]
 [AutoRegisterService]
 public class SemicolonAsNewLineModuleImpl : IFrontendCoreModule
 {

@@ -1,5 +1,6 @@
 namespace LabelsModule.Module;
 
+[UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("Labels")]
 [AutoRegisterService]
 public class LabelsModuleImpl : IFrontendCoreModule
 {

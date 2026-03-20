@@ -1,5 +1,6 @@
 namespace EqualityModule;
 
+[UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("Equality")]
 [AutoRegisterService]
 public class EqualityModuleImpl : IFrontendCoreModule
 {

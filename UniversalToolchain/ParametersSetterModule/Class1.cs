@@ -1,5 +1,6 @@
 namespace ParametersSetterModule;
 
+[UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("ParametersSetter")]
 [AutoRegisterService]
 public class ParametersSetterModuleImpl : IFrontendCoreModule
 {

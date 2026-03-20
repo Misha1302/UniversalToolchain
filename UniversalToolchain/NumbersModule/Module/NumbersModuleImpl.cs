@@ -1,5 +1,6 @@
 namespace NumbersModule.Module;
 
+[UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("Numbers")]
 [AutoRegisterService]
 public class NumbersModuleImpl : IFrontendCoreModule
 {
