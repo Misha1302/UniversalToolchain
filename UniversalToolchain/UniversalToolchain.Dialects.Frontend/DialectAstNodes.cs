@@ -1,8 +1,3 @@
-using BasicCore.LexerWrapper;
-using BasicCore.ParserWrapper;
-using ExceptionsManager;
-using AstNodeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.ParserWrapper.AstNodeTag>;
-
 namespace UniversalToolchain.Dialects.Frontend;
 
 public static class DialectAstNodeTypes

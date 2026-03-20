@@ -1,17 +1,3 @@
-using AbstractIrConverters;
-using BasicCodeTranslator;
-using BasicCore.LexerWrapper;
-using BasicCore.ParserWrapper;
-using BasicCore.Registration;
-using BasicCore.TranslatorWrapper;
-using BasicLexer.Core;
-using BasicParser.Core;
-using CommonExceptions;
-using UniversalToolchain.Dialects.Abstractions;
-using UniversalToolchain.Dialects.Core;
-using UniversalToolchain.Dialects.Frontend;
-using AstNodeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.ParserWrapper.AstNodeTag>;
-
 namespace UniversalToolchain.Dialects.Tests;
 
 internal static class DialectDslTestSupport

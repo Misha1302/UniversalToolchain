@@ -1,6 +1,3 @@
-using UniversalToolchain.Dialects.Integration;
-using UniversalToolchain.Dialects.Wist;
-
 return Parser.Default.ParseArguments<RunOptions, ReplOptions, DialectInspectOptions, DialectDemoOptions>(args)
     .MapResult(
         (RunOptions opts) => RunCommand(opts),

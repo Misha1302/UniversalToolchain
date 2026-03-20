@@ -1,8 +1,3 @@
-using BasicCore.Compilation;
-using BasicCore.Contracts;
-using ExceptionsManager;
-using IntermediateRepresentationAbstractions;
-
 namespace UniversalToolchain.Dialects.Wist;
 
 internal sealed class DialectIntrinsicPolicyCompiler<TCompilationOutput> : IAbstractIrCompiler<TCompilationOutput>

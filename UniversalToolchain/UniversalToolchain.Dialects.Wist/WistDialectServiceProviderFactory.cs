@@ -1,18 +1,3 @@
-using System.Reflection.Emit;
-using AbstractIrConverters;
-using BasicCore.Contracts;
-using BasicCore.Core;
-using BasicCore.ExecutorWrapper;
-using BasicCore.LexerWrapper;
-using BasicCore.ParserWrapper;
-using BasicCore.TranslatorWrapper;
-using BytecodeDynamicMethodsCompiler.Compilers;
-using DependencyInjection;
-using ExceptionsManager;
-using IntermediateRepresentationAbstractions;
-using Microsoft.Extensions.DependencyInjection;
-using ServiceLifetime = Microsoft.Extensions.DependencyInjection.ServiceLifetime;
-
 namespace UniversalToolchain.Dialects.Wist;
 
 /// <summary>

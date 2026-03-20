@@ -1,10 +1,3 @@
-using CommonExceptions;
-using IntermediateRepresentationAbstractions;
-using UniversalIntermediateRepresentation;
-using UniversalToolchain.Dialects.Abstractions;
-using UniversalToolchain.Dialects.Core;
-using UniversalToolchain.Dialects.Frontend;
-
 namespace UniversalToolchain.Dialects.Tests;
 
 public class DialectDslRegressionTests

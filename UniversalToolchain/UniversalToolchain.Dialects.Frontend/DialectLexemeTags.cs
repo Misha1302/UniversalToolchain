@@ -1,5 +1,3 @@
-using BasicCore.LexerWrapper;
-
 namespace UniversalToolchain.Dialects.Frontend;
 
 public static class DialectLexemeTags

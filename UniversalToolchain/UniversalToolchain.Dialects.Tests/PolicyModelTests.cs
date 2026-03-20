@@ -1,5 +1,3 @@
-using UniversalToolchain.Dialects.Abstractions;
-
 namespace UniversalToolchain.Dialects.Tests;
 
 public class PolicyModelTests

@@ -1,5 +1,3 @@
-using UniversalToolchain.Dialects.Abstractions;
-
 namespace UniversalToolchain.Dialects.Core;
 
 internal interface IDialectPolicyValidationRule

@@ -1,6 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-using UniversalToolchain.Dialects.Frontend;
-
 namespace UniversalToolchain.Dialects.Tests;
 
 internal static class DialectDslTestComposition

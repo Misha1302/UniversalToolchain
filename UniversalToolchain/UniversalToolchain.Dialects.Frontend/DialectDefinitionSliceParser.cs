@@ -1,6 +1,3 @@
-using BasicCore.ParserWrapper;
-using ExceptionsManager;
-
 namespace UniversalToolchain.Dialects.Frontend;
 
 public sealed class DialectDefinitionSliceParser

@@ -1,25 +1,3 @@
-using ArithmeticModule.Module;
-using CommentsModule;
-using ConditionsModule.Enums;
-using ConditionsModule.Module;
-using ConditionsModule.Optimizers;
-using CSharpInteropModule.Module;
-using EqualityModule;
-using ExceptionsManager;
-using IdentifierModule;
-using InternalPreprocessorLexemesModule;
-using LabelsModule.Module;
-using LocalVariablesOptimizerModule;
-using LoopsModule.Module;
-using NativeMathModule;
-using NumbersModule.Module;
-using ParametersSetterModule;
-using ScopesModule.Module;
-using SemicolonAsNewLineModule;
-using UniversalToolchain.Dialects.Integration;
-using VariablesModule;
-using WhitespacesModule;
-
 namespace UniversalToolchain.Dialects.Wist;
 
 /// <summary>

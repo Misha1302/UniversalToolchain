@@ -1,6 +1,3 @@
-using BasicCore.LexerWrapper;
-using ExceptionsManager;
-
 namespace UniversalToolchain.Dialects.Frontend;
 
 public sealed class DialectDirectiveLineParser

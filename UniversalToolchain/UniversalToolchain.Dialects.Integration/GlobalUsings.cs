@@ -1,0 +1,10 @@
+global using BasicCore.Contracts;
+global using ExceptionsManager;
+global using Microsoft.Extensions.DependencyInjection;
+global using System.Collections.ObjectModel;
+global using System.Reflection;
+global using System.Text;
+global using UniversalToolchain.Dialects.Abstractions;
+global using UniversalToolchain.Dialects.Core;
+global using UniversalToolchain.Dialects.Frontend;
+global using UniversalToolchain.Dialects.Parsing;

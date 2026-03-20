@@ -1,7 +1,3 @@
-using BasicCore.LexerWrapper;
-using CommonExceptions;
-using ExceptionsManager;
-
 namespace UniversalToolchain.Dialects.Frontend;
 
 public static class DialectDefinitionSliceParseErrors

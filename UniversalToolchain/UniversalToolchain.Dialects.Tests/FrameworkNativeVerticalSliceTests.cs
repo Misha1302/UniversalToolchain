@@ -1,18 +1,3 @@
-using AbstractIrConverters;
-using BasicCodeTranslator;
-using BasicCore.Compilation;
-using BasicCore.Core;
-using BasicCore.LexerWrapper;
-using BasicCore.ParserWrapper;
-using BasicCore.TranslatorWrapper;
-using BasicLexer.Core;
-using BasicParser.Core;
-using CommonExceptions;
-using IntermediateRepresentationAbstractions;
-using UniversalIntermediateRepresentation;
-using UniversalToolchain.Dialects.Abstractions;
-using UniversalToolchain.Dialects.Frontend;
-
 namespace UniversalToolchain.Dialects.Tests;
 
 public class FrameworkNativeVerticalSliceTests

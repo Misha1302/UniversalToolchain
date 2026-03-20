@@ -1,5 +1,3 @@
-using UniversalToolchain.Dialects.Wist;
-
 var services = new ServiceCollection();
 services.AddWistDialectServices();
 

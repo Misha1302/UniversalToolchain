@@ -1,13 +1,3 @@
-using AbstractIrConverters;
-using BasicCodeTranslator;
-using BasicCore.Core;
-using BasicCore.LexerWrapper;
-using BasicCore.ParserWrapper;
-using BasicCore.TranslatorWrapper;
-using BasicLexer.Core;
-using BasicParser.Core;
-using ExceptionsManager;
-
 namespace UniversalToolchain.Dialects.Frontend;
 
 public sealed class DialectDslCompiler

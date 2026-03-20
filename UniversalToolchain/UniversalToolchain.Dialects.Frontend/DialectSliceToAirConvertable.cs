@@ -1,7 +1,3 @@
-using DynamicMethodWrapper;
-using IntermediateRepresentationAbstractions;
-using UniversalIntermediateRepresentation;
-
 namespace UniversalToolchain.Dialects.Frontend;
 
 public sealed class DialectSliceToAirConvertable(IReadOnlyList<object> annotations) : IAbstractMethodConvertable

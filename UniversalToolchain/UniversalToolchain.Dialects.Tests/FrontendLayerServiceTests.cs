@@ -1,16 +1,3 @@
-using AbstractIrConverters;
-using BasicCodeTranslator;
-using BasicCore.LexerWrapper;
-using BasicCore.ParserWrapper;
-using BasicCore.Registration;
-using BasicCore.TranslatorWrapper;
-using BasicLexer.Core;
-using BasicParser.Core;
-using CommonExceptions;
-using IntermediateRepresentationAbstractions;
-using UniversalIntermediateRepresentation;
-using UniversalToolchain.Dialects.Frontend;
-
 namespace UniversalToolchain.Dialects.Tests;
 
 public class FrontendLayerServiceTests

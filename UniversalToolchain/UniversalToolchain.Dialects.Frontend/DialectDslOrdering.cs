@@ -1,5 +1,3 @@
-using ExceptionsManager;
-
 namespace UniversalToolchain.Dialects.Frontend;
 
 public enum DialectParserStage

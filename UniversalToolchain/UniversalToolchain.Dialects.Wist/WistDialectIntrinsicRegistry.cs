@@ -1,8 +1,3 @@
-using BytecodeDynamicMethodsCompiler.Compilers;
-using UniversalToolchain.Dialects.Abstractions;
-using UniversalToolchain.Dialects.Integration;
-using AbstractIrConverters;
-
 namespace UniversalToolchain.Dialects.Wist;
 
 internal static class WistDialectIntrinsicRegistry

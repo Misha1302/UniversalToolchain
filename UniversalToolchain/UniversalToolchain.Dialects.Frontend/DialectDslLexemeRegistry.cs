@@ -1,7 +1,3 @@
-using System.Text.RegularExpressions;
-using BasicCore.Registration;
-using ExceptionsManager;
-
 namespace UniversalToolchain.Dialects.Frontend;
 
 public static class DialectDslLexemeRegistry
