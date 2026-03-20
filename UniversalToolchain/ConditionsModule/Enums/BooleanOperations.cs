@@ -1,5 +1,6 @@
 namespace ConditionsModule.Enums;
 
+[UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("BooleanConditions")]
 [AutoRegisterService]
 public class BooleanOperations : IFrontendCoreModule
 {

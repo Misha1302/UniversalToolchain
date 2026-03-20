@@ -1,5 +1,6 @@
 namespace WhitespacesModule;
 
+[UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("Whitespaces")]
 [AutoRegisterService]
 public class WhitespaceModuleImpl : IFrontendCoreModule
 {

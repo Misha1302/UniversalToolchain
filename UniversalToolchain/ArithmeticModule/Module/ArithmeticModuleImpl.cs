@@ -1,5 +1,6 @@
 namespace ArithmeticModule.Module;
 
+[UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("Arithmetic")]
 [AutoRegisterService]
 public class ArithmeticModuleImpl : IFrontendCoreModule
 {

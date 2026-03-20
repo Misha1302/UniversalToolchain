@@ -50,6 +50,8 @@ public sealed class RuntimeModuleDescriptor
 
     public Type ImplementationType { get; }
 
+    public Type MetadataOwnerType => ImplementationType;
+
     public bool IsFrontendModule => typeof(IFrontendCoreModule).IsAssignableFrom(ImplementationType);
 
     public bool IsIrProcessingModule => typeof(IIRProcessingModule).IsAssignableFrom(ImplementationType);

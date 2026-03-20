@@ -1,5 +1,6 @@
 namespace IdentifierModule;
 
+[UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("Identifier")]
 [AutoRegisterService]
 public class IdentifierModuleImpl : IFrontendCoreModule
 {

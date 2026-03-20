@@ -16,14 +16,22 @@ public sealed class RuntimeBackendDescriptor
     {
     }
 
-
-    public RuntimeBackendDescriptor(DialectBackendId backendId, IEnumerable<string>? aliases = null)
+    public RuntimeBackendDescriptor(DialectBackendId backendId, Type metadataOwnerType, IEnumerable<string>? aliases = null)
     {
+        if (metadataOwnerType == null)
+            Thrower.ArgumentNull(nameof(metadataOwnerType));
+
         if (string.IsNullOrWhiteSpace(backendId.Value))
             Thrower.Argument(nameof(backendId), "Runtime backend descriptor must contain a canonical backend identifier.");
 
         BackendId = backendId;
+        MetadataOwnerType = metadataOwnerType;
         _aliases = new ReadOnlyCollection<string>(SnapshotAliases(aliases, nameof(aliases), backendId.Value));
+    }
+
+    public RuntimeBackendDescriptor(DialectBackendId backendId, IEnumerable<string>? aliases = null)
+        : this(backendId, typeof(RuntimeBackendDescriptor), aliases)
+    {
     }
 
     public DialectBackendId BackendId { get; }
@@ -37,6 +45,8 @@ public sealed class RuntimeBackendDescriptor
     public IReadOnlyList<string> Aliases => _aliases;
 
     public IReadOnlyList<string> AllNames => [CanonicalId, .. _aliases];
+
+    public Type MetadataOwnerType { get; }
 
     private static List<string> SnapshotAliases(IEnumerable<string>? aliases, string paramName, string canonicalId)
     {

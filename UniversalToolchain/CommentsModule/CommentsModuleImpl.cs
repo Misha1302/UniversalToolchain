@@ -1,5 +1,6 @@
 namespace CommentsModule;
 
+[UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("Comments")]
 [AutoRegisterService]
 public class CommentsModuleImpl : IFrontendCoreModule
 {

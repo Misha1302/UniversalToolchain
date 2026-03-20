@@ -1,5 +1,6 @@
 namespace ConditionsModule.Optimizers;
 
+[UniversalToolchain.Dialects.Abstractions.DialectOptimizerAlias("BooleanOptimization")]
 [AutoRegisterService]
 [UsedImplicitly]
 public class BooleanOptimizerModule : IIRProcessingModule

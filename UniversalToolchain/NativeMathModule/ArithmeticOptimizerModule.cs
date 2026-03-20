@@ -1,5 +1,6 @@
 namespace NativeMathModule;
 
+[UniversalToolchain.Dialects.Abstractions.DialectOptimizerAlias("ArithmeticOptimization")]
 [AutoRegisterService]
 [UsedImplicitly]
 public class ArithmeticOptimizerModule : IIRProcessingModule

@@ -1,5 +1,6 @@
 namespace CSharpInteropModule.Module;
 
+[UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("CSharpInterop")]
 [AutoRegisterService]
 public class CSharpInteropModuleImpl : IFrontendCoreModule
 {
