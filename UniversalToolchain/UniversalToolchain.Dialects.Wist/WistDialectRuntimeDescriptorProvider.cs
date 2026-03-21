@@ -4,6 +4,7 @@ using CommentsModule;
 using ConditionsModule.Enums;
 using CSharpInteropModule.Module;
 using EqualityModule;
+using ExceptionsManager;
 using IdentifierModule;
 using InternalPreprocessorLexemesModule;
 using LabelsModule.Module;
@@ -14,7 +15,6 @@ using NumbersModule.Module;
 using ParametersSetterModule;
 using ScopesModule.Module;
 using SemicolonAsNewLineModule;
-using ExceptionsManager;
 using UniversalToolchain.Dialects.Integration;
 using VariablesModule;
 using WhitespacesModule;
@@ -26,6 +26,16 @@ namespace UniversalToolchain.Dialects.Wist;
 /// </summary>
 public sealed class WistDialectRuntimeDescriptorProvider : IDialectRuntimeDescriptorProvider
 {
+    private readonly IReadOnlyList<IWistDialectBackendServiceProvider> _backendProviders;
+
+    public WistDialectRuntimeDescriptorProvider(IEnumerable<IWistDialectBackendServiceProvider> backendProviders)
+    {
+        if (backendProviders == null)
+            Thrower.ArgumentNull(nameof(backendProviders));
+
+        _backendProviders = backendProviders.ToList();
+    }
+
     public int Order => 0;
 
     public void Register(DialectRuntimeDescriptorRegistryBuilder builder)
@@ -41,9 +51,9 @@ public sealed class WistDialectRuntimeDescriptorProvider : IDialectRuntimeDescri
         RegisterIntrinsics(builder);
     }
 
-    private static void RegisterIntrinsics(DialectRuntimeDescriptorRegistryBuilder builder)
+    private void RegisterIntrinsics(DialectRuntimeDescriptorRegistryBuilder builder)
     {
-        foreach (var intrinsic in WistDialectIntrinsicRegistry.CreateDescriptors())
+        foreach (var intrinsic in WistDialectIntrinsicRegistry.CreateDescriptors(_backendProviders))
             builder.RegisterIntrinsic(intrinsic);
     }
 
