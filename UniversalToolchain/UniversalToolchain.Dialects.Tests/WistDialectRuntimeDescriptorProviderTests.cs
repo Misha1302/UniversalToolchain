@@ -46,5 +46,12 @@ public class WistDialectRuntimeDescriptorProviderTests
         });
     }
 
-    private static DialectRuntimeDescriptorRegistry BuildRegistry() => DialectRuntimeDescriptorRegistryFactory.BuildFromProviders([new WistDialectRuntimeDescriptorProvider()]);
+    private static DialectRuntimeDescriptorRegistry BuildRegistry()
+    {
+        var services = new ServiceCollection();
+        services.AddWistDialectServices();
+
+        using var provider = services.BuildServiceProvider();
+        return provider.GetRequiredService<DialectRuntimeDescriptorRegistry>();
+    }
 }

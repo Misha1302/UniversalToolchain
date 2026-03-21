@@ -60,7 +60,7 @@ public class DialectRuntimeArchitectureTests
     [Test]
     public void WistIntrinsicRegistry_ComesFromRealBackendCapabilities()
     {
-        var registry = DialectRuntimeDescriptorRegistryFactory.BuildFromProviders([new WistDialectRuntimeDescriptorProvider()]);
+        var registry = BuildRegistry();
 
         Assert.Multiple(() =>
         {
@@ -106,6 +106,12 @@ public class DialectRuntimeArchitectureTests
                 Assert.That(text, Does.Not.Contain("capability "));
             });
         }
+    }
+
+    private static DialectRuntimeDescriptorRegistry BuildRegistry()
+    {
+        using var provider = CreateProvider();
+        return provider.GetRequiredService<DialectRuntimeDescriptorRegistry>();
     }
 
     private static ServiceProvider CreateProvider()

@@ -45,7 +45,7 @@ public class DialectRuntimeAliasAttributeDiscoveryTests
     [Test]
     public void WistRuntimeProvider_ResolvesExistingAliasesFromAttributes()
     {
-        var registry = DialectRuntimeDescriptorRegistryFactory.BuildFromProviders([new WistDialectRuntimeDescriptorProvider()]);
+        var registry = BuildRegistry();
 
         Assert.Multiple(() =>
         {
@@ -184,6 +184,15 @@ public class DialectRuntimeAliasAttributeDiscoveryTests
             .RegisterAttributedOptimizers(typeof(AttributedOptimizer), typeof(MultiAliasAttributedOptimizer))
             .RegisterAttributedBackends(typeof(AttributedBackendDeclaration))
             .Build();
+    }
+
+    private static DialectRuntimeDescriptorRegistry BuildRegistry()
+    {
+        var services = new ServiceCollection();
+        services.AddWistDialectServices();
+
+        using var provider = services.BuildServiceProvider();
+        return provider.GetRequiredService<DialectRuntimeDescriptorRegistry>();
     }
 
     private static string GetWistExamplesRoot()
