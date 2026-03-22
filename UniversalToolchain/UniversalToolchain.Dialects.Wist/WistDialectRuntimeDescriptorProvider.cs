@@ -1,23 +1,6 @@
 using System.Reflection;
-using ArithmeticModule.Module;
-using CommentsModule;
-using ConditionsModule.Enums;
-using CSharpInteropModule.Module;
-using EqualityModule;
 using ExceptionsManager;
-using IdentifierModule;
-using InternalPreprocessorLexemesModule;
-using LabelsModule.Module;
-using LocalVariablesOptimizerModule;
-using LoopsModule.Module;
-using NativeMathModule;
-using NumbersModule.Module;
-using ParametersSetterModule;
-using ScopesModule.Module;
-using SemicolonAsNewLineModule;
 using UniversalToolchain.Dialects.Integration;
-using VariablesModule;
-using WhitespacesModule;
 
 namespace UniversalToolchain.Dialects.Wist;
 
@@ -26,14 +9,21 @@ namespace UniversalToolchain.Dialects.Wist;
 /// </summary>
 public sealed class WistDialectRuntimeDescriptorProvider : IDialectRuntimeDescriptorProvider
 {
+    private readonly IReadOnlyList<Assembly> _runtimeAssemblies;
     private readonly IReadOnlyList<IWistDialectBackendServiceProvider> _backendProviders;
 
-    public WistDialectRuntimeDescriptorProvider(IEnumerable<IWistDialectBackendServiceProvider> backendProviders)
+    public WistDialectRuntimeDescriptorProvider(
+        IEnumerable<IWistDialectBackendServiceProvider> backendProviders,
+        IEnumerable<IWistDialectRuntimeAssemblyContributor> runtimeAssemblyContributors)
     {
         if (backendProviders == null)
             Thrower.ArgumentNull(nameof(backendProviders));
 
+        if (runtimeAssemblyContributors == null)
+            Thrower.ArgumentNull(nameof(runtimeAssemblyContributors));
+
         _backendProviders = backendProviders.ToList();
+        _runtimeAssemblies = WistDialectRuntimeAssemblyCatalog.Build(runtimeAssemblyContributors).ToList();
     }
 
     public int Order => 0;
@@ -43,10 +33,9 @@ public sealed class WistDialectRuntimeDescriptorProvider : IDialectRuntimeDescri
         if (builder == null)
             Thrower.ArgumentNull(nameof(builder));
 
-        var runtimeAssemblies = GetRuntimeAssemblies();
         builder
-            .RegisterAttributedModulesFromAssemblies(runtimeAssemblies)
-            .RegisterAttributedOptimizersFromAssemblies(runtimeAssemblies)
+            .RegisterAttributedModulesFromAssemblies(_runtimeAssemblies.ToArray())
+            .RegisterAttributedOptimizersFromAssemblies(_runtimeAssemblies.ToArray())
             .RegisterAttributedBackendsFromAssemblies(typeof(WistDialectRuntimeDescriptorProvider).Assembly);
         RegisterIntrinsics(builder);
     }
@@ -55,29 +44,5 @@ public sealed class WistDialectRuntimeDescriptorProvider : IDialectRuntimeDescri
     {
         foreach (var intrinsic in WistDialectIntrinsicRegistry.CreateDescriptors(_backendProviders))
             builder.RegisterIntrinsic(intrinsic);
-    }
-
-    private static Assembly[] GetRuntimeAssemblies()
-    {
-        return
-        [
-            typeof(ArithmeticModuleImpl).Assembly,
-            typeof(BooleanOperations).Assembly,
-            typeof(CommentsModuleImpl).Assembly,
-            typeof(CSharpInteropModuleImpl).Assembly,
-            typeof(EqualityModuleImpl).Assembly,
-            typeof(IdentifierModuleImpl).Assembly,
-            typeof(InternalPreprocessorLexemesModuleImpl).Assembly,
-            typeof(LabelsModuleImpl).Assembly,
-            typeof(LocalVariablesOptimizer).Assembly,
-            typeof(LoopsModuleImpl).Assembly,
-            typeof(NativeTypesModuleImpl).Assembly,
-            typeof(NumbersModuleImpl).Assembly,
-            typeof(ParametersSetterModuleImpl).Assembly,
-            typeof(ScopesModuleImpl).Assembly,
-            typeof(SemicolonAsNewLineModuleImpl).Assembly,
-            typeof(VariablesModuleImpl).Assembly,
-            typeof(WhitespaceModuleImpl).Assembly
-        ];
     }
 }
