@@ -20,6 +20,12 @@ public static class WistDialectServiceCollectionExtensions
         services.AddDialectDslDefaultComposition();
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IWistDialectBackendServiceProvider, WistCilDialectBackendServiceProvider>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IWistDialectBackendServiceProvider, WistInterpreterDialectBackendServiceProvider>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IWistDialectRuntimeAssemblyContributor, WistExpressionRuntimeAssemblyContributor>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IWistDialectRuntimeAssemblyContributor, WistSyntaxRuntimeAssemblyContributor>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IWistDialectRuntimeAssemblyContributor, WistStateRuntimeAssemblyContributor>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IWistDialectRuntimeAssemblyContributor, WistControlFlowRuntimeAssemblyContributor>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IWistDialectRuntimeAssemblyContributor, WistInteropRuntimeAssemblyContributor>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IWistDialectRuntimeAssemblyContributor, WistOptimizerRuntimeAssemblyContributor>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IDialectRuntimeDescriptorProvider, WistDialectRuntimeDescriptorProvider>());
         services.TryAddSingleton(static provider => DialectRuntimeDescriptorRegistryFactory.BuildFromProviders(provider.GetServices<IDialectRuntimeDescriptorProvider>()));
         services.TryAddSingleton<IDialectCompiledDialectBuildPlanBuilder, DialectCompiledDialectBuildPlanBuilder>();
