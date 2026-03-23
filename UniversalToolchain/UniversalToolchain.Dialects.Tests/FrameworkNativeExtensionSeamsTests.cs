@@ -1,4 +1,3 @@
-using System.Reflection;
 using BasicCore.Contracts;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
@@ -130,8 +129,8 @@ public class FrameworkNativeExtensionSeamsTests
     [Test]
     public void RuntimeDescriptorFactory_BuildsDeterministically_FromProviders()
     {
-        var first = DialectRuntimeDescriptorRegistryFactory.BuildFromAssemblies(Assembly.GetExecutingAssembly());
-        var second = DialectRuntimeDescriptorRegistryFactory.BuildFromAssemblies(Assembly.GetExecutingAssembly());
+        var first = DialectRuntimeDescriptorRegistryFactory.BuildFromProviders([new DemoRuntimeDescriptorProvider()]);
+        var second = DialectRuntimeDescriptorRegistryFactory.BuildFromProviders([new DemoRuntimeDescriptorProvider()]);
 
         Assert.Multiple(() =>
         {
