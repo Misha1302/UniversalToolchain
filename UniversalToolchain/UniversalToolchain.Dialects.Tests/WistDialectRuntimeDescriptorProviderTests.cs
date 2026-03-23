@@ -1,6 +1,6 @@
-using System.Reflection;
-using System.Reflection.Emit;
+using ArithmeticModule;
 using ArithmeticModule.Module;
+using ConditionsModule;
 using LocalVariablesOptimizerModule;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -12,13 +12,11 @@ namespace UniversalToolchain.Dialects.Tests;
 
 public class WistDialectRuntimeDescriptorProviderTests
 {
-    private static readonly Assembly TestRuntimeExtensionAssembly = CreateTestRuntimeExtensionAssembly();
-
     [Test]
     public void RegistryFactory_BuildsDeterministicRealWistCatalog()
     {
-        var first = BuildRegistry();
-        var second = BuildRegistry();
+        var first = BuildRegistryFromServices();
+        var second = BuildRegistryFromServices();
 
         Assert.Multiple(() =>
         {
@@ -55,11 +53,11 @@ public class WistDialectRuntimeDescriptorProviderTests
     }
 
     [Test]
-    public void AddWistDialectServices_AllowsExtendingRuntimeAssemblyDiscoveryViaContributor()
+    public void AddWistDialectServices_AllowsExtendingRuntimeDescriptorDiscoveryViaProvider()
     {
         var services = new ServiceCollection();
         services.AddWistDialectServices();
-        services.TryAddEnumerable(ServiceDescriptor.Singleton<IWistDialectRuntimeAssemblyContributor, TestOnlyRuntimeAssemblyContributor>());
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IDialectRuntimeDescriptorProvider, TestOnlyRuntimeDescriptorProvider>());
 
         using var provider = services.BuildServiceProvider();
         var registry = provider.GetRequiredService<DialectRuntimeDescriptorRegistry>();
@@ -67,63 +65,80 @@ public class WistDialectRuntimeDescriptorProviderTests
         Assert.Multiple(() =>
         {
             Assert.That(registry.TryResolveModule("TestOnlyFrontend", out var module), Is.True);
-            Assert.That(module!.CanonicalId, Does.Contain("TestOnlyAttributedFrontendModule"));
+            Assert.That(module!.CanonicalId, Does.Contain(nameof(TestOnlyAttributedFrontendModule)));
             Assert.That(registry.TryResolveOptimizer("TestOnlyOptimizer", out var optimizer), Is.True);
-            Assert.That(optimizer!.CanonicalId, Does.Contain("TestOnlyAttributedOptimizer"));
+            Assert.That(optimizer!.CanonicalId, Does.Contain(nameof(TestOnlyAttributedOptimizer)));
         });
     }
 
     [Test]
-    public void WistDialectRuntimeDescriptorProvider_DeduplicatesDuplicateAssemblies()
+    public void RegistryFactory_CompositionIsDeterministicRegardlessOfProviderRegistrationOrder()
     {
-        var registry = BuildRegistry(
-            new DuplicateTestAssemblyContributor(),
-            new TestOnlyRuntimeAssemblyContributor());
-        var assemblies = WistDialectRuntimeAssemblyCatalog.Build(
-            [new DuplicateTestAssemblyContributor(), new TestOnlyRuntimeAssemblyContributor()]);
+        var first = DialectRuntimeDescriptorRegistryFactory.BuildFromProviders([
+            new TestOnlyRuntimeDescriptorProvider(),
+            new LocalVariablesOptimizerDialectRuntimeDescriptorProvider(),
+            new WistDialectRuntimeDescriptorProvider(Array.Empty<IWistDialectBackendServiceProvider>()),
+            new ArithmeticDialectRuntimeDescriptorProvider(),
+            new ConditionsDialectRuntimeDescriptorProvider()
+        ]);
+        var second = DialectRuntimeDescriptorRegistryFactory.BuildFromProviders([
+            new ConditionsDialectRuntimeDescriptorProvider(),
+            new ArithmeticDialectRuntimeDescriptorProvider(),
+            new WistDialectRuntimeDescriptorProvider(Array.Empty<IWistDialectBackendServiceProvider>()),
+            new LocalVariablesOptimizerDialectRuntimeDescriptorProvider(),
+            new TestOnlyRuntimeDescriptorProvider()
+        ]);
 
         Assert.Multiple(() =>
         {
-            Assert.That(assemblies.Select(static x => x.FullName), Is.EqualTo(new[] { TestRuntimeExtensionAssembly.FullName }));
-            Assert.That(registry.TryResolveModule("TestOnlyFrontend", out _), Is.True);
-            Assert.That(registry.TryResolveOptimizer("TestOnlyOptimizer", out _), Is.True);
-            Assert.That(registry.Modules.Keys.Count(static x => x.Contains("TestOnlyAttributedFrontendModule", StringComparison.Ordinal)), Is.EqualTo(1));
-            Assert.That(registry.Optimizers.Keys.Count(static x => x.Contains("TestOnlyAttributedOptimizer", StringComparison.Ordinal)), Is.EqualTo(1));
+            Assert.That(first.Modules.Keys, Is.EqualTo(second.Modules.Keys));
+            Assert.That(first.Optimizers.Keys, Is.EqualTo(second.Optimizers.Keys));
+            Assert.That(first.Backends.Keys, Is.EqualTo(second.Backends.Keys));
+            Assert.That(first.Intrinsics.Keys, Is.EqualTo(second.Intrinsics.Keys));
         });
     }
 
     [Test]
-    public void WistDialectRuntimeAssemblyCatalog_OrderDoesNotDependOnContributorRegistrationOrder()
-    {
-        var first = WistDialectRuntimeAssemblyCatalog.Build([new ZuluAssemblyContributor(), new AlphaAssemblyContributor()]);
-        var second = WistDialectRuntimeAssemblyCatalog.Build([new AlphaAssemblyContributor(), new ZuluAssemblyContributor()]);
-
-        Assert.That(
-            first.Select(static x => x.FullName),
-            Is.EqualTo(second.Select(static x => x.FullName)));
-    }
-
-    [Test]
-    public void WistDialectRuntimeDescriptorProvider_RejectsInvalidContributorInputClearly()
+    public void RegistryFactory_RejectsInvalidProviderInputClearly()
     {
         Assert.Multiple(() =>
         {
             Assert.That(
-                () => new WistDialectRuntimeDescriptorProvider(Array.Empty<IWistDialectBackendServiceProvider>(), null!),
-                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("runtimeAssemblyContributors"));
+                () => DialectRuntimeDescriptorRegistryFactory.BuildFromProviders(null!),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("providers"));
             Assert.That(
-                () => new WistDialectRuntimeDescriptorProvider(Array.Empty<IWistDialectBackendServiceProvider>(), new IWistDialectRuntimeAssemblyContributor[] { null! }),
-                Throws.ArgumentException.With.Message.Contains("Contributor collection must not contain null entries."));
+                () => DialectRuntimeDescriptorRegistryFactory.BuildFromProviders([null!]),
+                Throws.ArgumentException.With.Message.Contains("Provider collection must not contain null entries."));
             Assert.That(
-                () => new WistDialectRuntimeDescriptorProvider(Array.Empty<IWistDialectBackendServiceProvider>(), [new NullAssembliesContributor()]),
-                Throws.InvalidOperationException.With.Message.Contains("returned null assemblies"));
+                () => new WistDialectRuntimeDescriptorProvider(null!),
+                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("backendProviders"));
             Assert.That(
-                () => new WistDialectRuntimeDescriptorProvider(Array.Empty<IWistDialectBackendServiceProvider>(), [new NullAssemblyEntryContributor()]),
-                Throws.InvalidOperationException.With.Message.Contains("returned a null assembly"));
+                () => DialectRuntimeDescriptorRegistryFactory.BuildFromProviders([new NullTypeEntryRuntimeDescriptorProvider()]),
+                Throws.ArgumentException.With.Message.Contains("Type list must not contain null entries."));
         });
     }
 
-    private static DialectRuntimeDescriptorRegistry BuildRegistry()
+    [Test]
+    public void RegistryFactory_PreservesDuplicateCollisionValidationAcrossDistributedProviders()
+    {
+        Assert.Multiple(() =>
+        {
+            Assert.That(
+                () => DialectRuntimeDescriptorRegistryFactory.BuildFromProviders([
+                    new ArithmeticDialectRuntimeDescriptorProvider(),
+                    new ConflictingModuleRuntimeDescriptorProvider()
+                ]),
+                Throws.ArgumentException.With.Message.Contains("module alias 'Arithmetic'"));
+            Assert.That(
+                () => DialectRuntimeDescriptorRegistryFactory.BuildFromProviders([
+                    new LocalVariablesOptimizerDialectRuntimeDescriptorProvider(),
+                    new ConflictingOptimizerRuntimeDescriptorProvider()
+                ]),
+                Throws.ArgumentException.With.Message.Contains("optimizer alias 'LocalVariablesOptimization'"));
+        });
+    }
+
+    private static DialectRuntimeDescriptorRegistry BuildRegistryFromServices()
     {
         var services = new ServiceCollection();
         services.AddWistDialectServices();
@@ -132,112 +147,65 @@ public class WistDialectRuntimeDescriptorProviderTests
         return provider.GetRequiredService<DialectRuntimeDescriptorRegistry>();
     }
 
-    private static DialectRuntimeDescriptorRegistry BuildRegistry(params IWistDialectRuntimeAssemblyContributor[] contributors)
+    private sealed class TestOnlyRuntimeDescriptorProvider : IDialectRuntimeDescriptorProvider
     {
-        var provider = new WistDialectRuntimeDescriptorProvider(Array.Empty<IWistDialectBackendServiceProvider>(), contributors);
-        var builder = new DialectRuntimeDescriptorRegistryBuilder();
-        provider.Register(builder);
-        return builder.Build();
-    }
+        public decimal Order => 700m;
 
-    private static Assembly CreateTestRuntimeExtensionAssembly()
-    {
-        var assemblyName = new AssemblyName("UniversalToolchain.Dialects.Tests.RuntimeExtension");
-        var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.Run);
-        var moduleBuilder = assemblyBuilder.DefineDynamicModule("RuntimeExtensionModule");
-
-        CreateAttributedDerivedType(moduleBuilder, "TestOnlyAttributedFrontendModule", typeof(ArithmeticModuleImpl), typeof(DialectModuleAliasAttribute), "TestOnlyFrontend");
-        CreateAttributedDerivedType(moduleBuilder, "TestOnlyAttributedOptimizer", typeof(LocalVariablesOptimizer), typeof(DialectOptimizerAliasAttribute), "TestOnlyOptimizer");
-        return assemblyBuilder;
-    }
-
-    private static void CreateAttributedDerivedType(
-        ModuleBuilder moduleBuilder,
-        string typeName,
-        Type baseType,
-        Type attributeType,
-        string alias)
-    {
-        var typeBuilder = moduleBuilder.DefineType(typeName, TypeAttributes.Public | TypeAttributes.Class, baseType);
-        var attributeConstructor = attributeType.GetConstructor([typeof(string[])])!;
-        var attribute = new CustomAttributeBuilder(attributeConstructor, new object[] { new[] { alias } });
-        typeBuilder.SetCustomAttribute(attribute);
-        _ = typeBuilder.CreateType();
-    }
-
-    private sealed class TestOnlyRuntimeAssemblyContributor : IWistDialectRuntimeAssemblyContributor
-    {
-        public int Order => 700;
-
-        public IReadOnlyList<Assembly> GetAssemblies()
+        public void Register(DialectRuntimeDescriptorRegistryBuilder builder)
         {
-            return
-            [
-                TestRuntimeExtensionAssembly
-            ];
+            builder
+                .RegisterAttributedModules(typeof(TestOnlyAttributedFrontendModule))
+                .RegisterAttributedOptimizers(typeof(TestOnlyAttributedOptimizer));
         }
     }
 
-    private sealed class DuplicateTestAssemblyContributor : IWistDialectRuntimeAssemblyContributor
+    private sealed class NullTypeEntryRuntimeDescriptorProvider : IDialectRuntimeDescriptorProvider
     {
-        public int Order => 700;
+        public decimal Order => 700m;
 
-        public IReadOnlyList<Assembly> GetAssemblies()
+        public void Register(DialectRuntimeDescriptorRegistryBuilder builder)
         {
-            return
-            [
-                TestRuntimeExtensionAssembly,
-                TestRuntimeExtensionAssembly
-            ];
+            builder.RegisterAttributedModules([null!]);
         }
     }
 
-    private sealed class AlphaAssemblyContributor : IWistDialectRuntimeAssemblyContributor
+    private sealed class ConflictingModuleRuntimeDescriptorProvider : IDialectRuntimeDescriptorProvider
     {
-        public int Order => 900;
+        public decimal Order => 700m;
 
-        public IReadOnlyList<Assembly> GetAssemblies()
+        public void Register(DialectRuntimeDescriptorRegistryBuilder builder)
         {
-            return
-            [
-                typeof(WistDialectRuntimeDescriptorProvider).Assembly
-            ];
+            builder.RegisterAttributedModules(typeof(ConflictingAttributedArithmeticModule));
         }
     }
 
-    private sealed class ZuluAssemblyContributor : IWistDialectRuntimeAssemblyContributor
+    private sealed class ConflictingOptimizerRuntimeDescriptorProvider : IDialectRuntimeDescriptorProvider
     {
-        public int Order => 900;
+        public decimal Order => 700m;
 
-        public IReadOnlyList<Assembly> GetAssemblies()
+        public void Register(DialectRuntimeDescriptorRegistryBuilder builder)
         {
-            return
-            [
-                TestRuntimeExtensionAssembly
-            ];
+            builder.RegisterAttributedOptimizers(typeof(ConflictingAttributedOptimizer));
         }
     }
 
-    private sealed class NullAssembliesContributor : IWistDialectRuntimeAssemblyContributor
+    [DialectModuleAlias("TestOnlyFrontend")]
+    private sealed class TestOnlyAttributedFrontendModule : ArithmeticModuleImpl
     {
-        public int Order => 0;
-
-        public IReadOnlyList<Assembly> GetAssemblies()
-        {
-            return null!;
-        }
     }
 
-    private sealed class NullAssemblyEntryContributor : IWistDialectRuntimeAssemblyContributor
+    [DialectOptimizerAlias("TestOnlyOptimizer")]
+    private sealed class TestOnlyAttributedOptimizer : LocalVariablesOptimizer
     {
-        public int Order => 0;
+    }
 
-        public IReadOnlyList<Assembly> GetAssemblies()
-        {
-            return
-            [
-                null!
-            ];
-        }
+    [DialectModuleAlias("Arithmetic")]
+    private sealed class ConflictingAttributedArithmeticModule : ArithmeticModuleImpl
+    {
+    }
+
+    [DialectOptimizerAlias("LocalVariablesOptimization")]
+    private sealed class ConflictingAttributedOptimizer : LocalVariablesOptimizer
+    {
     }
 }

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
@@ -13,6 +13,8 @@
         <ProjectReference Include="..\IntermediateRepresentationAbstractions\IntermediateRepresentationAbstractions.csproj"/>
         <ProjectReference Include="..\ObjectExtensions\ObjectExtensions.csproj"/>
         <ProjectReference Include="..\SettableGettableModule\SettableGettableModule.csproj"/>
+        <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Dialects.Integration\UniversalToolchain.Dialects.Integration.csproj"/>
     </ItemGroup>
 
 </Project>

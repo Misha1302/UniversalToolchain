@@ -5,7 +5,7 @@ namespace UniversalToolchain.Dialects.Integration;
 /// </summary>
 public interface IDialectRuntimeDescriptorProvider
 {
-    int Order { get; }
+    decimal Order { get; }
 
     void Register(DialectRuntimeDescriptorRegistryBuilder builder);
 }

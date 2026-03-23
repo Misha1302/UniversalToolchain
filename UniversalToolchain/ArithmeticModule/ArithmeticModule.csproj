@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
@@ -11,6 +11,8 @@
         <ProjectReference Include="..\UniversalToolchain.Dialects.Abstractions\UniversalToolchain.Dialects.Abstractions.csproj"/>
         <ProjectReference Include="..\BasicCore\BasicCore.csproj"/>
         <ProjectReference Include="..\GenericMath\GenericMath.csproj"/>
+        <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Dialects.Integration\UniversalToolchain.Dialects.Integration.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
