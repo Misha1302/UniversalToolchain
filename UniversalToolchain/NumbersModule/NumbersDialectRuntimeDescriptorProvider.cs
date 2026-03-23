@@ -6,7 +6,7 @@ namespace NumbersModule;
 
 public sealed class NumbersDialectRuntimeDescriptorProvider : IDialectRuntimeDescriptorProvider
 {
-    public int Order => 140;
+    public decimal Order => 140m;
 
     public void Register(DialectRuntimeDescriptorRegistryBuilder builder)
     {

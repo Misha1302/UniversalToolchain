@@ -6,7 +6,7 @@ namespace InternalPreprocessorLexemesModule;
 
 public sealed class InternalPreprocessorLexemesDialectRuntimeDescriptorProvider : IDialectRuntimeDescriptorProvider
 {
-    public int Order => 220;
+    public decimal Order => 220m;
 
     public void Register(DialectRuntimeDescriptorRegistryBuilder builder)
     {

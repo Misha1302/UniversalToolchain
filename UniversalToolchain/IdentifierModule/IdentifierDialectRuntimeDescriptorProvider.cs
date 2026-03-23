@@ -6,7 +6,7 @@ namespace IdentifierModule;
 
 public sealed class IdentifierDialectRuntimeDescriptorProvider : IDialectRuntimeDescriptorProvider
 {
-    public int Order => 210;
+    public decimal Order => 210m;
 
     public void Register(DialectRuntimeDescriptorRegistryBuilder builder)
     {

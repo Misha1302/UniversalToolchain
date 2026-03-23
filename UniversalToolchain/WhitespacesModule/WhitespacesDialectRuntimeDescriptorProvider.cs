@@ -6,7 +6,7 @@ namespace WhitespacesModule;
 
 public sealed class WhitespacesDialectRuntimeDescriptorProvider : IDialectRuntimeDescriptorProvider
 {
-    public int Order => 240;
+    public decimal Order => 240m;
 
     public void Register(DialectRuntimeDescriptorRegistryBuilder builder)
     {

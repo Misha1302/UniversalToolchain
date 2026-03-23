@@ -6,7 +6,7 @@ namespace LoopsModule;
 
 public sealed class LoopsDialectRuntimeDescriptorProvider : IDialectRuntimeDescriptorProvider
 {
-    public int Order => 410;
+    public decimal Order => 410m;
 
     public void Register(DialectRuntimeDescriptorRegistryBuilder builder)
     {

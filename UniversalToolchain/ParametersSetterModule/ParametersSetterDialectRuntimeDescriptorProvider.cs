@@ -6,7 +6,7 @@ namespace ParametersSetterModule;
 
 public sealed class ParametersSetterDialectRuntimeDescriptorProvider : IDialectRuntimeDescriptorProvider
 {
-    public int Order => 300;
+    public decimal Order => 300m;
 
     public void Register(DialectRuntimeDescriptorRegistryBuilder builder)
     {

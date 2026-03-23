@@ -6,7 +6,7 @@ namespace ArithmeticModule;
 
 public sealed class ArithmeticDialectRuntimeDescriptorProvider : IDialectRuntimeDescriptorProvider
 {
-    public int Order => 100;
+    public decimal Order => 100m;
 
     public void Register(DialectRuntimeDescriptorRegistryBuilder builder)
     {

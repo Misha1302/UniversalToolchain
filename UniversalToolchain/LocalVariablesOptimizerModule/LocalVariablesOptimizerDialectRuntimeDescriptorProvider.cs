@@ -6,7 +6,7 @@ namespace LocalVariablesOptimizerModule;
 
 public sealed class LocalVariablesOptimizerDialectRuntimeDescriptorProvider : IDialectRuntimeDescriptorProvider
 {
-    public int Order => 600;
+    public decimal Order => 600m;
 
     public void Register(DialectRuntimeDescriptorRegistryBuilder builder)
     {

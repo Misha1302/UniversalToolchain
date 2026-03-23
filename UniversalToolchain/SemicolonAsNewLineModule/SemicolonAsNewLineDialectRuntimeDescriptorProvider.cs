@@ -6,7 +6,7 @@ namespace SemicolonAsNewLineModule;
 
 public sealed class SemicolonAsNewLineDialectRuntimeDescriptorProvider : IDialectRuntimeDescriptorProvider
 {
-    public int Order => 230;
+    public decimal Order => 230m;
 
     public void Register(DialectRuntimeDescriptorRegistryBuilder builder)
     {

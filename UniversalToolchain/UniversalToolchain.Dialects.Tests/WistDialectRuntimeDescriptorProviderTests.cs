@@ -149,7 +149,7 @@ public class WistDialectRuntimeDescriptorProviderTests
 
     private sealed class TestOnlyRuntimeDescriptorProvider : IDialectRuntimeDescriptorProvider
     {
-        public int Order => 700;
+        public decimal Order => 700m;
 
         public void Register(DialectRuntimeDescriptorRegistryBuilder builder)
         {
@@ -161,7 +161,7 @@ public class WistDialectRuntimeDescriptorProviderTests
 
     private sealed class NullTypeEntryRuntimeDescriptorProvider : IDialectRuntimeDescriptorProvider
     {
-        public int Order => 700;
+        public decimal Order => 700m;
 
         public void Register(DialectRuntimeDescriptorRegistryBuilder builder)
         {
@@ -171,7 +171,7 @@ public class WistDialectRuntimeDescriptorProviderTests
 
     private sealed class ConflictingModuleRuntimeDescriptorProvider : IDialectRuntimeDescriptorProvider
     {
-        public int Order => 700;
+        public decimal Order => 700m;
 
         public void Register(DialectRuntimeDescriptorRegistryBuilder builder)
         {
@@ -181,7 +181,7 @@ public class WistDialectRuntimeDescriptorProviderTests
 
     private sealed class ConflictingOptimizerRuntimeDescriptorProvider : IDialectRuntimeDescriptorProvider
     {
-        public int Order => 700;
+        public decimal Order => 700m;
 
         public void Register(DialectRuntimeDescriptorRegistryBuilder builder)
         {

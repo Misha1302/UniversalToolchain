@@ -6,7 +6,7 @@ namespace LabelsModule;
 
 public sealed class LabelsDialectRuntimeDescriptorProvider : IDialectRuntimeDescriptorProvider
 {
-    public int Order => 400;
+    public decimal Order => 400m;
 
     public void Register(DialectRuntimeDescriptorRegistryBuilder builder)
     {

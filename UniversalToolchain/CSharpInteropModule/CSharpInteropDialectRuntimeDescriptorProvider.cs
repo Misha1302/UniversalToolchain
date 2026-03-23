@@ -6,7 +6,7 @@ namespace CSharpInteropModule;
 
 public sealed class CSharpInteropDialectRuntimeDescriptorProvider : IDialectRuntimeDescriptorProvider
 {
-    public int Order => 500;
+    public decimal Order => 500m;
 
     public void Register(DialectRuntimeDescriptorRegistryBuilder builder)
     {

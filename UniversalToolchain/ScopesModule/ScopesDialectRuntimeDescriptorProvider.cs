@@ -6,7 +6,7 @@ namespace ScopesModule;
 
 public sealed class ScopesDialectRuntimeDescriptorProvider : IDialectRuntimeDescriptorProvider
 {
-    public int Order => 310;
+    public decimal Order => 310m;
 
     public void Register(DialectRuntimeDescriptorRegistryBuilder builder)
     {

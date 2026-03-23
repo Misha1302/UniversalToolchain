@@ -178,7 +178,7 @@ public class FrameworkNativeExtensionSeamsTests
 
     private sealed class DemoRuntimeDescriptorProvider : IDialectRuntimeDescriptorProvider
     {
-        public int Order => 10;
+        public decimal Order => 10m;
 
         public void Register(DialectRuntimeDescriptorRegistryBuilder builder)
         {

@@ -6,7 +6,7 @@ namespace VariablesModule;
 
 public sealed class VariablesDialectRuntimeDescriptorProvider : IDialectRuntimeDescriptorProvider
 {
-    public int Order => 320;
+    public decimal Order => 320m;
 
     public void Register(DialectRuntimeDescriptorRegistryBuilder builder)
     {

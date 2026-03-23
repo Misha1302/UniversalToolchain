@@ -6,7 +6,7 @@ namespace ConditionsModule;
 
 public sealed class ConditionsDialectRuntimeDescriptorProvider : IDialectRuntimeDescriptorProvider
 {
-    public int Order => 110;
+    public decimal Order => 110m;
 
     public void Register(DialectRuntimeDescriptorRegistryBuilder builder)
     {

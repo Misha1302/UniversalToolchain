@@ -6,7 +6,7 @@ namespace NativeMathModule;
 
 public sealed class NativeMathDialectRuntimeDescriptorProvider : IDialectRuntimeDescriptorProvider
 {
-    public int Order => 130;
+    public decimal Order => 130m;
 
     public void Register(DialectRuntimeDescriptorRegistryBuilder builder)
     {

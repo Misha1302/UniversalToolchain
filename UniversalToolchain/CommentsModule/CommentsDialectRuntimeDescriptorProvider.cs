@@ -6,7 +6,7 @@ namespace CommentsModule;
 
 public sealed class CommentsDialectRuntimeDescriptorProvider : IDialectRuntimeDescriptorProvider
 {
-    public int Order => 200;
+    public decimal Order => 200m;
 
     public void Register(DialectRuntimeDescriptorRegistryBuilder builder)
     {

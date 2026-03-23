@@ -20,7 +20,7 @@ public sealed class WistDialectRuntimeDescriptorProvider : IDialectRuntimeDescri
         _backendProviders = backendProviders.ToList();
     }
 
-    public int Order => 0;
+    public decimal Order => 0m;
 
     public void Register(DialectRuntimeDescriptorRegistryBuilder builder)
     {

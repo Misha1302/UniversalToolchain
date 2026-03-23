@@ -6,7 +6,7 @@ namespace EqualityModule;
 
 public sealed class EqualityDialectRuntimeDescriptorProvider : IDialectRuntimeDescriptorProvider
 {
-    public int Order => 120;
+    public decimal Order => 120m;
 
     public void Register(DialectRuntimeDescriptorRegistryBuilder builder)
     {
