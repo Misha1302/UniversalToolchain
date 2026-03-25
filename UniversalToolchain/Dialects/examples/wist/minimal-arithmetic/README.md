@@ -1,20 +1,27 @@
 # Minimal arithmetic dialect
 
-This example shows the smallest practical Wist dialect in this repository.
+## What this example demonstrates
+This is the smallest useful arithmetic-oriented dialect composition in the repository.
 
-Enabled:
+## Enabled modules/backends/features
+- Modules: `Arithmetic`, `Numbers`, `Scopes`, `Whitespaces`
+- Backend: `interpreter`
 
-- `Whitespaces`
-- `Scopes`
-- `Numbers`
-- `Arithmetic`
-- the `interpreter` backend
+## Intentionally excluded capabilities
+- No compiler backend.
+- No variables/identifiers, loops, labels, or condition modules.
+- No optimizer flags beyond default behavior of selected modules.
 
-Disabled by omission:
+## Exact CLI commands to run it
+From repository root:
 
-- variables
-- labels
-- loops
-- the compiler backend
+```bash
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- dialect-inspect --file UniversalToolchain/Dialects/examples/wist/minimal-arithmetic/dialect.wistdialect
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/minimal-arithmetic/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/minimal-arithmetic/program.wist --mode interpreter
+```
 
-The sample program only relies on arithmetic parsing and evaluation.
+## Expected behavior/result
+`program.wist` evaluates `2 + 3 * 4` and returns `14`.
+
+## Why this example exists
+It is a minimal end-to-end composition for arithmetic parsing/evaluation and a compact smoke-test target for the dialect runtime path.

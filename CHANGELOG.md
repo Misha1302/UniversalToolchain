@@ -7,4 +7,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 ### Changed
-- Repository maintenance updates for documentation consistency and contributor guidance.
+- Synchronized top-level documentation with the current `Wistc` CLI verbs/options and dialect execution flow.
+- Updated repository docs to reflect active dialect subsystem projects, examples, and test coverage paths.
+- Aligned programmatic usage docs with `WistDialectExecutionWorkflow`-based execution.
+- Corrected contributing instructions to include both core and dialect test projects.
+- Replaced `ConfigurationEditor/README.md` template text with project-specific tool documentation.
+- Expanded dialect example READMEs with explicit enabled/excluded capabilities, run commands, and expected outcomes.

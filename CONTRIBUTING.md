@@ -1,22 +1,30 @@
 # Contributing
 
 ## Prerequisites
-- .NET SDK 10.0.x (see `UniversalToolchain/global.json`).
+- Requires .NET SDK `10.0.103` (`rollForward: latestMajor`, `allowPrerelease: true`).
+- Current build and test projects target `net10.0` (.NET 10).
 
 ## Build and test
-From repository root:
+Run from repository root:
 
 ```bash
 dotnet restore UniversalToolchain/Wist.sln
 dotnet build UniversalToolchain/Wist.sln -c Release --no-restore
 dotnet test UniversalToolchain/Tests/Tests.csproj -c Release --no-build
+dotnet test UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolchain.Dialects.Tests.csproj -c Release --no-build
 ```
 
+## Documentation changes
+- Treat code as source of truth; verify docs against current implementation.
+- Ensure any command/example in docs is runnable from repository root.
+- Remove stale historical wording instead of preserving it.
+- Do not combine doc sync with unrelated refactors.
+
 ## Coding rules
-- Follow the mandatory project rules in `PROJECT_RULES.md`.
-- Keep changes focused, behavior-preserving, and deterministic.
+- Follow mandatory rules in `PROJECT_RULES.md`.
+- Keep changes focused and deterministic.
 
 ## Pull requests
-- Include a concise summary of what changed and why.
-- Include validation commands and results.
-- Avoid unrelated refactors in the same PR.
+- Include what changed and why.
+- Include executed validation commands and outcomes.
+- Keep PR scope coherent.
