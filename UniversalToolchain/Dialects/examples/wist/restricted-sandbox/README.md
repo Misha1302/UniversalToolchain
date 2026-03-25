@@ -1,18 +1,29 @@
 # Restricted sandbox dialect
 
-This example demonstrates a deliberately constrained runtime.
+## What this example demonstrates
+This example demonstrates constrained composition aimed at a narrower runtime profile.
 
-Enabled:
+## Enabled modules/backends/features
+- Modules: `Arithmetic`, `Numbers`, `Scopes`, `Whitespaces`
+- Backend: `interpreter`
 
-- arithmetic-only execution through the `interpreter` backend
-- `Scopes`, `Numbers`, `Arithmetic`, and `Whitespaces`
+## Intentionally excluded capabilities
+- No compiler backend.
+- No variables/identifiers, loops, labels, conditions, or interop-related capabilities.
+- No claim of complete hardened sandboxing.
 
-Disabled by omission:
+## Exact CLI commands to run it
+From repository root:
 
-- the compiler backend
-- identifiers and variables
-- conditions, labels, loops, and interop
-- declarative security and capability directives, because the Wist execution path does not enforce them yet
+```bash
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- dialect-inspect --file UniversalToolchain/Dialects/examples/wist/restricted-sandbox/dialect.wistdialect
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/restricted-sandbox/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/restricted-sandbox/program.wist --mode interpreter
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/restricted-sandbox/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/restricted-sandbox/forbidden-program.wist --mode interpreter
+```
 
-`program.wist` succeeds because it only needs arithmetic.
-`forbidden-program.wist` is expected to fail because variable declarations are not part of this dialect.
+## Expected behavior/result
+- `program.wist` returns `42`.
+- `forbidden-program.wist` is expected to fail because variable declarations are excluded from this dialect composition.
+
+## Why this example exists
+It documents and tests how the dialect path can intentionally constrain available modules. It is a composition constraint example, not a fully hardened sandbox guarantee.

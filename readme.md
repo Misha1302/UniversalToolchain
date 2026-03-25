@@ -1,170 +1,135 @@
-# UniversalToolchain & Wist Language
+# UniversalToolchain & Wist
 
-Readme for January 4 2026 
+## 1. What this repository is
+UniversalToolchain is a modular compiler/interpreter framework implemented in .NET.
+Wist is the reference language used to validate and evolve that framework.
+The repository uses composable modules for lexer, parser, translation, optimization, and execution stages.
+Current solution projects target `net10.0` (see `UniversalToolchain/*.csproj`) and SDK resolution is pinned in `UniversalToolchain/global.json`.
 
----
+## 2. Repository scope
+The current repository includes:
+- the core UniversalToolchain compilation/execution pipeline
+- the Wist CLI (`Wistc`) with file execution, eval, and REPL
+- the dialect definition DSL subsystem and composition pipeline
+- dialect examples under `UniversalToolchain/Dialects/examples/wist`
+- core tests and dedicated dialect tests
+- benchmark projects (including `NCalcWist.Benchmarks`)
+- `ConfigurationEditor` (React/TypeScript frontend for config editing)
 
-UniversalToolchain is a modular, extensible compiler and interpreter framework for the **Wist** programming language, built on .NET 10. It provides a complete toolchain from source code parsing to execution, featuring both a high-performance compiler (generating dynamic methods) and a flexible interpreter.
+## 3. Main capabilities
+- Modular language feature composition through frontend and IR modules.
+- Dual execution modes: `compiler` and `interpreter`.
+- Dialect-based runtime composition path (`.wistdialect` -> composition -> execution host).
+- Runnable examples and automated tests for core and dialect paths.
+- Programmatic dialect execution via `WistDialectExecutionWorkflow`.
 
-## Key Features
+## 4. Requirements
+- .NET SDK compatible with `UniversalToolchain/global.json`:
+  - SDK version: `10.0.103`
+  - `rollForward`: `latestMajor`
+  - `allowPrerelease`: `true`
 
-- **Modular & Extensible Architecture**: Every language feature (lexing, parsing, IR generation, optimization, execution) is implemented as a pluggable module.
-- **Dual Execution Modes**:
-  - **Compiler**: Translates Wist code to .NET dynamic methods for near-native performance.
-  - **Interpreter**: Executes intermediate representation (IR) directly for flexibility and debugging.
-- **Extensible Types & Operations**: Core type system and operations are designed for extension via custom modules.
-- **Standard Modules**: Includes arithmetic, conditions, variables, scopes, functions, and native C# interop (not full).
-- **Optimization Pipeline**: Supports IR-level optimizations (e.g., local variable optimization, native values optimization).
-- **REPL & CLI Tools**: Interactive REPL and command-line runner for rapid development and testing.
-- **Comprehensive Diagnostics**: Configurable logging, AST/bytecode dumps, and error reporting.
+## 5. Build and test
+From repository root:
 
-## Getting Started
-
-### Installation from scratch (.NET 10, official installers)
-
-Choose your OS and install **.NET 10 SDK** using official Microsoft instructions.
-
-#### Windows
-
-~~~powershell
-# Install official .NET 10 SDK via winget
-winget install Microsoft.DotNet.SDK.10
-
-# Verify
-dotnet --version
-~~~
-
-#### macOS
-
-Install the official .NET 10 SDK package from Microsoft:
-
-- https://dotnet.microsoft.com/download/dotnet/10.0
-
-Then verify in terminal:
-
-~~~bash
-dotnet --version
-~~~
-
-#### Linux (Ubuntu 24.04)
-
-~~~bash
-# Add official Microsoft package feed
-wget https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
-sudo dpkg -i packages-microsoft-prod.deb
-rm packages-microsoft-prod.deb
-
-# Install .NET 10 SDK
-sudo apt-get update
-sudo apt-get install -y dotnet-sdk-10.0
-
-# Verify
-dotnet --version
-~~~
-
-#### Linux (Fedora)
-
-~~~bash
-# Add official Microsoft package feed
-sudo rpm -Uvh https://packages.microsoft.com/config/fedora/$(rpm -E %fedora)/packages-microsoft-prod.rpm
-
-# Install .NET 10 SDK
-sudo dnf install -y dotnet-sdk-10.0
-
-# Verify
-dotnet --version
-~~~
-
-#### Build and run tests
-
-~~~bash
-git clone https://github.com/Misha1302/Wist2
-cd Wist2
+```bash
 dotnet restore UniversalToolchain/Wist.sln
-DOTNET_ROLL_FORWARD=Major dotnet test UniversalToolchain/Tests/Tests.csproj --configuration Release
-~~~
+dotnet build UniversalToolchain/Wist.sln -c Release --no-restore
+dotnet test UniversalToolchain/Tests/Tests.csproj -c Release --no-build
+dotnet test UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolchain.Dialects.Tests.csproj -c Release --no-build
+```
 
-### Repository Hygiene
+## 6. CLI usage
+The `Wistc` entrypoint exposes these verbs:
+- `run`
+- `repl`
+- `dialect-inspect`
+- `dialect-demo`
 
-Generated text snapshots (for example files in `UniversalToolchain/project_as_file/*.txt`, `UniversalToolchain/Wistc/code.txt`, and `ConfigurationEditor/project_code.txt`) are local helper artifacts and are intentionally ignored by git.
+Key options used by runtime execution:
+- `--dialect-file <path>` to compose and run with a dialect definition
+- `--mode <compiler|interpreter>` to select backend
 
-### Running Wist Code
+## 7. Default runtime examples
+Run a file:
 
-Use the `wistc` command-line tool (after building):
+```bash
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --file UniversalToolchain/Dialects/examples/wist/full-default/program.wist --mode interpreter
+```
 
-~~~bash
-# Run a Wist file
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --file program.wist
+Run a one-liner:
 
-# Run a one-liner
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run "let x = 5 + 3; x * 2"
+```bash
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --mode compiler
+```
 
-# Start REPL
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- repl
-~~~
+Start REPL:
 
-### Example Wist Program
+```bash
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- repl --mode compiler
+```
 
-~~~js
-// Variables and arithmetic
-let a = 10
-let b = 20
-let sum = a + b
+## 8. Dialect runtime examples
+Run code with a dialect file:
 
-// Conditions
-if sum > 25
-    sum = sum * 2
-else 
-    sum = sum / 2
+```bash
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/full-default/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/full-default/program.wist --mode interpreter
+```
 
-// Function call (C# interop)
-System.Console.WriteLine(sum)
+Inspect a dialect file:
 
-// Native arithmetic with type suffixes
-let precise = 3.14f * 2.0f
-~~~
+```bash
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- dialect-inspect --file UniversalToolchain/Dialects/examples/wist/full-default/dialect.wistdialect
+```
 
-## Architecture Overview
+Run dialect framework demo using a real dialect file:
 
-UniversalToolchain is built around a pipeline of modular stages:
+```bash
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- dialect-demo --file UniversalToolchain/Dialects/examples/wist/full-default/dialect.wistdialect
+```
 
-1. **Lexing & Parsing**: Tokenization and AST construction via pluggable lexer/parser modules.
-2. **AST to Bytecode**: Translates AST into a platform-independent bytecode.
-3. **Bytecode to IR**: Converts bytecode into an intermediate representation (IR) for optimization.
-4. **Optimization**: Applies IR-level optimizations via `IIRProcessingModule` implementations.
-5. **Compilation/Interpretation**:
-   - **Compiler**: Lowers IR to .NET dynamic methods using `GrEmit`.
-   - **Interpreter**: Directly executes IR instructions.
-6. **Execution**: Runs the compiled method or interpreted IR, returning the result.
+## 9. Programmatic usage
+`UniversalToolchain/Example/Program.cs` shows programmatic composition/execution:
 
-Each stage is configurable via dependency injection and module registration.
+```csharp
+using UniversalToolchain.Dialects.Wist;
 
-## Extending the Language
+var services = new ServiceCollection();
+services.AddWistDialectServices();
 
-New language features are added by implementing `IFrontendCoreModule` (lexer, parser, AST translator) and/or `IIRProcessingModule` (IR optimizations). Modules are auto-discovered via `AutoRegisterServiceAttribute` or manually registered.
+using var provider = services.BuildServiceProvider();
+var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
 
-Example module skeleton:
-
-~~~csharp
-[AutoRegisterService]
-public class MyFeatureModule : IFrontendCoreModule
+var dialect = workflow.ComposeFile("./Dialects/examples/wist/full-default/dialect.wistdialect");
+if (!dialect.IsSuccess)
 {
-    public void InitLexer(ILexer lexer) { /* Add lexeme patterns */ }
-    public void InitParser(IParser parser) { /* Add AST node creators */ }
-    public void InitAstTranslator(IAstToBytecodeTranslator translator) { /* Add AST visitors */ }
+    Console.WriteLine(dialect.ToDeterministicText());
+    return;
 }
-~~~
 
-## Performance
+using var host = workflow.CreateHost(dialect);
+var result = host.Run("(2 + 2) * 3", "compiler");
+Console.WriteLine(result);
+```
 
-- **Compiler mode** leverages .NET's JIT for high-performance execution, suitable for production workloads.
-- **Interpreter mode** prioritizes flexibility and is ideal for debugging, scripting, and educational use.
-- Optimizations like local variable caching, and native arithmetic intrinsics are applied where supported.
+## 10. Repository examples
+- `full-default`: practical default-style runtime composition with both `cil` and `interpreter` backends plus local-variable optimization.
+- `minimal-arithmetic`: smallest useful arithmetic-focused composition (`Arithmetic`, `Numbers`, `Scopes`, `Whitespaces`) on interpreter backend.
+- `restricted-sandbox`: constrained composition example focused on arithmetic-only execution profile.
 
-## License
+## 11. Architecture at a glance
+- Modular pipeline stages: lexing/parsing, AST translation, IR processing, backend execution.
+- Same language frontend can run in compiler or interpreter mode.
+- Dialect composition path resolves declarative runtime descriptors into executable Wist hosts.
 
-Licensed under the Apache License 2.0. See [LICENSE](LICENSE) for details.
+## 12. Current limitations
+- The repository includes constrained runtime compositions, but does **not** claim fully hardened sandbox guarantees for untrusted code.
+- Security boundaries for untrusted execution remain an area that must be treated cautiously.
+- Parts of architecture and composition ergonomics are still evolving.
+- Dialect examples can constrain available capabilities, but constrained composition is not equivalent to complete process-level isolation.
 
-## Project Rules
+## 13. License
+Licensed under Apache License 2.0. See `LICENSE`.
 
-**[Project Rules](PROJECT_RULES.md)** - Main rules to write code.
+## 14. Project rules
+Contributor coding/documentation rules: [PROJECT_RULES.md](PROJECT_RULES.md).

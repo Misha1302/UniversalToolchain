@@ -1,11 +1,28 @@
 # Full default-style dialect
 
-This example approximates the practical default Wist runtime using the dialect DSL.
+## What this example demonstrates
+This example shows a practical default runtime profile expressed via dialect DSL, close to the default Wist feature set used in regular execution.
 
-Enabled:
+## Enabled modules/backends/features
+- Modules: `Arithmetic`, `BooleanConditions`, `ComparisonConditions`, `Conditions`, `Equality`, `Identifier`, `Labels`, `Loops`, `Numbers`, `Scopes`, `SemicolonAsNewLine`, `Variables`, `Whitespaces`
+- Backends: `cil`, `interpreter`
+- Enabled feature flag: `LocalVariablesOptimization`
 
-- arithmetic, equality, identifiers, variables, scopes, conditions, labels, loops, and semicolon handling
-- both real backends: `cil` for compiled execution and `interpreter`
-- `LocalVariablesOptimization`
+## Intentionally excluded capabilities
+- No explicit C# interop module declaration in this dialect file.
+- No security/capability enforcement directives beyond composition choices.
 
-The sample program exercises variable declarations, a `for` loop, a comparison, and a final computed result.
+## Exact CLI commands to run it
+From repository root:
+
+```bash
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- dialect-inspect --file UniversalToolchain/Dialects/examples/wist/full-default/dialect.wistdialect
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/full-default/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/full-default/program.wist --mode interpreter
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/full-default/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/full-default/program.wist --mode compiler
+```
+
+## Expected behavior/result
+`program.wist` computes the sum from 1 to 5 and returns `15`.
+
+## Why this example exists
+It provides a realistic baseline dialect profile for validating DSL composition against both execution backends.
