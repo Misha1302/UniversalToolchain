@@ -16,6 +16,7 @@ public class DialectProjectsSmokeTests
         Assert.That(exampleDirectories.Select(Path.GetFileName), Is.EquivalentTo(new[]
         {
             "full-default",
+            "full-default-native",
             "minimal-arithmetic",
             "restricted-sandbox"
         }));

@@ -1,3 +1,4 @@
 dialect RestrictedSandbox
 use Arithmetic,Numbers,Scopes,Whitespaces
+exclude BooleanConditions,Comments,ComparisonConditions,Conditions,CSharpInterop,Equality,Identifier,Labels,Loops,NativeTypes,ParametersSetter,SemicolonAsNewLine,Variables
 backend interpreter

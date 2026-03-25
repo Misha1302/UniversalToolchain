@@ -82,6 +82,15 @@
         <Content Include="..\Dialects\examples\wist\full-default\README.md">
             <Link>Dialects\examples\wist\full-default\README.md</Link>
         </Content>
+        <Content Include="..\Dialects\examples\wist\full-default-native\dialect.wistdialect">
+            <Link>Dialects\examples\wist\full-default-native\dialect.wistdialect</Link>
+        </Content>
+        <Content Include="..\Dialects\examples\wist\full-default-native\program.wist">
+            <Link>Dialects\examples\wist\full-default-native\program.wist</Link>
+        </Content>
+        <Content Include="..\Dialects\examples\wist\full-default-native\README.md">
+            <Link>Dialects\examples\wist\full-default-native\README.md</Link>
+        </Content>
         <Content Include="..\Dialects\examples\wist\minimal-arithmetic\dialect.wistdialect">
             <Link>Dialects\examples\wist\minimal-arithmetic\dialect.wistdialect</Link>
         </Content>

@@ -4,12 +4,12 @@
 This example shows a practical default runtime profile expressed via dialect DSL, close to the default Wist feature set used in regular execution.
 
 ## Enabled modules/backends/features
-- Modules: `Arithmetic`, `BooleanConditions`, `ComparisonConditions`, `Conditions`, `Equality`, `Identifier`, `Labels`, `Loops`, `Numbers`, `Scopes`, `SemicolonAsNewLine`, `Variables`, `Whitespaces`
+- Modules: `Arithmetic`, `BooleanConditions`, `Comments`, `ComparisonConditions`, `Conditions`, `CSharpInterop`, `Equality`, `Identifier`, `Labels`, `Loops`, `Numbers`, `Scopes`, `SemicolonAsNewLine`, `Variables`, `Whitespaces`
 - Backends: `cil`, `interpreter`
 - Enabled feature flag: `LocalVariablesOptimization`
 
 ## Intentionally excluded capabilities
-- No explicit C# interop module declaration in this dialect file.
+- Native arithmetic/type stack (`NativeTypes`) and native optimizer set are intentionally not part of this default profile.
 - No security/capability enforcement directives beyond composition choices.
 
 ## Exact CLI commands to run it
