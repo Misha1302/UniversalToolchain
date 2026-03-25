@@ -1,34 +1,63 @@
-# UniversalToolchain & Wist
+# UniversalToolchain
 
-## 1. What this repository is
-UniversalToolchain is a modular compiler/interpreter framework implemented in .NET.
-Wist is the reference language used to validate and evolve that framework.
-The repository uses composable modules for lexer, parser, translation, optimization, and execution stages.
-Current solution projects target `net10.0` (.NET 10). The repository pins .NET SDK `10.0.103` with `rollForward: latestMajor` and `allowPrerelease: true`.
+UniversalToolchain is a modular .NET framework for building extensible domain-specific languages.
 
-## 2. Repository scope
-The current repository includes:
-- the core UniversalToolchain compilation/execution pipeline
-- the Wist CLI (`Wistc`) with file execution, eval, and REPL
-- the dialect definition DSL subsystem and composition pipeline
-- dialect examples under `UniversalToolchain/Dialects/examples/wist`
-- core tests and dedicated dialect tests
-- benchmark projects (including `NCalcWist.Benchmarks`)
-- `ConfigurationEditor` (React/TypeScript frontend for config editing)
+This repository contains the **UniversalToolchain framework** and **Wist**, its reference language.
+Wist is used as a proving ground to validate and evolve the framework’s composable pipeline, grammar-driven frontend, and execution backends.
 
-## 3. Main capabilities
-- Modular language feature composition through frontend and IR modules.
+## Why this project exists
+
+Many DSL projects start as one-off implementations and end up rebuilding the same infrastructure: lexer/parser, AST/IR transforms, runtime wiring, and execution.
+
+UniversalToolchain focuses on reusing that infrastructure through composable stages on .NET, so language features can be assembled and evolved without rewriting the entire toolchain each time.
+
+## What it supports
+
+- Modular language feature composition across frontend and runtime stages.
 - Dual execution modes: `compiler` and `interpreter`.
-- Dialect-based runtime composition path (`.wistdialect` -> composition -> execution host).
-- Runnable examples and automated tests for core and dialect paths.
-- Programmatic dialect execution via `WistDialectExecutionWorkflow`.
+- Dialect-based runtime composition via `.wistdialect` files.
+- CLI and programmatic usage.
+- Tests, runnable examples, and benchmark projects in-repo.
 
-## 4. Requirements
-- Requires .NET SDK `10.0.103`.
-- SDK policy in this repository: `rollForward: latestMajor`, `allowPrerelease: true`.
-- Current build/test/runtime projects target `net10.0` (.NET 10).
+## Quick demo
 
-## 5. Build and test
+From repository root:
+
+```bash
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --mode compiler
+```
+
+Expected output:
+
+```text
+12
+```
+
+## Architecture at a glance
+
+```text
+Source -> Lexer/Parser -> AST -> Bytecode/IR -> Optimization -> Compiler/Interpreter -> Execution
+```
+
+With dialects, a composition step resolves a `.wistdialect` definition into an executable Wist runtime host.
+
+## Why this approach?
+
+This project is not only about parsing expressions. It is about **reusable language infrastructure**:
+- compose language capabilities from modules instead of hardcoding one pipeline,
+- keep one frontend model while switching execution backend (`compiler` or `interpreter`),
+- define runtime shape declaratively with dialect files.
+
+## Requirements
+
+- .NET SDK `10.0.103`
+- SDK policy in `UniversalToolchain/global.json`:
+  - `rollForward: latestMajor`
+  - `allowPrerelease: true`
+- Projects target `net10.0`
+
+## Quick start: build and test
+
 From repository root:
 
 ```bash
@@ -38,57 +67,45 @@ dotnet test UniversalToolchain/Tests/Tests.csproj -c Release --no-build
 dotnet test UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolchain.Dialects.Tests.csproj -c Release --no-build
 ```
 
-## 6. CLI usage
-The `Wistc` entrypoint exposes these verbs:
+## CLI usage (`Wistc`)
+
+Available verbs:
 - `run`
 - `repl`
 - `dialect-inspect`
 - `dialect-demo`
 
-Key options used by runtime execution:
-- `--dialect-file <path>` to compose and run with a dialect definition
-- `--mode <compiler|interpreter>` to select backend
+Common runtime options:
+- `--mode <compiler|interpreter>`
+- `--dialect-file <path>`
 
-## 7. Default runtime examples
-Run a file:
+Examples:
 
 ```bash
+# Run a .wist file
 dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --file UniversalToolchain/Dialects/examples/wist/full-default/program.wist --mode interpreter
-```
 
-Run a one-liner:
-
-```bash
+# Evaluate one expression
 dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --mode compiler
-```
 
-Start REPL:
-
-```bash
+# Start REPL
 dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- repl --mode compiler
 ```
 
-## 8. Dialect runtime examples
-Run code with a dialect file:
+## Dialect usage
 
 ```bash
+# Run code with a dialect definition
 dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/full-default/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/full-default/program.wist --mode interpreter
-```
 
-Inspect a dialect file:
-
-```bash
+# Inspect a dialect file
 dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- dialect-inspect --file UniversalToolchain/Dialects/examples/wist/full-default/dialect.wistdialect
-```
 
-Run dialect framework demo using a real dialect file:
-
-```bash
+# Run the framework-native dialect demo workflow
 dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- dialect-demo --file UniversalToolchain/Dialects/examples/wist/full-default/dialect.wistdialect
 ```
 
-## 9. Programmatic usage
-`UniversalToolchain/Example/Program.cs` shows programmatic composition/execution:
+## Programmatic usage
 
 ```csharp
 using UniversalToolchain.Dialects.Wist;
@@ -100,35 +117,35 @@ using var provider = services.BuildServiceProvider();
 var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
 
 var dialect = workflow.ComposeFile("./Dialects/examples/wist/full-default/dialect.wistdialect");
-if (!dialect.IsSuccess)
-{
-    Console.WriteLine(dialect.ToDeterministicText());
-    return;
-}
+if (!dialect.IsSuccess) return;
 
 using var host = workflow.CreateHost(dialect);
 var result = host.Run("(2 + 2) * 3", "compiler");
 Console.WriteLine(result);
 ```
 
-## 10. Repository examples
-- `full-default`: practical default-style runtime composition with both `cil` and `interpreter` backends plus local-variable optimization.
-- `minimal-arithmetic`: smallest useful arithmetic-focused composition (`Arithmetic`, `Numbers`, `Scopes`, `Whitespaces`) on interpreter backend.
-- `restricted-sandbox`: constrained composition example focused on arithmetic-only execution profile.
+See `UniversalToolchain/Example/Program.cs` for the full example with composition diagnostics handling.
 
-## 11. Architecture at a glance
-- Modular pipeline stages: lexing/parsing, AST translation, IR processing, backend execution.
-- Same language frontend can run in compiler or interpreter mode.
-- Dialect composition path resolves declarative runtime descriptors into executable Wist hosts.
+## Repository examples
 
-## 12. Current limitations
-- The repository includes constrained runtime compositions, but does **not** claim fully hardened sandbox guarantees for untrusted code.
-- Security boundaries for untrusted execution remain an area that must be treated cautiously.
+Dialect examples are under `UniversalToolchain/Dialects/examples/wist`:
+- `full-default`
+- `minimal-arithmetic`
+- `restricted-sandbox`
+
+## Current limitations
+
+- This repository does **not** claim hardened sandboxing for untrusted code.
+- Constrained dialect composition is **not** equivalent to OS/process-level isolation.
+- Security boundaries for untrusted execution must be treated cautiously.
 - Parts of architecture and composition ergonomics are still evolving.
-- Dialect examples can constrain available capabilities, but constrained composition is not equivalent to complete process-level isolation.
 
-## 13. License
-Licensed under Apache License 2.0. See `LICENSE`.
+## License
 
-## 14. Project rules
-Contributor coding/documentation rules: [PROJECT_RULES.md](PROJECT_RULES.md).
+Licensed under Apache License 2.0. See [LICENSE](LICENSE).
+
+## Project rules and contribution docs
+
+- [PROJECT_RULES.md](PROJECT_RULES.md)
+- [CONTRIBUTING.md](CONTRIBUTING.md)
+- [project info.md](project%20info.md)
