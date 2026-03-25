@@ -3,6 +3,8 @@
 ## 1. Purpose
 This repository develops UniversalToolchain as a modular language toolchain and uses Wist as its primary implementation target. The purpose is to evolve reusable compilation/execution infrastructure while validating it on a real language runtime.
 
+Current projects in this repository target `net10.0` (.NET 10), and the repository pins .NET SDK `10.0.103` with `rollForward: latestMajor` and `allowPrerelease: true`.
+
 ## 2. What UniversalToolchain is
 UniversalToolchain is a composition-oriented framework where language behavior is assembled from modules. Core stages include lexing, parsing, AST translation, IR processing, and backend execution. Composition is dependency-injection based and supports both default runtime assembly and dialect-driven assembly.
 

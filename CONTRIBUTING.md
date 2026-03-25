@@ -1,7 +1,8 @@
 # Contributing
 
 ## Prerequisites
-- .NET SDK compatible with `UniversalToolchain/global.json`.
+- Requires .NET SDK `10.0.103` (`rollForward: latestMajor`, `allowPrerelease: true`).
+- Current build and test projects target `net10.0` (.NET 10).
 
 ## Build and test
 Run from repository root:

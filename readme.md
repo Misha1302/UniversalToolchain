@@ -4,7 +4,7 @@
 UniversalToolchain is a modular compiler/interpreter framework implemented in .NET.
 Wist is the reference language used to validate and evolve that framework.
 The repository uses composable modules for lexer, parser, translation, optimization, and execution stages.
-Current solution projects target `net10.0` (see `UniversalToolchain/*.csproj`) and SDK resolution is pinned in `UniversalToolchain/global.json`.
+Current solution projects target `net10.0` (.NET 10). The repository pins .NET SDK `10.0.103` with `rollForward: latestMajor` and `allowPrerelease: true`.
 
 ## 2. Repository scope
 The current repository includes:
@@ -24,10 +24,9 @@ The current repository includes:
 - Programmatic dialect execution via `WistDialectExecutionWorkflow`.
 
 ## 4. Requirements
-- .NET SDK compatible with `UniversalToolchain/global.json`:
-  - SDK version: `10.0.103`
-  - `rollForward`: `latestMajor`
-  - `allowPrerelease`: `true`
+- Requires .NET SDK `10.0.103`.
+- SDK policy in this repository: `rollForward: latestMajor`, `allowPrerelease: true`.
+- Current build/test/runtime projects target `net10.0` (.NET 10).
 
 ## 5. Build and test
 From repository root:
