@@ -321,6 +321,59 @@
       border-radius: 999px;
       padding: .15rem .5rem;
     }
+    .code-label {
+      margin-top: .7rem;
+      margin-bottom: .4rem;
+      font-size: .74rem;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      color: #c5d4fb;
+    }
+    .code-box {
+      margin: 0 0 .55rem;
+      padding: .68rem .72rem;
+      border-radius: .72rem;
+      border: 1px solid rgba(90, 118, 197, .8);
+      background: linear-gradient(180deg, rgba(14, 22, 48, .94), rgba(11, 18, 37, .98));
+      color: #d8ffe8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: .79rem;
+      line-height: 1.45;
+      overflow-x: auto;
+    }
+    .split-code {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: .55rem;
+      margin-bottom: .2rem;
+    }
+    .mini-state {
+      border: 1px solid rgba(90, 118, 197, .76);
+      border-radius: .72rem;
+      padding: .55rem;
+      background: rgba(13, 21, 43, .7);
+    }
+    .mini-state h4 {
+      margin: 0 0 .38rem;
+      font-size: .74rem;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+      color: #bfd0fb;
+    }
+    .mini-state pre {
+      margin: 0;
+      color: #d6ffe6;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: .76rem;
+      line-height: 1.42;
+      overflow-x: auto;
+    }
+    .mini-state.bad {
+      border-color: rgba(255, 159, 159, .6);
+      background: rgba(52, 18, 23, .26);
+    }
+    .mini-state.bad h4 { color: #ffd2d2; }
+    .mini-state.bad pre { color: #ffcfd5; }
     .micro-demo {
       margin-top: 1rem;
       background: linear-gradient(180deg, rgba(25, 39, 83, .62), rgba(17, 27, 58, .75));
@@ -423,6 +476,7 @@
 
     @media (max-width: 900px) {
       .hero-grid, .grid-3, .dialects, .list, .split, .facts, .micro-demo-grid, .flow { grid-template-columns: 1fr; }
+      .split-code { grid-template-columns: 1fr; }
       .flow-step { min-height: auto; }
       .flow-step::after { display: none; }
       section { padding: 3.2rem 0; }
@@ -542,11 +596,17 @@ enable LocalVariablesOptimization</pre>
           <div class="chips">
             <span class="chip">loops</span><span class="chip">conditions</span><span class="chip">variables</span><span class="chip">labels</span>
           </div>
+          <div class="code-label">Real example</div>
+          <pre class="code-box">let sum = 0
+for (let i = 1) (i <= 5) (i = i + 1) (
+    sum = sum + i
+)
+sum</pre>
           <ul>
             <li>Modules include arithmetic, conditions, loops, variables, scopes, labels, and more.</li>
             <li>Backends: <code>cil</code> + <code>interpreter</code>.</li>
             <li><code>LocalVariablesOptimization</code> enabled.</li>
-            <li>Example program returns <strong>15</strong>.</li>
+            <li>Returns <strong>15</strong>.</li>
           </ul>
         </article>
         <article class="dialect level-min">
@@ -555,10 +615,12 @@ enable LocalVariablesOptimization</pre>
           <div class="chips">
             <span class="chip">arithmetic</span><span class="chip">numbers</span><span class="chip">scopes</span>
           </div>
+          <div class="code-label">Real example</div>
+          <pre class="code-box">2 + 3 * 4</pre>
           <ul>
             <li>Modules: <code>Arithmetic</code>, <code>Numbers</code>, <code>Scopes</code>, <code>Whitespaces</code>.</li>
             <li>Backend: <code>interpreter</code>.</li>
-            <li>Example returns <strong>14</strong>.</li>
+            <li>Returns <strong>14</strong>.</li>
           </ul>
         </article>
         <article class="dialect level-restrict">
@@ -567,10 +629,22 @@ enable LocalVariablesOptimization</pre>
           <div class="chips">
             <span class="chip">interpreter only</span><span class="chip">no variables</span><span class="chip">no conditions</span>
           </div>
+          <div class="code-label">Allowed vs forbidden</div>
+          <div class="split-code">
+            <div class="mini-state">
+              <h4>Allowed example</h4>
+              <pre>40 + 2</pre>
+            </div>
+            <div class="mini-state bad">
+              <h4>Forbidden example</h4>
+              <pre>let x = 1
+x</pre>
+            </div>
+          </div>
           <ul>
             <li>Interpreter only; excludes variables, conditions, loops, and interop-related capabilities.</li>
             <li>Allowed example returns <strong>42</strong>.</li>
-            <li>Forbidden example fails by design.</li>
+            <li>Forbidden example fails by design (variables are excluded here).</li>
             <li><strong>Not</strong> a hardened sandbox guarantee.</li>
           </ul>
         </article>
@@ -578,9 +652,9 @@ enable LocalVariablesOptimization</pre>
       <div class="micro-demo">
         <h3>What changes when you change modules?</h3>
         <div class="micro-demo-grid">
-          <div class="micro"><b>full-default</b><br/>`let s = 0;` + loop + conditions are available → program can compute `15`.</div>
-          <div class="micro"><b>minimal-arithmetic</b><br/>`2 + 3 * 4` succeeds in interpreter mode → returns `14`.</div>
-          <div class="micro"><b>restricted-sandbox</b><br/>Simple arithmetic can return `42`, but variable declarations are expected to fail.</div>
+          <div class="micro"><b>full-default</b><br/>Real example uses variables + loop and computes the sum `1..5` → returns `15`.</div>
+          <div class="micro"><b>minimal-arithmetic</b><br/>Real example is expression-only arithmetic: `2 + 3 * 4` → returns `14`.</div>
+          <div class="micro"><b>restricted-sandbox</b><br/>Allowed arithmetic `40 + 2` works, but `let x = 1` fails by design.</div>
         </div>
       </div>
     </div>
