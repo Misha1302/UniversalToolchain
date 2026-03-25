@@ -11,7 +11,6 @@
 - AG Grid (table editing)
 - dnd-kit
 - react-dropzone (file input)
-- MUI components/icons
 
 ## 3. Supported workflows in the current app
 - Load `.txt` lexer or parser configuration files (file picker or drag-and-drop).
