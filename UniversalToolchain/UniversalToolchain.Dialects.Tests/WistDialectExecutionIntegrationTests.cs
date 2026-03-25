@@ -46,6 +46,79 @@ public class WistDialectExecutionIntegrationTests
         });
     }
 
+
+    [Test]
+    public void FullNativeDialect_RichProgram_RunsWithBothRealBackends()
+    {
+        using var provider = CreateProvider();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+        var example = ResolveExampleDirectory("full-default-native");
+        var code = File.ReadAllText(Path.Combine(example, "program.wist"));
+
+        var result = workflow.ComposeFile(Path.Combine(example, "dialect.wistdialect"));
+        using var host = workflow.CreateHost(result);
+        var interpreterValue = host.Run(code, "interpreter");
+        var compilerValue = host.Run(code, "compiler");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(ToDouble(interpreterValue), Is.EqualTo(15d).Within(1e-9));
+            Assert.That(ToDouble(compilerValue), Is.EqualTo(15d).Within(1e-9));
+        });
+    }
+
+
+    [Test]
+    public void FullDialect_CommentsProgram_RunsWithBothRealBackends()
+    {
+        using var provider = CreateProvider();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+        var example = ResolveExampleDirectory("full-default");
+
+        var result = workflow.ComposeFile(Path.Combine(example, "dialect.wistdialect"));
+        using var host = workflow.CreateHost(result);
+        var code = """
+            // single line comment
+            let x = 2
+            /* block
+               comment */
+            x + 5
+            """;
+
+        var interpreterValue = host.Run(code, "interpreter");
+        var compilerValue = host.Run(code, "compiler");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(ToDouble(interpreterValue), Is.EqualTo(7d).Within(1e-9));
+            Assert.That(ToDouble(compilerValue), Is.EqualTo(7d).Within(1e-9));
+        });
+    }
+
+    [Test]
+    public void FullDialect_CSharpInteropProgram_RunsWithBothRealBackends()
+    {
+        using var provider = CreateProvider();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+        var example = ResolveExampleDirectory("full-default");
+
+        var result = workflow.ComposeFile(Path.Combine(example, "dialect.wistdialect"));
+        using var host = workflow.CreateHost(result);
+        const string code = "NumbersModule.Core.RealNumberImpl.Add(2, 5)";
+
+        var interpreterValue = host.Run(code, "interpreter");
+        var compilerValue = host.Run(code, "compiler");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(ToDouble(interpreterValue), Is.EqualTo(7d).Within(1e-9));
+            Assert.That(ToDouble(compilerValue), Is.EqualTo(7d).Within(1e-9));
+        });
+    }
+
     [Test]
     public void RestrictedDialect_DisabledCompilerBackend_IsRejected()
     {

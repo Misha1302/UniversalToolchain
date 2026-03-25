@@ -9,7 +9,7 @@ This example demonstrates constrained composition aimed at a narrower runtime pr
 
 ## Intentionally excluded capabilities
 - No compiler backend.
-- No variables/identifiers, loops, labels, conditions, or interop-related capabilities.
+- Explicitly excludes `Variables`, `Identifier`, `Loops`, condition modules, comments, internal preprocessor lexemes, semicolon newline behavior, C# interop, and native arithmetic modules.
 - No claim of complete hardened sandboxing.
 
 ## Exact CLI commands to run it
