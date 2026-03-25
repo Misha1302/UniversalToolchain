@@ -9,15 +9,15 @@
 - Vite
 - Zustand (state)
 - AG Grid (table editing)
-- dnd-kit (row reordering)
+- dnd-kit
 - react-dropzone (file input)
 - MUI components/icons
 
 ## 3. Supported workflows in the current app
 - Load `.txt` lexer or parser configuration files (file picker or drag-and-drop).
 - Auto-detect configuration type and switch the active tab (`parser` / `lexer`).
-- Edit configuration rows in table view.
-- Add/delete rows, reorder rows, and sort rows by priority.
+- View loaded parser/lexer rows in a tabular grid.
+- Edit loaded rows directly in the table cells.
 - Filter rows via search.
 - Export current tab back to text format.
 - Clear current configuration state.

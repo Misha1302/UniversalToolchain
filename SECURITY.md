@@ -13,4 +13,4 @@ Dialect examples can constrain composition (for example, arithmetic-only interpr
 Treat untrusted script execution as high risk. If you must run untrusted input, isolate it at the process/environment level and disable unsafe capabilities by composition.
 
 ## Supported versions
-This repository is currently developed on the active main branch and targets .NET 10 (`net10.0`). Security fixes are expected to be applied there.
+This repository is currently developed on the default development branch and targets .NET 10 (`net10.0`). Security fixes are expected to be applied there.
