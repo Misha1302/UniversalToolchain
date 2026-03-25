@@ -38,6 +38,12 @@
     .hero {
       padding: 5.5rem 0 4rem;
     }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 1rem;
+      align-items: start;
+    }
     .eyebrow {
       display: inline-block;
       border: 1px solid var(--line);
@@ -55,6 +61,21 @@
       max-width: 900px;
     }
     .hero p { max-width: 900px; font-size: 1.08rem; }
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .5rem;
+      margin-top: .65rem;
+    }
+    .badge {
+      border: 1px solid var(--line);
+      background: rgba(120,166,255,0.11);
+      border-radius: 999px;
+      padding: .3rem .65rem;
+      font-size: .82rem;
+      color: var(--brand);
+      font-weight: 600;
+    }
 
     .actions { display: flex; flex-wrap: wrap; gap: .8rem; margin-top: 1.5rem; }
     .btn {
@@ -69,6 +90,64 @@
     }
     .btn.primary { background: linear-gradient(100deg, #4d74d8, #3d56a7); border-color: #5a79cc; }
     .btn:hover { filter: brightness(1.08); }
+    .hero-side {
+      display: grid;
+      gap: .75rem;
+    }
+    .terminal, .snippet {
+      background: linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0));
+      border: 1px solid var(--line);
+      border-radius: .8rem;
+      overflow: hidden;
+      box-shadow: 0 8px 30px rgba(0,0,0,.25);
+    }
+    .panel-head {
+      padding: .55rem .8rem;
+      background: #0e1735;
+      border-bottom: 1px solid var(--line);
+      font-size: .8rem;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      gap: .5rem;
+    }
+    .terminal pre, .snippet pre {
+      margin: 0;
+      padding: .85rem;
+      overflow-x: auto;
+      font-size: .83rem;
+      line-height: 1.45;
+      color: #d4ffe8;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+    .terminal .out {
+      border-top: 1px solid var(--line);
+      color: #96ffd7;
+      background: rgba(102,227,196,0.04);
+      padding: .65rem .85rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: .86rem;
+    }
+    .at-glance {
+      padding-top: 0;
+    }
+    .facts {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: .7rem;
+    }
+    .fact {
+      border: 1px solid var(--line);
+      background: var(--surface);
+      border-radius: .8rem;
+      padding: .8rem;
+      text-align: center;
+    }
+    .fact strong {
+      display: block;
+      font-size: 1.25rem;
+      color: var(--brand-2);
+    }
 
     .grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
     .card {
@@ -97,8 +176,56 @@
 
     .dialects { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
     .dialect { background: var(--surface); border: 1px solid var(--line); border-radius: .9rem; padding: 1rem; }
+    .dialect.level-full { border-color: rgba(102,227,196,.4); }
+    .dialect.level-min { border-color: rgba(120,166,255,.4); }
+    .dialect.level-restrict { border-color: rgba(255,159,159,.5); }
     .dialect code { color: var(--brand-2); }
     .dialect ul { margin: .45rem 0 0 1rem; color: var(--muted); }
+    .profile-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: .5rem;
+      align-items: center;
+      margin-bottom: .5rem;
+    }
+    .scale {
+      font-size: .73rem;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: .2rem .5rem;
+      white-space: nowrap;
+    }
+    .chips { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .4rem; }
+    .chip {
+      font-size: .74rem;
+      color: #c6d6ff;
+      border: 1px solid var(--line);
+      background: rgba(120,166,255,.08);
+      border-radius: 999px;
+      padding: .15rem .5rem;
+    }
+    .micro-demo {
+      margin-top: 1rem;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: .9rem;
+      padding: 1rem;
+    }
+    .micro-demo-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: .7rem;
+      margin-top: .7rem;
+    }
+    .micro {
+      border: 1px solid var(--line);
+      border-radius: .7rem;
+      background: rgba(255,255,255,.01);
+      padding: .7rem;
+      font-size: .88rem;
+    }
+    .micro b { color: var(--text); }
 
     .pipeline {
       background: var(--surface);
@@ -129,7 +256,7 @@
     footer a { color: var(--brand); text-decoration: none; }
 
     @media (max-width: 900px) {
-      .grid-3, .dialects, .list, .split { grid-template-columns: 1fr; }
+      .hero-grid, .grid-3, .dialects, .list, .split, .facts, .micro-demo-grid { grid-template-columns: 1fr; }
       section { padding: 3.1rem 0; }
       .hero { padding-top: 4.2rem; }
     }
@@ -137,21 +264,55 @@
 </head>
 <body>
   <header class="hero" id="top">
-    <div class="container">
-      <span class="eyebrow">UniversalToolchain + Wist</span>
-      <h1>Build DSLs on .NET from reusable compiler modules.</h1>
-      <p>
-        UniversalToolchain is a modular .NET language toolchain. Wist is the working reference language used to validate it in real code:
-        shared frontend concepts, composable modules, and two real execution paths (<strong>compiler</strong> and <strong>interpreter</strong>).
-      </p>
-      <div class="actions">
-        <a class="btn primary" href="https://github.com/Misha1302/Wist2">GitHub Repository</a>
-        <a class="btn" href="https://github.com/Misha1302/Wist2/blob/master/readme.md">Read README / Docs</a>
-        <a class="btn" href="#dialects">Jump to Examples</a>
-        <a class="btn" href="#programmers">Technical Details</a>
+    <div class="container hero-grid">
+      <div>
+        <span class="eyebrow">UniversalToolchain + Wist</span>
+        <h1>Build DSLs on .NET from reusable compiler modules.</h1>
+        <p>
+          UniversalToolchain is reusable language infrastructure, not “just another language.”
+          Wist is the reference implementation that proves the architecture with a working CLI, REPL,
+          dialect composition, and dual execution backends.
+        </p>
+        <div class="badge-row">
+          <span class="badge">Modular pipeline</span>
+          <span class="badge">CLI + programmatic API</span>
+          <span class="badge">Dialect-driven runtime composition</span>
+        </div>
+        <div class="actions">
+          <a class="btn primary" href="https://github.com/Misha1302/Wist2">GitHub Repository</a>
+          <a class="btn" href="https://github.com/Misha1302/Wist2/blob/master/readme.md">Read README / Docs</a>
+          <a class="btn" href="#dialects">Jump to Examples</a>
+          <a class="btn" href="#programmers">Technical Details</a>
+        </div>
       </div>
+      <aside class="hero-side">
+        <article class="terminal">
+          <div class="panel-head"><span>Instant proof</span><span>CLI (documented)</span></div>
+          <pre>$ dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --mode compiler</pre>
+          <div class="out">12</div>
+        </article>
+        <article class="snippet">
+          <div class="panel-head"><span>Mini dialect shape</span><span>Presentational</span></div>
+          <pre>dialect FullDefault
+use Arithmetic, BooleanConditions, ComparisonConditions, ...
+backend cil, interpreter
+enable LocalVariablesOptimization</pre>
+        </article>
+      </aside>
     </div>
   </header>
+
+  <section id="glance" class="at-glance">
+    <div class="container">
+      <div class="facts">
+        <div class="fact"><strong>4</strong>CLI verbs</div>
+        <div class="fact"><strong>2</strong>execution modes</div>
+        <div class="fact"><strong>3</strong>dialect profiles</div>
+        <div class="fact"><strong>.NET 10</strong>runtime baseline</div>
+        <div class="fact"><strong>Wist</strong>reference language</div>
+      </div>
+    </div>
+  </section>
 
   <section id="value-cards">
     <div class="container">
@@ -162,11 +323,11 @@
         </article>
         <article class="card">
           <h3>Choose execution</h3>
-          <p>Use interpreter mode for debugging and compiler mode when you need compiled execution.</p>
+          <p>Run in <code>interpreter</code> mode for debugging and in <code>compiler</code> mode for compiled execution with the same language frontend.</p>
         </article>
         <article class="card">
           <h3>Define dialects</h3>
-          <p>Create restricted or fuller language profiles with a dialect file and run them through the same workflow.</p>
+          <p>Declare language/runtime profiles in a <code>.wistdialect</code> file, compose a host, then execute through the same CLI/programmatic path.</p>
         </article>
       </div>
     </div>
@@ -180,7 +341,7 @@
         UniversalToolchain exists to reuse that infrastructure through composable .NET stages and modules.
       </p>
       <p>
-        Instead of hardcoding one language runtime, you can compose capabilities, keep a shared frontend model, and select runtime behavior by configuration.
+        Instead of hardcoding one runtime, you compose capabilities, keep one frontend model, and switch execution paths with explicit dialect/runtime settings.
       </p>
     </div>
   </section>
@@ -203,11 +364,14 @@
   <section id="dialects">
     <div class="container">
       <h2>Dialect examples (language/runtime profiles)</h2>
-      <p>One framework, multiple profiles. These examples are in the repository and run end-to-end.</p>
+      <p>One framework → multiple profiles. Same toolchain, different capability sets and runtime shape.</p>
       <div class="dialects">
-        <article class="dialect">
-          <h3><code>full-default</code></h3>
+        <article class="dialect level-full">
+          <div class="profile-row"><h3><code>full-default</code></h3><span class="scale">broader profile</span></div>
           <p>Practical default-style Wist profile close to regular execution.</p>
+          <div class="chips">
+            <span class="chip">loops</span><span class="chip">conditions</span><span class="chip">variables</span><span class="chip">labels</span>
+          </div>
           <ul>
             <li>Modules include arithmetic, conditions, loops, variables, scopes, labels, and more.</li>
             <li>Backends: <code>cil</code> + <code>interpreter</code>.</li>
@@ -215,18 +379,24 @@
             <li>Example program returns <strong>15</strong>.</li>
           </ul>
         </article>
-        <article class="dialect">
-          <h3><code>minimal-arithmetic</code></h3>
+        <article class="dialect level-min">
+          <div class="profile-row"><h3><code>minimal-arithmetic</code></h3><span class="scale">narrow profile</span></div>
           <p>Smallest useful arithmetic-oriented composition.</p>
+          <div class="chips">
+            <span class="chip">arithmetic</span><span class="chip">numbers</span><span class="chip">scopes</span>
+          </div>
           <ul>
             <li>Modules: <code>Arithmetic</code>, <code>Numbers</code>, <code>Scopes</code>, <code>Whitespaces</code>.</li>
             <li>Backend: <code>interpreter</code>.</li>
             <li>Example returns <strong>14</strong>.</li>
           </ul>
         </article>
-        <article class="dialect">
-          <h3><code>restricted-sandbox</code></h3>
+        <article class="dialect level-restrict">
+          <div class="profile-row"><h3><code>restricted-sandbox</code></h3><span class="scale">most constrained</span></div>
           <p>Constrained profile for narrower capabilities.</p>
+          <div class="chips">
+            <span class="chip">interpreter only</span><span class="chip">no variables</span><span class="chip">no conditions</span>
+          </div>
           <ul>
             <li>Interpreter only; excludes variables, conditions, loops, and interop-related capabilities.</li>
             <li>Allowed example returns <strong>42</strong>.</li>
@@ -234,6 +404,14 @@
             <li><strong>Not</strong> a hardened sandbox guarantee.</li>
           </ul>
         </article>
+      </div>
+      <div class="micro-demo">
+        <h3>What changes when you change modules?</h3>
+        <div class="micro-demo-grid">
+          <div class="micro"><b>full-default</b><br/>`let s = 0;` + loop + conditions are available → program can compute `15`.</div>
+          <div class="micro"><b>minimal-arithmetic</b><br/>`2 + 3 * 4` succeeds in interpreter mode → returns `14`.</div>
+          <div class="micro"><b>restricted-sandbox</b><br/>Simple arithmetic can return `42`, but variable declarations are expected to fail.</div>
+        </div>
       </div>
     </div>
   </section>
