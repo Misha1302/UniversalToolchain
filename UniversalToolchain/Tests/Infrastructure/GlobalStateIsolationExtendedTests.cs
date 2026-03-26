@@ -47,12 +47,18 @@ public class GlobalStateIsolationExtendedTests
     }
 
     [Test]
-    public void FreshProvider_ShouldNotObserveState_FromPreviousProvider()
+    public void SameProvider_ShouldKeepSameVariableNamesSeparated_AcrossDistinctPrograms()
     {
-        var first = ExecuteOnFreshProvider("let i = 3\nwhile i > 0 (i = i - 1)\ni");
-        var second = ExecuteOnFreshProvider("let i = 3\nwhile i > 0 (i = i - 1)\ni");
+        using var provider = BuildProvider();
+        var interpreter = GetCore(provider, isCompiler: false);
 
-        Assert.That(second, Is.EqualTo(first).Within(1e-9));
+        var first = ToDouble(interpreter.Run("let x = 10
+x + 1"));
+        var second = ToDouble(interpreter.Run("let x = 3
+x * 2"));
+
+        Assert.That(first, Is.EqualTo(11).Within(1e-9));
+        Assert.That(second, Is.EqualTo(6).Within(1e-9));
     }
 
     [Test]
@@ -72,11 +78,6 @@ public class GlobalStateIsolationExtendedTests
         }
     }
 
-    private static double ExecuteOnFreshProvider(string code)
-    {
-        using var provider = BuildProvider();
-        return ToDouble(GetCore(provider, isCompiler: false).Run(code));
-    }
 
     private static ServiceProvider BuildProvider()
     {

@@ -25,17 +25,12 @@ public class DeterministicCompositionAndDiscoveryTests
     }
 
     [Test]
-    public void AutoRegistration_ShouldDiscoverServicesDeterministically_WhenAssemblyOrderChanges()
+    public void AutoRegistration_ShouldProduceStableProjection_AcrossRepeatedBuilds()
     {
-        var assembly = typeof(ServiceCollectionExtensions).Assembly;
+        var baseline = DescribeAutoRegisteredServices();
 
-        var servicesA = new ServiceCollection();
-        servicesA.AddAutoRegisteredServices([assembly]);
-
-        var servicesB = new ServiceCollection();
-        servicesB.AddAutoRegisteredServices((new[] { assembly }).Reverse());
-
-        Assert.That(DescribeServiceCollection(servicesB), Is.EqualTo(DescribeServiceCollection(servicesA)));
+        for (var i = 0; i < 25; i++)
+            Assert.That(DescribeAutoRegisteredServices(), Is.EqualTo(baseline));
     }
 
     [Test]
@@ -66,6 +61,13 @@ public class DeterministicCompositionAndDiscoveryTests
                 d.ImplementationFactory != null ? "factory" : "no-factory",
                 d.ImplementationInstance != null ? "instance" : "no-instance"
             ])).ToArray();
+    }
+
+    private static string[] DescribeAutoRegisteredServices()
+    {
+        var services = new ServiceCollection();
+        services.AddAutoRegisteredServices(typeof(ServiceCollectionExtensions).Assembly);
+        return DescribeServiceCollection(services);
     }
 
     private static string[] DescribeResolvedCoreRunnables()

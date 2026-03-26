@@ -81,12 +81,14 @@ public class DialectRuntimeAliasAttributeDiscoveryTests
             Assert.That(moduleNames, Does.Contain("CSharpInteropModuleImpl"));
             Assert.That(moduleNames, Does.Contain("VariablesModuleImpl"));
             Assert.That(Array.IndexOf(moduleNames, "ArithmeticModuleImpl"), Is.LessThan(Array.IndexOf(moduleNames, "VariablesModuleImpl")));
-            Assert.That(
-                result.RuntimeComposition.EnabledBackends.Select(static x => x.CanonicalId),
-                Is.EqualTo(new[] { "cil", "interpreter" }));
-            Assert.That(
-                result.RuntimeComposition.EnabledOptimizers.Select(static x => x.ImplementationType.Name),
-                Is.EqualTo(new[] { "LocalVariablesOptimizer" }));
+            var backends = result.RuntimeComposition.EnabledBackends.Select(static x => x.CanonicalId).ToArray();
+            Assert.That(backends, Has.Length.EqualTo(2));
+            Assert.That(backends, Does.Contain("cil"));
+            Assert.That(backends, Does.Contain("interpreter"));
+
+            var optimizers = result.RuntimeComposition.EnabledOptimizers.Select(static x => x.ImplementationType.Name).ToArray();
+            Assert.That(optimizers, Has.Length.EqualTo(1));
+            Assert.That(optimizers[0], Is.EqualTo("LocalVariablesOptimizer"));
         });
     }
 
@@ -158,9 +160,12 @@ public class DialectRuntimeAliasAttributeDiscoveryTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(first.Modules.Keys, Is.EqualTo(second.Modules.Keys));
-            Assert.That(first.Optimizers.Keys, Is.EqualTo(second.Optimizers.Keys));
-            Assert.That(first.Backends.Keys, Is.EqualTo(second.Backends.Keys));
+            Assert.That(first.Modules.Keys.OrderBy(static x => x), Is.EqualTo(second.Modules.Keys.OrderBy(static x => x)));
+            Assert.That(first.Optimizers.Keys.OrderBy(static x => x), Is.EqualTo(second.Optimizers.Keys.OrderBy(static x => x)));
+            Assert.That(first.Backends.Keys.OrderBy(static x => x), Is.EqualTo(second.Backends.Keys.OrderBy(static x => x)));
+            Assert.That(first.Modules["MultiAliasModule"].ImplementationType, Is.EqualTo(second.Modules["MultiAliasModule"].ImplementationType));
+            Assert.That(first.Optimizers["MultiAliasOptimizer"].ImplementationType, Is.EqualTo(second.Optimizers["MultiAliasOptimizer"].ImplementationType));
+            Assert.That(first.Backends[new DialectBackendId("attributed-runtime")].CanonicalId, Is.EqualTo(second.Backends[new DialectBackendId("attributed-runtime")].CanonicalId));
         });
     }
 

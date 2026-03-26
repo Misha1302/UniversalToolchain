@@ -13,73 +13,53 @@ public class CSharpInteropResolutionAndNegativeContractsTests : TestBase
     }
 
     [Test]
-    public void SameInteropCall_ShouldResolveSameOverload_AcrossRepeatedExecutions()
+    public void ExecuteCode_ShouldResolveSameUnambiguousCallShape_AcrossRepeatedRuns()
     {
         const string code = "System.Math.Abs(-5)";
-        var first = ExecuteCode<int>(code);
+        var expected = ExecuteCode<int>(code);
 
         for (var i = 0; i < 20; i++)
-            Assert.That(ExecuteCode<int>(code), Is.EqualTo(first));
+            Assert.That(ExecuteCode<int>(code), Is.EqualTo(expected));
     }
 
     [Test]
-    public void AmbiguousOverloadResolution_ShouldFailPredictably()
+    public void MethodsFinder_ShouldFailPredictably_ForAmbiguousOverloadSignature()
     {
-        var ex = Assert.Throws<AmbiguousMatchException>(() => MethodsFinder.GetMethod($"{typeof(OverloadHost).FullName}.Pick", [typeof(int), typeof(int)]));
+        var exception = Assert.Throws<AmbiguousMatchException>(() =>
+            MethodsFinder.GetMethod($"{typeof(OverloadHost).FullName}.Pick", [typeof(int), typeof(int)]));
 
-        Assert.That(ex, Is.Not.Null);
+        Assert.That(exception!.Message, Does.Contain("Ambiguous match"));
     }
 
     [Test]
-    public void ConstructorResolution_ShouldSelectConstructorMatchingStackArgumentTypes()
+    public void ExecuteCode_ShouldRejectNonPublicInteropTarget()
     {
-        var ctorFromInt = typeof(OverloadHost).GetConstructor([typeof(int)]);
-        var ctorFromLong = typeof(OverloadHost).GetConstructor([typeof(long)]);
+        var exception = Assert.Throws<ImportException>(() => ExecuteCode<int>($"{typeof(OverloadHost).FullName}.Hidden()"));
 
-        Assert.That(ctorFromInt, Is.Not.Null);
-        Assert.That(ctorFromLong, Is.Not.Null);
-        Assert.That(ctorFromInt, Is.Not.EqualTo(ctorFromLong));
+        Assert.That(exception!.Message, Does.Contain("not found").IgnoreCase);
     }
 
     [Test]
-    public void NonPublicInteropTarget_ShouldBeRejected_BySymbolResolution()
+    public void ExecuteCode_ShouldRejectUnsupportedRefOutCallShape()
     {
-        var hasPrivateMethod = MethodsFinder.ContainsAnyMethod($"{typeof(OverloadHost).FullName}.Hidden");
-        var resolved = MethodsFinder.GetMethod($"{typeof(OverloadHost).FullName}.Hidden");
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(() => ExecuteCode<int>("System.Int32.TryParse(7)"));
 
-        Assert.That(hasPrivateMethod, Is.True);
-        Assert.That(resolved, Is.Null);
+        Assert.That(exception!.ParamName, Is.EqualTo("index"));
     }
 
     [Test]
-    public void UnsupportedRefOutCallShape_ShouldFailWithStableImportContract()
+    public void ExecuteCode_ShouldRejectNullCallShape_WhenCastContractCannotBeSatisfied()
     {
-        var ex = Assert.Throws<ArgumentOutOfRangeException>(() => ExecuteCode<int>("System.Int32.TryParse(7)"));
+        var exception = Assert.Throws<InvalidOperationException>(() => ExecuteCode<int>("System.String.IsNullOrEmpty(null)"));
 
-        Assert.That(ex, Is.Not.Null);
-    }
-
-    [Test]
-    public void NullArgumentCallShape_ShouldFailWithStableImportContract()
-    {
-        var ex = Assert.Catch(() => ExecuteCode<int>("System.String.IsNullOrEmpty(null)"));
-
-        Assert.That(ex, Is.Not.Null);
-        Assert.That(ex!.Message, Does.Contain("String").IgnoreCase);
+        Assert.That(exception!.Message, Does.Contain("Cannot cast").And.Contain("System.String"));
     }
 
     private sealed class OverloadHost
     {
-        public OverloadHost(int value)
-        {
-        }
-
-        public OverloadHost(long value)
-        {
-        }
-
         public static string Pick(int left, long right) => "int-long";
         public static string Pick(long left, int right) => "long-int";
+
         private static string Hidden() => "hidden";
     }
 }
