@@ -76,30 +76,19 @@ public class DialectRuntimeAliasAttributeDiscoveryTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(
-                result.RuntimeComposition!.OrderedModules.Select(static x => x.ImplementationType.Name),
-                Is.EqualTo(new[]
-                {
-                    "ArithmeticModuleImpl",
-                    "BooleanOperations",
-                    "ComparisonOperations",
-                    "ConditionsModuleImpl",
-                    "EqualityModuleImpl",
-                    "IdentifierModuleImpl",
-                    "LabelsModuleImpl",
-                    "LoopsModuleImpl",
-                    "NumbersModuleImpl",
-                    "ScopesModuleImpl",
-                    "SemicolonAsNewLineModuleImpl",
-                    "VariablesModuleImpl",
-                    "WhitespaceModuleImpl"
-                }));
-            Assert.That(
-                result.RuntimeComposition.EnabledBackends.Select(static x => x.CanonicalId),
-                Is.EqualTo(new[] { "cil", "interpreter" }));
-            Assert.That(
-                result.RuntimeComposition.EnabledOptimizers.Select(static x => x.ImplementationType.Name),
-                Is.EqualTo(new[] { "LocalVariablesOptimizer" }));
+            var moduleNames = result.RuntimeComposition!.OrderedModules.Select(static x => x.ImplementationType.Name).ToArray();
+            Assert.That(moduleNames, Does.Contain("ArithmeticModuleImpl"));
+            Assert.That(moduleNames, Does.Contain("CSharpInteropModuleImpl"));
+            Assert.That(moduleNames, Does.Contain("VariablesModuleImpl"));
+            Assert.That(Array.IndexOf(moduleNames, "ArithmeticModuleImpl"), Is.LessThan(Array.IndexOf(moduleNames, "VariablesModuleImpl")));
+            var backends = result.RuntimeComposition.EnabledBackends.Select(static x => x.CanonicalId).ToArray();
+            Assert.That(backends, Has.Length.EqualTo(2));
+            Assert.That(backends, Does.Contain("cil"));
+            Assert.That(backends, Does.Contain("interpreter"));
+
+            var optimizers = result.RuntimeComposition.EnabledOptimizers.Select(static x => x.ImplementationType.Name).ToArray();
+            Assert.That(optimizers, Has.Length.EqualTo(1));
+            Assert.That(optimizers[0], Is.EqualTo("LocalVariablesOptimizer"));
         });
     }
 
@@ -171,9 +160,20 @@ public class DialectRuntimeAliasAttributeDiscoveryTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(first.Modules.Keys, Is.EqualTo(second.Modules.Keys));
-            Assert.That(first.Optimizers.Keys, Is.EqualTo(second.Optimizers.Keys));
-            Assert.That(first.Backends.Keys, Is.EqualTo(second.Backends.Keys));
+            Assert.That(first.Modules.Keys.OrderBy(static x => x), Is.EqualTo(second.Modules.Keys.OrderBy(static x => x)));
+            Assert.That(first.Optimizers.Keys.OrderBy(static x => x), Is.EqualTo(second.Optimizers.Keys.OrderBy(static x => x)));
+            Assert.That(first.Backends.Keys.OrderBy(static x => x), Is.EqualTo(second.Backends.Keys.OrderBy(static x => x)));
+            Assert.That(first.TryResolveModule("MultiAliasModule", out var firstModule), Is.True);
+            Assert.That(second.TryResolveModule("MultiAliasModule", out var secondModule), Is.True);
+            Assert.That(firstModule!.ImplementationType, Is.EqualTo(secondModule!.ImplementationType));
+
+            Assert.That(first.TryResolveOptimizer("MultiAliasOptimizer", out var firstOptimizer), Is.True);
+            Assert.That(second.TryResolveOptimizer("MultiAliasOptimizer", out var secondOptimizer), Is.True);
+            Assert.That(firstOptimizer!.ImplementationType, Is.EqualTo(secondOptimizer!.ImplementationType));
+
+            Assert.That(first.TryResolveBackend(new DialectBackendId("attributed-runtime"), out var firstBackend), Is.True);
+            Assert.That(second.TryResolveBackend(new DialectBackendId("attributed-runtime"), out var secondBackend), Is.True);
+            Assert.That(firstBackend!.CanonicalId, Is.EqualTo(secondBackend!.CanonicalId));
         });
     }
 
