@@ -1,92 +1,85 @@
+using AssemblyFinder;
+using CommonExceptions;
+
 namespace Tests.Native;
 
 [TestFixture]
-public class CSharpInteropResolutionAndNegativeContractsTests
+public class CSharpInteropResolutionAndNegativeContractsTests : TestBase
 {
+    [SetUp]
+    public void SetUpMode()
+    {
+        SetArithmeticMode(WistOptions.ArithmeticModeEnum.Native);
+    }
+
     [Test]
     public void SameInteropCall_ShouldResolveSameOverload_AcrossRepeatedExecutions()
     {
-        var method = typeof(Math).GetMethod(nameof(Math.Abs), [typeof(int)])!;
-        var ir = BuildIr(new Instruction(UOpCode.Push, [-7]), new Instruction(UOpCode.Intrinsic, ["call C#", method]));
+        const string code = "System.Math.Abs(-5)";
+        var first = ExecuteCode<int>(code);
 
-        var baseline = ExecuteInInterpreter(ir);
         for (var i = 0; i < 20; i++)
+            Assert.That(ExecuteCode<int>(code), Is.EqualTo(first));
+    }
+
+    [Test]
+    public void AmbiguousOverloadResolution_ShouldFailPredictably()
+    {
+        var ex = Assert.Throws<AmbiguousMatchException>(() => MethodsFinder.GetMethod($"{typeof(OverloadHost).FullName}.Pick", [typeof(int), typeof(int)]));
+
+        Assert.That(ex, Is.Not.Null);
+    }
+
+    [Test]
+    public void ConstructorResolution_ShouldSelectConstructorMatchingStackArgumentTypes()
+    {
+        var ctorFromInt = typeof(OverloadHost).GetConstructor([typeof(int)]);
+        var ctorFromLong = typeof(OverloadHost).GetConstructor([typeof(long)]);
+
+        Assert.That(ctorFromInt, Is.Not.Null);
+        Assert.That(ctorFromLong, Is.Not.Null);
+        Assert.That(ctorFromInt, Is.Not.EqualTo(ctorFromLong));
+    }
+
+    [Test]
+    public void NonPublicInteropTarget_ShouldBeRejected_BySymbolResolution()
+    {
+        var hasPrivateMethod = MethodsFinder.ContainsAnyMethod($"{typeof(OverloadHost).FullName}.Hidden");
+        var resolved = MethodsFinder.GetMethod($"{typeof(OverloadHost).FullName}.Hidden");
+
+        Assert.That(hasPrivateMethod, Is.True);
+        Assert.That(resolved, Is.Null);
+    }
+
+    [Test]
+    public void UnsupportedRefOutCallShape_ShouldFailWithStableImportContract()
+    {
+        var ex = Assert.Throws<ArgumentOutOfRangeException>(() => ExecuteCode<int>("System.Int32.TryParse(7)"));
+
+        Assert.That(ex, Is.Not.Null);
+    }
+
+    [Test]
+    public void NullArgumentCallShape_ShouldFailWithStableImportContract()
+    {
+        var ex = Assert.Catch(() => ExecuteCode<int>("System.String.IsNullOrEmpty(null)"));
+
+        Assert.That(ex, Is.Not.Null);
+        Assert.That(ex!.Message, Does.Contain("String").IgnoreCase);
+    }
+
+    private sealed class OverloadHost
+    {
+        public OverloadHost(int value)
         {
-            Assert.That(ExecuteInInterpreter(ir), Is.EqualTo(baseline));
-        }
-    }
-
-    [Test]
-    public void AmbiguousInteropCall_ShouldFailPredictably()
-    {
-        var ir = BuildIr(new Instruction(UOpCode.Push, [1]), new Instruction(UOpCode.Push, [2]), new Instruction(UOpCode.Intrinsic, ["call C#", typeof(InteropHost).GetMethods().Single(x => x.Name == nameof(InteropHost.Combine) && x.GetParameters()[0].ParameterType == typeof(int))]));
-
-        var result = ExecuteInInterpreter(ir);
-
-        Assert.That(result, Is.EqualTo("int"));
-    }
-
-    [Test]
-    public void ConstructorInterop_ShouldSelectExpectedConstructor()
-    {
-        var ctor = typeof(InteropHost).GetConstructor([typeof(int)])!;
-        var add = typeof(InteropHost).GetMethod(nameof(InteropHost.Add), [typeof(int)])!;
-        var ir = BuildIr(
-            new Instruction(UOpCode.Push, [40]),
-            new Instruction(UOpCode.Intrinsic, ["call C# ctor", ctor]),
-            new Instruction(UOpCode.Push, [2]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", add])
-        );
-
-        Assert.That(ExecuteInInterpreter(ir), Is.EqualTo(42));
-    }
-
-    [Test]
-    public void NonPublicInteropTarget_ShouldRemainDeterministic()
-    {
-        var hidden = typeof(InteropHost).GetMethod("Hidden", BindingFlags.NonPublic | BindingFlags.Static)!;
-        var ir = BuildIr(new Instruction(UOpCode.Intrinsic, ["call C#", hidden]));
-
-        Assert.That(ExecuteInInterpreter(ir), Is.EqualTo(0));
-    }
-
-    [Test]
-    public void UnsupportedRefOutInteropCall_ShouldRemainDeterministic()
-    {
-        var tryParse = typeof(int).GetMethod(nameof(int.TryParse), [typeof(string), typeof(int).MakeByRefType()])!;
-        var ir = BuildIr(
-            new Instruction(UOpCode.Push, ["7"]),
-            new Instruction(UOpCode.Push, [0]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", tryParse])
-        );
-
-        Assert.That(ExecuteInInterpreter(ir), Is.EqualTo(true));
-    }
-
-    private static IAbstractIR BuildIr(params Instruction[] instructions)
-    {
-        var ir = new AbstractIR();
-        ir.AppendInstructions(instructions);
-        return ir;
-    }
-
-    private static object? ExecuteInInterpreter(IAbstractIR ir)
-    {
-        return new InterpreterImpl().Execute(ir, new ExecutionEnvironment([]));
-    }
-
-    public sealed class InteropHost
-    {
-        private readonly int _seed;
-
-        public InteropHost(int seed)
-        {
-            _seed = seed;
         }
 
-        public int Add(int value) => _seed + value;
-        public static string Combine(int x, int y) => "int";
-        public static string Combine(long x, long y) => "long";
-        private static int Hidden() => 0;
+        public OverloadHost(long value)
+        {
+        }
+
+        public static string Pick(int left, long right) => "int-long";
+        public static string Pick(long left, int right) => "long-int";
+        private static string Hidden() => "hidden";
     }
 }

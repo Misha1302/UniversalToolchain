@@ -1,57 +1,53 @@
 using CommonExceptions;
 using Microsoft.Extensions.DependencyInjection;
-using UniversalToolchain.Dialects.Wist;
 using UniversalToolchain.Dialects.Integration;
+using UniversalToolchain.Dialects.Wist;
 
 namespace UniversalToolchain.Dialects.Tests;
 
+[TestFixture]
 public class DialectDeterminismAndSandboxContractsTests
 {
     [Test]
     public void FullDefaultDialect_ShouldComposeDeterministically_AcrossRepeatedRuns()
-    {
-        AssertStableProjection("full-default", 20);
-    }
+        => AssertRepeatedProjectionIsStable("full-default", 20);
 
     [Test]
     public void MinimalArithmeticDialect_ShouldComposeDeterministically_AcrossRepeatedRuns()
-    {
-        AssertStableProjection("minimal-arithmetic", 20);
-    }
+        => AssertRepeatedProjectionIsStable("minimal-arithmetic", 20);
 
     [Test]
     public void RestrictedSandboxDialect_ShouldComposeDeterministically_AcrossRepeatedRuns()
-    {
-        AssertStableProjection("restricted-sandbox", 20);
-    }
+        => AssertRepeatedProjectionIsStable("restricted-sandbox", 20);
 
     [Test]
     public void RestrictedSandbox_ShouldNotExposeForbiddenCapabilities()
     {
         using var provider = CreateProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var result = workflow.ComposeFile(GetDialectPath("restricted-sandbox"));
+        var composition = workflow.ComposeFile(GetDialectPath("restricted-sandbox"));
 
-        Assert.That(result.IsSuccess, Is.True);
-        Assert.That(result.RuntimeComposition!.EnabledBackends.Select(x => x.CanonicalId), Is.EqualTo(new[] { "interpreter" }));
-        Assert.That(result.RuntimeComposition.OrderedModules.Select(x => x.ImplementationType.Name), Does.Not.Contain("CSharpInteropModuleImpl"));
+        Assert.That(composition.IsSuccess, Is.True);
+        Assert.That(composition.RuntimeComposition!.EnabledBackends.Select(x => x.CanonicalId), Is.EqualTo(new[] { "interpreter" }));
+        Assert.That(composition.RuntimeComposition.OrderedModules.Select(x => x.CanonicalId), Does.Not.Contain("CSharpInterop"));
     }
 
     [Test]
-    public void InvalidDialectInput_ShouldProduceStableDiagnostics()
+    public void InvalidDialectInput_ShouldProduceStableDiagnosticContract()
     {
         const string source = """
-dialect Bad
-unknown something
-backend interpreter
-""";
+                              dialect Invalid
+                              unknown directive
+                              backend interpreter
+                              """;
 
         using var provider = CreateProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var first = Assert.Throws<ParserException>(() => workflow.ComposeText(source, "invalid.wistdialect"));
-        var second = Assert.Throws<ParserException>(() => workflow.ComposeText(source, "invalid.wistdialect"));
 
-        Assert.That(second!.Message, Is.EqualTo(first!.Message));
+        var first = Assert.Throws<ParserException>(() => workflow.ComposeText(source, "invalid-1.wistdialect"));
+        var second = Assert.Throws<ParserException>(() => workflow.ComposeText(source, "invalid-2.wistdialect"));
+
+        Assert.That(second!.Message.Split('\n')[0], Is.EqualTo(first!.Message.Split('\n')[0]));
     }
 
     [Test]
@@ -59,41 +55,36 @@ backend interpreter
     {
         using var provider = CreateProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var expected = Project(workflow.ComposeFile(GetDialectPath("full-default")));
+        var baseline = Project(workflow.ComposeFile(GetDialectPath("full-default")));
 
         for (var i = 0; i < 20; i++)
-        {
-            Assert.That(Project(workflow.ComposeFile(GetDialectPath("full-default"))), Is.EqualTo(expected));
-        }
+            Assert.That(Project(workflow.ComposeFile(GetDialectPath("full-default"))), Is.EqualTo(baseline));
     }
 
-    private static void AssertStableProjection(string exampleName, int repetitions)
+    private static void AssertRepeatedProjectionIsStable(string dialectName, int repetitions)
     {
         using var provider = CreateProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var expected = Project(workflow.ComposeFile(GetDialectPath(exampleName)));
+        var baseline = Project(workflow.ComposeFile(GetDialectPath(dialectName)));
 
         for (var i = 0; i < repetitions; i++)
-        {
-            Assert.That(Project(workflow.ComposeFile(GetDialectPath(exampleName))), Is.EqualTo(expected));
-        }
+            Assert.That(Project(workflow.ComposeFile(GetDialectPath(dialectName))), Is.EqualTo(baseline));
     }
 
     private static string Project(DialectFrameworkCompositionResult result)
     {
         return string.Join("|", [
             result.IsSuccess.ToString(),
-            string.Join(",", result.SemanticDiagnostics.Select(x => x.Message)),
-            string.Join(",", result.ResolutionDiagnostics.Select(x => x.Message)),
+            string.Join(",", result.SemanticDiagnostics.Select(x => $"{x.Code}:{x.Message}")),
+            string.Join(",", result.ResolutionDiagnostics.Select(x => $"{x.Code}:{x.Message}")),
             string.Join(",", result.RuntimeComposition?.OrderedModules.Select(x => x.CanonicalId) ?? []),
-            string.Join(",", result.RuntimeComposition?.EnabledBackends.Select(x => x.CanonicalId) ?? [])
+            string.Join(",", result.RuntimeComposition?.EnabledBackends.Select(x => x.CanonicalId) ?? []),
+            string.Join(",", result.RuntimeComposition?.EnabledOptimizers.Select(x => x.CanonicalId) ?? [])
         ]);
     }
 
-    private static string GetDialectPath(string exampleName)
-    {
-        return Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "Dialects", "examples", "wist", exampleName, "dialect.wistdialect"));
-    }
+    private static string GetDialectPath(string dialectName)
+        => Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "Dialects", "examples", "wist", dialectName, "dialect.wistdialect"));
 
     private static ServiceProvider CreateProvider()
     {

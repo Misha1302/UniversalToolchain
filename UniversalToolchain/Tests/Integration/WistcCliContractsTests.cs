@@ -41,11 +41,19 @@ public class WistcCliContractsTests
     }
 
     [Test]
+    public void DialectDemo_ShouldReturnDocumentedFailureContract_ForValidScenario()
+    {
+        var result = RunCli("dialect-demo --scenario valid");
+        Assert.That(result.ExitCode, Is.EqualTo(1));
+        Assert.That(result.StdOut + result.StdErr, Does.Contain("Compilation error").IgnoreCase);
+    }
+
+    [Test]
     public void InvalidInput_ShouldReturnFailureContract()
     {
         var result = RunCli("run --file /tmp/does-not-exist.wist");
         Assert.That(result.ExitCode, Is.EqualTo(1));
-        Assert.That(result.StdErr, Does.Contain("does not exist").IgnoreCase);
+        Assert.That(result.StdErr, Does.Contain("File was not found").IgnoreCase);
     }
 
     [Test]

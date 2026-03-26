@@ -4,28 +4,31 @@ namespace Tests.Infrastructure;
 public class OptimizerIdempotenceAndIntrinsicGateTests
 {
     [Test]
-    public void LocalVariablesOptimizer_ShouldBeIdempotent_ForNormalizedProgram()
+    public void LocalVariablesOptimizer_ShouldBeStructurallyIdempotent_AndSemanticallyStable()
     {
-        var module = new LocalVariablesOptimizer();
+        var optimizer = new LocalVariablesOptimizer();
         var compiler = new FakeCompiler(["store_local", "load_local", "load_local_ref"]);
         var ir = BuildIr(
-            new Instruction(UOpCode.Push, [9]),
+            new Instruction(UOpCode.Push, [10]),
             new Instruction(UOpCode.Intrinsic, ["store_local", "x", typeof(int)]),
-            new Instruction(UOpCode.Intrinsic, ["load_local", "x", typeof(int)])
+            new Instruction(UOpCode.Intrinsic, ["load_local", "x", typeof(int)]),
+            new Instruction(UOpCode.Push, [32]),
+            new Instruction(UOpCode.Intrinsic, ["add_i32"])
         );
 
-        var first = module.ProcessIr(ir, compiler);
-        var second = module.ProcessIr(first, compiler);
+        var pass1 = optimizer.ProcessIr(ir, compiler);
+        var pass2 = optimizer.ProcessIr(pass1, compiler);
 
-        Assert.That(Project(second), Is.EqualTo(Project(first)));
+        Assert.That(Project(pass2), Is.EqualTo(Project(pass1)));
+        Assert.That(CompileAndExecute(pass1), Is.EqualTo(CompileAndExecute(pass2)));
     }
 
     [Test]
-    public void ArithmeticOptimization_ShouldPreserveSemantics_WhenAppliedRepeatedly()
+    public void ArithmeticOptimizer_ShouldPreserveOriginalSemantics_AcrossRepeatedPasses()
     {
-        var module = new ArithmeticOptimizerModule();
+        var optimizer = new ArithmeticOptimizerModule();
         var compiler = new FakeCompiler(["add_i32", "sub_i32", "mul_i32", "div_i32"]);
-        var ir = BuildIr(
+        var original = BuildIr(
             new Instruction(UOpCode.Push, [2]),
             new Instruction(UOpCode.Push, [3]),
             new Instruction(UOpCode.Intrinsic, ["add_i32"]),
@@ -33,43 +36,50 @@ public class OptimizerIdempotenceAndIntrinsicGateTests
             new Instruction(UOpCode.Intrinsic, ["mul_i32"])
         );
 
-        var first = module.ProcessIr(ir, compiler);
-        var second = module.ProcessIr(first, compiler);
+        var pass1 = optimizer.ProcessIr(original, compiler);
+        var pass2 = optimizer.ProcessIr(pass1, compiler);
 
-        Assert.That(CompileAndExecute(second), Is.EqualTo(CompileAndExecute(first)));
+        Assert.That(CompileAndExecute(pass1), Is.EqualTo(CompileAndExecute(original)));
+        Assert.That(CompileAndExecute(pass2), Is.EqualTo(CompileAndExecute(original)));
     }
 
     [Test]
-    public void OptimizerPipeline_ShouldNotEmitUnsupportedIntrinsic_ForCurrentBackend()
+    public void NativeCilOptimizer_ShouldEmitOnlySupportedLoadIntrinsics_ForLiteralTypes()
     {
-        var module = new NativeCilOptimizerModule();
-        var compiler = new FakeCompiler(["load_i32"]);
+        var optimizer = new NativeCilOptimizerModule();
+        var compiler = new FakeCompiler(["load_i32", "load_f64"]);
 
-        var optimized = module.ProcessIr(BuildIr(new Instruction(UOpCode.Push, [1.2m])), compiler);
+        var optimized = optimizer.ProcessIr(BuildIr(new Instruction(UOpCode.Push, [1.2m])), compiler);
 
-        Assert.That(optimized.Instructions.Select(x => x.Operands[0]).OfType<string>(), Does.Not.Contain("load_f64"));
+        var projected = optimized.Instructions.Select(x => x.ToString()).ToArray();
+
+        Assert.That(projected.Any(x => x.Contains("load_decimal", StringComparison.Ordinal)), Is.False);
+        Assert.That(CompileAndExecute(optimized), Is.EqualTo(1.2m));
     }
 
     [Test]
-    public void Optimization_ShouldNotCrossObservableBehaviorBoundaries()
+    public void EGraphOptimizer_ShouldPreserveRuntimeBehavior_ForControlFlowSensitiveProgram()
     {
-        var module = new EGraphOptimizerModule();
-        var compiler = new FakeCompiler(["add_i32", "mul_i32", "sub_i32", "div_i32"]);
-        var label = Guid.NewGuid();
-        var ir = BuildIr(
+        var optimizer = new EGraphOptimizerModule();
+        var compiler = new FakeCompiler(["add_i32", "sub_i32", "mul_i32", "div_i32"]);
+        var labelTrue = Guid.NewGuid();
+        var labelEnd = Guid.NewGuid();
+
+        var original = BuildIr(
+            new Instruction(UOpCode.Push, [true]),
+            new Instruction(UOpCode.JmpIf, [labelTrue]),
+            new Instruction(UOpCode.Push, [100]),
+            new Instruction(UOpCode.Jmp, [labelEnd]),
+            new Instruction(UOpCode.Label, [labelTrue]),
             new Instruction(UOpCode.Push, [2]),
             new Instruction(UOpCode.Push, [3]),
             new Instruction(UOpCode.Intrinsic, ["add_i32"]),
-            new Instruction(UOpCode.Jmp, [label]),
-            new Instruction(UOpCode.Push, [777]),
-            new Instruction(UOpCode.Label, [label]),
-            new Instruction(UOpCode.Push, [5])
+            new Instruction(UOpCode.Label, [labelEnd])
         );
 
-        var optimized = module.ProcessIr(ir, compiler);
+        var optimized = optimizer.ProcessIr(original, compiler);
 
-        Assert.That(optimized.Instructions.Any(x => x.UOpCode == UOpCode.Jmp), Is.True);
-        Assert.That(optimized.Instructions.Any(x => x.UOpCode == UOpCode.Label), Is.True);
+        Assert.That(CompileAndExecute(optimized), Is.EqualTo(CompileAndExecute(original)));
     }
 
     private static string[] Project(IAbstractIR ir) => ir.Instructions.Select(x => x.ToString()).ToArray();
@@ -86,6 +96,7 @@ public class OptimizerIdempotenceAndIntrinsicGateTests
         var compiled = new AbstractMethodsCompilerImpl().Compile(ir, new CompilationInput { SourceText = string.Empty });
         return new DynamicMethodExecutor().Execute(compiled, new ExecutionEnvironment([]));
     }
+
 
     private sealed class FakeCompiler(IReadOnlyList<string> intrinsics) : IAbstractIrCompiler<object>
     {

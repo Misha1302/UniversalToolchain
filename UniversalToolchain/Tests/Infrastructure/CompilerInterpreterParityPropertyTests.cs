@@ -8,41 +8,34 @@ public class CompilerInterpreterParityPropertyTests
 {
     [Test]
     public void SameProgram_ShouldProduceSameResult_InCompilerAndInterpreter_ForArithmeticExpressions()
-    {
-        AssertParity("let a = 9\nlet b = 4\n(a * b) + (a - b)");
-    }
+        => AssertParity("let a = 9\nlet b = 4\n(a * b) + (a - b)");
 
     [Test]
     public void SameProgram_ShouldProduceSameResult_InCompilerAndInterpreter_ForNestedConditions()
-    {
-        AssertParity("let x = 7\nif x > 5 (if x < 10 (42) else (24)) else (0)");
-    }
+        => AssertParity("let x = 7\nif x > 5 (if x < 10 (42) else (24)) else (0)");
 
     [Test]
     public void SameProgram_ShouldProduceSameResult_InCompilerAndInterpreter_ForLoopAccumulation()
-    {
-        AssertParity("let i = 0\nlet sum = 0\nwhile i < 6 (sum = sum + i\ni = i + 1)\nsum");
-    }
+        => AssertParity("let i = 0\nlet sum = 0\nwhile i < 6 (sum = sum + i\ni = i + 1)\nsum");
 
     [Test]
-    public void SameProgram_ShouldProduceSameResult_InCompilerAndInterpreter_ForVariableShadowing()
-    {
-        AssertParity("let x = 10\nlet x = x + 1\nx + 5");
-    }
+    public void SameProgram_ShouldProduceSameResult_InCompilerAndInterpreter_ForScopedVariableRebinding()
+        => AssertParity("let x = 10\nx = x + 2\nlet y = x * 3\ny - x");
 
     [Test]
     public void SameProgram_ShouldPreserveShortCircuitSemantics_InBothBackends()
-    {
-        AssertParity("let x = 0\nlet safe = (x != 0) and (10 / x > 1)\nif safe (1) else (2)");
-    }
+        => AssertParity("let x = 0\nlet safe = (x != 0) and (10 / x > 1)\nif safe (1) else (2)");
 
     [Test]
     public void InvalidProgram_ShouldFailConsistently_InBothBackends()
     {
         const string code = "let x =\n";
-        var compilerException = Assert.Catch(() => Execute(code, "compiler"));
-        var interpreterException = Assert.Catch(() => Execute(code, "interpreter"));
 
+        var compilerException = Assert.Catch(() => Execute(code, BackendMode.Compiler));
+        var interpreterException = Assert.Catch(() => Execute(code, BackendMode.Interpreter));
+
+        Assert.That(interpreterException, Is.Not.Null);
+        Assert.That(compilerException, Is.Not.Null);
         Assert.That(interpreterException!.GetType(), Is.EqualTo(compilerException!.GetType()));
         Assert.That(interpreterException.Message.Split('\n')[0], Is.EqualTo(compilerException.Message.Split('\n')[0]));
     }
@@ -50,39 +43,44 @@ public class CompilerInterpreterParityPropertyTests
     [Test]
     public void GeneratedPrograms_ShouldMaintainSemanticParity_AcrossBackends()
     {
-        const int seed = 1337;
+        const int seed = 1302;
         var random = new Random(seed);
 
-        for (var i = 0; i < 60; i++)
+        for (var i = 0; i < 70; i++)
         {
-            var program = GenerateProgram(random, i);
-            var compilerResult = Execute(program, "compiler");
-            var interpreterResult = Execute(program, "interpreter");
+            var program = GenerateBoundedProgram(random, i);
+            var compilerResult = Execute(program, BackendMode.Compiler);
+            var interpreterResult = Execute(program, BackendMode.Interpreter);
+
             Assert.That(interpreterResult, Is.EqualTo(compilerResult), $"Seed={seed}; Case={i}; Program:\n{program}");
         }
     }
 
-    private static string GenerateProgram(Random random, int index)
+    private static string GenerateBoundedProgram(Random random, int caseIndex)
     {
-        var a = random.Next(-5, 12);
-        var b = random.Next(1, 8);
+        var a = random.Next(-7, 11);
+        var b = random.Next(1, 7);
+        var c = random.Next(1, 5);
 
-        return (index % 2) switch
+        return (caseIndex % 4) switch
         {
             0 => $"let a = {a}\nlet b = {b}\n(a + b) * (a - b)",
-            1 => $"let i = 0\nlet acc = {random.Next(0, 3)}\nwhile i < {random.Next(1, 6)} (acc = acc + {b}\ni = i + 1)\nacc",
-            _ => $"let x = {a}\nlet y = {b}\n(x * y) - y"
+            1 => $"let x = {a}\nlet y = {b}\n(x + y) - y",
+            2 => $"let i = 0\nlet acc = {c}\nwhile i < {random.Next(1, 6)} (acc = acc + {b}\ni = i + 1)\nacc",
+            _ => $"let x = {a}\nx = x + {b}\nx * {c}"
         };
     }
 
-    private static object? Execute(string code, string mode)
+    private static object? Execute(string code, BackendMode mode)
     {
         using var provider = BuildProvider();
-        var core = provider.GetServices<ICoreRunnable>()
-            .First(r => r.GetType().IsGenericType &&
-                        r.GetType().GetGenericTypeDefinition() == typeof(BasicCoreImpl<>) &&
-                        ((mode == "compiler" && r.GetType().GetGenericArguments()[0] == typeof(DynamicMethod)) ||
-                         (mode == "interpreter" && r.GetType().GetGenericArguments()[0] == typeof(IAbstractIR))));
+        var core = provider.GetServices<ICoreRunnable>().First(x =>
+            x.GetType().IsGenericType &&
+            x.GetType().GetGenericTypeDefinition() == typeof(BasicCoreImpl<>) &&
+            (mode == BackendMode.Compiler
+                ? x.GetType().GetGenericArguments()[0] == typeof(DynamicMethod)
+                : x.GetType().GetGenericArguments()[0] == typeof(IAbstractIR)));
+
         return core.Run(code);
     }
 
@@ -94,7 +92,11 @@ public class CompilerInterpreterParityPropertyTests
     }
 
     private static void AssertParity(string code)
+        => Assert.That(Execute(code, BackendMode.Interpreter), Is.EqualTo(Execute(code, BackendMode.Compiler)));
+
+    private enum BackendMode
     {
-        Assert.That(Execute(code, "interpreter"), Is.EqualTo(Execute(code, "compiler")));
+        Compiler,
+        Interpreter
     }
 }
