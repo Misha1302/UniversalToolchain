@@ -97,9 +97,16 @@ public class WistcCliContractsTests
             process.Kill(true);
             process.WaitForExit(5000);
         }
+        else
+        {
+            process.WaitForExit();
+        }
 
-        Task.WaitAll(stdOutTask, stdErrTask);
-        return new CliResult(process.ExitCode, stdOutTask.Result, stdErrTask.Result, timedOut);
+        var streamsCompleted = Task.WaitAll([stdOutTask, stdErrTask], TimeSpan.FromSeconds(10));
+        var stdOut = streamsCompleted && stdOutTask.IsCompletedSuccessfully ? stdOutTask.Result : string.Empty;
+        var stdErr = streamsCompleted && stdErrTask.IsCompletedSuccessfully ? stdErrTask.Result : string.Empty;
+
+        return new CliResult(process.ExitCode, stdOut, stdErr, timedOut);
     }
 
     private static string GetDialectPath(string exampleName)

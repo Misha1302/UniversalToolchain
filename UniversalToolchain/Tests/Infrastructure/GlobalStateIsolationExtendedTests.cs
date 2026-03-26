@@ -52,10 +52,8 @@ public class GlobalStateIsolationExtendedTests
         using var provider = BuildProvider();
         var interpreter = GetCore(provider, isCompiler: false);
 
-        var first = ToDouble(interpreter.Run("let x = 10
-x + 1"));
-        var second = ToDouble(interpreter.Run("let x = 3
-x * 2"));
+        var first = ToDouble(interpreter.Run("let x = 10\nx + 1"));
+        var second = ToDouble(interpreter.Run("let x = 3\nx * 2"));
 
         Assert.That(first, Is.EqualTo(11).Within(1e-9));
         Assert.That(second, Is.EqualTo(6).Within(1e-9));

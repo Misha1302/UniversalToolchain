@@ -163,9 +163,17 @@ public class DialectRuntimeAliasAttributeDiscoveryTests
             Assert.That(first.Modules.Keys.OrderBy(static x => x), Is.EqualTo(second.Modules.Keys.OrderBy(static x => x)));
             Assert.That(first.Optimizers.Keys.OrderBy(static x => x), Is.EqualTo(second.Optimizers.Keys.OrderBy(static x => x)));
             Assert.That(first.Backends.Keys.OrderBy(static x => x), Is.EqualTo(second.Backends.Keys.OrderBy(static x => x)));
-            Assert.That(first.Modules["MultiAliasModule"].ImplementationType, Is.EqualTo(second.Modules["MultiAliasModule"].ImplementationType));
-            Assert.That(first.Optimizers["MultiAliasOptimizer"].ImplementationType, Is.EqualTo(second.Optimizers["MultiAliasOptimizer"].ImplementationType));
-            Assert.That(first.Backends[new DialectBackendId("attributed-runtime")].CanonicalId, Is.EqualTo(second.Backends[new DialectBackendId("attributed-runtime")].CanonicalId));
+            Assert.That(first.TryResolveModule("MultiAliasModule", out var firstModule), Is.True);
+            Assert.That(second.TryResolveModule("MultiAliasModule", out var secondModule), Is.True);
+            Assert.That(firstModule!.ImplementationType, Is.EqualTo(secondModule!.ImplementationType));
+
+            Assert.That(first.TryResolveOptimizer("MultiAliasOptimizer", out var firstOptimizer), Is.True);
+            Assert.That(second.TryResolveOptimizer("MultiAliasOptimizer", out var secondOptimizer), Is.True);
+            Assert.That(firstOptimizer!.ImplementationType, Is.EqualTo(secondOptimizer!.ImplementationType));
+
+            Assert.That(first.TryResolveBackend(new DialectBackendId("attributed-runtime"), out var firstBackend), Is.True);
+            Assert.That(second.TryResolveBackend(new DialectBackendId("attributed-runtime"), out var secondBackend), Is.True);
+            Assert.That(firstBackend!.CanonicalId, Is.EqualTo(secondBackend!.CanonicalId));
         });
     }
 
