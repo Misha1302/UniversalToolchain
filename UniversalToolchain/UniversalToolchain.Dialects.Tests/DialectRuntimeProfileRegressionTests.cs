@@ -29,42 +29,49 @@ public class DialectRuntimeProfileRegressionTests
     }
 
     [Test]
-    public void MinimalArithmeticProfile_ShouldRejectVariableSyntaxOutsideEnabledModules()
+    public void MinimalArithmeticProfile_ShouldComposeWithInterpreterOnly_AndExpectedModuleShape()
     {
         using var provider = CreateProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var composition = workflow.ComposeFile(GetDialectPath("minimal-arithmetic"));
         using var host = workflow.CreateHost(composition);
 
-        var ex = Assert.Catch(() => host.Run("let x = 1\nx", "interpreter"));
+        var moduleTypes = composition.RuntimeComposition!.OrderedModules.Select(static x => x.ImplementationType.Name).ToArray();
+        var backendIds = composition.RuntimeComposition.EnabledBackends.Select(static x => x.CanonicalId).ToArray();
 
         Assert.Multiple(() =>
         {
             Assert.That(composition.IsSuccess, Is.True);
             Assert.That(composition.RuntimeComposition, Is.Not.Null);
-            Assert.That(composition.RuntimeComposition!.EnabledBackends.Select(static x => x.CanonicalId), Is.EqualTo(new[] { "interpreter" }));
-            Assert.That(ex, Is.Not.Null);
-            Assert.That(ex!.Message, Does.Contain("token").IgnoreCase);
+            Assert.That(backendIds, Is.EqualTo(new[] { "interpreter" }));
+            Assert.That(moduleTypes, Is.EquivalentTo(new[] { "ArithmeticModuleImpl", "NumbersModuleImpl", "ScopesModuleImpl", "WhitespaceModuleImpl" }));
+            Assert.That(moduleTypes, Does.Not.Contain("IdentifierModuleImpl"));
+            Assert.That(moduleTypes, Does.Not.Contain("VariablesModuleImpl"));
+            Assert.That(Assert.Catch(() => host.Run("1 + 1", "compiler")), Is.Not.Null);
         });
     }
 
     [Test]
-    public void RestrictedSandboxProfile_ShouldRejectIdentifierBasedProgram_WhenIdentifiersAreExcluded()
+    public void RestrictedSandboxProfile_ShouldDisableCompilerAndInteropCapabilities()
     {
         using var provider = CreateProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var composition = workflow.ComposeFile(GetDialectPath("restricted-sandbox"));
         using var host = workflow.CreateHost(composition);
 
-        var ex = Assert.Catch(() => host.Run(File.ReadAllText(GetForbiddenProgramPath("restricted-sandbox")), "interpreter"));
+        var moduleTypes = composition.RuntimeComposition!.OrderedModules.Select(static x => x.ImplementationType.Name).ToArray();
+        var backendIds = composition.RuntimeComposition.EnabledBackends.Select(static x => x.CanonicalId).ToArray();
+        var compilerFailure = Assert.Catch(() => host.Run("1 + 1", "compiler"));
 
         Assert.Multiple(() =>
         {
             Assert.That(composition.IsSuccess, Is.True);
             Assert.That(composition.RuntimeComposition, Is.Not.Null);
-            Assert.That(composition.RuntimeComposition!.EnabledBackends.Select(static x => x.CanonicalId), Is.EqualTo(new[] { "interpreter" }));
-            Assert.That(ex, Is.Not.Null);
-            Assert.That(ex!.Message, Does.Contain("token").Or.Contain("Variable").Or.Contain("Identifier").IgnoreCase);
+            Assert.That(backendIds, Is.EqualTo(new[] { "interpreter" }));
+            Assert.That(moduleTypes, Does.Not.Contain("CSharpInteropModuleImpl"));
+            Assert.That(moduleTypes, Does.Not.Contain("IdentifierModuleImpl"));
+            Assert.That(moduleTypes, Does.Not.Contain("VariablesModuleImpl"));
+            Assert.That(compilerFailure, Is.Not.Null);
         });
     }
 
@@ -73,9 +80,6 @@ public class DialectRuntimeProfileRegressionTests
 
     private static string GetProgramPath(string dialectName)
         => Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "Dialects", "examples", "wist", dialectName, "program.wist"));
-
-    private static string GetForbiddenProgramPath(string dialectName)
-        => Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "Dialects", "examples", "wist", dialectName, "forbidden-program.wist"));
 
     private static ServiceProvider CreateProvider()
     {

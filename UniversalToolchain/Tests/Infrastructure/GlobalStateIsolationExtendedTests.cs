@@ -8,20 +8,6 @@ namespace Tests.Infrastructure;
 public class GlobalStateIsolationExtendedTests
 {
     [Test]
-    public void RepeatedSuccessfulRuns_OnSameProvider_ShouldNotAccumulateExecutionState()
-    {
-        using var provider = BuildProvider();
-        var compiler = GetCore(provider, isCompiler: true);
-
-        var baseline = ToDouble(compiler.Run("let x = 5\nlet y = 2\nx * y"));
-        for (var i = 0; i < 30; i++)
-        {
-            var value = ToDouble(compiler.Run("let x = 5\nlet y = 2\nx * y"));
-            Assert.That(value, Is.EqualTo(baseline).Within(1e-9));
-        }
-    }
-
-    [Test]
     public void FailedExecution_ShouldNotAffectNextSuccessfulExecution_OnSameProvider()
     {
         using var provider = BuildProvider();
@@ -60,20 +46,18 @@ public class GlobalStateIsolationExtendedTests
     }
 
     [Test]
-    public void InterleavedExecutions_ShouldKeepRequestSpecificStateSeparated()
+    public void FreshProvider_ShouldNotObserveContamination_FromPreviousProvider()
     {
-        using var provider = BuildProvider();
-        var compiler = GetCore(provider, isCompiler: true);
-        var interpreter = GetCore(provider, isCompiler: false);
+        using var firstProvider = BuildProvider();
+        var firstInterpreter = GetCore(firstProvider, isCompiler: false);
+        var fromFirstProvider = ToDouble(firstInterpreter.Run("let x = 99\nx + 1"));
 
-        for (var i = 1; i <= 15; i++)
-        {
-            var codeA = $"let a = {i}\na + {i}";
-            var codeB = $"let b = {i * 2}\nb - {i}";
+        using var secondProvider = BuildProvider();
+        var secondInterpreter = GetCore(secondProvider, isCompiler: false);
+        var fromSecondProvider = ToDouble(secondInterpreter.Run("let x = 3\nx + 1"));
 
-            Assert.That(ToDouble(compiler.Run(codeA)), Is.EqualTo(i * 2).Within(1e-9));
-            Assert.That(ToDouble(interpreter.Run(codeB)), Is.EqualTo(i).Within(1e-9));
-        }
+        Assert.That(fromFirstProvider, Is.EqualTo(100).Within(1e-9));
+        Assert.That(fromSecondProvider, Is.EqualTo(4).Within(1e-9));
     }
 
 

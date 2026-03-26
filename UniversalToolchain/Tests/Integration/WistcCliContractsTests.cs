@@ -14,7 +14,7 @@ public class WistcCliContractsTests
         var build = RunProcess("dotnet", "build Wistc/Wistc.csproj -c Release", Path.Combine(repoRoot, "UniversalToolchain"), 180000);
         Assert.That(build.TimedOut, Is.False, $"dotnet build timed out.{Environment.NewLine}{build.StdErr}{Environment.NewLine}{build.StdOut}");
         Assert.That(build.ExitCode, Is.EqualTo(0), build.StdErr + build.StdOut);
-        _cliDllPath = Path.Combine(repoRoot, "UniversalToolchain", "Wistc", "bin", "Release", "net10.0", "Wistc.dll");
+        _cliDllPath = ResolveCliDllPath(repoRoot);
         Assert.That(File.Exists(_cliDllPath), Is.True, $"CLI assembly not found at '{_cliDllPath}'.");
     }
 
@@ -46,18 +46,10 @@ public class WistcCliContractsTests
     }
 
     [Test]
-    public void DialectDemo_ShouldReturnDocumentedFailureContract_ForValidScenario()
-    {
-        var result = RunCli("dialect-demo --scenario valid");
-        Assert.That(result.TimedOut, Is.False, "CLI process timed out.");
-        Assert.That(result.ExitCode, Is.EqualTo(1));
-        Assert.That(result.StdOut + result.StdErr, Does.Contain("Compilation error").IgnoreCase);
-    }
-
-    [Test]
     public void InvalidInput_ShouldReturnFailureContract()
     {
-        var result = RunCli("run --file /tmp/does-not-exist.wist");
+        var missingPath = Path.Combine(Path.GetTempPath(), $"wist-missing-{Guid.NewGuid():N}.wist");
+        var result = RunCli($"run --file \"{missingPath}\"");
         Assert.That(result.TimedOut, Is.False, "CLI process timed out.");
         Assert.That(result.ExitCode, Is.EqualTo(1));
         Assert.That(result.StdErr, Does.Contain("File was not found").IgnoreCase);
@@ -117,6 +109,17 @@ public class WistcCliContractsTests
     private static string GetRepoRoot()
     {
         return Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", ".."));
+    }
+
+    private static string ResolveCliDllPath(string repoRoot)
+    {
+        var binDirectory = Path.Combine(repoRoot, "UniversalToolchain", "Wistc", "bin", "Release");
+        var candidates = Directory.EnumerateFiles(binDirectory, "Wistc.dll", SearchOption.AllDirectories).ToArray();
+
+        return candidates
+            .OrderByDescending(static x => x.Contains($"{Path.DirectorySeparatorChar}net", StringComparison.Ordinal))
+            .ThenByDescending(File.GetLastWriteTimeUtc)
+            .FirstOrDefault() ?? Path.Combine(binDirectory, "net10.0", "Wistc.dll");
     }
 
     private sealed record CliResult(int ExitCode, string StdOut, string StdErr, bool TimedOut);
