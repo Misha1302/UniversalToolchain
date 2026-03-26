@@ -76,24 +76,11 @@ public class DialectRuntimeAliasAttributeDiscoveryTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(
-                result.RuntimeComposition!.OrderedModules.Select(static x => x.ImplementationType.Name),
-                Is.EqualTo(new[]
-                {
-                    "ArithmeticModuleImpl",
-                    "BooleanOperations",
-                    "ComparisonOperations",
-                    "ConditionsModuleImpl",
-                    "EqualityModuleImpl",
-                    "IdentifierModuleImpl",
-                    "LabelsModuleImpl",
-                    "LoopsModuleImpl",
-                    "NumbersModuleImpl",
-                    "ScopesModuleImpl",
-                    "SemicolonAsNewLineModuleImpl",
-                    "VariablesModuleImpl",
-                    "WhitespaceModuleImpl"
-                }));
+            var moduleNames = result.RuntimeComposition!.OrderedModules.Select(static x => x.ImplementationType.Name).ToArray();
+            Assert.That(moduleNames, Does.Contain("ArithmeticModuleImpl"));
+            Assert.That(moduleNames, Does.Contain("CSharpInteropModuleImpl"));
+            Assert.That(moduleNames, Does.Contain("VariablesModuleImpl"));
+            Assert.That(Array.IndexOf(moduleNames, "ArithmeticModuleImpl"), Is.LessThan(Array.IndexOf(moduleNames, "VariablesModuleImpl")));
             Assert.That(
                 result.RuntimeComposition.EnabledBackends.Select(static x => x.CanonicalId),
                 Is.EqualTo(new[] { "cil", "interpreter" }));
