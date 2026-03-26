@@ -1,7 +1,9 @@
 using ArithmeticModule;
+using BasicCore.Contracts;
 using CommentsModule;
 using ConditionsModule;
 using CSharpInteropModule;
+using DependencyInjection;
 using EqualityModule;
 using ExceptionsManager;
 using IdentifierModule;
@@ -11,6 +13,7 @@ using LocalVariablesOptimizerModule;
 using LoopsModule;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using UniversalToolchain.Dialects.Abstractions;
 using NativeMathModule;
 using NumbersModule;
 using ParametersSetterModule;
@@ -29,6 +32,80 @@ namespace UniversalToolchain.Dialects.Wist;
 /// </summary>
 public static class WistDialectServiceCollectionExtensions
 {
+
+    /// <summary>
+    ///     Registers only pre-selected Wist runtime components without assembly auto-discovery.
+    /// </summary>
+    public static IServiceCollection AddSelectedWistRuntimeServices(
+        this IServiceCollection services,
+        DialectResolvedRuntimeSelection selection,
+        IEnumerable<IWistDialectBackendServiceProvider> backendProviders,
+        DialectBuildPlan buildPlan)
+    {
+        if (services == null)
+            Thrower.ArgumentNull(nameof(services));
+
+        if (selection == null)
+            Thrower.ArgumentNull(nameof(selection));
+
+        if (backendProviders == null)
+            Thrower.ArgumentNull(nameof(backendProviders));
+
+        if (buildPlan == null)
+            Thrower.ArgumentNull(nameof(buildPlan));
+
+        services.AddWistCoreServices();
+
+        foreach (var module in selection.OrderedModules)
+        {
+            if (module.IsFrontendModule)
+                services.AddSingleton(typeof(IFrontendCoreModule), module.ImplementationType);
+
+            if (module.IsIrProcessingModule)
+                services.AddTransient(typeof(IIRProcessingModule), module.ImplementationType);
+        }
+
+        foreach (var optimizer in selection.EnabledOptimizers)
+            services.AddTransient(typeof(IIRProcessingModule), optimizer.ImplementationType);
+
+        var providerMap = backendProviders.ToDictionary(x => x.BackendId, x => x);
+        foreach (var backend in selection.EnabledBackends.OrderBy(x => x.CanonicalId))
+        {
+            if (!providerMap.TryGetValue(backend.CanonicalId, out var backendProvider))
+                Thrower.InvalidOpEx($"No Wist backend service provider is registered for backend '{backend.CanonicalId.Value}'.");
+
+            var runtimeDescriptor = new RuntimeBackendDescriptor(backend.CanonicalId, backend.ImplementationType, backend.Aliases);
+            var allowedIntrinsics = ResolveAllowedIntrinsics(buildPlan, backendProvider, backend.CanonicalId);
+            var hasExplicitAllowList = buildPlan.IntrinsicDirectives.Any(x => x.Allowed && x.Target.Matches(backend.CanonicalId));
+            var forbiddenIntrinsics = buildPlan.IntrinsicDirectives
+                .Where(x => !x.Allowed && x.Target.Matches(backend.CanonicalId))
+                .Select(x => x.Name)
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(x => x, StringComparer.Ordinal)
+                .ToList();
+
+            var config = new WistDialectBackendConfiguration(runtimeDescriptor, allowedIntrinsics, forbiddenIntrinsics, hasExplicitAllowList);
+            backendProvider.RegisterRuntime(services, config);
+        }
+
+        return services;
+    }
+
+    private static IReadOnlyList<string> ResolveAllowedIntrinsics(DialectBuildPlan buildPlan, IWistDialectBackendServiceProvider backendProvider, DialectBackendId backendId)
+    {
+        var hasExplicitAllowList = buildPlan.IntrinsicDirectives.Any(x => x.Allowed && x.Target.Matches(backendId));
+        if (!hasExplicitAllowList)
+            return backendProvider.SupportedIntrinsics.ToList();
+
+        return buildPlan.IntrinsicDirectives
+            .Where(x => x.Allowed && x.Target.Matches(backendId))
+            .Select(x => x.Name)
+            .Distinct(StringComparer.Ordinal)
+            .Where(x => backendProvider.SupportedIntrinsics.Contains(x, StringComparer.Ordinal))
+            .OrderBy(x => x, StringComparer.Ordinal)
+            .ToList();
+    }
+
     public static IServiceCollection AddWistDialectServices(this IServiceCollection services)
     {
         if (services == null)
@@ -66,6 +143,9 @@ public static class WistDialectServiceCollectionExtensions
             provider.GetRequiredService<IDialectRuntimeCompositionResolver>()));
         services.TryAddSingleton<WistDialectExecutionConfigurationBuilder>();
         services.TryAddSingleton<WistDialectServiceProviderFactory>();
+        services.TryAddSingleton<IDialectRuntimeCatalog>(_ => WistRuntimeCatalogFactory.Create());
+        services.TryAddSingleton<DialectRuntimeSelectionResolver>();
+        services.TryAddSingleton<DialectRuntimeProviderFactory>();
         services.TryAddSingleton<WistDialectExecutionWorkflow>();
         return services;
     }
