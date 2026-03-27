@@ -65,7 +65,7 @@ public class DialectRuntimeAliasAttributeDiscoveryTests
     public void WistWorkflow_ComposesExistingDialectFileWithAttributeDrivenAliases()
     {
         var services = new ServiceCollection();
-        services.AddWistDialectServices();
+        services.AddWistDialectServicesLegacy();
 
         using var provider = services.BuildServiceProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
@@ -120,7 +120,7 @@ public class DialectRuntimeAliasAttributeDiscoveryTests
     public void WistWorkflow_ReportsMissingAliasesThroughExistingResolutionDiagnostics()
     {
         var services = new ServiceCollection();
-        services.AddWistDialectServices();
+        services.AddWistDialectServicesLegacy();
 
         using var provider = services.BuildServiceProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
@@ -189,7 +189,7 @@ public class DialectRuntimeAliasAttributeDiscoveryTests
     private static DialectRuntimeDescriptorRegistry BuildRegistry()
     {
         var services = new ServiceCollection();
-        services.AddWistDialectServices();
+        services.AddWistDialectServicesLegacy();
 
         using var provider = services.BuildServiceProvider();
         return provider.GetRequiredService<DialectRuntimeDescriptorRegistry>();

@@ -84,7 +84,7 @@ public class DialectRuntimeProfileRegressionTests
     private static ServiceProvider CreateProvider()
     {
         var services = new ServiceCollection();
-        services.AddWistDialectServices();
+        services.AddWistDialectServicesLegacy();
         return services.BuildServiceProvider();
     }
 }

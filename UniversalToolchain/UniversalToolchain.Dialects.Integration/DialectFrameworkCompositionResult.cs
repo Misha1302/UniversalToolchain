@@ -20,7 +20,8 @@ public sealed class DialectFrameworkCompositionResult
         DialectBuildPlan? buildPlan,
         DialectRuntimeComposition? runtimeComposition,
         IEnumerable<DialectDiagnostic> semanticDiagnostics,
-        IEnumerable<DialectDiagnostic> resolutionDiagnostics)
+        IEnumerable<DialectDiagnostic> resolutionDiagnostics,
+        object? runtimeSelection = null)
     {
         if (string.IsNullOrWhiteSpace(sourceName))
             Thrower.Argument(nameof(sourceName), "Source name must not be empty.");
@@ -31,6 +32,7 @@ public sealed class DialectFrameworkCompositionResult
         RuntimeComposition = runtimeComposition;
         _semanticDiagnostics = new ReadOnlyCollection<DialectDiagnostic>(Snapshot(semanticDiagnostics, nameof(semanticDiagnostics)));
         _resolutionDiagnostics = new ReadOnlyCollection<DialectDiagnostic>(Snapshot(resolutionDiagnostics, nameof(resolutionDiagnostics)));
+        RuntimeSelection = runtimeSelection;
     }
 
     public string SourceName { get; }
@@ -41,6 +43,8 @@ public sealed class DialectFrameworkCompositionResult
 
     public DialectRuntimeComposition? RuntimeComposition { get; }
 
+    public object? RuntimeSelection { get; }
+
     public IReadOnlyList<DialectDiagnostic> SemanticDiagnostics => _semanticDiagnostics;
 
     public IReadOnlyList<DialectDiagnostic> ResolutionDiagnostics => _resolutionDiagnostics;
@@ -48,7 +52,6 @@ public sealed class DialectFrameworkCompositionResult
     public bool IsSuccess =>
         CompiledDialect != null &&
         BuildPlan != null &&
-        RuntimeComposition != null &&
         !_semanticDiagnostics.Any(x => x.Severity == DialectDiagnosticSeverity.Error) &&
         !_resolutionDiagnostics.Any(x => x.Severity == DialectDiagnosticSeverity.Error);
 
