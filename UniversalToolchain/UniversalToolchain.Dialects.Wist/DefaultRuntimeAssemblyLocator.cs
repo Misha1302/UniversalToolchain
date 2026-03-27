@@ -6,9 +6,9 @@ public sealed class DefaultRuntimeAssemblyLocator : IRuntimeAssemblyLocator
 {
     private readonly IReadOnlyList<string> _searchRoots;
 
-    public DefaultRuntimeAssemblyLocator(RuntimeAssemblyLocatorOptions? options = null)
+    public DefaultRuntimeAssemblyLocator(RuntimeArtifactLocatorOptions? options = null)
     {
-        options ??= new RuntimeAssemblyLocatorOptions();
+        options ??= new RuntimeArtifactLocatorOptions();
 
         _searchRoots = new[] { AppContext.BaseDirectory }
             .Concat(options.AdditionalSearchDirectories ?? [])

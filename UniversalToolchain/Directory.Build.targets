@@ -1,0 +1,27 @@
+<Project>
+
+  <PropertyGroup>
+    <DialectRuntimeManifestEmitterProject>$(MSBuildThisFileDirectory)UniversalToolchain.Dialects.ManifestEmitter/UniversalToolchain.Dialects.ManifestEmitter.csproj</DialectRuntimeManifestEmitterProject>
+  </PropertyGroup>
+
+  <Target Name="EmitDialectRuntimeManifest"
+          AfterTargets="Build"
+          Condition="'$(EmitDialectRuntimeManifest)' == 'true' and '$(DesignTimeBuild)' != 'true'">
+    <PropertyGroup>
+      <DialectRuntimeManifestOutputPath>$(TargetDir)$(AssemblyName).dialect.runtime.json</DialectRuntimeManifestOutputPath>
+    </PropertyGroup>
+
+    <Exec Command="dotnet run --project &quot;$(DialectRuntimeManifestEmitterProject)&quot; -- --assembly &quot;$(TargetPath)&quot; --dialect-family &quot;$(DialectRuntimeManifestFamily)&quot; --output &quot;$(DialectRuntimeManifestOutputPath)&quot;" />
+
+    <ItemGroup>
+      <FileWrites Include="$(DialectRuntimeManifestOutputPath)" />
+    </ItemGroup>
+  </Target>
+
+  <Target Name="EmitDialectRuntimeManifestsForOutputDirectory"
+          AfterTargets="Build"
+          Condition="'$(GenerateDialectRuntimeManifestsInOutput)' == 'true' and '$(DesignTimeBuild)' != 'true'">
+    <Exec Command="bash -lc 'set -euo pipefail; shopt -s nullglob; for dll in &quot;$(TargetDir)&quot;*.dll; do name=${dll##*/}; name=${name%.dll}; if [[ $name == *Module || $name == UniversalToolchain.Dialects.Wist ]]; then dotnet run --project &quot;$(DialectRuntimeManifestEmitterProject)&quot; -- --assembly &quot;$dll&quot; --dialect-family &quot;$(DialectRuntimeManifestFamily)&quot; --output &quot;$(TargetDir)$name.dialect.runtime.json&quot;; fi; done'" />
+  </Target>
+
+</Project>
