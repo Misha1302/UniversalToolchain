@@ -1,6 +1,7 @@
 namespace LocalVariablesOptimizerModule;
 
 [UniversalToolchain.Dialects.Abstractions.DialectOptimizerAlias("LocalVariablesOptimization")]
+[UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("wist", "Optimizer", "LocalVariablesOptimization")]
 [AutoRegisterService]
 public class LocalVariablesOptimizer : IIRProcessingModule
 {

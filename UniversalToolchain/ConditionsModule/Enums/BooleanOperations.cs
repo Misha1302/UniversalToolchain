@@ -1,6 +1,7 @@
 namespace ConditionsModule.Enums;
 
 [UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("BooleanConditions")]
+[UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("wist", "FrontendModule", "BooleanConditions")]
 [AutoRegisterService]
 public class BooleanOperations : IFrontendCoreModule
 {

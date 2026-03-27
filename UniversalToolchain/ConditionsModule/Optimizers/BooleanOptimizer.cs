@@ -1,6 +1,7 @@
 namespace ConditionsModule.Optimizers;
 
 [UniversalToolchain.Dialects.Abstractions.DialectOptimizerAlias("BooleanOptimization")]
+[UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("wist", "Optimizer", "BooleanOptimization")]
 [AutoRegisterService]
 [UsedImplicitly]
 public class BooleanOptimizerModule : IIRProcessingModule

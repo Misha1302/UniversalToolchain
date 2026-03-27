@@ -1,6 +1,7 @@
 namespace NativeMathModule;
 
 [UniversalToolchain.Dialects.Abstractions.DialectOptimizerAlias("EGraphOptimization")]
+[UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("wist", "Optimizer", "EGraphOptimization")]
 [AutoRegisterService]
 public class EGraphOptimizerModule : IIRProcessingModule
 {

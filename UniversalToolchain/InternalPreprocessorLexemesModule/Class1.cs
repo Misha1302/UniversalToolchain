@@ -1,6 +1,7 @@
 namespace InternalPreprocessorLexemesModule;
 
 [UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("InternalPreprocessorLexemes")]
+[UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("wist", "FrontendModule", "InternalPreprocessorLexemes")]
 [AutoRegisterService]
 public class InternalPreprocessorLexemesModuleImpl : IFrontendCoreModule
 {

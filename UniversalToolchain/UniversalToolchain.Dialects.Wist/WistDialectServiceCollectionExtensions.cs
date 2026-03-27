@@ -57,9 +57,12 @@ public static class WistDialectServiceCollectionExtensions
 
         services.TryAddSingleton<IWistRuntimeManifest, WistRuntimeManifest>();
         services.TryAddSingleton<SelectedRuntimePlanResolver>();
-        services.TryAddSingleton<RuntimeAssemblyLocatorOptions>();
+        services.TryAddSingleton<RuntimeArtifactLocatorOptions>();
+        services.TryAddSingleton<IRuntimeManifestFileLocator>(provider =>
+            new DefaultRuntimeManifestFileLocator(provider.GetRequiredService<RuntimeArtifactLocatorOptions>()));
         services.TryAddSingleton<IRuntimeAssemblyLocator>(provider =>
-            new DefaultRuntimeAssemblyLocator(provider.GetRequiredService<RuntimeAssemblyLocatorOptions>()));
+            new DefaultRuntimeAssemblyLocator(provider.GetRequiredService<RuntimeArtifactLocatorOptions>()));
+        services.TryAddSingleton<RuntimeManifestJsonSerializer>();
         services.TryAddSingleton<IRuntimeComponentTypeLoader, DefaultRuntimeComponentTypeLoader>();
         services.TryAddSingleton<DialectIntrinsicPolicyResolver>();
         services.TryAddSingleton<IDialectCompiledDialectBuildPlanBuilder, DialectCompiledDialectBuildPlanBuilder>();

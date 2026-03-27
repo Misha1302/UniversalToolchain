@@ -1,6 +1,7 @@
 namespace SemicolonAsNewLineModule;
 
 [UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("SemicolonAsNewLine")]
+[UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("wist", "FrontendModule", "SemicolonAsNewLine")]
 [AutoRegisterService]
 public class SemicolonAsNewLineModuleImpl : IFrontendCoreModule
 {

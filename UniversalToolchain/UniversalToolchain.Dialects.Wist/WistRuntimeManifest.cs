@@ -4,62 +4,32 @@ namespace UniversalToolchain.Dialects.Wist;
 
 public sealed class WistRuntimeManifest : IWistRuntimeManifest
 {
-    private static readonly IReadOnlyList<RuntimeComponentManifestEntry> ModuleEntries =
-    [
-        Create(RuntimeComponentKind.FrontendModule, "Arithmetic", [], "ArithmeticModule", "ArithmeticModule.Module.ArithmeticModuleImpl"),
-        Create(RuntimeComponentKind.FrontendModule, "Comments", [], "CommentsModule", "CommentsModule.CommentsModuleImpl"),
-        Create(RuntimeComponentKind.FrontendModule, "Conditions", [], "ConditionsModule", "ConditionsModule.Module.ConditionsModuleImpl"),
-        Create(RuntimeComponentKind.FrontendModule, "ComparisonConditions", [], "ConditionsModule", "ConditionsModule.Enums.ComparisonOperations"),
-        Create(RuntimeComponentKind.FrontendModule, "BooleanConditions", [], "ConditionsModule", "ConditionsModule.Enums.BooleanOperations"),
-        Create(RuntimeComponentKind.FrontendModule, "CSharpInterop", [], "CSharpInteropModule", "CSharpInteropModule.Module.CSharpInteropModuleImpl"),
-        Create(RuntimeComponentKind.FrontendModule, "Equality", [], "EqualityModule", "EqualityModule.EqualityModuleImpl"),
-        Create(RuntimeComponentKind.FrontendModule, "Identifier", [], "IdentifierModule", "IdentifierModule.IdentifierModuleImpl"),
-        Create(RuntimeComponentKind.FrontendModule, "InternalPreprocessorLexemes", [], "InternalPreprocessorLexemesModule", "InternalPreprocessorLexemesModule.InternalPreprocessorLexemesModuleImpl"),
-        Create(RuntimeComponentKind.FrontendModule, "Labels", [], "LabelsModule", "LabelsModule.Module.LabelsModuleImpl"),
-        Create(RuntimeComponentKind.FrontendModule, "Loops", [], "LoopsModule", "LoopsModule.Module.LoopsModuleImpl"),
-        Create(RuntimeComponentKind.FrontendModule, "NativeTypes", [], "NativeMathModule", "NativeMathModule.NativeTypesModuleImpl"),
-        Create(RuntimeComponentKind.FrontendModule, "Numbers", [], "NumbersModule", "NumbersModule.Module.NumbersModuleImpl"),
-        Create(RuntimeComponentKind.FrontendModule, "ParametersSetter", [], "ParametersSetterModule", "ParametersSetterModule.ParametersSetterModuleImpl"),
-        Create(RuntimeComponentKind.FrontendModule, "Scopes", [], "ScopesModule", "ScopesModule.Module.ScopesModuleImpl"),
-        Create(RuntimeComponentKind.FrontendModule, "SemicolonAsNewLine", [], "SemicolonAsNewLineModule", "SemicolonAsNewLineModule.SemicolonAsNewLineModuleImpl"),
-        Create(RuntimeComponentKind.FrontendModule, "Variables", [], "VariablesModule", "VariablesModule.VariablesModuleImpl"),
-        Create(RuntimeComponentKind.FrontendModule, "Whitespaces", [], "WhitespacesModule", "WhitespacesModule.WhitespaceModuleImpl")
-    ];
-
-    private static readonly IReadOnlyList<RuntimeComponentManifestEntry> OptimizerEntries =
-    [
-        Create(RuntimeComponentKind.Optimizer, "ArithmeticOptimization", [], "NativeMathModule", "NativeMathModule.ArithmeticOptimizerModule"),
-        Create(RuntimeComponentKind.Optimizer, "BooleanOptimization", [], "ConditionsModule", "ConditionsModule.Optimizers.BooleanOptimizerModule"),
-        Create(RuntimeComponentKind.Optimizer, "ComparisonIntrinsicOptimization", [], "ConditionsModule", "ConditionsModule.Optimizers.ComparisonIntrinsicOptimizerModule"),
-        Create(RuntimeComponentKind.Optimizer, "EGraphOptimization", [], "NativeMathModule", "NativeMathModule.EGraphOptimizerModule"),
-        Create(RuntimeComponentKind.Optimizer, "LocalVariablesOptimization", [], "LocalVariablesOptimizerModule", "LocalVariablesOptimizerModule.LocalVariablesOptimizer"),
-        Create(RuntimeComponentKind.Optimizer, "NativeCilOptimization", [], "NativeMathModule", "NativeMathModule.NativeCilOptimizerModule"),
-        Create(RuntimeComponentKind.Optimizer, "NativeTypesOptimization", [], "NativeMathModule", "NativeMathModule.NativeTypesOptimizerModule")
-    ];
-
-    private static readonly IReadOnlyList<RuntimeComponentManifestEntry> BackendEntries =
-    [
-        Create(RuntimeComponentKind.Backend, "cil", ["compiler"], "UniversalToolchain.Dialects.Wist", "UniversalToolchain.Dialects.Wist.WistCilBackendDeclaration"),
-        Create(RuntimeComponentKind.Backend, "interpreter", [], "UniversalToolchain.Dialects.Wist", "UniversalToolchain.Dialects.Wist.WistInterpreterBackendDeclaration")
-    ];
+    private const string WistDialectFamily = "wist";
 
     private readonly IReadOnlyDictionary<string, RuntimeComponentManifestEntry> _backendsByAlias;
     private readonly IReadOnlyDictionary<string, RuntimeComponentManifestEntry> _modulesByAlias;
     private readonly IReadOnlyDictionary<string, RuntimeComponentManifestEntry> _optimizersByAlias;
 
     public WistRuntimeManifest()
-        : this(ModuleEntries, OptimizerEntries, BackendEntries)
+        : this(new DefaultRuntimeManifestFileLocator(), new RuntimeManifestJsonSerializer())
     {
     }
 
-    internal WistRuntimeManifest(
-        IEnumerable<RuntimeComponentManifestEntry> modules,
-        IEnumerable<RuntimeComponentManifestEntry> optimizers,
-        IEnumerable<RuntimeComponentManifestEntry> backends)
+    public WistRuntimeManifest(
+        IRuntimeManifestFileLocator manifestFileLocator,
+        RuntimeManifestJsonSerializer jsonSerializer)
     {
-        Modules = Sort(modules);
-        Optimizers = Sort(optimizers);
-        Backends = Sort(backends);
+        if (manifestFileLocator == null)
+            Thrower.ArgumentNull(nameof(manifestFileLocator));
+
+        if (jsonSerializer == null)
+            Thrower.ArgumentNull(nameof(jsonSerializer));
+
+        var entries = LoadEntries(manifestFileLocator.GetManifestFilePaths(), jsonSerializer);
+
+        Modules = Sort(entries.Where(static x => x.Kind == RuntimeComponentKind.FrontendModule));
+        Optimizers = Sort(entries.Where(static x => x.Kind == RuntimeComponentKind.Optimizer));
+        Backends = Sort(entries.Where(static x => x.Kind == RuntimeComponentKind.Backend));
 
         _modulesByAlias = CreateAliasMap(Modules, nameof(Modules));
         _optimizersByAlias = CreateAliasMap(Optimizers, nameof(Optimizers));
@@ -67,15 +37,74 @@ public sealed class WistRuntimeManifest : IWistRuntimeManifest
     }
 
     public IReadOnlyCollection<RuntimeComponentManifestEntry> Modules { get; }
+
     public IReadOnlyCollection<RuntimeComponentManifestEntry> Optimizers { get; }
+
     public IReadOnlyCollection<RuntimeComponentManifestEntry> Backends { get; }
 
     public bool TryResolveModule(string alias, out RuntimeComponentManifestEntry? entry) => TryResolve(_modulesByAlias, alias, out entry);
+
     public bool TryResolveOptimizer(string alias, out RuntimeComponentManifestEntry? entry) => TryResolve(_optimizersByAlias, alias, out entry);
+
     public bool TryResolveBackend(string backendId, out RuntimeComponentManifestEntry? entry) => TryResolve(_backendsByAlias, backendId, out entry);
 
     public IReadOnlyList<RuntimeComponentManifestEntry> GetBackendsInDeterministicOrder() =>
-        Backends.OrderBy(x => x.CanonicalAlias, StringComparer.Ordinal).ThenBy(x => x.TypeReference.TypeFullName, StringComparer.Ordinal).ToList();
+        Backends.OrderBy(static x => x.CanonicalAlias, StringComparer.Ordinal)
+            .ThenBy(static x => x.TypeReference.TypeFullName, StringComparer.Ordinal)
+            .ToList();
+
+    internal static IReadOnlyList<RuntimeComponentManifestEntry> LoadEntries(
+        IEnumerable<string> manifestPaths,
+        RuntimeManifestJsonSerializer jsonSerializer)
+    {
+        var entries = new List<RuntimeComponentManifestEntry>();
+
+        foreach (var manifestPath in manifestPaths.OrderBy(static x => x, StringComparer.Ordinal))
+        {
+            if (!File.Exists(manifestPath))
+                continue;
+
+            var document = jsonSerializer.Deserialize(File.ReadAllText(manifestPath));
+            if (!string.Equals(document.DialectFamily?.Trim(), WistDialectFamily, StringComparison.Ordinal))
+                continue;
+
+            var assemblySimpleName = document.AssemblySimpleName?.Trim();
+            if (string.IsNullOrWhiteSpace(assemblySimpleName))
+                Thrower.Argument(nameof(manifestPaths), $"Runtime manifest '{manifestPath}' has an empty assemblySimpleName.");
+
+            foreach (var component in document.Components ?? [])
+            {
+                entries.Add(ToRuntimeEntry(component, assemblySimpleName!, manifestPath));
+            }
+        }
+
+        return entries;
+    }
+
+    private static RuntimeComponentManifestEntry ToRuntimeEntry(
+        FileDialectRuntimeComponentEntry component,
+        string assemblySimpleName,
+        string manifestPath)
+    {
+        var kind = ParseKind(component.Kind, manifestPath);
+
+        return Normalize(new RuntimeComponentManifestEntry(
+            kind,
+            component.CanonicalAlias,
+            component.Aliases,
+            new RuntimeTypeReference(assemblySimpleName, component.TypeFullName)));
+    }
+
+    private static RuntimeComponentKind ParseKind(string kind, string manifestPath)
+    {
+        return kind switch
+        {
+            "FrontendModule" => RuntimeComponentKind.FrontendModule,
+            "Optimizer" => RuntimeComponentKind.Optimizer,
+            "Backend" => RuntimeComponentKind.Backend,
+            _ => Thrower.InvalidOpEx<RuntimeComponentKind>($"Unsupported runtime component kind '{kind}' in '{manifestPath}'.")
+        };
+    }
 
     private static bool TryResolve(IReadOnlyDictionary<string, RuntimeComponentManifestEntry> map, string alias, out RuntimeComponentManifestEntry? entry)
     {
@@ -85,17 +114,11 @@ public sealed class WistRuntimeManifest : IWistRuntimeManifest
         return map.TryGetValue(alias.Trim(), out entry);
     }
 
-    private static RuntimeComponentManifestEntry Create(RuntimeComponentKind kind, string canonicalAlias, IReadOnlyList<string> aliases, string assemblySimpleName, string typeFullName)
-    {
-        return new RuntimeComponentManifestEntry(kind, canonicalAlias, aliases, new RuntimeTypeReference(assemblySimpleName, typeFullName));
-    }
-
     private static IReadOnlyList<RuntimeComponentManifestEntry> Sort(IEnumerable<RuntimeComponentManifestEntry> entries)
     {
         return entries
-            .Select(Normalize)
-            .OrderBy(x => x.CanonicalAlias, StringComparer.Ordinal)
-            .ThenBy(x => x.TypeReference.TypeFullName, StringComparer.Ordinal)
+            .OrderBy(static x => x.CanonicalAlias, StringComparer.Ordinal)
+            .ThenBy(static x => x.TypeReference.TypeFullName, StringComparer.Ordinal)
             .ToList();
     }
 
@@ -117,11 +140,11 @@ public sealed class WistRuntimeManifest : IWistRuntimeManifest
             Thrower.Argument(nameof(entry), "TypeReference.TypeFullName must not be empty.");
 
         var aliases = (entry.Aliases ?? [])
-            .Select(x => x?.Trim())
-            .Where(x => !string.IsNullOrWhiteSpace(x))
-            .Select(x => x!)
+            .Select(static x => x?.Trim())
+            .Where(static x => !string.IsNullOrWhiteSpace(x))
+            .Select(static x => x!)
             .Distinct(StringComparer.Ordinal)
-            .OrderBy(x => x, StringComparer.Ordinal)
+            .OrderBy(static x => x, StringComparer.Ordinal)
             .ToList();
 
         aliases.RemoveAll(x => string.Equals(x, canonical, StringComparison.Ordinal));

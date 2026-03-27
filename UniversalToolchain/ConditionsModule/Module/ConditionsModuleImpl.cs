@@ -1,6 +1,7 @@
 namespace ConditionsModule.Module;
 
 [UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("Conditions")]
+[UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("wist", "FrontendModule", "Conditions")]
 [AutoRegisterService]
 public class ConditionsModuleImpl : IFrontendCoreModule
 {

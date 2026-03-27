@@ -1,6 +1,7 @@
 namespace ScopesModule.Module;
 
 [UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("Scopes")]
+[UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("wist", "FrontendModule", "Scopes")]
 [AutoRegisterService]
 public class ScopesModuleImpl : IFrontendCoreModule
 {

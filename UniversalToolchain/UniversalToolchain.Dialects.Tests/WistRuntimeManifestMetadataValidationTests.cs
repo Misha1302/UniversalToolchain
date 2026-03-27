@@ -1,4 +1,5 @@
-using System.Reflection;
+using System.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Wist;
 
 namespace UniversalToolchain.Dialects.Tests;
@@ -6,60 +7,203 @@ namespace UniversalToolchain.Dialects.Tests;
 public class WistRuntimeManifestMetadataValidationTests
 {
     [Test]
-    public void ManifestEntries_ResolveTypes_AndMatchExpectedContracts()
+    public void WistRuntimeManifest_NoHardcodedEntries_RemainsFileBased()
     {
-        var manifest = new WistRuntimeManifest();
-        var entries = manifest.Modules.Concat(manifest.Optimizers).Concat(manifest.Backends).ToList();
+        using var temp = new TempDirectory();
+        var serializer = new RuntimeManifestJsonSerializer();
+        var manifestPath = Path.Combine(temp.Path, "ArithmeticModule.dialect.runtime.json");
 
-        foreach (var entry in entries)
+        var document = new FileDialectRuntimeManifestDocument(
+            "wist",
+            "ArithmeticModule",
+            [new FileDialectRuntimeComponentEntry("FrontendModule", "Arithmetic", [], "ArithmeticModule.Module.ArithmeticModuleImpl")]);
+        File.WriteAllText(manifestPath, serializer.Serialize(document));
+
+        var manifest = new WistRuntimeManifest(new StaticManifestLocator([manifestPath]), serializer);
+
+        Assert.Multiple(() =>
         {
-            var entryPath = Path.Combine(AppContext.BaseDirectory, entry.TypeReference.AssemblySimpleName + ".dll");
-            Assert.That(File.Exists(entryPath), Is.True, $"Assembly is missing: {entryPath}");
-
-            var runtimeAssemblies = Directory.GetFiles(Path.GetDirectoryName(typeof(object).Assembly.Location)!, "*.dll");
-            var resolverPaths = runtimeAssemblies.Concat([entryPath, typeof(WistRuntimeManifest).Assembly.Location, typeof(BasicCore.Contracts.IFrontendCoreModule).Assembly.Location, typeof(UniversalToolchain.Dialects.Abstractions.DialectBackendDeclaration).Assembly.Location]).Distinct(StringComparer.Ordinal).ToArray();
-            var resolver = new PathAssemblyResolver(resolverPaths);
-            using var context = new MetadataLoadContext(resolver);
-            var assembly = context.LoadFromAssemblyPath(entryPath);
-            var type = assembly.GetType(entry.TypeReference.TypeFullName, throwOnError: false, ignoreCase: false);
-            Assert.That(type, Is.Not.Null, $"Type not found: {entry.TypeReference.TypeFullName}");
-
-            var frontendContract = context.LoadFromAssemblyName(typeof(BasicCore.Contracts.IFrontendCoreModule).Assembly.GetName().Name!).GetType("BasicCore.Contracts.IFrontendCoreModule")!;
-            var irContract = context.LoadFromAssemblyName(typeof(BasicCore.Contracts.IIRProcessingModule).Assembly.GetName().Name!).GetType("BasicCore.Contracts.IIRProcessingModule")!;
-            var backendContract = context.LoadFromAssemblyName(typeof(UniversalToolchain.Dialects.Abstractions.DialectBackendDeclaration).Assembly.GetName().Name!).GetType("UniversalToolchain.Dialects.Abstractions.DialectBackendDeclaration")!;
-
-            Assert.That(IsValidForKind(entry.Kind, type!, frontendContract, irContract, backendContract), Is.True, $"Unexpected contract mismatch for {entry.CanonicalAlias}");
-        }
+            Assert.That(manifest.Modules.Select(static x => x.CanonicalAlias), Is.EqualTo(new[] { "Arithmetic" }));
+            Assert.That(manifest.Optimizers, Is.Empty);
+            Assert.That(manifest.Backends, Is.Empty);
+        });
     }
-
-
 
     [Test]
-    public void Manifest_DuplicateAlias_FailsFast_WithClearMessage()
+    public void ManifestAggregator_LoadsMultipleSidecarFiles_Deterministically()
     {
-        var dup = new RuntimeComponentManifestEntry(
-            RuntimeComponentKind.FrontendModule,
-            "Arithmetic",
-            [],
-            new RuntimeTypeReference("AnyAssembly", "Any.Type"));
+        using var temp = new TempDirectory();
+        var serializer = new RuntimeManifestJsonSerializer();
 
-        var ex = Assert.Throws<InvalidOperationException>(() => new WistRuntimeManifest([dup, dup], [], []));
-        Assert.That(ex!.Message, Does.Contain("Arithmetic").And.Contain("Modules"));
+        var paths = new[]
+        {
+            Path.Combine(temp.Path, "b.dialect.runtime.json"),
+            Path.Combine(temp.Path, "a.dialect.runtime.json")
+        };
+
+        File.WriteAllText(paths[0], serializer.Serialize(new FileDialectRuntimeManifestDocument(
+            "wist",
+            "BAssembly",
+            [new FileDialectRuntimeComponentEntry("FrontendModule", "B", [], "B.Type")])));
+        File.WriteAllText(paths[1], serializer.Serialize(new FileDialectRuntimeManifestDocument(
+            "wist",
+            "AAssembly",
+            [new FileDialectRuntimeComponentEntry("FrontendModule", "A", [], "A.Type")])));
+
+        var manifest = new WistRuntimeManifest(new StaticManifestLocator(paths), serializer);
+        Assert.That(manifest.Modules.Select(static x => x.CanonicalAlias), Is.EqualTo(new[] { "A", "B" }));
     }
 
-    private static bool IsValidForKind(
-        RuntimeComponentKind kind,
-        Type type,
-        Type frontendContract,
-        Type irContract,
-        Type backendContract)
+    [Test]
+    public void ManifestAggregator_DuplicateAliasAcrossAssemblies_FailsFast_WithClearMessage()
     {
-        return kind switch
+        using var temp = new TempDirectory();
+        var serializer = new RuntimeManifestJsonSerializer();
+
+        var first = Path.Combine(temp.Path, "first.dialect.runtime.json");
+        var second = Path.Combine(temp.Path, "second.dialect.runtime.json");
+
+        File.WriteAllText(first, serializer.Serialize(new FileDialectRuntimeManifestDocument(
+            "wist",
+            "AAssembly",
+            [new FileDialectRuntimeComponentEntry("FrontendModule", "Alias", [], "A.Type")])));
+        File.WriteAllText(second, serializer.Serialize(new FileDialectRuntimeManifestDocument(
+            "wist",
+            "BAssembly",
+            [new FileDialectRuntimeComponentEntry("FrontendModule", "Alias", [], "B.Type")])));
+
+        var exception = Assert.Throws<InvalidOperationException>(() => new WistRuntimeManifest(new StaticManifestLocator([first, second]), serializer));
+        Assert.That(exception!.Message, Does.Contain("Alias").And.Contain("Modules"));
+    }
+
+    [Test]
+    public void ManifestEmitter_WritesExpectedJson_ForSingleAssembly()
+    {
+        var testDir = TestContext.CurrentContext.TestDirectory;
+        var assemblyPath = Path.Combine(testDir, "ArithmeticModule.dll");
+        Assert.That(File.Exists(assemblyPath), Is.True, "ArithmeticModule.dll is required in the test output.");
+
+        using var temp = new TempDirectory();
+        var outputPath = Path.Combine(temp.Path, "ArithmeticModule.dialect.runtime.json");
+        var repoRoot = Path.GetFullPath(Path.Combine(testDir, "..", "..", "..", ".."));
+        var emitterProject = Path.Combine(repoRoot, "UniversalToolchain.Dialects.ManifestEmitter", "UniversalToolchain.Dialects.ManifestEmitter.csproj");
+
+        var start = new ProcessStartInfo("dotnet", $"run --project \"{emitterProject}\" -- --assembly \"{assemblyPath}\" --dialect-family wist --output \"{outputPath}\"")
         {
-            RuntimeComponentKind.FrontendModule => frontendContract.IsAssignableFrom(type) || irContract.IsAssignableFrom(type),
-            RuntimeComponentKind.Optimizer => irContract.IsAssignableFrom(type),
-            RuntimeComponentKind.Backend => backendContract.IsAssignableFrom(type),
-            _ => false
+            RedirectStandardError = true,
+            RedirectStandardOutput = true,
+            WorkingDirectory = repoRoot
         };
+
+        using var process = Process.Start(start)!;
+        process.WaitForExit();
+
+        Assert.That(process.ExitCode, Is.EqualTo(0), process.StandardError.ReadToEnd());
+
+        var serializer = new RuntimeManifestJsonSerializer();
+        var document = serializer.Deserialize(File.ReadAllText(outputPath));
+        var arithmeticEntry = document.Components.Single(static x => x.CanonicalAlias == "Arithmetic");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(document.DialectFamily, Is.EqualTo("wist"));
+            Assert.That(document.AssemblySimpleName, Is.EqualTo("ArithmeticModule"));
+            Assert.That(arithmeticEntry.Kind, Is.EqualTo("FrontendModule"));
+            Assert.That(arithmeticEntry.TypeFullName, Is.EqualTo("ArithmeticModule.Module.ArithmeticModuleImpl"));
+        });
+    }
+
+    [Test]
+    public void MetadataEmitter_UsesMetadataOnlyInspection()
+    {
+        var testDir = TestContext.CurrentContext.TestDirectory;
+        var sourcePath = Path.GetFullPath(Path.Combine(testDir, "..", "..", "..", "..", "UniversalToolchain.Dialects.ManifestEmitter", "Program.cs"));
+        var source = File.ReadAllText(sourcePath);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(source, Does.Contain("MetadataLoadContext"));
+            Assert.That(source, Does.Not.Contain("AssemblyLoadContext.Default.LoadFromAssemblyPath"));
+        });
+    }
+
+    [Test]
+    public void MinimalPath_Compose_DoesNotLoadFeatureAssemblyBeforeTypeLoad()
+    {
+        var before = GetLoadedModuleAssemblies();
+
+        var services = new ServiceCollection();
+        services.AddWistDialectServices();
+        using var provider = services.BuildServiceProvider();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+
+        var composition = workflow.ComposeFile(GetDialectPath("minimal-arithmetic"));
+        var after = GetLoadedModuleAssemblies();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(composition.IsSuccess, Is.True, composition.ToDeterministicText());
+            Assert.That(after, Is.EqualTo(before), "Compose stage should not load additional feature assemblies.");
+        });
+    }
+
+    [Test]
+    public void MinimalPath_CreateHost_LoadsOnlySelectedAssemblies()
+    {
+        var before = GetLoadedModuleAssemblies();
+
+        var services = new ServiceCollection();
+        services.AddWistDialectServices();
+        using var provider = services.BuildServiceProvider();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+
+        var composition = workflow.ComposeFile(GetDialectPath("minimal-arithmetic"));
+        using var host = workflow.CreateHost(composition);
+        var after = GetLoadedModuleAssemblies();
+        var loadedByHost = after.Except(before, StringComparer.Ordinal).ToHashSet(StringComparer.Ordinal);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(composition.IsSuccess, Is.True, composition.ToDeterministicText());
+            Assert.That(loadedByHost, Does.Not.Contain("VariablesModule"));
+            Assert.That(loadedByHost, Does.Not.Contain("IdentifierModule"));
+        });
+    }
+
+    private static string GetDialectPath(string dialectName)
+    {
+        return Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "Dialects", "examples", "wist", dialectName, "dialect.wistdialect"));
+    }
+
+    private static IReadOnlySet<string> GetLoadedModuleAssemblies()
+    {
+        return AppDomain.CurrentDomain.GetAssemblies()
+            .Select(static x => x.GetName().Name)
+            .Where(static x => !string.IsNullOrWhiteSpace(x))
+            .Select(static x => x!)
+            .Where(static x => x.EndsWith("Module", StringComparison.Ordinal) || x == "UniversalToolchain.Dialects.Wist")
+            .ToHashSet(StringComparer.Ordinal);
+    }
+
+    private sealed class StaticManifestLocator(IReadOnlyList<string> paths) : IRuntimeManifestFileLocator
+    {
+        public IReadOnlyList<string> GetManifestFilePaths() => paths;
+    }
+
+    private sealed class TempDirectory : IDisposable
+    {
+        public TempDirectory()
+        {
+            Path = System.IO.Path.Combine(System.IO.Path.GetTempPath(), $"dialect-tests-{Guid.NewGuid():N}");
+            Directory.CreateDirectory(Path);
+        }
+
+        public string Path { get; }
+
+        public void Dispose()
+        {
+            if (Directory.Exists(Path))
+                Directory.Delete(Path, recursive: true);
+        }
     }
 }
