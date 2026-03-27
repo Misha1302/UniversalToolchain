@@ -154,7 +154,7 @@ public class WistDialectBackendHardcodeTests
     private static ServiceProvider CreateRootProvider()
     {
         var services = new ServiceCollection();
-        services.AddWistDialectServices();
+        services.AddWistDialectServicesLegacy();
         return services.BuildServiceProvider();
     }
 
