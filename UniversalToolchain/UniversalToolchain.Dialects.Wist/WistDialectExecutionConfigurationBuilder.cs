@@ -1,38 +1,60 @@
+using BasicCore.Contracts;
 using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Integration;
 
 namespace UniversalToolchain.Dialects.Wist;
 
-/// <summary>
-///     Converts resolved dialect composition into explicit Wist execution wiring.
-/// </summary>
 public sealed class WistDialectExecutionConfigurationBuilder
 {
-    public WistDialectExecutionConfiguration Build(DialectBuildPlan buildPlan, DialectRuntimeComposition runtimeComposition, DialectRuntimeDescriptorRegistry registry)
+    private readonly DialectIntrinsicPolicyResolver _intrinsicPolicyResolver;
+    private readonly IWistRuntimeManifest _manifest;
+    private readonly IRuntimeComponentTypeLoader _typeLoader;
+
+    public WistDialectExecutionConfigurationBuilder(
+        IRuntimeComponentTypeLoader typeLoader,
+        DialectIntrinsicPolicyResolver intrinsicPolicyResolver,
+        IWistRuntimeManifest manifest)
+    {
+        _typeLoader = typeLoader ?? throw new ArgumentNullException(nameof(typeLoader));
+        _intrinsicPolicyResolver = intrinsicPolicyResolver ?? throw new ArgumentNullException(nameof(intrinsicPolicyResolver));
+        _manifest = manifest ?? throw new ArgumentNullException(nameof(manifest));
+    }
+
+    public WistDialectExecutionConfiguration Build(DialectBuildPlan buildPlan, SelectedRuntimePlan selectedRuntimePlan)
     {
         if (buildPlan == null)
             Thrower.ArgumentNull(nameof(buildPlan));
 
-        if (runtimeComposition == null)
-            Thrower.ArgumentNull(nameof(runtimeComposition));
+        if (selectedRuntimePlan == null)
+            Thrower.ArgumentNull(nameof(selectedRuntimePlan));
 
-        if (registry == null)
-            Thrower.ArgumentNull(nameof(registry));
+        if (!selectedRuntimePlan.IsResolved)
+            Thrower.Argument(nameof(selectedRuntimePlan), "Selected runtime plan must be resolved before execution wiring is built.");
 
-        if (!runtimeComposition.IsResolved)
-            Thrower.Argument(nameof(runtimeComposition), "Runtime composition must be resolved before execution wiring is built.");
+        var frontendModules = new List<Type>();
+        var irModules = new List<Type>();
 
-        var frontendModules = runtimeComposition.OrderedModules
-            .Where(x => x.IsFrontendModule)
-            .Select(x => x.ImplementationType);
-        var irModules = runtimeComposition.OrderedModules
-            .Where(x => x.IsIrProcessingModule)
-            .Select(x => x.ImplementationType);
-        var optimizers = runtimeComposition.EnabledOptimizers
-            .Select(x => x.ImplementationType);
-        var backends = runtimeComposition.EnabledBackends
-            .Select(backend => BuildBackendConfiguration(backend, buildPlan, runtimeComposition))
+        foreach (var entry in selectedRuntimePlan.OrderedModules)
+        {
+            var type = _typeLoader.LoadType(entry);
+            if (typeof(IFrontendCoreModule).IsAssignableFrom(type))
+                frontendModules.Add(type);
+
+            if (typeof(IIRProcessingModule).IsAssignableFrom(type))
+                irModules.Add(type);
+        }
+
+        var optimizers = selectedRuntimePlan.EnabledOptimizers
+            .Select(_typeLoader.LoadType)
+            .ToList();
+
+        var backends = selectedRuntimePlan.EnabledBackends
+            .Select(x => BuildBackendConfiguration(x, buildPlan))
+            .ToList();
+
+        var knownBackends = _manifest.GetBackendsInDeterministicOrder()
+            .Select(x => new RuntimeBackendDescriptor(new DialectBackendId(x.CanonicalAlias), x.Aliases))
             .ToList();
 
         return new WistDialectExecutionConfiguration(
@@ -41,25 +63,17 @@ public sealed class WistDialectExecutionConfigurationBuilder
             irModules,
             optimizers,
             backends,
-            registry.Backends.Values);
+            knownBackends);
     }
 
-    private static WistDialectBackendConfiguration BuildBackendConfiguration(
-        RuntimeBackendDescriptor backend,
-        DialectBuildPlan buildPlan,
-        DialectRuntimeComposition runtimeComposition)
+    private WistDialectBackendConfiguration BuildBackendConfiguration(RuntimeComponentManifestEntry backend, DialectBuildPlan buildPlan)
     {
-        var allowedIntrinsics = runtimeComposition.AllowedIntrinsics
-            .Where(x => x.AppliesTo(backend.BackendId))
-            .Select(x => x.CanonicalId);
-        var hasExplicitAllowList = buildPlan.IntrinsicDirectives.Any(x => x.Allowed && x.Target.Matches(backend.BackendId));
-        var forbiddenIntrinsics = buildPlan.IntrinsicDirectives
-            .Where(x => !x.Allowed && x.Target.Matches(backend.BackendId))
-            .Select(x => x.Name)
-            .Distinct(StringComparer.Ordinal)
-            .OrderBy(x => x, StringComparer.Ordinal)
-            .ToList();
-
-        return new WistDialectBackendConfiguration(backend, allowedIntrinsics, forbiddenIntrinsics, hasExplicitAllowList);
+        var backendId = new DialectBackendId(backend.CanonicalAlias);
+        var policy = _intrinsicPolicyResolver.Resolve(buildPlan, backendId);
+        return new WistDialectBackendConfiguration(
+            new RuntimeBackendDescriptor(backendId, backend.Aliases),
+            policy.Allowed,
+            policy.Forbidden,
+            policy.HasExplicitAllowList);
     }
 }

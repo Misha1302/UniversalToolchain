@@ -39,7 +39,7 @@ public class WistDialectRuntimeDescriptorProviderTests
     public void AddWistDialectServices_RegistersReusableWorkflowServices()
     {
         var services = new ServiceCollection();
-        services.AddWistDialectServices();
+        services.AddWistDialectServicesLegacy();
 
         using var provider = services.BuildServiceProvider();
         var registry = provider.GetRequiredService<DialectRuntimeDescriptorRegistry>();
@@ -56,7 +56,7 @@ public class WistDialectRuntimeDescriptorProviderTests
     public void AddWistDialectServices_AllowsExtendingRuntimeDescriptorDiscoveryViaProvider()
     {
         var services = new ServiceCollection();
-        services.AddWistDialectServices();
+        services.AddWistDialectServicesLegacy();
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IDialectRuntimeDescriptorProvider, TestOnlyRuntimeDescriptorProvider>());
 
         using var provider = services.BuildServiceProvider();
@@ -141,7 +141,7 @@ public class WistDialectRuntimeDescriptorProviderTests
     private static DialectRuntimeDescriptorRegistry BuildRegistryFromServices()
     {
         var services = new ServiceCollection();
-        services.AddWistDialectServices();
+        services.AddWistDialectServicesLegacy();
 
         using var provider = services.BuildServiceProvider();
         return provider.GetRequiredService<DialectRuntimeDescriptorRegistry>();

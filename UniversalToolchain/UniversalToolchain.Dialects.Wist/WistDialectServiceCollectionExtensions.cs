@@ -24,21 +24,57 @@ using WhitespacesModule;
 
 namespace UniversalToolchain.Dialects.Wist;
 
-/// <summary>
-///     Registers Wist-specific dialect services and descriptor catalogs.
-/// </summary>
 public static class WistDialectServiceCollectionExtensions
 {
-    public static IServiceCollection AddWistDialectServices(this IServiceCollection services)
+    public static IServiceCollection AddWistDialectServices(this IServiceCollection services) => AddWistDialectServicesMinimal(services);
+
+    public static IServiceCollection AddWistDialectServicesMinimal(this IServiceCollection services)
     {
         if (services == null)
-        {
             Thrower.ArgumentNull(nameof(services));
-        }
 
         services.AddDialectDslDefaultComposition();
+        AddSharedWistDialectServices(services);
+        AddMinimalCompositionServices(services);
+        return services;
+    }
+
+    public static IServiceCollection AddWistDialectServicesLegacy(this IServiceCollection services)
+    {
+        if (services == null)
+            Thrower.ArgumentNull(nameof(services));
+
+        services.AddDialectDslDefaultComposition();
+        AddSharedWistDialectServices(services);
+        AddLegacyCompositionServices(services);
+        return services;
+    }
+
+    private static void AddSharedWistDialectServices(IServiceCollection services)
+    {
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IWistDialectBackendServiceProvider, WistCilDialectBackendServiceProvider>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IWistDialectBackendServiceProvider, WistInterpreterDialectBackendServiceProvider>());
+
+        services.TryAddSingleton<IWistRuntimeManifest, WistRuntimeManifest>();
+        services.TryAddSingleton<SelectedRuntimePlanResolver>();
+        services.TryAddSingleton<RuntimeAssemblyLocatorOptions>();
+        services.TryAddSingleton<IRuntimeAssemblyLocator>(provider =>
+            new DefaultRuntimeAssemblyLocator(provider.GetRequiredService<RuntimeAssemblyLocatorOptions>()));
+        services.TryAddSingleton<IRuntimeComponentTypeLoader, DefaultRuntimeComponentTypeLoader>();
+        services.TryAddSingleton<DialectIntrinsicPolicyResolver>();
+        services.TryAddSingleton<IDialectCompiledDialectBuildPlanBuilder, DialectCompiledDialectBuildPlanBuilder>();
+        services.TryAddSingleton<WistDialectExecutionConfigurationBuilder>();
+        services.TryAddSingleton<WistDialectServiceProviderFactory>();
+        services.TryAddSingleton<WistDialectExecutionWorkflow>();
+    }
+
+    private static void AddMinimalCompositionServices(IServiceCollection services)
+    {
+        // minimal path intentionally avoids runtime descriptor discovery services.
+    }
+
+    private static void AddLegacyCompositionServices(IServiceCollection services)
+    {
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IDialectRuntimeDescriptorProvider, WistDialectRuntimeDescriptorProvider>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IDialectRuntimeDescriptorProvider, ArithmeticDialectRuntimeDescriptorProvider>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IDialectRuntimeDescriptorProvider, ConditionsDialectRuntimeDescriptorProvider>());
@@ -57,16 +93,13 @@ public static class WistDialectServiceCollectionExtensions
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IDialectRuntimeDescriptorProvider, LoopsDialectRuntimeDescriptorProvider>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IDialectRuntimeDescriptorProvider, CSharpInteropDialectRuntimeDescriptorProvider>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IDialectRuntimeDescriptorProvider, LocalVariablesOptimizerDialectRuntimeDescriptorProvider>());
+
         services.TryAddSingleton(static provider => DialectRuntimeDescriptorRegistryFactory.BuildFromProviders(provider.GetServices<IDialectRuntimeDescriptorProvider>()));
-        services.TryAddSingleton<IDialectCompiledDialectBuildPlanBuilder, DialectCompiledDialectBuildPlanBuilder>();
         services.TryAddSingleton<IDialectRuntimeCompositionResolver, DialectRuntimeCompositionResolver>();
         services.TryAddSingleton(static provider => new DialectFrameworkCompositionWorkflow(
             provider.GetRequiredService<DialectDslCompiler>(),
             provider.GetRequiredService<IDialectCompiledDialectBuildPlanBuilder>(),
             provider.GetRequiredService<IDialectRuntimeCompositionResolver>()));
-        services.TryAddSingleton<WistDialectExecutionConfigurationBuilder>();
-        services.TryAddSingleton<WistDialectServiceProviderFactory>();
-        services.TryAddSingleton<WistDialectExecutionWorkflow>();
-        return services;
+        services.TryAddSingleton<LegacyWistDialectCompositionService>();
     }
 }
