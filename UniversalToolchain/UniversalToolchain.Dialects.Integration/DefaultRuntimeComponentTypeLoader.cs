@@ -3,12 +3,8 @@ using System.Reflection;
 using System.Runtime.Loader;
 using ExceptionsManager;
 
-namespace UniversalToolchain.Dialects.Wist;
+namespace UniversalToolchain.Dialects.Integration;
 
-/// <summary>
-/// Runtime type-loading strategy. Current implementation uses the default load context,
-/// but callers should depend on <see cref="IRuntimeComponentTypeLoader"/> rather than context-specific behavior.
-/// </summary>
 public sealed class DefaultRuntimeComponentTypeLoader : IRuntimeComponentTypeLoader
 {
     private readonly ConcurrentDictionary<string, Lazy<Type>> _cache = new(StringComparer.Ordinal);

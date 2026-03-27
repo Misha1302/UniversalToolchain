@@ -1,7 +1,7 @@
 namespace NativeMathModule;
 
 [UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("NativeTypes")]
-[UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("wist", "FrontendModule", "NativeTypes")]
+[UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("FrontendModule", "NativeTypes")]
 [AutoRegisterService]
 public class NativeTypesModuleImpl : IFrontendCoreModule
 {

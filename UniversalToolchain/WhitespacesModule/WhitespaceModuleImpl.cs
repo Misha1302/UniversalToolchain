@@ -1,7 +1,7 @@
 namespace WhitespacesModule;
 
 [UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("Whitespaces")]
-[UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("wist", "FrontendModule", "Whitespaces")]
+[UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("FrontendModule", "Whitespaces")]
 [AutoRegisterService]
 public class WhitespaceModuleImpl : IFrontendCoreModule
 {

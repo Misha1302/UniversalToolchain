@@ -1,4 +1,4 @@
-namespace UniversalToolchain.Dialects.Wist;
+namespace UniversalToolchain.Dialects.Integration;
 
 public sealed record FileDialectRuntimeComponentEntry(
     string Kind,

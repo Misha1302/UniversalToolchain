@@ -1,4 +1,4 @@
-using UniversalToolchain.Dialects.Wist;
+using UniversalToolchain.Dialects.Integration;
 
 namespace UniversalToolchain.Dialects.Tests;
 

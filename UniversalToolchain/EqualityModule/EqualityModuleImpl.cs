@@ -1,7 +1,7 @@
 namespace EqualityModule;
 
 [UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("Equality")]
-[UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("wist", "FrontendModule", "Equality")]
+[UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("FrontendModule", "Equality")]
 [AutoRegisterService]
 public class EqualityModuleImpl : IFrontendCoreModule
 {

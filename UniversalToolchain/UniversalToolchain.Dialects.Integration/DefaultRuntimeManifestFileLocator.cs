@@ -1,6 +1,4 @@
-using ExceptionsManager;
-
-namespace UniversalToolchain.Dialects.Wist;
+namespace UniversalToolchain.Dialects.Integration;
 
 public sealed class DefaultRuntimeManifestFileLocator : IRuntimeManifestFileLocator
 {

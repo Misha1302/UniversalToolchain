@@ -1,7 +1,7 @@
 namespace CSharpInteropModule.Module;
 
 [UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("CSharpInterop")]
-[UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("wist", "FrontendModule", "CSharpInterop")]
+[UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("FrontendModule", "CSharpInterop")]
 [AutoRegisterService]
 public class CSharpInteropModuleImpl : IFrontendCoreModule
 {

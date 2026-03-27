@@ -1,7 +1,7 @@
 namespace ArithmeticModule.Module;
 
 [UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("Arithmetic")]
-[UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("wist", "FrontendModule", "Arithmetic")]
+[UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("FrontendModule", "Arithmetic")]
 [AutoRegisterService]
 public class ArithmeticModuleImpl : IFrontendCoreModule
 {

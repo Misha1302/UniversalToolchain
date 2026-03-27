@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace UniversalToolchain.Dialects.Wist;
+namespace UniversalToolchain.Dialects.Integration;
 
 public sealed class RuntimeManifestJsonSerializer
 {
@@ -15,7 +15,6 @@ public sealed class RuntimeManifestJsonSerializer
                        ?? throw new InvalidOperationException("Failed to deserialize runtime manifest JSON.");
 
         return new FileDialectRuntimeManifestDocument(
-            document.DialectFamily ?? string.Empty,
             document.AssemblySimpleName ?? string.Empty,
             (document.Components ?? [])
             .Select(static x => new FileDialectRuntimeComponentEntry(
@@ -30,7 +29,6 @@ public sealed class RuntimeManifestJsonSerializer
     {
         var payload = new SerializableManifestDocument
         {
-            DialectFamily = document.DialectFamily,
             AssemblySimpleName = document.AssemblySimpleName,
             Components = document.Components
                 .Select(static x => new SerializableManifestComponentEntry
@@ -48,8 +46,6 @@ public sealed class RuntimeManifestJsonSerializer
 
     private sealed class SerializableManifestDocument
     {
-        public string? DialectFamily { get; init; }
-
         public string? AssemblySimpleName { get; init; }
 
         public List<SerializableManifestComponentEntry>? Components { get; init; }

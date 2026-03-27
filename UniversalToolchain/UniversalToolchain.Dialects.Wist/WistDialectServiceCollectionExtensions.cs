@@ -55,7 +55,6 @@ public static class WistDialectServiceCollectionExtensions
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IWistDialectBackendServiceProvider, WistCilDialectBackendServiceProvider>());
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IWistDialectBackendServiceProvider, WistInterpreterDialectBackendServiceProvider>());
 
-        services.TryAddSingleton<IWistRuntimeManifest, WistRuntimeManifest>();
         services.TryAddSingleton<SelectedRuntimePlanResolver>();
         services.TryAddSingleton<RuntimeArtifactLocatorOptions>();
         services.TryAddSingleton<IRuntimeManifestFileLocator>(provider =>
@@ -63,6 +62,7 @@ public static class WistDialectServiceCollectionExtensions
         services.TryAddSingleton<IRuntimeAssemblyLocator>(provider =>
             new DefaultRuntimeAssemblyLocator(provider.GetRequiredService<RuntimeArtifactLocatorOptions>()));
         services.TryAddSingleton<RuntimeManifestJsonSerializer>();
+        services.TryAddSingleton<IRuntimeComponentCatalog, FileBasedRuntimeComponentCatalog>();
         services.TryAddSingleton<IRuntimeComponentTypeLoader, DefaultRuntimeComponentTypeLoader>();
         services.TryAddSingleton<DialectIntrinsicPolicyResolver>();
         services.TryAddSingleton<IDialectCompiledDialectBuildPlanBuilder, DialectCompiledDialectBuildPlanBuilder>();

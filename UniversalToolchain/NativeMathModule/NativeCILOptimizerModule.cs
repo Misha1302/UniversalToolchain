@@ -1,7 +1,7 @@
 namespace NativeMathModule;
 
 [UniversalToolchain.Dialects.Abstractions.DialectOptimizerAlias("NativeCilOptimization")]
-[UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("wist", "Optimizer", "NativeCilOptimization")]
+[UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("Optimizer", "NativeCilOptimization")]
 [AutoRegisterService]
 public class NativeCilOptimizerModule : IIRProcessingModule
 {

@@ -6,16 +6,12 @@ namespace UniversalToolchain.Dialects.Abstractions;
 public sealed class DialectRuntimeExportAttribute : Attribute
 {
     public DialectRuntimeExportAttribute(
-        string dialectFamily,
         string componentKind,
         string canonicalAlias)
     {
-        DialectFamily = dialectFamily;
         ComponentKind = componentKind;
         CanonicalAlias = canonicalAlias;
     }
-
-    public string DialectFamily { get; }
 
     public string ComponentKind { get; }
 
