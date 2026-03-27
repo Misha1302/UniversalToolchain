@@ -8,17 +8,17 @@ namespace UniversalToolchain.Dialects.Wist;
 public sealed class WistDialectExecutionConfigurationBuilder
 {
     private readonly DialectIntrinsicPolicyResolver _intrinsicPolicyResolver;
-    private readonly IRuntimeComponentCatalog _catalog;
+    private readonly IWistKnownBackendsProvider _knownBackendsProvider;
     private readonly IRuntimeComponentTypeLoader _typeLoader;
 
     public WistDialectExecutionConfigurationBuilder(
         IRuntimeComponentTypeLoader typeLoader,
         DialectIntrinsicPolicyResolver intrinsicPolicyResolver,
-        IRuntimeComponentCatalog catalog)
+        IWistKnownBackendsProvider knownBackendsProvider)
     {
         _typeLoader = typeLoader ?? throw new ArgumentNullException(nameof(typeLoader));
         _intrinsicPolicyResolver = intrinsicPolicyResolver ?? throw new ArgumentNullException(nameof(intrinsicPolicyResolver));
-        _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
+        _knownBackendsProvider = knownBackendsProvider ?? throw new ArgumentNullException(nameof(knownBackendsProvider));
     }
 
     public WistDialectExecutionConfiguration Build(DialectBuildPlan buildPlan, SelectedRuntimePlan selectedRuntimePlan)
@@ -53,9 +53,7 @@ public sealed class WistDialectExecutionConfigurationBuilder
             .Select(x => BuildBackendConfiguration(x, buildPlan))
             .ToList();
 
-        var knownBackends = _catalog.GetBackendsInDeterministicOrder()
-            .Select(x => new RuntimeBackendDescriptor(new DialectBackendId(x.CanonicalAlias), x.Aliases))
-            .ToList();
+        var knownBackends = _knownBackendsProvider.GetKnownBackends();
 
         return new WistDialectExecutionConfiguration(
             buildPlan.Name,

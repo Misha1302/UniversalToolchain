@@ -64,6 +64,7 @@ public static class WistDialectServiceCollectionExtensions
         services.TryAddSingleton<RuntimeManifestJsonSerializer>();
         services.TryAddSingleton<IRuntimeComponentCatalog, FileBasedRuntimeComponentCatalog>();
         services.TryAddSingleton<IRuntimeComponentTypeLoader, DefaultRuntimeComponentTypeLoader>();
+        services.TryAddSingleton<IWistKnownBackendsProvider, WistKnownBackendsProvider>();
         services.TryAddSingleton<DialectIntrinsicPolicyResolver>();
         services.TryAddSingleton<IDialectCompiledDialectBuildPlanBuilder, DialectCompiledDialectBuildPlanBuilder>();
         services.TryAddSingleton<WistDialectExecutionConfigurationBuilder>();
