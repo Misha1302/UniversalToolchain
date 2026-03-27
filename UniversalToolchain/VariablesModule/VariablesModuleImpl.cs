@@ -1,7 +1,7 @@
 namespace VariablesModule;
 
 [UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("Variables")]
-[UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("wist", "FrontendModule", "Variables")]
+[UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("FrontendModule", "Variables")]
 [AutoRegisterService]
 public class VariablesModuleImpl : IFrontendCoreModule
 {

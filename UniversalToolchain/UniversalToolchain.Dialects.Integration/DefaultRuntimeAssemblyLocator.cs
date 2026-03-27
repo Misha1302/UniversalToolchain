@@ -1,6 +1,6 @@
 using ExceptionsManager;
 
-namespace UniversalToolchain.Dialects.Wist;
+namespace UniversalToolchain.Dialects.Integration;
 
 public sealed class DefaultRuntimeAssemblyLocator : IRuntimeAssemblyLocator
 {

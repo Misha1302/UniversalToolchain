@@ -5,8 +5,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <LangVersion>14</LangVersion>
-        <GenerateDialectRuntimeManifestsInOutput>true</GenerateDialectRuntimeManifestsInOutput>
-        <DialectRuntimeManifestFamily>wist</DialectRuntimeManifestFamily>
+        <EmitDialectRuntimeManifest>true</EmitDialectRuntimeManifest>
     </PropertyGroup>
 
     <ItemGroup>

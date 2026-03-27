@@ -1,15 +1,15 @@
 using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
 
-namespace UniversalToolchain.Dialects.Wist;
+namespace UniversalToolchain.Dialects.Integration;
 
 public sealed class SelectedRuntimePlanResolver
 {
-    private readonly IWistRuntimeManifest _manifest;
+    private readonly IRuntimeComponentCatalog _catalog;
 
-    public SelectedRuntimePlanResolver(IWistRuntimeManifest manifest)
+    public SelectedRuntimePlanResolver(IRuntimeComponentCatalog catalog)
     {
-        _manifest = manifest ?? throw new ArgumentNullException(nameof(manifest));
+        _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
     }
 
     public SelectedRuntimePlan Resolve(DialectBuildPlan buildPlan)
@@ -30,7 +30,7 @@ public sealed class SelectedRuntimePlanResolver
         var modules = new List<RuntimeComponentManifestEntry>();
         foreach (var moduleAlias in buildPlan.OrderedModules)
         {
-            if (!_manifest.TryResolveModule(moduleAlias, out var entry) || entry == null)
+            if (!_catalog.TryResolveModule(moduleAlias, out var entry) || entry == null)
             {
                 diagnostics.Add(new DialectDiagnostic("R001", $"Runtime module descriptor '{moduleAlias}' was not registered.", DialectDiagnosticSeverity.Error));
                 continue;
@@ -52,7 +52,7 @@ public sealed class SelectedRuntimePlanResolver
 
         foreach (var backendId in buildPlan.EnabledBackends.OrderBy(x => x))
         {
-            if (!_manifest.TryResolveBackend(backendId.Value, out var entry) || entry == null)
+            if (!_catalog.TryResolveBackend(backendId.Value, out var entry) || entry == null)
             {
                 diagnostics.Add(new DialectDiagnostic("R002", $"Runtime backend descriptor '{backendId.Value}' was not registered.", DialectDiagnosticSeverity.Error));
                 continue;
@@ -90,7 +90,7 @@ public sealed class SelectedRuntimePlanResolver
             if (!selectedBackendIds.Any(optimizer.Target.Matches))
                 continue;
 
-            if (!_manifest.TryResolveOptimizer(optimizer.Name, out var entry) || entry == null)
+            if (!_catalog.TryResolveOptimizer(optimizer.Name, out var entry) || entry == null)
             {
                 diagnostics.Add(new DialectDiagnostic("R003", $"Runtime optimizer descriptor '{optimizer.Name}' was not registered.", DialectDiagnosticSeverity.Error));
                 continue;

@@ -6,8 +6,6 @@
         <Nullable>enable</Nullable>
         <OutputType>Exe</OutputType>
         <LangVersion>14</LangVersion>
-        <GenerateDialectRuntimeManifestsInOutput>true</GenerateDialectRuntimeManifestsInOutput>
-        <DialectRuntimeManifestFamily>wist</DialectRuntimeManifestFamily>
     </PropertyGroup>
 
     <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">

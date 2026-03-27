@@ -1,6 +1,5 @@
-namespace UniversalToolchain.Dialects.Wist;
+namespace UniversalToolchain.Dialects.Integration;
 
 public sealed record FileDialectRuntimeManifestDocument(
-    string DialectFamily,
     string AssemblySimpleName,
     IReadOnlyList<FileDialectRuntimeComponentEntry> Components);

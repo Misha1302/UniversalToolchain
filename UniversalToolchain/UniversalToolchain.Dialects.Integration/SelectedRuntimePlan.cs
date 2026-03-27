@@ -1,7 +1,6 @@
 using UniversalToolchain.Dialects.Abstractions;
-using UniversalToolchain.Dialects.Integration;
 
-namespace UniversalToolchain.Dialects.Wist;
+namespace UniversalToolchain.Dialects.Integration;
 
 public sealed record SelectedRuntimePlan(
     IReadOnlyList<RuntimeComponentManifestEntry> OrderedModules,
