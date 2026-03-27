@@ -18,6 +18,15 @@ public sealed class SelectedRuntimePlanResolver
             Thrower.ArgumentNull(nameof(buildPlan));
 
         var diagnostics = new List<DialectDiagnostic>(buildPlan.ValidationResult.Diagnostics);
+        var modules = ResolveModules(buildPlan, diagnostics);
+        var backends = ResolveBackends(buildPlan, diagnostics, out var selectedBackendIds);
+        var optimizers = ResolveOptimizers(buildPlan, diagnostics, selectedBackendIds);
+
+        return new SelectedRuntimePlan(modules, optimizers, backends, diagnostics);
+    }
+
+    private IReadOnlyList<RuntimeComponentManifestEntry> ResolveModules(DialectBuildPlan buildPlan, ICollection<DialectDiagnostic> diagnostics)
+    {
         var modules = new List<RuntimeComponentManifestEntry>();
         foreach (var moduleAlias in buildPlan.OrderedModules)
         {
@@ -30,7 +39,17 @@ public sealed class SelectedRuntimePlanResolver
             modules.Add(entry);
         }
 
+        return modules;
+    }
+
+    private IReadOnlyList<RuntimeComponentManifestEntry> ResolveBackends(
+        DialectBuildPlan buildPlan,
+        ICollection<DialectDiagnostic> diagnostics,
+        out IReadOnlySet<DialectBackendId> selectedBackendIds)
+    {
         var backends = new List<RuntimeComponentManifestEntry>();
+        var backendIdSet = new SortedSet<DialectBackendId>();
+
         foreach (var backendId in buildPlan.EnabledBackends.OrderBy(x => x))
         {
             if (!_manifest.TryResolveBackend(backendId.Value, out var entry) || entry == null)
@@ -39,14 +58,36 @@ public sealed class SelectedRuntimePlanResolver
                 continue;
             }
 
-            if (!backends.Contains(entry))
-                backends.Add(entry);
+            var resolvedBackendId = new DialectBackendId(entry.CanonicalAlias);
+            if (!backendIdSet.Add(resolvedBackendId))
+                continue;
+
+            backends.Add(entry);
         }
 
+        var orderedBackends = backends
+            .OrderBy(x => x.CanonicalAlias, StringComparer.Ordinal)
+            .ThenBy(x => x.TypeReference.TypeFullName, StringComparer.Ordinal)
+            .ToList();
+
+        selectedBackendIds = backendIdSet;
+        return orderedBackends;
+    }
+
+    private IReadOnlyList<RuntimeComponentManifestEntry> ResolveOptimizers(
+        DialectBuildPlan buildPlan,
+        ICollection<DialectDiagnostic> diagnostics,
+        IReadOnlySet<DialectBackendId> selectedBackendIds)
+    {
         var optimizers = new List<RuntimeComponentManifestEntry>();
-        foreach (var optimizer in buildPlan.OptimizerDirectives.Where(x => x.Enabled).OrderBy(x => x.Name, StringComparer.Ordinal).ThenBy(x => x.Target))
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var optimizer in buildPlan.OptimizerDirectives
+                     .Where(x => x.Enabled)
+                     .OrderBy(x => x.Name, StringComparer.Ordinal)
+                     .ThenBy(x => x.Target))
         {
-            if (!backends.Any(x => optimizer.Target.Matches(new DialectBackendId(x.CanonicalAlias))))
+            if (!selectedBackendIds.Any(optimizer.Target.Matches))
                 continue;
 
             if (!_manifest.TryResolveOptimizer(optimizer.Name, out var entry) || entry == null)
@@ -55,10 +96,10 @@ public sealed class SelectedRuntimePlanResolver
                 continue;
             }
 
-            if (!optimizers.Contains(entry))
+            if (seen.Add(entry.CanonicalAlias))
                 optimizers.Add(entry);
         }
 
-        return new SelectedRuntimePlan(modules, optimizers, backends.OrderBy(x => x.CanonicalAlias, StringComparer.Ordinal).ToList(), diagnostics);
+        return optimizers;
     }
 }

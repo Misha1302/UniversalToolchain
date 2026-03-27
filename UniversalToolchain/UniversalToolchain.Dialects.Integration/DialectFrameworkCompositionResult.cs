@@ -21,7 +21,7 @@ public sealed class DialectFrameworkCompositionResult
         DialectRuntimeComposition? runtimeComposition,
         IEnumerable<DialectDiagnostic> semanticDiagnostics,
         IEnumerable<DialectDiagnostic> resolutionDiagnostics,
-        object? runtimeSelection = null)
+        IDialectRuntimeSelection? runtimeSelection = null)
     {
         if (string.IsNullOrWhiteSpace(sourceName))
             Thrower.Argument(nameof(sourceName), "Source name must not be empty.");
@@ -43,7 +43,7 @@ public sealed class DialectFrameworkCompositionResult
 
     public DialectRuntimeComposition? RuntimeComposition { get; }
 
-    public object? RuntimeSelection { get; }
+    public IDialectRuntimeSelection? RuntimeSelection { get; }
 
     public IReadOnlyList<DialectDiagnostic> SemanticDiagnostics => _semanticDiagnostics;
 

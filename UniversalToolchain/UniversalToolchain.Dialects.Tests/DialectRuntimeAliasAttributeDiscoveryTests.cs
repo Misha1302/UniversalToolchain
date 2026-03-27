@@ -72,21 +72,22 @@ public class DialectRuntimeAliasAttributeDiscoveryTests
         var result = workflow.ComposeFile(Path.Combine(GetWistExamplesRoot(), "full-default", "dialect.wistdialect"));
 
         Assert.That(result.IsSuccess, Is.True, string.Join(Environment.NewLine, result.ResolutionDiagnostics.Select(static x => x.Message)));
-        Assert.That(result.RuntimeComposition, Is.Not.Null);
+        var legacyResult = provider.GetRequiredService<LegacyWistDialectCompositionService>().ComposeText(File.ReadAllText(Path.Combine(GetWistExamplesRoot(), "full-default", "dialect.wistdialect")), "full-default");
+        Assert.That(legacyResult.RuntimeComposition, Is.Not.Null);
 
         Assert.Multiple(() =>
         {
-            var moduleNames = result.RuntimeComposition!.OrderedModules.Select(static x => x.ImplementationType.Name).ToArray();
+            var moduleNames = legacyResult.RuntimeComposition!.OrderedModules.Select(static x => x.ImplementationType.Name).ToArray();
             Assert.That(moduleNames, Does.Contain("ArithmeticModuleImpl"));
             Assert.That(moduleNames, Does.Contain("CSharpInteropModuleImpl"));
             Assert.That(moduleNames, Does.Contain("VariablesModuleImpl"));
             Assert.That(Array.IndexOf(moduleNames, "ArithmeticModuleImpl"), Is.LessThan(Array.IndexOf(moduleNames, "VariablesModuleImpl")));
-            var backends = result.RuntimeComposition.EnabledBackends.Select(static x => x.CanonicalId).ToArray();
+            var backends = legacyResult.RuntimeComposition.EnabledBackends.Select(static x => x.CanonicalId).ToArray();
             Assert.That(backends, Has.Length.EqualTo(2));
             Assert.That(backends, Does.Contain("cil"));
             Assert.That(backends, Does.Contain("interpreter"));
 
-            var optimizers = result.RuntimeComposition.EnabledOptimizers.Select(static x => x.ImplementationType.Name).ToArray();
+            var optimizers = legacyResult.RuntimeComposition.EnabledOptimizers.Select(static x => x.ImplementationType.Name).ToArray();
             Assert.That(optimizers, Has.Length.EqualTo(1));
             Assert.That(optimizers[0], Is.EqualTo("LocalVariablesOptimizer"));
         });

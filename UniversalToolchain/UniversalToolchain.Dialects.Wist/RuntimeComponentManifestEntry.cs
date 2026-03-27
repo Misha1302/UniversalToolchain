@@ -4,8 +4,7 @@ public sealed record RuntimeComponentManifestEntry(
     RuntimeComponentKind Kind,
     string CanonicalAlias,
     IReadOnlyList<string> Aliases,
-    string AssemblySimpleName,
-    string TypeFullName)
+    RuntimeTypeReference TypeReference)
 {
     public IReadOnlyList<string> AllAliases => [CanonicalAlias, .. Aliases];
 }

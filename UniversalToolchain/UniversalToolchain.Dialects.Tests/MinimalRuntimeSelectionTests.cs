@@ -60,6 +60,34 @@ public class MinimalRuntimeSelectionTests
         Assert.That(selection.Diagnostics.Any(x => x.Code == "R003"), Is.True);
     }
 
+
+    [Test]
+    public void SelectionResolver_DropsDuplicateBackendSelections_Deterministically()
+    {
+        var resolver = new SelectedRuntimePlanResolver(new WistRuntimeManifest());
+        var plan = BuildPlan(modules: ["Arithmetic"], backends: [WistDialectBackendIds.Interpreter, WistDialectBackendIds.Interpreter, WistDialectBackendIds.Cil], optimizers: []);
+        var selection = resolver.Resolve(plan);
+
+        Assert.That(selection.EnabledBackends.Select(x => x.CanonicalAlias), Is.EqualTo(new[] { "cil", "interpreter" }));
+    }
+
+    [Test]
+    public void SelectionResolver_DropsDuplicateOptimizers_Deterministically()
+    {
+        var resolver = new SelectedRuntimePlanResolver(new WistRuntimeManifest());
+        var plan = BuildPlan(
+            modules: ["Arithmetic"],
+            backends: [WistDialectBackendIds.Interpreter],
+            optimizers:
+            [
+                new OptimizerBuildDirective("LocalVariablesOptimization", true, DialectBackendSelector.Any),
+                new OptimizerBuildDirective("LocalVariablesOptimization", true, DialectBackendSelector.Any)
+            ]);
+
+        var selection = resolver.Resolve(plan);
+        Assert.That(selection.EnabledOptimizers.Select(x => x.CanonicalAlias), Is.EqualTo(new[] { "LocalVariablesOptimization" }));
+    }
+
     [Test]
     public void SelectionResolver_DoesNotLoadFeatureAssemblies()
     {

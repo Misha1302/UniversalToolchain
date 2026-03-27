@@ -9,4 +9,6 @@ public interface IWistRuntimeManifest
     IReadOnlyCollection<RuntimeComponentManifestEntry> Modules { get; }
     IReadOnlyCollection<RuntimeComponentManifestEntry> Optimizers { get; }
     IReadOnlyCollection<RuntimeComponentManifestEntry> Backends { get; }
+
+    IReadOnlyList<RuntimeComponentManifestEntry> GetBackendsInDeterministicOrder();
 }

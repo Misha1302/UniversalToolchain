@@ -5,59 +5,87 @@ using ExceptionsManager;
 
 namespace UniversalToolchain.Dialects.Wist;
 
+/// <summary>
+/// Runtime type-loading strategy. Current implementation uses the default load context,
+/// but callers should depend on <see cref="IRuntimeComponentTypeLoader"/> rather than context-specific behavior.
+/// </summary>
 public sealed class DefaultRuntimeComponentTypeLoader : IRuntimeComponentTypeLoader
 {
     private readonly ConcurrentDictionary<string, Lazy<Type>> _cache = new(StringComparer.Ordinal);
+    private readonly IRuntimeAssemblyLocator _locator;
+
+    public DefaultRuntimeComponentTypeLoader(IRuntimeAssemblyLocator locator)
+    {
+        _locator = locator ?? throw new ArgumentNullException(nameof(locator));
+    }
 
     public Type LoadType(RuntimeComponentManifestEntry entry)
     {
         if (entry == null)
             Thrower.ArgumentNull(nameof(entry));
 
-        if (string.IsNullOrWhiteSpace(entry.AssemblySimpleName))
+        var typeReference = entry.TypeReference;
+        if (string.IsNullOrWhiteSpace(typeReference.AssemblySimpleName))
             Thrower.Argument(nameof(entry), "Assembly simple name must not be empty.");
 
-        if (string.IsNullOrWhiteSpace(entry.TypeFullName))
+        if (string.IsNullOrWhiteSpace(typeReference.TypeFullName))
             Thrower.Argument(nameof(entry), "Type full name must not be empty.");
 
-        var key = $"{entry.AssemblySimpleName}|{entry.TypeFullName}";
-        var lazy = _cache.GetOrAdd(key, _ => new Lazy<Type>(() => ResolveType(entry), LazyThreadSafetyMode.ExecutionAndPublication));
+        var key = $"{typeReference.AssemblySimpleName}|{typeReference.TypeFullName}";
+        var lazy = _cache.GetOrAdd(key, _ => new Lazy<Type>(() => ResolveType(typeReference), LazyThreadSafetyMode.ExecutionAndPublication));
         return lazy.Value;
     }
 
-    private static Type ResolveType(RuntimeComponentManifestEntry entry)
+    private Type ResolveType(RuntimeTypeReference typeReference)
     {
-        var assembly = AppDomain.CurrentDomain
-            .GetAssemblies()
-            .FirstOrDefault(x => string.Equals(x.GetName().Name, entry.AssemblySimpleName, StringComparison.Ordinal));
+        var assembly = TryGetAlreadyLoadedAssembly(typeReference.AssemblySimpleName)
+                       ?? TryLoadBySimpleName(typeReference.AssemblySimpleName)
+                       ?? LoadAssemblyFromResolvedPath(typeReference.AssemblySimpleName);
 
-        if (assembly == null)
-        {
-            assembly = TryLoadByName(entry.AssemblySimpleName) ?? LoadFromBaseDirectory(entry.AssemblySimpleName);
-        }
-
-        return assembly.GetType(entry.TypeFullName, throwOnError: true, ignoreCase: false)
-               ?? Thrower.InvalidOpEx<Type>($"Type '{entry.TypeFullName}' was not found in assembly '{entry.AssemblySimpleName}'.");
+        return ResolveTypeFromAssembly(assembly, typeReference);
     }
 
-    private static Assembly? TryLoadByName(string assemblySimpleName)
+    private static Assembly? TryGetAlreadyLoadedAssembly(string assemblySimpleName)
+    {
+        return AppDomain.CurrentDomain
+            .GetAssemblies()
+            .FirstOrDefault(x => string.Equals(x.GetName().Name, assemblySimpleName, StringComparison.Ordinal));
+    }
+
+    private static Assembly? TryLoadBySimpleName(string assemblySimpleName)
     {
         try
         {
             return Assembly.Load(new AssemblyName(assemblySimpleName));
         }
-        catch
+        catch (FileNotFoundException)
+        {
+            return null;
+        }
+        catch (FileLoadException)
+        {
+            return null;
+        }
+        catch (BadImageFormatException)
         {
             return null;
         }
     }
 
-    private static Assembly LoadFromBaseDirectory(string assemblySimpleName)
+    private Assembly LoadAssemblyFromResolvedPath(string assemblySimpleName)
     {
-        var path = Path.Combine(AppContext.BaseDirectory, assemblySimpleName + ".dll");
-        if (!File.Exists(path))
-            Thrower.FileNotFound(path);
+        if (!_locator.TryResolveAssemblyPath(assemblySimpleName, out var absolutePath) || string.IsNullOrWhiteSpace(absolutePath))
+            Thrower.FileNotFound(Path.Combine(AppContext.BaseDirectory, assemblySimpleName + ".dll"));
 
-        return AssemblyLoadContext.Default.LoadFromAssemblyPath(path);
+        if (!Path.IsPathRooted(absolutePath))
+            Thrower.Argument(nameof(absolutePath), $"Assembly locator returned non-absolute path '{absolutePath}'.");
+
+        return AssemblyLoadContext.Default.LoadFromAssemblyPath(absolutePath);
+    }
+
+    private static Type ResolveTypeFromAssembly(Assembly assembly, RuntimeTypeReference typeReference)
+    {
+        return assembly.GetType(typeReference.TypeFullName, throwOnError: true, ignoreCase: false)
+               ?? Thrower.InvalidOpEx<Type>($"Type '{typeReference.TypeFullName}' was not found in assembly '{typeReference.AssemblySimpleName}'.");
     }
 }

@@ -23,6 +23,27 @@ public class WistMinimalRuntimeMemorySmokeTests
         Assert.That(after.Count - before.Count, Is.LessThanOrEqualTo(5));
     }
 
+
+    [Test]
+    public void MinimalPath_RepeatedCompose_DoesNotLoadUnusedFeatureAssemblies()
+    {
+        using var provider = CreateMinimalProvider();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+        var before = AppDomain.CurrentDomain.GetAssemblies().Select(x => x.GetName().Name).ToHashSet(StringComparer.Ordinal);
+
+        for (var i = 0; i < 25; i++)
+            _ = workflow.ComposeText("dialect Demo\nuse Arithmetic,Numbers,Whitespaces\nbackend interpreter", $"s{i}");
+
+        var afterCompose = AppDomain.CurrentDomain.GetAssemblies().Select(x => x.GetName().Name).ToHashSet(StringComparer.Ordinal);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(afterCompose.Contains("CommentsModule"), Is.EqualTo(before.Contains("CommentsModule")));
+            Assert.That(afterCompose.Contains("LabelsModule"), Is.EqualTo(before.Contains("LabelsModule")));
+            Assert.That(afterCompose.Contains("LocalVariablesOptimizerModule"), Is.EqualTo(before.Contains("LocalVariablesOptimizerModule")));
+        });
+    }
+
     [Test]
     public void MinimalPath_RepeatedOperations_DoNotGrowServiceCounts()
     {

@@ -5,6 +5,35 @@ namespace UniversalToolchain.Dialects.Tests;
 
 public class WistDialectMinimalRuntimeIsolationTests
 {
+
+    [Test]
+    public void MinimalWorkflow_HasNoLegacyDependencies()
+    {
+        using var provider = CreateMinimalProvider();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(provider.GetService<UniversalToolchain.Dialects.Integration.DialectFrameworkCompositionWorkflow>(), Is.Null);
+            Assert.That(provider.GetService<UniversalToolchain.Dialects.Integration.DialectRuntimeDescriptorRegistry>(), Is.Null);
+            Assert.That(provider.GetService<LegacyWistDialectCompositionService>(), Is.Null);
+        });
+    }
+
+    [Test]
+    public void MinimalWorkflow_ComposeText_DoesNotPopulateRuntimeComposition()
+    {
+        using var provider = CreateMinimalProvider();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+
+        var result = workflow.ComposeText("dialect Demo\nuse Arithmetic\nbackend interpreter", "inline");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.RuntimeComposition, Is.Null);
+            Assert.That(result.RuntimeSelection, Is.Not.Null);
+        });
+    }
+
     [Test]
     public async Task ComposeText_ParallelDifferentDialects_DoNotMixSelections()
     {

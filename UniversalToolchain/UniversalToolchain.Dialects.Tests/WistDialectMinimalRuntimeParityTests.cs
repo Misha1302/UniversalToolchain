@@ -12,6 +12,20 @@ public class WistDialectMinimalRuntimeParityTests
     [Test]
     public void MinimalPath_MinimalArithmetic_ProducesSameExecutionResult_AsLegacyPath() => AssertParityForExample("minimal-arithmetic", "interpreter", expected: 14d);
 
+
+    [Test]
+    public void MinimalPath_WithOptimizer_ProducesSameExecutionResult_AsLegacyPath()
+    {
+        var examplePath = ResolveExampleDirectory("full-default");
+        var dialectText = File.ReadAllText(Path.Combine(examplePath, "dialect.wistdialect"));
+        var code = File.ReadAllText(Path.Combine(examplePath, "program.wist"));
+
+        var minimal = Execute(CreateMinimalProvider(), dialectText, code, "interpreter");
+        var legacy = Execute(CreateLegacyProvider(), dialectText, code, "interpreter");
+
+        Assert.That(minimal, Is.EqualTo(legacy).Within(1e-9));
+    }
+
     [Test]
     public void MinimalPath_InterpreterOnly_ProducesSameExecutionResult_AsLegacyPath() => AssertParityForInlineDialect("dialect Demo\nuse Arithmetic,Numbers,Whitespaces\nbackend interpreter", "2 + 5", "interpreter");
 

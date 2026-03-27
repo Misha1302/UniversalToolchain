@@ -53,7 +53,7 @@ public sealed class WistDialectExecutionConfigurationBuilder
             .Select(x => BuildBackendConfiguration(x, buildPlan))
             .ToList();
 
-        var knownBackends = _manifest.Backends
+        var knownBackends = _manifest.GetBackendsInDeterministicOrder()
             .Select(x => new RuntimeBackendDescriptor(new DialectBackendId(x.CanonicalAlias), x.Aliases))
             .ToList();
 

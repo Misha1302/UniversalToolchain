@@ -11,8 +11,6 @@ public sealed class WistDialectExecutionWorkflow
     private readonly IDialectCompiledDialectBuildPlanBuilder _buildPlanBuilder;
     private readonly DialectDslCompiler _compiler;
     private readonly WistDialectExecutionConfigurationBuilder _configurationBuilder;
-    private readonly DialectFrameworkCompositionWorkflow? _legacyCompositionWorkflow;
-    private readonly DialectRuntimeDescriptorRegistry? _legacyRegistry;
     private readonly SelectedRuntimePlanResolver _resolver;
     private readonly WistDialectServiceProviderFactory _serviceProviderFactory;
 
@@ -21,17 +19,13 @@ public sealed class WistDialectExecutionWorkflow
         IDialectCompiledDialectBuildPlanBuilder buildPlanBuilder,
         SelectedRuntimePlanResolver resolver,
         WistDialectExecutionConfigurationBuilder configurationBuilder,
-        WistDialectServiceProviderFactory serviceProviderFactory,
-        DialectFrameworkCompositionWorkflow? legacyCompositionWorkflow = null,
-        DialectRuntimeDescriptorRegistry? legacyRegistry = null)
+        WistDialectServiceProviderFactory serviceProviderFactory)
     {
         _compiler = compiler ?? throw new ArgumentNullException(nameof(compiler));
         _buildPlanBuilder = buildPlanBuilder ?? throw new ArgumentNullException(nameof(buildPlanBuilder));
         _resolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
         _configurationBuilder = configurationBuilder ?? throw new ArgumentNullException(nameof(configurationBuilder));
         _serviceProviderFactory = serviceProviderFactory ?? throw new ArgumentNullException(nameof(serviceProviderFactory));
-        _legacyCompositionWorkflow = legacyCompositionWorkflow;
-        _legacyRegistry = legacyRegistry;
     }
 
     public DialectFrameworkCompositionResult ComposeFile(string filePath)
@@ -52,23 +46,6 @@ public sealed class WistDialectExecutionWorkflow
 
         if (string.IsNullOrWhiteSpace(sourceName))
             Thrower.Argument(nameof(sourceName), "Source name must not be empty.");
-
-        if (_legacyCompositionWorkflow != null && _legacyRegistry != null)
-        {
-            var legacy = _legacyCompositionWorkflow.ComposeText(sourceText, _legacyRegistry, sourceName);
-            if (legacy.BuildPlan == null || !legacy.BuildPlan.CanBuild)
-                return legacy;
-
-            var selection = _resolver.Resolve(legacy.BuildPlan);
-            return new DialectFrameworkCompositionResult(
-                legacy.SourceName,
-                legacy.CompiledDialect,
-                legacy.BuildPlan,
-                legacy.RuntimeComposition,
-                legacy.SemanticDiagnostics,
-                legacy.ResolutionDiagnostics,
-                selection);
-        }
 
         var compiled = _compiler.Compile(sourceText);
         var buildPlan = _buildPlanBuilder.Build(compiled);

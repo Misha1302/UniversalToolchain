@@ -13,7 +13,7 @@ public class WistRuntimeManifestMetadataValidationTests
 
         foreach (var entry in entries)
         {
-            var entryPath = Path.Combine(AppContext.BaseDirectory, entry.AssemblySimpleName + ".dll");
+            var entryPath = Path.Combine(AppContext.BaseDirectory, entry.TypeReference.AssemblySimpleName + ".dll");
             Assert.That(File.Exists(entryPath), Is.True, $"Assembly is missing: {entryPath}");
 
             var runtimeAssemblies = Directory.GetFiles(Path.GetDirectoryName(typeof(object).Assembly.Location)!, "*.dll");
@@ -21,8 +21,8 @@ public class WistRuntimeManifestMetadataValidationTests
             var resolver = new PathAssemblyResolver(resolverPaths);
             using var context = new MetadataLoadContext(resolver);
             var assembly = context.LoadFromAssemblyPath(entryPath);
-            var type = assembly.GetType(entry.TypeFullName, throwOnError: false, ignoreCase: false);
-            Assert.That(type, Is.Not.Null, $"Type not found: {entry.TypeFullName}");
+            var type = assembly.GetType(entry.TypeReference.TypeFullName, throwOnError: false, ignoreCase: false);
+            Assert.That(type, Is.Not.Null, $"Type not found: {entry.TypeReference.TypeFullName}");
 
             var frontendContract = context.LoadFromAssemblyName(typeof(BasicCore.Contracts.IFrontendCoreModule).Assembly.GetName().Name!).GetType("BasicCore.Contracts.IFrontendCoreModule")!;
             var irContract = context.LoadFromAssemblyName(typeof(BasicCore.Contracts.IIRProcessingModule).Assembly.GetName().Name!).GetType("BasicCore.Contracts.IIRProcessingModule")!;
@@ -30,6 +30,21 @@ public class WistRuntimeManifestMetadataValidationTests
 
             Assert.That(IsValidForKind(entry.Kind, type!, frontendContract, irContract, backendContract), Is.True, $"Unexpected contract mismatch for {entry.CanonicalAlias}");
         }
+    }
+
+
+
+    [Test]
+    public void Manifest_DuplicateAlias_FailsFast_WithClearMessage()
+    {
+        var dup = new RuntimeComponentManifestEntry(
+            RuntimeComponentKind.FrontendModule,
+            "Arithmetic",
+            [],
+            new RuntimeTypeReference("AnyAssembly", "Any.Type"));
+
+        var ex = Assert.Throws<InvalidOperationException>(() => new WistRuntimeManifest([dup, dup], [], []));
+        Assert.That(ex!.Message, Does.Contain("Arithmetic").And.Contain("Modules"));
     }
 
     private static bool IsValidForKind(

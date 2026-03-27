@@ -26,10 +26,11 @@ public class DialectDeterminismAndSandboxContractsTests
         using var provider = CreateProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var composition = workflow.ComposeFile(GetDialectPath("restricted-sandbox"));
+        var legacyComposition = provider.GetRequiredService<LegacyWistDialectCompositionService>().ComposeText(File.ReadAllText(GetDialectPath("restricted-sandbox")), "restricted-sandbox");
 
         Assert.That(composition.IsSuccess, Is.True);
-        Assert.That(composition.RuntimeComposition!.EnabledBackends.Select(x => x.CanonicalId), Is.EqualTo(new[] { "interpreter" }));
-        Assert.That(composition.RuntimeComposition.OrderedModules.Select(x => x.CanonicalId), Does.Not.Contain("CSharpInterop"));
+        Assert.That(legacyComposition.RuntimeComposition!.EnabledBackends.Select(x => x.CanonicalId), Is.EqualTo(new[] { "interpreter" }));
+        Assert.That(legacyComposition.RuntimeComposition.OrderedModules.Select(x => x.CanonicalId), Does.Not.Contain("CSharpInterop"));
     }
 
     [Test]
@@ -77,9 +78,9 @@ public class DialectDeterminismAndSandboxContractsTests
             result.IsSuccess.ToString(),
             string.Join(",", result.SemanticDiagnostics.Select(x => $"{x.Code}:{x.Message}")),
             string.Join(",", result.ResolutionDiagnostics.Select(x => $"{x.Code}:{x.Message}")),
-            string.Join(",", result.RuntimeComposition?.OrderedModules.Select(x => x.CanonicalId) ?? []),
-            string.Join(",", result.RuntimeComposition?.EnabledBackends.Select(x => x.CanonicalId) ?? []),
-            string.Join(",", result.RuntimeComposition?.EnabledOptimizers.Select(x => x.CanonicalId) ?? [])
+            string.Join(",", (result.RuntimeSelection as SelectedRuntimePlan)?.OrderedModules.Select(x => x.CanonicalAlias) ?? []),
+            string.Join(",", (result.RuntimeSelection as SelectedRuntimePlan)?.EnabledBackends.Select(x => x.CanonicalAlias) ?? []),
+            string.Join(",", (result.RuntimeSelection as SelectedRuntimePlan)?.EnabledOptimizers.Select(x => x.CanonicalAlias) ?? [])
         ]);
     }
 
