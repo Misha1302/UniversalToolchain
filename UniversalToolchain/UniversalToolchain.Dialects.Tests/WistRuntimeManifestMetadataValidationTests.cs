@@ -14,7 +14,7 @@ public class WistRuntimeManifestMetadataValidationTests
     public void FileBasedRuntimeComponentCatalog_ResolvesEntriesWithoutDialectFamily()
     {
         using var temp = new TempDirectory();
-        var serializer = new RuntimeManifestJsonSerializer();
+        IRuntimeManifestSerializer serializer = new RuntimeManifestJsonSerializer();
         var manifestPath = Path.Combine(temp.Path, "ArithmeticModule.dialect.runtime.json");
 
         var document = new FileDialectRuntimeManifestDocument(
@@ -104,7 +104,7 @@ public class WistRuntimeManifestMetadataValidationTests
         var json = File.ReadAllText(outputPath);
         Assert.That(json, Does.Not.Contain("dialectFamily"));
 
-        var serializer = new RuntimeManifestJsonSerializer();
+        IRuntimeManifestSerializer serializer = new RuntimeManifestJsonSerializer();
         var document = serializer.Deserialize(json);
         Assert.That(document.AssemblySimpleName, Is.EqualTo("ArithmeticModule"));
     }
@@ -175,7 +175,7 @@ public class WistRuntimeManifestMetadataValidationTests
     private static InvalidOperationException BuildDuplicateAliasException(string kind, string _)
     {
         using var temp = new TempDirectory();
-        var serializer = new RuntimeManifestJsonSerializer();
+        IRuntimeManifestSerializer serializer = new RuntimeManifestJsonSerializer();
 
         var first = Path.Combine(temp.Path, "first.dialect.runtime.json");
         var second = Path.Combine(temp.Path, "second.dialect.runtime.json");

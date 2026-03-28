@@ -1,39 +1,38 @@
 using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
-using UniversalToolchain.Dialects.Integration;
 
-namespace UniversalToolchain.Dialects.Wist;
+namespace UniversalToolchain.Dialects.Integration;
 
-public sealed class WistKnownBackendsProvider : IWistKnownBackendsProvider
+public sealed class RuntimeKnownBackendsProvider : IRuntimeKnownBackendsProvider
 {
     private readonly IReadOnlyList<RuntimeBackendDescriptor> _knownBackends;
 
-    public WistKnownBackendsProvider(
+    public RuntimeKnownBackendsProvider(
         IRuntimeComponentCatalog catalog,
-        IEnumerable<IWistDialectBackendServiceProvider> backendProviders)
+        IEnumerable<IDialectBackendRuntimeRegistrar> backendRegistrars)
     {
         if (catalog == null)
             Thrower.ArgumentNull(nameof(catalog));
 
-        if (backendProviders == null)
-            Thrower.ArgumentNull(nameof(backendProviders));
+        if (backendRegistrars == null)
+            Thrower.ArgumentNull(nameof(backendRegistrars));
 
-        var providersById = CreateProviderMap(backendProviders);
+        var providersById = CreateProviderMap(backendRegistrars);
         _knownBackends = BuildKnownBackends(catalog, providersById);
     }
 
     public IReadOnlyList<RuntimeBackendDescriptor> GetKnownBackends() => _knownBackends;
 
-    private static IReadOnlyDictionary<DialectBackendId, IWistDialectBackendServiceProvider> CreateProviderMap(
-        IEnumerable<IWistDialectBackendServiceProvider> backendProviders)
+    private static IReadOnlyDictionary<DialectBackendId, IDialectBackendRuntimeRegistrar> CreateProviderMap(
+        IEnumerable<IDialectBackendRuntimeRegistrar> backendRegistrars)
     {
-        var map = new SortedDictionary<DialectBackendId, IWistDialectBackendServiceProvider>();
-        foreach (var backendProvider in backendProviders
-                     .Select(x => x.NotNull(nameof(backendProviders)))
+        var map = new SortedDictionary<DialectBackendId, IDialectBackendRuntimeRegistrar>();
+        foreach (var backendRegistrar in backendRegistrars
+                     .Select(x => x.NotNull(nameof(backendRegistrars)))
                      .OrderBy(x => x.BackendId))
         {
-            if (!map.TryAdd(backendProvider.BackendId, backendProvider))
-                Thrower.InvalidOpEx($"Duplicate Wist backend provider registration for backend '{backendProvider.BackendId.Value}'.");
+            if (!map.TryAdd(backendRegistrar.BackendId, backendRegistrar))
+                Thrower.InvalidOpEx($"Duplicate backend provider registration for backend '{backendRegistrar.BackendId.Value}'.");
         }
 
         return map;
@@ -41,13 +40,13 @@ public sealed class WistKnownBackendsProvider : IWistKnownBackendsProvider
 
     private static IReadOnlyList<RuntimeBackendDescriptor> BuildKnownBackends(
         IRuntimeComponentCatalog catalog,
-        IReadOnlyDictionary<DialectBackendId, IWistDialectBackendServiceProvider> providersById)
+        IReadOnlyDictionary<DialectBackendId, IDialectBackendRuntimeRegistrar> providersById)
     {
         var descriptors = new List<RuntimeBackendDescriptor>();
         foreach (var backendId in providersById.Keys)
         {
             if (!catalog.TryResolveBackend(backendId.Value, out var entry) || entry == null)
-                Thrower.InvalidOpEx($"Wist backend provider '{backendId.Value}' is registered, but no matching runtime backend metadata entry exists.");
+                Thrower.InvalidOpEx($"Backend provider '{backendId.Value}' is registered, but no matching runtime backend metadata entry exists.");
 
             var aliases = entry.Aliases
                 .OrderBy(static x => x, StringComparer.Ordinal)

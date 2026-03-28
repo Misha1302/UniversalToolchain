@@ -76,7 +76,7 @@ public class WistDialectBackendHardcodeTests
             new FakeBackendServiceProvider(backendId, ["second_intrinsic"])
         ]));
 
-        Assert.That(exception!.Message, Is.EqualTo("Duplicate Wist backend service provider registration for backend 'duplicate-backend'."));
+        Assert.That(exception!.Message, Is.EqualTo("Duplicate backend runtime registrar registration for backend 'duplicate-backend'."));
     }
 
     [Test]
@@ -87,7 +87,7 @@ public class WistDialectBackendHardcodeTests
 
         var exception = Assert.Throws<InvalidOperationException>(() => factory.Create(CreateConfiguration(requestedBackend)));
 
-        Assert.That(exception!.Message, Is.EqualTo("No Wist backend service provider is registered for backend 'missing-backend'."));
+        Assert.That(exception!.Message, Is.EqualTo("No backend runtime registrar is registered for backend 'missing-backend'."));
     }
 
     [Test]
@@ -96,7 +96,7 @@ public class WistDialectBackendHardcodeTests
         var backendA = new DialectBackendId("backend-a");
         var backendB = new DialectBackendId("backend-b");
 
-        var descriptors = WistDialectIntrinsicRegistry.CreateDescriptors([
+        var descriptors = RuntimeBackendIntrinsicRegistry.CreateDescriptors([
             new FakeBackendServiceProvider(backendA, ["shared_intrinsic", "only_a"]),
             new FakeBackendServiceProvider(backendB, ["shared_intrinsic", "only_b"])
         ]);
@@ -119,21 +119,21 @@ public class WistDialectBackendHardcodeTests
         var backendA = new RuntimeBackendDescriptor(new DialectBackendId("backend-a"), "backend-a-runtime");
         var backendB = new RuntimeBackendDescriptor(new DialectBackendId("backend-b"), "backend-b-runtime");
         var configuration = CreateConfiguration(backendA, backendB);
-        var providersInDeclaredOrder = new IWistDialectBackendServiceProvider[]
+        var providersInDeclaredOrder = new IDialectBackendRuntimeRegistrar[]
         {
             new FakeBackendServiceProvider(backendA.BackendId, ["shared_intrinsic", "only_a"]),
             new FakeBackendServiceProvider(backendB.BackendId, ["shared_intrinsic", "only_b"])
         };
-        var providersInReverseOrder = new IWistDialectBackendServiceProvider[]
+        var providersInReverseOrder = new IDialectBackendRuntimeRegistrar[]
         {
             new FakeBackendServiceProvider(backendB.BackendId, ["shared_intrinsic", "only_b"]),
             new FakeBackendServiceProvider(backendA.BackendId, ["shared_intrinsic", "only_a"])
         };
 
-        var firstDescriptorSet = WistDialectIntrinsicRegistry.CreateDescriptors(providersInDeclaredOrder)
+        var firstDescriptorSet = RuntimeBackendIntrinsicRegistry.CreateDescriptors(providersInDeclaredOrder)
             .Select(x => $"{x.CanonicalId}@{DialectBackendSelectorText.ToText(x.Target)}")
             .ToList();
-        var secondDescriptorSet = WistDialectIntrinsicRegistry.CreateDescriptors(providersInReverseOrder)
+        var secondDescriptorSet = RuntimeBackendIntrinsicRegistry.CreateDescriptors(providersInReverseOrder)
             .Select(x => $"{x.CanonicalId}@{DialectBackendSelectorText.ToText(x.Target)}")
             .ToList();
 
@@ -174,11 +174,11 @@ public class WistDialectBackendHardcodeTests
             [],
             [],
             [],
-            backendDescriptors.Select(static x => new WistDialectBackendConfiguration(x, [], [], false)),
+            backendDescriptors.Select(static x => new DialectBackendRuntimeConfiguration(x, [], [], false)),
             backendDescriptors);
     }
 
-    private sealed class FakeBackendServiceProvider(DialectBackendId backendId, IReadOnlyList<string> supportedIntrinsics) : IWistDialectBackendServiceProvider
+    private sealed class FakeBackendServiceProvider(DialectBackendId backendId, IReadOnlyList<string> supportedIntrinsics) : IDialectBackendRuntimeRegistrar
     {
         private readonly IReadOnlyList<string> _supportedIntrinsics = supportedIntrinsics
             .Distinct(StringComparer.Ordinal)
@@ -189,7 +189,7 @@ public class WistDialectBackendHardcodeTests
 
         public IReadOnlyList<string> SupportedIntrinsics => _supportedIntrinsics;
 
-        public void RegisterRuntime(IServiceCollection services, WistDialectBackendConfiguration configuration)
+        public void RegisterRuntime(IServiceCollection services, DialectBackendRuntimeConfiguration configuration)
         {
             if (services == null)
                 Thrower.ArgumentNull(nameof(services));
