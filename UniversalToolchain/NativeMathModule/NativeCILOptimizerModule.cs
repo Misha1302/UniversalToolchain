@@ -3,6 +3,7 @@ namespace NativeMathModule;
 [UniversalToolchain.Dialects.Abstractions.DialectOptimizerAlias("NativeCilOptimization")]
 [UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("Optimizer", "NativeCilOptimization")]
 [AutoRegisterService]
+[ArithmeticModeCompatibility(ArithmeticMode.Native)]
 public class NativeCilOptimizerModule : IIRProcessingModule
 {
     // Словарь для маппинга типов на методы генерации CIL

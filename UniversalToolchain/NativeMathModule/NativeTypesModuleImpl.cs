@@ -3,6 +3,7 @@ namespace NativeMathModule;
 [UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("NativeTypes")]
 [UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("FrontendModule", "NativeTypes")]
 [AutoRegisterService]
+[ArithmeticModeCompatibility(ArithmeticMode.Native)]
 public class NativeTypesModuleImpl : IFrontendCoreModule
 {
     public void InitLexer(ILexer lexer)

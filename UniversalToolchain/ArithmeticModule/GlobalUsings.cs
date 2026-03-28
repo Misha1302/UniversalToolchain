@@ -12,3 +12,4 @@ global using BasicCore.TranslatorWrapper;
 global using BasicTypesExtensions;
 global using DynamicMethodWrapper;
 global using ExceptionsManager;
+global using UniversalToolchain.Dialects.Abstractions;

@@ -6,7 +6,7 @@ public class NativeIntegerTests : TestBase
     [SetUp]
     public void Setup()
     {
-        SetArithmeticMode(WistOptions.ArithmeticModeEnum.Native);
+        SetArithmeticMode(ArithmeticMode.Native);
     }
 
     [Test]

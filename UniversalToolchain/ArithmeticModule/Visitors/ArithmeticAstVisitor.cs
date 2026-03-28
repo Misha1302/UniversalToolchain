@@ -1,6 +1,7 @@
 namespace ArithmeticModule.Visitors;
 
 [AutoRegisterService]
+[ArithmeticModeCompatibility(ArithmeticMode.Universal)]
 public class ArithmeticAstVisitor : IAstVisitor
 {
     private static readonly Dictionary<string, string> _opToName = new()

@@ -5,12 +5,12 @@ public abstract class TestBase
 {
     protected const int CoresCount = 2;
     private IServiceProvider? _serviceProvider;
-    private WistOptions.ArithmeticModeEnum _arithmeticMode = WistOptions.ArithmeticModeEnum.Universal;
+    private ArithmeticMode _arithmeticMode = ArithmeticMode.Universal;
 
     /// <summary>
     ///     Устанавливает режим арифметики для тестов
     /// </summary>
-    protected void SetArithmeticMode(WistOptions.ArithmeticModeEnum mode)
+    protected void SetArithmeticMode(ArithmeticMode mode)
     {
         _arithmeticMode = mode;
         _serviceProvider = null; // Сброс провайдера при изменении режима

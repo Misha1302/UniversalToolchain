@@ -9,7 +9,7 @@ public class ExampleRunner
         var services = new ServiceCollection();
 
         services.AddWistServices(options =>
-            options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native
+            options.ArithmeticMode = ArithmeticMode.Native
         );
 
         // Add optional modules

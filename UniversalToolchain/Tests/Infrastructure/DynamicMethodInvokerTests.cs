@@ -309,7 +309,7 @@ public class DynamicMethodInvokerTests
         // Arrange: Создаем Wist Engine как в Program.cs
         var services = new ServiceCollection();
         services.AddWistServices(options =>
-            options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native);
+            options.ArithmeticMode = ArithmeticMode.Native);
 
         var provider = services.BuildServiceProvider();
         var executableGiver = provider.GetServices<IExecutableGiver<DynamicMethod>>().First();
@@ -338,7 +338,7 @@ public class DynamicMethodInvokerTests
         // Arrange
         var services = new ServiceCollection();
         services.AddWistServices(options =>
-            options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native);
+            options.ArithmeticMode = ArithmeticMode.Native);
 
         var provider = services.BuildServiceProvider();
         var executableGiver = provider.GetServices<IExecutableGiver<DynamicMethod>>().First();
@@ -372,7 +372,7 @@ public class DynamicMethodInvokerTests
         // Arrange
         var services = new ServiceCollection();
         services.AddWistServices(options =>
-            options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native);
+            options.ArithmeticMode = ArithmeticMode.Native);
 
         var provider = services.BuildServiceProvider();
         var executableGiver = provider.GetServices<IExecutableGiver<DynamicMethod>>().First();
@@ -407,7 +407,7 @@ public class DynamicMethodInvokerTests
         // Arrange
         var services = new ServiceCollection();
         services.AddWistServices(options =>
-            options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native);
+            options.ArithmeticMode = ArithmeticMode.Native);
 
         var provider = services.BuildServiceProvider();
         var executableGiver = provider.GetServices<IExecutableGiver<DynamicMethod>>().First();
@@ -442,7 +442,7 @@ public class DynamicMethodInvokerTests
         // Arrange
         var services = new ServiceCollection();
         services.AddWistServices(options =>
-            options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native);
+            options.ArithmeticMode = ArithmeticMode.Native);
 
         var provider = services.BuildServiceProvider();
         var executableGiver = provider.GetServices<IExecutableGiver<DynamicMethod>>().First();
@@ -471,7 +471,7 @@ public class DynamicMethodInvokerTests
         // Arrange
         var services = new ServiceCollection();
         services.AddWistServices(options =>
-            options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native);
+            options.ArithmeticMode = ArithmeticMode.Native);
 
         var provider = services.BuildServiceProvider();
         var executableGiver = provider.GetServices<IExecutableGiver<DynamicMethod>>().First();
@@ -502,7 +502,7 @@ public class DynamicMethodInvokerTests
         // Arrange
         var services = new ServiceCollection();
         services.AddWistServices(options =>
-            options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native);
+            options.ArithmeticMode = ArithmeticMode.Native);
 
         var provider = services.BuildServiceProvider();
         var executableGiver = provider.GetServices<IExecutableGiver<DynamicMethod>>().First();
@@ -536,7 +536,7 @@ public class DynamicMethodInvokerTests
         // Arrange
         var services = new ServiceCollection();
         services.AddWistServices(options =>
-            options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native);
+            options.ArithmeticMode = ArithmeticMode.Native);
 
         var provider = services.BuildServiceProvider();
         var executableGiver = provider.GetServices<IExecutableGiver<DynamicMethod>>().First();
@@ -584,7 +584,7 @@ public class DynamicMethodInvokerTests
         // Arrange
         var services = new ServiceCollection();
         services.AddWistServices(options =>
-            options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native);
+            options.ArithmeticMode = ArithmeticMode.Native);
 
         var provider = services.BuildServiceProvider();
         var executableGiver = provider.GetServices<IExecutableGiver<DynamicMethod>>().First();
@@ -612,7 +612,7 @@ public class DynamicMethodInvokerTests
         // Тест Universal mode
         var servicesUniversal = new ServiceCollection();
         servicesUniversal.AddWistServices(options =>
-            options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native);
+            options.ArithmeticMode = ArithmeticMode.Native);
 
         var providerUniversal = servicesUniversal.BuildServiceProvider();
         var executableGiverUniversal = providerUniversal.GetServices<IExecutableGiver<DynamicMethod>>().First();
@@ -635,7 +635,7 @@ public class DynamicMethodInvokerTests
         // Тест Native mode
         var servicesNative = new ServiceCollection();
         servicesNative.AddWistServices(options =>
-            options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native);
+            options.ArithmeticMode = ArithmeticMode.Native);
 
         var providerNative = servicesNative.BuildServiceProvider();
         var executableGiverNative = providerNative.GetServices<IExecutableGiver<DynamicMethod>>().First();
