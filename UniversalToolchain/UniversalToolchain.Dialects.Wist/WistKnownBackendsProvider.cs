@@ -49,7 +49,11 @@ public sealed class WistKnownBackendsProvider : IWistKnownBackendsProvider
             if (!catalog.TryResolveBackend(backendId.Value, out var entry) || entry == null)
                 Thrower.InvalidOpEx($"Wist backend provider '{backendId.Value}' is registered, but no matching runtime backend metadata entry exists.");
 
-            descriptors.Add(new RuntimeBackendDescriptor(new DialectBackendId(entry.CanonicalAlias), entry.Aliases));
+            var aliases = entry.Aliases
+                .OrderBy(static x => x, StringComparer.Ordinal)
+                .ToArray();
+
+            descriptors.Add(new RuntimeBackendDescriptor(new DialectBackendId(entry.CanonicalAlias), aliases));
         }
 
         return descriptors
