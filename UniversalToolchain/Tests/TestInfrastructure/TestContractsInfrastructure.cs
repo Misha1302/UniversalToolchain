@@ -32,7 +32,7 @@ internal static class TestContractsInfrastructure
     public static string WriteManifest(string root, string fileName, string assemblySimpleName, IReadOnlyList<FileDialectRuntimeComponentEntry> components)
     {
         var serializer = new RuntimeManifestJsonSerializer();
-        var path = System.IO.Path.Combine(root, fileName);
+        var path = Path.Combine(root, fileName);
         var document = new FileDialectRuntimeManifestDocument(assemblySimpleName, components);
         File.WriteAllText(path, serializer.Serialize(document));
         return path;

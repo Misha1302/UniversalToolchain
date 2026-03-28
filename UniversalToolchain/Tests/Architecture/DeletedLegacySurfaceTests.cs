@@ -1,6 +1,6 @@
+using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Tests.TestInfrastructure;
-using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
 
 namespace Tests.Architecture;
@@ -62,7 +62,7 @@ public class DeletedLegacySurfaceTests
     public void CanonicalRuntimePath_ShouldNotExposeRemovedBroadWistBootstrap()
     {
         var extensionMethods = typeof(WistDialectServiceCollectionExtensions)
-            .GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+            .GetMethods(BindingFlags.Public | BindingFlags.Static)
             .Select(static x => x.Name)
             .ToArray();
 
@@ -78,7 +78,7 @@ public class DeletedLegacySurfaceTests
     public void CanonicalRuntimePath_ShouldNotExposeLegacyCompositionWorkflow()
     {
         var workflowType = typeof(WistDialectExecutionWorkflow);
-        var publicMethods = workflowType.GetMethods(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+        var publicMethods = workflowType.GetMethods(BindingFlags.Public | BindingFlags.Instance)
             .Select(static x => x.Name)
             .ToArray();
 

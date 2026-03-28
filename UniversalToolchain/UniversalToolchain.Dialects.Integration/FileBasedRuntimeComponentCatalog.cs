@@ -157,10 +157,8 @@ public sealed class FileBasedRuntimeComponentCatalog : IRuntimeComponentCatalog
         foreach (var entry in entries)
         {
             if (ownersById.TryGetValue(entry.ComponentId, out var existing))
-            {
                 Thrower.InvalidOpEx(
                     $"Duplicate runtime component id '{entry.ComponentId}' for aliases '{existing.CanonicalAlias}' and '{entry.CanonicalAlias}'.");
-            }
 
             ownersById.Add(entry.ComponentId, entry);
         }

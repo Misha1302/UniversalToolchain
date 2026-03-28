@@ -5,8 +5,6 @@ namespace Tests.Cli;
 [TestFixture]
 public class WistcCliContractsTests
 {
-    private static string _cliDllPath = string.Empty;
-
     [OneTimeSetUp]
     public void BuildCli()
     {
@@ -18,6 +16,8 @@ public class WistcCliContractsTests
         _cliDllPath = ResolveCliDllPath(repoRoot);
         Assert.That(File.Exists(_cliDllPath), Is.True, $"CLI assembly not found at '{_cliDllPath}'.");
     }
+
+    private static string _cliDllPath = string.Empty;
 
     [Test]
     public void DialectInspect_ShouldSucceed_ForMinimalValidDialect()

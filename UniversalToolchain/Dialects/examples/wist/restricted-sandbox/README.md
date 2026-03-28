@@ -6,7 +6,8 @@ This example demonstrates constrained composition aimed at a narrower runtime pr
 
 ## Enabled modules/backends/features
 
-- Modules: `Arithmetic`, `BooleanConditions`, `Comments`, `ComparisonConditions`, `Conditions`, `Equality`, `Numbers`, `Scopes`, `Whitespaces`
+- Modules: `Arithmetic`, `BooleanConditions`, `Comments`, `ComparisonConditions`, `Conditions`, `Equality`, `Numbers`,
+  `Scopes`, `Whitespaces`
 - Backend: `interpreter`
 
 ## Intentionally excluded capabilities
