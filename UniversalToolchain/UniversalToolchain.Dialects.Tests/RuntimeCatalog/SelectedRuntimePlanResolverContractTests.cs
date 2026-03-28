@@ -149,8 +149,8 @@ public class SelectedRuntimePlanResolverContractTests
         return new SelectedRuntimePlanResolver(new StaticCatalog(entries));
     }
 
-    private static RuntimeComponentManifestEntry Entry(RuntimeComponentKind kind, string canonicalAlias, string type, params string[] aliases)
-        => new(kind, canonicalAlias, aliases, new RuntimeTypeReference("TestAssembly", type));
+    private static RuntimeComponentManifestEntry Entry(RuntimeComponentKind kind, string canonicalAlias, string _, params string[] aliases)
+        => new(kind, canonicalAlias, aliases, RuntimeComponentIdFactory.Create(kind, canonicalAlias), "TestAssembly");
 
     private sealed class StaticCatalog(IEnumerable<RuntimeComponentManifestEntry> entries) : IRuntimeComponentCatalog
     {

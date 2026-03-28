@@ -84,7 +84,8 @@ public class WistDialectBackendCompatibilityTests
             RuntimeComponentKind.Backend,
             alias,
             aliases ?? [],
-            new RuntimeTypeReference("AnyAssembly", $"Any.Namespace.{alias}"));
+            RuntimeComponentIdFactory.Create(RuntimeComponentKind.Backend, alias),
+            "AnyAssembly");
 
     private sealed class StaticCatalog(params RuntimeComponentManifestEntry[] backends) : IRuntimeComponentCatalog
     {

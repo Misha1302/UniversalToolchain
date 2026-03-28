@@ -15,7 +15,7 @@ public class RuntimeManifestCatalogContractTests
 
         var catalog = new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([zPath, aPath]), serializer);
 
-        Assert.That(catalog.GetModulesInDeterministicOrder().Select(static x => x.TypeReference.AssemblySimpleName), Is.EqualTo(new[] { "AAssembly", "ZAssembly" }));
+        Assert.That(catalog.GetModulesInDeterministicOrder().Select(static x => x.AssemblySimpleName), Is.EqualTo(new[] { "AAssembly", "ZAssembly" }));
     }
 
     [Test]
@@ -41,14 +41,15 @@ public class RuntimeManifestCatalogContractTests
     }
 
     [Test]
-    public void LoadEntries_ShouldRejectEmptyTypeFullName()
+    public void LoadEntries_ShouldDeriveComponentIdFromKindAndAlias_WhenMissingInManifest()
     {
         using var temp = new TempDirectory();
         var serializer = new RuntimeManifestJsonSerializer();
-        var path = WriteManifest(temp.Path, "empty-type.dialect.runtime.json", "Asm", [Module("Arithmetic", " ")], serializer);
+        var path = WriteManifest(temp.Path, "empty-type.dialect.runtime.json", "Asm", [new FileDialectRuntimeComponentEntry("FrontendModule", "Arithmetic", [], " ")], serializer);
 
-        var ex = Assert.Throws<ArgumentException>(() => new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([path]), serializer));
-        Assert.That(ex!.Message, Does.Contain("TypeReference.TypeFullName must not be empty"));
+        var catalog = new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([path]), serializer);
+        Assert.That(catalog.TryResolveModule("Arithmetic", out var entry), Is.True);
+        Assert.That(entry!.ComponentId.Value, Is.EqualTo("frontend.arithmetic"));
     }
 
     [Test]
@@ -100,7 +101,7 @@ public class RuntimeManifestCatalogContractTests
         {
             Assert.That(entry!.CanonicalAlias, Is.EqualTo("Arithmetic"));
             Assert.That(entry.Aliases, Is.EqualTo(new[] { "a", "b" }));
-            Assert.That(entry.TypeReference.TypeFullName, Is.EqualTo("Arithmetic.Module.Type"));
+            Assert.That(entry.ComponentId.Value, Is.EqualTo("frontend.arithmetic"));
         });
     }
 
@@ -116,14 +117,14 @@ public class RuntimeManifestCatalogContractTests
         return Assert.Throws<InvalidOperationException>(() => new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([firstPath, secondPath]), serializer))!;
     }
 
-    private static FileDialectRuntimeComponentEntry Module(string alias, string type, params string[] aliases) =>
-        new("FrontendModule", alias, aliases, type);
+    private static FileDialectRuntimeComponentEntry Module(string alias, string _, params string[] aliases) =>
+        new("FrontendModule", alias, aliases, RuntimeComponentIdFactory.Create(RuntimeComponentKind.FrontendModule, alias).Value);
 
-    private static FileDialectRuntimeComponentEntry Optimizer(string alias, string type, params string[] aliases) =>
-        new("Optimizer", alias, aliases, type);
+    private static FileDialectRuntimeComponentEntry Optimizer(string alias, string _, params string[] aliases) =>
+        new("Optimizer", alias, aliases, RuntimeComponentIdFactory.Create(RuntimeComponentKind.Optimizer, alias).Value);
 
-    private static FileDialectRuntimeComponentEntry Backend(string alias, string type, params string[] aliases) =>
-        new("Backend", alias, aliases, type);
+    private static FileDialectRuntimeComponentEntry Backend(string alias, string _, params string[] aliases) =>
+        new("Backend", alias, aliases, RuntimeComponentIdFactory.Create(RuntimeComponentKind.Backend, alias).Value);
 
     private static string WriteManifest(string root, string fileName, string assemblySimpleName, IReadOnlyList<FileDialectRuntimeComponentEntry> components, IRuntimeManifestSerializer serializer)
     {
