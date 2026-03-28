@@ -1,0 +1,133 @@
+using Microsoft.Extensions.DependencyInjection;
+using Tests.TestInfrastructure;
+using UniversalToolchain.Dialects.Integration;
+using UniversalToolchain.Dialects.Wist;
+
+namespace Tests.Stress;
+
+[TestFixture]
+public class RuntimeStressContractsTests
+{
+    private const int RepeatCount = 100;
+    private const int ParallelCount = 50;
+
+    [Test]
+    public void ComposeAndCreateHost_ShouldSurvive100RepeatedCycles()
+    {
+        using var provider = TestContractsInfrastructure.CreateWorkflowProvider();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+
+        var signatures = new List<string>(RepeatCount);
+        for (var i = 0; i < RepeatCount; i++)
+        {
+            var composition = workflow.ComposeText("dialect Repeat\nuse Arithmetic,Numbers,Variables\nenable LocalVariablesOptimization\nbackend compiler,interpreter", $"repeat-{i}");
+            Assert.That(composition.IsSuccess, Is.True, composition.ToDeterministicText());
+            using var host = workflow.CreateHost(composition);
+            signatures.Add(TestContractsInfrastructure.BuildSelectionSignature(composition) + "##" + TestContractsInfrastructure.BuildHostSignature(host));
+        }
+
+        Assert.That(signatures.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task ComposeAndCreateHost_ShouldSurvive50ParallelCycles()
+    {
+        using var provider = TestContractsInfrastructure.CreateWorkflowProvider();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+
+        var signatures = await Task.WhenAll(Enumerable.Range(0, ParallelCount).Select(i => Task.Run(() =>
+        {
+            var composition = workflow.ComposeText("dialect Parallel\nuse Arithmetic,Numbers\nbackend compiler,interpreter", $"parallel-{i}");
+            if (!composition.IsSuccess)
+                return "compose-failed:" + composition.ToDeterministicText();
+
+            using var host = workflow.CreateHost(composition);
+            return TestContractsInfrastructure.BuildSelectionSignature(composition) + "##" + TestContractsInfrastructure.BuildHostSignature(host);
+        })));
+
+        Assert.That(signatures.All(static x => !x.StartsWith("compose-failed:", StringComparison.Ordinal)), Is.True, string.Join(Environment.NewLine, signatures));
+        Assert.That(signatures.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1));
+    }
+
+    [Test]
+    public void ManifestCatalogLoading_ShouldRemainStable_After100Repeats()
+    {
+        using var temp = new TempDirectory();
+        var first = TestContractsInfrastructure.WriteManifest(temp.Path, "a.dialect.runtime.json", "A.Assembly", [new FileDialectRuntimeComponentEntry("FrontendModule", "Arithmetic", ["arith"], "ArithmeticModule.Module.ArithmeticModuleImpl")]);
+        var second = TestContractsInfrastructure.WriteManifest(temp.Path, "b.dialect.runtime.json", "B.Assembly", [new FileDialectRuntimeComponentEntry("Backend", "interpreter", ["vm"], "BasicInterpreter.Implementations.BasicInterpreter")]);
+        var serializer = new RuntimeManifestJsonSerializer();
+
+        var signatures = new List<string>(RepeatCount);
+        for (var i = 0; i < RepeatCount; i++)
+        {
+            var catalog = new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([second, first]), serializer);
+            var modules = catalog.GetModulesInDeterministicOrder().Select(static x => x.CanonicalAlias).ToArray();
+            var backends = catalog.GetBackendsInDeterministicOrder().Select(static x => x.CanonicalAlias).ToArray();
+            signatures.Add(string.Join("|", modules) + "::" + string.Join("|", backends));
+        }
+
+        Assert.That(signatures.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1));
+    }
+
+    [Test]
+    public void RuntimeTypeLoading_ShouldRemainStable_After100Repeats()
+    {
+        using var provider = TestContractsInfrastructure.CreateWorkflowProvider();
+        var loader = provider.GetRequiredService<IRuntimeComponentTypeLoader>();
+        var catalog = provider.GetRequiredService<IRuntimeComponentCatalog>();
+
+        var entries = catalog.GetModulesInDeterministicOrder().Take(3)
+            .Concat(catalog.GetBackendsInDeterministicOrder())
+            .ToArray();
+
+        var signatures = new List<string>(RepeatCount);
+        for (var i = 0; i < RepeatCount; i++)
+            signatures.Add(string.Join("|", entries.Select(loader.LoadType).Select(static x => x.FullName)));
+
+        Assert.That(signatures.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1));
+    }
+
+    [Test]
+    public void KnownBackendResolution_ShouldRemainStable_After100Repeats()
+    {
+        using var provider = TestContractsInfrastructure.CreateWorkflowProvider();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+        var composition = workflow.ComposeText("dialect Backends\nuse Arithmetic\nbackend compiler,interpreter", "backends");
+        Assert.That(composition.IsSuccess, Is.True, composition.ToDeterministicText());
+
+        var signatures = new List<string>(RepeatCount);
+        for (var i = 0; i < RepeatCount; i++)
+        {
+            using var host = workflow.CreateHost(composition);
+            signatures.Add(string.Join("|", host.Configuration.EnabledBackends.Select(static x => x.CanonicalId)));
+        }
+
+        Assert.That(signatures.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task CanonicalWistRuntimeFlow_ShouldRemainStable_UnderMixedLoad()
+    {
+        using var provider = TestContractsInfrastructure.CreateWorkflowProvider();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+
+        var tasks = Enumerable.Range(0, ParallelCount).Select(i => Task.Run(() =>
+        {
+            var dialectText = i % 2 == 0
+                ? "dialect M1\nuse Arithmetic,Numbers\nbackend compiler,interpreter"
+                : "dialect M2\nuse Arithmetic,Numbers,Variables\nenable LocalVariablesOptimization\nbackend compiler,interpreter";
+
+            var composition = workflow.ComposeText(dialectText, $"mixed-{i}");
+            if (!composition.IsSuccess)
+                return "compose-failed:" + composition.ToDeterministicText();
+
+            using var host = workflow.CreateHost(composition);
+            var runResult = host.Run("1+2", i % 2 == 0 ? "interpreter" : "compiler");
+            return TestContractsInfrastructure.BuildSelectionSignature(composition) + "##" + TestContractsInfrastructure.BuildHostSignature(host) + "##" + (runResult?.ToString() ?? "<null>");
+        }));
+
+        var signatures = await Task.WhenAll(tasks);
+        Assert.That(signatures.All(static x => !x.StartsWith("compose-failed:", StringComparison.Ordinal)), Is.True, string.Join(Environment.NewLine, signatures));
+        Assert.That(signatures.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(2));
+    }
+}
