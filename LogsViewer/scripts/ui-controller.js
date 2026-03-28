@@ -3,12 +3,12 @@ class UIController {
     static displaySection(sectionId, content) {
         const contentElement = document.getElementById(`${sectionId}-content`);
         const lineNumbersElement = document.getElementById(`${sectionId}-line-numbers`);
-        
+
         if (contentElement && lineNumbersElement) {
             contentElement.textContent = content;
-            
+
             const lineCount = content.split('\n').length;
-            lineNumbersElement.innerHTML = Array.from({length: lineCount}, (_, i) => 
+            lineNumbersElement.innerHTML = Array.from({length: lineCount}, (_, i) =>
                 `<div>${i + 1}</div>`
             ).join('');
         }
@@ -40,7 +40,7 @@ class UIController {
             if (!file) return;
 
             FileHandler.updateFileInfo(file);
-            
+
             try {
                 const content = await FileHandler.readFile(file);
                 callback(content);

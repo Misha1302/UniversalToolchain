@@ -11,7 +11,8 @@ public class RuntimeKnownBackendsProviderContractTests
     {
         var catalog = new StaticCatalog([
             Entry(RuntimeComponentKind.Backend, "compiler", "Meta.Compiler"),
-            Entry(RuntimeComponentKind.Backend, "interpreter", "Meta.Interpreter")]);
+            Entry(RuntimeComponentKind.Backend, "interpreter", "Meta.Interpreter")
+        ]);
 
         var provider = new RuntimeKnownBackendsProvider(catalog, [new StubRegistrar("interpreter")]);
         var known = provider.GetKnownBackends();
@@ -56,7 +57,8 @@ public class RuntimeKnownBackendsProviderContractTests
     {
         var catalog = new StaticCatalog([
             Entry(RuntimeComponentKind.Backend, "interpreter", "Meta.Interpreter"),
-            Entry(RuntimeComponentKind.Backend, "compiler", "Meta.Compiler")]);
+            Entry(RuntimeComponentKind.Backend, "compiler", "Meta.Compiler")
+        ]);
 
         var provider = new RuntimeKnownBackendsProvider(catalog, [new StubRegistrar("interpreter"), new StubRegistrar("compiler")]);
 
@@ -81,7 +83,10 @@ public class RuntimeKnownBackendsProviderContractTests
     {
         public DialectBackendId BackendId { get; } = new(backend);
         public IReadOnlyList<string> SupportedIntrinsics => [];
-        public void RegisterRuntime(IServiceCollection services, DialectBackendRuntimeConfiguration configuration) { }
+
+        public void RegisterRuntime(IServiceCollection services, DialectBackendRuntimeConfiguration configuration)
+        {
+        }
     }
 
     private sealed class StaticCatalog(IEnumerable<RuntimeComponentManifestEntry> entries) : IRuntimeComponentCatalog
@@ -91,8 +96,18 @@ public class RuntimeKnownBackendsProviderContractTests
             .SelectMany(static x => x.AllAliases.Select(a => (a, x)))
             .ToDictionary(static x => x.a, static x => x.x, StringComparer.Ordinal);
 
-        public bool TryResolveModule(string alias, out RuntimeComponentManifestEntry? entry) { entry = null; return false; }
-        public bool TryResolveOptimizer(string alias, out RuntimeComponentManifestEntry? entry) { entry = null; return false; }
+        public bool TryResolveModule(string alias, out RuntimeComponentManifestEntry? entry)
+        {
+            entry = null;
+            return false;
+        }
+
+        public bool TryResolveOptimizer(string alias, out RuntimeComponentManifestEntry? entry)
+        {
+            entry = null;
+            return false;
+        }
+
         public bool TryResolveBackend(string alias, out RuntimeComponentManifestEntry? entry) => _entries.TryGetValue(alias, out entry);
         public IReadOnlyList<RuntimeComponentManifestEntry> GetModulesInDeterministicOrder() => [];
         public IReadOnlyList<RuntimeComponentManifestEntry> GetOptimizersInDeterministicOrder() => [];

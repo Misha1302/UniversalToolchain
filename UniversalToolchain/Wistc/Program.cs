@@ -1,4 +1,3 @@
-using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
 
 return Parser.Default.ParseArguments<RunOptions, ReplOptions, DialectInspectOptions, DialectDemoOptions>(args)
@@ -105,10 +104,10 @@ int DialectDemoCommand(DialectDemoOptions options)
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var report = string.IsNullOrWhiteSpace(options.File)
             ? workflow.ComposeText("""
-                                 dialect Demo
-                                 use Arithmetic,Numbers
-                                 backend interpreter
-                                 """, "demo-inline")
+                                   dialect Demo
+                                   use Arithmetic,Numbers
+                                   backend interpreter
+                                   """, "demo-inline")
             : workflow.ComposeFile(options.File);
 
         Console.WriteLine(report.ToDeterministicText());
@@ -172,7 +171,7 @@ WistDialectExecutionHost CreateDefaultHost(CommonOptions options)
 
     var modules = new List<string>
     {
-        "Whitespaces","SemicolonAsNewLine","Comments","Numbers","Identifier","Arithmetic","Equality","Conditions","Loops","Variables","Scopes","Labels","InternalPreprocessorLexemes","CSharpInterop"
+        "Whitespaces", "SemicolonAsNewLine", "Comments", "Numbers", "Identifier", "Arithmetic", "Equality", "Conditions", "Loops", "Variables", "Scopes", "Labels", "InternalPreprocessorLexemes", "CSharpInterop"
     };
 
     if (options.UseNativeMath)
@@ -223,8 +222,8 @@ ServiceProvider CreateDialectWorkflowProvider()
 {
     var services = new ServiceCollection();
     services.AddWistDialectServices();
-        services.AddWistCilBackend();
-        services.AddWistInterpreterBackend();
+    services.AddWistCilBackend();
+    services.AddWistInterpreterBackend();
     return services.BuildServiceProvider();
 }
 

@@ -1,7 +1,9 @@
+using UniversalToolchain.Dialects.Abstractions;
+
 namespace LabelsModule.Module;
 
-[UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("Labels")]
-[UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("FrontendModule", "Labels")]
+[DialectModuleAlias("Labels")]
+[DialectRuntimeExport("FrontendModule", "Labels")]
 [AutoRegisterService]
 public class LabelsModuleImpl : IFrontendCoreModule
 {

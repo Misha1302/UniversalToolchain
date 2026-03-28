@@ -52,7 +52,7 @@ public sealed class WistDialectExecutionWorkflow
         var semanticErrors = buildPlan.ValidationResult.Diagnostics.Where(x => x.Severity == DialectDiagnosticSeverity.Error).ToList();
 
         if (!buildPlan.CanBuild)
-            return new DialectFrameworkCompositionResult(sourceName, compiled, buildPlan, semanticErrors, [], null);
+            return new DialectFrameworkCompositionResult(sourceName, compiled, buildPlan, semanticErrors, []);
 
         var selectedRuntimePlan = _resolver.Resolve(buildPlan);
         var resolutionErrors = selectedRuntimePlan.Diagnostics

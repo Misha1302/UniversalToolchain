@@ -18,7 +18,11 @@ to:
 parse dialect -> build plan -> resolve only selected components -> register only selected components
 ~~~
 
-This plan is focused on the **dialect-based execution path** first. The existing eager path may remain for compatibility. The current code already has a minimal core registration path in `AddWistCoreServices()`, while the full path still performs automatic discovery first and filtering later, and `TypesFinder` keeps global static caches and recursively scans assemblies. :contentReference[oaicite:0]{index=0} :contentReference[oaicite:1]{index=1} :contentReference[oaicite:2]{index=2}
+This plan is focused on the **dialect-based execution path** first. The existing eager path may remain for
+compatibility. The current code already has a minimal core registration path in `AddWistCoreServices()`, while the full
+path still performs automatic discovery first and filtering later, and `TypesFinder` keeps global static caches and
+recursively scans assemblies. :contentReference[oaicite:0]{index=0} :contentReference[oaicite:1]{index=1} :
+contentReference[oaicite:2]{index=2}
 
 ---
 
@@ -32,7 +36,8 @@ Right now the main DI path is broad and eager:
 2. It calls `RegisterAutoDiscoveredServices(...)`.
 3. That path uses `TypesFinder` or loaded assemblies.
 4. `AddAutoRegisteredServices(...)` iterates all types from assemblies and registers supported ones.
-5. Only after that `ApplyOptionsFilters(...)` removes excluded namespaces/modules. :contentReference[oaicite:3]{index=3} :contentReference[oaicite:4]{index=4}
+5. Only after that `ApplyOptionsFilters(...)` removes excluded namespaces/modules. :contentReference[oaicite:3]
+   {index=3} :contentReference[oaicite:4]{index=4}
 
 This means that even if a dialect actually needs only:
 
@@ -49,11 +54,16 @@ the system may still:
 - populate global caches,
 - register many descriptors and services that are later removed.
 
-`TypesFinder` is especially important here because it uses global static/lazy caches, keeps loaded assemblies, caches assembly names, caches “bad assemblies”, scans `*.dll` recursively and loads types from assemblies. This is a strong candidate for startup memory growth that is independent from the actual selected module count. :contentReference[oaicite:5]{index=5}
+`TypesFinder` is especially important here because it uses global static/lazy caches, keeps loaded assemblies, caches
+assembly names, caches “bad assemblies”, scans `*.dll` recursively and loads types from assemblies. This is a strong
+candidate for startup memory growth that is independent from the actual selected module count. :
+contentReference[oaicite:5]{index=5}
 
 ### Why “just use fewer modules” is not enough
 
-Using fewer modules in the dialect config is **not sufficient** in the current architecture because the expensive part happens **before** the module selection becomes effective. The selected module count helps runtime composition a bit, but does not control the broad discovery phase. :contentReference[oaicite:6]{index=6}
+Using fewer modules in the dialect config is **not sufficient** in the current architecture because the expensive part
+happens **before** the module selection becomes effective. The selected module count helps runtime composition a bit,
+but does not control the broad discovery phase. :contentReference[oaicite:6]{index=6}
 
 ---
 
@@ -115,13 +125,16 @@ The dialect path must become **selection-driven**, not **discovery-driven**.
 ## Design constraints
 
 1. **Do not break existing eager path immediately.**  
-   `AddWistServices()` should remain available for compatibility and tests that still rely on full auto-discovery. :contentReference[oaicite:7]{index=7}
+   `AddWistServices()` should remain available for compatibility and tests that still rely on full auto-discovery. :
+   contentReference[oaicite:7]{index=7}
 
 2. **The dialect path must not depend on broad assembly scanning at execution time.**  
    It may still use a prebuilt registry/catalog, but must not scan all assemblies every time.
 
 3. **Keep deterministic ordering.**  
-   The project already has ordering-sensitive dialect behavior and tests for deterministic ordering. The new runtime composition must preserve deterministic ordering of selected modules/optimizers/backends. :contentReference[oaicite:8]{index=8} :contentReference[oaicite:9]{index=9} :contentReference[oaicite:10]{index=10}
+   The project already has ordering-sensitive dialect behavior and tests for deterministic ordering. The new runtime
+   composition must preserve deterministic ordering of selected modules/optimizers/backends. :
+   contentReference[oaicite:8]{index=8} :contentReference[oaicite:9]{index=9} :contentReference[oaicite:10]{index=10}
 
 4. **Do not mix runtime selection with DI auto-registration.**  
    Selection must be based on runtime descriptors, then DI registration should instantiate only chosen types.
@@ -162,7 +175,8 @@ No service provider yet.
 ### Layer 3: minimal service provider assembly
 
 Use `AddWistCoreServices()` and explicitly register only selected components.  
-This is the point where actual runtime objects are instantiated. `AddWistCoreServices()` is already the right minimal base for this. :contentReference[oaicite:11]{index=11}
+This is the point where actual runtime objects are instantiated. `AddWistCoreServices()` is already the right minimal
+base for this. :contentReference[oaicite:11]{index=11}
 
 ---
 
@@ -175,6 +189,7 @@ Before refactoring, add tests that lock in the current expected dialect semantic
 ### Add tests
 
 #### 1. Deterministic dialect composition
+
 Create tests:
 
 - `ComposeText_SameDialect_RepeatedRuns_ProduceSameSelectedModules`
@@ -182,6 +197,7 @@ Create tests:
 - `ComposeText_ParallelRuns_DoNotCrossPolluteSelections`
 
 #### 2. Compatibility between old and new path
+
 Prepare golden cases for several dialects:
 
 - minimal dialect
@@ -200,6 +216,7 @@ Each test should compare:
 - final runtime behavior on a few sample programs
 
 #### 3. Memory-oriented smoke tests
+
 Not precise profiler assertions, only coarse safety tests:
 
 - repeated compose 100 times should not grow registered component count,
@@ -263,7 +280,8 @@ public sealed record DialectRuntimeBackendDescriptor(
 
 ### Why
 
-This layer allows the dialect flow to reason about runtime capabilities without immediately building DI objects or doing broad registration.
+This layer allows the dialect flow to reason about runtime capabilities without immediately building DI objects or doing
+broad registration.
 
 ### Acceptance criteria for Phase 2
 
@@ -320,6 +338,7 @@ public sealed class DialectRuntimeCatalogBuilder
 ### Important implementation details
 
 #### Alias collisions
+
 Builder must fail fast with clear messages:
 
 - which alias collided,
@@ -329,6 +348,7 @@ Builder must fail fast with clear messages:
 This is already aligned with existing alias collision tests. :contentReference[oaicite:12]{index=12}
 
 #### Ordering
+
 Internally sort descriptors deterministically:
 
 - canonical alias ascending for modules/optimizers,
@@ -373,16 +393,19 @@ public sealed class DialectRuntimeSelectionResolver
 ### Responsibilities
 
 #### Modules
+
 - Resolve all module aliases from `plan.OrderedModules`.
 - Preserve the exact order from the normalized `DialectBuildPlan`.
 - Report missing aliases as resolution diagnostics.
 
 #### Optimizers
+
 - Resolve only explicitly enabled optimizers.
 - Respect backend targeting if policy is backend-specific.
 - Preserve deterministic order.
 
 #### Backends
+
 - Resolve only selected backend ids from the build plan.
 - Preserve deterministic order from plan normalization.
 
@@ -414,9 +437,11 @@ public sealed class DialectRuntimeProviderFactory
 ### Internal algorithm
 
 #### Step 1
+
 Create a fresh `ServiceCollection`.
 
 #### Step 2
+
 Call:
 
 ~~~csharp
@@ -426,6 +451,7 @@ services.AddWistCoreServices();
 This gives the minimal base runtime without broad discovery. :contentReference[oaicite:13]{index=13}
 
 #### Step 3
+
 Register selected frontend modules explicitly:
 
 ~~~csharp
@@ -436,6 +462,7 @@ foreach (var module in selection.OrderedModules)
 ~~~
 
 #### Step 4
+
 Register selected optimizers explicitly:
 
 ~~~csharp
@@ -446,6 +473,7 @@ foreach (var optimizer in selection.EnabledOptimizers)
 ~~~
 
 #### Step 5
+
 Register only required backend-related components.
 
 This part depends on current backend design. For first iteration:
@@ -528,7 +556,8 @@ But the default dialect path should use the new minimal provider assembly.
 ## Phase 7. Restrict `TypesFinder` usage to bootstrap scenarios only
 
 `TypesFinder` should no longer be a required dependency of every dialect composition.  
-Currently it is expensive because it maintains global caches and performs recursive assembly scanning and type enumeration. :contentReference[oaicite:14]{index=14}
+Currently it is expensive because it maintains global caches and performs recursive assembly scanning and type
+enumeration. :contentReference[oaicite:14]{index=14}
 
 ### New rule
 
@@ -556,10 +585,12 @@ public interface IDialectRuntimeCatalogBootstrapper
 Then provide two implementations:
 
 #### 1. Reflection bootstrapper
+
 For development/compatibility.
 May scan assemblies once at application startup.
 
 #### 2. Static/manual bootstrapper
+
 For production/minimal memory.
 Registers known types explicitly.
 
@@ -621,7 +652,8 @@ This phase is optional for the first merge, but should be planned.
 
 ### Current limitation
 
-If many modules live in already loaded assemblies, selected-only DI registration helps but cannot fully eliminate assembly metadata memory cost.
+If many modules live in already loaded assemblies, selected-only DI registration helps but cannot fully eliminate
+assembly metadata memory cost.
 
 ### Future direction
 
@@ -710,10 +742,12 @@ If renaming is too disruptive, at least document clearly that it is **not** the 
 ## 1. `DependencyInjection/ServiceCollectionExtensions.cs`
 
 ### Keep
+
 - `AddWistCoreServices()`
 - `AddWistServices(...)`
 
 ### Add
+
 - `AddSelectedWistRuntimeServices(DialectResolvedRuntimeSelection selection)`
 
 ### Expected implementation sketch
@@ -738,6 +772,7 @@ public static IServiceCollection AddSelectedWistRuntimeServices(
 ~~~
 
 ### Rule
+
 This method must never call full auto-discovery.
 
 ---
@@ -745,9 +780,11 @@ This method must never call full auto-discovery.
 ## 2. `DependencyInjection/AutoRegistration.cs`
 
 ### Keep
+
 As compatibility/bootstrap-only feature.
 
 ### Add docs/comments
+
 State explicitly that this is eager discovery and not the preferred low-memory dialect path.
 
 ---
@@ -755,14 +792,17 @@ State explicitly that this is eager discovery and not the preferred low-memory d
 ## 3. `AssemblyFinder/TypesFinder.cs`
 
 ### Keep
+
 As bootstrap/compatibility utility.
 
 ### Do not call from
+
 - `ComposeText`
 - `ComposeFile`
 - minimal provider assembly path
 
 ### Optional cleanup later
+
 Add explicit warnings/comments about static cache semantics.
 
 ---
@@ -788,6 +828,7 @@ Add new files:
 ## 5. `WistDialectExecutionWorkflow`
 
 ### Refactor
+
 Move from eager registration/dependency on broad discovery toward:
 
 ~~~text
@@ -795,6 +836,7 @@ compile dialect -> build plan -> resolve selection -> create minimal provider
 ~~~
 
 ### Important
+
 The workflow result should expose the selected runtime composition clearly for diagnostics and tests.
 
 ---
@@ -857,27 +899,35 @@ This will make it much easier to verify that the new path really avoids eager di
 ## Migration plan
 
 ## Step 1
+
 Add tests that freeze current dialect behavior.
 
 ## Step 2
+
 Introduce runtime descriptors and runtime catalog.
 
 ## Step 3
+
 Introduce selection resolver.
 
 ## Step 4
+
 Introduce minimal provider factory using `AddWistCoreServices()`.
 
 ## Step 5
+
 Switch `WistDialectExecutionWorkflow` to the new minimal path.
 
 ## Step 6
+
 Keep old eager path as fallback/compatibility.
 
 ## Step 7
+
 Optionally add manual Wist runtime catalog.
 
 ## Step 8
+
 Optionally add selective assembly loading metadata.
 
 ---
@@ -885,32 +935,40 @@ Optionally add selective assembly loading metadata.
 ## Risks
 
 ## Risk 1: missing implicit registrations
+
 Some runtime behavior may currently depend on eager registration of unrelated services.
 
 ### Mitigation
+
 - compare old and new path with golden tests,
 - add explicit registrations only where required,
 - do not guess hidden dependencies.
 
 ## Risk 2: backend registration coupling
+
 Backend support may currently be mixed into generic DI registration.
 
 ### Mitigation
+
 - isolate backend descriptor to runtime selection,
 - introduce explicit backend registration policy,
 - test interpreter-only and compiler-only compositions.
 
 ## Risk 3: hidden global state
+
 Some existing logic may silently rely on global caches.
 
 ### Mitigation
+
 - add repeated-run and parallel isolation tests,
 - make the new dialect path avoid static mutation where possible.
 
 ## Risk 4: catalog drift
+
 Manual Wist catalog may become outdated when modules are added.
 
 ### Mitigation
+
 - add tests that validate expected aliases exist,
 - document update checklist for new modules,
 - optionally keep reflection bootstrapper for dev verification.

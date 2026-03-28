@@ -1,7 +1,9 @@
+using UniversalToolchain.Dialects.Abstractions;
+
 namespace ConditionsModule.Optimizers;
 
-[UniversalToolchain.Dialects.Abstractions.DialectOptimizerAlias("BooleanOptimization")]
-[UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("Optimizer", "BooleanOptimization")]
+[DialectOptimizerAlias("BooleanOptimization")]
+[DialectRuntimeExport("Optimizer", "BooleanOptimization")]
 [AutoRegisterService]
 [UsedImplicitly]
 public class BooleanOptimizerModule : IIRProcessingModule

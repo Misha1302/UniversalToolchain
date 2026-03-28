@@ -1,36 +1,36 @@
 <Project>
 
-  <PropertyGroup>
-    <DialectRuntimeManifestEmitterProjectPath>$(MSBuildThisFileDirectory)UniversalToolchain.Dialects.ManifestEmitter/UniversalToolchain.Dialects.ManifestEmitter.csproj</DialectRuntimeManifestEmitterProjectPath>
-    <DialectRuntimeManifestFileSuffix>.dialect.runtime.json</DialectRuntimeManifestFileSuffix>
-  </PropertyGroup>
-
-  <Target Name="EmitDialectRuntimeManifest"
-          AfterTargets="Build"
-          Condition="'$(EmitDialectRuntimeManifest)' == 'true' and '$(DesignTimeBuild)' != 'true'">
     <PropertyGroup>
-      <DialectRuntimeManifestOutputPath>$(TargetDir)$(AssemblyName)$(DialectRuntimeManifestFileSuffix)</DialectRuntimeManifestOutputPath>
+        <DialectRuntimeManifestEmitterProjectPath>$(MSBuildThisFileDirectory)UniversalToolchain.Dialects.ManifestEmitter/UniversalToolchain.Dialects.ManifestEmitter.csproj</DialectRuntimeManifestEmitterProjectPath>
+        <DialectRuntimeManifestFileSuffix>.dialect.runtime.json</DialectRuntimeManifestFileSuffix>
     </PropertyGroup>
 
-    <Exec Command="&quot;$(DOTNET_HOST_PATH)&quot; run --project &quot;$(DialectRuntimeManifestEmitterProjectPath)&quot; -- --assembly &quot;$(TargetPath)&quot; --output &quot;$(DialectRuntimeManifestOutputPath)&quot;" />
+    <Target Name="EmitDialectRuntimeManifest"
+            AfterTargets="Build"
+            Condition="'$(EmitDialectRuntimeManifest)' == 'true' and '$(DesignTimeBuild)' != 'true'">
+        <PropertyGroup>
+            <DialectRuntimeManifestOutputPath>$(TargetDir)$(AssemblyName)$(DialectRuntimeManifestFileSuffix)</DialectRuntimeManifestOutputPath>
+        </PropertyGroup>
 
-    <ItemGroup>
-      <FileWrites Include="$(DialectRuntimeManifestOutputPath)" />
-    </ItemGroup>
-  </Target>
+        <Exec Command="&quot;$(DOTNET_HOST_PATH)&quot; run --project &quot;$(DialectRuntimeManifestEmitterProjectPath)&quot; -- --assembly &quot;$(TargetPath)&quot; --output &quot;$(DialectRuntimeManifestOutputPath)&quot;"/>
 
-  <Target Name="CopyReferencedDialectRuntimeManifests"
-          AfterTargets="Build"
-          Condition="'$(DesignTimeBuild)' != 'true'">
-    <ItemGroup>
-      <_ReferencedDialectRuntimeManifestCandidates Include="@(ReferenceCopyLocalPaths->'%(RootDir)%(Directory)%(Filename)$(DialectRuntimeManifestFileSuffix)')" />
-      <_ReferencedDialectRuntimeManifests Include="@(_ReferencedDialectRuntimeManifestCandidates)"
-                                          Condition="Exists('%(Identity)')" />
-    </ItemGroup>
+        <ItemGroup>
+            <FileWrites Include="$(DialectRuntimeManifestOutputPath)"/>
+        </ItemGroup>
+    </Target>
 
-    <Copy SourceFiles="@(_ReferencedDialectRuntimeManifests)"
-          DestinationFolder="$(TargetDir)"
-          SkipUnchangedFiles="true" />
-  </Target>
+    <Target Name="CopyReferencedDialectRuntimeManifests"
+            AfterTargets="Build"
+            Condition="'$(DesignTimeBuild)' != 'true'">
+        <ItemGroup>
+            <_ReferencedDialectRuntimeManifestCandidates Include="@(ReferenceCopyLocalPaths->'%(RootDir)%(Directory)%(Filename)$(DialectRuntimeManifestFileSuffix)')"/>
+            <_ReferencedDialectRuntimeManifests Include="@(_ReferencedDialectRuntimeManifestCandidates)"
+                                                Condition="Exists('%(Identity)')"/>
+        </ItemGroup>
+
+        <Copy SourceFiles="@(_ReferencedDialectRuntimeManifests)"
+              DestinationFolder="$(TargetDir)"
+              SkipUnchangedFiles="true"/>
+    </Target>
 
 </Project>

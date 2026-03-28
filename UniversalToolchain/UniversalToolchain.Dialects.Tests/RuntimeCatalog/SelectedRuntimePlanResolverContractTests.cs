@@ -9,7 +9,7 @@ public class SelectedRuntimePlanResolverContractTests
     public void Resolve_ShouldPreserveDeclaredModuleOrder()
     {
         var resolver = CreateResolver();
-        var plan = BuildPlan(modules: ["Numbers", "Arithmetic"], backends: [new DialectBackendId("interpreter")]);
+        var plan = BuildPlan(["Numbers", "Arithmetic"], [new DialectBackendId("interpreter")]);
 
         var selected = resolver.Resolve(plan);
 
@@ -20,7 +20,7 @@ public class SelectedRuntimePlanResolverContractTests
     public void Resolve_ShouldSortBackendsDeterministically()
     {
         var resolver = CreateResolver();
-        var plan = BuildPlan(modules: ["Arithmetic"], backends: [new DialectBackendId("interpreter"), new DialectBackendId("compiler")]);
+        var plan = BuildPlan(["Arithmetic"], [new DialectBackendId("interpreter"), new DialectBackendId("compiler")]);
 
         var selected = resolver.Resolve(plan);
 
@@ -31,7 +31,7 @@ public class SelectedRuntimePlanResolverContractTests
     public void Resolve_ShouldIgnoreDuplicateBackendSelection()
     {
         var resolver = CreateResolver();
-        var plan = BuildPlan(modules: ["Arithmetic"], backends: [new DialectBackendId("interpreter"), new DialectBackendId("interpreter")]);
+        var plan = BuildPlan(["Arithmetic"], [new DialectBackendId("interpreter"), new DialectBackendId("interpreter")]);
 
         var selected = resolver.Resolve(plan);
 
@@ -43,9 +43,8 @@ public class SelectedRuntimePlanResolverContractTests
     {
         var resolver = CreateResolver();
         var plan = BuildPlan(
-            modules: ["Arithmetic"],
-            backends: [new DialectBackendId("interpreter")],
-            optimizers:
+            ["Arithmetic"],
+            [new DialectBackendId("interpreter")],
             [
                 new OptimizerBuildDirective("CommonOpt", true, DialectBackendSelector.Any),
                 new OptimizerBuildDirective("CompilerOnlyOpt", true, DialectBackendSelector.For(new DialectBackendId("compiler"))),
@@ -61,7 +60,7 @@ public class SelectedRuntimePlanResolverContractTests
     public void Resolve_ShouldAddR001Diagnostic_ForMissingModule()
     {
         var resolver = CreateResolver();
-        var selected = resolver.Resolve(BuildPlan(modules: ["MissingModule"], backends: [new DialectBackendId("interpreter")]));
+        var selected = resolver.Resolve(BuildPlan(["MissingModule"], [new DialectBackendId("interpreter")]));
 
         Assert.That(selected.Diagnostics.Single(static x => x.Code == "R001").Message, Does.Contain("MissingModule"));
     }
@@ -70,7 +69,7 @@ public class SelectedRuntimePlanResolverContractTests
     public void Resolve_ShouldAddR002Diagnostic_ForMissingBackend()
     {
         var resolver = CreateResolver();
-        var selected = resolver.Resolve(BuildPlan(modules: ["Arithmetic"], backends: [new DialectBackendId("missing-backend")]));
+        var selected = resolver.Resolve(BuildPlan(["Arithmetic"], [new DialectBackendId("missing-backend")]));
 
         Assert.That(selected.Diagnostics.Single(static x => x.Code == "R002").Message, Does.Contain("missing-backend"));
     }
@@ -80,9 +79,9 @@ public class SelectedRuntimePlanResolverContractTests
     {
         var resolver = CreateResolver();
         var selected = resolver.Resolve(BuildPlan(
-            modules: ["Arithmetic"],
-            backends: [new DialectBackendId("interpreter")],
-            optimizers: [new OptimizerBuildDirective("missing-opt", true, DialectBackendSelector.Any)]));
+            ["Arithmetic"],
+            [new DialectBackendId("interpreter")],
+            [new OptimizerBuildDirective("missing-opt", true, DialectBackendSelector.Any)]));
 
         Assert.That(selected.Diagnostics.Single(static x => x.Code == "R003").Message, Does.Contain("missing-opt"));
     }
@@ -92,11 +91,12 @@ public class SelectedRuntimePlanResolverContractTests
     {
         var resolver = CreateResolver();
         var plan = BuildPlan(
-            modules: ["Numbers", "Arithmetic"],
-            backends: [new DialectBackendId("interpreter"), new DialectBackendId("compiler"), new DialectBackendId("interpreter")],
-            optimizers: [
+            ["Numbers", "Arithmetic"],
+            [new DialectBackendId("interpreter"), new DialectBackendId("compiler"), new DialectBackendId("interpreter")],
+            [
                 new OptimizerBuildDirective("InterpreterOnlyOpt", true, DialectBackendSelector.For(new DialectBackendId("interpreter"))),
-                new OptimizerBuildDirective("CommonOpt", true, DialectBackendSelector.Any)]);
+                new OptimizerBuildDirective("CommonOpt", true, DialectBackendSelector.Any)
+            ]);
 
         string? baseline = null;
         for (var i = 0; i < 50; i++)
@@ -120,9 +120,8 @@ public class SelectedRuntimePlanResolverContractTests
     private static DialectBuildPlan BuildPlan(
         IReadOnlyList<string> modules,
         IReadOnlyList<DialectBackendId> backends,
-        IReadOnlyList<OptimizerBuildDirective>? optimizers = null)
-    {
-        return new DialectBuildPlan(
+        IReadOnlyList<OptimizerBuildDirective>? optimizers = null) =>
+        new(
             "ContractDialect",
             null,
             modules,
@@ -133,7 +132,6 @@ public class SelectedRuntimePlanResolverContractTests
             null,
             [],
             new DialectValidationResult([]));
-    }
 
     private static SelectedRuntimePlanResolver CreateResolver()
     {
@@ -156,9 +154,9 @@ public class SelectedRuntimePlanResolverContractTests
 
     private sealed class StaticCatalog(IEnumerable<RuntimeComponentManifestEntry> entries) : IRuntimeComponentCatalog
     {
+        private readonly IReadOnlyDictionary<string, RuntimeComponentManifestEntry> _backends = entries.Where(static x => x.Kind == RuntimeComponentKind.Backend).SelectMany(static x => x.AllAliases.Select(a => (a, x))).ToDictionary(static x => x.a, static x => x.x, StringComparer.Ordinal);
         private readonly IReadOnlyDictionary<string, RuntimeComponentManifestEntry> _modules = entries.Where(static x => x.Kind == RuntimeComponentKind.FrontendModule).SelectMany(static x => x.AllAliases.Select(a => (a, x))).ToDictionary(static x => x.a, static x => x.x, StringComparer.Ordinal);
         private readonly IReadOnlyDictionary<string, RuntimeComponentManifestEntry> _optimizers = entries.Where(static x => x.Kind == RuntimeComponentKind.Optimizer).SelectMany(static x => x.AllAliases.Select(a => (a, x))).ToDictionary(static x => x.a, static x => x.x, StringComparer.Ordinal);
-        private readonly IReadOnlyDictionary<string, RuntimeComponentManifestEntry> _backends = entries.Where(static x => x.Kind == RuntimeComponentKind.Backend).SelectMany(static x => x.AllAliases.Select(a => (a, x))).ToDictionary(static x => x.a, static x => x.x, StringComparer.Ordinal);
 
         public bool TryResolveModule(string alias, out RuntimeComponentManifestEntry? entry) => _modules.TryGetValue(alias, out entry);
         public bool TryResolveOptimizer(string alias, out RuntimeComponentManifestEntry? entry) => _optimizers.TryGetValue(alias, out entry);

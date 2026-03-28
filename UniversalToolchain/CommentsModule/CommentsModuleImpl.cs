@@ -1,7 +1,9 @@
+using UniversalToolchain.Dialects.Abstractions;
+
 namespace CommentsModule;
 
-[UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("Comments")]
-[UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("FrontendModule", "Comments")]
+[DialectModuleAlias("Comments")]
+[DialectRuntimeExport("FrontendModule", "Comments")]
 [AutoRegisterService]
 public class CommentsModuleImpl : IFrontendCoreModule
 {

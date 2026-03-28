@@ -1,3 +1,4 @@
+using ArithmeticModule.Module;
 using UniversalToolchain.Dialects.Integration;
 
 namespace UniversalToolchain.Dialects.Tests;
@@ -36,7 +37,7 @@ public class RuntimeComponentTypeLoaderTests
     [Test]
     public void TypeLoader_DoesNotUseLocator_WhenAssemblyAlreadyLoaded()
     {
-        _ = typeof(ArithmeticModule.Module.ArithmeticModuleImpl).Assembly;
+        _ = typeof(ArithmeticModuleImpl).Assembly;
         var locator = new CountingLocator(false, null);
         var loader = new DefaultRuntimeComponentTypeLoader(new DefaultRuntimeAssemblyLoadStrategy(locator));
 

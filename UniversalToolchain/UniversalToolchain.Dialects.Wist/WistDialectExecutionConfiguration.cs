@@ -11,9 +11,9 @@ namespace UniversalToolchain.Dialects.Wist;
 public sealed class WistDialectExecutionConfiguration
 {
     private readonly ReadOnlyCollection<DialectBackendRuntimeConfiguration> _backendConfigurations;
-    private readonly Dictionary<string, DialectBackendId> _knownBackendNameMap;
     private readonly ReadOnlyCollection<Type> _frontendModules;
     private readonly ReadOnlyCollection<Type> _irModules;
+    private readonly Dictionary<string, DialectBackendId> _knownBackendNameMap;
     private readonly ReadOnlyCollection<Type> _optimizers;
 
     public WistDialectExecutionConfiguration(

@@ -1,7 +1,9 @@
+using UniversalToolchain.Dialects.Abstractions;
+
 namespace ParametersSetterModule;
 
-[UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("ParametersSetter")]
-[UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("FrontendModule", "ParametersSetter")]
+[DialectModuleAlias("ParametersSetter")]
+[DialectRuntimeExport("FrontendModule", "ParametersSetter")]
 [AutoRegisterService]
 public class ParametersSetterModuleImpl : IFrontendCoreModule
 {

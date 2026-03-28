@@ -151,7 +151,7 @@ public class RuntimeManifestCatalogContractTests
         public void Dispose()
         {
             if (Directory.Exists(Path))
-                Directory.Delete(Path, recursive: true);
+                Directory.Delete(Path, true);
         }
     }
 }

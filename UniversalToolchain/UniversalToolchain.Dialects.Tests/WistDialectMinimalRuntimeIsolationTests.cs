@@ -6,8 +6,6 @@ namespace UniversalToolchain.Dialects.Tests;
 
 public class WistDialectMinimalRuntimeIsolationTests
 {
-
-
     [Test]
     public void ServiceRegistrations_UseGenericBackendAbstractionsOnly()
     {
@@ -28,9 +26,7 @@ public class WistDialectMinimalRuntimeIsolationTests
     {
         using var provider = CreateMinimalProvider();
 
-        Assert.Multiple(() =>
-        {
-        });
+        Assert.Multiple(() => { });
     }
 
     [Test]
@@ -41,10 +37,7 @@ public class WistDialectMinimalRuntimeIsolationTests
 
         var result = workflow.ComposeText("dialect Demo\nuse Arithmetic\nbackend interpreter", "inline");
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.RuntimeSelection, Is.Not.Null);
-        });
+        Assert.Multiple(() => { Assert.That(result.RuntimeSelection, Is.Not.Null); });
     }
 
     [Test]
@@ -162,7 +155,7 @@ public class WistDialectMinimalRuntimeIsolationTests
         public void Dispose()
         {
             if (Directory.Exists(Path))
-                Directory.Delete(Path, recursive: true);
+                Directory.Delete(Path, true);
         }
     }
 }

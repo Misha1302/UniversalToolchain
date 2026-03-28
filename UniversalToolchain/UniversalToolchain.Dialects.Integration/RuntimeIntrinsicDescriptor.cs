@@ -9,12 +9,12 @@ namespace UniversalToolchain.Dialects.Integration;
 /// </summary>
 public sealed class RuntimeIntrinsicDescriptor
 {
+    private readonly ReadOnlyCollection<string> _aliases;
+
     public RuntimeIntrinsicDescriptor(string canonicalId, DialectBackendId target, IEnumerable<string>? aliases = null)
         : this(canonicalId, DialectBackendSelector.For(target), aliases)
     {
     }
-
-    private readonly ReadOnlyCollection<string> _aliases;
 
     public RuntimeIntrinsicDescriptor(string canonicalId, DialectBackendSelector target, IEnumerable<string>? aliases = null)
     {

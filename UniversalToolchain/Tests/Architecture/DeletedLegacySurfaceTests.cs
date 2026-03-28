@@ -1,4 +1,3 @@
-using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Wist;
 
@@ -65,8 +64,8 @@ public class DeletedLegacySurfaceTests
     private static Type? FindType(string fullName)
     {
         return AppDomain.CurrentDomain.GetAssemblies()
-                   .Select(x => x.GetType(fullName, throwOnError: false, ignoreCase: false))
+                   .Select(x => x.GetType(fullName, false, false))
                    .FirstOrDefault(static x => x != null)
-               ?? Type.GetType(fullName, throwOnError: false, ignoreCase: false);
+               ?? Type.GetType(fullName, false, false);
     }
 }

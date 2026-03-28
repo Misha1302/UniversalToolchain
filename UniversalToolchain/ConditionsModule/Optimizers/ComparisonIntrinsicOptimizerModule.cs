@@ -1,7 +1,9 @@
+using UniversalToolchain.Dialects.Abstractions;
+
 namespace ConditionsModule.Optimizers;
 
-[UniversalToolchain.Dialects.Abstractions.DialectOptimizerAlias("ComparisonIntrinsicOptimization")]
-[UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("Optimizer", "ComparisonIntrinsicOptimization")]
+[DialectOptimizerAlias("ComparisonIntrinsicOptimization")]
+[DialectRuntimeExport("Optimizer", "ComparisonIntrinsicOptimization")]
 [AutoRegisterService]
 [UsedImplicitly]
 public class ComparisonIntrinsicOptimizerModule : IIRProcessingModule

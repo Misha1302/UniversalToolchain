@@ -1,5 +1,3 @@
-using System;
-
 namespace UniversalToolchain.Dialects.Abstractions;
 
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]

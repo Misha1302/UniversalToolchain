@@ -2,8 +2,8 @@ namespace UniversalToolchain.Dialects.Integration;
 
 public sealed class DefaultRuntimeManifestFileLocator : IRuntimeManifestFileLocator
 {
-    private readonly string _manifestSearchPattern;
     private readonly SearchOption _manifestSearchOption;
+    private readonly string _manifestSearchPattern;
     private readonly IReadOnlyList<string> _searchRoots;
 
     public DefaultRuntimeManifestFileLocator(RuntimeArtifactLocatorOptions options)

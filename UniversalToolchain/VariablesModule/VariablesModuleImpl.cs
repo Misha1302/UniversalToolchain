@@ -1,7 +1,9 @@
+using UniversalToolchain.Dialects.Abstractions;
+
 namespace VariablesModule;
 
-[UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("Variables")]
-[UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("FrontendModule", "Variables")]
+[DialectModuleAlias("Variables")]
+[DialectRuntimeExport("FrontendModule", "Variables")]
 [AutoRegisterService]
 public class VariablesModuleImpl : IFrontendCoreModule
 {

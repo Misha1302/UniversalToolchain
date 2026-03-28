@@ -79,14 +79,12 @@ public class WistDialectBackendCompatibilityTests
         });
     }
 
-    private static RuntimeComponentManifestEntry Entry(string alias, IReadOnlyList<string>? aliases = null)
-    {
-        return new RuntimeComponentManifestEntry(
+    private static RuntimeComponentManifestEntry Entry(string alias, IReadOnlyList<string>? aliases = null) =>
+        new(
             RuntimeComponentKind.Backend,
             alias,
             aliases ?? [],
             new RuntimeTypeReference("AnyAssembly", $"Any.Namespace.{alias}"));
-    }
 
     private sealed class StaticCatalog(params RuntimeComponentManifestEntry[] backends) : IRuntimeComponentCatalog
     {

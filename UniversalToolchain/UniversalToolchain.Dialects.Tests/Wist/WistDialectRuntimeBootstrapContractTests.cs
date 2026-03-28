@@ -120,10 +120,10 @@ public class WistDialectRuntimeBootstrapContractTests
     {
         public DialectBackendId BackendId { get; } = new(backendId);
         public IReadOnlyList<string> SupportedIntrinsics => [];
+
         public void RegisterRuntime(IServiceCollection services, DialectBackendRuntimeConfiguration configuration)
         {
             services.AddSingleton(typeof(object), new object());
         }
     }
-
 }

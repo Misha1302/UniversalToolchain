@@ -1,7 +1,7 @@
 namespace NativeMathModule;
 
-[UniversalToolchain.Dialects.Abstractions.DialectOptimizerAlias("NativeCilOptimization")]
-[UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("Optimizer", "NativeCilOptimization")]
+[DialectOptimizerAlias("NativeCilOptimization")]
+[DialectRuntimeExport("Optimizer", "NativeCilOptimization")]
 [AutoRegisterService]
 [ArithmeticModeCompatibility(ArithmeticMode.Native)]
 public class NativeCilOptimizerModule : IIRProcessingModule

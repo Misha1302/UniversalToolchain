@@ -1,7 +1,7 @@
 namespace NativeMathModule;
 
-[UniversalToolchain.Dialects.Abstractions.DialectOptimizerAlias("ArithmeticOptimization")]
-[UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("Optimizer", "ArithmeticOptimization")]
+[DialectOptimizerAlias("ArithmeticOptimization")]
+[DialectRuntimeExport("Optimizer", "ArithmeticOptimization")]
 [AutoRegisterService]
 [ArithmeticModeCompatibility(ArithmeticMode.Native)]
 [UsedImplicitly]

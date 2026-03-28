@@ -100,7 +100,7 @@
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s ease;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .bytecode-mnemonic:hover .bytecode-tooltip {
@@ -123,16 +123,16 @@
         padding: 10px;
         font-size: 0.8rem;
     }
-    
+
     .bytecode-line {
         padding: 4px 6px;
     }
-    
+
     .bytecode-address {
         min-width: 30px;
         font-size: 0.7rem;
     }
-    
+
     .bytecode-mnemonic {
         padding: 3px 6px;
         font-size: 0.8rem;

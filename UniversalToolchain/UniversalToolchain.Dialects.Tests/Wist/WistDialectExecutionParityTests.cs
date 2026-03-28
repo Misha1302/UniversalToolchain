@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.Extensions.DependencyInjection;
 using NumbersModule.Core;
 using UniversalToolchain.Dialects.Wist;
@@ -107,7 +108,7 @@ public class WistDialectExecutionParityTests
             double doubleValue => doubleValue,
             float floatValue => floatValue,
             decimal decimalValue => (double)decimalValue,
-            _ => Convert.ToDouble(value, System.Globalization.CultureInfo.InvariantCulture)
+            _ => Convert.ToDouble(value, CultureInfo.InvariantCulture)
         };
     }
 }

@@ -3,7 +3,7 @@
     --node-border: #3498db;
     --node-text: #2c3e50;
     --line-color: #95a5a6;
-    
+
     /* Монотонные цвета для фона вместо градиентов */
     --level-0-bg: #ffffff;
     --level-1-bg: #f8f9fa;
@@ -11,7 +11,7 @@
     --level-3-bg: #e9ecef;
     --level-4-bg: #e2e6ea;
     --level-5-bg: #dbe0e5;
-    
+
     /* Цвета границ */
     --level-0-border: #3498db;
     --level-1-border: #3183c2;
@@ -52,7 +52,7 @@
     border-radius: 8px;
     padding: 12px 16px;
     margin: 10px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
     position: relative;
     z-index: 10;
     min-width: 150px;
@@ -62,7 +62,7 @@
 
 .node:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
 }
 
 .node.level-1 {
@@ -169,11 +169,11 @@
         min-width: 120px;
         padding: 8px 12px;
     }
-    
+
     .node-content {
         font-size: 0.8rem;
     }
-    
+
     .level-indicator {
         font-size: 0.6rem;
     }

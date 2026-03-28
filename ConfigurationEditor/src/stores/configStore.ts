@@ -1,392 +1,391 @@
-import { create } from 'zustand';
-import { devtools, persist } from 'zustand/middleware';
-import { ConfigType, ConfigFile, ConfigRow } from '@/types/config';
-import { parseParserConfig, parseLexerConfig, detectConfigType, formatToOriginal } from '@/utils/parser';
-import { toast } from 'react-hot-toast';
-import { arrayMove } from '@dnd-kit/sortable';
+import {create} from 'zustand';
+import {devtools, persist} from 'zustand/middleware';
+import {ConfigFile, ConfigRow, ConfigType} from '@/types/config';
+import {detectConfigType, formatToOriginal, parseLexerConfig, parseParserConfig} from '@/utils/parser';
+import {toast} from 'react-hot-toast';
 
 interface ConfigStore {
-  // Данные
-  parserConfig: ConfigFile | null;
-  lexerConfig: ConfigFile | null;
+    // Данные
+    parserConfig: ConfigFile | null;
+    lexerConfig: ConfigFile | null;
 
-  // UI состояние
-  activeTab: ConfigType;
-  searchQuery: string;
+    // UI состояние
+    activeTab: ConfigType;
+    searchQuery: string;
 
-  // Действия
-  setActiveTab: (tab: ConfigType) => void;
-  setSearchQuery: (query: string) => void;
-  loadFile: (file: File) => Promise<void>;
-  updateRow: (configType: ConfigType, rowId: string, updates: Partial<ConfigRow>) => void;
-  addRow: (configType: ConfigType) => void;
-  deleteRow: (configType: ConfigType, rowId: string) => void;
-  clearConfig: (configType: ConfigType) => void;
-  exportConfig: (configType: ConfigType) => void;
-  getFilteredRows: (configType: ConfigType) => ConfigRow[];
-  getCurrentConfig: () => ConfigFile | null;
+    // Действия
+    setActiveTab: (tab: ConfigType) => void;
+    setSearchQuery: (query: string) => void;
+    loadFile: (file: File) => Promise<void>;
+    updateRow: (configType: ConfigType, rowId: string, updates: Partial<ConfigRow>) => void;
+    addRow: (configType: ConfigType) => void;
+    deleteRow: (configType: ConfigType, rowId: string) => void;
+    clearConfig: (configType: ConfigType) => void;
+    exportConfig: (configType: ConfigType) => void;
+    getFilteredRows: (configType: ConfigType) => ConfigRow[];
+    getCurrentConfig: () => ConfigFile | null;
 
-  reorderRow: (configType: ConfigType, dragIndex: number, hoverIndex: number) => void;
-  sortRowsByPriority: (configType: ConfigType) => void;
+    reorderRow: (configType: ConfigType, dragIndex: number, hoverIndex: number) => void;
+    sortRowsByPriority: (configType: ConfigType) => void;
 }
 
 export const useConfigStore = create<ConfigStore>()(
-  devtools(
-    persist(
-      (set, get) => ({
-        parserConfig: null,
-        lexerConfig: null,
-        activeTab: ConfigType.PARSER,
-        searchQuery: '',
-
-        reorderRow: (configType, dragIndex, hoverIndex) => {
-          const state = get();
-          const config = configType === ConfigType.PARSER
-            ? state.parserConfig
-            : state.lexerConfig;
-
-          if (!config) return;
-
-          const rows = [...config.rows];
-          const draggedRow = rows[dragIndex];
-
-          // Удаляем из старой позиции
-          rows.splice(dragIndex, 1);
-          // Вставляем в новую позицию
-          rows.splice(hoverIndex, 0, draggedRow);
-
-          // Пересчитываем приоритеты
-          const updatedRows = rows.map((row, index) => {
-            if (configType === ConfigType.PARSER) {
-              // Для парсера: приоритет уменьшается на 1000 при перемещении вверх
-              const priority = 100000 - (index * 1000);
-              return { ...row, priority };
-            } else {
-              // Для лексера: приоритет увеличивается на 100 при перемещении вниз
-              const priority = index * 100;
-              return { ...row, priority };
-            }
-          });
-
-          const updatedConfig = {
-            ...config,
-            rows: updatedRows,
-            lastModified: new Date(),
-          };
-
-          if (configType === ConfigType.PARSER) {
-            set({ parserConfig: updatedConfig });
-          } else {
-            set({ lexerConfig: updatedConfig });
-          }
-
-          toast.success('Порядок строк обновлен');
-        },
-
-        setActiveTab: (tab) => set({ activeTab: tab }),
-        setSearchQuery: (query) => set({ searchQuery: query }),
-
-        loadFile: async (file) => {
-          try {
-            const content = await file.text();
-            const type = detectConfigType(content);
-
-            let config: ConfigFile;
-            if (type === ConfigType.PARSER) {
-              config = parseParserConfig(content);
-            } else {
-              config = parseLexerConfig(content);
-            }
-
-            config.fileName = file.name;
-            config.fileSize = file.size;
-
-            if (type === ConfigType.PARSER) {
-              set({
-                parserConfig: config,
+    devtools(
+        persist(
+            (set, get) => ({
+                parserConfig: null,
+                lexerConfig: null,
                 activeTab: ConfigType.PARSER,
                 searchQuery: '',
-              });
-              toast.success(`Загружен файл парсера: ${file.name} (${config.rows.length} строк)`);
-            } else {
-              set({
-                lexerConfig: config,
-                activeTab: ConfigType.LEXER,
-                searchQuery: '',
-              });
-              toast.success(`Загружен файл лексера: ${file.name} (${config.rows.length} строк)`);
-            }
-          } catch (error) {
-            console.error('Error loading file:', error);
-            toast.error(`Ошибка загрузки: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
-          }
-        },
 
-        updateRow: (configType, rowId, updates) => {
-          const state = get();
-          const config = configType === ConfigType.PARSER
-            ? state.parserConfig
-            : state.lexerConfig;
+                reorderRow: (configType, dragIndex, hoverIndex) => {
+                    const state = get();
+                    const config = configType === ConfigType.PARSER
+                        ? state.parserConfig
+                        : state.lexerConfig;
 
-          if (!config) return;
+                    if (!config) return;
 
-          const updatedRows = config.rows.map(row =>
-            row.id === rowId ? { ...row, ...updates } : row,
-          );
+                    const rows = [...config.rows];
+                    const draggedRow = rows[dragIndex];
 
-          const updatedConfig = {
-            ...config,
-            rows: updatedRows,
-            lastModified: new Date(),
-          };
+                    // Удаляем из старой позиции
+                    rows.splice(dragIndex, 1);
+                    // Вставляем в новую позицию
+                    rows.splice(hoverIndex, 0, draggedRow);
 
-          if (configType === ConfigType.PARSER) {
-            set({ parserConfig: updatedConfig });
-          } else {
-            set({ lexerConfig: updatedConfig });
-          }
+                    // Пересчитываем приоритеты
+                    const updatedRows = rows.map((row, index) => {
+                        if (configType === ConfigType.PARSER) {
+                            // Для парсера: приоритет уменьшается на 1000 при перемещении вверх
+                            const priority = 100000 - (index * 1000);
+                            return {...row, priority};
+                        } else {
+                            // Для лексера: приоритет увеличивается на 100 при перемещении вниз
+                            const priority = index * 100;
+                            return {...row, priority};
+                        }
+                    });
 
-          toast.success('Строка обновлена');
-        },
+                    const updatedConfig = {
+                        ...config,
+                        rows: updatedRows,
+                        lastModified: new Date(),
+                    };
 
-        addRow: (configType) => {
-          const state = get();
-          const config = configType === ConfigType.PARSER
-            ? state.parserConfig
-            : state.lexerConfig;
+                    if (configType === ConfigType.PARSER) {
+                        set({parserConfig: updatedConfig});
+                    } else {
+                        set({lexerConfig: updatedConfig});
+                    }
 
-          if (!config) return;
+                    toast.success('Порядок строк обновлен');
+                },
 
-          const newRow: ConfigRow = configType === ConfigType.PARSER ? {
-            id: `parser-new-${Date.now()}`,
-            priority: 0,
-            type_full_name: 'NewModule.NewType',
-            instance_hash: 0,
-            ast_node_type: 'NewNode',
-            lineNumber: config.rows.length + 1,
-            originalLine: '',
-          } : {
-            id: `lexer-new-${Date.now()}`,
-            priority: 0,
-            encodedPattern: 'IA==',
-            decodedPattern: ' ',
-            lexeme_type: 'NewLexeme',
-            ignore_flag: false,
-            lineNumber: config.rows.length + 1,
-            originalLine: '',
-          };
+                setActiveTab: (tab) => set({activeTab: tab}),
+                setSearchQuery: (query) => set({searchQuery: query}),
 
-          const updatedConfig = {
-            ...config,
-            rows: [...config.rows, newRow],
-            lastModified: new Date(),
-          };
+                loadFile: async (file) => {
+                    try {
+                        const content = await file.text();
+                        const type = detectConfigType(content);
 
-          if (configType === ConfigType.PARSER) {
-            set({ parserConfig: updatedConfig });
-          } else {
-            set({ lexerConfig: updatedConfig });
-          }
+                        let config: ConfigFile;
+                        if (type === ConfigType.PARSER) {
+                            config = parseParserConfig(content);
+                        } else {
+                            config = parseLexerConfig(content);
+                        }
 
-          toast.success('Добавлена новая строка');
-        },
+                        config.fileName = file.name;
+                        config.fileSize = file.size;
 
-        deleteRow: (configType, rowId) => {
-          const state = get();
-          const config = configType === ConfigType.PARSER
-            ? state.parserConfig
-            : state.lexerConfig;
+                        if (type === ConfigType.PARSER) {
+                            set({
+                                parserConfig: config,
+                                activeTab: ConfigType.PARSER,
+                                searchQuery: '',
+                            });
+                            toast.success(`Загружен файл парсера: ${file.name} (${config.rows.length} строк)`);
+                        } else {
+                            set({
+                                lexerConfig: config,
+                                activeTab: ConfigType.LEXER,
+                                searchQuery: '',
+                            });
+                            toast.success(`Загружен файл лексера: ${file.name} (${config.rows.length} строк)`);
+                        }
+                    } catch (error) {
+                        console.error('Error loading file:', error);
+                        toast.error(`Ошибка загрузки: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
+                    }
+                },
 
-          if (!config) return;
+                updateRow: (configType, rowId, updates) => {
+                    const state = get();
+                    const config = configType === ConfigType.PARSER
+                        ? state.parserConfig
+                        : state.lexerConfig;
 
-          const row = config.rows.find(r => r.id === rowId);
-          if (!row) return;
+                    if (!config) return;
 
-          if (window.confirm(`Удалить строку ${row.lineNumber}?`)) {
-            const updatedRows = config.rows.filter(row => row.id !== rowId);
+                    const updatedRows = config.rows.map(row =>
+                        row.id === rowId ? {...row, ...updates} : row,
+                    );
 
-            const updatedConfig = {
-              ...config,
-              rows: updatedRows,
-              lastModified: new Date(),
-            };
+                    const updatedConfig = {
+                        ...config,
+                        rows: updatedRows,
+                        lastModified: new Date(),
+                    };
 
-            if (configType === ConfigType.PARSER) {
-              set({ parserConfig: updatedConfig });
-            } else {
-              set({ lexerConfig: updatedConfig });
-            }
+                    if (configType === ConfigType.PARSER) {
+                        set({parserConfig: updatedConfig});
+                    } else {
+                        set({lexerConfig: updatedConfig});
+                    }
 
-            toast.success('Строка удалена');
-          }
-        },
+                    toast.success('Строка обновлена');
+                },
 
-        clearConfig: (configType) => {
-          if (window.confirm('Удалить текущую конфигурацию?')) {
-            if (configType === ConfigType.PARSER) {
-              set({ parserConfig: null });
-              toast.success('Конфигурация парсера очищена');
-            } else {
-              set({ lexerConfig: null });
-              toast.success('Конфигурация лексера очищена');
-            }
-          }
-        },
+                addRow: (configType) => {
+                    const state = get();
+                    const config = configType === ConfigType.PARSER
+                        ? state.parserConfig
+                        : state.lexerConfig;
 
-        exportConfig: (configType) => {
-          const state = get();
-          const config = configType === ConfigType.PARSER
-            ? state.parserConfig
-            : state.lexerConfig;
+                    if (!config) return;
 
-          if (!config) {
-            toast.error('Нет данных для экспорта');
-            return;
-          }
+                    const newRow: ConfigRow = configType === ConfigType.PARSER ? {
+                        id: `parser-new-${Date.now()}`,
+                        priority: 0,
+                        type_full_name: 'NewModule.NewType',
+                        instance_hash: 0,
+                        ast_node_type: 'NewNode',
+                        lineNumber: config.rows.length + 1,
+                        originalLine: '',
+                    } : {
+                        id: `lexer-new-${Date.now()}`,
+                        priority: 0,
+                        encodedPattern: 'IA==',
+                        decodedPattern: ' ',
+                        lexeme_type: 'NewLexeme',
+                        ignore_flag: false,
+                        lineNumber: config.rows.length + 1,
+                        originalLine: '',
+                    };
 
-          console.log('Экспорт конфигурации:', {
-            type: config.type,
-            rows: config.rows.length,
-            fileName: config.fileName,
-            commentsType: typeof config.comments,
-            comments: config.comments
-          });
+                    const updatedConfig = {
+                        ...config,
+                        rows: [...config.rows, newRow],
+                        lastModified: new Date(),
+                    };
 
-          try {
-            const content = formatToOriginal(config);
+                    if (configType === ConfigType.PARSER) {
+                        set({parserConfig: updatedConfig});
+                    } else {
+                        set({lexerConfig: updatedConfig});
+                    }
 
-            console.log('Содержимое для экспорта:');
-            console.log(content);
+                    toast.success('Добавлена новая строка');
+                },
 
-            // Создаем Blob
-            const blob = new Blob([content], {
-              type: 'text/plain;charset=utf-8'
-            });
+                deleteRow: (configType, rowId) => {
+                    const state = get();
+                    const config = configType === ConfigType.PARSER
+                        ? state.parserConfig
+                        : state.lexerConfig;
 
-            // Формируем имя файла
-            const fileName = config.fileName ||
-              `${config.type === ConfigType.PARSER ? 'Parser' : 'Lexer'}Configuration_${new Date().toISOString().slice(0, 10)}.txt`;
+                    if (!config) return;
 
-            // Создаем URL для Blob
-            const url = URL.createObjectURL(blob);
+                    const row = config.rows.find(r => r.id === rowId);
+                    if (!row) return;
 
-            // Создаем временную ссылку для скачивания
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = fileName;
-            link.style.display = 'none';
+                    if (window.confirm(`Удалить строку ${row.lineNumber}?`)) {
+                        const updatedRows = config.rows.filter(row => row.id !== rowId);
 
-            // Добавляем ссылку в DOM
-            document.body.appendChild(link);
+                        const updatedConfig = {
+                            ...config,
+                            rows: updatedRows,
+                            lastModified: new Date(),
+                        };
 
-            // Имитируем клик
-            link.click();
+                        if (configType === ConfigType.PARSER) {
+                            set({parserConfig: updatedConfig});
+                        } else {
+                            set({lexerConfig: updatedConfig});
+                        }
 
-            // Очищаем
-            setTimeout(() => {
-              document.body.removeChild(link);
-              URL.revokeObjectURL(url);
-            }, 100);
+                        toast.success('Строка удалена');
+                    }
+                },
 
-            toast.success(`Конфигурация экспортирована как ${fileName}`);
+                clearConfig: (configType) => {
+                    if (window.confirm('Удалить текущую конфигурацию?')) {
+                        if (configType === ConfigType.PARSER) {
+                            set({parserConfig: null});
+                            toast.success('Конфигурация парсера очищена');
+                        } else {
+                            set({lexerConfig: null});
+                            toast.success('Конфигурация лексера очищена');
+                        }
+                    }
+                },
 
-          } catch (error) {
-            console.error('Ошибка экспорта:', error);
-            toast.error(`Ошибка при экспорте: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
-          }
-        },
+                exportConfig: (configType) => {
+                    const state = get();
+                    const config = configType === ConfigType.PARSER
+                        ? state.parserConfig
+                        : state.lexerConfig;
 
-        getFilteredRows: (configType) => {
-          const state = get();
-          const config = configType === ConfigType.PARSER
-            ? state.parserConfig
-            : state.lexerConfig;
+                    if (!config) {
+                        toast.error('Нет данных для экспорта');
+                        return;
+                    }
 
-          if (!config) return [];
+                    console.log('Экспорт конфигурации:', {
+                        type: config.type,
+                        rows: config.rows.length,
+                        fileName: config.fileName,
+                        commentsType: typeof config.comments,
+                        comments: config.comments
+                    });
 
-          const query = state.searchQuery.toLowerCase().trim();
-          if (!query) return config.rows;
+                    try {
+                        const content = formatToOriginal(config);
 
-          return config.rows.filter(row => {
-            if (configType === ConfigType.PARSER) {
-              const parserRow = row as any;
-              return (
-                parserRow.priority.toString().includes(query) ||
-                parserRow.type_full_name.toLowerCase().includes(query) ||
-                parserRow.ast_node_type.toLowerCase().includes(query) ||
-                parserRow.module?.toLowerCase().includes(query) || false ||
-                parserRow.instance_hash.toString().includes(query)
-              );
-            } else {
-              const lexerRow = row as any;
-              return (
-                lexerRow.priority.toString().includes(query) ||
-                lexerRow.decodedPattern.toLowerCase().includes(query) ||
-                lexerRow.lexeme_type.toLowerCase().includes(query) ||
-                lexerRow.encodedPattern.toLowerCase().includes(query) ||
-                lexerRow.ignore_flag.toString().includes(query)
-              );
-            }
-          });
-        },
+                        console.log('Содержимое для экспорта:');
+                        console.log(content);
 
-        getCurrentConfig: () => {
-          const state = get();
-          return state.activeTab === ConfigType.PARSER
-            ? state.parserConfig
-            : state.lexerConfig;
-        },
+                        // Создаем Blob
+                        const blob = new Blob([content], {
+                            type: 'text/plain;charset=utf-8'
+                        });
 
-        sortRowsByPriority: (configType) => {
-          const state = get();
-          const config = configType === ConfigType.PARSER
-            ? state.parserConfig
-            : state.lexerConfig;
+                        // Формируем имя файла
+                        const fileName = config.fileName ||
+                            `${config.type === ConfigType.PARSER ? 'Parser' : 'Lexer'}Configuration_${new Date().toISOString().slice(0, 10)}.txt`;
 
-          if (!config || config.rows.length === 0) return;
+                        // Создаем URL для Blob
+                        const url = URL.createObjectURL(blob);
 
-          // Создаем глубокую копию строк
-          const rows = [...config.rows];
+                        // Создаем временную ссылку для скачивания
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = fileName;
+                        link.style.display = 'none';
 
-          // Сортируем в зависимости от типа конфигурации
-          if (configType === ConfigType.PARSER) {
-            // Для парсера: по убыванию (больший приоритет = выше)
-            rows.sort((a, b) => b.priority - a.priority);
-          } else {
-            // Для лексера: по возрастанию (меньший приоритет = выше)
-            rows.sort((a, b) => a.priority - b.priority);
-          }
+                        // Добавляем ссылку в DOM
+                        document.body.appendChild(link);
 
-          // Обновляем lineNumber для корректного отображения
-          const updatedRows = rows.map((row, index) => ({
-            ...row,
-            lineNumber: index + 1
-          }));
+                        // Имитируем клик
+                        link.click();
 
-          const updatedConfig = {
-            ...config,
-            rows: updatedRows,
-            lastModified: new Date(),
-          };
+                        // Очищаем
+                        setTimeout(() => {
+                            document.body.removeChild(link);
+                            URL.revokeObjectURL(url);
+                        }, 100);
 
-          if (configType === ConfigType.PARSER) {
-            set({ parserConfig: updatedConfig });
-          } else {
-            set({ lexerConfig: updatedConfig });
-          }
+                        toast.success(`Конфигурация экспортирована как ${fileName}`);
 
-          toast.success('Строки пересортированы по приоритету');
-        },
-      }),
-      {
-        name: 'config-editor-storage',
-        partialize: (state) => ({
-          parserConfig: state.parserConfig,
-          lexerConfig: state.lexerConfig,
-          activeTab: state.activeTab,
-        }),
-      },
+                    } catch (error) {
+                        console.error('Ошибка экспорта:', error);
+                        toast.error(`Ошибка при экспорте: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
+                    }
+                },
+
+                getFilteredRows: (configType) => {
+                    const state = get();
+                    const config = configType === ConfigType.PARSER
+                        ? state.parserConfig
+                        : state.lexerConfig;
+
+                    if (!config) return [];
+
+                    const query = state.searchQuery.toLowerCase().trim();
+                    if (!query) return config.rows;
+
+                    return config.rows.filter(row => {
+                        if (configType === ConfigType.PARSER) {
+                            const parserRow = row as any;
+                            return (
+                                parserRow.priority.toString().includes(query) ||
+                                parserRow.type_full_name.toLowerCase().includes(query) ||
+                                parserRow.ast_node_type.toLowerCase().includes(query) ||
+                                parserRow.module?.toLowerCase().includes(query) || false ||
+                                parserRow.instance_hash.toString().includes(query)
+                            );
+                        } else {
+                            const lexerRow = row as any;
+                            return (
+                                lexerRow.priority.toString().includes(query) ||
+                                lexerRow.decodedPattern.toLowerCase().includes(query) ||
+                                lexerRow.lexeme_type.toLowerCase().includes(query) ||
+                                lexerRow.encodedPattern.toLowerCase().includes(query) ||
+                                lexerRow.ignore_flag.toString().includes(query)
+                            );
+                        }
+                    });
+                },
+
+                getCurrentConfig: () => {
+                    const state = get();
+                    return state.activeTab === ConfigType.PARSER
+                        ? state.parserConfig
+                        : state.lexerConfig;
+                },
+
+                sortRowsByPriority: (configType) => {
+                    const state = get();
+                    const config = configType === ConfigType.PARSER
+                        ? state.parserConfig
+                        : state.lexerConfig;
+
+                    if (!config || config.rows.length === 0) return;
+
+                    // Создаем глубокую копию строк
+                    const rows = [...config.rows];
+
+                    // Сортируем в зависимости от типа конфигурации
+                    if (configType === ConfigType.PARSER) {
+                        // Для парсера: по убыванию (больший приоритет = выше)
+                        rows.sort((a, b) => b.priority - a.priority);
+                    } else {
+                        // Для лексера: по возрастанию (меньший приоритет = выше)
+                        rows.sort((a, b) => a.priority - b.priority);
+                    }
+
+                    // Обновляем lineNumber для корректного отображения
+                    const updatedRows = rows.map((row, index) => ({
+                        ...row,
+                        lineNumber: index + 1
+                    }));
+
+                    const updatedConfig = {
+                        ...config,
+                        rows: updatedRows,
+                        lastModified: new Date(),
+                    };
+
+                    if (configType === ConfigType.PARSER) {
+                        set({parserConfig: updatedConfig});
+                    } else {
+                        set({lexerConfig: updatedConfig});
+                    }
+
+                    toast.success('Строки пересортированы по приоритету');
+                },
+            }),
+            {
+                name: 'config-editor-storage',
+                partialize: (state) => ({
+                    parserConfig: state.parserConfig,
+                    lexerConfig: state.lexerConfig,
+                    activeTab: state.activeTab,
+                }),
+            },
+        ),
     ),
-  ),
 );
 

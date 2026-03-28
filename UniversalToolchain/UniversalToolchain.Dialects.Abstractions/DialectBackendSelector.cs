@@ -22,16 +22,6 @@ public readonly record struct DialectBackendSelector : IComparable<DialectBacken
 
     public bool IsAny { get; }
 
-    public static DialectBackendSelector For(DialectBackendId backendId) => new(backendId, false);
-
-    public bool Matches(DialectBackendId backendId)
-    {
-        if (IsAny)
-            return true;
-
-        return BackendId == backendId;
-    }
-
     public int CompareTo(DialectBackendSelector other)
     {
         if (IsAny && !other.IsAny)
@@ -41,6 +31,16 @@ public readonly record struct DialectBackendSelector : IComparable<DialectBacken
             return 1;
 
         return BackendId.CompareTo(other.BackendId);
+    }
+
+    public static DialectBackendSelector For(DialectBackendId backendId) => new(backendId, false);
+
+    public bool Matches(DialectBackendId backendId)
+    {
+        if (IsAny)
+            return true;
+
+        return BackendId == backendId;
     }
 
     public override string ToString() => DialectBackendSelectorText.ToText(this);

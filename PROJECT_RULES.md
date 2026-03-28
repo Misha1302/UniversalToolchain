@@ -1,8 +1,10 @@
 # PROJECT_RULES
 
-This document defines the mandatory coding rules for the project. It replaces undocumented or inconsistent conventions with explicit standards.
+This document defines the mandatory coding rules for the project. It replaces undocumented or inconsistent conventions
+with explicit standards.
 
-The goal is to keep the codebase deterministic, readable, easy to review, and consistent across modules, translators, optimizers, executors, and infrastructure code.
+The goal is to keep the codebase deterministic, readable, easy to review, and consistent across modules, translators,
+optimizers, executors, and infrastructure code.
 
 ---
 
@@ -21,9 +23,11 @@ The goal is to keep the codebase deterministic, readable, easy to review, and co
 
 ### 2.1 English-only rule
 
-All comments, XML documentation, exception messages, debug messages, and user-facing technical text must be written in English.
+All comments, XML documentation, exception messages, debug messages, and user-facing technical text must be written in
+English.
 
 This includes:
+
 - `//` comments
 - `/* ... */` comments
 - XML comments (`<summary>`, `<param>`, `<returns>`, etc.)
@@ -38,6 +42,7 @@ Do not write comments in Russian or mix English with Russian inside code files.
 ### 2.3 Comment quality
 
 Comments must explain one of the following:
+
 - intent
 - invariant
 - non-obvious limitation
@@ -64,11 +69,15 @@ public PreparedExecution<TCompilationOutput> Build(CompilationInput input)
 
 ## 3. Naming Conventions
 
-The current codebase already strongly uses PascalCase for types and members such as `BasicCoreImpl`, `PreparedExecutionBuilder`, `CompilationInput`, `ExecutionEnvironment`, `TryVisit`, and `NormalizeRuntimeInput`, and underscore-prefixed private fields such as `_prepared`, `_inputNormalizer`, `_intrinsicCompiler`, `_assemblyCache`, and `_separator`. These conventions must be treated as standard.
+The current codebase already strongly uses PascalCase for types and members such as `BasicCoreImpl`,
+`PreparedExecutionBuilder`, `CompilationInput`, `ExecutionEnvironment`, `TryVisit`, and `NormalizeRuntimeInput`, and
+underscore-prefixed private fields such as `_prepared`, `_inputNormalizer`, `_intrinsicCompiler`, `_assemblyCache`, and
+`_separator`. These conventions must be treated as standard.
 
 ### 3.1 Types
 
 Use `PascalCase` for:
+
 - classes
 - records
 - interfaces
@@ -77,6 +86,7 @@ Use `PascalCase` for:
 - attributes
 
 Examples:
+
 - `BasicCoreImpl`
 - `PreparedExecution`
 - `IExecutionEnvironment`
@@ -85,12 +95,14 @@ Examples:
 ### 3.2 Methods and properties
 
 Use `PascalCase` for:
+
 - methods
 - properties
 - events
 - local functions
 
 Examples:
+
 - `PrepareToRun`
 - `RunPrepared`
 - `Build`
@@ -100,11 +112,13 @@ Examples:
 ### 3.3 Parameters and local variables
 
 Use `camelCase` for:
+
 - parameters
 - local variables
 - lambda parameters
 
 Examples:
+
 - `code`
 - `parameters`
 - `targetBytecode`
@@ -116,6 +130,7 @@ Examples:
 Use `_camelCase` for private instance and static fields.
 
 Examples:
+
 - `_prepared`
 - `_preparedExecutionBuilder`
 - `_intrinsicTypeRegistry`
@@ -127,6 +142,7 @@ Examples:
 Interfaces must start with `I`.
 
 Examples:
+
 - `ICoreRunnable`
 - `IAbstractMethodsTranslator`
 - `IIRProcessingModule`
@@ -136,6 +152,7 @@ Examples:
 Attribute types must end with `Attribute`.
 
 Example:
+
 - `AutoRegisterServiceAttribute`
 
 ### 3.7 Boolean naming
@@ -143,6 +160,7 @@ Example:
 Boolean variables, fields, and methods should read like conditions.
 
 Preferred:
+
 - `isValid`
 - `hasValue`
 - `needCasting`
@@ -154,6 +172,7 @@ Preferred:
 Use plural names for collections and maps unless the variable represents one logical lookup object.
 
 Preferred:
+
 - `modules`
 - `optimizers`
 - `externalSlots`
@@ -165,6 +184,7 @@ Preferred:
 Avoid cryptic abbreviations in new code.
 
 Allowed when already domain-standard in the project:
+
 - `IR`
 - `AIR`
 - `CIL`
@@ -179,13 +199,15 @@ Do not introduce new unclear abbreviations without strong reason.
 
 ### 4.1 One main type per file
 
-Each file should contain one main public type. Small tightly-coupled helper types may be nested when this improves locality.
+Each file should contain one main public type. Small tightly-coupled helper types may be nested when this improves
+locality.
 
 ### 4.2 File name = main type name
 
 The file name should match the main type name.
 
 Examples:
+
 - `PreparedExecutionBuilder.cs` → `PreparedExecutionBuilder`
 - `Thrower.cs` → `Thrower`
 
@@ -199,13 +221,16 @@ namespace BasicCore.Core;
 
 ### 4.4 Global usings
 
-Shared and stable imports should be moved to `GlobalUsings.cs` per project. The repository already uses this approach and even lists broader migration to global usings as a project task.
+Shared and stable imports should be moved to `GlobalUsings.cs` per project. The repository already uses this approach
+and even lists broader migration to global usings as a project task.
 
 ---
 
 ## 5. Formatting and Braces
 
-The codebase consistently places opening braces on a new line for methods, properties, constructors, control blocks, and switch arms with block bodies, while often keeping single-line guard clauses without braces. This should be formalized as the project style.
+The codebase consistently places opening braces on a new line for methods, properties, constructors, control blocks, and
+switch arms with block bodies, while often keeping single-line guard clauses without braces. This should be formalized
+as the project style.
 
 ### 5.1 Base brace style
 
@@ -236,18 +261,21 @@ public sealed class PreparedExecution<TCompilationOutput>(
 ### 5.3 Single-line statements
 
 A single statement after `if`, `for`, `foreach`, or `while` may omit braces only when all of the following are true:
+
 - the body is exactly one short statement
 - there is no nested control flow
 - readability is not reduced
 - future modification risk is low
 
 Preferred:
+
 ```csharp
 if (obj == null)
     Thrower.ArgumentNull(nameof(obj));
 ```
 
 Required braces:
+
 ```csharp
 if (obj == null)
 {
@@ -275,6 +303,7 @@ Align continuation for readability, not for clever compactness.
 Allowed only for short trivial members.
 
 Preferred:
+
 ```csharp
 public object? GetExternalValue(int slot) => _values[slot];
 ```
@@ -283,13 +312,17 @@ Avoid expression-bodied members when the logic is not trivial.
 
 ### 5.7 Collection expressions
 
-Collection expressions such as `[]` are allowed when they improve clarity and match target framework support already used in the project.
+Collection expressions such as `[]` are allowed when they improve clarity and match target framework support already
+used in the project.
 
 ---
 
 ## 6. Null Handling
 
-The project currently uses both `Thrower`-based null handling and direct framework null guards such as `ArgumentNullException.ThrowIfNull`. The new standard must be stricter: null validation in project code must go through `Thrower` only. `Thrower` already provides `ArgumentNull`, `NotNull`, and `NullException`, so the project has a dedicated mechanism for this rule.
+The project currently uses both `Thrower`-based null handling and direct framework null guards such as
+`ArgumentNullException.ThrowIfNull`. The new standard must be stricter: null validation in project code must go through
+`Thrower` only. `Thrower` already provides `ArgumentNull`, `NotNull`, and `NullException`, so the project has a
+dedicated mechanism for this rule.
 
 ### 6.1 General rule
 
@@ -299,6 +332,7 @@ Validate nulls at boundaries and assert invariants internally.
 ### 6.2 Mandatory API for null checks
 
 Use only:
+
 - `Thrower.ArgumentNull(...)`
 - `obj.NotNull(...)`
 - `Thrower.AssertAlways(...)` for internal invariants
@@ -307,6 +341,7 @@ Use only:
 ### 6.3 Forbidden
 
 Do not use:
+
 - `ArgumentNullException.ThrowIfNull(...)`
 - direct `throw new ArgumentNullException(...)`
 - silent fallback to null when null is invalid
@@ -341,7 +376,9 @@ Thrower.AssertAlways(_prepared != null, "Prepared execution must be initialized 
 
 ## 7. Exception Policy
 
-The codebase already has a centralized `Thrower` service with `InvalidOpEx`, `AssertAlways`, `NotImplementedException`, `ArgumentNull`, `Argument`, `FileNotFound`, `NotSupported`, and `InvalidCast`. This must be the only allowed way to throw project exceptions.
+The codebase already has a centralized `Thrower` service with `InvalidOpEx`, `AssertAlways`, `NotImplementedException`,
+`ArgumentNull`, `Argument`, `FileNotFound`, `NotSupported`, and `InvalidCast`. This must be the only allowed way to
+throw project exceptions.
 
 ### 7.1 Mandatory rule
 
@@ -350,6 +387,7 @@ All exceptions in project code must be thrown via `Thrower`.
 ### 7.2 Allowed APIs
 
 Use:
+
 - `Thrower.InvalidOpEx(...)`
 - `Thrower.InvalidOpEx<T>(...)`
 - `Thrower.AssertAlways(...)`
@@ -363,6 +401,7 @@ Use:
 ### 7.3 Forbidden
 
 Do not write:
+
 ```csharp
 throw new Exception(...);
 throw new InvalidOperationException(...);
@@ -373,17 +412,20 @@ throw new NotImplementedException(...);
 ### 7.4 Exception messages
 
 Exception messages must:
+
 - be in English
 - be short and precise
 - describe the violated invariant or invalid input
 - avoid noise and implementation trivia
 
 Preferred:
+
 - `"Unknown intrinsic 'load_xyz'."`
 - `"Expected return value on stack."`
 - `"Argument 'provider' cannot be null."`
 
 Avoid vague messages like:
+
 - `"Error"`
 - `"Something went wrong"`
 - `"Invalid state"`
@@ -399,6 +441,7 @@ Public types and non-trivial public members should have XML documentation.
 ### 8.2 Required for
 
 Required XML docs for:
+
 - public services
 - extension points
 - public options/configuration types
@@ -419,6 +462,7 @@ XML documentation must be in English only.
 ### 9.1 Prefer read-only abstractions
 
 Public APIs should prefer:
+
 - `IReadOnlyList<T>`
 - `IReadOnlyDictionary<TKey, TValue>`
 - immutable snapshots where practical
@@ -436,17 +480,21 @@ This matches the current split around `CompilationInput` and should remain the s
 
 ## 10. Parser and AST Rules
 
-The existing parser rules in the current `PROJECT_RULES.md` remain valid and are retained here with tighter wording: use `SafeGet`, mark processed nodes, do not mutate ancestors above the parent scope inside `IAstNodeCreator`, and process `NodeCreators` in priority order.
+The existing parser rules in the current `PROJECT_RULES.md` remain valid and are retained here with tighter wording: use
+`SafeGet`, mark processed nodes, do not mutate ancestors above the parent scope inside `IAstNodeCreator`, and process
+`NodeCreators` in priority order.
 
 ### 10.1 `IAstNodeCreator`
 
 Allowed:
+
 - change `NodeType`
 - move existing nodes within the allowed local scope
 - create new nodes
 - add tags
 
 Forbidden:
+
 - mutate ancestors above the current parent scope
 - hide index changes after removal
 - rely on unsafe child access
@@ -457,17 +505,20 @@ Use `SafeGet` when index may be out of range.
 
 ### 10.3 Processed nodes
 
-When parser logic consumes or transforms a node in parser flow, mark it with `MarkAsParserHandled()` when required by the parsing contract.
+When parser logic consumes or transforms a node in parser flow, mark it with `MarkAsParserHandled()` when required by
+the parsing contract.
 
 ### 10.4 Visitor order
 
-In AST visitors, process child nodes before the current node unless a specific visitor contract requires otherwise. This is the current dominant project pattern.
+In AST visitors, process child nodes before the current node unless a specific visitor contract requires otherwise. This
+is the current dominant project pattern.
 
 ---
 
 ## 11. Type Stack and IR Rules
 
-The current project rules around stack order, type inference, generic resolution, backend-dependent intrinsics, and AIR-level peephole optimizations remain valid.
+The current project rules around stack order, type inference, generic resolution, backend-dependent intrinsics, and
+AIR-level peephole optimizations remain valid.
 
 ### 11.1 Stack order
 
@@ -484,6 +535,7 @@ Use `GenericTypeResolver` for generic method calls.
 ### 11.4 Intrinsics
 
 Do not add new intrinsics without:
+
 - backend support analysis
 - type stack rule registration
 - clear naming
@@ -493,7 +545,8 @@ Do not add new intrinsics without:
 
 ## 12. Dependency Injection and Reflection
 
-The project already highlights determinism problems around assembly scanning and reflection-based discovery, and explicitly plans to centralize reflection and redesign DI behavior. These concerns should be reflected in the rules.
+The project already highlights determinism problems around assembly scanning and reflection-based discovery, and
+explicitly plans to centralize reflection and redesign DI behavior. These concerns should be reflected in the rules.
 
 ### 12.1 DI registration
 
@@ -517,6 +570,7 @@ Where ordering matters, define it explicitly.
 ### 13.1 Order
 
 Use the following order:
+
 1. `System...`
 2. third-party namespaces
 3. project namespaces
@@ -532,6 +586,7 @@ Do not keep redundant local `using` directives when a stable `GlobalUsings.cs` a
 ### 14.1 Every non-trivial rule change needs tests
 
 Add or update tests when changing:
+
 - parsing precedence
 - binding behavior
 - intrinsic mapping
@@ -545,13 +600,15 @@ Every bug fix should add a regression test when practical.
 
 ### 14.3 Semantic parity
 
-For language behavior, prefer paired tests that verify both interpreter and compiled execution produce the same observable result.
+For language behavior, prefer paired tests that verify both interpreter and compiled execution produce the same
+observable result.
 
 ---
 
 ## 15. Forbidden Practices
 
 Forbidden in new code:
+
 - direct exception throwing instead of `Thrower`
 - comments not in English
 - XML docs not in English
@@ -602,9 +659,13 @@ public void RegisterAssembly(Assembly assembly)
 
 ## 17. Migration Notes for Existing Code
 
-This document is stricter than parts of the current codebase. The repository still contains mixed-language comments and mixed null-check styles, so these rules should be treated as the target standard for cleanup rather than a claim that all current files already comply. Evidence of mixed English/Russian comments and mixed guard approaches is visible in the current code snapshot.
+This document is stricter than parts of the current codebase. The repository still contains mixed-language comments and
+mixed null-check styles, so these rules should be treated as the target standard for cleanup rather than a claim that
+all current files already comply. Evidence of mixed English/Russian comments and mixed guard approaches is visible in
+the current code snapshot.
 
 Priority cleanup order:
+
 1. Convert all non-English comments and XML docs to English.
 2. Replace direct framework null guards with `Thrower`-based guards.
 3. Replace direct `throw new ...` with `Thrower` calls.
@@ -616,6 +677,7 @@ Priority cleanup order:
 ## 18. Short Checklist for Contributors
 
 Before merging code, verify:
+
 - names follow project casing conventions
 - comments and XML docs are English only
 - null checks use `Thrower`
@@ -630,4 +692,5 @@ Before merging code, verify:
 
 ## 19. Source Basis
 
-This document was updated based on the current `PROJECT_RULES.md`, the `Thrower` implementation, the existing core pipeline classes, and the repository-wide conventions visible in the uploaded project snapshot.
+This document was updated based on the current `PROJECT_RULES.md`, the `Thrower` implementation, the existing core
+pipeline classes, and the repository-wide conventions visible in the uploaded project snapshot.

@@ -1,3 +1,4 @@
+using System.Globalization;
 using Microsoft.Extensions.DependencyInjection;
 using NumbersModule.Core;
 using UniversalToolchain.Dialects.Wist;
@@ -7,10 +8,10 @@ namespace UniversalToolchain.Dialects.Tests;
 public class WistDialectMinimalRuntimeParityTests
 {
     [Test]
-    public void MinimalPath_FullDefault_ProducesSameExecutionResult_AsLegacyPath() => AssertParityForExample("full-default", "interpreter", expected: 15d);
+    public void MinimalPath_FullDefault_ProducesSameExecutionResult_AsLegacyPath() => AssertParityForExample("full-default", "interpreter", 15d);
 
     [Test]
-    public void MinimalPath_MinimalArithmetic_ProducesSameExecutionResult_AsLegacyPath() => AssertParityForExample("minimal-arithmetic", "interpreter", expected: 14d);
+    public void MinimalPath_MinimalArithmetic_ProducesSameExecutionResult_AsLegacyPath() => AssertParityForExample("minimal-arithmetic", "interpreter", 14d);
 
 
     [Test]
@@ -95,7 +96,7 @@ public class WistDialectMinimalRuntimeParityTests
             double doubleValue => doubleValue,
             float floatValue => floatValue,
             decimal decimalValue => (double)decimalValue,
-            _ => Convert.ToDouble(value, System.Globalization.CultureInfo.InvariantCulture)
+            _ => Convert.ToDouble(value, CultureInfo.InvariantCulture)
         };
     }
 }

@@ -15,10 +15,7 @@ public static class DialectBackendSelectorText
         return backendId.Value;
     }
 
-    public static string ToText(DialectBackendSelector selector)
-    {
-        return selector.IsAny ? "any" : ToText(selector.BackendId);
-    }
+    public static string ToText(DialectBackendSelector selector) => selector.IsAny ? "any" : ToText(selector.BackendId);
 
     public static bool TryParseId(string text, out DialectBackendId backendId)
     {

@@ -79,12 +79,12 @@ public class WistDialectExecutionIntegrationTests
         var result = workflow.ComposeFile(Path.Combine(example, "dialect.wistdialect"));
         using var host = workflow.CreateHost(result);
         var code = """
-            // single line comment
-            let x = 2
-            /* block
-               comment */
-            x + 5
-            """;
+                   // single line comment
+                   let x = 2
+                   /* block
+                      comment */
+                   x + 5
+                   """;
 
         var interpreterValue = host.Run(code, "interpreter");
         var compilerValue = host.Run(code, "compiler");

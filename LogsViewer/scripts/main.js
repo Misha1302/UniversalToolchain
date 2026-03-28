@@ -10,7 +10,7 @@ class LogViewer {
     init() {
         UIController.setupNavigation();
         UIController.setupFileUpload((content) => this.parseLogFile(content));
-        
+
         // Загружаем пример логов по умолчанию
         this.loadDefaultLogs();
     }

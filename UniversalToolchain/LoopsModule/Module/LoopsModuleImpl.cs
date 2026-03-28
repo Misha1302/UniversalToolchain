@@ -1,7 +1,9 @@
+using UniversalToolchain.Dialects.Abstractions;
+
 namespace LoopsModule.Module;
 
-[UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("Loops")]
-[UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("FrontendModule", "Loops")]
+[DialectModuleAlias("Loops")]
+[DialectRuntimeExport("FrontendModule", "Loops")]
 [AutoRegisterService]
 public class LoopsModuleImpl : IFrontendCoreModule
 {

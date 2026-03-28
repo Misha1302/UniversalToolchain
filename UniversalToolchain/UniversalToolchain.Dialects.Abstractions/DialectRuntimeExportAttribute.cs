@@ -1,8 +1,6 @@
-using System;
-
 namespace UniversalToolchain.Dialects.Abstractions;
 
-[AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+[AttributeUsage(AttributeTargets.Class, Inherited = false)]
 public sealed class DialectRuntimeExportAttribute : Attribute
 {
     public DialectRuntimeExportAttribute(

@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
-using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core;
 using UniversalToolchain.Dialects.Frontend;
 using UniversalToolchain.Dialects.Integration;
@@ -196,10 +195,7 @@ public class WistRuntimeManifestMetadataValidationTests
         return Assert.Throws<InvalidOperationException>(() => new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([first, second]), serializer))!;
     }
 
-    private static string GetDialectPath(string dialectName)
-    {
-        return Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "Dialects", "examples", "wist", dialectName, "dialect.wistdialect"));
-    }
+    private static string GetDialectPath(string dialectName) => Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "Dialects", "examples", "wist", dialectName, "dialect.wistdialect"));
 
     private static IReadOnlySet<string> GetLoadedModuleAssemblies()
     {
@@ -229,7 +225,7 @@ public class WistRuntimeManifestMetadataValidationTests
         public void Dispose()
         {
             if (Directory.Exists(Path))
-                Directory.Delete(Path, recursive: true);
+                Directory.Delete(Path, true);
         }
     }
 }

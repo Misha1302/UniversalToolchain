@@ -17,11 +17,11 @@ public class MinimalRuntimeSelectionTests
         var builder = provider.GetRequiredService<IDialectCompiledDialectBuildPlanBuilder>();
         var resolver = provider.GetRequiredService<SelectedRuntimePlanResolver>();
         const string source = """
-            dialect Deterministic
-            use Arithmetic,Numbers,Variables
-            backend interpreter,compiler
-            enable LocalVariablesOptimization
-            """;
+                              dialect Deterministic
+                              use Arithmetic,Numbers,Variables
+                              backend interpreter,compiler
+                              enable LocalVariablesOptimization
+                              """;
 
         string? signature = null;
         for (var i = 0; i < 100; i++)
@@ -38,7 +38,7 @@ public class MinimalRuntimeSelectionTests
     public void SelectionResolver_MissingModule_AddsR001()
     {
         var resolver = new SelectedRuntimePlanResolver(new FileBasedRuntimeComponentCatalog(new DefaultRuntimeManifestFileLocator(new RuntimeArtifactLocatorOptions()), new RuntimeManifestJsonSerializer()));
-        var plan = BuildPlan(modules: ["NoSuchModule"], backends: [WistDialectBackendIds.Interpreter], optimizers: []);
+        var plan = BuildPlan(["NoSuchModule"], [WistDialectBackendIds.Interpreter], []);
         var selection = resolver.Resolve(plan);
         Assert.That(selection.Diagnostics.Any(x => x.Code == "R001"), Is.True);
     }
@@ -47,7 +47,7 @@ public class MinimalRuntimeSelectionTests
     public void SelectionResolver_MissingBackend_AddsR002()
     {
         var resolver = new SelectedRuntimePlanResolver(new FileBasedRuntimeComponentCatalog(new DefaultRuntimeManifestFileLocator(new RuntimeArtifactLocatorOptions()), new RuntimeManifestJsonSerializer()));
-        var plan = BuildPlan(modules: ["Arithmetic"], backends: [new DialectBackendId("missing")], optimizers: []);
+        var plan = BuildPlan(["Arithmetic"], [new DialectBackendId("missing")], []);
         var selection = resolver.Resolve(plan);
         Assert.That(selection.Diagnostics.Any(x => x.Code == "R002"), Is.True);
     }
@@ -56,7 +56,7 @@ public class MinimalRuntimeSelectionTests
     public void SelectionResolver_MissingOptimizer_AddsR003()
     {
         var resolver = new SelectedRuntimePlanResolver(new FileBasedRuntimeComponentCatalog(new DefaultRuntimeManifestFileLocator(new RuntimeArtifactLocatorOptions()), new RuntimeManifestJsonSerializer()));
-        var plan = BuildPlan(modules: ["Arithmetic"], backends: [WistDialectBackendIds.Interpreter], optimizers: [new OptimizerBuildDirective("missing-opt", true, DialectBackendSelector.Any)]);
+        var plan = BuildPlan(["Arithmetic"], [WistDialectBackendIds.Interpreter], [new OptimizerBuildDirective("missing-opt", true, DialectBackendSelector.Any)]);
         var selection = resolver.Resolve(plan);
         Assert.That(selection.Diagnostics.Any(x => x.Code == "R003"), Is.True);
     }
@@ -66,7 +66,7 @@ public class MinimalRuntimeSelectionTests
     public void SelectionResolver_DropsDuplicateBackendSelections_Deterministically()
     {
         var resolver = new SelectedRuntimePlanResolver(new FileBasedRuntimeComponentCatalog(new DefaultRuntimeManifestFileLocator(new RuntimeArtifactLocatorOptions()), new RuntimeManifestJsonSerializer()));
-        var plan = BuildPlan(modules: ["Arithmetic"], backends: [WistDialectBackendIds.Interpreter, WistDialectBackendIds.Interpreter, WistDialectBackendIds.Cil], optimizers: []);
+        var plan = BuildPlan(["Arithmetic"], [WistDialectBackendIds.Interpreter, WistDialectBackendIds.Interpreter, WistDialectBackendIds.Cil], []);
         var selection = resolver.Resolve(plan);
 
         Assert.That(selection.EnabledBackends.Select(x => x.CanonicalAlias), Is.EqualTo(new[] { "cil", "interpreter" }));
@@ -77,9 +77,8 @@ public class MinimalRuntimeSelectionTests
     {
         var resolver = new SelectedRuntimePlanResolver(new FileBasedRuntimeComponentCatalog(new DefaultRuntimeManifestFileLocator(new RuntimeArtifactLocatorOptions()), new RuntimeManifestJsonSerializer()));
         var plan = BuildPlan(
-            modules: ["Arithmetic"],
-            backends: [WistDialectBackendIds.Interpreter],
-            optimizers:
+            ["Arithmetic"],
+            [WistDialectBackendIds.Interpreter],
             [
                 new OptimizerBuildDirective("LocalVariablesOptimization", true, DialectBackendSelector.Any),
                 new OptimizerBuildDirective("LocalVariablesOptimization", true, DialectBackendSelector.Any)
@@ -95,7 +94,7 @@ public class MinimalRuntimeSelectionTests
     {
         var resolver = new SelectedRuntimePlanResolver(new FileBasedRuntimeComponentCatalog(new DefaultRuntimeManifestFileLocator(new RuntimeArtifactLocatorOptions()), new RuntimeManifestJsonSerializer()));
         var before = AppDomain.CurrentDomain.GetAssemblies().Select(x => x.GetName().Name).ToHashSet(StringComparer.Ordinal);
-        var plan = BuildPlan(modules: ["Arithmetic"], backends: [WistDialectBackendIds.Interpreter], optimizers: []);
+        var plan = BuildPlan(["Arithmetic"], [WistDialectBackendIds.Interpreter], []);
         _ = resolver.Resolve(plan);
         var after = AppDomain.CurrentDomain.GetAssemblies().Select(x => x.GetName().Name).ToHashSet(StringComparer.Ordinal);
 
@@ -107,10 +106,7 @@ public class MinimalRuntimeSelectionTests
         });
     }
 
-    private static DialectBuildPlan BuildPlan(IReadOnlyList<string> modules, IReadOnlyList<DialectBackendId> backends, IReadOnlyList<OptimizerBuildDirective> optimizers)
-    {
-        return new DialectBuildPlan("Demo", null, modules, backends, [], [], optimizers, null, [], new DialectValidationResult([]));
-    }
+    private static DialectBuildPlan BuildPlan(IReadOnlyList<string> modules, IReadOnlyList<DialectBackendId> backends, IReadOnlyList<OptimizerBuildDirective> optimizers) => new("Demo", null, modules, backends, [], [], optimizers, null, [], new DialectValidationResult([]));
 
     private static ServiceProvider CreateMinimalProvider()
     {

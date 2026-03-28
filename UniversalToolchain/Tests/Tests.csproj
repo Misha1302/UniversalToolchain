@@ -54,10 +54,10 @@
 
 
     <ItemGroup>
-        <Compile Remove="**/*.cs" />
-        <Compile Include="GlobalUsings.cs" />
-        <Compile Include="Integration/WistcCliContractsTests.cs" />
-        <Compile Include="Architecture/DeletedLegacySurfaceTests.cs" />
+        <Compile Remove="**/*.cs"/>
+        <Compile Include="GlobalUsings.cs"/>
+        <Compile Include="Integration/WistcCliContractsTests.cs"/>
+        <Compile Include="Architecture/DeletedLegacySurfaceTests.cs"/>
     </ItemGroup>
 
     <ItemGroup>

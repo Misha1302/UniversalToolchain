@@ -3,8 +3,8 @@ using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core.ServiceCollection;
-using ServiceLifetime = Microsoft.Extensions.DependencyInjection.ServiceLifetime;
 using UniversalToolchain.Dialects.Integration;
+using ServiceLifetime = Microsoft.Extensions.DependencyInjection.ServiceLifetime;
 
 namespace UniversalToolchain.Dialects.Wist;
 

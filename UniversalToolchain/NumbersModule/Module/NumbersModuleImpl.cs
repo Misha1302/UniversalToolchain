@@ -1,7 +1,7 @@
 namespace NumbersModule.Module;
 
-[UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("Numbers")]
-[UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("FrontendModule", "Numbers")]
+[DialectModuleAlias("Numbers")]
+[DialectRuntimeExport("FrontendModule", "Numbers")]
 [AutoRegisterService]
 [ArithmeticModeCompatibility(ArithmeticMode.Universal)]
 public class NumbersModuleImpl : IFrontendCoreModule

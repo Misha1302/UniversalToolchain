@@ -3,13 +3,16 @@
 UniversalToolchain is a modular .NET framework for building extensible domain-specific languages.
 
 This repository contains the **UniversalToolchain framework** and **Wist**, its reference language.
-Wist is used as a proving ground to validate and evolve the framework’s composable pipeline, grammar-driven frontend, and execution backends.
+Wist is used as a proving ground to validate and evolve the framework’s composable pipeline, grammar-driven frontend,
+and execution backends.
 
 ## Why this project exists
 
-Many DSL projects start as one-off implementations and end up rebuilding the same infrastructure: lexer/parser, AST/IR transforms, runtime wiring, and execution.
+Many DSL projects start as one-off implementations and end up rebuilding the same infrastructure: lexer/parser, AST/IR
+transforms, runtime wiring, and execution.
 
-UniversalToolchain focuses on reusing that infrastructure through composable stages on .NET, so language features can be assembled and evolved without rewriting the entire toolchain each time.
+UniversalToolchain focuses on reusing that infrastructure through composable stages on .NET, so language features can be
+assembled and evolved without rewriting the entire toolchain each time.
 
 ## What it supports
 
@@ -44,6 +47,7 @@ With dialects, a composition step resolves a `.wistdialect` definition into an e
 ## Why this approach?
 
 This project is not only about parsing expressions. It is about **reusable language infrastructure**:
+
 - compose language capabilities from modules instead of hardcoding one pipeline,
 - keep one frontend model while switching execution backend (`compiler` or `interpreter`),
 - define runtime shape declaratively with dialect files.
@@ -52,8 +56,8 @@ This project is not only about parsing expressions. It is about **reusable langu
 
 - .NET SDK `10.0.103`
 - SDK policy in `UniversalToolchain/global.json`:
-  - `rollForward: latestMajor`
-  - `allowPrerelease: true`
+    - `rollForward: latestMajor`
+    - `allowPrerelease: true`
 - Projects target `net10.0`
 
 ## Quick start: build and test
@@ -70,12 +74,14 @@ dotnet test UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolch
 ## CLI usage (`Wistc`)
 
 Available verbs:
+
 - `run`
 - `repl`
 - `dialect-inspect`
 - `dialect-demo`
 
 Common runtime options:
+
 - `--mode <compiler|interpreter>`
 - `--dialect-file <path>`
 
@@ -129,6 +135,7 @@ See `UniversalToolchain/Example/Program.cs` for the full example with compositio
 ## Repository examples
 
 Dialect examples are under `UniversalToolchain/Dialects/examples/wist`:
+
 - `full-default`
 - `minimal-arithmetic`
 - `restricted-sandbox`

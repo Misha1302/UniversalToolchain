@@ -5,9 +5,9 @@ using BasicCore.ExecutorWrapper;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
+using ExceptionsManager;
 using IntermediateRepresentationAbstractions;
 using Microsoft.Extensions.DependencyInjection;
-using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Integration;
 

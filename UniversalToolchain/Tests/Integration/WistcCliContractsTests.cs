@@ -5,8 +5,6 @@ namespace Tests.Integration;
 [TestFixture]
 public class WistcCliContractsTests
 {
-    private static string _cliDllPath = string.Empty;
-
     [OneTimeSetUp]
     public void BuildCli()
     {
@@ -17,6 +15,8 @@ public class WistcCliContractsTests
         _cliDllPath = ResolveCliDllPath(repoRoot);
         Assert.That(File.Exists(_cliDllPath), Is.True, $"CLI assembly not found at '{_cliDllPath}'.");
     }
+
+    private static string _cliDllPath = string.Empty;
 
     [Test]
     public void RunEval_ShouldReturnExpectedValue_InCompilerMode()
@@ -64,10 +64,7 @@ public class WistcCliContractsTests
         Assert.That(result.StdErr, Does.Contain("Unknown execution mode"));
     }
 
-    private static CliResult RunCli(string args)
-    {
-        return RunProcess("dotnet", $"\"{_cliDllPath}\" {args}", Path.GetDirectoryName(_cliDllPath)!, 30000);
-    }
+    private static CliResult RunCli(string args) => RunProcess("dotnet", $"\"{_cliDllPath}\" {args}", Path.GetDirectoryName(_cliDllPath)!, 30000);
 
     private static CliResult RunProcess(string fileName, string arguments, string workingDirectory, int timeoutMs)
     {
@@ -101,15 +98,9 @@ public class WistcCliContractsTests
         return new CliResult(process.ExitCode, stdOut, stdErr, timedOut);
     }
 
-    private static string GetDialectPath(string exampleName)
-    {
-        return Path.Combine(GetRepoRoot(), "UniversalToolchain", "Dialects", "examples", "wist", exampleName, "dialect.wistdialect");
-    }
+    private static string GetDialectPath(string exampleName) => Path.Combine(GetRepoRoot(), "UniversalToolchain", "Dialects", "examples", "wist", exampleName, "dialect.wistdialect");
 
-    private static string GetRepoRoot()
-    {
-        return Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", ".."));
-    }
+    private static string GetRepoRoot() => Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", ".."));
 
     private static string ResolveCliDllPath(string repoRoot)
     {

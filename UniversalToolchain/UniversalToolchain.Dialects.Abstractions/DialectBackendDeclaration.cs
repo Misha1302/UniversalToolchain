@@ -4,6 +4,8 @@ namespace UniversalToolchain.Dialects.Abstractions;
 
 public abstract class DialectBackendDeclaration
 {
+    public abstract DialectBackendId BackendId { get; }
+
     public DialectBackendId GetBackendId()
     {
         var backendId = BackendId;
@@ -12,6 +14,4 @@ public abstract class DialectBackendDeclaration
 
         return backendId;
     }
-
-    public abstract DialectBackendId BackendId { get; }
 }

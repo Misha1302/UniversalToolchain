@@ -70,14 +70,12 @@ public sealed class FileBasedRuntimeComponentCatalog : IRuntimeComponentCatalog
     private static RuntimeComponentManifestEntry ToRuntimeEntry(
         FileDialectRuntimeComponentEntry component,
         string assemblySimpleName,
-        string manifestPath)
-    {
-        return Normalize(new RuntimeComponentManifestEntry(
+        string manifestPath) =>
+        Normalize(new RuntimeComponentManifestEntry(
             RuntimeComponentKindCodec.Parse(component.Kind, manifestPath),
             component.CanonicalAlias,
             component.Aliases,
             new RuntimeTypeReference(assemblySimpleName, component.TypeFullName)));
-    }
 
     private static bool TryResolve(IReadOnlyDictionary<string, RuntimeComponentManifestEntry> map, string alias, out RuntimeComponentManifestEntry? entry)
     {

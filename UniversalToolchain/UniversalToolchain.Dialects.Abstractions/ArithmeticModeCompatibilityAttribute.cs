@@ -3,7 +3,7 @@ namespace UniversalToolchain.Dialects.Abstractions;
 /// <summary>
 ///     Declares arithmetic mode compatibility for a concrete auto-registered type.
 /// </summary>
-[AttributeUsage(AttributeTargets.Class, Inherited = false, AllowMultiple = false)]
+[AttributeUsage(AttributeTargets.Class, Inherited = false)]
 public sealed class ArithmeticModeCompatibilityAttribute : Attribute
 {
     private readonly HashSet<ArithmeticMode> _supportedModes;

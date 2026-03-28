@@ -5,8 +5,8 @@ namespace UniversalToolchain.Dialects.Integration;
 
 public sealed class DefaultRuntimeComponentTypeLoader : IRuntimeComponentTypeLoader
 {
-    private readonly ConcurrentDictionary<string, Lazy<Type>> _cache = new(StringComparer.Ordinal);
     private readonly IRuntimeAssemblyLoadStrategy _assemblyLoadStrategy;
+    private readonly ConcurrentDictionary<string, Lazy<Type>> _cache = new(StringComparer.Ordinal);
 
     public DefaultRuntimeComponentTypeLoader(IRuntimeAssemblyLoadStrategy assemblyLoadStrategy)
     {
@@ -33,7 +33,7 @@ public sealed class DefaultRuntimeComponentTypeLoader : IRuntimeComponentTypeLoa
     private Type ResolveType(RuntimeTypeReference typeReference)
     {
         var assembly = _assemblyLoadStrategy.LoadAssembly(typeReference.AssemblySimpleName);
-        return assembly.GetType(typeReference.TypeFullName, throwOnError: true, ignoreCase: false)
+        return assembly.GetType(typeReference.TypeFullName, true, false)
                ?? Thrower.InvalidOpEx<Type>($"Type '{typeReference.TypeFullName}' was not found in assembly '{typeReference.AssemblySimpleName}'.");
     }
 }

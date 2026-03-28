@@ -1,4 +1,5 @@
 using System.Reflection;
+using ArithmeticModule.Module;
 using UniversalToolchain.Dialects.Integration;
 
 namespace UniversalToolchain.Dialects.Tests.RuntimeLoading;
@@ -8,7 +9,7 @@ public class RuntimeAssemblyLoadStrategyContractTests
     [Test]
     public void TypeLoader_ShouldUseInjectedAssemblyLoadStrategy()
     {
-        var strategy = new CountingAssemblyLoadStrategy(typeof(ArithmeticModule.Module.ArithmeticModuleImpl).Assembly);
+        var strategy = new CountingAssemblyLoadStrategy(typeof(ArithmeticModuleImpl).Assembly);
         var loader = new DefaultRuntimeComponentTypeLoader(strategy);
 
         var resolved = loader.LoadType(Entry("ArithmeticModule", "ArithmeticModule.Module.ArithmeticModuleImpl"));
@@ -35,7 +36,7 @@ public class RuntimeAssemblyLoadStrategyContractTests
     [Test]
     public void TypeLoader_ShouldThrowClearError_ForMissingTypeInAssembly()
     {
-        var strategy = new CountingAssemblyLoadStrategy(typeof(ArithmeticModule.Module.ArithmeticModuleImpl).Assembly);
+        var strategy = new CountingAssemblyLoadStrategy(typeof(ArithmeticModuleImpl).Assembly);
         var loader = new DefaultRuntimeComponentTypeLoader(strategy);
 
         var ex = Assert.Throws<TypeLoadException>(() => loader.LoadType(Entry("ArithmeticModule", "ArithmeticModule.Module.DoesNotExist")));
@@ -46,7 +47,7 @@ public class RuntimeAssemblyLoadStrategyContractTests
     [Test]
     public void TypeLoader_ShouldCacheResolvedTypeDeterministically()
     {
-        var strategy = new CountingAssemblyLoadStrategy(typeof(ArithmeticModule.Module.ArithmeticModuleImpl).Assembly);
+        var strategy = new CountingAssemblyLoadStrategy(typeof(ArithmeticModuleImpl).Assembly);
         var loader = new DefaultRuntimeComponentTypeLoader(strategy);
         var entry = Entry("ArithmeticModule", "ArithmeticModule.Module.ArithmeticModuleImpl");
 
@@ -63,7 +64,7 @@ public class RuntimeAssemblyLoadStrategyContractTests
     [Test]
     public void TypeLoader_ShouldReturnSameType_ForRepeatedResolutions()
     {
-        var strategy = new CountingAssemblyLoadStrategy(typeof(ArithmeticModule.Module.ArithmeticModuleImpl).Assembly);
+        var strategy = new CountingAssemblyLoadStrategy(typeof(ArithmeticModuleImpl).Assembly);
         var loader = new DefaultRuntimeComponentTypeLoader(strategy);
         var entry = Entry("ArithmeticModule", "ArithmeticModule.Module.ArithmeticModuleImpl");
 
@@ -75,7 +76,7 @@ public class RuntimeAssemblyLoadStrategyContractTests
     [Test]
     public async Task TypeLoader_ShouldBeSafe_ForParallelResolutionsOfSameType()
     {
-        var strategy = new CountingAssemblyLoadStrategy(typeof(ArithmeticModule.Module.ArithmeticModuleImpl).Assembly);
+        var strategy = new CountingAssemblyLoadStrategy(typeof(ArithmeticModuleImpl).Assembly);
         var loader = new DefaultRuntimeComponentTypeLoader(strategy);
         var entry = Entry("ArithmeticModule", "ArithmeticModule.Module.ArithmeticModuleImpl");
 

@@ -10,7 +10,6 @@ using BasicParser.Core;
 using CommonExceptions;
 using IntermediateRepresentationAbstractions;
 using UniversalIntermediateRepresentation;
-using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Frontend;
 
 namespace UniversalToolchain.Dialects.Tests;

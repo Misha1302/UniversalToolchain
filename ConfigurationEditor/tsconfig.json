@@ -2,7 +2,11 @@
   "compilerOptions": {
     "target": "ES2020",
     "useDefineForClassFields": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2020",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "module": "ESNext",
     "skipLibCheck": true,
     "moduleResolution": "bundler",
@@ -17,15 +21,32 @@
     "noFallthroughCasesInSwitch": false,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"],
-      "@components/*": ["src/components/*"],
-      "@utils/*": ["src/utils/*"],
-      "@hooks/*": ["src/hooks/*"],
-      "@types/*": ["src/types/*"],
-      "@stores/*": ["src/stores/*"]
+      "@/*": [
+        "src/*"
+      ],
+      "@components/*": [
+        "src/components/*"
+      ],
+      "@utils/*": [
+        "src/utils/*"
+      ],
+      "@hooks/*": [
+        "src/hooks/*"
+      ],
+      "@types/*": [
+        "src/types/*"
+      ],
+      "@stores/*": [
+        "src/stores/*"
+      ]
     },
-    "types": ["vite/client"]
+    "types": [
+      "vite/client"
+    ]
   },
-  "include": ["src", "vite.config.ts"],
+  "include": [
+    "src",
+    "vite.config.ts"
+  ],
   "references": []
 }
