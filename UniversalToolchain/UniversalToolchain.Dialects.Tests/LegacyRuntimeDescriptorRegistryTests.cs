@@ -10,7 +10,7 @@ using UniversalToolchain.Dialects.Wist;
 
 namespace UniversalToolchain.Dialects.Tests;
 
-public class WistDialectRuntimeDescriptorProviderTests
+public class LegacyRuntimeDescriptorRegistryTests
 {
     [Test]
     public void RegistryFactory_BuildsDeterministicRealWistCatalog()

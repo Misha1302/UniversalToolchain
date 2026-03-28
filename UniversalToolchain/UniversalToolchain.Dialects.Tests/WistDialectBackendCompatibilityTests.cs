@@ -8,7 +8,7 @@ namespace UniversalToolchain.Dialects.Tests;
 public class WistDialectBackendCompatibilityTests
 {
     [Test]
-    public void WistKnownBackendsProvider_ReturnsOnlyBackendsSupportedByWistProviders()
+    public void RuntimeKnownBackendsProvider_ReturnsOnlyBackendsSupportedByRuntimeRegistrars()
     {
         var catalog = new StaticCatalog(
             Entry("cil", ["compiler"]),
@@ -32,7 +32,7 @@ public class WistDialectBackendCompatibilityTests
     }
 
     [Test]
-    public void WistKnownBackendsProvider_FailsWhenProviderBackendIsMissingFromCatalog()
+    public void RuntimeKnownBackendsProvider_FailsWhenProviderBackendIsMissingFromCatalog()
     {
         var catalog = new StaticCatalog(Entry("cil"));
         var exception = Assert.Throws<InvalidOperationException>(() =>
@@ -42,7 +42,7 @@ public class WistDialectBackendCompatibilityTests
     }
 
     [Test]
-    public void WistKnownBackendsProvider_FailsOnDuplicateBackendProvidersDeterministically()
+    public void RuntimeKnownBackendsProvider_FailsOnDuplicateBackendProvidersDeterministically()
     {
         var catalog = new StaticCatalog(Entry("cil"));
         var exception = Assert.Throws<InvalidOperationException>(() =>
@@ -57,7 +57,7 @@ public class WistDialectBackendCompatibilityTests
     }
 
     [Test]
-    public void WistDialectExecutionConfigurationBuilder_KnownBackendsComeFromWistKnownBackendsProvider()
+    public void WistDialectExecutionConfigurationBuilder_KnownBackendsComeFromRuntimeKnownBackendsProvider()
     {
         var knownBackendsProvider = new RecordingKnownBackendsProvider(
             [new RuntimeBackendDescriptor(new DialectBackendId("wist-only"), ["wo"])]);

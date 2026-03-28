@@ -7,6 +7,20 @@ namespace UniversalToolchain.Dialects.Tests;
 public class WistDialectMinimalRuntimeIsolationTests
 {
 
+
+    [Test]
+    public void ServiceRegistrations_UseGenericBackendAbstractionsOnly()
+    {
+        var services = new ServiceCollection();
+        services.AddWistDialectServicesMinimal();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(services.Any(static x => x.ServiceType == typeof(IDialectBackendRuntimeRegistrar)), Is.True);
+            Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeKnownBackendsProvider)), Is.True);
+        });
+    }
+
     [Test]
     public void MinimalWorkflow_HasNoLegacyDependencies()
     {
