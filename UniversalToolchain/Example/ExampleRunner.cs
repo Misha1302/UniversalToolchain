@@ -1,38 +1,42 @@
+using UniversalToolchain.Dialects.Wist;
+
 namespace Example;
 
 public class ExampleRunner
 {
-    private readonly ServiceProvider _provider;
+    private readonly WistDialectExecutionHost _host;
 
     public ExampleRunner()
     {
         var services = new ServiceCollection();
+        services.AddWistDialectServices();
+        services.AddWistCilBackend();
+        services.AddWistInterpreterBackend();
 
-        services.AddWistServices(options =>
-            options.ArithmeticMode = ArithmeticMode.Native
-        );
+        using var provider = services.BuildServiceProvider();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+        var composition = workflow.ComposeText(
+            """
+            dialect ExampleNative
+            use Whitespaces,SemicolonAsNewLine,Comments,Numbers,Identifier,Arithmetic,NativeMath,Equality,Conditions,Loops,Variables,Scopes,Labels,InternalPreprocessorLexemes,CSharpInterop
+            enable LocalVariablesOptimization
+            backend compiler,interpreter
+            """,
+            "example-inline");
 
-        // Add optional modules
-        services.AddSingleton<IFrontendCoreModule>(new ExecutorDebugLoggerImpl());
-        services.AddSingleton<IFrontendCoreModule>(new ParserConfigurationModuleImpl(ActionType.DumpConfiguration));
-        services.AddSingleton<IFrontendCoreModule>(new LexerConfigurationModuleImpl(ActionType.DumpConfiguration));
+        if (!composition.IsSuccess)
+            Thrower.InvalidOpEx(composition.ToDeterministicText());
 
-        _provider = services.BuildServiceProvider();
+        _host = workflow.CreateHost(composition);
     }
 
     public void RunInterpreter(string code)
     {
-        var c = _provider.GetService<ICoreRunnable>().NotNull();
-        Console.WriteLine("Runned: " + c.Run(code));
+        Console.WriteLine("Runned: " + _host.Run(code, "interpreter"));
     }
 
-
-    public void RunCompiled(string code, OrderedDictionary<string, Type> parameters)
+    public void RunCompiled(string code, OrderedDictionary<string, Type> _)
     {
-        var core = _provider.GetService<IExecutableGiver<DynamicMethod>>().NotNull();
-        var method = core.GetExecutable(code, parameters);
-        var fastCallable = new DynamicMethodInvoker<int, int, int>(method);
-
-        Console.WriteLine("Result: " + fastCallable.Invoke(7, 15));
+        Console.WriteLine("Result: " + _host.Run(code, "compiler"));
     }
 }

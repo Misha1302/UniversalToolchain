@@ -40,9 +40,11 @@ public sealed class DefaultRuntimeManifestFileLocator : IRuntimeManifestFileLoca
 
     private static IReadOnlyList<string> ResolveSearchRoots(RuntimeArtifactLocatorOptions options)
     {
-        return options.SearchRoots
-            .Concat(options.AdditionalSearchDirectories)
-            .Append(AppContext.BaseDirectory)
+        var searchRoots = options.SearchRoots.AsEnumerable();
+        if (options.IncludeAppContextBaseDirectory)
+            searchRoots = searchRoots.Append(AppContext.BaseDirectory);
+
+        return searchRoots
             .Where(static x => !string.IsNullOrWhiteSpace(x))
             .Select(Path.GetFullPath)
             .Distinct(StringComparer.Ordinal)

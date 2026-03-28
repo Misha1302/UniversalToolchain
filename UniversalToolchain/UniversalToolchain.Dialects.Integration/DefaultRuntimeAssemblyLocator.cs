@@ -16,9 +16,11 @@ public sealed class DefaultRuntimeAssemblyLocator : IRuntimeAssemblyLocator
             ? ".dll"
             : options.AssemblyFileExtension;
 
-        _searchRoots = options.SearchRoots
-            .Concat(options.AdditionalSearchDirectories)
-            .Append(AppContext.BaseDirectory)
+        var searchRoots = options.SearchRoots.AsEnumerable();
+        if (options.IncludeAppContextBaseDirectory)
+            searchRoots = searchRoots.Append(AppContext.BaseDirectory);
+
+        _searchRoots = searchRoots
             .Where(x => !string.IsNullOrWhiteSpace(x))
             .Select(Path.GetFullPath)
             .Distinct(StringComparer.Ordinal)

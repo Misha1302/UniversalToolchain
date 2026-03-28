@@ -1,6 +1,4 @@
 using System.Collections.Concurrent;
-using System.Reflection;
-using System.Runtime.Loader;
 using ExceptionsManager;
 
 namespace UniversalToolchain.Dialects.Integration;
@@ -8,11 +6,11 @@ namespace UniversalToolchain.Dialects.Integration;
 public sealed class DefaultRuntimeComponentTypeLoader : IRuntimeComponentTypeLoader
 {
     private readonly ConcurrentDictionary<string, Lazy<Type>> _cache = new(StringComparer.Ordinal);
-    private readonly IRuntimeAssemblyLocator _locator;
+    private readonly IRuntimeAssemblyLoadStrategy _assemblyLoadStrategy;
 
-    public DefaultRuntimeComponentTypeLoader(IRuntimeAssemblyLocator locator)
+    public DefaultRuntimeComponentTypeLoader(IRuntimeAssemblyLoadStrategy assemblyLoadStrategy)
     {
-        _locator = locator ?? throw new ArgumentNullException(nameof(locator));
+        _assemblyLoadStrategy = assemblyLoadStrategy ?? throw new ArgumentNullException(nameof(assemblyLoadStrategy));
     }
 
     public Type LoadType(RuntimeComponentManifestEntry entry)
@@ -34,53 +32,7 @@ public sealed class DefaultRuntimeComponentTypeLoader : IRuntimeComponentTypeLoa
 
     private Type ResolveType(RuntimeTypeReference typeReference)
     {
-        var assembly = TryGetAlreadyLoadedAssembly(typeReference.AssemblySimpleName)
-                       ?? TryLoadBySimpleName(typeReference.AssemblySimpleName)
-                       ?? LoadAssemblyFromResolvedPath(typeReference.AssemblySimpleName);
-
-        return ResolveTypeFromAssembly(assembly, typeReference);
-    }
-
-    private static Assembly? TryGetAlreadyLoadedAssembly(string assemblySimpleName)
-    {
-        return AppDomain.CurrentDomain
-            .GetAssemblies()
-            .FirstOrDefault(x => string.Equals(x.GetName().Name, assemblySimpleName, StringComparison.Ordinal));
-    }
-
-    private static Assembly? TryLoadBySimpleName(string assemblySimpleName)
-    {
-        try
-        {
-            return Assembly.Load(new AssemblyName(assemblySimpleName));
-        }
-        catch (FileNotFoundException)
-        {
-            return null;
-        }
-        catch (FileLoadException)
-        {
-            return null;
-        }
-        catch (BadImageFormatException)
-        {
-            return null;
-        }
-    }
-
-    private Assembly LoadAssemblyFromResolvedPath(string assemblySimpleName)
-    {
-        if (!_locator.TryResolveAssemblyPath(assemblySimpleName, out var absolutePath) || string.IsNullOrWhiteSpace(absolutePath))
-            Thrower.FileNotFound($"Assembly '{assemblySimpleName}' was not found in configured runtime assembly locator search roots.");
-
-        if (!Path.IsPathRooted(absolutePath))
-            Thrower.Argument(nameof(absolutePath), $"Assembly locator returned non-absolute path '{absolutePath}'.");
-
-        return AssemblyLoadContext.Default.LoadFromAssemblyPath(absolutePath);
-    }
-
-    private static Type ResolveTypeFromAssembly(Assembly assembly, RuntimeTypeReference typeReference)
-    {
+        var assembly = _assemblyLoadStrategy.LoadAssembly(typeReference.AssemblySimpleName);
         return assembly.GetType(typeReference.TypeFullName, throwOnError: true, ignoreCase: false)
                ?? Thrower.InvalidOpEx<Type>($"Type '{typeReference.TypeFullName}' was not found in assembly '{typeReference.AssemblySimpleName}'.");
     }

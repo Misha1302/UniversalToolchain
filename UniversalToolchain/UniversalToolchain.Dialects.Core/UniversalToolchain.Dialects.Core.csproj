@@ -8,7 +8,22 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.1"/>
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj"/>
+        <ProjectReference Include="..\AbstractIrConverters\AbstractIrConverters.csproj"/>
+        <ProjectReference Include="..\BasicCodeTranslator\BasicCodeTranslator.csproj"/>
+        <ProjectReference Include="..\BasicCilCompiler\BasicCilCompiler.csproj"/>
+        <ProjectReference Include="..\BasicCore\BasicCore.csproj"/>
+        <ProjectReference Include="..\BasicInterpreter\BasicInterpreter.csproj"/>
+        <ProjectReference Include="..\BasicLexer\BasicLexer.csproj"/>
+        <ProjectReference Include="..\BasicParser\BasicParser.csproj"/>
+        <ProjectReference Include="..\BytecodeDynamicMethodsCompiler\BytecodeDynamicMethodsCompiler.csproj"/>
+        <ProjectReference Include="..\DotnetAirHelper\DotnetAirHelper.csproj"/>
+        <ProjectReference Include="..\DynamicMethodWrapper\DynamicMethodWrapper.csproj"/>
+        <ProjectReference Include="..\IntermediateRepresentationAbstractions\IntermediateRepresentationAbstractions.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Dialects.Abstractions\UniversalToolchain.Dialects.Abstractions.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Dialects.Parsing\UniversalToolchain.Dialects.Parsing.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Dialects.Frontend\UniversalToolchain.Dialects.Frontend.csproj"/>

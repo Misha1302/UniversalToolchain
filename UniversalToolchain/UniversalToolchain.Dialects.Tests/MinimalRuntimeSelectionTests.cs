@@ -115,7 +115,9 @@ public class MinimalRuntimeSelectionTests
     private static ServiceProvider CreateMinimalProvider()
     {
         var services = new ServiceCollection();
-        services.AddWistDialectServicesMinimal();
+        services.AddWistDialectServices();
+        services.AddWistCilBackend();
+        services.AddWistInterpreterBackend();
         return services.BuildServiceProvider();
     }
 }

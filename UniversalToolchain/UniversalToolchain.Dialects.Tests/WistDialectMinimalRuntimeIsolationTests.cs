@@ -12,7 +12,9 @@ public class WistDialectMinimalRuntimeIsolationTests
     public void ServiceRegistrations_UseGenericBackendAbstractionsOnly()
     {
         var services = new ServiceCollection();
-        services.AddWistDialectServicesMinimal();
+        services.AddWistDialectServices();
+        services.AddWistCilBackend();
+        services.AddWistInterpreterBackend();
 
         Assert.Multiple(() =>
         {
@@ -28,14 +30,11 @@ public class WistDialectMinimalRuntimeIsolationTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(provider.GetService<UniversalToolchain.Dialects.Integration.DialectFrameworkCompositionWorkflow>(), Is.Null);
-            Assert.That(provider.GetService<UniversalToolchain.Dialects.Integration.DialectRuntimeDescriptorRegistry>(), Is.Null);
-            Assert.That(provider.GetService<LegacyWistDialectCompositionService>(), Is.Null);
         });
     }
 
     [Test]
-    public void MinimalWorkflow_ComposeText_DoesNotPopulateRuntimeComposition()
+    public void MinimalWorkflow_ComposeText_ProducesRuntimeSelection()
     {
         using var provider = CreateMinimalProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
@@ -44,7 +43,6 @@ public class WistDialectMinimalRuntimeIsolationTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(result.RuntimeComposition, Is.Null);
             Assert.That(result.RuntimeSelection, Is.Not.Null);
         });
     }
@@ -123,8 +121,10 @@ public class WistDialectMinimalRuntimeIsolationTests
                 [new FileDialectRuntimeComponentEntry("Backend", "foreign-backend", ["foreign"], "Foreign.Backend.Type")])));
 
         var services = new ServiceCollection();
-        services.AddSingleton(new RuntimeArtifactLocatorOptions { AdditionalSearchDirectories = [temp.Path] });
-        services.AddWistDialectServicesMinimal();
+        services.AddSingleton(new RuntimeArtifactLocatorOptions { SearchRoots = [temp.Path], IncludeAppContextBaseDirectory = true });
+        services.AddWistDialectServices();
+        services.AddWistCilBackend();
+        services.AddWistInterpreterBackend();
 
         using var provider = services.BuildServiceProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
@@ -143,7 +143,9 @@ public class WistDialectMinimalRuntimeIsolationTests
     private static ServiceProvider CreateMinimalProvider()
     {
         var services = new ServiceCollection();
-        services.AddWistDialectServicesMinimal();
+        services.AddWistDialectServices();
+        services.AddWistCilBackend();
+        services.AddWistInterpreterBackend();
         return services.BuildServiceProvider();
     }
 

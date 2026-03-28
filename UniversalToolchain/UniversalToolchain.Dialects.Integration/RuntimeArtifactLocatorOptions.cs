@@ -4,7 +4,7 @@ public sealed class RuntimeArtifactLocatorOptions
 {
     public IReadOnlyList<string> SearchRoots { get; init; } = [];
 
-    public IReadOnlyList<string> AdditionalSearchDirectories { get; init; } = [];
+    public bool IncludeAppContextBaseDirectory { get; init; } = true;
 
     public string ManifestSearchPattern { get; init; } = "*.dialect.runtime.json";
 
