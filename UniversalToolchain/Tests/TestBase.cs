@@ -1,3 +1,5 @@
+using UniversalToolchain.Dialects.Wist;
+
 namespace Tests;
 
 [TestFixture]
@@ -7,30 +9,21 @@ public abstract class TestBase
     private IServiceProvider? _serviceProvider;
     private ArithmeticMode _arithmeticMode = ArithmeticMode.Universal;
 
-    /// <summary>
-    ///     Устанавливает режим арифметики для тестов
-    /// </summary>
     protected void SetArithmeticMode(ArithmeticMode mode)
     {
         _arithmeticMode = mode;
-        _serviceProvider = null; // Сброс провайдера при изменении режима
+        _serviceProvider = null;
     }
 
-    /// <summary>
-    ///     Создает сервис-провайдер с указанной конфигурацией арифметики
-    /// </summary>
-    virtual protected IServiceProvider BuildServiceProvider()
+    protected virtual IServiceProvider BuildServiceProvider()
     {
         var services = new ServiceCollection();
-
-        services.AddWistServices(options => options.ArithmeticMode = _arithmeticMode);
+        services.AddSingleton<ICoreRunnable>(new DialectCoreRunnable(BuildHost(_arithmeticMode), "compiler"));
+        services.AddSingleton<ICoreRunnable>(new DialectCoreRunnable(BuildHost(_arithmeticMode), "interpreter"));
         _serviceProvider = services.BuildServiceProvider();
         return _serviceProvider;
     }
 
-    /// <summary>
-    ///     Выполняет код и возвращает результат как динамический тип
-    /// </summary>
     internal object ExecuteCode(string code)
     {
         if (_serviceProvider == null)
@@ -66,9 +59,6 @@ public abstract class TestBase
         return typedValues[0];
     }
 
-    /// <summary>
-    ///     Выполняет код и возвращает результат как указанный тип
-    /// </summary>
     internal T ExecuteCode<T>(string code)
     {
         var result = ExecuteCode(code);
@@ -86,9 +76,6 @@ public abstract class TestBase
         return Thrower.InvalidCast<object?>($"Cannot convert test result from type {value.GetType()} to {t}.");
     }
 
-    /// <summary>
-    ///     Создает ядро определенного типа
-    /// </summary>
     protected T CreateCore<T>() where T : ICoreRunnable
     {
         if (_serviceProvider == null)
@@ -98,5 +85,48 @@ public abstract class TestBase
             .OfType<T>()
             .FirstOrDefault()
             .NotNull($"Core of type {typeof(T).Name} not found");
+    }
+
+    private static WistDialectExecutionHost BuildHost(ArithmeticMode arithmeticMode)
+    {
+        var services = new ServiceCollection();
+        services.AddWistDialectServices();
+        services.AddWistCilBackend();
+        services.AddWistInterpreterBackend();
+
+        using var provider = services.BuildServiceProvider();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+
+        var dialectText = arithmeticMode == ArithmeticMode.Native ? NativeDialect : UniversalDialect;
+        var composition = workflow.ComposeText(dialectText, "tests-inline");
+        if (!composition.IsSuccess)
+            Thrower.InvalidOpEx(composition.ToDeterministicText());
+
+        return workflow.CreateHost(composition);
+    }
+
+    private const string UniversalDialect = """
+                                          dialect TestUniversal
+                                          use Whitespaces,SemicolonAsNewLine,Comments,Numbers,Identifier,Arithmetic,Equality,Conditions,Loops,Variables,Scopes,Labels,InternalPreprocessorLexemes,CSharpInterop
+                                          enable LocalVariablesOptimization
+                                          backend compiler,interpreter
+                                          """;
+
+    private const string NativeDialect = """
+                                       dialect TestNative
+                                       use Whitespaces,SemicolonAsNewLine,Comments,Numbers,Identifier,Arithmetic,NativeMath,Equality,Conditions,Loops,Variables,Scopes,Labels,InternalPreprocessorLexemes,CSharpInterop
+                                       enable LocalVariablesOptimization
+                                       backend compiler,interpreter
+                                       """;
+
+    private sealed class DialectCoreRunnable(WistDialectExecutionHost host, string mode) : ICoreRunnable
+    {
+        public object? Run(string code, Dictionary<string, object>? args = null)
+        {
+            if (args != null && args.Count > 0)
+                Thrower.InvalidOpEx("Parameterized execution is not supported by TestBase dialect adapter.");
+
+            return host.Run(code, mode);
+        }
     }
 }

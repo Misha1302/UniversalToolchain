@@ -1,1 +1,0 @@
-BenchmarkRunner.Run<CSharpVsCompilerVsInterpreterBasicLoopBenchmarks>();

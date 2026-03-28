@@ -29,13 +29,6 @@ public static class WistDialectCompositionFormattingExtensions
             builder.AppendLine($"Enabled optimizers: {Join(result.BuildPlan.OptimizerDirectives.Where(x => x.Enabled).Select(x => x.Name))}");
         }
 
-        if (result.RuntimeComposition != null)
-        {
-            builder.AppendLine($"Runtime modules: {Join(result.RuntimeComposition.OrderedModules.Select(x => x.Name))}");
-            builder.AppendLine($"Runtime backends: {Join(result.RuntimeComposition.EnabledBackends.Select(x => x.Name))}");
-            builder.AppendLine($"Runtime optimizers: {Join(result.RuntimeComposition.EnabledOptimizers.Select(x => x.Name))}");
-        }
-
         builder.AppendLine($"Semantic diagnostics: {FormatDiagnostics(result.SemanticDiagnostics)}");
         builder.AppendLine($"Resolution diagnostics: {FormatDiagnostics(result.ResolutionDiagnostics)}");
 

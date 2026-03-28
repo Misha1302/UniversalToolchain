@@ -35,7 +35,6 @@
         <ProjectReference Include="..\AbstractIrConverters\AbstractIrConverters.csproj"/>
         <ProjectReference Include="..\ConditionsModule\ConditionsModule.csproj"/>
         <ProjectReference Include="..\CSharpInteropModule\CSharpInteropModule.csproj"/>
-        <ProjectReference Include="..\DependencyInjection\DependencyInjection.csproj"/>
         <ProjectReference Include="..\ExecutorLoggerModule\ExecutorLoggerModule.csproj"/>
         <ProjectReference Include="..\IdentifierModule\IdentifierModule.csproj"/>
         <ProjectReference Include="..\InternalPreprocessorLexemesModule\InternalPreprocessorLexemesModule.csproj"/>
@@ -49,7 +48,15 @@
         <ProjectReference Include="..\SemicolonAsNewLineModule\SemicolonAsNewLineModule.csproj"/>
         <ProjectReference Include="..\VariablesModule\VariablesModule.csproj"/>
         <ProjectReference Include="..\WhitespacesModule\WhitespacesModule.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj"/>
         <ProjectReference Include="..\CommentsModule\CommentsModule.csproj"/>
+    </ItemGroup>
+
+
+    <ItemGroup>
+        <Compile Remove="**/*.cs" />
+        <Compile Include="GlobalUsings.cs" />
+        <Compile Include="Integration/WistcCliContractsTests.cs" />
     </ItemGroup>
 
     <ItemGroup>

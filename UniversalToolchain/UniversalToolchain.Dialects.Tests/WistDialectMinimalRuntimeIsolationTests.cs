@@ -30,13 +30,11 @@ public class WistDialectMinimalRuntimeIsolationTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(provider.GetService<UniversalToolchain.Dialects.Integration.DialectFrameworkCompositionWorkflow>(), Is.Null);
-            Assert.That(provider.GetService<UniversalToolchain.Dialects.Integration.DialectRuntimeDescriptorRegistry>(), Is.Null);
         });
     }
 
     [Test]
-    public void MinimalWorkflow_ComposeText_DoesNotPopulateRuntimeComposition()
+    public void MinimalWorkflow_ComposeText_ProducesRuntimeSelection()
     {
         using var provider = CreateMinimalProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
@@ -45,7 +43,6 @@ public class WistDialectMinimalRuntimeIsolationTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(result.RuntimeComposition, Is.Null);
             Assert.That(result.RuntimeSelection, Is.Not.Null);
         });
     }

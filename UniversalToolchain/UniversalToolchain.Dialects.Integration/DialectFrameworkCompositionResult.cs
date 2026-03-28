@@ -18,7 +18,6 @@ public sealed class DialectFrameworkCompositionResult
         string sourceName,
         DialectDefinitionSlice? compiledDialect,
         DialectBuildPlan? buildPlan,
-        DialectRuntimeComposition? runtimeComposition,
         IEnumerable<DialectDiagnostic> semanticDiagnostics,
         IEnumerable<DialectDiagnostic> resolutionDiagnostics,
         IDialectRuntimeSelection? runtimeSelection = null)
@@ -29,7 +28,6 @@ public sealed class DialectFrameworkCompositionResult
         SourceName = sourceName;
         CompiledDialect = compiledDialect;
         BuildPlan = buildPlan;
-        RuntimeComposition = runtimeComposition;
         _semanticDiagnostics = new ReadOnlyCollection<DialectDiagnostic>(Snapshot(semanticDiagnostics, nameof(semanticDiagnostics)));
         _resolutionDiagnostics = new ReadOnlyCollection<DialectDiagnostic>(Snapshot(resolutionDiagnostics, nameof(resolutionDiagnostics)));
         RuntimeSelection = runtimeSelection;
@@ -40,8 +38,6 @@ public sealed class DialectFrameworkCompositionResult
     public DialectDefinitionSlice? CompiledDialect { get; }
 
     public DialectBuildPlan? BuildPlan { get; }
-
-    public DialectRuntimeComposition? RuntimeComposition { get; }
 
     public IDialectRuntimeSelection? RuntimeSelection { get; }
 

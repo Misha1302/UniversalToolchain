@@ -29,20 +29,18 @@ int RunCommand(RunOptions options)
         if (!string.IsNullOrWhiteSpace(options.DialectFile))
         {
             ValidateDialectExecutionOptions(options);
-            using var host = CreateDialectHost(options.DialectFile);
-            var result = host.Run(code, options.Mode);
+            using var dialectHost = CreateDialectHost(options.DialectFile);
+            var result = dialectHost.Run(code, options.Mode);
             if (result != null)
                 Console.WriteLine(result);
 
             return 0;
         }
 
-        var provider = BuildDefaultServiceProvider(options);
-        var core = GetLegacyCoreRunnable(provider, options.Mode);
-
-        var legacyResult = core.Run(code);
-        if (legacyResult != null)
-            Console.WriteLine(legacyResult);
+        using var host = CreateDefaultHost(options);
+        var runtimeResult = host.Run(code, options.Mode);
+        if (runtimeResult != null)
+            Console.WriteLine(runtimeResult);
 
         return 0;
     }
@@ -71,22 +69,21 @@ int ReplCommand(ReplOptions options)
         if (!string.IsNullOrWhiteSpace(options.DialectFile))
         {
             ValidateDialectExecutionOptions(options);
-            using var host = CreateDialectHost(options.DialectFile);
+            using var dialectHost = CreateDialectHost(options.DialectFile);
             Console.WriteLine("Wist REPL (Ctrl+C to exit)");
             Console.WriteLine($"Mode: {options.Mode}");
 
-            var repl = new Repl(host.GetCore(options.Mode), options.HistoryFile);
-            return repl.Run();
+            var dialectRepl = new Repl(dialectHost.GetCore(options.Mode), options.HistoryFile);
+            return dialectRepl.Run();
         }
 
-        var provider = BuildDefaultServiceProvider(options);
-        var core = GetLegacyCoreRunnable(provider, options.Mode);
+        using var defaultHost = CreateDefaultHost(options);
 
         Console.WriteLine("Wist REPL (Ctrl+C to exit)");
         Console.WriteLine($"Mode: {options.Mode}");
 
-        var legacyRepl = new Repl(core, options.HistoryFile);
-        return legacyRepl.Run();
+        var defaultRepl = new Repl(defaultHost.GetCore(options.Mode), options.HistoryFile);
+        return defaultRepl.Run();
     }
     catch (WistException ex)
     {
@@ -105,9 +102,14 @@ int DialectDemoCommand(DialectDemoOptions options)
     try
     {
         using var provider = CreateDialectWorkflowProvider();
-        var demoWorkflow = new DialectFrameworkDemoWorkflow(provider.GetRequiredService<DialectFrameworkCompositionWorkflow>());
-        var registry = provider.GetRequiredService<DialectRuntimeDescriptorRegistry>();
-        var report = CreateDemoReport(options, demoWorkflow, registry);
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+        var report = string.IsNullOrWhiteSpace(options.File)
+            ? workflow.ComposeText("""
+                                 dialect Demo
+                                 use Arithmetic,Numbers
+                                 backend interpreter
+                                 """, "demo-inline")
+            : workflow.ComposeFile(options.File);
 
         Console.WriteLine(report.ToDeterministicText());
         return report.IsSuccess ? 0 : 1;
@@ -124,43 +126,6 @@ int DialectDemoCommand(DialectDemoOptions options)
     }
 }
 
-DialectFrameworkDemoReport CreateDemoReport(
-    DialectDemoOptions options,
-    DialectFrameworkDemoWorkflow demoWorkflow,
-    DialectRuntimeDescriptorRegistry registry)
-{
-    if (!string.IsNullOrWhiteSpace(options.File))
-    {
-        if (!File.Exists(options.File))
-            Thrower.FileNotFound(options.File);
-
-        return demoWorkflow.RunSource(File.ReadAllText(options.File), registry, options.File);
-    }
-
-    var scenario = ParseDemoScenario(options.Scenario);
-    return demoWorkflow.RunScenario(scenario, registry);
-}
-
-DialectFrameworkDemoScenario ParseDemoScenario(string scenarioText)
-{
-    if (string.IsNullOrWhiteSpace(scenarioText))
-        return DialectFrameworkDemoScenario.Valid;
-
-    return scenarioText.Trim().ToLowerInvariant() switch
-    {
-        "valid" => DialectFrameworkDemoScenario.Valid,
-        "invalid-syntax" => DialectFrameworkDemoScenario.InvalidSyntax,
-        "semantic-conflict" => DialectFrameworkDemoScenario.SemanticConflict,
-        "unresolved-module" => DialectFrameworkDemoScenario.UnresolvedModule,
-        _ => UnknownDemoScenario(scenarioText)
-    };
-}
-
-DialectFrameworkDemoScenario UnknownDemoScenario(string scenarioText)
-{
-    Thrower.Argument(nameof(scenarioText), $"Unknown demo scenario '{scenarioText}'.");
-    return DialectFrameworkDemoScenario.Valid;
-}
 
 int DialectInspectCommand(DialectInspectOptions options)
 {
@@ -200,81 +165,34 @@ string GetCode(RunOptions options)
     return options.Code ?? string.Empty;
 }
 
-IServiceProvider BuildDefaultServiceProvider(CommonOptions options)
+WistDialectExecutionHost CreateDefaultHost(CommonOptions options)
 {
-    var services = new ServiceCollection();
+    using var provider = CreateDialectWorkflowProvider();
+    var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
 
-    services.AddWistServices(wistOptions =>
-        wistOptions.ArithmeticMode = options.UseNativeMath
-            ? ArithmeticMode.Native
-            : ArithmeticMode.Universal);
-
-    var frontendModules = services
-        .Where(x => x.ServiceType == typeof(IFrontendCoreModule))
-        .ToList();
-    var modulesToRemove = new List<ServiceDescriptor>();
-    var modulesToAdd = new List<IFrontendCoreModule>();
-
-    if (options.ExcludeModules != null && options.ExcludeModules.Any())
+    var modules = new List<string>
     {
-        var excludeSet = new HashSet<string>(options.ExcludeModules.Select(x => x.Trim()), StringComparer.Ordinal);
-        foreach (var module in frontendModules)
-        {
-            var typeName = module.ImplementationType?.FullName;
-            if (typeName != null && excludeSet.Contains(typeName))
-                modulesToRemove.Add(module);
-        }
+        "Whitespaces","SemicolonAsNewLine","Comments","Numbers","Identifier","Arithmetic","Equality","Conditions","Loops","Variables","Scopes","Labels","InternalPreprocessorLexemes","CSharpInterop"
+    };
+
+    if (options.UseNativeMath)
+        modules.Add("NativeMath");
+
+    if (options.IncludeModules != null)
+        modules.AddRange(options.IncludeModules.Select(x => x.Trim()).Where(x => !string.IsNullOrWhiteSpace(x)));
+
+    if (options.ExcludeModules != null)
+    {
+        var excluded = new HashSet<string>(options.ExcludeModules.Select(x => x.Trim()), StringComparer.OrdinalIgnoreCase);
+        modules = modules.Where(x => !excluded.Contains(x)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
     }
 
-    if (options.IncludeModules != null && options.IncludeModules.Any())
-        foreach (var moduleName in options.IncludeModules)
-        {
-            var type = Type.GetType(moduleName.Trim()) ??
-                       AppDomain.CurrentDomain.GetAssemblies()
-                           .SelectMany(x => x.GetTypes())
-                           .FirstOrDefault(x => x.FullName == moduleName.Trim());
+    var dialectText = $"dialect CliDefault\nuse {string.Join(",", modules)}\nenable LocalVariablesOptimization\nbackend compiler,interpreter";
+    var composition = workflow.ComposeText(dialectText, "cli-default");
+    if (!composition.IsSuccess)
+        Thrower.InvalidOpEx(composition.ToDeterministicText());
 
-            if (type != null && typeof(IFrontendCoreModule).IsAssignableFrom(type))
-            {
-                var module = Activator.CreateInstance(type) as IFrontendCoreModule;
-                if (module != null)
-                    modulesToAdd.Add(module);
-            }
-            else
-            {
-                Console.WriteLine($"Warning: Module '{moduleName}' not found or not a valid IFrontendCoreModule");
-            }
-        }
-
-    foreach (var module in modulesToRemove)
-        services.Remove(module);
-
-    foreach (var module in modulesToAdd)
-        services.AddSingleton(module);
-
-    return services.BuildServiceProvider();
-}
-
-ICoreRunnable GetLegacyCoreRunnable(IServiceProvider provider, string mode)
-{
-    var runnables = provider.GetServices<ICoreRunnable>().ToList();
-
-    if (mode.Equals("compiler", StringComparison.OrdinalIgnoreCase))
-        return runnables.FirstOrDefault(r =>
-                   r.GetType().IsGenericType &&
-                   r.GetType().GetGenericTypeDefinition() == typeof(BasicCoreImpl<>) &&
-                   r.GetType().GetGenericArguments()[0] == typeof(DynamicMethod))
-               ?? runnables.First();
-
-    if (mode.Equals("interpreter", StringComparison.OrdinalIgnoreCase))
-        return runnables.FirstOrDefault(r =>
-                   r.GetType().IsGenericType &&
-                   r.GetType().GetGenericTypeDefinition() == typeof(BasicCoreImpl<>) &&
-                   r.GetType().GetGenericArguments()[0] == typeof(IAbstractIR))
-               ?? runnables.Last();
-
-    Thrower.Argument(nameof(mode), $"Unknown execution mode '{mode}'. Supported modes: 'compiler', 'interpreter'.");
-    return null!;
+    return workflow.CreateHost(composition);
 }
 
 void ValidateDialectExecutionOptions(CommonOptions options)

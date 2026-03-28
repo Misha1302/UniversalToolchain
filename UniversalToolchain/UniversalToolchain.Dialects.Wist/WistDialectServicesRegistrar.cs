@@ -15,7 +15,5 @@ public sealed class WistDialectServicesRegistrar : IDialectServicesRegistrar
             Thrower.ArgumentNull(nameof(services));
 
         services.AddWistDialectServices();
-        services.AddWistCilBackend();
-        services.AddWistInterpreterBackend();
     }
 }
