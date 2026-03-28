@@ -1,7 +1,9 @@
 namespace ArithmeticModule.Module;
 
 [UniversalToolchain.Dialects.Abstractions.DialectModuleAlias("Arithmetic")]
+[UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("FrontendModule", "Arithmetic")]
 [AutoRegisterService]
+[ArithmeticModeCompatibility(ArithmeticMode.Universal)]
 public class ArithmeticModuleImpl : IFrontendCoreModule
 {
     public static readonly IReadOnlyList<string> Ops = ["Addition", "Substraction", "Multiplication", "Division"];

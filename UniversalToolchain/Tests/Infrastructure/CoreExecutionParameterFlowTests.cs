@@ -135,7 +135,7 @@ public class CoreExecutionParameterFlowTests
     private static DynamicMethod GetExecutable(string code, OrderedDictionary<string, Type> parameters)
     {
         var services = new ServiceCollection();
-        services.AddWistServices(options => options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native);
+        services.AddWistServices(options => options.ArithmeticMode = ArithmeticMode.Native);
         var provider = services.BuildServiceProvider();
 
         var giver = provider.GetRequiredService<IExecutableGiver<DynamicMethod>>();
@@ -145,7 +145,7 @@ public class CoreExecutionParameterFlowTests
     private static ICoreRunnable CreateDynamicMethodCore()
     {
         var services = new ServiceCollection();
-        services.AddWistServices(options => options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native);
+        services.AddWistServices(options => options.ArithmeticMode = ArithmeticMode.Native);
         var provider = services.BuildServiceProvider();
 
         var modules = provider.GetServices<IFrontendCoreModule>()

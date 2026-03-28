@@ -12,3 +12,4 @@ global using ExceptionsManager;
 global using GenericMath;
 global using NumbersModule.Core;
 global using NumbersModule.Visitors;
+global using UniversalToolchain.Dialects.Abstractions;

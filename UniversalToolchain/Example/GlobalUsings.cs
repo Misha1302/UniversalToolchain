@@ -33,3 +33,4 @@ global using ScopesModule;
 global using SemicolonAsNewLineModule;
 global using VariablesModule;
 global using WhitespacesModule;
+global using UniversalToolchain.Dialects.Abstractions;

@@ -1,6 +1,7 @@
 namespace NumbersModule.Visitors;
 
 [AutoRegisterService]
+[ArithmeticModeCompatibility(ArithmeticMode.Universal)]
 public class NumberAstVisitor : IAstVisitor
 {
     public void TryVisit(BytecodeVisitorData data)

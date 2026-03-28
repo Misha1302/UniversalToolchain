@@ -1,7 +1,9 @@
 namespace NativeMathModule;
 
 [UniversalToolchain.Dialects.Abstractions.DialectOptimizerAlias("NativeTypesOptimization")]
+[UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("Optimizer", "NativeTypesOptimization")]
 [AutoRegisterService]
+[ArithmeticModeCompatibility(ArithmeticMode.Native)]
 public class NativeTypesOptimizerModule : IIRProcessingModule
 {
     public IAbstractIR ProcessIr<TCompilationOutput>(IAbstractIR current, IAbstractIrCompiler<TCompilationOutput> compiler)

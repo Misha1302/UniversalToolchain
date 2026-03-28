@@ -1,14 +1,13 @@
 using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
-using UniversalToolchain.Dialects.Integration;
 
-namespace UniversalToolchain.Dialects.Wist;
+namespace UniversalToolchain.Dialects.Integration;
 
-internal static class WistDialectIntrinsicRegistry
+public static class RuntimeBackendIntrinsicRegistry
 {
-    public static IReadOnlyList<RuntimeIntrinsicDescriptor> CreateDescriptors(IEnumerable<IWistDialectBackendServiceProvider> backendProviders)
+    public static IReadOnlyList<RuntimeIntrinsicDescriptor> CreateDescriptors(IEnumerable<IDialectBackendRuntimeRegistrar> backendRegistrars)
     {
-        var backendIntrinsics = CreateBackendIntrinsicMap(backendProviders);
+        var backendIntrinsics = CreateBackendIntrinsicMap(backendRegistrars);
         var commonIntrinsics = GetCommonIntrinsics(backendIntrinsics);
         var descriptors = new List<RuntimeIntrinsicDescriptor>();
 
@@ -27,19 +26,19 @@ internal static class WistDialectIntrinsicRegistry
             .ToList();
     }
 
-    private static IReadOnlyDictionary<DialectBackendId, SortedSet<string>> CreateBackendIntrinsicMap(IEnumerable<IWistDialectBackendServiceProvider> backendProviders)
+    private static IReadOnlyDictionary<DialectBackendId, SortedSet<string>> CreateBackendIntrinsicMap(IEnumerable<IDialectBackendRuntimeRegistrar> backendRegistrars)
     {
-        if (backendProviders == null)
-            Thrower.ArgumentNull(nameof(backendProviders));
+        if (backendRegistrars == null)
+            Thrower.ArgumentNull(nameof(backendRegistrars));
 
         var map = new SortedDictionary<DialectBackendId, SortedSet<string>>();
-        foreach (var backendProvider in backendProviders
-                     .Select(x => x.NotNull(nameof(backendProviders)))
+        foreach (var backendRegistrar in backendRegistrars
+                     .Select(x => x.NotNull(nameof(backendRegistrars)))
                      .OrderBy(x => x.BackendId))
         {
-            var intrinsics = new SortedSet<string>(backendProvider.SupportedIntrinsics ?? Thrower.InvalidOpEx<IReadOnlyList<string>>($"Backend '{backendProvider.BackendId.Value}' returned null supported intrinsics."), StringComparer.Ordinal);
-            if (!map.TryAdd(backendProvider.BackendId, intrinsics))
-                Thrower.InvalidOpEx($"Duplicate Wist backend service provider registration for backend '{backendProvider.BackendId.Value}'.");
+            var intrinsics = new SortedSet<string>(backendRegistrar.SupportedIntrinsics ?? Thrower.InvalidOpEx<IReadOnlyList<string>>($"Backend '{backendRegistrar.BackendId.Value}' returned null supported intrinsics."), StringComparer.Ordinal);
+            if (!map.TryAdd(backendRegistrar.BackendId, intrinsics))
+                Thrower.InvalidOpEx($"Duplicate backend provider registration for backend '{backendRegistrar.BackendId.Value}'.");
         }
 
         return map;

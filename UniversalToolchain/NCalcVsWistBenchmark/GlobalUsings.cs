@@ -9,3 +9,4 @@ global using Microsoft.Extensions.DependencyInjection;
 global using NCalc;
 global using NCalc.LambdaCompilation;
 global using NCalcVsWistBenchmark;
+global using UniversalToolchain.Dialects.Abstractions;

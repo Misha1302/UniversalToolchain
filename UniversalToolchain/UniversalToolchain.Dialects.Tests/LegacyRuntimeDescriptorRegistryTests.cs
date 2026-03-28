@@ -10,7 +10,7 @@ using UniversalToolchain.Dialects.Wist;
 
 namespace UniversalToolchain.Dialects.Tests;
 
-public class WistDialectRuntimeDescriptorProviderTests
+public class LegacyRuntimeDescriptorRegistryTests
 {
     [Test]
     public void RegistryFactory_BuildsDeterministicRealWistCatalog()
@@ -25,13 +25,32 @@ public class WistDialectRuntimeDescriptorProviderTests
             Assert.That(first.Backends.Keys, Is.EqualTo(second.Backends.Keys));
             Assert.That(first.Intrinsics.Keys, Is.EqualTo(second.Intrinsics.Keys));
             Assert.That(first.TryResolveModule("Arithmetic", out var arithmeticModule), Is.True);
-            Assert.That(arithmeticModule!.CanonicalId, Does.Contain("ArithmeticModuleImpl"));
+            Assert.That(arithmeticModule!.CanonicalId, Is.EqualTo("Arithmetic"));
             Assert.That(first.TryResolveModule("Variables", out var variablesModule), Is.True);
-            Assert.That(variablesModule!.CanonicalId, Does.Contain("VariablesModuleImpl"));
+            Assert.That(variablesModule!.CanonicalId, Is.EqualTo("Variables"));
             Assert.That(first.TryResolveOptimizer("LocalVariablesOptimization", out var localVariablesOptimizer), Is.True);
-            Assert.That(localVariablesOptimizer!.CanonicalId, Does.Contain("LocalVariablesOptimizer"));
+            Assert.That(localVariablesOptimizer!.CanonicalId, Is.EqualTo("LocalVariablesOptimization"));
             Assert.That(first.Backends.Keys, Is.EqualTo(new[] { TestBackendIds.Cil, TestBackendIds.Interpreter }));
             Assert.That(first.Intrinsics.Keys, Does.Contain(("add_i32", TestBackendIds.CilSelector)));
+        });
+    }
+
+
+    [Test]
+    public void LegacyRegistry_UsesRealBackendMetadataOwnerTypes()
+    {
+        var registry = BuildRegistryFromServices();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(registry.TryResolveBackend(new DialectBackendId("cil"), out var cil), Is.True);
+            Assert.That(registry.TryResolveBackend(new DialectBackendId("interpreter"), out var interpreter), Is.True);
+            Assert.That(cil!.MetadataOwnerType, Is.EqualTo(typeof(WistCilBackendDeclaration)));
+            Assert.That(interpreter!.MetadataOwnerType, Is.EqualTo(typeof(WistInterpreterBackendDeclaration)));
+            Assert.That(cil.MetadataOwnerType, Is.Not.EqualTo(typeof(CatalogBackedDialectRuntimeDescriptorProvider)));
+            Assert.That(interpreter.MetadataOwnerType, Is.Not.EqualTo(typeof(CatalogBackedDialectRuntimeDescriptorProvider)));
+            Assert.That(cil.MetadataOwnerType, Is.Not.EqualTo(typeof(RuntimeBackendDescriptor)));
+            Assert.That(interpreter.MetadataOwnerType, Is.Not.EqualTo(typeof(RuntimeBackendDescriptor)));
         });
     }
 
@@ -39,7 +58,7 @@ public class WistDialectRuntimeDescriptorProviderTests
     public void AddWistDialectServices_RegistersReusableWorkflowServices()
     {
         var services = new ServiceCollection();
-        services.AddWistDialectServices();
+        services.AddWistDialectServicesLegacy();
 
         using var provider = services.BuildServiceProvider();
         var registry = provider.GetRequiredService<DialectRuntimeDescriptorRegistry>();
@@ -56,7 +75,7 @@ public class WistDialectRuntimeDescriptorProviderTests
     public void AddWistDialectServices_AllowsExtendingRuntimeDescriptorDiscoveryViaProvider()
     {
         var services = new ServiceCollection();
-        services.AddWistDialectServices();
+        services.AddWistDialectServicesLegacy();
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IDialectRuntimeDescriptorProvider, TestOnlyRuntimeDescriptorProvider>());
 
         using var provider = services.BuildServiceProvider();
@@ -77,14 +96,12 @@ public class WistDialectRuntimeDescriptorProviderTests
         var first = DialectRuntimeDescriptorRegistryFactory.BuildFromProviders([
             new TestOnlyRuntimeDescriptorProvider(),
             new LocalVariablesOptimizerDialectRuntimeDescriptorProvider(),
-            new WistDialectRuntimeDescriptorProvider(Array.Empty<IWistDialectBackendServiceProvider>()),
             new ArithmeticDialectRuntimeDescriptorProvider(),
             new ConditionsDialectRuntimeDescriptorProvider()
         ]);
         var second = DialectRuntimeDescriptorRegistryFactory.BuildFromProviders([
             new ConditionsDialectRuntimeDescriptorProvider(),
             new ArithmeticDialectRuntimeDescriptorProvider(),
-            new WistDialectRuntimeDescriptorProvider(Array.Empty<IWistDialectBackendServiceProvider>()),
             new LocalVariablesOptimizerDialectRuntimeDescriptorProvider(),
             new TestOnlyRuntimeDescriptorProvider()
         ]);
@@ -109,9 +126,6 @@ public class WistDialectRuntimeDescriptorProviderTests
             Assert.That(
                 () => DialectRuntimeDescriptorRegistryFactory.BuildFromProviders([null!]),
                 Throws.ArgumentException.With.Message.Contains("Provider collection must not contain null entries."));
-            Assert.That(
-                () => new WistDialectRuntimeDescriptorProvider(null!),
-                Throws.ArgumentNullException.With.Property("ParamName").EqualTo("backendProviders"));
             Assert.That(
                 () => DialectRuntimeDescriptorRegistryFactory.BuildFromProviders([new NullTypeEntryRuntimeDescriptorProvider()]),
                 Throws.ArgumentException.With.Message.Contains("Type list must not contain null entries."));
@@ -141,7 +155,7 @@ public class WistDialectRuntimeDescriptorProviderTests
     private static DialectRuntimeDescriptorRegistry BuildRegistryFromServices()
     {
         var services = new ServiceCollection();
-        services.AddWistDialectServices();
+        services.AddWistDialectServicesLegacy();
 
         using var provider = services.BuildServiceProvider();
         return provider.GetRequiredService<DialectRuntimeDescriptorRegistry>();

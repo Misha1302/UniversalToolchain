@@ -1,18 +1,17 @@
 using System.Collections.ObjectModel;
 using ExceptionsManager;
-using UniversalToolchain.Dialects.Integration;
 
-namespace UniversalToolchain.Dialects.Wist;
+namespace UniversalToolchain.Dialects.Integration;
 
 /// <summary>
-///     Immutable backend-specific execution configuration for one enabled Wist backend.
+///     Immutable backend-specific runtime configuration for one enabled backend.
 /// </summary>
-public sealed class WistDialectBackendConfiguration
+public class DialectBackendRuntimeConfiguration
 {
     private readonly ReadOnlyCollection<string> _allowedIntrinsics;
     private readonly ReadOnlyCollection<string> _forbiddenIntrinsics;
 
-    public WistDialectBackendConfiguration(
+    public DialectBackendRuntimeConfiguration(
         RuntimeBackendDescriptor backendDescriptor,
         IEnumerable<string> allowedIntrinsics,
         IEnumerable<string> forbiddenIntrinsics,

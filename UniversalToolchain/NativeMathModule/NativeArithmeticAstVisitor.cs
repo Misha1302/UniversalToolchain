@@ -1,6 +1,7 @@
 namespace NativeMathModule;
 
 [AutoRegisterService]
+[ArithmeticModeCompatibility(ArithmeticMode.Native)]
 public class NativeArithmeticAstVisitor : IAstVisitor
 {
     private static readonly Dictionary<string, string> _opToMethodName = new()

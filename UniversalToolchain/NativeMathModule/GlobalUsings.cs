@@ -18,3 +18,4 @@ global using JetBrains.Annotations;
 global using ListExtensions;
 global using ObjectExtensions;
 global using UniversalIntermediateRepresentation;
+global using UniversalToolchain.Dialects.Abstractions;

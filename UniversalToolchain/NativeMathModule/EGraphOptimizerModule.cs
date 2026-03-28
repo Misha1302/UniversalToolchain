@@ -1,7 +1,9 @@
 namespace NativeMathModule;
 
 [UniversalToolchain.Dialects.Abstractions.DialectOptimizerAlias("EGraphOptimization")]
+[UniversalToolchain.Dialects.Abstractions.DialectRuntimeExport("Optimizer", "EGraphOptimization")]
 [AutoRegisterService]
+[ArithmeticModeCompatibility(ArithmeticMode.Native)]
 public class EGraphOptimizerModule : IIRProcessingModule
 {
     private static readonly string[] _supportedArithmeticIntrinsics =

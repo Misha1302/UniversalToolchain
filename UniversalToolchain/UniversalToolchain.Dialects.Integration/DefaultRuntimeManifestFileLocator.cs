@@ -1,0 +1,52 @@
+namespace UniversalToolchain.Dialects.Integration;
+
+public sealed class DefaultRuntimeManifestFileLocator : IRuntimeManifestFileLocator
+{
+    private readonly string _manifestSearchPattern;
+    private readonly SearchOption _manifestSearchOption;
+    private readonly IReadOnlyList<string> _searchRoots;
+
+    public DefaultRuntimeManifestFileLocator(RuntimeArtifactLocatorOptions options)
+    {
+        if (options == null)
+            throw new ArgumentNullException(nameof(options));
+
+        _manifestSearchPattern = string.IsNullOrWhiteSpace(options.ManifestSearchPattern)
+            ? "*.dialect.runtime.json"
+            : options.ManifestSearchPattern;
+
+        _manifestSearchOption = options.ManifestSearchOption;
+        _searchRoots = ResolveSearchRoots(options);
+    }
+
+    public IReadOnlyList<string> GetManifestFilePaths()
+    {
+        var paths = new List<string>();
+
+        foreach (var root in _searchRoots)
+        {
+            if (!Directory.Exists(root))
+                continue;
+
+            paths.AddRange(Directory.EnumerateFiles(root, _manifestSearchPattern, _manifestSearchOption)
+                .Select(Path.GetFullPath));
+        }
+
+        return paths
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(static x => x, StringComparer.Ordinal)
+            .ToList();
+    }
+
+    private static IReadOnlyList<string> ResolveSearchRoots(RuntimeArtifactLocatorOptions options)
+    {
+        return options.SearchRoots
+            .Concat(options.AdditionalSearchDirectories)
+            .Append(AppContext.BaseDirectory)
+            .Where(static x => !string.IsNullOrWhiteSpace(x))
+            .Select(Path.GetFullPath)
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(static x => x, StringComparer.Ordinal)
+            .ToList();
+    }
+}

@@ -17,3 +17,4 @@ global using BasicParser.Core;
 global using BytecodeDynamicMethodsCompiler.Compilers;
 global using IntermediateRepresentationAbstractions;
 global using Microsoft.Extensions.DependencyInjection;
+global using UniversalToolchain.Dialects.Abstractions;

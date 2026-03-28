@@ -29,3 +29,4 @@ global using SemicolonAsNewLineModule;
 global using VariablesModule;
 global using WhitespacesModule;
 global using Wistc;
+global using UniversalToolchain.Dialects.Abstractions;

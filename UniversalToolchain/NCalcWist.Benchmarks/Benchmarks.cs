@@ -27,7 +27,7 @@ public sealed record ScenarioSpec(
 public static class BenchState
 {
     public static readonly ServiceProvider Provider = new ServiceCollection()
-        .AddWistServices(options => options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native, string.IsNullOrWhiteSpace(GlobalConfig.ModulesPath) ? null : GlobalConfig.ModulesPath)
+        .AddWistServices(options => options.ArithmeticMode = ArithmeticMode.Native, string.IsNullOrWhiteSpace(GlobalConfig.ModulesPath) ? null : GlobalConfig.ModulesPath)
         .BuildServiceProvider();
 
     public static readonly IExecutableGiver<DynamicMethod> WistExecutableGiver = Provider.GetRequiredService<IExecutableGiver<DynamicMethod>>();
