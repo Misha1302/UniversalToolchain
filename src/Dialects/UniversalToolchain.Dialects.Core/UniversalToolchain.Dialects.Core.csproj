@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <LangVersion>14</LangVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.1"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../../Shared/ExceptionsManager/ExceptionsManager.csproj"/>
+        <ProjectReference Include="../../IR/AbstractIrConverters/AbstractIrConverters.csproj"/>
+        <ProjectReference Include="../../Frontend/BasicCodeTranslator/BasicCodeTranslator.csproj"/>
+        <ProjectReference Include="../../Runtime/BasicCilCompiler/BasicCilCompiler.csproj"/>
+        <ProjectReference Include="../../Frontend/BasicCore/BasicCore.csproj"/>
+        <ProjectReference Include="../../Runtime/BasicInterpreter/BasicInterpreter.csproj"/>
+        <ProjectReference Include="../../Frontend/BasicLexer/BasicLexer.csproj"/>
+        <ProjectReference Include="../../Frontend/BasicParser/BasicParser.csproj"/>
+        <ProjectReference Include="../../Runtime/BytecodeDynamicMethodsCompiler/BytecodeDynamicMethodsCompiler.csproj"/>
+        <ProjectReference Include="../../Shared/DotnetAirHelper/DotnetAirHelper.csproj"/>
+        <ProjectReference Include="../../Runtime/DynamicMethodWrapper/DynamicMethodWrapper.csproj"/>
+        <ProjectReference Include="../../IR/IntermediateRepresentationAbstractions/IntermediateRepresentationAbstractions.csproj"/>
+        <ProjectReference Include="../UniversalToolchain.Dialects.Abstractions/UniversalToolchain.Dialects.Abstractions.csproj"/>
+        <ProjectReference Include="../UniversalToolchain.Dialects.Parsing/UniversalToolchain.Dialects.Parsing.csproj"/>
+        <ProjectReference Include="../UniversalToolchain.Dialects.Frontend/UniversalToolchain.Dialects.Frontend.csproj"/>
+    </ItemGroup>
+
+</Project>

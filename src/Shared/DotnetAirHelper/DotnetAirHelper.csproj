@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../DotnetHelper/DotnetHelper.csproj"/>
+        <ProjectReference Include="../ExceptionsManager/ExceptionsManager.csproj"/>
+        <ProjectReference Include="../../IR/IntermediateRepresentationAbstractions/IntermediateRepresentationAbstractions.csproj"/>
+        <ProjectReference Include="../ListExtensions/ListExtensions.csproj"/>
+        <ProjectReference Include="../ObjectExtensions/ObjectExtensions.csproj"/>
+    </ItemGroup>
+
+</Project>

@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <LangVersion>14</LangVersion>
+        <EmitDialectRuntimeManifest>true</EmitDialectRuntimeManifest>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../../Dialects/UniversalToolchain.Dialects.Abstractions/UniversalToolchain.Dialects.Abstractions.csproj"/>
+        <ProjectReference Include="../../Frontend/BasicCore/BasicCore.csproj"/>
+        <ProjectReference Include="../../Shared/ExceptionsManager/ExceptionsManager.csproj"/>
+        <ProjectReference Include="../../Dialects/UniversalToolchain.Dialects.Integration/UniversalToolchain.Dialects.Integration.csproj"/>
+    </ItemGroup>
+
+</Project>

@@ -1,0 +1,110 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <OutputType>Exe</OutputType>
+        <LangVersion>14</LangVersion>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+        <OutputPath>bin</OutputPath>
+    </PropertyGroup>
+
+    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+        <OutputPath>bin</OutputPath>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../../src/Modules/ArithmeticModule/ArithmeticModule.csproj"/>
+        <ProjectReference Include="../../src/Runtime/BasicCilCompiler/BasicCilCompiler.csproj"/>
+        <ProjectReference Include="../../src/Frontend/BasicCodeTranslator/BasicCodeTranslator.csproj"/>
+        <ProjectReference Include="../../src/Frontend/BasicCore/BasicCore.csproj"/>
+        <ProjectReference Include="../../src/Runtime/BasicInterpreter/BasicInterpreter.csproj"/>
+        <ProjectReference Include="../../src/Frontend/BasicLexer/BasicLexer.csproj"/>
+        <ProjectReference Include="../../src/Frontend/BasicParser/BasicParser.csproj"/>
+        <ProjectReference Include="../../src/Runtime/BasicStdLib/BasicStdLib.csproj"/>
+        <ProjectReference Include="../../src/Shared/BasicTypesExtensions/BasicTypesExtensions.csproj"/>
+        <ProjectReference Include="../../src/Runtime/BytecodeDynamicMethodsCompiler/BytecodeDynamicMethodsCompiler.csproj"/>
+        <ProjectReference Include="../../src/IR/AbstractIrConverters/AbstractIrConverters.csproj"/>
+        <ProjectReference Include="../../src/Modules/ConditionsModule/ConditionsModule.csproj"/>
+        <ProjectReference Include="../../src/Modules/CSharpInteropModule/CSharpInteropModule.csproj"/>
+        <ProjectReference Include="../../src/Modules/ExecutorLoggerModule/ExecutorLoggerModule.csproj"/>
+        <ProjectReference Include="../../src/Modules/IdentifierModule/IdentifierModule.csproj"/>
+        <ProjectReference Include="../../src/Frontend/InternalPreprocessorLexemesModule/InternalPreprocessorLexemesModule.csproj"/>
+        <ProjectReference Include="../../src/Modules/LabelsModule/LabelsModule.csproj"/>
+        <ProjectReference Include="../../src/Modules/LocalVariablesOptimizerModule/LocalVariablesOptimizerModule.csproj"/>
+        <ProjectReference Include="../../src/Modules/LoopsModule/LoopsModule.csproj"/>
+        <ProjectReference Include="../../src/Modules/NativeMathModule/NativeMathModule.csproj"/>
+        <ProjectReference Include="../../src/Modules/NumbersModule/NumbersModule.csproj"/>
+        <ProjectReference Include="../../src/Frontend/ParserConfigurationModule/ParserConfigurationModule.csproj"/>
+        <ProjectReference Include="../../src/Modules/ScopesModule/ScopesModule.csproj"/>
+        <ProjectReference Include="../../src/Modules/SemicolonAsNewLineModule/SemicolonAsNewLineModule.csproj"/>
+        <ProjectReference Include="../../src/Dialects/UniversalToolchain.Dialects.Wist/UniversalToolchain.Dialects.Wist.csproj"/>
+        <ProjectReference Include="../../src/Modules/VariablesModule/VariablesModule.csproj"/>
+        <ProjectReference Include="../../src/Modules/WhitespacesModule/WhitespacesModule.csproj"/>
+        <ProjectReference Include="../../src/Modules/CommentsModule/CommentsModule.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.1"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Include="..\dialects\wist\full-default\dialect.wistdialect">
+            <Link>dialects\wist\full-default\dialect.wistdialect</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\dialects\wist\full-default\program.wist">
+            <Link>dialects\wist\full-default\program.wist</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\dialects\wist\full-default\README.md">
+            <Link>dialects\wist\full-default\README.md</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\dialects\wist\full-default-native\dialect.wistdialect">
+            <Link>dialects\wist\full-default-native\dialect.wistdialect</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\dialects\wist\full-default-native\program.wist">
+            <Link>dialects\wist\full-default-native\program.wist</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\dialects\wist\full-default-native\README.md">
+            <Link>dialects\wist\full-default-native\README.md</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\dialects\wist\minimal-arithmetic\dialect.wistdialect">
+            <Link>dialects\wist\minimal-arithmetic\dialect.wistdialect</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\dialects\wist\minimal-arithmetic\program.wist">
+            <Link>dialects\wist\minimal-arithmetic\program.wist</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\dialects\wist\minimal-arithmetic\README.md">
+            <Link>dialects\wist\minimal-arithmetic\README.md</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\dialects\wist\restricted-sandbox\dialect.wistdialect">
+            <Link>dialects\wist\restricted-sandbox\dialect.wistdialect</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\dialects\wist\restricted-sandbox\forbidden-program.wist">
+            <Link>dialects\wist\restricted-sandbox\forbidden-program.wist</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\dialects\wist\restricted-sandbox\program.wist">
+            <Link>dialects\wist\restricted-sandbox\program.wist</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\dialects\wist\restricted-sandbox\README.md">
+            <Link>dialects\wist\restricted-sandbox\README.md</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+
+</Project>

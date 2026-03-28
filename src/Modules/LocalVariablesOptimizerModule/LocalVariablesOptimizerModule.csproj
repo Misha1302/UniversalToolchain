@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <EmitDialectRuntimeManifest>true</EmitDialectRuntimeManifest>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../../Dialects/UniversalToolchain.Dialects.Abstractions/UniversalToolchain.Dialects.Abstractions.csproj"/>
+        <ProjectReference Include="../../Frontend/BasicCore/BasicCore.csproj"/>
+        <ProjectReference Include="../../Shared/DotnetAirHelper/DotnetAirHelper.csproj"/>
+        <ProjectReference Include="../../IR/IntermediateRepresentationAbstractions/IntermediateRepresentationAbstractions.csproj"/>
+        <ProjectReference Include="../../Shared/ObjectExtensions/ObjectExtensions.csproj"/>
+        <ProjectReference Include="../SettableGettableModule/SettableGettableModule.csproj"/>
+        <ProjectReference Include="../../Shared/ExceptionsManager/ExceptionsManager.csproj"/>
+        <ProjectReference Include="../../Dialects/UniversalToolchain.Dialects.Integration/UniversalToolchain.Dialects.Integration.csproj"/>
+    </ItemGroup>
+
+</Project>

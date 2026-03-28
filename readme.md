@@ -27,7 +27,7 @@ assembled and evolved without rewriting the entire toolchain each time.
 From repository root:
 
 ```bash
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --mode compiler
+dotnet run --project apps/Wist.Cli/Wist.Cli.csproj -- run --eval "(2 + 2) * 3" --mode compiler
 ```
 
 Expected output:
@@ -65,9 +65,9 @@ This project is not only about parsing expressions. It is about **reusable langu
 From repository root:
 
 ```bash
-dotnet restore UniversalToolchain/Wist.sln
-dotnet build UniversalToolchain/Wist.sln -c Release --no-restore
-dotnet test UniversalToolchain/Tests/Tests.csproj -c Release --no-build
+dotnet restore UniversalToolchain.sln
+dotnet build UniversalToolchain.sln -c Release --no-restore
+dotnet test tests/UniversalToolchain.Tests/UniversalToolchain.Tests.csproj -c Release --no-build
 dotnet test UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolchain.Dialects.Tests.csproj -c Release --no-build
 ```
 
@@ -89,26 +89,26 @@ Examples:
 
 ```bash
 # Run a .wist file
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --file UniversalToolchain/Dialects/examples/wist/full-default/program.wist --mode interpreter
+dotnet run --project apps/Wist.Cli/Wist.Cli.csproj -- run --file samples/dialects/wist/full-default/program.wist --mode interpreter
 
 # Evaluate one expression
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --mode compiler
+dotnet run --project apps/Wist.Cli/Wist.Cli.csproj -- run --eval "(2 + 2) * 3" --mode compiler
 
 # Start REPL
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- repl --mode compiler
+dotnet run --project apps/Wist.Cli/Wist.Cli.csproj -- repl --mode compiler
 ```
 
 ## Dialect usage
 
 ```bash
 # Run code with a dialect definition
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/full-default/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/full-default/program.wist --mode interpreter
+dotnet run --project apps/Wist.Cli/Wist.Cli.csproj -- run --dialect-file samples/dialects/wist/full-default/dialect.wistdialect --file samples/dialects/wist/full-default/program.wist --mode interpreter
 
 # Inspect a dialect file
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- dialect-inspect --file UniversalToolchain/Dialects/examples/wist/full-default/dialect.wistdialect
+dotnet run --project apps/Wist.Cli/Wist.Cli.csproj -- dialect-inspect --file samples/dialects/wist/full-default/dialect.wistdialect
 
 # Run the framework-native dialect demo workflow
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- dialect-demo --file UniversalToolchain/Dialects/examples/wist/full-default/dialect.wistdialect
+dotnet run --project apps/Wist.Cli/Wist.Cli.csproj -- dialect-demo --file samples/dialects/wist/full-default/dialect.wistdialect
 ```
 
 ## Programmatic usage
@@ -122,7 +122,7 @@ services.AddWistDialectServices();
 using var provider = services.BuildServiceProvider();
 var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
 
-var dialect = workflow.ComposeFile("./Dialects/examples/wist/full-default/dialect.wistdialect");
+var dialect = workflow.ComposeFile("./samples/dialects/wist/full-default/dialect.wistdialect");
 if (!dialect.IsSuccess) return;
 
 using var host = workflow.CreateHost(dialect);
@@ -130,11 +130,11 @@ var result = host.Run("(2 + 2) * 3", "compiler");
 Console.WriteLine(result);
 ```
 
-See `UniversalToolchain/Example/Program.cs` for the full example with composition diagnostics handling.
+See `samples/Wist.ConsoleExample/Program.cs` for the full example with composition diagnostics handling.
 
 ## Repository examples
 
-Dialect examples are under `UniversalToolchain/Dialects/examples/wist`:
+Dialect examples are under `samples/dialects/wist`:
 
 - `full-default`
 - `full-default-native`

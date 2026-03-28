@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <LangVersion>14</LangVersion>
+        <EmitDialectRuntimeManifest>true</EmitDialectRuntimeManifest>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.1"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../../IR/AbstractIrConverters/AbstractIrConverters.csproj"/>
+        <ProjectReference Include="../../Modules/ArithmeticModule/ArithmeticModule.csproj"/>
+        <ProjectReference Include="../../Shared/AssemblyFinder/AssemblyFinder.csproj"/>
+        <ProjectReference Include="../../Frontend/BasicCore/BasicCore.csproj"/>
+        <ProjectReference Include="../../Runtime/BytecodeDynamicMethodsCompiler/BytecodeDynamicMethodsCompiler.csproj"/>
+        <ProjectReference Include="../../Modules/CommentsModule/CommentsModule.csproj"/>
+        <ProjectReference Include="../../Modules/ConditionsModule/ConditionsModule.csproj"/>
+        <ProjectReference Include="../../Modules/CSharpInteropModule/CSharpInteropModule.csproj"/>
+        <ProjectReference Include="../../Modules/EqualityModule/EqualityModule.csproj"/>
+        <ProjectReference Include="../../Shared/ExceptionsManager/ExceptionsManager.csproj"/>
+        <ProjectReference Include="../../Modules/IdentifierModule/IdentifierModule.csproj"/>
+        <ProjectReference Include="../../Frontend/InternalPreprocessorLexemesModule/InternalPreprocessorLexemesModule.csproj"/>
+        <ProjectReference Include="../../Modules/LabelsModule/LabelsModule.csproj"/>
+        <ProjectReference Include="../../Modules/LocalVariablesOptimizerModule/LocalVariablesOptimizerModule.csproj"/>
+        <ProjectReference Include="../../Modules/LoopsModule/LoopsModule.csproj"/>
+        <ProjectReference Include="../../Modules/NativeMathModule/NativeMathModule.csproj"/>
+        <ProjectReference Include="../../Modules/NumbersModule/NumbersModule.csproj"/>
+        <ProjectReference Include="../../Modules/ParametersSetterModule/ParametersSetterModule.csproj"/>
+        <ProjectReference Include="../../Modules/ScopesModule/ScopesModule.csproj"/>
+        <ProjectReference Include="../../Modules/SemicolonAsNewLineModule/SemicolonAsNewLineModule.csproj"/>
+        <ProjectReference Include="../UniversalToolchain.Dialects.Core/UniversalToolchain.Dialects.Core.csproj"/>
+        <ProjectReference Include="../UniversalToolchain.Dialects.Frontend/UniversalToolchain.Dialects.Frontend.csproj"/>
+        <ProjectReference Include="../UniversalToolchain.Dialects.Integration/UniversalToolchain.Dialects.Integration.csproj"/>
+        <ProjectReference Include="../../Modules/VariablesModule/VariablesModule.csproj"/>
+        <ProjectReference Include="../../Modules/WhitespacesModule/WhitespacesModule.csproj"/>
+    </ItemGroup>
+
+</Project>

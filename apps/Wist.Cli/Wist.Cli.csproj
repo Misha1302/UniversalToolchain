@@ -1,0 +1,48 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <LangVersion>14</LangVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../../src/Modules/ArithmeticModule/ArithmeticModule.csproj"/>
+        <ProjectReference Include="../../src/Frontend/BasicCodeTranslator/BasicCodeTranslator.csproj"/>
+        <ProjectReference Include="../../src/Frontend/BasicCore/BasicCore.csproj"/>
+        <ProjectReference Include="../../src/Runtime/BasicInterpreter/BasicInterpreter.csproj"/>
+        <ProjectReference Include="../../src/Runtime/BasicStdLib/BasicStdLib.csproj"/>
+        <ProjectReference Include="../../src/Runtime/BytecodeDynamicMethodsCompiler/BytecodeDynamicMethodsCompiler.csproj"/>
+        <ProjectReference Include="../../src/IR/AbstractIrConverters/AbstractIrConverters.csproj"/>
+        <ProjectReference Include="../../src/Modules/ConditionsModule/ConditionsModule.csproj"/>
+        <ProjectReference Include="../../src/Modules/CSharpInteropModule/CSharpInteropModule.csproj"/>
+        <ProjectReference Include="../../src/Modules/ExecutorLoggerModule/ExecutorLoggerModule.csproj"/>
+        <ProjectReference Include="../../src/Modules/IdentifierModule/IdentifierModule.csproj"/>
+        <ProjectReference Include="../../src/Modules/LabelsModule/LabelsModule.csproj"/>
+        <ProjectReference Include="../../src/Modules/LoopsModule/LoopsModule.csproj"/>
+        <ProjectReference Include="../../src/Modules/NativeMathModule/NativeMathModule.csproj"/>
+        <ProjectReference Include="../../src/Modules/LocalVariablesOptimizerModule/LocalVariablesOptimizerModule.csproj"/>
+        <ProjectReference Include="../../src/Dialects/UniversalToolchain.Dialects.Integration/UniversalToolchain.Dialects.Integration.csproj"/>
+        <ProjectReference Include="../../src/Modules/NumbersModule/NumbersModule.csproj"/>
+        <ProjectReference Include="../../src/Frontend/ParserConfigurationModule/ParserConfigurationModule.csproj"/>
+        <ProjectReference Include="../../src/Modules/ScopesModule/ScopesModule.csproj"/>
+        <ProjectReference Include="../../src/Modules/SemicolonAsNewLineModule/SemicolonAsNewLineModule.csproj"/>
+        <ProjectReference Include="../../src/Modules/VariablesModule/VariablesModule.csproj"/>
+        <ProjectReference Include="../../src/Modules/WhitespacesModule/WhitespacesModule.csproj"/>
+        <ProjectReference Include="../../src/Shared/CommonExceptions/CommonExceptions.csproj"/>
+        <ProjectReference Include="../../src/Dialects/UniversalToolchain.Dialects.Wist/UniversalToolchain.Dialects.Wist.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="CommandLineParser" Version="2.9.1"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="JetBrains.Annotations" Version="2025.2.4"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.1"/>
+    </ItemGroup>
+
+
+</Project>

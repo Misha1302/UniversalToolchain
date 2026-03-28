@@ -10,9 +10,9 @@
 Run from repository root:
 
 ```bash
-dotnet restore UniversalToolchain/Wist.sln
-dotnet build UniversalToolchain/Wist.sln -c Release --no-restore
-dotnet test UniversalToolchain/Tests/Tests.csproj -c Release --no-build
+dotnet restore UniversalToolchain.sln
+dotnet build UniversalToolchain.sln -c Release --no-restore
+dotnet test tests/UniversalToolchain.Tests/UniversalToolchain.Tests.csproj -c Release --no-build
 dotnet test UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolchain.Dialects.Tests.csproj -c Release --no-build
 ```
 

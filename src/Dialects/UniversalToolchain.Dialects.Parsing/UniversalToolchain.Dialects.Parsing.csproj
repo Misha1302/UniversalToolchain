@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <LangVersion>14</LangVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../../Shared/ExceptionsManager/ExceptionsManager.csproj"/>
+        <ProjectReference Include="../UniversalToolchain.Dialects.Abstractions/UniversalToolchain.Dialects.Abstractions.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Remove="DialectBackendTarget.cs"/>
+    </ItemGroup>
+
+</Project>

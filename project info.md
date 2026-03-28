@@ -73,10 +73,10 @@ tests that compose and execute each example end-to-end.
 
 ## 9. Repository entry points
 
-- Solution: `UniversalToolchain/Wist.sln`
+- Solution: `UniversalToolchain.sln`
 - CLI entry: `UniversalToolchain/Wistc/Program.cs`
-- Programmatic example: `UniversalToolchain/Example/Program.cs`
-- Dialect examples: `UniversalToolchain/Dialects/examples/wist/*`
-- Core tests: `UniversalToolchain/Tests/Tests.csproj`
+- Programmatic example: `samples/Wist.ConsoleExample/Program.cs`
+- Dialect examples: `samples/dialects/wist/*`
+- Core tests: `tests/UniversalToolchain.Tests/UniversalToolchain.Tests.csproj`
 - Dialect tests: `UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolchain.Dialects.Tests.csproj`
 - Configuration editor frontend: `ConfigurationEditor/`

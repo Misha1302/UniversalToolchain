@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../AbstractIrExtensions/AbstractIrExtensions.csproj"/>
+        <ProjectReference Include="../../Frontend/BasicCore/BasicCore.csproj"/>
+        <ProjectReference Include="../../Shared/DotnetAirHelper/DotnetAirHelper.csproj"/>
+    </ItemGroup>
+
+</Project>

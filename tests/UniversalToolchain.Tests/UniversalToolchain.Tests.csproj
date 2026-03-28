@@ -1,0 +1,68 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <LangVersion>14</LangVersion>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <IsPackable>false</IsPackable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="coverlet.collector" Version="6.0.2"/>
+        <PackageReference Include="JetBrains.Annotations" Version="2025.2.4"/>
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0"/>
+        <PackageReference Include="NUnit" Version="4.2.2"/>
+        <PackageReference Include="NUnit.Analyzers" Version="4.4.0"/>
+        <PackageReference Include="NUnit3TestAdapter" Version="4.6.0"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.1"/>
+        <PackageReference Include="SharpFuzz.Common" Version="2.2.0"/>
+    </ItemGroup>
+
+
+    <ItemGroup>
+        <ProjectReference Include="../../src/Modules/ArithmeticModule/ArithmeticModule.csproj"/>
+        <ProjectReference Include="../../src/Runtime/BasicCilCompiler/BasicCilCompiler.csproj"/>
+        <ProjectReference Include="../../src/Frontend/BasicCodeTranslator/BasicCodeTranslator.csproj"/>
+        <ProjectReference Include="../../src/Frontend/BasicCore/BasicCore.csproj"/>
+        <ProjectReference Include="../../src/Runtime/BasicInterpreter/BasicInterpreter.csproj"/>
+        <ProjectReference Include="../../src/Frontend/BasicLexer/BasicLexer.csproj"/>
+        <ProjectReference Include="../../src/Frontend/BasicParser/BasicParser.csproj"/>
+        <ProjectReference Include="../../src/Runtime/BasicStdLib/BasicStdLib.csproj"/>
+        <ProjectReference Include="../../src/Shared/BasicTypesExtensions/BasicTypesExtensions.csproj"/>
+        <ProjectReference Include="../../src/Runtime/BytecodeDynamicMethodsCompiler/BytecodeDynamicMethodsCompiler.csproj"/>
+        <ProjectReference Include="../../src/IR/AbstractIrConverters/AbstractIrConverters.csproj"/>
+        <ProjectReference Include="../../src/Modules/ConditionsModule/ConditionsModule.csproj"/>
+        <ProjectReference Include="../../src/Modules/CSharpInteropModule/CSharpInteropModule.csproj"/>
+        <ProjectReference Include="../../src/Modules/ExecutorLoggerModule/ExecutorLoggerModule.csproj"/>
+        <ProjectReference Include="../../src/Modules/IdentifierModule/IdentifierModule.csproj"/>
+        <ProjectReference Include="../../src/Frontend/InternalPreprocessorLexemesModule/InternalPreprocessorLexemesModule.csproj"/>
+        <ProjectReference Include="../../src/Modules/LabelsModule/LabelsModule.csproj"/>
+        <ProjectReference Include="../../src/Modules/LocalVariablesOptimizerModule/LocalVariablesOptimizerModule.csproj"/>
+        <ProjectReference Include="../../src/Modules/LoopsModule/LoopsModule.csproj"/>
+        <ProjectReference Include="../../src/Modules/NativeMathModule/NativeMathModule.csproj"/>
+        <ProjectReference Include="../../src/Modules/NumbersModule/NumbersModule.csproj"/>
+        <ProjectReference Include="../../src/Frontend/ParserConfigurationModule/ParserConfigurationModule.csproj"/>
+        <ProjectReference Include="../../src/Modules/ScopesModule/ScopesModule.csproj"/>
+        <ProjectReference Include="../../src/Modules/SemicolonAsNewLineModule/SemicolonAsNewLineModule.csproj"/>
+        <ProjectReference Include="../../src/Modules/VariablesModule/VariablesModule.csproj"/>
+        <ProjectReference Include="../../src/Modules/WhitespacesModule/WhitespacesModule.csproj"/>
+        <ProjectReference Include="../../src/Dialects/UniversalToolchain.Dialects.Wist/UniversalToolchain.Dialects.Wist.csproj"/>
+        <ProjectReference Include="../../src/Modules/CommentsModule/CommentsModule.csproj"/>
+    </ItemGroup>
+
+
+    <ItemGroup>
+        <Compile Remove="**/*.cs"/>
+        <Compile Include="GlobalUsings.cs"/>
+        <Compile Include="TestInfrastructure/TestContractsInfrastructure.cs"/>
+        <Compile Include="Cli/WistcCliContractsTests.cs"/>
+        <Compile Include="Architecture/DeletedLegacySurfaceTests.cs"/>
+        <Compile Include="Stress/RuntimeStressContractsTests.cs"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Using Include="NUnit.Framework"/>
+    </ItemGroup>
+</Project>

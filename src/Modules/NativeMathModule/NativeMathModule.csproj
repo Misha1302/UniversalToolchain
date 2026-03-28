@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <EmitDialectRuntimeManifest>true</EmitDialectRuntimeManifest>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="../../Dialects/UniversalToolchain.Dialects.Abstractions/UniversalToolchain.Dialects.Abstractions.csproj"/>
+        <ProjectReference Include="../../IR/AbstractIrExtensions/AbstractIrExtensions.csproj"/>
+        <ProjectReference Include="../../Frontend/BasicCore/BasicCore.csproj"/>
+        <ProjectReference Include="../../Shared/BasicTypesExtensions/BasicTypesExtensions.csproj"/>
+        <ProjectReference Include="../../Shared/DotnetAirHelper/DotnetAirHelper.csproj"/>
+        <ProjectReference Include="../../Shared/ObjectExtensions/ObjectExtensions.csproj"/>
+        <ProjectReference Include="../../Shared/ExceptionsManager/ExceptionsManager.csproj"/>
+        <ProjectReference Include="../../Dialects/UniversalToolchain.Dialects.Integration/UniversalToolchain.Dialects.Integration.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.1"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="JetBrains.Annotations" Version="2025.2.4"/>
+    </ItemGroup>
+
+</Project>
