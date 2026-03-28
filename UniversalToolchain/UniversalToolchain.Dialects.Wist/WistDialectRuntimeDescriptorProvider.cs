@@ -8,9 +8,9 @@ namespace UniversalToolchain.Dialects.Wist;
 /// </summary>
 public sealed class WistDialectRuntimeDescriptorProvider : IDialectRuntimeDescriptorProvider
 {
-    private readonly IReadOnlyList<IWistDialectBackendServiceProvider> _backendProviders;
+    private readonly IReadOnlyList<IDialectBackendRuntimeRegistrar> _backendProviders;
 
-    public WistDialectRuntimeDescriptorProvider(IEnumerable<IWistDialectBackendServiceProvider> backendProviders)
+    public WistDialectRuntimeDescriptorProvider(IEnumerable<IDialectBackendRuntimeRegistrar> backendProviders)
     {
         if (backendProviders == null)
         {
@@ -29,7 +29,6 @@ public sealed class WistDialectRuntimeDescriptorProvider : IDialectRuntimeDescri
             Thrower.ArgumentNull(nameof(builder));
         }
 
-        builder.RegisterAttributedBackendsFromAssemblies(typeof(WistDialectRuntimeDescriptorProvider).Assembly);
         RegisterIntrinsics(builder);
     }
 

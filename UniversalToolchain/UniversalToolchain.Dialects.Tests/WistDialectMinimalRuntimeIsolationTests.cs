@@ -21,6 +21,21 @@ public class WistDialectMinimalRuntimeIsolationTests
     }
 
     [Test]
+    public void LegacyWorkflow_RegistersLegacyCompatibilityServices()
+    {
+        var services = new ServiceCollection();
+        services.AddWistDialectServicesLegacy();
+        using var provider = services.BuildServiceProvider();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(provider.GetService<DialectFrameworkCompositionWorkflow>(), Is.Not.Null);
+            Assert.That(provider.GetService<DialectRuntimeDescriptorRegistry>(), Is.Not.Null);
+            Assert.That(provider.GetService<LegacyWistDialectCompositionService>(), Is.Not.Null);
+        });
+    }
+
+    [Test]
     public void MinimalWorkflow_ComposeText_DoesNotPopulateRuntimeComposition()
     {
         using var provider = CreateMinimalProvider();

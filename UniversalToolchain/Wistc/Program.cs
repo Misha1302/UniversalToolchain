@@ -304,7 +304,7 @@ WistDialectExecutionHost CreateDialectHost(string dialectFile)
 ServiceProvider CreateDialectWorkflowProvider()
 {
     var services = new ServiceCollection();
-    services.AddWistDialectServices();
+    services.AddWistDialectServicesLegacy();
     return services.BuildServiceProvider();
 }
 

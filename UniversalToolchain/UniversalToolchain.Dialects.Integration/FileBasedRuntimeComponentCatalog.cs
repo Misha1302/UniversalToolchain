@@ -4,34 +4,32 @@ namespace UniversalToolchain.Dialects.Integration;
 
 public sealed class FileBasedRuntimeComponentCatalog : IRuntimeComponentCatalog
 {
+    private readonly IReadOnlyList<RuntimeComponentManifestEntry> _backends;
     private readonly IReadOnlyDictionary<string, RuntimeComponentManifestEntry> _backendsByAlias;
+    private readonly IReadOnlyList<RuntimeComponentManifestEntry> _modules;
     private readonly IReadOnlyDictionary<string, RuntimeComponentManifestEntry> _modulesByAlias;
+    private readonly IReadOnlyList<RuntimeComponentManifestEntry> _optimizers;
     private readonly IReadOnlyDictionary<string, RuntimeComponentManifestEntry> _optimizersByAlias;
-
-    public FileBasedRuntimeComponentCatalog()
-        : this(new DefaultRuntimeManifestFileLocator(), new RuntimeManifestJsonSerializer())
-    {
-    }
 
     public FileBasedRuntimeComponentCatalog(
         IRuntimeManifestFileLocator manifestFileLocator,
-        RuntimeManifestJsonSerializer jsonSerializer)
+        IRuntimeManifestSerializer serializer)
     {
         if (manifestFileLocator == null)
             Thrower.ArgumentNull(nameof(manifestFileLocator));
 
-        if (jsonSerializer == null)
-            Thrower.ArgumentNull(nameof(jsonSerializer));
+        if (serializer == null)
+            Thrower.ArgumentNull(nameof(serializer));
 
-        var entries = LoadEntries(manifestFileLocator.GetManifestFilePaths(), jsonSerializer);
+        var entries = LoadEntries(manifestFileLocator.GetManifestFilePaths(), serializer);
 
-        var modules = Sort(entries.Where(static x => x.Kind == RuntimeComponentKind.FrontendModule));
-        var optimizers = Sort(entries.Where(static x => x.Kind == RuntimeComponentKind.Optimizer));
-        var backends = Sort(entries.Where(static x => x.Kind == RuntimeComponentKind.Backend));
+        _modules = Sort(entries.Where(static x => x.Kind == RuntimeComponentKind.FrontendModule));
+        _optimizers = Sort(entries.Where(static x => x.Kind == RuntimeComponentKind.Optimizer));
+        _backends = Sort(entries.Where(static x => x.Kind == RuntimeComponentKind.Backend));
 
-        _modulesByAlias = CreateAliasMap(modules, "module");
-        _optimizersByAlias = CreateAliasMap(optimizers, "optimizer");
-        _backendsByAlias = CreateAliasMap(backends, "backend");
+        _modulesByAlias = CreateAliasMap(_modules, "module");
+        _optimizersByAlias = CreateAliasMap(_optimizers, "optimizer");
+        _backendsByAlias = CreateAliasMap(_backends, "backend");
     }
 
     public bool TryResolveModule(string alias, out RuntimeComponentManifestEntry? entry) => TryResolve(_modulesByAlias, alias, out entry);
@@ -40,18 +38,18 @@ public sealed class FileBasedRuntimeComponentCatalog : IRuntimeComponentCatalog
 
     public bool TryResolveBackend(string alias, out RuntimeComponentManifestEntry? entry) => TryResolve(_backendsByAlias, alias, out entry);
 
+    public IReadOnlyList<RuntimeComponentManifestEntry> GetModulesInDeterministicOrder() => _modules;
+
+    public IReadOnlyList<RuntimeComponentManifestEntry> GetOptimizersInDeterministicOrder() => _optimizers;
+
     public IReadOnlyList<RuntimeComponentManifestEntry> GetBackendsInDeterministicOrder()
     {
-        return _backendsByAlias.Values
-            .Distinct()
-            .OrderBy(static x => x.CanonicalAlias, StringComparer.Ordinal)
-            .ThenBy(static x => x.TypeReference.TypeFullName, StringComparer.Ordinal)
-            .ToList();
+        return _backends;
     }
 
     internal static IReadOnlyList<RuntimeComponentManifestEntry> LoadEntries(
         IEnumerable<string> manifestPaths,
-        RuntimeManifestJsonSerializer jsonSerializer)
+        IRuntimeManifestSerializer serializer)
     {
         var entries = new List<RuntimeComponentManifestEntry>();
 
@@ -60,7 +58,7 @@ public sealed class FileBasedRuntimeComponentCatalog : IRuntimeComponentCatalog
             if (!File.Exists(manifestPath))
                 continue;
 
-            var document = jsonSerializer.Deserialize(File.ReadAllText(manifestPath));
+            var document = serializer.Deserialize(File.ReadAllText(manifestPath));
             var assemblySimpleName = document.AssemblySimpleName?.Trim();
             if (string.IsNullOrWhiteSpace(assemblySimpleName))
                 Thrower.Argument(nameof(manifestPaths), $"Runtime manifest '{manifestPath}' has an empty assemblySimpleName.");
@@ -86,16 +84,7 @@ public sealed class FileBasedRuntimeComponentCatalog : IRuntimeComponentCatalog
             new RuntimeTypeReference(assemblySimpleName, component.TypeFullName)));
     }
 
-    private static RuntimeComponentKind ParseKind(string kind, string manifestPath)
-    {
-        return kind switch
-        {
-            "FrontendModule" => RuntimeComponentKind.FrontendModule,
-            "Optimizer" => RuntimeComponentKind.Optimizer,
-            "Backend" => RuntimeComponentKind.Backend,
-            _ => Thrower.InvalidOpEx<RuntimeComponentKind>($"Unsupported runtime component kind '{kind}' in '{manifestPath}'.")
-        };
-    }
+    private static RuntimeComponentKind ParseKind(string kind, string manifestPath) => RuntimeComponentKindCodec.Parse(kind, manifestPath);
 
     private static bool TryResolve(IReadOnlyDictionary<string, RuntimeComponentManifestEntry> map, string alias, out RuntimeComponentManifestEntry? entry)
     {

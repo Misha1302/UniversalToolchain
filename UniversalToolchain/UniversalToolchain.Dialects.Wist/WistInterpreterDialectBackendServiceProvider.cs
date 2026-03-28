@@ -9,6 +9,7 @@ using IntermediateRepresentationAbstractions;
 using Microsoft.Extensions.DependencyInjection;
 using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
+using UniversalToolchain.Dialects.Integration;
 
 namespace UniversalToolchain.Dialects.Wist;
 
@@ -35,6 +36,15 @@ internal sealed class WistInterpreterDialectBackendServiceProvider : IWistDialec
         services.AddTransient<ICoreOptimizedRunnable>(provider => CreateCore(provider, configuration));
         services.AddTransient<IExecutableGiver<IAbstractIR>>(provider => CreateCore(provider, configuration));
         services.AddTransient(provider => new WistDialectBackendRuntime(configuration.BackendDescriptor, CreateCore(provider, configuration)));
+    }
+
+    void IDialectBackendRuntimeRegistrar.RegisterRuntime(IServiceCollection services, DialectBackendRuntimeConfiguration configuration)
+    {
+        var wistConfiguration = configuration as WistDialectBackendConfiguration;
+        if (wistConfiguration == null)
+            Thrower.Argument(nameof(configuration), $"Backend '{BackendId.Value}' requires '{nameof(WistDialectBackendConfiguration)}'.");
+
+        RegisterRuntime(services, wistConfiguration);
     }
 
     private static BasicCoreImpl<IAbstractIR> CreateCore(IServiceProvider provider, WistDialectBackendConfiguration configuration)

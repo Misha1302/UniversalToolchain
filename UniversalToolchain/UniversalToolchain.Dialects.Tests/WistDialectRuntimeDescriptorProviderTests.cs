@@ -25,11 +25,11 @@ public class WistDialectRuntimeDescriptorProviderTests
             Assert.That(first.Backends.Keys, Is.EqualTo(second.Backends.Keys));
             Assert.That(first.Intrinsics.Keys, Is.EqualTo(second.Intrinsics.Keys));
             Assert.That(first.TryResolveModule("Arithmetic", out var arithmeticModule), Is.True);
-            Assert.That(arithmeticModule!.CanonicalId, Does.Contain("ArithmeticModuleImpl"));
+            Assert.That(arithmeticModule!.CanonicalId, Is.EqualTo("Arithmetic"));
             Assert.That(first.TryResolveModule("Variables", out var variablesModule), Is.True);
-            Assert.That(variablesModule!.CanonicalId, Does.Contain("VariablesModuleImpl"));
+            Assert.That(variablesModule!.CanonicalId, Is.EqualTo("Variables"));
             Assert.That(first.TryResolveOptimizer("LocalVariablesOptimization", out var localVariablesOptimizer), Is.True);
-            Assert.That(localVariablesOptimizer!.CanonicalId, Does.Contain("LocalVariablesOptimizer"));
+            Assert.That(localVariablesOptimizer!.CanonicalId, Is.EqualTo("LocalVariablesOptimization"));
             Assert.That(first.Backends.Keys, Is.EqualTo(new[] { TestBackendIds.Cil, TestBackendIds.Interpreter }));
             Assert.That(first.Intrinsics.Keys, Does.Contain(("add_i32", TestBackendIds.CilSelector)));
         });
@@ -77,14 +77,14 @@ public class WistDialectRuntimeDescriptorProviderTests
         var first = DialectRuntimeDescriptorRegistryFactory.BuildFromProviders([
             new TestOnlyRuntimeDescriptorProvider(),
             new LocalVariablesOptimizerDialectRuntimeDescriptorProvider(),
-            new WistDialectRuntimeDescriptorProvider(Array.Empty<IWistDialectBackendServiceProvider>()),
+            new WistDialectRuntimeDescriptorProvider(Array.Empty<IDialectBackendRuntimeRegistrar>()),
             new ArithmeticDialectRuntimeDescriptorProvider(),
             new ConditionsDialectRuntimeDescriptorProvider()
         ]);
         var second = DialectRuntimeDescriptorRegistryFactory.BuildFromProviders([
             new ConditionsDialectRuntimeDescriptorProvider(),
             new ArithmeticDialectRuntimeDescriptorProvider(),
-            new WistDialectRuntimeDescriptorProvider(Array.Empty<IWistDialectBackendServiceProvider>()),
+            new WistDialectRuntimeDescriptorProvider(Array.Empty<IDialectBackendRuntimeRegistrar>()),
             new LocalVariablesOptimizerDialectRuntimeDescriptorProvider(),
             new TestOnlyRuntimeDescriptorProvider()
         ]);

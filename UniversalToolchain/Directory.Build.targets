@@ -2,13 +2,14 @@
 
   <PropertyGroup>
     <DialectRuntimeManifestEmitterProject>$(MSBuildThisFileDirectory)UniversalToolchain.Dialects.ManifestEmitter/UniversalToolchain.Dialects.ManifestEmitter.csproj</DialectRuntimeManifestEmitterProject>
+    <DialectRuntimeManifestSuffix>.dialect.runtime.json</DialectRuntimeManifestSuffix>
   </PropertyGroup>
 
   <Target Name="EmitDialectRuntimeManifest"
           AfterTargets="Build"
           Condition="'$(EmitDialectRuntimeManifest)' == 'true' and '$(DesignTimeBuild)' != 'true'">
     <PropertyGroup>
-      <DialectRuntimeManifestOutputPath>$(TargetDir)$(AssemblyName).dialect.runtime.json</DialectRuntimeManifestOutputPath>
+      <DialectRuntimeManifestOutputPath>$(TargetDir)$(AssemblyName)$(DialectRuntimeManifestSuffix)</DialectRuntimeManifestOutputPath>
     </PropertyGroup>
 
     <Exec Command="&quot;$(DOTNET_HOST_PATH)&quot; run --project &quot;$(DialectRuntimeManifestEmitterProject)&quot; -- --assembly &quot;$(TargetPath)&quot; --output &quot;$(DialectRuntimeManifestOutputPath)&quot;" />
@@ -22,7 +23,7 @@
           AfterTargets="Build"
           Condition="'$(DesignTimeBuild)' != 'true'">
     <ItemGroup>
-      <_ReferencedDialectRuntimeManifestCandidates Include="@(ReferenceCopyLocalPaths->'%(RootDir)%(Directory)%(Filename).dialect.runtime.json')" />
+      <_ReferencedDialectRuntimeManifestCandidates Include="@(ReferenceCopyLocalPaths->'%(RootDir)%(Directory)%(Filename)$(DialectRuntimeManifestSuffix)')" />
       <_ReferencedDialectRuntimeManifests Include="@(_ReferencedDialectRuntimeManifestCandidates)"
                                           Condition="Exists('%(Identity)')" />
     </ItemGroup>

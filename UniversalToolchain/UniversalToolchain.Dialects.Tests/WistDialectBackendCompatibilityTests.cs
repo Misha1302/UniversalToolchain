@@ -15,11 +15,11 @@ public class WistDialectBackendCompatibilityTests
             Entry("interpreter"),
             Entry("foreign-backend", ["foreign"]));
 
-        var provider = new WistKnownBackendsProvider(
+        var provider = new RuntimeKnownBackendsProvider(
             catalog,
             [
-                new StubWistBackendProvider(new DialectBackendId("cil")),
-                new StubWistBackendProvider(new DialectBackendId("interpreter"))
+                new StubBackendRegistrar(new DialectBackendId("cil")),
+                new StubBackendRegistrar(new DialectBackendId("interpreter"))
             ]);
 
         var known = provider.GetKnownBackends();
@@ -36,7 +36,7 @@ public class WistDialectBackendCompatibilityTests
     {
         var catalog = new StaticCatalog(Entry("cil"));
         var exception = Assert.Throws<InvalidOperationException>(() =>
-            new WistKnownBackendsProvider(catalog, [new StubWistBackendProvider(new DialectBackendId("interpreter"))]));
+            new RuntimeKnownBackendsProvider(catalog, [new StubBackendRegistrar(new DialectBackendId("interpreter"))]));
 
         Assert.That(exception!.Message, Does.Contain("interpreter"));
     }
@@ -46,11 +46,11 @@ public class WistDialectBackendCompatibilityTests
     {
         var catalog = new StaticCatalog(Entry("cil"));
         var exception = Assert.Throws<InvalidOperationException>(() =>
-            new WistKnownBackendsProvider(
+            new RuntimeKnownBackendsProvider(
                 catalog,
                 [
-                    new StubWistBackendProvider(new DialectBackendId("cil")),
-                    new StubWistBackendProvider(new DialectBackendId("cil"))
+                    new StubBackendRegistrar(new DialectBackendId("cil")),
+                    new StubBackendRegistrar(new DialectBackendId("cil"))
                 ]));
 
         Assert.That(exception!.Message, Does.Contain("Duplicate").And.Contain("cil"));
@@ -108,16 +108,20 @@ public class WistDialectBackendCompatibilityTests
 
         public bool TryResolveBackend(string alias, out RuntimeComponentManifestEntry? entry) => _map.TryGetValue(alias, out entry);
 
+        public IReadOnlyList<RuntimeComponentManifestEntry> GetModulesInDeterministicOrder() => [];
+
+        public IReadOnlyList<RuntimeComponentManifestEntry> GetOptimizersInDeterministicOrder() => [];
+
         public IReadOnlyList<RuntimeComponentManifestEntry> GetBackendsInDeterministicOrder() => _map.Values.Distinct().OrderBy(x => x.CanonicalAlias, StringComparer.Ordinal).ToList();
     }
 
-    private sealed class StubWistBackendProvider(DialectBackendId backendId) : IWistDialectBackendServiceProvider
+    private sealed class StubBackendRegistrar(DialectBackendId backendId) : IDialectBackendRuntimeRegistrar
     {
         public DialectBackendId BackendId { get; } = backendId;
 
         public IReadOnlyList<string> SupportedIntrinsics => [];
 
-        public void RegisterRuntime(IServiceCollection services, WistDialectBackendConfiguration configuration)
+        public void RegisterRuntime(IServiceCollection services, DialectBackendRuntimeConfiguration configuration)
         {
         }
     }
@@ -127,7 +131,7 @@ public class WistDialectBackendCompatibilityTests
         public Type LoadType(RuntimeComponentManifestEntry entry) => typeof(object);
     }
 
-    private sealed class RecordingKnownBackendsProvider(IReadOnlyList<RuntimeBackendDescriptor> knownBackends) : IWistKnownBackendsProvider
+    private sealed class RecordingKnownBackendsProvider(IReadOnlyList<RuntimeBackendDescriptor> knownBackends) : IRuntimeKnownBackendsProvider
     {
         public int Calls { get; private set; }
 

@@ -50,6 +50,39 @@ public class WistRuntimeManifestMetadataValidationTests
     }
 
     [Test]
+    public void FileBasedRuntimeComponentCatalog_EnumeratesModulesOptimizersAndBackends_Deterministically()
+    {
+        using var temp = new TempDirectory();
+        var serializer = new RuntimeManifestJsonSerializer();
+        var manifestA = Path.Combine(temp.Path, "a.dialect.runtime.json");
+        var manifestB = Path.Combine(temp.Path, "b.dialect.runtime.json");
+
+        File.WriteAllText(manifestA, serializer.Serialize(new FileDialectRuntimeManifestDocument(
+            "BAssembly",
+            [
+                new FileDialectRuntimeComponentEntry("Backend", "interpreter", [], "Runtime.Backends.Interpreter"),
+                new FileDialectRuntimeComponentEntry("Optimizer", "LocalVariablesOptimization", [], "Runtime.Optimizers.Local"),
+                new FileDialectRuntimeComponentEntry("FrontendModule", "Numbers", [], "Runtime.Modules.Numbers")
+            ])));
+        File.WriteAllText(manifestB, serializer.Serialize(new FileDialectRuntimeManifestDocument(
+            "AAssembly",
+            [
+                new FileDialectRuntimeComponentEntry("Backend", "cil", ["compiler"], "Runtime.Backends.Cil"),
+                new FileDialectRuntimeComponentEntry("FrontendModule", "Arithmetic", [], "Runtime.Modules.Arithmetic"),
+                new FileDialectRuntimeComponentEntry("Optimizer", "AlphaOptimization", [], "Runtime.Optimizers.Alpha")
+            ])));
+
+        var catalog = new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([manifestA, manifestB]), serializer);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(catalog.GetModulesInDeterministicOrder().Select(static x => x.CanonicalAlias), Is.EqualTo(new[] { "Arithmetic", "Numbers" }));
+            Assert.That(catalog.GetOptimizersInDeterministicOrder().Select(static x => x.CanonicalAlias), Is.EqualTo(new[] { "AlphaOptimization", "LocalVariablesOptimization" }));
+            Assert.That(catalog.GetBackendsInDeterministicOrder().Select(static x => x.CanonicalAlias), Is.EqualTo(new[] { "cil", "interpreter" }));
+        });
+    }
+
+    [Test]
     public void SelectionResolver_UsesGlobalCatalogWithoutFamilyFiltering()
     {
         var services = new ServiceCollection();

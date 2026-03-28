@@ -14,6 +14,6 @@ public sealed class WistDialectServicesRegistrar : IDialectServicesRegistrar
         if (services == null)
             Thrower.ArgumentNull(nameof(services));
 
-        services.AddWistDialectServices();
+        services.AddWistDialectServicesMinimal();
     }
 }

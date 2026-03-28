@@ -57,7 +57,7 @@ public class DialectRuntimeAliasAttributeDiscoveryTests
             Assert.That(registry.TryResolveBackend(new DialectBackendId("compiler"), out var compiler), Is.True);
             Assert.That(cil, Is.SameAs(compiler));
             Assert.That(registry.TryResolveBackend(new DialectBackendId("interpreter"), out var interpreter), Is.True);
-            Assert.That(interpreter!.MetadataOwnerType.Name, Is.EqualTo("WistInterpreterBackendDeclaration"));
+            Assert.That(interpreter!.MetadataOwnerType.Name, Is.EqualTo("CatalogBackedDialectRuntimeDescriptorProvider"));
         });
     }
 

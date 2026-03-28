@@ -8,13 +8,13 @@ namespace UniversalToolchain.Dialects.Wist;
 public sealed class WistDialectExecutionConfigurationBuilder
 {
     private readonly DialectIntrinsicPolicyResolver _intrinsicPolicyResolver;
-    private readonly IWistKnownBackendsProvider _knownBackendsProvider;
+    private readonly IRuntimeKnownBackendsProvider _knownBackendsProvider;
     private readonly IRuntimeComponentTypeLoader _typeLoader;
 
     public WistDialectExecutionConfigurationBuilder(
         IRuntimeComponentTypeLoader typeLoader,
         DialectIntrinsicPolicyResolver intrinsicPolicyResolver,
-        IWistKnownBackendsProvider knownBackendsProvider)
+        IRuntimeKnownBackendsProvider knownBackendsProvider)
     {
         _typeLoader = typeLoader ?? throw new ArgumentNullException(nameof(typeLoader));
         _intrinsicPolicyResolver = intrinsicPolicyResolver ?? throw new ArgumentNullException(nameof(intrinsicPolicyResolver));
