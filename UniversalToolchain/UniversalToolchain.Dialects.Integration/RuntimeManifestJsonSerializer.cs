@@ -21,7 +21,7 @@ public sealed class RuntimeManifestJsonSerializer : IRuntimeManifestSerializer
                 RuntimeComponentKindCodec.Format(RuntimeComponentKindCodec.Parse(x.Kind ?? string.Empty, "runtime manifest")),
                 x.CanonicalAlias ?? string.Empty,
                 x.Aliases ?? [],
-                x.TypeFullName ?? string.Empty))
+                ResolveComponentId(x)))
             .ToList());
     }
 
@@ -36,12 +36,22 @@ public sealed class RuntimeManifestJsonSerializer : IRuntimeManifestSerializer
                     Kind = RuntimeComponentKindCodec.Format(RuntimeComponentKindCodec.Parse(x.Kind ?? string.Empty, "runtime manifest")),
                     CanonicalAlias = x.CanonicalAlias,
                     Aliases = x.Aliases,
-                    TypeFullName = x.TypeFullName
+                    ComponentId = x.ComponentId
                 })
                 .ToList()
         };
 
         return JsonSerializer.Serialize(payload, JsonOptions);
+    }
+
+    private static string ResolveComponentId(SerializableManifestComponentEntry entry)
+    {
+        if (!string.IsNullOrWhiteSpace(entry.ComponentId))
+            return entry.ComponentId;
+
+        var kind = RuntimeComponentKindCodec.Parse(entry.Kind ?? string.Empty, "runtime manifest");
+        var alias = entry.CanonicalAlias ?? string.Empty;
+        return RuntimeComponentIdFactory.Create(kind, alias).Value;
     }
 
     private sealed class SerializableManifestDocument
@@ -58,6 +68,8 @@ public sealed class RuntimeManifestJsonSerializer : IRuntimeManifestSerializer
         public string? CanonicalAlias { get; init; }
 
         public IReadOnlyList<string>? Aliases { get; init; }
+
+        public string? ComponentId { get; init; }
 
         public string? TypeFullName { get; init; }
     }

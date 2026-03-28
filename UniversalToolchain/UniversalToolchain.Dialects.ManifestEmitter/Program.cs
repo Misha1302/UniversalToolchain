@@ -37,9 +37,7 @@ internal static class ManifestEmitter
 
     public static ManifestDocument Emit(string assemblyPath)
     {
-        var runtimePaths = Directory.GetFiles(Path.GetDirectoryName(typeof(object).Assembly.Location)!, "*.dll", SearchOption.TopDirectoryOnly);
-        var localPaths = Directory.GetFiles(Path.GetDirectoryName(assemblyPath)!, "*.dll", SearchOption.TopDirectoryOnly);
-        var resolver = new PathAssemblyResolver(runtimePaths.Concat(localPaths).Append(assemblyPath).Distinct(StringComparer.Ordinal));
+        var resolver = new PathAssemblyResolver(BuildMetadataAssemblyPaths(assemblyPath));
 
         using var context = new MetadataLoadContext(resolver);
         var assembly = context.LoadFromAssemblyPath(assemblyPath);
@@ -49,10 +47,24 @@ internal static class ManifestEmitter
             .SelectMany(BuildEntry)
             .OrderBy(static x => x.Kind, StringComparer.Ordinal)
             .ThenBy(static x => x.CanonicalAlias, StringComparer.Ordinal)
-            .ThenBy(static x => x.TypeFullName, StringComparer.Ordinal)
+            .ThenBy(static x => x.ComponentId, StringComparer.Ordinal)
             .ToList();
 
         return new ManifestDocument(assembly.GetName().Name!, components);
+    }
+
+    private static IEnumerable<string> BuildMetadataAssemblyPaths(string assemblyPath)
+    {
+        var tpa = AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") as string;
+        var runtimePaths = string.IsNullOrWhiteSpace(tpa)
+            ? []
+            : tpa.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        var localPaths = Directory.EnumerateFiles(Path.GetDirectoryName(assemblyPath)!, "*.dll", SearchOption.TopDirectoryOnly);
+        return runtimePaths
+            .Concat(localPaths)
+            .Append(assemblyPath)
+            .Distinct(StringComparer.Ordinal);
     }
 
     private static IEnumerable<ManifestComponentEntry> BuildEntry(Type type)
@@ -65,6 +77,9 @@ internal static class ManifestEmitter
         if (values.Length < 2)
             return [];
 
+        var kind = values[0];
+        var canonicalAlias = values[1];
+
         var aliases = type.CustomAttributes
             .Where(static x => x.AttributeType.FullName == RuntimeAliasAttributeFullName)
             .Select(static x => x.ConstructorArguments[0].Value?.ToString())
@@ -74,13 +89,26 @@ internal static class ManifestEmitter
             .OrderBy(static x => x, StringComparer.Ordinal)
             .ToList();
 
-        return [new ManifestComponentEntry(values[0], values[1], aliases, type.FullName ?? type.Name)];
+        return [new ManifestComponentEntry(kind, canonicalAlias, aliases, RuntimeId(kind, canonicalAlias))];
+    }
+
+    private static string RuntimeId(string kind, string canonicalAlias)
+    {
+        var prefix = kind.Trim() switch
+        {
+            "FrontendModule" => "frontend",
+            "Optimizer" => "optimizer",
+            "Backend" => "backend",
+            _ => throw new InvalidOperationException($"Unknown runtime component kind '{kind}'.")
+        };
+
+        return $"{prefix}.{canonicalAlias.Trim().ToLowerInvariant()}";
     }
 }
 
 internal sealed record ManifestDocument(string AssemblySimpleName, IReadOnlyList<ManifestComponentEntry> Components);
 
-internal sealed record ManifestComponentEntry(string Kind, string CanonicalAlias, IReadOnlyList<string> Aliases, string TypeFullName);
+internal sealed record ManifestComponentEntry(string Kind, string CanonicalAlias, IReadOnlyList<string> Aliases, string ComponentId);
 
 internal static class JsonOptions
 {

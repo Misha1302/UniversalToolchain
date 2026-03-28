@@ -67,7 +67,7 @@ public sealed class SelectedRuntimePlanResolver
 
         var orderedBackends = backends
             .OrderBy(x => x.CanonicalAlias, StringComparer.Ordinal)
-            .ThenBy(x => x.TypeReference.TypeFullName, StringComparer.Ordinal)
+                        .ThenBy(x => x.ComponentId.Value, StringComparer.Ordinal)
             .ToList();
 
         selectedBackendIds = backendIdSet;

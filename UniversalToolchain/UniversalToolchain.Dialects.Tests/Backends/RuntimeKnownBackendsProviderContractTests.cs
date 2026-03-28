@@ -83,8 +83,8 @@ public class RuntimeKnownBackendsProviderContractTests
         Assert.That(aliases, Is.EqualTo(new[] { "a", "z" }));
     }
 
-    private static RuntimeComponentManifestEntry Entry(RuntimeComponentKind kind, string canonical, string type, params string[] aliases)
-        => new(kind, canonical, aliases, new RuntimeTypeReference("Assembly", type));
+    private static RuntimeComponentManifestEntry Entry(RuntimeComponentKind kind, string canonical, string _, params string[] aliases)
+        => new(kind, canonical, aliases, RuntimeComponentIdFactory.Create(kind, canonical), "Assembly");
 
     private sealed class StubRegistrar(string backend) : IDialectBackendRuntimeRegistrar
     {

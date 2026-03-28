@@ -64,18 +64,28 @@ public sealed class FileBasedRuntimeComponentCatalog : IRuntimeComponentCatalog
                 entries.Add(ToRuntimeEntry(component, assemblySimpleName!, manifestPath));
         }
 
+        ValidateUniqueIds(entries);
         return entries;
     }
 
     private static RuntimeComponentManifestEntry ToRuntimeEntry(
         FileDialectRuntimeComponentEntry component,
         string assemblySimpleName,
-        string manifestPath) =>
-        Normalize(new RuntimeComponentManifestEntry(
-            RuntimeComponentKindCodec.Parse(component.Kind, manifestPath),
-            component.CanonicalAlias,
+        string manifestPath)
+    {
+        var kind = RuntimeComponentKindCodec.Parse(component.Kind, manifestPath);
+        var canonicalAlias = component.CanonicalAlias;
+        var componentId = string.IsNullOrWhiteSpace(component.ComponentId)
+            ? RuntimeComponentIdFactory.Create(kind, canonicalAlias)
+            : new RuntimeComponentId(component.ComponentId);
+
+        return Normalize(new RuntimeComponentManifestEntry(
+            kind,
+            canonicalAlias,
             component.Aliases,
-            new RuntimeTypeReference(assemblySimpleName, component.TypeFullName)));
+            componentId,
+            assemblySimpleName));
+    }
 
     private static bool TryResolve(IReadOnlyDictionary<string, RuntimeComponentManifestEntry> map, string alias, out RuntimeComponentManifestEntry? entry)
     {
@@ -89,7 +99,7 @@ public sealed class FileBasedRuntimeComponentCatalog : IRuntimeComponentCatalog
     {
         return entries
             .OrderBy(static x => x.CanonicalAlias, StringComparer.Ordinal)
-            .ThenBy(static x => x.TypeReference.TypeFullName, StringComparer.Ordinal)
+            .ThenBy(static x => x.ComponentId.Value, StringComparer.Ordinal)
             .ToList();
     }
 
@@ -102,13 +112,9 @@ public sealed class FileBasedRuntimeComponentCatalog : IRuntimeComponentCatalog
         if (string.IsNullOrWhiteSpace(canonical))
             Thrower.Argument(nameof(entry), "Canonical alias must not be empty.");
 
-        var assemblySimpleName = entry.TypeReference.AssemblySimpleName?.Trim();
+        var assemblySimpleName = entry.AssemblySimpleName?.Trim();
         if (string.IsNullOrWhiteSpace(assemblySimpleName))
-            Thrower.Argument(nameof(entry), "TypeReference.AssemblySimpleName must not be empty.");
-
-        var typeFullName = entry.TypeReference.TypeFullName?.Trim();
-        if (string.IsNullOrWhiteSpace(typeFullName))
-            Thrower.Argument(nameof(entry), "TypeReference.TypeFullName must not be empty.");
+            Thrower.Argument(nameof(entry), "AssemblySimpleName must not be empty.");
 
         var aliases = (entry.Aliases ?? [])
             .Select(static x => x?.Trim())
@@ -124,7 +130,8 @@ public sealed class FileBasedRuntimeComponentCatalog : IRuntimeComponentCatalog
         {
             CanonicalAlias = canonical,
             Aliases = aliases,
-            TypeReference = new RuntimeTypeReference(assemblySimpleName, typeFullName)
+            AssemblySimpleName = assemblySimpleName,
+            ComponentId = new RuntimeComponentId(entry.ComponentId.Value.Trim())
         };
     }
 
@@ -141,5 +148,21 @@ public sealed class FileBasedRuntimeComponentCatalog : IRuntimeComponentCatalog
         }
 
         return map;
+    }
+
+    private static void ValidateUniqueIds(IEnumerable<RuntimeComponentManifestEntry> entries)
+    {
+        var ownersById = new Dictionary<RuntimeComponentId, RuntimeComponentManifestEntry>();
+
+        foreach (var entry in entries)
+        {
+            if (ownersById.TryGetValue(entry.ComponentId, out var existing))
+            {
+                Thrower.InvalidOpEx(
+                    $"Duplicate runtime component id '{entry.ComponentId}' for aliases '{existing.CanonicalAlias}' and '{entry.CanonicalAlias}'.");
+            }
+
+            ownersById.Add(entry.ComponentId, entry);
+        }
     }
 }
