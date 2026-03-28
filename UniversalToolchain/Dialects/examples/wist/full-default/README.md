@@ -10,13 +10,13 @@ used in regular execution.
 - Modules: `Arithmetic`, `BooleanConditions`, `Comments`, `ComparisonConditions`, `Conditions`, `CSharpInterop`,
   `Equality`, `Identifier`, `Labels`, `Loops`, `Numbers`, `Scopes`, `SemicolonAsNewLine`, `Variables`, `Whitespaces`
 - Backends: `cil`, `interpreter`
-- Enabled feature flag: `LocalVariablesOptimization`
+- Enabled optimizer flags: `BooleanOptimization`, `ComparisonIntrinsicOptimization`, `LocalVariablesOptimization`
 
 ## Intentionally excluded capabilities
 
 - Native arithmetic/type stack (`NativeTypes`) and native optimizer set are intentionally not part of this default
   profile.
-- No security/capability enforcement directives beyond composition choices.
+- Declares `security trusted` and `capability unsafe-interop` to make trusted intent explicit.
 
 ## Exact CLI commands to run it
 
