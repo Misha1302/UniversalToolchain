@@ -8,7 +8,7 @@ services.AddWistInterpreterBackend();
 using var provider = services.BuildServiceProvider();
 var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
 
-var dialect = workflow.ComposeFile("./Dialects/examples/wist/full-default/dialect.wistdialect");
+var dialect = workflow.ComposeFile("./Dialects/examples/wist/full-default-native/dialect.wistdialect");
 if (!dialect.IsSuccess)
 {
     Console.WriteLine(dialect.ToDeterministicText());
