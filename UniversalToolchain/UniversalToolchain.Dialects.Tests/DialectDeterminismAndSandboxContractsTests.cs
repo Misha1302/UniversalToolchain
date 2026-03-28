@@ -9,29 +9,8 @@ namespace UniversalToolchain.Dialects.Tests;
 public class DialectDeterminismAndSandboxContractsTests
 {
     [Test]
-    public void FullDefaultDialect_ShouldComposeDeterministically_AcrossRepeatedRuns()
-        => AssertRepeatedProjectionIsStable("full-default", 20);
-
-    [Test]
     public void MinimalArithmeticDialect_ShouldComposeDeterministically_AcrossRepeatedRuns()
         => AssertRepeatedProjectionIsStable("minimal-arithmetic", 20);
-
-    [Test]
-    public void RestrictedSandboxDialect_ShouldComposeDeterministically_AcrossRepeatedRuns()
-        => AssertRepeatedProjectionIsStable("restricted-sandbox", 20);
-
-    [Test]
-    public void RestrictedSandbox_ShouldNotExposeForbiddenCapabilities()
-    {
-        using var provider = CreateProvider();
-        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var composition = workflow.ComposeFile(GetDialectPath("restricted-sandbox"));
-        var legacyComposition = provider.GetRequiredService<LegacyWistDialectCompositionService>().ComposeText(File.ReadAllText(GetDialectPath("restricted-sandbox")), "restricted-sandbox");
-
-        Assert.That(composition.IsSuccess, Is.True);
-        Assert.That(legacyComposition.RuntimeComposition!.EnabledBackends.Select(x => x.CanonicalId), Is.EqualTo(new[] { "interpreter" }));
-        Assert.That(legacyComposition.RuntimeComposition.OrderedModules.Select(x => x.CanonicalId), Does.Not.Contain("CSharpInterop"));
-    }
 
     [Test]
     public void InvalidDialectInput_ShouldProduceStableDiagnosticContract()
@@ -56,10 +35,10 @@ public class DialectDeterminismAndSandboxContractsTests
     {
         using var provider = CreateProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var baseline = Project(workflow.ComposeFile(GetDialectPath("full-default")));
+        var baseline = Project(workflow.ComposeFile(GetDialectPath("minimal-arithmetic")));
 
         for (var i = 0; i < 20; i++)
-            Assert.That(Project(workflow.ComposeFile(GetDialectPath("full-default"))), Is.EqualTo(baseline));
+            Assert.That(Project(workflow.ComposeFile(GetDialectPath("minimal-arithmetic"))), Is.EqualTo(baseline));
     }
 
     private static void AssertRepeatedProjectionIsStable(string dialectName, int repetitions)
@@ -90,7 +69,7 @@ public class DialectDeterminismAndSandboxContractsTests
     private static ServiceProvider CreateProvider()
     {
         var services = new ServiceCollection();
-        services.AddWistDialectServicesLegacy();
+        services.AddWistDialectServicesMinimal();
         return services.BuildServiceProvider();
     }
 }

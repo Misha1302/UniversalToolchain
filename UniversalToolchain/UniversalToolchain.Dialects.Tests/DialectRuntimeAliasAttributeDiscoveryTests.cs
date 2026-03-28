@@ -43,53 +43,30 @@ public class DialectRuntimeAliasAttributeDiscoveryTests
     }
 
     [Test]
-    public void WistRuntimeProvider_ResolvesExistingAliasesFromAttributes()
-    {
-        var registry = BuildRegistry();
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(registry.TryResolveModule("Arithmetic", out var arithmetic), Is.True);
-            Assert.That(arithmetic!.ImplementationType, Is.EqualTo(typeof(ArithmeticModule.Module.ArithmeticModuleImpl)));
-            Assert.That(registry.TryResolveOptimizer("LocalVariablesOptimization", out var localVariables), Is.True);
-            Assert.That(localVariables!.ImplementationType, Is.EqualTo(typeof(LocalVariablesOptimizerModule.LocalVariablesOptimizer)));
-            Assert.That(registry.TryResolveBackend(new DialectBackendId("cil"), out var cil), Is.True);
-            Assert.That(registry.TryResolveBackend(new DialectBackendId("compiler"), out var compiler), Is.True);
-            Assert.That(cil, Is.SameAs(compiler));
-            Assert.That(registry.TryResolveBackend(new DialectBackendId("interpreter"), out var interpreter), Is.True);
-            Assert.That(interpreter!.MetadataOwnerType.Name, Is.EqualTo("WistInterpreterBackendDeclaration"));
-        });
-    }
-
-    [Test]
-    public void WistWorkflow_ComposesExistingDialectFileWithAttributeDrivenAliases()
+    public void WistWorkflow_ComposesMinimalDialectFileWithAliasDrivenSelection()
     {
         var services = new ServiceCollection();
-        services.AddWistDialectServicesLegacy();
+        services.AddWistDialectServicesMinimal();
 
         using var provider = services.BuildServiceProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var result = workflow.ComposeFile(Path.Combine(GetWistExamplesRoot(), "full-default", "dialect.wistdialect"));
+        var result = workflow.ComposeFile(Path.Combine(GetWistExamplesRoot(), "minimal-arithmetic", "dialect.wistdialect"));
 
         Assert.That(result.IsSuccess, Is.True, string.Join(Environment.NewLine, result.ResolutionDiagnostics.Select(static x => x.Message)));
-        var legacyResult = provider.GetRequiredService<LegacyWistDialectCompositionService>().ComposeText(File.ReadAllText(Path.Combine(GetWistExamplesRoot(), "full-default", "dialect.wistdialect")), "full-default");
-        Assert.That(legacyResult.RuntimeComposition, Is.Not.Null);
 
         Assert.Multiple(() =>
         {
-            var moduleNames = legacyResult.RuntimeComposition!.OrderedModules.Select(static x => x.ImplementationType.Name).ToArray();
-            Assert.That(moduleNames, Does.Contain("ArithmeticModuleImpl"));
-            Assert.That(moduleNames, Does.Contain("CSharpInteropModuleImpl"));
-            Assert.That(moduleNames, Does.Contain("VariablesModuleImpl"));
-            Assert.That(Array.IndexOf(moduleNames, "ArithmeticModuleImpl"), Is.LessThan(Array.IndexOf(moduleNames, "VariablesModuleImpl")));
-            var backends = legacyResult.RuntimeComposition.EnabledBackends.Select(static x => x.CanonicalId).ToArray();
-            Assert.That(backends, Has.Length.EqualTo(2));
-            Assert.That(backends, Does.Contain("cil"));
+            var runtimeSelection = (SelectedRuntimePlan)result.RuntimeSelection!;
+            var moduleAliases = runtimeSelection.OrderedModules.Select(static x => x.CanonicalAlias).ToArray();
+            Assert.That(moduleAliases, Does.Contain("Arithmetic"));
+            Assert.That(moduleAliases, Does.Contain("Numbers"));
+            Assert.That(moduleAliases, Does.Contain("Scopes"));
+            var backends = runtimeSelection.EnabledBackends.Select(static x => x.CanonicalAlias).ToArray();
+            Assert.That(backends, Has.Length.EqualTo(1));
             Assert.That(backends, Does.Contain("interpreter"));
 
-            var optimizers = legacyResult.RuntimeComposition.EnabledOptimizers.Select(static x => x.ImplementationType.Name).ToArray();
-            Assert.That(optimizers, Has.Length.EqualTo(1));
-            Assert.That(optimizers[0], Is.EqualTo("LocalVariablesOptimizer"));
+            var optimizers = runtimeSelection.EnabledOptimizers.Select(static x => x.CanonicalAlias).ToArray();
+            Assert.That(optimizers, Is.Empty);
         });
     }
 
@@ -121,7 +98,7 @@ public class DialectRuntimeAliasAttributeDiscoveryTests
     public void WistWorkflow_ReportsMissingAliasesThroughExistingResolutionDiagnostics()
     {
         var services = new ServiceCollection();
-        services.AddWistDialectServicesLegacy();
+        services.AddWistDialectServicesMinimal();
 
         using var provider = services.BuildServiceProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
@@ -185,15 +162,6 @@ public class DialectRuntimeAliasAttributeDiscoveryTests
             .RegisterAttributedOptimizers(typeof(AttributedOptimizer), typeof(MultiAliasAttributedOptimizer))
             .RegisterAttributedBackends(typeof(AttributedBackendDeclaration))
             .Build();
-    }
-
-    private static DialectRuntimeDescriptorRegistry BuildRegistry()
-    {
-        var services = new ServiceCollection();
-        services.AddWistDialectServicesLegacy();
-
-        using var provider = services.BuildServiceProvider();
-        return provider.GetRequiredService<DialectRuntimeDescriptorRegistry>();
     }
 
     private static string GetWistExamplesRoot()

@@ -8,7 +8,7 @@ public class WistDialectMinimalRuntimeIsolationTests
 {
 
     [Test]
-    public void MinimalWorkflow_HasNoLegacyDependencies()
+    public void WistMinimalServices_DoNotRequireLegacyCompositionServices()
     {
         using var provider = CreateMinimalProvider();
 
@@ -16,7 +16,7 @@ public class WistDialectMinimalRuntimeIsolationTests
         {
             Assert.That(provider.GetService<UniversalToolchain.Dialects.Integration.DialectFrameworkCompositionWorkflow>(), Is.Null);
             Assert.That(provider.GetService<UniversalToolchain.Dialects.Integration.DialectRuntimeDescriptorRegistry>(), Is.Null);
-            Assert.That(provider.GetService<LegacyWistDialectCompositionService>(), Is.Null);
+            Assert.That(provider.GetServices<IDialectRuntimeDescriptorProvider>(), Is.Empty);
         });
     }
 

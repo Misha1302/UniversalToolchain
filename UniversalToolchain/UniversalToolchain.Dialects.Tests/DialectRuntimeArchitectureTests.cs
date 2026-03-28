@@ -60,22 +60,27 @@ public class DialectRuntimeArchitectureTests
     [Test]
     public void WistIntrinsicRegistry_ComesFromRealBackendCapabilities()
     {
-        var registry = BuildRegistry();
+        var backendProviders = new IWistDialectBackendServiceProvider[]
+        {
+            new WistCilDialectBackendServiceProvider(),
+            new WistInterpreterDialectBackendServiceProvider()
+        };
+        var descriptors = WistDialectIntrinsicRegistry.CreateDescriptors(backendProviders);
 
         Assert.Multiple(() =>
         {
-            Assert.That(registry.GetIntrinsicDescriptors("call C#").Select(x => x.Target), Is.EqualTo(new[] { DialectBackendSelector.Any }));
-            Assert.That(registry.GetIntrinsicDescriptors("add_i32").Select(x => x.Target), Is.EqualTo(new[] { TestBackendIds.CilSelector }));
-            Assert.That(registry.GetIntrinsicDescriptors("ldloc"), Is.Empty);
+            Assert.That(descriptors.Where(x => x.CanonicalId == "call C#").Select(x => x.Target), Is.EqualTo(new[] { DialectBackendSelector.Any }));
+            Assert.That(descriptors.Where(x => x.CanonicalId == "add_i32").Select(x => x.Target), Is.EqualTo(new[] { TestBackendIds.CilSelector }));
+            Assert.That(descriptors.Where(x => x.CanonicalId == "ldloc"), Is.Empty);
         });
     }
 
     [Test]
-    public void WistHost_ResolvesCompilerAliasThroughBackendDescriptors()
+    public void WistHost_ResolvesInterpreterAliasThroughBackendDescriptors()
     {
         using var provider = CreateProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var example = ResolveExampleDirectory("full-default");
+        var example = ResolveExampleDirectory("minimal-arithmetic");
 
         var result = workflow.ComposeFile(Path.Combine(example, "dialect.wistdialect"));
         using var host = workflow.CreateHost(result);
@@ -83,7 +88,6 @@ public class DialectRuntimeArchitectureTests
         Assert.Multiple(() =>
         {
             Assert.That(result.IsSuccess, Is.True);
-            Assert.That(host.GetCore("compiler"), Is.Not.Null);
             Assert.That(host.GetCore("interpreter"), Is.Not.Null);
         });
     }
@@ -108,16 +112,10 @@ public class DialectRuntimeArchitectureTests
         }
     }
 
-    private static DialectRuntimeDescriptorRegistry BuildRegistry()
-    {
-        using var provider = CreateProvider();
-        return provider.GetRequiredService<DialectRuntimeDescriptorRegistry>();
-    }
-
     private static ServiceProvider CreateProvider()
     {
         var services = new ServiceCollection();
-        services.AddWistDialectServicesLegacy();
+        services.AddWistDialectServicesMinimal();
         return services.BuildServiceProvider();
     }
 

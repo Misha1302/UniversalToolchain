@@ -154,17 +154,18 @@ public class WistDialectBackendHardcodeTests
     private static ServiceProvider CreateRootProvider()
     {
         var services = new ServiceCollection();
-        services.AddWistDialectServicesLegacy();
+        services.AddWistDialectServicesMinimal();
         return services.BuildServiceProvider();
     }
 
     private static WistDialectExecutionConfiguration CreateConfiguration(ServiceProvider provider, DialectBackendId backendId)
     {
-        var registry = provider.GetRequiredService<DialectRuntimeDescriptorRegistry>();
-        if (!registry.TryResolveBackend(backendId, out var backendDescriptor))
+        var knownBackends = provider.GetRequiredService<IWistKnownBackendsProvider>().GetKnownBackends();
+        var backendDescriptor = knownBackends.SingleOrDefault(x => x.BackendId == backendId);
+        if (backendDescriptor == null)
             Thrower.InvalidOpEx($"Backend '{backendId.Value}' was not registered.");
 
-        return CreateConfiguration(backendDescriptor!);
+        return CreateConfiguration(backendDescriptor);
     }
 
     private static WistDialectExecutionConfiguration CreateConfiguration(params RuntimeBackendDescriptor[] backendDescriptors)

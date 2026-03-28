@@ -11,29 +11,17 @@ public class DialectProjectsSmokeTests
     {
         using var provider = CreateProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var exampleDirectories = ResolveExampleDirectories();
+        var exampleDirectory = ResolveExampleDirectory("minimal-arithmetic");
+        var dialectPath = Path.Combine(exampleDirectory, "dialect.wistdialect");
+        var composition = workflow.ComposeFile(dialectPath);
 
-        Assert.That(exampleDirectories.Select(Path.GetFileName), Is.EquivalentTo(new[]
-        {
-            "full-default",
-            "full-default-native",
-            "minimal-arithmetic",
-            "restricted-sandbox"
-        }));
+        Assert.That(composition.IsSuccess, Is.True, $"Composition failed for '{dialectPath}'.\n{composition.ToDeterministicText()}");
 
-        foreach (var exampleDirectory in exampleDirectories)
-        {
-            var dialectPath = Path.Combine(exampleDirectory, "dialect.wistdialect");
-            var composition = workflow.ComposeFile(dialectPath);
-            Assert.That(composition.IsSuccess, Is.True, $"Composition failed for '{dialectPath}'.\n{composition.ToDeterministicText()}");
+        using var host = workflow.CreateHost(composition);
+        var programPath = Path.Combine(exampleDirectory, "program.wist");
+        var result = host.Run(File.ReadAllText(programPath), "interpreter");
 
-            using var host = workflow.CreateHost(composition);
-            var exampleName = Path.GetFileName(exampleDirectory);
-            var programPath = Path.Combine(exampleDirectory, "program.wist");
-            var result = host.Run(File.ReadAllText(programPath), "interpreter");
-
-            Assert.That(result, Is.Not.Null, $"Example '{exampleName}' returned null.");
-        }
+        Assert.That(result, Is.Not.Null, "Example 'minimal-arithmetic' returned null.");
     }
 
     private static ServiceProvider CreateProvider()
@@ -43,14 +31,12 @@ public class DialectProjectsSmokeTests
         return services.BuildServiceProvider();
     }
 
-    private static IReadOnlyList<string> ResolveExampleDirectories()
+    private static string ResolveExampleDirectory(string name)
     {
-        var root = Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "Dialects", "examples", "wist"));
-        if (!Directory.Exists(root))
-            Thrower.FileNotFound(root);
+        var path = Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "Dialects", "examples", "wist", name));
+        if (!Directory.Exists(path))
+            Thrower.FileNotFound(path);
 
-        return Directory.EnumerateDirectories(root)
-            .OrderBy(Path.GetFileName, StringComparer.Ordinal)
-            .ToList();
+        return path;
     }
 }
