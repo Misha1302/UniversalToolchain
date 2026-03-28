@@ -5,7 +5,7 @@ internal static class ParameterTestHost
     public static IServiceProvider CreateProvider()
     {
         var services = new ServiceCollection();
-        services.AddWistServices(options => options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native);
+        services.AddWistServices(options => options.ArithmeticMode = ArithmeticMode.Native);
         return services.BuildServiceProvider();
     }
 

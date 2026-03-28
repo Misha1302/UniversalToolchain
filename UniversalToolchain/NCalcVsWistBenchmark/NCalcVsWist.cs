@@ -14,7 +14,7 @@ public class NCalcVsWist
     {
         // Инициализация DI для Wist выполняется один раз
         var services = new ServiceCollection().AddWistServices(
-            options => options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native,
+            options => options.ArithmeticMode = ArithmeticMode.Native,
             GlobalPath.PathToDlls
         );
         var provider = services.BuildServiceProvider();
@@ -55,7 +55,7 @@ public class SimpleAdditionBenchmark
         // Wist
         var services = new ServiceCollection();
         services.AddWistServices(
-            options => options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native,
+            options => options.ArithmeticMode = ArithmeticMode.Native,
             GlobalPath.PathToDlls);
         var provider = services.BuildServiceProvider();
         var core = provider.GetRequiredService<IExecutableGiver<DynamicMethod>>();
@@ -99,7 +99,7 @@ public class ComplexArithmeticBenchmark
         // Wist
         var services = new ServiceCollection();
         services.AddWistServices(
-            options => options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native,
+            options => options.ArithmeticMode = ArithmeticMode.Native,
             GlobalPath.PathToDlls);
         var provider = services.BuildServiceProvider();
         var core = provider.GetRequiredService<IExecutableGiver<DynamicMethod>>();
@@ -145,7 +145,7 @@ public class DoubleAdditionBenchmark
     {
         var services = new ServiceCollection();
         services.AddWistServices(
-            options => options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native,
+            options => options.ArithmeticMode = ArithmeticMode.Native,
             GlobalPath.PathToDlls);
         var provider = services.BuildServiceProvider();
         var core = provider.GetRequiredService<IExecutableGiver<DynamicMethod>>();
@@ -189,7 +189,7 @@ public class ComplexDoubleExpressionBenchmark
     {
         var services = new ServiceCollection();
         services.AddWistServices(
-            options => options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native,
+            options => options.ArithmeticMode = ArithmeticMode.Native,
             GlobalPath.PathToDlls);
         var provider = services.BuildServiceProvider();
         var core = provider.GetRequiredService<IExecutableGiver<DynamicMethod>>();
@@ -239,7 +239,7 @@ public class DecimalAdditionBenchmark
     {
         var services = new ServiceCollection();
         services.AddWistServices(
-            options => options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native,
+            options => options.ArithmeticMode = ArithmeticMode.Native,
             GlobalPath.PathToDlls);
         var provider = services.BuildServiceProvider();
         var core = provider.GetRequiredService<IExecutableGiver<DynamicMethod>>();
@@ -319,7 +319,7 @@ public class MathFunctionsBenchmark
     {
         var services = new ServiceCollection();
         services.AddWistServices(
-            options => options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native,
+            options => options.ArithmeticMode = ArithmeticMode.Native,
             GlobalPath.PathToDlls);
         var provider = services.BuildServiceProvider();
         var core = provider.GetRequiredService<IExecutableGiver<DynamicMethod>>();
@@ -367,7 +367,7 @@ public class SimpleConditionalBenchmark
     {
         var services = new ServiceCollection();
         services.AddWistServices(
-            options => options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native,
+            options => options.ArithmeticMode = ArithmeticMode.Native,
             GlobalPath.PathToDlls);
         var provider = services.BuildServiceProvider();
         var core = provider.GetRequiredService<IExecutableGiver<DynamicMethod>>();
@@ -412,7 +412,7 @@ public class ComplexConditionalBenchmark
     {
         var services = new ServiceCollection();
         services.AddWistServices(
-            options => options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native,
+            options => options.ArithmeticMode = ArithmeticMode.Native,
             GlobalPath.PathToDlls);
         var provider = services.BuildServiceProvider();
         var core = provider.GetRequiredService<IExecutableGiver<DynamicMethod>>();
@@ -469,7 +469,7 @@ public class MultipleIntegerVariablesBenchmark
     {
         var services = new ServiceCollection();
         services.AddWistServices(
-            options => options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native,
+            options => options.ArithmeticMode = ArithmeticMode.Native,
             GlobalPath.PathToDlls);
         var provider = services.BuildServiceProvider();
         var core = provider.GetRequiredService<IExecutableGiver<DynamicMethod>>();
@@ -521,7 +521,7 @@ public class BooleanLogicBenchmark
     {
         var services = new ServiceCollection();
         services.AddWistServices(
-            options => options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native,
+            options => options.ArithmeticMode = ArithmeticMode.Native,
             GlobalPath.PathToDlls);
         var provider = services.BuildServiceProvider();
         var core = provider.GetRequiredService<IExecutableGiver<DynamicMethod>>();
@@ -571,7 +571,7 @@ public class ComplexBooleanBenchmark
     {
         var services = new ServiceCollection();
         services.AddWistServices(
-            options => options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native,
+            options => options.ArithmeticMode = ArithmeticMode.Native,
             GlobalPath.PathToDlls);
         var provider = services.BuildServiceProvider();
         var core = provider.GetRequiredService<IExecutableGiver<DynamicMethod>>();
@@ -624,7 +624,7 @@ public class TaxCalculationBenchmark
     {
         var services = new ServiceCollection();
         services.AddWistServices(
-            options => options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native,
+            options => options.ArithmeticMode = ArithmeticMode.Native,
             GlobalPath.PathToDlls);
         var provider = services.BuildServiceProvider();
         var core = provider.GetRequiredService<IExecutableGiver<DynamicMethod>>();
@@ -677,7 +677,7 @@ public class CompoundInterestBenchmark
     {
         var services = new ServiceCollection();
         services.AddWistServices(
-            options => options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native,
+            options => options.ArithmeticMode = ArithmeticMode.Native,
             GlobalPath.PathToDlls);
         var provider = services.BuildServiceProvider();
         var core = provider.GetRequiredService<IExecutableGiver<DynamicMethod>>();
@@ -731,7 +731,7 @@ public class LargeExpressionBenchmark
     {
         var services = new ServiceCollection();
         services.AddWistServices(
-            options => options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native,
+            options => options.ArithmeticMode = ArithmeticMode.Native,
             GlobalPath.PathToDlls);
         var provider = services.BuildServiceProvider();
         var core = provider.GetRequiredService<IExecutableGiver<DynamicMethod>>();

@@ -1,6 +1,7 @@
 namespace NativeMathModule;
 
 [AutoRegisterService]
+[ArithmeticModeCompatibility(ArithmeticMode.Native)]
 public class NativeNumberAstVisitor : IAstVisitor
 {
     public void TryVisit(BytecodeVisitorData data)

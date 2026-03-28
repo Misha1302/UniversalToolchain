@@ -185,10 +185,7 @@ public static class ServiceCollectionExtensions
             }
         }
 
-        // Process arithmetic modules according to option-provided namespace filters.
-        if (options.ArithmeticModeNamespaceExclusions.TryGetValue(options.ArithmeticMode, out var namespacesToRemove))
-            foreach (var namespaceToRemove in namespacesToRemove)
-                services.RemoveAllByNamespace(namespaceToRemove);
+        ApplyArithmeticModePolicy(services, options.ArithmeticMode);
 
         // Remove modules explicitly marked for removal.
         if (options.ModulesToRemove?.Any() == true)
@@ -201,6 +198,27 @@ public static class ServiceCollectionExtensions
                 foreach (var module in moduleTypes)
                     services.Remove(module);
             }
+    }
+
+    private static void ApplyArithmeticModePolicy(
+        IServiceCollection services,
+        ArithmeticMode mode)
+    {
+        var descriptors = services
+            .Where(static x => x.ImplementationType != null)
+            .ToList();
+
+        foreach (var descriptor in descriptors)
+        {
+            var implementationType = descriptor.ImplementationType!;
+            var policy = implementationType.GetCustomAttribute<ArithmeticModeCompatibilityAttribute>();
+
+            if (policy == null)
+                continue;
+
+            if (!policy.Supports(mode))
+                services.Remove(descriptor);
+        }
     }
 
 
@@ -276,65 +294,4 @@ public static class ServiceCollectionExtensions
     }
 
     private sealed record CoreFactory(Type CompilationType, Func<IServiceProvider, ICoreRunnable> Factory);
-}
-
-/// <summary>
-///     Options for Wist configuration.
-/// </summary>
-public class WistOptions
-{
-    private static readonly IReadOnlyDictionary<ArithmeticModeEnum, IReadOnlyList<string>> DefaultArithmeticModeNamespaceExclusions
-        = new Dictionary<ArithmeticModeEnum, IReadOnlyList<string>>
-        {
-            [ArithmeticModeEnum.None] = ["ArithmeticModule", "NativeMathModule", "NumbersModule"],
-            [ArithmeticModeEnum.Universal] = ["NativeMathModule"],
-            [ArithmeticModeEnum.Native] = ["NumbersModule", "ArithmeticModule"]
-        };
-
-    /// <summary>
-    ///     Arithmetic module mode.
-    /// </summary>
-    public enum ArithmeticModeEnum
-    {
-        /// <summary>
-        ///     Do not use arithmetic modules.
-        /// </summary>
-        None,
-
-        /// <summary>
-        ///     Use universal arithmetic (ICustomNumber).
-        /// </summary>
-        Universal,
-
-        /// <summary>
-        ///     Use native arithmetic (INumber&lt;T&gt;).
-        /// </summary>
-        Native
-    }
-
-    /// <summary>
-    ///     Selected arithmetic mode.
-    /// </summary>
-    public ArithmeticModeEnum ArithmeticMode { get; set; } = ArithmeticModeEnum.Universal;
-
-    /// <summary>
-    ///     Namespace filters removed for each arithmetic mode.
-    /// </summary>
-    public IReadOnlyDictionary<ArithmeticModeEnum, IReadOnlyList<string>> ArithmeticModeNamespaceExclusions { get; set; }
-        = DefaultArithmeticModeNamespaceExclusions;
-
-    /// <summary>
-    ///     Namespaces that should be excluded from automatic registration.
-    /// </summary>
-    public IReadOnlyList<string>? ExcludedNamespaces { get; set; }
-
-    /// <summary>
-    ///     Namespaces that should be included (all others will be excluded).
-    /// </summary>
-    public IReadOnlyList<string>? IncludedNamespaces { get; set; }
-
-    /// <summary>
-    ///     Concrete module types that should be removed.
-    /// </summary>
-    public IReadOnlyList<Type>? ModulesToRemove { get; set; }
 }

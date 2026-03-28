@@ -6,7 +6,7 @@ public class FunctionOverloadingTests : TestBase
     [SetUp]
     public void Setup()
     {
-        SetArithmeticMode(WistOptions.ArithmeticModeEnum.Universal);
+        SetArithmeticMode(ArithmeticMode.Universal);
     }
 
     [Test]

@@ -36,44 +36,85 @@ public class DeterministicCompositionAndDiscoveryTests
     [Test]
     public void ArithmeticModeFiltering_ShouldBeDeterministic_ForRelevantModuleRegistrations()
     {
-        var universal = DescribeFrontendModules(options => options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Universal);
-        var native = DescribeFrontendModules(options => options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native);
+        var universal = DescribeFrontendModules(options => options.ArithmeticMode = ArithmeticMode.Universal);
+        var native = DescribeFrontendModules(options => options.ArithmeticMode = ArithmeticMode.Native);
 
         Assert.That(universal, Is.Not.EqualTo(native));
-        Assert.That(DescribeFrontendModules(options => options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Universal), Is.EqualTo(universal));
-        Assert.That(DescribeFrontendModules(options => options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native), Is.EqualTo(native));
+        Assert.That(DescribeFrontendModules(options => options.ArithmeticMode = ArithmeticMode.Universal), Is.EqualTo(universal));
+        Assert.That(DescribeFrontendModules(options => options.ArithmeticMode = ArithmeticMode.Native), Is.EqualTo(native));
     }
 
     [Test]
-    public void ArithmeticModeFiltering_ShouldUseConfigurableNamespaceCatalog()
+    public void ArithmeticModeFiltering_ShouldUseTypeMetadata_NotNamespaceNames()
     {
-        var baselineUniversal = DescribeFrontendModules(options =>
-        {
-            options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Universal;
-        });
+        var services = new ServiceCollection();
+        services.AddSingleton<IMetadataTestService, StrangeNamespaceNativeService>();
+        services.AddSingleton<IMetadataTestService, StrangeNamespaceUniversalService>();
 
-        var overriddenUniversal = DescribeFrontendModules(options =>
-        {
-            options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Universal;
-            options.ArithmeticModeNamespaceExclusions = new Dictionary<WistOptions.ArithmeticModeEnum, IReadOnlyList<string>>
-            {
-                [WistOptions.ArithmeticModeEnum.Universal] = [],
-                [WistOptions.ArithmeticModeEnum.Native] = ["NumbersModule", "ArithmeticModule"],
-                [WistOptions.ArithmeticModeEnum.None] = ["ArithmeticModule", "NativeMathModule", "NumbersModule"]
-            };
-        });
+        ApplyArithmeticModePolicy(services, ArithmeticMode.Universal);
+        Assert.That(DescribeMetadataServices(services), Is.EqualTo(new[] { typeof(StrangeNamespaceUniversalService).FullName! }));
 
-        Assert.That(overriddenUniversal.Length, Is.GreaterThan(baselineUniversal.Length));
-        Assert.That(DescribeFrontendModules(options =>
+        var nativeServices = new ServiceCollection();
+        nativeServices.AddSingleton<IMetadataTestService, StrangeNamespaceNativeService>();
+        nativeServices.AddSingleton<IMetadataTestService, StrangeNamespaceUniversalService>();
+
+        ApplyArithmeticModePolicy(nativeServices, ArithmeticMode.Native);
+        Assert.That(DescribeMetadataServices(nativeServices), Is.EqualTo(new[] { typeof(StrangeNamespaceNativeService).FullName! }));
+    }
+
+    [Test]
+    public void ArithmeticModeFiltering_ShouldNotRequireCentralModuleCatalog()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<IMetadataTestService, CatalogIndependentUniversalService>();
+
+        ApplyArithmeticModePolicy(services, ArithmeticMode.Universal);
+        Assert.That(DescribeMetadataServices(services), Is.EqualTo(new[] { typeof(CatalogIndependentUniversalService).FullName! }));
+
+        var nativeServices = new ServiceCollection();
+        nativeServices.AddSingleton<IMetadataTestService, CatalogIndependentUniversalService>();
+
+        ApplyArithmeticModePolicy(nativeServices, ArithmeticMode.Native);
+        Assert.That(DescribeMetadataServices(nativeServices), Is.Empty);
+    }
+
+    [Test]
+    public void ArithmeticModeFiltering_ShouldPreserveDeterminism()
+    {
+        var universalBaseline = DescribeMetadataPolicyProjection(ArithmeticMode.Universal);
+        var nativeBaseline = DescribeMetadataPolicyProjection(ArithmeticMode.Native);
+
+        Assert.That(universalBaseline, Is.Not.EqualTo(nativeBaseline));
+
+        for (var i = 0; i < 15; i++)
         {
-            options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Universal;
-            options.ArithmeticModeNamespaceExclusions = new Dictionary<WistOptions.ArithmeticModeEnum, IReadOnlyList<string>>
+            Assert.That(DescribeMetadataPolicyProjection(ArithmeticMode.Universal), Is.EqualTo(universalBaseline));
+            Assert.That(DescribeMetadataPolicyProjection(ArithmeticMode.Native), Is.EqualTo(nativeBaseline));
+        }
+    }
+
+    [Test]
+    public void ArithmeticModeFiltering_ShouldNotDependOnNamespaceRenaming()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<IMetadataTestService, NamespaceOneUniversalService>();
+        services.AddSingleton<IMetadataTestService, NamespaceTwoUniversalService>();
+
+        ApplyArithmeticModePolicy(services, ArithmeticMode.Universal);
+        Assert.That(
+            DescribeMetadataServices(services),
+            Is.EqualTo(new[]
             {
-                [WistOptions.ArithmeticModeEnum.Universal] = [],
-                [WistOptions.ArithmeticModeEnum.Native] = ["NumbersModule", "ArithmeticModule"],
-                [WistOptions.ArithmeticModeEnum.None] = ["ArithmeticModule", "NativeMathModule", "NumbersModule"]
-            };
-        }), Is.EqualTo(overriddenUniversal));
+                typeof(NamespaceOneUniversalService).FullName!,
+                typeof(NamespaceTwoUniversalService).FullName!
+            }));
+
+        var nativeServices = new ServiceCollection();
+        nativeServices.AddSingleton<IMetadataTestService, NamespaceOneUniversalService>();
+        nativeServices.AddSingleton<IMetadataTestService, NamespaceTwoUniversalService>();
+
+        ApplyArithmeticModePolicy(nativeServices, ArithmeticMode.Native);
+        Assert.That(DescribeMetadataServices(nativeServices), Is.Empty);
     }
 
     private static ServiceCollection CreateServices(Action<WistOptions>? configure = null)
@@ -117,4 +158,51 @@ public class DeterministicCompositionAndDiscoveryTests
             .Select(x => x.GetType().FullName ?? x.GetType().Name)
             .ToArray();
     }
+
+    private static void ApplyArithmeticModePolicy(ServiceCollection services, ArithmeticMode mode)
+    {
+        var method = typeof(ServiceCollectionExtensions).GetMethod(
+            "ApplyArithmeticModePolicy",
+            BindingFlags.NonPublic | BindingFlags.Static);
+
+        Assert.That(method, Is.Not.Null);
+        method!.Invoke(null, new object?[] { services, mode });
+    }
+
+    private static string[] DescribeMetadataPolicyProjection(ArithmeticMode mode)
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<IMetadataTestService, StrangeNamespaceNativeService>();
+        services.AddSingleton<IMetadataTestService, StrangeNamespaceUniversalService>();
+        services.AddSingleton<IMetadataTestService, NamespaceOneUniversalService>();
+        services.AddSingleton<IMetadataTestService, NamespaceTwoUniversalService>();
+        ApplyArithmeticModePolicy(services, mode);
+        return DescribeMetadataServices(services);
+    }
+
+    private static string[] DescribeMetadataServices(ServiceCollection services)
+    {
+        return services
+            .Where(static d => d.ServiceType == typeof(IMetadataTestService))
+            .Select(static d => d.ImplementationType!.FullName!)
+            .OrderBy(static x => x, StringComparer.Ordinal)
+            .ToArray();
+    }
+
+    private interface IMetadataTestService;
+
+    [ArithmeticModeCompatibility(ArithmeticMode.Native)]
+    private sealed class StrangeNamespaceNativeService : IMetadataTestService;
+
+    [ArithmeticModeCompatibility(ArithmeticMode.Universal)]
+    private sealed class StrangeNamespaceUniversalService : IMetadataTestService;
+
+    [ArithmeticModeCompatibility(ArithmeticMode.Universal)]
+    private sealed class CatalogIndependentUniversalService : IMetadataTestService;
+
+    [ArithmeticModeCompatibility(ArithmeticMode.Universal)]
+    private sealed class NamespaceOneUniversalService : IMetadataTestService;
+
+    [ArithmeticModeCompatibility(ArithmeticMode.Universal)]
+    private sealed class NamespaceTwoUniversalService : IMetadataTestService;
 }

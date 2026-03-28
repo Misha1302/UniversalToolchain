@@ -78,3 +78,4 @@ global using Tests.Infrastructure;
 global using UniversalIntermediateRepresentation;
 global using VariablesModule;
 global using WhitespacesModule;
+global using UniversalToolchain.Dialects.Abstractions;

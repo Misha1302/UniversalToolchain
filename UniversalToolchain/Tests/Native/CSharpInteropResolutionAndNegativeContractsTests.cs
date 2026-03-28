@@ -9,7 +9,7 @@ public class CSharpInteropResolutionAndNegativeContractsTests : TestBase
     [SetUp]
     public void SetUpMode()
     {
-        SetArithmeticMode(WistOptions.ArithmeticModeEnum.Native);
+        SetArithmeticMode(ArithmeticMode.Native);
     }
 
     [Test]

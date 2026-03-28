@@ -6,7 +6,7 @@ public class NativeArithmeticOptimizationIntegrationTests
     public void NativePipeline_ShouldOptimizeStraightLineArithmeticAndKeepExecutionCorrect()
     {
         var services = new ServiceCollection();
-        services.AddWistServices(options => options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native);
+        services.AddWistServices(options => options.ArithmeticMode = ArithmeticMode.Native);
         using var provider = services.BuildServiceProvider();
 
         var methodGiver = provider.GetRequiredService<IExecutableGiver<DynamicMethod>>();

@@ -206,8 +206,8 @@ IServiceProvider BuildDefaultServiceProvider(CommonOptions options)
 
     services.AddWistServices(wistOptions =>
         wistOptions.ArithmeticMode = options.UseNativeMath
-            ? WistOptions.ArithmeticModeEnum.Native
-            : WistOptions.ArithmeticModeEnum.Universal);
+            ? ArithmeticMode.Native
+            : ArithmeticMode.Universal);
 
     var frontendModules = services
         .Where(x => x.ServiceType == typeof(IFrontendCoreModule))
