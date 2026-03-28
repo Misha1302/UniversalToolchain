@@ -185,24 +185,10 @@ public static class ServiceCollectionExtensions
             }
         }
 
-        // Process arithmetic modules according to options.
-        switch (options.ArithmeticMode)
-        {
-            case WistOptions.ArithmeticModeEnum.None:
-                services.RemoveAllByNamespace("ArithmeticModule");
-                services.RemoveAllByNamespace("NativeMathModule");
-                services.RemoveAllByNamespace("NumbersModule");
-                break;
-
-            case WistOptions.ArithmeticModeEnum.Universal:
-                services.RemoveAllByNamespace("NativeMathModule");
-                break;
-
-            case WistOptions.ArithmeticModeEnum.Native:
-                services.RemoveAllByNamespace("NumbersModule");
-                services.RemoveAllByNamespace("ArithmeticModule");
-                break;
-        }
+        // Process arithmetic modules according to option-provided namespace filters.
+        if (options.ArithmeticModeNamespaceExclusions.TryGetValue(options.ArithmeticMode, out var namespacesToRemove))
+            foreach (var namespaceToRemove in namespacesToRemove)
+                services.RemoveAllByNamespace(namespaceToRemove);
 
         // Remove modules explicitly marked for removal.
         if (options.ModulesToRemove?.Any() == true)
@@ -297,6 +283,14 @@ public static class ServiceCollectionExtensions
 /// </summary>
 public class WistOptions
 {
+    private static readonly IReadOnlyDictionary<ArithmeticModeEnum, IReadOnlyList<string>> DefaultArithmeticModeNamespaceExclusions
+        = new Dictionary<ArithmeticModeEnum, IReadOnlyList<string>>
+        {
+            [ArithmeticModeEnum.None] = ["ArithmeticModule", "NativeMathModule", "NumbersModule"],
+            [ArithmeticModeEnum.Universal] = ["NativeMathModule"],
+            [ArithmeticModeEnum.Native] = ["NumbersModule", "ArithmeticModule"]
+        };
+
     /// <summary>
     ///     Arithmetic module mode.
     /// </summary>
@@ -322,6 +316,12 @@ public class WistOptions
     ///     Selected arithmetic mode.
     /// </summary>
     public ArithmeticModeEnum ArithmeticMode { get; set; } = ArithmeticModeEnum.Universal;
+
+    /// <summary>
+    ///     Namespace filters removed for each arithmetic mode.
+    /// </summary>
+    public IReadOnlyDictionary<ArithmeticModeEnum, IReadOnlyList<string>> ArithmeticModeNamespaceExclusions { get; set; }
+        = DefaultArithmeticModeNamespaceExclusions;
 
     /// <summary>
     ///     Namespaces that should be excluded from automatic registration.

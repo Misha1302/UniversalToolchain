@@ -44,6 +44,38 @@ public class DeterministicCompositionAndDiscoveryTests
         Assert.That(DescribeFrontendModules(options => options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Native), Is.EqualTo(native));
     }
 
+    [Test]
+    public void ArithmeticModeFiltering_ShouldUseConfigurableNamespaceCatalog()
+    {
+        var baselineUniversal = DescribeFrontendModules(options =>
+        {
+            options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Universal;
+        });
+
+        var overriddenUniversal = DescribeFrontendModules(options =>
+        {
+            options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Universal;
+            options.ArithmeticModeNamespaceExclusions = new Dictionary<WistOptions.ArithmeticModeEnum, IReadOnlyList<string>>
+            {
+                [WistOptions.ArithmeticModeEnum.Universal] = [],
+                [WistOptions.ArithmeticModeEnum.Native] = ["NumbersModule", "ArithmeticModule"],
+                [WistOptions.ArithmeticModeEnum.None] = ["ArithmeticModule", "NativeMathModule", "NumbersModule"]
+            };
+        });
+
+        Assert.That(overriddenUniversal.Length, Is.GreaterThan(baselineUniversal.Length));
+        Assert.That(DescribeFrontendModules(options =>
+        {
+            options.ArithmeticMode = WistOptions.ArithmeticModeEnum.Universal;
+            options.ArithmeticModeNamespaceExclusions = new Dictionary<WistOptions.ArithmeticModeEnum, IReadOnlyList<string>>
+            {
+                [WistOptions.ArithmeticModeEnum.Universal] = [],
+                [WistOptions.ArithmeticModeEnum.Native] = ["NumbersModule", "ArithmeticModule"],
+                [WistOptions.ArithmeticModeEnum.None] = ["ArithmeticModule", "NativeMathModule", "NumbersModule"]
+            };
+        }), Is.EqualTo(overriddenUniversal));
+    }
+
     private static ServiceCollection CreateServices(Action<WistOptions>? configure = null)
     {
         var services = new ServiceCollection();
