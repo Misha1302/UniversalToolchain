@@ -1,8 +1,8 @@
 using BasicCore.Contracts;
-using DependencyInjection;
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
+using UniversalToolchain.Dialects.Core.ServiceCollection;
 using ServiceLifetime = Microsoft.Extensions.DependencyInjection.ServiceLifetime;
 using UniversalToolchain.Dialects.Integration;
 
@@ -26,7 +26,7 @@ public sealed class WistDialectServiceProviderFactory
             Thrower.ArgumentNull(nameof(configuration));
 
         var services = new ServiceCollection();
-        services.AddWistCoreServices();
+        services.AddCoreRuntimeInfrastructure();
 
         RegisterModules(services, configuration.FrontendModules, typeof(IFrontendCoreModule), ServiceLifetime.Singleton);
         RegisterModules(services, configuration.IrModules, typeof(IIRProcessingModule), ServiceLifetime.Transient);

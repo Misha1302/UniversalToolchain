@@ -64,14 +64,18 @@ public class WistDialectMinimalRuntimeParityTests
     private static ServiceProvider CreateMinimalProvider()
     {
         var services = new ServiceCollection();
-        services.AddWistDialectServicesMinimal();
+        services.AddWistDialectServices();
+        services.AddWistCilBackend();
+        services.AddWistInterpreterBackend();
         return services.BuildServiceProvider();
     }
 
     private static ServiceProvider CreateLegacyProvider()
     {
         var services = new ServiceCollection();
-        services.AddWistDialectServicesLegacy();
+        services.AddWistDialectServices();
+        services.AddWistCilBackend();
+        services.AddWistInterpreterBackend();
         return services.BuildServiceProvider();
     }
 

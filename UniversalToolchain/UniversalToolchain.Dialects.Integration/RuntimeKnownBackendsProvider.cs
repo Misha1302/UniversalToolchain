@@ -52,7 +52,10 @@ public sealed class RuntimeKnownBackendsProvider : IRuntimeKnownBackendsProvider
                 .OrderBy(static x => x, StringComparer.Ordinal)
                 .ToArray();
 
-            descriptors.Add(new RuntimeBackendDescriptor(new DialectBackendId(entry.CanonicalAlias), aliases));
+            descriptors.Add(new RuntimeBackendDescriptor(
+                new DialectBackendId(entry.CanonicalAlias),
+                typeof(RuntimeComponentManifestEntry),
+                aliases));
         }
 
         return descriptors

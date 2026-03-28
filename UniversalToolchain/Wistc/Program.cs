@@ -305,6 +305,8 @@ ServiceProvider CreateDialectWorkflowProvider()
 {
     var services = new ServiceCollection();
     services.AddWistDialectServices();
+        services.AddWistCilBackend();
+        services.AddWistInterpreterBackend();
     return services.BuildServiceProvider();
 }
 

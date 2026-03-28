@@ -7,7 +7,7 @@ public class RuntimeComponentTypeLoaderTests
     [Test]
     public void TypeLoader_LoadsOnlyRequestedAssembly()
     {
-        var loader = new DefaultRuntimeComponentTypeLoader(new DefaultRuntimeAssemblyLocator(new RuntimeArtifactLocatorOptions()));
+        var loader = new DefaultRuntimeComponentTypeLoader(new DefaultRuntimeAssemblyLoadStrategy(new DefaultRuntimeAssemblyLocator(new RuntimeArtifactLocatorOptions())));
         var entry = Entry("ArithmeticModule", "ArithmeticModule.Module.ArithmeticModuleImpl");
 
         var type = loader.LoadType(entry);
@@ -22,7 +22,7 @@ public class RuntimeComponentTypeLoaderTests
     [Test]
     public void TypeLoader_RepeatedLoad_UsesCache()
     {
-        var loader = new DefaultRuntimeComponentTypeLoader(new DefaultRuntimeAssemblyLocator(new RuntimeArtifactLocatorOptions()));
+        var loader = new DefaultRuntimeComponentTypeLoader(new DefaultRuntimeAssemblyLoadStrategy(new DefaultRuntimeAssemblyLocator(new RuntimeArtifactLocatorOptions())));
         var entry = Entry("ArithmeticModule", "ArithmeticModule.Module.ArithmeticModuleImpl");
 
         var first = loader.LoadType(entry);
@@ -38,7 +38,7 @@ public class RuntimeComponentTypeLoaderTests
     {
         _ = typeof(ArithmeticModule.Module.ArithmeticModuleImpl).Assembly;
         var locator = new CountingLocator(false, null);
-        var loader = new DefaultRuntimeComponentTypeLoader(locator);
+        var loader = new DefaultRuntimeComponentTypeLoader(new DefaultRuntimeAssemblyLoadStrategy(locator));
 
         var type = loader.LoadType(Entry("ArithmeticModule", "ArithmeticModule.Module.ArithmeticModuleImpl"));
 
@@ -54,7 +54,7 @@ public class RuntimeComponentTypeLoaderTests
     {
         var badAssembly = "DefinitelyMissing.Assembly.For.Loader.Test";
         var locator = new CountingLocator(true, Path.Combine(AppContext.BaseDirectory, "ArithmeticModule.dll"));
-        var loader = new DefaultRuntimeComponentTypeLoader(locator);
+        var loader = new DefaultRuntimeComponentTypeLoader(new DefaultRuntimeAssemblyLoadStrategy(locator));
 
         var type = loader.LoadType(Entry(badAssembly, "ArithmeticModule.Module.ArithmeticModuleImpl"));
 
@@ -68,7 +68,7 @@ public class RuntimeComponentTypeLoaderTests
     [Test]
     public void TypeLoader_LoadFromAssemblyPath_RequiresAbsolutePath()
     {
-        var loader = new DefaultRuntimeComponentTypeLoader(new CountingLocator(true, "relative/path/ArithmeticModule.dll"));
+        var loader = new DefaultRuntimeComponentTypeLoader(new DefaultRuntimeAssemblyLoadStrategy(new CountingLocator(true, "relative/path/ArithmeticModule.dll")));
         var ex = Assert.Throws<ArgumentException>(() => loader.LoadType(Entry("Missing.Assembly.With.Relative.Path", "ArithmeticModule.Module.ArithmeticModuleImpl")));
         Assert.That(ex!.Message, Does.Contain("non-absolute path"));
     }
@@ -76,7 +76,7 @@ public class RuntimeComponentTypeLoaderTests
     [Test]
     public void TypeLoader_InvalidAssembly_ThrowsClearError()
     {
-        var loader = new DefaultRuntimeComponentTypeLoader(new DefaultRuntimeAssemblyLocator(new RuntimeArtifactLocatorOptions()));
+        var loader = new DefaultRuntimeComponentTypeLoader(new DefaultRuntimeAssemblyLoadStrategy(new DefaultRuntimeAssemblyLocator(new RuntimeArtifactLocatorOptions())));
         var ex = Assert.Throws<FileNotFoundException>(() => loader.LoadType(Entry("NoSuchAssembly", "Missing.Type")));
         Assert.That(ex!.Message, Does.Contain("NoSuchAssembly"));
     }
@@ -84,7 +84,7 @@ public class RuntimeComponentTypeLoaderTests
     [Test]
     public void TypeLoader_InvalidType_ThrowsClearError()
     {
-        var loader = new DefaultRuntimeComponentTypeLoader(new DefaultRuntimeAssemblyLocator(new RuntimeArtifactLocatorOptions()));
+        var loader = new DefaultRuntimeComponentTypeLoader(new DefaultRuntimeAssemblyLoadStrategy(new DefaultRuntimeAssemblyLocator(new RuntimeArtifactLocatorOptions())));
         Assert.Throws<TypeLoadException>(() => loader.LoadType(Entry("ArithmeticModule", "Missing.Type")));
     }
 

@@ -117,7 +117,9 @@ public class DialectRuntimeArchitectureTests
     private static ServiceProvider CreateProvider()
     {
         var services = new ServiceCollection();
-        services.AddWistDialectServicesLegacy();
+        services.AddWistDialectServices();
+        services.AddWistCilBackend();
+        services.AddWistInterpreterBackend();
         return services.BuildServiceProvider();
     }
 
