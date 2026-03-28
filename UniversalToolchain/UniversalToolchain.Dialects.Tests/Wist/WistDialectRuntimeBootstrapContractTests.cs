@@ -40,14 +40,78 @@ public class WistDialectRuntimeBootstrapContractTests
     }
 
     [Test]
-    public void WistDialectServicesRegistrar_ShouldNotHardcodeConcreteBackends()
+    public void WistDialectServicesRegistrar_ShouldKeepBackendRegistrationExplicitAndOptIn()
     {
         var services = new ServiceCollection();
         var registrar = new WistDialectServicesRegistrar();
 
         registrar.Register(services);
 
-        Assert.That(services.Where(static x => x.ServiceType == typeof(IDialectBackendRuntimeRegistrar)), Is.Empty);
+        Assert.Multiple(() =>
+        {
+            Assert.That(services.Where(static x => x.ServiceType == typeof(IDialectBackendRuntimeRegistrar)), Is.Empty);
+            Assert.That(services.Any(static x => x.ServiceType == typeof(WistDialectExecutionWorkflow)), Is.True);
+        });
+    }
+
+    [Test]
+    public void AddWistDialectServices_WithoutExplicitBackends_ShouldNotAllowHostCreationForBackendedDialect()
+    {
+        var services = new ServiceCollection();
+        services.AddWistDialectServices();
+
+        using var provider = services.BuildServiceProvider();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+        var composition = workflow.ComposeText("dialect MissingBackends\nuse Arithmetic\nbackend interpreter", "missing-backends");
+
+        Assert.That(composition.IsSuccess, Is.True, composition.ToDeterministicText());
+
+        var ex = Assert.Throws<InvalidOperationException>(() => workflow.CreateHost(composition));
+        Assert.That(ex!.Message, Does.Contain("No backend runtime registrar is registered for backend 'interpreter'"));
+    }
+
+    [Test]
+    public void ExplicitBackendRegistration_ShouldEnableOnlyThoseBackendsThatWereAdded()
+    {
+        var services = new ServiceCollection();
+        services.AddWistDialectServices();
+        services.AddWistInterpreterBackend();
+
+        using var provider = services.BuildServiceProvider();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+
+        var interpreterOnly = workflow.ComposeText("dialect InterpreterOnly\nuse Arithmetic\nbackend interpreter", "interpreter-only");
+        var compilerRequested = workflow.ComposeText("dialect NeedsCompiler\nuse Arithmetic\nbackend compiler", "needs-compiler");
+
+        Assert.That(interpreterOnly.IsSuccess, Is.True, interpreterOnly.ToDeterministicText());
+        using var interpreterHost = workflow.CreateHost(interpreterOnly);
+
+        Assert.That(compilerRequested.IsSuccess, Is.True, compilerRequested.ToDeterministicText());
+        var ex = Assert.Throws<InvalidOperationException>(() => workflow.CreateHost(compilerRequested));
+        Assert.That(ex!.Message, Does.Contain("No backend runtime registrar is registered for backend 'cil'"));
+    }
+
+    [Test]
+    public void CanonicalBootstrap_ShouldRemainStableAcrossRepeatedServiceProviderBuilds()
+    {
+        var signatures = new List<string>();
+        for (var i = 0; i < 30; i++)
+        {
+            var services = new ServiceCollection();
+            services.AddWistDialectServices();
+            services.AddWistCilBackend();
+            services.AddWistInterpreterBackend();
+
+            using var provider = services.BuildServiceProvider();
+            var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+            var composition = workflow.ComposeText("dialect Stable\nuse Arithmetic,Numbers\nbackend interpreter,compiler", $"stable-{i}");
+            Assert.That(composition.IsSuccess, Is.True, composition.ToDeterministicText());
+
+            using var host = workflow.CreateHost(composition);
+            signatures.Add(WistDialectTestInfrastructure.BuildHostSignature(host));
+        }
+
+        Assert.That(signatures.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1));
     }
 
     [Test]
@@ -101,19 +165,10 @@ public class WistDialectRuntimeBootstrapContractTests
         for (var i = 0; i < 30; i++)
         {
             using var host = workflow.CreateHost(composition);
-            signatures.Add(DescribeHost(host));
+            signatures.Add(WistDialectTestInfrastructure.BuildHostSignature(host));
         }
 
         Assert.That(signatures.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1));
-    }
-
-    private static string DescribeHost(WistDialectExecutionHost host)
-    {
-        return string.Join("|", host.Configuration.FrontendModules.Select(static x => x.FullName))
-               + "::"
-               + string.Join("|", host.Configuration.IrModules.Select(static x => x.FullName))
-               + "::"
-               + string.Join("|", host.Configuration.BackendConfigurations.Select(static x => x.BackendDescriptor.CanonicalId));
     }
 
     private sealed class NoopRegistrar(string backendId) : IDialectBackendRuntimeRegistrar

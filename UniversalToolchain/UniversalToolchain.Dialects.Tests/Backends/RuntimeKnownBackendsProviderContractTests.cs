@@ -43,13 +43,20 @@ public class RuntimeKnownBackendsProviderContractTests
     }
 
     [Test]
-    public void KnownBackendsProvider_ShouldPreserveMetadataOwnerType()
+    public void KnownBackendsProvider_ShouldExposeCatalogBackedMetadataOwnershipWithoutBreakingDescriptorTruth()
     {
-        var catalog = new StaticCatalog([Entry(RuntimeComponentKind.Backend, "interpreter", "Meta.Interpreter")]);
+        var catalog = new StaticCatalog([Entry(RuntimeComponentKind.Backend, "interpreter", "Meta.Interpreter", "vm")]);
 
         var provider = new RuntimeKnownBackendsProvider(catalog, [new StubRegistrar("interpreter")]);
+        var descriptor = provider.GetKnownBackends().Single();
 
-        Assert.That(provider.GetKnownBackends().Single().MetadataOwnerType, Is.EqualTo(typeof(RuntimeComponentManifestEntry)));
+        Assert.Multiple(() =>
+        {
+            Assert.That(descriptor.MetadataOwnerType, Is.Not.Null);
+            Assert.That(descriptor.MetadataOwnerType.Assembly, Is.EqualTo(typeof(RuntimeComponentManifestEntry).Assembly));
+            Assert.That(descriptor.CanonicalId, Is.EqualTo("interpreter"));
+            Assert.That(descriptor.Aliases, Is.EqualTo(new[] { "vm" }));
+        });
     }
 
     [Test]

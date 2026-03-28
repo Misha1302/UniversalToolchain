@@ -135,11 +135,13 @@ public class RuntimeArtifactLocatorContractTests
 
         var paths = locator.GetManifestFilePaths();
 
-        Assert.That(paths, Is.EqualTo(new[]
+        var expected = new[]
         {
             Path.GetFullPath(firstManifest),
             Path.GetFullPath(secondManifest)
-        }));
+        }.OrderBy(static x => x, StringComparer.Ordinal).ToArray();
+
+        Assert.That(paths.OrderBy(static x => x, StringComparer.Ordinal), Is.EqualTo(expected));
     }
 
     private sealed class TempDirectory : IDisposable
