@@ -2,7 +2,11 @@ dialect FullDefaultNative
 use BooleanConditions,Comments,ComparisonConditions,Conditions,CSharpInterop,Equality,Identifier,Labels,Loops,NativeTypes,Scopes,SemicolonAsNewLine,Variables,Whitespaces
 backend cil,interpreter
 enable ArithmeticOptimization
+enable BooleanOptimization
+enable ComparisonIntrinsicOptimization
 enable EGraphOptimization
 enable LocalVariablesOptimization
 enable NativeCilOptimization
 enable NativeTypesOptimization
+security trusted
+capability unsafe-interop

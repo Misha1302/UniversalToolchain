@@ -10,13 +10,13 @@ to the native arithmetic/type stack and enables native optimizations.
 - Modules: `BooleanConditions`, `Comments`, `ComparisonConditions`, `Conditions`, `CSharpInterop`, `Equality`,
   `Identifier`, `Labels`, `Loops`, `NativeTypes`, `Scopes`, `SemicolonAsNewLine`, `Variables`, `Whitespaces`
 - Backends: `cil`, `interpreter`
-- Enabled optimizer flags: `ArithmeticOptimization`, `EGraphOptimization`, `LocalVariablesOptimization`,
-  `NativeCilOptimization`, `NativeTypesOptimization`
+- Enabled optimizer flags: `ArithmeticOptimization`, `BooleanOptimization`, `ComparisonIntrinsicOptimization`,
+  `EGraphOptimization`, `LocalVariablesOptimization`, `NativeCilOptimization`, `NativeTypesOptimization`
 
 ## Intentionally excluded capabilities
 
 - `Arithmetic` + `Numbers` are excluded to avoid mixing the standard arithmetic stack with `NativeTypes`.
-- No security/capability directives are used in this runnable example.
+- Declares `security trusted` and `capability unsafe-interop` to make trusted intent explicit.
 
 ## Exact CLI commands to run it
 
@@ -30,7 +30,7 @@ dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file
 
 ## Expected behavior/result
 
-`program.wist` computes the sum from 1 to 5 and returns `15`.
+`program.wist` uses native numeric literals and returns `15`.
 
 ## Why this example exists
 

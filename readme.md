@@ -137,8 +137,16 @@ See `UniversalToolchain/Example/Program.cs` for the full example with compositio
 Dialect examples are under `UniversalToolchain/Dialects/examples/wist`:
 
 - `full-default`
+- `full-default-native`
 - `minimal-arithmetic`
 - `restricted-sandbox`
+
+Profile roles:
+
+- `full-default` — richest universal profile
+- `full-default-native` — richest native arithmetic profile
+- `minimal-arithmetic` — smallest runnable arithmetic profile
+- `restricted-sandbox` — restricted interpreter-only expression profile, not OS-level sandbox
 
 ## Current limitations
 

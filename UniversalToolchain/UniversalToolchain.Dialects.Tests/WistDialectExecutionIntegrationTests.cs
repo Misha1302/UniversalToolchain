@@ -149,6 +149,40 @@ public class WistDialectExecutionIntegrationTests
         Assert.That(ex!.Message, Does.Contain("Variable").Or.Contain("Identifier").Or.Contain("token").IgnoreCase);
     }
 
+    [Test]
+    public void RestrictedDialect_ExpressionOnlyProgram_IsAllowedAndExecutable()
+    {
+        using var provider = CreateProvider();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+        var example = ResolveExampleDirectory("restricted-sandbox");
+
+        var result = workflow.ComposeFile(Path.Combine(example, "dialect.wistdialect"));
+        using var host = workflow.CreateHost(result);
+
+        var value = host.Run(File.ReadAllText(Path.Combine(example, "program.wist")), "interpreter");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(value, Is.EqualTo(true));
+        });
+    }
+
+    [Test]
+    public void RestrictedDialect_InteropProgram_IsRejected()
+    {
+        using var provider = CreateProvider();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+        var example = ResolveExampleDirectory("restricted-sandbox");
+
+        var result = workflow.ComposeFile(Path.Combine(example, "dialect.wistdialect"));
+        using var host = workflow.CreateHost(result);
+
+        var ex = Assert.Catch<Exception>(() => host.Run(File.ReadAllText(Path.Combine(example, "forbidden-interop.wist")), "interpreter"));
+
+        Assert.That(ex!.Message, Does.Contain("interop").Or.Contain("identifier").Or.Contain("token").IgnoreCase);
+    }
+
     private static ServiceProvider CreateProvider()
     {
         var services = new ServiceCollection();
