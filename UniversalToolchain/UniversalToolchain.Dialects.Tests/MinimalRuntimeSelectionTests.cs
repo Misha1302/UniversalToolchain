@@ -37,7 +37,7 @@ public class MinimalRuntimeSelectionTests
     [Test]
     public void SelectionResolver_MissingModule_AddsR001()
     {
-        var resolver = new SelectedRuntimePlanResolver(new FileBasedRuntimeComponentCatalog());
+        var resolver = new SelectedRuntimePlanResolver(new FileBasedRuntimeComponentCatalog(new DefaultRuntimeManifestFileLocator(new RuntimeArtifactLocatorOptions()), new RuntimeManifestJsonSerializer()));
         var plan = BuildPlan(modules: ["NoSuchModule"], backends: [WistDialectBackendIds.Interpreter], optimizers: []);
         var selection = resolver.Resolve(plan);
         Assert.That(selection.Diagnostics.Any(x => x.Code == "R001"), Is.True);
@@ -46,7 +46,7 @@ public class MinimalRuntimeSelectionTests
     [Test]
     public void SelectionResolver_MissingBackend_AddsR002()
     {
-        var resolver = new SelectedRuntimePlanResolver(new FileBasedRuntimeComponentCatalog());
+        var resolver = new SelectedRuntimePlanResolver(new FileBasedRuntimeComponentCatalog(new DefaultRuntimeManifestFileLocator(new RuntimeArtifactLocatorOptions()), new RuntimeManifestJsonSerializer()));
         var plan = BuildPlan(modules: ["Arithmetic"], backends: [new DialectBackendId("missing")], optimizers: []);
         var selection = resolver.Resolve(plan);
         Assert.That(selection.Diagnostics.Any(x => x.Code == "R002"), Is.True);
@@ -55,7 +55,7 @@ public class MinimalRuntimeSelectionTests
     [Test]
     public void SelectionResolver_MissingOptimizer_AddsR003()
     {
-        var resolver = new SelectedRuntimePlanResolver(new FileBasedRuntimeComponentCatalog());
+        var resolver = new SelectedRuntimePlanResolver(new FileBasedRuntimeComponentCatalog(new DefaultRuntimeManifestFileLocator(new RuntimeArtifactLocatorOptions()), new RuntimeManifestJsonSerializer()));
         var plan = BuildPlan(modules: ["Arithmetic"], backends: [WistDialectBackendIds.Interpreter], optimizers: [new OptimizerBuildDirective("missing-opt", true, DialectBackendSelector.Any)]);
         var selection = resolver.Resolve(plan);
         Assert.That(selection.Diagnostics.Any(x => x.Code == "R003"), Is.True);
@@ -65,7 +65,7 @@ public class MinimalRuntimeSelectionTests
     [Test]
     public void SelectionResolver_DropsDuplicateBackendSelections_Deterministically()
     {
-        var resolver = new SelectedRuntimePlanResolver(new FileBasedRuntimeComponentCatalog());
+        var resolver = new SelectedRuntimePlanResolver(new FileBasedRuntimeComponentCatalog(new DefaultRuntimeManifestFileLocator(new RuntimeArtifactLocatorOptions()), new RuntimeManifestJsonSerializer()));
         var plan = BuildPlan(modules: ["Arithmetic"], backends: [WistDialectBackendIds.Interpreter, WistDialectBackendIds.Interpreter, WistDialectBackendIds.Cil], optimizers: []);
         var selection = resolver.Resolve(plan);
 
@@ -75,7 +75,7 @@ public class MinimalRuntimeSelectionTests
     [Test]
     public void SelectionResolver_DropsDuplicateOptimizers_Deterministically()
     {
-        var resolver = new SelectedRuntimePlanResolver(new FileBasedRuntimeComponentCatalog());
+        var resolver = new SelectedRuntimePlanResolver(new FileBasedRuntimeComponentCatalog(new DefaultRuntimeManifestFileLocator(new RuntimeArtifactLocatorOptions()), new RuntimeManifestJsonSerializer()));
         var plan = BuildPlan(
             modules: ["Arithmetic"],
             backends: [WistDialectBackendIds.Interpreter],
@@ -93,7 +93,7 @@ public class MinimalRuntimeSelectionTests
     [Test]
     public void SelectionResolver_DoesNotLoadFeatureAssemblies()
     {
-        var resolver = new SelectedRuntimePlanResolver(new FileBasedRuntimeComponentCatalog());
+        var resolver = new SelectedRuntimePlanResolver(new FileBasedRuntimeComponentCatalog(new DefaultRuntimeManifestFileLocator(new RuntimeArtifactLocatorOptions()), new RuntimeManifestJsonSerializer()));
         var before = AppDomain.CurrentDomain.GetAssemblies().Select(x => x.GetName().Name).ToHashSet(StringComparer.Ordinal);
         var plan = BuildPlan(modules: ["Arithmetic"], backends: [WistDialectBackendIds.Interpreter], optimizers: []);
         _ = resolver.Resolve(plan);

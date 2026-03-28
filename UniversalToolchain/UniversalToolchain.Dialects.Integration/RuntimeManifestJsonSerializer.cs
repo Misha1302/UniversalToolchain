@@ -2,7 +2,7 @@ using System.Text.Json;
 
 namespace UniversalToolchain.Dialects.Integration;
 
-public sealed class RuntimeManifestJsonSerializer
+public sealed class RuntimeManifestJsonSerializer : IRuntimeManifestSerializer
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -18,7 +18,7 @@ public sealed class RuntimeManifestJsonSerializer
             document.AssemblySimpleName ?? string.Empty,
             (document.Components ?? [])
             .Select(static x => new FileDialectRuntimeComponentEntry(
-                x.Kind ?? string.Empty,
+                RuntimeComponentKindCodec.Format(RuntimeComponentKindCodec.Parse(x.Kind ?? string.Empty, "runtime manifest")),
                 x.CanonicalAlias ?? string.Empty,
                 x.Aliases ?? [],
                 x.TypeFullName ?? string.Empty))
@@ -33,7 +33,7 @@ public sealed class RuntimeManifestJsonSerializer
             Components = document.Components
                 .Select(static x => new SerializableManifestComponentEntry
                 {
-                    Kind = x.Kind,
+                    Kind = RuntimeComponentKindCodec.Format(RuntimeComponentKindCodec.Parse(x.Kind ?? string.Empty, "runtime manifest")),
                     CanonicalAlias = x.CanonicalAlias,
                     Aliases = x.Aliases,
                     TypeFullName = x.TypeFullName

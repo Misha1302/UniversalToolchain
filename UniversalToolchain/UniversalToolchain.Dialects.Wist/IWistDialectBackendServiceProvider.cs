@@ -1,13 +1,8 @@
-using Microsoft.Extensions.DependencyInjection;
-using UniversalToolchain.Dialects.Abstractions;
+using UniversalToolchain.Dialects.Integration;
 
 namespace UniversalToolchain.Dialects.Wist;
 
-public interface IWistDialectBackendServiceProvider
+[Obsolete("Use IDialectBackendRuntimeRegistrar from UniversalToolchain.Dialects.Integration.")]
+public interface IWistDialectBackendServiceProvider : IDialectBackendRuntimeRegistrar
 {
-    DialectBackendId BackendId { get; }
-
-    IReadOnlyList<string> SupportedIntrinsics { get; }
-
-    void RegisterRuntime(IServiceCollection services, WistDialectBackendConfiguration configuration);
 }

@@ -10,7 +10,7 @@ namespace UniversalToolchain.Dialects.Wist;
 /// </summary>
 public sealed class WistDialectExecutionConfiguration
 {
-    private readonly ReadOnlyCollection<WistDialectBackendConfiguration> _backendConfigurations;
+    private readonly ReadOnlyCollection<DialectBackendRuntimeConfiguration> _backendConfigurations;
     private readonly Dictionary<string, DialectBackendId> _knownBackendNameMap;
     private readonly ReadOnlyCollection<Type> _frontendModules;
     private readonly ReadOnlyCollection<Type> _irModules;
@@ -21,7 +21,7 @@ public sealed class WistDialectExecutionConfiguration
         IEnumerable<Type> frontendModules,
         IEnumerable<Type> irModules,
         IEnumerable<Type> optimizers,
-        IEnumerable<WistDialectBackendConfiguration> backendConfigurations,
+        IEnumerable<DialectBackendRuntimeConfiguration> backendConfigurations,
         IEnumerable<RuntimeBackendDescriptor> knownBackends)
     {
         if (string.IsNullOrWhiteSpace(dialectName))
@@ -31,7 +31,7 @@ public sealed class WistDialectExecutionConfiguration
         _frontendModules = new ReadOnlyCollection<Type>(SnapshotTypes(frontendModules, nameof(frontendModules)));
         _irModules = new ReadOnlyCollection<Type>(SnapshotTypes(irModules, nameof(irModules)));
         _optimizers = new ReadOnlyCollection<Type>(SnapshotTypes(optimizers, nameof(optimizers)));
-        _backendConfigurations = new ReadOnlyCollection<WistDialectBackendConfiguration>(SnapshotBackends(backendConfigurations, nameof(backendConfigurations)));
+        _backendConfigurations = new ReadOnlyCollection<DialectBackendRuntimeConfiguration>(SnapshotBackends(backendConfigurations, nameof(backendConfigurations)));
         _knownBackendNameMap = SnapshotKnownBackends(knownBackends, nameof(knownBackends));
     }
 
@@ -43,7 +43,7 @@ public sealed class WistDialectExecutionConfiguration
 
     public IReadOnlyList<Type> Optimizers => _optimizers;
 
-    public IReadOnlyList<WistDialectBackendConfiguration> BackendConfigurations => _backendConfigurations;
+    public IReadOnlyList<DialectBackendRuntimeConfiguration> BackendConfigurations => _backendConfigurations;
 
     public IReadOnlyList<RuntimeBackendDescriptor> EnabledBackends => _backendConfigurations.Select(x => x.BackendDescriptor).ToList();
 
@@ -55,7 +55,7 @@ public sealed class WistDialectExecutionConfiguration
         return _knownBackendNameMap.TryGetValue(nameOrAlias, out backendId);
     }
 
-    public bool TryGetEnabledBackend(DialectBackendId backendId, out WistDialectBackendConfiguration backendConfiguration)
+    public bool TryGetEnabledBackend(DialectBackendId backendId, out DialectBackendRuntimeConfiguration backendConfiguration)
     {
         if (string.IsNullOrWhiteSpace(backendId.Value))
             Thrower.Argument(nameof(backendId), "Backend identifier must not be empty.");
@@ -89,7 +89,7 @@ public sealed class WistDialectExecutionConfiguration
         return map;
     }
 
-    private static List<WistDialectBackendConfiguration> SnapshotBackends(IEnumerable<WistDialectBackendConfiguration> values, string paramName)
+    private static List<DialectBackendRuntimeConfiguration> SnapshotBackends(IEnumerable<DialectBackendRuntimeConfiguration> values, string paramName)
     {
         if (values == null)
             Thrower.ArgumentNull(paramName);

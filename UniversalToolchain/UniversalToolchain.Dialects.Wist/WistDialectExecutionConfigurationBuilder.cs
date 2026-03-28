@@ -8,13 +8,13 @@ namespace UniversalToolchain.Dialects.Wist;
 public sealed class WistDialectExecutionConfigurationBuilder
 {
     private readonly DialectIntrinsicPolicyResolver _intrinsicPolicyResolver;
-    private readonly IWistKnownBackendsProvider _knownBackendsProvider;
+    private readonly IRuntimeKnownBackendsProvider _knownBackendsProvider;
     private readonly IRuntimeComponentTypeLoader _typeLoader;
 
     public WistDialectExecutionConfigurationBuilder(
         IRuntimeComponentTypeLoader typeLoader,
         DialectIntrinsicPolicyResolver intrinsicPolicyResolver,
-        IWistKnownBackendsProvider knownBackendsProvider)
+        IRuntimeKnownBackendsProvider knownBackendsProvider)
     {
         _typeLoader = typeLoader ?? throw new ArgumentNullException(nameof(typeLoader));
         _intrinsicPolicyResolver = intrinsicPolicyResolver ?? throw new ArgumentNullException(nameof(intrinsicPolicyResolver));
@@ -64,12 +64,13 @@ public sealed class WistDialectExecutionConfigurationBuilder
             knownBackends);
     }
 
-    private WistDialectBackendConfiguration BuildBackendConfiguration(RuntimeComponentManifestEntry backend, DialectBuildPlan buildPlan)
+    private DialectBackendRuntimeConfiguration BuildBackendConfiguration(RuntimeComponentManifestEntry backend, DialectBuildPlan buildPlan)
     {
         var backendId = new DialectBackendId(backend.CanonicalAlias);
         var policy = _intrinsicPolicyResolver.Resolve(buildPlan, backendId);
-        return new WistDialectBackendConfiguration(
-            new RuntimeBackendDescriptor(backendId, backend.Aliases),
+        var metadataOwnerType = _typeLoader.LoadType(backend);
+        return new DialectBackendRuntimeConfiguration(
+            new RuntimeBackendDescriptor(backendId, metadataOwnerType, backend.Aliases),
             policy.Allowed,
             policy.Forbidden,
             policy.HasExplicitAllowList);

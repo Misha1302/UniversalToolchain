@@ -4,6 +4,7 @@ using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
 using ServiceLifetime = Microsoft.Extensions.DependencyInjection.ServiceLifetime;
+using UniversalToolchain.Dialects.Integration;
 
 namespace UniversalToolchain.Dialects.Wist;
 
@@ -12,9 +13,9 @@ namespace UniversalToolchain.Dialects.Wist;
 /// </summary>
 public sealed class WistDialectServiceProviderFactory
 {
-    private readonly IReadOnlyDictionary<DialectBackendId, IWistDialectBackendServiceProvider> _backendProviders;
+    private readonly IReadOnlyDictionary<DialectBackendId, IDialectBackendRuntimeRegistrar> _backendProviders;
 
-    public WistDialectServiceProviderFactory(IEnumerable<IWistDialectBackendServiceProvider> backendProviders)
+    public WistDialectServiceProviderFactory(IEnumerable<IDialectBackendRuntimeRegistrar> backendProviders)
     {
         _backendProviders = CreateBackendProviderMap(backendProviders);
     }
@@ -46,24 +47,24 @@ public sealed class WistDialectServiceProviderFactory
         foreach (var backend in configuration.BackendConfigurations.OrderBy(x => x.BackendDescriptor.BackendId))
         {
             if (!_backendProviders.TryGetValue(backend.BackendDescriptor.BackendId, out var backendProvider))
-                Thrower.InvalidOpEx($"No Wist backend service provider is registered for backend '{backend.BackendDescriptor.CanonicalId}'.");
+                Thrower.InvalidOpEx($"No backend runtime registrar is registered for backend '{backend.BackendDescriptor.CanonicalId}'.");
 
             backendProvider.RegisterRuntime(services, backend);
         }
     }
 
-    private static IReadOnlyDictionary<DialectBackendId, IWistDialectBackendServiceProvider> CreateBackendProviderMap(IEnumerable<IWistDialectBackendServiceProvider> backendProviders)
+    private static IReadOnlyDictionary<DialectBackendId, IDialectBackendRuntimeRegistrar> CreateBackendProviderMap(IEnumerable<IDialectBackendRuntimeRegistrar> backendProviders)
     {
         if (backendProviders == null)
             Thrower.ArgumentNull(nameof(backendProviders));
 
-        var map = new SortedDictionary<DialectBackendId, IWistDialectBackendServiceProvider>();
+        var map = new SortedDictionary<DialectBackendId, IDialectBackendRuntimeRegistrar>();
         foreach (var backendProvider in backendProviders
                      .Select(x => x.NotNull(nameof(backendProviders)))
                      .OrderBy(x => x.BackendId))
         {
             if (!map.TryAdd(backendProvider.BackendId, backendProvider))
-                Thrower.InvalidOpEx($"Duplicate Wist backend service provider registration for backend '{backendProvider.BackendId.Value}'.");
+                Thrower.InvalidOpEx($"Duplicate backend runtime registrar registration for backend '{backendProvider.BackendId.Value}'.");
         }
 
         return map;

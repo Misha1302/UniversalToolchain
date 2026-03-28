@@ -1,43 +1,21 @@
-using ExceptionsManager;
 using UniversalToolchain.Dialects.Integration;
 
 namespace UniversalToolchain.Dialects.Wist;
 
-/// <summary>
-///     Registers central Wist runtime descriptors that are owned by the Wist dialect layer itself.
-/// </summary>
+[Obsolete("Use CatalogBackedDialectRuntimeDescriptorProvider.")]
 public sealed class WistDialectRuntimeDescriptorProvider : IDialectRuntimeDescriptorProvider
 {
-    private readonly IReadOnlyList<IWistDialectBackendServiceProvider> _backendProviders;
+    private readonly CatalogBackedDialectRuntimeDescriptorProvider _inner;
 
-    public WistDialectRuntimeDescriptorProvider(IEnumerable<IWistDialectBackendServiceProvider> backendProviders)
+    public WistDialectRuntimeDescriptorProvider(
+        IRuntimeComponentCatalog catalog,
+        IRuntimeComponentTypeLoader typeLoader,
+        IEnumerable<IDialectBackendRuntimeRegistrar> backendRegistrars)
     {
-        if (backendProviders == null)
-        {
-            Thrower.ArgumentNull(nameof(backendProviders));
-        }
-
-        _backendProviders = backendProviders.ToList();
+        _inner = new CatalogBackedDialectRuntimeDescriptorProvider(catalog, typeLoader, backendRegistrars);
     }
 
-    public decimal Order => 0m;
+    public decimal Order => _inner.Order;
 
-    public void Register(DialectRuntimeDescriptorRegistryBuilder builder)
-    {
-        if (builder == null)
-        {
-            Thrower.ArgumentNull(nameof(builder));
-        }
-
-        builder.RegisterAttributedBackendsFromAssemblies(typeof(WistDialectRuntimeDescriptorProvider).Assembly);
-        RegisterIntrinsics(builder);
-    }
-
-    private void RegisterIntrinsics(DialectRuntimeDescriptorRegistryBuilder builder)
-    {
-        foreach (var intrinsic in WistDialectIntrinsicRegistry.CreateDescriptors(_backendProviders))
-        {
-            builder.RegisterIntrinsic(intrinsic);
-        }
-    }
+    public void Register(DialectRuntimeDescriptorRegistryBuilder builder) => _inner.Register(builder);
 }

@@ -71,7 +71,7 @@ public sealed class DefaultRuntimeComponentTypeLoader : IRuntimeComponentTypeLoa
     private Assembly LoadAssemblyFromResolvedPath(string assemblySimpleName)
     {
         if (!_locator.TryResolveAssemblyPath(assemblySimpleName, out var absolutePath) || string.IsNullOrWhiteSpace(absolutePath))
-            Thrower.FileNotFound(Path.Combine(AppContext.BaseDirectory, assemblySimpleName + ".dll"));
+            Thrower.FileNotFound($"Assembly '{assemblySimpleName}' was not found in configured runtime assembly locator search roots.");
 
         if (!Path.IsPathRooted(absolutePath))
             Thrower.Argument(nameof(absolutePath), $"Assembly locator returned non-absolute path '{absolutePath}'.");

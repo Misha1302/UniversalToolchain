@@ -2,19 +2,21 @@ namespace UniversalToolchain.Dialects.Integration;
 
 public sealed class DefaultRuntimeManifestFileLocator : IRuntimeManifestFileLocator
 {
+    private readonly string _manifestSearchPattern;
+    private readonly SearchOption _manifestSearchOption;
     private readonly IReadOnlyList<string> _searchRoots;
 
-    public DefaultRuntimeManifestFileLocator(RuntimeArtifactLocatorOptions? options = null)
+    public DefaultRuntimeManifestFileLocator(RuntimeArtifactLocatorOptions options)
     {
-        options ??= new RuntimeArtifactLocatorOptions();
+        if (options == null)
+            throw new ArgumentNullException(nameof(options));
 
-        _searchRoots = new[] { AppContext.BaseDirectory }
-            .Concat(options.AdditionalSearchDirectories ?? [])
-            .Where(static x => !string.IsNullOrWhiteSpace(x))
-            .Select(Path.GetFullPath)
-            .Distinct(StringComparer.Ordinal)
-            .OrderBy(static x => x, StringComparer.Ordinal)
-            .ToList();
+        _manifestSearchPattern = string.IsNullOrWhiteSpace(options.ManifestSearchPattern)
+            ? "*.dialect.runtime.json"
+            : options.ManifestSearchPattern;
+
+        _manifestSearchOption = options.ManifestSearchOption;
+        _searchRoots = ResolveSearchRoots(options);
     }
 
     public IReadOnlyList<string> GetManifestFilePaths()
@@ -26,11 +28,23 @@ public sealed class DefaultRuntimeManifestFileLocator : IRuntimeManifestFileLoca
             if (!Directory.Exists(root))
                 continue;
 
-            paths.AddRange(Directory.EnumerateFiles(root, "*.dialect.runtime.json", SearchOption.TopDirectoryOnly)
+            paths.AddRange(Directory.EnumerateFiles(root, _manifestSearchPattern, _manifestSearchOption)
                 .Select(Path.GetFullPath));
         }
 
         return paths
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(static x => x, StringComparer.Ordinal)
+            .ToList();
+    }
+
+    private static IReadOnlyList<string> ResolveSearchRoots(RuntimeArtifactLocatorOptions options)
+    {
+        return options.SearchRoots
+            .Concat(options.AdditionalSearchDirectories)
+            .Append(AppContext.BaseDirectory)
+            .Where(static x => !string.IsNullOrWhiteSpace(x))
+            .Select(Path.GetFullPath)
             .Distinct(StringComparer.Ordinal)
             .OrderBy(static x => x, StringComparer.Ordinal)
             .ToList();

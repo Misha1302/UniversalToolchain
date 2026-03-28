@@ -7,7 +7,7 @@ public class RuntimeComponentTypeLoaderTests
     [Test]
     public void TypeLoader_LoadsOnlyRequestedAssembly()
     {
-        var loader = new DefaultRuntimeComponentTypeLoader(new DefaultRuntimeAssemblyLocator());
+        var loader = new DefaultRuntimeComponentTypeLoader(new DefaultRuntimeAssemblyLocator(new RuntimeArtifactLocatorOptions()));
         var entry = Entry("ArithmeticModule", "ArithmeticModule.Module.ArithmeticModuleImpl");
 
         var type = loader.LoadType(entry);
@@ -22,7 +22,7 @@ public class RuntimeComponentTypeLoaderTests
     [Test]
     public void TypeLoader_RepeatedLoad_UsesCache()
     {
-        var loader = new DefaultRuntimeComponentTypeLoader(new DefaultRuntimeAssemblyLocator());
+        var loader = new DefaultRuntimeComponentTypeLoader(new DefaultRuntimeAssemblyLocator(new RuntimeArtifactLocatorOptions()));
         var entry = Entry("ArithmeticModule", "ArithmeticModule.Module.ArithmeticModuleImpl");
 
         var first = loader.LoadType(entry);
@@ -76,15 +76,15 @@ public class RuntimeComponentTypeLoaderTests
     [Test]
     public void TypeLoader_InvalidAssembly_ThrowsClearError()
     {
-        var loader = new DefaultRuntimeComponentTypeLoader(new DefaultRuntimeAssemblyLocator());
+        var loader = new DefaultRuntimeComponentTypeLoader(new DefaultRuntimeAssemblyLocator(new RuntimeArtifactLocatorOptions()));
         var ex = Assert.Throws<FileNotFoundException>(() => loader.LoadType(Entry("NoSuchAssembly", "Missing.Type")));
-        Assert.That(ex!.Message, Does.Contain("NoSuchAssembly.dll"));
+        Assert.That(ex!.Message, Does.Contain("NoSuchAssembly"));
     }
 
     [Test]
     public void TypeLoader_InvalidType_ThrowsClearError()
     {
-        var loader = new DefaultRuntimeComponentTypeLoader(new DefaultRuntimeAssemblyLocator());
+        var loader = new DefaultRuntimeComponentTypeLoader(new DefaultRuntimeAssemblyLocator(new RuntimeArtifactLocatorOptions()));
         Assert.Throws<TypeLoadException>(() => loader.LoadType(Entry("ArithmeticModule", "Missing.Type")));
     }
 

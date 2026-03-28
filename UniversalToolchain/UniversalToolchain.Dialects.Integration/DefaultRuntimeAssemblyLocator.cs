@@ -4,17 +4,25 @@ namespace UniversalToolchain.Dialects.Integration;
 
 public sealed class DefaultRuntimeAssemblyLocator : IRuntimeAssemblyLocator
 {
+    private readonly string _assemblyFileExtension;
     private readonly IReadOnlyList<string> _searchRoots;
 
-    public DefaultRuntimeAssemblyLocator(RuntimeArtifactLocatorOptions? options = null)
+    public DefaultRuntimeAssemblyLocator(RuntimeArtifactLocatorOptions options)
     {
-        options ??= new RuntimeArtifactLocatorOptions();
+        if (options == null)
+            throw new ArgumentNullException(nameof(options));
 
-        _searchRoots = new[] { AppContext.BaseDirectory }
-            .Concat(options.AdditionalSearchDirectories ?? [])
+        _assemblyFileExtension = string.IsNullOrWhiteSpace(options.AssemblyFileExtension)
+            ? ".dll"
+            : options.AssemblyFileExtension;
+
+        _searchRoots = options.SearchRoots
+            .Concat(options.AdditionalSearchDirectories)
+            .Append(AppContext.BaseDirectory)
             .Where(x => !string.IsNullOrWhiteSpace(x))
             .Select(Path.GetFullPath)
             .Distinct(StringComparer.Ordinal)
+            .OrderBy(static x => x, StringComparer.Ordinal)
             .ToList();
     }
 
@@ -23,7 +31,7 @@ public sealed class DefaultRuntimeAssemblyLocator : IRuntimeAssemblyLocator
         if (string.IsNullOrWhiteSpace(assemblySimpleName))
             Thrower.Argument(nameof(assemblySimpleName), "Assembly simple name must not be empty.");
 
-        var fileName = assemblySimpleName.Trim() + ".dll";
+        var fileName = assemblySimpleName.Trim() + _assemblyFileExtension;
         foreach (var root in _searchRoots)
         {
             var candidate = Path.Combine(root, fileName);

@@ -2,7 +2,7 @@ using UniversalToolchain.Dialects.Integration;
 
 namespace UniversalToolchain.Dialects.Wist;
 
-public interface IWistKnownBackendsProvider
+[Obsolete("Use IRuntimeKnownBackendsProvider from UniversalToolchain.Dialects.Integration.")]
+public interface IWistKnownBackendsProvider : IRuntimeKnownBackendsProvider
 {
-    IReadOnlyList<RuntimeBackendDescriptor> GetKnownBackends();
 }

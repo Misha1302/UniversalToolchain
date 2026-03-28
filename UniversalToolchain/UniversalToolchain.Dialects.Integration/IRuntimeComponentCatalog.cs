@@ -8,5 +8,9 @@ public interface IRuntimeComponentCatalog
 
     bool TryResolveBackend(string alias, out RuntimeComponentManifestEntry? entry);
 
+    IReadOnlyList<RuntimeComponentManifestEntry> GetModulesInDeterministicOrder();
+
+    IReadOnlyList<RuntimeComponentManifestEntry> GetOptimizersInDeterministicOrder();
+
     IReadOnlyList<RuntimeComponentManifestEntry> GetBackendsInDeterministicOrder();
 }

@@ -9,10 +9,11 @@ using IntermediateRepresentationAbstractions;
 using Microsoft.Extensions.DependencyInjection;
 using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
+using UniversalToolchain.Dialects.Integration;
 
 namespace UniversalToolchain.Dialects.Wist;
 
-internal sealed class WistInterpreterDialectBackendServiceProvider : IWistDialectBackendServiceProvider
+internal sealed class WistInterpreterDialectBackendServiceProvider : IDialectBackendRuntimeRegistrar
 {
     private static readonly IReadOnlyList<string> _supportedIntrinsics = new AbstractIrToAbstractIrStub().SupportedIntrinsics
         .Distinct(StringComparer.Ordinal)
@@ -23,7 +24,7 @@ internal sealed class WistInterpreterDialectBackendServiceProvider : IWistDialec
 
     public IReadOnlyList<string> SupportedIntrinsics => _supportedIntrinsics;
 
-    public void RegisterRuntime(IServiceCollection services, WistDialectBackendConfiguration configuration)
+    public void RegisterRuntime(IServiceCollection services, DialectBackendRuntimeConfiguration configuration)
     {
         if (services == null)
             Thrower.ArgumentNull(nameof(services));
@@ -37,7 +38,7 @@ internal sealed class WistInterpreterDialectBackendServiceProvider : IWistDialec
         services.AddTransient(provider => new WistDialectBackendRuntime(configuration.BackendDescriptor, CreateCore(provider, configuration)));
     }
 
-    private static BasicCoreImpl<IAbstractIR> CreateCore(IServiceProvider provider, WistDialectBackendConfiguration configuration)
+    private static BasicCoreImpl<IAbstractIR> CreateCore(IServiceProvider provider, DialectBackendRuntimeConfiguration configuration)
     {
         return new BasicCoreImpl<IAbstractIR>(
             provider.GetRequiredService<Func<ILexer>>(),
