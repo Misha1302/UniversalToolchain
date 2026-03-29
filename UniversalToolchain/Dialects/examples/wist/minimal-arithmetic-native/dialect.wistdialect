@@ -1,0 +1,9 @@
+dialect MinimalArithmeticNative
+use NativeTypes,Numbers,Scopes,Whitespaces
+backend cil
+enable ArithmeticOptimization
+enable EGraphOptimization
+enable NativeCilOptimization
+enable NativeTypesOptimization
+security restricted
+
