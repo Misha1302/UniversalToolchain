@@ -18,6 +18,7 @@ public class DialectProjectsSmokeTests
             "full-default",
             "full-default-native",
             "minimal-arithmetic",
+            "minimal-arithmetic-native",
             "restricted-sandbox"
         }));
 
@@ -30,7 +31,12 @@ public class DialectProjectsSmokeTests
             using var host = workflow.CreateHost(composition);
             var exampleName = Path.GetFileName(exampleDirectory);
             var programPath = Path.Combine(exampleDirectory, "program.wist");
-            var result = host.Run(File.ReadAllText(programPath), "interpreter");
+            var result = host.Run(
+                File.ReadAllText(programPath),
+                host.Configuration.EnabledBackends.Any(x => x.Name == "interpreter")
+                    ? "interpreter"
+                    : "cil"
+            );
 
             Assert.That(result, Is.Not.Null, $"Example '{exampleName}' returned null.");
         }
