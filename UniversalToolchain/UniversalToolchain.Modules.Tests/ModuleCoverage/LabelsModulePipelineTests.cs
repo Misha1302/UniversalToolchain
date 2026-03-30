@@ -9,7 +9,14 @@ public class LabelsModulePipelineTests
     public void Labels_ForwardJump_ReachesTargetLabel()
     {
         using var h = new ModulePipelineTestHelper();
-        var r = h.ExecuteBoth("let x = 1; goto @end; x = 10; @end: x", Modules);
+        var r = h.ExecuteBoth(
+            """
+            let x = 1
+            goto @end
+            x = 10
+            @end: x
+            """,
+            Modules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(1));
     }
@@ -18,7 +25,14 @@ public class LabelsModulePipelineTests
     public void Labels_BackwardJump_IsHandledDeterministically()
     {
         using var h = new ModulePipelineTestHelper();
-        var r = h.ExecuteBoth("let i = 0; @loop: i = i + 1; if i < 3 goto @loop; i", Modules);
+        var r = h.ExecuteBoth(
+            """
+            let i = 0
+            @loop: i = i + 1
+            if i < 3 goto @loop
+            i
+            """,
+            Modules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(3));
     }
@@ -27,14 +41,26 @@ public class LabelsModulePipelineTests
     public void Labels_MissingLabel_FailsDeterministically()
     {
         using var h = new ModulePipelineTestHelper();
-        h.AssertFails("goto @missing; 1", Modules, "label");
+        h.AssertFails(
+            """
+            goto @missing
+            1
+            """,
+            Modules,
+            "label");
     }
 
     [Test]
     public void Labels_DuplicateLabel_FailsDeterministically()
     {
         using var h = new ModulePipelineTestHelper();
-        h.AssertFails("@x: 1; @x: 2", Modules, "label");
+        h.AssertFails(
+            """
+            @x: 1
+            @x: 2
+            """,
+            Modules,
+            "label");
     }
 
     [Test]
