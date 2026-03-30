@@ -1,7 +1,7 @@
-namespace UniversalToolchain.Dialects.Tests.ModuleCoverage;
+namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 
 [TestFixture]
-public class VariablesModulePipelineTests
+public class VariablesModuleIsolationTests
 {
     private static readonly string[] Modules = ModulePipelineTestHelper.FullUniversalModules;
     [Test] public void Variables_LetDeclaration_AssignsInitialValue(){using var h=new ModulePipelineTestHelper();var r=h.ExecuteBoth("let x = 10; x",Modules);ModulePipelineTestHelper.AssertParity(r.Compiler,r.Interpreter);Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler),Is.EqualTo(10));}

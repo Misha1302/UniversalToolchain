@@ -1,7 +1,7 @@
-namespace UniversalToolchain.Dialects.Tests.ModuleCoverage;
+namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 
 [TestFixture]
-public class LocalVariablesOptimizerModulePipelineTests
+public class LocalVariablesOptimizerSemanticPreservationTests
 {
     private static readonly string[] Modules = ModulePipelineTestHelper.FullUniversalModules;
 

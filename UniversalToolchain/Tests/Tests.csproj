@@ -60,6 +60,8 @@
         <Compile Include="Cli/WistcCliContractsTests.cs"/>
         <Compile Include="Architecture/DeletedLegacySurfaceTests.cs"/>
         <Compile Include="Stress/RuntimeStressContractsTests.cs"/>
+        <Compile Include="CoreContracts/BasicCoreLifecycleContractsTests.cs"/>
+        <Compile Include="Concurrency/BasicCoreConcurrencyTests.cs"/>
     </ItemGroup>
 
     <ItemGroup>

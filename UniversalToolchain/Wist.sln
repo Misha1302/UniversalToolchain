@@ -122,6 +122,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniversalToolchain.Dialects
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniversalToolchain.Dialects.Wist", "UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj", "{523486E4-D53F-4147-AB0D-5B2A5ACE6468}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniversalToolchain.Modules.Tests", "UniversalToolchain.Modules.Tests\UniversalToolchain.Modules.Tests.csproj", "{507806F7-75E5-4A6A-BF23-18992BF44B97}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -768,6 +770,18 @@ Global
 		{523486E4-D53F-4147-AB0D-5B2A5ACE6468}.Release|x64.Build.0 = Release|Any CPU
 		{523486E4-D53F-4147-AB0D-5B2A5ACE6468}.Release|x86.ActiveCfg = Release|Any CPU
 		{523486E4-D53F-4147-AB0D-5B2A5ACE6468}.Release|x86.Build.0 = Release|Any CPU
+		{507806F7-75E5-4A6A-BF23-18992BF44B97}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{507806F7-75E5-4A6A-BF23-18992BF44B97}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{507806F7-75E5-4A6A-BF23-18992BF44B97}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{507806F7-75E5-4A6A-BF23-18992BF44B97}.Debug|x64.Build.0 = Debug|Any CPU
+		{507806F7-75E5-4A6A-BF23-18992BF44B97}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{507806F7-75E5-4A6A-BF23-18992BF44B97}.Debug|x86.Build.0 = Debug|Any CPU
+		{507806F7-75E5-4A6A-BF23-18992BF44B97}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{507806F7-75E5-4A6A-BF23-18992BF44B97}.Release|Any CPU.Build.0 = Release|Any CPU
+		{507806F7-75E5-4A6A-BF23-18992BF44B97}.Release|x64.ActiveCfg = Release|Any CPU
+		{507806F7-75E5-4A6A-BF23-18992BF44B97}.Release|x64.Build.0 = Release|Any CPU
+		{507806F7-75E5-4A6A-BF23-18992BF44B97}.Release|x86.ActiveCfg = Release|Any CPU
+		{507806F7-75E5-4A6A-BF23-18992BF44B97}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

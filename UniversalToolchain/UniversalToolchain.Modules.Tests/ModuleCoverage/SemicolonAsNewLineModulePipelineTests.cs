@@ -1,4 +1,4 @@
-namespace UniversalToolchain.Dialects.Tests.ModuleCoverage;
+namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 
 [TestFixture]
 public class SemicolonAsNewLineModulePipelineTests

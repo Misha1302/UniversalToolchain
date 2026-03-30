@@ -1,7 +1,7 @@
-namespace UniversalToolchain.Dialects.Tests.ModuleCoverage;
+namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 
 [TestFixture]
-public class ArithmeticModulePipelineTests
+public class ArithmeticModuleIsolationTests
 {
     private static readonly string[] Modules = ModulePipelineTestHelper.FullUniversalModules;
     [Test] public void Arithmetic_Addition_IsCommutativeForConstants(){using var h=new ModulePipelineTestHelper();h.ExecuteEquivalent("2+3","3+2",Modules);}    

@@ -1,5 +1,17 @@
+global using BasicTypesExtensions;
+global using BasicCore.Compilation;
+global using BasicCore.Contracts;
+global using BasicCore.Core;
+global using BasicCore.Execution;
+global using BasicCore.ExecutorWrapper;
+global using BasicCore.LexerWrapper;
+global using BasicCore.ParserWrapper;
+global using BasicCore.TranslatorWrapper;
+global using IntermediateRepresentationAbstractions;
 global using NUnit.Framework;
 global using System;
 global using System.IO;
 global using System.Linq;
+global using System.Threading;
 global using System.Threading.Tasks;
+global using UniversalIntermediateRepresentation;
