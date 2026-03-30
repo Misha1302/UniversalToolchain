@@ -3,6 +3,7 @@
 UniversalToolchain is a modular .NET framework for building extensible language toolchains.
 
 This repository contains:
+
 - **UniversalToolchain** — reusable framework infrastructure.
 - **Wist** — a reference language used to validate and evolve framework architecture.
 
@@ -10,8 +11,10 @@ Wist is intentionally a proving ground, not a limitation of the framework’s sc
 
 ## Why this project exists
 
-Many language projects repeatedly rebuild the same layers: parsing, AST/IR transforms, runtime composition, and execution.
-UniversalToolchain focuses on reusable composition so capabilities can be assembled from modules instead of hardcoded into one implementation path.
+Many language projects repeatedly rebuild the same layers: parsing, AST/IR transforms, runtime composition, and
+execution.
+UniversalToolchain focuses on reusable composition so capabilities can be assembled from modules instead of hardcoded
+into one implementation path.
 
 ## Scope and architecture
 
@@ -22,16 +25,19 @@ Source -> Lexer/Parser -> AST -> Bytecode/IR -> Optimization -> Compiler/Interpr
 ```
 
 Key repository architecture concepts:
+
 - framework-first, composition-based pipeline design,
 - dual execution modes (`compiler`, `interpreter`),
 - dialect-driven runtime composition via `.wistdialect`,
 - CLI and programmatic entry points for validation and integration.
 
-For detailed architecture context (execution model, dialect workflow, and repository entry points), see `docs/architecture-overview.md`.
+For detailed architecture context (execution model, dialect workflow, and repository entry points), see
+`docs/architecture-overview.md`.
 
 ## Architectural priorities
 
 The repository is maintained with these priorities:
+
 - universality first,
 - no hardcoded behavior where composition/abstraction is viable,
 - low coupling to concrete implementations, dialects, and modules,
@@ -42,8 +48,8 @@ The repository is maintained with these priorities:
 
 - .NET SDK `10.0.103`
 - SDK policy in `UniversalToolchain/global.json`:
-  - `rollForward: latestMajor`
-  - `allowPrerelease: true`
+    - `rollForward: latestMajor`
+    - `allowPrerelease: true`
 - Targets: `net10.0`
 
 ## Quick start
@@ -73,12 +79,14 @@ Expected output:
 ## CLI usage (`Wistc`)
 
 Available verbs:
+
 - `run`
 - `repl`
 - `dialect-inspect`
 - `dialect-demo`
 
 Common options:
+
 - `--mode <compiler|interpreter>`
 - `--dialect-file <path>`
 
@@ -132,6 +140,7 @@ See `UniversalToolchain/Example/Program.cs` for a full composition + diagnostics
 ## Dialect examples
 
 Located under `UniversalToolchain/Dialects/examples/wist`:
+
 - `full-default`
 - `full-default-native`
 - `minimal-arithmetic`
@@ -139,7 +148,8 @@ Located under `UniversalToolchain/Dialects/examples/wist`:
 
 ## Security note
 
-The repository does **not** claim hardened sandboxing for untrusted code. Use process/environment isolation for untrusted execution scenarios.
+The repository does **not** claim hardened sandboxing for untrusted code. Use process/environment isolation for
+untrusted execution scenarios.
 See `SECURITY.md` for the trust model.
 
 ## Canonical documentation map

@@ -5,12 +5,12 @@ using UniversalToolchain.Dialects.Wist;
 namespace Tests.Infrastructure;
 
 /// <summary>
-/// Provides deterministic helpers for creating dialect hosts in tests.
+///     Provides deterministic helpers for creating dialect hosts in tests.
 /// </summary>
 public static class DialectTestHostInfrastructure
 {
     /// <summary>
-    /// Creates an execution host from inline dialect text.
+    ///     Creates an execution host from inline dialect text.
     /// </summary>
     public static WistDialectExecutionHost CreateHostFromDialectText(string dialectText)
     {
@@ -32,23 +32,17 @@ public static class DialectTestHostInfrastructure
     }
 
     /// <summary>
-    /// Creates a host configured only for the interpreter backend.
+    ///     Creates a host configured only for the interpreter backend.
     /// </summary>
-    public static WistDialectExecutionHost CreateInterpreterHost(string dialectText)
-    {
-        return CreateHostFromDialectText(EnsureSingleBackend(dialectText, "interpreter"));
-    }
+    public static WistDialectExecutionHost CreateInterpreterHost(string dialectText) => CreateHostFromDialectText(EnsureSingleBackend(dialectText, "interpreter"));
 
     /// <summary>
-    /// Creates a host configured only for the compiler backend.
+    ///     Creates a host configured only for the compiler backend.
     /// </summary>
-    public static WistDialectExecutionHost CreateCompilerHost(string dialectText)
-    {
-        return CreateHostFromDialectText(EnsureSingleBackend(dialectText, "compiler"));
-    }
+    public static WistDialectExecutionHost CreateCompilerHost(string dialectText) => CreateHostFromDialectText(EnsureSingleBackend(dialectText, "compiler"));
 
     /// <summary>
-    /// Executes code in both backends and verifies semantic parity.
+    ///     Executes code in both backends and verifies semantic parity.
     /// </summary>
     public static object? RunInBothBackends(string dialectText, string code)
     {

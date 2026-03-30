@@ -1,21 +1,21 @@
-using UniversalToolchain.Dialects.Integration;
 using Microsoft.Extensions.DependencyInjection;
 using NumbersModule.Core;
+using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
 
 namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 
 internal sealed class ModulePipelineTestHelper : IDisposable
 {
-    private readonly ServiceProvider _provider;
-    private readonly WistDialectExecutionWorkflow _workflow;
-
     public static readonly string[] FullUniversalModules =
     [
         "Whitespaces", "SemicolonAsNewLine", "Comments", "Numbers", "Identifier", "Arithmetic", "Equality",
         "Conditions", "ComparisonConditions", "BooleanConditions", "Loops", "Variables", "Scopes", "Labels",
         "InternalPreprocessorLexemes", "CSharpInterop"
     ];
+
+    private readonly ServiceProvider _provider;
+    private readonly WistDialectExecutionWorkflow _workflow;
 
     public ModulePipelineTestHelper()
     {
@@ -144,4 +144,3 @@ internal sealed class ModulePipelineTestHelper : IDisposable
         }
     }
 }
-

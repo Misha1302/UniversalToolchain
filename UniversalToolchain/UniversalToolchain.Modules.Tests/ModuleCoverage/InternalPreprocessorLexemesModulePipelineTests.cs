@@ -24,7 +24,24 @@ public class InternalPreprocessorLexemesModulePipelineTests
             Assert.Pass();
     }
 
-    [Test] public void InternalPreprocessorLexemes_UserFacingUnsupportedToken_IsRejectedDeterministically(){using var h=new ModulePipelineTestHelper();h.AssertFails("#![set x = 2] 2 + 3", Modules, "preprocessor");}
-    [Test] public void InternalPreprocessorLexemes_EquivalentComposedProgram_PreservesSemanticResult(){using var h=new ModulePipelineTestHelper();h.ExecuteEquivalent("2+3", "2 + 3", Modules);}    
-    [Test] public void InternalPreprocessorLexemes_FailureDiagnostics_AreStableAndUseful(){using var h=new ModulePipelineTestHelper();h.AssertFails("#![oops", Modules, "preprocessor");}
+    [Test]
+    public void InternalPreprocessorLexemes_UserFacingUnsupportedToken_IsRejectedDeterministically()
+    {
+        using var h = new ModulePipelineTestHelper();
+        h.AssertFails("#![set x = 2] 2 + 3", Modules, "preprocessor");
+    }
+
+    [Test]
+    public void InternalPreprocessorLexemes_EquivalentComposedProgram_PreservesSemanticResult()
+    {
+        using var h = new ModulePipelineTestHelper();
+        h.ExecuteEquivalent("2+3", "2 + 3", Modules);
+    }
+
+    [Test]
+    public void InternalPreprocessorLexemes_FailureDiagnostics_AreStableAndUseful()
+    {
+        using var h = new ModulePipelineTestHelper();
+        h.AssertFails("#![oops", Modules, "preprocessor");
+    }
 }

@@ -78,16 +78,16 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
         <Content Include="..\Dialects\examples\wist\minimal-arithmetic-native\dialect.wistdialect">
-          <Link>Dialects\examples\wist\minimal-arithmetic-native\dialect.wistdialect</Link>
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <Link>Dialects\examples\wist\minimal-arithmetic-native\dialect.wistdialect</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
         <Content Include="..\Dialects\examples\wist\minimal-arithmetic-native\program.wist">
-          <Link>Dialects\examples\wist\minimal-arithmetic-native\program.wist</Link>
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <Link>Dialects\examples\wist\minimal-arithmetic-native\program.wist</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
         <Content Include="..\Dialects\examples\wist\minimal-arithmetic-native\README.md">
-          <Link>Dialects\examples\wist\minimal-arithmetic-native\README.md</Link>
-          <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <Link>Dialects\examples\wist\minimal-arithmetic-native\README.md</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
         <Content Include="..\Dialects\examples\wist\minimal-arithmetic\dialect.wistdialect">
             <Link>Dialects\examples\wist\minimal-arithmetic\dialect.wistdialect</Link>

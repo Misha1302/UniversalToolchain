@@ -4,9 +4,9 @@
 
 - Use .NET SDK `10.0.103` (see `UniversalToolchain/global.json`).
 - Read canonical repo docs:
-  - `readme.md` (project overview and scope)
-  - `PROJECT_RULES.md` (coding standards)
-  - `AGENTS.md` when making AI-assisted or agent-driven changes
+    - `readme.md` (project overview and scope)
+    - `PROJECT_RULES.md` (coding standards)
+    - `AGENTS.md` when making AI-assisted or agent-driven changes
 
 ## Build and test
 

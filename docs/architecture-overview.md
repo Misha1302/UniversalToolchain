@@ -10,25 +10,28 @@ Wist is the reference language in this repository and serves as a proving ground
 The current architecture is organized into three layers:
 
 1. **Core runtime pipeline**
-   - Shared compilation/execution infrastructure (frontend, translation, optimization, and backend execution).
+    - Shared compilation/execution infrastructure (frontend, translation, optimization, and backend execution).
 2. **Dialect subsystem**
-   - `UniversalToolchain.Dialects.*` projects that parse, validate, and resolve dialect definitions.
+    - `UniversalToolchain.Dialects.*` projects that parse, validate, and resolve dialect definitions.
 3. **Integration layer**
-   - `UniversalToolchain.Dialects.Wist`, which maps dialect composition results into executable Wist hosts.
+    - `UniversalToolchain.Dialects.Wist`, which maps dialect composition results into executable Wist hosts.
 
 ## Execution model
 
 Execution supports two modes:
+
 - `compiler`
 - `interpreter`
 
 Runtime composition paths:
+
 - **Default composition**: uses built-in/default service registrations.
 - **Dialect-based composition**: uses a `.wistdialect` file to resolve runtime composition before execution.
 
 ## Dialect workflow
 
 Typical dialect execution flow:
+
 1. Parse dialect source.
 2. Build semantic plan.
 3. Resolve runtime composition descriptors.

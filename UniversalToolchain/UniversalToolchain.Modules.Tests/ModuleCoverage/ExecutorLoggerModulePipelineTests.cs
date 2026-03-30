@@ -1,3 +1,5 @@
+using ExecutorLoggerModule;
+
 namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 
 [TestFixture]
@@ -16,7 +18,7 @@ public class ExecutorLoggerModulePipelineTests
         var path = Path.Combine(TestContext.CurrentContext.WorkDirectory, "logs.txt");
         if (File.Exists(path)) File.Delete(path);
 
-        var logger = new ExecutorLoggerModule.ExecutorDebugLoggerImpl(path);
+        var logger = new ExecutorDebugLoggerImpl(path);
         logger.ProcessText("2+3");
         logger.ProcessLexemes([]);
 

@@ -5,8 +5,6 @@ namespace Tests.Cli;
 [TestFixture]
 public class WistcCliEndToEndTests
 {
-    private static string _cliDllPath = string.Empty;
-
     [OneTimeSetUp]
     public void BuildCli()
     {
@@ -18,6 +16,8 @@ public class WistcCliEndToEndTests
         _cliDllPath = ResolveCliDllPath(repoRoot);
         Assert.That(File.Exists(_cliDllPath), Is.True, $"CLI assembly not found at '{_cliDllPath}'.");
     }
+
+    private static string _cliDllPath = string.Empty;
 
     [Test]
     [TestCase("compiler")]
@@ -143,10 +143,7 @@ public class WistcCliEndToEndTests
         });
     }
 
-    private static CliResult RunCli(string args)
-    {
-        return TestContractsInfrastructure.RunProcess("dotnet", $"\"{_cliDllPath}\" {args}", Path.GetDirectoryName(_cliDllPath)!, 30000);
-    }
+    private static CliResult RunCli(string args) => TestContractsInfrastructure.RunProcess("dotnet", $"\"{_cliDllPath}\" {args}", Path.GetDirectoryName(_cliDllPath)!, 30000);
 
     private static string WriteMinimalDialect(string root, string fileName)
     {
@@ -166,8 +163,5 @@ public class WistcCliEndToEndTests
             .FirstOrDefault() ?? Path.Combine(binDirectory, "net10.0", "Wistc.dll");
     }
 
-    private static string GetRepoRoot()
-    {
-        return Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", ".."));
-    }
+    private static string GetRepoRoot() => Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", ".."));
 }
