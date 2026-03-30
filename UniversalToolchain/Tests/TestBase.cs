@@ -3,6 +3,7 @@ using UniversalToolchain.Dialects.Wist;
 namespace Tests;
 
 [TestFixture]
+[Obsolete("TestBase is legacy and allowed only for smoke/parity-smoke scenarios. Use Tests.Infrastructure.DialectTestHostInfrastructure for new module isolation tests.")]
 public abstract class TestBase
 {
     protected const int CoresCount = 2;
