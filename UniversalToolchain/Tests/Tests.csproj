@@ -54,15 +54,6 @@
 
 
     <ItemGroup>
-        <Compile Remove="**/*.cs"/>
-        <Compile Include="GlobalUsings.cs"/>
-        <Compile Include="TestInfrastructure/TestContractsInfrastructure.cs"/>
-        <Compile Include="Cli/WistcCliContractsTests.cs"/>
-        <Compile Include="Architecture/DeletedLegacySurfaceTests.cs"/>
-        <Compile Include="Stress/RuntimeStressContractsTests.cs"/>
-    </ItemGroup>
-
-    <ItemGroup>
         <Using Include="NUnit.Framework"/>
     </ItemGroup>
 </Project>
