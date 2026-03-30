@@ -6,7 +6,7 @@
 - Read canonical repo docs:
   - `readme.md` (project overview and scope)
   - `PROJECT_RULES.md` (coding standards)
-  - `AGENTS.md` (AI-agent change strategy and architectural guardrails)
+  - `AGENTS.md` when making AI-assisted or agent-driven changes
 
 ## Build and test
 

@@ -11,5 +11,6 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - Consolidated repository-level documentation around explicit canonical roles (`readme.md`, `PROJECT_RULES.md`, `CONTRIBUTING.md`, `AGENTS.md`).
 - Updated root documentation to reinforce framework-first positioning: UniversalToolchain as reusable architecture, Wist as reference language.
+- Added `docs/architecture-overview.md` to preserve concrete architecture details (execution model, dialect workflow, entry points, and risk boundaries) after consolidation.
 - Removed duplicate project-overview content from legacy `project info.md` and merged key context into canonical docs.
 - Added root-level `AGENTS.md` with strict AI-agent instructions focused on universality, low coupling, and anti-legacy change strategy.

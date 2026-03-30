@@ -27,6 +27,8 @@ Key repository architecture concepts:
 - dialect-driven runtime composition via `.wistdialect`,
 - CLI and programmatic entry points for validation and integration.
 
+For detailed architecture context (execution model, dialect workflow, and repository entry points), see `docs/architecture-overview.md`.
+
 ## Architectural priorities
 
 The repository is maintained with these priorities:
@@ -92,6 +94,19 @@ dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2
 dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- repl --mode compiler
 ```
 
+## Dialect usage
+
+```bash
+# Run code with a dialect definition
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/full-default/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/full-default/program.wist --mode interpreter
+
+# Inspect a dialect file
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- dialect-inspect --file UniversalToolchain/Dialects/examples/wist/full-default/dialect.wistdialect
+
+# Run the dialect demo workflow
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- dialect-demo --file UniversalToolchain/Dialects/examples/wist/full-default/dialect.wistdialect
+```
+
 ## Programmatic usage
 
 ```csharp
@@ -129,6 +144,7 @@ See `SECURITY.md` for the trust model.
 ## Canonical documentation map
 
 - Project overview: `readme.md`
+- Architecture overview: `docs/architecture-overview.md`
 - Coding standards: `PROJECT_RULES.md`
 - Contribution workflow: `CONTRIBUTING.md`
 - AI agent instructions: `AGENTS.md`
