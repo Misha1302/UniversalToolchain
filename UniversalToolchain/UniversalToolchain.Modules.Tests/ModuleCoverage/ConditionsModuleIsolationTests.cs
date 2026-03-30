@@ -1,7 +1,7 @@
-namespace UniversalToolchain.Dialects.Tests.ModuleCoverage;
+namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 
 [TestFixture]
-public class ConditionsModulePipelineTests
+public class ConditionsModuleIsolationTests
 {
     private static readonly string[] Modules = ModulePipelineTestHelper.FullUniversalModules;
     [Test] public void Conditions_IfTrue_ReturnsThenBranch(){using var h=new ModulePipelineTestHelper();var r=h.ExecuteBoth("if 2==2 (1) else (2)",Modules);ModulePipelineTestHelper.AssertParity(r.Compiler,r.Interpreter);Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler),Is.EqualTo(1));}

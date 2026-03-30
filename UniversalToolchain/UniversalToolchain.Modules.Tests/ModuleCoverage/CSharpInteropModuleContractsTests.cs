@@ -1,7 +1,7 @@
-namespace UniversalToolchain.Dialects.Tests.ModuleCoverage;
+namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 
 [TestFixture]
-public class CSharpInteropModulePipelineTests
+public class CSharpInteropModuleContractsTests
 {
     private static readonly string[] Modules = ModulePipelineTestHelper.FullUniversalModules;
     [Test] public void CSharpInterop_StaticMethodCall_ReturnsExpectedValue(){using var h=new ModulePipelineTestHelper();var r=h.ExecuteBoth("NumbersModule.Core.RealNumberImpl.Add(2,5)",Modules);ModulePipelineTestHelper.AssertParity(r.Compiler,r.Interpreter);Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler),Is.EqualTo(7));}

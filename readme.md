@@ -54,6 +54,7 @@ From repository root:
 dotnet restore UniversalToolchain/Wist.sln
 dotnet build UniversalToolchain/Wist.sln -c Release --no-restore
 dotnet test UniversalToolchain/Tests/Tests.csproj -c Release --no-build
+dotnet test UniversalToolchain/UniversalToolchain.Modules.Tests/UniversalToolchain.Modules.Tests.csproj -c Release --no-build
 dotnet test UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolchain.Dialects.Tests.csproj -c Release --no-build
 ```
 

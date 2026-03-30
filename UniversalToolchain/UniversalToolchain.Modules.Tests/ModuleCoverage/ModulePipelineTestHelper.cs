@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using NumbersModule.Core;
 using UniversalToolchain.Dialects.Wist;
 
-namespace UniversalToolchain.Dialects.Tests.ModuleCoverage;
+namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 
 internal sealed class ModulePipelineTestHelper : IDisposable
 {
