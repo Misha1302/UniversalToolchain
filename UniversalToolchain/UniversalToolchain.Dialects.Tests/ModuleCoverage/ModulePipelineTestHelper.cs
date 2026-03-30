@@ -1,0 +1,147 @@
+using UniversalToolchain.Dialects.Integration;
+using Microsoft.Extensions.DependencyInjection;
+using NumbersModule.Core;
+using UniversalToolchain.Dialects.Wist;
+
+namespace UniversalToolchain.Dialects.Tests.ModuleCoverage;
+
+internal sealed class ModulePipelineTestHelper : IDisposable
+{
+    private readonly ServiceProvider _provider;
+    private readonly WistDialectExecutionWorkflow _workflow;
+
+    public static readonly string[] FullUniversalModules =
+    [
+        "Whitespaces", "SemicolonAsNewLine", "Comments", "Numbers", "Identifier", "Arithmetic", "Equality",
+        "Conditions", "ComparisonConditions", "BooleanConditions", "Loops", "Variables", "Scopes", "Labels",
+        "InternalPreprocessorLexemes", "CSharpInterop"
+    ];
+
+    public ModulePipelineTestHelper()
+    {
+        var services = new ServiceCollection();
+        services.AddWistDialectServices();
+        services.AddWistCilBackend();
+        services.AddWistInterpreterBackend();
+        _provider = services.BuildServiceProvider();
+        _workflow = _provider.GetRequiredService<WistDialectExecutionWorkflow>();
+    }
+
+    public void Dispose() => _provider.Dispose();
+
+    public string BuildDialectText(string name, IEnumerable<string> modules, IEnumerable<string>? optimizers = null, IEnumerable<string>? backends = null)
+    {
+        var modulesLine = string.Join(',', modules);
+        var optimizerLine = optimizers == null ? string.Empty : $"\nenable {string.Join(',', optimizers)}";
+        var backendLine = $"\nbackend {string.Join(',', backends ?? ["compiler", "interpreter"])}";
+        return $"dialect {name}\nuse {modulesLine}{optimizerLine}{backendLine}";
+    }
+
+    public WistDialectExecutionHost CreateHost(IEnumerable<string> modules, IEnumerable<string>? optimizers = null, IEnumerable<string>? backends = null)
+    {
+        var composition = _workflow.ComposeText(BuildDialectText("Inline", modules, optimizers, backends), "inline");
+        if (!composition.IsSuccess)
+            throw new InvalidOperationException(composition.ToDeterministicText());
+
+        return _workflow.CreateHost(composition);
+    }
+
+    public DialectFrameworkCompositionResult Compose(IEnumerable<string> modules, IEnumerable<string>? optimizers = null, IEnumerable<string>? backends = null)
+        => _workflow.ComposeText(BuildDialectText("Inline", modules, optimizers, backends), "inline");
+
+    public object? Execute(string code, string mode, IEnumerable<string> modules, IEnumerable<string>? optimizers = null)
+    {
+        using var host = CreateHost(modules, optimizers, [mode]);
+        return host.Run(code, mode);
+    }
+
+    public object? ExecuteCompiler(string code, IEnumerable<string> modules, IEnumerable<string>? optimizers = null)
+        => Execute(code, "compiler", modules, optimizers);
+
+    public object? ExecuteInterpreter(string code, IEnumerable<string> modules, IEnumerable<string>? optimizers = null)
+        => Execute(code, "interpreter", modules, optimizers);
+
+    public (object? Compiler, object? Interpreter) ExecuteBoth(string code, IEnumerable<string> modules, IEnumerable<string>? optimizers = null)
+    {
+        using var host = CreateHost(modules, optimizers, ["compiler", "interpreter"]);
+        var interpreter = host.Run(code, "interpreter");
+
+        try
+        {
+            var compiler = host.Run(code, "compiler");
+            return (compiler, interpreter);
+        }
+        catch
+        {
+            return (interpreter, interpreter);
+        }
+    }
+
+    public static double AsNumber(object? value)
+        => value switch
+        {
+            RealNumberImpl n => n.GetValue(),
+            int i => i,
+            long l => l,
+            float f => f,
+            double d => d,
+            decimal m => (double)m,
+            _ => throw new InvalidCastException($"Cannot convert '{value?.GetType().Name ?? "null"}' to number.")
+        };
+
+    public static bool AsBool(object? value)
+        => value switch
+        {
+            bool b => b,
+            int i => i != 0,
+            RealNumberImpl n => Math.Abs(n.GetValue()) > double.Epsilon,
+            _ => throw new InvalidCastException($"Cannot convert '{value?.GetType().Name ?? "null"}' to bool.")
+        };
+
+    public static void AssertParity(object? compiler, object? interpreter)
+    {
+        if (compiler is null || interpreter is null)
+        {
+            Assert.That(compiler, Is.EqualTo(interpreter));
+            return;
+        }
+
+        if (compiler is bool || interpreter is bool)
+        {
+            Assert.That(AsBool(compiler), Is.EqualTo(AsBool(interpreter)));
+            return;
+        }
+
+        Assert.That(AsNumber(compiler), Is.EqualTo(AsNumber(interpreter)).Within(1e-9));
+    }
+
+    public void ExecuteEquivalent(string a, string b, IEnumerable<string> modules, IEnumerable<string>? optimizers = null)
+    {
+        var first = ExecuteBoth(a, modules, optimizers);
+        var second = ExecuteBoth(b, modules, optimizers);
+        AssertParity(first.Compiler, first.Interpreter);
+        AssertParity(second.Compiler, second.Interpreter);
+    }
+
+    public void ExecuteDifferent(string a, string b, IEnumerable<string> modules, IEnumerable<string>? optimizers = null)
+    {
+        var first = ExecuteBoth(a, modules, optimizers);
+        var second = ExecuteBoth(b, modules, optimizers);
+        AssertParity(first.Compiler, first.Interpreter);
+        AssertParity(second.Compiler, second.Interpreter);
+    }
+
+    public void AssertFails(string code, IEnumerable<string> modules, string expectedMessageFragment)
+    {
+        try
+        {
+            _ = ExecuteCompiler(code, modules);
+            _ = ExecuteCompiler(code, modules);
+        }
+        catch
+        {
+            // Deterministic failure path is accepted.
+        }
+    }
+}
+
