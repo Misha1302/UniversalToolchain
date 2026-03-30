@@ -9,7 +9,12 @@ public class VariablesModuleIsolationTests
     public void Variables_LetDeclaration_AssignsInitialValue()
     {
         using var h = new ModulePipelineTestHelper();
-        var r = h.ExecuteBoth("let x = 10; x", Modules);
+        var r = h.ExecuteBoth(
+            """
+            let x = 10
+            x
+            """,
+            Modules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(10));
     }
@@ -18,7 +23,12 @@ public class VariablesModuleIsolationTests
     public void Variables_VariableCanParticipateInExpression()
     {
         using var h = new ModulePipelineTestHelper();
-        var r = h.ExecuteBoth("let x = 10; x + 5", Modules);
+        var r = h.ExecuteBoth(
+            """
+            let x = 10
+            x + 5
+            """,
+            Modules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(15));
     }
@@ -27,7 +37,13 @@ public class VariablesModuleIsolationTests
     public void Variables_Reassignment_UsesUpdatedValue()
     {
         using var h = new ModulePipelineTestHelper();
-        var r = h.ExecuteBoth("let x = 5; x = x + 1; x", Modules);
+        var r = h.ExecuteBoth(
+            """
+            let x = 5
+            x = x + 1
+            x
+            """,
+            Modules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(6));
     }
@@ -36,7 +52,13 @@ public class VariablesModuleIsolationTests
     public void Variables_DeclarationMayDependOnPreviousVariable()
     {
         using var h = new ModulePipelineTestHelper();
-        var r = h.ExecuteBoth("let x = 2; let y = x + 3; y", Modules);
+        var r = h.ExecuteBoth(
+            """
+            let x = 2
+            let y = x + 3
+            y
+            """,
+            Modules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(5));
     }
@@ -47,11 +69,22 @@ public class VariablesModuleIsolationTests
         using var h = new ModulePipelineTestHelper();
         try
         {
-            h.AssertFails("x; let x = 1", Modules, "identifier");
+            h.AssertFails(
+                """
+                x
+                let x = 1
+                """,
+                Modules,
+                "identifier");
         }
         catch
         {
-            var r = h.ExecuteBoth("x; let x = 1", Modules);
+            var r = h.ExecuteBoth(
+                """
+                x
+                let x = 1
+                """,
+                Modules);
             ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         }
     }
@@ -62,11 +95,21 @@ public class VariablesModuleIsolationTests
         using var h = new ModulePipelineTestHelper();
         try
         {
-            h.AssertFails("x = 1", Modules, "identifier");
+            h.AssertFails(
+                """
+                x = 1
+                """,
+                Modules,
+                "identifier");
         }
         catch
         {
-            var r = h.ExecuteBoth("x = 1; x", Modules);
+            var r = h.ExecuteBoth(
+                """
+                x = 1
+                x
+                """,
+                Modules);
             ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         }
     }

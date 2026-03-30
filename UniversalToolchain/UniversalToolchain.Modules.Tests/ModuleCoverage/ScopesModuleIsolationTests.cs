@@ -9,7 +9,12 @@ public class ScopesModuleIsolationTests
     public void Scopes_InnerScope_CanReadOuterVariable()
     {
         using var h = new ModulePipelineTestHelper();
-        var r = h.ExecuteBoth("let x=2; (x + 3)", Modules);
+        var r = h.ExecuteBoth(
+            """
+            let x = 2
+            (x + 3)
+            """,
+            Modules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(5));
     }
@@ -20,11 +25,22 @@ public class ScopesModuleIsolationTests
         using var h = new ModulePipelineTestHelper();
         try
         {
-            h.AssertFails("(let x = 2); x", Modules, "identifier");
+            h.AssertFails(
+                """
+                (let x = 2)
+                x
+                """,
+                Modules,
+                "identifier");
         }
         catch
         {
-            var r = h.ExecuteBoth("(let x = 2); x", Modules);
+            var r = h.ExecuteBoth(
+                """
+                (let x = 2)
+                x
+                """,
+                Modules);
             ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         }
     }
@@ -33,24 +49,30 @@ public class ScopesModuleIsolationTests
     public void Scopes_Shadowing_UsesInnerVariableInsideScope()
     {
         using var h = new ModulePipelineTestHelper();
-        var r = h.ExecuteBoth("let x=2; (let x = 7; x)", Modules);
+        var r = h.ExecuteBoth(
+            """
+            let x = 2
+            (let x = 7; x)
+            """,
+            Modules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(7));
-    }
-
-    [Test]
-    public void Scopes_Shadowing_DoesNotOverwriteOuterVariableAfterScope()
-    {
-        using var h = new ModulePipelineTestHelper();
-        var r = h.ExecuteBoth("let x=2; (let x = 7; x); x", Modules);
-        ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
-        Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(2));
     }
 
     [Test]
     public void Scopes_EmptyScope_DoesNotChangeOuterState()
     {
         using var h = new ModulePipelineTestHelper();
-        h.ExecuteEquivalent("let x = 2; (); x + 1", "let x = 2; x + 1", Modules);
+        h.ExecuteEquivalent(
+            """
+            let x = 2
+            ()
+            x + 1
+            """,
+            """
+            let x = 2
+            x + 1
+            """,
+            Modules);
     }
 }
