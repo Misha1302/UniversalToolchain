@@ -179,12 +179,13 @@ public class LocalVariablesOptimizer : IIRProcessingModule
         }
 
         var branchTargets = CollectBranchTargets(instructions, labelToIndex);
+        var controlFlowJoinPoints = CollectControlFlowJoinPoints(instructions, labelToIndex);
         var hasBackwardBranches = HasBackwardBranch(instructions, labelToIndex);
 
         var iIndex = 0;
         while (iIndex < instructions.Count - 1)
         {
-            if (!hasBackwardBranches && CanApplyRule3(instructions, iIndex, branchTargets, out var replacement))
+            if (!hasBackwardBranches && CanApplyRule3(instructions, iIndex, branchTargets, controlFlowJoinPoints, out var replacement))
             {
                 instructions[iIndex] = replacement;
                 instructions.RemoveRange(iIndex + 1, 2);
@@ -192,7 +193,7 @@ public class LocalVariablesOptimizer : IIRProcessingModule
                 continue;
             }
 
-            if (!hasBackwardBranches && CanApplyRule2(instructions, iIndex, branchTargets))
+            if (!hasBackwardBranches && CanApplyRule2(instructions, iIndex, branchTargets, controlFlowJoinPoints))
             {
                 instructions.RemoveRange(iIndex, 2);
                 changed = true;
@@ -214,7 +215,7 @@ public class LocalVariablesOptimizer : IIRProcessingModule
 
     private static bool CanApplyRule1(IReadOnlyList<Instruction> instructions, int start, HashSet<int> branchTargets)
     {
-        if (!CanRewriteSlice(instructions, start, 2, branchTargets))
+        if (!CanRewriteSlice(instructions, start, 2, branchTargets, []))
             return false;
 
         return TryGetLoadLocalKey(instructions[start], out var loadKey) &&
@@ -222,9 +223,9 @@ public class LocalVariablesOptimizer : IIRProcessingModule
                loadKey == storeKey;
     }
 
-    private static bool CanApplyRule2(IReadOnlyList<Instruction> instructions, int start, HashSet<int> branchTargets)
+    private static bool CanApplyRule2(IReadOnlyList<Instruction> instructions, int start, HashSet<int> branchTargets, HashSet<int> controlFlowJoinPoints)
     {
-        if (!CanRewriteSlice(instructions, start, 2, branchTargets))
+        if (!CanRewriteSlice(instructions, start, 2, branchTargets, controlFlowJoinPoints))
             return false;
 
         if (!TryGetStoreLocalKey(instructions[start], out var localKey) ||
@@ -232,16 +233,16 @@ public class LocalVariablesOptimizer : IIRProcessingModule
             loadedKey != localKey)
             return false;
 
-        return !HasLoadBeforeBoundary(instructions, start + 2, localKey);
+        return !HasLoadBeforeBoundary(instructions, start + 2, localKey, controlFlowJoinPoints);
     }
 
-    private static bool CanApplyRule3(IReadOnlyList<Instruction> instructions, int start, HashSet<int> branchTargets, out Instruction replacement)
+    private static bool CanApplyRule3(IReadOnlyList<Instruction> instructions, int start, HashSet<int> branchTargets, HashSet<int> controlFlowJoinPoints, out Instruction replacement)
     {
         replacement = null!;
         if (start + 2 >= instructions.Count)
             return false;
 
-        if (!CanRewriteSlice(instructions, start, 3, branchTargets))
+        if (!CanRewriteSlice(instructions, start, 3, branchTargets, controlFlowJoinPoints))
             return false;
 
         if (!TryGetStoreLocalKey(instructions[start], out var localKey) ||
@@ -250,14 +251,14 @@ public class LocalVariablesOptimizer : IIRProcessingModule
             !TryGetStoreLocalKey(instructions[start + 2], out _))
             return false;
 
-        if (HasLoadBeforeBoundary(instructions, start + 3, localKey))
+        if (HasLoadBeforeBoundary(instructions, start + 3, localKey, controlFlowJoinPoints))
             return false;
 
         replacement = instructions[start + 2];
         return true;
     }
 
-    private static bool CanRewriteSlice(IReadOnlyList<Instruction> instructions, int start, int length, HashSet<int> branchTargets)
+    private static bool CanRewriteSlice(IReadOnlyList<Instruction> instructions, int start, int length, HashSet<int> branchTargets, HashSet<int> controlFlowJoinPoints)
     {
         if (start + length > instructions.Count)
             return false;
@@ -266,17 +267,26 @@ public class LocalVariablesOptimizer : IIRProcessingModule
         {
             if (branchTargets.Contains(i))
                 return false;
+            if (controlFlowJoinPoints.Contains(i))
+                return false;
             if (i > 0 && instructions[i - 1].UOpCode == UOpCode.Label)
                 return false;
+            if (IsScopeOrBranchSensitiveInstruction(instructions[i]))
+                return false;
         }
+
+        if (start + length < instructions.Count && controlFlowJoinPoints.Contains(start + length))
+            return false;
 
         return true;
     }
 
-    private static bool HasLoadBeforeBoundary(IReadOnlyList<Instruction> instructions, int start, string localKey)
+    private static bool HasLoadBeforeBoundary(IReadOnlyList<Instruction> instructions, int start, string localKey, HashSet<int> controlFlowJoinPoints)
     {
         for (var i = start; i < instructions.Count; i++)
         {
+            if (controlFlowJoinPoints.Contains(i))
+                return true;
             if (IsBlockBoundary(instructions[i]))
                 return false;
             if (TryGetLoadLocalKey(instructions[i], out var key) && key == localKey)
@@ -293,7 +303,25 @@ public class LocalVariablesOptimizer : IIRProcessingModule
         instruction.UOpCode == UOpCode.JmpIfNot ||
         IsIntrinsicName(instruction, "ret") ||
         IsIntrinsicName(instruction, "throw") ||
+        IsScopeOrBranchSensitiveInstruction(instruction) ||
         IsIntrinsicBranch(instruction);
+
+    private static bool IsScopeOrBranchSensitiveInstruction(Instruction instruction)
+    {
+        if (instruction.UOpCode != UOpCode.Intrinsic || instruction.Operands.Count == 0 || instruction.Operands[0] is not string name)
+            return false;
+
+        return name == "begin_scope" ||
+               name == "end_scope" ||
+               name == "enter_scope" ||
+               name == "exit_scope" ||
+               name == "leave_scope" ||
+               name == "try" ||
+               name == "catch" ||
+               name == "finally" ||
+               name == "endfinally" ||
+               name == "rethrow";
+    }
 
     private static bool IsIntrinsicBranch(Instruction instruction)
     {
@@ -339,6 +367,39 @@ public class LocalVariablesOptimizer : IIRProcessingModule
 
         return false;
     }
+
+    private static HashSet<int> CollectControlFlowJoinPoints(IReadOnlyList<Instruction> instructions, IReadOnlyDictionary<object, int> labelToIndex)
+    {
+        var incomingEdges = new int[instructions.Count];
+        for (var i = 0; i < instructions.Count; i++)
+        {
+            if (i + 1 < instructions.Count && !IsUnconditionalTransfer(instructions[i]))
+                incomingEdges[i + 1]++;
+
+            foreach (var target in ExtractBranchTargets(instructions[i]))
+            {
+                if (labelToIndex.TryGetValue(target, out var targetIndex))
+                    incomingEdges[targetIndex]++;
+            }
+        }
+
+        var joinPoints = new HashSet<int>();
+        for (var i = 0; i < incomingEdges.Length; i++)
+        {
+            if (incomingEdges[i] > 1)
+                joinPoints.Add(i);
+        }
+
+        return joinPoints;
+    }
+
+    private static bool IsUnconditionalTransfer(Instruction instruction) =>
+        instruction.UOpCode == UOpCode.Jmp ||
+        IsIntrinsicName(instruction, "ret") ||
+        IsIntrinsicName(instruction, "throw") ||
+        IsIntrinsicName(instruction, "leave") ||
+        IsIntrinsicName(instruction, "rethrow") ||
+        IsIntrinsicName(instruction, "endfinally");
 
     private static IEnumerable<object> ExtractBranchTargets(Instruction instruction)
     {

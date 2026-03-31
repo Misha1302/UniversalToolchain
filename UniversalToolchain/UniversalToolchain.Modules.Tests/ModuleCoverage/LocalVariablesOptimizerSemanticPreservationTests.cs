@@ -54,6 +54,27 @@ public class LocalVariablesOptimizerSemanticPreservationTests
     public void LocalVariablesOptimizer_ScopeAndLabelsScenario_RemainsSemanticallyStable()
     {
         using var h = new ModulePipelineTestHelper();
-        AssertSameWithWithoutOptimizer(h, "let x=0; (let x=10; x); x=x+3; x");
+        AssertSameWithWithoutOptimizer(h, "let x=0; if 1==1 (let x=10; x=10) else (x=x); x=x+3; x");
+    }
+
+    [Test]
+    public void LocalVariablesOptimizer_ShadowingWithLabel_RemainsSemanticallyStable()
+    {
+        using var h = new ModulePipelineTestHelper();
+        AssertSameWithWithoutOptimizer(h, "let x=0; @next: if x==0 (let x=7; x=8) else (x=x+1); if x<2 goto @next; x");
+    }
+
+    [Test]
+    public void LocalVariablesOptimizer_ForwardJumpWithLocalWriteRead_RemainsSemanticallyStable()
+    {
+        using var h = new ModulePipelineTestHelper();
+        AssertSameWithWithoutOptimizer(h, "let x=1; goto @skip; x=9; @skip: x=x+2; x");
+    }
+
+    [Test]
+    public void LocalVariablesOptimizer_NestedScopeWithPostScopeAssignment_RemainsSemanticallyStable()
+    {
+        using var h = new ModulePipelineTestHelper();
+        AssertSameWithWithoutOptimizer(h, "let x=1; if 1==1 (let y=x+2; x=x+y) else (x=x); x=x+5; x");
     }
 }
