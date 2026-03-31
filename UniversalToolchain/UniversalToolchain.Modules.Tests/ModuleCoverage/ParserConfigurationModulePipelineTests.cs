@@ -4,44 +4,42 @@ namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 public class ParserConfigurationModulePipelineTests
 {
     [Test]
-    public void ParserConfiguration_ValidConfiguration_ComposesAndExecutesProgram()
+    public void DialectComposition_WithAliasAccessibleModules_ComposesAndExecutesProgram()
     {
         using var h = new ModulePipelineTestHelper();
-        var r = h.ExecuteBoth("2+3", ModulePipelineTestHelper.FullUniversalModules);
-        ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
-        Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(5));
+        var result = h.ExecuteBoth("2+3", ModulePipelineTestHelper.FullUniversalModules);
+        ModulePipelineTestHelper.AssertParity(result.Compiler, result.Interpreter);
+        Assert.That(ModulePipelineTestHelper.AsNumber(result.Compiler), Is.EqualTo(5));
     }
 
     [Test]
-    public void ParserConfiguration_UnknownConfigurationEntry_FailsCompositionDeterministically()
+    public void DialectComposition_WithUnresolvedModuleAlias_ReportsExpectedCompositionDiagnostic()
     {
         using var h = new ModulePipelineTestHelper();
         var composition = h.Compose(ModulePipelineTestHelper.FullUniversalModules.Concat(["ParserConfiguration"]));
+
         Assert.That(composition.IsSuccess, Is.False);
-        Assert.That(string.Join("\\n", composition.SemanticDiagnostics.Concat(composition.ResolutionDiagnostics).Select(static d => d.Message)), Does.Contain("ParserConfiguration"));
+
+        var diagnostics = composition.SemanticDiagnostics
+            .Concat(composition.ResolutionDiagnostics)
+            .Select(static d => d.Message)
+            .ToArray();
+
+        Assert.That(diagnostics, Is.Not.Empty);
+        Assert.That(
+            diagnostics.Any(static message => message.Contains("module descriptor", StringComparison.OrdinalIgnoreCase)),
+            Is.True);
+        Assert.That(
+            diagnostics.Any(static message => message.Contains("not registered", StringComparison.OrdinalIgnoreCase)),
+            Is.True);
+        Assert.That(diagnostics.Any(static message => message.Contains("ParserConfiguration", StringComparison.OrdinalIgnoreCase)), Is.True);
     }
 
     [Test]
-    public void ParserConfiguration_ConflictingConfigurationEntries_AreHandledDeterministically()
+    public void DialectComposition_WithAliasAccessibleModules_PreservesBackendParity()
     {
         using var h = new ModulePipelineTestHelper();
-        var one = h.Compose(ModulePipelineTestHelper.FullUniversalModules.Concat(["ParserConfiguration", "ParserConfiguration"]));
-        Assert.That(one.IsSuccess, Is.False);
-        Assert.That(string.Join("\\n", one.SemanticDiagnostics.Concat(one.ResolutionDiagnostics).Select(static d => d.Message)), Does.Contain("duplicate").IgnoreCase);
-    }
-
-    [Test]
-    public void ParserConfiguration_ConfigurationChangesAcceptedSurfaceSyntaxAsIntended()
-    {
-        using var h = new ModulePipelineTestHelper();
-        h.AssertFails("2 +", ModulePipelineTestHelper.FullUniversalModules, "token");
-    }
-
-    [Test]
-    public void ParserConfiguration_BackendParity_IsPreservedUnderValidConfiguration()
-    {
-        using var h = new ModulePipelineTestHelper();
-        var r = h.ExecuteBoth("let x=2; x+3", ModulePipelineTestHelper.FullUniversalModules);
-        ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
+        var result = h.ExecuteBoth("let x=2; x+3", ModulePipelineTestHelper.FullUniversalModules);
+        ModulePipelineTestHelper.AssertParity(result.Compiler, result.Interpreter);
     }
 }

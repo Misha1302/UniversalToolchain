@@ -22,6 +22,7 @@
         <ProjectReference Include="..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj"/>
         <ProjectReference Include="..\NumbersModule\NumbersModule.csproj"/>
         <ProjectReference Include="..\ExecutorLoggerModule\ExecutorLoggerModule.csproj"/>
+        <ProjectReference Include="..\ParserConfigurationModule\ParserConfigurationModule.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
