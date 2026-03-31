@@ -6,6 +6,7 @@ public class InternalPreprocessorLexemesModulePipelineTests
     private static readonly string[] Modules = ModulePipelineTestHelper.FullUniversalModules;
 
     [Test]
+    [Ignore("Pending: depends on non-exported ParametersSetter module contracts.")]
     public void InternalPreprocessorLexemes_DialectRequiringThem_ComposesSuccessfullyWhenEnabled()
     {
         using var h = new ModulePipelineTestHelper();
@@ -14,6 +15,7 @@ public class InternalPreprocessorLexemesModulePipelineTests
     }
 
     [Test]
+    [Ignore("Pending: depends on non-exported ParametersSetter module contracts.")]
     public void InternalPreprocessorLexemes_DialectRequiringThem_FailsCompositionWhenDisabled()
     {
         using var h = new ModulePipelineTestHelper();

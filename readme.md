@@ -146,6 +146,12 @@ Located under `UniversalToolchain/Dialects/examples/wist`:
 - `minimal-arithmetic`
 - `restricted-sandbox` *(composition-constrained profile, not OS-level sandboxing)*
 
+## Module coverage notes
+
+- `ParametersSetter` is currently **not exported** into dialect composition.
+- Coverage tests for `ParametersSetter` are intentionally marked pending until its parser contracts and runtime
+  parameter-binding semantics are implemented.
+
 ## Security note
 
 The repository does **not** claim hardened sandboxing for untrusted code. Use process/environment isolation for
