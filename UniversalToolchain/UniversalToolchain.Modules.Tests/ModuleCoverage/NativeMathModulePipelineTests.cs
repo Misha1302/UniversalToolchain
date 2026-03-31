@@ -33,6 +33,15 @@ public class NativeMathModulePipelineTests
     }
 
     [Test]
+    public void NativeMath_UnaryMinusWithWhitespace_ProducesExpectedValue()
+    {
+        using var h = new ModulePipelineTestHelper();
+        var r = h.ExecuteBoth("- 3 + 1", NativeModules);
+        ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
+        Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(-2));
+    }
+
+    [Test]
     public void NativeMath_DivisionByZero_IsHandledDeterministically()
     {
         using var h = new ModulePipelineTestHelper();
