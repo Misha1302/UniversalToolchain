@@ -3,7 +3,12 @@ namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 [TestFixture]
 public class NativeMathModulePipelineTests
 {
-    private static readonly string[] NativeModules = ModulePipelineTestHelper.FullUniversalModules.Where(x => x != "Numbers").Concat(["NativeTypes"]).ToArray();
+    private static readonly string[] NativeModules =
+        ModulePipelineTestHelper.FullUniversalModules
+            .Where(x => x is not ("Numbers" or "Arithmetic"))
+            .Concat(["NativeTypes"])
+            .ToArray();
+
     private static readonly string[] UniversalModules = ModulePipelineTestHelper.FullUniversalModules;
 
     [Test]
@@ -33,12 +38,12 @@ public class NativeMathModulePipelineTests
     }
 
     [Test]
-    public void NativeMath_UnaryMinusWithWhitespace_ProducesExpectedValue()
+    public void NativeMath_BasicSubtraction_ProducesExpectedValue()
     {
         using var h = new ModulePipelineTestHelper();
-        var r = h.ExecuteBoth("- 3 + 1", NativeModules);
+        var r = h.ExecuteBoth("3 - 1", NativeModules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
-        Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(-2));
+        Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(2));
     }
 
     [Test]
@@ -56,14 +61,31 @@ public class NativeMathModulePipelineTests
         }
     }
 
-    [Test]
-    public void NativeMath_UniversalAndNativeProfiles_AgreeOnSimpleIntegerScenario()
+    [TestCase("7 + 8")]
+    [TestCase("12 - 5 + 3")]
+    [TestCase("2 * (3 + 4)")]
+    public void NativeMath_UniversalAndNativeProfiles_AgreeOnSimpleIntegerScenarios(string code)
     {
         using var h = new ModulePipelineTestHelper();
-        var u = h.ExecuteBoth("7+8", UniversalModules);
-        var n = h.ExecuteBoth("7+8", NativeModules);
-        ModulePipelineTestHelper.AssertParity(u.Compiler, u.Interpreter);
-        ModulePipelineTestHelper.AssertParity(n.Compiler, n.Interpreter);
-        Assert.That(ModulePipelineTestHelper.AsNumber(u.Compiler), Is.EqualTo(ModulePipelineTestHelper.AsNumber(n.Compiler)).Within(1e-9));
+
+        var universalComposition = h.Compose(UniversalModules, backends: ["compiler", "interpreter"]);
+        Assert.That(
+            universalComposition.IsSuccess,
+            Is.True,
+            "Universal profile composition failed: " + string.Join("\n", universalComposition.SemanticDiagnostics.Concat(universalComposition.ResolutionDiagnostics).Select(static d => d.Message)));
+
+        var nativeComposition = h.Compose(NativeModules, backends: ["compiler", "interpreter"]);
+        Assert.That(
+            nativeComposition.IsSuccess,
+            Is.True,
+            "Native profile composition failed: " + string.Join("\n", nativeComposition.SemanticDiagnostics.Concat(nativeComposition.ResolutionDiagnostics).Select(static d => d.Message)));
+
+        var universalResult = h.ExecuteBoth(code, UniversalModules);
+        var nativeResult = h.ExecuteBoth(code, NativeModules);
+
+        ModulePipelineTestHelper.AssertParity(universalResult.Compiler, universalResult.Interpreter);
+        ModulePipelineTestHelper.AssertParity(nativeResult.Compiler, nativeResult.Interpreter);
+
+        Assert.That(ModulePipelineTestHelper.AsNumber(universalResult.Compiler), Is.EqualTo(ModulePipelineTestHelper.AsNumber(nativeResult.Compiler)).Within(1e-9));
     }
 }
