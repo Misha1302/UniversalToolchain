@@ -1,3 +1,4 @@
+using BasicCore.Registration;
 using UniversalToolchain.Dialects.Abstractions;
 
 namespace WhitespacesModule;
@@ -7,15 +8,10 @@ namespace WhitespacesModule;
 [AutoRegisterService]
 public class WhitespaceModuleImpl : IFrontendCoreModule
 {
-    public void InitLexer(ILexer lexer)
-    {
-        var lexemes = (List<LexemePattern>)
-        [
-            new LexemePattern(" ", LexemeType.CreateOrGet("Space")),
-            new LexemePattern(@"\n", LexemeType.CreateOrGet("NewLine"))
-        ];
+    private static readonly IReadOnlyList<LexemeRegistration> _lexemeRegistrations =
+    [
+        new(@"[ \t\r\n]+", "Whitespace", Ignore: true)
+    ];
 
-        foreach (var lexemePattern in lexemes) lexer.Configuration.TryUncheckedAddPattern(lexemePattern);
-        lexer.Configuration.LexemesToIgnore.AddRange(lexemes.Select(x => x.LexemeType));
-    }
+    public void InitLexer(ILexer lexer) => lexer.AddLexemes(_lexemeRegistrations);
 }
