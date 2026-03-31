@@ -15,10 +15,12 @@ public class NumbersModulePipelineTests
     }
 
     [Test]
-    public void Numbers_StandaloneNegativeLiteral_FailsWithoutUnaryMinusSupport()
+    public void Numbers_StandaloneNegativeLiteral_ExecutesToExpectedValue()
     {
         using var h = new ModulePipelineTestHelper();
-        h.AssertFails("-13", Modules, "token");
+        var r = h.ExecuteBoth("-13", Modules);
+        ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
+        Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(-13));
     }
 
     [Test]

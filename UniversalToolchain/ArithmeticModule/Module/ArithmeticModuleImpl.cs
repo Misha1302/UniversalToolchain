@@ -18,6 +18,7 @@ public class ArithmeticModuleImpl : IFrontendCoreModule
 
     private static readonly IReadOnlyList<NodeCreatorRegistration> _nodeCreatorRegistrations =
     [
+        new(-40f, new UnaryMinusOperationNodeCreator()),
         new(-31f, new MultiplicationOperationNodeCreator()),
         new(-31f, new DivisionOperationNodeCreator()),
         new(-30f, new AdditionOperationNodeCreator()),
@@ -28,5 +29,6 @@ public class ArithmeticModuleImpl : IFrontendCoreModule
 
     public void InitParser(IParser parser) => parser.AddNodeCreators(_nodeCreatorRegistrations);
 
-    public void InitAstTranslator(IAstToBytecodeTranslator translator) => translator.AddVisitors(new ArithmeticAstVisitor());
+    public void InitAstTranslator(IAstToBytecodeTranslator translator) =>
+        translator.AddVisitors(new UnaryMinusAstVisitor(), new ArithmeticAstVisitor());
 }
