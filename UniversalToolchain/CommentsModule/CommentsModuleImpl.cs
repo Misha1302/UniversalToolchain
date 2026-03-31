@@ -1,3 +1,4 @@
+using CommonExceptions;
 using UniversalToolchain.Dialects.Abstractions;
 
 namespace CommentsModule;
@@ -15,14 +16,37 @@ public class CommentsModuleImpl : IFrontendCoreModule
 
     public void InitLexer(ILexer lexer) => lexer.AddLexemes(_lexemeRegistrations);
 
-    public void InitAstTranslator(IAstToBytecodeTranslator translator)
+    public string ProcessText(string curCode)
     {
-        // Комментарии не попадают в AST
+        ValidateNoUnterminatedBlockComment(curCode);
+        return curCode;
     }
 
-    // Метод ProcessText для предварительной обработки (опционально)
-    public string ProcessText(string curCode) =>
-        // Можно добавить предварительную обработку для удаления комментариев,
-        // но лучше оставить это лексеру
-        curCode;
+    public void InitAstTranslator(IAstToBytecodeTranslator translator)
+    {
+    }
+
+    private static void ValidateNoUnterminatedBlockComment(string code)
+    {
+        var searchIndex = 0;
+
+        while (searchIndex < code.Length)
+        {
+            var openingIndex = code.IndexOf("/*", searchIndex, StringComparison.Ordinal);
+            if (openingIndex < 0)
+                return;
+
+            var closingIndex = code.IndexOf("*/", openingIndex + 2, StringComparison.Ordinal);
+            if (closingIndex < 0)
+            {
+                var location = new LexemeValue("/*", null, openingIndex, code);
+                WistThrower.Lexer(
+                    "Unterminated block comment (comment).",
+                    new SourceLocation { Line = location.LineNumber, Column = location.CharNumber }
+                );
+            }
+
+            searchIndex = closingIndex + 2;
+        }
+    }
 }
