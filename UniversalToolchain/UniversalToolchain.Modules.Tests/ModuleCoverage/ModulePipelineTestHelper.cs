@@ -107,32 +107,90 @@ internal sealed class ModulePipelineTestHelper : IDisposable
         Assert.That(AsNumber(compiler), Is.EqualTo(AsNumber(interpreter)).Within(1e-9));
     }
 
+    private static void AssertSemanticEqual(object? left, object? right)
+    {
+        if (left is null || right is null)
+        {
+            Assert.That(left, Is.EqualTo(right));
+            return;
+        }
+
+        if (left is bool || right is bool)
+        {
+            Assert.That(AsBool(left), Is.EqualTo(AsBool(right)));
+            return;
+        }
+
+        Assert.That(AsNumber(left), Is.EqualTo(AsNumber(right)).Within(1e-9));
+    }
+
+    private static void AssertSemanticNotEqual(object? left, object? right)
+    {
+        if (left is null || right is null)
+        {
+            Assert.That(left, Is.Not.EqualTo(right));
+            return;
+        }
+
+        if (left is bool || right is bool)
+        {
+            Assert.That(AsBool(left), Is.Not.EqualTo(AsBool(right)));
+            return;
+        }
+
+        Assert.That(Math.Abs(AsNumber(left) - AsNumber(right)), Is.GreaterThan(1e-9));
+    }
+
     public void ExecuteEquivalent(string a, string b, IEnumerable<string> modules, IEnumerable<string>? optimizers = null)
     {
-        var first = ExecuteBoth(a, modules, optimizers);
-        var second = ExecuteBoth(b, modules, optimizers);
-        AssertParity(first.Compiler, first.Interpreter);
-        AssertParity(second.Compiler, second.Interpreter);
+        var resultA = ExecuteBoth(a, modules, optimizers);
+        var resultB = ExecuteBoth(b, modules, optimizers);
+        AssertParity(resultA.Compiler, resultA.Interpreter);
+        AssertParity(resultB.Compiler, resultB.Interpreter);
+        AssertSemanticEqual(resultA.Compiler, resultB.Compiler);
+        AssertSemanticEqual(resultA.Interpreter, resultB.Interpreter);
     }
 
     public void ExecuteDifferent(string a, string b, IEnumerable<string> modules, IEnumerable<string>? optimizers = null)
     {
-        var first = ExecuteBoth(a, modules, optimizers);
-        var second = ExecuteBoth(b, modules, optimizers);
-        AssertParity(first.Compiler, first.Interpreter);
-        AssertParity(second.Compiler, second.Interpreter);
+        var resultA = ExecuteBoth(a, modules, optimizers);
+        var resultB = ExecuteBoth(b, modules, optimizers);
+        AssertParity(resultA.Compiler, resultA.Interpreter);
+        AssertParity(resultB.Compiler, resultB.Interpreter);
+        AssertSemanticNotEqual(resultA.Compiler, resultB.Compiler);
+        AssertSemanticNotEqual(resultA.Interpreter, resultB.Interpreter);
     }
 
     public void AssertFails(string code, IEnumerable<string> modules, string expectedMessageFragment)
     {
-        try
+        var compilerException = Assert.Throws<Exception>(() =>
         {
-            _ = ExecuteCompiler(code, modules);
-            _ = ExecuteCompiler(code, modules);
-        }
-        catch
+            try
+            {
+                _ = ExecuteCompiler(code, modules);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message, ex);
+            }
+        });
+
+        var interpreterException = Assert.Throws<Exception>(() =>
         {
-            // Deterministic failure path is accepted.
+            try
+            {
+                _ = ExecuteInterpreter(code, modules);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message, ex);
+            }
+        });
+
+        if (!string.IsNullOrWhiteSpace(expectedMessageFragment))
+        {
+            Assert.That(compilerException!.Message, Does.Contain(expectedMessageFragment).IgnoreCase);
+            Assert.That(interpreterException!.Message, Does.Contain(expectedMessageFragment).IgnoreCase);
         }
     }
 }
