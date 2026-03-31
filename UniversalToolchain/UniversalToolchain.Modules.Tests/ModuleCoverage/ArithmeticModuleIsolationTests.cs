@@ -9,7 +9,7 @@ public class ArithmeticModuleIsolationTests
     public void Arithmetic_Addition_IsCommutativeForConstants()
     {
         using var h = new ModulePipelineTestHelper();
-        h.ExecuteEquivalent("2+3", "3+2", Modules);
+        h.ExecuteEquivalent("2 + 3", "3 + 2", Modules);
     }
 
     [Test]

@@ -65,16 +65,8 @@ internal sealed class ModulePipelineTestHelper : IDisposable
     {
         using var host = CreateHost(modules, optimizers, ["compiler", "interpreter"]);
         var interpreter = host.Run(code, "interpreter");
-
-        try
-        {
-            var compiler = host.Run(code, "compiler");
-            return (compiler, interpreter);
-        }
-        catch
-        {
-            return (interpreter, interpreter);
-        }
+        var compiler = host.Run(code, "compiler");
+        return (compiler, interpreter);
     }
 
     public static double AsNumber(object? value)
