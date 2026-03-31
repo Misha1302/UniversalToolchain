@@ -23,6 +23,7 @@ public class NativeTypesModuleImpl : IFrontendCoreModule
 
     public void InitParser(IParser parser)
     {
+        parser.Configuration.NodeCreators.Add(-40f, new NativeUnaryMinusOperationNodeCreator());
         parser.Configuration.NodeCreators.Add(-31, new NativeMultiplicationOperationNodeCreator());
         parser.Configuration.NodeCreators.Add(-31, new NativeDivisionOperationNodeCreator());
         parser.Configuration.NodeCreators.Add(-30, new NativeAdditionOperationNodeCreator());
@@ -32,6 +33,7 @@ public class NativeTypesModuleImpl : IFrontendCoreModule
     public void InitAstTranslator(IAstToBytecodeTranslator translator)
     {
         translator.Configuration.Visitors.Add(new NativeNumberAstVisitor());
+        translator.Configuration.Visitors.Add(new NativeUnaryMinusAstVisitor());
         translator.Configuration.Visitors.Add(new NativeArithmeticAstVisitor());
     }
 

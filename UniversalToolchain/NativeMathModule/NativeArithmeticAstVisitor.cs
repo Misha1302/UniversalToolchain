@@ -35,31 +35,30 @@ public class NativeArithmeticAstVisitor : IAstVisitor
             $"NativeArithmetic_{methodName}",
             (il, context) =>
             {
-                // Используем обобщенные методы из INumber<T>
-                var leftType = context.Stack[^2];
-                var rightType = context.Stack[^1];
-                Thrower.AssertAlways(leftType == rightType);
-
-                if (leftType == typeof(decimal))
-                {
-                    var decimalMethod = typeof(NativeArithmetic)
-                        .GetMethod(methodName + "Decimal", BindingFlags.Static | BindingFlags.Public)
-                        .NotNull();
-
-                    il.CallCSharp(decimalMethod);
-                }
-                else
-                {
-                    var genericMethod = typeof(NativeArithmetic)
-                        .GetMethod(methodName, BindingFlags.Static | BindingFlags.Public)
-                        .NotNull()
-                        .MakeGenericMethod(leftType);
-
-                    il.CallCSharp(genericMethod);
-                }
+                var resolvedMethod = ResolveNativeArithmeticMethod(methodName, context.Stack[^2], context.Stack[^1]);
+                il.CallCSharp(resolvedMethod);
             }
         );
 
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
+    }
+
+    internal static MethodInfo ResolveNativeArithmeticMethod(string methodName, Type leftType, Type rightType)
+    {
+        Thrower.AssertAlways(leftType == rightType);
+
+        if (leftType == typeof(decimal))
+        {
+            var decimalMethod = typeof(NativeArithmetic)
+                .GetMethod(methodName + "Decimal", BindingFlags.Static | BindingFlags.Public)
+                .NotNull();
+
+            return decimalMethod;
+        }
+
+        return typeof(NativeArithmetic)
+            .GetMethod(methodName, BindingFlags.Static | BindingFlags.Public)
+            .NotNull()
+            .MakeGenericMethod(leftType);
     }
 }
