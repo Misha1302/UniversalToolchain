@@ -1,21 +1,37 @@
 using System.Collections.Concurrent;
 using System.Reflection;
+using System.Threading;
+using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
 
 namespace UniversalToolchain.Dialects.Integration;
 
-public sealed class DefaultRuntimeComponentResolver(IRuntimeAssemblyLoadStrategy assemblyLoadStrategy) : IRuntimeComponentResolver
+public sealed class DefaultRuntimeComponentResolver : IRuntimeComponentResolver
 {
-    private readonly IRuntimeAssemblyLoadStrategy _assemblyLoadStrategy = assemblyLoadStrategy ?? throw new ArgumentNullException(nameof(assemblyLoadStrategy));
-    private readonly ConcurrentDictionary<string, RuntimeComponentDescriptor> _cache = new(StringComparer.Ordinal);
+    private readonly IRuntimeAssemblyLoadStrategy _assemblyLoadStrategy;
+    private readonly ConcurrentDictionary<string, Lazy<RuntimeComponentDescriptor>> _cache = new(StringComparer.Ordinal);
+
+    public DefaultRuntimeComponentResolver(IRuntimeAssemblyLoadStrategy assemblyLoadStrategy)
+    {
+        if (assemblyLoadStrategy == null)
+            Thrower.ArgumentNull(nameof(assemblyLoadStrategy));
+
+        _assemblyLoadStrategy = assemblyLoadStrategy;
+    }
 
     public RuntimeComponentDescriptor Resolve(RuntimeComponentManifestEntry entry)
     {
         if (entry == null)
-            throw new ArgumentNullException(nameof(entry));
+            Thrower.ArgumentNull(nameof(entry));
 
         var key = $"{entry.AssemblySimpleName}|{entry.ComponentId.Value}";
-        return _cache.GetOrAdd(key, _ => ResolveCore(entry));
+        var lazy = _cache.GetOrAdd(
+            key,
+            _ => new Lazy<RuntimeComponentDescriptor>(
+                () => ResolveCore(entry),
+                LazyThreadSafetyMode.ExecutionAndPublication));
+
+        return lazy.Value;
     }
 
     private RuntimeComponentDescriptor ResolveCore(RuntimeComponentManifestEntry entry)
@@ -35,7 +51,7 @@ public sealed class DefaultRuntimeComponentResolver(IRuntimeAssemblyLoadStrategy
             return new RuntimeComponentDescriptor(id, kind, canonicalAlias, aliases, type);
         }
 
-        throw new InvalidOperationException(
+        return Thrower.InvalidOpEx<RuntimeComponentDescriptor>(
             $"Runtime component '{entry.ComponentId}' was not found in assembly '{entry.AssemblySimpleName}'.");
     }
 
