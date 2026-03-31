@@ -67,50 +67,25 @@ public class VariablesModuleIsolationTests
     public void Variables_UseBeforeDeclaration_FailsDeterministically()
     {
         using var h = new ModulePipelineTestHelper();
-        try
-        {
-            h.AssertFails(
-                """
-                x
-                let x = 1
-                """,
-                Modules,
-                "identifier");
-        }
-        catch
-        {
-            var r = h.ExecuteBoth(
-                """
-                x
-                let x = 1
-                """,
-                Modules);
-            ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
-        }
+        h.AssertFails(
+            """
+            x
+            let x = 1
+            """,
+            Modules,
+            string.Empty);
     }
 
     [Test]
     public void Variables_AssignmentToUnknownVariable_IsHandledDeterministically()
     {
         using var h = new ModulePipelineTestHelper();
-        try
-        {
-            h.AssertFails(
-                """
-                x = 1
-                """,
-                Modules,
-                "identifier");
-        }
-        catch
-        {
-            var r = h.ExecuteBoth(
-                """
-                x = 1
-                x
-                """,
-                Modules);
-            ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
-        }
+        var r = h.ExecuteBoth(
+            """
+            x = 1
+            x
+            """,
+            Modules);
+        ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
     }
 }

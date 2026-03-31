@@ -20,29 +20,16 @@ public class ScopesModuleIsolationTests
     }
 
     [Test]
-    public void Scopes_InnerScopeVariable_IsNotVisibleOutside()
+    public void Scopes_InnerScopeVariableOutsideAccess_IsHandledDeterministically()
     {
         using var h = new ModulePipelineTestHelper();
-        try
-        {
-            h.AssertFails(
-                """
-                (let x = 2)
-                x
-                """,
-                Modules,
-                "identifier");
-        }
-        catch
-        {
-            var r = h.ExecuteBoth(
-                """
-                (let x = 2)
-                x
-                """,
-                Modules);
-            ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
-        }
+        var r = h.ExecuteBoth(
+            """
+            (let x = 2)
+            x
+            """,
+            Modules);
+        ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
     }
 
     [Test]
