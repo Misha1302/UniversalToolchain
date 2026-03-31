@@ -8,7 +8,10 @@ public sealed class DefaultRuntimeComponentTypeLoader : IRuntimeComponentTypeLoa
 
     public DefaultRuntimeComponentTypeLoader(IRuntimeComponentResolver resolver)
     {
-        _resolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
+        if (resolver == null)
+            Thrower.ArgumentNull(nameof(resolver));
+
+        _resolver = resolver;
     }
 
 
