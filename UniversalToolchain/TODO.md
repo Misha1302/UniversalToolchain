@@ -12,6 +12,8 @@
 
 - Dialect subsystem exists (parsing/core/integration/frontend/wist projects), but composition ergonomics and policy
   depth continue to evolve.
+- `ParametersSetter` module contracts (parser references + runtime binding semantics) are still pending; module remains
+  intentionally non-exported and excluded from active coverage.
 - Constrained runtime profiles exist through dialect examples, but security hardening is still incomplete.
 - Module grouping/dependency-order concepts are only partially represented and need first-class contracts.
 - Test coverage exists for both core and dialect paths, but additional structure and grouping improvements are still

@@ -1,33 +1,12 @@
-using UniversalToolchain.Dialects.Abstractions;
-
 namespace ParametersSetterModule;
 
-[DialectModuleAlias("ParametersSetter")]
-[DialectRuntimeExport("FrontendModule", "ParametersSetter")]
-[AutoRegisterService]
-public class ParametersSetterModuleImpl : IFrontendCoreModule
+/// <summary>
+/// Placeholder for the future ParametersSetter module implementation.
+/// The module is intentionally not exported to dialect composition until
+/// lexer/parser/runtime contracts are finalized.
+/// </summary>
+public sealed class ParametersSetterModuleImpl
 {
-    // public void InitLexer(ILexer lexer)
-    // {
-    //     lexer.Configuration.TryAddPattern(new LexemePattern(@"\(", LexemeType.CreateOrGet("OpenPar")));
-    //     lexer.Configuration.TryAddPattern(new LexemePattern(@"\)", LexemeType.CreateOrGet("ClosePar")));
-    // }
-    //
-    // public void InitParser(IParser parser)
-    // {
-    //     parser.Configuration.NodeCreators.Add(-100_000f, new ParametersSetNodeCreator());
-    // }
-    //
-    // public AstNode ProcessAst(AstNode node)
-    // {
-    //     foreach (var child in node.Children)
-    //     {
-    //         ProcessAst(child);
-    //     }
-    //
-    //     if (node.NodeType == ExtensibleEnum<AstNodeTag>.CreateOrGet("DefineParameter"))
-    //     {
-    //         node.
-    //     }
-    // }
+    public const string UnsupportedReason =
+        "ParametersSetter is not exported yet: parser contracts and runtime binding semantics are not finalized.";
 }
