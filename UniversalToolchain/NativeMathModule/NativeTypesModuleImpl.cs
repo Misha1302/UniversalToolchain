@@ -9,7 +9,7 @@ public class NativeTypesModuleImpl : IFrontendCoreModule
     public void InitLexer(ILexer lexer)
     {
         lexer.Configuration.TryAddPattern(
-            new LexemePattern(@"[+-]?\d+(?:_?\d+)*(?:\.\d+(?:_?\d+)*)?(?:[eE][+-]?\d+(?:_?\d+)*)?[fdmFDM]?",
+            new LexemePattern(@"\d+(?:_?\d+)*(?:\.\d+(?:_?\d+)*)?(?:[eE][+-]?\d+(?:_?\d+)*)?[fdmlFDML]?",
                 ExtensibleEnum<LexemeTag>.CreateOrGet("NativeNumber")),
             priority: -20f
         );
