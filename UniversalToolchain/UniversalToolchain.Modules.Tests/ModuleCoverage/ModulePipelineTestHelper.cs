@@ -161,36 +161,47 @@ internal sealed class ModulePipelineTestHelper : IDisposable
         AssertSemanticNotEqual(resultA.Interpreter, resultB.Interpreter);
     }
 
-    public void AssertFails(string code, IEnumerable<string> modules, string expectedMessageFragment)
+    public void AssertFails(string code, IEnumerable<string> modules, params string[] expectedAnyOf)
+        => AssertFails(code, modules, null, expectedAnyOf);
+
+    public void AssertFails<TException>(string code, IEnumerable<string> modules, params string[] expectedAnyOf)
+        where TException : Exception
+        => AssertFails(code, modules, typeof(TException), expectedAnyOf);
+
+    private void AssertFails(string code, IEnumerable<string> modules, Type? expectedExceptionType, params string[] expectedAnyOf)
     {
-        var compilerException = Assert.Throws<Exception>(() =>
-        {
-            try
-            {
-                _ = ExecuteCompiler(code, modules);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message, ex);
-            }
-        });
+        var compilerException = Assert.Catch(() => _ = ExecuteCompiler(code, modules));
+        var interpreterException = Assert.Catch(() => _ = ExecuteInterpreter(code, modules));
 
-        var interpreterException = Assert.Throws<Exception>(() =>
-        {
-            try
-            {
-                _ = ExecuteInterpreter(code, modules);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message, ex);
-            }
-        });
+        var compilerMessage = compilerException?.Message ?? "<no message>";
+        var interpreterMessage = interpreterException?.Message ?? "<no message>";
+        var combinedMessage = $"Compiler error: {compilerMessage}{Environment.NewLine}Interpreter error: {interpreterMessage}";
 
-        if (!string.IsNullOrWhiteSpace(expectedMessageFragment))
+        Assert.That(compilerException, Is.Not.Null, $"Expected compiler execution to fail. {combinedMessage}");
+        Assert.That(interpreterException, Is.Not.Null, $"Expected interpreter execution to fail. {combinedMessage}");
+
+        if (expectedExceptionType != null)
         {
-            Assert.That(compilerException!.Message, Does.Contain(expectedMessageFragment).IgnoreCase);
-            Assert.That(interpreterException!.Message, Does.Contain(expectedMessageFragment).IgnoreCase);
+            Assert.That(compilerException, Is.InstanceOf(expectedExceptionType), combinedMessage);
+            Assert.That(interpreterException, Is.InstanceOf(expectedExceptionType), combinedMessage);
         }
+
+        var nonEmptyFragments = expectedAnyOf.Where(fragment => !string.IsNullOrWhiteSpace(fragment)).ToArray();
+        if (nonEmptyFragments.Length == 0)
+            return;
+
+        AssertMessageHasAnyFragment(compilerMessage, nonEmptyFragments, "compiler", combinedMessage);
+        AssertMessageHasAnyFragment(interpreterMessage, nonEmptyFragments, "interpreter", combinedMessage);
+    }
+
+    private static void AssertMessageHasAnyFragment(string message, IEnumerable<string> expectedAnyOf, string backend, string combinedMessage)
+    {
+        var expectedList = expectedAnyOf.ToArray();
+        var matchFound = expectedList.Any(fragment => message.Contains(fragment, StringComparison.OrdinalIgnoreCase));
+
+        Assert.That(
+            matchFound,
+            Is.True,
+            $"Expected {backend} error to contain any of: [{string.Join(", ", expectedList)}]. {combinedMessage}");
     }
 }

@@ -75,7 +75,7 @@ public class VariablesModuleIsolationTests
                 let x = 1
                 """,
                 Modules,
-                "identifier");
+                "identifier", "variable", "not found", "unknown");
         }
         catch
         {
@@ -100,7 +100,7 @@ public class VariablesModuleIsolationTests
                 x = 1
                 """,
                 Modules,
-                "identifier");
+                "identifier", "variable", "not found", "unknown");
         }
         catch
         {

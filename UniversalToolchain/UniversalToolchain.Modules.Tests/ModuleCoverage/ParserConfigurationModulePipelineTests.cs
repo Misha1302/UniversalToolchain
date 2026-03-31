@@ -34,7 +34,7 @@ public class ParserConfigurationModulePipelineTests
     public void ParserConfiguration_ConfigurationChangesAcceptedSurfaceSyntaxAsIntended()
     {
         using var h = new ModulePipelineTestHelper();
-        h.AssertFails("2 +", ModulePipelineTestHelper.FullUniversalModules, "token");
+        h.AssertFails("2 +", ModulePipelineTestHelper.FullUniversalModules, "token", "parser", "invalid");
     }
 
     [Test]

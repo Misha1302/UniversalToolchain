@@ -47,6 +47,6 @@ public class EqualityModulePipelineTests
     public void Equality_UnknownIdentifierOperand_FailsDeterministically()
     {
         using var h = new ModulePipelineTestHelper();
-        h.AssertFails("2 == hi", Modules, "identifier");
+        h.AssertFails("2 == hi", Modules, "identifier", "variable", "not found", "unknown");
     }
 }

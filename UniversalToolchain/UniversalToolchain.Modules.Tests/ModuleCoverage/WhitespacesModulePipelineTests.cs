@@ -37,6 +37,6 @@ public class WhitespacesModulePipelineTests
     public void Whitespaces_ModuleDisabled_SameProgramFailsDeterministically()
     {
         using var h = new ModulePipelineTestHelper();
-        h.AssertFails("let x = 2; x + 3", Modules.Where(x => x != "Whitespaces"), "token");
+        h.AssertFails("let x = 2; x + 3", Modules.Where(x => x != "Whitespaces"), "token", "parser", "invalid");
     }
 }

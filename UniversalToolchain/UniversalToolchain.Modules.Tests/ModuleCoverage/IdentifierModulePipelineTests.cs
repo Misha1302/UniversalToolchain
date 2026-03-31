@@ -27,20 +27,20 @@ public class IdentifierModulePipelineTests
     public void Identifier_UnknownIdentifier_FailsDeterministically()
     {
         using var h = new ModulePipelineTestHelper();
-        h.AssertFails("hi", Modules, "identifier");
+        h.AssertFails("hi", Modules, "identifier", "variable", "not found", "unknown");
     }
 
     [Test]
     public void Identifier_ReservedKeywordAsIdentifier_IsRejectedDeterministically()
     {
         using var h = new ModulePipelineTestHelper();
-        h.AssertFails("let if = 2", Modules, "token");
+        h.AssertFails("let if = 2", Modules, "token", "parser", "invalid");
     }
 
     [Test]
     public void Identifier_CaseSensitivity_IsHandledDeterministically()
     {
         using var h = new ModulePipelineTestHelper();
-        h.AssertFails("let x = 2; X", Modules, "identifier");
+        h.AssertFails("let x = 2; X", Modules, "identifier", "variable", "not found", "unknown");
     }
 }

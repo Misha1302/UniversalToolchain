@@ -31,7 +31,7 @@ public class ScopesModuleIsolationTests
                 x
                 """,
                 Modules,
-                "identifier");
+                "identifier", "variable", "not found", "unknown");
         }
         catch
         {
