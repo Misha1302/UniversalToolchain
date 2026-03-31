@@ -7,7 +7,7 @@ public class WistDialectProfileContractTests
     {
         var source = File.ReadAllText(GetDialectFilePath("full-default"));
 
-        Assert.That(source, Does.Contain("use Arithmetic,BooleanConditions,Comments,ComparisonConditions,Conditions,CSharpInterop,Equality,Identifier,Labels,Loops,Numbers,Scopes,SemicolonAsNewLine,Variables,Whitespaces"));
+        Assert.That(source, Does.Contain("use Arithmetic,BooleanConditions,Comments,ComparisonConditions,Conditions,CSharpInterop,Equality,Identifier,Labels,Loops,Numbers,Strings,Scopes,SemicolonAsNewLine,Variables,Whitespaces"));
     }
 
     [Test]

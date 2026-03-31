@@ -33,6 +33,7 @@
         <ProjectReference Include="..\NumbersModule\NumbersModule.csproj"/>
         <ProjectReference Include="..\ParametersSetterModule\ParametersSetterModule.csproj"/>
         <ProjectReference Include="..\ScopesModule\ScopesModule.csproj"/>
+        <ProjectReference Include="..\StringsModule\StringsModule.csproj"/>
         <ProjectReference Include="..\SemicolonAsNewLineModule\SemicolonAsNewLineModule.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Dialects.Core\UniversalToolchain.Dialects.Core.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Dialects.Frontend\UniversalToolchain.Dialects.Frontend.csproj"/>

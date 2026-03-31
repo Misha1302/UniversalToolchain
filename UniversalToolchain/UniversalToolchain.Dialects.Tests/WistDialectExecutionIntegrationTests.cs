@@ -1,6 +1,7 @@
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
 using NumbersModule.Core;
+using StringsModule.Core;
 using UniversalToolchain.Dialects.Wist;
 
 namespace UniversalToolchain.Dialects.Tests;
@@ -119,6 +120,33 @@ public class WistDialectExecutionIntegrationTests
         });
     }
 
+
+    [Test]
+    public void FullDialect_StringsSupport_WorksAcrossBackends()
+    {
+        using var provider = CreateProvider();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+        var example = ResolveExampleDirectory("full-default");
+
+        var result = workflow.ComposeFile(Path.Combine(example, "dialect.wistdialect"));
+        using var host = workflow.CreateHost(result);
+        const string code = """
+                            let left = "http://x"
+                            let right: string = "api"
+                            left + "/" + right
+                            """;
+
+        var interpreterValue = host.Run(code, "interpreter");
+        var compilerValue = host.Run(code, "compiler");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(ToStringValue(interpreterValue), Is.EqualTo("http://x/api"));
+            Assert.That(ToStringValue(compilerValue), Is.EqualTo("http://x/api"));
+        });
+    }
+
     [Test]
     public void RestrictedDialect_DisabledCompilerBackend_IsRejected()
     {
@@ -212,6 +240,16 @@ public class WistDialectExecutionIntegrationTests
             float floatValue => floatValue,
             decimal decimalValue => (double)decimalValue,
             _ => Thrower.InvalidCast<double>($"Unsupported result value '{value?.GetType().FullName ?? "<null>"}'.")
+        };
+    }
+
+    private static string ToStringValue(object? value)
+    {
+        return value switch
+        {
+            WistStringImpl stringValue => stringValue.GetValue(),
+            string rawString => rawString,
+            _ => Thrower.InvalidCast<string>($"Unsupported result value '{value?.GetType().FullName ?? "<null>"}'.")
         };
     }
 }

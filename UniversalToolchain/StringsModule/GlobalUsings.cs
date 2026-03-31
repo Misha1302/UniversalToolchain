@@ -1,0 +1,16 @@
+global using System.Text;
+global using AbstractIrExtensions;
+global using BasicCore.Attributes;
+global using BasicCore.Contracts;
+global using BasicCore.LexerWrapper;
+global using BasicCore.ParserWrapper;
+global using BasicCore.Registration;
+global using BasicCore.TranslatorWrapper;
+global using BasicTypesExtensions;
+global using DynamicMethodWrapper;
+global using ExceptionsManager;
+global using StringsModule.Core;
+global using StringsModule.Parsing;
+global using StringsModule.Visitors;
+global using UniversalToolchain.Dialects.Abstractions;
+global using StringsModule.Module;

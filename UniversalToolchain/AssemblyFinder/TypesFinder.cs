@@ -7,6 +7,12 @@ public static class TypesFinder
     private static readonly Dictionary<string, Assembly> _assemblyCache = new(StringComparer.OrdinalIgnoreCase);
     private static readonly HashSet<string> _badAssemblies = new(StringComparer.OrdinalIgnoreCase);
 
+    private static readonly Dictionary<string, string> _typeAliases = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["string"] = "StringsModule.Core.WistStringImpl",
+        ["str"] = "StringsModule.Core.WistStringImpl"
+    };
+
     // Публичные свойства с ленивой инициализацией
     private static readonly Lazy<IReadOnlyList<Assembly>> _allAssemblies = new(() => LoadAllAssemblies(), true);
     private static readonly Lazy<IReadOnlyList<Type>> _allTypes = new(LoadAllTypes, true);
@@ -36,10 +42,19 @@ public static class TypesFinder
 
     public static Type GetType(string name)
     {
-        var type = AllTypes.FirstOrDefault(x => x.FullName == name);
-        if (type == null)
-            Thrower.InvalidOpEx($"Type '{name}' was not found among loaded assemblies.");
-        return type;
+        if (TryGetType(name, out var type))
+            return type!;
+
+        return Thrower.InvalidOpEx<Type>($"Type '{name}' was not found among loaded assemblies.");
+    }
+
+    public static bool TryGetType(string name, out Type? type)
+    {
+        if (_typeAliases.TryGetValue(name, out var aliasTarget))
+            name = aliasTarget;
+
+        type = AllTypes.FirstOrDefault(x => string.Equals(x.FullName, name, StringComparison.Ordinal));
+        return type != null;
     }
 
     private static bool IsValidAssembly(Assembly assembly)

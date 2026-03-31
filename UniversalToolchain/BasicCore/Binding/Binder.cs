@@ -61,6 +61,12 @@ public sealed class Binder
         if (typeNode == null)
             return typeof(object);
 
-        return Type.GetType(typeNode.Text) ?? typeof(object);
+        var resolvedName = typeNode.Text switch
+        {
+            "string" or "String" or "str" => "StringsModule.Core.WistStringImpl, StringsModule",
+            _ => typeNode.Text
+        };
+
+        return Type.GetType(resolvedName) ?? typeof(object);
     }
 }

@@ -1,5 +1,5 @@
 dialect RestrictedSandbox
-use Arithmetic,BooleanConditions,Comments,ComparisonConditions,Conditions,Equality,Numbers,Scopes,Whitespaces
+use Arithmetic,BooleanConditions,Comments,ComparisonConditions,Conditions,Equality,Numbers,Strings,Scopes,Whitespaces
 exclude CSharpInterop,Identifier,InternalPreprocessorLexemes,Labels,Loops,NativeTypes,ParametersSetter,SemicolonAsNewLine,Variables
 backend interpreter
 security restricted

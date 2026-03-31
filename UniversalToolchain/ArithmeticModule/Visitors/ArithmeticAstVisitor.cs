@@ -25,7 +25,14 @@ public class ArithmeticAstVisitor : IAstVisitor
 
         var method = new AbstractMethodImpl(
             $"Op_{op}",
-            (il, context) => il.CallCSharp(context.Stack[^1].GetMethod(methodName).NotNull())
+            (il, context) =>
+            {
+                var leftType = context.Stack[^1];
+                var operationMethod = leftType.GetMethod(methodName);
+                if (operationMethod == null)
+                    Thrower.NotSupported<object>($"Operator '{op}' is not supported for type '{leftType.Name}'.");
+                il.CallCSharp(operationMethod!);
+            }
         );
 
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));

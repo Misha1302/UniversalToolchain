@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using NumbersModule.Core;
+using StringsModule.Core;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
 
@@ -11,7 +12,7 @@ internal sealed class ModulePipelineTestHelper : IDisposable
     [
         "Whitespaces", "SemicolonAsNewLine", "Comments", "Numbers", "Identifier", "Arithmetic", "Equality",
         "Conditions", "ComparisonConditions", "BooleanConditions", "Loops", "Variables", "Scopes", "Labels",
-        "InternalPreprocessorLexemes", "CSharpInterop"
+        "InternalPreprocessorLexemes", "CSharpInterop", "Strings"
     ];
 
     private readonly ServiceProvider _provider;
@@ -98,6 +99,14 @@ internal sealed class ModulePipelineTestHelper : IDisposable
             _ => throw new InvalidCastException($"Cannot convert '{value?.GetType().Name ?? "null"}' to bool.")
         };
 
+    public static string AsString(object? value)
+        => value switch
+        {
+            WistStringImpl s => s.GetValue(),
+            string s => s,
+            _ => throw new InvalidCastException($"Cannot convert '{value?.GetType().Name ?? "null"}' to string.")
+        };
+
     public static void AssertParity(object? compiler, object? interpreter)
     {
         if (compiler is null || interpreter is null)
@@ -109,6 +118,12 @@ internal sealed class ModulePipelineTestHelper : IDisposable
         if (compiler is bool || interpreter is bool)
         {
             Assert.That(AsBool(compiler), Is.EqualTo(AsBool(interpreter)));
+            return;
+        }
+
+        if (compiler is WistStringImpl || interpreter is WistStringImpl || compiler is string || interpreter is string)
+        {
+            Assert.That(AsString(compiler), Is.EqualTo(AsString(interpreter)));
             return;
         }
 

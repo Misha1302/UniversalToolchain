@@ -43,6 +43,7 @@
         <ProjectReference Include="..\LoopsModule\LoopsModule.csproj"/>
         <ProjectReference Include="..\NativeMathModule\NativeMathModule.csproj"/>
         <ProjectReference Include="..\NumbersModule\NumbersModule.csproj"/>
+        <ProjectReference Include="..\StringsModule\StringsModule.csproj"/>
         <ProjectReference Include="..\ParserConfigurationModule\ParserConfigurationModule.csproj"/>
         <ProjectReference Include="..\ScopesModule\ScopesModule.csproj"/>
         <ProjectReference Include="..\SemicolonAsNewLineModule\SemicolonAsNewLineModule.csproj"/>
