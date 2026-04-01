@@ -131,19 +131,38 @@ var dialect = workflow.ComposeFile("./Dialects/examples/wist/full-default/dialec
 if (!dialect.IsSuccess) return;
 
 using var host = workflow.CreateHost(dialect);
-var result = host.Run("(2 + 2) * 3", "compiler");
-Console.WriteLine(result);
+
+var artifactCompiler = host.GetArtifactCompiler<DynamicMethod>("compiler");
+var artifact = artifactCompiler.Compile("(2 + 2) * 3");
+var result = artifact.CreateSession().Run();
+Console.WriteLine(result); // 12
 ```
 
 See `UniversalToolchain/Example/Program.cs` for a full composition + diagnostics flow.
 
-### Compile artifact API (DynamicMethod backend)
+### Compile artifact API (canonical contract)
+
+`GetArtifactCompiler<TCompilationOutput>(mode)` is the canonical compile-artifact access path from the host layer:
 
 ```csharp
-var compilerCore = host.GetCore("compiler") as BasicCoreImpl<DynamicMethod>
-                   ?? throw new InvalidOperationException();
+var compiler = host.GetArtifactCompiler<DynamicMethod>("compiler");
+var artifact = compiler.Compile("x + 1", new OrderedDictionary<string, Type>
+{
+    ["x"] = typeof(int)
+});
 
-var artifact = compilerCore.Compile("x + 1", new OrderedDictionary<string, Type>
+var session = artifact.CreateSession();
+session.SetArgument("x", 41);
+var fortyTwo = session.Run<int>();
+```
+
+### DynamicMethod fast-path (optional)
+
+For `DynamicMethod` artifacts, extension methods remain available as an optional fast-path API:
+
+```csharp
+var compiler = host.GetArtifactCompiler<DynamicMethod>("compiler");
+var artifact = compiler.Compile("x + 1", new OrderedDictionary<string, Type>
 {
     ["x"] = typeof(int)
 });

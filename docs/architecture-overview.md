@@ -28,6 +28,10 @@ Runtime composition paths:
 - **Default composition**: uses built-in/default service registrations.
 - **Dialect-based composition**: uses a `.wistdialect` file to resolve runtime composition before execution.
 
+Public compile-artifact access is exposed through a host-level contract:
+
+- `IArtifactCompiler<TCompilationOutput>` for deterministic artifact compilation (`Compile(...)`) and session creation via `ICompiledArtifact<TCompilationOutput>`.
+
 ## Dialect workflow
 
 Typical dialect execution flow:

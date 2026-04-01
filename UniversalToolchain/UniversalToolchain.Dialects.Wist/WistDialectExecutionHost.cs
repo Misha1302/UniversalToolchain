@@ -33,6 +33,24 @@ public sealed class WistDialectExecutionHost : IDisposable
 
     public ICoreRunnable GetCore(string mode)
     {
+        return ResolveRuntime(mode).Core;
+    }
+
+    public object? Run(string code, string mode) => GetCore(mode).Run(code);
+
+    public IArtifactCompiler<TCompilationOutput> GetArtifactCompiler<TCompilationOutput>(string mode)
+    {
+        var runtime = ResolveRuntime(mode);
+        if (runtime.Core is IArtifactCompiler<TCompilationOutput> compiler)
+            return compiler;
+
+        Thrower.InvalidOpEx<IArtifactCompiler<TCompilationOutput>>(
+            $"Backend '{runtime.Descriptor.CanonicalId}' does not support compilation output '{typeof(TCompilationOutput).FullName}'.");
+        return null!;
+    }
+
+    private WistDialectBackendRuntime ResolveRuntime(string mode)
+    {
         if (string.IsNullOrWhiteSpace(mode))
             Thrower.Argument(nameof(mode), "Execution mode must not be empty.");
 
@@ -48,10 +66,8 @@ public sealed class WistDialectExecutionHost : IDisposable
         var runtime = _serviceProvider.GetServices<WistDialectBackendRuntime>()
             .FirstOrDefault(x => x.Descriptor.BackendId == backendConfiguration.BackendDescriptor.BackendId);
         if (runtime == null)
-            Thrower.InvalidOpEx<ICoreRunnable>($"Backend core '{backendConfiguration.BackendDescriptor.CanonicalId}' was not registered.");
+            Thrower.InvalidOpEx<WistDialectBackendRuntime>($"Backend core '{backendConfiguration.BackendDescriptor.CanonicalId}' was not registered.");
 
-        return runtime.Core;
+        return runtime;
     }
-
-    public object? Run(string code, string mode) => GetCore(mode).Run(code);
 }

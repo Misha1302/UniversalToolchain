@@ -11,6 +11,7 @@ public class BasicCoreImpl<TCompilationOutput>(
     IReadOnlyList<IIRProcessingModule> optimizers,
     IReadOnlyList<IMiddleEndCoreModule<TCompilationOutput>> middleEndModules
 ) : ICoreRunnable, ICoreOptimizedRunnable, IExecutableGiver<TCompilationOutput>
+    , IArtifactCompiler<TCompilationOutput>
 {
     private readonly CompilationInputNormalizer _inputNormalizer = new();
 

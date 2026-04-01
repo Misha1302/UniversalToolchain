@@ -49,6 +49,22 @@ public class RuntimeCompiledArtifactContractsTests
     }
 
     [Test]
+    public void HostArtifactCompilerAccessor_ShouldReturnTypedCompiler_AndRejectUnsupportedOutput()
+    {
+        using var host = CreateHost();
+
+        var compiler = host.GetArtifactCompiler<DynamicMethod>("compiler");
+        var artifact = compiler.Compile("41 + 1");
+        var value = artifact.CreateSession().Run();
+
+        var ex = Assert.Throws<InvalidOperationException>(() => host.GetArtifactCompiler<DynamicMethod>("interpreter"));
+
+        Assert.That(value, Is.Not.Null);
+        Assert.That(ex!.Message, Does.Contain("does not support compilation output"));
+        Assert.That(ex.Message, Does.Contain(typeof(DynamicMethod).FullName));
+    }
+
+    [Test]
     public void DynamicMethodArtifact_AsFunc_SingleArgument_ReturnsExpectedValue()
     {
         var artifact = CreateUnaryAddOneArtifact();
