@@ -22,7 +22,7 @@ public class NativeArithmeticAstVisitor : IAstVisitor
             nodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("NativeDivision"))
             return;
 
-        // Обрабатываем оба операнда
+        // Process both operands first to keep stack typing deterministic.
         data.AstToBytecodeTranslator.Translate(data.Node.Children[0]);
         data.AstToBytecodeTranslator.Translate(data.Node.Children[1]);
 
@@ -60,5 +60,28 @@ public class NativeArithmeticAstVisitor : IAstVisitor
             .GetMethod(methodName, BindingFlags.Static | BindingFlags.Public)
             .NotNull()
             .MakeGenericMethod(leftType);
+    }
+
+    internal static MethodInfo ResolveNativeUnaryMinusMethod(Type operandType)
+    {
+        if (operandType == typeof(decimal))
+        {
+            return typeof(NativeArithmetic)
+                .GetMethod(nameof(NativeArithmetic.NegateDecimal), BindingFlags.Static | BindingFlags.Public)
+                .NotNull();
+        }
+
+        try
+        {
+            return typeof(NativeArithmetic)
+                .GetMethod(nameof(NativeArithmetic.Negate), BindingFlags.Static | BindingFlags.Public)
+                .NotNull()
+                .MakeGenericMethod(operandType);
+        }
+        catch (Exception)
+        {
+            return Thrower.NotSupported<MethodInfo>(
+                $"Native unary minus does not support operand type '{operandType}'.");
+        }
     }
 }

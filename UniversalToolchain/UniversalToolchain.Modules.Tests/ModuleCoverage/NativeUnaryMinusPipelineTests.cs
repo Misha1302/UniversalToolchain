@@ -60,6 +60,56 @@ public class NativeUnaryMinusPipelineTests
         ModulePipelineTestHelper.AssertParity(result.Compiler, result.Interpreter);
     }
 
+    [Test]
+    public void NativeUnaryMinus_DoubleLiteral_ParsesAndExecutes()
+    {
+        using var h = new ModulePipelineTestHelper();
+        var result = h.ExecuteBoth("-1.5", NativeModules);
+
+        ModulePipelineTestHelper.AssertParity(result.Compiler, result.Interpreter);
+        Assert.That(ModulePipelineTestHelper.AsNumber(result.Compiler), Is.EqualTo(-1.5d));
+    }
+
+    [Test]
+    public void NativeUnaryMinus_FloatLiteral_ParsesAndExecutes()
+    {
+        using var h = new ModulePipelineTestHelper();
+        var result = h.ExecuteBoth("-1f", NativeModules);
+
+        ModulePipelineTestHelper.AssertParity(result.Compiler, result.Interpreter);
+        Assert.That(ModulePipelineTestHelper.AsNumber(result.Compiler), Is.EqualTo(-1f));
+    }
+
+    [Test]
+    public void NativeUnaryMinus_LongLiteral_ParsesAndExecutes()
+    {
+        using var h = new ModulePipelineTestHelper();
+        var result = h.ExecuteBoth("-1L", NativeModules);
+
+        ModulePipelineTestHelper.AssertParity(result.Compiler, result.Interpreter);
+        Assert.That(ModulePipelineTestHelper.AsNumber(result.Compiler), Is.EqualTo(-1L));
+    }
+
+    [Test]
+    public void NativeUnaryMinus_DecimalLiteral_ParsesAndExecutes()
+    {
+        using var h = new ModulePipelineTestHelper();
+        var result = h.ExecuteBoth("-1m", NativeModules);
+
+        ModulePipelineTestHelper.AssertParity(result.Compiler, result.Interpreter);
+        Assert.That(ModulePipelineTestHelper.AsNumber(result.Compiler), Is.EqualTo(-1m));
+    }
+
+    [Test]
+    public void NativeUnaryMinus_DoubleExpression_AfterBinaryOperator_ParsesAndExecutes()
+    {
+        using var h = new ModulePipelineTestHelper();
+        var result = h.ExecuteBoth("2.0 * -3.0", NativeModules);
+
+        ModulePipelineTestHelper.AssertParity(result.Compiler, result.Interpreter);
+        Assert.That(ModulePipelineTestHelper.AsNumber(result.Compiler), Is.EqualTo(-6.0d));
+    }
+
     [TestCase("-7")]
     [TestCase("2 * -3")]
     [TestCase("-(2 + 5) + 9")]
