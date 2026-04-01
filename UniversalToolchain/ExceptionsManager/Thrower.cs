@@ -77,4 +77,10 @@ public static class Thrower
     public static T InvalidCast<T>(string message = "") => throw new InvalidCastException(FormatMessage(message, "Value cannot be converted to target type."));
 
     private static string FormatMessage(string message, string fallback) => string.IsNullOrWhiteSpace(message) ? fallback : message;
+
+    [DoesNotReturn]
+    public static void MultipleDefinition(string message)
+    {
+        throw new InvalidOperationException($"There are multiple definitions of {message}");
+    }
 }
