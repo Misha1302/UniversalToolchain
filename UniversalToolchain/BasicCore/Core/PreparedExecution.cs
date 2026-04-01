@@ -2,15 +2,12 @@ namespace BasicCore.Core;
 
 internal sealed class PreparedExecution<TCompilationOutput>(
     string sourceText,
-    TCompilationOutput compilationOutput,
-    IExecutor<TCompilationOutput> executor,
-    IExecutionEnvironment executionEnvironment)
+    ICompiledArtifact<TCompilationOutput> artifact,
+    ICompiledArtifactSession session)
 {
     public string SourceText { get; } = sourceText;
 
-    public TCompilationOutput CompilationOutput { get; } = compilationOutput;
+    public ICompiledArtifact<TCompilationOutput> Artifact { get; } = artifact;
 
-    public IExecutor<TCompilationOutput> Executor { get; } = executor;
-
-    public IExecutionEnvironment ExecutionEnvironment { get; } = executionEnvironment;
+    public ICompiledArtifactSession Session { get; } = session;
 }
