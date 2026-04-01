@@ -139,11 +139,11 @@ See `UniversalToolchain/Example/Program.cs` for a full composition + diagnostics
 
 ### Compile artifact API
 
-Generic framework path (through the public compile-artifact contract/accessor):
+Generic framework path (through the host-level accessor):
 
 ```csharp
-var compilerArtifacts = /* resolve public compile-artifact accessor from your composition */;
-var artifact = compilerArtifacts.Compile("x + 1", new OrderedDictionary<string, Type>
+var compiler = host.GetArtifactCompiler<DynamicMethod>("compiler");
+var artifact = compiler.Compile("x + 1", new OrderedDictionary<string, Type>
 {
     ["x"] = typeof(int)
 });
@@ -156,10 +156,8 @@ var fortyTwo = session.Run<int>();
 Optional DynamicMethod fast-path (backend-specific extension):
 
 ```csharp
-var compilerCore = host.GetCore("compiler") as BasicCoreImpl<DynamicMethod>
-                   ?? throw new InvalidOperationException();
-
-var artifact = compilerCore.Compile("x + 1", new OrderedDictionary<string, Type>
+var compiler = host.GetArtifactCompiler<DynamicMethod>("compiler");
+var artifact = compiler.Compile("x + 1", new OrderedDictionary<string, Type>
 {
     ["x"] = typeof(int)
 });

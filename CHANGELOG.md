@@ -12,14 +12,18 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Fixed constant-binding mutation.
 - Fixed false-positive comment validation for `// /*`.
 - Improved runtime component resolver assembly indexing.
+- Prevented silent duplicate runtime component id overwrite during assembly component indexing.
 
 ### Added
 
-- Introduced a public compile-artifact contract/accessor.
+- Introduced host-level compile-artifact access via `WistDialectExecutionHost.GetArtifactCompiler<TCompilationOutput>(mode)`.
+- Added interface-based invoke helpers for `ICompiledArtifactSession`.
 
 ### Changed
 
 - Renamed `ParametersSetter` placeholder type.
+- Clarified compiled artifact mutability contract in XML documentation.
+- Refactored native unary minus in native arithmetic path to use a dedicated negate method.
 - Consolidated repository-level documentation around explicit canonical roles (`readme.md`, `PROJECT_RULES.md`,
   `CONTRIBUTING.md`, `AGENTS.md`).
 - Updated root documentation to reinforce framework-first positioning: UniversalToolchain as reusable architecture, Wist
