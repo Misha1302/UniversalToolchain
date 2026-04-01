@@ -5,7 +5,7 @@ namespace ParametersSetterModule;
 /// The module is intentionally not exported to dialect composition until
 /// lexer/parser/runtime contracts are finalized.
 /// </summary>
-public sealed class ParametersSetterModuleImpl
+public sealed class ParametersSetterModulePlaceholder
 {
     public const string UnsupportedReason =
         "ParametersSetter is not exported yet: parser contracts and runtime binding semantics are not finalized.";

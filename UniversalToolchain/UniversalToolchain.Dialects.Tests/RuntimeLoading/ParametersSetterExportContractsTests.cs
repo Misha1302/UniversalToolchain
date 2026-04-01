@@ -27,7 +27,7 @@ public class ParametersSetterExportContractsTests
     [Test]
     public void ParametersSetter_PlaceholderUnsupportedReason_IsStable()
     {
-        Assert.That(ParametersSetterModuleImpl.UnsupportedReason, Is.EqualTo(ExpectedUnsupportedReason));
+        Assert.That(ParametersSetterModulePlaceholder.UnsupportedReason, Is.EqualTo(ExpectedUnsupportedReason));
     }
 
     [Test]
