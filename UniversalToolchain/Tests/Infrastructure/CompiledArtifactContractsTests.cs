@@ -110,6 +110,39 @@ public class CompiledArtifactContractsTests
     }
 
     [Test]
+    public void CompiledArtifactSession_SetArgument_RejectsConstantBindingBySlot()
+    {
+        var artifact = CreateArtifactWithConstantBinding("compiled");
+        var session = artifact.CreateSession();
+
+        var ex = Assert.Throws<InvalidOperationException>(() => session.SetArgument(0, 99));
+
+        Assert.That(ex!.Message, Is.EqualTo("Binding 'value' at slot 0 is constant and cannot be reassigned."));
+    }
+
+    [Test]
+    public void CompiledArtifactSession_SetArgument_RejectsConstantBindingByName()
+    {
+        var artifact = CreateArtifactWithConstantBinding("compiled");
+        var session = artifact.CreateSession();
+
+        var ex = Assert.Throws<InvalidOperationException>(() => session.SetArgument("value", 99));
+
+        Assert.That(ex!.Message, Is.EqualTo("Binding 'value' at slot 0 is constant and cannot be reassigned."));
+    }
+
+    [Test]
+    public void CompiledArtifactSession_SetArgument_AllowsVariableBindingMutation()
+    {
+        var artifact = CreateTwoArgumentArtifact("compiled", 1, "seed");
+        var session = artifact.CreateSession();
+
+        session.SetArgument(0, 10);
+
+        Assert.That(session.Run(), Is.EqualTo("compiled:10:seed"));
+    }
+
+    [Test]
     public void CompiledArtifactSession_Run_UsesArtifactCompilationOutput()
     {
         var artifact = CreateTwoArgumentArtifact("expected-output", 3, "x");
@@ -180,6 +213,18 @@ public class CompiledArtifactContractsTests
             [
                 new ExternalBinding { Name = "value", Type = typeof(int), Value = defaultValue, Kind = ExternalBindingKind.Variable },
                 new ExternalBinding { Name = "text", Type = typeof(string), Value = defaultText, Kind = ExternalBindingKind.Variable }
+            ],
+            compilationOutput,
+            new PairFormattingExecutor());
+    }
+
+    private static CompiledArtifact<string> CreateArtifactWithConstantBinding(string compilationOutput)
+    {
+        return new CompiledArtifact<string>(
+            "value + text",
+            [
+                new ExternalBinding { Name = "value", Type = typeof(int), Value = 1, Kind = ExternalBindingKind.Constant },
+                new ExternalBinding { Name = "text", Type = typeof(string), Value = "seed", Kind = ExternalBindingKind.Variable }
             ],
             compilationOutput,
             new PairFormattingExecutor());
