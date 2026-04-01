@@ -80,7 +80,16 @@ public class RuntimeCompiledArtifactContractsTests
         return new CompiledArtifact<DynamicMethod>(
             "x + 1",
             [new ExternalBinding { Name = "x", Type = typeof(int), Kind = ExternalBindingKind.Variable }],
-            dynamicMethod);
+            dynamicMethod,
+            new DynamicMethodExecutor());
+    }
+
+    private sealed class DynamicMethodExecutor : IExecutor<DynamicMethod>
+    {
+        public object? Execute(DynamicMethod compilation, IExecutionEnvironment environment)
+        {
+            return compilation.CreateDelegate<Func<int, int>>().Invoke((int)environment.GetExternalValue(0)!);
+        }
     }
 
     private static WistDialectExecutionHost CreateHost()

@@ -8,8 +8,13 @@ public sealed class CompiledArtifact<TCompilationOutput> : ICompiledArtifact<TCo
 {
     private readonly ExternalBinding[] _declaredBindings;
     private readonly IReadOnlyDictionary<string, int> _slotsByName;
+    private readonly IExecutor<TCompilationOutput> _executor;
 
-    public CompiledArtifact(string sourceText, IReadOnlyList<ExternalBinding> declaredBindings, TCompilationOutput compilationOutput)
+    public CompiledArtifact(
+        string sourceText,
+        IReadOnlyList<ExternalBinding> declaredBindings,
+        TCompilationOutput compilationOutput,
+        IExecutor<TCompilationOutput> executor)
     {
         if (sourceText is null)
             Thrower.ArgumentNull(nameof(sourceText));
@@ -17,8 +22,12 @@ public sealed class CompiledArtifact<TCompilationOutput> : ICompiledArtifact<TCo
         if (declaredBindings is null)
             Thrower.ArgumentNull(nameof(declaredBindings));
 
+        if (executor is null)
+            Thrower.ArgumentNull(nameof(executor));
+
         _declaredBindings = SnapshotBindings(declaredBindings);
         _slotsByName = BuildSlots(_declaredBindings);
+        _executor = executor;
 
         SourceText = sourceText;
         CompilationOutput = compilationOutput;
@@ -32,7 +41,7 @@ public sealed class CompiledArtifact<TCompilationOutput> : ICompiledArtifact<TCo
 
     public TCompilationOutput CompilationOutput { get; }
 
-    public IExecutionEnvironment CreateSession() => new ExecutionEnvironment(_declaredBindings);
+    public ICompiledArtifactSession CreateSession() => new CompiledArtifactSession<TCompilationOutput>(this, _executor, new ExecutionEnvironment(_declaredBindings));
 
     private static ExternalBinding[] SnapshotBindings(IReadOnlyList<ExternalBinding> declaredBindings)
     {

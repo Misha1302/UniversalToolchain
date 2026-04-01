@@ -13,6 +13,36 @@ internal sealed class PreparedExecutionBuilder<TCompilationOutput>(
 {
     public ICompiledArtifact<TCompilationOutput> Compile(CompilationInput input)
     {
+        var buildResult = BuildCompilationResult(input);
+
+        return new CompiledArtifact<TCompilationOutput>(
+            buildResult.SourceText,
+            buildResult.DeclaredBindings,
+            buildResult.CompilationOutput,
+            buildResult.Executor);
+    }
+
+    public PreparedExecution<TCompilationOutput> Build(CompilationInput input)
+    {
+        var buildResult = BuildCompilationResult(input);
+        var artifact = new CompiledArtifact<TCompilationOutput>(
+            buildResult.SourceText,
+            buildResult.DeclaredBindings,
+            buildResult.CompilationOutput,
+            buildResult.Executor);
+        var session = artifact.CreateSession();
+
+        return new PreparedExecution<TCompilationOutput>(
+            artifact.SourceText,
+            artifact,
+            session);
+    }
+
+    private CompilationBuildResult<TCompilationOutput> BuildCompilationResult(CompilationInput input)
+    {
+        if (input is null)
+            Thrower.ArgumentNull(nameof(input));
+
         var lexer = lexerFactory();
         var parser = parserFactory();
         var astTranslator = astTranslatorFactory();
@@ -45,34 +75,25 @@ internal sealed class PreparedExecutionBuilder<TCompilationOutput>(
         var compilationOutput = middleEndModules.Aggregate(compiled, (current, module) => module.ProcessCompilation(current));
         middleEndModules.ForEach(module => module.InitExecutor(executor));
 
-        var slotsByName = new Dictionary<string, int>(input.ExternalBindings.Count, StringComparer.Ordinal);
-        for (var i = 0; i < input.ExternalBindings.Count; i++)
-        {
-            var binding = input.ExternalBindings[i];
-            if (!slotsByName.TryAdd(binding.Name, i))
-                Thrower.Argument(nameof(input), $"Declared binding '{binding.Name}' is duplicated.");
-        }
-
-        _ = slotsByName;
-
-        return new CompiledArtifact<TCompilationOutput>(
+        return new CompilationBuildResult<TCompilationOutput>(
             input.SourceText,
             input.ExternalBindings,
-            compilationOutput);
+            compilationOutput,
+            executor);
     }
+}
 
-    public PreparedExecution<TCompilationOutput> Build(CompilationInput input)
-    {
-        var artifact = Compile(input);
-        var session = new CompiledArtifactSession<TCompilationOutput>(
-            artifact.CompilationOutput,
-            executorFactory(),
-            artifact.CreateSession(),
-            artifact.DeclaredBindings);
+internal sealed class CompilationBuildResult<TCompilationOutput>(
+    string sourceText,
+    IReadOnlyList<ExternalBinding> declaredBindings,
+    TCompilationOutput compilationOutput,
+    IExecutor<TCompilationOutput> executor)
+{
+    public string SourceText { get; } = sourceText;
 
-        return new PreparedExecution<TCompilationOutput>(
-            artifact.SourceText,
-            artifact,
-            session);
-    }
+    public IReadOnlyList<ExternalBinding> DeclaredBindings { get; } = declaredBindings;
+
+    public TCompilationOutput CompilationOutput { get; } = compilationOutput;
+
+    public IExecutor<TCompilationOutput> Executor { get; } = executor;
 }
