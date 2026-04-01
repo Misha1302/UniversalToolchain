@@ -32,11 +32,7 @@ public sealed class CompiledArtifactSession<TCompilationOutput> : ICompiledArtif
 
     public void SetArgument(int slot, object? value)
     {
-        if (slot < 0 || slot >= _artifact.DeclaredBindings.Count)
-            Thrower.ArgumentOutOfRange<object>(nameof(slot), $"Argument slot '{slot}' is out of range [0, {_artifact.DeclaredBindings.Count - 1}].");
-
-        var binding = _artifact.DeclaredBindings[slot];
-        EnsureAssignable(binding, value, slot, binding.Name);
+        ValidateAssignment(slot, value);
         _executionEnvironment.SetExternalValue(slot, value);
     }
 
@@ -52,6 +48,21 @@ public sealed class CompiledArtifactSession<TCompilationOutput> : ICompiledArtif
     }
 
     public object? Run() => _executor.Execute(_artifact.CompilationOutput, _executionEnvironment);
+
+    private void ValidateAssignment(int slot, object? value)
+    {
+        if (slot < 0 || slot >= _artifact.DeclaredBindings.Count)
+            Thrower.ArgumentOutOfRange<object>(nameof(slot), $"Argument slot '{slot}' is out of range [0, {_artifact.DeclaredBindings.Count - 1}].");
+
+        var binding = _artifact.DeclaredBindings[slot];
+        if (binding.Kind == ExternalBindingKind.Constant)
+        {
+            Thrower.InvalidOpEx(
+                $"Binding '{binding.Name}' at slot {slot} is constant and cannot be reassigned.");
+        }
+
+        EnsureAssignable(binding, value, slot, binding.Name);
+    }
 
     private static void EnsureAssignable(ExternalBinding binding, object? value, int slot, string name)
     {
