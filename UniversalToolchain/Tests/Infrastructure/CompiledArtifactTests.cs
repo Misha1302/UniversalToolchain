@@ -69,6 +69,23 @@ public class CompiledArtifactTests
     }
 
     [Test]
+    public void Constructor_ShouldPreserveReferenceForMutableBindingValue()
+    {
+        var mutableValue = new List<int> { 1 };
+        var bindings = new List<ExternalBinding>
+        {
+            new() { Name = "x", Type = typeof(List<int>), Value = mutableValue, Kind = ExternalBindingKind.Variable }
+        };
+
+        var artifact = new CompiledArtifact<string>("x", bindings, "compiled", new NoOpExecutor<string>());
+        mutableValue.Add(2);
+
+        var valueFromArtifact = artifact.DeclaredBindings[0].Value;
+        Assert.That(valueFromArtifact, Is.SameAs(mutableValue));
+        Assert.That((List<int>)valueFromArtifact!, Is.EqualTo(new[] { 1, 2 }));
+    }
+
+    [Test]
     public void Constructor_WithDuplicateBindingName_ShouldThrow()
     {
         var bindings = new List<ExternalBinding>
