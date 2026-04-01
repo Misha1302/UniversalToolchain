@@ -128,6 +128,30 @@ public class RuntimeCompiledArtifactContractsTests
         Assert.That(delegateResult, Is.EqualTo(29));
     }
 
+    [Test]
+    public void GetArtifactCompiler_WithDynamicMethodOutput_ReturnsWorkingCompilerArtifactPath()
+    {
+        using var host = CreateHost();
+        var compiler = host.GetArtifactCompiler<DynamicMethod>("compiler");
+        var artifact = compiler.Compile("x", new OrderedDictionary<string, Type> { ["x"] = typeof(object) });
+        var session = artifact.CreateSession();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(artifact.CompilationOutput, Is.Not.Null);
+            Assert.That(artifact.SlotsByName.ContainsKey("x"), Is.True);
+            Assert.That(session, Is.Not.Null);
+        });
+    }
+
+    [Test]
+    public void GetArtifactCompiler_WithMismatchedCompilationOutput_ThrowsInvalidOperationException()
+    {
+        using var host = CreateHost();
+
+        Assert.Throws<InvalidOperationException>(() => host.GetArtifactCompiler<IAbstractIR>("compiler"));
+    }
+
     private static ICompiledArtifact<DynamicMethod> CreateUnaryAddOneArtifact()
     {
         var dynamicMethod = new DynamicMethod("AddOne", typeof(int), [typeof(int)]);
