@@ -21,8 +21,12 @@ parse dialect -> build plan -> resolve only selected components -> register only
 This plan is focused on the **dialect-based execution path** first. The existing eager path may remain for
 compatibility. The current code already has a minimal core registration path in `AddWistCoreServices()`, while the full
 path still performs automatic discovery first and filtering later, and `TypesFinder` keeps global static caches and
-recursively scans assemblies. :contentReference[oaicite:0]{index=0} :contentReference[oaicite:1]{index=1} :
-contentReference[oaicite:2]{index=2}
+recursively scans assemblies.
+
+For concrete reference points in the current codebase, see
+[`TypesFinder`](AssemblyFinder/TypesFinder.cs),
+[`WistDialectExecutionWorkflow`](UniversalToolchain.Dialects.Wist/WistDialectExecutionWorkflow.cs), and
+[`AddWistDialectServices`](UniversalToolchain.Dialects.Wist/WistDialectServiceCollectionExtensions.cs).
 
 ---
 
@@ -36,8 +40,7 @@ Right now the main DI path is broad and eager:
 2. It calls `RegisterAutoDiscoveredServices(...)`.
 3. That path uses `TypesFinder` or loaded assemblies.
 4. `AddAutoRegisteredServices(...)` iterates all types from assemblies and registers supported ones.
-5. Only after that `ApplyOptionsFilters(...)` removes excluded namespaces/modules. :contentReference[oaicite:3]
-   {index=3} :contentReference[oaicite:4]{index=4}
+5. Only after that `ApplyOptionsFilters(...)` removes excluded namespaces/modules.
 
 This means that even if a dialect actually needs only:
 
@@ -56,14 +59,13 @@ the system may still:
 
 `TypesFinder` is especially important here because it uses global static/lazy caches, keeps loaded assemblies, caches
 assembly names, caches “bad assemblies”, scans `*.dll` recursively and loads types from assemblies. This is a strong
-candidate for startup memory growth that is independent from the actual selected module count. :
-contentReference[oaicite:5]{index=5}
+candidate for startup memory growth that is independent from the actual selected module count.
 
 ### Why “just use fewer modules” is not enough
 
 Using fewer modules in the dialect config is **not sufficient** in the current architecture because the expensive part
 happens **before** the module selection becomes effective. The selected module count helps runtime composition a bit,
-but does not control the broad discovery phase. :contentReference[oaicite:6]{index=6}
+but does not control the broad discovery phase.
 
 ---
 
@@ -124,22 +126,20 @@ The dialect path must become **selection-driven**, not **discovery-driven**.
 
 ## Design constraints
 
-1. **Do not break existing eager path immediately.**  
-   `AddWistServices()` should remain available for compatibility and tests that still rely on full auto-discovery. :
-   contentReference[oaicite:7]{index=7}
+1. **Do not break existing eager path immediately.**
+   `AddWistServices()` should remain available for compatibility and tests that still rely on full auto-discovery.
 
-2. **The dialect path must not depend on broad assembly scanning at execution time.**  
+2. **The dialect path must not depend on broad assembly scanning at execution time.**
    It may still use a prebuilt registry/catalog, but must not scan all assemblies every time.
 
-3. **Keep deterministic ordering.**  
+3. **Keep deterministic ordering.**
    The project already has ordering-sensitive dialect behavior and tests for deterministic ordering. The new runtime
-   composition must preserve deterministic ordering of selected modules/optimizers/backends. :
-   contentReference[oaicite:8]{index=8} :contentReference[oaicite:9]{index=9} :contentReference[oaicite:10]{index=10}
+   composition must preserve deterministic ordering of selected modules/optimizers/backends.
 
-4. **Do not mix runtime selection with DI auto-registration.**  
+4. **Do not mix runtime selection with DI auto-registration.**
    Selection must be based on runtime descriptors, then DI registration should instantiate only chosen types.
 
-5. **No hidden global mutable state in the new dialect path.**  
+5. **No hidden global mutable state in the new dialect path.**
    Avoid new static caches unless they are read-only and deterministic.
 
 ---
@@ -174,9 +174,9 @@ No service provider yet.
 
 ### Layer 3: minimal service provider assembly
 
-Use `AddWistCoreServices()` and explicitly register only selected components.  
+Use `AddWistCoreServices()` and explicitly register only selected components.
 This is the point where actual runtime objects are instantiated. `AddWistCoreServices()` is already the right minimal
-base for this. :contentReference[oaicite:11]{index=11}
+base for this.
 
 ---
 
@@ -345,7 +345,9 @@ Builder must fail fast with clear messages:
 - which old type owns it,
 - which new type tried to reuse it.
 
-This is already aligned with existing alias collision tests. :contentReference[oaicite:12]{index=12}
+This is already aligned with existing alias collision tests.
+For example, see
+[`RuntimeManifestCatalogContractTests`](UniversalToolchain.Dialects.Tests/RuntimeCatalog/RuntimeManifestCatalogContractTests.cs).
 
 #### Ordering
 
@@ -448,7 +450,7 @@ Call:
 services.AddWistCoreServices();
 ~~~
 
-This gives the minimal base runtime without broad discovery. :contentReference[oaicite:13]{index=13}
+This gives the minimal base runtime without broad discovery.
 
 #### Step 3
 
@@ -484,9 +486,9 @@ This part depends on current backend design. For first iteration:
 
 ### Very important
 
-Do **not** call `AddWistServices()` here.  
-Do **not** call `AddAutoRegisteredServices()` here.  
-Do **not** call `TypesFinder.LoadAllAssemblies()` here.  
+Do **not** call `AddWistServices()` here.
+Do **not** call `AddAutoRegisteredServices()` here.
+Do **not** call `TypesFinder.LoadAllAssemblies()` here.
 Do **not** scan all types here.
 
 ### Acceptance criteria for Phase 5
@@ -555,9 +557,9 @@ But the default dialect path should use the new minimal provider assembly.
 
 ## Phase 7. Restrict `TypesFinder` usage to bootstrap scenarios only
 
-`TypesFinder` should no longer be a required dependency of every dialect composition.  
+`TypesFinder` should no longer be a required dependency of every dialect composition.
 Currently it is expensive because it maintains global caches and performs recursive assembly scanning and type
-enumeration. :contentReference[oaicite:14]{index=14}
+enumeration.
 
 ### New rule
 
@@ -636,7 +638,7 @@ This avoids:
 
 ### Migration compromise
 
-For the first iteration, manual catalog is acceptable and even desirable.  
+For the first iteration, manual catalog is acceptable and even desirable.
 It is much simpler and much more memory-friendly than trying to keep full magical discovery.
 
 ### Acceptance criteria for Phase 8
@@ -679,7 +681,7 @@ public interface ISelectiveAssemblyLoader
 
 ### First safe version
 
-Do not use custom unloadable `AssemblyLoadContext` yet.  
+Do not use custom unloadable `AssemblyLoadContext` yet.
 Just load missing assemblies on demand using a controlled loader.
 
 ### Second version, optional
