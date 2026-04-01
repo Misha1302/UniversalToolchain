@@ -1,3 +1,5 @@
+using ExceptionsManager;
+
 namespace UniversalToolchain.Dialects.Abstractions;
 
 /// <summary>
@@ -11,7 +13,7 @@ public sealed class ArithmeticModeCompatibilityAttribute : Attribute
     public ArithmeticModeCompatibilityAttribute(params ArithmeticMode[] supportedModes)
     {
         if (supportedModes == null || supportedModes.Length == 0)
-            throw new ArgumentException("At least one arithmetic mode must be specified.", nameof(supportedModes));
+            Thrower.Argument(nameof(supportedModes), "At least one arithmetic mode must be specified.");
 
         _supportedModes = supportedModes.ToHashSet();
     }

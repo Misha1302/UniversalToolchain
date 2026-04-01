@@ -22,14 +22,6 @@ public class WistDialectMinimalRuntimeIsolationTests
     }
 
     [Test]
-    public void MinimalWorkflow_HasNoLegacyDependencies()
-    {
-        using var provider = CreateMinimalProvider();
-
-        Assert.Multiple(() => { });
-    }
-
-    [Test]
     public void MinimalWorkflow_ComposeText_ProducesRuntimeSelection()
     {
         using var provider = CreateMinimalProvider();

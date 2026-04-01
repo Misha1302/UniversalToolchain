@@ -7,7 +7,6 @@ public static class TypesFinder
     private static readonly Dictionary<string, Assembly> _assemblyCache = new(StringComparer.OrdinalIgnoreCase);
     private static readonly HashSet<string> _badAssemblies = new(StringComparer.OrdinalIgnoreCase);
 
-    // Публичные свойства с ленивой инициализацией
     private static readonly Lazy<IReadOnlyList<Assembly>> _allAssemblies = new(() => LoadAllAssemblies(), true);
     private static readonly Lazy<IReadOnlyList<Type>> _allTypes = new(LoadAllTypes, true);
 
@@ -48,35 +47,29 @@ public static class TypesFinder
 
         try
         {
-            // Быстрая проверка - пытаемся получить минимальную информацию
             _ = assembly.GetName();
-            // Полная проверка - загрузка типов (но только если еще не проверяли)
             if (!_badAssemblies.Contains(assembly.FullName ?? ""))
                 _ = assembly.GetExportedTypes();
             return true;
         }
         catch (BadImageFormatException)
         {
-            // Битая сборка
             if (assembly.FullName != null)
                 _badAssemblies.Add(assembly.FullName);
             return false;
         }
         catch (FileLoadException)
         {
-            // Защищенная или недоступная сборка
             if (assembly.FullName != null)
                 _badAssemblies.Add(assembly.FullName);
             return false;
         }
         catch (ReflectionTypeLoadException)
         {
-            // Частично загруженная сборка
-            return true; // Все еще может содержать полезные типы
+            return true;
         }
         catch
         {
-            // Любая другая ошибка
             return false;
         }
     }
@@ -92,18 +85,15 @@ public static class TypesFinder
         }
         catch (BadImageFormatException)
         {
-            // Битый файл
             _badAssemblies.Add(Path.GetFileName(path));
             return false;
         }
         catch (UnauthorizedAccessException)
         {
-            // Нет прав доступа
             return false;
         }
         catch (IOException)
         {
-            // Файл занят или недоступен
             return false;
         }
     }
@@ -115,22 +105,18 @@ public static class TypesFinder
 
         lock (_syncLock)
         {
-            // Проверяем кэш
             if (_assemblyCache.TryGetValue(fullName, out assembly))
                 return true;
 
-            // Проверяем плохие сборки
             if (_badAssemblies.Contains(fullName))
                 return false;
 
             try
             {
-                // Загружаем сборку
                 assembly = path != null
                     ? AssemblyLoadContext.Default.LoadFromAssemblyPath(path)
                     : Assembly.Load(assemblyName);
 
-                // Валидируем сборку
                 if (!IsValidAssembly(assembly))
                 {
                     _badAssemblies.Add(fullName);
@@ -138,7 +124,6 @@ public static class TypesFinder
                     return false;
                 }
 
-                // Кэшируем успешную загрузку
                 CacheAssembly(assembly);
                 _loadedAssemblies.Add(assembly);
 
@@ -151,7 +136,6 @@ public static class TypesFinder
             }
             catch (FileLoadException ex) when (ex.Message.Contains("administrator") || ex.Message.Contains("elevated"))
             {
-                // Требуются повышенные права
                 _badAssemblies.Add(fullName);
                 return false;
             }
@@ -160,7 +144,6 @@ public static class TypesFinder
                                            UnauthorizedAccessException or
                                            PathTooLongException)
             {
-                // Другие ошибки файловой системы
                 _badAssemblies.Add(fullName);
                 return false;
             }
@@ -178,7 +161,6 @@ public static class TypesFinder
     {
         foreach (var reference in assembly.GetReferencedAssemblies())
         {
-            // Игнорируем системные сборки
             if (reference.Name?.StartsWith("System.") == true ||
                 reference.Name?.StartsWith("Microsoft.") == true ||
                 reference.Name == "netstandard" ||
@@ -197,13 +179,11 @@ public static class TypesFinder
     {
         var assemblies = new List<Assembly>();
 
-        // Загружаем сборки из текущего домена
         lock (_syncLock)
         {
             assemblies.AddRange(_loadedAssemblies);
         }
 
-        // Загружаем сборки из текущей директории и поддиректорий
         var currentPath = path ?? AppDomain.CurrentDomain.BaseDirectory;
         var dlls = Directory.EnumerateFiles(currentPath, "*.dll", SearchOption.AllDirectories);
 
@@ -212,12 +192,10 @@ public static class TypesFinder
             if (TryLoadAssembly(dllPath, out var assembly))
             {
                 assemblies.Add(assembly);
-                // Загружаем зависимости
                 LoadDependencies(assembly);
             }
         }
 
-        // Убираем дубликаты (на всякий случай)
         var distinctAssemblies = new HashSet<Assembly>(assemblies);
 
         return distinctAssemblies.ToArray();
@@ -235,20 +213,17 @@ public static class TypesFinder
             }
             catch (ReflectionTypeLoadException ex)
             {
-                // Частично загруженные типы
                 var loadedTypes = ex.Types.Where(t => t != null);
                 types.AddRange(loadedTypes!);
             }
             catch
             {
-                // Пропускаем сборки, которые не могут загрузить типы
             }
         }
 
         return types.Distinct().ToArray();
     }
 
-    // Метод для добавления сборок вручную (например, для тестирования)
     public static void RegisterAssembly(Assembly assembly)
     {
         // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract

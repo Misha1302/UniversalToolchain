@@ -1,3 +1,4 @@
+using ExceptionsManager;
 using System.Text.Json;
 
 namespace UniversalToolchain.Dialects.Integration;
@@ -12,12 +13,12 @@ public sealed class RuntimeManifestJsonSerializer : IRuntimeManifestSerializer
     public FileDialectRuntimeManifestDocument Deserialize(string json)
     {
         var document = JsonSerializer.Deserialize<SerializableManifestDocument>(json, JsonOptions)
-                       ?? throw new InvalidOperationException("Failed to deserialize runtime manifest JSON.");
+                       ?? Thrower.InvalidOpEx<SerializableManifestDocument>("Failed to deserialize runtime manifest JSON.");
 
         return new FileDialectRuntimeManifestDocument(
             document.AssemblySimpleName ?? string.Empty,
             (document.Components ?? [])
-            .Select(static x => new FileDialectRuntimeComponentEntry(
+            .Select(x => new FileDialectRuntimeComponentEntry(
                 RuntimeComponentKindCodec.Format(RuntimeComponentKindCodec.Parse(x.Kind ?? string.Empty, "runtime manifest")),
                 x.CanonicalAlias ?? string.Empty,
                 x.Aliases ?? [],

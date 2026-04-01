@@ -11,7 +11,10 @@ public sealed class DialectDslFrontendModule : IFrontendCoreModule
 {
     public DialectDslFrontendModule(DialectDslRegistry registry)
     {
-        Registry = registry ?? throw new ArgumentNullException(nameof(registry));
+        if (registry == null)
+            Thrower.ArgumentNull(nameof(registry));
+
+        Registry = registry;
     }
 
     public DialectDslRegistry Registry { get; }

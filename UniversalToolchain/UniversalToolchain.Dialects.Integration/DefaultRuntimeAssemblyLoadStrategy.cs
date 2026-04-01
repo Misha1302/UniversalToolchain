@@ -4,9 +4,17 @@ using ExceptionsManager;
 
 namespace UniversalToolchain.Dialects.Integration;
 
-public sealed class DefaultRuntimeAssemblyLoadStrategy(IRuntimeAssemblyLocator locator) : IRuntimeAssemblyLoadStrategy
+public sealed class DefaultRuntimeAssemblyLoadStrategy : IRuntimeAssemblyLoadStrategy
 {
-    private readonly IRuntimeAssemblyLocator _locator = locator ?? throw new ArgumentNullException(nameof(locator));
+    private readonly IRuntimeAssemblyLocator _locator;
+
+    public DefaultRuntimeAssemblyLoadStrategy(IRuntimeAssemblyLocator locator)
+    {
+        if (locator == null)
+            Thrower.ArgumentNull(nameof(locator));
+
+        _locator = locator;
+    }
 
     public Assembly LoadAssembly(string assemblySimpleName)
     {
