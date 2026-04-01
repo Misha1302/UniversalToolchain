@@ -134,7 +134,7 @@ public class DefaultRuntimeComponentResolverTests
         {
             Assert.That(first.ActivationType, Is.Not.EqualTo(second.ActivationType));
             Assert.That(first.Id, Is.Not.EqualTo(second.Id));
-            Assert.That(strategy.GetCalls(TestAssemblyName), Is.EqualTo(2));
+            Assert.That(strategy.GetCalls(TestAssemblyName), Is.EqualTo(1));
         });
     }
 

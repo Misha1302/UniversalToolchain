@@ -9,7 +9,8 @@ namespace UniversalToolchain.Dialects.Integration;
 public sealed class DefaultRuntimeComponentResolver : IRuntimeComponentResolver
 {
     private readonly IRuntimeAssemblyLoadStrategy _assemblyLoadStrategy;
-    private readonly ConcurrentDictionary<string, Lazy<RuntimeComponentDescriptor>> _cache = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, Lazy<Assembly>> _assemblyCache = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, Lazy<IReadOnlyDictionary<RuntimeComponentId, RuntimeComponentDescriptor>>> _assemblyComponentIndexCache = new(StringComparer.Ordinal);
 
     public DefaultRuntimeComponentResolver(IRuntimeAssemblyLoadStrategy assemblyLoadStrategy)
     {
@@ -24,35 +25,66 @@ public sealed class DefaultRuntimeComponentResolver : IRuntimeComponentResolver
         if (entry == null)
             Thrower.ArgumentNull(nameof(entry));
 
-        var key = $"{entry.AssemblySimpleName}|{entry.ComponentId.Value}";
-        var lazy = _cache.GetOrAdd(
-            key,
-            _ => new Lazy<RuntimeComponentDescriptor>(
-                () => ResolveCore(entry),
-                LazyThreadSafetyMode.ExecutionAndPublication));
+        var index = GetAssemblyComponentIndex(entry.AssemblySimpleName);
+        if (index.TryGetValue(entry.ComponentId, out var descriptor))
+            return descriptor;
+
+        return Thrower.InvalidOpEx<RuntimeComponentDescriptor>(
+            $"Runtime component '{entry.ComponentId}' was not found in assembly '{entry.AssemblySimpleName}'.");
+    }
+
+    private IReadOnlyDictionary<RuntimeComponentId, RuntimeComponentDescriptor> GetAssemblyComponentIndex(string assemblySimpleName)
+    {
+        var lazy = _assemblyComponentIndexCache.GetOrAdd(
+            assemblySimpleName,
+            static (name, resolver) => new Lazy<IReadOnlyDictionary<RuntimeComponentId, RuntimeComponentDescriptor>>(
+                () => resolver.BuildAssemblyComponentIndex(name),
+                LazyThreadSafetyMode.ExecutionAndPublication),
+            this);
 
         return lazy.Value;
     }
 
-    private RuntimeComponentDescriptor ResolveCore(RuntimeComponentManifestEntry entry)
+    private IReadOnlyDictionary<RuntimeComponentId, RuntimeComponentDescriptor> BuildAssemblyComponentIndex(string assemblySimpleName)
     {
-        var assembly = _assemblyLoadStrategy.LoadAssembly(entry.AssemblySimpleName);
+        var assembly = GetAssembly(assemblySimpleName);
+        var descriptors = new Dictionary<RuntimeComponentId, RuntimeComponentDescriptor>();
 
-        foreach (var type in assembly.GetTypes())
+        foreach (var type in GetLoadableTypes(assembly))
         {
             if (!TryGetRuntimeExport(type, out var kind, out var canonicalAlias))
                 continue;
 
             var id = RuntimeComponentIdFactory.Create(kind, canonicalAlias);
-            if (id != entry.ComponentId)
-                continue;
-
             var aliases = GetRuntimeAliases(type);
-            return new RuntimeComponentDescriptor(id, kind, canonicalAlias, aliases, type);
+            descriptors[id] = new RuntimeComponentDescriptor(id, kind, canonicalAlias, aliases, type);
         }
 
-        return Thrower.InvalidOpEx<RuntimeComponentDescriptor>(
-            $"Runtime component '{entry.ComponentId}' was not found in assembly '{entry.AssemblySimpleName}'.");
+        return descriptors;
+    }
+
+    private Assembly GetAssembly(string assemblySimpleName)
+    {
+        var lazy = _assemblyCache.GetOrAdd(
+            assemblySimpleName,
+            static (name, resolver) => new Lazy<Assembly>(
+                () => resolver._assemblyLoadStrategy.LoadAssembly(name),
+                LazyThreadSafetyMode.ExecutionAndPublication),
+            this);
+
+        return lazy.Value;
+    }
+
+    private static IEnumerable<Type> GetLoadableTypes(Assembly assembly)
+    {
+        try
+        {
+            return assembly.GetTypes();
+        }
+        catch (ReflectionTypeLoadException exception)
+        {
+            return exception.Types.Where(static type => type != null).Cast<Type>();
+        }
     }
 
     private static bool TryGetRuntimeExport(Type type, out RuntimeComponentKind kind, out string canonicalAlias)
