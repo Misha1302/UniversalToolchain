@@ -134,7 +134,49 @@ public class DefaultRuntimeComponentResolverTests
         {
             Assert.That(first.ActivationType, Is.Not.EqualTo(second.ActivationType));
             Assert.That(first.Id, Is.Not.EqualTo(second.Id));
-            Assert.That(strategy.GetCalls(TestAssemblyName), Is.EqualTo(2));
+            Assert.That(strategy.GetCalls(TestAssemblyName), Is.EqualTo(1));
+        });
+    }
+
+    [Test]
+    public void Resolve_DifferentEntries_FromSameAssembly_UsesSingleAssemblyIndexBuild()
+    {
+        var strategy = new CountingAssemblyLoadStrategy(new Dictionary<string, Assembly>(StringComparer.Ordinal)
+        {
+            [TestAssemblyName] = typeof(ResolverExportForCaching).Assembly
+        });
+        var resolver = new DefaultRuntimeComponentResolver(strategy);
+        var firstEntry = Entry(RuntimeComponentKind.FrontendModule, ResolverExportForDifferentEntriesAAlias, TestAssemblyName);
+        var secondEntry = Entry(RuntimeComponentKind.FrontendModule, ResolverExportForDifferentEntriesBAlias, TestAssemblyName);
+
+        _ = resolver.Resolve(firstEntry);
+        _ = resolver.Resolve(secondEntry);
+
+        Assert.That(strategy.GetCalls(TestAssemblyName), Is.EqualTo(1));
+    }
+
+    [Test]
+    public void Resolve_AssemblyTypeLoadFailure_StillUsesLoadableTypes()
+    {
+        var loadableType = typeof(ResolverExportForDifferentEntriesA);
+        var failingAssembly = new ReflectionTypeLoadExceptionAssembly(
+            [loadableType, null],
+            [new TypeLoadException("Simulated type load failure")]);
+
+        var strategy = new CountingAssemblyLoadStrategy(new Dictionary<string, Assembly>(StringComparer.Ordinal)
+        {
+            [TestAssemblyName] = failingAssembly
+        });
+        var resolver = new DefaultRuntimeComponentResolver(strategy);
+        var entry = Entry(RuntimeComponentKind.FrontendModule, ResolverExportForDifferentEntriesAAlias, TestAssemblyName);
+
+        var descriptor = resolver.Resolve(entry);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(descriptor.Id, Is.EqualTo(entry.ComponentId));
+            Assert.That(descriptor.ActivationType, Is.EqualTo(loadableType));
+            Assert.That(strategy.GetCalls(TestAssemblyName), Is.EqualTo(1));
         });
     }
 
@@ -186,5 +228,13 @@ public class DefaultRuntimeComponentResolverTests
         private readonly RuntimeComponentDescriptor _descriptor = descriptor;
 
         public RuntimeComponentDescriptor Resolve(RuntimeComponentManifestEntry entry) => _descriptor;
+    }
+
+    private sealed class ReflectionTypeLoadExceptionAssembly(Type?[] types, Exception[] loaderExceptions) : Assembly
+    {
+        private readonly Type?[] _types = types;
+        private readonly Exception[] _loaderExceptions = loaderExceptions;
+
+        public override Type[] GetTypes() => throw new ReflectionTypeLoadException(_types, _loaderExceptions);
     }
 }
