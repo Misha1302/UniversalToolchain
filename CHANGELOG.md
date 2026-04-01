@@ -7,8 +7,19 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed constant-binding mutation.
+- Fixed false-positive comment validation for `// /*`.
+- Improved runtime component resolver assembly indexing.
+
+### Added
+
+- Introduced a public compile-artifact contract/accessor.
+
 ### Changed
 
+- Renamed `ParametersSetter` placeholder type.
 - Consolidated repository-level documentation around explicit canonical roles (`readme.md`, `PROJECT_RULES.md`,
   `CONTRIBUTING.md`, `AGENTS.md`).
 - Updated root documentation to reinforce framework-first positioning: UniversalToolchain as reusable architecture, Wist

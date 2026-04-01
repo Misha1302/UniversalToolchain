@@ -28,6 +28,13 @@ Runtime composition paths:
 - **Default composition**: uses built-in/default service registrations.
 - **Dialect-based composition**: uses a `.wistdialect` file to resolve runtime composition before execution.
 
+Compile-artifact surface:
+
+- The framework exposes a public compile-artifact contract for backends that support artifact-oriented workflows
+  (compile once, create one or more execution sessions).
+- Backend-specific helpers/extensions are optional layers on top of that contract and should be treated as
+  convenience/performance paths, not mandatory framework behavior.
+
 ## Dialect workflow
 
 Typical dialect execution flow:
