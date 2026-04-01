@@ -60,6 +60,9 @@
         <Compile Include="Cli/WistcCliEndToEndTests.cs"/>
         <Compile Include="Architecture/DeletedLegacySurfaceTests.cs"/>
         <Compile Include="Infrastructure/DialectTestHostInfrastructure.cs"/>
+        <Compile Include="Infrastructure/CompiledArtifactSessionTests.cs"/>
+        <Compile Include="Infrastructure/CompiledArtifactTests.cs"/>
+        <Compile Include="Infrastructure/RuntimeCompiledArtifactContractsTests.cs"/>
         <Compile Include="Stress/RuntimeStressContractsTests.cs"/>
         <Compile Include="CoreContracts/BasicCoreLifecycleContractsTests.cs"/>
         <Compile Include="Concurrency/BasicCoreConcurrencyTests.cs"/>

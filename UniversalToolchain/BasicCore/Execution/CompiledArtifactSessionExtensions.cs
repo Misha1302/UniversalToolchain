@@ -62,6 +62,13 @@ public static class CompiledArtifactSessionExtensions
         if (arguments == null)
             Thrower.ArgumentNull(nameof(arguments));
 
+        if (arguments.Count != session.ArgumentCount)
+        {
+            Thrower.Argument(
+                nameof(arguments),
+                $"Expected {session.ArgumentCount} named arguments, but got {arguments.Count}.");
+        }
+
         foreach (var argument in arguments)
             session.SetArgument(argument.Key, argument.Value);
 

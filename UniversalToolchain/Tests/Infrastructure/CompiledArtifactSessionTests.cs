@@ -6,7 +6,7 @@ public class CompiledArtifactSessionTests
     [Test]
     public void SetArgument_ShouldThrow_WhenSlotIsOutOfRange()
     {
-        var session = CreateSession();
+        var session = CreateSession(out _);
 
         Assert.Throws<ArgumentOutOfRangeException>(() => session.SetArgument(-1, 1));
         Assert.Throws<ArgumentOutOfRangeException>(() => session.SetArgument(2, 1));
@@ -15,7 +15,7 @@ public class CompiledArtifactSessionTests
     [Test]
     public void SetArgument_ShouldThrow_WhenValueIsNotAssignable()
     {
-        var session = CreateSession();
+        var session = CreateSession(out _);
 
         Assert.Throws<ArgumentException>(() => session.SetArgument(0, "bad"));
     }
@@ -23,7 +23,7 @@ public class CompiledArtifactSessionTests
     [Test]
     public void SetArgument_ShouldThrow_WhenNullAssignedToNonNullableValueType()
     {
-        var session = CreateSession();
+        var session = CreateSession(out _);
 
         Assert.Throws<ArgumentException>(() => session.SetArgument(0, null));
     }
@@ -31,17 +31,17 @@ public class CompiledArtifactSessionTests
     [Test]
     public void SetArgument_ByName_ShouldAssignValueToCorrespondingSlot()
     {
-        var session = CreateSession();
+        var session = CreateSession(out var environment);
 
         session.SetArgument("value", 7);
 
-        Assert.That(session.Environment.GetExternalValue(0), Is.EqualTo(7));
+        Assert.That(environment.GetExternalValue(0), Is.EqualTo(7));
     }
 
     [Test]
     public void Run_ShouldExecuteViaExecutor()
     {
-        var session = CreateSession();
+        var session = CreateSession(out _);
 
         session.SetArgument(0, 11);
         session.SetArgument(1, "abc");
@@ -54,7 +54,7 @@ public class CompiledArtifactSessionTests
     [Test]
     public void RunGeneric_ShouldReturnTypedResult()
     {
-        var session = CreateSession();
+        var session = CreateSession(out _);
 
         session.SetArgument(0, 5);
         session.SetArgument(1, "x");
@@ -67,7 +67,7 @@ public class CompiledArtifactSessionTests
     [Test]
     public void Invoke_ShouldAssignByPositionAndRun()
     {
-        var session = CreateSession();
+        var session = CreateSession(out _);
 
         var result = session.Invoke<string, string>(3, "n");
 
@@ -77,7 +77,7 @@ public class CompiledArtifactSessionTests
     [Test]
     public void InvokeNamed_ShouldAssignByNameAndRun()
     {
-        var session = CreateSession();
+        var session = CreateSession(out _);
 
         var result = session.InvokeNamed<string, string>(new Dictionary<string, object?>
         {
@@ -88,7 +88,59 @@ public class CompiledArtifactSessionTests
         Assert.That(result, Is.EqualTo("compiled:9:q"));
     }
 
-    private static SessionContext CreateSession()
+    [Test]
+    public void Invoke_ShouldThrow_WhenArgumentCountIsWrong()
+    {
+        var session = CreateSession(out _);
+
+        Assert.Throws<ArgumentException>(() => session.Invoke<string, string>(1));
+    }
+
+    [Test]
+    public void Invoke_ShouldThrow_WhenArgumentTypeIsWrong()
+    {
+        var session = CreateSession(out _);
+
+        Assert.Throws<ArgumentException>(() => session.Invoke<string, string>("bad", "ok"));
+    }
+
+    [Test]
+    public void InvokeNamed_ShouldThrow_WhenMissingRequiredArgument()
+    {
+        var session = CreateSession(out _);
+
+        Assert.Throws<ArgumentException>(() => session.InvokeNamed<string, string>(new Dictionary<string, object?>
+        {
+            ["value"] = 9
+        }));
+    }
+
+    [Test]
+    public void InvokeNamed_ShouldThrow_WhenExtraArgumentIsProvided()
+    {
+        var session = CreateSession(out _);
+
+        Assert.Throws<ArgumentException>(() => session.InvokeNamed<string, string>(new Dictionary<string, object?>
+        {
+            ["value"] = 9,
+            ["text"] = "q",
+            ["extra"] = 42
+        }));
+    }
+
+    [Test]
+    public void Session_ShouldBeReusable_WithDifferentArgumentsAcrossRuns()
+    {
+        var session = CreateSession(out _);
+
+        var first = session.Invoke<string, string>(3, "a");
+        var second = session.Invoke<string, string>(8, "b");
+
+        Assert.That(first, Is.EqualTo("compiled:3:a"));
+        Assert.That(second, Is.EqualTo("compiled:8:b"));
+    }
+
+    private static CompiledArtifactSession<string> CreateSession(out ExecutionEnvironment environment)
     {
         var bindings = new List<ExternalBinding>
         {
@@ -96,22 +148,9 @@ public class CompiledArtifactSessionTests
             new() { Name = "text", Type = typeof(string) }
         };
 
-        var environment = new ExecutionEnvironment(bindings);
+        environment = new ExecutionEnvironment(bindings);
         var executor = new FakeExecutor();
-        var session = new CompiledArtifactSession<string>("compiled", executor, environment, bindings);
-
-        return new SessionContext(session, environment);
-    }
-
-    private sealed class SessionContext(
-        CompiledArtifactSession<string> session,
-        ExecutionEnvironment environment)
-    {
-        public CompiledArtifactSession<string> Session { get; } = session;
-
-        public ExecutionEnvironment Environment { get; } = environment;
-
-        public static implicit operator CompiledArtifactSession<string>(SessionContext context) => context.Session;
+        return new CompiledArtifactSession<string>("compiled", executor, environment, bindings);
     }
 
     private sealed class FakeExecutor : IExecutor<string>
