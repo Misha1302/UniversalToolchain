@@ -1,13 +1,81 @@
 # UniversalToolchain
 
-UniversalToolchain is a modular .NET framework for building extensible language toolchains.
+UniversalToolchain is a .NET-first framework for building embeddable DSLs, expression engines, and rule engines.
+
+It is designed for cases where you want:
+
+- configurable formulas inside a .NET application,
+- a small domain-specific language instead of hardcoded rules,
+- a reusable toolchain pipeline with interpreter and compiler execution modes.
 
 This repository contains:
 
 - **UniversalToolchain** — reusable framework infrastructure.
-- **Wist** — a reference language used to validate and evolve framework architecture.
+- **Wist** — a reference language used to validate and evolve the framework architecture.
 
-Wist is intentionally a proving ground, not a limitation of the framework’s scope.
+## Where it can be used
+
+Typical scenarios:
+
+- pricing and discount formulas,
+- validation and routing rules,
+- configurable business logic in internal tools,
+- educational and research projects around compilers and DSLs.
+
+## Fastest way to try
+
+```bash
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --mode compiler
+```
+
+Expected output:
+
+```text
+12
+```
+
+## Quick demo
+
+```bash
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "x + 1" --mode compiler
+```
+
+Programmatic path:
+
+```csharp
+var compiler = host.GetArtifactCompiler<DynamicMethod>("compiler");
+var artifact = compiler.Compile("x + 1", new OrderedDictionary<string, Type>
+{
+    ["x"] = typeof(int)
+});
+
+var addOne = artifact.AsFunc<int, int>();
+var result = addOne(41); // 42
+```
+
+## Programmatic example: parameterized formula inside a .NET app
+
+A fuller scenario is available in `UniversalToolchain/Example/Program.cs`.
+
+```csharp
+var compiler = host.GetArtifactCompiler<DynamicMethod>("compiler");
+var declaredBindings = new OrderedDictionary<string, Type>
+{
+    ["price"] = typeof(double),
+    ["fee"] = typeof(double)
+};
+
+var artifact = compiler.Compile("price * 0.9 + fee", declaredBindings);
+var calculate = artifact.AsFunc<double, double, double>();
+var compiledResult = calculate(100.0, 5.0); // 95.0
+
+var interpreter = host.GetArtifactCompiler<IAbstractIR>("interpreter");
+var interpretedArtifact = interpreter.Compile("price * 0.9 + fee", declaredBindings);
+var session = interpretedArtifact.CreateSession();
+session.SetArgument("price", 100.0);
+session.SetArgument("fee", 5.0);
+var interpretedResult = (double)(session.Run() ?? throw new InvalidOperationException("Interpreter returned null.")); // 95.0
+```
 
 ## Why this project exists
 
@@ -16,34 +84,18 @@ execution.
 UniversalToolchain focuses on reusable composition so capabilities can be assembled from modules instead of hardcoded
 into one implementation path.
 
-## What is architecturally interesting here
+## Compared to a simple expression evaluator
 
-UniversalToolchain is not just a parser playground.
+UniversalToolchain is not just a string-to-number evaluator.
+It is designed as a reusable language toolchain with modular composition, dialect configuration, and multiple execution
+modes.
 
-The repository experiments with a reusable language pipeline where:
+## Compared to language platforms focused on their own runtime model
 
-- frontend behavior is composed from modules instead of being baked into one compiler,
-- dialect definitions select runtime capabilities explicitly,
-- the same language surface can target both interpreter and compiler backends,
-- framework code and reference-language code are intentionally separated.
+UniversalToolchain is focused on explicit backend-oriented execution inside the .NET ecosystem.
+The design priority here is composable integration into .NET applications rather than a separate runtime universe.
 
-## How features plug into the pipeline
-
-Framework features are introduced through extension points instead of one monolithic compiler path.
-
-For example, a frontend module can participate in several stages:
-
-- text preprocessing,
-- lexer initialization,
-- lexeme post-processing,
-- parser initialization,
-- AST post-processing,
-- bytecode post-processing,
-- AST-to-bytecode translator initialization.
-
-This is the core idea behind the project: language features are assembled from modules that attach to explicit pipeline stages.
-
-## Scope and architecture
+## Architecture at a glance
 
 At a high level:
 
@@ -61,47 +113,19 @@ Key repository architecture concepts:
 For detailed architecture context (execution model, dialect workflow, and repository entry points), see
 `docs/architecture-overview.md`.
 
-## Architectural priorities
+## How features plug into the pipeline
 
-The repository is maintained with these priorities:
+Framework features are introduced through extension points instead of one monolithic compiler path.
 
-- universality first,
-- no hardcoded behavior where composition/abstraction is viable,
-- low coupling to concrete implementations, dialects, and modules,
-- DRY, KISS, SOLID, and OOP-oriented design,
-- explicit avoidance of technical debt and legacy-preserving shortcuts.
+For example, a frontend module can participate in several stages:
 
-## Requirements
-
-- .NET SDK `10.0.103`
-- SDK policy in `UniversalToolchain/global.json`:
-    - `rollForward: latestMajor`
-    - `allowPrerelease: true`
-- Targets: `net10.0`
-
-## Quick start
-
-From repository root:
-
-```bash
-dotnet restore UniversalToolchain/Wist.sln
-dotnet build UniversalToolchain/Wist.sln -c Release --no-restore
-dotnet test UniversalToolchain/Tests/Tests.csproj -c Release --no-build
-dotnet test UniversalToolchain/UniversalToolchain.Modules.Tests/UniversalToolchain.Modules.Tests.csproj -c Release --no-build
-dotnet test UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolchain.Dialects.Tests.csproj -c Release --no-build
-```
-
-## Quick demo
-
-```bash
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --mode compiler
-```
-
-Expected output:
-
-```text
-12
-```
+- text preprocessing,
+- lexer initialization,
+- lexeme post-processing,
+- parser initialization,
+- AST post-processing,
+- bytecode post-processing,
+- AST-to-bytecode translator initialization.
 
 ## CLI usage (`Wistc`)
 
@@ -143,57 +167,6 @@ dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- dialect-inspect --
 dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- dialect-demo --file UniversalToolchain/Dialects/examples/wist/full-default/dialect.wistdialect
 ```
 
-## Programmatic usage
-
-```csharp
-using UniversalToolchain.Dialects.Wist;
-
-var services = new ServiceCollection();
-services.AddWistDialectServices();
-
-using var provider = services.BuildServiceProvider();
-var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-
-var dialect = workflow.ComposeFile("./Dialects/examples/wist/full-default/dialect.wistdialect");
-if (!dialect.IsSuccess) return;
-
-using var host = workflow.CreateHost(dialect);
-var result = host.Run("(2 + 2) * 3", "compiler");
-Console.WriteLine(result);
-```
-
-See `UniversalToolchain/Example/Program.cs` for a full composition + diagnostics flow.
-
-### Compile artifact API
-
-Generic framework path (through the host-level accessor):
-
-```csharp
-var compiler = host.GetArtifactCompiler<DynamicMethod>("compiler");
-var artifact = compiler.Compile("x + 1", new OrderedDictionary<string, Type>
-{
-    ["x"] = typeof(int)
-});
-
-var session = artifact.CreateSession();
-session.SetArgument("x", 41);
-var fortyTwo = session.Run<int>();
-```
-
-Optional DynamicMethod fast-path (backend-specific extension):
-
-```csharp
-var compiler = host.GetArtifactCompiler<DynamicMethod>("compiler");
-var artifact = compiler.Compile("x + 1", new OrderedDictionary<string, Type>
-{
-    ["x"] = typeof(int)
-});
-
-var addOne = artifact.AsFunc<int, int>();
-var fortyTwo = addOne(41);
-var alsoFortyTwo = artifact.GetNativeDelegateInvoker().Invoke<int, int>(41);
-```
-
 ## Dialect examples
 
 Located under `UniversalToolchain/Dialects/examples/wist`:
@@ -203,20 +176,47 @@ Located under `UniversalToolchain/Dialects/examples/wist`:
 - `minimal-arithmetic`
 - `restricted-sandbox` *(composition-constrained profile, not OS-level sandboxing)*
 
-## Current limitations
+## Why .NET 10 right now?
 
-This repository is actively evolving, and some areas are intentionally treated as design-in-progress:
+The repository currently targets `net10.0` and requires .NET SDK `10.0.103`.
+This is a temporary choice for ongoing framework/runtime work and may be relaxed in future versions.
 
-- some bootstrap/runtime wiring is still concrete rather than fully descriptor-driven,
-- reflection-based interop/discovery helpers still exist and are being cleaned up,
-- constrained dialect composition is not equivalent to hardened sandboxing,
-- the reference language Wist is still the main proving ground for framework decisions.
+## Requirements
+
+- .NET SDK `10.0.103`
+- SDK policy in `UniversalToolchain/global.json`:
+    - `rollForward: latestMajor`
+    - `allowPrerelease: true`
+- Targets: `net10.0`
+
+## Quick start
+
+From repository root:
+
+```bash
+dotnet restore UniversalToolchain/Wist.sln
+dotnet build UniversalToolchain/Wist.sln -c Release --no-restore
+dotnet test UniversalToolchain/Tests/Tests.csproj -c Release --no-build
+dotnet test UniversalToolchain/UniversalToolchain.Modules.Tests/UniversalToolchain.Modules.Tests.csproj -c Release --no-build
+dotnet test UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolchain.Dialects.Tests.csproj -c Release --no-build
+```
 
 ## Security note
 
 The repository does **not** claim hardened sandboxing for untrusted code. Use process/environment isolation for
 untrusted execution scenarios.
 See `SECURITY.md` for the trust model.
+
+## Known limitations
+
+This repository is actively evolving, and some areas are intentionally treated as design-in-progress:
+
+- some bootstrap/runtime wiring is still concrete rather than fully descriptor-driven,
+- reflection-based interop/discovery helpers still exist and are being cleaned up,
+- constrained dialect composition is not equivalent to hardened sandboxing,
+- `ParametersSetter` is not yet exported into dialect composition,
+- coverage tests for `ParametersSetter` dialect export are pending,
+- the reference language Wist is still the main proving ground for framework decisions.
 
 ## Canonical documentation map
 
