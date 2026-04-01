@@ -1,0 +1,231 @@
+using System.Collections.Specialized;
+using System.Reflection.Emit;
+using Microsoft.Extensions.DependencyInjection;
+using UniversalToolchain.Dialects.Wist;
+
+namespace Tests.Infrastructure;
+
+[TestFixture]
+public class CompiledArtifactContractsTests
+{
+    [Test]
+    public void Compile_And_PrepareToRun_ProduceEquivalentExecutionResult()
+    {
+        using var host = CreateHost();
+        var compilerCore = GetCompilerCore(host);
+        const string code = "(1 + 2) * 5";
+        var declaredBindings = new OrderedDictionary<string, Type>();
+
+        compilerCore.PrepareToRun(code, declaredBindings);
+        var viaPrepared = compilerCore.RunPrepared();
+
+        var artifact = compilerCore.Compile(code, declaredBindings);
+        var viaCompiledSession = artifact.CreateSession().Run();
+
+        Assert.That(viaCompiledSession, Is.EqualTo(viaPrepared));
+    }
+
+    [Test]
+    public void Compile_And_GetExecutable_ProduceEquivalentCompilationOutput()
+    {
+        using var host = CreateHost();
+        var compilerCore = GetCompilerCore(host);
+        const string code = "41 + 1";
+
+        var fromCompile = compilerCore.Compile(code).CompilationOutput;
+        var fromGetExecutable = compilerCore.GetExecutable(code);
+
+        var viaCompile = fromCompile.CreateDelegate<Func<int>>().Invoke();
+        var viaGetExecutable = fromGetExecutable.CreateDelegate<Func<int>>().Invoke();
+
+        Assert.That(viaGetExecutable, Is.EqualTo(viaCompile));
+    }
+
+    [Test]
+    public void CompiledArtifact_CreateSession_ReturnsIndependentSessions()
+    {
+        var artifact = CreateTwoArgumentArtifact("compiled");
+
+        var first = artifact.CreateSession();
+        var second = artifact.CreateSession();
+
+        first.SetArgument(0, 5);
+        first.SetArgument(1, "left");
+
+        second.SetArgument(0, 9);
+        second.SetArgument(1, "right");
+
+        Assert.That(first.Run(), Is.EqualTo("compiled:5:left"));
+        Assert.That(second.Run(), Is.EqualTo("compiled:9:right"));
+    }
+
+    [Test]
+    public void CompiledArtifact_CreateSession_PreservesDeclaredBindingOrder()
+    {
+        var artifact = new CompiledArtifact<string>(
+            "order",
+            [
+                new ExternalBinding { Name = "beta", Type = typeof(int), Value = 1, Kind = ExternalBindingKind.Variable },
+                new ExternalBinding { Name = "alpha", Type = typeof(int), Value = 2, Kind = ExternalBindingKind.Variable },
+                new ExternalBinding { Name = "gamma", Type = typeof(int), Value = 3, Kind = ExternalBindingKind.Variable }
+            ],
+            "ordered",
+            new OrderedSlotsExecutor());
+
+        var session = artifact.CreateSession();
+
+        Assert.That(session.Run(), Is.EqualTo("ordered:1|2|3"));
+    }
+
+    [Test]
+    public void CompiledArtifact_CreateSession_PreservesDeclaredDefaultValues()
+    {
+        var artifact = CreateTwoArgumentArtifact("compiled", 7, "seed");
+        var session = artifact.CreateSession();
+
+        var result = session.Run();
+
+        Assert.That(result, Is.EqualTo("compiled:7:seed"));
+    }
+
+    [Test]
+    public void CompiledArtifactSession_SetArgument_ByName_UsesArtifactSlots()
+    {
+        var artifact = CreateTwoArgumentArtifact("compiled", 0, "init");
+        var session = artifact.CreateSession();
+
+        session.SetArgument("text", "name-slot");
+        session.SetArgument("value", 42);
+
+        Assert.That(session.Run(), Is.EqualTo("compiled:42:name-slot"));
+    }
+
+    [Test]
+    public void CompiledArtifactSession_SetArgument_BySlot_UsesDeclaredBindingTypeValidation()
+    {
+        var artifact = CreateTwoArgumentArtifact("compiled");
+        var session = artifact.CreateSession();
+
+        Assert.Throws<ArgumentException>(() => session.SetArgument(0, "wrong-type"));
+    }
+
+    [Test]
+    public void CompiledArtifactSession_Run_UsesArtifactCompilationOutput()
+    {
+        var artifact = CreateTwoArgumentArtifact("expected-output", 3, "x");
+        var session = artifact.CreateSession();
+
+        var result = session.Run();
+
+        Assert.That(result, Is.EqualTo("expected-output:3:x"));
+    }
+
+    [Test]
+    public void CompiledArtifactSession_Run_CanBeRepeatedWithDifferentArguments()
+    {
+        var artifact = CreateTwoArgumentArtifact("compiled", 0, string.Empty);
+        var session = artifact.CreateSession();
+
+        var first = session.Invoke<string, string>(1, "a");
+        var second = session.Invoke<string, string>(8, "b");
+
+        Assert.That(first, Is.EqualTo("compiled:1:a"));
+        Assert.That(second, Is.EqualTo("compiled:8:b"));
+    }
+
+    [Test]
+    public void CompiledArtifactSession_Run_RejectsNullForNonNullableValueType()
+    {
+        var artifact = CreateTwoArgumentArtifact("compiled");
+        var session = artifact.CreateSession();
+
+        Assert.Throws<ArgumentException>(() => session.Invoke<string, string>(null, "value"));
+    }
+
+    [Test]
+    public void CompiledArtifactSession_Run_RejectsUnknownArgumentName()
+    {
+        var artifact = CreateTwoArgumentArtifact("compiled");
+        var session = artifact.CreateSession();
+
+        Assert.Throws<ArgumentException>(() => session.InvokeNamed<string, string>(new Dictionary<string, object?>
+        {
+            ["value"] = 1,
+            ["unknown"] = "x"
+        }));
+    }
+
+    [Test]
+    public void CompiledArtifactSession_Run_RejectsWrongArgumentCount()
+    {
+        var artifact = CreateTwoArgumentArtifact("compiled");
+        var session = artifact.CreateSession();
+
+        Assert.Throws<ArgumentException>(() => session.Invoke<string, string>(1));
+    }
+
+    [Test]
+    public void CompiledArtifactSession_Run_RejectsWrongArgumentType()
+    {
+        var artifact = CreateTwoArgumentArtifact("compiled");
+        var session = artifact.CreateSession();
+
+        Assert.Throws<ArgumentException>(() => session.Invoke<string, string>("bad", "ok"));
+    }
+
+    private static CompiledArtifact<string> CreateTwoArgumentArtifact(string compilationOutput, int defaultValue = 0, string defaultText = "")
+    {
+        return new CompiledArtifact<string>(
+            "value + text",
+            [
+                new ExternalBinding { Name = "value", Type = typeof(int), Value = defaultValue, Kind = ExternalBindingKind.Variable },
+                new ExternalBinding { Name = "text", Type = typeof(string), Value = defaultText, Kind = ExternalBindingKind.Variable }
+            ],
+            compilationOutput,
+            new PairFormattingExecutor());
+    }
+
+    private sealed class PairFormattingExecutor : IExecutor<string>
+    {
+        public object? Execute(string compilation, IExecutionEnvironment environment)
+        {
+            return $"{compilation}:{environment.GetExternalValue(0)}:{environment.GetExternalValue(1)}";
+        }
+    }
+
+    private sealed class OrderedSlotsExecutor : IExecutor<string>
+    {
+        public object? Execute(string compilation, IExecutionEnvironment environment)
+        {
+            return $"{compilation}:{environment.GetExternalValue(0)}|{environment.GetExternalValue(1)}|{environment.GetExternalValue(2)}";
+        }
+    }
+
+    private static WistDialectExecutionHost CreateHost()
+    {
+        var services = new ServiceCollection();
+        services.AddWistDialectServices();
+        services.AddWistCilBackend();
+
+        using var provider = services.BuildServiceProvider();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+        var composition = workflow.ComposeText(
+            """
+            dialect CompiledArtifactContracts
+            use Whitespaces,SemicolonAsNewLine,Comments,Numbers,Identifier,Arithmetic,Equality,Conditions,Loops,Variables,Scopes,Labels,InternalPreprocessorLexemes,CSharpInterop
+            backend compiler
+            """,
+            "compiled-artifact-contracts-inline");
+
+        if (!composition.IsSuccess)
+            Thrower.InvalidOpEx(composition.ToDeterministicText());
+
+        return workflow.CreateHost(composition);
+    }
+
+    private static BasicCoreImpl<DynamicMethod> GetCompilerCore(WistDialectExecutionHost host)
+    {
+        return host.GetCore("compiler") as BasicCoreImpl<DynamicMethod>
+               ?? Thrower.InvalidOpEx<BasicCoreImpl<DynamicMethod>>("Compiler core must be BasicCoreImpl<DynamicMethod>.");
+    }
+}
