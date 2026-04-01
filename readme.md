@@ -16,6 +16,33 @@ execution.
 UniversalToolchain focuses on reusable composition so capabilities can be assembled from modules instead of hardcoded
 into one implementation path.
 
+## What is architecturally interesting here
+
+UniversalToolchain is not just a parser playground.
+
+The repository experiments with a reusable language pipeline where:
+
+- frontend behavior is composed from modules instead of being baked into one compiler,
+- dialect definitions select runtime capabilities explicitly,
+- the same language surface can target both interpreter and compiler backends,
+- framework code and reference-language code are intentionally separated.
+
+## How features plug into the pipeline
+
+Framework features are introduced through extension points instead of one monolithic compiler path.
+
+For example, a frontend module can participate in several stages:
+
+- text preprocessing,
+- lexer initialization,
+- lexeme post-processing,
+- parser initialization,
+- AST post-processing,
+- bytecode post-processing,
+- AST-to-bytecode translator initialization.
+
+This is the core idea behind the project: language features are assembled from modules that attach to explicit pipeline stages.
+
 ## Scope and architecture
 
 At a high level:
@@ -176,11 +203,14 @@ Located under `UniversalToolchain/Dialects/examples/wist`:
 - `minimal-arithmetic`
 - `restricted-sandbox` *(composition-constrained profile, not OS-level sandboxing)*
 
-## Module coverage notes
+## Current limitations
 
-- `ParametersSetter` is currently **not exported** into dialect composition.
-- Coverage tests for `ParametersSetter` are intentionally marked pending until its parser contracts and runtime
-  parameter-binding semantics are implemented.
+This repository is actively evolving, and some areas are intentionally treated as design-in-progress:
+
+- some bootstrap/runtime wiring is still concrete rather than fully descriptor-driven,
+- reflection-based interop/discovery helpers still exist and are being cleaned up,
+- constrained dialect composition is not equivalent to hardened sandboxing,
+- the reference language Wist is still the main proving ground for framework decisions.
 
 ## Security note
 
@@ -194,7 +224,6 @@ See `SECURITY.md` for the trust model.
 - Architecture overview: `docs/architecture-overview.md`
 - Coding standards: `PROJECT_RULES.md`
 - Contribution workflow: `CONTRIBUTING.md`
-- AI agent instructions: `AGENTS.md`
 - Security policy: `SECURITY.md`
 - Release notes: `CHANGELOG.md`
 

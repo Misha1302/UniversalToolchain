@@ -10,7 +10,10 @@ public sealed class DialectAstToBytecodeVisitor : IAstVisitor
 
     public DialectAstToBytecodeVisitor(DialectDslRegistry registry)
     {
-        _registry = registry ?? throw new ArgumentNullException(nameof(registry));
+        if (registry == null)
+            Thrower.ArgumentNull(nameof(registry));
+
+        _registry = registry;
     }
 
     public void TryVisit(BytecodeVisitorData data)

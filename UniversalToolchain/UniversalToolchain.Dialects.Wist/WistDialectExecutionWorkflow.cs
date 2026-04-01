@@ -21,11 +21,26 @@ public sealed class WistDialectExecutionWorkflow
         WistDialectExecutionConfigurationBuilder configurationBuilder,
         WistDialectServiceProviderFactory serviceProviderFactory)
     {
-        _compiler = compiler ?? throw new ArgumentNullException(nameof(compiler));
-        _buildPlanBuilder = buildPlanBuilder ?? throw new ArgumentNullException(nameof(buildPlanBuilder));
-        _resolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
-        _configurationBuilder = configurationBuilder ?? throw new ArgumentNullException(nameof(configurationBuilder));
-        _serviceProviderFactory = serviceProviderFactory ?? throw new ArgumentNullException(nameof(serviceProviderFactory));
+        if (compiler == null)
+            Thrower.ArgumentNull(nameof(compiler));
+
+        if (buildPlanBuilder == null)
+            Thrower.ArgumentNull(nameof(buildPlanBuilder));
+
+        if (resolver == null)
+            Thrower.ArgumentNull(nameof(resolver));
+
+        if (configurationBuilder == null)
+            Thrower.ArgumentNull(nameof(configurationBuilder));
+
+        if (serviceProviderFactory == null)
+            Thrower.ArgumentNull(nameof(serviceProviderFactory));
+
+        _compiler = compiler;
+        _buildPlanBuilder = buildPlanBuilder;
+        _resolver = resolver;
+        _configurationBuilder = configurationBuilder;
+        _serviceProviderFactory = serviceProviderFactory;
     }
 
     public DialectFrameworkCompositionResult ComposeFile(string filePath)
@@ -71,9 +86,12 @@ public sealed class WistDialectExecutionWorkflow
         if (!compositionResult.IsSuccess || compositionResult.BuildPlan == null)
             Thrower.Argument(nameof(compositionResult), "Dialect composition result must be successful before a runtime host can be created.");
 
-        if (compositionResult.RuntimeSelection is not SelectedRuntimePlan selectedRuntimePlan)
-            throw new ArgumentException("Dialect composition result does not contain a selected runtime plan for Wist execution.", nameof(compositionResult));
+        if (compositionResult.RuntimeSelection is not SelectedRuntimePlan)
+            Thrower.Argument(
+                nameof(compositionResult),
+                "Dialect composition result does not contain a selected runtime plan for Wist execution.");
 
+        var selectedRuntimePlan = (SelectedRuntimePlan)compositionResult.RuntimeSelection;
         var configuration = _configurationBuilder.Build(compositionResult.BuildPlan, selectedRuntimePlan);
         var provider = _serviceProviderFactory.Create(configuration);
         return new WistDialectExecutionHost(provider, configuration);

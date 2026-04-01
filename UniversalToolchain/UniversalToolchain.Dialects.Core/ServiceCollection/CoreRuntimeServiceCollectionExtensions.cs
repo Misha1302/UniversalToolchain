@@ -11,6 +11,7 @@ using BasicInterpreter;
 using BasicLexer.Core;
 using BasicParser.Core;
 using BytecodeDynamicMethodsCompiler.Compilers;
+using ExceptionsManager;
 using IntermediateRepresentationAbstractions;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -23,7 +24,8 @@ public static class CoreRuntimeServiceCollectionExtensions
 {
     public static IServiceCollection AddCoreRuntimeInfrastructure(this IServiceCollection services)
     {
-        ArgumentNullException.ThrowIfNull(services);
+        if (services == null)
+            Thrower.ArgumentNull(nameof(services));
 
         services.AddTransient<Func<ILexer>>(_ =>
         {

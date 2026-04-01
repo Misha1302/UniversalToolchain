@@ -16,9 +16,18 @@ public sealed class WistDialectExecutionConfigurationBuilder
         DialectIntrinsicPolicyResolver intrinsicPolicyResolver,
         IRuntimeKnownBackendsProvider knownBackendsProvider)
     {
-        _typeLoader = typeLoader ?? throw new ArgumentNullException(nameof(typeLoader));
-        _intrinsicPolicyResolver = intrinsicPolicyResolver ?? throw new ArgumentNullException(nameof(intrinsicPolicyResolver));
-        _knownBackendsProvider = knownBackendsProvider ?? throw new ArgumentNullException(nameof(knownBackendsProvider));
+        if (typeLoader == null)
+            Thrower.ArgumentNull(nameof(typeLoader));
+
+        if (intrinsicPolicyResolver == null)
+            Thrower.ArgumentNull(nameof(intrinsicPolicyResolver));
+
+        if (knownBackendsProvider == null)
+            Thrower.ArgumentNull(nameof(knownBackendsProvider));
+
+        _typeLoader = typeLoader;
+        _intrinsicPolicyResolver = intrinsicPolicyResolver;
+        _knownBackendsProvider = knownBackendsProvider;
     }
 
     public WistDialectExecutionConfiguration Build(DialectBuildPlan buildPlan, SelectedRuntimePlan selectedRuntimePlan)
