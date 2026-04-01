@@ -1,3 +1,6 @@
+using System.Reflection;
+using ExceptionsManager;
+
 namespace Tests.Infrastructure;
 
 [TestFixture]
@@ -61,6 +64,7 @@ public class BasicCoreImplOrchestrationTests
         var core = CreateCore(calls, compiler, executor);
 
         var executable = core.GetExecutable("value");
+        core.PrepareToRun("value");
         var runResult = core.RunPrepared();
 
         Assert.That(executable, Is.EqualTo("compiled:value"));
@@ -90,7 +94,7 @@ public class BasicCoreImplOrchestrationTests
     }
 
     [Test]
-    public void PrepareToRun_ShouldUseExecutorInitializedByMiddleEndModule()
+    public void PrepareToRun_UsesExecutorInitializedByMiddleEndModule()
     {
         var calls = new List<string>();
         var executor = new ConfigurableExecutor(calls);
@@ -109,6 +113,150 @@ public class BasicCoreImplOrchestrationTests
         var runResult = core.RunPrepared();
 
         Assert.That(runResult, Is.EqualTo("initialized:compiled:value"));
+        Assert.That(calls.Count(call => call == "configMiddle.InitExecutor"), Is.EqualTo(1));
+        Assert.That(calls, Does.Contain("configMiddle.InitExecutor"));
+        Assert.That(calls, Does.Contain("configExecutor.Execute"));
+        Assert.That(calls.IndexOf("configMiddle.InitExecutor"), Is.LessThan(calls.IndexOf("configExecutor.Execute")));
+    }
+
+    [Test]
+    public void Compile_DoesNotBypassMiddleEndExecutorInitializationSemantics()
+    {
+        var calls = new List<string>();
+        var executor = new ConfigurableExecutor(calls);
+        var core = CreateConfigurableCore(calls, executor);
+
+        var artifact = core.Compile("value");
+        var runResult = artifact.CreateSession().Run();
+
+        Assert.That(runResult, Is.EqualTo("initialized:compiled:value"));
+        Assert.That(calls.Count(call => call == "configMiddle.InitExecutor"), Is.EqualTo(1));
+        Assert.That(calls.IndexOf("configMiddle.InitExecutor"), Is.LessThan(calls.IndexOf("configExecutor.Execute")));
+    }
+
+    [Test]
+    public void Build_And_Compile_ShareSameExecutorInitializationSemantics()
+    {
+        var calls = new List<string>();
+        var executor = new ConfigurableExecutor(calls);
+        var core = CreateConfigurableCore(calls, executor);
+
+        var compileResult = core.Compile("value").CreateSession().Run();
+        core.PrepareToRun("value");
+        var preparedResult = core.RunPrepared();
+
+        Assert.That(compileResult, Is.EqualTo("initialized:compiled:value"));
+        Assert.That(preparedResult, Is.EqualTo("initialized:compiled:value"));
+        Assert.That(calls.Count(call => call == "configMiddle.InitExecutor"), Is.EqualTo(2));
+    }
+
+    [Test]
+    public void RunPrepared_UsesPreparedSession_NotAdHocExecution()
+    {
+        var calls = new List<string>();
+        var executor = new ConfigurableExecutor(calls)
+        {
+            IncludeFirstArgumentInResult = true
+        };
+        var core = CreateConfigurableCore(calls, executor);
+
+        core.PrepareToRun(
+            new CompilationInput
+            {
+                SourceText = "value",
+                ExternalBindings =
+                [
+                    new ExternalBinding
+                    {
+                        Name = "x",
+                        Type = typeof(int)
+                    }
+                ]
+            });
+
+        var preparedSession = GetPreparedSession(core);
+        preparedSession.SetArgument(0, 42);
+        var runResult = core.RunPrepared();
+
+        Assert.That(runResult, Is.EqualTo("initialized:compiled:value|arg:42"));
+        Assert.That(calls.Count(call => call == "compiler.Compile"), Is.EqualTo(1));
+    }
+
+    [Test]
+    public void Compile_Then_CreateSession_And_PrepareToRun_ProduceEquivalentExecutionResult()
+    {
+        var compileCalls = new List<string>();
+        var compileExecutor = new ConfigurableExecutor(compileCalls)
+        {
+            IncludeFirstArgumentInResult = true
+        };
+        var compileCore = CreateConfigurableCore(compileCalls, compileExecutor);
+        var compilationInput = new CompilationInput
+        {
+            SourceText = "value",
+            ExternalBindings =
+            [
+                new ExternalBinding
+                {
+                    Name = "x",
+                    Type = typeof(int)
+                }
+            ]
+        };
+
+        var compileSession = compileCore.Compile(compilationInput).CreateSession();
+        compileSession.SetArgument("x", 77);
+        var compileResult = compileSession.Run();
+
+        var prepareCalls = new List<string>();
+        var prepareExecutor = new ConfigurableExecutor(prepareCalls)
+        {
+            IncludeFirstArgumentInResult = true
+        };
+        var prepareCore = CreateConfigurableCore(prepareCalls, prepareExecutor);
+        prepareCore.PrepareToRun(compilationInput);
+        var preparedSession = GetPreparedSession(prepareCore);
+        preparedSession.SetArgument("x", 77);
+        var preparedResult = prepareCore.RunPrepared();
+
+        Assert.That(preparedResult, Is.EqualTo(compileResult));
+    }
+
+    private static ICompiledArtifactSession GetPreparedSession(BasicCoreImpl<string> core)
+    {
+        var preparedField = typeof(BasicCoreImpl<string>).GetField("_prepared", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(preparedField, Is.Not.Null);
+
+        var preparedAsyncLocal = preparedField!.GetValue(core);
+        Assert.That(preparedAsyncLocal, Is.Not.Null);
+
+        var valueProperty = preparedAsyncLocal!.GetType().GetProperty("Value");
+        Assert.That(valueProperty, Is.Not.Null);
+
+        var prepared = valueProperty!.GetValue(preparedAsyncLocal);
+        Assert.That(prepared, Is.Not.Null);
+
+        var sessionProperty = prepared!.GetType().GetProperty("Session");
+        Assert.That(sessionProperty, Is.Not.Null);
+
+        var session = sessionProperty!.GetValue(prepared) as ICompiledArtifactSession;
+        Assert.That(session, Is.Not.Null);
+
+        return session!;
+    }
+
+    private static BasicCoreImpl<string> CreateConfigurableCore(List<string> calls, ConfigurableExecutor executor)
+    {
+        return new BasicCoreImpl<string>(
+            () => new TrackingLexer(calls),
+            () => new TrackingParser(calls),
+            () => new TrackingAstTranslator(calls),
+            () => new TrackingMethodsTranslator(calls),
+            () => new TrackingCompiler(calls),
+            () => executor,
+            [new TrackingFrontendModule(calls)],
+            [new TrackingOptimizer(calls)],
+            [new ConfiguringMiddleEnd(calls, "initialized")]);
     }
 
     private static BasicCoreImpl<string> CreateCore(List<string> calls, TrackingCompiler compiler, TrackingExecutor executor)
@@ -251,16 +399,21 @@ public class BasicCoreImplOrchestrationTests
     private sealed class ConfigurableExecutor(List<string> calls) : IExecutor<string>
     {
         private string _prefix = "raw";
+        public bool IncludeFirstArgumentInResult { get; init; }
 
         public void SetPrefix(string prefix)
         {
+            calls.Add("configExecutor.SetPrefix");
             _prefix = prefix;
         }
 
         public object Execute(string compilation, IExecutionEnvironment environment)
         {
             calls.Add("configExecutor.Execute");
-            return _prefix + ":" + compilation;
+            if (!IncludeFirstArgumentInResult)
+                return _prefix + ":" + compilation;
+
+            return _prefix + ":" + compilation + "|arg:" + environment.GetExternalValue(0);
         }
     }
 
