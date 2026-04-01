@@ -63,6 +63,7 @@
         <Compile Include="Infrastructure/CompiledArtifactSessionTests.cs"/>
         <Compile Include="Infrastructure/CompiledArtifactTests.cs"/>
         <Compile Include="Infrastructure/RuntimeCompiledArtifactContractsTests.cs"/>
+        <Compile Include="Infrastructure/BasicCoreImplOrchestrationTests.cs"/>
         <Compile Include="Stress/RuntimeStressContractsTests.cs"/>
         <Compile Include="CoreContracts/BasicCoreLifecycleContractsTests.cs"/>
         <Compile Include="Concurrency/BasicCoreConcurrencyTests.cs"/>
