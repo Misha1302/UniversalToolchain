@@ -117,7 +117,7 @@ public class DefaultRuntimeComponentResolverTests
     }
 
     [Test]
-    public void Resolve_DifferentEntries_DoNotCrossPolluteCache()
+    public void Resolve_DifferentEntriesFromSameAssembly_LoadAssemblyCalledOnce()
     {
         var strategy = new CountingAssemblyLoadStrategy(new Dictionary<string, Assembly>(StringComparer.Ordinal)
         {
@@ -138,6 +138,26 @@ public class DefaultRuntimeComponentResolverTests
         });
     }
 
+    [Test]
+    public void Resolve_WhenAssemblyGetTypesThrowsReflectionTypeLoadException_UsesLoadableTypesFallback()
+    {
+        var fallbackAssembly = new ReflectionTypeLoadExceptionAssembly([typeof(ResolverExportForFallback), null, typeof(ResolverExportForDifferentEntriesA)]);
+        var strategy = new CountingAssemblyLoadStrategy(new Dictionary<string, Assembly>(StringComparer.Ordinal)
+        {
+            [TestAssemblyName] = fallbackAssembly
+        });
+        var resolver = new DefaultRuntimeComponentResolver(strategy);
+        var entry = Entry(RuntimeComponentKind.FrontendModule, ResolverExportForFallbackAlias, TestAssemblyName);
+
+        var descriptor = resolver.Resolve(entry);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(descriptor.ActivationType, Is.EqualTo(typeof(ResolverExportForFallback)));
+            Assert.That(strategy.GetCalls(TestAssemblyName), Is.EqualTo(1));
+        });
+    }
+
     private static RuntimeComponentManifestEntry Entry(RuntimeComponentKind kind, string canonicalAlias, string assemblySimpleName)
         => new(kind, canonicalAlias, [], RuntimeComponentIdFactory.Create(kind, canonicalAlias), assemblySimpleName);
 
@@ -146,6 +166,7 @@ public class DefaultRuntimeComponentResolverTests
     private const string ResolverExportForAliasesAlias = "resolver.aliases.sample";
     private const string ResolverExportForDifferentEntriesAAlias = "resolver.entries.a";
     private const string ResolverExportForDifferentEntriesBAlias = "resolver.entries.b";
+    private const string ResolverExportForFallbackAlias = "resolver.fallback.sample";
 
     [DialectRuntimeExport("FrontendModule", ResolverExportForCachingAlias)]
     private sealed class ResolverExportForCaching;
@@ -162,6 +183,9 @@ public class DefaultRuntimeComponentResolverTests
 
     [DialectRuntimeExport("FrontendModule", ResolverExportForDifferentEntriesBAlias)]
     private sealed class ResolverExportForDifferentEntriesB;
+
+    [DialectRuntimeExport("FrontendModule", ResolverExportForFallbackAlias)]
+    private sealed class ResolverExportForFallback;
 
     private sealed class CountingAssemblyLoadStrategy(IReadOnlyDictionary<string, Assembly> assemblies) : IRuntimeAssemblyLoadStrategy
     {
@@ -186,5 +210,13 @@ public class DefaultRuntimeComponentResolverTests
         private readonly RuntimeComponentDescriptor _descriptor = descriptor;
 
         public RuntimeComponentDescriptor Resolve(RuntimeComponentManifestEntry entry) => _descriptor;
+    }
+
+    private sealed class ReflectionTypeLoadExceptionAssembly(Type?[] loadableTypes) : Assembly
+    {
+        private readonly Type?[] _loadableTypes = loadableTypes;
+
+        public override Type[] GetTypes()
+            => throw new ReflectionTypeLoadException(_loadableTypes, new Exception?[_loadableTypes.Length]!);
     }
 }
