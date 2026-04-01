@@ -57,7 +57,9 @@ public sealed class DefaultRuntimeComponentResolver : IRuntimeComponentResolver
 
             var id = RuntimeComponentIdFactory.Create(kind, canonicalAlias);
             var aliases = GetRuntimeAliases(type);
-            descriptors[id] = new RuntimeComponentDescriptor(id, kind, canonicalAlias, aliases, type);
+            var descriptor = new RuntimeComponentDescriptor(id, kind, canonicalAlias, aliases, type);
+            if (!descriptors.TryAdd(id, descriptor))
+                Thrower.InvalidOpEx("Duplicate runtime component id detected during assembly component indexing.");
         }
 
         return descriptors;
