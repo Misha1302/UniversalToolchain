@@ -12,7 +12,7 @@ public class DefaultRuntimeComponentResolverTests
     {
         var strategy = new CountingAssemblyLoadStrategy(new Dictionary<string, Assembly>(StringComparer.Ordinal)
         {
-            [TestAssemblyName] = typeof(ResolverExportForCaching).Assembly
+            [TestAssemblyName] = CreateTestAssembly(typeof(ResolverExportForCaching))
         });
         var resolver = new DefaultRuntimeComponentResolver(strategy);
         var entry = Entry(RuntimeComponentKind.FrontendModule, ResolverExportForCachingAlias, TestAssemblyName);
@@ -32,7 +32,7 @@ public class DefaultRuntimeComponentResolverTests
     {
         var strategy = new CountingAssemblyLoadStrategy(new Dictionary<string, Assembly>(StringComparer.Ordinal)
         {
-            [TestAssemblyName] = typeof(ResolverExportForCaching).Assembly
+            [TestAssemblyName] = CreateTestAssembly(typeof(ResolverExportForCaching))
         });
         var resolver = new DefaultRuntimeComponentResolver(strategy);
         var entry = Entry(RuntimeComponentKind.FrontendModule, ResolverExportForCachingAlias, TestAssemblyName);
@@ -52,7 +52,7 @@ public class DefaultRuntimeComponentResolverTests
     {
         var strategy = new CountingAssemblyLoadStrategy(new Dictionary<string, Assembly>(StringComparer.Ordinal)
         {
-            [TestAssemblyName] = typeof(ResolverExportForCaching).Assembly
+            [TestAssemblyName] = CreateTestAssembly(typeof(ResolverExportForCaching))
         });
         var resolver = new DefaultRuntimeComponentResolver(strategy);
         var entry = Entry(RuntimeComponentKind.FrontendModule, "resolver.missing.component", TestAssemblyName);
@@ -69,7 +69,7 @@ public class DefaultRuntimeComponentResolverTests
     {
         var strategy = new CountingAssemblyLoadStrategy(new Dictionary<string, Assembly>(StringComparer.Ordinal)
         {
-            [TestAssemblyName] = typeof(ResolverExportForAliases).Assembly
+            [TestAssemblyName] = CreateTestAssembly(typeof(ResolverExportForAliases))
         });
         var resolver = new DefaultRuntimeComponentResolver(strategy);
         var entry = Entry(RuntimeComponentKind.FrontendModule, ResolverExportForAliasesAlias, TestAssemblyName);
@@ -80,11 +80,24 @@ public class DefaultRuntimeComponentResolverTests
     }
 
     [Test]
+    public void Resolve_WhenAssemblyContainsDuplicateRuntimeComponentIds_ThrowsInvalidOperationException()
+    {
+        var strategy = new CountingAssemblyLoadStrategy(new Dictionary<string, Assembly>(StringComparer.Ordinal)
+        {
+            [TestAssemblyName] = CreateTestAssembly(typeof(ResolverExportDuplicateA), typeof(ResolverExportDuplicateB))
+        });
+        var resolver = new DefaultRuntimeComponentResolver(strategy);
+        var entry = Entry(RuntimeComponentKind.FrontendModule, ResolverExportDuplicateAlias, TestAssemblyName);
+
+        Assert.Throws<InvalidOperationException>(() => resolver.Resolve(entry));
+    }
+
+    [Test]
     public async Task Resolve_ParallelCalls_ForSameEntry_AreConsistent()
     {
         var strategy = new CountingAssemblyLoadStrategy(new Dictionary<string, Assembly>(StringComparer.Ordinal)
         {
-            [TestAssemblyName] = typeof(ResolverExportForCaching).Assembly
+            [TestAssemblyName] = CreateTestAssembly(typeof(ResolverExportForCaching))
         });
         var resolver = new DefaultRuntimeComponentResolver(strategy);
         var entry = Entry(RuntimeComponentKind.FrontendModule, ResolverExportForCachingAlias, TestAssemblyName);
@@ -117,11 +130,11 @@ public class DefaultRuntimeComponentResolverTests
     }
 
     [Test]
-    public void Resolve_DifferentEntries_DoNotCrossPolluteCache()
+    public void Resolve_DifferentEntriesFromSameAssembly_LoadAssemblyCalledOnce()
     {
         var strategy = new CountingAssemblyLoadStrategy(new Dictionary<string, Assembly>(StringComparer.Ordinal)
         {
-            [TestAssemblyName] = typeof(ResolverExportForCaching).Assembly
+            [TestAssemblyName] = CreateTestAssembly(typeof(ResolverExportForDifferentEntriesA), typeof(ResolverExportForDifferentEntriesB))
         });
         var resolver = new DefaultRuntimeComponentResolver(strategy);
         var firstEntry = Entry(RuntimeComponentKind.FrontendModule, ResolverExportForDifferentEntriesAAlias, TestAssemblyName);
@@ -134,18 +147,42 @@ public class DefaultRuntimeComponentResolverTests
         {
             Assert.That(first.ActivationType, Is.Not.EqualTo(second.ActivationType));
             Assert.That(first.Id, Is.Not.EqualTo(second.Id));
-            Assert.That(strategy.GetCalls(TestAssemblyName), Is.EqualTo(2));
+            Assert.That(strategy.GetCalls(TestAssemblyName), Is.EqualTo(1));
+        });
+    }
+
+    [Test]
+    public void Resolve_WhenAssemblyGetTypesThrowsReflectionTypeLoadException_UsesLoadableTypesFallback()
+    {
+        var fallbackAssembly = new ReflectionTypeLoadExceptionAssembly([typeof(ResolverExportForFallback), null, typeof(ResolverExportForDifferentEntriesA)]);
+        var strategy = new CountingAssemblyLoadStrategy(new Dictionary<string, Assembly>(StringComparer.Ordinal)
+        {
+            [TestAssemblyName] = fallbackAssembly
+        });
+        var resolver = new DefaultRuntimeComponentResolver(strategy);
+        var entry = Entry(RuntimeComponentKind.FrontendModule, ResolverExportForFallbackAlias, TestAssemblyName);
+
+        var descriptor = resolver.Resolve(entry);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(descriptor.ActivationType, Is.EqualTo(typeof(ResolverExportForFallback)));
+            Assert.That(strategy.GetCalls(TestAssemblyName), Is.EqualTo(1));
         });
     }
 
     private static RuntimeComponentManifestEntry Entry(RuntimeComponentKind kind, string canonicalAlias, string assemblySimpleName)
         => new(kind, canonicalAlias, [], RuntimeComponentIdFactory.Create(kind, canonicalAlias), assemblySimpleName);
 
+    private static Assembly CreateTestAssembly(params Type[] loadableTypes) => new ReflectionTypeLoadExceptionAssembly(loadableTypes.Cast<Type?>().ToArray());
+
     private const string TestAssemblyName = "ResolverTestsAssembly";
     private const string ResolverExportForCachingAlias = "resolver.cache.sample";
     private const string ResolverExportForAliasesAlias = "resolver.aliases.sample";
     private const string ResolverExportForDifferentEntriesAAlias = "resolver.entries.a";
     private const string ResolverExportForDifferentEntriesBAlias = "resolver.entries.b";
+    private const string ResolverExportForFallbackAlias = "resolver.fallback.sample";
+    private const string ResolverExportDuplicateAlias = "resolver.duplicate.sample";
 
     [DialectRuntimeExport("FrontendModule", ResolverExportForCachingAlias)]
     private sealed class ResolverExportForCaching;
@@ -162,6 +199,15 @@ public class DefaultRuntimeComponentResolverTests
 
     [DialectRuntimeExport("FrontendModule", ResolverExportForDifferentEntriesBAlias)]
     private sealed class ResolverExportForDifferentEntriesB;
+
+    [DialectRuntimeExport("FrontendModule", ResolverExportForFallbackAlias)]
+    private sealed class ResolverExportForFallback;
+
+    [DialectRuntimeExport("FrontendModule", ResolverExportDuplicateAlias)]
+    private sealed class ResolverExportDuplicateA;
+
+    [DialectRuntimeExport("FrontendModule", ResolverExportDuplicateAlias)]
+    private sealed class ResolverExportDuplicateB;
 
     private sealed class CountingAssemblyLoadStrategy(IReadOnlyDictionary<string, Assembly> assemblies) : IRuntimeAssemblyLoadStrategy
     {
@@ -186,5 +232,13 @@ public class DefaultRuntimeComponentResolverTests
         private readonly RuntimeComponentDescriptor _descriptor = descriptor;
 
         public RuntimeComponentDescriptor Resolve(RuntimeComponentManifestEntry entry) => _descriptor;
+    }
+
+    private sealed class ReflectionTypeLoadExceptionAssembly(Type?[] loadableTypes) : Assembly
+    {
+        private readonly Type?[] _loadableTypes = loadableTypes;
+
+        public override Type[] GetTypes()
+            => throw new ReflectionTypeLoadException(_loadableTypes, new Exception?[_loadableTypes.Length]!);
     }
 }

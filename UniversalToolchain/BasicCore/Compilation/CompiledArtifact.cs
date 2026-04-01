@@ -1,7 +1,10 @@
 namespace BasicCore.Compilation;
 
 /// <summary>
-/// Default immutable implementation of <see cref="ICompiledArtifact{TCompilationOutput}"/>.
+/// Default implementation of <see cref="ICompiledArtifact{TCompilationOutput}"/> with fixed artifact structure.
+/// Declared bindings and slots mapping are snapshotted at construction time and stay unchanged afterwards.
+/// Binding values are copied by reference; no generic deep clone is performed.
+/// Mutable object graphs referenced by binding values can still be mutated externally.
 /// </summary>
 /// <typeparam name="TCompilationOutput">Compilation backend output type.</typeparam>
 public sealed class CompiledArtifact<TCompilationOutput> : ICompiledArtifact<TCompilationOutput>

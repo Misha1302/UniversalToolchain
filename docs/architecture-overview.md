@@ -28,6 +28,15 @@ Runtime composition paths:
 - **Default composition**: uses built-in/default service registrations.
 - **Dialect-based composition**: uses a `.wistdialect` file to resolve runtime composition before execution.
 
+Compile-artifact surface:
+
+- Host-level artifact compilation is exposed through
+  `WistDialectExecutionHost.GetArtifactCompiler<TCompilationOutput>(mode)`.
+- Backends that support artifact-oriented execution return `IArtifactCompiler<TCompilationOutput>` and produce
+  `ICompiledArtifact<TCompilationOutput>`.
+- Backend-specific helpers/extensions (for example, `DynamicMethod` convenience APIs) are optional layers and should
+  be treated as convenience/performance paths, not mandatory framework behavior.
+
 ## Dialect workflow
 
 Typical dialect execution flow:
@@ -37,6 +46,9 @@ Typical dialect execution flow:
 3. Resolve runtime composition descriptors.
 4. Create execution host.
 5. Run code.
+
+Runtime component resolution builds cached per-assembly component indexes and uses a loadable-types fallback when
+reflection encounters partial type-load failures.
 
 ## Repository entry points
 
