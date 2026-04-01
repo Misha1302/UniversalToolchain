@@ -26,8 +26,8 @@ public static class CompiledArtifactSessionExtensions
     /// <summary>
     /// Assigns positional arguments and executes the session.
     /// </summary>
-    public static T Invoke<TCompilationOutput, T>(
-        this CompiledArtifactSession<TCompilationOutput> session,
+    public static T Invoke<T>(
+        this ICompiledArtifactSession session,
         params object?[] arguments)
     {
         if (session == null)
@@ -52,8 +52,8 @@ public static class CompiledArtifactSessionExtensions
     /// <summary>
     /// Assigns named arguments and executes the session.
     /// </summary>
-    public static T InvokeNamed<TCompilationOutput, T>(
-        this CompiledArtifactSession<TCompilationOutput> session,
+    public static T InvokeNamed<T>(
+        this ICompiledArtifactSession session,
         IReadOnlyDictionary<string, object?> arguments)
     {
         if (session == null)
@@ -73,5 +73,25 @@ public static class CompiledArtifactSessionExtensions
             session.SetArgument(argument.Key, argument.Value);
 
         return session.Run<T>();
+    }
+
+    /// <summary>
+    /// Assigns positional arguments and executes the session.
+    /// </summary>
+    public static T Invoke<TCompilationOutput, T>(
+        this CompiledArtifactSession<TCompilationOutput> session,
+        params object?[] arguments)
+    {
+        return Invoke<T>(session, arguments);
+    }
+
+    /// <summary>
+    /// Assigns named arguments and executes the session.
+    /// </summary>
+    public static T InvokeNamed<TCompilationOutput, T>(
+        this CompiledArtifactSession<TCompilationOutput> session,
+        IReadOnlyDictionary<string, object?> arguments)
+    {
+        return InvokeNamed<T>(session, arguments);
     }
 }

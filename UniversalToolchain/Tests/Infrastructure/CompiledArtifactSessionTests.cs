@@ -75,11 +75,35 @@ public class CompiledArtifactSessionTests
     }
 
     [Test]
+    public void Invoke_ShouldWork_ThroughInterfaceReference()
+    {
+        ICompiledArtifactSession session = CreateSession(out _);
+
+        var result = session.Invoke<string>(3, "n");
+
+        Assert.That(result, Is.EqualTo("compiled:3:n"));
+    }
+
+    [Test]
     public void InvokeNamed_ShouldAssignByNameAndRun()
     {
         var session = CreateSession(out _);
 
         var result = session.InvokeNamed<string, string>(new Dictionary<string, object?>
+        {
+            ["text"] = "q",
+            ["value"] = 9
+        });
+
+        Assert.That(result, Is.EqualTo("compiled:9:q"));
+    }
+
+    [Test]
+    public void InvokeNamed_ShouldWork_ThroughInterfaceReference()
+    {
+        ICompiledArtifactSession session = CreateSession(out _);
+
+        var result = session.InvokeNamed<string>(new Dictionary<string, object?>
         {
             ["text"] = "q",
             ["value"] = 9
