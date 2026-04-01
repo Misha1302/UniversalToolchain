@@ -134,6 +134,23 @@ public class CompiledArtifactContractsTests
     }
 
     [Test]
+    public void CompiledArtifactSession_Run_CanBeInvokedViaInterface()
+    {
+        var artifact = CreateTwoArgumentArtifact("compiled", 0, string.Empty);
+        ICompiledArtifactSession session = artifact.CreateSession();
+
+        var first = session.Invoke<string>(1, "a");
+        var second = session.InvokeNamed<string>(new Dictionary<string, object?>
+        {
+            ["value"] = 8,
+            ["text"] = "b"
+        });
+
+        Assert.That(first, Is.EqualTo("compiled:1:a"));
+        Assert.That(second, Is.EqualTo("compiled:8:b"));
+    }
+
+    [Test]
     public void CompiledArtifactSession_Run_RejectsNullForNonNullableValueType()
     {
         var artifact = CreateTwoArgumentArtifact("compiled");
