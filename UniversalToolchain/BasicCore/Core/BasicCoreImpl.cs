@@ -10,7 +10,7 @@ public class BasicCoreImpl<TCompilationOutput>(
     IReadOnlyList<IFrontendCoreModule> modules,
     IReadOnlyList<IIRProcessingModule> optimizers,
     IReadOnlyList<IMiddleEndCoreModule<TCompilationOutput>> middleEndModules
-) : ICoreRunnable, ICoreOptimizedRunnable, IExecutableGiver<TCompilationOutput>
+) : ICoreRunnable, ICoreOptimizedRunnable, IExecutableGiver<TCompilationOutput>, IArtifactCompiler<TCompilationOutput>
 {
     private readonly CompilationInputNormalizer _inputNormalizer = new();
 
