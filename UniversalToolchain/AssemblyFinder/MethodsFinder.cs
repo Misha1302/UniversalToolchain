@@ -21,18 +21,14 @@ public static class MethodsFinder
         var split = fullName.Split('.');
         if (split.Length < 2) return null;
 
-        // Последний элемент - имя метода
         var methodName = split.Last();
 
-        // Все остальные элементы - имя типа
         var typeNameParts = split.Take(split.Length - 1).ToList();
 
-        // Сначала ищем по полному имени (Namespace.Class)
         var fullTypeName = string.Join(".", typeNameParts);
         var method = FindMethodInType(fullTypeName, methodName, null);
         if (method != null) return method;
 
-        // Если не нашли, пробуем найти по короткому имени (Class)
         var shortTypeName = typeNameParts.Last();
         return FindMethodInType(shortTypeName, methodName, null);
     }
@@ -58,25 +54,20 @@ public static class MethodsFinder
         var split = fullName.Split('.');
         if (split.Length < 2) return null;
 
-        // Последний элемент - имя метода
         var methodName = split.Last();
 
-        // Все остальные элементы - имя типа
         var typeNameParts = split.Take(split.Length - 1).ToList();
 
-        // Сначала ищем по полному имени (Namespace.Class)
         var fullTypeName = string.Join(".", typeNameParts);
         var method = FindMethodInType(fullTypeName, methodName, parameterTypes);
         if (method != null) return method;
 
-        // Если не нашли, пробуем найти по короткому имени (Class)
         var shortTypeName = typeNameParts.Last();
         return FindMethodInType(shortTypeName, methodName, parameterTypes);
     }
 
     private static MethodInfo? FindMethodInType(string typeName, string methodName, Type[]? parameterTypes)
     {
-        // Ищем тип в сборках
         var type = FindTypeByName(typeName);
         if (type == null) return null;
 
@@ -89,24 +80,18 @@ public static class MethodsFinder
             return anyCandidates.FirstOrDefault(m => !m.IsGenericMethod) ?? anyCandidates.FirstOrDefault();
         }
 
-        // Ищем метод с определенными параметрами
-        // Сначала точное совпадение
         var exactMethod = type.GetMethod(methodName,
             BindingFlags.Static | BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy,
             null, parameterTypes, null);
 
         if (exactMethod != null) return exactMethod;
 
-        // Если не нашли точного совпадения, ищем по имени и количеству параметров
-        // с проверкой совместимости типов
         var candidates = type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.Instance | BindingFlags.FlattenHierarchy)
             .Where(m => m.Name == methodName && m.GetParameters().Length == parameterTypes.Length)
             .ToList();
 
         if (candidates.Count == 1) return candidates[0];
 
-        // Если несколько кандидатов, выбираем наиболее подходящий
-        // (простая эвристика - первый метод, где все параметры совместимы)
         foreach (var candidate in candidates)
         {
             var parameters = candidate.GetParameters();
@@ -146,32 +131,26 @@ public static class MethodsFinder
 
     private static Type? FindTypeByName(string typeName)
     {
-        // Прямой поиск по полному имени
         var type = Type.GetType(typeName);
         if (type != null) return type;
 
-        // Поиск во всех сборках
         var allTypes = TypesFinder.AllTypes.ToArray();
 
-        // Сначала ищем по полному имени (включая namespace)
         var foundTypes = allTypes
             .Where(t => t.FullName != null && t.FullName.Equals(typeName, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
         if (foundTypes.Count == 1) return foundTypes[0];
 
-        // Если не нашли по полному имени, ищем по имени класса (без namespace)
         foundTypes = allTypes
             .Where(t => t.Name.Equals(typeName, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
         if (foundTypes.Count == 1) return foundTypes[0];
 
-        // Если несколько типов с одним именем, предпочитаем не-generic типы
         var nonGenericTypes = foundTypes.Where(t => !t.IsGenericType).ToList();
         if (nonGenericTypes.Count == 1) return nonGenericTypes[0];
 
-        // Если все еще несколько, возвращаем первый
         return foundTypes.FirstOrDefault();
     }
 
@@ -180,21 +159,17 @@ public static class MethodsFinder
         if (source == target) return true;
         if (target.IsAssignableFrom(source)) return true;
 
-        // Проверка на nullable типы
         if (target.IsGenericType && target.GetGenericTypeDefinition() == typeof(Nullable<>))
         {
             var underlyingType = Nullable.GetUnderlyingType(target);
             return IsTypeCompatible(source, underlyingType!);
         }
 
-        // Проверка на интерфейсы
         if (target.IsInterface && source.GetInterfaces().Contains(target))
             return true;
 
-        // Для generics: попытка проверки через ограничения
         if (target.IsGenericParameter)
         {
-            // Проверяем ограничения generic-параметра
             var constraints = target.GetGenericParameterConstraints();
             foreach (var constraint in constraints)
             {

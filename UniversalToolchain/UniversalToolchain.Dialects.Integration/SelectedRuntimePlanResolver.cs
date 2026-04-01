@@ -9,7 +9,10 @@ public sealed class SelectedRuntimePlanResolver
 
     public SelectedRuntimePlanResolver(IRuntimeComponentCatalog catalog)
     {
-        _catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
+        if (catalog == null)
+            Thrower.ArgumentNull(nameof(catalog));
+
+        _catalog = catalog;
     }
 
     public SelectedRuntimePlan Resolve(DialectBuildPlan buildPlan)

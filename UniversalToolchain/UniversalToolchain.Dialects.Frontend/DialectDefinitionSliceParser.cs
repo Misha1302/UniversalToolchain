@@ -9,7 +9,10 @@ public sealed class DialectDefinitionSliceParser
 
     public DialectDefinitionSliceParser(DialectDslRegistry registry)
     {
-        _registry = registry ?? throw new ArgumentNullException(nameof(registry));
+        if (registry == null)
+            Thrower.ArgumentNull(nameof(registry));
+
+        _registry = registry;
     }
 
     public DialectDefinitionSlice Parse(AstNode astRoot)

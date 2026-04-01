@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using UniversalToolchain.Dialects.Integration;
 
@@ -8,7 +9,8 @@ public static class WistCilBackendServiceCollectionExtensions
 {
     public static IServiceCollection AddWistCilBackend(this IServiceCollection services)
     {
-        ArgumentNullException.ThrowIfNull(services);
+        if (services == null)
+            Thrower.ArgumentNull(nameof(services));
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IDialectBackendRuntimeRegistrar, WistCilDialectBackendServiceProvider>());
         return services;
     }
