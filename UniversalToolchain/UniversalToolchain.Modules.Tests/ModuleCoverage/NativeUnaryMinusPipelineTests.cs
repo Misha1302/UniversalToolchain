@@ -76,4 +76,19 @@ public class NativeUnaryMinusPipelineTests
         ModulePipelineTestHelper.AssertParity(nativeResult.Compiler, universalResult.Compiler);
         ModulePipelineTestHelper.AssertParity(nativeResult.Interpreter, universalResult.Interpreter);
     }
+
+    [TestCase("10 - -2")]
+    [TestCase("-(2 + 5) + 9")]
+    public void NativeUnaryMinus_RegressionCases_MatchUniversalUnaryMinus(string code)
+    {
+        using var h = new ModulePipelineTestHelper();
+
+        var nativeResult = h.ExecuteBoth(code, NativeModules);
+        var universalResult = h.ExecuteBoth(code, UniversalModules);
+
+        ModulePipelineTestHelper.AssertParity(nativeResult.Compiler, nativeResult.Interpreter);
+        ModulePipelineTestHelper.AssertParity(universalResult.Compiler, universalResult.Interpreter);
+        ModulePipelineTestHelper.AssertParity(nativeResult.Compiler, universalResult.Compiler);
+        ModulePipelineTestHelper.AssertParity(nativeResult.Interpreter, universalResult.Interpreter);
+    }
 }
