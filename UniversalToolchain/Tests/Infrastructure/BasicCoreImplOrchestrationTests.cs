@@ -89,6 +89,28 @@ public class BasicCoreImplOrchestrationTests
         Assert.That(ex!.Message, Is.EqualTo("parse failed"));
     }
 
+    [Test]
+    public void PrepareToRun_ShouldUseExecutorInitializedByMiddleEndModule()
+    {
+        var calls = new List<string>();
+        var executor = new ConfigurableExecutor(calls);
+        var core = new BasicCoreImpl<string>(
+            () => new TrackingLexer(calls),
+            () => new TrackingParser(calls),
+            () => new TrackingAstTranslator(calls),
+            () => new TrackingMethodsTranslator(calls),
+            () => new TrackingCompiler(calls),
+            () => executor,
+            [new TrackingFrontendModule(calls)],
+            [new TrackingOptimizer(calls)],
+            [new ConfiguringMiddleEnd(calls, "initialized")]);
+
+        core.PrepareToRun("value");
+        var runResult = core.RunPrepared();
+
+        Assert.That(runResult, Is.EqualTo("initialized:compiled:value"));
+    }
+
     private static BasicCoreImpl<string> CreateCore(List<string> calls, TrackingCompiler compiler, TrackingExecutor executor)
     {
         return new BasicCoreImpl<string>(
@@ -223,6 +245,46 @@ public class BasicCoreImplOrchestrationTests
         {
             calls.Add("executor.Execute");
             return "exec:" + compilation;
+        }
+    }
+
+    private sealed class ConfigurableExecutor(List<string> calls) : IExecutor<string>
+    {
+        private string _prefix = "raw";
+
+        public void SetPrefix(string prefix)
+        {
+            _prefix = prefix;
+        }
+
+        public object Execute(string compilation, IExecutionEnvironment environment)
+        {
+            calls.Add("configExecutor.Execute");
+            return _prefix + ":" + compilation;
+        }
+    }
+
+    private sealed class ConfiguringMiddleEnd(List<string> calls, string prefix) : IMiddleEndCoreModule<string>
+    {
+        public void InitMethodsCompiler(IAbstractIrCompiler<string> compiler) => calls.Add("configMiddle.InitMethodsCompiler");
+
+        public string ProcessCompilation(string current)
+        {
+            calls.Add("configMiddle.ProcessCompilation");
+            return current;
+        }
+
+        public void InitExecutor(IExecutor<string> executor)
+        {
+            calls.Add("configMiddle.InitExecutor");
+
+            if (executor is ConfigurableExecutor configurableExecutor)
+            {
+                configurableExecutor.SetPrefix(prefix);
+                return;
+            }
+
+            Thrower.InvalidOpEx("Executor must be ConfigurableExecutor for this test.");
         }
     }
 }

@@ -148,9 +148,9 @@ public class CompiledArtifactSessionTests
             new() { Name = "text", Type = typeof(string) }
         };
 
+        var artifact = new CompiledArtifact<string>("compiled-source", bindings, "compiled", new FakeExecutor());
         environment = new ExecutionEnvironment(bindings);
-        var executor = new FakeExecutor();
-        return new CompiledArtifactSession<string>("compiled", executor, environment, bindings);
+        return new CompiledArtifactSession<string>(artifact, new FakeExecutor(), environment);
     }
 
     private sealed class FakeExecutor : IExecutor<string>

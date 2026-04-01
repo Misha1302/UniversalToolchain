@@ -29,5 +29,5 @@ public interface ICompiledArtifact<out TCompilationOutput>
     /// <summary>
     /// Creates a new execution session initialized with declared binding values.
     /// </summary>
-    IExecutionEnvironment CreateSession();
+    ICompiledArtifactSession CreateSession();
 }

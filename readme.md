@@ -137,6 +137,22 @@ Console.WriteLine(result);
 
 See `UniversalToolchain/Example/Program.cs` for a full composition + diagnostics flow.
 
+### Compile artifact API (DynamicMethod backend)
+
+```csharp
+var compilerCore = host.GetCore("compiler") as BasicCoreImpl<DynamicMethod>
+                   ?? throw new InvalidOperationException();
+
+var artifact = compilerCore.Compile("x + 1", new OrderedDictionary<string, Type>
+{
+    ["x"] = typeof(int)
+});
+
+var addOne = artifact.AsFunc<int, int>();
+var fortyTwo = addOne(41);
+var alsoFortyTwo = artifact.GetNativeDelegateInvoker().Invoke<int, int>(41);
+```
+
 ## Dialect examples
 
 Located under `UniversalToolchain/Dialects/examples/wist`:
