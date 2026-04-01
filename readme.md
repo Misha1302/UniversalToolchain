@@ -137,7 +137,23 @@ Console.WriteLine(result);
 
 See `UniversalToolchain/Example/Program.cs` for a full composition + diagnostics flow.
 
-### Compile artifact API (DynamicMethod backend)
+### Compile artifact API
+
+Generic framework path (through the public compile-artifact contract/accessor):
+
+```csharp
+var compilerArtifacts = /* resolve public compile-artifact accessor from your composition */;
+var artifact = compilerArtifacts.Compile("x + 1", new OrderedDictionary<string, Type>
+{
+    ["x"] = typeof(int)
+});
+
+var session = artifact.CreateSession();
+session.SetArgument("x", 41);
+var fortyTwo = session.Run<int>();
+```
+
+Optional DynamicMethod fast-path (backend-specific extension):
 
 ```csharp
 var compilerCore = host.GetCore("compiler") as BasicCoreImpl<DynamicMethod>
