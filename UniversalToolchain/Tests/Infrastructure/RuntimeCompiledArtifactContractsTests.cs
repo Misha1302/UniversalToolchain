@@ -49,16 +49,47 @@ public class RuntimeCompiledArtifactContractsTests
     }
 
     [Test]
-    public void CompiledArtifact_AsFuncAndNativeInvoker_ShouldExecuteHappyPath()
+    public void DynamicMethodArtifact_AsFunc_SingleArgument_ReturnsExpectedValue()
     {
         var artifact = CreateUnaryAddOneArtifact();
 
-        Assert.That(artifact.AsFunc<int, int>()(41), Is.EqualTo(42));
-        Assert.That(artifact.GetNativeDelegateInvoker().Invoke<int, int>(9), Is.EqualTo(10));
+        var result = artifact.AsFunc<int, int>()(41);
+
+        Assert.That(result, Is.EqualTo(42));
     }
 
     [Test]
-    public void NativeDelegateInvoker_ShouldCacheDelegateInstancePerDelegateType()
+    public void DynamicMethodArtifact_AsFunc_TwoArguments_ReturnsExpectedValue()
+    {
+        var artifact = CreateBinaryArtifact();
+
+        var result = artifact.AsFunc<int, int, int>()(6, 7);
+
+        Assert.That(result, Is.EqualTo(67));
+    }
+
+    [Test]
+    public void DynamicMethodArtifact_NativeInvoker_InvokeSingleArgument_ReturnsExpectedValue()
+    {
+        var artifact = CreateUnaryAddOneArtifact();
+
+        var result = artifact.GetNativeDelegateInvoker().Invoke<int, int>(9);
+
+        Assert.That(result, Is.EqualTo(10));
+    }
+
+    [Test]
+    public void DynamicMethodArtifact_NativeInvoker_InvokeTwoArguments_ReturnsExpectedValue()
+    {
+        var artifact = CreateBinaryArtifact();
+
+        var result = artifact.GetNativeDelegateInvoker().Invoke<int, int, int>(4, 5);
+
+        Assert.That(result, Is.EqualTo(45));
+    }
+
+    [Test]
+    public void DynamicMethodArtifact_NativeInvoker_CachesDelegatePerDelegateType()
     {
         var invoker = CreateUnaryAddOneArtifact().GetNativeDelegateInvoker();
 
@@ -66,6 +97,35 @@ public class RuntimeCompiledArtifactContractsTests
         var second = invoker.AsFunc<int, int>();
 
         Assert.That(second, Is.SameAs(first));
+    }
+
+    [Test]
+    public void DynamicMethodArtifact_CreateSession_And_AsFunc_ProduceEquivalentResult()
+    {
+        var artifact = CreateBinaryArtifact();
+        var fromAsFunc = artifact.AsFunc<int, int, int>()(8, 3);
+
+        var session = artifact.CreateSession();
+        session.SetArgument("x", 8);
+        session.SetArgument("y", 3);
+        var fromSession = session.Run<int>();
+
+        var fromInvoker = artifact.GetNativeDelegateInvoker().Invoke<int, int, int>(8, 3);
+
+        Assert.That(fromSession, Is.EqualTo(fromAsFunc));
+        Assert.That(fromInvoker, Is.EqualTo(fromAsFunc));
+    }
+
+    [Test]
+    public void DynamicMethodArtifact_DeclaredBindingOrder_MatchesDelegateArgumentOrder()
+    {
+        var artifact = CreateDeclaredOrderArtifact();
+
+        var declaredNames = artifact.DeclaredBindings.Select(static binding => binding.Name).ToArray();
+        var delegateResult = artifact.AsFunc<int, int, int>()(2, 9);
+
+        Assert.That(declaredNames, Is.EqualTo(new[] { "left", "right" }));
+        Assert.That(delegateResult, Is.EqualTo(29));
     }
 
     private static ICompiledArtifact<DynamicMethod> CreateUnaryAddOneArtifact()
@@ -84,11 +144,59 @@ public class RuntimeCompiledArtifactContractsTests
             new DynamicMethodExecutor());
     }
 
+    private static ICompiledArtifact<DynamicMethod> CreateBinaryArtifact()
+    {
+        var dynamicMethod = new DynamicMethod("ConcatDecimalDigits", typeof(int), [typeof(int), typeof(int)]);
+        var il = dynamicMethod.GetILGenerator();
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldc_I4_S, 10);
+        il.Emit(OpCodes.Mul);
+        il.Emit(OpCodes.Ldarg_1);
+        il.Emit(OpCodes.Add);
+        il.Emit(OpCodes.Ret);
+
+        return new CompiledArtifact<DynamicMethod>(
+            "x * 10 + y",
+            [
+                new ExternalBinding { Name = "x", Type = typeof(int), Kind = ExternalBindingKind.Variable },
+                new ExternalBinding { Name = "y", Type = typeof(int), Kind = ExternalBindingKind.Variable }
+            ],
+            dynamicMethod,
+            new DynamicMethodExecutor());
+    }
+
+    private static ICompiledArtifact<DynamicMethod> CreateDeclaredOrderArtifact()
+    {
+        var dynamicMethod = new DynamicMethod("DeclaredBindingOrder", typeof(int), [typeof(int), typeof(int)]);
+        var il = dynamicMethod.GetILGenerator();
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldc_I4_S, 10);
+        il.Emit(OpCodes.Mul);
+        il.Emit(OpCodes.Ldarg_1);
+        il.Emit(OpCodes.Add);
+        il.Emit(OpCodes.Ret);
+
+        return new CompiledArtifact<DynamicMethod>(
+            "left * 10 + right",
+            [
+                new ExternalBinding { Name = "left", Type = typeof(int), Kind = ExternalBindingKind.Variable },
+                new ExternalBinding { Name = "right", Type = typeof(int), Kind = ExternalBindingKind.Variable }
+            ],
+            dynamicMethod,
+            new DynamicMethodExecutor());
+    }
+
     private sealed class DynamicMethodExecutor : IExecutor<DynamicMethod>
     {
         public object? Execute(DynamicMethod compilation, IExecutionEnvironment environment)
         {
-            return compilation.CreateDelegate<Func<int, int>>().Invoke((int)environment.GetExternalValue(0)!);
+            var parameters = compilation.GetParameters();
+            var args = new object?[parameters.Length];
+
+            for (var i = 0; i < parameters.Length; i++)
+                args[i] = environment.GetExternalValue(i);
+
+            return compilation.Invoke(null, args);
         }
     }
 
