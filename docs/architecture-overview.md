@@ -30,10 +30,12 @@ Runtime composition paths:
 
 Compile-artifact surface:
 
-- The framework exposes a public compile-artifact contract for backends that support artifact-oriented workflows
-  (compile once, create one or more execution sessions).
-- Backend-specific helpers/extensions are optional layers on top of that contract and should be treated as
-  convenience/performance paths, not mandatory framework behavior.
+- Host-level artifact compilation is exposed through
+  `WistDialectExecutionHost.GetArtifactCompiler<TCompilationOutput>(mode)`.
+- Backends that support artifact-oriented execution return `IArtifactCompiler<TCompilationOutput>` and produce
+  `ICompiledArtifact<TCompilationOutput>`.
+- Backend-specific helpers/extensions (for example, `DynamicMethod` convenience APIs) are optional layers and should
+  be treated as convenience/performance paths, not mandatory framework behavior.
 
 ## Dialect workflow
 
@@ -44,6 +46,9 @@ Typical dialect execution flow:
 3. Resolve runtime composition descriptors.
 4. Create execution host.
 5. Run code.
+
+Runtime component resolution builds cached per-assembly component indexes and uses a loadable-types fallback when
+reflection encounters partial type-load failures.
 
 ## Repository entry points
 
