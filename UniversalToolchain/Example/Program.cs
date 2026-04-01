@@ -1,3 +1,7 @@
+using System.IO;
+using IntermediateRepresentationAbstractions;
+using System.Collections.Specialized;
+using System.Reflection.Emit;
 using UniversalToolchain.Dialects.Wist;
 
 var services = new ServiceCollection();
@@ -8,7 +12,8 @@ services.AddWistInterpreterBackend();
 using var provider = services.BuildServiceProvider();
 var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
 
-var dialect = workflow.ComposeFile("./Dialects/examples/wist/full-default-native/dialect.wistdialect");
+var dialectFile = Path.Combine(AppContext.BaseDirectory, "Dialects", "examples", "wist", "full-default-native", "dialect.wistdialect");
+var dialect = workflow.ComposeFile(dialectFile);
 if (!dialect.IsSuccess)
 {
     Console.WriteLine(dialect.ToDeterministicText());
@@ -16,5 +21,27 @@ if (!dialect.IsSuccess)
 }
 
 using var host = workflow.CreateHost(dialect);
-var result = host.Run("(2 + 2) * 3", "compiler");
-Console.WriteLine(result);
+
+const string formula = "price * 0.9 + fee";
+var declaredBindings = new OrderedDictionary<string, Type>
+{
+    ["price"] = typeof(double),
+    ["fee"] = typeof(double)
+};
+
+var compiler = host.GetArtifactCompiler<DynamicMethod>("compiler");
+var compiledArtifact = compiler.Compile(formula, declaredBindings);
+var calculateCompiled = compiledArtifact.AsFunc<double, double, double>();
+var compiledResult = calculateCompiled(100.0, 5.0);
+
+var interpreter = host.GetArtifactCompiler<IAbstractIR>("interpreter");
+var interpretedArtifact = interpreter.Compile(formula, declaredBindings);
+var interpretedSession = interpretedArtifact.CreateSession();
+interpretedSession.SetArgument("price", 100.0);
+interpretedSession.SetArgument("fee", 5.0);
+var interpretedResult = (double)(interpretedSession.Run() ?? throw new InvalidOperationException("Interpreter returned null."));
+
+Console.WriteLine($"Formula: {formula}");
+Console.WriteLine($"Compiler result: {compiledResult}");
+Console.WriteLine($"Interpreter result: {interpretedResult}");
+Console.WriteLine($"Expected result: 95");
