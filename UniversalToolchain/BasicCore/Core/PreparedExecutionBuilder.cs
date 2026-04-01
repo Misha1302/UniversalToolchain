@@ -11,7 +11,7 @@ internal sealed class PreparedExecutionBuilder<TCompilationOutput>(
     IReadOnlyList<IIRProcessingModule> optimizers,
     IReadOnlyList<IMiddleEndCoreModule<TCompilationOutput>> middleEndModules)
 {
-    public PreparedExecution<TCompilationOutput> Build(CompilationInput input)
+    public ICompiledArtifact<TCompilationOutput> Compile(CompilationInput input)
     {
         var lexer = lexerFactory();
         var parser = parserFactory();
@@ -45,10 +45,34 @@ internal sealed class PreparedExecutionBuilder<TCompilationOutput>(
         var compilationOutput = middleEndModules.Aggregate(compiled, (current, module) => module.ProcessCompilation(current));
         middleEndModules.ForEach(module => module.InitExecutor(executor));
 
-        return new PreparedExecution<TCompilationOutput>(
+        var slotsByName = new Dictionary<string, int>(input.ExternalBindings.Count, StringComparer.Ordinal);
+        for (var i = 0; i < input.ExternalBindings.Count; i++)
+        {
+            var binding = input.ExternalBindings[i];
+            if (!slotsByName.TryAdd(binding.Name, i))
+                Thrower.Argument(nameof(input), $"Declared binding '{binding.Name}' is duplicated.");
+        }
+
+        _ = slotsByName;
+
+        return new CompiledArtifact<TCompilationOutput>(
             input.SourceText,
-            compilationOutput,
-            executor,
-            new ExecutionEnvironment(input.ExternalBindings));
+            input.ExternalBindings,
+            compilationOutput);
+    }
+
+    public PreparedExecution<TCompilationOutput> Build(CompilationInput input)
+    {
+        var artifact = Compile(input);
+        var session = new CompiledArtifactSession<TCompilationOutput>(
+            artifact.CompilationOutput,
+            executorFactory(),
+            artifact.CreateSession(),
+            artifact.DeclaredBindings);
+
+        return new PreparedExecution<TCompilationOutput>(
+            artifact.SourceText,
+            artifact,
+            session);
     }
 }

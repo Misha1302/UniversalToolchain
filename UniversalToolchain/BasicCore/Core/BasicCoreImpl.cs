@@ -37,7 +37,7 @@ public class BasicCoreImpl<TCompilationOutput>(
     {
         var prepared = _prepared.Value;
         Thrower.AssertAlways(prepared != null);
-        return prepared.Executor.Execute(prepared.CompilationOutput, prepared.ExecutionEnvironment);
+        return prepared.Session.Run();
     }
 
     public object? Run(string code, Dictionary<string, object>? parameters = null)
@@ -48,13 +48,16 @@ public class BasicCoreImpl<TCompilationOutput>(
     }
 
     public TCompilationOutput GetExecutable(string code, OrderedDictionary<string, Type>? parameters = null)
-    {
-        PrepareToRun(code, parameters);
-        return _prepared.Value!.CompilationOutput;
-    }
+        => Compile(code, parameters).CompilationOutput;
 
     public void PrepareToRun(CompilationInput input)
     {
         _prepared.Value = _preparedExecutionBuilder.Build(input);
     }
+
+    public ICompiledArtifact<TCompilationOutput> Compile(string code, OrderedDictionary<string, Type>? parameters = null)
+        => Compile(_inputNormalizer.NormalizeDeclaredInput(code, parameters));
+
+    public ICompiledArtifact<TCompilationOutput> Compile(CompilationInput input)
+        => _preparedExecutionBuilder.Compile(input);
 }
