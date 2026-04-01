@@ -29,6 +29,20 @@ public class CommentsModuleValidationTests
     }
 
     [Test]
+    public void Comments_SingleLineCommentContainingBlockOpen_DoesNotThrow()
+    {
+        using var helper = new ModulePipelineTestHelper();
+        helper.ExecuteEquivalent("// /*\n2 + 3", "2 + 3", Modules);
+    }
+
+    [Test]
+    public void Comments_BlockCommentOpenedInsideSingleLineComment_DoesNotAffectNextLine()
+    {
+        using var helper = new ModulePipelineTestHelper();
+        helper.ExecuteEquivalent("// before /*\n2 + 3", "2 + 3", Modules);
+    }
+
+    [Test]
     public void Comments_BlockCommentOnlyInput_DoesNotCreatePhantomStatement()
     {
         using var helper = new ModulePipelineTestHelper();

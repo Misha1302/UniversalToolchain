@@ -28,25 +28,60 @@ public class CommentsModuleImpl : IFrontendCoreModule
 
     private static void ValidateNoUnterminatedBlockComment(string code)
     {
-        var searchIndex = 0;
+        var state = CommentScanState.Normal;
+        var blockCommentStartIndex = -1;
 
-        while (searchIndex < code.Length)
+        for (var index = 0; index < code.Length; index++)
         {
-            var openingIndex = code.IndexOf("/*", searchIndex, StringComparison.Ordinal);
-            if (openingIndex < 0)
-                return;
+            var currentChar = code[index];
+            var nextChar = index + 1 < code.Length ? code[index + 1] : '\0';
 
-            var closingIndex = code.IndexOf("*/", openingIndex + 2, StringComparison.Ordinal);
-            if (closingIndex < 0)
+            switch (state)
             {
-                var location = new LexemeValue("/*", null, openingIndex, code);
-                WistThrower.Lexer(
-                    "Unterminated block comment (comment).",
-                    new SourceLocation { Line = location.LineNumber, Column = location.CharNumber }
-                );
-            }
+                case CommentScanState.Normal:
+                    if (currentChar == '/' && nextChar == '/')
+                    {
+                        state = CommentScanState.SingleLineComment;
+                        index++;
+                    }
+                    else if (currentChar == '/' && nextChar == '*')
+                    {
+                        state = CommentScanState.BlockComment;
+                        blockCommentStartIndex = index;
+                        index++;
+                    }
+                    break;
 
-            searchIndex = closingIndex + 2;
+                case CommentScanState.SingleLineComment:
+                    if (currentChar is '\n' or '\r')
+                        state = CommentScanState.Normal;
+                    break;
+
+                case CommentScanState.BlockComment:
+                    if (currentChar == '*' && nextChar == '/')
+                    {
+                        state = CommentScanState.Normal;
+                        blockCommentStartIndex = -1;
+                        index++;
+                    }
+                    break;
+            }
         }
+
+        if (state == CommentScanState.BlockComment)
+        {
+            var location = new LexemeValue("/*", null, blockCommentStartIndex, code);
+            WistThrower.Lexer(
+                "Unterminated block comment (comment).",
+                new SourceLocation { Line = location.LineNumber, Column = location.CharNumber }
+            );
+        }
+    }
+
+    private enum CommentScanState
+    {
+        Normal,
+        SingleLineComment,
+        BlockComment
     }
 }
