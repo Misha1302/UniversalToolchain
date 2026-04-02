@@ -67,6 +67,7 @@
         <Compile Include="Stress/RuntimeStressContractsTests.cs"/>
         <Compile Include="CoreContracts/BasicCoreLifecycleContractsTests.cs"/>
         <Compile Include="Concurrency/BasicCoreConcurrencyTests.cs"/>
+        <Compile Include="Core/DialectDefinitionSliceParserTests.cs"/>
     </ItemGroup>
 
     <ItemGroup>
