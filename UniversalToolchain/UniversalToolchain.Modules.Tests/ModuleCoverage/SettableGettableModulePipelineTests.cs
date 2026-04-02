@@ -24,14 +24,14 @@ public class SettableGettableModulePipelineTests
     public void SettableGettable_GetBeforeSet_IsHandledDeterministically()
     {
         using var h = new ModulePipelineTestHelper();
-        h.AssertFails("x", ModulePipelineTestHelper.FullUniversalModules, "");
+        h.AssertCompilerAndInterpreterFailSameWay("x", ModulePipelineTestHelper.FullUniversalModules);
     }
 
     [Test]
     public void SettableGettable_SetOnUnsupportedTarget_FailsDeterministically()
     {
         using var h = new ModulePipelineTestHelper();
-        h.AssertFails("(2+3)=7", ModulePipelineTestHelper.FullUniversalModules, "");
+        h.AssertFailsContaining("(2+3)=7", ModulePipelineTestHelper.FullUniversalModules, string.Empty);
     }
 
     [Test]

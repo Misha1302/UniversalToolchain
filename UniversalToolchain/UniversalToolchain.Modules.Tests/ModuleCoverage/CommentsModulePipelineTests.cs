@@ -37,6 +37,6 @@ public class CommentsModulePipelineTests
     public void Comments_UnterminatedBlockComment_FailsDeterministically()
     {
         using var h = new ModulePipelineTestHelper();
-        h.AssertFails("2 /* bad", Modules, "comment");
+        h.AssertFailsContaining("2 /* bad", Modules, "comment");
     }
 }

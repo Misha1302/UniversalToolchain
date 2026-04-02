@@ -30,7 +30,7 @@ public class InternalPreprocessorLexemesModulePipelineTests
     public void InternalPreprocessorLexemes_UserFacingUnsupportedToken_IsRejectedDeterministically()
     {
         using var h = new ModulePipelineTestHelper();
-        h.AssertFails("#![set x = 2] 2 + 3", Modules, "internal-only");
+        h.AssertFailsContaining("#![set x = 2] 2 + 3", Modules, "internal-only");
     }
 
     [Test]
@@ -44,6 +44,6 @@ public class InternalPreprocessorLexemesModulePipelineTests
     public void InternalPreprocessorLexemes_FailureDiagnostics_AreStableAndUseful()
     {
         using var h = new ModulePipelineTestHelper();
-        h.AssertFails("#![oops", Modules, "internal-only");
+        h.AssertFailsContaining("#![oops", Modules, "internal-only");
     }
 }

@@ -67,13 +67,12 @@ public class VariablesModuleIsolationTests
     public void Variables_UseBeforeDeclaration_FailsDeterministically()
     {
         using var h = new ModulePipelineTestHelper();
-        h.AssertFails(
+        h.AssertCompilerAndInterpreterFailSameWay(
             """
             x
             let x = 1
             """,
-            Modules,
-            string.Empty);
+            Modules);
     }
 
     [Test]

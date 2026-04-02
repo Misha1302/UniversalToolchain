@@ -37,6 +37,6 @@ public class SemicolonAsNewLineModulePipelineTests
     public void SemicolonAsNewLine_ModuleDisabled_NewlineSeparatedProgramFailsDeterministically()
     {
         using var h = new ModulePipelineTestHelper();
-        h.AssertFails("let x = 2;\nx + 3", Modules.Where(x => x != "SemicolonAsNewLine"), "token");
+        h.AssertFailsContaining("let x = 2;\nx + 3", Modules.Where(x => x != "SemicolonAsNewLine"), "token");
     }
 }

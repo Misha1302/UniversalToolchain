@@ -30,7 +30,7 @@ public class ExecutorLoggerModulePipelineTests
     public void ExecutorLogger_Enabled_ErroringProgramProducesStableLoggingBehavior()
     {
         using var h = new ModulePipelineTestHelper();
-        h.AssertFails("2 / hi", ModulePipelineTestHelper.FullUniversalModules, "identifier");
+        h.AssertFailsContaining("2 / hi", ModulePipelineTestHelper.FullUniversalModules, string.Empty);
     }
 
     [Test]

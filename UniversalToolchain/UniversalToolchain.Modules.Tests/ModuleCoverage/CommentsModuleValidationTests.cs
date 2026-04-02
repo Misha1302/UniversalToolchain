@@ -10,7 +10,7 @@ public class CommentsModuleValidationTests
     {
         using var helper = new ModulePipelineTestHelper();
         const string code = "2 /* bad";
-        helper.AssertFails(code, Modules, "comment");
+        helper.AssertFailsContaining(code, Modules, "comment");
 
         var compilerError = Assert.Catch(() => helper.ExecuteCompiler(code, Modules));
         var interpreterError = Assert.Catch(() => helper.ExecuteInterpreter(code, Modules));

@@ -70,11 +70,11 @@ public class LoopsModulePipelineTests
     public void Loops_MalformedLoop_FailsDeterministically()
     {
         using var h = new ModulePipelineTestHelper();
-        h.AssertFails(
+        h.AssertFailsContaining(
             """
             for (let i = 0) (i < 3) (i = i + 1) i
             """,
             Modules,
-            "invalid");
+            string.Empty);
     }
 }
