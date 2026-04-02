@@ -66,6 +66,7 @@
         <Compile Include="Infrastructure/BasicCoreImplOrchestrationTests.cs"/>
         <Compile Include="Stress/RuntimeStressContractsTests.cs"/>
         <Compile Include="CoreContracts/BasicCoreLifecycleContractsTests.cs"/>
+        <Compile Include="Core/DynamicMethodInvokerTests.cs"/>
         <Compile Include="Concurrency/BasicCoreConcurrencyTests.cs"/>
     </ItemGroup>
 
