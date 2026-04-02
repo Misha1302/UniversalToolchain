@@ -68,6 +68,7 @@
         <Compile Include="CoreContracts/BasicCoreLifecycleContractsTests.cs"/>
         <Compile Include="Core/DynamicMethodInvokerTests.cs"/>
         <Compile Include="Concurrency/BasicCoreConcurrencyTests.cs"/>
+        <Compile Include="Core/DialectDefinitionSliceParserTests.cs"/>
     </ItemGroup>
 
     <ItemGroup>
