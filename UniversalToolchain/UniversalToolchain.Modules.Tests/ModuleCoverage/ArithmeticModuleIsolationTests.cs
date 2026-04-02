@@ -87,7 +87,7 @@ public class ArithmeticModuleIsolationTests
     public void Arithmetic_InvalidRightOperand_FailsDeterministically()
     {
         using var h = new ModulePipelineTestHelper();
-        h.AssertFails("2 / hi", Modules, "");
+        h.AssertCompilerAndInterpreterFailSameWay("2 / hi", Modules);
     }
 
     [Test]

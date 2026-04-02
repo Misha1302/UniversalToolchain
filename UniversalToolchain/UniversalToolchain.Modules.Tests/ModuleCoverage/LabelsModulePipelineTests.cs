@@ -41,7 +41,7 @@ public class LabelsModulePipelineTests
     public void Labels_MissingLabel_FailsDeterministically()
     {
         using var h = new ModulePipelineTestHelper();
-        h.AssertFails(
+        h.AssertFailsContaining(
             """
             goto @missing
             1
@@ -54,7 +54,7 @@ public class LabelsModulePipelineTests
     public void Labels_DuplicateLabel_FailsDeterministically()
     {
         using var h = new ModulePipelineTestHelper();
-        h.AssertFails(
+        h.AssertFailsContaining(
             """
             @x: 1
             @x: 2

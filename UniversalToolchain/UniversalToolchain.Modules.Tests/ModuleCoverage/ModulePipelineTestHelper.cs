@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using NumbersModule.Core;
+using System.Text;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
 
@@ -161,31 +162,115 @@ internal sealed class ModulePipelineTestHelper : IDisposable
         AssertSemanticNotEqual(resultA.Interpreter, resultB.Interpreter);
     }
 
-    public void AssertFails(string code, IEnumerable<string> modules, string expectedMessageFragment)
+    public void AssertFailsContaining(string code, IEnumerable<string> modules, string expectedFragment)
     {
-        _ = expectedMessageFragment;
-        _ = Assert.Throws<Exception>(() =>
-        {
-            try
-            {
-                _ = ExecuteCompiler(code, modules);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message, ex);
-            }
-        });
+        Exception? compilerException = null;
+        Exception? interpreterException = null;
 
-        _ = Assert.Throws<Exception>(() =>
+        try
         {
-            try
+            _ = ExecuteCompiler(code, modules);
+        }
+        catch (Exception ex)
+        {
+            compilerException = ex;
+        }
+
+        try
+        {
+            _ = ExecuteInterpreter(code, modules);
+        }
+        catch (Exception ex)
+        {
+            interpreterException = ex;
+        }
+
+        Assert.That(compilerException, Is.Not.Null);
+        Assert.That(interpreterException, Is.Not.Null);
+
+        var comparableCompilerException = GetComparableException(compilerException!);
+        var comparableInterpreterException = GetComparableException(interpreterException!);
+        Assert.That(comparableCompilerException.ToString().Contains(expectedFragment, StringComparison.OrdinalIgnoreCase), Is.True);
+        Assert.That(comparableInterpreterException.ToString().Contains(expectedFragment, StringComparison.OrdinalIgnoreCase), Is.True);
+    }
+
+    public void AssertCompilerAndInterpreterFailSameWay(string code, IEnumerable<string> modules)
+    {
+        Exception? compilerException = null;
+        Exception? interpreterException = null;
+
+        try
+        {
+            _ = ExecuteCompiler(code, modules);
+        }
+        catch (Exception ex)
+        {
+            compilerException = ex;
+        }
+
+        try
+        {
+            _ = ExecuteInterpreter(code, modules);
+        }
+        catch (Exception ex)
+        {
+            interpreterException = ex;
+        }
+
+        Assert.That(compilerException, Is.Not.Null);
+        Assert.That(interpreterException, Is.Not.Null);
+
+        var comparableCompilerException = GetComparableException(compilerException!);
+        var comparableInterpreterException = GetComparableException(interpreterException!);
+        Assert.That(comparableCompilerException.GetType(), Is.EqualTo(comparableInterpreterException.GetType()));
+        Assert.That(GetInvariantMessageFragment(comparableCompilerException.Message), Is.EqualTo(GetInvariantMessageFragment(comparableInterpreterException.Message)));
+    }
+
+    public void AssertParityAndValue(string code, IEnumerable<string> modules, double expected)
+    {
+        var (compiler, interpreter) = ExecuteBoth(code, modules);
+        AssertParity(compiler, interpreter);
+        Assert.That(AsNumber(compiler), Is.EqualTo(expected).Within(1e-9));
+    }
+
+    private static string GetInvariantMessageFragment(string message)
+    {
+        const int maxLength = 64;
+        var builder = new StringBuilder(message.Length);
+        foreach (var c in message)
+        {
+            if (char.IsLetter(c))
             {
-                _ = ExecuteInterpreter(code, modules);
+                builder.Append(char.ToLowerInvariant(c));
+                continue;
             }
-            catch (Exception ex)
+
+            if (!char.IsDigit(c))
+                continue;
+
+            if (builder.Length == 0 || builder[^1] != '#')
+                builder.Append('#');
+        }
+
+        var normalized = builder.ToString().Trim();
+        return normalized.Length <= maxLength ? normalized : normalized[..maxLength];
+    }
+
+    private static Exception GetComparableException(Exception exception)
+    {
+        var current = exception;
+        while (true)
+        {
+            if (current is AggregateException aggregateException && aggregateException.InnerExceptions.Count == 1)
             {
-                throw new Exception(ex.Message, ex);
+                current = aggregateException.InnerExceptions[0];
+                continue;
             }
-        });
+
+            if (current.InnerException == null)
+                return current;
+
+            current = current.InnerException;
+        }
     }
 }

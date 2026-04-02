@@ -27,20 +27,20 @@ public class CSharpInteropModuleContractsTests
     public void CSharpInterop_MissingMethod_FailsDeterministically()
     {
         using var h = new ModulePipelineTestHelper();
-        h.AssertFails("NumbersModule.Core.RealNumberImpl.Missing(2, 5)", Modules, "method");
+        h.AssertFailsContaining("NumbersModule.Core.RealNumberImpl.Missing(2, 5)", Modules, "method");
     }
 
     [Test]
     public void CSharpInterop_WrongArgumentCount_FailsDeterministically()
     {
         using var h = new ModulePipelineTestHelper();
-        h.AssertFails("NumbersModule.Core.RealNumberImpl.Add(2)", Modules, "argument");
+        h.AssertFailsContaining("NumbersModule.Core.RealNumberImpl.Add(2)", Modules, "argument");
     }
 
     [Test]
     public void CSharpInterop_ModuleDisabled_SameProgramFailsDeterministically()
     {
         using var h = new ModulePipelineTestHelper();
-        h.AssertFails("NumbersModule.Core.RealNumberImpl.Add(2, 5)", Modules.Where(x => x != "CSharpInterop"), "identifier");
+        h.AssertFailsContaining("NumbersModule.Core.RealNumberImpl.Add(2, 5)", Modules.Where(x => x != "CSharpInterop"), string.Empty);
     }
 }

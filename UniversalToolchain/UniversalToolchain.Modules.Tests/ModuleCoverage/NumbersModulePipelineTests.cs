@@ -45,7 +45,7 @@ public class NumbersModulePipelineTests
     public void Numbers_InvalidNumericLiteral_FailsDeterministically()
     {
         using var h = new ModulePipelineTestHelper();
-        h.AssertFails("1.2.3", Modules, "token");
+        h.AssertFailsContaining("1.2.3", Modules, "token");
     }
 
     [TestCase("2+3", new[] { "Number", "Addition", "Number" })]
