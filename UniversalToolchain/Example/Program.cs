@@ -41,7 +41,11 @@ interpretedSession.SetArgument("price", 100.0);
 interpretedSession.SetArgument("fee", 5.0);
 var interpretedResult = (double)(interpretedSession.Run() ?? throw new InvalidOperationException("Interpreter returned null."));
 
+var fastNativeInvoker = new DynamicMethodInvoker<double, double, double>(compiledArtifact.CompilationOutput);
+var nativeInvokedResult = fastNativeInvoker.Invoke(100.0, 5.0);
+
 Console.WriteLine($"Formula: {formula}");
 Console.WriteLine($"Compiler result: {compiledResult}");
 Console.WriteLine($"Interpreter result: {interpretedResult}");
+Console.WriteLine($"Fast invoked result: {nativeInvokedResult}");
 Console.WriteLine($"Expected result: 95");
