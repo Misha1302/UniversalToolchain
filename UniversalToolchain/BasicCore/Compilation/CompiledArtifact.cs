@@ -1,16 +1,15 @@
 namespace BasicCore.Compilation;
 
 /// <summary>
-/// Default implementation of <see cref="ICompiledArtifact{TCompilationOutput}"/> with fixed artifact structure.
-/// Declared bindings and slots mapping are snapshotted at construction time and stay unchanged afterwards.
-/// Binding values are copied by reference; no generic deep clone is performed.
-/// Mutable object graphs referenced by binding values can still be mutated externally.
+///     Default implementation of <see cref="ICompiledArtifact{TCompilationOutput}" /> with fixed artifact structure.
+///     Declared bindings and slots mapping are snapshotted at construction time and stay unchanged afterwards.
+///     Binding values are copied by reference; no generic deep clone is performed.
+///     Mutable object graphs referenced by binding values can still be mutated externally.
 /// </summary>
 /// <typeparam name="TCompilationOutput">Compilation backend output type.</typeparam>
 public sealed class CompiledArtifact<TCompilationOutput> : ICompiledArtifact<TCompilationOutput>
 {
     private readonly ExternalBinding[] _declaredBindings;
-    private readonly IReadOnlyDictionary<string, int> _slotsByName;
     private readonly IExecutor<TCompilationOutput> _executor;
 
     public CompiledArtifact(
@@ -29,7 +28,7 @@ public sealed class CompiledArtifact<TCompilationOutput> : ICompiledArtifact<TCo
             Thrower.ArgumentNull(nameof(executor));
 
         _declaredBindings = SnapshotBindings(declaredBindings);
-        _slotsByName = BuildSlots(_declaredBindings);
+        SlotsByName = BuildSlots(_declaredBindings);
         _executor = executor;
 
         SourceText = sourceText;
@@ -40,7 +39,7 @@ public sealed class CompiledArtifact<TCompilationOutput> : ICompiledArtifact<TCo
 
     public IReadOnlyList<ExternalBinding> DeclaredBindings => _declaredBindings;
 
-    public IReadOnlyDictionary<string, int> SlotsByName => _slotsByName;
+    public IReadOnlyDictionary<string, int> SlotsByName { get; }
 
     public TCompilationOutput CompilationOutput { get; }
 

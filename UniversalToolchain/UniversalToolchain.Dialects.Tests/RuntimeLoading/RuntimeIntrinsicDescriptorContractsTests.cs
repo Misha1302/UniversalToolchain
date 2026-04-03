@@ -8,7 +8,7 @@ public class RuntimeIntrinsicDescriptorContractsTests
     [Test]
     public void Ctor_NullAliases_ProducesEmptyAliasList()
     {
-        var descriptor = new RuntimeIntrinsicDescriptor("intrinsic.sample", new DialectBackendId("compiler"), null);
+        var descriptor = new RuntimeIntrinsicDescriptor("intrinsic.sample", new DialectBackendId("compiler"));
 
         Assert.That(descriptor.Aliases, Is.Empty);
     }

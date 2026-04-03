@@ -347,7 +347,8 @@ Builder must fail fast with clear messages:
 
 This is already aligned with existing alias collision tests.
 For example, see
-[`RuntimeManifestCatalogContractTests`](UniversalToolchain.Dialects.Tests/RuntimeCatalog/RuntimeManifestCatalogContractTests.cs).
+[
+`RuntimeManifestCatalogContractTests`](UniversalToolchain.Dialects.Tests/RuntimeCatalog/RuntimeManifestCatalogContractTests.cs).
 
 #### Ordering
 

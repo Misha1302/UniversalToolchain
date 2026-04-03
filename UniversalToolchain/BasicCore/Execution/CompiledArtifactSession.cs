@@ -1,13 +1,13 @@
 namespace BasicCore.Execution;
 
 /// <summary>
-/// Default implementation of <see cref="ICompiledArtifactSession"/> for compiled artifacts.
+///     Default implementation of <see cref="ICompiledArtifactSession" /> for compiled artifacts.
 /// </summary>
 public sealed class CompiledArtifactSession<TCompilationOutput> : ICompiledArtifactSession
 {
     private readonly ICompiledArtifact<TCompilationOutput> _artifact;
-    private readonly IExecutor<TCompilationOutput> _executor;
     private readonly IExecutionEnvironment _executionEnvironment;
+    private readonly IExecutor<TCompilationOutput> _executor;
 
     public CompiledArtifactSession(
         ICompiledArtifact<TCompilationOutput> artifact,
@@ -56,10 +56,8 @@ public sealed class CompiledArtifactSession<TCompilationOutput> : ICompiledArtif
 
         var binding = _artifact.DeclaredBindings[slot];
         if (binding.Kind == ExternalBindingKind.Constant)
-        {
             Thrower.InvalidOpEx(
                 $"Binding '{binding.Name}' at slot {slot} is constant and cannot be reassigned.");
-        }
 
         EnsureAssignable(binding, value, slot, binding.Name);
     }
@@ -69,21 +67,17 @@ public sealed class CompiledArtifactSession<TCompilationOutput> : ICompiledArtif
         if (value == null)
         {
             if (binding.Type.IsValueType && Nullable.GetUnderlyingType(binding.Type) == null)
-            {
                 Thrower.Argument(
                     nameof(value),
                     $"Null cannot be assigned to non-nullable value-type argument '{name}' at slot {slot} ({binding.Type.Name}).");
-            }
 
             return;
         }
 
         var valueType = value.GetType();
         if (!binding.Type.IsAssignableFrom(valueType))
-        {
             Thrower.Argument(
                 nameof(value),
                 $"Value of type '{valueType}' is not assignable to argument '{name}' at slot {slot} with declared type '{binding.Type}'.");
-        }
     }
 }

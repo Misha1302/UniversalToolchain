@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using System.Reflection;
-using System.Threading;
 using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
 
@@ -8,9 +7,9 @@ namespace UniversalToolchain.Dialects.Integration;
 
 public sealed class DefaultRuntimeComponentResolver : IRuntimeComponentResolver
 {
-    private readonly IRuntimeAssemblyLoadStrategy _assemblyLoadStrategy;
     private readonly ConcurrentDictionary<string, Lazy<Assembly>> _assemblyCache = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<string, Lazy<IReadOnlyDictionary<RuntimeComponentId, RuntimeComponentDescriptor>>> _assemblyComponentIndexCache = new(StringComparer.Ordinal);
+    private readonly IRuntimeAssemblyLoadStrategy _assemblyLoadStrategy;
 
     public DefaultRuntimeComponentResolver(IRuntimeAssemblyLoadStrategy assemblyLoadStrategy)
     {

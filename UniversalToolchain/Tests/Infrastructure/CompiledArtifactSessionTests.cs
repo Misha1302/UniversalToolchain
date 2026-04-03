@@ -179,9 +179,6 @@ public class CompiledArtifactSessionTests
 
     private sealed class FakeExecutor : IExecutor<string>
     {
-        public object? Execute(string compilation, IExecutionEnvironment environment)
-        {
-            return $"{compilation}:{environment.GetExternalValue(0)}:{environment.GetExternalValue(1)}";
-        }
+        public object? Execute(string compilation, IExecutionEnvironment environment) => $"{compilation}:{environment.GetExternalValue(0)}:{environment.GetExternalValue(1)}";
     }
 }

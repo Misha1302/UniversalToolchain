@@ -1,4 +1,3 @@
-using System.Collections.Specialized;
 using System.Reflection.Emit;
 using DynamicMethodCalling;
 using ExceptionsManager;
@@ -247,15 +246,11 @@ public class RuntimeCompiledArtifactContractsTests
         return workflow.CreateHost(composition);
     }
 
-    private static BasicCoreImpl<DynamicMethod> GetCompilerCore(WistDialectExecutionHost host)
-    {
-        return host.GetCore("compiler") as BasicCoreImpl<DynamicMethod>
-               ?? Thrower.InvalidOpEx<BasicCoreImpl<DynamicMethod>>("Compiler core must be BasicCoreImpl<DynamicMethod>.");
-    }
+    private static BasicCoreImpl<DynamicMethod> GetCompilerCore(WistDialectExecutionHost host) =>
+        host.GetCore("compiler") as BasicCoreImpl<DynamicMethod>
+        ?? Thrower.InvalidOpEx<BasicCoreImpl<DynamicMethod>>("Compiler core must be BasicCoreImpl<DynamicMethod>.");
 
-    private static BasicCoreImpl<IAbstractIR> GetInterpreterCore(WistDialectExecutionHost host)
-    {
-        return host.GetCore("interpreter") as BasicCoreImpl<IAbstractIR>
-               ?? Thrower.InvalidOpEx<BasicCoreImpl<IAbstractIR>>("Interpreter core must be BasicCoreImpl<IAbstractIR>.");
-    }
+    private static BasicCoreImpl<IAbstractIR> GetInterpreterCore(WistDialectExecutionHost host) =>
+        host.GetCore("interpreter") as BasicCoreImpl<IAbstractIR>
+        ?? Thrower.InvalidOpEx<BasicCoreImpl<IAbstractIR>>("Interpreter core must be BasicCoreImpl<IAbstractIR>.");
 }

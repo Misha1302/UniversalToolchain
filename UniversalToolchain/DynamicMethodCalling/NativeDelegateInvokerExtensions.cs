@@ -1,7 +1,7 @@
 namespace DynamicMethodCalling;
 
 /// <summary>
-/// Provides typed delegate and invoke helpers for <see cref="INativeDelegateInvoker"/>.
+///     Provides typed delegate and invoke helpers for <see cref="INativeDelegateInvoker" />.
 /// </summary>
 public static class NativeDelegateInvokerExtensions
 {

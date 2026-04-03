@@ -65,11 +65,9 @@ public class NativeArithmeticAstVisitor : IAstVisitor
     internal static MethodInfo ResolveNativeUnaryMinusMethod(Type operandType)
     {
         if (operandType == typeof(decimal))
-        {
             return typeof(NativeArithmetic)
                 .GetMethod(nameof(NativeArithmetic.NegateDecimal), BindingFlags.Static | BindingFlags.Public)
                 .NotNull();
-        }
 
         try
         {

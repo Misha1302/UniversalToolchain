@@ -1,7 +1,4 @@
-using System.IO;
 using IntermediateRepresentationAbstractions;
-using System.Collections.Specialized;
-using System.Reflection.Emit;
 using UniversalToolchain.Dialects.Wist;
 
 var services = new ServiceCollection();
@@ -48,4 +45,4 @@ Console.WriteLine($"Formula: {formula}");
 Console.WriteLine($"Compiler result: {compiledResult}");
 Console.WriteLine($"Interpreter result: {interpretedResult}");
 Console.WriteLine($"Fast invoked result: {nativeInvokedResult}");
-Console.WriteLine($"Expected result: 95");
+Console.WriteLine("Expected result: 95");

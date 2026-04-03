@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using BasicCore.Binding;
 using BasicCore.Binding.Symbols;
 using BasicCore.Compilation;

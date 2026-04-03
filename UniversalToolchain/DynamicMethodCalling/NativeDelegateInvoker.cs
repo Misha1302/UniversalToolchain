@@ -1,12 +1,12 @@
 namespace DynamicMethodCalling;
 
 /// <summary>
-/// Creates and caches native delegates for a single <see cref="DynamicMethod"/>.
+///     Creates and caches native delegates for a single <see cref="DynamicMethod" />.
 /// </summary>
 public sealed class NativeDelegateInvoker : INativeDelegateInvoker
 {
-    private readonly DynamicMethod _dynamicMethod;
     private readonly ConcurrentDictionary<Type, Delegate> _delegateCache = new();
+    private readonly DynamicMethod _dynamicMethod;
 
     public NativeDelegateInvoker(DynamicMethod dynamicMethod)
     {
@@ -16,10 +16,7 @@ public sealed class NativeDelegateInvoker : INativeDelegateInvoker
         _dynamicMethod = dynamicMethod;
     }
 
-    public TDelegate GetDelegate<TDelegate>() where TDelegate : Delegate
-    {
-        return (TDelegate)GetDelegate(typeof(TDelegate));
-    }
+    public TDelegate GetDelegate<TDelegate>() where TDelegate : Delegate => (TDelegate)GetDelegate(typeof(TDelegate));
 
     public Delegate GetDelegate(Type delegateType)
     {
@@ -32,8 +29,5 @@ public sealed class NativeDelegateInvoker : INativeDelegateInvoker
         return _delegateCache.GetOrAdd(delegateType, CreateDelegate);
     }
 
-    private Delegate CreateDelegate(Type delegateType)
-    {
-        return _dynamicMethod.CreateDelegate(delegateType);
-    }
+    private Delegate CreateDelegate(Type delegateType) => _dynamicMethod.CreateDelegate(delegateType);
 }

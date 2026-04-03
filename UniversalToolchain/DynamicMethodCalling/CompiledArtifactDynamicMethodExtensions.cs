@@ -1,7 +1,7 @@
 namespace DynamicMethodCalling;
 
 /// <summary>
-/// Provides typed delegate access helpers for compiled <see cref="DynamicMethod"/> artifacts.
+///     Provides typed delegate access helpers for compiled <see cref="DynamicMethod" /> artifacts.
 /// </summary>
 public static class CompiledArtifactDynamicMethodExtensions
 {
@@ -55,8 +55,5 @@ public static class CompiledArtifactDynamicMethodExtensions
         return artifact.GetNativeDelegateInvoker().AsFunc<T1, T2, T3, T4, TResult>();
     }
 
-    private static NativeDelegateInvoker CreateInvoker(ICompiledArtifact<DynamicMethod> artifact)
-    {
-        return new NativeDelegateInvoker(artifact.CompilationOutput);
-    }
+    private static NativeDelegateInvoker CreateInvoker(ICompiledArtifact<DynamicMethod> artifact) => new(artifact.CompilationOutput);
 }

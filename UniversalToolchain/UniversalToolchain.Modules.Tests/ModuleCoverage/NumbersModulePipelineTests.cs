@@ -1,3 +1,8 @@
+using ArithmeticModule.Module;
+using BasicCore.LexerWrapper;
+using BasicLexer.Core;
+using NumbersModule.Module;
+
 namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 
 [TestFixture]
@@ -68,11 +73,11 @@ public class NumbersModulePipelineTests
         Assert.That(tokens[0].Text, Is.EqualTo("1e-5"));
     }
 
-    private static BasicCore.LexerWrapper.ILexer BuildNumbersAndArithmeticLexer()
+    private static ILexer BuildNumbersAndArithmeticLexer()
     {
-        BasicCore.LexerWrapper.ILexer lexer = new BasicLexer.Core.BasicLexerImpl();
-        new NumbersModule.Module.NumbersModuleImpl().InitLexer(lexer);
-        new ArithmeticModule.Module.ArithmeticModuleImpl().InitLexer(lexer);
+        ILexer lexer = new BasicLexerImpl();
+        new NumbersModuleImpl().InitLexer(lexer);
+        new ArithmeticModuleImpl().InitLexer(lexer);
         return lexer;
     }
 }

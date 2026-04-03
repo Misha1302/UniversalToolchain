@@ -1,9 +1,9 @@
 namespace ParametersSetterModule;
 
 /// <summary>
-/// Placeholder for the future ParametersSetter module implementation.
-/// The module is intentionally not exported to dialect composition until
-/// lexer/parser/runtime contracts are finalized.
+///     Placeholder for the future ParametersSetter module implementation.
+///     The module is intentionally not exported to dialect composition until
+///     lexer/parser/runtime contracts are finalized.
 /// </summary>
 public sealed class ParametersSetterModulePlaceholder
 {

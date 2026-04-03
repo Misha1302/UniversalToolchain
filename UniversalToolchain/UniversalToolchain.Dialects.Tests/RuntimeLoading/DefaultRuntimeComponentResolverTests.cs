@@ -7,6 +7,14 @@ namespace UniversalToolchain.Dialects.Tests.RuntimeLoading;
 
 public class DefaultRuntimeComponentResolverTests
 {
+    private const string TestAssemblyName = "ResolverTestsAssembly";
+    private const string ResolverExportForCachingAlias = "resolver.cache.sample";
+    private const string ResolverExportForAliasesAlias = "resolver.aliases.sample";
+    private const string ResolverExportForDifferentEntriesAAlias = "resolver.entries.a";
+    private const string ResolverExportForDifferentEntriesBAlias = "resolver.entries.b";
+    private const string ResolverExportForFallbackAlias = "resolver.fallback.sample";
+    private const string ResolverExportDuplicateAlias = "resolver.duplicate.sample";
+
     [Test]
     public void Resolve_SameEntryTwice_ReturnsEquivalentDescriptor()
     {
@@ -175,14 +183,6 @@ public class DefaultRuntimeComponentResolverTests
         => new(kind, canonicalAlias, [], RuntimeComponentIdFactory.Create(kind, canonicalAlias), assemblySimpleName);
 
     private static Assembly CreateTestAssembly(params Type[] loadableTypes) => new ReflectionTypeLoadExceptionAssembly(loadableTypes.Cast<Type?>().ToArray());
-
-    private const string TestAssemblyName = "ResolverTestsAssembly";
-    private const string ResolverExportForCachingAlias = "resolver.cache.sample";
-    private const string ResolverExportForAliasesAlias = "resolver.aliases.sample";
-    private const string ResolverExportForDifferentEntriesAAlias = "resolver.entries.a";
-    private const string ResolverExportForDifferentEntriesBAlias = "resolver.entries.b";
-    private const string ResolverExportForFallbackAlias = "resolver.fallback.sample";
-    private const string ResolverExportDuplicateAlias = "resolver.duplicate.sample";
 
     [DialectRuntimeExport("FrontendModule", ResolverExportForCachingAlias)]
     private sealed class ResolverExportForCaching;

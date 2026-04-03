@@ -16,7 +16,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
-- Introduced host-level compile-artifact access via `WistDialectExecutionHost.GetArtifactCompiler<TCompilationOutput>(mode)`.
+- Introduced host-level compile-artifact access via
+  `WistDialectExecutionHost.GetArtifactCompiler<TCompilationOutput>(mode)`.
 - Added interface-based invoke helpers for `ICompiledArtifactSession`.
 
 ### Changed

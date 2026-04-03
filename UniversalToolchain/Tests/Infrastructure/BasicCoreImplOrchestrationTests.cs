@@ -401,12 +401,6 @@ public class BasicCoreImplOrchestrationTests
         private string _prefix = "raw";
         public bool IncludeFirstArgumentInResult { get; init; }
 
-        public void SetPrefix(string prefix)
-        {
-            calls.Add("configExecutor.SetPrefix");
-            _prefix = prefix;
-        }
-
         public object Execute(string compilation, IExecutionEnvironment environment)
         {
             calls.Add("configExecutor.Execute");
@@ -414,6 +408,12 @@ public class BasicCoreImplOrchestrationTests
                 return _prefix + ":" + compilation;
 
             return _prefix + ":" + compilation + "|arg:" + environment.GetExternalValue(0);
+        }
+
+        public void SetPrefix(string prefix)
+        {
+            calls.Add("configExecutor.SetPrefix");
+            _prefix = prefix;
         }
     }
 

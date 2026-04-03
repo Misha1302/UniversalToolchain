@@ -1,6 +1,6 @@
+using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using NumbersModule.Core;
-using System.Text;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
 

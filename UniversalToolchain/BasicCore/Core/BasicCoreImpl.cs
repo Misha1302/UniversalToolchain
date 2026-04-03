@@ -28,6 +28,12 @@ public class BasicCoreImpl<TCompilationOutput>(
             optimizers,
             middleEndModules);
 
+    public ICompiledArtifact<TCompilationOutput> Compile(string code, OrderedDictionary<string, Type>? parameters = null)
+        => Compile(_inputNormalizer.NormalizeDeclaredInput(code, parameters));
+
+    public ICompiledArtifact<TCompilationOutput> Compile(CompilationInput input)
+        => _preparedExecutionBuilder.Compile(input);
+
     public void PrepareToRun(string code, OrderedDictionary<string, Type>? parameters = null)
     {
         PrepareToRun(_inputNormalizer.NormalizeDeclaredInput(code, parameters));
@@ -54,10 +60,4 @@ public class BasicCoreImpl<TCompilationOutput>(
     {
         _prepared.Value = _preparedExecutionBuilder.Build(input);
     }
-
-    public ICompiledArtifact<TCompilationOutput> Compile(string code, OrderedDictionary<string, Type>? parameters = null)
-        => Compile(_inputNormalizer.NormalizeDeclaredInput(code, parameters));
-
-    public ICompiledArtifact<TCompilationOutput> Compile(CompilationInput input)
-        => _preparedExecutionBuilder.Compile(input);
 }

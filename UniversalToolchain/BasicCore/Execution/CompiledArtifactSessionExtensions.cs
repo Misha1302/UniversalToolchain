@@ -1,12 +1,12 @@
 namespace BasicCore.Execution;
 
 /// <summary>
-/// Convenience execution helpers for <see cref="ICompiledArtifactSession"/>.
+///     Convenience execution helpers for <see cref="ICompiledArtifactSession" />.
 /// </summary>
 public static class CompiledArtifactSessionExtensions
 {
     /// <summary>
-    /// Executes the session and casts the result to <typeparamref name="T"/>.
+    ///     Executes the session and casts the result to <typeparamref name="T" />.
     /// </summary>
     public static T Run<T>(this ICompiledArtifactSession session)
     {
@@ -24,7 +24,7 @@ public static class CompiledArtifactSessionExtensions
     }
 
     /// <summary>
-    /// Assigns positional arguments and executes the session.
+    ///     Assigns positional arguments and executes the session.
     /// </summary>
     public static T Invoke<T>(
         this ICompiledArtifactSession session,
@@ -37,11 +37,9 @@ public static class CompiledArtifactSessionExtensions
             Thrower.ArgumentNull(nameof(arguments));
 
         if (arguments.Length != session.ArgumentCount)
-        {
             Thrower.Argument(
                 nameof(arguments),
                 $"Expected {session.ArgumentCount} arguments, but got {arguments.Length}.");
-        }
 
         for (var i = 0; i < arguments.Length; i++)
             session.SetArgument(i, arguments[i]);
@@ -50,7 +48,7 @@ public static class CompiledArtifactSessionExtensions
     }
 
     /// <summary>
-    /// Assigns named arguments and executes the session.
+    ///     Assigns named arguments and executes the session.
     /// </summary>
     public static T InvokeNamed<T>(
         this ICompiledArtifactSession session,
@@ -63,11 +61,9 @@ public static class CompiledArtifactSessionExtensions
             Thrower.ArgumentNull(nameof(arguments));
 
         if (arguments.Count != session.ArgumentCount)
-        {
             Thrower.Argument(
                 nameof(arguments),
                 $"Expected {session.ArgumentCount} named arguments, but got {arguments.Count}.");
-        }
 
         foreach (var argument in arguments)
             session.SetArgument(argument.Key, argument.Value);
@@ -76,22 +72,18 @@ public static class CompiledArtifactSessionExtensions
     }
 
     /// <summary>
-    /// Assigns positional arguments and executes the session.
+    ///     Assigns positional arguments and executes the session.
     /// </summary>
     public static T Invoke<TCompilationOutput, T>(
         this CompiledArtifactSession<TCompilationOutput> session,
-        params object?[] arguments)
-    {
-        return Invoke<T>(session, arguments);
-    }
+        params object?[] arguments) =>
+        Invoke<T>(session, arguments);
 
     /// <summary>
-    /// Assigns named arguments and executes the session.
+    ///     Assigns named arguments and executes the session.
     /// </summary>
     public static T InvokeNamed<TCompilationOutput, T>(
         this CompiledArtifactSession<TCompilationOutput> session,
-        IReadOnlyDictionary<string, object?> arguments)
-    {
-        return InvokeNamed<T>(session, arguments);
-    }
+        IReadOnlyDictionary<string, object?> arguments) =>
+        InvokeNamed<T>(session, arguments);
 }

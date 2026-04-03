@@ -55,8 +55,5 @@ public class UnaryMinusOperationNodeCreator : IAstNodeCreator
         return IsOperandNode(leftNode);
     }
 
-    private static bool IsOperandNode(AstNode node)
-    {
-        return !_nonOperandNodeTypes.Contains(node.NodeType);
-    }
+    private static bool IsOperandNode(AstNode node) => !_nonOperandNodeTypes.Contains(node.NodeType);
 }

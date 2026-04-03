@@ -17,8 +17,6 @@ namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 [TestFixture]
 public class ParserConfigurationModuleDiRegistrationTests
 {
-    private string _testConfigPath = string.Empty;
-
     [SetUp]
     public void SetUp()
     {
@@ -31,6 +29,8 @@ public class ParserConfigurationModuleDiRegistrationTests
         if (File.Exists(_testConfigPath))
             File.Delete(_testConfigPath);
     }
+
+    private string _testConfigPath = string.Empty;
 
     [Test]
     public void ParserOrderConfiguration_WithActionTypeDump_WritesParserCreatorOrderSnapshot()
