@@ -3,22 +3,7 @@
 ## Purpose
 
 UniversalToolchain is a modular .NET framework for embeddable DSLs, expression engines, and rule engines.
-Wist is the reference language in this repository and validates the framework through a working CLI, dialect composition, and dual execution backends.
-
-
-## Current baseline
-
-Current baseline is .NET 10 / SDK 10.0.103 because active runtime and backend work is being validated there first.
-Older target frameworks are not the current compatibility target.
-
-## Published dialect profiles
-
-The repository currently highlights four runnable dialect profiles:
-
-- `full-default`
-- `full-default-native`
-- `minimal-arithmetic`
-- `restricted-sandbox`
+Wist is the reference language in this repository and demonstrates the framework through a working CLI, dialect composition, and two execution backends.
 
 ## Architecture split
 
