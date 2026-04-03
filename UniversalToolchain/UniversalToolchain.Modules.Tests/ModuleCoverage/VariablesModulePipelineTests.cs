@@ -39,7 +39,7 @@ public class VariablesModulePipelineTests
     public void Variables_UnknownVariable_FailsDeterministically()
     {
         using var h = new ModulePipelineTestHelper();
-        h.AssertFails("unknownVariable", Modules, string.Empty);
+        h.AssertFailsContaining("unknownVariable", Modules, string.Empty);
     }
 
     [Test]
