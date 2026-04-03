@@ -26,3 +26,4 @@ __pycache__/
 UniversalToolchain/project_as_file/*.txt
 UniversalToolchain/Wistc/code.txt
 ConfigurationEditor/project_code.txt
+/UniversalToolchain/BenchmarkDotNet.Artifacts
