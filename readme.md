@@ -1,17 +1,12 @@
 # UniversalToolchain
 
-UniversalToolchain is a modular .NET framework for embeddable DSLs, expression engines, and rule engines. Wist is the reference language in this repository and validates the framework through a working CLI, dialect composition, and dual execution backends.
+UniversalToolchain is a modular .NET framework for embeddable DSLs, expression engines, and rule engines. Wist is the reference language in this repository and demonstrates the framework through a working CLI, dialect composition, and two execution backends.
 
 It is designed for cases where you want:
 
 - configurable formulas inside a .NET application,
 - a small domain-specific language instead of hardcoded rules,
 - a reusable toolchain pipeline with interpreter and compiler execution modes.
-
-This repository contains:
-
-- **UniversalToolchain** — reusable framework infrastructure.
-- **Wist** — a reference language used to validate and evolve the framework architecture.
 
 ## Where it can be used
 
@@ -40,7 +35,7 @@ Expected output:
 12
 ```
 
-## Programmatic example with parameters
+## Programmatic example
 
 A fuller scenario is available in `UniversalToolchain/Example/Program.cs`.
 
@@ -70,6 +65,11 @@ Many language projects repeatedly rebuild the same layers: parsing, AST/IR trans
 execution.
 UniversalToolchain focuses on reusable composition so capabilities can be assembled from modules instead of hardcoded
 into one implementation path.
+
+This repository contains:
+
+- **UniversalToolchain** — reusable framework infrastructure.
+- **Wist** — a reference language used to validate and evolve the framework architecture.
 
 ## Compared to language platforms focused on their own runtime model
 
@@ -159,8 +159,8 @@ Located under `UniversalToolchain/Dialects/examples/wist`:
 
 ## Why .NET 10 right now?
 
-Current baseline is .NET 10 / SDK 10.0.103 because active runtime and backend work is being validated there first.
-Older target frameworks are not the current compatibility target.
+The current validation baseline is .NET 10 (`net10.0`) with SDK `10.0.103`.
+Active runtime and backend work is being verified there first, so older target frameworks are not the current compatibility target.
 
 ## Requirements
 
