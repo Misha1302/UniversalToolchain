@@ -16,15 +16,12 @@ using UniversalToolchain.Dialects.Wist;
 [SimpleJob]
 [Orderer(SummaryOrderPolicy.FastestToSlowest)]
 [RankColumn]
-public abstract class ArithmeticExecutionBenchmarks
+public abstract class ArithmeticBenchmarkEnvironmentBase
 {
-    private const int DataSize = 4096;
+    protected const int DataSize = 4096;
 
     private ServiceProvider? _provider;
     private WistDialectExecutionHost? _host;
-    private Func<BenchContext, double>? _nCalcLambda;
-    private Func<int, double>? _wistInvoker;
-    private BenchContext? _context;
     private int _index;
 
     protected double[] A = [];
@@ -39,181 +36,7 @@ public abstract class ArithmeticExecutionBenchmarks
     protected double[] J = [];
     protected double[] K = [];
 
-    protected abstract string WistFormula { get; }
-    protected abstract string NCalcFormula { get; }
-    protected abstract string[] BindingNames { get; }
-
-    [GlobalSetup]
-    public void GlobalSetup()
-    {
-        InitializeInputData();
-
-        var services = new ServiceCollection();
-        services.AddWistDialectServices();
-        services.AddWistCilBackend();
-        services.AddWistInterpreterBackend();
-
-        _provider = services.BuildServiceProvider();
-        var workflow = _provider.GetRequiredService<WistDialectExecutionWorkflow>();
-
-        var dialectFile = Path.Combine(AppContext.BaseDirectory, "Dialects", "examples", "wist", "full-default-native", "dialect.wistdialect");
-        var dialect = workflow.ComposeFile(dialectFile);
-
-        if (!dialect.IsSuccess)
-            Thrower.InvalidOpEx($"Failed to compose dialect file: {dialect.ToDeterministicText()}");
-
-        _host = workflow.CreateHost(dialect);
-
-        var compiler = _host.GetArtifactCompiler<DynamicMethod>("compiler");
-        var declaredBindings = CreateDeclaredBindings();
-        var compiledArtifact = compiler.Compile(WistFormula, declaredBindings);
-
-        _wistInvoker = CreateWistInvoker(compiledArtifact.CompilationOutput);
-
-        var nCalcExpression = new Expression(NCalcFormula);
-        _nCalcLambda = nCalcExpression.ToLambda<BenchContext, double>();
-        _context = new BenchContext();
-
-        EnsureResultParity();
-    }
-
-    [GlobalCleanup]
-    public void GlobalCleanup()
-    {
-        _host?.Dispose();
-        _provider?.Dispose();
-    }
-
-    [Benchmark(Baseline = true)]
-    public double CSharp_NoInliningMethod()
-    {
-        var i = NextIndex();
-        return ExecuteCSharp(i);
-    }
-
-    [Benchmark]
-    public double NCalc_Lambda()
-    {
-        Thrower.AssertAlways(_context != null, "Benchmark context must be initialized.");
-        Thrower.AssertAlways(_nCalcLambda != null, "NCalc lambda must be initialized.");
-
-        var i = NextIndex();
-        _context.A = A[i];
-        _context.B = B[i];
-        _context.C = C[i];
-        _context.D = D[i];
-        _context.E = E[i];
-        _context.F = F[i];
-        _context.G = G[i];
-        _context.H = H[i];
-        _context.I = I[i];
-        _context.J = J[i];
-        _context.K = K[i];
-
-        return _nCalcLambda(_context);
-    }
-
-    [Benchmark]
-    public double Wist_Cil_FastInvoker()
-    {
-        Thrower.AssertAlways(_wistInvoker != null, "Wist invoker must be initialized.");
-
-        var i = NextIndex();
-        return _wistInvoker(i);
-    }
-
-    protected abstract double ExecuteCSharp(int index);
-
-    protected virtual OrderedDictionary<string, Type> CreateDeclaredBindings()
-    {
-        var declaredBindings = new OrderedDictionary<string, Type>();
-
-        foreach (var bindingName in BindingNames)
-            declaredBindings[bindingName] = typeof(double);
-
-        return declaredBindings;
-    }
-
-    protected virtual Func<int, double> CreateWistInvoker(DynamicMethod dynamicMethod)
-    {
-        return BindingNames.Length switch
-        {
-            3 => BuildInvoker3(dynamicMethod),
-            5 => BuildInvoker5(dynamicMethod),
-            6 => BuildInvoker6(dynamicMethod),
-            8 => BuildInvoker8(dynamicMethod),
-            11 => BuildInvoker11(dynamicMethod),
-            _ => Thrower.InvalidOpEx<Func<int, double>>($"Unsupported binding count for fast invoker: {BindingNames.Length}.")
-        };
-    }
-
-    private Func<int, double> BuildInvoker3(DynamicMethod dynamicMethod)
-    {
-        var invoker = new DynamicMethodInvoker<double, double, double, double>(dynamicMethod);
-        return i => invoker.Invoke(A[i], B[i], C[i]);
-    }
-
-    private Func<int, double> BuildInvoker5(DynamicMethod dynamicMethod)
-    {
-        var invoker = new DynamicMethodInvoker<double, double, double, double, double, double>(dynamicMethod);
-        return i => invoker.Invoke(A[i], B[i], C[i], D[i], E[i]);
-    }
-
-    private Func<int, double> BuildInvoker6(DynamicMethod dynamicMethod)
-    {
-        var invoker = new DynamicMethodInvoker<double, double, double, double, double, double, double>(dynamicMethod);
-        return i => invoker.Invoke(A[i], B[i], C[i], D[i], E[i], F[i]);
-    }
-
-    private Func<int, double> BuildInvoker8(DynamicMethod dynamicMethod)
-    {
-        var invoker = new DynamicMethodInvoker<double, double, double, double, double, double, double, double, double>(dynamicMethod);
-        return i => invoker.Invoke(A[i], B[i], C[i], D[i], E[i], F[i], G[i], H[i]);
-    }
-
-    private Func<int, double> BuildInvoker11(DynamicMethod dynamicMethod)
-    {
-        var invoker = new DynamicMethodInvoker<double, double, double, double, double, double, double, double, double, double, double, double>(dynamicMethod);
-        return i => invoker.Invoke(A[i], B[i], C[i], D[i], E[i], F[i], G[i], H[i], I[i], J[i], K[i]);
-    }
-
-    private void EnsureResultParity()
-    {
-        Thrower.AssertAlways(_context != null, "Benchmark context must be initialized.");
-        Thrower.AssertAlways(_nCalcLambda != null, "NCalc lambda must be initialized.");
-        Thrower.AssertAlways(_wistInvoker != null, "Wist invoker must be initialized.");
-
-        const int validationIndex = 0;
-
-        _context.A = A[validationIndex];
-        _context.B = B[validationIndex];
-        _context.C = C[validationIndex];
-        _context.D = D[validationIndex];
-        _context.E = E[validationIndex];
-        _context.F = F[validationIndex];
-        _context.G = G[validationIndex];
-        _context.H = H[validationIndex];
-        _context.I = I[validationIndex];
-        _context.J = J[validationIndex];
-        _context.K = K[validationIndex];
-
-        var cSharpResult = ExecuteCSharp(validationIndex);
-        var nCalcResult = _nCalcLambda(_context);
-        var wistResult = _wistInvoker(validationIndex);
-
-        if (!AreEqual(cSharpResult, nCalcResult) || !AreEqual(cSharpResult, wistResult))
-        {
-            Thrower.InvalidOpEx(
-                $"Result mismatch detected. C#: {cSharpResult}, NCalc: {nCalcResult}, Wist: {wistResult}.");
-        }
-    }
-
-    private static bool AreEqual(double left, double right)
-    {
-        return Math.Abs(left - right) <= 1e-9;
-    }
-
-    private void InitializeInputData()
+    protected void InitializeInputData()
     {
         A = new double[DataSize];
         B = new double[DataSize];
@@ -241,101 +64,472 @@ public abstract class ArithmeticExecutionBenchmarks
         Fill(random, K);
     }
 
-    private static void Fill(Random random, double[] values)
+    protected void CreateProviderAndHost()
     {
-        for (var i = 0; i < values.Length; i++)
-            values[i] = 0.1 + random.NextDouble() * 999.9;
+        var services = new ServiceCollection();
+        services.AddWistDialectServices();
+        services.AddWistCilBackend();
+        services.AddWistInterpreterBackend();
+
+        _provider = services.BuildServiceProvider();
+        var workflow = _provider.GetRequiredService<WistDialectExecutionWorkflow>();
+
+        var dialectFile = Path.Combine(AppContext.BaseDirectory, "Dialects", "examples", "wist", "full-default-native", "dialect.wistdialect");
+        var dialect = workflow.ComposeFile(dialectFile);
+
+        if (!dialect.IsSuccess)
+            Thrower.InvalidOpEx($"Failed to compose dialect file: {dialect.ToDeterministicText()}");
+
+        _host = workflow.CreateHost(dialect);
+    }
+
+    protected DynamicMethod CompileWistDynamicMethod(string formula, string[] bindingNames)
+    {
+        var host = _host ?? Thrower.InvalidOpEx<WistDialectExecutionHost>("Wist host must be initialized before compilation.");
+        var compiler = host.GetArtifactCompiler<DynamicMethod>("compiler");
+        var declaredBindings = CreateDeclaredBindings(bindingNames);
+        var compiledArtifact = compiler.Compile(formula, declaredBindings);
+        return compiledArtifact.CompilationOutput;
+    }
+
+    protected OrderedDictionary<string, Type> CreateDeclaredBindings(string[] bindingNames)
+    {
+        var declaredBindings = new OrderedDictionary<string, Type>();
+
+        foreach (var bindingName in bindingNames)
+            declaredBindings[bindingName] = typeof(double);
+
+        return declaredBindings;
+    }
+
+    protected void EnsureResultParityAcrossIndexes(
+        Func<int, double> cSharp,
+        Func<int, double> nCalc,
+        Func<int, double> wist)
+    {
+        var validationIndexes = new[] { 0, 1, 17, 255, 1023, 2047, 4095 };
+
+        foreach (var index in validationIndexes)
+        {
+            var cSharpResult = cSharp(index);
+            var nCalcResult = nCalc(index);
+            var wistResult = wist(index);
+
+            if (!AreEqual(cSharpResult, nCalcResult) || !AreEqual(cSharpResult, wistResult))
+            {
+                Thrower.InvalidOpEx(
+                    $"Result mismatch detected at index {index}. C#: {cSharpResult}, NCalc: {nCalcResult}, Wist: {wistResult}.");
+            }
+        }
+    }
+
+    [GlobalCleanup]
+    public void GlobalCleanup()
+    {
+        _host?.Dispose();
+        _provider?.Dispose();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private int NextIndex()
+    protected int NextIndex()
     {
         var i = _index;
         _index = (i + 1) & (DataSize - 1);
         return i;
     }
+
+    private static bool AreEqual(double left, double right)
+    {
+        const double absoluteEpsilon = 1e-9;
+        const double relativeEpsilon = 1e-12;
+        var delta = Math.Abs(left - right);
+        var scale = Math.Max(1.0, Math.Max(Math.Abs(left), Math.Abs(right)));
+
+        return delta <= Math.Max(absoluteEpsilon, relativeEpsilon * scale);
+    }
+
+    private static void Fill(Random random, double[] values)
+    {
+        for (var i = 0; i < values.Length; i++)
+            values[i] = 0.1 + random.NextDouble() * 999.9;
+    }
 }
 
-public class Simple3Benchmarks : ArithmeticExecutionBenchmarks
+public class Simple3Benchmarks : ArithmeticBenchmarkEnvironmentBase
 {
-    protected override string WistFormula => "A + B * C / 5.0";
-    protected override string NCalcFormula => "[A] + [B] * [C] / 5.0";
-    protected override string[] BindingNames => ["A", "B", "C"];
+    private const string WistFormula = "A + B * C / 5.0";
+    private const string NCalcFormula = "[A] + [B] * [C] / 5.0";
+
+    private DynamicMethodInvoker<double, double, double, double> _wistInvoker = null!;
+    private Func<BenchContext3, double> _nCalcLambda = null!;
+    private BenchContext3 _context = null!;
+
+    [GlobalSetup]
+    public void GlobalSetup()
+    {
+        InitializeInputData();
+        CreateProviderAndHost();
+
+        var dynamicMethod = CompileWistDynamicMethod(WistFormula, ["A", "B", "C"]);
+        _wistInvoker = new DynamicMethodInvoker<double, double, double, double>(dynamicMethod);
+
+        var nCalcExpression = new Expression(NCalcFormula);
+        _nCalcLambda = nCalcExpression.ToLambda<BenchContext3, double>();
+        _context = new BenchContext3();
+
+        EnsureResultParityAcrossIndexes(CSharpAt, NCalcAt, WistAt);
+    }
+
+    [Benchmark(Baseline = true)]
+    public double CSharp_NoInliningMethod()
+    {
+        var i = NextIndex();
+        return CSharp_NoInliningMethodCore(A[i], B[i], C[i]);
+    }
+
+    [Benchmark]
+    public double NCalc_Lambda()
+    {
+        var i = NextIndex();
+        _context.A = A[i];
+        _context.B = B[i];
+        _context.C = C[i];
+        return _nCalcLambda(_context);
+    }
+
+    [Benchmark]
+    public double Wist_Cil_FastInvoker()
+    {
+        var i = NextIndex();
+        return _wistInvoker.Invoke(A[i], B[i], C[i]);
+    }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static double CSharp_NoInliningMethod(double a, double b, double c)
+    private static double CSharp_NoInliningMethodCore(double a, double b, double c)
     {
         return a + b * c / 5.0;
     }
 
-    protected override double ExecuteCSharp(int index)
+    private double CSharpAt(int index)
     {
-        return CSharp_NoInliningMethod(A[index], B[index], C[index]);
+        return CSharp_NoInliningMethodCore(A[index], B[index], C[index]);
+    }
+
+    private double NCalcAt(int index)
+    {
+        _context.A = A[index];
+        _context.B = B[index];
+        _context.C = C[index];
+        return _nCalcLambda(_context);
+    }
+
+    private double WistAt(int index)
+    {
+        return _wistInvoker.Invoke(A[index], B[index], C[index]);
     }
 }
 
-public class Medium8Benchmarks : ArithmeticExecutionBenchmarks
+public class Medium8Benchmarks : ArithmeticBenchmarkEnvironmentBase
 {
-    protected override string WistFormula => "((A + B) * (C - D) / (E + 1.0)) + F * G - H / 3.0";
-    protected override string NCalcFormula => "(([A] + [B]) * ([C] - [D]) / ([E] + 1.0)) + [F] * [G] - [H] / 3.0";
-    protected override string[] BindingNames => ["A", "B", "C", "D", "E", "F", "G", "H"];
+    private const string WistFormula = "((A + B) * (C - D) / (E + 1.0)) + F * G - H / 3.0";
+    private const string NCalcFormula = "(([A] + [B]) * ([C] - [D]) / ([E] + 1.0)) + [F] * [G] - [H] / 3.0";
+
+    private DynamicMethodInvoker<double, double, double, double, double, double, double, double, double> _wistInvoker = null!;
+    private Func<BenchContext8, double> _nCalcLambda = null!;
+    private BenchContext8 _context = null!;
+
+    [GlobalSetup]
+    public void GlobalSetup()
+    {
+        InitializeInputData();
+        CreateProviderAndHost();
+
+        var dynamicMethod = CompileWistDynamicMethod(WistFormula, ["A", "B", "C", "D", "E", "F", "G", "H"]);
+        _wistInvoker = new DynamicMethodInvoker<double, double, double, double, double, double, double, double, double>(dynamicMethod);
+
+        var nCalcExpression = new Expression(NCalcFormula);
+        _nCalcLambda = nCalcExpression.ToLambda<BenchContext8, double>();
+        _context = new BenchContext8();
+
+        EnsureResultParityAcrossIndexes(CSharpAt, NCalcAt, WistAt);
+    }
+
+    [Benchmark(Baseline = true)]
+    public double CSharp_NoInliningMethod()
+    {
+        var i = NextIndex();
+        return CSharp_NoInliningMethodCore(A[i], B[i], C[i], D[i], E[i], F[i], G[i], H[i]);
+    }
+
+    [Benchmark]
+    public double NCalc_Lambda()
+    {
+        var i = NextIndex();
+        _context.A = A[i];
+        _context.B = B[i];
+        _context.C = C[i];
+        _context.D = D[i];
+        _context.E = E[i];
+        _context.F = F[i];
+        _context.G = G[i];
+        _context.H = H[i];
+        return _nCalcLambda(_context);
+    }
+
+    [Benchmark]
+    public double Wist_Cil_FastInvoker()
+    {
+        var i = NextIndex();
+        return _wistInvoker.Invoke(A[i], B[i], C[i], D[i], E[i], F[i], G[i], H[i]);
+    }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static double CSharp_NoInliningMethod(double a, double b, double c, double d, double e, double f, double g, double h)
+    private static double CSharp_NoInliningMethodCore(double a, double b, double c, double d, double e, double f, double g, double h)
     {
         return ((a + b) * (c - d) / (e + 1.0)) + f * g - h / 3.0;
     }
 
-    protected override double ExecuteCSharp(int index)
+    private double CSharpAt(int index)
     {
-        return CSharp_NoInliningMethod(A[index], B[index], C[index], D[index], E[index], F[index], G[index], H[index]);
+        return CSharp_NoInliningMethodCore(A[index], B[index], C[index], D[index], E[index], F[index], G[index], H[index]);
+    }
+
+    private double NCalcAt(int index)
+    {
+        _context.A = A[index];
+        _context.B = B[index];
+        _context.C = C[index];
+        _context.D = D[index];
+        _context.E = E[index];
+        _context.F = F[index];
+        _context.G = G[index];
+        _context.H = H[index];
+        return _nCalcLambda(_context);
+    }
+
+    private double WistAt(int index)
+    {
+        return _wistInvoker.Invoke(A[index], B[index], C[index], D[index], E[index], F[index], G[index], H[index]);
     }
 }
 
-public class DeepChain6Benchmarks : ArithmeticExecutionBenchmarks
+public class DeepChain6Benchmarks : ArithmeticBenchmarkEnvironmentBase
 {
-    protected override string WistFormula => "((((A * 1.1 + B) * 1.2 + C) * 1.3 + D) * 1.4 + E) / (F + 1.0)";
-    protected override string NCalcFormula => "(((([A] * 1.1 + [B]) * 1.2 + [C]) * 1.3 + [D]) * 1.4 + [E]) / ([F] + 1.0)";
-    protected override string[] BindingNames => ["A", "B", "C", "D", "E", "F"];
+    private const string WistFormula = "((((A * 1.1 + B) * 1.2 + C) * 1.3 + D) * 1.4 + E) / (F + 1.0)";
+    private const string NCalcFormula = "(((([A] * 1.1 + [B]) * 1.2 + [C]) * 1.3 + [D]) * 1.4 + [E]) / ([F] + 1.0)";
+
+    private DynamicMethodInvoker<double, double, double, double, double, double, double> _wistInvoker = null!;
+    private Func<BenchContext6, double> _nCalcLambda = null!;
+    private BenchContext6 _context = null!;
+
+    [GlobalSetup]
+    public void GlobalSetup()
+    {
+        InitializeInputData();
+        CreateProviderAndHost();
+
+        var dynamicMethod = CompileWistDynamicMethod(WistFormula, ["A", "B", "C", "D", "E", "F"]);
+        _wistInvoker = new DynamicMethodInvoker<double, double, double, double, double, double, double>(dynamicMethod);
+
+        var nCalcExpression = new Expression(NCalcFormula);
+        _nCalcLambda = nCalcExpression.ToLambda<BenchContext6, double>();
+        _context = new BenchContext6();
+
+        EnsureResultParityAcrossIndexes(CSharpAt, NCalcAt, WistAt);
+    }
+
+    [Benchmark(Baseline = true)]
+    public double CSharp_NoInliningMethod()
+    {
+        var i = NextIndex();
+        return CSharp_NoInliningMethodCore(A[i], B[i], C[i], D[i], E[i], F[i]);
+    }
+
+    [Benchmark]
+    public double NCalc_Lambda()
+    {
+        var i = NextIndex();
+        _context.A = A[i];
+        _context.B = B[i];
+        _context.C = C[i];
+        _context.D = D[i];
+        _context.E = E[i];
+        _context.F = F[i];
+        return _nCalcLambda(_context);
+    }
+
+    [Benchmark]
+    public double Wist_Cil_FastInvoker()
+    {
+        var i = NextIndex();
+        return _wistInvoker.Invoke(A[i], B[i], C[i], D[i], E[i], F[i]);
+    }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static double CSharp_NoInliningMethod(double a, double b, double c, double d, double e, double f)
+    private static double CSharp_NoInliningMethodCore(double a, double b, double c, double d, double e, double f)
     {
         return ((((a * 1.1 + b) * 1.2 + c) * 1.3 + d) * 1.4 + e) / (f + 1.0);
     }
 
-    protected override double ExecuteCSharp(int index)
+    private double CSharpAt(int index)
     {
-        return CSharp_NoInliningMethod(A[index], B[index], C[index], D[index], E[index], F[index]);
+        return CSharp_NoInliningMethodCore(A[index], B[index], C[index], D[index], E[index], F[index]);
+    }
+
+    private double NCalcAt(int index)
+    {
+        _context.A = A[index];
+        _context.B = B[index];
+        _context.C = C[index];
+        _context.D = D[index];
+        _context.E = E[index];
+        _context.F = F[index];
+        return _nCalcLambda(_context);
+    }
+
+    private double WistAt(int index)
+    {
+        return _wistInvoker.Invoke(A[index], B[index], C[index], D[index], E[index], F[index]);
     }
 }
 
-public class RepeatedSubexpressionsBenchmarks : ArithmeticExecutionBenchmarks
+public class RepeatedSubexpressionsBenchmarks : ArithmeticBenchmarkEnvironmentBase
 {
-    protected override string WistFormula => "((A * B) + (A * B) + (A * B) + (C * D)) / (E + 1.0)";
-    protected override string NCalcFormula => "(([A] * [B]) + ([A] * [B]) + ([A] * [B]) + ([C] * [D])) / ([E] + 1.0)";
-    protected override string[] BindingNames => ["A", "B", "C", "D", "E"];
+    private const string WistFormula = "((A * B) + (A * B) + (A * B) + (C * D)) / (E + 1.0)";
+    private const string NCalcFormula = "(([A] * [B]) + ([A] * [B]) + ([A] * [B]) + ([C] * [D])) / ([E] + 1.0)";
+
+    private DynamicMethodInvoker<double, double, double, double, double, double> _wistInvoker = null!;
+    private Func<BenchContext5, double> _nCalcLambda = null!;
+    private BenchContext5 _context = null!;
+
+    [GlobalSetup]
+    public void GlobalSetup()
+    {
+        InitializeInputData();
+        CreateProviderAndHost();
+
+        var dynamicMethod = CompileWistDynamicMethod(WistFormula, ["A", "B", "C", "D", "E"]);
+        _wistInvoker = new DynamicMethodInvoker<double, double, double, double, double, double>(dynamicMethod);
+
+        var nCalcExpression = new Expression(NCalcFormula);
+        _nCalcLambda = nCalcExpression.ToLambda<BenchContext5, double>();
+        _context = new BenchContext5();
+
+        EnsureResultParityAcrossIndexes(CSharpAt, NCalcAt, WistAt);
+    }
+
+    [Benchmark(Baseline = true)]
+    public double CSharp_NoInliningMethod()
+    {
+        var i = NextIndex();
+        return CSharp_NoInliningMethodCore(A[i], B[i], C[i], D[i], E[i]);
+    }
+
+    [Benchmark]
+    public double NCalc_Lambda()
+    {
+        var i = NextIndex();
+        _context.A = A[i];
+        _context.B = B[i];
+        _context.C = C[i];
+        _context.D = D[i];
+        _context.E = E[i];
+        return _nCalcLambda(_context);
+    }
+
+    [Benchmark]
+    public double Wist_Cil_FastInvoker()
+    {
+        var i = NextIndex();
+        return _wistInvoker.Invoke(A[i], B[i], C[i], D[i], E[i]);
+    }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static double CSharp_NoInliningMethod(double a, double b, double c, double d, double e)
+    private static double CSharp_NoInliningMethodCore(double a, double b, double c, double d, double e)
     {
         return ((a * b) + (a * b) + (a * b) + (c * d)) / (e + 1.0);
     }
 
-    protected override double ExecuteCSharp(int index)
+    private double CSharpAt(int index)
     {
-        return CSharp_NoInliningMethod(A[index], B[index], C[index], D[index], E[index]);
+        return CSharp_NoInliningMethodCore(A[index], B[index], C[index], D[index], E[index]);
+    }
+
+    private double NCalcAt(int index)
+    {
+        _context.A = A[index];
+        _context.B = B[index];
+        _context.C = C[index];
+        _context.D = D[index];
+        _context.E = E[index];
+        return _nCalcLambda(_context);
+    }
+
+    private double WistAt(int index)
+    {
+        return _wistInvoker.Invoke(A[index], B[index], C[index], D[index], E[index]);
     }
 }
 
-public class WideExpression11Benchmarks : ArithmeticExecutionBenchmarks
+public class WideExpression11Benchmarks : ArithmeticBenchmarkEnvironmentBase
 {
-    protected override string WistFormula => "(A + B + C + D) * (E - F + G) / (H + 1.0) + I * J - K / 3.0";
-    protected override string NCalcFormula => "([A] + [B] + [C] + [D]) * ([E] - [F] + [G]) / ([H] + 1.0) + [I] * [J] - [K] / 3.0";
-    protected override string[] BindingNames => ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"];
+    private const string WistFormula = "(A + B + C + D) * (E - F + G) / (H + 1.0) + I * J - K / 3.0";
+    private const string NCalcFormula = "([A] + [B] + [C] + [D]) * ([E] - [F] + [G]) / ([H] + 1.0) + [I] * [J] - [K] / 3.0";
+
+    private DynamicMethodInvoker<double, double, double, double, double, double, double, double, double, double, double, double> _wistInvoker = null!;
+    private Func<BenchContext11, double> _nCalcLambda = null!;
+    private BenchContext11 _context = null!;
+
+    [GlobalSetup]
+    public void GlobalSetup()
+    {
+        InitializeInputData();
+        CreateProviderAndHost();
+
+        var dynamicMethod = CompileWistDynamicMethod(WistFormula, ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"]);
+        _wistInvoker = new DynamicMethodInvoker<double, double, double, double, double, double, double, double, double, double, double, double>(dynamicMethod);
+
+        var nCalcExpression = new Expression(NCalcFormula);
+        _nCalcLambda = nCalcExpression.ToLambda<BenchContext11, double>();
+        _context = new BenchContext11();
+
+        EnsureResultParityAcrossIndexes(CSharpAt, NCalcAt, WistAt);
+    }
+
+    [Benchmark(Baseline = true)]
+    public double CSharp_NoInliningMethod()
+    {
+        var i = NextIndex();
+        return CSharp_NoInliningMethodCore(A[i], B[i], C[i], D[i], E[i], F[i], G[i], H[i], I[i], J[i], K[i]);
+    }
+
+    [Benchmark]
+    public double NCalc_Lambda()
+    {
+        var i = NextIndex();
+        _context.A = A[i];
+        _context.B = B[i];
+        _context.C = C[i];
+        _context.D = D[i];
+        _context.E = E[i];
+        _context.F = F[i];
+        _context.G = G[i];
+        _context.H = H[i];
+        _context.I = I[i];
+        _context.J = J[i];
+        _context.K = K[i];
+        return _nCalcLambda(_context);
+    }
+
+    [Benchmark]
+    public double Wist_Cil_FastInvoker()
+    {
+        var i = NextIndex();
+        return _wistInvoker.Invoke(A[i], B[i], C[i], D[i], E[i], F[i], G[i], H[i], I[i], J[i], K[i]);
+    }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static double CSharp_NoInliningMethod(
+    private static double CSharp_NoInliningMethodCore(
         double a,
         double b,
         double c,
@@ -351,9 +545,9 @@ public class WideExpression11Benchmarks : ArithmeticExecutionBenchmarks
         return (a + b + c + d) * (e - f + g) / (h + 1.0) + i * j - k / 3.0;
     }
 
-    protected override double ExecuteCSharp(int index)
+    private double CSharpAt(int index)
     {
-        return CSharp_NoInliningMethod(
+        return CSharp_NoInliningMethodCore(
             A[index],
             B[index],
             C[index],
@@ -366,9 +560,68 @@ public class WideExpression11Benchmarks : ArithmeticExecutionBenchmarks
             J[index],
             K[index]);
     }
+
+    private double NCalcAt(int index)
+    {
+        _context.A = A[index];
+        _context.B = B[index];
+        _context.C = C[index];
+        _context.D = D[index];
+        _context.E = E[index];
+        _context.F = F[index];
+        _context.G = G[index];
+        _context.H = H[index];
+        _context.I = I[index];
+        _context.J = J[index];
+        _context.K = K[index];
+        return _nCalcLambda(_context);
+    }
+
+    private double WistAt(int index)
+    {
+        return _wistInvoker.Invoke(A[index], B[index], C[index], D[index], E[index], F[index], G[index], H[index], I[index], J[index], K[index]);
+    }
 }
 
-public sealed class BenchContext
+public sealed class BenchContext3
+{
+    public double A { get; set; }
+    public double B { get; set; }
+    public double C { get; set; }
+}
+
+public sealed class BenchContext5
+{
+    public double A { get; set; }
+    public double B { get; set; }
+    public double C { get; set; }
+    public double D { get; set; }
+    public double E { get; set; }
+}
+
+public sealed class BenchContext6
+{
+    public double A { get; set; }
+    public double B { get; set; }
+    public double C { get; set; }
+    public double D { get; set; }
+    public double E { get; set; }
+    public double F { get; set; }
+}
+
+public sealed class BenchContext8
+{
+    public double A { get; set; }
+    public double B { get; set; }
+    public double C { get; set; }
+    public double D { get; set; }
+    public double E { get; set; }
+    public double F { get; set; }
+    public double G { get; set; }
+    public double H { get; set; }
+}
+
+public sealed class BenchContext11
 {
     public double A { get; set; }
     public double B { get; set; }
