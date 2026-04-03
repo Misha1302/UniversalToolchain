@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>UniversalToolchain — Build DSLs on .NET from reusable compiler modules</title>
+    <title>UniversalToolchain — Modular .NET framework for embeddable DSLs and rule engines</title>
     <style>
         :root {
             --bg: #0a1022;
@@ -707,12 +707,10 @@
 <header class="hero" id="top">
     <div class="container hero-grid">
         <div class="hero-copy">
-            <span class="eyebrow">UniversalToolchain & Wist</span>
+            <span class="eyebrow">UniversalToolchain</span>
             <h1>Build DSLs on .NET from reusable compiler modules.</h1>
             <p>
-                UniversalToolchain is reusable language infrastructure, not “just another language.”
-                Wist is the reference implementation that proves the architecture with a working CLI, REPL,
-                dialect composition, and dual execution backends.
+                UniversalToolchain is a modular .NET framework for embeddable DSLs. Wist is the reference language in this repository.
             </p>
             <div class="badge-row">
                 <span class="badge">Modular pipeline</span>
@@ -721,7 +719,8 @@
             </div>
             <div class="actions">
                 <a class="btn primary" href="https://github.com/Misha1302/Wist2">GitHub Repository</a>
-                <a class="btn" href="https://github.com/Misha1302/Wist2/blob/master/readme.md">Read README / Docs</a>
+                <a class="btn" href="https://github.com/Misha1302/Wist2/blob/master/readme.md">README</a>
+                <a class="btn" href="https://github.com/Misha1302/Wist2/blob/master/docs/architecture-overview.md">Architecture</a>
                 <a class="btn" href="#dialects">Jump to Examples</a>
                 <a class="btn" href="#programmers">Technical Details</a>
             </div>
@@ -748,7 +747,7 @@ enable LocalVariablesOptimization</pre>
         <div class="facts">
             <div class="fact"><strong>4</strong>CLI verbs</div>
             <div class="fact"><strong>2</strong>execution modes</div>
-            <div class="fact"><strong>3</strong>dialect profiles</div>
+            <div class="fact"><strong>4</strong>dialect profiles</div>
             <div class="fact"><strong>.NET 10</strong>runtime baseline</div>
             <div class="fact"><strong>Wist</strong>reference language</div>
         </div>
@@ -794,7 +793,7 @@ enable LocalVariablesOptimization</pre>
 <section id="works-today">
     <div class="container">
         <h2>What works today</h2>
-        <p>Current capabilities are production-minded building blocks, not placeholders.</p>
+        <p>Current capabilities are implemented end-to-end with runnable examples and tests.</p>
         <div class="list">
             <div class="item">Wist CLI with verbs: <code>run</code>, <code>repl</code>, <code>dialect-inspect</code>,
                 <code>dialect-demo</code></div>
@@ -832,6 +831,24 @@ sum</pre>
                     <li>Backends: <code>cil</code> + <code>interpreter</code>.</li>
                     <li><code>LocalVariablesOptimization</code> enabled.</li>
                     <li>Returns <strong>15</strong>.</li>
+                </ul>
+            </article>
+            <article class="dialect level-full">
+                <div class="profile-row"><h3><code>full-default-native</code></h3><span class="scale">native-types profile</span>
+                </div>
+                <p>Default-like profile that relies on native types instead of universal arithmetic modules.</p>
+                <div class="chips">
+                    <span class="chip">native types</span><span class="chip">compiler + interpreter</span><span
+                        class="chip">interop capable</span>
+                </div>
+                <div class="code-label">Real example</div>
+                <pre class="code-box">let base = 40
+base + 2</pre>
+                <ul>
+                    <li>Includes <code>NativeTypes</code> and excludes universal <code>Arithmetic</code>/<code>Numbers</code> modules.</li>
+                    <li>Backends: <code>cil</code> + <code>interpreter</code>.</li>
+                    <li>Security: <code>trusted</code>, capability <code>unsafe-interop</code>.</li>
+                    <li>Returns <strong>42</strong>.</li>
                 </ul>
             </article>
             <article class="dialect level-min">
@@ -891,6 +908,8 @@ x</pre>
                 <div class="micro"><b>restricted-sandbox</b><br/>Allowed arithmetic `40 + 2` works, but `let x = 1`
                     fails by design.
                 </div>
+                <div class="micro"><b>full-default-native</b><br/>Uses native-type modules and keeps dual backend execution
+                    with trusted composition.</div>
             </div>
         </div>
     </div>
@@ -938,8 +957,8 @@ x</pre>
         </div>
         <aside class="note">
             <h3>Current platform baseline</h3>
-            <p>Repository targets <strong>.NET 10</strong> (<code>net10.0</code>) and pins SDK <code>10.0.103</code>
-                with roll-forward policy in repo configuration.</p>
+            <p>Current baseline is <strong>.NET 10 / SDK 10.0.103</strong> because active runtime and backend work is being validated there first.
+                Older target frameworks are not the current compatibility target.</p>
         </aside>
     </div>
 </section>
@@ -970,7 +989,7 @@ x</pre>
         <div class="links">
             <a href="https://github.com/Misha1302/Wist2">Repository</a>
             <a href="https://github.com/Misha1302/Wist2/blob/master/readme.md">README</a>
-            <a href="https://github.com/Misha1302/Wist2/blob/master/project%20info.md">Project Info</a>
+            <a href="https://github.com/Misha1302/Wist2/blob/master/docs/architecture-overview.md">Architecture Overview</a>
             <a href="https://github.com/Misha1302/Wist2/blob/master/SECURITY.md">Security Policy</a>
             <a href="https://github.com/Misha1302/Wist2/tree/master/UniversalToolchain/Dialects/examples/wist">Dialect
                 Examples</a>
