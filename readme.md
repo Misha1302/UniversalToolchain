@@ -1,6 +1,6 @@
 # UniversalToolchain
 
-UniversalToolchain is a .NET-first framework for building embeddable DSLs, expression engines, and rule engines.
+UniversalToolchain is a modular .NET framework for embeddable DSLs, expression engines, and rule engines. Wist is the reference language in this repository and validates the framework through a working CLI, dialect composition, and dual execution backends.
 
 It is designed for cases where you want:
 
@@ -22,7 +22,13 @@ Typical scenarios:
 - configurable business logic in internal tools,
 - educational and research projects around compilers and DSLs.
 
-## Fastest way to try
+## Why not just an expression evaluator?
+
+UniversalToolchain is not just a string-to-number evaluator.
+It is designed as a reusable language toolchain with modular composition, dialect configuration, and multiple execution
+modes.
+
+## Quick start in 30 seconds
 
 ```bash
 dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --mode compiler
@@ -34,26 +40,7 @@ Expected output:
 12
 ```
 
-## Quick demo
-
-```bash
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "x + 1" --mode compiler
-```
-
-Programmatic path:
-
-```csharp
-var compiler = host.GetArtifactCompiler<DynamicMethod>("compiler");
-var artifact = compiler.Compile("x + 1", new OrderedDictionary<string, Type>
-{
-    ["x"] = typeof(int)
-});
-
-var addOne = artifact.AsFunc<int, int>();
-var result = addOne(41); // 42
-```
-
-## Programmatic example: parameterized formula inside a .NET app
+## Programmatic example with parameters
 
 A fuller scenario is available in `UniversalToolchain/Example/Program.cs`.
 
@@ -83,12 +70,6 @@ Many language projects repeatedly rebuild the same layers: parsing, AST/IR trans
 execution.
 UniversalToolchain focuses on reusable composition so capabilities can be assembled from modules instead of hardcoded
 into one implementation path.
-
-## Compared to a simple expression evaluator
-
-UniversalToolchain is not just a string-to-number evaluator.
-It is designed as a reusable language toolchain with modular composition, dialect configuration, and multiple execution
-modes.
 
 ## Compared to language platforms focused on their own runtime model
 
@@ -178,8 +159,8 @@ Located under `UniversalToolchain/Dialects/examples/wist`:
 
 ## Why .NET 10 right now?
 
-The repository currently targets `net10.0` and requires .NET SDK `10.0.103`.
-This is a temporary choice for ongoing framework/runtime work and may be relaxed in future versions.
+Current baseline is .NET 10 / SDK 10.0.103 because active runtime and backend work is being validated there first.
+Older target frameworks are not the current compatibility target.
 
 ## Requirements
 
