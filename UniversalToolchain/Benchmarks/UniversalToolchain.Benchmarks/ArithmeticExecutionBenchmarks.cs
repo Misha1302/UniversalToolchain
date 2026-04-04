@@ -1,9 +1,6 @@
-using System.Collections.Generic;
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Columns;
-using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Order;
 using DynamicMethodCalling.Core;
 using ExceptionsManager;
@@ -19,10 +16,10 @@ using UniversalToolchain.Dialects.Wist;
 public abstract class ArithmeticBenchmarkEnvironmentBase
 {
     protected const int DataSize = 4096;
-
-    private ServiceProvider? _provider;
     private WistDialectExecutionHost? _host;
     private int _index;
+
+    private ServiceProvider? _provider;
 
     protected double[] A = [];
     protected double[] B = [];
@@ -116,10 +113,8 @@ public abstract class ArithmeticBenchmarkEnvironmentBase
             var wistResult = wist(index);
 
             if (!AreEqual(cSharpResult, nCalcResult) || !AreEqual(cSharpResult, wistResult))
-            {
                 Thrower.InvalidOpEx(
                     $"Result mismatch detected at index {index}. C#: {cSharpResult}, NCalc: {nCalcResult}, Wist: {wistResult}.");
-            }
         }
     }
 
@@ -134,7 +129,7 @@ public abstract class ArithmeticBenchmarkEnvironmentBase
     protected int NextIndex()
     {
         var i = _index;
-        _index = (i + 1) & (DataSize - 1);
+        _index = i + 1 & DataSize - 1;
         return i;
     }
 
@@ -159,10 +154,11 @@ public class Simple3Benchmarks : ArithmeticBenchmarkEnvironmentBase
 {
     private const string WistFormula = "A + B * C / 5.0";
     private const string NCalcFormula = "[A] + [B] * [C] / 5.0";
+    private const int InnerCount = 1024;
+    private BenchContext3 _context = null!;
+    private Func<BenchContext3, double> _nCalcLambda = null!;
 
     private DynamicMethodInvoker<double, double, double, double> _wistInvoker = null!;
-    private Func<BenchContext3, double> _nCalcLambda = null!;
-    private BenchContext3 _context = null!;
 
     [GlobalSetup]
     public void GlobalSetup()
@@ -183,37 +179,46 @@ public class Simple3Benchmarks : ArithmeticBenchmarkEnvironmentBase
     [Benchmark(Baseline = true)]
     public double CSharp_NoInliningMethod()
     {
-        var i = NextIndex();
-        return CSharp_NoInliningMethodCore(A[i], B[i], C[i]);
+        var sum = 0.0;
+        for (var k = 0; k < InnerCount; k++)
+        {
+            var i = NextIndex();
+            sum += CSharp_NoInliningMethodCore(A[i], B[i], C[i]);
+        }
+        return sum;
     }
 
     [Benchmark]
     public double NCalc_Lambda()
     {
-        var i = NextIndex();
-        _context.A = A[i];
-        _context.B = B[i];
-        _context.C = C[i];
-        return _nCalcLambda(_context);
+        var sum = 0.0;
+        for (var k = 0; k < InnerCount; k++)
+        {
+            var i = NextIndex();
+            _context.A = A[i];
+            _context.B = B[i];
+            _context.C = C[i];
+            sum += _nCalcLambda(_context);
+        }
+        return sum;
     }
 
     [Benchmark]
     public double Wist_Cil_FastInvoker()
     {
-        var i = NextIndex();
-        return _wistInvoker.Invoke(A[i], B[i], C[i]);
+        var sum = 0.0;
+        for (var k = 0; k < InnerCount; k++)
+        {
+            var i = NextIndex();
+            sum += _wistInvoker.Invoke(A[i], B[i], C[i]);
+        }
+        return sum;
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static double CSharp_NoInliningMethodCore(double a, double b, double c)
-    {
-        return a + b * c / 5.0;
-    }
+    private static double CSharp_NoInliningMethodCore(double a, double b, double c) => a + b * c / 5.0;
 
-    private double CSharpAt(int index)
-    {
-        return CSharp_NoInliningMethodCore(A[index], B[index], C[index]);
-    }
+    private double CSharpAt(int index) => CSharp_NoInliningMethodCore(A[index], B[index], C[index]);
 
     private double NCalcAt(int index)
     {
@@ -223,20 +228,18 @@ public class Simple3Benchmarks : ArithmeticBenchmarkEnvironmentBase
         return _nCalcLambda(_context);
     }
 
-    private double WistAt(int index)
-    {
-        return _wistInvoker.Invoke(A[index], B[index], C[index]);
-    }
+    private double WistAt(int index) => _wistInvoker.Invoke(A[index], B[index], C[index]);
 }
 
 public class Medium8Benchmarks : ArithmeticBenchmarkEnvironmentBase
 {
     private const string WistFormula = "((A + B) * (C - D) / (E + 1.0)) + F * G - H / 3.0";
     private const string NCalcFormula = "(([A] + [B]) * ([C] - [D]) / ([E] + 1.0)) + [F] * [G] - [H] / 3.0";
+    private const int InnerCount = 1024;
+    private BenchContext8 _context = null!;
+    private Func<BenchContext8, double> _nCalcLambda = null!;
 
     private DynamicMethodInvoker<double, double, double, double, double, double, double, double, double> _wistInvoker = null!;
-    private Func<BenchContext8, double> _nCalcLambda = null!;
-    private BenchContext8 _context = null!;
 
     [GlobalSetup]
     public void GlobalSetup()
@@ -257,42 +260,51 @@ public class Medium8Benchmarks : ArithmeticBenchmarkEnvironmentBase
     [Benchmark(Baseline = true)]
     public double CSharp_NoInliningMethod()
     {
-        var i = NextIndex();
-        return CSharp_NoInliningMethodCore(A[i], B[i], C[i], D[i], E[i], F[i], G[i], H[i]);
+        var sum = 0.0;
+        for (var k = 0; k < InnerCount; k++)
+        {
+            var i = NextIndex();
+            sum += CSharp_NoInliningMethodCore(A[i], B[i], C[i], D[i], E[i], F[i], G[i], H[i]);
+        }
+        return sum;
     }
 
     [Benchmark]
     public double NCalc_Lambda()
     {
-        var i = NextIndex();
-        _context.A = A[i];
-        _context.B = B[i];
-        _context.C = C[i];
-        _context.D = D[i];
-        _context.E = E[i];
-        _context.F = F[i];
-        _context.G = G[i];
-        _context.H = H[i];
-        return _nCalcLambda(_context);
+        var sum = 0.0;
+        for (var k = 0; k < InnerCount; k++)
+        {
+            var i = NextIndex();
+            _context.A = A[i];
+            _context.B = B[i];
+            _context.C = C[i];
+            _context.D = D[i];
+            _context.E = E[i];
+            _context.F = F[i];
+            _context.G = G[i];
+            _context.H = H[i];
+            sum += _nCalcLambda(_context);
+        }
+        return sum;
     }
 
     [Benchmark]
     public double Wist_Cil_FastInvoker()
     {
-        var i = NextIndex();
-        return _wistInvoker.Invoke(A[i], B[i], C[i], D[i], E[i], F[i], G[i], H[i]);
+        var sum = 0.0;
+        for (var k = 0; k < InnerCount; k++)
+        {
+            var i = NextIndex();
+            sum += _wistInvoker.Invoke(A[i], B[i], C[i], D[i], E[i], F[i], G[i], H[i]);
+        }
+        return sum;
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static double CSharp_NoInliningMethodCore(double a, double b, double c, double d, double e, double f, double g, double h)
-    {
-        return ((a + b) * (c - d) / (e + 1.0)) + f * g - h / 3.0;
-    }
+    private static double CSharp_NoInliningMethodCore(double a, double b, double c, double d, double e, double f, double g, double h) => (a + b) * (c - d) / (e + 1.0) + f * g - h / 3.0;
 
-    private double CSharpAt(int index)
-    {
-        return CSharp_NoInliningMethodCore(A[index], B[index], C[index], D[index], E[index], F[index], G[index], H[index]);
-    }
+    private double CSharpAt(int index) => CSharp_NoInliningMethodCore(A[index], B[index], C[index], D[index], E[index], F[index], G[index], H[index]);
 
     private double NCalcAt(int index)
     {
@@ -307,20 +319,18 @@ public class Medium8Benchmarks : ArithmeticBenchmarkEnvironmentBase
         return _nCalcLambda(_context);
     }
 
-    private double WistAt(int index)
-    {
-        return _wistInvoker.Invoke(A[index], B[index], C[index], D[index], E[index], F[index], G[index], H[index]);
-    }
+    private double WistAt(int index) => _wistInvoker.Invoke(A[index], B[index], C[index], D[index], E[index], F[index], G[index], H[index]);
 }
 
 public class DeepChain6Benchmarks : ArithmeticBenchmarkEnvironmentBase
 {
     private const string WistFormula = "((((A * 1.1 + B) * 1.2 + C) * 1.3 + D) * 1.4 + E) / (F + 1.0)";
     private const string NCalcFormula = "(((([A] * 1.1 + [B]) * 1.2 + [C]) * 1.3 + [D]) * 1.4 + [E]) / ([F] + 1.0)";
+    private const int InnerCount = 1024;
+    private BenchContext6 _context = null!;
+    private Func<BenchContext6, double> _nCalcLambda = null!;
 
     private DynamicMethodInvoker<double, double, double, double, double, double, double> _wistInvoker = null!;
-    private Func<BenchContext6, double> _nCalcLambda = null!;
-    private BenchContext6 _context = null!;
 
     [GlobalSetup]
     public void GlobalSetup()
@@ -341,40 +351,49 @@ public class DeepChain6Benchmarks : ArithmeticBenchmarkEnvironmentBase
     [Benchmark(Baseline = true)]
     public double CSharp_NoInliningMethod()
     {
-        var i = NextIndex();
-        return CSharp_NoInliningMethodCore(A[i], B[i], C[i], D[i], E[i], F[i]);
+        var sum = 0.0;
+        for (var k = 0; k < InnerCount; k++)
+        {
+            var i = NextIndex();
+            sum += CSharp_NoInliningMethodCore(A[i], B[i], C[i], D[i], E[i], F[i]);
+        }
+        return sum;
     }
 
     [Benchmark]
     public double NCalc_Lambda()
     {
-        var i = NextIndex();
-        _context.A = A[i];
-        _context.B = B[i];
-        _context.C = C[i];
-        _context.D = D[i];
-        _context.E = E[i];
-        _context.F = F[i];
-        return _nCalcLambda(_context);
+        var sum = 0.0;
+        for (var k = 0; k < InnerCount; k++)
+        {
+            var i = NextIndex();
+            _context.A = A[i];
+            _context.B = B[i];
+            _context.C = C[i];
+            _context.D = D[i];
+            _context.E = E[i];
+            _context.F = F[i];
+            sum += _nCalcLambda(_context);
+        }
+        return sum;
     }
 
     [Benchmark]
     public double Wist_Cil_FastInvoker()
     {
-        var i = NextIndex();
-        return _wistInvoker.Invoke(A[i], B[i], C[i], D[i], E[i], F[i]);
+        var sum = 0.0;
+        for (var k = 0; k < InnerCount; k++)
+        {
+            var i = NextIndex();
+            sum += _wistInvoker.Invoke(A[i], B[i], C[i], D[i], E[i], F[i]);
+        }
+        return sum;
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static double CSharp_NoInliningMethodCore(double a, double b, double c, double d, double e, double f)
-    {
-        return ((((a * 1.1 + b) * 1.2 + c) * 1.3 + d) * 1.4 + e) / (f + 1.0);
-    }
+    private static double CSharp_NoInliningMethodCore(double a, double b, double c, double d, double e, double f) => ((((a * 1.1 + b) * 1.2 + c) * 1.3 + d) * 1.4 + e) / (f + 1.0);
 
-    private double CSharpAt(int index)
-    {
-        return CSharp_NoInliningMethodCore(A[index], B[index], C[index], D[index], E[index], F[index]);
-    }
+    private double CSharpAt(int index) => CSharp_NoInliningMethodCore(A[index], B[index], C[index], D[index], E[index], F[index]);
 
     private double NCalcAt(int index)
     {
@@ -387,20 +406,18 @@ public class DeepChain6Benchmarks : ArithmeticBenchmarkEnvironmentBase
         return _nCalcLambda(_context);
     }
 
-    private double WistAt(int index)
-    {
-        return _wistInvoker.Invoke(A[index], B[index], C[index], D[index], E[index], F[index]);
-    }
+    private double WistAt(int index) => _wistInvoker.Invoke(A[index], B[index], C[index], D[index], E[index], F[index]);
 }
 
 public class RepeatedSubexpressionsBenchmarks : ArithmeticBenchmarkEnvironmentBase
 {
     private const string WistFormula = "((A * B) + (A * B) + (A * B) + (C * D)) / (E + 1.0)";
     private const string NCalcFormula = "(([A] * [B]) + ([A] * [B]) + ([A] * [B]) + ([C] * [D])) / ([E] + 1.0)";
+    private const int InnerCount = 1024;
+    private BenchContext5 _context = null!;
+    private Func<BenchContext5, double> _nCalcLambda = null!;
 
     private DynamicMethodInvoker<double, double, double, double, double, double> _wistInvoker = null!;
-    private Func<BenchContext5, double> _nCalcLambda = null!;
-    private BenchContext5 _context = null!;
 
     [GlobalSetup]
     public void GlobalSetup()
@@ -421,39 +438,48 @@ public class RepeatedSubexpressionsBenchmarks : ArithmeticBenchmarkEnvironmentBa
     [Benchmark(Baseline = true)]
     public double CSharp_NoInliningMethod()
     {
-        var i = NextIndex();
-        return CSharp_NoInliningMethodCore(A[i], B[i], C[i], D[i], E[i]);
+        var sum = 0.0;
+        for (var k = 0; k < InnerCount; k++)
+        {
+            var i = NextIndex();
+            sum += CSharp_NoInliningMethodCore(A[i], B[i], C[i], D[i], E[i]);
+        }
+        return sum;
     }
 
     [Benchmark]
     public double NCalc_Lambda()
     {
-        var i = NextIndex();
-        _context.A = A[i];
-        _context.B = B[i];
-        _context.C = C[i];
-        _context.D = D[i];
-        _context.E = E[i];
-        return _nCalcLambda(_context);
+        var sum = 0.0;
+        for (var k = 0; k < InnerCount; k++)
+        {
+            var i = NextIndex();
+            _context.A = A[i];
+            _context.B = B[i];
+            _context.C = C[i];
+            _context.D = D[i];
+            _context.E = E[i];
+            sum += _nCalcLambda(_context);
+        }
+        return sum;
     }
 
     [Benchmark]
     public double Wist_Cil_FastInvoker()
     {
-        var i = NextIndex();
-        return _wistInvoker.Invoke(A[i], B[i], C[i], D[i], E[i]);
+        var sum = 0.0;
+        for (var k = 0; k < InnerCount; k++)
+        {
+            var i = NextIndex();
+            sum += _wistInvoker.Invoke(A[i], B[i], C[i], D[i], E[i]);
+        }
+        return sum;
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static double CSharp_NoInliningMethodCore(double a, double b, double c, double d, double e)
-    {
-        return ((a * b) + (a * b) + (a * b) + (c * d)) / (e + 1.0);
-    }
+    private static double CSharp_NoInliningMethodCore(double a, double b, double c, double d, double e) => (a * b + a * b + a * b + c * d) / (e + 1.0);
 
-    private double CSharpAt(int index)
-    {
-        return CSharp_NoInliningMethodCore(A[index], B[index], C[index], D[index], E[index]);
-    }
+    private double CSharpAt(int index) => CSharp_NoInliningMethodCore(A[index], B[index], C[index], D[index], E[index]);
 
     private double NCalcAt(int index)
     {
@@ -465,20 +491,18 @@ public class RepeatedSubexpressionsBenchmarks : ArithmeticBenchmarkEnvironmentBa
         return _nCalcLambda(_context);
     }
 
-    private double WistAt(int index)
-    {
-        return _wistInvoker.Invoke(A[index], B[index], C[index], D[index], E[index]);
-    }
+    private double WistAt(int index) => _wistInvoker.Invoke(A[index], B[index], C[index], D[index], E[index]);
 }
 
 public class WideExpression11Benchmarks : ArithmeticBenchmarkEnvironmentBase
 {
     private const string WistFormula = "(A + B + C + D) * (E - F + G) / (H + 1.0) + I * J - K / 3.0";
     private const string NCalcFormula = "([A] + [B] + [C] + [D]) * ([E] - [F] + [G]) / ([H] + 1.0) + [I] * [J] - [K] / 3.0";
+    private const int InnerCount = 1024;
+    private BenchContext11 _context = null!;
+    private Func<BenchContext11, double> _nCalcLambda = null!;
 
     private DynamicMethodInvoker<double, double, double, double, double, double, double, double, double, double, double, double> _wistInvoker = null!;
-    private Func<BenchContext11, double> _nCalcLambda = null!;
-    private BenchContext11 _context = null!;
 
     [GlobalSetup]
     public void GlobalSetup()
@@ -499,33 +523,48 @@ public class WideExpression11Benchmarks : ArithmeticBenchmarkEnvironmentBase
     [Benchmark(Baseline = true)]
     public double CSharp_NoInliningMethod()
     {
-        var i = NextIndex();
-        return CSharp_NoInliningMethodCore(A[i], B[i], C[i], D[i], E[i], F[i], G[i], H[i], I[i], J[i], K[i]);
+        var sum = 0.0;
+        for (var k = 0; k < InnerCount; k++)
+        {
+            var i = NextIndex();
+            sum += CSharp_NoInliningMethodCore(A[i], B[i], C[i], D[i], E[i], F[i], G[i], H[i], I[i], J[i], K[i]);
+        }
+        return sum;
     }
 
     [Benchmark]
     public double NCalc_Lambda()
     {
-        var i = NextIndex();
-        _context.A = A[i];
-        _context.B = B[i];
-        _context.C = C[i];
-        _context.D = D[i];
-        _context.E = E[i];
-        _context.F = F[i];
-        _context.G = G[i];
-        _context.H = H[i];
-        _context.I = I[i];
-        _context.J = J[i];
-        _context.K = K[i];
-        return _nCalcLambda(_context);
+        var sum = 0.0;
+        for (var k = 0; k < InnerCount; k++)
+        {
+            var i = NextIndex();
+            _context.A = A[i];
+            _context.B = B[i];
+            _context.C = C[i];
+            _context.D = D[i];
+            _context.E = E[i];
+            _context.F = F[i];
+            _context.G = G[i];
+            _context.H = H[i];
+            _context.I = I[i];
+            _context.J = J[i];
+            _context.K = K[i];
+            sum += _nCalcLambda(_context);
+        }
+        return sum;
     }
 
     [Benchmark]
     public double Wist_Cil_FastInvoker()
     {
-        var i = NextIndex();
-        return _wistInvoker.Invoke(A[i], B[i], C[i], D[i], E[i], F[i], G[i], H[i], I[i], J[i], K[i]);
+        var sum = 0.0;
+        for (var k = 0; k < InnerCount; k++)
+        {
+            var i = NextIndex();
+            sum += _wistInvoker.Invoke(A[i], B[i], C[i], D[i], E[i], F[i], G[i], H[i], I[i], J[i], K[i]);
+        }
+        return sum;
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
@@ -540,14 +579,11 @@ public class WideExpression11Benchmarks : ArithmeticBenchmarkEnvironmentBase
         double h,
         double i,
         double j,
-        double k)
-    {
-        return (a + b + c + d) * (e - f + g) / (h + 1.0) + i * j - k / 3.0;
-    }
+        double k) =>
+        (a + b + c + d) * (e - f + g) / (h + 1.0) + i * j - k / 3.0;
 
-    private double CSharpAt(int index)
-    {
-        return CSharp_NoInliningMethodCore(
+    private double CSharpAt(int index) =>
+        CSharp_NoInliningMethodCore(
             A[index],
             B[index],
             C[index],
@@ -559,7 +595,6 @@ public class WideExpression11Benchmarks : ArithmeticBenchmarkEnvironmentBase
             I[index],
             J[index],
             K[index]);
-    }
 
     private double NCalcAt(int index)
     {
@@ -577,10 +612,7 @@ public class WideExpression11Benchmarks : ArithmeticBenchmarkEnvironmentBase
         return _nCalcLambda(_context);
     }
 
-    private double WistAt(int index)
-    {
-        return _wistInvoker.Invoke(A[index], B[index], C[index], D[index], E[index], F[index], G[index], H[index], I[index], J[index], K[index]);
-    }
+    private double WistAt(int index) => _wistInvoker.Invoke(A[index], B[index], C[index], D[index], E[index], F[index], G[index], H[index], I[index], J[index], K[index]);
 }
 
 public sealed class BenchContext3
