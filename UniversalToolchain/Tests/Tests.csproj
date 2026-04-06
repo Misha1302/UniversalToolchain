@@ -69,6 +69,7 @@
         <Compile Include="Core/DynamicMethodInvokerTests.cs"/>
         <Compile Include="Concurrency/BasicCoreConcurrencyTests.cs"/>
         <Compile Include="Core/DialectDefinitionSliceParserTests.cs"/>
+        <Compile Include="Integration/InterpreterBindingsParityTests.cs"/>
     </ItemGroup>
 
     <ItemGroup>
