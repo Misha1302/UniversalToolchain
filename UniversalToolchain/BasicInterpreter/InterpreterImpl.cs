@@ -116,6 +116,20 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
                && method.GetParameters()[0].ParameterType == typeof(string);
     }
 
+    private static bool TryResolveDeclaredExternalSlot(
+        InterpreterState state,
+        object?[] args,
+        out int slot)
+    {
+        slot = default;
+        if (args.Length != 1 || args[0] is not string key)
+            return false;
+
+        // Only declared layout metadata can mark a symbol as external.
+        // Runtime call observation must not infer local/external symbol class.
+        return state.ExternalBindingsLayout?.SlotsByName.TryGetValue(key, out slot) == true;
+    }
+
     private void ExecuteCSharpCall(Instruction instruction, InterpreterState state)
     {
         var method = instruction.Operands[1].Get<MethodInfo>();
@@ -135,8 +149,7 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
         }
 
         if (IsVariablesContainerGet(method)
-            && args[0] is string key
-            && state.ExternalBindingsLayout?.SlotsByName.TryGetValue(key, out var slot) == true)
+            && TryResolveDeclaredExternalSlot(state, args, out var slot))
         {
             var value = state.ExecutionEnvironment.NotNull().GetExternalValue(slot);
             state.ValueStack.Push(value!);
