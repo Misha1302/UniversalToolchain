@@ -42,6 +42,16 @@ public static class AbstractIrExtensions
         );
     }
 
+    public static void LdExternal<TIdentifier>(this IGenericAbstractIR<TIdentifier> air, int slot, Type valueType)
+    {
+        air.Intrinsic("load_external", slot, valueType);
+    }
+
+    public static void StExternal<TIdentifier>(this IGenericAbstractIR<TIdentifier> air, int slot, Type valueType)
+    {
+        air.Intrinsic("store_external", slot, valueType);
+    }
+
     private static void ActWithLoc<TIdentifier>(
         this IGenericAbstractIR<TIdentifier> air,
         Type locType,

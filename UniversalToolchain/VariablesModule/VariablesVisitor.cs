@@ -74,11 +74,26 @@ public class VariablesVisitor : IAstVisitor
 
     private void HandleBoundVariable(BytecodeVisitorData data, Symbol symbol)
     {
+        if (symbol is ExternalVariableSymbol externalVariableSymbol)
+        {
+            HandleBoundExternalVariable(data, externalVariableSymbol.Name, externalVariableSymbol.Slot, externalVariableSymbol.Type, true);
+            return;
+        }
+
+        if (symbol is ExternalConstantSymbol externalConstantSymbol)
+        {
+            HandleBoundExternalVariable(data, externalConstantSymbol.Name, externalConstantSymbol.Slot, externalConstantSymbol.Type, false);
+            return;
+        }
+
+        HandleBoundLocalVariable(data, symbol);
+    }
+
+    private void HandleBoundLocalVariable(BytecodeVisitorData data, Symbol symbol)
+    {
         var variableKey = symbol.StorageKey;
         var displayName = symbol.Name;
         if (IsConcreteType(symbol.Type))
-            _variablesTypes[variableKey] = symbol.Type;
-        else if (symbol is ExternalVariableSymbol or ExternalConstantSymbol && !_variablesTypes.ContainsKey(variableKey))
             _variablesTypes[variableKey] = symbol.Type;
 
         if (data.Node.AllTags.Contains("ExpectingSettableReference"))
@@ -97,16 +112,51 @@ public class VariablesVisitor : IAstVisitor
             return;
         }
 
-        var loadName = symbol is ExternalVariableSymbol or ExternalConstantSymbol
-            ? "LoadValueOfExternalVar"
-            : "LoadValueOfLocalVar";
-
         var loadMethod = new AbstractMethodImpl(
-            $"{loadName}_{displayName}",
+            $"LoadValueOfLocalVar_{displayName}",
             (il, _) =>
             {
                 var storageType = ResolveReadType(symbol, variableKey);
                 il.LdLoc(variableKey, storageType);
+            }
+        );
+
+        data.Bytecode.Instructions.Add(new BytecodeInstruction(loadMethod));
+    }
+
+    private void HandleBoundExternalVariable(
+        BytecodeVisitorData data,
+        string name,
+        int slot,
+        Type symbolType,
+        bool canAssign)
+    {
+        if (data.Node.AllTags.Contains("ExpectingSettableReference"))
+        {
+            if (!canAssign)
+                Thrower.InvalidOpEx($"External constant '{name}' cannot be assigned.");
+
+            var method = new AbstractMethodImpl(
+                $"LoadReferenceToExternalVar_{name}",
+                (il, context) =>
+                {
+                    var inferredType = context.Stack.Last();
+                    var storageType = ResolveWriteType(new ExternalVariableSymbol(name, symbolType, slot), name, inferredType);
+                    il.LdLocRef(name, storageType);
+                }
+            );
+            data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
+            return;
+        }
+
+        var loadMethod = new AbstractMethodImpl(
+            $"LoadValueOfExternalVar_{name}",
+            (il, _) =>
+            {
+                var loadType = _variablesTypes.TryGetValue(name, out var refinedType) && IsConcreteType(refinedType)
+                    ? refinedType
+                    : symbolType;
+                il.LdExternal(slot, loadType);
             }
         );
 

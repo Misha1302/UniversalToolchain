@@ -100,8 +100,29 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
             ExecuteCSharpCall(instruction, state);
         else if (intrinsicName == "call C# ctor")
             ExecuteCSharpConstructor(instruction, state);
+        else if (intrinsicName == "load_external")
+            ExecuteLoadExternal(instruction, state);
+        else if (intrinsicName == "store_external")
+            ExecuteStoreExternal(instruction, state);
         else
             Thrower.InvalidOpEx($"Unknown intrinsic call: {intrinsicName}.");
+    }
+
+    private static void ExecuteLoadExternal(Instruction instruction, InterpreterState state)
+    {
+        var slot = instruction.Operands[1].Get<int>();
+        var value = state.ExecutionEnvironment.NotNull().GetExternalValue(slot);
+        state.ValueStack.Push(value!);
+    }
+
+    private static void ExecuteStoreExternal(Instruction instruction, InterpreterState state)
+    {
+        if (state.ValueStack.Count == 0)
+            Thrower.InvalidOpEx("Cannot store external value: stack is empty.");
+
+        var slot = instruction.Operands[1].Get<int>();
+        var value = state.ValueStack.Pop();
+        state.ExecutionEnvironment.NotNull().SetExternalValue(slot, value);
     }
 
 
