@@ -11,6 +11,7 @@ public sealed class CompiledArtifact<TCompilationOutput> : ICompiledArtifact<TCo
 {
     private readonly ExternalBinding[] _declaredBindings;
     private readonly IExecutor<TCompilationOutput> _executor;
+    private readonly ExternalBindingsLayout _externalBindingsLayout;
 
     public CompiledArtifact(
         string sourceText,
@@ -28,7 +29,8 @@ public sealed class CompiledArtifact<TCompilationOutput> : ICompiledArtifact<TCo
             Thrower.ArgumentNull(nameof(executor));
 
         _declaredBindings = SnapshotBindings(declaredBindings);
-        SlotsByName = BuildSlots(_declaredBindings);
+        _externalBindingsLayout = ExternalBindingsLayout.FromDeclaredBindings(_declaredBindings);
+        SlotsByName = _externalBindingsLayout.SlotsByName;
         _executor = executor;
 
         SourceText = sourceText;
@@ -43,7 +45,7 @@ public sealed class CompiledArtifact<TCompilationOutput> : ICompiledArtifact<TCo
 
     public TCompilationOutput CompilationOutput { get; }
 
-    public ICompiledArtifactSession CreateSession() => new CompiledArtifactSession<TCompilationOutput>(this, _executor, new ExecutionEnvironment(_declaredBindings));
+    public ICompiledArtifactSession CreateSession() => new CompiledArtifactSession<TCompilationOutput>(this, _executor, new ExecutionEnvironment(_declaredBindings, _externalBindingsLayout));
 
     private static ExternalBinding[] SnapshotBindings(IReadOnlyList<ExternalBinding> declaredBindings)
     {
@@ -73,17 +75,4 @@ public sealed class CompiledArtifact<TCompilationOutput> : ICompiledArtifact<TCo
         return snapshot;
     }
 
-    private static IReadOnlyDictionary<string, int> BuildSlots(IReadOnlyList<ExternalBinding> declaredBindings)
-    {
-        var slots = new Dictionary<string, int>(declaredBindings.Count, StringComparer.Ordinal);
-
-        for (var i = 0; i < declaredBindings.Count; i++)
-        {
-            var name = declaredBindings[i].Name;
-            if (!slots.TryAdd(name, i))
-                Thrower.Argument(nameof(declaredBindings), $"Declared binding '{name}' is duplicated.");
-        }
-
-        return slots;
-    }
 }
