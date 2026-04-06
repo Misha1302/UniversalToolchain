@@ -77,6 +77,27 @@ public class BytecodeAndStateIsolationTests : TestBase
     }
 
     [Test]
+    public void VariablesContainer_Get_ShouldThrowClearException_WhenKeyIsMissing()
+    {
+        var missingKey = "missing-" + Guid.NewGuid().ToString("N");
+
+        var exception = Assert.Throws<KeyNotFoundException>(() => VariablesContainer<int>.Get(missingKey));
+
+        Assert.That(exception!.Message, Does.Contain(missingKey));
+    }
+
+    [Test]
+    public void VariablesContainer_Get_ShouldReturnValue_WhenKeyExists()
+    {
+        var key = "existing-" + Guid.NewGuid().ToString("N");
+        VariablesContainer<int>.Set(key, 123);
+
+        var value = VariablesContainer<int>.Get(key);
+
+        Assert.That(value, Is.EqualTo(123));
+    }
+
+    [Test]
     public void Should_BeStableAcrossRepeatedRuns_When_ExecutingSameProgramMultipleTimes()
     {
         const string code = @"
