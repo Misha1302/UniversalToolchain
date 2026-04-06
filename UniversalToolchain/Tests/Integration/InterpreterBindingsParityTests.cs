@@ -140,6 +140,64 @@ public class InterpreterBindingsParityTests
         AssertDeterministicParity(nestedScopeCode, declared, arguments);
     }
 
+
+    [Test]
+    public void LocalVariable_TypeMustStayStableAcrossRepeatedReadWrite()
+    {
+        const string code = """
+                            let i = 0
+                            i = i + 1
+                            i = i + 1
+                            i
+                            """;
+
+        var declared = new OrderedDictionary<string, Type>();
+        var result = RunInBothBackends(code, declared, []);
+
+        Assert.That(result.CompilerNumeric, Is.EqualTo(result.InterpreterNumeric).Within(1e-9));
+        Assert.That(result.CompilerNumeric, Is.EqualTo(2.0).Within(1e-9));
+    }
+
+    [Test]
+    public void LocalVariable_WithExternalArithmetic_MustNotSwitchStorageContainer()
+    {
+        const string code = """
+                            let i = 0
+                            i = i + 1
+                            price + fee * i
+                            """;
+
+        var declared = new OrderedDictionary<string, Type>
+        {
+            ["price"] = typeof(object),
+            ["fee"] = typeof(object)
+        };
+
+        var result = RunInBothBackends(code, declared, [
+            new NamedArgument("price", 100.0),
+            new NamedArgument("fee", 2.5)
+        ]);
+
+        Assert.That(result.CompilerNumeric, Is.EqualTo(result.InterpreterNumeric).Within(1e-9));
+        Assert.That(result.CompilerNumeric, Is.EqualTo(102.5).Within(1e-9));
+    }
+
+    [Test]
+    public void LocalShadowing_MustUseIndependentStorageKeys()
+    {
+        const string code = """
+                            let fee = 1
+                            let total = fee
+                            total + fee
+                            """;
+
+        var declared = new OrderedDictionary<string, Type>();
+        var result = RunInBothBackends(code, declared, []);
+
+        Assert.That(result.CompilerNumeric, Is.EqualTo(result.InterpreterNumeric).Within(1e-9));
+        Assert.That(result.CompilerNumeric, Is.EqualTo(2.0).Within(1e-9));
+    }
+
     [Test]
     public void UnknownVariableAccess_WhenStrictFailureExists_ShouldExposeMeaningfulError()
     {

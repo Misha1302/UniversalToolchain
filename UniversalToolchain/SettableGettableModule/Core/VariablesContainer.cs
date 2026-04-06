@@ -20,7 +20,9 @@ public static class VariablesContainer<T>
         if (TryGet(key, out var value))
             return value;
 
-        throw new KeyNotFoundException($"Variable with key '{key}' was not found.");
+        throw new KeyNotFoundException(
+            $"Variable with key '{key}' was not found in {typeof(VariablesContainer<T>).FullName}. " +
+            $"Value type: {typeof(T).FullName}.");
     }
 
     /// <summary>
