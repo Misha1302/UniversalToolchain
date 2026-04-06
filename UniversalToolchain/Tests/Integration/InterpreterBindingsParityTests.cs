@@ -10,6 +10,28 @@ namespace Tests.Integration;
 public class InterpreterBindingsParityTests
 {
     [Test]
+    public void ExternalBindings_ReadsMustWorkWithoutLocalContainerStorage()
+    {
+        const string code = """
+                            price + fee
+                            """;
+
+        var declared = new OrderedDictionary<string, Type>
+        {
+            ["price"] = typeof(RealNumberImpl),
+            ["fee"] = typeof(RealNumberImpl)
+        };
+
+        var result = RunInBothBackends(code, declared, [
+            new NamedArgument("price", new RealNumberImpl(10.0)),
+            new NamedArgument("fee", new RealNumberImpl(2.0))
+        ]);
+
+        Assert.That(result.CompilerNumeric, Is.EqualTo(result.InterpreterNumeric).Within(1e-9));
+        Assert.That(result.CompilerNumeric, Is.EqualTo(12.0).Within(1e-9));
+    }
+
+    [Test]
     public void Reproducer_WithPriceFeeAndLocalLoopVariable_ShouldMatchCompilerInterpreterAndExpected()
     {
         const string code = """

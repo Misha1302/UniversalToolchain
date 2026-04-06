@@ -13,6 +13,8 @@ internal sealed class AbstractMethodsIntrinsicCompiler
             ["store_local"] = CompileStoreLocal,
             ["load_local"] = CompileLoadLocal,
             ["load_local_ref"] = CompileLoadLocalRef,
+            ["load_external"] = CompileLoadExternal,
+            ["store_external"] = CompileStoreExternal,
             ["load_bool"] = CompileLoadBool,
             ["boolean_and"] = CompileBooleanAnd,
             ["boolean_or"] = CompileBooleanOr,
@@ -29,6 +31,7 @@ internal sealed class AbstractMethodsIntrinsicCompiler
     [
         "call C#", "call C# ctor",
         "store_local", "load_local", "load_local_ref",
+        "load_external", "store_external",
         "load_i32", "load_i64", "load_f32", "load_f64", "load_decimal",
         "boolean_and", "boolean_or", "boolean_not",
         "add_i32", "sub_i32", "mul_i32", "div_i32",
@@ -140,6 +143,21 @@ internal sealed class AbstractMethodsIntrinsicCompiler
 
         context.Il.Ldloca(context.GetOrCreateLocal(varName, varType, true));
         stack.Push(varType.MakeByRefType());
+    }
+
+    private static void CompileLoadExternal(CompilationContext context, Instruction instruction, List<Type> stack)
+    {
+        var slot = instruction.Operands[1].Get<int>();
+        var varType = instruction.Operands[2].Get<Type>();
+        context.Il.Ldarg(slot);
+        stack.Push(varType);
+    }
+
+    private static void CompileStoreExternal(CompilationContext context, Instruction instruction, List<Type> stack)
+    {
+        var slot = instruction.Operands[1].Get<int>();
+        context.Il.Starg(slot);
+        stack.Pop();
     }
 
 

@@ -40,6 +40,21 @@ public static class AirTypes
                 stack.Push(ctor.DeclaringType.NotNull());
             }
         );
+        TryRegisterIntrinsic(
+            "load_external",
+            (instruction, stack) =>
+            {
+                var valueType = instruction.Operands[2].Get<Type>();
+                stack.Push(valueType);
+            }
+        );
+        TryRegisterIntrinsic(
+            "store_external",
+            (_, stack) =>
+            {
+                stack.Pop();
+            }
+        );
     }
 
     public static bool TryRegisterIntrinsic(string name, Action<Instruction, List<Type>> processIntrinsic) => _intrinsicsProcessors.TryAdd(name, processIntrinsic);
