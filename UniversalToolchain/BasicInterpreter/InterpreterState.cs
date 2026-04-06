@@ -5,8 +5,7 @@ public class InterpreterState
     private readonly Dictionary<Guid, int> _labelPositions = new();
     private bool _labelsBuilt;
     public Stack<object> ValueStack { get; } = new();
-    public Dictionary<string, int> ExternalSlotsByName { get; } = new();
-    public HashSet<string> LocalVariables { get; } = [];
+    public ExternalBindingsLayout? ExternalBindingsLayout { get; set; }
 
     public int InstructionPointer { get; set; }
     public IExecutionEnvironment? ExecutionEnvironment { get; set; }

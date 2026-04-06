@@ -1,15 +1,22 @@
 namespace BasicCore.Execution;
 
-public sealed class ExecutionEnvironment : IExecutionEnvironment
+public sealed class ExecutionEnvironment : IExecutionEnvironment, IExternalBindingsLayoutProvider
 {
     private readonly object?[] _values;
 
-    public ExecutionEnvironment(IReadOnlyList<ExternalBinding> bindings)
+    public ExecutionEnvironment(IReadOnlyList<ExternalBinding> bindings, ExternalBindingsLayout? externalBindingsLayout = null)
     {
+        if (bindings is null)
+            Thrower.ArgumentNull(nameof(bindings));
+
         _values = new object?[bindings.Count];
         for (var i = 0; i < bindings.Count; i++)
             _values[i] = bindings[i].Value;
+
+        ExternalBindingsLayout = externalBindingsLayout ?? ExternalBindingsLayout.FromDeclaredBindings(bindings);
     }
+
+    public ExternalBindingsLayout ExternalBindingsLayout { get; }
 
     public object? GetExternalValue(int slot) => _values[slot];
 

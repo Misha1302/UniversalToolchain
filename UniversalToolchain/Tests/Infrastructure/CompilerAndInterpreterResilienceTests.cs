@@ -1,3 +1,5 @@
+using SettableGettableModule.Core;
+
 namespace Tests.Infrastructure;
 
 [TestFixture]
@@ -116,6 +118,50 @@ public class CompilerAndInterpreterResilienceTests
         var exception = Assert.Throws<RuntimeExecutionException>(() => ExecuteInInterpreter(ir));
 
         Assert.That(exception!.Message, Does.Contain("unknown intrinsic"));
+    }
+
+    [Test]
+    public void Interpreter_VariablesContainerGet_UsesDeclaredExternalBindingLayoutSlot()
+    {
+        var getMethod = typeof(VariablesContainer<int>).GetMethod(nameof(VariablesContainer<int>.Get), [typeof(string)]);
+        Assert.That(getMethod, Is.Not.Null);
+
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, ["target"]),
+            new Instruction(UOpCode.Intrinsic, ["call C#", getMethod!]));
+
+        var environment = new ExecutionEnvironment(
+        [
+            new ExternalBinding { Name = "other", Type = typeof(int), Value = 11, Kind = ExternalBindingKind.Variable },
+            new ExternalBinding { Name = "target", Type = typeof(int), Value = 42, Kind = ExternalBindingKind.Variable }
+        ]);
+
+        var result = ExecuteInInterpreter(ir, environment);
+
+        Assert.That(result, Is.EqualTo(42));
+    }
+
+    [Test]
+    public void Interpreter_VariablesContainerGet_NameMissingInLayout_IsTreatedAsLocalVariable()
+    {
+        var key = $"local_only_{Guid.NewGuid():N}";
+        VariablesContainer<int>.Set(key, 7);
+
+        var getMethod = typeof(VariablesContainer<int>).GetMethod(nameof(VariablesContainer<int>.Get), [typeof(string)]);
+        Assert.That(getMethod, Is.Not.Null);
+
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [key]),
+            new Instruction(UOpCode.Intrinsic, ["call C#", getMethod!]));
+
+        var environment = new ExecutionEnvironment(
+        [
+            new ExternalBinding { Name = "declared", Type = typeof(int), Value = 999, Kind = ExternalBindingKind.Variable }
+        ]);
+
+        var result = ExecuteInInterpreter(ir, environment);
+
+        Assert.That(result, Is.EqualTo(7));
     }
 
     [Test]
@@ -358,6 +404,12 @@ public class CompilerAndInterpreterResilienceTests
     {
         var interpreter = new InterpreterImpl();
         return interpreter.Execute(ir, new ExecutionEnvironment([]));
+    }
+
+    private static object? ExecuteInInterpreter(IAbstractIR ir, IExecutionEnvironment environment)
+    {
+        var interpreter = new InterpreterImpl();
+        return interpreter.Execute(ir, environment);
     }
 
     private static IAbstractIR BuildIr(params Instruction[] instructions)
