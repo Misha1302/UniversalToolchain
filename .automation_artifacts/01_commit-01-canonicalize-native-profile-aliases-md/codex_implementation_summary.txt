@@ -1,0 +1,15 @@
+Summary: internal native-profile composition now uses `NativeTypes` consistently where this commit spec required it. I updated the inline native dialect in [TestBase.cs](/home/micodiy/razakov/sharp/Wist2/UniversalToolchain/Tests/TestBase.cs), the example inline dialect in [ExampleRunner.cs](/home/micodiy/razakov/sharp/Wist2/UniversalToolchain/Example/ExampleRunner.cs), and the CLI default host mapping in [Program.cs](/home/micodiy/razakov/sharp/Wist2/UniversalToolchain/Wistc/Program.cs) so `--use-native-math` now appends `NativeTypes` internally. I also added a focused CLI regression test in [WistcCliEndToEndTests.cs](/home/micodiy/razakov/sharp/Wist2/UniversalToolchain/Tests/Cli/WistcCliEndToEndTests.cs) covering that mapping.
+
+Files changed:
+- [TestBase.cs](/home/micodiy/razakov/sharp/Wist2/UniversalToolchain/Tests/TestBase.cs)
+- [ExampleRunner.cs](/home/micodiy/razakov/sharp/Wist2/UniversalToolchain/Example/ExampleRunner.cs)
+- [Program.cs](/home/micodiy/razakov/sharp/Wist2/UniversalToolchain/Wistc/Program.cs)
+- [WistcCliEndToEndTests.cs](/home/micodiy/razakov/sharp/Wist2/UniversalToolchain/Tests/Cli/WistcCliEndToEndTests.cs)
+
+What I validated:
+- Repository search confirmed the edited internal composition paths no longer reference `NativeMath`; only the CLI option/test names still do, intentionally.
+- Checked the final diff to ensure the change stayed commit-sized and limited to the required paths plus one regression test.
+- Attempted `dotnet build UniversalToolchain/Wist.sln -c Release`, `dotnet build UniversalToolchain/Wistc/Wistc.csproj -c Release`, and targeted `dotnet test` for `WistcCliEndToEndTests` and `CSharpInteropResolutionAndNegativeContractsTests`.
+
+Remaining risk or uncertainty:
+- I could not complete runtime validation in this sandbox. `dotnet test` aborts with `System.Net.Sockets.SocketException (13): Permission denied` when VSTest tries to open its local socket, and `dotnet build` exits early during restore/project-walk with no compiler errors emitted. The diagnostic log points at SDK/workload resolver behavior in this environment rather than a source error, but I could not prove the updated code by executing the tests here.

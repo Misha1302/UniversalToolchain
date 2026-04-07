@@ -1,0 +1,195 @@
+You are working inside the local git repository.
+
+        Before editing anything, read these project guidance files if they exist:
+        - PROJECT_RULES.md
+- AGENTS.md
+- CONTRIBUTING.md
+- readme.md
+
+        Your job is to implement exactly one commit-sized change described below.
+
+        Hard requirements:
+        - Implement only the current commit spec.
+        - Respect the project rules and contribution guidance.
+        - Do not create commits yourself.
+        - Do not create or merge pull requests yourself.
+        - Leave the working tree with code changes only; the outer script will handle git commit / push / PR / merge.
+        - In the final message, provide:
+          1) a short summary of what changed,
+          2) the files changed,
+          3) what you validated,
+          4) any remaining risk or uncertainty.
+
+        Current commit spec file: commit-01-canonicalize-native-profile-aliases.md
+        Suggested commit message: Canonicalize internal native profile alias to NativeTypes
+
+        Begin commit spec:
+        ------------------
+        # Commit 01 — Canonicalize native profile aliases to `NativeTypes`
+
+## High-level idea
+
+Fix the naming drift around the native arithmetic/type module before touching backend semantics.
+
+Right now the codebase has two conflicting names for the same user-facing capability:
+
+- the published and tested dialect profiles use `NativeTypes`,
+- some internal code paths still use `NativeMath`.
+
+This causes host composition to fail before the real interop tests even start.  
+The clean fix is to choose one canonical alias and update all internal consumers to use it consistently.
+
+## Why this should be the first commit
+
+This change is:
+
+- independent from the intrinsic refactor,
+- easy to validate,
+- restores semantic clarity,
+- removes one entire class of false-negative test failures.
+
+It also prevents later refactoring work from being obscured by unrelated dialect-resolution errors.
+
+## Canonical decision
+
+Use **`NativeTypes`** as the only canonical internal name.
+
+Do **not** keep `NativeMath` alive inside internal code paths unless you explicitly want a public backward-compatibility policy.  
+For a clean internal architecture, remove drift rather than formalizing legacy aliases.
+
+## Non-goals
+
+- Do not refactor intrinsic logic here.
+- Do not add compatibility aliases unless you deliberately decide to support old external dialect files.
+- Do not mix this commit with optimizer or compiler changes.
+
+## Files likely to change
+
+At minimum, inspect and update:
+
+- `UniversalToolchain/Tests/TestBase.cs`
+- `UniversalToolchain/Example/ExampleRunner.cs`
+- `UniversalToolchain/Wistc/Program.cs`
+
+Also search for any remaining uses of:
+
+- `NativeMath`
+- `UseNativeMath`
+
+Potentially also check:
+
+- test helper files,
+- old smoke examples,
+- CLI help text or README snippets if they still mention the old module alias.
+
+## Detailed implementation instructions
+
+### 1. Update the test native dialect text
+
+In `Tests/TestBase.cs`, update the inline native dialect source.
+
+#### Current problem
+The native dialect text includes:
+
+```text
+use ...,Arithmetic,NativeMath,Equality,...
+```
+
+but the actual canonical module alias in the current dialect model is `NativeTypes`.
+
+#### Required change
+Replace `NativeMath` with `NativeTypes`.
+
+#### Additional guidance
+Read the full inline profile and make sure it remains semantically coherent after the rename.  
+If the native profile should really represent the published native dialect model, also check whether it is mixing modules that the canonical native profile avoids.
+
+At minimum:
+- the alias must be corrected,
+- the file must no longer construct a host using an unregistered runtime descriptor.
+
+### 2. Update the example runner
+
+In `Example/ExampleRunner.cs`, update the inline dialect definition in the same way.
+
+#### Required change
+Replace `NativeMath` with `NativeTypes`.
+
+#### Why
+The example should represent the canonical architecture, not stale internal naming.
+
+### 3. Update CLI default native module selection
+
+In `Wistc/Program.cs`, inspect the native-path logic inside `CreateDefaultHost`.
+
+#### Current problem
+When `options.UseNativeMath` is enabled, the CLI appends `NativeMath` to the selected modules list.
+
+#### Required change
+Keep the option name if you want to preserve CLI UX for now, but make it append `NativeTypes`.
+
+Recommended minimal clean version:
+
+- keep the user option name `UseNativeMath` for this commit,
+- map it internally to `NativeTypes`,
+- optionally leave a TODO for later renaming the option itself if you want naming purity across the CLI surface too.
+
+### 4. Run a targeted repository-wide search
+
+Search for the exact string `NativeMath`.
+
+For each occurrence, classify it:
+
+- **must change now**: internal composition code, examples, tests, CLI assembly logic,
+- **allowed to remain temporarily**: historical docs only if intentionally preserved,
+- **must be removed**: stale code path that would reintroduce drift.
+
+If a markdown file or comment still documents `NativeMath` as the current valid profile name, update it unless it is explicitly historical context.
+
+### 5. Decide explicitly about backward compatibility
+
+Choose one of these policies and document it in the commit message and PR description.
+
+#### Preferred policy for a clean internal architecture
+- Internal code uses only `NativeTypes`.
+- No runtime alias is added.
+- Old `NativeMath` dialect sources are considered obsolete.
+
+#### Alternative policy only if you really want compatibility
+- Keep canonical alias `NativeTypes`.
+- Add a compatibility runtime alias for `NativeMath`.
+- Ensure manifest emission includes that alias through the correct runtime alias attribute, not only module alias metadata.
+
+If you choose the compatibility route, do **not** do it in the same commit unless you are sure it is required.  
+For the cleanest sequence, keep commit 01 focused on canonicalization.
+
+## Suggested validation
+
+### Manual validation
+- Build the solution.
+- Run the previously failing native/interoperability tests that were failing at dialect composition time.
+- Confirm the host now composes the native profile instead of failing with `Runtime module descriptor 'NativeMath' was not registered`.
+
+### Tests to inspect
+Especially verify:
+- `CSharpInteropResolutionAndNegativeContractsTests`
+- any example smoke tests
+- any CLI dialect composition tests involving native mode
+
+## Acceptance criteria
+
+This commit is complete when:
+
+- no internal host construction path references `NativeMath`,
+- the native test profile uses `NativeTypes`,
+- the example runner uses `NativeTypes`,
+- CLI native mode uses `NativeTypes`,
+- native interop tests no longer fail at dialect-resolution stage because of the old alias.
+
+## Suggested commit message
+
+```text
+Canonicalize internal native profile alias to NativeTypes
+```
+
+        ------------------
