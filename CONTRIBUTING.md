@@ -20,6 +20,8 @@ dotnet test UniversalToolchain/UniversalToolchain.Modules.Tests/UniversalToolcha
 dotnet test UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolchain.Dialects.Tests.csproj -c Release --no-build
 ```
 
+`UniversalToolchain/Tests.Legacy/Tests.Legacy.csproj` is a quarantine suite for disabled historical tests and is not part of default validation.
+
 ## Change expectations
 
 - Keep changes minimal, targeted, and deterministic.
