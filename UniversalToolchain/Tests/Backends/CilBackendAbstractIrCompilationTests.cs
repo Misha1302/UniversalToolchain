@@ -113,6 +113,21 @@ public class CilBackendAbstractIrCompilationTests
     }
 
     [Test]
+    public void SupportedIntrinsics_ExposeRegisteredFamilies()
+    {
+        var supportedIntrinsics = new AbstractMethodsCompilerImpl().SupportedIntrinsics;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(supportedIntrinsics, Contains.Item("call C#"));
+            Assert.That(supportedIntrinsics, Contains.Item("load_decimal"));
+            Assert.That(supportedIntrinsics, Contains.Item("add_decimal"));
+            Assert.That(supportedIntrinsics, Contains.Item("cmp_le_f64"));
+            Assert.That(supportedIntrinsics.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(supportedIntrinsics.Count));
+        });
+    }
+
+    [Test]
     public void DeepNestedConditionsWithSharedStackState_HandlesComplexControlFlow()
     {
         var branch1 = Guid.NewGuid();

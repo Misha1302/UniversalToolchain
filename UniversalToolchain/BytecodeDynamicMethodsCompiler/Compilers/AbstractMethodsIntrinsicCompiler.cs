@@ -2,48 +2,19 @@ namespace BytecodeDynamicMethodsCompiler.Compilers;
 
 internal sealed class AbstractMethodsIntrinsicCompiler
 {
-    private readonly Dictionary<string, IntrinsicHandler> _intrinsicHandlers;
+    private readonly CilIntrinsicRegistry _registry;
 
     public AbstractMethodsIntrinsicCompiler()
+        : this(new CilIntrinsicRegistry())
     {
-        _intrinsicHandlers = new Dictionary<string, IntrinsicHandler>
-        {
-            ["call C#"] = CompileCallCSharp,
-            ["call C# ctor"] = CompileCallCSharpCtor,
-            ["store_local"] = CompileStoreLocal,
-            ["load_local"] = CompileLoadLocal,
-            ["load_local_ref"] = CompileLoadLocalRef,
-            ["load_external"] = CompileLoadExternal,
-            ["store_external"] = CompileStoreExternal,
-            ["load_bool"] = CompileLoadBool,
-            ["boolean_and"] = CompileBooleanAnd,
-            ["boolean_or"] = CompileBooleanOr,
-            ["boolean_not"] = CompileBooleanNot,
-            ["load_i32"] = LoadNativeNumber,
-            ["load_i64"] = LoadNativeNumber,
-            ["load_f32"] = LoadNativeNumber,
-            ["load_f64"] = LoadNativeNumber,
-            ["load_decimal"] = LoadNativeNumber
-        };
     }
 
-    public IReadOnlyList<string> SupportedIntrinsics =>
-    [
-        "call C#", "call C# ctor",
-        "store_local", "load_local", "load_local_ref",
-        "load_external", "store_external",
-        "load_i32", "load_i64", "load_f32", "load_f64", "load_decimal",
-        "boolean_and", "boolean_or", "boolean_not",
-        "add_i32", "sub_i32", "mul_i32", "div_i32",
-        "add_i64", "sub_i64", "mul_i64", "div_i64",
-        "add_f32", "sub_f32", "mul_f32", "div_f32",
-        "add_f64", "sub_f64", "mul_f64", "div_f64",
-        "add_decimal", "sub_decimal", "mul_decimal", "div_decimal",
-        "cmp_eq_i32", "cmp_ne_i32", "cmp_gt_i32", "cmp_ge_i32", "cmp_lt_i32", "cmp_le_i32",
-        "cmp_eq_i64", "cmp_ne_i64", "cmp_gt_i64", "cmp_ge_i64", "cmp_lt_i64", "cmp_le_i64",
-        "cmp_eq_f32", "cmp_ne_f32", "cmp_gt_f32", "cmp_ge_f32", "cmp_lt_f32", "cmp_le_f32",
-        "cmp_eq_f64", "cmp_ne_f64", "cmp_gt_f64", "cmp_ge_f64", "cmp_lt_f64", "cmp_le_f64"
-    ];
+    internal AbstractMethodsIntrinsicCompiler(CilIntrinsicRegistry registry)
+    {
+        _registry = registry;
+    }
+
+    public IReadOnlyList<string> SupportedIntrinsics => _registry.SupportedIntrinsics;
 
     public void Compile(CompilationContext context, Instruction instruction, List<Type> stack)
     {
@@ -51,28 +22,15 @@ internal sealed class AbstractMethodsIntrinsicCompiler
         Thrower.AssertAlways(instruction.Operands[0] is string);
 
         var name = instruction.Operands[0].Get<string>();
-        if (_intrinsicHandlers.TryGetValue(name, out var handler))
-        {
-            handler(context, instruction, stack);
-            return;
-        }
-
-        if (IsArithmeticIntrinsic(name))
-        {
-            CompileArithmeticIntrinsic(context, name, stack);
-            return;
-        }
-
-        if (IsComparisonIntrinsic(name))
-        {
-            CompileComparisonIntrinsic(context, name, stack);
-            return;
-        }
-
-        Thrower.InvalidOpEx($"Unsupported intrinsic: {name}");
+        var descriptor = _registry.GetRequired(name);
+        descriptor.Compile(context, instruction, stack);
     }
 
-    private static void CompileCallCSharp(CompilationContext context, Instruction instruction, List<Type> stack)
+    internal static void ProcessTypesNoOp(Instruction instruction, List<Type> stack)
+    {
+    }
+
+    internal static void CompileCallCSharp(CompilationContext context, Instruction instruction, List<Type> stack)
     {
         var method = instruction.Operands[1].Get<MethodInfo>();
         Thrower.AssertAlways(method.DeclaringType != null);
@@ -95,7 +53,7 @@ internal sealed class AbstractMethodsIntrinsicCompiler
             stack.Push(method.ReturnType);
     }
 
-    private static void CompileCallCSharpCtor(CompilationContext context, Instruction instruction, List<Type> stack)
+    internal static void CompileCallCSharpCtor(CompilationContext context, Instruction instruction, List<Type> stack)
     {
         var ctor = instruction.Operands[1].Get<ConstructorInfo>();
         Thrower.AssertAlways(ctor.DeclaringType != null);
@@ -110,7 +68,7 @@ internal sealed class AbstractMethodsIntrinsicCompiler
         stack.Push(ctor.DeclaringType);
     }
 
-    private static void CompileStoreLocal(CompilationContext context, Instruction instruction, List<Type> stack)
+    internal static void CompileStoreLocal(CompilationContext context, Instruction instruction, List<Type> stack)
     {
         var varName = instruction.Operands[1].Get<string>();
         var varType = instruction.Operands[2].Get<Type>();
@@ -123,7 +81,7 @@ internal sealed class AbstractMethodsIntrinsicCompiler
         stack.Pop();
     }
 
-    private static void CompileLoadLocal(CompilationContext context, Instruction instruction, List<Type> stack)
+    internal static void CompileLoadLocal(CompilationContext context, Instruction instruction, List<Type> stack)
     {
         var varName = instruction.Operands[1].Get<string>();
         var varType = instruction.Operands[2].Get<Type>();
@@ -136,7 +94,7 @@ internal sealed class AbstractMethodsIntrinsicCompiler
         stack.Push(varType);
     }
 
-    private static void CompileLoadLocalRef(CompilationContext context, Instruction instruction, List<Type> stack)
+    internal static void CompileLoadLocalRef(CompilationContext context, Instruction instruction, List<Type> stack)
     {
         var varName = instruction.Operands[1].Get<string>();
         var varType = instruction.Operands[2].Get<Type>();
@@ -145,7 +103,7 @@ internal sealed class AbstractMethodsIntrinsicCompiler
         stack.Push(varType.MakeByRefType());
     }
 
-    private static void CompileLoadExternal(CompilationContext context, Instruction instruction, List<Type> stack)
+    internal static void CompileLoadExternal(CompilationContext context, Instruction instruction, List<Type> stack)
     {
         var slot = instruction.Operands[1].Get<int>();
         var varType = instruction.Operands[2].Get<Type>();
@@ -153,7 +111,7 @@ internal sealed class AbstractMethodsIntrinsicCompiler
         stack.Push(varType);
     }
 
-    private static void CompileStoreExternal(CompilationContext context, Instruction instruction, List<Type> stack)
+    internal static void CompileStoreExternal(CompilationContext context, Instruction instruction, List<Type> stack)
     {
         var slot = instruction.Operands[1].Get<int>();
         context.Il.Starg(slot);
@@ -161,28 +119,28 @@ internal sealed class AbstractMethodsIntrinsicCompiler
     }
 
 
-    private static void CompileLoadBool(CompilationContext context, Instruction instruction, List<Type> stack)
+    internal static void CompileLoadBool(CompilationContext context, Instruction instruction, List<Type> stack)
     {
         var value = instruction.Operands[1].Get<bool>();
         context.Il.Ldc_I4(value ? 1 : 0);
         stack.Push(typeof(bool));
     }
 
-    private static void CompileBooleanAnd(CompilationContext context, Instruction instruction, List<Type> stack)
+    internal static void CompileBooleanAnd(CompilationContext context, Instruction instruction, List<Type> stack)
     {
         EnsureBinaryBoolOperands(stack, instruction.Operands[0].Get<string>());
         context.Il.And();
         PopTwoPush(stack, typeof(bool));
     }
 
-    private static void CompileBooleanOr(CompilationContext context, Instruction instruction, List<Type> stack)
+    internal static void CompileBooleanOr(CompilationContext context, Instruction instruction, List<Type> stack)
     {
         EnsureBinaryBoolOperands(stack, instruction.Operands[0].Get<string>());
         context.Il.Or();
         PopTwoPush(stack, typeof(bool));
     }
 
-    private static void CompileBooleanNot(CompilationContext context, Instruction instruction, List<Type> stack)
+    internal static void CompileBooleanNot(CompilationContext context, Instruction instruction, List<Type> stack)
     {
         Thrower.AssertAlways(stack.Count >= 1, $"Not enough values on stack for {instruction.Operands[0].Get<string>()}");
         Thrower.AssertAlways(stack[^1] == typeof(bool), "Expected boolean operand");
@@ -193,7 +151,7 @@ internal sealed class AbstractMethodsIntrinsicCompiler
         stack.Push(typeof(bool));
     }
 
-    private static void LoadNativeNumber(CompilationContext context, Instruction instruction, List<Type> stack)
+    internal static void LoadNativeNumber(CompilationContext context, Instruction instruction, List<Type> stack)
     {
         var name = instruction.Operands[0].Get<string>();
         var arg = instruction.Operands[1];
@@ -253,8 +211,9 @@ internal sealed class AbstractMethodsIntrinsicCompiler
         il.Newobj(ctor);
     }
 
-    private static void CompileArithmeticIntrinsic(CompilationContext context, string name, List<Type> stack)
+    internal static void CompileArithmeticIntrinsic(CompilationContext context, Instruction instruction, List<Type> stack)
     {
+        var name = instruction.Operands[0].Get<string>();
         var parts = name.Split('_');
         var operation = parts[0];
         var typeStr = parts[1];
@@ -318,8 +277,9 @@ internal sealed class AbstractMethodsIntrinsicCompiler
             Thrower.InvalidOpEx($"Unknown operation: {operation}");
     }
 
-    private static void CompileComparisonIntrinsic(CompilationContext context, string name, List<Type> stack)
+    internal static void CompileComparisonIntrinsic(CompilationContext context, Instruction instruction, List<Type> stack)
     {
+        var name = instruction.Operands[0].Get<string>();
         var parts = name.Split('_');
         var operation = parts[1];
         var typeStr = parts[2];
@@ -466,13 +426,6 @@ internal sealed class AbstractMethodsIntrinsicCompiler
 
         Thrower.InvalidOpEx($"Cannot cast {sourceType} to {targetType}");
     }
-
-    private static bool IsArithmeticIntrinsic(string name)
-        => name.StartsWith("add_") || name.StartsWith("sub_") || name.StartsWith("mul_") || name.StartsWith("div_");
-
-    private static bool IsComparisonIntrinsic(string name)
-        => name.StartsWith("cmp_");
-
     private static void EnsureBinaryBoolOperands(List<Type> stack, string intrinsicName)
     {
         Thrower.AssertAlways(stack.Count >= 2, $"Not enough values on stack for {intrinsicName}");
@@ -492,6 +445,4 @@ internal sealed class AbstractMethodsIntrinsicCompiler
         for (var i = 0; i < count; i++)
             stack.Pop();
     }
-
-    private delegate void IntrinsicHandler(CompilationContext context, Instruction instruction, List<Type> stack);
 }
