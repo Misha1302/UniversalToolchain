@@ -100,13 +100,11 @@
         <Compile Remove="Core/VariablesModuleTests.cs"/>
         <Compile Remove="Core/WistThrowerAndStageExceptionsTests.cs"/>
         <Compile Remove="Internal/ArithmeticOptimizerModuleTests.cs"/>
-        <Compile Remove="Internal/BytecodeAndStateIsolationTests.cs"/>
         <Compile Remove="Internal/CompilationInputNormalizerTests.cs"/>
         <Compile Remove="Internal/EGraphOptimizerModuleTests.cs"/>
         <Compile Remove="Internal/MethodsFinderAndTypesFinderTests.cs"/>
         <Compile Remove="Internal/OptimizerIdempotenceAndIntrinsicGateTests.cs"/>
         <Compile Remove="Internal/OptimizerRegressionTests.cs"/>
-        <Compile Remove="Legacy/LegacyTestBaseContractsTests.cs"/>
         <Compile Remove="Stress/DynamicMethodInvokerConcurrencyTests.cs"/>
         <Compile Remove="Stress/PerformanceAndComplexityTests.cs"/>
         <Compile Remove="Stress/PerformanceTests.cs"/>
