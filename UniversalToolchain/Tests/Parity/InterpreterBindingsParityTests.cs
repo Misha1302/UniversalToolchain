@@ -3,6 +3,7 @@ using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
 using NumbersModule.Core;
 using UniversalToolchain.Dialects.Wist;
+using Tests.Infrastructure;
 
 namespace Tests.Integration;
 
@@ -22,7 +23,7 @@ public class InterpreterBindingsParityTests
             ["fee"] = typeof(RealNumberImpl)
         };
 
-        var result = RunInBothBackends(code, declared, [
+        var result = RunWithBindingsInBothBackends(code, declared, [
             new NamedArgument("price", new RealNumberImpl(10.0)),
             new NamedArgument("fee", new RealNumberImpl(2.0))
         ]);
@@ -47,7 +48,7 @@ public class InterpreterBindingsParityTests
             ["fee"] = typeof(RealNumberImpl)
         };
 
-        var result = RunInBothBackends(code, declared, [
+        var result = RunWithBindingsInBothBackends(code, declared, [
             new NamedArgument("price", new RealNumberImpl(100.0)),
             new NamedArgument("fee", new RealNumberImpl(2.5))
         ]);
@@ -73,14 +74,14 @@ public class InterpreterBindingsParityTests
             ["unusedBeta"] = typeof(string)
         };
 
-        var first = RunInBothBackends(code, declared, [
+        var first = RunWithBindingsInBothBackends(code, declared, [
             new NamedArgument("price", new RealNumberImpl(5.0)),
             new NamedArgument("fee", new RealNumberImpl(1.5)),
             new NamedArgument("unusedAlpha", new RealNumberImpl(999.0)),
             new NamedArgument("unusedBeta", "ignored")
         ]);
 
-        var second = RunInBothBackends(code, declared, [
+        var second = RunWithBindingsInBothBackends(code, declared, [
             new NamedArgument("price", new RealNumberImpl(5.0)),
             new NamedArgument("fee", new RealNumberImpl(1.5)),
             new NamedArgument("unusedAlpha", new RealNumberImpl(-321.0)),
@@ -116,12 +117,12 @@ public class InterpreterBindingsParityTests
             ["price"] = typeof(RealNumberImpl)
         };
 
-        var ordered = RunInBothBackends(code, declaredPriceThenFee, [
+        var ordered = RunWithBindingsInBothBackends(code, declaredPriceThenFee, [
             new NamedArgument("price", new RealNumberImpl(7.0)),
             new NamedArgument("fee", new RealNumberImpl(0.75))
         ]);
 
-        var reordered = RunInBothBackends(code, declaredFeeThenPrice, [
+        var reordered = RunWithBindingsInBothBackends(code, declaredFeeThenPrice, [
             new NamedArgument("price", new RealNumberImpl(7.0)),
             new NamedArgument("fee", new RealNumberImpl(0.75))
         ]);
@@ -174,7 +175,7 @@ public class InterpreterBindingsParityTests
                             """;
 
         var declared = new OrderedDictionary<string, Type>();
-        var result = RunInBothBackends(code, declared, []);
+        var result = RunWithBindingsInBothBackends(code, declared, []);
 
         Assert.That(result.CompilerNumeric, Is.EqualTo(result.InterpreterNumeric).Within(1e-9));
         Assert.That(result.CompilerNumeric, Is.EqualTo(2.0).Within(1e-9));
@@ -195,7 +196,7 @@ public class InterpreterBindingsParityTests
             ["fee"] = typeof(RealNumberImpl)
         };
 
-        var result = RunInBothBackends(code, declared, [
+        var result = RunWithBindingsInBothBackends(code, declared, [
             new NamedArgument("price", new RealNumberImpl(100.0)),
             new NamedArgument("fee", new RealNumberImpl(2.5))
         ]);
@@ -214,7 +215,7 @@ public class InterpreterBindingsParityTests
                             """;
 
         var declared = new OrderedDictionary<string, Type>();
-        var result = RunInBothBackends(code, declared, []);
+        var result = RunWithBindingsInBothBackends(code, declared, []);
 
         Assert.That(result.CompilerNumeric, Is.EqualTo(result.InterpreterNumeric).Within(1e-9));
         Assert.That(result.CompilerNumeric, Is.EqualTo(2.0).Within(1e-9));
@@ -246,7 +247,7 @@ public class InterpreterBindingsParityTests
         }
     }
 
-    private static (double CompilerNumeric, double InterpreterNumeric) RunInBothBackends(
+    private static (double CompilerNumeric, double InterpreterNumeric) RunWithBindingsInBothBackends(
         string code,
         OrderedDictionary<string, Type> declared,
         IReadOnlyList<NamedArgument> arguments)
@@ -264,38 +265,36 @@ public class InterpreterBindingsParityTests
             interpreterSession.SetArgument(argument.Name, argument.Value);
         }
 
-        var compilerResult = compilerSession.Run() ?? Thrower.InvalidOpEx<object>("Compiler returned null result.");
-        var interpreterResult = interpreterSession.Run() ?? Thrower.InvalidOpEx<object>("Interpreter returned null result.");
+        var compilerResult = BackendExecutionResult.Success(compilerSession.Run() ?? Thrower.InvalidOpEx<object>("Compiler returned null result."));
+        var interpreterResult = BackendExecutionResult.Success(interpreterSession.Run() ?? Thrower.InvalidOpEx<object>("Interpreter returned null result."));
 
-        return (ToNumeric(compilerResult), ToNumeric(interpreterResult));
+        BackendParityInfrastructure.AssertSemanticParity(compilerResult, interpreterResult);
+        return (BackendParityInfrastructure.AsNumber(compilerResult.Value), BackendParityInfrastructure.AsNumber(interpreterResult.Value));
     }
 
     private static void AssertDeterministicParity(string code, OrderedDictionary<string, Type> declared, IReadOnlyList<NamedArgument> arguments)
     {
-        var first = TryRunInBothBackends(code, declared, arguments);
-        var second = TryRunInBothBackends(code, declared, arguments);
+        var first = TryRunWithBindingsInBothBackends(code, declared, arguments);
+        var second = TryRunWithBindingsInBothBackends(code, declared, arguments);
 
-        Assert.That(first.CompilerOutcome.Kind, Is.EqualTo(first.InterpreterOutcome.Kind));
-        Assert.That(second.CompilerOutcome.Kind, Is.EqualTo(second.InterpreterOutcome.Kind));
-        Assert.That(first.CompilerOutcome.Kind, Is.EqualTo(second.CompilerOutcome.Kind));
+        BackendParityInfrastructure.AssertSemanticParity(first.CompilerOutcome, first.InterpreterOutcome);
+        BackendParityInfrastructure.AssertSemanticParity(second.CompilerOutcome, second.InterpreterOutcome);
 
-        if (first.CompilerOutcome.Kind == OutcomeKind.Success)
+        Assert.That(first.CompilerOutcome.IsSuccess, Is.EqualTo(second.CompilerOutcome.IsSuccess));
+
+        if (first.CompilerOutcome.IsSuccess)
         {
-            Assert.That(first.CompilerOutcome.NumericValue, Is.EqualTo(first.InterpreterOutcome.NumericValue).Within(1e-9));
-            Assert.That(second.CompilerOutcome.NumericValue, Is.EqualTo(second.InterpreterOutcome.NumericValue).Within(1e-9));
-            Assert.That(first.CompilerOutcome.NumericValue, Is.EqualTo(second.CompilerOutcome.NumericValue).Within(1e-9));
+            Assert.That(BackendParityInfrastructure.AsNumber(first.CompilerOutcome.Value),
+                Is.EqualTo(BackendParityInfrastructure.AsNumber(second.CompilerOutcome.Value)).Within(1e-9));
             return;
         }
 
-        Assert.That(first.CompilerOutcome.ExceptionType, Is.EqualTo(first.InterpreterOutcome.ExceptionType));
-        Assert.That(second.CompilerOutcome.ExceptionType, Is.EqualTo(second.InterpreterOutcome.ExceptionType));
-        Assert.That(first.CompilerOutcome.ExceptionType, Is.EqualTo(second.CompilerOutcome.ExceptionType));
-        Assert.That(first.CompilerOutcome.ExceptionMessage, Is.EqualTo(first.InterpreterOutcome.ExceptionMessage));
-        Assert.That(second.CompilerOutcome.ExceptionMessage, Is.EqualTo(second.InterpreterOutcome.ExceptionMessage));
-        Assert.That(first.CompilerOutcome.ExceptionMessage, Is.EqualTo(second.CompilerOutcome.ExceptionMessage));
+        Assert.That(first.CompilerOutcome.Exception?.GetType().FullName,
+            Is.EqualTo(second.CompilerOutcome.Exception?.GetType().FullName));
+        Assert.That(first.CompilerOutcome.Exception?.Message, Is.EqualTo(second.CompilerOutcome.Exception?.Message));
     }
 
-    private static (ExecutionOutcome CompilerOutcome, ExecutionOutcome InterpreterOutcome) TryRunInBothBackends(
+    private static (BackendExecutionResult CompilerOutcome, BackendExecutionResult InterpreterOutcome) TryRunWithBindingsInBothBackends(
         string code,
         OrderedDictionary<string, Type> declared,
         IReadOnlyList<NamedArgument> arguments)
@@ -306,36 +305,20 @@ public class InterpreterBindingsParityTests
         return (compilerOutcome, interpreterOutcome);
     }
 
-    private static ExecutionOutcome TryRunSingleBackend<TCompilationOutput>(
+    private static BackendExecutionResult TryRunSingleBackend<TCompilationOutput>(
         Func<ICompiledArtifact<TCompilationOutput>> artifactFactory,
         IReadOnlyList<NamedArgument> arguments)
     {
-        try
+        return BackendParityInfrastructure.ExecuteSafely(() =>
         {
             var artifact = artifactFactory();
             var session = artifact.CreateSession();
             foreach (var argument in arguments)
                 session.SetArgument(argument.Name, argument.Value);
 
-            var result = session.Run() ?? Thrower.InvalidOpEx<object>("Backend returned null result.");
-            return ExecutionOutcome.Success(ToNumeric(result));
-        }
-        catch (Exception ex)
-        {
-            return ExecutionOutcome.Failure(ex.GetType().FullName ?? ex.GetType().Name, ex.Message);
-        }
+            return session.Run() ?? Thrower.InvalidOpEx<object>("Backend returned null result.");
+        });
     }
-
-    private static double ToNumeric(object value) => value switch
-    {
-        int intValue => intValue,
-        long longValue => longValue,
-        float floatValue => floatValue,
-        double doubleValue => doubleValue,
-        decimal decimalValue => (double)decimalValue,
-        RealNumberImpl realNumber => realNumber.GetValue(),
-        _ => Thrower.InvalidCast<double>($"Cannot convert value of type {value.GetType().FullName} to numeric result.")
-    };
 
     private static WistDialectExecutionHost CreateHost()
     {
@@ -369,18 +352,4 @@ public class InterpreterBindingsParityTests
         ?? Thrower.InvalidOpEx<BasicCoreImpl<IAbstractIR>>("Interpreter core must be BasicCoreImpl<IAbstractIR>.");
 
     private sealed record NamedArgument(string Name, object Value);
-
-    private enum OutcomeKind
-    {
-        Success,
-        Failure
-    }
-
-    private sealed record ExecutionOutcome(OutcomeKind Kind, double? NumericValue, string? ExceptionType, string? ExceptionMessage)
-    {
-        public static ExecutionOutcome Success(double numericValue) => new(OutcomeKind.Success, numericValue, null, null);
-
-        public static ExecutionOutcome Failure(string exceptionType, string exceptionMessage) =>
-            new(OutcomeKind.Failure, null, exceptionType, exceptionMessage);
-    }
 }

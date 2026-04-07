@@ -46,14 +46,9 @@ public static class DialectTestHostInfrastructure
     /// </summary>
     public static object? RunInBothBackends(string dialectText, string code)
     {
-        using var compilerHost = CreateCompilerHost(dialectText);
-        using var interpreterHost = CreateInterpreterHost(dialectText);
-
-        var compilerResult = compilerHost.Run(code, "compiler");
-        var interpreterResult = interpreterHost.Run(code, "interpreter");
-
-        Assert.That(interpreterResult, Is.EqualTo(compilerResult), "Interpreter and compiler results must match.");
-        return compilerResult;
+        var (compilerResult, interpreterResult) = BackendParityInfrastructure.RunBoth(dialectText, code);
+        BackendParityInfrastructure.AssertSemanticParity(compilerResult, interpreterResult);
+        return compilerResult.Value;
     }
 
     private static string EnsureSingleBackend(string dialectText, string backend)

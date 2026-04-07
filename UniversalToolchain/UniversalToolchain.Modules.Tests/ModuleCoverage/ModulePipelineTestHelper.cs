@@ -1,8 +1,8 @@
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
-using NumbersModule.Core;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
+using Tests.Infrastructure;
 
 namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 
@@ -70,43 +70,14 @@ internal sealed class ModulePipelineTestHelper : IDisposable
         return (compiler, interpreter);
     }
 
-    public static double AsNumber(object? value)
-        => value switch
-        {
-            RealNumberImpl n => n.GetValue(),
-            int i => i,
-            long l => l,
-            float f => f,
-            double d => d,
-            decimal m => (double)m,
-            _ => throw new InvalidCastException($"Cannot convert '{value?.GetType().Name ?? "null"}' to number.")
-        };
+    public static double AsNumber(object? value) => BackendParityInfrastructure.AsNumber(value);
 
-    public static bool AsBool(object? value)
-        => value switch
-        {
-            bool b => b,
-            int i => i != 0,
-            RealNumberImpl n => Math.Abs(n.GetValue()) > double.Epsilon,
-            _ => throw new InvalidCastException($"Cannot convert '{value?.GetType().Name ?? "null"}' to bool.")
-        };
+    public static bool AsBool(object? value) => BackendParityInfrastructure.AsBool(value);
 
     public static void AssertParity(object? compiler, object? interpreter)
-    {
-        if (compiler is null || interpreter is null)
-        {
-            Assert.That(compiler, Is.EqualTo(interpreter));
-            return;
-        }
-
-        if (compiler is bool || interpreter is bool)
-        {
-            Assert.That(AsBool(compiler), Is.EqualTo(AsBool(interpreter)));
-            return;
-        }
-
-        Assert.That(AsNumber(compiler), Is.EqualTo(AsNumber(interpreter)).Within(1e-9));
-    }
+        => BackendParityInfrastructure.AssertSemanticParity(
+            BackendExecutionResult.Success(compiler),
+            BackendExecutionResult.Success(interpreter));
 
     private static void AssertSemanticEqual(object? left, object? right)
     {
@@ -164,64 +135,28 @@ internal sealed class ModulePipelineTestHelper : IDisposable
 
     public void AssertFailsContaining(string code, IEnumerable<string> modules, string expectedFragment)
     {
-        Exception? compilerException = null;
-        Exception? interpreterException = null;
+        var dialectText = BuildDialectText("Inline", modules, null, ["compiler", "interpreter"]);
+        var (compilerResult, interpreterResult) = BackendParityInfrastructure.RunBoth(dialectText, code);
 
-        try
-        {
-            _ = ExecuteCompiler(code, modules);
-        }
-        catch (Exception ex)
-        {
-            compilerException = ex;
-        }
+        Assert.That(compilerResult.IsSuccess, Is.False);
+        Assert.That(interpreterResult.IsSuccess, Is.False);
 
-        try
-        {
-            _ = ExecuteInterpreter(code, modules);
-        }
-        catch (Exception ex)
-        {
-            interpreterException = ex;
-        }
-
-        Assert.That(compilerException, Is.Not.Null);
-        Assert.That(interpreterException, Is.Not.Null);
-
-        var comparableCompilerException = GetComparableException(compilerException!);
-        var comparableInterpreterException = GetComparableException(interpreterException!);
-        Assert.That(comparableCompilerException.ToString().Contains(expectedFragment, StringComparison.OrdinalIgnoreCase), Is.True);
-        Assert.That(comparableInterpreterException.ToString().Contains(expectedFragment, StringComparison.OrdinalIgnoreCase), Is.True);
+        var compilerExceptionText = GetComparableException(compilerResult.Exception!).ToString();
+        var interpreterExceptionText = GetComparableException(interpreterResult.Exception!).ToString();
+        Assert.That(compilerExceptionText.Contains(expectedFragment, StringComparison.OrdinalIgnoreCase), Is.True);
+        Assert.That(interpreterExceptionText.Contains(expectedFragment, StringComparison.OrdinalIgnoreCase), Is.True);
     }
 
     public void AssertCompilerAndInterpreterFailSameWay(string code, IEnumerable<string> modules)
     {
-        Exception? compilerException = null;
-        Exception? interpreterException = null;
+        var dialectText = BuildDialectText("Inline", modules, null, ["compiler", "interpreter"]);
+        var (compilerResult, interpreterResult) = BackendParityInfrastructure.RunBoth(dialectText, code);
 
-        try
-        {
-            _ = ExecuteCompiler(code, modules);
-        }
-        catch (Exception ex)
-        {
-            compilerException = ex;
-        }
+        Assert.That(compilerResult.IsSuccess, Is.False);
+        Assert.That(interpreterResult.IsSuccess, Is.False);
 
-        try
-        {
-            _ = ExecuteInterpreter(code, modules);
-        }
-        catch (Exception ex)
-        {
-            interpreterException = ex;
-        }
-
-        Assert.That(compilerException, Is.Not.Null);
-        Assert.That(interpreterException, Is.Not.Null);
-
-        var comparableCompilerException = GetComparableException(compilerException!);
-        var comparableInterpreterException = GetComparableException(interpreterException!);
+        var comparableCompilerException = GetComparableException(compilerResult.Exception!);
+        var comparableInterpreterException = GetComparableException(interpreterResult.Exception!);
         Assert.That(comparableCompilerException.GetType(), Is.EqualTo(comparableInterpreterException.GetType()));
         Assert.That(GetInvariantMessageFragment(comparableCompilerException.Message), Is.EqualTo(GetInvariantMessageFragment(comparableInterpreterException.Message)));
     }
