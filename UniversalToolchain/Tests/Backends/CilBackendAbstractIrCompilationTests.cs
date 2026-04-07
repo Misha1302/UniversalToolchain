@@ -9,28 +9,21 @@ public class CilBackendAbstractIrCompilationTests
     public void SupportedIntrinsics_HaveDescriptorCompileAndTypeHandlers_ForEveryPublishedName()
     {
         var compiler = new AbstractMethodsCompilerImpl();
-        var registryType = typeof(AbstractMethodsCompilerImpl).Assembly.GetType("BytecodeDynamicMethodsCompiler.Compilers.CilIntrinsicRegistry")!;
-        var descriptorType = typeof(AbstractMethodsCompilerImpl).Assembly.GetType("BytecodeDynamicMethodsCompiler.Compilers.CilIntrinsicDescriptor")!;
-        var registry = Activator.CreateInstance(registryType)!;
-        var getRequired = registryType.GetMethod("GetRequired", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)!;
-        var supportedByRegistry = (IReadOnlyList<string>)registryType.GetProperty("SupportedIntrinsics")!.GetValue(registry)!;
-        var descriptorName = descriptorType.GetProperty("Name")!;
-        var descriptorCompile = descriptorType.GetProperty("Compile")!;
-        var descriptorProcessTypes = descriptorType.GetProperty("ProcessTypes")!;
+        var registry = new CilIntrinsicRegistry();
 
-        Assert.That(compiler.SupportedIntrinsics, Is.EqualTo(supportedByRegistry));
+        Assert.That(compiler.SupportedIntrinsics, Is.EqualTo(registry.SupportedIntrinsics));
         Assert.That(compiler.SupportedIntrinsics.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(compiler.SupportedIntrinsics.Count));
 
         foreach (var intrinsicName in compiler.SupportedIntrinsics)
         {
-            var descriptor = getRequired.Invoke(registry, [intrinsicName]);
+            var descriptor = registry.GetRequired(intrinsicName);
 
             Assert.Multiple(() =>
             {
                 Assert.That(descriptor, Is.Not.Null, $"Intrinsic '{intrinsicName}' must resolve to a descriptor.");
-                Assert.That(descriptorName.GetValue(descriptor!), Is.EqualTo(intrinsicName), $"Descriptor name mismatch for intrinsic '{intrinsicName}'.");
-                Assert.That(descriptorCompile.GetValue(descriptor!), Is.Not.Null, $"Intrinsic '{intrinsicName}' must expose compile handling.");
-                Assert.That(descriptorProcessTypes.GetValue(descriptor!), Is.Not.Null, $"Intrinsic '{intrinsicName}' must expose type-stack handling.");
+                Assert.That(descriptor.Name, Is.EqualTo(intrinsicName), $"Descriptor name mismatch for intrinsic '{intrinsicName}'.");
+                Assert.That(descriptor.Compile, Is.Not.Null, $"Intrinsic '{intrinsicName}' must expose compile handling.");
+                Assert.That(descriptor.ProcessTypes, Is.Not.Null, $"Intrinsic '{intrinsicName}' must expose type-stack handling.");
             });
         }
     }
