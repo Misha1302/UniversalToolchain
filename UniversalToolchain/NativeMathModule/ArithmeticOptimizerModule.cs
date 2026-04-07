@@ -30,98 +30,8 @@ public class ArithmeticOptimizerModule : IIRProcessingModule
             return current;
         _isDecimalsSupported = _decimalModuleIntrinsics.All(x => compiler.SupportedIntrinsics.Contains(x));
 
-        InitializeAirTypes();
         current = OptimizeArithmetic(current);
         return current;
-    }
-
-    private void InitializeAirTypes()
-    {
-        // Регистрация интринсиков для целых чисел
-        foreach (var type in new[] { "i32", "i64" })
-        {
-            AirTypes.TryRegisterIntrinsic($"add_{type}", (_, stack) =>
-            {
-                stack.Pop();
-                stack.Pop();
-                stack.Push(GetTypeFromSuffix(type));
-            });
-            AirTypes.TryRegisterIntrinsic($"sub_{type}", (_, stack) =>
-            {
-                stack.Pop();
-                stack.Pop();
-                stack.Push(GetTypeFromSuffix(type));
-            });
-            AirTypes.TryRegisterIntrinsic($"mul_{type}", (_, stack) =>
-            {
-                stack.Pop();
-                stack.Pop();
-                stack.Push(GetTypeFromSuffix(type));
-            });
-            AirTypes.TryRegisterIntrinsic($"div_{type}", (_, stack) =>
-            {
-                stack.Pop();
-                stack.Pop();
-                stack.Push(GetTypeFromSuffix(type));
-            });
-        }
-
-        // Регистрация интринсиков для чисел с плавающей точкой
-        foreach (var type in new[] { "f32", "f64" })
-        {
-            AirTypes.TryRegisterIntrinsic($"add_{type}", (_, stack) =>
-            {
-                stack.Pop();
-                stack.Pop();
-                stack.Push(GetTypeFromSuffix(type));
-            });
-            AirTypes.TryRegisterIntrinsic($"sub_{type}", (_, stack) =>
-            {
-                stack.Pop();
-                stack.Pop();
-                stack.Push(GetTypeFromSuffix(type));
-            });
-            AirTypes.TryRegisterIntrinsic($"mul_{type}", (_, stack) =>
-            {
-                stack.Pop();
-                stack.Pop();
-                stack.Push(GetTypeFromSuffix(type));
-            });
-            AirTypes.TryRegisterIntrinsic($"div_{type}", (_, stack) =>
-            {
-                stack.Pop();
-                stack.Pop();
-                stack.Push(GetTypeFromSuffix(type));
-            });
-        }
-
-        if (_isDecimalsSupported)
-        {
-            AirTypes.TryRegisterIntrinsic("add_decimal", (_, stack) =>
-            {
-                stack.Pop();
-                stack.Pop();
-                stack.Push(typeof(decimal));
-            });
-            AirTypes.TryRegisterIntrinsic("sub_decimal", (_, stack) =>
-            {
-                stack.Pop();
-                stack.Pop();
-                stack.Push(typeof(decimal));
-            });
-            AirTypes.TryRegisterIntrinsic("mul_decimal", (_, stack) =>
-            {
-                stack.Pop();
-                stack.Pop();
-                stack.Push(typeof(decimal));
-            });
-            AirTypes.TryRegisterIntrinsic("div_decimal", (_, stack) =>
-            {
-                stack.Pop();
-                stack.Pop();
-                stack.Push(typeof(decimal));
-            });
-        }
     }
 
     private IAbstractIR OptimizeArithmetic(IAbstractIR air)
@@ -422,16 +332,6 @@ public class ArithmeticOptimizerModule : IIRProcessingModule
 
         return operation is not null && typeSuffix is not null ? $"{operation}_{typeSuffix}" : null;
     }
-
-    private Type GetTypeFromSuffix(string suffix) => suffix switch
-    {
-        "i32" => typeof(int),
-        "i64" => typeof(long),
-        "f32" => typeof(float),
-        "f64" => typeof(double),
-        "decimal" => typeof(decimal),
-        _ => Thrower.NotSupported<Type>($"Type suffix '{suffix}' is not supported.")
-    };
 
     private class CompilationContext
     {

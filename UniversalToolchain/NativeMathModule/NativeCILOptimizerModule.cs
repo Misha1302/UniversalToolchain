@@ -47,34 +47,7 @@ public class NativeCilOptimizerModule : IIRProcessingModule
             return current;
         _isDecimalsSupported = _decimalModuleIntrinsics.All(x => compiler.SupportedIntrinsics.Contains(x));
 
-        InitializeAirTypes();
         return OptimizeNativeLoads(current);
-    }
-
-    private void InitializeAirTypes()
-    {
-        AirTypes.TryRegisterIntrinsic(
-            "load_i32",
-            (_, stack) => stack.Push(typeof(int))
-        );
-        AirTypes.TryRegisterIntrinsic(
-            "load_i64",
-            (_, stack) => stack.Push(typeof(long))
-        );
-        AirTypes.TryRegisterIntrinsic(
-            "load_f32",
-            (_, stack) => stack.Push(typeof(float))
-        );
-        AirTypes.TryRegisterIntrinsic(
-            "load_f64",
-            (_, stack) => stack.Push(typeof(double))
-        );
-
-        if (_isDecimalsSupported)
-            AirTypes.TryRegisterIntrinsic(
-                "load_decimal",
-                (_, stack) => stack.Push(typeof(decimal))
-            );
     }
 
     private static void InitializeCilGenerators()

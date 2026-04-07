@@ -124,10 +124,7 @@ public class EGraphOptimizerModuleTests
             new Instruction(UOpCode.Intrinsic, ["add_i32"])
         ));
 
-        var stack = new List<Type>();
-        Assert.DoesNotThrow(() => optimized.Instructions.ManipulateTypesStack(stack, AirTypes.ProcessTypesIntrinsic));
-        Assert.That(stack, Has.Count.EqualTo(1));
-        Assert.That(stack[0], Is.EqualTo(typeof(int)));
+        Assert.That(CompileAndExecute(optimized), Is.EqualTo(5));
     }
 
     [Test]

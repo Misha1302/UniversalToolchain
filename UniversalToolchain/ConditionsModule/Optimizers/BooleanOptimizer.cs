@@ -18,39 +18,8 @@ public class BooleanOptimizerModule : IIRProcessingModule
         if (_standardModuleIntrinsics.Any(x => !compiler.SupportedIntrinsics.Contains(x)))
             return current;
 
-        InitializeAirTypes();
         var optimized = OptimizeNativeLoads(current);
         return OptimizeBooleanPeepholes(optimized);
-    }
-
-    private void InitializeAirTypes()
-    {
-        AirTypes.TryRegisterIntrinsic(
-            "boolean_and",
-            (_, stack) =>
-            {
-                stack.Pop();
-                stack.Pop();
-                stack.Push(typeof(bool));
-            }
-        );
-        AirTypes.TryRegisterIntrinsic(
-            "boolean_or",
-            (_, stack) =>
-            {
-                stack.Pop();
-                stack.Pop();
-                stack.Push(typeof(bool));
-            }
-        );
-        AirTypes.TryRegisterIntrinsic(
-            "boolean_not",
-            (_, stack) =>
-            {
-                stack.Pop();
-                stack.Push(typeof(bool));
-            }
-        );
     }
 
     private IAbstractIR OptimizeNativeLoads(IAbstractIR air)

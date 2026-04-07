@@ -31,8 +31,6 @@ public class ComparisonIntrinsicOptimizerModule : IIRProcessingModule
         if (_comparisonIntrinsics.Any(x => !compiler.SupportedIntrinsics.Contains(x)))
             return current;
 
-        InitializeAirTypes();
-
         var result = new AbstractIR();
         var optimized = new List<Instruction>();
         var stack = new List<Type>();
@@ -71,21 +69,21 @@ public class ComparisonIntrinsicOptimizerModule : IIRProcessingModule
         }
 
         if (instruction.UOpCode == UOpCode.Intrinsic)
-            AirTypes.ProcessTypesIntrinsic(instruction, stack);
-    }
-
-    private static void InitializeAirTypes()
-    {
-        foreach (var type in new[] { "i32", "i64", "f32", "f64" })
         {
-            foreach (var op in new[] { "eq", "ne", "gt", "ge", "lt", "le" })
+            if (instruction.Operands.Count == 0 || instruction.Operands[0] is not string intrinsicName)
+                return;
+
+            if (intrinsicName == "call C#")
             {
-                AirTypes.TryRegisterIntrinsic($"cmp_{op}_{type}", (_, stack) =>
-                {
-                    stack.Pop();
-                    stack.Pop();
-                    stack.Push(typeof(bool));
-                });
+                AirTypes.ProcessTypesIntrinsic(instruction, stack);
+                return;
+            }
+
+            if (intrinsicName.StartsWith("cmp_", StringComparison.Ordinal))
+            {
+                stack.Pop();
+                stack.Pop();
+                stack.Push(typeof(bool));
             }
         }
     }

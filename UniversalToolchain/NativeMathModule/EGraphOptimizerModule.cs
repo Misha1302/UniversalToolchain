@@ -19,8 +19,6 @@ public class EGraphOptimizerModule : IIRProcessingModule
         if (_supportedArithmeticIntrinsics.Any(x => !compiler.SupportedIntrinsics.Contains(x)))
             return current;
 
-        RegisterAirTypes();
-
         var source = current.Instructions.ToList();
         var optimized = new List<Instruction>();
 
@@ -499,42 +497,6 @@ public class EGraphOptimizerModule : IIRProcessingModule
                         : Thrower.InvalidOpEx<string>("Unsupported expression type");
 
         return $"{prefix}_{suffix}";
-    }
-
-    private static void RegisterAirTypes()
-    {
-        RegisterType("i32", typeof(int));
-        RegisterType("i64", typeof(long));
-        RegisterType("f32", typeof(float));
-        RegisterType("f64", typeof(double));
-    }
-
-    private static void RegisterType(string suffix, Type type)
-    {
-        AirTypes.TryRegisterIntrinsic($"add_{suffix}", (_, stack) =>
-        {
-            stack.Pop();
-            stack.Pop();
-            stack.Push(type);
-        });
-        AirTypes.TryRegisterIntrinsic($"sub_{suffix}", (_, stack) =>
-        {
-            stack.Pop();
-            stack.Pop();
-            stack.Push(type);
-        });
-        AirTypes.TryRegisterIntrinsic($"mul_{suffix}", (_, stack) =>
-        {
-            stack.Pop();
-            stack.Pop();
-            stack.Push(type);
-        });
-        AirTypes.TryRegisterIntrinsic($"div_{suffix}", (_, stack) =>
-        {
-            stack.Pop();
-            stack.Pop();
-            stack.Push(type);
-        });
     }
 
     private enum ExprOp

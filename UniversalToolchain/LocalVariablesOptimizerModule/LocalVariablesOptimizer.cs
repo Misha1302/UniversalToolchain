@@ -19,7 +19,6 @@ public class LocalVariablesOptimizer : IIRProcessingModule
         if (!_intrinsics.All(x => compiler.SupportedIntrinsics.Contains(x)))
             return current;
 
-        InitIntrinsics();
         var optimized = OptimizeVariables(current);
         var instructions = optimized.Instructions.ToList();
         var changed = RemoveRedundantLocalRoundtrips(instructions);
@@ -29,22 +28,6 @@ public class LocalVariablesOptimizer : IIRProcessingModule
         var result = new AbstractIR();
         result.AppendInstructions(instructions);
         return result;
-    }
-
-    private void InitIntrinsics()
-    {
-        AirTypes.TryRegisterIntrinsic(
-            "store_local",
-            (_, stack) => stack.Pop()
-        );
-        AirTypes.TryRegisterIntrinsic(
-            "load_local",
-            (instruction, stack) => stack.Push(instruction.Operands[2].Get<Type>())
-        );
-        AirTypes.TryRegisterIntrinsic(
-            "load_local_ref",
-            (instruction, stack) => stack.Push(typeof(VariableReference<>).MakeGenericType(instruction.Operands[2].Get<Type>()))
-        );
     }
 
     private IAbstractIR OptimizeVariables(IAbstractIR air)
