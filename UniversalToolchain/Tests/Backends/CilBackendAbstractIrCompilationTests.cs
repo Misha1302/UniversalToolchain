@@ -77,6 +77,24 @@ public class CilBackendAbstractIrCompilationTests
     }
 
     [Test]
+    public void LoadLocalRef_WithRefCall_UsesBackendTypeSimulation()
+    {
+        var incrementRef = typeof(CilBackendAbstractIrCompilationTests)
+            .GetMethod(nameof(IncrementRef), BindingFlags.NonPublic | BindingFlags.Static);
+
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [41]),
+            new Instruction(UOpCode.Intrinsic, ["store_local", "x", typeof(int)]),
+            new Instruction(UOpCode.Intrinsic, ["load_local_ref", "x", typeof(int)]),
+            new Instruction(UOpCode.Intrinsic, ["call C#", incrementRef!])
+        );
+
+        var result = CompileAndExecute(ir);
+
+        Assert.That(result, Is.EqualTo(42));
+    }
+
+    [Test]
     public void ComparisonIntrinsicI32_ProducesCorrectResult()
     {
         var ir = BuildIr(
@@ -205,6 +223,12 @@ public class CilBackendAbstractIrCompilationTests
     }
 
     private static int AddOne(int value) => value + 1;
+
+    private static int IncrementRef(ref int value)
+    {
+        value++;
+        return value;
+    }
 
     private static int CombineDigits(int acc, int nextDigit) => acc * 10 + nextDigit;
 

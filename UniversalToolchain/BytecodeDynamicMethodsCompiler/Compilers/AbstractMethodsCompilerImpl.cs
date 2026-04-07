@@ -3,6 +3,7 @@ namespace BytecodeDynamicMethodsCompiler.Compilers;
 public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
 {
     private readonly AbstractMethodsIntrinsicCompiler _intrinsicCompiler = new();
+    private readonly CilAbstractIrTypeSimulator _typeSimulator = new();
 
     public IReadOnlyList<string> SupportedIntrinsics => _intrinsicCompiler.SupportedIntrinsics;
 
@@ -45,46 +46,14 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
         il.Ret();
     }
 
-    private static Type GetReturnType(IAbstractIR air)
+    private Type GetReturnType(IAbstractIR air)
     {
-        var stack = new List<Type>();
-        var labelStacks = new Dictionary<Guid, List<Type>>();
-
-        foreach (var instruction in air.Instructions)
-        {
-            if (instruction.UOpCode == UOpCode.Label)
-            {
-                var labelId = instruction.Operands[0].Get<Guid>();
-                if (labelStacks.TryGetValue(labelId, out var saved))
-                {
-                    stack.Clear();
-                    stack.AddRange(saved);
-                }
-            }
-
-            instruction.ManipulateTypesStack(stack, AirTypes.ProcessTypesIntrinsic);
-            ProcessBranchingStack(instruction, stack, labelStacks);
-        }
-
+        var stack = _typeSimulator.Simulate(air.Instructions);
         return stack.Count > 0 ? stack[^1] : typeof(void);
-    }
-
-    private static void ProcessBranchingStack(
-        Instruction instruction,
-        List<Type> stack,
-        Dictionary<Guid, List<Type>> labelStacks
-    )
-    {
-        if (!instruction.UOpCode.IsAnyJump())
-            return;
-
-        var labelId = instruction.Operands[0].Get<Guid>();
-        labelStacks[labelId] = new List<Type>(stack);
     }
 
     private static void InitializeLabels(CompilationContext context, IAbstractIR bytecode)
     {
-        var typesStack = new List<Type>();
         foreach (var instruction in bytecode.Instructions)
         {
             if (instruction.UOpCode == UOpCode.Label)
@@ -92,8 +61,6 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
                 var id = instruction.Operands[0].Get<Guid>();
                 context.InstructionLabels[id] = context.Il.DefineLabel($"Instruction {id}");
             }
-
-            instruction.ManipulateTypesStack(typesStack, AirTypes.ProcessTypesIntrinsic);
         }
     }
 

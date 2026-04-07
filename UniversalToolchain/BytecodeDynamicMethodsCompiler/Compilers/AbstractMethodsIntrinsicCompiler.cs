@@ -26,8 +26,14 @@ internal sealed class AbstractMethodsIntrinsicCompiler
         descriptor.Compile(context, instruction, stack);
     }
 
-    internal static void ProcessTypesNoOp(Instruction instruction, List<Type> stack)
+    public void ProcessTypes(Instruction instruction, List<Type> stack)
     {
+        Thrower.AssertAlways(instruction.UOpCode == UOpCode.Intrinsic);
+        Thrower.AssertAlways(instruction.Operands[0] is string);
+
+        var name = instruction.Operands[0].Get<string>();
+        var descriptor = _registry.GetRequired(name);
+        descriptor.ProcessTypes(instruction, stack);
     }
 
     internal static void CompileCallCSharp(CompilationContext context, Instruction instruction, List<Type> stack)
@@ -53,6 +59,26 @@ internal sealed class AbstractMethodsIntrinsicCompiler
             stack.Push(method.ReturnType);
     }
 
+    internal static void ProcessTypesCallCSharp(Instruction instruction, List<Type> stack)
+    {
+        var method = instruction.Operands[1].Get<MethodInfo>();
+        Thrower.AssertAlways(method.DeclaringType != null);
+
+        var parametersCount = method.GetParameters().Length;
+        var stackTypes = stack.TakeLast(parametersCount).ToList();
+        var targetTypes = GenericTypeResolver.GetParameterTypes(method, stackTypes).ToList();
+        if (!method.IsStatic)
+        {
+            targetTypes.Insert(0, method.DeclaringType);
+        }
+
+        method = GenericTypeResolver.MakeGenericMethod(method, targetTypes);
+
+        PopMany(stack, targetTypes.Count);
+        if (method.ReturnType != typeof(void))
+            stack.Push(method.ReturnType);
+    }
+
     internal static void CompileCallCSharpCtor(CompilationContext context, Instruction instruction, List<Type> stack)
     {
         var ctor = instruction.Operands[1].Get<ConstructorInfo>();
@@ -65,6 +91,15 @@ internal sealed class AbstractMethodsIntrinsicCompiler
         context.Il.Newobj(ctor);
 
         PopMany(stack, targetTypes.Count);
+        stack.Push(ctor.DeclaringType);
+    }
+
+    internal static void ProcessTypesCallCSharpCtor(Instruction instruction, List<Type> stack)
+    {
+        var ctor = instruction.Operands[1].Get<ConstructorInfo>();
+        Thrower.AssertAlways(ctor.DeclaringType != null);
+
+        PopMany(stack, ctor.GetParameters().Length);
         stack.Push(ctor.DeclaringType);
     }
 
@@ -81,6 +116,12 @@ internal sealed class AbstractMethodsIntrinsicCompiler
         stack.Pop();
     }
 
+    internal static void ProcessTypesStoreLocal(Instruction instruction, List<Type> stack)
+    {
+        Thrower.AssertAlways(stack.Count >= 1, $"Not enough values on stack for {instruction.Operands[0].Get<string>()}");
+        stack.Pop();
+    }
+
     internal static void CompileLoadLocal(CompilationContext context, Instruction instruction, List<Type> stack)
     {
         var varName = instruction.Operands[1].Get<string>();
@@ -94,12 +135,24 @@ internal sealed class AbstractMethodsIntrinsicCompiler
         stack.Push(varType);
     }
 
+    internal static void ProcessTypesLoadLocal(Instruction instruction, List<Type> stack)
+    {
+        var varType = instruction.Operands[2].Get<Type>();
+        stack.Push(varType);
+    }
+
     internal static void CompileLoadLocalRef(CompilationContext context, Instruction instruction, List<Type> stack)
     {
         var varName = instruction.Operands[1].Get<string>();
         var varType = instruction.Operands[2].Get<Type>();
 
         context.Il.Ldloca(context.GetOrCreateLocal(varName, varType, true));
+        stack.Push(varType.MakeByRefType());
+    }
+
+    internal static void ProcessTypesLoadLocalRef(Instruction instruction, List<Type> stack)
+    {
+        var varType = instruction.Operands[2].Get<Type>();
         stack.Push(varType.MakeByRefType());
     }
 
@@ -111,10 +164,22 @@ internal sealed class AbstractMethodsIntrinsicCompiler
         stack.Push(varType);
     }
 
+    internal static void ProcessTypesLoadExternal(Instruction instruction, List<Type> stack)
+    {
+        var varType = instruction.Operands[2].Get<Type>();
+        stack.Push(varType);
+    }
+
     internal static void CompileStoreExternal(CompilationContext context, Instruction instruction, List<Type> stack)
     {
         var slot = instruction.Operands[1].Get<int>();
         context.Il.Starg(slot);
+        stack.Pop();
+    }
+
+    internal static void ProcessTypesStoreExternal(Instruction instruction, List<Type> stack)
+    {
+        Thrower.AssertAlways(stack.Count >= 1, $"Not enough values on stack for {instruction.Operands[0].Get<string>()}");
         stack.Pop();
     }
 
@@ -126,10 +191,21 @@ internal sealed class AbstractMethodsIntrinsicCompiler
         stack.Push(typeof(bool));
     }
 
+    internal static void ProcessTypesLoadBool(Instruction instruction, List<Type> stack)
+    {
+        stack.Push(typeof(bool));
+    }
+
     internal static void CompileBooleanAnd(CompilationContext context, Instruction instruction, List<Type> stack)
     {
         EnsureBinaryBoolOperands(stack, instruction.Operands[0].Get<string>());
         context.Il.And();
+        PopTwoPush(stack, typeof(bool));
+    }
+
+    internal static void ProcessTypesBooleanAnd(Instruction instruction, List<Type> stack)
+    {
+        EnsureBinaryBoolOperands(stack, instruction.Operands[0].Get<string>());
         PopTwoPush(stack, typeof(bool));
     }
 
@@ -140,6 +216,12 @@ internal sealed class AbstractMethodsIntrinsicCompiler
         PopTwoPush(stack, typeof(bool));
     }
 
+    internal static void ProcessTypesBooleanOr(Instruction instruction, List<Type> stack)
+    {
+        EnsureBinaryBoolOperands(stack, instruction.Operands[0].Get<string>());
+        PopTwoPush(stack, typeof(bool));
+    }
+
     internal static void CompileBooleanNot(CompilationContext context, Instruction instruction, List<Type> stack)
     {
         Thrower.AssertAlways(stack.Count >= 1, $"Not enough values on stack for {instruction.Operands[0].Get<string>()}");
@@ -147,6 +229,15 @@ internal sealed class AbstractMethodsIntrinsicCompiler
 
         context.Il.Ldc_I4(1);
         context.Il.Xor();
+        stack.Pop();
+        stack.Push(typeof(bool));
+    }
+
+    internal static void ProcessTypesBooleanNot(Instruction instruction, List<Type> stack)
+    {
+        Thrower.AssertAlways(stack.Count >= 1, $"Not enough values on stack for {instruction.Operands[0].Get<string>()}");
+        Thrower.AssertAlways(stack[^1] == typeof(bool), "Expected boolean operand");
+
         stack.Pop();
         stack.Push(typeof(bool));
     }
@@ -195,6 +286,12 @@ internal sealed class AbstractMethodsIntrinsicCompiler
         Thrower.InvalidOpEx($"Unknown native number loading {name}");
     }
 
+    internal static void ProcessTypesLoadNativeNumber(Instruction instruction, List<Type> stack)
+    {
+        var name = instruction.Operands[0].Get<string>();
+        stack.Push(GetLoadIntrinsicType(name));
+    }
+
     private static void EmitDecimalLiteral(GroboIL il, decimal value)
     {
         var bits = decimal.GetBits(value);
@@ -214,24 +311,32 @@ internal sealed class AbstractMethodsIntrinsicCompiler
     internal static void CompileArithmeticIntrinsic(CompilationContext context, Instruction instruction, List<Type> stack)
     {
         var name = instruction.Operands[0].Get<string>();
-        var parts = name.Split('_');
-        var operation = parts[0];
-        var typeStr = parts[1];
+        var (_, operation, operandType) = ParseIntrinsicSignature(name);
 
         Thrower.AssertAlways(stack.Count >= 2, $"Not enough values on stack for binary operation {name}");
 
-        if (typeStr == "decimal")
+        if (operandType == typeof(decimal))
         {
             CompileDecimalArithmetic(context.Il, operation);
             PopTwoPush(stack, typeof(decimal));
             return;
         }
 
-        var resultType = GetTypeFromString(typeStr);
-        Thrower.AssertAlways(stack[^1] == resultType && stack[^2] == resultType, $"Type mismatch for operation {name}");
+        Thrower.AssertAlways(stack[^1] == operandType && stack[^2] == operandType, $"Type mismatch for operation {name}");
 
         CompilePrimitiveArithmetic(context.Il, operation);
-        PopTwoPush(stack, resultType);
+        PopTwoPush(stack, operandType);
+    }
+
+    internal static void ProcessTypesArithmeticIntrinsic(Instruction instruction, List<Type> stack)
+    {
+        var name = instruction.Operands[0].Get<string>();
+        var (_, _, operandType) = ParseIntrinsicSignature(name);
+
+        Thrower.AssertAlways(stack.Count >= 2, $"Not enough values on stack for binary operation {name}");
+        Thrower.AssertAlways(stack[^1] == operandType && stack[^2] == operandType, $"Type mismatch for operation {name}");
+
+        PopTwoPush(stack, operandType);
     }
 
     private static void CompileDecimalArithmetic(GroboIL il, string operation)
@@ -280,16 +385,24 @@ internal sealed class AbstractMethodsIntrinsicCompiler
     internal static void CompileComparisonIntrinsic(CompilationContext context, Instruction instruction, List<Type> stack)
     {
         var name = instruction.Operands[0].Get<string>();
-        var parts = name.Split('_');
-        var operation = parts[1];
-        var typeStr = parts[2];
+        var (_, operation, operandType) = ParseIntrinsicSignature(name);
 
         Thrower.AssertAlways(stack.Count >= 2, $"Not enough values on stack for comparison {name}");
 
-        var operandType = GetTypeFromString(typeStr);
         Thrower.AssertAlways(stack[^1] == operandType && stack[^2] == operandType, $"Type mismatch for operation {name}");
 
         CompilePrimitiveComparison(context.Il, operation);
+        PopTwoPush(stack, typeof(bool));
+    }
+
+    internal static void ProcessTypesComparisonIntrinsic(Instruction instruction, List<Type> stack)
+    {
+        var name = instruction.Operands[0].Get<string>();
+        var (_, _, operandType) = ParseIntrinsicSignature(name);
+
+        Thrower.AssertAlways(stack.Count >= 2, $"Not enough values on stack for comparison {name}");
+        Thrower.AssertAlways(stack[^1] == operandType && stack[^2] == operandType, $"Type mismatch for operation {name}");
+
         PopTwoPush(stack, typeof(bool));
     }
 
@@ -346,6 +459,34 @@ internal sealed class AbstractMethodsIntrinsicCompiler
 
         Thrower.InvalidOpEx($"Unsupported type string: {typeStr}");
         return typeof(void);
+    }
+
+    private static Type GetLoadIntrinsicType(string name)
+    {
+        return name switch
+        {
+            "load_i32" => typeof(int),
+            "load_i64" => typeof(long),
+            "load_f32" => typeof(float),
+            "load_f64" => typeof(double),
+            "load_decimal" => typeof(decimal),
+            _ => Thrower.InvalidOpEx<Type>($"Unknown native number loading {name}")
+        };
+    }
+
+    private static (string Family, string Operation, Type OperandType) ParseIntrinsicSignature(string name)
+    {
+        var parts = name.Split('_');
+        Thrower.AssertAlways(parts.Length >= 2, $"Unsupported intrinsic name format: {name}");
+
+        if (parts[0] == "cmp")
+        {
+            Thrower.AssertAlways(parts.Length == 3, $"Unsupported comparison intrinsic name format: {name}");
+            return ("cmp", parts[1], GetTypeFromString(parts[2]));
+        }
+
+        Thrower.AssertAlways(parts.Length == 2, $"Unsupported intrinsic name format: {name}");
+        return (parts[0], parts[0], GetTypeFromString(parts[1]));
     }
 
     private static void CastValuesToTypes(GroboIL il, IReadOnlyList<Type> targetTypes, IReadOnlyList<Type> stackTypes)
