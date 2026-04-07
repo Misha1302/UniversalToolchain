@@ -18,7 +18,7 @@ public class ExampleRunner
         var composition = workflow.ComposeText(
             """
             dialect ExampleNative
-            use Whitespaces,SemicolonAsNewLine,Comments,Numbers,Identifier,Arithmetic,NativeTypes,Equality,Conditions,Loops,Variables,Scopes,Labels,InternalPreprocessorLexemes,CSharpInterop
+            use Whitespaces,SemicolonAsNewLine,Comments,Numbers,Identifier,Arithmetic,NativeMath,Equality,Conditions,Loops,Variables,Scopes,Labels,InternalPreprocessorLexemes,CSharpInterop
             enable LocalVariablesOptimization
             backend compiler,interpreter
             """,

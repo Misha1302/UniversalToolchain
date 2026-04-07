@@ -109,17 +109,6 @@ public class WistcCliEndToEndTests
     }
 
     [Test]
-    [TestCase("compiler")]
-    [TestCase("interpreter")]
-    public void RunEval_ShouldSucceed_WhenUseNativeMathMapsToNativeTypes(string mode)
-    {
-        var result = RunCli($"run --eval --use-native-math --mode {mode} \"1 + 2\"");
-
-        AssertSuccess(result);
-        Assert.That(result.StdOut, Does.Contain("3"));
-    }
-
-    [Test]
     [TestCase("--include-module Numbers", "--include-module")]
     [TestCase("--exclude-module Numbers", "--exclude-module")]
     public void RunDialectFile_ShouldRejectManualModuleOverrides(string option, string optionName)

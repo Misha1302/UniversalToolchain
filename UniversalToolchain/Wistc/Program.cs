@@ -175,7 +175,7 @@ WistDialectExecutionHost CreateDefaultHost(CommonOptions options)
     };
 
     if (options.UseNativeMath)
-        modules.Add("NativeTypes");
+        modules.Add("NativeMath");
 
     if (options.IncludeModules != null)
         modules.AddRange(options.IncludeModules.Select(x => x.Trim()).Where(x => !string.IsNullOrWhiteSpace(x)));
