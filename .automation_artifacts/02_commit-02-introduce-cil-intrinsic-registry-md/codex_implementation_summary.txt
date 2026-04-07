@@ -1,0 +1,17 @@
+Implemented an explicit CIL intrinsic registry so the backend now has one source of truth for intrinsic compile semantics and supported intrinsic names. `AbstractMethodsIntrinsicCompiler` is now a thin executor over registry descriptors, and arithmetic/comparison families are registered through the registry instead of being inferred from separate hardcoded lists.
+
+Files changed:
+- [AbstractMethodsIntrinsicCompiler.cs](/home/micodiy/razakov/sharp/Wist2/UniversalToolchain/BytecodeDynamicMethodsCompiler/Compilers/AbstractMethodsIntrinsicCompiler.cs)
+- [CilIntrinsicDescriptor.cs](/home/micodiy/razakov/sharp/Wist2/UniversalToolchain/BytecodeDynamicMethodsCompiler/Compilers/CilIntrinsicDescriptor.cs)
+- [CilIntrinsicRegistry.cs](/home/micodiy/razakov/sharp/Wist2/UniversalToolchain/BytecodeDynamicMethodsCompiler/Compilers/CilIntrinsicRegistry.cs)
+- [CilBackendAbstractIrCompilationTests.cs](/home/micodiy/razakov/sharp/Wist2/UniversalToolchain/Tests/Backends/CilBackendAbstractIrCompilationTests.cs)
+
+Validated:
+- `dotnet build UniversalToolchain/Wist.sln -c Release -maxcpucount:1 -nodeReuse:false` passed.
+- Added a test asserting `SupportedIntrinsics` is unique, sorted, and still includes representative registered intrinsics/families.
+- `dotnet test` could not run in this sandbox because `vstest` failed on a socket permission error.
+
+Remaining risk or uncertainty:
+- `ProcessTypes` is intentionally present but still wired as a placeholder on descriptors, since migrating AIR type simulation was explicitly out of scope for this commit.
+- The sandbox prevented executing the test suite, so runtime verification is limited to a successful compile plus code review of the registry wiring.
+

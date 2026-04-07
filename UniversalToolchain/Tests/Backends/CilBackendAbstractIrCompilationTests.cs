@@ -4,6 +4,22 @@ namespace Tests.Infrastructure;
 public class CilBackendAbstractIrCompilationTests
 {
     [Test]
+    public void SupportedIntrinsics_AreUniqueSortedAndIncludeRegisteredFamilies()
+    {
+        var compiler = new AbstractMethodsCompilerImpl();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(compiler.SupportedIntrinsics, Is.Ordered.Using<string>(StringComparer.Ordinal));
+            Assert.That(compiler.SupportedIntrinsics.Distinct(StringComparer.Ordinal), Is.EqualTo(compiler.SupportedIntrinsics));
+            Assert.That(compiler.SupportedIntrinsics, Does.Contain("call C#"));
+            Assert.That(compiler.SupportedIntrinsics, Does.Contain("load_decimal"));
+            Assert.That(compiler.SupportedIntrinsics, Does.Contain("add_decimal"));
+            Assert.That(compiler.SupportedIntrinsics, Does.Contain("cmp_le_f64"));
+        });
+    }
+
+    [Test]
     public void LocalStoreAndLoad_WithStaticCall_ProducesCorrectResult()
     {
         var addOneMethod = typeof(CilBackendAbstractIrCompilationTests)
