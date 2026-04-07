@@ -1,4 +1,5 @@
 using UniversalToolchain.Dialects.Wist;
+using Tests.Infrastructure;
 
 namespace Tests.Legacy;
 
@@ -64,18 +65,30 @@ public abstract class LegacyTestBase
     internal T ExecuteCode<T>(string code)
     {
         var result = ExecuteCode(code);
-        return (T)CastType(result, typeof(T))!;
+        return BackendValueNormalizer.ConvertTo<T>(result);
     }
 
     private static object? CastType(object value, Type t)
     {
-        if (value.GetType() == t)
-            return value;
+        var normalized = BackendValueNormalizer.Normalize(value);
 
-        if (value is int i && t == typeof(bool))
-            return i == 1;
+        if (normalized is null)
+            return t == typeof(object) ? null : Thrower.InvalidCast<object?>($"Cannot convert test result from type {value.GetType()} to {t}.");
 
-        return Thrower.InvalidCast<object?>($"Cannot convert test result from type {value.GetType()} to {t}.");
+        if (t.IsInstanceOfType(normalized))
+            return normalized;
+
+        if (normalized is IConvertible convertible)
+            return Convert.ChangeType(convertible, t);
+
+        try
+        {
+            return Convert.ChangeType(normalized, t);
+        }
+        catch (Exception)
+        {
+            return Thrower.InvalidCast<object?>($"Cannot convert test result from type {value.GetType()} to {t}.");
+        }
     }
 
     protected T CreateCore<T>() where T : ICoreRunnable

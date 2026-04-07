@@ -1,6 +1,5 @@
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
-using NumbersModule.Core;
 using UniversalToolchain.Dialects.Wist;
 
 namespace Tests.Infrastructure;
@@ -32,7 +31,7 @@ public static class BackendParityInfrastructure
 
         if (compilerResult.IsSuccess)
         {
-            AssertValuesEqual(compilerResult.Value, interpreterResult.Value);
+            BackendResultAssertions.AssertEquivalent(compilerResult.Value, interpreterResult.Value);
             return;
         }
 
@@ -42,33 +41,6 @@ public static class BackendParityInfrastructure
         Assert.That(compilerException.GetType().FullName, Is.EqualTo(interpreterException.GetType().FullName));
         Assert.That(compilerException.Message, Is.EqualTo(interpreterException.Message));
     }
-
-    /// <summary>
-    /// Converts backend values into a numeric representation.
-    /// </summary>
-    public static double AsNumber(object? value)
-        => value switch
-        {
-            RealNumberImpl n => n.GetValue(),
-            int i => i,
-            long l => l,
-            float f => f,
-            double d => d,
-            decimal m => (double)m,
-            _ => throw new InvalidCastException($"Cannot convert '{value?.GetType().Name ?? "null"}' to number.")
-        };
-
-    /// <summary>
-    /// Converts backend values into a boolean representation.
-    /// </summary>
-    public static bool AsBool(object? value)
-        => value switch
-        {
-            bool b => b,
-            int i => i != 0,
-            RealNumberImpl n => Math.Abs(n.GetValue()) > double.Epsilon,
-            _ => throw new InvalidCastException($"Cannot convert '{value?.GetType().Name ?? "null"}' to bool.")
-        };
 
     /// <summary>
     /// Executes a backend function and captures success/failure in <see cref="BackendExecutionResult"/>.
@@ -110,23 +82,6 @@ public static class BackendParityInfrastructure
 
         lines.Add($"backend {backend}");
         return string.Join(Environment.NewLine, lines);
-    }
-
-    private static void AssertValuesEqual(object? left, object? right)
-    {
-        if (left is null || right is null)
-        {
-            Assert.That(left, Is.EqualTo(right));
-            return;
-        }
-
-        if (left is bool || right is bool)
-        {
-            Assert.That(AsBool(left), Is.EqualTo(AsBool(right)));
-            return;
-        }
-
-        Assert.That(AsNumber(left), Is.EqualTo(AsNumber(right)).Within(1e-9));
     }
 }
 

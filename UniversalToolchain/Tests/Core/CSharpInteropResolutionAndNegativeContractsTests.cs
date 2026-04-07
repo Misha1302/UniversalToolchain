@@ -1,6 +1,5 @@
 using AssemblyFinder;
 using CommonExceptions;
-using NumbersModule.Core;
 using Tests.Infrastructure;
 
 namespace Tests.Core;
@@ -81,23 +80,7 @@ public class CSharpInteropResolutionAndNegativeContractsTests
         if (!compilerResult.IsSuccess)
             throw compilerResult.Exception!;
 
-        var value = compilerResult.Value ?? throw new InvalidOperationException("Cannot cast null test result.");
-        if (value is T typed)
-            return typed;
-
-        if (value is int i && typeof(T) == typeof(bool))
-            return (T)(object)(i == 1);
-
-        if (value is IConvertible convertible)
-            return (T)Convert.ChangeType(convertible, typeof(T));
-
-        if (value.GetType().FullName == typeof(RealNumberImpl).FullName)
-        {
-            var numberValue = (double)value.GetType().GetMethod("GetValue")!.Invoke(value, null)!;
-            return (T)Convert.ChangeType(numberValue, typeof(T));
-        }
-
-        throw new InvalidOperationException($"Cannot cast test result from {value.GetType().FullName} to {typeof(T).FullName}.");
+        return BackendValueNormalizer.ConvertTo<T>(compilerResult.Value);
     }
 
 }

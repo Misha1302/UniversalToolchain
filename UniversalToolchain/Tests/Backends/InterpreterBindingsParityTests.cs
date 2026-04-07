@@ -260,7 +260,7 @@ public class InterpreterBindingsParityTests
         var interpreterResult = BackendExecutionResult.Success(ParityBackendExecutionAdapter.RunCompiled(host, "interpreter", code, declared, mappedArguments));
 
         BackendParityInfrastructure.AssertSemanticParity(compilerResult, interpreterResult);
-        return (BackendParityInfrastructure.AsNumber(compilerResult.Value), BackendParityInfrastructure.AsNumber(interpreterResult.Value));
+        return (BackendValueNormalizer.ConvertTo<double>(compilerResult.Value), BackendValueNormalizer.ConvertTo<double>(interpreterResult.Value));
     }
 
     private static void AssertDeterministicParity(string code, OrderedDictionary<string, Type> declared, IReadOnlyList<NamedArgument> arguments)
@@ -275,8 +275,8 @@ public class InterpreterBindingsParityTests
 
         if (first.CompilerOutcome.IsSuccess)
         {
-            Assert.That(BackendParityInfrastructure.AsNumber(first.CompilerOutcome.Value),
-                Is.EqualTo(BackendParityInfrastructure.AsNumber(second.CompilerOutcome.Value)).Within(1e-9));
+            Assert.That(BackendValueNormalizer.ConvertTo<double>(first.CompilerOutcome.Value),
+                Is.EqualTo(BackendValueNormalizer.ConvertTo<double>(second.CompilerOutcome.Value)).Within(1e-9));
             return;
         }
 
