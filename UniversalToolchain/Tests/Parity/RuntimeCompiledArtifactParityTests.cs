@@ -1,5 +1,4 @@
 using System.Collections.Specialized;
-using System.Reflection.Emit;
 using Tests.Infrastructure;
 
 namespace Tests.Parity;
@@ -17,11 +16,11 @@ public class RuntimeCompiledArtifactParityTests
             ["y"] = typeof(object)
         };
 
-        ICompiledArtifact<DynamicMethod> compilerArtifact = RuntimeCompiledArtifactTestFactory.GetCompilerCore(host).Compile("x", declared);
-        ICompiledArtifact<IAbstractIR> interpreterArtifact = RuntimeCompiledArtifactTestFactory.GetInterpreterCore(host).Compile("x", declared);
+        var compilerArtifact = ParityBackendExecutionAdapter.CompileSnapshot(host, "compiler", "x", declared);
+        var interpreterArtifact = ParityBackendExecutionAdapter.CompileSnapshot(host, "interpreter", "x", declared);
 
-        Assert.That(compilerArtifact.DeclaredBindings.Select(static b => b.Name),
-            Is.EqualTo(interpreterArtifact.DeclaredBindings.Select(static b => b.Name)));
+        Assert.That(compilerArtifact.DeclaredBindingNames,
+            Is.EqualTo(interpreterArtifact.DeclaredBindingNames));
         Assert.That(compilerArtifact.SlotsByName, Is.EqualTo(interpreterArtifact.SlotsByName));
     }
 }
