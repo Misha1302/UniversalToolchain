@@ -31,6 +31,24 @@ dotnet test UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolch
 - If behavior changes, add or update tests in the same change.
 - If structure/behavior meaningfully changes, update docs in the same change.
 
+## Test suite rules
+
+- New tests must not inherit from `LegacyTestBase`.
+- Backend-specific checks belong in `Tests/Backends`.
+- Public behavior tests belong in `Tests/Core`.
+- Implementation-detail checks belong in `Tests/Internal`.
+- Reusable helpers belong in `Tests/Infrastructure`.
+- Repetition and parallel stability checks belong in `Tests/Stress`.
+- Historical or quarantine tests must live in an explicit legacy project or `Tests/Legacy`.
+- New explicit single-backend tests must use `DialectTestHostInfrastructure`.
+- Backend parity checks must use `BackendParityInfrastructure`.
+- Do not leave inactive tests hidden behind `<Compile Remove=...>` in the active project.
+- Prefer explicit internal contracts via `InternalsVisibleTo("Tests")` over reflection with type-name strings.
+- Avoid hidden backend result casts inside fixtures.
+- Avoid mixing unrelated concerns in one fixture.
+
+This cleanup did not tighten negative assertions. It focused on structure, isolation, and maintainability so future test changes stay easier to reason about and review.
+
 ## Documentation quality
 
 - Keep docs aligned with real implementation.

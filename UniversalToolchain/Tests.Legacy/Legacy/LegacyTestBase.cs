@@ -3,6 +3,7 @@ using Tests.Infrastructure;
 
 namespace Tests.Legacy;
 
+// Temporary legacy adapter. Do not use in new tests.
 [TestFixture]
 // Legacy-only base for smoke/regression scenarios. New tests must use DialectTestHostInfrastructure + BackendParityInfrastructure.
 [Obsolete("LegacyTestBase is temporary and allowed only for legacy smoke/parity-smoke scenarios. New tests must use DialectTestHostInfrastructure or BackendParityInfrastructure.")]
