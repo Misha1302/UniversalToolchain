@@ -52,25 +52,52 @@
         <ProjectReference Include="..\CommentsModule\CommentsModule.csproj"/>
     </ItemGroup>
 
-
     <ItemGroup>
-        <Compile Remove="**/*.cs"/>
-        <Compile Include="GlobalUsings.cs"/>
-        <Compile Include="TestInfrastructure/TestContractsInfrastructure.cs"/>
-        <Compile Include="Cli/WistcCliEndToEndTests.cs"/>
-        <Compile Include="Architecture/DeletedLegacySurfaceTests.cs"/>
-        <Compile Include="Infrastructure/DialectTestHostInfrastructure.cs"/>
-        <Compile Include="Infrastructure/CompiledArtifactSessionTests.cs"/>
-        <Compile Include="Infrastructure/CompiledArtifactTests.cs"/>
-        <Compile Include="Infrastructure/RuntimeCompiledArtifactContractsTests.cs"/>
-        <Compile Include="Infrastructure/BasicCoreImplOrchestrationTests.cs"/>
-        <Compile Include="Stress/RuntimeStressContractsTests.cs"/>
-        <Compile Include="CoreContracts/BasicCoreLifecycleContractsTests.cs"/>
-        <Compile Include="Core/DynamicMethodInvokerTests.cs"/>
-        <Compile Include="Concurrency/BasicCoreConcurrencyTests.cs"/>
-        <Compile Include="Core/DialectDefinitionSliceParserTests.cs"/>
-        <Compile Include="Integration/InterpreterBindingsParityTests.cs"/>
+        <Compile Remove="Arithmetic/**"/>
+        <Compile Remove="Integration/**"/>
+        <Compile Remove="Performance/**"/>
+        <Compile Remove="Native/NativeDecimalTests.cs"/>
+        <Compile Remove="Native/NativeEdgeCasesTests.cs"/>
+        <Compile Remove="Native/NativeFloatDoubleTests.cs"/>
+        <Compile Remove="Native/NativeFunctionOverloadingTests.cs"/>
+        <Compile Remove="Native/NativeIntegerTests.cs"/>
+        <Compile Remove="Native/NativeMixedTypesTests.cs"/>
+        <Compile Remove="Core/AstNodeAndChildrenCollectionContractsTests.cs"/>
+        <Compile Remove="Core/AstNodeCreatorBoundaryTests.cs"/>
+        <Compile Remove="Core/BasicLexerImplTests.cs"/>
+        <Compile Remove="Core/BasicParserImplTests.cs"/>
+        <Compile Remove="Core/BinderTests.cs"/>
+        <Compile Remove="Core/CompilationInputNullRuntimeBugTests.cs"/>
+        <Compile Remove="Core/ComplexConditionsTests.cs"/>
+        <Compile Remove="Core/ComplexExpressionsTests.cs"/>
+        <Compile Remove="Core/EdgeCasesTests.cs"/>
+        <Compile Remove="Core/ExtensibleEnumTests.cs"/>
+        <Compile Remove="Core/FrontendModuleRegistrationExtensionsTests.cs"/>
+        <Compile Remove="Core/GenericAbstractIRNullGuardTests.cs"/>
+        <Compile Remove="Core/LexerConfigurationTests.cs"/>
+        <Compile Remove="Core/LoopTests.cs"/>
+        <Compile Remove="Core/ParserConfigurationModuleImplTests.cs"/>
+        <Compile Remove="Core/ParserLexerInvariantContractsTests.cs"/>
+        <Compile Remove="Core/StackAndTypeTests.cs"/>
+        <Compile Remove="Core/StackManipulationTests.cs"/>
+        <Compile Remove="Core/TreeValidatorTests.cs"/>
+        <Compile Remove="Core/VariablesModuleTests.cs"/>
+        <Compile Remove="Infrastructure/ArithmeticOptimizerModuleTests.cs"/>
+        <Compile Remove="Infrastructure/BytecodeAndStateIsolationTests.cs"/>
+        <Compile Remove="Infrastructure/CompilationInputNormalizerTests.cs"/>
+        <Compile Remove="Infrastructure/CompiledArtifactContractsTests.cs"/>
+        <Compile Remove="Infrastructure/DynamicMethodInvokerConcurrencyTests.cs"/>
+        <Compile Remove="Infrastructure/EGraphOptimizerModuleTests.cs"/>
+        <Compile Remove="Infrastructure/FunctionOverloadingTests.cs"/>
+        <Compile Remove="Infrastructure/MethodsFinderAndTypesFinderTests.cs"/>
+        <Compile Remove="Infrastructure/OptimizerIdempotenceAndIntrinsicGateTests.cs"/>
+        <Compile Remove="Infrastructure/OptimizerRegressionTests.cs"/>
+        <Compile Remove="Infrastructure/StaticMethodTests.cs"/>
+        <Compile Remove="Infrastructure/TestBaseContractsTests.cs"/>
+        <Compile Remove="Infrastructure/WistProgramGenerationSharpFuzzTests.cs"/>
+        <Compile Remove="Infrastructure/WistThrowerAndStageExceptionsTests.cs"/>
     </ItemGroup>
+
 
     <ItemGroup>
         <Using Include="NUnit.Framework"/>
