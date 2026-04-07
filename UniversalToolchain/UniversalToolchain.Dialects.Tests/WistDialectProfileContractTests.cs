@@ -41,6 +41,24 @@ public class WistDialectProfileContractTests
     }
 
     [Test]
+    public void InternalNativeCompositionPaths_UseCanonicalNativeTypesAlias()
+    {
+        var testBaseSource = File.ReadAllText(GetRepositoryFilePath("UniversalToolchain", "Tests", "TestBase.cs"));
+        var exampleRunnerSource = File.ReadAllText(GetRepositoryFilePath("UniversalToolchain", "Example", "ExampleRunner.cs"));
+        var cliProgramSource = File.ReadAllText(GetRepositoryFilePath("UniversalToolchain", "Wistc", "Program.cs"));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(testBaseSource, Does.Contain("Arithmetic,NativeTypes,Equality"), "Legacy test native profile must compose the canonical NativeTypes alias.");
+            Assert.That(testBaseSource, Does.Not.Contain("Arithmetic,NativeMath,Equality"), "Legacy test native profile must not reintroduce the old NativeMath alias.");
+            Assert.That(exampleRunnerSource, Does.Contain("Arithmetic,NativeTypes,Equality"), "ExampleRunner must compose the canonical NativeTypes alias.");
+            Assert.That(exampleRunnerSource, Does.Not.Contain("Arithmetic,NativeMath,Equality"), "ExampleRunner must not reintroduce the old NativeMath alias.");
+            Assert.That(cliProgramSource, Does.Contain("modules.Add(\"NativeTypes\")"), "CLI native path must add the canonical NativeTypes alias.");
+            Assert.That(cliProgramSource, Does.Not.Contain("modules.Add(\"NativeMath\")"), "CLI native path must not add the old NativeMath alias.");
+        });
+    }
+
+    [Test]
     public void RestrictedSandbox_DialectFile_IsInterpreterOnly_AndDisablesInteropStateAndControlFlow()
     {
         var source = File.ReadAllText(GetDialectFilePath("restricted-sandbox"));
@@ -85,8 +103,14 @@ public class WistDialectProfileContractTests
     }
 
     private static string GetDialectFilePath(string dialectName) =>
-        Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "Dialects", "examples", "wist", dialectName, "dialect.wistdialect"));
+        Path.GetFullPath(Path.Combine(GetRepositoryRoot(), "Dialects", "examples", "wist", dialectName, "dialect.wistdialect"));
 
     private static string GetRepositoryReadmePath() =>
-        Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "..", "readme.md"));
+        GetRepositoryFilePath("readme.md");
+
+    private static string GetRepositoryFilePath(params string[] parts) =>
+        Path.GetFullPath(Path.Combine([GetRepositoryRoot(), .. parts]));
+
+    private static string GetRepositoryRoot() =>
+        Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", ".."));
 }

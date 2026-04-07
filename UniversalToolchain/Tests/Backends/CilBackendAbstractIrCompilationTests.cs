@@ -1,8 +1,40 @@
+using System.Reflection.Emit;
+
 namespace Tests.Infrastructure;
 
 [TestFixture]
 public class CilBackendAbstractIrCompilationTests
 {
+    [Test]
+    public void SupportedIntrinsics_HaveDescriptorCompileAndTypeHandlers_ForEveryPublishedName()
+    {
+        var compiler = new AbstractMethodsCompilerImpl();
+        var registryType = typeof(AbstractMethodsCompilerImpl).Assembly.GetType("BytecodeDynamicMethodsCompiler.Compilers.CilIntrinsicRegistry")!;
+        var descriptorType = typeof(AbstractMethodsCompilerImpl).Assembly.GetType("BytecodeDynamicMethodsCompiler.Compilers.CilIntrinsicDescriptor")!;
+        var registry = Activator.CreateInstance(registryType)!;
+        var getRequired = registryType.GetMethod("GetRequired", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)!;
+        var supportedByRegistry = (IReadOnlyList<string>)registryType.GetProperty("SupportedIntrinsics")!.GetValue(registry)!;
+        var descriptorName = descriptorType.GetProperty("Name")!;
+        var descriptorCompile = descriptorType.GetProperty("Compile")!;
+        var descriptorProcessTypes = descriptorType.GetProperty("ProcessTypes")!;
+
+        Assert.That(compiler.SupportedIntrinsics, Is.EqualTo(supportedByRegistry));
+        Assert.That(compiler.SupportedIntrinsics.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(compiler.SupportedIntrinsics.Count));
+
+        foreach (var intrinsicName in compiler.SupportedIntrinsics)
+        {
+            var descriptor = getRequired.Invoke(registry, [intrinsicName]);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(descriptor, Is.Not.Null, $"Intrinsic '{intrinsicName}' must resolve to a descriptor.");
+                Assert.That(descriptorName.GetValue(descriptor!), Is.EqualTo(intrinsicName), $"Descriptor name mismatch for intrinsic '{intrinsicName}'.");
+                Assert.That(descriptorCompile.GetValue(descriptor!), Is.Not.Null, $"Intrinsic '{intrinsicName}' must expose compile handling.");
+                Assert.That(descriptorProcessTypes.GetValue(descriptor!), Is.Not.Null, $"Intrinsic '{intrinsicName}' must expose type-stack handling.");
+            });
+        }
+    }
+
     [Test]
     public void LocalStoreAndLoad_WithStaticCall_ProducesCorrectResult()
     {
@@ -123,6 +155,33 @@ public class CilBackendAbstractIrCompilationTests
     }
 
     [Test]
+    public void ArithmeticIntrinsicI32_ProducesCorrectResultWithoutOptimizer()
+    {
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [19]),
+            new Instruction(UOpCode.Push, [23]),
+            new Instruction(UOpCode.Intrinsic, ["add_i32"])
+        );
+
+        var result = CompileAndExecute(ir);
+
+        Assert.That(result, Is.EqualTo(42));
+    }
+
+    [Test]
+    public void BooleanNotIntrinsic_ProducesCorrectResultWithoutOptimizer()
+    {
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [true]),
+            new Instruction(UOpCode.Intrinsic, ["boolean_not"])
+        );
+
+        var result = CompileAndExecute(ir);
+
+        Assert.That(result, Is.EqualTo(false));
+    }
+
+    [Test]
     public void UnknownNumericLoaderIntrinsic_ThrowsInvalidOperationException()
     {
         var ir = BuildIr(new Instruction(UOpCode.Intrinsic, ["load_x128", 1]));
@@ -192,6 +251,95 @@ public class CilBackendAbstractIrCompilationTests
     }
 
     [Test]
+    public void BranchWithComparisonCondition_InfersMergedReturnType_WithoutOptimizer()
+    {
+        var branchTrue = Guid.NewGuid();
+        var end = Guid.NewGuid();
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [7]),
+            new Instruction(UOpCode.Push, [3]),
+            new Instruction(UOpCode.Intrinsic, ["cmp_gt_i32"]),
+            new Instruction(UOpCode.JmpIf, [branchTrue]),
+            new Instruction(UOpCode.Push, ["no"]),
+            new Instruction(UOpCode.Jmp, [end]),
+            new Instruction(UOpCode.Label, [branchTrue]),
+            new Instruction(UOpCode.Push, ["yes"]),
+            new Instruction(UOpCode.Label, [end])
+        );
+
+        var compiled = Compile(ir);
+        var result = Execute(compiled);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(compiled.ReturnType, Is.EqualTo(typeof(string)));
+            Assert.That(result, Is.EqualTo("yes"));
+        });
+    }
+
+    [Test]
+    public void NestedBranches_InfersBooleanReturnType_WithoutOptimizer()
+    {
+        var outerTrue = Guid.NewGuid();
+        var innerTrue = Guid.NewGuid();
+        var end = Guid.NewGuid();
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [true]),
+            new Instruction(UOpCode.JmpIf, [outerTrue]),
+            new Instruction(UOpCode.Push, [false]),
+            new Instruction(UOpCode.Jmp, [end]),
+            new Instruction(UOpCode.Label, [outerTrue]),
+            new Instruction(UOpCode.Push, [2.5d]),
+            new Instruction(UOpCode.Push, [2.5d]),
+            new Instruction(UOpCode.Intrinsic, ["cmp_le_f64"]),
+            new Instruction(UOpCode.JmpIf, [innerTrue]),
+            new Instruction(UOpCode.Push, [false]),
+            new Instruction(UOpCode.Jmp, [end]),
+            new Instruction(UOpCode.Label, [innerTrue]),
+            new Instruction(UOpCode.Push, [true]),
+            new Instruction(UOpCode.Label, [end])
+        );
+
+        var compiled = Compile(ir);
+        var result = Execute(compiled);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(compiled.ReturnType, Is.EqualTo(typeof(bool)));
+            Assert.That(result, Is.EqualTo(true));
+        });
+    }
+
+    [Test]
+    public void LocalLoadAfterBranchMerge_UsesMergedLabelState_WithoutOptimizer()
+    {
+        var branchTrue = Guid.NewGuid();
+        var end = Guid.NewGuid();
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [true]),
+            new Instruction(UOpCode.JmpIf, [branchTrue]),
+            new Instruction(UOpCode.Push, [41]),
+            new Instruction(UOpCode.Intrinsic, ["store_local", "x", typeof(int)]),
+            new Instruction(UOpCode.Jmp, [end]),
+            new Instruction(UOpCode.Label, [branchTrue]),
+            new Instruction(UOpCode.Push, [40]),
+            new Instruction(UOpCode.Intrinsic, ["store_local", "x", typeof(int)]),
+            new Instruction(UOpCode.Label, [end]),
+            new Instruction(UOpCode.Intrinsic, ["load_local", "x", typeof(int)]),
+            new Instruction(UOpCode.Intrinsic, ["call C#", typeof(CilBackendAbstractIrCompilationTests).GetMethod(nameof(AddOne), BindingFlags.NonPublic | BindingFlags.Static)!])
+        );
+
+        var compiled = Compile(ir);
+        var result = Execute(compiled);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(compiled.ReturnType, Is.EqualTo(typeof(int)));
+            Assert.That(result, Is.EqualTo(41));
+        });
+    }
+
+    [Test]
     public void BranchingAndDropPipeline_CombinesStackOperationsWithoutLeakingGarbage()
     {
         var toBranch = Guid.NewGuid();
@@ -241,13 +389,22 @@ public class CilBackendAbstractIrCompilationTests
         return ir;
     }
 
-    private static object CompileAndExecute(IAbstractIR ir)
+    private static DynamicMethod Compile(IAbstractIR ir)
     {
         var compiler = new AbstractMethodsCompilerImpl();
         var input = new CompilationInput { SourceText = string.Empty };
-        var compiled = compiler.Compile(ir, input);
+        return compiler.Compile(ir, input);
+    }
+
+    private static object Execute(DynamicMethod method)
+    {
         var executor = new DynamicMethodExecutor();
-        return executor.Execute(compiled, new ExecutionEnvironment([]));
+        return executor.Execute(method, new ExecutionEnvironment([]));
+    }
+
+    private static object CompileAndExecute(IAbstractIR ir)
+    {
+        return Execute(Compile(ir));
     }
 
     private sealed class ReflectionTarget(int seed)
