@@ -28,3 +28,5 @@ UniversalToolchain/Wistc/code.txt
 ConfigurationEditor/project_code.txt
 /UniversalToolchain/BenchmarkDotNet.Artifacts
 /UniversalToolchain/Benchmarks/BenchmarkDotNet.Artifacts
+/.automation_artifacts
+.codex
