@@ -3,6 +3,7 @@ using UniversalToolchain.Dialects.Wist;
 namespace Tests;
 
 [TestFixture]
+// Legacy-only base for smoke/regression scenarios. New tests must use DialectTestHostInfrastructure + BackendParityInfrastructure.
 [Obsolete("TestBase is legacy and allowed only for smoke/parity-smoke scenarios. Use Tests.Infrastructure.DialectTestHostInfrastructure for new module isolation tests.")]
 public abstract class TestBase
 {
