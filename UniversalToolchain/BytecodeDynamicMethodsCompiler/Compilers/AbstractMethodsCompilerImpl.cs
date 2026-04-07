@@ -2,8 +2,15 @@ namespace BytecodeDynamicMethodsCompiler.Compilers;
 
 public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
 {
-    private readonly AbstractMethodsIntrinsicCompiler _intrinsicCompiler = new();
-    private readonly CilAbstractIrTypeSimulator _typeSimulator = new();
+    private readonly AbstractMethodsIntrinsicCompiler _intrinsicCompiler;
+    private readonly CilAbstractIrTypeSimulator _typeSimulator;
+
+    public AbstractMethodsCompilerImpl()
+    {
+        var registry = new CilIntrinsicRegistry();
+        _intrinsicCompiler = new AbstractMethodsIntrinsicCompiler(registry);
+        _typeSimulator = new CilAbstractIrTypeSimulator(_intrinsicCompiler);
+    }
 
     public IReadOnlyList<string> SupportedIntrinsics => _intrinsicCompiler.SupportedIntrinsics;
 
@@ -18,10 +25,9 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
         using var il = new GroboIL(method);
 
         var context = new CompilationContext(il, externalSlots);
-        InitializeLabels(context, air);
+        var labelStacks = InitializeLabels(context, air);
 
         var typesStack = new List<Type>();
-        var labelStacks = new Dictionary<Guid, List<Type>>();
 
         foreach (var instruction in air.Instructions)
             CompileInstruction(context, instruction, typesStack, labelStacks);
@@ -52,7 +58,7 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
         return stack.Count > 0 ? stack[^1] : typeof(void);
     }
 
-    private static void InitializeLabels(CompilationContext context, IAbstractIR bytecode)
+    private Dictionary<Guid, List<Type>> InitializeLabels(CompilationContext context, IAbstractIR bytecode)
     {
         foreach (var instruction in bytecode.Instructions)
         {
@@ -62,6 +68,10 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
                 context.InstructionLabels[id] = context.Il.DefineLabel($"Instruction {id}");
             }
         }
+
+        var labelStacks = new Dictionary<Guid, List<Type>>();
+        _typeSimulator.Simulate(bytecode.Instructions, labelStacks);
+        return labelStacks;
     }
 
     private void CompileInstruction(
@@ -88,15 +98,15 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
                 stack.Pop();
                 break;
             case UOpCode.Jmp:
-                HandleJump(context, instruction, stack, labelStacks, static (il, label) => il.Br(label));
+                HandleJump(context, instruction, static (il, label) => il.Br(label));
                 break;
             case UOpCode.JmpIf:
                 stack.Pop();
-                HandleJump(context, instruction, stack, labelStacks, static (il, label) => il.Brtrue(label));
+                HandleJump(context, instruction, static (il, label) => il.Brtrue(label));
                 break;
             case UOpCode.JmpIfNot:
                 stack.Pop();
-                HandleJump(context, instruction, stack, labelStacks, static (il, label) => il.Brfalse(label));
+                HandleJump(context, instruction, static (il, label) => il.Brfalse(label));
                 break;
             case UOpCode.Label:
                 MarkLabel(context, instruction, stack, labelStacks);
@@ -115,13 +125,10 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
     private static void HandleJump(
         CompilationContext context,
         Instruction instruction,
-        List<Type> stack,
-        Dictionary<Guid, List<Type>> labelStacks,
         Action<GroboIL, GroboIL.Label> branchAction
     )
     {
         var labelId = instruction.Operands[0].Get<Guid>();
-        labelStacks[labelId] = new List<Type>(stack);
         branchAction(context.Il, context.InstructionLabels[labelId]);
     }
 

@@ -16,8 +16,12 @@ internal sealed class CilAbstractIrTypeSimulator
 
     public List<Type> Simulate(IReadOnlyList<Instruction> instructions)
     {
+        return Simulate(instructions, new Dictionary<Guid, List<Type>>());
+    }
+
+    public List<Type> Simulate(IReadOnlyList<Instruction> instructions, Dictionary<Guid, List<Type>> labelStacks)
+    {
         var stack = new List<Type>();
-        var labelStacks = new Dictionary<Guid, List<Type>>();
 
         foreach (var instruction in instructions)
             ApplyInstruction(instruction, stack, labelStacks);
@@ -30,10 +34,15 @@ internal sealed class CilAbstractIrTypeSimulator
         ApplyInstruction(instruction, stack, new Dictionary<Guid, List<Type>>());
     }
 
+    public void ApplyInstruction(Instruction instruction, List<Type> stack, Dictionary<Guid, List<Type>> labelStacks)
+    {
+        ApplyInstruction(instruction, stack, (IDictionary<Guid, List<Type>>)labelStacks);
+    }
+
     private void ApplyInstruction(
         Instruction instruction,
         List<Type> stack,
-        Dictionary<Guid, List<Type>> labelStacks
+        IDictionary<Guid, List<Type>> labelStacks
     )
     {
         switch (instruction.UOpCode)
@@ -81,7 +90,7 @@ internal sealed class CilAbstractIrTypeSimulator
     private static void RestoreLabelStack(
         Instruction instruction,
         List<Type> stack,
-        IReadOnlyDictionary<Guid, List<Type>> labelStacks
+        IDictionary<Guid, List<Type>> labelStacks
     )
     {
         var labelId = instruction.Operands[0].Get<Guid>();
