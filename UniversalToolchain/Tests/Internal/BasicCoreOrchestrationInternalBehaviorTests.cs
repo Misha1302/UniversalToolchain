@@ -4,7 +4,7 @@ using ExceptionsManager;
 namespace Tests.Infrastructure;
 
 [TestFixture]
-public class BasicCoreImplOrchestrationTests
+public class BasicCoreOrchestrationInternalBehaviorTests
 {
     [Test]
     public void Should_RunPipelineInExpectedOrder_When_PrepareToRunIsCalled()
