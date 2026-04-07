@@ -1,4 +1,5 @@
 using SettableGettableModule.Core;
+using Tests.Infrastructure;
 
 namespace Tests.Backends;
 
@@ -136,7 +137,9 @@ public class InterpreterBackendIrExecutionTests
     [Test]
     public void VariablesContainerGet_NameMissingInLayout_IsTreatedAsLocalVariable()
     {
-        var key = $"local_only_{Guid.NewGuid():N}";
+        using var _ = GlobalTestStateScope.Create();
+
+        const string key = "local_only";
         VariablesContainer<int>.Set(key, 7);
 
         var getMethod = typeof(VariablesContainer<int>).GetMethod(nameof(VariablesContainer<int>.Get), [typeof(string)]);

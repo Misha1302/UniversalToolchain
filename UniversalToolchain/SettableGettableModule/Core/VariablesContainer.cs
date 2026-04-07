@@ -4,6 +4,11 @@ public static class VariablesContainer<T>
 {
     private static readonly Dictionary<string, T> _variables = [];
 
+    static VariablesContainer()
+    {
+        VariablesContainerTestHooks.RegisterReset(ClearForTests);
+    }
+
     /// <summary>
     /// Stores value by key, replacing an existing value when key is already present.
     /// </summary>
@@ -36,5 +41,10 @@ public static class VariablesContainer<T>
     public static VariableReference<T> GetRef(string key)
     {
         return new VariableReference<T>(value => CollectionsMarshal.GetValueRefOrAddDefault(_variables, key, out _) = value);
+    }
+
+    internal static void ClearForTests()
+    {
+        _variables.Clear();
     }
 }

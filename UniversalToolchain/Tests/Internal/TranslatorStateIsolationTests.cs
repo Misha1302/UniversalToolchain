@@ -1,5 +1,6 @@
 using BasicCodeTranslator;
 using DotnetAirHelper;
+using Tests.Infrastructure;
 
 namespace Tests.Internal;
 
@@ -38,7 +39,9 @@ public class TranslatorStateIsolationTests
     [Test]
     public void Should_RegisterAirIntrinsicPredictably_When_RegisteringSameNameTwice()
     {
-        var intrinsic = "test_intrinsic_" + Guid.NewGuid().ToString("N");
+        using var _ = GlobalTestStateScope.Create();
+
+        const string intrinsic = "test_intrinsic";
 
         var first = AirTypes.TryRegisterIntrinsic(intrinsic, (_, _) => { });
         var second = AirTypes.TryRegisterIntrinsic(intrinsic, (_, _) => { });

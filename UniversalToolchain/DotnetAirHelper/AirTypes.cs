@@ -3,9 +3,20 @@ namespace DotnetAirHelper;
 public static class AirTypes
 {
     private static readonly Dictionary<string, Action<Instruction, List<Type>>> _intrinsicsProcessors = [];
+    private static bool _defaultsInitialized;
 
     static AirTypes()
     {
+        EnsureDefaultsRegistered();
+    }
+
+    private static void EnsureDefaultsRegistered()
+    {
+        if (_defaultsInitialized)
+            return;
+
+        _intrinsicsProcessors.Clear();
+
         TryRegisterIntrinsic(
             "call C#",
             (instruction, stack) =>
@@ -55,6 +66,8 @@ public static class AirTypes
                 stack.Pop();
             }
         );
+
+        _defaultsInitialized = true;
     }
 
     public static bool TryRegisterIntrinsic(string name, Action<Instruction, List<Type>> processIntrinsic) => _intrinsicsProcessors.TryAdd(name, processIntrinsic);
@@ -66,5 +79,11 @@ public static class AirTypes
             processor(instruction, stack);
         else
             Thrower.InvalidOpEx($"Unknown intrinsic {instruction}");
+    }
+
+    internal static void ResetToDefaultsForTests()
+    {
+        _defaultsInitialized = false;
+        EnsureDefaultsRegistered();
     }
 }

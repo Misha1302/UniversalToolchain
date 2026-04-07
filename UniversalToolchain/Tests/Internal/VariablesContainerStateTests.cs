@@ -1,4 +1,5 @@
 using SettableGettableModule.Core;
+using Tests.Infrastructure;
 
 namespace Tests.Internal;
 
@@ -8,8 +9,10 @@ public class VariablesContainerStateTests
     [Test]
     public void Should_IsolateValuesByKey_When_UsingVariablesContainer()
     {
-        var keyA = "iso-a-" + Guid.NewGuid();
-        var keyB = "iso-b-" + Guid.NewGuid();
+        using var _ = GlobalTestStateScope.Create();
+
+        const string keyA = "iso-a";
+        const string keyB = "iso-b";
         VariablesContainer<int>.Set(keyA, 42);
         VariablesContainer<int>.Set(keyB, 7);
 
@@ -23,7 +26,9 @@ public class VariablesContainerStateTests
     [Test]
     public void VariablesContainer_Get_ShouldThrowClearException_WhenKeyIsMissing()
     {
-        var missingKey = "missing-" + Guid.NewGuid().ToString("N");
+        using var _ = GlobalTestStateScope.Create();
+
+        const string missingKey = "missing-key";
 
         var exception = Assert.Throws<KeyNotFoundException>(() => VariablesContainer<int>.Get(missingKey));
 
@@ -33,7 +38,9 @@ public class VariablesContainerStateTests
     [Test]
     public void VariablesContainer_Get_ShouldReturnValue_WhenKeyExists()
     {
-        var key = "existing-" + Guid.NewGuid().ToString("N");
+        using var _ = GlobalTestStateScope.Create();
+
+        const string key = "existing-key";
         VariablesContainer<int>.Set(key, 123);
 
         var value = VariablesContainer<int>.Get(key);
