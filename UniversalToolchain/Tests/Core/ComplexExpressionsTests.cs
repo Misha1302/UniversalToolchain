@@ -1,7 +1,7 @@
 namespace Tests.Core;
 
 [TestFixture]
-public class ComplexExpressionsTests : TestBase
+public class ComplexExpressionsTests : LegacyTestBase
 {
     [Test]
     public void Execute_NestedArithmeticWithVariables_ReturnsCorrectResult()

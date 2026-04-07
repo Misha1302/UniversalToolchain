@@ -1,7 +1,7 @@
 using System.Reflection;
 using ExceptionsManager;
 
-namespace Tests.Infrastructure;
+namespace Tests.Internal;
 
 [TestFixture]
 public class BasicCoreOrchestrationInternalBehaviorTests

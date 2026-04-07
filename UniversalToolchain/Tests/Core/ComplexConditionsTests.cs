@@ -1,7 +1,7 @@
 namespace Tests.Core;
 
 [TestFixture]
-public class ComplexConditionsTests : TestBase
+public class ComplexConditionsTests : LegacyTestBase
 {
     [Test]
     public void Execute_NestedIfElseConditions_ReturnsCorrectBranch()

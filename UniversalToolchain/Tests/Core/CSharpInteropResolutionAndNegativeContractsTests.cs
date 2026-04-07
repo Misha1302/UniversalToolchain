@@ -1,0 +1,111 @@
+using AssemblyFinder;
+using CommonExceptions;
+using NumbersModule.Core;
+using Tests.Infrastructure;
+
+namespace Tests.Core;
+
+[TestFixture]
+public class CSharpInteropResolutionAndNegativeContractsTests
+{
+    private const string DialectText = """
+                                       dialect NativeInterop
+                                       use Whitespaces,SemicolonAsNewLine,Comments,Numbers,Identifier,Arithmetic,Equality,Conditions,Loops,Variables,Scopes,Labels,InternalPreprocessorLexemes,CSharpInterop
+                                       enable LocalVariablesOptimization
+                                       backend compiler,interpreter
+                                       """;
+
+    [Test]
+    public void ExecuteCode_ShouldResolveSameUnambiguousCallShape_AcrossRepeatedRuns()
+    {
+        const string code = "System.Math.Sqrt(16.0)";
+        var first = BackendParityInfrastructure.ExecuteSafely(() => ExecuteCode<object>(code));
+
+        for (var i = 0; i < 20; i++)
+        {
+            var current = BackendParityInfrastructure.ExecuteSafely(() => ExecuteCode<object>(code));
+            Assert.That(current.IsSuccess, Is.EqualTo(first.IsSuccess));
+
+            if (first.IsSuccess)
+            {
+                Assert.That(current.Value, Is.EqualTo(first.Value));
+                continue;
+            }
+
+            Assert.That(current.Exception!.GetType(), Is.EqualTo(first.Exception!.GetType()));
+            Assert.That(current.Exception!.Message, Is.EqualTo(first.Exception!.Message));
+        }
+    }
+
+    [Test]
+    public void MethodsFinder_ShouldFailPredictably_ForAmbiguousOverloadSignature()
+    {
+        var exception = Assert.Throws<AmbiguousMatchException>(() =>
+            MethodsFinder.GetMethod($"{typeof(InteropContractsHost).FullName}.Pick", [typeof(int), typeof(int)]));
+
+        Assert.That(exception!.Message, Does.Contain("Ambiguous match"));
+    }
+
+    [Test]
+    public void ExecuteCode_ShouldRejectNonPublicInteropTarget()
+    {
+        var exception = Assert.Throws<ImportException>(() => ExecuteCode<int>($"{typeof(InteropContractsHost).FullName}.Hidden()"));
+
+        Assert.That(exception!.Message, Does.Contain("not found").IgnoreCase);
+    }
+
+    [Test]
+    public void ExecuteCode_ShouldRejectUnsupportedRefOutCallShape()
+    {
+        var exception = Assert.Throws<ArgumentOutOfRangeException>(() => ExecuteCode<int>("System.Int32.TryParse(7)"));
+
+        Assert.That(exception!.ParamName, Is.EqualTo("index"));
+    }
+
+    [Test]
+    public void ExecuteCode_ShouldRejectNullCallShape_WhenCastContractCannotBeSatisfied()
+    {
+        var exception = Assert.Throws<InvalidOperationException>(() => ExecuteCode<int>("System.String.IsNullOrEmpty(null)"));
+
+        Assert.That(exception!.Message, Does.Contain("Cannot cast").Or.Contain("Storage type for variable 'null' is not fixed before read"));
+    }
+
+    private static T ExecuteCode<T>(string code)
+    {
+        var compilerResult = BackendParityInfrastructure.ExecuteSafely(() =>
+        {
+            using var compilerHost = DialectTestHostInfrastructure.CreateCompilerHost(DialectText);
+            return compilerHost.Run(code, "compiler");
+        });
+
+        if (!compilerResult.IsSuccess)
+            throw compilerResult.Exception!;
+
+        var value = compilerResult.Value ?? throw new InvalidOperationException("Cannot cast null test result.");
+        if (value is T typed)
+            return typed;
+
+        if (value is int i && typeof(T) == typeof(bool))
+            return (T)(object)(i == 1);
+
+        if (value is IConvertible convertible)
+            return (T)Convert.ChangeType(convertible, typeof(T));
+
+        if (value.GetType().FullName == typeof(RealNumberImpl).FullName)
+        {
+            var numberValue = (double)value.GetType().GetMethod("GetValue")!.Invoke(value, null)!;
+            return (T)Convert.ChangeType(numberValue, typeof(T));
+        }
+
+        throw new InvalidOperationException($"Cannot cast test result from {value.GetType().FullName} to {typeof(T).FullName}.");
+    }
+
+}
+
+internal static class InteropContractsHost
+{
+    public static string Pick(int left, long right) => "int-long";
+    public static string Pick(long left, int right) => "long-int";
+
+    private static string Hidden() => "hidden";
+}

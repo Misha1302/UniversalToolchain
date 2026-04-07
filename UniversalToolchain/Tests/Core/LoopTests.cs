@@ -1,7 +1,7 @@
 namespace Tests.Core;
 
 [TestFixture]
-public class LoopTests : TestBase
+public class LoopTests : LegacyTestBase
 {
     [Test]
     public void Execute_SimpleLoopWithLabels_ComputesSumCorrectly()

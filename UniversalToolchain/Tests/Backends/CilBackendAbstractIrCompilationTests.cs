@@ -1,6 +1,6 @@
 using System.Reflection.Emit;
 
-namespace Tests.Infrastructure;
+namespace Tests.Backends;
 
 [TestFixture]
 public class CilBackendAbstractIrCompilationTests

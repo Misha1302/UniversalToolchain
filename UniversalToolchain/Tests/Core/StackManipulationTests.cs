@@ -1,7 +1,7 @@
 namespace Tests.Core;
 
 [TestFixture]
-public class StackManipulationTests : TestBase
+public class StackManipulationTests : LegacyTestBase
 {
     [Test]
     public void Execute_MixedBoolNumberExpressions_ComplexStackManipulation1()

@@ -1,6 +1,6 @@
 using SettableGettableModule.Core;
 
-namespace Tests.Infrastructure;
+namespace Tests.Backends;
 
 [TestFixture]
 public class InterpreterBackendIrExecutionTests

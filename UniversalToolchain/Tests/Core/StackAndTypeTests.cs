@@ -1,7 +1,7 @@
 namespace Tests.Core;
 
 [TestFixture]
-public class StackAndTypeTests : TestBase
+public class StackAndTypeTests : LegacyTestBase
 {
     [Test]
     public void Execute_ComplexStackOperationsWithMixedTypes_PreservesStackIntegrity()

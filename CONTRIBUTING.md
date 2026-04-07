@@ -25,7 +25,7 @@ dotnet test UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolch
 - Keep changes minimal, targeted, and deterministic.
 - Prefer extending existing architecture over adding special-case paths.
 - Avoid hardcoding dialect/module assumptions into framework-level contracts.
-- New tests must not inherit from `Tests.TestBase`; use `Tests.Infrastructure.DialectTestHostInfrastructure` with `Tests.Infrastructure.BackendParityInfrastructure`.
+- New tests must not inherit from `Tests.Legacy.LegacyTestBase`; use `Tests.Infrastructure.DialectTestHostInfrastructure` with `Tests.Infrastructure.BackendParityInfrastructure`.
 - If behavior changes, add or update tests in the same change.
 - If structure/behavior meaningfully changes, update docs in the same change.
 

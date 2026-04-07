@@ -1,7 +1,7 @@
 namespace Tests.Core;
 
 [TestFixture]
-public class EdgeCasesTests : TestBase
+public class EdgeCasesTests : LegacyTestBase
 {
     [Test]
     public void Execute_ZeroValues_HandlesCorrectly()

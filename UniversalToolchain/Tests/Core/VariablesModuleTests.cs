@@ -1,7 +1,7 @@
 namespace Tests.Core;
 
 [TestFixture]
-public class VariablesModuleTests : TestBase
+public class VariablesModuleTests : LegacyTestBase
 {
     [Test]
     public void Execute_VariableDeclaration_CanBeUsedInExpression()
