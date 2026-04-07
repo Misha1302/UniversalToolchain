@@ -3,6 +3,7 @@ using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
 using NumbersModule.Core;
 using UniversalToolchain.Dialects.Wist;
+using Tests.Infrastructure;
 
 namespace Tests.Integration;
 
@@ -252,22 +253,15 @@ public class InterpreterBindingsParityTests
         IReadOnlyList<NamedArgument> arguments)
     {
         using var host = CreateHost();
-        var compilerArtifact = GetCompilerCore(host).Compile(code, declared);
-        var interpreterArtifact = GetInterpreterCore(host).Compile(code, declared);
+        var compilerResult = TryRunSingleBackend(() => GetCompilerCore(host).Compile(code, declared), arguments);
+        var interpreterResult = TryRunSingleBackend(() => GetInterpreterCore(host).Compile(code, declared), arguments);
 
-        var compilerSession = compilerArtifact.CreateSession();
-        var interpreterSession = interpreterArtifact.CreateSession();
+        BackendParityInfrastructure.AssertSemanticParity(compilerResult, interpreterResult);
+        Assert.That(compilerResult.IsSuccess, Is.True);
 
-        foreach (var argument in arguments)
-        {
-            compilerSession.SetArgument(argument.Name, argument.Value);
-            interpreterSession.SetArgument(argument.Name, argument.Value);
-        }
-
-        var compilerResult = compilerSession.Run() ?? Thrower.InvalidOpEx<object>("Compiler returned null result.");
-        var interpreterResult = interpreterSession.Run() ?? Thrower.InvalidOpEx<object>("Interpreter returned null result.");
-
-        return (ToNumeric(compilerResult), ToNumeric(interpreterResult));
+        return (
+            BackendParityInfrastructure.AsNumber(compilerResult.Value),
+            BackendParityInfrastructure.AsNumber(interpreterResult.Value));
     }
 
     private static void AssertDeterministicParity(string code, OrderedDictionary<string, Type> declared, IReadOnlyList<NamedArgument> arguments)
@@ -275,38 +269,38 @@ public class InterpreterBindingsParityTests
         var first = TryRunInBothBackends(code, declared, arguments);
         var second = TryRunInBothBackends(code, declared, arguments);
 
-        Assert.That(first.CompilerOutcome.Kind, Is.EqualTo(first.InterpreterOutcome.Kind));
-        Assert.That(second.CompilerOutcome.Kind, Is.EqualTo(second.InterpreterOutcome.Kind));
-        Assert.That(first.CompilerOutcome.Kind, Is.EqualTo(second.CompilerOutcome.Kind));
+        BackendParityInfrastructure.AssertSemanticParity(first.CompilerResult, first.InterpreterResult);
+        BackendParityInfrastructure.AssertSemanticParity(second.CompilerResult, second.InterpreterResult);
 
-        if (first.CompilerOutcome.Kind == OutcomeKind.Success)
+        Assert.That(first.CompilerResult.IsSuccess, Is.EqualTo(second.CompilerResult.IsSuccess));
+        if (first.CompilerResult.IsSuccess)
         {
-            Assert.That(first.CompilerOutcome.NumericValue, Is.EqualTo(first.InterpreterOutcome.NumericValue).Within(1e-9));
-            Assert.That(second.CompilerOutcome.NumericValue, Is.EqualTo(second.InterpreterOutcome.NumericValue).Within(1e-9));
-            Assert.That(first.CompilerOutcome.NumericValue, Is.EqualTo(second.CompilerOutcome.NumericValue).Within(1e-9));
+            Assert.That(
+                BackendParityInfrastructure.AsNumber(first.CompilerResult.Value),
+                Is.EqualTo(BackendParityInfrastructure.AsNumber(second.CompilerResult.Value)).Within(1e-9));
             return;
         }
 
-        Assert.That(first.CompilerOutcome.ExceptionType, Is.EqualTo(first.InterpreterOutcome.ExceptionType));
-        Assert.That(second.CompilerOutcome.ExceptionType, Is.EqualTo(second.InterpreterOutcome.ExceptionType));
-        Assert.That(first.CompilerOutcome.ExceptionType, Is.EqualTo(second.CompilerOutcome.ExceptionType));
-        Assert.That(first.CompilerOutcome.ExceptionMessage, Is.EqualTo(first.InterpreterOutcome.ExceptionMessage));
-        Assert.That(second.CompilerOutcome.ExceptionMessage, Is.EqualTo(second.InterpreterOutcome.ExceptionMessage));
-        Assert.That(first.CompilerOutcome.ExceptionMessage, Is.EqualTo(second.CompilerOutcome.ExceptionMessage));
+        var firstException = first.CompilerResult.Exception;
+        var secondException = second.CompilerResult.Exception;
+        Assert.That(firstException, Is.Not.Null);
+        Assert.That(secondException, Is.Not.Null);
+        Assert.That(firstException!.GetType(), Is.EqualTo(secondException!.GetType()));
+        Assert.That(firstException.Message, Is.EqualTo(secondException.Message));
     }
 
-    private static (ExecutionOutcome CompilerOutcome, ExecutionOutcome InterpreterOutcome) TryRunInBothBackends(
+    private static (BackendExecutionResult CompilerResult, BackendExecutionResult InterpreterResult) TryRunInBothBackends(
         string code,
         OrderedDictionary<string, Type> declared,
         IReadOnlyList<NamedArgument> arguments)
     {
         using var host = CreateHost();
-        var compilerOutcome = TryRunSingleBackend(() => GetCompilerCore(host).Compile(code, declared), arguments);
-        var interpreterOutcome = TryRunSingleBackend(() => GetInterpreterCore(host).Compile(code, declared), arguments);
-        return (compilerOutcome, interpreterOutcome);
+        var compilerResult = TryRunSingleBackend(() => GetCompilerCore(host).Compile(code, declared), arguments);
+        var interpreterResult = TryRunSingleBackend(() => GetInterpreterCore(host).Compile(code, declared), arguments);
+        return (compilerResult, interpreterResult);
     }
 
-    private static ExecutionOutcome TryRunSingleBackend<TCompilationOutput>(
+    private static BackendExecutionResult TryRunSingleBackend<TCompilationOutput>(
         Func<ICompiledArtifact<TCompilationOutput>> artifactFactory,
         IReadOnlyList<NamedArgument> arguments)
     {
@@ -317,25 +311,13 @@ public class InterpreterBindingsParityTests
             foreach (var argument in arguments)
                 session.SetArgument(argument.Name, argument.Value);
 
-            var result = session.Run() ?? Thrower.InvalidOpEx<object>("Backend returned null result.");
-            return ExecutionOutcome.Success(ToNumeric(result));
+            return BackendExecutionResult.Success(session.Run());
         }
         catch (Exception ex)
         {
-            return ExecutionOutcome.Failure(ex.GetType().FullName ?? ex.GetType().Name, ex.Message);
+            return BackendExecutionResult.Failure(ex);
         }
     }
-
-    private static double ToNumeric(object value) => value switch
-    {
-        int intValue => intValue,
-        long longValue => longValue,
-        float floatValue => floatValue,
-        double doubleValue => doubleValue,
-        decimal decimalValue => (double)decimalValue,
-        RealNumberImpl realNumber => realNumber.GetValue(),
-        _ => Thrower.InvalidCast<double>($"Cannot convert value of type {value.GetType().FullName} to numeric result.")
-    };
 
     private static WistDialectExecutionHost CreateHost()
     {
@@ -370,17 +352,4 @@ public class InterpreterBindingsParityTests
 
     private sealed record NamedArgument(string Name, object Value);
 
-    private enum OutcomeKind
-    {
-        Success,
-        Failure
-    }
-
-    private sealed record ExecutionOutcome(OutcomeKind Kind, double? NumericValue, string? ExceptionType, string? ExceptionMessage)
-    {
-        public static ExecutionOutcome Success(double numericValue) => new(OutcomeKind.Success, numericValue, null, null);
-
-        public static ExecutionOutcome Failure(string exceptionType, string exceptionMessage) =>
-            new(OutcomeKind.Failure, null, exceptionType, exceptionMessage);
-    }
 }

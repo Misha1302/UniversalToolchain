@@ -26,6 +26,10 @@
     </ItemGroup>
 
     <ItemGroup>
+        <Compile Include="..\Tests\Infrastructure\BackendParityInfrastructure.cs" Link="Infrastructure\BackendParityInfrastructure.cs" />
+    </ItemGroup>
+
+    <ItemGroup>
         <Using Include="NUnit.Framework"/>
     </ItemGroup>
 
