@@ -1,8 +1,7 @@
-using System.Reflection.Emit;
-using ExceptionsManager;
-using Microsoft.Extensions.DependencyInjection;
-using NumbersModule.Core;
+using System.Collections.Generic;
+using System.Collections.Specialized;
 using UniversalToolchain.Dialects.Wist;
+using NumbersModule.Core;
 using Tests.Infrastructure;
 
 namespace Tests.Integration;
@@ -225,18 +224,18 @@ public class InterpreterBindingsParityTests
     public void UnknownVariableAccess_WhenStrictFailureExists_ShouldExposeMeaningfulError()
     {
         using var host = CreateHost();
-        var compilerCore = GetCompilerCore(host);
         var declared = new OrderedDictionary<string, Type>
         {
             ["price"] = typeof(RealNumberImpl)
         };
 
+        var arguments = new List<KeyValuePair<string, object>>
+        {
+            new("price", new RealNumberImpl(2.0))
+        };
         try
         {
-            var artifact = compilerCore.Compile("unknown + price", declared);
-            var session = artifact.CreateSession();
-            session.SetArgument("price", new RealNumberImpl(2.0));
-            _ = session.Run();
+            _ = ParityBackendExecutionAdapter.RunCompiled(host, "compiler", "unknown + price", declared, arguments);
             Assert.Pass("Current runtime allows the scenario without strict unknown-variable failure.");
         }
         catch (Exception ex)
@@ -253,20 +252,12 @@ public class InterpreterBindingsParityTests
         IReadOnlyList<NamedArgument> arguments)
     {
         using var host = CreateHost();
-        var compilerArtifact = GetCompilerCore(host).Compile(code, declared);
-        var interpreterArtifact = GetInterpreterCore(host).Compile(code, declared);
+        var mappedArguments = arguments
+            .Select(static argument => new KeyValuePair<string, object>(argument.Name, argument.Value))
+            .ToArray();
 
-        var compilerSession = compilerArtifact.CreateSession();
-        var interpreterSession = interpreterArtifact.CreateSession();
-
-        foreach (var argument in arguments)
-        {
-            compilerSession.SetArgument(argument.Name, argument.Value);
-            interpreterSession.SetArgument(argument.Name, argument.Value);
-        }
-
-        var compilerResult = BackendExecutionResult.Success(compilerSession.Run() ?? Thrower.InvalidOpEx<object>("Compiler returned null result."));
-        var interpreterResult = BackendExecutionResult.Success(interpreterSession.Run() ?? Thrower.InvalidOpEx<object>("Interpreter returned null result."));
+        var compilerResult = BackendExecutionResult.Success(ParityBackendExecutionAdapter.RunCompiled(host, "compiler", code, declared, mappedArguments));
+        var interpreterResult = BackendExecutionResult.Success(ParityBackendExecutionAdapter.RunCompiled(host, "interpreter", code, declared, mappedArguments));
 
         BackendParityInfrastructure.AssertSemanticParity(compilerResult, interpreterResult);
         return (BackendParityInfrastructure.AsNumber(compilerResult.Value), BackendParityInfrastructure.AsNumber(interpreterResult.Value));
@@ -300,56 +291,21 @@ public class InterpreterBindingsParityTests
         IReadOnlyList<NamedArgument> arguments)
     {
         using var host = CreateHost();
-        var compilerOutcome = TryRunSingleBackend(() => GetCompilerCore(host).Compile(code, declared), arguments);
-        var interpreterOutcome = TryRunSingleBackend(() => GetInterpreterCore(host).Compile(code, declared), arguments);
+        var mappedArguments = arguments
+            .Select(static argument => new KeyValuePair<string, object>(argument.Name, argument.Value))
+            .ToArray();
+
+        var compilerOutcome = TryRunSingleBackend(() => ParityBackendExecutionAdapter.RunCompiled(host, "compiler", code, declared, mappedArguments));
+        var interpreterOutcome = TryRunSingleBackend(() => ParityBackendExecutionAdapter.RunCompiled(host, "interpreter", code, declared, mappedArguments));
         return (compilerOutcome, interpreterOutcome);
     }
 
-    private static BackendExecutionResult TryRunSingleBackend<TCompilationOutput>(
-        Func<ICompiledArtifact<TCompilationOutput>> artifactFactory,
-        IReadOnlyList<NamedArgument> arguments)
+    private static BackendExecutionResult TryRunSingleBackend(Func<object> backendRunner)
     {
-        return BackendParityInfrastructure.ExecuteSafely(() =>
-        {
-            var artifact = artifactFactory();
-            var session = artifact.CreateSession();
-            foreach (var argument in arguments)
-                session.SetArgument(argument.Name, argument.Value);
-
-            return session.Run() ?? Thrower.InvalidOpEx<object>("Backend returned null result.");
-        });
+        return BackendParityInfrastructure.ExecuteSafely(backendRunner);
     }
 
-    private static WistDialectExecutionHost CreateHost()
-    {
-        var services = new ServiceCollection();
-        services.AddWistDialectServices();
-        services.AddWistCilBackend();
-        services.AddWistInterpreterBackend();
-
-        using var provider = services.BuildServiceProvider();
-        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var composition = workflow.ComposeText(
-            """
-            dialect InterpreterBindingsParity
-            use Whitespaces,SemicolonAsNewLine,Comments,Numbers,Identifier,Arithmetic,Equality,Conditions,Loops,Variables,Scopes,Labels,InternalPreprocessorLexemes,CSharpInterop
-            backend compiler,interpreter
-            """,
-            "interpreter-bindings-parity-inline");
-
-        if (!composition.IsSuccess)
-            Thrower.InvalidOpEx(composition.ToDeterministicText());
-
-        return workflow.CreateHost(composition);
-    }
-
-    private static BasicCoreImpl<DynamicMethod> GetCompilerCore(WistDialectExecutionHost host) =>
-        host.GetCore("compiler") as BasicCoreImpl<DynamicMethod>
-        ?? Thrower.InvalidOpEx<BasicCoreImpl<DynamicMethod>>("Compiler core must be BasicCoreImpl<DynamicMethod>.");
-
-    private static BasicCoreImpl<IAbstractIR> GetInterpreterCore(WistDialectExecutionHost host) =>
-        host.GetCore("interpreter") as BasicCoreImpl<IAbstractIR>
-        ?? Thrower.InvalidOpEx<BasicCoreImpl<IAbstractIR>>("Interpreter core must be BasicCoreImpl<IAbstractIR>.");
+    private static WistDialectExecutionHost CreateHost() => RuntimeCompiledArtifactTestFactory.CreateHost();
 
     private sealed record NamedArgument(string Name, object Value);
 }
