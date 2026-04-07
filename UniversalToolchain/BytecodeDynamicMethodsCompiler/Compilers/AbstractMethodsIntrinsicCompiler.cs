@@ -2,48 +2,20 @@ namespace BytecodeDynamicMethodsCompiler.Compilers;
 
 internal sealed class AbstractMethodsIntrinsicCompiler
 {
-    private readonly Dictionary<string, IntrinsicHandler> _intrinsicHandlers;
+    private static readonly Action<Instruction, List<Type>> NoTypeProcessing = static (_, _) => { };
+    private readonly CilIntrinsicRegistry _registry;
 
     public AbstractMethodsIntrinsicCompiler()
+        : this(CreateRegistry())
     {
-        _intrinsicHandlers = new Dictionary<string, IntrinsicHandler>
-        {
-            ["call C#"] = CompileCallCSharp,
-            ["call C# ctor"] = CompileCallCSharpCtor,
-            ["store_local"] = CompileStoreLocal,
-            ["load_local"] = CompileLoadLocal,
-            ["load_local_ref"] = CompileLoadLocalRef,
-            ["load_external"] = CompileLoadExternal,
-            ["store_external"] = CompileStoreExternal,
-            ["load_bool"] = CompileLoadBool,
-            ["boolean_and"] = CompileBooleanAnd,
-            ["boolean_or"] = CompileBooleanOr,
-            ["boolean_not"] = CompileBooleanNot,
-            ["load_i32"] = LoadNativeNumber,
-            ["load_i64"] = LoadNativeNumber,
-            ["load_f32"] = LoadNativeNumber,
-            ["load_f64"] = LoadNativeNumber,
-            ["load_decimal"] = LoadNativeNumber
-        };
     }
 
-    public IReadOnlyList<string> SupportedIntrinsics =>
-    [
-        "call C#", "call C# ctor",
-        "store_local", "load_local", "load_local_ref",
-        "load_external", "store_external",
-        "load_i32", "load_i64", "load_f32", "load_f64", "load_decimal",
-        "boolean_and", "boolean_or", "boolean_not",
-        "add_i32", "sub_i32", "mul_i32", "div_i32",
-        "add_i64", "sub_i64", "mul_i64", "div_i64",
-        "add_f32", "sub_f32", "mul_f32", "div_f32",
-        "add_f64", "sub_f64", "mul_f64", "div_f64",
-        "add_decimal", "sub_decimal", "mul_decimal", "div_decimal",
-        "cmp_eq_i32", "cmp_ne_i32", "cmp_gt_i32", "cmp_ge_i32", "cmp_lt_i32", "cmp_le_i32",
-        "cmp_eq_i64", "cmp_ne_i64", "cmp_gt_i64", "cmp_ge_i64", "cmp_lt_i64", "cmp_le_i64",
-        "cmp_eq_f32", "cmp_ne_f32", "cmp_gt_f32", "cmp_ge_f32", "cmp_lt_f32", "cmp_le_f32",
-        "cmp_eq_f64", "cmp_ne_f64", "cmp_gt_f64", "cmp_ge_f64", "cmp_lt_f64", "cmp_le_f64"
-    ];
+    internal AbstractMethodsIntrinsicCompiler(CilIntrinsicRegistry registry)
+    {
+        _registry = registry;
+    }
+
+    public IReadOnlyList<string> SupportedIntrinsics => _registry.SupportedIntrinsics;
 
     public void Compile(CompilationContext context, Instruction instruction, List<Type> stack)
     {
@@ -51,25 +23,8 @@ internal sealed class AbstractMethodsIntrinsicCompiler
         Thrower.AssertAlways(instruction.Operands[0] is string);
 
         var name = instruction.Operands[0].Get<string>();
-        if (_intrinsicHandlers.TryGetValue(name, out var handler))
-        {
-            handler(context, instruction, stack);
-            return;
-        }
-
-        if (IsArithmeticIntrinsic(name))
-        {
-            CompileArithmeticIntrinsic(context, name, stack);
-            return;
-        }
-
-        if (IsComparisonIntrinsic(name))
-        {
-            CompileComparisonIntrinsic(context, name, stack);
-            return;
-        }
-
-        Thrower.InvalidOpEx($"Unsupported intrinsic: {name}");
+        var descriptor = _registry.GetRequired(name);
+        descriptor.Compile(context, instruction, stack);
     }
 
     private static void CompileCallCSharp(CompilationContext context, Instruction instruction, List<Type> stack)
@@ -467,12 +422,6 @@ internal sealed class AbstractMethodsIntrinsicCompiler
         Thrower.InvalidOpEx($"Cannot cast {sourceType} to {targetType}");
     }
 
-    private static bool IsArithmeticIntrinsic(string name)
-        => name.StartsWith("add_") || name.StartsWith("sub_") || name.StartsWith("mul_") || name.StartsWith("div_");
-
-    private static bool IsComparisonIntrinsic(string name)
-        => name.StartsWith("cmp_");
-
     private static void EnsureBinaryBoolOperands(List<Type> stack, string intrinsicName)
     {
         Thrower.AssertAlways(stack.Count >= 2, $"Not enough values on stack for {intrinsicName}");
@@ -493,5 +442,67 @@ internal sealed class AbstractMethodsIntrinsicCompiler
             stack.Pop();
     }
 
-    private delegate void IntrinsicHandler(CompilationContext context, Instruction instruction, List<Type> stack);
+    private static CilIntrinsicRegistry CreateRegistry()
+    {
+        var descriptors = new List<CilIntrinsicDescriptor>
+        {
+            CreateDescriptor("call C#", CompileCallCSharp),
+            CreateDescriptor("call C# ctor", CompileCallCSharpCtor),
+            CreateDescriptor("store_local", CompileStoreLocal),
+            CreateDescriptor("load_local", CompileLoadLocal),
+            CreateDescriptor("load_local_ref", CompileLoadLocalRef),
+            CreateDescriptor("load_external", CompileLoadExternal),
+            CreateDescriptor("store_external", CompileStoreExternal),
+            CreateDescriptor("load_bool", CompileLoadBool),
+            CreateDescriptor("boolean_and", CompileBooleanAnd),
+            CreateDescriptor("boolean_or", CompileBooleanOr),
+            CreateDescriptor("boolean_not", CompileBooleanNot),
+            CreateDescriptor("load_i32", LoadNativeNumber),
+            CreateDescriptor("load_i64", LoadNativeNumber),
+            CreateDescriptor("load_f32", LoadNativeNumber),
+            CreateDescriptor("load_f64", LoadNativeNumber),
+            CreateDescriptor("load_decimal", LoadNativeNumber)
+        };
+
+        RegisterArithmeticFamily(descriptors);
+        RegisterComparisonFamily(descriptors);
+
+        return new CilIntrinsicRegistry(descriptors);
+    }
+
+    private static CilIntrinsicDescriptor CreateDescriptor(
+        string name,
+        Action<CompilationContext, Instruction, List<Type>> compile,
+        Action<Instruction, List<Type>>? processTypes = null)
+        => new(name, compile, processTypes ?? NoTypeProcessing);
+
+    private static void RegisterArithmeticFamily(ICollection<CilIntrinsicDescriptor> descriptors)
+    {
+        var operations = new[] { "add", "sub", "mul", "div" };
+        var operandTypes = new[] { "i32", "i64", "f32", "f64", "decimal" };
+
+        foreach (var operation in operations)
+        foreach (var operandType in operandTypes)
+        {
+            var name = $"{operation}_{operandType}";
+            descriptors.Add(CreateDescriptor(
+                name,
+                static (context, instruction, stack) => CompileArithmeticIntrinsic(context, instruction.Operands[0].Get<string>(), stack)));
+        }
+    }
+
+    private static void RegisterComparisonFamily(ICollection<CilIntrinsicDescriptor> descriptors)
+    {
+        var operations = new[] { "eq", "ne", "gt", "ge", "lt", "le" };
+        var operandTypes = new[] { "i32", "i64", "f32", "f64" };
+
+        foreach (var operation in operations)
+        foreach (var operandType in operandTypes)
+        {
+            var name = $"cmp_{operation}_{operandType}";
+            descriptors.Add(CreateDescriptor(
+                name,
+                static (context, instruction, stack) => CompileComparisonIntrinsic(context, instruction.Operands[0].Get<string>(), stack)));
+        }
+    }
 }
