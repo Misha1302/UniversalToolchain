@@ -1,5 +1,6 @@
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Intrinsics.Builtins;
+using UniversalToolchain.Intrinsics.Capabilities;
 
 namespace NativeMathModule;
 
@@ -10,17 +11,24 @@ namespace NativeMathModule;
 [ArithmeticModeCompatibility(ArithmeticMode.Native)]
 public class EGraphOptimizerModule : IIRProcessingModule
 {
-    private static readonly string[] _supportedArithmeticIntrinsics =
+    private static readonly IReadOnlyList<Type> _supportedArithmeticTypes =
     [
-        "add_i32", "sub_i32", "mul_i32", "div_i32",
-        "add_i64", "sub_i64", "mul_i64", "div_i64",
-        "add_f32", "sub_f32", "mul_f32", "div_f32",
-        "add_f64", "sub_f64", "mul_f64", "div_f64"
+        typeof(int), typeof(long), typeof(float), typeof(double)
     ];
+
+    private IOptimizerIntrinsicCapabilityContext? _capabilityContext;
+
+    public void InitIntrinsicCapabilityContext(IOptimizerIntrinsicCapabilityContext capabilityContext)
+    {
+        _capabilityContext = capabilityContext ?? throw new ArgumentNullException(nameof(capabilityContext));
+    }
 
     public IAbstractIR ProcessIr<TCompilationOutput>(IAbstractIR current, IAbstractIrCompiler<TCompilationOutput> compiler)
     {
-        if (_supportedArithmeticIntrinsics.Any(x => !compiler.SupportedIntrinsics.Contains(x)))
+        var capabilityContext = _capabilityContext
+                                ?? throw new InvalidOperationException("E-graph optimizer requires intrinsic capability context initialization.");
+
+        if (!HasRequiredCapabilities(capabilityContext))
             return current;
 
         var source = current.Instructions.ToList();
@@ -50,6 +58,20 @@ public class EGraphOptimizerModule : IIRProcessingModule
         var result = new AbstractIR();
         result.AppendInstructions(optimized);
         return result;
+    }
+
+    private static bool HasRequiredCapabilities(IOptimizerIntrinsicCapabilityContext capabilityContext)
+    {
+        foreach (var type in _supportedArithmeticTypes)
+        {
+            if (!capabilityContext.Supports(BuiltinIntrinsicSymbols.Arithmetic.Add, type) ||
+                !capabilityContext.Supports(BuiltinIntrinsicSymbols.Arithmetic.Subtract, type) ||
+                !capabilityContext.Supports(BuiltinIntrinsicSymbols.Arithmetic.Multiply, type) ||
+                !capabilityContext.Supports(BuiltinIntrinsicSymbols.Arithmetic.Divide, type))
+                return false;
+        }
+
+        return true;
     }
 
     private static bool IsControlFlowTerminator(Instruction instruction) =>

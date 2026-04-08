@@ -1,5 +1,6 @@
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Intrinsics.Builtins;
+using UniversalToolchain.Intrinsics.Capabilities;
 
 namespace NativeMathModule;
 
@@ -10,25 +11,18 @@ namespace NativeMathModule;
 [ArithmeticModeCompatibility(ArithmeticMode.Native)]
 public class NativeCilOptimizerModule : IIRProcessingModule
 {
-    // Словарь для маппинга типов на методы генерации CIL
+    // Maps constants to legacy CIL load intrinsics for backends that support them.
     private static readonly Dictionary<Type, Action<Instruction, CompilationContext>> _cilGenerators = new();
 
-    private static readonly IReadOnlyList<string> _standardModuleIntrinsics =
+    private static readonly IReadOnlyList<Type> _standardLoadTypes =
     [
-        "load_i32",
-        "load_i64",
-        "load_f32",
-        "load_f64"
+        typeof(int),
+        typeof(long),
+        typeof(float),
+        typeof(double)
     ];
 
-
-    private static readonly IReadOnlyList<string> _decimalModuleIntrinsics =
-    [
-        "load_decimal"
-    ];
-
-
-    // Поддерживаемые нативные типы для оптимизации
+    // Supported native types for load-constant lowering.
     private static readonly HashSet<Type> _supportedTypes =
     [
         typeof(int),
@@ -38,6 +32,7 @@ public class NativeCilOptimizerModule : IIRProcessingModule
         typeof(decimal)
     ];
 
+    private IOptimizerIntrinsicCapabilityContext? _capabilityContext;
     private bool _isDecimalsSupported;
 
     static NativeCilOptimizerModule()
@@ -45,18 +40,26 @@ public class NativeCilOptimizerModule : IIRProcessingModule
         InitializeCilGenerators();
     }
 
+    public void InitIntrinsicCapabilityContext(IOptimizerIntrinsicCapabilityContext capabilityContext)
+    {
+        _capabilityContext = capabilityContext ?? throw new ArgumentNullException(nameof(capabilityContext));
+    }
+
     public IAbstractIR ProcessIr<TCompilationOutput>(IAbstractIR current, IAbstractIrCompiler<TCompilationOutput> compiler)
     {
-        if (_standardModuleIntrinsics.Any(x => !compiler.SupportedIntrinsics.Contains(x)))
+        var capabilityContext = _capabilityContext
+                                ?? throw new InvalidOperationException("Native CIL optimizer requires intrinsic capability context initialization.");
+
+        if (!_standardLoadTypes.All(type => capabilityContext.Supports(BuiltinIntrinsicSymbols.Core.LoadConst, type)))
             return current;
-        _isDecimalsSupported = _decimalModuleIntrinsics.All(x => compiler.SupportedIntrinsics.Contains(x));
+
+        _isDecimalsSupported = capabilityContext.Supports(BuiltinIntrinsicSymbols.Core.LoadConst, typeof(decimal));
 
         return OptimizeNativeLoads(current);
     }
 
     private static void InitializeCilGenerators()
     {
-        // Инициализация генераторов CIL для разных типов
         _cilGenerators[typeof(int)] = (instruction, context) =>
         {
             var value = instruction.Operands[0].Get<int>();
@@ -112,7 +115,6 @@ public class NativeCilOptimizerModule : IIRProcessingModule
         {
             var instruction = instructions[i];
 
-            // Ищем паттерн: Push с примитивным типом
             if (instruction.UOpCode == UOpCode.Push && instruction.Operands.Count == 1)
             {
                 var value = instruction.Operands[0];
@@ -126,13 +128,11 @@ public class NativeCilOptimizerModule : IIRProcessingModule
 
                 if (_supportedTypes.Contains(valueType) && _cilGenerators.TryGetValue(valueType, out var generator))
                 {
-                    // Заменяем Push на наш CIL-интринсик
                     generator(instruction, context);
                     continue;
                 }
             }
 
-            // Для остальных инструкций оставляем как есть
             context.NewInstructions.Add(instruction);
         }
 

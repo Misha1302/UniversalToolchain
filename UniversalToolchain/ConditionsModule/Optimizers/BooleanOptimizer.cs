@@ -1,6 +1,7 @@
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Intrinsics.Builtins;
+using UniversalToolchain.Intrinsics.Capabilities;
 
 namespace ConditionsModule.Optimizers;
 
@@ -11,14 +12,21 @@ namespace ConditionsModule.Optimizers;
 [UsedImplicitly]
 public class BooleanOptimizerModule : IIRProcessingModule
 {
-    private static readonly IReadOnlyList<string> _standardModuleIntrinsics =
-    [
-        "boolean_and", "boolean_or", "boolean_not"
-    ];
+    private IOptimizerIntrinsicCapabilityContext? _capabilityContext;
+
+    public void InitIntrinsicCapabilityContext(IOptimizerIntrinsicCapabilityContext capabilityContext)
+    {
+        _capabilityContext = capabilityContext ?? throw new ArgumentNullException(nameof(capabilityContext));
+    }
 
     public IAbstractIR ProcessIr<TCompilationOutput>(IAbstractIR current, IAbstractIrCompiler<TCompilationOutput> compiler)
     {
-        if (_standardModuleIntrinsics.Any(x => !compiler.SupportedIntrinsics.Contains(x)))
+        var capabilityContext = _capabilityContext
+                                ?? throw new InvalidOperationException("Boolean optimizer requires intrinsic capability context initialization.");
+
+        if (!capabilityContext.Supports(BuiltinIntrinsicSymbols.Boolean.And) ||
+            !capabilityContext.Supports(BuiltinIntrinsicSymbols.Boolean.Or) ||
+            !capabilityContext.Supports(BuiltinIntrinsicSymbols.Boolean.Not))
             return current;
 
         var optimized = OptimizeNativeLoads(current);

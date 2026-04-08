@@ -9,7 +9,8 @@ internal sealed class PreparedExecutionBuilder<TCompilationOutput>(
     Func<IExecutor<TCompilationOutput>> executorFactory,
     IReadOnlyList<IFrontendCoreModule> modules,
     IReadOnlyList<IIRProcessingModule> optimizers,
-    IReadOnlyList<IMiddleEndCoreModule<TCompilationOutput>> middleEndModules)
+    IReadOnlyList<IMiddleEndCoreModule<TCompilationOutput>> middleEndModules,
+    IIntrinsicCapabilitySetFactory? intrinsicCapabilitySetFactory = null)
 {
     public ICompiledArtifact<TCompilationOutput> Compile(CompilationInput input)
     {
@@ -49,6 +50,8 @@ internal sealed class PreparedExecutionBuilder<TCompilationOutput>(
         var methodsTranslator = abstractMethodsTranslatorFactory();
         var compiler = compilerFactory();
         var executor = executorFactory();
+        var intrinsicCapabilitySet = (intrinsicCapabilitySetFactory ?? new CompilerIntrinsicCapabilitySetFactory()).Create(compiler);
+        var optimizerCapabilityContext = new OptimizerIntrinsicCapabilityContext(intrinsicCapabilitySet);
 
         var targetCode = modules.Aggregate(input.SourceText, (current, module) => module.ProcessText(current));
         modules.ForEach(module => module.InitLexer(lexer));
@@ -66,6 +69,7 @@ internal sealed class PreparedExecutionBuilder<TCompilationOutput>(
 
         var targetBytecode = modules.Aggregate(bytecode, (current, module) => module.ProcessBytecode(current));
         optimizers.ForEach(module => module.InitMethodsTranslator(methodsTranslator));
+        optimizers.ForEach(module => module.InitIntrinsicCapabilityContext(optimizerCapabilityContext));
         var air = methodsTranslator.Translate(targetBytecode);
 
         var targetIr = optimizers.Aggregate(air, (current, module) => module.ProcessIr(current, compiler));

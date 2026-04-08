@@ -1,6 +1,7 @@
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Intrinsics.Builtins;
+using UniversalToolchain.Intrinsics.Capabilities;
 
 namespace LocalVariablesOptimizerModule;
 
@@ -10,16 +11,21 @@ namespace LocalVariablesOptimizerModule;
 [IntrinsicDescriptorProvider(typeof(StorageIntrinsicDescriptorProvider))]
 public class LocalVariablesOptimizer : IIRProcessingModule
 {
-    private readonly IReadOnlyList<string> _intrinsics =
-    [
-        "store_local",
-        "load_local",
-        "load_local_ref"
-    ];
+    private IOptimizerIntrinsicCapabilityContext? _capabilityContext;
+
+    public void InitIntrinsicCapabilityContext(IOptimizerIntrinsicCapabilityContext capabilityContext)
+    {
+        _capabilityContext = capabilityContext ?? throw new ArgumentNullException(nameof(capabilityContext));
+    }
 
     public IAbstractIR ProcessIr<TCompilationOutput>(IAbstractIR current, IAbstractIrCompiler<TCompilationOutput> compiler)
     {
-        if (!_intrinsics.All(x => compiler.SupportedIntrinsics.Contains(x)))
+        var capabilityContext = _capabilityContext
+                                ?? throw new InvalidOperationException("Local variables optimizer requires intrinsic capability context initialization.");
+
+        if (!capabilityContext.Supports(BuiltinIntrinsicSymbols.Storage.StoreLocal) ||
+            !capabilityContext.Supports(BuiltinIntrinsicSymbols.Storage.LoadLocal) ||
+            !capabilityContext.Supports(BuiltinIntrinsicSymbols.Storage.LoadLocalRef))
             return current;
 
         var optimized = OptimizeVariables(current);

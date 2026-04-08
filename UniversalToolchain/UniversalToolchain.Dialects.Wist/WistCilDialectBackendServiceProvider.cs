@@ -55,12 +55,12 @@ internal sealed class WistCilDialectBackendServiceProvider : IDialectBackendRunt
                     configuration.AllowedIntrinsics,
                     configuration.ForbiddenIntrinsics,
                     configuration.HasExplicitAllowList);
-                _ = capabilitySetFactory.Create(compiler);
                 return compiler;
             },
             provider.GetRequiredService<Func<IExecutor<DynamicMethod>>>(),
             provider.GetServices<IFrontendCoreModule>().ToList(),
             provider.GetServices<IIRProcessingModule>().ToList(),
-            []);
+            [],
+            capabilitySetFactory);
     }
 }

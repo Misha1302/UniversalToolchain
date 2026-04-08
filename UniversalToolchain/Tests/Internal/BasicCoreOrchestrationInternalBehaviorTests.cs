@@ -1,5 +1,6 @@
 using System.Reflection;
 using ExceptionsManager;
+using UniversalToolchain.Intrinsics.Capabilities;
 
 namespace Tests.Internal;
 
@@ -46,6 +47,7 @@ public class BasicCoreOrchestrationInternalBehaviorTests
             "translator.Translate",
             "module.ProcessBytecode",
             "optimizer.InitMethodsTranslator",
+            "optimizer.InitIntrinsicCapabilityContext",
             "methodsTranslator.Translate",
             "optimizer.ProcessIr",
             "middle.InitMethodsCompiler",
@@ -309,6 +311,8 @@ public class BasicCoreOrchestrationInternalBehaviorTests
     private sealed class TrackingOptimizer(List<string> calls) : IIRProcessingModule
     {
         public void InitMethodsTranslator(IAbstractMethodsTranslator methodsTranslator) => calls.Add("optimizer.InitMethodsTranslator");
+
+        public void InitIntrinsicCapabilityContext(IOptimizerIntrinsicCapabilityContext capabilityContext) => calls.Add("optimizer.InitIntrinsicCapabilityContext");
 
         public IAbstractIR ProcessIr<TCompilationOutput>(IAbstractIR current, IAbstractIrCompiler<TCompilationOutput> compiler)
         {

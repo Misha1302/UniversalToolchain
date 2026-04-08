@@ -1,6 +1,7 @@
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Intrinsics.Builtins;
+using UniversalToolchain.Intrinsics.Capabilities;
 
 namespace ConditionsModule.Optimizers;
 
@@ -11,12 +12,9 @@ namespace ConditionsModule.Optimizers;
 [UsedImplicitly]
 public class ComparisonIntrinsicOptimizerModule : IIRProcessingModule
 {
-    private static readonly IReadOnlyList<string> _comparisonIntrinsics =
+    private static readonly IReadOnlyList<Type> _supportedComparisonTypes =
     [
-        "cmp_eq_i32", "cmp_ne_i32", "cmp_gt_i32", "cmp_ge_i32", "cmp_lt_i32", "cmp_le_i32",
-        "cmp_eq_i64", "cmp_ne_i64", "cmp_gt_i64", "cmp_ge_i64", "cmp_lt_i64", "cmp_le_i64",
-        "cmp_eq_f32", "cmp_ne_f32", "cmp_gt_f32", "cmp_ge_f32", "cmp_lt_f32", "cmp_le_f32",
-        "cmp_eq_f64", "cmp_ne_f64", "cmp_gt_f64", "cmp_ge_f64", "cmp_lt_f64", "cmp_le_f64"
+        typeof(int), typeof(long), typeof(float), typeof(double)
     ];
 
     private static readonly IReadOnlyDictionary<string, string> _comparisonOperations = new Dictionary<string, string>
@@ -29,9 +27,19 @@ public class ComparisonIntrinsicOptimizerModule : IIRProcessingModule
         [nameof(Comparisons.LessOrEqual)] = "le"
     };
 
+    private IOptimizerIntrinsicCapabilityContext? _capabilityContext;
+
+    public void InitIntrinsicCapabilityContext(IOptimizerIntrinsicCapabilityContext capabilityContext)
+    {
+        _capabilityContext = capabilityContext ?? throw new ArgumentNullException(nameof(capabilityContext));
+    }
+
     public IAbstractIR ProcessIr<TCompilationOutput>(IAbstractIR current, IAbstractIrCompiler<TCompilationOutput> compiler)
     {
-        if (_comparisonIntrinsics.Any(x => !compiler.SupportedIntrinsics.Contains(x)))
+        var capabilityContext = _capabilityContext
+                                ?? throw new InvalidOperationException("Comparison optimizer requires intrinsic capability context initialization.");
+
+        if (!HasRequiredCapabilities(capabilityContext))
             return current;
 
         var result = new AbstractIR();
@@ -54,6 +62,22 @@ public class ComparisonIntrinsicOptimizerModule : IIRProcessingModule
 
         result.AppendInstructions(optimized);
         return result;
+    }
+
+    private static bool HasRequiredCapabilities(IOptimizerIntrinsicCapabilityContext capabilityContext)
+    {
+        foreach (var type in _supportedComparisonTypes)
+        {
+            if (!capabilityContext.Supports(BuiltinIntrinsicSymbols.Comparison.Equal, type) ||
+                !capabilityContext.Supports(BuiltinIntrinsicSymbols.Comparison.NotEqual, type) ||
+                !capabilityContext.Supports(BuiltinIntrinsicSymbols.Comparison.Greater, type) ||
+                !capabilityContext.Supports(BuiltinIntrinsicSymbols.Comparison.GreaterOrEqual, type) ||
+                !capabilityContext.Supports(BuiltinIntrinsicSymbols.Comparison.Less, type) ||
+                !capabilityContext.Supports(BuiltinIntrinsicSymbols.Comparison.LessOrEqual, type))
+                return false;
+        }
+
+        return true;
     }
 
 

@@ -5,6 +5,9 @@ public interface IIRProcessingModule
 {
     IAbstractIR ProcessIr<TCompilationOutput>(IAbstractIR current, IAbstractIrCompiler<TCompilationOutput> compiler) => current;
 
+    void InitIntrinsicCapabilityContext(IOptimizerIntrinsicCapabilityContext capabilityContext)
+    {
+    }
 
     void InitMethodsTranslator(IAbstractMethodsTranslator methodsTranslator)
     {

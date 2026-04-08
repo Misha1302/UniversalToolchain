@@ -9,7 +9,8 @@ public class BasicCoreImpl<TCompilationOutput>(
     Func<IExecutor<TCompilationOutput>> executorFactory,
     IReadOnlyList<IFrontendCoreModule> modules,
     IReadOnlyList<IIRProcessingModule> optimizers,
-    IReadOnlyList<IMiddleEndCoreModule<TCompilationOutput>> middleEndModules
+    IReadOnlyList<IMiddleEndCoreModule<TCompilationOutput>> middleEndModules,
+    IIntrinsicCapabilitySetFactory? intrinsicCapabilitySetFactory = null
 ) : ICoreRunnable, ICoreOptimizedRunnable, IExecutableGiver<TCompilationOutput>, IArtifactCompiler<TCompilationOutput>
 {
     private readonly CompilationInputNormalizer _inputNormalizer = new();
@@ -26,7 +27,8 @@ public class BasicCoreImpl<TCompilationOutput>(
             executorFactory,
             modules,
             optimizers,
-            middleEndModules);
+            middleEndModules,
+            intrinsicCapabilitySetFactory);
 
     public ICompiledArtifact<TCompilationOutput> Compile(string code, OrderedDictionary<string, Type>? parameters = null)
         => Compile(_inputNormalizer.NormalizeDeclaredInput(code, parameters));
