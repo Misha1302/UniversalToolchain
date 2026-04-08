@@ -1,4 +1,5 @@
 using BasicCodeTranslator;
+using AbstractIrExtensions;
 using DotnetAirHelper;
 using Tests.Infrastructure;
 
@@ -48,6 +49,23 @@ public class TranslatorStateIsolationTests
 
         Assert.That(first, Is.True);
         Assert.That(second, Is.False);
+    }
+
+    [Test]
+    public void BuiltInIntrinsicSequence_ShouldRemainTypeStackValid_ForDoubleArithmeticExpression()
+    {
+        var ir = CreateIr(
+            new Instruction(UOpCode.Intrinsic, ["load_external", 0, typeof(double)]),
+            new Instruction(UOpCode.Intrinsic, ["load_f64", 0.9d]),
+            new Instruction(UOpCode.Intrinsic, ["mul_f64"]),
+            new Instruction(UOpCode.Intrinsic, ["load_external", 1, typeof(double)]),
+            new Instruction(UOpCode.Intrinsic, ["add_f64"]));
+
+        var stack = new List<Type>();
+
+        Assert.DoesNotThrow(() => ir.Instructions.ManipulateTypesStack(stack, AirTypes.ProcessTypesIntrinsic));
+        Assert.That(stack, Has.Count.EqualTo(1));
+        Assert.That(stack[0], Is.EqualTo(typeof(double)));
     }
 
     private sealed class NestedAppendingVisitor(

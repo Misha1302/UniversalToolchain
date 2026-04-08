@@ -14,6 +14,11 @@ public class OptimizerRegressionTests
 
         var optimized = module.ProcessIr(ir, compiler);
 
+        var stack = new List<Type>();
+
+        Assert.DoesNotThrow(() => optimized.Instructions.ManipulateTypesStack(stack, AirTypes.ProcessTypesIntrinsic));
+        Assert.That(stack, Has.Count.EqualTo(1));
+        Assert.That(stack[0], Is.EqualTo(typeof(bool)));
         Assert.That(CompileAndExecute(optimized), Is.EqualTo(false));
     }
 
@@ -120,6 +125,10 @@ public class OptimizerRegressionTests
 
         Assert.That(optimized.Instructions[^1].UOpCode, Is.EqualTo(UOpCode.Intrinsic));
         Assert.That(optimized.Instructions[^1].Operands[0], Is.EqualTo("cmp_lt_i32"));
+        var stack = new List<Type>();
+        Assert.DoesNotThrow(() => optimized.Instructions.ManipulateTypesStack(stack, AirTypes.ProcessTypesIntrinsic));
+        Assert.That(stack, Has.Count.EqualTo(1));
+        Assert.That(stack[0], Is.EqualTo(typeof(bool)));
         Assert.That(CompileAndExecute(optimized), Is.EqualTo(true));
     }
 
@@ -354,6 +363,10 @@ public class OptimizerRegressionTests
 
         var optimized = module.ProcessIr(ir, compiler);
 
+        var stack = new List<Type>();
+
+        Assert.DoesNotThrow(() => optimized.Instructions.ManipulateTypesStack(stack, AirTypes.ProcessTypesIntrinsic));
+        Assert.That(stack, Is.Empty);
         Assert.DoesNotThrow(() => CompileAndExecute(optimized));
     }
 
