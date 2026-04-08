@@ -49,6 +49,8 @@ public static class CoreRuntimeServiceCollectionExtensions
             var config = new BytecodeTranslatorConfiguration([]);
             return () => new BasicAstToBytecodeTranslatorImpl(config);
         });
+        services.AddSingleton<IntrinsicDescriptorProviderMetadataValidator>();
+        services.AddSingleton<IntrinsicSemanticCoverageValidator>();
         services.AddSingleton<IntrinsicSemanticStartupValidator>();
         services.AddSingleton<IIntrinsicTypeResolutionContext, IntrinsicTypeResolutionContext>();
         services.AddSingleton<MethodCallTypeSemanticsResolver>();

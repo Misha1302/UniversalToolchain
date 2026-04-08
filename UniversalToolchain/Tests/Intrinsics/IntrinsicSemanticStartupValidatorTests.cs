@@ -1,3 +1,5 @@
+using BasicCore.Contracts;
+using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Intrinsics.Contracts;
 using UniversalToolchain.Intrinsics.Core;
 
@@ -7,32 +9,69 @@ namespace Tests.Intrinsics;
 public sealed class IntrinsicSemanticStartupValidatorTests
 {
     [Test]
-    public void Validate_ShouldSucceed_WhenProvidersAreValid()
+    public void Validate_ShouldFail_WhenDuplicateProviderTypeIsRegistered()
     {
         var validator = new IntrinsicSemanticStartupValidator();
         var providers = new IIntrinsicDescriptorProvider[]
         {
-            new AlphaProvider(CreateDescriptor("math", "add")),
-            new BetaProvider(CreateDescriptor("logic", "and"))
-        };
-
-        Assert.DoesNotThrow(() => validator.Validate(providers));
-    }
-
-    [Test]
-    public void Validate_ShouldFail_WhenDuplicateSymbolsExist()
-    {
-        var validator = new IntrinsicSemanticStartupValidator();
-        var providers = new IIntrinsicDescriptorProvider[]
-        {
-            new AlphaProvider(CreateDescriptor("math", "add")),
-            new BetaProvider(CreateDescriptor("math", "add"))
+            new DuplicateProvider(CreateDescriptor("math", "add")),
+            new DuplicateProvider(CreateDescriptor("logic", "and"))
         };
 
         var exception = Assert.Throws<InvalidOperationException>(() => validator.Validate(providers));
 
-        Assert.That(exception!.Message, Does.Contain("Duplicate intrinsic semantic descriptor"));
-        Assert.That(exception.Message, Does.Contain("math.add"));
+        Assert.That(exception!.Message, Does.Contain(typeof(DuplicateProvider).FullName));
+        Assert.That(exception.Message, Does.Contain("registered 2 times"));
+    }
+
+    [Test]
+    public void Validate_ShouldFail_WhenProviderReturnsInvalidDescriptor()
+    {
+        var validator = new IntrinsicSemanticStartupValidator();
+        var providers = new IIntrinsicDescriptorProvider[]
+        {
+            new InvalidDescriptorProvider(new IntrinsicSemanticDescriptor
+            {
+                Symbol = default,
+                Category = IntrinsicCategory.Core,
+                StackRule = null!,
+                ValidationRule = new NoOpValidationRule()
+            })
+        };
+
+        var exception = Assert.Throws<InvalidOperationException>(() => validator.Validate(providers));
+
+        Assert.That(exception!.Message, Does.Contain(typeof(InvalidDescriptorProvider).FullName));
+        Assert.That(exception.Message, Does.Contain("default symbol"));
+    }
+
+    [Test]
+    public void Validate_ShouldFail_WhenAttributedModuleProviderIsMissing()
+    {
+        var validator = new IntrinsicSemanticStartupValidator();
+        var providers = Array.Empty<IIntrinsicDescriptorProvider>();
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            validator.Validate(providers, [(typeof(MissingProviderFrontendModule), typeof(MissingProvider))]));
+
+        Assert.That(exception!.Message, Does.Contain(typeof(MissingProviderFrontendModule).FullName));
+        Assert.That(exception.Message, Does.Contain(typeof(MissingProvider).FullName));
+        Assert.That(exception.Message, Does.Contain("not registered"));
+    }
+
+    [Test]
+    public void Validate_ShouldSucceed_WhenProvidersAndCoverageAreValid()
+    {
+        var validator = new IntrinsicSemanticStartupValidator();
+        var providers = new IIntrinsicDescriptorProvider[]
+        {
+            new ValidProvider(CreateDescriptor("math", "add"))
+        };
+
+        var result = validator.Validate(providers, [(typeof(ValidFrontendModule), typeof(ValidProvider))]);
+
+        Assert.That(result.IsSuccess, Is.True);
+        Assert.That(result.Errors, Is.Empty);
     }
 
     private static IntrinsicSemanticDescriptor CreateDescriptor(string @namespace, string name)
@@ -56,9 +95,25 @@ public sealed class IntrinsicSemanticStartupValidatorTests
         }
     }
 
-    private sealed class AlphaProvider(params IntrinsicSemanticDescriptor[] descriptors) : FakeProvider(descriptors);
+    private sealed class DuplicateProvider(params IntrinsicSemanticDescriptor[] descriptors) : FakeProvider(descriptors);
 
-    private sealed class BetaProvider(params IntrinsicSemanticDescriptor[] descriptors) : FakeProvider(descriptors);
+    private sealed class InvalidDescriptorProvider(params IntrinsicSemanticDescriptor[] descriptors) : FakeProvider(descriptors);
+
+    private sealed class MissingProvider : IIntrinsicDescriptorProvider
+    {
+        public IReadOnlyList<IntrinsicSemanticDescriptor> GetDescriptors()
+        {
+            return [CreateDescriptor("logic", "missing")];
+        }
+    }
+
+    private sealed class ValidProvider(params IntrinsicSemanticDescriptor[] descriptors) : FakeProvider(descriptors);
+
+    [IntrinsicDescriptorProvider(typeof(MissingProvider))]
+    private sealed class MissingProviderFrontendModule : IFrontendCoreModule;
+
+    [IntrinsicDescriptorProvider(typeof(ValidProvider))]
+    private sealed class ValidFrontendModule : IFrontendCoreModule;
 
     private sealed class NoOpStackRule : IIntrinsicStackRule
     {

@@ -68,6 +68,14 @@ public sealed class WistDialectServiceProviderFactory
             foreach (var attribute in moduleType.GetCustomAttributes(typeof(IntrinsicDescriptorProviderAttribute), false)
                          .Cast<IntrinsicDescriptorProviderAttribute>())
             {
+                if (!typeof(IIntrinsicDescriptorProvider).IsAssignableFrom(attribute.ProviderType))
+                {
+                    var moduleDisplayName = moduleType.FullName ?? moduleType.Name;
+                    var providerDisplayName = attribute.ProviderType.FullName ?? attribute.ProviderType.Name;
+                    Thrower.InvalidOpEx(
+                        $"Module '{moduleDisplayName}' declares intrinsic descriptor provider '{providerDisplayName}', but the provider type does not implement IIntrinsicDescriptorProvider.");
+                }
+
                 providerTypes.Add(attribute.ProviderType);
             }
         }
@@ -78,10 +86,40 @@ public sealed class WistDialectServiceProviderFactory
 
     private static void ValidateIntrinsicSemantics(IServiceCollection services)
     {
+        var coverageRequirements = GetIntrinsicCoverageRequirements(services);
+
         using var provider = services.BuildServiceProvider();
         var validator = provider.GetRequiredService<IntrinsicSemanticStartupValidator>();
         var providers = provider.GetServices<IIntrinsicDescriptorProvider>();
-        validator.Validate(providers);
+        validator.Validate(providers, coverageRequirements);
+    }
+
+    private static IReadOnlyList<Type> GetRegisteredImplementationTypes(IServiceCollection services, Type serviceType)
+    {
+        return services
+            .Where(x => x.ServiceType == serviceType)
+            .Select(x => x.ImplementationType ?? x.ImplementationInstance?.GetType())
+            .Where(static x => x != null)
+            .Cast<Type>()
+            .OrderBy(x => x.FullName, StringComparer.Ordinal)
+            .ToList();
+    }
+
+    private static IReadOnlyList<(Type ModuleType, Type ProviderType)> GetIntrinsicCoverageRequirements(IServiceCollection services)
+    {
+        var moduleTypes = GetRegisteredImplementationTypes(services, typeof(IFrontendCoreModule))
+            .Concat(GetRegisteredImplementationTypes(services, typeof(IIRProcessingModule)))
+            .Distinct()
+            .OrderBy(x => x.FullName, StringComparer.Ordinal);
+
+        return moduleTypes
+            .SelectMany(static moduleType =>
+                moduleType.GetCustomAttributes(typeof(IntrinsicDescriptorProviderAttribute), false)
+                    .Cast<IntrinsicDescriptorProviderAttribute>()
+                    .Select(attribute => (ModuleType: moduleType, ProviderType: attribute.ProviderType)))
+            .OrderBy(x => x.ModuleType.FullName, StringComparer.Ordinal)
+            .ThenBy(x => x.ProviderType.FullName, StringComparer.Ordinal)
+            .ToList();
     }
 
     private static IReadOnlyDictionary<DialectBackendId, IDialectBackendRuntimeRegistrar> CreateBackendProviderMap(IEnumerable<IDialectBackendRuntimeRegistrar> backendProviders)
