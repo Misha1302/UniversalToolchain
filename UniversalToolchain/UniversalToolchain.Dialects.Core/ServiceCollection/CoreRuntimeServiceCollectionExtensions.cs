@@ -44,21 +44,24 @@ public static class CoreRuntimeServiceCollectionExtensions
         });
 
         services.AddTransient<Func<IAstToBytecodeTranslator>>(_ => () => new BasicAstToBytecodeTranslatorImpl());
-        services.AddTransient<ILegacyIntrinsicDecoder, LegacyIntrinsicDecoder>();
-        services.AddTransient<IIntrinsicTypeResolutionContext, IntrinsicTypeResolutionContext>();
-        services.AddTransient<MethodCallTypeSemanticsResolver>();
+        services.AddSingleton<IIntrinsicTypeResolutionContext, IntrinsicTypeResolutionContext>();
+        services.AddSingleton<MethodCallTypeSemanticsResolver>();
+        services.AddTransient<IIntrinsicDescriptorProvider, CoreIntrinsicDescriptorProvider>();
         services.AddTransient<IIntrinsicDescriptorProvider, ArithmeticIntrinsicDescriptorProvider>();
         services.AddTransient<IIntrinsicDescriptorProvider, ComparisonIntrinsicDescriptorProvider>();
         services.AddTransient<IIntrinsicDescriptorProvider, BooleanIntrinsicDescriptorProvider>();
         services.AddTransient<IIntrinsicDescriptorProvider, StorageIntrinsicDescriptorProvider>();
-        services.AddTransient<IIntrinsicDescriptorProvider>(provider =>
-            new CoreIntrinsicDescriptorProvider(provider.GetRequiredService<MethodCallTypeSemanticsResolver>()));
-        services.AddTransient<IIntrinsicCatalog>(provider =>
-            new IntrinsicCatalogBuilder().Build(provider.GetServices<IIntrinsicDescriptorProvider>()));
-        services.AddTransient<IIntrinsicTypeStackProcessor, IntrinsicTypeStackProcessor>();
-        services.AddTransient<Func<IAbstractMethodsTranslator>>(provider => () => new BytecodeToAbstractIrConverterImpl(
-            provider.GetRequiredService<ILegacyIntrinsicDecoder>(),
-            provider.GetRequiredService<IIntrinsicTypeStackProcessor>()));
+        services.AddSingleton<IIntrinsicCatalog>(sp =>
+        {
+            var providers = sp.GetServices<IIntrinsicDescriptorProvider>();
+            return new IntrinsicCatalogBuilder().Build(providers);
+        });
+        services.AddSingleton<ILegacyIntrinsicDecoder, LegacyIntrinsicDecoder>();
+        services.AddSingleton<IIntrinsicTypeStackProcessor, IntrinsicTypeStackProcessor>();
+        services.AddTransient<Func<IAbstractMethodsTranslator>>(sp =>
+            () => new BytecodeToAbstractIrConverterImpl(
+                sp.GetRequiredService<ILegacyIntrinsicDecoder>(),
+                sp.GetRequiredService<IIntrinsicTypeStackProcessor>()));
         services.AddTransient<Func<IExecutor<DynamicMethod>>>(_ => () => new DynamicMethodExecutor());
         services.AddTransient<Func<IExecutor<IAbstractIR>>>(_ => () => new InterpreterImpl());
 
