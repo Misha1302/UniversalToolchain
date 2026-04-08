@@ -1,30 +1,50 @@
+using ExceptionsManager;
+using NumbersModule.Core;
+using NUnit.Framework;
+
 namespace Tests.Infrastructure;
 
-internal static class BackendResultAssertions
+public static class BackendResultAssertions
 {
     public static void AssertEquivalent(object? left, object? right)
     {
-        var normalizedLeft = BackendValueNormalizer.Normalize(left);
-        var normalizedRight = BackendValueNormalizer.Normalize(right);
-
-        if (normalizedLeft is null || normalizedRight is null)
+        if (left is null || right is null)
         {
-            Assert.That(normalizedLeft, Is.EqualTo(normalizedRight));
+            Assert.That(left, Is.EqualTo(right));
             return;
         }
 
-        if (normalizedLeft is bool || normalizedRight is bool)
+        if (left is bool || right is bool)
         {
-            Assert.That((bool)normalizedLeft, Is.EqualTo((bool)normalizedRight));
+            Assert.That(AsBool(left), Is.EqualTo(AsBool(right)));
             return;
         }
 
-        if (normalizedLeft is double leftDouble && normalizedRight is double rightDouble)
-        {
-            Assert.That(leftDouble, Is.EqualTo(rightDouble).Within(1e-9));
-            return;
-        }
+        Assert.That(AsNumber(left), Is.EqualTo(AsNumber(right)).Within(1e-9));
+    }
 
-        Assert.That(normalizedLeft, Is.EqualTo(normalizedRight));
+    public static double AsNumber(object? value)
+    {
+        return value switch
+        {
+            int intValue => intValue,
+            long longValue => longValue,
+            float floatValue => floatValue,
+            double doubleValue => doubleValue,
+            decimal decimalValue => (double)decimalValue,
+            RealNumberImpl realNumberImpl => realNumberImpl.GetValue(),
+            _ => Thrower.InvalidOpEx<double>(
+                $"Value '{value?.ToString() ?? "null"}' of runtime type '{value?.GetType().FullName ?? "null"}' is not a supported numeric result.")
+        };
+    }
+
+    public static bool AsBool(object? value)
+    {
+        return value switch
+        {
+            bool boolValue => boolValue,
+            _ => Thrower.InvalidOpEx<bool>(
+                $"Value '{value?.ToString() ?? "null"}' of runtime type '{value?.GetType().FullName ?? "null"}' is not a boolean result.")
+        };
     }
 }

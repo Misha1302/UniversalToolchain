@@ -1,5 +1,6 @@
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
+using NUnit.Framework;
 using UniversalToolchain.Dialects.Wist;
 
 namespace Tests.Infrastructure;
@@ -40,6 +41,16 @@ public static class BackendParityInfrastructure
 
         Assert.That(compilerException.GetType().FullName, Is.EqualTo(interpreterException.GetType().FullName));
         Assert.That(compilerException.Message, Is.EqualTo(interpreterException.Message));
+    }
+
+    public static double AsNumber(object? value)
+    {
+        return BackendResultAssertions.AsNumber(value);
+    }
+
+    public static bool AsBool(object? value)
+    {
+        return BackendResultAssertions.AsBool(value);
     }
 
     /// <summary>
