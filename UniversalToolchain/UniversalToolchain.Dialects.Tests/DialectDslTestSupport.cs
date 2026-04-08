@@ -10,6 +10,10 @@ using CommonExceptions;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core;
 using UniversalToolchain.Dialects.Frontend;
+using UniversalToolchain.Intrinsics.Builtins;
+using UniversalToolchain.Intrinsics.Contracts;
+using UniversalToolchain.Intrinsics.Core;
+using UniversalToolchain.Intrinsics.Legacy;
 using AstNodeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.ParserWrapper.AstNodeTag>;
 
 namespace UniversalToolchain.Dialects.Tests;
@@ -41,7 +45,7 @@ internal static class DialectDslTestSupport
 
         var ast = parser.Parse(lexer.Lexemize(source));
         var bytecode = translator.Translate(module.ProcessAst(ast));
-        var ir = new BytecodeToAbstractIrConverterImpl().Translate(bytecode);
+        var ir = CreateAbstractMethodsTranslator().Translate(bytecode);
         return DialectDefinitionSliceAirReader.Read(ir);
     }
 
@@ -96,6 +100,31 @@ internal static class DialectDslTestSupport
     {
         diagnostics = [];
         return DialectDefinitionSemanticBinder.Bind(slice, diagnostics);
+    }
+
+    public static IAbstractMethodsTranslator CreateAbstractMethodsTranslator()
+    {
+        return new BytecodeToAbstractIrConverterImpl(
+            new LegacyIntrinsicDecoder(),
+            CreateTypeStackProcessor());
+    }
+
+    private static IIntrinsicTypeStackProcessor CreateTypeStackProcessor()
+    {
+        var catalog = new IntrinsicCatalogBuilder().Build(CreateDescriptorProviders());
+        return new IntrinsicTypeStackProcessor(catalog, new IntrinsicTypeResolutionContext());
+    }
+
+    private static IIntrinsicDescriptorProvider[] CreateDescriptorProviders()
+    {
+        return
+        [
+            new ArithmeticIntrinsicDescriptorProvider(),
+            new ComparisonIntrinsicDescriptorProvider(),
+            new BooleanIntrinsicDescriptorProvider(),
+            new StorageIntrinsicDescriptorProvider(),
+            new CoreIntrinsicDescriptorProvider(new MethodCallTypeSemanticsResolver())
+        ];
     }
 }
 

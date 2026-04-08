@@ -220,7 +220,7 @@ public class FrameworkNativeVerticalSliceTests
             () => new BasicLexerImpl(new LexerConfiguration([])),
             () => new BasicParserImpl(new ParserConfiguration([])),
             () => new BasicAstToBytecodeTranslatorImpl(new BytecodeTranslatorConfiguration([])),
-            () => new BytecodeToAbstractIrConverterImpl(),
+            DialectDslTestSupport.CreateAbstractMethodsTranslator,
             () => new DialectDefinitionSliceCompiler(),
             () => new DialectDefinitionSliceExecutor(),
             [],

@@ -14,6 +14,10 @@ using BytecodeDynamicMethodsCompiler.Compilers;
 using ExceptionsManager;
 using IntermediateRepresentationAbstractions;
 using Microsoft.Extensions.DependencyInjection;
+using UniversalToolchain.Intrinsics.Builtins;
+using UniversalToolchain.Intrinsics.Contracts;
+using UniversalToolchain.Intrinsics.Core;
+using UniversalToolchain.Intrinsics.Legacy;
 
 namespace UniversalToolchain.Dialects.Core.ServiceCollection;
 
@@ -40,7 +44,21 @@ public static class CoreRuntimeServiceCollectionExtensions
         });
 
         services.AddTransient<Func<IAstToBytecodeTranslator>>(_ => () => new BasicAstToBytecodeTranslatorImpl());
-        services.AddTransient<Func<IAbstractMethodsTranslator>>(_ => () => new BytecodeToAbstractIrConverterImpl());
+        services.AddTransient<ILegacyIntrinsicDecoder, LegacyIntrinsicDecoder>();
+        services.AddTransient<IIntrinsicTypeResolutionContext, IntrinsicTypeResolutionContext>();
+        services.AddTransient<MethodCallTypeSemanticsResolver>();
+        services.AddTransient<IIntrinsicDescriptorProvider, ArithmeticIntrinsicDescriptorProvider>();
+        services.AddTransient<IIntrinsicDescriptorProvider, ComparisonIntrinsicDescriptorProvider>();
+        services.AddTransient<IIntrinsicDescriptorProvider, BooleanIntrinsicDescriptorProvider>();
+        services.AddTransient<IIntrinsicDescriptorProvider, StorageIntrinsicDescriptorProvider>();
+        services.AddTransient<IIntrinsicDescriptorProvider>(provider =>
+            new CoreIntrinsicDescriptorProvider(provider.GetRequiredService<MethodCallTypeSemanticsResolver>()));
+        services.AddTransient<IIntrinsicCatalog>(provider =>
+            new IntrinsicCatalogBuilder().Build(provider.GetServices<IIntrinsicDescriptorProvider>()));
+        services.AddTransient<IIntrinsicTypeStackProcessor, IntrinsicTypeStackProcessor>();
+        services.AddTransient<Func<IAbstractMethodsTranslator>>(provider => () => new BytecodeToAbstractIrConverterImpl(
+            provider.GetRequiredService<ILegacyIntrinsicDecoder>(),
+            provider.GetRequiredService<IIntrinsicTypeStackProcessor>()));
         services.AddTransient<Func<IExecutor<DynamicMethod>>>(_ => () => new DynamicMethodExecutor());
         services.AddTransient<Func<IExecutor<IAbstractIR>>>(_ => () => new InterpreterImpl());
 

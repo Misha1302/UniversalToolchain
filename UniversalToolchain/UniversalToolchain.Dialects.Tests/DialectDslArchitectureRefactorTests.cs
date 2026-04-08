@@ -277,7 +277,7 @@ public class DialectDslArchitectureRefactorTests
 
         var ast = parser.Parse(lexer.Lexemize(source));
         var bytecode = translator.Translate(module.ProcessAst(ast));
-        var ir = new BytecodeToAbstractIrConverterImpl().Translate(bytecode);
+        var ir = DialectDslTestSupport.CreateAbstractMethodsTranslator().Translate(bytecode);
         return DialectDefinitionSliceAirReader.Read(ir);
     }
 

@@ -82,7 +82,7 @@ public class FrontendLayerServiceTests
 
         var ast = parser.Parse(lexer.Lexemize("dialect Tiny\nuse Arithmetic,Variables\nsecurity trusted\ncapability sandbox\n"));
         var bytecode = translator.Translate(module.ProcessAst(ast));
-        var ir = new BytecodeToAbstractIrConverterImpl().Translate(bytecode);
+        var ir = DialectDslTestSupport.CreateAbstractMethodsTranslator().Translate(bytecode);
         var annotations = ir.Instructions.SelectMany(x => x.Metadata).ToList();
 
         Assert.Multiple(() =>

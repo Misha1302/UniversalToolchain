@@ -1,4 +1,8 @@
 using AbstractIrConverters;
+using UniversalToolchain.Intrinsics.Builtins;
+using UniversalToolchain.Intrinsics.Contracts;
+using UniversalToolchain.Intrinsics.Core;
+using UniversalToolchain.Intrinsics.Legacy;
 
 namespace Tests.Internal;
 
@@ -8,7 +12,7 @@ public class BytecodeConverterContractsTests
     [Test]
     public void Should_ConvertInstructionsInOrder_When_BytecodeContainsMultipleOps()
     {
-        var converter = new BytecodeToAbstractIrConverterImpl();
+        var converter = CreateConverter();
         var bytecode = new Bytecode([
             new BytecodeInstruction(new StubConvertable("first", _ => CreateIr(new Instruction(UOpCode.Push, [1])))),
             new BytecodeInstruction(new StubConvertable("second", _ => CreateIr(new Instruction(UOpCode.Push, [2]))))
@@ -23,7 +27,7 @@ public class BytecodeConverterContractsTests
     [Test]
     public void Should_PassUpdatedTypeStackToNextOperation_When_ConvertingBytecode()
     {
-        var converter = new BytecodeToAbstractIrConverterImpl();
+        var converter = CreateConverter();
         IReadOnlyList<Type>? observedStack = null;
 
         var bytecode = new Bytecode([
@@ -44,7 +48,7 @@ public class BytecodeConverterContractsTests
     [Test]
     public void Should_Throw_When_ConvertedIntrinsicIsUnknown()
     {
-        var converter = new BytecodeToAbstractIrConverterImpl();
+        var converter = CreateConverter();
         var bytecode = new Bytecode([
             new BytecodeInstruction(new StubConvertable("bad", _ =>
                 CreateIr(new Instruction(UOpCode.Intrinsic, ["not_registered"]))))
@@ -56,7 +60,7 @@ public class BytecodeConverterContractsTests
     [Test]
     public void Should_ReturnEmptyIr_When_BytecodeIsEmpty()
     {
-        var converter = new BytecodeToAbstractIrConverterImpl();
+        var converter = CreateConverter();
 
         var ir = converter.Translate(new Bytecode([]));
 
@@ -68,6 +72,31 @@ public class BytecodeConverterContractsTests
         var ir = new AbstractIR();
         ir.AppendInstructions(instructions);
         return ir;
+    }
+
+    private static BytecodeToAbstractIrConverterImpl CreateConverter()
+    {
+        return new BytecodeToAbstractIrConverterImpl(
+            new LegacyIntrinsicDecoder(),
+            CreateTypeStackProcessor());
+    }
+
+    private static IIntrinsicTypeStackProcessor CreateTypeStackProcessor()
+    {
+        var catalog = new IntrinsicCatalogBuilder().Build(CreateDescriptorProviders());
+        return new IntrinsicTypeStackProcessor(catalog, new IntrinsicTypeResolutionContext());
+    }
+
+    private static IIntrinsicDescriptorProvider[] CreateDescriptorProviders()
+    {
+        return
+        [
+            new ArithmeticIntrinsicDescriptorProvider(),
+            new ComparisonIntrinsicDescriptorProvider(),
+            new BooleanIntrinsicDescriptorProvider(),
+            new StorageIntrinsicDescriptorProvider(),
+            new CoreIntrinsicDescriptorProvider(new MethodCallTypeSemanticsResolver())
+        ];
     }
 
     private sealed class StubConvertable(string name, Func<IAbstractMethodConvertable.Context, IAbstractIR> factory)
