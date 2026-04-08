@@ -10,6 +10,7 @@ using IntermediateRepresentationAbstractions;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Integration;
+using UniversalToolchain.Intrinsics.Capabilities;
 
 namespace UniversalToolchain.Dialects.Wist;
 
@@ -40,16 +41,23 @@ internal sealed class WistInterpreterDialectBackendServiceProvider : IDialectBac
 
     private static BasicCoreImpl<IAbstractIR> CreateCore(IServiceProvider provider, DialectBackendRuntimeConfiguration configuration)
     {
+        var capabilitySetFactory = provider.GetRequiredService<IIntrinsicCapabilitySetFactory>();
+
         return new BasicCoreImpl<IAbstractIR>(
             provider.GetRequiredService<Func<ILexer>>(),
             provider.GetRequiredService<Func<IParser>>(),
             provider.GetRequiredService<Func<IAstToBytecodeTranslator>>(),
             provider.GetRequiredService<Func<IAbstractMethodsTranslator>>(),
-            () => new DialectIntrinsicPolicyCompiler<IAbstractIR>(
-                provider.GetRequiredService<AbstractIrToAbstractIrStub>(),
-                configuration.AllowedIntrinsics,
-                configuration.ForbiddenIntrinsics,
-                configuration.HasExplicitAllowList),
+            () =>
+            {
+                var compiler = new DialectIntrinsicPolicyCompiler<IAbstractIR>(
+                    provider.GetRequiredService<AbstractIrToAbstractIrStub>(),
+                    configuration.AllowedIntrinsics,
+                    configuration.ForbiddenIntrinsics,
+                    configuration.HasExplicitAllowList);
+                _ = capabilitySetFactory.Create(compiler);
+                return compiler;
+            },
             provider.GetRequiredService<Func<IExecutor<IAbstractIR>>>(),
             provider.GetServices<IFrontendCoreModule>().ToList(),
             provider.GetServices<IIRProcessingModule>().ToList(),

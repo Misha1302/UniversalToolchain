@@ -46,6 +46,21 @@ public sealed class CompilerIntrinsicCapabilityAdapterTests
         Assert.That(isSupported, Is.False);
     }
 
+    [Test]
+    public void Factory_Create_ShouldReturnCapabilityAdapterBoundToCompiler()
+    {
+        var factory = new CompilerIntrinsicCapabilitySetFactory();
+        var compiler = new FakeCompiler(["add_i32"]);
+
+        var capabilitySet = factory.Create(compiler);
+        var isSupported = capabilitySet.Supports(
+            BuiltinIntrinsicSymbols.Arithmetic.Add,
+            [IntrinsicTypeArgument.From(typeof(int))]);
+
+        Assert.That(capabilitySet, Is.TypeOf<CompilerIntrinsicCapabilityAdapter<object>>());
+        Assert.That(isSupported, Is.True);
+    }
+
     private sealed class FakeCompiler(IReadOnlyList<string> supportedIntrinsics) : IAbstractIrCompiler<object>
     {
         public IReadOnlyList<string> SupportedIntrinsics { get; } = supportedIntrinsics;

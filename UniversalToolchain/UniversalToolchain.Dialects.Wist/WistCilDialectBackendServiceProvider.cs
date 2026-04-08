@@ -10,6 +10,7 @@ using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Integration;
+using UniversalToolchain.Intrinsics.Capabilities;
 
 namespace UniversalToolchain.Dialects.Wist;
 
@@ -40,16 +41,23 @@ internal sealed class WistCilDialectBackendServiceProvider : IDialectBackendRunt
 
     private static BasicCoreImpl<DynamicMethod> CreateCore(IServiceProvider provider, DialectBackendRuntimeConfiguration configuration)
     {
+        var capabilitySetFactory = provider.GetRequiredService<IIntrinsicCapabilitySetFactory>();
+
         return new BasicCoreImpl<DynamicMethod>(
             provider.GetRequiredService<Func<ILexer>>(),
             provider.GetRequiredService<Func<IParser>>(),
             provider.GetRequiredService<Func<IAstToBytecodeTranslator>>(),
             provider.GetRequiredService<Func<IAbstractMethodsTranslator>>(),
-            () => new DialectIntrinsicPolicyCompiler<DynamicMethod>(
-                provider.GetRequiredService<AbstractMethodsCompilerImpl>(),
-                configuration.AllowedIntrinsics,
-                configuration.ForbiddenIntrinsics,
-                configuration.HasExplicitAllowList),
+            () =>
+            {
+                var compiler = new DialectIntrinsicPolicyCompiler<DynamicMethod>(
+                    provider.GetRequiredService<AbstractMethodsCompilerImpl>(),
+                    configuration.AllowedIntrinsics,
+                    configuration.ForbiddenIntrinsics,
+                    configuration.HasExplicitAllowList);
+                _ = capabilitySetFactory.Create(compiler);
+                return compiler;
+            },
             provider.GetRequiredService<Func<IExecutor<DynamicMethod>>>(),
             provider.GetServices<IFrontendCoreModule>().ToList(),
             provider.GetServices<IIRProcessingModule>().ToList(),

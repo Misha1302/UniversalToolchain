@@ -15,6 +15,7 @@ using ExceptionsManager;
 using IntermediateRepresentationAbstractions;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Intrinsics.Builtins;
+using UniversalToolchain.Intrinsics.Capabilities;
 using UniversalToolchain.Intrinsics.Contracts;
 using UniversalToolchain.Intrinsics.Core;
 using UniversalToolchain.Intrinsics.Legacy;
@@ -59,6 +60,7 @@ public static class CoreRuntimeServiceCollectionExtensions
         });
         services.AddSingleton<ILegacyIntrinsicDecoder, LegacyIntrinsicDecoder>();
         services.AddSingleton<IIntrinsicTypeStackProcessor, IntrinsicTypeStackProcessor>();
+        services.AddSingleton<IIntrinsicCapabilitySetFactory, CompilerIntrinsicCapabilitySetFactory>();
         services.AddTransient<Func<IAbstractMethodsTranslator>>(sp =>
             () => new BytecodeToAbstractIrConverterImpl(
                 sp.GetRequiredService<ILegacyIntrinsicDecoder>(),
