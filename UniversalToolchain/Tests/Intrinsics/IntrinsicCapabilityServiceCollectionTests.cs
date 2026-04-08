@@ -2,6 +2,7 @@ using UniversalToolchain.Dialects.Core.ServiceCollection;
 using UniversalToolchain.Intrinsics.Builtins;
 using UniversalToolchain.Intrinsics.Capabilities;
 using UniversalToolchain.Intrinsics.Contracts;
+using UniversalToolchain.Intrinsics.Core;
 
 namespace Tests.Intrinsics;
 
@@ -24,6 +25,18 @@ public sealed class IntrinsicCapabilityServiceCollectionTests
                 BuiltinIntrinsicSymbols.Arithmetic.Add,
                 [IntrinsicTypeArgument.From(typeof(int))]),
             Is.True);
+    }
+
+    [Test]
+    public void AddCoreRuntimeInfrastructure_ShouldRegisterInstructionIntrinsicReader()
+    {
+        var services = new ServiceCollection();
+        services.AddCoreRuntimeInfrastructure();
+
+        using var provider = services.BuildServiceProvider();
+        var reader = provider.GetRequiredService<IInstructionIntrinsicReader>();
+
+        Assert.That(reader, Is.TypeOf<InstructionIntrinsicReader>());
     }
 
     private sealed class FakeCompiler(IReadOnlyList<string> supportedIntrinsics) : IAbstractIrCompiler<object>

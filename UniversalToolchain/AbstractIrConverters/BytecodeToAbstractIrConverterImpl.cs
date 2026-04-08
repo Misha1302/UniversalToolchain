@@ -1,26 +1,25 @@
 using ExceptionsManager;
 using UniversalToolchain.Intrinsics.Contracts;
 using UniversalToolchain.Intrinsics.Core;
-using UniversalToolchain.Intrinsics.Legacy;
 
 namespace AbstractIrConverters;
 
 public class BytecodeToAbstractIrConverterImpl : IAbstractMethodsTranslator
 {
-    private readonly ILegacyIntrinsicDecoder _decoder;
+    private readonly IInstructionIntrinsicReader _intrinsicReader;
     private readonly IIntrinsicTypeStackProcessor _processor;
 
     public BytecodeToAbstractIrConverterImpl(
-        ILegacyIntrinsicDecoder decoder,
+        IInstructionIntrinsicReader intrinsicReader,
         IIntrinsicTypeStackProcessor processor)
     {
-        if (decoder == null)
-            Thrower.ArgumentNull(nameof(decoder));
+        if (intrinsicReader == null)
+            Thrower.ArgumentNull(nameof(intrinsicReader));
 
         if (processor == null)
             Thrower.ArgumentNull(nameof(processor));
 
-        _decoder = decoder!;
+        _intrinsicReader = intrinsicReader;
         _processor = processor!;
     }
 
@@ -41,7 +40,7 @@ public class BytecodeToAbstractIrConverterImpl : IAbstractMethodsTranslator
             InstructionTypeStackApplier.Apply(
                 air.Instructions,
                 typesStack,
-                _decoder,
+                _intrinsicReader,
                 _processor);
             unused++;
         }

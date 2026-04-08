@@ -61,11 +61,12 @@ public static class CoreRuntimeServiceCollectionExtensions
             return new IntrinsicCatalogBuilder().Build(providers);
         });
         services.AddSingleton<ILegacyIntrinsicDecoder, LegacyIntrinsicDecoder>();
+        services.AddSingleton<IInstructionIntrinsicReader, InstructionIntrinsicReader>();
         services.AddSingleton<IIntrinsicTypeStackProcessor, IntrinsicTypeStackProcessor>();
         services.AddSingleton<IIntrinsicCapabilitySetFactory, CompilerIntrinsicCapabilitySetFactory>();
         services.AddTransient<Func<IAbstractMethodsTranslator>>(sp =>
             () => new BytecodeToAbstractIrConverterImpl(
-                sp.GetRequiredService<ILegacyIntrinsicDecoder>(),
+                sp.GetRequiredService<IInstructionIntrinsicReader>(),
                 sp.GetRequiredService<IIntrinsicTypeStackProcessor>()));
         services.AddTransient<Func<IExecutor<DynamicMethod>>>(_ => () => new DynamicMethodExecutor());
         services.AddTransient<Func<IExecutor<IAbstractIR>>>(_ => () => new InterpreterImpl());

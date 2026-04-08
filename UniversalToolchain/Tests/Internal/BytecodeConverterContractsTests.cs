@@ -54,7 +54,10 @@ public class BytecodeConverterContractsTests
                 CreateIr(new Instruction(UOpCode.Intrinsic, ["not_registered"]))))
         ]);
 
-        Assert.Throws<InvalidOperationException>(() => converter.Translate(bytecode));
+        var exception = Assert.Throws<InvalidOperationException>(() => converter.Translate(bytecode));
+
+        Assert.That(exception!.Message, Does.Contain("Unable to read intrinsic invocation"));
+        Assert.That(exception.Message, Does.Contain("not_registered"));
     }
 
     [Test]
@@ -77,7 +80,7 @@ public class BytecodeConverterContractsTests
     private static BytecodeToAbstractIrConverterImpl CreateConverter()
     {
         return new BytecodeToAbstractIrConverterImpl(
-            new LegacyIntrinsicDecoder(),
+            new InstructionIntrinsicReader(new LegacyIntrinsicDecoder()),
             CreateTypeStackProcessor());
     }
 
