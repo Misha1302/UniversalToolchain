@@ -1,6 +1,7 @@
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Intrinsics.Builtins;
 using UniversalToolchain.Intrinsics.Capabilities;
+using UniversalToolchain.Intrinsics.Contracts;
 
 namespace NativeMathModule;
 
@@ -20,8 +21,6 @@ public class ArithmeticOptimizerModule : IIRProcessingModule
     ];
 
     private IOptimizerIntrinsicCapabilityContext? _capabilityContext;
-    private bool _isDecimalsSupported;
-
     public void InitIntrinsicCapabilityContext(IOptimizerIntrinsicCapabilityContext capabilityContext)
     {
         _capabilityContext = capabilityContext ?? throw new ArgumentNullException(nameof(capabilityContext));
@@ -34,8 +33,6 @@ public class ArithmeticOptimizerModule : IIRProcessingModule
 
         if (!HasRequiredCapabilities(capabilityContext, _standardArithmeticTypes))
             return current;
-
-        _isDecimalsSupported = HasRequiredCapabilities(capabilityContext, [typeof(decimal)]);
 
         current = OptimizeArithmetic(current);
         return current;
@@ -72,10 +69,10 @@ public class ArithmeticOptimizerModule : IIRProcessingModule
 
                 if (method.DeclaringType == typeof(NativeArithmetic))
                 {
-                    var intrinsicName = GetIntrinsicName(method);
-                    if (intrinsicName != null)
+                    var intrinsicInstruction = CreateArithmeticInstruction(method);
+                    if (intrinsicInstruction != null)
                     {
-                        context.NewInstructions.Add(new Instruction(UOpCode.Intrinsic, [intrinsicName]));
+                        context.NewInstructions.Add(intrinsicInstruction);
                         continue;
                     }
                 }
@@ -133,16 +130,22 @@ public class ArithmeticOptimizerModule : IIRProcessingModule
         var right = instructions[index + 1];
         var op = instructions[index + 2];
 
-        if (!TryGetArithmeticIntrinsic(op, out var name, out var suffix))
+        if (!TryGetArithmeticIntrinsic(op, out var symbol, out var suffix))
             return false;
 
-        if (name == "sub" && IsSingleValueProducer(left) && TryGetNumericConstant(right, out var rightValue) && IsZero(rightValue))
+        if (symbol == BuiltinIntrinsicSymbols.Arithmetic.Subtract &&
+            IsSingleValueProducer(left) &&
+            TryGetNumericConstant(right, out var rightValue) &&
+            IsZero(rightValue))
             return Replace3With1(instructions, index, left);
 
-        if (name == "div" && IsSingleValueProducer(left) && TryGetNumericConstant(right, out rightValue) && IsOne(rightValue))
+        if (symbol == BuiltinIntrinsicSymbols.Arithmetic.Divide &&
+            IsSingleValueProducer(left) &&
+            TryGetNumericConstant(right, out rightValue) &&
+            IsOne(rightValue))
             return Replace3With1(instructions, index, left);
 
-        if (name == "add")
+        if (symbol == BuiltinIntrinsicSymbols.Arithmetic.Add)
         {
             if (TryGetNumericConstant(left, out var leftValue) && IsZero(leftValue) && IsSingleValueProducer(right))
                 return Replace3With1(instructions, index, right);
@@ -151,7 +154,7 @@ public class ArithmeticOptimizerModule : IIRProcessingModule
                 return Replace3With1(instructions, index, left);
         }
 
-        if (name == "mul")
+        if (symbol == BuiltinIntrinsicSymbols.Arithmetic.Multiply)
         {
             if (TryGetNumericConstant(left, out var leftValue))
             {
@@ -185,9 +188,9 @@ public class ArithmeticOptimizerModule : IIRProcessingModule
         var op2 = instructions[index + 4];
 
         if (!IsSingleValueProducer(x) ||
-            !TryGetArithmeticIntrinsic(op1, out var name1, out var suffix1) ||
-            !TryGetArithmeticIntrinsic(op2, out var name2, out var suffix2) ||
-            name1 != name2 ||
+            !TryGetArithmeticIntrinsic(op1, out var symbol1, out var suffix1) ||
+            !TryGetArithmeticIntrinsic(op2, out var symbol2, out var suffix2) ||
+            symbol1 != symbol2 ||
             suffix1 != suffix2 ||
             !IsIntegerSuffix(suffix1) ||
             !TryGetNumericConstant(c1, out var v1) ||
@@ -195,9 +198,9 @@ public class ArithmeticOptimizerModule : IIRProcessingModule
             return false;
 
         object? combined = null;
-        if (name1 == "add")
+        if (symbol1 == BuiltinIntrinsicSymbols.Arithmetic.Add)
             combined = CombineIntegerConstants(v1, v2, false, suffix1);
-        else if (name1 == "mul")
+        else if (symbol1 == BuiltinIntrinsicSymbols.Arithmetic.Multiply)
             combined = CombineIntegerConstants(v1, v2, true, suffix1);
 
         if (combined is null)
@@ -217,7 +220,8 @@ public class ArithmeticOptimizerModule : IIRProcessingModule
         var left = instructions[index];
         var right = instructions[index + 1];
         var op = instructions[index + 2];
-        if (!TryGetArithmeticIntrinsic(op, out var name, out _) || name != "add" && name != "mul")
+        if (!TryGetArithmeticIntrinsic(op, out var symbol, out _) ||
+            symbol != BuiltinIntrinsicSymbols.Arithmetic.Add && symbol != BuiltinIntrinsicSymbols.Arithmetic.Multiply)
             return false;
 
         if (!TryGetNumericConstant(left, out _) || TryGetNumericConstant(right, out _) || !IsSingleValueProducer(right))
@@ -234,10 +238,12 @@ public class ArithmeticOptimizerModule : IIRProcessingModule
         if (instruction.UOpCode == UOpCode.Push)
             return true;
 
-        return instruction.UOpCode == UOpCode.Intrinsic &&
+        return BuiltinIntrinsicInstruction.Is(instruction, BuiltinIntrinsicSymbols.Storage.LoadLocal) ||
+               BuiltinIntrinsicInstruction.Is(instruction, BuiltinIntrinsicSymbols.Storage.LoadLocalRef) ||
+               instruction.UOpCode == UOpCode.Intrinsic &&
                instruction.Operands.Count > 0 &&
                instruction.Operands[0] is string intrinsicName &&
-               (intrinsicName == "load_local" || intrinsicName == "load_local_ref" || intrinsicName.StartsWith("ldloc", StringComparison.Ordinal));
+               intrinsicName.StartsWith("ldloc", StringComparison.Ordinal);
     }
 
     private static bool Replace3With1(List<Instruction> instructions, int index, Instruction replacement)
@@ -248,20 +254,16 @@ public class ArithmeticOptimizerModule : IIRProcessingModule
         return true;
     }
 
-    private static bool TryGetArithmeticIntrinsic(Instruction instruction, out string operation, out string suffix)
+    private static bool TryGetArithmeticIntrinsic(Instruction instruction, out IntrinsicSymbol symbol, out string suffix)
     {
-        operation = string.Empty;
+        symbol = default;
         suffix = string.Empty;
-        if (instruction.UOpCode != UOpCode.Intrinsic || instruction.Operands.Count == 0 || instruction.Operands[0] is not string name)
+        if (!BuiltinIntrinsicInstruction.TryGetInvocation(instruction, out var invocation) ||
+            !TryGetArithmeticSuffix(invocation, out suffix))
             return false;
 
-        var split = name.Split('_');
-        if (split.Length != 2)
-            return false;
-
-        operation = split[0];
-        suffix = split[1];
-        return operation is "add" or "sub" or "mul" or "div";
+        symbol = invocation.Symbol;
+        return true;
     }
 
     private static bool TryGetNumericConstant(Instruction instruction, out object value)
@@ -312,46 +314,120 @@ public class ArithmeticOptimizerModule : IIRProcessingModule
         return null;
     }
 
-    private string? GetIntrinsicName(MethodInfo method)
+    private static bool TryGetArithmeticSuffix(IntrinsicInvocation invocation, out string suffix)
     {
-        var typeMap = new Dictionary<Type, string>
-        {
-            [typeof(int)] = "i32",
-            [typeof(long)] = "i64",
-            [typeof(float)] = "f32",
-            [typeof(double)] = "f64",
-            [typeof(decimal)] = "decimal"
-        };
+        suffix = string.Empty;
+        if (!IsArithmeticSymbol(invocation.Symbol) || invocation.TypeArguments.Count != 1)
+            return false;
 
-        var opMap = new Dictionary<string, string>
-        {
-            ["Add"] = "add",
-            ["Subtract"] = "sub",
-            ["Multiply"] = "mul",
-            ["Divide"] = "div"
-        };
+        return TryMapTypeToSuffix(invocation.TypeArguments[0].RuntimeType, out suffix);
+    }
 
-        string? typeSuffix = null;
-        string? operation = null;
+    private static Instruction? CreateArithmeticInstruction(MethodInfo method)
+    {
+        if (!TryGetArithmeticSymbol(method, out var symbol, out var runtimeType))
+            return null;
 
-        // Обработка обобщенных методов (int, long, float, double)
+        return BuiltinIntrinsicInstruction.Create(symbol, runtimeType);
+    }
+
+    private static bool TryGetArithmeticSymbol(MethodInfo method, out IntrinsicSymbol symbol, out Type runtimeType)
+    {
+        symbol = default;
+        runtimeType = null!;
+
         if (method.IsGenericMethod)
         {
             var genericType = method.GetGenericArguments()[0];
-            if (typeMap.TryGetValue(genericType, out var resolvedTypeSuffix))
-            {
-                typeSuffix = resolvedTypeSuffix;
-                operation = opMap.GetValueOrDefault(method.Name);
-            }
-        }
-        // Обработка методов для decimal
-        else if (method.Name.EndsWith("Decimal"))
-        {
-            typeSuffix = "decimal";
-            operation = opMap.GetValueOrDefault(method.Name.Replace("Decimal", ""));
+            if (!TryGetArithmeticSymbol(method.Name, out symbol))
+                return false;
+
+            runtimeType = genericType;
+            return TryMapTypeToSuffix(runtimeType, out _);
         }
 
-        return operation is not null && typeSuffix is not null ? $"{operation}_{typeSuffix}" : null;
+        if (!method.Name.EndsWith("Decimal", StringComparison.Ordinal) ||
+            !TryGetArithmeticSymbol(method.Name.Replace("Decimal", string.Empty, StringComparison.Ordinal), out symbol))
+            return false;
+
+        runtimeType = typeof(decimal);
+        return true;
+    }
+
+    private static bool TryGetArithmeticSymbol(string methodName, out IntrinsicSymbol symbol)
+    {
+        symbol = default;
+
+        if (methodName == nameof(NativeArithmetic.Add))
+        {
+            symbol = BuiltinIntrinsicSymbols.Arithmetic.Add;
+            return true;
+        }
+
+        if (methodName == nameof(NativeArithmetic.Subtract))
+        {
+            symbol = BuiltinIntrinsicSymbols.Arithmetic.Subtract;
+            return true;
+        }
+
+        if (methodName == nameof(NativeArithmetic.Multiply))
+        {
+            symbol = BuiltinIntrinsicSymbols.Arithmetic.Multiply;
+            return true;
+        }
+
+        if (methodName == nameof(NativeArithmetic.Divide))
+        {
+            symbol = BuiltinIntrinsicSymbols.Arithmetic.Divide;
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool IsArithmeticSymbol(IntrinsicSymbol symbol)
+    {
+        return symbol == BuiltinIntrinsicSymbols.Arithmetic.Add ||
+               symbol == BuiltinIntrinsicSymbols.Arithmetic.Subtract ||
+               symbol == BuiltinIntrinsicSymbols.Arithmetic.Multiply ||
+               symbol == BuiltinIntrinsicSymbols.Arithmetic.Divide;
+    }
+
+    private static bool TryMapTypeToSuffix(Type runtimeType, out string suffix)
+    {
+        suffix = string.Empty;
+
+        if (runtimeType == typeof(int))
+        {
+            suffix = "i32";
+            return true;
+        }
+
+        if (runtimeType == typeof(long))
+        {
+            suffix = "i64";
+            return true;
+        }
+
+        if (runtimeType == typeof(float))
+        {
+            suffix = "f32";
+            return true;
+        }
+
+        if (runtimeType == typeof(double))
+        {
+            suffix = "f64";
+            return true;
+        }
+
+        if (runtimeType == typeof(decimal))
+        {
+            suffix = "decimal";
+            return true;
+        }
+
+        return false;
     }
 
     private class CompilationContext

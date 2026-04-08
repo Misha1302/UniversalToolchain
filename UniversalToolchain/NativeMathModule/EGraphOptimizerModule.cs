@@ -1,6 +1,7 @@
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Intrinsics.Builtins;
 using UniversalToolchain.Intrinsics.Capabilities;
+using UniversalToolchain.Intrinsics.Contracts;
 
 namespace NativeMathModule;
 
@@ -137,19 +138,22 @@ public class EGraphOptimizerModule : IIRProcessingModule
 
     private static bool TryProcessIntrinsic(Instruction instruction, Stack<Expr> stack)
     {
-        if (instruction.Operands.Count == 0 || instruction.Operands[0] is not string intrinsic)
+        if (!BuiltinIntrinsicInstruction.TryGetInvocation(instruction, out var invocation))
             return false;
 
-        if (intrinsic == "load_local")
+        if (invocation.Symbol == BuiltinIntrinsicSymbols.Storage.LoadLocal)
         {
-            if (instruction.Operands.Count != 3 || instruction.Operands[1] is not string name || instruction.Operands[2] is not Type type || !IsSupportedType(type))
+            if (invocation.DataOperands.Count < 2 ||
+                invocation.DataOperands[0] is not string name ||
+                invocation.DataOperands[1] is not Type type ||
+                !IsSupportedType(type))
                 return false;
 
             stack.Push(Expr.Local(name, type));
             return true;
         }
 
-        if (!TryGetBinaryOp(intrinsic, out var operation, out var resultType))
+        if (!TryGetBinaryOp(invocation, out var operation, out var resultType))
             return false;
 
         if (stack.Count < 2)
@@ -181,35 +185,23 @@ public class EGraphOptimizerModule : IIRProcessingModule
     private static bool IsSupportedType(Type type) =>
         type == typeof(int) || type == typeof(long) || type == typeof(float) || type == typeof(double);
 
-    private static bool TryGetBinaryOp(string intrinsic, out ExprOp operation, [NotNullWhen(true)] out Type? type)
+    private static bool TryGetBinaryOp(IntrinsicInvocation invocation, out ExprOp operation, [NotNullWhen(true)] out Type? type)
     {
-        var parts = intrinsic.Split('_');
-        if (parts.Length != 2)
+        ExprOp? parsedOperation = invocation.Symbol.Name switch
         {
-            operation = ExprOp.Const;
-            type = null;
-            return false;
-        }
-
-        ExprOp? parsedOperation = parts[0] switch
-        {
-            "add" => ExprOp.Add,
-            "sub" => ExprOp.Sub,
-            "mul" => ExprOp.Mul,
-            "div" => ExprOp.Div,
+            "Add" => ExprOp.Add,
+            "Subtract" => ExprOp.Sub,
+            "Multiply" => ExprOp.Mul,
+            "Divide" => ExprOp.Div,
             _ => null
         };
 
-        type = parts[1] switch
-        {
-            "i32" => typeof(int),
-            "i64" => typeof(long),
-            "f32" => typeof(float),
-            "f64" => typeof(double),
-            _ => null
-        };
+        type = invocation.TypeArguments.Count == 1 ? invocation.TypeArguments[0].RuntimeType : null;
 
-        if (parsedOperation is null || type is null)
+        if (invocation.Symbol.Namespace != BuiltinIntrinsicSymbols.Arithmetic.Add.Namespace ||
+            parsedOperation is null ||
+            type is null ||
+            !IsSupportedType(type))
         {
             operation = ExprOp.Const;
             return false;
@@ -488,7 +480,11 @@ public class EGraphOptimizerModule : IIRProcessingModule
                 output.Add(new Instruction(UOpCode.Push, [expr.Value!]));
                 return;
             case ExprOp.Local:
-                output.Add(new Instruction(UOpCode.Intrinsic, ["load_local", expr.LocalName!, expr.Type]));
+                output.Add(BuiltinIntrinsicInstruction.Create(
+                    BuiltinIntrinsicSymbols.Storage.LoadLocal,
+                    IntrinsicTypeArgument.From(expr.Type),
+                    expr.LocalName!,
+                    expr.Type));
                 return;
             case ExprOp.Add:
             case ExprOp.Sub:
@@ -496,33 +492,21 @@ public class EGraphOptimizerModule : IIRProcessingModule
             case ExprOp.Div:
                 EmitExpression(expr.Left!, output);
                 EmitExpression(expr.Right!, output);
-                output.Add(new Instruction(UOpCode.Intrinsic, [GetIntrinsicName(expr.Operation, expr.Type)]));
+                output.Add(BuiltinIntrinsicInstruction.Create(GetIntrinsicSymbol(expr.Operation), expr.Type));
                 return;
         }
     }
 
-    private static string GetIntrinsicName(ExprOp operation, Type type)
+    private static IntrinsicSymbol GetIntrinsicSymbol(ExprOp operation)
     {
-        var prefix = operation switch
+        return operation switch
         {
-            ExprOp.Add => "add",
-            ExprOp.Sub => "sub",
-            ExprOp.Mul => "mul",
-            ExprOp.Div => "div",
-            _ => Thrower.InvalidOpEx<string>("Unsupported expression operation")
+            ExprOp.Add => BuiltinIntrinsicSymbols.Arithmetic.Add,
+            ExprOp.Sub => BuiltinIntrinsicSymbols.Arithmetic.Subtract,
+            ExprOp.Mul => BuiltinIntrinsicSymbols.Arithmetic.Multiply,
+            ExprOp.Div => BuiltinIntrinsicSymbols.Arithmetic.Divide,
+            _ => Thrower.InvalidOpEx<IntrinsicSymbol>("Unsupported expression operation")
         };
-
-        var suffix = type == typeof(int)
-            ? "i32"
-            : type == typeof(long)
-                ? "i64"
-                : type == typeof(float)
-                    ? "f32"
-                    : type == typeof(double)
-                        ? "f64"
-                        : Thrower.InvalidOpEx<string>("Unsupported expression type");
-
-        return $"{prefix}_{suffix}";
     }
 
     private enum ExprOp

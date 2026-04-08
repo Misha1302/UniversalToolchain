@@ -2,6 +2,7 @@ using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Intrinsics.Builtins;
 using UniversalToolchain.Intrinsics.Capabilities;
+using UniversalToolchain.Intrinsics.Contracts;
 
 namespace ConditionsModule.Optimizers;
 
@@ -17,14 +18,14 @@ public class ComparisonIntrinsicOptimizerModule : IIRProcessingModule
         typeof(int), typeof(long), typeof(float), typeof(double)
     ];
 
-    private static readonly IReadOnlyDictionary<string, string> _comparisonOperations = new Dictionary<string, string>
+    private static readonly IReadOnlyDictionary<string, IntrinsicSymbol> _comparisonOperations = new Dictionary<string, IntrinsicSymbol>
     {
-        [nameof(Comparisons.Equal)] = "eq",
-        [nameof(Comparisons.NotEqual)] = "ne",
-        [nameof(Comparisons.Greater)] = "gt",
-        [nameof(Comparisons.GreaterOrEqual)] = "ge",
-        [nameof(Comparisons.Less)] = "lt",
-        [nameof(Comparisons.LessOrEqual)] = "le"
+        [nameof(Comparisons.Equal)] = BuiltinIntrinsicSymbols.Comparison.Equal,
+        [nameof(Comparisons.NotEqual)] = BuiltinIntrinsicSymbols.Comparison.NotEqual,
+        [nameof(Comparisons.Greater)] = BuiltinIntrinsicSymbols.Comparison.Greater,
+        [nameof(Comparisons.GreaterOrEqual)] = BuiltinIntrinsicSymbols.Comparison.GreaterOrEqual,
+        [nameof(Comparisons.Less)] = BuiltinIntrinsicSymbols.Comparison.Less,
+        [nameof(Comparisons.LessOrEqual)] = BuiltinIntrinsicSymbols.Comparison.LessOrEqual
     };
 
     private IOptimizerIntrinsicCapabilityContext? _capabilityContext;
@@ -50,9 +51,8 @@ public class ComparisonIntrinsicOptimizerModule : IIRProcessingModule
         {
             if (TryBuildComparisonIntrinsic(instruction, stack, out var intrinsic))
             {
-                var optimizedInstruction = new Instruction(UOpCode.Intrinsic, [intrinsic]);
-                optimized.Add(optimizedInstruction);
-                ApplyInstructionTypes(optimizedInstruction, stack);
+                optimized.Add(intrinsic);
+                ApplyInstructionTypes(intrinsic, stack);
                 continue;
             }
 
@@ -97,16 +97,16 @@ public class ComparisonIntrinsicOptimizerModule : IIRProcessingModule
 
         if (instruction.UOpCode == UOpCode.Intrinsic)
         {
-            if (instruction.Operands.Count == 0 || instruction.Operands[0] is not string intrinsicName)
-                return;
-
-            if (intrinsicName == "call C#")
+            if (instruction.Operands.Count > 0 &&
+                instruction.Operands[0] is string intrinsicName &&
+                intrinsicName == "call C#")
             {
                 AirTypes.ProcessTypesIntrinsic(instruction, stack);
                 return;
             }
 
-            if (intrinsicName.StartsWith("cmp_", StringComparison.Ordinal))
+            if (BuiltinIntrinsicInstruction.TryGetInvocation(instruction, out var invocation) &&
+                IsComparisonSymbol(invocation.Symbol))
             {
                 stack.Pop();
                 stack.Pop();
@@ -115,9 +115,9 @@ public class ComparisonIntrinsicOptimizerModule : IIRProcessingModule
         }
     }
 
-    private static bool TryBuildComparisonIntrinsic(Instruction instruction, IReadOnlyList<Type> stack, out string intrinsic)
+    private static bool TryBuildComparisonIntrinsic(Instruction instruction, IReadOnlyList<Type> stack, out Instruction intrinsic)
     {
-        intrinsic = string.Empty;
+        intrinsic = null!;
 
         if (instruction.UOpCode != UOpCode.Intrinsic ||
             instruction.Operands.Count < 2 ||
@@ -126,14 +126,14 @@ public class ComparisonIntrinsicOptimizerModule : IIRProcessingModule
             return false;
 
         var method = instruction.Operands[1].Get<MethodInfo>();
-        if (method.DeclaringType != typeof(Comparisons) || !_comparisonOperations.TryGetValue(method.Name, out var operation))
+        if (method.DeclaringType != typeof(Comparisons) || !_comparisonOperations.TryGetValue(method.Name, out var symbol))
             return false;
 
         var operandType = ResolveOperandType(method, stack);
-        if (!TryMapTypeToSuffix(operandType, out var suffix))
+        if (operandType is null || !IsSupportedType(operandType))
             return false;
 
-        intrinsic = $"cmp_{operation}_{suffix}";
+        intrinsic = BuiltinIntrinsicInstruction.Create(symbol, operandType);
         return true;
     }
 
@@ -152,33 +152,21 @@ public class ComparisonIntrinsicOptimizerModule : IIRProcessingModule
         return null;
     }
 
-    private static bool TryMapTypeToSuffix(Type? type, out string suffix)
+    private static bool IsSupportedType(Type type)
     {
-        suffix = string.Empty;
-        if (type == typeof(int))
-        {
-            suffix = "i32";
-            return true;
-        }
+        return type == typeof(int) ||
+               type == typeof(long) ||
+               type == typeof(float) ||
+               type == typeof(double);
+    }
 
-        if (type == typeof(long))
-        {
-            suffix = "i64";
-            return true;
-        }
-
-        if (type == typeof(float))
-        {
-            suffix = "f32";
-            return true;
-        }
-
-        if (type == typeof(double))
-        {
-            suffix = "f64";
-            return true;
-        }
-
-        return false;
+    private static bool IsComparisonSymbol(IntrinsicSymbol symbol)
+    {
+        return symbol == BuiltinIntrinsicSymbols.Comparison.Equal ||
+               symbol == BuiltinIntrinsicSymbols.Comparison.NotEqual ||
+               symbol == BuiltinIntrinsicSymbols.Comparison.Greater ||
+               symbol == BuiltinIntrinsicSymbols.Comparison.GreaterOrEqual ||
+               symbol == BuiltinIntrinsicSymbols.Comparison.Less ||
+               symbol == BuiltinIntrinsicSymbols.Comparison.LessOrEqual;
     }
 }

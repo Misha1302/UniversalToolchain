@@ -8,6 +8,7 @@ using UniversalIntermediateRepresentation;
 using UniversalToolchain.Intrinsics.Builtins;
 using UniversalToolchain.Intrinsics.Capabilities;
 using UniversalToolchain.Intrinsics.Contracts;
+using UniversalToolchain.Intrinsics.Core;
 
 namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 
@@ -28,9 +29,10 @@ public sealed class LocalVariablesOptimizerCapabilityTests
         Assert.That(result, Is.Not.SameAs(input));
         Assert.That(result.Instructions.Count, Is.EqualTo(1));
         Assert.That(result.Instructions[0].UOpCode, Is.EqualTo(UOpCode.Intrinsic));
-        Assert.That(result.Instructions[0].Operands[0], Is.EqualTo("load_local"));
-        Assert.That(result.Instructions[0].Operands[1], Is.EqualTo("x"));
-        Assert.That(result.Instructions[0].Operands[2], Is.EqualTo(typeof(int)));
+        Assert.That(result.Instructions[0].TryGetTypedIntrinsicInvocation(out var invocation), Is.True);
+        Assert.That(invocation.Symbol, Is.EqualTo(BuiltinIntrinsicSymbols.Storage.LoadLocal));
+        Assert.That(invocation.TypeArguments, Is.EqualTo(new[] { IntrinsicTypeArgument.From(typeof(int)) }));
+        Assert.That(invocation.DataOperands, Is.EqualTo(new object?[] { "x", typeof(int) }));
     }
 
     [Test]

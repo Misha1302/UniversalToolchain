@@ -11,7 +11,7 @@ namespace NativeMathModule;
 [ArithmeticModeCompatibility(ArithmeticMode.Native)]
 public class NativeCilOptimizerModule : IIRProcessingModule
 {
-    // Maps constants to legacy CIL load intrinsics for backends that support them.
+    // Maps constants to typed load-constant intrinsics for backends that support them.
     private static readonly Dictionary<Type, Action<Instruction, CompilationContext>> _cilGenerators = new();
 
     private static readonly IReadOnlyList<Type> _standardLoadTypes =
@@ -63,46 +63,46 @@ public class NativeCilOptimizerModule : IIRProcessingModule
         _cilGenerators[typeof(int)] = (instruction, context) =>
         {
             var value = instruction.Operands[0].Get<int>();
-            context.NewInstructions.Add(new Instruction(
-                UOpCode.Intrinsic,
-                ["load_i32", value]
-            ));
+            context.NewInstructions.Add(BuiltinIntrinsicInstruction.Create(
+                BuiltinIntrinsicSymbols.Core.LoadConst,
+                typeof(int),
+                [value]));
         };
 
         _cilGenerators[typeof(long)] = (instruction, context) =>
         {
             var value = instruction.Operands[0].Get<long>();
-            context.NewInstructions.Add(new Instruction(
-                UOpCode.Intrinsic,
-                ["load_i64", value]
-            ));
+            context.NewInstructions.Add(BuiltinIntrinsicInstruction.Create(
+                BuiltinIntrinsicSymbols.Core.LoadConst,
+                typeof(long),
+                [value]));
         };
 
         _cilGenerators[typeof(float)] = (instruction, context) =>
         {
             var value = instruction.Operands[0].Get<float>();
-            context.NewInstructions.Add(new Instruction(
-                UOpCode.Intrinsic,
-                ["load_f32", value]
-            ));
+            context.NewInstructions.Add(BuiltinIntrinsicInstruction.Create(
+                BuiltinIntrinsicSymbols.Core.LoadConst,
+                typeof(float),
+                [value]));
         };
 
         _cilGenerators[typeof(double)] = (instruction, context) =>
         {
             var value = instruction.Operands[0].Get<double>();
-            context.NewInstructions.Add(new Instruction(
-                UOpCode.Intrinsic,
-                ["load_f64", value]
-            ));
+            context.NewInstructions.Add(BuiltinIntrinsicInstruction.Create(
+                BuiltinIntrinsicSymbols.Core.LoadConst,
+                typeof(double),
+                [value]));
         };
 
         _cilGenerators[typeof(decimal)] = (instruction, context) =>
         {
             var value = instruction.Operands[0].Get<decimal>();
-            context.NewInstructions.Add(new Instruction(
-                UOpCode.Intrinsic,
-                ["load_decimal", value]
-            ));
+            context.NewInstructions.Add(BuiltinIntrinsicInstruction.Create(
+                BuiltinIntrinsicSymbols.Core.LoadConst,
+                typeof(decimal),
+                [value]));
         };
     }
 

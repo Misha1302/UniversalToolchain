@@ -2,6 +2,7 @@ using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Intrinsics.Builtins;
 using UniversalToolchain.Intrinsics.Capabilities;
+using UniversalToolchain.Intrinsics.Contracts;
 
 namespace ConditionsModule.Optimizers;
 
@@ -38,11 +39,11 @@ public class BooleanOptimizerModule : IIRProcessingModule
         var instructions = air.Instructions.ToList();
         var context = new CompilationContext();
 
-        var methodToIntrinsic = new Dictionary<string, string>
+        var methodToIntrinsic = new Dictionary<string, IntrinsicSymbol>
         {
-            [nameof(BooleanVisitor.BooleanOperations.And)] = "boolean_and",
-            [nameof(BooleanVisitor.BooleanOperations.Or)] = "boolean_or",
-            [nameof(BooleanVisitor.BooleanOperations.Not)] = "boolean_not"
+            [nameof(BooleanVisitor.BooleanOperations.And)] = BuiltinIntrinsicSymbols.Boolean.And,
+            [nameof(BooleanVisitor.BooleanOperations.Or)] = BuiltinIntrinsicSymbols.Boolean.Or,
+            [nameof(BooleanVisitor.BooleanOperations.Not)] = BuiltinIntrinsicSymbols.Boolean.Not
         };
 
         for (var i = 0; i < instructions.Count; i++)
@@ -55,9 +56,9 @@ public class BooleanOptimizerModule : IIRProcessingModule
                     var m = instruction.Operands[1].Get<MethodInfo>();
 
                     if (m.DeclaringType == typeof(BooleanVisitor.BooleanOperations))
-                        if (methodToIntrinsic.TryGetValue(m.Name, out var mappedIntrinsicName))
+                        if (methodToIntrinsic.TryGetValue(m.Name, out var mappedIntrinsicSymbol))
                         {
-                            context.NewInstructions.Add(new Instruction(UOpCode.Intrinsic, [mappedIntrinsicName]));
+                            context.NewInstructions.Add(BuiltinIntrinsicInstruction.Create(mappedIntrinsicSymbol));
                             continue;
                         }
                 }
@@ -112,7 +113,8 @@ public class BooleanOptimizerModule : IIRProcessingModule
         if (start + 1 >= instructions.Count)
             return false;
 
-        if (!TryGetBoolPush(instructions[start], out var value) || !IsBooleanIntrinsic(instructions[start + 1], "boolean_not"))
+        if (!TryGetBoolPush(instructions[start], out var value) ||
+            !IsBooleanIntrinsic(instructions[start + 1], BuiltinIntrinsicSymbols.Boolean.Not))
             return false;
 
         folded = new Instruction(UOpCode.Push, [!value]);
@@ -128,13 +130,13 @@ public class BooleanOptimizerModule : IIRProcessingModule
         if (!TryGetBoolPush(instructions[start], out var left) || !TryGetBoolPush(instructions[start + 1], out var right))
             return false;
 
-        if (IsBooleanIntrinsic(instructions[start + 2], "boolean_and"))
+        if (IsBooleanIntrinsic(instructions[start + 2], BuiltinIntrinsicSymbols.Boolean.And))
         {
             folded = new Instruction(UOpCode.Push, [left && right]);
             return true;
         }
 
-        if (IsBooleanIntrinsic(instructions[start + 2], "boolean_or"))
+        if (IsBooleanIntrinsic(instructions[start + 2], BuiltinIntrinsicSymbols.Boolean.Or))
         {
             folded = new Instruction(UOpCode.Push, [left || right]);
             return true;
@@ -149,13 +151,17 @@ public class BooleanOptimizerModule : IIRProcessingModule
         if (start + 2 >= instructions.Count)
             return false;
 
-        if (IsBooleanIntrinsic(instructions[start + 2], "boolean_and") && TryGetBoolPush(instructions[start + 1], out var andRight) && andRight)
+        if (IsBooleanIntrinsic(instructions[start + 2], BuiltinIntrinsicSymbols.Boolean.And) &&
+            TryGetBoolPush(instructions[start + 1], out var andRight) &&
+            andRight)
         {
             replacement = instructions[start];
             return true;
         }
 
-        if (IsBooleanIntrinsic(instructions[start + 2], "boolean_or") && TryGetBoolPush(instructions[start + 1], out var orRight) && !orRight)
+        if (IsBooleanIntrinsic(instructions[start + 2], BuiltinIntrinsicSymbols.Boolean.Or) &&
+            TryGetBoolPush(instructions[start + 1], out var orRight) &&
+            !orRight)
         {
             replacement = instructions[start];
             return true;
@@ -164,11 +170,8 @@ public class BooleanOptimizerModule : IIRProcessingModule
         return false;
     }
 
-    private static bool IsBooleanIntrinsic(Instruction instruction, string intrinsicName) =>
-        instruction.UOpCode == UOpCode.Intrinsic &&
-        instruction.Operands.Count > 0 &&
-        instruction.Operands[0] is string name &&
-        name == intrinsicName;
+    private static bool IsBooleanIntrinsic(Instruction instruction, IntrinsicSymbol symbol) =>
+        BuiltinIntrinsicInstruction.Is(instruction, symbol);
 
     private static bool TryGetBoolPush(Instruction instruction, out bool value)
     {

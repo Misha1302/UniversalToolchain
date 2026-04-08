@@ -2,6 +2,7 @@ using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Intrinsics.Builtins;
 using UniversalToolchain.Intrinsics.Capabilities;
+using UniversalToolchain.Intrinsics.Contracts;
 
 namespace LocalVariablesOptimizerModule;
 
@@ -149,14 +150,14 @@ public class LocalVariablesOptimizer : IIRProcessingModule
     {
         var varName = (string)pushInstr.Operands[0];
         var varType = getRefInstr.Operands[1].Get<MethodInfo>().DeclaringType.NotNull().GetGenericArguments()[0];
-        return new Instruction(UOpCode.Intrinsic, ["store_local", varName, varType]);
+        return BuiltinIntrinsicInstruction.Create(BuiltinIntrinsicSymbols.Storage.StoreLocal, varName, varType);
     }
 
     private Instruction CreateLoadLocalIntrinsic(Instruction pushInstr, Instruction getInstr)
     {
         var varName = (string)pushInstr.Operands[0];
         var varType = getInstr.Operands[1].Get<MethodInfo>().DeclaringType.NotNull().GetGenericArguments()[0];
-        return new Instruction(UOpCode.Intrinsic, ["load_local", varName, varType]);
+        return BuiltinIntrinsicInstruction.Create(BuiltinIntrinsicSymbols.Storage.LoadLocal, varType, [varName, varType]);
     }
 
     private static bool RemoveRedundantLocalRoundtrips(List<Instruction> instructions)
@@ -425,6 +426,9 @@ public class LocalVariablesOptimizer : IIRProcessingModule
     private static bool TryGetLoadLocalKey(Instruction instruction, out string localKey)
     {
         localKey = string.Empty;
+        if (TryGetBuiltinLocalKey(instruction, BuiltinIntrinsicSymbols.Storage.LoadLocal, out localKey))
+            return true;
+
         if (instruction.UOpCode != UOpCode.Intrinsic || instruction.Operands.Count == 0 || instruction.Operands[0] is not string name)
             return false;
 
@@ -440,6 +444,9 @@ public class LocalVariablesOptimizer : IIRProcessingModule
     private static bool TryGetStoreLocalKey(Instruction instruction, out string localKey)
     {
         localKey = string.Empty;
+        if (TryGetBuiltinLocalKey(instruction, BuiltinIntrinsicSymbols.Storage.StoreLocal, out localKey))
+            return true;
+
         if (instruction.UOpCode != UOpCode.Intrinsic || instruction.Operands.Count == 0 || instruction.Operands[0] is not string name)
             return false;
 
@@ -472,5 +479,18 @@ public class LocalVariablesOptimizer : IIRProcessingModule
         }
 
         return false;
+    }
+
+    private static bool TryGetBuiltinLocalKey(Instruction instruction, IntrinsicSymbol symbol, out string localKey)
+    {
+        localKey = string.Empty;
+        if (!BuiltinIntrinsicInstruction.TryGetInvocation(instruction, out var invocation) ||
+            invocation.Symbol != symbol ||
+            invocation.DataOperands.Count == 0 ||
+            invocation.DataOperands[0] is not string name)
+            return false;
+
+        localKey = name;
+        return true;
     }
 }
