@@ -15,6 +15,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <Compile Include="..\Intrinsics\Builtins\*.cs" Link="Intrinsics\Builtins\%(Filename)%(Extension)"/>
         <Compile Include="..\Intrinsics\Contracts\*.cs" Link="Intrinsics\Contracts\%(Filename)%(Extension)"/>
         <Compile Include="..\Intrinsics\Core\**\*.cs" Link="Intrinsics\Core\%(RecursiveDir)%(Filename)%(Extension)"/>
         <Compile Include="..\Intrinsics\Validation\*.cs" Link="Intrinsics\Validation\%(Filename)%(Extension)"/>
