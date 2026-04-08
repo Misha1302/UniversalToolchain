@@ -57,6 +57,12 @@ public static class InstructionTypeStackApplier
                     break;
 
                 case UOpCode.Intrinsic:
+                    if (instruction.TryGetTypedIntrinsicInvocation(out var typedInvocation))
+                    {
+                        processor.Process(typedInvocation, stack);
+                        break;
+                    }
+
                     if (!decoder.TryDecode(instruction, out var invocation))
                         Thrower.InvalidOpEx($"Unknown intrinsic {instruction}");
 
