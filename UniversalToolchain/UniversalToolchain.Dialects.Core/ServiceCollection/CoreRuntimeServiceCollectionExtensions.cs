@@ -43,7 +43,11 @@ public static class CoreRuntimeServiceCollectionExtensions
             return () => new BasicParserImpl(config);
         });
 
-        services.AddTransient<Func<IAstToBytecodeTranslator>>(_ => () => new BasicAstToBytecodeTranslatorImpl());
+        services.AddTransient<Func<IAstToBytecodeTranslator>>(_ =>
+        {
+            var config = new BytecodeTranslatorConfiguration([]);
+            return () => new BasicAstToBytecodeTranslatorImpl(config);
+        });
         services.AddSingleton<IntrinsicSemanticStartupValidator>();
         services.AddSingleton<IIntrinsicTypeResolutionContext, IntrinsicTypeResolutionContext>();
         services.AddSingleton<MethodCallTypeSemanticsResolver>();

@@ -10,6 +10,8 @@ using BasicParser.Core;
 using CommonExceptions;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Frontend;
+using UniversalToolchain.Intrinsics.Builtins;
+using UniversalToolchain.Intrinsics.Contracts;
 
 namespace UniversalToolchain.Dialects.Tests;
 
@@ -54,7 +56,7 @@ public class DialectDslArchitectureRefactorTests
     [Test]
     public void Compiler_DefaultConstructor_PreservesBuiltInStandaloneUsage()
     {
-        var compiler = new DialectDslCompiler();
+        using var compiler = new DialectDslCompiler();
 
         var slice = compiler.Compile("dialect Demo\nuse Arithmetic\n");
 
@@ -81,8 +83,10 @@ public class DialectDslArchitectureRefactorTests
             capability sandbox
             """;
 
-        var standaloneSlice = new DialectDslCompiler().Compile(source);
-        var diSlice = DialectDslTestComposition.CreateCompiler().Compile(source);
+        using var standaloneCompiler = new DialectDslCompiler();
+        using var diCompiler = DialectDslTestComposition.CreateCompiler();
+        var standaloneSlice = standaloneCompiler.Compile(source);
+        var diSlice = diCompiler.Compile(source);
 
         Assert.Multiple(() =>
         {
@@ -111,7 +115,7 @@ public class DialectDslArchitectureRefactorTests
     [Test]
     public void Compiler_DefaultConstructor_PreservesBuiltInDocumentValidationRules()
     {
-        var compiler = new DialectDslCompiler();
+        using var compiler = new DialectDslCompiler();
 
         var ex = Assert.Throws<ParserException>(() => compiler.Compile("dialect Demo\nuse Arithmetic\nexclude Arithmetic\n"));
 
@@ -227,7 +231,8 @@ public class DialectDslArchitectureRefactorTests
     [Test]
     public void BuiltInPolicies_PreserveIntrinsicOptimizerAndSecuritySemantics()
     {
-        var slice = DialectDslTestComposition.CreateCompiler().Compile(
+        using var compiler = DialectDslTestComposition.CreateCompiler();
+        var slice = compiler.Compile(
             """
             dialect Demo
             allow add_i32
@@ -252,7 +257,8 @@ public class DialectDslArchitectureRefactorTests
             capability sandbox
             """;
 
-        var standaloneSlice = new DialectDslCompiler().Compile(source);
+        using var compiler = new DialectDslCompiler();
+        var standaloneSlice = compiler.Compile(source);
         var frontendModuleSlice = ParseWithFrontendModule(DialectDslTestComposition.CreateFrontendModule(), source);
 
         Assert.Multiple(() =>
@@ -277,8 +283,36 @@ public class DialectDslArchitectureRefactorTests
 
         var ast = parser.Parse(lexer.Lexemize(source));
         var bytecode = translator.Translate(module.ProcessAst(ast));
-        var ir = DialectDslTestSupport.CreateAbstractMethodsTranslator().Translate(bytecode);
+        using var provider = DialectDslTestSupport.CreateFrontendCompilerServices(module);
+        var ir = provider.GetRequiredService<Func<IAbstractMethodsTranslator>>()().Translate(bytecode);
         return DialectDefinitionSliceAirReader.Read(ir);
+    }
+
+    [Test]
+    public void FrontendCompilerServices_ShouldResolveIntrinsicCatalogThroughSharedDiComposition()
+    {
+        var module = DialectDslTestComposition.CreateFrontendModule();
+        using var provider = DialectDslTestSupport.CreateFrontendCompilerServices(module);
+        using var compiler = new DialectDslCompiler(module);
+
+        var providerTypes = provider.GetServices<IIntrinsicDescriptorProvider>()
+            .Select(static x => x.GetType())
+            .ToArray();
+        var slice = compiler.Compile("dialect Demo\nuse Arithmetic\n");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(provider.GetRequiredService<IIntrinsicCatalog>(), Is.Not.Null);
+            Assert.That(providerTypes, Is.EqualTo(new[]
+            {
+                typeof(CoreIntrinsicDescriptorProvider),
+                typeof(ArithmeticIntrinsicDescriptorProvider),
+                typeof(ComparisonIntrinsicDescriptorProvider),
+                typeof(BooleanIntrinsicDescriptorProvider),
+                typeof(StorageIntrinsicDescriptorProvider)
+            }));
+            Assert.That(slice.UseModules, Is.EqualTo(new[] { "Arithmetic" }));
+        });
     }
 
     private sealed class ProviderExecutionRecorder

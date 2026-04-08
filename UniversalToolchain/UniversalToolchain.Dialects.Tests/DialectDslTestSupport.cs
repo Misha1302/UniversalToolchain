@@ -1,5 +1,6 @@
 using AbstractIrConverters;
 using BasicCodeTranslator;
+using BasicCore.Contracts;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using BasicCore.Registration;
@@ -7,13 +8,10 @@ using BasicCore.TranslatorWrapper;
 using BasicLexer.Core;
 using BasicParser.Core;
 using CommonExceptions;
+using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core;
 using UniversalToolchain.Dialects.Frontend;
-using UniversalToolchain.Intrinsics.Builtins;
-using UniversalToolchain.Intrinsics.Contracts;
-using UniversalToolchain.Intrinsics.Core;
-using UniversalToolchain.Intrinsics.Legacy;
 using AstNodeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.ParserWrapper.AstNodeTag>;
 
 namespace UniversalToolchain.Dialects.Tests;
@@ -45,7 +43,8 @@ internal static class DialectDslTestSupport
 
         var ast = parser.Parse(lexer.Lexemize(source));
         var bytecode = translator.Translate(module.ProcessAst(ast));
-        var ir = CreateAbstractMethodsTranslator().Translate(bytecode);
+        using var provider = CreateFrontendCompilerServices(module);
+        var ir = provider.GetRequiredService<Func<IAbstractMethodsTranslator>>()().Translate(bytecode);
         return DialectDefinitionSliceAirReader.Read(ir);
     }
 
@@ -102,29 +101,25 @@ internal static class DialectDslTestSupport
         return DialectDefinitionSemanticBinder.Bind(slice, diagnostics);
     }
 
+    public static ServiceProvider CreateFrontendCompilerServices(DialectDslFrontendModule module)
+    {
+        var services = new ServiceCollection();
+        services.AddDialectDslFrontendCompilerServices(module);
+        return services.BuildServiceProvider();
+    }
+
     public static IAbstractMethodsTranslator CreateAbstractMethodsTranslator()
     {
-        return new BytecodeToAbstractIrConverterImpl(
-            new LegacyIntrinsicDecoder(),
-            CreateTypeStackProcessor());
+        return CreateAbstractMethodsTranslator(DialectDslTestComposition.CreateFrontendModule());
     }
 
-    private static IIntrinsicTypeStackProcessor CreateTypeStackProcessor()
+    public static IAbstractMethodsTranslator CreateAbstractMethodsTranslator(DialectDslFrontendModule module)
     {
-        var catalog = new IntrinsicCatalogBuilder().Build(CreateDescriptorProviders());
-        return new IntrinsicTypeStackProcessor(catalog, new IntrinsicTypeResolutionContext());
-    }
+        if (module == null)
+            throw new ArgumentNullException(nameof(module));
 
-    private static IIntrinsicDescriptorProvider[] CreateDescriptorProviders()
-    {
-        return
-        [
-            new ArithmeticIntrinsicDescriptorProvider(),
-            new ComparisonIntrinsicDescriptorProvider(),
-            new BooleanIntrinsicDescriptorProvider(),
-            new StorageIntrinsicDescriptorProvider(),
-            new CoreIntrinsicDescriptorProvider(new MethodCallTypeSemanticsResolver())
-        ];
+        using var provider = CreateFrontendCompilerServices(module);
+        return provider.GetRequiredService<Func<IAbstractMethodsTranslator>>()();
     }
 }
 

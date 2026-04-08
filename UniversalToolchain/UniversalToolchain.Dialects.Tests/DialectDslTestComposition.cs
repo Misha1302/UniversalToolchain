@@ -22,7 +22,7 @@ internal static class DialectDslTestComposition
     public static DialectDslCompiler CreateCompiler(Action<IServiceCollection>? configure = null)
     {
         using var provider = CreateProvider(configure);
-        return provider.GetRequiredService<DialectDslCompiler>();
+        return new DialectDslCompiler(provider.GetRequiredService<DialectDslFrontendModule>());
     }
 
     public static DialectDslFrontendModule CreateFrontendModule(Action<IServiceCollection>? configure = null)

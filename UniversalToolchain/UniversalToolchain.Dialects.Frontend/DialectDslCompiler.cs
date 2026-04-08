@@ -1,23 +1,17 @@
-using AbstractIrConverters;
-using BasicCodeTranslator;
 using BasicCore.Contracts;
 using BasicCore.Core;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
-using BasicLexer.Core;
-using BasicParser.Core;
 using ExceptionsManager;
-using UniversalToolchain.Intrinsics.Builtins;
-using UniversalToolchain.Intrinsics.Contracts;
-using UniversalToolchain.Intrinsics.Core;
-using UniversalToolchain.Intrinsics.Legacy;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace UniversalToolchain.Dialects.Frontend;
 
-public sealed class DialectDslCompiler
+public sealed class DialectDslCompiler : IDisposable
 {
     private readonly BasicCoreImpl<DialectDefinitionSlice> _core;
+    private readonly ServiceProvider _serviceProvider;
 
     public DialectDslCompiler()
         : this(CreateDefaultFrontendModule())
@@ -29,16 +23,24 @@ public sealed class DialectDslCompiler
         if (frontendModule == null)
             Thrower.ArgumentNull(nameof(frontendModule));
 
+        var services = new ServiceCollection();
+        services.AddDialectDslFrontendCompilerServices(frontendModule);
+        _serviceProvider = services.BuildServiceProvider();
+
+        var lexerFactory = _serviceProvider.GetRequiredService<Func<ILexer>>();
+        var parserFactory = _serviceProvider.GetRequiredService<Func<IParser>>();
+        var astTranslatorFactory = _serviceProvider.GetRequiredService<Func<IAstToBytecodeTranslator>>();
+        var abstractMethodsTranslatorFactory = _serviceProvider.GetRequiredService<Func<IAbstractMethodsTranslator>>();
         var compiler = new DialectDefinitionSliceCompiler();
 
         _core = new BasicCoreImpl<DialectDefinitionSlice>(
-            () => new BasicLexerImpl(new LexerConfiguration([])),
-            () => new BasicParserImpl(new ParserConfiguration([])),
-            () => new BasicAstToBytecodeTranslatorImpl(new BytecodeTranslatorConfiguration([])),
-            CreateAbstractMethodsTranslator,
+            lexerFactory,
+            parserFactory,
+            astTranslatorFactory,
+            abstractMethodsTranslatorFactory,
             () => compiler,
             () => new DialectDefinitionSliceExecutor(),
-            [frontendModule],
+            [_serviceProvider.GetRequiredService<IFrontendCoreModule>()],
             [],
             []);
     }
@@ -47,28 +49,8 @@ public sealed class DialectDslCompiler
 
     private static DialectDslFrontendModule CreateDefaultFrontendModule() => DialectDslStandaloneComposition.CreateFrontendModule();
 
-    private static IAbstractMethodsTranslator CreateAbstractMethodsTranslator()
+    public void Dispose()
     {
-        return new BytecodeToAbstractIrConverterImpl(
-            new LegacyIntrinsicDecoder(),
-            CreateTypeStackProcessor());
-    }
-
-    private static IIntrinsicTypeStackProcessor CreateTypeStackProcessor()
-    {
-        var catalog = new IntrinsicCatalogBuilder().Build(CreateDescriptorProviders());
-        return new IntrinsicTypeStackProcessor(catalog, new IntrinsicTypeResolutionContext());
-    }
-
-    private static IIntrinsicDescriptorProvider[] CreateDescriptorProviders()
-    {
-        return
-        [
-            new ArithmeticIntrinsicDescriptorProvider(),
-            new ComparisonIntrinsicDescriptorProvider(),
-            new BooleanIntrinsicDescriptorProvider(),
-            new StorageIntrinsicDescriptorProvider(),
-            new CoreIntrinsicDescriptorProvider(new MethodCallTypeSemanticsResolver())
-        ];
+        _serviceProvider.Dispose();
     }
 }
