@@ -1,9 +1,60 @@
+using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Intrinsics.Contracts;
 
 namespace UniversalToolchain.Intrinsics.Core;
 
 public sealed class IntrinsicDescriptorProviderMetadataValidator
 {
+    public IReadOnlyList<string> Validate(IServiceCollection services)
+    {
+        if (services == null)
+            Thrower.ArgumentNull(nameof(services));
+
+        var descriptors = services
+            .Select(static (descriptor, index) => new RegistrationEntry(index, descriptor))
+            .Where(static x => x.Descriptor.ServiceType == typeof(IIntrinsicDescriptorProvider))
+            .OrderBy(static x => GetRegistrationProviderType(x.Descriptor)?.FullName, StringComparer.Ordinal)
+            .ThenBy(static x => x.Index)
+            .ToList();
+
+        var errors = new List<string>();
+        var providerRegistrationCounts = new Dictionary<Type, int>();
+
+        foreach (var entry in descriptors)
+        {
+            var descriptor = entry.Descriptor;
+            var providerType = GetRegistrationProviderType(descriptor);
+
+            if (providerType != null)
+            {
+                if (!typeof(IIntrinsicDescriptorProvider).IsAssignableFrom(providerType))
+                {
+                    var providerDisplayName = providerType.FullName ?? providerType.Name;
+                    errors.Add($"Intrinsic descriptor provider '{providerDisplayName}' does not implement IIntrinsicDescriptorProvider.");
+                    continue;
+                }
+
+                providerRegistrationCounts.TryGetValue(providerType, out var currentCount);
+                providerRegistrationCounts[providerType] = currentCount + 1;
+            }
+
+            if (!TryCreateProviderInstance(descriptor, out var provider) || provider == null)
+                continue;
+
+            errors.AddRange(Validate([provider]));
+        }
+
+        foreach (var duplicateProviderRegistration in providerRegistrationCounts
+                     .Where(static x => x.Value > 1)
+                     .OrderBy(static x => x.Key.FullName, StringComparer.Ordinal))
+        {
+            var providerDisplayName = duplicateProviderRegistration.Key.FullName ?? duplicateProviderRegistration.Key.Name;
+            errors.Add($"Intrinsic descriptor provider '{providerDisplayName}' is registered {duplicateProviderRegistration.Value} times.");
+        }
+
+        return errors;
+    }
+
     public IReadOnlyList<string> Validate(IEnumerable<IIntrinsicDescriptorProvider> providers)
     {
         if (providers == null)
@@ -96,5 +147,32 @@ public sealed class IntrinsicDescriptorProviderMetadataValidator
         return errors;
     }
 
+    private static Type? GetRegistrationProviderType(ServiceDescriptor descriptor)
+    {
+        return descriptor.ImplementationType ?? descriptor.ImplementationInstance?.GetType();
+    }
+
+    private static bool TryCreateProviderInstance(ServiceDescriptor descriptor, out IIntrinsicDescriptorProvider? provider)
+    {
+        provider = descriptor.ImplementationInstance as IIntrinsicDescriptorProvider;
+        if (provider != null)
+            return true;
+
+        var providerType = descriptor.ImplementationType;
+        if (providerType == null)
+            return false;
+
+        if (providerType.IsAbstract)
+            return false;
+
+        var constructor = providerType.GetConstructor(Type.EmptyTypes);
+        if (constructor == null)
+            return false;
+
+        provider = (IIntrinsicDescriptorProvider?)Activator.CreateInstance(providerType);
+        return provider != null;
+    }
+
+    private sealed record RegistrationEntry(int Index, ServiceDescriptor Descriptor);
     private sealed record ProviderEntry(int Index, IIntrinsicDescriptorProvider? Provider);
 }

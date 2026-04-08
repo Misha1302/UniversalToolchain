@@ -35,9 +35,11 @@ public sealed class WistDialectServiceProviderFactory
         RegisterModules(services, configuration.Optimizers, typeof(IIRProcessingModule), ServiceLifetime.Transient);
         RegisterIntrinsicDescriptorProviders(services, configuration);
         RegisterBackendRuntimes(services, configuration);
-        ValidateIntrinsicSemantics(services);
+        var coverageRequirements = ValidateIntrinsicSemantics(services);
 
-        return services.BuildServiceProvider();
+        var provider = services.BuildServiceProvider();
+        ValidateIntrinsicSemantics(provider, coverageRequirements);
+        return provider;
     }
 
     private static void RegisterModules(IServiceCollection services, IEnumerable<Type> types, Type serviceType, ServiceLifetime lifetime)
@@ -84,14 +86,40 @@ public sealed class WistDialectServiceProviderFactory
             services.AddSingleton(typeof(IIntrinsicDescriptorProvider), providerType);
     }
 
-    private static void ValidateIntrinsicSemantics(IServiceCollection services)
+    private static IReadOnlyList<(Type ModuleType, Type ProviderType)> ValidateIntrinsicSemantics(IServiceCollection services)
     {
         var coverageRequirements = GetIntrinsicCoverageRequirements(services);
+        var metadataValidator = new IntrinsicDescriptorProviderMetadataValidator();
+        var coverageValidator = new IntrinsicSemanticCoverageValidator();
+        var errors = new List<string>();
 
-        using var provider = services.BuildServiceProvider();
+        errors.AddRange(metadataValidator.Validate(services));
+        errors.AddRange(coverageValidator.Validate(GetRegisteredProviderTypes(services), coverageRequirements));
+
+        if (errors.Count > 0)
+            Thrower.InvalidOpEx("Intrinsic semantic startup validation failed:" + Environment.NewLine + string.Join(Environment.NewLine, errors));
+
+        return coverageRequirements;
+    }
+
+    private static void ValidateIntrinsicSemantics(
+        IServiceProvider provider,
+        IReadOnlyList<(Type ModuleType, Type ProviderType)> coverageRequirements)
+    {
         var validator = provider.GetRequiredService<IntrinsicSemanticStartupValidator>();
         var providers = provider.GetServices<IIntrinsicDescriptorProvider>();
         validator.Validate(providers, coverageRequirements);
+    }
+
+    private static IReadOnlyList<Type> GetRegisteredProviderTypes(IServiceCollection services)
+    {
+        return services
+            .Where(static x => x.ServiceType == typeof(IIntrinsicDescriptorProvider))
+            .Select(static x => x.ImplementationType ?? x.ImplementationInstance?.GetType())
+            .Where(static x => x != null)
+            .Cast<Type>()
+            .OrderBy(x => x.FullName, StringComparer.Ordinal)
+            .ToList();
     }
 
     private static IReadOnlyList<Type> GetRegisteredImplementationTypes(IServiceCollection services, Type serviceType)

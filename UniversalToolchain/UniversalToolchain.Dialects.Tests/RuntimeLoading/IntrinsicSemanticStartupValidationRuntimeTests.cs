@@ -1,5 +1,6 @@
 using BasicCore.Contracts;
 using Microsoft.Extensions.DependencyInjection;
+using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core.ServiceCollection;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
@@ -66,6 +67,32 @@ public sealed class IntrinsicSemanticStartupValidationRuntimeTests
         });
     }
 
+    [Test]
+    public void RuntimeFactory_ShouldReuseSingletonProviderDependencies_AfterStartupValidation()
+    {
+        CountingDependency.Reset();
+
+        var factory = new WistDialectServiceProviderFactory([new CountingBackendRegistrar()]);
+        var configuration = new WistDialectExecutionConfiguration(
+            "CountingProvider",
+            [],
+            [],
+            [],
+            [new DialectBackendRuntimeConfiguration(
+                new RuntimeBackendDescriptor(new DialectBackendId("counting"), typeof(CountingBackendRegistrar)),
+                [],
+                [],
+                false)],
+            [new RuntimeBackendDescriptor(new DialectBackendId("counting"), typeof(CountingBackendRegistrar))]);
+
+        var provider = factory.Create(configuration);
+        using var providerLifetime = provider as IDisposable;
+        _ = provider.GetServices<IIntrinsicDescriptorProvider>()
+            .Single(static x => x.GetType() == typeof(CountingDescriptorProvider));
+
+        Assert.That(CountingDependency.CreationCount, Is.EqualTo(1));
+    }
+
     private sealed class NotAProvider;
 
     private sealed class MissingProvider : IIntrinsicDescriptorProvider
@@ -81,6 +108,45 @@ public sealed class IntrinsicSemanticStartupValidationRuntimeTests
         public IReadOnlyList<IntrinsicSemanticDescriptor> GetDescriptors()
         {
             return [CreateDescriptor("logic", "present")];
+        }
+    }
+
+    private sealed class CountingDependency
+    {
+        private static int _creationCount;
+
+        public CountingDependency()
+        {
+            _creationCount++;
+        }
+
+        public static int CreationCount => _creationCount;
+
+        public static void Reset()
+        {
+            _creationCount = 0;
+        }
+    }
+
+    private sealed class CountingDescriptorProvider(CountingDependency dependency) : IIntrinsicDescriptorProvider
+    {
+        public IReadOnlyList<IntrinsicSemanticDescriptor> GetDescriptors()
+        {
+            ArgumentNullException.ThrowIfNull(dependency);
+            return [CreateDescriptor("counting", "provider")];
+        }
+    }
+
+    private sealed class CountingBackendRegistrar : IDialectBackendRuntimeRegistrar
+    {
+        public DialectBackendId BackendId { get; } = new("counting");
+
+        public IReadOnlyList<string> SupportedIntrinsics => [];
+
+        public void RegisterRuntime(IServiceCollection services, DialectBackendRuntimeConfiguration configuration)
+        {
+            services.AddSingleton<CountingDependency>();
+            services.AddSingleton<IIntrinsicDescriptorProvider, CountingDescriptorProvider>();
         }
     }
 

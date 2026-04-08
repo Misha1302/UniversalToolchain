@@ -5,6 +5,41 @@ namespace UniversalToolchain.Intrinsics.Core;
 public sealed class IntrinsicSemanticCoverageValidator
 {
     public IReadOnlyList<string> Validate(
+        IEnumerable<Type> registeredProviderTypes,
+        IEnumerable<(Type ModuleType, Type ProviderType)> coverageRequirements)
+    {
+        if (registeredProviderTypes == null)
+            Thrower.ArgumentNull(nameof(registeredProviderTypes));
+
+        if (coverageRequirements == null)
+            Thrower.ArgumentNull(nameof(coverageRequirements));
+
+        var errors = new List<string>();
+        var providerTypeSet = registeredProviderTypes
+            .Select(x => x.NotNull(nameof(registeredProviderTypes)))
+            .ToHashSet();
+        var orderedRequirements = coverageRequirements
+            .Select(x => (x.ModuleType.NotNull(nameof(coverageRequirements)), x.ProviderType.NotNull(nameof(coverageRequirements))))
+            .Distinct()
+            .OrderBy(x => x.Item1.FullName, StringComparer.Ordinal)
+            .ThenBy(x => x.Item2.FullName, StringComparer.Ordinal)
+            .ToList();
+
+        foreach (var requirement in orderedRequirements)
+        {
+            var moduleType = requirement.Item1;
+            var providerType = requirement.Item2;
+            var moduleDisplayName = moduleType.FullName ?? moduleType.Name;
+            var providerDisplayName = providerType.FullName ?? providerType.Name;
+
+            if (!providerTypeSet.Contains(providerType))
+                errors.Add($"Module '{moduleDisplayName}' requires intrinsic descriptor provider '{providerDisplayName}', but it is not registered.");
+        }
+
+        return errors;
+    }
+
+    public IReadOnlyList<string> Validate(
         IIntrinsicCatalog catalog,
         IEnumerable<IIntrinsicDescriptorProvider> providers,
         IEnumerable<(Type ModuleType, Type ProviderType)> coverageRequirements)
