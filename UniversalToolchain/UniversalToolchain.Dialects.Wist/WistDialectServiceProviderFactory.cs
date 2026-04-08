@@ -5,6 +5,7 @@ using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core.ServiceCollection;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Intrinsics.Contracts;
+using UniversalToolchain.Intrinsics.Core;
 using ServiceLifetime = Microsoft.Extensions.DependencyInjection.ServiceLifetime;
 
 namespace UniversalToolchain.Dialects.Wist;
@@ -34,6 +35,7 @@ public sealed class WistDialectServiceProviderFactory
         RegisterModules(services, configuration.Optimizers, typeof(IIRProcessingModule), ServiceLifetime.Transient);
         RegisterIntrinsicDescriptorProviders(services, configuration);
         RegisterBackendRuntimes(services, configuration);
+        ValidateIntrinsicSemantics(services);
 
         return services.BuildServiceProvider();
     }
@@ -72,6 +74,14 @@ public sealed class WistDialectServiceProviderFactory
 
         foreach (var providerType in providerTypes)
             services.AddSingleton(typeof(IIntrinsicDescriptorProvider), providerType);
+    }
+
+    private static void ValidateIntrinsicSemantics(IServiceCollection services)
+    {
+        using var provider = services.BuildServiceProvider();
+        var validator = provider.GetRequiredService<IntrinsicSemanticStartupValidator>();
+        var providers = provider.GetServices<IIntrinsicDescriptorProvider>();
+        validator.Validate(providers);
     }
 
     private static IReadOnlyDictionary<DialectBackendId, IDialectBackendRuntimeRegistrar> CreateBackendProviderMap(IEnumerable<IDialectBackendRuntimeRegistrar> backendProviders)
