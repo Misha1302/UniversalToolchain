@@ -1,8 +1,12 @@
+using UniversalToolchain.Dialects.Integration;
+using UniversalToolchain.Intrinsics.Builtins;
+
 namespace NativeMathModule;
 
 [DialectOptimizerAlias("EGraphOptimization")]
 [DialectRuntimeExport("Optimizer", "EGraphOptimization")]
 [AutoRegisterService]
+[IntrinsicDescriptorProvider(typeof(ArithmeticIntrinsicDescriptorProvider))]
 [ArithmeticModeCompatibility(ArithmeticMode.Native)]
 public class EGraphOptimizerModule : IIRProcessingModule
 {

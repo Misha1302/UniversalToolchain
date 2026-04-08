@@ -1,10 +1,13 @@
 using UniversalToolchain.Dialects.Abstractions;
+using UniversalToolchain.Dialects.Integration;
+using UniversalToolchain.Intrinsics.Builtins;
 
 namespace LocalVariablesOptimizerModule;
 
 [DialectOptimizerAlias("LocalVariablesOptimization")]
 [DialectRuntimeExport("Optimizer", "LocalVariablesOptimization")]
 [AutoRegisterService]
+[IntrinsicDescriptorProvider(typeof(StorageIntrinsicDescriptorProvider))]
 public class LocalVariablesOptimizer : IIRProcessingModule
 {
     private readonly IReadOnlyList<string> _intrinsics =

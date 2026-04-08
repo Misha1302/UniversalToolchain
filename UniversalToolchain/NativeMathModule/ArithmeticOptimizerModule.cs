@@ -1,8 +1,12 @@
+using UniversalToolchain.Dialects.Integration;
+using UniversalToolchain.Intrinsics.Builtins;
+
 namespace NativeMathModule;
 
 [DialectOptimizerAlias("ArithmeticOptimization")]
 [DialectRuntimeExport("Optimizer", "ArithmeticOptimization")]
 [AutoRegisterService]
+[IntrinsicDescriptorProvider(typeof(ArithmeticIntrinsicDescriptorProvider))]
 [ArithmeticModeCompatibility(ArithmeticMode.Native)]
 [UsedImplicitly]
 public class ArithmeticOptimizerModule : IIRProcessingModule

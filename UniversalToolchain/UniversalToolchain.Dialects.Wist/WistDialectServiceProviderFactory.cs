@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core.ServiceCollection;
 using UniversalToolchain.Dialects.Integration;
+using UniversalToolchain.Intrinsics.Contracts;
 using ServiceLifetime = Microsoft.Extensions.DependencyInjection.ServiceLifetime;
 
 namespace UniversalToolchain.Dialects.Wist;
@@ -31,6 +32,7 @@ public sealed class WistDialectServiceProviderFactory
         RegisterModules(services, configuration.FrontendModules, typeof(IFrontendCoreModule), ServiceLifetime.Singleton);
         RegisterModules(services, configuration.IrModules, typeof(IIRProcessingModule), ServiceLifetime.Transient);
         RegisterModules(services, configuration.Optimizers, typeof(IIRProcessingModule), ServiceLifetime.Transient);
+        RegisterIntrinsicDescriptorProviders(services, configuration);
         RegisterBackendRuntimes(services, configuration);
 
         return services.BuildServiceProvider();
@@ -53,6 +55,25 @@ public sealed class WistDialectServiceProviderFactory
         }
     }
 
+    private static void RegisterIntrinsicDescriptorProviders(IServiceCollection services, WistDialectExecutionConfiguration configuration)
+    {
+        var providerTypes = new SortedSet<Type>(TypeFullNameComparer.Instance);
+
+        foreach (var moduleType in configuration.IrModules
+                     .Concat(configuration.Optimizers)
+                     .Concat(configuration.FrontendModules))
+        {
+            foreach (var attribute in moduleType.GetCustomAttributes(typeof(IntrinsicDescriptorProviderAttribute), false)
+                         .Cast<IntrinsicDescriptorProviderAttribute>())
+            {
+                providerTypes.Add(attribute.ProviderType);
+            }
+        }
+
+        foreach (var providerType in providerTypes)
+            services.AddSingleton(typeof(IIntrinsicDescriptorProvider), providerType);
+    }
+
     private static IReadOnlyDictionary<DialectBackendId, IDialectBackendRuntimeRegistrar> CreateBackendProviderMap(IEnumerable<IDialectBackendRuntimeRegistrar> backendProviders)
     {
         if (backendProviders == null)
@@ -68,5 +89,24 @@ public sealed class WistDialectServiceProviderFactory
         }
 
         return map;
+    }
+
+    private sealed class TypeFullNameComparer : IComparer<Type>
+    {
+        public static TypeFullNameComparer Instance { get; } = new();
+
+        public int Compare(Type? x, Type? y)
+        {
+            if (ReferenceEquals(x, y))
+                return 0;
+
+            if (x is null)
+                return -1;
+
+            if (y is null)
+                return 1;
+
+            return StringComparer.Ordinal.Compare(x.FullName, y.FullName);
+        }
     }
 }

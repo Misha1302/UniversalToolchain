@@ -47,10 +47,6 @@ public static class CoreRuntimeServiceCollectionExtensions
         services.AddSingleton<IIntrinsicTypeResolutionContext, IntrinsicTypeResolutionContext>();
         services.AddSingleton<MethodCallTypeSemanticsResolver>();
         services.AddTransient<IIntrinsicDescriptorProvider, CoreIntrinsicDescriptorProvider>();
-        services.AddTransient<IIntrinsicDescriptorProvider, ArithmeticIntrinsicDescriptorProvider>();
-        services.AddTransient<IIntrinsicDescriptorProvider, ComparisonIntrinsicDescriptorProvider>();
-        services.AddTransient<IIntrinsicDescriptorProvider, BooleanIntrinsicDescriptorProvider>();
-        services.AddTransient<IIntrinsicDescriptorProvider, StorageIntrinsicDescriptorProvider>();
         services.AddSingleton<IIntrinsicCatalog>(sp =>
         {
             var providers = sp.GetServices<IIntrinsicDescriptorProvider>();
