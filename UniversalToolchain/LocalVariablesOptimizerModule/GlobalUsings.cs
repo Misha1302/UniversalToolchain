@@ -1,7 +1,6 @@
 global using System.Reflection;
 global using BasicCore.Attributes;
 global using BasicCore.Contracts;
-global using DotnetAirHelper;
 global using ExceptionsManager;
 global using IntermediateRepresentationAbstractions;
 global using ListExtensions;

@@ -3,6 +3,7 @@ using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Intrinsics.Builtins;
 using UniversalToolchain.Intrinsics.Capabilities;
 using UniversalToolchain.Intrinsics.Contracts;
+using UniversalToolchain.Intrinsics.Legacy;
 
 namespace ConditionsModule.Optimizers;
 
@@ -96,21 +97,16 @@ public class ComparisonIntrinsicOptimizerModule : IIRProcessingModule
 
         if (instruction.UOpCode == UOpCode.Intrinsic)
         {
-            if (instruction.Operands.Count > 0 &&
-                instruction.Operands[0] is string intrinsicName &&
-                intrinsicName == "call C#")
-            {
-                AirTypes.ProcessTypesIntrinsic(instruction, stack);
-                return;
-            }
-
             if (BuiltinIntrinsicInstruction.TryGetInvocation(instruction, out var invocation) &&
                 IsComparisonSymbol(invocation.Symbol))
             {
                 stack.Pop();
                 stack.Pop();
                 stack.Push(typeof(bool));
+                return;
             }
+
+            LegacyIntrinsicTypeProcessor.ProcessTypes(instruction, stack);
         }
     }
 

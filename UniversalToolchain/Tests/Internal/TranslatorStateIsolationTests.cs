@@ -1,7 +1,6 @@
 using BasicCodeTranslator;
 using AbstractIrExtensions;
-using DotnetAirHelper;
-using Tests.Infrastructure;
+using UniversalToolchain.Intrinsics.Legacy;
 
 namespace Tests.Internal;
 
@@ -38,20 +37,6 @@ public class TranslatorStateIsolationTests
     }
 
     [Test]
-    public void Should_RegisterAirIntrinsicPredictably_When_RegisteringSameNameTwice()
-    {
-        using var _ = GlobalTestStateScope.Create();
-
-        const string intrinsic = "test_intrinsic";
-
-        var first = AirTypes.TryRegisterIntrinsic(intrinsic, (_, _) => { });
-        var second = AirTypes.TryRegisterIntrinsic(intrinsic, (_, _) => { });
-
-        Assert.That(first, Is.True);
-        Assert.That(second, Is.False);
-    }
-
-    [Test]
     public void BuiltInIntrinsicSequence_ShouldRemainTypeStackValid_ForDoubleArithmeticExpression()
     {
         var ir = CreateIr(
@@ -63,7 +48,7 @@ public class TranslatorStateIsolationTests
 
         var stack = new List<Type>();
 
-        Assert.DoesNotThrow(() => ir.Instructions.ManipulateTypesStack(stack, AirTypes.ProcessTypesIntrinsic));
+        Assert.DoesNotThrow(() => ir.Instructions.ManipulateTypesStack(stack, LegacyIntrinsicTypeProcessor.ProcessTypes));
         Assert.That(stack, Has.Count.EqualTo(1));
         Assert.That(stack[0], Is.EqualTo(typeof(double)));
     }

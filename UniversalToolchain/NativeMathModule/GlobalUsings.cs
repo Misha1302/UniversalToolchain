@@ -10,7 +10,6 @@ global using BasicCore.LexerWrapper;
 global using BasicCore.ParserWrapper;
 global using BasicCore.TranslatorWrapper;
 global using BasicTypesExtensions;
-global using DotnetAirHelper;
 global using DynamicMethodWrapper;
 global using ExceptionsManager;
 global using IntermediateRepresentationAbstractions;

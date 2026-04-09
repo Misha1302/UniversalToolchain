@@ -1,4 +1,3 @@
-using DotnetAirHelper;
 using SettableGettableModule.Core;
 
 namespace Tests.Infrastructure;
@@ -19,7 +18,7 @@ internal sealed class GlobalTestStateScope : IDisposable
 
     private static void Reset()
     {
-        AirTypes.ResetToDefaultsForTests();
+        // Reset only mutable global test hooks so each test observes a clean runtime state.
         VariablesContainerTestHooks.ResetAllForTests();
     }
 }

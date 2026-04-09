@@ -4,7 +4,6 @@ global using AbstractIrExtensions;
 global using BasicCore.Compilation;
 global using BasicCore.Contracts;
 global using BytecodeDynamicMethodsCompiler.Core;
-global using DotnetAirHelper;
 global using DotnetHelper;
 global using ExceptionsManager;
 global using GrEmit;
