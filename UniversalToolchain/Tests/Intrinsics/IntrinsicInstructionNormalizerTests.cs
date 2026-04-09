@@ -111,6 +111,49 @@ public class IntrinsicInstructionNormalizerTests
         Assert.That(exception!.Message, Does.Contain("Unsupported intrinsic instruction payload"));
     }
 
+    [Test]
+    public void NormalizeOrThrow_ForAlreadyNormalizedLoadLocalRef_IsIdempotent()
+    {
+        var instruction = Intrinsic("load_local_ref", "x", typeof(int));
+
+        var normalized1 = IntrinsicInstructionNormalizer.NormalizeOrThrow(instruction);
+        var normalized2 = IntrinsicInstructionNormalizer.NormalizeOrThrow(normalized1);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(normalized2.UOpCode, Is.EqualTo(normalized1.UOpCode));
+            Assert.That(normalized2.Operands.Count, Is.EqualTo(normalized1.Operands.Count));
+            Assert.That(normalized2.Operands[0], Is.EqualTo("load_local_ref"));
+            Assert.That(normalized2.Operands[1], Is.EqualTo("x"));
+            Assert.That(normalized2.Operands[2], Is.EqualTo(typeof(int)));
+        });
+    }
+
+    [Test]
+    public void TryNormalize_UnknownIntrinsic_ReturnsFalse()
+    {
+        var instruction = Intrinsic("definitely_unknown_intrinsic");
+
+        var ok = IntrinsicInstructionNormalizer.TryNormalize(instruction, out var normalized);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(ok, Is.False);
+            Assert.That(normalized, Is.Null);
+        });
+    }
+
+    [Test]
+    public void NormalizeOrThrow_UnknownIntrinsic_Throws()
+    {
+        var instruction = Intrinsic("definitely_unknown_intrinsic");
+
+        Assert.Throws<InvalidOperationException>(() =>
+        {
+            _ = IntrinsicInstructionNormalizer.NormalizeOrThrow(instruction);
+        });
+    }
+
     private static Instruction CreateTypedInstruction(
         IntrinsicSymbol symbol,
         IReadOnlyList<IntrinsicTypeArgument>? typeArguments = null,
@@ -122,5 +165,14 @@ public class IntrinsicInstructionNormalizerTests
             dataOperands ?? []);
 
         return new Instruction(UOpCode.Intrinsic, [invocation]);
+    }
+
+    private static Instruction Intrinsic(string name, params object?[] args)
+    {
+        var operands = new List<object>(args.Length + 1) { name };
+        for (var i = 0; i < args.Length; i++)
+            operands.Add(args[i]!);
+
+        return new Instruction(UOpCode.Intrinsic, operands);
     }
 }

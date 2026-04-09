@@ -29,8 +29,11 @@ internal static class IntrinsicInstructionNormalizer
         if (instruction.Operands.Count == 0)
             return false;
 
-        if (instruction.Operands[0] is string)
+        if (instruction.Operands[0] is string intrinsicName)
         {
+            if (!IsSupportedIntrinsicName(intrinsicName))
+                return false;
+
             normalizedInstruction = instruction;
             return true;
         }
@@ -38,7 +41,7 @@ internal static class IntrinsicInstructionNormalizer
         if (instruction.Operands.Count != 1 || instruction.Operands[0] is not IntrinsicInvocation invocation)
             return false;
 
-        if (!LegacyCapabilityNameEncoder.TryEncode(invocation.Symbol, invocation.TypeArguments, out var intrinsicName))
+        if (!LegacyCapabilityNameEncoder.TryEncode(invocation.Symbol, invocation.TypeArguments, out var encodedName))
             return false;
 
         if (invocation.Symbol == BuiltinIntrinsicSymbols.Core.CallCSharp
@@ -47,7 +50,7 @@ internal static class IntrinsicInstructionNormalizer
             if (!TryGetDataOperand(invocation.DataOperands, 0, out var dataOperand))
                 return false;
 
-            normalizedInstruction = new Instruction(UOpCode.Intrinsic, [intrinsicName, dataOperand]);
+            normalizedInstruction = new Instruction(UOpCode.Intrinsic, [encodedName, dataOperand]);
             return true;
         }
 
@@ -57,7 +60,7 @@ internal static class IntrinsicInstructionNormalizer
                 || !TryGetSingleRuntimeType(invocation.TypeArguments, out var runtimeType))
                 return false;
 
-            normalizedInstruction = new Instruction(UOpCode.Intrinsic, [intrinsicName, dataOperand, runtimeType]);
+            normalizedInstruction = new Instruction(UOpCode.Intrinsic, [encodedName, dataOperand, runtimeType]);
             return true;
         }
 
@@ -67,7 +70,7 @@ internal static class IntrinsicInstructionNormalizer
             if (!TryGetDataOperand(invocation.DataOperands, 0, out var dataOperand))
                 return false;
 
-            normalizedInstruction = new Instruction(UOpCode.Intrinsic, [intrinsicName, dataOperand]);
+            normalizedInstruction = new Instruction(UOpCode.Intrinsic, [encodedName, dataOperand]);
             return true;
         }
 
@@ -78,7 +81,7 @@ internal static class IntrinsicInstructionNormalizer
                 || !TryGetSingleRuntimeType(invocation.TypeArguments, out var runtimeType))
                 return false;
 
-            normalizedInstruction = new Instruction(UOpCode.Intrinsic, [intrinsicName, dataOperand, runtimeType]);
+            normalizedInstruction = new Instruction(UOpCode.Intrinsic, [encodedName, dataOperand, runtimeType]);
             return true;
         }
 
@@ -89,7 +92,7 @@ internal static class IntrinsicInstructionNormalizer
 
             if (TryGetSingleRuntimeType(invocation.TypeArguments, out var runtimeTypeFromTypeArguments))
             {
-                normalizedInstruction = new Instruction(UOpCode.Intrinsic, [intrinsicName, dataOperand, runtimeTypeFromTypeArguments]);
+                normalizedInstruction = new Instruction(UOpCode.Intrinsic, [encodedName, dataOperand, runtimeTypeFromTypeArguments]);
                 return true;
             }
 
@@ -97,7 +100,7 @@ internal static class IntrinsicInstructionNormalizer
                 && invocation.DataOperands.Count >= 2
                 && invocation.DataOperands[1] is Type runtimeTypeFromData)
             {
-                normalizedInstruction = new Instruction(UOpCode.Intrinsic, [intrinsicName, dataOperand, runtimeTypeFromData]);
+                normalizedInstruction = new Instruction(UOpCode.Intrinsic, [encodedName, dataOperand, runtimeTypeFromData]);
                 return true;
             }
 
@@ -108,14 +111,14 @@ internal static class IntrinsicInstructionNormalizer
             || invocation.Symbol == BuiltinIntrinsicSymbols.Boolean.Or
             || invocation.Symbol == BuiltinIntrinsicSymbols.Boolean.Not)
         {
-            normalizedInstruction = new Instruction(UOpCode.Intrinsic, [intrinsicName]);
+            normalizedInstruction = new Instruction(UOpCode.Intrinsic, [encodedName]);
             return true;
         }
 
         if (invocation.Symbol.Namespace == BuiltinIntrinsicSymbols.Arithmetic.Add.Namespace
             || invocation.Symbol.Namespace == BuiltinIntrinsicSymbols.Comparison.Equal.Namespace)
         {
-            normalizedInstruction = new Instruction(UOpCode.Intrinsic, [intrinsicName]);
+            normalizedInstruction = new Instruction(UOpCode.Intrinsic, [encodedName]);
             return true;
         }
 
@@ -142,5 +145,28 @@ internal static class IntrinsicInstructionNormalizer
 
         runtimeType = typeArguments[0].RuntimeType;
         return true;
+    }
+
+    private static bool IsSupportedIntrinsicName(string intrinsicName)
+    {
+        if (intrinsicName == "call C#"
+            || intrinsicName == "call C# ctor"
+            || intrinsicName == "store_local"
+            || intrinsicName == "load_local"
+            || intrinsicName == "load_local_ref"
+            || intrinsicName == "load_external"
+            || intrinsicName == "store_external"
+            || intrinsicName == "load_bool"
+            || intrinsicName == "boolean_and"
+            || intrinsicName == "boolean_or"
+            || intrinsicName == "boolean_not")
+            return true;
+
+        return intrinsicName.StartsWith("load_", StringComparison.Ordinal)
+               || intrinsicName.StartsWith("add_", StringComparison.Ordinal)
+               || intrinsicName.StartsWith("sub_", StringComparison.Ordinal)
+               || intrinsicName.StartsWith("mul_", StringComparison.Ordinal)
+               || intrinsicName.StartsWith("div_", StringComparison.Ordinal)
+               || intrinsicName.StartsWith("cmp_", StringComparison.Ordinal);
     }
 }
