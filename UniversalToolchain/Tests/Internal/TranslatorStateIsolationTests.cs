@@ -1,6 +1,6 @@
 using BasicCodeTranslator;
 using AbstractIrExtensions;
-using UniversalToolchain.Intrinsics.Legacy;
+using UniversalToolchain.Intrinsics.Core;
 
 namespace Tests.Internal;
 
@@ -48,7 +48,7 @@ public class TranslatorStateIsolationTests
 
         var stack = new List<Type>();
 
-        Assert.DoesNotThrow(() => ir.Instructions.ManipulateTypesStack(stack, LegacyIntrinsicTypeProcessor.ProcessTypes));
+        Assert.DoesNotThrow(() => ir.Instructions.ManipulateTypesStack(stack, IntrinsicTypeProcessor.ProcessTypes));
         Assert.That(stack, Has.Count.EqualTo(1));
         Assert.That(stack[0], Is.EqualTo(typeof(double)));
     }

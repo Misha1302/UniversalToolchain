@@ -114,7 +114,7 @@ public class ArithmeticOptimizerModuleTests
 
         var stack = new List<Type>();
 
-        Assert.DoesNotThrow(() => optimized.Instructions.ManipulateTypesStack(stack, LegacyIntrinsicTypeProcessor.ProcessTypes));
+        Assert.DoesNotThrow(() => optimized.Instructions.ManipulateTypesStack(stack, IntrinsicTypeProcessor.ProcessTypes));
         Assert.That(stack, Has.Count.EqualTo(1));
         Assert.That(stack[0], Is.EqualTo(typeof(int)));
         Assert.That(CompileAndExecute(optimized, 10), Is.EqualTo(12));

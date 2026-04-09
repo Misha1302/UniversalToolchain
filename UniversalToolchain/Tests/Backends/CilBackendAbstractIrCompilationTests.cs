@@ -1,4 +1,5 @@
 using UniversalToolchain.Intrinsics.Builtins;
+using UniversalToolchain.Intrinsics.Core;
 using UniversalToolchain.Intrinsics.Contracts;
 using System.Reflection.Emit;
 
@@ -27,6 +28,31 @@ public class CilBackendAbstractIrCompilationTests
                 Assert.That(descriptor.Compile, Is.Not.Null, $"Intrinsic '{intrinsicName}' must expose compile handling.");
                 Assert.That(descriptor.ProcessTypes, Is.Not.Null, $"Intrinsic '{intrinsicName}' must expose type-stack handling.");
             });
+        }
+    }
+
+    [Test]
+    public void RegistryProcessTypes_UsesSharedIntrinsicTypeProcessor_ForEveryRegisteredIntrinsic()
+    {
+        var registry = new CilIntrinsicRegistry();
+        var representativeCases = new[]
+        {
+            ("load_f64", new Instruction(UOpCode.Intrinsic, ["load_f64", 1.5d]), new List<Type>()),
+            ("boolean_not", new Instruction(UOpCode.Intrinsic, ["boolean_not"]), new List<Type> { typeof(bool) }),
+            ("add_i32", new Instruction(UOpCode.Intrinsic, ["add_i32"]), new List<Type> { typeof(int), typeof(int) }),
+            ("cmp_le_f64", new Instruction(UOpCode.Intrinsic, ["cmp_le_f64"]), new List<Type> { typeof(double), typeof(double) }),
+            ("load_local", new Instruction(UOpCode.Intrinsic, ["load_local", "x", typeof(int)]), new List<Type>())
+        };
+
+        foreach (var (name, instruction, initialStack) in representativeCases)
+        {
+            var registryStack = initialStack.ToList();
+            var sharedStack = initialStack.ToList();
+
+            registry.GetRequired(name).ProcessTypes(instruction, registryStack);
+            IntrinsicTypeProcessor.ProcessTypes(instruction, sharedStack);
+
+            Assert.That(registryStack, Is.EqualTo(sharedStack), name);
         }
     }
 
