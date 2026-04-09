@@ -4,16 +4,24 @@ using UniversalToolchain.Intrinsics.Builtins;
 using UniversalToolchain.Intrinsics.Capabilities;
 using UniversalToolchain.Intrinsics.Contracts;
 
-namespace UniversalToolchain.Intrinsics.Legacy;
+namespace UniversalToolchain.Intrinsics.Core;
 
-internal static class IntrinsicInstructionLegacyProjector
+internal static class IntrinsicInstructionNormalizer
 {
-    public static bool TryProject(Instruction instruction, out Instruction projectedInstruction)
+    public static Instruction NormalizeOrThrow(Instruction instruction)
+    {
+        if (!TryNormalize(instruction, out var normalizedInstruction))
+            return Thrower.InvalidOpEx<Instruction>($"Unsupported intrinsic instruction payload: {instruction}");
+
+        return normalizedInstruction;
+    }
+
+    public static bool TryNormalize(Instruction instruction, out Instruction normalizedInstruction)
     {
         if (instruction == null)
             Thrower.ArgumentNull(nameof(instruction));
 
-        projectedInstruction = default!;
+        normalizedInstruction = default!;
 
         if (instruction.UOpCode != UOpCode.Intrinsic)
             return false;
@@ -23,7 +31,7 @@ internal static class IntrinsicInstructionLegacyProjector
 
         if (instruction.Operands[0] is string)
         {
-            projectedInstruction = instruction;
+            normalizedInstruction = instruction;
             return true;
         }
 
@@ -39,7 +47,7 @@ internal static class IntrinsicInstructionLegacyProjector
             if (!TryGetDataOperand(invocation.DataOperands, 0, out var dataOperand))
                 return false;
 
-            projectedInstruction = new Instruction(UOpCode.Intrinsic, [intrinsicName, dataOperand]);
+            normalizedInstruction = new Instruction(UOpCode.Intrinsic, [intrinsicName, dataOperand]);
             return true;
         }
 
@@ -49,7 +57,7 @@ internal static class IntrinsicInstructionLegacyProjector
                 || !TryGetSingleRuntimeType(invocation.TypeArguments, out var runtimeType))
                 return false;
 
-            projectedInstruction = new Instruction(UOpCode.Intrinsic, [intrinsicName, dataOperand, runtimeType]);
+            normalizedInstruction = new Instruction(UOpCode.Intrinsic, [intrinsicName, dataOperand, runtimeType]);
             return true;
         }
 
@@ -59,7 +67,7 @@ internal static class IntrinsicInstructionLegacyProjector
             if (!TryGetDataOperand(invocation.DataOperands, 0, out var dataOperand))
                 return false;
 
-            projectedInstruction = new Instruction(UOpCode.Intrinsic, [intrinsicName, dataOperand]);
+            normalizedInstruction = new Instruction(UOpCode.Intrinsic, [intrinsicName, dataOperand]);
             return true;
         }
 
@@ -70,7 +78,7 @@ internal static class IntrinsicInstructionLegacyProjector
                 || !TryGetSingleRuntimeType(invocation.TypeArguments, out var runtimeType))
                 return false;
 
-            projectedInstruction = new Instruction(UOpCode.Intrinsic, [intrinsicName, dataOperand, runtimeType]);
+            normalizedInstruction = new Instruction(UOpCode.Intrinsic, [intrinsicName, dataOperand, runtimeType]);
             return true;
         }
 
@@ -81,7 +89,7 @@ internal static class IntrinsicInstructionLegacyProjector
 
             if (TryGetSingleRuntimeType(invocation.TypeArguments, out var runtimeTypeFromTypeArguments))
             {
-                projectedInstruction = new Instruction(UOpCode.Intrinsic, [intrinsicName, dataOperand, runtimeTypeFromTypeArguments]);
+                normalizedInstruction = new Instruction(UOpCode.Intrinsic, [intrinsicName, dataOperand, runtimeTypeFromTypeArguments]);
                 return true;
             }
 
@@ -89,7 +97,7 @@ internal static class IntrinsicInstructionLegacyProjector
                 && invocation.DataOperands.Count >= 2
                 && invocation.DataOperands[1] is Type runtimeTypeFromData)
             {
-                projectedInstruction = new Instruction(UOpCode.Intrinsic, [intrinsicName, dataOperand, runtimeTypeFromData]);
+                normalizedInstruction = new Instruction(UOpCode.Intrinsic, [intrinsicName, dataOperand, runtimeTypeFromData]);
                 return true;
             }
 
@@ -100,20 +108,19 @@ internal static class IntrinsicInstructionLegacyProjector
             || invocation.Symbol == BuiltinIntrinsicSymbols.Boolean.Or
             || invocation.Symbol == BuiltinIntrinsicSymbols.Boolean.Not)
         {
-            projectedInstruction = new Instruction(UOpCode.Intrinsic, [intrinsicName]);
+            normalizedInstruction = new Instruction(UOpCode.Intrinsic, [intrinsicName]);
             return true;
         }
 
         if (invocation.Symbol.Namespace == BuiltinIntrinsicSymbols.Arithmetic.Add.Namespace
             || invocation.Symbol.Namespace == BuiltinIntrinsicSymbols.Comparison.Equal.Namespace)
         {
-            projectedInstruction = new Instruction(UOpCode.Intrinsic, [intrinsicName]);
+            normalizedInstruction = new Instruction(UOpCode.Intrinsic, [intrinsicName]);
             return true;
         }
 
         return false;
     }
-
 
     private static bool TryGetDataOperand(IReadOnlyList<object?> dataOperands, int index, out object operand)
     {

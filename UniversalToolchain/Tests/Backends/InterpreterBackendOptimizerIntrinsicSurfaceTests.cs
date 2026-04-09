@@ -1,21 +1,13 @@
 using Tests.Infrastructure;
-using UniversalToolchain.Intrinsics.Legacy;
+using UniversalToolchain.Intrinsics.Core;
 
 namespace Tests.Backends;
 
 [TestFixture]
 public sealed class InterpreterBackendOptimizerIntrinsicSurfaceTests
 {
-    private static readonly HashSet<string> SupportedInterpreterIntrinsics =
-    [
-        "call C#",
-        "call C# ctor",
-        "load_external",
-        "store_external"
-    ];
-
     [Test]
-    public void InterpreterBackend_WithOptimizersEnabled_DoesNotContainBackendSpecificIntrinsics()
+    public void InterpreterBackend_WithOptimizersEnabled_ContainsOnlyInterpreterSupportedIntrinsics()
     {
         var dialect = """
                       dialect Tiny
@@ -36,8 +28,31 @@ public sealed class InterpreterBackendOptimizerIntrinsicSurfaceTests
         var intrinsicNames = CollectIntrinsicNames(artifact.CompilationOutput).ToArray();
 
         Assert.That(intrinsicNames, Is.Not.Empty);
-        Assert.That(intrinsicNames.All(SupportedInterpreterIntrinsics.Contains), Is.True,
-            $"Interpreter IR contains unsupported intrinsic names: {string.Join(", ", intrinsicNames.Where(x => !SupportedInterpreterIntrinsics.Contains(x)).Distinct(StringComparer.Ordinal))}");
+        Assert.That(intrinsicNames.All(IsSupportedInterpreterIntrinsic), Is.True,
+            $"Interpreter IR contains unsupported intrinsic names: {string.Join(", ", intrinsicNames.Where(x => !IsSupportedInterpreterIntrinsic(x)).Distinct(StringComparer.Ordinal))}");
+    }
+
+    private static bool IsSupportedInterpreterIntrinsic(string intrinsicName)
+    {
+        if (intrinsicName == "call C#"
+            || intrinsicName == "call C# ctor"
+            || intrinsicName == "load_external"
+            || intrinsicName == "store_external"
+            || intrinsicName == "store_local"
+            || intrinsicName == "load_local"
+            || intrinsicName == "load_local_ref"
+            || intrinsicName == "load_bool"
+            || intrinsicName == "boolean_and"
+            || intrinsicName == "boolean_or"
+            || intrinsicName == "boolean_not")
+            return true;
+
+        return intrinsicName.StartsWith("load_", StringComparison.Ordinal)
+               || intrinsicName.StartsWith("add_", StringComparison.Ordinal)
+               || intrinsicName.StartsWith("sub_", StringComparison.Ordinal)
+               || intrinsicName.StartsWith("mul_", StringComparison.Ordinal)
+               || intrinsicName.StartsWith("div_", StringComparison.Ordinal)
+               || intrinsicName.StartsWith("cmp_", StringComparison.Ordinal);
     }
 
     private static IEnumerable<string> CollectIntrinsicNames(IAbstractIR air)
@@ -47,10 +62,10 @@ public sealed class InterpreterBackendOptimizerIntrinsicSurfaceTests
             if (instruction.UOpCode != UOpCode.Intrinsic)
                 continue;
 
-            if (!IntrinsicInstructionLegacyProjector.TryProject(instruction, out var projectedInstruction))
-                Assert.Fail($"Failed to project intrinsic instruction to legacy form: {instruction}");
+            if (!IntrinsicInstructionNormalizer.TryNormalize(instruction, out var normalizedInstruction))
+                Assert.Fail($"Failed to normalize intrinsic instruction: {instruction}");
 
-            yield return (string)projectedInstruction.Operands[0];
+            yield return (string)normalizedInstruction.Operands[0];
         }
     }
 }

@@ -198,7 +198,7 @@ public class InterpreterBackendIrExecutionTests
 
 
     [Test]
-    public void TypedArithmeticIntrinsicI32_OnCoreInterpreterPath_RemainsUnsupported()
+    public void TypedArithmeticIntrinsicI32_OnCoreInterpreterPath_ExecutesSuccessfully()
     {
         var ir = BuildIr(
             new Instruction(UOpCode.Push, [20]),
@@ -206,22 +206,22 @@ public class InterpreterBackendIrExecutionTests
             CreateTypedIntrinsic(BuiltinIntrinsicSymbols.Arithmetic.Add, [IntrinsicTypeArgument.From(typeof(int))])
         );
 
-        var exception = Assert.Throws<RuntimeExecutionException>(() => ExecuteInInterpreter(ir));
+        var result = ExecuteInInterpreter(ir);
 
-        Assert.That(exception!.Message, Does.Contain("Unknown intrinsic call: add_i32."));
+        Assert.That(result, Is.EqualTo(42));
     }
 
     [Test]
-    public void TypedBooleanNotIntrinsic_OnCoreInterpreterPath_RemainsUnsupported()
+    public void TypedBooleanNotIntrinsic_OnCoreInterpreterPath_ExecutesSuccessfully()
     {
         var ir = BuildIr(
             new Instruction(UOpCode.Push, [true]),
             CreateTypedIntrinsic(BuiltinIntrinsicSymbols.Boolean.Not)
         );
 
-        var exception = Assert.Throws<RuntimeExecutionException>(() => ExecuteInInterpreter(ir));
+        var result = ExecuteInInterpreter(ir);
 
-        Assert.That(exception!.Message, Does.Contain("Unknown intrinsic call: boolean_not."));
+        Assert.That(result, Is.EqualTo(false));
     }
 
     private static int CombineDigits(int acc, int nextDigit) => acc * 10 + nextDigit;

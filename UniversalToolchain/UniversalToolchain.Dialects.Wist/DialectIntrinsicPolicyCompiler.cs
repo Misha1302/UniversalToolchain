@@ -3,7 +3,7 @@ using BasicCore.Contracts;
 using ExceptionsManager;
 using IntermediateRepresentationAbstractions;
 using ObjectExtensions;
-using UniversalToolchain.Intrinsics.Legacy;
+using UniversalToolchain.Intrinsics.Core;
 
 namespace UniversalToolchain.Dialects.Wist;
 
@@ -54,10 +54,10 @@ internal sealed class DialectIntrinsicPolicyCompiler<TCompilationOutput> : IAbst
             if (instruction.UOpCode != UOpCode.Intrinsic)
                 continue;
 
-            if (!IntrinsicInstructionLegacyProjector.TryProject(instruction, out var projectedInstruction))
+            if (!IntrinsicInstructionNormalizer.TryNormalize(instruction, out var normalizedInstruction))
                 Thrower.InvalidOpEx($"Intrinsic payload cannot be validated against dialect policy: {instruction}");
 
-            var intrinsicName = projectedInstruction.Operands[0].Get<string>();
+            var intrinsicName = normalizedInstruction.Operands[0].Get<string>();
 
             if (_forbiddenIntrinsics.Contains(intrinsicName))
                 Thrower.InvalidOpEx($"Intrinsic '{intrinsicName}' is forbidden by the selected dialect.");

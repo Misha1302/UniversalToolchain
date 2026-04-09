@@ -3,6 +3,7 @@ namespace BasicInterpreter;
 public class InterpreterState
 {
     private readonly Dictionary<Guid, int> _labelPositions = new();
+    private readonly Dictionary<string, object?> _locals = new(StringComparer.Ordinal);
     private bool _labelsBuilt;
     public Stack<object> ValueStack { get; } = new();
 
@@ -18,7 +19,8 @@ public class InterpreterState
 
     public void BuildLabelPositions(IReadOnlyList<Instruction> instructions)
     {
-        if (_labelsBuilt) return;
+        if (_labelsBuilt)
+            return;
 
         _labelPositions.Clear();
         for (var i = 0; i < instructions.Count; i++)
@@ -39,5 +41,27 @@ public class InterpreterState
             Thrower.InvalidOpEx($"Label with id '{labelId}' was not found in the instruction stream.");
 
         return position;
+    }
+
+    public object GetLocalValue(string name, Type runtimeType)
+    {
+        if (_locals.TryGetValue(name, out var value) && value != null)
+            return value;
+
+        var defaultValue = runtimeType.IsValueType
+            ? Activator.CreateInstance(runtimeType)
+            : null;
+
+        _locals[name] = defaultValue;
+
+        if (defaultValue == null)
+            Thrower.InvalidOpEx($"Local '{name}' is null and cannot be loaded.");
+
+        return defaultValue;
+    }
+
+    public void SetLocalValue(string name, object? value)
+    {
+        _locals[name] = value;
     }
 }
