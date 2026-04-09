@@ -52,6 +52,18 @@ public sealed class IntrinsicTypeProcessorTests
     }
 
     [Test]
+    public void ProcessTypes_LoadLocalRef_PushesByRefType()
+    {
+        var stack = new List<Type>();
+        var instruction = new Instruction(UOpCode.Intrinsic, ["load_local_ref", "x", typeof(int)]);
+
+        IntrinsicTypeProcessor.ProcessTypes(instruction, stack);
+
+        Assert.That(stack, Has.Count.EqualTo(1));
+        Assert.That(stack[0], Is.EqualTo(typeof(int).MakeByRefType()));
+    }
+
+    [Test]
     public void TypedComparisonIntrinsic_IsProjected_AndProducesBooleanResult()
     {
         var instruction = CreateTypedInstruction(

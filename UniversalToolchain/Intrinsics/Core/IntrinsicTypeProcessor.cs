@@ -1,7 +1,6 @@
 using System.Reflection;
 using DotnetHelper;
 using ObjectExtensions;
-using UniversalToolchain.Intrinsics.Legacy;
 
 namespace UniversalToolchain.Intrinsics.Core;
 
@@ -27,10 +26,7 @@ internal static class IntrinsicTypeProcessor
         if (instruction.Operands.Count > 0 && instruction.Operands[0] is string)
             return instruction;
 
-        if (IntrinsicInstructionLegacyProjector.TryProject(instruction, out var projectedInstruction))
-            return projectedInstruction;
-
-        return Thrower.InvalidOpEx<Instruction>($"Unsupported intrinsic instruction payload: {instruction}");
+        return IntrinsicInstructionNormalizer.NormalizeOrThrow(instruction);
     }
 
     private static void ProcessNormalizedInstruction(Instruction instruction, List<Type> stack)

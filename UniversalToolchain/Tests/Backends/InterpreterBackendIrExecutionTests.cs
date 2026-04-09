@@ -8,6 +8,24 @@ namespace Tests.Backends;
 [TestFixture]
 public class InterpreterBackendIrExecutionTests
 {
+    private static class RefInteropSamples
+    {
+        public static void Increment(ref int value)
+        {
+            value++;
+        }
+
+        public static void Set42(out int value)
+        {
+            value = 42;
+        }
+
+        public static void AddTen(ref int value)
+        {
+            value += 10;
+        }
+    }
+
     [Test]
     public void ConditionalJump_PreservesExpectedStackState()
     {
@@ -198,7 +216,7 @@ public class InterpreterBackendIrExecutionTests
 
 
     [Test]
-    public void TypedArithmeticIntrinsicI32_OnCoreInterpreterPath_RemainsUnsupported()
+    public void TypedArithmeticIntrinsicI32_OnCoreInterpreterPath_ExecutesSuccessfully()
     {
         var ir = BuildIr(
             new Instruction(UOpCode.Push, [20]),
@@ -206,22 +224,143 @@ public class InterpreterBackendIrExecutionTests
             CreateTypedIntrinsic(BuiltinIntrinsicSymbols.Arithmetic.Add, [IntrinsicTypeArgument.From(typeof(int))])
         );
 
-        var exception = Assert.Throws<RuntimeExecutionException>(() => ExecuteInInterpreter(ir));
+        var result = ExecuteInInterpreter(ir);
 
-        Assert.That(exception!.Message, Does.Contain("Unknown intrinsic call: add_i32."));
+        Assert.That(result, Is.EqualTo(42));
     }
 
     [Test]
-    public void TypedBooleanNotIntrinsic_OnCoreInterpreterPath_RemainsUnsupported()
+    public void TypedBooleanNotIntrinsic_OnCoreInterpreterPath_ExecutesSuccessfully()
     {
         var ir = BuildIr(
             new Instruction(UOpCode.Push, [true]),
             CreateTypedIntrinsic(BuiltinIntrinsicSymbols.Boolean.Not)
         );
 
-        var exception = Assert.Throws<RuntimeExecutionException>(() => ExecuteInInterpreter(ir));
+        var result = ExecuteInInterpreter(ir);
 
-        Assert.That(exception!.Message, Does.Contain("Unknown intrinsic call: boolean_not."));
+        Assert.That(result, Is.EqualTo(false));
+    }
+
+    [Test]
+    public void InterpreterAndCil_StoreLocalThenLoadLocal_ReturnSameValue()
+    {
+        var air = Air(
+            Intrinsic("load_i32", 123),
+            Intrinsic("store_local", "x", typeof(int)),
+            Intrinsic("load_local", "x", typeof(int))
+        );
+
+        var interpreterResult = ExecuteWithInterpreter(air);
+        var cilResult = ExecuteWithCil(air);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(interpreterResult, Is.EqualTo(123));
+            Assert.That(cilResult, Is.EqualTo(123));
+        });
+    }
+
+    [Test]
+    public void InterpreterAndCil_LoadLocalRef_CallRefMethod_MutatesLocal()
+    {
+        var method = typeof(RefInteropSamples)
+            .GetMethod(nameof(RefInteropSamples.Increment), BindingFlags.Public | BindingFlags.Static)!;
+
+        var air = Air(
+            Intrinsic("load_i32", 10),
+            Intrinsic("store_local", "x", typeof(int)),
+            Intrinsic("load_local_ref", "x", typeof(int)),
+            Intrinsic("call C#", method),
+            Intrinsic("load_local", "x", typeof(int))
+        );
+
+        var interpreterResult = ExecuteWithInterpreter(air);
+        var cilResult = ExecuteWithCil(air);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(interpreterResult, Is.EqualTo(11));
+            Assert.That(cilResult, Is.EqualTo(11));
+        });
+    }
+
+    [Test]
+    public void InterpreterAndCil_LoadLocalRef_CallOutMethod_AssignsLocal()
+    {
+        var method = typeof(RefInteropSamples)
+            .GetMethod(nameof(RefInteropSamples.Set42), BindingFlags.Public | BindingFlags.Static)!;
+
+        var air = Air(
+            Intrinsic("load_i32", 0),
+            Intrinsic("store_local", "x", typeof(int)),
+            Intrinsic("load_local_ref", "x", typeof(int)),
+            Intrinsic("call C#", method),
+            Intrinsic("load_local", "x", typeof(int))
+        );
+
+        var interpreterResult = ExecuteWithInterpreter(air);
+        var cilResult = ExecuteWithCil(air);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(interpreterResult, Is.EqualTo(42));
+            Assert.That(cilResult, Is.EqualTo(42));
+        });
+    }
+
+    [Test]
+    public void InterpreterAndCil_LoadLocalRef_MutatesOnlyTargetLocal()
+    {
+        var method = typeof(RefInteropSamples)
+            .GetMethod(nameof(RefInteropSamples.Increment), BindingFlags.Public | BindingFlags.Static)!;
+
+        var air = Air(
+            Intrinsic("load_i32", 10),
+            Intrinsic("store_local", "x", typeof(int)),
+            Intrinsic("load_i32", 20),
+            Intrinsic("store_local", "y", typeof(int)),
+            Intrinsic("load_local_ref", "y", typeof(int)),
+            Intrinsic("call C#", method),
+            Intrinsic("load_local", "x", typeof(int)),
+            Intrinsic("load_local", "y", typeof(int)),
+            Intrinsic("add_i32")
+        );
+
+        var interpreterResult = ExecuteWithInterpreter(air);
+        var cilResult = ExecuteWithCil(air);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(interpreterResult, Is.EqualTo(31));
+            Assert.That(cilResult, Is.EqualTo(31));
+        });
+    }
+
+    [Test]
+    public void InterpreterAndCil_RepeatedRefMutation_KeepsLatestLocalValue()
+    {
+        var method = typeof(RefInteropSamples)
+            .GetMethod(nameof(RefInteropSamples.AddTen), BindingFlags.Public | BindingFlags.Static)!;
+
+        var air = Air(
+            Intrinsic("load_i32", 5),
+            Intrinsic("store_local", "x", typeof(int)),
+            Intrinsic("load_local_ref", "x", typeof(int)),
+            Intrinsic("call C#", method),
+            Intrinsic("load_local_ref", "x", typeof(int)),
+            Intrinsic("call C#", method),
+            Intrinsic("load_local", "x", typeof(int))
+        );
+
+        var interpreterResult = ExecuteWithInterpreter(air);
+        var cilResult = ExecuteWithCil(air);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(interpreterResult, Is.EqualTo(25));
+            Assert.That(cilResult, Is.EqualTo(25));
+        });
     }
 
     private static int CombineDigits(int acc, int nextDigit) => acc * 10 + nextDigit;
@@ -252,6 +391,35 @@ public class InterpreterBackendIrExecutionTests
     {
         var interpreter = new InterpreterImpl();
         return interpreter.Execute(ir, environment);
+    }
+
+    private static object? ExecuteWithInterpreter(IAbstractIR air)
+    {
+        var interpreter = new InterpreterImpl();
+        return interpreter.Execute(air, new ExecutionEnvironment([]));
+    }
+
+    private static object? ExecuteWithCil(IAbstractIR air)
+    {
+        var compiler = new AbstractMethodsCompilerImpl();
+        var dynamicMethod = compiler.Compile(air, new CompilationInput { SourceText = string.Empty });
+
+        var executor = new DynamicMethodExecutor();
+        return executor.Execute(dynamicMethod, new ExecutionEnvironment([]));
+    }
+
+    private static Instruction Intrinsic(string name, params object?[] args)
+    {
+        var operands = new List<object>(args.Length + 1) { name };
+        for (var i = 0; i < args.Length; i++)
+            operands.Add(args[i]!);
+
+        return new Instruction(UOpCode.Intrinsic, operands);
+    }
+
+    private static IAbstractIR Air(params Instruction[] instructions)
+    {
+        return BuildIr(instructions);
     }
 
     private static IAbstractIR BuildIr(params Instruction[] instructions)

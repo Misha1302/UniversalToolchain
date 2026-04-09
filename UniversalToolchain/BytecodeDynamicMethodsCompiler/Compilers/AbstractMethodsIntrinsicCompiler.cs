@@ -1,5 +1,4 @@
 using UniversalToolchain.Intrinsics.Core;
-using UniversalToolchain.Intrinsics.Legacy;
 
 namespace BytecodeDynamicMethodsCompiler.Compilers;
 
@@ -21,12 +20,11 @@ internal sealed class AbstractMethodsIntrinsicCompiler
 
     public void Compile(CompilationContext context, Instruction instruction, List<Type> stack)
     {
-        if (!IntrinsicInstructionLegacyProjector.TryProject(instruction, out var projectedInstruction))
-            Thrower.InvalidOpEx($"Unsupported intrinsic instruction payload: {instruction}");
+        var normalizedInstruction = IntrinsicInstructionNormalizer.NormalizeOrThrow(instruction);
 
-        var name = projectedInstruction.Operands[0].Get<string>();
+        var name = normalizedInstruction.Operands[0].Get<string>();
         var descriptor = _registry.GetRequired(name);
-        descriptor.Compile(context, projectedInstruction, stack);
+        descriptor.Compile(context, normalizedInstruction, stack);
     }
 
     public void ProcessTypes(Instruction instruction, List<Type> stack)
