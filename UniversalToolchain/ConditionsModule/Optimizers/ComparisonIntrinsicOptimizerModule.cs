@@ -3,7 +3,7 @@ using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Intrinsics.Builtins;
 using UniversalToolchain.Intrinsics.Capabilities;
 using UniversalToolchain.Intrinsics.Contracts;
-using UniversalToolchain.Intrinsics.Legacy;
+using UniversalToolchain.Intrinsics.Core;
 
 namespace ConditionsModule.Optimizers;
 
@@ -106,7 +106,7 @@ public class ComparisonIntrinsicOptimizerModule : IIRProcessingModule
                 return;
             }
 
-            LegacyIntrinsicTypeProcessor.ProcessTypes(instruction, stack);
+            IntrinsicTypeProcessor.ProcessTypes(instruction, stack);
         }
     }
 

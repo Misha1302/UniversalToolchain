@@ -1,11 +1,11 @@
 using UniversalToolchain.Intrinsics.Builtins;
 using UniversalToolchain.Intrinsics.Contracts;
-using UniversalToolchain.Intrinsics.Legacy;
+using UniversalToolchain.Intrinsics.Core;
 
 namespace Tests.Intrinsics;
 
 [TestFixture]
-public sealed class LegacyIntrinsicTypeProcessorCoverageTests
+public sealed class IntrinsicTypeProcessorCoverageTests
 {
     [Test]
     public void SharedProcessor_HandlesRepresentativeIntrinsicSurface_WithoutLegacyShim()
@@ -14,7 +14,7 @@ public sealed class LegacyIntrinsicTypeProcessorCoverageTests
         {
             var stack = scenario.InitialStack.ToList();
 
-            Assert.DoesNotThrow(() => LegacyIntrinsicTypeProcessor.ProcessTypes(scenario.Instruction, stack), scenario.Name);
+            Assert.DoesNotThrow(() => IntrinsicTypeProcessor.ProcessTypes(scenario.Instruction, stack), scenario.Name);
             Assert.That(stack, Is.EqualTo(scenario.ExpectedStack), scenario.Name);
         }
     }
@@ -25,7 +25,7 @@ public sealed class LegacyIntrinsicTypeProcessorCoverageTests
         var instruction = new Instruction(UOpCode.Intrinsic, ["unknown_intrinsic"]);
         var stack = new List<Type>();
 
-        var exception = Assert.Throws<InvalidOperationException>(() => LegacyIntrinsicTypeProcessor.ProcessTypes(instruction, stack));
+        var exception = Assert.Throws<InvalidOperationException>(() => IntrinsicTypeProcessor.ProcessTypes(instruction, stack));
 
         Assert.That(exception, Is.Not.Null);
         Assert.That(exception!.Message, Does.Contain("unknown_intrinsic"));

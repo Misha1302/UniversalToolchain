@@ -1,10 +1,11 @@
 using System.Reflection;
 using DotnetHelper;
 using ObjectExtensions;
+using UniversalToolchain.Intrinsics.Legacy;
 
-namespace UniversalToolchain.Intrinsics.Legacy;
+namespace UniversalToolchain.Intrinsics.Core;
 
-internal static class LegacyIntrinsicTypeProcessor
+internal static class IntrinsicTypeProcessor
 {
     public static void ProcessTypes(Instruction instruction, List<Type> stack)
     {
@@ -17,13 +18,22 @@ internal static class LegacyIntrinsicTypeProcessor
         if (instruction.UOpCode != UOpCode.Intrinsic)
             Thrower.InvalidOpEx("Instruction must be an intrinsic opcode.");
 
-        if (!IntrinsicInstructionLegacyProjector.TryProject(instruction, out var projectedInstruction))
-            Thrower.InvalidOpEx($"Unsupported intrinsic instruction payload: {instruction}");
-
-        ProcessProjectedInstruction(projectedInstruction, stack);
+        var normalizedInstruction = NormalizeInstruction(instruction);
+        ProcessNormalizedInstruction(normalizedInstruction, stack);
     }
 
-    private static void ProcessProjectedInstruction(Instruction instruction, List<Type> stack)
+    private static Instruction NormalizeInstruction(Instruction instruction)
+    {
+        if (instruction.Operands.Count > 0 && instruction.Operands[0] is string)
+            return instruction;
+
+        if (IntrinsicInstructionLegacyProjector.TryProject(instruction, out var projectedInstruction))
+            return projectedInstruction;
+
+        return Thrower.InvalidOpEx<Instruction>($"Unsupported intrinsic instruction payload: {instruction}");
+    }
+
+    private static void ProcessNormalizedInstruction(Instruction instruction, List<Type> stack)
     {
         var name = instruction.Operands[0].Get<string>();
 

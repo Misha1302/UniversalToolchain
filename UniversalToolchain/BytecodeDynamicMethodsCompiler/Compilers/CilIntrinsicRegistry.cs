@@ -1,3 +1,5 @@
+using UniversalToolchain.Intrinsics.Core;
+
 namespace BytecodeDynamicMethodsCompiler.Compilers;
 
 internal sealed class CilIntrinsicRegistry
@@ -13,97 +15,97 @@ internal sealed class CilIntrinsicRegistry
             descriptors,
             "call C#",
             AbstractMethodsIntrinsicCompiler.CompileCallCSharp,
-            AbstractMethodsIntrinsicCompiler.ProcessTypesCallCSharp
+            IntrinsicTypeProcessor.ProcessTypes
         );
         Register(
             descriptors,
             "call C# ctor",
             AbstractMethodsIntrinsicCompiler.CompileCallCSharpCtor,
-            AbstractMethodsIntrinsicCompiler.ProcessTypesCallCSharpCtor
+            IntrinsicTypeProcessor.ProcessTypes
         );
         Register(
             descriptors,
             "store_local",
             AbstractMethodsIntrinsicCompiler.CompileStoreLocal,
-            AbstractMethodsIntrinsicCompiler.ProcessTypesStoreLocal
+            IntrinsicTypeProcessor.ProcessTypes
         );
         Register(
             descriptors,
             "load_local",
             AbstractMethodsIntrinsicCompiler.CompileLoadLocal,
-            AbstractMethodsIntrinsicCompiler.ProcessTypesLoadLocal
+            IntrinsicTypeProcessor.ProcessTypes
         );
         Register(
             descriptors,
             "load_local_ref",
             AbstractMethodsIntrinsicCompiler.CompileLoadLocalRef,
-            AbstractMethodsIntrinsicCompiler.ProcessTypesLoadLocalRef
+            IntrinsicTypeProcessor.ProcessTypes
         );
         Register(
             descriptors,
             "load_external",
             AbstractMethodsIntrinsicCompiler.CompileLoadExternal,
-            AbstractMethodsIntrinsicCompiler.ProcessTypesLoadExternal
+            IntrinsicTypeProcessor.ProcessTypes
         );
         Register(
             descriptors,
             "store_external",
             AbstractMethodsIntrinsicCompiler.CompileStoreExternal,
-            AbstractMethodsIntrinsicCompiler.ProcessTypesStoreExternal
+            IntrinsicTypeProcessor.ProcessTypes
         );
         Register(
             descriptors,
             "load_bool",
             AbstractMethodsIntrinsicCompiler.CompileLoadBool,
-            AbstractMethodsIntrinsicCompiler.ProcessTypesLoadBool
+            IntrinsicTypeProcessor.ProcessTypes
         );
         Register(
             descriptors,
             "boolean_and",
             AbstractMethodsIntrinsicCompiler.CompileBooleanAnd,
-            AbstractMethodsIntrinsicCompiler.ProcessTypesBooleanAnd
+            IntrinsicTypeProcessor.ProcessTypes
         );
         Register(
             descriptors,
             "boolean_or",
             AbstractMethodsIntrinsicCompiler.CompileBooleanOr,
-            AbstractMethodsIntrinsicCompiler.ProcessTypesBooleanOr
+            IntrinsicTypeProcessor.ProcessTypes
         );
         Register(
             descriptors,
             "boolean_not",
             AbstractMethodsIntrinsicCompiler.CompileBooleanNot,
-            AbstractMethodsIntrinsicCompiler.ProcessTypesBooleanNot
+            IntrinsicTypeProcessor.ProcessTypes
         );
         Register(
             descriptors,
             "load_i32",
             AbstractMethodsIntrinsicCompiler.LoadNativeNumber,
-            AbstractMethodsIntrinsicCompiler.ProcessTypesLoadNativeNumber
+            IntrinsicTypeProcessor.ProcessTypes
         );
         Register(
             descriptors,
             "load_i64",
             AbstractMethodsIntrinsicCompiler.LoadNativeNumber,
-            AbstractMethodsIntrinsicCompiler.ProcessTypesLoadNativeNumber
+            IntrinsicTypeProcessor.ProcessTypes
         );
         Register(
             descriptors,
             "load_f32",
             AbstractMethodsIntrinsicCompiler.LoadNativeNumber,
-            AbstractMethodsIntrinsicCompiler.ProcessTypesLoadNativeNumber
+            IntrinsicTypeProcessor.ProcessTypes
         );
         Register(
             descriptors,
             "load_f64",
             AbstractMethodsIntrinsicCompiler.LoadNativeNumber,
-            AbstractMethodsIntrinsicCompiler.ProcessTypesLoadNativeNumber
+            IntrinsicTypeProcessor.ProcessTypes
         );
         Register(
             descriptors,
             "load_decimal",
             AbstractMethodsIntrinsicCompiler.LoadNativeNumber,
-            AbstractMethodsIntrinsicCompiler.ProcessTypesLoadNativeNumber
+            IntrinsicTypeProcessor.ProcessTypes
         );
 
         RegisterArithmeticFamily(descriptors, "i32");
@@ -154,25 +156,25 @@ internal sealed class CilIntrinsicRegistry
             descriptors,
             $"add_{typeName}",
             AbstractMethodsIntrinsicCompiler.CompileArithmeticIntrinsic,
-            AbstractMethodsIntrinsicCompiler.ProcessTypesArithmeticIntrinsic
+            IntrinsicTypeProcessor.ProcessTypes
         );
         Register(
             descriptors,
             $"sub_{typeName}",
             AbstractMethodsIntrinsicCompiler.CompileArithmeticIntrinsic,
-            AbstractMethodsIntrinsicCompiler.ProcessTypesArithmeticIntrinsic
+            IntrinsicTypeProcessor.ProcessTypes
         );
         Register(
             descriptors,
             $"mul_{typeName}",
             AbstractMethodsIntrinsicCompiler.CompileArithmeticIntrinsic,
-            AbstractMethodsIntrinsicCompiler.ProcessTypesArithmeticIntrinsic
+            IntrinsicTypeProcessor.ProcessTypes
         );
         Register(
             descriptors,
             $"div_{typeName}",
             AbstractMethodsIntrinsicCompiler.CompileArithmeticIntrinsic,
-            AbstractMethodsIntrinsicCompiler.ProcessTypesArithmeticIntrinsic
+            IntrinsicTypeProcessor.ProcessTypes
         );
     }
 
@@ -182,37 +184,37 @@ internal sealed class CilIntrinsicRegistry
             descriptors,
             $"cmp_eq_{typeName}",
             AbstractMethodsIntrinsicCompiler.CompileComparisonIntrinsic,
-            AbstractMethodsIntrinsicCompiler.ProcessTypesComparisonIntrinsic
+            IntrinsicTypeProcessor.ProcessTypes
         );
         Register(
             descriptors,
             $"cmp_ne_{typeName}",
             AbstractMethodsIntrinsicCompiler.CompileComparisonIntrinsic,
-            AbstractMethodsIntrinsicCompiler.ProcessTypesComparisonIntrinsic
+            IntrinsicTypeProcessor.ProcessTypes
         );
         Register(
             descriptors,
             $"cmp_gt_{typeName}",
             AbstractMethodsIntrinsicCompiler.CompileComparisonIntrinsic,
-            AbstractMethodsIntrinsicCompiler.ProcessTypesComparisonIntrinsic
+            IntrinsicTypeProcessor.ProcessTypes
         );
         Register(
             descriptors,
             $"cmp_ge_{typeName}",
             AbstractMethodsIntrinsicCompiler.CompileComparisonIntrinsic,
-            AbstractMethodsIntrinsicCompiler.ProcessTypesComparisonIntrinsic
+            IntrinsicTypeProcessor.ProcessTypes
         );
         Register(
             descriptors,
             $"cmp_lt_{typeName}",
             AbstractMethodsIntrinsicCompiler.CompileComparisonIntrinsic,
-            AbstractMethodsIntrinsicCompiler.ProcessTypesComparisonIntrinsic
+            IntrinsicTypeProcessor.ProcessTypes
         );
         Register(
             descriptors,
             $"cmp_le_{typeName}",
             AbstractMethodsIntrinsicCompiler.CompileComparisonIntrinsic,
-            AbstractMethodsIntrinsicCompiler.ProcessTypesComparisonIntrinsic
+            IntrinsicTypeProcessor.ProcessTypes
         );
     }
 }
