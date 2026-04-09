@@ -19,6 +19,7 @@ internal sealed class GlobalTestStateScope : IDisposable
 
     private static void Reset()
     {
+        // Reset only mutable global test hooks so each test observes a clean compatibility/runtime state.
         AirTypes.ResetToDefaultsForTests();
         VariablesContainerTestHooks.ResetAllForTests();
     }

@@ -2,6 +2,7 @@ using BasicCodeTranslator;
 using AbstractIrExtensions;
 using DotnetAirHelper;
 using Tests.Infrastructure;
+using UniversalToolchain.Intrinsics.Legacy;
 
 namespace Tests.Internal;
 
@@ -38,6 +39,7 @@ public class TranslatorStateIsolationTests
     }
 
     [Test]
+    // This test keeps validating deterministic custom override registration while AirTypes remains a compatibility shim.
     public void Should_RegisterAirIntrinsicPredictably_When_RegisteringSameNameTwice()
     {
         using var _ = GlobalTestStateScope.Create();
@@ -63,7 +65,7 @@ public class TranslatorStateIsolationTests
 
         var stack = new List<Type>();
 
-        Assert.DoesNotThrow(() => ir.Instructions.ManipulateTypesStack(stack, AirTypes.ProcessTypesIntrinsic));
+        Assert.DoesNotThrow(() => ir.Instructions.ManipulateTypesStack(stack, LegacyIntrinsicTypeProcessor.ProcessTypes));
         Assert.That(stack, Has.Count.EqualTo(1));
         Assert.That(stack[0], Is.EqualTo(typeof(double)));
     }
