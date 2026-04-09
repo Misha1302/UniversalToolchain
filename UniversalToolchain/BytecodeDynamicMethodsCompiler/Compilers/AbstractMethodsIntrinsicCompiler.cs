@@ -30,12 +30,7 @@ internal sealed class AbstractMethodsIntrinsicCompiler
 
     public void ProcessTypes(Instruction instruction, List<Type> stack)
     {
-        if (!IntrinsicInstructionLegacyProjector.TryProject(instruction, out var projectedInstruction))
-            Thrower.InvalidOpEx($"Unsupported intrinsic instruction payload: {instruction}");
-
-        var name = projectedInstruction.Operands[0].Get<string>();
-        var descriptor = _registry.GetRequired(name);
-        descriptor.ProcessTypes(projectedInstruction, stack);
+        LegacyIntrinsicTypeProcessor.ProcessTypes(instruction, stack);
     }
 
     internal static void CompileCallCSharp(CompilationContext context, Instruction instruction, List<Type> stack)
