@@ -4,6 +4,7 @@ using BasicCore.Contracts;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using BasicCore.Registration;
+using BasicCore.Contracts;
 using BasicCore.TranslatorWrapper;
 using BasicLexer.Core;
 using BasicParser.Core;

@@ -1,3 +1,5 @@
+using UniversalToolchain.Intrinsics.Builtins;
+using UniversalToolchain.Intrinsics.Contracts;
 using SettableGettableModule.Core;
 using Tests.Infrastructure;
 
@@ -194,9 +196,51 @@ public class InterpreterBackendIrExecutionTests
         Assert.That(result, Is.EqualTo(123));
     }
 
+
+    [Test]
+    public void TypedArithmeticIntrinsicI32_OnCoreInterpreterPath_RemainsUnsupported()
+    {
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [20]),
+            new Instruction(UOpCode.Push, [22]),
+            CreateTypedIntrinsic(BuiltinIntrinsicSymbols.Arithmetic.Add, [IntrinsicTypeArgument.From(typeof(int))])
+        );
+
+        var exception = Assert.Throws<RuntimeExecutionException>(() => ExecuteInInterpreter(ir));
+
+        Assert.That(exception!.Message, Does.Contain("Unknown intrinsic call: add_i32."));
+    }
+
+    [Test]
+    public void TypedBooleanNotIntrinsic_OnCoreInterpreterPath_RemainsUnsupported()
+    {
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [true]),
+            CreateTypedIntrinsic(BuiltinIntrinsicSymbols.Boolean.Not)
+        );
+
+        var exception = Assert.Throws<RuntimeExecutionException>(() => ExecuteInInterpreter(ir));
+
+        Assert.That(exception!.Message, Does.Contain("Unknown intrinsic call: boolean_not."));
+    }
+
     private static int CombineDigits(int acc, int nextDigit) => acc * 10 + nextDigit;
 
     private static T Echo<T>(T value) => value;
+
+
+    private static Instruction CreateTypedIntrinsic(
+        IntrinsicSymbol symbol,
+        IReadOnlyList<IntrinsicTypeArgument>? typeArguments = null,
+        IReadOnlyList<object?>? dataOperands = null)
+    {
+        var invocation = new IntrinsicInvocation(
+            symbol,
+            typeArguments ?? [],
+            dataOperands ?? []);
+
+        return new Instruction(UOpCode.Intrinsic, [invocation]);
+    }
 
     private static object? ExecuteInInterpreter(IAbstractIR ir)
     {

@@ -1,3 +1,5 @@
+using UniversalToolchain.Intrinsics.Legacy;
+
 namespace BytecodeDynamicMethodsCompiler.Compilers;
 
 internal sealed class AbstractMethodsIntrinsicCompiler
@@ -18,22 +20,22 @@ internal sealed class AbstractMethodsIntrinsicCompiler
 
     public void Compile(CompilationContext context, Instruction instruction, List<Type> stack)
     {
-        Thrower.AssertAlways(instruction.UOpCode == UOpCode.Intrinsic);
-        Thrower.AssertAlways(instruction.Operands[0] is string);
+        if (!IntrinsicInstructionLegacyProjector.TryProject(instruction, out var projectedInstruction))
+            Thrower.InvalidOpEx($"Unsupported intrinsic instruction payload: {instruction}");
 
-        var name = instruction.Operands[0].Get<string>();
+        var name = projectedInstruction.Operands[0].Get<string>();
         var descriptor = _registry.GetRequired(name);
-        descriptor.Compile(context, instruction, stack);
+        descriptor.Compile(context, projectedInstruction, stack);
     }
 
     public void ProcessTypes(Instruction instruction, List<Type> stack)
     {
-        Thrower.AssertAlways(instruction.UOpCode == UOpCode.Intrinsic);
-        Thrower.AssertAlways(instruction.Operands[0] is string);
+        if (!IntrinsicInstructionLegacyProjector.TryProject(instruction, out var projectedInstruction))
+            Thrower.InvalidOpEx($"Unsupported intrinsic instruction payload: {instruction}");
 
-        var name = instruction.Operands[0].Get<string>();
+        var name = projectedInstruction.Operands[0].Get<string>();
         var descriptor = _registry.GetRequired(name);
-        descriptor.ProcessTypes(instruction, stack);
+        descriptor.ProcessTypes(projectedInstruction, stack);
     }
 
     internal static void CompileCallCSharp(CompilationContext context, Instruction instruction, List<Type> stack)

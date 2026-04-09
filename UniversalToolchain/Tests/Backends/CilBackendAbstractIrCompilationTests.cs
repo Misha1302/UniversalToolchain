@@ -1,3 +1,5 @@
+using UniversalToolchain.Intrinsics.Builtins;
+using UniversalToolchain.Intrinsics.Contracts;
 using System.Reflection.Emit;
 
 namespace Tests.Backends;
@@ -363,6 +365,34 @@ public class CilBackendAbstractIrCompilationTests
         Assert.That(result, Is.EqualTo(1056));
     }
 
+
+    [Test]
+    public void TypedArithmeticIntrinsicI32_ProducesCorrectResult()
+    {
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [19]),
+            new Instruction(UOpCode.Push, [23]),
+            CreateTypedIntrinsic(BuiltinIntrinsicSymbols.Arithmetic.Add, [IntrinsicTypeArgument.From(typeof(int))])
+        );
+
+        var result = CompileAndExecute(ir);
+
+        Assert.That(result, Is.EqualTo(42));
+    }
+
+    [Test]
+    public void TypedBooleanNotIntrinsic_ProducesCorrectResult()
+    {
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [true]),
+            CreateTypedIntrinsic(BuiltinIntrinsicSymbols.Boolean.Not)
+        );
+
+        var result = CompileAndExecute(ir);
+
+        Assert.That(result, Is.EqualTo(false));
+    }
+
     private static int AddOne(int value) => value + 1;
 
     private static int IncrementRef(ref int value)
@@ -374,6 +404,20 @@ public class CilBackendAbstractIrCompilationTests
     private static int CombineDigits(int acc, int nextDigit) => acc * 10 + nextDigit;
 
     private static T Echo<T>(T value) => value;
+
+
+    private static Instruction CreateTypedIntrinsic(
+        IntrinsicSymbol symbol,
+        IReadOnlyList<IntrinsicTypeArgument>? typeArguments = null,
+        IReadOnlyList<object?>? dataOperands = null)
+    {
+        var invocation = new IntrinsicInvocation(
+            symbol,
+            typeArguments ?? [],
+            dataOperands ?? []);
+
+        return new Instruction(UOpCode.Intrinsic, [invocation]);
+    }
 
     private static IAbstractIR BuildIr(params Instruction[] instructions)
     {
