@@ -25,9 +25,11 @@ public class BooleanOptimizerModule : IIRProcessingModule
         var capabilityContext = _capabilityContext
                                 ?? throw new InvalidOperationException("Boolean optimizer requires intrinsic capability context initialization.");
 
-        if (!capabilityContext.Supports(BuiltinIntrinsicSymbols.Boolean.And) ||
-            !capabilityContext.Supports(BuiltinIntrinsicSymbols.Boolean.Or) ||
-            !capabilityContext.Supports(BuiltinIntrinsicSymbols.Boolean.Not))
+        if (!OptimizerCapabilityGuards.SupportsAll(
+                capabilityContext,
+                (BuiltinIntrinsicSymbols.Boolean.And, []),
+                (BuiltinIntrinsicSymbols.Boolean.Or, []),
+                (BuiltinIntrinsicSymbols.Boolean.Not, [])))
             return current;
 
         var optimized = OptimizeNativeLoads(current);

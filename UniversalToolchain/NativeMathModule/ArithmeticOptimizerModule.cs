@@ -15,9 +15,9 @@ public class ArithmeticOptimizerModule : IIRProcessingModule
 {
     // Lightweight e-graph-inspired symbolic simplifier for straight-line postfix IR.
     // This is intentionally not a full equality-saturation e-graph engine.
-    private static readonly IReadOnlyList<Type> _standardArithmeticTypes =
+    private static readonly IReadOnlyList<Type> _supportedArithmeticTypes =
     [
-        typeof(int), typeof(long), typeof(float), typeof(double)
+        typeof(int), typeof(long), typeof(float), typeof(double), typeof(decimal)
     ];
 
     private IOptimizerIntrinsicCapabilityContext? _capabilityContext;
@@ -31,7 +31,7 @@ public class ArithmeticOptimizerModule : IIRProcessingModule
         var capabilityContext = _capabilityContext
                                 ?? throw new InvalidOperationException("Arithmetic optimizer requires intrinsic capability context initialization.");
 
-        if (!HasRequiredCapabilities(capabilityContext, _standardArithmeticTypes))
+        if (!HasRequiredCapabilities(capabilityContext, _supportedArithmeticTypes))
             return current;
 
         current = OptimizeArithmetic(current);
@@ -40,16 +40,15 @@ public class ArithmeticOptimizerModule : IIRProcessingModule
 
     private static bool HasRequiredCapabilities(IOptimizerIntrinsicCapabilityContext capabilityContext, IReadOnlyList<Type> types)
     {
-        foreach (var type in types)
+        var requirements = types.SelectMany(type => new (IntrinsicSymbol Symbol, Type[] TypeArguments)[]
         {
-            if (!capabilityContext.Supports(BuiltinIntrinsicSymbols.Arithmetic.Add, type) ||
-                !capabilityContext.Supports(BuiltinIntrinsicSymbols.Arithmetic.Subtract, type) ||
-                !capabilityContext.Supports(BuiltinIntrinsicSymbols.Arithmetic.Multiply, type) ||
-                !capabilityContext.Supports(BuiltinIntrinsicSymbols.Arithmetic.Divide, type))
-                return false;
-        }
+            (BuiltinIntrinsicSymbols.Arithmetic.Add, [type]),
+            (BuiltinIntrinsicSymbols.Arithmetic.Subtract, [type]),
+            (BuiltinIntrinsicSymbols.Arithmetic.Multiply, [type]),
+            (BuiltinIntrinsicSymbols.Arithmetic.Divide, [type])
+        });
 
-        return true;
+        return OptimizerCapabilityGuards.SupportsAll(capabilityContext, requirements);
     }
 
     private IAbstractIR OptimizeArithmetic(IAbstractIR air)
