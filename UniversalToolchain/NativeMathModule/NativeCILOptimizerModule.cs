@@ -14,16 +14,7 @@ public class NativeCilOptimizerModule : IIRProcessingModule
     // Maps constants to typed load-constant intrinsics for backends that support them.
     private static readonly Dictionary<Type, Action<Instruction, CompilationContext>> _cilGenerators = new();
 
-    private static readonly IReadOnlyList<Type> _standardLoadTypes =
-    [
-        typeof(int),
-        typeof(long),
-        typeof(float),
-        typeof(double)
-    ];
-
-    // Supported native types for load-constant lowering.
-    private static readonly HashSet<Type> _supportedTypes =
+    private static readonly IReadOnlyList<Type> _supportedLoadTypes =
     [
         typeof(int),
         typeof(long),
@@ -33,8 +24,6 @@ public class NativeCilOptimizerModule : IIRProcessingModule
     ];
 
     private IOptimizerIntrinsicCapabilityContext? _capabilityContext;
-    private bool _isDecimalsSupported;
-
     static NativeCilOptimizerModule()
     {
         InitializeCilGenerators();
@@ -50,10 +39,10 @@ public class NativeCilOptimizerModule : IIRProcessingModule
         var capabilityContext = _capabilityContext
                                 ?? throw new InvalidOperationException("Native CIL optimizer requires intrinsic capability context initialization.");
 
-        if (!_standardLoadTypes.All(type => capabilityContext.Supports(BuiltinIntrinsicSymbols.Core.LoadConst, type)))
+        var requirements = _supportedLoadTypes
+            .Select(type => (BuiltinIntrinsicSymbols.Core.LoadConst, new[] { type }));
+        if (!OptimizerCapabilityGuards.SupportsAll(capabilityContext, requirements))
             return current;
-
-        _isDecimalsSupported = capabilityContext.Supports(BuiltinIntrinsicSymbols.Core.LoadConst, typeof(decimal));
 
         return OptimizeNativeLoads(current);
     }
@@ -120,13 +109,7 @@ public class NativeCilOptimizerModule : IIRProcessingModule
                 var value = instruction.Operands[0];
                 var valueType = value.GetType();
 
-                if (valueType == typeof(decimal) && !_isDecimalsSupported)
-                {
-                    context.NewInstructions.Add(instruction);
-                    continue;
-                }
-
-                if (_supportedTypes.Contains(valueType) && _cilGenerators.TryGetValue(valueType, out var generator))
+                if (_cilGenerators.TryGetValue(valueType, out var generator))
                 {
                     generator(instruction, context);
                     continue;

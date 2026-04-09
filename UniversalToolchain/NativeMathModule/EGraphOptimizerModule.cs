@@ -63,16 +63,16 @@ public class EGraphOptimizerModule : IIRProcessingModule
 
     private static bool HasRequiredCapabilities(IOptimizerIntrinsicCapabilityContext capabilityContext)
     {
-        foreach (var type in _supportedArithmeticTypes)
+        var requirements = _supportedArithmeticTypes.SelectMany(type => new (IntrinsicSymbol Symbol, Type[] TypeArguments)[]
         {
-            if (!capabilityContext.Supports(BuiltinIntrinsicSymbols.Arithmetic.Add, type) ||
-                !capabilityContext.Supports(BuiltinIntrinsicSymbols.Arithmetic.Subtract, type) ||
-                !capabilityContext.Supports(BuiltinIntrinsicSymbols.Arithmetic.Multiply, type) ||
-                !capabilityContext.Supports(BuiltinIntrinsicSymbols.Arithmetic.Divide, type))
-                return false;
-        }
+            (BuiltinIntrinsicSymbols.Arithmetic.Add, [type]),
+            (BuiltinIntrinsicSymbols.Arithmetic.Subtract, [type]),
+            (BuiltinIntrinsicSymbols.Arithmetic.Multiply, [type]),
+            (BuiltinIntrinsicSymbols.Arithmetic.Divide, [type]),
+            (BuiltinIntrinsicSymbols.Storage.LoadLocal, [type])
+        });
 
-        return true;
+        return OptimizerCapabilityGuards.SupportsAll(capabilityContext, requirements);
     }
 
     private static bool IsControlFlowTerminator(Instruction instruction) =>

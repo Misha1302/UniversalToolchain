@@ -66,18 +66,17 @@ public class ComparisonIntrinsicOptimizerModule : IIRProcessingModule
 
     private static bool HasRequiredCapabilities(IOptimizerIntrinsicCapabilityContext capabilityContext)
     {
-        foreach (var type in _supportedComparisonTypes)
+        var requirements = _supportedComparisonTypes.SelectMany(type => new (IntrinsicSymbol Symbol, Type[] TypeArguments)[]
         {
-            if (!capabilityContext.Supports(BuiltinIntrinsicSymbols.Comparison.Equal, type) ||
-                !capabilityContext.Supports(BuiltinIntrinsicSymbols.Comparison.NotEqual, type) ||
-                !capabilityContext.Supports(BuiltinIntrinsicSymbols.Comparison.Greater, type) ||
-                !capabilityContext.Supports(BuiltinIntrinsicSymbols.Comparison.GreaterOrEqual, type) ||
-                !capabilityContext.Supports(BuiltinIntrinsicSymbols.Comparison.Less, type) ||
-                !capabilityContext.Supports(BuiltinIntrinsicSymbols.Comparison.LessOrEqual, type))
-                return false;
-        }
+            (BuiltinIntrinsicSymbols.Comparison.Equal, [type]),
+            (BuiltinIntrinsicSymbols.Comparison.NotEqual, [type]),
+            (BuiltinIntrinsicSymbols.Comparison.Greater, [type]),
+            (BuiltinIntrinsicSymbols.Comparison.GreaterOrEqual, [type]),
+            (BuiltinIntrinsicSymbols.Comparison.Less, [type]),
+            (BuiltinIntrinsicSymbols.Comparison.LessOrEqual, [type])
+        });
 
-        return true;
+        return OptimizerCapabilityGuards.SupportsAll(capabilityContext, requirements);
     }
 
 

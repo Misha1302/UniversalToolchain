@@ -24,9 +24,11 @@ public class LocalVariablesOptimizer : IIRProcessingModule
         var capabilityContext = _capabilityContext
                                 ?? throw new InvalidOperationException("Local variables optimizer requires intrinsic capability context initialization.");
 
-        if (!capabilityContext.Supports(BuiltinIntrinsicSymbols.Storage.StoreLocal) ||
-            !capabilityContext.Supports(BuiltinIntrinsicSymbols.Storage.LoadLocal) ||
-            !capabilityContext.Supports(BuiltinIntrinsicSymbols.Storage.LoadLocalRef))
+        if (!OptimizerCapabilityGuards.SupportsAll(
+                capabilityContext,
+                (BuiltinIntrinsicSymbols.Storage.StoreLocal, []),
+                (BuiltinIntrinsicSymbols.Storage.LoadLocal, []),
+                (BuiltinIntrinsicSymbols.Storage.LoadLocalRef, [])))
             return current;
 
         var optimized = OptimizeVariables(current);
