@@ -1,3 +1,5 @@
+using UniversalToolchain.Intrinsics.Legacy;
+
 namespace BasicInterpreter;
 
 public class InterpreterImpl : IExecutor<IAbstractIR>
@@ -95,15 +97,18 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
 
     private void ExecuteIntrinsic(Instruction instruction, InterpreterState state)
     {
-        var intrinsicName = instruction.Operands[0].Get<string>();
+        if (!IntrinsicInstructionLegacyProjector.TryProject(instruction, out var projectedInstruction))
+            Thrower.InvalidOpEx($"Unknown intrinsic call payload: {instruction}.");
+
+        var intrinsicName = projectedInstruction.Operands[0].Get<string>();
         if (intrinsicName == "call C#")
-            ExecuteCSharpCall(instruction, state);
+            ExecuteCSharpCall(projectedInstruction, state);
         else if (intrinsicName == "call C# ctor")
-            ExecuteCSharpConstructor(instruction, state);
+            ExecuteCSharpConstructor(projectedInstruction, state);
         else if (intrinsicName == "load_external")
-            ExecuteLoadExternal(instruction, state);
+            ExecuteLoadExternal(projectedInstruction, state);
         else if (intrinsicName == "store_external")
-            ExecuteStoreExternal(instruction, state);
+            ExecuteStoreExternal(projectedInstruction, state);
         else
             Thrower.InvalidOpEx($"Unknown intrinsic call: {intrinsicName}.");
     }
