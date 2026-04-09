@@ -11,7 +11,6 @@ global using ConditionsModule.Core;
 global using ConditionsModule.Creators;
 global using ConditionsModule.Enums;
 global using ConditionsModule.Visitors;
-global using DotnetAirHelper;
 global using DynamicMethodWrapper;
 global using ExceptionsManager;
 global using IntermediateRepresentationAbstractions;

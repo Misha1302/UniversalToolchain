@@ -1,7 +1,5 @@
 using BasicCodeTranslator;
 using AbstractIrExtensions;
-using DotnetAirHelper;
-using Tests.Infrastructure;
 using UniversalToolchain.Intrinsics.Legacy;
 
 namespace Tests.Internal;
@@ -36,21 +34,6 @@ public class TranslatorStateIsolationTests
         var translated = translator.Translate(ast);
 
         Assert.That(translated.Instructions.Count, Is.EqualTo(2));
-    }
-
-    [Test]
-    // This test keeps validating deterministic custom override registration while AirTypes remains a compatibility shim.
-    public void Should_RegisterAirIntrinsicPredictably_When_RegisteringSameNameTwice()
-    {
-        using var _ = GlobalTestStateScope.Create();
-
-        const string intrinsic = "test_intrinsic";
-
-        var first = AirTypes.TryRegisterIntrinsic(intrinsic, (_, _) => { });
-        var second = AirTypes.TryRegisterIntrinsic(intrinsic, (_, _) => { });
-
-        Assert.That(first, Is.True);
-        Assert.That(second, Is.False);
     }
 
     [Test]

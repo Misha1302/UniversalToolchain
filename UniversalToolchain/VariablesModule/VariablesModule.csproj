@@ -12,7 +12,6 @@
         <ProjectReference Include="..\UniversalToolchain.Dialects.Abstractions\UniversalToolchain.Dialects.Abstractions.csproj"/>
         <ProjectReference Include="..\AssemblyFinder\AssemblyFinder.csproj"/>
         <ProjectReference Include="..\BasicCore\BasicCore.csproj"/>
-        <ProjectReference Include="..\DotnetAirHelper\DotnetAirHelper.csproj"/>
         <ProjectReference Include="..\EqualityModule\EqualityModule.csproj"/>
         <ProjectReference Include="..\SettableGettableModule\SettableGettableModule.csproj"/>
         <ProjectReference Include="..\UniversalIntermediateRepresentation\UniversalIntermediateRepresentation.csproj"/>
