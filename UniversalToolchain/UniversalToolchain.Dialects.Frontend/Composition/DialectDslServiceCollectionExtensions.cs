@@ -29,6 +29,7 @@ public static class DialectDslServiceCollectionExtensions
             services.AddSingleton<IFrontendCoreModule>(static provider => provider.GetRequiredService<DialectDslFrontendModule>());
         services.TryAddTransient<DialectDirectiveLineParser>();
         services.TryAddTransient<DialectDefinitionSliceParser>();
+        services.TryAddSingleton<IDialectDslCompilerFactory, DialectDslCompilerFactory>();
         services.TryAddTransient<DialectDslCompiler>();
         return services;
     }
