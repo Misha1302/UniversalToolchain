@@ -60,7 +60,7 @@ public sealed class LocalVariablesOptimizerCapabilityTests
 
     private static AbstractIR CreateLoadPatternIr()
     {
-        var method = typeof(VariablesContainer<int>).GetMethod(nameof(VariablesContainer<int>.Get), BindingFlags.Instance | BindingFlags.Public);
+        var method = typeof(VariablesContainer<int>).GetMethod(nameof(VariablesContainer<int>.Get), BindingFlags.Static | BindingFlags.Public);
         Assert.That(method, Is.Not.Null);
 
         var air = new AbstractIR();

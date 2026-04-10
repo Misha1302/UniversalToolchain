@@ -1,0 +1,34 @@
+Tests (12 tests) Failed: 12 tests failed
+  Tests (5 tests) Failed: 5 tests failed
+    Tests (5 tests) Failed: 5 tests failed
+      Backends (1 test) Failed: 1 test failed
+        InterpreterBackendOptimizerIntrinsicSurfaceTests (1 test) Failed: One or more child tests had errors: 1 test failed
+          InterpreterBackend_WithOptimizersEnabled_ContainsOnlyInterpreterSupportedIntrinsics Failed: System.InvalidOperationException : Intrinsic semantic startup validation failed:
+      Core (4 tests) Failed: 4 tests failed
+        ModuleCombinationsTests (2 tests) Failed: One or more child tests had errors: 2 tests failed
+          Execute_AllCoreModulesTogether_WorksCorrectly Failed: System.InvalidOperationException : Value 'null' of runtime type 'null' is not a supported numeric result.
+          Execute_MixedOperationsWithDifferentPrecedence_RespectsOrder Failed: System.InvalidOperationException : Value 'null' of runtime type 'null' is not a supported numeric result.
+        ModuleInteractionTests (2 tests) Failed: One or more child tests had errors: 2 tests failed
+          Execute_ComplexExpressionWithAllOperators_OrderOfOperationsCorrect Failed: System.InvalidOperationException : Value 'null' of runtime type 'null' is not a supported numeric result.
+          Execute_MultipleModuleIntegration_WorksSeamlessly Failed: System.InvalidOperationException : Value 'null' of runtime type 'null' is not a supported numeric result.
+  UniversalToolchain.Dialects.Tests (6 tests) Failed: 6 tests failed
+    UniversalToolchain.Dialects.Tests (6 tests) Failed: 6 tests failed
+      RuntimeLoading (1 test) Failed: 1 test failed
+        IntrinsicSemanticCompositionGuardTests (1 test) Failed: One or more child tests had errors: 1 test failed
+          RuntimeFactory_ShouldFailFast_WhenDuplicateIntrinsicSymbolsAreRegistered Failed:   Assert.That(exception!.Message, Does.Contain("Duplicate intrinsic semantic descriptor"))
+      Wist (1 test) Failed: 1 test failed
+        WistDialectBackendMatrixTests (1 test) Failed: One or more child tests had errors: 1 test failed
+          ExampleProgram_BackendMatrix_ShouldMatchExpectedOutcomes (1 test) Failed: One or more child tests had errors: 1 test failed
+            Wist example matrix: full-default-native Failed: System.InvalidOperationException : Intrinsic semantic startup validation failed:
+      DialectProjectsSmokeTests (1 test) Failed: One or more child tests had errors: 1 test failed
+        ExampleProjects_AreEnumerated_Composed_AndExecutedEndToEnd Failed: System.InvalidOperationException : Intrinsic semantic startup validation failed:
+      FrameworkNativeVerticalSliceTests (1 test) Failed: One or more child tests had errors: 1 test failed
+        Compile_IsDeterministic_ForSameInput Failed: System.InvalidOperationException : Dialect AIR contained duplicate DialectNameAirAnnotation values 'Tiny' and 'Tiny'.
+      MinimalRuntimeSelectionTests (1 test) Failed: One or more child tests had errors: 1 test failed
+        SelectionResolver_SameDialect_RepeatedRuns_ProduceSameSelectionOrder Failed: System.InvalidOperationException : Dialect AIR contained duplicate DialectNameAirAnnotation values 'Deterministic' and 'Deterministic'.
+      WistDialectExecutionIntegrationTests (1 test) Failed: One or more child tests had errors: 1 test failed
+        FullNativeDialect_RichProgram_RunsWithBothRealBackends Failed: System.InvalidOperationException : Intrinsic semantic startup validation failed:
+  UniversalToolchain.Modules.Tests (1 test) Failed: 1 test failed
+    UniversalToolchain.Modules.Tests.ModuleCoverage (1 test) Failed: 1 test failed
+      TypedIntrinsicEmitterOptimizerTests (1 test) Failed: One or more child tests had errors: 1 test failed
+        BooleanOptimizer_WhenCapabilitySupportsFamily_RewritesToTypedIntrinsic Failed:   Assert.That(BuiltinIntrinsicInstruction.Is(result.Instructions[^1], BuiltinIntrinsicSymbols.Boolean.Not), Is.True)

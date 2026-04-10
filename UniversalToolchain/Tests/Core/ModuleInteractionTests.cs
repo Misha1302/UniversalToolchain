@@ -1,4 +1,5 @@
 using NumbersModule.Core;
+using Tests.Infrastructure;
 
 namespace Tests.Core;
 
@@ -18,8 +19,7 @@ public class ModuleInteractionTests
 
         var result = Tests.Infrastructure.DialectTestHostInfrastructure.RunInBothBackends(DialectText, code);
 
-        var numberResult = (RealNumberImpl)result!;
-        Assert.That(numberResult.GetValue(), Is.EqualTo(63).Within(1e-9));
+        Assert.That(BackendResultAssertions.AsNumber(result), Is.EqualTo(63).Within(1e-9));
     }
 
     [Test]
@@ -29,7 +29,6 @@ public class ModuleInteractionTests
 
         var result = Tests.Infrastructure.DialectTestHostInfrastructure.RunInBothBackends(DialectText, code);
 
-        var numberResult = (RealNumberImpl)result!;
-        Assert.That(numberResult.GetValue(), Is.EqualTo(10.4150375).Within(1e-7));
+        Assert.That(BackendResultAssertions.AsNumber(result), Is.EqualTo(10.4150375).Within(1e-7));
     }
 }

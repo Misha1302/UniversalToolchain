@@ -1,4 +1,5 @@
 using NumbersModule.Core;
+using Tests.Infrastructure;
 
 namespace Tests.Core;
 
@@ -16,10 +17,9 @@ public class ModuleCombinationsTests
     {
         var code = "((10 + 5) * 2 - 3) / 2";
 
-        var result = Tests.Infrastructure.DialectTestHostInfrastructure.RunInBothBackends(DialectText, code);
+        var result = DialectTestHostInfrastructure.RunInBothBackends(DialectText, code);
 
-        var numberResult = (RealNumberImpl)result!;
-        Assert.That(numberResult.GetValue(), Is.EqualTo(13.5).Within(1e-9));
+        Assert.That(BackendResultAssertions.AsNumber(result), Is.EqualTo(13.5).Within(1e-9));
     }
 
     [Test]
@@ -27,9 +27,8 @@ public class ModuleCombinationsTests
     {
         var code = "(2 + 3 * 4) + ((2 + 3) * 4) * 2";
 
-        var result = Tests.Infrastructure.DialectTestHostInfrastructure.RunInBothBackends(DialectText, code);
+        var result = DialectTestHostInfrastructure.RunInBothBackends(DialectText, code);
 
-        var numberResult = (RealNumberImpl)result!;
-        Assert.That(numberResult.GetValue(), Is.EqualTo(54).Within(1e-9));
+        Assert.That(BackendResultAssertions.AsNumber(result), Is.EqualTo(54).Within(1e-9));
     }
 }

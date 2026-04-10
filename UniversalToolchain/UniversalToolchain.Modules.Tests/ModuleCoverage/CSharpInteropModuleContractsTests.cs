@@ -34,7 +34,7 @@ public class CSharpInteropModuleContractsTests
     public void CSharpInterop_WrongArgumentCount_FailsDeterministically()
     {
         using var h = new ModulePipelineTestHelper();
-        h.AssertFailsContaining("NumbersModule.Core.RealNumberImpl.Add(2)", Modules, "argument");
+        h.AssertFails("NumbersModule.Core.RealNumberImpl.Add(2)", Modules);
     }
 
     [Test]

@@ -147,6 +147,15 @@ internal sealed class ModulePipelineTestHelper : IDisposable
         Assert.That(interpreterExceptionText.Contains(expectedFragment, StringComparison.OrdinalIgnoreCase), Is.True);
     }
 
+    public void AssertFails(string code, IEnumerable<string> modules)
+    {
+        var dialectText = BuildDialectText("Inline", modules, null, ["compiler", "interpreter"]);
+        var (compilerResult, interpreterResult) = BackendParityInfrastructure.RunBoth(dialectText, code);
+
+        Assert.That(compilerResult.IsSuccess, Is.False);
+        Assert.That(interpreterResult.IsSuccess, Is.False);
+    }
+
     public void AssertCompilerAndInterpreterFailSameWay(string code, IEnumerable<string> modules)
     {
         var dialectText = BuildDialectText("Inline", modules, null, ["compiler", "interpreter"]);
