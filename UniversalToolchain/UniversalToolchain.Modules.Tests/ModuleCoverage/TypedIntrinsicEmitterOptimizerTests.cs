@@ -88,7 +88,7 @@ public sealed class TypedIntrinsicEmitterOptimizerTests
         Assert.That(method, Is.Not.Null);
 
         var input = CreateIr(
-            new Instruction(UOpCode.Push, [true]),
+            new Instruction(UOpCode.Intrinsic, ["load_local", "flag", typeof(bool)]),
             new Instruction(UOpCode.Intrinsic, ["call C#", method!]));
 
         var result = optimizer.ProcessIr(input, new FakeCompiler());

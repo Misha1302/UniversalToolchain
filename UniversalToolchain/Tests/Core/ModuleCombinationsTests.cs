@@ -7,10 +7,10 @@ namespace Tests.Core;
 public class ModuleCombinationsTests
 {
     private const string DialectText = """
-                                       dialect ModuleCombinations
-                                       use Arithmetic,Numbers
-                                       backend compiler,interpreter
-                                       """;
+                                   dialect ModuleCombinations
+                                   use Arithmetic,Numbers,Scopes,Whitespaces
+                                   backend compiler,interpreter
+                                   """;
 
     [Test]
     public void Execute_AllCoreModulesTogether_WorksCorrectly()

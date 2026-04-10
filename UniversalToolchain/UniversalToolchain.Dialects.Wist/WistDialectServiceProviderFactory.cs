@@ -45,7 +45,12 @@ public sealed class WistDialectServiceProviderFactory
     private static void RegisterModules(IServiceCollection services, IEnumerable<Type> types, Type serviceType, ServiceLifetime lifetime)
     {
         foreach (var type in types.OrderBy(x => x.FullName, StringComparer.Ordinal))
+        {
             services.Add(new ServiceDescriptor(serviceType, type, lifetime));
+
+            if (!services.Any(x => x.ServiceType == type && x.ImplementationType == type))
+                services.Add(new ServiceDescriptor(type, type, lifetime));
+        }
     }
 
     private void RegisterBackendRuntimes(IServiceCollection services, WistDialectExecutionConfiguration configuration)
@@ -83,7 +88,10 @@ public sealed class WistDialectServiceProviderFactory
         }
 
         foreach (var providerType in providerTypes)
-            services.AddSingleton(typeof(IIntrinsicDescriptorProvider), providerType);
+        {
+            if (!services.Any(x => x.ServiceType == typeof(IIntrinsicDescriptorProvider) && x.ImplementationType == providerType))
+                services.AddSingleton(typeof(IIntrinsicDescriptorProvider), providerType);
+        }
     }
 
     private static IReadOnlyList<(Type ModuleType, Type ProviderType)> ValidateIntrinsicSemantics(IServiceCollection services)

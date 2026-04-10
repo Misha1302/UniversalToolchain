@@ -38,10 +38,6 @@ public sealed class IntrinsicDescriptorProviderMetadataValidator
                 providerRegistrationCounts[providerType] = currentCount + 1;
             }
 
-            if (!TryCreateProviderInstance(descriptor, out var provider) || provider == null)
-                continue;
-
-            errors.AddRange(Validate([provider]));
         }
 
         foreach (var duplicateProviderRegistration in providerRegistrationCounts
@@ -150,27 +146,6 @@ public sealed class IntrinsicDescriptorProviderMetadataValidator
     private static Type? GetRegistrationProviderType(ServiceDescriptor descriptor)
     {
         return descriptor.ImplementationType ?? descriptor.ImplementationInstance?.GetType();
-    }
-
-    private static bool TryCreateProviderInstance(ServiceDescriptor descriptor, out IIntrinsicDescriptorProvider? provider)
-    {
-        provider = descriptor.ImplementationInstance as IIntrinsicDescriptorProvider;
-        if (provider != null)
-            return true;
-
-        var providerType = descriptor.ImplementationType;
-        if (providerType == null)
-            return false;
-
-        if (providerType.IsAbstract)
-            return false;
-
-        var constructor = providerType.GetConstructor(Type.EmptyTypes);
-        if (constructor == null)
-            return false;
-
-        provider = (IIntrinsicDescriptorProvider?)Activator.CreateInstance(providerType);
-        return provider != null;
     }
 
     private sealed record RegistrationEntry(int Index, ServiceDescriptor Descriptor);

@@ -42,6 +42,9 @@ internal sealed class WistInterpreterDialectBackendServiceProvider : IDialectBac
     private static BasicCoreImpl<IAbstractIR> CreateCore(IServiceProvider provider, DialectBackendRuntimeConfiguration configuration)
     {
         var capabilitySetFactory = provider.GetRequiredService<IIntrinsicCapabilitySetFactory>();
+        var backendOptimizers = configuration.OptimizerTypes
+            .Select(type => (IIRProcessingModule)provider.GetRequiredService(type))
+            .ToList();
 
         return new BasicCoreImpl<IAbstractIR>(
             provider.GetRequiredService<Func<ILexer>>(),
@@ -59,7 +62,7 @@ internal sealed class WistInterpreterDialectBackendServiceProvider : IDialectBac
             },
             provider.GetRequiredService<Func<IExecutor<IAbstractIR>>>(),
             provider.GetServices<IFrontendCoreModule>().ToList(),
-            provider.GetServices<IIRProcessingModule>().ToList(),
+            backendOptimizers,
             [],
             capabilitySetFactory);
     }
