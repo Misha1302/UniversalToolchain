@@ -9,20 +9,20 @@ namespace UniversalToolchain.Dialects.Wist;
 public sealed class WistDialectExecutionWorkflow
 {
     private readonly IDialectCompiledDialectBuildPlanBuilder _buildPlanBuilder;
-    private readonly DialectDslCompiler _compiler;
+    private readonly IDialectDslCompilerFactory _compilerFactory;
     private readonly WistDialectExecutionConfigurationBuilder _configurationBuilder;
     private readonly SelectedRuntimePlanResolver _resolver;
     private readonly WistDialectServiceProviderFactory _serviceProviderFactory;
 
     public WistDialectExecutionWorkflow(
-        DialectDslCompiler compiler,
+        IDialectDslCompilerFactory compilerFactory,
         IDialectCompiledDialectBuildPlanBuilder buildPlanBuilder,
         SelectedRuntimePlanResolver resolver,
         WistDialectExecutionConfigurationBuilder configurationBuilder,
         WistDialectServiceProviderFactory serviceProviderFactory)
     {
-        if (compiler == null)
-            Thrower.ArgumentNull(nameof(compiler));
+        if (compilerFactory == null)
+            Thrower.ArgumentNull(nameof(compilerFactory));
 
         if (buildPlanBuilder == null)
             Thrower.ArgumentNull(nameof(buildPlanBuilder));
@@ -36,7 +36,7 @@ public sealed class WistDialectExecutionWorkflow
         if (serviceProviderFactory == null)
             Thrower.ArgumentNull(nameof(serviceProviderFactory));
 
-        _compiler = compiler;
+        _compilerFactory = compilerFactory;
         _buildPlanBuilder = buildPlanBuilder;
         _resolver = resolver;
         _configurationBuilder = configurationBuilder;
@@ -62,7 +62,7 @@ public sealed class WistDialectExecutionWorkflow
         if (string.IsNullOrWhiteSpace(sourceName))
             Thrower.Argument(nameof(sourceName), "Source name must not be empty.");
 
-        var compiled = _compiler.Compile(sourceText);
+        var compiled = CompileSourceText(sourceText);
         var buildPlan = _buildPlanBuilder.Build(compiled);
         var semanticErrors = buildPlan.ValidationResult.Diagnostics.Where(x => x.Severity == DialectDiagnosticSeverity.Error).ToList();
 
@@ -76,6 +76,16 @@ public sealed class WistDialectExecutionWorkflow
             .ToList();
 
         return new DialectFrameworkCompositionResult(sourceName, compiled, buildPlan, semanticErrors, resolutionErrors, selectedRuntimePlan);
+    }
+
+
+    private DialectDefinitionSlice CompileSourceText(string sourceText)
+    {
+        if (sourceText == null)
+            Thrower.ArgumentNull(nameof(sourceText));
+
+        using var compiler = _compilerFactory.Create();
+        return compiler.Compile(sourceText);
     }
 
     public WistDialectExecutionHost CreateHost(DialectFrameworkCompositionResult compositionResult)
