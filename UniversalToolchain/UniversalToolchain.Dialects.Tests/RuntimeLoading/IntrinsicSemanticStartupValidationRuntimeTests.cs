@@ -82,6 +82,7 @@ public sealed class IntrinsicSemanticStartupValidationRuntimeTests
                 new RuntimeBackendDescriptor(new DialectBackendId("counting"), typeof(CountingBackendRegistrar)),
                 [],
                 [],
+                [],
                 false)],
             [new RuntimeBackendDescriptor(new DialectBackendId("counting"), typeof(CountingBackendRegistrar))]);
 

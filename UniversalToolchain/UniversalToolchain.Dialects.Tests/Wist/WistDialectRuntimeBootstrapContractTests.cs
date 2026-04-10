@@ -123,7 +123,7 @@ public class WistDialectRuntimeBootstrapContractTests
             [],
             [],
             [],
-            [new DialectBackendRuntimeConfiguration(new RuntimeBackendDescriptor(new DialectBackendId("interpreter"), typeof(NoopRegistrar), ["vm"]), [], [], false)],
+            [new DialectBackendRuntimeConfiguration(new RuntimeBackendDescriptor(new DialectBackendId("interpreter"), typeof(NoopRegistrar), ["vm"]), [], [], [], false)],
             [new RuntimeBackendDescriptor(new DialectBackendId("interpreter"), typeof(NoopRegistrar), ["vm"])]);
 
         var provider = factory.Create(config);
@@ -141,7 +141,7 @@ public class WistDialectRuntimeBootstrapContractTests
             [],
             [],
             [],
-            [new DialectBackendRuntimeConfiguration(new RuntimeBackendDescriptor(new DialectBackendId("interpreter"), typeof(object), []), [], [], false)],
+            [new DialectBackendRuntimeConfiguration(new RuntimeBackendDescriptor(new DialectBackendId("interpreter"), typeof(object), []), [], [], [], false)],
             [new RuntimeBackendDescriptor(new DialectBackendId("interpreter"), typeof(object), [])]);
 
         var ex = Assert.Throws<InvalidOperationException>(() => factory.Create(config));

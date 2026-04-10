@@ -42,6 +42,9 @@ internal sealed class WistCilDialectBackendServiceProvider : IDialectBackendRunt
     private static BasicCoreImpl<DynamicMethod> CreateCore(IServiceProvider provider, DialectBackendRuntimeConfiguration configuration)
     {
         var capabilitySetFactory = provider.GetRequiredService<IIntrinsicCapabilitySetFactory>();
+        var backendOptimizers = configuration.OptimizerTypes
+            .Select(type => (IIRProcessingModule)provider.GetRequiredService(type))
+            .ToList();
 
         return new BasicCoreImpl<DynamicMethod>(
             provider.GetRequiredService<Func<ILexer>>(),
@@ -59,7 +62,7 @@ internal sealed class WistCilDialectBackendServiceProvider : IDialectBackendRunt
             },
             provider.GetRequiredService<Func<IExecutor<DynamicMethod>>>(),
             provider.GetServices<IFrontendCoreModule>().ToList(),
-            provider.GetServices<IIRProcessingModule>().ToList(),
+            backendOptimizers,
             [],
             capabilitySetFactory);
     }

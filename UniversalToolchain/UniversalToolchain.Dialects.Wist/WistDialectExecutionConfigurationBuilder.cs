@@ -54,12 +54,15 @@ public sealed class WistDialectExecutionConfigurationBuilder
                 irModules.Add(type);
         }
 
-        var optimizers = selectedRuntimePlan.EnabledOptimizers
-            .Select(_typeLoader.LoadType)
-            .ToList();
 
         var backends = selectedRuntimePlan.EnabledBackends
-            .Select(x => BuildBackendConfiguration(x, buildPlan))
+            .Select(x => BuildBackendConfiguration(x, buildPlan, selectedRuntimePlan))
+            .ToList();
+
+        var allOptimizers = backends
+            .SelectMany(x => x.OptimizerTypes)
+            .Distinct()
+            .OrderBy(x => x.FullName, StringComparer.Ordinal)
             .ToList();
 
         var knownBackends = _knownBackendsProvider.GetKnownBackends();
@@ -68,18 +71,31 @@ public sealed class WistDialectExecutionConfigurationBuilder
             buildPlan.Name,
             frontendModules,
             irModules,
-            optimizers,
+            allOptimizers,
             backends,
             knownBackends);
     }
 
-    private DialectBackendRuntimeConfiguration BuildBackendConfiguration(RuntimeComponentManifestEntry backend, DialectBuildPlan buildPlan)
+    private DialectBackendRuntimeConfiguration BuildBackendConfiguration(
+        RuntimeComponentManifestEntry backend,
+        DialectBuildPlan buildPlan,
+        SelectedRuntimePlan selectedRuntimePlan)
     {
         var backendId = new DialectBackendId(backend.CanonicalAlias);
+        var optimizerTypes = selectedRuntimePlan.EnabledOptimizers
+            .Where(entry => buildPlan.OptimizerDirectives
+                .Where(x => x.Enabled)
+                .Any(x => string.Equals(x.Name, entry.CanonicalAlias, StringComparison.Ordinal)
+                          && x.Target.Matches(backendId)))
+            .Select(_typeLoader.LoadType)
+            .Distinct()
+            .OrderBy(x => x.FullName, StringComparer.Ordinal)
+            .ToList();
         var policy = _intrinsicPolicyResolver.Resolve(buildPlan, backendId);
         var metadataOwnerType = _typeLoader.LoadType(backend);
         return new DialectBackendRuntimeConfiguration(
             new RuntimeBackendDescriptor(backendId, metadataOwnerType, backend.Aliases),
+            optimizerTypes,
             policy.Allowed,
             policy.Forbidden,
             policy.HasExplicitAllowList);

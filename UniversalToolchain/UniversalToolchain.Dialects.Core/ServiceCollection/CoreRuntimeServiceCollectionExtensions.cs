@@ -33,22 +33,13 @@ public static class CoreRuntimeServiceCollectionExtensions
             Thrower.ArgumentNull(nameof(services));
 
         services.AddTransient<Func<ILexer>>(_ =>
-        {
-            var config = new LexerConfiguration([]);
-            return () => new BasicLexerImpl(config);
-        });
+            () => new BasicLexerImpl(new LexerConfiguration([])));
 
         services.AddTransient<Func<IParser>>(_ =>
-        {
-            var config = new ParserConfiguration([]);
-            return () => new BasicParserImpl(config);
-        });
+            () => new BasicParserImpl(new ParserConfiguration([])));
 
         services.AddTransient<Func<IAstToBytecodeTranslator>>(_ =>
-        {
-            var config = new BytecodeTranslatorConfiguration([]);
-            return () => new BasicAstToBytecodeTranslatorImpl(config);
-        });
+            () => new BasicAstToBytecodeTranslatorImpl(new BytecodeTranslatorConfiguration([])));
         services.AddSingleton<IntrinsicDescriptorProviderMetadataValidator>();
         services.AddSingleton<IntrinsicSemanticCoverageValidator>();
         services.AddSingleton<IntrinsicSemanticStartupValidator>();

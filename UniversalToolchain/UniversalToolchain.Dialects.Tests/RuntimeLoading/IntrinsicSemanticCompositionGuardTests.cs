@@ -21,7 +21,7 @@ public sealed class IntrinsicSemanticCompositionGuardTests
 
         var exception = Assert.Throws<InvalidOperationException>(() => factory.Create(configuration));
 
-        Assert.That(exception!.Message, Does.Contain("Duplicate intrinsic semantic descriptor"));
+        Assert.That(exception!.Message, Does.Contain("Intrinsic symbol"));
         Assert.That(exception.Message, Does.Contain("math.add"));
     }
 

@@ -305,11 +305,7 @@ public class DialectDslArchitectureRefactorTests
             Assert.That(provider.GetRequiredService<IIntrinsicCatalog>(), Is.Not.Null);
             Assert.That(providerTypes, Is.EqualTo(new[]
             {
-                typeof(CoreIntrinsicDescriptorProvider),
-                typeof(ArithmeticIntrinsicDescriptorProvider),
-                typeof(ComparisonIntrinsicDescriptorProvider),
-                typeof(BooleanIntrinsicDescriptorProvider),
-                typeof(StorageIntrinsicDescriptorProvider)
+                typeof(CoreIntrinsicDescriptorProvider)
             }));
             Assert.That(slice.UseModules, Is.EqualTo(new[] { "Arithmetic" }));
         });

@@ -26,10 +26,6 @@ public static class DialectDslFrontendServiceCollectionExtensions
 
         services.AddSingleton(frontendModule);
         services.AddSingleton<IFrontendCoreModule>(frontendModule);
-        services.AddSingleton<IIntrinsicDescriptorProvider, ArithmeticIntrinsicDescriptorProvider>();
-        services.AddSingleton<IIntrinsicDescriptorProvider, ComparisonIntrinsicDescriptorProvider>();
-        services.AddSingleton<IIntrinsicDescriptorProvider, BooleanIntrinsicDescriptorProvider>();
-        services.AddSingleton<IIntrinsicDescriptorProvider, StorageIntrinsicDescriptorProvider>();
 
         return services;
     }
