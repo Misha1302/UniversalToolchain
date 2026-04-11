@@ -63,12 +63,7 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
     private static IReadOnlyList<string> BuildSupportedIntrinsicIds()
     {
         var registry = new CilIntrinsicRegistry();
-        var intrinsicIds = registry.SupportedIntrinsics
-            .Distinct(StringComparer.Ordinal)
-            .OrderBy(static x => x, StringComparer.Ordinal)
-            .ToArray();
-
-        return Array.AsReadOnly(intrinsicIds);
+        return registry.SupportedIntrinsics;
     }
 
     private Dictionary<Guid, List<Type>> InitializeLabels(CompilationContext context, IAbstractIR bytecode)

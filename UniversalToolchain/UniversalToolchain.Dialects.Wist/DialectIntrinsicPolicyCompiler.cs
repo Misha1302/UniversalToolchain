@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using BasicCore.Compilation;
 using BasicCore.Contracts;
 using ExceptionsManager;
@@ -67,7 +68,7 @@ internal sealed class DialectIntrinsicPolicyCompiler<TCompilationOutput> : IAbst
         }
     }
 
-    private static HashSet<string> CreateSet(IEnumerable<string> values, string paramName)
+    private static HashSet<string> CreateSet(IEnumerable<string> values, [CallerArgumentExpression(nameof(values))] string? paramName = null)
     {
         if (values == null)
             Thrower.ArgumentNull(paramName);

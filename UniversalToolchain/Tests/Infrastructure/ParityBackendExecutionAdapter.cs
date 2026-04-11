@@ -2,6 +2,7 @@ using System.Collections.Specialized;
 using UniversalToolchain.Dialects.Wist;
 using System.Reflection.Emit;
 using ExceptionsManager;
+using IntermediateRepresentationAbstractions;
 
 namespace Tests.Infrastructure;
 
@@ -35,7 +36,7 @@ internal static class ParityBackendExecutionAdapter
         return session.Run() ?? Thrower.InvalidOpEx<object>($"Backend '{backendName}' returned null result.");
     }
 
-    private static ICompiledArtifact<object> CompileArtifact(
+    private static ICompiledArtifact CompileArtifact(
         WistDialectExecutionHost host,
         string backendName,
         string code,
@@ -43,29 +44,14 @@ internal static class ParityBackendExecutionAdapter
     {
         return backendName switch
         {
-            "compiler" => Wrap(host.GetArtifactCompiler<DynamicMethod>(backendName).Compile(code, declared)),
-            "interpreter" => Wrap(host.GetArtifactCompiler<IAbstractIR>(backendName).Compile(code, declared)),
-            _ => Thrower.InvalidOpEx<ICompiledArtifact<object>>($"Unsupported backend '{backendName}'.")
+            "compiler" => host.GetArtifactCompiler<DynamicMethod>(backendName).Compile(code, declared),
+            "interpreter" => host.GetArtifactCompiler<IAbstractIR>(backendName).Compile(code, declared),
+            _ => Thrower.InvalidOpEx<ICompiledArtifact>($"Unsupported backend '{backendName}'.")
         };
     }
-
-    private static ICompiledArtifact<object> Wrap<TCompilationOutput>(ICompiledArtifact<TCompilationOutput> artifact)
-        => new ArtifactAdapter<TCompilationOutput>(artifact);
 
     internal sealed record BackendArtifactSnapshot(
         IReadOnlyList<string> DeclaredBindingNames,
         IReadOnlyDictionary<string, int> SlotsByName);
 
-    private sealed class ArtifactAdapter<TCompilationOutput>(ICompiledArtifact<TCompilationOutput> inner) : ICompiledArtifact<object>
-    {
-        public string SourceText => inner.SourceText;
-
-        public IReadOnlyList<ExternalBinding> DeclaredBindings => inner.DeclaredBindings;
-
-        public IReadOnlyDictionary<string, int> SlotsByName => inner.SlotsByName;
-
-        public object CompilationOutput => inner.CompilationOutput!;
-
-        public ICompiledArtifactSession CreateSession() => inner.CreateSession();
-    }
 }

@@ -11,53 +11,42 @@ internal sealed class CilIntrinsicRegistry
     {
         var descriptors = new List<CilIntrinsicDescriptor>();
 
-        Register(
-            descriptors,
+        var carriedRegister = (
+            string name,
+            Action<CompilationContext, Instruction, List<Type>> compile
+        ) => Register(descriptors, name, compile, IntrinsicTypeProcessor.ProcessTypes);
+
+        carriedRegister(
             "call C#",
-            AbstractMethodsIntrinsicCompiler.CompileCallCSharp,
-            IntrinsicTypeProcessor.ProcessTypes
+            AbstractMethodsIntrinsicCompiler.CompileCallCSharp
         );
-        Register(
-            descriptors,
+        carriedRegister(
             "call C# ctor",
-            AbstractMethodsIntrinsicCompiler.CompileCallCSharpCtor,
-            IntrinsicTypeProcessor.ProcessTypes
+            AbstractMethodsIntrinsicCompiler.CompileCallCSharpCtor
         );
-        Register(
-            descriptors,
+        carriedRegister(
             "store_local",
-            AbstractMethodsIntrinsicCompiler.CompileStoreLocal,
-            IntrinsicTypeProcessor.ProcessTypes
+            AbstractMethodsIntrinsicCompiler.CompileStoreLocal
         );
-        Register(
-            descriptors,
+        carriedRegister(
             "load_local",
-            AbstractMethodsIntrinsicCompiler.CompileLoadLocal,
-            IntrinsicTypeProcessor.ProcessTypes
+            AbstractMethodsIntrinsicCompiler.CompileLoadLocal
         );
-        Register(
-            descriptors,
+        carriedRegister(
             "load_local_ref",
-            AbstractMethodsIntrinsicCompiler.CompileLoadLocalRef,
-            IntrinsicTypeProcessor.ProcessTypes
+            AbstractMethodsIntrinsicCompiler.CompileLoadLocalRef
         );
-        Register(
-            descriptors,
+        carriedRegister(
             "load_external",
-            AbstractMethodsIntrinsicCompiler.CompileLoadExternal,
-            IntrinsicTypeProcessor.ProcessTypes
+            AbstractMethodsIntrinsicCompiler.CompileLoadExternal
         );
-        Register(
-            descriptors,
+        carriedRegister(
             "store_external",
-            AbstractMethodsIntrinsicCompiler.CompileStoreExternal,
-            IntrinsicTypeProcessor.ProcessTypes
+            AbstractMethodsIntrinsicCompiler.CompileStoreExternal
         );
-        Register(
-            descriptors,
+        carriedRegister(
             "load_bool",
-            AbstractMethodsIntrinsicCompiler.CompileLoadBool,
-            IntrinsicTypeProcessor.ProcessTypes
+            AbstractMethodsIntrinsicCompiler.CompileLoadBool
         );
         Register(
             descriptors,
@@ -65,47 +54,33 @@ internal sealed class CilIntrinsicRegistry
             AbstractMethodsIntrinsicCompiler.CompileBooleanAnd,
             IntrinsicTypeProcessor.ProcessTypes
         );
-        Register(
-            descriptors,
+        carriedRegister(
             "boolean_or",
-            AbstractMethodsIntrinsicCompiler.CompileBooleanOr,
-            IntrinsicTypeProcessor.ProcessTypes
+            AbstractMethodsIntrinsicCompiler.CompileBooleanOr
         );
-        Register(
-            descriptors,
+        carriedRegister(
             "boolean_not",
-            AbstractMethodsIntrinsicCompiler.CompileBooleanNot,
-            IntrinsicTypeProcessor.ProcessTypes
+            AbstractMethodsIntrinsicCompiler.CompileBooleanNot
         );
-        Register(
-            descriptors,
+        carriedRegister(
             "load_i32",
-            AbstractMethodsIntrinsicCompiler.LoadNativeNumber,
-            IntrinsicTypeProcessor.ProcessTypes
+            AbstractMethodsIntrinsicCompiler.LoadNativeNumber
         );
-        Register(
-            descriptors,
+        carriedRegister(
             "load_i64",
-            AbstractMethodsIntrinsicCompiler.LoadNativeNumber,
-            IntrinsicTypeProcessor.ProcessTypes
+            AbstractMethodsIntrinsicCompiler.LoadNativeNumber
         );
-        Register(
-            descriptors,
+        carriedRegister(
             "load_f32",
-            AbstractMethodsIntrinsicCompiler.LoadNativeNumber,
-            IntrinsicTypeProcessor.ProcessTypes
+            AbstractMethodsIntrinsicCompiler.LoadNativeNumber
         );
-        Register(
-            descriptors,
+        carriedRegister(
             "load_f64",
-            AbstractMethodsIntrinsicCompiler.LoadNativeNumber,
-            IntrinsicTypeProcessor.ProcessTypes
+            AbstractMethodsIntrinsicCompiler.LoadNativeNumber
         );
-        Register(
-            descriptors,
+        carriedRegister(
             "load_decimal",
-            AbstractMethodsIntrinsicCompiler.LoadNativeNumber,
-            IntrinsicTypeProcessor.ProcessTypes
+            AbstractMethodsIntrinsicCompiler.LoadNativeNumber
         );
 
         RegisterArithmeticFamily(descriptors, "i32");
@@ -119,7 +94,7 @@ internal sealed class CilIntrinsicRegistry
         RegisterComparisonFamily(descriptors, "f32");
         RegisterComparisonFamily(descriptors, "f64");
 
-        var descriptorsByName = new Dictionary<string, CilIntrinsicDescriptor>(descriptors.Count, StringComparer.Ordinal);
+        var descriptorsByName = new OrderedDictionary<string, CilIntrinsicDescriptor>(descriptors.Count, StringComparer.Ordinal);
         foreach (var descriptor in descriptors)
         {
             if (!descriptorsByName.TryAdd(descriptor.Name, descriptor))

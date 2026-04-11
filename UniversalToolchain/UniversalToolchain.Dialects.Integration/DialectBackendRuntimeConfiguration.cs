@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Runtime.CompilerServices;
 using ExceptionsManager;
 
 namespace UniversalToolchain.Dialects.Integration;
@@ -39,7 +40,7 @@ public class DialectBackendRuntimeConfiguration
 
     public bool HasExplicitAllowList { get; }
 
-    private static List<Type> SnapshotTypes(IEnumerable<Type> values, string paramName)
+    private static List<Type> SnapshotTypes(IEnumerable<Type> values, [CallerArgumentExpression(nameof(values))] string? paramName = null)
     {
         if (values == null)
             Thrower.ArgumentNull(paramName);
@@ -51,7 +52,7 @@ public class DialectBackendRuntimeConfiguration
             .ToList();
     }
 
-    private static List<string> Snapshot(IEnumerable<string> values, string paramName)
+    private static List<string> Snapshot(IEnumerable<string> values, [CallerArgumentExpression(nameof(values))] string? paramName = null)
     {
         if (values == null)
             Thrower.ArgumentNull(paramName);

@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Runtime.CompilerServices;
 using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Integration;
@@ -32,7 +33,7 @@ public sealed class WistDialectExecutionConfiguration
         _irModules = new ReadOnlyCollection<Type>(SnapshotTypes(irModules, nameof(irModules)));
         _optimizers = new ReadOnlyCollection<Type>(SnapshotTypes(optimizers, nameof(optimizers)));
         _backendConfigurations = new ReadOnlyCollection<DialectBackendRuntimeConfiguration>(SnapshotBackends(backendConfigurations, nameof(backendConfigurations)));
-        _knownBackendNameMap = SnapshotKnownBackends(knownBackends, nameof(knownBackends));
+        _knownBackendNameMap = SnapshotKnownBackends(knownBackends);
     }
 
     public string DialectName { get; }
@@ -64,7 +65,7 @@ public sealed class WistDialectExecutionConfiguration
         return backendConfiguration != null;
     }
 
-    private static List<Type> SnapshotTypes(IEnumerable<Type> values, string paramName)
+    private static List<Type> SnapshotTypes(IEnumerable<Type> values, [CallerArgumentExpression(nameof(values))] string? paramName = null)
     {
         if (values == null)
             Thrower.ArgumentNull(paramName);
@@ -73,7 +74,7 @@ public sealed class WistDialectExecutionConfiguration
     }
 
 
-    private static Dictionary<string, DialectBackendId> SnapshotKnownBackends(IEnumerable<RuntimeBackendDescriptor> values, string paramName)
+    private static Dictionary<string, DialectBackendId> SnapshotKnownBackends(IEnumerable<RuntimeBackendDescriptor> values, [CallerArgumentExpression(nameof(values))] string paramName = null!)
     {
         if (values == null)
             Thrower.ArgumentNull(paramName);
@@ -89,7 +90,7 @@ public sealed class WistDialectExecutionConfiguration
         return map;
     }
 
-    private static List<DialectBackendRuntimeConfiguration> SnapshotBackends(IEnumerable<DialectBackendRuntimeConfiguration> values, string paramName)
+    private static List<DialectBackendRuntimeConfiguration> SnapshotBackends(IEnumerable<DialectBackendRuntimeConfiguration> values, [CallerArgumentExpression(nameof(values))] string? paramName = null)
     {
         if (values == null)
             Thrower.ArgumentNull(paramName);
