@@ -1,4 +1,6 @@
+using AbstractIrConverters;
 using BasicCore.LexerWrapper;
+using BytecodeDynamicMethodsCompiler.Compilers;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Integration;
@@ -115,7 +117,7 @@ public class WistDialectRuntimeBootstrapContractTests
     }
 
     [Test]
-    public void WistDialectServiceProviderFactory_ShouldUseNeutralCoreBootstrap()
+    public void WistDialectServiceProviderFactory_ShouldRegisterFrontendDefaultsWithoutBackendDefaults()
     {
         var factory = new WistDialectServiceProviderFactory([new NoopRegistrar("interpreter")]);
         var config = new WistDialectExecutionConfiguration(
@@ -128,7 +130,12 @@ public class WistDialectRuntimeBootstrapContractTests
 
         var provider = factory.Create(config);
 
-        Assert.That(provider.GetService<Func<ILexer>>(), Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(provider.GetService<Func<ILexer>>(), Is.Not.Null);
+            Assert.That(provider.GetService<AbstractMethodsCompilerImpl>(), Is.Null);
+            Assert.That(provider.GetService<AbstractIrToAbstractIrStub>(), Is.Null);
+        });
         (provider as IDisposable)?.Dispose();
     }
 
