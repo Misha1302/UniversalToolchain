@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Runtime.CompilerServices;
 using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
 
@@ -67,7 +68,7 @@ public sealed class DialectSyntaxDocument
 
     public IReadOnlyDictionary<string, bool> Capabilities => _capabilities;
 
-    private static List<T> Snapshot<T>(IEnumerable<T> source, string paramName)
+    private static List<T> Snapshot<T>(IEnumerable<T> source, [CallerArgumentExpression(nameof(source))] string? paramName = null)
     {
         if (source == null)
             Thrower.ArgumentNull(paramName);

@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Runtime.CompilerServices;
 using ExceptionsManager;
 
 namespace UniversalToolchain.Dialects.Abstractions;
@@ -67,7 +68,7 @@ public sealed class DialectBuildPlan
 
     public bool CanBuild => ValidationResult.IsValid;
 
-    private static List<T> Snapshot<T>(IEnumerable<T> source, string paramName)
+    private static List<T> Snapshot<T>(IEnumerable<T> source, [CallerArgumentExpression(nameof(source))] string? paramName = null)
     {
         if (source == null)
             Thrower.ArgumentNull(paramName);

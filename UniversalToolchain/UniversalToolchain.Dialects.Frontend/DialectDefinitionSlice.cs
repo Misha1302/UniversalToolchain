@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Runtime.CompilerServices;
 using ExceptionsManager;
 
 namespace UniversalToolchain.Dialects.Frontend;
@@ -73,7 +74,7 @@ public sealed class DialectDefinitionSlice
         return result;
     }
 
-    private static List<T> Snapshot<T>(IEnumerable<T> values, string paramName)
+    private static List<T> Snapshot<T>(IEnumerable<T> values, [CallerArgumentExpression(nameof(values))] string? paramName = null)
     {
         if (values == null)
             Thrower.ArgumentNull(paramName);

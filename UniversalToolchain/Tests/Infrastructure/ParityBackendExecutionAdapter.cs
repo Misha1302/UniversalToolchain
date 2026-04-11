@@ -13,7 +13,7 @@ internal static class ParityBackendExecutionAdapter
         string code,
         OrderedDictionary<string, Type> declared)
     {
-        var artifact = CompileArtifact(host, backendName, code, declared);
+        var artifact = CompileArtifact<object>(host, backendName, code, declared);
         return new BackendArtifactSnapshot(
             artifact.DeclaredBindings.Select(static binding => binding.Name).ToArray(),
             new Dictionary<string, int>(artifact.SlotsByName, StringComparer.Ordinal));
@@ -26,7 +26,7 @@ internal static class ParityBackendExecutionAdapter
         OrderedDictionary<string, Type> declared,
         IReadOnlyList<KeyValuePair<string, object>> arguments)
     {
-        var artifact = CompileArtifact(host, backendName, code, declared);
+        var artifact = CompileArtifact<>(host, backendName, code, declared);
         var session = artifact.CreateSession();
 
         foreach (var argument in arguments)

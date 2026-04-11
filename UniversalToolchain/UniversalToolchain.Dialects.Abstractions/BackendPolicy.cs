@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Runtime.CompilerServices;
 using ExceptionsManager;
 
 namespace UniversalToolchain.Dialects.Abstractions;
@@ -31,7 +32,7 @@ public sealed class BackendPolicy
 
     public IReadOnlyList<DialectBackendId> DisabledBackends => _disabledBackends;
 
-    private static List<DialectBackendId> NormalizeNames(IEnumerable<DialectBackendId>? values, string paramName)
+    private static List<DialectBackendId> NormalizeNames(IEnumerable<DialectBackendId>? values, [CallerArgumentExpression(nameof(values))] string? paramName = null)
     {
         if (values == null)
             return [];

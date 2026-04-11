@@ -65,7 +65,7 @@ public sealed class WistDialectExecutionConfiguration
         return backendConfiguration != null;
     }
 
-    private static List<Type> SnapshotTypes(IEnumerable<Type> values, string paramName)
+    private static List<Type> SnapshotTypes(IEnumerable<Type> values, [CallerArgumentExpression(nameof(values))] string? paramName = null)
     {
         if (values == null)
             Thrower.ArgumentNull(paramName);
@@ -90,7 +90,7 @@ public sealed class WistDialectExecutionConfiguration
         return map;
     }
 
-    private static List<DialectBackendRuntimeConfiguration> SnapshotBackends(IEnumerable<DialectBackendRuntimeConfiguration> values, string paramName)
+    private static List<DialectBackendRuntimeConfiguration> SnapshotBackends(IEnumerable<DialectBackendRuntimeConfiguration> values, [CallerArgumentExpression(nameof(values))] string? paramName = null)
     {
         if (values == null)
             Thrower.ArgumentNull(paramName);

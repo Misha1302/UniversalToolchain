@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Runtime.CompilerServices;
 using ExceptionsManager;
 
 namespace UniversalToolchain.Dialects.Abstractions;
@@ -28,7 +29,7 @@ public sealed class OptimizerPolicy
 
     public IReadOnlyList<string> DisabledOptimizers => _disabledOptimizers;
 
-    private static List<string> NormalizeNames(IEnumerable<string>? values, string paramName)
+    private static List<string> NormalizeNames(IEnumerable<string>? values, [CallerArgumentExpression(nameof(values))] string? paramName = null)
     {
         if (values == null)
             return [];

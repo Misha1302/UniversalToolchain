@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using ExceptionsManager;
 
 namespace UniversalToolchain.Dialects.Frontend;
@@ -18,7 +19,7 @@ public sealed record DialectSetStateKey<TValue>(string Name, IEqualityComparer<T
 
 internal static class DialectTypedStateGuards
 {
-    public static void EnsureKey(DialectTypedStateKey? key, string paramName)
+    public static void EnsureKey(DialectTypedStateKey? key, [CallerArgumentExpression(nameof(key))] string? paramName = null)
     {
         if (key == null)
             Thrower.ArgumentNull(paramName);
