@@ -45,17 +45,6 @@ public sealed class WistDialectExecutionHost : IDisposable
             "Selected backend does not expose a compatible artifact compiler.");
     }
 
-    public IArtifactCompiler<object> GetArtifactCompiler(string mode)
-    {
-        var runtime = ResolveRuntime(mode);
-
-        if (runtime.Core is IArtifactCompiler artifactCompiler)
-            return artifactCompiler;
-
-        return Thrower.InvalidOpEx<IArtifactCompiler<TCompilationOutput>>(
-            "Selected backend does not expose a compatible artifact compiler.");
-    }
-
     private WistDialectBackendRuntime ResolveRuntime(string mode)
     {
         if (string.IsNullOrWhiteSpace(mode))

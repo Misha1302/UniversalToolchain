@@ -42,6 +42,55 @@ public class CompiledArtifactContractsTests
     }
 
     [Test]
+    public void CompiledArtifact_Implements_Untyped_And_Typed_Interfaces()
+    {
+        var artifact = CreateTwoArgumentArtifact("compiled");
+
+        Assert.That(artifact, Is.InstanceOf<ICompiledArtifact>());
+        Assert.That(artifact, Is.InstanceOf<ICompiledArtifact<string>>());
+    }
+
+    [Test]
+    public void CommonCode_CanUseICompiledArtifact_WithoutCompilationOutputType()
+    {
+        var artifact = CreateTwoArgumentArtifact("compiled", 4, "seed");
+        ICompiledArtifact untypedArtifact = artifact;
+
+        var session = untypedArtifact.CreateSession();
+        session.SetArgument("value", 7);
+        session.SetArgument("text", "shared");
+
+        Assert.That(untypedArtifact.SourceText, Is.EqualTo("value + text"));
+        Assert.That(session.Run(), Is.EqualTo("compiled:7:shared"));
+    }
+
+    [Test]
+    public void TypedCode_CanReadCompilationOutput_FromTypedInterface()
+    {
+        var artifact = CreateTwoArgumentArtifact("typed-output");
+        ICompiledArtifact<string> typedArtifact = artifact;
+
+        Assert.That(typedArtifact.CompilationOutput, Is.EqualTo("typed-output"));
+    }
+
+    [Test]
+    public void ICompiledArtifactCollection_CanStore_DifferentCompiledArtifactTypes()
+    {
+        var stringArtifact = CreateTwoArgumentArtifact("string-output", 5, "x");
+        var intArtifact = new CompiledArtifact<int>(
+            "int-compiled",
+            [new ExternalBinding { Name = "value", Type = typeof(int), Value = 2, Kind = ExternalBindingKind.Variable }],
+            123,
+            new IntIdentityExecutor());
+
+        IReadOnlyList<ICompiledArtifact> artifacts = [stringArtifact, intArtifact];
+
+        Assert.That(artifacts, Has.Count.EqualTo(2));
+        Assert.That(artifacts[0].CreateSession().Run(), Is.EqualTo("string-output:5:x"));
+        Assert.That(artifacts[1].CreateSession().Run(), Is.EqualTo(123));
+    }
+
+    [Test]
     public void CompiledArtifact_CreateSession_ReturnsIndependentSessions()
     {
         var artifact = CreateTwoArgumentArtifact("compiled");
@@ -260,6 +309,14 @@ public class CompiledArtifactContractsTests
         public object? Execute(string compilation, IExecutionEnvironment environment)
         {
             return $"{compilation}:{environment.GetExternalValue(0)}|{environment.GetExternalValue(1)}|{environment.GetExternalValue(2)}";
+        }
+    }
+
+    private sealed class IntIdentityExecutor : IExecutor<int>
+    {
+        public object? Execute(int compilation, IExecutionEnvironment environment)
+        {
+            return compilation;
         }
     }
 
