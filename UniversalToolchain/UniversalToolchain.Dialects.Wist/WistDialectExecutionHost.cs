@@ -49,10 +49,10 @@ public sealed class WistDialectExecutionHost : IDisposable
     {
         var runtime = ResolveRuntime(mode);
 
-        if (runtime.Core is IArtifactCompiler artifactCompiler)
+        if (runtime.Core is IArtifactCompiler<object> artifactCompiler)
             return artifactCompiler;
 
-        return Thrower.InvalidOpEx<IArtifactCompiler<TCompilationOutput>>(
+        return Thrower.InvalidOpEx<IArtifactCompiler<object>>(
             "Selected backend does not expose a compatible artifact compiler.");
     }
 

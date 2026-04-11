@@ -8,8 +8,7 @@ namespace BasicCore.Compilation;
 ///     If <see cref="ExternalBinding.Value" /> references a mutable object graph, that graph can still be mutated
 ///     externally.
 /// </summary>
-/// <typeparam name="TCompilationOutput">Compilation backend output type.</typeparam>
-public interface ICompiledArtifact<out TCompilationOutput>
+public interface ICompiledArtifact
 {
     /// <summary>
     ///     Gets source text used to produce this artifact.
@@ -30,12 +29,19 @@ public interface ICompiledArtifact<out TCompilationOutput>
     IReadOnlyDictionary<string, int> SlotsByName { get; }
 
     /// <summary>
-    ///     Gets compiled output payload.
-    /// </summary>
-    TCompilationOutput CompilationOutput { get; }
-
-    /// <summary>
     ///     Creates a new execution session initialized with declared binding values.
     /// </summary>
     ICompiledArtifactSession CreateSession();
+}
+
+/// <summary>
+///     Represents a typed compiled artifact snapshot.
+/// </summary>
+/// <typeparam name="TCompilationOutput">Compilation backend output type.</typeparam>
+public interface ICompiledArtifact<out TCompilationOutput> : ICompiledArtifact
+{
+    /// <summary>
+    ///     Gets compiled output payload.
+    /// </summary>
+    TCompilationOutput CompilationOutput { get; }
 }
