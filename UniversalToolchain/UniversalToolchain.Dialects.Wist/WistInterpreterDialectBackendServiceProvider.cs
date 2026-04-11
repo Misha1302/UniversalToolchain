@@ -16,14 +16,9 @@ namespace UniversalToolchain.Dialects.Wist;
 
 internal sealed class WistInterpreterDialectBackendServiceProvider : IDialectBackendRuntimeRegistrar
 {
-    private static readonly IReadOnlyList<string> _supportedIntrinsics = new AbstractIrToAbstractIrStub().SupportedIntrinsics
-        .Distinct(StringComparer.Ordinal)
-        .OrderBy(x => x, StringComparer.Ordinal)
-        .ToList();
-
     public DialectBackendId BackendId => WistDialectBackendIds.Interpreter;
 
-    public IReadOnlyList<string> SupportedIntrinsics => _supportedIntrinsics;
+    public IReadOnlyList<string> SupportedIntrinsics => AbstractIrToAbstractIrStub.SupportedIntrinsicIds;
 
     public void RegisterRuntime(IServiceCollection services, DialectBackendRuntimeConfiguration configuration)
     {
