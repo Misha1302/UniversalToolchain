@@ -35,28 +35,23 @@ internal static class ParityBackendExecutionAdapter
         return session.Run() ?? Thrower.InvalidOpEx<object>($"Backend '{backendName}' returned null result.");
     }
 
-    private static ICompiledArtifact<object> CompileArtifact(
+    private static ICompiledArtifact<TCompilationOutput> CompileArtifact<TCompilationOutput>(
         WistDialectExecutionHost host,
         string backendName,
         string code,
         OrderedDictionary<string, Type> declared)
     {
-        return backendName switch
-        {
-            "compiler" => Wrap(host.GetArtifactCompiler<DynamicMethod>(backendName).Compile(code, declared)),
-            "interpreter" => Wrap(host.GetArtifactCompiler<IAbstractIR>(backendName).Compile(code, declared)),
-            _ => Thrower.InvalidOpEx<ICompiledArtifact<object>>($"Unsupported backend '{backendName}'.")
-        };
+        return Wrap(host.GetArtifactCompiler<TCompilationOutput>(backendName).Compile(code, declared));
     }
 
-    private static ICompiledArtifact<object> Wrap<TCompilationOutput>(ICompiledArtifact<TCompilationOutput> artifact)
+    private static ICompiledArtifact<TCompilationOutput> Wrap<TCompilationOutput>(ICompiledArtifact<TCompilationOutput> artifact)
         => new ArtifactAdapter<TCompilationOutput>(artifact);
 
     internal sealed record BackendArtifactSnapshot(
         IReadOnlyList<string> DeclaredBindingNames,
         IReadOnlyDictionary<string, int> SlotsByName);
 
-    private sealed class ArtifactAdapter<TCompilationOutput>(ICompiledArtifact<TCompilationOutput> inner) : ICompiledArtifact<object>
+    private sealed class ArtifactAdapter<TCompilationOutput>(ICompiledArtifact<TCompilationOutput> inner) : ICompiledArtifact<TCompilationOutput>
     {
         public string SourceText => inner.SourceText;
 
@@ -64,7 +59,7 @@ internal static class ParityBackendExecutionAdapter
 
         public IReadOnlyDictionary<string, int> SlotsByName => inner.SlotsByName;
 
-        public object CompilationOutput => inner.CompilationOutput!;
+        public TCompilationOutput CompilationOutput => inner.CompilationOutput!;
 
         public ICompiledArtifactSession CreateSession() => inner.CreateSession();
     }
