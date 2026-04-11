@@ -1,4 +1,6 @@
+using AbstractIrConverters;
 using BasicCore.LexerWrapper;
+using BytecodeDynamicMethodsCompiler.Compilers;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Integration;
@@ -8,6 +10,54 @@ namespace UniversalToolchain.Dialects.Tests.Wist;
 
 public class WistDialectRuntimeBootstrapContractTests
 {
+    [Test]
+    public void AddWistDialectCoreServices_ShouldRegisterWorkflowWithoutFullRuntimePolicy()
+    {
+        var services = new ServiceCollection();
+        services.AddWistDialectCoreServices();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(services.Any(static x => x.ServiceType == typeof(WistDialectExecutionWorkflow)), Is.True);
+            Assert.That(services.Any(static x => x.ServiceType == typeof(SelectedRuntimePlanResolver)), Is.True);
+            Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeComponentCatalog)), Is.False);
+            Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeComponentTypeLoader)), Is.False);
+        });
+    }
+
+    [Test]
+    public void AddFileSystemRuntimeCatalogServices_ShouldRegisterCatalogArtifactsOnly()
+    {
+        var services = new ServiceCollection();
+        services.AddFileSystemRuntimeCatalogServices();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeManifestFileLocator)), Is.True);
+            Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeManifestSerializer)), Is.True);
+            Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeComponentCatalog)), Is.True);
+            Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeComponentTypeLoader)), Is.False);
+            Assert.That(services.Any(static x => x.ServiceType == typeof(WistDialectExecutionWorkflow)), Is.False);
+        });
+    }
+
+    [Test]
+    public void AddReflectionRuntimeResolutionServices_ShouldRegisterResolutionArtifactsOnly()
+    {
+        var services = new ServiceCollection();
+        services.AddReflectionRuntimeResolutionServices();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeAssemblyLocator)), Is.True);
+            Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeAssemblyLoadStrategy)), Is.True);
+            Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeComponentResolver)), Is.True);
+            Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeComponentTypeLoader)), Is.True);
+            Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeKnownBackendsProvider)), Is.True);
+            Assert.That(services.Any(static x => x.ServiceType == typeof(WistDialectExecutionWorkflow)), Is.False);
+        });
+    }
+
     [Test]
     public void AddWistDialectServices_ShouldRegisterCanonicalRuntimeInfrastructure()
     {
@@ -21,6 +71,21 @@ public class WistDialectRuntimeBootstrapContractTests
             Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeComponentTypeLoader)), Is.True);
             Assert.That(services.Any(static x => x.ServiceType == typeof(WistDialectExecutionWorkflow)), Is.True);
         });
+    }
+
+    [Test]
+    public void AddWistDialectServices_ShouldMatchCanonicalCompositionOfBlocks()
+    {
+        var wrapperServices = new ServiceCollection();
+        wrapperServices.AddWistDialectServices();
+
+        var blockServices = new ServiceCollection();
+        blockServices
+            .AddWistDialectCoreServices()
+            .AddFileSystemRuntimeCatalogServices()
+            .AddReflectionRuntimeResolutionServices();
+
+        Assert.That(BuildServiceSignatures(wrapperServices), Is.EqualTo(BuildServiceSignatures(blockServices)));
     }
 
     [Test]
@@ -115,7 +180,7 @@ public class WistDialectRuntimeBootstrapContractTests
     }
 
     [Test]
-    public void WistDialectServiceProviderFactory_ShouldUseNeutralCoreBootstrap()
+    public void WistDialectServiceProviderFactory_ShouldRegisterFrontendDefaultsWithoutBackendDefaults()
     {
         var factory = new WistDialectServiceProviderFactory([new NoopRegistrar("interpreter")]);
         var config = new WistDialectExecutionConfiguration(
@@ -128,7 +193,12 @@ public class WistDialectRuntimeBootstrapContractTests
 
         var provider = factory.Create(config);
 
-        Assert.That(provider.GetService<Func<ILexer>>(), Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(provider.GetService<Func<ILexer>>(), Is.Not.Null);
+            Assert.That(provider.GetService<AbstractMethodsCompilerImpl>(), Is.Null);
+            Assert.That(provider.GetService<AbstractIrToAbstractIrStub>(), Is.Null);
+        });
         (provider as IDisposable)?.Dispose();
     }
 
@@ -170,6 +240,21 @@ public class WistDialectRuntimeBootstrapContractTests
 
         Assert.That(signatures.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1));
     }
+
+    private static IReadOnlyList<ServiceRegistrationSignature> BuildServiceSignatures(IServiceCollection services)
+    {
+        return services
+            .Select(static service => new ServiceRegistrationSignature(
+                service.ServiceType,
+                service.ImplementationType,
+                service.Lifetime))
+            .ToArray();
+    }
+
+    private readonly record struct ServiceRegistrationSignature(
+        Type ServiceType,
+        Type? ImplementationType,
+        ServiceLifetime Lifetime);
 
     private sealed class NoopRegistrar(string backendId) : IDialectBackendRuntimeRegistrar
     {

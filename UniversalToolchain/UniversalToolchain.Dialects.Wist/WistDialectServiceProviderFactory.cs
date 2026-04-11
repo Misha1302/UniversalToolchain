@@ -28,7 +28,8 @@ public sealed class WistDialectServiceProviderFactory
             Thrower.ArgumentNull(nameof(configuration));
 
         var services = new ServiceCollection();
-        services.AddCoreRuntimeInfrastructure();
+        services.AddNeutralRuntimeInfrastructure();
+        services.AddBasicFrontendPipelineDefaults();
 
         RegisterModules(services, configuration.FrontendModules, typeof(IFrontendCoreModule), ServiceLifetime.Singleton);
         RegisterModules(services, configuration.IrModules, typeof(IIRProcessingModule), ServiceLifetime.Transient);

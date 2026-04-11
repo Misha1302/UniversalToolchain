@@ -14,7 +14,7 @@ public class RuntimeKnownBackendsProviderContractTests
             Entry(RuntimeComponentKind.Backend, "interpreter", "Meta.Interpreter")
         ]);
 
-        var provider = new RuntimeKnownBackendsProvider(catalog, [new StubRegistrar("interpreter")]);
+        var provider = new RuntimeKnownBackendsProvider(catalog, [new StubRegistrar("interpreter")], new StubTypeLoader());
         var known = provider.GetKnownBackends();
 
         Assert.That(known.Select(static x => x.CanonicalId), Is.EqualTo(new[] { "interpreter" }));
@@ -26,7 +26,10 @@ public class RuntimeKnownBackendsProviderContractTests
         var catalog = new StaticCatalog([Entry(RuntimeComponentKind.Backend, "interpreter", "Meta.Interpreter")]);
 
         var ex = Assert.Throws<InvalidOperationException>(() =>
-            new RuntimeKnownBackendsProvider(catalog, [new StubRegistrar("interpreter"), new StubRegistrar("interpreter")]))!;
+            new RuntimeKnownBackendsProvider(
+                catalog,
+                [new StubRegistrar("interpreter"), new StubRegistrar("interpreter")],
+                new StubTypeLoader()))!;
 
         Assert.That(ex.Message, Does.Contain("Duplicate backend provider registration for backend 'interpreter'"));
     }
@@ -36,27 +39,43 @@ public class RuntimeKnownBackendsProviderContractTests
     {
         var catalog = new StaticCatalog([Entry(RuntimeComponentKind.Backend, "compiler", "Meta.Compiler")]);
 
-        var ex = Assert.Throws<InvalidOperationException>(() =>
-            new RuntimeKnownBackendsProvider(catalog, [new StubRegistrar("interpreter")]))!;
+        var provider = new RuntimeKnownBackendsProvider(catalog, [new StubRegistrar("interpreter")], new StubTypeLoader());
+
+        var ex = Assert.Throws<InvalidOperationException>(() => provider.GetKnownBackends())!;
 
         Assert.That(ex.Message, Does.Contain("no matching runtime backend metadata entry"));
     }
 
     [Test]
-    public void KnownBackendsProvider_ShouldExposeCatalogBackedMetadataOwnershipWithoutBreakingDescriptorTruth()
+    public void KnownBackendsProvider_ShouldResolveRealMetadataOwnerType_FromTypeLoader()
     {
         var catalog = new StaticCatalog([Entry(RuntimeComponentKind.Backend, "interpreter", "Meta.Interpreter", "vm")]);
 
-        var provider = new RuntimeKnownBackendsProvider(catalog, [new StubRegistrar("interpreter")]);
+        var provider = new RuntimeKnownBackendsProvider(catalog, [new StubRegistrar("interpreter")], new StubTypeLoader());
         var descriptor = provider.GetKnownBackends().Single();
 
         Assert.Multiple(() =>
         {
-            Assert.That(descriptor.MetadataOwnerType, Is.Not.Null);
-            Assert.That(descriptor.MetadataOwnerType.Assembly, Is.EqualTo(typeof(RuntimeComponentManifestEntry).Assembly));
+            Assert.That(descriptor.MetadataOwnerType, Is.EqualTo(typeof(FakeBackendMetadata)));
             Assert.That(descriptor.CanonicalId, Is.EqualTo("interpreter"));
             Assert.That(descriptor.Aliases, Is.EqualTo(new[] { "vm" }));
         });
+    }
+
+    [Test]
+    public void KnownBackendsProvider_ShouldBuildMetadataLazily()
+    {
+        var catalog = new StaticCatalog([Entry(RuntimeComponentKind.Backend, "interpreter", "Meta.Interpreter")]);
+        var typeLoader = new StubTypeLoader();
+
+        var provider = new RuntimeKnownBackendsProvider(catalog, [new StubRegistrar("interpreter")], typeLoader);
+
+        Assert.That(typeLoader.Calls, Is.EqualTo(0));
+
+        provider.GetKnownBackends();
+        provider.GetKnownBackends();
+
+        Assert.That(typeLoader.Calls, Is.EqualTo(1));
     }
 
     [Test]
@@ -67,7 +86,10 @@ public class RuntimeKnownBackendsProviderContractTests
             Entry(RuntimeComponentKind.Backend, "compiler", "Meta.Compiler")
         ]);
 
-        var provider = new RuntimeKnownBackendsProvider(catalog, [new StubRegistrar("interpreter"), new StubRegistrar("compiler")]);
+        var provider = new RuntimeKnownBackendsProvider(
+            catalog,
+            [new StubRegistrar("interpreter"), new StubRegistrar("compiler")],
+            new StubTypeLoader());
 
         Assert.That(provider.GetKnownBackends().Select(static x => x.CanonicalId), Is.EqualTo(new[] { "compiler", "interpreter" }));
     }
@@ -77,7 +99,7 @@ public class RuntimeKnownBackendsProviderContractTests
     {
         var catalog = new StaticCatalog([Entry(RuntimeComponentKind.Backend, "interpreter", "Meta.Interpreter", "z", "a")]);
 
-        var provider = new RuntimeKnownBackendsProvider(catalog, [new StubRegistrar("interpreter")]);
+        var provider = new RuntimeKnownBackendsProvider(catalog, [new StubRegistrar("interpreter")], new StubTypeLoader());
         var aliases = provider.GetKnownBackends().Single().Aliases;
 
         Assert.That(aliases, Is.EqualTo(new[] { "a", "z" }));
@@ -94,6 +116,21 @@ public class RuntimeKnownBackendsProviderContractTests
         public void RegisterRuntime(IServiceCollection services, DialectBackendRuntimeConfiguration configuration)
         {
         }
+    }
+
+    private sealed class StubTypeLoader : IRuntimeComponentTypeLoader
+    {
+        public int Calls { get; private set; }
+
+        public Type LoadType(RuntimeComponentManifestEntry entry)
+        {
+            Calls++;
+            return typeof(FakeBackendMetadata);
+        }
+    }
+
+    private sealed class FakeBackendMetadata
+    {
     }
 
     private sealed class StaticCatalog(IEnumerable<RuntimeComponentManifestEntry> entries) : IRuntimeComponentCatalog

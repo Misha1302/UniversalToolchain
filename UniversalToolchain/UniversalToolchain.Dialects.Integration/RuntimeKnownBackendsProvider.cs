@@ -5,11 +5,15 @@ namespace UniversalToolchain.Dialects.Integration;
 
 public sealed class RuntimeKnownBackendsProvider : IRuntimeKnownBackendsProvider
 {
-    private readonly IReadOnlyList<RuntimeBackendDescriptor> _knownBackends;
+    private readonly IRuntimeComponentCatalog _catalog;
+    private readonly IReadOnlyDictionary<DialectBackendId, IDialectBackendRuntimeRegistrar> _providersById;
+    private readonly IRuntimeComponentTypeLoader _typeLoader;
+    private readonly Lazy<IReadOnlyList<RuntimeBackendDescriptor>> _knownBackends;
 
     public RuntimeKnownBackendsProvider(
         IRuntimeComponentCatalog catalog,
-        IEnumerable<IDialectBackendRuntimeRegistrar> backendRegistrars)
+        IEnumerable<IDialectBackendRuntimeRegistrar> backendRegistrars,
+        IRuntimeComponentTypeLoader typeLoader)
     {
         if (catalog == null)
             Thrower.ArgumentNull(nameof(catalog));
@@ -17,11 +21,16 @@ public sealed class RuntimeKnownBackendsProvider : IRuntimeKnownBackendsProvider
         if (backendRegistrars == null)
             Thrower.ArgumentNull(nameof(backendRegistrars));
 
-        var providersById = CreateProviderMap(backendRegistrars);
-        _knownBackends = BuildKnownBackends(catalog, providersById);
+        if (typeLoader == null)
+            Thrower.ArgumentNull(nameof(typeLoader));
+
+        _catalog = catalog;
+        _providersById = CreateProviderMap(backendRegistrars);
+        _typeLoader = typeLoader;
+        _knownBackends = new Lazy<IReadOnlyList<RuntimeBackendDescriptor>>(BuildKnownBackends);
     }
 
-    public IReadOnlyList<RuntimeBackendDescriptor> GetKnownBackends() => _knownBackends;
+    public IReadOnlyList<RuntimeBackendDescriptor> GetKnownBackends() => _knownBackends.Value;
 
     private static IReadOnlyDictionary<DialectBackendId, IDialectBackendRuntimeRegistrar> CreateProviderMap(
         IEnumerable<IDialectBackendRuntimeRegistrar> backendRegistrars)
@@ -38,23 +47,22 @@ public sealed class RuntimeKnownBackendsProvider : IRuntimeKnownBackendsProvider
         return map;
     }
 
-    private static IReadOnlyList<RuntimeBackendDescriptor> BuildKnownBackends(
-        IRuntimeComponentCatalog catalog,
-        IReadOnlyDictionary<DialectBackendId, IDialectBackendRuntimeRegistrar> providersById)
+    private IReadOnlyList<RuntimeBackendDescriptor> BuildKnownBackends()
     {
         var descriptors = new List<RuntimeBackendDescriptor>();
-        foreach (var backendId in providersById.Keys)
+        foreach (var backendId in _providersById.Keys)
         {
-            if (!catalog.TryResolveBackend(backendId.Value, out var entry) || entry == null)
+            if (!_catalog.TryResolveBackend(backendId.Value, out var entry) || entry == null)
                 Thrower.InvalidOpEx($"Backend provider '{backendId.Value}' is registered, but no matching runtime backend metadata entry exists.");
 
+            var metadataOwnerType = _typeLoader.LoadType(entry).NotNull();
             var aliases = entry.Aliases
                 .OrderBy(static x => x, StringComparer.Ordinal)
                 .ToArray();
 
             descriptors.Add(new RuntimeBackendDescriptor(
                 new DialectBackendId(entry.CanonicalAlias),
-                typeof(RuntimeComponentManifestEntry),
+                metadataOwnerType,
                 aliases));
         }
 

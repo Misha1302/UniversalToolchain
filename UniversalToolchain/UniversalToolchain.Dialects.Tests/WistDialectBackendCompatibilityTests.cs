@@ -20,7 +20,8 @@ public class WistDialectBackendCompatibilityTests
             [
                 new StubBackendProvider(new DialectBackendId("cil")),
                 new StubBackendProvider(new DialectBackendId("interpreter"))
-            ]);
+            ],
+            new StubRuntimeComponentTypeLoader());
 
         var known = provider.GetKnownBackends();
 
@@ -35,8 +36,12 @@ public class WistDialectBackendCompatibilityTests
     public void RuntimeKnownBackendsProvider_FailsWhenProviderBackendIsMissingFromCatalog()
     {
         var catalog = new StaticCatalog(Entry("cil"));
-        var exception = Assert.Throws<InvalidOperationException>(() =>
-            new RuntimeKnownBackendsProvider(catalog, [new StubBackendProvider(new DialectBackendId("interpreter"))]));
+        var provider = new RuntimeKnownBackendsProvider(
+            catalog,
+            [new StubBackendProvider(new DialectBackendId("interpreter"))],
+            new StubRuntimeComponentTypeLoader());
+
+        var exception = Assert.Throws<InvalidOperationException>(() => provider.GetKnownBackends());
 
         Assert.That(exception!.Message, Does.Contain("interpreter"));
     }
@@ -51,7 +56,8 @@ public class WistDialectBackendCompatibilityTests
                 [
                     new StubBackendProvider(new DialectBackendId("cil")),
                     new StubBackendProvider(new DialectBackendId("cil"))
-                ]));
+                ],
+                new StubRuntimeComponentTypeLoader()));
 
         Assert.That(exception!.Message, Does.Contain("Duplicate").And.Contain("cil"));
     }

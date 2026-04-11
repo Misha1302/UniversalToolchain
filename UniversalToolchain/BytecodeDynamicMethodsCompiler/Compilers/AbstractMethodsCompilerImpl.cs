@@ -5,6 +5,8 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
     private readonly AbstractMethodsIntrinsicCompiler _intrinsicCompiler;
     private readonly CilAbstractIrTypeSimulator _typeSimulator;
 
+    public static IReadOnlyList<string> SupportedIntrinsicIds { get; } = BuildSupportedIntrinsicIds();
+
     public AbstractMethodsCompilerImpl()
     {
         var registry = new CilIntrinsicRegistry();
@@ -12,7 +14,7 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
         _typeSimulator = new CilAbstractIrTypeSimulator(_intrinsicCompiler);
     }
 
-    public IReadOnlyList<string> SupportedIntrinsics => _intrinsicCompiler.SupportedIntrinsics;
+    public IReadOnlyList<string> SupportedIntrinsics => SupportedIntrinsicIds;
 
     public DynamicMethod Compile(IAbstractIR air, CompilationInput input)
     {
@@ -56,6 +58,17 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
     {
         var stack = _typeSimulator.Simulate(air.Instructions);
         return stack.Count > 0 ? stack[^1] : typeof(void);
+    }
+
+    private static IReadOnlyList<string> BuildSupportedIntrinsicIds()
+    {
+        var registry = new CilIntrinsicRegistry();
+        var intrinsicIds = registry.SupportedIntrinsics
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(static x => x, StringComparer.Ordinal)
+            .ToArray();
+
+        return Array.AsReadOnly(intrinsicIds);
     }
 
     private Dictionary<Guid, List<Type>> InitializeLabels(CompilationContext context, IAbstractIR bytecode)
