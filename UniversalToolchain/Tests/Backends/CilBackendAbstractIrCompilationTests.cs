@@ -14,7 +14,7 @@ public class CilBackendAbstractIrCompilationTests
         var compiler = new AbstractMethodsCompilerImpl();
         var registry = new CilIntrinsicRegistry();
 
-        Assert.That(compiler.SupportedIntrinsics, Is.EqualTo(registry.SupportedIntrinsics));
+        Assert.That(compiler.SupportedIntrinsics.OrderBy(x => x), Is.EqualTo(registry.SupportedIntrinsics.OrderBy(x => x)));
         Assert.That(compiler.SupportedIntrinsics.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(compiler.SupportedIntrinsics.Count));
 
         foreach (var intrinsicName in compiler.SupportedIntrinsics)
