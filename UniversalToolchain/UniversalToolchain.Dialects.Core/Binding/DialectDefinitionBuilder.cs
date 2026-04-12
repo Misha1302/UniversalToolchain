@@ -8,6 +8,7 @@ internal sealed class DialectDefinitionBuilder
     private string? _baseDialectName;
     private BackendPolicy? _backendPolicy;
     private CapabilityPolicy? _capabilityPolicy;
+    private readonly Dictionary<string, object> _extensions = new(StringComparer.Ordinal);
     private IntrinsicPolicy? _intrinsicPolicy;
     private ModulePolicy? _modulePolicy;
     private string? _name;
@@ -78,6 +79,28 @@ internal sealed class DialectDefinitionBuilder
         _orderRules = orderRules;
     }
 
+    public void SetExtension(string key, object value)
+    {
+        if (string.IsNullOrWhiteSpace(key))
+            Thrower.Argument(nameof(key), "Extension key must not be null or empty.");
+
+        if (value == null)
+            Thrower.ArgumentNull(nameof(value));
+
+        if (_extensions.ContainsKey(key))
+            Thrower.Argument(nameof(key), $"Duplicate extension key '{key}'.");
+
+        _extensions.Add(key, value);
+    }
+
+    public bool TryGetExtension(string key, out object? value)
+    {
+        if (string.IsNullOrWhiteSpace(key))
+            Thrower.Argument(nameof(key), "Extension key must not be null or empty.");
+
+        return _extensions.TryGetValue(key, out value);
+    }
+
     public DialectDefinition Build()
     {
         if (string.IsNullOrWhiteSpace(_name))
@@ -114,6 +137,7 @@ internal sealed class DialectDefinitionBuilder
             _capabilityPolicy,
             _orderRules,
             _version,
-            _baseDialectName);
+            _baseDialectName,
+            _extensions.OrderBy(x => x.Key, StringComparer.Ordinal));
     }
 }

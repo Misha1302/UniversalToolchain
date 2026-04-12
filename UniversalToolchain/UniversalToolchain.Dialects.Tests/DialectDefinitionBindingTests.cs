@@ -98,6 +98,50 @@ public class DialectDefinitionBindingTests
         });
     }
 
+    [Test]
+    public void Builder_StoresCustomExtensionsWithoutChangingTypedPolicies()
+    {
+        var builder = new DialectDefinitionBuilder();
+        builder.SetIdentity("dialect", null, null);
+        builder.SetModulePolicy(new ModulePolicy(["A"]));
+        builder.SetBackendPolicy(new BackendPolicy([TestBackendIds.Cil]));
+        builder.SetIntrinsicPolicy(new IntrinsicPolicy(["i"]));
+        builder.SetOptimizerPolicy(new OptimizerPolicy(["o"]));
+        builder.SetSecurityPolicy(null);
+        builder.SetCapabilityPolicy(new CapabilityPolicy([new KeyValuePair<string, bool>("cap", true)]));
+        builder.SetOrderRules([]);
+        builder.SetExtension("custom.semantic", new[] { "future" });
+
+        var found = builder.TryGetExtension("custom.semantic", out var stored);
+        var definition = builder.Build();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(found, Is.True);
+            Assert.That(stored, Is.EqualTo(new[] { "future" }));
+            Assert.That(definition.Extensions["custom.semantic"], Is.EqualTo(new[] { "future" }));
+            Assert.That(definition.IntrinsicPolicy.AllowedIntrinsics, Is.EqualTo(new[] { "i" }));
+            Assert.That(definition.OptimizerPolicy.EnabledOptimizers, Is.EqualTo(new[] { "o" }));
+            Assert.That(definition.CapabilityPolicy.Capabilities["cap"], Is.True);
+        });
+    }
+
+    [Test]
+    public void Builder_RejectsInvalidAndDuplicateExtensions()
+    {
+        var builder = new DialectDefinitionBuilder();
+        builder.SetExtension("custom", 1);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(() => builder.SetExtension(null!, 1), Throws.TypeOf<ArgumentException>());
+            Assert.That(() => builder.SetExtension(" ", 1), Throws.TypeOf<ArgumentException>());
+            Assert.That(() => builder.SetExtension("missing", null!), Throws.TypeOf<ArgumentNullException>());
+            Assert.That(() => builder.SetExtension("custom", 2), Throws.TypeOf<ArgumentException>());
+            Assert.That(() => builder.TryGetExtension(" ", out _), Throws.TypeOf<ArgumentException>());
+        });
+    }
+
     private static DialectSyntaxDocument CreateSyntaxDocument(string name, string? version = null)
     {
         return new DialectSyntaxDocument(
@@ -176,6 +220,7 @@ public class DialectDefinitionBindingTests
             Assert.That(actual.OptimizerPolicy.DisabledOptimizers, Is.EqualTo(expected.OptimizerPolicy.DisabledOptimizers));
             Assert.That(actual.SecurityPolicy?.Profile, Is.EqualTo(expected.SecurityPolicy?.Profile));
             Assert.That(actual.CapabilityPolicy.Capabilities, Is.EqualTo(expected.CapabilityPolicy.Capabilities));
+            Assert.That(actual.Extensions, Is.EqualTo(expected.Extensions));
             Assert.That(
                 actual.OrderRules.Select(x => (x.Kind, x.ModuleName, x.RelatedModuleName)),
                 Is.EqualTo(expected.OrderRules.Select(x => (x.Kind, x.ModuleName, x.RelatedModuleName))));

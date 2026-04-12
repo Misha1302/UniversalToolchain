@@ -11,6 +11,8 @@ internal static class DialectDefinitionSemanticBinder
 {
     private static readonly DialectDirectiveHandlerRegistry DirectiveHandlerRegistry = new(
     [
+        new ModuleDirectiveHandler(),
+        new BackendDirectiveHandler(),
         new IntrinsicDirectiveHandler(),
         new OptimizerDirectiveHandler(),
         new SecurityDirectiveHandler(),
@@ -47,46 +49,12 @@ internal static class DialectDefinitionSemanticBinder
         if (diagnostics == null)
             Thrower.ArgumentNull(nameof(diagnostics));
 
-        var diagnosticCodes = GetDiagnosticCodes(source.InputKind);
         var builder = new DialectDefinitionBuilder();
 
         builder.SetIdentity(source.Name, source.Version, source.BaseDialectName);
-
-        var activeModules = DialectSemanticNormalization.NormalizeActiveModules(
-            source.UseModules,
-            source.ExcludeModules,
-            diagnostics,
-            diagnosticCodes.ModuleConflict);
-
-        var backendMap = DialectSemanticNormalization.NormalizeBackendRules(
-            source.BackendDirectives,
-            x => x.Backend,
-            x => x.Enabled,
-            diagnostics,
-            diagnosticCodes.BackendContradiction);
-
-        builder.SetModulePolicy(new ModulePolicy(
-            activeModules,
-            source.ExcludeModules.Distinct(StringComparer.Ordinal).OrderBy(x => x, StringComparer.Ordinal)));
-        builder.SetBackendPolicy(new BackendPolicy(
-            backendMap.Where(x => x.Value).Select(x => x.Key).OrderBy(x => x, Comparer<DialectBackendId>.Default),
-            backendMap.Where(x => !x.Value).Select(x => x.Key).OrderBy(x => x, Comparer<DialectBackendId>.Default)));
         builder.SetOrderRules(DialectOrderConstraintMapper.ToDefinitionRules(DialectOrderConstraintMapper.FromBindingRules(source.OrderRules)));
         DirectiveHandlerRegistry.Apply(source, builder, diagnostics);
 
         return builder.Build();
     }
-
-    private static BindingDiagnosticCodes GetDiagnosticCodes(DialectBindingInputKind inputKind)
-    {
-        return inputKind switch
-        {
-            DialectBindingInputKind.Compiled => new BindingDiagnosticCodes("S101", "S102"),
-            _ => new BindingDiagnosticCodes("S001", "S003")
-        };
-    }
-
-    private readonly record struct BindingDiagnosticCodes(
-        string ModuleConflict,
-        string BackendContradiction);
 }

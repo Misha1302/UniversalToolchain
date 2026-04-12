@@ -4,11 +4,21 @@ namespace UniversalToolchain.Dialects.Core.Binding.Handlers;
 
 internal sealed class DialectDirectiveHandlerContext
 {
-    private DialectDirectiveHandlerContext(string intrinsicContradictionCode, string optimizerContradictionCode)
+    private DialectDirectiveHandlerContext(
+        string moduleConflictCode,
+        string backendContradictionCode,
+        string intrinsicContradictionCode,
+        string optimizerContradictionCode)
     {
+        ModuleConflictCode = moduleConflictCode;
+        BackendContradictionCode = backendContradictionCode;
         IntrinsicContradictionCode = intrinsicContradictionCode;
         OptimizerContradictionCode = optimizerContradictionCode;
     }
+
+    public string ModuleConflictCode { get; }
+
+    public string BackendContradictionCode { get; }
 
     public string IntrinsicContradictionCode { get; }
 
@@ -18,8 +28,8 @@ internal sealed class DialectDirectiveHandlerContext
     {
         return inputKind switch
         {
-            DialectBindingInputKind.Compiled => new DialectDirectiveHandlerContext("S103", "S104"),
-            _ => new DialectDirectiveHandlerContext("S004", "S005")
+            DialectBindingInputKind.Compiled => new DialectDirectiveHandlerContext("S101", "S102", "S103", "S104"),
+            _ => new DialectDirectiveHandlerContext("S001", "S003", "S004", "S005")
         };
     }
 

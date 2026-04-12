@@ -38,6 +38,56 @@ public class DialectDirectiveHandlerTests
     }
 
     [Test]
+    public void ModuleHandler_NormalizesAndSetsPolicy()
+    {
+        var diagnostics = new List<DialectDiagnostic>();
+        var builder = CreateBuilderWithPolicyDefaults();
+        var source = new TestBindingSource
+        {
+            UseModules = ["Variables", "Arithmetic", "Arithmetic", "UnsafeInterop"],
+            ExcludeModules = ["UnsafeInterop"]
+        };
+
+        new ModuleDirectiveHandler().Apply(source, builder, diagnostics);
+        var definition = builder.Build();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(definition.ModulePolicy.IncludedModules, Is.EqualTo(new[] { "Arithmetic", "Variables" }));
+            Assert.That(definition.ModulePolicy.ExcludedModules, Is.EqualTo(new[] { "UnsafeInterop" }));
+            Assert.That(diagnostics.Select(x => x.Code), Is.EqualTo(new[] { "S001" }));
+        });
+    }
+
+    [Test]
+    public void BackendHandler_NormalizesAndSetsPolicy()
+    {
+        var diagnostics = new List<DialectDiagnostic>();
+        var builder = CreateBuilderWithPolicyDefaults();
+        var source = new TestBindingSource
+        {
+            InputKind = DialectBindingInputKind.Compiled,
+            BackendDirectives =
+            [
+                new BackendBindingDirectiveRecord(TestBackendIds.Interpreter, true),
+                new BackendBindingDirectiveRecord(TestBackendIds.Cil, false),
+                new BackendBindingDirectiveRecord(TestBackendIds.Interpreter, true),
+                new BackendBindingDirectiveRecord(TestBackendIds.Interpreter, false)
+            ]
+        };
+
+        new BackendDirectiveHandler().Apply(source, builder, diagnostics);
+        var definition = builder.Build();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(definition.BackendPolicy.EnabledBackends, Is.EqualTo(new[] { TestBackendIds.Interpreter }));
+            Assert.That(definition.BackendPolicy.DisabledBackends, Is.EqualTo(new[] { TestBackendIds.Cil }));
+            Assert.That(diagnostics.Select(x => x.Code), Is.EqualTo(new[] { "S102" }));
+        });
+    }
+
+    [Test]
     public void IntrinsicHandler_NormalizesAndSetsPolicy()
     {
         var diagnostics = new List<DialectDiagnostic>();
@@ -151,6 +201,8 @@ public class DialectDirectiveHandlerTests
         var source = CreateFullSource();
         var registry = new DialectDirectiveHandlerRegistry(
         [
+            new BackendDirectiveHandler(),
+            new ModuleDirectiveHandler(),
             new SecurityDirectiveHandler(),
             new CapabilityDirectiveHandler(),
             new OptimizerDirectiveHandler(),
@@ -160,6 +212,13 @@ public class DialectDirectiveHandlerTests
         registry.Apply(source, builder, diagnostics);
         var definition = builder.Build();
 
+        Assert.Multiple(() =>
+        {
+            Assert.That(definition.ModulePolicy.IncludedModules, Is.EqualTo(new[] { "Arithmetic", "Variables" }));
+            Assert.That(definition.ModulePolicy.ExcludedModules, Is.EqualTo(new[] { "UnsafeInterop" }));
+            Assert.That(definition.BackendPolicy.EnabledBackends, Is.EqualTo(new[] { TestBackendIds.Interpreter }));
+            Assert.That(definition.BackendPolicy.DisabledBackends, Is.EqualTo(new[] { TestBackendIds.Cil }));
+        });
         AssertPolicyShape(definition);
         Assert.That(diagnostics, Is.Empty);
     }
