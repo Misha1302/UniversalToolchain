@@ -1,5 +1,6 @@
 using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
+using UniversalToolchain.Dialects.Core.Binding;
 using UniversalToolchain.Dialects.Frontend;
 using UniversalToolchain.Dialects.Parsing;
 
@@ -15,51 +16,7 @@ internal static class DialectDefinitionSemanticBinder
         if (diagnostics == null)
             Thrower.ArgumentNull(nameof(diagnostics));
 
-        var activeModules = DialectSemanticNormalization.NormalizeActiveModules(
-            syntaxDocument.UseModules,
-            syntaxDocument.ExcludeModules,
-            diagnostics,
-            "S001");
-
-        var backendMap = DialectSemanticNormalization.NormalizeBackendRules(
-            syntaxDocument.BackendDirectives,
-            x => x.Backend,
-            x => x.Enabled,
-            diagnostics,
-            "S003");
-
-        var intrinsicDirectives = DialectSemanticNormalization.NormalizeIntrinsicRules(
-            syntaxDocument.IntrinsicDirectives,
-            x => x.Name,
-            x => x.Target,
-            x => x.Allowed,
-            diagnostics,
-            "S004");
-
-        var optimizerDirectives = DialectSemanticNormalization.NormalizeOptimizerRules(
-            syntaxDocument.OptimizerDirectives,
-            x => x.Name,
-            x => x.Target,
-            x => x.Enabled,
-            diagnostics,
-            "S005");
-
-        return new DialectDefinition(
-            syntaxDocument.Name,
-            new ModulePolicy(activeModules, syntaxDocument.ExcludeModules.Distinct(StringComparer.Ordinal).OrderBy(x => x, StringComparer.Ordinal)),
-            new BackendPolicy(
-                backendMap.Where(x => x.Value).Select(x => x.Key).OrderBy(x => x, Comparer<DialectBackendId>.Default),
-                backendMap.Where(x => !x.Value).Select(x => x.Key).OrderBy(x => x, Comparer<DialectBackendId>.Default)),
-            new IntrinsicPolicy(
-                intrinsicDirectives.Where(x => x.Allowed).Select(FormatRuleName),
-                intrinsicDirectives.Where(x => !x.Allowed).Select(FormatRuleName)),
-            new OptimizerPolicy(
-                optimizerDirectives.Where(x => x.Enabled).Select(FormatRuleName),
-                optimizerDirectives.Where(x => !x.Enabled).Select(FormatRuleName)),
-            syntaxDocument.SecurityProfile.HasValue ? new SecurityPolicy(syntaxDocument.SecurityProfile.Value) : null,
-            new CapabilityPolicy(syntaxDocument.Capabilities.OrderBy(x => x.Key, StringComparer.Ordinal)),
-            DialectOrderConstraintMapper.ToDefinitionRules(DialectOrderConstraintMapper.FromSyntaxRules(syntaxDocument.OrderRules)),
-            syntaxDocument.Version);
+        return BindCore(new SyntaxDialectBindingSource(syntaxDocument), diagnostics);
     }
 
     public static DialectDefinition Bind(DialectDefinitionSlice compiledDialect, List<DialectDiagnostic> diagnostics)
@@ -70,54 +27,68 @@ internal static class DialectDefinitionSemanticBinder
         if (diagnostics == null)
             Thrower.ArgumentNull(nameof(diagnostics));
 
+        return BindCore(new CompiledDialectBindingSource(compiledDialect), diagnostics);
+    }
+
+    internal static DialectDefinition BindCore(IDialectBindingSource source, List<DialectDiagnostic> diagnostics)
+    {
+        if (source == null)
+            Thrower.ArgumentNull(nameof(source));
+
+        if (diagnostics == null)
+            Thrower.ArgumentNull(nameof(diagnostics));
+
+        var diagnosticCodes = GetDiagnosticCodes(source.InputKind);
+        var builder = new DialectDefinitionBuilder();
+
+        builder.SetIdentity(source.Name, source.Version, source.BaseDialectName);
+
         var activeModules = DialectSemanticNormalization.NormalizeActiveModules(
-            compiledDialect.UseModules,
-            compiledDialect.ExcludeModules,
+            source.UseModules,
+            source.ExcludeModules,
             diagnostics,
-            "S101");
+            diagnosticCodes.ModuleConflict);
 
         var backendMap = DialectSemanticNormalization.NormalizeBackendRules(
-            compiledDialect.BackendDirectives,
+            source.BackendDirectives,
             x => x.Backend,
             x => x.Enabled,
             diagnostics,
-            "S102");
+            diagnosticCodes.BackendContradiction);
 
         var intrinsicDirectives = DialectSemanticNormalization.NormalizeIntrinsicRules(
-            compiledDialect.IntrinsicDirectives,
+            source.IntrinsicDirectives,
             x => x.Name,
             x => x.Target,
             x => x.Allowed,
             diagnostics,
-            "S103");
+            diagnosticCodes.IntrinsicContradiction);
 
         var optimizerDirectives = DialectSemanticNormalization.NormalizeOptimizerRules(
-            compiledDialect.OptimizerDirectives,
+            source.OptimizerDirectives,
             x => x.Name,
             x => x.Target,
             x => x.Enabled,
             diagnostics,
-            "S104");
+            diagnosticCodes.OptimizerContradiction);
 
-        var capabilities = compiledDialect.CapabilityDirectives
-            .OrderBy(x => x.Name, StringComparer.Ordinal)
-            .Select(x => new KeyValuePair<string, bool>(x.Name, x.Value));
+        builder.SetModulePolicy(new ModulePolicy(
+            activeModules,
+            source.ExcludeModules.Distinct(StringComparer.Ordinal).OrderBy(x => x, StringComparer.Ordinal)));
+        builder.SetBackendPolicy(new BackendPolicy(
+            backendMap.Where(x => x.Value).Select(x => x.Key).OrderBy(x => x, Comparer<DialectBackendId>.Default),
+            backendMap.Where(x => !x.Value).Select(x => x.Key).OrderBy(x => x, Comparer<DialectBackendId>.Default)));
+        builder.SetIntrinsicPolicy(new IntrinsicPolicy(
+            intrinsicDirectives.Where(x => x.Allowed).Select(FormatRuleName),
+            intrinsicDirectives.Where(x => !x.Allowed).Select(FormatRuleName)));
+        builder.SetOptimizerPolicy(new OptimizerPolicy(
+            optimizerDirectives.Where(x => x.Enabled).Select(FormatRuleName),
+            optimizerDirectives.Where(x => !x.Enabled).Select(FormatRuleName)));
+        builder.SetSecurityPolicy(source.SecurityProfile.HasValue ? new SecurityPolicy(source.SecurityProfile.Value) : null);
+        builder.SetCapabilityPolicy(new CapabilityPolicy(source.Capabilities.OrderBy(x => x.Key, StringComparer.Ordinal)));
+        builder.SetOrderRules(DialectOrderConstraintMapper.ToDefinitionRules(DialectOrderConstraintMapper.FromBindingRules(source.OrderRules)));
 
-        return new DialectDefinition(
-            compiledDialect.Name,
-            new ModulePolicy(activeModules, compiledDialect.ExcludeModules.Distinct(StringComparer.Ordinal).OrderBy(x => x, StringComparer.Ordinal)),
-            new BackendPolicy(
-                backendMap.Where(x => x.Value).Select(x => x.Key).OrderBy(x => x, Comparer<DialectBackendId>.Default),
-                backendMap.Where(x => !x.Value).Select(x => x.Key).OrderBy(x => x, Comparer<DialectBackendId>.Default)),
-            new IntrinsicPolicy(
-                intrinsicDirectives.Where(x => x.Allowed).Select(FormatRuleName),
-                intrinsicDirectives.Where(x => !x.Allowed).Select(FormatRuleName)),
-            new OptimizerPolicy(
-                optimizerDirectives.Where(x => x.Enabled).Select(FormatRuleName),
-                optimizerDirectives.Where(x => !x.Enabled).Select(FormatRuleName)),
-            compiledDialect.SecurityProfile.HasValue ? new SecurityPolicy(ToSecurityProfile(compiledDialect.SecurityProfile.Value)) : null,
-            new CapabilityPolicy(capabilities),
-            DialectOrderConstraintMapper.ToDefinitionRules(DialectOrderConstraintMapper.FromCompiledDirectives(compiledDialect.OrderDirectives)));
+        return builder.Build();
     }
 
     private static string FormatRuleName(IntrinsicBuildDirective directive) => FormatRuleName(directive.Name, directive.Target);
@@ -126,12 +97,18 @@ internal static class DialectDefinitionSemanticBinder
 
     private static string FormatRuleName(string name, DialectBackendSelector target) => target.IsAny ? name : $"{name}@{DialectBackendSelectorText.ToText(target.BackendId)}";
 
-    private static SecurityProfile ToSecurityProfile(DialectSecurityProfile profile)
+    private static BindingDiagnosticCodes GetDiagnosticCodes(DialectBindingInputKind inputKind)
     {
-        return profile switch
+        return inputKind switch
         {
-            DialectSecurityProfile.Trusted => SecurityProfile.Trusted,
-            _ => SecurityProfile.Restricted
+            DialectBindingInputKind.Compiled => new BindingDiagnosticCodes("S101", "S102", "S103", "S104"),
+            _ => new BindingDiagnosticCodes("S001", "S003", "S004", "S005")
         };
     }
+
+    private readonly record struct BindingDiagnosticCodes(
+        string ModuleConflict,
+        string BackendContradiction,
+        string IntrinsicContradiction,
+        string OptimizerContradiction);
 }

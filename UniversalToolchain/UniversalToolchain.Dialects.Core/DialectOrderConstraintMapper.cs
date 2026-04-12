@@ -1,4 +1,5 @@
 using UniversalToolchain.Dialects.Abstractions;
+using UniversalToolchain.Dialects.Core.Binding;
 using UniversalToolchain.Dialects.Frontend;
 
 namespace UniversalToolchain.Dialects.Core;
@@ -8,6 +9,8 @@ internal static class DialectOrderConstraintMapper
     public static List<DialectOrderConstraint> FromSyntaxRules(IReadOnlyList<OrderRule> rules) => rules.Select(ToOrderConstraint).ToList();
 
     public static List<DialectOrderConstraint> FromCompiledDirectives(IReadOnlyList<DialectOrderDirective> directives) => directives.Select(ToOrderConstraint).ToList();
+
+    public static List<DialectOrderConstraint> FromBindingRules(IReadOnlyList<OrderBindingDirectiveRecord> rules) => rules.Select(ToOrderConstraint).ToList();
 
     public static List<DialectOrderConstraint> FromDefinitionRules(IReadOnlyList<OrderRule> rules) => rules.Select(ToOrderConstraint).ToList();
 
@@ -24,6 +27,12 @@ internal static class DialectOrderConstraintMapper
             ToConstraintKind(directive.Kind),
             directive.SourceModule,
             directive.TargetModule);
+
+    private static DialectOrderConstraint ToOrderConstraint(OrderBindingDirectiveRecord rule) =>
+        new(
+            ToConstraintKind(rule.Kind),
+            rule.ModuleName,
+            rule.RelatedModuleName);
 
     private static OrderRule ToDefinitionRule(DialectOrderConstraint constraint) => new(ToDefinitionKind(constraint.Kind), constraint.SourceModule, constraint.TargetModule);
 
