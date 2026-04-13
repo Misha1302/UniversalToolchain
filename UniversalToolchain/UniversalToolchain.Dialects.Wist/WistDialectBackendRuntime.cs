@@ -8,11 +8,9 @@ internal sealed class WistDialectBackendRuntime
 {
     public WistDialectBackendRuntime(RuntimeBackendDescriptor descriptor, ICoreRunnable core)
     {
-        if (descriptor == null)
-            Thrower.ArgumentNull(nameof(descriptor));
+        descriptor = descriptor.ArgNotNull();
 
-        if (core == null)
-            Thrower.ArgumentNull(nameof(core));
+        core = core.ArgNotNull();
 
         Descriptor = descriptor;
         Core = core;

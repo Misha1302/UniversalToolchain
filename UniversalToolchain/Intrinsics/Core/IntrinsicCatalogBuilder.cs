@@ -6,8 +6,7 @@ public sealed class IntrinsicCatalogBuilder
 {
     public IIntrinsicCatalog Build(IEnumerable<IIntrinsicDescriptorProvider> providers)
     {
-        if (providers == null)
-            Thrower.ArgumentNull(nameof(providers));
+        providers = providers.ArgNotNull();
 
         var orderedProviders = providers
             .Select(x => x.NotNull(nameof(providers)))
@@ -38,8 +37,7 @@ public sealed class IntrinsicCatalogBuilder
 
     private static void ValidateDescriptor(IntrinsicSemanticDescriptor descriptor)
     {
-        if (descriptor == null)
-            Thrower.ArgumentNull(nameof(descriptor));
+        descriptor = descriptor.ArgNotNull();
 
         Thrower.AssertAlways(descriptor.StackRule != null);
         Thrower.AssertAlways(descriptor.ValidationRule != null);

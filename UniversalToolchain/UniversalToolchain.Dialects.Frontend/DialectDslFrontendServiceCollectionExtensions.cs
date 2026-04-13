@@ -15,11 +15,9 @@ public static class DialectDslFrontendServiceCollectionExtensions
         this IServiceCollection services,
         DialectDslFrontendModule frontendModule)
     {
-        if (services == null)
-            Thrower.ArgumentNull(nameof(services));
+        services = services.ArgNotNull();
 
-        if (frontendModule == null)
-            Thrower.ArgumentNull(nameof(frontendModule));
+        frontendModule = frontendModule.ArgNotNull();
 
         var coreRuntimeInfrastructure = AddCoreRuntimeInfrastructureMethod.Invoke(null, [services]);
         if (coreRuntimeInfrastructure == null)

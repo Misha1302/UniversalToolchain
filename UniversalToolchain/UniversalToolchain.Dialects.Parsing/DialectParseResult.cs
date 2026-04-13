@@ -13,8 +13,7 @@ public sealed class DialectParseResult
 
     public DialectParseResult(DialectSyntaxDocument? document, IEnumerable<DialectDiagnostic> diagnostics)
     {
-        if (diagnostics == null)
-            Thrower.ArgumentNull(nameof(diagnostics));
+        diagnostics = diagnostics.ArgNotNull();
 
         var snapshot = new List<DialectDiagnostic>();
         foreach (var diagnostic in diagnostics)

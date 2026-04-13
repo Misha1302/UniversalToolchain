@@ -31,8 +31,7 @@ public sealed class DialectBuildPlan
         if (string.IsNullOrWhiteSpace(name))
             Thrower.Argument(nameof(name), "Dialect name must not be empty.");
 
-        if (validationResult == null)
-            Thrower.ArgumentNull(nameof(validationResult));
+        validationResult = validationResult.ArgNotNull();
 
         Name = name;
         Version = version;
@@ -87,8 +86,7 @@ public sealed class DialectBuildPlan
 
     private static Dictionary<string, bool> SnapshotDictionary(IEnumerable<KeyValuePair<string, bool>> source)
     {
-        if (source == null)
-            Thrower.ArgumentNull(nameof(source));
+        source = source.ArgNotNull();
 
         var dictionary = new Dictionary<string, bool>(StringComparer.Ordinal);
         foreach (var item in source)

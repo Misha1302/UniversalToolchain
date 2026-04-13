@@ -10,8 +10,7 @@ public static class DialectDslLexemeRegistry
 
     public static IReadOnlyList<LexemeRegistration> CreateRegistrations(DialectDslRegistry registry)
     {
-        if (registry == null)
-            Thrower.ArgumentNull(nameof(registry));
+        registry = registry.ArgNotNull();
 
         var registrations = new List<LexemeRegistration>
         {

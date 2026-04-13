@@ -8,8 +8,7 @@ public static class DialectDefinitionSliceAirReader
 {
     public static DialectDefinitionSlice Read(IAbstractIR air)
     {
-        if (air == null)
-            Thrower.ArgumentNull(nameof(air));
+        air = air.ArgNotNull();
 
         var aggregation = new DialectDefinitionAggregation();
         foreach (var annotation in air.Instructions.SelectMany(x => x.Metadata))
@@ -29,8 +28,7 @@ public sealed class DialectDefinitionSliceBuilder
 {
     public DialectDefinitionSlice Build(DialectDefinitionAggregation aggregation)
     {
-        if (aggregation == null)
-            Thrower.ArgumentNull(nameof(aggregation));
+        aggregation = aggregation.ArgNotNull();
 
         if (string.IsNullOrWhiteSpace(aggregation.DialectName))
             Thrower.InvalidOpEx("Dialect AIR is missing a DialectNameAirAnnotation.");

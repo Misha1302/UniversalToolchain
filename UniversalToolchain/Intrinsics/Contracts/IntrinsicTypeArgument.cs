@@ -4,8 +4,7 @@ public readonly record struct IntrinsicTypeArgument(Type RuntimeType)
 {
     public static IntrinsicTypeArgument From(Type type)
     {
-        if (type == null)
-            Thrower.ArgumentNull(nameof(type));
+        type = type.ArgNotNull();
 
         return new IntrinsicTypeArgument(type);
     }

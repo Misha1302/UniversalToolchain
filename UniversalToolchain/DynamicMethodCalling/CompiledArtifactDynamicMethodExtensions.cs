@@ -9,48 +9,42 @@ public static class CompiledArtifactDynamicMethodExtensions
 
     public static INativeDelegateInvoker GetNativeDelegateInvoker(this ICompiledArtifact<DynamicMethod> artifact)
     {
-        if (artifact is null)
-            Thrower.ArgumentNull(nameof(artifact));
+        artifact = artifact.ArgNotNull();
 
         return _invokers.GetValue(artifact, CreateInvoker);
     }
 
     public static Func<TResult> AsFunc<TResult>(this ICompiledArtifact<DynamicMethod> artifact)
     {
-        if (artifact is null)
-            Thrower.ArgumentNull(nameof(artifact));
+        artifact = artifact.ArgNotNull();
 
         return artifact.GetNativeDelegateInvoker().AsFunc<TResult>();
     }
 
     public static Func<T1, TResult> AsFunc<T1, TResult>(this ICompiledArtifact<DynamicMethod> artifact)
     {
-        if (artifact is null)
-            Thrower.ArgumentNull(nameof(artifact));
+        artifact = artifact.ArgNotNull();
 
         return artifact.GetNativeDelegateInvoker().AsFunc<T1, TResult>();
     }
 
     public static Func<T1, T2, TResult> AsFunc<T1, T2, TResult>(this ICompiledArtifact<DynamicMethod> artifact)
     {
-        if (artifact is null)
-            Thrower.ArgumentNull(nameof(artifact));
+        artifact = artifact.ArgNotNull();
 
         return artifact.GetNativeDelegateInvoker().AsFunc<T1, T2, TResult>();
     }
 
     public static Func<T1, T2, T3, TResult> AsFunc<T1, T2, T3, TResult>(this ICompiledArtifact<DynamicMethod> artifact)
     {
-        if (artifact is null)
-            Thrower.ArgumentNull(nameof(artifact));
+        artifact = artifact.ArgNotNull();
 
         return artifact.GetNativeDelegateInvoker().AsFunc<T1, T2, T3, TResult>();
     }
 
     public static Func<T1, T2, T3, T4, TResult> AsFunc<T1, T2, T3, T4, TResult>(this ICompiledArtifact<DynamicMethod> artifact)
     {
-        if (artifact is null)
-            Thrower.ArgumentNull(nameof(artifact));
+        artifact = artifact.ArgNotNull();
 
         return artifact.GetNativeDelegateInvoker().AsFunc<T1, T2, T3, T4, TResult>();
     }

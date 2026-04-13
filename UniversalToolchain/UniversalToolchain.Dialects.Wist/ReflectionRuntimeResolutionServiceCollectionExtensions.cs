@@ -15,8 +15,7 @@ public static class ReflectionRuntimeResolutionServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddReflectionRuntimeResolutionServices(this IServiceCollection services)
     {
-        if (services == null)
-            Thrower.ArgumentNull(nameof(services));
+        services = services.ArgNotNull();
 
         services.TryAddSingleton<IRuntimeAssemblyLocator, DefaultRuntimeAssemblyLocator>();
         services.TryAddSingleton<IRuntimeAssemblyLoadStrategy, DefaultRuntimeAssemblyLoadStrategy>();

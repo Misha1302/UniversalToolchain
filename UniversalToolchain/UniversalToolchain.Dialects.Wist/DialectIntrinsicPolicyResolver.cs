@@ -9,8 +9,7 @@ public sealed class DialectIntrinsicPolicyResolver
         DialectBuildPlan buildPlan,
         DialectBackendId backendId)
     {
-        if (buildPlan == null)
-            Thrower.ArgumentNull(nameof(buildPlan));
+        buildPlan = buildPlan.ArgNotNull();
 
         var allowed = buildPlan.IntrinsicDirectives
             .Where(x => x.Allowed && x.Target.Matches(backendId))

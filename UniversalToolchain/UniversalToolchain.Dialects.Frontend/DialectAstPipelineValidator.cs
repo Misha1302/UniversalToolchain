@@ -7,11 +7,9 @@ public static class DialectAstPipelineValidator
 {
     public static AstNode Validate(AstNode astRoot, DialectDslRegistry registry)
     {
-        if (astRoot == null)
-            Thrower.ArgumentNull(nameof(astRoot));
+        astRoot = astRoot.ArgNotNull();
 
-        if (registry == null)
-            Thrower.ArgumentNull(nameof(registry));
+        registry = registry.ArgNotNull();
 
         DialectDslAstValidator.Validate(astRoot, registry);
         return astRoot;
@@ -22,11 +20,9 @@ public static class DialectDslAstValidator
 {
     public static DialectDocumentAstNode Validate(AstNode astRoot, DialectDslRegistry registry)
     {
-        if (astRoot == null)
-            Thrower.ArgumentNull(nameof(astRoot));
+        astRoot = astRoot.ArgNotNull();
 
-        if (registry == null)
-            Thrower.ArgumentNull(nameof(registry));
+        registry = registry.ArgNotNull();
 
         if (astRoot.Children.Count != 1 || astRoot.Children[0] is not DialectDocumentAstNode)
             DialectDefinitionSliceParseErrors.Fail("Dialect AST must contain exactly one DialectDocumentAstNode root.", astRoot.Children.FirstOrDefault()?.LexemeValue);

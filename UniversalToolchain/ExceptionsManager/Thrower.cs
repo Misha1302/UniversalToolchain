@@ -40,6 +40,19 @@ public static class Thrower
         return obj;
     }
 
+    [return: NotNull]
+    public static T ArgNotNull<T>(
+        this T? obj,
+        string message = "",
+        [CallerArgumentExpression(nameof(obj))]
+        string paramName = "")
+    {
+        if (obj == null)
+            ArgumentNull(paramName, message);
+
+        return obj;
+    }
+
     [DoesNotReturn]
     public static void NotImplementedException(string msg = "")
     {

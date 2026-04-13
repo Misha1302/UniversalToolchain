@@ -10,8 +10,7 @@ public static class CompiledArtifactSessionExtensions
     /// </summary>
     public static T Run<T>(this ICompiledArtifactSession session)
     {
-        if (session == null)
-            Thrower.ArgumentNull(nameof(session));
+        session = session.ArgNotNull();
 
         var result = session.Run();
         if (result is T typed)
@@ -30,11 +29,9 @@ public static class CompiledArtifactSessionExtensions
         this ICompiledArtifactSession session,
         params object?[] arguments)
     {
-        if (session == null)
-            Thrower.ArgumentNull(nameof(session));
+        session = session.ArgNotNull();
 
-        if (arguments == null)
-            Thrower.ArgumentNull(nameof(arguments));
+        arguments = arguments.ArgNotNull();
 
         if (arguments.Length != session.ArgumentCount)
             Thrower.Argument(
@@ -54,11 +51,9 @@ public static class CompiledArtifactSessionExtensions
         this ICompiledArtifactSession session,
         IReadOnlyDictionary<string, object?> arguments)
     {
-        if (session == null)
-            Thrower.ArgumentNull(nameof(session));
+        session = session.ArgNotNull();
 
-        if (arguments == null)
-            Thrower.ArgumentNull(nameof(arguments));
+        arguments = arguments.ArgNotNull();
 
         if (arguments.Count != session.ArgumentCount)
             Thrower.Argument(

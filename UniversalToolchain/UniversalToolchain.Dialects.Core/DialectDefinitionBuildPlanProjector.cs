@@ -7,11 +7,9 @@ internal static class DialectDefinitionBuildPlanProjector
 {
     public static DialectBuildPlan Project(DialectDefinition definition, List<DialectDiagnostic> diagnostics, string cycleCode, string cycleMessagePrefix, string? missingReferenceCode = null, string? missingReferenceMessagePrefix = null)
     {
-        if (definition == null)
-            Thrower.ArgumentNull(nameof(definition));
+        definition = definition.ArgNotNull();
 
-        if (diagnostics == null)
-            Thrower.ArgumentNull(nameof(diagnostics));
+        diagnostics = diagnostics.ArgNotNull();
 
         var securityProfile = definition.SecurityPolicy?.Profile;
         var capabilities = definition.CapabilityPolicy.Capabilities

@@ -16,11 +16,9 @@ public sealed class IntrinsicSemanticStartupValidator
         IntrinsicDescriptorProviderMetadataValidator metadataValidator,
         IntrinsicSemanticCoverageValidator coverageValidator)
     {
-        if (metadataValidator == null)
-            Thrower.ArgumentNull(nameof(metadataValidator));
+        metadataValidator = metadataValidator.ArgNotNull();
 
-        if (coverageValidator == null)
-            Thrower.ArgumentNull(nameof(coverageValidator));
+        coverageValidator = coverageValidator.ArgNotNull();
 
         _metadataValidator = metadataValidator;
         _coverageValidator = coverageValidator;
@@ -30,8 +28,7 @@ public sealed class IntrinsicSemanticStartupValidator
         IEnumerable<IIntrinsicDescriptorProvider> providers,
         IEnumerable<(Type ModuleType, Type ProviderType)>? coverageRequirements = null)
     {
-        if (providers == null)
-            Thrower.ArgumentNull(nameof(providers));
+        providers = providers.ArgNotNull();
 
         var providerList = providers.ToList();
         var resolvedCoverageRequirements = SnapshotCoverageRequirements(coverageRequirements);

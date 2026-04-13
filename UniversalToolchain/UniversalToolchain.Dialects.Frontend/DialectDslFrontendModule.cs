@@ -11,8 +11,7 @@ public sealed class DialectDslFrontendModule : IFrontendCoreModule
 {
     public DialectDslFrontendModule(DialectDslRegistry registry)
     {
-        if (registry == null)
-            Thrower.ArgumentNull(nameof(registry));
+        registry = registry.ArgNotNull();
 
         Registry = registry;
     }
@@ -21,16 +20,14 @@ public sealed class DialectDslFrontendModule : IFrontendCoreModule
 
     public void InitLexer(ILexer lexer)
     {
-        if (lexer == null)
-            Thrower.ArgumentNull(nameof(lexer));
+        lexer = lexer.ArgNotNull();
 
         lexer.AddLexemes(DialectDslLexemeRegistry.CreateRegistrations(Registry));
     }
 
     public void InitParser(IParser parser)
     {
-        if (parser == null)
-            Thrower.ArgumentNull(nameof(parser));
+        parser = parser.ArgNotNull();
 
         parser.AddNodeCreators(DialectDslParserNodeRegistry.CreateRegistrations(Registry));
     }
@@ -39,8 +36,7 @@ public sealed class DialectDslFrontendModule : IFrontendCoreModule
 
     public void InitAstTranslator(IAstToBytecodeTranslator translator)
     {
-        if (translator == null)
-            Thrower.ArgumentNull(nameof(translator));
+        translator = translator.ArgNotNull();
 
         translator.AddVisitors(new DialectAstToBytecodeVisitor(Registry));
     }

@@ -21,20 +21,15 @@ public sealed class WistDialectExecutionWorkflow
         WistDialectExecutionConfigurationBuilder configurationBuilder,
         WistDialectServiceProviderFactory serviceProviderFactory)
     {
-        if (compilerFactory == null)
-            Thrower.ArgumentNull(nameof(compilerFactory));
+        compilerFactory = compilerFactory.ArgNotNull();
 
-        if (buildPlanBuilder == null)
-            Thrower.ArgumentNull(nameof(buildPlanBuilder));
+        buildPlanBuilder = buildPlanBuilder.ArgNotNull();
 
-        if (resolver == null)
-            Thrower.ArgumentNull(nameof(resolver));
+        resolver = resolver.ArgNotNull();
 
-        if (configurationBuilder == null)
-            Thrower.ArgumentNull(nameof(configurationBuilder));
+        configurationBuilder = configurationBuilder.ArgNotNull();
 
-        if (serviceProviderFactory == null)
-            Thrower.ArgumentNull(nameof(serviceProviderFactory));
+        serviceProviderFactory = serviceProviderFactory.ArgNotNull();
 
         _compilerFactory = compilerFactory;
         _buildPlanBuilder = buildPlanBuilder;
@@ -56,8 +51,7 @@ public sealed class WistDialectExecutionWorkflow
 
     public DialectFrameworkCompositionResult ComposeText(string sourceText, string sourceName)
     {
-        if (sourceText == null)
-            Thrower.ArgumentNull(nameof(sourceText));
+        sourceText = sourceText.ArgNotNull();
 
         if (string.IsNullOrWhiteSpace(sourceName))
             Thrower.Argument(nameof(sourceName), "Source name must not be empty.");
@@ -81,8 +75,7 @@ public sealed class WistDialectExecutionWorkflow
 
     private DialectDefinitionSlice CompileSourceText(string sourceText)
     {
-        if (sourceText == null)
-            Thrower.ArgumentNull(nameof(sourceText));
+        sourceText = sourceText.ArgNotNull();
 
         using var compiler = _compilerFactory.Create();
         return compiler.Compile(sourceText);
@@ -90,8 +83,7 @@ public sealed class WistDialectExecutionWorkflow
 
     public WistDialectExecutionHost CreateHost(DialectFrameworkCompositionResult compositionResult)
     {
-        if (compositionResult == null)
-            Thrower.ArgumentNull(nameof(compositionResult));
+        compositionResult = compositionResult.ArgNotNull();
 
         if (!compositionResult.IsSuccess || compositionResult.BuildPlan == null)
             Thrower.Argument(nameof(compositionResult), "Dialect composition result must be successful before a runtime host can be created.");

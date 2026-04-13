@@ -7,8 +7,7 @@ public sealed class IntrinsicDescriptorProviderAttribute : Attribute
 {
     public IntrinsicDescriptorProviderAttribute(Type providerType)
     {
-        if (providerType == null)
-            Thrower.ArgumentNull(nameof(providerType));
+        providerType = providerType.ArgNotNull();
 
         ProviderType = providerType;
     }

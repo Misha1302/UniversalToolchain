@@ -19,8 +19,7 @@ public static class DialectDirectiveDescriptors
 {
     public static IReadOnlyList<DialectDirectiveDescriptor> CreateOrdered(DialectDslRegistry registry)
     {
-        if (registry == null)
-            Thrower.ArgumentNull(nameof(registry));
+        registry = registry.ArgNotNull();
 
         return registry.DirectiveFeatures
             .Select(x => new DialectDirectiveDescriptor

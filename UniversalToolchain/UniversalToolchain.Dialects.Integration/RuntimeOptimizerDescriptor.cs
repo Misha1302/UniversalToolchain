@@ -24,8 +24,7 @@ public sealed class RuntimeOptimizerDescriptor
 
     public RuntimeOptimizerDescriptor(Type implementationType, IEnumerable<string>? aliases = null, string? canonicalId = null)
     {
-        if (implementationType == null)
-            Thrower.ArgumentNull(nameof(implementationType));
+        implementationType = implementationType.ArgNotNull();
 
         if (!typeof(IIRProcessingModule).IsAssignableFrom(implementationType))
             Thrower.Argument(nameof(implementationType), "Optimizer type must implement IIRProcessingModule.");

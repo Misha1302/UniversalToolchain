@@ -45,25 +45,21 @@ public class GenericAbstractIR<TIdentifier> : IGenericAbstractIR<TIdentifier>
 
     public void Annotate(params List<object>[] annotations)
     {
-        if (annotations == null)
-            Thrower.ArgumentNull(nameof(annotations));
+        annotations = annotations.ArgNotNull();
         _instructions.AddRange(annotations.Select(ann => new Instruction(UOpCode.Annotate, ann)));
     }
 
     public void Intrinsic(object instructionIdentifier, params List<object> operands)
     {
-        if (instructionIdentifier == null)
-            Thrower.ArgumentNull(nameof(instructionIdentifier));
-        if (operands == null)
-            Thrower.ArgumentNull(nameof(operands));
+        instructionIdentifier = instructionIdentifier.ArgNotNull();
+        operands = operands.ArgNotNull();
         _instructions.Add(new Instruction(UOpCode.Intrinsic, [instructionIdentifier, ..operands]));
     }
 
 
     public void AppendInstructions(IReadOnlyList<Instruction> instructions)
     {
-        if (instructions == null)
-            Thrower.ArgumentNull(nameof(instructions));
+        instructions = instructions.ArgNotNull();
         _instructions.AddRange(instructions);
     }
 }

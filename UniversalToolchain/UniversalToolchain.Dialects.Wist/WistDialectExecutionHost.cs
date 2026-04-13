@@ -13,11 +13,9 @@ public sealed class WistDialectExecutionHost : IDisposable
 
     public WistDialectExecutionHost(IServiceProvider serviceProvider, WistDialectExecutionConfiguration configuration)
     {
-        if (serviceProvider == null)
-            Thrower.ArgumentNull(nameof(serviceProvider));
+        serviceProvider = serviceProvider.ArgNotNull();
 
-        if (configuration == null)
-            Thrower.ArgumentNull(nameof(configuration));
+        configuration = configuration.ArgNotNull();
 
         _serviceProvider = serviceProvider;
         Configuration = configuration;

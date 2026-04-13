@@ -15,11 +15,9 @@ public sealed class FileBasedRuntimeComponentCatalog : IRuntimeComponentCatalog
         IRuntimeManifestFileLocator manifestFileLocator,
         IRuntimeManifestSerializer manifestSerializer)
     {
-        if (manifestFileLocator == null)
-            Thrower.ArgumentNull(nameof(manifestFileLocator));
+        manifestFileLocator = manifestFileLocator.ArgNotNull();
 
-        if (manifestSerializer == null)
-            Thrower.ArgumentNull(nameof(manifestSerializer));
+        manifestSerializer = manifestSerializer.ArgNotNull();
 
         var entries = LoadEntries(manifestFileLocator.GetManifestFilePaths(), manifestSerializer);
 
@@ -105,8 +103,7 @@ public sealed class FileBasedRuntimeComponentCatalog : IRuntimeComponentCatalog
 
     private static RuntimeComponentManifestEntry Normalize(RuntimeComponentManifestEntry entry)
     {
-        if (entry == null)
-            Thrower.ArgumentNull(nameof(entry));
+        entry = entry.ArgNotNull();
 
         var canonical = entry.CanonicalAlias?.Trim();
         if (string.IsNullOrWhiteSpace(canonical))

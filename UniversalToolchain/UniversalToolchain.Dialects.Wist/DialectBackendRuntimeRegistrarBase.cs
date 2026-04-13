@@ -20,11 +20,9 @@ internal abstract class DialectBackendRuntimeRegistrarBase<TCompilationOutput> :
 
     public void RegisterRuntime(IServiceCollection services, DialectBackendRuntimeConfiguration configuration)
     {
-        if (services == null)
-            Thrower.ArgumentNull(nameof(services));
+        services = services.ArgNotNull();
 
-        if (configuration == null)
-            Thrower.ArgumentNull(nameof(configuration));
+        configuration = configuration.ArgNotNull();
 
         RegisterBackendDefaults(services);
 

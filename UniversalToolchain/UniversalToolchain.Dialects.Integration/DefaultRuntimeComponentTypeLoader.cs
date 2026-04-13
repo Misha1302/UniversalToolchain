@@ -8,8 +8,7 @@ public sealed class DefaultRuntimeComponentTypeLoader : IRuntimeComponentTypeLoa
 
     public DefaultRuntimeComponentTypeLoader(IRuntimeComponentResolver resolver)
     {
-        if (resolver == null)
-            Thrower.ArgumentNull(nameof(resolver));
+        resolver = resolver.ArgNotNull();
 
         _resolver = resolver;
     }
@@ -17,8 +16,7 @@ public sealed class DefaultRuntimeComponentTypeLoader : IRuntimeComponentTypeLoa
 
     public Type LoadType(RuntimeComponentManifestEntry entry)
     {
-        if (entry == null)
-            Thrower.ArgumentNull(nameof(entry));
+        entry = entry.ArgNotNull();
 
         return _resolver.Resolve(entry).ActivationType;
     }

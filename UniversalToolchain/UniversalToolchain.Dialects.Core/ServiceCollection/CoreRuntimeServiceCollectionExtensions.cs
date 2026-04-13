@@ -15,8 +15,7 @@ public static class CoreRuntimeServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddCoreRuntimeInfrastructure(this IServiceCollection services)
     {
-        if (services == null)
-            Thrower.ArgumentNull(nameof(services));
+        services = services.ArgNotNull();
 
         return services
             .AddNeutralRuntimeInfrastructure()

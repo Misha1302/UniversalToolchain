@@ -11,17 +11,13 @@ public static class InstructionTypeStackApplier
         IInstructionIntrinsicReader intrinsicReader,
         IIntrinsicTypeStackProcessor processor)
     {
-        if (instructions == null)
-            Thrower.ArgumentNull(nameof(instructions));
+        instructions = instructions.ArgNotNull();
 
-        if (stack == null)
-            Thrower.ArgumentNull(nameof(stack));
+        stack = stack.ArgNotNull();
 
-        if (intrinsicReader == null)
-            Thrower.ArgumentNull(nameof(intrinsicReader));
+        intrinsicReader = intrinsicReader.ArgNotNull();
 
-        if (processor == null)
-            Thrower.ArgumentNull(nameof(processor));
+        processor = processor.ArgNotNull();
 
         foreach (var instruction in instructions)
         {

@@ -13,8 +13,7 @@ public sealed class InstructionIntrinsicReader : IInstructionIntrinsicReader
 
     public InstructionIntrinsicReader(ILegacyIntrinsicDecoder legacyIntrinsicDecoder)
     {
-        if (legacyIntrinsicDecoder == null)
-            Thrower.ArgumentNull(nameof(legacyIntrinsicDecoder));
+        legacyIntrinsicDecoder = legacyIntrinsicDecoder.ArgNotNull();
 
         _legacyIntrinsicDecoder = legacyIntrinsicDecoder;
     }

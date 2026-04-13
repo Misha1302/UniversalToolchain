@@ -8,8 +8,7 @@ internal sealed class DialectDirectiveHandlerRegistry
 
     public DialectDirectiveHandlerRegistry(IEnumerable<IDialectDirectiveHandler> handlers)
     {
-        if (handlers == null)
-            Thrower.ArgumentNull(nameof(handlers));
+        handlers = handlers.ArgNotNull();
 
         _handlers = handlers
             .Select(ValidateHandler)
@@ -22,8 +21,7 @@ internal sealed class DialectDirectiveHandlerRegistry
 
     public void Apply(DialectBindingExecutionContext context)
     {
-        if (context == null)
-            Thrower.ArgumentNull(nameof(context));
+        context = context.ArgNotNull();
 
         foreach (var handler in _handlers)
             handler.Apply(context);
@@ -31,8 +29,7 @@ internal sealed class DialectDirectiveHandlerRegistry
 
     private static IDialectDirectiveHandler ValidateHandler(IDialectDirectiveHandler handler)
     {
-        if (handler == null)
-            Thrower.ArgumentNull(nameof(handler));
+        handler = handler.ArgNotNull();
 
         return handler;
     }

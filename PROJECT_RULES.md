@@ -334,6 +334,7 @@ Validate nulls at boundaries and assert invariants internally.
 Use only:
 
 - `Thrower.ArgumentNull(...)`
+- `obj.ArgNotNull(...)` for public API boundary arguments
 - `obj.NotNull(...)`
 - `Thrower.AssertAlways(...)` for internal invariants
 - `Thrower.NullException<T>(...)` only in rare low-level helper scenarios
@@ -350,14 +351,14 @@ Do not use:
 ### 6.4 Preferred boundary normalization style
 
 For non-nullable reference arguments in public constructors and public methods, prefer immediate normalization through
-`obj.NotNull(...)` over repetitive defensive `if (obj == null) Thrower.ArgumentNull(...)` blocks.
+`obj.ArgNotNull(...)` over repetitive defensive `if (obj == null) Thrower.ArgumentNull(...)` blocks.
 
 Preferred:
 
 ```csharp
 public Runner(IExecutor executor)
 {
-    _executor = executor.NotNull("Argument 'executor' cannot be null.");
+    _executor = executor.ArgNotNull();
 }
 ```
 
@@ -390,7 +391,7 @@ public IntrinsicTypeRegistryBuilder Add(string name, IntrinsicTypeProcessor proc
     if (string.IsNullOrWhiteSpace(name))
         Thrower.Argument(nameof(name), "Intrinsic type rule name must not be empty.");
 
-    processor = processor.NotNull("Argument 'processor' cannot be null.");
+    processor = processor.ArgNotNull();
 
     ...
 }
@@ -398,7 +399,7 @@ public IntrinsicTypeRegistryBuilder Add(string name, IntrinsicTypeProcessor proc
 
 ### 6.6 Internal invariants
 
-Use `Thrower.AssertAlways` when null would mean an internal bug or broken invariant.
+Use `obj.NotNull(...)` or `Thrower.AssertAlways` when null would mean an internal bug or broken invariant.
 
 ```csharp
 Thrower.AssertAlways(_prepared != null, "Prepared execution must be initialized before RunPrepared.");

@@ -10,8 +10,7 @@ public sealed class DefaultRuntimeManifestFileLocator : IRuntimeManifestFileLoca
 
     public DefaultRuntimeManifestFileLocator(RuntimeArtifactLocatorOptions options)
     {
-        if (options == null)
-            Thrower.ArgumentNull(nameof(options));
+        options = options.ArgNotNull();
 
         _manifestSearchPattern = string.IsNullOrWhiteSpace(options.ManifestSearchPattern)
             ? "*.dialect.runtime.json"

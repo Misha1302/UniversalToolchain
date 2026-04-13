@@ -16,14 +16,11 @@ public sealed class WistDialectExecutionConfigurationBuilder
         DialectIntrinsicPolicyResolver intrinsicPolicyResolver,
         IRuntimeKnownBackendsProvider knownBackendsProvider)
     {
-        if (typeLoader == null)
-            Thrower.ArgumentNull(nameof(typeLoader));
+        typeLoader = typeLoader.ArgNotNull();
 
-        if (intrinsicPolicyResolver == null)
-            Thrower.ArgumentNull(nameof(intrinsicPolicyResolver));
+        intrinsicPolicyResolver = intrinsicPolicyResolver.ArgNotNull();
 
-        if (knownBackendsProvider == null)
-            Thrower.ArgumentNull(nameof(knownBackendsProvider));
+        knownBackendsProvider = knownBackendsProvider.ArgNotNull();
 
         _typeLoader = typeLoader;
         _intrinsicPolicyResolver = intrinsicPolicyResolver;
@@ -32,11 +29,9 @@ public sealed class WistDialectExecutionConfigurationBuilder
 
     public WistDialectExecutionConfiguration Build(DialectBuildPlan buildPlan, SelectedRuntimePlan selectedRuntimePlan)
     {
-        if (buildPlan == null)
-            Thrower.ArgumentNull(nameof(buildPlan));
+        buildPlan = buildPlan.ArgNotNull();
 
-        if (selectedRuntimePlan == null)
-            Thrower.ArgumentNull(nameof(selectedRuntimePlan));
+        selectedRuntimePlan = selectedRuntimePlan.ArgNotNull();
 
         if (!selectedRuntimePlan.IsResolved)
             Thrower.Argument(nameof(selectedRuntimePlan), "Selected runtime plan must be resolved before execution wiring is built.");

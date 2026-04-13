@@ -11,11 +11,9 @@ public sealed class IntrinsicTypeStackProcessor : IIntrinsicTypeStackProcessor
         IIntrinsicCatalog catalog,
         IIntrinsicTypeResolutionContext context)
     {
-        if (catalog == null)
-            Thrower.ArgumentNull(nameof(catalog));
+        catalog = catalog.ArgNotNull();
 
-        if (context == null)
-            Thrower.ArgumentNull(nameof(context));
+        context = context.ArgNotNull();
 
         _catalog = catalog;
         _context = context;
@@ -23,11 +21,9 @@ public sealed class IntrinsicTypeStackProcessor : IIntrinsicTypeStackProcessor
 
     public void Process(IntrinsicInvocation invocation, List<Type> stack)
     {
-        if (invocation == null)
-            Thrower.ArgumentNull(nameof(invocation));
+        invocation = invocation.ArgNotNull();
 
-        if (stack == null)
-            Thrower.ArgumentNull(nameof(stack));
+        stack = stack.ArgNotNull();
 
         var descriptor = _catalog.Resolve(invocation.Symbol);
         descriptor.ValidationRule.Validate(invocation, _context);

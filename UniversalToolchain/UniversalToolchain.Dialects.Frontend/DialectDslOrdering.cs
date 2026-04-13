@@ -69,8 +69,7 @@ internal static class DialectParserOrderValidation
 {
     public static void EnsureNoCollisions<T>(IReadOnlyList<T> items, Func<T, DialectParserOrder> orderSelector, Func<T, string> describeItem, string scope)
     {
-        if (items == null)
-            Thrower.ArgumentNull(nameof(items));
+        items = items.ArgNotNull();
 
         var collision = items
             .GroupBy(orderSelector)

@@ -8,8 +8,7 @@ public sealed class DialectDefinitionSliceExecutor : IExecutor<DialectDefinition
 {
     public object? Execute(DialectDefinitionSlice compilation, IExecutionEnvironment environment)
     {
-        if (compilation == null)
-            Thrower.ArgumentNull(nameof(compilation));
+        compilation = compilation.ArgNotNull();
 
         return compilation;
     }

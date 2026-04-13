@@ -21,8 +21,7 @@ internal sealed class DialectIntrinsicPolicyCompiler<TCompilationOutput> : IAbst
         IEnumerable<string> forbiddenIntrinsics,
         bool hasExplicitAllowList = false)
     {
-        if (inner == null)
-            Thrower.ArgumentNull(nameof(inner));
+        inner = inner.ArgNotNull();
 
         _inner = inner;
         _allowedIntrinsics = CreateSet(allowedIntrinsics, nameof(allowedIntrinsics));
@@ -38,11 +37,9 @@ internal sealed class DialectIntrinsicPolicyCompiler<TCompilationOutput> : IAbst
 
     public TCompilationOutput Compile(IAbstractIR air, CompilationInput input)
     {
-        if (air == null)
-            Thrower.ArgumentNull(nameof(air));
+        air = air.ArgNotNull();
 
-        if (input == null)
-            Thrower.ArgumentNull(nameof(input));
+        input = input.ArgNotNull();
 
         ValidateIntrinsics(air);
         return _inner.Compile(air, input);

@@ -16,8 +16,7 @@ internal sealed class CompiledDialectBindingSource : IDialectBindingSource
 
     public CompiledDialectBindingSource(DialectDefinitionSlice slice)
     {
-        if (slice == null)
-            Thrower.ArgumentNull(nameof(slice));
+        slice = slice.ArgNotNull();
 
         _slice = slice;
         _orderRules = new ReadOnlyCollection<OrderBindingDirectiveRecord>(slice.OrderDirectives.Select(ToOrderRule).ToList());

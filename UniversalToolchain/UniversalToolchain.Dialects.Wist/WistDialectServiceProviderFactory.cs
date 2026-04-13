@@ -24,8 +24,7 @@ public sealed class WistDialectServiceProviderFactory
 
     public IServiceProvider Create(WistDialectExecutionConfiguration configuration)
     {
-        if (configuration == null)
-            Thrower.ArgumentNull(nameof(configuration));
+        configuration = configuration.ArgNotNull();
 
         var services = new ServiceCollection();
         services.AddNeutralRuntimeInfrastructure();
@@ -161,8 +160,7 @@ public sealed class WistDialectServiceProviderFactory
 
     private static IReadOnlyDictionary<DialectBackendId, IDialectBackendRuntimeRegistrar> CreateBackendProviderMap(IEnumerable<IDialectBackendRuntimeRegistrar> backendProviders)
     {
-        if (backendProviders == null)
-            Thrower.ArgumentNull(nameof(backendProviders));
+        backendProviders = backendProviders.ArgNotNull();
 
         var map = new SortedDictionary<DialectBackendId, IDialectBackendRuntimeRegistrar>();
         foreach (var backendProvider in backendProviders
