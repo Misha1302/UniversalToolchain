@@ -29,6 +29,38 @@ public sealed class DialectNameAirAnnotation(string name) : IDialectDefinitionSl
     }
 }
 
+public sealed class DialectVersionAirAnnotation(string version) : IDialectDefinitionSliceAnnotation
+{
+    public string Version { get; } = DialectAnnotationValueGuard.RequireValue(
+        version,
+        nameof(version),
+        "Dialect version annotation must not be empty.");
+
+    public void Apply(DialectDefinitionAggregation aggregation)
+    {
+        if (aggregation == null)
+            Thrower.ArgumentNull(nameof(aggregation));
+
+        aggregation.SetVersion(Version);
+    }
+}
+
+public sealed class BaseDialectAirAnnotation(string baseDialectName) : IDialectDefinitionSliceAnnotation
+{
+    public string BaseDialectName { get; } = DialectAnnotationValueGuard.RequireValue(
+        baseDialectName,
+        nameof(baseDialectName),
+        "Base dialect annotation must not be empty.");
+
+    public void Apply(DialectDefinitionAggregation aggregation)
+    {
+        if (aggregation == null)
+            Thrower.ArgumentNull(nameof(aggregation));
+
+        aggregation.SetBaseDialectName(BaseDialectName);
+    }
+}
+
 public sealed class UseModulesAirAnnotation(IReadOnlyList<string> modules) : IDialectDefinitionSliceAnnotation
 {
     public IReadOnlyList<string> Modules { get; } = DialectAnnotationValueGuard.RequireList(modules, nameof(modules), "Use modules annotation must not contain empty values.");
