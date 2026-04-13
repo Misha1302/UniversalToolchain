@@ -116,7 +116,7 @@ public class ParserConfigurationModuleImplTests
             -10.00|ConditionsModule.ComparisonNodeCreator|1|NotEqual
             -10.00|ConditionsModule.ComparisonNodeCreator|2|Greater
             20.00|ArithmeticModule.Creators.AdditionOperationNodeCreator|0|Addition
-            20.00|ArithmeticModule.SubstractionOperationNodeCreator|0|Substraction
+            20.00|ArithmeticModule.SubtractionOperationNodeCreator|0|Subtraction
             """;
 
         File.WriteAllText(_testConfigPath, configContent);

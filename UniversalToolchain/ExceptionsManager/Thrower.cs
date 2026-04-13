@@ -11,7 +11,7 @@ public static class Thrower
     [DoesNotReturn]
     [DebuggerStepThrough]
     [DebuggerHidden]
-    public static void AssertationFail(string errorMessage = "")
+    public static void AssertionFail(string errorMessage = "")
     {
         InvalidOpEx($"Assertion failed: {errorMessage}");
     }
@@ -29,7 +29,7 @@ public static class Thrower
     )
     {
         if (!cond)
-            AssertationFail(errorMessage == "" ? expression : errorMessage);
+            AssertionFail(errorMessage == "" ? expression : errorMessage);
     }
 
     [return: NotNull]

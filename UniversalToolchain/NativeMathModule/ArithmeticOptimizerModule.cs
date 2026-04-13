@@ -23,13 +23,18 @@ public class ArithmeticOptimizerModule : IIRProcessingModule
     private IOptimizerIntrinsicCapabilityContext? _capabilityContext;
     public void InitIntrinsicCapabilityContext(IOptimizerIntrinsicCapabilityContext capabilityContext)
     {
-        _capabilityContext = capabilityContext ?? throw new ArgumentNullException(nameof(capabilityContext));
+        if (capabilityContext == null)
+            Thrower.ArgumentNull(nameof(capabilityContext));
+
+        _capabilityContext = capabilityContext;
     }
 
     public IAbstractIR ProcessIr<TCompilationOutput>(IAbstractIR current, IAbstractIrCompiler<TCompilationOutput> compiler)
     {
-        var capabilityContext = _capabilityContext
-                                ?? throw new InvalidOperationException("Arithmetic optimizer requires intrinsic capability context initialization.");
+        if (_capabilityContext == null)
+            Thrower.InvalidOpEx("Arithmetic optimizer requires intrinsic capability context initialization.");
+
+        var capabilityContext = _capabilityContext;
 
         if (!HasRequiredCapabilities(capabilityContext, _supportedArithmeticTypes))
             return current;

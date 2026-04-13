@@ -54,7 +54,7 @@ public class NumbersModulePipelineTests
     }
 
     [TestCase("2+3", new[] { "Number", "Addition", "Number" })]
-    [TestCase("10-23", new[] { "Number", "Substraction", "Number" })]
+    [TestCase("10-23", new[] { "Number", "Subtraction", "Number" })]
     public void Numbers_Lexing_BinaryOperations_KeepOperatorsSeparate(string code, string[] expectedTags)
     {
         var tokens = BuildNumbersAndArithmeticLexer().Lexemize(code);

@@ -6,18 +6,26 @@ namespace UniversalToolchain.Intrinsics.Core.Rules;
 /// <summary>
 /// Applies stack semantics for a reflected .NET method call.
 /// </summary>
-public sealed class CSharpCallStackRule(MethodCallTypeSemanticsResolver resolver) : IIntrinsicStackRule
+public sealed class CSharpCallStackRule : IIntrinsicStackRule
 {
+    private readonly MethodCallTypeSemanticsResolver _resolver;
+
+    public CSharpCallStackRule(MethodCallTypeSemanticsResolver resolver)
+    {
+        if (resolver == null)
+            Thrower.ArgumentNull(nameof(resolver));
+
+        _resolver = resolver;
+    }
+
     public void Apply(IntrinsicInvocation invocation, List<Type> stack, IIntrinsicTypeResolutionContext context)
     {
-        ArgumentNullException.ThrowIfNull(resolver);
-
         Thrower.AssertAlways(
             invocation.DataOperands.Count > 0 && invocation.DataOperands[0] is MethodInfo,
             $"Intrinsic '{invocation.Symbol}' requires DataOperands[0] to be a MethodInfo.");
 
         var method = (MethodInfo)invocation.DataOperands[0]!;
-        var resolution = resolver.ResolveForStack(method, stack);
+        var resolution = _resolver.ResolveForStack(method, stack);
 
         Thrower.AssertAlways(
             stack.Count >= resolution.ConsumedTypes.Count,

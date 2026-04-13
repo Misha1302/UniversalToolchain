@@ -5,13 +5,20 @@ namespace UniversalToolchain.Intrinsics.Core.Rules;
 /// <summary>
 /// Pushes a single resolved type onto the stack.
 /// </summary>
-public sealed class PushSingleTypeRule(
-    Func<IntrinsicInvocation, IIntrinsicTypeResolutionContext, Type> resolveType) : IIntrinsicStackRule
+public sealed class PushSingleTypeRule : IIntrinsicStackRule
 {
+    private readonly Func<IntrinsicInvocation, IIntrinsicTypeResolutionContext, Type> _resolveType;
+
+    public PushSingleTypeRule(Func<IntrinsicInvocation, IIntrinsicTypeResolutionContext, Type> resolveType)
+    {
+        if (resolveType == null)
+            Thrower.ArgumentNull(nameof(resolveType));
+
+        _resolveType = resolveType;
+    }
+
     public void Apply(IntrinsicInvocation invocation, List<Type> stack, IIntrinsicTypeResolutionContext context)
     {
-        ArgumentNullException.ThrowIfNull(resolveType);
-
-        stack.Add(resolveType(invocation, context));
+        stack.Add(_resolveType(invocation, context));
     }
 }

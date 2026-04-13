@@ -11,7 +11,10 @@ public sealed class CompositeValidationRule : IIntrinsicValidationRule
 
     public CompositeValidationRule(params IIntrinsicValidationRule[] rules)
     {
-        _rules = rules ?? throw new ArgumentNullException(nameof(rules));
+        if (rules == null)
+            Thrower.ArgumentNull(nameof(rules));
+
+        _rules = rules;
     }
 
     public void Validate(IntrinsicInvocation invocation, IIntrinsicTypeResolutionContext context)

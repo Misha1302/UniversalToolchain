@@ -99,10 +99,15 @@ internal static class ManifestEmitter
             "FrontendModule" => "frontend",
             "Optimizer" => "optimizer",
             "Backend" => "backend",
-            _ => throw new InvalidOperationException($"Unknown runtime component kind '{kind}'.")
+            _ => throw CreateUnknownRuntimeKindException(kind)
         };
 
         return $"{prefix}.{canonicalAlias.Trim().ToLowerInvariant()}";
+    }
+
+    private static Exception CreateUnknownRuntimeKindException(string kind)
+    {
+        return new InvalidOperationException($"Unknown runtime component kind '{kind}'.");
     }
 }
 

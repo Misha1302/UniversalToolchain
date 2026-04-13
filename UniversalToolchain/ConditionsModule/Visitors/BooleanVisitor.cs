@@ -50,15 +50,15 @@ public class BooleanVisitor : IAstVisitor
         var op = data.Node.NodeType;
         var isAnd = op.GetName() == "And";
 
-        // Генерируем уникальные метки для управления потоком
+        // Generate unique labels for short-circuit flow control.
         var falseLabel = Guid.NewGuid();
         var trueLabel = Guid.NewGuid();
         var endLabel = Guid.NewGuid();
 
-        // 1. Вычисляем левый операнд
+        // 1. Evaluate the left operand.
         data.AstToBytecodeTranslator.Translate(data.Node.Children[0]);
 
-        // 2. Условный переход в зависимости от операции
+        // 2. Branch based on the operation kind.
         if (isAnd)
         {
             var condJumpMethod = new AbstractMethodImpl(
@@ -77,22 +77,21 @@ public class BooleanVisitor : IAstVisitor
         }
 
 
-        // 3. Вычисляем правый операнд
+        // 3. Evaluate the right operand.
         data.AstToBytecodeTranslator.Translate(data.Node.Children[1]);
 
-        // 4. Для AND: если оба true -> true, иначе -> false
-        //    Для OR: если оба false -> false, иначе -> true
+        // 4. For AND: both true => true, otherwise false.
+        //    For OR: both false => false, otherwise true.
         if (isAnd)
         {
-            // После вычисления правого операнда для AND
-            // Если правый false -> переход к false
+            // After evaluating the right operand for AND, false jumps to the false label.
             var rightFalseJump = new AbstractMethodImpl(
                 $"BoolAndRightFalse_{falseLabel}",
                 (il, _) => il.JmpIfNot(falseLabel)
             );
             data.Bytecode.Instructions.Add(new BytecodeInstruction(rightFalseJump));
 
-            // Оба true - переход к true
+            // Both are true, branch to the true label.
             var jumpToTrue = new AbstractMethodImpl(
                 $"BoolAndJumpTrue_{trueLabel}",
                 (il, _) => il.Jmp(trueLabel)
@@ -101,15 +100,14 @@ public class BooleanVisitor : IAstVisitor
         }
         else // OR
         {
-            // После вычисления правого операнда для OR
-            // Если правый true -> переход к true
+            // After evaluating the right operand for OR, true jumps to the true label.
             var rightTrueJump = new AbstractMethodImpl(
                 $"BoolOrRightTrue_{trueLabel}",
                 (il, _) => il.JmpIf(trueLabel)
             );
             data.Bytecode.Instructions.Add(new BytecodeInstruction(rightTrueJump));
 
-            // Оба false - переход к false
+            // Both are false, branch to the false label.
             var jumpToFalse = new AbstractMethodImpl(
                 $"BoolOrJumpFalse_{falseLabel}",
                 (il, _) => il.Jmp(falseLabel)
@@ -117,7 +115,7 @@ public class BooleanVisitor : IAstVisitor
             data.Bytecode.Instructions.Add(new BytecodeInstruction(jumpToFalse));
         }
 
-        // 5. Метка false (результат false)
+        // 5. False label emits false.
         var falseLabelMethod = new AbstractMethodImpl(
             $"BoolFalseLabel_{falseLabel}",
             (il, _) => il.SetLabel(falseLabel)
@@ -136,7 +134,7 @@ public class BooleanVisitor : IAstVisitor
         );
         data.Bytecode.Instructions.Add(new BytecodeInstruction(jumpToEnd));
 
-        // 6. Метка true (результат true)
+        // 6. True label emits true.
         var trueLabelMethod = new AbstractMethodImpl(
             $"BoolTrueLabel_{trueLabel}",
             (il, _) => il.SetLabel(trueLabel)
@@ -149,7 +147,7 @@ public class BooleanVisitor : IAstVisitor
         );
         data.Bytecode.Instructions.Add(new BytecodeInstruction(pushTrueMethod));
 
-        // 7. Метка конца
+        // 7. End label joins control flow.
         var endLabelMethod = new AbstractMethodImpl(
             $"BoolEndLabel_{endLabel}",
             (il, _) => il.SetLabel(endLabel)

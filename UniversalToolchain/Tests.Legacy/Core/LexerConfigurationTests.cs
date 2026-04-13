@@ -393,7 +393,7 @@ public class LexerConfigurationTests
         Assert.That(fileContent, Does.Contain("Identifier"));
         Assert.That(fileContent, Does.Contain("Number"));
         Assert.That(fileContent, Does.Contain("Addition"));
-        Assert.That(fileContent, Does.Contain("Substraction"));
+        Assert.That(fileContent, Does.Contain("Subtraction"));
     }
 
     [Test]
