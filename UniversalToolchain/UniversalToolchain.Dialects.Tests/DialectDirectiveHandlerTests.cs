@@ -257,6 +257,7 @@ public class DialectDirectiveHandlerTests
         var builder = CreateBuilder();
         builder.SetIntrinsicPolicy(new IntrinsicPolicy());
         builder.SetOptimizerPolicy(new OptimizerPolicy());
+        builder.SetSecurityPolicy(null);
         builder.SetCapabilityPolicy(new CapabilityPolicy());
         return builder;
     }
