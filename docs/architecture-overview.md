@@ -50,6 +50,15 @@ Typical dialect execution flow:
 Runtime component resolution builds cached per-assembly component indexes and uses a loadable-types fallback when
 reflection encounters partial type-load failures.
 
+## Dialect extensibility boundary
+
+The `.wistdialect` syntax remains closed in the current dialect series. New custom semantics should plug into semantic
+binding through directive handlers and builder extensions, not through grammar changes or a meta-DSL.
+
+`DialectDefinition` remains the typed immutable v1 model. Its typed properties are the canonical access path for v1
+policies such as modules, backends, intrinsics, optimizers, security, capabilities, and order rules. `Extensions` is a
+controlled storage bag for future custom semantic results only; canonical v1 policies should not be moved into it.
+
 ## Repository entry points
 
 - Solution: `UniversalToolchain/Wist.sln`
