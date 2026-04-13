@@ -99,9 +99,9 @@ def remove_using_directives(content):
 def remove_single_line_comments(content):
     """
     Removes single-line comments (//) while preserving string-literal correctness:
-    1. 1. Comments inside string literals are preserved
-    2. 2. Raw string literals are treated safely
-    3. 3. Escaped quotes are handled safely
+    1. Comments inside string literals are preserved
+    2. Raw string literals are treated safely
+    3. Escaped quotes are handled safely
     """
     if not content:
         return content

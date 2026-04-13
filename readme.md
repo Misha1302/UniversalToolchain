@@ -56,7 +56,11 @@ var interpretedArtifact = interpreter.Compile("price * 0.9 + fee", declaredBindi
 var session = interpretedArtifact.CreateSession();
 session.SetArgument("price", 100.0);
 session.SetArgument("fee", 5.0);
-var interpretedResult = (double)(session.Run() ?? throw new InvalidOperationException("Interpreter returned null.")); // 95.0
+var interpretedResultObject = session.Run();
+if (interpretedResultObject == null)
+    Thrower.InvalidOpEx("Interpreter returned null.");
+
+var interpretedResult = (double)interpretedResultObject; // 95.0
 ```
 
 ## Why this project exists
