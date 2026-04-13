@@ -50,19 +50,7 @@ public class NativeTypesOptimizerModule : IIRProcessingModule
                         optimizedInstructions.Add(instructions[i]);
                     }
                 }
-                catch (TargetInvocationException)
-                {
-                    optimizedInstructions.Add(instructions[i]);
-                }
-                catch (ArgumentException)
-                {
-                    optimizedInstructions.Add(instructions[i]);
-                }
-                catch (TargetParameterCountException)
-                {
-                    optimizedInstructions.Add(instructions[i]);
-                }
-                catch (MethodAccessException)
+                catch
                 {
                     optimizedInstructions.Add(instructions[i]);
                 }
