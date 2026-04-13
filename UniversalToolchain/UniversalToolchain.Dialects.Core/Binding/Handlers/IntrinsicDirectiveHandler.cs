@@ -1,35 +1,24 @@
-using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
 
 namespace UniversalToolchain.Dialects.Core.Binding.Handlers;
 
 internal sealed class IntrinsicDirectiveHandler : IDialectDirectiveHandler
 {
-    public int Order => 0;
+    public int Order => 20;
 
     public string Name => "Intrinsic";
 
-    public void Apply(IDialectBindingSource source, DialectDefinitionBuilder builder, List<DialectDiagnostic> diagnostics)
+    public void Apply(DialectBindingExecutionContext context)
     {
-        if (source == null)
-            Thrower.ArgumentNull(nameof(source));
-
-        if (builder == null)
-            Thrower.ArgumentNull(nameof(builder));
-
-        if (diagnostics == null)
-            Thrower.ArgumentNull(nameof(diagnostics));
-
-        var context = DialectDirectiveHandlerContext.FromInputKind(source.InputKind);
         var intrinsicDirectives = DialectSemanticNormalization.NormalizeIntrinsicRules(
-            source.IntrinsicDirectives,
+            context.Source.IntrinsicDirectives,
             x => x.Name,
             x => x.Target,
             x => x.Allowed,
-            diagnostics,
-            context.IntrinsicContradictionCode);
+            context.Diagnostics,
+            context.DirectiveContext.IntrinsicContradictionCode);
 
-        builder.SetIntrinsicPolicy(new IntrinsicPolicy(
+        context.Builder.SetIntrinsicPolicy(new IntrinsicPolicy(
             intrinsicDirectives.Where(x => x.Allowed).Select(FormatRuleName),
             intrinsicDirectives.Where(x => !x.Allowed).Select(FormatRuleName)));
     }

@@ -18,7 +18,7 @@ public class DialectDirectiveHandlerTests
             new RecordingDirectiveHandlerA(applied)
         ]);
 
-        registry.Apply(new TestBindingSource(), new DialectDefinitionBuilder(), []);
+        registry.Apply(CreateContext(new TestBindingSource(), new DialectDefinitionBuilder(), []));
 
         Assert.Multiple(() =>
         {
@@ -48,7 +48,7 @@ public class DialectDirectiveHandlerTests
             ExcludeModules = ["UnsafeInterop"]
         };
 
-        new ModuleDirectiveHandler().Apply(source, builder, diagnostics);
+        new ModuleDirectiveHandler().Apply(CreateContext(source, builder, diagnostics));
         var definition = builder.Build();
 
         Assert.Multiple(() =>
@@ -76,7 +76,7 @@ public class DialectDirectiveHandlerTests
             ]
         };
 
-        new BackendDirectiveHandler().Apply(source, builder, diagnostics);
+        new BackendDirectiveHandler().Apply(CreateContext(source, builder, diagnostics));
         var definition = builder.Build();
 
         Assert.Multiple(() =>
@@ -106,7 +106,7 @@ public class DialectDirectiveHandlerTests
             ]
         };
 
-        new IntrinsicDirectiveHandler().Apply(source, builder, diagnostics);
+        new IntrinsicDirectiveHandler().Apply(CreateContext(source, builder, diagnostics));
         var definition = builder.Build();
 
         Assert.Multiple(() =>
@@ -136,7 +136,7 @@ public class DialectDirectiveHandlerTests
             ]
         };
 
-        new OptimizerDirectiveHandler().Apply(source, builder, diagnostics);
+        new OptimizerDirectiveHandler().Apply(CreateContext(source, builder, diagnostics));
         var definition = builder.Build();
 
         Assert.Multiple(() =>
@@ -153,11 +153,11 @@ public class DialectDirectiveHandlerTests
         var presentBuilder = CreateBuilderWithPolicyDefaults();
         var missingBuilder = CreateBuilderWithPolicyDefaults();
 
-        new SecurityDirectiveHandler().Apply(
+        new SecurityDirectiveHandler().Apply(CreateContext(
             new TestBindingSource { SecurityProfile = SecurityProfile.Restricted },
             presentBuilder,
-            []);
-        new SecurityDirectiveHandler().Apply(new TestBindingSource(), missingBuilder, []);
+            []));
+        new SecurityDirectiveHandler().Apply(CreateContext(new TestBindingSource(), missingBuilder, []));
 
         Assert.Multiple(() =>
         {
@@ -182,7 +182,7 @@ public class DialectDirectiveHandlerTests
             ]
         };
 
-        new CapabilityDirectiveHandler().Apply(source, builder, []);
+        new CapabilityDirectiveHandler().Apply(CreateContext(source, builder, []));
         var definition = builder.Build();
 
         Assert.Multiple(() =>
@@ -209,7 +209,7 @@ public class DialectDirectiveHandlerTests
             new IntrinsicDirectiveHandler()
         ]);
 
-        registry.Apply(source, builder, diagnostics);
+        registry.Apply(CreateContext(source, builder, diagnostics));
         var definition = builder.Build();
 
         Assert.Multiple(() =>
@@ -250,6 +250,14 @@ public class DialectDirectiveHandlerTests
         builder.SetBackendPolicy(new BackendPolicy([TestBackendIds.Interpreter]));
         builder.SetOrderRules([]);
         return builder;
+    }
+
+    private static DialectBindingExecutionContext CreateContext(
+        IDialectBindingSource source,
+        DialectDefinitionBuilder builder,
+        List<DialectDiagnostic> diagnostics)
+    {
+        return new DialectBindingExecutionContext(source, builder, diagnostics);
     }
 
     private static DialectDefinitionBuilder CreateBuilderWithPolicyDefaults()
@@ -344,7 +352,7 @@ public class DialectDirectiveHandlerTests
 
         public string Name => "A";
 
-        public void Apply(IDialectBindingSource source, DialectDefinitionBuilder builder, List<DialectDiagnostic> diagnostics)
+        public void Apply(DialectBindingExecutionContext context)
         {
             applied.Add("A");
         }
@@ -356,7 +364,7 @@ public class DialectDirectiveHandlerTests
 
         public string Name => "B";
 
-        public void Apply(IDialectBindingSource source, DialectDefinitionBuilder builder, List<DialectDiagnostic> diagnostics)
+        public void Apply(DialectBindingExecutionContext context)
         {
             applied.Add("B");
         }
@@ -368,7 +376,7 @@ public class DialectDirectiveHandlerTests
 
         public string Name => "Late";
 
-        public void Apply(IDialectBindingSource source, DialectDefinitionBuilder builder, List<DialectDiagnostic> diagnostics)
+        public void Apply(DialectBindingExecutionContext context)
         {
             applied.Add("Late");
         }

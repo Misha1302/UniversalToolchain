@@ -53,7 +53,8 @@ internal static class DialectDefinitionSemanticBinder
 
         builder.SetIdentity(source.Name, source.Version, source.BaseDialectName);
         builder.SetOrderRules(DialectOrderConstraintMapper.ToDefinitionRules(DialectOrderConstraintMapper.FromBindingRules(source.OrderRules)));
-        DirectiveHandlerRegistry.Apply(source, builder, diagnostics);
+        var context = new DialectBindingExecutionContext(source, builder, diagnostics);
+        DirectiveHandlerRegistry.Apply(context);
 
         return builder.Build();
     }
