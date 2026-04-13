@@ -44,7 +44,9 @@ public sealed class DialectDefinitionSliceBuilder
             aggregation.IntrinsicDirectives,
             aggregation.OptimizerDirectives,
             aggregation.SecurityProfile,
-            aggregation.Capabilities);
+            aggregation.Capabilities,
+            aggregation.Version,
+            aggregation.BaseDialectName);
     }
 }
 
@@ -66,6 +68,10 @@ public sealed class DialectDefinitionAggregation
     private readonly List<string> _useModules = [];
 
     public string? DialectName { get; private set; }
+
+    public string? Version { get; private set; }
+
+    public string? BaseDialectName { get; private set; }
 
     public DialectSecurityProfile? SecurityProfile { get; private set; }
 
@@ -89,6 +95,34 @@ public sealed class DialectDefinitionAggregation
             Thrower.InvalidOpEx($"Dialect AIR contained duplicate DialectNameAirAnnotation values '{DialectName}' and '{name}'.");
 
         DialectName = DialectAnnotationValueGuard.RequireValue(name, nameof(name), "Dialect name must not be empty.");
+    }
+
+    public void SetVersion(string version)
+    {
+        var normalized = DialectAnnotationValueGuard.RequireValue(
+            version,
+            nameof(version),
+            "Dialect version must not be empty.");
+
+        if (Version != null)
+            Thrower.InvalidOpEx(
+                $"Dialect AIR contained duplicate version annotation values '{Version}' and '{normalized}'.");
+
+        Version = normalized;
+    }
+
+    public void SetBaseDialectName(string baseDialectName)
+    {
+        var normalized = DialectAnnotationValueGuard.RequireValue(
+            baseDialectName,
+            nameof(baseDialectName),
+            "Base dialect name must not be empty.");
+
+        if (BaseDialectName != null)
+            Thrower.InvalidOpEx(
+                $"Dialect AIR contained duplicate base dialect annotation values '{BaseDialectName}' and '{normalized}'.");
+
+        BaseDialectName = normalized;
     }
 
     public void SetSecurityProfile(DialectSecurityProfile profile)
