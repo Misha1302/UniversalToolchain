@@ -17,18 +17,13 @@ public class BooleanOptimizerModule : IIRProcessingModule
 
     public void InitIntrinsicCapabilityContext(IOptimizerIntrinsicCapabilityContext capabilityContext)
     {
-        if (capabilityContext == null)
-            Thrower.ArgumentNull(nameof(capabilityContext));
-
-        _capabilityContext = capabilityContext;
+        _capabilityContext = capabilityContext.NotNull("Argument 'capabilityContext' cannot be null.");
     }
 
     public IAbstractIR ProcessIr<TCompilationOutput>(IAbstractIR current, IAbstractIrCompiler<TCompilationOutput> compiler)
     {
-        if (_capabilityContext == null)
-            Thrower.InvalidOpEx("Boolean optimizer requires intrinsic capability context initialization.");
-
-        var capabilityContext = _capabilityContext;
+        var capabilityContext = _capabilityContext.NotNull(
+            "Boolean optimizer requires intrinsic capability context initialization.");
 
         if (!OptimizerCapabilityGuards.SupportsAll(
                 capabilityContext,
