@@ -345,9 +345,42 @@ Do not use:
 - `ArgumentNullException.ThrowIfNull(...)`
 - direct `throw new ArgumentNullException(...)`
 - silent fallback to null when null is invalid
-- `!` null-forgiving operator as a substitute for validation
+- null-forgiving operator `!` when `.NotNull(...)` or proper validation can express the contract directly
 
-### 6.4 Boundary validation
+### 6.4 Preferred boundary normalization style
+
+For non-nullable reference arguments in public constructors and public methods, prefer immediate normalization through
+`obj.NotNull(...)` over repetitive defensive `if (obj == null) Thrower.ArgumentNull(...)` blocks.
+
+Preferred:
+
+```csharp
+public Runner(IExecutor executor)
+{
+    _executor = executor.NotNull("Argument 'executor' cannot be null.");
+}
+```
+
+Avoid when unnecessary:
+
+```csharp
+public Runner(IExecutor executor)
+{
+    if (executor == null)
+        Thrower.ArgumentNull(nameof(executor));
+
+    _executor = executor;
+}
+```
+
+Do not apply this blindly to:
+
+- intentionally nullable arguments
+- trivial forwarding overloads
+- private/internal helpers that already operate under validated invariants
+- string arguments that require stronger semantic validation than null-only checks
+
+### 6.5 Boundary validation
 
 Validate public constructor arguments, public method arguments, DI entry points, and reflection inputs.
 
@@ -357,14 +390,13 @@ public IntrinsicTypeRegistryBuilder Add(string name, IntrinsicTypeProcessor proc
     if (string.IsNullOrWhiteSpace(name))
         Thrower.Argument(nameof(name), "Intrinsic type rule name must not be empty.");
 
-    if (processor == null)
-        Thrower.ArgumentNull(nameof(processor));
+    processor = processor.NotNull("Argument 'processor' cannot be null.");
 
     ...
 }
 ```
 
-### 6.5 Internal invariants
+### 6.6 Internal invariants
 
 Use `Thrower.AssertAlways` when null would mean an internal bug or broken invariant.
 
