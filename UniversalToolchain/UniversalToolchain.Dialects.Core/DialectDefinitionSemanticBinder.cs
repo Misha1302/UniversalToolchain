@@ -67,6 +67,24 @@ internal static class DialectDefinitionSemanticBinder
         string? missingReferenceCode = null,
         string? missingReferenceMessagePrefix = null)
     {
+        if (source == null)
+            Thrower.ArgumentNull(nameof(source));
+
+        if (diagnostics == null)
+            Thrower.ArgumentNull(nameof(diagnostics));
+
+        if (string.IsNullOrWhiteSpace(cycleCode))
+            Thrower.Argument(nameof(cycleCode), "Cycle diagnostic code must not be empty.");
+
+        if (string.IsNullOrWhiteSpace(cycleMessagePrefix))
+            Thrower.Argument(nameof(cycleMessagePrefix), "Cycle diagnostic message prefix must not be empty.");
+
+        if (missingReferenceCode != null && string.IsNullOrWhiteSpace(missingReferenceCode))
+            Thrower.Argument(nameof(missingReferenceCode), "Missing-reference diagnostic code must be null or non-empty.");
+
+        if (missingReferenceMessagePrefix != null && string.IsNullOrWhiteSpace(missingReferenceMessagePrefix))
+            Thrower.Argument(nameof(missingReferenceMessagePrefix), "Missing-reference diagnostic message prefix must be null or non-empty.");
+
         var definition = BindCore(source, diagnostics);
 
         return DialectDefinitionBuildPlanProjector.Project(
