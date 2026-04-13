@@ -4,7 +4,8 @@ using ExceptionsManager;
 
 var arguments = CliArguments.Parse(args);
 var manifest = ManifestEmitter.Emit(arguments.AssemblyPath);
-Directory.CreateDirectory(Path.GetDirectoryName(arguments.OutputPath)!);
+Directory.CreateDirectory(
+    Path.GetDirectoryName(arguments.OutputPath).NotNull("Output directory path must not be null."));
 File.WriteAllText(arguments.OutputPath, JsonSerializer.Serialize(manifest, JsonOptions.Instance));
 
 internal sealed record CliArguments(string AssemblyPath, string OutputPath)
@@ -16,16 +17,16 @@ internal sealed record CliArguments(string AssemblyPath, string OutputPath)
             values[args[i]] = args[i + 1];
 
         if (!values.TryGetValue("--assembly", out var assemblyPath) || string.IsNullOrWhiteSpace(assemblyPath))
-            throw new ArgumentException("Missing '--assembly <absolute path>' argument.");
+            Thrower.Argument(nameof(args), "Missing '--assembly <absolute path>' argument.");
 
         if (!Path.IsPathRooted(assemblyPath))
-            throw new ArgumentException("--assembly must be an absolute path.");
+            Thrower.Argument(nameof(args), "--assembly must be an absolute path.");
 
         if (!values.TryGetValue("--output", out var outputPath) || string.IsNullOrWhiteSpace(outputPath))
-            throw new ArgumentException("Missing '--output <absolute path>' argument.");
+            Thrower.Argument(nameof(args), "Missing '--output <absolute path>' argument.");
 
         if (!Path.IsPathRooted(outputPath))
-            throw new ArgumentException("--output must be an absolute path.");
+            Thrower.Argument(nameof(args), "--output must be an absolute path.");
 
         return new CliArguments(Path.GetFullPath(assemblyPath), Path.GetFullPath(outputPath));
     }

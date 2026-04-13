@@ -43,7 +43,7 @@ internal static class BackendValueNormalizer
         if (normalized is IConvertible convertible)
             return (T)Convert.ChangeType(convertible, typeof(T));
 
-        throw new InvalidOperationException(
+        return Thrower.InvalidOpEx<T>(
             $"Cannot convert normalized backend value from {normalized?.GetType().FullName ?? "<null>"} to {typeof(T).FullName}.");
     }
 }
