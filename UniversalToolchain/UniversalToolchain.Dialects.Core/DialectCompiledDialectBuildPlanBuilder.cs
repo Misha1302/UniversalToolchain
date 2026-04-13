@@ -1,5 +1,6 @@
 using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
+using UniversalToolchain.Dialects.Core.Binding;
 using UniversalToolchain.Dialects.Frontend;
 
 namespace UniversalToolchain.Dialects.Core;
@@ -15,9 +16,8 @@ public sealed class DialectCompiledDialectBuildPlanBuilder : IDialectCompiledDia
             Thrower.ArgumentNull(nameof(compiledDialect));
 
         var diagnostics = new List<DialectDiagnostic>();
-        var definition = DialectDefinitionSemanticBinder.Bind(compiledDialect, diagnostics);
-        return DialectDefinitionBuildPlanProjector.Project(
-            definition,
+        return DialectDefinitionSemanticBinder.BuildPlanCore(
+            new CompiledDialectBindingSource(compiledDialect),
             diagnostics,
             "S105",
             "Order directives contain a cycle involving modules");

@@ -33,7 +33,7 @@ internal sealed class SyntaxDialectBindingSource : IDialectBindingSource
 
     public string? Version => _document.Version;
 
-    public string? BaseDialectName => null;
+    public string? BaseDialectName => _document.BaseDialectName;
 
     public IReadOnlyList<string> UseModules => _document.UseModules;
 

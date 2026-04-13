@@ -1,5 +1,6 @@
 using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
+using UniversalToolchain.Dialects.Core.Binding;
 using UniversalToolchain.Dialects.Parsing;
 
 namespace UniversalToolchain.Dialects.Core;
@@ -15,9 +16,8 @@ public sealed class DialectBuildPlanBuilder : IDialectBuildPlanBuilder
             Thrower.ArgumentNull(nameof(syntaxDocument));
 
         var diagnostics = new List<DialectDiagnostic>();
-        var definition = DialectDefinitionSemanticBinder.Bind(syntaxDocument, diagnostics);
-        return DialectDefinitionBuildPlanProjector.Project(
-            definition,
+        return DialectDefinitionSemanticBinder.BuildPlanCore(
+            new SyntaxDialectBindingSource(syntaxDocument),
             diagnostics,
             "S007",
             "Order rules contain a cycle involving modules",

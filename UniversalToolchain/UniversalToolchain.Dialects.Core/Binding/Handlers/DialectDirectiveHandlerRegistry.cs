@@ -1,40 +1,32 @@
 using ExceptionsManager;
-using UniversalToolchain.Dialects.Abstractions;
 
 namespace UniversalToolchain.Dialects.Core.Binding.Handlers;
 
 internal sealed class DialectDirectiveHandlerRegistry
 {
-    private readonly IReadOnlyList<IDialectDirectiveHandler> _handlers;
+    private readonly IDialectDirectiveHandler[] _handlers;
 
     public DialectDirectiveHandlerRegistry(IEnumerable<IDialectDirectiveHandler> handlers)
     {
         if (handlers == null)
             Thrower.ArgumentNull(nameof(handlers));
 
-        var orderedHandlers = handlers.Select(ValidateHandler)
-            .OrderBy(x => x.Order)
-            .ThenBy(x => x.GetType().FullName, StringComparer.Ordinal)
-            .ToList();
-
-        _handlers = orderedHandlers;
+        _handlers = handlers
+            .Select(ValidateHandler)
+            .OrderBy(static x => x.Order)
+            .ThenBy(static x => x.GetType().FullName, StringComparer.Ordinal)
+            .ToArray();
     }
 
     public IReadOnlyList<IDialectDirectiveHandler> Handlers => _handlers;
 
-    public void Apply(IDialectBindingSource source, DialectDefinitionBuilder builder, List<DialectDiagnostic> diagnostics)
+    public void Apply(DialectBindingExecutionContext context)
     {
-        if (source == null)
-            Thrower.ArgumentNull(nameof(source));
-
-        if (builder == null)
-            Thrower.ArgumentNull(nameof(builder));
-
-        if (diagnostics == null)
-            Thrower.ArgumentNull(nameof(diagnostics));
+        if (context == null)
+            Thrower.ArgumentNull(nameof(context));
 
         foreach (var handler in _handlers)
-            handler.Apply(source, builder, diagnostics);
+            handler.Apply(context);
     }
 
     private static IDialectDirectiveHandler ValidateHandler(IDialectDirectiveHandler handler)

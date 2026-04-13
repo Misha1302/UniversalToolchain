@@ -23,12 +23,22 @@ public sealed class DialectDefinitionSlice
         IEnumerable<DialectIntrinsicDirective> intrinsicDirectives,
         IEnumerable<DialectOptimizerDirective> optimizerDirectives,
         DialectSecurityProfile? securityProfile,
-        IEnumerable<DialectCapabilityDirective> capabilityDirectives)
+        IEnumerable<DialectCapabilityDirective> capabilityDirectives,
+        string? version = null,
+        string? baseDialectName = null)
     {
         if (string.IsNullOrWhiteSpace(name))
             Thrower.Argument(nameof(name), "Dialect name must not be empty.");
 
+        if (version != null && string.IsNullOrWhiteSpace(version))
+            Thrower.Argument(nameof(version), "Dialect version must be null or non-empty.");
+
+        if (baseDialectName != null && string.IsNullOrWhiteSpace(baseDialectName))
+            Thrower.Argument(nameof(baseDialectName), "Base dialect name must be null or non-empty.");
+
         Name = name;
+        Version = version;
+        BaseDialectName = baseDialectName;
         _useModules = new ReadOnlyCollection<string>(SnapshotStrings(useModules, nameof(useModules), "Module names must not be empty."));
         _excludeModules = new ReadOnlyCollection<string>(SnapshotStrings(excludeModules, nameof(excludeModules), "Module names must not be empty."));
         _orderDirectives = new ReadOnlyCollection<DialectOrderDirective>(Snapshot(orderDirectives, nameof(orderDirectives)));
@@ -40,6 +50,10 @@ public sealed class DialectDefinitionSlice
     }
 
     public string Name { get; }
+
+    public string? Version { get; }
+
+    public string? BaseDialectName { get; }
 
     public IReadOnlyList<string> UseModules => _useModules;
 

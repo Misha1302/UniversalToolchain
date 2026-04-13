@@ -28,7 +28,8 @@ public sealed class DialectSyntaxDocument
         IEnumerable<IntrinsicDirectiveSyntax> intrinsicDirectives,
         IEnumerable<OptimizerDirectiveSyntax> optimizerDirectives,
         SecurityProfile? securityProfile,
-        IEnumerable<KeyValuePair<string, bool>> capabilities)
+        IEnumerable<KeyValuePair<string, bool>> capabilities,
+        string? baseDialectName = null)
     {
         if (string.IsNullOrWhiteSpace(name))
             Thrower.Argument(nameof(name), "Dialect name must not be empty.");
@@ -36,8 +37,12 @@ public sealed class DialectSyntaxDocument
         if (version != null && string.IsNullOrWhiteSpace(version))
             Thrower.Argument(nameof(version), "Dialect version must be null or non-empty.");
 
+        if (baseDialectName != null && string.IsNullOrWhiteSpace(baseDialectName))
+            Thrower.Argument(nameof(baseDialectName), "Base dialect name must be null or non-empty.");
+
         Name = name;
         Version = version;
+        BaseDialectName = baseDialectName;
         _useModules = new ReadOnlyCollection<string>(Snapshot(useModules, nameof(useModules)));
         _excludeModules = new ReadOnlyCollection<string>(Snapshot(excludeModules, nameof(excludeModules)));
         _orderRules = new ReadOnlyCollection<OrderRule>(Snapshot(orderRules, nameof(orderRules)));
@@ -51,6 +56,8 @@ public sealed class DialectSyntaxDocument
     public string Name { get; }
 
     public string? Version { get; }
+
+    public string? BaseDialectName { get; }
 
     public IReadOnlyList<string> UseModules => _useModules;
 

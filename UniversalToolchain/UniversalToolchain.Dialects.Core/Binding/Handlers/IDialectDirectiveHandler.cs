@@ -1,5 +1,3 @@
-using UniversalToolchain.Dialects.Abstractions;
-
 namespace UniversalToolchain.Dialects.Core.Binding.Handlers;
 
 internal interface IDialectDirectiveHandler
@@ -8,5 +6,5 @@ internal interface IDialectDirectiveHandler
 
     string Name { get; }
 
-    void Apply(IDialectBindingSource source, DialectDefinitionBuilder builder, List<DialectDiagnostic> diagnostics);
+    void Apply(DialectBindingExecutionContext context);
 }

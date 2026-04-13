@@ -31,9 +31,9 @@ internal sealed class CompiledDialectBindingSource : IDialectBindingSource
 
     public string Name => _slice.Name;
 
-    public string? Version => null;
+    public string? Version => _slice.Version;
 
-    public string? BaseDialectName => null;
+    public string? BaseDialectName => _slice.BaseDialectName;
 
     public IReadOnlyList<string> UseModules => _slice.UseModules;
 

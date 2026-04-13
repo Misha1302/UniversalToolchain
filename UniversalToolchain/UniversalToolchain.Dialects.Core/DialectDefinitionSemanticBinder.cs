@@ -53,8 +53,28 @@ internal static class DialectDefinitionSemanticBinder
 
         builder.SetIdentity(source.Name, source.Version, source.BaseDialectName);
         builder.SetOrderRules(DialectOrderConstraintMapper.ToDefinitionRules(DialectOrderConstraintMapper.FromBindingRules(source.OrderRules)));
-        DirectiveHandlerRegistry.Apply(source, builder, diagnostics);
+        var context = new DialectBindingExecutionContext(source, builder, diagnostics);
+        DirectiveHandlerRegistry.Apply(context);
 
         return builder.Build();
+    }
+
+    internal static DialectBuildPlan BuildPlanCore(
+        IDialectBindingSource source,
+        List<DialectDiagnostic> diagnostics,
+        string cycleCode,
+        string cycleMessagePrefix,
+        string? missingReferenceCode = null,
+        string? missingReferenceMessagePrefix = null)
+    {
+        var definition = BindCore(source, diagnostics);
+
+        return DialectDefinitionBuildPlanProjector.Project(
+            definition,
+            diagnostics,
+            cycleCode,
+            cycleMessagePrefix,
+            missingReferenceCode,
+            missingReferenceMessagePrefix);
     }
 }
