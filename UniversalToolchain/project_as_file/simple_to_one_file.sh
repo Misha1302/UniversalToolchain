@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Парсинг аргументов
+# Parse CLI arguments
 COMPRESS_FLAG=""
 REMOVE_USING_FLAG=""
 REMOVE_COMMENTS_FLAG=""
@@ -20,23 +20,23 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         *)
-            echo "Неизвестный аргумент: $1"
-            echo "Использование: $0 [--compress] [--remove-using] [--output ИМЯ_ФАЙЛА]"
+            echo "Unknown argument: $1"
+            echo "Usage: $0 [--compress] [--remove-using] [--output OUTPUT_FILE]"
             exit 1
             ;;
     esac
 done
 
 if [[ -n "$COMPRESS_FLAG" ]]; then
-    echo "Режим сжатия включен"
+    echo "Compression mode enabled"
 fi
 
 if [[ -n "$REMOVE_USING_FLAG" ]]; then
-    echo "Режим удаления using директив включен"
+    echo "Remove-using mode enabled"
 fi
 
 if [[ -n "$REMOVE_COMMENTS_FLAG" ]]; then
-    echo "Режим удаления комментарий включен"
+    echo "Remove-comments mode enabled"
 fi
 
 python3 script_to_one_file.py --pattern '\.cs(?![a-zA-Z0-9])|\.md' --root ./.. --exclude-pattern '.*?(Tests|Benchmark|Extensions|Wistc|Comments|Scopes|Whitespaces).*?|.*?(?<![a-zA-Z])(bin|obj)(?![a-zA-Z]).*?' --output "partial_main_code.txt" $COMPRESS_FLAG $REMOVE_USING_FLAG $REMOVE_COMMENTS_FLAG

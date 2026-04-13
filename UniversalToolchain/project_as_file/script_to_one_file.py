@@ -3,37 +3,37 @@ import re
 import argparse
 
 def should_exclude(file_path, exclude_dirs, exclude_pattern=None):
-    """Проверяет, находится ли файл в исключенной директории или соответствует ли исключающему шаблону."""
+    """Checks whether a path must be excluded by directory or regex pattern."""
     abs_path = os.path.abspath(file_path)
     
-    # Проверка по списку исключенных директорий
+    # Check excluded directories.
     for excl_dir in exclude_dirs:
         if os.path.commonpath([abs_path, os.path.abspath(excl_dir)]) == os.path.abspath(excl_dir):
             return True
     
-    # Проверка по регулярному выражению для пути
+    # Check exclusion regex against full path.
     if exclude_pattern:
         try:
             if re.search(exclude_pattern, abs_path):
                 return True
         except re.error as e:
-            print(f"Ошибка в регулярном выражении для исключения: {e}")
+            print(f"Invalid exclusion regex: {e}")
     
     return False
 
 def matches_pattern(filename, pattern=None, extension=None):
-    """Проверяет, соответствует ли имя файла заданному шаблону или расширению."""
-    # Если задан паттерн, используем его
+    """Checks whether a filename matches a regex pattern or extension."""
+    # If a pattern is provided, use it.
     if pattern:
         try:
             return bool(re.search(pattern, filename))
         except re.error as e:
-            print(f"Ошибка в регулярном выражении для файлов: {e}")
+            print(f"Invalid file regex: {e}")
             return False
     
-    # Иначе используем расширение (для обратной совместимости)
+    # Otherwise use extension matching (for backward compatibility).
     if extension:
-        # Проверяем расширение файла
+        # Check file extension.
         if '.' not in filename:
             return False
         file_ext = '.' + filename.rsplit('.', 1)[1]
@@ -42,30 +42,30 @@ def matches_pattern(filename, pattern=None, extension=None):
     return False
 
 def compress_content(content):
-    """Удаляет двойные пробелы и переносы строк из содержимого."""
-    # Заменяем все переносы строк на пробелы
+    """Removes duplicate whitespace and line breaks from content."""
+    # Replace line breaks with spaces.
     content = content.replace('\n', ' ')
     content = content.replace('\r', ' ')
     
-    # Заменяем множественные пробелы на один пробел
+    # Collapse repeated whitespace.
     content = re.sub(r'\s+', ' ', content)
     
-    # Удаляем пробелы в начале и конце
+    # Trim leading/trailing spaces.
     content = content.strip()
     
     return content
 
 def remove_using_directives(content):
-    """Удаляет директивы using из C# кода."""
-    # Разбиваем содержимое на строки
+    """Removes C# using directives from text."""
+    # Split content into lines.
     lines = content.split('\n')
     filtered_lines = []
     
-    # Флаг для отслеживания многострочных комментариев
+    # Track multiline comment state.
     in_block_comment = False
     
     for line in lines:
-        # Обработка многострочных комментариев /* ... */
+        # Handle multiline comments /* ... */.
         if '/*' in line and '*/' not in line:
             in_block_comment = True
             filtered_lines.append(line)
@@ -77,31 +77,31 @@ def remove_using_directives(content):
             filtered_lines.append(line)
             continue
         
-        # Игнорируем однострочные комментарии
+        # Keep single-line comments unchanged.
         stripped_line = line.strip()
         if stripped_line.startswith('//'):
             filtered_lines.append(line)
             continue
         
-        # Проверяем, является ли строка using директивой
-        # Шаблон для using директив: начинается с 'using', заканчивается ';'
-        # Но не является using statement (using (var x = ...))
+        # Check whether the line is a using directive.
+        # Pattern: using directive starts with using and ends with ;
+        # Exclude using statements (using (var x = ...)).
         if (re.match(r'^\s*(global )?using\s+[^;]+;\s*(\/\/.*)?$', line)
                 and not re.match(r'^\s*using\s*\(', line)):
-            # Это using директива, пропускаем ее
+            # This is a using directive, skip it.
             continue
         
-        # Если это не using директива, добавляем строку
+        # Not a using directive, keep line.
         filtered_lines.append(line)
     
     return '\n'.join(filtered_lines)
 
 def remove_single_line_comments(content):
     """
-    Удаляет однострочные комментарии (//), но учитывает специфические случаи:
-    1. Комментарии внутри строковых литералов не удаляются
-    2. Сырые строковые литералы (raw string literals) не обрабатываются для комментариев внутри них
-    3. Безопасное удаление комментариев с учетом экранирования кавычек
+    Removes single-line comments (//) while preserving string-literal correctness:
+    1. Comments inside string literals are preserved
+    2. Raw string literals are treated safely
+    3. Escaped quotes are handled safely
     """
     if not content:
         return content
@@ -109,13 +109,13 @@ def remove_single_line_comments(content):
     lines = content.split('\n')
     result_lines = []
     
-    # Флаги для отслеживания состояния
-    in_string = False          # Находимся внутри обычной строки ""
-    in_raw_string = False      # Находимся внутри сырой строки (raw string literal)
-    raw_string_delimiter = 0   # Количество кавычек для сырой строки
-    in_char = False            # Находимся внутри символьного литерала ''
-    escape_next = False        # Следующий символ экранирован
-    in_block_comment = False   # Находимся внутри многострочного комментария /* ... */
+    # State-tracking flags.
+    in_string = False          # Inside regular string literal
+    in_raw_string = False      # Inside raw string literal
+    raw_string_delimiter = 0   # Raw string quote delimiter length
+    in_char = False            # Inside char literal
+    escape_next = False        # Next character is escaped
+    in_block_comment = False   # Inside multiline comment /* ... */
     
     for line in lines:
         i = 0
@@ -127,7 +127,7 @@ def remove_single_line_comments(content):
             ch_next = line[i+1] if i+1 < line_len else ''
             ch_prev = line[i-1] if i > 0 else ''
             
-            # Обработка экранирования для обычных строк
+            # Process escaping for regular strings.
             if not in_raw_string and not in_block_comment and not in_char:
                 if ch == '\\' and in_string:
                     escape_next = not escape_next
@@ -140,39 +140,39 @@ def remove_single_line_comments(content):
                     i += 1
                     continue
             
-            # Проверка начала/конца сырой строки (raw string literal)
+            # Check start/end of raw string literal.
             if not in_block_comment and not in_string and not in_char:
-                # Проверяем начало сырой строки
+                # Check raw string start.
                 if ch == '"' and i+2 < line_len and line[i+1:i+3] == '""':
-                    # Считаем количество открывающих кавычек
+                    # Count opening quotes.
                     j = i
                     while j < line_len and line[j] == '"':
                         j += 1
                     quote_count = j - i
                     
                     if not in_raw_string:
-                        # Начало сырой строки
+                        # Raw string start.
                         in_raw_string = True
                         raw_string_delimiter = quote_count
                         result.append(line[i:j])
                         i = j
                         continue
                     else:
-                        # Проверяем конец сырой строки
+                        # Check raw string end.
                         if quote_count >= raw_string_delimiter:
-                            # Конец сырой строки
+                            # Raw string end.
                             in_raw_string = False
                             result.append(line[i:j])
                             i = j
                             continue
             
-            # Если мы внутри сырой строки, просто копируем символы
+            # If inside raw string, copy characters as-is.
             if in_raw_string:
                 result.append(ch)
                 i += 1
                 continue
             
-            # Проверка начала/конца многострочного комментария
+            # Check multiline comment start/end.
             if not in_string and not in_char and not in_raw_string:
                 if ch == '/' and ch_next == '*':
                     in_block_comment = True
@@ -187,13 +187,13 @@ def remove_single_line_comments(content):
                     i += 2
                     continue
             
-            # Если внутри многострочного комментария, просто копируем
+            # If inside multiline comment, copy as-is.
             if in_block_comment:
                 result.append(ch)
                 i += 1
                 continue
             
-            # Проверка начала/конца строкового литерала
+            # Check regular string start/end.
             if not in_block_comment and not in_raw_string:
                 if ch == '"' and not in_char and not (in_string and escape_next):
                     in_string = not in_string
@@ -206,16 +206,16 @@ def remove_single_line_comments(content):
                     i += 1
                     continue
             
-            # Проверка на однострочный комментарий
+            # Check single-line comments.
             if not in_string and not in_char and not in_block_comment and not in_raw_string:
                 if ch == '/' and ch_next == '/':
-                    # Найден однострочный комментарий, пропускаем остаток строки
+                    # Single-line comment found, skip the rest of the line.
                     break
                 elif ch == '/' and ch_next == '*':
-                    # Начало многострочного комментария (уже обработано выше)
+                    # Multiline comment start (already handled above).
                     pass
             
-            # Копируем текущий символ
+            # Copy current character.
             result.append(ch)
             i += 1
         
@@ -226,21 +226,21 @@ def remove_single_line_comments(content):
 def process_files(root_dir, extension, exclude_dirs, output_file, pattern=None, 
                   exclude_pattern=None, compress=False, remove_using=False,
                   remove_comments=False):
-    """Обрабатывает все файлы по заданному критерию и записывает результат."""
+    """Processes all matching files and writes merged output."""
     with open(output_file, 'w', encoding='utf-8') as out_f:
         for root, dirs, files in os.walk(root_dir):
-            # Пропускаем исключенные директории
+            # Skip excluded directories.
             if should_exclude(root, exclude_dirs, exclude_pattern):
                 continue
                 
             for file in files:
-                # Проверяем, соответствует ли файл критерию отбора
+                # Check whether the file matches selection criteria.
                 if not matches_pattern(file, pattern, extension):
                     continue
                     
                 file_path = os.path.join(root, file)
                 
-                # Пропускаем файлы в исключенных директориях или соответствующие exclude_pattern
+                # Skip files in excluded directories or matching exclude_pattern.
                 if should_exclude(file_path, exclude_dirs, exclude_pattern):
                     continue
                 
@@ -252,74 +252,74 @@ def process_files(root_dir, extension, exclude_dirs, output_file, pattern=None,
                         with open(file_path, 'r', encoding='latin-1') as in_f:
                             content = in_f.read()
                     except Exception as e:
-                        print(f"Ошибка чтения файла {file_path}: {str(e)}")
+                        print(f"Error reading file {file_path}: {str(e)}")
                         continue
                 except Exception as e:
-                    print(f"Ошибка чтения файла {file_path}: {str(e)}")
+                    print(f"Error reading file {file_path}: {str(e)}")
                     continue
                 
-                # Удаляем using директивы из всех файлов, если флаг установлен
+                # Remove using directives when enabled.
                 if remove_using:
                     content = remove_using_directives(content)
                 
-                # Удаляем однострочные комментарии, если флаг установлен
+                # Remove single-line comments when enabled.
                 if remove_comments:
                     content = remove_single_line_comments(content)
                 
-                # Сжимаем содержимое, если включен флаг compress
+                # Compress content when enabled.
                 if compress:
                     content = compress_content(content)
                 
-                # Записываем в выходной файл
+                # Write to output file.
                 out_f.write(f"# {file_path}\n")
                 out_f.write(content)
                 out_f.write("\n" + "-" * 40 + "\n\n")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description='Объединение файлов с кодом в один документ',
+        description='Combine source files into a single document',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
-Примеры использования:
-  По расширению:      python script.py --ext .py --exclude tests --output result.txt
-  По регулярному выражению для имени файла:
+Usage examples:
+  By extension:      python script.py --ext .py --exclude tests --output result.txt
+  By filename regex:
                       python script.py --pattern '.*\\.(py|js)$' --exclude-pattern '.*/test.*' --output result.txt
-  По конкретному имени: python script.py --pattern '^config\\.py$' --output result.txt
-  Со сжатием:         python script.py --ext .py --compress --output compressed_result.txt
-  Без using директив: python script.py --ext .cs --remove-using --output result.txt
-  Без комментариев:   python script.py --ext .cs --remove-comments --output no_comments.txt
+  By exact filename: python script.py --pattern '^config\\.py$' --output result.txt
+  With compression:         python script.py --ext .py --compress --output compressed_result.txt
+  Without using directives: python script.py --ext .cs --remove-using --output result.txt
+  Without comments:   python script.py --ext .cs --remove-comments --output no_comments.txt
   
-Примечание:
-  • Используйте --ext для фильтрации по расширению (старый способ)
-  • Используйте --pattern для фильтрации по регулярному выражению для имени файла
-  • Используйте --exclude для исключения директорий
-  • Используйте --exclude-pattern для исключения по регулярному выражению для пути
-  • Используйте --compress для сжатия содержимого (удаление двойных пробелов и переносов строк)
-  • Используйте --remove-using для удаления using директив из всех C# файлов
-  • Используйте --remove-comments для удаления однострочных комментариев (//) с учетом строковых литералов
+Notes:
+  • Use --ext for extension filtering (legacy mode)
+  • Use --pattern for filename regex filtering
+  • Use --exclude to skip directories
+  • Use --exclude-pattern to skip paths by regex
+  • Use --compress to normalize whitespace
+  • Use --remove-using to strip using directives from C# files
+  • Use --remove-comments to remove // comments safely
         """
     )
     
-    # Группа параметров для фильтрации файлов (взаимоисключающие)
+    # Mutually exclusive file-filter parameters.
     file_filter_group = parser.add_mutually_exclusive_group()
-    file_filter_group.add_argument('--ext', help='Расширение файлов (например: .py, .js)')
-    file_filter_group.add_argument('--pattern', help='Регулярное выражение для имени файла (например: .*\\.py$)')
+    file_filter_group.add_argument('--ext', help='File extension (for example: .py, .js)')
+    file_filter_group.add_argument('--pattern', help='Filename regex (for example: .*\\.py$)')
     
-    parser.add_argument('--root', default='.', help='Корневая директория для поиска (по умолчанию: текущая директория)')
-    parser.add_argument('--exclude', nargs='*', default=[], help='Директории для исключения (например: tests node_modules)')
-    parser.add_argument('--exclude-pattern', help='Регулярное выражение для исключения путей (например: .*/test.*)')
-    parser.add_argument('--output', default='combined_files.txt', help='Выходной файл (по умолчанию: combined_files.txt)')
-    parser.add_argument('--compress', action='store_true', help='Сжимать содержимое файлов (удалять двойные пробелы и переносы строк)')
-    parser.add_argument('--remove-using', action='store_true', help='Удалять using директивы из всех C# файлов')
-    parser.add_argument('--remove-comments', action='store_true', help='Удалять однострочные комментарии (//) с учетом строковых литералов')
+    parser.add_argument('--root', default='.', help='Root directory for search (default: current directory)')
+    parser.add_argument('--exclude', nargs='*', default=[], help='Directories to exclude (for example: tests node_modules)')
+    parser.add_argument('--exclude-pattern', help='Path exclusion regex (for example: .*/test.*)')
+    parser.add_argument('--output', default='combined_files.txt', help='Output file (default: combined_files.txt)')
+    parser.add_argument('--compress', action='store_true', help='Compress file content (normalize whitespace)')
+    parser.add_argument('--remove-using', action='store_true', help='Remove using directives from all C# files')
+    parser.add_argument('--remove-comments', action='store_true', help='Remove // comments with string-literal awareness')
     
     args = parser.parse_args()
     
-    # Проверка, что задан хотя бы один критерий фильтрации файлов
+    # Require at least one file filter criterion.
     if not args.ext and not args.pattern:
-        parser.error("Необходимо указать либо --ext, либо --pattern")
+        parser.error("You must specify either --ext or --pattern")
     
     process_files(args.root, args.ext, args.exclude, args.output, args.pattern, 
                   args.exclude_pattern, args.compress, args.remove_using,
                   args.remove_comments)
-    print(f"Обработка завершена. Результат сохранен в {args.output}")
+    print(f"Processing completed. Result saved to {args.output}")

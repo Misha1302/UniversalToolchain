@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text.Json;
+using ExceptionsManager;
 
 var arguments = CliArguments.Parse(args);
 var manifest = ManifestEmitter.Emit(arguments.AssemblyPath);
@@ -99,7 +100,7 @@ internal static class ManifestEmitter
             "FrontendModule" => "frontend",
             "Optimizer" => "optimizer",
             "Backend" => "backend",
-            _ => throw new InvalidOperationException($"Unknown runtime component kind '{kind}'.")
+            _ => Thrower.InvalidOpEx<string>($"Unknown runtime component kind '{kind}'.")
         };
 
         return $"{prefix}.{canonicalAlias.Trim().ToLowerInvariant()}";

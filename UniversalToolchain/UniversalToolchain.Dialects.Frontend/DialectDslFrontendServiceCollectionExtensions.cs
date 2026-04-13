@@ -21,8 +21,11 @@ public static class DialectDslFrontendServiceCollectionExtensions
         if (frontendModule == null)
             Thrower.ArgumentNull(nameof(frontendModule));
 
-        _ = (IServiceCollection)(AddCoreRuntimeInfrastructureMethod.Invoke(null, [services])
-            ?? throw new InvalidOperationException("Core runtime infrastructure registration returned null."));
+        var coreRuntimeInfrastructure = AddCoreRuntimeInfrastructureMethod.Invoke(null, [services]);
+        if (coreRuntimeInfrastructure == null)
+            Thrower.InvalidOpEx("Core runtime infrastructure registration returned null.");
+
+        _ = (IServiceCollection)coreRuntimeInfrastructure;
 
         services.AddSingleton(frontendModule);
         services.AddSingleton<IFrontendCoreModule>(frontendModule);
@@ -41,13 +44,19 @@ public static class DialectDslFrontendServiceCollectionExtensions
 
         var extensionType = coreAssembly.GetType(
             "UniversalToolchain.Dialects.Core.ServiceCollection.CoreRuntimeServiceCollectionExtensions",
-            throwOnError: true)
-            ?? throw new InvalidOperationException("Core runtime service collection extensions type was not found.");
+            throwOnError: true);
 
-        return extensionType.GetMethod(
-                   "AddCoreRuntimeInfrastructure",
-                   BindingFlags.Public | BindingFlags.Static,
-                   [typeof(IServiceCollection)])
-               ?? throw new InvalidOperationException("AddCoreRuntimeInfrastructure(IServiceCollection) was not found.");
+        if (extensionType == null)
+            Thrower.InvalidOpEx("Core runtime service collection extensions type was not found.");
+
+        var method = extensionType.GetMethod(
+            "AddCoreRuntimeInfrastructure",
+            BindingFlags.Public | BindingFlags.Static,
+            [typeof(IServiceCollection)]);
+
+        if (method == null)
+            Thrower.InvalidOpEx("AddCoreRuntimeInfrastructure(IServiceCollection) was not found.");
+
+        return method;
     }
 }

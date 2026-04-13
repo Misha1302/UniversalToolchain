@@ -1,3 +1,5 @@
+using ExceptionsManager;
+
 namespace UniversalToolchain.Dialects.Integration;
 
 public sealed class DefaultRuntimeManifestFileLocator : IRuntimeManifestFileLocator
@@ -9,7 +11,7 @@ public sealed class DefaultRuntimeManifestFileLocator : IRuntimeManifestFileLoca
     public DefaultRuntimeManifestFileLocator(RuntimeArtifactLocatorOptions options)
     {
         if (options == null)
-            throw new ArgumentNullException(nameof(options));
+            Thrower.ArgumentNull(nameof(options));
 
         _manifestSearchPattern = string.IsNullOrWhiteSpace(options.ManifestSearchPattern)
             ? "*.dialect.runtime.json"

@@ -8,22 +8,18 @@ public class NativeTypesOptimizerModule : IIRProcessingModule
 {
     public IAbstractIR ProcessIr<TCompilationOutput>(IAbstractIR current, IAbstractIrCompiler<TCompilationOutput> compiler)
     {
-        // Регистрируем обработку наших интринсиков
         InitIntrinsics();
 
-        // Простая оптимизация: объединение последовательных операций
+        // Fold consecutive native arithmetic calls when operands are compile-time constants.
         return OptimizeNativeOperations(current);
     }
 
     public void InitMethodsTranslator(IAbstractMethodsTranslator methodsTranslator)
     {
-        // Инициализация не требуется
     }
 
     private void InitIntrinsics()
     {
-        // Используем существующую систему интринсиков
-        // (если нужно будет добавить специальные интринсики для нативных типов)
     }
 
     private IAbstractIR OptimizeNativeOperations(IAbstractIR air)
@@ -33,11 +29,10 @@ public class NativeTypesOptimizerModule : IIRProcessingModule
 
         for (var i = 0; i < instructions.Count; i++)
         {
-            // Ищем паттерн: две push-инструкции + вызов NativeArithmetic
+            // Match: push, push, and then a NativeArithmetic call.
             if (i + 2 < instructions.Count &&
                 IsNativeArithmeticPattern(instructions[i], instructions[i + 1], instructions[i + 2]))
             {
-                // Оптимизируем: заменяем на одну инструкцию с предварительно вычисленным значением
                 var left = instructions[i].Operands[0];
                 var right = instructions[i + 1].Operands[0];
                 var method = (MethodInfo)instructions[i + 2].Operands[1];
@@ -48,7 +43,7 @@ public class NativeTypesOptimizerModule : IIRProcessingModule
                     if (result is not null)
                     {
                         optimizedInstructions.Add(new Instruction(UOpCode.Push, [result]));
-                        i += 2; // Пропускаем оптимизированные инструкции
+                        i += 2;
                     }
                     else
                     {
@@ -57,7 +52,6 @@ public class NativeTypesOptimizerModule : IIRProcessingModule
                 }
                 catch
                 {
-                    // Если не удалось вычислить во время компиляции, оставляем как есть
                     optimizedInstructions.Add(instructions[i]);
                 }
             }

@@ -9,7 +9,10 @@ public sealed class CompilerIntrinsicCapabilityAdapter<TCompilationOutput> : IIn
 
     public CompilerIntrinsicCapabilityAdapter(IAbstractIrCompiler<TCompilationOutput> compiler)
     {
-        _compiler = compiler ?? throw new ArgumentNullException(nameof(compiler));
+        if (compiler == null)
+            Thrower.ArgumentNull(nameof(compiler));
+
+        _compiler = compiler;
     }
 
     public bool Supports(IntrinsicSymbol symbol, IReadOnlyList<IntrinsicTypeArgument> typeArguments)

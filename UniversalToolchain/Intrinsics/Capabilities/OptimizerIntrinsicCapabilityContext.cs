@@ -8,7 +8,10 @@ public sealed class OptimizerIntrinsicCapabilityContext : IOptimizerIntrinsicCap
 
     public OptimizerIntrinsicCapabilityContext(IIntrinsicCapabilitySet capabilitySet)
     {
-        _capabilitySet = capabilitySet ?? throw new ArgumentNullException(nameof(capabilitySet));
+        if (capabilitySet == null)
+            Thrower.ArgumentNull(nameof(capabilitySet));
+
+        _capabilitySet = capabilitySet;
     }
 
     public bool Supports(IntrinsicSymbol symbol, params Type[] typeArguments)

@@ -21,13 +21,18 @@ public class EGraphOptimizerModule : IIRProcessingModule
 
     public void InitIntrinsicCapabilityContext(IOptimizerIntrinsicCapabilityContext capabilityContext)
     {
-        _capabilityContext = capabilityContext ?? throw new ArgumentNullException(nameof(capabilityContext));
+        if (capabilityContext == null)
+            Thrower.ArgumentNull(nameof(capabilityContext));
+
+        _capabilityContext = capabilityContext;
     }
 
     public IAbstractIR ProcessIr<TCompilationOutput>(IAbstractIR current, IAbstractIrCompiler<TCompilationOutput> compiler)
     {
-        var capabilityContext = _capabilityContext
-                                ?? throw new InvalidOperationException("E-graph optimizer requires intrinsic capability context initialization.");
+        if (_capabilityContext == null)
+            Thrower.InvalidOpEx("E-graph optimizer requires intrinsic capability context initialization.");
+
+        var capabilityContext = _capabilityContext;
 
         if (!HasRequiredCapabilities(capabilityContext))
             return current;

@@ -2,13 +2,13 @@ namespace ArithmeticModule.Creators;
 
 public class UnaryMinusOperationNodeCreator : IAstNodeCreator
 {
-    private static readonly ExtensibleEnum<AstNodeTag> _substractionNodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("Substraction");
+    private static readonly ExtensibleEnum<AstNodeTag> _subtractionNodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("Subtraction");
     private static readonly ExtensibleEnum<AstNodeTag> _unaryMinusNodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("UnaryMinus");
 
     private static readonly HashSet<ExtensibleEnum<AstNodeTag>> _nonOperandNodeTypes =
     [
         ExtensibleEnum<AstNodeTag>.CreateOrGet("Addition"),
-        ExtensibleEnum<AstNodeTag>.CreateOrGet("Substraction"),
+        ExtensibleEnum<AstNodeTag>.CreateOrGet("Subtraction"),
         ExtensibleEnum<AstNodeTag>.CreateOrGet("Multiplication"),
         ExtensibleEnum<AstNodeTag>.CreateOrGet("Division"),
         ExtensibleEnum<AstNodeTag>.CreateOrGet("OpenPar"),
@@ -21,12 +21,12 @@ public class UnaryMinusOperationNodeCreator : IAstNodeCreator
         ExtensibleEnum<AstNodeTag>.CreateOrGet("Colon")
     ];
 
-    public ExtensibleEnum<AstNodeTag> AstNodeType => _substractionNodeType;
+    public ExtensibleEnum<AstNodeTag> AstNodeType => _subtractionNodeType;
 
     public bool TryCreateNode(AstNode scope, int childIndex)
     {
         var currentNode = scope.SafeGet(childIndex);
-        if (currentNode?.NodeType != _substractionNodeType)
+        if (currentNode?.NodeType != _subtractionNodeType)
             return false;
 
         if (HasCompletedLeftOperand(scope, childIndex))

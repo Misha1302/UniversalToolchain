@@ -11,7 +11,8 @@ public sealed class CoreIntrinsicDescriptorProvider : IIntrinsicDescriptorProvid
 
     public CoreIntrinsicDescriptorProvider(MethodCallTypeSemanticsResolver methodCallTypeSemanticsResolver)
     {
-        ArgumentNullException.ThrowIfNull(methodCallTypeSemanticsResolver);
+        if (methodCallTypeSemanticsResolver == null)
+            Thrower.ArgumentNull(nameof(methodCallTypeSemanticsResolver));
 
         _descriptors =
         [

@@ -6,12 +6,12 @@ namespace ArithmeticModule.Module;
 [ArithmeticModeCompatibility(ArithmeticMode.Universal)]
 public class ArithmeticModuleImpl : IFrontendCoreModule
 {
-    public static readonly IReadOnlyList<string> Ops = ["Addition", "Substraction", "Multiplication", "Division"];
+    public static readonly IReadOnlyList<string> Ops = ["Addition", "Subtraction", "Multiplication", "Division"];
 
     private static readonly IReadOnlyList<LexemeRegistration> _lexemeRegistrations =
     [
         new(@"\+", "Addition"),
-        new(@"\-", "Substraction"),
+        new(@"\-", "Subtraction"),
         new(@"\*", "Multiplication"),
         new(@"\/", "Division")
     ];
@@ -22,7 +22,7 @@ public class ArithmeticModuleImpl : IFrontendCoreModule
         new(-31f, new MultiplicationOperationNodeCreator()),
         new(-31f, new DivisionOperationNodeCreator()),
         new(-30f, new AdditionOperationNodeCreator()),
-        new(-30f, new SubstractionOperationNodeCreator())
+        new(-30f, new SubtractionOperationNodeCreator())
     ];
 
     public void InitLexer(ILexer lexer) => lexer.AddLexemes(_lexemeRegistrations);
