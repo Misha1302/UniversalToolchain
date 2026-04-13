@@ -58,4 +58,23 @@ internal static class DialectDefinitionSemanticBinder
 
         return builder.Build();
     }
+
+    internal static DialectBuildPlan BuildPlanCore(
+        IDialectBindingSource source,
+        List<DialectDiagnostic> diagnostics,
+        string cycleCode,
+        string cycleMessagePrefix,
+        string? missingReferenceCode = null,
+        string? missingReferenceMessagePrefix = null)
+    {
+        var definition = BindCore(source, diagnostics);
+
+        return DialectDefinitionBuildPlanProjector.Project(
+            definition,
+            diagnostics,
+            cycleCode,
+            cycleMessagePrefix,
+            missingReferenceCode,
+            missingReferenceMessagePrefix);
+    }
 }
