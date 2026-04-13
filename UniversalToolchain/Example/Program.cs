@@ -36,11 +36,7 @@ var interpretedArtifact = interpreter.Compile(formula, declaredBindings);
 var interpretedSession = interpretedArtifact.CreateSession();
 interpretedSession.SetArgument("price", 100.0);
 interpretedSession.SetArgument("fee", 5.0);
-var interpretedResultObject = interpretedSession.Run();
-if (interpretedResultObject == null)
-    Thrower.InvalidOpEx("Interpreter returned null.");
-
-var interpretedResult = (double)interpretedResultObject;
+var interpretedResult = (double)interpretedSession.Run().NotNull();
 
 var fastNativeInvoker = new DynamicMethodInvoker<double, double, double>(compiledArtifact.CompilationOutput);
 var nativeInvokedResult = fastNativeInvoker.Invoke(100.0, 5.0);
