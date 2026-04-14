@@ -7,11 +7,9 @@ internal static class DialectLexer
 {
     public static IReadOnlyList<DialectToken> Lex(string sourceText, IList<DialectDiagnostic> diagnostics)
     {
-        if (sourceText == null)
-            Thrower.ArgumentNull(nameof(sourceText));
+        sourceText = sourceText.ArgNotNull();
 
-        if (diagnostics == null)
-            Thrower.ArgumentNull(nameof(diagnostics));
+        diagnostics = diagnostics.ArgNotNull();
 
         var tokens = new List<DialectToken>();
         var index = 0;

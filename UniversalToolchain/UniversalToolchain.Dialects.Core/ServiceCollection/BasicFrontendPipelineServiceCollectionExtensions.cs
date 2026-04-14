@@ -20,8 +20,7 @@ public static class BasicFrontendPipelineServiceCollectionExtensions
 {
     public static IServiceCollection AddBasicFrontendPipelineDefaults(this IServiceCollection services)
     {
-        if (services == null)
-            Thrower.ArgumentNull(nameof(services));
+        services = services.ArgNotNull();
 
         services.AddTransient<Func<ILexer>>(_ =>
             () => new BasicLexerImpl(new LexerConfiguration([])));

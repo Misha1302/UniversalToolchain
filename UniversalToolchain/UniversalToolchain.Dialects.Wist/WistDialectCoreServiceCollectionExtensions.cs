@@ -17,8 +17,7 @@ public static class WistDialectCoreServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddWistDialectCoreServices(this IServiceCollection services)
     {
-        if (services == null)
-            Thrower.ArgumentNull(nameof(services));
+        services = services.ArgNotNull();
 
         services.AddDialectDslDefaultComposition();
 

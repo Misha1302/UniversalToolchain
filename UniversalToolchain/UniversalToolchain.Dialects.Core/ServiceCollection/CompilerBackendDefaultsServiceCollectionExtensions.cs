@@ -15,8 +15,7 @@ public static class CompilerBackendDefaultsServiceCollectionExtensions
 {
     public static IServiceCollection AddCompilerBackendDefaults(this IServiceCollection services)
     {
-        if (services == null)
-            Thrower.ArgumentNull(nameof(services));
+        services = services.ArgNotNull();
 
         services.TryAddTransient<AbstractMethodsCompilerImpl>();
         services.TryAddTransient<Func<IExecutor<DynamicMethod>>>(_ => () => new DynamicMethodExecutor());

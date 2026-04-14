@@ -15,14 +15,11 @@ public sealed class RuntimeKnownBackendsProvider : IRuntimeKnownBackendsProvider
         IEnumerable<IDialectBackendRuntimeRegistrar> backendRegistrars,
         IRuntimeComponentTypeLoader typeLoader)
     {
-        if (catalog == null)
-            Thrower.ArgumentNull(nameof(catalog));
+        catalog = catalog.ArgNotNull();
 
-        if (backendRegistrars == null)
-            Thrower.ArgumentNull(nameof(backendRegistrars));
+        backendRegistrars = backendRegistrars.ArgNotNull();
 
-        if (typeLoader == null)
-            Thrower.ArgumentNull(nameof(typeLoader));
+        typeLoader = typeLoader.ArgNotNull();
 
         _catalog = catalog;
         _providersById = CreateProviderMap(backendRegistrars);

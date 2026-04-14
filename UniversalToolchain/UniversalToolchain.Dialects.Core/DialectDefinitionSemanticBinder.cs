@@ -21,33 +21,27 @@ internal static class DialectDefinitionSemanticBinder
 
     public static DialectDefinition Bind(DialectSyntaxDocument syntaxDocument, List<DialectDiagnostic> diagnostics)
     {
-        if (syntaxDocument == null)
-            Thrower.ArgumentNull(nameof(syntaxDocument));
+        syntaxDocument = syntaxDocument.ArgNotNull();
 
-        if (diagnostics == null)
-            Thrower.ArgumentNull(nameof(diagnostics));
+        diagnostics = diagnostics.ArgNotNull();
 
         return BindCore(new SyntaxDialectBindingSource(syntaxDocument), diagnostics);
     }
 
     public static DialectDefinition Bind(DialectDefinitionSlice compiledDialect, List<DialectDiagnostic> diagnostics)
     {
-        if (compiledDialect == null)
-            Thrower.ArgumentNull(nameof(compiledDialect));
+        compiledDialect = compiledDialect.ArgNotNull();
 
-        if (diagnostics == null)
-            Thrower.ArgumentNull(nameof(diagnostics));
+        diagnostics = diagnostics.ArgNotNull();
 
         return BindCore(new CompiledDialectBindingSource(compiledDialect), diagnostics);
     }
 
     internal static DialectDefinition BindCore(IDialectBindingSource source, List<DialectDiagnostic> diagnostics)
     {
-        if (source == null)
-            Thrower.ArgumentNull(nameof(source));
+        source = source.ArgNotNull();
 
-        if (diagnostics == null)
-            Thrower.ArgumentNull(nameof(diagnostics));
+        diagnostics = diagnostics.ArgNotNull();
 
         var builder = new DialectDefinitionBuilder();
 
@@ -67,11 +61,9 @@ internal static class DialectDefinitionSemanticBinder
         string? missingReferenceCode = null,
         string? missingReferenceMessagePrefix = null)
     {
-        if (source == null)
-            Thrower.ArgumentNull(nameof(source));
+        source = source.ArgNotNull();
 
-        if (diagnostics == null)
-            Thrower.ArgumentNull(nameof(diagnostics));
+        diagnostics = diagnostics.ArgNotNull();
 
         if (string.IsNullOrWhiteSpace(cycleCode))
             Thrower.Argument(nameof(cycleCode), "Cycle diagnostic code must not be empty.");

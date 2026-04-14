@@ -28,8 +28,7 @@ public static class RuntimeBackendIntrinsicRegistry
 
     private static IReadOnlyDictionary<DialectBackendId, SortedSet<string>> CreateBackendIntrinsicMap(IEnumerable<IDialectBackendRuntimeRegistrar> backendRegistrars)
     {
-        if (backendRegistrars == null)
-            Thrower.ArgumentNull(nameof(backendRegistrars));
+        backendRegistrars = backendRegistrars.ArgNotNull();
 
         var map = new SortedDictionary<DialectBackendId, SortedSet<string>>();
         foreach (var backendRegistrar in backendRegistrars

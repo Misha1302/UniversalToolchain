@@ -41,20 +41,15 @@ public sealed class DialectDefinition
         if (string.IsNullOrWhiteSpace(name))
             Thrower.Argument(nameof(name), "Dialect name must not be empty.");
 
-        if (modulePolicy == null)
-            Thrower.ArgumentNull(nameof(modulePolicy));
+        modulePolicy = modulePolicy.ArgNotNull();
 
-        if (backendPolicy == null)
-            Thrower.ArgumentNull(nameof(backendPolicy));
+        backendPolicy = backendPolicy.ArgNotNull();
 
-        if (intrinsicPolicy == null)
-            Thrower.ArgumentNull(nameof(intrinsicPolicy));
+        intrinsicPolicy = intrinsicPolicy.ArgNotNull();
 
-        if (optimizerPolicy == null)
-            Thrower.ArgumentNull(nameof(optimizerPolicy));
+        optimizerPolicy = optimizerPolicy.ArgNotNull();
 
-        if (capabilityPolicy == null)
-            Thrower.ArgumentNull(nameof(capabilityPolicy));
+        capabilityPolicy = capabilityPolicy.ArgNotNull();
 
         if (version != null && string.IsNullOrWhiteSpace(version))
             Thrower.Argument(nameof(version), "Dialect version must be null or a non-empty value.");

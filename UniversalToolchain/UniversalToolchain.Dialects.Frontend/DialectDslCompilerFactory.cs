@@ -8,8 +8,7 @@ public sealed class DialectDslCompilerFactory : IDialectDslCompilerFactory
 
     public DialectDslCompilerFactory(DialectDslFrontendModule frontendModule)
     {
-        if (frontendModule == null)
-            Thrower.ArgumentNull(nameof(frontendModule));
+        frontendModule = frontendModule.ArgNotNull();
 
         _frontendModule = frontendModule;
     }

@@ -12,8 +12,7 @@ public sealed class DialectBuildPlanBuilder : IDialectBuildPlanBuilder
 {
     public DialectBuildPlan Build(DialectSyntaxDocument syntaxDocument)
     {
-        if (syntaxDocument == null)
-            Thrower.ArgumentNull(nameof(syntaxDocument));
+        syntaxDocument = syntaxDocument.ArgNotNull();
 
         var diagnostics = new List<DialectDiagnostic>();
         return DialectDefinitionSemanticBinder.BuildPlanCore(

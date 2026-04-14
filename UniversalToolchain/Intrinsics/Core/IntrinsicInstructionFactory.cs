@@ -7,8 +7,7 @@ public static class IntrinsicInstructionFactory
 {
     public static Instruction Create(IntrinsicInvocation invocation)
     {
-        if (invocation == null)
-            Thrower.ArgumentNull(nameof(invocation));
+        invocation = invocation.ArgNotNull();
 
         return new Instruction(UOpCode.Intrinsic, [invocation]);
     }

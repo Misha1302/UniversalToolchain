@@ -9,16 +9,14 @@ public sealed class SelectedRuntimePlanResolver
 
     public SelectedRuntimePlanResolver(IRuntimeComponentCatalog catalog)
     {
-        if (catalog == null)
-            Thrower.ArgumentNull(nameof(catalog));
+        catalog = catalog.ArgNotNull();
 
         _catalog = catalog;
     }
 
     public SelectedRuntimePlan Resolve(DialectBuildPlan buildPlan)
     {
-        if (buildPlan == null)
-            Thrower.ArgumentNull(nameof(buildPlan));
+        buildPlan = buildPlan.ArgNotNull();
 
         var diagnostics = new List<DialectDiagnostic>(buildPlan.ValidationResult.Diagnostics);
         var modules = ResolveModules(buildPlan, diagnostics);

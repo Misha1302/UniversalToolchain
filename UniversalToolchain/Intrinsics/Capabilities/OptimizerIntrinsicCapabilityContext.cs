@@ -8,8 +8,7 @@ public sealed class OptimizerIntrinsicCapabilityContext : IOptimizerIntrinsicCap
 
     public OptimizerIntrinsicCapabilityContext(IIntrinsicCapabilitySet capabilitySet)
     {
-        if (capabilitySet == null)
-            Thrower.ArgumentNull(nameof(capabilitySet));
+        capabilitySet = capabilitySet.ArgNotNull();
 
         _capabilitySet = capabilitySet;
     }
@@ -21,8 +20,7 @@ public sealed class OptimizerIntrinsicCapabilityContext : IOptimizerIntrinsicCap
 
     public bool Supports(IntrinsicSymbol symbol, IReadOnlyList<Type> typeArguments)
     {
-        if (typeArguments == null)
-            Thrower.ArgumentNull(nameof(typeArguments));
+        typeArguments = typeArguments.ArgNotNull();
 
         return _capabilitySet.Supports(symbol, typeArguments.Select(IntrinsicTypeArgument.From).ToArray());
     }

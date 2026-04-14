@@ -4,8 +4,7 @@ public sealed class IntrinsicSemanticValidationResult
 {
     public IntrinsicSemanticValidationResult(IEnumerable<string> errors)
     {
-        if (errors == null)
-            Thrower.ArgumentNull(nameof(errors));
+        errors = errors.ArgNotNull();
 
         Errors = errors
             .Select(x => x.NotNull(nameof(errors)))

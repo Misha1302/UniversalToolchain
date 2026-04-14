@@ -24,8 +24,7 @@ public sealed class RuntimeModuleDescriptor
 
     public RuntimeModuleDescriptor(Type implementationType, IEnumerable<string>? aliases = null, string? canonicalId = null)
     {
-        if (implementationType == null)
-            Thrower.ArgumentNull(nameof(implementationType));
+        implementationType = implementationType.ArgNotNull();
 
         if (!typeof(IFrontendCoreModule).IsAssignableFrom(implementationType) &&
             !typeof(IIRProcessingModule).IsAssignableFrom(implementationType))

@@ -7,8 +7,7 @@ public sealed class ExternalBindingsLayout
 {
     private ExternalBindingsLayout(IReadOnlyDictionary<string, int> slotsByName)
     {
-        if (slotsByName is null)
-            Thrower.ArgumentNull(nameof(slotsByName));
+        slotsByName = slotsByName.ArgNotNull();
 
         SlotsByName = slotsByName;
     }
@@ -23,8 +22,7 @@ public sealed class ExternalBindingsLayout
     /// </summary>
     public static ExternalBindingsLayout FromDeclaredBindings(IReadOnlyList<ExternalBinding> declaredBindings)
     {
-        if (declaredBindings is null)
-            Thrower.ArgumentNull(nameof(declaredBindings));
+        declaredBindings = declaredBindings.ArgNotNull();
 
         var slots = new Dictionary<string, int>(declaredBindings.Count, StringComparer.Ordinal);
         for (var i = 0; i < declaredBindings.Count; i++)

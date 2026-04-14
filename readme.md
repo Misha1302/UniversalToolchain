@@ -56,11 +56,7 @@ var interpretedArtifact = interpreter.Compile("price * 0.9 + fee", declaredBindi
 var session = interpretedArtifact.CreateSession();
 session.SetArgument("price", 100.0);
 session.SetArgument("fee", 5.0);
-var interpretedResultObject = session.Run();
-if (interpretedResultObject == null)
-    Thrower.InvalidOpEx("Interpreter returned null.");
-
-var interpretedResult = (double)interpretedResultObject; // 95.0
+var interpretedResult = (double)session.Run().NotNull(); // 95.0
 ```
 
 ## Why this project exists
@@ -210,7 +206,6 @@ This repository is actively evolving, and some areas are intentionally treated a
 - Coding standards: `PROJECT_RULES.md`
 - Contribution workflow: `CONTRIBUTING.md`
 - Security policy: `SECURITY.md`
-- Release notes: `CHANGELOG.md`
 
 ## License
 

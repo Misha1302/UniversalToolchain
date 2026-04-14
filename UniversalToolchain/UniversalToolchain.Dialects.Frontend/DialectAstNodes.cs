@@ -37,11 +37,9 @@ public sealed class DialectDocumentAstNode : DialectAstNode
 
     private static List<AstNode> CreateChildren(DialectDeclarationAstNode declaration, IReadOnlyList<DialectDirectiveAstNode> directives)
     {
-        if (declaration == null)
-            Thrower.ArgumentNull(nameof(declaration));
+        declaration = declaration.ArgNotNull();
 
-        if (directives == null)
-            Thrower.ArgumentNull(nameof(directives));
+        directives = directives.ArgNotNull();
 
         var children = new List<AstNode> { declaration };
         children.AddRange(directives);
@@ -65,8 +63,7 @@ public sealed class DialectDirectiveAstNode : DialectAstNode
         lexemeValue,
         CreateChildren(payloadNodes))
     {
-        if (feature == null)
-            Thrower.ArgumentNull(nameof(feature));
+        feature = feature.ArgNotNull();
 
         Feature = feature;
     }
@@ -77,8 +74,7 @@ public sealed class DialectDirectiveAstNode : DialectAstNode
 
     private static List<AstNode> CreateChildren(IReadOnlyList<AstNode> payloadNodes)
     {
-        if (payloadNodes == null)
-            Thrower.ArgumentNull(nameof(payloadNodes));
+        payloadNodes = payloadNodes.ArgNotNull();
 
         if (payloadNodes.Count != 1)
             Thrower.Argument(nameof(payloadNodes), "Dialect directives must contain exactly one payload node.");
@@ -94,8 +90,7 @@ public sealed class IdentifierValueAstNode : DialectAstNode
 {
     public IdentifierValueAstNode(LexemeValue lexemeValue) : base(DialectAstNodeTypes.IdentifierValue, lexemeValue, [])
     {
-        if (lexemeValue == null)
-            Thrower.ArgumentNull(nameof(lexemeValue));
+        lexemeValue = lexemeValue.ArgNotNull();
     }
 
     public string Identifier => Text;
@@ -111,8 +106,7 @@ public sealed class IdentifierListAstNode : DialectAstNode
 
     private static List<AstNode> CreateChildren(IReadOnlyList<IdentifierValueAstNode> identifiers)
     {
-        if (identifiers == null)
-            Thrower.ArgumentNull(nameof(identifiers));
+        identifiers = identifiers.ArgNotNull();
 
         return identifiers.Cast<AstNode>().ToList();
     }

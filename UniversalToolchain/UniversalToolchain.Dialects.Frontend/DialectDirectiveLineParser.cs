@@ -9,19 +9,16 @@ public sealed class DialectDirectiveLineParser
 
     public DialectDirectiveLineParser(DialectDslRegistry registry)
     {
-        if (registry == null)
-            Thrower.ArgumentNull(nameof(registry));
+        registry = registry.ArgNotNull();
 
         _registry = registry;
     }
 
     public bool TryParse(IReadOnlyList<LexemeValue> line, DialectDirectiveAccumulation accumulation)
     {
-        if (line == null)
-            Thrower.ArgumentNull(nameof(line));
+        line = line.ArgNotNull();
 
-        if (accumulation == null)
-            Thrower.ArgumentNull(nameof(accumulation));
+        accumulation = accumulation.ArgNotNull();
 
         if (line.Count == 0)
             return true;

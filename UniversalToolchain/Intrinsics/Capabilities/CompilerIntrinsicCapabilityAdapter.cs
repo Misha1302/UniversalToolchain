@@ -9,8 +9,7 @@ public sealed class CompilerIntrinsicCapabilityAdapter<TCompilationOutput> : IIn
 
     public CompilerIntrinsicCapabilityAdapter(IAbstractIrCompiler<TCompilationOutput> compiler)
     {
-        if (compiler == null)
-            Thrower.ArgumentNull(nameof(compiler));
+        compiler = compiler.ArgNotNull();
 
         _compiler = compiler;
     }

@@ -11,8 +11,7 @@ public sealed class PushSingleTypeRule : IIntrinsicStackRule
 
     public PushSingleTypeRule(Func<IntrinsicInvocation, IIntrinsicTypeResolutionContext, Type> resolveType)
     {
-        if (resolveType == null)
-            Thrower.ArgumentNull(nameof(resolveType));
+        resolveType = resolveType.ArgNotNull();
 
         _resolveType = resolveType;
     }

@@ -14,14 +14,11 @@ public sealed class CompiledArtifactSession<TCompilationOutput> : ICompiledArtif
         IExecutor<TCompilationOutput> executor,
         IExecutionEnvironment executionEnvironment)
     {
-        if (artifact == null)
-            Thrower.ArgumentNull(nameof(artifact));
+        artifact = artifact.ArgNotNull();
 
-        if (executor == null)
-            Thrower.ArgumentNull(nameof(executor));
+        executor = executor.ArgNotNull();
 
-        if (executionEnvironment == null)
-            Thrower.ArgumentNull(nameof(executionEnvironment));
+        executionEnvironment = executionEnvironment.ArgNotNull();
 
         _artifact = artifact;
         _executor = executor;
@@ -38,8 +35,7 @@ public sealed class CompiledArtifactSession<TCompilationOutput> : ICompiledArtif
 
     public void SetArgument(string name, object? value)
     {
-        if (name == null)
-            Thrower.ArgumentNull(nameof(name));
+        name = name.ArgNotNull();
 
         if (!_artifact.SlotsByName.TryGetValue(name, out var slot))
             Thrower.Argument(nameof(name), $"Unknown argument name '{name}'.");

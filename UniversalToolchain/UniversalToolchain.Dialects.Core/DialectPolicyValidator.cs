@@ -13,16 +13,14 @@ public sealed class DialectPolicyValidator
 
     public DialectPolicyValidator(IDialectBuildPlanBuilder buildPlanBuilder)
     {
-        if (buildPlanBuilder == null)
-            Thrower.ArgumentNull(nameof(buildPlanBuilder));
+        buildPlanBuilder = buildPlanBuilder.ArgNotNull();
 
         _buildPlanBuilder = buildPlanBuilder;
     }
 
     public DialectValidationResult Validate(DialectSyntaxDocument syntaxDocument)
     {
-        if (syntaxDocument == null)
-            Thrower.ArgumentNull(nameof(syntaxDocument));
+        syntaxDocument = syntaxDocument.ArgNotNull();
 
         var plan = _buildPlanBuilder.Build(syntaxDocument);
         return plan.ValidationResult;

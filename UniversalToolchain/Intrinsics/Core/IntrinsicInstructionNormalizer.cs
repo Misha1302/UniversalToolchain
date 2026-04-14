@@ -18,8 +18,7 @@ internal static class IntrinsicInstructionNormalizer
 
     public static bool TryNormalize(Instruction instruction, out Instruction normalizedInstruction)
     {
-        if (instruction == null)
-            Thrower.ArgumentNull(nameof(instruction));
+        instruction = instruction.ArgNotNull();
 
         normalizedInstruction = default!;
 

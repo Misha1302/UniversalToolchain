@@ -67,8 +67,7 @@ internal abstract class DialectDirectiveFeatureBase : IDialectDirectiveFeature
 
     static protected void ValidateIdentifier(IdentifierValueAstNode identifier, string message)
     {
-        if (identifier == null)
-            Thrower.ArgumentNull(nameof(identifier));
+        identifier = identifier.ArgNotNull();
 
         if (string.IsNullOrWhiteSpace(identifier.Identifier))
             DialectDefinitionSliceParseErrors.Fail(message, identifier.LexemeValue);

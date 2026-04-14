@@ -11,8 +11,7 @@ public sealed class CompositeValidationRule : IIntrinsicValidationRule
 
     public CompositeValidationRule(params IIntrinsicValidationRule[] rules)
     {
-        if (rules == null)
-            Thrower.ArgumentNull(nameof(rules));
+        rules = rules.ArgNotNull();
 
         _rules = rules;
     }

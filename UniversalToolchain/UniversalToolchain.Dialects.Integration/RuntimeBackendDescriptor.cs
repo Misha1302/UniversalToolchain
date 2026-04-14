@@ -18,8 +18,7 @@ public sealed class RuntimeBackendDescriptor
 
     public RuntimeBackendDescriptor(DialectBackendId backendId, Type metadataOwnerType, IEnumerable<string>? aliases = null)
     {
-        if (metadataOwnerType == null)
-            Thrower.ArgumentNull(nameof(metadataOwnerType));
+        metadataOwnerType = metadataOwnerType.ArgNotNull();
 
         if (string.IsNullOrWhiteSpace(backendId.Value))
             Thrower.Argument(nameof(backendId), "Runtime backend descriptor must contain a canonical backend identifier.");

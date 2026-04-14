@@ -227,8 +227,7 @@ public static class TypesFinder
     public static void RegisterAssembly(Assembly assembly)
     {
         // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
-        if (assembly == null)
-            Thrower.ArgumentNull(nameof(assembly));
+        assembly = assembly.ArgNotNull();
 
         lock (_syncLock)
         {

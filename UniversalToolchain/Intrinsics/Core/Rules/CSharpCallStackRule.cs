@@ -12,8 +12,7 @@ public sealed class CSharpCallStackRule : IIntrinsicStackRule
 
     public CSharpCallStackRule(MethodCallTypeSemanticsResolver resolver)
     {
-        if (resolver == null)
-            Thrower.ArgumentNull(nameof(resolver));
+        resolver = resolver.ArgNotNull();
 
         _resolver = resolver;
     }

@@ -15,11 +15,9 @@ internal static class DialectSecurityCapabilityPolicyValidator
         IReadOnlyDictionary<string, bool> capabilities,
         List<DialectDiagnostic> diagnostics)
     {
-        if (capabilities == null)
-            Thrower.ArgumentNull(nameof(capabilities));
+        capabilities = capabilities.ArgNotNull();
 
-        if (diagnostics == null)
-            Thrower.ArgumentNull(nameof(diagnostics));
+        diagnostics = diagnostics.ArgNotNull();
 
         Validate(securityProfile, capabilities, diagnostics, DefaultRules);
     }
@@ -30,14 +28,11 @@ internal static class DialectSecurityCapabilityPolicyValidator
         List<DialectDiagnostic> diagnostics,
         IReadOnlyList<IDialectPolicyValidationRule> rules)
     {
-        if (capabilities == null)
-            Thrower.ArgumentNull(nameof(capabilities));
+        capabilities = capabilities.ArgNotNull();
 
-        if (diagnostics == null)
-            Thrower.ArgumentNull(nameof(diagnostics));
+        diagnostics = diagnostics.ArgNotNull();
 
-        if (rules == null)
-            Thrower.ArgumentNull(nameof(rules));
+        rules = rules.ArgNotNull();
 
         foreach (var rule in rules)
         {

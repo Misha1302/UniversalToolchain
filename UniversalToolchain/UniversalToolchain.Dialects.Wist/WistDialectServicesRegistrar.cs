@@ -11,8 +11,7 @@ public sealed class WistDialectServicesRegistrar : IDialectServicesRegistrar
 {
     public void Register(IServiceCollection services)
     {
-        if (services == null)
-            Thrower.ArgumentNull(nameof(services));
+        services = services.ArgNotNull();
 
         services.AddWistDialectServices();
     }

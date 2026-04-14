@@ -16,8 +16,7 @@ internal sealed class SyntaxDialectBindingSource : IDialectBindingSource
 
     public SyntaxDialectBindingSource(DialectSyntaxDocument document)
     {
-        if (document == null)
-            Thrower.ArgumentNull(nameof(document));
+        document = document.ArgNotNull();
 
         _document = document;
         _orderRules = new ReadOnlyCollection<OrderBindingDirectiveRecord>(document.OrderRules.Select(ToOrderRule).ToList());

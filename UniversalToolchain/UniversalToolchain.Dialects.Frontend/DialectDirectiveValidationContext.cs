@@ -13,8 +13,7 @@ public sealed class DialectDirectiveValidationContext
 
     public void AddValues<TValue>(DialectSetStateKey<TValue> key, IEnumerable<TValue> values, string duplicateMessage, LexemeValue? token)
     {
-        if (values == null)
-            Thrower.ArgumentNull(nameof(values));
+        values = values.ArgNotNull();
 
         foreach (var value in values)
             AddValue(key, value, duplicateMessage, token);
@@ -28,8 +27,7 @@ public sealed class DialectDirectiveValidationContext
 
     public void EnsureSingleton(IDialectDirectiveFeature feature, LexemeValue? token)
     {
-        if (feature == null)
-            Thrower.ArgumentNull(nameof(feature));
+        feature = feature.ArgNotNull();
 
         if (!_singletonDirectives.Add(feature.Id))
             DialectDefinitionSliceParseErrors.Fail(feature.SingletonViolationMessage, token);
@@ -38,8 +36,7 @@ public sealed class DialectDirectiveValidationContext
     public TState GetOrAddState<TState>(DialectValueStateKey<TState> key, Func<TState> factory) where TState : class
     {
         DialectTypedStateGuards.EnsureKey(key, nameof(key));
-        if (factory == null)
-            Thrower.ArgumentNull(nameof(factory));
+        factory = factory.ArgNotNull();
 
         if (_state.TryGetValue(key, out var existing))
         {

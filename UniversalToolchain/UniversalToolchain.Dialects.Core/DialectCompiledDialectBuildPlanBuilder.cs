@@ -12,8 +12,7 @@ public sealed class DialectCompiledDialectBuildPlanBuilder : IDialectCompiledDia
 {
     public DialectBuildPlan Build(DialectDefinitionSlice compiledDialect)
     {
-        if (compiledDialect == null)
-            Thrower.ArgumentNull(nameof(compiledDialect));
+        compiledDialect = compiledDialect.ArgNotNull();
 
         var diagnostics = new List<DialectDiagnostic>();
         return DialectDefinitionSemanticBinder.BuildPlanCore(

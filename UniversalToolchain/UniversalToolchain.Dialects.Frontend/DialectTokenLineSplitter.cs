@@ -7,8 +7,7 @@ public static class DialectTokenLineSplitter
 {
     public static List<List<LexemeValue>> Split(IReadOnlyList<LexemeValue> tokens)
     {
-        if (tokens == null)
-            Thrower.ArgumentNull(nameof(tokens));
+        tokens = tokens.ArgNotNull();
 
         var result = new List<List<LexemeValue>>();
         var current = new List<LexemeValue>();

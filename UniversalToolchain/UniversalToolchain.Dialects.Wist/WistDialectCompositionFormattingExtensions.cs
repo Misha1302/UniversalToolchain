@@ -12,8 +12,7 @@ public static class WistDialectCompositionFormattingExtensions
 {
     public static string ToDeterministicText(this DialectFrameworkCompositionResult result)
     {
-        if (result == null)
-            Thrower.ArgumentNull(nameof(result));
+        result = result.ArgNotNull();
 
         var builder = new StringBuilder();
         builder.AppendLine($"Source: {result.SourceName}");

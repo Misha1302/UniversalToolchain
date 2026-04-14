@@ -8,8 +8,7 @@ public sealed class IntrinsicCatalog : IIntrinsicCatalog
 
     public IntrinsicCatalog(IReadOnlyDictionary<IntrinsicSymbol, IntrinsicSemanticDescriptor> descriptors)
     {
-        if (descriptors == null)
-            Thrower.ArgumentNull(nameof(descriptors));
+        descriptors = descriptors.ArgNotNull();
 
         _descriptors = descriptors;
     }

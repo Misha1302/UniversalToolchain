@@ -10,8 +10,7 @@ public sealed class NativeDelegateInvoker : INativeDelegateInvoker
 
     public NativeDelegateInvoker(DynamicMethod dynamicMethod)
     {
-        if (dynamicMethod is null)
-            Thrower.ArgumentNull(nameof(dynamicMethod));
+        dynamicMethod = dynamicMethod.ArgNotNull();
 
         _dynamicMethod = dynamicMethod;
     }
@@ -20,8 +19,7 @@ public sealed class NativeDelegateInvoker : INativeDelegateInvoker
 
     public Delegate GetDelegate(Type delegateType)
     {
-        if (delegateType is null)
-            Thrower.ArgumentNull(nameof(delegateType));
+        delegateType = delegateType.ArgNotNull();
 
         if (!typeof(Delegate).IsAssignableFrom(delegateType))
             Thrower.Argument(nameof(delegateType), $"Type '{delegateType}' must be a delegate type.");

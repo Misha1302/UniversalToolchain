@@ -14,8 +14,7 @@ public sealed class DialectNameAirAnnotation(string name) : IDialectDefinitionSl
 
     public void Apply(DialectDefinitionAggregation aggregation)
     {
-        if (aggregation == null)
-            Thrower.ArgumentNull(nameof(aggregation));
+        aggregation = aggregation.ArgNotNull();
 
         aggregation.SetDialectName(Name);
     }
@@ -38,8 +37,7 @@ public sealed class DialectVersionAirAnnotation(string version) : IDialectDefini
 
     public void Apply(DialectDefinitionAggregation aggregation)
     {
-        if (aggregation == null)
-            Thrower.ArgumentNull(nameof(aggregation));
+        aggregation = aggregation.ArgNotNull();
 
         aggregation.SetVersion(Version);
     }
@@ -54,8 +52,7 @@ public sealed class BaseDialectAirAnnotation(string baseDialectName) : IDialectD
 
     public void Apply(DialectDefinitionAggregation aggregation)
     {
-        if (aggregation == null)
-            Thrower.ArgumentNull(nameof(aggregation));
+        aggregation = aggregation.ArgNotNull();
 
         aggregation.SetBaseDialectName(BaseDialectName);
     }

@@ -8,11 +8,9 @@ public sealed class IntrinsicSemanticCoverageValidator
         IEnumerable<Type> registeredProviderTypes,
         IEnumerable<(Type ModuleType, Type ProviderType)> coverageRequirements)
     {
-        if (registeredProviderTypes == null)
-            Thrower.ArgumentNull(nameof(registeredProviderTypes));
+        registeredProviderTypes = registeredProviderTypes.ArgNotNull();
 
-        if (coverageRequirements == null)
-            Thrower.ArgumentNull(nameof(coverageRequirements));
+        coverageRequirements = coverageRequirements.ArgNotNull();
 
         var errors = new List<string>();
         var providerTypeSet = registeredProviderTypes
@@ -44,14 +42,11 @@ public sealed class IntrinsicSemanticCoverageValidator
         IEnumerable<IIntrinsicDescriptorProvider> providers,
         IEnumerable<(Type ModuleType, Type ProviderType)> coverageRequirements)
     {
-        if (catalog == null)
-            Thrower.ArgumentNull(nameof(catalog));
+        catalog = catalog.ArgNotNull();
 
-        if (providers == null)
-            Thrower.ArgumentNull(nameof(providers));
+        providers = providers.ArgNotNull();
 
-        if (coverageRequirements == null)
-            Thrower.ArgumentNull(nameof(coverageRequirements));
+        coverageRequirements = coverageRequirements.ArgNotNull();
 
         var errors = new List<string>();
         var providerMap = providers

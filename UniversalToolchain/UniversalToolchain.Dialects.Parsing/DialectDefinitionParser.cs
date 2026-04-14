@@ -10,8 +10,7 @@ public sealed class DialectDefinitionParser : IDialectDefinitionParser
 {
     public DialectParseResult Parse(string sourceText)
     {
-        if (sourceText == null)
-            Thrower.ArgumentNull(nameof(sourceText));
+        sourceText = sourceText.ArgNotNull();
 
         var diagnostics = new List<DialectDiagnostic>();
         var tokens = DialectLexer.Lex(sourceText, diagnostics);

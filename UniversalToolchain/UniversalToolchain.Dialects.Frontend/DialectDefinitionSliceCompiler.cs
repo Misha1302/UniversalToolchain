@@ -9,11 +9,9 @@ public sealed class DialectDefinitionSliceCompiler : IAbstractIrCompiler<Dialect
 {
     public DialectDefinitionSlice Compile(IAbstractIR air, CompilationInput input)
     {
-        if (air == null)
-            Thrower.ArgumentNull(nameof(air));
+        air = air.ArgNotNull();
 
-        if (input == null)
-            Thrower.ArgumentNull(nameof(input));
+        input = input.ArgNotNull();
 
         return DialectDefinitionSliceAirReader.Read(air);
     }

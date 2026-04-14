@@ -28,8 +28,7 @@ internal static class DialectNodeCreatorSupport
 
     public static IdentifierValueAstNode ParseSingleIdentifier(AstNode lineNode, string directiveDisplayName)
     {
-        if (lineNode == null)
-            Thrower.ArgumentNull(nameof(lineNode));
+        lineNode = lineNode.ArgNotNull();
 
         if (lineNode.Children.Count != 2)
             DialectDefinitionSliceParseErrors.Fail(
@@ -47,8 +46,7 @@ internal static class DialectNodeCreatorSupport
 
     public static IdentifierListAstNode ParseIdentifierList(AstNode lineNode, string directiveDisplayName)
     {
-        if (lineNode == null)
-            Thrower.ArgumentNull(nameof(lineNode));
+        lineNode = lineNode.ArgNotNull();
 
         if (lineNode.Children.Count < 2)
             DialectDefinitionSliceParseErrors.Fail(
@@ -183,8 +181,7 @@ public sealed class FeatureDialectDirectiveNodeCreator : DialectLineConstructNod
 
     public FeatureDialectDirectiveNodeCreator(IDialectDirectiveFeature feature)
     {
-        if (feature == null)
-            Thrower.ArgumentNull(nameof(feature));
+        feature = feature.ArgNotNull();
 
         _feature = feature;
     }

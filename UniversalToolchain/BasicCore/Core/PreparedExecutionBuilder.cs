@@ -41,8 +41,7 @@ internal sealed class PreparedExecutionBuilder<TCompilationOutput>(
 
     private CompilationBuildResult<TCompilationOutput> BuildCompilationResult(CompilationInput input)
     {
-        if (input is null)
-            Thrower.ArgumentNull(nameof(input));
+        input = input.ArgNotNull();
 
         var lexer = lexerFactory();
         var parser = parserFactory();

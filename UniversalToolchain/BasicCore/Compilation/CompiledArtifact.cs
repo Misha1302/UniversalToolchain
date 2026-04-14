@@ -19,14 +19,11 @@ public sealed class CompiledArtifact<TCompilationOutput> : ICompiledArtifact<TCo
         TCompilationOutput compilationOutput,
         IExecutor<TCompilationOutput> executor)
     {
-        if (sourceText is null)
-            Thrower.ArgumentNull(nameof(sourceText));
+        sourceText = sourceText.ArgNotNull();
 
-        if (declaredBindings is null)
-            Thrower.ArgumentNull(nameof(declaredBindings));
+        declaredBindings = declaredBindings.ArgNotNull();
 
-        if (executor is null)
-            Thrower.ArgumentNull(nameof(executor));
+        executor = executor.ArgNotNull();
 
         _declaredBindings = SnapshotBindings(declaredBindings);
         _externalBindingsLayout = ExternalBindingsLayout.FromDeclaredBindings(_declaredBindings);

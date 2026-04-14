@@ -20,8 +20,7 @@ public sealed class DialectDslCompiler : IDisposable
 
     public DialectDslCompiler(DialectDslFrontendModule frontendModule)
     {
-        if (frontendModule == null)
-            Thrower.ArgumentNull(nameof(frontendModule));
+        frontendModule = frontendModule.ArgNotNull();
 
         var services = new ServiceCollection();
         services.AddDialectDslFrontendCompilerServices(frontendModule);

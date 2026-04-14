@@ -10,8 +10,7 @@ public sealed class DialectDslRegistryBuilder
 
     public DialectDslRegistryBuilder RegisterFeature(IDialectDirectiveFeature feature)
     {
-        if (feature == null)
-            Thrower.ArgumentNull(nameof(feature));
+        feature = feature.ArgNotNull();
 
         _features.Add(feature);
         return this;
@@ -19,8 +18,7 @@ public sealed class DialectDslRegistryBuilder
 
     public DialectDslRegistryBuilder RegisterDocumentRule(IDialectDocumentValidationRule rule)
     {
-        if (rule == null)
-            Thrower.ArgumentNull(nameof(rule));
+        rule = rule.ArgNotNull();
 
         _documentRules.Add(rule);
         return this;

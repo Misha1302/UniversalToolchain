@@ -13,16 +13,14 @@ public sealed class DefaultRuntimeComponentResolver : IRuntimeComponentResolver
 
     public DefaultRuntimeComponentResolver(IRuntimeAssemblyLoadStrategy assemblyLoadStrategy)
     {
-        if (assemblyLoadStrategy == null)
-            Thrower.ArgumentNull(nameof(assemblyLoadStrategy));
+        assemblyLoadStrategy = assemblyLoadStrategy.ArgNotNull();
 
         _assemblyLoadStrategy = assemblyLoadStrategy;
     }
 
     public RuntimeComponentDescriptor Resolve(RuntimeComponentManifestEntry entry)
     {
-        if (entry == null)
-            Thrower.ArgumentNull(nameof(entry));
+        entry = entry.ArgNotNull();
 
         var index = GetAssemblyComponentIndex(entry.AssemblySimpleName);
         if (index.TryGetValue(entry.ComponentId, out var descriptor))

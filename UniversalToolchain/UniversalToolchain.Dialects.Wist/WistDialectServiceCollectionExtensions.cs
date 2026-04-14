@@ -7,8 +7,7 @@ public static class WistDialectServiceCollectionExtensions
 {
     public static IServiceCollection AddWistDialectServices(this IServiceCollection services)
     {
-        if (services == null)
-            Thrower.ArgumentNull(nameof(services));
+        services = services.ArgNotNull();
 
         return services
             .AddWistDialectCoreServices()

@@ -9,8 +9,7 @@ public static class WistInterpreterBackendServiceCollectionExtensions
 {
     public static IServiceCollection AddWistInterpreterBackend(this IServiceCollection services)
     {
-        if (services == null)
-            Thrower.ArgumentNull(nameof(services));
+        services = services.ArgNotNull();
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IDialectBackendRuntimeRegistrar, WistInterpreterDialectBackendServiceProvider>());
         return services;
     }

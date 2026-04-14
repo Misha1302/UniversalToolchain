@@ -15,8 +15,7 @@ public static class InterpreterBackendDefaultsServiceCollectionExtensions
 {
     public static IServiceCollection AddInterpreterBackendDefaults(this IServiceCollection services)
     {
-        if (services == null)
-            Thrower.ArgumentNull(nameof(services));
+        services = services.ArgNotNull();
 
         services.TryAddTransient<AbstractIrToAbstractIrStub>();
         services.TryAddTransient<Func<IExecutor<IAbstractIR>>>(_ => () => new InterpreterImpl());

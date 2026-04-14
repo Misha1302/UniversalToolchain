@@ -9,8 +9,7 @@ public static class DialectDslServiceCollectionExtensions
 {
     public static IServiceCollection AddDialectDslDefaultComposition(this IServiceCollection services)
     {
-        if (services == null)
-            Thrower.ArgumentNull(nameof(services));
+        services = services.ArgNotNull();
 
         return services
             .AddDialectDsl()
@@ -19,8 +18,7 @@ public static class DialectDslServiceCollectionExtensions
 
     public static IServiceCollection AddDialectDsl(this IServiceCollection services)
     {
-        if (services == null)
-            Thrower.ArgumentNull(nameof(services));
+        services = services.ArgNotNull();
 
         services.TryAddSingleton<IDialectDslRegistryFactory, DialectDslRegistryFactory>();
         services.TryAddSingleton(static provider => provider.GetRequiredService<IDialectDslRegistryFactory>().CreateRegistry());
@@ -36,8 +34,7 @@ public static class DialectDslServiceCollectionExtensions
 
     public static IServiceCollection AddDialectDslBuiltIns(this IServiceCollection services)
     {
-        if (services == null)
-            Thrower.ArgumentNull(nameof(services));
+        services = services.ArgNotNull();
 
         return services
             .AddDialectDirectiveFeature<UseModulesDialectDirectiveFeature>()
@@ -58,8 +55,7 @@ public static class DialectDslServiceCollectionExtensions
     public static IServiceCollection AddDialectDirectiveFeature<TFeature>(this IServiceCollection services)
         where TFeature : class, IDialectDirectiveFeature
     {
-        if (services == null)
-            Thrower.ArgumentNull(nameof(services));
+        services = services.ArgNotNull();
 
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IDialectDirectiveFeature, TFeature>());
         return services;
@@ -68,8 +64,7 @@ public static class DialectDslServiceCollectionExtensions
     public static IServiceCollection AddDialectDirectiveFeatureProvider<TProvider>(this IServiceCollection services)
         where TProvider : class, IDialectDslFeatureProvider
     {
-        if (services == null)
-            Thrower.ArgumentNull(nameof(services));
+        services = services.ArgNotNull();
 
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IDialectDslFeatureProvider, TProvider>());
         return services;
@@ -78,8 +73,7 @@ public static class DialectDslServiceCollectionExtensions
     public static IServiceCollection AddDialectDocumentValidationRule<TRule>(this IServiceCollection services)
         where TRule : class, IDialectDocumentValidationRule
     {
-        if (services == null)
-            Thrower.ArgumentNull(nameof(services));
+        services = services.ArgNotNull();
 
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IDialectDocumentValidationRule, TRule>());
         return services;

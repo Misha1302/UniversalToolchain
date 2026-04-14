@@ -9,8 +9,7 @@ public static class WistCilBackendServiceCollectionExtensions
 {
     public static IServiceCollection AddWistCilBackend(this IServiceCollection services)
     {
-        if (services == null)
-            Thrower.ArgumentNull(nameof(services));
+        services = services.ArgNotNull();
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IDialectBackendRuntimeRegistrar, WistCilDialectBackendServiceProvider>());
         return services;
     }

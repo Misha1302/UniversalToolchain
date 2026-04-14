@@ -20,8 +20,7 @@ public class DialectBackendRuntimeConfiguration
         IEnumerable<string> forbiddenIntrinsics,
         bool hasExplicitAllowList)
     {
-        if (backendDescriptor == null)
-            Thrower.ArgumentNull(nameof(backendDescriptor));
+        backendDescriptor = backendDescriptor.ArgNotNull();
 
         BackendDescriptor = backendDescriptor;
         _optimizerTypes = new ReadOnlyCollection<Type>(SnapshotTypes(optimizerTypes, nameof(optimizerTypes)));

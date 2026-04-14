@@ -16,8 +16,7 @@ public class LocalVariablesOptimizer : IIRProcessingModule
 
     public void InitIntrinsicCapabilityContext(IOptimizerIntrinsicCapabilityContext capabilityContext)
     {
-        if (capabilityContext == null)
-            Thrower.ArgumentNull(nameof(capabilityContext));
+        capabilityContext = capabilityContext.ArgNotNull();
 
         _capabilityContext = capabilityContext;
     }

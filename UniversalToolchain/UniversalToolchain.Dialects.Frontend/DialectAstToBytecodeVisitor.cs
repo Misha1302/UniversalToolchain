@@ -10,16 +10,14 @@ public sealed class DialectAstToBytecodeVisitor : IAstVisitor
 
     public DialectAstToBytecodeVisitor(DialectDslRegistry registry)
     {
-        if (registry == null)
-            Thrower.ArgumentNull(nameof(registry));
+        registry = registry.ArgNotNull();
 
         _registry = registry;
     }
 
     public void TryVisit(BytecodeVisitorData data)
     {
-        if (data == null)
-            Thrower.ArgumentNull(nameof(data));
+        data = data.ArgNotNull();
 
         var document = DialectDslAstValidator.Validate(data.Node, _registry);
         var annotations = DialectAstLowering.Lower(document);
@@ -31,8 +29,7 @@ internal static class DialectAstLowering
 {
     public static IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDocumentAstNode document)
     {
-        if (document == null)
-            Thrower.ArgumentNull(nameof(document));
+        document = document.ArgNotNull();
 
         var annotations = new List<IDialectDefinitionSliceAnnotation>
         {

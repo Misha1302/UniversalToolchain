@@ -8,11 +8,9 @@ internal static class IntrinsicTypeProcessor
 {
     public static void ProcessTypes(Instruction instruction, List<Type> stack)
     {
-        if (instruction == null)
-            Thrower.ArgumentNull(nameof(instruction));
+        instruction = instruction.ArgNotNull();
 
-        if (stack == null)
-            Thrower.ArgumentNull(nameof(stack));
+        stack = stack.ArgNotNull();
 
         if (instruction.UOpCode != UOpCode.Intrinsic)
             Thrower.InvalidOpEx("Instruction must be an intrinsic opcode.");

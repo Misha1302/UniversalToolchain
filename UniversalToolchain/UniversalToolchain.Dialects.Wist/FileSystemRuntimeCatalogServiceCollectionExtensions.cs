@@ -15,8 +15,7 @@ public static class FileSystemRuntimeCatalogServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddFileSystemRuntimeCatalogServices(this IServiceCollection services)
     {
-        if (services == null)
-            Thrower.ArgumentNull(nameof(services));
+        services = services.ArgNotNull();
 
         services.TryAddSingleton(new RuntimeArtifactLocatorOptions());
         services.TryAddSingleton<IRuntimeManifestFileLocator, DefaultRuntimeManifestFileLocator>();

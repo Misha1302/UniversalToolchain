@@ -8,11 +8,9 @@ public static class OptimizerCapabilityGuards
         IOptimizerIntrinsicCapabilityContext capabilityContext,
         IEnumerable<(IntrinsicSymbol Symbol, Type[] TypeArguments)> requirements)
     {
-        if (capabilityContext == null)
-            Thrower.ArgumentNull(nameof(capabilityContext));
+        capabilityContext = capabilityContext.ArgNotNull();
 
-        if (requirements == null)
-            Thrower.ArgumentNull(nameof(requirements));
+        requirements = requirements.ArgNotNull();
 
         foreach (var requirement in requirements)
         {

@@ -27,32 +27,28 @@ internal sealed class DialectDefinitionBuilder
 
     public void SetModulePolicy(ModulePolicy modulePolicy)
     {
-        if (modulePolicy == null)
-            Thrower.ArgumentNull(nameof(modulePolicy));
+        modulePolicy = modulePolicy.ArgNotNull();
 
         _modulePolicy = modulePolicy;
     }
 
     public void SetBackendPolicy(BackendPolicy backendPolicy)
     {
-        if (backendPolicy == null)
-            Thrower.ArgumentNull(nameof(backendPolicy));
+        backendPolicy = backendPolicy.ArgNotNull();
 
         _backendPolicy = backendPolicy;
     }
 
     public void SetIntrinsicPolicy(IntrinsicPolicy intrinsicPolicy)
     {
-        if (intrinsicPolicy == null)
-            Thrower.ArgumentNull(nameof(intrinsicPolicy));
+        intrinsicPolicy = intrinsicPolicy.ArgNotNull();
 
         _intrinsicPolicy = intrinsicPolicy;
     }
 
     public void SetOptimizerPolicy(OptimizerPolicy optimizerPolicy)
     {
-        if (optimizerPolicy == null)
-            Thrower.ArgumentNull(nameof(optimizerPolicy));
+        optimizerPolicy = optimizerPolicy.ArgNotNull();
 
         _optimizerPolicy = optimizerPolicy;
     }
@@ -65,16 +61,14 @@ internal sealed class DialectDefinitionBuilder
 
     public void SetCapabilityPolicy(CapabilityPolicy capabilityPolicy)
     {
-        if (capabilityPolicy == null)
-            Thrower.ArgumentNull(nameof(capabilityPolicy));
+        capabilityPolicy = capabilityPolicy.ArgNotNull();
 
         _capabilityPolicy = capabilityPolicy;
     }
 
     public void SetOrderRules(IReadOnlyList<OrderRule> orderRules)
     {
-        if (orderRules == null)
-            Thrower.ArgumentNull(nameof(orderRules));
+        orderRules = orderRules.ArgNotNull();
 
         _orderRules = orderRules;
     }
@@ -84,8 +78,7 @@ internal sealed class DialectDefinitionBuilder
         if (string.IsNullOrWhiteSpace(key))
             Thrower.Argument(nameof(key), "Extension key must not be null or empty.");
 
-        if (value == null)
-            Thrower.ArgumentNull(nameof(value));
+        value = value.ArgNotNull();
 
         if (_extensions.ContainsKey(key))
             Thrower.Argument(nameof(key), $"Duplicate extension key '{key}'.");

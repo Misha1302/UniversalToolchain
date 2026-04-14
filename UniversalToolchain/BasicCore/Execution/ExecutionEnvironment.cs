@@ -6,8 +6,7 @@ public sealed class ExecutionEnvironment : IExecutionEnvironment, IExternalBindi
 
     public ExecutionEnvironment(IReadOnlyList<ExternalBinding> bindings, ExternalBindingsLayout? externalBindingsLayout = null)
     {
-        if (bindings is null)
-            Thrower.ArgumentNull(nameof(bindings));
+        bindings = bindings.ArgNotNull();
 
         _values = new object?[bindings.Count];
         for (var i = 0; i < bindings.Count; i++)

@@ -10,10 +10,8 @@ public sealed class MethodCallTypeSemanticsResolver
 {
     public MethodCallResolution ResolveForStack(MethodInfo method, IReadOnlyList<Type> currentStack)
     {
-        if (method == null)
-            Thrower.ArgumentNull(nameof(method));
-        if (currentStack == null)
-            Thrower.ArgumentNull(nameof(currentStack));
+        method = method.ArgNotNull();
+        currentStack = currentStack.ArgNotNull();
 
         var parameters = method.GetParameters();
         var parameterCount = parameters.Length;

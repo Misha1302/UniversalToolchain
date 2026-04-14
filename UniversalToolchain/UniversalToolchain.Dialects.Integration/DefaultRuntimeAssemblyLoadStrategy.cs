@@ -10,8 +10,7 @@ public sealed class DefaultRuntimeAssemblyLoadStrategy : IRuntimeAssemblyLoadStr
 
     public DefaultRuntimeAssemblyLoadStrategy(IRuntimeAssemblyLocator locator)
     {
-        if (locator == null)
-            Thrower.ArgumentNull(nameof(locator));
+        locator = locator.ArgNotNull();
 
         _locator = locator;
     }

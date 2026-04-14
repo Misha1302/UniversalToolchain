@@ -9,16 +9,14 @@ public sealed class DialectDefinitionSliceParser
 
     public DialectDefinitionSliceParser(DialectDslRegistry registry)
     {
-        if (registry == null)
-            Thrower.ArgumentNull(nameof(registry));
+        registry = registry.ArgNotNull();
 
         _registry = registry;
     }
 
     public DialectDefinitionSlice Parse(AstNode astRoot)
     {
-        if (astRoot == null)
-            Thrower.ArgumentNull(nameof(astRoot));
+        astRoot = astRoot.ArgNotNull();
 
         var document = DialectDslAstValidator.Validate(astRoot, _registry);
         var annotations = DialectAstLowering.Lower(document);

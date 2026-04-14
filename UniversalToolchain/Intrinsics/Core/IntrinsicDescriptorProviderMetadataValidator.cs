@@ -7,8 +7,7 @@ public sealed class IntrinsicDescriptorProviderMetadataValidator
 {
     public IReadOnlyList<string> Validate(IServiceCollection services)
     {
-        if (services == null)
-            Thrower.ArgumentNull(nameof(services));
+        services = services.ArgNotNull();
 
         var descriptors = services
             .Select(static (descriptor, index) => new RegistrationEntry(index, descriptor))
@@ -53,8 +52,7 @@ public sealed class IntrinsicDescriptorProviderMetadataValidator
 
     public IReadOnlyList<string> Validate(IEnumerable<IIntrinsicDescriptorProvider> providers)
     {
-        if (providers == null)
-            Thrower.ArgumentNull(nameof(providers));
+        providers = providers.ArgNotNull();
 
         var errors = new List<string>();
         var providerEntries = providers

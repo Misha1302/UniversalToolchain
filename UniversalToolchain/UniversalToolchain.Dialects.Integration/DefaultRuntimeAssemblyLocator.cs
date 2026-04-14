@@ -9,8 +9,7 @@ public sealed class DefaultRuntimeAssemblyLocator : IRuntimeAssemblyLocator
 
     public DefaultRuntimeAssemblyLocator(RuntimeArtifactLocatorOptions options)
     {
-        if (options == null)
-            Thrower.ArgumentNull(nameof(options));
+        options = options.ArgNotNull();
 
         _assemblyFileExtension = string.IsNullOrWhiteSpace(options.AssemblyFileExtension)
             ? ".dll"

@@ -7,8 +7,7 @@ public sealed class DialectRuntimeCatalogProviderAttribute : Attribute
 {
     public DialectRuntimeCatalogProviderAttribute(Type providerType)
     {
-        if (providerType == null)
-            Thrower.ArgumentNull(nameof(providerType));
+        providerType = providerType.ArgNotNull();
 
         ProviderType = providerType;
     }

@@ -94,8 +94,7 @@ public sealed class DialectSyntaxDocument
 
     private static Dictionary<string, bool> SnapshotDictionary(IEnumerable<KeyValuePair<string, bool>> source)
     {
-        if (source == null)
-            Thrower.ArgumentNull(nameof(source));
+        source = source.ArgNotNull();
 
         var dictionary = new Dictionary<string, bool>(StringComparer.Ordinal);
         foreach (var item in source)

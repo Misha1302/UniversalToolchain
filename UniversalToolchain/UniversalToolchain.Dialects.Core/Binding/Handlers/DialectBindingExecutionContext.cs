@@ -10,14 +10,11 @@ internal sealed class DialectBindingExecutionContext
         DialectDefinitionBuilder builder,
         List<DialectDiagnostic> diagnostics)
     {
-        if (source == null)
-            Thrower.ArgumentNull(nameof(source));
+        source = source.ArgNotNull();
 
-        if (builder == null)
-            Thrower.ArgumentNull(nameof(builder));
+        builder = builder.ArgNotNull();
 
-        if (diagnostics == null)
-            Thrower.ArgumentNull(nameof(diagnostics));
+        diagnostics = diagnostics.ArgNotNull();
 
         Source = source;
         Builder = builder;

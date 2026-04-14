@@ -9,8 +9,7 @@ public abstract class DialectAliasAttributeBase : Attribute
 
     protected DialectAliasAttributeBase(params string[] aliases)
     {
-        if (aliases == null)
-            Thrower.ArgumentNull(nameof(aliases));
+        aliases = aliases.ArgNotNull();
 
         if (aliases.Length == 0)
             Thrower.Argument(nameof(aliases), "At least one alias must be declared.");
