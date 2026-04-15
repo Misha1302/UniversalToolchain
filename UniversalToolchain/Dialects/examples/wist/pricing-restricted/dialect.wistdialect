@@ -1,0 +1,9 @@
+dialect PricingRestricted
+use Identifier,NativeTypes,Numbers,Scopes,Whitespaces
+exclude Arithmetic,BooleanConditions,Comments,ComparisonConditions,Conditions,CSharpInterop,Equality,Labels,Loops,ParametersSetter,SemicolonAsNewLine,Variables
+backend cil,interpreter
+enable ArithmeticOptimization
+enable EGraphOptimization
+enable NativeCilOptimization
+enable NativeTypesOptimization
+security restricted

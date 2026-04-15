@@ -101,6 +101,14 @@
             <Link>Dialects\examples\wist\minimal-arithmetic\README.md</Link>
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
+        <Content Include="..\Dialects\examples\wist\pricing-restricted\dialect.wistdialect">
+            <Link>Dialects\examples\wist\pricing-restricted\dialect.wistdialect</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\Dialects\examples\wist\pricing-restricted\README.md">
+            <Link>Dialects\examples\wist\pricing-restricted\README.md</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
         <Content Include="..\Dialects\examples\wist\restricted-sandbox\dialect.wistdialect">
             <Link>Dialects\examples\wist\restricted-sandbox\dialect.wistdialect</Link>
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>

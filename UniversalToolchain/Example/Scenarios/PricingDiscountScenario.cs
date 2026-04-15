@@ -3,6 +3,9 @@ namespace Example.Scenarios;
 public static class PricingDiscountScenario
 {
     private const string Formula = "price * 0.9 + fee";
+    private const string DisallowedFormula = "let discount = 0.9\nprice * discount + fee";
+    private const string GeneralDialectProfileName = "full-default-native";
+    private const string RestrictedDialectProfileName = "pricing-restricted";
     private const double Price = 100.0;
     private const double Fee = 5.0;
 
@@ -10,7 +13,8 @@ public static class PricingDiscountScenario
     {
         var printer = new ScenarioConsolePrinter();
         var hardcodedPricingCalculator = new HardcodedPricingCalculator();
-        using var dslPricingCalculator = new DslPricingCalculator();
+        using var generalDslPricingCalculator = new DslPricingCalculator(GeneralDialectProfileName);
+        using var restrictedDslPricingCalculator = new DslPricingCalculator(RestrictedDialectProfileName);
 
         printer.PrintTitle("Pricing and Discount Demo");
         printer.PrintFormula(Formula, Price, Fee);
@@ -18,32 +22,47 @@ public static class PricingDiscountScenario
         var hardcodedResult = hardcodedPricingCalculator.Calculate(Price, Fee);
         printer.PrintResult("Hardcoded result", hardcodedResult);
 
-        var compilerResult = dslPricingCalculator.CalculateWithCompiler(Formula, Price, Fee);
-        printer.PrintResult("Compiler result", compilerResult);
+        var generalCompilerResult = generalDslPricingCalculator.CalculateWithCompiler(Formula, Price, Fee);
+        printer.PrintResult("General dialect compiler result", generalCompilerResult);
 
-        var interpreterResult = dslPricingCalculator.CalculateWithInterpreter(Formula, Price, Fee);
-        printer.PrintResult("Interpreter result", interpreterResult);
+        var generalInterpreterResult = generalDslPricingCalculator.CalculateWithInterpreter(Formula, Price, Fee);
+        printer.PrintResult("General dialect interpreter result", generalInterpreterResult);
 
-        var fastInvokerResult = dslPricingCalculator.CalculateWithFastInvoker(Formula, Price, Fee);
-        printer.PrintResult("Fast invoker result", fastInvokerResult);
+        var generalFastInvokerResult = generalDslPricingCalculator.CalculateWithFastInvoker(Formula, Price, Fee);
+        printer.PrintResult("General dialect fast invoker result", generalFastInvokerResult);
+
+        var restrictedCompilerResult = restrictedDslPricingCalculator.CalculateWithCompiler(Formula, Price, Fee);
+        printer.PrintResult("Restricted pricing compiler result", restrictedCompilerResult);
+
+        var restrictedInterpreterResult = restrictedDslPricingCalculator.CalculateWithInterpreter(Formula, Price, Fee);
+        printer.PrintResult("Restricted pricing interpreter result", restrictedInterpreterResult);
+
+        var restrictedRejectsLocalVariables = !restrictedDslPricingCalculator.CanCompileWithInterpreter(DisallowedFormula);
+        Console.WriteLine($"Restricted pricing rejects local variables: {restrictedRejectsLocalVariables}");
 
         var allResultsMatch = ResultsMatch(
             hardcodedResult,
-            compilerResult,
-            interpreterResult,
-            fastInvokerResult);
+            generalCompilerResult,
+            generalInterpreterResult,
+            generalFastInvokerResult,
+            restrictedCompilerResult,
+            restrictedInterpreterResult);
 
         printer.PrintSummary(allResultsMatch);
     }
 
     private static bool ResultsMatch(
         double hardcodedResult,
-        double compilerResult,
-        double interpreterResult,
-        double fastInvokerResult)
+        double generalCompilerResult,
+        double generalInterpreterResult,
+        double generalFastInvokerResult,
+        double restrictedCompilerResult,
+        double restrictedInterpreterResult)
     {
-        return hardcodedResult == compilerResult &&
-               hardcodedResult == interpreterResult &&
-               hardcodedResult == fastInvokerResult;
+        return hardcodedResult == generalCompilerResult &&
+               hardcodedResult == generalInterpreterResult &&
+               hardcodedResult == generalFastInvokerResult &&
+               hardcodedResult == restrictedCompilerResult &&
+               hardcodedResult == restrictedInterpreterResult;
     }
 }
