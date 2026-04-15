@@ -1,27 +1,17 @@
 # UniversalToolchain
 
-UniversalToolchain is a modular .NET framework for embeddable DSLs, expression engines, and rule engines. Wist is the reference language in this repository and demonstrates the framework through a working CLI, dialect composition, and two execution backends.
+UniversalToolchain is a modular .NET framework for embeddable DSLs, expression engines, and rule engines.
+It is for .NET applications that need configurable language behavior instead of one fixed evaluator.
 
-It is designed for cases where you want:
-
-- configurable formulas inside a .NET application,
-- a small domain-specific language instead of hardcoded rules,
-- a reusable toolchain pipeline with interpreter and compiler execution modes.
-
-## Where it can be used
-
-Typical scenarios:
-
-- pricing and discount formulas,
-- validation and routing rules,
-- configurable business logic in internal tools,
-- educational and research projects around compilers and DSLs.
+Wist is the reference language in this repository. It demonstrates the framework through a working CLI, dialect
+composition, and compiler/interpreter execution modes.
 
 ## Why not just an expression evaluator?
 
-UniversalToolchain is not just a string-to-number evaluator.
-It is designed as a reusable language toolchain with modular composition, dialect configuration, and multiple execution
-modes.
+UniversalToolchain is useful when expressions are only one part of the problem.
+It gives you a language pipeline: syntax, dialect composition, validation, translation, optimization, and execution.
+
+Use it when you need control over what the language can express and how it runs.
 
 ## Quick start in 30 seconds
 
@@ -35,9 +25,22 @@ Expected output:
 12
 ```
 
+## Run the pricing demo
+
+```bash
+dotnet run --project UniversalToolchain/Example/Example.csproj
+```
+
+This runs a pricing formula through hardcoded C#, a general Wist dialect, and a restricted pricing dialect. It shows the
+same calculation executed through compiler, interpreter, and fast native invocation paths, plus rejection of a formula
+that the restricted dialect does not allow.
+
+Code: [UniversalToolchain/Example/Scenarios/PricingDiscountScenario.cs](UniversalToolchain/Example/Scenarios/PricingDiscountScenario.cs)
+and [UniversalToolchain/Example/Scenarios/DslPricingCalculator.cs](UniversalToolchain/Example/Scenarios/DslPricingCalculator.cs).
+
 ## Programmatic example
 
-A fuller scenario is available in `UniversalToolchain/Example/Program.cs`.
+A small direct API example:
 
 ```csharp
 var compiler = host.GetArtifactCompiler<DynamicMethod>("compiler");
@@ -59,22 +62,51 @@ session.SetArgument("fee", 5.0);
 var interpretedResult = (double)session.Run().NotNull(); // 95.0
 ```
 
+## When to use UniversalToolchain
+
+Use UniversalToolchain when:
+
+- a normal expression evaluator is too narrow for your rules or formulas,
+- users need a syntax that matches your domain instead of C# syntax,
+- you need a restricted dialect that allows only selected language features,
+- the same language should support compiler and interpreter modes,
+- you need an inspectable execution pipeline for validation, diagnostics, or backend work,
+- you want configurable business logic without hardcoding every rule into the application.
+
+Typical scenarios include pricing formulas, validation rules, routing rules, internal workflow rules, and DSL experiments
+inside .NET applications.
+
+## When not to use UniversalToolchain
+
+Do not start here when:
+
+- you only need trivial arithmetic formulas,
+- you only need a subset of C# expressions,
+- you only need parser generation,
+- you do not need a DSL or runtime story,
+- a simple library call can already evaluate all rules you plan to support.
+
+For those cases, a smaller evaluator, a rules library, or a parser generator is usually easier to own.
+
+## Comparison
+
+- **NCalc** is strong for evaluating compact expressions. UniversalToolchain becomes relevant when expression evaluation
+  is not enough and you need dialect control, execution modes, or a reusable pipeline.
+- **RulesEngine** is strong for JSON-defined business rules in .NET applications. UniversalToolchain becomes relevant
+  when the rule language itself needs custom syntax, restricted capabilities, or compiler/interpreter backends.
+- **ANTLR/csly** are strong for building parsers. UniversalToolchain becomes relevant when parsing is only the first
+  step and you also need runtime composition, IR/bytecode translation, optimization, and execution.
+
 ## Why this project exists
 
 Many language projects repeatedly rebuild the same layers: parsing, AST/IR transforms, runtime composition, and
-execution.
-UniversalToolchain focuses on reusable composition so capabilities can be assembled from modules instead of hardcoded
-into one implementation path.
+execution. UniversalToolchain focuses on reusable composition so capabilities can be assembled from modules instead of
+hardcoded into one implementation path.
 
 This repository contains:
 
-- **UniversalToolchain** — reusable framework infrastructure.
-- **Wist** — a reference language used to validate and evolve the framework architecture.
-
-## Compared to language platforms focused on their own runtime model
-
-UniversalToolchain is focused on explicit backend-oriented execution inside the .NET ecosystem.
-The design priority here is composable integration into .NET applications rather than a separate runtime universe.
+- **UniversalToolchain**: reusable framework infrastructure.
+- **Wist**: a reference language used to validate and evolve the framework architecture.
 
 ## Architecture at a glance
 
