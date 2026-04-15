@@ -31,7 +31,7 @@ It should not include:
 - loops
 - labels
 - conditions
-- local variables
+- statement-style bindings
 - comments
 - C# interop
 - general statement syntax
