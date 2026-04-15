@@ -251,8 +251,6 @@ This repository is actively evolving, and some areas are intentionally treated a
 - some bootstrap/runtime wiring is still concrete rather than fully descriptor-driven,
 - reflection-based interop/discovery helpers still exist and are being cleaned up,
 - constrained dialect composition is not equivalent to hardened sandboxing,
-- `ParametersSetter` is not yet exported into dialect composition,
-- coverage tests for `ParametersSetter` dialect export are pending,
 - the reference language Wist is still the main proving ground for framework decisions.
 
 ## Canonical documentation map
