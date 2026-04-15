@@ -45,26 +45,41 @@ Expected output:
 
 ## Programmatic example
 
-A small direct API example:
+A small Wist facade example:
 
 ```csharp
-var compiler = host.GetArtifactCompiler<DynamicMethod>("compiler");
-var declaredBindings = new OrderedDictionary<string, Type>
-{
-    ["price"] = typeof(double),
-    ["fee"] = typeof(double)
-};
+using var wist = WistRuntimeFacadeBuilder
+    .CreateDefault()
+    .Build();
 
-var artifact = compiler.Compile("price * 0.9 + fee", declaredBindings);
-var calculate = artifact.AsFunc<double, double, double>();
-var compiledResult = calculate(100.0, 5.0); // 95.0
+var result = wist.Run(
+    "price * 0.9 + fee",
+    new Dictionary<string, object?>
+    {
+        ["price"] = 100.0,
+        ["fee"] = 5.0
+    },
+    mode: "compiler");
 
-var interpreter = host.GetArtifactCompiler<IAbstractIR>("interpreter");
-var interpretedArtifact = interpreter.Compile("price * 0.9 + fee", declaredBindings);
-var session = interpretedArtifact.CreateSession();
-session.SetArgument("price", 100.0);
-session.SetArgument("fee", 5.0);
-var interpretedResult = (double)session.Run().NotNull(); // 95.0
+var compiledResult = (double)result!; // 95.0
+```
+
+Use a dialect file when the runtime surface must be restricted:
+
+```csharp
+using var wist = WistRuntimeFacadeBuilder
+    .CreateDefault()
+    .WithDialectFile("pricing-restricted/dialect.wistdialect")
+    .Build();
+
+var attempt = wist.TryCompile(
+    "let discount = 0.9\nprice * discount + fee",
+    new Dictionary<string, Type>
+    {
+        ["price"] = typeof(double),
+        ["fee"] = typeof(double)
+    },
+    mode: "interpreter");
 ```
 
 ## When to use UniversalToolchain
