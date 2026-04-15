@@ -2,6 +2,8 @@
 
 ## Allowed
 
+External pricing inputs can be provided by the host:
+
 ```text
 price * 0.9 + fee
 ```
@@ -12,6 +14,12 @@ price * 0.9 + fee
 
 ```text
 price - discount
+```
+
+Standalone smoke execution uses literal values because it has no host-provided bindings:
+
+```text
+100.0 * 0.9 + 5.0
 ```
 
 ## Not allowed
