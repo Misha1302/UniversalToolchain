@@ -1,29 +1,12 @@
 # UniversalToolchain
 
-UniversalToolchain is a modular .NET framework for embeddable DSLs, expression engines, and rule engines.
-It is for .NET applications that need configurable language behavior instead of one fixed evaluator.
+Build formulas, rules, and mini-languages for .NET applications.
 
-Wist is the reference language in this repository. It demonstrates the framework through a working CLI, dialect
+UniversalToolchain is an embeddable .NET DSL/runtime framework for the moment when a plain expression evaluator is no
+longer enough.
+
+Wist is the reference language in this repository. It demonstrates the framework through a pricing demo, dialect
 composition, and compiler/interpreter execution modes.
-
-## Why not just an expression evaluator?
-
-UniversalToolchain is useful when expressions are only one part of the problem.
-It gives you a language pipeline: syntax, dialect composition, validation, translation, optimization, and execution.
-
-Use it when you need control over what the language can express and how it runs.
-
-## Quick start in 30 seconds
-
-```bash
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --mode compiler
-```
-
-Expected output:
-
-```text
-12
-```
 
 ## Run the pricing demo
 
@@ -38,28 +21,65 @@ that the restricted dialect does not allow.
 Code: [UniversalToolchain/Example/Scenarios/PricingDiscountScenario.cs](UniversalToolchain/Example/Scenarios/PricingDiscountScenario.cs)
 and [UniversalToolchain/Example/Scenarios/DslPricingCalculator.cs](UniversalToolchain/Example/Scenarios/DslPricingCalculator.cs).
 
+## What this demo shows
+
+The pricing demo compares three ways to own the same business rule:
+
+- hardcoded C# pricing logic,
+- a general Wist dialect for the formula,
+- a restricted pricing dialect with a narrower allowed surface,
+- compiler and interpreter execution paths for the same calculation,
+- rejection of a formula shape that the restricted dialect does not allow.
+
+## Tiny CLI quick start
+
+```bash
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --mode compiler
+```
+
+Expected output:
+
+```text
+12
+```
+
 ## Programmatic example
 
-A small direct API example:
+A small Wist facade example:
 
 ```csharp
-var compiler = host.GetArtifactCompiler<DynamicMethod>("compiler");
-var declaredBindings = new OrderedDictionary<string, Type>
-{
-    ["price"] = typeof(double),
-    ["fee"] = typeof(double)
-};
+using var wist = WistRuntimeFacadeBuilder
+    .CreateDefault()
+    .Build();
 
-var artifact = compiler.Compile("price * 0.9 + fee", declaredBindings);
-var calculate = artifact.AsFunc<double, double, double>();
-var compiledResult = calculate(100.0, 5.0); // 95.0
+var result = wist.Run(
+    "price * 0.9 + fee",
+    new Dictionary<string, object?>
+    {
+        ["price"] = 100.0,
+        ["fee"] = 5.0
+    },
+    mode: "compiler");
 
-var interpreter = host.GetArtifactCompiler<IAbstractIR>("interpreter");
-var interpretedArtifact = interpreter.Compile("price * 0.9 + fee", declaredBindings);
-var session = interpretedArtifact.CreateSession();
-session.SetArgument("price", 100.0);
-session.SetArgument("fee", 5.0);
-var interpretedResult = (double)session.Run().NotNull(); // 95.0
+var compiledResult = (double)result!; // 95.0
+```
+
+Use a dialect file when the runtime surface must be restricted:
+
+```csharp
+using var wist = WistRuntimeFacadeBuilder
+    .CreateDefault()
+    .WithDialectFile("pricing-restricted/dialect.wistdialect")
+    .Build();
+
+var attempt = wist.TryCompile(
+    "let discount = 0.9\nprice * discount + fee",
+    new Dictionary<string, Type>
+    {
+        ["price"] = typeof(double),
+        ["fee"] = typeof(double)
+    },
+    mode: "interpreter");
 ```
 
 ## When to use UniversalToolchain
@@ -91,9 +111,11 @@ For those cases, a smaller evaluator, a rules library, or a parser generator is 
 ## Comparison
 
 - **NCalc** is strong for evaluating compact expressions. UniversalToolchain becomes relevant when expression evaluation
-  is not enough and you need dialect control, execution modes, or a reusable pipeline.
+  is not enough and you need dialect control, execution modes, or a reusable pipeline. See
+  [Wist2 vs NCalc](docs/comparisons/wist2-vs-ncalc.md).
 - **RulesEngine** is strong for JSON-defined business rules in .NET applications. UniversalToolchain becomes relevant
-  when the rule language itself needs custom syntax, restricted capabilities, or compiler/interpreter backends.
+  when the rule language itself needs custom syntax, restricted capabilities, or compiler/interpreter backends. See
+  [Wist2 vs RulesEngine](docs/comparisons/wist2-vs-rulesengine.md).
 - **ANTLR/csly** are strong for building parsers. UniversalToolchain becomes relevant when parsing is only the first
   step and you also need runtime composition, IR/bytecode translation, optimization, and execution.
 
@@ -101,7 +123,8 @@ For those cases, a smaller evaluator, a rules library, or a parser generator is 
 
 Many language projects repeatedly rebuild the same layers: parsing, AST/IR transforms, runtime composition, and
 execution. UniversalToolchain focuses on reusable composition so capabilities can be assembled from modules instead of
-hardcoded into one implementation path.
+hardcoded into one implementation path. See [Why this exists](docs/why-this-exists.md) for the longer product and
+architecture rationale.
 
 This repository contains:
 
@@ -203,7 +226,7 @@ Active runtime and backend work is being verified there first, so older target f
     - `allowPrerelease: true`
 - Targets: `net10.0`
 
-## Quick start
+## Build and test from source
 
 From repository root:
 
@@ -228,8 +251,6 @@ This repository is actively evolving, and some areas are intentionally treated a
 - some bootstrap/runtime wiring is still concrete rather than fully descriptor-driven,
 - reflection-based interop/discovery helpers still exist and are being cleaned up,
 - constrained dialect composition is not equivalent to hardened sandboxing,
-- `ParametersSetter` is not yet exported into dialect composition,
-- coverage tests for `ParametersSetter` dialect export are pending,
 - the reference language Wist is still the main proving ground for framework decisions.
 
 ## Canonical documentation map

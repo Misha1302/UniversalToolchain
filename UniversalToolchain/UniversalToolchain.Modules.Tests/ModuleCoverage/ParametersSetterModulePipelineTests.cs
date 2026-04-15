@@ -1,7 +1,6 @@
 namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 
 [TestFixture]
-[Ignore("Pending: ParametersSetter module is not exported while parsing and runtime binding contracts are under design.")]
 public class ParametersSetterModulePipelineTests
 {
     private static readonly string[] Modules = ModulePipelineTestHelper.FullUniversalModules.Concat(["ParametersSetter"]).ToArray();
