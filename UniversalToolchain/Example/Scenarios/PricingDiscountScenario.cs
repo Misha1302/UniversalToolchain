@@ -37,8 +37,13 @@ public static class PricingDiscountScenario
         var restrictedInterpreterResult = restrictedDslPricingCalculator.CalculateWithInterpreter(Formula, Price, Fee);
         printer.PrintResult("Restricted pricing interpreter result", restrictedInterpreterResult);
 
-        var restrictedRejectsLocalVariables = !restrictedDslPricingCalculator.CanCompileWithInterpreter(DisallowedFormula);
+        var restrictedPositiveAttempt = restrictedDslPricingCalculator.TryCompileWithInterpreter(Formula);
+        Console.WriteLine($"Restricted pricing accepts positive formula: {restrictedPositiveAttempt.IsSuccess}");
+
+        var restrictedLocalVariableAttempt = restrictedDslPricingCalculator.TryCompileWithInterpreter(DisallowedFormula);
+        var restrictedRejectsLocalVariables = !restrictedLocalVariableAttempt.IsSuccess;
         Console.WriteLine($"Restricted pricing rejects local variables: {restrictedRejectsLocalVariables}");
+        Console.WriteLine($"Restricted pricing local variable rejection reason: {restrictedLocalVariableAttempt.ErrorMessage}");
 
         var allResultsMatch = ResultsMatch(
             hardcodedResult,
