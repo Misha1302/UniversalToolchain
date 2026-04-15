@@ -283,6 +283,10 @@
             background: linear-gradient(180deg, rgba(10, 16, 34, 0.84), rgba(11, 17, 37, 1));
         }
 
+        #product-links {
+            background: linear-gradient(180deg, rgba(12, 20, 44, 0.9), rgba(10, 16, 34, 0.9));
+        }
+
         #why {
             background: linear-gradient(180deg, rgba(13, 21, 46, 0.88), rgba(12, 20, 44, 0.95));
         }
@@ -330,6 +334,42 @@
         .card p {
             margin-bottom: 0;
             font-size: .98rem;
+        }
+
+        .link-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: .85rem;
+            margin-top: 1rem;
+        }
+
+        .doc-link {
+            display: block;
+            min-height: 100%;
+            padding: .95rem;
+            border: 1px solid rgba(84, 110, 186, 0.78);
+            border-radius: var(--radius-md);
+            background: linear-gradient(165deg, rgba(255, 255, 255, .04), rgba(255, 255, 255, 0));
+            color: var(--text);
+            text-decoration: none;
+            box-shadow: var(--shadow-md);
+        }
+
+        .doc-link strong {
+            display: block;
+            margin-bottom: .35rem;
+            color: #f2f6ff;
+        }
+
+        .doc-link span {
+            display: block;
+            color: var(--muted);
+            font-size: .92rem;
+        }
+
+        .doc-link:hover {
+            border-color: var(--line-strong);
+            filter: brightness(1.06);
         }
 
         #works-today h2 {
@@ -673,7 +713,7 @@
         }
 
         @media (max-width: 900px) {
-            .hero-grid, .grid-3, .dialects, .list, .split, .facts, .micro-demo-grid, .flow {
+            .hero-grid, .grid-3, .link-grid, .dialects, .list, .split, .facts, .micro-demo-grid, .flow {
                 grid-template-columns: 1fr;
             }
 
@@ -722,6 +762,7 @@
                 <a class="btn primary" href="https://github.com/Misha1302/Wist2">GitHub Repository</a>
                 <a class="btn" href="https://github.com/Misha1302/Wist2/blob/master/readme.md">README</a>
                 <a class="btn" href="https://github.com/Misha1302/Wist2/blob/master/docs/architecture-overview.md">Architecture</a>
+                <a class="btn" href="why-this-exists.md">Why this exists</a>
                 <a class="btn" href="#dialects">Jump to Examples</a>
                 <a class="btn" href="#programmers">Technical Details</a>
             </div>
@@ -772,6 +813,31 @@ enable LocalVariablesOptimization</pre>
                 <p>Declare language/runtime profiles in a <code>.wistdialect</code> file, compose a host, then execute
                     through the same CLI/programmatic path.</p>
             </article>
+        </div>
+    </div>
+</section>
+
+<section id="product-links">
+    <div class="container">
+        <h2>Product grounding</h2>
+        <p>Start here when deciding whether this repository is the right category of tool for the problem.</p>
+        <div class="link-grid">
+            <a class="doc-link" href="https://github.com/Misha1302/Wist2/tree/master/UniversalToolchain/Example">
+                <strong>Pricing demo</strong>
+                <span>Hardcoded C#, general Wist, and a restricted pricing dialect side by side.</span>
+            </a>
+            <a class="doc-link" href="why-this-exists.md">
+                <strong>Why this exists</strong>
+                <span>The product reason for a modular embeddable runtime layer.</span>
+            </a>
+            <a class="doc-link" href="comparisons/wist2-vs-ncalc.md">
+                <strong>Wist2 vs NCalc</strong>
+                <span>Use an evaluator when an evaluator is the whole problem.</span>
+            </a>
+            <a class="doc-link" href="comparisons/wist2-vs-rulesengine.md">
+                <strong>Wist2 vs RulesEngine</strong>
+                <span>Choose the boundary between structured rules and custom runtime control.</span>
+            </a>
         </div>
     </div>
 </section>
@@ -991,6 +1057,9 @@ x</pre>
             <a href="https://github.com/Misha1302/Wist2">Repository</a>
             <a href="https://github.com/Misha1302/Wist2/blob/master/readme.md">README</a>
             <a href="https://github.com/Misha1302/Wist2/blob/master/docs/architecture-overview.md">Architecture Overview</a>
+            <a href="why-this-exists.md">Why This Exists</a>
+            <a href="comparisons/wist2-vs-ncalc.md">Wist2 vs NCalc</a>
+            <a href="comparisons/wist2-vs-rulesengine.md">Wist2 vs RulesEngine</a>
             <a href="https://github.com/Misha1302/Wist2/blob/master/SECURITY.md">Security Policy</a>
             <a href="https://github.com/Misha1302/Wist2/tree/master/UniversalToolchain/Dialects/examples/wist">Dialect
                 Examples</a>
