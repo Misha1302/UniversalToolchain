@@ -20,10 +20,29 @@ public sealed class ScenarioConsolePrinter
         Console.WriteLine($"{label}: {value}");
     }
 
+    public void PrintProductSummary(
+        double hardcodedResult,
+        double generalDialectResult,
+        double restrictedPricingResult,
+        bool restrictedRejectsUnsupportedStatementStyleBindings,
+        bool allResultsMatch)
+    {
+        PrintResult("Hardcoded result", hardcodedResult);
+        PrintResult("General dialect result", generalDialectResult);
+        PrintResult("Restricted pricing result", restrictedPricingResult);
+        Console.WriteLine($"Restricted pricing rejects unsupported statement-style bindings: {restrictedRejectsUnsupportedStatementStyleBindings}");
+        PrintSummary(allResultsMatch);
+    }
+
     public void PrintSummary(bool allResultsMatch)
     {
         PrintSeparator();
         Console.WriteLine($"All results match: {allResultsMatch}");
+    }
+
+    public void PrintSummarySeparator()
+    {
+        PrintSeparator();
     }
 
     private static void PrintSeparator()

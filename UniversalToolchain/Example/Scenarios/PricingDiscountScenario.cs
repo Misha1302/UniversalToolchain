@@ -9,7 +9,7 @@ public static class PricingDiscountScenario
     private const double Price = 100.0;
     private const double Fee = 5.0;
 
-    public static void Run()
+    public static void Run(bool verbose)
     {
         var printer = new ScenarioConsolePrinter();
         var hardcodedPricingCalculator = new HardcodedPricingCalculator();
@@ -20,30 +20,20 @@ public static class PricingDiscountScenario
         printer.PrintFormula(Formula, Price, Fee);
 
         var hardcodedResult = hardcodedPricingCalculator.Calculate(Price, Fee);
-        printer.PrintResult("Hardcoded result", hardcodedResult);
 
         var generalCompilerResult = generalDslPricingCalculator.CalculateWithCompiler(Formula, Price, Fee);
-        printer.PrintResult("General dialect compiler result", generalCompilerResult);
-
         var generalInterpreterResult = generalDslPricingCalculator.CalculateWithInterpreter(Formula, Price, Fee);
-        printer.PrintResult("General dialect interpreter result", generalInterpreterResult);
-
         var generalFastInvokerResult = generalDslPricingCalculator.CalculateWithFastInvoker(Formula, Price, Fee);
-        printer.PrintResult("General dialect fast invoker result", generalFastInvokerResult);
+        var generalDialectResult = generalCompilerResult;
 
         var restrictedCompilerResult = restrictedDslPricingCalculator.CalculateWithCompiler(Formula, Price, Fee);
-        printer.PrintResult("Restricted pricing compiler result", restrictedCompilerResult);
-
         var restrictedInterpreterResult = restrictedDslPricingCalculator.CalculateWithInterpreter(Formula, Price, Fee);
-        printer.PrintResult("Restricted pricing interpreter result", restrictedInterpreterResult);
+        var restrictedPricingResult = restrictedCompilerResult;
 
         var restrictedPositiveAttempt = restrictedDslPricingCalculator.TryCompileWithInterpreter(Formula);
-        Console.WriteLine($"Restricted pricing accepts positive formula: {restrictedPositiveAttempt.IsSuccess}");
 
         var restrictedStatementStyleBindingAttempt = restrictedDslPricingCalculator.TryCompileWithInterpreter(DisallowedFormula);
         var restrictedRejectsUnsupportedStatementStyleBindings = !restrictedStatementStyleBindingAttempt.IsSuccess;
-        Console.WriteLine($"Restricted pricing rejects unsupported statement-style bindings: {restrictedRejectsUnsupportedStatementStyleBindings}");
-        Console.WriteLine($"Restricted pricing statement-style binding rejection reason: {restrictedStatementStyleBindingAttempt.ErrorMessage}");
 
         var allResultsMatch = ResultsMatch(
             hardcodedResult,
@@ -53,7 +43,24 @@ public static class PricingDiscountScenario
             restrictedCompilerResult,
             restrictedInterpreterResult);
 
-        printer.PrintSummary(allResultsMatch);
+        printer.PrintProductSummary(
+            hardcodedResult,
+            generalDialectResult,
+            restrictedPricingResult,
+            restrictedRejectsUnsupportedStatementStyleBindings,
+            allResultsMatch);
+
+        if (verbose)
+        {
+            printer.PrintSummarySeparator();
+            printer.PrintResult("General dialect compiler result", generalCompilerResult);
+            printer.PrintResult("General dialect interpreter result", generalInterpreterResult);
+            printer.PrintResult("General dialect fast invoker result", generalFastInvokerResult);
+            printer.PrintResult("Restricted pricing compiler result", restrictedCompilerResult);
+            printer.PrintResult("Restricted pricing interpreter result", restrictedInterpreterResult);
+            Console.WriteLine($"Restricted pricing accepts positive formula: {restrictedPositiveAttempt.IsSuccess}");
+            Console.WriteLine($"Restricted pricing statement-style binding rejection reason: {restrictedStatementStyleBindingAttempt.ErrorMessage}");
+        }
     }
 
     private static bool ResultsMatch(
