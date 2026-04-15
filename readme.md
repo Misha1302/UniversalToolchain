@@ -187,6 +187,7 @@ Located under `UniversalToolchain/Dialects/examples/wist`:
 - `full-default`
 - `full-default-native`
 - `minimal-arithmetic`
+- `pricing-restricted` *(narrow pricing profile with restricted runtime surface)*
 - `restricted-sandbox` *(composition-constrained profile, not OS-level sandboxing)*
 
 ## Why .NET 10 right now?

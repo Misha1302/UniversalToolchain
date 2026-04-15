@@ -40,10 +40,10 @@ public static class PricingDiscountScenario
         var restrictedPositiveAttempt = restrictedDslPricingCalculator.TryCompileWithInterpreter(Formula);
         Console.WriteLine($"Restricted pricing accepts positive formula: {restrictedPositiveAttempt.IsSuccess}");
 
-        var restrictedLocalVariableAttempt = restrictedDslPricingCalculator.TryCompileWithInterpreter(DisallowedFormula);
-        var restrictedRejectsLocalVariables = !restrictedLocalVariableAttempt.IsSuccess;
-        Console.WriteLine($"Restricted pricing rejects local variables: {restrictedRejectsLocalVariables}");
-        Console.WriteLine($"Restricted pricing local variable rejection reason: {restrictedLocalVariableAttempt.ErrorMessage}");
+        var restrictedStatementStyleBindingAttempt = restrictedDslPricingCalculator.TryCompileWithInterpreter(DisallowedFormula);
+        var restrictedRejectsUnsupportedStatementStyleBindings = !restrictedStatementStyleBindingAttempt.IsSuccess;
+        Console.WriteLine($"Restricted pricing rejects unsupported statement-style bindings: {restrictedRejectsUnsupportedStatementStyleBindings}");
+        Console.WriteLine($"Restricted pricing statement-style binding rejection reason: {restrictedStatementStyleBindingAttempt.ErrorMessage}");
 
         var allResultsMatch = ResultsMatch(
             hardcodedResult,

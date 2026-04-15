@@ -12,7 +12,7 @@ public sealed class PricingRestrictedDialectExecutionTests
 {
     private const string PricingFormula = "price * 0.9 + fee";
 
-    private const string LocalVariableFormula = """
+    private const string StatementStyleBindingFormula = """
                                                 let discount = 0.9
                                                 price * discount + fee
                                                 """;
@@ -38,19 +38,19 @@ public sealed class PricingRestrictedDialectExecutionTests
     }
 
     [Test]
-    public void PricingRestricted_Dialect_Rejects_LocalVariableFormula()
+    public void PricingRestricted_Dialect_Rejects_UnsupportedStatementStyleBindingFormula()
     {
         var result = BackendParityInfrastructure.ExecuteSafely(() =>
         {
             using var host = CreatePricingHost();
             var interpreter = host.GetArtifactCompiler<IAbstractIR>("interpreter");
-            _ = interpreter.Compile(LocalVariableFormula, CreateDeclaredBindings());
+            _ = interpreter.Compile(StatementStyleBindingFormula, CreateDeclaredBindings());
             return null;
         });
 
         Assert.Multiple(() =>
         {
-            Assert.That(result.IsSuccess, Is.False, "Pricing-restricted must reject local variable formulas.");
+            Assert.That(result.IsSuccess, Is.False, "Pricing-restricted must reject unsupported statement-style binding formulas.");
             Assert.That(result.Exception, Is.Not.Null);
             Assert.That(result.Exception!.Message, Is.Not.Empty);
             Assert.That(
