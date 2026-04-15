@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>UniversalToolchain — Modular .NET framework for embeddable DSLs, expression engines, and rule engines</title>
+    <title>UniversalToolchain — formulas, rules, and mini-languages for .NET</title>
     <style>
         :root {
             --bg: #0a1022;
@@ -281,6 +281,10 @@
 
         #value-cards {
             background: linear-gradient(180deg, rgba(10, 16, 34, 0.84), rgba(11, 17, 37, 1));
+        }
+
+        #pricing-logic {
+            background: linear-gradient(180deg, rgba(10, 16, 34, 0.92), rgba(12, 20, 44, 0.9));
         }
 
         #product-links {
@@ -748,48 +752,73 @@
     <div class="container hero-grid">
         <div class="hero-copy">
             <span class="eyebrow">UniversalToolchain</span>
-            <h1>Build DSLs on .NET from reusable compiler modules.</h1>
+            <h1>Build formulas, rules, and mini-languages for .NET applications.</h1>
             <p>
-                UniversalToolchain is a modular .NET framework for embeddable DSLs, expression engines, and rule engines.
-                Wist is the reference language in this repository and demonstrates the framework through a working CLI, dialect composition, and two execution backends.
+                Start with formulas and rules, then grow into controlled DSL runtimes with custom syntax, restricted
+                dialects, inspectable stages, and compiler/interpreter execution paths.
             </p>
             <div class="badge-row">
-                <span class="badge">Modular pipeline</span>
+                <span class="badge">Pricing demo first</span>
                 <span class="badge">CLI + programmatic API</span>
-                <span class="badge">Dialect-driven runtime composition</span>
+                <span class="badge">Dialect restrictions</span>
             </div>
             <div class="actions">
-                <a class="btn primary" href="https://github.com/Misha1302/Wist2">GitHub Repository</a>
+                <a class="btn primary" href="https://github.com/Misha1302/Wist2/tree/master/UniversalToolchain/Example">Run Pricing Demo</a>
                 <a class="btn" href="https://github.com/Misha1302/Wist2/blob/master/readme.md">README</a>
-                <a class="btn" href="https://github.com/Misha1302/Wist2/blob/master/docs/architecture-overview.md">Architecture</a>
+                <a class="btn" href="https://github.com/Misha1302/Wist2">GitHub</a>
                 <a class="btn" href="why-this-exists.md">Why this exists</a>
-                <a class="btn" href="#dialects">Jump to Examples</a>
-                <a class="btn" href="#programmers">Technical Details</a>
+                <a class="btn" href="comparisons/wist2-vs-ncalc.md">Wist2 vs NCalc</a>
             </div>
         </div>
         <aside class="hero-side">
             <article class="terminal">
-                <div class="panel-head"><span>Instant proof</span><span>CLI (documented)</span></div>
-                <pre>$ dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --mode compiler</pre>
-                <div class="out">12</div>
+                <div class="panel-head"><span>First path</span><span>Pricing demo</span></div>
+                <pre>$ dotnet run --project UniversalToolchain/Example/Example.csproj</pre>
+                <div class="out">hardcoded C# + Wist + pricing-restricted</div>
             </article>
             <article class="snippet">
-                <div class="panel-head"><span>Mini dialect shape</span><span>Presentational</span></div>
-                <pre>dialect FullDefault
-use Arithmetic, BooleanConditions, ComparisonConditions, ...
-backend cil, interpreter
-enable LocalVariablesOptimization</pre>
+                <div class="panel-head"><span>Controlled surface</span><span>pricing-restricted</span></div>
+                <pre>formula + dialect restrictions
+compiler and interpreter paths
+reject unsupported formula shapes</pre>
             </article>
         </aside>
     </div>
 </header>
+
+<section id="pricing-logic">
+    <div class="container">
+        <h2>Pricing Logic Without Hardcoding Every Rule</h2>
+        <p>
+            The pricing demo is the fastest way to see the product boundary: formula authoring, dialect control, and
+            runtime execution in one small scenario.
+        </p>
+        <div class="grid-3">
+            <article class="card">
+                <h3>Before</h3>
+                <p>Hardcoded C# pricing logic keeps behavior close to the application but turns every rule change into
+                    an application change.</p>
+            </article>
+            <article class="card">
+                <h3>Evaluator-only</h3>
+                <p>An expression evaluator can run a formula, but it does not own custom syntax, restricted dialects, or
+                    the full runtime pipeline.</p>
+            </article>
+            <article class="card">
+                <h3>UniversalToolchain</h3>
+                <p>Use a formula with an explicit dialect, restrict what that dialect can express, and choose the
+                    runtime path that should execute it.</p>
+            </article>
+        </div>
+    </div>
+</section>
 
 <section class="at-glance" id="glance">
     <div class="container">
         <div class="facts">
             <div class="fact"><strong>4</strong>CLI verbs</div>
             <div class="fact"><strong>2</strong>execution modes</div>
-            <div class="fact"><strong>4</strong>dialect profiles</div>
+            <div class="fact"><strong>5</strong>dialect profiles</div>
             <div class="fact"><strong>.NET 10</strong>runtime baseline</div>
             <div class="fact"><strong>Wist</strong>reference language</div>
         </div>
@@ -937,6 +966,31 @@ base + 2</pre>
                 </ul>
             </article>
             <article class="dialect level-restrict">
+                <div class="profile-row"><h3><code>pricing-restricted</code></h3><span
+                        class="scale">domain surface</span></div>
+                <p>Narrow pricing language for controlled formula execution, not a general program dialect.</p>
+                <div class="chips">
+                    <span class="chip">pricing formulas</span><span class="chip">limited capabilities</span><span
+                        class="chip">runtime control</span>
+                </div>
+                <div class="code-label">Controlled rule shape</div>
+                <div class="split-code">
+                    <div class="mini-state">
+                        <h4>Allowed direction</h4>
+                        <pre>price * 0.9 + fee</pre>
+                    </div>
+                    <div class="mini-state bad">
+                        <h4>Rejected direction</h4>
+                        <pre>unsupported formula shape</pre>
+                    </div>
+                </div>
+                <ul>
+                    <li>Built for pricing expressions with deliberately limited capabilities.</li>
+                    <li>Useful when domain users need a controlled surface instead of a full language.</li>
+                    <li>The demo shows rejection when a formula shape falls outside the restricted dialect.</li>
+                </ul>
+            </article>
+            <article class="dialect level-restrict">
                 <div class="profile-row"><h3><code>restricted-sandbox</code></h3><span
                         class="scale">most constrained</span></div>
                 <p>Constrained profile for narrower capabilities.</p>
@@ -972,6 +1026,8 @@ x</pre>
                 <div class="micro"><b>minimal-arithmetic</b><br/>Real example is expression-only arithmetic: `2 + 3 * 4`
                     → returns `14`.
                 </div>
+                <div class="micro"><b>pricing-restricted</b><br/>Pricing formulas run through a deliberately narrow
+                    domain surface and unsupported shapes fail by design.</div>
                 <div class="micro"><b>restricted-sandbox</b><br/>Allowed arithmetic `40 + 2` works, but `let x = 1`
                     fails by design.
                 </div>
