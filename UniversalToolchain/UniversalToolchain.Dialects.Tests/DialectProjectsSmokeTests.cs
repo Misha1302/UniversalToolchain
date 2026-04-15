@@ -19,7 +19,8 @@ public class DialectProjectsSmokeTests
             "full-default-native",
             "minimal-arithmetic",
             "minimal-arithmetic-native",
-            "restricted-sandbox"
+            "restricted-sandbox",
+            "pricing-restricted"
         }));
 
         foreach (var exampleDirectory in exampleDirectories)
