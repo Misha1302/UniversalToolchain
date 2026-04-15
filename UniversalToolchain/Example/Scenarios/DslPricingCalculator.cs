@@ -45,18 +45,21 @@ public sealed class DslPricingCalculator : IDisposable
         return fastNativeInvoker.Invoke(price, fee);
     }
 
-    public bool CanCompileWithInterpreter(string formula)
+    /// <summary>
+    /// Attempts to compile a pricing formula with the interpreter backend and preserves failure diagnostics.
+    /// </summary>
+    public CompilationAttemptResult TryCompileWithInterpreter(string formula)
     {
         try
         {
             var interpreter = _host.GetArtifactCompiler<IAbstractIR>(InterpreterBackendName);
             _ = interpreter.Compile(formula, CreateDeclaredBindings());
 
-            return true;
+            return CompilationAttemptResult.Success();
         }
-        catch (Exception)
+        catch (Exception exception)
         {
-            return false;
+            return CompilationAttemptResult.Failure(exception);
         }
     }
 
@@ -106,5 +109,21 @@ public sealed class DslPricingCalculator : IDisposable
     {
         var compiler = _host.GetArtifactCompiler<DynamicMethod>(CompilerBackendName);
         return compiler.Compile(formula, CreateDeclaredBindings());
+    }
+
+    /// <summary>
+    /// Describes the result of a pricing formula compilation attempt.
+    /// </summary>
+    public sealed record CompilationAttemptResult(bool IsSuccess, string? ErrorMessage, Exception? Exception)
+    {
+        public static CompilationAttemptResult Success()
+        {
+            return new CompilationAttemptResult(true, null, null);
+        }
+
+        public static CompilationAttemptResult Failure(Exception exception)
+        {
+            return new CompilationAttemptResult(false, exception.Message, exception);
+        }
     }
 }
