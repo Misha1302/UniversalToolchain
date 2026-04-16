@@ -8,6 +8,18 @@ namespace UniversalToolchain.Dialects.Wist;
 /// </summary>
 public sealed class WistRuntimeFacadeBuilder
 {
+    private const string SafeDefaultDialectText = """
+                                                 dialect FacadeSafeDefault
+                                                 use Identifier,NativeTypes,Scopes,Variables,Whitespaces
+                                                 exclude Arithmetic,BooleanConditions,Comments,ComparisonConditions,Conditions,CSharpInterop,Equality,Labels,Loops,ParametersSetter,SemicolonAsNewLine
+                                                 backend cil,interpreter
+                                                 enable ArithmeticOptimization
+                                                 enable EGraphOptimization
+                                                 enable NativeCilOptimization
+                                                 enable NativeTypesOptimization
+                                                 security restricted
+                                                 """;
+
     private const string TrustedDefaultDialectText = """
                                                     dialect FullDefault
                                                     use Arithmetic,BooleanConditions,Comments,ComparisonConditions,Conditions,CSharpInterop,Equality,Identifier,Labels,Loops,Numbers,Scopes,SemicolonAsNewLine,Variables,Whitespaces
@@ -30,9 +42,10 @@ public sealed class WistRuntimeFacadeBuilder
     }
 
     /// <summary>
-    ///     Creates a builder for the current default built-in Wist facade profile, which is trusted and interop-enabled.
+    ///     Creates a builder for the current safe built-in Wist facade profile.
     /// </summary>
-    public static WistRuntimeFacadeBuilder CreateDefault() => CreateTrustedDefault();
+    public static WistRuntimeFacadeBuilder CreateDefault()
+        => new(SafeDefaultDialectText, "wist-facade-safe-default");
 
     /// <summary>
     ///     Creates a builder for the explicit trusted built-in Wist facade profile.

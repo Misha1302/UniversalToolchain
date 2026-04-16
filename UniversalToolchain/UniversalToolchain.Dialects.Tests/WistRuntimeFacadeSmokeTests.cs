@@ -6,6 +6,7 @@ namespace UniversalToolchain.Dialects.Tests;
 [TestFixture]
 public sealed class WistRuntimeFacadeSmokeTests
 {
+    private const string InteropFormula = "NumbersModule.Core.RealNumberImpl.Add(2, 5)";
     private const string PricingFormula = "price * 0.9 + fee";
 
     private const string StatementStyleBindingFormula = """
@@ -50,6 +51,54 @@ public sealed class WistRuntimeFacadeSmokeTests
     }
 
     [Test]
+    public void Facade_CreateDefault_TryCompile_InteropCall_Fails_Compiler()
+    {
+        using var wist = WistRuntimeFacadeBuilder
+            .CreateDefault()
+            .Build();
+
+        var attempt = wist.TryCompile(InteropFormula, CreateEmptyDeclaredBindings(), mode: "compiler");
+
+        AssertTryCompileFails(attempt);
+    }
+
+    [Test]
+    public void Facade_CreateDefault_TryCompile_InteropCall_Fails_Interpreter()
+    {
+        using var wist = WistRuntimeFacadeBuilder
+            .CreateDefault()
+            .Build();
+
+        var attempt = wist.TryCompile(InteropFormula, CreateEmptyDeclaredBindings(), mode: "interpreter");
+
+        AssertTryCompileFails(attempt);
+    }
+
+    [Test]
+    public void Facade_CreateTrustedDefault_TryCompile_InteropCall_Succeeds_Compiler()
+    {
+        using var wist = WistRuntimeFacadeBuilder
+            .CreateTrustedDefault()
+            .Build();
+
+        var attempt = wist.TryCompile(InteropFormula, CreateEmptyDeclaredBindings(), mode: "compiler");
+
+        AssertTryCompileSucceeds(attempt);
+    }
+
+    [Test]
+    public void Facade_CreateTrustedDefault_TryCompile_InteropCall_Succeeds_Interpreter()
+    {
+        using var wist = WistRuntimeFacadeBuilder
+            .CreateTrustedDefault()
+            .Build();
+
+        var attempt = wist.TryCompile(InteropFormula, CreateEmptyDeclaredBindings(), mode: "interpreter");
+
+        AssertTryCompileSucceeds(attempt);
+    }
+
+    [Test]
     public void Facade_TryCompile_RestrictedPricing_ReturnsFailureForStatementStyleBinding()
     {
         using var wist = WistRuntimeFacadeBuilder
@@ -59,13 +108,7 @@ public sealed class WistRuntimeFacadeSmokeTests
 
         var attempt = wist.TryCompile(StatementStyleBindingFormula, CreateDeclaredBindings(), mode: "interpreter");
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(attempt.IsSuccess, Is.False);
-            Assert.That(attempt.Artifact, Is.Null);
-            Assert.That(attempt.Exception, Is.Not.Null);
-            Assert.That(attempt.ErrorMessage, Is.Not.Empty);
-        });
+        AssertTryCompileFails(attempt);
     }
 
     private static Dictionary<string, object?> CreateArguments()
@@ -76,6 +119,8 @@ public sealed class WistRuntimeFacadeSmokeTests
             ["fee"] = 5.0d
         };
     }
+
+    private static Dictionary<string, Type> CreateEmptyDeclaredBindings() => new();
 
     private static Dictionary<string, Type> CreateDeclaredBindings()
     {
@@ -94,4 +139,26 @@ public sealed class WistRuntimeFacadeSmokeTests
             "wist",
             "pricing-restricted",
             "dialect.wistdialect"));
+
+    private static void AssertTryCompileSucceeds(WistTryCompileResult attempt)
+    {
+        Assert.Multiple(() =>
+        {
+            Assert.That(attempt.IsSuccess, Is.True);
+            Assert.That(attempt.Artifact, Is.Not.Null);
+            Assert.That(attempt.Exception, Is.Null);
+            Assert.That(attempt.ErrorMessage, Is.Null);
+        });
+    }
+
+    private static void AssertTryCompileFails(WistTryCompileResult attempt)
+    {
+        Assert.Multiple(() =>
+        {
+            Assert.That(attempt.IsSuccess, Is.False);
+            Assert.That(attempt.Artifact, Is.Null);
+            Assert.That(attempt.Exception, Is.Not.Null);
+            Assert.That(attempt.ErrorMessage, Is.Not.Empty);
+        });
+    }
 }
