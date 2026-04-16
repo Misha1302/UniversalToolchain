@@ -1,5 +1,10 @@
 global using BasicCore.Attributes;
+global using BasicCore.Binding;
+global using BasicCore.Binding.Symbols;
 global using BasicCore.Contracts;
 global using BasicCore.LexerWrapper;
 global using BasicCore.ParserWrapper;
 global using BasicTypesExtensions;
+global using BasicCore.Registration;
+global using BasicCore.TranslatorWrapper;
+global using DynamicMethodWrapper;

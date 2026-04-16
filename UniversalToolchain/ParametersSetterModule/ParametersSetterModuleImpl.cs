@@ -17,4 +17,7 @@ public sealed class ParametersSetterModuleImpl : IFrontendCoreModule
     ];
 
     public void InitParser(IParser parser) => parser.AddNodeCreators(_nodeCreatorRegistrations);
+
+    public void InitAstTranslator(IAstToBytecodeTranslator translator) =>
+        translator.AddVisitors(new ParametersExternalBindingVisitor());
 }

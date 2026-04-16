@@ -19,6 +19,20 @@ public sealed class Binder
         if (node.NodeType == AstNodeType.CreateOrGet("Variable"))
             return BindVariable(node);
 
+        if (node.NodeType == AstNodeType.CreateOrGet("Identifier"))
+            return BindIdentifier(node);
+
+        for (var i = 0; i < node.Children.Count; i++)
+            node[i] = BindNode(node[i]);
+
+        return node;
+    }
+
+    private AstNode BindIdentifier(AstNode node)
+    {
+        if (_externals.TryGetValue(node.Text, out var external))
+            return new BoundExternalReference(node, external);
+
         for (var i = 0; i < node.Children.Count; i++)
             node[i] = BindNode(node[i]);
 
