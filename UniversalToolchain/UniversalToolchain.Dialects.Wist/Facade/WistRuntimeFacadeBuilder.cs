@@ -21,9 +21,16 @@ public sealed class WistRuntimeFacadeBuilder
     }
 
     /// <summary>
-    ///     Creates a builder for the default Wist facade profile.
+    ///     Creates a builder for the safe default Wist facade profile.
     /// </summary>
     public static WistRuntimeFacadeBuilder CreateDefault() => new(
+        BuiltInFacadeDialectProfiles.SafeDefaultText,
+        BuiltInFacadeDialectProfiles.SafeDefaultSyntheticSourceName);
+
+    /// <summary>
+    ///     Creates a builder for the trusted Wist facade profile with unsafe interop enabled.
+    /// </summary>
+    public static WistRuntimeFacadeBuilder CreateTrustedDefault() => new(
         BuiltInFacadeDialectProfiles.TrustedDefaultText,
         BuiltInFacadeDialectProfiles.TrustedDefaultSyntheticSourceName);
 
