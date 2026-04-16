@@ -8,30 +8,60 @@ namespace UniversalToolchain.Dialects.Wist;
 /// </summary>
 public sealed class WistRuntimeFacadeBuilder
 {
-    private const string DefaultDialectText = """
-                                             dialect FullDefault
-                                             use Arithmetic,BooleanConditions,Comments,ComparisonConditions,Conditions,CSharpInterop,Equality,Identifier,Labels,Loops,Numbers,Scopes,SemicolonAsNewLine,Variables,Whitespaces
-                                             backend cil,interpreter
-                                             enable BooleanOptimization
-                                             enable ComparisonIntrinsicOptimization
-                                             enable LocalVariablesOptimization
-                                             security trusted
-                                             capability unsafe-interop
-                                             """;
+    private const string SafeDefaultDialectText = """
+                                                  dialect SafeDefault
+                                                  use Arithmetic,BooleanConditions,Comments,ComparisonConditions,Conditions,Equality,Identifier,Labels,Loops,Numbers,Scopes,SemicolonAsNewLine,Variables,Whitespaces
+                                                  backend cil,interpreter
+                                                  enable BooleanOptimization
+                                                  enable ComparisonIntrinsicOptimization
+                                                  enable LocalVariablesOptimization
+                                                  security restricted
+                                                  """;
+
+    private const string TrustedDefaultDialectText = """
+                                                     dialect TrustedDefault
+                                                     use Arithmetic,BooleanConditions,Comments,ComparisonConditions,Conditions,CSharpInterop,Equality,Identifier,Labels,Loops,Numbers,Scopes,SemicolonAsNewLine,Variables,Whitespaces
+                                                     backend cil,interpreter
+                                                     enable BooleanOptimization
+                                                     enable ComparisonIntrinsicOptimization
+                                                     enable LocalVariablesOptimization
+                                                     security trusted
+                                                     capability unsafe-interop
+                                                     """;
 
     private string? _dialectFilePath;
+    private string _builtInDialectText = SafeDefaultDialectText;
 
     private WistRuntimeFacadeBuilder()
     {
     }
 
     /// <summary>
-    ///     Creates a builder for the default Wist facade profile.
+    ///     Creates a builder for the safe first-contact Wist facade profile with no C# interop, restricted security,
+    ///     and a runtime surface intended for formulas and rules onboarding.
     /// </summary>
-    public static WistRuntimeFacadeBuilder CreateDefault() => new();
+    public static WistRuntimeFacadeBuilder CreateDefault()
+    {
+        return new WistRuntimeFacadeBuilder
+        {
+            _builtInDialectText = SafeDefaultDialectText
+        };
+    }
 
     /// <summary>
-    ///     Uses a Wist dialect file instead of the default facade profile.
+    ///     Creates a builder for trusted Wist composition with C# interop enabled as an explicit opt-in profile that
+    ///     must not be used for untrusted input.
+    /// </summary>
+    public static WistRuntimeFacadeBuilder CreateTrustedDefault()
+    {
+        return new WistRuntimeFacadeBuilder
+        {
+            _builtInDialectText = TrustedDefaultDialectText
+        };
+    }
+
+    /// <summary>
+    ///     Uses a Wist dialect file instead of the selected built-in facade profile.
     /// </summary>
     public WistRuntimeFacadeBuilder WithDialectFile(string filePath)
     {
@@ -55,7 +85,7 @@ public sealed class WistRuntimeFacadeBuilder
         using var provider = services.BuildServiceProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var composition = _dialectFilePath == null
-            ? workflow.ComposeText(DefaultDialectText, "wist-facade-default")
+            ? workflow.ComposeText(_builtInDialectText, "wist-facade-default")
             : workflow.ComposeFile(_dialectFilePath);
 
         if (!composition.IsSuccess)
