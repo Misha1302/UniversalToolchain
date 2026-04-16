@@ -754,13 +754,14 @@
             <span class="eyebrow">UniversalToolchain</span>
             <h1>Build formulas, rules, and mini-languages for .NET applications.</h1>
             <p>
-                Start with formulas and rules, then grow into controlled DSL runtimes with custom syntax, restricted
-                dialects, inspectable stages, and compiler/interpreter execution paths.
+                Start with a safe default facade for formulas and rules, then opt into trusted runtime capabilities
+                explicitly when the host owns the code and environment.
             </p>
             <div class="badge-row">
                 <span class="badge">Pricing demo first</span>
                 <span class="badge">CLI + programmatic API</span>
-                <span class="badge">Dialect restrictions</span>
+                <span class="badge">Safe default first</span>
+                <span class="badge">Trusted opt-in</span>
             </div>
             <div class="actions">
                 <a class="btn primary" href="https://github.com/Misha1302/Wist2/tree/master/UniversalToolchain/Example">Run Pricing Demo</a>
@@ -777,10 +778,10 @@
                 <div class="out">hardcoded C# + Wist + pricing-restricted</div>
             </article>
             <article class="snippet">
-                <div class="panel-head"><span>Controlled surface</span><span>pricing-restricted</span></div>
-                <pre>formula + dialect restrictions
-compiler and interpreter paths
-reject unsupported formula shapes</pre>
+                <div class="panel-head"><span>Facade defaults</span><span>safe built-in profile</span></div>
+                <pre>CreateDefault(): restricted posture
+no C# interop by default
+CreateTrustedDefault(): explicit opt-in</pre>
             </article>
         </aside>
     </div>
@@ -839,8 +840,9 @@ reject unsupported formula shapes</pre>
             </article>
             <article class="card">
                 <h3>Define dialects</h3>
-                <p>Declare language/runtime profiles in a <code>.wistdialect</code> file, compose a host, then execute
-                    through the same CLI/programmatic path.</p>
+                <p>Declare language/runtime profiles in a <code>.wistdialect</code> file, start with
+                    <code>CreateDefault()</code> for the safe built-in facade, and use
+                    <code>CreateTrustedDefault()</code> only as an explicit trusted opt-in.</p>
             </article>
         </div>
     </div>
@@ -894,8 +896,10 @@ reject unsupported formula shapes</pre>
             <div class="item">Wist CLI with verbs: <code>run</code>, <code>repl</code>, <code>dialect-inspect</code>,
                 <code>dialect-demo</code></div>
             <div class="item">REPL for interactive execution</div>
-            <div class="item">Programmatic execution API via <code>WistDialectExecutionWorkflow</code></div>
+            <div class="item">Programmatic execution API via <code>WistRuntimeFacadeBuilder</code> and
+                <code>WistDialectExecutionWorkflow</code></div>
             <div class="item">Dialect-based runtime composition from <code>.wistdialect</code> files</div>
+            <div class="item"><code>CreateDefault()</code> safe facade path with no C# interop by default</div>
             <div class="item">Two runtime modes: <code>compiler</code> and <code>interpreter</code></div>
             <div class="item">Runnable example dialect profiles and programs in-repo</div>
             <div class="item">Core tests plus dedicated dialect tests</div>
@@ -1074,8 +1078,10 @@ x</pre>
                 → run code.
             </p>
             <p>
-                You can execute through CLI entry points or use <code>WistDialectExecutionWorkflow</code> directly in
-                .NET code. The repository includes runnable examples and tests for both core and dialect paths.
+                You can execute through CLI entry points, start with the safe <code>CreateDefault()</code> facade, opt
+                into <code>CreateTrustedDefault()</code> for trusted hosts, or use
+                <code>WistDialectExecutionWorkflow</code> directly in .NET code. The repository includes runnable
+                examples and tests for both core and dialect paths.
             </p>
         </div>
         <aside class="note">
@@ -1092,8 +1098,8 @@ x</pre>
             <h3>Limitations and trust model</h3>
             <p>
                 This repository does <strong>not</strong> claim hardened sandboxing for untrusted code.
-                Constrained dialect composition is <strong>not</strong> equivalent to OS/process-level isolation.
-                Treat untrusted execution as high risk.
+                Safe facade composition and constrained dialect composition are <strong>not</strong> equivalent to
+                OS/process-level isolation. Treat untrusted execution as high risk.
             </p>
             <p>
                 Architecture and composition ergonomics are still evolving. Active engineering work includes

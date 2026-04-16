@@ -45,7 +45,8 @@ Expected output:
 
 ## Programmatic example
 
-A small Wist facade example:
+A small Wist facade example using the safe built-in profile. `CreateDefault()` is the first-contact path: it uses a
+restricted security posture and does not enable C# interop by default.
 
 ```csharp
 using var wist = WistRuntimeFacadeBuilder
@@ -62,6 +63,14 @@ var result = wist.Run(
     mode: "compiler");
 
 var compiledResult = (double)result!; // 95.0
+```
+
+Use the trusted facade only as an explicit opt-in path when the host owns the code and environment:
+
+```csharp
+using var trustedWist = WistRuntimeFacadeBuilder
+    .CreateTrustedDefault()
+    .Build();
 ```
 
 Use a dialect file when the runtime surface must be restricted:
@@ -81,6 +90,14 @@ var attempt = wist.TryCompile(
     },
     mode: "interpreter");
 ```
+
+Safe composition is not hardened sandboxing. Untrusted execution still requires process/environment isolation; see
+`SECURITY.md` for the trust model.
+
+## Add to another .NET solution
+
+For now, add UniversalToolchain through project references to the needed projects under `UniversalToolchain/`. Detailed
+integration guidance will live in dedicated integration docs.
 
 ## When to use UniversalToolchain
 
@@ -218,10 +235,10 @@ Located under `UniversalToolchain/Dialects/examples/wist`:
 The current validation baseline is .NET 10 (`net10.0`) with SDK `10.0.103`.
 Active runtime and backend work is being verified there first, so older target frameworks are not the current compatibility target.
 
-## Requirements
+## Prerequisites
 
-- .NET SDK `10.0.103`
-- SDK policy in `UniversalToolchain/global.json`:
+- Current validation baseline: .NET 10 / SDK `10.0.103`.
+- Compatible SDKs may work when they satisfy `UniversalToolchain/global.json`:
     - `rollForward: latestMajor`
     - `allowPrerelease: true`
 - Targets: `net10.0`
