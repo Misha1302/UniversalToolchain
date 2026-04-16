@@ -8,6 +8,13 @@ longer enough.
 Wist is the reference language in this repository. It demonstrates the framework through a pricing demo, dialect
 composition, and compiler/interpreter execution modes.
 
+## Prerequisites
+
+- .NET SDK `10.0.103`
+- Current target framework: `net10.0`
+- SDK resolution is controlled by `UniversalToolchain/global.json`
+- `allowPrerelease: true` is enabled in that file, so some environments may require prerelease SDK support
+
 ## Run the pricing demo
 
 ```bash
@@ -47,6 +54,9 @@ Expected output:
 
 A small Wist facade example:
 
+`CreateDefault()` uses the safe built-in profile for first-contact usage.
+It does not enable C# interop and does not expose unsafe interop capability by default.
+
 ```csharp
 using var wist = WistRuntimeFacadeBuilder
     .CreateDefault()
@@ -62,6 +72,15 @@ var result = wist.Run(
     mode: "compiler");
 
 var compiledResult = (double)result!; // 95.0
+```
+
+Use `CreateTrustedDefault()` only when you intentionally want trusted composition with C# interop enabled. Do not treat
+that path as appropriate for untrusted input.
+
+```csharp
+using var wist = WistRuntimeFacadeBuilder
+    .CreateTrustedDefault()
+    .Build();
 ```
 
 Use a dialect file when the runtime surface must be restricted:
@@ -81,6 +100,21 @@ var attempt = wist.TryCompile(
     },
     mode: "interpreter");
 ```
+
+Safe composition is not the same as hardened sandboxing.
+If input is untrusted, use process/environment isolation and keep unsafe capabilities disabled.
+
+## Add to another .NET solution
+
+Today the simplest integration path is a project reference to the Wist facade layer:
+
+```xml
+<ItemGroup>
+  <ProjectReference Include="..\Wist2\UniversalToolchain\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj" />
+</ItemGroup>
+```
+
+Then create a facade and run formulas programmatically.
 
 ## When to use UniversalToolchain
 
