@@ -43,9 +43,10 @@ Expected output:
 12
 ```
 
-## Programmatic example
+## Programmatic facade
 
-A small Wist facade example:
+`WistRuntimeFacadeBuilder.CreateDefault()` builds the safe default Wist facade profile. It is intended for normal
+embedded formula execution and excludes unsafe interop from the default composition.
 
 ```csharp
 using var wist = WistRuntimeFacadeBuilder
@@ -64,12 +65,24 @@ var result = wist.Run(
 var compiledResult = (double)result!; // 95.0
 ```
 
-Use a dialect file when the runtime surface must be restricted:
+The safe default is a composition choice, not hardened sandboxing. Do not treat it as process, filesystem, network, or
+resource isolation for untrusted code.
+
+Use `CreateTrustedDefault()` only when the host intentionally wants the broader trusted Wist profile with unsafe interop
+enabled:
+
+```csharp
+using var wist = WistRuntimeFacadeBuilder
+    .CreateTrustedDefault()
+    .Build();
+```
+
+Use a dialect file when the host needs to override the built-in facade profile with a concrete runtime surface:
 
 ```csharp
 using var wist = WistRuntimeFacadeBuilder
     .CreateDefault()
-    .WithDialectFile("pricing-restricted/dialect.wistdialect")
+    .WithDialectFile("UniversalToolchain/Dialects/examples/wist/pricing-restricted/dialect.wistdialect")
     .Build();
 
 var attempt = wist.TryCompile(
@@ -81,6 +94,11 @@ var attempt = wist.TryCompile(
     },
     mode: "interpreter");
 ```
+
+Integration docs:
+
+- [Project reference setup](docs/integration/project-reference-setup.md)
+- [Minimal facade host](docs/integration/minimal-facade-host.md)
 
 ## When to use UniversalToolchain
 
@@ -220,8 +238,8 @@ Active runtime and backend work is being verified there first, so older target f
 
 ## Requirements
 
-- .NET SDK `10.0.103`
-- SDK policy in `UniversalToolchain/global.json`:
+- .NET SDK compatible with `UniversalToolchain/global.json`
+- SDK policy currently requests `10.0.103` and allows:
     - `rollForward: latestMajor`
     - `allowPrerelease: true`
 - Targets: `net10.0`
@@ -231,12 +249,19 @@ Active runtime and backend work is being verified there first, so older target f
 From repository root:
 
 ```bash
-dotnet restore UniversalToolchain/Wist.sln
-dotnet build UniversalToolchain/Wist.sln -c Release --no-restore
-dotnet test UniversalToolchain/Tests/Tests.csproj -c Release --no-build
-dotnet test UniversalToolchain/UniversalToolchain.Modules.Tests/UniversalToolchain.Modules.Tests.csproj -c Release --no-build
-dotnet test UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolchain.Dialects.Tests.csproj -c Release --no-build
+./scripts/bootstrap.sh
+./scripts/test.sh
 ```
+
+PowerShell equivalents:
+
+```powershell
+./scripts/bootstrap.ps1
+./scripts/test.ps1
+```
+
+The scripts verify that `dotnet` is available, use SDK policy from `UniversalToolchain/global.json`, build the solution
+in Release configuration, run the CI-aligned test projects, and smoke-test the pricing example output.
 
 ## Security note
 
@@ -257,6 +282,7 @@ This repository is actively evolving, and some areas are intentionally treated a
 
 - Project overview: `readme.md`
 - Architecture overview: `docs/architecture-overview.md`
+- Integration: `docs/integration/project-reference-setup.md`, `docs/integration/minimal-facade-host.md`
 - Coding standards: `PROJECT_RULES.md`
 - Contribution workflow: `CONTRIBUTING.md`
 - Security policy: `SECURITY.md`

@@ -760,7 +760,8 @@
             <div class="badge-row">
                 <span class="badge">Pricing demo first</span>
                 <span class="badge">CLI + programmatic API</span>
-                <span class="badge">Dialect restrictions</span>
+                <span class="badge">Safe facade default</span>
+                <span class="badge">Trusted opt-in</span>
             </div>
             <div class="actions">
                 <a class="btn primary" href="https://github.com/Misha1302/Wist2/tree/master/UniversalToolchain/Example">Run Pricing Demo</a>
@@ -777,10 +778,10 @@
                 <div class="out">hardcoded C# + Wist + pricing-restricted</div>
             </article>
             <article class="snippet">
-                <div class="panel-head"><span>Controlled surface</span><span>pricing-restricted</span></div>
-                <pre>formula + dialect restrictions
-compiler and interpreter paths
-reject unsupported formula shapes</pre>
+                <div class="panel-head"><span>Facade path</span><span>current default</span></div>
+                <pre>CreateDefault() is safe by default
+CreateTrustedDefault() opts into interop
+WithDialectFile(...) overrides the profile</pre>
             </article>
         </aside>
     </div>
@@ -867,6 +868,10 @@ reject unsupported formula shapes</pre>
                 <strong>Wist2 vs RulesEngine</strong>
                 <span>Choose the boundary between structured rules and custom runtime control.</span>
             </a>
+            <a class="doc-link" href="integration/minimal-facade-host.md">
+                <strong>Minimal facade host</strong>
+                <span>Embed Wist through the safe default facade, trusted opt-in, or a dialect file.</span>
+            </a>
         </div>
     </div>
 </section>
@@ -894,10 +899,12 @@ reject unsupported formula shapes</pre>
             <div class="item">Wist CLI with verbs: <code>run</code>, <code>repl</code>, <code>dialect-inspect</code>,
                 <code>dialect-demo</code></div>
             <div class="item">REPL for interactive execution</div>
-            <div class="item">Programmatic execution API via <code>WistDialectExecutionWorkflow</code></div>
+            <div class="item">Programmatic execution API via <code>WistRuntimeFacadeBuilder.CreateDefault()</code></div>
+            <div class="item">Explicit trusted opt-in via <code>CreateTrustedDefault()</code></div>
             <div class="item">Dialect-based runtime composition from <code>.wistdialect</code> files</div>
             <div class="item">Two runtime modes: <code>compiler</code> and <code>interpreter</code></div>
             <div class="item">Runnable example dialect profiles and programs in-repo</div>
+            <div class="item">Bootstrap and test scripts aligned with the CI build, test, and example smoke path</div>
             <div class="item">Core tests plus dedicated dialect tests</div>
         </div>
     </div>
@@ -1074,14 +1081,16 @@ x</pre>
                 → run code.
             </p>
             <p>
-                You can execute through CLI entry points or use <code>WistDialectExecutionWorkflow</code> directly in
-                .NET code. The repository includes runnable examples and tests for both core and dialect paths.
+                You can execute through CLI entry points or embed the current Wist facade with
+                <code>WistRuntimeFacadeBuilder</code>. Use <code>CreateDefault()</code> for the safe default profile,
+                <code>CreateTrustedDefault()</code> for explicit trusted interop, or <code>WithDialectFile(...)</code>
+                for a concrete restricted profile.
             </p>
         </div>
         <aside class="note">
             <h3>Current platform baseline</h3>
             <p>Current baseline is <strong>.NET 10 / SDK 10.0.103</strong> because active runtime and backend work is being validated there first.
-                Older target frameworks are not the current compatibility target.</p>
+                SDK policy comes from <code>UniversalToolchain/global.json</code>. Older target frameworks are not the current compatibility target.</p>
         </aside>
     </div>
 </section>
@@ -1113,6 +1122,8 @@ x</pre>
             <a href="https://github.com/Misha1302/Wist2">Repository</a>
             <a href="https://github.com/Misha1302/Wist2/blob/master/readme.md">README</a>
             <a href="https://github.com/Misha1302/Wist2/blob/master/docs/architecture-overview.md">Architecture Overview</a>
+            <a href="integration/project-reference-setup.md">Project Reference Setup</a>
+            <a href="integration/minimal-facade-host.md">Minimal Facade Host</a>
             <a href="why-this-exists.md">Why This Exists</a>
             <a href="comparisons/wist2-vs-ncalc.md">Wist2 vs NCalc</a>
             <a href="comparisons/wist2-vs-rulesengine.md">Wist2 vs RulesEngine</a>
