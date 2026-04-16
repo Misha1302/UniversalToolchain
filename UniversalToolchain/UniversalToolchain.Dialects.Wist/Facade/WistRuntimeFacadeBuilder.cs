@@ -8,27 +8,24 @@ namespace UniversalToolchain.Dialects.Wist;
 /// </summary>
 public sealed class WistRuntimeFacadeBuilder
 {
-    private const string DefaultDialectText = """
-                                             dialect FullDefault
-                                             use Arithmetic,BooleanConditions,Comments,ComparisonConditions,Conditions,CSharpInterop,Equality,Identifier,Labels,Loops,Numbers,Scopes,SemicolonAsNewLine,Variables,Whitespaces
-                                             backend cil,interpreter
-                                             enable BooleanOptimization
-                                             enable ComparisonIntrinsicOptimization
-                                             enable LocalVariablesOptimization
-                                             security trusted
-                                             capability unsafe-interop
-                                             """;
-
+    private readonly string _builtInDialectText;
+    private readonly string _builtInSyntheticSourceName;
     private string? _dialectFilePath;
 
-    private WistRuntimeFacadeBuilder()
+    private WistRuntimeFacadeBuilder(
+        string builtInDialectText,
+        string builtInSyntheticSourceName)
     {
+        _builtInDialectText = builtInDialectText;
+        _builtInSyntheticSourceName = builtInSyntheticSourceName;
     }
 
     /// <summary>
     ///     Creates a builder for the default Wist facade profile.
     /// </summary>
-    public static WistRuntimeFacadeBuilder CreateDefault() => new();
+    public static WistRuntimeFacadeBuilder CreateDefault() => new(
+        BuiltInFacadeDialectProfiles.TrustedDefaultText,
+        BuiltInFacadeDialectProfiles.TrustedDefaultSyntheticSourceName);
 
     /// <summary>
     ///     Uses a Wist dialect file instead of the default facade profile.
@@ -55,7 +52,7 @@ public sealed class WistRuntimeFacadeBuilder
         using var provider = services.BuildServiceProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var composition = _dialectFilePath == null
-            ? workflow.ComposeText(DefaultDialectText, "wist-facade-default")
+            ? workflow.ComposeText(_builtInDialectText, _builtInSyntheticSourceName)
             : workflow.ComposeFile(_dialectFilePath);
 
         if (!composition.IsSuccess)
