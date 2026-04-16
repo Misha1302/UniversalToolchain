@@ -8,6 +8,22 @@ longer enough.
 Wist is the reference language in this repository. It demonstrates the framework through a pricing demo, dialect
 composition, and compiler/interpreter execution modes.
 
+## Short path
+
+Bootstrap the repository from the root:
+
+```bash
+./scripts/bootstrap.sh
+```
+
+Run the CI-equivalent local validation:
+
+```bash
+./scripts/test.sh
+```
+
+On Windows, use the equivalent PowerShell scripts: `./scripts/bootstrap.ps1` and `./scripts/test.ps1`.
+
 ## Run the pricing demo
 
 ```bash
