@@ -300,6 +300,8 @@ This repository is actively evolving, and some areas are intentionally treated a
 
 - Project overview: `readme.md`
 - Architecture overview: `docs/architecture-overview.md`
+- Integration setup: `docs/integration/project-reference-setup.md`
+- Minimal facade host: `docs/integration/minimal-facade-host.md`
 - Coding standards: `PROJECT_RULES.md`
 - Contribution workflow: `CONTRIBUTING.md`
 - Security policy: `SECURITY.md`
