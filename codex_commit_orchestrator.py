@@ -29,8 +29,7 @@ Resume model
   * commit spec ordering,
   * completed commit indices,
   * whether the branch was pushed,
-  * whether the final PR was created,
-  * whether the final review already ran.
+  * whether the final PR was created.
 - If a run stops because of internet loss or any other failure, rerun the script and choose resume.
 """
 
@@ -54,7 +53,7 @@ from typing import Iterable
 from urllib.parse import quote
 
 
-DEFAULT_BASE_BRANCH = "master"
+DEFAULT_BASE_BRANCH = "auto"
 DEFAULT_STATE_FILENAME = "single_branch_state.json"
 RULE_FILES = [
     "PROJECT_RULES.md",
@@ -362,6 +361,59 @@ def local_branch_exists(repo_path: pathlib.Path, branch_name: str) -> bool:
 def remote_branch_exists(repo_path: pathlib.Path, branch_name: str) -> bool:
     result = run(["git", "ls-remote", "--heads", "origin", branch_name], cwd=repo_path, check=False)
     return bool((result.stdout or "").strip())
+
+
+def branch_exists_local_or_remote(repo_path: pathlib.Path, branch_name: str) -> bool:
+    return local_branch_exists(repo_path, branch_name) or remote_branch_exists(repo_path, branch_name)
+
+
+def detect_default_remote_branch(repo_path: pathlib.Path) -> str | None:
+    result = run(["git", "symbolic-ref", "refs/remotes/origin/HEAD"], cwd=repo_path, check=False)
+    ref = (result.stdout or "").strip()
+    prefix = "refs/remotes/origin/"
+    if ref.startswith(prefix):
+        return ref[len(prefix):]
+    return None
+
+
+def resolve_base_branch(repo_path: pathlib.Path, requested_base_branch: str) -> str:
+    normalized = (requested_base_branch or "").strip()
+
+    if normalized and normalized.lower() != "auto":
+        if branch_exists_local_or_remote(repo_path, normalized):
+            return normalized
+
+        fallback_candidates: list[str] = []
+        if normalized not in {"master", "main"}:
+            fallback_candidates.append(normalized)
+        fallback_candidates.extend(["master", "main"])
+
+        for candidate in fallback_candidates:
+            if branch_exists_local_or_remote(repo_path, candidate):
+                print_warn(
+                    f"Requested base branch `{normalized}` was not found. Falling back to `{candidate}`."
+                )
+                return candidate
+
+        raise StepError(
+            f"Could not find requested base branch `{normalized}` or fallback branches `master` / `main`."
+        )
+
+    remote_default = detect_default_remote_branch(repo_path)
+    candidates: list[str] = []
+    if remote_default:
+        candidates.append(remote_default)
+    candidates.extend(["master", "main"])
+
+    seen: set[str] = set()
+    for candidate in candidates:
+        if candidate in seen:
+            continue
+        seen.add(candidate)
+        if branch_exists_local_or_remote(repo_path, candidate):
+            return candidate
+
+    raise StepError("Could not detect a base branch. Neither `master` nor `main` exists locally/remotely.")
 
 
 # ---------- GitHub folder loading ----------
@@ -853,85 +905,6 @@ def get_repo_slug(repo_path: pathlib.Path) -> str:
     raise StepError(f"Unsupported origin remote URL format: {remote}")
 
 
-# ---------- Final review ----------
-
-
-def run_final_review(
-    repo_path: pathlib.Path,
-    artifacts_dir: pathlib.Path,
-    specs: list[CommitSpec],
-    available_rule_files: list[str],
-) -> pathlib.Path:
-    print_header("FINAL REVIEW")
-    review_dir = artifacts_dir / "final_review"
-    review_dir.mkdir(parents=True, exist_ok=True)
-    review_path = review_dir / "final_review.md"
-    prompt_path = review_dir / "final_review_prompt.txt"
-    stderr_path = review_dir / "final_review_stderr.txt"
-
-    joined_specs = "\n\n".join(f"=== {spec.name} ===\n{spec.body}" for spec in specs)
-    rules_block = "\n".join(f"- {path}" for path in available_rule_files) or "- (none found)"
-
-    prompt = textwrap.dedent(
-        f"""
-        You are doing a final code review of the current repository state.
-
-        Before answering, read these repository files if they exist:
-        {rules_block}
-
-        Also inspect the current codebase and the recent git history as needed.
-
-        The repository was supposed to implement the following sequence of commit specs.
-        Use these specs to infer the intended overall task, then verify whether the current repository state satisfies them correctly.
-
-        Deliver a review in Markdown with these sections:
-        1. Overall verdict
-        2. Intended task you inferred
-        3. Commit-by-commit completion check
-        4. Project rule violations
-        5. Bugs / semantic concerns
-        6. Test and coverage gaps
-        7. Suggested follow-up fixes
-
-        Commit specs:
-        {joined_specs}
-        """
-    ).strip() + "\n"
-
-    prompt_path.write_text(prompt, encoding="utf-8")
-
-    process = subprocess.run(
-        [
-            "codex",
-            "exec",
-            "--cd",
-            str(repo_path),
-            "--sandbox",
-            "read-only",
-            "--output-last-message",
-            str(review_path),
-            "-",
-        ],
-        cwd=str(repo_path),
-        text=True,
-        input=prompt,
-        capture_output=True,
-    )
-
-    stderr_path.write_text(process.stderr or "", encoding="utf-8")
-
-    if process.stdout:
-        review_path.write_text(process.stdout, encoding="utf-8")
-
-    if process.returncode != 0:
-        raise StepError(
-            "Final review failed.\n"
-            f"STDOUT:\n{process.stdout}\nSTDERR:\n{process.stderr}"
-        )
-
-    return review_path
-
-
 # ---------- Orchestration ----------
 
 
@@ -1083,27 +1056,6 @@ def maybe_push_branch(repo_path: pathlib.Path, state_path: pathlib.Path, state: 
 
 
 
-def maybe_run_final_review(
-    repo_path: pathlib.Path,
-    artifacts_dir: pathlib.Path,
-    state_path: pathlib.Path,
-    state: StateSnapshot,
-    specs: list[CommitSpec],
-    available_rule_files: list[str],
-) -> pathlib.Path:
-    if state.final_review_path:
-        review_path = pathlib.Path(state.final_review_path)
-        if review_path.exists():
-            print_info(f"Final review already exists: {review_path}")
-            return review_path
-
-    review_path = run_final_review(repo_path, artifacts_dir, specs, available_rule_files)
-    state.final_review_path = str(review_path)
-    save_state(state_path, state)
-    return review_path
-
-
-
 def maybe_create_final_pr(
     repo_path: pathlib.Path,
     state_path: pathlib.Path,
@@ -1171,11 +1123,14 @@ def main() -> int:
     ensure_gh_authenticated()
     ensure_codex_authenticated(repo_path)
 
+    resolved_base_branch = resolve_base_branch(repo_path, args.base_branch)
+    print_step(f"Using base branch: {resolved_base_branch}")
+
     print_header("LOADING COMMIT SPECS")
     specs, state, is_resume = load_or_initialize_run(
         repo_path=repo_path,
         spec_source_text=spec_source_text,
-        base_branch=args.base_branch,
+        base_branch=resolved_base_branch,
         state_path=state_path,
         skip_final_pr=args.skip_final_pr,
         args_start_from=args.start_from,
@@ -1212,16 +1167,6 @@ def main() -> int:
     print("все коммиты совершены")
 
     maybe_push_branch(repo_path, state_path, state)
-
-    review_path = maybe_run_final_review(
-        repo_path=repo_path,
-        artifacts_dir=artifacts_dir,
-        state_path=state_path,
-        state=state,
-        specs=specs,
-        available_rule_files=available_rule_files,
-    )
-    print(f"Path to final review report: {review_path}")
 
     pr_url = maybe_create_final_pr(
         repo_path=repo_path,
