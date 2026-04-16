@@ -272,6 +272,15 @@ dotnet test UniversalToolchain/UniversalToolchain.Modules.Tests/UniversalToolcha
 dotnet test UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolchain.Dialects.Tests.csproj -c Release --no-build
 ```
 
+### Short path
+
+```bash
+./scripts/bootstrap.sh
+./scripts/test.sh
+```
+
+PowerShell equivalents are available as `./scripts/bootstrap.ps1` and `./scripts/test.ps1`.
+
 ## Security note
 
 The repository does **not** claim hardened sandboxing for untrusted code. Use process/environment isolation for
