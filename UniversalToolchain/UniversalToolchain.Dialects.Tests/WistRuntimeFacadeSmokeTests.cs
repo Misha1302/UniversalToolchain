@@ -26,6 +26,18 @@ public sealed class WistRuntimeFacadeSmokeTests
     }
 
     [Test]
+    public void Facade_CreateTrustedDefault_Run_Compiler_ReturnsExpectedResult()
+    {
+        using var wist = WistRuntimeFacadeBuilder
+            .CreateTrustedDefault()
+            .Build();
+
+        var result = wist.Run(PricingFormula, CreateArguments(), mode: "compiler");
+
+        Assert.That(BackendParityInfrastructure.AsNumber(result), Is.EqualTo(95.0d).Within(1e-9));
+    }
+
+    [Test]
     public void Facade_Run_Interpreter_ReturnsExpectedResult()
     {
         using var wist = WistRuntimeFacadeBuilder
