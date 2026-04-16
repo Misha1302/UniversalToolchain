@@ -112,8 +112,9 @@ Safe composition is not hardened sandboxing. Untrusted execution still requires 
 
 ## Add to another .NET solution
 
-For now, add UniversalToolchain through project references to the needed projects under `UniversalToolchain/`. Detailed
-integration guidance will live in dedicated integration docs.
+For now, add UniversalToolchain through project references to the needed projects under `UniversalToolchain/`. See
+[Project Reference Setup](docs/integration/project-reference-setup.md) and
+[Minimal Facade Host](docs/integration/minimal-facade-host.md).
 
 ## When to use UniversalToolchain
 
@@ -290,6 +291,8 @@ This repository is actively evolving, and some areas are intentionally treated a
 
 - Project overview: `readme.md`
 - Architecture overview: `docs/architecture-overview.md`
+- Project reference integration: `docs/integration/project-reference-setup.md`
+- Minimal facade host: `docs/integration/minimal-facade-host.md`
 - Coding standards: `PROJECT_RULES.md`
 - Contribution workflow: `CONTRIBUTING.md`
 - Security policy: `SECURITY.md`
