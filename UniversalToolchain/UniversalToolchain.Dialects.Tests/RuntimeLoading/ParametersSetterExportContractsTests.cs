@@ -15,7 +15,7 @@ public class ParametersSetterExportContractsTests
 {
     private const string ParametersDialectText = """
                                                  dialect ParametersDialect
-                                                 use Arithmetic,Identifier,Numbers,ParametersSetter,Whitespaces
+                                                 use Arithmetic,Identifier,Variables,Numbers,ParametersSetter,Whitespaces
                                                  backend compiler,interpreter
                                                  """;
 
@@ -133,7 +133,7 @@ public class ParametersSetterExportContractsTests
 
     private static Exception CaptureFailure(TestDelegate action)
     {
-        var exception = Assert.Throws<Exception>(action);
+        var exception = Assert.Catch(action);
         Assert.That(exception, Is.Not.Null);
         return exception!;
     }
