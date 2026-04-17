@@ -1,3 +1,6 @@
+using BasicCodeTranslator.Visitors;
+using System.Collections.Generic;
+
 namespace BasicCodeTranslator;
 
 public class BasicAstToBytecodeTranslatorImpl(BytecodeTranslatorConfiguration configuration) : IAstToBytecodeTranslator
@@ -6,7 +9,7 @@ public class BasicAstToBytecodeTranslatorImpl(BytecodeTranslatorConfiguration co
     {
     }
 
-    public BytecodeTranslatorConfiguration Configuration { get; } = configuration;
+    public BytecodeTranslatorConfiguration Configuration { get; } = CreateConfiguration(configuration);
 
     public Bytecode Translate(AstNode root)
     {
@@ -16,6 +19,25 @@ public class BasicAstToBytecodeTranslatorImpl(BytecodeTranslatorConfiguration co
         requestTranslator.Translate(root);
 
         return bytecode;
+    }
+
+    private static BytecodeTranslatorConfiguration CreateConfiguration(BytecodeTranslatorConfiguration configuration)
+    {
+        var visitors = new List<IAstVisitor>(configuration.Visitors.Count + 1);
+        var hasStructuralScopeVisitor = false;
+
+        foreach (var visitor in configuration.Visitors)
+        {
+            if (visitor is StructuralScopeAstVisitor)
+                hasStructuralScopeVisitor = true;
+
+            visitors.Add(visitor);
+        }
+
+        if (!hasStructuralScopeVisitor)
+            visitors.Insert(0, new StructuralScopeAstVisitor());
+
+        return new BytecodeTranslatorConfiguration(visitors);
     }
 
     private sealed class RequestTranslator(BytecodeTranslatorConfiguration configuration, Bytecode bytecode)
