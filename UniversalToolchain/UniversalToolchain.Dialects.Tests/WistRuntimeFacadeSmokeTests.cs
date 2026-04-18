@@ -1,3 +1,4 @@
+using NumbersModule.Core;
 using Tests.Infrastructure;
 using UniversalToolchain.Dialects.Wist;
 
@@ -60,8 +61,8 @@ public sealed class WistRuntimeFacadeSmokeTests
     {
         return new Dictionary<string, object?>
         {
-            ["price"] = 100.0d,
-            ["fee"] = 5.0d
+            ["price"] = new RealNumberImpl(100.0d),
+            ["fee"] = new RealNumberImpl(5.0d)
         };
     }
 
