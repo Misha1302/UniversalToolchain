@@ -9,6 +9,11 @@ public sealed class StructuralScopeAstVisitor : IAstVisitor
             return;
         }
 
+        if (data.Bytecode.Instructions.Count != data.InstructionCountBeforeVisit)
+        {
+            return;
+        }
+
         foreach (var child in data.Node.Children)
         {
             data.AstToBytecodeTranslator.Translate(child);

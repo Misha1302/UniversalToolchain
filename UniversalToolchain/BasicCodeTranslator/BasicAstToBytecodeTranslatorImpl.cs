@@ -35,7 +35,7 @@ public class BasicAstToBytecodeTranslatorImpl(BytecodeTranslatorConfiguration co
         }
 
         if (!hasStructuralScopeVisitor)
-            visitors.Insert(0, new StructuralScopeAstVisitor());
+            visitors.Add(new StructuralScopeAstVisitor());
 
         return new BytecodeTranslatorConfiguration(visitors);
     }
@@ -47,7 +47,7 @@ public class BasicAstToBytecodeTranslatorImpl(BytecodeTranslatorConfiguration co
 
         public Bytecode Translate(AstNode root)
         {
-            var data = new BytecodeVisitorData(this, bytecode, root);
+            var data = new BytecodeVisitorData(this, bytecode, root, bytecode.Instructions.Count);
             foreach (var visitor in Configuration.Visitors)
                 visitor.TryVisit(data);
 
