@@ -47,6 +47,19 @@ public class DialectDefinitionSliceParserTests
     }
 
     [Test]
+    public void ParseAst_WithProgramRoot_StillBuildsSingleDialectDocumentChild()
+    {
+        var ast = ParseAst("dialect Tiny\nuse Arithmetic\n");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(ast.NodeType, Is.EqualTo(ExtensibleEnum<AstNodeTag>.CreateOrGet("Program")));
+            Assert.That(ast.Children.Count, Is.EqualTo(1));
+            Assert.That(ast.Children[0], Is.TypeOf<DialectDocumentAstNode>());
+        });
+    }
+
+    [Test]
     public void Execute_WithNullCompilation_ThrowsArgumentNullException()
     {
         var executor = new DialectDefinitionSliceExecutor();

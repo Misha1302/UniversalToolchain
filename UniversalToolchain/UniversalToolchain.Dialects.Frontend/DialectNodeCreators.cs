@@ -7,8 +7,10 @@ namespace UniversalToolchain.Dialects.Frontend;
 internal static class DialectNodeCreatorSupport
 {
     private static readonly AstNodeType ScopeType = AstNodeType.CreateOrGet("Scope");
+    private static readonly AstNodeType ProgramType = AstNodeType.CreateOrGet("Program");
 
-    public static bool IsScope(AstNode scope) => scope.NodeType == ScopeType;
+    public static bool IsStructuralContainer(AstNode scope)
+        => scope.NodeType == ScopeType || scope.NodeType == ProgramType;
 
     public static bool IsDialectLine(AstNode node) => node.NodeType == DialectAstNodeTypes.DialectLine;
 
@@ -94,7 +96,7 @@ public sealed class DialectLineNodeCreator : IAstNodeCreator
 
     public bool TryCreateNode(AstNode scope, int childIndex)
     {
-        if (scope == null || !DialectNodeCreatorSupport.IsScope(scope) || childIndex < 0 || childIndex >= scope.Children.Count)
+        if (scope == null || !DialectNodeCreatorSupport.IsStructuralContainer(scope) || childIndex < 0 || childIndex >= scope.Children.Count)
             return false;
 
         var current = scope.Children[childIndex];
@@ -139,7 +141,7 @@ public abstract class DialectLineConstructNodeCreator : IAstNodeCreator
 
     public bool TryCreateNode(AstNode scope, int childIndex)
     {
-        if (scope == null || !DialectNodeCreatorSupport.IsScope(scope) || childIndex < 0 || childIndex >= scope.Children.Count)
+        if (scope == null || !DialectNodeCreatorSupport.IsStructuralContainer(scope) || childIndex < 0 || childIndex >= scope.Children.Count)
             return false;
 
         var candidate = scope.Children[childIndex];
@@ -199,7 +201,7 @@ public sealed class DialectDocumentNodeCreator : IAstNodeCreator
 
     public bool TryCreateNode(AstNode scope, int childIndex)
     {
-        if (scope == null || !DialectNodeCreatorSupport.IsScope(scope) || childIndex != 0)
+        if (scope == null || !DialectNodeCreatorSupport.IsStructuralContainer(scope) || childIndex != 0)
             return false;
 
         if (scope.Children.Count == 0)

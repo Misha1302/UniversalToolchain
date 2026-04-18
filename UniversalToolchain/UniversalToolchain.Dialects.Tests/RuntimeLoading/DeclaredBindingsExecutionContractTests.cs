@@ -1,8 +1,8 @@
-using System.Collections.Specialized;
 using System.Reflection.Emit;
 using BasicCore.Execution;
 using IntermediateRepresentationAbstractions;
 using Microsoft.Extensions.DependencyInjection;
+using NumbersModule.Core;
 using Tests.Infrastructure;
 using UniversalToolchain.Dialects.Wist;
 
@@ -22,7 +22,7 @@ public class DeclaredBindingsExecutionContractTests
         using var host = ComposeHost(DeclaredBindingsDialectText);
 
         var artifact = host.GetArtifactCompiler<DynamicMethod>("compiler").Compile("left + right", CreateDeclaredBindings());
-        var result = artifact.CreateSession().InvokeNamed<object>(CreateArguments(left: 7, right: 5));
+        var result = artifact.CreateSession().InvokeNamed<object>(CreateArguments(new RealNumberImpl(7), new RealNumberImpl(5)));
 
         Assert.That(BackendParityInfrastructure.AsNumber(result), Is.EqualTo(12d).Within(1e-9));
     }
@@ -33,7 +33,7 @@ public class DeclaredBindingsExecutionContractTests
         using var host = ComposeHost(DeclaredBindingsDialectText);
 
         var artifact = host.GetArtifactCompiler<IAbstractIR>("interpreter").Compile("left + right", CreateDeclaredBindings());
-        var result = artifact.CreateSession().InvokeNamed<object>(CreateArguments(left: 7, right: 5));
+        var result = artifact.CreateSession().InvokeNamed<object>(CreateArguments(new RealNumberImpl(7), new RealNumberImpl(5)));
 
         Assert.That(BackendParityInfrastructure.AsNumber(result), Is.EqualTo(12d).Within(1e-9));
     }
@@ -77,25 +77,18 @@ public class DeclaredBindingsExecutionContractTests
 
     private static WistDialectExecutionHost ComposeHost(string dialectText)
     {
-        var provider = CreateWorkflowProviderWithCilAndInterpreter();
-        try
-        {
-            var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-            var composition = workflow.ComposeText(dialectText, "declared-bindings-inline");
-            if (!composition.IsSuccess)
-                throw new InvalidOperationException(composition.ToDeterministicText());
+        using var provider = CreateWorkflowProviderWithCilAndInterpreter();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+        var composition = workflow.ComposeText(dialectText, "declared-bindings-inline");
+        if (!composition.IsSuccess)
+            throw new InvalidOperationException(composition.ToDeterministicText());
 
-            return workflow.CreateHost(composition);
-        }
-        finally
-        {
-            provider.Dispose();
-        }
+        return workflow.CreateHost(composition);
     }
 
     private static Exception CaptureFailure(TestDelegate action)
     {
-        var exception = Assert.Throws<Exception>(action);
+        var exception = Assert.Catch(action);
         Assert.That(exception, Is.Not.Null);
         return exception!;
     }
@@ -104,20 +97,18 @@ public class DeclaredBindingsExecutionContractTests
     {
         var bindings = new OrderedDictionary<string, Type>
         {
-            ["left"] = typeof(double),
-            ["right"] = typeof(double)
+            ["left"] = typeof(RealNumberImpl),
+            ["right"] = typeof(RealNumberImpl)
         };
         return bindings;
     }
 
-    private static IReadOnlyDictionary<string, object?> CreateArguments(double left, double right)
-    {
-        return new Dictionary<string, object?>
+    private static IReadOnlyDictionary<string, object?> CreateArguments(RealNumberImpl left, RealNumberImpl right) =>
+        new Dictionary<string, object?>
         {
             ["left"] = left,
             ["right"] = right
         };
-    }
 
     private static ServiceProvider CreateWorkflowProviderWithCilAndInterpreter()
     {
