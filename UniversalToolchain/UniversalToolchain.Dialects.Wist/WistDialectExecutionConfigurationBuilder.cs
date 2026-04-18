@@ -36,13 +36,16 @@ public sealed class WistDialectExecutionConfigurationBuilder
         if (!selectedRuntimePlan.IsResolved)
             Thrower.Argument(nameof(selectedRuntimePlan), "Selected runtime plan must be resolved before execution wiring is built.");
 
-        var frontendModules = new List<Type>();
+        var frontendModules = new List<Type>
+        {
+            typeof(ProgramStructureFrontendModule)
+        };
         var irModules = new List<Type>();
 
         foreach (var entry in selectedRuntimePlan.OrderedModules)
         {
             var type = _typeLoader.LoadType(entry);
-            if (typeof(IFrontendCoreModule).IsAssignableFrom(type))
+            if (typeof(IFrontendCoreModule).IsAssignableFrom(type) && !frontendModules.Contains(type))
                 frontendModules.Add(type);
 
             if (typeof(IIRProcessingModule).IsAssignableFrom(type))

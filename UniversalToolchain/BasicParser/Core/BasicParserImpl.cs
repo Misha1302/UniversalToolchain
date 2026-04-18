@@ -11,7 +11,7 @@ public class BasicParserImpl(ParserConfiguration configuration) : IParser
     public AstNode Parse(List<LexemeValue> lexemes)
     {
         var nodes = lexemes.Select(x => new AstNode(AstNodeType.CreateOrGet("Unknown"), x, [])).ToList();
-        var root = new AstNode(AstNodeType.CreateOrGet("Scope"), null, nodes);
+        var root = new AstNode(AstNodeType.CreateOrGet("Program"), null, nodes);
         SetAstNodeTypes(root);
         ParseRoot(root);
         Thrower.AssertAlways(new TreeValidator().IsValidTree(root), "Tree is invalid");
@@ -34,7 +34,6 @@ public class BasicParserImpl(ParserConfiguration configuration) : IParser
 
             child.MarkAsParserHandled();
 
-            // Парсим только изменённый / собранный узел, а не весь scope заново
             if (i >= 0 && i < scope.Children.Count)
             {
                 var changedNode = scope.Children[i];
