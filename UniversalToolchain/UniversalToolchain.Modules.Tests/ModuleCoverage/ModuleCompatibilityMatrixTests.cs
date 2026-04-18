@@ -3,7 +3,7 @@ namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 [TestFixture]
 public class ModuleCompatibilityMatrixTests
 {
-    private static readonly string[] Modules = ModulePipelineTestHelper.FullUniversalModules;
+    private static readonly string[] _modules = ModulePipelineTestHelper.FullUniversalModules;
 
     [Test]
     public void CoreExecutionProfiles_CompileAndRunAcrossModuleMatrix()
@@ -20,7 +20,7 @@ public class ModuleCompatibilityMatrixTests
 
         foreach (var scenario in scenarios)
         {
-            var result = helper.ExecuteBoth(scenario, Modules);
+            var result = helper.ExecuteBoth(scenario, _modules);
             ModulePipelineTestHelper.AssertParity(result.Compiler, result.Interpreter);
         }
     }

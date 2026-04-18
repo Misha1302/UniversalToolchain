@@ -3,12 +3,12 @@ namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 [TestFixture]
 public class LocalVariablesOptimizerSemanticPreservationTests
 {
-    private static readonly string[] Modules = ModulePipelineTestHelper.FullUniversalModules;
+    private static readonly string[] _modules = ModulePipelineTestHelper.FullUniversalModules;
 
     private static void AssertSameWithWithoutOptimizer(ModulePipelineTestHelper h, string code)
     {
-        var disabled = h.ExecuteBoth(code, Modules);
-        var enabled = h.ExecuteBoth(code, Modules, ["LocalVariablesOptimization"]);
+        var disabled = h.ExecuteBoth(code, _modules);
+        var enabled = h.ExecuteBoth(code, _modules, ["LocalVariablesOptimization"]);
         ModulePipelineTestHelper.AssertParity(disabled.Compiler, disabled.Interpreter);
         ModulePipelineTestHelper.AssertParity(enabled.Compiler, enabled.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(disabled.Compiler), Is.EqualTo(ModulePipelineTestHelper.AsNumber(enabled.Compiler)).Within(1e-9));
@@ -39,7 +39,7 @@ public class LocalVariablesOptimizerSemanticPreservationTests
     public void LocalVariablesOptimizer_CompilerParity_IsPreservedWhenOptimizerEnabled()
     {
         using var h = new ModulePipelineTestHelper();
-        var r = h.ExecuteBoth("let x=1; let y=2; x=x+y; x", Modules, ["LocalVariablesOptimization"]);
+        var r = h.ExecuteBoth("let x=1; let y=2; x=x+y; x", _modules, ["LocalVariablesOptimization"]);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
     }
 

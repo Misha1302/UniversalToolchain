@@ -7,7 +7,7 @@ namespace Tests.Intrinsics;
 [TestFixture]
 public sealed class BuiltInDescriptorProvidersTests
 {
-    private static readonly IntrinsicTypeResolutionContext Context = new();
+    private static readonly IntrinsicTypeResolutionContext _context = new();
 
     [Test]
     public void ArithmeticProvider_ShouldExposeFourDescriptors()
@@ -89,8 +89,8 @@ public sealed class BuiltInDescriptorProvidersTests
             Assert.That(descriptor.Category, Is.EqualTo(IntrinsicCategory.Arithmetic));
             Assert.That(descriptor.StackRule, Is.TypeOf<BinarySameTypeResultRule>());
 
-            descriptor.ValidationRule.Validate(invocation, Context);
-            descriptor.StackRule.Apply(invocation, stack, Context);
+            descriptor.ValidationRule.Validate(invocation, _context);
+            descriptor.StackRule.Apply(invocation, stack, _context);
 
             Assert.That(stack, Is.EqualTo(new[] { typeof(decimal) }));
         }
@@ -112,8 +112,8 @@ public sealed class BuiltInDescriptorProvidersTests
             Assert.That(descriptor.Category, Is.EqualTo(IntrinsicCategory.Comparison));
             Assert.That(descriptor.StackRule, Is.TypeOf<BinaryComparisonRule>());
 
-            descriptor.ValidationRule.Validate(invocation, Context);
-            descriptor.StackRule.Apply(invocation, stack, Context);
+            descriptor.ValidationRule.Validate(invocation, _context);
+            descriptor.StackRule.Apply(invocation, stack, _context);
 
             Assert.That(stack, Is.EqualTo(new[] { typeof(bool) }));
         }
@@ -132,8 +132,8 @@ public sealed class BuiltInDescriptorProvidersTests
         Assert.That(descriptor.Category, Is.EqualTo(IntrinsicCategory.Storage));
         Assert.That(descriptor.StackRule, Is.TypeOf<LoadLocalRefStackRule>());
 
-        descriptor.ValidationRule.Validate(invocation, Context);
-        descriptor.StackRule.Apply(invocation, stack, Context);
+        descriptor.ValidationRule.Validate(invocation, _context);
+        descriptor.StackRule.Apply(invocation, stack, _context);
 
         Assert.That(stack, Is.EqualTo(new[] { typeof(VariableReference<int>) }));
     }

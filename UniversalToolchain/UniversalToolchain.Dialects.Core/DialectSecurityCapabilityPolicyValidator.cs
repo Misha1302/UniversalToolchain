@@ -5,7 +5,7 @@ namespace UniversalToolchain.Dialects.Core;
 
 internal static class DialectSecurityCapabilityPolicyValidator
 {
-    private static readonly IReadOnlyList<IDialectPolicyValidationRule> DefaultRules =
+    private static readonly IReadOnlyList<IDialectPolicyValidationRule> _defaultRules =
     [
         new RestrictedProfileUnsafeInteropRule()
     ];
@@ -19,7 +19,7 @@ internal static class DialectSecurityCapabilityPolicyValidator
 
         diagnostics = diagnostics.ArgNotNull();
 
-        Validate(securityProfile, capabilities, diagnostics, DefaultRules);
+        Validate(securityProfile, capabilities, diagnostics, _defaultRules);
     }
 
     public static void Validate(

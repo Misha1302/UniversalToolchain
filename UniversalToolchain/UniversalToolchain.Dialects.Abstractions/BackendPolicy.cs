@@ -43,7 +43,7 @@ public sealed class BackendPolicy
         foreach (var value in values)
         {
             if (string.IsNullOrWhiteSpace(value.Value))
-                Thrower.Argument(paramName, "Policy entries must contain backend identifiers.");
+                Thrower.Argument(paramName.NotNull(), "Policy entries must contain backend identifiers.");
 
             if (!unique.Add(value))
                 continue;

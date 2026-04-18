@@ -164,8 +164,8 @@ internal sealed class DirectAliasDirectiveFeature : AliasDirectiveFeature
 
 internal class AliasDirectiveFeature(string keyword, string id, string capabilityPrefix, int sequence) : IDialectDirectiveFeature
 {
-    private static readonly DialectListStateKey<string> AccumulationKey = new("AliasMappings");
-    private static readonly DialectSetStateKey<string> ValidationKey = new("AliasMappings", StringComparer.Ordinal);
+    private static readonly DialectListStateKey<string> _accumulationKey = new("AliasMappings");
+    private static readonly DialectSetStateKey<string> _validationKey = new("AliasMappings", StringComparer.Ordinal);
 
     public string Id => id;
 
@@ -200,7 +200,7 @@ internal class AliasDirectiveFeature(string keyword, string id, string capabilit
         if (line.Count != 3)
             DialectDefinitionSliceParseErrors.Fail($"Directive '{keyword}' expects exactly two identifiers.", line[0]);
 
-        accumulation.GetOrCreateList(AccumulationKey).Add($"{line[1].Text}->{line[2].Text}");
+        accumulation.GetOrCreateList(_accumulationKey).Add($"{line[1].Text}->{line[2].Text}");
     }
 
     public void ValidateSemantic(DialectDirectiveAstNode directive, DialectDirectiveValidationContext context)
@@ -209,7 +209,7 @@ internal class AliasDirectiveFeature(string keyword, string id, string capabilit
         if (string.Equals(payload.Source.Identifier, payload.Target.Identifier, StringComparison.Ordinal))
             DialectDefinitionSliceParseErrors.Fail("Alias source and target must differ.", directive.LexemeValue);
 
-        context.AddValue(ValidationKey, $"{payload.Source.Identifier}->{payload.Target.Identifier}", "Duplicate alias directive is not allowed.", directive.LexemeValue);
+        context.AddValue(_validationKey, $"{payload.Source.Identifier}->{payload.Target.Identifier}", "Duplicate alias directive is not allowed.", directive.LexemeValue);
     }
 
     public IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive)
@@ -305,9 +305,9 @@ internal abstract class SimpleIdentifierDirectiveFeatureBase : IDialectDirective
 
 internal sealed class AliasDirectivePayloadAstNode : DialectAstNode
 {
-    private static readonly AstNodeType PayloadNodeType = AstNodeType.CreateOrGet("AliasDirectivePayload");
+    private static readonly AstNodeType _payloadNodeType = AstNodeType.CreateOrGet("AliasDirectivePayload");
 
-    public AliasDirectivePayloadAstNode(IdentifierValueAstNode source, IdentifierValueAstNode target) : base(PayloadNodeType, null, [source, target])
+    public AliasDirectivePayloadAstNode(IdentifierValueAstNode source, IdentifierValueAstNode target) : base(_payloadNodeType, null, [source, target])
     {
     }
 

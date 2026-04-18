@@ -2,11 +2,11 @@ namespace NativeMathModule;
 
 public class NativeUnaryMinusAstVisitor : IAstVisitor
 {
-    private static readonly ExtensibleEnum<AstNodeTag> NativeUnaryMinus = ExtensibleEnum<AstNodeTag>.CreateOrGet("NativeUnaryMinus");
+    private static readonly ExtensibleEnum<AstNodeTag> _nativeUnaryMinus = ExtensibleEnum<AstNodeTag>.CreateOrGet("NativeUnaryMinus");
 
     public void TryVisit(BytecodeVisitorData data)
     {
-        if (data.Node.NodeType != NativeUnaryMinus)
+        if (data.Node.NodeType != _nativeUnaryMinus)
             return;
 
         data.AstToBytecodeTranslator.Translate(data.Node.Children[0]);

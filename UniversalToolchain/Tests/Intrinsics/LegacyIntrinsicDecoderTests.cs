@@ -6,14 +6,14 @@ namespace Tests.Intrinsics;
 [TestFixture]
 public sealed class LegacyIntrinsicDecoderTests
 {
-    private static readonly ILegacyIntrinsicDecoder Decoder = new LegacyIntrinsicDecoder();
+    private static readonly ILegacyIntrinsicDecoder _decoder = new LegacyIntrinsicDecoder();
 
     [Test]
     public void TryDecode_ShouldDecodeArithmeticIntrinsic()
     {
         var instruction = CreateIntrinsicInstruction("add_i32", 1, 2);
 
-        var success = Decoder.TryDecode(instruction, out var invocation);
+        var success = _decoder.TryDecode(instruction, out var invocation);
 
         Assert.That(success, Is.True);
         AssertInvocation(
@@ -28,7 +28,7 @@ public sealed class LegacyIntrinsicDecoderTests
     {
         var instruction = CreateIntrinsicInstruction("cmp_ge_f64", 1.0, 2.0);
 
-        var success = Decoder.TryDecode(instruction, out var invocation);
+        var success = _decoder.TryDecode(instruction, out var invocation);
 
         Assert.That(success, Is.True);
         AssertInvocation(
@@ -43,7 +43,7 @@ public sealed class LegacyIntrinsicDecoderTests
     {
         var instruction = CreateIntrinsicInstruction("load_decimal", 12.5m);
 
-        var success = Decoder.TryDecode(instruction, out var invocation);
+        var success = _decoder.TryDecode(instruction, out var invocation);
 
         Assert.That(success, Is.True);
         AssertInvocation(
@@ -58,7 +58,7 @@ public sealed class LegacyIntrinsicDecoderTests
     {
         var instruction = CreateIntrinsicInstruction("load_external", 3, typeof(long));
 
-        var success = Decoder.TryDecode(instruction, out var invocation);
+        var success = _decoder.TryDecode(instruction, out var invocation);
 
         Assert.That(success, Is.True);
         AssertInvocation(
@@ -74,7 +74,7 @@ public sealed class LegacyIntrinsicDecoderTests
         var method = typeof(Math).GetMethod(nameof(Math.Abs), [typeof(int)])!;
         var instruction = CreateIntrinsicInstruction("call C#", method);
 
-        var success = Decoder.TryDecode(instruction, out var invocation);
+        var success = _decoder.TryDecode(instruction, out var invocation);
 
         Assert.That(success, Is.True);
         AssertInvocation(
@@ -89,7 +89,7 @@ public sealed class LegacyIntrinsicDecoderTests
     {
         var instruction = CreateIntrinsicInstruction("boolean_not");
 
-        var success = Decoder.TryDecode(instruction, out var invocation);
+        var success = _decoder.TryDecode(instruction, out var invocation);
 
         Assert.That(success, Is.True);
         AssertInvocation(
@@ -104,7 +104,7 @@ public sealed class LegacyIntrinsicDecoderTests
     {
         var instruction = CreateIntrinsicInstruction("load_local_ref", "value", typeof(float));
 
-        var success = Decoder.TryDecode(instruction, out var invocation);
+        var success = _decoder.TryDecode(instruction, out var invocation);
 
         Assert.That(success, Is.True);
         AssertInvocation(
@@ -119,7 +119,7 @@ public sealed class LegacyIntrinsicDecoderTests
     {
         var instruction = CreateIntrinsicInstruction("unknown_intrinsic", 1, 2, 3);
 
-        var success = Decoder.TryDecode(instruction, out var invocation);
+        var success = _decoder.TryDecode(instruction, out var invocation);
 
         Assert.That(success, Is.False);
         Assert.That(invocation, Is.EqualTo(default(IntrinsicInvocation)));

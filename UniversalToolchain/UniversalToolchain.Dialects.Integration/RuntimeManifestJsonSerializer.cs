@@ -5,14 +5,14 @@ namespace UniversalToolchain.Dialects.Integration;
 
 public sealed class RuntimeManifestJsonSerializer : IRuntimeManifestSerializer
 {
-    private static readonly JsonSerializerOptions JsonOptions = new()
+    private static readonly JsonSerializerOptions _jsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
     public FileDialectRuntimeManifestDocument Deserialize(string json)
     {
-        var document = JsonSerializer.Deserialize<SerializableManifestDocument>(json, JsonOptions)
+        var document = JsonSerializer.Deserialize<SerializableManifestDocument>(json, _jsonOptions)
                        ?? Thrower.InvalidOpEx<SerializableManifestDocument>("Failed to deserialize runtime manifest JSON.");
 
         return new FileDialectRuntimeManifestDocument(
@@ -42,7 +42,7 @@ public sealed class RuntimeManifestJsonSerializer : IRuntimeManifestSerializer
                 .ToList()
         };
 
-        return JsonSerializer.Serialize(payload, JsonOptions);
+        return JsonSerializer.Serialize(payload, _jsonOptions);
     }
 
     private static string ResolveComponentId(SerializableManifestComponentEntry entry)

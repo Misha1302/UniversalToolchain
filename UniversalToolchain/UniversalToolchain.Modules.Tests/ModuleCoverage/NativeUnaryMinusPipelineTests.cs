@@ -3,19 +3,19 @@ namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 [TestFixture]
 public class NativeUnaryMinusPipelineTests
 {
-    private static readonly string[] NativeModules =
+    private static readonly string[] _nativeModules =
         ModulePipelineTestHelper.FullUniversalModules
             .Where(x => x is not ("Numbers" or "Arithmetic"))
             .Concat(["NativeTypes"])
             .ToArray();
 
-    private static readonly string[] UniversalModules = ModulePipelineTestHelper.FullUniversalModules;
+    private static readonly string[] _universalModules = ModulePipelineTestHelper.FullUniversalModules;
 
     [Test]
     public void NativeUnaryMinus_LiteralAtExpressionStart_ParsesAndExecutes()
     {
         using var h = new ModulePipelineTestHelper();
-        var result = h.ExecuteBoth("-5", NativeModules);
+        var result = h.ExecuteBoth("-5", _nativeModules);
 
         ModulePipelineTestHelper.AssertParity(result.Compiler, result.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(result.Compiler), Is.EqualTo(-5));
@@ -25,7 +25,7 @@ public class NativeUnaryMinusPipelineTests
     public void NativeUnaryMinus_AfterBinaryOperator_ParsesAsUnaryMinus()
     {
         using var h = new ModulePipelineTestHelper();
-        var result = h.ExecuteBoth("2 * -3", NativeModules);
+        var result = h.ExecuteBoth("2 * -3", _nativeModules);
 
         ModulePipelineTestHelper.AssertParity(result.Compiler, result.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(result.Compiler), Is.EqualTo(-6));
@@ -35,7 +35,7 @@ public class NativeUnaryMinusPipelineTests
     public void NativeUnaryMinus_BinarySubtraction_IsNotRewrittenAsUnaryMinus()
     {
         using var h = new ModulePipelineTestHelper();
-        var result = h.ExecuteBoth("9 - 4", NativeModules);
+        var result = h.ExecuteBoth("9 - 4", _nativeModules);
 
         ModulePipelineTestHelper.AssertParity(result.Compiler, result.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(result.Compiler), Is.EqualTo(5));
@@ -45,7 +45,7 @@ public class NativeUnaryMinusPipelineTests
     public void NativeUnaryMinus_ParenthesizedExpression_ParsesAndExecutes()
     {
         using var h = new ModulePipelineTestHelper();
-        var result = h.ExecuteBoth("-(2 + 3)", NativeModules);
+        var result = h.ExecuteBoth("-(2 + 3)", _nativeModules);
 
         ModulePipelineTestHelper.AssertParity(result.Compiler, result.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(result.Compiler), Is.EqualTo(-5));
@@ -55,7 +55,7 @@ public class NativeUnaryMinusPipelineTests
     public void NativeUnaryMinus_CompilerAndInterpreter_ProduceSameResult()
     {
         using var h = new ModulePipelineTestHelper();
-        var result = h.ExecuteBoth("-3 * (4 - 7) + 2", NativeModules);
+        var result = h.ExecuteBoth("-3 * (4 - 7) + 2", _nativeModules);
 
         ModulePipelineTestHelper.AssertParity(result.Compiler, result.Interpreter);
     }
@@ -64,7 +64,7 @@ public class NativeUnaryMinusPipelineTests
     public void NativeUnaryMinus_DoubleLiteral_ParsesAndExecutes()
     {
         using var h = new ModulePipelineTestHelper();
-        var result = h.ExecuteBoth("-1.5", NativeModules);
+        var result = h.ExecuteBoth("-1.5", _nativeModules);
 
         ModulePipelineTestHelper.AssertParity(result.Compiler, result.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(result.Compiler), Is.EqualTo(-1.5d));
@@ -74,7 +74,7 @@ public class NativeUnaryMinusPipelineTests
     public void NativeUnaryMinus_FloatLiteral_ParsesAndExecutes()
     {
         using var h = new ModulePipelineTestHelper();
-        var result = h.ExecuteBoth("-1f", NativeModules);
+        var result = h.ExecuteBoth("-1f", _nativeModules);
 
         ModulePipelineTestHelper.AssertParity(result.Compiler, result.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(result.Compiler), Is.EqualTo(-1f));
@@ -84,7 +84,7 @@ public class NativeUnaryMinusPipelineTests
     public void NativeUnaryMinus_LongLiteral_ParsesAndExecutes()
     {
         using var h = new ModulePipelineTestHelper();
-        var result = h.ExecuteBoth("-1L", NativeModules);
+        var result = h.ExecuteBoth("-1L", _nativeModules);
 
         ModulePipelineTestHelper.AssertParity(result.Compiler, result.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(result.Compiler), Is.EqualTo(-1L));
@@ -94,7 +94,7 @@ public class NativeUnaryMinusPipelineTests
     public void NativeUnaryMinus_DecimalLiteral_ParsesAndExecutes()
     {
         using var h = new ModulePipelineTestHelper();
-        var result = h.ExecuteBoth("-1m", NativeModules);
+        var result = h.ExecuteBoth("-1m", _nativeModules);
 
         ModulePipelineTestHelper.AssertParity(result.Compiler, result.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(result.Compiler), Is.EqualTo(-1m));
@@ -104,7 +104,7 @@ public class NativeUnaryMinusPipelineTests
     public void NativeUnaryMinus_DoubleExpression_AfterBinaryOperator_ParsesAndExecutes()
     {
         using var h = new ModulePipelineTestHelper();
-        var result = h.ExecuteBoth("2.0 * -3.0", NativeModules);
+        var result = h.ExecuteBoth("2.0 * -3.0", _nativeModules);
 
         ModulePipelineTestHelper.AssertParity(result.Compiler, result.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(result.Compiler), Is.EqualTo(-6.0d));
@@ -118,8 +118,8 @@ public class NativeUnaryMinusPipelineTests
     {
         using var h = new ModulePipelineTestHelper();
 
-        var nativeResult = h.ExecuteBoth(code, NativeModules);
-        var universalResult = h.ExecuteBoth(code, UniversalModules);
+        var nativeResult = h.ExecuteBoth(code, _nativeModules);
+        var universalResult = h.ExecuteBoth(code, _universalModules);
 
         ModulePipelineTestHelper.AssertParity(nativeResult.Compiler, nativeResult.Interpreter);
         ModulePipelineTestHelper.AssertParity(universalResult.Compiler, universalResult.Interpreter);

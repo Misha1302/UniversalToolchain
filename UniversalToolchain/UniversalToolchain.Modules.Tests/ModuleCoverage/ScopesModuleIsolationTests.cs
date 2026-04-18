@@ -3,7 +3,7 @@ namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 [TestFixture]
 public class ScopesModuleIsolationTests
 {
-    private static readonly string[] Modules = ModulePipelineTestHelper.FullUniversalModules;
+    private static readonly string[] _modules = ModulePipelineTestHelper.FullUniversalModules;
 
     [Test]
     public void Scopes_InnerScope_CanReadOuterVariable()
@@ -14,7 +14,7 @@ public class ScopesModuleIsolationTests
             let x = 2
             (x + 3)
             """,
-            Modules);
+            _modules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(5));
     }
@@ -28,7 +28,7 @@ public class ScopesModuleIsolationTests
             (let x = 2)
             x
             """,
-            Modules);
+            _modules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
     }
 
@@ -41,7 +41,7 @@ public class ScopesModuleIsolationTests
             let x = 2
             (let x = 7; x)
             """,
-            Modules);
+            _modules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(7));
     }
@@ -60,6 +60,6 @@ public class ScopesModuleIsolationTests
             let x = 2
             x + 1
             """,
-            Modules);
+            _modules);
     }
 }

@@ -6,7 +6,7 @@ namespace Tests.Intrinsics;
 [TestFixture]
 public sealed class CoreIntrinsicDescriptorProviderTests
 {
-    private static readonly IntrinsicTypeResolutionContext Context = new();
+    private static readonly IntrinsicTypeResolutionContext _context = new();
 
     [Test]
     public void GetDescriptors_ShouldContainCoreBuiltInSymbols()
@@ -35,7 +35,7 @@ public sealed class CoreIntrinsicDescriptorProviderTests
 
         Assert.That(descriptor.StackRule, Is.TypeOf<PushSingleTypeRule>());
 
-        descriptor.StackRule.Apply(invocation, stack, Context);
+        descriptor.StackRule.Apply(invocation, stack, _context);
 
         Assert.That(stack, Is.EqualTo(new[] { typeof(decimal) }));
     }
@@ -59,7 +59,7 @@ public sealed class CoreIntrinsicDescriptorProviderTests
         var descriptor = provider.GetDescriptors().Single(x => x.Symbol == BuiltinIntrinsicSymbols.Core.LoadExternal);
         var invocation = CreateInvocation(BuiltinIntrinsicSymbols.Core.LoadExternal);
 
-        var exception = Assert.Throws<InvalidOperationException>(() => descriptor.ValidationRule.Validate(invocation, Context));
+        var exception = Assert.Throws<InvalidOperationException>(() => descriptor.ValidationRule.Validate(invocation, _context));
 
         Assert.That(exception!.Message, Does.Contain("Expected 1 type arguments"));
     }

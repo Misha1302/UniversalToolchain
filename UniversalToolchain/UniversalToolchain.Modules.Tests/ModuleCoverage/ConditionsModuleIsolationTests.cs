@@ -3,13 +3,13 @@ namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 [TestFixture]
 public class ConditionsModuleIsolationTests
 {
-    private static readonly string[] Modules = ModulePipelineTestHelper.FullUniversalModules;
+    private static readonly string[] _modules = ModulePipelineTestHelper.FullUniversalModules;
 
     [Test]
     public void Conditions_IfTrue_ReturnsThenBranch()
     {
         using var h = new ModulePipelineTestHelper();
-        var r = h.ExecuteBoth("if 2 == 2 (1) else (2)", Modules);
+        var r = h.ExecuteBoth("if 2 == 2 (1) else (2)", _modules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(1));
     }
@@ -18,7 +18,7 @@ public class ConditionsModuleIsolationTests
     public void Conditions_IfFalse_ReturnsElseBranch()
     {
         using var h = new ModulePipelineTestHelper();
-        var r = h.ExecuteBoth("if 2 == 3 (1) else (2)", Modules);
+        var r = h.ExecuteBoth("if 2 == 3 (1) else (2)", _modules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(2));
     }
@@ -33,7 +33,7 @@ public class ConditionsModuleIsolationTests
                 if 3 == 3 (9) else (8)
             ) else (7)
             """,
-            Modules);
+            _modules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(9));
     }
@@ -47,7 +47,7 @@ public class ConditionsModuleIsolationTests
             let x = 2
             if x == 2 (10) else (20)
             """,
-            Modules);
+            _modules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(10));
     }
@@ -62,7 +62,7 @@ public class ConditionsModuleIsolationTests
                 """
                 if 1 (2) else (3)
                 """,
-                Modules);
+                _modules);
             ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         }
         catch (Exception ex)

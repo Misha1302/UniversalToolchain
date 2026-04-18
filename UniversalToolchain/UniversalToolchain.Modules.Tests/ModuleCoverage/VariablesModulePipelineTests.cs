@@ -15,7 +15,7 @@ namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 [TestFixture]
 public class VariablesModulePipelineTests
 {
-    private static readonly string[] Modules = ModulePipelineTestHelper.FullUniversalModules;
+    private static readonly string[] _modules = ModulePipelineTestHelper.FullUniversalModules;
 
     [Test]
     public void Variables_LocalAssignRead_MultipleAssignments_AndArithmetic_AreDeterministic()
@@ -28,7 +28,7 @@ public class VariablesModulePipelineTests
             x = x * 3
             x + 4
             """,
-            Modules);
+            _modules);
 
         ModulePipelineTestHelper.AssertParity(result.Compiler, result.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(result.Compiler), Is.EqualTo(13));
@@ -38,14 +38,14 @@ public class VariablesModulePipelineTests
     public void Variables_UnknownVariable_FailsDeterministically()
     {
         using var h = new ModulePipelineTestHelper();
-        h.AssertFailsContaining("unknownVariable", Modules, string.Empty);
+        h.AssertFailsContaining("unknownVariable", _modules, string.Empty);
     }
 
     [Test]
     public void Variables_IndependentRuns_DoNotLeakStateBetweenCalls()
     {
         using var h = new ModulePipelineTestHelper();
-        using var host = h.CreateHost(Modules, backends: ["interpreter"]);
+        using var host = h.CreateHost(_modules, backends: ["interpreter"]);
         var core = host.GetCore("interpreter");
 
         var first = core.Run("let x = 7\nx");
@@ -59,7 +59,7 @@ public class VariablesModulePipelineTests
     public void Variables_BoundExternalVariableAndConstant_WorkViaDeclaredBindingsAndSession()
     {
         using var h = new ModulePipelineTestHelper();
-        using var host = h.CreateHost(Modules, backends: ["interpreter"]);
+        using var host = h.CreateHost(_modules, backends: ["interpreter"]);
         var interpreterCompiler = host.GetArtifactCompiler<IAbstractIR>("interpreter");
 
         var artifact = interpreterCompiler.Compile(new CompilationInput
@@ -94,7 +94,7 @@ public class VariablesModulePipelineTests
         Assert.That(referenceOp.Name, Is.EqualTo("LoadReferenceToLocalVar_x"));
 
         using var h = new ModulePipelineTestHelper();
-        var result = h.ExecuteBoth("let x = 3\nx = x + 2\nx", Modules);
+        var result = h.ExecuteBoth("let x = 3\nx = x + 2\nx", _modules);
         ModulePipelineTestHelper.AssertParity(result.Compiler, result.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(result.Compiler), Is.EqualTo(5));
     }

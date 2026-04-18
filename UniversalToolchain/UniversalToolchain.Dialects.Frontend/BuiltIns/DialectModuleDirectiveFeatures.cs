@@ -74,7 +74,7 @@ internal abstract class OrderDialectDirectiveFeatureBase : IdentifierListDialect
 
 internal sealed class RequiresModulesDialectDirectiveFeature : OrderDialectDirectiveFeatureBase
 {
-    private static readonly DialectSetStateKey<string> ValidationStateKey = new("builtin.order.requires", StringComparer.Ordinal);
+    private static readonly DialectSetStateKey<string> _validationStateKey = new("builtin.order.requires", StringComparer.Ordinal);
 
     public override string Id => "builtin.order.requires";
 
@@ -84,7 +84,7 @@ internal sealed class RequiresModulesDialectDirectiveFeature : OrderDialectDirec
 
     override protected DialectOrderDirectiveKind OrderKind => DialectOrderDirectiveKind.Requires;
 
-    override protected DialectSetStateKey<string> ValidationKey => ValidationStateKey;
+    override protected DialectSetStateKey<string> ValidationKey => _validationStateKey;
 
     override protected string DuplicateMessage => "Duplicate requires module is not allowed.";
 
@@ -93,7 +93,7 @@ internal sealed class RequiresModulesDialectDirectiveFeature : OrderDialectDirec
 
 internal sealed class BeforeModulesDialectDirectiveFeature : OrderDialectDirectiveFeatureBase
 {
-    private static readonly DialectSetStateKey<string> ValidationStateKey = new("builtin.order.before", StringComparer.Ordinal);
+    private static readonly DialectSetStateKey<string> _validationStateKey = new("builtin.order.before", StringComparer.Ordinal);
 
     public override string Id => "builtin.order.before";
 
@@ -103,7 +103,7 @@ internal sealed class BeforeModulesDialectDirectiveFeature : OrderDialectDirecti
 
     override protected DialectOrderDirectiveKind OrderKind => DialectOrderDirectiveKind.Before;
 
-    override protected DialectSetStateKey<string> ValidationKey => ValidationStateKey;
+    override protected DialectSetStateKey<string> ValidationKey => _validationStateKey;
 
     override protected string DuplicateMessage => "Duplicate before module is not allowed.";
 
@@ -112,7 +112,7 @@ internal sealed class BeforeModulesDialectDirectiveFeature : OrderDialectDirecti
 
 internal sealed class AfterModulesDialectDirectiveFeature : OrderDialectDirectiveFeatureBase
 {
-    private static readonly DialectSetStateKey<string> ValidationStateKey = new("builtin.order.after", StringComparer.Ordinal);
+    private static readonly DialectSetStateKey<string> _validationStateKey = new("builtin.order.after", StringComparer.Ordinal);
 
     public override string Id => "builtin.order.after";
 
@@ -122,7 +122,7 @@ internal sealed class AfterModulesDialectDirectiveFeature : OrderDialectDirectiv
 
     override protected DialectOrderDirectiveKind OrderKind => DialectOrderDirectiveKind.After;
 
-    override protected DialectSetStateKey<string> ValidationKey => ValidationStateKey;
+    override protected DialectSetStateKey<string> ValidationKey => _validationStateKey;
 
     override protected string DuplicateMessage => "Duplicate after module is not allowed.";
 
@@ -131,7 +131,7 @@ internal sealed class AfterModulesDialectDirectiveFeature : OrderDialectDirectiv
 
 internal sealed class BackendDialectDirectiveFeature : IdentifierListDialectDirectiveFeatureBase
 {
-    private static readonly DialectSetStateKey<string> ValidationKey = new("builtin.backends.enable", StringComparer.Ordinal);
+    private static readonly DialectSetStateKey<string> _validationKey = new("builtin.backends.enable", StringComparer.Ordinal);
 
     public override string Id => "builtin.backends.enable";
 
@@ -146,7 +146,7 @@ internal sealed class BackendDialectDirectiveFeature : IdentifierListDialectDire
 
     public override void ValidateSemantic(DialectDirectiveAstNode directive, DialectDirectiveValidationContext context)
     {
-        context.AddValues(ValidationKey, GetIdentifierListArgument(directive), "Duplicate backend identifier is not allowed.", directive.LexemeValue);
+        context.AddValues(_validationKey, GetIdentifierListArgument(directive), "Duplicate backend identifier is not allowed.", directive.LexemeValue);
     }
 
     public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive) =>
@@ -155,7 +155,7 @@ internal sealed class BackendDialectDirectiveFeature : IdentifierListDialectDire
 
 internal sealed class CapabilityDialectDirectiveFeature : IdentifierListDialectDirectiveFeatureBase
 {
-    private static readonly DialectSetStateKey<string> ValidationKey = new("builtin.capabilities.enable", StringComparer.Ordinal);
+    private static readonly DialectSetStateKey<string> _validationKey = new("builtin.capabilities.enable", StringComparer.Ordinal);
 
     public override string Id => "builtin.capabilities.enable";
 
@@ -170,7 +170,7 @@ internal sealed class CapabilityDialectDirectiveFeature : IdentifierListDialectD
 
     public override void ValidateSemantic(DialectDirectiveAstNode directive, DialectDirectiveValidationContext context)
     {
-        context.AddValues(ValidationKey, GetIdentifierListArgument(directive), "Duplicate capability identifier is not allowed.", directive.LexemeValue);
+        context.AddValues(_validationKey, GetIdentifierListArgument(directive), "Duplicate capability identifier is not allowed.", directive.LexemeValue);
     }
 
     public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive) =>

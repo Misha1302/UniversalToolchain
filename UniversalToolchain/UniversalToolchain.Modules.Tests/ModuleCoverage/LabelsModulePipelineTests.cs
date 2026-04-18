@@ -3,7 +3,7 @@ namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 [TestFixture]
 public class LabelsModulePipelineTests
 {
-    private static readonly string[] Modules = ModulePipelineTestHelper.FullUniversalModules;
+    private static readonly string[] _modules = ModulePipelineTestHelper.FullUniversalModules;
 
     [Test]
     public void Labels_ForwardJump_ReachesTargetLabel()
@@ -16,7 +16,7 @@ public class LabelsModulePipelineTests
             x = 10
             @end: x
             """,
-            Modules);
+            _modules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(1));
     }
@@ -32,7 +32,7 @@ public class LabelsModulePipelineTests
             if i < 3 goto @loop
             i
             """,
-            Modules);
+            _modules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(3));
     }
@@ -46,7 +46,7 @@ public class LabelsModulePipelineTests
             goto @missing
             1
             """,
-            Modules,
+            _modules,
             "label");
     }
 
@@ -59,7 +59,7 @@ public class LabelsModulePipelineTests
             @x: 1
             @x: 2
             """,
-            Modules,
+            _modules,
             "label");
     }
 
@@ -67,7 +67,7 @@ public class LabelsModulePipelineTests
     public void Labels_LabelOnlyProgram_DoesNotCorruptExecutionState()
     {
         using var h = new ModulePipelineTestHelper();
-        var r = h.ExecuteBoth("@x: 2", Modules);
+        var r = h.ExecuteBoth("@x: 2", _modules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(2));
     }

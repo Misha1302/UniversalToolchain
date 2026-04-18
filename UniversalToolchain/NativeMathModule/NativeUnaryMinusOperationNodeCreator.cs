@@ -2,11 +2,11 @@ namespace NativeMathModule;
 
 public class NativeUnaryMinusOperationNodeCreator : IAstNodeCreator
 {
-    private static readonly ExtensibleEnum<AstNodeTag> NativeSubtraction = ExtensibleEnum<AstNodeTag>.CreateOrGet("NativeSubtraction");
-    private static readonly ExtensibleEnum<AstNodeTag> NativeAddition = ExtensibleEnum<AstNodeTag>.CreateOrGet("NativeAddition");
-    private static readonly ExtensibleEnum<AstNodeTag> NativeMultiplication = ExtensibleEnum<AstNodeTag>.CreateOrGet("NativeMultiplication");
-    private static readonly ExtensibleEnum<AstNodeTag> NativeDivision = ExtensibleEnum<AstNodeTag>.CreateOrGet("NativeDivision");
-    public ExtensibleEnum<AstNodeTag> AstNodeType => NativeSubtraction;
+    private static readonly ExtensibleEnum<AstNodeTag> _nativeSubtraction = ExtensibleEnum<AstNodeTag>.CreateOrGet("NativeSubtraction");
+    private static readonly ExtensibleEnum<AstNodeTag> _nativeAddition = ExtensibleEnum<AstNodeTag>.CreateOrGet("NativeAddition");
+    private static readonly ExtensibleEnum<AstNodeTag> _nativeMultiplication = ExtensibleEnum<AstNodeTag>.CreateOrGet("NativeMultiplication");
+    private static readonly ExtensibleEnum<AstNodeTag> _nativeDivision = ExtensibleEnum<AstNodeTag>.CreateOrGet("NativeDivision");
+    public ExtensibleEnum<AstNodeTag> AstNodeType => _nativeSubtraction;
 
     public bool TryCreateNode(AstNode scope, int childIndex)
     {
@@ -14,7 +14,7 @@ public class NativeUnaryMinusOperationNodeCreator : IAstNodeCreator
             return false;
 
         var child = scope.Children[childIndex];
-        if (child.NodeType != NativeSubtraction)
+        if (child.NodeType != _nativeSubtraction)
             return false;
 
         if (!IsUnaryPosition(scope, childIndex))
@@ -36,9 +36,9 @@ public class NativeUnaryMinusOperationNodeCreator : IAstNodeCreator
             return true;
 
         var previous = scope.Children[childIndex - 1].NodeType;
-        return previous == NativeAddition ||
-               previous == NativeSubtraction ||
-               previous == NativeMultiplication ||
-               previous == NativeDivision;
+        return previous == _nativeAddition ||
+               previous == _nativeSubtraction ||
+               previous == _nativeMultiplication ||
+               previous == _nativeDivision;
     }
 }

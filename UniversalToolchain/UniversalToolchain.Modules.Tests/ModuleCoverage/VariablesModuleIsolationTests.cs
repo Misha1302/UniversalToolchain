@@ -3,7 +3,7 @@ namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 [TestFixture]
 public class VariablesModuleIsolationTests
 {
-    private static readonly string[] Modules = ModulePipelineTestHelper.FullUniversalModules;
+    private static readonly string[] _modules = ModulePipelineTestHelper.FullUniversalModules;
 
     [Test]
     public void Variables_LetDeclaration_AssignsInitialValue()
@@ -14,7 +14,7 @@ public class VariablesModuleIsolationTests
             let x = 10
             x
             """,
-            Modules);
+            _modules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(10));
     }
@@ -28,7 +28,7 @@ public class VariablesModuleIsolationTests
             let x = 10
             x + 5
             """,
-            Modules);
+            _modules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(15));
     }
@@ -43,7 +43,7 @@ public class VariablesModuleIsolationTests
             x = x + 1
             x
             """,
-            Modules);
+            _modules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(6));
     }
@@ -58,7 +58,7 @@ public class VariablesModuleIsolationTests
             let y = x + 3
             y
             """,
-            Modules);
+            _modules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(5));
     }
@@ -72,7 +72,7 @@ public class VariablesModuleIsolationTests
             x
             let x = 1
             """,
-            Modules);
+            _modules);
     }
 
     [Test]
@@ -84,7 +84,7 @@ public class VariablesModuleIsolationTests
             x = 1
             x
             """,
-            Modules);
+            _modules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
     }
 }

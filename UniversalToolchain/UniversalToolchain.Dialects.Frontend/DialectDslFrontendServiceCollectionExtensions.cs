@@ -7,7 +7,7 @@ namespace UniversalToolchain.Dialects.Frontend;
 
 public static class DialectDslFrontendServiceCollectionExtensions
 {
-    private static readonly MethodInfo AddCoreRuntimeInfrastructureMethod = ResolveAddCoreRuntimeInfrastructureMethod();
+    private static readonly MethodInfo _addCoreRuntimeInfrastructureMethod = ResolveAddCoreRuntimeInfrastructureMethod();
 
     public static IServiceCollection AddDialectDslFrontendCompilerServices(
         this IServiceCollection services,
@@ -17,7 +17,7 @@ public static class DialectDslFrontendServiceCollectionExtensions
 
         frontendModule = frontendModule.ArgNotNull();
 
-        var coreRuntimeInfrastructure = AddCoreRuntimeInfrastructureMethod.Invoke(null, [services]);
+        var coreRuntimeInfrastructure = _addCoreRuntimeInfrastructureMethod.Invoke(null, [services]);
         if (coreRuntimeInfrastructure == null)
             Thrower.InvalidOpEx("Core runtime infrastructure registration returned null.");
 

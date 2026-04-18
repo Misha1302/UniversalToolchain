@@ -6,8 +6,8 @@ namespace Tests.Intrinsics;
 [TestFixture]
 public sealed class IntrinsicStackRulesTests
 {
-    private static readonly IntrinsicTypeResolutionContext Context = new();
-    private static readonly IntrinsicInvocation EmptyInvocation = CreateInvocation();
+    private static readonly IntrinsicTypeResolutionContext _context = new();
+    private static readonly IntrinsicInvocation _emptyInvocation = CreateInvocation();
 
     [Test]
     public void BinarySameTypeResultRule_ShouldPushSameType()
@@ -16,7 +16,7 @@ public sealed class IntrinsicStackRulesTests
         var stack = new List<Type> { typeof(int), typeof(int) };
         var invocation = CreateInvocation([IntrinsicTypeArgument.From(typeof(int))]);
 
-        rule.Apply(invocation, stack, Context);
+        rule.Apply(invocation, stack, _context);
 
         Assert.That(stack, Is.EqualTo(new[] { typeof(int) }));
     }
@@ -28,7 +28,7 @@ public sealed class IntrinsicStackRulesTests
         var stack = new List<Type> { typeof(int), typeof(int) };
         var invocation = CreateInvocation([IntrinsicTypeArgument.From(typeof(int))]);
 
-        rule.Apply(invocation, stack, Context);
+        rule.Apply(invocation, stack, _context);
 
         Assert.That(stack, Is.EqualTo(new[] { typeof(bool) }));
     }
@@ -39,7 +39,7 @@ public sealed class IntrinsicStackRulesTests
         var rule = new BooleanUnaryRule();
         var stack = new List<Type> { typeof(int) };
 
-        Assert.Throws<InvalidOperationException>(() => rule.Apply(EmptyInvocation, stack, Context));
+        Assert.Throws<InvalidOperationException>(() => rule.Apply(_emptyInvocation, stack, _context));
     }
 
     [Test]
@@ -48,7 +48,7 @@ public sealed class IntrinsicStackRulesTests
         var rule = new BooleanBinaryRule();
         var stack = new List<Type> { typeof(bool), typeof(int) };
 
-        Assert.Throws<InvalidOperationException>(() => rule.Apply(EmptyInvocation, stack, Context));
+        Assert.Throws<InvalidOperationException>(() => rule.Apply(_emptyInvocation, stack, _context));
     }
 
     [Test]
@@ -57,7 +57,7 @@ public sealed class IntrinsicStackRulesTests
         var rule = new PushSingleTypeRule((_, _) => typeof(string));
         var stack = new List<Type>();
 
-        rule.Apply(EmptyInvocation, stack, Context);
+        rule.Apply(_emptyInvocation, stack, _context);
 
         Assert.That(stack, Is.EqualTo(new[] { typeof(string) }));
     }
@@ -69,7 +69,7 @@ public sealed class IntrinsicStackRulesTests
         var stack = new List<Type>();
         var invocation = CreateInvocation([IntrinsicTypeArgument.From(typeof(int))]);
 
-        rule.Apply(invocation, stack, Context);
+        rule.Apply(invocation, stack, _context);
 
         Assert.That(stack, Is.EqualTo(new[] { typeof(VariableReference<int>) }));
     }

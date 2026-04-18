@@ -3,13 +3,13 @@ namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 [TestFixture]
 public class LocalVariablesOptimizerControlFlowSafetyTests
 {
-    private static readonly string[] Modules = ModulePipelineTestHelper.FullUniversalModules;
+    private static readonly string[] _modules = ModulePipelineTestHelper.FullUniversalModules;
 
     private static (object? Compiler, object? Interpreter) ExecuteWithOptimizer(ModulePipelineTestHelper helper, string code)
-        => helper.ExecuteBoth(code, Modules, ["LocalVariablesOptimization"]);
+        => helper.ExecuteBoth(code, _modules, ["LocalVariablesOptimization"]);
 
     private static (object? Compiler, object? Interpreter) ExecuteWithoutOptimizer(ModulePipelineTestHelper helper, string code)
-        => helper.ExecuteBoth(code, Modules);
+        => helper.ExecuteBoth(code, _modules);
 
     private static void AssertEnabledMatchesDisabled(ModulePipelineTestHelper helper, string code)
     {

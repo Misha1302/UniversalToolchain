@@ -3,7 +3,7 @@ namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 [TestFixture]
 public class ExecutionSemanticParityTests
 {
-    private static readonly string[] Modules = ModulePipelineTestHelper.FullUniversalModules;
+    private static readonly string[] _modules = ModulePipelineTestHelper.FullUniversalModules;
 
     [TestCase("2 + 2")]
     [TestCase("let x = 2; x * 3")]
@@ -12,7 +12,7 @@ public class ExecutionSemanticParityTests
     public void CompilerAndInterpreter_StaySemanticallyAligned(string code)
     {
         using var helper = new ModulePipelineTestHelper();
-        var result = helper.ExecuteBoth(code, Modules);
+        var result = helper.ExecuteBoth(code, _modules);
 
         ModulePipelineTestHelper.AssertParity(result.Compiler, result.Interpreter);
     }

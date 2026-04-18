@@ -6,11 +6,11 @@ namespace UniversalToolchain.Dialects.Frontend;
 
 internal static class DialectNodeCreatorSupport
 {
-    private static readonly AstNodeType ScopeType = AstNodeType.CreateOrGet("Scope");
-    private static readonly AstNodeType ProgramType = AstNodeType.CreateOrGet("Program");
+    private static readonly AstNodeType _scopeType = AstNodeType.CreateOrGet("Scope");
+    private static readonly AstNodeType _programType = AstNodeType.CreateOrGet("Program");
 
     public static bool IsStructuralContainer(AstNode scope)
-        => scope.NodeType == ScopeType || scope.NodeType == ProgramType;
+        => scope.NodeType == _scopeType || scope.NodeType == _programType;
 
     public static bool IsDialectLine(AstNode node) => node.NodeType == DialectAstNodeTypes.DialectLine;
 

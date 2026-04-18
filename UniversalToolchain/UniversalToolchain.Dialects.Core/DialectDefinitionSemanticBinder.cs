@@ -9,7 +9,7 @@ namespace UniversalToolchain.Dialects.Core;
 
 internal static class DialectDefinitionSemanticBinder
 {
-    private static readonly DialectDirectiveHandlerRegistry DirectiveHandlerRegistry = new(
+    private static readonly DialectDirectiveHandlerRegistry _directiveHandlerRegistry = new(
     [
         new ModuleDirectiveHandler(),
         new BackendDirectiveHandler(),
@@ -48,7 +48,7 @@ internal static class DialectDefinitionSemanticBinder
         builder.SetIdentity(source.Name, source.Version, source.BaseDialectName);
         builder.SetOrderRules(DialectOrderConstraintMapper.ToDefinitionRules(DialectOrderConstraintMapper.FromBindingRules(source.OrderRules)));
         var context = new DialectBindingExecutionContext(source, builder, diagnostics);
-        DirectiveHandlerRegistry.Apply(context);
+        _directiveHandlerRegistry.Apply(context);
 
         return builder.Build();
     }

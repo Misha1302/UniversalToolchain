@@ -3,14 +3,14 @@ namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 [TestFixture]
 public class BooleanConditionsPipelineTests
 {
-    private static readonly string[] Modules = ModulePipelineTestHelper.FullUniversalModules;
+    private static readonly string[] _modules = ModulePipelineTestHelper.FullUniversalModules;
 
     [TestCase("true", true)]
     [TestCase("false", false)]
     public void BooleanConditions_Literals_ReturnExpectedValue(string code, bool expected)
     {
         using var h = new ModulePipelineTestHelper();
-        var r = h.ExecuteBoth(code, Modules);
+        var r = h.ExecuteBoth(code, _modules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsBool(r.Compiler), Is.EqualTo(expected));
     }
@@ -20,7 +20,7 @@ public class BooleanConditionsPipelineTests
     public void BooleanConditions_UnaryNot_ReturnsExpectedValue(string code, bool expected)
     {
         using var h = new ModulePipelineTestHelper();
-        var r = h.ExecuteBoth(code, Modules);
+        var r = h.ExecuteBoth(code, _modules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsBool(r.Compiler), Is.EqualTo(expected));
     }
@@ -36,7 +36,7 @@ public class BooleanConditionsPipelineTests
     public void BooleanConditions_BinaryAndOr_ReturnExpectedValue(string code, bool expected)
     {
         using var h = new ModulePipelineTestHelper();
-        var r = h.ExecuteBoth(code, Modules);
+        var r = h.ExecuteBoth(code, _modules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsBool(r.Compiler), Is.EqualTo(expected));
     }
@@ -45,7 +45,7 @@ public class BooleanConditionsPipelineTests
     public void BooleanConditions_NestedWithComparison_ReturnsExpectedValue()
     {
         using var h = new ModulePipelineTestHelper();
-        var r = h.ExecuteBoth("(2 < 3 and 1 < 2) or false", Modules);
+        var r = h.ExecuteBoth("(2 < 3 and 1 < 2) or false", _modules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsBool(r.Compiler), Is.True);
     }
@@ -54,7 +54,7 @@ public class BooleanConditionsPipelineTests
     public void BooleanConditions_AndShortCircuit_DoesNotEvaluateRightHandSide()
     {
         using var h = new ModulePipelineTestHelper();
-        var r = h.ExecuteBoth("false and UniversalToolchain.Modules.Tests.ModuleCoverage.BooleanConditionsPipelineTests.Dangerous()", Modules);
+        var r = h.ExecuteBoth("false and UniversalToolchain.Modules.Tests.ModuleCoverage.BooleanConditionsPipelineTests.Dangerous()", _modules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsBool(r.Compiler), Is.False);
     }
@@ -63,7 +63,7 @@ public class BooleanConditionsPipelineTests
     public void BooleanConditions_OrShortCircuit_DoesNotEvaluateRightHandSide()
     {
         using var h = new ModulePipelineTestHelper();
-        var r = h.ExecuteBoth("true or UniversalToolchain.Modules.Tests.ModuleCoverage.BooleanConditionsPipelineTests.Dangerous()", Modules);
+        var r = h.ExecuteBoth("true or UniversalToolchain.Modules.Tests.ModuleCoverage.BooleanConditionsPipelineTests.Dangerous()", _modules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsBool(r.Compiler), Is.True);
     }
@@ -73,8 +73,8 @@ public class BooleanConditionsPipelineTests
     {
         using var h = new ModulePipelineTestHelper();
 
-        var compilerException = Assert.Catch(() => h.ExecuteCompiler("true and 5", Modules));
-        var interpreterException = Assert.Catch(() => h.ExecuteInterpreter("true and 5", Modules));
+        var compilerException = Assert.Catch(() => h.ExecuteCompiler("true and 5", _modules));
+        var interpreterException = Assert.Catch(() => h.ExecuteInterpreter("true and 5", _modules));
 
         Assert.That(compilerException, Is.Not.Null);
         Assert.That(interpreterException, Is.Not.Null);

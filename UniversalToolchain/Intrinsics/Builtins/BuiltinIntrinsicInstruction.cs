@@ -5,7 +5,7 @@ namespace BasicCore.Builtins;
 
 public static class BuiltinIntrinsicInstruction
 {
-    private static readonly ILegacyIntrinsicDecoder LegacyDecoder = new LegacyIntrinsicDecoder();
+    private static readonly ILegacyIntrinsicDecoder _legacyDecoder = new LegacyIntrinsicDecoder();
 
     public static Instruction Create(IntrinsicSymbol symbol) => Create(symbol, [], []);
 
@@ -30,7 +30,7 @@ public static class BuiltinIntrinsicInstruction
         if (instruction.TryGetTypedIntrinsicInvocation(out invocation))
             return true;
 
-        return LegacyDecoder.TryDecode(instruction, out invocation);
+        return _legacyDecoder.TryDecode(instruction, out invocation);
     }
 
     public static bool Is(Instruction instruction, IntrinsicSymbol symbol) => TryGetInvocation(instruction, out var invocation) && invocation.Symbol == symbol;

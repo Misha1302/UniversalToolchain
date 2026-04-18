@@ -3,9 +3,9 @@ namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 [TestFixture]
 public class WhileLoopPipelineTests
 {
-    private static readonly string[] Modules = ModulePipelineTestHelper.FullUniversalModules;
+    private static readonly string[] _modules = ModulePipelineTestHelper.FullUniversalModules;
 
-    private static readonly string[] StableErrorFragments =
+    private static readonly string[] _stableErrorFragments =
     [
         "Tree is invalid",
         "Assertion failed",
@@ -30,7 +30,7 @@ public class WhileLoopPipelineTests
 
             sum
             """,
-            Modules);
+            _modules);
 
         ModulePipelineTestHelper.AssertParity(result.Compiler, result.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(result.Compiler), Is.EqualTo(15));
@@ -52,7 +52,7 @@ public class WhileLoopPipelineTests
 
             marker
             """,
-            Modules);
+            _modules);
 
         ModulePipelineTestHelper.AssertParity(result.Compiler, result.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(result.Compiler), Is.EqualTo(17));
@@ -78,7 +78,7 @@ public class WhileLoopPipelineTests
 
             total
             """,
-            Modules);
+            _modules);
 
         ModulePipelineTestHelper.AssertParity(result.Compiler, result.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(result.Compiler), Is.EqualTo(18));
@@ -100,7 +100,7 @@ public class WhileLoopPipelineTests
 
             product
             """,
-            Modules);
+            _modules);
 
         ModulePipelineTestHelper.AssertParity(result.Compiler, result.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(result.Compiler), Is.EqualTo(24));
@@ -120,7 +120,7 @@ public class WhileLoopPipelineTests
 
             i
             """,
-            Modules);
+            _modules);
 
         ModulePipelineTestHelper.AssertParity(result.Compiler, result.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(result.Compiler), Is.EqualTo(8));
@@ -138,7 +138,7 @@ public class WhileLoopPipelineTests
                 while
                 i
                 """,
-                Modules));
+                _modules));
 
         var interpreterException = Assert.Throws(Is.InstanceOf<Exception>(), () =>
             helper.ExecuteInterpreter(
@@ -147,7 +147,7 @@ public class WhileLoopPipelineTests
                 while
                 i
                 """,
-                Modules));
+                _modules));
 
         Assert.That(compilerException, Is.Not.Null);
         Assert.That(interpreterException, Is.Not.Null);
@@ -175,11 +175,11 @@ public class WhileLoopPipelineTests
 
             sum
             """,
-            Modules);
+            _modules);
 
         ModulePipelineTestHelper.AssertParity(result.Compiler, result.Interpreter);
     }
 
     private static string? ExtractStableErrorFragment(string message)
-        => StableErrorFragments.FirstOrDefault(message.Contains);
+        => _stableErrorFragments.FirstOrDefault(message.Contains);
 }

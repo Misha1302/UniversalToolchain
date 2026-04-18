@@ -40,7 +40,7 @@ public sealed class OptimizerPolicy
         foreach (var value in values)
         {
             if (string.IsNullOrWhiteSpace(value))
-                Thrower.Argument(paramName, "Policy entries must not be null or empty.");
+                Thrower.Argument(paramName.NotNull(), "Policy entries must not be null or empty.");
 
             if (!unique.Add(value))
                 continue;

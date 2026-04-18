@@ -3,19 +3,19 @@ namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 [TestFixture]
 public class NativeMathModulePipelineTests
 {
-    private static readonly string[] NativeModules =
+    private static readonly string[] _nativeModules =
         ModulePipelineTestHelper.FullUniversalModules
             .Where(x => x is not ("Numbers" or "Arithmetic"))
             .Concat(["NativeTypes"])
             .ToArray();
 
-    private static readonly string[] UniversalModules = ModulePipelineTestHelper.FullUniversalModules;
+    private static readonly string[] _universalModules = ModulePipelineTestHelper.FullUniversalModules;
 
     [Test]
     public void NativeMath_SimpleAddition_ReturnsExpectedValueOnBothBackends()
     {
         using var h = new ModulePipelineTestHelper();
-        var r = h.ExecuteBoth("2 + 3", NativeModules);
+        var r = h.ExecuteBoth("2 + 3", _nativeModules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(5));
     }
@@ -24,7 +24,7 @@ public class NativeMathModulePipelineTests
     public void NativeMath_PrecedenceMatchesExpectedArithmeticRules()
     {
         using var h = new ModulePipelineTestHelper();
-        var r = h.ExecuteBoth("2 + 3 * 4", NativeModules);
+        var r = h.ExecuteBoth("2 + 3 * 4", _nativeModules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(14));
     }
@@ -33,7 +33,7 @@ public class NativeMathModulePipelineTests
     public void NativeMath_LongArithmeticChain_HasBackendParity()
     {
         using var h = new ModulePipelineTestHelper();
-        var r = h.ExecuteBoth("1 + 2 * 3 - 4 + 5 * 6 - 7", NativeModules);
+        var r = h.ExecuteBoth("1 + 2 * 3 - 4 + 5 * 6 - 7", _nativeModules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
     }
 
@@ -41,7 +41,7 @@ public class NativeMathModulePipelineTests
     public void NativeMath_BasicSubtraction_ProducesExpectedValue()
     {
         using var h = new ModulePipelineTestHelper();
-        var r = h.ExecuteBoth("3 - 1", NativeModules);
+        var r = h.ExecuteBoth("3 - 1", _nativeModules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(2));
     }
@@ -52,7 +52,7 @@ public class NativeMathModulePipelineTests
         using var h = new ModulePipelineTestHelper();
         try
         {
-            var r = h.ExecuteBoth("2/0", NativeModules);
+            var r = h.ExecuteBoth("2/0", _nativeModules);
             ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         }
         catch (Exception ex)
@@ -68,20 +68,20 @@ public class NativeMathModulePipelineTests
     {
         using var h = new ModulePipelineTestHelper();
 
-        var universalComposition = h.Compose(UniversalModules, backends: ["compiler", "interpreter"]);
+        var universalComposition = h.Compose(_universalModules, backends: ["compiler", "interpreter"]);
         Assert.That(
             universalComposition.IsSuccess,
             Is.True,
             "Universal profile composition failed: " + string.Join("\n", universalComposition.SemanticDiagnostics.Concat(universalComposition.ResolutionDiagnostics).Select(static d => d.Message)));
 
-        var nativeComposition = h.Compose(NativeModules, backends: ["compiler", "interpreter"]);
+        var nativeComposition = h.Compose(_nativeModules, backends: ["compiler", "interpreter"]);
         Assert.That(
             nativeComposition.IsSuccess,
             Is.True,
             "Native profile composition failed: " + string.Join("\n", nativeComposition.SemanticDiagnostics.Concat(nativeComposition.ResolutionDiagnostics).Select(static d => d.Message)));
 
-        var universalResult = h.ExecuteBoth(code, UniversalModules);
-        var nativeResult = h.ExecuteBoth(code, NativeModules);
+        var universalResult = h.ExecuteBoth(code, _universalModules);
+        var nativeResult = h.ExecuteBoth(code, _nativeModules);
 
         ModulePipelineTestHelper.AssertParity(universalResult.Compiler, universalResult.Interpreter);
         ModulePipelineTestHelper.AssertParity(nativeResult.Compiler, nativeResult.Interpreter);

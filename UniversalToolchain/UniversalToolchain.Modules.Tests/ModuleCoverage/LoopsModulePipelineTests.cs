@@ -3,7 +3,7 @@ namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 [TestFixture]
 public class LoopsModulePipelineTests
 {
-    private static readonly string[] Modules = ModulePipelineTestHelper.FullUniversalModules;
+    private static readonly string[] _modules = ModulePipelineTestHelper.FullUniversalModules;
 
     [Test]
     public void Loops_SimpleLoop_AccumulatesExpectedResult()
@@ -15,7 +15,7 @@ public class LoopsModulePipelineTests
             for (let i = 1) (i <= 4) (i = i + 1) (s = s + i)
             s
             """,
-            Modules);
+            _modules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(10));
     }
@@ -30,7 +30,7 @@ public class LoopsModulePipelineTests
             for (let i = 10) (i < 0) (i = i + 1) (s = s + 1)
             s
             """,
-            Modules);
+            _modules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(5));
     }
@@ -44,7 +44,7 @@ public class LoopsModulePipelineTests
             let i = 3
             i
             """,
-            Modules);
+            _modules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(3));
     }
@@ -61,7 +61,7 @@ public class LoopsModulePipelineTests
             )
             s
             """,
-            Modules);
+            _modules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(9));
     }
@@ -74,7 +74,7 @@ public class LoopsModulePipelineTests
             """
             for (let i = 0) (i < 3) (i = i + 1) i
             """,
-            Modules,
+            _modules,
             string.Empty);
     }
 }
