@@ -244,8 +244,15 @@ namespace BasicCore.Core;
 ```
 
 ### 4.4 Global usings
-Shared and stable imports should be moved to `GlobalUsings.cs` per project.
-The repository already uses this approach and even lists broader migration to global usings as a project task.
+Shared and stable imports should be moved to a dedicated `GlobalUsings.cs` file per project instead of being repeatedly imported at the top of individual files.
+
+Prefer:
+- one dedicated global usings file per project
+- moving common and stable imports there
+
+Avoid:
+- repeating the same stable imports across many files
+- scattering pseudo-global imports through unrelated source files
 
 ---
 
@@ -603,6 +610,7 @@ Use the following order:
 
 ### 13.2 Redundant usings
 Do not keep redundant local `using` directives when a stable `GlobalUsings.cs` already exists.
+If an import is common for a project and consistently needed across many files, prefer moving it into the dedicated global usings file instead of repeating it locally.
 
 ---
 
@@ -715,6 +723,7 @@ Before merging code, verify:
 - test classes end with `Tests`
 - test methods follow `MethodOrFeature_Scenario_ExpectedResult`
 - extension classes are used for natural capability extension, not as helper dumping grounds
+- shared stable imports are placed in a dedicated `GlobalUsings.cs` file instead of being repeated across files
 - role suffix matches behavior
 - direct `throw` is not used outside `Thrower` and approved `Thrower` helpers
 - null argument validation is done only at public API boundaries
