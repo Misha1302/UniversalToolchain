@@ -1,11 +1,10 @@
 using BasicCore.Contracts;
+using BasicCore.Core;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core.ServiceCollection;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
-using UniversalToolchain.Intrinsics.Contracts;
-using UniversalToolchain.Intrinsics.Core;
 
 namespace UniversalToolchain.Dialects.Tests.RuntimeLoading;
 

@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 
-namespace UniversalToolchain.Dialects.Frontend;
+namespace UniversalToolchain.Dialects.Frontend.Composition;
 
 internal static class DialectDslStandaloneComposition
 {

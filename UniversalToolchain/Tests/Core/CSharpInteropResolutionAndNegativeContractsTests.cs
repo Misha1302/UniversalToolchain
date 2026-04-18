@@ -1,5 +1,7 @@
 using AssemblyFinder;
 using Tests.Infrastructure;
+using UniversalToolchain.Dialects.Tests;
+using UniversalToolchain.Modules.Tests;
 
 namespace Tests.Core;
 

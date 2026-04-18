@@ -1,4 +1,4 @@
-namespace UniversalToolchain.Intrinsics.Capabilities;
+namespace BasicCore.Capabilities;
 
 public interface IIntrinsicCapabilitySetFactory
 {

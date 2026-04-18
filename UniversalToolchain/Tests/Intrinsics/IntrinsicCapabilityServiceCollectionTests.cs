@@ -1,8 +1,6 @@
+using BasicCore.Builtins;
+using BasicCore.Capabilities;
 using UniversalToolchain.Dialects.Core.ServiceCollection;
-using UniversalToolchain.Intrinsics.Builtins;
-using UniversalToolchain.Intrinsics.Capabilities;
-using UniversalToolchain.Intrinsics.Contracts;
-using UniversalToolchain.Intrinsics.Core;
 
 namespace Tests.Intrinsics;
 

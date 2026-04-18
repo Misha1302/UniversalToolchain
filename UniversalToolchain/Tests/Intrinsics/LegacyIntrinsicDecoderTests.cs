@@ -1,6 +1,5 @@
-using UniversalToolchain.Intrinsics.Builtins;
-using UniversalToolchain.Intrinsics.Contracts;
-using UniversalToolchain.Intrinsics.Legacy;
+using BasicCore.Builtins;
+using BasicCore.Legacy;
 
 namespace Tests.Intrinsics;
 

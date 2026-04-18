@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core;
 using UniversalToolchain.Dialects.Frontend;
+using UniversalToolchain.Dialects.Frontend.Composition;
 using AstNodeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.ParserWrapper.AstNodeTag>;
 
 namespace UniversalToolchain.Dialects.Tests;
@@ -90,7 +91,7 @@ internal static class DialectDslTestSupport
         Assert.Multiple(() =>
         {
             foreach (var fragment in fragments)
-                Assert.That(exception!.Message, Does.Contain(fragment), $"Expected parser exception to contain '{fragment}'.");
+                Assert.That(exception.Message, Does.Contain(fragment), $"Expected parser exception to contain '{fragment}'.");
         });
     }
 

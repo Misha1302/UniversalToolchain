@@ -1,6 +1,7 @@
 using AbstractIrConverters;
 using BasicCodeTranslator;
 using BasicCore.Contracts;
+using BasicCore.Core;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
@@ -8,8 +9,6 @@ using BasicLexer.Core;
 using BasicParser.Core;
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
-using UniversalToolchain.Intrinsics.Contracts;
-using UniversalToolchain.Intrinsics.Core;
 
 namespace UniversalToolchain.Dialects.Core.ServiceCollection;
 

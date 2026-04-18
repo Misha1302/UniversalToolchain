@@ -239,6 +239,6 @@ public class DefaultRuntimeComponentResolverTests
         private readonly Type?[] _loadableTypes = loadableTypes;
 
         public override Type[] GetTypes()
-            => throw new ReflectionTypeLoadException(_loadableTypes, new Exception?[_loadableTypes.Length]!);
+            => throw new ReflectionTypeLoadException(_loadableTypes, new Exception?[_loadableTypes.Length]);
     }
 }

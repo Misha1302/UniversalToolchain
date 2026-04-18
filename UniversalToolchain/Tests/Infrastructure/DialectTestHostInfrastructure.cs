@@ -1,8 +1,9 @@
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Wist;
+using UniversalToolchain.Modules.Tests;
 
-namespace Tests.Infrastructure;
+namespace UniversalToolchain.Dialects.Tests;
 
 /// <summary>
 ///     Provides deterministic helpers for creating dialect hosts in tests.

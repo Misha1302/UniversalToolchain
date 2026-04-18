@@ -1,7 +1,7 @@
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace UniversalToolchain.Dialects.Wist;
+namespace UniversalToolchain.Dialects.Wist.Facade;
 
 /// <summary>
 ///     Builds Wist runtime facades without exposing service wiring to first-contact users.

@@ -1,7 +1,7 @@
 using ExceptionsManager;
 using NumbersModule.Core;
 
-namespace Tests.Infrastructure;
+namespace UniversalToolchain.Dialects.Tests;
 
 public static class BackendResultAssertions
 {

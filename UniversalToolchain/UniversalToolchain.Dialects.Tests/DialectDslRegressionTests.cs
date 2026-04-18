@@ -4,6 +4,7 @@ using UniversalIntermediateRepresentation;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core;
 using UniversalToolchain.Dialects.Frontend;
+using UniversalToolchain.Dialects.Frontend.Composition;
 
 namespace UniversalToolchain.Dialects.Tests;
 

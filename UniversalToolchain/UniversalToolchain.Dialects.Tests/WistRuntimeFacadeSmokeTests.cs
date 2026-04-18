@@ -1,6 +1,6 @@
 using NumbersModule.Core;
-using Tests.Infrastructure;
-using UniversalToolchain.Dialects.Wist;
+using UniversalToolchain.Dialects.Wist.Facade;
+using UniversalToolchain.Modules.Tests;
 
 namespace UniversalToolchain.Dialects.Tests;
 

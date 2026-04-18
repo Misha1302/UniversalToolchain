@@ -1,3 +1,4 @@
+using BasicCore.Capabilities;
 using BasicCore.Contracts;
 using BasicCore.Core;
 using BasicCore.ExecutorWrapper;
@@ -8,7 +9,6 @@ using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Integration;
-using UniversalToolchain.Intrinsics.Capabilities;
 
 namespace UniversalToolchain.Dialects.Wist;
 

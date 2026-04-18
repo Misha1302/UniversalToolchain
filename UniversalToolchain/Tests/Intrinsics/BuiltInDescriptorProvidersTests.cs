@@ -1,8 +1,6 @@
+using BasicCore.Builtins;
+using BasicCore.Core.Rules;
 using SettableGettableModule.Core;
-using UniversalToolchain.Intrinsics.Builtins;
-using UniversalToolchain.Intrinsics.Contracts;
-using UniversalToolchain.Intrinsics.Core;
-using UniversalToolchain.Intrinsics.Core.Rules;
 
 namespace Tests.Intrinsics;
 

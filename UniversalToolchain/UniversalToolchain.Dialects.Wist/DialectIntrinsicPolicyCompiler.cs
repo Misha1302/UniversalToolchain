@@ -1,10 +1,10 @@
 using System.Runtime.CompilerServices;
 using BasicCore.Compilation;
 using BasicCore.Contracts;
+using BasicCore.Core;
 using ExceptionsManager;
 using IntermediateRepresentationAbstractions;
 using ObjectExtensions;
-using UniversalToolchain.Intrinsics.Core;
 
 namespace UniversalToolchain.Dialects.Wist;
 
@@ -67,11 +67,8 @@ internal sealed class DialectIntrinsicPolicyCompiler<TCompilationOutput> : IAbst
 
     private static HashSet<string> CreateSet(IEnumerable<string> values, [CallerArgumentExpression(nameof(values))] string? paramName = null)
     {
-        if (values == null)
-            Thrower.ArgumentNull(paramName);
-
         return values
-            .Select(x => x.NotNull(paramName))
+            .Select(x => x.NotNull(paramName.NotNull()))
             .Where(x => !string.IsNullOrWhiteSpace(x))
             .ToHashSet(StringComparer.Ordinal);
     }

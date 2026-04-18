@@ -1,7 +1,6 @@
 using SettableGettableModule.Core;
-using UniversalToolchain.Intrinsics.Contracts;
 
-namespace UniversalToolchain.Intrinsics.Core.Rules;
+namespace BasicCore.Core.Rules;
 
 /// <summary>
 ///     Pushes a <see cref="VariableReference{T}" /> for the resolved local value type.

@@ -1,6 +1,4 @@
-using UniversalToolchain.Intrinsics.Contracts;
-
-namespace UniversalToolchain.Intrinsics.Core.Rules;
+namespace BasicCore.Core.Rules;
 
 /// <summary>
 ///     Consumes two booleans and pushes one boolean.

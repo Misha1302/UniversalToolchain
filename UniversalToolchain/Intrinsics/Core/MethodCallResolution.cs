@@ -1,4 +1,4 @@
-namespace UniversalToolchain.Intrinsics.Core;
+namespace BasicCore.Core;
 
 /// <summary>
 ///     Describes the stack effect of a resolved .NET method call.

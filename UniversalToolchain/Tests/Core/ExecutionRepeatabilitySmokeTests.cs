@@ -1,4 +1,4 @@
-using Tests.Infrastructure;
+using UniversalToolchain.Modules.Tests;
 
 namespace Tests.Core;
 

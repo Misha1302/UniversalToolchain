@@ -1,5 +1,6 @@
 using BasicCore.LexerWrapper;
 using ExceptionsManager;
+using UniversalToolchain.Dialects.Frontend.Composition;
 
 namespace UniversalToolchain.Dialects.Frontend;
 

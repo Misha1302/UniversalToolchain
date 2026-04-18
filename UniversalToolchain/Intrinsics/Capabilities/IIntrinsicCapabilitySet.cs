@@ -1,6 +1,4 @@
-using UniversalToolchain.Intrinsics.Contracts;
-
-namespace UniversalToolchain.Intrinsics.Capabilities;
+namespace BasicCore.Capabilities;
 
 public interface IIntrinsicCapabilitySet
 {

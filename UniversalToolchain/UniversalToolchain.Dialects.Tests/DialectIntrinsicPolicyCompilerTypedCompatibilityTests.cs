@@ -1,10 +1,9 @@
+using BasicCore.Builtins;
 using BasicCore.Compilation;
 using BasicCore.Contracts;
 using IntermediateRepresentationAbstractions;
 using UniversalIntermediateRepresentation;
 using UniversalToolchain.Dialects.Wist;
-using UniversalToolchain.Intrinsics.Builtins;
-using UniversalToolchain.Intrinsics.Contracts;
 
 namespace UniversalToolchain.Dialects.Tests;
 

@@ -1,4 +1,4 @@
-namespace UniversalToolchain.Intrinsics.Legacy;
+namespace BasicCore.Legacy;
 
 /// <summary>
 ///     Provides exact suffix-to-runtime-type mapping for the legacy intrinsic naming scheme.

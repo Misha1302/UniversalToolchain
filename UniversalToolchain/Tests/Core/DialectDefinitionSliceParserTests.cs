@@ -1,5 +1,6 @@
 using BasicLexer.Core;
 using UniversalToolchain.Dialects.Frontend;
+using UniversalToolchain.Dialects.Frontend.Composition;
 
 namespace Tests.Core;
 

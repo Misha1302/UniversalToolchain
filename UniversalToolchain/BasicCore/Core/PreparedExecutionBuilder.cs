@@ -1,3 +1,5 @@
+using BasicCore.Capabilities;
+
 namespace BasicCore.Core;
 
 internal sealed class PreparedExecutionBuilder<TCompilationOutput>(

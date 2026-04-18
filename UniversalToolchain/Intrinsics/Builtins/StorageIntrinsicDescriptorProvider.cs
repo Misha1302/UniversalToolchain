@@ -1,8 +1,7 @@
-using UniversalToolchain.Intrinsics.Contracts;
-using UniversalToolchain.Intrinsics.Core.Rules;
-using UniversalToolchain.Intrinsics.Validation;
+using BasicCore.Core.Rules;
+using BasicCore.Validation;
 
-namespace UniversalToolchain.Intrinsics.Builtins;
+namespace BasicCore.Builtins;
 
 public sealed class StorageIntrinsicDescriptorProvider : IIntrinsicDescriptorProvider
 {

@@ -3,8 +3,8 @@ using BasicCore.Execution;
 using IntermediateRepresentationAbstractions;
 using Microsoft.Extensions.DependencyInjection;
 using NumbersModule.Core;
-using Tests.Infrastructure;
 using UniversalToolchain.Dialects.Wist;
+using UniversalToolchain.Modules.Tests;
 
 namespace UniversalToolchain.Dialects.Tests.RuntimeLoading;
 

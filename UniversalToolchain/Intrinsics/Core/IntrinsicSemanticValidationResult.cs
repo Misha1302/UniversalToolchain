@@ -1,4 +1,4 @@
-namespace UniversalToolchain.Intrinsics.Core;
+namespace BasicCore.Core;
 
 public sealed class IntrinsicSemanticValidationResult
 {

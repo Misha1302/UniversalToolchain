@@ -1,6 +1,4 @@
-using UniversalToolchain.Intrinsics.Contracts;
-
-namespace UniversalToolchain.Intrinsics.Validation;
+namespace BasicCore.Validation;
 
 /// <summary>
 ///     Runs multiple validation rules in a deterministic sequence.

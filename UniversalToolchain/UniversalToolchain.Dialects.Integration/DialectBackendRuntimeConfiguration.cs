@@ -41,11 +41,8 @@ public class DialectBackendRuntimeConfiguration
 
     private static List<Type> SnapshotTypes(IEnumerable<Type> values, [CallerArgumentExpression(nameof(values))] string? paramName = null)
     {
-        if (values == null)
-            Thrower.ArgumentNull(paramName);
-
         return values
-            .Select(x => x.NotNull(paramName))
+            .Select(x => x.NotNull(paramName.NotNull()))
             .Distinct()
             .OrderBy(x => x.FullName, StringComparer.Ordinal)
             .ToList();
@@ -53,11 +50,8 @@ public class DialectBackendRuntimeConfiguration
 
     private static List<string> Snapshot(IEnumerable<string> values, [CallerArgumentExpression(nameof(values))] string? paramName = null)
     {
-        if (values == null)
-            Thrower.ArgumentNull(paramName);
-
         return values
-            .Select(x => x.NotNull(paramName))
+            .Select(x => x.NotNull(paramName.NotNull()))
             .Where(x => !string.IsNullOrWhiteSpace(x))
             .Distinct(StringComparer.Ordinal)
             .OrderBy(x => x, StringComparer.Ordinal)

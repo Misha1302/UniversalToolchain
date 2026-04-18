@@ -2,7 +2,7 @@ using System.Reflection;
 using DotnetHelper;
 using ObjectExtensions;
 
-namespace UniversalToolchain.Intrinsics.Core;
+namespace BasicCore.Core;
 
 internal static class IntrinsicTypeProcessor
 {

@@ -1,3 +1,5 @@
+using BasicCore.Capabilities;
+
 namespace BasicCore.Core;
 
 public class BasicCoreImpl<TCompilationOutput>(

@@ -1,5 +1,4 @@
-using Tests.Infrastructure;
-using UniversalToolchain.Intrinsics.Core;
+using UniversalToolchain.Dialects.Tests;
 
 namespace Tests.Backends;
 

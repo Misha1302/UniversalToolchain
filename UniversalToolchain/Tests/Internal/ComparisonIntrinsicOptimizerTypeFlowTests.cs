@@ -1,8 +1,7 @@
+using BasicCore.Builtins;
+using BasicCore.Capabilities;
 using ConditionsModule.Enums;
 using ConditionsModule.Optimizers;
-using UniversalToolchain.Intrinsics.Builtins;
-using UniversalToolchain.Intrinsics.Capabilities;
-using UniversalToolchain.Intrinsics.Contracts;
 
 namespace Tests.Internal;
 

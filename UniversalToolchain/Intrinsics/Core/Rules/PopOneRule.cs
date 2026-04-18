@@ -1,6 +1,4 @@
-using UniversalToolchain.Intrinsics.Contracts;
-
-namespace UniversalToolchain.Intrinsics.Core.Rules;
+namespace BasicCore.Core.Rules;
 
 /// <summary>
 ///     Pops a single value from the stack.

@@ -1,6 +1,4 @@
-using UniversalToolchain.Intrinsics.Contracts;
-
-namespace UniversalToolchain.Intrinsics.Validation;
+namespace BasicCore.Validation;
 
 /// <summary>
 ///     Requires an intrinsic invocation to contain an exact number of type arguments.

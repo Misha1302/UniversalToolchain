@@ -1,4 +1,5 @@
 using BasicCodeTranslator;
+using BasicCore.Builtins;
 using BasicCore.Contracts;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
@@ -9,8 +10,7 @@ using BasicParser.Core;
 using CommonExceptions;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Frontend;
-using UniversalToolchain.Intrinsics.Builtins;
-using UniversalToolchain.Intrinsics.Contracts;
+using UniversalToolchain.Dialects.Frontend.Composition;
 
 namespace UniversalToolchain.Dialects.Tests;
 

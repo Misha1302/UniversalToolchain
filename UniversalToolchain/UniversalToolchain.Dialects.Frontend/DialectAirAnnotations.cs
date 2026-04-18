@@ -194,9 +194,6 @@ internal static class DialectAnnotationValueGuard
 
     public static IReadOnlyList<string> RequireList(IReadOnlyList<string> values, string paramName, string message)
     {
-        if (values == null)
-            Thrower.ArgumentNull(paramName);
-
         var result = new List<string>(values.Count);
         foreach (var value in values)
             result.Add(RequireValue(value, paramName, message));

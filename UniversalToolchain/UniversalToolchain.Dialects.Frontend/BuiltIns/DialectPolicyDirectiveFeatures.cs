@@ -1,4 +1,4 @@
-namespace UniversalToolchain.Dialects.Frontend;
+namespace UniversalToolchain.Dialects.Frontend.BuiltIns;
 
 internal abstract class IntrinsicPolicyDialectDirectiveFeatureBase : SingleIdentifierDialectDirectiveFeatureBase
 {

@@ -1,8 +1,7 @@
+using BasicCore.Builtins;
 using ObjectExtensions;
-using UniversalToolchain.Intrinsics.Builtins;
-using UniversalToolchain.Intrinsics.Contracts;
 
-namespace UniversalToolchain.Intrinsics.Legacy;
+namespace BasicCore.Legacy;
 
 /// <summary>
 ///     Decodes current string-based intrinsic instructions without changing existing emitters.

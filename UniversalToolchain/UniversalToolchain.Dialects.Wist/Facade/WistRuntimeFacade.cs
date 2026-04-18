@@ -4,7 +4,7 @@ using ExceptionsManager;
 using IntermediateRepresentationAbstractions;
 using UniversalToolchain.Dialects.Abstractions;
 
-namespace UniversalToolchain.Dialects.Wist;
+namespace UniversalToolchain.Dialects.Wist.Facade;
 
 /// <summary>
 ///     Provides a small Wist-specific programmatic entry point over the dialect execution host.

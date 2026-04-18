@@ -1,7 +1,6 @@
 using System.Reflection;
-using UniversalToolchain.Intrinsics.Contracts;
 
-namespace UniversalToolchain.Intrinsics.Core.Rules;
+namespace BasicCore.Core.Rules;
 
 /// <summary>
 ///     Applies stack semantics for a reflected .NET constructor call.

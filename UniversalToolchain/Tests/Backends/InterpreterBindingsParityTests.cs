@@ -1,6 +1,7 @@
 using NumbersModule.Core;
 using Tests.Infrastructure;
 using UniversalToolchain.Dialects.Wist;
+using UniversalToolchain.Modules.Tests;
 
 namespace Tests.Backends;
 

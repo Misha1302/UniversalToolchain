@@ -6,7 +6,7 @@ namespace UniversalToolchain.Dialects.Frontend;
 
 public sealed class DialectDefinitionSliceExecutor : IExecutor<DialectDefinitionSlice>
 {
-    public object? Execute(DialectDefinitionSlice compilation, IExecutionEnvironment environment)
+    public object Execute(DialectDefinitionSlice compilation, IExecutionEnvironment environment)
     {
         compilation = compilation.ArgNotNull();
 

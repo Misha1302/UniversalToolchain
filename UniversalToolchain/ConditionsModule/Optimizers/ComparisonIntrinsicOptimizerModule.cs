@@ -1,9 +1,8 @@
+using BasicCore.Builtins;
+using BasicCore.Capabilities;
+using BasicCore.Core;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Integration;
-using UniversalToolchain.Intrinsics.Builtins;
-using UniversalToolchain.Intrinsics.Capabilities;
-using UniversalToolchain.Intrinsics.Contracts;
-using UniversalToolchain.Intrinsics.Core;
 
 namespace ConditionsModule.Optimizers;
 

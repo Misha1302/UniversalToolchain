@@ -1,7 +1,7 @@
 using System.Reflection;
 using DotnetHelper;
 
-namespace UniversalToolchain.Intrinsics.Core;
+namespace BasicCore.Core;
 
 /// <summary>
 ///     Resolves .NET method-call stack semantics from the current stack shape.

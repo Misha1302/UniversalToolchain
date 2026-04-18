@@ -1,7 +1,5 @@
-using UniversalToolchain.Intrinsics.Builtins;
-using UniversalToolchain.Intrinsics.Contracts;
-using UniversalToolchain.Intrinsics.Core;
-using UniversalToolchain.Intrinsics.Core.Rules;
+using BasicCore.Builtins;
+using BasicCore.Core.Rules;
 
 namespace Tests.Intrinsics;
 

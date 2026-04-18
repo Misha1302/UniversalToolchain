@@ -1,6 +1,7 @@
 using BasicCore.ParserWrapper;
 using BasicCore.Registration;
 using ExceptionsManager;
+using UniversalToolchain.Dialects.Frontend.Composition;
 
 namespace UniversalToolchain.Dialects.Frontend;
 

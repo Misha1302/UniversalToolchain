@@ -1,3 +1,4 @@
+using BasicCore.Builtins;
 using BasicCore.Contracts;
 using ConditionsModule.Optimizers;
 using LocalVariablesOptimizerModule;
@@ -5,8 +6,6 @@ using Microsoft.Extensions.DependencyInjection;
 using NativeMathModule;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
-using UniversalToolchain.Intrinsics.Builtins;
-using UniversalToolchain.Intrinsics.Contracts;
 
 namespace UniversalToolchain.Dialects.Tests.RuntimeLoading;
 

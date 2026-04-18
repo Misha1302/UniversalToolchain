@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using BasicCore.Registration;
 using ExceptionsManager;
+using UniversalToolchain.Dialects.Frontend.Composition;
 
 namespace UniversalToolchain.Dialects.Frontend;
 

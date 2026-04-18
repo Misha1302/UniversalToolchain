@@ -19,12 +19,9 @@ public sealed record DialectSetStateKey<TValue>(string Name, IEqualityComparer<T
 
 internal static class DialectTypedStateGuards
 {
-    public static void EnsureKey(DialectTypedStateKey? key, [CallerArgumentExpression(nameof(key))] string? paramName = null)
+    public static void EnsureKey(DialectTypedStateKey key, [CallerArgumentExpression(nameof(key))] string? paramName = null)
     {
-        if (key == null)
-            Thrower.ArgumentNull(paramName);
-
         if (string.IsNullOrWhiteSpace(key.Name))
-            Thrower.Argument(paramName, "Typed dialect state key name must not be empty.");
+            Thrower.Argument(paramName.NotNull(), "Typed dialect state key name must not be empty.");
     }
 }

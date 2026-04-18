@@ -1,4 +1,4 @@
-using UniversalToolchain.Intrinsics.Core;
+using BasicCore.Core;
 
 namespace BytecodeDynamicMethodsCompiler.Compilers;
 

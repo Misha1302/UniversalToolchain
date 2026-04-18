@@ -1,10 +1,10 @@
+using BasicCore.Builtins;
+using BasicCore.Capabilities;
+using BasicCore.Contracts;
+using BasicCore.Core;
+using BasicCore.Legacy;
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
-using UniversalToolchain.Intrinsics.Builtins;
-using UniversalToolchain.Intrinsics.Capabilities;
-using UniversalToolchain.Intrinsics.Contracts;
-using UniversalToolchain.Intrinsics.Core;
-using UniversalToolchain.Intrinsics.Legacy;
 
 namespace UniversalToolchain.Dialects.Core.ServiceCollection;
 

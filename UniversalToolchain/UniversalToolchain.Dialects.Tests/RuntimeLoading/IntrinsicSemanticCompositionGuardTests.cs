@@ -1,7 +1,6 @@
 using BasicCore.Contracts;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
-using UniversalToolchain.Intrinsics.Contracts;
 
 namespace UniversalToolchain.Dialects.Tests.RuntimeLoading;
 

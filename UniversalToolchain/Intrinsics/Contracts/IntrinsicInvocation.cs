@@ -1,4 +1,4 @@
-namespace UniversalToolchain.Intrinsics.Contracts;
+namespace BasicCore.Contracts;
 
 public sealed record IntrinsicInvocation
 {

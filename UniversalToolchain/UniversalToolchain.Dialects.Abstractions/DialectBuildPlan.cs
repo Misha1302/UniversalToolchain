@@ -69,14 +69,11 @@ public sealed class DialectBuildPlan
 
     private static List<T> Snapshot<T>(IEnumerable<T> source, [CallerArgumentExpression(nameof(source))] string? paramName = null)
     {
-        if (source == null)
-            Thrower.ArgumentNull(paramName);
-
         var list = new List<T>();
         foreach (var item in source)
         {
             if (item == null)
-                Thrower.Argument(paramName, "Collection must not contain null entries.");
+                Thrower.Argument(paramName.NotNull(), "Collection must not contain null entries.");
 
             list.Add(item);
         }

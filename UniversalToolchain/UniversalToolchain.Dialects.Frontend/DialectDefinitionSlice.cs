@@ -73,9 +73,6 @@ public sealed class DialectDefinitionSlice
 
     private static List<string> SnapshotStrings(IEnumerable<string> values, string paramName, string emptyMessage)
     {
-        if (values == null)
-            Thrower.ArgumentNull(paramName);
-
         var result = new List<string>();
         foreach (var value in values)
         {
@@ -90,14 +87,11 @@ public sealed class DialectDefinitionSlice
 
     private static List<T> Snapshot<T>(IEnumerable<T> values, [CallerArgumentExpression(nameof(values))] string? paramName = null)
     {
-        if (values == null)
-            Thrower.ArgumentNull(paramName);
-
         var result = new List<T>();
         foreach (var value in values)
         {
             if (value == null)
-                Thrower.Argument(paramName, "Collection must not contain null values.");
+                Thrower.Argument(paramName.NotNull(), "Collection must not contain null values.");
 
             result.Add(value);
         }

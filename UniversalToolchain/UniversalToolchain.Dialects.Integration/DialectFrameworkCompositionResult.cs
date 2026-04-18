@@ -54,18 +54,6 @@ public sealed class DialectFrameworkCompositionResult
 
     private static List<DialectDiagnostic> Snapshot(IEnumerable<DialectDiagnostic> diagnostics, [CallerArgumentExpression(nameof(diagnostics))] string? paramName = null)
     {
-        if (diagnostics == null)
-            Thrower.ArgumentNull(paramName);
-
-        var result = new List<DialectDiagnostic>();
-        foreach (var diagnostic in diagnostics)
-        {
-            if (diagnostic == null)
-                Thrower.Argument(paramName, "Diagnostics collection must not contain null values.");
-
-            result.Add(diagnostic);
-        }
-
-        return result;
+        return diagnostics.Select(x => x.NotNull()).ToList();
     }
 }

@@ -2,7 +2,7 @@ using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using ExceptionsManager;
 
-namespace UniversalToolchain.Dialects.Frontend;
+namespace UniversalToolchain.Dialects.Frontend.BuiltIns;
 
 internal static class DialectDirectiveValidationKeys
 {

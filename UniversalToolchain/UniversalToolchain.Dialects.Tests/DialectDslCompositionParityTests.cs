@@ -2,6 +2,7 @@ using BasicCore.Contracts;
 using CommonExceptions;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Frontend;
+using UniversalToolchain.Dialects.Frontend.Composition;
 
 namespace UniversalToolchain.Dialects.Tests;
 

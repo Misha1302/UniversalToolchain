@@ -1,4 +1,4 @@
-using UniversalToolchain.Intrinsics.Capabilities;
+using BasicCore.Capabilities;
 
 namespace Tests.Internal;
 

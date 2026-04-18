@@ -1,6 +1,3 @@
-using UniversalToolchain.Intrinsics.Contracts;
-using UniversalToolchain.Intrinsics.Core;
-
 namespace Tests.Intrinsics;
 
 [TestFixture]

@@ -1,7 +1,6 @@
-using UniversalToolchain.Intrinsics.Contracts;
-using UniversalToolchain.Intrinsics.Legacy;
+using BasicCore.Legacy;
 
-namespace UniversalToolchain.Intrinsics.Core;
+namespace BasicCore.Core;
 
 /// <summary>
 ///     Reads typed intrinsic payloads first and falls back to legacy decoding when needed.

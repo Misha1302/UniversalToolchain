@@ -17,4 +17,3 @@ global using ExceptionsManager;
 global using IntermediateRepresentationAbstractions;
 global using LexemeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.LexerWrapper.LexemeTag>;
 global using Microsoft.Extensions.DependencyInjection;
-global using UniversalToolchain.Intrinsics.Capabilities;

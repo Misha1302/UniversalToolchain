@@ -1,6 +1,4 @@
-using UniversalToolchain.Intrinsics.Contracts;
-
-namespace UniversalToolchain.Intrinsics.Legacy;
+namespace BasicCore.Legacy;
 
 /// <summary>
 ///     Translates current string-based intrinsic instructions into structured intrinsic invocations.

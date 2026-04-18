@@ -1,6 +1,4 @@
-using UniversalToolchain.Intrinsics.Contracts;
-
-namespace UniversalToolchain.Intrinsics.Core;
+namespace BasicCore.Core;
 
 /// <summary>
 ///     Reads a structured intrinsic invocation from an instruction.

@@ -1,7 +1,6 @@
+using BasicCore.Builtins;
 using SettableGettableModule.Core;
 using Tests.Infrastructure;
-using UniversalToolchain.Intrinsics.Builtins;
-using UniversalToolchain.Intrinsics.Contracts;
 
 namespace Tests.Backends;
 
@@ -399,7 +398,7 @@ public class InterpreterBackendIrExecutionTests
         return interpreter.Execute(air, new ExecutionEnvironment([]));
     }
 
-    private static object? ExecuteWithCil(IAbstractIR air)
+    private static object ExecuteWithCil(IAbstractIR air)
     {
         var compiler = new AbstractMethodsCompilerImpl();
         var dynamicMethod = compiler.Compile(air, new CompilationInput { SourceText = string.Empty });

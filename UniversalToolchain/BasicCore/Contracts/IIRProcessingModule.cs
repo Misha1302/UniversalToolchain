@@ -1,3 +1,5 @@
+using BasicCore.Capabilities;
+
 namespace BasicCore.Contracts;
 
 // ReSharper disable once InconsistentNaming

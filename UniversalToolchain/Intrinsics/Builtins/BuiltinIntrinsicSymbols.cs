@@ -1,6 +1,4 @@
-using UniversalToolchain.Intrinsics.Contracts;
-
-namespace UniversalToolchain.Intrinsics.Builtins;
+namespace BasicCore.Builtins;
 
 public static class BuiltinIntrinsicSymbols
 {

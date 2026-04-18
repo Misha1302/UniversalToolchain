@@ -1,14 +1,13 @@
 using System.Reflection;
+using BasicCore.Builtins;
+using BasicCore.Capabilities;
 using BasicCore.Compilation;
 using BasicCore.Contracts;
+using BasicCore.Core;
 using IntermediateRepresentationAbstractions;
 using LocalVariablesOptimizerModule;
 using SettableGettableModule.Core;
 using UniversalIntermediateRepresentation;
-using UniversalToolchain.Intrinsics.Builtins;
-using UniversalToolchain.Intrinsics.Capabilities;
-using UniversalToolchain.Intrinsics.Contracts;
-using UniversalToolchain.Intrinsics.Core;
 
 namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 

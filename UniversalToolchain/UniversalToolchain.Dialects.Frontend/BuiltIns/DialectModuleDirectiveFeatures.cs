@@ -1,4 +1,4 @@
-namespace UniversalToolchain.Dialects.Frontend;
+namespace UniversalToolchain.Dialects.Frontend.BuiltIns;
 
 internal sealed class UseModulesDialectDirectiveFeature : IdentifierListDialectDirectiveFeatureBase
 {

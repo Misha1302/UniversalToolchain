@@ -1,6 +1,6 @@
+using BasicCore.Builtins;
+using BasicCore.Capabilities;
 using UniversalToolchain.Dialects.Integration;
-using UniversalToolchain.Intrinsics.Builtins;
-using UniversalToolchain.Intrinsics.Capabilities;
 
 namespace NativeMathModule;
 

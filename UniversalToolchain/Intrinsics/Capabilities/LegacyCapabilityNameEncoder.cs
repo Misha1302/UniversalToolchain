@@ -1,8 +1,7 @@
-using UniversalToolchain.Intrinsics.Builtins;
-using UniversalToolchain.Intrinsics.Contracts;
-using UniversalToolchain.Intrinsics.Legacy;
+using BasicCore.Builtins;
+using BasicCore.Legacy;
 
-namespace UniversalToolchain.Intrinsics.Capabilities;
+namespace BasicCore.Capabilities;
 
 public static class LegacyCapabilityNameEncoder
 {

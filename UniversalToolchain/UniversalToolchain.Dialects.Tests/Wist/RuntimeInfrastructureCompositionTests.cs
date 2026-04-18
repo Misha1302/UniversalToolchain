@@ -1,5 +1,6 @@
 using System.Reflection.Emit;
 using AbstractIrConverters;
+using BasicCore.Capabilities;
 using BasicCore.Contracts;
 using BasicCore.ExecutorWrapper;
 using BasicCore.LexerWrapper;
@@ -12,7 +13,6 @@ using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core.ServiceCollection;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
-using UniversalToolchain.Intrinsics.Capabilities;
 
 namespace UniversalToolchain.Dialects.Tests.Wist;
 

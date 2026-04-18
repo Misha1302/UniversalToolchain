@@ -2,8 +2,9 @@ using BasicCore.Contracts;
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using UniversalToolchain.Dialects.Frontend.BuiltIns;
 
-namespace UniversalToolchain.Dialects.Frontend;
+namespace UniversalToolchain.Dialects.Frontend.Composition;
 
 public static class DialectDslServiceCollectionExtensions
 {

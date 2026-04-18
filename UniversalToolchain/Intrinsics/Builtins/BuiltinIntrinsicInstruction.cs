@@ -1,8 +1,7 @@
-using UniversalToolchain.Intrinsics.Contracts;
-using UniversalToolchain.Intrinsics.Core;
-using UniversalToolchain.Intrinsics.Legacy;
+using BasicCore.Core;
+using BasicCore.Legacy;
 
-namespace UniversalToolchain.Intrinsics.Builtins;
+namespace BasicCore.Builtins;
 
 public static class BuiltinIntrinsicInstruction
 {

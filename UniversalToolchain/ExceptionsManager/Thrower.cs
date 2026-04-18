@@ -69,7 +69,7 @@ public static class Thrower
     }
 
     [DoesNotReturn]
-    public static void ArgumentNull(string paramName, string message = "")
+    private static void ArgumentNull(string paramName, string message = "")
     {
         throw new ArgumentNullException(paramName, FormatMessage(message, $"Argument '{paramName}' cannot be null."));
     }

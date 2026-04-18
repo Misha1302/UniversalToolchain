@@ -1,4 +1,4 @@
-using Tests.Infrastructure;
+using UniversalToolchain.Dialects.Tests;
 
 namespace Tests.Core;
 

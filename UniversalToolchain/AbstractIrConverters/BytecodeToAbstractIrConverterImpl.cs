@@ -1,6 +1,5 @@
+using BasicCore.Core;
 using ExceptionsManager;
-using UniversalToolchain.Intrinsics.Contracts;
-using UniversalToolchain.Intrinsics.Core;
 
 namespace AbstractIrConverters;
 
@@ -18,7 +17,7 @@ public class BytecodeToAbstractIrConverterImpl : IAbstractMethodsTranslator
         processor = processor.ArgNotNull();
 
         _intrinsicReader = intrinsicReader;
-        _processor = processor!;
+        _processor = processor;
     }
 
     public IAbstractIR Translate(Bytecode bytecode)

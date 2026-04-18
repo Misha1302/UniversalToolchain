@@ -1,7 +1,5 @@
 using System.Reflection.Emit;
-using UniversalToolchain.Intrinsics.Builtins;
-using UniversalToolchain.Intrinsics.Contracts;
-using UniversalToolchain.Intrinsics.Core;
+using BasicCore.Builtins;
 
 namespace Tests.Backends;
 

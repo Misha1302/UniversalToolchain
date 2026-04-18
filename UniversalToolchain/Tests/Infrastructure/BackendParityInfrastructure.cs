@@ -1,8 +1,9 @@
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
+using UniversalToolchain.Dialects.Tests;
 using UniversalToolchain.Dialects.Wist;
 
-namespace Tests.Infrastructure;
+namespace UniversalToolchain.Modules.Tests;
 
 /// <summary>
 ///     Unified parity infrastructure for compiler and interpreter backend execution.

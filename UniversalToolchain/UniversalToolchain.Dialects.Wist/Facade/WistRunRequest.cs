@@ -1,6 +1,6 @@
 using ExceptionsManager;
 
-namespace UniversalToolchain.Dialects.Wist;
+namespace UniversalToolchain.Dialects.Wist.Facade;
 
 /// <summary>
 ///     Describes one Wist facade execution request.

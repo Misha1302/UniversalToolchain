@@ -1,6 +1,4 @@
-using UniversalToolchain.Intrinsics.Contracts;
-
-namespace UniversalToolchain.Intrinsics.Core;
+namespace BasicCore.Core;
 
 public static class InstructionIntrinsicExtensions
 {

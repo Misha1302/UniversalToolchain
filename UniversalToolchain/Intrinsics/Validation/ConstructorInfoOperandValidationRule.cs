@@ -1,7 +1,6 @@
 using System.Reflection;
-using UniversalToolchain.Intrinsics.Contracts;
 
-namespace UniversalToolchain.Intrinsics.Validation;
+namespace BasicCore.Validation;
 
 /// <summary>
 ///     Requires the first intrinsic operand to be a <see cref="ConstructorInfo" />.

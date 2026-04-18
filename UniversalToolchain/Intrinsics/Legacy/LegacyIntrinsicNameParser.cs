@@ -1,7 +1,6 @@
-using UniversalToolchain.Intrinsics.Builtins;
-using UniversalToolchain.Intrinsics.Contracts;
+using BasicCore.Builtins;
 
-namespace UniversalToolchain.Intrinsics.Legacy;
+namespace BasicCore.Legacy;
 
 /// <summary>
 ///     Parses the legacy string intrinsic names into structured symbols and type arguments.

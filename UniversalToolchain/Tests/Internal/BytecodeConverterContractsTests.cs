@@ -1,8 +1,6 @@
 using AbstractIrConverters;
-using UniversalToolchain.Intrinsics.Builtins;
-using UniversalToolchain.Intrinsics.Contracts;
-using UniversalToolchain.Intrinsics.Core;
-using UniversalToolchain.Intrinsics.Legacy;
+using BasicCore.Builtins;
+using BasicCore.Legacy;
 
 namespace Tests.Internal;
 

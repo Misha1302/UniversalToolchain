@@ -9,6 +9,8 @@ using NCalc;
 using NCalc.LambdaCompilation;
 using UniversalToolchain.Dialects.Wist;
 
+namespace UniversalToolchain.Benchmarks;
+
 [MemoryDiagnoser]
 [SimpleJob]
 [Orderer(SummaryOrderPolicy.FastestToSlowest)]

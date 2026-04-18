@@ -1,7 +1,7 @@
-using UniversalToolchain.Intrinsics.Builtins;
-using UniversalToolchain.Intrinsics.Contracts;
+using BasicCore.Builtins;
+using BasicCore.Capabilities;
 
-namespace UniversalToolchain.Intrinsics.Core;
+namespace BasicCore.Core;
 
 internal static class IntrinsicInstructionNormalizer
 {

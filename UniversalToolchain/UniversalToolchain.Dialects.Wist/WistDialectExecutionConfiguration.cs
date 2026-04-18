@@ -67,18 +67,16 @@ public sealed class WistDialectExecutionConfiguration
 
     private static List<Type> SnapshotTypes(IEnumerable<Type> values, [CallerArgumentExpression(nameof(values))] string? paramName = null)
     {
-        if (values == null)
-            Thrower.ArgumentNull(paramName);
-
-        return values.Select(x => x.NotNull(paramName)).Distinct().OrderBy(x => x.FullName, StringComparer.Ordinal).ToList();
+        return values
+            .Select(x => x.NotNull(paramName.NotNull()))
+            .Distinct()
+            .OrderBy(x => x.FullName, StringComparer.Ordinal)
+            .ToList();
     }
 
 
     private static Dictionary<string, DialectBackendId> SnapshotKnownBackends(IEnumerable<RuntimeBackendDescriptor> values, [CallerArgumentExpression(nameof(values))] string paramName = null!)
     {
-        if (values == null)
-            Thrower.ArgumentNull(paramName);
-
         var map = new Dictionary<string, DialectBackendId>(StringComparer.Ordinal);
         foreach (var value in values)
         {
@@ -92,11 +90,8 @@ public sealed class WistDialectExecutionConfiguration
 
     private static List<DialectBackendRuntimeConfiguration> SnapshotBackends(IEnumerable<DialectBackendRuntimeConfiguration> values, [CallerArgumentExpression(nameof(values))] string? paramName = null)
     {
-        if (values == null)
-            Thrower.ArgumentNull(paramName);
-
         return values
-            .Select(x => x.NotNull(paramName))
+            .Select(x => x.NotNull(paramName.NotNull()))
             .OrderBy(x => x.BackendDescriptor.BackendId)
             .ToList();
     }

@@ -1,4 +1,4 @@
-using UniversalToolchain.Intrinsics.Core;
+using BasicCore.Core;
 
 namespace BasicInterpreter;
 
@@ -198,7 +198,7 @@ internal sealed class InterpreterIntrinsicExecutor
         return state.ExternalBindingsLayout?.SlotsByName.TryGetValue(key, out slot) == true;
     }
 
-    private static object? ConvertValue(object value, Type targetType)
+    private static object ConvertValue(object value, Type targetType)
     {
         try
         {

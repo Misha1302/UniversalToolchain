@@ -1,7 +1,7 @@
 using BasicCore.Compilation;
 using ExceptionsManager;
 
-namespace UniversalToolchain.Dialects.Wist;
+namespace UniversalToolchain.Dialects.Wist.Facade;
 
 /// <summary>
 ///     Captures the outcome of a Wist facade compilation attempt.
