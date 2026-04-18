@@ -71,5 +71,4 @@ public sealed class CompiledArtifact<TCompilationOutput> : ICompiledArtifact<TCo
 
         return snapshot;
     }
-
 }

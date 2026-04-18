@@ -5,10 +5,10 @@ namespace UniversalToolchain.Dialects.Core.Binding;
 
 internal sealed class DialectDefinitionBuilder
 {
-    private string? _baseDialectName;
-    private BackendPolicy? _backendPolicy;
-    private CapabilityPolicy? _capabilityPolicy;
     private readonly Dictionary<string, object> _extensions = new(StringComparer.Ordinal);
+    private BackendPolicy? _backendPolicy;
+    private string? _baseDialectName;
+    private CapabilityPolicy? _capabilityPolicy;
     private IntrinsicPolicy? _intrinsicPolicy;
     private ModulePolicy? _modulePolicy;
     private string? _name;

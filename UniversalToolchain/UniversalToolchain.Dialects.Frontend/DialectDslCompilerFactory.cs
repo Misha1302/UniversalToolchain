@@ -13,8 +13,5 @@ public sealed class DialectDslCompilerFactory : IDialectDslCompilerFactory
         _frontendModule = frontendModule;
     }
 
-    public DialectDslCompiler Create()
-    {
-        return new DialectDslCompiler(_frontendModule);
-    }
+    public DialectDslCompiler Create() => new(_frontendModule);
 }

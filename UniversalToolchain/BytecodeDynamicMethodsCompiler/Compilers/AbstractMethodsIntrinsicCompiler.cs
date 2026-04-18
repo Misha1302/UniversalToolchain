@@ -450,6 +450,7 @@ internal sealed class AbstractMethodsIntrinsicCompiler
 
         Thrower.InvalidOpEx($"Cannot cast {sourceType} to {targetType}");
     }
+
     private static void EnsureBinaryBoolOperands(List<Type> stack, string intrinsicName)
     {
         Thrower.AssertAlways(stack.Count >= 2, $"Not enough values on stack for {intrinsicName}");

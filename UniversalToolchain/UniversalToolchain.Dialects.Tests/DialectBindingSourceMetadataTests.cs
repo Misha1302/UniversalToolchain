@@ -10,7 +10,7 @@ public class DialectBindingSourceMetadataTests
     [Test]
     public void SyntaxDialectBindingSource_ExposesVersion_FromDocument()
     {
-        var source = new SyntaxDialectBindingSource(CreateSyntaxDocument(version: "1.2"));
+        var source = new SyntaxDialectBindingSource(CreateSyntaxDocument("1.2"));
 
         Assert.That(source.Version, Is.EqualTo("1.2"));
     }
@@ -26,7 +26,7 @@ public class DialectBindingSourceMetadataTests
     [Test]
     public void CompiledDialectBindingSource_ExposesVersion_FromSlice()
     {
-        var source = new CompiledDialectBindingSource(CreateCompiledSlice(version: "2.0"));
+        var source = new CompiledDialectBindingSource(CreateCompiledSlice("2.0"));
 
         Assert.That(source.Version, Is.EqualTo("2.0"));
     }
@@ -41,9 +41,8 @@ public class DialectBindingSourceMetadataTests
 
     private static DialectSyntaxDocument CreateSyntaxDocument(
         string? version = null,
-        string? baseDialectName = null)
-    {
-        return new DialectSyntaxDocument(
+        string? baseDialectName = null) =>
+        new(
             "dialect",
             version,
             [],
@@ -55,13 +54,11 @@ public class DialectBindingSourceMetadataTests
             SecurityProfile.Trusted,
             [],
             baseDialectName);
-    }
 
     private static DialectDefinitionSlice CreateCompiledSlice(
         string? version = null,
-        string? baseDialectName = null)
-    {
-        return new DialectDefinitionSlice(
+        string? baseDialectName = null) =>
+        new(
             "dialect",
             [],
             [],
@@ -73,5 +70,4 @@ public class DialectBindingSourceMetadataTests
             [],
             version,
             baseDialectName);
-    }
 }

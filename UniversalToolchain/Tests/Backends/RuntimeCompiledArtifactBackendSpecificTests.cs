@@ -1,4 +1,3 @@
-using System.Collections.Specialized;
 using System.Reflection.Emit;
 using Tests.Infrastructure;
 

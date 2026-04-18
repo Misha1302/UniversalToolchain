@@ -21,7 +21,7 @@ public sealed class WistRuntimeFacadeSmokeTests
             .CreateDefault()
             .Build();
 
-        var result = wist.Run(PricingFormula, CreateArguments(), mode: "compiler");
+        var result = wist.Run(PricingFormula, CreateArguments(), "compiler");
 
         Assert.That(BackendParityInfrastructure.AsNumber(result), Is.EqualTo(95.0d).Within(1e-9));
     }
@@ -33,7 +33,7 @@ public sealed class WistRuntimeFacadeSmokeTests
             .CreateDefault()
             .Build();
 
-        var result = wist.Run(PricingFormula, CreateArguments(), mode: "interpreter");
+        var result = wist.Run(PricingFormula, CreateArguments(), "interpreter");
 
         Assert.That(BackendParityInfrastructure.AsNumber(result), Is.EqualTo(95.0d).Within(1e-9));
     }
@@ -46,7 +46,7 @@ public sealed class WistRuntimeFacadeSmokeTests
             .WithDialectFile(GetDialectFilePath())
             .Build();
 
-        var attempt = wist.TryCompile(StatementStyleBindingFormula, CreateDeclaredBindings(), mode: "interpreter");
+        var attempt = wist.TryCompile(StatementStyleBindingFormula, CreateDeclaredBindings(), "interpreter");
 
         Assert.Multiple(() =>
         {
@@ -57,23 +57,19 @@ public sealed class WistRuntimeFacadeSmokeTests
         });
     }
 
-    private static Dictionary<string, object?> CreateArguments()
-    {
-        return new Dictionary<string, object?>
+    private static Dictionary<string, object?> CreateArguments() =>
+        new()
         {
             ["price"] = new RealNumberImpl(100.0d),
             ["fee"] = new RealNumberImpl(5.0d)
         };
-    }
 
-    private static Dictionary<string, Type> CreateDeclaredBindings()
-    {
-        return new Dictionary<string, Type>
+    private static Dictionary<string, Type> CreateDeclaredBindings() =>
+        new()
         {
             ["price"] = typeof(double),
             ["fee"] = typeof(double)
         };
-    }
 
     private static string GetDialectFilePath()
         => Path.GetFullPath(Path.Combine(

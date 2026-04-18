@@ -1,4 +1,3 @@
-using NumbersModule.Core;
 using Tests.Infrastructure;
 
 namespace Tests.Core;
@@ -7,17 +6,17 @@ namespace Tests.Core;
 public class ModuleInteractionTests
 {
     private const string DialectText = """
-                                   dialect ModuleInteraction
-                                   use Arithmetic,Numbers,CSharpInterop,Identifier,Scopes,Whitespaces
-                                   backend compiler,interpreter
-                                   """;
+                                       dialect ModuleInteraction
+                                       use Arithmetic,Numbers,CSharpInterop,Identifier,Scopes,Whitespaces
+                                       backend compiler,interpreter
+                                       """;
 
     [Test]
     public void Execute_MultipleModuleIntegration_WorksSeamlessly()
     {
         var code = "Main.Round((10 * 2) * 3.141592653589793)";
 
-        var result = Tests.Infrastructure.DialectTestHostInfrastructure.RunInBothBackends(DialectText, code);
+        var result = DialectTestHostInfrastructure.RunInBothBackends(DialectText, code);
 
         Assert.That(BackendResultAssertions.AsNumber(result), Is.EqualTo(63).Within(1e-9));
     }
@@ -27,7 +26,7 @@ public class ModuleInteractionTests
     {
         var code = "Main.Pow(2.0, 3.0) + (Main.Sqrt(4.0) * 2.0) - Main.Log(3.0, 2.0) / Main.Abs(2.0 - 3.0)";
 
-        var result = Tests.Infrastructure.DialectTestHostInfrastructure.RunInBothBackends(DialectText, code);
+        var result = DialectTestHostInfrastructure.RunInBothBackends(DialectText, code);
 
         Assert.That(BackendResultAssertions.AsNumber(result), Is.EqualTo(10.4150375).Within(1e-7));
     }

@@ -44,12 +44,12 @@ public sealed class DialectDslCompiler : IDisposable
             []);
     }
 
-    public DialectDefinitionSlice Compile(string sourceText) => _core.GetExecutable(sourceText);
-
-    private static DialectDslFrontendModule CreateDefaultFrontendModule() => DialectDslStandaloneComposition.CreateFrontendModule();
-
     public void Dispose()
     {
         _serviceProvider.Dispose();
     }
+
+    public DialectDefinitionSlice Compile(string sourceText) => _core.GetExecutable(sourceText);
+
+    private static DialectDslFrontendModule CreateDefaultFrontendModule() => DialectDslStandaloneComposition.CreateFrontendModule();
 }

@@ -15,9 +15,9 @@ public sealed class ExecutionEnvironment : IExecutionEnvironment, IExternalBindi
         ExternalBindingsLayout = externalBindingsLayout ?? ExternalBindingsLayout.FromDeclaredBindings(bindings);
     }
 
-    public ExternalBindingsLayout ExternalBindingsLayout { get; }
-
     public object? GetExternalValue(int slot) => _values[slot];
 
     public void SetExternalValue(int slot, object? value) => _values[slot] = value;
+
+    public ExternalBindingsLayout ExternalBindingsLayout { get; }
 }

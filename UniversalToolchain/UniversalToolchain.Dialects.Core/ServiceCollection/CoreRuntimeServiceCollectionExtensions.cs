@@ -10,7 +10,8 @@ public static class CoreRuntimeServiceCollectionExtensions
 {
     /// <summary>
     ///     Registers the historical convenience bootstrap for consumers that expect the full built-in runtime pipeline.
-    ///     This method is not the minimal neutral runtime layer; use <see cref="NeutralRuntimeServiceCollectionExtensions.AddNeutralRuntimeInfrastructure" />
+    ///     This method is not the minimal neutral runtime layer; use
+    ///     <see cref="NeutralRuntimeServiceCollectionExtensions.AddNeutralRuntimeInfrastructure" />
     ///     when concrete frontend and backend defaults should be composed explicitly.
     /// </summary>
     public static IServiceCollection AddCoreRuntimeInfrastructure(this IServiceCollection services)

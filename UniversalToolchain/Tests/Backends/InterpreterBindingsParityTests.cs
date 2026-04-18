@@ -1,8 +1,6 @@
-using System.Collections.Generic;
-using System.Collections.Specialized;
-using UniversalToolchain.Dialects.Wist;
 using NumbersModule.Core;
 using Tests.Infrastructure;
+using UniversalToolchain.Dialects.Wist;
 
 namespace Tests.Backends;
 
@@ -300,10 +298,7 @@ public class InterpreterBindingsParityTests
         return (compilerOutcome, interpreterOutcome);
     }
 
-    private static BackendExecutionResult TryRunSingleBackend(Func<object> backendRunner)
-    {
-        return BackendParityInfrastructure.ExecuteSafely(backendRunner);
-    }
+    private static BackendExecutionResult TryRunSingleBackend(Func<object> backendRunner) => BackendParityInfrastructure.ExecuteSafely(backendRunner);
 
     private static WistDialectExecutionHost CreateHost() => RuntimeCompiledArtifactTestFactory.CreateHost();
 

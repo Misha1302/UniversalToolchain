@@ -58,8 +58,5 @@ public sealed class CoreIntrinsicDescriptorProvider : IIntrinsicDescriptorProvid
         ];
     }
 
-    public IReadOnlyList<IntrinsicSemanticDescriptor> GetDescriptors()
-    {
-        return _descriptors;
-    }
+    public IReadOnlyList<IntrinsicSemanticDescriptor> GetDescriptors() => _descriptors;
 }

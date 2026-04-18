@@ -3,7 +3,7 @@ using UniversalToolchain.Intrinsics.Contracts;
 namespace UniversalToolchain.Intrinsics.Core.Rules;
 
 /// <summary>
-/// Applies a binary comparison that consumes two values of the same expected type and pushes a boolean.
+///     Applies a binary comparison that consumes two values of the same expected type and pushes a boolean.
 /// </summary>
 public sealed class BinaryComparisonRule : IIntrinsicStackRule
 {

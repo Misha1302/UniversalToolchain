@@ -1,10 +1,10 @@
-using DotnetHelper;
 using System.Reflection;
+using DotnetHelper;
 
 namespace UniversalToolchain.Intrinsics.Core;
 
 /// <summary>
-/// Resolves .NET method-call stack semantics from the current stack shape.
+///     Resolves .NET method-call stack semantics from the current stack shape.
 /// </summary>
 public sealed class MethodCallTypeSemanticsResolver
 {
@@ -31,9 +31,7 @@ public sealed class MethodCallTypeSemanticsResolver
         }
 
         if (method.IsGenericMethod)
-        {
             method = GenericTypeResolver.MakeGenericMethod(method, parameterTypes);
-        }
 
         return new MethodCallResolution
         {

@@ -13,12 +13,12 @@ internal sealed class WistInterpreterDialectBackendServiceProvider : DialectBack
 
     public override IReadOnlyList<string> SupportedIntrinsics => AbstractIrToAbstractIrStub.SupportedIntrinsicIds;
 
-    protected override void RegisterBackendDefaults(IServiceCollection services)
+    override protected void RegisterBackendDefaults(IServiceCollection services)
         => services.AddInterpreterBackendDefaults();
 
-    protected override AbstractIrToAbstractIrStub ResolveBackendCompiler(IServiceProvider provider)
+    override protected AbstractIrToAbstractIrStub ResolveBackendCompiler(IServiceProvider provider)
         => provider.GetRequiredService<AbstractIrToAbstractIrStub>();
 
-    protected override Func<IExecutor<IAbstractIR>> ResolveExecutorFactory(IServiceProvider provider)
+    override protected Func<IExecutor<IAbstractIR>> ResolveExecutorFactory(IServiceProvider provider)
         => provider.GetRequiredService<Func<IExecutor<IAbstractIR>>>();
 }

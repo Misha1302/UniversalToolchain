@@ -1,4 +1,3 @@
-using IntermediateRepresentationAbstractions;
 using UniversalToolchain.Intrinsics.Contracts;
 
 namespace UniversalToolchain.Intrinsics.Core;
@@ -25,8 +24,5 @@ public static class InstructionIntrinsicExtensions
         return true;
     }
 
-    public static bool IsTypedIntrinsicInvocation(this Instruction instruction)
-    {
-        return instruction.TryGetTypedIntrinsicInvocation(out _);
-    }
+    public static bool IsTypedIntrinsicInvocation(this Instruction instruction) => instruction.TryGetTypedIntrinsicInvocation(out _);
 }

@@ -10,7 +10,7 @@ public sealed class BooleanIntrinsicDescriptorProvider : IIntrinsicDescriptorPro
     [
         CreateBinaryDescriptor(BuiltinIntrinsicSymbols.Boolean.And),
         CreateBinaryDescriptor(BuiltinIntrinsicSymbols.Boolean.Or),
-        new IntrinsicSemanticDescriptor
+        new()
         {
             Symbol = BuiltinIntrinsicSymbols.Boolean.Not,
             Category = IntrinsicCategory.Boolean,
@@ -19,19 +19,14 @@ public sealed class BooleanIntrinsicDescriptorProvider : IIntrinsicDescriptorPro
         }
     ];
 
-    public IReadOnlyList<IntrinsicSemanticDescriptor> GetDescriptors()
-    {
-        return _descriptors;
-    }
+    public IReadOnlyList<IntrinsicSemanticDescriptor> GetDescriptors() => _descriptors;
 
-    private static IntrinsicSemanticDescriptor CreateBinaryDescriptor(IntrinsicSymbol symbol)
-    {
-        return new IntrinsicSemanticDescriptor
+    private static IntrinsicSemanticDescriptor CreateBinaryDescriptor(IntrinsicSymbol symbol) =>
+        new()
         {
             Symbol = symbol,
             Category = IntrinsicCategory.Boolean,
             StackRule = new BooleanBinaryRule(),
             ValidationRule = new NoValidationRule()
         };
-    }
 }

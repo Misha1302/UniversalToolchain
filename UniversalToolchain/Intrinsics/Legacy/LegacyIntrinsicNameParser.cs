@@ -4,7 +4,7 @@ using UniversalToolchain.Intrinsics.Contracts;
 namespace UniversalToolchain.Intrinsics.Legacy;
 
 /// <summary>
-/// Parses the legacy string intrinsic names into structured symbols and type arguments.
+///     Parses the legacy string intrinsic names into structured symbols and type arguments.
 /// </summary>
 public static class LegacyIntrinsicNameParser
 {

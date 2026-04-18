@@ -1,4 +1,3 @@
-using IntermediateRepresentationAbstractions;
 using UniversalToolchain.Intrinsics.Contracts;
 
 namespace UniversalToolchain.Intrinsics.Core;

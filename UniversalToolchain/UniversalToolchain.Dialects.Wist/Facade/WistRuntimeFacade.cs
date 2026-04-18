@@ -1,7 +1,5 @@
-using System.Collections.Specialized;
 using System.Reflection.Emit;
 using BasicCore.Compilation;
-using BasicCore.Execution;
 using ExceptionsManager;
 using IntermediateRepresentationAbstractions;
 using UniversalToolchain.Dialects.Abstractions;
@@ -19,6 +17,8 @@ public sealed class WistRuntimeFacade : IDisposable
     {
         _host = host.ArgNotNull();
     }
+
+    public void Dispose() => _host.Dispose();
 
     /// <summary>
     ///     Executes Wist source text with named arguments through the selected backend.
@@ -64,8 +64,6 @@ public sealed class WistRuntimeFacade : IDisposable
             return WistTryCompileResult.Failure(ex);
         }
     }
-
-    public void Dispose() => _host.Dispose();
 
     private ICompiledArtifact Compile(string code, OrderedDictionary<string, Type> declaredBindings, string mode)
     {

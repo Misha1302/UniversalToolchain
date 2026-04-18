@@ -23,10 +23,7 @@ public class VariablesVisitor : IAstVisitor
             HandleVariable(data);
     }
 
-    private static bool IsConcreteType(Type type)
-    {
-        return type != typeof(object);
-    }
+    private static bool IsConcreteType(Type type) => type != typeof(object);
 
     private Type ResolveReadType(Symbol symbol, string variableKey)
     {
@@ -195,7 +192,7 @@ public class VariablesVisitor : IAstVisitor
                         _variablesTypes.TryGetValue(variableKey, out var existing) && IsConcreteType(existing)
                             ? existing
                             : IsConcreteType(inferredType)
-                                ? (_variablesTypes[variableKey] = inferredType)
+                                ? _variablesTypes[variableKey] = inferredType
                                 : typeof(object);
 
                     il.LdLocRef(variableKey, storageType);

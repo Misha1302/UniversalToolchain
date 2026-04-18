@@ -66,19 +66,14 @@ public sealed class CoreIntrinsicDescriptorProviderTests
         Assert.That(exception!.Message, Does.Contain("Expected 1 type arguments"));
     }
 
-    private static CoreIntrinsicDescriptorProvider CreateProvider()
-    {
-        return new CoreIntrinsicDescriptorProvider(new MethodCallTypeSemanticsResolver());
-    }
+    private static CoreIntrinsicDescriptorProvider CreateProvider() => new(new MethodCallTypeSemanticsResolver());
 
     private static IntrinsicInvocation CreateInvocation(
         IntrinsicSymbol symbol,
         IReadOnlyList<IntrinsicTypeArgument>? typeArguments = null,
-        IReadOnlyList<object?>? dataOperands = null)
-    {
-        return new IntrinsicInvocation(
+        IReadOnlyList<object?>? dataOperands = null) =>
+        new(
             symbol,
             typeArguments ?? [],
             dataOperands ?? []);
-    }
 }

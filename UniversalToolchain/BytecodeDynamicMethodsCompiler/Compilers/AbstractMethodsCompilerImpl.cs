@@ -5,14 +5,14 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
     private readonly AbstractMethodsIntrinsicCompiler _intrinsicCompiler;
     private readonly CilAbstractIrTypeSimulator _typeSimulator;
 
-    public static IReadOnlyList<string> SupportedIntrinsicIds { get; } = BuildSupportedIntrinsicIds();
-
     public AbstractMethodsCompilerImpl()
     {
         var registry = new CilIntrinsicRegistry();
         _intrinsicCompiler = new AbstractMethodsIntrinsicCompiler(registry);
         _typeSimulator = new CilAbstractIrTypeSimulator(_intrinsicCompiler);
     }
+
+    public static IReadOnlyList<string> SupportedIntrinsicIds { get; } = BuildSupportedIntrinsicIds();
 
     public IReadOnlyList<string> SupportedIntrinsics => SupportedIntrinsicIds;
 

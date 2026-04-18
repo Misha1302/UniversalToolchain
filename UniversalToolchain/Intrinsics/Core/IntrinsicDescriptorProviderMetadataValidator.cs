@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Intrinsics.Contracts;
 
 namespace UniversalToolchain.Intrinsics.Core;
@@ -36,7 +35,6 @@ public sealed class IntrinsicDescriptorProviderMetadataValidator
                 providerRegistrationCounts.TryGetValue(providerType, out var currentCount);
                 providerRegistrationCounts[providerType] = currentCount + 1;
             }
-
         }
 
         foreach (var duplicateProviderRegistration in providerRegistrationCounts
@@ -141,11 +139,9 @@ public sealed class IntrinsicDescriptorProviderMetadataValidator
         return errors;
     }
 
-    private static Type? GetRegistrationProviderType(ServiceDescriptor descriptor)
-    {
-        return descriptor.ImplementationType ?? descriptor.ImplementationInstance?.GetType();
-    }
+    private static Type? GetRegistrationProviderType(ServiceDescriptor descriptor) => descriptor.ImplementationType ?? descriptor.ImplementationInstance?.GetType();
 
     private sealed record RegistrationEntry(int Index, ServiceDescriptor Descriptor);
+
     private sealed record ProviderEntry(int Index, IIntrinsicDescriptorProvider? Provider);
 }

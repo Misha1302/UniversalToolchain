@@ -33,8 +33,5 @@ internal sealed class DialectDirectiveHandlerContext
         };
     }
 
-    public static string FormatRuleName(string name, DialectBackendSelector target)
-    {
-        return target.IsAny ? name : $"{name}@{DialectBackendSelectorText.ToText(target.BackendId)}";
-    }
+    public static string FormatRuleName(string name, DialectBackendSelector target) => target.IsAny ? name : $"{name}@{DialectBackendSelectorText.ToText(target.BackendId)}";
 }

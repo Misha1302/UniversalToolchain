@@ -1,4 +1,3 @@
-using System.Collections.Specialized;
 using Tests.Infrastructure;
 
 namespace Tests.Backends;

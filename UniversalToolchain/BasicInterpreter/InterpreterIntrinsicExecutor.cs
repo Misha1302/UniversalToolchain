@@ -4,12 +4,6 @@ namespace BasicInterpreter;
 
 internal sealed class InterpreterIntrinsicExecutor
 {
-    private sealed class LocalReference(string name, Type type)
-    {
-        public string Name { get; } = name;
-        public Type Type { get; } = type;
-    }
-
     public void Execute(Instruction instruction, InterpreterState state)
     {
         var normalizedInstruction = IntrinsicInstructionNormalizer.NormalizeOrThrow(instruction);
@@ -384,5 +378,11 @@ internal sealed class InterpreterIntrinsicExecutor
             Thrower.InvalidOpEx("Interpreter stack is empty.");
 
         return state.ValueStack.Pop().Get<T>();
+    }
+
+    private sealed class LocalReference(string name, Type type)
+    {
+        public string Name { get; } = name;
+        public Type Type { get; } = type;
     }
 }

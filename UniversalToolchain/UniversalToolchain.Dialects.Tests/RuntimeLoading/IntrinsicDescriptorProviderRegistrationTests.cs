@@ -72,7 +72,7 @@ public class IntrinsicDescriptorProviderRegistrationTests
     public void DuplicateProviderAttributes_ShouldNotProduceDuplicateRegistrations()
     {
         using var provider = CreateProvider(
-            frontendModules: [typeof(DuplicateBooleanFrontendModule)],
+            [typeof(DuplicateBooleanFrontendModule)],
             optimizers: [typeof(DuplicateBooleanOptimizerModule)]);
 
         var providerTypes = provider.GetServices<IIntrinsicDescriptorProvider>()

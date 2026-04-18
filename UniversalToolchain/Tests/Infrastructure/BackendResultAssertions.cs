@@ -1,6 +1,5 @@
 using ExceptionsManager;
 using NumbersModule.Core;
-using NUnit.Framework;
 
 namespace Tests.Infrastructure;
 

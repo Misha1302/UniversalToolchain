@@ -77,12 +77,10 @@ public class BytecodeConverterContractsTests
         return ir;
     }
 
-    private static BytecodeToAbstractIrConverterImpl CreateConverter()
-    {
-        return new BytecodeToAbstractIrConverterImpl(
+    private static BytecodeToAbstractIrConverterImpl CreateConverter() =>
+        new(
             new InstructionIntrinsicReader(new LegacyIntrinsicDecoder()),
             CreateTypeStackProcessor());
-    }
 
     private static IIntrinsicTypeStackProcessor CreateTypeStackProcessor()
     {
@@ -90,17 +88,14 @@ public class BytecodeConverterContractsTests
         return new IntrinsicTypeStackProcessor(catalog, new IntrinsicTypeResolutionContext());
     }
 
-    private static IIntrinsicDescriptorProvider[] CreateDescriptorProviders()
-    {
-        return
-        [
-            new ArithmeticIntrinsicDescriptorProvider(),
-            new ComparisonIntrinsicDescriptorProvider(),
-            new BooleanIntrinsicDescriptorProvider(),
-            new StorageIntrinsicDescriptorProvider(),
-            new CoreIntrinsicDescriptorProvider(new MethodCallTypeSemanticsResolver())
-        ];
-    }
+    private static IIntrinsicDescriptorProvider[] CreateDescriptorProviders() =>
+    [
+        new ArithmeticIntrinsicDescriptorProvider(),
+        new ComparisonIntrinsicDescriptorProvider(),
+        new BooleanIntrinsicDescriptorProvider(),
+        new StorageIntrinsicDescriptorProvider(),
+        new CoreIntrinsicDescriptorProvider(new MethodCallTypeSemanticsResolver())
+    ];
 
     private sealed class StubConvertable(string name, Func<IAbstractMethodConvertable.Context, IAbstractIR> factory)
         : IAbstractMethodConvertable

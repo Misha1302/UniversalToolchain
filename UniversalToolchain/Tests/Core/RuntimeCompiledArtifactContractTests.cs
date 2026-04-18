@@ -1,4 +1,3 @@
-using System.Collections.Specialized;
 using DynamicMethodCalling;
 using Tests.Infrastructure;
 

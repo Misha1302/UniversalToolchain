@@ -1,7 +1,7 @@
 namespace UniversalToolchain.Intrinsics.Core;
 
 /// <summary>
-/// Describes the stack effect of a resolved .NET method call.
+///     Describes the stack effect of a resolved .NET method call.
 /// </summary>
 public sealed class MethodCallResolution
 {

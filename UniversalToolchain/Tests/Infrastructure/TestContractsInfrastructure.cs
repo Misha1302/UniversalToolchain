@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
 

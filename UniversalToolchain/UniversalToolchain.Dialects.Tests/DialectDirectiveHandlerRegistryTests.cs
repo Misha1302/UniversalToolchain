@@ -95,10 +95,6 @@ public class DialectDirectiveHandlerRegistryTests
 
     private sealed class RegistryContextCapturingHandler : IDialectDirectiveHandler
     {
-        public int Order => 0;
-
-        public string Name => "Capture";
-
         public DialectBindingExecutionContext? Context { get; private set; }
 
         public IDialectBindingSource? Source { get; private set; }
@@ -108,6 +104,9 @@ public class DialectDirectiveHandlerRegistryTests
         public List<DialectDiagnostic>? Diagnostics { get; private set; }
 
         public DialectDirectiveHandlerContext? DirectiveContext { get; private set; }
+        public int Order => 0;
+
+        public string Name => "Capture";
 
         public void Apply(DialectBindingExecutionContext context)
         {
@@ -124,26 +123,26 @@ public class DialectDirectiveHandlerRegistryTests
     {
         public DialectBindingInputKind InputKind { get; init; } = DialectBindingInputKind.Syntax;
 
-        public string Name { get; init; } = "dialect";
+        public string Name { get; } = "dialect";
 
         public string? Version { get; init; }
 
         public string? BaseDialectName { get; init; }
 
-        public IReadOnlyList<string> UseModules { get; init; } = [];
+        public IReadOnlyList<string> UseModules { get; } = [];
 
-        public IReadOnlyList<string> ExcludeModules { get; init; } = [];
+        public IReadOnlyList<string> ExcludeModules { get; } = [];
 
-        public IReadOnlyList<OrderBindingDirectiveRecord> OrderRules { get; init; } = [];
+        public IReadOnlyList<OrderBindingDirectiveRecord> OrderRules { get; } = [];
 
-        public IReadOnlyList<BackendBindingDirectiveRecord> BackendDirectives { get; init; } = [];
+        public IReadOnlyList<BackendBindingDirectiveRecord> BackendDirectives { get; } = [];
 
-        public IReadOnlyList<IntrinsicBindingDirectiveRecord> IntrinsicDirectives { get; init; } = [];
+        public IReadOnlyList<IntrinsicBindingDirectiveRecord> IntrinsicDirectives { get; } = [];
 
-        public IReadOnlyList<OptimizerBindingDirectiveRecord> OptimizerDirectives { get; init; } = [];
+        public IReadOnlyList<OptimizerBindingDirectiveRecord> OptimizerDirectives { get; } = [];
 
         public SecurityProfile? SecurityProfile { get; init; }
 
-        public IReadOnlyList<KeyValuePair<string, bool>> Capabilities { get; init; } = [];
+        public IReadOnlyList<KeyValuePair<string, bool>> Capabilities { get; } = [];
     }
 }

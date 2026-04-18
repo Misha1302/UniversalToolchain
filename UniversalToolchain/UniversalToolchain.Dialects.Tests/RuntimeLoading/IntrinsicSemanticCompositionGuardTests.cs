@@ -25,6 +25,15 @@ public sealed class IntrinsicSemanticCompositionGuardTests
         Assert.That(exception.Message, Does.Contain("math.add"));
     }
 
+    private static IntrinsicSemanticDescriptor CreateDescriptor(string @namespace, string name) =>
+        new()
+        {
+            Symbol = new IntrinsicSymbol(@namespace, name),
+            Category = IntrinsicCategory.Core,
+            StackRule = new NoOpStackRule(),
+            ValidationRule = new NoOpValidationRule()
+        };
+
     [IntrinsicDescriptorProvider(typeof(DuplicateAlphaIntrinsicDescriptorProvider))]
     private sealed class DuplicateAlphaFrontendModule : IFrontendCoreModule;
 
@@ -33,29 +42,14 @@ public sealed class IntrinsicSemanticCompositionGuardTests
 
     private sealed class DuplicateAlphaIntrinsicDescriptorProvider : IIntrinsicDescriptorProvider
     {
-        public IReadOnlyList<IntrinsicSemanticDescriptor> GetDescriptors()
-        {
-            return [CreateDescriptor("math", "add")];
-        }
+        public IReadOnlyList<IntrinsicSemanticDescriptor> GetDescriptors() =>
+            [CreateDescriptor("math", "add")];
     }
 
     private sealed class DuplicateBetaIntrinsicDescriptorProvider : IIntrinsicDescriptorProvider
     {
-        public IReadOnlyList<IntrinsicSemanticDescriptor> GetDescriptors()
-        {
-            return [CreateDescriptor("math", "add")];
-        }
-    }
-
-    private static IntrinsicSemanticDescriptor CreateDescriptor(string @namespace, string name)
-    {
-        return new IntrinsicSemanticDescriptor
-        {
-            Symbol = new IntrinsicSymbol(@namespace, name),
-            Category = IntrinsicCategory.Core,
-            StackRule = new NoOpStackRule(),
-            ValidationRule = new NoOpValidationRule()
-        };
+        public IReadOnlyList<IntrinsicSemanticDescriptor> GetDescriptors() =>
+            [CreateDescriptor("math", "add")];
     }
 
     private sealed class NoOpStackRule : IIntrinsicStackRule

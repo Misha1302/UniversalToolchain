@@ -1,7 +1,7 @@
 namespace UniversalToolchain.Intrinsics.Legacy;
 
 /// <summary>
-/// Provides exact suffix-to-runtime-type mapping for the legacy intrinsic naming scheme.
+///     Provides exact suffix-to-runtime-type mapping for the legacy intrinsic naming scheme.
 /// </summary>
 public static class LegacyIntrinsicSuffixMap
 {

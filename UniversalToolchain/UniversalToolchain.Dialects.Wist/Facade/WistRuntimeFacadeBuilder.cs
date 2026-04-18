@@ -9,15 +9,15 @@ namespace UniversalToolchain.Dialects.Wist;
 public sealed class WistRuntimeFacadeBuilder
 {
     private const string DefaultDialectText = """
-                                             dialect FullDefault
-                                             use Arithmetic,BooleanConditions,Comments,ComparisonConditions,Conditions,CSharpInterop,Equality,Identifier,Labels,Loops,Numbers,Scopes,SemicolonAsNewLine,Variables,Whitespaces
-                                             backend cil,interpreter
-                                             enable BooleanOptimization
-                                             enable ComparisonIntrinsicOptimization
-                                             enable LocalVariablesOptimization
-                                             security trusted
-                                             capability unsafe-interop
-                                             """;
+                                              dialect FullDefault
+                                              use Arithmetic,BooleanConditions,Comments,ComparisonConditions,Conditions,CSharpInterop,Equality,Identifier,Labels,Loops,Numbers,Scopes,SemicolonAsNewLine,Variables,Whitespaces
+                                              backend cil,interpreter
+                                              enable BooleanOptimization
+                                              enable ComparisonIntrinsicOptimization
+                                              enable LocalVariablesOptimization
+                                              security trusted
+                                              capability unsafe-interop
+                                              """;
 
     private string? _dialectFilePath;
 

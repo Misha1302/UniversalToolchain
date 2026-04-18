@@ -1,6 +1,4 @@
 using BasicLexer.Core;
-using BasicParser.Core;
-using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Frontend;
 
 namespace Tests.Core;

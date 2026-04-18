@@ -9,8 +9,5 @@ public readonly record struct IntrinsicTypeArgument(Type RuntimeType)
         return new IntrinsicTypeArgument(type);
     }
 
-    public override string ToString()
-    {
-        return RuntimeType.FullName ?? RuntimeType.Name;
-    }
+    public override string ToString() => RuntimeType.FullName ?? RuntimeType.Name;
 }

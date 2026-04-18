@@ -21,6 +21,7 @@ public class ArithmeticOptimizerModule : IIRProcessingModule
     ];
 
     private IOptimizerIntrinsicCapabilityContext? _capabilityContext;
+
     public void InitIntrinsicCapabilityContext(IOptimizerIntrinsicCapabilityContext capabilityContext)
     {
         capabilityContext = capabilityContext.ArgNotNull();
@@ -388,13 +389,11 @@ public class ArithmeticOptimizerModule : IIRProcessingModule
         return false;
     }
 
-    private static bool IsArithmeticSymbol(IntrinsicSymbol symbol)
-    {
-        return symbol == BuiltinIntrinsicSymbols.Arithmetic.Add ||
-               symbol == BuiltinIntrinsicSymbols.Arithmetic.Subtract ||
-               symbol == BuiltinIntrinsicSymbols.Arithmetic.Multiply ||
-               symbol == BuiltinIntrinsicSymbols.Arithmetic.Divide;
-    }
+    private static bool IsArithmeticSymbol(IntrinsicSymbol symbol) =>
+        symbol == BuiltinIntrinsicSymbols.Arithmetic.Add ||
+        symbol == BuiltinIntrinsicSymbols.Arithmetic.Subtract ||
+        symbol == BuiltinIntrinsicSymbols.Arithmetic.Multiply ||
+        symbol == BuiltinIntrinsicSymbols.Arithmetic.Divide;
 
     private static bool TryMapTypeToSuffix(Type runtimeType, out string suffix)
     {

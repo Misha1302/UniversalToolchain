@@ -3,7 +3,7 @@ using UniversalToolchain.Intrinsics.Contracts;
 namespace UniversalToolchain.Intrinsics.Core.Rules;
 
 /// <summary>
-/// Pops a single value from the stack.
+///     Pops a single value from the stack.
 /// </summary>
 public sealed class PopOneRule : IIntrinsicStackRule
 {

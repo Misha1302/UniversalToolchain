@@ -1,5 +1,5 @@
-using BasicCodeTranslator;
 using AbstractIrExtensions;
+using BasicCodeTranslator;
 using UniversalToolchain.Intrinsics.Core;
 
 namespace Tests.Internal;

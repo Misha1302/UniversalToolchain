@@ -152,7 +152,7 @@ public sealed class WistDialectServiceProviderFactory
             .SelectMany(static moduleType =>
                 moduleType.GetCustomAttributes(typeof(IntrinsicDescriptorProviderAttribute), false)
                     .Cast<IntrinsicDescriptorProviderAttribute>()
-                    .Select(attribute => (ModuleType: moduleType, ProviderType: attribute.ProviderType)))
+                    .Select(attribute => (ModuleType: moduleType, attribute.ProviderType)))
             .OrderBy(x => x.ModuleType.FullName, StringComparer.Ordinal)
             .ThenBy(x => x.ProviderType.FullName, StringComparer.Ordinal)
             .ToList();

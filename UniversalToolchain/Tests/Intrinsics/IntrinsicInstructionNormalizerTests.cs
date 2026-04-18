@@ -148,10 +148,7 @@ public class IntrinsicInstructionNormalizerTests
     {
         var instruction = Intrinsic("definitely_unknown_intrinsic");
 
-        Assert.Throws<InvalidOperationException>(() =>
-        {
-            _ = IntrinsicInstructionNormalizer.NormalizeOrThrow(instruction);
-        });
+        Assert.Throws<InvalidOperationException>(() => { _ = IntrinsicInstructionNormalizer.NormalizeOrThrow(instruction); });
     }
 
     private static Instruction CreateTypedInstruction(

@@ -1,7 +1,7 @@
-using UniversalToolchain.Intrinsics.Builtins;
-using UniversalToolchain.Intrinsics.Core;
-using UniversalToolchain.Intrinsics.Contracts;
 using System.Reflection.Emit;
+using UniversalToolchain.Intrinsics.Builtins;
+using UniversalToolchain.Intrinsics.Contracts;
+using UniversalToolchain.Intrinsics.Core;
 
 namespace Tests.Backends;
 
@@ -465,10 +465,7 @@ public class CilBackendAbstractIrCompilationTests
         return executor.Execute(method, new ExecutionEnvironment([]));
     }
 
-    private static object CompileAndExecute(IAbstractIR ir)
-    {
-        return Execute(Compile(ir));
-    }
+    private static object CompileAndExecute(IAbstractIR ir) => Execute(Compile(ir));
 
     private sealed class ReflectionTarget(int seed)
     {

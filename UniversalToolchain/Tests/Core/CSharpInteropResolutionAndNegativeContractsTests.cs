@@ -1,5 +1,4 @@
 using AssemblyFinder;
-using CommonExceptions;
 using Tests.Infrastructure;
 
 namespace Tests.Core;

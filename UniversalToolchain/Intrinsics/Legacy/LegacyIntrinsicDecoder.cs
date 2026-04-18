@@ -1,4 +1,3 @@
-using IntermediateRepresentationAbstractions;
 using ObjectExtensions;
 using UniversalToolchain.Intrinsics.Builtins;
 using UniversalToolchain.Intrinsics.Contracts;
@@ -6,7 +5,7 @@ using UniversalToolchain.Intrinsics.Contracts;
 namespace UniversalToolchain.Intrinsics.Legacy;
 
 /// <summary>
-/// Decodes current string-based intrinsic instructions without changing existing emitters.
+///     Decodes current string-based intrinsic instructions without changing existing emitters.
 /// </summary>
 public sealed class LegacyIntrinsicDecoder : ILegacyIntrinsicDecoder
 {

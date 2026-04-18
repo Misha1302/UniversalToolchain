@@ -3,7 +3,7 @@ using UniversalToolchain.Intrinsics.Contracts;
 namespace UniversalToolchain.Intrinsics.Core.Rules;
 
 /// <summary>
-/// Applies a binary operation that consumes two values of the same expected type and pushes the same type.
+///     Applies a binary operation that consumes two values of the same expected type and pushes the same type.
 /// </summary>
 public sealed class BinarySameTypeResultRule : IIntrinsicStackRule
 {

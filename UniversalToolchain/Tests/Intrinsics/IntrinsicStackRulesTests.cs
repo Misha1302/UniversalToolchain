@@ -16,7 +16,7 @@ public sealed class IntrinsicStackRulesTests
     {
         var rule = new BinarySameTypeResultRule();
         var stack = new List<Type> { typeof(int), typeof(int) };
-        var invocation = CreateInvocation(typeArguments: [IntrinsicTypeArgument.From(typeof(int))]);
+        var invocation = CreateInvocation([IntrinsicTypeArgument.From(typeof(int))]);
 
         rule.Apply(invocation, stack, Context);
 
@@ -28,7 +28,7 @@ public sealed class IntrinsicStackRulesTests
     {
         var rule = new BinaryComparisonRule();
         var stack = new List<Type> { typeof(int), typeof(int) };
-        var invocation = CreateInvocation(typeArguments: [IntrinsicTypeArgument.From(typeof(int))]);
+        var invocation = CreateInvocation([IntrinsicTypeArgument.From(typeof(int))]);
 
         rule.Apply(invocation, stack, Context);
 
@@ -69,7 +69,7 @@ public sealed class IntrinsicStackRulesTests
     {
         var rule = new LoadLocalRefStackRule();
         var stack = new List<Type>();
-        var invocation = CreateInvocation(typeArguments: [IntrinsicTypeArgument.From(typeof(int))]);
+        var invocation = CreateInvocation([IntrinsicTypeArgument.From(typeof(int))]);
 
         rule.Apply(invocation, stack, Context);
 
@@ -78,11 +78,9 @@ public sealed class IntrinsicStackRulesTests
 
     private static IntrinsicInvocation CreateInvocation(
         IReadOnlyList<IntrinsicTypeArgument>? typeArguments = null,
-        IReadOnlyList<object?>? dataOperands = null)
-    {
-        return new IntrinsicInvocation(
+        IReadOnlyList<object?>? dataOperands = null) =>
+        new(
             new IntrinsicSymbol("test", "intrinsic"),
             typeArguments ?? [],
             dataOperands ?? []);
-    }
 }

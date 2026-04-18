@@ -151,21 +151,17 @@ public class ComparisonIntrinsicOptimizerModule : IIRProcessingModule
         return null;
     }
 
-    private static bool IsSupportedType(Type type)
-    {
-        return type == typeof(int) ||
-               type == typeof(long) ||
-               type == typeof(float) ||
-               type == typeof(double);
-    }
+    private static bool IsSupportedType(Type type) =>
+        type == typeof(int) ||
+        type == typeof(long) ||
+        type == typeof(float) ||
+        type == typeof(double);
 
-    private static bool IsComparisonSymbol(IntrinsicSymbol symbol)
-    {
-        return symbol == BuiltinIntrinsicSymbols.Comparison.Equal ||
-               symbol == BuiltinIntrinsicSymbols.Comparison.NotEqual ||
-               symbol == BuiltinIntrinsicSymbols.Comparison.Greater ||
-               symbol == BuiltinIntrinsicSymbols.Comparison.GreaterOrEqual ||
-               symbol == BuiltinIntrinsicSymbols.Comparison.Less ||
-               symbol == BuiltinIntrinsicSymbols.Comparison.LessOrEqual;
-    }
+    private static bool IsComparisonSymbol(IntrinsicSymbol symbol) =>
+        symbol == BuiltinIntrinsicSymbols.Comparison.Equal ||
+        symbol == BuiltinIntrinsicSymbols.Comparison.NotEqual ||
+        symbol == BuiltinIntrinsicSymbols.Comparison.Greater ||
+        symbol == BuiltinIntrinsicSymbols.Comparison.GreaterOrEqual ||
+        symbol == BuiltinIntrinsicSymbols.Comparison.Less ||
+        symbol == BuiltinIntrinsicSymbols.Comparison.LessOrEqual;
 }

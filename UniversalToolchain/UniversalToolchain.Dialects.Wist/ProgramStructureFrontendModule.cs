@@ -18,14 +18,10 @@ public sealed class ProgramStructureFrontendModule : IFrontendCoreModule
         public void TryVisit(BytecodeVisitorData data)
         {
             if (data.Node.NodeType != ExtensibleEnum<AstNodeTag>.Get("Program"))
-            {
                 return;
-            }
 
             foreach (var child in data.Node.Children)
-            {
                 data.AstToBytecodeTranslator.Translate(child);
-            }
         }
     }
 }

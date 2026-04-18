@@ -1,7 +1,7 @@
-using UniversalToolchain.Intrinsics.Builtins;
-using UniversalToolchain.Intrinsics.Contracts;
 using SettableGettableModule.Core;
 using Tests.Infrastructure;
+using UniversalToolchain.Intrinsics.Builtins;
+using UniversalToolchain.Intrinsics.Contracts;
 
 namespace Tests.Backends;
 
@@ -417,10 +417,7 @@ public class InterpreterBackendIrExecutionTests
         return new Instruction(UOpCode.Intrinsic, operands);
     }
 
-    private static IAbstractIR Air(params Instruction[] instructions)
-    {
-        return BuildIr(instructions);
-    }
+    private static IAbstractIR Air(params Instruction[] instructions) => BuildIr(instructions);
 
     private static IAbstractIR BuildIr(params Instruction[] instructions)
     {

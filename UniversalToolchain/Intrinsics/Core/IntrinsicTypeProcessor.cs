@@ -134,9 +134,7 @@ internal static class IntrinsicTypeProcessor
         var stackTypes = stack.TakeLast(parametersCount).ToList();
         var targetTypes = GenericTypeResolver.GetParameterTypes(method, stackTypes).ToList();
         if (!method.IsStatic)
-        {
             targetTypes.Insert(0, method.DeclaringType);
-        }
 
         method = GenericTypeResolver.MakeGenericMethod(method, targetTypes);
 
@@ -324,8 +322,6 @@ internal static class IntrinsicTypeProcessor
         Thrower.AssertAlways(stack.Count >= count, $"Cannot pop {count} values from a stack of size {stack.Count}.");
 
         for (var i = 0; i < count; i++)
-        {
             stack.RemoveAt(stack.Count - 1);
-        }
     }
 }

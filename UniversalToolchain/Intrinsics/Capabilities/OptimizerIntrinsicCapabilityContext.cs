@@ -13,10 +13,7 @@ public sealed class OptimizerIntrinsicCapabilityContext : IOptimizerIntrinsicCap
         _capabilitySet = capabilitySet;
     }
 
-    public bool Supports(IntrinsicSymbol symbol, params Type[] typeArguments)
-    {
-        return Supports(symbol, (IReadOnlyList<Type>)typeArguments);
-    }
+    public bool Supports(IntrinsicSymbol symbol, params Type[] typeArguments) => Supports(symbol, (IReadOnlyList<Type>)typeArguments);
 
     public bool Supports(IntrinsicSymbol symbol, IReadOnlyList<Type> typeArguments)
     {

@@ -9,12 +9,12 @@ internal sealed class GlobalTestStateScope : IDisposable
         Reset();
     }
 
-    public static GlobalTestStateScope Create() => new();
-
     public void Dispose()
     {
         Reset();
     }
+
+    public static GlobalTestStateScope Create() => new();
 
     private static void Reset()
     {

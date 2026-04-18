@@ -23,8 +23,5 @@ internal sealed class OptimizerDirectiveHandler : IDialectDirectiveHandler
             optimizerDirectives.Where(x => !x.Enabled).Select(FormatRuleName)));
     }
 
-    private static string FormatRuleName(OptimizerBuildDirective directive)
-    {
-        return DialectDirectiveHandlerContext.FormatRuleName(directive.Name, directive.Target);
-    }
+    private static string FormatRuleName(OptimizerBuildDirective directive) => DialectDirectiveHandlerContext.FormatRuleName(directive.Name, directive.Target);
 }

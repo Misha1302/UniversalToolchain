@@ -24,7 +24,7 @@ public sealed class TypedIntrinsicEmitterOptimizerTests
     {
         var optimizer = CreateOptimizer(
             new ArithmeticOptimizerModule(),
-            CreateArithmeticCapabilities(includeDecimal: false).ToArray());
+            CreateArithmeticCapabilities(false).ToArray());
         var method = typeof(NativeArithmetic).GetMethod(nameof(NativeArithmetic.Add), BindingFlags.Public | BindingFlags.Static)?.MakeGenericMethod(typeof(int));
         Assert.That(method, Is.Not.Null);
 
@@ -43,7 +43,7 @@ public sealed class TypedIntrinsicEmitterOptimizerTests
     {
         var optimizer = CreateOptimizer(
             new ArithmeticOptimizerModule(),
-            CreateArithmeticCapabilities(includeDecimal: true).ToArray());
+            CreateArithmeticCapabilities(true).ToArray());
         var method = typeof(NativeArithmetic).GetMethod(nameof(NativeArithmetic.Add), BindingFlags.Public | BindingFlags.Static)?.MakeGenericMethod(typeof(int));
         Assert.That(method, Is.Not.Null);
 
@@ -196,7 +196,7 @@ public sealed class TypedIntrinsicEmitterOptimizerTests
     {
         var optimizer = CreateOptimizer(
             new EGraphOptimizerModule(),
-            CreateArithmeticCapabilities(includeDecimal: false).ToArray());
+            CreateArithmeticCapabilities(false).ToArray());
 
         var input = CreateIr(
             BuiltinIntrinsicInstruction.Create(BuiltinIntrinsicSymbols.Storage.LoadLocal, typeof(int), ["x", typeof(int)]),
@@ -290,10 +290,7 @@ public sealed class TypedIntrinsicEmitterOptimizerTests
     {
         public IReadOnlyList<string> SupportedIntrinsics => [];
 
-        public object Compile(IAbstractIR air, CompilationInput input)
-        {
-            throw new NotSupportedException();
-        }
+        public object Compile(IAbstractIR air, CompilationInput input) => throw new NotSupportedException();
     }
 
     private sealed class FakeCapabilitySet(

@@ -143,11 +143,9 @@ public sealed class BuiltInDescriptorProvidersTests
     private static IntrinsicInvocation CreateInvocation(
         IntrinsicSymbol symbol,
         IReadOnlyList<IntrinsicTypeArgument>? typeArguments = null,
-        IReadOnlyList<object?>? dataOperands = null)
-    {
-        return new IntrinsicInvocation(
+        IReadOnlyList<object?>? dataOperands = null) =>
+        new(
             symbol,
             typeArguments ?? [],
             dataOperands ?? []);
-    }
 }

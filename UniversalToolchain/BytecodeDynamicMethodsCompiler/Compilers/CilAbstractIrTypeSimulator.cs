@@ -14,10 +14,7 @@ internal sealed class CilAbstractIrTypeSimulator
         _intrinsicCompiler = intrinsicCompiler;
     }
 
-    public List<Type> Simulate(IReadOnlyList<Instruction> instructions)
-    {
-        return Simulate(instructions, new Dictionary<Guid, List<Type>>());
-    }
+    public List<Type> Simulate(IReadOnlyList<Instruction> instructions) => Simulate(instructions, new Dictionary<Guid, List<Type>>());
 
     public List<Type> Simulate(IReadOnlyList<Instruction> instructions, Dictionary<Guid, List<Type>> labelStacks)
     {

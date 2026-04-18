@@ -3,7 +3,7 @@ using UniversalToolchain.Intrinsics.Contracts;
 namespace UniversalToolchain.Intrinsics.Core.Rules;
 
 /// <summary>
-/// Pushes a single resolved type onto the stack.
+///     Pushes a single resolved type onto the stack.
 /// </summary>
 public sealed class PushSingleTypeRule : IIntrinsicStackRule
 {

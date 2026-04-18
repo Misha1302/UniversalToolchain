@@ -83,10 +83,8 @@ public sealed class IntrinsicSemanticCoverageValidator
             foreach (var descriptor in descriptors)
             {
                 if (!catalog.TryResolve(descriptor.Symbol, out _))
-                {
                     errors.Add(
                         $"Module '{moduleDisplayName}' expects symbol '{descriptor.Symbol}' from provider '{providerDisplayName}', but the symbol is missing from the intrinsic catalog.");
-                }
             }
         }
 

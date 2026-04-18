@@ -13,7 +13,7 @@ public static class PricingDiscountScenario
     {
         var printer = new ScenarioConsolePrinter();
         var hardcodedPricingCalculator = new HardcodedPricingCalculator();
-        using var generalDslPricingCalculator = new DslPricingCalculator(GeneralDialectProfileName);
+        using var generalDslPricingCalculator = new DslPricingCalculator();
         using var restrictedDslPricingCalculator = new DslPricingCalculator(RestrictedDialectProfileName);
 
         printer.PrintTitle("Pricing and Discount Demo");
@@ -69,12 +69,10 @@ public static class PricingDiscountScenario
         double generalInterpreterResult,
         double generalFastInvokerResult,
         double restrictedCompilerResult,
-        double restrictedInterpreterResult)
-    {
-        return hardcodedResult == generalCompilerResult &&
-               hardcodedResult == generalInterpreterResult &&
-               hardcodedResult == generalFastInvokerResult &&
-               hardcodedResult == restrictedCompilerResult &&
-               hardcodedResult == restrictedInterpreterResult;
-    }
+        double restrictedInterpreterResult) =>
+        hardcodedResult == generalCompilerResult &&
+        hardcodedResult == generalInterpreterResult &&
+        hardcodedResult == generalFastInvokerResult &&
+        hardcodedResult == restrictedCompilerResult &&
+        hardcodedResult == restrictedInterpreterResult;
 }

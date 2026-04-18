@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+
 namespace BasicCore.Execution;
 
 /// <summary>
@@ -32,6 +34,6 @@ public sealed class ExternalBindingsLayout
                 Thrower.Argument(nameof(declaredBindings), $"Declared binding '{name}' is duplicated.");
         }
 
-        return new ExternalBindingsLayout(new System.Collections.ObjectModel.ReadOnlyDictionary<string, int>(slots));
+        return new ExternalBindingsLayout(new ReadOnlyDictionary<string, int>(slots));
     }
 }

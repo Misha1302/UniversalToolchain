@@ -13,12 +13,12 @@ internal sealed class WistCilDialectBackendServiceProvider : DialectBackendRunti
 
     public override IReadOnlyList<string> SupportedIntrinsics => AbstractMethodsCompilerImpl.SupportedIntrinsicIds;
 
-    protected override void RegisterBackendDefaults(IServiceCollection services)
+    override protected void RegisterBackendDefaults(IServiceCollection services)
         => services.AddCompilerBackendDefaults();
 
-    protected override AbstractMethodsCompilerImpl ResolveBackendCompiler(IServiceProvider provider)
+    override protected AbstractMethodsCompilerImpl ResolveBackendCompiler(IServiceProvider provider)
         => provider.GetRequiredService<AbstractMethodsCompilerImpl>();
 
-    protected override Func<IExecutor<DynamicMethod>> ResolveExecutorFactory(IServiceProvider provider)
+    override protected Func<IExecutor<DynamicMethod>> ResolveExecutorFactory(IServiceProvider provider)
         => provider.GetRequiredService<Func<IExecutor<DynamicMethod>>>();
 }

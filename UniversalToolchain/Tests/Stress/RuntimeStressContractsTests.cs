@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using Tests.Infrastructure;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;

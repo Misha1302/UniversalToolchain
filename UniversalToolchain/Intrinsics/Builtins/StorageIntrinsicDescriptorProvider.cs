@@ -8,21 +8,21 @@ public sealed class StorageIntrinsicDescriptorProvider : IIntrinsicDescriptorPro
 {
     private readonly IReadOnlyList<IntrinsicSemanticDescriptor> _descriptors =
     [
-        new IntrinsicSemanticDescriptor
+        new()
         {
             Symbol = BuiltinIntrinsicSymbols.Storage.LoadLocal,
             Category = IntrinsicCategory.Storage,
             StackRule = new PushSingleTypeRule((invocation, context) => context.Resolve(invocation.TypeArguments[0])),
             ValidationRule = new ExpectedTypeArgumentCountRule(1)
         },
-        new IntrinsicSemanticDescriptor
+        new()
         {
             Symbol = BuiltinIntrinsicSymbols.Storage.StoreLocal,
             Category = IntrinsicCategory.Storage,
             StackRule = new PopOneRule(),
             ValidationRule = new NoValidationRule()
         },
-        new IntrinsicSemanticDescriptor
+        new()
         {
             Symbol = BuiltinIntrinsicSymbols.Storage.LoadLocalRef,
             Category = IntrinsicCategory.Storage,
@@ -31,8 +31,5 @@ public sealed class StorageIntrinsicDescriptorProvider : IIntrinsicDescriptorPro
         }
     ];
 
-    public IReadOnlyList<IntrinsicSemanticDescriptor> GetDescriptors()
-    {
-        return _descriptors;
-    }
+    public IReadOnlyList<IntrinsicSemanticDescriptor> GetDescriptors() => _descriptors;
 }

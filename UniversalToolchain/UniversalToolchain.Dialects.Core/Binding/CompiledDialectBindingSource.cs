@@ -9,10 +9,10 @@ internal sealed class CompiledDialectBindingSource : IDialectBindingSource
 {
     private readonly ReadOnlyCollection<BackendBindingDirectiveRecord> _backendDirectives;
     private readonly ReadOnlyCollection<KeyValuePair<string, bool>> _capabilities;
-    private readonly DialectDefinitionSlice _slice;
     private readonly ReadOnlyCollection<IntrinsicBindingDirectiveRecord> _intrinsicDirectives;
     private readonly ReadOnlyCollection<OptimizerBindingDirectiveRecord> _optimizerDirectives;
     private readonly ReadOnlyCollection<OrderBindingDirectiveRecord> _orderRules;
+    private readonly DialectDefinitionSlice _slice;
 
     public CompiledDialectBindingSource(DialectDefinitionSlice slice)
     {
@@ -74,8 +74,8 @@ internal sealed class CompiledDialectBindingSource : IDialectBindingSource
     {
         return profile switch
         {
-            DialectSecurityProfile.Trusted => UniversalToolchain.Dialects.Abstractions.SecurityProfile.Trusted,
-            _ => UniversalToolchain.Dialects.Abstractions.SecurityProfile.Restricted
+            DialectSecurityProfile.Trusted => Abstractions.SecurityProfile.Trusted,
+            _ => Abstractions.SecurityProfile.Restricted
         };
     }
 }

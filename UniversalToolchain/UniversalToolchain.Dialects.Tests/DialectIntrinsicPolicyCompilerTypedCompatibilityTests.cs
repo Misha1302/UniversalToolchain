@@ -1,10 +1,10 @@
 using BasicCore.Compilation;
 using BasicCore.Contracts;
 using IntermediateRepresentationAbstractions;
+using UniversalIntermediateRepresentation;
 using UniversalToolchain.Dialects.Wist;
 using UniversalToolchain.Intrinsics.Builtins;
 using UniversalToolchain.Intrinsics.Contracts;
-using UniversalIntermediateRepresentation;
 
 namespace UniversalToolchain.Dialects.Tests;
 
@@ -13,7 +13,7 @@ public class DialectIntrinsicPolicyCompilerTypedCompatibilityTests
     [Test]
     public void Compile_ForbidsTypedIntrinsic_SameWayAsLegacyStringIntrinsic()
     {
-        var compiler = CreatePolicyCompiler(forbiddenIntrinsics: ["boolean_not"]);
+        var compiler = CreatePolicyCompiler(["boolean_not"]);
         var typedIr = BuildIr(CreateTypedIntrinsic(BuiltinIntrinsicSymbols.Boolean.Not));
         var legacyIr = BuildIr(new Instruction(UOpCode.Intrinsic, ["boolean_not"]));
         var input = new CompilationInput { SourceText = string.Empty };
@@ -28,14 +28,12 @@ public class DialectIntrinsicPolicyCompilerTypedCompatibilityTests
         });
     }
 
-    private static DialectIntrinsicPolicyCompiler<IAbstractIR> CreatePolicyCompiler(IReadOnlyList<string> forbiddenIntrinsics)
-    {
-        return new DialectIntrinsicPolicyCompiler<IAbstractIR>(
+    private static DialectIntrinsicPolicyCompiler<IAbstractIR> CreatePolicyCompiler(IReadOnlyList<string> forbiddenIntrinsics) =>
+        new(
             new PassthroughCompiler(),
-            allowedIntrinsics: [],
-            forbiddenIntrinsics: forbiddenIntrinsics,
-            hasExplicitAllowList: false);
-    }
+            [],
+            forbiddenIntrinsics,
+            false);
 
     private static Instruction CreateTypedIntrinsic(
         IntrinsicSymbol symbol,

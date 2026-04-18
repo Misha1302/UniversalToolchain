@@ -61,10 +61,7 @@ public sealed class IntrinsicSemanticStartupValidationRuntimeTests
             [],
             []);
 
-        Assert.DoesNotThrow(() =>
-        {
-            _ = factory.Create(configuration);
-        });
+        Assert.DoesNotThrow(() => { _ = factory.Create(configuration); });
     }
 
     [Test]
@@ -78,12 +75,14 @@ public sealed class IntrinsicSemanticStartupValidationRuntimeTests
             [],
             [],
             [],
-            [new DialectBackendRuntimeConfiguration(
-                new RuntimeBackendDescriptor(new DialectBackendId("counting"), typeof(CountingBackendRegistrar)),
-                [],
-                [],
-                [],
-                false)],
+            [
+                new DialectBackendRuntimeConfiguration(
+                    new RuntimeBackendDescriptor(new DialectBackendId("counting"), typeof(CountingBackendRegistrar)),
+                    [],
+                    [],
+                    [],
+                    false)
+            ],
             [new RuntimeBackendDescriptor(new DialectBackendId("counting"), typeof(CountingBackendRegistrar))]);
 
         var provider = factory.Create(configuration);
@@ -94,38 +93,41 @@ public sealed class IntrinsicSemanticStartupValidationRuntimeTests
         Assert.That(CountingDependency.CreationCount, Is.EqualTo(1));
     }
 
+    private static IntrinsicSemanticDescriptor CreateDescriptor(string @namespace, string name) =>
+        new()
+        {
+            Symbol = new IntrinsicSymbol(@namespace, name),
+            Category = IntrinsicCategory.Core,
+            StackRule = new NoOpStackRule(),
+            ValidationRule = new NoOpValidationRule()
+        };
+
     private sealed class NotAProvider;
 
     private sealed class MissingProvider : IIntrinsicDescriptorProvider
     {
-        public IReadOnlyList<IntrinsicSemanticDescriptor> GetDescriptors()
-        {
-            return [CreateDescriptor("logic", "missing")];
-        }
+        public IReadOnlyList<IntrinsicSemanticDescriptor> GetDescriptors() =>
+            [CreateDescriptor("logic", "missing")];
     }
 
     private sealed class ValidProvider : IIntrinsicDescriptorProvider
     {
-        public IReadOnlyList<IntrinsicSemanticDescriptor> GetDescriptors()
-        {
-            return [CreateDescriptor("logic", "present")];
-        }
+        public IReadOnlyList<IntrinsicSemanticDescriptor> GetDescriptors() =>
+            [CreateDescriptor("logic", "present")];
     }
 
     private sealed class CountingDependency
     {
-        private static int _creationCount;
-
         public CountingDependency()
         {
-            _creationCount++;
+            CreationCount++;
         }
 
-        public static int CreationCount => _creationCount;
+        public static int CreationCount { get; private set; }
 
         public static void Reset()
         {
-            _creationCount = 0;
+            CreationCount = 0;
         }
     }
 
@@ -159,17 +161,6 @@ public sealed class IntrinsicSemanticStartupValidationRuntimeTests
 
     [IntrinsicDescriptorProvider(typeof(ValidProvider))]
     private sealed class ValidProviderFrontendModule : IFrontendCoreModule;
-
-    private static IntrinsicSemanticDescriptor CreateDescriptor(string @namespace, string name)
-    {
-        return new IntrinsicSemanticDescriptor
-        {
-            Symbol = new IntrinsicSymbol(@namespace, name),
-            Category = IntrinsicCategory.Core,
-            StackRule = new NoOpStackRule(),
-            ValidationRule = new NoOpValidationRule()
-        };
-    }
 
     private sealed class NoOpStackRule : IIntrinsicStackRule
     {

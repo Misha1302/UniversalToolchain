@@ -1,7 +1,4 @@
-using IntermediateRepresentationAbstractions;
-using ObjectExtensions;
 using UniversalToolchain.Intrinsics.Builtins;
-using UniversalToolchain.Intrinsics.Capabilities;
 using UniversalToolchain.Intrinsics.Contracts;
 
 namespace UniversalToolchain.Intrinsics.Core;

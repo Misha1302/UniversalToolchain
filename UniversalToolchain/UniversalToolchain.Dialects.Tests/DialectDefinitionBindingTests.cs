@@ -11,7 +11,7 @@ public class DialectDefinitionBindingTests
     [Test]
     public void Bind_SyntaxPath_MatchesBindCoreResult()
     {
-        var document = CreateSyntaxDocument("dialect", version: "1.0");
+        var document = CreateSyntaxDocument("dialect", "1.0");
         var publicDiagnostics = new List<DialectDiagnostic>();
         var coreDiagnostics = new List<DialectDiagnostic>();
 
@@ -142,9 +142,8 @@ public class DialectDefinitionBindingTests
         });
     }
 
-    private static DialectSyntaxDocument CreateSyntaxDocument(string name, string? version = null)
-    {
-        return new DialectSyntaxDocument(
+    private static DialectSyntaxDocument CreateSyntaxDocument(string name, string? version = null) =>
+        new(
             name,
             version,
             ["B", "A", "A"],
@@ -171,11 +170,9 @@ public class DialectDefinitionBindingTests
                 new KeyValuePair<string, bool>("supports-floats", true),
                 new KeyValuePair<string, bool>("safe-interop", false)
             ]);
-    }
 
-    private static DialectDefinitionSlice CreateCompiledSlice(string name)
-    {
-        return new DialectDefinitionSlice(
+    private static DialectDefinitionSlice CreateCompiledSlice(string name) =>
+        new(
             name,
             ["B", "A", "A"],
             ["Z", "Z"],
@@ -201,7 +198,6 @@ public class DialectDefinitionBindingTests
                 new DialectCapabilityDirective("supports-floats", true),
                 new DialectCapabilityDirective("safe-interop", false)
             ]);
-    }
 
     private static void AssertDefinitionsEqual(DialectDefinition expected, DialectDefinition actual)
     {

@@ -126,10 +126,7 @@ public sealed class LegacyIntrinsicDecoderTests
         Assert.That(invocation, Is.EqualTo(default(IntrinsicInvocation)));
     }
 
-    private static Instruction CreateIntrinsicInstruction(string name, params object[] operands)
-    {
-        return new Instruction(UOpCode.Intrinsic, [name, .. operands]);
-    }
+    private static Instruction CreateIntrinsicInstruction(string name, params object[] operands) => new(UOpCode.Intrinsic, [name, .. operands]);
 
     private static void AssertInvocation(
         IntrinsicInvocation invocation,

@@ -10,7 +10,7 @@ public static class VariablesContainer<T>
     }
 
     /// <summary>
-    /// Stores value by key, replacing an existing value when key is already present.
+    ///     Stores value by key, replacing an existing value when key is already present.
     /// </summary>
     public static void Set(string key, T value)
     {
@@ -18,7 +18,7 @@ public static class VariablesContainer<T>
     }
 
     /// <summary>
-    /// Gets value by key or throws <see cref="KeyNotFoundException"/> when key is missing.
+    ///     Gets value by key or throws <see cref="KeyNotFoundException" /> when key is missing.
     /// </summary>
     public static T Get(string key)
     {
@@ -31,12 +31,9 @@ public static class VariablesContainer<T>
     }
 
     /// <summary>
-    /// Tries to get value by key without throwing when key is missing.
+    ///     Tries to get value by key without throwing when key is missing.
     /// </summary>
-    public static bool TryGet(string key, out T value)
-    {
-        return _variables.TryGetValue(key, out value!);
-    }
+    public static bool TryGet(string key, out T value) => _variables.TryGetValue(key, out value!);
 
     public static VariableReference<T> GetRef(string key)
     {

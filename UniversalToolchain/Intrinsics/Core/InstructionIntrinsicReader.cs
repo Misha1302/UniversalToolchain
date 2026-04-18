@@ -1,11 +1,10 @@
-using IntermediateRepresentationAbstractions;
 using UniversalToolchain.Intrinsics.Contracts;
 using UniversalToolchain.Intrinsics.Legacy;
 
 namespace UniversalToolchain.Intrinsics.Core;
 
 /// <summary>
-/// Reads typed intrinsic payloads first and falls back to legacy decoding when needed.
+///     Reads typed intrinsic payloads first and falls back to legacy decoding when needed.
 /// </summary>
 public sealed class InstructionIntrinsicReader : IInstructionIntrinsicReader
 {

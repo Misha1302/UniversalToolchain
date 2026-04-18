@@ -1,10 +1,8 @@
-using AbstractIrConverters;
 using BasicCodeTranslator;
 using BasicCore.Contracts;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using BasicCore.Registration;
-using BasicCore.Contracts;
 using BasicCore.TranslatorWrapper;
 using BasicLexer.Core;
 using BasicParser.Core;
@@ -109,10 +107,7 @@ internal static class DialectDslTestSupport
         return services.BuildServiceProvider();
     }
 
-    public static IAbstractMethodsTranslator CreateAbstractMethodsTranslator()
-    {
-        return CreateAbstractMethodsTranslator(DialectDslTestComposition.CreateFrontendModule());
-    }
+    public static IAbstractMethodsTranslator CreateAbstractMethodsTranslator() => CreateAbstractMethodsTranslator(DialectDslTestComposition.CreateFrontendModule());
 
     public static IAbstractMethodsTranslator CreateAbstractMethodsTranslator(DialectDslFrontendModule module)
     {

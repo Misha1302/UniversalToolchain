@@ -18,7 +18,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\Tests\Tests.csproj" />
+        <ProjectReference Include="..\Tests\Tests.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Dialects.Integration\UniversalToolchain.Dialects.Integration.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj"/>
         <ProjectReference Include="..\NumbersModule\NumbersModule.csproj"/>
@@ -27,7 +27,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Compile Include="..\Tests\Infrastructure\BackendParityInfrastructure.cs" Link="Infrastructure\BackendParityInfrastructure.cs" />
+        <Compile Include="..\Tests\Infrastructure\BackendParityInfrastructure.cs" Link="Infrastructure\BackendParityInfrastructure.cs"/>
     </ItemGroup>
 
     <ItemGroup>

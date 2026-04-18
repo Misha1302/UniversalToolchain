@@ -43,9 +43,6 @@ public sealed class IntrinsicCapabilityServiceCollectionTests
     {
         public IReadOnlyList<string> SupportedIntrinsics { get; } = supportedIntrinsics;
 
-        public object Compile(IAbstractIR air, CompilationInput input)
-        {
-            throw new NotSupportedException();
-        }
+        public object Compile(IAbstractIR air, CompilationInput input) => throw new NotSupportedException();
     }
 }

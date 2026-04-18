@@ -6,9 +6,9 @@ namespace UniversalToolchain.Dialects.Integration;
 public sealed class RuntimeKnownBackendsProvider : IRuntimeKnownBackendsProvider
 {
     private readonly IRuntimeComponentCatalog _catalog;
+    private readonly Lazy<IReadOnlyList<RuntimeBackendDescriptor>> _knownBackends;
     private readonly IReadOnlyDictionary<DialectBackendId, IDialectBackendRuntimeRegistrar> _providersById;
     private readonly IRuntimeComponentTypeLoader _typeLoader;
-    private readonly Lazy<IReadOnlyList<RuntimeBackendDescriptor>> _knownBackends;
 
     public RuntimeKnownBackendsProvider(
         IRuntimeComponentCatalog catalog,

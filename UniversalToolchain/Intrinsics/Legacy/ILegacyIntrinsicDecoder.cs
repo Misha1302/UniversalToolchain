@@ -1,10 +1,9 @@
-using IntermediateRepresentationAbstractions;
 using UniversalToolchain.Intrinsics.Contracts;
 
 namespace UniversalToolchain.Intrinsics.Legacy;
 
 /// <summary>
-/// Translates current string-based intrinsic instructions into structured intrinsic invocations.
+///     Translates current string-based intrinsic instructions into structured intrinsic invocations.
 /// </summary>
 public interface ILegacyIntrinsicDecoder
 {

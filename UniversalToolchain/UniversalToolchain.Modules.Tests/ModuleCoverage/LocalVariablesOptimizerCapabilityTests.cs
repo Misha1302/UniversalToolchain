@@ -53,10 +53,7 @@ public sealed class LocalVariablesOptimizerCapabilityTests
         return optimizer;
     }
 
-    private static IOptimizerIntrinsicCapabilityContext CreateCapabilityContext(params IntrinsicSymbol[] supportedSymbols)
-    {
-        return new OptimizerIntrinsicCapabilityContext(new FakeCapabilitySet(supportedSymbols));
-    }
+    private static IOptimizerIntrinsicCapabilityContext CreateCapabilityContext(params IntrinsicSymbol[] supportedSymbols) => new OptimizerIntrinsicCapabilityContext(new FakeCapabilitySet(supportedSymbols));
 
     private static AbstractIR CreateLoadPatternIr()
     {
@@ -76,19 +73,13 @@ public sealed class LocalVariablesOptimizerCapabilityTests
     {
         public IReadOnlyList<string> SupportedIntrinsics => [];
 
-        public object Compile(IAbstractIR air, CompilationInput input)
-        {
-            throw new NotSupportedException();
-        }
+        public object Compile(IAbstractIR air, CompilationInput input) => throw new NotSupportedException();
     }
 
     private sealed class FakeCapabilitySet(params IntrinsicSymbol[] supportedSymbols) : IIntrinsicCapabilitySet
     {
         private readonly HashSet<IntrinsicSymbol> _supportedSymbols = supportedSymbols.ToHashSet();
 
-        public bool Supports(IntrinsicSymbol symbol, IReadOnlyList<IntrinsicTypeArgument> typeArguments)
-        {
-            return _supportedSymbols.Contains(symbol);
-        }
+        public bool Supports(IntrinsicSymbol symbol, IReadOnlyList<IntrinsicTypeArgument> typeArguments) => _supportedSymbols.Contains(symbol);
     }
 }

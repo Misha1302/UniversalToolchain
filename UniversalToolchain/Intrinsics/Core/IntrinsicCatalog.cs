@@ -23,8 +23,5 @@ public sealed class IntrinsicCatalog : IIntrinsicCatalog
         return descriptor;
     }
 
-    public bool TryResolve(IntrinsicSymbol symbol, out IntrinsicSemanticDescriptor descriptor)
-    {
-        return _descriptors.TryGetValue(symbol, out descriptor!);
-    }
+    public bool TryResolve(IntrinsicSymbol symbol, out IntrinsicSemanticDescriptor descriptor) => _descriptors.TryGetValue(symbol, out descriptor!);
 }

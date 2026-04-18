@@ -1,17 +1,16 @@
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
-using NUnit.Framework;
 using UniversalToolchain.Dialects.Wist;
 
 namespace Tests.Infrastructure;
 
 /// <summary>
-/// Unified parity infrastructure for compiler and interpreter backend execution.
+///     Unified parity infrastructure for compiler and interpreter backend execution.
 /// </summary>
 public static class BackendParityInfrastructure
 {
     /// <summary>
-    /// Executes the same code in both backends and captures success/failure outcomes.
+    ///     Executes the same code in both backends and captures success/failure outcomes.
     /// </summary>
     public static (BackendExecutionResult CompilerResult, BackendExecutionResult InterpreterResult) RunBoth(string dialectText, string code)
     {
@@ -24,7 +23,7 @@ public static class BackendParityInfrastructure
     }
 
     /// <summary>
-    /// Asserts that two backend outcomes are semantically equivalent.
+    ///     Asserts that two backend outcomes are semantically equivalent.
     /// </summary>
     public static void AssertSemanticParity(BackendExecutionResult compilerResult, BackendExecutionResult interpreterResult)
     {
@@ -43,18 +42,12 @@ public static class BackendParityInfrastructure
         Assert.That(compilerException.Message, Is.EqualTo(interpreterException.Message));
     }
 
-    public static double AsNumber(object? value)
-    {
-        return BackendResultAssertions.AsNumber(value);
-    }
+    public static double AsNumber(object? value) => BackendResultAssertions.AsNumber(value);
 
-    public static bool AsBool(object? value)
-    {
-        return BackendResultAssertions.AsBool(value);
-    }
+    public static bool AsBool(object? value) => BackendResultAssertions.AsBool(value);
 
     /// <summary>
-    /// Executes a backend function and captures success/failure in <see cref="BackendExecutionResult"/>.
+    ///     Executes a backend function and captures success/failure in <see cref="BackendExecutionResult" />.
     /// </summary>
     public static BackendExecutionResult ExecuteSafely(Func<object?> action)
     {
@@ -97,7 +90,7 @@ public static class BackendParityInfrastructure
 }
 
 /// <summary>
-/// Captures backend execution outcome for parity checks in both success and failure scenarios.
+///     Captures backend execution outcome for parity checks in both success and failure scenarios.
 /// </summary>
 public sealed record BackendExecutionResult(bool IsSuccess, object? Value, Exception? Exception)
 {

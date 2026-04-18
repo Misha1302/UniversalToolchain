@@ -1,8 +1,8 @@
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
+using Tests.Infrastructure;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
-using Tests.Infrastructure;
 
 namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 

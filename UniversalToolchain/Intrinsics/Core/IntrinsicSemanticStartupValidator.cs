@@ -38,7 +38,6 @@ public sealed class IntrinsicSemanticStartupValidator
 
         IIntrinsicCatalog? catalog = null;
         if (errors.Count == 0)
-        {
             try
             {
                 catalog = new IntrinsicCatalogBuilder().Build(providerList);
@@ -47,7 +46,6 @@ public sealed class IntrinsicSemanticStartupValidator
             {
                 errors.Add(ex.Message);
             }
-        }
 
         if (catalog != null)
             errors.AddRange(_coverageValidator.Validate(catalog, providerList, resolvedCoverageRequirements));

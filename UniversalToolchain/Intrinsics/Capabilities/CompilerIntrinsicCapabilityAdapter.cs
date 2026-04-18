@@ -1,4 +1,3 @@
-using BasicCore.Contracts;
 using UniversalToolchain.Intrinsics.Contracts;
 
 namespace UniversalToolchain.Intrinsics.Capabilities;
@@ -14,9 +13,7 @@ public sealed class CompilerIntrinsicCapabilityAdapter<TCompilationOutput> : IIn
         _compiler = compiler;
     }
 
-    public bool Supports(IntrinsicSymbol symbol, IReadOnlyList<IntrinsicTypeArgument> typeArguments)
-    {
-        return LegacyCapabilityNameEncoder.TryEncode(symbol, typeArguments, out var capabilityName)
-               && _compiler.SupportedIntrinsics.Contains(capabilityName);
-    }
+    public bool Supports(IntrinsicSymbol symbol, IReadOnlyList<IntrinsicTypeArgument> typeArguments) =>
+        LegacyCapabilityNameEncoder.TryEncode(symbol, typeArguments, out var capabilityName)
+        && _compiler.SupportedIntrinsics.Contains(capabilityName);
 }

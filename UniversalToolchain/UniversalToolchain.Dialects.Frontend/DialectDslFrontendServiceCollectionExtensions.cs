@@ -2,8 +2,6 @@ using System.Reflection;
 using BasicCore.Contracts;
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
-using UniversalToolchain.Intrinsics.Builtins;
-using UniversalToolchain.Intrinsics.Contracts;
 
 namespace UniversalToolchain.Dialects.Frontend;
 
@@ -34,15 +32,15 @@ public static class DialectDslFrontendServiceCollectionExtensions
     private static MethodInfo ResolveAddCoreRuntimeInfrastructureMethod()
     {
         var coreAssembly = AppDomain.CurrentDomain.GetAssemblies()
-            .FirstOrDefault(static assembly => string.Equals(
-                assembly.GetName().Name,
-                "UniversalToolchain.Dialects.Core",
-                StringComparison.Ordinal))
-            ?? Assembly.Load("UniversalToolchain.Dialects.Core");
+                               .FirstOrDefault(static assembly => string.Equals(
+                                   assembly.GetName().Name,
+                                   "UniversalToolchain.Dialects.Core",
+                                   StringComparison.Ordinal))
+                           ?? Assembly.Load("UniversalToolchain.Dialects.Core");
 
         var extensionType = coreAssembly.GetType(
             "UniversalToolchain.Dialects.Core.ServiceCollection.CoreRuntimeServiceCollectionExtensions",
-            throwOnError: true);
+            true);
 
         if (extensionType == null)
             Thrower.InvalidOpEx("Core runtime service collection extensions type was not found.");

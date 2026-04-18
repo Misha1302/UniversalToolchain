@@ -3,7 +3,7 @@ using UniversalToolchain.Intrinsics.Contracts;
 namespace UniversalToolchain.Intrinsics.Validation;
 
 /// <summary>
-/// Runs multiple validation rules in a deterministic sequence.
+///     Runs multiple validation rules in a deterministic sequence.
 /// </summary>
 public sealed class CompositeValidationRule : IIntrinsicValidationRule
 {
@@ -19,8 +19,6 @@ public sealed class CompositeValidationRule : IIntrinsicValidationRule
     public void Validate(IntrinsicInvocation invocation, IIntrinsicTypeResolutionContext context)
     {
         foreach (var rule in _rules)
-        {
             rule.Validate(invocation, context);
-        }
     }
 }

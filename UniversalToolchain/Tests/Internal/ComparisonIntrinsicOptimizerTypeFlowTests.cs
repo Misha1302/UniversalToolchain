@@ -1,4 +1,3 @@
-using System.Reflection;
 using ConditionsModule.Enums;
 using ConditionsModule.Optimizers;
 using UniversalToolchain.Intrinsics.Builtins;
@@ -67,10 +66,7 @@ public sealed class ComparisonIntrinsicOptimizerTypeFlowTests
     {
         public IReadOnlyList<string> SupportedIntrinsics => [];
 
-        public object Compile(IAbstractIR air, CompilationInput input)
-        {
-            throw new NotSupportedException();
-        }
+        public object Compile(IAbstractIR air, CompilationInput input) => throw new NotSupportedException();
     }
 
     private sealed class FakeCapabilitySet(

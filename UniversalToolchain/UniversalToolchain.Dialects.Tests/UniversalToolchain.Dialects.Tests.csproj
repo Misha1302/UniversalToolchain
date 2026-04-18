@@ -40,89 +40,89 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Content Include="..\Dialects\examples\wist\full-default-native\dialect.wistdialect">
-        <Link>Dialects\examples\wist\full-default-native\dialect.wistdialect</Link>
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <Content Include="..\Dialects\examples\wist\full-default-native\program.wist">
-        <Link>Dialects\examples\wist\full-default-native\program.wist</Link>
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <Content Include="..\Dialects\examples\wist\full-default-native\README.md">
-        <Link>Dialects\examples\wist\full-default-native\README.md</Link>
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <Content Include="..\Dialects\examples\wist\full-default\dialect.wistdialect">
-        <Link>Dialects\examples\wist\full-default\dialect.wistdialect</Link>
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <Content Include="..\Dialects\examples\wist\full-default\program.wist">
-        <Link>Dialects\examples\wist\full-default\program.wist</Link>
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <Content Include="..\Dialects\examples\wist\full-default\README.md">
-        <Link>Dialects\examples\wist\full-default\README.md</Link>
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <Content Include="..\Dialects\examples\wist\minimal-arithmetic-native\dialect.wistdialect">
-        <Link>Dialects\examples\wist\minimal-arithmetic-native\dialect.wistdialect</Link>
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <Content Include="..\Dialects\examples\wist\minimal-arithmetic-native\program.wist">
-        <Link>Dialects\examples\wist\minimal-arithmetic-native\program.wist</Link>
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <Content Include="..\Dialects\examples\wist\minimal-arithmetic-native\README.md">
-        <Link>Dialects\examples\wist\minimal-arithmetic-native\README.md</Link>
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <Content Include="..\Dialects\examples\wist\minimal-arithmetic\dialect.wistdialect">
-        <Link>Dialects\examples\wist\minimal-arithmetic\dialect.wistdialect</Link>
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <Content Include="..\Dialects\examples\wist\minimal-arithmetic\program.wist">
-        <Link>Dialects\examples\wist\minimal-arithmetic\program.wist</Link>
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <Content Include="..\Dialects\examples\wist\minimal-arithmetic\README.md">
-        <Link>Dialects\examples\wist\minimal-arithmetic\README.md</Link>
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <Content Include="..\Dialects\examples\wist\restricted-sandbox\dialect.wistdialect">
-        <Link>Dialects\examples\wist\restricted-sandbox\dialect.wistdialect</Link>
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <Content Include="..\Dialects\examples\wist\restricted-sandbox\forbidden-interop.wist">
-        <Link>Dialects\examples\wist\restricted-sandbox\forbidden-interop.wist</Link>
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <Content Include="..\Dialects\examples\wist\restricted-sandbox\forbidden-program.wist">
-        <Link>Dialects\examples\wist\restricted-sandbox\forbidden-program.wist</Link>
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <Content Include="..\Dialects\examples\wist\restricted-sandbox\program.wist">
-        <Link>Dialects\examples\wist\restricted-sandbox\program.wist</Link>
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <Content Include="..\Dialects\examples\wist\restricted-sandbox\README.md">
-        <Link>Dialects\examples\wist\restricted-sandbox\README.md</Link>
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <Content Include="..\Dialects\examples\wist\pricing-restricted\dialect.wistdialect">
-        <Link>Dialects\examples\wist\pricing-restricted\dialect.wistdialect</Link>
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <Content Include="..\Dialects\examples\wist\pricing-restricted\program.wist">
-        <Link>Dialects\examples\wist\pricing-restricted\program.wist</Link>
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <Content Include="..\Dialects\examples\wist\pricing-restricted\README.md">
-        <Link>Dialects\examples\wist\pricing-restricted\README.md</Link>
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <Content Include="..\Dialects\RuntimeAliasDiscovery.md">
-        <Link>Dialects\RuntimeAliasDiscovery.md</Link>
-      </Content>
+        <Content Include="..\Dialects\examples\wist\full-default-native\dialect.wistdialect">
+            <Link>Dialects\examples\wist\full-default-native\dialect.wistdialect</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\Dialects\examples\wist\full-default-native\program.wist">
+            <Link>Dialects\examples\wist\full-default-native\program.wist</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\Dialects\examples\wist\full-default-native\README.md">
+            <Link>Dialects\examples\wist\full-default-native\README.md</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\Dialects\examples\wist\full-default\dialect.wistdialect">
+            <Link>Dialects\examples\wist\full-default\dialect.wistdialect</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\Dialects\examples\wist\full-default\program.wist">
+            <Link>Dialects\examples\wist\full-default\program.wist</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\Dialects\examples\wist\full-default\README.md">
+            <Link>Dialects\examples\wist\full-default\README.md</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\Dialects\examples\wist\minimal-arithmetic-native\dialect.wistdialect">
+            <Link>Dialects\examples\wist\minimal-arithmetic-native\dialect.wistdialect</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\Dialects\examples\wist\minimal-arithmetic-native\program.wist">
+            <Link>Dialects\examples\wist\minimal-arithmetic-native\program.wist</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\Dialects\examples\wist\minimal-arithmetic-native\README.md">
+            <Link>Dialects\examples\wist\minimal-arithmetic-native\README.md</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\Dialects\examples\wist\minimal-arithmetic\dialect.wistdialect">
+            <Link>Dialects\examples\wist\minimal-arithmetic\dialect.wistdialect</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\Dialects\examples\wist\minimal-arithmetic\program.wist">
+            <Link>Dialects\examples\wist\minimal-arithmetic\program.wist</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\Dialects\examples\wist\minimal-arithmetic\README.md">
+            <Link>Dialects\examples\wist\minimal-arithmetic\README.md</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\Dialects\examples\wist\restricted-sandbox\dialect.wistdialect">
+            <Link>Dialects\examples\wist\restricted-sandbox\dialect.wistdialect</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\Dialects\examples\wist\restricted-sandbox\forbidden-interop.wist">
+            <Link>Dialects\examples\wist\restricted-sandbox\forbidden-interop.wist</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\Dialects\examples\wist\restricted-sandbox\forbidden-program.wist">
+            <Link>Dialects\examples\wist\restricted-sandbox\forbidden-program.wist</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\Dialects\examples\wist\restricted-sandbox\program.wist">
+            <Link>Dialects\examples\wist\restricted-sandbox\program.wist</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\Dialects\examples\wist\restricted-sandbox\README.md">
+            <Link>Dialects\examples\wist\restricted-sandbox\README.md</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\Dialects\examples\wist\pricing-restricted\dialect.wistdialect">
+            <Link>Dialects\examples\wist\pricing-restricted\dialect.wistdialect</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\Dialects\examples\wist\pricing-restricted\program.wist">
+            <Link>Dialects\examples\wist\pricing-restricted\program.wist</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\Dialects\examples\wist\pricing-restricted\README.md">
+            <Link>Dialects\examples\wist\pricing-restricted\README.md</Link>
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Content>
+        <Content Include="..\Dialects\RuntimeAliasDiscovery.md">
+            <Link>Dialects\RuntimeAliasDiscovery.md</Link>
+        </Content>
     </ItemGroup>
 
 </Project>

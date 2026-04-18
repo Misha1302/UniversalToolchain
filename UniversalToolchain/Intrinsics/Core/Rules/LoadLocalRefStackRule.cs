@@ -4,7 +4,7 @@ using UniversalToolchain.Intrinsics.Contracts;
 namespace UniversalToolchain.Intrinsics.Core.Rules;
 
 /// <summary>
-/// Pushes a <see cref="VariableReference{T}"/> for the resolved local value type.
+///     Pushes a <see cref="VariableReference{T}" /> for the resolved local value type.
 /// </summary>
 public sealed class LoadLocalRefStackRule : IIntrinsicStackRule
 {

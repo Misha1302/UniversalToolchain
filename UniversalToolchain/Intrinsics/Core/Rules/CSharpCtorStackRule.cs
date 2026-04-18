@@ -4,7 +4,7 @@ using UniversalToolchain.Intrinsics.Contracts;
 namespace UniversalToolchain.Intrinsics.Core.Rules;
 
 /// <summary>
-/// Applies stack semantics for a reflected .NET constructor call.
+///     Applies stack semantics for a reflected .NET constructor call.
 /// </summary>
 public sealed class CSharpCtorStackRule : IIntrinsicStackRule
 {

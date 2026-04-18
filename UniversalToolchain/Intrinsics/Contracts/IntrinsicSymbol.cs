@@ -2,8 +2,5 @@ namespace UniversalToolchain.Intrinsics.Contracts;
 
 public readonly record struct IntrinsicSymbol(string Namespace, string Name)
 {
-    public override string ToString()
-    {
-        return $"{Namespace}.{Name}";
-    }
+    public override string ToString() => $"{Namespace}.{Name}";
 }

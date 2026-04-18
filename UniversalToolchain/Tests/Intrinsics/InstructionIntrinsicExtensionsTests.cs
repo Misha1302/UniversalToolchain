@@ -73,9 +73,9 @@ public sealed class InstructionIntrinsicExtensionsTests
     public void InstructionTypeStackApplier_ShouldUseTypedIntrinsicInvocation_WithoutLegacyDecoding()
     {
         var invocation = CreateInvocation(
-            symbol: BuiltinIntrinsicSymbols.Core.LoadConst,
-            typeArguments: [IntrinsicTypeArgument.From(typeof(int))],
-            dataOperands: [42]);
+            BuiltinIntrinsicSymbols.Core.LoadConst,
+            [IntrinsicTypeArgument.From(typeof(int))],
+            [42]);
         var instruction = IntrinsicInstructionFactory.Create(invocation);
         var stack = new List<Type>();
         var processor = new IntrinsicTypeStackProcessor(
@@ -97,7 +97,7 @@ public sealed class InstructionIntrinsicExtensionsTests
     [Test]
     public void InstructionIntrinsicReader_ShouldUseTypedIntrinsicInvocation_WithoutLegacyDecoding()
     {
-        var invocation = CreateInvocation(symbol: BuiltinIntrinsicSymbols.Boolean.Not);
+        var invocation = CreateInvocation(BuiltinIntrinsicSymbols.Boolean.Not);
         var instruction = IntrinsicInstructionFactory.Create(invocation);
         var reader = new InstructionIntrinsicReader(new ThrowingLegacyIntrinsicDecoder());
 
@@ -111,7 +111,7 @@ public sealed class InstructionIntrinsicExtensionsTests
     public void InstructionIntrinsicReader_ShouldUseLegacyDecoder_AsFallback()
     {
         var instruction = new Instruction(UOpCode.Intrinsic, ["boolean_not"]);
-        var legacyDecoder = new RecordingLegacyIntrinsicDecoder(CreateInvocation(symbol: BuiltinIntrinsicSymbols.Boolean.Not));
+        var legacyDecoder = new RecordingLegacyIntrinsicDecoder(CreateInvocation(BuiltinIntrinsicSymbols.Boolean.Not));
         var reader = new InstructionIntrinsicReader(legacyDecoder);
 
         var success = reader.TryRead(instruction, out var invocation);
@@ -146,20 +146,15 @@ public sealed class InstructionIntrinsicExtensionsTests
     private static IntrinsicInvocation CreateInvocation(
         IntrinsicSymbol? symbol = null,
         IReadOnlyList<IntrinsicTypeArgument>? typeArguments = null,
-        IReadOnlyList<object?>? dataOperands = null)
-    {
-        return new IntrinsicInvocation(
+        IReadOnlyList<object?>? dataOperands = null) =>
+        new(
             symbol ?? BuiltinIntrinsicSymbols.Boolean.Not,
             typeArguments ?? [],
             dataOperands ?? []);
-    }
 
     private sealed class ThrowingLegacyIntrinsicDecoder : ILegacyIntrinsicDecoder
     {
-        public bool TryDecode(Instruction instruction, out IntrinsicInvocation invocation)
-        {
-            throw new AssertionException("Legacy decoder should not be used for typed intrinsic instructions.");
-        }
+        public bool TryDecode(Instruction instruction, out IntrinsicInvocation invocation) => throw new AssertionException("Legacy decoder should not be used for typed intrinsic instructions.");
     }
 
     private sealed class RecordingLegacyIntrinsicDecoder(IntrinsicInvocation invocation) : ILegacyIntrinsicDecoder

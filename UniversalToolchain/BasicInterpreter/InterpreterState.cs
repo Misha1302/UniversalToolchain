@@ -8,9 +8,9 @@ public class InterpreterState
     public Stack<object> ValueStack { get; } = new();
 
     /// <summary>
-    /// Compile-time binding layout used to resolve declared external symbols at runtime.
-    /// Symbol class (local vs external) must be determined before interpreter execution.
-    /// Runtime state is not allowed to infer or redefine symbol class from observed calls.
+    ///     Compile-time binding layout used to resolve declared external symbols at runtime.
+    ///     Symbol class (local vs external) must be determined before interpreter execution.
+    ///     Runtime state is not allowed to infer or redefine symbol class from observed calls.
     /// </summary>
     public ExternalBindingsLayout? ExternalBindingsLayout { get; set; }
 

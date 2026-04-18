@@ -252,13 +252,7 @@ public class DialectDirectiveHandlerTests
         return builder;
     }
 
-    private static DialectBindingExecutionContext CreateContext(
-        IDialectBindingSource source,
-        DialectDefinitionBuilder builder,
-        List<DialectDiagnostic> diagnostics)
-    {
-        return new DialectBindingExecutionContext(source, builder, diagnostics);
-    }
+    private static DialectBindingExecutionContext CreateContext(IDialectBindingSource source, DialectDefinitionBuilder builder, List<DialectDiagnostic> diagnostics) => new(source, builder, diagnostics);
 
     private static DialectDefinitionBuilder CreateBuilderWithPolicyDefaults()
     {
@@ -270,9 +264,8 @@ public class DialectDirectiveHandlerTests
         return builder;
     }
 
-    private static TestBindingSource CreateFullSource()
-    {
-        return new TestBindingSource
+    private static TestBindingSource CreateFullSource() =>
+        new()
         {
             Name = "dialect",
             Version = "1.0",
@@ -302,7 +295,6 @@ public class DialectDirectiveHandlerTests
                 new KeyValuePair<string, bool>("safe-interop", false)
             ]
         };
-    }
 
     private static void AssertPolicyShape(DialectDefinition definition)
     {

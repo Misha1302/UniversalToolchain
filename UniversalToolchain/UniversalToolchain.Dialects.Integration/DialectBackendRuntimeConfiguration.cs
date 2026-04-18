@@ -9,9 +9,9 @@ namespace UniversalToolchain.Dialects.Integration;
 /// </summary>
 public class DialectBackendRuntimeConfiguration
 {
-    private readonly ReadOnlyCollection<Type> _optimizerTypes;
     private readonly ReadOnlyCollection<string> _allowedIntrinsics;
     private readonly ReadOnlyCollection<string> _forbiddenIntrinsics;
+    private readonly ReadOnlyCollection<Type> _optimizerTypes;
 
     public DialectBackendRuntimeConfiguration(
         RuntimeBackendDescriptor backendDescriptor,

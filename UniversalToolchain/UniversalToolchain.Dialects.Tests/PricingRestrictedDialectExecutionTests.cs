@@ -1,4 +1,3 @@
-using System.Collections.Specialized;
 using System.Reflection.Emit;
 using BasicCore.Execution;
 using IntermediateRepresentationAbstractions;
@@ -13,9 +12,9 @@ public sealed class PricingRestrictedDialectExecutionTests
     private const string PricingFormula = "price * 0.9 + fee";
 
     private const string StatementStyleBindingFormula = """
-                                                let discount = 0.9
-                                                price * discount + fee
-                                                """;
+                                                        let discount = 0.9
+                                                        price * discount + fee
+                                                        """;
 
     [Test]
     public void PricingRestricted_Dialect_Compiler_Executes_PricingFormula()
@@ -104,14 +103,12 @@ public sealed class PricingRestrictedDialectExecutionTests
         session.SetArgument("fee", 5.0d);
     }
 
-    private static OrderedDictionary<string, Type> CreateDeclaredBindings()
-    {
-        return new OrderedDictionary<string, Type>
+    private static OrderedDictionary<string, Type> CreateDeclaredBindings() =>
+        new()
         {
             ["price"] = typeof(double),
             ["fee"] = typeof(double)
         };
-    }
 
     private static WistDialectExecutionHost CreatePricingHost()
         => DialectTestHostInfrastructure.CreateHostFromDialectText(File.ReadAllText(GetDialectFilePath()));

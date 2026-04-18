@@ -71,25 +71,20 @@ public sealed class IntrinsicCatalogBuilderTests
         }));
     }
 
-    private static IntrinsicSemanticDescriptor CreateDescriptor(string @namespace, string name)
-    {
-        return new IntrinsicSemanticDescriptor
+    private static IntrinsicSemanticDescriptor CreateDescriptor(string @namespace, string name) =>
+        new()
         {
             Symbol = new IntrinsicSymbol(@namespace, name),
             Category = IntrinsicCategory.Core,
             StackRule = new NoOpStackRule(),
             ValidationRule = new NoOpValidationRule()
         };
-    }
 
     private class FakeProvider(params IntrinsicSemanticDescriptor[] descriptors) : IIntrinsicDescriptorProvider
     {
         private readonly IReadOnlyList<IntrinsicSemanticDescriptor> _descriptors = descriptors;
 
-        public IReadOnlyList<IntrinsicSemanticDescriptor> GetDescriptors()
-        {
-            return _descriptors;
-        }
+        public IReadOnlyList<IntrinsicSemanticDescriptor> GetDescriptors() => _descriptors;
     }
 
     private sealed class AlphaProvider(params IntrinsicSemanticDescriptor[] descriptors) : FakeProvider(descriptors);

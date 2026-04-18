@@ -23,8 +23,5 @@ internal sealed class IntrinsicDirectiveHandler : IDialectDirectiveHandler
             intrinsicDirectives.Where(x => !x.Allowed).Select(FormatRuleName)));
     }
 
-    private static string FormatRuleName(IntrinsicBuildDirective directive)
-    {
-        return DialectDirectiveHandlerContext.FormatRuleName(directive.Name, directive.Target);
-    }
+    private static string FormatRuleName(IntrinsicBuildDirective directive) => DialectDirectiveHandlerContext.FormatRuleName(directive.Name, directive.Target);
 }

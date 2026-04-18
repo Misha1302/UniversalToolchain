@@ -16,19 +16,14 @@ public sealed class ComparisonIntrinsicDescriptorProvider : IIntrinsicDescriptor
         CreateDescriptor(BuiltinIntrinsicSymbols.Comparison.LessOrEqual)
     ];
 
-    public IReadOnlyList<IntrinsicSemanticDescriptor> GetDescriptors()
-    {
-        return _descriptors;
-    }
+    public IReadOnlyList<IntrinsicSemanticDescriptor> GetDescriptors() => _descriptors;
 
-    private static IntrinsicSemanticDescriptor CreateDescriptor(IntrinsicSymbol symbol)
-    {
-        return new IntrinsicSemanticDescriptor
+    private static IntrinsicSemanticDescriptor CreateDescriptor(IntrinsicSymbol symbol) =>
+        new()
         {
             Symbol = symbol,
             Category = IntrinsicCategory.Comparison,
             StackRule = new BinaryComparisonRule(),
             ValidationRule = new ExpectedTypeArgumentCountRule(1)
         };
-    }
 }

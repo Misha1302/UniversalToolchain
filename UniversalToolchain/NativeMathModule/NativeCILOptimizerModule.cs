@@ -24,6 +24,7 @@ public class NativeCilOptimizerModule : IIRProcessingModule
     ];
 
     private IOptimizerIntrinsicCapabilityContext? _capabilityContext;
+
     static NativeCilOptimizerModule()
     {
         InitializeCilGenerators();

@@ -14,19 +14,14 @@ public sealed class ArithmeticIntrinsicDescriptorProvider : IIntrinsicDescriptor
         CreateDescriptor(BuiltinIntrinsicSymbols.Arithmetic.Divide)
     ];
 
-    public IReadOnlyList<IntrinsicSemanticDescriptor> GetDescriptors()
-    {
-        return _descriptors;
-    }
+    public IReadOnlyList<IntrinsicSemanticDescriptor> GetDescriptors() => _descriptors;
 
-    private static IntrinsicSemanticDescriptor CreateDescriptor(IntrinsicSymbol symbol)
-    {
-        return new IntrinsicSemanticDescriptor
+    private static IntrinsicSemanticDescriptor CreateDescriptor(IntrinsicSymbol symbol) =>
+        new()
         {
             Symbol = symbol,
             Category = IntrinsicCategory.Arithmetic,
             StackRule = new BinarySameTypeResultRule(),
             ValidationRule = new ExpectedTypeArgumentCountRule(1)
         };
-    }
 }

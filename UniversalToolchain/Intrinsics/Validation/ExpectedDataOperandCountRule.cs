@@ -3,7 +3,7 @@ using UniversalToolchain.Intrinsics.Contracts;
 namespace UniversalToolchain.Intrinsics.Validation;
 
 /// <summary>
-/// Requires an intrinsic invocation to contain an exact number of data operands.
+///     Requires an intrinsic invocation to contain an exact number of data operands.
 /// </summary>
 public sealed class ExpectedDataOperandCountRule(int expectedCount) : IIntrinsicValidationRule
 {

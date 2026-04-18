@@ -17,6 +17,11 @@ public sealed class DslPricingCalculator : IDisposable
         _host = CreateHost(dialectProfileName);
     }
 
+    public void Dispose()
+    {
+        _host.Dispose();
+    }
+
     public double CalculateWithCompiler(string formula, double price, double fee)
     {
         var compiledArtifact = CompileWithCompiler(formula);
@@ -46,7 +51,7 @@ public sealed class DslPricingCalculator : IDisposable
     }
 
     /// <summary>
-    /// Attempts to compile a pricing formula with the interpreter backend and preserves failure diagnostics.
+    ///     Attempts to compile a pricing formula with the interpreter backend and preserves failure diagnostics.
     /// </summary>
     public CompilationAttemptResult TryCompileWithInterpreter(string formula)
     {
@@ -61,11 +66,6 @@ public sealed class DslPricingCalculator : IDisposable
         {
             return CompilationAttemptResult.Failure(exception);
         }
-    }
-
-    public void Dispose()
-    {
-        _host.Dispose();
     }
 
     private static WistDialectExecutionHost CreateHost(string dialectProfileName)
@@ -85,25 +85,21 @@ public sealed class DslPricingCalculator : IDisposable
         return workflow.CreateHost(dialect);
     }
 
-    private static string GetDialectFilePath(string dialectProfileName)
-    {
-        return Path.Combine(
+    private static string GetDialectFilePath(string dialectProfileName) =>
+        Path.Combine(
             AppContext.BaseDirectory,
             "Dialects",
             "examples",
             "wist",
             dialectProfileName,
             "dialect.wistdialect");
-    }
 
-    private static OrderedDictionary<string, Type> CreateDeclaredBindings()
-    {
-        return new OrderedDictionary<string, Type>
+    private static OrderedDictionary<string, Type> CreateDeclaredBindings() =>
+        new()
         {
             ["price"] = typeof(double),
             ["fee"] = typeof(double)
         };
-    }
 
     private ICompiledArtifact<DynamicMethod> CompileWithCompiler(string formula)
     {
@@ -112,18 +108,12 @@ public sealed class DslPricingCalculator : IDisposable
     }
 
     /// <summary>
-    /// Describes the result of a pricing formula compilation attempt.
+    ///     Describes the result of a pricing formula compilation attempt.
     /// </summary>
     public sealed record CompilationAttemptResult(bool IsSuccess, string? ErrorMessage, Exception? Exception)
     {
-        public static CompilationAttemptResult Success()
-        {
-            return new CompilationAttemptResult(true, null, null);
-        }
+        public static CompilationAttemptResult Success() => new(true, null, null);
 
-        public static CompilationAttemptResult Failure(Exception exception)
-        {
-            return new CompilationAttemptResult(false, exception.Message, exception);
-        }
+        public static CompilationAttemptResult Failure(Exception exception) => new(false, exception.Message, exception);
     }
 }

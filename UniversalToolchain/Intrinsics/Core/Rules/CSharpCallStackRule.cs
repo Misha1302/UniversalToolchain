@@ -4,7 +4,7 @@ using UniversalToolchain.Intrinsics.Contracts;
 namespace UniversalToolchain.Intrinsics.Core.Rules;
 
 /// <summary>
-/// Applies stack semantics for a reflected .NET method call.
+///     Applies stack semantics for a reflected .NET method call.
 /// </summary>
 public sealed class CSharpCallStackRule : IIntrinsicStackRule
 {
@@ -40,8 +40,6 @@ public sealed class CSharpCallStackRule : IIntrinsicStackRule
 
         stack.RemoveRange(stack.Count - resolution.ConsumedTypes.Count, resolution.ConsumedTypes.Count);
         if (resolution.ReturnType != typeof(void))
-        {
             stack.Add(resolution.ReturnType);
-        }
     }
 }

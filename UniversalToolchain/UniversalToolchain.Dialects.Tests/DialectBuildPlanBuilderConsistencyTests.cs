@@ -46,7 +46,7 @@ public class DialectBuildPlanBuilderConsistencyTests
     public void BindCore_PropagatesVersionIntoDialectDefinition()
     {
         var diagnostics = new List<DialectDiagnostic>();
-        var document = CreateSyntaxDocument(version: "2.1");
+        var document = CreateSyntaxDocument("2.1");
 
         var definition = DialectDefinitionSemanticBinder.BindCore(new SyntaxDialectBindingSource(document), diagnostics);
 
@@ -77,8 +77,8 @@ public class DialectBuildPlanBuilderConsistencyTests
     {
         var syntaxDiagnostics = new List<DialectDiagnostic>();
         var compiledDiagnostics = new List<DialectDiagnostic>();
-        var document = CreateSyntaxDocument(version: "3.0", baseDialectName: "base-dialect");
-        var slice = CreateCompiledSlice(version: "3.0", baseDialectName: "base-dialect");
+        var document = CreateSyntaxDocument("3.0", "base-dialect");
+        var slice = CreateCompiledSlice("3.0", "base-dialect");
 
         var syntaxDefinition = DialectDefinitionSemanticBinder.BindCore(new SyntaxDialectBindingSource(document), syntaxDiagnostics);
         var compiledDefinition = DialectDefinitionSemanticBinder.BindCore(new CompiledDialectBindingSource(slice), compiledDiagnostics);
@@ -91,9 +91,8 @@ public class DialectBuildPlanBuilderConsistencyTests
         });
     }
 
-    private static DialectSyntaxDocument CreateSyntaxDocument(string? version = "1.0", string? baseDialectName = "base")
-    {
-        return new DialectSyntaxDocument(
+    private static DialectSyntaxDocument CreateSyntaxDocument(string? version = "1.0", string? baseDialectName = "base") =>
+        new(
             "dialect",
             version,
             ["Core", "Expressions", "Runtime"],
@@ -120,11 +119,9 @@ public class DialectBuildPlanBuilderConsistencyTests
                 new KeyValuePair<string, bool>("unsafe-interop", false)
             ],
             baseDialectName);
-    }
 
-    private static DialectDefinitionSlice CreateCompiledSlice(string? version = "1.0", string? baseDialectName = "base")
-    {
-        return new DialectDefinitionSlice(
+    private static DialectDefinitionSlice CreateCompiledSlice(string? version = "1.0", string? baseDialectName = "base") =>
+        new(
             "dialect",
             ["Core", "Expressions", "Runtime"],
             ["Legacy"],
@@ -151,7 +148,6 @@ public class DialectBuildPlanBuilderConsistencyTests
             ],
             version,
             baseDialectName);
-    }
 
     private static void AssertBuildPlansEqual(DialectBuildPlan expected, DialectBuildPlan actual)
     {

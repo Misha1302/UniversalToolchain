@@ -4,7 +4,7 @@ using UniversalToolchain.Intrinsics.Contracts;
 namespace UniversalToolchain.Intrinsics.Validation;
 
 /// <summary>
-/// Requires the first intrinsic operand to be a <see cref="ConstructorInfo"/>.
+///     Requires the first intrinsic operand to be a <see cref="ConstructorInfo" />.
 /// </summary>
 public sealed class ConstructorInfoOperandValidationRule : IIntrinsicValidationRule
 {

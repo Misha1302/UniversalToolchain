@@ -3,7 +3,7 @@ using UniversalToolchain.Intrinsics.Contracts;
 namespace UniversalToolchain.Intrinsics.Core.Rules;
 
 /// <summary>
-/// Consumes one boolean and pushes one boolean.
+///     Consumes one boolean and pushes one boolean.
 /// </summary>
 public sealed class BooleanUnaryRule : IIntrinsicStackRule
 {
