@@ -1,0 +1,6 @@
+# name<TAB>command<TAB>expected substrings separated by ';;'
+example-pricing	dotnet run --project UniversalToolchain/Example/Example.csproj -c Release --no-build	All results match: True;;Restricted pricing rejects unsupported statement-style bindings: True
+cli-run-eval	dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -c Release --no-build -- run --eval "(2 + 2) * 3" --mode compiler	12
+cli-run-file	dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -c Release --no-build -- run --file UniversalToolchain/Dialects/examples/wist/minimal-arithmetic/program.wist --mode interpreter	14
+cli-dialect-inspect	dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -c Release --no-build -- dialect-inspect --file UniversalToolchain/Dialects/examples/wist/full-default/dialect.wistdialect	Dialect: FullDefault
+cli-dialect-demo	dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -c Release --no-build -- dialect-demo --file UniversalToolchain/Dialects/examples/wist/full-default/dialect.wistdialect	Success: True
