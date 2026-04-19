@@ -28,14 +28,23 @@ used by the project.
 
 ## 4. Development commands
 
-From `ConfigurationEditor/`:
+Run these blocks from repository root.
 
 ```bash
+cd ConfigurationEditor
 npm install
-npm run dev
 npm run build
-npm run preview
 npm run type-check
+```
+
+```bash ci-timeout=15s ci-allowed-exit-codes=0,124
+cd ConfigurationEditor
+npm run dev
+```
+
+```bash ci-timeout=15s ci-allowed-exit-codes=0,124
+cd ConfigurationEditor
+npm run preview
 ```
 
 ## 5. Status / limitations
