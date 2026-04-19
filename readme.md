@@ -110,12 +110,6 @@ For those cases, a smaller evaluator, a rules library, or a parser generator is 
 
 ## Comparison
 
-- **NCalc** is strong for evaluating compact expressions. UniversalToolchain becomes relevant when expression evaluation
-  is not enough and you need dialect control, execution modes, or a reusable pipeline. See
-  [Wist2 vs NCalc](docs/comparisons/wist2-vs-ncalc.md).
-- **RulesEngine** is strong for JSON-defined business rules in .NET applications. UniversalToolchain becomes relevant
-  when the rule language itself needs custom syntax, restricted capabilities, or compiler/interpreter backends. See
-  [Wist2 vs RulesEngine](docs/comparisons/wist2-vs-rulesengine.md).
 - **ANTLR/csly** are strong for building parsers. UniversalToolchain becomes relevant when parsing is only the first
   step and you also need runtime composition, IR/bytecode translation, optimization, and execution.
 
