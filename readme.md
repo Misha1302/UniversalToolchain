@@ -2,11 +2,9 @@
 
 Build formulas, rules, and mini-languages for .NET applications.
 
-UniversalToolchain is an embeddable .NET DSL/runtime framework for the moment when a plain expression evaluator is no
-longer enough.
+UniversalToolchain is an embeddable .NET DSL/runtime framework for the moment when a plain expression evaluator is no longer enough.
 
-Wist is the reference language in this repository. It demonstrates the framework through a pricing demo, dialect
-composition, and compiler/interpreter execution modes.
+Wist is the reference language in this repository. It demonstrates the framework through a pricing demo, dialect composition, and compiler/interpreter execution modes.
 
 ## Run the pricing demo
 
@@ -14,12 +12,9 @@ composition, and compiler/interpreter execution modes.
 dotnet run --project UniversalToolchain/Example/Example.csproj
 ```
 
-This runs a pricing formula through hardcoded C#, a general Wist dialect, and a restricted pricing dialect. It shows the
-same calculation executed through compiler, interpreter, and fast native invocation paths, plus rejection of a formula
-that the restricted dialect does not allow.
+This runs a pricing formula through hardcoded C#, a general Wist dialect, and a restricted pricing dialect. It shows the same calculation executed through compiler, interpreter, and fast native invocation paths, plus rejection of a formula that the restricted dialect does not allow.
 
-Code: [UniversalToolchain/Example/Scenarios/PricingDiscountScenario.cs](UniversalToolchain/Example/Scenarios/PricingDiscountScenario.cs)
-and [UniversalToolchain/Example/Scenarios/DslPricingCalculator.cs](UniversalToolchain/Example/Scenarios/DslPricingCalculator.cs).
+Code: [UniversalToolchain/Example/Scenarios/PricingDiscountScenario.cs](UniversalToolchain/Example/Scenarios/PricingDiscountScenario.cs) and [UniversalToolchain/Example/Scenarios/DslPricingCalculator.cs](UniversalToolchain/Example/Scenarios/DslPricingCalculator.cs).
 
 ## What this demo shows
 
@@ -73,7 +68,7 @@ using var wist = WistRuntimeFacadeBuilder
     .Build();
 
 var attempt = wist.TryCompile(
-    "let discount = 0.9\nprice * discount + fee",
+    "let discount = 0.9\n price * discount + fee",
     new Dictionary<string, Type>
     {
         ["price"] = typeof(double),
@@ -93,8 +88,7 @@ Use UniversalToolchain when:
 - you need an inspectable execution pipeline for validation, diagnostics, or backend work,
 - you want configurable business logic without hardcoding every rule into the application.
 
-Typical scenarios include pricing formulas, validation rules, routing rules, internal workflow rules, and DSL experiments
-inside .NET applications.
+Typical scenarios include pricing formulas, validation rules, routing rules, internal workflow rules, and DSL experiments inside .NET applications.
 
 ## When not to use UniversalToolchain
 
@@ -110,21 +104,19 @@ For those cases, a smaller evaluator, a rules library, or a parser generator is 
 
 ## Comparison
 
-- **NCalc** is strong for evaluating compact expressions. UniversalToolchain becomes relevant when expression evaluation
-  is not enough and you need dialect control, execution modes, or a reusable pipeline. See
-  [Wist2 vs NCalc](docs/comparisons/wist2-vs-ncalc.md).
-- **RulesEngine** is strong for JSON-defined business rules in .NET applications. UniversalToolchain becomes relevant
-  when the rule language itself needs custom syntax, restricted capabilities, or compiler/interpreter backends. See
-  [Wist2 vs RulesEngine](docs/comparisons/wist2-vs-rulesengine.md).
-- **ANTLR/csly** are strong for building parsers. UniversalToolchain becomes relevant when parsing is only the first
-  step and you also need runtime composition, IR/bytecode translation, optimization, and execution.
+For a practical positioning guide against the nearest alternatives, see [UniversalToolchain vs Nearby Alternatives](docs/alternatives.md).
+
+At a high level:
+
+- **NCalc / Dynamic Expresso** are strong when you only need expression evaluation.
+- **RulesEngine** is strong when you need JSON-defined business rules in a .NET application.
+- **ANTLR / csly / Irony** are strong when parser construction is the main problem.
+- **JetBrains MPS** is strong when the target is a full language workbench with richer tooling.
+- **UniversalToolchain** becomes relevant when you need a restricted, embeddable DSL/runtime stack for .NET rather than only a parser, evaluator, or workbench.
 
 ## Why this project exists
 
-Many language projects repeatedly rebuild the same layers: parsing, AST/IR transforms, runtime composition, and
-execution. UniversalToolchain focuses on reusable composition so capabilities can be assembled from modules instead of
-hardcoded into one implementation path. See [Why this exists](docs/why-this-exists.md) for the longer product and
-architecture rationale.
+Many language projects repeatedly rebuild the same layers: parsing, AST/IR transforms, runtime composition, and execution. UniversalToolchain focuses on reusable composition so capabilities can be assembled from modules instead of hardcoded into one implementation path. See [Why this exists](docs/why-this-exists.md) for the longer product and architecture rationale.
 
 This repository contains:
 
@@ -146,8 +138,7 @@ Key repository architecture concepts:
 - dialect-driven runtime composition via `.wistdialect`,
 - CLI and programmatic entry points for validation and integration.
 
-For detailed architecture context (execution model, dialect workflow, and repository entry points), see
-`docs/architecture-overview.md`.
+For detailed architecture context (execution model, dialect workflow, and repository entry points), see `docs/architecture-overview.md`.
 
 ## How features plug into the pipeline
 
@@ -222,8 +213,8 @@ Active runtime and backend work is being verified there first, so older target f
 
 - .NET SDK `10.0.103`
 - SDK policy in `UniversalToolchain/global.json`:
-    - `rollForward: latestMajor`
-    - `allowPrerelease: true`
+  - `rollForward: latestMajor`
+  - `allowPrerelease: true`
 - Targets: `net10.0`
 
 ## Build and test from source
@@ -240,9 +231,8 @@ dotnet test UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolch
 
 ## Security note
 
-The repository does **not** claim hardened sandboxing for untrusted code. Use process/environment isolation for
-untrusted execution scenarios.
-See `SECURITY.md` for the trust model.
+The repository does **not** claim hardened sandboxing for untrusted code.
+Use process/environment isolation for untrusted execution scenarios. See [docs/SECURITY.md](docs/SECURITY.md) for the trust model.
 
 ## Known limitations
 
@@ -255,11 +245,12 @@ This repository is actively evolving, and some areas are intentionally treated a
 
 ## Canonical documentation map
 
-- Project overview: `readme.md`
-- Architecture overview: `docs/architecture-overview.md`
-- Coding standards: `PROJECT_RULES.md`
-- Contribution workflow: `CONTRIBUTING.md`
-- Security policy: `SECURITY.md`
+- Project overview: [readme.md](readme.md)
+- Architecture overview: [docs/architecture-overview.md](docs/architecture-overview.md)
+- Alternatives and positioning: [docs/alternatives.md](docs/alternatives.md)
+- Coding standards: [docs/PROJECT_RULES.md](docs/PROJECT_RULES.md)
+- Contribution workflow: [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)
+- Security policy: [docs/SECURITY.md](docs/SECURITY.md)
 
 ## License
 
