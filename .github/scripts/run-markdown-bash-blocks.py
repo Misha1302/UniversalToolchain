@@ -7,17 +7,14 @@ import sys
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
 
 
 @dataclass(frozen=True)
-class BashBlock
-{
+class BashBlock:
     file_path: Path
     start_line: int
     attributes: dict[str, str]
     content: str
-}
 
 
 def GetRepositoryRoot() -> Path:
