@@ -54,6 +54,8 @@ This cleanup did not tighten negative assertions. It focused on structure, isola
 - Keep docs aligned with real implementation.
 - Ensure commands in docs run from repository root.
 - Remove stale or legacy wording instead of preserving contradictory notes.
+- Every tracked markdown bash fence is executed in CI from repository root.
+- Long-running bash fences should be isolated in their own block and may declare `ci-timeout` plus `ci-allowed-exit-codes` in the fence header.
 
 ## Pull requests
 
