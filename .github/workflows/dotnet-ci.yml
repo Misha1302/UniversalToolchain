@@ -18,6 +18,11 @@ jobs:
         with:
           global-json-file: UniversalToolchain/global.json
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
       - name: Restore
         run: dotnet restore UniversalToolchain/Wist.sln
 
@@ -36,6 +41,6 @@ jobs:
             dotnet test UniversalToolchain/UniversalToolchain.Modules.Tests/UniversalToolchain.Modules.Tests.csproj -c Release --no-build
           fi
 
-      - name: Smoke checks (manifest)
+      - name: Markdown bash smoke checks
         shell: bash
-        run: ./.github/scripts/run-smoke-manifest.sh .github/scripts/cli-smoke-manifest.tsv
+        run: python3 ./.github/scripts/run-markdown-bash-blocks.py
