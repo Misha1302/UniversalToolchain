@@ -138,8 +138,6 @@ Key repository architecture concepts:
 - dialect-driven runtime composition via `.wistdialect`,
 - CLI and programmatic entry points for validation and integration.
 
-For detailed architecture context (execution model, dialect workflow, and repository entry points), see `docs/architecture-overview.md`.
-
 ## How features plug into the pipeline
 
 Framework features are introduced through extension points instead of one monolithic compiler path.
@@ -231,8 +229,9 @@ dotnet test UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolch
 
 ## Security note
 
-The repository does **not** claim hardened sandboxing for untrusted code.
-Use process/environment isolation for untrusted execution scenarios. See [docs/SECURITY.md](docs/SECURITY.md) for the trust model.
+The repository does **not** claim hardened sandboxing for untrusted code. Use process/environment isolation for
+untrusted execution scenarios.
+See [docs/SECURITY.md](docs/SECURITY.md) for the trust model.
 
 ## Known limitations
 
@@ -246,11 +245,11 @@ This repository is actively evolving, and some areas are intentionally treated a
 ## Canonical documentation map
 
 - Project overview: [readme.md](readme.md)
-- Architecture overview: [docs/architecture-overview.md](docs/architecture-overview.md)
-- Alternatives and positioning: [docs/alternatives.md](docs/alternatives.md)
 - Coding standards: [docs/PROJECT_RULES.md](docs/PROJECT_RULES.md)
 - Contribution workflow: [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)
 - Security policy: [docs/SECURITY.md](docs/SECURITY.md)
+- Main thoughts: [docs/vision/universaltoolchain_main_thoughts.md](docs/vision/universaltoolchain_main_thoughts.md)
+- Roadmap: [docs/vision/universaltoolchain_roadmap.md](docs/vision/universaltoolchain_roadmap.md)
 
 ## License
 

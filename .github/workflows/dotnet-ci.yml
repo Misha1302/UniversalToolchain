@@ -36,11 +36,6 @@ jobs:
             dotnet test UniversalToolchain/UniversalToolchain.Modules.Tests/UniversalToolchain.Modules.Tests.csproj -c Release --no-build
           fi
 
-      - name: Example smoke test
+      - name: Smoke checks (manifest)
         shell: bash
-        run: |
-          set -euo pipefail
-
-          output="$(dotnet run --project UniversalToolchain/Example/Example.csproj -c Release --no-build)"
-          grep -F "All results match: True" <<< "$output"
-          grep -F "Restricted pricing rejects unsupported statement-style bindings: True" <<< "$output"
+        run: ./.github/scripts/run-smoke-manifest.sh .github/scripts/cli-smoke-manifest.tsv
