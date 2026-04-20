@@ -8,6 +8,7 @@ This is the smallest useful arithmetic-oriented dialect composition in the repos
 
 - Modules: `Arithmetic`, `Numbers`, `Scopes`, `Whitespaces`
 - Backend: `interpreter`
+- Enabled optimizer flags: none
 
 ## Intentionally excluded capabilities
 

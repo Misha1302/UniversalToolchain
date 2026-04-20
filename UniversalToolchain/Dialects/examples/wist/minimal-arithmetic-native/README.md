@@ -1,13 +1,16 @@
-# Minimal arithmetic dialect
+# Minimal native arithmetic dialect
 
 ## What this example demonstrates
 
-This is the small fast native useful arithmetic-oriented dialect composition in the repository.
+This is the smallest native arithmetic-oriented dialect composition in the repository.
 
 ## Enabled modules/backends/features
 
 - Modules: `NativeTypes`, `Numbers`, `Scopes`, `Whitespaces`
 - Backend: `cil`
+- Enabled optimizer flags: `ArithmeticOptimization`, `EGraphOptimization`, `NativeCilOptimization`,
+  `NativeTypesOptimization`
+- User-facing CLI mode: `--mode compiler` selects the canonical `cil` backend.
 
 ## Intentionally excluded capabilities
 

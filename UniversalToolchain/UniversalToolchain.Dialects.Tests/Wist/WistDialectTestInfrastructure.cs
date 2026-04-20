@@ -28,6 +28,17 @@ internal static class WistDialectTestInfrastructure
                + string.Join("|", selection.EnabledBackends.Select(static x => x.CanonicalAlias));
     }
 
+    public static string BuildSelectionAndDiagnosticsSignature(DialectFrameworkCompositionResult composition)
+    {
+        var diagnostics = composition.SemanticDiagnostics
+            .Concat(composition.ResolutionDiagnostics)
+            .Select(static x => $"{x.Code}:{x.Severity}:{x.Message}");
+
+        return BuildSelectionSignature(composition)
+               + "::diagnostics::"
+               + string.Join("|", diagnostics);
+    }
+
     public static string BuildHostSignature(WistDialectExecutionHost host)
     {
         return string.Join("|", host.Configuration.FrontendModules.Select(static x => x.FullName))

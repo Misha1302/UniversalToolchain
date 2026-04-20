@@ -4,7 +4,8 @@ Build formulas, rules, and mini-languages for .NET applications.
 
 UniversalToolchain is an embeddable .NET DSL/runtime framework for the moment when a plain expression evaluator is no longer enough.
 
-Wist is the reference language in this repository. It demonstrates the framework through a pricing demo, dialect composition, and compiler/interpreter execution modes.
+Wist is the reference language in this repository. It demonstrates the framework through a pricing demo,
+manifest-backed dialect composition, and compiler/interpreter execution modes.
 
 ## Run the pricing demo
 
@@ -12,7 +13,9 @@ Wist is the reference language in this repository. It demonstrates the framework
 dotnet run --project UniversalToolchain/Example/Example.csproj
 ```
 
-This runs a pricing formula through hardcoded C#, a general Wist dialect, and a restricted pricing dialect. It shows the same calculation executed through compiler, interpreter, and fast native invocation paths, plus rejection of a formula that the restricted dialect does not allow.
+This runs a pricing formula through hardcoded C#, a general Wist dialect, and a restricted pricing dialect. It shows the
+same calculation executed through compiler, interpreter, and fast native invocation paths, plus rejection of a formula
+that the restricted dialect composition does not allow.
 
 Code: [UniversalToolchain/Example/Scenarios/PricingDiscountScenario.cs](UniversalToolchain/Example/Scenarios/PricingDiscountScenario.cs) and [UniversalToolchain/Example/Scenarios/DslPricingCalculator.cs](UniversalToolchain/Example/Scenarios/DslPricingCalculator.cs).
 
@@ -22,7 +25,7 @@ The pricing demo compares three ways to own the same business rule:
 
 - hardcoded C# pricing logic,
 - a general Wist dialect for the formula,
-- a restricted pricing dialect with a narrower allowed surface,
+- a restricted pricing dialect with a narrower runtime surface,
 - compiler and interpreter execution paths for the same calculation,
 - rejection of a formula shape that the restricted dialect does not allow.
 
@@ -59,7 +62,7 @@ var result = wist.Run(
 var compiledResult = (double)result!; // 95.0
 ```
 
-Use a dialect file when the runtime surface must be restricted:
+Use a dialect file when the runtime surface must be composition-constrained:
 
 ```csharp
 using var wist = WistRuntimeFacadeBuilder
@@ -83,7 +86,7 @@ Use UniversalToolchain when:
 
 - a normal expression evaluator is too narrow for your rules or formulas,
 - users need a syntax that matches your domain instead of C# syntax,
-- you need a restricted dialect that allows only selected language features,
+- you need a dialect profile that allows only selected language features,
 - the same language should support compiler and interpreter modes,
 - you need an inspectable execution pipeline for validation, diagnostics, or backend work,
 - you want configurable business logic without hardcoding every rule into the application.
@@ -135,8 +138,24 @@ Key repository architecture concepts:
 
 - framework-first, composition-based pipeline design,
 - dual execution modes (`compiler`, `interpreter`),
-- dialect-driven runtime composition via `.wistdialect`,
+- dialect-driven runtime composition via `.wistdialect` files,
+- manifest-backed runtime selection before host creation,
 - CLI and programmatic entry points for validation and integration.
+
+## Canonical Wist runtime path
+
+Normal Wist dialect execution follows this path:
+
+```text
+dialect source -> dialect compilation -> build plan -> manifest-backed runtime selection -> host creation -> execution
+```
+
+Composition and host creation are separate stages. `ComposeText`/`ComposeFile` compile the dialect DSL, build a
+deterministic plan, and resolve selected modules, optimizers, and backends from runtime manifests. `CreateHost` then
+builds the runtime provider for that resolved selection.
+
+The selection-driven path is the main dialect execution story. Eager discovery and compatibility helpers still exist,
+but they are not the canonical path for running shipped dialect profiles.
 
 ## How features plug into the pipeline
 
@@ -165,6 +184,9 @@ Common options:
 
 - `--mode <compiler|interpreter>`
 - `--dialect-file <path>`
+
+The user-facing `compiler` mode selects the canonical `cil` backend when a dialect declares `backend cil` or the
+`compiler` alias.
 
 Examples:
 
@@ -198,11 +220,15 @@ dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- dialect-demo --fil
 
 Located under `UniversalToolchain/Dialects/examples/wist`:
 
-- `full-default`
-- `full-default-native`
-- `minimal-arithmetic`
-- `pricing-restricted` *(narrow pricing profile with restricted runtime surface)*
-- `restricted-sandbox` *(composition-constrained profile, not OS-level sandboxing)*
+- `full-default`: standard Wist profile over `cil` and `interpreter`.
+- `full-default-native`: native arithmetic/type profile over `cil` and `interpreter`.
+- `minimal-arithmetic`: smallest interpreter arithmetic profile.
+- `minimal-arithmetic-native`: smallest native arithmetic profile over `cil`.
+- `pricing-restricted`: composition-constrained pricing profile with a restricted runtime surface.
+- `restricted-sandbox`: composition-constrained profile, not a hardened sandbox guarantee.
+
+These directories are runnable canonical references for the manifest-driven dialect path. Each README includes
+repository-root CLI commands, expected behavior, and the capabilities intentionally excluded by that profile.
 
 ## Why .NET 10 right now?
 
@@ -240,7 +266,7 @@ See [docs/SECURITY.md](docs/SECURITY.md) for the trust model.
 This repository is actively evolving, and some areas are intentionally treated as design-in-progress:
 
 - some bootstrap/runtime wiring is still concrete rather than fully descriptor-driven,
-- reflection-based interop/discovery helpers still exist and are being cleaned up,
+- reflection-based interop/discovery helpers still exist for compatibility and bootstrap scenarios,
 - constrained dialect composition is not equivalent to hardened sandboxing,
 - the reference language Wist is still the main proving ground for framework decisions.
 

@@ -1,5 +1,6 @@
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
+using UniversalToolchain.Dialects.Tests.Wist;
 using UniversalToolchain.Dialects.Wist;
 
 namespace UniversalToolchain.Dialects.Tests;
@@ -25,12 +26,15 @@ public class DialectProjectsSmokeTests
 
         foreach (var exampleDirectory in exampleDirectories)
         {
+            var exampleName = Path.GetFileName(exampleDirectory) ?? string.Empty;
             var dialectPath = Path.Combine(exampleDirectory, "dialect.wistdialect");
             var composition = workflow.ComposeFile(dialectPath);
             Assert.That(composition.IsSuccess, Is.True, $"Composition failed for '{dialectPath}'.\n{composition.ToDeterministicText()}");
 
+            var selectionSignature = WistDialectTestInfrastructure.BuildSelectionSignature(composition);
+            Assert.That(selectionSignature, Is.EqualTo(ExpectedSelectionSignatures[exampleName]), $"Runtime selection drifted for example '{exampleName}'.");
+
             using var host = workflow.CreateHost(composition);
-            var exampleName = Path.GetFileName(exampleDirectory);
             var programPath = Path.Combine(exampleDirectory, "program.wist");
             var result = host.Run(
                 File.ReadAllText(programPath),
@@ -42,6 +46,34 @@ public class DialectProjectsSmokeTests
             Assert.That(result, Is.Not.Null, $"Example '{exampleName}' returned null.");
         }
     }
+
+    private static readonly IReadOnlyDictionary<string, string> ExpectedSelectionSignatures = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["full-default"] =
+            "Arithmetic|BooleanConditions|Comments|ComparisonConditions|Conditions|CSharpInterop|Equality|Identifier|Labels|Loops|Numbers|Scopes|SemicolonAsNewLine|Variables|Whitespaces"
+            + "::BooleanOptimization|ComparisonIntrinsicOptimization|LocalVariablesOptimization"
+            + "::cil|interpreter",
+        ["full-default-native"] =
+            "BooleanConditions|Comments|ComparisonConditions|Conditions|CSharpInterop|Equality|Identifier|Labels|Loops|NativeTypes|Scopes|SemicolonAsNewLine|Variables|Whitespaces"
+            + "::ArithmeticOptimization|BooleanOptimization|ComparisonIntrinsicOptimization|EGraphOptimization|LocalVariablesOptimization|NativeCilOptimization|NativeTypesOptimization"
+            + "::cil|interpreter",
+        ["minimal-arithmetic"] =
+            "Arithmetic|Numbers|Scopes|Whitespaces"
+            + "::"
+            + "::interpreter",
+        ["minimal-arithmetic-native"] =
+            "NativeTypes|Numbers|Scopes|Whitespaces"
+            + "::ArithmeticOptimization|EGraphOptimization|NativeCilOptimization|NativeTypesOptimization"
+            + "::cil",
+        ["pricing-restricted"] =
+            "Identifier|NativeTypes|Scopes|Variables|Whitespaces"
+            + "::ArithmeticOptimization|EGraphOptimization|NativeCilOptimization|NativeTypesOptimization"
+            + "::cil|interpreter",
+        ["restricted-sandbox"] =
+            "Arithmetic|BooleanConditions|Comments|ComparisonConditions|Conditions|Equality|Numbers|Scopes|Whitespaces"
+            + "::"
+            + "::interpreter"
+    };
 
     private static ServiceProvider CreateProvider()
     {

@@ -34,6 +34,18 @@ dotnet test UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolch
 - If behavior changes, add or update tests in the same change.
 - If structure/behavior meaningfully changes, update docs in the same change.
 
+## Runtime composition expectations
+
+- Keep the canonical dialect path deterministic: dialect compilation, build-plan construction, manifest-backed runtime
+  selection, then host creation.
+- Keep runtime selection and host creation separate. Selection resolves modules, optimizers, and backends; host creation
+  instantiates the selected runtime surface.
+- Treat shipped example dialects as runnable references. Keep commands and paths in their READMEs valid from repository
+  root.
+- Add or update architecture guardrail tests when changing catalogs, resolvers, runtime manifests, backend registrars, or
+  optional facade layers.
+- Do not turn compatibility/eager discovery helpers into hidden decision-makers for framework-level dialect composition.
+
 ## Test suite rules
 
 - New tests must not inherit from `LegacyTestBase`.
@@ -57,6 +69,7 @@ This cleanup did not tighten negative assertions. It focused on structure, isola
 
 - Keep docs aligned with real implementation.
 - Ensure commands in docs run from repository root.
+- Keep example paths and CLI flags aligned with real shipped dialect files.
 - Remove stale or legacy wording instead of preserving contradictory notes.
 - Every tracked markdown bash fence is executed in CI from repository root.
 - Long-running bash fences should be isolated in their own block and may declare `ci-timeout` plus `ci-allowed-exit-codes` in the fence header.

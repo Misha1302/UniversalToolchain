@@ -2,11 +2,37 @@
 
 ## Status
 
-Draft implementation plan.
+Architecture tracking document. The original plan was written before the minimal dialect runtime path stabilized; this
+file now distinguishes implemented behavior from remaining work.
+
+Implemented in the normal Wist dialect path:
+
+- dialect source is compiled into a build plan before runtime assembly,
+- runtime selection is resolved from manifest-backed catalog entries,
+- `ComposeText` and `ComposeFile` return the selected runtime plan without creating the host,
+- `CreateHost` builds the runtime provider from that resolved selection,
+- shipped Wist example dialects are covered by composition and execution smoke tests,
+- backend aliases such as `compiler` resolve to the canonical `cil` backend where declared by the backend manifest.
+
+Partially implemented:
+
+- manifest files and reflection-backed component resolution are available, but runtime artifacts are still normally
+  already present in application output directories,
+- provider creation registers selected runtime components, while backend registrars and some bootstrap services remain
+  concrete Wist integration points,
+- eager discovery and compatibility helpers still exist and are not removed.
+
+Still future work:
+
+- selective assembly loading for unloaded feature packs,
+- measured memory baselines and regression thresholds,
+- broader cleanup or renaming of eager discovery APIs,
+- fully descriptor-driven deployment packaging outside the current Wist validation path.
 
 ## Goal
 
-Reduce memory usage during dialect composition and runtime startup by switching the dialect path from:
+Reduce memory usage during dialect composition and runtime startup by keeping the normal dialect path on the
+selection-driven flow:
 
 ~~~text
 discover everything -> register everything -> filter
@@ -18,10 +44,10 @@ to:
 parse dialect -> build plan -> resolve only selected components -> register only selected components
 ~~~
 
-This plan is focused on the **dialect-based execution path** first. The existing eager path may remain for
-compatibility. The current code already has a minimal core registration path in `AddWistCoreServices()`, while the full
-path still performs automatic discovery first and filtering later, and `TypesFinder` keeps global static caches and
-recursively scans assemblies.
+This plan is focused on the **dialect-based execution path** first. The existing eager path remains for compatibility.
+The current dialect workflow already compiles a dialect, builds a plan, resolves a selected runtime plan from manifests,
+and creates a host as a separate step. The full eager path still performs automatic discovery first and filtering later,
+and `TypesFinder` keeps global static caches and recursively scans assemblies.
 
 For concrete reference points in the current codebase, see
 [`TypesFinder`](AssemblyFinder/TypesFinder.cs),
@@ -34,7 +60,7 @@ For concrete reference points in the current codebase, see
 
 ### Current memory problem
 
-Right now the main DI path is broad and eager:
+The compatibility/eager DI path is broad:
 
 1. `AddWistServices(...)` registers core factories.
 2. It calls `RegisterAutoDiscoveredServices(...)`.
@@ -42,7 +68,7 @@ Right now the main DI path is broad and eager:
 4. `AddAutoRegisteredServices(...)` iterates all types from assemblies and registers supported ones.
 5. Only after that `ApplyOptionsFilters(...)` removes excluded namespaces/modules.
 
-This means that even if a dialect actually needs only:
+This means that an eager startup path can still do broad work even when a dialect actually needs only:
 
 ~~~text
 use Arithmetic, Variables
@@ -50,7 +76,7 @@ backend interpreter
 enable LocalVariablesOptimization
 ~~~
 
-the system may still:
+the eager path may still:
 
 - scan a large set of assemblies,
 - reflect over many unrelated types,
@@ -63,9 +89,9 @@ candidate for startup memory growth that is independent from the actual selected
 
 ### Why “just use fewer modules” is not enough
 
-Using fewer modules in the dialect config is **not sufficient** in the current architecture because the expensive part
-happens **before** the module selection becomes effective. The selected module count helps runtime composition a bit,
-but does not control the broad discovery phase.
+Using fewer modules is not sufficient for an eager startup path because the expensive part can happen before selection
+becomes effective. The normal Wist dialect path avoids making eager discovery the source of truth by resolving a
+manifest-backed selected runtime plan before host creation.
 
 ---
 
@@ -73,11 +99,11 @@ but does not control the broad discovery phase.
 
 ## In scope
 
-- Refactor the **dialect execution path** to register only requested modules/optimizers/backends.
-- Introduce lightweight runtime descriptors and a two-phase composition flow.
-- Reuse `AddWistCoreServices()` as the minimal base for runtime assembly.
+- Keep the **dialect execution path** selected by requested modules/optimizers/backends.
+- Keep lightweight manifest-backed runtime descriptors and two-stage composition visible in code and tests.
 - Reduce dependency on full auto-discovery in dialect workflows.
-- Add determinism and memory-oriented tests.
+- Maintain determinism and memory-oriented tests.
+- Plan remaining selective loading and eager-path cleanup without overstating what is complete.
 
 ## Out of scope
 
@@ -102,25 +128,24 @@ dialect text/file
     -> runtime created
 ~~~
 
-### New path
+### Current normal dialect path
 
 ~~~text
 dialect text/file
     -> parse dialect DSL
     -> build DialectBuildPlan
-    -> resolve aliases to lightweight runtime descriptors
-    -> create minimal runtime service collection
-    -> AddWistCoreServices()
+    -> resolve aliases to manifest-backed runtime descriptors
     -> register only selected modules
     -> register only selected optimizers
     -> register only selected backends
     -> build provider
+    -> create host
     -> execute
 ~~~
 
 ### Main principle
 
-The dialect path must become **selection-driven**, not **discovery-driven**.
+The dialect path must remain **selection-driven**, not **discovery-driven**.
 
 ---
 
@@ -134,12 +159,12 @@ The dialect path must become **selection-driven**, not **discovery-driven**.
 
 3. **Keep deterministic ordering.**
    The project already has ordering-sensitive dialect behavior and tests for deterministic ordering. The new runtime
-   composition must preserve deterministic ordering of selected modules/optimizers/backends.
+   composition preserves deterministic ordering of selected modules/optimizers/backends.
 
 4. **Do not mix runtime selection with DI auto-registration.**
    Selection must be based on runtime descriptors, then DI registration should instantiate only chosen types.
 
-5. **No hidden global mutable state in the new dialect path.**
+5. **No hidden global mutable state in the selected dialect path.**
    Avoid new static caches unless they are read-only and deterministic.
 
 ---
@@ -148,7 +173,7 @@ The dialect path must become **selection-driven**, not **discovery-driven**.
 
 ## Summary
 
-Implement a new dialect runtime composition subsystem with 3 layers:
+The dialect runtime composition subsystem is organized around 3 layers:
 
 ### Layer 1: lightweight catalog/registry
 
@@ -182,6 +207,9 @@ base for this.
 
 ## Detailed step-by-step implementation plan
 
+The phase sections below preserve the original design checklist and implementation sketches. Use the status section
+above as the current truth for what is implemented, partial, or future work.
+
 ## Phase 1. Freeze current behavior with tests
 
 Before refactoring, add tests that lock in the current expected dialect semantics.
@@ -196,7 +224,7 @@ Create tests:
 - `ComposeFile_SameDialect_RepeatedRuns_ProduceSameBackends`
 - `ComposeText_ParallelRuns_DoNotCrossPolluteSelections`
 
-#### 2. Compatibility between old and new path
+#### 2. Compatibility between eager and selected runtime paths
 
 Prepare golden cases for several dialects:
 
@@ -281,7 +309,7 @@ public sealed record DialectRuntimeBackendDescriptor(
 ### Why
 
 This layer allows the dialect flow to reason about runtime capabilities without immediately building DI objects or doing
-broad registration.
+broad registration. This is implemented through manifest catalog entries and selected runtime plans.
 
 ### Acceptance criteria for Phase 2
 
@@ -292,7 +320,7 @@ broad registration.
 
 ## Phase 3. Introduce runtime catalog/registry abstraction
 
-Create a registry specifically for alias resolution.
+Use a catalog specifically for alias resolution.
 
 ### New interface
 
@@ -309,7 +337,7 @@ public interface IDialectRuntimeCatalog
 }
 ~~~
 
-### New implementation
+### Implementation shape
 
 ~~~csharp
 public sealed class DialectRuntimeCatalog : IDialectRuntimeCatalog
@@ -426,7 +454,7 @@ This resolver must do **no DI registration** and **no instance creation**.
 
 ## Phase 5. Introduce minimal runtime provider factory
 
-This is the core memory-saving phase.
+This is the core memory-saving behavior in the current path.
 
 ### New type
 
@@ -502,9 +530,9 @@ Do **not** scan all types here.
 
 ## Phase 6. Add a dedicated dialect composition pipeline
 
-The dialect path should no longer go through the full eager DI registration path.
+The normal dialect path does not go through the full eager DI registration path.
 
-### New flow
+### Current flow
 
 ~~~text
 WistDialectExecutionWorkflow
@@ -512,12 +540,12 @@ WistDialectExecutionWorkflow
     -> build DialectBuildPlan
     -> resolve runtime selection from catalog
     -> create minimal provider from selection
-    -> execute/compose host
+    -> create host
 ~~~
 
 ### Required refactor
 
-`WistDialectExecutionWorkflow` should receive dependencies similar to:
+`WistDialectExecutionWorkflow` receives dependencies with this responsibility split:
 
 ~~~csharp
 public sealed class WistDialectExecutionWorkflow
@@ -540,13 +568,13 @@ Existing composition result object should expose:
 
 ### Compatibility rule
 
-If needed, keep the old eager path behind a separate API:
+Keep the old eager path as a compatibility/bootstrap option:
 
 ~~~csharp
 ComposeWithFullAutoDiscovery(...)
 ~~~
 
-But the default dialect path should use the new minimal provider assembly.
+The default dialect path should continue to use selected runtime assembly.
 
 ### Acceptance criteria for Phase 6
 
@@ -651,7 +679,7 @@ It is much simpler and much more memory-friendly than trying to keep full magica
 
 ## Phase 9. Future-proof selective assembly loading
 
-This phase is optional for the first merge, but should be planned.
+This remains future work.
 
 ### Current limitation
 
@@ -883,7 +911,7 @@ The workflow result should expose the selected runtime composition clearly for d
 
 ## Logging and diagnostics
 
-Add lightweight debug diagnostics for the new path.
+Add lightweight debug diagnostics for the selected runtime path.
 
 ### Example fields
 
@@ -895,43 +923,46 @@ Add lightweight debug diagnostics for the new path.
 
 ### Why
 
-This will make it much easier to verify that the new path really avoids eager discovery.
+This will make it much easier to verify that the selected runtime path really avoids eager discovery.
 
 ---
 
 ## Migration plan
 
+The first migration steps are implemented for the Wist dialect path. Remaining steps focus on packaging, selective
+loading, measurement, and cleanup.
+
 ## Step 1
 
-Add tests that freeze current dialect behavior.
+Implemented: tests freeze current dialect behavior.
 
 ## Step 2
 
-Introduce runtime descriptors and runtime catalog.
+Implemented through manifest-backed runtime component entries and catalog services.
 
 ## Step 3
 
-Introduce selection resolver.
+Implemented through selected runtime plan resolution.
 
 ## Step 4
 
-Introduce minimal provider factory using `AddWistCoreServices()`.
+Partially implemented: provider creation is selected-runtime based, with Wist-specific backend registrar integration.
 
 ## Step 5
 
-Switch `WistDialectExecutionWorkflow` to the new minimal path.
+Implemented: `WistDialectExecutionWorkflow` composes first and creates hosts from the resolved selection.
 
 ## Step 6
 
-Keep old eager path as fallback/compatibility.
+Implemented: old eager/discovery helpers remain compatibility and bootstrap paths.
 
 ## Step 7
 
-Optionally add manual Wist runtime catalog.
+Future/optional: current catalog resolution is manifest-backed rather than a fully manual static catalog.
 
 ## Step 8
 
-Optionally add selective assembly loading metadata.
+Future: add selective assembly loading metadata and loading policy.
 
 ---
 
@@ -943,7 +974,7 @@ Some runtime behavior may currently depend on eager registration of unrelated se
 
 ### Mitigation
 
-- compare old and new path with golden tests,
+- compare eager and selected runtime paths with golden tests,
 - add explicit registrations only where required,
 - do not guess hidden dependencies.
 
@@ -980,22 +1011,24 @@ Manual Wist catalog may become outdated when modules are added.
 
 ## Acceptance criteria for the whole feature
 
-The work is complete when all of the following are true:
+The memory-lowering feature is complete when all of the following are true:
 
-1. Dialect composition no longer requires `AddWistServices()` in the normal path.
-2. Dialect composition no longer performs broad auto-discovery in the normal path.
-3. Runtime provider for a dialect contains only selected modules/optimizers/backends plus minimal core services.
-4. Existing main dialect examples still work.
-5. Deterministic ordering is preserved.
-6. Parallel compositions do not leak state into each other.
-7. Tests prove that the new path does not touch eager discovery helpers.
-8. Memory usage at startup is measurably lower in the dialect path.
+1. Dialect composition no longer requires `AddWistServices()` in the normal path. Implemented.
+2. Dialect composition no longer performs broad auto-discovery as its source of truth in the normal path. Implemented.
+3. Runtime provider for a dialect contains only selected modules/optimizers/backends plus required core services.
+   Implemented for current Wist validation profiles.
+4. Existing main dialect examples still work. Implemented and covered by smoke tests.
+5. Deterministic ordering is preserved. Implemented and covered by tests.
+6. Parallel compositions do not leak state into each other. Implemented and covered by tests.
+7. Tests prove that the selected runtime path does not touch eager discovery helpers. Partially implemented; keep
+   strengthening this.
+8. Memory usage at startup is measurably lower in the dialect path. Future measurement work.
 
 ---
 
 ## Minimal first merge recommendation
 
-To keep the first implementation realistic, the first PR should do only this:
+The original minimal first merge recommendation was:
 
 1. add runtime descriptor records,
 2. add runtime catalog,
@@ -1005,7 +1038,8 @@ To keep the first implementation realistic, the first PR should do only this:
 6. provide a **manual** `WistRuntimeCatalogFactory`,
 7. add determinism/compatibility tests.
 
-This is the best balance between:
+The current implementation uses a manifest-backed catalog rather than a fully manual `WistRuntimeCatalogFactory`. The
+same balance still applies to future refinements:
 
 - real memory reduction,
 - low implementation risk,
