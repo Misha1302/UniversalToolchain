@@ -27,6 +27,9 @@ dotnet test UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolch
 - Keep changes minimal, targeted, and deterministic.
 - Prefer extending existing architecture over adding special-case paths.
 - Avoid hardcoding dialect/module assumptions into framework-level contracts.
+- Preserve the project's existing universality, layering, and composition principles.
+- Do not make convenience entities easy to grow into hidden sources of framework truth.
+- Prefer designs where reducing universality requires an explicit architectural change rather than a tiny local patch.
 - New tests must not inherit from `Tests.Legacy.LegacyTestBase`; use `Tests.Infrastructure.DialectTestHostInfrastructure` with `Tests.Infrastructure.BackendParityInfrastructure`.
 - If behavior changes, add or update tests in the same change.
 - If structure/behavior meaningfully changes, update docs in the same change.
@@ -46,6 +49,7 @@ dotnet test UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolch
 - Prefer explicit internal contracts via `InternalsVisibleTo("Tests")` over reflection with type-name strings.
 - Avoid hidden backend result casts inside fixtures.
 - Avoid mixing unrelated concerns in one fixture.
+- Add architecture guardrail tests when introducing new framework-adjacent catalogs, registries, profile loaders, or optional facade layers.
 
 This cleanup did not tighten negative assertions. It focused on structure, isolation, and maintainability so future test changes stay easier to reason about and review.
 
@@ -65,3 +69,4 @@ This cleanup did not tighten negative assertions. It focused on structure, isola
 - Explain what changed and why.
 - Include validation commands and outcomes.
 - Keep PR scope coherent (avoid unrelated rewrites).
+- Call out any architectural boundary added to preserve universality or reduce future technical debt.
