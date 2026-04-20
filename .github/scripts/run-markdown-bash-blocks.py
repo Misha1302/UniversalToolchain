@@ -54,6 +54,7 @@ def ParseFenceAttributes(rawAttributes: str) -> dict[str, str]:
     allowedKeys = {
         "ci-timeout",
         "ci-allowed-exit-codes",
+        "ci-run",
     }
 
     for token in shlex.split(rawAttributes):
@@ -129,6 +130,25 @@ def ParseAllowedExitCodes(attributes: dict[str, str]) -> set[int]:
         raise ValueError("ci-allowed-exit-codes must contain at least one exit code")
 
     return allowedCodes
+
+
+def ParseBooleanAttribute(rawValue: str, attributeName: str) -> bool:
+    normalizedValue = rawValue.strip().lower()
+    if normalizedValue in {"1", "true", "yes"}:
+        return True
+
+    if normalizedValue in {"0", "false", "no"}:
+        return False
+
+    raise ValueError(f"{attributeName} must be one of: true, false, 1, 0, yes, no")
+
+
+def ShouldRunBlock(block: BashBlock) -> bool:
+    rawValue = block.attributes.get("ci-run")
+    if rawValue is None:
+        return True
+
+    return ParseBooleanAttribute(rawValue, "ci-run")
 
 
 def BuildCommand(block: BashBlock, scriptPath: Path) -> list[str]:
@@ -316,6 +336,11 @@ def RunBlock(repositoryRoot: Path, block: BashBlock, blockIndex: int, totalBlock
     print(f"::group::{groupName}")
 
     try:
+        if not ShouldRunBlock(block):
+            print("[skipped] ci-run=false")
+            print(block.content)
+            return
+
         if HasCommandDirectives(block):
             for command in ParseCommandDirectives(block):
                 RunCommand(repositoryRoot, block, command)

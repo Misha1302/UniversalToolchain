@@ -176,7 +176,9 @@ dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --file Univers
 
 # Evaluate one expression
 dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --mode compiler
+```
 
+```bash ci-run=false
 # Start REPL
 dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- repl --mode compiler
 ```
