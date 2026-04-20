@@ -14,6 +14,9 @@ The goal is to keep the codebase deterministic, readable, easy to review, and co
 4. All new public behavior must be understandable from names, signatures, and short English documentation.
 5. When a rule conflicts with old code, new code must follow this document.
 6. During refactoring, align touched code with these rules.
+7. Preserve the project's existing universality, layering, and composition principles instead of narrowing them for local convenience.
+8. Prefer designs where loss of universality requires an explicit architectural change rather than a small special-case patch.
+9. Convenience layers must remain optional and must not become hidden framework-level sources of truth.
 
 ---
 
@@ -581,42 +584,92 @@ Do not add new intrinsics without:
 
 ---
 
-## 12. Dependency Injection and Reflection
+## 12. Architectural Universality and Anti-Debt Guardrails
+
+### 12.1 Preserve universality by design
+Framework entities must be designed so that reducing universality, introducing concrete coupling, or turning a reusable abstraction into product-specific logic is difficult and explicit.
+
+Preferred:
+- thin optional convenience layers
+- declarative definitions over imperative special cases
+- data-only descriptors when a type only identifies shipped profiles, presets, or examples
+- explicit boundaries between framework-level and product-level code
+- architecture tests for important dependency boundaries
+
+Avoid designs where one small patch can silently convert a reusable framework abstraction into a concrete Wist-only or profile-only mechanism.
+
+### 12.2 Convenience layers must stay optional
+Catalogs, registries, profile sources, facades, loaders, and other convenience layers must not become mandatory framework dependencies.
+
+The core system must remain usable through general composition paths without requiring those layers.
+
+### 12.3 Do not create hidden authorities
+Do not let a convenience entity become a hidden authority that decides framework-level semantics, module selection rules, backend selection rules, or dialect composition rules through imperative branching.
+
+If an entity only exposes shipped presets or built-in profiles, keep it small, data-driven, and replaceable.
+
+### 12.4 Prevent easy universality erosion
+When designing entities that sit near composition, runtime selection, profile loading, diagnostics, or binding resolution, prefer structures where harmful narrowing requires an explicit architectural refactor.
+
+Preferred:
+- external declarative profile files or manifests
+- immutable descriptors with minimal metadata
+- shared workflow paths for built-in and user-defined configurations
+- dependency boundaries enforced by tests
+
+Avoid:
+- rich descriptors that duplicate the real language model
+- branching by concrete profile id, dialect id, module name, or backend name in framework-level logic
+- built-in catalogs that mutate composition behavior instead of only supplying data
+- helpers that are trivially extendable by adding one more concrete `if`/`switch` arm
+
+### 12.5 Technical debt prevention rule
+A design is unacceptable if it is easy to modify in a way that:
+- reduces universality,
+- increases coupling to concrete dialects/modules/backends,
+- bypasses declared extension points,
+- or accumulates hidden technical debt through special-case branching.
+
+When such risk exists, restructure the design first so that the harmful modification path becomes harder, more visible, and more testable.
+
+---
+
+## 13. Dependency Injection and Reflection
 
 The project already highlights determinism problems around assembly scanning and reflection-based discovery, and explicitly plans to centralize reflection and redesign DI behavior.
 These concerns should be reflected in the rules.
 
-### 12.1 DI registration
+### 13.1 DI registration
 Prefer explicit registrations for critical infrastructure.
 Auto-registration is acceptable for modules and clearly marked extension points.
 
-### 12.2 Reflection
+### 13.2 Reflection
 Reflection usage should be centralized in dedicated helpers or registries.
 Do not scatter ad hoc reflection logic across unrelated modules.
 
-### 12.3 Determinism
+### 13.3 Determinism
 Do not make behavior depend on unstable assembly scan order.
 Where ordering matters, define it explicitly.
 
 ---
 
-## 13. Using Directives
+## 14. Using Directives
 
-### 13.1 Order
+### 14.1 Order
 Use the following order:
 1. `System...`
 2. third-party namespaces
 3. project namespaces
 
-### 13.2 Redundant usings
+### 14.2 Redundant usings
 Do not keep redundant local `using` directives when a stable `GlobalUsings.cs` already exists.
 If an import is common for a project and consistently needed across many files, prefer moving it into the dedicated global usings file instead of repeating it locally.
 
 ---
 
-## 14. Testing Rules
+## 15. Testing Rules
 
-### 14.1 Every non-trivial rule change needs tests
+### 15.1 Every non-trivial rule change needs tests
 Add or update tests when changing:
 - parsing precedence
 - binding behavior
@@ -624,16 +677,20 @@ Add or update tests when changing:
 - optimization passes
 - interpreter/compiler semantic parity
 - DI composition
+- architecture boundaries that protect universality or layering
 
-### 14.2 Fixes need regression tests
+### 15.2 Fixes need regression tests
 Every bug fix should add a regression test when practical.
 
-### 14.3 Semantic parity
+### 15.3 Semantic parity
 For language behavior, prefer paired tests that verify both interpreter and compiled execution produce the same observable result.
+
+### 15.4 Architecture guardrails
+When introducing a new convenience layer, catalog, registry, or profile loader near framework composition, add tests when practical that protect dependency direction and shared workflow behavior.
 
 ---
 
-## 15. Forbidden Practices
+## 16. Forbidden Practices
 
 Forbidden in new code:
 - direct exception throwing instead of `Thrower`
@@ -652,12 +709,14 @@ Forbidden in new code:
 - direct `throw` outside `Thrower` and approved `Thrower` extension helpers
 - routine null argument checks in private/internal helpers when validation belongs to the public API boundary
 - vague test names such as `Test1`, `Check`, or `ShouldWork`
+- convenience entities that become hidden sources of framework truth through imperative special-case logic
+- framework-level branching on concrete shipped profile ids, concrete dialect ids, or concrete built-in module sets when a general path already exists
 
 ---
 
-## 16. Preferred Patterns
+## 17. Preferred Patterns
 
-### 16.1 Good
+### 17.1 Good
 
 ```csharp
 public void RegisterAssembly(Assembly assembly)
@@ -676,20 +735,24 @@ public void RegisterAssembly(Assembly assembly)
 }
 ```
 
-### 16.2 Bad
+### 17.2 Bad
 
 ```csharp
-public void RegisterAssembly(Assembly assembly)
+public Runner Build(string profileId)
 {
-    ArgumentNullException.ThrowIfNull(assembly);
-    // Комментарий
-    throw new InvalidOperationException("bad");
+    if (profileId == "full-default")
+        return BuildFullDefault();
+
+    if (profileId == "restricted-sandbox")
+        return BuildRestrictedSandboxWithExtraRules();
+
+    throw new InvalidOperationException();
 }
 ```
 
 ---
 
-## 17. Migration Notes for Existing Code
+## 18. Migration Notes for Existing Code
 
 This document is stricter than parts of the current codebase.
 The repository still contains mixed-language comments and mixed null-check styles, so these rules should be treated as the target standard for cleanup rather than a claim that all current files already comply.
@@ -702,10 +765,11 @@ Priority cleanup order:
 3. Replace direct `throw new ...` with `Thrower` calls.
 4. Normalize brace usage in touched files.
 5. Move repeated imports into `GlobalUsings.cs` where stable.
+6. Reduce convenience-layer logic that hides framework decisions behind concrete special cases.
 
 ---
 
-## 18. Short Checklist for Contributors
+## 19. Short Checklist for Contributors
 
 Before merging code, verify:
 - names follow project casing conventions
@@ -727,9 +791,11 @@ Before merging code, verify:
 - role suffix matches behavior
 - direct `throw` is not used outside `Thrower` and approved `Thrower` helpers
 - null argument validation is done only at public API boundaries
+- the change preserves existing universality and layering instead of narrowing them for a local case
+- new convenience entities stay optional, data-driven where reasonable, and do not become hidden framework authorities
 
 ---
 
-## 19. Source Basis
+## 20. Source Basis
 
 This document was updated based on the current `PROJECT_RULES.md`, the `Thrower` implementation, the existing core pipeline classes, and the repository-wide conventions visible in the uploaded project snapshot.
