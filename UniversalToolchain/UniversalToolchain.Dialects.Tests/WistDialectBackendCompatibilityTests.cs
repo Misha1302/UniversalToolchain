@@ -1,3 +1,4 @@
+using BasicCore.Contracts;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Integration;
@@ -85,6 +86,74 @@ public class WistDialectBackendCompatibilityTests
         });
     }
 
+    [Test]
+    public void WistDialectExecutionConfigurationBuilder_RejectsModuleSelectionWithWrongManifestKind()
+    {
+        var builder = CreateBuilder(new StubRuntimeComponentTypeLoader());
+        var entry = new RuntimeComponentManifestEntry(
+            RuntimeComponentKind.Optimizer,
+            "Arithmetic",
+            [],
+            RuntimeComponentIdFactory.Create(RuntimeComponentKind.Optimizer, "Arithmetic"),
+            "AnyAssembly");
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            builder.Build(
+                new DialectBuildPlan("Demo", null, ["Arithmetic"], [], [], [], [], null, [], new DialectValidationResult([])),
+                new SelectedRuntimePlan([entry], [], [], [])));
+
+        Assert.That(exception!.Message, Does.Contain("FrontendModule").And.Contain("expected"));
+    }
+
+    [Test]
+    public void WistDialectExecutionConfigurationBuilder_RejectsModuleSelectionWithUnsupportedActivationType()
+    {
+        var module = ModuleEntry("UnsupportedModule");
+        var builder = CreateBuilder(new MappingRuntimeComponentTypeLoader((module, typeof(object))));
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            builder.Build(
+                new DialectBuildPlan("Demo", null, ["UnsupportedModule"], [], [], [], [], null, [], new DialectValidationResult([])),
+                new SelectedRuntimePlan([module], [], [], [])));
+
+        Assert.That(exception!.Message, Does.Contain("UnsupportedModule").And.Contain(nameof(IFrontendCoreModule)).And.Contain(nameof(IIRProcessingModule)));
+    }
+
+    [Test]
+    public void WistDialectExecutionConfigurationBuilder_RejectsOptimizerSelectionWithUnsupportedActivationType()
+    {
+        var backend = Entry("interpreter");
+        var optimizer = OptimizerEntry("UnsupportedOptimization");
+        var builder = CreateBuilder(new MappingRuntimeComponentTypeLoader(
+            (backend, typeof(object)),
+            (optimizer, typeof(object))));
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            builder.Build(
+                new DialectBuildPlan(
+                    "Demo",
+                    null,
+                    [],
+                    [new DialectBackendId("interpreter")],
+                    [],
+                    [],
+                    [new OptimizerBuildDirective("UnsupportedOptimization", true, DialectBackendSelector.Any)],
+                    null,
+                    [],
+                    new DialectValidationResult([])),
+                new SelectedRuntimePlan([], [optimizer], [backend], [])));
+
+        Assert.That(exception!.Message, Does.Contain("UnsupportedOptimization").And.Contain(nameof(IIRProcessingModule)));
+    }
+
+    private static WistDialectExecutionConfigurationBuilder CreateBuilder(IRuntimeComponentTypeLoader typeLoader)
+    {
+        return new WistDialectExecutionConfigurationBuilder(
+            typeLoader,
+            new DialectIntrinsicPolicyResolver(),
+            new RecordingKnownBackendsProvider([]));
+    }
+
     private static RuntimeComponentManifestEntry Entry(string alias, IReadOnlyList<string>? aliases = null) =>
         new(
             RuntimeComponentKind.Backend,
@@ -92,6 +161,26 @@ public class WistDialectBackendCompatibilityTests
             aliases ?? [],
             RuntimeComponentIdFactory.Create(RuntimeComponentKind.Backend, alias),
             "AnyAssembly");
+
+    private static RuntimeComponentManifestEntry ModuleEntry(string alias)
+    {
+        return new RuntimeComponentManifestEntry(
+            RuntimeComponentKind.FrontendModule,
+            alias,
+            [],
+            RuntimeComponentIdFactory.Create(RuntimeComponentKind.FrontendModule, alias),
+            "AnyAssembly");
+    }
+
+    private static RuntimeComponentManifestEntry OptimizerEntry(string alias)
+    {
+        return new RuntimeComponentManifestEntry(
+            RuntimeComponentKind.Optimizer,
+            alias,
+            [],
+            RuntimeComponentIdFactory.Create(RuntimeComponentKind.Optimizer, alias),
+            "AnyAssembly");
+    }
 
     private sealed class StaticCatalog(params RuntimeComponentManifestEntry[] backends) : IRuntimeComponentCatalog
     {
@@ -135,6 +224,23 @@ public class WistDialectBackendCompatibilityTests
     private sealed class StubRuntimeComponentTypeLoader : IRuntimeComponentTypeLoader
     {
         public Type LoadType(RuntimeComponentManifestEntry entry) => typeof(object);
+    }
+
+    private sealed class MappingRuntimeComponentTypeLoader(params (RuntimeComponentManifestEntry Entry, Type Type)[] mappings) : IRuntimeComponentTypeLoader
+    {
+        private readonly IReadOnlyDictionary<RuntimeComponentId, Type> _typesById = mappings.ToDictionary(
+            static x => x.Entry.ComponentId,
+            static x => x.Type);
+
+        public Type LoadType(RuntimeComponentManifestEntry entry)
+        {
+            if (_typesById.TryGetValue(entry.ComponentId, out var type))
+            {
+                return type;
+            }
+
+            return typeof(object);
+        }
     }
 
     private sealed class RecordingKnownBackendsProvider(IReadOnlyList<RuntimeBackendDescriptor> knownBackends) : IRuntimeKnownBackendsProvider

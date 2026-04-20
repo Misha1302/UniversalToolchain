@@ -44,12 +44,25 @@ public sealed class WistDialectExecutionConfigurationBuilder
 
         foreach (var entry in selectedRuntimePlan.OrderedModules)
         {
-            var type = _typeLoader.LoadType(entry);
-            if (typeof(IFrontendCoreModule).IsAssignableFrom(type) && !frontendModules.Contains(type))
-                frontendModules.Add(type);
+            var type = LoadComponentType(entry, RuntimeComponentKind.FrontendModule);
+            var isFrontendModule = typeof(IFrontendCoreModule).IsAssignableFrom(type);
+            var isIrModule = typeof(IIRProcessingModule).IsAssignableFrom(type);
 
-            if (typeof(IIRProcessingModule).IsAssignableFrom(type))
+            if (isFrontendModule && !frontendModules.Contains(type))
+            {
+                frontendModules.Add(type);
+            }
+
+            if (isIrModule)
+            {
                 irModules.Add(type);
+            }
+
+            if (!isFrontendModule && !isIrModule)
+            {
+                Thrower.InvalidOpEx(
+                    $"Runtime module '{entry.CanonicalAlias}' resolves to type '{DisplayName(type)}', but the type does not implement IFrontendCoreModule or IIRProcessingModule.");
+            }
         }
 
 
@@ -85,17 +98,45 @@ public sealed class WistDialectExecutionConfigurationBuilder
                 .Where(x => x.Enabled)
                 .Any(x => string.Equals(x.Name, entry.CanonicalAlias, StringComparison.Ordinal)
                           && x.Target.Matches(backendId)))
-            .Select(_typeLoader.LoadType)
+            .Select(LoadOptimizerType)
             .Distinct()
             .OrderBy(x => x.FullName, StringComparer.Ordinal)
             .ToList();
         var policy = _intrinsicPolicyResolver.Resolve(buildPlan, backendId);
-        var metadataOwnerType = _typeLoader.LoadType(backend);
+        var metadataOwnerType = LoadComponentType(backend, RuntimeComponentKind.Backend);
         return new DialectBackendRuntimeConfiguration(
             new RuntimeBackendDescriptor(backendId, metadataOwnerType, backend.Aliases),
             optimizerTypes,
             policy.Allowed,
             policy.Forbidden,
             policy.HasExplicitAllowList);
+    }
+
+    private Type LoadOptimizerType(RuntimeComponentManifestEntry entry)
+    {
+        var type = LoadComponentType(entry, RuntimeComponentKind.Optimizer);
+        if (!typeof(IIRProcessingModule).IsAssignableFrom(type))
+        {
+            Thrower.InvalidOpEx(
+                $"Runtime optimizer '{entry.CanonicalAlias}' resolves to type '{DisplayName(type)}', but the type does not implement IIRProcessingModule.");
+        }
+
+        return type;
+    }
+
+    private Type LoadComponentType(RuntimeComponentManifestEntry entry, RuntimeComponentKind expectedKind)
+    {
+        if (entry.Kind != expectedKind)
+        {
+            Thrower.InvalidOpEx(
+                $"Runtime component '{entry.CanonicalAlias}' has kind '{RuntimeComponentKindCodec.Format(entry.Kind)}', but '{RuntimeComponentKindCodec.Format(expectedKind)}' was expected.");
+        }
+
+        return _typeLoader.LoadType(entry);
+    }
+
+    private static string DisplayName(Type type)
+    {
+        return type.FullName ?? type.Name;
     }
 }
