@@ -108,19 +108,54 @@ public class SelectedRuntimePlanResolverContractTests
         }
     }
 
+    [Test]
+    public void Resolve_RepeatedRuns_PreservesDeterministicDiagnosticsOrdering()
+    {
+        var resolver = CreateResolver();
+        var plan = BuildPlan(
+            ["MissingModule", "Arithmetic"],
+            [new DialectBackendId("missing-backend"), new DialectBackendId("interpreter")],
+            [new OptimizerBuildDirective("missing-opt", true, DialectBackendSelector.Any)],
+            [new DialectDiagnostic("V001", "Existing validation diagnostic.", DialectDiagnosticSeverity.Warning)]);
+
+        string? baseline = null;
+        for (var i = 0; i < 50; i++)
+        {
+            var selected = resolver.Resolve(plan);
+            var signature = DescribeSelectedPlan(selected);
+            baseline ??= signature;
+            Assert.That(signature, Is.EqualTo(baseline));
+        }
+
+        var diagnostics = resolver.Resolve(plan).Diagnostics
+            .Select(static x => $"{x.Code}:{x.Message}")
+            .ToArray();
+
+        Assert.That(diagnostics, Is.EqualTo(new[]
+        {
+            "V001:Existing validation diagnostic.",
+            "R001:Runtime module descriptor 'MissingModule' was not registered.",
+            "R002:Runtime backend descriptor 'missing-backend' was not registered.",
+            "R003:Runtime optimizer descriptor 'missing-opt' was not registered."
+        }));
+    }
+
     private static string DescribeSelectedPlan(SelectedRuntimePlan plan)
     {
         return string.Join("|", plan.OrderedModules.Select(x => x.CanonicalAlias))
                + "::"
                + string.Join("|", plan.EnabledBackends.Select(x => x.CanonicalAlias))
                + "::"
-               + string.Join("|", plan.EnabledOptimizers.Select(x => x.CanonicalAlias));
+               + string.Join("|", plan.EnabledOptimizers.Select(x => x.CanonicalAlias))
+               + "::"
+               + string.Join("|", plan.Diagnostics.Select(static x => $"{x.Code}:{x.Severity}:{x.Message}"));
     }
 
     private static DialectBuildPlan BuildPlan(
         IReadOnlyList<string> modules,
         IReadOnlyList<DialectBackendId> backends,
-        IReadOnlyList<OptimizerBuildDirective>? optimizers = null) =>
+        IReadOnlyList<OptimizerBuildDirective>? optimizers = null,
+        IReadOnlyList<DialectDiagnostic>? diagnostics = null) =>
         new(
             "ContractDialect",
             null,
@@ -131,7 +166,7 @@ public class SelectedRuntimePlanResolverContractTests
             optimizers ?? [],
             null,
             [],
-            new DialectValidationResult([]));
+            new DialectValidationResult(diagnostics ?? []));
 
     private static SelectedRuntimePlanResolver CreateResolver()
     {

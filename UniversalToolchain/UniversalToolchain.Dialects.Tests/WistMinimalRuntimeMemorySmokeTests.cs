@@ -45,6 +45,27 @@ public class WistMinimalRuntimeMemorySmokeTests
     }
 
     [Test]
+    public void MinimalPath_ComposeOnly_DoesNotLoadUnselectedRuntimeAssembliesBeforeHostCreation()
+    {
+        using var provider = CreateMinimalProvider();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+        var before = AppDomain.CurrentDomain.GetAssemblies().Select(static x => x.GetName().Name).ToHashSet(StringComparer.Ordinal);
+
+        var result = workflow.ComposeText("dialect ComposeOnly\nuse Arithmetic,Numbers,Whitespaces\nbackend interpreter", "compose-only");
+        Assert.That(result.IsSuccess, Is.True, result.ToDeterministicText());
+
+        var afterCompose = AppDomain.CurrentDomain.GetAssemblies().Select(static x => x.GetName().Name).ToHashSet(StringComparer.Ordinal);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(afterCompose.Contains("CSharpInteropModule"), Is.EqualTo(before.Contains("CSharpInteropModule")));
+            Assert.That(afterCompose.Contains("LoopsModule"), Is.EqualTo(before.Contains("LoopsModule")));
+            Assert.That(afterCompose.Contains("ParametersSetterModule"), Is.EqualTo(before.Contains("ParametersSetterModule")));
+            Assert.That(afterCompose.Contains("LocalVariablesOptimizerModule"), Is.EqualTo(before.Contains("LocalVariablesOptimizerModule")));
+        });
+    }
+
+    [Test]
     public void MinimalPath_RepeatedOperations_DoNotGrowServiceCounts()
     {
         using var provider = CreateMinimalProvider();

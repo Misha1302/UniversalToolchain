@@ -94,13 +94,29 @@ public class WistDialectRuntimeBootstrapContractTests
         var services = new ServiceCollection();
         services.AddWistDialectServices();
 
-        var serviceTypes = services.Select(static x => x.ServiceType.FullName ?? string.Empty).ToArray();
+        var registeredTypeNames = BuildRegisteredTypeNames(services);
 
         Assert.Multiple(() =>
         {
-            Assert.That(serviceTypes.Any(static x => x.Contains("AutoRegistration", StringComparison.Ordinal)), Is.False);
-            Assert.That(serviceTypes.Any(static x => x.Contains("Legacy", StringComparison.Ordinal)), Is.False);
-            Assert.That(serviceTypes.Any(static x => x.Contains("WistOptions", StringComparison.Ordinal)), Is.False);
+            Assert.That(registeredTypeNames.Any(static x => x.Contains("AutoRegistration", StringComparison.Ordinal)), Is.False);
+            Assert.That(registeredTypeNames.Any(static x => x.Contains("Legacy", StringComparison.Ordinal)), Is.False);
+            Assert.That(registeredTypeNames.Any(static x => x.Contains("WistOptions", StringComparison.Ordinal)), Is.False);
+        });
+    }
+
+    [Test]
+    public void AddWistDialectServices_CanonicalBootstrap_DoesNotRegisterEagerAutoRegistrationConcepts()
+    {
+        var services = new ServiceCollection();
+        services.AddWistDialectServices();
+
+        var registeredTypeNames = BuildRegisteredTypeNames(services);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(registeredTypeNames.Any(static x => x.Contains("AutoRegisterServiceAttribute", StringComparison.Ordinal)), Is.False);
+            Assert.That(registeredTypeNames.Any(static x => x.Contains("AutoRegister", StringComparison.Ordinal)), Is.False);
+            Assert.That(registeredTypeNames.Any(static x => x.Contains("AutoRegistration", StringComparison.Ordinal)), Is.False);
         });
     }
 
@@ -117,6 +133,31 @@ public class WistDialectRuntimeBootstrapContractTests
             Assert.That(services.Where(static x => x.ServiceType == typeof(IDialectBackendRuntimeRegistrar)), Is.Empty);
             Assert.That(services.Any(static x => x.ServiceType == typeof(WistDialectExecutionWorkflow)), Is.True);
         });
+    }
+
+    [Test]
+    public void ComposeText_CanonicalPath_DoesNotCreateHostImplicitly()
+    {
+        var registrar = new CountingRegistrar("interpreter");
+        var services = new ServiceCollection();
+        services.AddWistDialectServices();
+        services.AddSingleton<IDialectBackendRuntimeRegistrar>(registrar);
+
+        using var provider = services.BuildServiceProvider();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+
+        var composition = workflow.ComposeText("dialect ComposeOnly\nuse Arithmetic,Numbers\nbackend interpreter", "compose-only");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(composition.IsSuccess, Is.True, composition.ToDeterministicText());
+            Assert.That(composition.RuntimeSelection, Is.InstanceOf<SelectedRuntimePlan>());
+            Assert.That(registrar.RegisterRuntimeCallCount, Is.EqualTo(0));
+        });
+
+        using var host = workflow.CreateHost(composition);
+
+        Assert.That(registrar.RegisterRuntimeCallCount, Is.EqualTo(1));
     }
 
     [Test]
@@ -251,6 +292,22 @@ public class WistDialectRuntimeBootstrapContractTests
             .ToArray();
     }
 
+    private static IReadOnlyList<string> BuildRegisteredTypeNames(IServiceCollection services)
+    {
+        return services
+            .SelectMany(static service => new[]
+            {
+                service.ServiceType,
+                service.ImplementationType,
+                service.ImplementationInstance?.GetType()
+            })
+            .Where(static type => type != null)
+            .Cast<Type>()
+            .Select(static type => type.FullName ?? type.Name)
+            .OrderBy(static x => x, StringComparer.Ordinal)
+            .ToArray();
+    }
+
     private readonly record struct ServiceRegistrationSignature(
         Type ServiceType,
         Type? ImplementationType,
@@ -263,6 +320,19 @@ public class WistDialectRuntimeBootstrapContractTests
 
         public void RegisterRuntime(IServiceCollection services, DialectBackendRuntimeConfiguration configuration)
         {
+            services.AddSingleton(typeof(object), new object());
+        }
+    }
+
+    private sealed class CountingRegistrar(string backendId) : IDialectBackendRuntimeRegistrar
+    {
+        public DialectBackendId BackendId { get; } = new(backendId);
+        public IReadOnlyList<string> SupportedIntrinsics => [];
+        public int RegisterRuntimeCallCount { get; private set; }
+
+        public void RegisterRuntime(IServiceCollection services, DialectBackendRuntimeConfiguration configuration)
+        {
+            RegisterRuntimeCallCount++;
             services.AddSingleton(typeof(object), new object());
         }
     }
