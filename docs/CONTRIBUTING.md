@@ -54,6 +54,11 @@ This cleanup did not tighten negative assertions. It focused on structure, isola
 - Keep docs aligned with real implementation.
 - Ensure commands in docs run from repository root.
 - Remove stale or legacy wording instead of preserving contradictory notes.
+- Every tracked markdown bash fence is executed in CI from repository root.
+- Long-running bash fences should be isolated in their own block and may declare `ci-timeout` plus `ci-allowed-exit-codes` in the fence header.
+- Interactive or documentation-only bash fences may declare `ci-run=false` to stay visible in docs without being executed in CI.
+- Command blocks that intentionally mix successful and failing commands may annotate the next command with `# ci: expect-exit=1` (or a comma-separated list of exit codes).
+- Line-level `# ci:` directives currently support single-line commands only and must not be mixed with fence-level `ci-allowed-exit-codes`.
 
 ## Pull requests
 
