@@ -2,7 +2,7 @@
 
 ## What this example demonstrates
 
-This example demonstrates constrained composition aimed at a narrower runtime profile.
+This example demonstrates a composition-constrained profile aimed at a narrower runtime surface.
 
 ## Enabled modules/backends/features
 
@@ -15,7 +15,7 @@ This example demonstrates constrained composition aimed at a narrower runtime pr
 - No compiler backend.
 - Explicitly excludes `Variables`, `Identifier`, `Loops`, `Labels`, `InternalPreprocessorLexemes`,
   `ParametersSetter`, `SemicolonAsNewLine`, `CSharpInterop`, and `NativeTypes`.
-- No claim of complete hardened sandboxing.
+- No hardened sandbox guarantee. The restriction comes from selected modules and backend composition.
 
 ## Exact CLI commands to run it
 
@@ -41,4 +41,4 @@ dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file
 ## Why this example exists
 
 It documents and tests how the dialect path can intentionally constrain available modules. It is a composition
-constraint example, not a fully hardened sandbox guarantee.
+constraint example, not a hardened sandbox guarantee.

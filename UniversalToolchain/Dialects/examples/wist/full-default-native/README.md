@@ -12,6 +12,7 @@ to the native arithmetic/type stack and enables native optimizations.
 - Backends: `cil`, `interpreter`
 - Enabled optimizer flags: `ArithmeticOptimization`, `BooleanOptimization`, `ComparisonIntrinsicOptimization`,
   `EGraphOptimization`, `LocalVariablesOptimization`, `NativeCilOptimization`, `NativeTypesOptimization`
+- User-facing CLI mode: `--mode compiler` selects the canonical `cil` backend.
 
 ## Intentionally excluded capabilities
 
