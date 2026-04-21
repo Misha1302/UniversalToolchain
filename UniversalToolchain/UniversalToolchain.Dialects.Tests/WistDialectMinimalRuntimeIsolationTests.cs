@@ -43,7 +43,7 @@ public class WistDialectMinimalRuntimeIsolationTests
         for (var i = 0; i < 40; i++)
         {
             var result = workflow.ComposeText("dialect Stable\nuse Arithmetic,Numbers,Whitespaces\nenable LocalVariablesOptimization\nbackend interpreter,compiler", $"stable-{i}");
-            Assert.That(result.IsSuccess, Is.True, UniversalToolchain.Dialects.Integration.DialectCompositionExplanationFormatter.FormatDeterministic(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationProjector.Project(result)));
+            Assert.That(result.IsSuccess, Is.True, FormatComposition(result));
             signatures.Add(WistDialectTestInfrastructure.BuildSelectionAndDiagnosticsSignature(result));
         }
 
@@ -79,7 +79,7 @@ public class WistDialectMinimalRuntimeIsolationTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(results.All(static x => x.Result.IsSuccess), Is.True, string.Join(Environment.NewLine, results.Select(static x => UniversalToolchain.Dialects.Integration.DialectCompositionExplanationFormatter.FormatDeterministic(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationProjector.Project(x.Result)))));
+            Assert.That(results.All(static x => x.Result.IsSuccess), Is.True, string.Join(Environment.NewLine, results.Select(static x => FormatComposition(x.Result))));
             Assert.That(signatures.Count, Is.EqualTo(3));
             Assert.That(results.Where(static x => x.DialectIndex == 0).Select(static x => WistDialectTestInfrastructure.BuildSelectionSignature(x.Result)).Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1));
             Assert.That(results.Where(static x => x.DialectIndex == 1).Select(static x => WistDialectTestInfrastructure.BuildSelectionSignature(x.Result)).Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1));
@@ -107,7 +107,7 @@ public class WistDialectMinimalRuntimeIsolationTests
         using var provider = CreateMinimalProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var result = workflow.ComposeText("dialect StableHost\nuse Arithmetic,Numbers,Whitespaces\nbackend interpreter,compiler", "stable-host");
-        Assert.That(result.IsSuccess, Is.True, UniversalToolchain.Dialects.Integration.DialectCompositionExplanationFormatter.FormatDeterministic(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationProjector.Project(result)));
+        Assert.That(result.IsSuccess, Is.True, FormatComposition(result));
 
         var signatures = new List<string>();
         for (var i = 0; i < 40; i++)
@@ -129,7 +129,7 @@ public class WistDialectMinimalRuntimeIsolationTests
         for (var i = 0; i < 30; i++)
         {
             var result = workflow.ComposeText("dialect Cycle\nuse Arithmetic,Numbers,Whitespaces\nbackend interpreter", $"cycle-{i}");
-            Assert.That(result.IsSuccess, Is.True, UniversalToolchain.Dialects.Integration.DialectCompositionExplanationFormatter.FormatDeterministic(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationProjector.Project(result)));
+            Assert.That(result.IsSuccess, Is.True, FormatComposition(result));
 
             using var host = workflow.CreateHost(result);
             var runResult = host.Run("2 + 5", "interpreter");
@@ -157,7 +157,7 @@ public class WistDialectMinimalRuntimeIsolationTests
             var scenario = scenarios[scenarioIndex];
             var composition = workflow.ComposeText(scenario.Item1, $"scenario-{i}");
             if (!composition.IsSuccess)
-                return (ScenarioIndex: scenarioIndex, Signature: "compose-failed:" + UniversalToolchain.Dialects.Integration.DialectCompositionExplanationFormatter.FormatDeterministic(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationProjector.Project(composition)));
+                return (ScenarioIndex: scenarioIndex, Signature: "compose-failed:" + FormatComposition(composition));
 
             using var host = workflow.CreateHost(composition);
             var runResult = host.Run(scenario.Item2, scenario.Item3);
@@ -220,7 +220,7 @@ public class WistDialectMinimalRuntimeIsolationTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(result.IsSuccess, Is.True, UniversalToolchain.Dialects.Integration.DialectCompositionExplanationFormatter.FormatDeterministic(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationProjector.Project(result)));
+            Assert.That(result.IsSuccess, Is.True, FormatComposition(result));
             Assert.That(host.Configuration.TryResolveKnownBackendId("interpreter", out _), Is.True);
             Assert.That(host.Configuration.TryResolveKnownBackendId("foreign-backend", out _), Is.False);
             Assert.That(host.Configuration.TryResolveKnownBackendId("foreign", out _), Is.False);
@@ -234,6 +234,11 @@ public class WistDialectMinimalRuntimeIsolationTests
         services.AddWistCilBackend();
         services.AddWistInterpreterBackend();
         return services.BuildServiceProvider();
+    }
+
+    private static string FormatComposition(DialectFrameworkCompositionResult composition)
+    {
+        return DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition));
     }
 
     private sealed class TempDirectory : IDisposable

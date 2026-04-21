@@ -7,6 +7,7 @@ using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
 using NCalc;
 using NCalc.LambdaCompilation;
+using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
 
 namespace UniversalToolchain.Benchmarks;
@@ -77,7 +78,7 @@ public abstract class ArithmeticBenchmarkEnvironmentBase
         var dialect = workflow.ComposeFile(dialectFile);
 
         if (!dialect.IsSuccess)
-            Thrower.InvalidOpEx($"Failed to compose dialect file: {UniversalToolchain.Dialects.Integration.DialectCompositionExplanationFormatter.FormatDeterministic(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationProjector.Project(dialect))}");
+            Thrower.InvalidOpEx($"Failed to compose dialect file: {DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(dialect))}");
 
         _host = workflow.CreateHost(dialect);
     }

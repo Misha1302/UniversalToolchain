@@ -117,7 +117,7 @@ public class WistDialectRuntimeBootstrapContractTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(composition.IsSuccess, Is.True, UniversalToolchain.Dialects.Integration.DialectCompositionExplanationFormatter.FormatDeterministic(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationProjector.Project(composition)));
+            Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
             Assert.That(composition.RuntimeSelection, Is.InstanceOf<SelectedRuntimePlan>());
             Assert.That(registrar.RegisterRuntimeCallCount, Is.EqualTo(0));
         });
@@ -137,7 +137,7 @@ public class WistDialectRuntimeBootstrapContractTests
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var composition = workflow.ComposeText("dialect MissingBackends\nuse Arithmetic\nbackend interpreter", "missing-backends");
 
-        Assert.That(composition.IsSuccess, Is.True, UniversalToolchain.Dialects.Integration.DialectCompositionExplanationFormatter.FormatDeterministic(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationProjector.Project(composition)));
+        Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
 
         var ex = Assert.Throws<InvalidOperationException>(() => workflow.CreateHost(composition));
         Assert.That(ex!.Message, Does.Contain("No backend runtime registrar is registered for backend 'interpreter'"));
@@ -156,10 +156,10 @@ public class WistDialectRuntimeBootstrapContractTests
         var interpreterOnly = workflow.ComposeText("dialect InterpreterOnly\nuse Arithmetic\nbackend interpreter", "interpreter-only");
         var compilerRequested = workflow.ComposeText("dialect NeedsCompiler\nuse Arithmetic\nbackend compiler", "needs-compiler");
 
-        Assert.That(interpreterOnly.IsSuccess, Is.True, UniversalToolchain.Dialects.Integration.DialectCompositionExplanationFormatter.FormatDeterministic(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationProjector.Project(interpreterOnly)));
+        Assert.That(interpreterOnly.IsSuccess, Is.True, FormatComposition(interpreterOnly));
         using var interpreterHost = workflow.CreateHost(interpreterOnly);
 
-        Assert.That(compilerRequested.IsSuccess, Is.True, UniversalToolchain.Dialects.Integration.DialectCompositionExplanationFormatter.FormatDeterministic(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationProjector.Project(compilerRequested)));
+        Assert.That(compilerRequested.IsSuccess, Is.True, FormatComposition(compilerRequested));
         var ex = Assert.Throws<InvalidOperationException>(() => workflow.CreateHost(compilerRequested));
         Assert.That(ex!.Message, Does.Contain("No backend runtime registrar is registered for backend 'cil'"));
     }
@@ -178,7 +178,7 @@ public class WistDialectRuntimeBootstrapContractTests
             using var provider = services.BuildServiceProvider();
             var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
             var composition = workflow.ComposeText("dialect Stable\nuse Arithmetic,Numbers\nbackend interpreter,compiler", $"stable-{i}");
-            Assert.That(composition.IsSuccess, Is.True, UniversalToolchain.Dialects.Integration.DialectCompositionExplanationFormatter.FormatDeterministic(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationProjector.Project(composition)));
+            Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
 
             using var host = workflow.CreateHost(composition);
             signatures.Add(WistDialectTestInfrastructure.BuildHostSignature(host));
@@ -240,7 +240,7 @@ public class WistDialectRuntimeBootstrapContractTests
                 "dialect Stable\nuse Arithmetic,Numbers,Whitespaces\nenable LocalVariablesOptimization\nbackend interpreter,compiler",
                 $"stable-{i}");
 
-            Assert.That(composition.IsSuccess, Is.True, UniversalToolchain.Dialects.Integration.DialectCompositionExplanationFormatter.FormatDeterministic(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationProjector.Project(composition)));
+            Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
 
             using var host = workflow.CreateHost(composition);
             var runResult = host.Run("2 + 5", "interpreter");
@@ -276,6 +276,11 @@ public class WistDialectRuntimeBootstrapContractTests
         }
 
         Assert.That(signatures.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1));
+    }
+
+    private static string FormatComposition(DialectFrameworkCompositionResult composition)
+    {
+        return DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition));
     }
 
     private static IReadOnlyList<ServiceRegistrationSignature> BuildServiceSignatures(IServiceCollection services)

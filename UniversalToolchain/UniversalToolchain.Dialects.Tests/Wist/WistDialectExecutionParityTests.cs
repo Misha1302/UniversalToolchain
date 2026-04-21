@@ -41,7 +41,7 @@ public class WistDialectExecutionParityTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(result.IsSuccess, Is.True, UniversalToolchain.Dialects.Integration.DialectCompositionExplanationFormatter.FormatDeterministic(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationProjector.Project(result)));
+            Assert.That(result.IsSuccess, Is.True, DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(result)));
             Assert.That(result.RuntimeSelection, Is.Not.Null);
         });
     }
@@ -77,7 +77,7 @@ public class WistDialectExecutionParityTests
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var composition = workflow.ComposeText(dialect, "inline-dialect");
         if (!composition.IsSuccess)
-            throw new InvalidOperationException(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationFormatter.FormatDeterministic(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationProjector.Project(composition)));
+            throw new InvalidOperationException(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
 
         return workflow.CreateHost(composition);
     }

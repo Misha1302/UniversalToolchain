@@ -158,7 +158,7 @@ public class WistRuntimeManifestMetadataValidationTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(composition.IsSuccess, Is.True, UniversalToolchain.Dialects.Integration.DialectCompositionExplanationFormatter.FormatDeterministic(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationProjector.Project(composition)));
+            Assert.That(composition.IsSuccess, Is.True, DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
             Assert.That(after, Is.EqualTo(before), "Compose stage should not load additional feature assemblies.");
         });
     }

@@ -1,0 +1,1 @@
+global using UniversalToolchain.Dialects.Integration;
