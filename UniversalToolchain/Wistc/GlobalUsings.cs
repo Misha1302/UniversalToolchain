@@ -1,12 +1,7 @@
 global using CommonExceptions;
 global using System.Diagnostics;
-global using System.Reflection;
-global using System.Reflection.Emit;
 global using ArithmeticModule;
-global using AssemblyFinder;
 global using BasicCodeTranslator;
-global using BasicCore;
-global using BasicCore.Attributes;
 global using BasicCore.Contracts;
 global using BasicCore.Core;
 global using BasicLexer;
@@ -29,4 +24,5 @@ global using WhitespacesModule;
 global using Wistc;
 global using UniversalToolchain.Dialects.Abstractions;
 global using UniversalToolchain.Dialects.Integration;
+global using UniversalToolchain.Dialects.Wist.Presets;
 global using Microsoft.Extensions.DependencyInjection;

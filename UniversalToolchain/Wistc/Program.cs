@@ -168,26 +168,24 @@ WistDialectExecutionHost CreateDefaultHost(CommonOptions options)
 {
     using var provider = CreateDialectWorkflowProvider();
     var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+    var customization = WistCliCustomizationRequest.FromOptions(options);
 
-    var modules = new List<string>
-    {
-        "Whitespaces", "SemicolonAsNewLine", "Comments", "Numbers", "Identifier", "Arithmetic", "Equality", "Conditions", "Loops", "Variables", "Scopes", "Labels", "InternalPreprocessorLexemes", "CSharpInterop"
-    };
+    if (!customization.HasCustomization)
+        return CreateHostFromPreset(workflow, WistShippedDialectPresets.Default);
 
-    if (options.UseNativeMath)
-        modules.Add("NativeTypes");
+    var dialectText = new WistCliCustomizedDialectBuilder().Build(customization);
+    var composition = workflow.ComposeText(dialectText, "cli-customized");
+    if (!composition.IsSuccess)
+        Thrower.InvalidOpEx(FormatComposition(composition));
 
-    if (options.IncludeModules != null)
-        modules.AddRange(options.IncludeModules.Select(x => x.Trim()).Where(x => !string.IsNullOrWhiteSpace(x)));
+    return workflow.CreateHost(composition);
+}
 
-    if (options.ExcludeModules != null)
-    {
-        var excluded = new HashSet<string>(options.ExcludeModules.Select(x => x.Trim()), StringComparer.OrdinalIgnoreCase);
-        modules = modules.Where(x => !excluded.Contains(x)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-    }
+WistDialectExecutionHost CreateHostFromPreset(WistDialectExecutionWorkflow workflow, WistShippedDialectPreset preset)
+{
+    var dialectFilePath = new WistShippedDialectFileResolver().Resolve(preset);
+    var composition = workflow.ComposeFile(dialectFilePath);
 
-    var dialectText = $"dialect CliDefault\nuse {string.Join(",", modules)}\nenable LocalVariablesOptimization\nbackend compiler,interpreter";
-    var composition = workflow.ComposeText(dialectText, "cli-default");
     if (!composition.IsSuccess)
         Thrower.InvalidOpEx(FormatComposition(composition));
 
@@ -196,13 +194,17 @@ WistDialectExecutionHost CreateDefaultHost(CommonOptions options)
 
 void ValidateDialectExecutionOptions(CommonOptions options)
 {
-    if (options.UseNativeMath)
+    var customization = WistCliCustomizationRequest.FromOptions(options);
+    if (!customization.HasCustomization)
+        return;
+
+    if (customization.UseNativeMath)
         Thrower.Argument(nameof(options.UseNativeMath), "The --use-native-math option cannot be combined with --dialect-file. Configure arithmetic through the dialect definition instead.");
 
-    if (options.IncludeModules != null && options.IncludeModules.Any())
+    if (customization.IncludeModules.Count > 0)
         Thrower.Argument(nameof(options.IncludeModules), "The --include-module option cannot be combined with --dialect-file. Configure modules through the dialect definition instead.");
 
-    if (options.ExcludeModules != null && options.ExcludeModules.Any())
+    if (customization.ExcludeModules.Count > 0)
         Thrower.Argument(nameof(options.ExcludeModules), "The --exclude-module option cannot be combined with --dialect-file. Configure modules through the dialect definition instead.");
 }
 
@@ -234,25 +236,7 @@ static string FormatComposition(DialectFrameworkCompositionResult result)
 
 void ListAllModules()
 {
-    Console.WriteLine("Available modules:");
-    Console.WriteLine("==================");
-
-    var assemblies = TypesFinder.Assemblies;
-    foreach (var assembly in assemblies)
-    {
-        var modules = assembly.GetTypes()
-            .Where(t => !t.IsAbstract && t.IsClass && typeof(IFrontendCoreModule).IsAssignableFrom(t))
-            .ToList();
-
-        if (!modules.Any())
-            continue;
-
-        Console.WriteLine($"\nAssembly: {assembly.GetName().Name}");
-        foreach (var module in modules)
-        {
-            var attr = module.GetCustomAttribute<AutoRegisterServiceAttribute>();
-            var lifetime = attr?.Lifetime.ToString() ?? "Transient";
-            Console.WriteLine($"  {module.FullName} [{lifetime}]");
-        }
-    }
+    using var provider = CreateDialectWorkflowProvider();
+    var catalog = provider.GetRequiredService<IRuntimeComponentCatalog>();
+    Console.Write(WistCliRuntimeListingFormatter.Format(catalog));
 }
