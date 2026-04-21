@@ -15,12 +15,11 @@ Run from repository root:
 ```bash
 dotnet restore UniversalToolchain/Wist.sln
 dotnet build UniversalToolchain/Wist.sln -c Release --no-restore
-dotnet test UniversalToolchain/Tests/Tests.csproj -c Release --no-build
-dotnet test UniversalToolchain/UniversalToolchain.Modules.Tests/UniversalToolchain.Modules.Tests.csproj -c Release --no-build
-dotnet test UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolchain.Dialects.Tests.csproj -c Release --no-build
+dotnet test UniversalToolchain/Wist.sln -c Release --no-build
 ```
 
-`UniversalToolchain/Tests.Legacy/Tests.Legacy.csproj` is a quarantine suite for disabled historical tests and is not part of default validation.
+This validation path runs all test projects currently included in `UniversalToolchain/Wist.sln`, including
+`UniversalToolchain/Tests.Legacy/Tests.Legacy.csproj`.
 
 ## Change expectations
 
