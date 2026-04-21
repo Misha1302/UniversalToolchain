@@ -77,7 +77,7 @@ public abstract class ArithmeticBenchmarkEnvironmentBase
         var dialect = workflow.ComposeFile(dialectFile);
 
         if (!dialect.IsSuccess)
-            Thrower.InvalidOpEx($"Failed to compose dialect file: {dialect.ToDeterministicText()}");
+            Thrower.InvalidOpEx($"Failed to compose dialect file: {UniversalToolchain.Dialects.Integration.DialectCompositionExplanationFormatter.FormatDeterministic(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationProjector.Project(dialect))}");
 
         _host = workflow.CreateHost(dialect);
     }

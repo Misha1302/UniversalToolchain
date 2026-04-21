@@ -52,7 +52,7 @@ public class WistMinimalRuntimeMemorySmokeTests
         var before = AppDomain.CurrentDomain.GetAssemblies().Select(static x => x.GetName().Name).ToHashSet(StringComparer.Ordinal);
 
         var result = workflow.ComposeText("dialect ComposeOnly\nuse Arithmetic,Numbers,Whitespaces\nbackend interpreter", "compose-only");
-        Assert.That(result.IsSuccess, Is.True, result.ToDeterministicText());
+        Assert.That(result.IsSuccess, Is.True, UniversalToolchain.Dialects.Integration.DialectCompositionExplanationFormatter.FormatDeterministic(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationProjector.Project(result)));
 
         var afterCompose = AppDomain.CurrentDomain.GetAssemblies().Select(static x => x.GetName().Name).ToHashSet(StringComparer.Ordinal);
 

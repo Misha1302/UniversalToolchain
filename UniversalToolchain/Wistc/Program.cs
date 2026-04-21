@@ -110,7 +110,7 @@ int DialectDemoCommand(DialectDemoOptions options)
                                    """, "demo-inline")
             : workflow.ComposeFile(options.File);
 
-        Console.WriteLine(report.ToDeterministicText());
+        Console.WriteLine(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationFormatter.FormatDeterministic(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationProjector.Project(report)));
         return report.IsSuccess ? 0 : 1;
     }
     catch (WistException ex)
@@ -133,7 +133,7 @@ int DialectInspectCommand(DialectInspectOptions options)
         using var provider = CreateDialectWorkflowProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var result = workflow.ComposeFile(options.File);
-        Console.WriteLine(result.ToDeterministicText());
+        Console.WriteLine(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationFormatter.FormatDeterministic(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationProjector.Project(result)));
         return result.IsSuccess ? 0 : 1;
     }
     catch (WistException ex)
@@ -189,7 +189,7 @@ WistDialectExecutionHost CreateDefaultHost(CommonOptions options)
     var dialectText = $"dialect CliDefault\nuse {string.Join(",", modules)}\nenable LocalVariablesOptimization\nbackend compiler,interpreter";
     var composition = workflow.ComposeText(dialectText, "cli-default");
     if (!composition.IsSuccess)
-        Thrower.InvalidOpEx(composition.ToDeterministicText());
+        Thrower.InvalidOpEx(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationFormatter.FormatDeterministic(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationProjector.Project(composition)));
 
     return workflow.CreateHost(composition);
 }
@@ -213,7 +213,7 @@ WistDialectExecutionHost CreateDialectHost(string dialectFile)
     var result = workflow.ComposeFile(dialectFile);
 
     if (!result.IsSuccess)
-        Thrower.InvalidOpEx(result.ToDeterministicText());
+        Thrower.InvalidOpEx(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationFormatter.FormatDeterministic(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationProjector.Project(result)));
 
     return workflow.CreateHost(result);
 }

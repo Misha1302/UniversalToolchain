@@ -25,7 +25,7 @@ public class ExampleRunner
             "example-inline");
 
         if (!composition.IsSuccess)
-            Thrower.InvalidOpEx(composition.ToDeterministicText());
+            Thrower.InvalidOpEx(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationFormatter.FormatDeterministic(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationProjector.Project(composition)));
 
         _host = workflow.CreateHost(composition);
     }

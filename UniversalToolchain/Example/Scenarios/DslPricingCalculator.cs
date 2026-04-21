@@ -80,7 +80,7 @@ public sealed class DslPricingCalculator : IDisposable
         var dialect = workflow.ComposeFile(GetDialectFilePath(dialectProfileName));
 
         if (!dialect.IsSuccess)
-            Thrower.InvalidOpEx(dialect.ToDeterministicText());
+            Thrower.InvalidOpEx(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationFormatter.FormatDeterministic(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationProjector.Project(dialect)));
 
         return workflow.CreateHost(dialect);
     }

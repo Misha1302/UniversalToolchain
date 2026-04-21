@@ -41,7 +41,7 @@ internal sealed class ModulePipelineTestHelper : IDisposable
     {
         var composition = _workflow.ComposeText(BuildDialectText("Inline", modules, optimizers, backends), "inline");
         if (!composition.IsSuccess)
-            throw new InvalidOperationException(composition.ToDeterministicText());
+            throw new InvalidOperationException(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationFormatter.FormatDeterministic(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationProjector.Project(composition)));
 
         return _workflow.CreateHost(composition);
     }

@@ -27,7 +27,7 @@ public static class DialectTestHostInfrastructure
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var composition = workflow.ComposeText(dialectText, "tests-inline");
         if (!composition.IsSuccess)
-            Thrower.InvalidOpEx(composition.ToDeterministicText());
+            Thrower.InvalidOpEx(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationFormatter.FormatDeterministic(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationProjector.Project(composition)));
 
         return workflow.CreateHost(composition);
     }

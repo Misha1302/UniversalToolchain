@@ -20,7 +20,7 @@ var dialect = workflow.ComposeText(
 );
 
 if (!dialect.IsSuccess)
-    Thrower.InvalidOpEx(dialect.ToDeterministicText());
+    Thrower.InvalidOpEx(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationFormatter.FormatDeterministic(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationProjector.Project(dialect)));
 
 var host = workflow.CreateHost(dialect);
 var result = host.Run("2 + 3", "compiler");

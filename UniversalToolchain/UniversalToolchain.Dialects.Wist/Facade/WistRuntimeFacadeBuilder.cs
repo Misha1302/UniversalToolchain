@@ -59,7 +59,7 @@ public sealed class WistRuntimeFacadeBuilder
             : workflow.ComposeFile(_dialectFilePath);
 
         if (!composition.IsSuccess)
-            Thrower.InvalidOpEx(composition.ToDeterministicText());
+            Thrower.InvalidOpEx(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationFormatter.FormatDeterministic(UniversalToolchain.Dialects.Integration.DialectCompositionExplanationProjector.Project(composition)));
 
         return new WistRuntimeFacade(workflow.CreateHost(composition));
     }
