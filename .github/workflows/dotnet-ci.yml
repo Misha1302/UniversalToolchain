@@ -30,16 +30,7 @@ jobs:
         run: dotnet build UniversalToolchain/Wist.sln -c Release --no-restore
 
       - name: Test
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          dotnet test UniversalToolchain/Tests/Tests.csproj -c Release --no-build
-          dotnet test UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolchain.Dialects.Tests.csproj -c Release --no-build
-
-          if [ -f UniversalToolchain/UniversalToolchain.Modules.Tests/UniversalToolchain.Modules.Tests.csproj ]; then
-            dotnet test UniversalToolchain/UniversalToolchain.Modules.Tests/UniversalToolchain.Modules.Tests.csproj -c Release --no-build
-          fi
+        run: dotnet test UniversalToolchain/Wist.sln -c Release --no-build
 
       - name: Markdown bash smoke checks
         shell: bash
