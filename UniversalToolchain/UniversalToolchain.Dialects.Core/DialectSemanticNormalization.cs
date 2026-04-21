@@ -11,10 +11,21 @@ internal static class DialectSemanticNormalization
         List<DialectDiagnostic> diagnostics,
         string conflictCode)
     {
-        var sortedUseModules = useModules.Distinct(StringComparer.Ordinal).OrderBy(x => x, StringComparer.Ordinal).ToList();
-        var sortedExcludeModules = excludeModules.Distinct(StringComparer.Ordinal).OrderBy(x => x, StringComparer.Ordinal).ToList();
+        var orderedUseModules = new List<string>();
+        var useSet = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var module in useModules)
+        {
+            if (useSet.Add(module))
+                orderedUseModules.Add(module);
+        }
 
-        foreach (var conflict in sortedUseModules.Intersect(sortedExcludeModules, StringComparer.Ordinal))
+        var sortedExcludeModules = excludeModules
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(x => x, StringComparer.Ordinal)
+            .ToList();
+        var excludeSet = sortedExcludeModules.ToHashSet(StringComparer.Ordinal);
+
+        foreach (var conflict in orderedUseModules.Where(excludeSet.Contains))
         {
             diagnostics.Add(new DialectDiagnostic(
                 conflictCode,
@@ -22,7 +33,7 @@ internal static class DialectSemanticNormalization
                 DialectDiagnosticSeverity.Error));
         }
 
-        return sortedUseModules.Where(x => !sortedExcludeModules.Contains(x, StringComparer.Ordinal)).ToList();
+        return orderedUseModules.Where(x => !excludeSet.Contains(x)).ToList();
     }
 
     public static Dictionary<DialectBackendId, bool> NormalizeBackendRules<TDirective>(
@@ -132,7 +143,18 @@ internal static class DialectSemanticNormalization
         string? missingReferenceCode = null,
         string? missingReferenceMessagePrefix = null)
     {
-        var nodes = activeModules.Distinct(StringComparer.Ordinal).OrderBy(x => x, StringComparer.Ordinal).ToList();
+        var nodes = new List<string>();
+        var nodeSet = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var module in activeModules)
+        {
+            if (nodeSet.Add(module))
+                nodes.Add(module);
+        }
+
+        var nodeIndices = nodes
+            .Select((module, index) => new { module, index })
+            .ToDictionary(x => x.module, x => x.index, StringComparer.Ordinal);
+
         var activeSet = nodes.ToHashSet(StringComparer.Ordinal);
         var edges = nodes.ToDictionary(x => x, _ => new HashSet<string>(StringComparer.Ordinal), StringComparer.Ordinal);
         var indegree = nodes.ToDictionary(x => x, _ => 0, StringComparer.Ordinal);
@@ -163,22 +185,26 @@ internal static class DialectSemanticNormalization
             indegree[to]++;
         }
 
-        var queue = new SortedSet<string>(nodes.Where(x => indegree[x] == 0), StringComparer.Ordinal);
+        var queue = new SortedSet<(int Index, string Name)>();
+        foreach (var node in nodes)
+        {
+            if (indegree[node] == 0)
+                queue.Add((nodeIndices[node], node));
+        }
+
         var ordered = new List<string>();
 
         while (queue.Count > 0)
         {
             var current = queue.Min;
-            if (current == null)
-                Thrower.InvalidOpEx("Queue minimum should exist.");
             queue.Remove(current);
-            ordered.Add(current);
+            ordered.Add(current.Name);
 
-            foreach (var next in edges[current])
+            foreach (var next in edges[current.Name])
             {
                 indegree[next]--;
                 if (indegree[next] == 0)
-                    queue.Add(next);
+                    queue.Add((nodeIndices[next], next));
             }
         }
 

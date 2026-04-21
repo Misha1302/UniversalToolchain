@@ -123,7 +123,7 @@ public class BuildPlanCollaboratorsTests
         Assert.Multiple(() =>
         {
             Assert.That(diagnostics, Is.Empty);
-            Assert.That(normalized.ActiveModules, Is.EqualTo(new[] { "A", "B" }));
+            Assert.That(normalized.ActiveModules, Is.EqualTo(new[] { "B", "A" }));
             Assert.That(normalized.BackendMap[TestBackendIds.Interpreter], Is.True);
             Assert.That(normalized.BackendMap[TestBackendIds.Cil], Is.False);
             Assert.That(normalized.OrderConstraints.Select(x => x.Kind), Is.EqualTo(new[] { DialectOrderConstraintKind.Before }));
