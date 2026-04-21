@@ -1,9 +1,8 @@
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using UniversalToolchain.Dialects.Integration;
 
-namespace UniversalToolchain.Dialects.Wist;
+namespace UniversalToolchain.Dialects.Integration;
 
 /// <summary>
 ///     Registers reflection-based runtime component resolution services.
