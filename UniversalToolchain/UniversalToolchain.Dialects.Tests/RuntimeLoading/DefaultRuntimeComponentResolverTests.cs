@@ -14,6 +14,7 @@ public class DefaultRuntimeComponentResolverTests
     private const string ResolverExportForDifferentEntriesBAlias = "resolver.entries.b";
     private const string ResolverExportForFallbackAlias = "resolver.fallback.sample";
     private const string ResolverExportDuplicateAlias = "resolver.duplicate.sample";
+    private const string ManifestAuthoritativeAlias = "resolver.manifest.authoritative";
 
     [Test]
     public void Resolve_SameEntryTwice_ReturnsEquivalentDescriptor()
@@ -50,7 +51,7 @@ public class DefaultRuntimeComponentResolverTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(first, Is.SameAs(second));
+            Assert.That(first, Is.EqualTo(second));
             Assert.That(strategy.GetCalls(TestAssemblyName), Is.EqualTo(1));
         });
     }
@@ -73,18 +74,30 @@ public class DefaultRuntimeComponentResolverTests
     }
 
     [Test]
-    public void Resolve_ReturnsAliasesInDeterministicOrder()
+    public void Resolve_ReturnsManifestAliases()
     {
         var strategy = new CountingAssemblyLoadStrategy(new Dictionary<string, Assembly>(StringComparer.Ordinal)
         {
             [TestAssemblyName] = CreateTestAssembly(typeof(ResolverExportForAliases))
         });
         var resolver = new DefaultRuntimeComponentResolver(strategy);
-        var entry = Entry(RuntimeComponentKind.FrontendModule, ResolverExportForAliasesAlias, TestAssemblyName);
+        var entry = new RuntimeComponentManifestEntry(
+            RuntimeComponentKind.FrontendModule,
+            ResolverExportForAliasesAlias,
+            ["manifest.alias", "beta"],
+            RuntimeComponentIdFactory.Create(RuntimeComponentKind.FrontendModule, ResolverExportForAliasesAlias),
+            TestAssemblyName);
 
         var descriptor = resolver.Resolve(entry);
 
-        Assert.That(descriptor.Aliases, Is.EqualTo(new[] { "Alpha", "alpha", "beta" }));
+        Assert.Multiple(() =>
+        {
+            Assert.That(descriptor.Id, Is.EqualTo(entry.ComponentId));
+            Assert.That(descriptor.Kind, Is.EqualTo(entry.Kind));
+            Assert.That(descriptor.CanonicalAlias, Is.EqualTo(entry.CanonicalAlias));
+            Assert.That(descriptor.Aliases, Is.EqualTo(entry.Aliases));
+            Assert.That(descriptor.ActivationType, Is.EqualTo(typeof(ResolverExportForAliases)));
+        });
     }
 
     [Test]
@@ -177,6 +190,56 @@ public class DefaultRuntimeComponentResolverTests
             Assert.That(descriptor.ActivationType, Is.EqualTo(typeof(ResolverExportForFallback)));
             Assert.That(strategy.GetCalls(TestAssemblyName), Is.EqualTo(1));
         });
+    }
+
+    [Test]
+    public void Resolve_WhenManifestKindDriftsFromExport_ThrowsDeterministicError()
+    {
+        var strategy = new CountingAssemblyLoadStrategy(new Dictionary<string, Assembly>(StringComparer.Ordinal)
+        {
+            [TestAssemblyName] = CreateTestAssembly(typeof(ResolverExportForCaching))
+        });
+        var resolver = new DefaultRuntimeComponentResolver(strategy);
+        var entry = new RuntimeComponentManifestEntry(
+            RuntimeComponentKind.Backend,
+            ResolverExportForCachingAlias,
+            [],
+            RuntimeComponentIdFactory.Create(RuntimeComponentKind.FrontendModule, ResolverExportForCachingAlias),
+            TestAssemblyName);
+
+        var ex = Assert.Throws<InvalidOperationException>(() => resolver.Resolve(entry));
+
+        Assert.That(
+            ex!.Message,
+            Does.Contain($"Runtime manifest entry '{entry.ComponentId}' resolves to type"));
+        Assert.That(
+            ex.Message,
+            Does.Contain("but the exported component kind is 'FrontendModule' instead of 'Backend'."));
+    }
+
+    [Test]
+    public void Resolve_WhenManifestCanonicalAliasDriftsFromExport_ThrowsDeterministicError()
+    {
+        var strategy = new CountingAssemblyLoadStrategy(new Dictionary<string, Assembly>(StringComparer.Ordinal)
+        {
+            [TestAssemblyName] = CreateTestAssembly(typeof(ResolverExportForCaching))
+        });
+        var resolver = new DefaultRuntimeComponentResolver(strategy);
+        var entry = new RuntimeComponentManifestEntry(
+            RuntimeComponentKind.FrontendModule,
+            ManifestAuthoritativeAlias,
+            [],
+            RuntimeComponentIdFactory.Create(RuntimeComponentKind.FrontendModule, ResolverExportForCachingAlias),
+            TestAssemblyName);
+
+        var ex = Assert.Throws<InvalidOperationException>(() => resolver.Resolve(entry));
+
+        Assert.That(
+            ex!.Message,
+            Does.Contain($"Runtime manifest entry '{entry.ComponentId}' resolves to type"));
+        Assert.That(
+            ex.Message,
+            Does.Contain($"but the exported canonical alias is '{ResolverExportForCachingAlias}' instead of '{ManifestAuthoritativeAlias}'."));
     }
 
     private static RuntimeComponentManifestEntry Entry(RuntimeComponentKind kind, string canonicalAlias, string assemblySimpleName)

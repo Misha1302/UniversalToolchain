@@ -53,7 +53,7 @@ public class DialectDirectiveHandlerTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(definition.ModulePolicy.IncludedModules, Is.EqualTo(new[] { "Arithmetic", "Variables" }));
+            Assert.That(definition.ModulePolicy.IncludedModules, Is.EqualTo(new[] { "Variables", "Arithmetic" }));
             Assert.That(definition.ModulePolicy.ExcludedModules, Is.EqualTo(new[] { "UnsafeInterop" }));
             Assert.That(diagnostics.Select(x => x.Code), Is.EqualTo(new[] { "S001" }));
         });
@@ -214,7 +214,7 @@ public class DialectDirectiveHandlerTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(definition.ModulePolicy.IncludedModules, Is.EqualTo(new[] { "Arithmetic", "Variables" }));
+            Assert.That(definition.ModulePolicy.IncludedModules, Is.EqualTo(new[] { "Variables", "Arithmetic" }));
             Assert.That(definition.ModulePolicy.ExcludedModules, Is.EqualTo(new[] { "UnsafeInterop" }));
             Assert.That(definition.BackendPolicy.EnabledBackends, Is.EqualTo(new[] { TestBackendIds.Interpreter }));
             Assert.That(definition.BackendPolicy.DisabledBackends, Is.EqualTo(new[] { TestBackendIds.Cil }));
@@ -232,7 +232,7 @@ public class DialectDirectiveHandlerTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(definition.ModulePolicy.IncludedModules, Is.EqualTo(new[] { "Arithmetic", "Variables" }));
+            Assert.That(definition.ModulePolicy.IncludedModules, Is.EqualTo(new[] { "Variables", "Arithmetic" }));
             Assert.That(definition.ModulePolicy.ExcludedModules, Is.EqualTo(new[] { "UnsafeInterop" }));
             Assert.That(definition.BackendPolicy.EnabledBackends, Is.EqualTo(new[] { TestBackendIds.Interpreter }));
             Assert.That(definition.BackendPolicy.DisabledBackends, Is.EqualTo(new[] { TestBackendIds.Cil }));

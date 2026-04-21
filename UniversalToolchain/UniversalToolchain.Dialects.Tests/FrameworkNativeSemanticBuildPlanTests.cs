@@ -21,13 +21,12 @@ public class FrameworkNativeSemanticBuildPlanTests
     }
 
     [Test]
-    public void BuildPlan_ListBasedOrdering_IsNormalizedDeterministically()
+    public void BuildPlan_ListBasedOrdering_UsesDeclarationOrderAsDefault()
     {
         const string source =
             """
             dialect D
             use C,B,A
-            before A,B,C
             backend interpreter,cil
             allow i1
             enable O1
@@ -41,7 +40,7 @@ public class FrameworkNativeSemanticBuildPlanTests
         Assert.Multiple(() =>
         {
             Assert.That(first.CanBuild, Is.True);
-            Assert.That(first.OrderedModules, Is.EqualTo(new[] { "A", "B", "C" }));
+            Assert.That(first.OrderedModules, Is.EqualTo(new[] { "C", "B", "A" }));
             Assert.That(first.EnabledBackends, Is.EqualTo(new[] { TestBackendIds.Cil, TestBackendIds.Interpreter }));
             Assert.That(first.Capabilities.Select(x => (x.Key, x.Value)), Is.EqualTo(new[] { ("cap1", true), ("cap2", true) }));
             Assert.That(first.OrderedModules, Is.EqualTo(second.OrderedModules));
@@ -54,7 +53,7 @@ public class FrameworkNativeSemanticBuildPlanTests
     }
 
     [Test]
-    public void BuildPlan_NoOrderRules_UsesLexicographicTieBreaker()
+    public void BuildPlan_NoOrderRules_PreservesDeclarationOrder()
     {
         var plan = BuildPlan(
             """
@@ -62,7 +61,33 @@ public class FrameworkNativeSemanticBuildPlanTests
             use C,B,A
             """);
 
-        Assert.That(plan.OrderedModules, Is.EqualTo(new[] { "A", "B", "C" }));
+        Assert.That(plan.OrderedModules, Is.EqualTo(new[] { "C", "B", "A" }));
+    }
+
+    [Test]
+    public void BuildPlan_OrderRules_OverrideDeclarationOrder()
+    {
+        var plan = BuildPlan(
+            """
+            dialect D
+            use C,B,A
+            before A,B
+            """);
+
+        Assert.That(plan.OrderedModules, Is.EqualTo(new[] { "C", "A", "B" }));
+    }
+
+    [Test]
+    public void BuildPlan_ReadySetTieBreaker_UsesDeclarationOrder()
+    {
+        var plan = BuildPlan(
+            """
+            dialect D
+            use D,C,B,A
+            before C,A
+            """);
+
+        Assert.That(plan.OrderedModules, Is.EqualTo(new[] { "D", "C", "B", "A" }));
     }
 
     [Test]
