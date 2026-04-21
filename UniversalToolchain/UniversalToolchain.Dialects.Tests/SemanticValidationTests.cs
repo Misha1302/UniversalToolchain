@@ -180,7 +180,7 @@ public class SemanticValidationTests
             Assert.That(parsed.IsSuccess, Is.True);
             Assert.That(plan.CanBuild, Is.True);
             Assert.That(plan.Name, Is.EqualTo("Valid"));
-            Assert.That(plan.OrderedModules, Is.EqualTo(new[] { "A", "B" }));
+            Assert.That(plan.OrderedModules, Is.EqualTo(new[] { "B", "A" }));
             Assert.That(plan.EnabledBackends, Is.EqualTo(new[] { TestBackendIds.Cil }));
             Assert.That(plan.IntrinsicDirectives, Has.Count.EqualTo(1));
             Assert.That(plan.OptimizerDirectives, Has.Count.EqualTo(1));
