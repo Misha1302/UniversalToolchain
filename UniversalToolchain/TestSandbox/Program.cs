@@ -1,5 +1,6 @@
 ﻿using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
+using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
 
 var services = new ServiceCollection();
@@ -20,7 +21,7 @@ var dialect = workflow.ComposeText(
 );
 
 if (!dialect.IsSuccess)
-    Thrower.InvalidOpEx(dialect.ToDeterministicText());
+    Thrower.InvalidOpEx(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(dialect)));
 
 var host = workflow.CreateHost(dialect);
 var result = host.Run("2 + 3", "compiler");

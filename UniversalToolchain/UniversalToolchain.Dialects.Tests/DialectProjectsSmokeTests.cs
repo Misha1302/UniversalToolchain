@@ -29,7 +29,7 @@ public class DialectProjectsSmokeTests
             var exampleName = Path.GetFileName(exampleDirectory) ?? string.Empty;
             var dialectPath = Path.Combine(exampleDirectory, "dialect.wistdialect");
             var composition = workflow.ComposeFile(dialectPath);
-            Assert.That(composition.IsSuccess, Is.True, $"Composition failed for '{dialectPath}'.\n{composition.ToDeterministicText()}");
+            Assert.That(composition.IsSuccess, Is.True, $"Composition failed for '{dialectPath}'.\n{DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition))}");
 
             var selectionSignature = WistDialectTestInfrastructure.BuildSelectionSignature(composition);
             Assert.That(selectionSignature, Is.EqualTo(ExpectedSelectionSignatures[exampleName]), $"Runtime selection drifted for example '{exampleName}'.");

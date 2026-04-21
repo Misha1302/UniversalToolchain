@@ -1,5 +1,6 @@
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
+using UniversalToolchain.Dialects.Integration;
 
 namespace UniversalToolchain.Dialects.Wist.Facade;
 
@@ -59,7 +60,7 @@ public sealed class WistRuntimeFacadeBuilder
             : workflow.ComposeFile(_dialectFilePath);
 
         if (!composition.IsSuccess)
-            Thrower.InvalidOpEx(composition.ToDeterministicText());
+            Thrower.InvalidOpEx(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
 
         return new WistRuntimeFacade(workflow.CreateHost(composition));
     }

@@ -26,4 +26,5 @@ global using System.Text;
 global using System.Threading;
 global using System.Threading.Tasks;
 global using UniversalToolchain.Dialects.Abstractions;
+global using UniversalToolchain.Dialects.Integration;
 global using UniversalIntermediateRepresentation;

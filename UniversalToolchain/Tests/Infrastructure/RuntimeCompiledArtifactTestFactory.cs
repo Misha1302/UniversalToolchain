@@ -81,7 +81,7 @@ internal static class RuntimeCompiledArtifactTestFactory
             "runtime-contracts-inline");
 
         if (!composition.IsSuccess)
-            Thrower.InvalidOpEx(composition.ToDeterministicText());
+            Thrower.InvalidOpEx(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
 
         return workflow.CreateHost(composition);
     }

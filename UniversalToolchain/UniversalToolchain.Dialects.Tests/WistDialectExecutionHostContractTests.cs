@@ -111,7 +111,7 @@ public class WistDialectExecutionHostContractTests
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var composition = workflow.ComposeText(dialect, "inline");
         if (!composition.IsSuccess)
-            throw new InvalidOperationException(composition.ToDeterministicText());
+            throw new InvalidOperationException(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
 
         return workflow.CreateHost(composition);
     }

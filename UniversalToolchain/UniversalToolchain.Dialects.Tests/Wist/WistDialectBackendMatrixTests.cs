@@ -15,7 +15,7 @@ public sealed class WistDialectBackendMatrixTests
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
 
         var composition = workflow.ComposeFile(Path.Combine(@case.ExampleDirectory, "dialect.wistdialect"));
-        Assert.That(composition.IsSuccess, Is.True, composition.ToDeterministicText());
+        Assert.That(composition.IsSuccess, Is.True, DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
 
         using var host = workflow.CreateHost(composition);
         var code = File.ReadAllText(Path.Combine(@case.ExampleDirectory, "program.wist"));

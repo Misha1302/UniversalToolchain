@@ -27,5 +27,6 @@ global using System.Threading;
 global using System.Threading.Tasks;
 global using Tests.Legacy;
 global using UniversalToolchain.Dialects.Abstractions;
+global using UniversalToolchain.Dialects.Integration;
 global using UniversalToolchain.Intrinsics.Core;
 global using UniversalIntermediateRepresentation;

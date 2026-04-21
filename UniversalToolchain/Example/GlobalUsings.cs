@@ -32,4 +32,5 @@ global using SemicolonAsNewLineModule;
 global using VariablesModule;
 global using WhitespacesModule;
 global using UniversalToolchain.Dialects.Abstractions;
+global using UniversalToolchain.Dialects.Integration;
 global using Microsoft.Extensions.DependencyInjection;

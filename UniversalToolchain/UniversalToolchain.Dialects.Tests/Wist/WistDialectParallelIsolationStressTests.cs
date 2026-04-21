@@ -24,7 +24,7 @@ public class WistDialectParallelIsolationStressTests
         var results = await Task.WhenAll(Enumerable.Range(0, ParallelCount)
             .Select(i => Task.Run(() => workflow.ComposeText(dialects[i % dialects.Length], $"parallel-{i}"))));
 
-        Assert.That(results.All(static x => x.IsSuccess), Is.True, string.Join(Environment.NewLine, results.Select(static x => x.ToDeterministicText())));
+        Assert.That(results.All(static x => x.IsSuccess), Is.True, string.Join(Environment.NewLine, results.Select(static x => FormatComposition(x))));
 
         var signatures = results.Select(WistDialectTestInfrastructure.BuildSelectionSignature).Distinct(StringComparer.Ordinal).ToArray();
         Assert.That(signatures.Length, Is.EqualTo(dialects.Length));
@@ -36,7 +36,7 @@ public class WistDialectParallelIsolationStressTests
         using var provider = WistDialectTestInfrastructure.CreateProviderWithExplicitBackends();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var composition = workflow.ComposeText("dialect Stable\nuse Arithmetic,Numbers\nenable LocalVariablesOptimization\nbackend compiler,interpreter", "stable");
-        Assert.That(composition.IsSuccess, Is.True, composition.ToDeterministicText());
+        Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
 
         var signatures = await Task.WhenAll(Enumerable.Range(0, ParallelCount).Select(_ => Task.Run(() =>
         {
@@ -57,7 +57,7 @@ public class WistDialectParallelIsolationStressTests
         for (var i = 0; i < RepeatCount; i++)
         {
             var result = workflow.ComposeText("dialect Repeat\nuse Arithmetic,Numbers,Whitespaces\nenable LocalVariablesOptimization\nbackend interpreter", $"repeat-{i}");
-            Assert.That(result.IsSuccess, Is.True, result.ToDeterministicText());
+            Assert.That(result.IsSuccess, Is.True, FormatComposition(result));
             signatures.Add(WistDialectTestInfrastructure.BuildSelectionSignature(result));
         }
 
@@ -70,7 +70,7 @@ public class WistDialectParallelIsolationStressTests
         using var provider = WistDialectTestInfrastructure.CreateProviderWithExplicitBackends();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var composition = workflow.ComposeText("dialect RepeatHost\nuse Arithmetic,Numbers\nbackend interpreter,compiler", "repeat-host");
-        Assert.That(composition.IsSuccess, Is.True, composition.ToDeterministicText());
+        Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
 
         var signatures = new List<string>(RepeatCount);
         for (var i = 0; i < RepeatCount; i++)
@@ -92,7 +92,7 @@ public class WistDialectParallelIsolationStressTests
         {
             var composition = workflow.ComposeText("dialect Mixed\nuse Arithmetic,Numbers,Variables\nenable LocalVariablesOptimization\nbackend interpreter,compiler", $"mixed-{i}");
             if (!composition.IsSuccess)
-                return "compose-failed:" + composition.ToDeterministicText();
+                return "compose-failed:" + FormatComposition(composition);
 
             using var host = workflow.CreateHost(composition);
             return WistDialectTestInfrastructure.BuildSelectionSignature(composition) + "##" + WistDialectTestInfrastructure.BuildHostSignature(host);
@@ -115,8 +115,8 @@ public class WistDialectParallelIsolationStressTests
         Assert.Multiple(() =>
         {
             Assert.That(failed.IsSuccess, Is.False);
-            Assert.That(first.IsSuccess, Is.True, first.ToDeterministicText());
-            Assert.That(second.IsSuccess, Is.True, second.ToDeterministicText());
+            Assert.That(first.IsSuccess, Is.True, FormatComposition(first));
+            Assert.That(second.IsSuccess, Is.True, FormatComposition(second));
             Assert.That(WistDialectTestInfrastructure.BuildSelectionSignature(first), Is.EqualTo(WistDialectTestInfrastructure.BuildSelectionSignature(second)));
         });
     }
@@ -127,7 +127,7 @@ public class WistDialectParallelIsolationStressTests
         using var provider = WistDialectTestInfrastructure.CreateProviderWithExplicitBackends();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var composition = workflow.ComposeText("dialect Backends\nuse Arithmetic\nbackend compiler,interpreter", "backends");
-        Assert.That(composition.IsSuccess, Is.True, composition.ToDeterministicText());
+        Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
 
         var signatures = new List<string>(RepeatCount);
         for (var i = 0; i < RepeatCount; i++)
@@ -147,12 +147,17 @@ public class WistDialectParallelIsolationStressTests
         var loader = provider.GetRequiredService<IRuntimeComponentTypeLoader>();
 
         var composition = workflow.ComposeText("dialect TypeLoad\nuse Arithmetic,Numbers\nenable LocalVariablesOptimization\nbackend compiler,interpreter", "typeload");
-        Assert.That(composition.IsSuccess, Is.True, composition.ToDeterministicText());
+        Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
 
         var selection = (SelectedRuntimePlan)composition.RuntimeSelection!;
         var entries = selection.OrderedModules.Concat(selection.EnabledOptimizers).Concat(selection.EnabledBackends).ToArray();
 
         var signatures = await Task.WhenAll(Enumerable.Range(0, ParallelCount).Select(_ => Task.Run(() => string.Join("|", entries.Select(loader.LoadType).Select(static x => x.FullName)))));
         Assert.That(signatures.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1));
+    }
+
+    private static string FormatComposition(DialectFrameworkCompositionResult composition)
+    {
+        return DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition));
     }
 }

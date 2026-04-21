@@ -81,7 +81,7 @@ public class DeclaredBindingsExecutionContractTests
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var composition = workflow.ComposeText(dialectText, "declared-bindings-inline");
         if (!composition.IsSuccess)
-            throw new InvalidOperationException(composition.ToDeterministicText());
+            throw new InvalidOperationException(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
 
         return workflow.CreateHost(composition);
     }

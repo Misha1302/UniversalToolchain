@@ -55,7 +55,7 @@ public class DeletedLegacySurfaceTests
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var composition = workflow.ComposeText("dialect D\nuse Arithmetic\nbackend interpreter", "inline");
 
-        Assert.That(composition.IsSuccess, Is.True, composition.ToDeterministicText());
+        Assert.That(composition.IsSuccess, Is.True, DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
     }
 
     [Test]
@@ -97,7 +97,7 @@ public class DeletedLegacySurfaceTests
         using var provider = TestContractsInfrastructure.CreateWorkflowProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var composition = workflow.ComposeText("dialect Canonical\nuse Arithmetic,Numbers\nbackend interpreter", "canonical");
-        Assert.That(composition.IsSuccess, Is.True, composition.ToDeterministicText());
+        Assert.That(composition.IsSuccess, Is.True, DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
 
         using var host = workflow.CreateHost(composition);
         Assert.DoesNotThrow(() => host.Run("2+2", "interpreter"));
@@ -118,7 +118,7 @@ public class DeletedLegacySurfaceTests
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var composition = workflow.ComposeText("dialect Pure\nuse Arithmetic,Numbers\nbackend interpreter", "pure");
 
-        Assert.That(composition.IsSuccess, Is.True, composition.ToDeterministicText());
+        Assert.That(composition.IsSuccess, Is.True, DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
         using var host = workflow.CreateHost(composition);
         Assert.DoesNotThrow(() => host.Run("40+2", "interpreter"));
     }

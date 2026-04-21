@@ -20,7 +20,7 @@ public class RuntimeStressContractsTests
         for (var i = 0; i < RepeatCount; i++)
         {
             var composition = workflow.ComposeText("dialect Repeat\nuse Arithmetic,Numbers,Variables\nenable LocalVariablesOptimization\nbackend compiler,interpreter", $"repeat-{i}");
-            Assert.That(composition.IsSuccess, Is.True, composition.ToDeterministicText());
+            Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
             using var host = workflow.CreateHost(composition);
             signatures.Add(TestContractsInfrastructure.BuildSelectionSignature(composition) + "##" + TestContractsInfrastructure.BuildHostSignature(host));
         }
@@ -38,7 +38,7 @@ public class RuntimeStressContractsTests
         {
             var composition = workflow.ComposeText("dialect Parallel\nuse Arithmetic,Numbers\nbackend compiler,interpreter", $"parallel-{i}");
             if (!composition.IsSuccess)
-                return "compose-failed:" + composition.ToDeterministicText();
+                return "compose-failed:" + FormatComposition(composition);
 
             using var host = workflow.CreateHost(composition);
             return TestContractsInfrastructure.BuildSelectionSignature(composition) + "##" + TestContractsInfrastructure.BuildHostSignature(host);
@@ -92,7 +92,7 @@ public class RuntimeStressContractsTests
         using var provider = TestContractsInfrastructure.CreateWorkflowProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var composition = workflow.ComposeText("dialect Backends\nuse Arithmetic\nbackend compiler,interpreter", "backends");
-        Assert.That(composition.IsSuccess, Is.True, composition.ToDeterministicText());
+        Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
 
         var signatures = new List<string>(RepeatCount);
         for (var i = 0; i < RepeatCount; i++)
@@ -118,7 +118,7 @@ public class RuntimeStressContractsTests
 
             var composition = workflow.ComposeText(dialectText, $"mixed-{i}");
             if (!composition.IsSuccess)
-                return "compose-failed:" + composition.ToDeterministicText();
+                return "compose-failed:" + FormatComposition(composition);
 
             using var host = workflow.CreateHost(composition);
             var runResult = host.Run("1+2", i % 2 == 0 ? "interpreter" : "compiler");
@@ -128,5 +128,10 @@ public class RuntimeStressContractsTests
         var signatures = await Task.WhenAll(tasks);
         Assert.That(signatures.All(static x => !x.StartsWith("compose-failed:", StringComparison.Ordinal)), Is.True, string.Join(Environment.NewLine, signatures));
         Assert.That(signatures.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(2));
+    }
+
+    private static string FormatComposition(DialectFrameworkCompositionResult composition)
+    {
+        return DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition));
     }
 }
