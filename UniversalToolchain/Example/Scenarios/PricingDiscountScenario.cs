@@ -1,11 +1,11 @@
+using UniversalToolchain.Dialects.Wist.Presets;
+
 namespace Example.Scenarios;
 
 public static class PricingDiscountScenario
 {
     private const string Formula = "price * 0.9 + fee";
     private const string DisallowedFormula = "let discount = 0.9\nprice * discount + fee";
-    private const string GeneralDialectProfileName = "full-default-native";
-    private const string RestrictedDialectProfileName = "pricing-restricted";
     private const double Price = 100.0;
     private const double Fee = 5.0;
 
@@ -14,7 +14,7 @@ public static class PricingDiscountScenario
         var printer = new ScenarioConsolePrinter();
         var hardcodedPricingCalculator = new HardcodedPricingCalculator();
         using var generalDslPricingCalculator = new DslPricingCalculator();
-        using var restrictedDslPricingCalculator = new DslPricingCalculator(RestrictedDialectProfileName);
+        using var restrictedDslPricingCalculator = new DslPricingCalculator(WistShippedDialectPresets.PricingRestricted);
 
         printer.PrintTitle("Pricing and Discount Demo");
         printer.PrintFormula(Formula, Price, Fee);

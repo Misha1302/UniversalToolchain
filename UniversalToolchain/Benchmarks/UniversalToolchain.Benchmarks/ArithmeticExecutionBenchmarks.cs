@@ -9,6 +9,7 @@ using NCalc;
 using NCalc.LambdaCompilation;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
+using UniversalToolchain.Dialects.Wist.Presets;
 
 namespace UniversalToolchain.Benchmarks;
 
@@ -74,7 +75,7 @@ public abstract class ArithmeticBenchmarkEnvironmentBase
         _provider = services.BuildServiceProvider();
         var workflow = _provider.GetRequiredService<WistDialectExecutionWorkflow>();
 
-        var dialectFile = Path.Combine(AppContext.BaseDirectory, "Dialects", "examples", "wist", "full-default-native", "dialect.wistdialect");
+        var dialectFile = new WistShippedDialectFileResolver().Resolve(WistShippedDialectPresets.FullDefaultNative);
         var dialect = workflow.ComposeFile(dialectFile);
 
         if (!dialect.IsSuccess)
