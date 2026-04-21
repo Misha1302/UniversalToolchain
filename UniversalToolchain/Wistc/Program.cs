@@ -168,26 +168,40 @@ WistDialectExecutionHost CreateDefaultHost(CommonOptions options)
 {
     using var provider = CreateDialectWorkflowProvider();
     var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+    var plan = new WistCliDialectPlanBuilder().Build(options);
 
-    var modules = new List<string>
+    return plan.Kind switch
     {
-        "Whitespaces", "SemicolonAsNewLine", "Comments", "Numbers", "Identifier", "Arithmetic", "Equality", "Conditions", "Loops", "Variables", "Scopes", "Labels", "InternalPreprocessorLexemes", "CSharpInterop"
+        WistCliDialectPlanKind.Preset => CreateHostFromPreset(workflow, plan.BasePreset),
+        WistCliDialectPlanKind.CustomizedPreset => CreateHostFromCustomizedPresetPlan(workflow, plan),
+        _ => Thrower.ArgumentOutOfRange<WistDialectExecutionHost>(nameof(plan.Kind), $"Unsupported CLI dialect plan kind '{plan.Kind}'.")
     };
+}
 
-    if (options.UseNativeMath)
-        modules.Add("NativeTypes");
+WistDialectExecutionHost CreateHostFromCustomizedPresetPlan(WistDialectExecutionWorkflow workflow, WistCliDialectPlan plan)
+{
+    workflow = workflow.ArgNotNull();
+    plan = plan.ArgNotNull();
 
-    if (options.IncludeModules != null)
-        modules.AddRange(options.IncludeModules.Select(x => x.Trim()).Where(x => !string.IsNullOrWhiteSpace(x)));
+    if (plan.Kind != WistCliDialectPlanKind.CustomizedPreset)
+        Thrower.Argument(nameof(plan), "CLI dialect plan must be of kind CustomizedPreset.");
 
-    if (options.ExcludeModules != null)
-    {
-        var excluded = new HashSet<string>(options.ExcludeModules.Select(x => x.Trim()), StringComparer.OrdinalIgnoreCase);
-        modules = modules.Where(x => !excluded.Contains(x)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-    }
+    var dialectText = plan.CustomizedDialectText;
+    if (string.IsNullOrWhiteSpace(dialectText))
+        Thrower.Argument(nameof(plan), "Customized preset plan must provide dialect text.");
 
-    var dialectText = $"dialect CliDefault\nuse {string.Join(",", modules)}\nenable LocalVariablesOptimization\nbackend compiler,interpreter";
-    var composition = workflow.ComposeText(dialectText, "cli-default");
+    var composition = workflow.ComposeText(dialectText, "cli-customized");
+    if (!composition.IsSuccess)
+        Thrower.InvalidOpEx(FormatComposition(composition));
+
+    return workflow.CreateHost(composition);
+}
+
+WistDialectExecutionHost CreateHostFromPreset(WistDialectExecutionWorkflow workflow, WistShippedDialectPreset preset)
+{
+    var dialectFilePath = new WistShippedDialectFileResolver().Resolve(preset);
+    var composition = workflow.ComposeFile(dialectFilePath);
+
     if (!composition.IsSuccess)
         Thrower.InvalidOpEx(FormatComposition(composition));
 
@@ -196,13 +210,17 @@ WistDialectExecutionHost CreateDefaultHost(CommonOptions options)
 
 void ValidateDialectExecutionOptions(CommonOptions options)
 {
-    if (options.UseNativeMath)
+    var customization = WistCliCustomizationRequest.FromOptions(options);
+    if (!customization.HasCustomization)
+        return;
+
+    if (customization.UseNativeMath)
         Thrower.Argument(nameof(options.UseNativeMath), "The --use-native-math option cannot be combined with --dialect-file. Configure arithmetic through the dialect definition instead.");
 
-    if (options.IncludeModules != null && options.IncludeModules.Any())
+    if (customization.IncludeModules.Count > 0)
         Thrower.Argument(nameof(options.IncludeModules), "The --include-module option cannot be combined with --dialect-file. Configure modules through the dialect definition instead.");
 
-    if (options.ExcludeModules != null && options.ExcludeModules.Any())
+    if (customization.ExcludeModules.Count > 0)
         Thrower.Argument(nameof(options.ExcludeModules), "The --exclude-module option cannot be combined with --dialect-file. Configure modules through the dialect definition instead.");
 }
 
@@ -234,25 +252,7 @@ static string FormatComposition(DialectFrameworkCompositionResult result)
 
 void ListAllModules()
 {
-    Console.WriteLine("Available modules:");
-    Console.WriteLine("==================");
-
-    var assemblies = TypesFinder.Assemblies;
-    foreach (var assembly in assemblies)
-    {
-        var modules = assembly.GetTypes()
-            .Where(t => !t.IsAbstract && t.IsClass && typeof(IFrontendCoreModule).IsAssignableFrom(t))
-            .ToList();
-
-        if (!modules.Any())
-            continue;
-
-        Console.WriteLine($"\nAssembly: {assembly.GetName().Name}");
-        foreach (var module in modules)
-        {
-            var attr = module.GetCustomAttribute<AutoRegisterServiceAttribute>();
-            var lifetime = attr?.Lifetime.ToString() ?? "Transient";
-            Console.WriteLine($"  {module.FullName} [{lifetime}]");
-        }
-    }
+    using var provider = CreateDialectWorkflowProvider();
+    var catalog = provider.GetRequiredService<IRuntimeComponentCatalog>();
+    Console.Write(WistCliRuntimeListingFormatter.Format(catalog));
 }

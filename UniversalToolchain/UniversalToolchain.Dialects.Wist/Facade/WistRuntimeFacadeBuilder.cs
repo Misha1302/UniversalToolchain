@@ -1,6 +1,7 @@
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Integration;
+using UniversalToolchain.Dialects.Wist.Presets;
 
 namespace UniversalToolchain.Dialects.Wist.Facade;
 
@@ -9,18 +10,8 @@ namespace UniversalToolchain.Dialects.Wist.Facade;
 /// </summary>
 public sealed class WistRuntimeFacadeBuilder
 {
-    private const string DefaultDialectText = """
-                                              dialect FullDefault
-                                              use Arithmetic,BooleanConditions,Comments,ComparisonConditions,Conditions,CSharpInterop,Equality,Identifier,Labels,Loops,Numbers,Scopes,SemicolonAsNewLine,Variables,Whitespaces
-                                              backend cil,interpreter
-                                              enable BooleanOptimization
-                                              enable ComparisonIntrinsicOptimization
-                                              enable LocalVariablesOptimization
-                                              security trusted
-                                              capability unsafe-interop
-                                              """;
-
     private string? _dialectFilePath;
+    private WistShippedDialectPreset _preset = WistShippedDialectPresets.Default;
 
     private WistRuntimeFacadeBuilder()
     {
@@ -44,6 +35,21 @@ public sealed class WistRuntimeFacadeBuilder
     }
 
     /// <summary>
+    ///     Uses a shipped Wist dialect preset when no explicit dialect file is configured.
+    /// </summary>
+    public WistRuntimeFacadeBuilder WithShippedDialectPreset(string presetId)
+        => WithShippedDialectPreset(WistShippedDialectPresets.GetRequired(presetId));
+
+    /// <summary>
+    ///     Uses a shipped Wist dialect preset when no explicit dialect file is configured.
+    /// </summary>
+    public WistRuntimeFacadeBuilder WithShippedDialectPreset(WistShippedDialectPreset preset)
+    {
+        _preset = preset.ArgNotNull();
+        return this;
+    }
+
+    /// <summary>
     ///     Builds a facade over a composed Wist dialect runtime host.
     /// </summary>
     public WistRuntimeFacade Build()
@@ -55,9 +61,8 @@ public sealed class WistRuntimeFacadeBuilder
 
         using var provider = services.BuildServiceProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var composition = _dialectFilePath == null
-            ? workflow.ComposeText(DefaultDialectText, "wist-facade-default")
-            : workflow.ComposeFile(_dialectFilePath);
+        var dialectFilePath = _dialectFilePath ?? new WistShippedDialectFileResolver().Resolve(_preset);
+        var composition = workflow.ComposeFile(dialectFilePath);
 
         if (!composition.IsSuccess)
             Thrower.InvalidOpEx(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));

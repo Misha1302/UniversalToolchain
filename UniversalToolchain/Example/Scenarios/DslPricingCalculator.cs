@@ -1,20 +1,31 @@
 using BasicCore.Compilation;
 using IntermediateRepresentationAbstractions;
 using UniversalToolchain.Dialects.Wist;
+using UniversalToolchain.Dialects.Wist.Presets;
 
 namespace Example.Scenarios;
 
 public sealed class DslPricingCalculator : IDisposable
 {
-    private const string DefaultDialectProfileName = "full-default-native";
     private const string CompilerBackendName = "compiler";
     private const string InterpreterBackendName = "interpreter";
 
     private readonly WistDialectExecutionHost _host;
 
-    public DslPricingCalculator(string dialectProfileName = DefaultDialectProfileName)
+    /// <summary>
+    ///     Creates a calculator that uses the default native shipped Wist dialect preset for the example.
+    /// </summary>
+    public DslPricingCalculator()
+        : this(WistShippedDialectPresets.FullDefaultNative)
     {
-        _host = CreateHost(dialectProfileName);
+    }
+
+    /// <summary>
+    ///     Creates a calculator that uses the provided shipped Wist dialect preset.
+    /// </summary>
+    public DslPricingCalculator(WistShippedDialectPreset dialectPreset)
+    {
+        _host = CreateHost(dialectPreset);
     }
 
     public void Dispose()
@@ -68,7 +79,7 @@ public sealed class DslPricingCalculator : IDisposable
         }
     }
 
-    private static WistDialectExecutionHost CreateHost(string dialectProfileName)
+    private static WistDialectExecutionHost CreateHost(WistShippedDialectPreset dialectPreset)
     {
         var services = new ServiceCollection();
         services.AddWistDialectServices();
@@ -77,22 +88,14 @@ public sealed class DslPricingCalculator : IDisposable
 
         using var provider = services.BuildServiceProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var dialect = workflow.ComposeFile(GetDialectFilePath(dialectProfileName));
+        var dialectFilePath = new WistShippedDialectFileResolver().Resolve(dialectPreset);
+        var dialect = workflow.ComposeFile(dialectFilePath);
 
         if (!dialect.IsSuccess)
             Thrower.InvalidOpEx(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(dialect)));
 
         return workflow.CreateHost(dialect);
     }
-
-    private static string GetDialectFilePath(string dialectProfileName) =>
-        Path.Combine(
-            AppContext.BaseDirectory,
-            "Dialects",
-            "examples",
-            "wist",
-            dialectProfileName,
-            "dialect.wistdialect");
 
     private static OrderedDictionary<string, Type> CreateDeclaredBindings() =>
         new()
