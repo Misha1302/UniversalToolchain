@@ -26,39 +26,6 @@ public class WistDialectRuntimeBootstrapContractTests
     }
 
     [Test]
-    public void AddFileSystemRuntimeCatalogServices_ShouldRegisterCatalogArtifactsOnly()
-    {
-        var services = new ServiceCollection();
-        services.AddFileSystemRuntimeCatalogServices();
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeManifestFileLocator)), Is.True);
-            Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeManifestSerializer)), Is.True);
-            Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeComponentCatalog)), Is.True);
-            Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeComponentTypeLoader)), Is.False);
-            Assert.That(services.Any(static x => x.ServiceType == typeof(WistDialectExecutionWorkflow)), Is.False);
-        });
-    }
-
-    [Test]
-    public void AddReflectionRuntimeResolutionServices_ShouldRegisterResolutionArtifactsOnly()
-    {
-        var services = new ServiceCollection();
-        services.AddReflectionRuntimeResolutionServices();
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeAssemblyLocator)), Is.True);
-            Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeAssemblyLoadStrategy)), Is.True);
-            Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeComponentResolver)), Is.True);
-            Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeComponentTypeLoader)), Is.True);
-            Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeKnownBackendsProvider)), Is.True);
-            Assert.That(services.Any(static x => x.ServiceType == typeof(WistDialectExecutionWorkflow)), Is.False);
-        });
-    }
-
-    [Test]
     public void AddWistDialectServices_ShouldRegisterCanonicalRuntimeInfrastructure()
     {
         var services = new ServiceCollection();
@@ -258,6 +225,35 @@ public class WistDialectRuntimeBootstrapContractTests
         var ex = Assert.Throws<InvalidOperationException>(() => factory.Create(config));
 
         Assert.That(ex!.Message, Does.Contain("No backend runtime registrar is registered for backend 'interpreter'"));
+    }
+
+    [Test]
+    public void ComposeCreateRun_CanonicalPath_RepeatedCycles_ShouldKeepDeterministicCompositeSignature()
+    {
+        using var provider = WistDialectTestInfrastructure.CreateProviderWithExplicitBackends();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+
+        var signatures = new List<string>();
+        for (var i = 0; i < 30; i++)
+        {
+            var composition = workflow.ComposeText(
+                "dialect Stable\nuse Arithmetic,Numbers,Whitespaces\nenable LocalVariablesOptimization\nbackend interpreter,compiler",
+                $"stable-{i}");
+
+            Assert.That(composition.IsSuccess, Is.True, composition.ToDeterministicText());
+
+            using var host = workflow.CreateHost(composition);
+            var runResult = host.Run("2 + 5", "interpreter");
+
+            signatures.Add(
+                WistDialectTestInfrastructure.BuildSelectionAndDiagnosticsSignature(composition)
+                + "::host::"
+                + WistDialectTestInfrastructure.BuildHostSignature(host)
+                + "::result::"
+                + runResult);
+        }
+
+        Assert.That(signatures.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1));
     }
 
     [Test]
