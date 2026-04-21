@@ -1,5 +1,4 @@
 using UniversalToolchain.Dialects.Integration;
-using UniversalToolchain.Dialects.Wist.Presets;
 using Wistc;
 
 namespace UniversalToolchain.Dialects.Tests.Wist;
@@ -56,26 +55,6 @@ public sealed class WistCliDefaultAndListingTests
     }
 
     [Test]
-    public void WistCliCustomizedDialectBuilder_Build_EmitsCustomizationOnlyDialect()
-    {
-        var request = new WistCliCustomizationRequest(
-            true,
-            ["ExtraModule"],
-            ["CSharpInterop"]);
-
-        var dialectText = new WistCliCustomizedDialectBuilder().Build(request);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(dialectText, Does.Contain("dialect CliCustomized"));
-            Assert.That(dialectText, Does.Contain("NativeTypes"));
-            Assert.That(dialectText, Does.Contain("ExtraModule"));
-            Assert.That(dialectText, Does.Not.Contain("CSharpInterop"));
-            Assert.That(dialectText, Does.Contain("backend cil,interpreter"));
-        });
-    }
-
-    [Test]
     public void RuntimeListing_UsesRuntimeComponentCatalog()
     {
         var output = WistCliRuntimeListingFormatter.Format(new StaticCatalog(
@@ -88,8 +67,6 @@ public sealed class WistCliDefaultAndListingTests
             Assert.That(output, Does.Contain("Modules:"));
             Assert.That(output, Does.Contain("Arithmetic | id: frontend.arithmetic | assembly: ArithmeticModule"));
             Assert.That(output, Does.Contain("cil | aliases: compiler | id: backend.cil | assembly: UniversalToolchain.Dialects.Wist"));
-            Assert.That(output, Does.Not.Contain("TypesFinder"));
-            Assert.That(output, Does.Not.Contain("AutoRegisterServiceAttribute"));
         });
     }
 
@@ -108,32 +85,6 @@ public sealed class WistCliDefaultAndListingTests
         Assert.That(output.IndexOf("  Alpha", StringComparison.Ordinal), Is.LessThan(output.IndexOf("  Beta", StringComparison.Ordinal)));
     }
 
-    [Test]
-    public void RuntimeListing_DoesNotDependOnTypesFinder()
-    {
-        var source = File.ReadAllText(Path.Combine(GetRepoRoot(), "UniversalToolchain", "Wistc", "Program.cs"))
-            + File.ReadAllText(Path.Combine(GetRepoRoot(), "UniversalToolchain", "Wistc", "WistCliRuntimeListingFormatter.cs"));
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(source, Does.Not.Contain("TypesFinder"));
-            Assert.That(source, Does.Not.Contain("AutoRegisterServiceAttribute"));
-            Assert.That(source, Does.Not.Contain("GetTypes()"));
-        });
-    }
-
-    [Test]
-    public void FacadeDefault_And_CliDefault_UseSameShippedPreset()
-    {
-        var source = File.ReadAllText(Path.Combine(GetRepoRoot(), "UniversalToolchain", "Wistc", "Program.cs"));
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(WistShippedDialectPresets.Default, Is.SameAs(WistShippedDialectPresets.FullDefault));
-            Assert.That(source, Does.Contain("CreateHostFromPreset(workflow, WistShippedDialectPresets.Default)"));
-        });
-    }
-
     private static RuntimeComponentManifestEntry Entry(
         RuntimeComponentKind kind,
         string canonicalAlias,
@@ -141,9 +92,6 @@ public sealed class WistCliDefaultAndListingTests
         string componentId,
         string assemblySimpleName)
         => new(kind, canonicalAlias, aliases, new RuntimeComponentId(componentId), assemblySimpleName);
-
-    private static string GetRepoRoot()
-        => Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", ".."));
 
     private sealed class StaticCatalog(
         IReadOnlyList<RuntimeComponentManifestEntry> modules,

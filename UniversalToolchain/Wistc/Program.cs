@@ -168,12 +168,28 @@ WistDialectExecutionHost CreateDefaultHost(CommonOptions options)
 {
     using var provider = CreateDialectWorkflowProvider();
     var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-    var customization = WistCliCustomizationRequest.FromOptions(options);
+    var plan = new WistCliDialectPlanBuilder().Build(options);
 
-    if (!customization.HasCustomization)
-        return CreateHostFromPreset(workflow, WistShippedDialectPresets.Default);
+    return plan.Kind switch
+    {
+        WistCliDialectPlanKind.Preset => CreateHostFromPreset(workflow, plan.BasePreset),
+        WistCliDialectPlanKind.CustomizedPreset => CreateHostFromCustomizedPresetPlan(workflow, plan),
+        _ => Thrower.ArgumentOutOfRange<WistDialectExecutionHost>(nameof(plan.Kind), $"Unsupported CLI dialect plan kind '{plan.Kind}'.")
+    };
+}
 
-    var dialectText = new WistCliCustomizedDialectBuilder().Build(customization);
+WistDialectExecutionHost CreateHostFromCustomizedPresetPlan(WistDialectExecutionWorkflow workflow, WistCliDialectPlan plan)
+{
+    workflow = workflow.ArgNotNull();
+    plan = plan.ArgNotNull();
+
+    if (plan.Kind != WistCliDialectPlanKind.CustomizedPreset)
+        Thrower.Argument(nameof(plan), "CLI dialect plan must be of kind CustomizedPreset.");
+
+    var dialectText = plan.CustomizedDialectText;
+    if (string.IsNullOrWhiteSpace(dialectText))
+        Thrower.Argument(nameof(plan), "Customized preset plan must provide dialect text.");
+
     var composition = workflow.ComposeText(dialectText, "cli-customized");
     if (!composition.IsSuccess)
         Thrower.InvalidOpEx(FormatComposition(composition));
