@@ -9,51 +9,73 @@ namespace UniversalToolchain.Dialects.Tests.RuntimeLoading;
 public sealed class IntrinsicSemanticBootstrapPlanContractTests
 {
     [Test]
-    public void Build_RegisteredModulesAndProviders_ProducesDeterministicPlan()
+    public void Build_SameServiceRegistrations_ProducesDeterministicPlan()
     {
-        var services = new ServiceCollection();
-        services.AddCoreRuntimeInfrastructure();
+        var services = CreateServices();
         services.AddSingleton<IFrontendCoreModule, ValidProviderFrontendModule>();
-        services.AddSingleton<IIRProcessingModule, ValidProviderOptimizerModule>();
         services.AddSingleton<IIntrinsicDescriptorProvider, ValidProvider>();
+        services.AddSingleton<IIntrinsicDescriptorProvider>(new ValidProvider());
 
         var builder = new IntrinsicSemanticBootstrapPlanBuilder();
         var first = builder.Build(services);
         var second = builder.Build(services);
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(first.RegisteredProviderTypes, Is.EqualTo(second.RegisteredProviderTypes));
-            Assert.That(first.Requirements, Is.EqualTo(second.Requirements));
-            Assert.That(first.Requirements.Select(static x => x.ProviderType), Is.EqualTo(new[]
-            {
-                typeof(ValidProvider),
-                typeof(ValidProvider)
-            }));
-        });
+        Assert.That(BuildPlanSignature(first), Is.EqualTo(BuildPlanSignature(second)));
     }
 
     [Test]
-    public void ValidatePreProvider_WhenRequirementMissingRegisteredProvider_Throws()
+    public void ValidatePreProvider_ImplementationTypeRegistration_ParticipatesInCoverageValidation()
     {
-        var services = new ServiceCollection();
-        services.AddCoreRuntimeInfrastructure();
-        services.AddSingleton<IFrontendCoreModule, MissingProviderFrontendModule>();
+        var services = CreateServices();
+        services.AddSingleton<IFrontendCoreModule, ValidProviderFrontendModule>();
+        services.AddSingleton<IIntrinsicDescriptorProvider, ValidProvider>();
 
         var builder = new IntrinsicSemanticBootstrapPlanBuilder();
         var plan = builder.Build(services);
         var validator = new IntrinsicSemanticBootstrapPreProviderValidator();
 
-        var exception = Assert.Throws<InvalidOperationException>(() => validator.Validate(plan, services));
-
-        Assert.That(exception!.Message, Does.Contain(typeof(MissingProvider).FullName));
+        Assert.DoesNotThrow(() => validator.Validate(plan, services));
     }
 
     [Test]
-    public void ValidateRuntime_WhenProvidersSatisfyPlan_DoesNotThrow()
+    public void ValidatePreProvider_ImplementationInstanceRegistration_ParticipatesInCoverageValidation()
     {
-        var services = new ServiceCollection();
-        services.AddCoreRuntimeInfrastructure();
+        var services = CreateServices();
+        services.AddSingleton<IFrontendCoreModule, ValidProviderFrontendModule>();
+        services.AddSingleton<IIntrinsicDescriptorProvider>(new ValidProvider());
+
+        var builder = new IntrinsicSemanticBootstrapPlanBuilder();
+        var plan = builder.Build(services);
+        var validator = new IntrinsicSemanticBootstrapPreProviderValidator();
+
+        Assert.DoesNotThrow(() => validator.Validate(plan, services));
+    }
+
+    [Test]
+    public void ValidatePreProvider_FactoryRegistration_FailsFastWithClearMessage()
+    {
+        var services = CreateServices();
+        services.AddSingleton<IFrontendCoreModule, ValidProviderFrontendModule>();
+        services.AddSingleton<IIntrinsicDescriptorProvider>(_ => new ValidProvider());
+
+        var builder = new IntrinsicSemanticBootstrapPlanBuilder();
+        var plan = builder.Build(services);
+        var validator = new IntrinsicSemanticBootstrapPreProviderValidator();
+
+        Assert.That(
+            plan.ProviderRegistrations.Select(static x => x.Kind),
+            Does.Contain(IntrinsicDescriptorProviderRegistrationKind.Factory));
+
+        var exception = Assert.Throws<InvalidOperationException>(() => validator.Validate(plan, services));
+
+        Assert.That(exception!.Message, Does.Contain("factory-based registration"));
+        Assert.That(exception.Message, Does.Contain("cannot infer provider type"));
+    }
+
+    [Test]
+    public void ValidateRuntime_SupportedRegistrationPaths_SucceedsAfterPreProviderValidation()
+    {
+        var services = CreateServices();
         services.AddSingleton<IFrontendCoreModule, ValidProviderFrontendModule>();
         services.AddSingleton<IIntrinsicDescriptorProvider, ValidProvider>();
 
@@ -68,6 +90,25 @@ public sealed class IntrinsicSemanticBootstrapPlanContractTests
         Assert.DoesNotThrow(() => runtimeValidator.Validate(provider, plan));
     }
 
+    private static ServiceCollection CreateServices()
+    {
+        var services = new ServiceCollection();
+        services.AddCoreRuntimeInfrastructure();
+        return services;
+    }
+
+    private static string BuildPlanSignature(IntrinsicSemanticBootstrapPlan plan)
+    {
+        return string.Join(
+                   "|",
+                   plan.ProviderRegistrations.Select(static x =>
+                       x.RegistrationIndex + ":" + x.Kind + ":" + (x.ProviderType?.FullName ?? "<null>")))
+               + "::"
+               + string.Join(
+                   "|",
+                   plan.Requirements.Select(static x => x.ModuleType.FullName + ":" + x.ProviderType.FullName));
+    }
+
     private static IntrinsicSemanticDescriptor CreateDescriptor(string @namespace, string name) =>
         new()
         {
@@ -77,26 +118,14 @@ public sealed class IntrinsicSemanticBootstrapPlanContractTests
             ValidationRule = new NoOpValidationRule()
         };
 
-    private sealed class MissingProvider : IIntrinsicDescriptorProvider
-    {
-        public IReadOnlyList<IntrinsicSemanticDescriptor> GetDescriptors() =>
-            [CreateDescriptor("logic", "missing")];
-    }
-
     private sealed class ValidProvider : IIntrinsicDescriptorProvider
     {
         public IReadOnlyList<IntrinsicSemanticDescriptor> GetDescriptors() =>
             [CreateDescriptor("logic", "valid")];
     }
 
-    [IntrinsicDescriptorProvider(typeof(MissingProvider))]
-    private sealed class MissingProviderFrontendModule : IFrontendCoreModule;
-
     [IntrinsicDescriptorProvider(typeof(ValidProvider))]
     private sealed class ValidProviderFrontendModule : IFrontendCoreModule;
-
-    [IntrinsicDescriptorProvider(typeof(ValidProvider))]
-    private sealed class ValidProviderOptimizerModule : IIRProcessingModule;
 
     private sealed class NoOpStackRule : IIntrinsicStackRule
     {

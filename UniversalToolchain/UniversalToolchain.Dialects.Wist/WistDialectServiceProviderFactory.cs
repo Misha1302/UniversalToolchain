@@ -18,15 +18,6 @@ public sealed class WistDialectServiceProviderFactory
     private readonly IntrinsicSemanticBootstrapPreProviderValidator _intrinsicBootstrapPreProviderValidator;
     private readonly IntrinsicSemanticBootstrapRuntimeValidator _intrinsicBootstrapRuntimeValidator;
 
-    public WistDialectServiceProviderFactory(IEnumerable<IDialectBackendRuntimeRegistrar> backendProviders)
-        : this(
-            backendProviders,
-            new IntrinsicSemanticBootstrapPlanBuilder(),
-            new IntrinsicSemanticBootstrapPreProviderValidator(),
-            new IntrinsicSemanticBootstrapRuntimeValidator())
-    {
-    }
-
     public WistDialectServiceProviderFactory(
         IEnumerable<IDialectBackendRuntimeRegistrar> backendProviders,
         IntrinsicSemanticBootstrapPlanBuilder intrinsicBootstrapPlanBuilder,

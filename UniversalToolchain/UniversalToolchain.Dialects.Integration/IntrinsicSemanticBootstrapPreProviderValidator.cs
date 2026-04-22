@@ -19,13 +19,26 @@ public sealed class IntrinsicSemanticBootstrapPreProviderValidator
         var errors = new List<string>();
 
         errors.AddRange(metadataValidator.Validate(services));
+        errors.AddRange(GetUnsupportedRegistrationErrors(plan.ProviderRegistrations));
+
+        var preBuildResolvableProviderTypes = plan.GetPreBuildResolvableProviderTypes();
         errors.AddRange(coverageValidator.Validate(
-            plan.RegisteredProviderTypes,
+            preBuildResolvableProviderTypes,
             plan.Requirements.Select(static x => (x.ModuleType, x.ProviderType)).ToList()));
 
         if (errors.Count > 0)
         {
             Thrower.InvalidOpEx("Intrinsic semantic startup validation failed:" + Environment.NewLine + string.Join(Environment.NewLine, errors));
         }
+    }
+
+    private static IReadOnlyList<string> GetUnsupportedRegistrationErrors(IReadOnlyList<IntrinsicDescriptorProviderRegistration> registrations)
+    {
+        return registrations
+            .Where(static x => x.Kind == IntrinsicDescriptorProviderRegistrationKind.Factory)
+            .OrderBy(x => x.RegistrationIndex)
+            .Select(static x =>
+                $"Intrinsic descriptor provider registration at index {x.RegistrationIndex} uses factory-based registration. Pre-provider bootstrap validation cannot infer provider type from factories. Use implementation-type or implementation-instance registration for IIntrinsicDescriptorProvider.")
+            .ToList();
     }
 }

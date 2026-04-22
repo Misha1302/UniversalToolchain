@@ -13,12 +13,11 @@ public sealed class IntrinsicSemanticBootstrapPlanBuilder
     {
         services = services.ArgNotNull();
 
-        var providerTypes = services
-            .Where(static x => x.ServiceType == typeof(IIntrinsicDescriptorProvider))
-            .Select(static x => x.ImplementationType ?? x.ImplementationInstance?.GetType())
-            .Where(static x => x != null)
-            .Cast<Type>()
-            .OrderBy(x => x.FullName, StringComparer.Ordinal)
+        var providerRegistrations = services
+            .Select(static (descriptor, index) => new RegistrationEntry(index, descriptor))
+            .Where(static x => x.Descriptor.ServiceType == typeof(IIntrinsicDescriptorProvider))
+            .Select(static x => ToProviderRegistration(x.Index, x.Descriptor))
+            .OrderBy(x => x.RegistrationIndex)
             .ToList();
 
         var moduleTypes = GetRegisteredImplementationTypes(services, typeof(IFrontendCoreModule))
@@ -36,7 +35,38 @@ public sealed class IntrinsicSemanticBootstrapPlanBuilder
             .ThenBy(x => x.ProviderType.FullName, StringComparer.Ordinal)
             .ToList();
 
-        return new IntrinsicSemanticBootstrapPlan(providerTypes, requirements);
+        return new IntrinsicSemanticBootstrapPlan(providerRegistrations, requirements);
+    }
+
+    private static IntrinsicDescriptorProviderRegistration ToProviderRegistration(int registrationIndex, ServiceDescriptor descriptor)
+    {
+        if (descriptor.ImplementationType != null)
+        {
+            return new IntrinsicDescriptorProviderRegistration(
+                registrationIndex,
+                IntrinsicDescriptorProviderRegistrationKind.ImplementationType,
+                descriptor.ImplementationType);
+        }
+
+        if (descriptor.ImplementationInstance != null)
+        {
+            return new IntrinsicDescriptorProviderRegistration(
+                registrationIndex,
+                IntrinsicDescriptorProviderRegistrationKind.ImplementationInstance,
+                descriptor.ImplementationInstance.GetType());
+        }
+
+        if (descriptor.ImplementationFactory != null)
+        {
+            return new IntrinsicDescriptorProviderRegistration(
+                registrationIndex,
+                IntrinsicDescriptorProviderRegistrationKind.Factory,
+                null);
+        }
+
+        Thrower.InvalidOpEx(
+            $"Intrinsic descriptor provider registration at index {registrationIndex} has no implementation type, instance, or factory.");
+        return null!;
     }
 
     private static IReadOnlyList<Type> GetRegisteredImplementationTypes(IServiceCollection services, Type serviceType)
@@ -49,4 +79,6 @@ public sealed class IntrinsicSemanticBootstrapPlanBuilder
             .OrderBy(x => x.FullName, StringComparer.Ordinal)
             .ToList();
     }
+
+    private sealed record RegistrationEntry(int Index, ServiceDescriptor Descriptor);
 }

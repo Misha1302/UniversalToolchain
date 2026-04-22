@@ -8,27 +8,43 @@ namespace UniversalToolchain.Dialects.Integration;
 /// </summary>
 public sealed class IntrinsicSemanticBootstrapPlan
 {
-    private readonly ReadOnlyCollection<Type> _registeredProviderTypes;
+    private readonly ReadOnlyCollection<IntrinsicDescriptorProviderRegistration> _providerRegistrations;
     private readonly ReadOnlyCollection<IntrinsicProviderRequirement> _requirements;
 
     public IntrinsicSemanticBootstrapPlan(
-        IEnumerable<Type> registeredProviderTypes,
+        IEnumerable<IntrinsicDescriptorProviderRegistration> providerRegistrations,
         IEnumerable<IntrinsicProviderRequirement> requirements)
     {
-        _registeredProviderTypes = new ReadOnlyCollection<Type>(SnapshotTypes(registeredProviderTypes, nameof(registeredProviderTypes)));
+        _providerRegistrations = new ReadOnlyCollection<IntrinsicDescriptorProviderRegistration>(
+            SnapshotRegistrations(providerRegistrations, nameof(providerRegistrations)));
         _requirements = new ReadOnlyCollection<IntrinsicProviderRequirement>(SnapshotRequirements(requirements, nameof(requirements)));
     }
 
-    public IReadOnlyList<Type> RegisteredProviderTypes => _registeredProviderTypes;
+    public IReadOnlyList<IntrinsicDescriptorProviderRegistration> ProviderRegistrations => _providerRegistrations;
 
     public IReadOnlyList<IntrinsicProviderRequirement> Requirements => _requirements;
 
-    private static List<Type> SnapshotTypes(IEnumerable<Type> values, string paramName)
+    public IReadOnlyList<Type> GetPreBuildResolvableProviderTypes()
+    {
+        return _providerRegistrations
+            .Where(static x => x.CanValidateBeforeProviderBuild)
+            .Select(static x => x.ProviderType)
+            .Where(static x => x != null)
+            .Cast<Type>()
+            .Distinct()
+            .OrderBy(x => x.FullName, StringComparer.Ordinal)
+            .ToList();
+    }
+
+    private static List<IntrinsicDescriptorProviderRegistration> SnapshotRegistrations(
+        IEnumerable<IntrinsicDescriptorProviderRegistration> values,
+        string paramName)
     {
         return values
             .Select(x => x.NotNull(paramName))
-            .Distinct()
-            .OrderBy(x => x.FullName, StringComparer.Ordinal)
+            .OrderBy(x => x.RegistrationIndex)
+            .ThenBy(x => x.Kind)
+            .ThenBy(x => x.ProviderType?.FullName, StringComparer.Ordinal)
             .ToList();
     }
 

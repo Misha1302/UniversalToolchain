@@ -27,6 +27,9 @@ public static class WistDialectCoreServiceCollectionExtensions
         services.TryAddSingleton<SelectedRuntimeModuleClassifier>();
         services.TryAddSingleton<SelectedRuntimeExecutionShapeBuilder>();
         services.TryAddSingleton<DialectBackendRuntimeConfigurationBuilder>();
+        services.TryAddSingleton<IntrinsicSemanticBootstrapPlanBuilder>();
+        services.TryAddSingleton<IntrinsicSemanticBootstrapPreProviderValidator>();
+        services.TryAddSingleton<IntrinsicSemanticBootstrapRuntimeValidator>();
         services.TryAddSingleton<IDialectCompiledDialectBuildPlanBuilder, DialectCompiledDialectBuildPlanBuilder>();
         services.TryAddSingleton<WistDialectExecutionConfigurationBuilder>();
         services.TryAddSingleton<WistDialectServiceProviderFactory>();
