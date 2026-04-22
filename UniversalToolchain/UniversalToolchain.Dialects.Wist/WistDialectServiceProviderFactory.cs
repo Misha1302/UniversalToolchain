@@ -1,5 +1,4 @@
 using BasicCore.Contracts;
-using BasicCore.Core;
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
@@ -15,10 +14,29 @@ namespace UniversalToolchain.Dialects.Wist;
 public sealed class WistDialectServiceProviderFactory
 {
     private readonly IReadOnlyDictionary<DialectBackendId, IDialectBackendRuntimeRegistrar> _backendProviders;
+    private readonly IntrinsicSemanticBootstrapPlanBuilder _intrinsicBootstrapPlanBuilder;
+    private readonly IntrinsicSemanticBootstrapPreProviderValidator _intrinsicBootstrapPreProviderValidator;
+    private readonly IntrinsicSemanticBootstrapRuntimeValidator _intrinsicBootstrapRuntimeValidator;
 
     public WistDialectServiceProviderFactory(IEnumerable<IDialectBackendRuntimeRegistrar> backendProviders)
+        : this(
+            backendProviders,
+            new IntrinsicSemanticBootstrapPlanBuilder(),
+            new IntrinsicSemanticBootstrapPreProviderValidator(),
+            new IntrinsicSemanticBootstrapRuntimeValidator())
+    {
+    }
+
+    public WistDialectServiceProviderFactory(
+        IEnumerable<IDialectBackendRuntimeRegistrar> backendProviders,
+        IntrinsicSemanticBootstrapPlanBuilder intrinsicBootstrapPlanBuilder,
+        IntrinsicSemanticBootstrapPreProviderValidator intrinsicBootstrapPreProviderValidator,
+        IntrinsicSemanticBootstrapRuntimeValidator intrinsicBootstrapRuntimeValidator)
     {
         _backendProviders = CreateBackendProviderMap(backendProviders);
+        _intrinsicBootstrapPlanBuilder = intrinsicBootstrapPlanBuilder.ArgNotNull();
+        _intrinsicBootstrapPreProviderValidator = intrinsicBootstrapPreProviderValidator.ArgNotNull();
+        _intrinsicBootstrapRuntimeValidator = intrinsicBootstrapRuntimeValidator.ArgNotNull();
     }
 
     public IServiceProvider Create(WistDialectExecutionConfiguration configuration)
@@ -34,10 +52,12 @@ public sealed class WistDialectServiceProviderFactory
         RegisterModules(services, configuration.Optimizers, typeof(IIRProcessingModule), ServiceLifetime.Transient);
         RegisterIntrinsicDescriptorProviders(services, configuration);
         RegisterBackendRuntimes(services, configuration);
-        var coverageRequirements = ValidateIntrinsicSemantics(services);
+
+        var bootstrapPlan = _intrinsicBootstrapPlanBuilder.Build(services);
+        _intrinsicBootstrapPreProviderValidator.Validate(bootstrapPlan, services);
 
         var provider = services.BuildServiceProvider();
-        ValidateIntrinsicSemantics(provider, coverageRequirements);
+        _intrinsicBootstrapRuntimeValidator.Validate(provider, bootstrapPlan);
         return provider;
     }
 
@@ -48,7 +68,9 @@ public sealed class WistDialectServiceProviderFactory
             services.Add(new ServiceDescriptor(serviceType, type, lifetime));
 
             if (!services.Any(x => x.ServiceType == type && x.ImplementationType == type))
+            {
                 services.Add(new ServiceDescriptor(type, type, lifetime));
+            }
         }
     }
 
@@ -57,7 +79,9 @@ public sealed class WistDialectServiceProviderFactory
         foreach (var backend in configuration.BackendConfigurations.OrderBy(x => x.BackendDescriptor.BackendId))
         {
             if (!_backendProviders.TryGetValue(backend.BackendDescriptor.BackendId, out var backendProvider))
+            {
                 Thrower.InvalidOpEx($"No backend runtime registrar is registered for backend '{backend.BackendDescriptor.CanonicalId}'.");
+            }
 
             backendProvider.RegisterRuntime(services, backend);
         }
@@ -89,72 +113,10 @@ public sealed class WistDialectServiceProviderFactory
         foreach (var providerType in providerTypes)
         {
             if (!services.Any(x => x.ServiceType == typeof(IIntrinsicDescriptorProvider) && x.ImplementationType == providerType))
+            {
                 services.AddSingleton(typeof(IIntrinsicDescriptorProvider), providerType);
+            }
         }
-    }
-
-    private static IReadOnlyList<(Type ModuleType, Type ProviderType)> ValidateIntrinsicSemantics(IServiceCollection services)
-    {
-        var coverageRequirements = GetIntrinsicCoverageRequirements(services);
-        var metadataValidator = new IntrinsicDescriptorProviderMetadataValidator();
-        var coverageValidator = new IntrinsicSemanticCoverageValidator();
-        var errors = new List<string>();
-
-        errors.AddRange(metadataValidator.Validate(services));
-        errors.AddRange(coverageValidator.Validate(GetRegisteredProviderTypes(services), coverageRequirements));
-
-        if (errors.Count > 0)
-            Thrower.InvalidOpEx("Intrinsic semantic startup validation failed:" + Environment.NewLine + string.Join(Environment.NewLine, errors));
-
-        return coverageRequirements;
-    }
-
-    private static void ValidateIntrinsicSemantics(
-        IServiceProvider provider,
-        IReadOnlyList<(Type ModuleType, Type ProviderType)> coverageRequirements)
-    {
-        var validator = provider.GetRequiredService<IntrinsicSemanticStartupValidator>();
-        var providers = provider.GetServices<IIntrinsicDescriptorProvider>();
-        validator.Validate(providers, coverageRequirements);
-    }
-
-    private static IReadOnlyList<Type> GetRegisteredProviderTypes(IServiceCollection services)
-    {
-        return services
-            .Where(static x => x.ServiceType == typeof(IIntrinsicDescriptorProvider))
-            .Select(static x => x.ImplementationType ?? x.ImplementationInstance?.GetType())
-            .Where(static x => x != null)
-            .Cast<Type>()
-            .OrderBy(x => x.FullName, StringComparer.Ordinal)
-            .ToList();
-    }
-
-    private static IReadOnlyList<Type> GetRegisteredImplementationTypes(IServiceCollection services, Type serviceType)
-    {
-        return services
-            .Where(x => x.ServiceType == serviceType)
-            .Select(x => x.ImplementationType ?? x.ImplementationInstance?.GetType())
-            .Where(static x => x != null)
-            .Cast<Type>()
-            .OrderBy(x => x.FullName, StringComparer.Ordinal)
-            .ToList();
-    }
-
-    private static IReadOnlyList<(Type ModuleType, Type ProviderType)> GetIntrinsicCoverageRequirements(IServiceCollection services)
-    {
-        var moduleTypes = GetRegisteredImplementationTypes(services, typeof(IFrontendCoreModule))
-            .Concat(GetRegisteredImplementationTypes(services, typeof(IIRProcessingModule)))
-            .Distinct()
-            .OrderBy(x => x.FullName, StringComparer.Ordinal);
-
-        return moduleTypes
-            .SelectMany(static moduleType =>
-                moduleType.GetCustomAttributes(typeof(IntrinsicDescriptorProviderAttribute), false)
-                    .Cast<IntrinsicDescriptorProviderAttribute>()
-                    .Select(attribute => (ModuleType: moduleType, attribute.ProviderType)))
-            .OrderBy(x => x.ModuleType.FullName, StringComparer.Ordinal)
-            .ThenBy(x => x.ProviderType.FullName, StringComparer.Ordinal)
-            .ToList();
     }
 
     private static IReadOnlyDictionary<DialectBackendId, IDialectBackendRuntimeRegistrar> CreateBackendProviderMap(IEnumerable<IDialectBackendRuntimeRegistrar> backendProviders)
@@ -167,7 +129,9 @@ public sealed class WistDialectServiceProviderFactory
                      .OrderBy(x => x.BackendId))
         {
             if (!map.TryAdd(backendProvider.BackendId, backendProvider))
+            {
                 Thrower.InvalidOpEx($"Duplicate backend runtime registrar registration for backend '{backendProvider.BackendId.Value}'.");
+            }
         }
 
         return map;
@@ -180,13 +144,19 @@ public sealed class WistDialectServiceProviderFactory
         public int Compare(Type? x, Type? y)
         {
             if (ReferenceEquals(x, y))
+            {
                 return 0;
+            }
 
             if (x is null)
+            {
                 return -1;
+            }
 
             if (y is null)
+            {
                 return 1;
+            }
 
             return StringComparer.Ordinal.Compare(x.FullName, y.FullName);
         }
