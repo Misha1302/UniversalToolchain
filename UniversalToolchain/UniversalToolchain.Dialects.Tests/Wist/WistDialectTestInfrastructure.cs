@@ -19,7 +19,9 @@ internal static class WistDialectTestInfrastructure
     {
         var selection = composition.RuntimeSelection as SelectedRuntimePlan;
         if (selection == null)
+        {
             return "<no-selection>";
+        }
 
         return string.Join("|", selection.OrderedModules.Select(static x => x.CanonicalAlias))
                + "::"

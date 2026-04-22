@@ -119,6 +119,28 @@ public sealed class WistRuntimePathGuardrailTests
     }
 
     [Test]
+    public void WistRequiredInfrastructureModulesProvider_GetModules_RepeatedCallsProduceEquivalentExplicitInfrastructure()
+    {
+        using var provider = WistDialectTestInfrastructure.CreateProviderWithExplicitBackends();
+        var requiredInfrastructure = provider.GetRequiredService<IWistRequiredInfrastructureModulesProvider>();
+
+        var frontendSignatures = Enumerable.Range(0, 30)
+            .Select(_ => string.Join("|", requiredInfrastructure.GetFrontendModuleTypes().Select(static x => x.FullName)))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+        var irSignatures = Enumerable.Range(0, 30)
+            .Select(_ => string.Join("|", requiredInfrastructure.GetIRModuleTypes().Select(static x => x.FullName)))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(frontendSignatures, Is.EqualTo(new[] { typeof(ProgramStructureFrontendModule).FullName }));
+            Assert.That(irSignatures, Is.EqualTo(new[] { string.Empty }));
+        });
+    }
+
+    [Test]
     public void SelectedRuntimeExecutionShapeBuilder_Build_RepeatedCallsProduceEquivalentShapes()
     {
         using var provider = WistDialectTestInfrastructure.CreateProviderWithExplicitBackends();

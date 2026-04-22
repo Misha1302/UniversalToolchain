@@ -22,7 +22,9 @@ public sealed class SelectedRuntimeExecutionShape
         IEnumerable<RuntimeComponentManifestEntry> backendEntries)
     {
         if (string.IsNullOrWhiteSpace(dialectName))
+        {
             Thrower.Argument(nameof(dialectName), "Dialect name must not be empty.");
+        }
 
         DialectName = dialectName;
         _frontendModuleTypes = new ReadOnlyCollection<Type>(SnapshotTypes(frontendModuleTypes, nameof(frontendModuleTypes)));

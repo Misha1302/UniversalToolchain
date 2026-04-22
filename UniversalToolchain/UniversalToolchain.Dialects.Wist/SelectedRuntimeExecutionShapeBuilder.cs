@@ -26,7 +26,9 @@ public sealed class SelectedRuntimeExecutionShapeBuilder
         selectedRuntimePlan = selectedRuntimePlan.ArgNotNull();
 
         if (!selectedRuntimePlan.IsResolved)
+        {
             Thrower.Argument(nameof(selectedRuntimePlan), "Selected runtime plan must be resolved before execution wiring is built.");
+        }
 
         var selectedModules = _moduleClassifier.Classify(selectedRuntimePlan.OrderedModules);
         var frontendModuleTypes = _requiredInfrastructureModulesProvider
