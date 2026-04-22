@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
+using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core;
 using UniversalToolchain.Dialects.Frontend;
 using UniversalToolchain.Dialects.Integration;
@@ -85,29 +86,89 @@ public class WistRuntimeManifestMetadataValidationTests
         var assemblyPath = Path.Combine(testDir, "ArithmeticModule.dll");
         Assert.That(File.Exists(assemblyPath), Is.True, "ArithmeticModule.dll is required in the test output.");
 
-        using var temp = new TempDirectory();
-        var outputPath = Path.Combine(temp.Path, "ArithmeticModule.dialect.runtime.json");
-        var repoRoot = Path.GetFullPath(Path.Combine(testDir, "..", "..", "..", ".."));
-        var emitterProject = Path.Combine(repoRoot, "UniversalToolchain.Dialects.ManifestEmitter", "UniversalToolchain.Dialects.ManifestEmitter.csproj");
-
-        var start = new ProcessStartInfo("dotnet", $"run --project \"{emitterProject}\" -- --assembly \"{assemblyPath}\" --output \"{outputPath}\"")
-        {
-            RedirectStandardError = true,
-            RedirectStandardOutput = true,
-            WorkingDirectory = repoRoot
-        };
-
-        using var process = Process.Start(start)!;
-        process.WaitForExit();
-
-        Assert.That(process.ExitCode, Is.EqualTo(0), process.StandardError.ReadToEnd());
-
-        var json = File.ReadAllText(outputPath);
+        var (json, document) = EmitManifest(assemblyPath);
         Assert.That(json, Does.Not.Contain("dialectFamily"));
 
-        IRuntimeManifestSerializer serializer = new RuntimeManifestJsonSerializer();
-        var document = serializer.Deserialize(json);
         Assert.That(document.AssemblySimpleName, Is.EqualTo("ArithmeticModule"));
+    }
+
+    [Test]
+    public void ManifestEmitter_ModuleEntriesIncludeActivationTypeFullName()
+    {
+        var testDir = TestContext.CurrentContext.TestDirectory;
+        var assemblyPath = Path.Combine(testDir, "ArithmeticModule.dll");
+        Assert.That(File.Exists(assemblyPath), Is.True, "ArithmeticModule.dll is required in the test output.");
+
+        var (_, document) = EmitManifest(assemblyPath);
+        var arithmetic = document.Components.Single(static x => x.CanonicalAlias == "Arithmetic");
+        var activation = arithmetic.Activation;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(activation, Is.Not.Null);
+            Assert.That(activation?.ActivationTypeFullName, Is.EqualTo("ArithmeticModule.Module.ArithmeticModuleImpl"));
+            Assert.That(activation?.RegistrarTypeFullName, Is.Null);
+        });
+    }
+
+    [Test]
+    public void ManifestEmitter_AnnotatedBackendEntriesIncludeActivationAndRegistrarTypeFullNames()
+    {
+        var testDir = TestContext.CurrentContext.TestDirectory;
+        var assemblyPath = Path.Combine(testDir, "UniversalToolchain.Dialects.Wist.dll");
+        Assert.That(File.Exists(assemblyPath), Is.True, "UniversalToolchain.Dialects.Wist.dll is required in the test output.");
+
+        var (_, document) = EmitManifest(assemblyPath);
+        var cil = document.Components.Single(static x => x.CanonicalAlias == "cil");
+        var interpreter = document.Components.Single(static x => x.CanonicalAlias == "interpreter");
+        var cilActivation = cil.Activation;
+        var interpreterActivation = interpreter.Activation;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(cilActivation?.ActivationTypeFullName, Is.EqualTo(typeof(WistCilBackendDeclaration).FullName));
+            Assert.That(cilActivation?.RegistrarTypeFullName, Is.EqualTo(typeof(WistCilDialectBackendServiceProvider).FullName));
+            Assert.That(interpreterActivation?.ActivationTypeFullName, Is.EqualTo(typeof(WistInterpreterBackendDeclaration).FullName));
+            Assert.That(interpreterActivation?.RegistrarTypeFullName, Is.EqualTo(typeof(WistInterpreterDialectBackendServiceProvider).FullName));
+        });
+    }
+
+    [Test]
+    public void ManifestEmitter_BackendEntryWithoutRegistrarAttribute_RemainsValidWithoutRegistrarTypeFullName()
+    {
+        var assemblyPath = typeof(ManifestEmitterOptionalRegistrarBackendExport).Assembly.Location;
+
+        var (_, document) = EmitManifest(assemblyPath);
+        var backend = document.Components.Single(static x => x.CanonicalAlias == "optional-registrar-test-backend");
+        var activation = backend.Activation;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(activation, Is.Not.Null);
+            Assert.That(activation?.ActivationTypeFullName, Is.EqualTo(typeof(ManifestEmitterOptionalRegistrarBackendExport).FullName));
+            Assert.That(activation?.RegistrarTypeFullName, Is.Null);
+        });
+    }
+
+    [Test]
+    public void ManifestEmitter_EmissionOrderRemainsDeterministic()
+    {
+        var testDir = TestContext.CurrentContext.TestDirectory;
+        var assemblyPath = Path.Combine(testDir, "UniversalToolchain.Dialects.Wist.dll");
+        Assert.That(File.Exists(assemblyPath), Is.True, "UniversalToolchain.Dialects.Wist.dll is required in the test output.");
+
+        var (_, document) = EmitManifest(assemblyPath);
+        var componentKeys = document.Components
+            .Select(static x => (x.Kind, x.CanonicalAlias, x.ComponentId))
+            .ToList();
+
+        var sortedKeys = componentKeys
+            .OrderBy(static x => x.Kind, StringComparer.Ordinal)
+            .ThenBy(static x => x.CanonicalAlias, StringComparer.Ordinal)
+            .ThenBy(static x => x.ComponentId, StringComparer.Ordinal)
+            .ToList();
+
+        Assert.That(componentKeys, Is.EqualTo(sortedKeys));
     }
 
     [Test]
@@ -195,6 +256,38 @@ public class WistRuntimeManifestMetadataValidationTests
         return Assert.Throws<InvalidOperationException>(() => new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([first, second]), serializer))!;
     }
 
+    private static (string Json, FileDialectRuntimeManifestDocument Document) EmitManifest(string assemblyPath)
+    {
+        using var temp = new TempDirectory();
+        var outputPath = Path.Combine(temp.Path, $"{Path.GetFileNameWithoutExtension(assemblyPath)}.dialect.runtime.json");
+        var repoRoot = GetRepoRoot();
+        var emitterProject = Path.Combine(repoRoot, "UniversalToolchain.Dialects.ManifestEmitter", "UniversalToolchain.Dialects.ManifestEmitter.csproj");
+
+        var start = new ProcessStartInfo("dotnet", $"run --project \"{emitterProject}\" -- --assembly \"{assemblyPath}\" --output \"{outputPath}\"")
+        {
+            RedirectStandardError = true,
+            RedirectStandardOutput = true,
+            WorkingDirectory = repoRoot
+        };
+
+        using var process = Process.Start(start);
+        if (process == null)
+        {
+            Assert.Fail("Manifest emitter process must start.");
+            return (string.Empty, new FileDialectRuntimeManifestDocument(string.Empty, []));
+        }
+
+        process.WaitForExit();
+
+        Assert.That(process.ExitCode, Is.EqualTo(0), process.StandardError.ReadToEnd());
+
+        var json = File.ReadAllText(outputPath);
+        IRuntimeManifestSerializer serializer = new RuntimeManifestJsonSerializer();
+        return (json, serializer.Deserialize(json));
+    }
+
+    private static string GetRepoRoot() => Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", ".."));
+
     private static string GetDialectPath(string dialectName) => Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "Dialects", "examples", "wist", dialectName, "dialect.wistdialect"));
 
     private static IReadOnlySet<string> GetLoadedModuleAssemblies()
@@ -229,3 +322,6 @@ public class WistRuntimeManifestMetadataValidationTests
         }
     }
 }
+
+[DialectRuntimeExport("Backend", "optional-registrar-test-backend")]
+internal sealed class ManifestEmitterOptionalRegistrarBackendExport;

@@ -34,6 +34,8 @@ internal sealed record CliArguments(string AssemblyPath, string OutputPath)
 
 internal static class ManifestEmitter
 {
+    private const string BackendKind = "Backend";
+    private const string BackendRegistrarTypeAttributeFullName = "UniversalToolchain.Dialects.Abstractions.DialectBackendRegistrarTypeAttribute";
     private const string RuntimeExportAttributeFullName = "UniversalToolchain.Dialects.Abstractions.DialectRuntimeExportAttribute";
     private const string RuntimeAliasAttributeFullName = "UniversalToolchain.Dialects.Abstractions.DialectRuntimeAliasAttribute";
 
@@ -91,7 +93,25 @@ internal static class ManifestEmitter
             .OrderBy(static x => x, StringComparer.Ordinal)
             .ToList();
 
-        return [new ManifestComponentEntry(kind, canonicalAlias, aliases, RuntimeId(kind, canonicalAlias))];
+        return [new ManifestComponentEntry(
+            kind,
+            canonicalAlias,
+            aliases,
+            RuntimeId(kind, canonicalAlias),
+            new ManifestActivationEntry(
+                type.FullName.NotNull("Runtime activation type full name must not be null."),
+                FindRegistrarTypeFullName(type, kind)))];
+    }
+
+    private static string? FindRegistrarTypeFullName(Type type, string kind)
+    {
+        if (!string.Equals(kind, BackendKind, StringComparison.Ordinal))
+            return null;
+
+        var attribute = type.CustomAttributes.FirstOrDefault(static x => x.AttributeType.FullName == BackendRegistrarTypeAttributeFullName);
+        var registrarType = attribute?.ConstructorArguments.FirstOrDefault().Value as Type;
+
+        return registrarType?.FullName;
     }
 
     private static string RuntimeId(string kind, string canonicalAlias)
@@ -100,7 +120,7 @@ internal static class ManifestEmitter
         {
             "FrontendModule" => "frontend",
             "Optimizer" => "optimizer",
-            "Backend" => "backend",
+            BackendKind => "backend",
             _ => Thrower.InvalidOpEx<string>($"Unknown runtime component kind '{kind}'.")
         };
 
@@ -110,7 +130,14 @@ internal static class ManifestEmitter
 
 internal sealed record ManifestDocument(string AssemblySimpleName, IReadOnlyList<ManifestComponentEntry> Components);
 
-internal sealed record ManifestComponentEntry(string Kind, string CanonicalAlias, IReadOnlyList<string> Aliases, string ComponentId);
+internal sealed record ManifestComponentEntry(
+    string Kind,
+    string CanonicalAlias,
+    IReadOnlyList<string> Aliases,
+    string ComponentId,
+    ManifestActivationEntry Activation);
+
+internal sealed record ManifestActivationEntry(string ActivationTypeFullName, string? RegistrarTypeFullName = null);
 
 internal static class JsonOptions
 {
