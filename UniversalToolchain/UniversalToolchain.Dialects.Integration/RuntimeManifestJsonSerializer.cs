@@ -22,7 +22,8 @@ public sealed class RuntimeManifestJsonSerializer : IRuntimeManifestSerializer
                 RuntimeComponentKindCodec.Format(RuntimeComponentKindCodec.Parse(x.Kind ?? string.Empty, "runtime manifest")),
                 x.CanonicalAlias ?? string.Empty,
                 x.Aliases ?? [],
-                ResolveComponentId(x)))
+                ResolveComponentId(x),
+                ResolveActivation(x)))
             .ToList());
     }
 
@@ -37,7 +38,14 @@ public sealed class RuntimeManifestJsonSerializer : IRuntimeManifestSerializer
                     Kind = RuntimeComponentKindCodec.Format(RuntimeComponentKindCodec.Parse(x.Kind ?? string.Empty, "runtime manifest")),
                     CanonicalAlias = x.CanonicalAlias,
                     Aliases = x.Aliases,
-                    ComponentId = x.ComponentId
+                    ComponentId = x.ComponentId,
+                    Activation = x.Activation == null
+                        ? null
+                        : new SerializableManifestActivationEntry
+                        {
+                            ActivationTypeFullName = x.Activation.ActivationTypeFullName,
+                            RegistrarTypeFullName = x.Activation.RegistrarTypeFullName
+                        }
                 })
                 .ToList()
         };
@@ -53,6 +61,19 @@ public sealed class RuntimeManifestJsonSerializer : IRuntimeManifestSerializer
         var kind = RuntimeComponentKindCodec.Parse(entry.Kind ?? string.Empty, "runtime manifest");
         var alias = entry.CanonicalAlias ?? string.Empty;
         return RuntimeComponentIdFactory.Create(kind, alias).Value;
+    }
+
+    private static FileRuntimeComponentActivationEntry? ResolveActivation(SerializableManifestComponentEntry entry)
+    {
+        if (entry.Activation != null)
+            return new FileRuntimeComponentActivationEntry(
+                entry.Activation.ActivationTypeFullName ?? string.Empty,
+                entry.Activation.RegistrarTypeFullName);
+
+        if (!string.IsNullOrWhiteSpace(entry.TypeFullName))
+            return new FileRuntimeComponentActivationEntry(entry.TypeFullName);
+
+        return null;
     }
 
     private sealed class SerializableManifestDocument
@@ -73,5 +94,14 @@ public sealed class RuntimeManifestJsonSerializer : IRuntimeManifestSerializer
         public string? ComponentId { get; init; }
 
         public string? TypeFullName { get; init; }
+
+        public SerializableManifestActivationEntry? Activation { get; init; }
+    }
+
+    private sealed class SerializableManifestActivationEntry
+    {
+        public string? ActivationTypeFullName { get; init; }
+
+        public string? RegistrarTypeFullName { get; init; }
     }
 }

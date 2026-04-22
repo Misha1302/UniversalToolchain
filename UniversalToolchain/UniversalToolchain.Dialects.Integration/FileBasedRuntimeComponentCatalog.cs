@@ -82,7 +82,8 @@ public sealed class FileBasedRuntimeComponentCatalog : IRuntimeComponentCatalog
             canonicalAlias,
             component.Aliases,
             componentId,
-            assemblySimpleName));
+            assemblySimpleName,
+            ToRuntimeActivation(component.Activation)));
     }
 
     private static bool TryResolve(IReadOnlyDictionary<string, RuntimeComponentManifestEntry> map, string alias, out RuntimeComponentManifestEntry? entry)
@@ -128,8 +129,31 @@ public sealed class FileBasedRuntimeComponentCatalog : IRuntimeComponentCatalog
             CanonicalAlias = canonical,
             Aliases = aliases,
             AssemblySimpleName = assemblySimpleName,
-            ComponentId = new RuntimeComponentId(entry.ComponentId.Value.Trim())
+            ComponentId = new RuntimeComponentId(entry.ComponentId.Value.Trim()),
+            Activation = NormalizeActivation(entry.Activation)
         };
+    }
+
+    private static RuntimeComponentActivationInfo? ToRuntimeActivation(FileRuntimeComponentActivationEntry? activation)
+    {
+        return activation == null
+            ? null
+            : new RuntimeComponentActivationInfo(activation.ActivationTypeFullName, activation.RegistrarTypeFullName);
+    }
+
+    private static RuntimeComponentActivationInfo? NormalizeActivation(RuntimeComponentActivationInfo? activation)
+    {
+        if (activation == null)
+            return null;
+
+        var activationTypeFullName = activation.ActivationTypeFullName?.Trim();
+        if (string.IsNullOrWhiteSpace(activationTypeFullName))
+            Thrower.Argument(nameof(activation), "ActivationTypeFullName must not be empty when activation metadata is provided.");
+
+        var registrarTypeFullName = activation.RegistrarTypeFullName?.Trim();
+        return new RuntimeComponentActivationInfo(
+            activationTypeFullName,
+            string.IsNullOrWhiteSpace(registrarTypeFullName) ? null : registrarTypeFullName);
     }
 
     private static IReadOnlyDictionary<string, RuntimeComponentManifestEntry> CreateAliasMap(IEnumerable<RuntimeComponentManifestEntry> entries, string kindName)
