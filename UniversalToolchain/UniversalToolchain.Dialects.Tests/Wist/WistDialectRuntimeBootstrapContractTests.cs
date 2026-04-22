@@ -49,6 +49,7 @@ public class WistDialectRuntimeBootstrapContractTests
         {
             Assert.That(services.Any(static x => x.ServiceType == typeof(SelectedRuntimePlanResolver)), Is.True);
             Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeComponentCatalog)), Is.True);
+            Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeAssemblyTypeLoader)), Is.True);
             Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeComponentTypeLoader)), Is.True);
             Assert.That(services.Any(static x => x.ServiceType == typeof(WistDialectExecutionWorkflow)), Is.True);
         });

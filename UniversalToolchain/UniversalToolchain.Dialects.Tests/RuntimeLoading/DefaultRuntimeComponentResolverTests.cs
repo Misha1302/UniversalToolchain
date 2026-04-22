@@ -14,6 +14,8 @@ public class DefaultRuntimeComponentResolverTests
     private const string ResolverExportForDifferentEntriesBAlias = "resolver.entries.b";
     private const string ResolverExportForFallbackAlias = "resolver.fallback.sample";
     private const string ResolverExportDuplicateAlias = "resolver.duplicate.sample";
+    private const string ResolverExactExportAlias = "resolver.exact.sample";
+    private const string ResolverExactNoExportAlias = "resolver.exact.no-export";
     private const string ManifestAuthoritativeAlias = "resolver.manifest.authoritative";
 
     [Test]
@@ -23,7 +25,7 @@ public class DefaultRuntimeComponentResolverTests
         {
             [TestAssemblyName] = CreateTestAssembly(typeof(ResolverExportForCaching))
         });
-        var resolver = new DefaultRuntimeComponentResolver(strategy);
+        var resolver = CreateResolver(strategy);
         var entry = Entry(RuntimeComponentKind.FrontendModule, ResolverExportForCachingAlias, TestAssemblyName);
 
         var first = resolver.Resolve(entry);
@@ -43,7 +45,7 @@ public class DefaultRuntimeComponentResolverTests
         {
             [TestAssemblyName] = CreateTestAssembly(typeof(ResolverExportForCaching))
         });
-        var resolver = new DefaultRuntimeComponentResolver(strategy);
+        var resolver = CreateResolver(strategy);
         var entry = Entry(RuntimeComponentKind.FrontendModule, ResolverExportForCachingAlias, TestAssemblyName);
 
         var first = resolver.Resolve(entry);
@@ -63,7 +65,7 @@ public class DefaultRuntimeComponentResolverTests
         {
             [TestAssemblyName] = CreateTestAssembly(typeof(ResolverExportForCaching))
         });
-        var resolver = new DefaultRuntimeComponentResolver(strategy);
+        var resolver = CreateResolver(strategy);
         var entry = Entry(RuntimeComponentKind.FrontendModule, "resolver.missing.component", TestAssemblyName);
 
         var ex = Assert.Throws<InvalidOperationException>(() => resolver.Resolve(entry));
@@ -80,7 +82,7 @@ public class DefaultRuntimeComponentResolverTests
         {
             [TestAssemblyName] = CreateTestAssembly(typeof(ResolverExportForAliases))
         });
-        var resolver = new DefaultRuntimeComponentResolver(strategy);
+        var resolver = CreateResolver(strategy);
         var entry = new RuntimeComponentManifestEntry(
             RuntimeComponentKind.FrontendModule,
             ResolverExportForAliasesAlias,
@@ -107,7 +109,7 @@ public class DefaultRuntimeComponentResolverTests
         {
             [TestAssemblyName] = CreateTestAssembly(typeof(ResolverExportDuplicateA), typeof(ResolverExportDuplicateB))
         });
-        var resolver = new DefaultRuntimeComponentResolver(strategy);
+        var resolver = CreateResolver(strategy);
         var entry = Entry(RuntimeComponentKind.FrontendModule, ResolverExportDuplicateAlias, TestAssemblyName);
 
         Assert.Throws<InvalidOperationException>(() => resolver.Resolve(entry));
@@ -120,7 +122,7 @@ public class DefaultRuntimeComponentResolverTests
         {
             [TestAssemblyName] = CreateTestAssembly(typeof(ResolverExportForCaching))
         });
-        var resolver = new DefaultRuntimeComponentResolver(strategy);
+        var resolver = CreateResolver(strategy);
         var entry = Entry(RuntimeComponentKind.FrontendModule, ResolverExportForCachingAlias, TestAssemblyName);
 
         var tasks = Enumerable.Range(0, 64).Select(_ => Task.Run(() => resolver.Resolve(entry)));
@@ -157,7 +159,7 @@ public class DefaultRuntimeComponentResolverTests
         {
             [TestAssemblyName] = CreateTestAssembly(typeof(ResolverExportForDifferentEntriesA), typeof(ResolverExportForDifferentEntriesB))
         });
-        var resolver = new DefaultRuntimeComponentResolver(strategy);
+        var resolver = CreateResolver(strategy);
         var firstEntry = Entry(RuntimeComponentKind.FrontendModule, ResolverExportForDifferentEntriesAAlias, TestAssemblyName);
         var secondEntry = Entry(RuntimeComponentKind.FrontendModule, ResolverExportForDifferentEntriesBAlias, TestAssemblyName);
 
@@ -180,7 +182,7 @@ public class DefaultRuntimeComponentResolverTests
         {
             [TestAssemblyName] = fallbackAssembly
         });
-        var resolver = new DefaultRuntimeComponentResolver(strategy);
+        var resolver = CreateResolver(strategy);
         var entry = Entry(RuntimeComponentKind.FrontendModule, ResolverExportForFallbackAlias, TestAssemblyName);
 
         var descriptor = resolver.Resolve(entry);
@@ -199,7 +201,7 @@ public class DefaultRuntimeComponentResolverTests
         {
             [TestAssemblyName] = CreateTestAssembly(typeof(ResolverExportForCaching))
         });
-        var resolver = new DefaultRuntimeComponentResolver(strategy);
+        var resolver = CreateResolver(strategy);
         var entry = new RuntimeComponentManifestEntry(
             RuntimeComponentKind.Backend,
             ResolverExportForCachingAlias,
@@ -224,7 +226,7 @@ public class DefaultRuntimeComponentResolverTests
         {
             [TestAssemblyName] = CreateTestAssembly(typeof(ResolverExportForCaching))
         });
-        var resolver = new DefaultRuntimeComponentResolver(strategy);
+        var resolver = CreateResolver(strategy);
         var entry = new RuntimeComponentManifestEntry(
             RuntimeComponentKind.FrontendModule,
             ManifestAuthoritativeAlias,
@@ -242,10 +244,139 @@ public class DefaultRuntimeComponentResolverTests
             Does.Contain($"but the exported canonical alias is '{ResolverExportForCachingAlias}' instead of '{ManifestAuthoritativeAlias}'."));
     }
 
+    [Test]
+    public void Resolve_WhenActivationMetadataExists_LoadsExactTypeWithoutAssemblyScan()
+    {
+        var strategy = new CountingAssemblyLoadStrategy(new Dictionary<string, Assembly>(StringComparer.Ordinal)
+        {
+            [TestAssemblyName] = CreateExactTypeAssembly(typeof(ResolverExactExport))
+        });
+        var resolver = CreateResolver(strategy);
+        var entry = EntryWithActivation(RuntimeComponentKind.FrontendModule, ResolverExactExportAlias, TestAssemblyName, typeof(ResolverExactExport));
+
+        var descriptor = resolver.Resolve(entry);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(descriptor.Id, Is.EqualTo(entry.ComponentId));
+            Assert.That(descriptor.ActivationType, Is.EqualTo(typeof(ResolverExactExport)));
+            Assert.That(strategy.GetCalls(TestAssemblyName), Is.EqualTo(1));
+        });
+    }
+
+    [Test]
+    public void Resolve_WhenActivationMetadataIsAbsent_UsesLegacyAssemblyScan()
+    {
+        var strategy = new CountingAssemblyLoadStrategy(new Dictionary<string, Assembly>(StringComparer.Ordinal)
+        {
+            [TestAssemblyName] = CreateTestAssembly(typeof(ResolverExactExport))
+        });
+        var resolver = CreateResolver(strategy);
+        var entry = Entry(RuntimeComponentKind.FrontendModule, ResolverExactExportAlias, TestAssemblyName);
+
+        var descriptor = resolver.Resolve(entry);
+
+        Assert.That(descriptor.ActivationType, Is.EqualTo(typeof(ResolverExactExport)));
+    }
+
+    [Test]
+    public void Resolve_WhenExactActivationTypeIsMissing_ThrowsDeterministicError()
+    {
+        var strategy = new CountingAssemblyLoadStrategy(new Dictionary<string, Assembly>(StringComparer.Ordinal)
+        {
+            [TestAssemblyName] = CreateExactTypeAssembly(typeof(ResolverExactExport))
+        });
+        var resolver = CreateResolver(strategy);
+        var entry = new RuntimeComponentManifestEntry(
+            RuntimeComponentKind.FrontendModule,
+            ResolverExactExportAlias,
+            [],
+            RuntimeComponentIdFactory.Create(RuntimeComponentKind.FrontendModule, ResolverExactExportAlias),
+            TestAssemblyName,
+            new RuntimeComponentActivationInfo("Missing.Runtime.Type"));
+
+        var ex = Assert.Throws<InvalidOperationException>(() => resolver.Resolve(entry));
+
+        Assert.That(
+            ex!.Message,
+            Is.EqualTo($"Runtime activation type 'Missing.Runtime.Type' was not found in assembly '{TestAssemblyName}'."));
+    }
+
+    [Test]
+    public void Resolve_WhenExactActivationTypeHasNoRuntimeExport_ThrowsDeterministicError()
+    {
+        var strategy = new CountingAssemblyLoadStrategy(new Dictionary<string, Assembly>(StringComparer.Ordinal)
+        {
+            [TestAssemblyName] = CreateExactTypeAssembly(typeof(ResolverExactWithoutExport))
+        });
+        var resolver = CreateResolver(strategy);
+        var entry = EntryWithActivation(RuntimeComponentKind.FrontendModule, ResolverExactNoExportAlias, TestAssemblyName, typeof(ResolverExactWithoutExport));
+
+        var ex = Assert.Throws<InvalidOperationException>(() => resolver.Resolve(entry));
+
+        Assert.That(
+            ex!.Message,
+            Is.EqualTo($"Runtime activation type '{typeof(ResolverExactWithoutExport).FullName}' for manifest entry '{entry.ComponentId}' does not declare DialectRuntimeExportAttribute."));
+    }
+
+    [Test]
+    public void Resolve_WhenExactActivationKindDriftsFromManifest_ThrowsDeterministicError()
+    {
+        var strategy = new CountingAssemblyLoadStrategy(new Dictionary<string, Assembly>(StringComparer.Ordinal)
+        {
+            [TestAssemblyName] = CreateExactTypeAssembly(typeof(ResolverExactBackendExport))
+        });
+        var resolver = CreateResolver(strategy);
+        var entry = EntryWithActivation(RuntimeComponentKind.FrontendModule, ResolverExactExportAlias, TestAssemblyName, typeof(ResolverExactBackendExport));
+
+        var ex = Assert.Throws<InvalidOperationException>(() => resolver.Resolve(entry));
+
+        Assert.That(
+            ex!.Message,
+            Does.Contain("but the exported component kind is 'Backend' instead of 'FrontendModule'."));
+    }
+
+    [Test]
+    public void Resolve_WhenExactActivationCanonicalAliasDriftsFromManifest_ThrowsDeterministicError()
+    {
+        var strategy = new CountingAssemblyLoadStrategy(new Dictionary<string, Assembly>(StringComparer.Ordinal)
+        {
+            [TestAssemblyName] = CreateExactTypeAssembly(typeof(ResolverExactDifferentAliasExport))
+        });
+        var resolver = CreateResolver(strategy);
+        var entry = EntryWithActivation(RuntimeComponentKind.FrontendModule, ResolverExactExportAlias, TestAssemblyName, typeof(ResolverExactDifferentAliasExport));
+
+        var ex = Assert.Throws<InvalidOperationException>(() => resolver.Resolve(entry));
+
+        Assert.That(
+            ex!.Message,
+            Does.Contain($"but the exported canonical alias is '{ManifestAuthoritativeAlias}' instead of '{ResolverExactExportAlias}'."));
+    }
+
     private static RuntimeComponentManifestEntry Entry(RuntimeComponentKind kind, string canonicalAlias, string assemblySimpleName)
         => new(kind, canonicalAlias, [], RuntimeComponentIdFactory.Create(kind, canonicalAlias), assemblySimpleName);
 
     private static Assembly CreateTestAssembly(params Type[] loadableTypes) => new ReflectionTypeLoadExceptionAssembly(loadableTypes.Cast<Type?>().ToArray());
+
+    private static Assembly CreateExactTypeAssembly(params Type[] loadableTypes) => new ExactTypeOnlyAssembly(loadableTypes);
+
+    private static DefaultRuntimeComponentResolver CreateResolver(IRuntimeAssemblyLoadStrategy strategy)
+        => new(new DefaultRuntimeAssemblyTypeLoader(strategy));
+
+    private static RuntimeComponentManifestEntry EntryWithActivation(
+        RuntimeComponentKind kind,
+        string canonicalAlias,
+        string assemblySimpleName,
+        Type activationType)
+    {
+        return new RuntimeComponentManifestEntry(
+            kind,
+            canonicalAlias,
+            [],
+            RuntimeComponentIdFactory.Create(kind, canonicalAlias),
+            assemblySimpleName,
+            new RuntimeComponentActivationInfo(activationType.FullName!));
+    }
 
     [DialectRuntimeExport("FrontendModule", ResolverExportForCachingAlias)]
     private sealed class ResolverExportForCaching;
@@ -271,6 +402,17 @@ public class DefaultRuntimeComponentResolverTests
 
     [DialectRuntimeExport("FrontendModule", ResolverExportDuplicateAlias)]
     private sealed class ResolverExportDuplicateB;
+
+    [DialectRuntimeExport("FrontendModule", ResolverExactExportAlias)]
+    private sealed class ResolverExactExport;
+
+    [DialectRuntimeExport("Backend", ResolverExactExportAlias)]
+    private sealed class ResolverExactBackendExport;
+
+    [DialectRuntimeExport("FrontendModule", ManifestAuthoritativeAlias)]
+    private sealed class ResolverExactDifferentAliasExport;
+
+    private sealed class ResolverExactWithoutExport;
 
     private sealed class CountingAssemblyLoadStrategy(IReadOnlyDictionary<string, Assembly> assemblies) : IRuntimeAssemblyLoadStrategy
     {
@@ -303,5 +445,22 @@ public class DefaultRuntimeComponentResolverTests
 
         public override Type[] GetTypes()
             => throw new ReflectionTypeLoadException(_loadableTypes, new Exception?[_loadableTypes.Length]);
+    }
+
+    private sealed class ExactTypeOnlyAssembly(IEnumerable<Type> loadableTypes) : Assembly
+    {
+        private readonly IReadOnlyDictionary<string, Type> _typesByFullName = loadableTypes
+            .ToDictionary(static type => type.FullName!, StringComparer.Ordinal);
+
+        public override Type? GetType(string name, bool throwOnError, bool ignoreCase)
+        {
+            if (!ignoreCase && _typesByFullName.TryGetValue(name, out var type))
+                return type;
+
+            return null;
+        }
+
+        public override Type[] GetTypes()
+            => throw new InvalidOperationException("Exact activation path must not scan assembly exports.");
     }
 }
