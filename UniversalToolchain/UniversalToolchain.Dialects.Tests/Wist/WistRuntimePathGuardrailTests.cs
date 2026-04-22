@@ -30,6 +30,12 @@ public sealed class WistRuntimePathGuardrailTests
 
         Assert.Multiple(() =>
         {
+            Assert.That(
+                WistDialectTestInfrastructure.BuildSelectionSignature(facade.Composition),
+                Is.EqualTo(WistDialectTestInfrastructure.BuildSelectionSignature(composition)));
+            Assert.That(
+                WistDialectTestInfrastructure.BuildSelectionAndDiagnosticsSignature(facade.Composition),
+                Is.EqualTo(WistDialectTestInfrastructure.BuildSelectionAndDiagnosticsSignature(composition)));
             Assert.That(WistDialectTestInfrastructure.BuildConfigurationSignature(facade.Configuration), Is.EqualTo(WistDialectTestInfrastructure.BuildConfigurationSignature(host.Configuration)));
             Assert.That(facade.Configuration.FrontendModules, Is.SupersetOf(expectedShape.FrontendModuleTypes));
             Assert.That(facade.Configuration.IrModules, Is.EqualTo(expectedShape.IRModuleTypes));
@@ -61,6 +67,12 @@ public sealed class WistRuntimePathGuardrailTests
 
         Assert.Multiple(() =>
         {
+            Assert.That(
+                WistDialectTestInfrastructure.BuildSelectionSignature(facade.Composition),
+                Is.EqualTo(WistDialectTestInfrastructure.BuildSelectionSignature(composition)));
+            Assert.That(
+                WistDialectTestInfrastructure.BuildSelectionAndDiagnosticsSignature(facade.Composition),
+                Is.EqualTo(WistDialectTestInfrastructure.BuildSelectionAndDiagnosticsSignature(composition)));
             Assert.That(WistDialectTestInfrastructure.BuildConfigurationSignature(facade.Configuration), Is.EqualTo(WistDialectTestInfrastructure.BuildConfigurationSignature(host.Configuration)));
             Assert.That(facade.Configuration.FrontendModules, Is.SupersetOf(expectedShape.FrontendModuleTypes));
             Assert.That(facade.Configuration.IrModules, Is.EqualTo(expectedShape.IRModuleTypes));
