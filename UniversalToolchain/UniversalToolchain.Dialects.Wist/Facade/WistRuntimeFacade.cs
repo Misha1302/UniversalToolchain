@@ -3,6 +3,7 @@ using BasicCore.Compilation;
 using ExceptionsManager;
 using IntermediateRepresentationAbstractions;
 using UniversalToolchain.Dialects.Abstractions;
+using UniversalToolchain.Dialects.Integration;
 
 namespace UniversalToolchain.Dialects.Wist.Facade;
 
@@ -13,10 +14,15 @@ public sealed class WistRuntimeFacade : IDisposable
 {
     private readonly WistDialectExecutionHost _host;
 
-    internal WistRuntimeFacade(WistDialectExecutionHost host)
+    internal WistRuntimeFacade(WistDialectExecutionHost host, DialectFrameworkCompositionResult composition)
     {
         _host = host.ArgNotNull();
+        Composition = composition.ArgNotNull();
     }
+
+    internal WistDialectExecutionConfiguration Configuration => _host.Configuration;
+
+    internal DialectFrameworkCompositionResult Composition { get; }
 
     public void Dispose() => _host.Dispose();
 
