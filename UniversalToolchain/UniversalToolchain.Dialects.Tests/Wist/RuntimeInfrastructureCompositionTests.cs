@@ -114,13 +114,14 @@ public class RuntimeInfrastructureCompositionTests
     public void WistDialectServiceProviderFactory_ShouldUseNeutralInfrastructurePlusFrontendDefaults()
     {
         var descriptor = new RuntimeBackendDescriptor(new DialectBackendId("noop"), typeof(NoopRegistrar), ["noop"]);
+        var backendEntry = BackendEntry("noop", typeof(NoopRegistrar));
         var factory = CreateFactory([new NoopRegistrar(descriptor.BackendId)]);
         var configuration = new WistDialectExecutionConfiguration(
             "Demo",
             [],
             [],
             [],
-            [new DialectBackendRuntimeConfiguration(descriptor, [], [], [], false)],
+            [new DialectBackendRuntimeConfiguration(backendEntry, descriptor, [], [], [], false)],
             [descriptor]);
 
         var provider = factory.Create(configuration);
@@ -148,11 +149,20 @@ public class RuntimeInfrastructureCompositionTests
     private static WistDialectServiceProviderFactory CreateFactory(IEnumerable<IDialectBackendRuntimeRegistrar> backendRegistrars)
     {
         return new WistDialectServiceProviderFactory(
-            backendRegistrars,
+            new StaticBackendRegistrarResolver(backendRegistrars),
             new IntrinsicSemanticBootstrapPlanBuilder(),
             new IntrinsicSemanticBootstrapPreProviderValidator(),
             new IntrinsicSemanticBootstrapRuntimeValidator());
     }
+
+    private static RuntimeComponentManifestEntry BackendEntry(string alias, Type registrarType)
+        => new(
+            RuntimeComponentKind.Backend,
+            alias,
+            [],
+            RuntimeComponentIdFactory.Create(RuntimeComponentKind.Backend, alias),
+            registrarType.Assembly.GetName().Name!,
+            new RuntimeComponentActivationInfo(typeof(object).FullName!, registrarType.FullName));
 
     [Test]
     public void CilBackendRegistrar_ShouldRegisterCompilerDefaultsThroughSharedBase()
@@ -227,6 +237,23 @@ public class RuntimeInfrastructureCompositionTests
 
         public void RegisterRuntime(IServiceCollection services, DialectBackendRuntimeConfiguration configuration)
         {
+        }
+    }
+
+    private sealed class StaticBackendRegistrarResolver(IEnumerable<IDialectBackendRuntimeRegistrar> backendRegistrars) : IRuntimeBackendRegistrarResolver
+    {
+        private readonly IReadOnlyDictionary<DialectBackendId, IDialectBackendRuntimeRegistrar> _registrarsById = backendRegistrars.ToDictionary(
+            static x => x.BackendId,
+            static x => x);
+
+        public IDialectBackendRuntimeRegistrar Resolve(RuntimeComponentManifestEntry backendEntry)
+        {
+            if (_registrarsById.TryGetValue(new DialectBackendId(backendEntry.CanonicalAlias), out var registrar))
+            {
+                return registrar;
+            }
+
+            throw new InvalidOperationException($"No test backend runtime registrar is registered for backend '{backendEntry.CanonicalAlias}'.");
         }
     }
 }

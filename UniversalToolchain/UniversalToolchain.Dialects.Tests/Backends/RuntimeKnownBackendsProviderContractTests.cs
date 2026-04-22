@@ -1,5 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
-using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Integration;
 
 namespace UniversalToolchain.Dialects.Tests.Backends;
@@ -7,43 +5,17 @@ namespace UniversalToolchain.Dialects.Tests.Backends;
 public class RuntimeKnownBackendsProviderContractTests
 {
     [Test]
-    public void KnownBackendsProvider_ShouldReturnOnlyBackendsBackedByRegistrars()
+    public void KnownBackendsProvider_ShouldReturnCatalogBackends()
     {
         var catalog = new StaticCatalog([
             Entry(RuntimeComponentKind.Backend, "compiler", "Meta.Compiler"),
             Entry(RuntimeComponentKind.Backend, "interpreter", "Meta.Interpreter")
         ]);
 
-        var provider = new RuntimeKnownBackendsProvider(catalog, [new StubRegistrar("interpreter")], new StubTypeLoader());
+        var provider = new RuntimeKnownBackendsProvider(catalog, new StubTypeLoader());
         var known = provider.GetKnownBackends();
 
-        Assert.That(known.Select(static x => x.CanonicalId), Is.EqualTo(new[] { "interpreter" }));
-    }
-
-    [Test]
-    public void KnownBackendsProvider_ShouldRejectDuplicateBackendRegistrars()
-    {
-        var catalog = new StaticCatalog([Entry(RuntimeComponentKind.Backend, "interpreter", "Meta.Interpreter")]);
-
-        var ex = Assert.Throws<InvalidOperationException>(() =>
-            new RuntimeKnownBackendsProvider(
-                catalog,
-                [new StubRegistrar("interpreter"), new StubRegistrar("interpreter")],
-                new StubTypeLoader()))!;
-
-        Assert.That(ex.Message, Does.Contain("Duplicate backend provider registration for backend 'interpreter'"));
-    }
-
-    [Test]
-    public void KnownBackendsProvider_ShouldRejectRegistrarWithoutCatalogMetadata()
-    {
-        var catalog = new StaticCatalog([Entry(RuntimeComponentKind.Backend, "compiler", "Meta.Compiler")]);
-
-        var provider = new RuntimeKnownBackendsProvider(catalog, [new StubRegistrar("interpreter")], new StubTypeLoader());
-
-        var ex = Assert.Throws<InvalidOperationException>(() => provider.GetKnownBackends())!;
-
-        Assert.That(ex.Message, Does.Contain("no matching runtime backend metadata entry"));
+        Assert.That(known.Select(static x => x.CanonicalId), Is.EqualTo(new[] { "compiler", "interpreter" }));
     }
 
     [Test]
@@ -51,7 +23,7 @@ public class RuntimeKnownBackendsProviderContractTests
     {
         var catalog = new StaticCatalog([Entry(RuntimeComponentKind.Backend, "interpreter", "Meta.Interpreter", "vm")]);
 
-        var provider = new RuntimeKnownBackendsProvider(catalog, [new StubRegistrar("interpreter")], new StubTypeLoader());
+        var provider = new RuntimeKnownBackendsProvider(catalog, new StubTypeLoader());
         var descriptor = provider.GetKnownBackends().Single();
 
         Assert.Multiple(() =>
@@ -68,7 +40,7 @@ public class RuntimeKnownBackendsProviderContractTests
         var catalog = new StaticCatalog([Entry(RuntimeComponentKind.Backend, "interpreter", "Meta.Interpreter")]);
         var typeLoader = new StubTypeLoader();
 
-        var provider = new RuntimeKnownBackendsProvider(catalog, [new StubRegistrar("interpreter")], typeLoader);
+        var provider = new RuntimeKnownBackendsProvider(catalog, typeLoader);
 
         Assert.That(typeLoader.Calls, Is.EqualTo(0));
 
@@ -88,7 +60,6 @@ public class RuntimeKnownBackendsProviderContractTests
 
         var provider = new RuntimeKnownBackendsProvider(
             catalog,
-            [new StubRegistrar("interpreter"), new StubRegistrar("compiler")],
             new StubTypeLoader());
 
         Assert.That(provider.GetKnownBackends().Select(static x => x.CanonicalId), Is.EqualTo(new[] { "compiler", "interpreter" }));
@@ -99,7 +70,7 @@ public class RuntimeKnownBackendsProviderContractTests
     {
         var catalog = new StaticCatalog([Entry(RuntimeComponentKind.Backend, "interpreter", "Meta.Interpreter", "z", "a")]);
 
-        var provider = new RuntimeKnownBackendsProvider(catalog, [new StubRegistrar("interpreter")], new StubTypeLoader());
+        var provider = new RuntimeKnownBackendsProvider(catalog, new StubTypeLoader());
         var aliases = provider.GetKnownBackends().Single().Aliases;
 
         Assert.That(aliases, Is.EqualTo(new[] { "a", "z" }));
@@ -107,16 +78,6 @@ public class RuntimeKnownBackendsProviderContractTests
 
     private static RuntimeComponentManifestEntry Entry(RuntimeComponentKind kind, string canonical, string _, params string[] aliases)
         => new(kind, canonical, aliases, RuntimeComponentIdFactory.Create(kind, canonical), "Assembly");
-
-    private sealed class StubRegistrar(string backend) : IDialectBackendRuntimeRegistrar
-    {
-        public DialectBackendId BackendId { get; } = new(backend);
-        public IReadOnlyList<string> SupportedIntrinsics => [];
-
-        public void RegisterRuntime(IServiceCollection services, DialectBackendRuntimeConfiguration configuration)
-        {
-        }
-    }
 
     private sealed class StubTypeLoader : IRuntimeComponentTypeLoader
     {

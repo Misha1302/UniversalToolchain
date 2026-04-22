@@ -4,6 +4,7 @@ using ConditionsModule.Optimizers;
 using LocalVariablesOptimizerModule;
 using Microsoft.Extensions.DependencyInjection;
 using NativeMathModule;
+using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
 
@@ -90,7 +91,7 @@ public class IntrinsicDescriptorProviderRegistrationTests
     private static WistDialectServiceProviderFactory CreateFactory(IEnumerable<IDialectBackendRuntimeRegistrar> backendRegistrars)
     {
         return new WistDialectServiceProviderFactory(
-            backendRegistrars,
+            new StaticBackendRegistrarResolver(backendRegistrars),
             new IntrinsicSemanticBootstrapPlanBuilder(),
             new IntrinsicSemanticBootstrapPreProviderValidator(),
             new IntrinsicSemanticBootstrapRuntimeValidator());
@@ -119,4 +120,16 @@ public class IntrinsicDescriptorProviderRegistrationTests
     [IntrinsicDescriptorProvider(typeof(BooleanIntrinsicDescriptorProvider))]
     [IntrinsicDescriptorProvider(typeof(BooleanIntrinsicDescriptorProvider))]
     private sealed class DuplicateBooleanOptimizerModule : IIRProcessingModule;
+
+    private sealed class StaticBackendRegistrarResolver(IEnumerable<IDialectBackendRuntimeRegistrar> backendRegistrars) : IRuntimeBackendRegistrarResolver
+    {
+        private readonly IReadOnlyDictionary<DialectBackendId, IDialectBackendRuntimeRegistrar> _registrarsById = backendRegistrars.ToDictionary(
+            static x => x.BackendId,
+            static x => x);
+
+        public IDialectBackendRuntimeRegistrar Resolve(RuntimeComponentManifestEntry backendEntry)
+        {
+            return _registrarsById[new DialectBackendId(backendEntry.CanonicalAlias)];
+        }
+    }
 }

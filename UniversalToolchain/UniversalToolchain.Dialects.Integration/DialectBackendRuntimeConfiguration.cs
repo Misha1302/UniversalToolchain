@@ -19,15 +19,29 @@ public class DialectBackendRuntimeConfiguration
         IEnumerable<string> allowedIntrinsics,
         IEnumerable<string> forbiddenIntrinsics,
         bool hasExplicitAllowList)
+        : this(null, backendDescriptor, optimizerTypes, allowedIntrinsics, forbiddenIntrinsics, hasExplicitAllowList)
+    {
+    }
+
+    public DialectBackendRuntimeConfiguration(
+        RuntimeComponentManifestEntry? backendManifestEntry,
+        RuntimeBackendDescriptor backendDescriptor,
+        IEnumerable<Type> optimizerTypes,
+        IEnumerable<string> allowedIntrinsics,
+        IEnumerable<string> forbiddenIntrinsics,
+        bool hasExplicitAllowList)
     {
         backendDescriptor = backendDescriptor.ArgNotNull();
 
+        BackendManifestEntry = backendManifestEntry;
         BackendDescriptor = backendDescriptor;
         _optimizerTypes = new ReadOnlyCollection<Type>(SnapshotTypes(optimizerTypes, nameof(optimizerTypes)));
         _allowedIntrinsics = new ReadOnlyCollection<string>(Snapshot(allowedIntrinsics, nameof(allowedIntrinsics)));
         _forbiddenIntrinsics = new ReadOnlyCollection<string>(Snapshot(forbiddenIntrinsics, nameof(forbiddenIntrinsics)));
         HasExplicitAllowList = hasExplicitAllowList;
     }
+
+    public RuntimeComponentManifestEntry? BackendManifestEntry { get; }
 
     public RuntimeBackendDescriptor BackendDescriptor { get; }
 

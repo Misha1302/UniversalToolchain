@@ -1,5 +1,4 @@
 using BasicCore.Contracts;
-using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
@@ -9,7 +8,7 @@ namespace UniversalToolchain.Dialects.Tests;
 public class WistDialectBackendCompatibilityTests
 {
     [Test]
-    public void RuntimeKnownBackendsProvider_ReturnsOnlyBackendsSupportedByRuntimeRegistrars()
+    public void RuntimeKnownBackendsProvider_ReturnsBackendsFromRuntimeCatalog()
     {
         var catalog = new StaticCatalog(
             Entry("cil", ["compiler"]),
@@ -18,49 +17,26 @@ public class WistDialectBackendCompatibilityTests
 
         var provider = new RuntimeKnownBackendsProvider(
             catalog,
-            [
-                new StubBackendProvider(new DialectBackendId("cil")),
-                new StubBackendProvider(new DialectBackendId("interpreter"))
-            ],
             new StubRuntimeComponentTypeLoader());
 
         var known = provider.GetKnownBackends();
 
         Assert.Multiple(() =>
         {
-            Assert.That(known.Select(static x => x.CanonicalId), Is.EqualTo(new[] { "cil", "interpreter" }));
-            Assert.That(known.SelectMany(static x => x.AllNames), Does.Not.Contain("foreign-backend"));
+            Assert.That(known.Select(static x => x.CanonicalId), Is.EqualTo(new[] { "cil", "foreign-backend", "interpreter" }));
+            Assert.That(known.SelectMany(static x => x.AllNames), Does.Contain("foreign-backend"));
         });
     }
 
     [Test]
-    public void RuntimeKnownBackendsProvider_FailsWhenProviderBackendIsMissingFromCatalog()
+    public void RuntimeKnownBackendsProvider_UsesCatalogOrderDeterministically()
     {
-        var catalog = new StaticCatalog(Entry("cil"));
+        var catalog = new StaticCatalog(Entry("interpreter"), Entry("cil"));
         var provider = new RuntimeKnownBackendsProvider(
             catalog,
-            [new StubBackendProvider(new DialectBackendId("interpreter"))],
             new StubRuntimeComponentTypeLoader());
 
-        var exception = Assert.Throws<InvalidOperationException>(() => provider.GetKnownBackends());
-
-        Assert.That(exception!.Message, Does.Contain("interpreter"));
-    }
-
-    [Test]
-    public void RuntimeKnownBackendsProvider_FailsOnDuplicateBackendProvidersDeterministically()
-    {
-        var catalog = new StaticCatalog(Entry("cil"));
-        var exception = Assert.Throws<InvalidOperationException>(() =>
-            new RuntimeKnownBackendsProvider(
-                catalog,
-                [
-                    new StubBackendProvider(new DialectBackendId("cil")),
-                    new StubBackendProvider(new DialectBackendId("cil"))
-                ],
-                new StubRuntimeComponentTypeLoader()));
-
-        Assert.That(exception!.Message, Does.Contain("Duplicate").And.Contain("cil"));
+        Assert.That(provider.GetKnownBackends().Select(static x => x.CanonicalId), Is.EqualTo(new[] { "cil", "interpreter" }));
     }
 
     [Test]
@@ -222,17 +198,6 @@ public class WistDialectBackendCompatibilityTests
         public IReadOnlyList<RuntimeComponentManifestEntry> GetOptimizersInDeterministicOrder() => [];
 
         public IReadOnlyList<RuntimeComponentManifestEntry> GetBackendsInDeterministicOrder() => _map.Values.Distinct().OrderBy(x => x.CanonicalAlias, StringComparer.Ordinal).ToList();
-    }
-
-    private sealed class StubBackendProvider(DialectBackendId backendId) : IDialectBackendRuntimeRegistrar
-    {
-        public DialectBackendId BackendId { get; } = backendId;
-
-        public IReadOnlyList<string> SupportedIntrinsics => [];
-
-        public void RegisterRuntime(IServiceCollection services, DialectBackendRuntimeConfiguration configuration)
-        {
-        }
     }
 
     private sealed class StubRuntimeComponentTypeLoader : IRuntimeComponentTypeLoader
