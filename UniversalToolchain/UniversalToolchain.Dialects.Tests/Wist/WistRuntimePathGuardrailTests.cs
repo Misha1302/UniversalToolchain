@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using BasicCore.Contracts;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
@@ -12,19 +13,30 @@ public sealed class WistRuntimePathGuardrailTests
     [Test]
     public void WistRuntimeFacadeBuilder_DefaultPreset_MatchesDirectWorkflowSelection()
     {
+        var presetFile = new WistShippedDialectFileResolver().Resolve(WistShippedDialectPresets.Default);
         using var facade = WistRuntimeFacadeBuilder
             .CreateDefault()
             .Build();
         using var provider = WistDialectTestInfrastructure.CreateProviderWithExplicitBackends();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var presetFile = new WistShippedDialectFileResolver().Resolve(WistShippedDialectPresets.Default);
         var composition = workflow.ComposeFile(presetFile);
+        var shapeBuilder = provider.GetRequiredService<SelectedRuntimeExecutionShapeBuilder>();
 
         Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
 
         using var host = workflow.CreateHost(composition);
+        var selection = (SelectedRuntimePlan)composition.RuntimeSelection!;
+        var expectedShape = shapeBuilder.Build(composition.BuildPlan!, selection);
 
-        Assert.That(WistDialectTestInfrastructure.BuildConfigurationSignature(facade.Configuration), Is.EqualTo(WistDialectTestInfrastructure.BuildConfigurationSignature(host.Configuration)));
+        Assert.Multiple(() =>
+        {
+            Assert.That(WistDialectTestInfrastructure.BuildConfigurationSignature(facade.Configuration), Is.EqualTo(WistDialectTestInfrastructure.BuildConfigurationSignature(host.Configuration)));
+            Assert.That(facade.Configuration.FrontendModules, Is.SupersetOf(expectedShape.FrontendModuleTypes));
+            Assert.That(facade.Configuration.IrModules, Is.EqualTo(expectedShape.IRModuleTypes));
+            Assert.That(
+                facade.Configuration.BackendConfigurations.Select(static x => x.BackendDescriptor.CanonicalId),
+                Is.EqualTo(expectedShape.BackendEntries.Select(static x => x.CanonicalAlias)));
+        });
     }
 
     [Test]
@@ -39,12 +51,23 @@ public sealed class WistRuntimePathGuardrailTests
         using var provider = WistDialectTestInfrastructure.CreateProviderWithExplicitBackends();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var composition = workflow.ComposeFile(dialectFile);
+        var shapeBuilder = provider.GetRequiredService<SelectedRuntimeExecutionShapeBuilder>();
 
         Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
 
         using var host = workflow.CreateHost(composition);
+        var selection = (SelectedRuntimePlan)composition.RuntimeSelection!;
+        var expectedShape = shapeBuilder.Build(composition.BuildPlan!, selection);
 
-        Assert.That(WistDialectTestInfrastructure.BuildConfigurationSignature(facade.Configuration), Is.EqualTo(WistDialectTestInfrastructure.BuildConfigurationSignature(host.Configuration)));
+        Assert.Multiple(() =>
+        {
+            Assert.That(WistDialectTestInfrastructure.BuildConfigurationSignature(facade.Configuration), Is.EqualTo(WistDialectTestInfrastructure.BuildConfigurationSignature(host.Configuration)));
+            Assert.That(facade.Configuration.FrontendModules, Is.SupersetOf(expectedShape.FrontendModuleTypes));
+            Assert.That(facade.Configuration.IrModules, Is.EqualTo(expectedShape.IRModuleTypes));
+            Assert.That(
+                facade.Configuration.BackendConfigurations.Select(static x => x.BackendDescriptor.CanonicalId),
+                Is.EqualTo(expectedShape.BackendEntries.Select(static x => x.CanonicalAlias)));
+        });
     }
 
     [Test]
@@ -212,6 +235,42 @@ public sealed class WistRuntimePathGuardrailTests
         Assert.That(arbitraryShape, Is.EqualTo(shippedShape));
     }
 
+    [Test]
+    public void SelectedRuntimeExecutionShapeBuilder_Build_PreservesSelectedModuleOrderWithStableDeduplication()
+    {
+        using var provider = WistDialectTestInfrastructure.CreateProviderWithExplicitBackends();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+        var shapeBuilder = provider.GetRequiredService<SelectedRuntimeExecutionShapeBuilder>();
+        var typeLoader = provider.GetRequiredService<IRuntimeComponentTypeLoader>();
+        var requiredInfrastructure = provider.GetRequiredService<IWistRequiredInfrastructureModulesProvider>();
+        var composition = workflow.ComposeText(
+            "dialect Ordered\nuse Arithmetic,Whitespaces,Numbers\nbackend interpreter",
+            "ordered");
+
+        Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
+
+        var selection = (SelectedRuntimePlan)composition.RuntimeSelection!;
+        var shape = shapeBuilder.Build(composition.BuildPlan!, selection);
+
+        var expectedFrontendTypes = DeduplicateStable(
+            requiredInfrastructure.GetFrontendModuleTypes()
+                .Concat(selection.OrderedModules
+                    .Select(typeLoader.LoadType)
+                    .Where(static x => typeof(IFrontendCoreModule).IsAssignableFrom(x))));
+        var expectedIrTypes = DeduplicateStable(
+            requiredInfrastructure.GetIRModuleTypes()
+                .Concat(selection.OrderedModules
+                    .Select(typeLoader.LoadType)
+                    .Where(static x => typeof(IIRProcessingModule).IsAssignableFrom(x))));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(shape.FrontendModuleTypes, Is.EqualTo(expectedFrontendTypes));
+            Assert.That(shape.IRModuleTypes, Is.EqualTo(expectedIrTypes));
+            Assert.That(shape.BackendEntries.Select(static x => x.CanonicalAlias), Is.EqualTo(new[] { "interpreter" }));
+        });
+    }
+
     private static string FormatComposition(DialectFrameworkCompositionResult composition)
     {
         return DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition));
@@ -233,6 +292,22 @@ public sealed class WistRuntimePathGuardrailTests
                + string.Join("|", shape.OptimizerEntries.Select(static x => x.CanonicalAlias))
                + "::"
                + string.Join("|", shape.BackendEntries.Select(static x => x.CanonicalAlias));
+    }
+
+    private static IReadOnlyList<Type> DeduplicateStable(IEnumerable<Type> types)
+    {
+        var snapshot = new List<Type>();
+        var seen = new HashSet<Type>();
+
+        foreach (var type in types)
+        {
+            if (seen.Add(type))
+            {
+                snapshot.Add(type);
+            }
+        }
+
+        return snapshot;
     }
 
     private sealed class CountingRegistrar(string backendId) : IDialectBackendRuntimeRegistrar
