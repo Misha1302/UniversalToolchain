@@ -18,6 +18,8 @@ public sealed class WistRuntimeFacade : IDisposable
         _host = host.ArgNotNull();
     }
 
+    internal WistDialectExecutionConfiguration Configuration => _host.Configuration;
+
     public void Dispose() => _host.Dispose();
 
     /// <summary>

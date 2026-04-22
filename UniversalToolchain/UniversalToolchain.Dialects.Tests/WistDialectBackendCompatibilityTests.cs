@@ -69,8 +69,8 @@ public class WistDialectBackendCompatibilityTests
         var knownBackendsProvider = new RecordingKnownBackendsProvider(
             [new RuntimeBackendDescriptor(new DialectBackendId("wist-only"), ["wo"])]);
         var builder = new WistDialectExecutionConfigurationBuilder(
-            new StubRuntimeComponentTypeLoader(),
-            new DialectIntrinsicPolicyResolver(),
+            CreateShapeBuilder(new StubRuntimeComponentTypeLoader()),
+            CreateBackendConfigurationBuilder(new StubRuntimeComponentTypeLoader()),
             knownBackendsProvider);
 
         var configuration = builder.Build(
@@ -149,9 +149,23 @@ public class WistDialectBackendCompatibilityTests
     private static WistDialectExecutionConfigurationBuilder CreateBuilder(IRuntimeComponentTypeLoader typeLoader)
     {
         return new WistDialectExecutionConfigurationBuilder(
-            typeLoader,
-            new DialectIntrinsicPolicyResolver(),
+            CreateShapeBuilder(typeLoader),
+            CreateBackendConfigurationBuilder(typeLoader),
             new RecordingKnownBackendsProvider([]));
+    }
+
+    private static SelectedRuntimeExecutionShapeBuilder CreateShapeBuilder(IRuntimeComponentTypeLoader typeLoader)
+    {
+        return new SelectedRuntimeExecutionShapeBuilder(
+            new SelectedRuntimeModuleClassifier(typeLoader),
+            new WistRequiredInfrastructureModulesProvider());
+    }
+
+    private static DialectBackendRuntimeConfigurationBuilder CreateBackendConfigurationBuilder(IRuntimeComponentTypeLoader typeLoader)
+    {
+        return new DialectBackendRuntimeConfigurationBuilder(
+            typeLoader,
+            new DialectIntrinsicPolicyResolver());
     }
 
     private static RuntimeComponentManifestEntry Entry(string alias, IReadOnlyList<string>? aliases = null) =>

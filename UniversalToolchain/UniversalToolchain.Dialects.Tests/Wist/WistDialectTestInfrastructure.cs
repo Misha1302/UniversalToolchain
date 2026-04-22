@@ -41,12 +41,17 @@ internal static class WistDialectTestInfrastructure
 
     public static string BuildHostSignature(WistDialectExecutionHost host)
     {
-        return string.Join("|", host.Configuration.FrontendModules.Select(static x => x.FullName))
+        return BuildConfigurationSignature(host.Configuration);
+    }
+
+    public static string BuildConfigurationSignature(WistDialectExecutionConfiguration configuration)
+    {
+        return string.Join("|", configuration.FrontendModules.Select(static x => x.FullName))
                + "::"
-               + string.Join("|", host.Configuration.IrModules.Select(static x => x.FullName))
+               + string.Join("|", configuration.IrModules.Select(static x => x.FullName))
                + "::"
-               + string.Join("|", host.Configuration.Optimizers.Select(static x => x.FullName))
+               + string.Join("|", configuration.Optimizers.Select(static x => x.FullName))
                + "::"
-               + string.Join("|", host.Configuration.BackendConfigurations.Select(static x => x.BackendDescriptor.CanonicalId));
+               + string.Join("|", configuration.BackendConfigurations.Select(static x => x.BackendDescriptor.CanonicalId));
     }
 }
