@@ -45,11 +45,19 @@ public sealed class SelectedRuntimeExecutionShape
 
     private static List<Type> SnapshotTypes(IEnumerable<Type> values, string paramName)
     {
-        return values
-            .Select(x => x.NotNull(paramName))
-            .Distinct()
-            .OrderBy(x => x.FullName, StringComparer.Ordinal)
-            .ToList();
+        var snapshot = new List<Type>();
+        var seen = new HashSet<Type>();
+
+        foreach (var value in values)
+        {
+            var type = value.NotNull(paramName);
+            if (seen.Add(type))
+            {
+                snapshot.Add(type);
+            }
+        }
+
+        return snapshot;
     }
 
     private static List<RuntimeComponentManifestEntry> SnapshotEntries(
@@ -57,12 +65,19 @@ public sealed class SelectedRuntimeExecutionShape
         RuntimeComponentKind expectedKind,
         string paramName)
     {
-        return values
-            .Select(x => x.NotNull(paramName))
-            .Select(x => ValidateKind(x, expectedKind))
-            .Distinct()
-            .OrderBy(x => x.CanonicalAlias, StringComparer.Ordinal)
-            .ToList();
+        var snapshot = new List<RuntimeComponentManifestEntry>();
+        var seen = new HashSet<RuntimeComponentManifestEntry>();
+
+        foreach (var value in values)
+        {
+            var entry = ValidateKind(value.NotNull(paramName), expectedKind);
+            if (seen.Add(entry))
+            {
+                snapshot.Add(entry);
+            }
+        }
+
+        return snapshot;
     }
 
     private static RuntimeComponentManifestEntry ValidateKind(RuntimeComponentManifestEntry entry, RuntimeComponentKind expectedKind)

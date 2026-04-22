@@ -25,10 +25,18 @@ public sealed class SelectedRuntimeModuleClassification
 
     private static List<Type> Snapshot(IEnumerable<Type> values, string paramName)
     {
-        return values
-            .Select(x => x.NotNull(paramName))
-            .Distinct()
-            .OrderBy(x => x.FullName, StringComparer.Ordinal)
-            .ToList();
+        var snapshot = new List<Type>();
+        var seen = new HashSet<Type>();
+
+        foreach (var value in values)
+        {
+            var type = value.NotNull(paramName);
+            if (seen.Add(type))
+            {
+                snapshot.Add(type);
+            }
+        }
+
+        return snapshot;
     }
 }
