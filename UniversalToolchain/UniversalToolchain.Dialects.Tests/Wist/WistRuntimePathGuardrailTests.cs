@@ -28,6 +28,26 @@ public sealed class WistRuntimePathGuardrailTests
     }
 
     [Test]
+    public void WistRuntimeFacadeBuilder_WithDialectFile_MatchesDirectWorkflowSelection()
+    {
+        var dialectFile = new WistShippedDialectFileResolver().Resolve(WistShippedDialectPresets.MinimalArithmetic);
+
+        using var facade = WistRuntimeFacadeBuilder
+            .CreateDefault()
+            .WithDialectFile(dialectFile)
+            .Build();
+        using var provider = WistDialectTestInfrastructure.CreateProviderWithExplicitBackends();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+        var composition = workflow.ComposeFile(dialectFile);
+
+        Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
+
+        using var host = workflow.CreateHost(composition);
+
+        Assert.That(WistDialectTestInfrastructure.BuildConfigurationSignature(facade.Configuration), Is.EqualTo(WistDialectTestInfrastructure.BuildConfigurationSignature(host.Configuration)));
+    }
+
+    [Test]
     public void ComposeText_CanonicalRuntimePath_DoesNotCreateBackendRegistrationSideEffects()
     {
         var registrar = new CountingRegistrar("interpreter");
@@ -39,6 +59,28 @@ public sealed class WistRuntimePathGuardrailTests
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
 
         var composition = workflow.ComposeText("dialect ComposeOnly\nuse Arithmetic,Numbers\nbackend interpreter", "compose-only");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
+            Assert.That(composition.RuntimeSelection, Is.InstanceOf<SelectedRuntimePlan>());
+            Assert.That(registrar.RegisterRuntimeCallCount, Is.EqualTo(0));
+        });
+    }
+
+    [Test]
+    public void ComposeFile_CanonicalRuntimePath_DoesNotCreateBackendRegistrationSideEffects()
+    {
+        var registrar = new CountingRegistrar("interpreter");
+        var services = new ServiceCollection();
+        services.AddWistDialectServices();
+        services.AddSingleton<IDialectBackendRuntimeRegistrar>(registrar);
+
+        using var provider = services.BuildServiceProvider();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+        var dialectFile = new WistShippedDialectFileResolver().Resolve(WistShippedDialectPresets.MinimalArithmetic);
+
+        var composition = workflow.ComposeFile(dialectFile);
 
         Assert.Multiple(() =>
         {
