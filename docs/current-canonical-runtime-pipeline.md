@@ -17,7 +17,9 @@ It is intentionally limited to behavior that exists today.
 
 - `UniversalToolchain.Dialects.Integration` owns **generic runtime infrastructure** bootstrap:
   - file-system runtime catalog registrations,
-  - reflection-based runtime resolution registrations.
+  - reflection-based runtime resolution registrations,
+  - selected-runtime activation classification and backend runtime configuration projection,
+  - intrinsic semantic bootstrap contracts and two-phase validation helpers.
 - `UniversalToolchain.Dialects.Wist` owns **Wist-specific orchestration**:
   - Wist workflow composition,
   - Wist execution configuration building,

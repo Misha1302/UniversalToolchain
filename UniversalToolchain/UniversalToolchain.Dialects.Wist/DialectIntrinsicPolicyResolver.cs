@@ -1,9 +1,10 @@
 using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
+using UniversalToolchain.Dialects.Integration;
 
 namespace UniversalToolchain.Dialects.Wist;
 
-public sealed class DialectIntrinsicPolicyResolver
+public sealed class DialectIntrinsicPolicyResolver : IDialectBackendIntrinsicPolicyResolver
 {
     public (IReadOnlyList<string> Allowed, IReadOnlyList<string> Forbidden, bool HasExplicitAllowList) Resolve(
         DialectBuildPlan buildPlan,

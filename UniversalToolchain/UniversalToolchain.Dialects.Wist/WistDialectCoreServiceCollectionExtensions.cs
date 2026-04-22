@@ -22,11 +22,14 @@ public static class WistDialectCoreServiceCollectionExtensions
         services.AddDialectDslDefaultComposition();
 
         services.TryAddSingleton<SelectedRuntimePlanResolver>();
-        services.TryAddSingleton<DialectIntrinsicPolicyResolver>();
+        services.TryAddSingleton<IDialectBackendIntrinsicPolicyResolver, DialectIntrinsicPolicyResolver>();
         services.TryAddSingleton<IWistRequiredInfrastructureModulesProvider, WistRequiredInfrastructureModulesProvider>();
         services.TryAddSingleton<SelectedRuntimeModuleClassifier>();
         services.TryAddSingleton<SelectedRuntimeExecutionShapeBuilder>();
         services.TryAddSingleton<DialectBackendRuntimeConfigurationBuilder>();
+        services.TryAddSingleton<IntrinsicSemanticBootstrapPlanBuilder>();
+        services.TryAddSingleton<IntrinsicSemanticBootstrapPreProviderValidator>();
+        services.TryAddSingleton<IntrinsicSemanticBootstrapRuntimeValidator>();
         services.TryAddSingleton<IDialectCompiledDialectBuildPlanBuilder, DialectCompiledDialectBuildPlanBuilder>();
         services.TryAddSingleton<WistDialectExecutionConfigurationBuilder>();
         services.TryAddSingleton<WistDialectServiceProviderFactory>();

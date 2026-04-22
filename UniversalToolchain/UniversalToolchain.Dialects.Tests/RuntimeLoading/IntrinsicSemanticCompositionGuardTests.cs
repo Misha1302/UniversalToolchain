@@ -9,7 +9,7 @@ public sealed class IntrinsicSemanticCompositionGuardTests
     [Test]
     public void RuntimeFactory_ShouldFailFast_WhenDuplicateIntrinsicSymbolsAreRegistered()
     {
-        var factory = new WistDialectServiceProviderFactory([]);
+        var factory = CreateFactory([]);
         var configuration = new WistDialectExecutionConfiguration(
             "DuplicateIntrinsicGuard",
             [typeof(DuplicateAlphaFrontendModule), typeof(DuplicateBetaFrontendModule)],
@@ -22,6 +22,16 @@ public sealed class IntrinsicSemanticCompositionGuardTests
 
         Assert.That(exception!.Message, Does.Contain("Intrinsic symbol"));
         Assert.That(exception.Message, Does.Contain("math.add"));
+    }
+
+
+    private static WistDialectServiceProviderFactory CreateFactory(IEnumerable<IDialectBackendRuntimeRegistrar> backendRegistrars)
+    {
+        return new WistDialectServiceProviderFactory(
+            backendRegistrars,
+            new IntrinsicSemanticBootstrapPlanBuilder(),
+            new IntrinsicSemanticBootstrapPreProviderValidator(),
+            new IntrinsicSemanticBootstrapRuntimeValidator());
     }
 
     private static IntrinsicSemanticDescriptor CreateDescriptor(string @namespace, string name) =>

@@ -86,12 +86,22 @@ public class IntrinsicDescriptorProviderRegistrationTests
         }));
     }
 
+
+    private static WistDialectServiceProviderFactory CreateFactory(IEnumerable<IDialectBackendRuntimeRegistrar> backendRegistrars)
+    {
+        return new WistDialectServiceProviderFactory(
+            backendRegistrars,
+            new IntrinsicSemanticBootstrapPlanBuilder(),
+            new IntrinsicSemanticBootstrapPreProviderValidator(),
+            new IntrinsicSemanticBootstrapRuntimeValidator());
+    }
+
     private static ServiceProvider CreateProvider(
         IReadOnlyList<Type>? frontendModules = null,
         IReadOnlyList<Type>? irModules = null,
         IReadOnlyList<Type>? optimizers = null)
     {
-        var factory = new WistDialectServiceProviderFactory([]);
+        var factory = CreateFactory([]);
         var configuration = new WistDialectExecutionConfiguration(
             "Test",
             frontendModules ?? [],

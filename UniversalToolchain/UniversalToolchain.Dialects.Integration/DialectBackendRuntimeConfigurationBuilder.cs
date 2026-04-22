@@ -1,21 +1,20 @@
 using BasicCore.Contracts;
 using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
-using UniversalToolchain.Dialects.Integration;
 
-namespace UniversalToolchain.Dialects.Wist;
+namespace UniversalToolchain.Dialects.Integration;
 
 /// <summary>
 ///     Builds backend-specific runtime configuration from selected runtime metadata.
 /// </summary>
 public sealed class DialectBackendRuntimeConfigurationBuilder
 {
-    private readonly DialectIntrinsicPolicyResolver _intrinsicPolicyResolver;
+    private readonly IDialectBackendIntrinsicPolicyResolver _intrinsicPolicyResolver;
     private readonly IRuntimeComponentTypeLoader _typeLoader;
 
     public DialectBackendRuntimeConfigurationBuilder(
         IRuntimeComponentTypeLoader typeLoader,
-        DialectIntrinsicPolicyResolver intrinsicPolicyResolver)
+        IDialectBackendIntrinsicPolicyResolver intrinsicPolicyResolver)
     {
         _typeLoader = typeLoader.ArgNotNull();
         _intrinsicPolicyResolver = intrinsicPolicyResolver.ArgNotNull();

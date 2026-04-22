@@ -13,7 +13,7 @@ public sealed class IntrinsicSemanticStartupValidationRuntimeTests
     [Test]
     public void RuntimeFactory_ShouldFail_WhenModuleDeclaresInvalidProviderType()
     {
-        var factory = new WistDialectServiceProviderFactory([]);
+        var factory = CreateFactory([]);
         var configuration = new WistDialectExecutionConfiguration(
             "InvalidProviderType",
             [typeof(InvalidProviderTypeFrontendModule)],
@@ -51,7 +51,7 @@ public sealed class IntrinsicSemanticStartupValidationRuntimeTests
     [Test]
     public void RuntimeFactory_ShouldSucceed_WhenIntrinsicProvidersCoverSelectedModules()
     {
-        var factory = new WistDialectServiceProviderFactory([]);
+        var factory = CreateFactory([]);
         var configuration = new WistDialectExecutionConfiguration(
             "ValidProviderCoverage",
             [typeof(ValidProviderFrontendModule)],
@@ -68,7 +68,7 @@ public sealed class IntrinsicSemanticStartupValidationRuntimeTests
     {
         CountingDependency.Reset();
 
-        var factory = new WistDialectServiceProviderFactory([new CountingBackendRegistrar()]);
+        var factory = CreateFactory([new CountingBackendRegistrar()]);
         var configuration = new WistDialectExecutionConfiguration(
             "CountingProvider",
             [],
@@ -90,6 +90,16 @@ public sealed class IntrinsicSemanticStartupValidationRuntimeTests
             .Single(static x => x.GetType() == typeof(CountingDescriptorProvider));
 
         Assert.That(CountingDependency.CreationCount, Is.EqualTo(1));
+    }
+
+
+    private static WistDialectServiceProviderFactory CreateFactory(IEnumerable<IDialectBackendRuntimeRegistrar> backendRegistrars)
+    {
+        return new WistDialectServiceProviderFactory(
+            backendRegistrars,
+            new IntrinsicSemanticBootstrapPlanBuilder(),
+            new IntrinsicSemanticBootstrapPreProviderValidator(),
+            new IntrinsicSemanticBootstrapRuntimeValidator());
     }
 
     private static IntrinsicSemanticDescriptor CreateDescriptor(string @namespace, string name) =>

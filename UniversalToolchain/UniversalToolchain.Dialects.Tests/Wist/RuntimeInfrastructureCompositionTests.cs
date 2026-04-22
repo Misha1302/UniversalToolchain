@@ -114,7 +114,7 @@ public class RuntimeInfrastructureCompositionTests
     public void WistDialectServiceProviderFactory_ShouldUseNeutralInfrastructurePlusFrontendDefaults()
     {
         var descriptor = new RuntimeBackendDescriptor(new DialectBackendId("noop"), typeof(NoopRegistrar), ["noop"]);
-        var factory = new WistDialectServiceProviderFactory([new NoopRegistrar(descriptor.BackendId)]);
+        var factory = CreateFactory([new NoopRegistrar(descriptor.BackendId)]);
         var configuration = new WistDialectExecutionConfiguration(
             "Demo",
             [],
@@ -142,6 +142,16 @@ public class RuntimeInfrastructureCompositionTests
         {
             (provider as IDisposable)?.Dispose();
         }
+    }
+
+
+    private static WistDialectServiceProviderFactory CreateFactory(IEnumerable<IDialectBackendRuntimeRegistrar> backendRegistrars)
+    {
+        return new WistDialectServiceProviderFactory(
+            backendRegistrars,
+            new IntrinsicSemanticBootstrapPlanBuilder(),
+            new IntrinsicSemanticBootstrapPreProviderValidator(),
+            new IntrinsicSemanticBootstrapRuntimeValidator());
     }
 
     [Test]

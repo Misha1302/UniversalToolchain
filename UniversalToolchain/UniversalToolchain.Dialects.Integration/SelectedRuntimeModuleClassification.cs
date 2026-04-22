@@ -1,7 +1,7 @@
 using System.Collections.ObjectModel;
 using ExceptionsManager;
 
-namespace UniversalToolchain.Dialects.Wist;
+namespace UniversalToolchain.Dialects.Integration;
 
 /// <summary>
 ///     Immutable role classification for runtime-selected module activation types.

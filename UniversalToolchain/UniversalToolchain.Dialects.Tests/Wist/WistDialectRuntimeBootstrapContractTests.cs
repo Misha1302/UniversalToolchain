@@ -26,6 +26,20 @@ public class WistDialectRuntimeBootstrapContractTests
     }
 
     [Test]
+    public void AddWistDialectCoreServices_ShouldRegisterIntrinsicBootstrapOrchestrationServices()
+    {
+        var services = new ServiceCollection();
+        services.AddWistDialectCoreServices();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(services.Any(static x => x.ServiceType == typeof(IntrinsicSemanticBootstrapPlanBuilder)), Is.True);
+            Assert.That(services.Any(static x => x.ServiceType == typeof(IntrinsicSemanticBootstrapPreProviderValidator)), Is.True);
+            Assert.That(services.Any(static x => x.ServiceType == typeof(IntrinsicSemanticBootstrapRuntimeValidator)), Is.True);
+        });
+    }
+
+    [Test]
     public void AddWistDialectServices_ShouldRegisterCanonicalRuntimeInfrastructure()
     {
         var services = new ServiceCollection();
@@ -190,7 +204,7 @@ public class WistDialectRuntimeBootstrapContractTests
     [Test]
     public void WistDialectServiceProviderFactory_ShouldRegisterFrontendDefaultsWithoutBackendDefaults()
     {
-        var factory = new WistDialectServiceProviderFactory([new NoopRegistrar("interpreter")]);
+        var factory = CreateFactory([new NoopRegistrar("interpreter")]);
         var config = new WistDialectExecutionConfiguration(
             "Demo",
             [],
@@ -213,7 +227,7 @@ public class WistDialectRuntimeBootstrapContractTests
     [Test]
     public void CreateHost_ShouldFailClearly_IfRequestedBackendRegistrarIsMissing()
     {
-        var factory = new WistDialectServiceProviderFactory([]);
+        var factory = CreateFactory([]);
         var config = new WistDialectExecutionConfiguration(
             "Demo",
             [],
@@ -276,6 +290,16 @@ public class WistDialectRuntimeBootstrapContractTests
         }
 
         Assert.That(signatures.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1));
+    }
+
+
+    private static WistDialectServiceProviderFactory CreateFactory(IEnumerable<IDialectBackendRuntimeRegistrar> backendRegistrars)
+    {
+        return new WistDialectServiceProviderFactory(
+            backendRegistrars,
+            new IntrinsicSemanticBootstrapPlanBuilder(),
+            new IntrinsicSemanticBootstrapPreProviderValidator(),
+            new IntrinsicSemanticBootstrapRuntimeValidator());
     }
 
     private static string FormatComposition(DialectFrameworkCompositionResult composition)

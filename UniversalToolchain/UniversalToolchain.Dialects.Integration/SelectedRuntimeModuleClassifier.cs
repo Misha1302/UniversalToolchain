@@ -1,11 +1,10 @@
 using BasicCore.Contracts;
 using ExceptionsManager;
-using UniversalToolchain.Dialects.Integration;
 
-namespace UniversalToolchain.Dialects.Wist;
+namespace UniversalToolchain.Dialects.Integration;
 
 /// <summary>
-///     Classifies selected runtime modules by execution role and validates activation compatibility.
+///     Classifies selected runtime modules by activation role and validates activation compatibility.
 /// </summary>
 public sealed class SelectedRuntimeModuleClassifier
 {
