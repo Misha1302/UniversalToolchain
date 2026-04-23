@@ -14,7 +14,6 @@ using UniversalToolchain.Dialects.Wist.Presets;
 namespace UniversalToolchain.Benchmarks;
 
 [MemoryDiagnoser]
-[SimpleJob]
 [Orderer(SummaryOrderPolicy.FastestToSlowest)]
 [RankColumn]
 public abstract class ArithmeticBenchmarkEnvironmentBase

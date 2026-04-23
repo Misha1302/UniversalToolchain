@@ -10,7 +10,6 @@ using NCalc.LambdaCompilation;
 namespace UniversalToolchain.Benchmarks.ExternalExecutionBenchmarks.Unrolled16;
 
 [MemoryDiagnoser]
-[SimpleJob]
 [Orderer(SummaryOrderPolicy.FastestToSlowest)]
 [RankColumn]
 public sealed class ExternalMedium8ExecutionUnrolled16Benchmarks : ExternalArithmeticExecutionUnrolled16BenchmarkEnvironmentBase
