@@ -10,7 +10,7 @@ using NCalc.LambdaCompilation;
 namespace UniversalToolchain.Benchmarks.ExternalExecutionBenchmarks;
 
 [MemoryDiagnoser]
-[DryJob]
+[SimpleJob]
 [Orderer(SummaryOrderPolicy.FastestToSlowest)]
 [RankColumn]
 public sealed class ExternalRepeatedSubexpressions5ExecutionBenchmarks : ExternalArithmeticExecutionBenchmarkEnvironmentBase
