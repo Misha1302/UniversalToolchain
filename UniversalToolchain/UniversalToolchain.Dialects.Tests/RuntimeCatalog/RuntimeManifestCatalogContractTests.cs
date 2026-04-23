@@ -53,6 +53,111 @@ public class RuntimeManifestCatalogContractTests
     }
 
     [Test]
+    public void LoadEntries_ManifestWithoutActivationMetadata_AcceptsEntry()
+    {
+        using var temp = new TempDirectory();
+        var serializer = new RuntimeManifestJsonSerializer();
+        var path = WriteRawManifest(
+            temp.Path,
+            "without-activation.dialect.runtime.json",
+            """
+            {"assemblySimpleName":"Asm","components":[{"kind":"FrontendModule","canonicalAlias":"Arithmetic","aliases":[],"componentId":"frontend.arithmetic"}]}
+            """);
+
+        var catalog = new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([path]), serializer);
+
+        Assert.That(catalog.TryResolveModule("Arithmetic", out var entry), Is.True);
+        Assert.That(entry!.Activation, Is.Null);
+    }
+
+    [Test]
+    public void LoadEntries_ManifestWithActivationMetadata_AcceptsEntry()
+    {
+        using var temp = new TempDirectory();
+        var serializer = new RuntimeManifestJsonSerializer();
+        var path = WriteRawManifest(
+            temp.Path,
+            "with-activation.dialect.runtime.json",
+            """
+            {"assemblySimpleName":"Asm","components":[{"kind":"FrontendModule","canonicalAlias":"Arithmetic","aliases":[],"componentId":"frontend.arithmetic","activation":{"activationTypeFullName":"Modules.ArithmeticModule","registrarTypeFullName":"Modules.ArithmeticRegistrar"}}]}
+            """);
+
+        var catalog = new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([path]), serializer);
+
+        Assert.That(catalog.TryResolveModule("Arithmetic", out var entry), Is.True);
+        Assert.That(entry!.Activation, Is.Not.Null);
+    }
+
+    [Test]
+    public void LoadEntries_ManifestWithActivationMetadata_PreservesActivationMetadata()
+    {
+        using var temp = new TempDirectory();
+        var serializer = new RuntimeManifestJsonSerializer();
+        var path = WriteManifest(
+            temp.Path,
+            "preserve-activation.dialect.runtime.json",
+            "Asm",
+            [new FileDialectRuntimeComponentEntry(
+                "FrontendModule",
+                "Arithmetic",
+                [],
+                "frontend.arithmetic",
+                new FileRuntimeComponentActivationEntry(" Modules.ArithmeticModule ", " Modules.ArithmeticRegistrar "))],
+            serializer);
+
+        var catalog = new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([path]), serializer);
+        Assert.That(catalog.TryResolveModule("Arithmetic", out var entry), Is.True);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(entry!.Activation!.ActivationTypeFullName, Is.EqualTo("Modules.ArithmeticModule"));
+            Assert.That(entry.Activation.ActivationAssemblySimpleName, Is.EqualTo("Asm"));
+            Assert.That(entry.Activation.RegistrarTypeFullName, Is.EqualTo("Modules.ArithmeticRegistrar"));
+            Assert.That(entry.Activation.RegistrarAssemblySimpleName, Is.EqualTo("Asm"));
+        });
+    }
+
+    [Test]
+    public void LoadEntries_ManifestWithStructuredActivationMetadata_PreservesAssemblyIdentity()
+    {
+        using var temp = new TempDirectory();
+        var serializer = new RuntimeManifestJsonSerializer();
+        var path = WriteRawManifest(
+            temp.Path,
+            "structured-activation.dialect.runtime.json",
+            """
+            {"assemblySimpleName":"OwnerAssembly","components":[{"kind":"Backend","canonicalAlias":"interpreter","aliases":[],"componentId":"backend.interpreter","activation":{"activationType":{"assemblySimpleName":"DeclarationAssembly","typeFullName":"Runtime.InterpreterDeclaration"},"registrarType":{"assemblySimpleName":"RegistrarAssembly","typeFullName":"Runtime.InterpreterRegistrar"}}}]}
+            """);
+
+        var catalog = new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([path]), serializer);
+        Assert.That(catalog.TryResolveBackend("interpreter", out var entry), Is.True);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(entry!.Activation!.ActivationAssemblySimpleName, Is.EqualTo("DeclarationAssembly"));
+            Assert.That(entry.Activation.ActivationTypeFullName, Is.EqualTo("Runtime.InterpreterDeclaration"));
+            Assert.That(entry.Activation.RegistrarAssemblySimpleName, Is.EqualTo("RegistrarAssembly"));
+            Assert.That(entry.Activation.RegistrarTypeFullName, Is.EqualTo("Runtime.InterpreterRegistrar"));
+        });
+    }
+
+    [Test]
+    public void LoadEntries_ActivationMetadataHasEmptyActivationTypeFullName_Throws()
+    {
+        using var temp = new TempDirectory();
+        var serializer = new RuntimeManifestJsonSerializer();
+        var path = WriteRawManifest(
+            temp.Path,
+            "empty-activation-type.dialect.runtime.json",
+            """
+            {"assemblySimpleName":"Asm","components":[{"kind":"FrontendModule","canonicalAlias":"Arithmetic","aliases":[],"componentId":"frontend.arithmetic","activation":{"activationTypeFullName":" "}}]}
+            """);
+
+        var ex = Assert.Throws<ArgumentException>(() => new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([path]), serializer));
+        Assert.That(ex!.Message, Does.Contain("typeFullName must not be empty"));
+    }
+
+    [Test]
     public void Catalog_ShouldRejectDuplicateModuleAlias()
     {
         var ex = BuildDuplicateAliasCatalogException(
@@ -131,6 +236,13 @@ public class RuntimeManifestCatalogContractTests
         var path = Path.Combine(root, fileName);
         var document = new FileDialectRuntimeManifestDocument(assemblySimpleName, components);
         File.WriteAllText(path, serializer.Serialize(document));
+        return path;
+    }
+
+    private static string WriteRawManifest(string root, string fileName, string json)
+    {
+        var path = Path.Combine(root, fileName);
+        File.WriteAllText(path, json);
         return path;
     }
 

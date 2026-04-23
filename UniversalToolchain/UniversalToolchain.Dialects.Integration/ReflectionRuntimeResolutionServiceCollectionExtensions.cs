@@ -18,8 +18,11 @@ public static class ReflectionRuntimeResolutionServiceCollectionExtensions
 
         services.TryAddSingleton<IRuntimeAssemblyLocator, DefaultRuntimeAssemblyLocator>();
         services.TryAddSingleton<IRuntimeAssemblyLoadStrategy, DefaultRuntimeAssemblyLoadStrategy>();
-        services.TryAddSingleton<IRuntimeComponentResolver, DefaultRuntimeComponentResolver>();
+        services.TryAddSingleton<IRuntimeAssemblyTypeLoader, DefaultRuntimeAssemblyTypeLoader>();
+        services.TryAddSingleton<IRuntimeComponentResolver>(provider => new DefaultRuntimeComponentResolver(
+            provider.GetRequiredService<IRuntimeAssemblyTypeLoader>()));
         services.TryAddSingleton<IRuntimeComponentTypeLoader, DefaultRuntimeComponentTypeLoader>();
+        services.TryAddSingleton<IRuntimeBackendRegistrarResolver, DefaultRuntimeBackendRegistrarResolver>();
         services.TryAddSingleton<IRuntimeKnownBackendsProvider, RuntimeKnownBackendsProvider>();
 
         return services;

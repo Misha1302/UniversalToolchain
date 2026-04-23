@@ -6,6 +6,13 @@ namespace UniversalToolchain.Dialects.Tests.Wist;
 
 internal static class WistDialectTestInfrastructure
 {
+    public static ServiceProvider CreateCanonicalProvider()
+    {
+        var services = new ServiceCollection();
+        services.AddWistDialectServices();
+        return services.BuildServiceProvider();
+    }
+
     public static ServiceProvider CreateProviderWithExplicitBackends()
     {
         var services = new ServiceCollection();

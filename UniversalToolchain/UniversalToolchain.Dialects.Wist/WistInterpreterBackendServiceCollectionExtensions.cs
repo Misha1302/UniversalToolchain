@@ -7,6 +7,10 @@ namespace UniversalToolchain.Dialects.Wist;
 
 public static class WistInterpreterBackendServiceCollectionExtensions
 {
+    /// <summary>
+    ///     Registers the Wist interpreter backend registrar as a compatibility convenience. Canonical shipped runtime
+    ///     paths resolve and activate this backend from the selected runtime manifest instead.
+    /// </summary>
     public static IServiceCollection AddWistInterpreterBackend(this IServiceCollection services)
     {
         services = services.ArgNotNull();

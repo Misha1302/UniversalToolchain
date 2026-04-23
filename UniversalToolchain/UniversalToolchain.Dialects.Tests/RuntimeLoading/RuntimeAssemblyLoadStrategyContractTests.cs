@@ -10,7 +10,7 @@ public class RuntimeAssemblyLoadStrategyContractTests
     public void TypeLoader_ShouldUseInjectedAssemblyLoadStrategy()
     {
         var strategy = new CountingAssemblyLoadStrategy(typeof(ArithmeticModuleImpl).Assembly);
-        var loader = new DefaultRuntimeComponentTypeLoader(new DefaultRuntimeComponentResolver(strategy));
+        var loader = new DefaultRuntimeComponentTypeLoader(CreateResolver(strategy));
 
         var resolved = loader.LoadType(Entry("ArithmeticModule", "frontend.arithmetic"));
 
@@ -26,7 +26,7 @@ public class RuntimeAssemblyLoadStrategyContractTests
     public void TypeLoader_ShouldThrowClearError_ForMissingAssembly()
     {
         var strategy = new ThrowingAssemblyLoadStrategy(new FileNotFoundException("Assembly 'Missing.Assembly' was not found."));
-        var loader = new DefaultRuntimeComponentTypeLoader(new DefaultRuntimeComponentResolver(strategy));
+        var loader = new DefaultRuntimeComponentTypeLoader(CreateResolver(strategy));
 
         var ex = Assert.Throws<FileNotFoundException>(() => loader.LoadType(Entry("Missing.Assembly", "frontend.missing")));
 
@@ -37,7 +37,7 @@ public class RuntimeAssemblyLoadStrategyContractTests
     public void TypeLoader_ShouldThrowClearError_ForMissingTypeInAssembly()
     {
         var strategy = new CountingAssemblyLoadStrategy(typeof(ArithmeticModuleImpl).Assembly);
-        var loader = new DefaultRuntimeComponentTypeLoader(new DefaultRuntimeComponentResolver(strategy));
+        var loader = new DefaultRuntimeComponentTypeLoader(CreateResolver(strategy));
 
         var ex = Assert.Throws<InvalidOperationException>(() => loader.LoadType(Entry("ArithmeticModule", "frontend.missing")));
 
@@ -48,7 +48,7 @@ public class RuntimeAssemblyLoadStrategyContractTests
     public void TypeLoader_ShouldCacheResolvedTypeDeterministically()
     {
         var strategy = new CountingAssemblyLoadStrategy(typeof(ArithmeticModuleImpl).Assembly);
-        var loader = new DefaultRuntimeComponentTypeLoader(new DefaultRuntimeComponentResolver(strategy));
+        var loader = new DefaultRuntimeComponentTypeLoader(CreateResolver(strategy));
         var entry = Entry("ArithmeticModule", "frontend.arithmetic");
 
         var first = loader.LoadType(entry);
@@ -65,7 +65,7 @@ public class RuntimeAssemblyLoadStrategyContractTests
     public void TypeLoader_ShouldReturnSameType_ForRepeatedResolutions()
     {
         var strategy = new CountingAssemblyLoadStrategy(typeof(ArithmeticModuleImpl).Assembly);
-        var loader = new DefaultRuntimeComponentTypeLoader(new DefaultRuntimeComponentResolver(strategy));
+        var loader = new DefaultRuntimeComponentTypeLoader(CreateResolver(strategy));
         var entry = Entry("ArithmeticModule", "frontend.arithmetic");
 
         var baseline = loader.LoadType(entry);
@@ -77,7 +77,7 @@ public class RuntimeAssemblyLoadStrategyContractTests
     public async Task TypeLoader_ShouldBeSafe_ForParallelResolutionsOfSameType()
     {
         var strategy = new CountingAssemblyLoadStrategy(typeof(ArithmeticModuleImpl).Assembly);
-        var loader = new DefaultRuntimeComponentTypeLoader(new DefaultRuntimeComponentResolver(strategy));
+        var loader = new DefaultRuntimeComponentTypeLoader(CreateResolver(strategy));
         var entry = Entry("ArithmeticModule", "frontend.arithmetic");
 
         var tasks = Enumerable.Range(0, 64).Select(_ => Task.Run(() => loader.LoadType(entry))).ToArray();
@@ -92,6 +92,9 @@ public class RuntimeAssemblyLoadStrategyContractTests
 
     private static RuntimeComponentManifestEntry Entry(string assemblySimpleName, string componentId) =>
         new(RuntimeComponentKind.FrontendModule, "Arithmetic", [], new RuntimeComponentId(componentId), assemblySimpleName);
+
+    private static DefaultRuntimeComponentResolver CreateResolver(IRuntimeAssemblyLoadStrategy strategy)
+        => new(new DefaultRuntimeAssemblyTypeLoader(strategy));
 
     private sealed class CountingAssemblyLoadStrategy(Assembly assembly) : IRuntimeAssemblyLoadStrategy
     {

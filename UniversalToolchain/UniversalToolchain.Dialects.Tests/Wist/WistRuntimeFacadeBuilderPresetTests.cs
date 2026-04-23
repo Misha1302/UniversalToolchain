@@ -33,7 +33,7 @@ public sealed class WistRuntimeFacadeBuilderPresetTests
         Assert.Multiple(() =>
         {
             Assert.That(attempt.IsSuccess, Is.False);
-            Assert.That(attempt.ErrorMessage, Does.Contain("does not enable the 'compiler' backend"));
+            Assert.That(attempt.ErrorMessage, Does.Contain("Unknown execution mode 'compiler'"));
         });
     }
 

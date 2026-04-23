@@ -49,7 +49,9 @@ public class WistDialectRuntimeBootstrapContractTests
         {
             Assert.That(services.Any(static x => x.ServiceType == typeof(SelectedRuntimePlanResolver)), Is.True);
             Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeComponentCatalog)), Is.True);
+            Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeAssemblyTypeLoader)), Is.True);
             Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeComponentTypeLoader)), Is.True);
+            Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeBackendRegistrarResolver)), Is.True);
             Assert.That(services.Any(static x => x.ServiceType == typeof(WistDialectExecutionWorkflow)), Is.True);
         });
     }
@@ -102,7 +104,7 @@ public class WistDialectRuntimeBootstrapContractTests
     }
 
     [Test]
-    public void WistDialectServicesRegistrar_ShouldKeepBackendRegistrationExplicitAndOptIn()
+    public void WistDialectServicesRegistrar_ShouldNotRegisterCompatibilityBackendRegistrars()
     {
         var services = new ServiceCollection();
         var registrar = new WistDialectServicesRegistrar();
@@ -119,10 +121,8 @@ public class WistDialectRuntimeBootstrapContractTests
     [Test]
     public void ComposeText_CanonicalPath_DoesNotCreateHostImplicitly()
     {
-        var registrar = new CountingRegistrar("interpreter");
         var services = new ServiceCollection();
         services.AddWistDialectServices();
-        services.AddSingleton<IDialectBackendRuntimeRegistrar>(registrar);
 
         using var provider = services.BuildServiceProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
@@ -133,16 +133,15 @@ public class WistDialectRuntimeBootstrapContractTests
         {
             Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
             Assert.That(composition.RuntimeSelection, Is.InstanceOf<SelectedRuntimePlan>());
-            Assert.That(registrar.RegisterRuntimeCallCount, Is.EqualTo(0));
         });
 
         using var host = workflow.CreateHost(composition);
 
-        Assert.That(registrar.RegisterRuntimeCallCount, Is.EqualTo(1));
+        Assert.That(host.Configuration.EnabledBackends.Select(static x => x.CanonicalId), Is.EqualTo(new[] { "interpreter" }));
     }
 
     [Test]
-    public void AddWistDialectServices_WithoutExplicitBackends_ShouldNotAllowHostCreationForBackendedDialect()
+    public void AddWistDialectServices_CanonicalPath_ShouldCreateHostForManifestSelectedBackend()
     {
         var services = new ServiceCollection();
         services.AddWistDialectServices();
@@ -153,12 +152,28 @@ public class WistDialectRuntimeBootstrapContractTests
 
         Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
 
-        var ex = Assert.Throws<InvalidOperationException>(() => workflow.CreateHost(composition));
-        Assert.That(ex!.Message, Does.Contain("No backend runtime registrar is registered for backend 'interpreter'"));
+        using var host = workflow.CreateHost(composition);
+        Assert.That(host.Configuration.EnabledBackends.Select(static x => x.CanonicalId), Is.EqualTo(new[] { "interpreter" }));
     }
 
     [Test]
-    public void ExplicitBackendRegistration_ShouldEnableOnlyThoseBackendsThatWereAdded()
+    public void AddWistDialectServices_CanonicalPath_ShouldCreateHostForShippedBackends()
+    {
+        var services = new ServiceCollection();
+        services.AddWistDialectServices();
+
+        using var provider = services.BuildServiceProvider();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+        var composition = workflow.ComposeText("dialect ShippedBackends\nuse Arithmetic\nbackend interpreter,compiler", "shipped-backends");
+
+        Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
+
+        using var host = workflow.CreateHost(composition);
+        Assert.That(host.Configuration.EnabledBackends.Select(static x => x.CanonicalId), Is.EqualTo(new[] { "cil", "interpreter" }));
+    }
+
+    [Test]
+    public void ExplicitBackendRegistration_ShouldNotLimitManifestDrivenBackendActivation()
     {
         var services = new ServiceCollection();
         services.AddWistDialectServices();
@@ -174,8 +189,13 @@ public class WistDialectRuntimeBootstrapContractTests
         using var interpreterHost = workflow.CreateHost(interpreterOnly);
 
         Assert.That(compilerRequested.IsSuccess, Is.True, FormatComposition(compilerRequested));
-        var ex = Assert.Throws<InvalidOperationException>(() => workflow.CreateHost(compilerRequested));
-        Assert.That(ex!.Message, Does.Contain("No backend runtime registrar is registered for backend 'cil'"));
+        using var compilerHost = workflow.CreateHost(compilerRequested);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(interpreterHost.Configuration.EnabledBackends.Select(static x => x.CanonicalId), Is.EqualTo(new[] { "interpreter" }));
+            Assert.That(compilerHost.Configuration.EnabledBackends.Select(static x => x.CanonicalId), Is.EqualTo(new[] { "cil" }));
+        });
     }
 
     [Test]
@@ -186,8 +206,6 @@ public class WistDialectRuntimeBootstrapContractTests
         {
             var services = new ServiceCollection();
             services.AddWistDialectServices();
-            services.AddWistCilBackend();
-            services.AddWistInterpreterBackend();
 
             using var provider = services.BuildServiceProvider();
             var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
@@ -204,13 +222,14 @@ public class WistDialectRuntimeBootstrapContractTests
     [Test]
     public void WistDialectServiceProviderFactory_ShouldRegisterFrontendDefaultsWithoutBackendDefaults()
     {
+        var backendEntry = BackendEntry("interpreter", typeof(NoopRegistrar));
         var factory = CreateFactory([new NoopRegistrar("interpreter")]);
         var config = new WistDialectExecutionConfiguration(
             "Demo",
             [],
             [],
             [],
-            [new DialectBackendRuntimeConfiguration(new RuntimeBackendDescriptor(new DialectBackendId("interpreter"), typeof(NoopRegistrar), ["vm"]), [], [], [], false)],
+            [new DialectBackendRuntimeConfiguration(backendEntry, new RuntimeBackendDescriptor(new DialectBackendId("interpreter"), typeof(NoopRegistrar), ["vm"]), [], [], [], false)],
             [new RuntimeBackendDescriptor(new DialectBackendId("interpreter"), typeof(NoopRegistrar), ["vm"])]);
 
         var provider = factory.Create(config);
@@ -225,7 +244,41 @@ public class WistDialectRuntimeBootstrapContractTests
     }
 
     [Test]
-    public void CreateHost_ShouldFailClearly_IfRequestedBackendRegistrarIsMissing()
+    public void WistDialectServiceProviderFactory_ShouldResolveAndActivateOnlySelectedBackends()
+    {
+        var selectedEntry = BackendEntry("selected", typeof(CountingRegistrar));
+        var resolver = new RecordingBackendRegistrarResolver([
+            ("selected", new CountingRegistrar("selected")),
+            ("unselected", new CountingRegistrar("unselected"))
+        ]);
+        var factory = new WistDialectServiceProviderFactory(
+            resolver,
+            new IntrinsicSemanticBootstrapPlanBuilder(),
+            new IntrinsicSemanticBootstrapPreProviderValidator(),
+            new IntrinsicSemanticBootstrapRuntimeValidator());
+        var config = new WistDialectExecutionConfiguration(
+            "Demo",
+            [],
+            [],
+            [],
+            [new DialectBackendRuntimeConfiguration(selectedEntry, new RuntimeBackendDescriptor(new DialectBackendId("selected"), typeof(CountingRegistrar)), [], [], [], false)],
+            [
+                new RuntimeBackendDescriptor(new DialectBackendId("selected"), typeof(CountingRegistrar)),
+                new RuntimeBackendDescriptor(new DialectBackendId("unselected"), typeof(CountingRegistrar))
+            ]);
+
+        using var provider = factory.Create(config) as IDisposable;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(resolver.ResolvedBackendAliases, Is.EqualTo(new[] { "selected" }));
+            Assert.That(((CountingRegistrar)resolver.RegistrarsByAlias["selected"]).RegisterRuntimeCallCount, Is.EqualTo(1));
+            Assert.That(((CountingRegistrar)resolver.RegistrarsByAlias["unselected"]).RegisterRuntimeCallCount, Is.EqualTo(0));
+        });
+    }
+
+    [Test]
+    public void CreateHost_ShouldFailClearly_IfBackendConfigurationDoesNotCarryManifestEntry()
     {
         var factory = CreateFactory([]);
         var config = new WistDialectExecutionConfiguration(
@@ -238,13 +291,13 @@ public class WistDialectRuntimeBootstrapContractTests
 
         var ex = Assert.Throws<InvalidOperationException>(() => factory.Create(config));
 
-        Assert.That(ex!.Message, Does.Contain("No backend runtime registrar is registered for backend 'interpreter'"));
+        Assert.That(ex!.Message, Does.Contain("does not include the selected backend manifest entry"));
     }
 
     [Test]
     public void ComposeCreateRun_CanonicalPath_RepeatedCycles_ShouldKeepDeterministicCompositeSignature()
     {
-        using var provider = WistDialectTestInfrastructure.CreateProviderWithExplicitBackends();
+        using var provider = WistDialectTestInfrastructure.CreateCanonicalProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
 
         var signatures = new List<string>();
@@ -275,8 +328,6 @@ public class WistDialectRuntimeBootstrapContractTests
     {
         var services = new ServiceCollection();
         services.AddWistDialectServices();
-        services.AddWistCilBackend();
-        services.AddWistInterpreterBackend();
 
         using var provider = services.BuildServiceProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
@@ -296,11 +347,20 @@ public class WistDialectRuntimeBootstrapContractTests
     private static WistDialectServiceProviderFactory CreateFactory(IEnumerable<IDialectBackendRuntimeRegistrar> backendRegistrars)
     {
         return new WistDialectServiceProviderFactory(
-            backendRegistrars,
+            new StaticBackendRegistrarResolver(backendRegistrars),
             new IntrinsicSemanticBootstrapPlanBuilder(),
             new IntrinsicSemanticBootstrapPreProviderValidator(),
             new IntrinsicSemanticBootstrapRuntimeValidator());
     }
+
+    private static RuntimeComponentManifestEntry BackendEntry(string alias, Type registrarType)
+        => new(
+            RuntimeComponentKind.Backend,
+            alias,
+            [],
+            RuntimeComponentIdFactory.Create(RuntimeComponentKind.Backend, alias),
+            registrarType.Assembly.GetName().Name!,
+            new RuntimeComponentActivationInfo(typeof(object).FullName!, registrarType.FullName));
 
     private static string FormatComposition(DialectFrameworkCompositionResult composition)
     {
@@ -359,6 +419,41 @@ public class WistDialectRuntimeBootstrapContractTests
         {
             RegisterRuntimeCallCount++;
             services.AddSingleton(typeof(object), new object());
+        }
+    }
+
+    private sealed class StaticBackendRegistrarResolver(IEnumerable<IDialectBackendRuntimeRegistrar> backendRegistrars) : IRuntimeBackendRegistrarResolver
+    {
+        private readonly IReadOnlyDictionary<DialectBackendId, IDialectBackendRuntimeRegistrar> _registrarsById = backendRegistrars.ToDictionary(
+            static x => x.BackendId,
+            static x => x);
+
+        public IDialectBackendRuntimeRegistrar Resolve(RuntimeComponentManifestEntry backendEntry)
+        {
+            if (_registrarsById.TryGetValue(new DialectBackendId(backendEntry.CanonicalAlias), out var registrar))
+            {
+                return registrar;
+            }
+
+            throw new InvalidOperationException($"No test backend runtime registrar is registered for backend '{backendEntry.CanonicalAlias}'.");
+        }
+    }
+
+    private sealed class RecordingBackendRegistrarResolver(IEnumerable<(string Alias, IDialectBackendRuntimeRegistrar Registrar)> registrars) : IRuntimeBackendRegistrarResolver
+    {
+        private readonly List<string> _resolvedBackendAliases = [];
+
+        public IReadOnlyDictionary<string, IDialectBackendRuntimeRegistrar> RegistrarsByAlias { get; } = registrars.ToDictionary(
+            static x => x.Alias,
+            static x => x.Registrar,
+            StringComparer.Ordinal);
+
+        public IReadOnlyList<string> ResolvedBackendAliases => _resolvedBackendAliases;
+
+        public IDialectBackendRuntimeRegistrar Resolve(RuntimeComponentManifestEntry backendEntry)
+        {
+            _resolvedBackendAliases.Add(backendEntry.CanonicalAlias);
+            return RegistrarsByAlias[backendEntry.CanonicalAlias];
         }
     }
 }

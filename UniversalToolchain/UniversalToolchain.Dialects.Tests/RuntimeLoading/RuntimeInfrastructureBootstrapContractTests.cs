@@ -33,8 +33,10 @@ public class RuntimeInfrastructureBootstrapContractTests
         {
             Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeAssemblyLocator)), Is.True);
             Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeAssemblyLoadStrategy)), Is.True);
+            Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeAssemblyTypeLoader)), Is.True);
             Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeComponentResolver)), Is.True);
             Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeComponentTypeLoader)), Is.True);
+            Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeBackendRegistrarResolver)), Is.True);
             Assert.That(services.Any(static x => x.ServiceType == typeof(IRuntimeKnownBackendsProvider)), Is.True);
             Assert.That(services.Any(static x => x.ServiceType == typeof(WistDialectExecutionWorkflow)), Is.False);
             Assert.That(services.Any(static x => x.ServiceType == typeof(WistDialectServiceProviderFactory)), Is.False);

@@ -7,22 +7,50 @@ namespace UniversalToolchain.Dialects.Integration;
 
 public sealed class DefaultRuntimeComponentResolver : IRuntimeComponentResolver
 {
-    private readonly ConcurrentDictionary<string, Lazy<Assembly>> _assemblyCache = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<string, Lazy<IReadOnlyDictionary<RuntimeComponentId, RuntimeComponentExportDescriptor>>>
         _assemblyComponentIndexCache = new(StringComparer.Ordinal);
-    private readonly IRuntimeAssemblyLoadStrategy _assemblyLoadStrategy;
+    private readonly IRuntimeAssemblyTypeLoader _assemblyTypeLoader;
 
     public DefaultRuntimeComponentResolver(IRuntimeAssemblyLoadStrategy assemblyLoadStrategy)
+        : this(new DefaultRuntimeAssemblyTypeLoader(assemblyLoadStrategy))
     {
-        assemblyLoadStrategy = assemblyLoadStrategy.ArgNotNull();
+    }
 
-        _assemblyLoadStrategy = assemblyLoadStrategy;
+    public DefaultRuntimeComponentResolver(IRuntimeAssemblyTypeLoader assemblyTypeLoader)
+    {
+        assemblyTypeLoader = assemblyTypeLoader.ArgNotNull();
+
+        _assemblyTypeLoader = assemblyTypeLoader;
     }
 
     public RuntimeComponentDescriptor Resolve(RuntimeComponentManifestEntry entry)
     {
         entry = entry.ArgNotNull();
 
+        if (entry.Activation != null)
+            return ResolveExactActivation(entry);
+
+        return ResolveLegacyScannedActivation(entry);
+    }
+
+    private RuntimeComponentDescriptor ResolveExactActivation(RuntimeComponentManifestEntry entry)
+    {
+        var activationTypeReference = entry.Activation!.ActivationType;
+        var assemblySimpleName = ResolveAssemblySimpleName(activationTypeReference.AssemblySimpleName, entry.AssemblySimpleName);
+        var type = _assemblyTypeLoader.LoadType(assemblySimpleName, activationTypeReference.TypeFullName);
+        var export = type.GetCustomAttribute<DialectRuntimeExportAttribute>(false);
+        if (export == null)
+            Thrower.InvalidOpEx(
+                $"Runtime activation type '{GetTypeName(type)}' for manifest entry '{entry.ComponentId}' does not declare DialectRuntimeExportAttribute.");
+
+        var descriptor = CreateExportDescriptor(type, export!);
+        ValidateResolvedComponent(entry, descriptor);
+
+        return CreateResolvedDescriptor(entry, descriptor);
+    }
+
+    private RuntimeComponentDescriptor ResolveLegacyScannedActivation(RuntimeComponentManifestEntry entry)
+    {
         var index = GetAssemblyComponentIndex(entry.AssemblySimpleName);
         if (index.TryGetValue(entry.ComponentId, out var descriptor))
         {
@@ -48,34 +76,21 @@ public sealed class DefaultRuntimeComponentResolver : IRuntimeComponentResolver
 
     private IReadOnlyDictionary<RuntimeComponentId, RuntimeComponentExportDescriptor> BuildAssemblyComponentIndex(string assemblySimpleName)
     {
-        var assembly = GetAssembly(assemblySimpleName);
+        var assembly = _assemblyTypeLoader.LoadAssembly(assemblySimpleName);
         var descriptors = new Dictionary<RuntimeComponentId, RuntimeComponentExportDescriptor>();
 
         foreach (var type in GetLoadableTypes(assembly))
         {
-            if (!TryGetRuntimeExport(type, out var kind, out var canonicalAlias))
+            var export = type.GetCustomAttribute<DialectRuntimeExportAttribute>(false);
+            if (export == null)
                 continue;
 
-            var id = RuntimeComponentIdFactory.Create(kind, canonicalAlias);
-            var aliases = GetRuntimeAliases(type);
-            var descriptor = new RuntimeComponentExportDescriptor(id, kind, canonicalAlias, aliases, type);
-            if (!descriptors.TryAdd(id, descriptor))
+            var descriptor = CreateExportDescriptor(type, export);
+            if (!descriptors.TryAdd(descriptor.Id, descriptor))
                 Thrower.InvalidOpEx("Duplicate runtime component id detected during assembly component indexing.");
         }
 
         return descriptors;
-    }
-
-    private Assembly GetAssembly(string assemblySimpleName)
-    {
-        var lazy = _assemblyCache.GetOrAdd(
-            assemblySimpleName,
-            static (name, resolver) => new Lazy<Assembly>(
-                () => resolver._assemblyLoadStrategy.LoadAssembly(name),
-                LazyThreadSafetyMode.ExecutionAndPublication),
-            this);
-
-        return lazy.Value;
     }
 
     private static IEnumerable<Type> GetLoadableTypes(Assembly assembly)
@@ -90,19 +105,14 @@ public sealed class DefaultRuntimeComponentResolver : IRuntimeComponentResolver
         }
     }
 
-    private static bool TryGetRuntimeExport(Type type, out RuntimeComponentKind kind, out string canonicalAlias)
+    private static RuntimeComponentExportDescriptor CreateExportDescriptor(Type type, DialectRuntimeExportAttribute export)
     {
-        var export = type.GetCustomAttribute<DialectRuntimeExportAttribute>(false);
-        if (export == null)
-        {
-            kind = default;
-            canonicalAlias = string.Empty;
-            return false;
-        }
+        var kind = RuntimeComponentKindCodec.Parse(export.ComponentKind, type.AssemblyQualifiedName ?? type.Name);
+        var canonicalAlias = export.CanonicalAlias;
+        var id = RuntimeComponentIdFactory.Create(kind, canonicalAlias);
+        var aliases = GetRuntimeAliases(type);
 
-        kind = RuntimeComponentKindCodec.Parse(export.ComponentKind, type.AssemblyQualifiedName ?? type.Name);
-        canonicalAlias = export.CanonicalAlias;
-        return true;
+        return new RuntimeComponentExportDescriptor(id, kind, canonicalAlias, aliases, type);
     }
 
     private static IReadOnlyList<string> GetRuntimeAliases(MemberInfo type)
@@ -143,6 +153,13 @@ public sealed class DefaultRuntimeComponentResolver : IRuntimeComponentResolver
     }
 
     private static string GetTypeName(Type type) => type.FullName ?? type.Name;
+
+    private static string ResolveAssemblySimpleName(string assemblySimpleName, string fallbackAssemblySimpleName)
+    {
+        return string.Equals(assemblySimpleName, RuntimeAssemblyIdentity.UnspecifiedAssemblySimpleName, StringComparison.Ordinal)
+            ? fallbackAssemblySimpleName
+            : assemblySimpleName;
+    }
 
     private sealed record RuntimeComponentExportDescriptor(
         RuntimeComponentId Id,

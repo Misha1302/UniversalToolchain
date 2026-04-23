@@ -7,51 +7,24 @@ public sealed class RuntimeKnownBackendsProvider : IRuntimeKnownBackendsProvider
 {
     private readonly IRuntimeComponentCatalog _catalog;
     private readonly Lazy<IReadOnlyList<RuntimeBackendDescriptor>> _knownBackends;
-    private readonly IReadOnlyDictionary<DialectBackendId, IDialectBackendRuntimeRegistrar> _providersById;
     private readonly IRuntimeComponentTypeLoader _typeLoader;
 
     public RuntimeKnownBackendsProvider(
         IRuntimeComponentCatalog catalog,
-        IEnumerable<IDialectBackendRuntimeRegistrar> backendRegistrars,
         IRuntimeComponentTypeLoader typeLoader)
     {
-        catalog = catalog.ArgNotNull();
-
-        backendRegistrars = backendRegistrars.ArgNotNull();
-
-        typeLoader = typeLoader.ArgNotNull();
-
-        _catalog = catalog;
-        _providersById = CreateProviderMap(backendRegistrars);
-        _typeLoader = typeLoader;
+        _catalog = catalog.ArgNotNull();
+        _typeLoader = typeLoader.ArgNotNull();
         _knownBackends = new Lazy<IReadOnlyList<RuntimeBackendDescriptor>>(BuildKnownBackends);
     }
 
     public IReadOnlyList<RuntimeBackendDescriptor> GetKnownBackends() => _knownBackends.Value;
 
-    private static IReadOnlyDictionary<DialectBackendId, IDialectBackendRuntimeRegistrar> CreateProviderMap(
-        IEnumerable<IDialectBackendRuntimeRegistrar> backendRegistrars)
-    {
-        var map = new SortedDictionary<DialectBackendId, IDialectBackendRuntimeRegistrar>();
-        foreach (var backendRegistrar in backendRegistrars
-                     .Select(x => x.NotNull(nameof(backendRegistrars)))
-                     .OrderBy(x => x.BackendId))
-        {
-            if (!map.TryAdd(backendRegistrar.BackendId, backendRegistrar))
-                Thrower.InvalidOpEx($"Duplicate backend provider registration for backend '{backendRegistrar.BackendId.Value}'.");
-        }
-
-        return map;
-    }
-
     private IReadOnlyList<RuntimeBackendDescriptor> BuildKnownBackends()
     {
         var descriptors = new List<RuntimeBackendDescriptor>();
-        foreach (var backendId in _providersById.Keys)
+        foreach (var entry in _catalog.GetBackendsInDeterministicOrder())
         {
-            if (!_catalog.TryResolveBackend(backendId.Value, out var entry) || entry == null)
-                Thrower.InvalidOpEx($"Backend provider '{backendId.Value}' is registered, but no matching runtime backend metadata entry exists.");
-
             var metadataOwnerType = _typeLoader.LoadType(entry).NotNull();
             var aliases = entry.Aliases
                 .OrderBy(static x => x, StringComparer.Ordinal)

@@ -49,6 +49,7 @@ public sealed class DialectBackendRuntimeConfigurationBuilder
         var metadataOwnerType = _typeLoader.LoadType(backend);
 
         return new DialectBackendRuntimeConfiguration(
+            backend,
             new RuntimeBackendDescriptor(backendId, metadataOwnerType, backend.Aliases),
             optimizerTypes,
             policy.Allowed,

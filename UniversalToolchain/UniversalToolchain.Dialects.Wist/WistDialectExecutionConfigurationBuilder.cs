@@ -7,23 +7,18 @@ namespace UniversalToolchain.Dialects.Wist;
 public sealed class WistDialectExecutionConfigurationBuilder
 {
     private readonly DialectBackendRuntimeConfigurationBuilder _backendConfigurationBuilder;
-    private readonly IRuntimeKnownBackendsProvider _knownBackendsProvider;
     private readonly SelectedRuntimeExecutionShapeBuilder _shapeBuilder;
 
     public WistDialectExecutionConfigurationBuilder(
         SelectedRuntimeExecutionShapeBuilder shapeBuilder,
-        DialectBackendRuntimeConfigurationBuilder backendConfigurationBuilder,
-        IRuntimeKnownBackendsProvider knownBackendsProvider)
+        DialectBackendRuntimeConfigurationBuilder backendConfigurationBuilder)
     {
         shapeBuilder = shapeBuilder.ArgNotNull();
 
         backendConfigurationBuilder = backendConfigurationBuilder.ArgNotNull();
 
-        knownBackendsProvider = knownBackendsProvider.ArgNotNull();
-
         _shapeBuilder = shapeBuilder;
         _backendConfigurationBuilder = backendConfigurationBuilder;
-        _knownBackendsProvider = knownBackendsProvider;
     }
 
     public WistDialectExecutionConfiguration Build(DialectBuildPlan buildPlan, SelectedRuntimePlan selectedRuntimePlan)
@@ -43,7 +38,11 @@ public sealed class WistDialectExecutionConfigurationBuilder
             .OrderBy(x => x.FullName, StringComparer.Ordinal)
             .ToList();
 
-        var knownBackends = _knownBackendsProvider.GetKnownBackends();
+        var knownBackends = backends
+            .Select(x => x.BackendDescriptor)
+            .OrderBy(x => x.BackendId)
+            .ThenBy(x => string.Join("|", x.Aliases), StringComparer.Ordinal)
+            .ToList();
 
         return new WistDialectExecutionConfiguration(
             shape.DialectName,

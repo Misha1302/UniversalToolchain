@@ -5,7 +5,7 @@ using UniversalToolchain.Dialects.Abstractions;
 namespace UniversalToolchain.Dialects.Integration;
 
 /// <summary>
-///     Describes one explicitly registered runtime backend.
+///     Describes one runtime backend known to a selected runtime catalog.
 /// </summary>
 public sealed class RuntimeBackendDescriptor
 {

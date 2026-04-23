@@ -69,6 +69,7 @@ public sealed class IntrinsicSemanticStartupValidationRuntimeTests
         CountingDependency.Reset();
 
         var factory = CreateFactory([new CountingBackendRegistrar()]);
+        var backendEntry = BackendEntry("counting", typeof(CountingBackendRegistrar));
         var configuration = new WistDialectExecutionConfiguration(
             "CountingProvider",
             [],
@@ -76,6 +77,7 @@ public sealed class IntrinsicSemanticStartupValidationRuntimeTests
             [],
             [
                 new DialectBackendRuntimeConfiguration(
+                    backendEntry,
                     new RuntimeBackendDescriptor(new DialectBackendId("counting"), typeof(CountingBackendRegistrar)),
                     [],
                     [],
@@ -96,11 +98,20 @@ public sealed class IntrinsicSemanticStartupValidationRuntimeTests
     private static WistDialectServiceProviderFactory CreateFactory(IEnumerable<IDialectBackendRuntimeRegistrar> backendRegistrars)
     {
         return new WistDialectServiceProviderFactory(
-            backendRegistrars,
+            new StaticBackendRegistrarResolver(backendRegistrars),
             new IntrinsicSemanticBootstrapPlanBuilder(),
             new IntrinsicSemanticBootstrapPreProviderValidator(),
             new IntrinsicSemanticBootstrapRuntimeValidator());
     }
+
+    private static RuntimeComponentManifestEntry BackendEntry(string alias, Type registrarType)
+        => new(
+            RuntimeComponentKind.Backend,
+            alias,
+            [],
+            RuntimeComponentIdFactory.Create(RuntimeComponentKind.Backend, alias),
+            registrarType.Assembly.GetName().Name!,
+            new RuntimeComponentActivationInfo(typeof(object).FullName!, registrarType.FullName));
 
     private static IntrinsicSemanticDescriptor CreateDescriptor(string @namespace, string name) =>
         new()
@@ -182,6 +193,18 @@ public sealed class IntrinsicSemanticStartupValidationRuntimeTests
     {
         public void Validate(IntrinsicInvocation invocation, IIntrinsicTypeResolutionContext context)
         {
+        }
+    }
+
+    private sealed class StaticBackendRegistrarResolver(IEnumerable<IDialectBackendRuntimeRegistrar> backendRegistrars) : IRuntimeBackendRegistrarResolver
+    {
+        private readonly IReadOnlyDictionary<DialectBackendId, IDialectBackendRuntimeRegistrar> _registrarsById = backendRegistrars.ToDictionary(
+            static x => x.BackendId,
+            static x => x);
+
+        public IDialectBackendRuntimeRegistrar Resolve(RuntimeComponentManifestEntry backendEntry)
+        {
+            return _registrarsById[new DialectBackendId(backendEntry.CanonicalAlias)];
         }
     }
 }

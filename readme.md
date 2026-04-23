@@ -152,10 +152,11 @@ dialect source -> dialect compilation -> build plan -> manifest-backed runtime s
 
 Composition and host creation are separate stages. `ComposeText`/`ComposeFile` compile the dialect DSL, build a
 deterministic plan, and resolve selected modules, optimizers, and backends from runtime manifests. `CreateHost` then
-builds the runtime provider for that resolved selection.
+builds the runtime provider for that resolved selection and activates only the selected backend registrars.
 
-The selection-driven path is the main dialect execution story. Eager discovery and compatibility helpers still exist,
-but they are not the canonical path for running shipped dialect profiles.
+The selection-driven path is the main dialect execution story. Shipped profiles do not require explicit backend imports
+in normal CLI, facade, or example usage. Eager discovery and compatibility helpers still exist, but they are not the
+canonical path for running shipped dialect profiles.
 
 ## How features plug into the pipeline
 

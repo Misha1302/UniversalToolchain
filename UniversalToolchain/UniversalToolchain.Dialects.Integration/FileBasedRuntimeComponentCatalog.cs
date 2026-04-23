@@ -82,7 +82,8 @@ public sealed class FileBasedRuntimeComponentCatalog : IRuntimeComponentCatalog
             canonicalAlias,
             component.Aliases,
             componentId,
-            assemblySimpleName));
+            assemblySimpleName,
+            ToRuntimeActivation(component.Activation)));
     }
 
     private static bool TryResolve(IReadOnlyDictionary<string, RuntimeComponentManifestEntry> map, string alias, out RuntimeComponentManifestEntry? entry)
@@ -128,8 +129,61 @@ public sealed class FileBasedRuntimeComponentCatalog : IRuntimeComponentCatalog
             CanonicalAlias = canonical,
             Aliases = aliases,
             AssemblySimpleName = assemblySimpleName,
-            ComponentId = new RuntimeComponentId(entry.ComponentId.Value.Trim())
+            ComponentId = new RuntimeComponentId(entry.ComponentId.Value.Trim()),
+            Activation = NormalizeActivation(entry.Activation, assemblySimpleName)
         };
+    }
+
+    private static RuntimeComponentActivationInfo? ToRuntimeActivation(FileRuntimeComponentActivationEntry? activation)
+    {
+        return activation == null
+            ? null
+            : new RuntimeComponentActivationInfo(activation.ActivationType, activation.RegistrarType);
+    }
+
+    private static RuntimeComponentActivationInfo? NormalizeActivation(RuntimeComponentActivationInfo? activation, string ownerAssemblySimpleName)
+    {
+        if (activation == null)
+            return null;
+
+        var activationType = NormalizeTypeReference(
+            activation.ActivationType,
+            ownerAssemblySimpleName,
+            nameof(activation),
+            "ActivationTypeFullName must not be empty when activation metadata is provided.");
+        var registrarType = activation.RegistrarType == null
+            ? null
+            : NormalizeTypeReference(
+                activation.RegistrarType,
+                ownerAssemblySimpleName,
+                nameof(activation),
+                "RegistrarTypeFullName must not be empty when activation metadata is provided.");
+
+        return new RuntimeComponentActivationInfo(
+            activationType,
+            registrarType);
+    }
+
+    private static RuntimeTypeReference NormalizeTypeReference(
+        RuntimeTypeReference typeReference,
+        string ownerAssemblySimpleName,
+        string paramName,
+        string emptyTypeMessage)
+    {
+        typeReference = typeReference.NotNull(paramName);
+
+        var typeFullName = typeReference.TypeFullName?.Trim();
+        if (string.IsNullOrWhiteSpace(typeFullName))
+            Thrower.Argument(paramName, emptyTypeMessage);
+
+        var assemblySimpleName = typeReference.AssemblySimpleName?.Trim();
+        if (string.IsNullOrWhiteSpace(assemblySimpleName) ||
+            string.Equals(assemblySimpleName, RuntimeAssemblyIdentity.UnspecifiedAssemblySimpleName, StringComparison.Ordinal))
+        {
+            assemblySimpleName = ownerAssemblySimpleName;
+        }
+
+        return new RuntimeTypeReference(assemblySimpleName, typeFullName);
     }
 
     private static IReadOnlyDictionary<string, RuntimeComponentManifestEntry> CreateAliasMap(IEnumerable<RuntimeComponentManifestEntry> entries, string kindName)

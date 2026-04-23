@@ -13,18 +13,18 @@ namespace UniversalToolchain.Dialects.Wist;
 /// </summary>
 public sealed class WistDialectServiceProviderFactory
 {
-    private readonly IReadOnlyDictionary<DialectBackendId, IDialectBackendRuntimeRegistrar> _backendProviders;
+    private readonly IRuntimeBackendRegistrarResolver _backendRegistrarResolver;
     private readonly IntrinsicSemanticBootstrapPlanBuilder _intrinsicBootstrapPlanBuilder;
     private readonly IntrinsicSemanticBootstrapPreProviderValidator _intrinsicBootstrapPreProviderValidator;
     private readonly IntrinsicSemanticBootstrapRuntimeValidator _intrinsicBootstrapRuntimeValidator;
 
     public WistDialectServiceProviderFactory(
-        IEnumerable<IDialectBackendRuntimeRegistrar> backendProviders,
+        IRuntimeBackendRegistrarResolver backendRegistrarResolver,
         IntrinsicSemanticBootstrapPlanBuilder intrinsicBootstrapPlanBuilder,
         IntrinsicSemanticBootstrapPreProviderValidator intrinsicBootstrapPreProviderValidator,
         IntrinsicSemanticBootstrapRuntimeValidator intrinsicBootstrapRuntimeValidator)
     {
-        _backendProviders = CreateBackendProviderMap(backendProviders);
+        _backendRegistrarResolver = backendRegistrarResolver.ArgNotNull();
         _intrinsicBootstrapPlanBuilder = intrinsicBootstrapPlanBuilder.ArgNotNull();
         _intrinsicBootstrapPreProviderValidator = intrinsicBootstrapPreProviderValidator.ArgNotNull();
         _intrinsicBootstrapRuntimeValidator = intrinsicBootstrapRuntimeValidator.ArgNotNull();
@@ -69,12 +69,11 @@ public sealed class WistDialectServiceProviderFactory
     {
         foreach (var backend in configuration.BackendConfigurations.OrderBy(x => x.BackendDescriptor.BackendId))
         {
-            if (!_backendProviders.TryGetValue(backend.BackendDescriptor.BackendId, out var backendProvider))
-            {
-                Thrower.InvalidOpEx($"No backend runtime registrar is registered for backend '{backend.BackendDescriptor.CanonicalId}'.");
-            }
-
-            backendProvider.RegisterRuntime(services, backend);
+            var manifestEntry = backend.BackendManifestEntry
+                                ?? Thrower.InvalidOpEx<RuntimeComponentManifestEntry>(
+                                    $"Backend runtime configuration for backend '{backend.BackendDescriptor.CanonicalId}' does not include the selected backend manifest entry.");
+            var backendRegistrar = _backendRegistrarResolver.Resolve(manifestEntry);
+            backendRegistrar.RegisterRuntime(services, backend);
         }
     }
 
@@ -108,24 +107,6 @@ public sealed class WistDialectServiceProviderFactory
                 services.AddSingleton(typeof(IIntrinsicDescriptorProvider), providerType);
             }
         }
-    }
-
-    private static IReadOnlyDictionary<DialectBackendId, IDialectBackendRuntimeRegistrar> CreateBackendProviderMap(IEnumerable<IDialectBackendRuntimeRegistrar> backendProviders)
-    {
-        backendProviders = backendProviders.ArgNotNull();
-
-        var map = new SortedDictionary<DialectBackendId, IDialectBackendRuntimeRegistrar>();
-        foreach (var backendProvider in backendProviders
-                     .Select(x => x.NotNull(nameof(backendProviders)))
-                     .OrderBy(x => x.BackendId))
-        {
-            if (!map.TryAdd(backendProvider.BackendId, backendProvider))
-            {
-                Thrower.InvalidOpEx($"Duplicate backend runtime registrar registration for backend '{backendProvider.BackendId.Value}'.");
-            }
-        }
-
-        return map;
     }
 
     private sealed class TypeFullNameComparer : IComparer<Type>
