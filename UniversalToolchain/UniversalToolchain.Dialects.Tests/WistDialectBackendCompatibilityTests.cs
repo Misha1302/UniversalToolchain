@@ -40,24 +40,23 @@ public class WistDialectBackendCompatibilityTests
     }
 
     [Test]
-    public void WistDialectExecutionConfigurationBuilder_KnownBackendsComeFromRuntimeKnownBackendsProvider()
+    public void WistDialectExecutionConfigurationBuilder_KnownBackendsComeFromSelectedRuntimeBackends()
     {
-        var knownBackendsProvider = new RecordingKnownBackendsProvider(
-            [new RuntimeBackendDescriptor(new DialectBackendId("wist-only"), ["wo"])]);
+        var backendEntry = Entry("interpreter", ["run"]);
         var builder = new WistDialectExecutionConfigurationBuilder(
             CreateShapeBuilder(new StubRuntimeComponentTypeLoader()),
-            CreateBackendConfigurationBuilder(new StubRuntimeComponentTypeLoader()),
-            knownBackendsProvider);
+            CreateBackendConfigurationBuilder(new StubRuntimeComponentTypeLoader()));
 
         var configuration = builder.Build(
-            new DialectBuildPlan("Demo", null, [], [], [], [], [], null, [], new DialectValidationResult([])),
-            new SelectedRuntimePlan([], [], [], []));
+            new DialectBuildPlan("Demo", null, [], [new DialectBackendId("interpreter")], [], [], [], null, [], new DialectValidationResult([])),
+            new SelectedRuntimePlan([], [], [backendEntry], []));
 
         Assert.Multiple(() =>
         {
-            Assert.That(knownBackendsProvider.Calls, Is.EqualTo(1));
-            Assert.That(configuration.TryResolveKnownBackendId("wist-only", out var backendId), Is.True);
-            Assert.That(backendId.Value, Is.EqualTo("wist-only"));
+            Assert.That(configuration.TryResolveKnownBackendId("interpreter", out var backendId), Is.True);
+            Assert.That(backendId.Value, Is.EqualTo("interpreter"));
+            Assert.That(configuration.TryResolveKnownBackendId("run", out var aliasId), Is.True);
+            Assert.That(aliasId.Value, Is.EqualTo("interpreter"));
             Assert.That(configuration.TryResolveKnownBackendId("foreign-backend", out _), Is.False);
         });
     }
@@ -126,8 +125,7 @@ public class WistDialectBackendCompatibilityTests
     {
         return new WistDialectExecutionConfigurationBuilder(
             CreateShapeBuilder(typeLoader),
-            CreateBackendConfigurationBuilder(typeLoader),
-            new RecordingKnownBackendsProvider([]));
+            CreateBackendConfigurationBuilder(typeLoader));
     }
 
     private static SelectedRuntimeExecutionShapeBuilder CreateShapeBuilder(IRuntimeComponentTypeLoader typeLoader)
@@ -222,14 +220,4 @@ public class WistDialectBackendCompatibilityTests
         }
     }
 
-    private sealed class RecordingKnownBackendsProvider(IReadOnlyList<RuntimeBackendDescriptor> knownBackends) : IRuntimeKnownBackendsProvider
-    {
-        public int Calls { get; private set; }
-
-        public IReadOnlyList<RuntimeBackendDescriptor> GetKnownBackends()
-        {
-            Calls++;
-            return knownBackends;
-        }
-    }
 }

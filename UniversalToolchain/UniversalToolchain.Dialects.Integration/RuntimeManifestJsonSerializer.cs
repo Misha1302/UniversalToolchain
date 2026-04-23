@@ -43,8 +43,12 @@ public sealed class RuntimeManifestJsonSerializer : IRuntimeManifestSerializer
                         ? null
                         : new SerializableManifestActivationEntry
                         {
-                            ActivationTypeFullName = x.Activation.ActivationTypeFullName,
-                            RegistrarTypeFullName = x.Activation.RegistrarTypeFullName
+                            ActivationType = CreateSerializableTypeReference(x.Activation.ActivationType),
+                            RegistrarType = CreateSerializableTypeReference(x.Activation.RegistrarType),
+                            ActivationTypeFullName = x.Activation.ActivationType.TypeFullName,
+                            ActivationAssemblySimpleName = ResolveAssemblySimpleNameForSerialization(x.Activation.ActivationType),
+                            RegistrarTypeFullName = x.Activation.RegistrarType?.TypeFullName,
+                            RegistrarAssemblySimpleName = ResolveAssemblySimpleNameForSerialization(x.Activation.RegistrarType)
                         }
                 })
                 .ToList()
@@ -66,9 +70,21 @@ public sealed class RuntimeManifestJsonSerializer : IRuntimeManifestSerializer
     private static FileRuntimeComponentActivationEntry? ResolveActivation(SerializableManifestComponentEntry entry)
     {
         if (entry.Activation != null)
+        {
+            var activationType = ResolveTypeReference(
+                entry.Activation.ActivationType,
+                entry.Activation.ActivationTypeFullName,
+                entry.Activation.ActivationAssemblySimpleName);
+            var registrarType = ResolveTypeReference(
+                entry.Activation.RegistrarType,
+                entry.Activation.RegistrarTypeFullName,
+                entry.Activation.RegistrarAssemblySimpleName,
+                allowMissingType: true);
+
             return new FileRuntimeComponentActivationEntry(
-                entry.Activation.ActivationTypeFullName ?? string.Empty,
-                entry.Activation.RegistrarTypeFullName);
+                activationType.NotNull(nameof(entry)),
+                registrarType);
+        }
 
         if (!string.IsNullOrWhiteSpace(entry.TypeFullName))
             return new FileRuntimeComponentActivationEntry(entry.TypeFullName);
@@ -100,8 +116,62 @@ public sealed class RuntimeManifestJsonSerializer : IRuntimeManifestSerializer
 
     private sealed class SerializableManifestActivationEntry
     {
+        public SerializableManifestTypeReference? ActivationType { get; init; }
+
+        public SerializableManifestTypeReference? RegistrarType { get; init; }
+
         public string? ActivationTypeFullName { get; init; }
 
+        public string? ActivationAssemblySimpleName { get; init; }
+
         public string? RegistrarTypeFullName { get; init; }
+
+        public string? RegistrarAssemblySimpleName { get; init; }
+    }
+
+    private sealed class SerializableManifestTypeReference
+    {
+        public string? AssemblySimpleName { get; init; }
+
+        public string? TypeFullName { get; init; }
+    }
+
+    private static SerializableManifestTypeReference? CreateSerializableTypeReference(RuntimeTypeReference? typeReference)
+    {
+        if (typeReference == null)
+            return null;
+
+        return new SerializableManifestTypeReference
+        {
+            AssemblySimpleName = ResolveAssemblySimpleNameForSerialization(typeReference),
+            TypeFullName = typeReference.TypeFullName
+        };
+    }
+
+    private static RuntimeTypeReference? ResolveTypeReference(
+        SerializableManifestTypeReference? structuredReference,
+        string? legacyTypeFullName,
+        string? legacyAssemblySimpleName,
+        bool allowMissingType = false)
+    {
+        var typeFullName = structuredReference?.TypeFullName ?? legacyTypeFullName ?? string.Empty;
+        if (allowMissingType && string.IsNullOrWhiteSpace(typeFullName))
+            return null;
+
+        var assemblySimpleName = structuredReference?.AssemblySimpleName
+                                 ?? legacyAssemblySimpleName
+                                 ?? RuntimeAssemblyIdentity.UnspecifiedAssemblySimpleName;
+
+        return new RuntimeTypeReference(assemblySimpleName, typeFullName);
+    }
+
+    private static string? ResolveAssemblySimpleNameForSerialization(RuntimeTypeReference? typeReference)
+    {
+        if (typeReference == null)
+            return null;
+
+        return string.Equals(typeReference.AssemblySimpleName, RuntimeAssemblyIdentity.UnspecifiedAssemblySimpleName, StringComparison.Ordinal)
+            ? null
+            : typeReference.AssemblySimpleName;
     }
 }

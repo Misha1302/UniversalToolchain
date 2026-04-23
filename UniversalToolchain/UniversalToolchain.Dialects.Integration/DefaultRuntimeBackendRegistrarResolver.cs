@@ -30,14 +30,15 @@ public sealed class DefaultRuntimeBackendRegistrarResolver : IRuntimeBackendRegi
                 $"Runtime component '{backendEntry.CanonicalAlias}' has kind '{RuntimeComponentKindCodec.Format(backendEntry.Kind)}', but '{RuntimeComponentKindCodec.Format(RuntimeComponentKind.Backend)}' was expected.");
         }
 
-        var registrarTypeFullName = backendEntry.Activation?.RegistrarTypeFullName;
-        if (string.IsNullOrWhiteSpace(registrarTypeFullName))
+        var registrarTypeReference = backendEntry.Activation?.RegistrarType;
+        if (registrarTypeReference == null)
         {
             Thrower.InvalidOpEx(
                 $"Runtime backend manifest entry '{backendEntry.CanonicalAlias}' does not declare registrarTypeFullName activation metadata.");
         }
 
-        var registrarType = _typeLoader.LoadType(backendEntry.AssemblySimpleName, registrarTypeFullName);
+        var registrarAssemblySimpleName = ResolveAssemblySimpleName(registrarTypeReference.AssemblySimpleName, backendEntry.AssemblySimpleName);
+        var registrarType = _typeLoader.LoadType(registrarAssemblySimpleName, registrarTypeReference.TypeFullName);
         if (!typeof(IDialectBackendRuntimeRegistrar).IsAssignableFrom(registrarType))
         {
             Thrower.InvalidOpEx(
@@ -58,5 +59,12 @@ public sealed class DefaultRuntimeBackendRegistrarResolver : IRuntimeBackendRegi
     private static string DisplayName(Type type)
     {
         return type.FullName ?? type.Name;
+    }
+
+    private static string ResolveAssemblySimpleName(string assemblySimpleName, string fallbackAssemblySimpleName)
+    {
+        return string.Equals(assemblySimpleName, RuntimeAssemblyIdentity.UnspecifiedAssemblySimpleName, StringComparison.Ordinal)
+            ? fallbackAssemblySimpleName
+            : assemblySimpleName;
     }
 }

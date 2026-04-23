@@ -130,7 +130,7 @@ public sealed class FileBasedRuntimeComponentCatalog : IRuntimeComponentCatalog
             Aliases = aliases,
             AssemblySimpleName = assemblySimpleName,
             ComponentId = new RuntimeComponentId(entry.ComponentId.Value.Trim()),
-            Activation = NormalizeActivation(entry.Activation)
+            Activation = NormalizeActivation(entry.Activation, assemblySimpleName)
         };
     }
 
@@ -138,22 +138,52 @@ public sealed class FileBasedRuntimeComponentCatalog : IRuntimeComponentCatalog
     {
         return activation == null
             ? null
-            : new RuntimeComponentActivationInfo(activation.ActivationTypeFullName, activation.RegistrarTypeFullName);
+            : new RuntimeComponentActivationInfo(activation.ActivationType, activation.RegistrarType);
     }
 
-    private static RuntimeComponentActivationInfo? NormalizeActivation(RuntimeComponentActivationInfo? activation)
+    private static RuntimeComponentActivationInfo? NormalizeActivation(RuntimeComponentActivationInfo? activation, string ownerAssemblySimpleName)
     {
         if (activation == null)
             return null;
 
-        var activationTypeFullName = activation.ActivationTypeFullName?.Trim();
-        if (string.IsNullOrWhiteSpace(activationTypeFullName))
-            Thrower.Argument(nameof(activation), "ActivationTypeFullName must not be empty when activation metadata is provided.");
+        var activationType = NormalizeTypeReference(
+            activation.ActivationType,
+            ownerAssemblySimpleName,
+            nameof(activation),
+            "ActivationTypeFullName must not be empty when activation metadata is provided.");
+        var registrarType = activation.RegistrarType == null
+            ? null
+            : NormalizeTypeReference(
+                activation.RegistrarType,
+                ownerAssemblySimpleName,
+                nameof(activation),
+                "RegistrarTypeFullName must not be empty when activation metadata is provided.");
 
-        var registrarTypeFullName = activation.RegistrarTypeFullName?.Trim();
         return new RuntimeComponentActivationInfo(
-            activationTypeFullName,
-            string.IsNullOrWhiteSpace(registrarTypeFullName) ? null : registrarTypeFullName);
+            activationType,
+            registrarType);
+    }
+
+    private static RuntimeTypeReference NormalizeTypeReference(
+        RuntimeTypeReference typeReference,
+        string ownerAssemblySimpleName,
+        string paramName,
+        string emptyTypeMessage)
+    {
+        typeReference = typeReference.NotNull(paramName);
+
+        var typeFullName = typeReference.TypeFullName?.Trim();
+        if (string.IsNullOrWhiteSpace(typeFullName))
+            Thrower.Argument(paramName, emptyTypeMessage);
+
+        var assemblySimpleName = typeReference.AssemblySimpleName?.Trim();
+        if (string.IsNullOrWhiteSpace(assemblySimpleName) ||
+            string.Equals(assemblySimpleName, RuntimeAssemblyIdentity.UnspecifiedAssemblySimpleName, StringComparison.Ordinal))
+        {
+            assemblySimpleName = ownerAssemblySimpleName;
+        }
+
+        return new RuntimeTypeReference(assemblySimpleName, typeFullName);
     }
 
     private static IReadOnlyDictionary<string, RuntimeComponentManifestEntry> CreateAliasMap(IEnumerable<RuntimeComponentManifestEntry> entries, string kindName)

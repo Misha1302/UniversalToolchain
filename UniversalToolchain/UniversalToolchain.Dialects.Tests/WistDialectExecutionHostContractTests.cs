@@ -92,7 +92,7 @@ public class WistDialectExecutionHostContractTests
 
         AssertThrowsWithMessageFragment<InvalidOperationException>(
             () => host.GetCore("compiler"),
-            "does not enable the 'compiler' backend");
+            "Unknown execution mode 'compiler'");
     }
 
     [Test]

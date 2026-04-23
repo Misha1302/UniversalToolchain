@@ -111,7 +111,33 @@ public class RuntimeManifestCatalogContractTests
         Assert.Multiple(() =>
         {
             Assert.That(entry!.Activation!.ActivationTypeFullName, Is.EqualTo("Modules.ArithmeticModule"));
+            Assert.That(entry.Activation.ActivationAssemblySimpleName, Is.EqualTo("Asm"));
             Assert.That(entry.Activation.RegistrarTypeFullName, Is.EqualTo("Modules.ArithmeticRegistrar"));
+            Assert.That(entry.Activation.RegistrarAssemblySimpleName, Is.EqualTo("Asm"));
+        });
+    }
+
+    [Test]
+    public void LoadEntries_ManifestWithStructuredActivationMetadata_PreservesAssemblyIdentity()
+    {
+        using var temp = new TempDirectory();
+        var serializer = new RuntimeManifestJsonSerializer();
+        var path = WriteRawManifest(
+            temp.Path,
+            "structured-activation.dialect.runtime.json",
+            """
+            {"assemblySimpleName":"OwnerAssembly","components":[{"kind":"Backend","canonicalAlias":"interpreter","aliases":[],"componentId":"backend.interpreter","activation":{"activationType":{"assemblySimpleName":"DeclarationAssembly","typeFullName":"Runtime.InterpreterDeclaration"},"registrarType":{"assemblySimpleName":"RegistrarAssembly","typeFullName":"Runtime.InterpreterRegistrar"}}}]}
+            """);
+
+        var catalog = new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([path]), serializer);
+        Assert.That(catalog.TryResolveBackend("interpreter", out var entry), Is.True);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(entry!.Activation!.ActivationAssemblySimpleName, Is.EqualTo("DeclarationAssembly"));
+            Assert.That(entry.Activation.ActivationTypeFullName, Is.EqualTo("Runtime.InterpreterDeclaration"));
+            Assert.That(entry.Activation.RegistrarAssemblySimpleName, Is.EqualTo("RegistrarAssembly"));
+            Assert.That(entry.Activation.RegistrarTypeFullName, Is.EqualTo("Runtime.InterpreterRegistrar"));
         });
     }
 
@@ -128,7 +154,7 @@ public class RuntimeManifestCatalogContractTests
             """);
 
         var ex = Assert.Throws<ArgumentException>(() => new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([path]), serializer));
-        Assert.That(ex!.Message, Does.Contain("ActivationTypeFullName must not be empty"));
+        Assert.That(ex!.Message, Does.Contain("typeFullName must not be empty"));
     }
 
     [Test]

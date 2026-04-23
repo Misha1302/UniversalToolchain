@@ -38,7 +38,7 @@ public sealed class WistDialectBackendMatrixTests
         yield return BuildCase(
             "minimal-arithmetic",
             ExpectedOutcome.Success("14"),
-            ExpectedOutcome.Failure("does not enable the 'compiler' backend"));
+            ExpectedOutcome.Failure("Unknown execution mode 'compiler'"));
 
         yield return BuildCase(
             "full-default",
