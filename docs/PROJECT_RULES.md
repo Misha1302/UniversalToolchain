@@ -799,3 +799,14 @@ Before merging code, verify:
 ## 20. Source Basis
 
 This document was updated based on the current `PROJECT_RULES.md`, the `Thrower` implementation, the existing core pipeline classes, and the repository-wide conventions visible in the uploaded project snapshot.
+
+
+---
+
+## 21. Runtime reflection and activation boundaries
+
+1. Reflection is allowed only when centralized, deterministic, and architecturally justified.
+2. The canonical runtime path must not use broad eager assembly/type discovery as a hidden source of truth.
+3. Targeted exact activation of selected runtime components/backends from manifests is allowed and expected.
+4. Do not scatter reflection-based activation across unrelated modules; keep it in runtime integration infrastructure.
+5. Compatibility/eager discovery helpers must stay optional and must not become framework truth for dialect composition.

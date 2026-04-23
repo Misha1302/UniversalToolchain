@@ -327,12 +327,14 @@
 - unsafe extensions
 
 ### 3. Restricted profiles
-Поддержать готовые safe profiles:
+Support safe profiles that restrict language-facing capabilities:
 - no interop
-- no reflection-like features
+- no user-visible reflection-like features
 - no uncontrolled host access
 - limited types only
 - limited operators only
+
+These restrictions target DSL/user capabilities. They do not imply that internal runtime infrastructure (for example, targeted exact activation of selected runtime components) must be removed.
 
 ### 4. Security-aware diagnostics
 Ошибки ограничений должны быть:

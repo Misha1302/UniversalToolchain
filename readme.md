@@ -154,8 +154,9 @@ Composition and host creation are separate stages. `ComposeText`/`ComposeFile` c
 deterministic plan, and resolve selected modules, optimizers, and backends from runtime manifests. `CreateHost` then
 builds the runtime provider for that resolved selection and activates only the selected backend registrars.
 
-The selection-driven path is the main dialect execution story. Shipped profiles do not require explicit backend imports
-in normal CLI, facade, or example usage. Eager discovery and compatibility helpers still exist, but they are not the
+The selection-driven path is the main dialect execution story. Runtime activation in that path uses targeted, exact loading
+of selected runtime component and registrar types from manifests. Shipped profiles do not require explicit backend imports in
+normal CLI, facade, or example usage. Broad eager discovery and compatibility helpers still exist, but they are not the
 canonical path for running shipped dialect profiles.
 
 ## How features plug into the pipeline
@@ -274,6 +275,9 @@ This repository is actively evolving, and some areas are intentionally treated a
 ## Canonical documentation map
 
 - Project overview: [readme.md](readme.md)
+- Current runtime pipeline: [docs/current-canonical-runtime-pipeline.md](docs/current-canonical-runtime-pipeline.md)
+- Runtime manifest activation model: [docs/runtime-manifest-activation-model.md](docs/runtime-manifest-activation-model.md)
+- Runtime manifest format: [docs/runtime-manifest-format.md](docs/runtime-manifest-format.md)
 - Coding standards: [docs/PROJECT_RULES.md](docs/PROJECT_RULES.md)
 - Contribution workflow: [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)
 - Security policy: [docs/SECURITY.md](docs/SECURITY.md)
