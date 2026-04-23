@@ -2,17 +2,25 @@
 
     <PropertyGroup>
         <DialectRuntimeManifestEmitterProjectPath>$(MSBuildThisFileDirectory)UniversalToolchain.Dialects.ManifestEmitter/UniversalToolchain.Dialects.ManifestEmitter.csproj</DialectRuntimeManifestEmitterProjectPath>
+        <DialectRuntimeManifestEmitterTargetFramework>net10.0</DialectRuntimeManifestEmitterTargetFramework>
+        <DialectRuntimeManifestEmitterDll>$(MSBuildThisFileDirectory)UniversalToolchain.Dialects.ManifestEmitter/bin/$(Configuration)/$(DialectRuntimeManifestEmitterTargetFramework)/UniversalToolchain.Dialects.ManifestEmitter.dll</DialectRuntimeManifestEmitterDll>
         <DialectRuntimeManifestFileSuffix>.dialect.runtime.json</DialectRuntimeManifestFileSuffix>
     </PropertyGroup>
 
+    <ItemGroup Condition="'$(EmitDialectRuntimeManifest)' == 'true' and '$(MSBuildProjectFullPath)' != '$(DialectRuntimeManifestEmitterProjectPath)'">
+        <ProjectReference Include="$(DialectRuntimeManifestEmitterProjectPath)"
+                          ReferenceOutputAssembly="false"
+                          PrivateAssets="all"/>
+    </ItemGroup>
+
     <Target Name="EmitDialectRuntimeManifest"
             AfterTargets="Build"
-            Condition="'$(EmitDialectRuntimeManifest)' == 'true' and '$(DesignTimeBuild)' != 'true'">
+            Condition="'$(EmitDialectRuntimeManifest)' == 'true' and '$(DesignTimeBuild)' != 'true' and '$(MSBuildProjectFullPath)' != '$(DialectRuntimeManifestEmitterProjectPath)'">
         <PropertyGroup>
             <DialectRuntimeManifestOutputPath>$(TargetDir)$(AssemblyName)$(DialectRuntimeManifestFileSuffix)</DialectRuntimeManifestOutputPath>
         </PropertyGroup>
 
-        <Exec Command="&quot;$(DOTNET_HOST_PATH)&quot; run --project &quot;$(DialectRuntimeManifestEmitterProjectPath)&quot; -- --assembly &quot;$(TargetPath)&quot; --output &quot;$(DialectRuntimeManifestOutputPath)&quot;"/>
+        <Exec Command="&quot;$(DOTNET_HOST_PATH)&quot; &quot;$(DialectRuntimeManifestEmitterDll)&quot; --assembly &quot;$(TargetPath)&quot; --output &quot;$(DialectRuntimeManifestOutputPath)&quot;"/>
 
         <ItemGroup>
             <FileWrites Include="$(DialectRuntimeManifestOutputPath)"/>
