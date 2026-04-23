@@ -73,6 +73,16 @@ public class MinimalRuntimeSelectionTests
     }
 
     [Test]
+    public void SelectionResolver_DropsDuplicateModuleSelections_Deterministically()
+    {
+        var resolver = new SelectedRuntimePlanResolver(new FileBasedRuntimeComponentCatalog(new DefaultRuntimeManifestFileLocator(new RuntimeArtifactLocatorOptions()), new RuntimeManifestJsonSerializer()));
+        var plan = BuildPlan(["Arithmetic", "Numbers", "Arithmetic", "Numbers"], [WistDialectBackendIds.Interpreter], []);
+        var selection = resolver.Resolve(plan);
+
+        Assert.That(selection.OrderedModules.Select(x => x.CanonicalAlias), Is.EqualTo(new[] { "Arithmetic", "Numbers" }));
+    }
+
+    [Test]
     public void SelectionResolver_DropsDuplicateOptimizers_Deterministically()
     {
         var resolver = new SelectedRuntimePlanResolver(new FileBasedRuntimeComponentCatalog(new DefaultRuntimeManifestFileLocator(new RuntimeArtifactLocatorOptions()), new RuntimeManifestJsonSerializer()));

@@ -754,11 +754,11 @@
             <span class="eyebrow">UniversalToolchain</span>
             <h1>Build formulas, rules, and mini-languages for .NET applications.</h1>
             <p>
-                Start with formulas and rules, then grow into controlled DSL runtimes with custom syntax, restricted
-                dialects, inspectable stages, and compiler/interpreter execution paths.
+                Start with formulas and rules, then grow into explicit DSL runtimes with shipped dialect profiles,
+                inspectable stages, and compiler/interpreter execution paths.
             </p>
             <div class="badge-row">
-                <span class="badge">Pricing demo first</span>
+                <span class="badge">6 shipped profiles</span>
                 <span class="badge">CLI + programmatic API</span>
                 <span class="badge">Dialect restrictions</span>
             </div>
@@ -767,7 +767,7 @@
                 <a class="btn" href="https://github.com/Misha1302/Wist2/blob/master/readme.md">README</a>
                 <a class="btn" href="https://github.com/Misha1302/Wist2">GitHub</a>
                 <a class="btn" href="why-this-exists.md">Why this exists</a>
-                <a class="btn" href="comparisons/wist2-vs-ncalc.md">Wist2 vs NCalc</a>
+                <a class="btn" href="alternatives.md">Nearby alternatives</a>
             </div>
         </div>
         <aside class="hero-side">
@@ -815,13 +815,13 @@ reject unsupported formula shapes</pre>
 
 <section class="at-glance" id="glance">
     <div class="container">
-        <div class="facts">
-            <div class="fact"><strong>4</strong>CLI verbs</div>
-            <div class="fact"><strong>2</strong>execution modes</div>
-            <div class="fact"><strong>5</strong>dialect profiles</div>
-            <div class="fact"><strong>.NET 10</strong>runtime baseline</div>
-            <div class="fact"><strong>Wist</strong>reference language</div>
-        </div>
+            <div class="facts">
+                <div class="fact"><strong>4</strong>CLI verbs</div>
+                <div class="fact"><strong>2</strong>execution modes</div>
+                <div class="fact"><strong>6</strong>dialect profiles</div>
+                <div class="fact"><strong>.NET 10</strong>runtime baseline</div>
+                <div class="fact"><strong>Wist</strong>reference language</div>
+            </div>
     </div>
 </section>
 
@@ -859,13 +859,13 @@ reject unsupported formula shapes</pre>
                 <strong>Why this exists</strong>
                 <span>The product reason for a modular embeddable runtime layer.</span>
             </a>
-            <a class="doc-link" href="comparisons/wist2-vs-ncalc.md">
-                <strong>Wist2 vs NCalc</strong>
-                <span>Use an evaluator when an evaluator is the whole problem.</span>
+            <a class="doc-link" href="alternatives.md">
+                <strong>Nearby alternatives</strong>
+                <span>Use a smaller evaluator, rules library, parser tool, or workbench when that is the whole problem.</span>
             </a>
-            <a class="doc-link" href="comparisons/wist2-vs-rulesengine.md">
-                <strong>Wist2 vs RulesEngine</strong>
-                <span>Choose the boundary between structured rules and custom runtime control.</span>
+            <a class="doc-link" href="current-canonical-runtime-pipeline.md">
+                <strong>Current runtime pipeline</strong>
+                <span>The canonical selection-driven path from dialect source to runtime host creation.</span>
             </a>
         </div>
     </div>
@@ -938,13 +938,12 @@ sum</pre>
                         class="chip">interop capable</span>
                 </div>
                 <div class="code-label">Real example</div>
-                <pre class="code-box">let base = 40
-base + 2</pre>
+                <pre class="code-box">10f + 5f</pre>
                 <ul>
                     <li>Includes <code>NativeTypes</code> and excludes universal <code>Arithmetic</code>/<code>Numbers</code> modules.</li>
                     <li>Backends: <code>cil</code> + <code>interpreter</code>.</li>
                     <li>Security: <code>trusted</code>, capability <code>unsafe-interop</code>.</li>
-                    <li>Returns <strong>42</strong>.</li>
+                    <li>Returns <strong>15</strong>.</li>
                 </ul>
             </article>
             <article class="dialect level-min">
@@ -962,6 +961,22 @@ base + 2</pre>
                         <code>Whitespaces</code>.
                     </li>
                     <li>Backend: <code>interpreter</code>.</li>
+                    <li>Returns <strong>14</strong>.</li>
+                </ul>
+            </article>
+            <article class="dialect level-min">
+                <div class="profile-row"><h3><code>minimal-arithmetic-native</code></h3><span
+                        class="scale">native narrow profile</span></div>
+                <p>Small native arithmetic composition for the canonical compiler backend.</p>
+                <div class="chips">
+                    <span class="chip">native types</span><span class="chip">compiler only</span><span
+                        class="chip">compact baseline</span>
+                </div>
+                <div class="code-label">Real example</div>
+                <pre class="code-box">2 + 3 * 4</pre>
+                <ul>
+                    <li>Modules: <code>NativeTypes</code>, <code>Numbers</code>, <code>Scopes</code>, <code>Whitespaces</code>.</li>
+                    <li>Backend: <code>cil</code>.</li>
                     <li>Returns <strong>14</strong>.</li>
                 </ul>
             </article>
@@ -995,13 +1010,13 @@ base + 2</pre>
                         class="scale">most constrained</span></div>
                 <p>Constrained profile for narrower capabilities.</p>
                 <div class="chips">
-                    <span class="chip">interpreter only</span><span class="chip">no variables</span><span class="chip">no conditions</span>
+                    <span class="chip">interpreter only</span><span class="chip">no variables</span><span class="chip">no interop</span>
                 </div>
                 <div class="code-label">Allowed vs forbidden</div>
                 <div class="split-code">
                     <div class="mini-state">
                         <h4>Allowed example</h4>
-                        <pre>40 + 2</pre>
+                        <pre>1 + 2 * 3 &gt; 4</pre>
                     </div>
                     <div class="mini-state bad">
                         <h4>Forbidden example</h4>
@@ -1010,8 +1025,8 @@ x</pre>
                     </div>
                 </div>
                 <ul>
-                    <li>Interpreter only; excludes variables, conditions, loops, and interop-related capabilities.</li>
-                    <li>Allowed example returns <strong>42</strong>.</li>
+                    <li>Interpreter only; excludes variables, identifiers, loops, labels, native types, and interop-related capabilities.</li>
+                    <li>Allowed example returns <strong>true</strong>.</li>
                     <li>Forbidden example fails by design (variables are excluded here).</li>
                     <li><strong>Not</strong> a hardened sandbox guarantee.</li>
                 </ul>
@@ -1026,9 +1041,11 @@ x</pre>
                 <div class="micro"><b>minimal-arithmetic</b><br/>Real example is expression-only arithmetic: `2 + 3 * 4`
                     → returns `14`.
                 </div>
+                <div class="micro"><b>minimal-arithmetic-native</b><br/>Keeps the same arithmetic example on the native
+                    runtime stack and compiler backend only.</div>
                 <div class="micro"><b>pricing-restricted</b><br/>Pricing formulas run through a deliberately narrow
                     domain surface and unsupported shapes fail by design.</div>
-                <div class="micro"><b>restricted-sandbox</b><br/>Allowed arithmetic `40 + 2` works, but `let x = 1`
+                <div class="micro"><b>restricted-sandbox</b><br/>Allowed expression `1 + 2 * 3 > 4` works, but `let x = 1`
                     fails by design.
                 </div>
                 <div class="micro"><b>full-default-native</b><br/>Uses native-type modules and keeps dual backend execution
@@ -1112,11 +1129,10 @@ x</pre>
         <div class="links">
             <a href="https://github.com/Misha1302/Wist2">Repository</a>
             <a href="https://github.com/Misha1302/Wist2/blob/master/readme.md">README</a>
-            <a href="https://github.com/Misha1302/Wist2/blob/master/docs/architecture-overview.md">Architecture Overview</a>
+            <a href="current-canonical-runtime-pipeline.md">Current Runtime Pipeline</a>
             <a href="why-this-exists.md">Why This Exists</a>
-            <a href="comparisons/wist2-vs-ncalc.md">Wist2 vs NCalc</a>
-            <a href="comparisons/wist2-vs-rulesengine.md">Wist2 vs RulesEngine</a>
-            <a href="https://github.com/Misha1302/Wist2/blob/master/docs/SECURITY.md">Security Policy</a>
+            <a href="alternatives.md">Nearby Alternatives</a>
+            <a href="SECURITY.md">Security Policy</a>
             <a href="https://github.com/Misha1302/Wist2/tree/master/UniversalToolchain/Dialects/examples/wist">Dialect
                 Examples</a>
         </div>

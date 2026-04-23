@@ -248,6 +248,52 @@ public sealed class WistRuntimePathGuardrailTests
     }
 
     [Test]
+    public void WistDialectExecutionConfigurationBuilder_Build_DuplicateSelectedModulesDoNotDriftFromCanonicalConfiguration()
+    {
+        using var provider = WistDialectTestInfrastructure.CreateCanonicalProvider();
+        var resolver = provider.GetRequiredService<SelectedRuntimePlanResolver>();
+        var configurationBuilder = provider.GetRequiredService<WistDialectExecutionConfigurationBuilder>();
+
+        var canonicalPlan = new DialectBuildPlan(
+            "Stable",
+            null,
+            ["Arithmetic", "Numbers"],
+            [WistDialectBackendIds.Interpreter],
+            [],
+            [],
+            [],
+            null,
+            [],
+            new DialectValidationResult([]));
+        var duplicatePlan = new DialectBuildPlan(
+            "Stable",
+            null,
+            ["Arithmetic", "Numbers", "Arithmetic", "Numbers"],
+            [WistDialectBackendIds.Interpreter],
+            [],
+            [],
+            [],
+            null,
+            [],
+            new DialectValidationResult([]));
+
+        var canonicalSelection = resolver.Resolve(canonicalPlan);
+        var duplicateSelection = resolver.Resolve(duplicatePlan);
+        var canonicalConfiguration = configurationBuilder.Build(canonicalPlan, canonicalSelection);
+        var duplicateConfiguration = configurationBuilder.Build(duplicatePlan, duplicateSelection);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(canonicalSelection.IsResolved, Is.True);
+            Assert.That(duplicateSelection.IsResolved, Is.True);
+            Assert.That(duplicateSelection.OrderedModules.Select(static x => x.CanonicalAlias), Is.EqualTo(canonicalSelection.OrderedModules.Select(static x => x.CanonicalAlias)));
+            Assert.That(
+                WistDialectTestInfrastructure.BuildConfigurationSignature(duplicateConfiguration),
+                Is.EqualTo(WistDialectTestInfrastructure.BuildConfigurationSignature(canonicalConfiguration)));
+        });
+    }
+
+    [Test]
     public void SelectedRuntimeExecutionShapeBuilder_Build_PreservesSelectedModuleOrderWithStableDeduplication()
     {
         using var provider = WistDialectTestInfrastructure.CreateCanonicalProvider();

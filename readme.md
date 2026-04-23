@@ -4,8 +4,8 @@ Build formulas, rules, and mini-languages for .NET applications.
 
 UniversalToolchain is an embeddable .NET DSL/runtime framework for the moment when a plain expression evaluator is no longer enough.
 
-Wist is the reference language in this repository. It demonstrates the framework through a pricing demo,
-manifest-backed dialect composition, and compiler/interpreter execution modes.
+Wist is the reference language in this repository. It demonstrates the framework through shipped dialect profiles, a
+pricing demo, manifest-backed dialect composition, and compiler/interpreter execution modes.
 
 ## Run the pricing demo
 
@@ -13,9 +13,9 @@ manifest-backed dialect composition, and compiler/interpreter execution modes.
 dotnet run --project UniversalToolchain/Example/Example.csproj
 ```
 
-This runs a pricing formula through hardcoded C#, a general Wist dialect, and a restricted pricing dialect. It shows the
-same calculation executed through compiler, interpreter, and fast native invocation paths, plus rejection of a formula
-that the restricted dialect composition does not allow.
+This runs a pricing formula through hardcoded C#, the shipped `full-default-native` Wist preset, and the shipped
+`pricing-restricted` dialect. It shows the same calculation executed through compiler, interpreter, and fast native
+invocation paths, plus rejection of a formula that the restricted dialect composition does not allow.
 
 Code: [UniversalToolchain/Example/Scenarios/PricingDiscountScenario.cs](UniversalToolchain/Example/Scenarios/PricingDiscountScenario.cs) and [UniversalToolchain/Example/Scenarios/DslPricingCalculator.cs](UniversalToolchain/Example/Scenarios/DslPricingCalculator.cs).
 
@@ -24,9 +24,9 @@ Code: [UniversalToolchain/Example/Scenarios/PricingDiscountScenario.cs](Universa
 The pricing demo compares three ways to own the same business rule:
 
 - hardcoded C# pricing logic,
-- a general Wist dialect for the formula,
+- the shipped `full-default-native` Wist preset for the formula,
 - a restricted pricing dialect with a narrower runtime surface,
-- compiler and interpreter execution paths for the same calculation,
+- compiler, interpreter, and fast native invocation paths for the same calculation,
 - rejection of a formula shape that the restricted dialect does not allow.
 
 ## Tiny CLI quick start
@@ -62,12 +62,14 @@ var result = wist.Run(
 var compiledResult = (double)result!; // 95.0
 ```
 
-Use a dialect file when the runtime surface must be composition-constrained:
+Use an explicit shipped dialect preset when the runtime surface must be composition-constrained:
 
 ```csharp
+using UniversalToolchain.Dialects.Wist.Presets;
+
 using var wist = WistRuntimeFacadeBuilder
     .CreateDefault()
-    .WithDialectFile("pricing-restricted/dialect.wistdialect")
+    .WithShippedDialectPreset(WistShippedDialectPresets.PricingRestricted)
     .Build();
 
 var attempt = wist.TryCompile(
@@ -278,11 +280,11 @@ This repository is actively evolving, and some areas are intentionally treated a
 - Current runtime pipeline: [docs/current-canonical-runtime-pipeline.md](docs/current-canonical-runtime-pipeline.md)
 - Runtime manifest activation model: [docs/runtime-manifest-activation-model.md](docs/runtime-manifest-activation-model.md)
 - Runtime manifest format: [docs/runtime-manifest-format.md](docs/runtime-manifest-format.md)
+- Why this exists: [docs/why-this-exists.md](docs/why-this-exists.md)
+- Nearby alternatives: [docs/alternatives.md](docs/alternatives.md)
 - Coding standards: [docs/PROJECT_RULES.md](docs/PROJECT_RULES.md)
 - Contribution workflow: [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)
 - Security policy: [docs/SECURITY.md](docs/SECURITY.md)
-- Main thoughts: [docs/vision/universaltoolchain_main_thoughts.md](docs/vision/universaltoolchain_main_thoughts.md)
-- Roadmap: [docs/vision/universaltoolchain_roadmap.md](docs/vision/universaltoolchain_roadmap.md)
 
 ## License
 

@@ -29,6 +29,8 @@ public sealed class SelectedRuntimePlanResolver
     private IReadOnlyList<RuntimeComponentManifestEntry> ResolveModules(DialectBuildPlan buildPlan, ICollection<DialectDiagnostic> diagnostics)
     {
         var modules = new List<RuntimeComponentManifestEntry>();
+        var seen = new HashSet<RuntimeComponentId>();
+
         foreach (var moduleAlias in buildPlan.OrderedModules)
         {
             if (!_catalog.TryResolveModule(moduleAlias, out var entry) || entry == null)
@@ -36,6 +38,9 @@ public sealed class SelectedRuntimePlanResolver
                 diagnostics.Add(new DialectDiagnostic("R001", $"Runtime module descriptor '{moduleAlias}' was not registered.", DialectDiagnosticSeverity.Error));
                 continue;
             }
+
+            if (!seen.Add(entry.ComponentId))
+                continue;
 
             modules.Add(entry);
         }
