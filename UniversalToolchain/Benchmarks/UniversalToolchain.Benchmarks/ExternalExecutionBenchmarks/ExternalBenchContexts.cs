@@ -1,13 +1,13 @@
 namespace UniversalToolchain.Benchmarks.ExternalExecutionBenchmarks;
 
-public sealed class ExternalBenchContext3
+public class ExternalBenchContext3
 {
     public double A { get; set; }
     public double B { get; set; }
     public double C { get; set; }
 }
 
-public sealed class ExternalBenchContext5
+public class ExternalBenchContext5
 {
     public double A { get; set; }
     public double B { get; set; }
@@ -16,7 +16,7 @@ public sealed class ExternalBenchContext5
     public double E { get; set; }
 }
 
-public sealed class ExternalBenchContext6
+public class ExternalBenchContext6
 {
     public double A { get; set; }
     public double B { get; set; }
@@ -26,7 +26,7 @@ public sealed class ExternalBenchContext6
     public double F { get; set; }
 }
 
-public sealed class ExternalBenchContext8
+public class ExternalBenchContext8
 {
     public double A { get; set; }
     public double B { get; set; }
@@ -38,7 +38,7 @@ public sealed class ExternalBenchContext8
     public double H { get; set; }
 }
 
-public sealed class ExternalBenchContext11
+public class ExternalBenchContext11
 {
     public double A { get; set; }
     public double B { get; set; }

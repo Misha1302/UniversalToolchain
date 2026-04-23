@@ -32,3 +32,4 @@ ConfigurationEditor/project_code.txt
 .codex
 benchmark-report.html
 /UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/BenchmarkDotNet.Artifacts
+/BenchmarkDotNet.Artifacts

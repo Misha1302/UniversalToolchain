@@ -12,7 +12,7 @@ namespace UniversalToolchain.Benchmarks.ExternalExecutionBenchmarks.Unrolled16;
 [MemoryDiagnoser]
 [Orderer(SummaryOrderPolicy.FastestToSlowest)]
 [RankColumn]
-public sealed class ExternalMedium8ExecutionUnrolled16Benchmarks : ExternalArithmeticExecutionUnrolled16BenchmarkEnvironmentBase
+public class ExternalMedium8ExecutionUnrolled16Benchmarks : ExternalArithmeticExecutionUnrolled16BenchmarkEnvironmentBase
 {
     private const string WistFormula = "((A + B) * (C - D) / (E + 1.0)) + F * G - H / 3.0";
     private const string NCalcFormula = "(([A] + [B]) * ([C] - [D]) / ([E] + 1.0)) + [F] * [G] - [H] / 3.0";
