@@ -10,8 +10,6 @@ public class ExampleRunner
     {
         var services = new ServiceCollection();
         services.AddWistDialectServices();
-        services.AddWistCilBackend();
-        services.AddWistInterpreterBackend();
 
         using var provider = services.BuildServiceProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();

@@ -17,7 +17,7 @@ public sealed class WistRuntimePathGuardrailTests
         using var facade = WistRuntimeFacadeBuilder
             .CreateDefault()
             .Build();
-        using var provider = WistDialectTestInfrastructure.CreateProviderWithExplicitBackends();
+        using var provider = WistDialectTestInfrastructure.CreateCanonicalProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var composition = workflow.ComposeFile(presetFile);
         var shapeBuilder = provider.GetRequiredService<SelectedRuntimeExecutionShapeBuilder>();
@@ -54,7 +54,7 @@ public sealed class WistRuntimePathGuardrailTests
             .CreateDefault()
             .WithDialectFile(dialectFile)
             .Build();
-        using var provider = WistDialectTestInfrastructure.CreateProviderWithExplicitBackends();
+        using var provider = WistDialectTestInfrastructure.CreateCanonicalProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var composition = workflow.ComposeFile(dialectFile);
         var shapeBuilder = provider.GetRequiredService<SelectedRuntimeExecutionShapeBuilder>();
@@ -128,7 +128,7 @@ public sealed class WistRuntimePathGuardrailTests
     [Test]
     public void SelectedRuntimeExecutionShapeBuilder_Build_UsesOnlySelectedModulesAndExplicitRequiredInfrastructure()
     {
-        using var provider = WistDialectTestInfrastructure.CreateProviderWithExplicitBackends();
+        using var provider = WistDialectTestInfrastructure.CreateCanonicalProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var shapeBuilder = provider.GetRequiredService<SelectedRuntimeExecutionShapeBuilder>();
         var requiredInfrastructure = provider.GetRequiredService<IWistRequiredInfrastructureModulesProvider>();
@@ -156,7 +156,7 @@ public sealed class WistRuntimePathGuardrailTests
     [Test]
     public void WistRequiredInfrastructureModulesProvider_GetModules_RepeatedCallsProduceEquivalentExplicitInfrastructure()
     {
-        using var provider = WistDialectTestInfrastructure.CreateProviderWithExplicitBackends();
+        using var provider = WistDialectTestInfrastructure.CreateCanonicalProvider();
         var requiredInfrastructure = provider.GetRequiredService<IWistRequiredInfrastructureModulesProvider>();
 
         var frontendSignatures = Enumerable.Range(0, 30)
@@ -178,7 +178,7 @@ public sealed class WistRuntimePathGuardrailTests
     [Test]
     public void SelectedRuntimeExecutionShapeBuilder_Build_RepeatedCallsProduceEquivalentShapes()
     {
-        using var provider = WistDialectTestInfrastructure.CreateProviderWithExplicitBackends();
+        using var provider = WistDialectTestInfrastructure.CreateCanonicalProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var shapeBuilder = provider.GetRequiredService<SelectedRuntimeExecutionShapeBuilder>();
         var composition = workflow.ComposeText(
@@ -199,7 +199,7 @@ public sealed class WistRuntimePathGuardrailTests
     [Test]
     public void WistDialectExecutionConfigurationBuilder_Build_RepeatedCallsProduceEquivalentConfigurations()
     {
-        using var provider = WistDialectTestInfrastructure.CreateProviderWithExplicitBackends();
+        using var provider = WistDialectTestInfrastructure.CreateCanonicalProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var configurationBuilder = provider.GetRequiredService<WistDialectExecutionConfigurationBuilder>();
         var composition = workflow.ComposeText(
@@ -220,7 +220,7 @@ public sealed class WistRuntimePathGuardrailTests
     [Test]
     public void SelectedRuntimeExecutionShapeBuilder_Build_EquivalentPlansDoNotDependOnDialectNames()
     {
-        using var provider = WistDialectTestInfrastructure.CreateProviderWithExplicitBackends();
+        using var provider = WistDialectTestInfrastructure.CreateCanonicalProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var shapeBuilder = provider.GetRequiredService<SelectedRuntimeExecutionShapeBuilder>();
 
@@ -250,7 +250,7 @@ public sealed class WistRuntimePathGuardrailTests
     [Test]
     public void SelectedRuntimeExecutionShapeBuilder_Build_PreservesSelectedModuleOrderWithStableDeduplication()
     {
-        using var provider = WistDialectTestInfrastructure.CreateProviderWithExplicitBackends();
+        using var provider = WistDialectTestInfrastructure.CreateCanonicalProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var shapeBuilder = provider.GetRequiredService<SelectedRuntimeExecutionShapeBuilder>();
         var typeLoader = provider.GetRequiredService<IRuntimeComponentTypeLoader>();

@@ -104,7 +104,7 @@ public class WistDialectRuntimeBootstrapContractTests
     }
 
     [Test]
-    public void WistDialectServicesRegistrar_ShouldKeepBackendRegistrationExplicitAndOptIn()
+    public void WistDialectServicesRegistrar_ShouldNotRegisterCompatibilityBackendRegistrars()
     {
         var services = new ServiceCollection();
         var registrar = new WistDialectServicesRegistrar();
@@ -141,7 +141,7 @@ public class WistDialectRuntimeBootstrapContractTests
     }
 
     [Test]
-    public void AddWistDialectServices_WithoutExplicitBackends_ShouldCreateHostForManifestSelectedBackend()
+    public void AddWistDialectServices_CanonicalPath_ShouldCreateHostForManifestSelectedBackend()
     {
         var services = new ServiceCollection();
         services.AddWistDialectServices();
@@ -157,7 +157,7 @@ public class WistDialectRuntimeBootstrapContractTests
     }
 
     [Test]
-    public void AddWistDialectServices_WithoutExplicitBackends_ShouldCreateHostForShippedBackends()
+    public void AddWistDialectServices_CanonicalPath_ShouldCreateHostForShippedBackends()
     {
         var services = new ServiceCollection();
         services.AddWistDialectServices();
@@ -206,8 +206,6 @@ public class WistDialectRuntimeBootstrapContractTests
         {
             var services = new ServiceCollection();
             services.AddWistDialectServices();
-            services.AddWistCilBackend();
-            services.AddWistInterpreterBackend();
 
             using var provider = services.BuildServiceProvider();
             var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
@@ -299,7 +297,7 @@ public class WistDialectRuntimeBootstrapContractTests
     [Test]
     public void ComposeCreateRun_CanonicalPath_RepeatedCycles_ShouldKeepDeterministicCompositeSignature()
     {
-        using var provider = WistDialectTestInfrastructure.CreateProviderWithExplicitBackends();
+        using var provider = WistDialectTestInfrastructure.CreateCanonicalProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
 
         var signatures = new List<string>();
@@ -330,8 +328,6 @@ public class WistDialectRuntimeBootstrapContractTests
     {
         var services = new ServiceCollection();
         services.AddWistDialectServices();
-        services.AddWistCilBackend();
-        services.AddWistInterpreterBackend();
 
         using var provider = services.BuildServiceProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
