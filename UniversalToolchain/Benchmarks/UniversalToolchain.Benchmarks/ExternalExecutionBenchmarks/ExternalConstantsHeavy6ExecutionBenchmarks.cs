@@ -13,7 +13,7 @@ namespace UniversalToolchain.Benchmarks.ExternalExecutionBenchmarks;
 [SimpleJob]
 [Orderer(SummaryOrderPolicy.FastestToSlowest)]
 [RankColumn]
-public sealed class ExternalConstantsHeavy6ExecutionBenchmarks : ExternalArithmeticExecutionBenchmarkEnvironmentBase
+public class ExternalConstantsHeavy6ExecutionBenchmarks : ExternalArithmeticExecutionBenchmarkEnvironmentBase
 {
     private const string WistFormula = "(A * 1.5 + B * 2.0 - C * 3.0 + D / 4.0 + E / 5.0) * 0.75 + F";
     private const string NCalcFormula = "([A] * 1.5 + [B] * 2.0 - [C] * 3.0 + [D] / 4.0 + [E] / 5.0) * 0.75 + [F]";
