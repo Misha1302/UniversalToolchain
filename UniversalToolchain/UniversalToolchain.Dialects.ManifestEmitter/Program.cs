@@ -99,11 +99,13 @@ internal static class ManifestEmitter
             aliases,
             RuntimeId(kind, canonicalAlias),
             new ManifestActivationEntry(
-                type.FullName.NotNull("Runtime activation type full name must not be null."),
-                FindRegistrarTypeFullName(type, kind)))];
+                new ManifestTypeReference(
+                    type.Assembly.GetName().Name.NotNull("Runtime activation type assembly simple name must not be null."),
+                    type.FullName.NotNull("Runtime activation type full name must not be null.")),
+                FindRegistrarTypeReference(type, kind)))];
     }
 
-    private static string? FindRegistrarTypeFullName(Type type, string kind)
+    private static ManifestTypeReference? FindRegistrarTypeReference(Type type, string kind)
     {
         if (!string.Equals(kind, BackendKind, StringComparison.Ordinal))
             return null;
@@ -111,7 +113,12 @@ internal static class ManifestEmitter
         var attribute = type.CustomAttributes.FirstOrDefault(static x => x.AttributeType.FullName == BackendRegistrarTypeAttributeFullName);
         var registrarType = attribute?.ConstructorArguments.FirstOrDefault().Value as Type;
 
-        return registrarType?.FullName;
+        if (registrarType == null)
+            return null;
+
+        return new ManifestTypeReference(
+            registrarType.Assembly.GetName().Name.NotNull("Runtime backend registrar type assembly simple name must not be null."),
+            registrarType.FullName.NotNull("Runtime backend registrar type full name must not be null."));
     }
 
     private static string RuntimeId(string kind, string canonicalAlias)
@@ -137,7 +144,13 @@ internal sealed record ManifestComponentEntry(
     string ComponentId,
     ManifestActivationEntry Activation);
 
-internal sealed record ManifestActivationEntry(string ActivationTypeFullName, string? RegistrarTypeFullName = null);
+internal sealed record ManifestActivationEntry(
+    ManifestTypeReference ActivationType,
+    ManifestTypeReference? RegistrarType = null);
+
+internal sealed record ManifestTypeReference(
+    string AssemblySimpleName,
+    string TypeFullName);
 
 internal static class JsonOptions
 {

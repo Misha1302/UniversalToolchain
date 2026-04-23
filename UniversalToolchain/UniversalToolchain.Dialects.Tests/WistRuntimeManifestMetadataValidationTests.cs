@@ -107,7 +107,9 @@ public class WistRuntimeManifestMetadataValidationTests
         {
             Assert.That(activation, Is.Not.Null);
             Assert.That(activation?.ActivationTypeFullName, Is.EqualTo("ArithmeticModule.Module.ArithmeticModuleImpl"));
+            Assert.That(activation?.ActivationAssemblySimpleName, Is.EqualTo("ArithmeticModule"));
             Assert.That(activation?.RegistrarTypeFullName, Is.Null);
+            Assert.That(activation?.RegistrarAssemblySimpleName, Is.Null);
         });
     }
 
@@ -127,9 +129,13 @@ public class WistRuntimeManifestMetadataValidationTests
         Assert.Multiple(() =>
         {
             Assert.That(cilActivation?.ActivationTypeFullName, Is.EqualTo(typeof(WistCilBackendDeclaration).FullName));
+            Assert.That(cilActivation?.ActivationAssemblySimpleName, Is.EqualTo(typeof(WistCilBackendDeclaration).Assembly.GetName().Name));
             Assert.That(cilActivation?.RegistrarTypeFullName, Is.EqualTo(typeof(WistCilDialectBackendServiceProvider).FullName));
+            Assert.That(cilActivation?.RegistrarAssemblySimpleName, Is.EqualTo(typeof(WistCilDialectBackendServiceProvider).Assembly.GetName().Name));
             Assert.That(interpreterActivation?.ActivationTypeFullName, Is.EqualTo(typeof(WistInterpreterBackendDeclaration).FullName));
+            Assert.That(interpreterActivation?.ActivationAssemblySimpleName, Is.EqualTo(typeof(WistInterpreterBackendDeclaration).Assembly.GetName().Name));
             Assert.That(interpreterActivation?.RegistrarTypeFullName, Is.EqualTo(typeof(WistInterpreterDialectBackendServiceProvider).FullName));
+            Assert.That(interpreterActivation?.RegistrarAssemblySimpleName, Is.EqualTo(typeof(WistInterpreterDialectBackendServiceProvider).Assembly.GetName().Name));
         });
     }
 

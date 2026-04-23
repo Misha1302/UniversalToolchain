@@ -13,7 +13,7 @@ public sealed class RuntimeBackendRegistrarResolverTests
             new StubAssemblyTypeLoader([]),
             new ServiceCollection().BuildServiceProvider());
 
-        var exception = Assert.Throws<InvalidOperationException>(() => resolver.Resolve(Entry("backend", null)));
+        var exception = Assert.Throws<InvalidOperationException>(() => resolver.Resolve(Entry("backend", (string?)null)));
 
         Assert.That(exception!.Message, Does.Contain("registrarTypeFullName"));
     }
@@ -22,7 +22,7 @@ public sealed class RuntimeBackendRegistrarResolverTests
     public void Resolve_WhenRegistrarTypeDoesNotImplementBackendRegistrar_ThrowsClearError()
     {
         var resolver = new DefaultRuntimeBackendRegistrarResolver(
-            new StubAssemblyTypeLoader([(typeof(NotARegistrar).FullName!, typeof(NotARegistrar))]),
+            new StubAssemblyTypeLoader([("TestAssembly", typeof(NotARegistrar).FullName!, typeof(NotARegistrar))]),
             new ServiceCollection().BuildServiceProvider());
 
         var exception = Assert.Throws<InvalidOperationException>(() => resolver.Resolve(Entry("backend", typeof(NotARegistrar).FullName)));
@@ -34,7 +34,7 @@ public sealed class RuntimeBackendRegistrarResolverTests
     public void Resolve_WhenRegistrarBackendIdDoesNotMatchManifestAlias_ThrowsClearError()
     {
         var resolver = new DefaultRuntimeBackendRegistrarResolver(
-            new StubAssemblyTypeLoader([(typeof(MismatchedRegistrar).FullName!, typeof(MismatchedRegistrar))]),
+            new StubAssemblyTypeLoader([("TestAssembly", typeof(MismatchedRegistrar).FullName!, typeof(MismatchedRegistrar))]),
             new ServiceCollection().BuildServiceProvider());
 
         var exception = Assert.Throws<InvalidOperationException>(() => resolver.Resolve(Entry("selected", typeof(MismatchedRegistrar).FullName)));
@@ -48,7 +48,7 @@ public sealed class RuntimeBackendRegistrarResolverTests
         var services = new ServiceCollection();
         services.AddSingleton(new RegistrarDependency("injected"));
         using var provider = services.BuildServiceProvider();
-        var typeLoader = new StubAssemblyTypeLoader([(typeof(DependencyBackedRegistrar).FullName!, typeof(DependencyBackedRegistrar))]);
+        var typeLoader = new StubAssemblyTypeLoader([("TestAssembly", typeof(DependencyBackedRegistrar).FullName!, typeof(DependencyBackedRegistrar))]);
         var resolver = new DefaultRuntimeBackendRegistrarResolver(typeLoader, provider);
 
         var registrar = resolver.Resolve(Entry("backend", typeof(DependencyBackedRegistrar).FullName));
@@ -57,8 +57,37 @@ public sealed class RuntimeBackendRegistrarResolverTests
         {
             Assert.That(registrar, Is.InstanceOf<DependencyBackedRegistrar>());
             Assert.That(((DependencyBackedRegistrar)registrar).Dependency.Value, Is.EqualTo("injected"));
-            Assert.That(typeLoader.LoadedTypes, Is.EqualTo(new[] { typeof(DependencyBackedRegistrar).FullName }));
+            Assert.That(typeLoader.LoadedTypes, Is.EqualTo(new[] { "TestAssembly::" + typeof(DependencyBackedRegistrar).FullName }));
         });
+    }
+
+    [Test]
+    public void Resolve_WhenRegistrarAssemblyIsExplicit_LoadsFromRegistrarAssembly()
+    {
+        var resolver = new DefaultRuntimeBackendRegistrarResolver(
+            new StubAssemblyTypeLoader([("RegistrarAssembly", typeof(SimpleRegistrar).FullName!, typeof(SimpleRegistrar))]),
+            new ServiceCollection().BuildServiceProvider());
+
+        var entry = Entry(
+            "backend",
+            new RuntimeTypeReference("RegistrarAssembly", typeof(SimpleRegistrar).FullName!));
+
+        var registrar = resolver.Resolve(entry);
+
+        Assert.That(registrar, Is.InstanceOf<SimpleRegistrar>());
+    }
+
+    [Test]
+    public void Resolve_WhenLegacyRegistrarAssemblyIsMissing_UsesBackendAssemblyFallback()
+    {
+        var resolver = new DefaultRuntimeBackendRegistrarResolver(
+            new StubAssemblyTypeLoader([("TestAssembly", typeof(SimpleRegistrar).FullName!, typeof(SimpleRegistrar))]),
+            new ServiceCollection().BuildServiceProvider());
+
+        var entry = Entry("backend", typeof(SimpleRegistrar).FullName);
+        var registrar = resolver.Resolve(entry);
+
+        Assert.That(registrar, Is.InstanceOf<SimpleRegistrar>());
     }
 
     private static RuntimeComponentManifestEntry Entry(string alias, string? registrarTypeFullName)
@@ -69,6 +98,17 @@ public sealed class RuntimeBackendRegistrarResolverTests
             RuntimeComponentIdFactory.Create(RuntimeComponentKind.Backend, alias),
             "TestAssembly",
             new RuntimeComponentActivationInfo(typeof(object).FullName!, registrarTypeFullName));
+
+    private static RuntimeComponentManifestEntry Entry(string alias, RuntimeTypeReference registrarTypeReference)
+        => new(
+            RuntimeComponentKind.Backend,
+            alias,
+            [],
+            RuntimeComponentIdFactory.Create(RuntimeComponentKind.Backend, alias),
+            "TestAssembly",
+            new RuntimeComponentActivationInfo(
+                new RuntimeTypeReference("TestAssembly", typeof(object).FullName!),
+                registrarTypeReference));
 
     private sealed class NotARegistrar;
 
@@ -95,12 +135,21 @@ public sealed class RuntimeBackendRegistrarResolverTests
 
     private sealed record RegistrarDependency(string Value);
 
-    private sealed class StubAssemblyTypeLoader(IEnumerable<(string FullName, Type Type)> types) : IRuntimeAssemblyTypeLoader
+    private sealed class SimpleRegistrar : IDialectBackendRuntimeRegistrar
     {
-        private readonly IReadOnlyDictionary<string, Type> _types = types.ToDictionary(
-            static x => x.FullName,
-            static x => x.Type,
-            StringComparer.Ordinal);
+        public DialectBackendId BackendId { get; } = new("backend");
+        public IReadOnlyList<string> SupportedIntrinsics => [];
+
+        public void RegisterRuntime(IServiceCollection services, DialectBackendRuntimeConfiguration configuration)
+        {
+        }
+    }
+
+    private sealed class StubAssemblyTypeLoader(IEnumerable<(string AssemblySimpleName, string FullName, Type Type)> types) : IRuntimeAssemblyTypeLoader
+    {
+        private readonly IReadOnlyDictionary<(string AssemblySimpleName, string FullName), Type> _types = types.ToDictionary(
+            static x => (x.AssemblySimpleName, x.FullName),
+            static x => x.Type);
         private readonly List<string> _loadedTypes = [];
 
         public IReadOnlyList<string> LoadedTypes => _loadedTypes;
@@ -112,9 +161,8 @@ public sealed class RuntimeBackendRegistrarResolverTests
 
         public Type LoadType(string assemblySimpleName, string activationTypeFullName)
         {
-            Assert.That(assemblySimpleName, Is.EqualTo("TestAssembly"));
-            _loadedTypes.Add(activationTypeFullName);
-            return _types[activationTypeFullName];
+            _loadedTypes.Add(assemblySimpleName + "::" + activationTypeFullName);
+            return _types[(assemblySimpleName, activationTypeFullName)];
         }
     }
 }

@@ -35,7 +35,9 @@ public sealed class DefaultRuntimeComponentResolver : IRuntimeComponentResolver
 
     private RuntimeComponentDescriptor ResolveExactActivation(RuntimeComponentManifestEntry entry)
     {
-        var type = _assemblyTypeLoader.LoadType(entry.AssemblySimpleName, entry.Activation!.ActivationTypeFullName);
+        var activationTypeReference = entry.Activation!.ActivationType;
+        var assemblySimpleName = ResolveAssemblySimpleName(activationTypeReference.AssemblySimpleName, entry.AssemblySimpleName);
+        var type = _assemblyTypeLoader.LoadType(assemblySimpleName, activationTypeReference.TypeFullName);
         var export = type.GetCustomAttribute<DialectRuntimeExportAttribute>(false);
         if (export == null)
             Thrower.InvalidOpEx(
@@ -151,6 +153,13 @@ public sealed class DefaultRuntimeComponentResolver : IRuntimeComponentResolver
     }
 
     private static string GetTypeName(Type type) => type.FullName ?? type.Name;
+
+    private static string ResolveAssemblySimpleName(string assemblySimpleName, string fallbackAssemblySimpleName)
+    {
+        return string.Equals(assemblySimpleName, RuntimeAssemblyIdentity.UnspecifiedAssemblySimpleName, StringComparison.Ordinal)
+            ? fallbackAssemblySimpleName
+            : assemblySimpleName;
+    }
 
     private sealed record RuntimeComponentExportDescriptor(
         RuntimeComponentId Id,

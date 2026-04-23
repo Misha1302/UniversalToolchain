@@ -131,7 +131,7 @@ public class WistDialectExecutionIntegrationTests
 
         var ex = Assert.Throws<InvalidOperationException>(() => host.GetCore("compiler"));
 
-        Assert.That(ex!.Message, Does.Contain("does not enable the 'compiler' backend"));
+        Assert.That(ex!.Message, Does.Contain("Unknown execution mode 'compiler'"));
     }
 
     [Test]
