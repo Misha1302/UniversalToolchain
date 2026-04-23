@@ -12,7 +12,7 @@ namespace UniversalToolchain.Benchmarks.ExternalExecutionBenchmarks;
 [MemoryDiagnoser]
 [Orderer(SummaryOrderPolicy.FastestToSlowest)]
 [RankColumn]
-public sealed class ExternalWideExpression11ExecutionBenchmarks : ExternalArithmeticExecutionBenchmarkEnvironmentBase
+public class ExternalWideExpression11ExecutionBenchmarks : ExternalArithmeticExecutionBenchmarkEnvironmentBase
 {
     private const string WistFormula = "(A + B + C + D) * (E - F + G) / (H + 1.0) + I * J - K / 3.0";
     private const string NCalcFormula = "([A] + [B] + [C] + [D]) * ([E] - [F] + [G]) / ([H] + 1.0) + [I] * [J] - [K] / 3.0";

@@ -130,7 +130,7 @@ def render(case):
     names = letters(case['arity'])
     class_name = case['class']
     context = case['context']
-    src = f"""{HEADER}public sealed class {class_name} : ExternalArithmeticExecutionUnrolled16BenchmarkEnvironmentBase
+    src = f"""{HEADER}public class {class_name} : ExternalArithmeticExecutionUnrolled16BenchmarkEnvironmentBase
 {{
     private const string WistFormula = \"{case['wist']}\";
     private const string NCalcFormula = \"{case['ncalc']}\";

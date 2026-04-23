@@ -12,7 +12,7 @@ namespace UniversalToolchain.Benchmarks.ExternalExecutionBenchmarks.Unrolled16;
 [MemoryDiagnoser]
 [Orderer(SummaryOrderPolicy.FastestToSlowest)]
 [RankColumn]
-public sealed class ExternalSimple3ExecutionUnrolled16Benchmarks : ExternalArithmeticExecutionUnrolled16BenchmarkEnvironmentBase
+public class ExternalSimple3ExecutionUnrolled16Benchmarks : ExternalArithmeticExecutionUnrolled16BenchmarkEnvironmentBase
 {
     private const string WistFormula = "A + B * C / 5.0";
     private const string NCalcFormula = "[A] + [B] * [C] / 5.0";
