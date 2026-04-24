@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 from pathlib import Path
 
+UnrollCount = 128
+
 ROOT = Path(__file__).resolve().parents[1]
 
 HEADER = """using System.Runtime.CompilerServices;
@@ -12,7 +14,7 @@ using DynamicMethodCalling.Core;
 using NCalc;
 using NCalc.LambdaCompilation;
 
-namespace UniversalToolchain.Benchmarks.ExternalExecutionBenchmarks.Unrolled16;
+namespace UniversalToolchain.Benchmarks.ExternalExecutionBenchmarks.Unrolled;
 
 [MemoryDiagnoser]
 [Orderer(SummaryOrderPolicy.FastestToSlowest)]
@@ -21,8 +23,8 @@ namespace UniversalToolchain.Benchmarks.ExternalExecutionBenchmarks.Unrolled16;
 
 CASES = [
     {
-        "class": "ExternalSimple3ExecutionUnrolled16Benchmarks",
-        "context": "ExternalBenchContext3Unrolled16",
+        "class": f"ExternalSimple3ExecutionUnrolled{UnrollCount}Benchmarks",
+        "context": f"ExternalBenchContext3Unrolled",
         "arity": 3,
         "wist": "A + B * C / 5.0",
         "ncalc": "[A] + [B] * [C] / 5.0",
@@ -30,8 +32,8 @@ CASES = [
         "core": "a + b * c / 5.0",
     },
     {
-        "class": "ExternalMedium8ExecutionUnrolled16Benchmarks",
-        "context": "ExternalBenchContext8Unrolled16",
+        "class": f"ExternalMedium8ExecutionUnrolled{UnrollCount}Benchmarks",
+        "context": f"ExternalBenchContext8Unrolled",
         "arity": 8,
         "wist": "((A + B) * (C - D) / (E + 1.0)) + F * G - H / 3.0",
         "ncalc": "(([A] + [B]) * ([C] - [D]) / ([E] + 1.0)) + [F] * [G] - [H] / 3.0",
@@ -39,8 +41,8 @@ CASES = [
         "core": "((a + b) * (c - d) / (e + 1.0)) + f * g - h / 3.0",
     },
     {
-        "class": "ExternalDeepChain6ExecutionUnrolled16Benchmarks",
-        "context": "ExternalBenchContext6Unrolled16",
+        "class": f"ExternalDeepChain6ExecutionUnrolled{UnrollCount}Benchmarks",
+        "context": f"ExternalBenchContext6Unrolled",
         "arity": 6,
         "wist": "((((A * 1.1 + B) * 1.2 + C) * 1.3 + D) * 1.4 + E) / (F + 1.0)",
         "ncalc": "(((([A] * 1.1 + [B]) * 1.2 + [C]) * 1.3 + [D]) * 1.4 + [E]) / ([F] + 1.0)",
@@ -48,8 +50,8 @@ CASES = [
         "core": "((((a * 1.1 + b) * 1.2 + c) * 1.3 + d) * 1.4 + e) / (f + 1.0)",
     },
     {
-        "class": "ExternalRepeatedSubexpressions5ExecutionUnrolled16Benchmarks",
-        "context": "ExternalBenchContext5Unrolled16",
+        "class": f"ExternalRepeatedSubexpressions5ExecutionUnrolled{UnrollCount}Benchmarks",
+        "context": f"ExternalBenchContext5Unrolled",
         "arity": 5,
         "wist": "((A * B) + (A * B) + (A * B) + (C * D)) / (E + 1.0)",
         "ncalc": "(([A] * [B]) + ([A] * [B]) + ([A] * [B]) + ([C] * [D])) / ([E] + 1.0)",
@@ -57,8 +59,8 @@ CASES = [
         "core": "((a * b) + (a * b) + (a * b) + (c * d)) / (e + 1.0)",
     },
     {
-        "class": "ExternalWideExpression11ExecutionUnrolled16Benchmarks",
-        "context": "ExternalBenchContext11Unrolled16",
+        "class": f"ExternalWideExpression11ExecutionUnrolled{UnrollCount}Benchmarks",
+        "context": f"ExternalBenchContext11Unrolled",
         "arity": 11,
         "wist": "(A + B + C + D) * (E - F + G) / (H + 1.0) + I * J - K / 3.0",
         "ncalc": "([A] + [B] + [C] + [D]) * ([E] - [F] + [G]) / ([H] + 1.0) + [I] * [J] - [K] / 3.0",
@@ -66,8 +68,8 @@ CASES = [
         "core": "(a + b + c + d) * (e - f + g) / (h + 1.0) + i * j - k / 3.0",
     },
     {
-        "class": "ExternalConstantsHeavy6ExecutionUnrolled16Benchmarks",
-        "context": "ExternalBenchContext6Unrolled16",
+        "class": f"ExternalConstantsHeavy6ExecutionUnrolled{UnrollCount}Benchmarks",
+        "context": f"ExternalBenchContext6Unrolled",
         "arity": 6,
         "wist": "(A * 1.5 + B * 2.0 - C * 3.0 + D / 4.0 + E / 5.0) * 0.75 + F",
         "ncalc": "([A] * 1.5 + [B] * 2.0 - [C] * 3.0 + [D] / 4.0 + [E] / 5.0) * 0.75 + [F]",
@@ -107,7 +109,7 @@ def context_setters(context: str, names, idx='i'):
 
 def unrolled_lines(kind: str, names, context_name='_nCalcContext'):
     lines = []
-    for i in range(16):
+    for i in range(UnrollCount):
         lines.append(f"        var i{i} = NextIndex();")
         if kind == 'csharp':
             args = arg_access(names, f"i{i}")
@@ -130,7 +132,7 @@ def render(case):
     names = letters(case['arity'])
     class_name = case['class']
     context = case['context']
-    src = f"""{HEADER}public class {class_name} : ExternalArithmeticExecutionUnrolled16BenchmarkEnvironmentBase
+    src = f"""{HEADER}public class {class_name} : ExternalArithmeticExecutionUnrolledBenchmarkEnvironmentBase
 {{
     private const string WistFormula = \"{case['wist']}\";
     private const string NCalcFormula = \"{case['ncalc']}\";
@@ -164,7 +166,7 @@ def render(case):
     }}
 
     [Benchmark(Baseline = true, OperationsPerInvoke = 16)]
-    public double CSharp_NoInliningMethod_Unrolled16()
+    public double CSharp_NoInliningMethod_Unrolled{UnrollCount}()
     {{
         var sum = 0.0;
 
@@ -174,7 +176,7 @@ def render(case):
     }}
 
     [Benchmark(OperationsPerInvoke = 16)]
-    public double DynamicExpresso_Delegate_Unrolled16()
+    public double DynamicExpresso_Delegate_Unrolled{UnrollCount}()
     {{
         var sum = 0.0;
 
@@ -184,7 +186,7 @@ def render(case):
     }}
 
     [Benchmark(OperationsPerInvoke = 16)]
-    public double NCalc_Lambda_Unrolled16()
+    public double NCalc_Lambda_Unrolled{UnrollCount}()
     {{
         var sum = 0.0;
 
@@ -194,7 +196,7 @@ def render(case):
     }}
 
     [Benchmark(OperationsPerInvoke = 16)]
-    public double Wist_Cil_FastInvoker_Unrolled16()
+    public double Wist_Cil_FastInvoker_Unrolled{UnrollCount}()
     {{
         var sum = 0.0;
 

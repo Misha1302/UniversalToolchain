@@ -1,13 +1,13 @@
-namespace UniversalToolchain.Benchmarks.ExternalExecutionBenchmarks.Unrolled16;
+namespace UniversalToolchain.Benchmarks.ExternalExecutionBenchmarks.Unrolled;
 
-public class ExternalBenchContext3Unrolled16
+public class ExternalBenchContext3Unrolled
 {
     public double A { get; set; }
     public double B { get; set; }
     public double C { get; set; }
 }
 
-public class ExternalBenchContext5Unrolled16
+public class ExternalBenchContext5Unrolled
 {
     public double A { get; set; }
     public double B { get; set; }
@@ -16,7 +16,7 @@ public class ExternalBenchContext5Unrolled16
     public double E { get; set; }
 }
 
-public class ExternalBenchContext6Unrolled16
+public class ExternalBenchContext6Unrolled
 {
     public double A { get; set; }
     public double B { get; set; }
@@ -26,7 +26,7 @@ public class ExternalBenchContext6Unrolled16
     public double F { get; set; }
 }
 
-public class ExternalBenchContext8Unrolled16
+public class ExternalBenchContext8Unrolled
 {
     public double A { get; set; }
     public double B { get; set; }
@@ -38,7 +38,7 @@ public class ExternalBenchContext8Unrolled16
     public double H { get; set; }
 }
 
-public class ExternalBenchContext11Unrolled16
+public class ExternalBenchContext11Unrolled
 {
     public double A { get; set; }
     public double B { get; set; }

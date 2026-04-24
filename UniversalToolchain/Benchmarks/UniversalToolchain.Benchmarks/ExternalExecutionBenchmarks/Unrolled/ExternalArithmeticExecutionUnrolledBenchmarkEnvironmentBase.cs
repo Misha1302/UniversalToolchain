@@ -1,16 +1,15 @@
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
-using DynamicMethodCalling.Core;
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
 using UniversalToolchain.Dialects.Wist.Presets;
 
-namespace UniversalToolchain.Benchmarks.ExternalExecutionBenchmarks.Unrolled16;
+namespace UniversalToolchain.Benchmarks.ExternalExecutionBenchmarks.Unrolled;
 
-public abstract class ExternalArithmeticExecutionUnrolled16BenchmarkEnvironmentBase
+public abstract class ExternalArithmeticExecutionUnrolledBenchmarkEnvironmentBase
 {
     protected const int DataSize = 4096;
 
