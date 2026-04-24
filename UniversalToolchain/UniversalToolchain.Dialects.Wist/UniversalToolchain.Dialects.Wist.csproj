@@ -37,6 +37,7 @@
         <ProjectReference Include="..\UniversalToolchain.Dialects.Core\UniversalToolchain.Dialects.Core.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Dialects.Frontend\UniversalToolchain.Dialects.Frontend.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Dialects.Integration\UniversalToolchain.Dialects.Integration.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Features.Abstractions\UniversalToolchain.Features.Abstractions.csproj"/>
         <ProjectReference Include="..\VariablesModule\VariablesModule.csproj"/>
         <ProjectReference Include="..\WhitespacesModule\WhitespacesModule.csproj"/>
     </ItemGroup>
