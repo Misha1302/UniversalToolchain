@@ -9,36 +9,37 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1"/>
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.1"/>
-        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0"/>
-        <PackageReference Include="NUnit" Version="4.2.2"/>
-        <PackageReference Include="NUnit.Analyzers" Version="4.4.0"/>
-        <PackageReference Include="NUnit3TestAdapter" Version="4.6.0"/>
-        <PackageReference Include="System.Reflection.MetadataLoadContext" Version="10.0.0"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.1" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+        <PackageReference Include="NUnit" Version="4.2.2" />
+        <PackageReference Include="NUnit.Analyzers" Version="4.4.0" />
+        <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
+        <PackageReference Include="System.Reflection.MetadataLoadContext" Version="10.0.0" />
     </ItemGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\ExecutorLoggerModule\ExecutorLoggerModule.csproj"/>
-        <ProjectReference Include="..\UniversalToolchain.Dialects.Abstractions\UniversalToolchain.Dialects.Abstractions.csproj"/>
-        <ProjectReference Include="..\UniversalToolchain.Dialects.Core\UniversalToolchain.Dialects.Core.csproj"/>
-        <ProjectReference Include="..\UniversalToolchain.Dialects.Parsing\UniversalToolchain.Dialects.Parsing.csproj"/>
-        <ProjectReference Include="..\UniversalToolchain.Dialects.Integration\UniversalToolchain.Dialects.Integration.csproj"/>
-        <ProjectReference Include="..\UniversalToolchain.Dialects.Frontend\UniversalToolchain.Dialects.Frontend.csproj"/>
-        <ProjectReference Include="..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj"/>
-        <ProjectReference Include="..\UniversalToolchain.Features.Abstractions\UniversalToolchain.Features.Abstractions.csproj"/>
-        <ProjectReference Include="..\Wistc\Wistc.csproj"/>
-        <ProjectReference Include="..\NumbersModule\NumbersModule.csproj"/>
+        <ProjectReference Include="..\ExecutorLoggerModule\ExecutorLoggerModule.csproj" />
+        <ProjectReference Include="..\UniversalToolchain.Dialects.Abstractions\UniversalToolchain.Dialects.Abstractions.csproj" />
+        <ProjectReference Include="..\UniversalToolchain.Dialects.Core\UniversalToolchain.Dialects.Core.csproj" />
+        <ProjectReference Include="..\UniversalToolchain.Dialects.Parsing\UniversalToolchain.Dialects.Parsing.csproj" />
+        <ProjectReference Include="..\UniversalToolchain.Dialects.Integration\UniversalToolchain.Dialects.Integration.csproj" />
+        <ProjectReference Include="..\UniversalToolchain.Dialects.Frontend\UniversalToolchain.Dialects.Frontend.csproj" />
+        <ProjectReference Include="..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj" />
+        <ProjectReference Include="..\UniversalToolchain.Features.Abstractions\UniversalToolchain.Features.Abstractions.csproj" />
+        <ProjectReference Include="..\Wistc\Wistc.csproj" />
+        <ProjectReference Include="..\NumbersModule\NumbersModule.csproj" />
+        <ProjectReference Include="..\UniversalToolchain.Features.Core\UniversalToolchain.Features.Core.csproj" />
     </ItemGroup>
 
     <ItemGroup>
-        <Compile Include="..\Tests\Infrastructure\BackendParityInfrastructure.cs" Link="Infrastructure\BackendParityInfrastructure.cs"/>
-        <Compile Include="..\Tests\Infrastructure\BackendResultAssertions.cs" Link="Infrastructure\BackendResultAssertions.cs"/>
-        <Compile Include="..\Tests\Infrastructure\DialectTestHostInfrastructure.cs" Link="Infrastructure\DialectTestHostInfrastructure.cs"/>
+        <Compile Include="..\Tests\Infrastructure\BackendParityInfrastructure.cs" Link="Infrastructure\BackendParityInfrastructure.cs" />
+        <Compile Include="..\Tests\Infrastructure\BackendResultAssertions.cs" Link="Infrastructure\BackendResultAssertions.cs" />
+        <Compile Include="..\Tests\Infrastructure\DialectTestHostInfrastructure.cs" Link="Infrastructure\DialectTestHostInfrastructure.cs" />
     </ItemGroup>
 
     <ItemGroup>
-        <Using Include="NUnit.Framework"/>
+        <Using Include="NUnit.Framework" />
     </ItemGroup>
 
     <ItemGroup>
