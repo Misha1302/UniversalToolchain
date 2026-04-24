@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from pathlib import Path
 
-UnrollCount = 128
+UnrollCount = 1024
 
 ROOT = Path(__file__).resolve().parents[1]
 
