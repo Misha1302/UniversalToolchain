@@ -42,6 +42,22 @@ public sealed class WistLanguageFeatureCatalog : ILanguageFeatureCatalog
         return
         [
             new(
+                WistLanguageFeatureIds.IfExpression,
+                "If expression",
+                LanguageFeatureKind.Syntax,
+                ["IfExpression"],
+                [],
+                [
+                    new(
+                        "if",
+                        LanguageFeatureSymbolKind.SyntaxForm,
+                        "if condition then expr else expr",
+                        "Selects one of two expression branches based on a boolean condition.")
+                ],
+                InterpreterAndCilBackends,
+                "Provides expression-level conditional branching."),
+
+            new(
                 WistLanguageFeatureIds.ArithmeticExpressions,
                 "Arithmetic expressions",
                 LanguageFeatureKind.Syntax,

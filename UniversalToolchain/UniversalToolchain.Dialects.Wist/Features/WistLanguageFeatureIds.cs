@@ -7,6 +7,7 @@ namespace UniversalToolchain.Dialects.Wist.Features;
 /// </summary>
 public static class WistLanguageFeatureIds
 {
+    public static readonly LanguageFeatureId IfExpression = new("IfExpression");
     public static readonly LanguageFeatureId SafeMathFunctions = new("SafeMathFunctions");
     public static readonly LanguageFeatureId StandardNumbers = new("StandardNumbers");
     public static readonly LanguageFeatureId NativeNumbers = new("NativeNumbers");
