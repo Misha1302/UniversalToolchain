@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <LangVersion>14</LangVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\UniversalToolchain.Features.Abstractions\UniversalToolchain.Features.Abstractions.csproj" />
+        <ProjectReference Include="..\UniversalToolchain.Features.Core\UniversalToolchain.Features.Core.csproj" />
+        <ProjectReference Include="..\UniversalToolchain.Rules.Abstractions\UniversalToolchain.Rules.Abstractions.csproj" />
+    </ItemGroup>
+
+</Project>

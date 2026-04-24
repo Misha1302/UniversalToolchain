@@ -26,7 +26,10 @@
         <ProjectReference Include="..\UniversalToolchain.Dialects.Integration\UniversalToolchain.Dialects.Integration.csproj" />
         <ProjectReference Include="..\UniversalToolchain.Dialects.Frontend\UniversalToolchain.Dialects.Frontend.csproj" />
         <ProjectReference Include="..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj" />
+        <ProjectReference Include="..\UniversalToolchain.Functions.Abstractions\UniversalToolchain.Functions.Abstractions.csproj" />
         <ProjectReference Include="..\UniversalToolchain.Features.Abstractions\UniversalToolchain.Features.Abstractions.csproj" />
+        <ProjectReference Include="..\UniversalToolchain.Rules.Abstractions\UniversalToolchain.Rules.Abstractions.csproj" />
+        <ProjectReference Include="..\UniversalToolchain.Rules.Core\UniversalToolchain.Rules.Core.csproj" />
         <ProjectReference Include="..\Wistc\Wistc.csproj" />
         <ProjectReference Include="..\NumbersModule\NumbersModule.csproj" />
         <ProjectReference Include="..\UniversalToolchain.Features.Core\UniversalToolchain.Features.Core.csproj" />
