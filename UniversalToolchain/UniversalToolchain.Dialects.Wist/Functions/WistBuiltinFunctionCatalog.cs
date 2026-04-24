@@ -10,7 +10,7 @@ public sealed class WistBuiltinFunctionCatalog : IBuiltinFunctionCatalog
     private readonly IReadOnlyList<BuiltinFunctionDescriptor> _descriptors;
 
     public WistBuiltinFunctionCatalog()
-        : this([])
+        : this(BuildDefaultDescriptors())
     {
     }
 
@@ -129,5 +129,50 @@ public sealed class WistBuiltinFunctionCatalog : IBuiltinFunctionCatalog
                     null,
                     [])
             ]);
+    }
+
+    private static IReadOnlyList<BuiltinFunctionDescriptor> BuildDefaultDescriptors()
+    {
+        return
+        [
+            new BuiltinFunctionDescriptor(
+                "abs",
+                WistLanguageFeatureIds.SafeMathFunctions,
+                [new FunctionParameterDescriptor("value", WistFunctionTypeDescriptors.Number)],
+                WistFunctionTypeDescriptors.Number,
+                FunctionPurity.Pure,
+                ["cil", "interpreter"]),
+            new BuiltinFunctionDescriptor(
+                "clamp",
+                WistLanguageFeatureIds.SafeMathFunctions,
+                [
+                    new FunctionParameterDescriptor("value", WistFunctionTypeDescriptors.Number),
+                    new FunctionParameterDescriptor("min", WistFunctionTypeDescriptors.Number),
+                    new FunctionParameterDescriptor("max", WistFunctionTypeDescriptors.Number)
+                ],
+                WistFunctionTypeDescriptors.Number,
+                FunctionPurity.Pure,
+                ["cil", "interpreter"]),
+            new BuiltinFunctionDescriptor(
+                "max",
+                WistLanguageFeatureIds.SafeMathFunctions,
+                [
+                    new FunctionParameterDescriptor("left", WistFunctionTypeDescriptors.Number),
+                    new FunctionParameterDescriptor("right", WistFunctionTypeDescriptors.Number)
+                ],
+                WistFunctionTypeDescriptors.Number,
+                FunctionPurity.Pure,
+                ["cil", "interpreter"]),
+            new BuiltinFunctionDescriptor(
+                "min",
+                WistLanguageFeatureIds.SafeMathFunctions,
+                [
+                    new FunctionParameterDescriptor("left", WistFunctionTypeDescriptors.Number),
+                    new FunctionParameterDescriptor("right", WistFunctionTypeDescriptors.Number)
+                ],
+                WistFunctionTypeDescriptors.Number,
+                FunctionPurity.Pure,
+                ["cil", "interpreter"])
+        ];
     }
 }

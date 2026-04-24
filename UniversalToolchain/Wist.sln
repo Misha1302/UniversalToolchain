@@ -140,6 +140,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniversalToolchain.Rules.Co
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniversalToolchain.Functions.Abstractions", "UniversalToolchain.Functions.Abstractions\UniversalToolchain.Functions.Abstractions.csproj", "{094940A9-5BFF-42A1-8DC6-7B2AF90F2936}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SafeMathFunctionsModule", "SafeMathFunctionsModule\SafeMathFunctionsModule.csproj", "{0F3A98B6-40D5-4FA4-8BAF-1498EA76E028}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -870,6 +872,18 @@ Global
 		{094940A9-5BFF-42A1-8DC6-7B2AF90F2936}.Release|x64.Build.0 = Release|Any CPU
 		{094940A9-5BFF-42A1-8DC6-7B2AF90F2936}.Release|x86.ActiveCfg = Release|Any CPU
 		{094940A9-5BFF-42A1-8DC6-7B2AF90F2936}.Release|x86.Build.0 = Release|Any CPU
+		{0F3A98B6-40D5-4FA4-8BAF-1498EA76E028}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0F3A98B6-40D5-4FA4-8BAF-1498EA76E028}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0F3A98B6-40D5-4FA4-8BAF-1498EA76E028}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{0F3A98B6-40D5-4FA4-8BAF-1498EA76E028}.Debug|x64.Build.0 = Debug|Any CPU
+		{0F3A98B6-40D5-4FA4-8BAF-1498EA76E028}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{0F3A98B6-40D5-4FA4-8BAF-1498EA76E028}.Debug|x86.Build.0 = Debug|Any CPU
+		{0F3A98B6-40D5-4FA4-8BAF-1498EA76E028}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0F3A98B6-40D5-4FA4-8BAF-1498EA76E028}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0F3A98B6-40D5-4FA4-8BAF-1498EA76E028}.Release|x64.ActiveCfg = Release|Any CPU
+		{0F3A98B6-40D5-4FA4-8BAF-1498EA76E028}.Release|x64.Build.0 = Release|Any CPU
+		{0F3A98B6-40D5-4FA4-8BAF-1498EA76E028}.Release|x86.ActiveCfg = Release|Any CPU
+		{0F3A98B6-40D5-4FA4-8BAF-1498EA76E028}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

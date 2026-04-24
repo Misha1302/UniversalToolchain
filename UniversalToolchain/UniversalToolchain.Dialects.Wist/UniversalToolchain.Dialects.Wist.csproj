@@ -20,6 +20,7 @@
         <ProjectReference Include="..\BasicCore\BasicCore.csproj"/>
         <ProjectReference Include="..\BytecodeDynamicMethodsCompiler\BytecodeDynamicMethodsCompiler.csproj"/>
         <ProjectReference Include="..\CommentsModule\CommentsModule.csproj"/>
+        <ProjectReference Include="..\CommonExceptions\CommonExceptions.csproj"/>
         <ProjectReference Include="..\ConditionsModule\ConditionsModule.csproj"/>
         <ProjectReference Include="..\CSharpInteropModule\CSharpInteropModule.csproj"/>
         <ProjectReference Include="..\EqualityModule\EqualityModule.csproj"/>
@@ -33,6 +34,7 @@
         <ProjectReference Include="..\NumbersModule\NumbersModule.csproj"/>
         <ProjectReference Include="..\ParametersSetterModule\ParametersSetterModule.csproj"/>
         <ProjectReference Include="..\ScopesModule\ScopesModule.csproj"/>
+        <ProjectReference Include="..\SafeMathFunctionsModule\SafeMathFunctionsModule.csproj"/>
         <ProjectReference Include="..\SemicolonAsNewLineModule\SemicolonAsNewLineModule.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Dialects.Core\UniversalToolchain.Dialects.Core.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Dialects.Frontend\UniversalToolchain.Dialects.Frontend.csproj"/>

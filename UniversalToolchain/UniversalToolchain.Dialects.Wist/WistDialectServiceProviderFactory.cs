@@ -4,6 +4,10 @@ using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core.ServiceCollection;
 using UniversalToolchain.Dialects.Integration;
+using UniversalToolchain.Dialects.Wist.Features;
+using UniversalToolchain.Dialects.Wist.Functions;
+using UniversalToolchain.Features.Abstractions;
+using UniversalToolchain.Functions.Abstractions;
 using ServiceLifetime = Microsoft.Extensions.DependencyInjection.ServiceLifetime;
 
 namespace UniversalToolchain.Dialects.Wist;
@@ -37,6 +41,10 @@ public sealed class WistDialectServiceProviderFactory
         var services = new ServiceCollection();
         services.AddNeutralRuntimeInfrastructure();
         services.AddBasicFrontendPipelineDefaults();
+        services.AddSingleton(configuration);
+        services.AddSingleton<ILanguageFeatureCatalog, WistLanguageFeatureCatalog>();
+        services.AddSingleton<IBuiltinFunctionCatalog, WistBuiltinFunctionCatalog>();
+        services.AddSingleton<WistBuiltinFunctionBindingResolver>();
 
         RegisterModules(services, configuration.FrontendModules, typeof(IFrontendCoreModule), ServiceLifetime.Singleton);
         RegisterModules(services, configuration.IrModules, typeof(IIRProcessingModule), ServiceLifetime.Transient);

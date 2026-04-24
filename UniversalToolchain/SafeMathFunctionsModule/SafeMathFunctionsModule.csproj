@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <LangVersion>14</LangVersion>
+        <EmitDialectRuntimeManifest>true</EmitDialectRuntimeManifest>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\BasicCore\BasicCore.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Dialects.Abstractions\UniversalToolchain.Dialects.Abstractions.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Dialects.Integration\UniversalToolchain.Dialects.Integration.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.1"/>
+    </ItemGroup>
+
+</Project>

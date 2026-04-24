@@ -231,6 +231,37 @@ public sealed class WistLanguageFeatureCatalog : ILanguageFeatureCatalog
                 "Provides native numeric values for typed execution profiles."),
 
             new(
+                WistLanguageFeatureIds.SafeMathFunctions,
+                "Safe math functions",
+                LanguageFeatureKind.FunctionSet,
+                ["NativeTypes", "SafeMathFunctions"],
+                [],
+                [
+                    new(
+                        "min",
+                        LanguageFeatureSymbolKind.Function,
+                        "min(number left, number right) -> number",
+                        "Returns the smaller numeric value."),
+                    new(
+                        "max",
+                        LanguageFeatureSymbolKind.Function,
+                        "max(number left, number right) -> number",
+                        "Returns the larger numeric value."),
+                    new(
+                        "abs",
+                        LanguageFeatureSymbolKind.Function,
+                        "abs(number value) -> number",
+                        "Returns the absolute numeric value."),
+                    new(
+                        "clamp",
+                        LanguageFeatureSymbolKind.Function,
+                        "clamp(number value, number min, number max) -> number",
+                        "Clamps a numeric value into an inclusive range.")
+                ],
+                InterpreterAndCilBackends,
+                "Provides pure safe numeric helper functions for restricted formula and rule DSLs."),
+
+            new(
                 WistLanguageFeatureIds.Scopes,
                 "Scopes",
                 LanguageFeatureKind.Syntax,

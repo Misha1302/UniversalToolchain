@@ -7,7 +7,11 @@ public sealed class WistRequiredInfrastructureModulesProvider : IWistRequiredInf
 {
     public IReadOnlyList<Type> GetFrontendModuleTypes()
     {
-        return [typeof(ProgramStructureFrontendModule)];
+        return
+        [
+            typeof(BuiltinFunctionCallFrontendModule),
+            typeof(ProgramStructureFrontendModule)
+        ];
     }
 
     public IReadOnlyList<Type> GetIRModuleTypes()
