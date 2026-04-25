@@ -1,5 +1,5 @@
 using System.Text;
-using ExceptionsManager;
+using UniversalToolchain.Diagnostics.Abstractions;
 using UniversalToolchain.Rules.Abstractions;
 
 namespace UniversalToolchain.Dialects.Wist.Rules;
@@ -9,9 +9,9 @@ public sealed class WistRuleDeclarationExtractor
     public RuleDeclarationExtractionResult Extract(string source)
     {
         if (string.IsNullOrWhiteSpace(source))
-            return RuleDeclarationExtractionResult.Failure(["Rule source must not be empty."]);
+            return RuleDeclarationExtractionResult.Failure([CreateDiagnostic(ToolchainDiagnosticCodes.RuleInvalidBody, "Rule source must not be empty.")]);
 
-        var diagnostics = new List<string>();
+        var diagnostics = new List<ToolchainDiagnostic>();
         var rules = new List<RuleDeclarationModel>();
         var names = new HashSet<string>(StringComparer.Ordinal);
         var position = 0;
@@ -23,28 +23,28 @@ public sealed class WistRuleDeclarationExtractor
             var name = ReadIdentifier(source, ref cursor);
             if (string.IsNullOrWhiteSpace(name))
             {
-                diagnostics.Add($"Expected rule name at offset {cursor}.");
+                diagnostics.Add(CreateDiagnostic(ToolchainDiagnosticCodes.RuleInvalidBody, $"Expected rule name at offset {cursor}."));
                 break;
             }
 
             SkipWhiteSpace(source, ref cursor);
             if (!Consume(source, ref cursor, '('))
             {
-                diagnostics.Add($"Expected '(' after rule '{name}'.");
+                diagnostics.Add(CreateDiagnostic(ToolchainDiagnosticCodes.RuleInvalidBody, $"Expected '(' after rule '{name}'."));
                 break;
             }
 
             var parametersText = ReadUntilMatching(source, ref cursor, '(', ')');
             if (parametersText == null)
             {
-                diagnostics.Add($"Rule '{name}' has an unterminated parameter list.");
+                diagnostics.Add(CreateDiagnostic(ToolchainDiagnosticCodes.RuleInvalidBody, $"Rule '{name}' has an unterminated parameter list."));
                 break;
             }
 
             SkipWhiteSpace(source, ref cursor);
             if (!ConsumeArrow(source, ref cursor))
             {
-                diagnostics.Add($"Expected '->' after rule '{name}' parameter list.");
+                diagnostics.Add(CreateDiagnostic(ToolchainDiagnosticCodes.RuleInvalidBody, $"Expected '->' after rule '{name}' parameter list."));
                 break;
             }
 
@@ -52,26 +52,26 @@ public sealed class WistRuleDeclarationExtractor
             var returnTypeName = ReadIdentifier(source, ref cursor);
             if (string.IsNullOrWhiteSpace(returnTypeName))
             {
-                diagnostics.Add($"Expected return type for rule '{name}'.");
+                diagnostics.Add(CreateDiagnostic(ToolchainDiagnosticCodes.RuleInvalidBody, $"Expected return type for rule '{name}'."));
                 break;
             }
 
             SkipWhiteSpace(source, ref cursor);
             if (!Consume(source, ref cursor, '{'))
             {
-                diagnostics.Add($"Expected '{{' before rule '{name}' body.");
+                diagnostics.Add(CreateDiagnostic(ToolchainDiagnosticCodes.RuleInvalidBody, $"Expected '{{' before rule '{name}' body."));
                 break;
             }
 
             var body = ReadUntilMatching(source, ref cursor, '{', '}');
             if (body == null)
             {
-                diagnostics.Add($"Rule '{name}' has an unterminated body.");
+                diagnostics.Add(CreateDiagnostic(ToolchainDiagnosticCodes.RuleInvalidBody, $"Rule '{name}' has an unterminated body."));
                 break;
             }
 
             if (!names.Add(name))
-                diagnostics.Add($"Duplicate rule declaration '{name}'.");
+                diagnostics.Add(CreateDiagnostic(ToolchainDiagnosticCodes.RuleDuplicateName, $"Duplicate rule declaration '{name}'."));
 
             var parameters = ParseParameters(name, parametersText, diagnostics);
             var returnType = ParseType(returnTypeName, diagnostics, $"rule '{name}' return type");
@@ -82,7 +82,7 @@ public sealed class WistRuleDeclarationExtractor
         }
 
         if (rules.Count == 0 && diagnostics.Count == 0)
-            diagnostics.Add("No rule declarations were found.");
+            diagnostics.Add(CreateDiagnostic(ToolchainDiagnosticCodes.RuleInvalidBody, "No rule declarations were found."));
 
         return diagnostics.Count == 0
             ? RuleDeclarationExtractionResult.Success(rules)
@@ -92,7 +92,7 @@ public sealed class WistRuleDeclarationExtractor
     private static IReadOnlyList<RuleParameterModel> ParseParameters(
         string ruleName,
         string parametersText,
-        List<string> diagnostics)
+        List<ToolchainDiagnostic> diagnostics)
     {
         var parameters = new List<RuleParameterModel>();
         var names = new HashSet<string>(StringComparer.Ordinal);
@@ -104,13 +104,13 @@ public sealed class WistRuleDeclarationExtractor
             var parts = rawParameter.Split(':', StringSplitOptions.TrimEntries);
             if (parts.Length != 2 || string.IsNullOrWhiteSpace(parts[0]) || string.IsNullOrWhiteSpace(parts[1]))
             {
-                diagnostics.Add($"Invalid parameter declaration '{rawParameter}' in rule '{ruleName}'. Expected 'name: type'.");
+                diagnostics.Add(CreateDiagnostic(ToolchainDiagnosticCodes.RuleInvalidBody, $"Invalid parameter declaration '{rawParameter}' in rule '{ruleName}'. Expected 'name: type'."));
                 continue;
             }
 
             if (!names.Add(parts[0]))
             {
-                diagnostics.Add($"Duplicate parameter '{parts[0]}' in rule '{ruleName}'.");
+                diagnostics.Add(CreateDiagnostic(ToolchainDiagnosticCodes.RuleDuplicateParameter, $"Duplicate parameter '{parts[0]}' in rule '{ruleName}'."));
                 continue;
             }
 
@@ -122,13 +122,23 @@ public sealed class WistRuleDeclarationExtractor
         return parameters;
     }
 
-    private static RuleTypeDescriptor? ParseType(string typeName, List<string> diagnostics, string owner)
+    private static RuleTypeDescriptor? ParseType(string typeName, List<ToolchainDiagnostic> diagnostics, string owner)
     {
         if (string.Equals(typeName, "number", StringComparison.Ordinal) || string.Equals(typeName, "bool", StringComparison.Ordinal))
             return new RuleTypeDescriptor(typeName);
 
-        diagnostics.Add($"Unsupported type '{typeName}' for {owner}. Supported MVP types: number, bool.");
+        diagnostics.Add(CreateDiagnostic(ToolchainDiagnosticCodes.RuleUnknownType, $"Unsupported type '{typeName}' for {owner}. Supported MVP types: number, bool."));
         return null;
+    }
+
+    private static ToolchainDiagnostic CreateDiagnostic(string code, string message)
+    {
+        return new ToolchainDiagnostic(
+            code,
+            ToolchainDiagnosticSeverity.Error,
+            message,
+            null,
+            []);
     }
 
     private static bool TryFindKeyword(string source, string keyword, int start, out int index)
