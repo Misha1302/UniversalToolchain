@@ -442,6 +442,8 @@ internal sealed class AbstractMethodsIntrinsicCompiler
         if (sourceType.IsValueType && !targetType.IsValueType)
         {
             il.Box(sourceType);
+            if (targetType != typeof(object))
+                il.Castclass(targetType);
             return;
         }
 
