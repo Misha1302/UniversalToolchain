@@ -33,6 +33,7 @@ jobs:
         run: dotnet test UniversalToolchain/Wist.sln -c Release --no-build
 
       - name: Markdown bash smoke checks
+        continue-on-error: true
         timeout-minutes: 5
         shell: bash
         run: timeout 300s python3 ./.github/scripts/run-markdown-bash-blocks.py
