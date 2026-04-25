@@ -1,7 +1,17 @@
+global using System.Reflection;
+global using AbstractIrExtensions;
 global using AstNodeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.ParserWrapper.AstNodeTag>;
 global using BasicCore.Attributes;
 global using BasicCore.Contracts;
+global using BasicCore.LexerWrapper;
 global using BasicCore.ParserWrapper;
 global using BasicCore.Registration;
+global using BasicCore.TranslatorWrapper;
+global using DynamicMethodWrapper;
+global using ExceptionsManager;
+global using GenericMath;
+global using SettableGettableModule.Contracts;
 global using UniversalToolchain.Capabilities.Abstractions;
+global using UniversalToolchain.Capabilities.Core;
 global using UniversalToolchain.Dialects.Abstractions;
+global using UniversalToolchain.Functions.Abstractions;
