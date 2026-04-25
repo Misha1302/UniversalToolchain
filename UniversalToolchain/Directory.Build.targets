@@ -20,6 +20,10 @@
             <DialectRuntimeManifestOutputPath>$(TargetDir)$(AssemblyName)$(DialectRuntimeManifestFileSuffix)</DialectRuntimeManifestOutputPath>
         </PropertyGroup>
 
+        <MSBuild Projects="$(DialectRuntimeManifestEmitterProjectPath)"
+                 Targets="Build"
+                 Properties="Configuration=$(Configuration);TargetFramework=$(DialectRuntimeManifestEmitterTargetFramework)"/>
+
         <Exec Command="&quot;$(DOTNET_HOST_PATH)&quot; &quot;$(DialectRuntimeManifestEmitterDll)&quot; --assembly &quot;$(TargetPath)&quot; --output &quot;$(DialectRuntimeManifestOutputPath)&quot;"/>
 
         <ItemGroup>

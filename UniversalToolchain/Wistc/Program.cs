@@ -1,11 +1,13 @@
+using UniversalToolchain.Capabilities.Core;
 using UniversalToolchain.Dialects.Wist;
 
-return Parser.Default.ParseArguments<RunOptions, ReplOptions, DialectInspectOptions, DialectDemoOptions>(args)
+return Parser.Default.ParseArguments<RunOptions, ReplOptions, DialectInspectOptions, DialectDemoOptions, FeaturesOptions>(args)
     .MapResult(
         (RunOptions opts) => RunCommand(opts),
         (ReplOptions opts) => ReplCommand(opts),
         (DialectInspectOptions opts) => DialectInspectCommand(opts),
         (DialectDemoOptions opts) => DialectDemoCommand(opts),
+        (FeaturesOptions opts) => FeaturesCommand(opts),
         _ => 1);
 
 int RunCommand(RunOptions options)
@@ -125,6 +127,45 @@ int DialectDemoCommand(DialectDemoOptions options)
     }
 }
 
+int FeaturesCommand(FeaturesOptions options)
+{
+    try
+    {
+        using var provider = CreateDialectWorkflowProvider();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+        var runtimeComponentCatalog = provider.GetRequiredService<IRuntimeComponentCatalog>();
+        var typeLoader = provider.GetRequiredService<IRuntimeComponentTypeLoader>();
+        var composition = workflow.ComposeFile(options.DialectFile);
+
+        if (!composition.IsSuccess)
+        {
+            Console.Error.WriteLine(FormatComposition(composition));
+            return 1;
+        }
+
+        var selectedRuntimePlan = (SelectedRuntimePlan)composition.RuntimeSelection!;
+        var knownCatalog = new KnownCapabilityCatalogBuilder(typeLoader).Build(runtimeComponentCatalog);
+        var selectedCatalog = new SelectedCapabilityCatalogBuilder(typeLoader).Build(selectedRuntimePlan);
+        var explanation = DialectFeatureExplanationProjector.Project(
+            knownCatalog,
+            selectedCatalog,
+            selectedRuntimePlan,
+            composition.BuildPlan!.Name);
+
+        Console.WriteLine(DialectFeatureExplanationFormatter.FormatDeterministic(explanation));
+        return 0;
+    }
+    catch (WistException ex)
+    {
+        Console.Error.WriteLine(ex.ToString());
+        return 1;
+    }
+    catch (Exception ex)
+    {
+        Console.Error.WriteLine($"Error: {ex.Message}");
+        return 1;
+    }
+}
 
 int DialectInspectCommand(DialectInspectOptions options)
 {

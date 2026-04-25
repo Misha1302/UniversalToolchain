@@ -2,9 +2,9 @@ using UniversalToolchain.Capabilities.Abstractions;
 
 namespace ConditionsModule;
 
-public sealed class IfExpressionCapabilityProvider : ILanguageFeatureDescriptorProvider
+public sealed class ConditionalBranchesCapabilityProvider : ILanguageFeatureDescriptorProvider
 {
-    private static readonly LanguageFeatureId FeatureId = new("IfExpressions");
+    private static readonly LanguageFeatureId FeatureId = new("ConditionalBranches");
 
     public IReadOnlyList<LanguageFeatureDescriptor> GetLanguageFeatures()
     {
@@ -12,7 +12,7 @@ public sealed class IfExpressionCapabilityProvider : ILanguageFeatureDescriptorP
         [
             new LanguageFeatureDescriptor(
                 FeatureId,
-                "Conditional expressions",
+                "Conditional branches",
                 LanguageFeatureKind.Syntax,
                 ["Conditions"],
                 [],
@@ -22,7 +22,7 @@ public sealed class IfExpressionCapabilityProvider : ILanguageFeatureDescriptorP
                     new("else", LanguageFeatureSymbolKind.SyntaxForm, "else <body>", "Adds a fallback branch.")
                 ],
                 ["cil", "interpreter"],
-                "Provides if, elif, and else conditional constructs.")
+                "Provides statement-style conditional branch constructs.")
         ];
     }
 }

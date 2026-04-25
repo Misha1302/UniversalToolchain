@@ -3,7 +3,7 @@ using BasicCore.Capabilities;
 
 namespace BasicCore.Core;
 
-internal static class IntrinsicInstructionNormalizer
+public static class IntrinsicInstructionNormalizer
 {
     public static Instruction NormalizeOrThrow(Instruction instruction)
     {
