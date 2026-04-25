@@ -16,6 +16,7 @@ namespace UniversalToolchain.Dialects.Wist.Facade;
 public sealed class WistRuntimeFacade : IDisposable
 {
     private readonly WistDialectExecutionHost _host;
+    private readonly WistRuleRuntimeTypeResolver _ruleRuntimeTypeResolver = new();
 
     internal WistRuntimeFacade(WistDialectExecutionHost host, DialectFrameworkCompositionResult composition)
     {
@@ -166,7 +167,7 @@ public sealed class WistRuntimeFacade : IDisposable
         return declaredBindings;
     }
 
-    private static OrderedDictionary<string, Type> CreateDeclaredBindings(IReadOnlyList<RuleParameterModel> parameters)
+    private OrderedDictionary<string, Type> CreateDeclaredBindings(IReadOnlyList<RuleParameterModel> parameters)
     {
         parameters = parameters.ArgNotNull();
 
@@ -187,13 +188,11 @@ public sealed class WistRuntimeFacade : IDisposable
             rule.ReturnType);
     }
 
-    private static Type ResolveRuntimeType(RuleTypeDescriptor type)
+    private Type ResolveRuntimeType(RuleTypeDescriptor type)
     {
-        return type.Name switch
-        {
-            "number" => typeof(double),
-            "bool" => typeof(bool),
-            _ => Thrower.NotSupported<Type>($"Unsupported rule type '{type.Name}'.")
-        };
+        if (_ruleRuntimeTypeResolver.TryResolve(type, out var runtimeType))
+            return runtimeType;
+
+        return Thrower.NotSupported<Type>($"Unsupported rule type '{type.Name}'.");
     }
 }
