@@ -1,0 +1,55 @@
+name: UniversalToolchain validation
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  validate:
+    name: Restore, build, test, and anti-hardcode checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Install ripgrep
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ripgrep
+
+      - name: Restore
+        run: dotnet restore UniversalToolchain/Wist.sln
+
+      - name: Build
+        run: dotnet build UniversalToolchain/Wist.sln -c Release --no-restore
+
+      - name: Test
+        run: dotnet test UniversalToolchain/Wist.sln -c Release --no-build
+
+      - name: BasicCore must not depend on high-level layers or concrete feature modules
+        run: |
+          ! rg "UniversalToolchain\.Rules|UniversalToolchain\.Dialects\.Wist|SafeMathFunctionsModule|ConditionsModule" UniversalToolchain/BasicCore -g "*.cs" -g "*.csproj"
+
+      - name: Wist layer must not know SafeMath implementation
+        run: |
+          ! rg "SafeMathFunctionsModule|typeof\(SafeMathFunctions\)|nameof\(SafeMathFunctions" UniversalToolchain/UniversalToolchain.Dialects.Wist -g "*.cs"
+
+      - name: Parser and resolver must not hardcode SafeMath function names
+        run: |
+          ! rg '"clamp"|"min"|"max"|"abs"' UniversalToolchain -g "*.cs" -g "!SafeMathFunctionsModule/**" -g "!**/*Tests*/**" -g "!**/docs/**"
+
+      - name: IfExpression must not hardcode external module implementation details
+        run: |
+          ! rg "RealNumberImpl|NumbersModule\.Core|Addition|Multiplication|GreaterOrEqual|LessOrEqual" UniversalToolchain -g "*.cs" -g "!**/*Tests*/**"
+
+      - name: Framework must not branch on product profile names
+        run: |
+          ! rg "PricingRules|ValidationRules|PolicyRules" UniversalToolchain -g "*.cs" -g "!**/*Tests*/**" -g "!Wistc/**" -g "!Dialects/examples/**" -g "!docs/**"
