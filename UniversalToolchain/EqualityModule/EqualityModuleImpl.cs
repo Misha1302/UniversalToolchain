@@ -1,8 +1,10 @@
+using UniversalToolchain.Capabilities.Abstractions;
 using UniversalToolchain.Dialects.Abstractions;
 
 namespace EqualityModule;
 
 [DialectModuleAlias("Equality")]
+[DialectCapabilityProvider(typeof(EqualityCapabilityProvider))]
 [DialectRuntimeExport("FrontendModule", "Equality")]
 [AutoRegisterService]
 public class EqualityModuleImpl : IFrontendCoreModule

@@ -1,8 +1,10 @@
+using UniversalToolchain.Capabilities.Abstractions;
 using UniversalToolchain.Dialects.Abstractions;
 
 namespace LoopsModule.Module;
 
 [DialectModuleAlias("Loops")]
+[DialectCapabilityProvider(typeof(global::LoopsModule.LoopsCapabilityProvider))]
 [DialectRuntimeExport("FrontendModule", "Loops")]
 [AutoRegisterService]
 public class LoopsModuleImpl : IFrontendCoreModule

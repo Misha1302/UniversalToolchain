@@ -1,6 +1,9 @@
+using UniversalToolchain.Capabilities.Abstractions;
+
 namespace NumbersModule.Module;
 
 [DialectModuleAlias("Numbers")]
+[DialectCapabilityProvider(typeof(global::NumbersModule.NumbersCapabilityProvider))]
 [DialectRuntimeExport("FrontendModule", "Numbers")]
 [AutoRegisterService]
 [ArithmeticModeCompatibility(ArithmeticMode.Universal)]

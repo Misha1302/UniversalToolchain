@@ -30,6 +30,8 @@
         <ProjectReference Include="..\UniversalToolchain.Dialects.Frontend\UniversalToolchain.Dialects.Frontend.csproj" />
         <ProjectReference Include="..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj" />
         <ProjectReference Include="..\Wistc\Wistc.csproj" />
+        <ProjectReference Include="..\ArithmeticModule\ArithmeticModule.csproj" />
+        <ProjectReference Include="..\CSharpInteropModule\CSharpInteropModule.csproj" />
         <ProjectReference Include="..\NumbersModule\NumbersModule.csproj" />
         <ProjectReference Include="..\UniversalToolchain.Functions.Abstractions\UniversalToolchain.Functions.Abstractions.csproj" />
         <ProjectReference Include="..\UniversalToolchain.ExpressionTyping.Abstractions\UniversalToolchain.ExpressionTyping.Abstractions.csproj" />

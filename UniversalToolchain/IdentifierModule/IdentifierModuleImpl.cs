@@ -1,8 +1,10 @@
+using UniversalToolchain.Capabilities.Abstractions;
 using UniversalToolchain.Dialects.Abstractions;
 
 namespace IdentifierModule;
 
 [DialectModuleAlias("Identifier")]
+[DialectCapabilityProvider(typeof(IdentifierCapabilityProvider))]
 [DialectRuntimeExport("FrontendModule", "Identifier")]
 [AutoRegisterService]
 public class IdentifierModuleImpl : IFrontendCoreModule

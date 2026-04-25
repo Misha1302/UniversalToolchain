@@ -1,6 +1,9 @@
+using UniversalToolchain.Capabilities.Abstractions;
+
 namespace NativeMathModule;
 
 [DialectModuleAlias("NativeTypes")]
+[DialectCapabilityProvider(typeof(NativeTypesCapabilityProvider))]
 [DialectRuntimeExport("FrontendModule", "NativeTypes")]
 [AutoRegisterService]
 [ArithmeticModeCompatibility(ArithmeticMode.Native)]
