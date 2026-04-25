@@ -1,0 +1,3 @@
+rule Allow(enabled: bool) -> bool {
+    enabled
+}
