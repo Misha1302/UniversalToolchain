@@ -5,4 +5,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\UniversalToolchain.Diagnostics.Abstractions\UniversalToolchain.Diagnostics.Abstractions.csproj"/>
+  </ItemGroup>
 </Project>
