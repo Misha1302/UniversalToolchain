@@ -28,6 +28,9 @@ jobs:
       - name: Restore
         run: dotnet restore UniversalToolchain/Wist.sln
 
+      - name: Build manifest emitter
+        run: dotnet build UniversalToolchain/UniversalToolchain.Dialects.ManifestEmitter/UniversalToolchain.Dialects.ManifestEmitter.csproj -c Release --no-restore
+
       - name: Build
         run: dotnet build UniversalToolchain/Wist.sln -c Release --no-restore
 
