@@ -37,10 +37,10 @@ public sealed class FunctionCallsAndSafeMathCapabilityTests
             Assert.That(catalog.LanguageFeatures.Select(static x => x.FeatureId.Value), Is.EqualTo(new[] { "SafeMathFunctions" }));
             Assert.That(
                 catalog.BuiltinFunctionDescriptors.Select(static x => x.Name),
-                Is.EqualTo(new[] { "abs", "clamp", "max", "min" }));
+                Is.EqualTo(new[] { "abs", "clamp", "max", "min", "round" }));
             Assert.That(
                 catalog.BuiltinFunctionRuntimeBindings.Select(static x => x.Signature.Name),
-                Is.EqualTo(new[] { "abs", "clamp", "max", "min" }));
+                Is.EqualTo(new[] { "abs", "clamp", "max", "min", "round" }));
         });
     }
 
@@ -61,6 +61,26 @@ public sealed class FunctionCallsAndSafeMathCapabilityTests
             Assert.That(resolution.Descriptor?.FeatureId.Value, Is.EqualTo("SafeMathFunctions"));
             Assert.That(resolution.RuntimeBinding?.Method.DeclaringType, Is.EqualTo(typeof(SafeMathFunctions)));
             Assert.That(resolution.RuntimeBinding?.Method.Name, Is.EqualTo(nameof(SafeMathFunctions.Clamp)));
+        });
+    }
+
+    [Test]
+    public void SafeMathFunctionCatalog_ResolvesRoundOnlyWhenSafeMathIsSelected()
+    {
+        var selectedPlan = CreateSelectedPlan(
+            "SafeMathFunctions",
+            typeof(SafeMathFunctionsModuleImpl));
+        var selectedCatalog = new SelectedCapabilityCatalogBuilder().Build([typeof(SafeMathFunctionsModuleImpl)]);
+        var functionCatalog = new BuiltinFunctionCatalog(selectedCatalog, selectedPlan);
+
+        var resolution = functionCatalog.Resolve("round", [NumberType], "interpreter");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(resolution.IsSuccess, Is.True);
+            Assert.That(resolution.Descriptor?.FeatureId.Value, Is.EqualTo("SafeMathFunctions"));
+            Assert.That(resolution.RuntimeBinding?.Method.DeclaringType, Is.EqualTo(typeof(SafeMathFunctions)));
+            Assert.That(resolution.RuntimeBinding?.Method.Name, Is.EqualTo(nameof(SafeMathFunctions.Round)));
         });
     }
 
@@ -91,6 +111,7 @@ public sealed class FunctionCallsAndSafeMathCapabilityTests
             Assert.That(SafeMathFunctions.Clamp(15.0, 0.0, 10.0), Is.EqualTo(10.0));
             Assert.That(SafeMathFunctions.Max(3.0, 5.0), Is.EqualTo(5.0));
             Assert.That(SafeMathFunctions.Min(3.0, 5.0), Is.EqualTo(3.0));
+            Assert.That(SafeMathFunctions.Round(5.4), Is.EqualTo(5.0));
         });
     }
 
