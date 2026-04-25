@@ -10,6 +10,7 @@ global using BasicCore.TranslatorWrapper;
 global using DynamicMethodWrapper;
 global using ExceptionsManager;
 global using GenericMath;
+global using IntermediateRepresentationAbstractions;
 global using SettableGettableModule.Contracts;
 global using UniversalToolchain.Capabilities.Abstractions;
 global using UniversalToolchain.Capabilities.Core;
