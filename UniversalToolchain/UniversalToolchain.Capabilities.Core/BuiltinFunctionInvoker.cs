@@ -1,3 +1,4 @@
+using ExceptionsManager;
 using UniversalToolchain.Diagnostics.Abstractions;
 using UniversalToolchain.Functions.Abstractions;
 
@@ -7,8 +8,8 @@ public sealed class BuiltinFunctionInvoker
 {
     public BuiltinFunctionInvocationResult Invoke(BuiltinFunctionResolution resolution, IReadOnlyList<object?> arguments)
     {
-        ArgumentNullException.ThrowIfNull(resolution);
-        ArgumentNullException.ThrowIfNull(arguments);
+        resolution = resolution.ArgNotNull();
+        arguments = arguments.ArgNotNull();
 
         if (!resolution.IsSuccess || resolution.RuntimeBinding == null)
             return new BuiltinFunctionInvocationResult(false, null, resolution.Diagnostics);
