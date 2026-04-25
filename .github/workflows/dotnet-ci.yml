@@ -35,4 +35,4 @@ jobs:
       - name: Markdown bash smoke checks
         timeout-minutes: 5
         shell: bash
-        run: python3 ./.github/scripts/run-markdown-bash-blocks.py
+        run: timeout 300s python3 ./.github/scripts/run-markdown-bash-blocks.py
