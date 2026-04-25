@@ -198,13 +198,10 @@ public sealed class FunctionCallsAstVisitor : IAstVisitor
         if (gettableInterface == null)
             return false;
 
-        adapter = sourceType.GetMethod(
-            nameof(IGettable<object>.GetValue),
-            BindingFlags.Instance | BindingFlags.Public,
-            binder: null,
-            types: Type.EmptyTypes,
-            modifiers: null)!;
-        return adapter != null && adapter.ReturnType == targetType;
+        adapter = typeof(FunctionCallValueAdapter)
+            .GetMethod(nameof(FunctionCallValueAdapter.GetValue), BindingFlags.Public | BindingFlags.Static)!
+            .MakeGenericMethod(targetType);
+        return true;
     }
 
     private static bool TryResolveResultRuntimeType(
