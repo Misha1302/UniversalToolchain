@@ -22,7 +22,8 @@ public sealed class SafeMathFunctionsCapabilityProvider :
                     new("abs", LanguageFeatureSymbolKind.Function, "abs(number value) -> number", "Returns the absolute value."),
                     new("clamp", LanguageFeatureSymbolKind.Function, "clamp(number value, number min, number max) -> number", "Clamps a numeric value into an inclusive range."),
                     new("max", LanguageFeatureSymbolKind.Function, "max(number left, number right) -> number", "Returns the greater numeric value."),
-                    new("min", LanguageFeatureSymbolKind.Function, "min(number left, number right) -> number", "Returns the smaller numeric value.")
+                    new("min", LanguageFeatureSymbolKind.Function, "min(number left, number right) -> number", "Returns the smaller numeric value."),
+                    new("round", LanguageFeatureSymbolKind.Function, "round(number value) -> number", "Rounds the numeric value to the nearest integral value.")
                 ],
                 ["cil", "interpreter"],
                 "Provides pure numeric helper functions owned by the SafeMathFunctions module.")
@@ -52,7 +53,8 @@ public sealed class SafeMathFunctionsCapabilityProvider :
                 [
                     new FunctionParameterDescriptor("left", Number),
                     new FunctionParameterDescriptor("right", Number)
-                ])
+                ]),
+            CreatePureDescriptor("round", [new FunctionParameterDescriptor("value", Number)])
         ];
     }
 
@@ -63,7 +65,8 @@ public sealed class SafeMathFunctionsCapabilityProvider :
             CreateStaticMethodBinding("abs", [Number], nameof(SafeMathFunctions.Abs)),
             CreateStaticMethodBinding("clamp", [Number, Number, Number], nameof(SafeMathFunctions.Clamp)),
             CreateStaticMethodBinding("max", [Number, Number], nameof(SafeMathFunctions.Max)),
-            CreateStaticMethodBinding("min", [Number, Number], nameof(SafeMathFunctions.Min))
+            CreateStaticMethodBinding("min", [Number, Number], nameof(SafeMathFunctions.Min)),
+            CreateStaticMethodBinding("round", [Number], nameof(SafeMathFunctions.Round))
         ];
     }
 
