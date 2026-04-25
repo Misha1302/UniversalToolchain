@@ -22,4 +22,9 @@ public interface IFrontendCoreModule
     void InitAstTranslator(IAstToBytecodeTranslator translator)
     {
     }
+
+    void InitAstTranslator(IAstToBytecodeTranslator translator, IReadOnlyList<IFrontendCoreModule> selectedModules)
+    {
+        InitAstTranslator(translator);
+    }
 }
