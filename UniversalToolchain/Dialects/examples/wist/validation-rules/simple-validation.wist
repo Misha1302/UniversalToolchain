@@ -1,0 +1,3 @@
+rule IsPositive(value: number) -> bool {
+    value > 0.0
+}
