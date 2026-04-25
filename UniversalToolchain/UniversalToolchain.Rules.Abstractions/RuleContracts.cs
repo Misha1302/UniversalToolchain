@@ -1,3 +1,5 @@
+using UniversalToolchain.Diagnostics.Abstractions;
+
 namespace UniversalToolchain.Rules.Abstractions;
 
 public sealed record RuleTypeDescriptor(string Name);
@@ -11,11 +13,29 @@ public sealed record CompiledRuleDescriptor(
     IReadOnlyList<RuleParameterDescriptor> Parameters,
     RuleTypeDescriptor ReturnType);
 
+public sealed record RuleExecutionResult(
+    bool IsSuccess,
+    object? Value,
+    IReadOnlyList<ToolchainDiagnostic> Diagnostics)
+{
+    public static RuleExecutionResult Success(object? value)
+    {
+        return new RuleExecutionResult(true, value, []);
+    }
+
+    public static RuleExecutionResult Failure(IReadOnlyList<ToolchainDiagnostic> diagnostics)
+    {
+        return new RuleExecutionResult(false, null, diagnostics);
+    }
+}
+
 public interface ICompiledRule
 {
     CompiledRuleDescriptor Descriptor { get; }
 
     object? Run(IReadOnlyDictionary<string, object?> arguments);
+
+    RuleExecutionResult TryRun(IReadOnlyDictionary<string, object?> arguments);
 }
 
 public interface ICompiledRuleSet
@@ -24,20 +44,22 @@ public interface ICompiledRuleSet
 
     object? Run(string ruleName, IReadOnlyDictionary<string, object?> arguments);
 
+    RuleExecutionResult TryRun(string ruleName, IReadOnlyDictionary<string, object?> arguments);
+
     RuleSetSchema GetSchema();
 }
 
 public sealed record RuleSetCompileResult(
     bool IsSuccess,
     ICompiledRuleSet? RuleSet,
-    IReadOnlyList<string> Diagnostics)
+    IReadOnlyList<ToolchainDiagnostic> Diagnostics)
 {
     public static RuleSetCompileResult Success(ICompiledRuleSet ruleSet)
     {
         return new RuleSetCompileResult(true, ruleSet, []);
     }
 
-    public static RuleSetCompileResult Failure(IReadOnlyList<string> diagnostics)
+    public static RuleSetCompileResult Failure(IReadOnlyList<ToolchainDiagnostic> diagnostics)
     {
         return new RuleSetCompileResult(false, null, diagnostics);
     }
