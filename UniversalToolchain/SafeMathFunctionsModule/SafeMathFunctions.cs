@@ -21,4 +21,9 @@ public static class SafeMathFunctions
     {
         return Math.Min(left, right);
     }
+
+    public static double Round(double value)
+    {
+        return Math.Round(value);
+    }
 }
