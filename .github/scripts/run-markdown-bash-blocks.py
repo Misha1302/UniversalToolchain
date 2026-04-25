@@ -8,6 +8,8 @@ import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 
+DEFAULT_BASH_BLOCK_TIMEOUT = "60s"
+
 
 @dataclass(frozen=True)
 class BashBlock:
@@ -152,10 +154,7 @@ def ShouldRunBlock(block: BashBlock) -> bool:
 
 
 def BuildCommand(block: BashBlock, scriptPath: Path) -> list[str]:
-    timeoutValue = block.attributes.get("ci-timeout")
-    if timeoutValue is None:
-        return ["bash", str(scriptPath)]
-
+    timeoutValue = block.attributes.get("ci-timeout", DEFAULT_BASH_BLOCK_TIMEOUT)
     return ["timeout", timeoutValue, "bash", str(scriptPath)]
 
 
