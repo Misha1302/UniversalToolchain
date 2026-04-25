@@ -1,3 +1,4 @@
+using UniversalToolchain.Diagnostics.Abstractions;
 using UniversalToolchain.Rules.Abstractions;
 
 namespace UniversalToolchain.Dialects.Wist.Rules;
@@ -15,14 +16,14 @@ public sealed record RuleParameterModel(
 public sealed record RuleDeclarationExtractionResult(
     bool IsSuccess,
     IReadOnlyList<RuleDeclarationModel> Rules,
-    IReadOnlyList<string> Diagnostics)
+    IReadOnlyList<ToolchainDiagnostic> Diagnostics)
 {
     public static RuleDeclarationExtractionResult Success(IReadOnlyList<RuleDeclarationModel> rules)
     {
         return new RuleDeclarationExtractionResult(true, rules, []);
     }
 
-    public static RuleDeclarationExtractionResult Failure(IReadOnlyList<string> diagnostics)
+    public static RuleDeclarationExtractionResult Failure(IReadOnlyList<ToolchainDiagnostic> diagnostics)
     {
         return new RuleDeclarationExtractionResult(false, [], diagnostics);
     }
