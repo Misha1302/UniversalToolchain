@@ -1,5 +1,7 @@
+using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using FunctionCallsModule;
+using AstNodeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.ParserWrapper.AstNodeTag>;
 
 namespace UniversalToolchain.Dialects.Tests.Capabilities;
 
