@@ -40,7 +40,7 @@ public class BinderTests
     }
 
     [Test]
-    public void Should_ShadowExternal_When_LocalDefinitionWithSameNameExists()
+    public void Should_Fail_When_LocalDefinitionShadowsExternal()
     {
         var binder = new Binder([
             new ExternalBinding { Name = "v", Type = typeof(int), Kind = ExternalBindingKind.Variable }
@@ -51,19 +51,19 @@ public class BinderTests
             CreateVariableNode("v")
         ]);
 
-        var result = binder.Bind(root);
+        var ex = Assert.Throws<InvalidOperationException>(() => binder.Bind(root));
 
-        Assert.That(result[1], Is.TypeOf<BoundLocalReference>());
+        Assert.That(ex!.Message, Does.Contain("WST-BIND-002").And.Contain("shadow"));
     }
 
     [Test]
-    public void Should_InferObjectLocal_When_VariableIsUnknown()
+    public void Should_Fail_When_VariableIsUnknown()
     {
         var binder = new Binder([]);
 
-        var result = binder.Bind(CreateVariableNode("newLocal"));
+        var ex = Assert.Throws<InvalidOperationException>(() => binder.Bind(CreateVariableNode("newLocal")));
 
-        Assert.That(((BoundLocalReference)result).Symbol.Type, Is.EqualTo(typeof(object)));
+        Assert.That(ex!.Message, Does.Contain("WST-BIND-001").And.Contain("newLocal"));
     }
 
     [Test]

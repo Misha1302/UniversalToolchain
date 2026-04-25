@@ -13,6 +13,8 @@
         <ProjectReference Include="..\DynamicMethodWrapper\DynamicMethodWrapper.csproj"/>
         <ProjectReference Include="..\ObjectExtensions\ObjectExtensions.csproj"/>
         <ProjectReference Include="..\SettableGettableModule\SettableGettableModule.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Rules.Abstractions\UniversalToolchain.Rules.Abstractions.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Rules.Core\UniversalToolchain.Rules.Core.csproj"/>
     </ItemGroup>
 
     <ItemGroup>

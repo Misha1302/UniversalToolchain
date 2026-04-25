@@ -215,6 +215,22 @@ public sealed class WistLanguageFeatureCatalog : ILanguageFeatureCatalog
                 "Provides label declarations for control-flow oriented programs."),
 
             new(
+                WistLanguageFeatureIds.LetBindings,
+                "Let bindings",
+                LanguageFeatureKind.Syntax,
+                ["Variables", "Scopes"],
+                [],
+                [
+                    new(
+                        "let",
+                        LanguageFeatureSymbolKind.SyntaxForm,
+                        "let name = expression",
+                        "Introduces a local expression binding.")
+                ],
+                InterpreterAndCilBackends,
+                "Provides readable local expression bindings for formulas and rules."),
+
+            new(
                 WistLanguageFeatureIds.Loops,
                 "Loops",
                 LanguageFeatureKind.Syntax,

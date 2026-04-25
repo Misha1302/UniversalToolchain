@@ -132,7 +132,7 @@ public class InterpreterBindingsParityTests
     }
 
     [Test]
-    public void ShadowingAndNestedScope_WithLocalNamesOverlappingExternals_ShouldBeDeterministicAndParityStable()
+    public void DeclaredBindingShadowingAndDuplicateLocalNames_ReturnDeterministicBindingDiagnostics()
     {
         const string shadowingCode = """
                                      let price = fee
@@ -204,23 +204,20 @@ public class InterpreterBindingsParityTests
     }
 
     [Test]
-    public void LocalShadowing_MustUseIndependentStorageKeys()
+    public void DuplicateLocalNames_MustFailDeterministically()
     {
         const string code = """
                             let fee = 1
-                            let total = fee
-                            total + fee
+                            let fee = 2
+                            fee
                             """;
 
         var declared = new OrderedDictionary<string, Type>();
-        var result = RunWithBindingsInBothBackends(code, declared, []);
-
-        Assert.That(result.CompilerNumeric, Is.EqualTo(result.InterpreterNumeric).Within(1e-9));
-        Assert.That(result.CompilerNumeric, Is.EqualTo(2.0).Within(1e-9));
+        AssertDeterministicParity(code, declared, []);
     }
 
     [Test]
-    public void UnknownVariableAccess_WhenStrictFailureExists_ShouldExposeMeaningfulError()
+    public void UnknownVariableAccess_ShouldExposeMeaningfulError()
     {
         using var host = CreateHost();
         var declared = new OrderedDictionary<string, Type>
@@ -232,17 +229,10 @@ public class InterpreterBindingsParityTests
         {
             new("price", new RealNumberImpl(2.0))
         };
-        try
-        {
-            _ = ParityBackendExecutionAdapter.RunCompiled(host, "compiler", "unknown + price", declared, arguments);
-            Assert.Pass("Current runtime allows the scenario without strict unknown-variable failure.");
-        }
-        catch (Exception ex)
-        {
-            var message = ex.ToString();
-            Assert.That(message, Does.Contain("unknown").IgnoreCase,
-                "Strict unknown-variable failure must mention the unresolved variable name.");
-        }
+        var ex = Assert.Throws<Exception>(() => ParityBackendExecutionAdapter.RunCompiled(host, "compiler", "unknown + price", declared, arguments));
+
+        Assert.That(ex!.ToString(), Does.Contain("unknown").And.Contain("WST-BIND-001").IgnoreCase,
+            "Unknown-variable failure must mention the unresolved binding name and code.");
     }
 
     private static (double CompilerNumeric, double InterpreterNumeric) RunWithBindingsInBothBackends(

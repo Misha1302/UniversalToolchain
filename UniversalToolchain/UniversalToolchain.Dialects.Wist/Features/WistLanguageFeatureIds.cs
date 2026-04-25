@@ -17,6 +17,7 @@ public static class WistLanguageFeatureIds
     public static readonly LanguageFeatureId EqualityLogic = new("EqualityLogic");
     public static readonly LanguageFeatureId Variables = new("Variables");
     public static readonly LanguageFeatureId Scopes = new("Scopes");
+    public static readonly LanguageFeatureId LetBindings = new("LetBindings");
     public static readonly LanguageFeatureId Loops = new("Loops");
     public static readonly LanguageFeatureId Labels = new("Labels");
     public static readonly LanguageFeatureId Comments = new("Comments");

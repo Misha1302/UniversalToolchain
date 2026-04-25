@@ -33,17 +33,15 @@ public class ScopesModuleIsolationTests
     }
 
     [Test]
-    public void Scopes_Shadowing_UsesInnerVariableInsideScope()
+    public void Scopes_DuplicateLocalNameAcrossNestedScope_FailsDeterministically()
     {
         using var h = new ModulePipelineTestHelper();
-        var r = h.ExecuteBoth(
+        h.AssertCompilerAndInterpreterFailSameWay(
             """
             let x = 2
             (let x = 7; x)
             """,
             _modules);
-        ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
-        Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(7));
     }
 
     [Test]
