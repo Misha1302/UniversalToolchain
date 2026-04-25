@@ -24,6 +24,7 @@
         <ProjectReference Include="..\CSharpInteropModule\CSharpInteropModule.csproj"/>
         <ProjectReference Include="..\EqualityModule\EqualityModule.csproj"/>
         <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj"/>
+        <ProjectReference Include="..\FunctionCallsModule\FunctionCallsModule.csproj"/>
         <ProjectReference Include="..\IdentifierModule\IdentifierModule.csproj"/>
         <ProjectReference Include="..\InternalPreprocessorLexemesModule\InternalPreprocessorLexemesModule.csproj"/>
         <ProjectReference Include="..\LabelsModule\LabelsModule.csproj"/>
@@ -32,6 +33,7 @@
         <ProjectReference Include="..\NativeMathModule\NativeMathModule.csproj"/>
         <ProjectReference Include="..\NumbersModule\NumbersModule.csproj"/>
         <ProjectReference Include="..\ParametersSetterModule\ParametersSetterModule.csproj"/>
+        <ProjectReference Include="..\SafeMathFunctionsModule\SafeMathFunctionsModule.csproj"/>
         <ProjectReference Include="..\ScopesModule\ScopesModule.csproj"/>
         <ProjectReference Include="..\SemicolonAsNewLineModule\SemicolonAsNewLineModule.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Dialects.Core\UniversalToolchain.Dialects.Core.csproj"/>
