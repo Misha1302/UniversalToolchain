@@ -47,7 +47,7 @@ jobs:
 
       - name: Parser and resolver must not hardcode SafeMath function names
         run: |
-          ! rg '"clamp"|"min"|"max"|"abs"' UniversalToolchain -g "*.cs" -g "!SafeMathFunctionsModule/**" -g "!**/*Tests*/**" -g "!**/docs/**"
+          ! rg '"clamp"|"min"|"max"|"abs"' UniversalToolchain -g "*.cs" -g "!**/SafeMathFunctionsModule/**" -g "!**/*Tests*/**" -g "!**/docs/**"
 
       - name: IfExpression must not hardcode external module implementation details
         run: |
