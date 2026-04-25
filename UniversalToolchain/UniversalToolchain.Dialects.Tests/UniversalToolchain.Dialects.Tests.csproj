@@ -33,6 +33,8 @@
         <ProjectReference Include="..\ArithmeticModule\ArithmeticModule.csproj" />
         <ProjectReference Include="..\CSharpInteropModule\CSharpInteropModule.csproj" />
         <ProjectReference Include="..\NumbersModule\NumbersModule.csproj" />
+        <ProjectReference Include="..\FunctionCallsModule\FunctionCallsModule.csproj" />
+        <ProjectReference Include="..\SafeMathFunctionsModule\SafeMathFunctionsModule.csproj" />
         <ProjectReference Include="..\UniversalToolchain.Functions.Abstractions\UniversalToolchain.Functions.Abstractions.csproj" />
         <ProjectReference Include="..\UniversalToolchain.ExpressionTyping.Abstractions\UniversalToolchain.ExpressionTyping.Abstractions.csproj" />
     </ItemGroup>
