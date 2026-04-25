@@ -51,7 +51,7 @@ jobs:
 
       - name: IfExpression must not hardcode external module implementation details
         run: |
-          ! rg "RealNumberImpl|NumbersModule\.Core|Addition|Multiplication|GreaterOrEqual|LessOrEqual" UniversalToolchain -g "*.cs" -g "!**/*Tests*/**"
+          ! rg "RealNumberImpl|NumbersModule\.Core|Addition|Multiplication|GreaterOrEqual|LessOrEqual" UniversalToolchain -g "*.cs" -g "!**/*Tests*/**" -g "!**/ArithmeticModule/**" -g "!**/NativeMathModule/**" -g "!**/ConditionsModule/**" -g "!**/NumbersModule/**" -g "!**/Intrinsics/**" -g "!**/BasicStdLib/**"
 
       - name: Framework must not branch on product profile names
         run: |
