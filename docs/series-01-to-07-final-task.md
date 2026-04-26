@@ -16,6 +16,7 @@ UniversalToolchain is the product. Wist is the reference language and proving gr
 8. Convenience APIs must be thin wrappers over existing composition/runtime paths. They must not become second runtimes.
 9. All ordering must be deterministic: provider discovery, catalogs, diagnostics, feature reports, schema output, CLI output, and overload resolution.
 10. Single Responsibility is mandatory: parser parses, extractor extracts, resolver resolves, projector projects, runtime executes, formatter formats, catalog describes.
+11. Syntax ownership is mandatory: language syntax must not be recognized through ad hoc raw-source parsing outside the owning lexer/parser/AST/extractor pipeline.
 
 ## Controlled reflection policy
 
@@ -31,6 +32,16 @@ Forbidden patterns: scanning all loaded assemblies blindly, scanning the whole A
 
 Recommended pattern: composition selects modules; discovery scans only selected boundaries; providers are discovered through stable contracts; providers produce immutable descriptors and runtime bindings; catalogs/build plans are built deterministically; execution uses resolved plans without repeated reflection.
 
+## Syntax ownership policy
+
+`docs/SYNTAX_OWNERSHIP_RULES.md` is mandatory for this task.
+
+Production code must not recognize Wist or DSL language constructs from raw source text using regular expressions, line splitting, substring checks, or one-off scanners in validators, facades, resolvers, runtimes, CLI commands, optimizers, catalogs, or convenience layers.
+
+Allowed syntax recognizers are the owning lexer, parser, AST node creators, AST visitors, and parser-backed syntax extractors. Semantic validators must consume structured syntax output: tokens, AST nodes, declaration models, descriptors, symbols, typed expressions, or compiled plans.
+
+A missing AST/declaration model is not permission to parse raw source text locally. If the structured model does not exist, implementing that model is part of the task. Leaving a feature incomplete is preferable to introducing a second parser through a validator or facade.
+
 ## Component ownership
 
 Generic framework layers may define neutral abstractions, catalogs, provider interfaces, diagnostics, descriptors, and deterministic composition helpers. They must not contain Wist syntax, SafeMath function names, product profile names, or concrete product behavior.
@@ -45,6 +56,8 @@ RuleSet API must be a facade over the existing Wist pipeline. It must not introd
 
 IfExpression owns only conditional syntax, typing, and lowering. LetBindings owns only local binding syntax, scope, validation, and lowering. Neither may depend on concrete number, comparison, or SafeMath implementation details.
 
+LetBindings validation must be based on structured syntax output owned by the parser/extractor pipeline. It must not inspect raw rule body text with regular expressions, line splitting, substring checks, or local scanners.
+
 ## Required implementation scope
 
 Complete real FunctionCalls infrastructure: parse generic calls, resolve through provider catalogs, type-check arguments, lower through the existing pipeline, and execute in interpreter/CIL when the selected backend supports the binding.
@@ -56,6 +69,8 @@ Complete modular expression typing for MVP types `number` and `bool`. Type descr
 Complete IfExpression syntax: `if condition then expr else expr`. Condition must be bool, branch types must match, and interpreter/CIL behavior must match where both backends are enabled.
 
 Complete LetBindings inside rule bodies. Bindings are ordered, rule-local, cannot shadow parameters for MVP, cannot duplicate locals, and cannot be affected by extra runtime arguments.
+
+Rule-local LetBindings validation must expose enough structured information to validate local binding declaration name, declaration order, duplicate local names, parameter shadowing, and rule-local scope. Acceptable approaches include introducing a LetBinding AST/declaration model, extending the Wist rule extraction pipeline to preserve structured body declarations, or adding a module-owned extractor that consumes parser/AST output. Unacceptable approaches include regular expressions over rule body text, line splitting over rule bodies, prefix checks for `let`, or manual string slicing for syntax recognition inside the facade or validator.
 
 Complete Wist rule declaration parsing/extraction for rules with explicit parameters, explicit return type, zero or more `let` bindings, and one final expression.
 
@@ -91,17 +106,21 @@ Add tests for FunctionCalls parser, function catalog/resolution, SafeMath runtim
 
 Regression requirement: extra runtime arguments must never shadow local bindings.
 
+Architecture regression requirement: no production validator, facade, resolver, runtime wrapper, CLI command, optimizer, or catalog may rediscover Wist syntax from raw source text. Add tests or guardrails where practical to prevent string-based recognition of `let`, `if`, function calls, or rule declarations outside parser/extractor ownership.
+
 ## Validation
 
 Before final response, run or report inability to run:
 
-```bash
+```bash ci-timeout=300s
 dotnet restore UniversalToolchain/Wist.sln
 dotnet build UniversalToolchain/Wist.sln -c Release --no-restore
 dotnet test UniversalToolchain/Wist.sln -c Release --no-build
 ```
 
 Also run repository-specific validation and anti-hardcode checks. Do not claim green checks unless they were actually run or CI confirms them.
+
+Before final, inspect any production code that validates language semantics and verify that it consumes structured syntax output rather than raw source text.
 
 ## PR body update
 

@@ -179,6 +179,8 @@ public class LocalVariablesOptimizer : IIRProcessingModule
         var branchTargets = CollectBranchTargets(instructions, labelToIndex);
         var controlFlowJoinPoints = CollectControlFlowJoinPoints(instructions, labelToIndex);
         var hasBackwardBranches = HasBackwardBranch(instructions, labelToIndex);
+        if (branchTargets.Count > 0 || controlFlowJoinPoints.Count > 0)
+            return false;
 
         var iIndex = 0;
         while (iIndex < instructions.Count - 1)
@@ -198,7 +200,7 @@ public class LocalVariablesOptimizer : IIRProcessingModule
                 continue;
             }
 
-            if (CanApplyRule1(instructions, iIndex, branchTargets))
+            if (!hasBackwardBranches && CanApplyRule1(instructions, iIndex, branchTargets, controlFlowJoinPoints))
             {
                 instructions.RemoveRange(iIndex, 2);
                 changed = true;
@@ -211,9 +213,13 @@ public class LocalVariablesOptimizer : IIRProcessingModule
         return changed;
     }
 
-    private static bool CanApplyRule1(IReadOnlyList<Instruction> instructions, int start, HashSet<int> branchTargets)
+    private static bool CanApplyRule1(
+        IReadOnlyList<Instruction> instructions,
+        int start,
+        HashSet<int> branchTargets,
+        HashSet<int> controlFlowJoinPoints)
     {
-        if (!CanRewriteSlice(instructions, start, 2, branchTargets, []))
+        if (!CanRewriteSlice(instructions, start, 2, branchTargets, controlFlowJoinPoints))
             return false;
 
         return TryGetLoadLocalKey(instructions[start], out var loadKey) &&

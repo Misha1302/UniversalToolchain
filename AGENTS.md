@@ -24,6 +24,19 @@ Breaking these rules is a release-blocking architectural defect.
 8. Product profiles must be ordinary dialect preset/configuration files, not framework runtime modes.
 9. All provider discovery, catalogs, diagnostics, feature reports, schemas, CLI output, and overload resolution must be deterministic.
 10. Architecture shortcuts are worse than missing features. If a feature cannot be implemented without a shortcut, leave it incomplete and document the limitation.
+11. Syntax ownership is mandatory. Language syntax must not be recognized through ad hoc raw-source parsing outside the owning lexer/parser/AST/extractor pipeline.
+
+## Syntax ownership law
+
+`docs/SYNTAX_OWNERSHIP_RULES.md` is mandatory for all agents.
+
+Language syntax must be recognized only by the owning lexer, parser, AST node creators, AST visitors, or syntax-specific extractors built from parser output.
+
+Production validators, facades, resolvers, runtime wrappers, catalogs, CLI commands, optimizers, and convenience layers must consume structured syntax output. They must not rediscover language syntax from raw source text.
+
+Forbidden production patterns include regular expressions, line splitting, substring checks, manual source scans, and one-off scanners used to recognize language constructs outside the owning syntax pipeline.
+
+A missing parser, AST, or declaration model is not permission to parse raw source text locally. If the structured model does not exist yet, implement that model or leave the feature incomplete and document the limitation. A string-based syntax workaround is not an acceptable MVP.
 
 ## Single Responsibility Doctrine
 
@@ -48,6 +61,7 @@ Forbidden SRP violations:
 - facade becoming a product-specific engine;
 - catalog becoming a hidden source of composition truth;
 - generic framework code branching on concrete modules/profiles;
+- validators, facades, resolvers, runtimes, CLI commands, optimizers, or catalogs rediscovering language syntax from raw source text;
 - one type acting as parser + resolver + executor + formatter.
 
 ## Controlled reflection policy
@@ -121,6 +135,7 @@ Prefer:
 - data-driven descriptors over smart central authorities,
 - optional convenience layers over mandatory framework dependencies,
 - controlled reflection over direct framework-to-module dependencies when it reduces coupling,
+- structured syntax models over raw-source scans,
 - designs where narrowing a reusable abstraction requires an explicit structural change rather than a small ad hoc patch.
 
 ## Forbidden patterns
@@ -132,6 +147,7 @@ Do not introduce:
 - hardcoded function names outside the owning module/tests/examples/docs,
 - hardcoded product profile assumptions,
 - `if`/`switch` branching on concrete profile ids in framework/core/runtime code,
+- raw-source syntax recognition outside the owning lexer/parser/AST/extractor pipeline,
 - “just for this case” hacks,
 - implementation-detail leakage into public contracts,
 - copy-paste extensions,
@@ -150,6 +166,7 @@ Before editing:
 - read the relevant architecture and module boundaries,
 - reuse existing extension points when possible,
 - avoid parallel abstractions when one already exists,
+- if the change needs to understand language syntax, identify the owning parser/AST/declaration model first; do not parse raw source text locally,
 - verify whether the change preserves the project's existing universality and layering principles,
 - check whether controlled reflection can reduce coupling without becoming a hidden source of truth.
 
@@ -175,6 +192,8 @@ After editing:
 
 - `readme.md` is the canonical repository overview.
 - `docs/PROJECT_RULES.md` is the canonical coding standard and architecture rule set.
+- `docs/ARCHITECTURE_RULES.md` is the canonical architecture guardrail document.
+- `docs/SYNTAX_OWNERSHIP_RULES.md` is the canonical syntax ownership policy.
 - `docs/CONTRIBUTING.md` is the canonical contribution workflow.
 - `docs/series-01-to-07-final-task.md` is the current implementation task for finishing PR #206.
 - This file (`AGENTS.md`) is the canonical AI-agent behavior guide.
