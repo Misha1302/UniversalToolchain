@@ -8,6 +8,7 @@ namespace UniversalToolchain.Dialects.Wist.Rules;
 public sealed class CompiledWistRule : ICompiledRule
 {
     private readonly ICompiledArtifact _artifact;
+    private readonly WistRuleRuntimeValueAdapter _runtimeValueAdapter = new();
 
     public CompiledWistRule(CompiledRuleDescriptor descriptor, ICompiledArtifact artifact)
     {
@@ -33,20 +34,21 @@ public sealed class CompiledWistRule : ICompiledRule
     {
         arguments = arguments.ArgNotNull();
 
-        var diagnostics = ValidateArguments(arguments);
-        if (diagnostics.Count > 0)
-            return RuleExecutionResult.Failure(diagnostics);
+        var conversion = ConvertArguments(arguments);
+        if (conversion.Diagnostics.Count > 0)
+            return RuleExecutionResult.Failure(conversion.Diagnostics);
 
         var session = _artifact.CreateSession();
         foreach (var parameter in Descriptor.Parameters)
-            session.SetArgument(parameter.Name, arguments[parameter.Name]);
+            session.SetArgument(parameter.Name, conversion.RuntimeArguments[parameter.Name]);
 
         return RuleExecutionResult.Success(session.Run());
     }
 
-    private IReadOnlyList<ToolchainDiagnostic> ValidateArguments(IReadOnlyDictionary<string, object?> arguments)
+    private RuleArgumentConversionResult ConvertArguments(IReadOnlyDictionary<string, object?> arguments)
     {
         var diagnostics = new List<ToolchainDiagnostic>();
+        var runtimeArguments = new Dictionary<string, object?>(StringComparer.Ordinal);
         var requiredNames = Descriptor.Parameters
             .Select(static x => x.Name)
             .ToHashSet(StringComparer.Ordinal);
@@ -71,24 +73,22 @@ public sealed class CompiledWistRule : ICompiledRule
                 continue;
             }
 
-            var value = arguments[parameter.Name];
-            if (value == null)
+            if (!_runtimeValueAdapter.TryConvert(
+                    parameter.Type,
+                    arguments[parameter.Name],
+                    out var runtimeValue,
+                    out var diagnostic,
+                    parameter.Name,
+                    Descriptor.Name))
             {
-                diagnostics.Add(CreateDiagnostic(
-                    ToolchainDiagnosticCodes.RuleArgumentNull,
-                    $"Argument '{parameter.Name}' for rule '{Descriptor.Name}' must not be null."));
+                diagnostics.Add(diagnostic.NotNull());
                 continue;
             }
 
-            if (!IsRuntimeValueCompatible(parameter.Type, value))
-            {
-                diagnostics.Add(CreateDiagnostic(
-                    ToolchainDiagnosticCodes.RuleArgumentTypeMismatch,
-                    $"Argument '{parameter.Name}' for rule '{Descriptor.Name}' must have type '{parameter.Type.Name}'. Actual runtime type: '{value.GetType().FullName}'."));
-            }
+            runtimeArguments[parameter.Name] = runtimeValue;
         }
 
-        return diagnostics;
+        return new RuleArgumentConversionResult(runtimeArguments, diagnostics);
     }
 
     private static ToolchainDiagnostic CreateDiagnostic(string code, string message)
@@ -101,13 +101,7 @@ public sealed class CompiledWistRule : ICompiledRule
             []);
     }
 
-    private static bool IsRuntimeValueCompatible(RuleTypeDescriptor type, object value)
-    {
-        return type.Name switch
-        {
-            "number" => value is double or float or decimal or int or long or short or byte,
-            "bool" => value is bool,
-            _ => false
-        };
-    }
+    private sealed record RuleArgumentConversionResult(
+        IReadOnlyDictionary<string, object?> RuntimeArguments,
+        IReadOnlyList<ToolchainDiagnostic> Diagnostics);
 }

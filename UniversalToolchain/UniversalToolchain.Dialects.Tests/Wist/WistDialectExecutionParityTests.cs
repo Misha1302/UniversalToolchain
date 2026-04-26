@@ -16,6 +16,10 @@ public class WistDialectExecutionParityTests
         => AssertParity(CreateFullDialect(), "let x = 15\nlet result = 0\nif x > 10 (\n    if x < 20\n        result = 1\n    else\n        result = 2\n)\nelse\n    result = 3\nresult", 1d);
 
     [Test]
+    public void InterpreterAndCompiler_ShouldMatch_ForIfExpressionDialect()
+        => AssertParity(CreateFullDialect(), "let x = 15\nif x > 10 then 100 else 200", 100d);
+
+    [Test]
     public void InterpreterAndCompiler_ShouldMatch_ForVariablesAndScopesDialect()
         => AssertParity(CreateFullDialect(), "let x = 7\nlet y = x + 2\ny", 9d);
 
