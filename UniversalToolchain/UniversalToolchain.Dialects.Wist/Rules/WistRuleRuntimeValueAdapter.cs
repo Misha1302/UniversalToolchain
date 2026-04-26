@@ -1,3 +1,4 @@
+using ExceptionsManager;
 using NumbersModule.Core;
 using UniversalToolchain.Diagnostics.Abstractions;
 using UniversalToolchain.Rules.Abstractions;
