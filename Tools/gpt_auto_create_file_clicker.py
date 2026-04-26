@@ -56,6 +56,34 @@ TARGET_BUTTON_TEXTS = [
     "Create / Update",
     "CreateUpdate",
 
+    "Create/update PR",
+    "Create / Update PR",
+    "Create or Update PR",
+    "Create or update PR",
+    "CreateOrUpdatePR",
+    "CreateUpdatePR",
+
+    "Create/update Pull Request",
+    "Create / Update Pull Request",
+    "Create or Update Pull Request",
+    "Create or update pull request",
+    "CreateOrUpdatePullRequest",
+    "CreateUpdatePullRequest",
+
+    "Create PR",
+    "Create pr",
+    "CreatePR",
+    "Create Pull Request",
+    "Create pull request",
+    "CreatePullRequest",
+
+    "Update PR",
+    "Update pr",
+    "UpdatePR",
+    "Update Pull Request",
+    "Update pull request",
+    "UpdatePullRequest",
+
     "Update File",
     "Update file",
     "UpdateFile",
@@ -99,6 +127,9 @@ CLICK_COOLDOWN_SECONDS = 1.5
 
 SCROLL_INTERVAL_SECONDS = 0.70
 SCROLL_STEPS_PER_TICK = 1
+
+REFRESH_PAGE_WITH_F5 = False
+REFRESH_INTERVAL_SECONDS = 30.0
 
 MAX_SEARCH_DEPTH = 40
 
@@ -352,9 +383,20 @@ def create_scroll_device():
         e.EV_REL: [
             e.REL_WHEEL,
         ],
+        e.EV_KEY: [
+            e.KEY_F5,
+        ],
     }
 
-    return UInput(capabilities, name="gpt-auto-scroll-wheel")
+    return UInput(capabilities, name="gpt-auto-scroll-wheel-and-f5")
+
+
+def press_f5(ui):
+    ui.write(e.EV_KEY, e.KEY_F5, 1)
+    ui.syn()
+    time.sleep(0.05)
+    ui.write(e.EV_KEY, e.KEY_F5, 0)
+    ui.syn()
 
 
 def scroll_down(ui):
@@ -382,7 +424,8 @@ def main():
     print("  1. ищет кнопку через Firefox accessibility")
     print("  2. если нашёл — кликает")
     print("  3. если не нашёл — крутит колесо вниз")
-    print("  4. q останавливает скрипт глобально")
+    print("  4. каждые 30 секунд нажимает F5 для перезагрузки страницы")
+    print("  5. q останавливает скрипт глобально")
     print()
 
     print("Ищу кнопки:")
@@ -414,6 +457,7 @@ def main():
     last_click_time = 0
     last_scroll_time = 0
     last_not_found_print = 0
+    last_refresh_time = time.time()
 
     try:
         with create_scroll_device() as ui:
@@ -424,6 +468,14 @@ def main():
 
                 button, target_name = find_target_button()
                 now = time.time()
+
+                if (
+                    REFRESH_PAGE_WITH_F5
+                    and now - last_refresh_time >= REFRESH_INTERVAL_SECONDS
+                ):
+                    print("Нажимаю F5 для перезагрузки страницы...")
+                    press_f5(ui)
+                    last_refresh_time = now
 
                 if button is not None:
                     if now - last_click_time >= CLICK_COOLDOWN_SECONDS:
