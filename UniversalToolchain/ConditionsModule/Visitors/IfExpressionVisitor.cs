@@ -3,6 +3,7 @@ namespace ConditionsModule.Visitors;
 public sealed class IfExpressionVisitor : IAstVisitor
 {
     private static readonly ExtensibleEnum<AstNodeTag> IfExpressionNodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("IfExpression");
+    private int _ifExpressionSequence;
 
     public void TryVisit(BytecodeVisitorData data)
     {
@@ -14,12 +15,16 @@ public sealed class IfExpressionVisitor : IAstVisitor
         if (data.Node.Children.Count != 3)
             Thrower.InvalidOpEx("IfExpression node must contain condition, true branch, and false branch.");
 
-        var falseLabel = Guid.NewGuid();
-        var endLabel = Guid.NewGuid();
-        var resultLocalName = $"__if_expression_result_{Guid.NewGuid():N}";
+        var sequence = _ifExpressionSequence++;
+        var falseLabel = CreateDeterministicLabel(sequence, 1);
+        var endLabel = CreateDeterministicLabel(sequence, 2);
+        var resultLocalName = $"__if_expression_result_{sequence}";
         var resultType = default(Type);
 
         data.AstToBytecodeTranslator.Translate(data.Node.Children[0]);
+        data.Bytecode.Instructions.Add(new BytecodeInstruction(new AbstractMethodImpl(
+            $"IfExpression_RequireBooleanCondition_{sequence}",
+            (_, context) => RequireBooleanCondition(context))));
         data.Bytecode.Instructions.Add(new BytecodeInstruction(new AbstractMethodImpl(
             $"IfExpression_JmpIfNot_{falseLabel}",
             (il, _) => il.JmpIfNot(falseLabel))));
@@ -46,6 +51,25 @@ public sealed class IfExpressionVisitor : IAstVisitor
         data.Bytecode.Instructions.Add(new BytecodeInstruction(new AbstractMethodImpl(
             $"IfExpression_LoadResult_{resultLocalName}",
             (il, _) => il.LdLoc(resultLocalName, resultType.NotNull()))));
+    }
+
+    private static Guid CreateDeterministicLabel(int sequence, byte marker)
+    {
+        var bytes = new byte[16];
+        BitConverter.GetBytes(sequence).CopyTo(bytes, 0);
+        bytes[15] = marker;
+        return new Guid(bytes);
+    }
+
+    private static void RequireBooleanCondition(IAbstractMethodConvertable.Context context)
+    {
+        if (context.Stack.Count == 0)
+            Thrower.InvalidOpEx("IfExpression condition must leave a value on the stack.");
+
+        var conditionType = context.Stack[^1];
+        if (conditionType != typeof(bool))
+            Thrower.InvalidOpEx(
+                $"IfExpression condition must be boolean. Actual type: '{conditionType.FullName}'.");
     }
 
     private static void StoreBranchResult(
