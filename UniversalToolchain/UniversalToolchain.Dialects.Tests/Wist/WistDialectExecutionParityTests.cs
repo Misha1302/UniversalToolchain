@@ -1,4 +1,7 @@
 using System.Globalization;
+using BasicCore.ParserWrapper;
+using BasicTypesExtensions;
+using ConditionsModule.Creators;
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
 using NumbersModule.Core;
@@ -31,6 +34,68 @@ public class WistDialectExecutionParityTests
     [Test]
     public void InterpreterAndCompiler_ShouldMatch_ForIfExpression_WithIntermediateResultLocal()
         => AssertParity(CreateFullDialect(), "let result = 255.0\nif result < 0.0 then 0.0 else result", 255d);
+
+    [Test]
+    public void IfExpressionNodeCreator_ShouldPreserveSiblingsAfterIfExpression()
+    {
+        var ifNodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("If");
+        var thenNodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("Then");
+        var elseNodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("Else");
+        var expressionNodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("Expression");
+        var statementNodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("Statement");
+        var scopeNodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("Scope");
+
+        var condition = new AstNode(expressionNodeType, null, []);
+        var trueBranch = new AstNode(expressionNodeType, null, []);
+        var falseBranch = new AstNode(expressionNodeType, null, []);
+        var sibling1 = new AstNode(statementNodeType, null, []);
+        var sibling2 = new AstNode(statementNodeType, null, []);
+
+        var scope = new AstNode(
+            scopeNodeType,
+            null,
+            [
+                new AstNode(ifNodeType, null, []),
+                condition,
+                new AstNode(thenNodeType, null, []),
+                trueBranch,
+                new AstNode(elseNodeType, null, []),
+                falseBranch,
+                sibling1,
+                sibling2
+            ]);
+
+        var creator = new IfExpressionNodeCreator();
+        var wasCreated = creator.TryCreateNode(scope, 0);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(wasCreated, Is.True);
+            Assert.That(scope.Children.Count, Is.EqualTo(3));
+            Assert.That(scope.Children[1], Is.SameAs(sibling1));
+            Assert.That(scope.Children[2], Is.SameAs(sibling2));
+        });
+    }
+
+    [Test]
+    public void IfExpression_WhenFalseBranchIsMissing_ThrowsClearDiagnostic()
+    {
+        using var host = ComposeAndCreateHost(CreateFullDialect());
+
+        var interpreterException = Assert.Throws<InvalidOperationException>(
+            () => host.Run("if 1.0 < 2.0 then 10.0 else", "interpreter"));
+
+        var compilerException = Assert.Throws<InvalidOperationException>(
+            () => host.Run("if 1.0 < 2.0 then 10.0 else", "compiler"));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(interpreterException, Is.Not.Null);
+            Assert.That(compilerException, Is.Not.Null);
+            Assert.That(interpreterException?.Message, Does.Contain("if-expression false branch"));
+            Assert.That(compilerException?.Message, Does.Contain("if-expression false branch"));
+        });
+    }
 
     [Test]
     public void IfExpression_WhenConditionIsNotBool_ReturnsOrThrowsClearDiagnostic()
