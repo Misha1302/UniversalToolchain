@@ -13,11 +13,13 @@ public class ConditionsModuleImpl : IFrontendCoreModule
     [
         new("if", "If"),
         new("elif", "Elif"),
+        new("then", "Then"),
         new("else", "Else")
     ];
 
     private static readonly IReadOnlyList<NodeCreatorRegistration> _nodeCreatorRegistrations =
     [
+        new(14.5f, new IfExpressionNodeCreator()),
         new(15f, new IfNodeCreator()),
         new(15f, new ElifNodeCreator()),
         new(15f, new ElseNodeCreator()),
@@ -28,5 +30,6 @@ public class ConditionsModuleImpl : IFrontendCoreModule
 
     public void InitParser(IParser parser) => parser.AddNodeCreators(_nodeCreatorRegistrations);
 
-    public void InitAstTranslator(IAstToBytecodeTranslator translator) => translator.AddVisitors(new ConditionsVisitor());
+    public void InitAstTranslator(IAstToBytecodeTranslator translator) =>
+        translator.AddVisitors(new IfExpressionVisitor(), new ConditionsVisitor());
 }
