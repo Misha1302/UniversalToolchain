@@ -26,6 +26,7 @@ Breaking these rules is a release-blocking architecture defect.
 8. Convenience APIs must remain thin wrappers over existing composition/runtime paths. They must not become second runtimes.
 9. All discovery, catalog building, diagnostics, schema output, feature reports, CLI output, and overload resolution must be deterministic.
 10. Architecture shortcuts are worse than incomplete features.
+11. Language syntax must not be recognized through ad hoc raw-source parsing. Regular expressions, line splitting, substring checks, and manual source scans are forbidden for language constructs outside the owning lexer/parser/AST/extractor pipeline.
 
 ## 3. Single Responsibility Doctrine
 
@@ -50,7 +51,27 @@ Forbidden SRP violations:
 - facade becoming a product-specific engine;
 - catalog becoming a hidden source of composition truth;
 - generic framework code branching on concrete modules/profiles;
+- validators, facades, resolvers, runtimes, CLI commands, optimizers, or catalogs rediscovering language syntax from raw source text;
 - one type acting as parser, resolver, executor, and formatter at once.
+
+## 3.1 Syntax ownership rule
+
+Syntax ownership is mandatory.
+
+Only the owning lexer, parser, AST node creators, AST visitors, or dedicated syntax extractors built from parser output may recognize language constructs.
+
+Validators, facades, resolvers, runtime wrappers, catalogs, CLI commands, and optimizers must consume structured syntax models, AST nodes, declarations, descriptors, symbols, or compiled plans. They must not rediscover language syntax from raw source text.
+
+This is forbidden because it creates a second syntax recognizer outside the parser, bypasses module ownership, and breaks extensibility when syntax changes.
+
+Correct direction:
+
+- local binding syntax must be represented by parser-owned AST/declaration nodes;
+- rule validation must inspect those nodes or a declaration model produced by the parser/extractor;
+- facade code may orchestrate validation but must not recognize syntax itself;
+- incomplete syntax infrastructure must be implemented instead of bypassed.
+
+See `docs/SYNTAX_OWNERSHIP_RULES.md` for the full mandatory policy.
 
 ## 4. Controlled reflection policy
 
@@ -130,6 +151,7 @@ When adding convenience layers, catalogs, discovery paths, facades, or product p
 - BasicCore independence from Wist/Rules/SafeMath/concrete feature modules;
 - absence of hardcoded product profile branching in framework layers;
 - absence of SafeMath function names in parser/resolver/framework code;
+- absence of raw-source syntax recognition in validators, facades, resolvers, runtimes, CLI commands, optimizers, and catalogs;
 - deterministic provider discovery and report ordering;
 - facade reuse of the existing runtime pipeline;
 - absence of repeated reflection scans in hot execution paths.
