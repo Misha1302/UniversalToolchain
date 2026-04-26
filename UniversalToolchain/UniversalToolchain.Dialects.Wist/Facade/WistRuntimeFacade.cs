@@ -2,7 +2,6 @@ using System.Reflection.Emit;
 using BasicCore.Compilation;
 using ExceptionsManager;
 using IntermediateRepresentationAbstractions;
-using UniversalToolchain.Diagnostics.Abstractions;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist.Rules;
@@ -16,12 +15,13 @@ namespace UniversalToolchain.Dialects.Wist.Facade;
 public sealed class WistRuntimeFacade : IDisposable
 {
     private readonly WistDialectExecutionHost _host;
-    private readonly WistRuleRuntimeTypeResolver _ruleRuntimeTypeResolver = new();
+    private readonly IWistRuleSetCompiler _ruleSetCompiler;
 
-    internal WistRuntimeFacade(WistDialectExecutionHost host, DialectFrameworkCompositionResult composition)
+    internal WistRuntimeFacade(WistDialectExecutionHost host, DialectFrameworkCompositionResult composition, IWistRuleSetCompiler ruleSetCompiler)
     {
         _host = host.ArgNotNull();
         Composition = composition.ArgNotNull();
+        _ruleSetCompiler = ruleSetCompiler.ArgNotNull();
     }
 
     internal WistDialectExecutionConfiguration Configuration => _host.Configuration;
@@ -61,39 +61,7 @@ public sealed class WistRuntimeFacade : IDisposable
     /// </summary>
     public RuleSetCompileResult CompileRuleSet(string source, string mode = "compiler")
     {
-        var extraction = new WistRuleDeclarationExtractor().Extract(source);
-        if (!extraction.IsSuccess)
-            return new RuleSetCompileResult(false, null, extraction.Diagnostics);
-
-        var validationDiagnostics = new WistRuleBodyValidator().Validate(extraction.Rules);
-        if (validationDiagnostics.Count > 0)
-            return RuleSetCompileResult.Failure(validationDiagnostics);
-
-        var diagnostics = new List<ToolchainDiagnostic>();
-        var compiledRules = new List<ICompiledRule>();
-
-        foreach (var rule in extraction.Rules.OrderBy(static x => x.Name, StringComparer.Ordinal))
-        {
-            var declaredBindings = CreateDeclaredBindings(rule.Parameters);
-            try
-            {
-                var artifact = Compile(rule.Body, declaredBindings, mode);
-                compiledRules.Add(new CompiledWistRule(CreateDescriptor(rule), artifact));
-            }
-            catch (Exception ex)
-            {
-                diagnostics.Add(new ToolchainDiagnostic(
-                    ToolchainDiagnosticCodes.RuleInvalidBody,
-                    ToolchainDiagnosticSeverity.Error,
-                    $"Rule '{rule.Name}' could not be compiled: {ex.Message}",
-                    null,
-                    []));
-            }
-        }
-
-        return diagnostics.Count == 0
-            ? RuleSetCompileResult.Success(new CompiledWistRuleSet(compiledRules))
-            : RuleSetCompileResult.Failure(diagnostics);
+        return _ruleSetCompiler.Compile(source, mode);
     }
 
     /// <summary>
@@ -171,32 +139,4 @@ public sealed class WistRuntimeFacade : IDisposable
         return declaredBindings;
     }
 
-    private OrderedDictionary<string, Type> CreateDeclaredBindings(IReadOnlyList<RuleParameterModel> parameters)
-    {
-        parameters = parameters.ArgNotNull();
-
-        var declaredBindings = new OrderedDictionary<string, Type>();
-        foreach (var parameter in parameters)
-            declaredBindings[parameter.Name] = ResolveRuntimeType(parameter.Type);
-
-        return declaredBindings;
-    }
-
-    private static CompiledRuleDescriptor CreateDescriptor(RuleDeclarationModel rule)
-    {
-        return new CompiledRuleDescriptor(
-            rule.Name,
-            rule.Parameters
-                .Select(static x => new RuleParameterDescriptor(x.Name, x.Type))
-                .ToList(),
-            rule.ReturnType);
-    }
-
-    private Type ResolveRuntimeType(RuleTypeDescriptor type)
-    {
-        if (_ruleRuntimeTypeResolver.TryResolve(type, out var runtimeType))
-            return runtimeType;
-
-        return Thrower.NotSupported<Type>($"Unsupported rule type '{type.Name}'.");
-    }
 }
