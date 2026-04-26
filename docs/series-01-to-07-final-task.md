@@ -95,7 +95,7 @@ Regression requirement: extra runtime arguments must never shadow local bindings
 
 Before final response, run or report inability to run:
 
-```bash
+```bash ci-timeout=300s
 dotnet restore UniversalToolchain/Wist.sln
 dotnet build UniversalToolchain/Wist.sln -c Release --no-restore
 dotnet test UniversalToolchain/Wist.sln -c Release --no-build

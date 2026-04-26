@@ -65,6 +65,10 @@ public sealed class WistRuntimeFacade : IDisposable
         if (!extraction.IsSuccess)
             return new RuleSetCompileResult(false, null, extraction.Diagnostics);
 
+        var validationDiagnostics = new WistRuleBodyValidator().Validate(extraction.Rules);
+        if (validationDiagnostics.Count > 0)
+            return RuleSetCompileResult.Failure(validationDiagnostics);
+
         var diagnostics = new List<ToolchainDiagnostic>();
         var compiledRules = new List<ICompiledRule>();
 

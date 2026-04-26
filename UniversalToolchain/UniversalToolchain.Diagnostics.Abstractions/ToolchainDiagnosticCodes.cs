@@ -23,4 +23,6 @@ public static class ToolchainDiagnosticCodes
     public const string RuleDuplicateParameter = "UTC-RULE-007";
     public const string RuleUnknownType = "UTC-RULE-008";
     public const string RuleInvalidBody = "UTC-RULE-009";
+    public const string RuleDuplicateLocal = "UTC-RULE-010";
+    public const string RuleLocalShadowsParameter = "UTC-RULE-011";
 }

@@ -2559,7 +2559,7 @@ No docs describe feature system as runtime activation source.
 
 After every PR:
 
-```bash
+```bash ci-timeout=300s
 dotnet restore UniversalToolchain/Wist.sln
 dotnet build UniversalToolchain/Wist.sln -c Release --no-restore
 dotnet test UniversalToolchain/Wist.sln -c Release --no-build
@@ -2569,7 +2569,7 @@ If a PR changes docs with bash fences, also run the repository's markdown comman
 
 For feature/runtime PRs, also run targeted tests first:
 
-```bash
+```bash ci-timeout=300s
 dotnet test UniversalToolchain/Wist.sln -c Release --filter "FullyQualifiedName~Features"
 dotnet test UniversalToolchain/Wist.sln -c Release --filter "FullyQualifiedName~Functions"
 dotnet test UniversalToolchain/Wist.sln -c Release --filter "FullyQualifiedName~Rules"
