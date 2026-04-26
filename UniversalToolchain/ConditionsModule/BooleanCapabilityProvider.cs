@@ -1,10 +1,13 @@
 using UniversalToolchain.Capabilities.Abstractions;
+using UniversalToolchain.Rules.Abstractions;
 
 namespace ConditionsModule;
 
-public sealed class BooleanCapabilityProvider : ILanguageFeatureDescriptorProvider
+public sealed class BooleanCapabilityProvider : ILanguageFeatureDescriptorProvider, IRuleRuntimeTypeBindingProvider
 {
     private static readonly LanguageFeatureId FeatureId = new("BooleanConditions");
+    private static readonly RuleTypeDescriptor BoolRuleType = new("bool");
+    private static readonly IRuleRuntimeValueConverter BoolConverter = new BooleanRuleRuntimeValueConverter();
 
     public IReadOnlyList<LanguageFeatureDescriptor> GetLanguageFeatures()
     {
@@ -25,6 +28,14 @@ public sealed class BooleanCapabilityProvider : ILanguageFeatureDescriptorProvid
                 ],
                 ["cil", "interpreter"],
                 "Provides boolean literals and boolean operators.")
+        ];
+    }
+
+    public IReadOnlyList<RuleRuntimeTypeBinding> GetRuleRuntimeTypeBindings()
+    {
+        return
+        [
+            new RuleRuntimeTypeBinding(BoolRuleType, typeof(bool), BoolConverter)
         ];
     }
 }

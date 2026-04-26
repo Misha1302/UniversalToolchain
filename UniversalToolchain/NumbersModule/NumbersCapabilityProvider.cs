@@ -1,10 +1,13 @@
 using UniversalToolchain.Capabilities.Abstractions;
+using UniversalToolchain.Rules.Abstractions;
 
 namespace NumbersModule;
 
-public sealed class NumbersCapabilityProvider : ILanguageFeatureDescriptorProvider
+public sealed class NumbersCapabilityProvider : ILanguageFeatureDescriptorProvider, IRuleRuntimeTypeBindingProvider
 {
     private static readonly LanguageFeatureId FeatureId = new("NumericLiterals");
+    private static readonly RuleTypeDescriptor NumberRuleType = new("number");
+    private static readonly IRuleRuntimeValueConverter NumberConverter = new NumberRuleRuntimeValueConverter();
 
     public IReadOnlyList<LanguageFeatureDescriptor> GetLanguageFeatures()
     {
@@ -21,6 +24,14 @@ public sealed class NumbersCapabilityProvider : ILanguageFeatureDescriptorProvid
                 ],
                 ["cil", "interpreter"],
                 "Provides numeric literal parsing for Wist expressions.")
+        ];
+    }
+
+    public IReadOnlyList<RuleRuntimeTypeBinding> GetRuleRuntimeTypeBindings()
+    {
+        return
+        [
+            new RuleRuntimeTypeBinding(NumberRuleType, typeof(RealNumberImpl), NumberConverter)
         ];
     }
 }
