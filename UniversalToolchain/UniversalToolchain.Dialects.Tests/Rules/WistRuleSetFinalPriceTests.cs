@@ -1,7 +1,7 @@
 using System.Globalization;
-using Microsoft.Extensions.DependencyInjection;
 using NumbersModule.Core;
-using UniversalToolchain.Dialects.Wist;
+using UniversalToolchain.Diagnostics.Abstractions;
+using UniversalToolchain.Dialects.Wist.Facade;
 using UniversalToolchain.Rules.Abstractions;
 
 namespace UniversalToolchain.Dialects.Tests.Rules;
@@ -46,19 +46,10 @@ public sealed class WistRuleSetFinalPriceTests
 
     private static WistRuntimeFacade CreatePricingRulesFacade()
     {
-        var services = new ServiceCollection();
-        services.AddWistDialectServices();
-        services.AddWistCilBackend();
-        services.AddWistInterpreterBackend();
-        var provider = services.BuildServiceProvider();
-        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var composition = workflow.ComposeFile(ResolvePricingRulesDialectFile());
-        Assert.That(
-            composition.IsSuccess,
-            Is.True,
-            DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
-
-        return new WistRuntimeFacade(workflow.CreateHost(composition), composition);
+        return WistRuntimeFacadeBuilder
+            .CreateDefault()
+            .WithDialectFile(ResolvePricingRulesDialectFile())
+            .Build();
     }
 
     private static string ResolvePricingRulesDialectFile()
