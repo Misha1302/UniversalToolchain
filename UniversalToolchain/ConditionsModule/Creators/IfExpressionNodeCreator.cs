@@ -48,6 +48,11 @@ public sealed class IfExpressionNodeCreator : IAstNodeCreator
 
     private static AstNode ReadSingleExpression(AstNode scope, int startIndex, int endIndex, string segmentName)
     {
+        scope = scope.ArgNotNull();
+
+        if (startIndex < 0 || endIndex > scope.Children.Count || startIndex >= endIndex)
+            Thrower.InvalidOpEx($"Expected exactly one expression in {segmentName}.");
+
         var count = endIndex - startIndex;
         if (count != 1)
             Thrower.InvalidOpEx($"Expected exactly one expression in {segmentName}.");
