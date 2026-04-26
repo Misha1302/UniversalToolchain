@@ -317,7 +317,7 @@ public sealed class WistRuleSetSyntaxParser
                     depth--;
                     if (depth == 0)
                     {
-                        bodyText = _source[start..Position].Trim();
+                        bodyText = _source[start..Position];
                         bodyEndExclusive = Position;
                         Position++;
                         return true;

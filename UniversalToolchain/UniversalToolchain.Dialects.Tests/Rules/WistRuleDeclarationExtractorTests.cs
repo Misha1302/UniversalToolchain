@@ -1,4 +1,3 @@
-using UniversalToolchain.Diagnostics.Abstractions;
 using UniversalToolchain.Dialects.Wist.Rules;
 
 namespace UniversalToolchain.Dialects.Tests.Rules;
@@ -28,7 +27,7 @@ public sealed class WistRuleDeclarationExtractorTests
     }
 
     [Test]
-    public void Extract_WhenRuleNameIsDuplicated_ReturnsStructuredDiagnostic()
+    public void Extract_WhenRuleNameIsDuplicated_StillBuildsDeclarationModels()
     {
         var extractor = new WistRuleDeclarationExtractor();
 
@@ -39,13 +38,14 @@ public sealed class WistRuleDeclarationExtractorTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(result.IsSuccess, Is.False);
-            Assert.That(result.Diagnostics.Select(static x => x.Code), Does.Contain(ToolchainDiagnosticCodes.RuleDuplicateName));
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Diagnostics, Is.Empty);
+            Assert.That(result.Rules, Has.Count.EqualTo(2));
         });
     }
 
     [Test]
-    public void Extract_WhenParameterNameIsDuplicated_ReturnsStructuredDiagnostic()
+    public void Extract_WhenParameterNameIsDuplicated_StillBuildsDeclarationModel()
     {
         var extractor = new WistRuleDeclarationExtractor();
 
@@ -55,13 +55,15 @@ public sealed class WistRuleDeclarationExtractorTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(result.IsSuccess, Is.False);
-            Assert.That(result.Diagnostics.Select(static x => x.Code), Does.Contain(ToolchainDiagnosticCodes.RuleDuplicateParameter));
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Diagnostics, Is.Empty);
+            Assert.That(result.Rules, Has.Count.EqualTo(1));
+            Assert.That(result.Rules[0].Parameters, Has.Count.EqualTo(2));
         });
     }
 
     [Test]
-    public void Extract_WhenTypeIsUnknown_ReturnsStructuredDiagnostic()
+    public void Extract_WhenTypeIsUnknown_StillBuildsDeclarationModel()
     {
         var extractor = new WistRuleDeclarationExtractor();
 
@@ -71,8 +73,9 @@ public sealed class WistRuleDeclarationExtractorTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(result.IsSuccess, Is.False);
-            Assert.That(result.Diagnostics.Select(static x => x.Code), Does.Contain(ToolchainDiagnosticCodes.RuleUnknownType));
+            Assert.That(result.IsSuccess, Is.True);
+            Assert.That(result.Diagnostics, Is.Empty);
+            Assert.That(result.Rules[0].Parameters[0].Type.Name, Is.EqualTo("money"));
         });
     }
 }

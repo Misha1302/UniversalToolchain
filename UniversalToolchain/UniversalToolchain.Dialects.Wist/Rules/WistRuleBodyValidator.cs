@@ -13,6 +13,7 @@ public sealed class WistRuleBodyValidator
 
         foreach (var rule in rules.OrderBy(static x => x.Name, StringComparer.Ordinal))
         {
+            ValidateRuleReturnType(rule, diagnostics);
             ValidateRuleParameters(rule, diagnostics);
             ValidateRuleLocals(rule, diagnostics);
         }
@@ -32,6 +33,11 @@ public sealed class WistRuleBodyValidator
         }
     }
 
+    private static void ValidateRuleReturnType(RuleDeclarationModel rule, List<ToolchainDiagnostic> diagnostics)
+    {
+        ValidateSupportedType(rule.ReturnType.Name, diagnostics, $"rule '{rule.Name}' return type");
+    }
+
     private static void ValidateRuleParameters(RuleDeclarationModel rule, List<ToolchainDiagnostic> diagnostics)
     {
         foreach (var duplicateGroup in rule.Parameters
@@ -41,6 +47,17 @@ public sealed class WistRuleBodyValidator
         {
             diagnostics.Add(CreateDiagnostic(ToolchainDiagnosticCodes.RuleDuplicateParameter, $"Duplicate parameter '{duplicateGroup.Key}' in rule '{rule.Name}'."));
         }
+
+        foreach (var parameter in rule.Parameters)
+            ValidateSupportedType(parameter.Type.Name, diagnostics, $"parameter '{parameter.Name}' in rule '{rule.Name}'");
+    }
+
+    private static void ValidateSupportedType(string typeName, List<ToolchainDiagnostic> diagnostics, string owner)
+    {
+        if (string.Equals(typeName, "number", StringComparison.Ordinal) || string.Equals(typeName, "bool", StringComparison.Ordinal))
+            return;
+
+        diagnostics.Add(CreateDiagnostic(ToolchainDiagnosticCodes.RuleUnknownType, $"Unsupported type '{typeName}' for {owner}. Supported MVP types: number, bool."));
     }
 
     private static void ValidateRuleLocals(RuleDeclarationModel rule, List<ToolchainDiagnostic> diagnostics)

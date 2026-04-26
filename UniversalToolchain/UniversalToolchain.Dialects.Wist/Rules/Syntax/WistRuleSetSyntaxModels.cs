@@ -26,9 +26,3 @@ public sealed record WistRuleSetSyntaxParseResult(
     WistRuleSetSyntax? Syntax,
     IReadOnlyList<ToolchainDiagnostic> Diagnostics);
 
-public sealed record WistRuleBodySyntaxInfo(
-    IReadOnlyList<LocalBindingDeclarationModel> LocalBindings,
-    IReadOnlyList<ToolchainDiagnostic> Diagnostics)
-{
-    public bool IsSuccess => Diagnostics.Count == 0;
-}
