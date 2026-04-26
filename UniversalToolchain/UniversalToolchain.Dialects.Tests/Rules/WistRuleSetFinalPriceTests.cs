@@ -27,7 +27,9 @@ public sealed class WistRuleSetFinalPriceTests
         var compileResult = facade.CompileRuleSet(FinalPriceRules, backend);
 
         Assert.That(compileResult.IsSuccess, Is.True, FormatDiagnostics(compileResult.Diagnostics));
-        var runResult = compileResult.RuleSet.NotNull().TryRun(
+        Assert.That(compileResult.RuleSet, Is.Not.Null);
+
+        var runResult = compileResult.RuleSet!.TryRun(
             "FinalPrice",
             new Dictionary<string, object?>
             {
