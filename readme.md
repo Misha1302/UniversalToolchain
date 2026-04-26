@@ -251,7 +251,7 @@ Active runtime and backend work is being verified there first, so older target f
 
 From repository root:
 
-```bash
+```bash ci-run=false
 dotnet restore UniversalToolchain/Wist.sln
 dotnet build UniversalToolchain/Wist.sln -c Release --no-restore
 dotnet test UniversalToolchain/Tests/Tests.csproj -c Release --no-build
