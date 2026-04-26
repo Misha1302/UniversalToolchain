@@ -18,13 +18,21 @@ public sealed class WistRuleSetCompiler : IWistRuleSetCompiler
     private readonly WistRuleDeclarationExtractor _extractor;
     private readonly WistRuleRuntimeTypeResolver _typeResolver;
 
-    public WistRuleSetCompiler(Func<string, OrderedDictionary<string, Type>, string, ICompiledArtifact> artifactCompiler)
+    public WistRuleSetCompiler(
+        Func<string, OrderedDictionary<string, Type>, string, ICompiledArtifact> artifactCompiler,
+        IReadOnlyList<RuleRuntimeTypeBinding> ruleRuntimeTypeBindings)
     {
         _artifactCompiler = artifactCompiler.ArgNotNull();
+        ruleRuntimeTypeBindings = ruleRuntimeTypeBindings.ArgNotNull();
+
         _extractor = new WistRuleDeclarationExtractor();
         _validator = new WistRuleBodyValidator();
-        _typeResolver = new WistRuleRuntimeTypeResolver();
-        _argumentBinder = new WistRuleArgumentBinder();
+
+        var typeResolver = new WistRuleRuntimeTypeResolver(ruleRuntimeTypeBindings);
+        var valueAdapter = new WistRuleRuntimeValueAdapter(typeResolver);
+
+        _typeResolver = typeResolver;
+        _argumentBinder = new WistRuleArgumentBinder(valueAdapter);
     }
 
     public RuleSetCompileResult Compile(string source, string mode)

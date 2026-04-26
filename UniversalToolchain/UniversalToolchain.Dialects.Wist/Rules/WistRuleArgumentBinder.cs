@@ -27,7 +27,12 @@ public sealed record RuleArgumentBindingResult(
 
 public sealed class WistRuleArgumentBinder : IWistRuleArgumentBinder
 {
-    private readonly WistRuleRuntimeValueAdapter _runtimeValueAdapter = new();
+    private readonly WistRuleRuntimeValueAdapter _runtimeValueAdapter;
+
+    public WistRuleArgumentBinder(WistRuleRuntimeValueAdapter runtimeValueAdapter)
+    {
+        _runtimeValueAdapter = runtimeValueAdapter.ArgNotNull();
+    }
 
     public RuleArgumentBindingResult Bind(CompiledRuleDescriptor descriptor, IReadOnlyDictionary<string, object?> arguments)
     {
