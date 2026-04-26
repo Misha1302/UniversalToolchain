@@ -25,7 +25,7 @@ public class WistDialectExecutionParityTests
 
     [Test]
     public void InterpreterAndCompiler_ShouldMatch_ForLoopsDialect()
-        => AssertParity(CreateFullDialect(), "let sum = 0\nlet i = 1\n@start:\nif i > 4 goto @end\nsum = sum + i\ni = i + 1\ngoto @start\n@end:\ntotal", 10d);
+        => AssertParity(CreateFullDialect(), "let sum = 0\nlet i = 1\n@start:\nif i > 4 goto @end\nsum = sum + i\ni = i + 1\ngoto @start\n@end:\nsum", 10d);
 
     [Test]
     public void InterpreterAndCompiler_ShouldMatch_ForEqualityAndComparisonDialect()
