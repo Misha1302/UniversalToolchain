@@ -1,4 +1,5 @@
 using System.Globalization;
+using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
 using NumbersModule.Core;
 using UniversalToolchain.Dialects.Wist;
@@ -30,6 +31,21 @@ public class WistDialectExecutionParityTests
     [Test]
     public void InterpreterAndCompiler_ShouldMatch_ForIfExpression_WithIntermediateResultLocal()
         => AssertParity(CreateFullDialect(), "let result = 255.0\nif result < 0.0 then 0.0 else result", 255d);
+
+    [Test]
+    public void IfExpression_WhenConditionIsNotBool_ReturnsOrThrowsClearDiagnostic()
+    {
+        using var host = ComposeAndCreateHost(CreateFullDialect());
+
+        var interpreterException = Assert.Throws<InvalidOperationException>(() => host.Run("if 1.0 then 10.0 else 20.0", "interpreter"));
+        var compilerException = Assert.Throws<InvalidOperationException>(() => host.Run("if 1.0 then 10.0 else 20.0", "compiler"));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(interpreterException!.Message, Does.Contain("condition must be boolean"));
+            Assert.That(compilerException!.Message, Does.Contain("condition must be boolean"));
+        });
+    }
 
     [Test]
     public void InterpreterAndCompiler_ShouldMatch_ForVariablesAndScopesDialect()
@@ -93,7 +109,7 @@ public class WistDialectExecutionParityTests
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var composition = workflow.ComposeText(dialect, "inline-dialect");
         if (!composition.IsSuccess)
-            throw new InvalidOperationException(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
+            Thrower.InvalidOpEx(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
 
         return workflow.CreateHost(composition);
     }
