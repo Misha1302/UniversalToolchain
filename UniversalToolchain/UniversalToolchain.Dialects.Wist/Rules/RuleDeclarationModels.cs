@@ -3,11 +3,27 @@ using UniversalToolchain.Rules.Abstractions;
 
 namespace UniversalToolchain.Dialects.Wist.Rules;
 
+public readonly record struct RuleScopeId(int Value);
+
+public readonly record struct SourceSpan(int Start, int Length);
+
+public sealed record LocalBindingDeclarationModel(
+    string Name,
+    int DeclarationOrder,
+    RuleScopeId ScopeId,
+    SourceSpan Span);
+
+public sealed record RuleBodyModel(
+    string SourceText,
+    IReadOnlyList<LocalBindingDeclarationModel> LocalBindings,
+    SourceSpan Span);
+
 public sealed record RuleDeclarationModel(
     string Name,
     IReadOnlyList<RuleParameterModel> Parameters,
     RuleTypeDescriptor ReturnType,
-    string Body);
+    RuleBodyModel Body,
+    SourceSpan Span);
 
 public sealed record RuleParameterModel(
     string Name,

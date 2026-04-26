@@ -62,6 +62,64 @@ public sealed class WistRuleSetValidationTests
     }
 
     [Test]
+    public void CompileRuleSet_WhenCommentContainsLet_DoesNotCreateFakeLocal()
+    {
+        const string source = """
+                              rule Total(price: number) -> number {
+                                  // let value = 100.0
+                                  let real = price
+                                  real
+                              }
+                              """;
+
+        using var facade = CreatePricingRulesFacade();
+        var compile = facade.CompileRuleSet(source, "compiler");
+
+        Assert.That(compile.IsSuccess, Is.True, FormatDiagnostics(compile.Diagnostics));
+    }
+
+    [Test]
+    public void CompileRuleSet_WhenDuplicateLocalLetBindingExists_ReturnsDiagnostic()
+    {
+        const string source = """
+                              rule Bad(price: number) -> number {
+                                  let value = price
+                                  let value = price * 2.0
+                                  value
+                              }
+                              """;
+
+        using var facade = CreatePricingRulesFacade();
+        var compile = facade.CompileRuleSet(source, "compiler");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(compile.IsSuccess, Is.False);
+            Assert.That(compile.Diagnostics.Select(static x => x.Code), Does.Contain(ToolchainDiagnosticCodes.RuleDuplicateLocal));
+        });
+    }
+
+    [Test]
+    public void CompileRuleSet_WhenLocalLetBindingShadowsParameter_ReturnsDiagnostic()
+    {
+        const string source = """
+                              rule Bad(price: number) -> number {
+                                  let price = 10.0
+                                  price
+                              }
+                              """;
+
+        using var facade = CreatePricingRulesFacade();
+        var compile = facade.CompileRuleSet(source, "compiler");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(compile.IsSuccess, Is.False);
+            Assert.That(compile.Diagnostics.Select(static x => x.Code), Does.Contain(ToolchainDiagnosticCodes.RuleLocalShadowsParameter));
+        });
+    }
+
+    [Test]
     public void TryRun_WhenArgumentsAreInvalid_ReturnsStructuredDiagnostics()
     {
         const string source = """
@@ -122,43 +180,31 @@ public sealed class WistRuleSetValidationTests
     }
 
     [Test]
-    public void CompileRuleSet_WhenDuplicateLocalLetBindingExists_ReturnsDiagnostic()
+    public void CompileRuleSet_InterpreterAndCompiler_ShouldHaveParity()
     {
         const string source = """
-                              rule Bad(price: number) -> number {
-                                  let value = price
+                              rule Total(price: number) -> number {
                                   let value = price * 2.0
                                   value
                               }
                               """;
 
         using var facade = CreatePricingRulesFacade();
-        var compile = facade.CompileRuleSet(source, "compiler");
+        var compilerCompile = facade.CompileRuleSet(source, "compiler");
+        var interpreterCompile = facade.CompileRuleSet(source, "interpreter");
+
+        Assert.That(compilerCompile.IsSuccess, Is.True, FormatDiagnostics(compilerCompile.Diagnostics));
+        Assert.That(interpreterCompile.IsSuccess, Is.True, FormatDiagnostics(interpreterCompile.Diagnostics));
+
+        var args = new Dictionary<string, object?> { ["price"] = 10.0 };
+        var compilerRun = compilerCompile.RuleSet!.TryRun("Total", args);
+        var interpreterRun = interpreterCompile.RuleSet!.TryRun("Total", args);
 
         Assert.Multiple(() =>
         {
-            Assert.That(compile.IsSuccess, Is.False);
-            Assert.That(compile.Diagnostics.Select(static x => x.Code), Does.Contain(ToolchainDiagnosticCodes.RuleDuplicateLocal));
-        });
-    }
-
-    [Test]
-    public void CompileRuleSet_WhenLocalLetBindingShadowsParameter_ReturnsDiagnostic()
-    {
-        const string source = """
-                              rule Bad(price: number) -> number {
-                                  let price = 10.0
-                                  price
-                              }
-                              """;
-
-        using var facade = CreatePricingRulesFacade();
-        var compile = facade.CompileRuleSet(source, "compiler");
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(compile.IsSuccess, Is.False);
-            Assert.That(compile.Diagnostics.Select(static x => x.Code), Does.Contain(ToolchainDiagnosticCodes.RuleLocalShadowsParameter));
+            Assert.That(compilerRun.IsSuccess, Is.True, FormatDiagnostics(compilerRun.Diagnostics));
+            Assert.That(interpreterRun.IsSuccess, Is.True, FormatDiagnostics(interpreterRun.Diagnostics));
+            Assert.That(ToDouble(compilerRun.Value), Is.EqualTo(ToDouble(interpreterRun.Value)).Within(1e-9));
         });
     }
 

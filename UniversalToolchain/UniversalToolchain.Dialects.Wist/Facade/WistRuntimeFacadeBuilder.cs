@@ -1,7 +1,11 @@
+using System.Reflection.Emit;
+using BasicCore.Compilation;
+using IntermediateRepresentationAbstractions;
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist.Presets;
+using UniversalToolchain.Dialects.Wist.Rules;
 
 namespace UniversalToolchain.Dialects.Wist.Facade;
 
@@ -65,6 +69,21 @@ public sealed class WistRuntimeFacadeBuilder
         if (!composition.IsSuccess)
             Thrower.InvalidOpEx(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
 
-        return new WistRuntimeFacade(workflow.CreateHost(composition), composition);
+        var host = workflow.CreateHost(composition);
+        var ruleSetCompiler = new WistRuleSetCompiler((source, declaredBindings, mode) =>
+        {
+            if (!host.Configuration.TryResolveKnownBackendId(mode, out var backendId))
+                Thrower.InvalidOpEx($"Unknown execution mode '{mode}'.");
+
+            if (backendId == WistDialectBackendIds.Interpreter)
+                return host.GetArtifactCompiler<IAbstractIR>(mode).Compile(source, declaredBindings);
+
+            if (backendId == WistDialectBackendIds.Cil)
+                return host.GetArtifactCompiler<DynamicMethod>(mode).Compile(source, declaredBindings);
+
+            return Thrower.InvalidOpEx<ICompiledArtifact>($"Unsupported Wist facade backend '{mode}'.");
+        });
+
+        return new WistRuntimeFacade(host, composition, ruleSetCompiler);
     }
 }
