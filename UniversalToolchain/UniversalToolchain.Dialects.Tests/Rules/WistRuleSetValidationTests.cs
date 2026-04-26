@@ -78,32 +78,18 @@ public sealed class WistRuleSetValidationTests
         Assert.That(compile.IsSuccess, Is.True, FormatDiagnostics(compile.Diagnostics));
     }
 
+
     [Test]
-    public void CompileRuleSet_WhenDuplicateLocalLetBindingExists_ReturnsDiagnostic()
+    public void CompileRuleSet_LocalBindingValidation_IsNotPerformedUntilAstBackedExtractionExists()
     {
         const string source = """
-                              rule Bad(price: number) -> number {
+                              rule SameNameLocals(price: number) -> number {
                                   let value = price
                                   let value = price * 2.0
                                   value
                               }
-                              """;
 
-        using var facade = CreatePricingRulesFacade();
-        var compile = facade.CompileRuleSet(source, "compiler");
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(compile.IsSuccess, Is.False);
-            Assert.That(compile.Diagnostics.Select(static x => x.Code), Does.Contain(ToolchainDiagnosticCodes.RuleDuplicateLocal));
-        });
-    }
-
-    [Test]
-    public void CompileRuleSet_WhenLocalLetBindingShadowsParameter_ReturnsDiagnostic()
-    {
-        const string source = """
-                              rule Bad(price: number) -> number {
+                              rule LocalShadowsParameter(price: number) -> number {
                                   let price = 10.0
                                   price
                               }
@@ -114,8 +100,9 @@ public sealed class WistRuleSetValidationTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(compile.IsSuccess, Is.False);
-            Assert.That(compile.Diagnostics.Select(static x => x.Code), Does.Contain(ToolchainDiagnosticCodes.RuleLocalShadowsParameter));
+            Assert.That(compile.IsSuccess, Is.True, FormatDiagnostics(compile.Diagnostics));
+            Assert.That(compile.Diagnostics.Select(static x => x.Code), Does.Not.Contain(ToolchainDiagnosticCodes.RuleDuplicateLocal));
+            Assert.That(compile.Diagnostics.Select(static x => x.Code), Does.Not.Contain(ToolchainDiagnosticCodes.RuleLocalShadowsParameter));
         });
     }
 
