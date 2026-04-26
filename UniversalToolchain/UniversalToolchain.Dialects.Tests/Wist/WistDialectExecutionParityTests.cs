@@ -20,6 +20,18 @@ public class WistDialectExecutionParityTests
         => AssertParity(CreateFullDialect(), "let x = 15\nif x > 10 then 100 else 200", 100d);
 
     [Test]
+    public void InterpreterAndCompiler_ShouldMatch_ForIfExpression_WithLocalFalseBranchValue()
+        => AssertParity(CreateFullDialect(), "let x = 10.0\nif x < 0.0 then 0.0 else x", 10d);
+
+    [Test]
+    public void InterpreterAndCompiler_ShouldMatch_ForIfExpression_WithLocalTrueBranchLiteral()
+        => AssertParity(CreateFullDialect(), "let x = -10.0\nif x < 0.0 then 0.0 else x", 0d);
+
+    [Test]
+    public void InterpreterAndCompiler_ShouldMatch_ForIfExpression_WithIntermediateResultLocal()
+        => AssertParity(CreateFullDialect(), "let result = 255.0\nif result < 0.0 then 0.0 else result", 255d);
+
+    [Test]
     public void InterpreterAndCompiler_ShouldMatch_ForVariablesAndScopesDialect()
         => AssertParity(CreateFullDialect(), "let x = 7\nlet y = x + 2\ny", 9d);
 
