@@ -195,5 +195,6 @@ After editing:
 - `docs/ARCHITECTURE_RULES.md` is the canonical architecture guardrail document.
 - `docs/SYNTAX_OWNERSHIP_RULES.md` is the canonical syntax ownership policy.
 - `docs/CONTRIBUTING.md` is the canonical contribution workflow.
-- `docs/series-01-to-07-final-task.md` is the current implementation task for finishing PR #206.
+- `docs/series-01-to-07-final-task.md` is historical context from PR #206; cleanup branches may intentionally remove temporary MVP surfaces before AST-backed rewrites.
+- cleanup branches that remove temporary rule MVP surfaces must also remove runtime-visible `RuleDeclarations` module exposure until AST-backed rule declarations exist.
 - This file (`AGENTS.md`) is the canonical AI-agent behavior guide.

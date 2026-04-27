@@ -4,8 +4,6 @@ using ExceptionsManager;
 using IntermediateRepresentationAbstractions;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Integration;
-using UniversalToolchain.Dialects.Wist.Rules;
-using UniversalToolchain.Rules.Abstractions;
 
 namespace UniversalToolchain.Dialects.Wist.Facade;
 
@@ -15,13 +13,11 @@ namespace UniversalToolchain.Dialects.Wist.Facade;
 public sealed class WistRuntimeFacade : IDisposable
 {
     private readonly WistDialectExecutionHost _host;
-    private readonly IWistRuleSetCompiler _ruleSetCompiler;
 
-    internal WistRuntimeFacade(WistDialectExecutionHost host, DialectFrameworkCompositionResult composition, IWistRuleSetCompiler ruleSetCompiler)
+    internal WistRuntimeFacade(WistDialectExecutionHost host, DialectFrameworkCompositionResult composition)
     {
         _host = host.ArgNotNull();
         Composition = composition.ArgNotNull();
-        _ruleSetCompiler = ruleSetCompiler.ArgNotNull();
     }
 
     internal WistDialectExecutionConfiguration Configuration => _host.Configuration;
@@ -54,14 +50,6 @@ public sealed class WistRuntimeFacade : IDisposable
             session.SetArgument(argument.Key, argument.Value);
 
         return session.Run();
-    }
-
-    /// <summary>
-    ///     Compiles Wist rule declarations through the existing Wist runtime pipeline.
-    /// </summary>
-    public RuleSetCompileResult CompileRuleSet(string source, string mode = "compiler")
-    {
-        return _ruleSetCompiler.Compile(source, mode);
     }
 
     /// <summary>
@@ -138,5 +126,4 @@ public sealed class WistRuntimeFacade : IDisposable
 
         return declaredBindings;
     }
-
 }

@@ -1,7 +1,0 @@
-rule FinalPrice(price: number, quantity: number, discount: number, maxDiscount: number) -> number {
-    let base = price * quantity
-    let discountValue = clamp(base * discount, 0.0, maxDiscount)
-    let result = base - discountValue
-
-    if result < 0.0 then 0.0 else result
-}

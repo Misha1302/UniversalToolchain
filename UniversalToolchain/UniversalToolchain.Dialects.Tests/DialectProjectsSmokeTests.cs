@@ -11,13 +11,11 @@ public class DialectProjectsSmokeTests
     [
         "full-default",
         "full-default-native",
+        "function-calls-safe-math",
         "minimal-arithmetic",
         "minimal-arithmetic-native",
-        "policy-rules",
         "pricing-restricted",
-        "pricing-rules",
-        "restricted-sandbox",
-        "validation-rules"
+        "restricted-sandbox"
     ];
 
     [Test]

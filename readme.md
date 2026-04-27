@@ -7,6 +7,9 @@ UniversalToolchain is an embeddable .NET DSL/runtime framework for the moment wh
 Wist is the reference language in this repository. It demonstrates the framework through shipped dialect profiles, a
 pricing demo, manifest-backed dialect composition, and compiler/interpreter execution modes.
 
+> Rules are temporarily removed from the public runtime surface. `rule-schema`/`rule-run` and raw-source RuleSet MVP parsing were removed and will return only after an AST-owned rule declaration rewrite.
+> `RuleDeclarationsModule` is also removed from runtime-visible modules; do not reintroduce marker-only rule capabilities before parser-owned implementation exists.
+
 ## Run the pricing demo
 
 ```bash
@@ -93,7 +96,7 @@ Use UniversalToolchain when:
 - you need an inspectable execution pipeline for validation, diagnostics, or backend work,
 - you want configurable business logic without hardcoding every rule into the application.
 
-Typical scenarios include pricing formulas, validation rules, routing rules, internal workflow rules, and DSL experiments inside .NET applications.
+Typical scenarios include pricing formulas, routing rules, internal workflow rules, and DSL experiments inside .NET applications.
 
 ## When not to use UniversalToolchain
 
@@ -183,6 +186,7 @@ Available verbs:
 - `repl`
 - `dialect-inspect`
 - `dialect-demo`
+- `features`
 
 Common options:
 
@@ -226,6 +230,7 @@ Located under `UniversalToolchain/Dialects/examples/wist`:
 
 - `full-default`: standard Wist profile over `cil` and `interpreter`.
 - `full-default-native`: native arithmetic/type profile over `cil` and `interpreter`.
+- `function-calls-safe-math`: neutral FunctionCalls + SafeMath profile without rule declarations.
 - `minimal-arithmetic`: smallest interpreter arithmetic profile.
 - `minimal-arithmetic-native`: smallest native arithmetic profile over `cil`.
 - `pricing-restricted`: composition-constrained pricing profile with a restricted runtime surface.

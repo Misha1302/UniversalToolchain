@@ -21,7 +21,7 @@ public sealed class FunctionCallsSourceExecutionTests
     {
         using var provider = CreateProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var composition = workflow.ComposeFile(ResolvePricingRulesDialectFile());
+        var composition = workflow.ComposeFile(ResolveFunctionCallsSafeMathDialectFile());
         Assert.That(
             composition.IsSuccess,
             Is.True,
@@ -52,7 +52,7 @@ public sealed class FunctionCallsSourceExecutionTests
 
         using var provider = CreateProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var composition = workflow.ComposeFile(ResolvePricingRulesDialectFile());
+        var composition = workflow.ComposeFile(ResolveFunctionCallsSafeMathDialectFile());
         Assert.That(
             composition.IsSuccess,
             Is.True,
@@ -69,7 +69,7 @@ public sealed class FunctionCallsSourceExecutionTests
         });
     }
 
-    private static string ResolvePricingRulesDialectFile()
+    private static string ResolveFunctionCallsSafeMathDialectFile()
     {
         var path = Path.GetFullPath(Path.Combine(
             TestContext.CurrentContext.TestDirectory,
@@ -80,7 +80,7 @@ public sealed class FunctionCallsSourceExecutionTests
             "Dialects",
             "examples",
             "wist",
-            "pricing-rules",
+            "function-calls-safe-math",
             "dialect.wistdialect"));
         if (!File.Exists(path))
             Thrower.FileNotFound(path);
