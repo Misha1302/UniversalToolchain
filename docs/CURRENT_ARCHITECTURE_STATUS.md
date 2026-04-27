@@ -4,20 +4,24 @@ This document describes the currently supported surface of the branch. It is int
 
 Use it to distinguish current behavior from future or historical design plans.
 
-## Rules and RuleSet API
+## Rules feature
 
-Status: temporarily removed from public runtime surface.
+Status: removed from this branch.
 
-Currently not supported:
+Removed surfaces:
 
+- `UniversalToolchain.Rules.Abstractions`;
+- Wist rule runtime files under `UniversalToolchain.Dialects.Wist/Rules`;
+- `RuleDeclarationsModule`;
 - `CompileRuleSet`;
 - `rule-run`;
 - `rule-schema`;
-- executable `pricing-rules`, `validation-rules`, or `policy-rules` profiles;
-- runtime-visible `RuleDeclarationsModule`;
+- executable `pricing-rules`, `validation-rules`, and `policy-rules` profiles;
+- rule runtime type bindings;
+- rule-specific diagnostic codes;
 - raw-source rule declaration parser.
 
-Future rules work must start from parser-owned and AST-backed rule declarations. It must not reintroduce raw-source rule parsers, marker-only runtime modules, or CLI/facade commands before a real implementation exists.
+Do not restore rules code, rule profiles, rule CLI commands, or marker-only rule modules without a new explicit architecture task.
 
 ## FunctionCalls and SafeMathFunctions
 
@@ -39,13 +43,12 @@ Not final yet:
 
 Status: normal Wist `let` support exists.
 
-Rule-local LetBindings validation is not currently implemented because the temporary RuleSet surface has been removed.
+There is no rule-local LetBindings layer in this branch because the rules feature has been removed.
 
 Forbidden shortcuts:
 
 - raw-source local binding scanners;
-- pretending rule-local validation is complete;
-- restoring rule-local validation tests without AST-backed extraction.
+- restoring rule-local validation tests without first restoring an explicit rules architecture task.
 
 ## Documentation policy
 
