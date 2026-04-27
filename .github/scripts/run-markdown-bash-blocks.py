@@ -9,9 +9,6 @@ from dataclasses import dataclass
 from pathlib import Path
 
 DEFAULT_BASH_BLOCK_TIMEOUT = "60s"
-SKIPPED_MARKDOWN_BASH_FILES = {
-    Path("docs/feature-system-strict-implementation-plan.md"),
-}
 
 
 @dataclass(frozen=True)
@@ -49,11 +46,6 @@ def GetTrackedMarkdownFiles(repositoryRoot: Path) -> list[Path]:
     ]
 
     return sorted(markdownFiles)
-
-
-def ShouldInspectMarkdownFile(repositoryRoot: Path, markdownFilePath: Path) -> bool:
-    relativePath = markdownFilePath.relative_to(repositoryRoot)
-    return relativePath not in SKIPPED_MARKDOWN_BASH_FILES
 
 
 def ParseFenceAttributes(rawAttributes: str) -> dict[str, str]:
@@ -363,9 +355,6 @@ def main() -> int:
 
     allBlocks: list[BashBlock] = []
     for markdownFile in markdownFiles:
-        if not ShouldInspectMarkdownFile(repositoryRoot, markdownFile):
-            continue
-
         allBlocks.extend(ExtractBashBlocks(markdownFile))
 
     if len(allBlocks) == 0:
