@@ -10,7 +10,9 @@
     <ItemGroup Condition="'$(EmitDialectRuntimeManifest)' == 'true' and '$(MSBuildProjectFullPath)' != '$(DialectRuntimeManifestEmitterProjectPath)'">
         <ProjectReference Include="$(DialectRuntimeManifestEmitterProjectPath)"
                           ReferenceOutputAssembly="false"
-                          PrivateAssets="all"/>
+                          Private="false"
+                          PrivateAssets="all"
+                          SetTargetFramework="TargetFramework=$(DialectRuntimeManifestEmitterTargetFramework)"/>
     </ItemGroup>
 
     <Target Name="EmitDialectRuntimeManifest"
