@@ -4,6 +4,27 @@ This file is the mandatory behavior guide for AI agents working in this reposito
 
 Read this file before editing code. If a local task conflicts with this file, this file wins unless the user explicitly updates the architecture rules.
 
+## Documentation-first workflow
+
+Markdown files are architectural source material, not optional notes.
+
+Before non-trivial code changes, AI agents must identify the Markdown files that govern the task and the constraints they impose. Use `docs/DOCUMENTATION_INDEX.md` to find the relevant documents and `docs/CURRENT_ARCHITECTURE_STATUS.md` to distinguish current supported behavior from future or historical plans.
+
+For small typo fixes, formatting-only edits, or obviously local mechanical changes, a short mental check is enough. Do not create heavy process for ordinary development.
+
+For architecture, parser, runtime, module, capability, function, rules, CLI, CI, public API, or documentation-smoke-check changes, the agent must preserve documentation intent and update Markdown together with code when behavior changes.
+
+If code and Markdown disagree, report the conflict. Do not silently implement around the documentation.
+
+A failing documentation check means documentation and implementation drifted. It does not mean the documentation check should be weakened.
+
+Forbidden documentation fixes:
+
+- deleting architectural documentation to make CI pass;
+- replacing large documents with placeholders;
+- adding path-based Markdown exclusions to smoke checks;
+- restoring removed runtime functionality only because old docs reference it.
+
 ## Project identity
 
 - **UniversalToolchain** is the primary product: a reusable, modular toolchain/framework for building and composing language runtimes.
@@ -168,7 +189,8 @@ Before editing:
 - avoid parallel abstractions when one already exists,
 - if the change needs to understand language syntax, identify the owning parser/AST/declaration model first; do not parse raw source text locally,
 - verify whether the change preserves the project's existing universality and layering principles,
-- check whether controlled reflection can reduce coupling without becoming a hidden source of truth.
+- check whether controlled reflection can reduce coupling without becoming a hidden source of truth,
+- for non-trivial architecture or public-surface changes, check `docs/DOCUMENTATION_INDEX.md` and `docs/CURRENT_ARCHITECTURE_STATUS.md` before code changes.
 
 While editing:
 
@@ -191,6 +213,9 @@ After editing:
 ## Documentation policy
 
 - `readme.md` is the canonical repository overview.
+- `docs/DOCUMENTATION_INDEX.md` helps agents choose the right Markdown files before changing code.
+- `docs/DOCUMENTATION_RULES.md` defines how agents must preserve and update architectural Markdown.
+- `docs/CURRENT_ARCHITECTURE_STATUS.md` defines the current supported runtime surface of the branch.
 - `docs/PROJECT_RULES.md` is the canonical coding standard and architecture rule set.
 - `docs/ARCHITECTURE_RULES.md` is the canonical architecture guardrail document.
 - `docs/SYNTAX_OWNERSHIP_RULES.md` is the canonical syntax ownership policy.
