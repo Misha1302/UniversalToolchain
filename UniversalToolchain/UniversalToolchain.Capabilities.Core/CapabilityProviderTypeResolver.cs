@@ -2,7 +2,6 @@ using UniversalToolchain.Capabilities.Abstractions;
 using UniversalToolchain.Diagnostics.Abstractions;
 using UniversalToolchain.ExpressionTyping.Abstractions;
 using UniversalToolchain.Functions.Abstractions;
-using UniversalToolchain.Rules.Abstractions;
 
 namespace UniversalToolchain.Capabilities.Core;
 
@@ -55,8 +54,7 @@ public sealed class CapabilityProviderTypeResolver
         return typeof(ILanguageFeatureDescriptorProvider).IsAssignableFrom(providerType) ||
                typeof(IBuiltinFunctionDescriptorProvider).IsAssignableFrom(providerType) ||
                typeof(IBuiltinFunctionRuntimeBindingProvider).IsAssignableFrom(providerType) ||
-               typeof(IExpressionTypeRuleProvider).IsAssignableFrom(providerType) ||
-               typeof(IRuleRuntimeTypeBindingProvider).IsAssignableFrom(providerType);
+               typeof(IExpressionTypeRuleProvider).IsAssignableFrom(providerType);
     }
 
     internal static ToolchainDiagnostic CreateInvalidProviderDiagnostic(
