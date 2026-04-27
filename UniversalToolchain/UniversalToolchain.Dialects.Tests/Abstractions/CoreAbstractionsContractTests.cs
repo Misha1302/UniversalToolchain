@@ -21,27 +21,27 @@ public sealed class CoreAbstractionsContractTests
     public void LanguageFeatureDescriptor_CanDescribeFeature()
     {
         var descriptor = new LanguageFeatureDescriptor(
-            new LanguageFeatureId("feature.rules"),
-            "Rule Syntax",
+            new LanguageFeatureId("feature.functions"),
+            "Function calls",
             LanguageFeatureKind.Syntax,
             ["runtime.syntax"],
             [new LanguageFeatureId("feature.base")],
             [
                 new LanguageFeatureSymbolDescriptor(
-                    "rule",
-                    LanguageFeatureSymbolKind.RuleForm,
-                    "rule <name> = <expression>",
-                    "Declares a reusable rule.")
+                    "function-call",
+                    LanguageFeatureSymbolKind.SyntaxForm,
+                    "identifier(argument, ...)",
+                    "Calls a provider-backed built-in function.")
             ],
             ["interpreter"],
-            "Supports rule declarations.");
+            "Supports built-in function call syntax.");
 
         Assert.Multiple(() =>
         {
-            Assert.That(descriptor.FeatureId.Value, Is.EqualTo("feature.rules"));
+            Assert.That(descriptor.FeatureId.Value, Is.EqualTo("feature.functions"));
             Assert.That(descriptor.Kind, Is.EqualTo(LanguageFeatureKind.Syntax));
             Assert.That(descriptor.ProvidedSymbols, Has.Count.EqualTo(1));
-            Assert.That(descriptor.ProvidedSymbols[0].Kind, Is.EqualTo(LanguageFeatureSymbolKind.RuleForm));
+            Assert.That(descriptor.ProvidedSymbols[0].Kind, Is.EqualTo(LanguageFeatureSymbolKind.SyntaxForm));
         });
     }
 
