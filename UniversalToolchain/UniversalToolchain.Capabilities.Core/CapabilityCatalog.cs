@@ -3,7 +3,6 @@ using UniversalToolchain.Capabilities.Abstractions;
 using UniversalToolchain.Diagnostics.Abstractions;
 using UniversalToolchain.ExpressionTyping.Abstractions;
 using UniversalToolchain.Functions.Abstractions;
-using UniversalToolchain.Rules.Abstractions;
 
 namespace UniversalToolchain.Capabilities.Core;
 
@@ -16,7 +15,6 @@ public sealed class CapabilityCatalog
     private readonly IReadOnlyDictionary<LanguageFeatureId, CapabilityProviderDescriptor> _featureOwnersById;
     private readonly ReadOnlyCollection<LanguageFeatureDescriptor> _languageFeatures;
     private readonly ReadOnlyCollection<CapabilityProviderDescriptor> _providers;
-    private readonly ReadOnlyCollection<RuleRuntimeTypeBinding> _ruleRuntimeTypeBindings;
 
     public CapabilityCatalog(
         IEnumerable<CapabilityProviderDescriptor> providers,
@@ -24,7 +22,6 @@ public sealed class CapabilityCatalog
         IEnumerable<BuiltinFunctionDescriptor> builtinFunctionDescriptors,
         IEnumerable<BuiltinFunctionRuntimeBinding> builtinFunctionRuntimeBindings,
         IEnumerable<IExpressionTypeRule> expressionTypeRules,
-        IEnumerable<RuleRuntimeTypeBinding> ruleRuntimeTypeBindings,
         IEnumerable<ToolchainDiagnostic> diagnostics,
         IReadOnlyDictionary<LanguageFeatureId, CapabilityProviderDescriptor>? featureOwnersById = null)
     {
@@ -33,7 +30,6 @@ public sealed class CapabilityCatalog
         ArgumentNullException.ThrowIfNull(builtinFunctionDescriptors);
         ArgumentNullException.ThrowIfNull(builtinFunctionRuntimeBindings);
         ArgumentNullException.ThrowIfNull(expressionTypeRules);
-        ArgumentNullException.ThrowIfNull(ruleRuntimeTypeBindings);
         ArgumentNullException.ThrowIfNull(diagnostics);
 
         _providers = new ReadOnlyCollection<CapabilityProviderDescriptor>(providers
@@ -57,10 +53,6 @@ public sealed class CapabilityCatalog
         _expressionTypeRules = new ReadOnlyCollection<IExpressionTypeRule>(expressionTypeRules
             .OrderBy(static x => CapabilityProviderTypeResolver.GetTypeName(x.GetType()), StringComparer.Ordinal)
             .ToList());
-        _ruleRuntimeTypeBindings = new ReadOnlyCollection<RuleRuntimeTypeBinding>(ruleRuntimeTypeBindings
-            .OrderBy(static x => x.RuleType.Name, StringComparer.Ordinal)
-            .ThenBy(static x => x.RuntimeType.FullName ?? x.RuntimeType.Name, StringComparer.Ordinal)
-            .ToList());
         _diagnostics = new ReadOnlyCollection<ToolchainDiagnostic>(diagnostics
             .OrderBy(static x => x.Code, StringComparer.Ordinal)
             .ThenBy(static x => x.Message, StringComparer.Ordinal)
@@ -77,8 +69,6 @@ public sealed class CapabilityCatalog
     public IReadOnlyList<BuiltinFunctionRuntimeBinding> BuiltinFunctionRuntimeBindings => _builtinFunctionRuntimeBindings;
 
     public IReadOnlyList<IExpressionTypeRule> ExpressionTypeRules => _expressionTypeRules;
-
-    public IReadOnlyList<RuleRuntimeTypeBinding> RuleRuntimeTypeBindings => _ruleRuntimeTypeBindings;
 
     public IReadOnlyList<ToolchainDiagnostic> Diagnostics => _diagnostics;
 
@@ -111,7 +101,6 @@ public sealed class CapabilityCatalog
         var expressionTypeRules = new List<IExpressionTypeRule>();
         var diagnostics = new List<ToolchainDiagnostic>(discovery.Diagnostics);
         var featureOwnersById = new Dictionary<LanguageFeatureId, CapabilityProviderDescriptor>();
-        var ruleRuntimeTypeBindings = new List<RuleRuntimeTypeBinding>();
 
         foreach (var descriptor in discovery.ProviderDescriptors)
         {
@@ -142,9 +131,6 @@ public sealed class CapabilityCatalog
 
             if (provider is IExpressionTypeRuleProvider expressionTypeRuleProvider)
                 expressionTypeRules.AddRange(expressionTypeRuleProvider.GetRules() ?? []);
-
-            if (provider is IRuleRuntimeTypeBindingProvider ruleRuntimeTypeBindingProvider)
-                ruleRuntimeTypeBindings.AddRange(ruleRuntimeTypeBindingProvider.GetRuleRuntimeTypeBindings() ?? []);
         }
 
         return new CapabilityCatalog(
@@ -153,7 +139,6 @@ public sealed class CapabilityCatalog
             functions,
             runtimeBindings,
             expressionTypeRules,
-            ruleRuntimeTypeBindings,
             diagnostics,
             featureOwnersById);
     }
