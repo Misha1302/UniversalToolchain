@@ -9,6 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\UniversalToolchain.Capabilities.Abstractions\UniversalToolchain.Capabilities.Abstractions.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Dialects.Abstractions\UniversalToolchain.Dialects.Abstractions.csproj"/>
         <ProjectReference Include="..\AbstractIrExtensions\AbstractIrExtensions.csproj"/>
         <ProjectReference Include="..\BasicCore\BasicCore.csproj"/>
@@ -16,6 +17,7 @@
         <ProjectReference Include="..\ObjectExtensions\ObjectExtensions.csproj"/>
         <ProjectReference Include="..\UniversalIntermediateRepresentation\UniversalIntermediateRepresentation.csproj"/>
         <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Diagnostics.Abstractions\UniversalToolchain.Diagnostics.Abstractions.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Dialects.Integration\UniversalToolchain.Dialects.Integration.csproj"/>
     </ItemGroup>
 

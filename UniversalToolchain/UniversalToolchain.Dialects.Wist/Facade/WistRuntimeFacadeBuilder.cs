@@ -65,6 +65,7 @@ public sealed class WistRuntimeFacadeBuilder
         if (!composition.IsSuccess)
             Thrower.InvalidOpEx(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
 
-        return new WistRuntimeFacade(workflow.CreateHost(composition), composition);
+        var host = workflow.CreateHost(composition);
+        return new WistRuntimeFacade(host, composition);
     }
 }

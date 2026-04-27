@@ -12,7 +12,7 @@
 
 Run from repository root:
 
-```bash
+```bash ci-timeout=180s
 dotnet restore UniversalToolchain/Wist.sln
 dotnet build UniversalToolchain/Wist.sln -c Release --no-restore
 dotnet test UniversalToolchain/Wist.sln -c Release --no-build

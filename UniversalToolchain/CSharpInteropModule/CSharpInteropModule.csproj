@@ -9,6 +9,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\UniversalToolchain.Capabilities.Abstractions\UniversalToolchain.Capabilities.Abstractions.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Dialects.Abstractions\UniversalToolchain.Dialects.Abstractions.csproj"/>
         <ProjectReference Include="..\AbstractIrExtensions\AbstractIrExtensions.csproj"/>
         <ProjectReference Include="..\AssemblyFinder\AssemblyFinder.csproj"/>

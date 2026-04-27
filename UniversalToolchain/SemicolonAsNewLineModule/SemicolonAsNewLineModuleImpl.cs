@@ -1,8 +1,10 @@
+using UniversalToolchain.Capabilities.Abstractions;
 using UniversalToolchain.Dialects.Abstractions;
 
 namespace SemicolonAsNewLineModule;
 
 [DialectModuleAlias("SemicolonAsNewLine")]
+[DialectCapabilityProvider(typeof(SemicolonAsNewLineCapabilityProvider))]
 [DialectRuntimeExport("FrontendModule", "SemicolonAsNewLine")]
 [AutoRegisterService]
 public class SemicolonAsNewLineModuleImpl : IFrontendCoreModule

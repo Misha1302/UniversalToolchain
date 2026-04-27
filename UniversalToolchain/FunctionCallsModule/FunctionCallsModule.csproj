@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <LangVersion>14</LangVersion>
+        <EmitDialectRuntimeManifest>true</EmitDialectRuntimeManifest>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\BasicCore\BasicCore.csproj"/>
+        <ProjectReference Include="..\AbstractIrExtensions\AbstractIrExtensions.csproj"/>
+        <ProjectReference Include="..\DynamicMethodWrapper\DynamicMethodWrapper.csproj"/>
+        <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj"/>
+        <ProjectReference Include="..\GenericMath\GenericMath.csproj"/>
+        <ProjectReference Include="..\IntermediateRepresentationAbstractions\IntermediateRepresentationAbstractions.csproj"/>
+        <ProjectReference Include="..\SettableGettableModule\SettableGettableModule.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Capabilities.Abstractions\UniversalToolchain.Capabilities.Abstractions.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Capabilities.Core\UniversalToolchain.Capabilities.Core.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Dialects.Abstractions\UniversalToolchain.Dialects.Abstractions.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Dialects.Integration\UniversalToolchain.Dialects.Integration.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Functions.Abstractions\UniversalToolchain.Functions.Abstractions.csproj"/>
+    </ItemGroup>
+
+</Project>

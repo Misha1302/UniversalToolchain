@@ -4,7 +4,7 @@ using ObjectExtensions;
 
 namespace BasicCore.Core;
 
-internal static class IntrinsicTypeProcessor
+public static class IntrinsicTypeProcessor
 {
     public static void ProcessTypes(Instruction instruction, List<Type> stack)
     {

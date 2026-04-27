@@ -10,7 +10,9 @@
     <ItemGroup Condition="'$(EmitDialectRuntimeManifest)' == 'true' and '$(MSBuildProjectFullPath)' != '$(DialectRuntimeManifestEmitterProjectPath)'">
         <ProjectReference Include="$(DialectRuntimeManifestEmitterProjectPath)"
                           ReferenceOutputAssembly="false"
-                          PrivateAssets="all"/>
+                          Private="false"
+                          PrivateAssets="all"
+                          SetTargetFramework="TargetFramework=$(DialectRuntimeManifestEmitterTargetFramework)"/>
     </ItemGroup>
 
     <Target Name="EmitDialectRuntimeManifest"
@@ -19,6 +21,10 @@
         <PropertyGroup>
             <DialectRuntimeManifestOutputPath>$(TargetDir)$(AssemblyName)$(DialectRuntimeManifestFileSuffix)</DialectRuntimeManifestOutputPath>
         </PropertyGroup>
+
+        <MSBuild Projects="$(DialectRuntimeManifestEmitterProjectPath)"
+                 Targets="Build"
+                 Properties="Configuration=$(Configuration);TargetFramework=$(DialectRuntimeManifestEmitterTargetFramework)"/>
 
         <Exec Command="&quot;$(DOTNET_HOST_PATH)&quot; &quot;$(DialectRuntimeManifestEmitterDll)&quot; --assembly &quot;$(TargetPath)&quot; --output &quot;$(DialectRuntimeManifestOutputPath)&quot;"/>
 

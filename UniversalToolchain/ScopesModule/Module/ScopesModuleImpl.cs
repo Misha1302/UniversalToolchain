@@ -1,8 +1,10 @@
+using UniversalToolchain.Capabilities.Abstractions;
 using UniversalToolchain.Dialects.Abstractions;
 
 namespace ScopesModule.Module;
 
 [DialectModuleAlias("Scopes")]
+[DialectCapabilityProvider(typeof(global::ScopesModule.ScopesCapabilityProvider))]
 [DialectRuntimeExport("FrontendModule", "Scopes")]
 [AutoRegisterService]
 public class ScopesModuleImpl : IFrontendCoreModule

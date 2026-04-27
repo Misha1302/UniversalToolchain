@@ -65,7 +65,7 @@ internal sealed class PreparedExecutionBuilder<TCompilationOutput>(
         var targetRoot = modules.Aggregate(astRoot, (current, module) => module.ProcessAst(current));
         var boundRoot = new Binder(input.ExternalBindings).Bind(targetRoot);
 
-        modules.ForEach(module => module.InitAstTranslator(astTranslator));
+        modules.ForEach(module => module.InitAstTranslator(astTranslator, modules));
         var bytecode = astTranslator.Translate(boundRoot);
 
         var targetBytecode = modules.Aggregate(bytecode, (current, module) => module.ProcessBytecode(current));
