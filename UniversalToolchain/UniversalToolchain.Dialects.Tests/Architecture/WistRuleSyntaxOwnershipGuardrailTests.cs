@@ -55,6 +55,39 @@ public sealed class WistRuleSyntaxOwnershipGuardrailTests
     }
 
     [Test]
+    public void RemovedTemporaryRuleSetSurface_MustNotReappearInProductionCode()
+    {
+        var root = ResolveRepositoryRoot();
+        var targets = Directory
+            .GetFiles(Path.Combine(root, "UniversalToolchain"), "*.cs", SearchOption.AllDirectories)
+            .Where(file => !file.Contains(".Tests", StringComparison.Ordinal))
+            .OrderBy(file => file, StringComparer.Ordinal)
+            .ToList();
+
+        var forbiddenPatterns = new[]
+        {
+            "CompileRuleSet(",
+            "[Verb(\"rule-run\"",
+            "[Verb(\"rule-schema\"",
+            "WistRuleSetSyntaxParser",
+            "WistRuleSetSyntaxModels"
+        };
+
+        var violations = new List<string>();
+        foreach (var file in targets)
+        {
+            var content = File.ReadAllText(file);
+            foreach (var pattern in forbiddenPatterns)
+            {
+                if (content.Contains(pattern, StringComparison.Ordinal))
+                    violations.Add($"{Path.GetRelativePath(root, file)} contains removed temporary RuleSet surface pattern '{pattern}'.");
+            }
+        }
+
+        Assert.That(violations, Is.Empty);
+    }
+
+    [Test]
     public void TemporaryRuleSyntaxParser_MustNotExistInProductionCode()
     {
         var root = ResolveRepositoryRoot();

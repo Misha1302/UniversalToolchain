@@ -33,7 +33,6 @@
         <ProjectReference Include="..\NativeMathModule\NativeMathModule.csproj"/>
         <ProjectReference Include="..\NumbersModule\NumbersModule.csproj"/>
         <ProjectReference Include="..\ParametersSetterModule\ParametersSetterModule.csproj"/>
-        <ProjectReference Include="..\RuleDeclarationsModule\RuleDeclarationsModule.csproj"/>
         <ProjectReference Include="..\SafeMathFunctionsModule\SafeMathFunctionsModule.csproj"/>
         <ProjectReference Include="..\ScopesModule\ScopesModule.csproj"/>
         <ProjectReference Include="..\SemicolonAsNewLineModule\SemicolonAsNewLineModule.csproj"/>

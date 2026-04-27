@@ -4,6 +4,7 @@ This document is historical context from PR #206 on branch `auto/series-01-to-07
 
 Current cleanup status (April 26, 2026): temporary raw-source RuleSet MVP has been intentionally removed from the public runtime/CLI surface.
 Future rules work must re-enter through parser-owned/AST-backed rule declarations and extraction only.
+`RuleDeclarationsModule` was removed from runtime-visible modules during cleanup and must not return as a marker-only frontend module.
 
 UniversalToolchain is the product. Wist is the reference language and proving ground. Do not turn generic framework layers into Wist-, SafeMath-, pricing-, or demo-specific code.
 

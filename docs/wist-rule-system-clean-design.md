@@ -3,6 +3,7 @@
 This document describes the target design for the Wist rule system after removing raw-source syntax shortcuts.
 
 Status (April 26, 2026): the temporary raw-source rule parser and RuleSet public surface were removed during cleanup.
+`RuleDeclarationsModule` is also removed from runtime-visible composition until parser-owned declarations exist.
 Future implementation must use Wist parser/AST-owned structure only.
 
 The goal is intentionally modest: make the rule feature correct, parser-owned, and maintainable without introducing an oversized language-workbench architecture.
