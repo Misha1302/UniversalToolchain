@@ -1,4 +1,0 @@
-dialect PolicyRules
-use BooleanConditions,Comments,ComparisonConditions,Conditions,Equality,FunctionCalls,Identifier,Numbers,RuleDeclarations,Scopes,SemicolonAsNewLine,Variables,Whitespaces
-backend interpreter
-security restricted

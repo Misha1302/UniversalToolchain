@@ -1,6 +1,9 @@
-# Series 01-07 Final Task
+# Series 01-07 Final Task (Historical Context)
 
-This is the implementation task for finishing PR #206 on branch `auto/series-01-to-07-a9li0x`.
+This document is historical context from PR #206 on branch `auto/series-01-to-07-a9li0x`.
+
+Current cleanup status (April 26, 2026): temporary raw-source RuleSet MVP has been intentionally removed from the public runtime/CLI surface.
+Future rules work must re-enter through parser-owned/AST-backed rule declarations and extraction only.
 
 UniversalToolchain is the product. Wist is the reference language and proving ground. Do not turn generic framework layers into Wist-, SafeMath-, pricing-, or demo-specific code.
 
@@ -59,6 +62,8 @@ IfExpression owns only conditional syntax, typing, and lowering. LetBindings own
 LetBindings validation must be based on structured syntax output owned by the parser/extractor pipeline. It must not inspect raw rule body text with regular expressions, line splitting, substring checks, or local scanners.
 
 ## Required implementation scope
+
+> Historical note: items below describe the original target scope. The current cleanup PR intentionally removes temporary RuleSet compile/run surface until AST-backed ownership is implemented.
 
 Complete real FunctionCalls infrastructure: parse generic calls, resolve through provider catalogs, type-check arguments, lower through the existing pipeline, and execute in interpreter/CIL when the selected backend supports the binding.
 

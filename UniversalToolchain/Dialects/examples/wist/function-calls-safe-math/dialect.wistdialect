@@ -1,0 +1,7 @@
+dialect FunctionCallsSafeMath
+use Arithmetic,BooleanConditions,Comments,ComparisonConditions,Conditions,Equality,FunctionCalls,Identifier,Numbers,SafeMathFunctions,Scopes,SemicolonAsNewLine,Variables,Whitespaces
+backend cil,interpreter
+enable BooleanOptimization
+enable ComparisonIntrinsicOptimization
+enable LocalVariablesOptimization
+security restricted

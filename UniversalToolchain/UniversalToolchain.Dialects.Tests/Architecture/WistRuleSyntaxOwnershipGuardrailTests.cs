@@ -3,22 +3,16 @@ namespace UniversalToolchain.Dialects.Tests.Architecture;
 public sealed class WistRuleSyntaxOwnershipGuardrailTests
 {
     [Test]
-    public void ProductionRuleAndFacadeCode_MustNotUseRawSourceSyntaxRecognitionOutsideSyntaxOwner()
+    public void ProductionRuleAndFacadeCode_MustNotUseRawSourceSyntaxRecognition()
     {
         var root = ResolveRepositoryRoot();
         var wistRoot = Path.Combine(root, "UniversalToolchain", "UniversalToolchain.Dialects.Wist");
         var ruleRoot = Path.Combine(wistRoot, "Rules");
         var facadeRoot = Path.Combine(wistRoot, "Facade");
 
-        var allowedSyntaxOwners = new HashSet<string>(StringComparer.Ordinal)
-        {
-            Path.Combine(ruleRoot, "Syntax", "WistRuleSetSyntaxParser.cs")
-        };
-
         var targets = Directory
             .GetFiles(ruleRoot, "*.cs", SearchOption.AllDirectories)
             .Concat(Directory.GetFiles(facadeRoot, "*.cs", SearchOption.AllDirectories))
-            .Where(file => !allowedSyntaxOwners.Contains(file))
             .OrderBy(file => file, StringComparer.Ordinal)
             .ToList();
 
@@ -34,11 +28,13 @@ public sealed class WistRuleSyntaxOwnershipGuardrailTests
             ".Contains(\"let\"",
             ".StartsWith(\"rule\"",
             ".StartsWith(\"let\"",
+            "TryReadKeyword(",
             "ReadUntilMatching(",
             "SkipWhiteSpace(",
             "ReadIdentifier(",
             "ConsumeArrow(",
-            "TryReadKeyword("
+            "cursor",
+            "scanner"
         };
 
         var violations = new List<string>();
@@ -47,7 +43,7 @@ public sealed class WistRuleSyntaxOwnershipGuardrailTests
             var content = File.ReadAllText(file);
             foreach (var pattern in forbiddenPatterns)
             {
-                if (content.Contains(pattern, StringComparison.Ordinal))
+                if (content.Contains(pattern, StringComparison.OrdinalIgnoreCase))
                     violations.Add($"{Path.GetRelativePath(root, file)} contains forbidden pattern '{pattern}'.");
             }
         }
@@ -55,44 +51,21 @@ public sealed class WistRuleSyntaxOwnershipGuardrailTests
         Assert.That(
             violations,
             Is.Empty,
-            "Raw-source syntax recognition is only allowed in Wist rule syntax-owner files. Move this logic into parser-owned syntax services or consume structured parser output instead.");
+            "Rules/facade production code must consume parser-owned syntax structures instead of rediscovering language syntax from raw source text.");
     }
 
     [Test]
-    public void RuleSyntaxOwner_MustNotParseWistBodyLanguageConstructs()
+    public void TemporaryRuleSyntaxParser_MustNotExistInProductionCode()
     {
         var root = ResolveRepositoryRoot();
-        var syntaxOwner = Path.Combine(root, "UniversalToolchain", "UniversalToolchain.Dialects.Wist", "Rules", "Syntax", "WistRuleSetSyntaxParser.cs");
-        var content = File.ReadAllText(syntaxOwner);
+        var parserPath = Path.Combine(root, "UniversalToolchain", "UniversalToolchain.Dialects.Wist", "Rules", "Syntax", "WistRuleSetSyntaxParser.cs");
+        var modelsPath = Path.Combine(root, "UniversalToolchain", "UniversalToolchain.Dialects.Wist", "Rules", "Syntax", "WistRuleSetSyntaxModels.cs");
 
-        var forbiddenPatterns = new[]
+        Assert.Multiple(() =>
         {
-            "\"let\"",
-            "\"if\"",
-            "\"then\"",
-            "\"else\"",
-            "\"elif\"",
-            "\"goto\""
-        };
-
-        var violations = forbiddenPatterns
-            .Where(pattern => content.Contains(pattern, StringComparison.Ordinal))
-            .Select(pattern => $"WistRuleSetSyntaxParser.cs contains forbidden body-level keyword pattern {pattern}.")
-            .ToList();
-
-        Assert.That(
-            violations,
-            Is.Empty,
-            "Rule wrapper syntax parser must not recognize Wist body-language constructs.");
-    }
-
-    [Test]
-    public void RuleBodySourceScanner_MustNotExist()
-    {
-        var root = ResolveRepositoryRoot();
-        var scannerPath = Path.Combine(root, "UniversalToolchain", "UniversalToolchain.Dialects.Wist", "Rules", "Syntax", "WistRuleBodySyntaxAnalyzer.cs");
-
-        Assert.That(File.Exists(scannerPath), Is.False, "Raw body-source scanner must not be present in production code.");
+            Assert.That(File.Exists(parserPath), Is.False, "Temporary raw-source rule parser must not exist in production code.");
+            Assert.That(File.Exists(modelsPath), Is.False, "Temporary raw-source rule syntax models must not exist in production code.");
+        });
     }
 
     private static string ResolveRepositoryRoot()
