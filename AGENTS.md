@@ -12,7 +12,7 @@ Before non-trivial code changes, AI agents must identify the Markdown files that
 
 For small typo fixes, formatting-only edits, or obviously local mechanical changes, a short mental check is enough. Do not create heavy process for ordinary development.
 
-For architecture, parser, runtime, module, capability, function, rules, CLI, CI, public API, or documentation-smoke-check changes, the agent must preserve documentation intent and update Markdown together with code when behavior changes.
+For architecture, parser, runtime, module, capability, function, CLI, CI, public API, or documentation-smoke-check changes, the agent must preserve documentation intent and update Markdown together with code when behavior changes.
 
 If code and Markdown disagree, report the conflict. Do not silently implement around the documentation.
 
@@ -35,11 +35,11 @@ Forbidden documentation fixes:
 
 Breaking these rules is a release-blocking architectural defect.
 
-1. Generic framework layers must not hardcode dialect, profile, module, function, rule, backend, or demo names.
-2. Framework/core/runtime layers must not branch by shipped product profile names such as `pricing-rules`, `validation-rules`, or `policy-rules`.
+1. Generic framework layers must not hardcode dialect, profile, module, function, backend, or demo names.
+2. Framework/core/runtime layers must not branch by shipped product profile names.
 3. Runtime truth must flow only through dialect definition, compiled dialect slice, build plan, selected runtime plan, runtime configuration, and host/executor.
 4. Capabilities/features are projection and explanation layers. They describe selected composition; they do not activate runtime behavior.
-5. BasicCore must not depend on Wist, Rules, SafeMath, concrete feature modules, product profiles, or demo scenarios.
+5. BasicCore must not depend on Wist, SafeMath, concrete feature modules, product profiles, or demo scenarios.
 6. Function names belong to function providers/modules, not to parser, resolver, framework, or facade code.
 7. Convenience APIs must be thin wrappers over existing composition/runtime paths. They must not create second parsers, second evaluators, second registries, or product-specific runtimes.
 8. Product profiles must be ordinary dialect preset/configuration files, not framework runtime modes.
@@ -95,7 +95,7 @@ Use reflection when it helps:
 
 - avoid direct compile-time dependencies from framework/core layers to concrete modules;
 - discover module-owned providers through explicit composition boundaries;
-- keep BasicCore and generic runtime infrastructure independent from Wist, SafeMath, Rules, and product profiles;
+- keep BasicCore and generic runtime infrastructure independent from Wist, SafeMath, and product profiles;
 - reduce manual registration boilerplate;
 - preserve modular extensibility for future DSLs, modules, providers, and backends.
 
@@ -108,7 +108,7 @@ Allowed reflection boundaries:
 - explicitly selected provider marker interfaces/contracts;
 - selected compiled dialect slices;
 - selected runtime composition plans;
-- known provider contracts such as function, type, capability, rule, backend, and diagnostic providers.
+- known provider contracts such as function, type, capability, backend, and diagnostic providers.
 
 Forbidden reflection patterns:
 
@@ -220,6 +220,4 @@ After editing:
 - `docs/ARCHITECTURE_RULES.md` is the canonical architecture guardrail document.
 - `docs/SYNTAX_OWNERSHIP_RULES.md` is the canonical syntax ownership policy.
 - `docs/CONTRIBUTING.md` is the canonical contribution workflow.
-- `docs/series-01-to-07-final-task.md` is historical context from PR #206; cleanup branches may intentionally remove temporary MVP surfaces before AST-backed rewrites.
-- cleanup branches that remove temporary rule MVP surfaces must also remove runtime-visible `RuleDeclarations` module exposure until AST-backed rule declarations exist.
 - This file (`AGENTS.md`) is the canonical AI-agent behavior guide.
