@@ -2,6 +2,7 @@ global using System.Reflection;
 global using System.Reflection.Emit;
 global using AbstractIrExtensions;
 global using BasicCore.Compilation;
+global using BasicCore.Execution;
 global using BasicCore.Contracts;
 global using BytecodeDynamicMethodsCompiler.Core;
 global using DotnetHelper;

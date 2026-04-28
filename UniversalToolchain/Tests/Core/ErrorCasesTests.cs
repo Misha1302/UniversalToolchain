@@ -8,14 +8,14 @@ public class ErrorCasesTests
     private const string DialectText = """
                                        dialect ErrorCases
                                        use Whitespaces,SemicolonAsNewLine,Comments,Numbers,Identifier,Arithmetic,Equality,Conditions,Loops,Variables,Scopes,Labels,InternalPreprocessorLexemes,CSharpInterop
-                                       enable LocalVariablesOptimization
+                                       
                                        backend compiler,interpreter
                                        """;
 
     [Test]
     public void Execute_InvalidSyntax_ThrowsExceptionWithStableDiagnosticFragment()
     {
-        var code = "let 123 = 456";
+        var code = "let x =";
 
         var ex = Assert.Throws(Is.InstanceOf<Exception>(), () => ExecuteCode(code));
 

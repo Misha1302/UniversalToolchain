@@ -1,6 +1,6 @@
 namespace BasicCore.Execution;
 
-public interface IExecutionEnvironment
+public interface IExecutionEnvironment : IRuntimeContextStore, IRuntimeCallProviderResolver
 {
     object? GetExternalValue(int slot);
 

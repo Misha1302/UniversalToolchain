@@ -118,7 +118,7 @@ public class DialectCompositionExplanationProjectorTests
             [new DialectBackendId("compiler")],
             [new DialectBackendId("legacy")],
             [new IntrinsicBuildDirective("Math.Abs", true, DialectBackendSelector.Any)],
-            [new OptimizerBuildDirective("LocalVariablesOptimization", true, DialectBackendSelector.Any)],
+            [],
             SecurityProfile.Restricted,
             [new KeyValuePair<string, bool>("unsafe-interop", false)],
             new DialectValidationResult());

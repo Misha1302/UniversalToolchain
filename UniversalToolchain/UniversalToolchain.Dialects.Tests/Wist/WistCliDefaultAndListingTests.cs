@@ -59,7 +59,7 @@ public sealed class WistCliDefaultAndListingTests
     {
         var output = WistCliRuntimeListingFormatter.Format(new StaticCatalog(
             modules: [Entry(RuntimeComponentKind.FrontendModule, "Arithmetic", [], "frontend.arithmetic", "ArithmeticModule")],
-            optimizers: [Entry(RuntimeComponentKind.Optimizer, "LocalVariablesOptimization", [], "optimizer.localvariables", "LocalVariablesOptimizerModule")],
+            optimizers: [],
             backends: [Entry(RuntimeComponentKind.Backend, "cil", ["compiler"], "backend.cil", "UniversalToolchain.Dialects.Wist")]));
 
         Assert.Multiple(() =>

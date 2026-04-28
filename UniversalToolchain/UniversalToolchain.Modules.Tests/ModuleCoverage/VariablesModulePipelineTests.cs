@@ -81,17 +81,17 @@ public class VariablesModulePipelineTests
     }
 
     [Test]
-    public void Variables_ExpectingSettableReference_Path_IsUsed_ForAssignment()
+    public void Variables_ExpectingWriteTypeInference_Path_IsUsed_ForAssignment()
     {
         var variableSource = CreateVariableNode("x");
-        variableSource.AddTag("ExpectingSettableReference");
+        variableSource.AddTag("ExpectingWriteTypeInference");
 
         var visitor = new VariablesVisitor();
         var bytecode = new Bytecode([]);
         visitor.TryVisit(new BytecodeVisitorData(new PassthroughAstTranslator(), bytecode, variableSource));
 
         var referenceOp = GetSingleOp(bytecode, 0);
-        Assert.That(referenceOp.Name, Is.EqualTo("LoadReferenceToLocalVar_x"));
+        Assert.That(referenceOp.Name, Is.EqualTo("InferWriteTypeOfLocalVar_x"));
 
         using var h = new ModulePipelineTestHelper();
         var result = h.ExecuteBoth("let x = 3\nx = x + 2\nx", _modules);
@@ -131,7 +131,7 @@ public class VariablesModulePipelineTests
         var bytecode = new Bytecode([]);
 
         var source = CreateVariableNode("ext");
-        source.AddTag("ExpectingSettableReference");
+        source.AddTag("ExpectingWriteTypeInference");
         var boundSettable = new BoundExternalReference(source, new ExternalVariableSymbol("ext", typeof(object), 0));
 
         visitor.TryVisit(new BytecodeVisitorData(new PassthroughAstTranslator(), bytecode, boundSettable));

@@ -1,8 +1,9 @@
 namespace BytecodeDynamicMethodsCompiler.Core;
 
-internal sealed class CompilationContext(GroboIL il, Dictionary<string, int> externalSlots)
+internal sealed class CompilationContext(GroboIL il, Dictionary<string, int> externalSlots, int externalArgumentOffset = 0)
 {
     public Dictionary<string, int> ExternalSlots { get; } = externalSlots;
+    public int ExternalArgumentOffset { get; } = externalArgumentOffset;
     public Dictionary<string, GroboIL.Local> LocalVariables { get; } = new();
     public Dictionary<Guid, GroboIL.Label> InstructionLabels { get; } = new();
     public GroboIL Il { get; } = il;

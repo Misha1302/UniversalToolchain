@@ -93,19 +93,18 @@ public class VariablesVisitor : IAstVisitor
         if (IsConcreteType(symbol.Type))
             _variablesTypes[variableKey] = symbol.Type;
 
-        if (data.Node.AllTags.Contains("ExpectingSettableReference"))
+        if (data.Node.AllTags.Contains("ExpectingWriteTypeInference"))
         {
-            var method = new AbstractMethodImpl(
-                $"LoadReferenceToVar_{displayName}",
-                (il, context) =>
+            var inferMethod = new AbstractMethodImpl(
+                $"InferWriteTypeOfLocalVar_{displayName}",
+                (_, context) =>
                 {
-                    var inferredType = context.Stack.Last();
-                    var storageType = ResolveWriteType(symbol, variableKey, inferredType);
-                    il.LdLocRef(variableKey, storageType);
-                }
-            );
+                    if (context.Stack.Count == 0)
+                        Thrower.InvalidOpEx($"Cannot infer storage type for local variable '{displayName}' without assignment value.");
 
-            data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
+                    ResolveWriteType(symbol, variableKey, context.Stack[^1]);
+                });
+            data.Bytecode.Instructions.Add(new BytecodeInstruction(inferMethod));
             return;
         }
 
@@ -128,21 +127,22 @@ public class VariablesVisitor : IAstVisitor
         Type symbolType,
         bool canAssign)
     {
-        if (data.Node.AllTags.Contains("ExpectingSettableReference"))
+        if (data.Node.AllTags.Contains("ExpectingWriteTypeInference"))
         {
             if (!canAssign)
                 Thrower.InvalidOpEx($"External constant '{name}' cannot be assigned.");
 
-            var method = new AbstractMethodImpl(
-                $"LoadReferenceToExternalVar_{name}",
-                (il, context) =>
+            var inferMethod = new AbstractMethodImpl(
+                $"InferWriteTypeOfExternalVar_{name}",
+                (_, context) =>
                 {
-                    var inferredType = context.Stack.Last();
-                    var storageType = ResolveWriteType(new ExternalVariableSymbol(name, symbolType, slot), name, inferredType);
-                    il.LdLocRef(name, storageType);
-                }
-            );
-            data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
+                    if (context.Stack.Count == 0)
+                        Thrower.InvalidOpEx($"Cannot infer storage type for external variable '{name}' without assignment value.");
+
+                    var inferredType = context.Stack[^1];
+                    _variablesTypes[name] = IsConcreteType(inferredType) ? inferredType : symbolType;
+                });
+            data.Bytecode.Instructions.Add(new BytecodeInstruction(inferMethod));
             return;
         }
 
@@ -180,26 +180,19 @@ public class VariablesVisitor : IAstVisitor
     {
         var variableKey = data.Node.Text;
 
-        if (data.Node.AllTags.Contains("ExpectingSettableReference"))
+        if (data.Node.AllTags.Contains("ExpectingWriteTypeInference"))
         {
-            var method = new AbstractMethodImpl(
-                $"LoadReferenceToLocalVar_{data.Node.Text}",
-                (il, context) =>
+            var inferMethod = new AbstractMethodImpl(
+                $"InferWriteTypeOfLocalVar_{data.Node.Text}",
+                (_, context) =>
                 {
-                    var inferredType = context.Stack.Last();
+                    if (context.Stack.Count == 0)
+                        Thrower.InvalidOpEx($"Cannot infer storage type for local variable '{data.Node.Text}' without assignment value.");
 
-                    var storageType =
-                        _variablesTypes.TryGetValue(variableKey, out var existing) && IsConcreteType(existing)
-                            ? existing
-                            : IsConcreteType(inferredType)
-                                ? _variablesTypes[variableKey] = inferredType
-                                : typeof(object);
-
-                    il.LdLocRef(variableKey, storageType);
-                }
-            );
-
-            data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
+                    var inferredType = context.Stack[^1];
+                    _variablesTypes[variableKey] = IsConcreteType(inferredType) ? inferredType : typeof(object);
+                });
+            data.Bytecode.Instructions.Add(new BytecodeInstruction(inferMethod));
             return;
         }
 

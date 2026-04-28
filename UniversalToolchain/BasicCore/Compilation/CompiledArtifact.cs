@@ -12,12 +12,14 @@ public sealed class CompiledArtifact<TCompilationOutput> : ICompiledArtifact<TCo
     private readonly ExternalBinding[] _declaredBindings;
     private readonly IExecutor<TCompilationOutput> _executor;
     private readonly ExternalBindingsLayout _externalBindingsLayout;
+    private readonly IReadOnlyList<Type> _allowedRuntimeProviderTypes;
 
     public CompiledArtifact(
         string sourceText,
         IReadOnlyList<ExternalBinding> declaredBindings,
         TCompilationOutput compilationOutput,
-        IExecutor<TCompilationOutput> executor)
+        IExecutor<TCompilationOutput> executor,
+        IReadOnlyList<Type>? allowedRuntimeProviderTypes = null)
     {
         sourceText = sourceText.ArgNotNull();
 
@@ -29,6 +31,7 @@ public sealed class CompiledArtifact<TCompilationOutput> : ICompiledArtifact<TCo
         _externalBindingsLayout = ExternalBindingsLayout.FromDeclaredBindings(_declaredBindings);
         SlotsByName = _externalBindingsLayout.SlotsByName;
         _executor = executor;
+        _allowedRuntimeProviderTypes = allowedRuntimeProviderTypes?.ToList() ?? [];
 
         SourceText = sourceText;
         CompilationOutput = compilationOutput;
@@ -42,7 +45,10 @@ public sealed class CompiledArtifact<TCompilationOutput> : ICompiledArtifact<TCo
 
     public TCompilationOutput CompilationOutput { get; }
 
-    public ICompiledArtifactSession CreateSession() => new CompiledArtifactSession<TCompilationOutput>(this, _executor, new ExecutionEnvironment(_declaredBindings, _externalBindingsLayout));
+    public ICompiledArtifactSession CreateSession() => new CompiledArtifactSession<TCompilationOutput>(
+        this,
+        _executor,
+        new ExecutionEnvironment(_declaredBindings, _externalBindingsLayout, _allowedRuntimeProviderTypes));
 
     private static ExternalBinding[] SnapshotBindings(IReadOnlyList<ExternalBinding> declaredBindings)
     {

@@ -5,7 +5,6 @@ enable ArithmeticOptimization
 enable BooleanOptimization
 enable ComparisonIntrinsicOptimization
 enable EGraphOptimization
-enable LocalVariablesOptimization
 enable NativeCilOptimization
 enable NativeTypesOptimization
 security trusted

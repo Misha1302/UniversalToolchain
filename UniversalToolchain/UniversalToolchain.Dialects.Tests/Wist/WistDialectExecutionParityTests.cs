@@ -191,7 +191,7 @@ public class WistDialectExecutionParityTests
     private static string CreateFullDialect() => """
                                                  dialect D
                                                  use Arithmetic,BooleanConditions,Comments,ComparisonConditions,Conditions,Equality,Identifier,Labels,Loops,Numbers,Scopes,SemicolonAsNewLine,Variables,Whitespaces
-                                                 enable LocalVariablesOptimization
+                                                 
                                                  backend compiler,interpreter
                                                  """;
 

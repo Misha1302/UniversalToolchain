@@ -18,6 +18,12 @@ public static class GenericAbstractIrExtensions
         air.Intrinsic("call C#", methodBody);
     }
 
+    public static void CallCSharp<TIdentifier>(this IGenericAbstractIR<TIdentifier> air, CSharpCallDescriptor descriptor)
+    {
+        descriptor = descriptor.ArgNotNull();
+        air.Intrinsic("call C#", descriptor);
+    }
+
     public static void CallCSharp<TIdentifier>(this IGenericAbstractIR<TIdentifier> air, ConstructorInfo ctor)
     {
         air.Intrinsic("call C# ctor", ctor);

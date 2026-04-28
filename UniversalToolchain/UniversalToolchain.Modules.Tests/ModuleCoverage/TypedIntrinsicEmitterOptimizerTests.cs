@@ -8,9 +8,7 @@ using ConditionsModule.Enums;
 using ConditionsModule.Optimizers;
 using ConditionsModule.Visitors;
 using IntermediateRepresentationAbstractions;
-using LocalVariablesOptimizerModule;
 using NativeMathModule;
-using SettableGettableModule.Core;
 using UniversalIntermediateRepresentation;
 
 namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
@@ -165,29 +163,6 @@ public sealed class TypedIntrinsicEmitterOptimizerTests
         var result = optimizer.ProcessIr(input, new FakeCompiler());
 
         AssertTypedIntrinsic(result.Instructions[0], BuiltinIntrinsicSymbols.Core.LoadConst, typeof(double), 1.5d);
-    }
-
-    [Test]
-    public void LocalVariablesOptimizer_WhenCapabilityMissingLoadLocalRef_ReturnsInputUnchanged()
-    {
-        var optimizer = CreateOptimizer(
-            new LocalVariablesOptimizer(),
-            (BuiltinIntrinsicSymbols.Storage.LoadLocal, null),
-            (BuiltinIntrinsicSymbols.Storage.StoreLocal, null));
-        var method = typeof(VariablesContainer<int>)
-            .GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static)
-            .FirstOrDefault(x => x.Name == nameof(VariablesContainer<int>.Get) &&
-                                 x.GetParameters().Length == 1 &&
-                                 x.GetParameters()[0].ParameterType == typeof(string));
-        Assert.That(method, Is.Not.Null);
-
-        var input = CreateIr(
-            new Instruction(UOpCode.Push, ["x"]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", method!]));
-
-        var result = optimizer.ProcessIr(input, new FakeCompiler());
-
-        Assert.That(result, Is.SameAs(input));
     }
 
     [Test]
