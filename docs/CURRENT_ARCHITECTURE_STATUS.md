@@ -50,6 +50,19 @@ Forbidden shortcuts:
 - raw-source local binding scanners;
 - restoring rule-local validation tests without first restoring an explicit rules architecture task.
 
+## Interpreter runtime path
+
+Status: reference universal-call backend.
+
+Current policy:
+
+- the interpreter executes core AIR control-flow/data opcodes and the two universal C# call intrinsics only: `call C#` and `call C# ctor`;
+- the interpreter must not implement feature-specific or optimization-specific intrinsics;
+- if a feature must work in the interpreter, it must lower to ordinary C# runtime calls before interpretation;
+- backend-optimized intrinsics belong to backends that explicitly support them, such as CIL.
+
+Forbidden interpreter intrinsics include `load_local`, `store_local`, `load_local_ref`, `load_external`, `store_external`, `load_*`, `add_*`, `sub_*`, `mul_*`, `div_*`, `cmp_*`, `load_bool`, and boolean operation intrinsics.
+
 ## Local variables runtime path
 
 Status: migrated to execution-scoped C# runtime calls.
@@ -61,10 +74,17 @@ Current behavior:
 - `VariablesContainer<T>` static storage is removed from the production runtime path;
 - `LocalVariablesOptimization` is removed from the current runtime path.
 
+Interpreter path:
+
+- the interpreter executes local variables through the canonical execution-scoped C# runtime calls;
+- the interpreter must not receive `load_local`, `store_local`, or `load_local_ref`;
+- local-variable intrinsics are reserved for backend-capability-gated optimized paths, such as CIL.
+
 Future direction:
 
 - any local-variable optimization must operate on generated C# runtime call patterns;
-- do not reintroduce local-variable intrinsics or static/global variable storage.
+- such optimization may compress runtime-call patterns to local intrinsics only for backends that explicitly support those intrinsics;
+- do not reintroduce local-variable intrinsics into the interpreter or static/global variable storage.
 
 ## Interpreter intrinsic surface
 

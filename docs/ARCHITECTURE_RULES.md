@@ -73,6 +73,29 @@ Correct direction:
 
 See `docs/SYNTAX_OWNERSHIP_RULES.md` for the full mandatory policy.
 
+## 3.2 Interpreter intrinsic policy
+
+The interpreter is the reference universal-call backend.
+
+It must execute only:
+
+- core AIR opcodes: `Nop`, `Push`, `Drop`, `Jmp`, `JmpIf`, `JmpIfNot`, `Label`, and `Annotate`;
+- the universal `call C#` intrinsic;
+- the universal `call C# ctor` intrinsic.
+
+The interpreter must not implement feature-specific or optimization-specific intrinsics, including but not limited to:
+
+- local storage intrinsics: `load_local`, `store_local`, `load_local_ref`;
+- external binding intrinsics: `load_external`, `store_external`;
+- native arithmetic and comparison intrinsics: `load_*`, `add_*`, `sub_*`, `mul_*`, `div_*`, `cmp_*`;
+- boolean intrinsics: `load_bool`, `boolean_and`, `boolean_or`, `boolean_not`.
+
+If a feature must work in the interpreter, it must lower to ordinary C# runtime calls before interpretation.
+
+If a feature is optimized into intrinsics, that optimization must be backend-capability gated and must not run for the interpreter unless this policy is explicitly changed.
+
+Do not add interpreter intrinsic branches to make tests pass. Fix lowering or optimizer capability gating instead.
+
 ## 4. Controlled reflection policy
 
 Reflection is allowed and recommended when it reduces compile-time coupling between generic framework layers and concrete modules.
