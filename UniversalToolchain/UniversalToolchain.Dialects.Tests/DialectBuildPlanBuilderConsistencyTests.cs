@@ -60,7 +60,7 @@ public class DialectBuildPlanBuilderConsistencyTests
     [Test]
     public void SyntaxBuildPlanBuilder_UnknownGroupAlias_KeepsAliasAsModule()
     {
-        var document = CreateSyntaxDocument(useModules: ["UnknownAlias"]);
+        var document = CreateSyntaxDocument(useModules: ["UnknownAlias"], orderRules: []);
         var plan = CreateSyntaxGroupedBuilder().Build(document);
 
         Assert.Multiple(() =>
@@ -74,7 +74,7 @@ public class DialectBuildPlanBuilderConsistencyTests
     public void SyntaxBuildPlanBuilder_GroupCapabilityConflict_ReportsDiagnostic()
     {
         var document = CreateSyntaxDocument(
-            useModules: ["TestCore"],
+            useModules: ["TestCore", "Runtime"],
             capabilities: [new KeyValuePair<string, bool>("test.feature", false)]);
         var plan = CreateSyntaxGroupedBuilder().Build(document);
 
@@ -164,12 +164,14 @@ public class DialectBuildPlanBuilderConsistencyTests
         string? version = "1.0",
         string? baseDialectName = "base",
         IReadOnlyList<string>? useModules = null,
-        IReadOnlyList<KeyValuePair<string, bool>>? capabilities = null) =>
+        IReadOnlyList<KeyValuePair<string, bool>>? capabilities = null,
+        IReadOnlyList<OrderRule>? orderRules = null) =>
         new(
             "dialect",
             version,
             useModules ?? ["Core", "Expressions", "Runtime"],
             ["Legacy"],
+            orderRules ??
             [
                 new OrderRule(OrderRuleKind.Requires, "Expressions", "Core"),
                 new OrderRule(OrderRuleKind.After, "Runtime", "Expressions")
