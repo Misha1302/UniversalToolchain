@@ -1,9 +1,12 @@
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core;
+using UniversalToolchain.Dialects.Core.Groups;
 using UniversalToolchain.Dialects.Frontend.Composition;
 using UniversalToolchain.Dialects.Integration;
+using UniversalToolchain.Dialects.Wist.Groups;
 
 namespace UniversalToolchain.Dialects.Wist;
 
@@ -21,6 +24,9 @@ public static class WistDialectCoreServiceCollectionExtensions
 
         services.AddDialectDslDefaultComposition();
 
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IDialectGroupProvider, WistDialectGroupProvider>());
+        services.TryAddSingleton<IDialectGroupCatalog, CompositeDialectGroupCatalog>();
+        services.TryAddSingleton<DialectGroupExpander>();
         services.TryAddSingleton<SelectedRuntimePlanResolver>();
         services.TryAddSingleton<IDialectBackendIntrinsicPolicyResolver, DialectIntrinsicPolicyResolver>();
         services.TryAddSingleton<IWistRequiredInfrastructureModulesProvider, WistRequiredInfrastructureModulesProvider>();
