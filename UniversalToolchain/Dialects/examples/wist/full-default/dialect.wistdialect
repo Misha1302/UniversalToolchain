@@ -3,6 +3,5 @@ use Arithmetic,BooleanConditions,Comments,ComparisonConditions,Conditions,CSharp
 backend cil,interpreter
 enable BooleanOptimization
 enable ComparisonIntrinsicOptimization
-enable LocalVariablesOptimization
 security trusted
 capability unsafe-interop

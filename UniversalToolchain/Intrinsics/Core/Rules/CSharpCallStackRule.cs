@@ -19,11 +19,17 @@ public sealed class CSharpCallStackRule : IIntrinsicStackRule
     public void Apply(IntrinsicInvocation invocation, List<Type> stack, IIntrinsicTypeResolutionContext context)
     {
         Thrower.AssertAlways(
-            invocation.DataOperands.Count > 0 && invocation.DataOperands[0] is MethodInfo,
-            $"Intrinsic '{invocation.Symbol}' requires DataOperands[0] to be a MethodInfo.");
+            invocation.DataOperands.Count > 0,
+            $"Intrinsic '{invocation.Symbol}' requires call operand.");
 
-        var method = (MethodInfo)invocation.DataOperands[0]!;
-        var resolution = _resolver.ResolveForStack(method, stack);
+        MethodCallResolution resolution;
+        if (invocation.DataOperands[0] is MethodInfo methodInfo)
+            resolution = _resolver.ResolveForStack(methodInfo, stack);
+        else if (invocation.DataOperands[0] is CSharpCallDescriptor descriptor)
+            resolution = _resolver.ResolveForStack(descriptor, stack);
+        else
+            resolution = Thrower.InvalidOpEx<MethodCallResolution>(
+                $"Intrinsic '{invocation.Symbol}' requires DataOperands[0] to be MethodInfo or CSharpCallDescriptor.");
 
         Thrower.AssertAlways(
             stack.Count >= resolution.ConsumedTypes.Count,

@@ -3,5 +3,4 @@ use Arithmetic,BooleanConditions,Comments,ComparisonConditions,Conditions,Equali
 backend cil,interpreter
 enable BooleanOptimization
 enable ComparisonIntrinsicOptimization
-enable LocalVariablesOptimization
 security restricted

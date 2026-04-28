@@ -182,7 +182,7 @@ public sealed class WistRuntimePathGuardrailTests
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var shapeBuilder = provider.GetRequiredService<SelectedRuntimeExecutionShapeBuilder>();
         var composition = workflow.ComposeText(
-            "dialect Stable\nuse Arithmetic,Numbers,Whitespaces\nenable LocalVariablesOptimization\nbackend interpreter,compiler",
+            "dialect Stable\nuse Arithmetic,Numbers,Whitespaces\n\nbackend interpreter,compiler",
             "stable");
 
         Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
@@ -203,7 +203,7 @@ public sealed class WistRuntimePathGuardrailTests
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var configurationBuilder = provider.GetRequiredService<WistDialectExecutionConfigurationBuilder>();
         var composition = workflow.ComposeText(
-            "dialect Stable\nuse Arithmetic,Numbers,Whitespaces\nenable LocalVariablesOptimization\nbackend interpreter,compiler",
+            "dialect Stable\nuse Arithmetic,Numbers,Whitespaces\n\nbackend interpreter,compiler",
             "stable");
 
         Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
@@ -225,10 +225,10 @@ public sealed class WistRuntimePathGuardrailTests
         var shapeBuilder = provider.GetRequiredService<SelectedRuntimeExecutionShapeBuilder>();
 
         var shippedNamedComposition = workflow.ComposeText(
-            "dialect full-default\nuse Arithmetic,Numbers,Whitespaces\nenable LocalVariablesOptimization\nbackend interpreter,compiler",
+            "dialect full-default\nuse Arithmetic,Numbers,Whitespaces\n\nbackend interpreter,compiler",
             "full-default");
         var arbitraryNamedComposition = workflow.ComposeText(
-            "dialect RuntimePathGuardrail\nuse Arithmetic,Numbers,Whitespaces\nenable LocalVariablesOptimization\nbackend interpreter,compiler",
+            "dialect RuntimePathGuardrail\nuse Arithmetic,Numbers,Whitespaces\n\nbackend interpreter,compiler",
             "runtime-path-guardrail");
 
         Assert.Multiple(() =>

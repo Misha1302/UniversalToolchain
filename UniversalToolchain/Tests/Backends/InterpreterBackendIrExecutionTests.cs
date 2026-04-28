@@ -134,50 +134,6 @@ public class InterpreterBackendIrExecutionTests
     }
 
     [Test]
-    public void VariablesContainerGet_UsesDeclaredExternalBindingLayoutSlot()
-    {
-        var getMethod = typeof(VariablesContainer<int>).GetMethod(nameof(VariablesContainer<int>.Get), [typeof(string)]);
-
-        var ir = BuildIr(
-            new Instruction(UOpCode.Push, ["target"]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", getMethod!]));
-
-        var environment = new ExecutionEnvironment(
-        [
-            new ExternalBinding { Name = "other", Type = typeof(int), Value = 11, Kind = ExternalBindingKind.Variable },
-            new ExternalBinding { Name = "target", Type = typeof(int), Value = 42, Kind = ExternalBindingKind.Variable }
-        ]);
-
-        var result = ExecuteInInterpreter(ir, environment);
-
-        Assert.That(result, Is.EqualTo(42));
-    }
-
-    [Test]
-    public void VariablesContainerGet_NameMissingInLayout_IsTreatedAsLocalVariable()
-    {
-        using var _ = GlobalTestStateScope.Create();
-
-        const string key = "local_only";
-        VariablesContainer<int>.Set(key, 7);
-
-        var getMethod = typeof(VariablesContainer<int>).GetMethod(nameof(VariablesContainer<int>.Get), [typeof(string)]);
-
-        var ir = BuildIr(
-            new Instruction(UOpCode.Push, [key]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", getMethod!]));
-
-        var environment = new ExecutionEnvironment(
-        [
-            new ExternalBinding { Name = "declared", Type = typeof(int), Value = 999, Kind = ExternalBindingKind.Variable }
-        ]);
-
-        var result = ExecuteInInterpreter(ir, environment);
-
-        Assert.That(result, Is.EqualTo(7));
-    }
-
-    [Test]
     public void ManualStackManipulationWithDropsAndNestedBranches_RemainsDeterministic()
     {
         var outerTrue = Guid.NewGuid();

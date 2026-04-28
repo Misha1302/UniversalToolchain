@@ -68,7 +68,17 @@ public class ArithmeticOptimizerModule : IIRProcessingModule
                 instruction.Operands.Count >= 2 &&
                 (string)instruction.Operands[0] == "call C#")
             {
-                var method = instruction.Operands[1].Get<MethodInfo>();
+                var method = instruction.Operands[1] switch
+                {
+                    MethodInfo methodInfo => methodInfo,
+                    CSharpCallDescriptor descriptor => descriptor.Method,
+                    _ => null
+                };
+                if (method == null)
+                {
+                    context.NewInstructions.Add(instruction);
+                    continue;
+                }
 
                 if (method.DeclaringType == typeof(NativeArithmetic))
                 {

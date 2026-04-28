@@ -304,7 +304,7 @@ public class WistDialectRuntimeBootstrapContractTests
         for (var i = 0; i < 30; i++)
         {
             var composition = workflow.ComposeText(
-                "dialect Stable\nuse Arithmetic,Numbers,Whitespaces\nenable LocalVariablesOptimization\nbackend interpreter,compiler",
+                "dialect Stable\nuse Arithmetic,Numbers,Whitespaces\n\nbackend interpreter,compiler",
                 $"stable-{i}");
 
             Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));

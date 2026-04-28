@@ -1,6 +1,7 @@
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core;
 using UniversalToolchain.Dialects.Core.Binding;
+using UniversalToolchain.Dialects.Core.Groups;
 using UniversalToolchain.Dialects.Frontend;
 using UniversalToolchain.Dialects.Parsing;
 
@@ -40,6 +41,74 @@ public class DialectBuildPlanBuilderConsistencyTests
             "Order directives contain a cycle involving modules");
 
         AssertBuildPlansEqual(expected, actual);
+    }
+
+    [Test]
+    public void SyntaxBuildPlanBuilder_KnownGroup_ExpandsModulesAndCapabilities()
+    {
+        var document = CreateSyntaxDocument(useModules: ["TestCore", "Runtime"]);
+        var plan = CreateSyntaxGroupedBuilder().Build(document);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(plan.OrderedModules, Is.EqualTo(new[] { "Core", "Expressions", "Runtime" }));
+            Assert.That(plan.Capabilities["test.feature"], Is.True);
+            Assert.That(plan.ValidationResult.IsValid, Is.True);
+        });
+    }
+
+    [Test]
+    public void SyntaxBuildPlanBuilder_UnknownGroupAlias_KeepsAliasAsModule()
+    {
+        var document = CreateSyntaxDocument(useModules: ["UnknownAlias"], orderRules: []);
+        var plan = CreateSyntaxGroupedBuilder().Build(document);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(plan.OrderedModules, Is.EqualTo(new[] { "UnknownAlias" }));
+            Assert.That(plan.ValidationResult.IsValid, Is.True);
+        });
+    }
+
+    [Test]
+    public void SyntaxBuildPlanBuilder_GroupCapabilityConflict_ReportsDiagnostic()
+    {
+        var document = CreateSyntaxDocument(
+            useModules: ["TestCore", "Runtime"],
+            capabilities: [new KeyValuePair<string, bool>("test.feature", false)]);
+        var plan = CreateSyntaxGroupedBuilder().Build(document);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(plan.ValidationResult.IsValid, Is.False);
+            Assert.That(plan.ValidationResult.Diagnostics.Select(x => x.Code), Does.Contain("G001"));
+        });
+    }
+
+    [Test]
+    public void CompiledBuildPlanBuilder_KnownGroup_ExpandsModulesAndCapabilities()
+    {
+        var slice = CreateCompiledSlice(useModules: ["TestCore", "Runtime"]);
+        var plan = CreateCompiledGroupedBuilder().Build(slice);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(plan.OrderedModules, Is.EqualTo(new[] { "Core", "Expressions", "Runtime" }));
+            Assert.That(plan.Capabilities["test.feature"], Is.True);
+            Assert.That(plan.ValidationResult.IsValid, Is.True);
+        });
+    }
+
+    [Test]
+    public void SyntaxBuildPlanBuilder_GroupExpansion_RepeatedBuildsProduceSamePlan()
+    {
+        var document = CreateSyntaxDocument(useModules: ["TestCore", "Runtime"]);
+        var signatures = Enumerable.Range(0, 30)
+            .Select(_ => BuildPlanSignature(CreateSyntaxGroupedBuilder().Build(document)))
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+
+        Assert.That(signatures, Has.Length.EqualTo(1));
     }
 
     [Test]
@@ -91,12 +160,18 @@ public class DialectBuildPlanBuilderConsistencyTests
         });
     }
 
-    private static DialectSyntaxDocument CreateSyntaxDocument(string? version = "1.0", string? baseDialectName = "base") =>
+    private static DialectSyntaxDocument CreateSyntaxDocument(
+        string? version = "1.0",
+        string? baseDialectName = "base",
+        IReadOnlyList<string>? useModules = null,
+        IReadOnlyList<KeyValuePair<string, bool>>? capabilities = null,
+        IReadOnlyList<OrderRule>? orderRules = null) =>
         new(
             "dialect",
             version,
-            ["Core", "Expressions", "Runtime"],
+            useModules ?? ["Core", "Expressions", "Runtime"],
             ["Legacy"],
+            orderRules ??
             [
                 new OrderRule(OrderRuleKind.Requires, "Expressions", "Core"),
                 new OrderRule(OrderRuleKind.After, "Runtime", "Expressions")
@@ -114,16 +189,20 @@ public class DialectBuildPlanBuilderConsistencyTests
                 new OptimizerDirectiveSyntax("inline", false, TestBackendIds.InterpreterSelector)
             ],
             SecurityProfile.Restricted,
+            capabilities ??
             [
                 new KeyValuePair<string, bool>("sandbox", true),
                 new KeyValuePair<string, bool>("unsafe-interop", false)
             ],
             baseDialectName);
 
-    private static DialectDefinitionSlice CreateCompiledSlice(string? version = "1.0", string? baseDialectName = "base") =>
+    private static DialectDefinitionSlice CreateCompiledSlice(
+        string? version = "1.0",
+        string? baseDialectName = "base",
+        IReadOnlyList<string>? useModules = null) =>
         new(
             "dialect",
-            ["Core", "Expressions", "Runtime"],
+            useModules ?? ["Core", "Expressions", "Runtime"],
             ["Legacy"],
             [
                 new DialectOrderDirective(DialectOrderDirectiveKind.Requires, "Expressions", "Core"),
@@ -148,6 +227,30 @@ public class DialectBuildPlanBuilderConsistencyTests
             ],
             version,
             baseDialectName);
+
+    private static DialectBuildPlanBuilder CreateSyntaxGroupedBuilder()
+    {
+        return new DialectBuildPlanBuilder(CreateGroupExpander());
+    }
+
+    private static DialectCompiledDialectBuildPlanBuilder CreateCompiledGroupedBuilder()
+    {
+        return new DialectCompiledDialectBuildPlanBuilder(CreateGroupExpander());
+    }
+
+    private static DialectGroupExpander CreateGroupExpander()
+    {
+        return new DialectGroupExpander(new CompositeDialectGroupCatalog([new TestDialectGroupProvider()]));
+    }
+
+    private static string BuildPlanSignature(DialectBuildPlan plan)
+    {
+        return string.Join("|", plan.OrderedModules)
+               + "::"
+               + string.Join("|", plan.Capabilities.OrderBy(x => x.Key, StringComparer.Ordinal).Select(x => $"{x.Key}={x.Value}"))
+               + "::"
+               + string.Join("|", plan.ValidationResult.Diagnostics.Select(x => $"{x.Code}:{x.Message}:{x.Severity}"));
+    }
 
     private static void AssertBuildPlansEqual(DialectBuildPlan expected, DialectBuildPlan actual)
     {
@@ -191,5 +294,16 @@ public class DialectBuildPlanBuilderConsistencyTests
                 actual.OrderRules.Select(x => (x.Kind, x.ModuleName, x.RelatedModuleName)),
                 Is.EqualTo(expected.OrderRules.Select(x => (x.Kind, x.ModuleName, x.RelatedModuleName))));
         });
+    }
+
+    private sealed class TestDialectGroupProvider : IDialectGroupProvider
+    {
+        public IReadOnlyList<DialectGroupDescriptor> GetGroups() =>
+        [
+            new(
+                "TestCore",
+                ["Core", "Expressions"],
+                [new KeyValuePair<string, bool>("test.feature", true)])
+        ];
     }
 }

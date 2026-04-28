@@ -19,7 +19,7 @@ public class WistDialectProfileContractTests
         {
             Assert.That(source, Does.Contain("enable BooleanOptimization"));
             Assert.That(source, Does.Contain("enable ComparisonIntrinsicOptimization"));
-            Assert.That(source, Does.Contain("enable LocalVariablesOptimization"));
+            Assert.That(source, Does.Not.Contain("LocalVariablesOptimization"));
             Assert.That(source, Does.Contain("security trusted"));
             Assert.That(source, Does.Contain("capability unsafe-interop"));
         });
@@ -110,7 +110,7 @@ public class WistDialectProfileContractTests
             Assert.That(usedModules, Does.Not.Contain("Labels"));
             Assert.That(usedModules, Does.Not.Contain("Comments"));
             Assert.That(usedModules, Does.Not.Contain("CSharpInterop"));
-            Assert.That(source, Does.Not.Contain("enable LocalVariablesOptimization"));
+            Assert.That(source, Does.Not.Contain("LocalVariablesOptimization"));
             Assert.That(source, Does.Not.Contain("capability unsafe-interop"));
         });
     }

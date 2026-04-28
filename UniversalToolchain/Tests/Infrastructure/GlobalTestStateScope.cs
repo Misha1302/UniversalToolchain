@@ -1,5 +1,3 @@
-using SettableGettableModule.Core;
-
 namespace Tests.Infrastructure;
 
 internal sealed class GlobalTestStateScope : IDisposable
@@ -18,7 +16,6 @@ internal sealed class GlobalTestStateScope : IDisposable
 
     private static void Reset()
     {
-        // Reset only mutable global test hooks so each test observes a clean runtime state.
-        VariablesContainerTestHooks.ResetAllForTests();
+        // Intentionally left blank. Global mutable runtime containers were removed.
     }
 }

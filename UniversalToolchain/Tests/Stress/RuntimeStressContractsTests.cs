@@ -19,7 +19,7 @@ public class RuntimeStressContractsTests
         var signatures = new List<string>(RepeatCount);
         for (var i = 0; i < RepeatCount; i++)
         {
-            var composition = workflow.ComposeText("dialect Repeat\nuse Arithmetic,Numbers,Variables\nenable LocalVariablesOptimization\nbackend compiler,interpreter", $"repeat-{i}");
+            var composition = workflow.ComposeText("dialect Repeat\nuse Arithmetic,Numbers,Variables\n\nbackend compiler,interpreter", $"repeat-{i}");
             Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
             using var host = workflow.CreateHost(composition);
             signatures.Add(TestContractsInfrastructure.BuildSelectionSignature(composition) + "##" + TestContractsInfrastructure.BuildHostSignature(host));
@@ -114,7 +114,7 @@ public class RuntimeStressContractsTests
         {
             var dialectText = i % 2 == 0
                 ? "dialect M1\nuse Arithmetic,Numbers\nbackend compiler,interpreter"
-                : "dialect M2\nuse Arithmetic,Numbers,Variables\nenable LocalVariablesOptimization\nbackend compiler,interpreter";
+                : "dialect M2\nuse Arithmetic,Numbers,Variables\n\nbackend compiler,interpreter";
 
             var composition = workflow.ComposeText(dialectText, $"mixed-{i}");
             if (!composition.IsSuccess)

@@ -8,7 +8,7 @@ public class ExecutionRepeatabilitySmokeTests
     private const string DialectText = """
                                        dialect TestUniversal
                                        use Whitespaces,SemicolonAsNewLine,Comments,Numbers,Identifier,Arithmetic,Equality,Conditions,Loops,Variables,Scopes,Labels,InternalPreprocessorLexemes,CSharpInterop
-                                       enable LocalVariablesOptimization
+                                       
                                        backend compiler,interpreter
                                        """;
 

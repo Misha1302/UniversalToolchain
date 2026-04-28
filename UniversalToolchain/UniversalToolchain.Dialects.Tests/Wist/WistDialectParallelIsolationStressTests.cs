@@ -16,7 +16,7 @@ public class WistDialectParallelIsolationStressTests
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var dialects = new[]
         {
-            "dialect A\nuse Arithmetic,Numbers\nenable LocalVariablesOptimization\nbackend interpreter",
+            "dialect A\nuse Arithmetic,Numbers\n\nbackend interpreter",
             "dialect B\nuse Arithmetic,Variables,Scopes\nbackend interpreter,compiler",
             "dialect C\nuse Arithmetic,Conditions,ComparisonConditions\nbackend compiler"
         };
@@ -35,7 +35,7 @@ public class WistDialectParallelIsolationStressTests
     {
         using var provider = WistDialectTestInfrastructure.CreateProviderWithExplicitBackends();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var composition = workflow.ComposeText("dialect Stable\nuse Arithmetic,Numbers\nenable LocalVariablesOptimization\nbackend compiler,interpreter", "stable");
+        var composition = workflow.ComposeText("dialect Stable\nuse Arithmetic,Numbers\n\nbackend compiler,interpreter", "stable");
         Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
 
         var signatures = await Task.WhenAll(Enumerable.Range(0, ParallelCount).Select(_ => Task.Run(() =>
@@ -56,7 +56,7 @@ public class WistDialectParallelIsolationStressTests
 
         for (var i = 0; i < RepeatCount; i++)
         {
-            var result = workflow.ComposeText("dialect Repeat\nuse Arithmetic,Numbers,Whitespaces\nenable LocalVariablesOptimization\nbackend interpreter", $"repeat-{i}");
+            var result = workflow.ComposeText("dialect Repeat\nuse Arithmetic,Numbers,Whitespaces\n\nbackend interpreter", $"repeat-{i}");
             Assert.That(result.IsSuccess, Is.True, FormatComposition(result));
             signatures.Add(WistDialectTestInfrastructure.BuildSelectionSignature(result));
         }
@@ -90,7 +90,7 @@ public class WistDialectParallelIsolationStressTests
 
         var signatures = await Task.WhenAll(Enumerable.Range(0, ParallelCount).Select(i => Task.Run(() =>
         {
-            var composition = workflow.ComposeText("dialect Mixed\nuse Arithmetic,Numbers,Variables\nenable LocalVariablesOptimization\nbackend interpreter,compiler", $"mixed-{i}");
+            var composition = workflow.ComposeText("dialect Mixed\nuse Arithmetic,Numbers,Variables\n\nbackend interpreter,compiler", $"mixed-{i}");
             if (!composition.IsSuccess)
                 return "compose-failed:" + FormatComposition(composition);
 
@@ -146,7 +146,7 @@ public class WistDialectParallelIsolationStressTests
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var loader = provider.GetRequiredService<IRuntimeComponentTypeLoader>();
 
-        var composition = workflow.ComposeText("dialect TypeLoad\nuse Arithmetic,Numbers\nenable LocalVariablesOptimization\nbackend compiler,interpreter", "typeload");
+        var composition = workflow.ComposeText("dialect TypeLoad\nuse Arithmetic,Numbers\n\nbackend compiler,interpreter", "typeload");
         Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
 
         var selection = (SelectedRuntimePlan)composition.RuntimeSelection!;

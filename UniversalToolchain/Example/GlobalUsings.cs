@@ -22,7 +22,6 @@ global using ExceptionsManager;
 global using ExecutorLoggerModule;
 global using IdentifierModule;
 global using LabelsModule;
-global using LocalVariablesOptimizerModule;
 global using NumbersModule;
 global using ParserConfigurationModule;
 global using ParserConfigurationModule.Core;

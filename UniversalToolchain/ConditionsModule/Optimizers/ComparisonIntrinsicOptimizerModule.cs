@@ -123,7 +123,15 @@ public class ComparisonIntrinsicOptimizerModule : IIRProcessingModule
             intrinsicName != "call C#")
             return false;
 
-        var method = instruction.Operands[1].Get<MethodInfo>();
+        var method = instruction.Operands[1] switch
+        {
+            MethodInfo methodInfo => methodInfo,
+            CSharpCallDescriptor descriptor => descriptor.Method,
+            _ => null
+        };
+        if (method == null)
+            return false;
+
         if (method.DeclaringType != typeof(Comparisons) || !_comparisonOperations.TryGetValue(method.Name, out var symbol))
             return false;
 

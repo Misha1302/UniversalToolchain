@@ -17,7 +17,6 @@ public class ExampleRunner
             """
             dialect ExampleNative
             use Whitespaces,SemicolonAsNewLine,Comments,Numbers,Identifier,Arithmetic,NativeTypes,Equality,Conditions,Loops,Variables,Scopes,Labels,InternalPreprocessorLexemes,CSharpInterop
-            enable LocalVariablesOptimization
             backend compiler,interpreter
             """,
             "example-inline");

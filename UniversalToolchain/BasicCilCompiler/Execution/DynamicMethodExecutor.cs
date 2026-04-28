@@ -6,8 +6,9 @@ public class DynamicMethodExecutor : IExecutor<DynamicMethod>
     {
         var parameters = compilation.GetParameters();
         var values = new object?[parameters.Length];
-        for (var i = 0; i < parameters.Length; i++)
-            values[i] = environment.GetExternalValue(i);
+        values[0] = environment;
+        for (var i = 1; i < parameters.Length; i++)
+            values[i] = environment.GetExternalValue(i - 1);
 
         return compilation.Invoke(null, values)!;
     }

@@ -1,6 +1,7 @@
 using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core.Binding;
+using UniversalToolchain.Dialects.Core.Groups;
 using UniversalToolchain.Dialects.Parsing;
 
 namespace UniversalToolchain.Dialects.Core;
@@ -10,13 +11,28 @@ namespace UniversalToolchain.Dialects.Core;
 /// </summary>
 public sealed class DialectBuildPlanBuilder : IDialectBuildPlanBuilder
 {
+    private readonly DialectGroupExpander _groupExpander;
+
+    public DialectBuildPlanBuilder()
+        : this(new DialectGroupExpander(new EmptyDialectGroupCatalog()))
+    {
+    }
+
+    public DialectBuildPlanBuilder(DialectGroupExpander groupExpander)
+    {
+        _groupExpander = groupExpander.ArgNotNull();
+    }
+
     public DialectBuildPlan Build(DialectSyntaxDocument syntaxDocument)
     {
         syntaxDocument = syntaxDocument.ArgNotNull();
 
         var diagnostics = new List<DialectDiagnostic>();
+        var source = new SyntaxDialectBindingSource(syntaxDocument);
+        var expandedSource = _groupExpander.Expand(source, diagnostics);
+
         return DialectDefinitionSemanticBinder.BuildPlanCore(
-            new SyntaxDialectBindingSource(syntaxDocument),
+            expandedSource,
             diagnostics,
             "S007",
             "Order rules contain a cycle involving modules",

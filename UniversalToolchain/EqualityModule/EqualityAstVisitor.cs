@@ -7,13 +7,45 @@ public class EqualityAstVisitor : IAstVisitor
         if (data.Node.NodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("Equality"))
             return;
 
-        data.AstToBytecodeTranslator.Translate(data.Node.Children[1]); // value
-        data.AstToBytecodeTranslator.Translate(data.Node.Children[0]); // ref
+        var targetNode = data.Node.Children[0];
+        var valueNode = data.Node.Children[1];
+
+        data.AstToBytecodeTranslator.Translate(valueNode);
+        data.AstToBytecodeTranslator.Translate(targetNode);
 
         var method = new AbstractMethodImpl(
-            $"Set_{data.Node.Children[0].LexemeValue?.Text}={data.Node.Children[1].LexemeValue?.Text}",
-            (il, context) => il.SetValueToSettable(context.Stack[^2])
+            $"Set_{targetNode.LexemeValue?.Text}={valueNode.LexemeValue?.Text}",
+            (il, context) => StoreAssignmentTarget(il, context, targetNode)
         );
         data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
+    }
+
+    private static void StoreAssignmentTarget(
+        IAbstractIR il,
+        IAbstractMethodConvertable.Context context,
+        AstNode targetNode)
+    {
+        if (context.Stack.Count == 0)
+            Thrower.InvalidOpEx("Assignment requires a value on the stack.");
+
+        if (targetNode is BoundAstNode boundNode)
+        {
+            if (boundNode.Symbol is ExternalConstantSymbol externalConstantSymbol)
+                Thrower.InvalidOpEx($"External constant '{externalConstantSymbol.Name}' cannot be assigned.");
+
+            if (boundNode.Symbol is ExternalVariableSymbol externalVariableSymbol)
+            {
+                il.StExternal(externalVariableSymbol.Slot, externalVariableSymbol.Type);
+                return;
+            }
+
+            il.SetValueToLocal(boundNode.Symbol.StorageKey, context.Stack[^1]);
+            return;
+        }
+
+        if (targetNode.NodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("Variable"))
+            Thrower.InvalidOpEx("Assignment target must be a variable.");
+
+        il.SetValueToLocal(targetNode.Text, context.Stack[^1]);
     }
 }
