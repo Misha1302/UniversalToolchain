@@ -13,6 +13,7 @@ public class DialectProjectsSmokeTests
         "full-default-native",
         "function-calls-safe-math",
         "minimal-arithmetic",
+        "minimal-arithmetic-grouped",
         "minimal-arithmetic-native",
         "pricing-restricted",
         "restricted-sandbox"
