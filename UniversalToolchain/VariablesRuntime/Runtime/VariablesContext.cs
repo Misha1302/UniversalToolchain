@@ -1,4 +1,4 @@
-namespace AbstractIrExtensions;
+namespace VariablesModule.Runtime;
 
 public sealed class VariablesContext
 {

@@ -14,6 +14,7 @@ public class ValuesSetNodeCreator : IAstNodeCreator
         eqNode.Children.AddRange(scope[childIndex - 1], scope[childIndex + 1]);
         scope.Children.RemoveAt(childIndex + 1);
         scope.Children.RemoveAt(childIndex - 1);
+        eqNode.Children[^2].AddTag("ExpectingWriteTypeInference");
 
         return true;
     }

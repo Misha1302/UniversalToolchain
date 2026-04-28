@@ -50,6 +50,22 @@ Forbidden shortcuts:
 - raw-source local binding scanners;
 - restoring rule-local validation tests without first restoring an explicit rules architecture task.
 
+## Local variables runtime path
+
+Status: migrated to execution-scoped C# runtime calls.
+
+Current behavior:
+
+- local variables are lowered to ordinary `call C#` instructions via `VariablesRuntimeCallProvider` and `VariablesRuntimeCalls`;
+- local variable state is session-scoped through `ExecutionEnvironment` runtime context storage;
+- `VariablesContainer<T>` static storage is removed from the production runtime path;
+- `LocalVariablesOptimization` is removed from the current runtime path.
+
+Future direction:
+
+- any local-variable optimization must operate on generated C# runtime call patterns;
+- do not reintroduce local-variable intrinsics or static/global variable storage.
+
 ## Documentation policy
 
 `docs/DOCUMENTATION_RULES.md` defines how agents must handle stale Markdown examples and architecture documents.

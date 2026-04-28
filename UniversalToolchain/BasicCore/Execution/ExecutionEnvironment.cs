@@ -3,16 +3,23 @@ namespace BasicCore.Execution;
 public sealed class ExecutionEnvironment : IExecutionEnvironment, IExternalBindingsLayoutProvider
 {
     private readonly object?[] _values;
+    private readonly HashSet<Type>? _allowedRuntimeProviderTypes;
     private readonly Dictionary<RuntimeContextKey, object> _runtimeContexts = [];
     private readonly Dictionary<Type, object> _runtimeProviders = [];
 
-    public ExecutionEnvironment(IReadOnlyList<ExternalBinding> bindings, ExternalBindingsLayout? externalBindingsLayout = null)
+    public ExecutionEnvironment(
+        IReadOnlyList<ExternalBinding> bindings,
+        ExternalBindingsLayout? externalBindingsLayout = null,
+        IReadOnlyCollection<Type>? allowedRuntimeProviderTypes = null)
     {
         bindings = bindings.ArgNotNull();
 
         _values = new object?[bindings.Count];
         for (var i = 0; i < bindings.Count; i++)
             _values[i] = bindings[i].Value;
+
+        if (allowedRuntimeProviderTypes != null)
+            _allowedRuntimeProviderTypes = allowedRuntimeProviderTypes.ToHashSet();
 
         ExternalBindingsLayout = externalBindingsLayout ?? ExternalBindingsLayout.FromDeclaredBindings(bindings);
     }
@@ -36,6 +43,12 @@ public sealed class ExecutionEnvironment : IExecutionEnvironment, IExternalBindi
     public object GetRequiredProvider(Type providerType)
     {
         providerType = providerType.ArgNotNull();
+
+        if (_allowedRuntimeProviderTypes != null && !_allowedRuntimeProviderTypes.Contains(providerType))
+        {
+            return Thrower.InvalidOpEx<object>(
+                $"Runtime call provider '{providerType.FullName}' is not allowed in the current execution session.");
+        }
 
         if (_runtimeProviders.TryGetValue(providerType, out var existing))
             return existing;

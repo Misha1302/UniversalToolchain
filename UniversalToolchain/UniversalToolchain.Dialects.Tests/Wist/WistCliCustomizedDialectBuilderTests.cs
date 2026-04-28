@@ -24,7 +24,7 @@ public sealed class WistCliCustomizedDialectBuilderTests
         {
             Assert.That(dialectText, Does.Contain("enable BooleanOptimization"));
             Assert.That(dialectText, Does.Contain("enable ComparisonIntrinsicOptimization"));
-            Assert.That(dialectText, Does.Contain("enable LocalVariablesOptimization"));
+            Assert.That(dialectText, Does.Not.Contain("LocalVariablesOptimization"));
         });
     }
 

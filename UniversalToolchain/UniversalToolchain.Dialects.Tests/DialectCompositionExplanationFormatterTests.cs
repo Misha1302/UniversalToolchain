@@ -92,7 +92,7 @@ public class DialectCompositionExplanationFormatterTests
             [new DialectBackendId("compiler"), new DialectBackendId("interpreter")],
             [],
             [new IntrinsicBuildDirective("Math.Abs", true, DialectBackendSelector.Any)],
-            [new OptimizerBuildDirective("LocalVariablesOptimization", true, DialectBackendSelector.Any)],
+            [],
             SecurityProfile.Restricted,
             capabilities ?? new Dictionary<string, bool> { ["cap-b"] = true, ["cap-a"] = false });
 

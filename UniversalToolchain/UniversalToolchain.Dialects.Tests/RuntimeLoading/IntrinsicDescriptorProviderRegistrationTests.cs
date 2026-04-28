@@ -1,7 +1,6 @@
 using BasicCore.Builtins;
 using BasicCore.Contracts;
 using ConditionsModule.Optimizers;
-using LocalVariablesOptimizerModule;
 using Microsoft.Extensions.DependencyInjection;
 using NativeMathModule;
 using UniversalToolchain.Dialects.Abstractions;
@@ -18,7 +17,6 @@ public class IntrinsicDescriptorProviderRegistrationTests
         using var provider = CreateProvider(
             optimizers:
             [
-                typeof(LocalVariablesOptimizer),
                 typeof(ComparisonIntrinsicOptimizerModule),
                 typeof(BooleanOptimizerModule),
                 typeof(ArithmeticOptimizerModule)
@@ -33,8 +31,7 @@ public class IntrinsicDescriptorProviderRegistrationTests
             typeof(CoreIntrinsicDescriptorProvider),
             typeof(ArithmeticIntrinsicDescriptorProvider),
             typeof(BooleanIntrinsicDescriptorProvider),
-            typeof(ComparisonIntrinsicDescriptorProvider),
-            typeof(StorageIntrinsicDescriptorProvider)
+            typeof(ComparisonIntrinsicDescriptorProvider)
         }));
     }
 
@@ -44,7 +41,6 @@ public class IntrinsicDescriptorProviderRegistrationTests
         using var firstProvider = CreateProvider(
             optimizers:
             [
-                typeof(LocalVariablesOptimizer),
                 typeof(EGraphOptimizerModule),
                 typeof(BooleanOptimizerModule),
                 typeof(ComparisonIntrinsicOptimizerModule)
@@ -54,7 +50,6 @@ public class IntrinsicDescriptorProviderRegistrationTests
             [
                 typeof(ComparisonIntrinsicOptimizerModule),
                 typeof(BooleanOptimizerModule),
-                typeof(LocalVariablesOptimizer),
                 typeof(EGraphOptimizerModule)
             ]);
 

@@ -96,7 +96,7 @@ internal sealed class AbstractMethodsIntrinsicCompiler
         var varType = instruction.Operands[2].Get<Type>();
 
         if (context.ExternalSlots.TryGetValue(varName, out var slot))
-            context.Il.Starg(slot);
+            context.Il.Starg(slot + context.ExternalArgumentOffset);
         else
             context.Il.Stloc(context.GetOrCreateLocal(varName, varType));
 
@@ -109,7 +109,7 @@ internal sealed class AbstractMethodsIntrinsicCompiler
         var varType = instruction.Operands[2].Get<Type>();
 
         if (context.ExternalSlots.TryGetValue(varName, out var slot))
-            context.Il.Ldarg(slot);
+            context.Il.Ldarg(slot + context.ExternalArgumentOffset);
         else
             context.Il.Ldloc(context.GetOrCreateLocal(varName, varType, true));
 

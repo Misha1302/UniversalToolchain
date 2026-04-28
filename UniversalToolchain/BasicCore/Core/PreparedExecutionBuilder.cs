@@ -22,7 +22,8 @@ internal sealed class PreparedExecutionBuilder<TCompilationOutput>(
             buildResult.SourceText,
             buildResult.DeclaredBindings,
             buildResult.CompilationOutput,
-            buildResult.Executor);
+            buildResult.Executor,
+            buildResult.AllowedRuntimeProviderTypes);
     }
 
     public PreparedExecution<TCompilationOutput> Build(CompilationInput input)
@@ -32,7 +33,8 @@ internal sealed class PreparedExecutionBuilder<TCompilationOutput>(
             buildResult.SourceText,
             buildResult.DeclaredBindings,
             buildResult.CompilationOutput,
-            buildResult.Executor);
+            buildResult.Executor,
+            buildResult.AllowedRuntimeProviderTypes);
         var session = artifact.CreateSession();
 
         return new PreparedExecution<TCompilationOutput>(
@@ -74,6 +76,7 @@ internal sealed class PreparedExecutionBuilder<TCompilationOutput>(
         var air = methodsTranslator.Translate(targetBytecode);
 
         var targetIr = optimizers.Aggregate(air, (current, module) => module.ProcessIr(current, compiler));
+        var allowedRuntimeProviderTypes = ExtractAllowedRuntimeProviderTypes(targetIr);
         middleEndModules.ForEach(module => module.InitMethodsCompiler(compiler));
         var compiled = compiler.Compile(targetIr, input);
 
@@ -84,7 +87,29 @@ internal sealed class PreparedExecutionBuilder<TCompilationOutput>(
             input.SourceText,
             input.ExternalBindings,
             compilationOutput,
-            executor);
+            executor,
+            allowedRuntimeProviderTypes);
+    }
+
+    private static IReadOnlyList<Type> ExtractAllowedRuntimeProviderTypes(IAbstractIR ir)
+    {
+        var providers = new HashSet<Type>();
+        foreach (var instruction in ir.Instructions)
+        {
+            if (instruction.UOpCode != UOpCode.Intrinsic || instruction.Operands.Count < 2)
+                continue;
+
+            if (!Equals(instruction.Operands[0], "call C#"))
+                continue;
+
+            if (instruction.Operands[1] is not CSharpCallDescriptor descriptor)
+                continue;
+
+            if (descriptor.Receiver is CSharpCallReceiver.ExecutionScopedProvider executionScopedProvider)
+                providers.Add(executionScopedProvider.ProviderType);
+        }
+
+        return providers.ToList();
     }
 }
 
@@ -92,7 +117,8 @@ internal sealed class CompilationBuildResult<TCompilationOutput>(
     string sourceText,
     IReadOnlyList<ExternalBinding> declaredBindings,
     TCompilationOutput compilationOutput,
-    IExecutor<TCompilationOutput> executor)
+    IExecutor<TCompilationOutput> executor,
+    IReadOnlyList<Type> allowedRuntimeProviderTypes)
 {
     public string SourceText { get; } = sourceText;
 
@@ -101,4 +127,6 @@ internal sealed class CompilationBuildResult<TCompilationOutput>(
     public TCompilationOutput CompilationOutput { get; } = compilationOutput;
 
     public IExecutor<TCompilationOutput> Executor { get; } = executor;
+
+    public IReadOnlyList<Type> AllowedRuntimeProviderTypes { get; } = allowedRuntimeProviderTypes;
 }

@@ -93,6 +93,21 @@ public class VariablesVisitor : IAstVisitor
         if (IsConcreteType(symbol.Type))
             _variablesTypes[variableKey] = symbol.Type;
 
+        if (data.Node.AllTags.Contains("ExpectingWriteTypeInference"))
+        {
+            var inferMethod = new AbstractMethodImpl(
+                $"InferWriteTypeOfLocalVar_{displayName}",
+                (_, context) =>
+                {
+                    if (context.Stack.Count == 0)
+                        Thrower.InvalidOpEx($"Cannot infer storage type for local variable '{displayName}' without assignment value.");
+
+                    ResolveWriteType(symbol, variableKey, context.Stack[^1]);
+                });
+            data.Bytecode.Instructions.Add(new BytecodeInstruction(inferMethod));
+            return;
+        }
+
         var loadMethod = new AbstractMethodImpl(
             $"LoadValueOfLocalVar_{displayName}",
             (il, _) =>
@@ -112,7 +127,24 @@ public class VariablesVisitor : IAstVisitor
         Type symbolType,
         bool canAssign)
     {
-        _ = canAssign;
+        if (data.Node.AllTags.Contains("ExpectingWriteTypeInference"))
+        {
+            if (!canAssign)
+                Thrower.InvalidOpEx($"External constant '{name}' cannot be assigned.");
+
+            var inferMethod = new AbstractMethodImpl(
+                $"InferWriteTypeOfExternalVar_{name}",
+                (_, context) =>
+                {
+                    if (context.Stack.Count == 0)
+                        Thrower.InvalidOpEx($"Cannot infer storage type for external variable '{name}' without assignment value.");
+
+                    var inferredType = context.Stack[^1];
+                    _variablesTypes[name] = IsConcreteType(inferredType) ? inferredType : symbolType;
+                });
+            data.Bytecode.Instructions.Add(new BytecodeInstruction(inferMethod));
+            return;
+        }
 
         var loadMethod = new AbstractMethodImpl(
             $"LoadValueOfExternalVar_{name}",
@@ -147,6 +179,22 @@ public class VariablesVisitor : IAstVisitor
     private void HandleVariable(BytecodeVisitorData data)
     {
         var variableKey = data.Node.Text;
+
+        if (data.Node.AllTags.Contains("ExpectingWriteTypeInference"))
+        {
+            var inferMethod = new AbstractMethodImpl(
+                $"InferWriteTypeOfLocalVar_{data.Node.Text}",
+                (_, context) =>
+                {
+                    if (context.Stack.Count == 0)
+                        Thrower.InvalidOpEx($"Cannot infer storage type for local variable '{data.Node.Text}' without assignment value.");
+
+                    var inferredType = context.Stack[^1];
+                    _variablesTypes[variableKey] = IsConcreteType(inferredType) ? inferredType : typeof(object);
+                });
+            data.Bytecode.Instructions.Add(new BytecodeInstruction(inferMethod));
+            return;
+        }
 
         var loadMethod = new AbstractMethodImpl(
             $"LoadValueOfLocalVar_{data.Node.Text}",

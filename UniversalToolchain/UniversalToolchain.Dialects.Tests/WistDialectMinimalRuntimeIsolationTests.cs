@@ -42,7 +42,7 @@ public class WistDialectMinimalRuntimeIsolationTests
 
         for (var i = 0; i < 40; i++)
         {
-            var result = workflow.ComposeText("dialect Stable\nuse Arithmetic,Numbers,Whitespaces\nenable LocalVariablesOptimization\nbackend interpreter,compiler", $"stable-{i}");
+            var result = workflow.ComposeText("dialect Stable\nuse Arithmetic,Numbers,Whitespaces\n\nbackend interpreter,compiler", $"stable-{i}");
             Assert.That(result.IsSuccess, Is.True, FormatComposition(result));
             signatures.Add(WistDialectTestInfrastructure.BuildSelectionAndDiagnosticsSignature(result));
         }
@@ -58,7 +58,7 @@ public class WistDialectMinimalRuntimeIsolationTests
         var dialects = new[]
         {
             "dialect A\nuse Arithmetic,Numbers\nbackend interpreter",
-            "dialect B\nuse Arithmetic,Variables,Scopes\nbackend interpreter,compiler\nenable LocalVariablesOptimization",
+            "dialect B\nuse Arithmetic,Variables,Scopes\nbackend interpreter,compiler\n",
             "dialect C\nuse Arithmetic,Conditions,ComparisonConditions\nbackend compiler"
         };
 
@@ -147,7 +147,7 @@ public class WistDialectMinimalRuntimeIsolationTests
         var scenarios = new[]
         {
             ("dialect A\nuse Arithmetic,Numbers,Whitespaces\nbackend interpreter", "2 + 5", "interpreter"),
-            ("dialect B\nuse Arithmetic,Variables,Scopes,Numbers,Whitespaces\nbackend interpreter,compiler\nenable LocalVariablesOptimization", "2 + 5", "interpreter"),
+            ("dialect B\nuse Arithmetic,Variables,Scopes,Numbers,Whitespaces\nbackend interpreter,compiler\n", "2 + 5", "interpreter"),
             ("dialect C\nuse Arithmetic,Numbers,Whitespaces\nbackend compiler", "3 + 4", "compiler")
         };
 

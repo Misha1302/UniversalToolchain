@@ -5,6 +5,7 @@ global using System.Reflection;
 global using System.Runtime.CompilerServices;
 global using AbstractIrExtensions;
 global using BasicCore.Attributes;
+global using BasicCore.Core;
 global using BasicCore.Contracts;
 global using BasicCore.LexerWrapper;
 global using BasicCore.ParserWrapper;

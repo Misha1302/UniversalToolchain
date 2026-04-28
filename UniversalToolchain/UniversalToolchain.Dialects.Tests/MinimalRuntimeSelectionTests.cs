@@ -20,7 +20,7 @@ public class MinimalRuntimeSelectionTests
                               dialect Deterministic
                               use Arithmetic,Numbers,Variables
                               backend interpreter,compiler
-                              enable LocalVariablesOptimization
+                              
                               """;
 
         string? signature = null;
@@ -89,10 +89,7 @@ public class MinimalRuntimeSelectionTests
         var plan = BuildPlan(
             ["Arithmetic"],
             [WistDialectBackendIds.Interpreter],
-            [
-                new OptimizerBuildDirective("LocalVariablesOptimization", true, DialectBackendSelector.Any),
-                new OptimizerBuildDirective("LocalVariablesOptimization", true, DialectBackendSelector.Any)
-            ]);
+            []);
 
         var selection = resolver.Resolve(plan);
         var optimizerAliases = selection.EnabledOptimizers.Select(x => x.CanonicalAlias).ToList();

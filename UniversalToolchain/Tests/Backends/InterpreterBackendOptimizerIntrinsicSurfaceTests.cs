@@ -16,7 +16,7 @@ public sealed class InterpreterBackendOptimizerIntrinsicSurfaceTests
                       enable BooleanOptimization
                       enable ComparisonIntrinsicOptimization
                       enable NativeCilOptimization
-                      enable LocalVariablesOptimization
+                      
                       enable EGraphOptimization
                       """;
 

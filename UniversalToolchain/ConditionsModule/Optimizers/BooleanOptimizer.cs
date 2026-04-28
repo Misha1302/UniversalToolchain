@@ -51,18 +51,25 @@ public class BooleanOptimizerModule : IIRProcessingModule
         {
             var instruction = instructions[i];
 
-            if (instruction.UOpCode == UOpCode.Intrinsic)
-                if (instruction.Operands.Count >= 2 && instruction.Operands[0] is string intrinsicName && intrinsicName == "call C#")
+            if (instruction.UOpCode == UOpCode.Intrinsic
+                && instruction.Operands.Count >= 2
+                && instruction.Operands[0] is string intrinsicName
+                && intrinsicName == "call C#")
+            {
+                var method = instruction.Operands[1] switch
                 {
-                    var m = instruction.Operands[1].Get<MethodInfo>();
+                    MethodInfo methodInfo => methodInfo,
+                    CSharpCallDescriptor descriptor => descriptor.Method,
+                    _ => null
+                };
 
-                    if (m.DeclaringType == typeof(BooleanVisitor.BooleanOperations))
-                        if (methodToIntrinsic.TryGetValue(m.Name, out var mappedIntrinsicSymbol))
-                        {
-                            context.NewInstructions.Add(BuiltinIntrinsicInstruction.Create(mappedIntrinsicSymbol));
-                            continue;
-                        }
+                if (method?.DeclaringType == typeof(BooleanVisitor.BooleanOperations)
+                    && methodToIntrinsic.TryGetValue(method.Name, out var mappedIntrinsicSymbol))
+                {
+                    context.NewInstructions.Add(BuiltinIntrinsicInstruction.Create(mappedIntrinsicSymbol));
+                    continue;
                 }
+            }
 
             context.NewInstructions.Add(instruction);
         }
