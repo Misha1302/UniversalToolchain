@@ -13,7 +13,7 @@ public sealed class DialectGroupExpander
         _catalog = catalog.ArgNotNull();
     }
 
-    public IDialectBindingSource Expand(IDialectBindingSource source, List<DialectDiagnostic> diagnostics)
+    internal IDialectBindingSource Expand(IDialectBindingSource source, List<DialectDiagnostic> diagnostics)
     {
         source = source.ArgNotNull();
         diagnostics = diagnostics.ArgNotNull();
