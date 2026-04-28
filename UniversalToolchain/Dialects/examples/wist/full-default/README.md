@@ -10,7 +10,7 @@ used in regular execution.
 - Modules: `Arithmetic`, `BooleanConditions`, `Comments`, `ComparisonConditions`, `Conditions`, `CSharpInterop`,
   `Equality`, `Identifier`, `Labels`, `Loops`, `Numbers`, `Scopes`, `SemicolonAsNewLine`, `Variables`, `Whitespaces`
 - Backends: `cil`, `interpreter`
-- Enabled optimizer flags: `BooleanOptimization`, `ComparisonIntrinsicOptimization`, `LocalVariablesOptimization`
+- Enabled optimizer flags: `BooleanOptimization`, `ComparisonIntrinsicOptimization`
 - User-facing CLI mode: `--mode compiler` selects the canonical `cil` backend.
 
 ## Intentionally excluded capabilities

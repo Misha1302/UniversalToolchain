@@ -123,28 +123,23 @@ public static class IntrinsicTypeProcessor
 
     private static void ProcessTypesCallCSharp(Instruction instruction, List<Type> stack)
     {
-        var method = instruction.Operands[1].Get<MethodInfo>();
-        Thrower.AssertAlways(method.DeclaringType != null, $"Method '{method}' must have a declaring type.");
+        var resolver = new MethodCallTypeSemanticsResolver();
 
-        var parametersCount = method.GetParameters().Length;
-        Thrower.AssertAlways(
-            stack.Count >= parametersCount,
-            $"Not enough values on stack for intrinsic '{instruction.Operands[0].Get<string>()}'.");
-
-        var stackTypes = stack.TakeLast(parametersCount).ToList();
-        var targetTypes = GenericTypeResolver.GetParameterTypes(method, stackTypes).ToList();
-        if (!method.IsStatic)
-            targetTypes.Insert(0, method.DeclaringType);
-
-        method = GenericTypeResolver.MakeGenericMethod(method, targetTypes);
+        MethodCallResolution resolution;
+        if (instruction.Operands[1] is MethodInfo method)
+            resolution = resolver.ResolveForStack(method, stack);
+        else if (instruction.Operands[1] is CSharpCallDescriptor descriptor)
+            resolution = resolver.ResolveForStack(descriptor, stack);
+        else
+            resolution = Thrower.InvalidOpEx<MethodCallResolution>("call C# requires MethodInfo or CSharpCallDescriptor operand.");
 
         Thrower.AssertAlways(
-            stack.Count >= targetTypes.Count,
+            stack.Count >= resolution.ConsumedTypes.Count,
             $"Not enough values on stack for intrinsic '{instruction.Operands[0].Get<string>()}'.");
 
-        PopMany(stack, targetTypes.Count);
-        if (method.ReturnType != typeof(void))
-            stack.Add(method.ReturnType);
+        PopMany(stack, resolution.ConsumedTypes.Count);
+        if (resolution.ReturnType != typeof(void))
+            stack.Add(resolution.ReturnType);
     }
 
     private static void ProcessTypesCallCSharpCtor(Instruction instruction, List<Type> stack)

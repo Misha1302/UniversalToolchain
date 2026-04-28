@@ -2,26 +2,14 @@ namespace AbstractIrExtensions;
 
 public static class AbstractIrExtensions
 {
-    public static void LdLocRef<TIdentifier>(this IGenericAbstractIR<TIdentifier> air, string locName, Type locType)
-    {
-        air.Push(locName);
-        air.ActWithLoc(
-            locType,
-            nameof(VariablesContainer<>.GetRef)
-        );
-    }
-
-    public static void StLocByRef<TIdentifier>(this IGenericAbstractIR<TIdentifier> air, Type locType)
-    {
-        var varRef = typeof(VariableReference<>).MakeGenericType(locType);
-        var method = varRef.GetMethod(nameof(VariableReference<>.SetValue)).NotNull();
-        air.CallCSharp(method);
-    }
-
     public static void SetValueToLocal<TIdentifier>(this IGenericAbstractIR<TIdentifier> air, string locName, Type locType)
     {
-        air.LdLocRef(locName, locType);
-        air.SetValueToSettable(locType);
+        locName = locName.ArgNotNull();
+        locType = locType.ArgNotNull();
+
+        air.Push(locName);
+        air.CallCSharp(_loadVariablesContextDescriptor);
+        air.CallCSharp(GetOrCreateStoreLocalMethod(locType));
     }
 
     public static void SetValueToSettable<TIdentifier>(this IGenericAbstractIR<TIdentifier> air, Type type)
@@ -35,11 +23,12 @@ public static class AbstractIrExtensions
 
     public static void LdLoc<TIdentifier>(this IGenericAbstractIR<TIdentifier> air, string locName, Type locType)
     {
+        locName = locName.ArgNotNull();
+        locType = locType.ArgNotNull();
+
+        air.CallCSharp(_loadVariablesContextDescriptor);
         air.Push(locName);
-        air.ActWithLoc(
-            locType,
-            nameof(VariablesContainer<>.Get)
-        );
+        air.CallCSharp(GetOrCreateLoadLocalMethod(locType));
     }
 
     public static void LdExternal<TIdentifier>(this IGenericAbstractIR<TIdentifier> air, int slot, Type valueType)
@@ -52,22 +41,46 @@ public static class AbstractIrExtensions
         air.Intrinsic("store_external", slot, valueType);
     }
 
-    private static void ActWithLoc<TIdentifier>(
-        this IGenericAbstractIR<TIdentifier> air,
-        Type locType,
-        string methodName
-    )
-    {
-        var variablesContainer = typeof(VariablesContainer<>).MakeGenericType(locType);
-        var method = variablesContainer.GetMethod(methodName).NotNull();
-        air.CallCSharp(method);
-    }
-
     private static class VariablesHelper
     {
         public static void SetValueTo<T, TSettable>(T value, TSettable settable) where TSettable : ISettable<T>
         {
             settable.SetValue(value);
         }
+    }
+
+    private static readonly CSharpCallDescriptor _loadVariablesContextDescriptor = new(
+        typeof(VariablesRuntimeCallProvider).GetMethod(nameof(VariablesRuntimeCallProvider.LoadVariablesContext)).NotNull(),
+        new CSharpCallReceiver.ExecutionScopedProvider(typeof(VariablesRuntimeCallProvider)));
+
+    private static readonly MethodInfo _loadLocalDefinition = typeof(VariablesRuntimeCalls)
+        .GetMethod(nameof(VariablesRuntimeCalls.LoadLocal))
+        .NotNull();
+
+    private static readonly MethodInfo _storeLocalDefinition = typeof(VariablesRuntimeCalls)
+        .GetMethod(nameof(VariablesRuntimeCalls.StoreLocal))
+        .NotNull();
+
+    private static readonly Dictionary<Type, MethodInfo> _loadLocalMethods = [];
+    private static readonly Dictionary<Type, MethodInfo> _storeLocalMethods = [];
+
+    private static MethodInfo GetOrCreateLoadLocalMethod(Type type)
+    {
+        if (_loadLocalMethods.TryGetValue(type, out var method))
+            return method;
+
+        method = _loadLocalDefinition.MakeGenericMethod(type);
+        _loadLocalMethods[type] = method;
+        return method;
+    }
+
+    private static MethodInfo GetOrCreateStoreLocalMethod(Type type)
+    {
+        if (_storeLocalMethods.TryGetValue(type, out var method))
+            return method;
+
+        method = _storeLocalDefinition.MakeGenericMethod(type);
+        _storeLocalMethods[type] = method;
+        return method;
     }
 }

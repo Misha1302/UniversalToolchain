@@ -34,13 +34,16 @@ internal sealed class AbstractMethodsIntrinsicCompiler
 
     internal static void CompileCallCSharp(CompilationContext context, Instruction instruction, List<Type> stack)
     {
-        var method = instruction.Operands[1].Get<MethodInfo>();
+        var operand = instruction.Operands[1];
+        var descriptor = operand as CSharpCallDescriptor;
+        var method = descriptor?.Method ?? operand.Get<MethodInfo>();
         Thrower.AssertAlways(method.DeclaringType != null);
 
         var parametersCount = method.GetParameters().Length;
         var stackTypes = stack.TakeLast(parametersCount).ToList();
         var targetTypes = GenericTypeResolver.GetParameterTypes(method, stackTypes).ToList();
-        if (!method.IsStatic)
+        var useExecutionScopedProvider = descriptor?.Receiver is CSharpCallReceiver.ExecutionScopedProvider;
+        if (!method.IsStatic && !useExecutionScopedProvider)
         {
             targetTypes.Insert(0, method.DeclaringType);
             stackTypes.Insert(0, method.DeclaringType);
@@ -48,7 +51,24 @@ internal sealed class AbstractMethodsIntrinsicCompiler
 
         CastValuesToTypes(context.Il, targetTypes, stackTypes);
         method = GenericTypeResolver.MakeGenericMethod(method, targetTypes);
-        context.Il.Call(method);
+        if (descriptor?.Receiver is CSharpCallReceiver.ExecutionScopedProvider executionScopedProvider)
+        {
+            Thrower.AssertAlways(
+                parametersCount == 0,
+                "Execution-scoped provider calls with parameters are not supported in CIL backend yet.");
+            context.Il.Ldarg(0);
+            context.Il.Ldtoken(executionScopedProvider.ProviderType);
+            context.Il.Call(typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle)).NotNull());
+            context.Il.Call(typeof(RuntimeCallProviderResolverExtensions)
+                .GetMethod(nameof(RuntimeCallProviderResolverExtensions.GetRequiredProvider))
+                .NotNull());
+            context.Il.Castclass(executionScopedProvider.ProviderType);
+            context.Il.Call(method);
+        }
+        else
+        {
+            context.Il.Call(method);
+        }
 
         PopMany(stack, targetTypes.Count);
         if (method.ReturnType != typeof(void))
@@ -109,14 +129,14 @@ internal sealed class AbstractMethodsIntrinsicCompiler
     {
         var slot = instruction.Operands[1].Get<int>();
         var varType = instruction.Operands[2].Get<Type>();
-        context.Il.Ldarg(slot);
+        context.Il.Ldarg(slot + context.ExternalArgumentOffset);
         stack.Push(varType);
     }
 
     internal static void CompileStoreExternal(CompilationContext context, Instruction instruction, List<Type> stack)
     {
         var slot = instruction.Operands[1].Get<int>();
-        context.Il.Starg(slot);
+        context.Il.Starg(slot + context.ExternalArgumentOffset);
         stack.Pop();
     }
 

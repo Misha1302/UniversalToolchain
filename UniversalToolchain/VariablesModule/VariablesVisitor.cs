@@ -93,22 +93,6 @@ public class VariablesVisitor : IAstVisitor
         if (IsConcreteType(symbol.Type))
             _variablesTypes[variableKey] = symbol.Type;
 
-        if (data.Node.AllTags.Contains("ExpectingSettableReference"))
-        {
-            var method = new AbstractMethodImpl(
-                $"LoadReferenceToVar_{displayName}",
-                (il, context) =>
-                {
-                    var inferredType = context.Stack.Last();
-                    var storageType = ResolveWriteType(symbol, variableKey, inferredType);
-                    il.LdLocRef(variableKey, storageType);
-                }
-            );
-
-            data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
-            return;
-        }
-
         var loadMethod = new AbstractMethodImpl(
             $"LoadValueOfLocalVar_{displayName}",
             (il, _) =>
@@ -128,23 +112,7 @@ public class VariablesVisitor : IAstVisitor
         Type symbolType,
         bool canAssign)
     {
-        if (data.Node.AllTags.Contains("ExpectingSettableReference"))
-        {
-            if (!canAssign)
-                Thrower.InvalidOpEx($"External constant '{name}' cannot be assigned.");
-
-            var method = new AbstractMethodImpl(
-                $"LoadReferenceToExternalVar_{name}",
-                (il, context) =>
-                {
-                    var inferredType = context.Stack.Last();
-                    var storageType = ResolveWriteType(new ExternalVariableSymbol(name, symbolType, slot), name, inferredType);
-                    il.LdLocRef(name, storageType);
-                }
-            );
-            data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
-            return;
-        }
+        _ = canAssign;
 
         var loadMethod = new AbstractMethodImpl(
             $"LoadValueOfExternalVar_{name}",
@@ -179,29 +147,6 @@ public class VariablesVisitor : IAstVisitor
     private void HandleVariable(BytecodeVisitorData data)
     {
         var variableKey = data.Node.Text;
-
-        if (data.Node.AllTags.Contains("ExpectingSettableReference"))
-        {
-            var method = new AbstractMethodImpl(
-                $"LoadReferenceToLocalVar_{data.Node.Text}",
-                (il, context) =>
-                {
-                    var inferredType = context.Stack.Last();
-
-                    var storageType =
-                        _variablesTypes.TryGetValue(variableKey, out var existing) && IsConcreteType(existing)
-                            ? existing
-                            : IsConcreteType(inferredType)
-                                ? _variablesTypes[variableKey] = inferredType
-                                : typeof(object);
-
-                    il.LdLocRef(variableKey, storageType);
-                }
-            );
-
-            data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
-            return;
-        }
 
         var loadMethod = new AbstractMethodImpl(
             $"LoadValueOfLocalVar_{data.Node.Text}",

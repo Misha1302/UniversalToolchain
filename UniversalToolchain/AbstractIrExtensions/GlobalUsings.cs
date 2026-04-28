@@ -1,3 +1,5 @@
+global using BasicCore.Core;
+global using BasicCore.Execution;
 global using System.Reflection;
 global using ExceptionsManager;
 global using IntermediateRepresentationAbstractions;

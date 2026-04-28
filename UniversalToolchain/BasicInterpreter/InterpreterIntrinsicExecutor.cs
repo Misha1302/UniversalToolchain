@@ -101,7 +101,9 @@ internal sealed class InterpreterIntrinsicExecutor
 
     private void ExecuteCallCSharp(Instruction instruction, InterpreterState state)
     {
-        var method = instruction.Operands[1].Get<MethodInfo>();
+        var operand = instruction.Operands[1];
+        var descriptor = operand as CSharpCallDescriptor;
+        var method = descriptor?.Method ?? operand.Get<MethodInfo>();
         var parameters = method.GetParameters();
         var args = new object?[parameters.Length];
         var argTypes = new Type[parameters.Length];
@@ -132,14 +134,6 @@ internal sealed class InterpreterIntrinsicExecutor
             argTypes[i] = value?.GetType() ?? typeof(object);
         }
 
-        if (IsVariablesContainerGet(method)
-            && TryResolveDeclaredExternalSlot(state, args, out var externalSlot))
-        {
-            var externalValue = state.ExecutionEnvironment.NotNull().GetExternalValue(externalSlot);
-            state.ValueStack.Push(externalValue.NotNull());
-            return;
-        }
-
         var stackTypes = argTypes.AsReadOnly().ToList();
         var targetTypes = GenericTypeResolver.GetParameterTypes(method, stackTypes).ToList();
 
@@ -154,17 +148,26 @@ internal sealed class InterpreterIntrinsicExecutor
         method = GenericTypeResolver.MakeGenericMethod(method, targetTypes.ToArray());
 
         object? result;
-        if (method.IsStatic)
+        if (descriptor?.Receiver is CSharpCallReceiver.ExecutionScopedProvider executionScopedProvider)
         {
-            result = method.Invoke(null, args);
+            var environment = state.ExecutionEnvironment.NotNull();
+            var provider = environment.GetRequiredProvider(executionScopedProvider.ProviderType);
+            result = method.Invoke(provider, args);
         }
         else
         {
-            if (state.ValueStack.Count == 0)
-                Thrower.InvalidOpEx("Cannot call instance method: object instance is missing on the interpreter stack.");
+            if (method.IsStatic)
+            {
+                result = method.Invoke(null, args);
+            }
+            else
+            {
+                if (state.ValueStack.Count == 0)
+                    Thrower.InvalidOpEx("Cannot call instance method: object instance is missing on the interpreter stack.");
 
-            var instance = state.ValueStack.Pop();
-            result = method.Invoke(instance, args);
+                var instance = state.ValueStack.Pop();
+                result = method.Invoke(instance, args);
+            }
         }
 
         foreach (var (index, localReference) in byRefTargets)
@@ -172,30 +175,6 @@ internal sealed class InterpreterIntrinsicExecutor
 
         if (method.ReturnType != typeof(void))
             state.ValueStack.Push(result.NotNull());
-    }
-
-    private static bool IsVariablesContainerGet(MethodInfo method)
-    {
-        var declaringType = method.DeclaringType;
-        return declaringType != null
-               && declaringType.IsGenericType
-               && declaringType.GetGenericTypeDefinition().FullName == "SettableGettableModule.Core.VariablesContainer`1"
-               && method.Name == "Get"
-               && method.GetParameters().Length == 1
-               && method.GetParameters()[0].ParameterType == typeof(string);
-    }
-
-    private static bool TryResolveDeclaredExternalSlot(
-        InterpreterState state,
-        object?[] args,
-        out int slot)
-    {
-        slot = default;
-
-        if (args.Length != 1 || args[0] is not string key)
-            return false;
-
-        return state.ExternalBindingsLayout?.SlotsByName.TryGetValue(key, out slot) == true;
     }
 
     private static object ConvertValue(object value, Type targetType)

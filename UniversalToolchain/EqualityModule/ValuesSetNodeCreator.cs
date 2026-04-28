@@ -15,9 +15,6 @@ public class ValuesSetNodeCreator : IAstNodeCreator
         scope.Children.RemoveAt(childIndex + 1);
         scope.Children.RemoveAt(childIndex - 1);
 
-        // need to load reference to set something, not a value
-        eqNode.Children[^2].AddTag("ExpectingSettableReference");
-
         return true;
     }
 }
