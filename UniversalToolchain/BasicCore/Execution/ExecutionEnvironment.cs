@@ -68,6 +68,8 @@ public sealed class ExecutionEnvironment : IExecutionEnvironment, IExternalBindi
             var parameters = constructor.GetParameters();
             if (parameters.Length == 1 && parameters[0].ParameterType == typeof(IRuntimeContextStore))
                 return constructor.Invoke([this]).NotNull();
+            if (parameters.Length == 1 && parameters[0].ParameterType == typeof(IExecutionEnvironment))
+                return constructor.Invoke([this]).NotNull();
         }
 
         var parameterless = providerType.GetConstructor(Type.EmptyTypes);

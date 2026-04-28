@@ -33,25 +33,7 @@ public sealed class InterpreterBackendOptimizerIntrinsicSurfaceTests
 
     private static bool IsSupportedInterpreterIntrinsic(string intrinsicName)
     {
-        if (intrinsicName == "call C#"
-            || intrinsicName == "call C# ctor"
-            || intrinsicName == "load_external"
-            || intrinsicName == "store_external"
-            || intrinsicName == "store_local"
-            || intrinsicName == "load_local"
-            || intrinsicName == "load_local_ref"
-            || intrinsicName == "load_bool"
-            || intrinsicName == "boolean_and"
-            || intrinsicName == "boolean_or"
-            || intrinsicName == "boolean_not")
-            return true;
-
-        return intrinsicName.StartsWith("load_", StringComparison.Ordinal)
-               || intrinsicName.StartsWith("add_", StringComparison.Ordinal)
-               || intrinsicName.StartsWith("sub_", StringComparison.Ordinal)
-               || intrinsicName.StartsWith("mul_", StringComparison.Ordinal)
-               || intrinsicName.StartsWith("div_", StringComparison.Ordinal)
-               || intrinsicName.StartsWith("cmp_", StringComparison.Ordinal);
+        return intrinsicName == "call C#" || intrinsicName == "call C# ctor";
     }
 
     private static IEnumerable<string> CollectIntrinsicNames(IAbstractIR air)

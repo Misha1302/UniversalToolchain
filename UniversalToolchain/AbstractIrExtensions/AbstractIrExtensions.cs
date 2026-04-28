@@ -24,12 +24,18 @@ public static class AbstractIrExtensions
 
     public static void LdExternal<TIdentifier>(this IGenericAbstractIR<TIdentifier> air, int slot, Type valueType)
     {
-        air.Intrinsic("load_external", slot, valueType);
+        valueType = valueType.ArgNotNull();
+        air.CallCSharp(ExternalRuntimeMethodDescriptors.LoadEnvironmentDescriptor);
+        air.Push(slot);
+        air.CallCSharp(ExternalRuntimeMethodDescriptors.CreateLoadExternalMethod(valueType));
     }
 
     public static void StExternal<TIdentifier>(this IGenericAbstractIR<TIdentifier> air, int slot, Type valueType)
     {
-        air.Intrinsic("store_external", slot, valueType);
+        valueType = valueType.ArgNotNull();
+        air.Push(slot);
+        air.CallCSharp(ExternalRuntimeMethodDescriptors.LoadEnvironmentDescriptor);
+        air.CallCSharp(ExternalRuntimeMethodDescriptors.CreateStoreExternalMethod(valueType));
     }
 
 }

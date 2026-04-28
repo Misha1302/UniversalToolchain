@@ -66,6 +66,22 @@ Future direction:
 - any local-variable optimization must operate on generated C# runtime call patterns;
 - do not reintroduce local-variable intrinsics or static/global variable storage.
 
+## Interpreter intrinsic surface
+
+Status: intentionally minimal reference backend.
+
+Current behavior:
+
+- the interpreter executes core AIR opcodes (`Nop`, `Push`, `Drop`, `Jmp`, `JmpIf`, `JmpIfNot`, `Label`, `Annotate`);
+- the interpreter executes only two intrinsics: `call C#` and `call C# ctor`;
+- feature-specific or backend-optimized intrinsics (`load_*`, arithmetic, comparison, boolean, local/external storage intrinsics) are rejected by interpreter execution.
+
+Required optimization policy:
+
+- optimizers that produce non-call intrinsics must be backend-capability gated;
+- optimized intrinsic IR may be produced for backends that explicitly support it (for example CIL);
+- interpreter execution must remain a universal reference path and must not be used as a high-performance intrinsic backend.
+
 ## Documentation policy
 
 `docs/DOCUMENTATION_RULES.md` defines how agents must handle stale Markdown examples and architecture documents.

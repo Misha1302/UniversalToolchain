@@ -8,8 +8,7 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
     {
         var state = new InterpreterState
         {
-            ExecutionEnvironment = environment,
-            ExternalBindingsLayout = (environment as IExternalBindingsLayoutProvider)?.ExternalBindingsLayout
+            ExecutionEnvironment = environment
         };
         state.BuildLabelPositions(air.Instructions);
         return ExecuteInstructions(air.Instructions, state);
