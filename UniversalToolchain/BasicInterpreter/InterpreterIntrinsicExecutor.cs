@@ -4,6 +4,11 @@ namespace BasicInterpreter;
 
 internal sealed class InterpreterIntrinsicExecutor
 {
+    // The interpreter is the reference universal-call backend.
+    // Keep this executor intentionally minimal.
+    // Only "call C#" and "call C# ctor" are allowed here.
+    // Feature-specific or optimization-specific intrinsics must be handled by
+    // backend-capability-gated optimizers and must not be added to the interpreter.
     public void Execute(Instruction instruction, InterpreterState state)
     {
         var normalizedInstruction = IntrinsicInstructionNormalizer.NormalizeOrThrow(instruction);
