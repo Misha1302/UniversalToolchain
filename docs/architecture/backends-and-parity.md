@@ -130,3 +130,7 @@ Every backend should have documentation explaining:
 - which intrinsics it supports;
 - how it is selected by dialect/runtime manifests;
 - how parity with the reference path is tested.
+
+## Execution-bound native pointer wrapper parity note
+
+The CIL fast native pointer path may expose execution-bound wrappers over generated `DynamicMethod` artifacts. Generated CIL dynamic methods use `IExecutionEnvironment` as the hidden first parameter, followed by external binding arguments in declared binding order. Public fast wrappers hide this environment parameter from callers, validate full raw `DynamicMethod` signatures before function-pointer invocation, and provide typed `Invoke` methods for the supported native pointer arities. When generated code lowers external loads through the universal runtime-call path, the wrapper must ensure those loads observe the same invocation arguments as the native pointer call.

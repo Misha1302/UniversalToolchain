@@ -25,7 +25,7 @@ formula evaluation over host-provided pricing inputs and native numeric values.
 
 From repository root:
 
-```bash
+```bash ci-timeout=240
 dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- dialect-inspect --file UniversalToolchain/Dialects/examples/wist/pricing-restricted/dialect.wistdialect
 dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/pricing-restricted/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/pricing-restricted/program.wist --mode interpreter
 dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/pricing-restricted/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/pricing-restricted/program.wist --mode compiler

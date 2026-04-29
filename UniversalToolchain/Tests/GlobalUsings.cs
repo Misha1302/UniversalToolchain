@@ -3,6 +3,7 @@ global using BasicCore.Compilation;
 global using BasicCore.Contracts;
 global using BasicCore.Core;
 global using BasicCore.Execution;
+global using DynamicMethodCalling.Core;
 global using BasicCore.ExecutorWrapper;
 global using BasicCore.LexerWrapper;
 global using BasicCore.ParserWrapper;

@@ -22,7 +22,7 @@ This is the smallest native arithmetic-oriented dialect composition in the repos
 
 From repository root:
 
-```bash
+```bash ci-timeout=240
 dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- dialect-inspect --file UniversalToolchain/Dialects/examples/wist/minimal-arithmetic-native/dialect.wistdialect
 dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/minimal-arithmetic-native/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/minimal-arithmetic-native/program.wist --mode compiler
 ```

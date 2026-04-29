@@ -61,9 +61,9 @@ public sealed class DslPricingCalculator : IDisposable
     {
         var compiledArtifact = CompileWithCompiler(formula);
         var environment = CreateRuntimeCallEnvironment(compiledArtifact);
-        var fastNativeInvoker = new DynamicMethodInvoker<IExecutionEnvironment, double, double, double>(compiledArtifact.CompilationOutput);
+        var fastNativePointer = compiledArtifact.CreateExecutionBoundNativePointer<double, double, double>(environment);
 
-        return fastNativeInvoker.Invoke(environment, price, fee);
+        return fastNativePointer.Invoke(price, fee);
     }
 
     /// <summary>
