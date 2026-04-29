@@ -131,6 +131,8 @@ This repository contains:
 - **UniversalToolchain**: reusable framework infrastructure.
 - **Wist**: a reference language used to validate and evolve the framework architecture.
 
+For a stricter boundary between framework, reference language, and current limitations, see [Project positioning](docs/project-positioning.md).
+
 ## Architecture at a glance
 
 At a high level:
@@ -145,6 +147,7 @@ Key repository architecture concepts:
 - dual execution modes (`compiler`, `interpreter`),
 - dialect-driven runtime composition via `.wistdialect` files,
 - manifest-backed runtime selection before host creation,
+- bytecode/AIR as semantic pipeline layers,
 - CLI and programmatic entry points for validation and integration.
 
 ## Canonical Wist runtime path
@@ -177,6 +180,8 @@ For example, a frontend module can participate in several stages:
 - AST post-processing,
 - bytecode post-processing,
 - AST-to-bytecode translator initialization.
+
+Module authoring is convention-heavy. Before adding or changing modules, read [Module authoring guide](docs/guides/module-authoring.md) and [Module contracts](docs/contracts/module-contracts.md).
 
 ## CLI usage (`Wistc`)
 
@@ -277,14 +282,25 @@ This repository is actively evolving, and some areas are intentionally treated a
 - some bootstrap/runtime wiring is still concrete rather than fully descriptor-driven,
 - reflection-based interop/discovery helpers still exist for compatibility and bootstrap scenarios,
 - constrained dialect composition is not equivalent to hardened sandboxing,
+- bytecode tags and module authoring contracts are being formalized,
+- backend-agnostic artifact handling is still an active architecture area,
 - the reference language Wist is still the main proving ground for framework decisions.
+
+See [Current limitations](docs/limitations.md) for the explicit limitation and wording guide.
 
 ## Canonical documentation map
 
 - Project overview: [readme.md](readme.md)
+- Project positioning and public wording: [docs/project-positioning.md](docs/project-positioning.md)
+- Current limitations: [docs/limitations.md](docs/limitations.md)
 - Current runtime pipeline: [docs/current-canonical-runtime-pipeline.md](docs/current-canonical-runtime-pipeline.md)
 - Runtime manifest activation model: [docs/runtime-manifest-activation-model.md](docs/runtime-manifest-activation-model.md)
 - Runtime manifest format: [docs/runtime-manifest-format.md](docs/runtime-manifest-format.md)
+- Bytecode and AIR architecture: [docs/architecture/bytecode-and-air.md](docs/architecture/bytecode-and-air.md)
+- Backend and semantic parity contracts: [docs/architecture/backends-and-parity.md](docs/architecture/backends-and-parity.md)
+- Module authoring guide: [docs/guides/module-authoring.md](docs/guides/module-authoring.md)
+- Module hidden contracts: [docs/contracts/module-contracts.md](docs/contracts/module-contracts.md)
+- Architecture guardrails: [docs/ARCHITECTURE_RULES.md](docs/ARCHITECTURE_RULES.md)
 - Why this exists: [docs/why-this-exists.md](docs/why-this-exists.md)
 - Nearby alternatives: [docs/alternatives.md](docs/alternatives.md)
 - Coding standards: [docs/PROJECT_RULES.md](docs/PROJECT_RULES.md)
