@@ -60,7 +60,7 @@ public sealed class DslPricingCalculator : IDisposable
     public double CalculateWithFastInvoker(string formula, double price, double fee)
     {
         var compiledArtifact = CompileWithCompiler(formula);
-        var environment = CreateExecutionEnvironment(compiledArtifact, price, fee);
+        var environment = CreateRuntimeCallEnvironment(compiledArtifact);
         var fastNativeInvoker = new DynamicMethodInvoker<IExecutionEnvironment, double, double, double>(compiledArtifact.CompilationOutput);
 
         return fastNativeInvoker.Invoke(environment, price, fee);
@@ -107,26 +107,11 @@ public sealed class DslPricingCalculator : IDisposable
             ["fee"] = typeof(double)
         };
 
-    private static IExecutionEnvironment CreateExecutionEnvironment(ICompiledArtifact compiledArtifact, double price, double fee)
+    private static IExecutionEnvironment CreateRuntimeCallEnvironment(ICompiledArtifact compiledArtifact)
     {
         compiledArtifact = compiledArtifact.ArgNotNull();
 
-        var environment = new ExecutionEnvironment(compiledArtifact.DeclaredBindings);
-        environment.SetExternalValue(GetRequiredSlot(compiledArtifact, "price"), price);
-        environment.SetExternalValue(GetRequiredSlot(compiledArtifact, "fee"), fee);
-
-        return environment;
-    }
-
-    private static int GetRequiredSlot(ICompiledArtifact compiledArtifact, string name)
-    {
-        compiledArtifact = compiledArtifact.ArgNotNull();
-        name = name.ArgNotNull();
-
-        if (!compiledArtifact.SlotsByName.TryGetValue(name, out var slot))
-            Thrower.Argument(nameof(name), $"Unknown argument name '{name}'.");
-
-        return slot;
+        return new ExecutionEnvironment(compiledArtifact.DeclaredBindings);
     }
 
     private ICompiledArtifact<DynamicMethod> CompileWithCompiler(string formula)
