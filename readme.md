@@ -131,7 +131,7 @@ This repository contains:
 - **UniversalToolchain**: reusable framework infrastructure.
 - **Wist**: a reference language used to validate and evolve the framework architecture.
 
-For a stricter boundary between framework, reference language, and current limitations, see [Project positioning](docs/project-positioning.md).
+For a stricter boundary between framework, reference language, and current limitations, see [Project positioning](docs/project-positioning.md). For an external-style evaluative architecture review, see [Technical due diligence review](docs/reviews/technical-due-diligence.md).
 
 ## Architecture at a glance
 
@@ -293,6 +293,7 @@ See [Current limitations](docs/limitations.md) for the explicit limitation and w
 - Project overview: [readme.md](readme.md)
 - Project positioning and public wording: [docs/project-positioning.md](docs/project-positioning.md)
 - Current limitations: [docs/limitations.md](docs/limitations.md)
+- Technical due diligence review: [docs/reviews/technical-due-diligence.md](docs/reviews/technical-due-diligence.md)
 - Current runtime pipeline: [docs/current-canonical-runtime-pipeline.md](docs/current-canonical-runtime-pipeline.md)
 - Runtime manifest activation model: [docs/runtime-manifest-activation-model.md](docs/runtime-manifest-activation-model.md)
 - Runtime manifest format: [docs/runtime-manifest-format.md](docs/runtime-manifest-format.md)
