@@ -203,7 +203,7 @@ The user-facing `compiler` mode selects the canonical `cil` backend when a diale
 
 Examples:
 
-```bash
+```bash ci-timeout=240
 # Run a .wist file with an explicit dialect definition
 dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/full-default/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/full-default/program.wist --mode interpreter
 
@@ -218,7 +218,7 @@ dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- repl --mode compil
 
 ## Dialect usage
 
-```bash
+```bash ci-timeout=240
 # Run code with a dialect definition
 dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/full-default/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/full-default/program.wist --mode interpreter
 
