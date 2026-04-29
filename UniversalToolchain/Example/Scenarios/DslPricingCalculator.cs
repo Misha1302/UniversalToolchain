@@ -1,4 +1,5 @@
 using BasicCore.Compilation;
+using BasicCore.Execution;
 using IntermediateRepresentationAbstractions;
 using UniversalToolchain.Dialects.Wist;
 using UniversalToolchain.Dialects.Wist.Presets;
@@ -36,9 +37,12 @@ public sealed class DslPricingCalculator : IDisposable
     public double CalculateWithCompiler(string formula, double price, double fee)
     {
         var compiledArtifact = CompileWithCompiler(formula);
-        var calculate = compiledArtifact.AsFunc<double, double, double>();
+        var session = compiledArtifact.CreateSession();
 
-        return calculate(price, fee);
+        session.SetArgument("price", price);
+        session.SetArgument("fee", fee);
+
+        return (double)session.Run().NotNull();
     }
 
     public double CalculateWithInterpreter(string formula, double price, double fee)
@@ -56,9 +60,10 @@ public sealed class DslPricingCalculator : IDisposable
     public double CalculateWithFastInvoker(string formula, double price, double fee)
     {
         var compiledArtifact = CompileWithCompiler(formula);
-        var fastNativeInvoker = new DynamicMethodInvoker<double, double, double>(compiledArtifact.CompilationOutput);
+        var environment = CreateExecutionEnvironment(compiledArtifact, price, fee);
+        var fastNativeInvoker = new DynamicMethodInvoker<IExecutionEnvironment, double, double, double>(compiledArtifact.CompilationOutput);
 
-        return fastNativeInvoker.Invoke(price, fee);
+        return fastNativeInvoker.Invoke(environment, price, fee);
     }
 
     /// <summary>
@@ -101,6 +106,28 @@ public sealed class DslPricingCalculator : IDisposable
             ["price"] = typeof(double),
             ["fee"] = typeof(double)
         };
+
+    private static IExecutionEnvironment CreateExecutionEnvironment(ICompiledArtifact compiledArtifact, double price, double fee)
+    {
+        compiledArtifact = compiledArtifact.ArgNotNull();
+
+        var environment = new ExecutionEnvironment(compiledArtifact.DeclaredBindings);
+        environment.SetExternalValue(GetRequiredSlot(compiledArtifact, "price"), price);
+        environment.SetExternalValue(GetRequiredSlot(compiledArtifact, "fee"), fee);
+
+        return environment;
+    }
+
+    private static int GetRequiredSlot(ICompiledArtifact compiledArtifact, string name)
+    {
+        compiledArtifact = compiledArtifact.ArgNotNull();
+        name = name.ArgNotNull();
+
+        if (!compiledArtifact.SlotsByName.TryGetValue(name, out var slot))
+            Thrower.Argument(nameof(name), $"Unknown argument name '{name}'.");
+
+        return slot;
+    }
 
     private ICompiledArtifact<DynamicMethod> CompileWithCompiler(string formula)
     {
