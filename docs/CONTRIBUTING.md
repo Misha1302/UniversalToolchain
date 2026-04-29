@@ -5,7 +5,9 @@
 - Use .NET SDK `10.0.103` (see `UniversalToolchain/global.json`).
 - Read canonical repo docs:
     - `readme.md` (project overview and scope)
+    - `docs/project-positioning.md` (framework/reference-language boundary)
     - `docs/PROJECT_RULES.md` (coding standards)
+    - `docs/ARCHITECTURE_RULES.md` (architecture guardrails)
     - `AGENTS.md` when making AI-assisted or agent-driven changes
 
 ## Build and test
@@ -33,6 +35,7 @@ This validation path runs all test projects currently included in `UniversalTool
 - If behavior changes, add or update tests in the same change.
 - If structure/behavior meaningfully changes, update docs in the same change.
 - When changing runtime manifests, runtime catalogs, exact activation, backend registrar resolution, or canonical bootstrap behavior, update canonical docs in the same change: `readme.md`, `docs/current-canonical-runtime-pipeline.md`, `docs/runtime-manifest-activation-model.md`, and `docs/runtime-manifest-format.md` when manifest shape/semantics change.
+- When changing module authoring patterns, token names, parser priorities, AST visitors, bytecode tags, AIR shape, backend artifacts, or semantic parity assumptions, update the matching contract docs in the same change.
 
 ## Runtime composition expectations
 
@@ -45,6 +48,14 @@ This validation path runs all test projects currently included in `UniversalTool
 - Add or update architecture guardrail tests when changing catalogs, resolvers, runtime manifests, backend registrars, or
   optional facade layers.
 - Do not turn compatibility/eager discovery helpers into hidden decision-makers for framework-level dialect composition.
+
+## Module and pipeline expectations
+
+- Read `docs/guides/module-authoring.md` before adding or reshaping a module.
+- Read `docs/contracts/module-contracts.md` before changing token names, parser creator priorities, AST visitors, shared state, bytecode tags, or backend capability behavior.
+- Read `docs/architecture/bytecode-and-air.md` before changing bytecode, AIR, translation, or optimizer semantics.
+- Read `docs/architecture/backends-and-parity.md` before changing backend behavior, backend artifacts, intrinsics, or parity tests.
+- Do not add convention-only hidden contracts when a documented contract, verifier, shared constant, or test can make the rule explicit.
 
 ## Test suite rules
 
@@ -83,3 +94,4 @@ This cleanup did not tighten negative assertions. It focused on structure, isola
 - Include validation commands and outcomes.
 - Keep PR scope coherent (avoid unrelated rewrites).
 - Call out any architectural boundary added to preserve universality or reduce future technical debt.
+- Call out any new explicit contract added to replace a previously hidden convention.
