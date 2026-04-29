@@ -105,4 +105,27 @@ public class RuntimeCompiledArtifactContractTests
         Assert.That(declaredNames, Is.EqualTo(new[] { "left", "right" }));
         Assert.That(delegateResult, Is.EqualTo(29));
     }
+
+    [Test]
+    public void DynamicMethodArtifact_CreateExecutionBoundNativePointer_BindsEnvironmentFirstArgument()
+    {
+        var artifact = RuntimeCompiledArtifactTestFactory.CreateEnvironmentAndTwoArgumentsArtifact();
+        var environment = new ExecutionEnvironment(artifact.DeclaredBindings);
+
+        var nativePointer = artifact.CreateExecutionBoundNativePointer<int, int, int>(environment);
+        var result = nativePointer.Invoke(4, 5);
+
+        Assert.That(result, Is.EqualTo(45));
+    }
+
+    [Test]
+    public void DynamicMethodInvoker_WhenParameterTypesDoNotMatch_ThrowsBeforeInvocation()
+    {
+        var artifact = RuntimeCompiledArtifactTestFactory.CreateEnvironmentAndTwoArgumentsArtifact();
+
+        var exception = Assert.Throws<InvalidOperationException>(
+            () => new DynamicMethodInvoker<int, int, int>(artifact.CompilationOutput));
+
+        Assert.That(exception!.Message, Does.Contain("parameter"));
+    }
 }

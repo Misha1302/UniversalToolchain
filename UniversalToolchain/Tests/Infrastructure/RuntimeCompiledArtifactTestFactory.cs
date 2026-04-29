@@ -63,6 +63,27 @@ internal static class RuntimeCompiledArtifactTestFactory
             new DynamicMethodExecutor());
     }
 
+    public static ICompiledArtifact<DynamicMethod> CreateEnvironmentAndTwoArgumentsArtifact()
+    {
+        var dynamicMethod = new DynamicMethod("EnvironmentAndTwoArguments", typeof(int), [typeof(IExecutionEnvironment), typeof(int), typeof(int)]);
+        var il = dynamicMethod.GetILGenerator();
+        il.Emit(OpCodes.Ldarg_1);
+        il.Emit(OpCodes.Ldc_I4_S, 10);
+        il.Emit(OpCodes.Mul);
+        il.Emit(OpCodes.Ldarg_2);
+        il.Emit(OpCodes.Add);
+        il.Emit(OpCodes.Ret);
+
+        return new CompiledArtifact<DynamicMethod>(
+            "x * 10 + y",
+            [
+                new ExternalBinding { Name = "x", Type = typeof(int), Kind = ExternalBindingKind.Variable },
+                new ExternalBinding { Name = "y", Type = typeof(int), Kind = ExternalBindingKind.Variable }
+            ],
+            dynamicMethod,
+            new DynamicMethodExecutor());
+    }
+
     public static WistDialectExecutionHost CreateHost()
     {
         var services = new ServiceCollection();
