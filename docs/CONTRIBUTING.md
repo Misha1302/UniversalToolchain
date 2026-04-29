@@ -14,7 +14,7 @@
 
 Run from repository root:
 
-```bash ci-timeout=180s
+```bash ci-run=false
 dotnet restore UniversalToolchain/Wist.sln
 dotnet build UniversalToolchain/Wist.sln -c Release --no-restore
 dotnet test UniversalToolchain/Wist.sln -c Release --no-build
@@ -22,6 +22,7 @@ dotnet test UniversalToolchain/Wist.sln -c Release --no-build
 
 This validation path runs all test projects currently included in `UniversalToolchain/Wist.sln`, including
 `UniversalToolchain/Tests.Legacy/Tests.Legacy.csproj`.
+The CI workflow runs the same restore, build, and test commands as dedicated steps before Markdown smoke checks; this local validation block is not executed again by the Markdown runner to avoid duplicating the full suite inside documentation validation.
 
 ## Change expectations
 
@@ -82,7 +83,7 @@ This cleanup did not tighten negative assertions. It focused on structure, isola
 - Ensure commands in docs run from repository root.
 - Keep example paths and CLI flags aligned with real shipped dialect files.
 - Remove stale or legacy wording instead of preserving contradictory notes.
-- Every tracked markdown bash fence is executed in CI from repository root.
+- Every tracked markdown bash fence is executed in CI from repository root unless it is explicitly marked `ci-run=false` with an explanation.
 - Long-running bash fences should be isolated in their own block and may declare `ci-timeout` plus `ci-allowed-exit-codes` in the fence header.
 - Interactive or documentation-only bash fences may declare `ci-run=false` to stay visible in docs without being executed in CI.
 - Command blocks that intentionally mix successful and failing commands may annotate the next command with `# ci: expect-exit=1` (or a comma-separated list of exit codes).
