@@ -131,7 +131,7 @@ This repository contains:
 - **UniversalToolchain**: reusable framework infrastructure.
 - **Wist**: a reference language used to validate and evolve the framework architecture.
 
-For a stricter boundary between framework, reference language, and current limitations, see [Project positioning](docs/project-positioning.md). For an external-style evaluative architecture review, see [Technical due diligence review](docs/reviews/technical-due-diligence.md).
+For a stable project map, see [Global project overview](docs/global-project-overview.md). For a stricter boundary between framework, reference language, and current limitations, see [Project positioning](docs/project-positioning.md). For an external-style evaluative architecture review, see [Technical due diligence review](docs/reviews/technical-due-diligence.md).
 
 ## Architecture at a glance
 
@@ -291,6 +291,7 @@ See [Current limitations](docs/limitations.md) for the explicit limitation and w
 ## Canonical documentation map
 
 - Project overview: [readme.md](readme.md)
+- Global project overview: [docs/global-project-overview.md](docs/global-project-overview.md)
 - Project positioning and public wording: [docs/project-positioning.md](docs/project-positioning.md)
 - Current limitations: [docs/limitations.md](docs/limitations.md)
 - Technical due diligence review: [docs/reviews/technical-due-diligence.md](docs/reviews/technical-due-diligence.md)
