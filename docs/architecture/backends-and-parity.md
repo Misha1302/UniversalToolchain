@@ -133,4 +133,4 @@ Every backend should have documentation explaining:
 
 ## Execution-bound native pointer wrapper parity note
 
-The CIL fast native pointer path may expose an execution-bound wrapper over generated `DynamicMethod` artifacts. Generated CIL dynamic methods use `IExecutionEnvironment` as the hidden first parameter, followed by external binding arguments in declared binding order. Public fast wrappers should hide this environment parameter from callers and validate full raw `DynamicMethod` signatures before function-pointer invocation.
+The CIL fast native pointer path may expose an execution-bound wrapper over generated `DynamicMethod` artifacts. Generated CIL dynamic methods use `IExecutionEnvironment` as the hidden first parameter, followed by external binding arguments in declared binding order. Public fast wrappers hide this environment parameter from callers and validate full raw `DynamicMethod` signatures before function-pointer invocation. When generated code lowers external loads through the universal runtime-call path, the wrapper must ensure those loads observe the same invocation arguments as the native pointer call.

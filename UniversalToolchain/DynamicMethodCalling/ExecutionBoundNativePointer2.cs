@@ -1,5 +1,12 @@
 namespace DynamicMethodCalling;
 
+/// <summary>
+///     Wraps a DynamicMethod native pointer whose hidden first argument is an execution environment.
+/// </summary>
+/// <remarks>
+///     Instances are invocation-session objects and are not safe for concurrent Invoke calls.
+///     Create a separate wrapper per concurrent execution flow.
+/// </remarks>
 public sealed class ExecutionBoundNativePointer2<TArg1, TArg2, TResult>
 {
     private readonly IExecutionEnvironment _environment;
@@ -20,6 +27,9 @@ public sealed class ExecutionBoundNativePointer2<TArg1, TArg2, TResult>
         _arg2Slot = arg2Slot;
     }
 
+    /// <summary>
+    ///     Invokes the native pointer with two external arguments while supplying the bound execution environment internally.
+    /// </summary>
     public TResult Invoke(TArg1 arg1, TArg2 arg2)
     {
         _adapter.SetCurrentArguments(_arg1Slot, _arg2Slot, arg1, arg2);
@@ -48,7 +58,15 @@ public sealed class ExecutionBoundNativePointer2<TArg1, TArg2, TResult>
         public TContext GetOrCreate<TContext>(RuntimeContextKey key, Func<TContext> factory) where TContext : class =>
             innerEnvironment.GetOrCreate(key, factory);
 
-        public object GetRequiredProvider(Type providerType) => innerEnvironment.GetRequiredProvider(providerType);
+        public object GetRequiredProvider(Type providerType)
+        {
+            providerType = providerType.ArgNotNull();
+
+            if (providerType == typeof(ExternalRuntimeCallProvider))
+                return _externalRuntimeCallProvider ??= new ExternalRuntimeCallProvider(this);
+
+            return innerEnvironment.GetRequiredProvider(providerType);
+        }
 
         public void SetCurrentArguments(int arg1Slot, int arg2Slot, TArg1 arg1, TArg2 arg2)
         {
@@ -57,5 +75,7 @@ public sealed class ExecutionBoundNativePointer2<TArg1, TArg2, TResult>
             _arg1 = arg1;
             _arg2 = arg2;
         }
+
+        private ExternalRuntimeCallProvider? _externalRuntimeCallProvider;
     }
 }

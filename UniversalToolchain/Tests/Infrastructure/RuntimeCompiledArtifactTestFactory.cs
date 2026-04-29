@@ -84,6 +84,30 @@ internal static class RuntimeCompiledArtifactTestFactory
             new DynamicMethodExecutor());
     }
 
+    public static ICompiledArtifact<DynamicMethod> CreateExternalRuntimeLoadThroughProviderArtifact()
+    {
+        var dynamicMethod = new DynamicMethod("ExternalRuntimeLoadThroughProvider", typeof(int), [typeof(IExecutionEnvironment), typeof(int), typeof(int)]);
+        var il = dynamicMethod.GetILGenerator();
+        var helper = typeof(RuntimeCompiledArtifactTestFactory)
+            .GetMethod(nameof(LoadExternalSlotsThroughProvider), BindingFlags.NonPublic | BindingFlags.Static)
+            .NotNull();
+
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Ldarg_1);
+        il.Emit(OpCodes.Ldarg_2);
+        il.Emit(OpCodes.Call, helper);
+        il.Emit(OpCodes.Ret);
+
+        return new CompiledArtifact<DynamicMethod>(
+            "x * 10 + y",
+            [
+                new ExternalBinding { Name = "x", Type = typeof(int), Kind = ExternalBindingKind.Variable },
+                new ExternalBinding { Name = "y", Type = typeof(int), Kind = ExternalBindingKind.Variable }
+            ],
+            dynamicMethod,
+            new DynamicMethodExecutor());
+    }
+
     public static WistDialectExecutionHost CreateHost()
     {
         var services = new ServiceCollection();
@@ -127,5 +151,18 @@ internal static class RuntimeCompiledArtifactTestFactory
 
             return compilation.Invoke(null, args);
         }
+    }
+
+    private static int LoadExternalSlotsThroughProvider(IExecutionEnvironment environment, int unusedFirstArgument, int unusedSecondArgument)
+    {
+        environment = environment.ArgNotNull();
+
+        var provider = (ExternalRuntimeCallProvider)environment.GetRequiredProvider(typeof(ExternalRuntimeCallProvider));
+        var loadedEnvironment = provider.LoadEnvironment();
+
+        var first = ExternalRuntimeCalls.LoadExternal<int>(loadedEnvironment, 0);
+        var second = ExternalRuntimeCalls.LoadExternal<int>(loadedEnvironment, 1);
+
+        return first * 10 + second;
     }
 }

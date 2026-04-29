@@ -119,6 +119,18 @@ public class RuntimeCompiledArtifactContractTests
     }
 
     [Test]
+    public void DynamicMethodArtifact_CreateExecutionBoundNativePointer_ProvidesNativeArgumentsToExternalRuntimeLoads()
+    {
+        var artifact = RuntimeCompiledArtifactTestFactory.CreateExternalRuntimeLoadThroughProviderArtifact();
+        var environment = new ExecutionEnvironment(artifact.DeclaredBindings);
+
+        var nativePointer = artifact.CreateExecutionBoundNativePointer<int, int, int>(environment);
+        var result = nativePointer.Invoke(4, 5);
+
+        Assert.That(result, Is.EqualTo(45));
+    }
+
+    [Test]
     public void DynamicMethodInvoker_WhenParameterTypesDoNotMatch_ThrowsBeforeInvocation()
     {
         var artifact = RuntimeCompiledArtifactTestFactory.CreateEnvironmentAndTwoArgumentsArtifact();

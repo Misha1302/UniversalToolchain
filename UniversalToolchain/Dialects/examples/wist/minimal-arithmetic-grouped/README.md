@@ -18,7 +18,7 @@ This example shows the smallest useful arithmetic-oriented dialect composition u
 
 From repository root:
 
-```bash
+```bash ci-timeout=240
 dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- dialect-inspect --file UniversalToolchain/Dialects/examples/wist/minimal-arithmetic-grouped/dialect.wistdialect
 dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/minimal-arithmetic-grouped/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/minimal-arithmetic-grouped/program.wist --mode interpreter
 ```

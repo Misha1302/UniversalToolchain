@@ -23,7 +23,7 @@ to the native arithmetic/type stack and enables native optimizations.
 
 From repository root:
 
-```bash
+```bash ci-timeout=240
 dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- dialect-inspect --file UniversalToolchain/Dialects/examples/wist/full-default-native/dialect.wistdialect
 dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/full-default-native/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/full-default-native/program.wist --mode interpreter
 dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/full-default-native/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/full-default-native/program.wist --mode compiler
