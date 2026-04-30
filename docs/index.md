@@ -1,87 +1,58 @@
----
-layout: home
+# UniversalToolchain Documentation
 
-hero:
-  name: UniversalToolchain
-  text: Build languages, not one-off parsers.
-  tagline: A developer documentation hub for Wist, DSL composition, language modules, bytecode, AIR, and execution backends.
-  image:
-    src: /hero.svg
-    alt: UniversalToolchain pipeline
-  actions:
-    - theme: brand
-      text: Start with Wist
-      link: /start/
-    - theme: alt
-      text: Build a DSL
-      link: /build-dsls/
-    - theme: alt
-      text: Explore Internals
-      link: /internals/
+UniversalToolchain is a modular .NET framework for building domain-specific languages.
 
-features:
-  - icon: 🚀
-    title: Fast entry
-    details: Start by running Wist, then gradually move into dialects, modules, and internals.
-  - icon: 🧩
-    title: Modular language design
-    details: Treat language features as composable modules instead of hardcoded compiler branches.
-  - icon: ⚙️
-    title: Runtime-aware architecture
-    details: Follow the path from source code to bytecode, AIR, optimizers, and execution backends.
----
+Wist is the reference language built on top of UniversalToolchain. Start with the language, then move to dialects, modules, bytecode, AIR, and execution backends.
 
-## Choose your path
+> This documentation is written as a developer manual. It is not a landing page, a project report, or a promotional overview.
 
-<div class="doc-paths">
-  <div class="doc-path-card">
-    <h3>I want to use Wist</h3>
-    <p>Run the reference language, learn the syntax, and understand the basic development flow.</p>
-    <a href="/start/">Start here →</a>
-  </div>
+## Entry points
 
-  <div class="doc-path-card">
-    <h3>I want to build a DSL</h3>
-    <p>Compose existing language features into a small domain-specific language using dialect files.</p>
-    <a href="/build-dsls/">Build your first DSL →</a>
-  </div>
+| Goal | Start here | Continue with |
+|---|---|---|
+| Run the reference language | [Start](/start/) | [Wist](/wist/) |
+| Compose a DSL | [Dialects](/build-dsls/) | [Module composition](/build-dsls/module-composition) |
+| Add a language feature | [Modules](/write-modules/) | [Bytecode generation](/write-modules/bytecode-generation) |
+| Study implementation details | [Internals](/internals/) | [Pipeline](/internals/pipeline) |
+| Check precise contracts | [Reference](/reference/) | [Backend contracts](/reference/backend-contracts) |
 
-  <div class="doc-path-card">
-    <h3>I want to write a module</h3>
-    <p>Add a language feature: syntax recognition, AST nodes, bytecode generation, and tests.</p>
-    <a href="/write-modules/">Write a module →</a>
-  </div>
+## Recommended order
 
-  <div class="doc-path-card">
-    <h3>I want to understand the runtime</h3>
-    <p>Go deeper into bytecode, semantic tags, AIR, optimizations, interpreter execution, and CIL generation.</p>
-    <a href="/internals/">Explore internals →</a>
-  </div>
-</div>
+1. [Start here](/start/)
+2. [Run the first Wist program](/start/first-program)
+3. [Read the mental model](/start/mental-model)
+4. [Build a minimal DSL](/build-dsls/minimal-dsl)
+5. [Write a module](/write-modules/)
+6. [Read the pipeline overview](/internals/pipeline)
+7. [Use the reference section](/reference/)
 
-## Mental model
+## Pipeline
 
-UniversalToolchain is not just a language. It is a framework for building languages.
+```text
+source
+  -> lexer modules
+  -> parser modules
+  -> AST
+  -> bytecode + semantic tags
+  -> AIR
+  -> optimizers
+  -> interpreter backend / CIL backend
+  -> result
+```
 
-<div class="pipeline-strip">
-  <span class="pipeline-step">Source</span>
-  <span class="pipeline-step">Lexer</span>
-  <span class="pipeline-step">Parser</span>
-  <span class="pipeline-step">AST</span>
-  <span class="pipeline-step">Bytecode</span>
-  <span class="pipeline-step">AIR</span>
-  <span class="pipeline-step">Optimizers</span>
-  <span class="pipeline-step">Interpreter / CIL</span>
-</div>
+## Documentation sections
 
-<div class="next-box">
+| Section | Description |
+|---|---|
+| [Start](/start/) | Basic project model and the shortest path to running Wist. |
+| [Wist](/wist/) | Syntax and examples for the reference language. |
+| [Dialects](/build-dsls/) | Dialect files, feature composition, and backend selection. |
+| [Modules](/write-modules/) | Extension points for adding language features. |
+| [Internals](/internals/) | Compiler pipeline, bytecode, AIR, optimizers, and backends. |
+| [Reference](/reference/) | Exact technical contracts and reference material. |
 
-### Recommended reading order
+## Project model
 
-1. Start with Wist.
-2. Learn the mental model.
-3. Build a tiny DSL from existing modules.
-4. Write one language module.
-5. Only then go into bytecode, AIR, optimizers, and backend contracts.
+UniversalToolchain is not a single monolithic compiler.
 
-</div>
+The core idea is to make language features composable, testable, and reusable across dialects. Wist exists as the reference language that demonstrates how the framework pieces fit together.

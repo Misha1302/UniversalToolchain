@@ -17,9 +17,9 @@ export default defineConfig({
 
         nav: [
             { text: 'Start', link: '/start/' },
-            { text: 'Wist', link: '/wist/' },
-            { text: 'Build DSLs', link: '/build-dsls/' },
-            { text: 'Write Modules', link: '/write-modules/' },
+            { text: 'Language', link: '/wist/' },
+            { text: 'Dialects', link: '/build-dsls/' },
+            { text: 'Modules', link: '/write-modules/' },
             { text: 'Internals', link: '/internals/' },
             { text: 'Reference', link: '/reference/' },
             { text: 'GitHub', link: 'https://github.com/Misha1302/Wist2' }
