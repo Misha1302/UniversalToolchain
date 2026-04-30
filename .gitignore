@@ -33,3 +33,8 @@ ConfigurationEditor/project_code.txt
 benchmark-report.html
 /UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/BenchmarkDotNet.Artifacts
 /BenchmarkDotNet.Artifacts
+
+node_modules/
+docs/.vitepress/dist/
+docs/.vitepress/cache/
+package-lock.json
