@@ -93,6 +93,16 @@ const bookSidebar = [
     }
 ]
 
+const bookNav = [
+    { text: '0. Introduction', link: '/start/' },
+    { text: '1. Getting Started', link: '/start/installation' },
+    { text: '2. Wist Language', link: '/wist/' },
+    { text: '3. Building DSLs', link: '/build-dsls/' },
+    { text: '4. Writing Modules', link: '/write-modules/' },
+    { text: '5. Internals', link: '/internals/' },
+    { text: '6. Reference', link: '/reference/' }
+]
+
 export default defineConfig({
     title: 'UniversalToolchain',
     description: 'Developer documentation for UniversalToolchain and Wist.',
@@ -109,12 +119,7 @@ export default defineConfig({
         logo: '/logo.svg',
 
         nav: [
-            { text: 'Start', link: '/start/' },
-            { text: 'Wist', link: '/wist/' },
-            { text: 'Build DSLs', link: '/build-dsls/' },
-            { text: 'Modules', link: '/write-modules/' },
-            { text: 'Internals', link: '/internals/' },
-            { text: 'Reference', link: '/reference/' },
+            { text: 'Book', items: bookNav },
             { text: 'GitHub', link: 'https://github.com/Misha1302/Wist2' }
         ],
 
