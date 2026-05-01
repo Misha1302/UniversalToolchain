@@ -117,7 +117,7 @@ For loops:
 let sum = 0
 let i = 1
 
-while (i <= 5) (
+while i <= 5 (
     sum = sum + i
     i = i + 1
 )
@@ -129,6 +129,15 @@ Expected result:
 
 ```text
 15
+```
+
+Also test the parenthesized form if both variants are intended to remain valid:
+
+```wist
+while (i <= 5) (
+    sum = sum + i
+    i = i + 1
+)
 ```
 
 These examples are useful because they exercise interaction between parser extensions, not only one isolated token.
@@ -167,6 +176,7 @@ A parser extension should have tests for:
 - malformed syntax;
 - precedence or priority conflicts;
 - grouped syntax;
+- optional grouping variants when the parser accepts more than one form;
 - disabled dialect behavior;
 - compiler/interpreter parity when the feature has runtime semantics.
 

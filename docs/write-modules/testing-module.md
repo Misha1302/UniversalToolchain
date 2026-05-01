@@ -126,12 +126,21 @@ if 2 == 2 (1) else (2)
 let sum = 0
 let i = 1
 
-while (i <= 5) (
+while i <= 5 (
     sum = sum + i
     i = i + 1
 )
 
 sum
+```
+
+For loop modules, also include the parenthesized `while` condition form if both parser shapes are intended to remain valid:
+
+```wist
+while (i <= 5) (
+    sum = sum + i
+    i = i + 1
+)
 ```
 
 Choose examples that belong to the module and its documented dependencies.
@@ -188,6 +197,7 @@ Before merging a module PR, verify:
 - bytecode generation follows stack discipline;
 - disabled dialects reject the feature;
 - both backends are covered when supported;
+- optional syntax variants are documented and tested when they are intentionally accepted;
 - optimizer behavior is covered when relevant;
 - restricted dialects remain restricted;
 - no generic framework layer branches on concrete module names.

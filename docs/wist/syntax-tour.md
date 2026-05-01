@@ -84,7 +84,7 @@ A `while` loop:
 let sum = 0
 let i = 1
 
-while (i <= 5) (
+while i <= 5 (
     sum = sum + i
     i = i + 1
 )
@@ -97,6 +97,8 @@ Expected result:
 ```text
 15
 ```
+
+For `while`, the condition can be written without parentheses when it parses as one expression node. Parentheses are still allowed for readability. Multi-operation loop bodies should remain grouped.
 
 Loops require the `Loops` module plus variables, comparison and arithmetic support.
 
@@ -120,7 +122,7 @@ Expected result:
 15
 ```
 
-Use this example as the canonical reference for current `for` syntax.
+Use this example as the canonical reference for current `for` syntax. The current `for` parser expects initialization, condition, update and body to be grouped.
 
 ### 6. Comments
 
@@ -168,6 +170,7 @@ Each syntax feature is introduced by one or more modules. Modules register lexer
 
 - Trying to use variables in a dialect that omits `Variables` or `Identifier`.
 - Trying to use loops in a dialect that omits `Loops`.
+- Treating the parenthesized `while` condition examples as the only valid form.
 - Using `compiler` mode with a dialect that only exposes `interpreter`.
 - Assuming restricted dialects are hardened sandboxes. They constrain composition, but process isolation is still required for untrusted execution.
 

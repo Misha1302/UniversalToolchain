@@ -5,9 +5,9 @@ description: Explain block scopes and variable visibility.
 
 # Scopes
 
-Scopes and grouped expressions help Wist organize nested syntax such as conditions and loops.
+Scopes and grouped expressions help Wist organize nested syntax such as conditions and loop bodies.
 
-In current Wist examples, parentheses are used heavily for grouping: arithmetic precedence, conditional result expressions, loop conditions and loop bodies.
+In current Wist examples, parentheses are used heavily for grouping: arithmetic precedence, conditional result expressions, loop bodies and the grouped parts of `for` loops. Some constructs, such as `while` conditions, can also accept an unparenthesized expression when it parses as a single AST node.
 
 ## When to read this page
 
@@ -73,7 +73,7 @@ Loop bodies are grouped with parentheses:
 let sum = 0
 let i = 1
 
-while (i <= 5) (
+while i <= 5 (
     sum = sum + i
     i = i + 1
 )
@@ -89,6 +89,15 @@ Expected result:
 
 The grouped body contains multiple operations: update the accumulator and update the loop variable.
 
+The `while` condition above is not wrapped in parentheses because it already parses as one expression node. Parenthesized conditions are also valid and may be clearer in longer examples:
+
+```wist
+while (i <= 5) (
+    sum = sum + i
+    i = i + 1
+)
+```
+
 ## Variables and grouped bodies
 
 A grouped body often reads and writes variables declared before the body:
@@ -97,9 +106,9 @@ A grouped body often reads and writes variables declared before the body:
 let total = 0
 let outer = 1
 
-while (outer <= 3) (
+while outer <= 3 (
     let inner = 1
-    while (inner <= 2) (
+    while inner <= 2 (
         total = total + (outer * inner)
         inner = inner + 1
     )
@@ -140,6 +149,7 @@ When changing scope-related behavior, test:
 - arithmetic grouping;
 - grouped conditional expressions;
 - loop bodies with multiple operations;
+- parenthesized and unparenthesized `while` conditions when both forms should remain accepted;
 - nested loops or nested conditional groups;
 - variable declarations inside grouped bodies;
 - compiler/interpreter parity.
@@ -147,6 +157,7 @@ When changing scope-related behavior, test:
 ## Common mistakes
 
 - Treating parentheses as plain text delimiters outside the parser/AST pipeline.
+- Assuming every `while` condition must be parenthesized.
 - Assuming grouped loop bodies work without `Loops`, `Variables` and comparison modules.
 - Testing only flat expressions and missing nested grouped behavior.
 - Documenting stronger scope guarantees than the current tests prove.
