@@ -27,7 +27,7 @@ Understand the difference between UniversalToolchain and Wist, identify your rol
 | **Wist user** (run programs, learn syntax) | [First Program](/start/first-program) | [Syntax Tour](/wist/syntax-tour) |
 | **DSL developer** (compose your own language) | [Mental Model](/start/mental-model), [Dialect Files](/build-dsls/dialect-files) | [Minimal DSL](/build-dsls/minimal-dsl) |
 | **Module author** (add new language features) | [Write Modules](/write-modules/) | Later: Bytecode generation and backend guides |
-| **Runtime/compiler engineer** | [Internals](/internals/pipeline) | [Bytecode and AIR](/internals/bytecode-and-air) |
+| **Runtime/compiler engineer** | [Internals](/internals/pipeline) | [Bytecode and AIR](/architecture/bytecode-and-air) |
 | **Contributor/maintainer** | [Internals](/internals/) | Project rules and architecture docs |
 | **Reference user** | [Reference](/reference/) | Backend contracts, module specifications |
 
