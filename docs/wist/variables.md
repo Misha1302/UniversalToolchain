@@ -124,7 +124,7 @@ Variables are commonly used as loop counters and accumulators:
 let sum = 0
 let i = 1
 
-while (i <= 5) (
+while i <= 5 (
     sum = sum + i
     i = i + 1
 )
@@ -138,7 +138,7 @@ Expected result:
 15
 ```
 
-This requires variables plus loop and comparison support.
+This requires variables plus loop and comparison support. Parentheses around the `while` condition are optional when the condition parses as one expression node.
 
 ## Common mistakes
 
