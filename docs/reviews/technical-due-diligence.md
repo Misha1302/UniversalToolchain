@@ -10,7 +10,7 @@ This document belongs under `docs/reviews/` because it is a review and due-dilig
 
 Use it together with these canonical documents:
 
-- Project entry point: [readme.md](../../readme.md)
+- Project entry point: [Documentation index](../index.md)
 - Public positioning and wording: [Project positioning](../project-positioning.md)
 - Known limitations and wording boundaries: [Current limitations](../limitations.md)
 - Runtime pipeline: [Current canonical runtime pipeline](../current-canonical-runtime-pipeline.md)
