@@ -5,9 +5,27 @@ description: Explain source to execution pipeline.
 
 # Pipeline
 
-UniversalToolchain separates language processing into explicit stages. Each stage has a narrow job, produces a more structured representation, and gives modules a controlled place to extend behavior.
+The internal pipeline is the lifecycle that turns `CompilationInput` into a compiled artifact or a prepared execution session.
 
-The practical shape is:
+The canonical implementation entry point is `PreparedExecutionBuilder<TCompilationOutput>`. `BasicCoreImpl<TCompilationOutput>` delegates compilation and preparation to this builder.
+
+## Why this page matters
+
+Most architecture mistakes happen when a change is placed in the wrong stage.
+
+Examples:
+
+- parsing syntax in a bytecode visitor;
+- fixing AST shape during bytecode post-processing;
+- letting an optimizer provide required semantics;
+- making a backend silently accept unsupported intrinsics;
+- mixing runtime input values with local variable semantics.
+
+This page defines the actual order of operations so each stage can keep a narrow responsibility.
+
+## Public model vs. internal lifecycle
+
+The public mental model is:
 
 ```text
 source text
@@ -20,129 +38,254 @@ source text
   -> result
 ```
 
-This page explains what each stage is responsible for and where a developer should normally make changes.
+The internal lifecycle is more precise:
 
-## Why the pipeline is split
-
-The project is not designed as a single hardcoded Wist compiler. Wist is a reference language built on top of the UniversalToolchain infrastructure. The split pipeline keeps three concerns separate:
-
-- language syntax and parsing;
-- intermediate semantics and optimization;
-- execution by a concrete backend.
-
-That separation is what allows a dialect to be assembled from modules instead of being baked into one compiler class.
-
-## Stage overview
-
-| Stage | Input | Output | Main responsibility |
-| --- | --- | --- | --- |
-| Lexer | Source text | Tokens | Recognize lexical units while preserving enough information for the parser. |
-| Parser | Tokens | AST | Build a structured syntax tree using module-provided parsing behavior. |
-| AST | Parsed structure | AST nodes | Represent source-level language constructs before lowering. |
-| Bytecode | AST nodes | Bytecode operations | Normalize module semantics into a compact executable/intermediate form. |
-| AIR | Bytecode | Abstract IR | Represent backend-oriented operations and enable backend-safe processing. |
-| Backend | AIR | Execution result | Interpret or compile the program while preserving the same semantics. |
-
-## Lexer
-
-The lexer is the first boundary between raw text and the rest of the compiler. It should remain simple and deterministic: it recognizes tokens, but it should not decide high-level language meaning.
-
-A lexer change is usually appropriate when a dialect needs a new token category, a new literal form, or different whitespace/comment handling.
-
-## Parser
-
-The parser consumes tokens and produces AST nodes. This is where syntax becomes structure.
-
-Parser extensions should avoid global assumptions about the whole language. A module should claim only the syntax it owns and should cooperate with other modules through deterministic ordering and priority rules.
-
-When a parsing bug appears, the first question should be whether the syntax decision belongs in the parser or whether it is actually a later semantic/lowering concern.
-
-## AST
-
-The AST is source-oriented. It should describe what the program says, not how a backend will execute it.
-
-Good AST nodes are useful for:
-
-- making source constructs explicit;
-- keeping module-specific syntax isolated;
-- delaying backend decisions until lowering;
-- writing tests around language behavior before execution details matter.
-
-A common mistake is to put backend knowledge into AST nodes. That makes a feature harder to run through both interpreter and compiled backends.
-
-## Bytecode
-
-Bytecode is the first major normalization layer. It lowers AST-level constructs into operations that are easier to translate, inspect, and execute.
-
-Bytecode is useful because it gives the system a stable semantic layer between syntax and backend-specific execution. It can carry tags or metadata that describe meaning without forcing every backend to rediscover it from syntax.
-
-This is the right place to encode language semantics that should be shared by different backends.
-
-## AIR
-
-AIR, the Abstract Intermediate Representation, is closer to execution than bytecode. It is the representation backends consume or compile.
-
-AIR should be backend-neutral, but backend-aware enough to support efficient execution. That means it can expose operations that are meaningful to optimizers and backends without becoming CIL-specific, interpreter-specific, or tied to a single runtime strategy.
-
-The important rule is: AIR may prepare work for backends, but it should not leak one backend's private implementation into the whole pipeline.
-
-## Optimizers and intrinsics
-
-Optimizers should operate on representations where their assumptions are explicit. Intrinsics should be treated as contracts: a backend may support a fast path only when it can preserve the same observable semantics.
-
-A safe optimization has three properties:
-
-- it is guarded by backend capabilities;
-- it does not change interpreter/compiler parity;
-- it has tests proving both optimized and unoptimized behavior.
-
-This matters especially when adding native arithmetic, local-variable optimizations, or backend-specific fast paths.
-
-## Backends
-
-Backends execute the program represented by AIR.
-
-The interpreter backend is useful as a semantic reference: it should make behavior clear and testable. A compiled backend can then optimize execution, but it must not silently change language meaning.
-
-The main backend contract is semantic parity. If the interpreter and compiler disagree on the same dialect, input, and runtime bindings, the pipeline has a correctness bug.
-
-## Where to make changes
-
-| Change | Preferred place |
-| --- | --- |
-| New token syntax | Lexer module |
-| New expression or statement grammar | Parser extension / frontend module |
-| New source-level construct | AST node and parser extension |
-| Shared language semantics | Bytecode lowering |
-| Backend-facing execution operation | AIR translation |
-| Runtime acceleration | Optimizer or backend intrinsic |
-| Backend-specific implementation | Backend only |
-| Cross-backend correctness rule | Semantic parity tests |
-
-## Professional invariants
-
-A pipeline change should preserve these invariants:
-
-1. Module order is deterministic.
-2. Parsing does not depend on accidental service registration order.
-3. AST nodes do not contain backend-specific execution logic.
-4. Bytecode and AIR keep semantics explicit enough for tests and optimizers.
-5. Interpreter and compiled execution are tested against the same cases.
-6. Mutable state is scoped to one compilation/execution request unless explicitly designed otherwise.
-7. Backend-specific fast paths are capability-checked before use.
-
-## Minimal validation checklist
-
-After changing the pipeline, run at least:
-
-```bash ci-run=false
-dotnet build UniversalToolchain/Wist.sln -c Release
-dotnet test UniversalToolchain/Wist.sln -c Release --no-build
-npm run docs:build
+```text
+CompilationInput
+  -> create per-build services
+  -> modules.ProcessText
+  -> modules.InitLexer
+  -> lexer.Lexemize
+  -> modules.ProcessLexemes
+  -> modules.InitParser
+  -> parser.Parse
+  -> modules.ProcessAst
+  -> Binder
+  -> modules.InitAstTranslator
+  -> astTranslator.Translate
+  -> modules.ProcessBytecode
+  -> optimizers.InitMethodsTranslator
+  -> optimizers.InitIntrinsicCapabilityContext
+  -> methodsTranslator.Translate(bytecode)
+  -> optimizers.ProcessIr
+  -> ExtractAllowedRuntimeProviderTypes
+  -> middleEndModules.InitMethodsCompiler
+  -> compiler.Compile
+  -> middleEndModules.ProcessCompilation
+  -> middleEndModules.InitExecutor
+  -> compiled artifact or prepared session
 ```
 
-Use more targeted tests when the change affects a specific module, dialect, optimizer, or backend.
+Use the second model when documenting internals.
+
+## Build setup
+
+`PreparedExecutionBuilder` creates fresh pipeline services for each build:
+
+```text
+lexer
+parser
+AST translator
+bytecode-to-AIR translator
+backend compiler
+executor
+intrinsic capability set
+optimizer capability context
+```
+
+This matters because pipeline services may carry request-local state. Module instances may be shared by DI, but lexer/parser/translator/compiler/executor instances are created through factories during the build.
+
+## Input normalization
+
+`BasicCoreImpl` accepts two common input shapes:
+
+- runtime input: `Run(string code, Dictionary<string, object>? parameters)`;
+- declared input: `Compile(string code, OrderedDictionary<string, Type>? parameters)`.
+
+Both are normalized into `CompilationInput` with `ExternalBinding` entries.
+
+Runtime input includes values. Declared input includes types. This distinction is important for compiled artifacts: compile-time parameter shape and runtime parameter values are not the same concern.
+
+## Frontend text stage
+
+First, every selected frontend module may transform source text:
+
+```text
+modules.ProcessText
+```
+
+This stage should be used sparingly. It is appropriate for explicit text-level preprocessing, not for hidden syntax recognition that should belong to lexer/parser/AST stages.
+
+## Lexer stage
+
+Modules register lexemes through:
+
+```text
+modules.InitLexer
+```
+
+Then the lexer turns the processed source text into lexeme values:
+
+```text
+lexer.Lexemize(targetCode)
+```
+
+After lexing, modules may transform the lexeme list:
+
+```text
+modules.ProcessLexemes
+```
+
+Lexeme post-processing should preserve the lexer/parser boundary. Do not use it to implement syntax that should be expressed through parser node creators.
+
+## Parser stage
+
+Modules register parser node creators through:
+
+```text
+modules.InitParser
+```
+
+Then the parser builds an AST:
+
+```text
+parser.Parse(targetLexemes)
+```
+
+Parser extensions are ordered and priority-sensitive. This stage owns syntax structure.
+
+## AST processing and binding
+
+After parsing, modules may transform the AST:
+
+```text
+modules.ProcessAst
+```
+
+Then external bindings are applied:
+
+```text
+new Binder(input.ExternalBindings).Bind(targetRoot)
+```
+
+Binding happens before AST-to-bytecode translation. This placement is important: visitors should receive a bound AST rather than rediscover external bindings independently.
+
+## AST-to-bytecode translation
+
+Modules register AST visitors through:
+
+```text
+modules.InitAstTranslator(astTranslator, modules)
+```
+
+Then the translator produces bytecode:
+
+```text
+astTranslator.Translate(boundRoot)
+```
+
+Visitors must self-filter because multiple visitors may inspect the same node. A visitor should emit only feature-owned semantics.
+
+## Bytecode post-processing
+
+After translation, modules may process bytecode:
+
+```text
+modules.ProcessBytecode
+```
+
+This is a bytecode-level hook. It should not be used to patch missing parser or AST behavior.
+
+## Bytecode-to-AIR translation
+
+Optimizers first initialize the bytecode-to-AIR translator:
+
+```text
+optimizers.InitMethodsTranslator(methodsTranslator)
+```
+
+Then they receive an intrinsic capability context:
+
+```text
+optimizers.InitIntrinsicCapabilityContext(optimizerCapabilityContext)
+```
+
+Then bytecode is translated into AIR:
+
+```text
+methodsTranslator.Translate(targetBytecode)
+```
+
+At this point, execution semantics are represented as backend-facing AIR instructions.
+
+## IR optimization
+
+Selected IR processing modules transform AIR:
+
+```text
+optimizers.ProcessIr(current, compiler)
+```
+
+The backend compiler is passed into the optimizer stage so optimizers can respect backend capabilities. This is a guardrail: backend-specific optimized instructions should not be emitted for backends that cannot consume them.
+
+## Runtime provider extraction
+
+The pipeline extracts allowed runtime provider types from AIR before compilation:
+
+```text
+ExtractAllowedRuntimeProviderTypes(targetIr)
+```
+
+Currently this scans AIR intrinsic calls for C# call descriptors that reference execution-scoped providers. The result becomes part of the compiled artifact.
+
+This is implementation-specific and should not be described as a general-purpose security boundary.
+
+## Backend compilation
+
+Middle-end modules initialize the compiler:
+
+```text
+middleEndModules.InitMethodsCompiler(compiler)
+```
+
+Then the backend compiler compiles AIR:
+
+```text
+compiler.Compile(targetIr, input)
+```
+
+The output type depends on the selected backend. For example, the interpreter path can use AIR directly, while the CIL path compiles into a `DynamicMethod`.
+
+## Compilation post-processing and executor setup
+
+After backend compilation:
+
+```text
+middleEndModules.ProcessCompilation
+middleEndModules.InitExecutor
+```
+
+This lets middle-end modules adapt backend output and executor wiring.
+
+## Artifact/session output
+
+`Compile(input)` returns a compiled artifact.
+
+`Build(input)` returns a prepared execution object containing:
+
+- source text;
+- compiled artifact;
+- execution session.
+
+`BasicCoreImpl.PrepareToRun` stores the prepared execution in an `AsyncLocal`, and `RunPrepared` executes the stored session.
+
+## Stage ownership summary
+
+| Stage | Owns | Should not own |
+|---|---|---|
+| `ProcessText` | explicit text preprocessing | hidden grammar |
+| Lexer | token recognition | AST shape |
+| `ProcessLexemes` | token-list normalization | semantic lowering |
+| Parser | AST structure | backend behavior |
+| `ProcessAst` | AST normalization | bytecode execution semantics |
+| Binder | external binding attachment | local variable runtime mutation |
+| AST visitors | bytecode emission | raw source parsing |
+| `ProcessBytecode` | bytecode-level transformations | parser fixes |
+| AIR translator | backend-facing instruction stream | optimizer-only semantics |
+| Optimizers | semantics-preserving IR transforms | required base semantics |
+| Backend compiler | backend artifact creation | language syntax decisions |
+| Executor | execution of compiled artifact | dialect composition |
 
 ## Next
 
-Continue with [Lexer](/internals/lexer) or [Bytecode](/internals/bytecode).
+Continue with [Lexer](/internals/lexer).
