@@ -37,15 +37,19 @@ npm run build
 npm run type-check
 ```
 
-```bash ci-timeout=15s ci-allowed-exit-codes=0,124
+```bash ci-run=false
 cd ConfigurationEditor
 npm run dev
 ```
 
-```bash ci-timeout=15s ci-allowed-exit-codes=0,124
+This starts the local Vite development server and keeps running until stopped manually with `Ctrl+C`, so it is intentionally skipped by Markdown command validation in CI.
+
+```bash ci-run=false
 cd ConfigurationEditor
 npm run preview
 ```
+
+This starts the local Vite preview server and keeps running until stopped manually with `Ctrl+C`, so it is intentionally skipped by Markdown command validation in CI.
 
 ## 5. Status / limitations
 
