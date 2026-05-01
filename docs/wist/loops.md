@@ -25,7 +25,7 @@ A `while` loop repeats while its condition remains satisfied:
 let sum = 0
 let i = 1
 
-while (i <= 5) (
+while i <= 5 (
     sum = sum + i
     i = i + 1
 )
@@ -41,6 +41,17 @@ Expected result:
 
 This program sums numbers from 1 to 5.
 
+The condition does not have to be wrapped in parentheses when it parses as one expression node. The parser builds the `while` node from the next AST node as the condition and the following AST node as the body. Parentheses around the condition are still allowed and can be used for readability:
+
+```wist
+while (i <= 5) (
+    sum = sum + i
+    i = i + 1
+)
+```
+
+For multi-operation loop bodies, keep the body grouped with parentheses.
+
 ## Zero-iteration loop
 
 If the condition is not satisfied initially, the body is not executed:
@@ -49,7 +60,7 @@ If the condition is not satisfied initially, the body is not executed:
 let marker = 17
 let i = 10
 
-while (i < 10) (
+while i < 10 (
     marker = marker + 100
     i = i + 1
 )
@@ -91,7 +102,7 @@ The `for` loop groups initialization, condition, update and body:
 for (initialization) (condition) (update) (body)
 ```
 
-Use this as the canonical documented shape for current Wist `for` syntax.
+Use this as the canonical documented shape for current Wist `for` syntax. Unlike `while`, the current `for` parser expects the initialization, condition, update and body to be grouped as scopes.
 
 ## Required modules
 
@@ -121,6 +132,7 @@ For a dialect that enables loops, test:
 - normal loop execution;
 - zero iterations;
 - mutation of a loop variable;
+- parenthesized and unparenthesized `while` conditions when both are intended to remain valid;
 - nested loops if they are supported by the intended dialect;
 - malformed loop syntax;
 - compiler/interpreter parity when both backends are exposed.
@@ -128,6 +140,7 @@ For a dialect that enables loops, test:
 ## Common mistakes
 
 - Adding `Loops` without the variable and comparison modules required by the loop body.
+- Assuming `while` requires a parenthesized condition.
 - Forgetting to update the loop variable.
 - Using loops in a restricted formula DSL when a simpler expression would be enough.
 - Testing only the happy path and missing zero-iteration behavior.
