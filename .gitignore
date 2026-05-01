@@ -37,4 +37,3 @@ benchmark-report.html
 node_modules/
 docs/.vitepress/dist/
 docs/.vitepress/cache/
-package-lock.json
