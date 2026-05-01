@@ -50,11 +50,13 @@ For quick local work, `dotnet build` from the repository root may also work, but
 
 For documentation-only changes, tests may not be necessary. For code, module, dialect or runtime changes, run the relevant test projects:
 
-```bash
+```bash ci-run=false
 dotnet test UniversalToolchain/Tests/Tests.csproj -c Release --no-build
 dotnet test UniversalToolchain/UniversalToolchain.Modules.Tests/UniversalToolchain.Modules.Tests.csproj -c Release --no-build
 dotnet test UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolchain.Dialects.Tests.csproj -c Release --no-build
 ```
+
+The Markdown command runner intentionally skips this block because it is a local validation checklist, not a small documentation smoke command. The main `.NET CI` workflow already runs the full solution test step with `dotnet test UniversalToolchain/Wist.sln -c Release --no-build` before Markdown command validation.
 
 ### 4. Install documentation dependencies
 
