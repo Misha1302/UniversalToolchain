@@ -31,6 +31,7 @@
 
     --vp-code-color: #18191f;
     --vp-code-bg: #ede9e2;
+    --vp-code-block-bg: #f4f1ea;
 
     --vp-font-family-base:
         Inter,
@@ -72,6 +73,7 @@
 
     --vp-code-color: #f1f1f3;
     --vp-code-bg: #23242b;
+    --vp-code-block-bg: #08090c;
 }
 
 /* Remove product landing components. */
@@ -215,12 +217,17 @@
 .vp-doc div[class*="language-"] {
     border: 1px solid var(--vp-c-divider);
     border-radius: 8px;
-    background: #15161a;
+    background: var(--vp-code-block-bg);
     box-shadow: none;
 }
 
-.dark .vp-doc div[class*="language-"] {
-    background: #08090c;
+.vp-doc div[class*="language-"]::before {
+    color: var(--vp-c-text-3);
+    opacity: 0.75;
+}
+
+.vp-doc div[class*="language-"] pre {
+    background: transparent !important;
 }
 
 .vp-doc code {
@@ -235,6 +242,10 @@
     background: transparent;
     color: inherit;
     padding: 0;
+}
+
+.dark .vp-doc div[class*="language-"] {
+    border-color: var(--vp-c-divider);
 }
 
 /* Notes and quotes. */
