@@ -144,7 +144,7 @@ export default defineConfig({
         ],
 
         editLink: {
-            pattern: 'https://github.com/Misha1302/Wist2/edit/docs-site/docs/:path',
+            pattern: 'https://github.com/Misha1302/Wist2/edit/master/docs/:path',
             text: 'Edit this page on GitHub'
         },
 
