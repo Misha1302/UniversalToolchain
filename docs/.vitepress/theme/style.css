@@ -362,6 +362,54 @@
     border-radius: 8px !important;
 }
 
+/* Header anchors. */
+.vp-doc h1,
+.vp-doc h2,
+.vp-doc h3,
+.vp-doc h4,
+.vp-doc h5,
+.vp-doc h6 {
+    position: relative;
+}
+
+.vp-doc h1 > .header-anchor,
+.vp-doc h2 > .header-anchor,
+.vp-doc h3 > .header-anchor,
+.vp-doc h4 > .header-anchor,
+.vp-doc h5 > .header-anchor,
+.vp-doc h6 > .header-anchor {
+    float: none !important;
+    position: absolute;
+    left: -0.9em;
+    top: 50%;
+    transform: translateY(-50%);
+    margin: 0 !important;
+    padding: 0 0.2em 0 0;
+    line-height: 1;
+    font-size: 0.9em;
+    color: var(--vp-c-brand-1);
+    text-decoration: none;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease;
+}
+
+.vp-doc h1:hover > .header-anchor,
+.vp-doc h2:hover > .header-anchor,
+.vp-doc h3:hover > .header-anchor,
+.vp-doc h4:hover > .header-anchor,
+.vp-doc h5:hover > .header-anchor,
+.vp-doc h6:hover > .header-anchor,
+.vp-doc h1:focus-within > .header-anchor,
+.vp-doc h2:focus-within > .header-anchor,
+.vp-doc h3:focus-within > .header-anchor,
+.vp-doc h4:focus-within > .header-anchor,
+.vp-doc h5:focus-within > .header-anchor,
+.vp-doc h6:focus-within > .header-anchor {
+    opacity: 1;
+    pointer-events: auto;
+}
+
 @media (max-width: 780px) {
     .vp-doc {
         font-size: 15.8px;
