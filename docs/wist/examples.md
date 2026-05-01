@@ -135,7 +135,7 @@ Program:
 let sum = 0
 let i = 1
 
-while (i <= 5) (
+while i <= 5 (
     sum = sum + i
     i = i + 1
 )
@@ -148,6 +148,8 @@ Expected result:
 ```text
 15
 ```
+
+The `while` condition does not have to be parenthesized when it parses as one expression node. The loop body remains grouped because it contains multiple operations.
 
 Typical modules:
 
@@ -177,7 +179,7 @@ Expected result:
 15
 ```
 
-This is the shipped `full-default` example shape. It is useful for validating a broader Wist dialect over both interpreter and compiler modes.
+This is the shipped `full-default` example shape. It is useful for validating a broader Wist dialect over both interpreter and compiler modes. The current `for` parser expects initialization, condition, update and body to be grouped.
 
 ## Nested loop aggregate
 
@@ -187,9 +189,9 @@ Program:
 let total = 0
 let outer = 1
 
-while (outer <= 3) (
+while outer <= 3 (
     let inner = 1
-    while (inner <= 2) (
+    while inner <= 2 (
         total = total + (outer * inner)
         inner = inner + 1
     )
@@ -242,6 +244,7 @@ Use the smallest example that proves the concept:
 - Using a broad full-default example to document a restricted DSL.
 - Showing interop in user-facing formula documentation.
 - Using loop examples before explaining variables and comparisons.
+- Treating parenthesized `while` conditions as the only valid form.
 - Forgetting to mention which dialect or modules make an example valid.
 - Treating examples as complete language specification.
 
