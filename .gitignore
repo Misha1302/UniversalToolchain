@@ -37,3 +37,4 @@ benchmark-report.html
 node_modules/
 docs/.vitepress/dist/
 docs/.vitepress/cache/
+project_code_bundle.md
