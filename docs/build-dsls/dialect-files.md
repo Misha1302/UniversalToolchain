@@ -19,26 +19,44 @@ A Wist dialect file uses the `.wistdialect` extension. It is compiled before pro
 dialect source → dialect compilation → build plan → manifest-backed runtime selection → host creation → execution
 ```
 
-A typical dialect file contains:
+A parser-tested v1 dialect file uses one directive per line:
 
 ```text
 dialect FullDefault
-use Arithmetic,BooleanConditions,Comments,ComparisonConditions,Conditions,CSharpInterop,Equality,Identifier,Labels,Loops,Numbers,Scopes,SemicolonAsNewLine,Variables,Whitespaces
-backend cil,interpreter
-enable BooleanOptimization
-enable ComparisonIntrinsicOptimization
+use Arithmetic
+use BooleanConditions
+use Comments
+use ComparisonConditions
+use Conditions
+use CSharpInterop
+use Equality
+use Identifier
+use Labels
+use Loops
+use Numbers
+use Scopes
+use SemicolonAsNewLine
+use Variables
+use Whitespaces
+backend cil enable
+backend interpreter enable
+enable optimizer BooleanOptimization for any
+enable optimizer ComparisonIntrinsicOptimization for any
 security trusted
-capability unsafe-interop
+capability interop-enabled = true
 ```
 
 ## Minimal example
 
-The smallest shipped arithmetic dialect is:
+A minimal arithmetic dialect looks like this in the current parser-tested v1 form:
 
 ```text
 dialect MinimalArithmetic
-use Arithmetic,Numbers,Scopes,Whitespaces
-backend interpreter
+use Arithmetic
+use Numbers
+use Scopes
+use Whitespaces
+backend interpreter enable
 ```
 
 This dialect can run a program such as:
@@ -67,30 +85,40 @@ The name is used in diagnostics and composition output.
 
 ### `use`
 
-Selects modules:
+Selects one module:
 
 ```text
-use Arithmetic,Numbers,Scopes,Whitespaces
+use Arithmetic
+```
+
+Use multiple `use` lines to select multiple modules:
+
+```text
+use Arithmetic
+use Numbers
+use Scopes
+use Whitespaces
 ```
 
 A module must be selected for its syntax and runtime behavior to exist. For example, arithmetic syntax needs arithmetic and number support; variable syntax needs variables and identifier support.
 
 ### `exclude`
 
-Removes selected modules from a composition:
+Removes one selected module from a composition:
 
 ```text
-exclude CSharpInterop,Identifier,InternalPreprocessorLexemes,Labels,Loops,NativeTypes,ParametersSetter,SemicolonAsNewLine,Variables
+exclude CSharpInterop
 ```
 
-The shipped `restricted-sandbox` example uses this to keep the runtime surface narrower.
+Use multiple `exclude` lines for multiple modules.
 
 ### `backend`
 
-Selects execution backends:
+Enables or disables one execution backend:
 
 ```text
-backend cil,interpreter
+backend cil enable
+backend interpreter enable
 ```
 
 Currently documented user-facing modes are:
@@ -98,20 +126,29 @@ Currently documented user-facing modes are:
 - `compiler`, which maps to the CIL backend when the dialect exposes `cil`;
 - `interpreter`, which runs through the interpreter backend when exposed.
 
-Some dialect examples expose both `cil` and `interpreter`. Others expose only one backend.
+Some dialects expose both `cil` and `interpreter`. Others expose only one backend.
 
-### `enable`
+### `enable optimizer` / `disable optimizer`
 
-Enables optimizers:
+Enables or disables an optimizer for a backend selector:
 
 ```text
-enable ArithmeticOptimization
-enable EGraphOptimization
-enable NativeCilOptimization
-enable NativeTypesOptimization
+enable optimizer ArithmeticOptimization for any
+disable optimizer AggressiveInline for interpreter
 ```
 
-Only enable optimizers that are supported by the selected modules and backend path.
+Use `any` or `*` for all applicable backends, or a specific backend id such as `cil` or `interpreter`.
+
+### `allow intrinsic` / `forbid intrinsic`
+
+Allows or forbids an intrinsic for a backend selector:
+
+```text
+allow intrinsic "add_i32" for any
+forbid intrinsic "reflect-call" for cil
+```
+
+This is a dialect-level intrinsic policy directive. It should match backend capability expectations.
 
 ### `security`
 
@@ -127,14 +164,14 @@ or:
 security trusted
 ```
 
-A restricted dialect is a composition constraint, not a hardened sandbox. Use process and environment isolation for untrusted code.
+A restricted dialect is a composition constraint, not a process isolation guarantee.
 
 ### `capability`
 
-Declares a capability marker:
+Declares a boolean capability marker:
 
 ```text
-capability unsafe-interop
+capability interop-enabled = false
 ```
 
 Capabilities explain selected composition. They must not be treated as hidden runtime activation mechanisms.
@@ -151,7 +188,7 @@ Examples are located under `UniversalToolchain/Dialects/examples/wist`:
 | `minimal-arithmetic` | Smallest interpreter arithmetic profile. |
 | `minimal-arithmetic-native` | Smallest native arithmetic profile over `cil`. |
 | `pricing-restricted` | Composition-constrained pricing profile with a restricted runtime surface. |
-| `restricted-sandbox` | Composition-constrained profile; not a hardened sandbox guarantee. |
+| `restricted-sandbox` | Composition-constrained profile; not an isolation guarantee. |
 
 ## How it fits into the pipeline
 
@@ -161,8 +198,9 @@ Examples are located under `UniversalToolchain/Dialects/examples/wist`:
 
 - Do not document rules as an available public runtime feature. `rule-schema`, `rule-run`, raw-source RuleSet MVP parsing and `RuleDeclarationsModule` are temporarily removed.
 - Keep dialect files explicit. A future reader should be able to see which syntax and backend paths are available.
-- Do not treat `restricted-sandbox` as a real security sandbox.
+- Do not treat `restricted-sandbox` as a process isolation guarantee.
 - Do not add raw-source parsing workarounds for missing language features. Syntax must be owned by lexer/parser/AST/module code.
+- Prefer the parser-tested v1 directive shape documented in [Dialect Reference](/reference/dialect-reference).
 
 ## Next
 
