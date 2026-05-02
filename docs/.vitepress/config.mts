@@ -53,13 +53,14 @@ const bookSidebar = [
             { text: '4.2 Choose an Extension Type', link: '/write-modules/choose-extension-type' },
             { text: '4.3 Create Your First Module', link: '/write-modules/create-your-first-module' },
             { text: '4.4 Runtime Manifests', link: '/write-modules/runtime-manifests' },
-            { text: '4.5 Frontend Module', link: '/write-modules/frontend-module' },
-            { text: '4.6 Parser Extension', link: '/write-modules/parser-extension' },
-            { text: '4.7 AST Nodes', link: '/write-modules/ast-nodes' },
-            { text: '4.8 Bytecode Generation', link: '/write-modules/bytecode-generation' },
-            { text: '4.9 Semantic Tags', link: '/write-modules/semantic-tags' },
-            { text: '4.10 Ordering and Priority', link: '/write-modules/ordering-and-priority' },
-            { text: '4.11 Testing a Module', link: '/write-modules/testing-module' }
+            { text: '4.5 Writing Backends', link: '/write-modules/writing-backends' },
+            { text: '4.6 Frontend Module', link: '/write-modules/frontend-module' },
+            { text: '4.7 Parser Extension', link: '/write-modules/parser-extension' },
+            { text: '4.8 AST Nodes', link: '/write-modules/ast-nodes' },
+            { text: '4.9 Bytecode Generation', link: '/write-modules/bytecode-generation' },
+            { text: '4.10 Semantic Tags', link: '/write-modules/semantic-tags' },
+            { text: '4.11 Ordering and Priority', link: '/write-modules/ordering-and-priority' },
+            { text: '4.12 Testing a Module', link: '/write-modules/testing-module' }
         ]
     },
     {

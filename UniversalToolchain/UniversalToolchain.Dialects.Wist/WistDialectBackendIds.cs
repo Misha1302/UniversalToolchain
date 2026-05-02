@@ -3,7 +3,8 @@ using UniversalToolchain.Dialects.Abstractions;
 namespace UniversalToolchain.Dialects.Wist;
 
 /// <summary>
-///     Stable backend identifiers used by the Wist runtime integration.
+///     Stable identifiers for backends shipped by the Wist integration package.
+///     This is not a global backend registry; external backends are identified by their runtime manifests.
 /// </summary>
 public static class WistDialectBackendIds
 {

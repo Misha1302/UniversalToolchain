@@ -12,7 +12,7 @@ using UniversalToolchain.Dialects.Integration;
 
 namespace UniversalToolchain.Dialects.Wist;
 
-internal abstract class DialectBackendRuntimeRegistrarBase<TCompilationOutput> : IDialectBackendRuntimeRegistrar
+public abstract class DialectBackendRuntimeRegistrarBase<TCompilationOutput> : IDialectBackendRuntimeRegistrar
 {
     public abstract DialectBackendId BackendId { get; }
 

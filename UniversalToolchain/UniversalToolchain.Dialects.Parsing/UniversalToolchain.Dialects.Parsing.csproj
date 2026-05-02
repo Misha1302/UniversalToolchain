@@ -12,8 +12,4 @@
         <ProjectReference Include="..\UniversalToolchain.Dialects.Abstractions\UniversalToolchain.Dialects.Abstractions.csproj"/>
     </ItemGroup>
 
-    <ItemGroup>
-        <Compile Remove="DialectBackendTarget.cs"/>
-    </ItemGroup>
-
 </Project>
