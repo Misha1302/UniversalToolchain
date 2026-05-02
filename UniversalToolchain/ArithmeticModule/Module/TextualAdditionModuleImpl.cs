@@ -8,7 +8,7 @@ public class TextualAdditionModuleImpl : IFrontendCoreModule
 {
     private static readonly IReadOnlyList<LexemeRegistration> _lexemeRegistrations =
     [
-        new(@"plus", "TextualAddition")
+        new(@"\bplus\b", "TextualAddition", Priority: 110f)
     ];
 
     private static readonly IReadOnlyList<NodeCreatorRegistration> _nodeCreatorRegistrations =
