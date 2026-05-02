@@ -5,9 +5,18 @@ description: Introduce language module development.
 
 # Write Modules
 
-A module is the normal way to add a language feature to Wist or to a UniversalToolchain-based DSL. This page gives the lifecycle for module authors without pretending that every extension point is already fully formalized.
+A module is the normal way to add a language feature to Wist or to a UniversalToolchain-based DSL. This section gives the lifecycle for module authors without pretending that every extension point is already fully formalized.
 
-## When to read this page
+## Recommended path
+
+If you are new to module authoring, do not start from the reference pages. Use this order:
+
+1. [Choose an Extension Type](/write-modules/choose-extension-type) — decide whether you need a module, a dialect, an optimizer, an intrinsic, or backend work.
+2. [Create Your First Module](/write-modules/create-your-first-module) — build the small `TextualAddition` module from syntax idea to tests.
+3. [Frontend Module](/write-modules/frontend-module) — read the contract shape after seeing the end-to-end example.
+4. [Testing a Module](/write-modules/testing-module) — expand the tutorial tests into a full module test matrix.
+
+## When to read this section
 
 Read this when existing modules are not enough and you need to add syntax, AST translation, bytecode/AIR behavior or backend support.
 
@@ -22,7 +31,7 @@ Understand the expected path from syntax idea to tested language feature.
 - Build the repository and run relevant tests before changing behavior.
 - Review `docs/guides/module-authoring.md` and `docs/contracts/module-contracts.md` before implementing a real module.
 
-## Steps
+## Lifecycle
 
 ### 1. Define the feature boundary
 
@@ -30,6 +39,7 @@ A module should own one language feature or one tightly scoped set of related fe
 
 - `Numbers`
 - `Arithmetic`
+- `TextualAddition`
 - `Identifier`
 - `Variables`
 - `Scopes`
@@ -139,4 +149,4 @@ This is why module work requires both implementation tests and architecture disc
 
 ## Next
 
-Continue with the detailed [Module Authoring Guide](/guides/module-authoring) and [Module Contracts](/contracts/module-contracts), then read the internals pages for bytecode, AIR, backends and semantic parity.
+Continue with [Choose an Extension Type](/write-modules/choose-extension-type) and [Create Your First Module](/write-modules/create-your-first-module), then use [Module Authoring Guide](/guides/module-authoring) and [Module Contracts](/contracts/module-contracts) for deeper review.
