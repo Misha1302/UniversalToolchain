@@ -37,8 +37,11 @@ Dialect example:
 
 ```text
 dialect MinimalArithmetic
-use Arithmetic,Numbers,Scopes,Whitespaces
-backend interpreter
+use Arithmetic
+use Numbers
+use Scopes
+use Whitespaces
+backend interpreter enable
 ```
 
 Run example:
@@ -60,11 +63,15 @@ Dialect example:
 
 ```text
 dialect MinimalArithmeticNative
-use Arithmetic,Numbers,Scopes,Whitespaces,NativeTypes
-backend cil
-enable ArithmeticOptimization
-enable NativeCilOptimization
-enable NativeTypesOptimization
+use Arithmetic
+use Numbers
+use Scopes
+use Whitespaces
+use NativeTypes
+backend cil enable
+enable optimizer ArithmeticOptimization for cil
+enable optimizer NativeCilOptimization for cil
+enable optimizer NativeTypesOptimization for cil
 ```
 
 Run example:
@@ -84,7 +91,8 @@ Use both backends when you need:
 Dialect example:
 
 ```text
-backend cil,interpreter
+backend cil enable
+backend interpreter enable
 ```
 
 When both are enabled, tests should run the same source through both modes and compare observable results.
@@ -100,7 +108,7 @@ When both are enabled, tests should run the same source through both modes and c
 | Restricted user-authored formulas | usually `compiler` or `interpreter`, but only with a narrow module set |
 | Backend feature development | both, with explicit parity and negative tests |
 
-The backend choice is not a substitute for language restriction. A CIL-backed DSL can still be too broad if the dialect selects unsafe or unnecessary modules.
+The backend choice is not a substitute for language restriction. A CIL-backed DSL can still be too broad if the dialect selects unnecessary modules.
 
 ## Programmatic entry point
 
@@ -158,6 +166,7 @@ Parity does not mean every backend must support every dialect. A dialect may int
 - Treating the interpreter as a fallback when the selected backend fails.
 - Adding backend-specific intrinsics to a general interpreter surface.
 - Comparing benchmark numbers before separating compilation time from execution time.
+- Copying older shorthand backend directives such as `backend cil,interpreter` instead of parser-tested v1 directives.
 
 ## Next
 
