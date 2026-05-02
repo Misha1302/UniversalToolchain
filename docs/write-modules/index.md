@@ -13,8 +13,9 @@ If you are new to module authoring, do not start from the reference pages. Use t
 
 1. [Choose an Extension Type](/write-modules/choose-extension-type) — decide whether you need a module, a dialect, an optimizer, an intrinsic, or backend work.
 2. [Create Your First Module](/write-modules/create-your-first-module) — build the small `TextualAddition` module from syntax idea to tests.
-3. [Frontend Module](/write-modules/frontend-module) — read the contract shape after seeing the end-to-end example.
-4. [Testing a Module](/write-modules/testing-module) — expand the tutorial tests into a full module test matrix.
+3. [Runtime Manifests](/write-modules/runtime-manifests) — understand how module aliases become visible to dialect runtime composition without hand-written JSON.
+4. [Frontend Module](/write-modules/frontend-module) — read the contract shape after seeing the end-to-end example.
+5. [Testing a Module](/write-modules/testing-module) — expand the tutorial tests into a full module test matrix.
 
 ## When to read this section
 
@@ -108,6 +109,8 @@ The module must be selectable through dialect files. This usually requires modul
 use MyFeature,Numbers,Scopes,Whitespaces
 ```
 
+Read [Runtime Manifests](/write-modules/runtime-manifests) before creating new JSON files by hand. Normal module authoring relies on generated manifests.
+
 ### 8. Test the module
 
 At minimum, add:
@@ -146,7 +149,8 @@ This is why module work requires both implementation tests and architecture disc
 - Using global mutable state for feature coordination.
 - Treating capabilities as behavior activation.
 - Reintroducing rule declarations before the AST-owned rule declaration rewrite.
+- Hand-writing runtime manifest JSON instead of relying on generated manifests for normal module authoring.
 
 ## Next
 
-Continue with [Choose an Extension Type](/write-modules/choose-extension-type) and [Create Your First Module](/write-modules/create-your-first-module), then use [Module Authoring Guide](/guides/module-authoring) and [Module Contracts](/contracts/module-contracts) for deeper review.
+Continue with [Choose an Extension Type](/write-modules/choose-extension-type), [Create Your First Module](/write-modules/create-your-first-module), and [Runtime Manifests](/write-modules/runtime-manifests), then use [Module Authoring Guide](/guides/module-authoring) and [Module Contracts](/contracts/module-contracts) for deeper review.
