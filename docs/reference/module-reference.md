@@ -7,7 +7,7 @@ description: List built-in modules and their responsibilities.
 
 This page lists the currently documented Wist frontend module aliases and their broad responsibilities.
 
-For module authoring guidance, read [Writing Modules](/write-modules/). This page is a reference index, not a tutorial.
+For module authoring guidance, read [Writing Modules](/write-modules/). This page is a reference index, not a tutorial. For a complete beginner-friendly walkthrough, read [Create Your First Module](/write-modules/create-your-first-module).
 
 ## Alias source
 
@@ -39,6 +39,7 @@ The following aliases are used by the current Wist module coverage tests and mod
 | `Numbers` | numeric literal lexemes and number AST translation | `NumbersModuleImpl` |
 | `Identifier` | identifier lexemes and identifier handling | identifier module |
 | `Arithmetic` | arithmetic operator lexemes, parser creators and visitors | `ArithmeticModuleImpl` |
+| `TextualAddition` | textual `plus` operator that lowers to arithmetic addition | `TextualAdditionModuleImpl` |
 | `Equality` | equality operations | equality module |
 | `Conditions` | `if` / `elif` / `else` conditional syntax | `ConditionsModuleImpl` |
 | `ComparisonConditions` | comparison operations such as `<`, `<=`, `>`, `>=` | comparison condition module |
@@ -102,6 +103,7 @@ Examples:
 - `Variables` usually requires `Identifier`.
 - `Loops` usually requires variables and comparisons to be useful.
 - `Conditions` often requires equality or comparison modules depending on the condition expression.
+- `TextualAddition` is useful with `Arithmetic`, `Numbers`, `Scopes` and `Whitespaces` in the first-module tutorial.
 - `CSharpInterop` belongs to trusted/full profiles, not restricted user-facing formula DSLs.
 
 Dialect authors are responsible for selecting coherent module sets and testing omitted syntax.
@@ -113,5 +115,6 @@ This page is a curated reference, not an automatically generated catalog. When a
 ## Related pages
 
 - [Writing Modules](/write-modules/)
+- [Create Your First Module](/write-modules/create-your-first-module)
 - [Dialect Reference](/reference/dialect-reference)
 - [Testing a DSL](/build-dsls/testing-dsl)
