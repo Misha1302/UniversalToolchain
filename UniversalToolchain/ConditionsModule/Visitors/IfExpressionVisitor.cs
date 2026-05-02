@@ -83,14 +83,10 @@ public sealed class IfExpressionVisitor : IAstVisitor
 
         var branchType = context.Stack[^1];
         if (resultType == null)
-        {
             resultType = branchType;
-        }
         else if (resultType != branchType)
-        {
             Thrower.InvalidOpEx(
                 $"IfExpression branch types must match. Expected '{resultType.FullName}', actual '{branchType.FullName}'.");
-        }
 
         il.SetValueToLocal(resultLocalName, branchType);
     }

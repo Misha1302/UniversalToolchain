@@ -1,5 +1,4 @@
 using UniversalToolchain.Dialects.Abstractions;
-using UniversalToolchain.Dialects.Integration;
 
 namespace UniversalToolchain.Dialects.Tests;
 
@@ -109,9 +108,8 @@ public class DialectCompositionExplanationProjectorTests
         });
     }
 
-    private static DialectBuildPlan CreateBuildPlan(IReadOnlyList<string> orderedModules)
-    {
-        return new DialectBuildPlan(
+    private static DialectBuildPlan CreateBuildPlan(IReadOnlyList<string> orderedModules) =>
+        new(
             "Demo",
             "1.0.0",
             orderedModules,
@@ -122,17 +120,10 @@ public class DialectCompositionExplanationProjectorTests
             SecurityProfile.Restricted,
             [new KeyValuePair<string, bool>("unsafe-interop", false)],
             new DialectValidationResult());
-    }
 
-    private static RuntimeComponentManifestEntry Entry(string alias)
-    {
-        return new RuntimeComponentManifestEntry(RuntimeComponentKind.FrontendModule, alias, [], new RuntimeComponentId(alias + "-id"), "Assembly");
-    }
+    private static RuntimeComponentManifestEntry Entry(string alias) => new(RuntimeComponentKind.FrontendModule, alias, [], new RuntimeComponentId(alias + "-id"), "Assembly");
 
-    private static DialectDiagnostic Diagnostic(string code)
-    {
-        return new DialectDiagnostic(code, $"{code}-message", DialectDiagnosticSeverity.Warning);
-    }
+    private static DialectDiagnostic Diagnostic(string code) => new(code, $"{code}-message", DialectDiagnosticSeverity.Warning);
 
     private sealed class UnknownRuntimeSelection(bool isResolved, IReadOnlyList<DialectDiagnostic> diagnostics) : IDialectRuntimeSelection
     {

@@ -1,5 +1,3 @@
-using UniversalToolchain.Dialects.Integration;
-
 namespace Tests.Intrinsics;
 
 [TestFixture]

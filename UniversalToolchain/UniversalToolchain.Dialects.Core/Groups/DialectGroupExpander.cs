@@ -48,12 +48,10 @@ public sealed class DialectGroupExpander
             if (capabilityMap.TryGetValue(capability.Key, out var existing))
             {
                 if (existing != capability.Value)
-                {
                     diagnostics.Add(new DialectDiagnostic(
                         "G001",
                         $"Dialect group '{group.Alias}' conflicts with capability '{capability.Key}'.",
                         DialectDiagnosticSeverity.Error));
-                }
 
                 continue;
             }

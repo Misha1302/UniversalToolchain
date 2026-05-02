@@ -31,8 +31,7 @@ public class DialectIntrinsicPolicyCompilerTypedCompatibilityTests
         new(
             new PassthroughCompiler(),
             [],
-            forbiddenIntrinsics,
-            false);
+            forbiddenIntrinsics);
 
     private static Instruction CreateTypedIntrinsic(
         IntrinsicSymbol symbol,

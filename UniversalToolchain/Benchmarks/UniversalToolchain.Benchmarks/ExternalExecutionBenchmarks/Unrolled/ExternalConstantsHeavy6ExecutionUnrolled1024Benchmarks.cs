@@ -1,6 +1,5 @@
 using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Columns;
 using BenchmarkDotNet.Order;
 using DynamicExpresso;
 using DynamicMethodCalling.Core;
@@ -17,10 +16,10 @@ public class ExternalConstantsHeavy6ExecutionUnrolled1024Benchmarks : ExternalAr
     private const string WistFormula = "(A * 1.5 + B * 2.0 - C * 3.0 + D / 4.0 + E / 5.0) * 0.75 + F";
     private const string NCalcFormula = "([A] * 1.5 + [B] * 2.0 - [C] * 3.0 + [D] / 4.0 + [E] / 5.0) * 0.75 + [F]";
     private const string DynamicExpressoFormula = "(A * 1.5 + B * 2.0 - C * 3.0 + D / 4.0 + E / 5.0) * 0.75 + F";
+    private Func<double, double, double, double, double, double, double> _dynamicExpressoDelegate = null!;
 
     private ExternalBenchContext6Unrolled _nCalcContext = null!;
     private Func<ExternalBenchContext6Unrolled, double> _nCalcLambda = null!;
-    private Func<double, double, double, double, double, double, double> _dynamicExpressoDelegate = null!;
     private DynamicMethodInvoker<double, double, double, double, double, double, double> _wistFastInvoker = null!;
 
     [GlobalSetup]
@@ -18521,12 +18520,12 @@ public class ExternalConstantsHeavy6ExecutionUnrolled1024Benchmarks : ExternalAr
 
     private double NCalcAt(int index)
     {
-            _nCalcContext.A = A[index];
-            _nCalcContext.B = B[index];
-            _nCalcContext.C = C[index];
-            _nCalcContext.D = D[index];
-            _nCalcContext.E = E[index];
-            _nCalcContext.F = F[index];
+        _nCalcContext.A = A[index];
+        _nCalcContext.B = B[index];
+        _nCalcContext.C = C[index];
+        _nCalcContext.D = D[index];
+        _nCalcContext.E = E[index];
+        _nCalcContext.F = F[index];
         return _nCalcLambda(_nCalcContext);
     }
 

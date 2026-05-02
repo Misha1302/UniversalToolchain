@@ -1,6 +1,5 @@
 using BasicCore.Contracts;
 using UniversalToolchain.Dialects.Abstractions;
-using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
 
 namespace UniversalToolchain.Dialects.Tests.RuntimeLoading;
@@ -26,14 +25,12 @@ public sealed class IntrinsicSemanticCompositionGuardTests
     }
 
 
-    private static WistDialectServiceProviderFactory CreateFactory(IEnumerable<IDialectBackendRuntimeRegistrar> backendRegistrars)
-    {
-        return new WistDialectServiceProviderFactory(
+    private static WistDialectServiceProviderFactory CreateFactory(IEnumerable<IDialectBackendRuntimeRegistrar> backendRegistrars) =>
+        new(
             new StaticBackendRegistrarResolver(backendRegistrars),
             new IntrinsicSemanticBootstrapPlanBuilder(),
             new IntrinsicSemanticBootstrapPreProviderValidator(),
             new IntrinsicSemanticBootstrapRuntimeValidator());
-    }
 
     private static IntrinsicSemanticDescriptor CreateDescriptor(string @namespace, string name) =>
         new()
@@ -82,9 +79,6 @@ public sealed class IntrinsicSemanticCompositionGuardTests
             static x => x.BackendId,
             static x => x);
 
-        public IDialectBackendRuntimeRegistrar Resolve(RuntimeComponentManifestEntry backendEntry)
-        {
-            return _registrarsById[new DialectBackendId(backendEntry.CanonicalAlias)];
-        }
+        public IDialectBackendRuntimeRegistrar Resolve(RuntimeComponentManifestEntry backendEntry) => _registrarsById[new DialectBackendId(backendEntry.CanonicalAlias)];
     }
 }

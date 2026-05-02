@@ -37,5 +37,4 @@ public static class AbstractIrExtensions
         air.CallCSharp(ExternalRuntimeMethodDescriptors.LoadEnvironmentDescriptor);
         air.CallCSharp(ExternalRuntimeMethodDescriptors.CreateStoreExternalMethod(valueType));
     }
-
 }

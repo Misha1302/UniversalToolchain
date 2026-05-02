@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
 
 namespace Tests.Infrastructure;

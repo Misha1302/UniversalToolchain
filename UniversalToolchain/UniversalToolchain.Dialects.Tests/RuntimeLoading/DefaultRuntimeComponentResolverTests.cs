@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Reflection;
 using UniversalToolchain.Dialects.Abstractions;
-using UniversalToolchain.Dialects.Integration;
 
 namespace UniversalToolchain.Dialects.Tests.RuntimeLoading;
 
@@ -367,16 +366,14 @@ public class DefaultRuntimeComponentResolverTests
         RuntimeComponentKind kind,
         string canonicalAlias,
         string assemblySimpleName,
-        Type activationType)
-    {
-        return new RuntimeComponentManifestEntry(
+        Type activationType) =>
+        new(
             kind,
             canonicalAlias,
             [],
             RuntimeComponentIdFactory.Create(kind, canonicalAlias),
             assemblySimpleName,
             new RuntimeComponentActivationInfo(activationType.FullName!));
-    }
 
     [DialectRuntimeExport("FrontendModule", ResolverExportForCachingAlias)]
     private sealed class ResolverExportForCaching;

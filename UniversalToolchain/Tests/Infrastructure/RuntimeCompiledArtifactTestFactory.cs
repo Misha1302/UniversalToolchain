@@ -239,6 +239,19 @@ internal static class RuntimeCompiledArtifactTestFactory
         host.GetCore("interpreter") as BasicCoreImpl<IAbstractIR>
         ?? Thrower.InvalidOpEx<BasicCoreImpl<IAbstractIR>>("Interpreter core must be BasicCoreImpl<IAbstractIR>.");
 
+    private static int LoadExternalSlotsThroughProvider(IExecutionEnvironment environment, int unusedFirstArgument, int unusedSecondArgument)
+    {
+        environment = environment.ArgNotNull();
+
+        var provider = (ExternalRuntimeCallProvider)environment.GetRequiredProvider(typeof(ExternalRuntimeCallProvider));
+        var loadedEnvironment = provider.LoadEnvironment();
+
+        var first = ExternalRuntimeCalls.LoadExternal<int>(loadedEnvironment, 0);
+        var second = ExternalRuntimeCalls.LoadExternal<int>(loadedEnvironment, 1);
+
+        return first * 10 + second;
+    }
+
     private sealed class DynamicMethodExecutor : IExecutor<DynamicMethod>
     {
         public object? Execute(DynamicMethod compilation, IExecutionEnvironment environment)
@@ -251,18 +264,5 @@ internal static class RuntimeCompiledArtifactTestFactory
 
             return compilation.Invoke(null, args);
         }
-    }
-
-    private static int LoadExternalSlotsThroughProvider(IExecutionEnvironment environment, int unusedFirstArgument, int unusedSecondArgument)
-    {
-        environment = environment.ArgNotNull();
-
-        var provider = (ExternalRuntimeCallProvider)environment.GetRequiredProvider(typeof(ExternalRuntimeCallProvider));
-        var loadedEnvironment = provider.LoadEnvironment();
-
-        var first = ExternalRuntimeCalls.LoadExternal<int>(loadedEnvironment, 0);
-        var second = ExternalRuntimeCalls.LoadExternal<int>(loadedEnvironment, 1);
-
-        return first * 10 + second;
     }
 }

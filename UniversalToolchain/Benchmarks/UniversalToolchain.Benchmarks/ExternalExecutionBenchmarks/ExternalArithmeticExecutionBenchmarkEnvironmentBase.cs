@@ -1,7 +1,6 @@
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
-using DynamicMethodCalling.Core;
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Integration;
@@ -15,8 +14,8 @@ public abstract class ExternalArithmeticExecutionBenchmarkEnvironmentBase
     protected const int DataSize = 4096;
 
     private WistDialectExecutionHost? _host;
-    private ServiceProvider? _provider;
     private int _index;
+    private ServiceProvider? _provider;
 
     protected double[] A = [];
     protected double[] B = [];
@@ -72,10 +71,8 @@ public abstract class ExternalArithmeticExecutionBenchmarkEnvironmentBase
         var composition = workflow.ComposeFile(dialectFile);
 
         if (!composition.IsSuccess)
-        {
             Thrower.InvalidOpEx(
                 $"Failed to compose dialect file: {DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition))}");
-        }
 
         _host = workflow.CreateHost(composition);
     }
@@ -97,9 +94,7 @@ public abstract class ExternalArithmeticExecutionBenchmarkEnvironmentBase
         var declaredBindings = new OrderedDictionary<string, Type>();
 
         foreach (var bindingName in bindingNames)
-        {
             declaredBindings[bindingName] = typeof(double);
-        }
 
         return declaredBindings;
     }
@@ -122,11 +117,9 @@ public abstract class ExternalArithmeticExecutionBenchmarkEnvironmentBase
             if (!AreEqual(cSharpResult, dynamicExpressoResult) ||
                 !AreEqual(cSharpResult, nCalcResult) ||
                 !AreEqual(cSharpResult, wistResult))
-            {
                 Thrower.InvalidOpEx(
                     $"Result mismatch at index {index}. " +
                     $"C#: {cSharpResult}, DynamicExpresso: {dynamicExpressoResult}, NCalc: {nCalcResult}, Wist: {wistResult}.");
-            }
         }
     }
 
@@ -141,7 +134,7 @@ public abstract class ExternalArithmeticExecutionBenchmarkEnvironmentBase
     protected int NextIndex()
     {
         var i = _index;
-        _index = (i + 1) & (DataSize - 1);
+        _index = i + 1 & DataSize - 1;
         return i;
     }
 
@@ -159,8 +152,6 @@ public abstract class ExternalArithmeticExecutionBenchmarkEnvironmentBase
     private static void Fill(Random random, double[] values)
     {
         for (var i = 0; i < values.Length; i++)
-        {
             values[i] = 0.1 + random.NextDouble() * 999.9;
-        }
     }
 }

@@ -1,5 +1,3 @@
-using UniversalToolchain.Dialects.Integration;
-
 namespace UniversalToolchain.Dialects.Tests.RuntimeCatalog;
 
 public class RuntimeManifestCatalogContractTests
@@ -97,12 +95,14 @@ public class RuntimeManifestCatalogContractTests
             temp.Path,
             "preserve-activation.dialect.runtime.json",
             "Asm",
-            [new FileDialectRuntimeComponentEntry(
-                "FrontendModule",
-                "Arithmetic",
-                [],
-                "frontend.arithmetic",
-                new FileRuntimeComponentActivationEntry(" Modules.ArithmeticModule ", " Modules.ArithmeticRegistrar "))],
+            [
+                new FileDialectRuntimeComponentEntry(
+                    "FrontendModule",
+                    "Arithmetic",
+                    [],
+                    "frontend.arithmetic",
+                    new FileRuntimeComponentActivationEntry(" Modules.ArithmeticModule ", " Modules.ArithmeticRegistrar "))
+            ],
             serializer);
 
         var catalog = new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([path]), serializer);

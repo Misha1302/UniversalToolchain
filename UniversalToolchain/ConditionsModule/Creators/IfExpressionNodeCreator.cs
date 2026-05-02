@@ -29,7 +29,7 @@ public sealed class IfExpressionNodeCreator : IAstNodeCreator
         var falseExpression = ReadSingleExpression(scope, elseIndex + 1, elseIndex + 2, "if-expression false branch");
 
         var ifExpression = new AstNode(AstNodeType, ifToken.LexemeValue, [condition, trueExpression, falseExpression]);
-        var removeCount = (elseIndex + 1) - childIndex + 1;
+        var removeCount = elseIndex + 1 - childIndex + 1;
         scope.Children.RemoveRange(childIndex, removeCount);
         scope.Children.Insert(childIndex, ifExpression);
         return true;

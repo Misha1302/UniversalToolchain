@@ -1,6 +1,5 @@
 using UniversalToolchain.Capabilities.Core;
 using UniversalToolchain.Dialects.Wist;
-using UniversalToolchain.Dialects.Wist.Facade;
 
 return Parser.Default.ParseArguments<RunOptions, ReplOptions, DialectInspectOptions, DialectDemoOptions, FeaturesOptions>(args)
     .MapResult(

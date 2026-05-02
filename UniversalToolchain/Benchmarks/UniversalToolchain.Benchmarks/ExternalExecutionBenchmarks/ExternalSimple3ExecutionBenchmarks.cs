@@ -1,6 +1,5 @@
 using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Columns;
 using BenchmarkDotNet.Order;
 using DynamicExpresso;
 using DynamicMethodCalling.Core;
@@ -18,10 +17,10 @@ public class ExternalSimple3ExecutionBenchmarks : ExternalArithmeticExecutionBen
     private const string NCalcFormula = "[A] + [B] * [C] / 5.0";
     private const string DynamicExpressoFormula = "A + B * C / 5.0";
     private const int InnerCount = 4096;
+    private Func<double, double, double, double> _dynamicExpressoDelegate = null!;
 
     private ExternalBenchContext3 _nCalcContext = null!;
     private Func<ExternalBenchContext3, double> _nCalcLambda = null!;
-    private Func<double, double, double, double> _dynamicExpressoDelegate = null!;
     private DynamicMethodInvoker<double, double, double, double> _wistFastInvoker = null!;
 
     [GlobalSetup]
@@ -110,20 +109,11 @@ public class ExternalSimple3ExecutionBenchmarks : ExternalArithmeticExecutionBen
     }
 
     [MethodImpl(MethodImplOptions.NoInlining)]
-    private static double CSharp_NoInliningMethodCore(double a, double b, double c)
-    {
-        return a + b * c / 5.0;
-    }
+    private static double CSharp_NoInliningMethodCore(double a, double b, double c) => a + b * c / 5.0;
 
-    private double CSharpAt(int index)
-    {
-        return CSharp_NoInliningMethodCore(A[index], B[index], C[index]);
-    }
+    private double CSharpAt(int index) => CSharp_NoInliningMethodCore(A[index], B[index], C[index]);
 
-    private double DynamicExpressoAt(int index)
-    {
-        return _dynamicExpressoDelegate(A[index], B[index], C[index]);
-    }
+    private double DynamicExpressoAt(int index) => _dynamicExpressoDelegate(A[index], B[index], C[index]);
 
     private double NCalcAt(int index)
     {
@@ -134,8 +124,5 @@ public class ExternalSimple3ExecutionBenchmarks : ExternalArithmeticExecutionBen
         return _nCalcLambda(_nCalcContext);
     }
 
-    private double WistAt(int index)
-    {
-        return _wistFastInvoker.Invoke(A[index], B[index], C[index]);
-    }
+    private double WistAt(int index) => _wistFastInvoker.Invoke(A[index], B[index], C[index]);
 }

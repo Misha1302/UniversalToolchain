@@ -1,5 +1,5 @@
-using BasicCore.Core;
 using BasicCore.Contracts;
+using BasicCore.Core;
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
 

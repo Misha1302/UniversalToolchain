@@ -30,20 +30,14 @@ public sealed class SelectedRuntimeModuleClassifier
             var isIRModule = typeof(IIRProcessingModule).IsAssignableFrom(type);
 
             if (isFrontendModule)
-            {
                 frontendModuleTypes.Add(type);
-            }
 
             if (isIRModule)
-            {
                 irModuleTypes.Add(type);
-            }
 
             if (!isFrontendModule && !isIRModule)
-            {
                 Thrower.InvalidOpEx(
                     $"Runtime module '{moduleEntry.CanonicalAlias}' resolves to type '{DisplayName(type)}', but the type does not implement IFrontendCoreModule or IIRProcessingModule.");
-            }
         }
 
         return new SelectedRuntimeModuleClassification(frontendModuleTypes, irModuleTypes);
@@ -52,16 +46,11 @@ public sealed class SelectedRuntimeModuleClassifier
     private Type LoadModuleType(RuntimeComponentManifestEntry entry)
     {
         if (entry.Kind != RuntimeComponentKind.FrontendModule)
-        {
             Thrower.InvalidOpEx(
                 $"Runtime component '{entry.CanonicalAlias}' has kind '{RuntimeComponentKindCodec.Format(entry.Kind)}', but '{RuntimeComponentKindCodec.Format(RuntimeComponentKind.FrontendModule)}' was expected.");
-        }
 
         return _typeLoader.LoadType(entry);
     }
 
-    private static string DisplayName(Type type)
-    {
-        return type.FullName ?? type.Name;
-    }
+    private static string DisplayName(Type type) => type.FullName ?? type.Name;
 }

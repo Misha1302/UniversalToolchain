@@ -79,10 +79,7 @@ public sealed class CapabilityCatalog
         return _providers.Any(x => x.ProviderType == providerType);
     }
 
-    public bool TryGetOwningProvider(LanguageFeatureId featureId, out CapabilityProviderDescriptor descriptor)
-    {
-        return _featureOwnersById.TryGetValue(featureId, out descriptor!);
-    }
+    public bool TryGetOwningProvider(LanguageFeatureId featureId, out CapabilityProviderDescriptor descriptor) => _featureOwnersById.TryGetValue(featureId, out descriptor!);
 
     internal static CapabilityCatalog Build(
         IEnumerable<Type> runtimeComponentImplementationTypes,
@@ -115,13 +112,11 @@ public sealed class CapabilityCatalog
             providers.Add(descriptor);
 
             if (provider is ILanguageFeatureDescriptorProvider languageFeatureDescriptorProvider)
-            {
                 foreach (var feature in languageFeatureDescriptorProvider.GetLanguageFeatures() ?? [])
                 {
                     features.Add(feature);
                     featureOwnersById.TryAdd(feature.FeatureId, descriptor);
                 }
-            }
 
             if (provider is IBuiltinFunctionDescriptorProvider builtinFunctionDescriptorProvider)
                 functions.AddRange(builtinFunctionDescriptorProvider.GetFunctions() ?? []);

@@ -4,7 +4,6 @@ using CSharpInteropModule;
 using CSharpInteropModule.Module;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Capabilities.Core;
-using UniversalToolchain.Dialects.Tests.Wist;
 using UniversalToolchain.Dialects.Wist;
 
 namespace UniversalToolchain.Dialects.Tests.Capabilities;
@@ -118,9 +117,8 @@ public sealed class ModuleOwnedFeatureCatalogTests
         return services.BuildServiceProvider();
     }
 
-    private static string GetDialectPath(string dialectName)
-    {
-        return Path.GetFullPath(Path.Combine(
+    private static string GetDialectPath(string dialectName) =>
+        Path.GetFullPath(Path.Combine(
             TestContext.CurrentContext.TestDirectory,
             "..",
             "..",
@@ -131,16 +129,13 @@ public sealed class ModuleOwnedFeatureCatalogTests
             "wist",
             dialectName,
             "dialect.wistdialect"));
-    }
 
-    private static string GetRepositoryRoot()
-    {
-        return Path.GetFullPath(Path.Combine(
+    private static string GetRepositoryRoot() =>
+        Path.GetFullPath(Path.Combine(
             TestContext.CurrentContext.TestDirectory,
             "..",
             "..",
             "..",
             "..",
             ".."));
-    }
 }

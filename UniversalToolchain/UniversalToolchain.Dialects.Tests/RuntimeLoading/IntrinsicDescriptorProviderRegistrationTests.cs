@@ -4,7 +4,6 @@ using ConditionsModule.Optimizers;
 using Microsoft.Extensions.DependencyInjection;
 using NativeMathModule;
 using UniversalToolchain.Dialects.Abstractions;
-using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
 
 namespace UniversalToolchain.Dialects.Tests.RuntimeLoading;
@@ -83,14 +82,12 @@ public class IntrinsicDescriptorProviderRegistrationTests
     }
 
 
-    private static WistDialectServiceProviderFactory CreateFactory(IEnumerable<IDialectBackendRuntimeRegistrar> backendRegistrars)
-    {
-        return new WistDialectServiceProviderFactory(
+    private static WistDialectServiceProviderFactory CreateFactory(IEnumerable<IDialectBackendRuntimeRegistrar> backendRegistrars) =>
+        new(
             new StaticBackendRegistrarResolver(backendRegistrars),
             new IntrinsicSemanticBootstrapPlanBuilder(),
             new IntrinsicSemanticBootstrapPreProviderValidator(),
             new IntrinsicSemanticBootstrapRuntimeValidator());
-    }
 
     private static ServiceProvider CreateProvider(
         IReadOnlyList<Type>? frontendModules = null,
@@ -122,9 +119,6 @@ public class IntrinsicDescriptorProviderRegistrationTests
             static x => x.BackendId,
             static x => x);
 
-        public IDialectBackendRuntimeRegistrar Resolve(RuntimeComponentManifestEntry backendEntry)
-        {
-            return _registrarsById[new DialectBackendId(backendEntry.CanonicalAlias)];
-        }
+        public IDialectBackendRuntimeRegistrar Resolve(RuntimeComponentManifestEntry backendEntry) => _registrarsById[new DialectBackendId(backendEntry.CanonicalAlias)];
     }
 }

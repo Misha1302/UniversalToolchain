@@ -1,6 +1,5 @@
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
-using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
 
 namespace UniversalToolchain.Modules.Tests.ModuleCoverage;

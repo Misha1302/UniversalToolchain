@@ -1,5 +1,4 @@
 using UniversalToolchain.Dialects.Abstractions;
-using UniversalToolchain.Dialects.Integration;
 
 namespace UniversalToolchain.Dialects.Tests;
 
@@ -19,7 +18,7 @@ public class DialectCompositionExplanationFormatterTests
     [Test]
     public void FormatDeterministic_DoesNotAlphabeticallyReorderOrderedModules()
     {
-        var explanation = CreateExplanation(buildModules: ["module-z", "module-a", "module-m"]);
+        var explanation = CreateExplanation(["module-z", "module-a", "module-m"]);
 
         var text = DialectCompositionExplanationFormatter.FormatDeterministic(explanation);
 
@@ -116,13 +115,7 @@ public class DialectCompositionExplanationFormatterTests
             resolutionDiagnostics ?? [Diagnostic("R1")]);
     }
 
-    private static RuntimeComponentManifestEntry Entry(string alias)
-    {
-        return new RuntimeComponentManifestEntry(RuntimeComponentKind.FrontendModule, alias, [], new RuntimeComponentId(alias + "-id"), "Assembly");
-    }
+    private static RuntimeComponentManifestEntry Entry(string alias) => new(RuntimeComponentKind.FrontendModule, alias, [], new RuntimeComponentId(alias + "-id"), "Assembly");
 
-    private static DialectDiagnostic Diagnostic(string code)
-    {
-        return new DialectDiagnostic(code, $"{code}-message", DialectDiagnosticSeverity.Warning);
-    }
+    private static DialectDiagnostic Diagnostic(string code) => new(code, $"{code}-message", DialectDiagnosticSeverity.Warning);
 }

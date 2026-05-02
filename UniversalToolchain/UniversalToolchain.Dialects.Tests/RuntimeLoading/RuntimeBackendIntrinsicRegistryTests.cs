@@ -1,6 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
-using UniversalToolchain.Dialects.Integration;
 
 namespace UniversalToolchain.Dialects.Tests.RuntimeLoading;
 

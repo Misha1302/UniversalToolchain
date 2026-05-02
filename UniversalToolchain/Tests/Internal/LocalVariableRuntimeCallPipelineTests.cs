@@ -1,11 +1,5 @@
-using AbstractIrExtensions;
-using BasicCore.Core;
-using BasicCore.Execution;
-using BasicInterpreter;
-using BytecodeDynamicMethodsCompiler.Compilers;
-using BasicCilCompiler.Execution;
 using System.Reflection.Emit;
-using UniversalIntermediateRepresentation;
+using AbstractIrExtensions;
 using VariablesModule.Runtime;
 
 namespace Tests.Internal;
@@ -74,8 +68,7 @@ public sealed class LocalVariableRuntimeCallPipelineTests
     {
         var environment = new ExecutionEnvironment([], allowedRuntimeProviderTypes: []);
 
-        var exception = Assert.Throws<InvalidOperationException>(
-            () => environment.GetRequiredProvider(typeof(VariablesRuntimeCallProvider)));
+        var exception = Assert.Throws<InvalidOperationException>(() => environment.GetRequiredProvider(typeof(VariablesRuntimeCallProvider)));
 
         Assert.That(exception!.Message, Does.Contain("not allowed"));
     }

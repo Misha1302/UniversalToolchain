@@ -6,21 +6,18 @@ public sealed class SemicolonAsNewLineCapabilityProvider : ILanguageFeatureDescr
 {
     private static readonly LanguageFeatureId FeatureId = new("SemicolonAsNewLine");
 
-    public IReadOnlyList<LanguageFeatureDescriptor> GetLanguageFeatures()
-    {
-        return
-        [
-            new LanguageFeatureDescriptor(
-                FeatureId,
-                "Semicolon statement separators",
-                LanguageFeatureKind.Syntax,
-                ["SemicolonAsNewLine"],
-                [],
-                [
-                    new(";", LanguageFeatureSymbolKind.SyntaxForm, "statement ; statement", "Treats a semicolon as a newline-equivalent statement separator.")
-                ],
-                ["cil", "interpreter"],
-                "Provides semicolon-based statement separation.")
-        ];
-    }
+    public IReadOnlyList<LanguageFeatureDescriptor> GetLanguageFeatures() =>
+    [
+        new(
+            FeatureId,
+            "Semicolon statement separators",
+            LanguageFeatureKind.Syntax,
+            ["SemicolonAsNewLine"],
+            [],
+            [
+                new LanguageFeatureSymbolDescriptor(";", LanguageFeatureSymbolKind.SyntaxForm, "statement ; statement", "Treats a semicolon as a newline-equivalent statement separator.")
+            ],
+            ["cil", "interpreter"],
+            "Provides semicolon-based statement separation.")
+    ];
 }

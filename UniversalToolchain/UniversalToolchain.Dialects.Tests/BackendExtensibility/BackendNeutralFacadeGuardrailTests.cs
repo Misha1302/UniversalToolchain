@@ -23,9 +23,7 @@ public sealed class BackendNeutralFacadeGuardrailTests
         };
 
         foreach (var token in forbiddenTokens)
-        {
             Assert.That(source, Does.Not.Contain(token));
-        }
     }
 
     [Test]

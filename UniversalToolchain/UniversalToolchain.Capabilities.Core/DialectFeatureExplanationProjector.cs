@@ -100,9 +100,7 @@ public static class DialectFeatureExplanationProjector
 
         if (knownCapabilityCatalog.TryGetOwningProvider(feature.FeatureId, out var owner) &&
             !selectedCapabilityCatalog.ContainsProvider(owner.ProviderType))
-        {
             reasons.Add($"Owning provider '{CapabilityProviderTypeResolver.GetTypeName(owner.ProviderType)}' is not selected.");
-        }
 
         var selectedAliases = GetSelectedRuntimeComponentAliases(selectedRuntimePlan);
         var missingRuntimeAliases = feature.RequiredRuntimeComponentAliases

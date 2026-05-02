@@ -11,7 +11,6 @@ using IntermediateRepresentationAbstractions;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core.ServiceCollection;
-using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
 
 namespace UniversalToolchain.Dialects.Tests.Wist;
@@ -146,14 +145,12 @@ public class RuntimeInfrastructureCompositionTests
     }
 
 
-    private static WistDialectServiceProviderFactory CreateFactory(IEnumerable<IDialectBackendRuntimeRegistrar> backendRegistrars)
-    {
-        return new WistDialectServiceProviderFactory(
+    private static WistDialectServiceProviderFactory CreateFactory(IEnumerable<IDialectBackendRuntimeRegistrar> backendRegistrars) =>
+        new(
             new StaticBackendRegistrarResolver(backendRegistrars),
             new IntrinsicSemanticBootstrapPlanBuilder(),
             new IntrinsicSemanticBootstrapPreProviderValidator(),
             new IntrinsicSemanticBootstrapRuntimeValidator());
-    }
 
     private static RuntimeComponentManifestEntry BackendEntry(string alias, Type registrarType)
         => new(
@@ -249,9 +246,7 @@ public class RuntimeInfrastructureCompositionTests
         public IDialectBackendRuntimeRegistrar Resolve(RuntimeComponentManifestEntry backendEntry)
         {
             if (_registrarsById.TryGetValue(new DialectBackendId(backendEntry.CanonicalAlias), out var registrar))
-            {
                 return registrar;
-            }
 
             throw new InvalidOperationException($"No test backend runtime registrar is registered for backend '{backendEntry.CanonicalAlias}'.");
         }

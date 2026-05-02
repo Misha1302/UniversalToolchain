@@ -9,6 +9,7 @@ public sealed class DefaultRuntimeComponentResolver : IRuntimeComponentResolver
 {
     private readonly ConcurrentDictionary<string, Lazy<IReadOnlyDictionary<RuntimeComponentId, RuntimeComponentExportDescriptor>>>
         _assemblyComponentIndexCache = new(StringComparer.Ordinal);
+
     private readonly IRuntimeAssemblyTypeLoader _assemblyTypeLoader;
 
     public DefaultRuntimeComponentResolver(IRuntimeAssemblyLoadStrategy assemblyLoadStrategy)
@@ -142,24 +143,20 @@ public sealed class DefaultRuntimeComponentResolver : IRuntimeComponentResolver
 
     private static RuntimeComponentDescriptor CreateResolvedDescriptor(
         RuntimeComponentManifestEntry entry,
-        RuntimeComponentExportDescriptor descriptor)
-    {
-        return new RuntimeComponentDescriptor(
+        RuntimeComponentExportDescriptor descriptor) =>
+        new(
             entry.ComponentId,
             entry.Kind,
             entry.CanonicalAlias,
             entry.Aliases,
             descriptor.ActivationType);
-    }
 
     private static string GetTypeName(Type type) => type.FullName ?? type.Name;
 
-    private static string ResolveAssemblySimpleName(string assemblySimpleName, string fallbackAssemblySimpleName)
-    {
-        return string.Equals(assemblySimpleName, RuntimeAssemblyIdentity.UnspecifiedAssemblySimpleName, StringComparison.Ordinal)
+    private static string ResolveAssemblySimpleName(string assemblySimpleName, string fallbackAssemblySimpleName) =>
+        string.Equals(assemblySimpleName, RuntimeAssemblyIdentity.UnspecifiedAssemblySimpleName, StringComparison.Ordinal)
             ? fallbackAssemblySimpleName
             : assemblySimpleName;
-    }
 
     private sealed record RuntimeComponentExportDescriptor(
         RuntimeComponentId Id,

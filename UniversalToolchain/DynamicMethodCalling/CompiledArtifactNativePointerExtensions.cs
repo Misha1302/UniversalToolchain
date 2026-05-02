@@ -6,8 +6,8 @@ namespace DynamicMethodCalling;
 public static class CompiledArtifactNativePointerExtensions
 {
     /// <summary>
-///     Creates an execution-bound native pointer wrapper.
-/// </summary>
+    ///     Creates an execution-bound native pointer wrapper.
+    /// </summary>
     public static ExecutionBoundNativePointer<TResult> CreateExecutionBoundNativePointer<TResult>(
         this ICompiledArtifact<DynamicMethod> artifact,
         IExecutionEnvironment environment)
@@ -23,8 +23,8 @@ public static class CompiledArtifactNativePointerExtensions
     }
 
     /// <summary>
-///     Creates an execution-bound native pointer wrapper.
-/// </summary>
+    ///     Creates an execution-bound native pointer wrapper.
+    /// </summary>
     public static ExecutionBoundNativePointer<TArg1, TResult> CreateExecutionBoundNativePointer<TArg1, TResult>(
         this ICompiledArtifact<DynamicMethod> artifact,
         IExecutionEnvironment environment)
@@ -40,8 +40,8 @@ public static class CompiledArtifactNativePointerExtensions
     }
 
     /// <summary>
-///     Creates an execution-bound native pointer wrapper.
-/// </summary>
+    ///     Creates an execution-bound native pointer wrapper.
+    /// </summary>
     public static ExecutionBoundNativePointer<TArg1, TArg2, TResult> CreateExecutionBoundNativePointer<TArg1, TArg2, TResult>(
         this ICompiledArtifact<DynamicMethod> artifact,
         IExecutionEnvironment environment)
@@ -57,8 +57,8 @@ public static class CompiledArtifactNativePointerExtensions
     }
 
     /// <summary>
-///     Creates an execution-bound native pointer wrapper.
-/// </summary>
+    ///     Creates an execution-bound native pointer wrapper.
+    /// </summary>
     public static ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TResult> CreateExecutionBoundNativePointer<TArg1, TArg2, TArg3, TResult>(
         this ICompiledArtifact<DynamicMethod> artifact,
         IExecutionEnvironment environment)
@@ -74,8 +74,8 @@ public static class CompiledArtifactNativePointerExtensions
     }
 
     /// <summary>
-///     Creates an execution-bound native pointer wrapper.
-/// </summary>
+    ///     Creates an execution-bound native pointer wrapper.
+    /// </summary>
     public static ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TResult> CreateExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TResult>(
         this ICompiledArtifact<DynamicMethod> artifact,
         IExecutionEnvironment environment)
@@ -91,8 +91,8 @@ public static class CompiledArtifactNativePointerExtensions
     }
 
     /// <summary>
-///     Creates an execution-bound native pointer wrapper.
-/// </summary>
+    ///     Creates an execution-bound native pointer wrapper.
+    /// </summary>
     public static ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TArg5, TResult> CreateExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TArg5, TResult>(
         this ICompiledArtifact<DynamicMethod> artifact,
         IExecutionEnvironment environment)
@@ -108,8 +108,8 @@ public static class CompiledArtifactNativePointerExtensions
     }
 
     /// <summary>
-///     Creates an execution-bound native pointer wrapper.
-/// </summary>
+    ///     Creates an execution-bound native pointer wrapper.
+    /// </summary>
     public static ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TResult> CreateExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TResult>(
         this ICompiledArtifact<DynamicMethod> artifact,
         IExecutionEnvironment environment)
@@ -125,8 +125,8 @@ public static class CompiledArtifactNativePointerExtensions
     }
 
     /// <summary>
-///     Creates an execution-bound native pointer wrapper.
-/// </summary>
+    ///     Creates an execution-bound native pointer wrapper.
+    /// </summary>
     public static ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7, TResult> CreateExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7, TResult>(
         this ICompiledArtifact<DynamicMethod> artifact,
         IExecutionEnvironment environment)
@@ -142,8 +142,8 @@ public static class CompiledArtifactNativePointerExtensions
     }
 
     /// <summary>
-///     Creates an execution-bound native pointer wrapper.
-/// </summary>
+    ///     Creates an execution-bound native pointer wrapper.
+    /// </summary>
     public static ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7, TArg8, TResult> CreateExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7, TArg8, TResult>(
         this ICompiledArtifact<DynamicMethod> artifact,
         IExecutionEnvironment environment)
@@ -159,8 +159,8 @@ public static class CompiledArtifactNativePointerExtensions
     }
 
     /// <summary>
-///     Creates an execution-bound native pointer wrapper.
-/// </summary>
+    ///     Creates an execution-bound native pointer wrapper.
+    /// </summary>
     public static ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7, TArg8, TArg9, TResult> CreateExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7, TArg8, TArg9, TResult>(
         this ICompiledArtifact<DynamicMethod> artifact,
         IExecutionEnvironment environment)
@@ -176,8 +176,8 @@ public static class CompiledArtifactNativePointerExtensions
     }
 
     /// <summary>
-///     Creates an execution-bound native pointer wrapper.
-/// </summary>
+    ///     Creates an execution-bound native pointer wrapper.
+    /// </summary>
     public static ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7, TArg8, TArg9, TArg10, TResult> CreateExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7, TArg8, TArg9, TArg10, TResult>(
         this ICompiledArtifact<DynamicMethod> artifact,
         IExecutionEnvironment environment)
@@ -191,5 +191,4 @@ public static class CompiledArtifactNativePointerExtensions
 
         return new ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7, TArg8, TArg9, TArg10, TResult>(artifact, environment);
     }
-
 }

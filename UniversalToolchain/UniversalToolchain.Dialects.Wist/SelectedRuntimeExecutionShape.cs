@@ -28,9 +28,7 @@ public sealed class SelectedRuntimeExecutionShape
         IEnumerable<RuntimeComponentManifestEntry> backendEntries)
     {
         if (string.IsNullOrWhiteSpace(dialectName))
-        {
             Thrower.Argument(nameof(dialectName), "Dialect name must not be empty.");
-        }
 
         DialectName = dialectName;
         _requiredFrontendInfrastructureModuleTypes = new ReadOnlyCollection<Type>(SnapshotTypes(requiredFrontendInfrastructureModuleTypes, nameof(requiredFrontendInfrastructureModuleTypes)));
@@ -74,9 +72,7 @@ public sealed class SelectedRuntimeExecutionShape
         {
             var type = value.NotNull(paramName);
             if (seen.Add(type))
-            {
                 snapshot.Add(type);
-            }
         }
 
         return snapshot;
@@ -94,9 +90,7 @@ public sealed class SelectedRuntimeExecutionShape
         {
             var entry = ValidateKind(value.NotNull(paramName), expectedKind);
             if (seen.Add(entry))
-            {
                 snapshot.Add(entry);
-            }
         }
 
         return snapshot;
@@ -105,10 +99,8 @@ public sealed class SelectedRuntimeExecutionShape
     private static RuntimeComponentManifestEntry ValidateKind(RuntimeComponentManifestEntry entry, RuntimeComponentKind expectedKind)
     {
         if (entry.Kind != expectedKind)
-        {
             Thrower.InvalidOpEx(
                 $"Runtime component '{entry.CanonicalAlias}' has kind '{RuntimeComponentKindCodec.Format(entry.Kind)}', but '{RuntimeComponentKindCodec.Format(expectedKind)}' was expected.");
-        }
 
         return entry;
     }

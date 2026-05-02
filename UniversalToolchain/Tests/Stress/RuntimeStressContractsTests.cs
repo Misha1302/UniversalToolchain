@@ -1,5 +1,4 @@
 using Tests.Infrastructure;
-using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
 
 namespace Tests.Stress;
@@ -130,8 +129,5 @@ public class RuntimeStressContractsTests
         Assert.That(signatures.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(2));
     }
 
-    private static string FormatComposition(DialectFrameworkCompositionResult composition)
-    {
-        return DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition));
-    }
+    private static string FormatComposition(DialectFrameworkCompositionResult composition) => DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition));
 }

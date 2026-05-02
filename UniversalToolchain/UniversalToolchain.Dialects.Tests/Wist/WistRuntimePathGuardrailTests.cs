@@ -1,7 +1,6 @@
-using Microsoft.Extensions.DependencyInjection;
 using BasicCore.Contracts;
+using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
-using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
 using UniversalToolchain.Dialects.Wist.Facade;
 using UniversalToolchain.Dialects.Wist.Presets;
@@ -329,17 +328,12 @@ public sealed class WistRuntimePathGuardrailTests
         });
     }
 
-    private static string FormatComposition(DialectFrameworkCompositionResult composition)
-    {
-        return DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition));
-    }
+    private static string FormatComposition(DialectFrameworkCompositionResult composition) => DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition));
 
-    private static string BuildShapeSignature(SelectedRuntimeExecutionShape shape)
-    {
-        return shape.DialectName
-               + "::"
-               + BuildNameIndependentShapeSignature(shape);
-    }
+    private static string BuildShapeSignature(SelectedRuntimeExecutionShape shape) =>
+        shape.DialectName
+        + "::"
+        + BuildNameIndependentShapeSignature(shape);
 
     private static string BuildNameIndependentShapeSignature(SelectedRuntimeExecutionShape shape)
     {
@@ -360,9 +354,7 @@ public sealed class WistRuntimePathGuardrailTests
         foreach (var type in types)
         {
             if (seen.Add(type))
-            {
                 snapshot.Add(type);
-            }
         }
 
         return snapshot;
@@ -370,11 +362,10 @@ public sealed class WistRuntimePathGuardrailTests
 
     private sealed class CountingRegistrar(string backendId) : IDialectBackendRuntimeRegistrar
     {
+        public int RegisterRuntimeCallCount { get; private set; }
         public DialectBackendId BackendId { get; } = new(backendId);
 
         public IReadOnlyList<string> SupportedIntrinsics => [];
-
-        public int RegisterRuntimeCallCount { get; private set; }
 
         public void RegisterRuntime(IServiceCollection services, DialectBackendRuntimeConfiguration configuration)
         {

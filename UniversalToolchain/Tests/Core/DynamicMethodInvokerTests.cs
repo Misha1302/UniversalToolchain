@@ -1,6 +1,5 @@
 using System.Reflection.Emit;
 using DynamicMethodCalling;
-using DynamicMethodCalling.Core;
 
 namespace Tests.Core;
 

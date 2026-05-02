@@ -10,8 +10,8 @@ namespace UniversalToolchain.Dialects.Integration;
 public sealed class DefaultRuntimeAssemblyTypeLoader : IRuntimeAssemblyTypeLoader
 {
     private readonly ConcurrentDictionary<string, Lazy<Assembly>> _assemblyCache = new(StringComparer.Ordinal);
-    private readonly ConcurrentDictionary<RuntimeAssemblyTypeKey, Lazy<Type>> _typeCache = new();
     private readonly IRuntimeAssemblyLoadStrategy _assemblyLoadStrategy;
+    private readonly ConcurrentDictionary<RuntimeAssemblyTypeKey, Lazy<Type>> _typeCache = new();
 
     public DefaultRuntimeAssemblyTypeLoader(IRuntimeAssemblyLoadStrategy assemblyLoadStrategy)
     {
@@ -53,7 +53,7 @@ public sealed class DefaultRuntimeAssemblyTypeLoader : IRuntimeAssemblyTypeLoade
     private Type LoadTypeUncached(RuntimeAssemblyTypeKey key)
     {
         var assembly = LoadAssembly(key.AssemblySimpleName);
-        var type = assembly.GetType(key.ActivationTypeFullName, throwOnError: false, ignoreCase: false);
+        var type = assembly.GetType(key.ActivationTypeFullName, false, false);
 
         return type ?? Thrower.InvalidOpEx<Type>(
             $"Runtime activation type '{key.ActivationTypeFullName}' was not found in assembly '{key.AssemblySimpleName}'.");

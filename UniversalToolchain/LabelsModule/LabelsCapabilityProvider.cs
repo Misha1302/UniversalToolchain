@@ -6,22 +6,19 @@ public sealed class LabelsCapabilityProvider : ILanguageFeatureDescriptorProvide
 {
     private static readonly LanguageFeatureId FeatureId = new("LabelsAndGoto");
 
-    public IReadOnlyList<LanguageFeatureDescriptor> GetLanguageFeatures()
-    {
-        return
-        [
-            new LanguageFeatureDescriptor(
-                FeatureId,
-                "Labels and goto",
-                LanguageFeatureKind.Syntax,
-                ["Labels"],
-                [],
-                [
-                    new("label", LanguageFeatureSymbolKind.SyntaxForm, "name:", "Defines a jump target label."),
-                    new("goto", LanguageFeatureSymbolKind.SyntaxForm, "goto name", "Transfers control to a named label.")
-                ],
-                ["cil", "interpreter"],
-                "Provides labels and goto-based control flow.")
-        ];
-    }
+    public IReadOnlyList<LanguageFeatureDescriptor> GetLanguageFeatures() =>
+    [
+        new(
+            FeatureId,
+            "Labels and goto",
+            LanguageFeatureKind.Syntax,
+            ["Labels"],
+            [],
+            [
+                new LanguageFeatureSymbolDescriptor("label", LanguageFeatureSymbolKind.SyntaxForm, "name:", "Defines a jump target label."),
+                new LanguageFeatureSymbolDescriptor("goto", LanguageFeatureSymbolKind.SyntaxForm, "goto name", "Transfers control to a named label.")
+            ],
+            ["cil", "interpreter"],
+            "Provides labels and goto-based control flow.")
+    ];
 }

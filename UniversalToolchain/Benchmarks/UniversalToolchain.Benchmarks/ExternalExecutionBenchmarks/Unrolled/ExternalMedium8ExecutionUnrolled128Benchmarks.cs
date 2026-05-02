@@ -1,6 +1,5 @@
 using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Columns;
 using BenchmarkDotNet.Order;
 using DynamicExpresso;
 using DynamicMethodCalling.Core;
@@ -17,10 +16,10 @@ public class ExternalMedium8ExecutionUnrolled128Benchmarks : ExternalArithmeticE
     private const string WistFormula = "((A + B) * (C - D) / (E + 1.0)) + F * G - H / 3.0";
     private const string NCalcFormula = "(([A] + [B]) * ([C] - [D]) / ([E] + 1.0)) + [F] * [G] - [H] / 3.0";
     private const string DynamicExpressoFormula = "((A + B) * (C - D) / (E + 1.0)) + F * G - H / 3.0";
+    private Func<double, double, double, double, double, double, double, double, double> _dynamicExpressoDelegate = null!;
 
     private ExternalBenchContext8Unrolled _nCalcContext = null!;
     private Func<ExternalBenchContext8Unrolled, double> _nCalcLambda = null!;
-    private Func<double, double, double, double, double, double, double, double, double> _dynamicExpressoDelegate = null!;
     private DynamicMethodInvoker<double, double, double, double, double, double, double, double, double> _wistFastInvoker = null!;
 
     [GlobalSetup]
@@ -2639,7 +2638,7 @@ public class ExternalMedium8ExecutionUnrolled128Benchmarks : ExternalArithmeticE
 
     [MethodImpl(MethodImplOptions.NoInlining)]
     private static double CSharp_NoInliningMethodCore(double a, double b, double c, double d, double e, double f, double g, double h)
-        => ((a + b) * (c - d) / (e + 1.0)) + f * g - h / 3.0;
+        => (a + b) * (c - d) / (e + 1.0) + f * g - h / 3.0;
 
     private double CSharpAt(int index)
         => CSharp_NoInliningMethodCore(A[index], B[index], C[index], D[index], E[index], F[index], G[index], H[index]);
@@ -2649,14 +2648,14 @@ public class ExternalMedium8ExecutionUnrolled128Benchmarks : ExternalArithmeticE
 
     private double NCalcAt(int index)
     {
-            _nCalcContext.A = A[index];
-            _nCalcContext.B = B[index];
-            _nCalcContext.C = C[index];
-            _nCalcContext.D = D[index];
-            _nCalcContext.E = E[index];
-            _nCalcContext.F = F[index];
-            _nCalcContext.G = G[index];
-            _nCalcContext.H = H[index];
+        _nCalcContext.A = A[index];
+        _nCalcContext.B = B[index];
+        _nCalcContext.C = C[index];
+        _nCalcContext.D = D[index];
+        _nCalcContext.E = E[index];
+        _nCalcContext.F = F[index];
+        _nCalcContext.G = G[index];
+        _nCalcContext.H = H[index];
         return _nCalcLambda(_nCalcContext);
     }
 

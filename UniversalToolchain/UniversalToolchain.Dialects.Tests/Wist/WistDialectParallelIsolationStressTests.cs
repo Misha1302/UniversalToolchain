@@ -1,5 +1,4 @@
 using Microsoft.Extensions.DependencyInjection;
-using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
 
 namespace UniversalToolchain.Dialects.Tests.Wist;
@@ -156,8 +155,5 @@ public class WistDialectParallelIsolationStressTests
         Assert.That(signatures.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1));
     }
 
-    private static string FormatComposition(DialectFrameworkCompositionResult composition)
-    {
-        return DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition));
-    }
+    private static string FormatComposition(DialectFrameworkCompositionResult composition) => DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition));
 }

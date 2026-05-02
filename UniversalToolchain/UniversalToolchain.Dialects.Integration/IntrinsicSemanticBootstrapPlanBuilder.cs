@@ -41,28 +41,22 @@ public sealed class IntrinsicSemanticBootstrapPlanBuilder
     private static IntrinsicDescriptorProviderRegistration ToProviderRegistration(int registrationIndex, ServiceDescriptor descriptor)
     {
         if (descriptor.ImplementationType != null)
-        {
             return new IntrinsicDescriptorProviderRegistration(
                 registrationIndex,
                 IntrinsicDescriptorProviderRegistrationKind.ImplementationType,
                 descriptor.ImplementationType);
-        }
 
         if (descriptor.ImplementationInstance != null)
-        {
             return new IntrinsicDescriptorProviderRegistration(
                 registrationIndex,
                 IntrinsicDescriptorProviderRegistrationKind.ImplementationInstance,
                 descriptor.ImplementationInstance.GetType());
-        }
 
         if (descriptor.ImplementationFactory != null)
-        {
             return new IntrinsicDescriptorProviderRegistration(
                 registrationIndex,
                 IntrinsicDescriptorProviderRegistrationKind.Factory,
                 null);
-        }
 
         Thrower.InvalidOpEx(
             $"Intrinsic descriptor provider registration at index {registrationIndex} has no implementation type, instance, or factory.");

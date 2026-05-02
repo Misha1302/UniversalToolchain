@@ -7,8 +7,6 @@ namespace UniversalToolchain.Dialects.Core.Groups;
 internal sealed class ExpandedDialectBindingSource : IDialectBindingSource
 {
     private readonly IDialectBindingSource _inner;
-    private readonly IReadOnlyList<KeyValuePair<string, bool>> _capabilities;
-    private readonly IReadOnlyList<string> _useModules;
 
     public ExpandedDialectBindingSource(
         IDialectBindingSource inner,
@@ -16,8 +14,8 @@ internal sealed class ExpandedDialectBindingSource : IDialectBindingSource
         IReadOnlyList<KeyValuePair<string, bool>> capabilities)
     {
         _inner = inner.ArgNotNull();
-        _useModules = useModules.ArgNotNull();
-        _capabilities = capabilities.ArgNotNull();
+        UseModules = useModules.ArgNotNull();
+        Capabilities = capabilities.ArgNotNull();
     }
 
     public DialectBindingInputKind InputKind => _inner.InputKind;
@@ -28,7 +26,7 @@ internal sealed class ExpandedDialectBindingSource : IDialectBindingSource
 
     public string? BaseDialectName => _inner.BaseDialectName;
 
-    public IReadOnlyList<string> UseModules => _useModules;
+    public IReadOnlyList<string> UseModules { get; }
 
     public IReadOnlyList<string> ExcludeModules => _inner.ExcludeModules;
 
@@ -42,5 +40,5 @@ internal sealed class ExpandedDialectBindingSource : IDialectBindingSource
 
     public SecurityProfile? SecurityProfile => _inner.SecurityProfile;
 
-    public IReadOnlyList<KeyValuePair<string, bool>> Capabilities => _capabilities;
+    public IReadOnlyList<KeyValuePair<string, bool>> Capabilities { get; }
 }

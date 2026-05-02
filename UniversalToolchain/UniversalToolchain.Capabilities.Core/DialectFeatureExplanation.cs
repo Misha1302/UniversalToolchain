@@ -8,8 +8,8 @@ public sealed class DialectFeatureExplanation
 {
     private readonly ReadOnlyCollection<LanguageFeatureDescriptor> _availableFeatures;
     private readonly ReadOnlyCollection<BuiltinFunctionDescriptor> _availableFunctions;
-    private readonly ReadOnlyCollection<string> _backendSupport;
     private readonly ReadOnlyCollection<LanguageFeatureSymbolDescriptor> _availableSymbols;
+    private readonly ReadOnlyCollection<string> _backendSupport;
     private readonly ReadOnlyCollection<UnavailableFeatureExplanation> _unavailableKnownFeatures;
 
     public DialectFeatureExplanation(

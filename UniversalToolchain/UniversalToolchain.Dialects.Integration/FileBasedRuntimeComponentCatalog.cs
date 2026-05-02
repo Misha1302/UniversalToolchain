@@ -134,12 +134,10 @@ public sealed class FileBasedRuntimeComponentCatalog : IRuntimeComponentCatalog
         };
     }
 
-    private static RuntimeComponentActivationInfo? ToRuntimeActivation(FileRuntimeComponentActivationEntry? activation)
-    {
-        return activation == null
+    private static RuntimeComponentActivationInfo? ToRuntimeActivation(FileRuntimeComponentActivationEntry? activation) =>
+        activation == null
             ? null
             : new RuntimeComponentActivationInfo(activation.ActivationType, activation.RegistrarType);
-    }
 
     private static RuntimeComponentActivationInfo? NormalizeActivation(RuntimeComponentActivationInfo? activation, string ownerAssemblySimpleName)
     {
@@ -179,9 +177,7 @@ public sealed class FileBasedRuntimeComponentCatalog : IRuntimeComponentCatalog
         var assemblySimpleName = typeReference.AssemblySimpleName?.Trim();
         if (string.IsNullOrWhiteSpace(assemblySimpleName) ||
             string.Equals(assemblySimpleName, RuntimeAssemblyIdentity.UnspecifiedAssemblySimpleName, StringComparison.Ordinal))
-        {
             assemblySimpleName = ownerAssemblySimpleName;
-        }
 
         return new RuntimeTypeReference(assemblySimpleName, typeFullName);
     }

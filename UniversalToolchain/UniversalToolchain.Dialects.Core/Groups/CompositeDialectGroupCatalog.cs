@@ -5,8 +5,8 @@ namespace UniversalToolchain.Dialects.Core.Groups;
 
 public sealed class CompositeDialectGroupCatalog : IDialectGroupCatalog
 {
-    private readonly IReadOnlyDictionary<string, DialectGroupDescriptor> _groupsByAlias;
     private readonly IReadOnlyList<DialectGroupDescriptor> _groups;
+    private readonly IReadOnlyDictionary<string, DialectGroupDescriptor> _groupsByAlias;
 
     public CompositeDialectGroupCatalog(IEnumerable<IDialectGroupProvider> providers)
     {

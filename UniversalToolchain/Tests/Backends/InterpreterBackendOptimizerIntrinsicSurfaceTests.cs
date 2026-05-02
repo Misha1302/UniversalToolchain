@@ -16,7 +16,7 @@ public sealed class InterpreterBackendOptimizerIntrinsicSurfaceTests
                       enable BooleanOptimization
                       enable ComparisonIntrinsicOptimization
                       enable NativeCilOptimization
-                      
+
                       enable EGraphOptimization
                       """;
 
@@ -31,10 +31,7 @@ public sealed class InterpreterBackendOptimizerIntrinsicSurfaceTests
             $"Interpreter IR contains unsupported intrinsic names: {string.Join(", ", intrinsicNames.Where(x => !IsSupportedInterpreterIntrinsic(x)).Distinct(StringComparer.Ordinal))}");
     }
 
-    private static bool IsSupportedInterpreterIntrinsic(string intrinsicName)
-    {
-        return intrinsicName == "call C#" || intrinsicName == "call C# ctor";
-    }
+    private static bool IsSupportedInterpreterIntrinsic(string intrinsicName) => intrinsicName == "call C#" || intrinsicName == "call C# ctor";
 
     private static IEnumerable<string> CollectIntrinsicNames(IAbstractIR air)
     {

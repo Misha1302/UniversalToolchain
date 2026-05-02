@@ -1,7 +1,6 @@
 using BasicCore.Contracts;
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
-using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core.ServiceCollection;
 using UniversalToolchain.Dialects.Integration;
 using ServiceLifetime = Microsoft.Extensions.DependencyInjection.ServiceLifetime;
@@ -60,17 +59,13 @@ public sealed class WistDialectServiceProviderFactory
                 Thrower.Argument(nameof(types), "Module type collection must not contain null entries.");
 
             if (!serviceType.IsAssignableFrom(type))
-            {
                 Thrower.InvalidOpEx(
                     $"Module type '{type.FullName}' does not implement '{serviceType.FullName}'.");
-            }
 
             services.Add(new ServiceDescriptor(serviceType, type, lifetime));
 
             if (!services.Any(x => x.ServiceType == type && x.ImplementationType == type))
-            {
                 services.Add(new ServiceDescriptor(type, type, lifetime));
-            }
         }
     }
 
@@ -112,9 +107,7 @@ public sealed class WistDialectServiceProviderFactory
         foreach (var providerType in providerTypes)
         {
             if (!services.Any(x => x.ServiceType == typeof(IIntrinsicDescriptorProvider) && x.ImplementationType == providerType))
-            {
                 services.AddSingleton(typeof(IIntrinsicDescriptorProvider), providerType);
-            }
         }
     }
 
@@ -125,19 +118,13 @@ public sealed class WistDialectServiceProviderFactory
         public int Compare(Type? x, Type? y)
         {
             if (ReferenceEquals(x, y))
-            {
                 return 0;
-            }
 
             if (x is null)
-            {
                 return -1;
-            }
 
             if (y is null)
-            {
                 return 1;
-            }
 
             return StringComparer.Ordinal.Compare(x.FullName, y.FullName);
         }

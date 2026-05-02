@@ -4,7 +4,7 @@ using UniversalToolchain.Dialects.Abstractions;
 namespace ConditionsModule.Module;
 
 [DialectModuleAlias("Conditions")]
-[DialectCapabilityProvider(typeof(global::ConditionsModule.ConditionalBranchesCapabilityProvider))]
+[DialectCapabilityProvider(typeof(ConditionalBranchesCapabilityProvider))]
 [DialectRuntimeExport("FrontendModule", "Conditions")]
 [AutoRegisterService]
 public class ConditionsModuleImpl : IFrontendCoreModule

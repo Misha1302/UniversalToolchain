@@ -1,5 +1,4 @@
 using ArithmeticModule.Module;
-using UniversalToolchain.Dialects.Integration;
 
 namespace UniversalToolchain.Dialects.Tests;
 

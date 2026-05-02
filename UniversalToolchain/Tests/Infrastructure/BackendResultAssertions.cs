@@ -1,4 +1,3 @@
-using ExceptionsManager;
 using NumbersModule.Core;
 
 namespace UniversalToolchain.Dialects.Tests;

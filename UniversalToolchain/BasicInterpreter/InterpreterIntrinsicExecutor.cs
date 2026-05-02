@@ -123,5 +123,4 @@ internal sealed class InterpreterIntrinsicExecutor
         var instance = ctor.Invoke(args);
         state.ValueStack.Push(instance.NotNull());
     }
-
 }

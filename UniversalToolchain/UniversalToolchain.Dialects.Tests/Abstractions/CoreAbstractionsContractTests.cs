@@ -105,7 +105,7 @@ public sealed class CoreAbstractionsContractTests
         var context = new ExpressionTypeResolutionContext(
             new Dictionary<string, ExpressionTypeDescriptor>(StringComparer.Ordinal)
             {
-                ["value"] = new ExpressionTypeDescriptor("Number")
+                ["value"] = new("Number")
             },
             [diagnostic]);
 
@@ -121,17 +121,12 @@ public sealed class CoreAbstractionsContractTests
 
     private sealed class SampleLanguageFeatureDescriptorProvider : ILanguageFeatureDescriptorProvider
     {
-        public IReadOnlyList<LanguageFeatureDescriptor> GetLanguageFeatures()
-        {
-            return [];
-        }
+        public IReadOnlyList<LanguageFeatureDescriptor> GetLanguageFeatures() =>
+            [];
     }
 
     private static class SampleBindings
     {
-        public static string Combine(string left, string right)
-        {
-            return left + right;
-        }
+        public static string Combine(string left, string right) => left + right;
     }
 }

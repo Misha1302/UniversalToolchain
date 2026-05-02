@@ -1,6 +1,5 @@
 using BasicCore.Contracts;
 using UniversalToolchain.Dialects.Abstractions;
-using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
 
 namespace UniversalToolchain.Dialects.Tests;
@@ -121,26 +120,20 @@ public class WistDialectBackendCompatibilityTests
         Assert.That(exception!.Message, Does.Contain("UnsupportedOptimization").And.Contain(nameof(IIRProcessingModule)));
     }
 
-    private static WistDialectExecutionConfigurationBuilder CreateBuilder(IRuntimeComponentTypeLoader typeLoader)
-    {
-        return new WistDialectExecutionConfigurationBuilder(
+    private static WistDialectExecutionConfigurationBuilder CreateBuilder(IRuntimeComponentTypeLoader typeLoader) =>
+        new(
             CreateShapeBuilder(typeLoader),
             CreateBackendConfigurationBuilder(typeLoader));
-    }
 
-    private static SelectedRuntimeExecutionShapeBuilder CreateShapeBuilder(IRuntimeComponentTypeLoader typeLoader)
-    {
-        return new SelectedRuntimeExecutionShapeBuilder(
+    private static SelectedRuntimeExecutionShapeBuilder CreateShapeBuilder(IRuntimeComponentTypeLoader typeLoader) =>
+        new(
             new SelectedRuntimeModuleClassifier(typeLoader),
             new WistRequiredInfrastructureModulesProvider());
-    }
 
-    private static DialectBackendRuntimeConfigurationBuilder CreateBackendConfigurationBuilder(IRuntimeComponentTypeLoader typeLoader)
-    {
-        return new DialectBackendRuntimeConfigurationBuilder(
+    private static DialectBackendRuntimeConfigurationBuilder CreateBackendConfigurationBuilder(IRuntimeComponentTypeLoader typeLoader) =>
+        new(
             typeLoader,
             new DialectIntrinsicPolicyResolver());
-    }
 
     private static RuntimeComponentManifestEntry Entry(string alias, IReadOnlyList<string>? aliases = null) =>
         new(
@@ -150,25 +143,21 @@ public class WistDialectBackendCompatibilityTests
             RuntimeComponentIdFactory.Create(RuntimeComponentKind.Backend, alias),
             "AnyAssembly");
 
-    private static RuntimeComponentManifestEntry ModuleEntry(string alias)
-    {
-        return new RuntimeComponentManifestEntry(
+    private static RuntimeComponentManifestEntry ModuleEntry(string alias) =>
+        new(
             RuntimeComponentKind.FrontendModule,
             alias,
             [],
             RuntimeComponentIdFactory.Create(RuntimeComponentKind.FrontendModule, alias),
             "AnyAssembly");
-    }
 
-    private static RuntimeComponentManifestEntry OptimizerEntry(string alias)
-    {
-        return new RuntimeComponentManifestEntry(
+    private static RuntimeComponentManifestEntry OptimizerEntry(string alias) =>
+        new(
             RuntimeComponentKind.Optimizer,
             alias,
             [],
             RuntimeComponentIdFactory.Create(RuntimeComponentKind.Optimizer, alias),
             "AnyAssembly");
-    }
 
     private sealed class StaticCatalog(params RuntimeComponentManifestEntry[] backends) : IRuntimeComponentCatalog
     {
@@ -212,12 +201,9 @@ public class WistDialectBackendCompatibilityTests
         public Type LoadType(RuntimeComponentManifestEntry entry)
         {
             if (_typesById.TryGetValue(entry.ComponentId, out var type))
-            {
                 return type;
-            }
 
             return typeof(object);
         }
     }
-
 }

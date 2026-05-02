@@ -18,10 +18,7 @@ public sealed class SelectedCapabilityCatalogBuilder
         _providerFactory = providerFactory ?? new CapabilityProviderFactory();
     }
 
-    public CapabilityCatalog Build(IEnumerable<Type> runtimeComponentImplementationTypes)
-    {
-        return CapabilityCatalog.Build(runtimeComponentImplementationTypes, _providerTypeResolver, _providerFactory);
-    }
+    public CapabilityCatalog Build(IEnumerable<Type> runtimeComponentImplementationTypes) => CapabilityCatalog.Build(runtimeComponentImplementationTypes, _providerTypeResolver, _providerFactory);
 
     public CapabilityCatalog Build(SelectedRuntimePlan selectedRuntimePlan)
     {

@@ -81,9 +81,7 @@ public sealed class WistDialectExecutionConfiguration
         {
             var type = value.NotNull(paramName.NotNull());
             if (seen.Add(type))
-            {
                 snapshot.Add(type);
-            }
         }
 
         return snapshot;
@@ -111,9 +109,7 @@ public sealed class WistDialectExecutionConfiguration
         {
             var backend = value.NotNull(paramName.NotNull());
             if (seen.Add(backend.BackendDescriptor.BackendId))
-            {
                 snapshot.Add(backend);
-            }
         }
 
         return snapshot;

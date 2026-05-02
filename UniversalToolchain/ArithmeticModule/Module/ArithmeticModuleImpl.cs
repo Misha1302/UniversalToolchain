@@ -3,7 +3,7 @@ using UniversalToolchain.Capabilities.Abstractions;
 namespace ArithmeticModule.Module;
 
 [DialectModuleAlias("Arithmetic")]
-[DialectCapabilityProvider(typeof(global::ArithmeticModule.ArithmeticCapabilityProvider))]
+[DialectCapabilityProvider(typeof(ArithmeticCapabilityProvider))]
 [DialectRuntimeExport("FrontendModule", "Arithmetic")]
 [AutoRegisterService]
 [ArithmeticModeCompatibility(ArithmeticMode.Universal)]

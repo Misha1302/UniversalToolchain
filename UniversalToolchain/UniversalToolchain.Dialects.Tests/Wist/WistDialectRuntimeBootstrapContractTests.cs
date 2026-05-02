@@ -3,7 +3,6 @@ using BasicCore.LexerWrapper;
 using BytecodeDynamicMethodsCompiler.Compilers;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
-using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
 
 namespace UniversalToolchain.Dialects.Tests.Wist;
@@ -344,14 +343,12 @@ public class WistDialectRuntimeBootstrapContractTests
     }
 
 
-    private static WistDialectServiceProviderFactory CreateFactory(IEnumerable<IDialectBackendRuntimeRegistrar> backendRegistrars)
-    {
-        return new WistDialectServiceProviderFactory(
+    private static WistDialectServiceProviderFactory CreateFactory(IEnumerable<IDialectBackendRuntimeRegistrar> backendRegistrars) =>
+        new(
             new StaticBackendRegistrarResolver(backendRegistrars),
             new IntrinsicSemanticBootstrapPlanBuilder(),
             new IntrinsicSemanticBootstrapPreProviderValidator(),
             new IntrinsicSemanticBootstrapRuntimeValidator());
-    }
 
     private static RuntimeComponentManifestEntry BackendEntry(string alias, Type registrarType)
         => new(
@@ -362,10 +359,7 @@ public class WistDialectRuntimeBootstrapContractTests
             registrarType.Assembly.GetName().Name!,
             new RuntimeComponentActivationInfo(typeof(object).FullName!, registrarType.FullName));
 
-    private static string FormatComposition(DialectFrameworkCompositionResult composition)
-    {
-        return DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition));
-    }
+    private static string FormatComposition(DialectFrameworkCompositionResult composition) => DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition));
 
     private static IReadOnlyList<ServiceRegistrationSignature> BuildServiceSignatures(IServiceCollection services)
     {
@@ -411,9 +405,9 @@ public class WistDialectRuntimeBootstrapContractTests
 
     private sealed class CountingRegistrar(string backendId) : IDialectBackendRuntimeRegistrar
     {
+        public int RegisterRuntimeCallCount { get; private set; }
         public DialectBackendId BackendId { get; } = new(backendId);
         public IReadOnlyList<string> SupportedIntrinsics => [];
-        public int RegisterRuntimeCallCount { get; private set; }
 
         public void RegisterRuntime(IServiceCollection services, DialectBackendRuntimeConfiguration configuration)
         {
@@ -431,9 +425,7 @@ public class WistDialectRuntimeBootstrapContractTests
         public IDialectBackendRuntimeRegistrar Resolve(RuntimeComponentManifestEntry backendEntry)
         {
             if (_registrarsById.TryGetValue(new DialectBackendId(backendEntry.CanonicalAlias), out var registrar))
-            {
                 return registrar;
-            }
 
             throw new InvalidOperationException($"No test backend runtime registrar is registered for backend '{backendEntry.CanonicalAlias}'.");
         }

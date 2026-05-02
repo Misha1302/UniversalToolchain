@@ -54,9 +54,7 @@ public sealed class WistDialectExecutionConfigurationBuilder
         foreach (var value in values)
         {
             if (seen.Add(value))
-            {
                 snapshot.Add(value);
-            }
         }
 
         return snapshot;
@@ -71,9 +69,7 @@ public sealed class WistDialectExecutionConfigurationBuilder
         foreach (var value in values)
         {
             if (seen.Add(keySelector(value)))
-            {
                 snapshot.Add(value);
-            }
         }
 
         return snapshot;

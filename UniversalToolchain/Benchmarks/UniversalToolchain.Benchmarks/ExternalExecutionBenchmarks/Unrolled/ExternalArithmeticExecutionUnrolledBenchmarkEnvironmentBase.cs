@@ -14,8 +14,8 @@ public abstract class ExternalArithmeticExecutionUnrolledBenchmarkEnvironmentBas
     protected const int DataSize = 4096;
 
     private WistDialectExecutionHost? _host;
-    private ServiceProvider? _provider;
     private int _index;
+    private ServiceProvider? _provider;
 
     protected double[] A = [];
     protected double[] B = [];
@@ -71,10 +71,8 @@ public abstract class ExternalArithmeticExecutionUnrolledBenchmarkEnvironmentBas
         var composition = workflow.ComposeFile(dialectFile);
 
         if (!composition.IsSuccess)
-        {
             Thrower.InvalidOpEx(
                 $"Failed to compose dialect file: {DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition))}");
-        }
 
         _host = workflow.CreateHost(composition);
     }
@@ -96,9 +94,7 @@ public abstract class ExternalArithmeticExecutionUnrolledBenchmarkEnvironmentBas
         var declaredBindings = new OrderedDictionary<string, Type>();
 
         foreach (var bindingName in bindingNames)
-        {
             declaredBindings[bindingName] = typeof(double);
-        }
 
         return declaredBindings;
     }
@@ -121,11 +117,9 @@ public abstract class ExternalArithmeticExecutionUnrolledBenchmarkEnvironmentBas
             if (!AreEqual(cSharpResult, dynamicExpressoResult) ||
                 !AreEqual(cSharpResult, nCalcResult) ||
                 !AreEqual(cSharpResult, wistResult))
-            {
                 Thrower.InvalidOpEx(
                     $"Result mismatch at index {index}. " +
                     $"C#: {cSharpResult}, DynamicExpresso: {dynamicExpressoResult}, NCalc: {nCalcResult}, Wist: {wistResult}.");
-            }
         }
     }
 
@@ -140,7 +134,7 @@ public abstract class ExternalArithmeticExecutionUnrolledBenchmarkEnvironmentBas
     protected int NextIndex()
     {
         var i = _index;
-        _index = (i + 1) & (DataSize - 1);
+        _index = i + 1 & DataSize - 1;
         return i;
     }
 
@@ -158,8 +152,6 @@ public abstract class ExternalArithmeticExecutionUnrolledBenchmarkEnvironmentBas
     private static void Fill(Random random, double[] values)
     {
         for (var i = 0; i < values.Length; i++)
-        {
             values[i] = 0.1 + random.NextDouble() * 999.9;
-        }
     }
 }

@@ -15,7 +15,7 @@ public sealed class WistRuntimeFacadeBuilderPresetTests
             .CreateDefault()
             .Build();
 
-        var result = wist.Run("price * 0.9 + fee", CreateArguments(), "compiler");
+        var result = wist.Run("price * 0.9 + fee", CreateArguments());
 
         Assert.That(BackendParityInfrastructure.AsNumber(result), Is.EqualTo(95.0d).Within(1e-9));
     }
@@ -28,7 +28,7 @@ public sealed class WistRuntimeFacadeBuilderPresetTests
             .WithShippedDialectPreset(WistShippedDialectPresets.MinimalArithmetic)
             .Build();
 
-        var attempt = wist.TryCompile("2 + 3 * 4", new Dictionary<string, Type>(), "compiler");
+        var attempt = wist.TryCompile("2 + 3 * 4", new Dictionary<string, Type>());
 
         Assert.Multiple(() =>
         {
@@ -46,7 +46,7 @@ public sealed class WistRuntimeFacadeBuilderPresetTests
             .WithDialectFile(GetDialectFilePath(WistShippedDialectPresets.FullDefault))
             .Build();
 
-        var result = wist.Run("price * 0.9 + fee", CreateArguments(), "compiler");
+        var result = wist.Run("price * 0.9 + fee", CreateArguments());
 
         Assert.That(BackendParityInfrastructure.AsNumber(result), Is.EqualTo(95.0d).Within(1e-9));
     }

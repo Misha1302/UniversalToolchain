@@ -9,8 +9,5 @@ public sealed class ExternalRuntimeCallProvider
         _environment = environment.ArgNotNull();
     }
 
-    public IExecutionEnvironment LoadEnvironment()
-    {
-        return _environment;
-    }
+    public IExecutionEnvironment LoadEnvironment() => _environment;
 }

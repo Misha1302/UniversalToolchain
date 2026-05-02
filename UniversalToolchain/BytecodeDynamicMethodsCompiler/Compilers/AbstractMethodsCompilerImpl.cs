@@ -28,7 +28,7 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
         var method = new DynamicMethod("main", returnType, argsTypes);
         using var il = new GroboIL(method);
 
-        var context = new CompilationContext(il, externalSlots, externalArgumentOffset: 1);
+        var context = new CompilationContext(il, externalSlots, 1);
         var labelStacks = InitializeLabels(context, air);
 
         var typesStack = new List<Type>();

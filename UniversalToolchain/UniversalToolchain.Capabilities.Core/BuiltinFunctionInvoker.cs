@@ -16,11 +16,9 @@ public sealed class BuiltinFunctionInvoker
 
         var parameters = resolution.RuntimeBinding.Method.GetParameters();
         if (parameters.Length != arguments.Count)
-        {
             return Failure(
                 ToolchainDiagnosticCodes.WrongFunctionArgumentCount,
                 $"Builtin function '{resolution.RuntimeBinding.Signature.Name}' expects {parameters.Length} runtime arguments, but received {arguments.Count}.");
-        }
 
         var normalizedArguments = new object?[arguments.Count];
         for (var i = 0; i < arguments.Count; i++)
@@ -30,22 +28,18 @@ public sealed class BuiltinFunctionInvoker
             if (argument == null)
             {
                 if (parameterType.IsValueType)
-                {
                     return Failure(
                         ToolchainDiagnosticCodes.WrongFunctionArgumentType,
                         $"Builtin function '{resolution.RuntimeBinding.Signature.Name}' argument {i} must not be null.");
-                }
 
                 normalizedArguments[i] = null;
                 continue;
             }
 
             if (!parameterType.IsInstanceOfType(argument))
-            {
                 return Failure(
                     ToolchainDiagnosticCodes.WrongFunctionArgumentType,
                     $"Builtin function '{resolution.RuntimeBinding.Signature.Name}' argument {i} must have runtime type '{parameterType.FullName}'. Actual runtime type: '{argument.GetType().FullName}'.");
-            }
 
             normalizedArguments[i] = argument;
         }
@@ -56,9 +50,8 @@ public sealed class BuiltinFunctionInvoker
             []);
     }
 
-    private static BuiltinFunctionInvocationResult Failure(string code, string message)
-    {
-        return new BuiltinFunctionInvocationResult(
+    private static BuiltinFunctionInvocationResult Failure(string code, string message) =>
+        new(
             false,
             null,
             [
@@ -69,5 +62,4 @@ public sealed class BuiltinFunctionInvoker
                     null,
                     [])
             ]);
-    }
 }

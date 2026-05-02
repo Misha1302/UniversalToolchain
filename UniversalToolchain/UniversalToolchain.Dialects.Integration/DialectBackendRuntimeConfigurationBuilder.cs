@@ -30,10 +30,8 @@ public sealed class DialectBackendRuntimeConfigurationBuilder
         selectedRuntimePlan = selectedRuntimePlan.ArgNotNull();
 
         if (backend.Kind != RuntimeComponentKind.Backend)
-        {
             Thrower.InvalidOpEx(
                 $"Runtime component '{backend.CanonicalAlias}' has kind '{RuntimeComponentKindCodec.Format(backend.Kind)}', but '{RuntimeComponentKindCodec.Format(RuntimeComponentKind.Backend)}' was expected.");
-        }
 
         var backendId = new DialectBackendId(backend.CanonicalAlias);
         var optimizerTypes = selectedRuntimePlan.EnabledOptimizers
@@ -60,23 +58,16 @@ public sealed class DialectBackendRuntimeConfigurationBuilder
     private Type LoadOptimizerType(RuntimeComponentManifestEntry entry)
     {
         if (entry.Kind != RuntimeComponentKind.Optimizer)
-        {
             Thrower.InvalidOpEx(
                 $"Runtime component '{entry.CanonicalAlias}' has kind '{RuntimeComponentKindCodec.Format(entry.Kind)}', but '{RuntimeComponentKindCodec.Format(RuntimeComponentKind.Optimizer)}' was expected.");
-        }
 
         var type = _typeLoader.LoadType(entry);
         if (!typeof(IIRProcessingModule).IsAssignableFrom(type))
-        {
             Thrower.InvalidOpEx(
                 $"Runtime optimizer '{entry.CanonicalAlias}' resolves to type '{DisplayName(type)}', but the type does not implement IIRProcessingModule.");
-        }
 
         return type;
     }
 
-    private static string DisplayName(Type type)
-    {
-        return type.FullName ?? type.Name;
-    }
+    private static string DisplayName(Type type) => type.FullName ?? type.Name;
 }

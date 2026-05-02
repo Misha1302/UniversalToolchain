@@ -1,6 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
-using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
 
 namespace UniversalToolchain.Dialects.Tests.RuntimeLoading;
@@ -86,9 +85,7 @@ public sealed class ThirdBackendRuntimeComponentContractTests
         finally
         {
             if (serviceProvider is IDisposable disposable)
-            {
                 disposable.Dispose();
-            }
         }
     }
 
@@ -133,9 +130,8 @@ public sealed class ThirdBackendRuntimeComponentContractTests
             []);
     }
 
-    private static DialectBuildPlan BuildPlan(IEnumerable<DialectBackendId> enabledBackends)
-    {
-        return new DialectBuildPlan(
+    private static DialectBuildPlan BuildPlan(IEnumerable<DialectBackendId> enabledBackends) =>
+        new(
             "third-backend-test-dialect",
             null,
             [],
@@ -146,11 +142,9 @@ public sealed class ThirdBackendRuntimeComponentContractTests
             null,
             [],
             new DialectValidationResult());
-    }
 
-    private static RuntimeComponentManifestEntry ThirdBackendEntry()
-    {
-        return new RuntimeComponentManifestEntry(
+    private static RuntimeComponentManifestEntry ThirdBackendEntry() =>
+        new(
             RuntimeComponentKind.Backend,
             ThirdBackendId,
             [ThirdBackendAlias, ThirdBackendSecondAlias],
@@ -159,7 +153,6 @@ public sealed class ThirdBackendRuntimeComponentContractTests
             new RuntimeComponentActivationInfo(
                 new RuntimeTypeReference(ThirdBackendAssembly, typeof(ThirdBackendDeclaration).FullName!),
                 new RuntimeTypeReference(ThirdBackendAssembly, typeof(ThirdBackendRegistrar).FullName!)));
-    }
 
     // Intentionally no DialectRuntimeExport/DialectRuntimeAlias/DialectBackendRegistrarType attributes here.
     // The test creates RuntimeComponentManifestEntry manually. Exporting this fake backend from

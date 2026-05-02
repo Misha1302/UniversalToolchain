@@ -1,6 +1,5 @@
 using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Columns;
 using BenchmarkDotNet.Order;
 using DynamicExpresso;
 using DynamicMethodCalling.Core;
@@ -17,10 +16,10 @@ public class ExternalSimple3ExecutionUnrolled1024Benchmarks : ExternalArithmetic
     private const string WistFormula = "A + B * C / 5.0";
     private const string NCalcFormula = "[A] + [B] * [C] / 5.0";
     private const string DynamicExpressoFormula = "A + B * C / 5.0";
+    private Func<double, double, double, double> _dynamicExpressoDelegate = null!;
 
     private ExternalBenchContext3Unrolled _nCalcContext = null!;
     private Func<ExternalBenchContext3Unrolled, double> _nCalcLambda = null!;
-    private Func<double, double, double, double> _dynamicExpressoDelegate = null!;
     private DynamicMethodInvoker<double, double, double, double> _wistFastInvoker = null!;
 
     [GlobalSetup]
@@ -15449,9 +15448,9 @@ public class ExternalSimple3ExecutionUnrolled1024Benchmarks : ExternalArithmetic
 
     private double NCalcAt(int index)
     {
-            _nCalcContext.A = A[index];
-            _nCalcContext.B = B[index];
-            _nCalcContext.C = C[index];
+        _nCalcContext.A = A[index];
+        _nCalcContext.B = B[index];
+        _nCalcContext.C = C[index];
         return _nCalcLambda(_nCalcContext);
     }
 

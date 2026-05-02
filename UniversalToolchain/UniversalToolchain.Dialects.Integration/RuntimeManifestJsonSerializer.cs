@@ -79,7 +79,7 @@ public sealed class RuntimeManifestJsonSerializer : IRuntimeManifestSerializer
                 entry.Activation.RegistrarType,
                 entry.Activation.RegistrarTypeFullName,
                 entry.Activation.RegistrarAssemblySimpleName,
-                allowMissingType: true);
+                true);
 
             return new FileRuntimeComponentActivationEntry(
                 activationType.NotNull(nameof(entry)),
@@ -90,6 +90,45 @@ public sealed class RuntimeManifestJsonSerializer : IRuntimeManifestSerializer
             return new FileRuntimeComponentActivationEntry(entry.TypeFullName);
 
         return null;
+    }
+
+    private static SerializableManifestTypeReference? CreateSerializableTypeReference(RuntimeTypeReference? typeReference)
+    {
+        if (typeReference == null)
+            return null;
+
+        return new SerializableManifestTypeReference
+        {
+            AssemblySimpleName = ResolveAssemblySimpleNameForSerialization(typeReference),
+            TypeFullName = typeReference.TypeFullName
+        };
+    }
+
+    private static RuntimeTypeReference? ResolveTypeReference(
+        SerializableManifestTypeReference? structuredReference,
+        string? legacyTypeFullName,
+        string? legacyAssemblySimpleName,
+        bool allowMissingType = false)
+    {
+        var typeFullName = structuredReference?.TypeFullName ?? legacyTypeFullName ?? string.Empty;
+        if (allowMissingType && string.IsNullOrWhiteSpace(typeFullName))
+            return null;
+
+        var assemblySimpleName = structuredReference?.AssemblySimpleName
+                                 ?? legacyAssemblySimpleName
+                                 ?? RuntimeAssemblyIdentity.UnspecifiedAssemblySimpleName;
+
+        return new RuntimeTypeReference(assemblySimpleName, typeFullName);
+    }
+
+    private static string? ResolveAssemblySimpleNameForSerialization(RuntimeTypeReference? typeReference)
+    {
+        if (typeReference == null)
+            return null;
+
+        return string.Equals(typeReference.AssemblySimpleName, RuntimeAssemblyIdentity.UnspecifiedAssemblySimpleName, StringComparison.Ordinal)
+            ? null
+            : typeReference.AssemblySimpleName;
     }
 
     private sealed class SerializableManifestDocument
@@ -134,44 +173,5 @@ public sealed class RuntimeManifestJsonSerializer : IRuntimeManifestSerializer
         public string? AssemblySimpleName { get; init; }
 
         public string? TypeFullName { get; init; }
-    }
-
-    private static SerializableManifestTypeReference? CreateSerializableTypeReference(RuntimeTypeReference? typeReference)
-    {
-        if (typeReference == null)
-            return null;
-
-        return new SerializableManifestTypeReference
-        {
-            AssemblySimpleName = ResolveAssemblySimpleNameForSerialization(typeReference),
-            TypeFullName = typeReference.TypeFullName
-        };
-    }
-
-    private static RuntimeTypeReference? ResolveTypeReference(
-        SerializableManifestTypeReference? structuredReference,
-        string? legacyTypeFullName,
-        string? legacyAssemblySimpleName,
-        bool allowMissingType = false)
-    {
-        var typeFullName = structuredReference?.TypeFullName ?? legacyTypeFullName ?? string.Empty;
-        if (allowMissingType && string.IsNullOrWhiteSpace(typeFullName))
-            return null;
-
-        var assemblySimpleName = structuredReference?.AssemblySimpleName
-                                 ?? legacyAssemblySimpleName
-                                 ?? RuntimeAssemblyIdentity.UnspecifiedAssemblySimpleName;
-
-        return new RuntimeTypeReference(assemblySimpleName, typeFullName);
-    }
-
-    private static string? ResolveAssemblySimpleNameForSerialization(RuntimeTypeReference? typeReference)
-    {
-        if (typeReference == null)
-            return null;
-
-        return string.Equals(typeReference.AssemblySimpleName, RuntimeAssemblyIdentity.UnspecifiedAssemblySimpleName, StringComparison.Ordinal)
-            ? null
-            : typeReference.AssemblySimpleName;
     }
 }

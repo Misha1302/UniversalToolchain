@@ -1,7 +1,6 @@
 using SafeMathFunctionsModule;
 using UniversalToolchain.Capabilities.Core;
 using UniversalToolchain.Diagnostics.Abstractions;
-using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Functions.Abstractions;
 
 namespace UniversalToolchain.Dialects.Tests.Capabilities;
@@ -53,11 +52,7 @@ public sealed class BuiltinFunctionInvokerTests
         return new BuiltinFunctionCatalog(selectedCatalog, selectedPlan);
     }
 
-    private static RuntimeComponentManifestEntry CreateEntry(
-        string alias,
-        string id,
-        RuntimeComponentKind kind = RuntimeComponentKind.FrontendModule)
-    {
-        return new RuntimeComponentManifestEntry(kind, alias, [], new RuntimeComponentId(id), "TestAssembly");
-    }
+    private static RuntimeComponentManifestEntry CreateEntry(string alias, string id, RuntimeComponentKind kind = RuntimeComponentKind.FrontendModule) =>
+        new(kind, alias, [
+        ], new RuntimeComponentId(id), "TestAssembly");
 }

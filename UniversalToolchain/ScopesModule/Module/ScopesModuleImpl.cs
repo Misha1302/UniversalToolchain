@@ -4,7 +4,7 @@ using UniversalToolchain.Dialects.Abstractions;
 namespace ScopesModule.Module;
 
 [DialectModuleAlias("Scopes")]
-[DialectCapabilityProvider(typeof(global::ScopesModule.ScopesCapabilityProvider))]
+[DialectCapabilityProvider(typeof(ScopesCapabilityProvider))]
 [DialectRuntimeExport("FrontendModule", "Scopes")]
 [AutoRegisterService]
 public class ScopesModuleImpl : IFrontendCoreModule

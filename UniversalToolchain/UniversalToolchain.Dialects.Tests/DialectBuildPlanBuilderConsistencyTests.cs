@@ -228,20 +228,11 @@ public class DialectBuildPlanBuilderConsistencyTests
             version,
             baseDialectName);
 
-    private static DialectBuildPlanBuilder CreateSyntaxGroupedBuilder()
-    {
-        return new DialectBuildPlanBuilder(CreateGroupExpander());
-    }
+    private static DialectBuildPlanBuilder CreateSyntaxGroupedBuilder() => new(CreateGroupExpander());
 
-    private static DialectCompiledDialectBuildPlanBuilder CreateCompiledGroupedBuilder()
-    {
-        return new DialectCompiledDialectBuildPlanBuilder(CreateGroupExpander());
-    }
+    private static DialectCompiledDialectBuildPlanBuilder CreateCompiledGroupedBuilder() => new(CreateGroupExpander());
 
-    private static DialectGroupExpander CreateGroupExpander()
-    {
-        return new DialectGroupExpander(new CompositeDialectGroupCatalog([new TestDialectGroupProvider()]));
-    }
+    private static DialectGroupExpander CreateGroupExpander() => new(new CompositeDialectGroupCatalog([new TestDialectGroupProvider()]));
 
     private static string BuildPlanSignature(DialectBuildPlan plan)
     {

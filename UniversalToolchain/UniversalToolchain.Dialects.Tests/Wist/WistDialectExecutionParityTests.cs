@@ -82,11 +82,9 @@ public class WistDialectExecutionParityTests
     {
         using var host = ComposeAndCreateHost(CreateFullDialect());
 
-        var interpreterException = Assert.Throws<InvalidOperationException>(
-            () => host.Run("if 1.0 < 2.0 then 10.0 else", "interpreter"));
+        var interpreterException = Assert.Throws<InvalidOperationException>(() => host.Run("if 1.0 < 2.0 then 10.0 else", "interpreter"));
 
-        var compilerException = Assert.Throws<InvalidOperationException>(
-            () => host.Run("if 1.0 < 2.0 then 10.0 else", "compiler"));
+        var compilerException = Assert.Throws<InvalidOperationException>(() => host.Run("if 1.0 < 2.0 then 10.0 else", "compiler"));
 
         Assert.Multiple(() =>
         {
@@ -191,7 +189,7 @@ public class WistDialectExecutionParityTests
     private static string CreateFullDialect() => """
                                                  dialect D
                                                  use Arithmetic,BooleanConditions,Comments,ComparisonConditions,Conditions,Equality,Identifier,Labels,Loops,Numbers,Scopes,SemicolonAsNewLine,Variables,Whitespaces
-                                                 
+
                                                  backend compiler,interpreter
                                                  """;
 

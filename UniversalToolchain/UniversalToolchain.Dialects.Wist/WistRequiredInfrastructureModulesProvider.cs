@@ -5,13 +5,9 @@ namespace UniversalToolchain.Dialects.Wist;
 /// </summary>
 public sealed class WistRequiredInfrastructureModulesProvider : IWistRequiredInfrastructureModulesProvider
 {
-    public IReadOnlyList<Type> GetFrontendModuleTypes()
-    {
-        return [typeof(ProgramStructureFrontendModule)];
-    }
+    public IReadOnlyList<Type> GetFrontendModuleTypes() =>
+        [typeof(ProgramStructureFrontendModule)];
 
-    public IReadOnlyList<Type> GetIRModuleTypes()
-    {
-        return [];
-    }
+    public IReadOnlyList<Type> GetIRModuleTypes() =>
+        [];
 }

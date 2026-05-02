@@ -1,5 +1,4 @@
 using ExceptionsManager;
-using UniversalToolchain.Dialects.Abstractions;
 
 namespace UniversalToolchain.Dialects.Integration;
 
@@ -42,7 +41,6 @@ public static class DialectCompositionExplanationProjector
         var selectionType = runtimeSelection.GetType();
         var selectionKind = selectionType.FullName ?? selectionType.Name;
         if (runtimeSelection is IDialectResolvedRuntimeSelection resolvedSelection)
-        {
             return new DialectRuntimeSelectionExplanation(
                 selectionKind,
                 runtimeSelection.IsResolved,
@@ -51,7 +49,6 @@ public static class DialectCompositionExplanationProjector
                 resolvedSelection.OrderedModules,
                 resolvedSelection.EnabledOptimizers,
                 resolvedSelection.EnabledBackends);
-        }
 
         return new DialectRuntimeSelectionExplanation(
             selectionKind,

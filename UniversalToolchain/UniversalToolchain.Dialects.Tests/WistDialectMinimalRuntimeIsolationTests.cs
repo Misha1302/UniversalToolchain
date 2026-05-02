@@ -1,5 +1,4 @@
 using Microsoft.Extensions.DependencyInjection;
-using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Tests.Wist;
 using UniversalToolchain.Dialects.Wist;
 
@@ -236,10 +235,7 @@ public class WistDialectMinimalRuntimeIsolationTests
         return services.BuildServiceProvider();
     }
 
-    private static string FormatComposition(DialectFrameworkCompositionResult composition)
-    {
-        return DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition));
-    }
+    private static string FormatComposition(DialectFrameworkCompositionResult composition) => DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition));
 
     private sealed class TempDirectory : IDisposable
     {

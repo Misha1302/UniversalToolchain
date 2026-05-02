@@ -8,9 +8,7 @@ public sealed class WistRuleRuntimeDependencyGuardrailTests
         var root = ResolveRepositoryRoot();
         var ruleRoot = Path.Combine(root, "UniversalToolchain", "UniversalToolchain.Dialects.Wist", "Rules");
         if (!Directory.Exists(ruleRoot))
-        {
             Assert.Pass("Wist rules directory is not present in this repository state.");
-        }
 
         var files = Directory.GetFiles(ruleRoot, "*.cs", SearchOption.AllDirectories)
             .OrderBy(static x => x, StringComparer.Ordinal)

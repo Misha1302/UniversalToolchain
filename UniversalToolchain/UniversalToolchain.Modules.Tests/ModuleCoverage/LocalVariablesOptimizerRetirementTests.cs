@@ -11,7 +11,7 @@ public sealed class LocalVariablesOptimizerRetirementTests
     {
         var optimizerType = typeof(LocalVariablesOptimizer);
 
-        Assert.That(optimizerType.GetCustomAttributes(typeof(DialectOptimizerAliasAttribute), inherit: false), Is.Empty);
-        Assert.That(optimizerType.GetCustomAttributes(typeof(DialectRuntimeExportAttribute), inherit: false), Is.Empty);
+        Assert.That(optimizerType.GetCustomAttributes(typeof(DialectOptimizerAliasAttribute), false), Is.Empty);
+        Assert.That(optimizerType.GetCustomAttributes(typeof(DialectRuntimeExportAttribute), false), Is.Empty);
     }
 }

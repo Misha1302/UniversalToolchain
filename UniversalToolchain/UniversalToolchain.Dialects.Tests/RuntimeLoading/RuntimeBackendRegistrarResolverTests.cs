@@ -1,6 +1,6 @@
+using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
-using UniversalToolchain.Dialects.Integration;
 
 namespace UniversalToolchain.Dialects.Tests.RuntimeLoading;
 
@@ -124,9 +124,9 @@ public sealed class RuntimeBackendRegistrarResolverTests
 
     private sealed class DependencyBackedRegistrar(RegistrarDependency dependency) : IDialectBackendRuntimeRegistrar
     {
+        public RegistrarDependency Dependency { get; } = dependency;
         public DialectBackendId BackendId { get; } = new("backend");
         public IReadOnlyList<string> SupportedIntrinsics => [];
-        public RegistrarDependency Dependency { get; } = dependency;
 
         public void RegisterRuntime(IServiceCollection services, DialectBackendRuntimeConfiguration configuration)
         {
@@ -147,17 +147,15 @@ public sealed class RuntimeBackendRegistrarResolverTests
 
     private sealed class StubAssemblyTypeLoader(IEnumerable<(string AssemblySimpleName, string FullName, Type Type)> types) : IRuntimeAssemblyTypeLoader
     {
+        private readonly List<string> _loadedTypes = [];
+
         private readonly IReadOnlyDictionary<(string AssemblySimpleName, string FullName), Type> _types = types.ToDictionary(
             static x => (x.AssemblySimpleName, x.FullName),
             static x => x.Type);
-        private readonly List<string> _loadedTypes = [];
 
         public IReadOnlyList<string> LoadedTypes => _loadedTypes;
 
-        public System.Reflection.Assembly LoadAssembly(string assemblySimpleName)
-        {
-            throw new NotSupportedException();
-        }
+        public Assembly LoadAssembly(string assemblySimpleName) => throw new NotSupportedException();
 
         public Type LoadType(string assemblySimpleName, string activationTypeFullName)
         {

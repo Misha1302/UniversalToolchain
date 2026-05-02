@@ -9,10 +9,10 @@ namespace BasicCore.Compilation;
 /// <typeparam name="TCompilationOutput">Compilation backend output type.</typeparam>
 public sealed class CompiledArtifact<TCompilationOutput> : ICompiledArtifact<TCompilationOutput>
 {
+    private readonly IReadOnlyList<Type> _allowedRuntimeProviderTypes;
     private readonly ExternalBinding[] _declaredBindings;
     private readonly IExecutor<TCompilationOutput> _executor;
     private readonly ExternalBindingsLayout _externalBindingsLayout;
-    private readonly IReadOnlyList<Type> _allowedRuntimeProviderTypes;
 
     public CompiledArtifact(
         string sourceText,

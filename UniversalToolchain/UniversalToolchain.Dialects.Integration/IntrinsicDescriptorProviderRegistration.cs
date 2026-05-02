@@ -13,9 +13,7 @@ public sealed class IntrinsicDescriptorProviderRegistration
         Type? providerType)
     {
         if (registrationIndex < 0)
-        {
             Thrower.Argument(nameof(registrationIndex), "Registration index must not be negative.");
-        }
 
         RegistrationIndex = registrationIndex;
         Kind = kind;

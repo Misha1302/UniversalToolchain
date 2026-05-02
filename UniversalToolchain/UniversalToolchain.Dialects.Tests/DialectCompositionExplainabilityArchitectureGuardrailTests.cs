@@ -1,5 +1,4 @@
 using System.Reflection;
-using UniversalToolchain.Dialects.Integration;
 
 namespace UniversalToolchain.Dialects.Tests;
 

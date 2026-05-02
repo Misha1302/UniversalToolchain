@@ -13,10 +13,8 @@ internal sealed class WistDialectBackendRuntime
 
         var artifactCompiler = core as IArtifactCompiler;
         if (artifactCompiler is null)
-        {
             Thrower.InvalidOpEx(
                 $"Backend runtime '{descriptor.CanonicalId}' does not expose a backend-neutral artifact compiler.");
-        }
 
         Descriptor = descriptor;
         Core = core;

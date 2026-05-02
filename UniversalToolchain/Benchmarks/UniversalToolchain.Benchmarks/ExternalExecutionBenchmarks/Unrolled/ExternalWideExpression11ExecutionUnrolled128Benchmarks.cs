@@ -1,6 +1,5 @@
 using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Columns;
 using BenchmarkDotNet.Order;
 using DynamicExpresso;
 using DynamicMethodCalling.Core;
@@ -17,10 +16,10 @@ public class ExternalWideExpression11ExecutionUnrolled128Benchmarks : ExternalAr
     private const string WistFormula = "(A + B + C + D) * (E - F + G) / (H + 1.0) + I * J - K / 3.0";
     private const string NCalcFormula = "([A] + [B] + [C] + [D]) * ([E] - [F] + [G]) / ([H] + 1.0) + [I] * [J] - [K] / 3.0";
     private const string DynamicExpressoFormula = "(A + B + C + D) * (E - F + G) / (H + 1.0) + I * J - K / 3.0";
+    private Func<double, double, double, double, double, double, double, double, double, double, double, double> _dynamicExpressoDelegate = null!;
 
     private ExternalBenchContext11Unrolled _nCalcContext = null!;
     private Func<ExternalBenchContext11Unrolled, double> _nCalcLambda = null!;
-    private Func<double, double, double, double, double, double, double, double, double, double, double, double> _dynamicExpressoDelegate = null!;
     private DynamicMethodInvoker<double, double, double, double, double, double, double, double, double, double, double, double> _wistFastInvoker = null!;
 
     [GlobalSetup]
@@ -3033,17 +3032,17 @@ public class ExternalWideExpression11ExecutionUnrolled128Benchmarks : ExternalAr
 
     private double NCalcAt(int index)
     {
-            _nCalcContext.A = A[index];
-            _nCalcContext.B = B[index];
-            _nCalcContext.C = C[index];
-            _nCalcContext.D = D[index];
-            _nCalcContext.E = E[index];
-            _nCalcContext.F = F[index];
-            _nCalcContext.G = G[index];
-            _nCalcContext.H = H[index];
-            _nCalcContext.I = I[index];
-            _nCalcContext.J = J[index];
-            _nCalcContext.K = K[index];
+        _nCalcContext.A = A[index];
+        _nCalcContext.B = B[index];
+        _nCalcContext.C = C[index];
+        _nCalcContext.D = D[index];
+        _nCalcContext.E = E[index];
+        _nCalcContext.F = F[index];
+        _nCalcContext.G = G[index];
+        _nCalcContext.H = H[index];
+        _nCalcContext.I = I[index];
+        _nCalcContext.J = J[index];
+        _nCalcContext.K = K[index];
         return _nCalcLambda(_nCalcContext);
     }
 

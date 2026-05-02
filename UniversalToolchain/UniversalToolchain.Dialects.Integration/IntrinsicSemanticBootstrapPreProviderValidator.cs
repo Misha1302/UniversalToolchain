@@ -27,9 +27,7 @@ public sealed class IntrinsicSemanticBootstrapPreProviderValidator
             plan.Requirements.Select(static x => (x.ModuleType, x.ProviderType)).ToList()));
 
         if (errors.Count > 0)
-        {
             Thrower.InvalidOpEx("Intrinsic semantic startup validation failed:" + Environment.NewLine + string.Join(Environment.NewLine, errors));
-        }
     }
 
     private static IReadOnlyList<string> GetUnsupportedRegistrationErrors(IReadOnlyList<IntrinsicDescriptorProviderRegistration> registrations)

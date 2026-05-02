@@ -42,21 +42,13 @@ public sealed class FunctionCallsNodeCreatorTests
         });
     }
 
-    private static AstNode CreateRoot(params AstNode[] children)
-    {
-        return new AstNode(AstNodeType.CreateOrGet("Program"), null, children.ToList());
-    }
+    private static AstNode CreateRoot(params AstNode[] children) => new(AstNodeType.CreateOrGet("Program"), null, children.ToList());
 
-    private static AstNode CreateScope(params AstNode[] children)
-    {
-        return new AstNode(AstNodeType.CreateOrGet("Scope"), null, children.ToList());
-    }
+    private static AstNode CreateScope(params AstNode[] children) => new(AstNodeType.CreateOrGet("Scope"), null, children.ToList());
 
-    private static AstNode CreateIdentifier(string text)
-    {
-        return new AstNode(
+    private static AstNode CreateIdentifier(string text) =>
+        new(
             AstNodeType.CreateOrGet("Identifier"),
             new LexemeValue(text, null, -1, null),
             []);
-    }
 }

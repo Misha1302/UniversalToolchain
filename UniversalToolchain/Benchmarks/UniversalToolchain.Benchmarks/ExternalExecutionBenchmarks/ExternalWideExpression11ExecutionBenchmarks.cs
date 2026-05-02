@@ -1,6 +1,5 @@
 using System.Runtime.CompilerServices;
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Columns;
 using BenchmarkDotNet.Order;
 using DynamicExpresso;
 using DynamicMethodCalling.Core;
@@ -18,10 +17,10 @@ public class ExternalWideExpression11ExecutionBenchmarks : ExternalArithmeticExe
     private const string NCalcFormula = "([A] + [B] + [C] + [D]) * ([E] - [F] + [G]) / ([H] + 1.0) + [I] * [J] - [K] / 3.0";
     private const string DynamicExpressoFormula = "(A + B + C + D) * (E - F + G) / (H + 1.0) + I * J - K / 3.0";
     private const int InnerCount = 4096;
+    private Func<double, double, double, double, double, double, double, double, double, double, double, double> _dynamicExpressoDelegate = null!;
 
     private ExternalBenchContext11 _nCalcContext = null!;
     private Func<ExternalBenchContext11, double> _nCalcLambda = null!;
-    private Func<double, double, double, double, double, double, double, double, double, double, double, double> _dynamicExpressoDelegate = null!;
     private DynamicMethodInvoker<double, double, double, double, double, double, double, double, double, double, double, double> _wistFastInvoker = null!;
 
     [GlobalSetup]
@@ -78,9 +77,17 @@ public class ExternalWideExpression11ExecutionBenchmarks : ExternalArithmeticExe
         for (var k = 0; k < InnerCount; k++)
         {
             var i = NextIndex();
-            _nCalcContext.A = A[i]; _nCalcContext.B = B[i]; _nCalcContext.C = C[i]; _nCalcContext.D = D[i];
-            _nCalcContext.E = E[i]; _nCalcContext.F = F[i]; _nCalcContext.G = G[i]; _nCalcContext.H = H[i];
-            _nCalcContext.I = I[i]; _nCalcContext.J = J[i]; _nCalcContext.K = K[i];
+            _nCalcContext.A = A[i];
+            _nCalcContext.B = B[i];
+            _nCalcContext.C = C[i];
+            _nCalcContext.D = D[i];
+            _nCalcContext.E = E[i];
+            _nCalcContext.F = F[i];
+            _nCalcContext.G = G[i];
+            _nCalcContext.H = H[i];
+            _nCalcContext.I = I[i];
+            _nCalcContext.J = J[i];
+            _nCalcContext.K = K[i];
             sum += _nCalcLambda(_nCalcContext);
         }
 
@@ -110,9 +117,17 @@ public class ExternalWideExpression11ExecutionBenchmarks : ExternalArithmeticExe
 
     private double NCalcAt(int index)
     {
-        _nCalcContext.A = A[index]; _nCalcContext.B = B[index]; _nCalcContext.C = C[index]; _nCalcContext.D = D[index];
-        _nCalcContext.E = E[index]; _nCalcContext.F = F[index]; _nCalcContext.G = G[index]; _nCalcContext.H = H[index];
-        _nCalcContext.I = I[index]; _nCalcContext.J = J[index]; _nCalcContext.K = K[index];
+        _nCalcContext.A = A[index];
+        _nCalcContext.B = B[index];
+        _nCalcContext.C = C[index];
+        _nCalcContext.D = D[index];
+        _nCalcContext.E = E[index];
+        _nCalcContext.F = F[index];
+        _nCalcContext.G = G[index];
+        _nCalcContext.H = H[index];
+        _nCalcContext.I = I[index];
+        _nCalcContext.J = J[index];
+        _nCalcContext.K = K[index];
         return _nCalcLambda(_nCalcContext);
     }
 

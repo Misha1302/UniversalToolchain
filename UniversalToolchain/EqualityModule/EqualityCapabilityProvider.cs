@@ -6,21 +6,18 @@ public sealed class EqualityCapabilityProvider : ILanguageFeatureDescriptorProvi
 {
     private static readonly LanguageFeatureId FeatureId = new("Assignments");
 
-    public IReadOnlyList<LanguageFeatureDescriptor> GetLanguageFeatures()
-    {
-        return
-        [
-            new LanguageFeatureDescriptor(
-                FeatureId,
-                "Assignments",
-                LanguageFeatureKind.Syntax,
-                ["Equality"],
-                [],
-                [
-                    new("=", LanguageFeatureSymbolKind.Operator, "target = value", "Assigns a value to a settable target.")
-                ],
-                ["cil", "interpreter"],
-                "Provides assignment syntax for settable values.")
-        ];
-    }
+    public IReadOnlyList<LanguageFeatureDescriptor> GetLanguageFeatures() =>
+    [
+        new(
+            FeatureId,
+            "Assignments",
+            LanguageFeatureKind.Syntax,
+            ["Equality"],
+            [],
+            [
+                new LanguageFeatureSymbolDescriptor("=", LanguageFeatureSymbolKind.Operator, "target = value", "Assigns a value to a settable target.")
+            ],
+            ["cil", "interpreter"],
+            "Provides assignment syntax for settable values.")
+    ];
 }

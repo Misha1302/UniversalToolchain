@@ -1,5 +1,3 @@
-using UniversalToolchain.Dialects.Integration;
-
 namespace UniversalToolchain.Dialects.Tests.Backends;
 
 public class RuntimeKnownBackendsProviderContractTests

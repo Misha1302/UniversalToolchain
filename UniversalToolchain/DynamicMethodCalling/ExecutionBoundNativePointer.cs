@@ -21,12 +21,9 @@ public sealed class ExecutionBoundNativePointer<TResult>
     }
 
     /// <summary>
-///     Invokes the native pointer while supplying the bound execution environment internally.
-/// </summary>
-    public TResult Invoke()
-    {
-        return _invoker.Invoke(_adapter);
-    }
+    ///     Invokes the native pointer while supplying the bound execution environment internally.
+    /// </summary>
+    public TResult Invoke() => _invoker.Invoke(_adapter);
 }
 
 /// <summary>
@@ -50,8 +47,8 @@ public sealed class ExecutionBoundNativePointer<TArg1, TResult>
     }
 
     /// <summary>
-///     Invokes the native pointer while supplying the bound execution environment internally.
-/// </summary>
+    ///     Invokes the native pointer while supplying the bound execution environment internally.
+    /// </summary>
     public TResult Invoke(TArg1 arg1)
     {
         _adapter.SetCurrentArgument(0, arg1);
@@ -80,8 +77,8 @@ public sealed class ExecutionBoundNativePointer<TArg1, TArg2, TResult>
     }
 
     /// <summary>
-///     Invokes the native pointer while supplying the bound execution environment internally.
-/// </summary>
+    ///     Invokes the native pointer while supplying the bound execution environment internally.
+    /// </summary>
     public TResult Invoke(TArg1 arg1, TArg2 arg2)
     {
         _adapter.SetCurrentArgument(0, arg1);
@@ -111,8 +108,8 @@ public sealed class ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TResult>
     }
 
     /// <summary>
-///     Invokes the native pointer while supplying the bound execution environment internally.
-/// </summary>
+    ///     Invokes the native pointer while supplying the bound execution environment internally.
+    /// </summary>
     public TResult Invoke(TArg1 arg1, TArg2 arg2, TArg3 arg3)
     {
         _adapter.SetCurrentArgument(0, arg1);
@@ -143,8 +140,8 @@ public sealed class ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TRes
     }
 
     /// <summary>
-///     Invokes the native pointer while supplying the bound execution environment internally.
-/// </summary>
+    ///     Invokes the native pointer while supplying the bound execution environment internally.
+    /// </summary>
     public TResult Invoke(TArg1 arg1, TArg2 arg2, TArg3 arg3, TArg4 arg4)
     {
         _adapter.SetCurrentArgument(0, arg1);
@@ -176,8 +173,8 @@ public sealed class ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TArg
     }
 
     /// <summary>
-///     Invokes the native pointer while supplying the bound execution environment internally.
-/// </summary>
+    ///     Invokes the native pointer while supplying the bound execution environment internally.
+    /// </summary>
     public TResult Invoke(TArg1 arg1, TArg2 arg2, TArg3 arg3, TArg4 arg4, TArg5 arg5)
     {
         _adapter.SetCurrentArgument(0, arg1);
@@ -210,8 +207,8 @@ public sealed class ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TArg
     }
 
     /// <summary>
-///     Invokes the native pointer while supplying the bound execution environment internally.
-/// </summary>
+    ///     Invokes the native pointer while supplying the bound execution environment internally.
+    /// </summary>
     public TResult Invoke(TArg1 arg1, TArg2 arg2, TArg3 arg3, TArg4 arg4, TArg5 arg5, TArg6 arg6)
     {
         _adapter.SetCurrentArgument(0, arg1);
@@ -245,8 +242,8 @@ public sealed class ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TArg
     }
 
     /// <summary>
-///     Invokes the native pointer while supplying the bound execution environment internally.
-/// </summary>
+    ///     Invokes the native pointer while supplying the bound execution environment internally.
+    /// </summary>
     public TResult Invoke(TArg1 arg1, TArg2 arg2, TArg3 arg3, TArg4 arg4, TArg5 arg5, TArg6 arg6, TArg7 arg7)
     {
         _adapter.SetCurrentArgument(0, arg1);
@@ -281,8 +278,8 @@ public sealed class ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TArg
     }
 
     /// <summary>
-///     Invokes the native pointer while supplying the bound execution environment internally.
-/// </summary>
+    ///     Invokes the native pointer while supplying the bound execution environment internally.
+    /// </summary>
     public TResult Invoke(TArg1 arg1, TArg2 arg2, TArg3 arg3, TArg4 arg4, TArg5 arg5, TArg6 arg6, TArg7 arg7, TArg8 arg8)
     {
         _adapter.SetCurrentArgument(0, arg1);
@@ -318,8 +315,8 @@ public sealed class ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TArg
     }
 
     /// <summary>
-///     Invokes the native pointer while supplying the bound execution environment internally.
-/// </summary>
+    ///     Invokes the native pointer while supplying the bound execution environment internally.
+    /// </summary>
     public TResult Invoke(TArg1 arg1, TArg2 arg2, TArg3 arg3, TArg4 arg4, TArg5 arg5, TArg6 arg6, TArg7 arg7, TArg8 arg8, TArg9 arg9)
     {
         _adapter.SetCurrentArgument(0, arg1);
@@ -356,8 +353,8 @@ public sealed class ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TArg
     }
 
     /// <summary>
-///     Invokes the native pointer while supplying the bound execution environment internally.
-/// </summary>
+    ///     Invokes the native pointer while supplying the bound execution environment internally.
+    /// </summary>
     public TResult Invoke(TArg1 arg1, TArg2 arg2, TArg3 arg3, TArg4 arg4, TArg5 arg5, TArg6 arg6, TArg7 arg7, TArg8 arg8, TArg9 arg9, TArg10 arg10)
     {
         _adapter.SetCurrentArgument(0, arg1);

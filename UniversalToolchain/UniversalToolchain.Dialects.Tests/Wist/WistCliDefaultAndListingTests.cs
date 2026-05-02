@@ -1,4 +1,3 @@
-using UniversalToolchain.Dialects.Integration;
 using Wistc;
 
 namespace UniversalToolchain.Dialects.Tests.Wist;
@@ -17,9 +16,9 @@ public sealed class WistCliDefaultAndListingTests
     public void RuntimeListing_UsesRuntimeComponentCatalog()
     {
         var output = WistCliRuntimeListingFormatter.Format(new StaticCatalog(
-            modules: [Entry(RuntimeComponentKind.FrontendModule, "Arithmetic", [], "frontend.arithmetic", "ArithmeticModule")],
-            optimizers: [],
-            backends: [Entry(RuntimeComponentKind.Backend, "cil", ["compiler"], "backend.cil", "UniversalToolchain.Dialects.Wist")]));
+            [Entry(RuntimeComponentKind.FrontendModule, "Arithmetic", [], "frontend.arithmetic", "ArithmeticModule")],
+            [],
+            [Entry(RuntimeComponentKind.Backend, "cil", ["compiler"], "backend.cil", "UniversalToolchain.Dialects.Wist")]));
 
         Assert.Multiple(() =>
         {
@@ -33,13 +32,12 @@ public sealed class WistCliDefaultAndListingTests
     public void RuntimeListing_Output_IsDeterministicallyOrdered()
     {
         var output = WistCliRuntimeListingFormatter.Format(new StaticCatalog(
-            modules:
             [
                 Entry(RuntimeComponentKind.FrontendModule, "Alpha", [], "frontend.alpha", "AlphaModule"),
                 Entry(RuntimeComponentKind.FrontendModule, "Beta", [], "frontend.beta", "BetaModule")
             ],
-            optimizers: [],
-            backends: []));
+            [],
+            []));
 
         Assert.That(output.IndexOf("  Alpha", StringComparison.Ordinal), Is.LessThan(output.IndexOf("  Beta", StringComparison.Ordinal)));
     }

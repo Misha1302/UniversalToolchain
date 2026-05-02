@@ -1,5 +1,3 @@
-using UniversalToolchain.Dialects.Integration;
-
 namespace UniversalToolchain.Dialects.Tests.RuntimeLoading;
 
 public class RuntimeArtifactLocatorContractTests

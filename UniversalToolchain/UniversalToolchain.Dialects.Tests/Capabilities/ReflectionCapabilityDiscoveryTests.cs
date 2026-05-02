@@ -2,9 +2,6 @@ using System.Reflection;
 using UniversalToolchain.Capabilities.Abstractions;
 using UniversalToolchain.Capabilities.Core;
 using UniversalToolchain.Diagnostics.Abstractions;
-using UniversalToolchain.Dialects.Abstractions;
-using UniversalToolchain.Dialects.Integration;
-using UniversalToolchain.ExpressionTyping.Abstractions;
 using UniversalToolchain.Functions.Abstractions;
 
 namespace UniversalToolchain.Dialects.Tests.Capabilities;
@@ -208,13 +205,9 @@ public class ReflectionCapabilityDiscoveryTests
         });
     }
 
-    private static RuntimeComponentManifestEntry CreateEntry(
-        string alias,
-        string id,
-        RuntimeComponentKind kind = RuntimeComponentKind.FrontendModule)
-    {
-        return new RuntimeComponentManifestEntry(kind, alias, [], new RuntimeComponentId(id), "TestAssembly");
-    }
+    private static RuntimeComponentManifestEntry CreateEntry(string alias, string id, RuntimeComponentKind kind = RuntimeComponentKind.FrontendModule) =>
+        new(kind, alias, [
+        ], new RuntimeComponentId(id), "TestAssembly");
 
     [DialectCapabilityProvider(typeof(FakeFunctionCapabilityProvider))]
     private sealed class FakeFunctionModuleImpl
@@ -256,67 +249,55 @@ public class ReflectionCapabilityDiscoveryTests
         IBuiltinFunctionDescriptorProvider,
         IBuiltinFunctionRuntimeBindingProvider
     {
-        public IReadOnlyList<LanguageFeatureDescriptor> GetLanguageFeatures()
-        {
-            return
-            [
-                new LanguageFeatureDescriptor(
-                    new LanguageFeatureId("fake-functions"),
-                    "Fake Functions",
-                    LanguageFeatureKind.FunctionSet,
-                    ["fake-module"],
-                    [],
-                    [new LanguageFeatureSymbolDescriptor("fakeAdd", LanguageFeatureSymbolKind.Function, "fakeAdd(number, number)", "Adds fake numbers.")],
-                    ["interpreter"],
-                    "Fake arithmetic functions.")
-            ];
-        }
+        public IReadOnlyList<BuiltinFunctionDescriptor> GetFunctions() =>
+        [
+            new BuiltinFunctionDescriptor(
+                "fakeAdd",
+                new LanguageFeatureId("fake-functions"),
+                [new FunctionParameterDescriptor("left", NumberType), new FunctionParameterDescriptor("right", NumberType)],
+                NumberType,
+                FunctionPurity.Pure,
+                ["interpreter"])
+        ];
 
-        public IReadOnlyList<BuiltinFunctionDescriptor> GetFunctions()
-        {
-            return
-            [
-                new BuiltinFunctionDescriptor(
-                    "fakeAdd",
-                    new LanguageFeatureId("fake-functions"),
-                    [new FunctionParameterDescriptor("left", NumberType), new FunctionParameterDescriptor("right", NumberType)],
-                    NumberType,
-                    FunctionPurity.Pure,
-                    ["interpreter"])
-            ];
-        }
+        public IReadOnlyList<BuiltinFunctionRuntimeBinding> GetRuntimeBindings() =>
+        [
+            new BuiltinFunctionRuntimeBinding(
+                new BuiltinFunctionSignature("fakeAdd", [NumberType, NumberType]),
+                NumberType,
+                new LanguageFeatureId("fake-functions"),
+                typeof(FakeRuntimeMethods).GetMethod(nameof(FakeRuntimeMethods.FakeAdd), BindingFlags.Public | BindingFlags.Static)!,
+                ["interpreter"])
+        ];
 
-        public IReadOnlyList<BuiltinFunctionRuntimeBinding> GetRuntimeBindings()
-        {
-            return
-            [
-                new BuiltinFunctionRuntimeBinding(
-                    new BuiltinFunctionSignature("fakeAdd", [NumberType, NumberType]),
-                    NumberType,
-                    new LanguageFeatureId("fake-functions"),
-                    typeof(FakeRuntimeMethods).GetMethod(nameof(FakeRuntimeMethods.FakeAdd), BindingFlags.Public | BindingFlags.Static)!,
-                    ["interpreter"])
-            ];
-        }
+        public IReadOnlyList<LanguageFeatureDescriptor> GetLanguageFeatures() =>
+        [
+            new LanguageFeatureDescriptor(
+                new LanguageFeatureId("fake-functions"),
+                "Fake Functions",
+                LanguageFeatureKind.FunctionSet,
+                ["fake-module"],
+                [],
+                [new LanguageFeatureSymbolDescriptor("fakeAdd", LanguageFeatureSymbolKind.Function, "fakeAdd(number, number)", "Adds fake numbers.")],
+                ["interpreter"],
+                "Fake arithmetic functions.")
+        ];
     }
 
     private sealed class KnownOnlyCapabilityProvider : ILanguageFeatureDescriptorProvider
     {
-        public IReadOnlyList<LanguageFeatureDescriptor> GetLanguageFeatures()
-        {
-            return
-            [
-                new LanguageFeatureDescriptor(
-                    new LanguageFeatureId("known-only"),
-                    "Known Only",
-                    LanguageFeatureKind.Syntax,
-                    ["known-only-module"],
-                    [],
-                    [],
-                    ["interpreter"],
-                    "Feature used to prove known but unselected reporting.")
-            ];
-        }
+        public IReadOnlyList<LanguageFeatureDescriptor> GetLanguageFeatures() =>
+        [
+            new LanguageFeatureDescriptor(
+                new LanguageFeatureId("known-only"),
+                "Known Only",
+                LanguageFeatureKind.Syntax,
+                ["known-only-module"],
+                [],
+                [],
+                ["interpreter"],
+                "Feature used to prove known but unselected reporting.")
+        ];
     }
 
     private sealed class ZetaPrimaryCapabilityProvider : ILanguageFeatureDescriptorProvider
@@ -365,10 +346,7 @@ public class ReflectionCapabilityDiscoveryTests
 
     private sealed class StaticRuntimeComponentTypeLoader(IReadOnlyDictionary<RuntimeComponentId, Type> typesById) : IRuntimeComponentTypeLoader
     {
-        public Type LoadType(RuntimeComponentManifestEntry entry)
-        {
-            return typesById[entry.ComponentId];
-        }
+        public Type LoadType(RuntimeComponentManifestEntry entry) => typesById[entry.ComponentId];
     }
 
     private static class FakeRuntimeMethods

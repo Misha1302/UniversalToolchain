@@ -19,7 +19,7 @@ public sealed class CapabilityProviderTypeResolver
                      .OrderBy(GetTypeName, StringComparer.Ordinal))
         {
             foreach (var attribute in componentType
-                         .GetCustomAttributes(typeof(DialectCapabilityProviderAttribute), inherit: false)
+                         .GetCustomAttributes(typeof(DialectCapabilityProviderAttribute), false)
                          .Cast<DialectCapabilityProviderAttribute>()
                          .OrderBy(static x => GetTypeName(x.ProviderType), StringComparer.Ordinal))
             {
@@ -60,15 +60,13 @@ public sealed class CapabilityProviderTypeResolver
     internal static ToolchainDiagnostic CreateInvalidProviderDiagnostic(
         Type runtimeComponentImplementationType,
         Type providerType,
-        string message)
-    {
-        return new ToolchainDiagnostic(
+        string message) =>
+        new(
             ToolchainDiagnosticCodes.CapabilityProviderInvalid,
             ToolchainDiagnosticSeverity.Error,
             $"{message} Component='{GetTypeName(runtimeComponentImplementationType)}', provider='{GetTypeName(providerType)}'.",
             null,
             []);
-    }
 
     internal static string GetTypeName(Type type) => type.FullName ?? type.Name;
 }

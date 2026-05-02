@@ -1,3 +1,4 @@
+using UniversalToolchain.Capabilities.Abstractions;
 using UniversalToolchain.Diagnostics.Abstractions;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Functions.Abstractions;
@@ -7,7 +8,7 @@ namespace UniversalToolchain.Capabilities.Core;
 public sealed class BuiltinFunctionCatalog
 {
     private readonly IReadOnlySet<string> _availableBackendAliases;
-    private readonly IReadOnlySet<UniversalToolchain.Capabilities.Abstractions.LanguageFeatureId> _availableFeatureIds;
+    private readonly IReadOnlySet<LanguageFeatureId> _availableFeatureIds;
     private readonly BuiltinFunctionRuntimeBindingCatalog _runtimeBindingCatalog;
     private readonly CapabilityCatalog _selectedCapabilityCatalog;
 

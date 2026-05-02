@@ -21,7 +21,7 @@ public sealed class WistRuntimeFacadeSmokeTests
             .CreateDefault()
             .Build();
 
-        var result = wist.Run(PricingFormula, CreateArguments(), "compiler");
+        var result = wist.Run(PricingFormula, CreateArguments());
 
         Assert.That(BackendParityInfrastructure.AsNumber(result), Is.EqualTo(95.0d).Within(1e-9));
     }

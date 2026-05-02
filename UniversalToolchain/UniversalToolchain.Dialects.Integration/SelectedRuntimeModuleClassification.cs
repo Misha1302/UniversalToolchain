@@ -32,9 +32,7 @@ public sealed class SelectedRuntimeModuleClassification
         {
             var type = value.NotNull(paramName);
             if (seen.Add(type))
-            {
                 snapshot.Add(type);
-            }
         }
 
         return snapshot;

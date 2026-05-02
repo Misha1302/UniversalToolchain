@@ -1,4 +1,3 @@
-using System.Collections.Specialized;
 using ExceptionsManager;
 
 namespace UniversalToolchain.Dialects.Wist;

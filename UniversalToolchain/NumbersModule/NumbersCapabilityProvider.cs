@@ -6,21 +6,18 @@ public sealed class NumbersCapabilityProvider : ILanguageFeatureDescriptorProvid
 {
     private static readonly LanguageFeatureId FeatureId = new("NumericLiterals");
 
-    public IReadOnlyList<LanguageFeatureDescriptor> GetLanguageFeatures()
-    {
-        return
-        [
-            new LanguageFeatureDescriptor(
-                FeatureId,
-                "Numeric literals",
-                LanguageFeatureKind.Syntax,
-                ["Numbers"],
-                [],
-                [
-                    new("number", LanguageFeatureSymbolKind.SyntaxForm, "123 | 1.25 | 6.02e23", "Parses decimal and exponent-based numeric literals.")
-                ],
-                ["cil", "interpreter"],
-                "Provides numeric literal parsing for Wist expressions.")
-        ];
-    }
+    public IReadOnlyList<LanguageFeatureDescriptor> GetLanguageFeatures() =>
+    [
+        new(
+            FeatureId,
+            "Numeric literals",
+            LanguageFeatureKind.Syntax,
+            ["Numbers"],
+            [],
+            [
+                new LanguageFeatureSymbolDescriptor("number", LanguageFeatureSymbolKind.SyntaxForm, "123 | 1.25 | 6.02e23", "Parses decimal and exponent-based numeric literals.")
+            ],
+            ["cil", "interpreter"],
+            "Provides numeric literal parsing for Wist expressions.")
+    ];
 }

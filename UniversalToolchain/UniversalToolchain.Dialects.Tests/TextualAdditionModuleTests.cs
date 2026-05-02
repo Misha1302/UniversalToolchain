@@ -6,16 +6,16 @@ namespace UniversalToolchain.Dialects.Tests;
 public sealed class TextualAdditionModuleTests
 {
     private const string TextualAdditionDialect = """
-                                                 dialect TextualAdditionDemo
-                                                 use Whitespaces,Numbers,Scopes,Arithmetic,TextualAddition
-                                                 backend compiler,interpreter
-                                                 """;
+                                                  dialect TextualAdditionDemo
+                                                  use Whitespaces,Numbers,Scopes,Arithmetic,TextualAddition
+                                                  backend compiler,interpreter
+                                                  """;
 
     private const string ArithmeticOnlyDialect = """
-                                                dialect ArithmeticOnlyDemo
-                                                use Whitespaces,Numbers,Scopes,Arithmetic
-                                                backend compiler,interpreter
-                                                """;
+                                                 dialect ArithmeticOnlyDemo
+                                                 use Whitespaces,Numbers,Scopes,Arithmetic
+                                                 backend compiler,interpreter
+                                                 """;
 
     [Test]
     public void TextualAddition_Module_ExecutesPlusKeyword()

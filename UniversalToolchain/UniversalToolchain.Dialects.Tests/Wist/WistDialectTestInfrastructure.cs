@@ -1,5 +1,4 @@
 using Microsoft.Extensions.DependencyInjection;
-using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
 
 namespace UniversalToolchain.Dialects.Tests.Wist;
@@ -26,9 +25,7 @@ internal static class WistDialectTestInfrastructure
     {
         var selection = composition.RuntimeSelection as SelectedRuntimePlan;
         if (selection == null)
-        {
             return "<no-selection>";
-        }
 
         return string.Join("|", selection.OrderedModules.Select(static x => x.CanonicalAlias))
                + "::"
@@ -48,10 +45,7 @@ internal static class WistDialectTestInfrastructure
                + string.Join("|", diagnostics);
     }
 
-    public static string BuildHostSignature(WistDialectExecutionHost host)
-    {
-        return BuildConfigurationSignature(host.Configuration);
-    }
+    public static string BuildHostSignature(WistDialectExecutionHost host) => BuildConfigurationSignature(host.Configuration);
 
     public static string BuildConfigurationSignature(WistDialectExecutionConfiguration configuration)
     {
