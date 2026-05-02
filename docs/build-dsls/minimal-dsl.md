@@ -31,12 +31,15 @@ The repository already contains a minimal arithmetic example:
 UniversalToolchain/Dialects/examples/wist/minimal-arithmetic/dialect.wistdialect
 ```
 
-Its contents are:
+In parser-tested v1 syntax, the dialect shape is:
 
 ```text
 dialect MinimalArithmetic
-use Arithmetic,Numbers,Scopes,Whitespaces
-backend interpreter
+use Arithmetic
+use Numbers
+use Scopes
+use Whitespaces
+backend interpreter enable
 ```
 
 The matching program is:
@@ -65,8 +68,13 @@ If you need variables, extend the module list:
 
 ```text
 dialect MinimalVariables
-use Arithmetic,Numbers,Identifier,Variables,Scopes,Whitespaces
-backend interpreter
+use Arithmetic
+use Numbers
+use Identifier
+use Variables
+use Scopes
+use Whitespaces
+backend interpreter enable
 ```
 
 Then a program like this becomes valid:
@@ -80,7 +88,10 @@ x + y
 If you need comparisons and conditions, add the owning modules explicitly:
 
 ```text
-use Arithmetic,Numbers,Identifier,Variables,Scopes,Whitespaces,ComparisonConditions,Conditions,Equality,BooleanConditions
+use ComparisonConditions
+use Conditions
+use Equality
+use BooleanConditions
 ```
 
 The exact module set depends on the syntax you want to allow. Start narrow and add only the features you can test.
@@ -90,19 +101,20 @@ The exact module set depends on the syntax you want to allow. Start narrow and a
 For interpreter-only DSLs:
 
 ```text
-backend interpreter
+backend interpreter enable
 ```
 
 For CIL-backed DSLs:
 
 ```text
-backend cil
+backend cil enable
 ```
 
 For both modes:
 
 ```text
-backend cil,interpreter
+backend cil enable
+backend interpreter enable
 ```
 
 If both backends are enabled, add parity tests so the same source produces the same observable result in both modes.
@@ -112,10 +124,10 @@ If both backends are enabled, add parity tests so the same source produces the s
 A native arithmetic dialect can enable optimizers such as:
 
 ```text
-enable ArithmeticOptimization
-enable EGraphOptimization
-enable NativeCilOptimization
-enable NativeTypesOptimization
+enable optimizer ArithmeticOptimization for cil
+enable optimizer EGraphOptimization for any
+enable optimizer NativeCilOptimization for cil
+enable optimizer NativeTypesOptimization for any
 ```
 
 Do this after the minimal interpreter version works. Optimizers should not be used to hide missing semantics.
@@ -132,9 +144,10 @@ The dialect file is compiled into a build plan, resolved against runtime manifes
 
 - Starting with `full-default` and removing features without testing the result.
 - Forgetting `Identifier` when adding `Variables`.
-- Enabling `compiler` mode in the CLI while the dialect declares only `backend interpreter`.
-- Adding `CSharpInterop` or `unsafe-interop` to a DSL intended for restricted user-authored formulas.
+- Enabling `compiler` mode in the CLI while the dialect declares only `backend interpreter enable`.
+- Adding `CSharpInterop` or interop capabilities to a DSL intended for restricted user-authored formulas.
 - Documenting rules as available. Rule runtime functionality is currently removed from the public surface.
+- Copying older shorthand dialect examples instead of the parser-tested v1 directive shape.
 
 ## Next
 
