@@ -7,7 +7,7 @@ description: Build a small frontend module from syntax idea to tested dialect be
 
 This tutorial builds a real, intentionally small frontend module: `TextualAddition`.
 
-The module adds a textual addition operator:
+It adds this Wist syntax:
 
 ```wist
 2 plus 3
@@ -19,7 +19,7 @@ Expected result:
 5
 ```
 
-The feature is small on purpose. It touches the full module authoring path without requiring a new backend or intrinsic.
+The feature is deliberately small. It exercises the module pipeline without requiring a new backend, new AIR shape, or new intrinsic.
 
 ## What you will build
 
@@ -28,16 +28,12 @@ The feature is small on purpose. It touches the full module authoring path witho
 | Module alias | `TextualAddition` |
 | Runtime export | `FrontendModule/TextualAddition` |
 | New syntax | `<expression> plus <expression>` |
-| Parser precedence | same as normal addition |
-| Runtime behavior | reuse existing `Add` operation on the left operand type |
+| Parser precedence | same as addition/subtraction |
+| Runtime behavior | lower to the existing `Add` operation |
 | Required related modules | `Whitespaces`, `Numbers`, `Scopes`, `Arithmetic` |
-| Backend expectation | compiler and interpreter parity |
-
-This module is a good first example because it adds syntax but reuses existing arithmetic semantics.
+| Tests | positive execution, precedence, missing-module rejection |
 
 ## Files created
-
-The implementation lives in the existing `ArithmeticModule` project because this tutorial feature is semantically arithmetic-related:
 
 | Concern | File |
 |---|---|
@@ -46,23 +42,19 @@ The implementation lives in the existing `ArithmeticModule` project because this
 | AST visitor | `UniversalToolchain/ArithmeticModule/Visitors/TextualAdditionAstVisitor.cs` |
 | Tests | `UniversalToolchain/UniversalToolchain.Dialects.Tests/TextualAdditionModuleTests.cs` |
 
-A production feature could live in its own project. For a first tutorial, keeping the example near the existing arithmetic code makes ownership and reuse easier to understand.
+The example lives in `ArithmeticModule` because it is semantically arithmetic-related. A larger external feature can live in its own project, but the same responsibilities apply.
 
 ## Step 1. Define the feature boundary
 
-`TextualAddition` owns only one source-level feature: the keyword-like operator `plus`.
+`TextualAddition` owns exactly one source-level feature: the keyword-like binary operator `plus`.
 
-It does not own numeric literals, scopes, multiplication, or backend selection. Those are provided by existing modules.
-
-This boundary matters because a module should not quietly duplicate unrelated language behavior.
+It does not own numbers, scopes, multiplication, backend selection, or optimizer behavior. Those remain separate module/backend concerns.
 
 ## Step 2. Add the module entry point
 
-Create `UniversalToolchain/ArithmeticModule/Module/TextualAdditionModuleImpl.cs`:
+The module entry point declares dialect metadata and registers lexer, parser, and AST translation contributions.
 
 ```csharp
-namespace ArithmeticModule.Module;
-
 [DialectModuleAlias("TextualAddition")]
 [DialectRuntimeExport("FrontendModule", "TextualAddition")]
 [AutoRegisterService]
@@ -89,81 +81,57 @@ public class TextualAdditionModuleImpl : IFrontendCoreModule
 
 Important details:
 
-- `DialectModuleAlias("TextualAddition")` makes the module selectable from a dialect file.
-- `DialectRuntimeExport("FrontendModule", "TextualAddition")` exposes the runtime component to manifest-backed composition.
-- `AutoRegisterService` keeps service registration consistent with the rest of the module system.
-- The lexeme uses `\bplus\b` so `surplus` does not accidentally become `sur` + `plus`.
-- Lexeme priority is higher than the identifier pattern, so `plus` is recognized as module-owned syntax when this module is selected.
-- Parser priority `-30f` matches normal addition/subtraction precedence.
+- `DialectModuleAlias` makes the module selectable from a dialect file.
+- `DialectRuntimeExport` exposes it to manifest-backed runtime composition.
+- `\bplus\b` prevents accidental matches inside words such as `surplus`.
+- priority `110f` keeps `plus` above identifier-like lexemes when both are selected;
+- parser priority `-30f` matches ordinary addition/subtraction precedence.
 
 ## Step 3. Add the parser node creator
 
-Create `UniversalToolchain/ArithmeticModule/Creators/TextualAdditionOperationNodeCreator.cs`:
+The parser node creator reuses the existing binary-operation parser shape:
 
 ```csharp
-namespace ArithmeticModule.Creators;
-
-[AutoRegisterService]
-[ArithmeticModeCompatibility(ArithmeticMode.Universal)]
 public class TextualAdditionOperationNodeCreator() : BinaryOperationBase("TextualAddition");
 ```
 
-This reuses `BinaryOperationBase`, the same shape used by ordinary arithmetic binary operators.
+This transforms a flat token sequence like `2 plus 3` into a binary AST node with left and right operands.
 
-The parser creator turns this flat token sequence:
-
-```text
-2 plus 3
-```
-
-into a binary AST node where `plus` has left and right operands.
-
-The node type is `TextualAddition`, not `Addition`, because the module owns a distinct syntax surface. The visitor will map that syntax to addition semantics explicitly.
+The node type remains `TextualAddition`, not `Addition`, because this module owns a distinct syntax surface. The AST visitor maps that syntax to addition semantics explicitly.
 
 ## Step 4. Add the AST visitor
 
-Create `UniversalToolchain/ArithmeticModule/Visitors/TextualAdditionAstVisitor.cs`:
+The visitor must self-filter and emit bytecode only for `TextualAddition` nodes.
 
 ```csharp
-namespace ArithmeticModule.Visitors;
-
-[AutoRegisterService]
-[ArithmeticModeCompatibility(ArithmeticMode.Universal)]
-public class TextualAdditionAstVisitor : IAstVisitor
+public void TryVisit(BytecodeVisitorData data)
 {
-    private static readonly ExtensibleEnum<AstNodeTag> _nodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("TextualAddition");
+    if (data.Node.NodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("TextualAddition"))
+        return;
 
-    public void TryVisit(BytecodeVisitorData data)
-    {
-        if (data.Node.NodeType != _nodeType)
-            return;
+    foreach (var child in data.Node.Children)
+        data.AstToBytecodeTranslator.Translate(child);
 
-        foreach (var child in data.Node.Children)
-            data.AstToBytecodeTranslator.Translate(child);
+    var method = new AbstractMethodImpl(
+        "Op_plus",
+        (il, context) => il.CallCSharp(context.Stack[^1].GetMethod("Add").NotNull())
+    );
 
-        var method = new AbstractMethodImpl(
-            "Op_plus",
-            (il, context) => il.CallCSharp(context.Stack[^1].GetMethod("Add").NotNull())
-        );
-
-        data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
-    }
+    data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
 }
 ```
 
-The visitor must self-filter. It should emit bytecode only for `TextualAddition` nodes.
-
-The child translation order matters:
+The stack order is:
 
 ```text
-left operand → right operand → Add operation
+left operand -> right operand -> Add operation
 ```
 
-That keeps stack behavior consistent with the existing arithmetic visitor.
+That mirrors the existing arithmetic visitor and keeps compiler/interpreter behavior aligned.
 
 ## Step 5. Enable the module in a dialect
 
-A dialect must select the module explicitly:
+The syntax exists only when the dialect selects the module:
 
 ```text
 dialect TextualAdditionDemo
@@ -171,75 +139,34 @@ use Whitespaces,Numbers,Scopes,Arithmetic,TextualAddition
 backend compiler,interpreter
 ```
 
-`TextualAddition` is not a global language feature. Without this `use` entry, the `plus` syntax should be unavailable.
+Without `TextualAddition`, `2 plus 3` should be rejected. This is part of the module contract, not an optional nicety.
 
-## Step 6. Add positive and parity tests
+## Step 6. Add tests
 
-Create `UniversalToolchain/UniversalToolchain.Dialects.Tests/TextualAdditionModuleTests.cs`:
+The module test file covers three cases:
 
 ```csharp
-using UniversalToolchain.Modules.Tests;
-
-namespace UniversalToolchain.Dialects.Tests;
-
-[TestFixture]
-public sealed class TextualAdditionModuleTests
+[Test]
+public void TextualAddition_Module_ExecutesPlusKeyword()
 {
-    private const string TextualAdditionDialect = """
-                                                 dialect TextualAdditionDemo
-                                                 use Whitespaces,Numbers,Scopes,Arithmetic,TextualAddition
-                                                 backend compiler,interpreter
-                                                 """;
+    var result = DialectTestHostInfrastructure.RunInBothBackends(TextualAdditionDialect, "2 plus 3");
 
-    private const string ArithmeticOnlyDialect = """
-                                                dialect ArithmeticOnlyDemo
-                                                use Whitespaces,Numbers,Scopes,Arithmetic
-                                                backend compiler,interpreter
-                                                """;
-
-    [Test]
-    public void TextualAddition_Module_ExecutesPlusKeyword()
-    {
-        var result = DialectTestHostInfrastructure.RunInBothBackends(TextualAdditionDialect, "2 plus 3");
-
-        Assert.That(BackendParityInfrastructure.AsNumber(result), Is.EqualTo(5.0d).Within(1e-9));
-    }
-
-    [Test]
-    public void TextualAddition_Module_UsesAdditionPrecedence()
-    {
-        var result = DialectTestHostInfrastructure.RunInBothBackends(TextualAdditionDialect, "2 plus 3 * 4");
-
-        Assert.That(BackendParityInfrastructure.AsNumber(result), Is.EqualTo(14.0d).Within(1e-9));
-    }
-
-    [Test]
-    public void TextualAddition_Syntax_IsUnavailable_WhenModuleIsNotSelected()
-    {
-        var (compilerResult, interpreterResult) = BackendParityInfrastructure.RunBoth(ArithmeticOnlyDialect, "2 plus 3");
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(compilerResult.IsSuccess, Is.False, "Compiler path must reject syntax owned by an unselected module.");
-            Assert.That(interpreterResult.IsSuccess, Is.False, "Interpreter path must reject syntax owned by an unselected module.");
-            Assert.That(compilerResult.Exception, Is.Not.Null);
-            Assert.That(interpreterResult.Exception, Is.Not.Null);
-        });
-    }
+    Assert.That(BackendParityInfrastructure.AsNumber(result), Is.EqualTo(5.0d).Within(1e-9));
 }
 ```
 
-These tests prove three things:
+Also test:
 
-1. selected module syntax works;
-2. `plus` uses addition precedence;
-3. unselected module syntax is rejected in both backend paths.
+- `2 plus 3 * 4` returns `14`, proving addition-level precedence;
+- `2 plus 3` fails when the dialect selects `Arithmetic` but not `TextualAddition`, proving dialect visibility is real.
+
+Use `BackendParityInfrastructure` rather than a legacy smoke-test base. A module is not done until the intended backend paths agree.
 
 ## Step 7. Run the checks
 
 From repository root:
 
-```bash
+```bash ci-run=false
 dotnet restore UniversalToolchain/Wist.sln
 dotnet build UniversalToolchain/Wist.sln -c Release --no-restore
 dotnet test UniversalToolchain/Wist.sln -c Release --no-build
@@ -247,27 +174,11 @@ dotnet test UniversalToolchain/Wist.sln -c Release --no-build
 
 For documentation smoke checks:
 
-```bash
+```bash ci-run=false
 python3 .github/scripts/run-markdown-bash-blocks.py
 ```
 
-The GitHub workflow runs the same broad restore/build/test path, so keep the tutorial code blocks copyable and consistent with CI.
-
-## What you have learned
-
-This module demonstrates the minimum useful vertical slice:
-
-```text
-module metadata
-  → lexeme registration
-  → parser node creator
-  → AST visitor
-  → bytecode emission
-  → dialect selection
-  → backend parity tests
-```
-
-It does not demonstrate new backend behavior. That is the next level: a feature that emits new bytecode/AIR or requires interpreter/compiler support.
+These blocks are marked `ci-run=false` because the GitHub workflow already runs restore/build/test before the markdown smoke pass. The commands remain copyable for humans without making the documentation smoke step slow or recursive.
 
 ## Finished module checklist
 
@@ -278,7 +189,7 @@ Before considering a module complete, verify:
 - syntax belongs to lexer/parser, not raw source scanning;
 - parser priority is intentional and tested;
 - AST visitors self-filter;
-- emitted bytecode preserves stack discipline;
+- bytecode emission preserves stack discipline;
 - the feature is available only when selected by dialect;
 - selected backend modes agree on observable results;
 - negative tests prove omitted syntax stays unavailable.
