@@ -26,7 +26,7 @@ At minimum, a dialect should have these test categories:
 | Backend availability | unsupported modes fail |
 | Backend parity | interpreter and compiler agree when both are exposed |
 | Optimizer safety | optimizers do not change observable results |
-| Runtime surface | unsafe or unrelated modules are not accidentally selected |
+| Runtime surface | interop or unrelated modules are not accidentally selected |
 
 ## 1. Positive execution test
 
@@ -66,7 +66,7 @@ Negative tests are as important as positive tests. Without them, a “restricted
 If a dialect declares:
 
 ```text
-backend interpreter
+backend interpreter enable
 ```
 
 then asking for compiler mode should fail.
@@ -74,7 +74,7 @@ then asking for compiler mode should fail.
 If a dialect declares:
 
 ```text
-backend cil
+backend cil enable
 ```
 
 then asking for interpreter mode should fail.
@@ -86,7 +86,8 @@ The failure should be explicit. Do not silently fall back to another backend, be
 When a dialect exposes both:
 
 ```text
-backend cil,interpreter
+backend cil enable
+backend interpreter enable
 ```
 
 run the same source through both modes and compare the result.
@@ -118,13 +119,20 @@ Test optimizer-sensitive programs in two ways:
 
 Compare observable results. For backend-specific optimizers, also verify that unsupported backends do not receive backend-specific intrinsics.
 
+Current parser-tested optimizer directives use this shape:
+
+```text
+enable optimizer ArithmeticOptimization for cil
+disable optimizer AggressiveInline for interpreter
+```
+
 ## 6. Runtime surface test
 
 A DSL intended for end-user formulas should not accidentally expose broad runtime features.
 
 For a pricing formula dialect, test that these are unavailable unless intentionally selected:
 
-- unsafe C# interop;
+- C# interop;
 - loops;
 - labels;
 - broad native/runtime functionality;
@@ -138,7 +146,7 @@ This is not only a security concern. It also keeps the product behavior predicta
 |---|---|---|---|
 | `minimal-arithmetic` | `2 + 3 * 4` | `let x = 2` | `interpreter` |
 | `minimal-arithmetic-native` | `2 + 3 * 4` | unsupported non-arithmetic syntax | `compiler` |
-| `pricing-restricted` | pricing expression with declared inputs | unsafe interop or unrelated syntax | selected restricted backend path |
+| `pricing-restricted` | pricing expression with declared inputs | interop or unrelated syntax | selected restricted backend path |
 | `full-default` | broad Wist examples | invalid syntax only | `compiler`, `interpreter` |
 
 ## What not to test as a shortcut
@@ -159,7 +167,8 @@ Before documenting a dialect as stable, verify:
 - unsupported backend modes fail explicitly;
 - parity tests exist when both compiler and interpreter are enabled;
 - optimizer behavior is tested separately from base semantics;
-- restricted dialects do not expose unsafe or unrelated modules.
+- restricted dialects do not expose interop or unrelated modules;
+- dialect examples use the parser-tested v1 directive shape.
 
 ## Next
 

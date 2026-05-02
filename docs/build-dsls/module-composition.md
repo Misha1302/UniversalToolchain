@@ -55,8 +55,11 @@ This dialect:
 
 ```text
 dialect MinimalArithmetic
-use Arithmetic,Numbers,Scopes,Whitespaces
-backend interpreter
+use Arithmetic
+use Numbers
+use Scopes
+use Whitespaces
+backend interpreter enable
 ```
 
 is a composition of four capabilities:
@@ -88,7 +91,7 @@ Some modules are meaningful only with related modules. For example:
 - `Variables` usually requires `Identifier`.
 - conditional syntax usually requires comparison/equality/boolean support, depending on the exact program shape;
 - native/CIL-oriented optimizations require backend support;
-- unsafe interop should not appear in a restricted user-facing formula DSL.
+- interop modules should not appear in a restricted user-facing formula DSL.
 
 The documentation should not pretend that module composition is magic. A dialect author is responsible for selecting a coherent set of capabilities and testing it.
 
@@ -117,7 +120,7 @@ A restricted dialect reduces the available language surface. That is useful, but
 Use restricted dialects to say:
 
 ```text
-This formula language does not include variables, loops or unsafe interop.
+This formula language does not include variables, loops or interop modules.
 ```
 
 Do not use restricted dialects alone to say:
@@ -136,6 +139,7 @@ For untrusted third-party code, combine dialect restriction with process, enviro
 - Depending on one backend while documenting the dialect as backend-neutral.
 - Adding marker-only capabilities that imply behavior without implementation ownership.
 - Hiding missing module dependencies behind fallback parser behavior.
+- Copying older shorthand dialect examples instead of parser-tested v1 directives.
 
 ## Practical checklist
 
@@ -145,7 +149,7 @@ Before accepting a dialect composition, verify:
 - omitted syntax is rejected;
 - selected backends match the intended runtime modes;
 - compiler and interpreter results match when both are enabled;
-- unsafe interop is absent from user-authored restricted DSLs;
+- interop modules are absent from restricted user-authored DSLs unless explicitly intended;
 - optimizer support is tested separately from base semantics.
 
 ## Next

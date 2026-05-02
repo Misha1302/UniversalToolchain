@@ -44,12 +44,15 @@ dialect file
 
 ## Minimal example
 
-The smallest useful path is to start from a shipped arithmetic dialect:
+The smallest useful path is to start from an arithmetic dialect:
 
 ```text
 dialect MinimalArithmetic
-use Arithmetic,Numbers,Scopes,Whitespaces
-backend interpreter
+use Arithmetic
+use Numbers
+use Scopes
+use Whitespaces
+backend interpreter enable
 ```
 
 This dialect is intentionally narrow. It can run arithmetic expressions such as:
@@ -64,7 +67,7 @@ Expected result:
 14
 ```
 
-It should not accept syntax whose owning modules are not selected. For example, variables require `Identifier` and `Variables`; loops require loop-related modules; C# interop requires an explicit unsafe/trusted runtime surface.
+It should not accept syntax whose owning modules are not selected. For example, variables require `Identifier` and `Variables`; loops require loop-related modules; C# interop requires an explicit trusted runtime surface.
 
 ## What you usually build
 
@@ -77,7 +80,7 @@ Use this for pricing, scoring, limits, thresholds or other numeric expressions.
 Typical properties:
 
 - narrow module set;
-- no unsafe interop;
+- no interop modules;
 - deterministic input bindings;
 - compiler mode only when performance matters and CIL support is available;
 - negative tests for syntax that must remain unavailable.
@@ -126,6 +129,7 @@ This order keeps composition errors visible. It also prevents optimizers or back
 - A backend must not change the observable meaning of a program.
 - A module should own the syntax and semantics it introduces.
 - Do not document removed or internal rule-declaration behavior as public runtime functionality.
+- Prefer the parser-tested v1 dialect directive shape documented in [Dialect Reference](/reference/dialect-reference).
 
 ## Pages in this section
 
