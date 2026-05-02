@@ -16,6 +16,7 @@ public sealed class WistDialectExecutionConfiguration
     private readonly ReadOnlyCollection<Type> _irModules;
     private readonly Dictionary<string, DialectBackendId> _knownBackendNameMap;
     private readonly ReadOnlyCollection<Type> _optimizers;
+    private readonly ReadOnlyCollection<Type> _requiredInfrastructureModules;
 
     public WistDialectExecutionConfiguration(
         string dialectName,
@@ -23,20 +24,26 @@ public sealed class WistDialectExecutionConfiguration
         IEnumerable<Type> irModules,
         IEnumerable<Type> optimizers,
         IEnumerable<DialectBackendRuntimeConfiguration> backendConfigurations,
-        IEnumerable<RuntimeBackendDescriptor> knownBackends)
+        IEnumerable<RuntimeBackendDescriptor>? knownBackends = null,
+        IEnumerable<Type>? requiredInfrastructureModules = null)
     {
         if (string.IsNullOrWhiteSpace(dialectName))
             Thrower.Argument(nameof(dialectName), "Dialect name must not be empty.");
 
+        var backendSnapshot = SnapshotBackends(backendConfigurations, nameof(backendConfigurations));
+
         DialectName = dialectName;
+        _requiredInfrastructureModules = new ReadOnlyCollection<Type>(SnapshotTypes(requiredInfrastructureModules ?? Enumerable.Empty<Type>(), nameof(requiredInfrastructureModules)));
         _frontendModules = new ReadOnlyCollection<Type>(SnapshotTypes(frontendModules, nameof(frontendModules)));
         _irModules = new ReadOnlyCollection<Type>(SnapshotTypes(irModules, nameof(irModules)));
         _optimizers = new ReadOnlyCollection<Type>(SnapshotTypes(optimizers, nameof(optimizers)));
-        _backendConfigurations = new ReadOnlyCollection<DialectBackendRuntimeConfiguration>(SnapshotBackends(backendConfigurations, nameof(backendConfigurations)));
-        _knownBackendNameMap = SnapshotKnownBackends(knownBackends);
+        _backendConfigurations = new ReadOnlyCollection<DialectBackendRuntimeConfiguration>(backendSnapshot);
+        _knownBackendNameMap = SnapshotKnownBackends(knownBackends ?? backendSnapshot.Select(x => x.BackendDescriptor));
     }
 
     public string DialectName { get; }
+
+    public IReadOnlyList<Type> RequiredInfrastructureModules => _requiredInfrastructureModules;
 
     public IReadOnlyList<Type> FrontendModules => _frontendModules;
 
@@ -51,7 +58,7 @@ public sealed class WistDialectExecutionConfiguration
     public bool TryResolveKnownBackendId(string nameOrAlias, out DialectBackendId backendId)
     {
         if (string.IsNullOrWhiteSpace(nameOrAlias))
-            Thrower.Argument(nameof(nameOrAlias), "Execution mode must not be empty.");
+            Thrower.Argument(nameof(nameOrAlias), "Backend name must not be empty.");
 
         return _knownBackendNameMap.TryGetValue(nameOrAlias, out backendId);
     }
@@ -67,13 +74,20 @@ public sealed class WistDialectExecutionConfiguration
 
     private static List<Type> SnapshotTypes(IEnumerable<Type> values, [CallerArgumentExpression(nameof(values))] string? paramName = null)
     {
-        return values
-            .Select(x => x.NotNull(paramName.NotNull()))
-            .Distinct()
-            .OrderBy(x => x.FullName, StringComparer.Ordinal)
-            .ToList();
-    }
+        var snapshot = new List<Type>();
+        var seen = new HashSet<Type>();
 
+        foreach (var value in values)
+        {
+            var type = value.NotNull(paramName.NotNull());
+            if (seen.Add(type))
+            {
+                snapshot.Add(type);
+            }
+        }
+
+        return snapshot;
+    }
 
     private static Dictionary<string, DialectBackendId> SnapshotKnownBackends(IEnumerable<RuntimeBackendDescriptor> values, [CallerArgumentExpression(nameof(values))] string paramName = null!)
     {
@@ -90,9 +104,18 @@ public sealed class WistDialectExecutionConfiguration
 
     private static List<DialectBackendRuntimeConfiguration> SnapshotBackends(IEnumerable<DialectBackendRuntimeConfiguration> values, [CallerArgumentExpression(nameof(values))] string? paramName = null)
     {
-        return values
-            .Select(x => x.NotNull(paramName.NotNull()))
-            .OrderBy(x => x.BackendDescriptor.BackendId)
-            .ToList();
+        var snapshot = new List<DialectBackendRuntimeConfiguration>();
+        var seen = new HashSet<DialectBackendId>();
+
+        foreach (var value in values)
+        {
+            var backend = value.NotNull(paramName.NotNull());
+            if (seen.Add(backend.BackendDescriptor.BackendId))
+            {
+                snapshot.Add(backend);
+            }
+        }
+
+        return snapshot;
     }
 }

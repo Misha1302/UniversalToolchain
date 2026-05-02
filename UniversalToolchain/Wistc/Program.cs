@@ -30,9 +30,8 @@ int RunCommand(RunOptions options)
 
         if (!string.IsNullOrWhiteSpace(options.DialectFile))
         {
-            ValidateDialectExecutionOptions(options);
             using var dialectHost = CreateDialectHost(options.DialectFile);
-            var result = dialectHost.Run(code, options.Mode);
+            var result = dialectHost.Run(code, options.Backend);
             if (result != null)
                 Console.WriteLine(result);
 
@@ -40,7 +39,7 @@ int RunCommand(RunOptions options)
         }
 
         using var host = CreateDefaultHost(options);
-        var runtimeResult = host.Run(code, options.Mode);
+        var runtimeResult = host.Run(code, options.Backend);
         if (runtimeResult != null)
             Console.WriteLine(runtimeResult);
 
@@ -70,21 +69,20 @@ int ReplCommand(ReplOptions options)
     {
         if (!string.IsNullOrWhiteSpace(options.DialectFile))
         {
-            ValidateDialectExecutionOptions(options);
             using var dialectHost = CreateDialectHost(options.DialectFile);
             Console.WriteLine("Wist REPL (Ctrl+C to exit)");
-            Console.WriteLine($"Mode: {options.Mode}");
+            Console.WriteLine($"Backend: {options.Backend}");
 
-            var dialectRepl = new Repl(dialectHost.GetCore(options.Mode), options.HistoryFile);
+            var dialectRepl = new Repl(dialectHost.GetCore(options.Backend), options.HistoryFile);
             return dialectRepl.Run();
         }
 
         using var defaultHost = CreateDefaultHost(options);
 
         Console.WriteLine("Wist REPL (Ctrl+C to exit)");
-        Console.WriteLine($"Mode: {options.Mode}");
+        Console.WriteLine($"Backend: {options.Backend}");
 
-        var defaultRepl = new Repl(defaultHost.GetCore(options.Mode), options.HistoryFile);
+        var defaultRepl = new Repl(defaultHost.GetCore(options.Backend), options.HistoryFile);
         return defaultRepl.Run();
     }
     catch (WistException ex)
@@ -215,28 +213,8 @@ WistDialectExecutionHost CreateDefaultHost(CommonOptions options)
     return plan.Kind switch
     {
         WistCliDialectPlanKind.Preset => CreateHostFromPreset(workflow, plan.BasePreset),
-        WistCliDialectPlanKind.CustomizedPreset => CreateHostFromCustomizedPresetPlan(workflow, plan),
         _ => Thrower.ArgumentOutOfRange<WistDialectExecutionHost>(nameof(plan.Kind), $"Unsupported CLI dialect plan kind '{plan.Kind}'.")
     };
-}
-
-WistDialectExecutionHost CreateHostFromCustomizedPresetPlan(WistDialectExecutionWorkflow workflow, WistCliDialectPlan plan)
-{
-    workflow = workflow.ArgNotNull();
-    plan = plan.ArgNotNull();
-
-    if (plan.Kind != WistCliDialectPlanKind.CustomizedPreset)
-        Thrower.Argument(nameof(plan), "CLI dialect plan must be of kind CustomizedPreset.");
-
-    var dialectText = plan.CustomizedDialectText;
-    if (string.IsNullOrWhiteSpace(dialectText))
-        Thrower.Argument(nameof(plan), "Customized preset plan must provide dialect text.");
-
-    var composition = workflow.ComposeText(dialectText, "cli-customized");
-    if (!composition.IsSuccess)
-        Thrower.InvalidOpEx(FormatComposition(composition));
-
-    return workflow.CreateHost(composition);
 }
 
 WistDialectExecutionHost CreateHostFromPreset(WistDialectExecutionWorkflow workflow, WistShippedDialectPreset preset)
@@ -248,22 +226,6 @@ WistDialectExecutionHost CreateHostFromPreset(WistDialectExecutionWorkflow workf
         Thrower.InvalidOpEx(FormatComposition(composition));
 
     return workflow.CreateHost(composition);
-}
-
-void ValidateDialectExecutionOptions(CommonOptions options)
-{
-    var customization = WistCliCustomizationRequest.FromOptions(options);
-    if (!customization.HasCustomization)
-        return;
-
-    if (customization.UseNativeMath)
-        Thrower.Argument(nameof(options.UseNativeMath), "The --use-native-math option cannot be combined with --dialect-file. Configure arithmetic through the dialect definition instead.");
-
-    if (customization.IncludeModules.Count > 0)
-        Thrower.Argument(nameof(options.IncludeModules), "The --include-module option cannot be combined with --dialect-file. Configure modules through the dialect definition instead.");
-
-    if (customization.ExcludeModules.Count > 0)
-        Thrower.Argument(nameof(options.ExcludeModules), "The --exclude-module option cannot be combined with --dialect-file. Configure modules through the dialect definition instead.");
 }
 
 WistDialectExecutionHost CreateDialectHost(string dialectFile)

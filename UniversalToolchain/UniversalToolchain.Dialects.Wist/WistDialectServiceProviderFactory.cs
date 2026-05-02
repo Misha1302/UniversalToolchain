@@ -54,8 +54,17 @@ public sealed class WistDialectServiceProviderFactory
 
     private static void RegisterModules(IServiceCollection services, IEnumerable<Type> types, Type serviceType, ServiceLifetime lifetime)
     {
-        foreach (var type in types.OrderBy(x => x.FullName, StringComparer.Ordinal))
+        foreach (var type in types)
         {
+            if (type == null)
+                Thrower.Argument(nameof(types), "Module type collection must not contain null entries.");
+
+            if (!serviceType.IsAssignableFrom(type))
+            {
+                Thrower.InvalidOpEx(
+                    $"Module type '{type.FullName}' does not implement '{serviceType.FullName}'.");
+            }
+
             services.Add(new ServiceDescriptor(serviceType, type, lifetime));
 
             if (!services.Any(x => x.ServiceType == type && x.ImplementationType == type))
@@ -67,7 +76,7 @@ public sealed class WistDialectServiceProviderFactory
 
     private void RegisterBackendRuntimes(IServiceCollection services, WistDialectExecutionConfiguration configuration)
     {
-        foreach (var backend in configuration.BackendConfigurations.OrderBy(x => x.BackendDescriptor.BackendId))
+        foreach (var backend in configuration.BackendConfigurations)
         {
             var manifestEntry = backend.BackendManifestEntry
                                 ?? Thrower.InvalidOpEx<RuntimeComponentManifestEntry>(

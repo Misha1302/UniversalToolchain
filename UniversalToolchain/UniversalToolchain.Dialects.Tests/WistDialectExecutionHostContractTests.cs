@@ -72,7 +72,7 @@ public class WistDialectExecutionHostContractTests
 
         AssertThrowsWithMessageFragment<InvalidOperationException>(
             () => host.GetCore("unknown-mode"),
-            "Supported modes:");
+            "Supported backends:");
     }
 
     [Test]
@@ -92,7 +92,7 @@ public class WistDialectExecutionHostContractTests
 
         AssertThrowsWithMessageFragment<InvalidOperationException>(
             () => host.GetCore("compiler"),
-            "Unknown execution mode 'compiler'");
+            "Unknown backend 'compiler'");
     }
 
     [Test]
@@ -102,7 +102,7 @@ public class WistDialectExecutionHostContractTests
 
         AssertThrowsWithMessageFragment<InvalidOperationException>(
             () => host.Run("2 + 2", "unknown-mode"),
-            "Unknown execution mode 'unknown-mode'");
+            "Unknown backend 'unknown-mode'");
     }
 
     private static WistDialectExecutionHost ComposeAndCreateHost(string dialect)

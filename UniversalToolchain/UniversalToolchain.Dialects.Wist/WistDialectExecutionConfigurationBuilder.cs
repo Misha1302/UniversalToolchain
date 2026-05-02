@@ -14,7 +14,6 @@ public sealed class WistDialectExecutionConfigurationBuilder
         DialectBackendRuntimeConfigurationBuilder backendConfigurationBuilder)
     {
         shapeBuilder = shapeBuilder.ArgNotNull();
-
         backendConfigurationBuilder = backendConfigurationBuilder.ArgNotNull();
 
         _shapeBuilder = shapeBuilder;
@@ -24,7 +23,6 @@ public sealed class WistDialectExecutionConfigurationBuilder
     public WistDialectExecutionConfiguration Build(DialectBuildPlan buildPlan, SelectedRuntimePlan selectedRuntimePlan)
     {
         buildPlan = buildPlan.ArgNotNull();
-
         selectedRuntimePlan = selectedRuntimePlan.ArgNotNull();
 
         var shape = _shapeBuilder.Build(buildPlan, selectedRuntimePlan);
@@ -32,17 +30,10 @@ public sealed class WistDialectExecutionConfigurationBuilder
             .Select(x => _backendConfigurationBuilder.Build(x, buildPlan, selectedRuntimePlan))
             .ToList();
 
-        var allOptimizers = backends
-            .SelectMany(x => x.OptimizerTypes)
-            .Distinct()
-            .OrderBy(x => x.FullName, StringComparer.Ordinal)
-            .ToList();
-
-        var knownBackends = backends
-            .Select(x => x.BackendDescriptor)
-            .OrderBy(x => x.BackendId)
-            .ThenBy(x => string.Join("|", x.Aliases), StringComparer.Ordinal)
-            .ToList();
+        var allOptimizers = DeduplicateStable(backends.SelectMany(x => x.OptimizerTypes));
+        var knownBackends = DeduplicateStable(backends.Select(x => x.BackendDescriptor), static x => x.BackendId);
+        var requiredInfrastructure = DeduplicateStable(
+            shape.RequiredFrontendInfrastructureModuleTypes.Concat(shape.RequiredIRInfrastructureModuleTypes));
 
         return new WistDialectExecutionConfiguration(
             shape.DialectName,
@@ -50,6 +41,41 @@ public sealed class WistDialectExecutionConfigurationBuilder
             shape.IRModuleTypes,
             allOptimizers,
             backends,
-            knownBackends);
+            knownBackends,
+            requiredInfrastructure);
+    }
+
+    private static List<T> DeduplicateStable<T>(IEnumerable<T> values)
+        where T : notnull
+    {
+        var snapshot = new List<T>();
+        var seen = new HashSet<T>();
+
+        foreach (var value in values)
+        {
+            if (seen.Add(value))
+            {
+                snapshot.Add(value);
+            }
+        }
+
+        return snapshot;
+    }
+
+    private static List<T> DeduplicateStable<T, TKey>(IEnumerable<T> values, Func<T, TKey> keySelector)
+        where TKey : notnull
+    {
+        var snapshot = new List<T>();
+        var seen = new HashSet<TKey>();
+
+        foreach (var value in values)
+        {
+            if (seen.Add(keySelector(value)))
+            {
+                snapshot.Add(value);
+            }
+        }
+
+        return snapshot;
     }
 }

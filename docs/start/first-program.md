@@ -26,7 +26,7 @@ Run one Wist expression through the CLI and verify the expected output.
 ### 1. Run the compiler mode quick start
 
 ```bash
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --mode compiler
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --backend compiler
 ```
 
 Expected output:
@@ -40,7 +40,7 @@ Expected output:
 ### 2. Run the same expression through the interpreter
 
 ```bash
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --mode interpreter
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --backend interpreter
 ```
 
 Expected output:
@@ -78,7 +78,7 @@ The same source should produce the same observable result in compiler and interp
 ## Common mistakes
 
 - Running the command from a subdirectory, causing project paths to fail.
-- Using `--mode compiler` with a dialect that exposes only `interpreter`.
+- Using `--backend compiler` with a dialect that exposes only `interpreter`.
 - Assuming all dialects expose all Wist syntax. Syntax exists only when the owning module is selected.
 - Treating restricted dialects as security sandboxes. They restrict composition, but they are not hardened process sandboxes.
 

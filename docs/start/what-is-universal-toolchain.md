@@ -27,7 +27,7 @@ UniversalToolchain does not have a built-in language. The quickest way to see it
 
 ```bash
 # from the repository root
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --mode compiler
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --backend compiler
 ```
 
 This uses UniversalToolchain’s pipeline to parse and evaluate the expression. The expected output is `12`. For a richer demonstration of dialect composition, run the pricing demo:

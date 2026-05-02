@@ -7,7 +7,7 @@ description: Explain interpreter, CIL, and backend choice.
 
 Backends decide how a composed DSL program is executed after parsing and lowering.
 
-Wist currently exposes two user-facing execution modes:
+Wist currently exposes two user-facing backends:
 
 - `interpreter`
 - `compiler`
@@ -47,7 +47,7 @@ backend interpreter enable
 Run example:
 
 ```bash
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/minimal-arithmetic/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/minimal-arithmetic/program.wist --mode interpreter
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/minimal-arithmetic/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/minimal-arithmetic/program.wist --backend interpreter
 ```
 
 ### CIL compiler
@@ -77,7 +77,7 @@ enable optimizer NativeTypesOptimization for cil
 Run example:
 
 ```bash
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/minimal-arithmetic-native/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/minimal-arithmetic-native/program.wist --mode compiler
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/minimal-arithmetic-native/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/minimal-arithmetic-native/program.wist --backend compiler
 ```
 
 ### Both backends
@@ -171,3 +171,7 @@ Parity does not mean every backend must support every dialect. A dialect may int
 ## Next
 
 Continue with [Testing a DSL](/build-dsls/testing-dsl).
+
+## Backend contract invariant
+
+A backend is selected by backend id or alias. The repository currently ships built-in aliases such as `interpreter`, `compiler`, and `cil`, but those aliases are implementations, not a closed runtime model. A backend is considered first-class only if it can be discovered from runtime manifests, registered through its backend registrar, selected by dialect/runtime configuration, and executed through the backend-neutral artifact/session contract without editing `WistRuntimeFacade`.

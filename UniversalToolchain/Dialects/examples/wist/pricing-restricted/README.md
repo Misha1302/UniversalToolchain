@@ -11,7 +11,7 @@ formula evaluation over host-provided pricing inputs and native numeric values.
 - Backends: `cil`, `interpreter`
 - Enabled optimizer flags: `ArithmeticOptimization`, `EGraphOptimization`, `NativeCilOptimization`,
   `NativeTypesOptimization`
-- User-facing CLI mode: `--mode compiler` selects the canonical `cil` backend.
+- User-facing CLI mode: `--backend compiler` selects the canonical `cil` backend.
 - Security declaration: `security restricted`
 
 ## Intentionally excluded capabilities
@@ -27,8 +27,8 @@ From repository root:
 
 ```bash ci-timeout=240
 dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- dialect-inspect --file UniversalToolchain/Dialects/examples/wist/pricing-restricted/dialect.wistdialect
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/pricing-restricted/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/pricing-restricted/program.wist --mode interpreter
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/pricing-restricted/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/pricing-restricted/program.wist --mode compiler
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/pricing-restricted/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/pricing-restricted/program.wist --backend interpreter
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/pricing-restricted/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/pricing-restricted/program.wist --backend compiler
 ```
 
 ## Expected behavior/result

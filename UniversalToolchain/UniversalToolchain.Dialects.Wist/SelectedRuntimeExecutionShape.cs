@@ -13,11 +13,17 @@ public sealed class SelectedRuntimeExecutionShape
     private readonly ReadOnlyCollection<Type> _frontendModuleTypes;
     private readonly ReadOnlyCollection<Type> _irModuleTypes;
     private readonly ReadOnlyCollection<RuntimeComponentManifestEntry> _optimizerEntries;
+    private readonly ReadOnlyCollection<Type> _requiredFrontendInfrastructureModuleTypes;
+    private readonly ReadOnlyCollection<Type> _requiredIrInfrastructureModuleTypes;
+    private readonly ReadOnlyCollection<Type> _selectedFrontendModuleTypes;
+    private readonly ReadOnlyCollection<Type> _selectedIrModuleTypes;
 
     public SelectedRuntimeExecutionShape(
         string dialectName,
-        IEnumerable<Type> frontendModuleTypes,
-        IEnumerable<Type> irModuleTypes,
+        IEnumerable<Type> requiredFrontendInfrastructureModuleTypes,
+        IEnumerable<Type> selectedFrontendModuleTypes,
+        IEnumerable<Type> requiredIrInfrastructureModuleTypes,
+        IEnumerable<Type> selectedIrModuleTypes,
         IEnumerable<RuntimeComponentManifestEntry> optimizerEntries,
         IEnumerable<RuntimeComponentManifestEntry> backendEntries)
     {
@@ -27,13 +33,29 @@ public sealed class SelectedRuntimeExecutionShape
         }
 
         DialectName = dialectName;
-        _frontendModuleTypes = new ReadOnlyCollection<Type>(SnapshotTypes(frontendModuleTypes, nameof(frontendModuleTypes)));
-        _irModuleTypes = new ReadOnlyCollection<Type>(SnapshotTypes(irModuleTypes, nameof(irModuleTypes)));
+        _requiredFrontendInfrastructureModuleTypes = new ReadOnlyCollection<Type>(SnapshotTypes(requiredFrontendInfrastructureModuleTypes, nameof(requiredFrontendInfrastructureModuleTypes)));
+        _selectedFrontendModuleTypes = new ReadOnlyCollection<Type>(SnapshotTypes(selectedFrontendModuleTypes, nameof(selectedFrontendModuleTypes)));
+        _requiredIrInfrastructureModuleTypes = new ReadOnlyCollection<Type>(SnapshotTypes(requiredIrInfrastructureModuleTypes, nameof(requiredIrInfrastructureModuleTypes)));
+        _selectedIrModuleTypes = new ReadOnlyCollection<Type>(SnapshotTypes(selectedIrModuleTypes, nameof(selectedIrModuleTypes)));
+        _frontendModuleTypes = new ReadOnlyCollection<Type>(SnapshotTypes(
+            _requiredFrontendInfrastructureModuleTypes.Concat(_selectedFrontendModuleTypes),
+            nameof(selectedFrontendModuleTypes)));
+        _irModuleTypes = new ReadOnlyCollection<Type>(SnapshotTypes(
+            _requiredIrInfrastructureModuleTypes.Concat(_selectedIrModuleTypes),
+            nameof(selectedIrModuleTypes)));
         _optimizerEntries = new ReadOnlyCollection<RuntimeComponentManifestEntry>(SnapshotEntries(optimizerEntries, RuntimeComponentKind.Optimizer, nameof(optimizerEntries)));
         _backendEntries = new ReadOnlyCollection<RuntimeComponentManifestEntry>(SnapshotEntries(backendEntries, RuntimeComponentKind.Backend, nameof(backendEntries)));
     }
 
     public string DialectName { get; }
+
+    public IReadOnlyList<Type> RequiredFrontendInfrastructureModuleTypes => _requiredFrontendInfrastructureModuleTypes;
+
+    public IReadOnlyList<Type> SelectedFrontendModuleTypes => _selectedFrontendModuleTypes;
+
+    public IReadOnlyList<Type> RequiredIRInfrastructureModuleTypes => _requiredIrInfrastructureModuleTypes;
+
+    public IReadOnlyList<Type> SelectedIRModuleTypes => _selectedIrModuleTypes;
 
     public IReadOnlyList<Type> FrontendModuleTypes => _frontendModuleTypes;
 

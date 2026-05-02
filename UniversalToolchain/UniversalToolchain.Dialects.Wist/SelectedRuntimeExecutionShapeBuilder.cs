@@ -31,17 +31,15 @@ public sealed class SelectedRuntimeExecutionShapeBuilder
         }
 
         var selectedModules = _moduleClassifier.Classify(selectedRuntimePlan.OrderedModules);
-        var frontendModuleTypes = _requiredInfrastructureModulesProvider
-            .GetFrontendModuleTypes()
-            .Concat(selectedModules.FrontendModuleTypes);
-        var irModuleTypes = _requiredInfrastructureModulesProvider
-            .GetIRModuleTypes()
-            .Concat(selectedModules.IRModuleTypes);
+        var requiredFrontendModuleTypes = _requiredInfrastructureModulesProvider.GetFrontendModuleTypes();
+        var requiredIrModuleTypes = _requiredInfrastructureModulesProvider.GetIRModuleTypes();
 
         return new SelectedRuntimeExecutionShape(
             buildPlan.Name,
-            frontendModuleTypes,
-            irModuleTypes,
+            requiredFrontendModuleTypes,
+            selectedModules.FrontendModuleTypes,
+            requiredIrModuleTypes,
+            selectedModules.IRModuleTypes,
             selectedRuntimePlan.EnabledOptimizers,
             selectedRuntimePlan.EnabledBackends);
     }

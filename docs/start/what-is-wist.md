@@ -19,7 +19,7 @@ Wist is not meant to replace C#, scripting engines or full language workbenches.
 
 - shipped dialect profiles;
 - manifest-backed dialect composition;
-- compiler and interpreter execution modes;
+- compiler and interpreter backends;
 - CLI execution through `UniversalToolchain/Wistc/Wistc.csproj`;
 - programmatic usage through the Wist runtime facade;
 - constrained runtime surfaces such as `pricing-restricted`.
@@ -33,7 +33,7 @@ Rules are currently removed from the public runtime surface. Do not treat rule s
 Run a simple expression through the Wist CLI:
 
 ```bash
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --mode compiler
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --backend compiler
 ```
 
 Expected output:
@@ -45,7 +45,7 @@ Expected output:
 You can also run the same expression in interpreter mode:
 
 ```bash
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --mode interpreter
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --backend interpreter
 ```
 
 If a selected dialect does not expose the requested backend, Wistc reports an execution-mode error.

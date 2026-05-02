@@ -22,9 +22,9 @@ public class WistcCliEndToEndTests
     [Test]
     [TestCase("compiler")]
     [TestCase("interpreter")]
-    public void RunEval_ShouldSucceed_ForSupportedModes(string mode)
+    public void RunEval_ShouldSucceed_ForSupportedBackends(string backend)
     {
-        var result = RunCli($"run --eval --mode {mode} \"1 + 2\"");
+        var result = RunCli($"run --eval --backend {backend} \"1 + 2\"");
 
         AssertSuccess(result);
         Assert.That(result.StdOut, Does.Contain("3"));
@@ -37,7 +37,7 @@ public class WistcCliEndToEndTests
         var filePath = Path.Combine(temp.Path, "program.wist");
         File.WriteAllText(filePath, "1 + 2");
 
-        var result = RunCli($"run --file \"{filePath}\" --mode interpreter");
+        var result = RunCli($"run --file \"{filePath}\" --backend interpreter");
 
         AssertSuccess(result);
         Assert.That(result.StdOut, Does.Contain("3"));
@@ -49,7 +49,7 @@ public class WistcCliEndToEndTests
         using var temp = new TempDirectory();
         var dialectPath = WriteMinimalDialect(temp.Path, "minimal.wistdialect");
 
-        var result = RunCli($"run --dialect-file \"{dialectPath}\" --eval --mode interpreter \"1 + 2\"");
+        var result = RunCli($"run --dialect-file \"{dialectPath}\" --eval --backend interpreter \"1 + 2\"");
 
         AssertSuccess(result);
     }
@@ -81,44 +81,34 @@ public class WistcCliEndToEndTests
     }
 
     [Test]
-    public void RunEval_ShouldFail_ForInvalidMode()
+    public void RunEval_ShouldFail_ForInvalidBackend()
     {
-        var result = RunCli("run --eval --mode broken-mode \"1\"");
+        var result = RunCli("run --eval --backend broken-backend \"1\"");
 
-        AssertFailure(result, "Unknown execution mode");
+        AssertFailure(result, "Unknown backend");
     }
 
     [Test]
     public void RunDialectFile_ShouldFail_ForInvalidPath()
     {
         var missingPath = Path.Combine(Path.GetTempPath(), $"dialect-missing-{Guid.NewGuid():N}.wistdialect");
-        var result = RunCli($"run --dialect-file \"{missingPath}\" --eval --mode interpreter \"1\"");
+        var result = RunCli($"run --dialect-file \"{missingPath}\" --eval --backend interpreter \"1\"");
 
         AssertFailure(result, "File was not found");
     }
 
     [Test]
-    public void RunDialectFile_ShouldRejectUseNativeMathOption()
+    [TestCase("--use-native-math", "use-native-math")]
+    [TestCase("--include-module Numbers", "include-module")]
+    [TestCase("--exclude-module Numbers", "exclude-module")]
+    public void RunDialectFile_ShouldRejectRemovedRawDialectMutationOptions(string option, string optionName)
     {
         using var temp = new TempDirectory();
         var dialectPath = WriteMinimalDialect(temp.Path, "minimal.wistdialect");
 
-        var result = RunCli($"run --dialect-file \"{dialectPath}\" --use-native-math --eval --mode interpreter \"1\"");
+        var result = RunCli($"run --dialect-file \"{dialectPath}\" {option} --eval --backend interpreter \"1\"");
 
-        AssertFailure(result, "cannot be combined with --dialect-file", "--use-native-math");
-    }
-
-    [Test]
-    [TestCase("--include-module Numbers", "--include-module")]
-    [TestCase("--exclude-module Numbers", "--exclude-module")]
-    public void RunDialectFile_ShouldRejectManualModuleOverrides(string option, string optionName)
-    {
-        using var temp = new TempDirectory();
-        var dialectPath = WriteMinimalDialect(temp.Path, "minimal.wistdialect");
-
-        var result = RunCli($"run --dialect-file \"{dialectPath}\" {option} --eval --mode interpreter \"1\"");
-
-        AssertFailure(result, "cannot be combined with --dialect-file", optionName);
+        AssertFailure(result, $"Option '{optionName}' is unknown");
     }
 
     private static void AssertSuccess(CliResult result)

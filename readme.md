@@ -5,7 +5,7 @@ Build formulas, rules, and mini-languages for .NET applications.
 UniversalToolchain is an embeddable .NET DSL/runtime framework for the moment when a plain expression evaluator is no longer enough.
 
 Wist is the reference language in this repository. It demonstrates the framework through shipped dialect profiles, a
-pricing demo, manifest-backed dialect composition, and compiler/interpreter execution modes.
+pricing demo, manifest-backed dialect composition, and compiler/interpreter backends.
 
 > Rules are temporarily removed from the public runtime surface. `rule-schema`/`rule-run` and raw-source RuleSet MVP parsing were removed and will return only after an AST-owned rule declaration rewrite.
 > `RuleDeclarationsModule` is also removed from runtime-visible modules; do not reintroduce marker-only rule capabilities before parser-owned implementation exists.
@@ -35,7 +35,7 @@ The pricing demo compares three ways to own the same business rule:
 ## Tiny CLI quick start
 
 ```bash
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --mode compiler
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --backend compiler
 ```
 
 Expected output:
@@ -144,7 +144,7 @@ Source -> Lexer/Parser -> AST -> Bytecode/IR -> Optimization -> Compiler/Interpr
 Key repository architecture concepts:
 
 - framework-first, composition-based pipeline design,
-- dual execution modes (`compiler`, `interpreter`),
+- dual backends (`compiler`, `interpreter`),
 - dialect-driven runtime composition via `.wistdialect` files,
 - manifest-backed runtime selection before host creation,
 - bytecode/AIR as semantic pipeline layers,
@@ -195,7 +195,7 @@ Available verbs:
 
 Common options:
 
-- `--mode <compiler|interpreter>`
+- `--backend <compiler|interpreter>`
 - `--dialect-file <path>`
 
 The user-facing `compiler` mode selects the canonical `cil` backend when a dialect declares `backend cil` or the
@@ -205,22 +205,22 @@ Examples:
 
 ```bash ci-timeout=240
 # Run a .wist file with an explicit dialect definition
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/full-default/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/full-default/program.wist --mode interpreter
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/full-default/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/full-default/program.wist --backend interpreter
 
 # Evaluate one expression
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --mode compiler
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --backend compiler
 ```
 
 ```bash ci-run=false
 # Start REPL
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- repl --mode compiler
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- repl --backend compiler
 ```
 
 ## Dialect usage
 
 ```bash ci-timeout=240
 # Run code with a dialect definition
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/full-default/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/full-default/program.wist --mode interpreter
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/full-default/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/full-default/program.wist --backend interpreter
 
 # Inspect a dialect file
 dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- dialect-inspect --file UniversalToolchain/Dialects/examples/wist/full-default/dialect.wistdialect

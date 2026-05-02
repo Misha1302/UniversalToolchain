@@ -23,13 +23,13 @@ From repository root:
 
 ```bash
 dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- dialect-inspect --file UniversalToolchain/Dialects/examples/wist/restricted-sandbox/dialect.wistdialect
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/restricted-sandbox/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/restricted-sandbox/program.wist --mode interpreter
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/restricted-sandbox/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/restricted-sandbox/program.wist --backend interpreter
 
 # ci: expect-exit=1
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/restricted-sandbox/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/restricted-sandbox/forbidden-program.wist --mode interpreter
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/restricted-sandbox/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/restricted-sandbox/forbidden-program.wist --backend interpreter
 
 # ci: expect-exit=1
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/restricted-sandbox/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/restricted-sandbox/forbidden-interop.wist --mode interpreter
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/restricted-sandbox/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/restricted-sandbox/forbidden-interop.wist --backend interpreter
 ```
 
 ## Expected behavior/result

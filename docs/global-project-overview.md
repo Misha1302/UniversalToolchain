@@ -100,7 +100,7 @@ The third is the lack of a clearly explained, validated bytecode-tag contract. T
 
 **What to show publicly now**
 
-Show the project as a **modular DSL/runtime framework prototype** with a serious Wist reference language, a dialect build-plan system, manifest-backed runtime activation, and a real split between interpreter and CIL execution modes. Show the alternatives document and the current canonical runtime pipeline early. Show module composition and constrained dialects. Do **not** oversell generic third-party language authoring, backend authoring, or performance parity with hand-written C# until those are proven more directly.
+Show the project as a **modular DSL/runtime framework prototype** with a serious Wist reference language, a dialect build-plan system, manifest-backed runtime activation, and a real split between interpreter and CIL backends. Show the alternatives document and the current canonical runtime pipeline early. Show module composition and constrained dialects. Do **not** oversell generic third-party language authoring, backend authoring, or performance parity with hand-written C# until those are proven more directly.
 
 **What to hide, downplay, or explicitly label as design-in-progress**
 

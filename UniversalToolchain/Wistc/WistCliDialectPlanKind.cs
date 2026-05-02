@@ -2,6 +2,5 @@ namespace Wistc;
 
 internal enum WistCliDialectPlanKind
 {
-    Preset,
-    CustomizedPreset
+    Preset
 }

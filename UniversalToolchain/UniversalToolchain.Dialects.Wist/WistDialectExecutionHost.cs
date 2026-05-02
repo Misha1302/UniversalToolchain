@@ -1,3 +1,5 @@
+using System.Collections.Specialized;
+using BasicCore.Compilation;
 using BasicCore.Contracts;
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,7 +16,6 @@ public sealed class WistDialectExecutionHost : IDisposable
     public WistDialectExecutionHost(IServiceProvider serviceProvider, WistDialectExecutionConfiguration configuration)
     {
         serviceProvider = serviceProvider.ArgNotNull();
-
         configuration = configuration.ArgNotNull();
 
         _serviceProvider = serviceProvider;
@@ -29,33 +30,72 @@ public sealed class WistDialectExecutionHost : IDisposable
             disposable.Dispose();
     }
 
-    public ICoreRunnable GetCore(string mode)
-        => ResolveRuntime(mode).Core;
+    public ICoreRunnable GetCore(string backend)
+        => ResolveRuntime(backend).Core;
 
-    public IArtifactCompiler<TCompilationOutput> GetArtifactCompiler<TCompilationOutput>(string mode)
+    public IArtifactCompiler GetArtifactCompiler(string backend)
+        => ResolveRuntime(backend).ArtifactCompiler;
+
+    [Obsolete("Use backend-neutral GetArtifactCompiler(string), Compile(...), or Run(...) unless typed backend internals are the purpose of the caller.")]
+    public IArtifactCompiler<TCompilationOutput> GetArtifactCompiler<TCompilationOutput>(string backend)
     {
-        var runtime = ResolveRuntime(mode);
+        var runtime = ResolveRuntime(backend);
 
         if (runtime.Core is IArtifactCompiler<TCompilationOutput> artifactCompiler)
             return artifactCompiler;
 
         return Thrower.InvalidOpEx<IArtifactCompiler<TCompilationOutput>>(
-            "Selected backend does not expose a compatible artifact compiler.");
+            "Selected backend does not expose a compatible artifact compiler for the requested compilation output type.");
     }
 
-    private WistDialectBackendRuntime ResolveRuntime(string mode)
+    public ICompiledArtifact Compile(
+        string code,
+        OrderedDictionary<string, Type>? declaredBindings,
+        string backend)
     {
-        if (string.IsNullOrWhiteSpace(mode))
-            Thrower.Argument(nameof(mode), "Execution mode must not be empty.");
+        code = code.ArgNotNull();
 
-        if (!Configuration.TryResolveKnownBackendId(mode, out var backendId))
+        return GetArtifactCompiler(backend).Compile(code, declaredBindings);
+    }
+
+    public object? Run(
+        string code,
+        IReadOnlyDictionary<string, object?> arguments,
+        string backend)
+    {
+        code = code.ArgNotNull();
+        arguments = arguments.ArgNotNull();
+
+        var declaredBindings = WistDeclaredBindingFactory.FromRuntimeArguments(arguments);
+        var artifact = Compile(code, declaredBindings, backend);
+        var session = artifact.CreateSession();
+
+        foreach (var argument in arguments)
+            session.SetArgument(argument.Key, argument.Value);
+
+        return session.Run();
+    }
+
+    public object? Run(string code, string backend) => GetCore(backend).Run(code);
+
+    private WistDialectBackendRuntime ResolveRuntime(string backend)
+    {
+        if (string.IsNullOrWhiteSpace(backend))
+            Thrower.Argument(nameof(backend), "Backend name must not be empty.");
+
+        if (!Configuration.TryResolveKnownBackendId(backend, out var backendId))
         {
-            var supportedModes = string.Join(", ", Configuration.EnabledBackends.SelectMany(x => x.AllNames).Distinct(StringComparer.Ordinal).OrderBy(x => x, StringComparer.Ordinal));
-            Thrower.InvalidOpEx($"Unknown execution mode '{mode}'. Supported modes: {supportedModes}.");
+            var supportedBackends = string.Join(
+                ", ",
+                Configuration.EnabledBackends
+                    .SelectMany(x => x.AllNames)
+                    .Distinct(StringComparer.Ordinal)
+                    .OrderBy(x => x, StringComparer.Ordinal));
+            Thrower.InvalidOpEx($"Unknown backend '{backend}'. Supported backends: {supportedBackends}.");
         }
 
         if (!Configuration.TryGetEnabledBackend(backendId, out var backendConfiguration))
-            Thrower.InvalidOpEx($"Dialect '{Configuration.DialectName}' does not enable the '{mode}' backend.");
+            Thrower.InvalidOpEx($"Dialect '{Configuration.DialectName}' does not enable backend '{backend}'.");
 
         var runtime = _serviceProvider.GetServices<WistDialectBackendRuntime>()
             .FirstOrDefault(x => x.Descriptor.BackendId == backendConfiguration.BackendDescriptor.BackendId);
@@ -64,6 +104,4 @@ public sealed class WistDialectExecutionHost : IDisposable
 
         return runtime;
     }
-
-    public object? Run(string code, string mode) => GetCore(mode).Run(code);
 }

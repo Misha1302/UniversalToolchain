@@ -10,18 +10,17 @@ public sealed class WistRunRequest
     public WistRunRequest(
         string code,
         IReadOnlyDictionary<string, object?> arguments,
-        string mode = "compiler")
+        string backend = "compiler")
     {
         code = code.ArgNotNull();
-
         arguments = arguments.ArgNotNull();
 
-        if (string.IsNullOrWhiteSpace(mode))
-            Thrower.Argument(nameof(mode), "Execution mode must not be empty.");
+        if (string.IsNullOrWhiteSpace(backend))
+            Thrower.Argument(nameof(backend), "Backend name must not be empty.");
 
         Code = code;
         Arguments = arguments;
-        Mode = mode;
+        Backend = backend;
     }
 
     /// <summary>
@@ -35,7 +34,7 @@ public sealed class WistRunRequest
     public IReadOnlyDictionary<string, object?> Arguments { get; }
 
     /// <summary>
-    ///     Gets the backend mode name or alias.
+    ///     Gets the backend id or alias selected for execution.
     /// </summary>
-    public string Mode { get; }
+    public string Backend { get; }
 }

@@ -6,52 +6,11 @@ namespace UniversalToolchain.Dialects.Tests.Wist;
 public sealed class WistCliDefaultAndListingTests
 {
     [Test]
-    public void WistCliCustomizationRequest_FromOptionsWithoutOverrides_DoesNotRequestCustomization()
+    public void WistCliCustomizationRequest_FromOptions_DoesNotRequestRawDialectTextMutation()
     {
         var request = WistCliCustomizationRequest.FromOptions(new CommonOptions());
 
         Assert.That(request.HasCustomization, Is.False);
-    }
-
-    [Test]
-    public void WistCliCustomizationRequest_FromOptionsWithIncludeModules_RequestsCustomization()
-    {
-        var request = WistCliCustomizationRequest.FromOptions(new CommonOptions
-        {
-            IncludeModules = ["  ExtraModule  "]
-        });
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(request.HasCustomization, Is.True);
-            Assert.That(request.IncludeModules, Is.EqualTo(new[] { "ExtraModule" }));
-        });
-    }
-
-    [Test]
-    public void WistCliCustomizationRequest_FromOptionsWithExcludeModules_RequestsCustomization()
-    {
-        var request = WistCliCustomizationRequest.FromOptions(new CommonOptions
-        {
-            ExcludeModules = ["  CSharpInterop  "]
-        });
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(request.HasCustomization, Is.True);
-            Assert.That(request.ExcludeModules, Is.EqualTo(new[] { "CSharpInterop" }));
-        });
-    }
-
-    [Test]
-    public void WistCliCustomizationRequest_FromOptionsWithNativeMath_RequestsCustomization()
-    {
-        var request = WistCliCustomizationRequest.FromOptions(new CommonOptions
-        {
-            UseNativeMath = true
-        });
-
-        Assert.That(request.HasCustomization, Is.True);
     }
 
     [Test]

@@ -54,7 +54,7 @@ That is the nearest overlap in day-to-day product work.
 - the rule language itself must have **custom syntax**,
 - different contexts need **different allowed capabilities**,
 - the runtime surface must be intentionally **restricted by dialect**,
-- you need **compiler and interpreter** execution modes for the same language,
+- you need **compiler and interpreter** backends for the same language,
 - you need a more explicit pipeline for diagnostics, translation, inspection, or backend experimentation.
 
 ### Hard boundary
@@ -191,7 +191,7 @@ The following comparisons are misleading:
 
 ### 1. Comparing UniversalToolchain to NCalc only on raw expression convenience
 
-That ignores dialect control, execution modes, and reusable pipeline structure.
+That ignores dialect control, backends, and reusable pipeline structure.
 
 ### 2. Comparing UniversalToolchain to ANTLR only on parser quality
 

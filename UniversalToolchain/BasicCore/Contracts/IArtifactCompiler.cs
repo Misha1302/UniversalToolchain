@@ -1,7 +1,13 @@
 namespace BasicCore.Contracts;
 
-public interface IArtifactCompiler<TCompilationOutput>
+public interface IArtifactCompiler
 {
-    ICompiledArtifact<TCompilationOutput> Compile(string code, OrderedDictionary<string, Type>? parameters = null);
-    ICompiledArtifact<TCompilationOutput> Compile(CompilationInput input);
+    ICompiledArtifact Compile(string code, OrderedDictionary<string, Type>? parameters = null);
+    ICompiledArtifact Compile(CompilationInput input);
+}
+
+public interface IArtifactCompiler<TCompilationOutput> : IArtifactCompiler
+{
+    new ICompiledArtifact<TCompilationOutput> Compile(string code, OrderedDictionary<string, Type>? parameters = null);
+    new ICompiledArtifact<TCompilationOutput> Compile(CompilationInput input);
 }

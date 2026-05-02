@@ -38,6 +38,12 @@ public class BasicCoreImpl<TCompilationOutput>(
     public ICompiledArtifact<TCompilationOutput> Compile(CompilationInput input)
         => _preparedExecutionBuilder.Compile(input);
 
+    ICompiledArtifact IArtifactCompiler.Compile(string code, OrderedDictionary<string, Type>? parameters)
+        => Compile(code, parameters);
+
+    ICompiledArtifact IArtifactCompiler.Compile(CompilationInput input)
+        => Compile(input);
+
     public void PrepareToRun(string code, OrderedDictionary<string, Type>? parameters = null)
     {
         PrepareToRun(_inputNormalizer.NormalizeDeclaredInput(code, parameters));

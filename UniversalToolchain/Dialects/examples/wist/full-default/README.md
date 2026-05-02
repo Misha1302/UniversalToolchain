@@ -11,7 +11,7 @@ used in regular execution.
   `Equality`, `Identifier`, `Labels`, `Loops`, `Numbers`, `Scopes`, `SemicolonAsNewLine`, `Variables`, `Whitespaces`
 - Backends: `cil`, `interpreter`
 - Enabled optimizer flags: `BooleanOptimization`, `ComparisonIntrinsicOptimization`
-- User-facing CLI mode: `--mode compiler` selects the canonical `cil` backend.
+- User-facing CLI mode: `--backend compiler` selects the canonical `cil` backend.
 
 ## Intentionally excluded capabilities
 
@@ -25,8 +25,8 @@ From repository root:
 
 ```bash ci-timeout=180s
 dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- dialect-inspect --file UniversalToolchain/Dialects/examples/wist/full-default/dialect.wistdialect
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/full-default/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/full-default/program.wist --mode interpreter
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/full-default/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/full-default/program.wist --mode compiler
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/full-default/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/full-default/program.wist --backend interpreter
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/full-default/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/full-default/program.wist --backend compiler
 ```
 
 ## Expected behavior/result
