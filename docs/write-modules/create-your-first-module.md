@@ -52,9 +52,11 @@ It does not own numbers, scopes, multiplication, backend selection, or optimizer
 
 ## Step 2. Add the module entry point
 
-The module entry point declares dialect metadata and registers lexer, parser, and AST translation contributions.
+Create `UniversalToolchain/ArithmeticModule/Module/TextualAdditionModuleImpl.cs` with the complete file content below:
 
 ```csharp
+namespace ArithmeticModule.Module;
+
 [DialectModuleAlias("TextualAddition")]
 [DialectRuntimeExport("FrontendModule", "TextualAddition")]
 [AutoRegisterService]
@@ -84,14 +86,18 @@ Important details:
 - `DialectModuleAlias` makes the module selectable from a dialect file.
 - `DialectRuntimeExport` exposes it to manifest-backed runtime composition.
 - `\bplus\b` prevents accidental matches inside words such as `surplus`.
-- priority `110f` keeps `plus` above identifier-like lexemes when both are selected;
+- priority `110f` keeps `plus` above identifier-like lexemes when both are selected.
 - parser priority `-30f` matches ordinary addition/subtraction precedence.
 
 ## Step 3. Add the parser node creator
 
-The parser node creator reuses the existing binary-operation parser shape:
+Create `UniversalToolchain/ArithmeticModule/Creators/TextualAdditionOperationNodeCreator.cs` with the complete file content below:
 
 ```csharp
+namespace ArithmeticModule.Creators;
+
+[AutoRegisterService]
+[ArithmeticModeCompatibility(ArithmeticMode.Universal)]
 public class TextualAdditionOperationNodeCreator() : BinaryOperationBase("TextualAddition");
 ```
 
@@ -101,25 +107,36 @@ The node type remains `TextualAddition`, not `Addition`, because this module own
 
 ## Step 4. Add the AST visitor
 
-The visitor must self-filter and emit bytecode only for `TextualAddition` nodes.
+Create `UniversalToolchain/ArithmeticModule/Visitors/TextualAdditionAstVisitor.cs` with the complete file content below:
 
 ```csharp
-public void TryVisit(BytecodeVisitorData data)
+namespace ArithmeticModule.Visitors;
+
+[AutoRegisterService]
+[ArithmeticModeCompatibility(ArithmeticMode.Universal)]
+public class TextualAdditionAstVisitor : IAstVisitor
 {
-    if (data.Node.NodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("TextualAddition"))
-        return;
+    private static readonly ExtensibleEnum<AstNodeTag> _nodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("TextualAddition");
 
-    foreach (var child in data.Node.Children)
-        data.AstToBytecodeTranslator.Translate(child);
+    public void TryVisit(BytecodeVisitorData data)
+    {
+        if (data.Node.NodeType != _nodeType)
+            return;
 
-    var method = new AbstractMethodImpl(
-        "Op_plus",
-        (il, context) => il.CallCSharp(context.Stack[^1].GetMethod("Add").NotNull())
-    );
+        foreach (var child in data.Node.Children)
+            data.AstToBytecodeTranslator.Translate(child);
 
-    data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
+        var method = new AbstractMethodImpl(
+            "Op_plus",
+            (il, context) => il.CallCSharp(context.Stack[^1].GetMethod("Add").NotNull())
+        );
+
+        data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
+    }
 }
 ```
+
+The visitor must self-filter. It should emit bytecode only for `TextualAddition` nodes.
 
 The stack order is:
 
@@ -143,21 +160,64 @@ Without `TextualAddition`, `2 plus 3` should be rejected. This is part of the mo
 
 ## Step 6. Add tests
 
-The module test file covers three cases:
+Create `UniversalToolchain/UniversalToolchain.Dialects.Tests/TextualAdditionModuleTests.cs` with the complete file content below:
 
 ```csharp
-[Test]
-public void TextualAddition_Module_ExecutesPlusKeyword()
-{
-    var result = DialectTestHostInfrastructure.RunInBothBackends(TextualAdditionDialect, "2 plus 3");
+using UniversalToolchain.Modules.Tests;
 
-    Assert.That(BackendParityInfrastructure.AsNumber(result), Is.EqualTo(5.0d).Within(1e-9));
+namespace UniversalToolchain.Dialects.Tests;
+
+[TestFixture]
+public sealed class TextualAdditionModuleTests
+{
+    private const string TextualAdditionDialect = """
+                                                 dialect TextualAdditionDemo
+                                                 use Whitespaces,Numbers,Scopes,Arithmetic,TextualAddition
+                                                 backend compiler,interpreter
+                                                 """;
+
+    private const string ArithmeticOnlyDialect = """
+                                                dialect ArithmeticOnlyDemo
+                                                use Whitespaces,Numbers,Scopes,Arithmetic
+                                                backend compiler,interpreter
+                                                """;
+
+    [Test]
+    public void TextualAddition_Module_ExecutesPlusKeyword()
+    {
+        var result = DialectTestHostInfrastructure.RunInBothBackends(TextualAdditionDialect, "2 plus 3");
+
+        Assert.That(BackendParityInfrastructure.AsNumber(result), Is.EqualTo(5.0d).Within(1e-9));
+    }
+
+    [Test]
+    public void TextualAddition_Module_UsesAdditionPrecedence()
+    {
+        var result = DialectTestHostInfrastructure.RunInBothBackends(TextualAdditionDialect, "2 plus 3 * 4");
+
+        Assert.That(BackendParityInfrastructure.AsNumber(result), Is.EqualTo(14.0d).Within(1e-9));
+    }
+
+    [Test]
+    public void TextualAddition_Syntax_IsUnavailable_WhenModuleIsNotSelected()
+    {
+        var (compilerResult, interpreterResult) = BackendParityInfrastructure.RunBoth(ArithmeticOnlyDialect, "2 plus 3");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(compilerResult.IsSuccess, Is.False, "Compiler path must reject syntax owned by an unselected module.");
+            Assert.That(interpreterResult.IsSuccess, Is.False, "Interpreter path must reject syntax owned by an unselected module.");
+            Assert.That(compilerResult.Exception, Is.Not.Null);
+            Assert.That(interpreterResult.Exception, Is.Not.Null);
+        });
+    }
 }
 ```
 
-Also test:
+These tests prove three things:
 
-- `2 plus 3 * 4` returns `14`, proving addition-level precedence;
+- `2 plus 3` works when `TextualAddition` is selected.
+- `2 plus 3 * 4` returns `14`, proving addition-level precedence.
 - `2 plus 3` fails when the dialect selects `Arithmetic` but not `TextualAddition`, proving dialect visibility is real.
 
 Use `BackendParityInfrastructure` rather than a legacy smoke-test base. A module is not done until the intended backend paths agree.
@@ -179,6 +239,15 @@ python3 .github/scripts/run-markdown-bash-blocks.py
 ```
 
 These blocks are marked `ci-run=false` because the GitHub workflow already runs restore/build/test before the markdown smoke pass. The commands remain copyable for humans without making the documentation smoke step slow or recursive.
+
+## Verification
+
+The files above are intentionally complete, not illustrative fragments. The implementation in this repository follows these exact steps:
+
+- `TextualAdditionModuleImpl` registers the `plus` lexeme, parser creator, and AST visitor.
+- `TextualAdditionOperationNodeCreator` creates a binary AST shape for the operator.
+- `TextualAdditionAstVisitor` lowers the node to the existing `Add` operation.
+- `TextualAdditionModuleTests` verifies positive execution, precedence, and missing-module rejection through both selected backend paths.
 
 ## Finished module checklist
 
