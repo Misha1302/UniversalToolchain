@@ -89,6 +89,35 @@ Important details:
 - priority `110f` keeps `plus` above identifier-like lexemes when both are selected.
 - parser priority `-30f` matches ordinary addition/subtraction precedence.
 
+## Step 2.1. Do not create runtime JSON by hand
+
+Older module registration flows required hand-maintained JSON metadata. Current module projects should not do that.
+
+Runtime manifest JSON files are generated during build from attributes such as:
+
+```csharp
+[DialectModuleAlias("TextualAddition")]
+[DialectRuntimeExport("FrontendModule", "TextualAddition")]
+```
+
+If you add a module inside an existing project that already emits manifests, such as `ArithmeticModule`, no extra JSON file is needed.
+
+If you create a new standalone module project, enable manifest generation in that project's `.csproj`:
+
+```xml
+<PropertyGroup>
+    <EmitDialectRuntimeManifest>true</EmitDialectRuntimeManifest>
+</PropertyGroup>
+```
+
+The build then emits a file named like this in the output directory:
+
+```text
+YourModuleAssembly.dialect.runtime.json
+```
+
+The generated file is a build artifact. Do not commit a hand-written copy unless a future document explicitly says a specific scenario still needs one.
+
 ## Step 3. Add the parser node creator
 
 Create `UniversalToolchain/ArithmeticModule/Creators/TextualAdditionOperationNodeCreator.cs` with the complete file content below:
@@ -247,6 +276,7 @@ The files above are intentionally complete, not illustrative fragments. The impl
 - `TextualAdditionModuleImpl` registers the `plus` lexeme, parser creator, and AST visitor.
 - `TextualAdditionOperationNodeCreator` creates a binary AST shape for the operator.
 - `TextualAdditionAstVisitor` lowers the node to the existing `Add` operation.
+- Runtime manifest metadata is generated from module/export attributes during build; this tutorial does not require a hand-written `.dialect.runtime.json` file.
 - `TextualAdditionModuleTests` verifies positive execution, precedence, and missing-module rejection through both selected backend paths.
 
 ## Finished module checklist
@@ -255,6 +285,7 @@ Before considering a module complete, verify:
 
 - the module has a clear alias;
 - runtime export metadata is present;
+- hand-written runtime JSON is not needed; manifest generation is enabled when the module lives in a new project;
 - syntax belongs to lexer/parser, not raw source scanning;
 - parser priority is intentional and tested;
 - AST visitors self-filter;
