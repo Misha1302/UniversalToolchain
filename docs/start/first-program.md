@@ -18,8 +18,8 @@ Run one Wist expression through the CLI and verify the expected output.
 ## Prerequisites
 
 - You are in the repository root.
-- The repository is on the `docs-site` branch.
 - The .NET solution has been restored and built.
+- You are using the branch required by your current task or pull request.
 
 ## Steps
 
@@ -35,7 +35,7 @@ Expected output:
 12
 ```
 
-`compiler` is the user-facing mode that selects the CIL backend when the active dialect exposes the CIL backend.
+`compiler` is the user-facing backend alias that selects the CIL backend when the active dialect exposes the CIL backend.
 
 ### 2. Run the same expression through the interpreter
 
@@ -49,7 +49,7 @@ Expected output:
 12
 ```
 
-The interpreter path is useful when validating semantic parity. If a selected dialect does not expose `interpreter`, Wistc will reject that mode.
+The interpreter path is useful when validating semantic parity. If a selected dialect does not expose `interpreter`, Wistc will reject that backend alias.
 
 ### 3. Run the pricing demo
 
@@ -84,4 +84,4 @@ The same source should produce the same observable result in compiler and interp
 
 ## Next
 
-Read the [Mental Model](/start/mental-model), then continue with the [Wist Syntax Tour](/wist/syntax-tour).
+Read the [CLI Reference](/start/cli-reference) if you want the command surface, or continue with the [Mental Model](/start/mental-model) and the [Wist Syntax Tour](/wist/syntax-tour).
