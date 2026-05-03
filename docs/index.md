@@ -1,10 +1,29 @@
 # UniversalToolchain Documentation
 
-UniversalToolchain is a modular .NET framework for building domain-specific languages.
+UniversalToolchain is a Wist-first modular .NET DSL/runtime framework.
 
-Wist is the reference language built on top of UniversalToolchain. Start with the language, then move to dialects, modules, bytecode, AIR, and execution backends.
+It helps you build small embeddable languages for .NET applications when a plain expression evaluator is too limited, full C# scripting is too broad, and writing a compiler from scratch would be too expensive.
+
+Wist is the reference language built on top of UniversalToolchain. It is not the main product; it demonstrates how the framework pieces fit together.
 
 > This documentation is written as a developer manual. It is not a landing page, a project report, or a promotional overview.
+
+## In 60 seconds
+
+- **UniversalToolchain** is the framework.
+- **Wist** is the reference language used to validate the framework.
+- **Dialects** select modules, optimizers, security posture and execution backends.
+- **Modules** own reusable language features such as syntax, AST translation and bytecode behavior.
+- **Backends** execute the selected language surface through interpreter or compiled execution paths.
+- **Bytecode** and **AIR** keep frontend semantics separate from backend execution.
+
+A typical use case is a .NET application that needs configurable formulas or restricted business rules without exposing a full general-purpose language.
+
+## What this is not
+
+UniversalToolchain is not a production-grade sandbox, not a replacement for C#, and not a finished general-purpose language workbench. Restricted dialects control language composition, but untrusted execution still needs external process or environment isolation.
+
+See [Current Limitations](/limitations) for the current maturity boundaries.
 
 ## Entry points
 
@@ -29,7 +48,9 @@ Wist is the reference language built on top of UniversalToolchain. Start with th
 ## Pipeline
 
 ```text
-source
+.NET host application
+  -> Wist or custom DSL source
+  -> dialect-selected modules and backends
   -> lexer modules
   -> parser modules
   -> AST

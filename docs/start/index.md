@@ -1,24 +1,42 @@
 ---
 title: Start Here
-description: Give developers the fastest path from zero to a running Wist program.
+description: Give developers the fastest path from zero to understanding and running Wist.
 ---
 
 # Start Here
 
-This page introduces **UniversalToolchain** and the **Wist** reference language, explains who should read which sections of the documentation and helps you choose your route through the project.
+This page introduces **UniversalToolchain** and the **Wist** reference language, explains the practical reason the project exists, and helps you choose your route through the documentation.
 
 ## When to read this page
 
-Read this page if you have just discovered the repository and want to get started. It helps you understand the difference between the framework and the reference language and points you to the right section.
+Read this page if you have just discovered the repository and want to understand the project before going deep into implementation details.
 
 ## Goal
 
-Understand the difference between UniversalToolchain and Wist, identify your role, and know where to start.
+Understand what UniversalToolchain is, what Wist is, when the project is useful, and where to start.
 
 ## Project overview
 
-- **UniversalToolchain** is an embeddable .NET framework for composing restricted DSLs. It provides infrastructure for lexing, parsing, abstract syntax trees (AST), bytecode/AIR layers, optimizers and execution backends. Modules are the building blocks; dialects select modules, backends and optimizations; manifests resolve runtime activation.
+- **UniversalToolchain** is a Wist-first modular .NET framework for building embeddable DSL runtimes. It provides infrastructure for lexing, parsing, abstract syntax trees (AST), bytecode/AIR layers, optimizers and execution backends.
 - **Wist** is the reference language built on top of UniversalToolchain. It demonstrates how to assemble modules into a usable language and provides CLI and programmatic entry points.
+- **Modules** are reusable language features. They can contribute lexer, parser, AST translation, bytecode and IR behavior.
+- **Dialects** select modules, backends and optimizations. They describe a chosen language/runtime surface instead of hardcoding one compiler profile.
+
+## Use it when
+
+- you want configurable formulas or restricted business rules inside a .NET application;
+- you need language features to be selectable and testable as modules;
+- you want a reference language that demonstrates a modular compiler/runtime pipeline;
+- you need to compare interpreter and compiled execution paths for the same language surface.
+
+## Do not treat it as
+
+- a hardened sandbox for untrusted code;
+- a drop-in replacement for C# scripting;
+- a mature general-purpose language workbench;
+- a simple expression evaluator with no compiler/runtime concepts.
+
+For the current maturity boundaries, read [Current Limitations](/limitations).
 
 ## Identify your route
 
