@@ -17,9 +17,10 @@ const bookSidebar = [
         items: [
             { text: '1.1 Installation', link: '/start/installation' },
             { text: '1.2 First Program', link: '/start/first-program' },
-            { text: '1.3 Wist Overview', link: '/wist/' },
-            { text: '1.4 Wist Syntax Tour', link: '/wist/syntax-tour' },
-            { text: '1.5 Examples', link: '/wist/examples' }
+            { text: '1.3 CLI Reference', link: '/start/cli-reference' },
+            { text: '1.4 Wist Overview', link: '/wist/' },
+            { text: '1.5 Wist Syntax Tour', link: '/wist/syntax-tour' },
+            { text: '1.6 Examples', link: '/wist/examples' }
         ]
     },
     {
@@ -42,7 +43,9 @@ const bookSidebar = [
             { text: '3.3 Minimal DSL', link: '/build-dsls/minimal-dsl' },
             { text: '3.4 Module Composition', link: '/build-dsls/module-composition' },
             { text: '3.5 Backend Selection', link: '/build-dsls/backend-selection' },
-            { text: '3.6 Testing a DSL', link: '/build-dsls/testing-dsl' }
+            { text: '3.6 Embedding in .NET', link: '/build-dsls/embedding-dotnet' },
+            { text: '3.7 Testing a DSL', link: '/build-dsls/testing-dsl' },
+            { text: '3.8 Restricted DSL Security', link: '/build-dsls/restricted-dsl-security' }
         ]
     },
     {
@@ -88,11 +91,13 @@ const bookSidebar = [
             { text: '6.1 Overview', link: '/reference/' },
             { text: '6.2 Dialect Reference', link: '/reference/dialect-reference' },
             { text: '6.3 Module Reference', link: '/reference/module-reference' },
-            { text: '6.4 Bytecode Reference', link: '/reference/bytecode-reference' },
-            { text: '6.5 AIR Reference', link: '/reference/air-reference' },
-            { text: '6.6 Intrinsics Reference', link: '/reference/intrinsics-reference' },
-            { text: '6.7 Backend Contracts', link: '/reference/backend-contracts' },
-            { text: '6.8 Project Rules', link: '/reference/project-rules' }
+            { text: '6.4 Module Contracts', link: '/reference/module-contracts' },
+            { text: '6.5 Bytecode Reference', link: '/reference/bytecode-reference' },
+            { text: '6.6 AIR Reference', link: '/reference/air-reference' },
+            { text: '6.7 Intrinsics Reference', link: '/reference/intrinsics-reference' },
+            { text: '6.8 Backend Contracts', link: '/reference/backend-contracts' },
+            { text: '6.9 Project Rules', link: '/reference/project-rules' },
+            { text: '6.10 Documentation Rules', link: '/reference/documentation-rules' }
         ]
     }
 ]
