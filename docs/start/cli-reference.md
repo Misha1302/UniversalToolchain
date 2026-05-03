@@ -5,7 +5,7 @@ description: Document the current Wistc command surface used by onboarding examp
 
 # CLI Reference
 
-This page documents the Wist command-line surface used by the public examples. It is a practical reference for running source text, files, dialect files and backend modes from the repository checkout.
+This page documents the Wist command-line surface used by the public examples. It is a practical reference for running source text, files, dialect files and backend aliases from the repository checkout.
 
 ## When to read this page
 
@@ -28,15 +28,16 @@ The `--` separates `dotnet run` options from Wistc options.
 | `--eval "source"` | Runs source text passed directly on the command line. |
 | `--file path/to/program.wist` | Runs a source file. |
 | `--dialect-file path/to/dialect.wistdialect` | Uses an explicit dialect file instead of the default runtime surface. |
-| `--mode compiler` | Runs through the user-facing compiler mode when the selected dialect exposes CIL. |
-| `--mode interpreter` | Runs through the interpreter mode when the selected dialect exposes the interpreter backend. |
+| `--backend compiler` | Runs through the user-facing compiler alias when the selected dialect exposes CIL. |
+| `--backend interpreter` | Runs through the interpreter backend alias when the selected dialect exposes the interpreter backend. |
+| `--list-modules` | Lists available runtime components and exits. |
 
-`compiler` is a user-facing mode name. In dialect files, the backend id is usually `cil`.
+`compiler` is a user-facing backend alias. In dialect files, the backend id is usually `cil`.
 
 ## Minimal expression
 
 ```text
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --mode compiler
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --backend compiler
 ```
 
 Expected output:
@@ -48,7 +49,7 @@ Expected output:
 Interpreter mode should produce the same observable result when it is available:
 
 ```text
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --mode interpreter
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --backend interpreter
 ```
 
 ## Running a program file
@@ -56,31 +57,31 @@ dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2
 A file-based run combines a program file with an optional dialect file:
 
 ```text
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/minimal-arithmetic/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/minimal-arithmetic/program.wist --mode interpreter
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/minimal-arithmetic/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/minimal-arithmetic/program.wist --backend interpreter
 ```
 
 Use this form for documentation examples, tests and local debugging because the program and dialect are both explicit.
 
-## Backend mode versus dialect backend id
+## Backend alias versus dialect backend id
 
-Wistc accepts user-facing modes such as `compiler` and `interpreter`. Dialect files select backend ids such as `cil` and `interpreter`.
+Wistc accepts backend aliases such as `compiler` and `interpreter`. Dialect files select backend ids such as `cil` and `interpreter`.
 
 The mapping is intentional:
 
-| CLI mode | Dialect backend requirement |
+| CLI backend alias | Dialect backend requirement |
 |---|---|
 | `compiler` | selected dialect exposes `cil` |
 | `interpreter` | selected dialect exposes `interpreter` |
 
-A dialect that exposes only `interpreter` should reject `--mode compiler`. A dialect that exposes only `cil` should reject `--mode interpreter`. Silent fallback would hide composition errors.
+A dialect that exposes only `interpreter` should reject `--backend compiler`. A dialect that exposes only `cil` should reject `--backend interpreter`. Silent fallback would hide composition errors.
 
 ## Common failures
 
 | Symptom | Likely cause |
 |---|---|
 | Project path cannot be found | Command was run from the wrong directory. Run from the repository root. |
-| Compiler mode is rejected | The selected dialect does not expose the `cil` backend. |
-| Interpreter mode is rejected | The selected dialect does not expose the `interpreter` backend. |
+| Compiler backend alias is rejected | The selected dialect does not expose the `cil` backend. |
+| Interpreter backend alias is rejected | The selected dialect does not expose the `interpreter` backend. |
 | Syntax is rejected | The dialect does not select the module that owns the syntax. |
 | Interop expression is rejected | The selected dialect does not include trusted interop support. |
 | Dialect file fails to parse | The file may use older shorthand syntax instead of the current parser-tested directive form. |
