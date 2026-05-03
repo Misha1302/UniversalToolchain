@@ -66,6 +66,9 @@ public sealed class DslPricingCalculator : IDisposable
         if (parameters.Length > 0 && parameters[0].ParameterType == typeof(IExecutionEnvironment))
         {
             var environment = new ExecutionEnvironment(compiledArtifact.DeclaredBindings);
+            environment.SetExternalValue(compiledArtifact.SlotsByName["price"], price);
+            environment.SetExternalValue(compiledArtifact.SlotsByName["fee"], fee);
+
             var fastInvoker = new DynamicMethodInvoker<IExecutionEnvironment, double, double, double>(compiledArtifact.CompilationOutput);
 
             return fastInvoker.Invoke(environment, price, fee);
