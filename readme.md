@@ -7,9 +7,6 @@ UniversalToolchain is an embeddable .NET DSL/runtime framework for the moment wh
 Wist is the reference language in this repository. It demonstrates the framework through shipped dialect profiles, a
 pricing demo, manifest-backed dialect composition, and compiler/interpreter backends.
 
-> Rules are temporarily removed from the public runtime surface. `rule-schema`/`rule-run` and raw-source RuleSet MVP parsing were removed and will return only after an AST-owned rule declaration rewrite.
-> `RuleDeclarationsModule` is also removed from runtime-visible modules; do not reintroduce marker-only rule capabilities before parser-owned implementation exists.
-
 ## Run the pricing demo
 
 ```bash
