@@ -34,8 +34,8 @@ public class RuntimeCompiledArtifactContractTests
         var compilerCore = RuntimeCompiledArtifactTestFactory.GetCompilerCore(host);
         var declared = new OrderedDictionary<string, Type>
         {
-            ["left"] = typeof(int),
-            ["right"] = typeof(int)
+            ["left"] = typeof(double),
+            ["right"] = typeof(double)
         };
 
         var artifact = compilerCore.Compile("left + right", declared);
@@ -43,7 +43,7 @@ public class RuntimeCompiledArtifactContractTests
             .Select(static parameter => parameter.ParameterType)
             .ToArray();
 
-        Assert.That(parameterTypes, Is.EqualTo(new[] { typeof(int), typeof(int) }));
+        Assert.That(parameterTypes, Is.EqualTo(new[] { typeof(double), typeof(double) }));
         Assert.That(parameterTypes, Does.Not.Contain(typeof(IExecutionEnvironment)));
     }
 
