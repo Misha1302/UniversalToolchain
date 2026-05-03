@@ -44,8 +44,7 @@ public class NativeCilOptimizerModule : IIRProcessingModule
             "Native CIL optimizer requires intrinsic capability context initialization.");
 
         var supportsLoadConst = SupportsAllLoadConstTypes(capabilityContext);
-        var supportsLoadExternal = typeof(TCompilationOutput).FullName == "System.Reflection.Emit.DynamicMethod"
-                                   && SupportsAllLoadExternalTypes(capabilityContext);
+        var supportsLoadExternal = SupportsAllLoadExternalTypes(capabilityContext);
 
         if (!supportsLoadConst && !supportsLoadExternal)
             return current;
