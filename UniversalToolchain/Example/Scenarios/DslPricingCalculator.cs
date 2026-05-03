@@ -1,6 +1,6 @@
 using BasicCore.Compilation;
-using BasicCore.Execution;
 using IntermediateRepresentationAbstractions;
+using DynamicMethodCalling.Core;
 using UniversalToolchain.Dialects.Wist;
 using UniversalToolchain.Dialects.Wist.Presets;
 
@@ -60,10 +60,9 @@ public sealed class DslPricingCalculator : IDisposable
     public double CalculateWithFastInvoker(string formula, double price, double fee)
     {
         var compiledArtifact = CompileWithCompiler(formula);
-        var environment = CreateRuntimeCallEnvironment(compiledArtifact);
-        var fastNativePointer = compiledArtifact.CreateExecutionBoundNativePointer<double, double, double>(environment);
+        var fastInvoker = new DynamicMethodInvoker<double, double, double>(compiledArtifact.CompilationOutput);
 
-        return fastNativePointer.Invoke(price, fee);
+        return fastInvoker.Invoke(price, fee);
     }
 
     /// <summary>
@@ -106,13 +105,6 @@ public sealed class DslPricingCalculator : IDisposable
             ["price"] = typeof(double),
             ["fee"] = typeof(double)
         };
-
-    private static IExecutionEnvironment CreateRuntimeCallEnvironment(ICompiledArtifact compiledArtifact)
-    {
-        compiledArtifact = compiledArtifact.ArgNotNull();
-
-        return new ExecutionEnvironment(compiledArtifact.DeclaredBindings);
-    }
 
     private ICompiledArtifact<DynamicMethod> CompileWithCompiler(string formula)
     {
