@@ -11,7 +11,7 @@ public class WistDialectParallelIsolationStressTests
     [Test]
     public async Task ComposeText_ParallelCalls_ShouldNotMixRuntimeSelections()
     {
-        using var provider = WistDialectTestInfrastructure.CreateProviderWithExplicitBackends();
+        using var provider = WistDialectTestInfrastructure.CreateCanonicalProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var dialects = new[]
         {
@@ -32,7 +32,7 @@ public class WistDialectParallelIsolationStressTests
     [Test]
     public async Task CreateHost_ParallelCalls_ShouldNotMixBackendConfigurations()
     {
-        using var provider = WistDialectTestInfrastructure.CreateProviderWithExplicitBackends();
+        using var provider = WistDialectTestInfrastructure.CreateCanonicalProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var composition = workflow.ComposeText("dialect Stable\nuse Arithmetic,Numbers\n\nbackend compiler,interpreter", "stable");
         Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
@@ -49,7 +49,7 @@ public class WistDialectParallelIsolationStressTests
     [Test]
     public void RepeatedCompose_ShouldNotAccumulateRuntimeMetadata()
     {
-        using var provider = WistDialectTestInfrastructure.CreateProviderWithExplicitBackends();
+        using var provider = WistDialectTestInfrastructure.CreateCanonicalProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var signatures = new List<string>(RepeatCount);
 
@@ -66,7 +66,7 @@ public class WistDialectParallelIsolationStressTests
     [Test]
     public void RepeatedCreateHost_ShouldNotAccumulateRegistrations()
     {
-        using var provider = WistDialectTestInfrastructure.CreateProviderWithExplicitBackends();
+        using var provider = WistDialectTestInfrastructure.CreateCanonicalProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var composition = workflow.ComposeText("dialect RepeatHost\nuse Arithmetic,Numbers\nbackend interpreter,compiler", "repeat-host");
         Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
@@ -84,7 +84,7 @@ public class WistDialectParallelIsolationStressTests
     [Test]
     public async Task ParallelComposeAndCreateHost_ShouldRemainDeterministic()
     {
-        using var provider = WistDialectTestInfrastructure.CreateProviderWithExplicitBackends();
+        using var provider = WistDialectTestInfrastructure.CreateCanonicalProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
 
         var signatures = await Task.WhenAll(Enumerable.Range(0, ParallelCount).Select(i => Task.Run(() =>
@@ -104,7 +104,7 @@ public class WistDialectParallelIsolationStressTests
     [Test]
     public void FailedComposition_ShouldNotPoisonNextSuccessfulComposition()
     {
-        using var provider = WistDialectTestInfrastructure.CreateProviderWithExplicitBackends();
+        using var provider = WistDialectTestInfrastructure.CreateCanonicalProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
 
         var failed = workflow.ComposeText("dialect Broken\nuse MissingModule\nbackend interpreter", "broken");
@@ -123,7 +123,7 @@ public class WistDialectParallelIsolationStressTests
     [Test]
     public void RepeatedKnownBackendResolution_ShouldRemainStable()
     {
-        using var provider = WistDialectTestInfrastructure.CreateProviderWithExplicitBackends();
+        using var provider = WistDialectTestInfrastructure.CreateCanonicalProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var composition = workflow.ComposeText("dialect Backends\nuse Arithmetic\nbackend compiler,interpreter", "backends");
         Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
@@ -141,7 +141,7 @@ public class WistDialectParallelIsolationStressTests
     [Test]
     public async Task ParallelTypeLoading_ShouldRemainDeterministic()
     {
-        using var provider = WistDialectTestInfrastructure.CreateProviderWithExplicitBackends();
+        using var provider = WistDialectTestInfrastructure.CreateCanonicalProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var loader = provider.GetRequiredService<IRuntimeComponentTypeLoader>();
 
