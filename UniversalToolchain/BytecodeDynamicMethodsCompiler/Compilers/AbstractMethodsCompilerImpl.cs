@@ -18,17 +18,23 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
 
     public DynamicMethod Compile(IAbstractIR air, CompilationInput input)
     {
+        air = air.ArgNotNull();
+        input = input.ArgNotNull();
+
+        var requirements = CilExecutionRequirementAnalyzer.Analyze(air);
         var returnType = GetReturnType(air);
-        var argsTypes = new[] { typeof(IExecutionEnvironment) }
-            .Concat(input.ExternalBindings.Select(x => x.Type))
-            .ToArray();
+        var externalBindingTypes = input.ExternalBindings.Select(static x => x.Type).ToArray();
+        var argsTypes = requirements.RequiresExecutionEnvironment
+            ? new[] { typeof(IExecutionEnvironment) }.Concat(externalBindingTypes).ToArray()
+            : externalBindingTypes;
+        var externalArgumentOffset = requirements.RequiresExecutionEnvironment ? 1 : 0;
         var externalSlots = input.ExternalBindings
             .Select((binding, slot) => new { binding.Name, Slot = slot })
-            .ToDictionary(x => x.Name, x => x.Slot);
+            .ToDictionary(static x => x.Name, static x => x.Slot);
         var method = new DynamicMethod("main", returnType, argsTypes);
         using var il = new GroboIL(method);
 
-        var context = new CompilationContext(il, externalSlots, 1);
+        var context = new CompilationContext(il, externalSlots, externalArgumentOffset);
         var labelStacks = InitializeLabels(context, air);
 
         var typesStack = new List<Type>();
