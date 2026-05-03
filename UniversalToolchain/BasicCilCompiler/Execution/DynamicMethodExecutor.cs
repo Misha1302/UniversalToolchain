@@ -4,9 +4,6 @@ public class DynamicMethodExecutor : IExecutor<DynamicMethod>
 {
     public object Execute(DynamicMethod compilation, IExecutionEnvironment environment)
     {
-        compilation = compilation.ArgNotNull();
-        environment = environment.ArgNotNull();
-
         var parameters = compilation.GetParameters();
         var hasEnvironmentArgument = parameters.Length > 0 && parameters[0].ParameterType == typeof(IExecutionEnvironment);
         var values = new object?[parameters.Length];
