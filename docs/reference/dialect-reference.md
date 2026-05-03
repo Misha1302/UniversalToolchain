@@ -1,27 +1,19 @@
 ---
 title: Dialect Reference
-description: Document the dialect file format precisely.
+description: Document the current runtime .wistdialect format used by shipped Wist profiles.
 ---
 
 # Dialect Reference
 
-This page documents the current v1 dialect DSL syntax implemented by `DialectDefinitionParser`.
+This page documents the current public `.wistdialect` format used by the Wist runtime path.
 
-For conceptual guidance, read [Dialect Files](/build-dsls/dialect-files). This page is stricter: it describes parser-accepted directive shapes.
+The source of truth for public Wist dialect execution is the manifest-backed runtime workflow:
 
-## Lexical rules
+```text
+dialect source -> dialect compilation -> build plan -> manifest-backed runtime selection -> host creation -> execution
+```
 
-The dialect lexer currently recognizes:
-
-| Token | Shape |
-|---|---|
-| identifier | letters, digits, `_`, `-`, `.` |
-| string literal | double-quoted text on one line |
-| arrow | `->` |
-| equals | `=` |
-| newline | line separator |
-
-Whitespace other than newlines is skipped. Newlines are significant because each directive is line-based.
+The compiler used by that path is `DialectDslCompiler` through the Wist dialect execution workflow. The shipped dialect profiles under `UniversalToolchain/Dialects/examples/wist` use this format and should be treated as executable references.
 
 ## Document shape
 
@@ -31,228 +23,168 @@ A dialect file starts with a required header:
 dialect <Name>
 ```
 
-or with an explicit version:
+Directives then follow one per line. Most selection directives accept comma-separated identifier lists.
+
+## Minimal runtime dialect
+
+The shipped minimal arithmetic dialect uses this shape:
 
 ```text
-dialect <Name> version "<Version>"
+dialect MinimalArithmetic
+use Arithmetic,Numbers,Scopes,Whitespaces
+backend interpreter
 ```
 
-Then zero or more directives follow, one directive per line.
+This selects only the modules required for basic arithmetic and exposes only the interpreter backend.
 
-## Minimal valid dialect
+## Full profile example
 
-The parser accepts a dialect header alone:
+A broader Wist profile can select many modules and both built-in backend ids:
 
 ```text
-dialect Core
+dialect FullDefault
+use Arithmetic,BooleanConditions,Comments,ComparisonConditions,Conditions,CSharpInterop,Equality,Identifier,Labels,Loops,Numbers,Scopes,SemicolonAsNewLine,Variables,Whitespaces
+backend cil,interpreter
+enable BooleanOptimization
+enable ComparisonIntrinsicOptimization
+security trusted
+capability unsafe-interop
 ```
 
-This only defines a dialect document. It does not by itself select a useful runtime surface.
+The user-facing CLI alias `compiler` selects the `cil` backend when the active dialect exposes it. Dialect files should still declare the backend id `cil`.
 
 ## Directive reference
 
+### `dialect`
+
+Declares the dialect name:
+
+```text
+dialect PricingRestricted
+```
+
+The name is used in diagnostics, composition output and execution configuration.
+
 ### `use`
 
-Selects one module alias.
-
-```text
-use Arithmetic
-```
-
-Current parser shape:
-
-```text
-use <ModuleAlias>
-```
-
-Use multiple lines for multiple modules:
-
-```text
-use Numbers
-use Arithmetic
-use Scopes
-use Whitespaces
-```
-
-### `exclude`
-
-Excludes one module alias.
-
-```text
-exclude CSharpInterop
-```
-
-Current parser shape:
-
-```text
-exclude <ModuleAlias>
-```
-
-A module cannot be both used and excluded in the same dialect document.
-
-### `requires`, `before`, `after`
-
-Adds dependency/order rules.
-
-```text
-requires Variables -> Scopes
-before Conditions -> Labels
-after Loops -> Labels
-```
-
-Current parser shapes:
-
-```text
-requires <LeftAlias> -> <RightAlias>
-before <LeftAlias> -> <RightAlias>
-after <LeftAlias> -> <RightAlias>
-```
-
-### `backend`
-
-Enables or disables one backend id.
-
-```text
-backend interpreter enable
-backend cil disable
-```
-
-Current parser shape:
-
-```text
-backend <BackendId> enable
-backend <BackendId> disable
-```
-
-Backend identifiers are open-ended identifiers. A custom backend id is accepted syntactically, but runtime resolution still requires a matching registered backend/runtime surface.
-
-### `allow intrinsic` and `forbid intrinsic`
-
-Allows or forbids an intrinsic for a backend selector.
-
-```text
-allow intrinsic "add_i32" for any
-forbid intrinsic "reflect-call" for cil
-```
-
-Current parser shapes:
-
-```text
-allow intrinsic "<IntrinsicName>" for <BackendSelector>
-forbid intrinsic "<IntrinsicName>" for <BackendSelector>
-```
-
-### `enable optimizer` and `disable optimizer`
-
-Enables or disables an optimizer for a backend selector.
-
-```text
-enable optimizer ArithmeticOptimization for any
-disable optimizer AggressiveInline for interpreter
-```
-
-Current parser shapes:
-
-```text
-enable optimizer <OptimizerAlias> for <BackendSelector>
-disable optimizer <OptimizerAlias> for <BackendSelector>
-```
-
-### `security`
-
-Declares the intended security profile.
-
-```text
-security restricted
-security trusted
-```
-
-Only one security directive may be present.
-
-### `capability`
-
-Declares a boolean capability marker.
-
-```text
-capability supports-floats = true
-capability interop-enabled = false
-```
-
-Current parser shape:
-
-```text
-capability <Name> = true
-capability <Name> = false
-```
-
-Duplicate capability names are parser errors.
-
-## Backend selector
-
-Backend selectors are used by intrinsic and optimizer directives.
-
-Accepted selector shapes:
-
-| Selector | Meaning |
-|---|---|
-| `any` | all applicable backends |
-| `*` | all applicable backends |
-| `<BackendId>` | one backend id, such as `interpreter` or `cil` |
-
-`any` and `*` are accepted only where the parser allows wildcard selectors.
-
-## Duplicate/conflict diagnostics
-
-The parser currently reports errors for:
-
-| Code | Condition |
-|---|---|
-| `P100` | duplicate `use` module |
-| `P101` | same module is both used and excluded |
-| `P102` | duplicate `exclude` module |
-| `P103` | conflicting backend directive for the same backend |
-| `P104` | duplicate backend directive with the same state |
-| `P105` | duplicate security directive |
-| `P106` | duplicate capability directive |
-| `P107` | unknown directive |
-
-Lexing and parser expectation errors also have `P001`, `P002`, and `P200`-series diagnostics.
-
-## Complete parser-tested example
-
-```text
-dialect Strict version "1.0"
-use Arithmetic
-exclude CSharpInterop
-requires Variables -> Scopes
-before Conditions -> Labels
-after Loops -> Labels
-backend interpreter enable
-backend cil disable
-allow intrinsic "add_i32" for any
-forbid intrinsic "reflect-call" for cil
-enable optimizer ConstFold for any
-disable optimizer AggressiveInline for interpreter
-security restricted
-capability supports-floats = true
-capability interop-enabled = false
-```
-
-## Compatibility note
-
-Older docs or examples may contain shorthand forms such as:
+Selects one or more module aliases:
 
 ```text
 use Arithmetic,Numbers,Scopes,Whitespaces
-backend interpreter
-backend cil,interpreter
-enable ArithmeticOptimization
-capability interop-enabled
 ```
 
-The current parser-tested v1 shape is stricter than those shorthand examples: it parses one module per `use`, requires backend `enable` or `disable`, requires `enable optimizer ... for ...`, and requires boolean values for `capability`.
+You may also split module selection across several `use` lines when that is clearer:
 
-When updating examples, prefer the parser-tested v1 form documented on this page.
+```text
+use Arithmetic,Numbers
+use Scopes,Whitespaces
+```
+
+A module must be selected for the syntax and runtime behavior it owns to exist.
+
+### `exclude`
+
+Excludes one or more module aliases from the composition:
+
+```text
+exclude CSharpInterop
+```
+
+Use this when building from a broader base/profile and intentionally removing a runtime surface.
+
+### `requires`, `before`, `after`
+
+Declares ordering constraints over a comma-separated module chain:
+
+```text
+requires Variables,Scopes
+before Conditions,Labels
+after Loops,Labels
+```
+
+The runtime frontend lowers adjacent items in the list into pairwise order directives. Use these directives sparingly; prefer coherent module selections and deterministic module metadata when possible.
+
+### `backend`
+
+Selects one or more backend ids:
+
+```text
+backend interpreter
+backend cil,interpreter
+```
+
+Currently shipped Wist backends include:
+
+| Dialect backend id | User-facing mode |
+|---|---|
+| `interpreter` | `interpreter` |
+| `cil` | `compiler` |
+
+Backend identifiers are not a closed conceptual model. A backend is usable only when the runtime catalog contains a matching backend manifest entry and registrar.
+
+### `enable` / `disable`
+
+Enables or disables one optimizer alias:
+
+```text
+enable ArithmeticOptimization
+disable EGraphOptimization
+```
+
+Optimizer directives target all applicable backends in the current runtime dialect frontend. Do not use an optimizer to hide missing base semantics.
+
+### `allow` / `forbid`
+
+Allows or forbids one intrinsic name:
+
+```text
+allow add_i32
+forbid reflect-call
+```
+
+Intrinsic policy should match backend capability expectations. Backend-specific intrinsics must not leak into backend-agnostic runtime surfaces without an explicit capability story.
+
+### `security`
+
+Declares the intended security profile:
+
+```text
+security restricted
+```
+
+or:
+
+```text
+security trusted
+```
+
+A restricted dialect is a composition constraint, not a process isolation guarantee.
+
+### `capability`
+
+Declares one or more enabled capability markers:
+
+```text
+capability unsafe-interop
+capability pricing-formula,user-authored
+```
+
+Capabilities explain selected composition. They must not be treated as hidden runtime activation mechanisms.
+
+## Current syntax boundary
+
+The repository also contains `DialectDefinitionParser`, which accepts a stricter parser-specific shape such as:
+
+```text
+backend interpreter enable
+capability supports-floats = true
+```
+
+That parser is not the current public runtime `.wistdialect` contract used by shipped Wist profiles. Do not document its syntax as canonical for Wist runtime execution unless the runtime path is intentionally migrated to it.
+
+## Compatibility rule
+
+Public documentation, shipped examples and CLI onboarding must use the same dialect shape as the manifest-backed Wist runtime path. If the runtime parser changes in the future, update shipped `.wistdialect` files and this reference together.
 
 ## Related pages
 
