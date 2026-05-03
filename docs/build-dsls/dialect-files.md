@@ -1,11 +1,11 @@
 ---
 title: Dialect Files
-description: Document the dialect file format and its role.
+description: Document the runtime dialect file format and its role.
 ---
 
 # Dialect Files
 
-Dialect files describe which modules, optimizers and backends are available for a Wist runtime composition.
+Dialect files describe which modules, optimizers, capabilities and backends are available for a Wist runtime composition.
 
 ## Problem
 
@@ -19,44 +19,28 @@ A Wist dialect file uses the `.wistdialect` extension. It is compiled before pro
 dialect source → dialect compilation → build plan → manifest-backed runtime selection → host creation → execution
 ```
 
-A parser-tested v1 dialect file uses one directive per line:
+The public runtime dialect format used by shipped Wist profiles is intentionally compact. Selection directives accept comma-separated identifier lists:
 
 ```text
 dialect FullDefault
-use Arithmetic
-use BooleanConditions
-use Comments
-use ComparisonConditions
-use Conditions
-use CSharpInterop
-use Equality
-use Identifier
-use Labels
-use Loops
-use Numbers
-use Scopes
-use SemicolonAsNewLine
-use Variables
-use Whitespaces
-backend cil enable
-backend interpreter enable
-enable optimizer BooleanOptimization for any
-enable optimizer ComparisonIntrinsicOptimization for any
+use Arithmetic,BooleanConditions,Comments,ComparisonConditions,Conditions,CSharpInterop,Equality,Identifier,Labels,Loops,Numbers,Scopes,SemicolonAsNewLine,Variables,Whitespaces
+backend cil,interpreter
+enable BooleanOptimization
+enable ComparisonIntrinsicOptimization
 security trusted
-capability interop-enabled = true
+capability unsafe-interop
 ```
+
+This is the format used by the executable examples under `UniversalToolchain/Dialects/examples/wist`.
 
 ## Minimal example
 
-A minimal arithmetic dialect looks like this in the current parser-tested v1 form:
+A minimal arithmetic dialect looks like this:
 
 ```text
 dialect MinimalArithmetic
-use Arithmetic
-use Numbers
-use Scopes
-use Whitespaces
-backend interpreter enable
+use Arithmetic,Numbers,Scopes,Whitespaces
+backend interpreter
 ```
 
 This dialect can run a program such as:
@@ -85,40 +69,31 @@ The name is used in diagnostics and composition output.
 
 ### `use`
 
-Selects one module:
+Selects one or more module aliases:
 
 ```text
-use Arithmetic
+use Arithmetic,Numbers,Scopes,Whitespaces
 ```
 
-Use multiple `use` lines to select multiple modules:
-
-```text
-use Arithmetic
-use Numbers
-use Scopes
-use Whitespaces
-```
-
-A module must be selected for its syntax and runtime behavior to exist. For example, arithmetic syntax needs arithmetic and number support; variable syntax needs variables and identifier support.
+A module must be selected for its syntax and runtime behavior to exist. For example, arithmetic syntax needs arithmetic and number support; variable syntax usually needs variables and identifier support.
 
 ### `exclude`
 
-Removes one selected module from a composition:
+Removes one or more modules from a composition:
 
 ```text
 exclude CSharpInterop
 ```
 
-Use multiple `exclude` lines for multiple modules.
+Use this when deriving a narrower profile from a broader one.
 
 ### `backend`
 
-Enables or disables one execution backend:
+Selects one or more execution backend ids:
 
 ```text
-backend cil enable
-backend interpreter enable
+backend interpreter
+backend cil,interpreter
 ```
 
 Currently documented user-facing modes are:
@@ -128,24 +103,24 @@ Currently documented user-facing modes are:
 
 Some dialects expose both `cil` and `interpreter`. Others expose only one backend.
 
-### `enable optimizer` / `disable optimizer`
+### `enable` / `disable`
 
-Enables or disables an optimizer for a backend selector:
+Enables or disables an optimizer alias:
 
 ```text
-enable optimizer ArithmeticOptimization for any
-disable optimizer AggressiveInline for interpreter
+enable ArithmeticOptimization
+disable EGraphOptimization
 ```
 
-Use `any` or `*` for all applicable backends, or a specific backend id such as `cil` or `interpreter`.
+Optimizer directives apply to the current runtime dialect frontend policy. Enable optimizers after base semantics are already correct.
 
-### `allow intrinsic` / `forbid intrinsic`
+### `allow` / `forbid`
 
-Allows or forbids an intrinsic for a backend selector:
+Allows or forbids an intrinsic name:
 
 ```text
-allow intrinsic "add_i32" for any
-forbid intrinsic "reflect-call" for cil
+allow add_i32
+forbid reflect-call
 ```
 
 This is a dialect-level intrinsic policy directive. It should match backend capability expectations.
@@ -168,10 +143,11 @@ A restricted dialect is a composition constraint, not a process isolation guaran
 
 ### `capability`
 
-Declares a boolean capability marker:
+Declares one or more enabled capability markers:
 
 ```text
-capability interop-enabled = false
+capability interop-enabled
+capability pricing-formula,user-authored
 ```
 
 Capabilities explain selected composition. They must not be treated as hidden runtime activation mechanisms.
@@ -200,7 +176,7 @@ Examples are located under `UniversalToolchain/Dialects/examples/wist`:
 - Keep dialect files explicit. A future reader should be able to see which syntax and backend paths are available.
 - Do not treat `restricted-sandbox` as a process isolation guarantee.
 - Do not add raw-source parsing workarounds for missing language features. Syntax must be owned by lexer/parser/AST/module code.
-- Prefer the parser-tested v1 directive shape documented in [Dialect Reference](/reference/dialect-reference).
+- Keep public dialect examples aligned with the shipped runtime dialect frontend, not with secondary parser experiments.
 
 ## Next
 

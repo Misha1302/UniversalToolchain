@@ -71,7 +71,7 @@ For the simple expression, the runtime path is:
 source → parser → AST → bytecode/AIR → selected backend → result
 ```
 
-The CLI receives source text through `--eval`. Wist uses the active dialect to select modules and backends, parses the expression, translates it into intermediate representations and runs it through the selected backend.
+The CLI receives source text as the positional `code` argument. The `--eval` flag tells Wistc to evaluate that argument as an expression and print the result. Wist uses the active dialect to select modules and backends, parses the expression, translates it into intermediate representations and runs it through the selected backend.
 
 The same source should produce the same observable result in compiler and interpreter modes when both modes are available. This parity is one of the main correctness expectations for Wist backends.
 

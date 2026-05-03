@@ -13,7 +13,7 @@ Read this after [Minimal DSL](/build-dsls/minimal-dsl) when you want to run form
 
 ## Goal
 
-Create a Wist runtime facade, select a shipped dialect preset, pass source text and named inputs, choose a backend mode and read the result.
+Create a Wist runtime facade, select a shipped dialect preset, pass source text and named inputs, choose a backend and read the result.
 
 ## Minimal host shape
 
@@ -23,7 +23,7 @@ A host application should treat the DSL runtime as a composed execution surface:
 select dialect or preset
   -> create runtime facade
   -> pass source and declared inputs
-  -> choose requested mode
+  -> choose requested backend
   -> receive result or explicit failure
 ```
 
@@ -46,7 +46,7 @@ var result = runtime.Run(
         ["price"] = 100,
         ["fee"] = 5
     },
-    mode: "compiler");
+    backend: "compiler");
 ```
 
 Expected numeric result:
@@ -55,7 +55,7 @@ Expected numeric result:
 110
 ```
 
-The exact result wrapper shape depends on the current facade API. The important contract is that the host selects a dialect, supplies inputs explicitly and requests a backend mode intentionally.
+The important contract is that the host selects a dialect, supplies inputs explicitly and requests a backend intentionally.
 
 ## Why inputs are explicit
 
@@ -83,11 +83,11 @@ Use the narrowest dialect that supports the business case.
 
 Do not embed `full-default` only because it is convenient. A broad profile exposes more syntax and runtime behavior than a restricted formula surface usually needs.
 
-## Backend mode selection
+## Backend selection
 
-`mode: "compiler"` requests the CIL-backed compiler path when the selected dialect exposes CIL. `mode: "interpreter"` requests the interpreter path when exposed.
+`backend: "compiler"` requests the CIL-backed compiler path when the selected dialect exposes CIL. `backend: "interpreter"` requests the interpreter path when exposed.
 
-When both modes are available, add parity tests for important formulas. When only one mode is available, test that the unsupported mode fails explicitly.
+When both backends are available, add parity tests for important formulas. When only one backend is available, test that the unsupported backend request fails explicitly.
 
 ## What to test in a host application
 

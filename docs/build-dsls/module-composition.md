@@ -55,11 +55,8 @@ This dialect:
 
 ```text
 dialect MinimalArithmetic
-use Arithmetic
-use Numbers
-use Scopes
-use Whitespaces
-backend interpreter enable
+use Arithmetic,Numbers,Scopes,Whitespaces
+backend interpreter
 ```
 
 is a composition of four capabilities:
@@ -139,7 +136,7 @@ For untrusted third-party code, combine dialect restriction with process, enviro
 - Depending on one backend while documenting the dialect as backend-neutral.
 - Adding marker-only capabilities that imply behavior without implementation ownership.
 - Hiding missing module dependencies behind fallback parser behavior.
-- Copying older shorthand dialect examples instead of parser-tested v1 directives.
+- Copying syntax from secondary parser experiments instead of the runtime `.wistdialect` format used by shipped profiles.
 
 ## Practical checklist
 

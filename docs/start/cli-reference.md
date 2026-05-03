@@ -16,7 +16,7 @@ Read this after [First Program](/start/first-program) when you want to run more 
 From the repository root, Wist examples are run through the `Wistc` project:
 
 ```text
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run [options]
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run [options] [code]
 ```
 
 The `--` separates `dotnet run` options from Wistc options.
@@ -25,7 +25,7 @@ The `--` separates `dotnet run` options from Wistc options.
 
 | Option | Meaning |
 |---|---|
-| `--eval "source"` | Runs source text passed directly on the command line. |
+| `--eval` | Treats the positional `code` argument as an expression and prints the result. |
 | `--file path/to/program.wist` | Runs a source file. |
 | `--dialect-file path/to/dialect.wistdialect` | Uses an explicit dialect file instead of the default runtime surface. |
 | `--backend compiler` | Runs through the user-facing compiler alias when the selected dialect exposes CIL. |
@@ -45,6 +45,8 @@ Expected output:
 ```text
 12
 ```
+
+In this command, `--eval` is a flag and `"(2 + 2) * 3"` is the positional source argument.
 
 Interpreter mode should produce the same observable result when it is available:
 
@@ -84,22 +86,30 @@ A dialect that exposes only `interpreter` should reject `--backend compiler`. A 
 | Interpreter backend alias is rejected | The selected dialect does not expose the `interpreter` backend. |
 | Syntax is rejected | The dialect does not select the module that owns the syntax. |
 | Interop expression is rejected | The selected dialect does not include trusted interop support. |
-| Dialect file fails to parse | The file may use older shorthand syntax instead of the current parser-tested directive form. |
+| Dialect file fails to parse | The file may use syntax from a secondary parser path instead of the runtime `.wistdialect` format. |
 
 ## Current dialect syntax reminder
 
-Current parser-tested dialect examples use one directive per line:
+Current shipped runtime dialect examples use compact comma-separated selection directives:
 
 ```text
 dialect MinimalArithmetic
-use Arithmetic
-use Numbers
-use Scopes
-use Whitespaces
-backend interpreter enable
+use Arithmetic,Numbers,Scopes,Whitespaces
+backend interpreter
 ```
 
-Older shorthand such as `use Arithmetic,Numbers` or `backend cil,interpreter` may appear in historical material, but it should not be used for new public examples unless that compatibility path is explicitly being documented.
+For a CIL-capable dialect, select the `cil` backend id and request it from the CLI through `--backend compiler`:
+
+```text
+dialect MinimalArithmeticNative
+use Arithmetic,Numbers,Scopes,Whitespaces,NativeTypes
+backend cil
+enable ArithmeticOptimization
+enable NativeCilOptimization
+enable NativeTypesOptimization
+```
+
+The repository also contains a stricter parser-specific dialect syntax, but public Wist runtime examples should follow the syntax used by shipped `.wistdialect` profiles unless the runtime path is intentionally migrated.
 
 ## Next
 

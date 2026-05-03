@@ -48,11 +48,8 @@ The smallest useful path is to start from an arithmetic dialect:
 
 ```text
 dialect MinimalArithmetic
-use Arithmetic
-use Numbers
-use Scopes
-use Whitespaces
-backend interpreter enable
+use Arithmetic,Numbers,Scopes,Whitespaces
+backend interpreter
 ```
 
 This dialect is intentionally narrow. It can run arithmetic expressions such as:
@@ -129,7 +126,7 @@ This order keeps composition errors visible. It also prevents optimizers or back
 - A backend must not change the observable meaning of a program.
 - A module should own the syntax and semantics it introduces.
 - Do not document removed or internal rule-declaration behavior as public runtime functionality.
-- Prefer the parser-tested v1 dialect directive shape documented in [Dialect Reference](/reference/dialect-reference).
+- Public DSL examples must follow the runtime `.wistdialect` format used by shipped profiles.
 
 ## Pages in this section
 
