@@ -1,4 +1,5 @@
 using BasicCore.Compilation;
+using BasicCore.Execution;
 using IntermediateRepresentationAbstractions;
 using DynamicMethodCalling.Core;
 using UniversalToolchain.Dialects.Wist;
@@ -60,9 +61,19 @@ public sealed class DslPricingCalculator : IDisposable
     public double CalculateWithFastInvoker(string formula, double price, double fee)
     {
         var compiledArtifact = CompileWithCompiler(formula);
-        var fastInvoker = new DynamicMethodInvoker<double, double, double>(compiledArtifact.CompilationOutput);
+        var parameters = compiledArtifact.CompilationOutput.GetParameters();
 
-        return fastInvoker.Invoke(price, fee);
+        if (parameters.Length > 0 && parameters[0].ParameterType == typeof(IExecutionEnvironment))
+        {
+            var environment = new ExecutionEnvironment(compiledArtifact.DeclaredBindings);
+            var fastInvoker = new DynamicMethodInvoker<IExecutionEnvironment, double, double, double>(compiledArtifact.CompilationOutput);
+
+            return fastInvoker.Invoke(environment, price, fee);
+        }
+
+        var rawFastInvoker = new DynamicMethodInvoker<double, double, double>(compiledArtifact.CompilationOutput);
+
+        return rawFastInvoker.Invoke(price, fee);
     }
 
     /// <summary>
