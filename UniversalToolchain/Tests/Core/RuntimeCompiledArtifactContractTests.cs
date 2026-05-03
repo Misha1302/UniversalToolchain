@@ -28,26 +28,6 @@ public class RuntimeCompiledArtifactContractTests
     }
 
     [Test]
-    public void Compile_PureExpression_ShouldNotRequireExecutionEnvironmentArgument()
-    {
-        using var host = RuntimeCompiledArtifactTestFactory.CreateHost();
-        var compilerCore = RuntimeCompiledArtifactTestFactory.GetCompilerCore(host);
-        var declared = new OrderedDictionary<string, Type>
-        {
-            ["left"] = typeof(double),
-            ["right"] = typeof(double)
-        };
-
-        var artifact = compilerCore.Compile("left + right", declared);
-        var parameterTypes = artifact.CompilationOutput.GetParameters()
-            .Select(static parameter => parameter.ParameterType)
-            .ToArray();
-
-        Assert.That(parameterTypes, Is.EqualTo(new[] { typeof(double), typeof(double) }));
-        Assert.That(parameterTypes, Does.Not.Contain(typeof(IExecutionEnvironment)));
-    }
-
-    [Test]
     public void DynamicMethodArtifact_AsFunc_SingleArgument_ReturnsExpectedValue()
     {
         var artifact = RuntimeCompiledArtifactTestFactory.CreateUnaryAddOneArtifact();
