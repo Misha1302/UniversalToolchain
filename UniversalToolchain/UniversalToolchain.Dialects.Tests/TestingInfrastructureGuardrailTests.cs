@@ -1,5 +1,3 @@
-using UniversalToolchain.Dialects.Tests;
-
 namespace UniversalToolchain.Dialects.Tests;
 
 public sealed class TestingInfrastructureGuardrailTests
@@ -85,7 +83,7 @@ public sealed class TestingInfrastructureGuardrailTests
             "1 + 2 * 3");
 
         UniversalToolchain.Modules.Tests.BackendParityInfrastructure.AssertSemanticParity(compilerResult, interpreterResult);
-        Assert.That(compilerResult.Value, Is.EqualTo(7).Or.EqualTo(7d));
+        Assert.That(UniversalToolchain.Modules.Tests.BackendParityInfrastructure.AsNumber(compilerResult.Value), Is.EqualTo(7d));
     }
 
     private static IReadOnlyList<string> TestingInfrastructureFiles() =>
