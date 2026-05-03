@@ -27,7 +27,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Compile Include="..\Tests\Infrastructure\BackendParityInfrastructure.cs" Link="Infrastructure\BackendParityInfrastructure.cs"/>
+        <ProjectReference Include="..\UniversalToolchain.Testing.Infrastructure\UniversalToolchain.Testing.Infrastructure.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
