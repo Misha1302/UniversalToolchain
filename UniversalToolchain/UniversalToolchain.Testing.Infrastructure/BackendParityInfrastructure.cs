@@ -16,8 +16,22 @@ public static class BackendParityInfrastructure
     /// </summary>
     public static (BackendExecutionResult CompilerResult, BackendExecutionResult InterpreterResult) RunBoth(string dialectText, string code)
     {
-        using var compilerHost = CreateHost(EnsureSingleBackend(dialectText, "compiler"));
-        using var interpreterHost = CreateHost(EnsureSingleBackend(dialectText, "interpreter"));
+        using var provider = CreateCanonicalProvider();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+        var resolver = provider.GetRequiredService<SelectedRuntimePlanResolver>();
+        var baseComposition = workflow.ComposeText(dialectText, "backend-parity-inline");
+        if (!baseComposition.IsSuccess)
+            Thrower.InvalidOpEx(FormatComposition(baseComposition));
+
+        var compilerComposition = DialectCompositionTestOverrides.WithOnlyBackend(baseComposition, resolver, "compiler");
+        var interpreterComposition = DialectCompositionTestOverrides.WithOnlyBackend(baseComposition, resolver, "interpreter");
+        if (!compilerComposition.IsSuccess)
+            Thrower.InvalidOpEx(FormatComposition(compilerComposition));
+        if (!interpreterComposition.IsSuccess)
+            Thrower.InvalidOpEx(FormatComposition(interpreterComposition));
+
+        using var compilerHost = workflow.CreateHost(compilerComposition);
+        using var interpreterHost = workflow.CreateHost(interpreterComposition);
 
         var compilerResult = ExecuteSafely(() => compilerHost.Run(code, "compiler"));
         var interpreterResult = ExecuteSafely(() => interpreterHost.Run(code, "interpreter"));
@@ -63,32 +77,15 @@ public static class BackendParityInfrastructure
         }
     }
 
-    private static WistDialectExecutionHost CreateHost(string dialectText)
+    private static ServiceProvider CreateCanonicalProvider()
     {
         var services = new ServiceCollection();
         services.AddWistDialectServices();
-        services.AddWistCilBackend();
-        services.AddWistInterpreterBackend();
-
-        using var provider = services.BuildServiceProvider();
-        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var composition = workflow.ComposeText(dialectText, "backend-parity-inline");
-        if (!composition.IsSuccess)
-            Thrower.InvalidOpEx(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
-
-        return workflow.CreateHost(composition);
+        return services.BuildServiceProvider();
     }
 
-    private static string EnsureSingleBackend(string dialectText, string backend)
-    {
-        var lines = dialectText
-            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Where(static line => !line.StartsWith("backend ", StringComparison.Ordinal))
-            .ToList();
-
-        lines.Add($"backend {backend}");
-        return string.Join(Environment.NewLine, lines);
-    }
+    private static string FormatComposition(DialectFrameworkCompositionResult composition) =>
+        DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition));
 }
 
 /// <summary>
