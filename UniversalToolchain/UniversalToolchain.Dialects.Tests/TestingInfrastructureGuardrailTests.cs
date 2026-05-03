@@ -1,3 +1,5 @@
+using UniversalToolchain.Modules.Tests;
+
 namespace UniversalToolchain.Dialects.Tests;
 
 public sealed class TestingInfrastructureGuardrailTests
@@ -74,19 +76,20 @@ public sealed class TestingInfrastructureGuardrailTests
     {
         const string dialectText = """
                                   dialect Parity
-                                  use Arithmetic,Numbers
+                                  use Arithmetic,Numbers,CSharpInterop,Identifier,Scopes,Whitespaces
                                   backend interpreter,compiler
                                   """;
 
-        var (compilerResult, interpreterResult) = UniversalToolchain.Modules.Tests.BackendParityInfrastructure.RunBoth(
+        var (compilerResult, interpreterResult) = BackendParityInfrastructure.RunBoth(
             dialectText,
-            "1 + 2 * 3");
+            "Main.Round((10 * 2) * 3.141592653589793)");
 
-        UniversalToolchain.Modules.Tests.BackendParityInfrastructure.AssertSemanticParity(compilerResult, interpreterResult);
+        BackendParityInfrastructure.AssertSemanticParity(compilerResult, interpreterResult);
         Assert.Multiple(() =>
         {
             Assert.That(compilerResult.IsSuccess, Is.True);
             Assert.That(interpreterResult.IsSuccess, Is.True);
+            Assert.That(BackendParityInfrastructure.AsNumber(compilerResult.Value), Is.EqualTo(63d));
         });
     }
 
