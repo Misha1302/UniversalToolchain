@@ -1,5 +1,8 @@
+using System.Reflection;
 using BasicCore.Builtins;
 using BasicCore.Capabilities;
+using BasicCore.Core;
+using BasicCore.Execution;
 using UniversalToolchain.Dialects.Integration;
 
 namespace NativeMathModule;
@@ -41,7 +44,8 @@ public class NativeCilOptimizerModule : IIRProcessingModule
             "Native CIL optimizer requires intrinsic capability context initialization.");
 
         var requirements = _supportedLoadTypes
-            .Select(type => (BuiltinIntrinsicSymbols.Core.LoadConst, new[] { type }));
+            .Select(type => (BuiltinIntrinsicSymbols.Core.LoadConst, new[] { type }))
+            .Append((BuiltinIntrinsicSymbols.Core.LoadExternal, new[] { typeof(double) }));
         if (!OptimizerCapabilityGuards.SupportsAll(capabilityContext, requirements))
             return current;
 
@@ -103,6 +107,12 @@ public class NativeCilOptimizerModule : IIRProcessingModule
 
         for (var i = 0; i < instructions.Count; i++)
         {
+            if (TryOptimizeExternalLoad(instructions, i, context, out var consumedCount))
+            {
+                i += consumedCount - 1;
+                continue;
+            }
+
             var instruction = instructions[i];
 
             if (instruction.UOpCode == UOpCode.Push && instruction.Operands.Count == 1)
@@ -123,6 +133,79 @@ public class NativeCilOptimizerModule : IIRProcessingModule
         var result = new AbstractIR();
         result.AppendInstructions(context.NewInstructions);
         return result;
+    }
+
+    private static bool TryOptimizeExternalLoad(
+        IReadOnlyList<Instruction> instructions,
+        int index,
+        CompilationContext context,
+        out int consumedCount)
+    {
+        consumedCount = 0;
+
+        if (index + 2 >= instructions.Count)
+            return false;
+
+        var loadEnvironment = instructions[index];
+        var loadSlot = instructions[index + 1];
+        var loadExternal = instructions[index + 2];
+
+        if (!IsLoadEnvironmentCall(loadEnvironment))
+            return false;
+
+        if (loadSlot.UOpCode != UOpCode.Push || loadSlot.Operands.Count != 1 || loadSlot.Operands[0] is not int slot)
+            return false;
+
+        if (!TryGetLoadExternalValueType(loadExternal, out var valueType))
+            return false;
+
+        context.NewInstructions.Add(BuiltinIntrinsicInstruction.Create(
+            BuiltinIntrinsicSymbols.Core.LoadExternal,
+            valueType,
+            [slot]));
+        consumedCount = 3;
+        return true;
+    }
+
+    private static bool IsLoadEnvironmentCall(Instruction instruction)
+    {
+        if (!IntrinsicInstructionNormalizer.TryNormalize(instruction, out var normalized))
+            return false;
+
+        if (normalized.Operands.Count < 2 || normalized.Operands[0].Get<string>() != "call C#")
+            return false;
+
+        return normalized.Operands[1] is CSharpCallDescriptor descriptor
+               && descriptor.Receiver is CSharpCallReceiver.ExecutionScopedProvider provider
+               && provider.ProviderType == typeof(ExternalRuntimeCallProvider)
+               && descriptor.Method.Name == nameof(ExternalRuntimeCallProvider.LoadEnvironment);
+    }
+
+    private static bool TryGetLoadExternalValueType(Instruction instruction, out Type valueType)
+    {
+        valueType = default!;
+
+        if (!IntrinsicInstructionNormalizer.TryNormalize(instruction, out var normalized))
+            return false;
+
+        if (normalized.Operands.Count < 2 || normalized.Operands[0].Get<string>() != "call C#")
+            return false;
+
+        var operand = normalized.Operands[1];
+        var method = operand as MethodInfo;
+        if (operand is CSharpCallDescriptor descriptor)
+            method = descriptor.Method;
+
+        if (method == null)
+            return false;
+
+        if (!method.IsGenericMethod || method.GetGenericMethodDefinition() != typeof(ExternalRuntimeCalls)
+                .GetMethod(nameof(ExternalRuntimeCalls.LoadExternal))
+                .NotNull())
+            return false;
+
+        valueType = method.GetGenericArguments()[0];
+        return true;
     }
 
     private class CompilationContext
