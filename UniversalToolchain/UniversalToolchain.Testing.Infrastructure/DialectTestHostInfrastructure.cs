@@ -12,7 +12,7 @@ namespace UniversalToolchain.Dialects.Tests;
 public static class DialectTestHostInfrastructure
 {
     /// <summary>
-    ///     Creates an execution host from inline dialect text.
+    ///     Creates an execution host from inline dialect text through the canonical runtime path.
     /// </summary>
     public static WistDialectExecutionHost CreateHostFromDialectText(string dialectText)
     {
@@ -21,27 +21,27 @@ public static class DialectTestHostInfrastructure
 
         var services = new ServiceCollection();
         services.AddWistDialectServices();
-        services.AddWistCilBackend();
-        services.AddWistInterpreterBackend();
 
         using var provider = services.BuildServiceProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var composition = workflow.ComposeText(dialectText, "tests-inline");
         if (!composition.IsSuccess)
-            Thrower.InvalidOpEx(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
+            Thrower.InvalidOpEx(FormatComposition(composition));
 
         return workflow.CreateHost(composition);
     }
 
     /// <summary>
-    ///     Creates a host configured only for the interpreter backend.
+    ///     Creates a host by composing the original dialect through the canonical pipeline,
+    ///     then applying a structured test-only backend override to the build plan.
     /// </summary>
-    public static WistDialectExecutionHost CreateInterpreterHost(string dialectText) => CreateHostFromDialectText(EnsureSingleBackend(dialectText, "interpreter"));
+    public static WistDialectExecutionHost CreateInterpreterHost(string dialectText) => CreateHostWithOnlyBackend(dialectText, "interpreter");
 
     /// <summary>
-    ///     Creates a host configured only for the compiler backend.
+    ///     Creates a host by composing the original dialect through the canonical pipeline,
+    ///     then applying a structured test-only backend override to the build plan.
     /// </summary>
-    public static WistDialectExecutionHost CreateCompilerHost(string dialectText) => CreateHostFromDialectText(EnsureSingleBackend(dialectText, "compiler"));
+    public static WistDialectExecutionHost CreateCompilerHost(string dialectText) => CreateHostWithOnlyBackend(dialectText, "compiler");
 
     /// <summary>
     ///     Executes code in both backends and verifies semantic parity.
@@ -53,14 +53,28 @@ public static class DialectTestHostInfrastructure
         return compilerResult.Value;
     }
 
-    private static string EnsureSingleBackend(string dialectText, string backend)
+    private static WistDialectExecutionHost CreateHostWithOnlyBackend(string dialectText, string backend)
     {
-        var lines = dialectText
-            .Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Where(static line => !line.StartsWith("backend ", StringComparison.Ordinal))
-            .ToList();
+        if (string.IsNullOrWhiteSpace(dialectText))
+            Thrower.Argument(nameof(dialectText), "Dialect text must not be empty.");
 
-        lines.Add($"backend {backend}");
-        return string.Join(Environment.NewLine, lines);
+        var services = new ServiceCollection();
+        services.AddWistDialectServices();
+
+        using var provider = services.BuildServiceProvider();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+        var resolver = provider.GetRequiredService<SelectedRuntimePlanResolver>();
+        var composition = workflow.ComposeText(dialectText, $"tests-inline-{backend}");
+        if (!composition.IsSuccess)
+            Thrower.InvalidOpEx(FormatComposition(composition));
+
+        var overriddenComposition = DialectCompositionTestOverrides.WithOnlyBackend(composition, resolver, backend);
+        if (!overriddenComposition.IsSuccess)
+            Thrower.InvalidOpEx(FormatComposition(overriddenComposition));
+
+        return workflow.CreateHost(overriddenComposition);
     }
+
+    private static string FormatComposition(DialectFrameworkCompositionResult composition) =>
+        DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition));
 }
