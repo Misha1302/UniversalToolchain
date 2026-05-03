@@ -1,9 +1,8 @@
 using System.Runtime.CompilerServices;
-using BasicCore.Execution;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
 using DynamicExpresso;
-using DynamicMethodCalling;
+using DynamicMethodCalling.Core;
 using NCalc;
 using NCalc.LambdaCompilation;
 
@@ -22,7 +21,7 @@ public class ExternalWideExpression10ExecutionBenchmarks : ExternalArithmeticExe
     private Func<double, double, double, double, double, double, double, double, double, double, double> _dynamicExpressoDelegate = null!;
     private ExternalBenchContext10 _nCalcContext = null!;
     private Func<ExternalBenchContext10, double> _nCalcLambda = null!;
-    private ExecutionBoundNativePointer<double, double, double, double, double, double, double, double, double, double, double> _wistFastInvoker = null!;
+    private DynamicMethodInvoker<double, double, double, double, double, double, double, double, double, double, double> _wistFastInvoker = null!;
 
     [GlobalSetup]
     public void GlobalSetup()
@@ -30,9 +29,8 @@ public class ExternalWideExpression10ExecutionBenchmarks : ExternalArithmeticExe
         InitializeInputData();
         CreateProviderAndHost();
 
-        var compiledArtifact = CompileWistDynamicMethod(WistFormula, ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]);
-        var executionEnvironment = new ExecutionEnvironment(compiledArtifact.DeclaredBindings);
-        _wistFastInvoker = compiledArtifact.CreateExecutionBoundNativePointer<double, double, double, double, double, double, double, double, double, double, double>(executionEnvironment);
+        var dynamicMethod = CompileWistDynamicMethod(WistFormula, ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]);
+        _wistFastInvoker = new DynamicMethodInvoker<double, double, double, double, double, double, double, double, double, double, double>(dynamicMethod);
 
         var nCalcExpression = new Expression(NCalcFormula);
         _nCalcLambda = nCalcExpression.ToLambda<ExternalBenchContext10, double>();
