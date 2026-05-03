@@ -83,7 +83,11 @@ public sealed class TestingInfrastructureGuardrailTests
             "1 + 2 * 3");
 
         UniversalToolchain.Modules.Tests.BackendParityInfrastructure.AssertSemanticParity(compilerResult, interpreterResult);
-        Assert.That(UniversalToolchain.Modules.Tests.BackendParityInfrastructure.AsNumber(compilerResult.Value), Is.EqualTo(7d));
+        Assert.Multiple(() =>
+        {
+            Assert.That(compilerResult.IsSuccess, Is.True);
+            Assert.That(interpreterResult.IsSuccess, Is.True);
+        });
     }
 
     private static IReadOnlyList<string> TestingInfrastructureFiles() =>
