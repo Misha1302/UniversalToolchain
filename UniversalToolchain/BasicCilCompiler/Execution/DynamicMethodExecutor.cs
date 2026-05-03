@@ -4,11 +4,19 @@ public class DynamicMethodExecutor : IExecutor<DynamicMethod>
 {
     public object Execute(DynamicMethod compilation, IExecutionEnvironment environment)
     {
+        compilation = compilation.ArgNotNull();
+        environment = environment.ArgNotNull();
+
         var parameters = compilation.GetParameters();
+        var hasEnvironmentArgument = parameters.Length > 0 && parameters[0].ParameterType == typeof(IExecutionEnvironment);
         var values = new object?[parameters.Length];
-        values[0] = environment;
-        for (var i = 1; i < parameters.Length; i++)
-            values[i] = environment.GetExternalValue(i - 1);
+        var externalSlotOffset = hasEnvironmentArgument ? 1 : 0;
+
+        if (hasEnvironmentArgument)
+            values[0] = environment;
+
+        for (var i = externalSlotOffset; i < parameters.Length; i++)
+            values[i] = environment.GetExternalValue(i - externalSlotOffset);
 
         return compilation.Invoke(null, values)!;
     }
