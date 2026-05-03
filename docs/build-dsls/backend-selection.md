@@ -7,7 +7,7 @@ description: Explain interpreter, CIL, and backend choice.
 
 Backends decide how a composed DSL program is executed after parsing and lowering.
 
-Wist currently exposes two user-facing backends:
+Wist currently exposes two user-facing backend modes:
 
 - `interpreter`
 - `compiler`
@@ -37,11 +37,8 @@ Dialect example:
 
 ```text
 dialect MinimalArithmetic
-use Arithmetic
-use Numbers
-use Scopes
-use Whitespaces
-backend interpreter enable
+use Arithmetic,Numbers,Scopes,Whitespaces
+backend interpreter
 ```
 
 Run example:
@@ -63,15 +60,11 @@ Dialect example:
 
 ```text
 dialect MinimalArithmeticNative
-use Arithmetic
-use Numbers
-use Scopes
-use Whitespaces
-use NativeTypes
-backend cil enable
-enable optimizer ArithmeticOptimization for cil
-enable optimizer NativeCilOptimization for cil
-enable optimizer NativeTypesOptimization for cil
+use Arithmetic,Numbers,Scopes,Whitespaces,NativeTypes
+backend cil
+enable ArithmeticOptimization
+enable NativeCilOptimization
+enable NativeTypesOptimization
 ```
 
 Run example:
@@ -91,8 +84,7 @@ Use both backends when you need:
 Dialect example:
 
 ```text
-backend cil enable
-backend interpreter enable
+backend cil,interpreter
 ```
 
 When both are enabled, tests should run the same source through both modes and compare observable results.
@@ -129,7 +121,7 @@ var result = runtime.Run(
         ["price"] = 100,
         ["fee"] = 5
     },
-    mode: "compiler");
+    backend: "compiler");
 ```
 
 The facade still uses the composed dialect runtime. It should not be treated as a separate language implementation.
@@ -166,7 +158,7 @@ Parity does not mean every backend must support every dialect. A dialect may int
 - Treating the interpreter as a fallback when the selected backend fails.
 - Adding backend-specific intrinsics to a general interpreter surface.
 - Comparing benchmark numbers before separating compilation time from execution time.
-- Copying older shorthand backend directives such as `backend cil,interpreter` instead of parser-tested v1 directives.
+- Copying syntax from secondary parser experiments instead of the runtime `.wistdialect` format used by shipped profiles.
 
 ## Next
 
