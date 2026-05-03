@@ -1,3 +1,4 @@
+using System.Reflection;
 using DynamicMethodCalling;
 using Tests.Infrastructure;
 
@@ -24,6 +25,26 @@ public class RuntimeCompiledArtifactContractTests
         Assert.That(artifact.SlotsByName["beta"], Is.EqualTo(0));
         Assert.That(artifact.SlotsByName["alpha"], Is.EqualTo(1));
         Assert.That(artifact.SlotsByName["gamma"], Is.EqualTo(2));
+    }
+
+    [Test]
+    public void Compile_PureExpression_ShouldNotRequireExecutionEnvironmentArgument()
+    {
+        using var host = RuntimeCompiledArtifactTestFactory.CreateHost();
+        var compilerCore = RuntimeCompiledArtifactTestFactory.GetCompilerCore(host);
+        var declared = new OrderedDictionary<string, Type>
+        {
+            ["left"] = typeof(int),
+            ["right"] = typeof(int)
+        };
+
+        var artifact = compilerCore.Compile("left + right", declared);
+        var parameterTypes = artifact.CompilationOutput.GetParameters()
+            .Select(static parameter => parameter.ParameterType)
+            .ToArray();
+
+        Assert.That(parameterTypes, Is.EqualTo(new[] { typeof(int), typeof(int) }));
+        Assert.That(parameterTypes, Does.Not.Contain(typeof(IExecutionEnvironment)));
     }
 
     [Test]
