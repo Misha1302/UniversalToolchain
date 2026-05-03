@@ -40,9 +40,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Compile Include="..\Tests\Infrastructure\BackendParityInfrastructure.cs" Link="Infrastructure\BackendParityInfrastructure.cs"/>
-        <Compile Include="..\Tests\Infrastructure\BackendResultAssertions.cs" Link="Infrastructure\BackendResultAssertions.cs"/>
-        <Compile Include="..\Tests\Infrastructure\DialectTestHostInfrastructure.cs" Link="Infrastructure\DialectTestHostInfrastructure.cs"/>
+        <ProjectReference Include="..\UniversalToolchain.Testing.Infrastructure\UniversalToolchain.Testing.Infrastructure.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
