@@ -66,7 +66,7 @@ Negative tests are as important as positive tests. Without them, a “restricted
 If a dialect declares:
 
 ```text
-backend interpreter enable
+backend interpreter
 ```
 
 then asking for compiler mode should fail.
@@ -74,7 +74,7 @@ then asking for compiler mode should fail.
 If a dialect declares:
 
 ```text
-backend cil enable
+backend cil
 ```
 
 then asking for interpreter mode should fail.
@@ -86,8 +86,7 @@ The failure should be explicit. Do not silently fall back to another backend, be
 When a dialect exposes both:
 
 ```text
-backend cil enable
-backend interpreter enable
+backend cil,interpreter
 ```
 
 run the same source through both modes and compare the result.
@@ -119,11 +118,11 @@ Test optimizer-sensitive programs in two ways:
 
 Compare observable results. For backend-specific optimizers, also verify that unsupported backends do not receive backend-specific intrinsics.
 
-Current parser-tested optimizer directives use this shape:
+Current runtime optimizer directives use this shape:
 
 ```text
-enable optimizer ArithmeticOptimization for cil
-disable optimizer AggressiveInline for interpreter
+enable ArithmeticOptimization
+disable EGraphOptimization
 ```
 
 ## 6. Runtime surface test
@@ -168,7 +167,7 @@ Before documenting a dialect as stable, verify:
 - parity tests exist when both compiler and interpreter are enabled;
 - optimizer behavior is tested separately from base semantics;
 - restricted dialects do not expose interop or unrelated modules;
-- dialect examples use the parser-tested v1 directive shape.
+- dialect examples use the runtime `.wistdialect` format used by shipped profiles.
 
 ## Next
 
