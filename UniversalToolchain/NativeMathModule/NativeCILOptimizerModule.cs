@@ -43,13 +43,29 @@ public class NativeCilOptimizerModule : IIRProcessingModule
         var capabilityContext = _capabilityContext.NotNull(
             "Native CIL optimizer requires intrinsic capability context initialization.");
 
-        var requirements = _supportedLoadTypes
-            .Select(type => (BuiltinIntrinsicSymbols.Core.LoadConst, new[] { type }))
-            .Append((BuiltinIntrinsicSymbols.Core.LoadExternal, new[] { typeof(double) }));
-        if (!OptimizerCapabilityGuards.SupportsAll(capabilityContext, requirements))
+        var supportsLoadConst = SupportsAllLoadConstTypes(capabilityContext);
+        var supportsLoadExternal = SupportsAllLoadExternalTypes(capabilityContext);
+
+        if (!supportsLoadConst && !supportsLoadExternal)
             return current;
 
-        return OptimizeNativeLoads(current);
+        return OptimizeNativeLoads(current, supportsLoadConst, supportsLoadExternal);
+    }
+
+    private static bool SupportsAllLoadConstTypes(IOptimizerIntrinsicCapabilityContext capabilityContext)
+    {
+        var requirements = _supportedLoadTypes
+            .Select(type => (BuiltinIntrinsicSymbols.Core.LoadConst, new[] { type }));
+
+        return OptimizerCapabilityGuards.SupportsAll(capabilityContext, requirements);
+    }
+
+    private static bool SupportsAllLoadExternalTypes(IOptimizerIntrinsicCapabilityContext capabilityContext)
+    {
+        var requirements = _supportedLoadTypes
+            .Select(type => (BuiltinIntrinsicSymbols.Core.LoadExternal, new[] { type }));
+
+        return OptimizerCapabilityGuards.SupportsAll(capabilityContext, requirements);
     }
 
     private static void InitializeCilGenerators()
@@ -100,14 +116,14 @@ public class NativeCilOptimizerModule : IIRProcessingModule
         };
     }
 
-    private IAbstractIR OptimizeNativeLoads(IAbstractIR air)
+    private IAbstractIR OptimizeNativeLoads(IAbstractIR air, bool optimizeLoadConst, bool optimizeLoadExternal)
     {
         var instructions = air.Instructions.ToList();
         var context = new CompilationContext();
 
         for (var i = 0; i < instructions.Count; i++)
         {
-            if (TryOptimizeExternalLoad(instructions, i, context, out var consumedCount))
+            if (optimizeLoadExternal && TryOptimizeExternalLoad(instructions, i, context, out var consumedCount))
             {
                 i += consumedCount - 1;
                 continue;
@@ -115,7 +131,7 @@ public class NativeCilOptimizerModule : IIRProcessingModule
 
             var instruction = instructions[i];
 
-            if (instruction.UOpCode == UOpCode.Push && instruction.Operands.Count == 1)
+            if (optimizeLoadConst && instruction.UOpCode == UOpCode.Push && instruction.Operands.Count == 1)
             {
                 var value = instruction.Operands[0];
                 var valueType = value.GetType();
