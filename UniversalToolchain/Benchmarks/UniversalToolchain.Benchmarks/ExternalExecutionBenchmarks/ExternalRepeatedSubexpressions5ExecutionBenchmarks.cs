@@ -1,6 +1,8 @@
 using System.Runtime.CompilerServices;
+using BasicCore.Execution;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
+using DynamicMethodCalling;
 using DynamicExpresso;
 using DynamicMethodCalling.Core;
 using NCalc;
@@ -21,7 +23,7 @@ public class ExternalRepeatedSubexpressions5ExecutionBenchmarks : ExternalArithm
 
     private ExternalBenchContext5 _nCalcContext = null!;
     private Func<ExternalBenchContext5, double> _nCalcLambda = null!;
-    private DynamicMethodInvoker<double, double, double, double, double, double> _wistFastInvoker = null!;
+    private ExecutionBoundNativePointer<double, double, double, double, double, double> _wistFastInvoker = null!;
 
     [GlobalSetup]
     public void GlobalSetup()
@@ -29,8 +31,9 @@ public class ExternalRepeatedSubexpressions5ExecutionBenchmarks : ExternalArithm
         InitializeInputData();
         CreateProviderAndHost();
 
-        var dynamicMethod = CompileWistDynamicMethod(WistFormula, ["A", "B", "C", "D", "E"]);
-        _wistFastInvoker = new DynamicMethodInvoker<double, double, double, double, double, double>(dynamicMethod);
+        var compiledArtifact = CompileWistDynamicMethod(WistFormula, ["A", "B", "C", "D", "E"]);
+        var executionEnvironment = new ExecutionEnvironment(compiledArtifact.DeclaredBindings);
+        _wistFastInvoker = compiledArtifact.CreateExecutionBoundNativePointer<double, double, double, double, double, double>(executionEnvironment);
 
         var nCalcExpression = new Expression(NCalcFormula);
         _nCalcLambda = nCalcExpression.ToLambda<ExternalBenchContext5, double>();
@@ -44,7 +47,7 @@ public class ExternalRepeatedSubexpressions5ExecutionBenchmarks : ExternalArithm
         EnsureResultParityAcrossIndexes(CSharpAt, DynamicExpressoAt, NCalcAt, WistAt);
     }
 
-    [Benchmark(Baseline = true)]
+    [Benchmark(Baseline = true, OperationsPerInvoke = InnerCount)]
     public double CSharp_NoInliningMethod()
     {
         var sum = 0.0;
@@ -57,8 +60,8 @@ public class ExternalRepeatedSubexpressions5ExecutionBenchmarks : ExternalArithm
         return sum;
     }
 
-    [Benchmark]
-    public double DynamicExpresso_Delegate()
+    [Benchmark(OperationsPerInvoke = InnerCount)]
+    public double DynamicExpresso_CompiledDelegate()
     {
         var sum = 0.0;
         for (var k = 0; k < InnerCount; k++)
@@ -70,8 +73,8 @@ public class ExternalRepeatedSubexpressions5ExecutionBenchmarks : ExternalArithm
         return sum;
     }
 
-    [Benchmark]
-    public double NCalc_Lambda()
+    [Benchmark(OperationsPerInvoke = InnerCount)]
+    public double NCalc_CompiledLambda()
     {
         var sum = 0.0;
         for (var k = 0; k < InnerCount; k++)
@@ -88,8 +91,8 @@ public class ExternalRepeatedSubexpressions5ExecutionBenchmarks : ExternalArithm
         return sum;
     }
 
-    [Benchmark]
-    public double Wist_Cil_FastInvoker()
+    [Benchmark(OperationsPerInvoke = InnerCount)]
+    public double Wist_Cil_DynamicMethodFastInvoker()
     {
         var sum = 0.0;
         for (var k = 0; k < InnerCount; k++)
