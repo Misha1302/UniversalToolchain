@@ -18,7 +18,8 @@ Use reference pages when you need to answer questions such as:
 - which backend modes exist;
 - what a backend must preserve;
 - which dialect/module names are intended as stable aliases;
-- which intrinsic symbols or capability families need documentation.
+- which intrinsic symbols or capability families need documentation;
+- which project and documentation rules constrain changes.
 
 ## Current reference map
 
@@ -26,11 +27,13 @@ Use reference pages when you need to answer questions such as:
 |---|---|
 | [Dialect Reference](/reference/dialect-reference) | dialect file syntax, directive families and shipped profiles |
 | [Module Reference](/reference/module-reference) | module aliases, feature ownership and runtime exports |
+| [Module Contracts](/reference/module-contracts) | token, parser priority, visitor ownership, bytecode tag, state and backend-capability contracts |
 | [Bytecode Reference](/reference/bytecode-reference) | bytecode concepts and lowering responsibilities |
 | [AIR Reference](/reference/air-reference) | AIR opcode table and instruction contracts |
 | [Intrinsics Reference](/reference/intrinsics-reference) | intrinsic symbols, type arguments and capability expectations |
 | [Backend Contracts](/reference/backend-contracts) | interpreter/CIL/shared backend obligations |
 | [Project Rules](/reference/project-rules) | coding and contribution rules relevant to documentation and internals |
+| [Documentation Rules](/reference/documentation-rules) | documentation synchronization and executable example rules |
 
 ## Stability levels
 
@@ -79,4 +82,4 @@ If the source of truth is uncertain, document the item as current implementation
 
 ## Next
 
-Start with [AIR Reference](/reference/air-reference) or [Backend Contracts](/reference/backend-contracts).
+Start with [Dialect Reference](/reference/dialect-reference), [Module Contracts](/reference/module-contracts), [AIR Reference](/reference/air-reference) or [Backend Contracts](/reference/backend-contracts).

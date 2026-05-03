@@ -24,23 +24,25 @@ Understand the difference between UniversalToolchain and Wist, identify your rol
 
 | User type | What to read first | Then read |
 |---|---|---|
-| **Wist user** (run programs, learn syntax) | [First Program](/start/first-program) | [Syntax Tour](/wist/syntax-tour) |
-| **DSL developer** (compose your own language) | [Mental Model](/start/mental-model), [Dialect Files](/build-dsls/dialect-files) | [Minimal DSL](/build-dsls/minimal-dsl) |
-| **Module author** (add new language features) | [Write Modules](/write-modules/) | Later: Bytecode generation and backend guides |
-| **Runtime/compiler engineer** | [Internals](/internals/pipeline) | [Bytecode and AIR](/architecture/bytecode-and-air) |
-| **Contributor/maintainer** | [Internals](/internals/) | Project rules and architecture docs |
-| **Reference user** | [Reference](/reference/) | Backend contracts, module specifications |
+| **Wist user** (run programs, learn syntax) | [First Program](/start/first-program), [CLI Reference](/start/cli-reference) | [Syntax Tour](/wist/syntax-tour), [Examples](/wist/examples) |
+| **DSL developer** (compose your own language) | [Mental Model](/start/mental-model), [Dialect Files](/build-dsls/dialect-files) | [Minimal DSL](/build-dsls/minimal-dsl), [Embedding in .NET](/build-dsls/embedding-dotnet) |
+| **Module author** (add new language features) | [Write Modules](/write-modules/) | [Module Contracts](/reference/module-contracts), [Testing a Module](/write-modules/testing-module) |
+| **Runtime/compiler engineer** | [Pipeline](/internals/pipeline) | [Bytecode](/internals/bytecode), [AIR](/internals/air), [Backends](/internals/backends) |
+| **Contributor/maintainer** | [Internals](/internals/) | [Project Rules](/reference/project-rules), [Documentation Rules](/reference/documentation-rules) |
+| **Reference user** | [Reference](/reference/) | [Backend Contracts](/reference/backend-contracts), [Module Reference](/reference/module-reference) |
 
 ## Recommended order
 
 1. [First Program](/start/first-program)
-2. [Mental Model](/start/mental-model)
-3. [Syntax Tour](/wist/syntax-tour)
-4. [Dialect Files](/build-dsls/dialect-files)
-5. [Minimal DSL](/build-dsls/minimal-dsl)
-6. [Write Modules](/write-modules/)
-7. [Pipeline overview](/internals/pipeline)
-8. [Reference](/reference/)
+2. [CLI Reference](/start/cli-reference)
+3. [Mental Model](/start/mental-model)
+4. [Syntax Tour](/wist/syntax-tour)
+5. [Dialect Files](/build-dsls/dialect-files)
+6. [Minimal DSL](/build-dsls/minimal-dsl)
+7. [Embedding in .NET](/build-dsls/embedding-dotnet)
+8. [Write Modules](/write-modules/)
+9. [Pipeline overview](/internals/pipeline)
+10. [Reference](/reference/)
 
 ## Next
 

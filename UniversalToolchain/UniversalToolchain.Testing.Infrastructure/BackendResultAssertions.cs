@@ -1,5 +1,5 @@
+using System.Reflection;
 using ExceptionsManager;
-using NumbersModule.Core;
 
 namespace UniversalToolchain.Dialects.Tests;
 
@@ -31,7 +31,7 @@ public static class BackendResultAssertions
             float floatValue => floatValue,
             double doubleValue => doubleValue,
             decimal decimalValue => (double)decimalValue,
-            RealNumberImpl realNumberImpl => realNumberImpl.GetValue(),
+            _ when TryReadNumericWrapper(value, out var numericValue) => numericValue,
             _ => Thrower.InvalidOpEx<double>(
                 $"Value '{value?.ToString() ?? "null"}' of runtime type '{value?.GetType().FullName ?? "null"}' is not a supported numeric result.")
         };
@@ -45,5 +45,35 @@ public static class BackendResultAssertions
             _ => Thrower.InvalidOpEx<bool>(
                 $"Value '{value?.ToString() ?? "null"}' of runtime type '{value?.GetType().FullName ?? "null"}' is not a boolean result.")
         };
+    }
+
+    private static bool TryReadNumericWrapper(object? value, out double numericValue)
+    {
+        numericValue = 0;
+        if (value is null)
+            return false;
+
+        var method = value.GetType().GetMethod(
+            "GetValue",
+            BindingFlags.Instance | BindingFlags.Public,
+            binder: null,
+            types: Type.EmptyTypes,
+            modifiers: null);
+
+        if (method is null)
+            return false;
+
+        var result = method.Invoke(value, null);
+        numericValue = result switch
+        {
+            int intValue => intValue,
+            long longValue => longValue,
+            float floatValue => floatValue,
+            double doubleValue => doubleValue,
+            decimal decimalValue => (double)decimalValue,
+            _ => 0
+        };
+
+        return result is int or long or float or double or decimal;
     }
 }
