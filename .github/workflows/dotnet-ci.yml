@@ -32,6 +32,12 @@ jobs:
       - name: Test
         run: dotnet test UniversalToolchain/Wist.sln -c Release --no-build
 
+      - name: Install docs dependencies
+        run: npm install
+
+      - name: Build docs
+        run: npm run docs:build
+
       - name: Markdown bash smoke checks
         shell: bash
         run: python3 .github/scripts/run-markdown-bash-blocks.py
