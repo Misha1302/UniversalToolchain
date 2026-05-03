@@ -57,7 +57,7 @@ var result = wist.Run(
         ["price"] = 100.0,
         ["fee"] = 5.0
     },
-    mode: "compiler");
+    backend: "compiler");
 
 var compiledResult = (double)result!; // 95.0
 ```
@@ -79,7 +79,7 @@ var attempt = wist.TryCompile(
         ["price"] = typeof(double),
         ["fee"] = typeof(double)
     },
-    mode: "interpreter");
+    backend: "interpreter");
 ```
 
 ## When to use UniversalToolchain
@@ -196,7 +196,7 @@ Common options:
 - `--dialect-file <path>`
 
 The user-facing `compiler` mode selects the canonical `cil` backend when a dialect declares `backend cil` or the
-`compiler` alias.
+`compiler` alias. `--eval` is a flag; the source expression itself is passed as the positional code argument.
 
 Examples:
 
@@ -240,6 +240,8 @@ Located under `UniversalToolchain/Dialects/examples/wist`:
 
 These directories are runnable canonical references for the manifest-driven dialect path. Each README includes
 repository-root CLI commands, expected behavior, and the capabilities intentionally excluded by that profile.
+
+Public dialect documentation should follow the `.wistdialect` shape used by these shipped profiles. Secondary parser experiments must not be treated as the runtime dialect contract unless the runtime path is intentionally migrated to them.
 
 ## Why .NET 10 right now?
 
