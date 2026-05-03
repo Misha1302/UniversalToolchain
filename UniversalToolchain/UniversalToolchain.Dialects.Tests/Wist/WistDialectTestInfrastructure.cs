@@ -12,6 +12,10 @@ internal static class WistDialectTestInfrastructure
         return services.BuildServiceProvider();
     }
 
+    /// <summary>
+    ///     Creates a provider for tests that explicitly validate manual built-in backend registration behavior.
+    ///     Canonical runtime-path tests should use <see cref="CreateCanonicalProvider" /> instead.
+    /// </summary>
     public static ServiceProvider CreateProviderWithExplicitBackends()
     {
         var services = new ServiceCollection();
