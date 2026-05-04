@@ -47,7 +47,7 @@ public class ExternalSimple3ExecutionBenchmarks : ExternalArithmeticExecutionBen
         EnsureResultParityAcrossIndexes(CSharpAt, DynamicExpressoAt, NCalcAt, WistAt);
     }
 
-    [Benchmark(Baseline = true)]
+    [Benchmark(Baseline = true, OperationsPerInvoke = InnerCount)]
     public double CSharp_NoInliningMethod()
     {
         var sum = 0.0;
@@ -61,8 +61,8 @@ public class ExternalSimple3ExecutionBenchmarks : ExternalArithmeticExecutionBen
         return sum;
     }
 
-    [Benchmark]
-    public double DynamicExpresso_Delegate()
+    [Benchmark(OperationsPerInvoke = InnerCount)]
+    public double DynamicExpresso_CompiledDelegate()
     {
         var sum = 0.0;
 
@@ -75,8 +75,8 @@ public class ExternalSimple3ExecutionBenchmarks : ExternalArithmeticExecutionBen
         return sum;
     }
 
-    [Benchmark]
-    public double NCalc_Lambda()
+    [Benchmark(OperationsPerInvoke = InnerCount)]
+    public double NCalc_CompiledLambda()
     {
         var sum = 0.0;
 
@@ -94,8 +94,8 @@ public class ExternalSimple3ExecutionBenchmarks : ExternalArithmeticExecutionBen
         return sum;
     }
 
-    [Benchmark]
-    public double Wist_Cil_FastInvoker()
+    [Benchmark(OperationsPerInvoke = InnerCount)]
+    public double Wist_Cil_DynamicMethodFastInvoker()
     {
         var sum = 0.0;
 

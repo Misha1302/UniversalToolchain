@@ -9,6 +9,18 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <!-- Legacy and generated benchmark experiments are intentionally excluded from the public benchmark surface.
+             They can be restored later as explicitly experimental benchmarks after their OperationsPerInvoke contract
+             and generation pipeline are fixed. -->
+        <Compile Remove="ArithmeticExecutionBenchmarks.cs"/>
+        <Compile Remove="ExternalExecutionBenchmarks\ExternalWideExpression11ExecutionBenchmarks.cs"/>
+        <Compile Remove="ExternalExecutionBenchmarks\Unrolled\**\*.cs"/>
+        <None Include="ArithmeticExecutionBenchmarks.cs"/>
+        <None Include="ExternalExecutionBenchmarks\ExternalWideExpression11ExecutionBenchmarks.cs"/>
+        <None Include="ExternalExecutionBenchmarks\Unrolled\**\*"/>
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\..\DynamicMethodCalling\DynamicMethodCalling.csproj"/>
         <ProjectReference Include="..\..\ExceptionsManager\ExceptionsManager.csproj"/>
         <ProjectReference Include="..\..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj"/>

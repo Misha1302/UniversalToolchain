@@ -5,9 +5,7 @@ public class AbstractIrToAbstractIrStub : IAbstractIrCompiler<IAbstractIR>
     public static IReadOnlyList<string> SupportedIntrinsicIds { get; } = Array.AsReadOnly(new[]
         {
             "call C#",
-            "call C# ctor",
-            "load_external",
-            "store_external"
+            "call C# ctor"
         }
         .Distinct(StringComparer.Ordinal)
         .OrderBy(static x => x, StringComparer.Ordinal)

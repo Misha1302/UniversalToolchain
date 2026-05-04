@@ -4,6 +4,7 @@ using BasicCore.Capabilities;
 using BasicCore.Compilation;
 using BasicCore.Contracts;
 using BasicCore.Core;
+using BasicCore.Execution;
 using ConditionsModule.Enums;
 using ConditionsModule.Optimizers;
 using ConditionsModule.Visitors;
@@ -163,6 +164,63 @@ public sealed class TypedIntrinsicEmitterOptimizerTests
         var result = optimizer.ProcessIr(input, new FakeCompiler());
 
         AssertTypedIntrinsic(result.Instructions[0], BuiltinIntrinsicSymbols.Core.LoadConst, typeof(double), 1.5d);
+    }
+
+    [Test]
+    public void NativeCilOptimizer_WhenCapabilitySupportsRequestedExternalType_RewritesLegacyExternalLoadSequence()
+    {
+        var optimizer = CreateOptimizer(
+            new NativeCilOptimizerModule(),
+            (BuiltinIntrinsicSymbols.Core.LoadExternal, typeof(double)));
+
+        var input = CreateIr(
+            new Instruction(UOpCode.Intrinsic, ["call C#", ExternalRuntimeMethodDescriptors.LoadEnvironmentDescriptor]),
+            new Instruction(UOpCode.Push, [2]),
+            new Instruction(UOpCode.Intrinsic, ["call C#", ExternalRuntimeMethodDescriptors.CreateLoadExternalMethod(typeof(double))]));
+
+        var result = optimizer.ProcessIr(input, new FakeCompiler());
+
+        Assert.That(result.Instructions, Has.Count.EqualTo(1));
+        AssertTypedIntrinsic(result.Instructions[0], BuiltinIntrinsicSymbols.Core.LoadExternal, typeof(double), 2);
+    }
+
+    [Test]
+    public void NativeCilOptimizer_WhenCapabilityDoesNotSupportRequestedExternalType_KeepsLegacyExternalLoadSequence()
+    {
+        var optimizer = CreateOptimizer(
+            new NativeCilOptimizerModule(),
+            (BuiltinIntrinsicSymbols.Core.LoadExternal, typeof(int)),
+            (BuiltinIntrinsicSymbols.Core.LoadExternal, typeof(long)),
+            (BuiltinIntrinsicSymbols.Core.LoadExternal, typeof(float)),
+            (BuiltinIntrinsicSymbols.Core.LoadExternal, typeof(decimal)));
+
+        var input = CreateIr(
+            new Instruction(UOpCode.Intrinsic, ["call C#", ExternalRuntimeMethodDescriptors.LoadEnvironmentDescriptor]),
+            new Instruction(UOpCode.Push, [2]),
+            new Instruction(UOpCode.Intrinsic, ["call C#", ExternalRuntimeMethodDescriptors.CreateLoadExternalMethod(typeof(double))]));
+
+        var result = optimizer.ProcessIr(input, new FakeCompiler());
+
+        Assert.That(result, Is.SameAs(input));
+    }
+
+
+    [Test]
+    public void NativeCilOptimizer_WhenOnlyRequestedExternalTypeIsSupported_DoesNotRequireOtherExternalTypes()
+    {
+        var optimizer = CreateOptimizer(
+            new NativeCilOptimizerModule(),
+            (BuiltinIntrinsicSymbols.Core.LoadExternal, typeof(double)));
+
+        var input = CreateIr(
+            new Instruction(UOpCode.Intrinsic, ["call C#", ExternalRuntimeMethodDescriptors.LoadEnvironmentDescriptor]),
+            new Instruction(UOpCode.Push, [2]),
+            new Instruction(UOpCode.Intrinsic, ["call C#", ExternalRuntimeMethodDescriptors.CreateLoadExternalMethod(typeof(double))]));
+
+        var result = optimizer.ProcessIr(input, new FakeCompiler());
+
+        Assert.That(result.Instructions, Has.Count.EqualTo(1));
+        AssertTypedIntrinsic(result.Instructions[0], BuiltinIntrinsicSymbols.Core.LoadExternal, typeof(double), 2);
     }
 
     [Test]

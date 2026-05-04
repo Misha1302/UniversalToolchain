@@ -24,7 +24,7 @@ public class RuntimeStressContractsTests
             signatures.Add(TestContractsInfrastructure.BuildSelectionSignature(composition) + "##" + TestContractsInfrastructure.BuildHostSignature(host));
         }
 
-        Assert.That(signatures.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1));
+        Assert.That(signatures.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1), FormatSignatureGroups(signatures));
     }
 
     [Test]
@@ -44,7 +44,7 @@ public class RuntimeStressContractsTests
         })));
 
         Assert.That(signatures.All(static x => !x.StartsWith("compose-failed:", StringComparison.Ordinal)), Is.True, string.Join(Environment.NewLine, signatures));
-        Assert.That(signatures.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1));
+        Assert.That(signatures.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1), FormatSignatureGroups(signatures));
     }
 
     [Test]
@@ -64,7 +64,7 @@ public class RuntimeStressContractsTests
             signatures.Add(string.Join("|", modules) + "::" + string.Join("|", backends));
         }
 
-        Assert.That(signatures.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1));
+        Assert.That(signatures.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1), FormatSignatureGroups(signatures));
     }
 
     [Test]
@@ -82,7 +82,7 @@ public class RuntimeStressContractsTests
         for (var i = 0; i < RepeatCount; i++)
             signatures.Add(string.Join("|", entries.Select(loader.LoadType).Select(static x => x.FullName)));
 
-        Assert.That(signatures.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1));
+        Assert.That(signatures.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1), FormatSignatureGroups(signatures));
     }
 
     [Test]
@@ -100,7 +100,7 @@ public class RuntimeStressContractsTests
             signatures.Add(string.Join("|", host.Configuration.EnabledBackends.Select(static x => x.CanonicalId)));
         }
 
-        Assert.That(signatures.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1));
+        Assert.That(signatures.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1), FormatSignatureGroups(signatures));
     }
 
     [Test]
@@ -126,8 +126,19 @@ public class RuntimeStressContractsTests
 
         var signatures = await Task.WhenAll(tasks);
         Assert.That(signatures.All(static x => !x.StartsWith("compose-failed:", StringComparison.Ordinal)), Is.True, string.Join(Environment.NewLine, signatures));
-        Assert.That(signatures.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(2));
+        Assert.That(signatures.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(2), FormatSignatureGroups(signatures));
     }
 
     private static string FormatComposition(DialectFrameworkCompositionResult composition) => DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition));
+
+    private static string FormatSignatureGroups(IEnumerable<string> signatures)
+    {
+        return string.Join(
+            Environment.NewLine,
+            signatures
+                .GroupBy(static x => x, StringComparer.Ordinal)
+                .OrderByDescending(static x => x.Count())
+                .ThenBy(static x => x.Key, StringComparer.Ordinal)
+                .Select(static x => $"{x.Count()}x {x.Key}"));
+    }
 }
