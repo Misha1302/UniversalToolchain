@@ -44,7 +44,7 @@ public class NativeCilOptimizerModule : IIRProcessingModule
             "Native CIL optimizer requires intrinsic capability context initialization.");
 
         var supportsLoadConst = SupportsAllLoadConstTypes(capabilityContext);
-        var supportsLoadExternal = capabilityContext.Supports(BuiltinIntrinsicSymbols.Core.LoadExternal);
+        var supportsLoadExternal = SupportsAnyLoadExternalType(capabilityContext);
 
         if (!supportsLoadConst && !supportsLoadExternal)
             return current;
@@ -60,6 +60,13 @@ public class NativeCilOptimizerModule : IIRProcessingModule
         return OptimizerCapabilityGuards.SupportsAll(capabilityContext, requirements);
     }
 
+    private static bool SupportsAnyLoadExternalType(IOptimizerIntrinsicCapabilityContext capabilityContext)
+    {
+        if (capabilityContext.Supports(BuiltinIntrinsicSymbols.Core.LoadExternal))
+            return true;
+
+        return _supportedLoadTypes.Any(type => capabilityContext.Supports(BuiltinIntrinsicSymbols.Core.LoadExternal, type));
+    }
 
     private static void InitializeCilGenerators()
     {
@@ -113,11 +120,13 @@ public class NativeCilOptimizerModule : IIRProcessingModule
     {
         var instructions = air.Instructions.ToList();
         var context = new CompilationContext();
+        var changed = false;
 
         for (var i = 0; i < instructions.Count; i++)
         {
             if (optimizeLoadExternal && TryOptimizeExternalLoad(instructions, i, context, capabilityContext, out var consumedCount))
             {
+                changed = true;
                 i += consumedCount - 1;
                 continue;
             }
@@ -131,6 +140,7 @@ public class NativeCilOptimizerModule : IIRProcessingModule
 
                 if (_cilGenerators.TryGetValue(valueType, out var generator))
                 {
+                    changed = true;
                     generator(instruction, context);
                     continue;
                 }
@@ -138,6 +148,9 @@ public class NativeCilOptimizerModule : IIRProcessingModule
 
             context.NewInstructions.Add(instruction);
         }
+
+        if (!changed)
+            return air;
 
         var result = new AbstractIR();
         result.AppendInstructions(context.NewInstructions);
