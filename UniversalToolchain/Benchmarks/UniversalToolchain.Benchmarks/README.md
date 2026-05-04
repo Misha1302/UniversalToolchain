@@ -48,7 +48,7 @@ The benchmark method itself must not parse or compile source text.
 
 ## Smoke command
 
-```bash
+```bash ci-run=false
 dotnet run -c Release \
   --project UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj \
   -- \
@@ -58,7 +58,7 @@ dotnet run -c Release \
 
 ## Full public execution-speed command
 
-```bash
+```bash ci-run=false
 dotnet run -c Release \
   --project UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj \
   -- \

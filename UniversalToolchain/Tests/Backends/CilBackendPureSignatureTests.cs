@@ -1,5 +1,8 @@
 using System.Reflection.Emit;
 using DynamicMethodCalling.Core;
+using Microsoft.Extensions.DependencyInjection;
+using UniversalToolchain.Dialects.Wist;
+using UniversalToolchain.Dialects.Wist.Presets;
 
 namespace Tests.Backends;
 
@@ -35,6 +38,46 @@ public sealed class CilBackendPureSignatureTests
             Assert.That(parameterTypes, Is.EqualTo(new[] { typeof(double), typeof(double) }));
             Assert.That(parameterTypes, Does.Not.Contain(typeof(IExecutionEnvironment)));
             Assert.That(result, Is.EqualTo(42.0));
+        });
+    }
+
+
+    [Test]
+    public void Compile_ExternalConstantsHeavyFormula_ShouldProduceSixParameterDynamicMethodWithoutExecutionEnvironment()
+    {
+        var services = new ServiceCollection();
+        services.AddWistDialectServices();
+        services.AddWistCilBackend();
+
+        using var provider = services.BuildServiceProvider();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+        var dialectPath = new WistShippedDialectFileResolver().Resolve(WistShippedDialectPresets.FullDefaultNative);
+        var composition = workflow.ComposeFile(dialectPath);
+        Assert.That(composition.IsSuccess, Is.True);
+
+        using var host = workflow.CreateHost(composition);
+        var compiler = host.GetArtifactCompiler<DynamicMethod>("compiler");
+        var compiled = compiler.Compile(
+            "(A * 1.5 + B * 2.0 - C * 3.0 + D / 4.0 + E / 5.0) * 0.75 + F",
+            new OrderedDictionary<string, Type>
+            {
+                ["A"] = typeof(double), ["B"] = typeof(double), ["C"] = typeof(double),
+                ["D"] = typeof(double), ["E"] = typeof(double), ["F"] = typeof(double)
+            });
+
+        var parameterTypes = compiled.CompilationOutput.GetParameters().Select(static x => x.ParameterType).ToArray();
+        var invoker = new DynamicMethodInvoker<double, double, double, double, double, double, double>(compiled.CompilationOutput);
+        var result = invoker.Invoke(10.0, 20.0, 3.0, 8.0, 5.0, 1.5);
+        var expected = (10.0 * 1.5 + 20.0 * 2.0 - 3.0 * 3.0 + 8.0 / 4.0 + 5.0 / 5.0) * 0.75 + 1.5;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(parameterTypes, Is.EqualTo(new[]
+            {
+                typeof(double), typeof(double), typeof(double), typeof(double), typeof(double), typeof(double)
+            }));
+            Assert.That(parameterTypes, Does.Not.Contain(typeof(IExecutionEnvironment)));
+            Assert.That(result, Is.EqualTo(expected).Within(1e-9));
         });
     }
 
