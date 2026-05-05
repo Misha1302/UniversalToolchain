@@ -250,13 +250,9 @@ public class InterpreterBindingsParityTests
         OrderedDictionary<string, Type> declared,
         IReadOnlyList<NamedArgument> arguments)
     {
-        using var host = CreateHost();
-        var mappedArguments = arguments
-            .Select(static argument => new KeyValuePair<string, object>(argument.Name, argument.Value))
-            .ToArray();
-
-        var compilerResult = BackendExecutionResult.Success(ParityBackendExecutionAdapter.RunCompiled(host, "compiler", code, declared, mappedArguments));
-        var interpreterResult = BackendExecutionResult.Success(ParityBackendExecutionAdapter.RunCompiled(host, "interpreter", code, declared, mappedArguments));
+        var mappedArguments = MapArguments(arguments);
+        var compilerResult = BackendExecutionResult.Success(RunCompiled("compiler", code, declared, mappedArguments));
+        var interpreterResult = BackendExecutionResult.Success(RunCompiled("interpreter", code, declared, mappedArguments));
 
         BackendParityInfrastructure.AssertSemanticParity(compilerResult, interpreterResult);
         return (BackendValueNormalizer.ConvertTo<double>(compilerResult.Value), BackendValueNormalizer.ConvertTo<double>(interpreterResult.Value));
@@ -289,15 +285,26 @@ public class InterpreterBindingsParityTests
         OrderedDictionary<string, Type> declared,
         IReadOnlyList<NamedArgument> arguments)
     {
-        using var host = CreateHost();
-        var mappedArguments = arguments
-            .Select(static argument => new KeyValuePair<string, object>(argument.Name, argument.Value))
-            .ToArray();
-
-        var compilerOutcome = TryRunSingleBackend(() => ParityBackendExecutionAdapter.RunCompiled(host, "compiler", code, declared, mappedArguments));
-        var interpreterOutcome = TryRunSingleBackend(() => ParityBackendExecutionAdapter.RunCompiled(host, "interpreter", code, declared, mappedArguments));
+        var mappedArguments = MapArguments(arguments);
+        var compilerOutcome = TryRunSingleBackend(() => RunCompiled("compiler", code, declared, mappedArguments));
+        var interpreterOutcome = TryRunSingleBackend(() => RunCompiled("interpreter", code, declared, mappedArguments));
         return (compilerOutcome, interpreterOutcome);
     }
+
+    private static object RunCompiled(
+        string backend,
+        string code,
+        OrderedDictionary<string, Type> declared,
+        IReadOnlyList<KeyValuePair<string, object>> arguments)
+    {
+        using var host = CreateHost();
+        return ParityBackendExecutionAdapter.RunCompiled(host, backend, code, declared, arguments);
+    }
+
+    private static KeyValuePair<string, object>[] MapArguments(IReadOnlyList<NamedArgument> arguments)
+        => arguments
+            .Select(static argument => new KeyValuePair<string, object>(argument.Name, argument.Value))
+            .ToArray();
 
     private static BackendExecutionResult TryRunSingleBackend(Func<object> backendRunner) => BackendParityInfrastructure.ExecuteSafely(backendRunner);
 
