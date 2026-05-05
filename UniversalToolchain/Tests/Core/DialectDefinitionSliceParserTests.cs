@@ -10,7 +10,9 @@ public class DialectDefinitionSliceParserTests
     [Test]
     public void Constructor_WithNullRegistry_ThrowsArgumentNullException()
     {
-        Assert.Throws<ArgumentNullException>(() => new DialectDefinitionSliceParser(null!));
+        Assert.That(
+            () => _ = new DialectDefinitionSliceParser(null!),
+            Throws.TypeOf<ArgumentNullException>());
     }
 
     [Test]
