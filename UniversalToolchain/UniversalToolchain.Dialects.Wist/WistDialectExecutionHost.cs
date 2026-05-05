@@ -35,8 +35,10 @@ public sealed class WistDialectExecutionHost : IDisposable
     public IArtifactCompiler GetArtifactCompiler(string backend)
         => ResolveRuntime(backend).ArtifactCompiler;
 
-    [Obsolete("Use backend-neutral GetArtifactCompiler(string), Compile(...), or Run(...) unless typed backend internals are the purpose of the caller.")]
-    public IArtifactCompiler<TCompilationOutput> GetArtifactCompiler<TCompilationOutput>(string backend)
+    /// <summary>
+    ///     Gets a typed backend-specific artifact compiler for tests, benchmarks, and explicit fast-path adapters.
+    /// </summary>
+    public IArtifactCompiler<TCompilationOutput> GetBackendSpecificArtifactCompiler<TCompilationOutput>(string backend)
     {
         var runtime = ResolveRuntime(backend);
 
@@ -46,6 +48,10 @@ public sealed class WistDialectExecutionHost : IDisposable
         return Thrower.InvalidOpEx<IArtifactCompiler<TCompilationOutput>>(
             "Selected backend does not expose a compatible artifact compiler for the requested compilation output type.");
     }
+
+    [Obsolete("Use backend-neutral GetArtifactCompiler(string), Compile(...), or Run(...) unless typed backend internals are the purpose of the caller.")]
+    public IArtifactCompiler<TCompilationOutput> GetArtifactCompiler<TCompilationOutput>(string backend)
+        => GetBackendSpecificArtifactCompiler<TCompilationOutput>(backend);
 
     public ICompiledArtifact Compile(
         string code,
