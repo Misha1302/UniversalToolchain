@@ -98,14 +98,12 @@ public class ErrorCasesTests
         Assert.That(ex.Message, Does.Contain("Tree is invalid").Or.Contain("Assertion failed").Or.Contain("Invalid token").Or.Contain("Index was out of range").Or.Contain("violates the constraint"));
     }
 
-    private static object? ExecuteCode(string code)
+    private static void ExecuteCode(string code)
     {
         var (compilerResult, interpreterResult) = BackendParityInfrastructure.RunBoth(DialectText, code);
         BackendParityInfrastructure.AssertSemanticParity(compilerResult, interpreterResult);
 
-        if (compilerResult.IsSuccess)
-            return compilerResult.Value;
-
-        throw compilerResult.Exception!;
+        if (!compilerResult.IsSuccess)
+            throw compilerResult.Exception!;
     }
 }
