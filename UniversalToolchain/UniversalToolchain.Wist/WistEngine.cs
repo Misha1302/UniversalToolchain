@@ -11,14 +11,12 @@ namespace UniversalToolchain.Wist;
 /// </summary>
 public sealed class WistEngine : IDisposable
 {
-    private readonly ServiceProvider _provider;
     private readonly WistDialectExecutionHost _host;
     private readonly WistEngineOptions _options;
     private bool _disposed;
 
-    private WistEngine(ServiceProvider provider, WistDialectExecutionHost host, WistEngineOptions options)
+    private WistEngine(WistDialectExecutionHost host, WistEngineOptions options)
     {
-        _provider = provider;
         _host = host;
         _options = options;
     }
@@ -59,7 +57,7 @@ public sealed class WistEngine : IDisposable
             if (!composition.IsSuccess)
                 throw new InvalidOperationException(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
 
-            return new WistEngine(provider, workflow.CreateHost(composition), options);
+            return new WistEngine(workflow.CreateHost(composition), options);
         }
         catch
         {
@@ -170,7 +168,6 @@ public sealed class WistEngine : IDisposable
             return;
 
         _host.Dispose();
-        _provider.Dispose();
         _disposed = true;
     }
 
