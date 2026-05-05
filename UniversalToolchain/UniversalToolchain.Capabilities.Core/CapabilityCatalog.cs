@@ -112,20 +112,20 @@ public sealed class CapabilityCatalog
             providers.Add(descriptor);
 
             if (provider is ILanguageFeatureDescriptorProvider languageFeatureDescriptorProvider)
-                foreach (var feature in languageFeatureDescriptorProvider.GetLanguageFeatures() ?? [])
+                foreach (var feature in languageFeatureDescriptorProvider.GetLanguageFeatures())
                 {
                     features.Add(feature);
                     featureOwnersById.TryAdd(feature.FeatureId, descriptor);
                 }
 
             if (provider is IBuiltinFunctionDescriptorProvider builtinFunctionDescriptorProvider)
-                functions.AddRange(builtinFunctionDescriptorProvider.GetFunctions() ?? []);
+                functions.AddRange(builtinFunctionDescriptorProvider.GetFunctions());
 
             if (provider is IBuiltinFunctionRuntimeBindingProvider builtinFunctionRuntimeBindingProvider)
-                runtimeBindings.AddRange(builtinFunctionRuntimeBindingProvider.GetRuntimeBindings() ?? []);
+                runtimeBindings.AddRange(builtinFunctionRuntimeBindingProvider.GetRuntimeBindings());
 
             if (provider is IExpressionTypeRuleProvider expressionTypeRuleProvider)
-                expressionTypeRules.AddRange(expressionTypeRuleProvider.GetRules() ?? []);
+                expressionTypeRules.AddRange(expressionTypeRuleProvider.GetRules());
         }
 
         return new CapabilityCatalog(
