@@ -6,8 +6,14 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
     private readonly CilAbstractIrTypeSimulator _typeSimulator;
 
     public AbstractMethodsCompilerImpl()
+        : this(new CilIntrinsicRegistry())
     {
-        var registry = new CilIntrinsicRegistry();
+    }
+
+    public AbstractMethodsCompilerImpl(CilIntrinsicRegistry registry)
+    {
+        registry = registry.ArgNotNull();
+
         _intrinsicCompiler = new AbstractMethodsIntrinsicCompiler(registry);
         _typeSimulator = new CilAbstractIrTypeSimulator(_intrinsicCompiler);
     }
