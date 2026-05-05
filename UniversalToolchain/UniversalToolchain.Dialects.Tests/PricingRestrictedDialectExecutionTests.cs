@@ -42,7 +42,7 @@ public sealed class PricingRestrictedDialectExecutionTests
         var result = BackendParityInfrastructure.ExecuteSafely(() =>
         {
             using var host = CreatePricingHost();
-            var interpreter = host.GetArtifactCompiler<IAbstractIR>("interpreter");
+            var interpreter = host.GetBackendSpecificArtifactCompiler<IAbstractIR>("interpreter");
             _ = interpreter.Compile(StatementStyleBindingFormula, CreateDeclaredBindings());
             return null;
         });
@@ -79,7 +79,7 @@ public sealed class PricingRestrictedDialectExecutionTests
 
     private static double ExecuteCompilerFormula(WistDialectExecutionHost host)
     {
-        var compiler = host.GetArtifactCompiler<DynamicMethod>("compiler");
+        var compiler = host.GetBackendSpecificArtifactCompiler<DynamicMethod>("compiler");
         var artifact = compiler.Compile(PricingFormula, CreateDeclaredBindings());
         var session = artifact.CreateSession();
         SetPricingArguments(session);
@@ -89,7 +89,7 @@ public sealed class PricingRestrictedDialectExecutionTests
 
     private static double ExecuteInterpreterFormula(WistDialectExecutionHost host)
     {
-        var interpreter = host.GetArtifactCompiler<IAbstractIR>("interpreter");
+        var interpreter = host.GetBackendSpecificArtifactCompiler<IAbstractIR>("interpreter");
         var artifact = interpreter.Compile(PricingFormula, CreateDeclaredBindings());
         var session = artifact.CreateSession();
         SetPricingArguments(session);
