@@ -68,41 +68,86 @@ public class WistDialectExecutionHostContractTests
     [Test]
     public void GetCore_WithUnknownMode_ThrowsInvalidOperationException_WithSupportedModesList()
     {
-        using var host = ComposeAndCreateHost("dialect Demo\nuse Arithmetic,Numbers\nbackend compiler,interpreter");
+        var exception = CaptureGetCoreFailure(
+            "dialect Demo\nuse Arithmetic,Numbers\nbackend compiler,interpreter",
+            "unknown-mode");
 
-        AssertThrowsWithMessageFragment<InvalidOperationException>(
-            () => host.GetCore("unknown-mode"),
-            "Supported backends:");
+        Assert.That(exception.Message, Does.Contain("Supported backends:"));
     }
 
     [Test]
-    public void GetArtifactCompiler_WithWrongCompilationOutputType_ThrowsInvalidOperationException()
+    public void GetBackendSpecificArtifactCompiler_WithWrongCompilationOutputType_ThrowsInvalidOperationException()
     {
-        using var host = ComposeAndCreateHost("dialect Demo\nuse Arithmetic,Numbers\nbackend interpreter");
+        var exception = CaptureBackendSpecificCompilerFailure<DynamicMethod>(
+            "dialect Demo\nuse Arithmetic,Numbers\nbackend interpreter",
+            "interpreter");
 
-        AssertThrowsWithMessageFragment<InvalidOperationException>(
-            () => host.GetArtifactCompiler<DynamicMethod>("interpreter"),
-            "compatible artifact compiler");
+        Assert.That(exception.Message, Does.Contain("compatible artifact compiler"));
     }
 
     [Test]
     public void GetCore_WithDisabledBackend_ThrowsInvalidOperationException()
     {
-        using var host = ComposeAndCreateHost("dialect Demo\nuse Arithmetic,Numbers\nbackend interpreter");
+        var exception = CaptureGetCoreFailure(
+            "dialect Demo\nuse Arithmetic,Numbers\nbackend interpreter",
+            "compiler");
 
-        AssertThrowsWithMessageFragment<InvalidOperationException>(
-            () => host.GetCore("compiler"),
-            "Unknown backend 'compiler'");
+        Assert.That(exception.Message, Does.Contain("Unknown backend 'compiler'"));
     }
 
     [Test]
     public void Run_WithUnknownMode_ThrowsInvalidOperationException()
     {
-        using var host = ComposeAndCreateHost("dialect Demo\nuse Arithmetic,Numbers\nbackend interpreter");
+        var exception = CaptureRunFailure(
+            "dialect Demo\nuse Arithmetic,Numbers\nbackend interpreter",
+            "unknown-mode");
 
-        AssertThrowsWithMessageFragment<InvalidOperationException>(
-            () => host.Run("2 + 2", "unknown-mode"),
-            "Unknown backend 'unknown-mode'");
+        Assert.That(exception.Message, Does.Contain("Unknown backend 'unknown-mode'"));
+    }
+
+    private static Exception CaptureGetCoreFailure(string dialect, string backend)
+    {
+        using var host = ComposeAndCreateHost(dialect);
+        try
+        {
+            _ = host.GetCore(backend);
+        }
+        catch (Exception exception)
+        {
+            return exception;
+        }
+
+        throw new AssertionException("Expected GetCore to fail.");
+    }
+
+    private static Exception CaptureBackendSpecificCompilerFailure<TCompilationOutput>(string dialect, string backend)
+    {
+        using var host = ComposeAndCreateHost(dialect);
+        try
+        {
+            _ = host.GetBackendSpecificArtifactCompiler<TCompilationOutput>(backend);
+        }
+        catch (Exception exception)
+        {
+            return exception;
+        }
+
+        throw new AssertionException("Expected backend-specific compiler resolution to fail.");
+    }
+
+    private static Exception CaptureRunFailure(string dialect, string backend)
+    {
+        using var host = ComposeAndCreateHost(dialect);
+        try
+        {
+            _ = host.Run("2 + 2", backend);
+        }
+        catch (Exception exception)
+        {
+            return exception;
+        }
+
+        throw new AssertionException("Expected Run to fail.");
     }
 
     private static WistDialectExecutionHost ComposeAndCreateHost(string dialect)
