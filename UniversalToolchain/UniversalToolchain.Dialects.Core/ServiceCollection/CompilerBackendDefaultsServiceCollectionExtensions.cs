@@ -17,6 +17,7 @@ public static class CompilerBackendDefaultsServiceCollectionExtensions
     {
         services = services.ArgNotNull();
 
+        services.TryAddSingleton<CilIntrinsicRegistry>();
         services.TryAddTransient<AbstractMethodsCompilerImpl>();
         services.TryAddTransient<Func<IExecutor<DynamicMethod>>>(_ => () => new DynamicMethodExecutor());
 
