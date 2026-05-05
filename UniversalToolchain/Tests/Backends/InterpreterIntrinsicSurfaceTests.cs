@@ -134,7 +134,7 @@ public sealed class InterpreterIntrinsicSurfaceTests
                       """;
 
         using var host = DialectTestHostInfrastructure.CreateInterpreterHost(dialect);
-        var compiler = host.GetArtifactCompiler<IAbstractIR>("interpreter");
+        var compiler = host.GetBackendSpecificArtifactCompiler<IAbstractIR>("interpreter");
         var artifact = compiler.Compile("(1 + 2) > 0 and true");
 
         var intrinsics = CollectIntrinsicNames(artifact.CompilationOutput).Distinct(StringComparer.Ordinal).ToArray();
