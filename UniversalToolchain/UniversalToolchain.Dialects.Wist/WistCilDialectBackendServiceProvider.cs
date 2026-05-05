@@ -9,9 +9,11 @@ namespace UniversalToolchain.Dialects.Wist;
 
 internal sealed class WistCilDialectBackendServiceProvider : DialectBackendRuntimeRegistrarBase<DynamicMethod>
 {
+    private readonly CilIntrinsicRegistry _intrinsicRegistry = new();
+
     public override DialectBackendId BackendId => WistDialectBackendIds.Cil;
 
-    public override IReadOnlyList<string> SupportedIntrinsics => AbstractMethodsCompilerImpl.SupportedIntrinsicIds;
+    public override IReadOnlyList<string> SupportedIntrinsics => _intrinsicRegistry.SupportedIntrinsics;
 
     override protected void RegisterBackendDefaults(IServiceCollection services)
         => services.AddCompilerBackendDefaults();
