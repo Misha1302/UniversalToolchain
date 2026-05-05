@@ -1,5 +1,5 @@
-using AssemblyFinder;
 using System.Diagnostics.CodeAnalysis;
+using AssemblyFinder;
 using Tests.Infrastructure;
 using UniversalToolchain.Testing.Infrastructure;
 

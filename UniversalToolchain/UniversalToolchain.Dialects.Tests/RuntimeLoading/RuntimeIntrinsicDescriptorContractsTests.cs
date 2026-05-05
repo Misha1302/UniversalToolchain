@@ -26,19 +26,13 @@ public class RuntimeIntrinsicDescriptorContractsTests
     [Test]
     public void Ctor_BlankAlias_ThrowsArgumentException()
     {
-        Assert.Throws<ArgumentException>(() =>
-            {
-                _ = new RuntimeIntrinsicDescriptor("intrinsic.sample", new DialectBackendId("compiler"), [" "]);
-            });
+        Assert.Throws<ArgumentException>(() => { _ = new RuntimeIntrinsicDescriptor("intrinsic.sample", new DialectBackendId("compiler"), [" "]); });
     }
 
     [Test]
     public void Ctor_BlankCanonicalId_ThrowsArgumentException()
     {
-        Assert.Throws<ArgumentException>(() =>
-            {
-                _ = new RuntimeIntrinsicDescriptor(" ", new DialectBackendId("compiler"), ["alias"]);
-            });
+        Assert.Throws<ArgumentException>(() => { _ = new RuntimeIntrinsicDescriptor(" ", new DialectBackendId("compiler"), ["alias"]); });
     }
 
     [Test]

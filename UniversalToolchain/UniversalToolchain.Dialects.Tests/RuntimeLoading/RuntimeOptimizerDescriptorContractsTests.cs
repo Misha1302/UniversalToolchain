@@ -15,10 +15,7 @@ public class RuntimeOptimizerDescriptorContractsTests
     [Test]
     public void Ctor_InvalidImplementationType_ThrowsArgumentException()
     {
-        Assert.Throws<ArgumentException>(() =>
-            {
-                _ = new RuntimeOptimizerDescriptor("optimizer.sample", typeof(InvalidOptimizerType));
-            });
+        Assert.Throws<ArgumentException>(() => { _ = new RuntimeOptimizerDescriptor("optimizer.sample", typeof(InvalidOptimizerType)); });
     }
 
     [Test]
@@ -31,19 +28,13 @@ public class RuntimeOptimizerDescriptorContractsTests
 
         Assert.That(descriptor.Aliases, Is.EqualTo(new[] { "alpha", "beta" }));
 
-        Assert.Throws<ArgumentException>(() =>
-            {
-                _ = new RuntimeOptimizerDescriptor("optimizer.sample", typeof(TestOptimizerModule), ["  "]);
-            });
+        Assert.Throws<ArgumentException>(() => { _ = new RuntimeOptimizerDescriptor("optimizer.sample", typeof(TestOptimizerModule), ["  "]); });
     }
 
     [Test]
     public void Ctor_BlankCanonicalId_ThrowsArgumentException()
     {
-        Assert.Throws<ArgumentException>(() =>
-            {
-                _ = new RuntimeOptimizerDescriptor(" ", typeof(TestOptimizerModule));
-            });
+        Assert.Throws<ArgumentException>(() => { _ = new RuntimeOptimizerDescriptor(" ", typeof(TestOptimizerModule)); });
     }
 
     private sealed class TestOptimizerModule : IIRProcessingModule;

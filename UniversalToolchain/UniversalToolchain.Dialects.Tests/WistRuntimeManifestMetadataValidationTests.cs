@@ -258,10 +258,7 @@ public class WistRuntimeManifestMetadataValidationTests
             "BAssembly",
             [new FileDialectRuntimeComponentEntry(kind, "Alias", [], $"{kind.ToLowerInvariant()}.alias2")])));
 
-        return Assert.Throws<InvalidOperationException>(() =>
-        {
-            _ = new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([first, second]), serializer);
-        })!;
+        return Assert.Throws<InvalidOperationException>(() => { _ = new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([first, second]), serializer); })!;
     }
 
     private static (string Json, FileDialectRuntimeManifestDocument Document) EmitManifest(string assemblyPath)

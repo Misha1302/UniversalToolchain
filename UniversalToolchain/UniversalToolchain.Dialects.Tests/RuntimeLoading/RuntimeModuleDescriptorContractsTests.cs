@@ -22,10 +22,7 @@ public class RuntimeModuleDescriptorContractsTests
     [Test]
     public void Ctor_InvalidImplementationType_ThrowsArgumentException()
     {
-        Assert.Throws<ArgumentException>(() =>
-            {
-                _ = new RuntimeModuleDescriptor("invalid.sample", typeof(InvalidModuleType));
-            });
+        Assert.Throws<ArgumentException>(() => { _ = new RuntimeModuleDescriptor("invalid.sample", typeof(InvalidModuleType)); });
     }
 
     [Test]
@@ -38,19 +35,13 @@ public class RuntimeModuleDescriptorContractsTests
 
         Assert.That(descriptor.Aliases, Is.EqualTo(new[] { "alpha", "beta" }));
 
-        Assert.Throws<ArgumentException>(() =>
-            {
-                _ = new RuntimeModuleDescriptor("module.sample", typeof(TestFrontendModule), [""]);
-            });
+        Assert.Throws<ArgumentException>(() => { _ = new RuntimeModuleDescriptor("module.sample", typeof(TestFrontendModule), [""]); });
     }
 
     [Test]
     public void Ctor_BlankCanonicalId_ThrowsArgumentException()
     {
-        Assert.Throws<ArgumentException>(() =>
-            {
-                _ = new RuntimeModuleDescriptor(" ", typeof(TestFrontendModule));
-            });
+        Assert.Throws<ArgumentException>(() => { _ = new RuntimeModuleDescriptor(" ", typeof(TestFrontendModule)); });
     }
 
     [Test]
