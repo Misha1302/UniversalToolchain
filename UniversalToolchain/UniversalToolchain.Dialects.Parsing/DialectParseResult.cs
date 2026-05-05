@@ -16,7 +16,7 @@ public sealed class DialectParseResult
         diagnostics = diagnostics.ArgNotNull();
 
         var snapshot = new List<DialectDiagnostic>();
-        foreach (var diagnostic in diagnostics)
+        foreach (var diagnostic in diagnostics.Cast<DialectDiagnostic?>())
         {
             if (diagnostic == null)
                 Thrower.Argument(nameof(diagnostics), "Diagnostics must not contain null entries.");

@@ -32,8 +32,8 @@ public static class BackendParityInfrastructure
         using var compilerHost = workflow.CreateHost(compilerComposition);
         using var interpreterHost = workflow.CreateHost(interpreterComposition);
 
-        var compilerResult = ExecuteSafely(() => compilerHost.Run(code, "compiler"));
-        var interpreterResult = ExecuteSafely(() => interpreterHost.Run(code, "interpreter"));
+        var compilerResult = ExecuteHostSafely(compilerHost, code, "compiler");
+        var interpreterResult = ExecuteHostSafely(interpreterHost, code, "interpreter");
         return (compilerResult, interpreterResult);
     }
 
@@ -69,6 +69,18 @@ public static class BackendParityInfrastructure
         try
         {
             return BackendExecutionResult.Success(action());
+        }
+        catch (Exception ex)
+        {
+            return BackendExecutionResult.Failure(ex);
+        }
+    }
+
+    private static BackendExecutionResult ExecuteHostSafely(WistDialectExecutionHost host, string code, string backendName)
+    {
+        try
+        {
+            return BackendExecutionResult.Success(host.Run(code, backendName));
         }
         catch (Exception ex)
         {

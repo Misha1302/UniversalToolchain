@@ -16,12 +16,7 @@ internal static class DialectGroupDescriptorValidator
         var modules = NormalizeModules(descriptor.IncludedModules, alias);
         var capabilities = NormalizeCapabilities(descriptor.Capabilities, alias);
 
-        return descriptor with
-        {
-            Alias = alias,
-            IncludedModules = modules,
-            Capabilities = capabilities
-        };
+        return new DialectGroupDescriptor(Alias: alias, IncludedModules: modules, Capabilities: capabilities);
     }
 
     private static IReadOnlyList<string> NormalizeModules(IReadOnlyList<string> modules, string groupAlias)

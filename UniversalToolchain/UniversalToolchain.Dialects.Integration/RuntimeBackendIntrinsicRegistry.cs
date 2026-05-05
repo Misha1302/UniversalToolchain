@@ -35,12 +35,30 @@ public static class RuntimeBackendIntrinsicRegistry
                      .Select(x => x.NotNull(nameof(backendRegistrars)))
                      .OrderBy(x => x.BackendId))
         {
-            var intrinsics = new SortedSet<string>(backendRegistrar.SupportedIntrinsics ?? Thrower.InvalidOpEx<IReadOnlyList<string>>($"Backend '{backendRegistrar.BackendId.Value}' returned null supported intrinsics."), StringComparer.Ordinal);
+            var intrinsics = SnapshotSupportedIntrinsics(backendRegistrar.BackendId, backendRegistrar.SupportedIntrinsics);
             if (!map.TryAdd(backendRegistrar.BackendId, intrinsics))
                 Thrower.InvalidOpEx($"Duplicate backend provider registration for backend '{backendRegistrar.BackendId.Value}'.");
         }
 
         return map;
+    }
+
+    private static SortedSet<string> SnapshotSupportedIntrinsics(DialectBackendId backendId, IEnumerable<string?>? supportedIntrinsics)
+    {
+        var source = supportedIntrinsics
+                     ?? Thrower.InvalidOpEx<IEnumerable<string?>>($"Backend '{backendId.Value}' returned null supported intrinsics.");
+
+        var snapshot = new SortedSet<string>(StringComparer.Ordinal);
+        foreach (var intrinsic in source)
+        {
+            var normalized = intrinsic?.Trim();
+            if (string.IsNullOrWhiteSpace(normalized))
+                Thrower.InvalidOpEx($"Backend '{backendId.Value}' returned an empty supported intrinsic id.");
+
+            snapshot.Add(normalized.NotNull(nameof(supportedIntrinsics)));
+        }
+
+        return snapshot;
     }
 
     private static SortedSet<string> GetCommonIntrinsics(IReadOnlyDictionary<DialectBackendId, SortedSet<string>> backendIntrinsics)

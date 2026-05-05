@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
@@ -63,13 +64,20 @@ public sealed class WistDialectExecutionConfiguration
         return _knownBackendNameMap.TryGetValue(nameOrAlias, out backendId);
     }
 
-    public bool TryGetEnabledBackend(DialectBackendId backendId, out DialectBackendRuntimeConfiguration backendConfiguration)
+    public bool TryGetEnabledBackend(DialectBackendId backendId, [MaybeNullWhen(false)] out DialectBackendRuntimeConfiguration backendConfiguration)
     {
         if (string.IsNullOrWhiteSpace(backendId.Value))
             Thrower.Argument(nameof(backendId), "Backend identifier must not be empty.");
 
-        backendConfiguration = _backendConfigurations.FirstOrDefault(x => x.BackendDescriptor.BackendId == backendId)!;
-        return backendConfiguration != null;
+        var found = _backendConfigurations.FirstOrDefault(x => x.BackendDescriptor.BackendId == backendId);
+        if (found == null)
+        {
+            backendConfiguration = null;
+            return false;
+        }
+
+        backendConfiguration = found;
+        return true;
     }
 
     private static List<Type> SnapshotTypes(IEnumerable<Type> values, [CallerArgumentExpression(nameof(values))] string? paramName = null)

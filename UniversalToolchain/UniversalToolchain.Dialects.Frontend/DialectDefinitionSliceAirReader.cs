@@ -11,7 +11,7 @@ public static class DialectDefinitionSliceAirReader
         air = air.ArgNotNull();
 
         var aggregation = new DialectDefinitionAggregation();
-        foreach (var annotation in air.Instructions.SelectMany(x => x.Metadata))
+        foreach (var annotation in air.Instructions.SelectMany(static x => x.Metadata).Cast<object?>())
         {
             if (annotation == null)
                 Thrower.InvalidOpEx("Dialect AIR contained a null annotation entry.");

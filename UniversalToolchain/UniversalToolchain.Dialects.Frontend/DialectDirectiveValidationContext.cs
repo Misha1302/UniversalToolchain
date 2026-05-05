@@ -1,5 +1,6 @@
 using BasicCore.LexerWrapper;
 using ExceptionsManager;
+using ObjectExtensions;
 
 namespace UniversalToolchain.Dialects.Frontend;
 
@@ -46,9 +47,9 @@ public sealed class DialectDirectiveValidationContext
             return (TState)existing;
         }
 
-        var created = factory();
+        var created = factory().MakeNullable();
         if (created == null)
-            Thrower.InvalidOpEx<TState>($"Validation state factory for '{key.Name}' returned null.");
+            return Thrower.InvalidOpEx<TState>($"Validation state factory for '{key.Name}' returned null.");
 
         _state[key] = created;
         return created;

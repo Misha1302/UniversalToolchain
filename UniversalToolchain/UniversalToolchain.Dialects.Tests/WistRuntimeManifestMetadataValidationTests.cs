@@ -30,21 +30,21 @@ public class WistRuntimeManifestMetadataValidationTests
     [Test]
     public void FileBasedRuntimeComponentCatalog_FailsFastOnDuplicateGlobalModuleAlias()
     {
-        var exception = BuildDuplicateAliasException("FrontendModule", "Modules");
+        var exception = BuildDuplicateAliasException("FrontendModule");
         Assert.That(exception.Message, Does.Contain("module alias 'Alias'"));
     }
 
     [Test]
     public void FileBasedRuntimeComponentCatalog_FailsFastOnDuplicateGlobalOptimizerAlias()
     {
-        var exception = BuildDuplicateAliasException("Optimizer", "Optimizers");
+        var exception = BuildDuplicateAliasException("Optimizer");
         Assert.That(exception.Message, Does.Contain("optimizer alias 'Alias'"));
     }
 
     [Test]
     public void FileBasedRuntimeComponentCatalog_FailsFastOnDuplicateGlobalBackendAlias()
     {
-        var exception = BuildDuplicateAliasException("Backend", "Backends");
+        var exception = BuildDuplicateAliasException("Backend");
         Assert.That(exception.Message, Does.Contain("backend alias 'Alias'"));
     }
 
@@ -243,7 +243,7 @@ public class WistRuntimeManifestMetadataValidationTests
         Assert.That(catalog, Is.TypeOf<FileBasedRuntimeComponentCatalog>());
     }
 
-    private static InvalidOperationException BuildDuplicateAliasException(string kind, string _)
+    private static InvalidOperationException BuildDuplicateAliasException(string kind)
     {
         using var temp = new TempDirectory();
         IRuntimeManifestSerializer serializer = new RuntimeManifestJsonSerializer();
@@ -258,7 +258,10 @@ public class WistRuntimeManifestMetadataValidationTests
             "BAssembly",
             [new FileDialectRuntimeComponentEntry(kind, "Alias", [], $"{kind.ToLowerInvariant()}.alias2")])));
 
-        return Assert.Throws<InvalidOperationException>(() => new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([first, second]), serializer))!;
+        return Assert.Throws<InvalidOperationException>(() =>
+        {
+            _ = new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([first, second]), serializer);
+        })!;
     }
 
     private static (string Json, FileDialectRuntimeManifestDocument Document) EmitManifest(string assemblyPath)

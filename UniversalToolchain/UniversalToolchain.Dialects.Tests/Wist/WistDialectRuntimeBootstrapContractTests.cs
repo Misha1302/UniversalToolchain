@@ -361,13 +361,14 @@ public class WistDialectRuntimeBootstrapContractTests
 
     private static string FormatComposition(DialectFrameworkCompositionResult composition) => DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition));
 
-    private static IReadOnlyList<ServiceRegistrationSignature> BuildServiceSignatures(IServiceCollection services)
+    private static IReadOnlyList<string> BuildServiceSignatures(IServiceCollection services)
     {
         return services
-            .Select(static service => new ServiceRegistrationSignature(
-                service.ServiceType,
-                service.ImplementationType,
-                service.Lifetime))
+            .Select(static service => string.Join(
+                "|",
+                service.ServiceType.FullName ?? service.ServiceType.Name,
+                service.ImplementationType?.FullName ?? "<factory-or-instance>",
+                service.Lifetime.ToString()))
             .ToArray();
     }
 
@@ -386,11 +387,6 @@ public class WistDialectRuntimeBootstrapContractTests
             .OrderBy(static x => x, StringComparer.Ordinal)
             .ToArray();
     }
-
-    private readonly record struct ServiceRegistrationSignature(
-        Type ServiceType,
-        Type? ImplementationType,
-        ServiceLifetime Lifetime);
 
     private sealed class NoopRegistrar(string backendId) : IDialectBackendRuntimeRegistrar
     {

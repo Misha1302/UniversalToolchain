@@ -19,7 +19,7 @@ public sealed class RuntimeManifestJsonSerializer : IRuntimeManifestSerializer
             document.AssemblySimpleName ?? string.Empty,
             (document.Components ?? [])
             .Select(x => new FileDialectRuntimeComponentEntry(
-                RuntimeComponentKindCodec.Format(RuntimeComponentKindCodec.Parse(x.Kind ?? string.Empty, "runtime manifest")),
+                NormalizeKind(x.Kind),
                 x.CanonicalAlias ?? string.Empty,
                 x.Aliases ?? [],
                 ResolveComponentId(x),
@@ -35,7 +35,7 @@ public sealed class RuntimeManifestJsonSerializer : IRuntimeManifestSerializer
             Components = document.Components
                 .Select(static x => new SerializableManifestComponentEntry
                 {
-                    Kind = RuntimeComponentKindCodec.Format(RuntimeComponentKindCodec.Parse(x.Kind ?? string.Empty, "runtime manifest")),
+                    Kind = NormalizeKind(x.Kind),
                     CanonicalAlias = x.CanonicalAlias,
                     Aliases = x.Aliases,
                     ComponentId = x.ComponentId,
@@ -56,6 +56,9 @@ public sealed class RuntimeManifestJsonSerializer : IRuntimeManifestSerializer
 
         return JsonSerializer.Serialize(payload, _jsonOptions);
     }
+
+    private static string NormalizeKind(string? kind) =>
+        RuntimeComponentKindCodec.Format(RuntimeComponentKindCodec.Parse(kind ?? string.Empty, "runtime manifest"));
 
     private static string ResolveComponentId(SerializableManifestComponentEntry entry)
     {
@@ -148,6 +151,7 @@ public sealed class RuntimeManifestJsonSerializer : IRuntimeManifestSerializer
 
         public string? ComponentId { get; init; }
 
+        // ReSharper disable once UnusedAutoPropertyAccessor.Local
         public string? TypeFullName { get; init; }
 
         public SerializableManifestActivationEntry? Activation { get; init; }

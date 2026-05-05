@@ -54,9 +54,10 @@ public sealed class FileBasedRuntimeComponentCatalog : IRuntimeComponentCatalog
                 continue;
 
             var document = manifestSerializer.Deserialize(File.ReadAllText(manifestPath));
-            var assemblySimpleName = document.AssemblySimpleName?.Trim();
-            if (string.IsNullOrWhiteSpace(assemblySimpleName))
-                Thrower.Argument(nameof(manifestPaths), $"Runtime manifest '{manifestPath}' has an empty assemblySimpleName.");
+            var assemblySimpleName = NormalizeRequiredText(
+                document.AssemblySimpleName,
+                nameof(manifestPaths),
+                $"Runtime manifest '{manifestPath}' has an empty assemblySimpleName.");
 
             entries.AddRange(document.Components.Select(component => ToRuntimeEntry(component, assemblySimpleName, manifestPath)));
         }
@@ -105,23 +106,11 @@ public sealed class FileBasedRuntimeComponentCatalog : IRuntimeComponentCatalog
     {
         entry = entry.ArgNotNull();
 
-        var canonical = entry.CanonicalAlias?.Trim();
-        if (string.IsNullOrWhiteSpace(canonical))
-            Thrower.Argument(nameof(entry), "Canonical alias must not be empty.");
+        var canonical = NormalizeRequiredText(entry.CanonicalAlias, nameof(entry), "Canonical alias must not be empty.");
 
-        var assemblySimpleName = entry.AssemblySimpleName?.Trim();
-        if (string.IsNullOrWhiteSpace(assemblySimpleName))
-            Thrower.Argument(nameof(entry), "AssemblySimpleName must not be empty.");
+        var assemblySimpleName = NormalizeRequiredText(entry.AssemblySimpleName, nameof(entry), "AssemblySimpleName must not be empty.");
 
-        var aliases = (entry.Aliases ?? [])
-            .Select(static x => x?.Trim())
-            .Where(static x => !string.IsNullOrWhiteSpace(x))
-            .Select(static x => x!)
-            .Distinct(StringComparer.Ordinal)
-            .OrderBy(static x => x, StringComparer.Ordinal)
-            .ToList();
-
-        aliases.RemoveAll(x => string.Equals(x, canonical, StringComparison.Ordinal));
+        var aliases = NormalizeAliases(entry.Aliases, canonical);
 
         return entry with
         {
@@ -169,16 +158,50 @@ public sealed class FileBasedRuntimeComponentCatalog : IRuntimeComponentCatalog
     {
         typeReference = typeReference.NotNull(paramName);
 
-        var typeFullName = typeReference.TypeFullName?.Trim();
-        if (string.IsNullOrWhiteSpace(typeFullName))
-            Thrower.Argument(paramName, emptyTypeMessage);
+        var typeFullName = NormalizeRequiredText(typeReference.TypeFullName, paramName, emptyTypeMessage);
 
-        var assemblySimpleName = typeReference.AssemblySimpleName?.Trim();
-        if (string.IsNullOrWhiteSpace(assemblySimpleName) ||
+        var assemblySimpleName = NormalizeOptionalText(typeReference.AssemblySimpleName);
+        if (assemblySimpleName == null ||
             string.Equals(assemblySimpleName, RuntimeAssemblyIdentity.UnspecifiedAssemblySimpleName, StringComparison.Ordinal))
             assemblySimpleName = ownerAssemblySimpleName;
 
         return new RuntimeTypeReference(assemblySimpleName, typeFullName);
+    }
+
+    private static string NormalizeRequiredText(string? value, string paramName, string message)
+    {
+        var normalized = value?.Trim();
+        if (string.IsNullOrWhiteSpace(normalized))
+            Thrower.Argument(paramName, message);
+
+        return normalized.NotNull(paramName);
+    }
+
+    private static string? NormalizeOptionalText(string? value)
+    {
+        var normalized = value?.Trim();
+        return string.IsNullOrWhiteSpace(normalized) ? null : normalized;
+    }
+
+    private static List<string> NormalizeAliases(IEnumerable<string?>? aliases, string canonicalAlias)
+    {
+        if (aliases == null)
+            return [];
+
+        var result = new List<string>();
+        foreach (var alias in aliases)
+        {
+            var normalized = NormalizeOptionalText(alias);
+            if (normalized == null || string.Equals(normalized, canonicalAlias, StringComparison.Ordinal))
+                continue;
+
+            result.Add(normalized);
+        }
+
+        return result
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(static x => x, StringComparer.Ordinal)
+            .ToList();
     }
 
     private static IReadOnlyDictionary<string, RuntimeComponentManifestEntry> CreateAliasMap(IEnumerable<RuntimeComponentManifestEntry> entries, string kindName)

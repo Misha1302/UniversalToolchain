@@ -55,9 +55,6 @@ public sealed class WistDialectServiceProviderFactory
     {
         foreach (var type in types)
         {
-            if (type == null)
-                Thrower.Argument(nameof(types), "Module type collection must not contain null entries.");
-
             if (!serviceType.IsAssignableFrom(type))
                 Thrower.InvalidOpEx(
                     $"Module type '{type.FullName}' does not implement '{serviceType.FullName}'.");

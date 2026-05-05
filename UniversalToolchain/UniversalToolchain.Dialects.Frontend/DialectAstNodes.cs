@@ -72,28 +72,30 @@ public sealed class DialectDirectiveAstNode : DialectAstNode
 
     public AstNode Payload => Children[0];
 
-    private static List<AstNode> CreateChildren(IReadOnlyList<AstNode> payloadNodes)
+    private static List<AstNode> CreateChildren(IReadOnlyList<AstNode?> payloadNodes)
     {
         payloadNodes = payloadNodes.ArgNotNull();
 
         if (payloadNodes.Count != 1)
             Thrower.Argument(nameof(payloadNodes), "Dialect directives must contain exactly one payload node.");
 
-        if (payloadNodes[0] == null)
-            Thrower.Argument(nameof(payloadNodes), "Dialect directive payload must not be null.");
+        if (payloadNodes[0] is { } payloadNode)
+            return [payloadNode];
 
-        return payloadNodes.ToList();
+        Thrower.Argument(nameof(payloadNodes), "Dialect directive payload must not be null.");
+        return [];
     }
 }
 
 public sealed class IdentifierValueAstNode : DialectAstNode
 {
-    public IdentifierValueAstNode(LexemeValue lexemeValue) : base(DialectAstNodeTypes.IdentifierValue, lexemeValue, [])
+    public IdentifierValueAstNode(LexemeValue lexemeValue) : base(DialectAstNodeTypes.IdentifierValue, RequireLexemeValue(lexemeValue), [])
     {
-        lexemeValue = lexemeValue.ArgNotNull();
     }
 
     public string Identifier => Text;
+
+    private static LexemeValue RequireLexemeValue(LexemeValue? lexemeValue) => lexemeValue.ArgNotNull();
 }
 
 public sealed class IdentifierListAstNode : DialectAstNode

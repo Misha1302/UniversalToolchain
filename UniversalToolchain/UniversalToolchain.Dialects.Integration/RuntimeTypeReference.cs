@@ -14,7 +14,7 @@ public sealed record RuntimeTypeReference
 
     public string TypeFullName { get; }
 
-    private static string NormalizeRequired(string value, string paramName)
+    private static string NormalizeRequired(string? value, string paramName)
     {
         var normalized = value?.Trim();
         if (string.IsNullOrWhiteSpace(normalized))

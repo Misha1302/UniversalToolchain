@@ -96,7 +96,7 @@ public sealed class DialectLineNodeCreator : IAstNodeCreator
 
     public bool TryCreateNode(AstNode scope, int childIndex)
     {
-        if (scope == null || !DialectNodeCreatorSupport.IsStructuralContainer(scope) || childIndex < 0 || childIndex >= scope.Children.Count)
+        if (!DialectNodeCreatorSupport.IsStructuralContainer(scope) || childIndex < 0 || childIndex >= scope.Children.Count)
             return false;
 
         var current = scope.Children[childIndex];
@@ -141,7 +141,7 @@ public abstract class DialectLineConstructNodeCreator : IAstNodeCreator
 
     public bool TryCreateNode(AstNode scope, int childIndex)
     {
-        if (scope == null || !DialectNodeCreatorSupport.IsStructuralContainer(scope) || childIndex < 0 || childIndex >= scope.Children.Count)
+        if (!DialectNodeCreatorSupport.IsStructuralContainer(scope) || childIndex < 0 || childIndex >= scope.Children.Count)
             return false;
 
         var candidate = scope.Children[childIndex];
@@ -201,7 +201,7 @@ public sealed class DialectDocumentNodeCreator : IAstNodeCreator
 
     public bool TryCreateNode(AstNode scope, int childIndex)
     {
-        if (scope == null || !DialectNodeCreatorSupport.IsStructuralContainer(scope) || childIndex != 0)
+        if (!DialectNodeCreatorSupport.IsStructuralContainer(scope) || childIndex != 0)
             return false;
 
         if (scope.Children.Count == 0)

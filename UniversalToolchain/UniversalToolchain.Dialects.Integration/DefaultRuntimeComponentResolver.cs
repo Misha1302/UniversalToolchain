@@ -111,21 +111,7 @@ public sealed class DefaultRuntimeComponentResolver : IRuntimeComponentResolver
         var kind = RuntimeComponentKindCodec.Parse(export.ComponentKind, type.AssemblyQualifiedName ?? type.Name);
         var canonicalAlias = export.CanonicalAlias;
         var id = RuntimeComponentIdFactory.Create(kind, canonicalAlias);
-        var aliases = GetRuntimeAliases(type);
-
-        return new RuntimeComponentExportDescriptor(id, kind, canonicalAlias, aliases, type);
-    }
-
-    private static IReadOnlyList<string> GetRuntimeAliases(MemberInfo type)
-    {
-        return type
-            .GetCustomAttributes<DialectRuntimeAliasAttribute>(false)
-            .Select(x => x.Alias?.Trim())
-            .Where(static x => !string.IsNullOrWhiteSpace(x))
-            .Select(static x => x!)
-            .Distinct(StringComparer.Ordinal)
-            .OrderBy(static x => x, StringComparer.Ordinal)
-            .ToList();
+        return new RuntimeComponentExportDescriptor(id, kind, canonicalAlias, type);
     }
 
     private static void ValidateResolvedComponent(RuntimeComponentManifestEntry entry, RuntimeComponentExportDescriptor descriptor)
@@ -162,6 +148,5 @@ public sealed class DefaultRuntimeComponentResolver : IRuntimeComponentResolver
         RuntimeComponentId Id,
         RuntimeComponentKind Kind,
         string CanonicalAlias,
-        IReadOnlyList<string> Aliases,
         Type ActivationType);
 }

@@ -125,9 +125,9 @@ public class DialectDirectiveHandlerRegistryTests
 
         public string Name { get; } = "dialect";
 
-        public string? Version { get; init; }
+        public string? Version => null;
 
-        public string? BaseDialectName { get; init; }
+        public string? BaseDialectName => null;
 
         public IReadOnlyList<string> UseModules { get; } = [];
 
@@ -141,7 +141,7 @@ public class DialectDirectiveHandlerRegistryTests
 
         public IReadOnlyList<OptimizerBindingDirectiveRecord> OptimizerDirectives { get; } = [];
 
-        public SecurityProfile? SecurityProfile { get; init; }
+        public SecurityProfile? SecurityProfile => null;
 
         public IReadOnlyList<KeyValuePair<string, bool>> Capabilities { get; } = [];
     }

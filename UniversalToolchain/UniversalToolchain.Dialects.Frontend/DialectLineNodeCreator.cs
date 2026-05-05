@@ -1,1 +1,0 @@
-namespace UniversalToolchain.Dialects.Frontend;
