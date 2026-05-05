@@ -41,8 +41,8 @@ internal static class ParityBackendExecutionAdapter
     {
         return backendName switch
         {
-            "compiler" => host.GetArtifactCompiler<DynamicMethod>(backendName).Compile(code, declared),
-            "interpreter" => host.GetArtifactCompiler<IAbstractIR>(backendName).Compile(code, declared),
+            "compiler" => host.GetBackendSpecificArtifactCompiler<DynamicMethod>(backendName).Compile(code, declared),
+            "interpreter" => host.GetBackendSpecificArtifactCompiler<IAbstractIR>(backendName).Compile(code, declared),
             _ => Thrower.InvalidOpEx<ICompiledArtifact>($"Unsupported backend '{backendName}'.")
         };
     }
