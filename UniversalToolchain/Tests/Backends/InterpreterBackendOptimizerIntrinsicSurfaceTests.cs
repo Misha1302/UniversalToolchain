@@ -33,7 +33,7 @@ public sealed class InterpreterBackendOptimizerIntrinsicSurfaceTests
                       """;
 
         using var host = DialectTestHostInfrastructure.CreateInterpreterHost(dialect);
-        var compiler = host.GetArtifactCompiler<IAbstractIR>("interpreter");
+        var compiler = host.GetBackendSpecificArtifactCompiler<IAbstractIR>("interpreter");
         var artifact = compiler.Compile("(1 + 2) > 0 and true");
 
         var intrinsicNames = CollectIntrinsicNames(artifact.CompilationOutput).ToArray();
