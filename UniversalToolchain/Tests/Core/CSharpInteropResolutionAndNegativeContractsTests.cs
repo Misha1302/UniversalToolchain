@@ -1,4 +1,5 @@
 using AssemblyFinder;
+using System.Diagnostics.CodeAnalysis;
 using Tests.Infrastructure;
 using UniversalToolchain.Testing.Infrastructure;
 
@@ -87,5 +88,7 @@ internal static class InteropContractsHost
     public static string Pick(int left, long right) => "int-long";
     public static string Pick(long left, int right) => "long-int";
 
+    [SuppressMessage("Performance", "CA1822", Justification = "The method is used by name in a negative C# interop resolution contract test.")]
+    [SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "The method is intentionally non-public and resolved by name in a negative interop test.")]
     private static string Hidden() => "hidden";
 }
