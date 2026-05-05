@@ -159,12 +159,6 @@ public class InterpreterBackendIrExecutionTests
         return interpreter.Execute(ir, new ExecutionEnvironment([]));
     }
 
-    private static object? ExecuteInInterpreter(IAbstractIR ir, IExecutionEnvironment environment)
-    {
-        var interpreter = new InterpreterImpl();
-        return interpreter.Execute(ir, environment);
-    }
-
     private static IAbstractIR BuildIr(params Instruction[] instructions)
     {
         var ir = new AbstractIR();
