@@ -7,10 +7,10 @@ namespace Tests.Backends;
 public class RuntimeCompiledArtifactBackendSpecificTests
 {
     [Test]
-    public void GetArtifactCompiler_WithDynamicMethodOutput_ReturnsWorkingCompilerArtifactPath()
+    public void GetBackendSpecificArtifactCompiler_WithDynamicMethodOutput_ReturnsWorkingCompilerArtifactPath()
     {
         using var host = RuntimeCompiledArtifactTestFactory.CreateHost();
-        var compiler = host.GetArtifactCompiler<DynamicMethod>("compiler");
+        var compiler = host.GetBackendSpecificArtifactCompiler<DynamicMethod>("compiler");
         var artifact = compiler.Compile("x", new OrderedDictionary<string, Type> { ["x"] = typeof(object) });
         var session = artifact.CreateSession();
 
@@ -23,10 +23,10 @@ public class RuntimeCompiledArtifactBackendSpecificTests
     }
 
     [Test]
-    public void GetArtifactCompiler_WithMismatchedCompilationOutput_ThrowsInvalidOperationException()
+    public void GetBackendSpecificArtifactCompiler_WithMismatchedCompilationOutput_ThrowsInvalidOperationException()
     {
         using var host = RuntimeCompiledArtifactTestFactory.CreateHost();
 
-        Assert.Throws<InvalidOperationException>(() => host.GetArtifactCompiler<IAbstractIR>("compiler"));
+        Assert.Throws<InvalidOperationException>(() => host.GetBackendSpecificArtifactCompiler<IAbstractIR>("compiler"));
     }
 }
