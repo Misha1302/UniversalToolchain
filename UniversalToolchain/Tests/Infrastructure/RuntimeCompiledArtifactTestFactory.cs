@@ -241,6 +241,8 @@ internal static class RuntimeCompiledArtifactTestFactory
 
     private static int LoadExternalSlotsThroughProvider(IExecutionEnvironment environment, int unusedFirstArgument, int unusedSecondArgument)
     {
+        _ = unusedFirstArgument;
+        _ = unusedSecondArgument;
         environment = environment.ArgNotNull();
 
         var provider = (ExternalRuntimeCallProvider)environment.GetRequiredProvider(typeof(ExternalRuntimeCallProvider));
