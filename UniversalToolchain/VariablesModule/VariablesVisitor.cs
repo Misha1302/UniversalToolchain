@@ -48,25 +48,18 @@ public class VariablesVisitor : IAstVisitor
         return null!;
     }
 
-    private Type ResolveWriteType(Symbol symbol, string variableKey, Type inferredType)
+    private void UpdateWriteType(Symbol symbol, string variableKey, Type inferredType)
     {
         if (_variablesTypes.TryGetValue(variableKey, out var existing) && IsConcreteType(existing))
-            return existing;
+            return;
 
         if (IsConcreteType(symbol.Type))
         {
             _variablesTypes[variableKey] = symbol.Type;
-            return symbol.Type;
+            return;
         }
 
-        if (IsConcreteType(inferredType))
-        {
-            _variablesTypes[variableKey] = inferredType;
-            return inferredType;
-        }
-
-        _variablesTypes[variableKey] = typeof(object);
-        return typeof(object);
+        _variablesTypes[variableKey] = IsConcreteType(inferredType) ? inferredType : typeof(object);
     }
 
     private void HandleBoundVariable(BytecodeVisitorData data, Symbol symbol)
@@ -102,7 +95,7 @@ public class VariablesVisitor : IAstVisitor
                     if (context.Stack.Count == 0)
                         Thrower.InvalidOpEx($"Cannot infer storage type for local variable '{displayName}' without assignment value.");
 
-                    ResolveWriteType(symbol, variableKey, context.Stack[^1]);
+                    UpdateWriteType(symbol, variableKey, context.Stack[^1]);
                 });
             data.Bytecode.Instructions.Add(new BytecodeInstruction(inferMethod));
             return;
