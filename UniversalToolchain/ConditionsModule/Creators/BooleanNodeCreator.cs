@@ -18,34 +18,37 @@ public class BooleanNodeCreator(string nodeType, BooleanNodeCreator.BooleanState
         if (currentNode?.NodeType != AstNodeType)
             return false;
 
-        var node = scope[childIndex];
-
-        if (type == BooleanStatementType.UnaryOperation)
+        return type switch
         {
-            var operand = scope.SafeGet(childIndex + 1);
-            if (operand == null)
-                return false;
+            BooleanStatementType.UnaryOperation => TryCreateUnaryOperation(scope, childIndex, currentNode),
+            BooleanStatementType.BinaryOperation => TryCreateBinaryOperation(scope, childIndex, currentNode),
+            BooleanStatementType.Constant => true,
+            _ => false
+        };
+    }
 
-            // Unary NOT operation
-            node.Children.Add(operand);
-            scope.Children.RemoveAt(childIndex + 1);
-            return true;
-        }
+    private static bool TryCreateUnaryOperation(AstNode scope, int childIndex, AstNode node)
+    {
+        var operand = scope.SafeGet(childIndex + 1);
+        if (operand == null)
+            return false;
 
-        if (type == BooleanStatementType.BinaryOperation)
-        {
-            var leftOperand = scope.SafeGet(childIndex - 1);
-            var rightOperand = scope.SafeGet(childIndex + 1);
-            if (leftOperand == null || rightOperand == null)
-                return false;
+        node.Children.Add(operand);
+        scope.Children.RemoveAt(childIndex + 1);
+        return true;
+    }
 
-            node.Children.Add(leftOperand);
-            node.Children.Add(rightOperand);
-            scope.Children.RemoveAt(childIndex + 1);
-            scope.Children.RemoveAt(childIndex - 1);
-            return true;
-        }
+    private static bool TryCreateBinaryOperation(AstNode scope, int childIndex, AstNode node)
+    {
+        var leftOperand = scope.SafeGet(childIndex - 1);
+        var rightOperand = scope.SafeGet(childIndex + 1);
+        if (leftOperand == null || rightOperand == null)
+            return false;
 
+        node.Children.Add(leftOperand);
+        node.Children.Add(rightOperand);
+        scope.Children.RemoveAt(childIndex + 1);
+        scope.Children.RemoveAt(childIndex - 1);
         return true;
     }
 }
