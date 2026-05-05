@@ -15,7 +15,6 @@ public sealed class CapabilityProviderTypeResolver
         var diagnostics = new List<ToolchainDiagnostic>();
 
         foreach (var componentType in runtimeComponentImplementationTypes
-                     .Where(static x => x != null)
                      .OrderBy(GetTypeName, StringComparer.Ordinal))
         {
             foreach (var attribute in componentType
