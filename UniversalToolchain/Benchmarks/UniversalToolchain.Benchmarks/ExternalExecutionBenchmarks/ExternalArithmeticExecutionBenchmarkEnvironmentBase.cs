@@ -82,7 +82,7 @@ public abstract class ExternalArithmeticExecutionBenchmarkEnvironmentBase
         var host = _host ?? Thrower.InvalidOpEx<WistDialectExecutionHost>(
             "Wist host must be initialized before compilation.");
 
-        var compiler = host.GetArtifactCompiler<DynamicMethod>("compiler");
+        var compiler = host.GetBackendSpecificArtifactCompiler<DynamicMethod>("compiler");
         var declaredBindings = CreateDeclaredBindings(bindingNames);
         var compiledArtifact = compiler.Compile(formula, declaredBindings);
 
