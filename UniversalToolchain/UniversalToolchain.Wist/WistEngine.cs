@@ -156,7 +156,7 @@ public sealed class WistEngine : IDisposable
 
     private DynamicMethod CompileDynamicMethod(string formula, IReadOnlyDictionary<string, Type> bindingTypes)
     {
-        var artifact = _host.GetArtifactCompiler<DynamicMethod>("compiler").Compile(formula, CreateDeclaredBindings(bindingTypes));
+        var artifact = _host.GetBackendSpecificArtifactCompiler<DynamicMethod>("compiler").Compile(formula, CreateDeclaredBindings(bindingTypes));
         return artifact.CompilationOutput;
     }
 
