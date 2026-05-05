@@ -35,11 +35,6 @@ internal static class DialectSecurityCapabilityPolicyValidator
         rules = rules.ArgNotNull();
 
         foreach (var rule in rules)
-        {
-            if (rule == null)
-                Thrower.Argument(nameof(rules), "Policy rule list must not contain null entries.");
-
             rule.Validate(securityProfile, capabilities, diagnostics);
-        }
     }
 }
