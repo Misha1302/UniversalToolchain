@@ -31,9 +31,13 @@ internal sealed class ModulePipelineTestHelper : IDisposable
 
     public string BuildDialectText(string name, IEnumerable<string> modules, IEnumerable<string>? optimizers = null, IEnumerable<string>? backends = null)
     {
-        var modulesLine = string.Join(',', modules);
-        var optimizerLine = optimizers == null ? string.Empty : $"\nenable {string.Join(',', optimizers)}";
-        var backendLine = $"\nbackend {string.Join(',', backends ?? ["compiler", "interpreter"])}";
+        var moduleList = Materialize(modules);
+        var optimizerList = optimizers == null ? null : Materialize(optimizers);
+        var backendList = backends == null ? ["compiler", "interpreter"] : Materialize(backends);
+
+        var modulesLine = string.Join(',', moduleList);
+        var optimizerLine = optimizerList == null ? string.Empty : $"\nenable {string.Join(',', optimizerList)}";
+        var backendLine = $"\nbackend {string.Join(',', backendList)}";
         return $"dialect {name}\nuse {modulesLine}{optimizerLine}{backendLine}";
     }
 
@@ -114,8 +118,10 @@ internal sealed class ModulePipelineTestHelper : IDisposable
 
     public void ExecuteEquivalent(string a, string b, IEnumerable<string> modules, IEnumerable<string>? optimizers = null)
     {
-        var resultA = ExecuteBoth(a, modules, optimizers);
-        var resultB = ExecuteBoth(b, modules, optimizers);
+        var moduleList = Materialize(modules);
+        var optimizerList = optimizers == null ? null : Materialize(optimizers);
+        var resultA = ExecuteBoth(a, moduleList, optimizerList);
+        var resultB = ExecuteBoth(b, moduleList, optimizerList);
         AssertParity(resultA.Compiler, resultA.Interpreter);
         AssertParity(resultB.Compiler, resultB.Interpreter);
         AssertSemanticEqual(resultA.Compiler, resultB.Compiler);
@@ -124,8 +130,10 @@ internal sealed class ModulePipelineTestHelper : IDisposable
 
     public void ExecuteDifferent(string a, string b, IEnumerable<string> modules, IEnumerable<string>? optimizers = null)
     {
-        var resultA = ExecuteBoth(a, modules, optimizers);
-        var resultB = ExecuteBoth(b, modules, optimizers);
+        var moduleList = Materialize(modules);
+        var optimizerList = optimizers == null ? null : Materialize(optimizers);
+        var resultA = ExecuteBoth(a, moduleList, optimizerList);
+        var resultB = ExecuteBoth(b, moduleList, optimizerList);
         AssertParity(resultA.Compiler, resultA.Interpreter);
         AssertParity(resultB.Compiler, resultB.Interpreter);
         AssertSemanticNotEqual(resultA.Compiler, resultB.Compiler);
@@ -134,7 +142,8 @@ internal sealed class ModulePipelineTestHelper : IDisposable
 
     public void AssertFailsContaining(string code, IEnumerable<string> modules, string expectedFragment)
     {
-        var dialectText = BuildDialectText("Inline", modules, null, ["compiler", "interpreter"]);
+        var moduleList = Materialize(modules);
+        var dialectText = BuildDialectText("Inline", moduleList, null, ["compiler", "interpreter"]);
         var (compilerResult, interpreterResult) = BackendParityInfrastructure.RunBoth(dialectText, code);
 
         Assert.That(compilerResult.IsSuccess, Is.False);
@@ -148,7 +157,8 @@ internal sealed class ModulePipelineTestHelper : IDisposable
 
     public void AssertFails(string code, IEnumerable<string> modules)
     {
-        var dialectText = BuildDialectText("Inline", modules, null, ["compiler", "interpreter"]);
+        var moduleList = Materialize(modules);
+        var dialectText = BuildDialectText("Inline", moduleList, null, ["compiler", "interpreter"]);
         var (compilerResult, interpreterResult) = BackendParityInfrastructure.RunBoth(dialectText, code);
 
         Assert.That(compilerResult.IsSuccess, Is.False);
@@ -157,7 +167,8 @@ internal sealed class ModulePipelineTestHelper : IDisposable
 
     public void AssertCompilerAndInterpreterFailSameWay(string code, IEnumerable<string> modules)
     {
-        var dialectText = BuildDialectText("Inline", modules, null, ["compiler", "interpreter"]);
+        var moduleList = Materialize(modules);
+        var dialectText = BuildDialectText("Inline", moduleList, null, ["compiler", "interpreter"]);
         var (compilerResult, interpreterResult) = BackendParityInfrastructure.RunBoth(dialectText, code);
 
         Assert.That(compilerResult.IsSuccess, Is.False);
@@ -175,6 +186,9 @@ internal sealed class ModulePipelineTestHelper : IDisposable
         AssertParity(compiler, interpreter);
         Assert.That(AsNumber(compiler), Is.EqualTo(expected).Within(1e-9));
     }
+
+    private static IReadOnlyList<string> Materialize(IEnumerable<string> values)
+        => values as IReadOnlyList<string> ?? values.ToArray();
 
     private static string GetInvariantMessageFragment(string message)
     {
