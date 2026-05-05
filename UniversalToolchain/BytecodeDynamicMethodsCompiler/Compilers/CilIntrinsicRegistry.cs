@@ -2,11 +2,31 @@ using BasicCore.Core;
 
 namespace BytecodeDynamicMethodsCompiler.Compilers;
 
-internal sealed class CilIntrinsicRegistry
+public sealed class CilIntrinsicRegistry
 {
     private readonly IReadOnlyDictionary<string, CilIntrinsicDescriptor> _descriptorsByName;
 
     public CilIntrinsicRegistry()
+        : this(BuildDefaultDescriptors())
+    {
+    }
+
+    private CilIntrinsicRegistry(IReadOnlyList<CilIntrinsicDescriptor> descriptors)
+    {
+        descriptors = descriptors.ArgNotNull();
+
+        var descriptorsByName = new OrderedDictionary<string, CilIntrinsicDescriptor>(descriptors.Count, StringComparer.Ordinal);
+        foreach (var descriptor in descriptors)
+        {
+            if (!descriptorsByName.TryAdd(descriptor.Name, descriptor))
+                Thrower.InvalidOpEx($"Duplicate CIL intrinsic registration: {descriptor.Name}");
+        }
+
+        _descriptorsByName = descriptorsByName;
+        SupportedIntrinsics = descriptors.Select(x => x.Name).ToArray();
+    }
+
+    private static IReadOnlyList<CilIntrinsicDescriptor> BuildDefaultDescriptors()
     {
         var descriptors = new List<CilIntrinsicDescriptor>();
 
@@ -93,24 +113,15 @@ internal sealed class CilIntrinsicRegistry
         RegisterComparisonFamily(descriptors, "f32");
         RegisterComparisonFamily(descriptors, "f64");
 
-        var descriptorsByName = new OrderedDictionary<string, CilIntrinsicDescriptor>(descriptors.Count, StringComparer.Ordinal);
-        foreach (var descriptor in descriptors)
-        {
-            if (!descriptorsByName.TryAdd(descriptor.Name, descriptor))
-                Thrower.InvalidOpEx($"Duplicate CIL intrinsic registration: {descriptor.Name}");
-        }
-
-        IReadOnlyList<CilIntrinsicDescriptor> descriptors1 = descriptors.AsReadOnly();
-        _descriptorsByName = descriptorsByName;
-        SupportedIntrinsics = descriptors1.Select(x => x.Name).ToArray();
+        return descriptors.AsReadOnly();
     }
 
     public IReadOnlyList<string> SupportedIntrinsics { get; }
 
-    public bool TryGet(string name, out CilIntrinsicDescriptor descriptor)
+    internal bool TryGet(string name, out CilIntrinsicDescriptor descriptor)
         => _descriptorsByName.TryGetValue(name, out descriptor!);
 
-    public CilIntrinsicDescriptor GetRequired(string name)
+    internal CilIntrinsicDescriptor GetRequired(string name)
         => TryGet(name, out var descriptor)
             ? descriptor
             : Thrower.InvalidOpEx<CilIntrinsicDescriptor>($"Unsupported intrinsic: {name}");
