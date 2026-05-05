@@ -9,7 +9,7 @@ internal static class DialectGroupDescriptorValidator
     {
         descriptor = descriptor.ArgNotNull();
 
-        var alias = descriptor.Alias?.Trim();
+        var alias = descriptor.Alias.Trim();
         if (string.IsNullOrWhiteSpace(alias))
             Thrower.Argument(nameof(descriptor), "Dialect group alias must not be empty.");
 
@@ -33,7 +33,7 @@ internal static class DialectGroupDescriptorValidator
 
         foreach (var module in modules)
         {
-            var normalized = module?.Trim();
+            var normalized = module.Trim();
             if (string.IsNullOrWhiteSpace(normalized))
                 Thrower.Argument(nameof(modules), $"Dialect group '{groupAlias}' contains an empty module alias.");
 
@@ -53,7 +53,7 @@ internal static class DialectGroupDescriptorValidator
         var result = new SortedDictionary<string, bool>(StringComparer.Ordinal);
         foreach (var capability in capabilities)
         {
-            var name = capability.Key?.Trim();
+            var name = capability.Key.Trim();
             if (string.IsNullOrWhiteSpace(name))
                 Thrower.Argument(nameof(capabilities), $"Dialect group '{groupAlias}' contains an empty capability name.");
 
