@@ -13,7 +13,7 @@ internal sealed class AbstractMethodsIntrinsicCompiler
 
     internal AbstractMethodsIntrinsicCompiler(CilIntrinsicRegistry registry)
     {
-        _registry = registry;
+        _registry = registry.ArgNotNull();
     }
 
     public IReadOnlyList<string> SupportedIntrinsics => _registry.SupportedIntrinsics;
