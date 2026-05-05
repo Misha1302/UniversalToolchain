@@ -21,7 +21,7 @@ public class DeclaredBindingsExecutionContractTests
     {
         using var host = ComposeHost(DeclaredBindingsDialectText);
 
-        var artifact = host.GetArtifactCompiler<DynamicMethod>("compiler").Compile("left + right", CreateDeclaredBindings());
+        var artifact = host.GetBackendSpecificArtifactCompiler<DynamicMethod>("compiler").Compile("left + right", CreateDeclaredBindings());
         var result = artifact.CreateSession().InvokeNamed<object>(CreateArguments(new RealNumberImpl(7), new RealNumberImpl(5)));
 
         Assert.That(BackendParityInfrastructure.AsNumber(result), Is.EqualTo(12d).Within(1e-9));
@@ -32,7 +32,7 @@ public class DeclaredBindingsExecutionContractTests
     {
         using var host = ComposeHost(DeclaredBindingsDialectText);
 
-        var artifact = host.GetArtifactCompiler<IAbstractIR>("interpreter").Compile("left + right", CreateDeclaredBindings());
+        var artifact = host.GetBackendSpecificArtifactCompiler<IAbstractIR>("interpreter").Compile("left + right", CreateDeclaredBindings());
         var result = artifact.CreateSession().InvokeNamed<object>(CreateArguments(new RealNumberImpl(7), new RealNumberImpl(5)));
 
         Assert.That(BackendParityInfrastructure.AsNumber(result), Is.EqualTo(12d).Within(1e-9));
@@ -43,7 +43,7 @@ public class DeclaredBindingsExecutionContractTests
     {
         using var host = ComposeHost(DeclaredBindingsDialectText);
 
-        var artifact = host.GetArtifactCompiler<DynamicMethod>("compiler").Compile("right - left", CreateDeclaredBindings());
+        var artifact = host.GetBackendSpecificArtifactCompiler<DynamicMethod>("compiler").Compile("right - left", CreateDeclaredBindings());
 
         Assert.Multiple(() =>
         {
@@ -64,8 +64,8 @@ public class DeclaredBindingsExecutionContractTests
 
         using var host = ComposeHost(invalidDialectText);
 
-        var first = CaptureFailure(() => host.GetArtifactCompiler<DynamicMethod>("compiler").Compile("left + right", CreateDeclaredBindings()));
-        var second = CaptureFailure(() => host.GetArtifactCompiler<DynamicMethod>("compiler").Compile("left + right", CreateDeclaredBindings()));
+        var first = CaptureCompilerFailure(host);
+        var second = CaptureCompilerFailure(host);
 
         Assert.Multiple(() =>
         {
@@ -86,11 +86,18 @@ public class DeclaredBindingsExecutionContractTests
         return workflow.CreateHost(composition);
     }
 
-    private static Exception CaptureFailure(TestDelegate action)
+    private static Exception CaptureCompilerFailure(WistDialectExecutionHost host)
     {
-        var exception = Assert.Catch(action);
-        Assert.That(exception, Is.Not.Null);
-        return exception!;
+        try
+        {
+            _ = host.GetBackendSpecificArtifactCompiler<DynamicMethod>("compiler").Compile("left + right", CreateDeclaredBindings());
+        }
+        catch (Exception exception)
+        {
+            return exception;
+        }
+
+        throw new AssertionException("Expected compiler path to fail.");
     }
 
     private static OrderedDictionary<string, Type> CreateDeclaredBindings()
