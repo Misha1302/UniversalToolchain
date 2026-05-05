@@ -186,11 +186,19 @@ public class SelectedRuntimePlanResolverContractTests
     private static RuntimeComponentManifestEntry Entry(RuntimeComponentKind kind, string canonicalAlias, string _, params string[] aliases)
         => new(kind, canonicalAlias, aliases, RuntimeComponentIdFactory.Create(kind, canonicalAlias), "TestAssembly");
 
-    private sealed class StaticCatalog(IEnumerable<RuntimeComponentManifestEntry> entries) : IRuntimeComponentCatalog
+    private sealed class StaticCatalog : IRuntimeComponentCatalog
     {
-        private readonly IReadOnlyDictionary<string, RuntimeComponentManifestEntry> _backends = entries.Where(static x => x.Kind == RuntimeComponentKind.Backend).SelectMany(static x => x.AllAliases.Select(a => (a, x))).ToDictionary(static x => x.a, static x => x.x, StringComparer.Ordinal);
-        private readonly IReadOnlyDictionary<string, RuntimeComponentManifestEntry> _modules = entries.Where(static x => x.Kind == RuntimeComponentKind.FrontendModule).SelectMany(static x => x.AllAliases.Select(a => (a, x))).ToDictionary(static x => x.a, static x => x.x, StringComparer.Ordinal);
-        private readonly IReadOnlyDictionary<string, RuntimeComponentManifestEntry> _optimizers = entries.Where(static x => x.Kind == RuntimeComponentKind.Optimizer).SelectMany(static x => x.AllAliases.Select(a => (a, x))).ToDictionary(static x => x.a, static x => x.x, StringComparer.Ordinal);
+        private readonly IReadOnlyDictionary<string, RuntimeComponentManifestEntry> _backends;
+        private readonly IReadOnlyDictionary<string, RuntimeComponentManifestEntry> _modules;
+        private readonly IReadOnlyDictionary<string, RuntimeComponentManifestEntry> _optimizers;
+
+        public StaticCatalog(IEnumerable<RuntimeComponentManifestEntry> entries)
+        {
+            var entryList = entries.ToArray();
+            _backends = BuildMap(entryList, RuntimeComponentKind.Backend);
+            _modules = BuildMap(entryList, RuntimeComponentKind.FrontendModule);
+            _optimizers = BuildMap(entryList, RuntimeComponentKind.Optimizer);
+        }
 
         public bool TryResolveModule(string alias, out RuntimeComponentManifestEntry? entry) => _modules.TryGetValue(alias, out entry);
         public bool TryResolveOptimizer(string alias, out RuntimeComponentManifestEntry? entry) => _optimizers.TryGetValue(alias, out entry);
@@ -198,5 +206,13 @@ public class SelectedRuntimePlanResolverContractTests
         public IReadOnlyList<RuntimeComponentManifestEntry> GetModulesInDeterministicOrder() => _modules.Values.Distinct().OrderBy(static x => x.CanonicalAlias).ToList();
         public IReadOnlyList<RuntimeComponentManifestEntry> GetOptimizersInDeterministicOrder() => _optimizers.Values.Distinct().OrderBy(static x => x.CanonicalAlias).ToList();
         public IReadOnlyList<RuntimeComponentManifestEntry> GetBackendsInDeterministicOrder() => _backends.Values.Distinct().OrderBy(static x => x.CanonicalAlias).ToList();
+
+        private static IReadOnlyDictionary<string, RuntimeComponentManifestEntry> BuildMap(
+            IEnumerable<RuntimeComponentManifestEntry> entries,
+            RuntimeComponentKind kind)
+            => entries
+                .Where(x => x.Kind == kind)
+                .SelectMany(static x => x.AllAliases.Select(a => (a, x)))
+                .ToDictionary(static x => x.a, static x => x.x, StringComparer.Ordinal);
     }
 }
