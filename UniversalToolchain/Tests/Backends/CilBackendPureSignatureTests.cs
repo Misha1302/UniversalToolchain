@@ -54,7 +54,7 @@ public sealed class CilBackendPureSignatureTests
         Assert.That(composition.IsSuccess, Is.True);
 
         using var host = workflow.CreateHost(composition);
-        var compiler = host.GetArtifactCompiler<DynamicMethod>("compiler");
+        var compiler = host.GetBackendSpecificArtifactCompiler<DynamicMethod>("compiler");
         var compiled = compiler.Compile(
             "(A * 1.5 + B * 2.0 - C * 3.0 + D / 4.0 + E / 5.0) * 0.75 + F",
             new OrderedDictionary<string, Type>
