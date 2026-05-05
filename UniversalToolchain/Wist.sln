@@ -144,6 +144,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VariablesRuntime", "Variabl
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniversalToolchain.Testing.Infrastructure", "UniversalToolchain.Testing.Infrastructure\UniversalToolchain.Testing.Infrastructure.csproj", "{EBFBA873-B624-4DD4-AA1A-9E2A2C5A3DEA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniversalToolchain.Wist", "UniversalToolchain.Wist\UniversalToolchain.Wist.csproj", "{54E7122C-0DF1-4CB0-A80A-6C0C478FF251}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -898,6 +900,18 @@ Global
 		{EBFBA873-B624-4DD4-AA1A-9E2A2C5A3DEA}.Release|x64.Build.0 = Release|Any CPU
 		{EBFBA873-B624-4DD4-AA1A-9E2A2C5A3DEA}.Release|x86.ActiveCfg = Release|Any CPU
 		{EBFBA873-B624-4DD4-AA1A-9E2A2C5A3DEA}.Release|x86.Build.0 = Release|Any CPU
+		{54E7122C-0DF1-4CB0-A80A-6C0C478FF251}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{54E7122C-0DF1-4CB0-A80A-6C0C478FF251}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{54E7122C-0DF1-4CB0-A80A-6C0C478FF251}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{54E7122C-0DF1-4CB0-A80A-6C0C478FF251}.Debug|x64.Build.0 = Debug|Any CPU
+		{54E7122C-0DF1-4CB0-A80A-6C0C478FF251}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{54E7122C-0DF1-4CB0-A80A-6C0C478FF251}.Debug|x86.Build.0 = Debug|Any CPU
+		{54E7122C-0DF1-4CB0-A80A-6C0C478FF251}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{54E7122C-0DF1-4CB0-A80A-6C0C478FF251}.Release|Any CPU.Build.0 = Release|Any CPU
+		{54E7122C-0DF1-4CB0-A80A-6C0C478FF251}.Release|x64.ActiveCfg = Release|Any CPU
+		{54E7122C-0DF1-4CB0-A80A-6C0C478FF251}.Release|x64.Build.0 = Release|Any CPU
+		{54E7122C-0DF1-4CB0-A80A-6C0C478FF251}.Release|x86.ActiveCfg = Release|Any CPU
+		{54E7122C-0DF1-4CB0-A80A-6C0C478FF251}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
