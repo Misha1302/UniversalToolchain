@@ -46,24 +46,16 @@ public sealed class WistEngine : IDisposable
         var services = new ServiceCollection();
         services.AddWistDialectServices();
 
-        var provider = services.BuildServiceProvider();
-        try
-        {
-            var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-            var composition = workflow.ComposeFile(
-                new UniversalToolchain.Dialects.Wist.Presets.WistShippedDialectFileResolver()
-                    .Resolve(WistPresetMapper.ToShippedPreset(options.Preset)));
+        using var provider = services.BuildServiceProvider();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+        var composition = workflow.ComposeFile(
+            new UniversalToolchain.Dialects.Wist.Presets.WistShippedDialectFileResolver()
+                .Resolve(WistPresetMapper.ToShippedPreset(options.Preset)));
 
-            if (!composition.IsSuccess)
-                throw new InvalidOperationException(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
+        if (!composition.IsSuccess)
+            throw new InvalidOperationException(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
 
-            return new WistEngine(workflow.CreateHost(composition), options);
-        }
-        catch
-        {
-            provider.Dispose();
-            throw;
-        }
+        return new WistEngine(workflow.CreateHost(composition), options);
     }
 
     /// <summary>
