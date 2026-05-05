@@ -47,7 +47,7 @@ public sealed class DslPricingCalculator : IDisposable
 
     public double CalculateWithInterpreter(string formula, double price, double fee)
     {
-        var interpreter = _host.GetArtifactCompiler<IAbstractIR>(InterpreterBackendName);
+        var interpreter = _host.GetBackendSpecificArtifactCompiler<IAbstractIR>(InterpreterBackendName);
         var interpretedArtifact = interpreter.Compile(formula, CreateDeclaredBindings());
         var session = interpretedArtifact.CreateSession();
 
@@ -85,7 +85,7 @@ public sealed class DslPricingCalculator : IDisposable
     {
         try
         {
-            var interpreter = _host.GetArtifactCompiler<IAbstractIR>(InterpreterBackendName);
+            var interpreter = _host.GetBackendSpecificArtifactCompiler<IAbstractIR>(InterpreterBackendName);
             _ = interpreter.Compile(formula, CreateDeclaredBindings());
 
             return CompilationAttemptResult.Success();
@@ -121,7 +121,7 @@ public sealed class DslPricingCalculator : IDisposable
 
     private ICompiledArtifact<DynamicMethod> CompileWithCompiler(string formula)
     {
-        var compiler = _host.GetArtifactCompiler<DynamicMethod>(CompilerBackendName);
+        var compiler = _host.GetBackendSpecificArtifactCompiler<DynamicMethod>(CompilerBackendName);
         return compiler.Compile(formula, CreateDeclaredBindings());
     }
 
