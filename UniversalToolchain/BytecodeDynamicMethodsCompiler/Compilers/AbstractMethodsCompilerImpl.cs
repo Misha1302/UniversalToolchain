@@ -20,7 +20,7 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
 
     public static IReadOnlyList<string> SupportedIntrinsicIds { get; } = BuildSupportedIntrinsicIds();
 
-    public IReadOnlyList<string> SupportedIntrinsics => SupportedIntrinsicIds;
+    public IReadOnlyList<string> SupportedIntrinsics => _intrinsicCompiler.SupportedIntrinsics;
 
     public DynamicMethod Compile(IAbstractIR air, CompilationInput input)
     {
