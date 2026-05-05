@@ -60,7 +60,7 @@ public class VariablesModulePipelineTests
     {
         using var h = new ModulePipelineTestHelper();
         using var host = h.CreateHost(_modules, backends: ["interpreter"]);
-        var interpreterCompiler = host.GetArtifactCompiler<IAbstractIR>("interpreter");
+        var interpreterCompiler = host.GetBackendSpecificArtifactCompiler<IAbstractIR>("interpreter");
 
         var artifact = interpreterCompiler.Compile(new CompilationInput
         {
@@ -121,7 +121,7 @@ public class VariablesModulePipelineTests
         var loadOp = GetSingleOp(bytecode, 1);
         var ir = loadOp.GetAbstractIR(new IAbstractMethodConvertable.Context([]));
 
-        Assert.That(ir.Instructions.SelectMany(static i => i.Operands).Any(static o => o?.ToString()?.Contains("Int32", StringComparison.Ordinal) == true), Is.True);
+        Assert.That(ir.Instructions.SelectMany(static i => i.Operands).Any(static o => o.ToString()?.Contains("Int32", StringComparison.Ordinal) == true), Is.True);
     }
 
     [Test]
@@ -145,7 +145,7 @@ public class VariablesModulePipelineTests
         var loadOp = GetSingleOp(bytecode, 1);
         var ir = loadOp.GetAbstractIR(new IAbstractMethodConvertable.Context([]));
 
-        Assert.That(ir.Instructions.SelectMany(static i => i.Operands).Any(static o => o?.ToString()?.Contains("Int32", StringComparison.Ordinal) == true), Is.True);
+        Assert.That(ir.Instructions.SelectMany(static i => i.Operands).Any(static o => o.ToString()?.Contains("Int32", StringComparison.Ordinal) == true), Is.True);
     }
 
     private static AstNode CreateVariableNode(string name)
