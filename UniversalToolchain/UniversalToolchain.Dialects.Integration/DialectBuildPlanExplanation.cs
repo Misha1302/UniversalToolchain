@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Runtime.CompilerServices;
 using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
 
@@ -25,11 +24,11 @@ public sealed class DialectBuildPlanExplanation
         IEnumerable<KeyValuePair<string, bool>> capabilities)
     {
         CanBuild = canBuild;
-        _orderedModules = new ReadOnlyCollection<string>(Snapshot(orderedModules, nameof(orderedModules)));
-        _enabledBackends = new ReadOnlyCollection<DialectBackendId>(Snapshot(enabledBackends, nameof(enabledBackends)));
-        _disabledBackends = new ReadOnlyCollection<DialectBackendId>(Snapshot(disabledBackends, nameof(disabledBackends)));
-        _intrinsicDirectives = new ReadOnlyCollection<IntrinsicBuildDirective>(Snapshot(intrinsicDirectives, nameof(intrinsicDirectives)));
-        _optimizerDirectives = new ReadOnlyCollection<OptimizerBuildDirective>(Snapshot(optimizerDirectives, nameof(optimizerDirectives)));
+        _orderedModules = new ReadOnlyCollection<string>(Snapshot(orderedModules));
+        _enabledBackends = new ReadOnlyCollection<DialectBackendId>(Snapshot(enabledBackends));
+        _disabledBackends = new ReadOnlyCollection<DialectBackendId>(Snapshot(disabledBackends));
+        _intrinsicDirectives = new ReadOnlyCollection<IntrinsicBuildDirective>(Snapshot(intrinsicDirectives));
+        _optimizerDirectives = new ReadOnlyCollection<OptimizerBuildDirective>(Snapshot(optimizerDirectives));
         _capabilities = new ReadOnlyDictionary<string, bool>(SnapshotDictionary(capabilities));
         SecurityProfile = securityProfile;
     }
@@ -50,7 +49,7 @@ public sealed class DialectBuildPlanExplanation
 
     public IReadOnlyDictionary<string, bool> Capabilities => _capabilities;
 
-    private static List<T> Snapshot<T>(IEnumerable<T> source, [CallerArgumentExpression(nameof(source))] string? paramName = null)
+    private static List<T> Snapshot<T>(IEnumerable<T> source)
     {
         source = source.ArgNotNull();
         return source.Select(item => item.NotNull()).ToList();

@@ -5,11 +5,11 @@ namespace BasicCore.Execution;
 
 public static class ExternalRuntimeMethodDescriptors
 {
-    private static readonly MethodInfo LoadExternalDefinition = typeof(ExternalRuntimeCalls)
+    private static readonly MethodInfo _loadExternalDefinition = typeof(ExternalRuntimeCalls)
         .GetMethod(nameof(ExternalRuntimeCalls.LoadExternal))
         .NotNull();
 
-    private static readonly MethodInfo StoreExternalDefinition = typeof(ExternalRuntimeCalls)
+    private static readonly MethodInfo _storeExternalDefinition = typeof(ExternalRuntimeCalls)
         .GetMethod(nameof(ExternalRuntimeCalls.StoreExternal))
         .NotNull();
 
@@ -20,12 +20,12 @@ public static class ExternalRuntimeMethodDescriptors
     public static MethodInfo CreateLoadExternalMethod(Type valueType)
     {
         valueType = valueType.ArgNotNull();
-        return LoadExternalDefinition.MakeGenericMethod(valueType);
+        return _loadExternalDefinition.MakeGenericMethod(valueType);
     }
 
     public static MethodInfo CreateStoreExternalMethod(Type valueType)
     {
         valueType = valueType.ArgNotNull();
-        return StoreExternalDefinition.MakeGenericMethod(valueType);
+        return _storeExternalDefinition.MakeGenericMethod(valueType);
     }
 }

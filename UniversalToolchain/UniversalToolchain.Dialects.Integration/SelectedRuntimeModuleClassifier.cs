@@ -27,15 +27,15 @@ public sealed class SelectedRuntimeModuleClassifier
             var moduleEntry = entry.ArgNotNull();
             var type = LoadModuleType(moduleEntry);
             var isFrontendModule = typeof(IFrontendCoreModule).IsAssignableFrom(type);
-            var isIRModule = typeof(IIRProcessingModule).IsAssignableFrom(type);
+            var isIrModule = typeof(IIRProcessingModule).IsAssignableFrom(type);
 
             if (isFrontendModule)
                 frontendModuleTypes.Add(type);
 
-            if (isIRModule)
+            if (isIrModule)
                 irModuleTypes.Add(type);
 
-            if (!isFrontendModule && !isIRModule)
+            if (!isFrontendModule && !isIrModule)
                 Thrower.InvalidOpEx(
                     $"Runtime module '{moduleEntry.CanonicalAlias}' resolves to type '{DisplayName(type)}', but the type does not implement IFrontendCoreModule or IIRProcessingModule.");
         }

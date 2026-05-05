@@ -51,13 +51,13 @@ public sealed class SelectedRuntimeExecutionShape
 
     public IReadOnlyList<Type> SelectedFrontendModuleTypes => _selectedFrontendModuleTypes;
 
-    public IReadOnlyList<Type> RequiredIRInfrastructureModuleTypes => _requiredIrInfrastructureModuleTypes;
+    public IReadOnlyList<Type> RequiredIrInfrastructureModuleTypes => _requiredIrInfrastructureModuleTypes;
 
-    public IReadOnlyList<Type> SelectedIRModuleTypes => _selectedIrModuleTypes;
+    public IReadOnlyList<Type> SelectedIrModuleTypes => _selectedIrModuleTypes;
 
     public IReadOnlyList<Type> FrontendModuleTypes => _frontendModuleTypes;
 
-    public IReadOnlyList<Type> IRModuleTypes => _irModuleTypes;
+    public IReadOnlyList<Type> IrModuleTypes => _irModuleTypes;
 
     public IReadOnlyList<RuntimeComponentManifestEntry> OptimizerEntries => _optimizerEntries;
 

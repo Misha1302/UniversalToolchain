@@ -1,3 +1,5 @@
+using ObjectExtensions;
+
 namespace BasicCore.Core;
 
 public sealed class IntrinsicDescriptorProviderMetadataValidator
@@ -90,7 +92,7 @@ public sealed class IntrinsicDescriptorProviderMetadataValidator
                 continue;
             }
 
-            if (descriptors == null)
+            if (descriptors.MakeNullable() == null)
             {
                 errors.Add($"Intrinsic descriptor provider '{providerDisplayName}' returned a null descriptor collection.");
                 continue;
@@ -99,7 +101,7 @@ public sealed class IntrinsicDescriptorProviderMetadataValidator
             for (var descriptorIndex = 0; descriptorIndex < descriptors.Count; descriptorIndex++)
             {
                 var descriptor = descriptors[descriptorIndex];
-                if (descriptor == null)
+                if (descriptor.MakeNullable() == null)
                 {
                     errors.Add($"Intrinsic descriptor provider '{providerDisplayName}' returned a null descriptor at index {descriptorIndex}.");
                     continue;
@@ -111,10 +113,10 @@ public sealed class IntrinsicDescriptorProviderMetadataValidator
                     continue;
                 }
 
-                if (descriptor.StackRule == null)
+                if (descriptor.StackRule.MakeNullable() == null)
                     errors.Add($"Intrinsic descriptor provider '{providerDisplayName}' returned descriptor '{descriptor.Symbol}' with a null StackRule.");
 
-                if (descriptor.ValidationRule == null)
+                if (descriptor.ValidationRule.MakeNullable() == null)
                     errors.Add($"Intrinsic descriptor provider '{providerDisplayName}' returned descriptor '{descriptor.Symbol}' with a null ValidationRule.");
 
                 if (!symbolOwners.TryAdd(descriptor.Symbol, providerDisplayName))

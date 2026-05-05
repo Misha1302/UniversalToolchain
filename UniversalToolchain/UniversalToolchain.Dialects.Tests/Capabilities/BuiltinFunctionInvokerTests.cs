@@ -7,13 +7,13 @@ namespace UniversalToolchain.Dialects.Tests.Capabilities;
 
 public sealed class BuiltinFunctionInvokerTests
 {
-    private static readonly FunctionTypeDescriptor NumberType = new("number");
+    private static readonly FunctionTypeDescriptor _numberType = new("number");
 
     [Test]
     public void Invoke_WhenBindingIsResolved_InvokesStaticRuntimeMethod()
     {
         var catalog = CreateFunctionCatalog();
-        var resolution = catalog.Resolve("clamp", [NumberType, NumberType, NumberType], "interpreter");
+        var resolution = catalog.Resolve("clamp", [_numberType, _numberType, _numberType], "interpreter");
 
         var invocation = new BuiltinFunctionInvoker().Invoke(resolution, [15.0, 0.0, 10.0]);
 
@@ -29,7 +29,7 @@ public sealed class BuiltinFunctionInvokerTests
     public void Invoke_WhenRuntimeArgumentTypeIsWrong_ReturnsStructuredDiagnostic()
     {
         var catalog = CreateFunctionCatalog();
-        var resolution = catalog.Resolve("round", [NumberType], "interpreter");
+        var resolution = catalog.Resolve("round", [_numberType], "interpreter");
 
         var invocation = new BuiltinFunctionInvoker().Invoke(resolution, ["wrong"]);
 

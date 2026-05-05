@@ -21,7 +21,7 @@ public sealed class SelectedRuntimeModuleClassification
 
     public IReadOnlyList<Type> FrontendModuleTypes => _frontendModuleTypes;
 
-    public IReadOnlyList<Type> IRModuleTypes => _irModuleTypes;
+    public IReadOnlyList<Type> IrModuleTypes => _irModuleTypes;
 
     private static List<Type> Snapshot(IEnumerable<Type> values, string paramName)
     {

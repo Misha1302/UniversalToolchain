@@ -2,7 +2,7 @@ using System.Reflection.Emit;
 using BasicCore.Execution;
 using IntermediateRepresentationAbstractions;
 using UniversalToolchain.Dialects.Wist;
-using UniversalToolchain.Modules.Tests;
+using UniversalToolchain.Testing.Infrastructure;
 
 namespace UniversalToolchain.Dialects.Tests;
 

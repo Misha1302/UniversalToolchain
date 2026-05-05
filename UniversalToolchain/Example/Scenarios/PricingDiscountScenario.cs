@@ -63,16 +63,6 @@ public static class PricingDiscountScenario
         }
     }
 
-    private static bool ResultsMatch(
-        double hardcodedResult,
-        double generalCompilerResult,
-        double generalInterpreterResult,
-        double generalFastInvokerResult,
-        double restrictedCompilerResult,
-        double restrictedInterpreterResult) =>
-        hardcodedResult == generalCompilerResult &&
-        hardcodedResult == generalInterpreterResult &&
-        hardcodedResult == generalFastInvokerResult &&
-        hardcodedResult == restrictedCompilerResult &&
-        hardcodedResult == restrictedInterpreterResult;
+    private static bool ResultsMatch(params double[] values) =>
+        values.All(x => Math.Abs(values[0] - x) < 1e-12);
 }

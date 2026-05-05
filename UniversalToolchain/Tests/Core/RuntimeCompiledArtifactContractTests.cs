@@ -1,4 +1,3 @@
-using System.Reflection;
 using DynamicMethodCalling;
 using Tests.Infrastructure;
 
@@ -206,7 +205,7 @@ public class RuntimeCompiledArtifactContractTests
     {
         var artifact = RuntimeCompiledArtifactTestFactory.CreateEnvironmentAndTwoArgumentsArtifact();
 
-        var exception = Assert.Throws<InvalidOperationException>(() => new DynamicMethodInvoker<int, int, int>(artifact.CompilationOutput));
+        var exception = Assert.Throws<InvalidOperationException>(() => _ = new DynamicMethodInvoker<int, int, int>(artifact.CompilationOutput));
 
         Assert.That(exception!.Message, Does.Contain("parameter"));
     }

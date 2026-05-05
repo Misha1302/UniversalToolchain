@@ -4,12 +4,12 @@ namespace NumbersModule;
 
 public sealed class NumbersCapabilityProvider : ILanguageFeatureDescriptorProvider
 {
-    private static readonly LanguageFeatureId FeatureId = new("NumericLiterals");
+    private static readonly LanguageFeatureId _featureId = new("NumericLiterals");
 
     public IReadOnlyList<LanguageFeatureDescriptor> GetLanguageFeatures() =>
     [
         new(
-            FeatureId,
+            _featureId,
             "Numeric literals",
             LanguageFeatureKind.Syntax,
             ["Numbers"],

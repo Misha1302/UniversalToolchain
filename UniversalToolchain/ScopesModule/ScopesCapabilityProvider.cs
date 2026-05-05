@@ -4,12 +4,12 @@ namespace ScopesModule;
 
 public sealed class ScopesCapabilityProvider : ILanguageFeatureDescriptorProvider
 {
-    private static readonly LanguageFeatureId FeatureId = new("ParenthesizedScopes");
+    private static readonly LanguageFeatureId _featureId = new("ParenthesizedScopes");
 
     public IReadOnlyList<LanguageFeatureDescriptor> GetLanguageFeatures() =>
     [
         new(
-            FeatureId,
+            _featureId,
             "Parenthesized scopes",
             LanguageFeatureKind.Syntax,
             ["Scopes"],

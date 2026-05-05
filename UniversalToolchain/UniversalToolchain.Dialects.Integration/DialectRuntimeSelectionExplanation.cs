@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Runtime.CompilerServices;
 using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
 
@@ -27,10 +26,10 @@ public sealed class DialectRuntimeSelectionExplanation
         SelectionKind = selectionKind;
         IsResolved = isResolved;
         HasResolvedRuntimeComponents = hasResolvedRuntimeComponents;
-        _diagnostics = new ReadOnlyCollection<DialectDiagnostic>(Snapshot(diagnostics, nameof(diagnostics)));
-        _orderedModules = new ReadOnlyCollection<RuntimeComponentManifestEntry>(Snapshot(orderedModules, nameof(orderedModules)));
-        _enabledOptimizers = new ReadOnlyCollection<RuntimeComponentManifestEntry>(Snapshot(enabledOptimizers, nameof(enabledOptimizers)));
-        _enabledBackends = new ReadOnlyCollection<RuntimeComponentManifestEntry>(Snapshot(enabledBackends, nameof(enabledBackends)));
+        _diagnostics = new ReadOnlyCollection<DialectDiagnostic>(Snapshot(diagnostics));
+        _orderedModules = new ReadOnlyCollection<RuntimeComponentManifestEntry>(Snapshot(orderedModules));
+        _enabledOptimizers = new ReadOnlyCollection<RuntimeComponentManifestEntry>(Snapshot(enabledOptimizers));
+        _enabledBackends = new ReadOnlyCollection<RuntimeComponentManifestEntry>(Snapshot(enabledBackends));
     }
 
     public string SelectionKind { get; }
@@ -47,7 +46,7 @@ public sealed class DialectRuntimeSelectionExplanation
 
     public IReadOnlyList<RuntimeComponentManifestEntry> EnabledBackends => _enabledBackends;
 
-    private static List<T> Snapshot<T>(IEnumerable<T> source, [CallerArgumentExpression(nameof(source))] string? paramName = null)
+    private static List<T> Snapshot<T>(IEnumerable<T> source)
     {
         source = source.ArgNotNull();
         return source.Select(item => item.NotNull()).ToList();

@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using ExceptionsManager;
+using ObjectExtensions;
 
 namespace UniversalToolchain.Dialects.Abstractions;
 
@@ -16,7 +17,7 @@ public sealed class DialectValidationResult
         if (diagnostics != null)
             foreach (var diagnostic in diagnostics)
             {
-                if (diagnostic == null)
+                if (diagnostic.MakeNullable() == null)
                     Thrower.Argument(nameof(diagnostics), "Diagnostics collection must not contain null entries.");
 
                 list.Add(diagnostic);

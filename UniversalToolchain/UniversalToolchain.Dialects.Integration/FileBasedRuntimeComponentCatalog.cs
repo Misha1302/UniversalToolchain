@@ -58,8 +58,7 @@ public sealed class FileBasedRuntimeComponentCatalog : IRuntimeComponentCatalog
             if (string.IsNullOrWhiteSpace(assemblySimpleName))
                 Thrower.Argument(nameof(manifestPaths), $"Runtime manifest '{manifestPath}' has an empty assemblySimpleName.");
 
-            foreach (var component in document.Components ?? [])
-                entries.Add(ToRuntimeEntry(component, assemblySimpleName, manifestPath));
+            entries.AddRange(document.Components.Select(component => ToRuntimeEntry(component, assemblySimpleName, manifestPath)));
         }
 
         ValidateUniqueIds(entries);

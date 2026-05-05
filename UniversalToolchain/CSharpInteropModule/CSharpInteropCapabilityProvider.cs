@@ -4,12 +4,12 @@ namespace CSharpInteropModule;
 
 public sealed class CSharpInteropCapabilityProvider : ILanguageFeatureDescriptorProvider
 {
-    private static readonly LanguageFeatureId FeatureId = new("CSharpInterop");
+    private static readonly LanguageFeatureId _featureId = new("CSharpInterop");
 
     public IReadOnlyList<LanguageFeatureDescriptor> GetLanguageFeatures() =>
     [
         new(
-            FeatureId,
+            _featureId,
             "C# interop",
             LanguageFeatureKind.Interop,
             ["CSharpInterop"],

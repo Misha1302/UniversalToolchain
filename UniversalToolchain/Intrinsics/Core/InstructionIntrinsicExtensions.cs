@@ -1,3 +1,5 @@
+using ObjectExtensions;
+
 namespace BasicCore.Core;
 
 public static class InstructionIntrinsicExtensions
@@ -6,7 +8,7 @@ public static class InstructionIntrinsicExtensions
     {
         invocation = default!;
 
-        if (instruction == null)
+        if (instruction.MakeNullable() == null)
             return false;
 
         if (instruction.UOpCode != UOpCode.Intrinsic)

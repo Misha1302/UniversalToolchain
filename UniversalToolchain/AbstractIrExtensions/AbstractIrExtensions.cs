@@ -1,3 +1,5 @@
+using VariablesRuntime.Runtime;
+
 namespace AbstractIrExtensions;
 
 public static class AbstractIrExtensions

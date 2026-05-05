@@ -40,9 +40,11 @@ The benchmark method itself must not parse or compile source text.
 - `ExternalConstantsHeavy6ExecutionBenchmarks`;
 - `ExternalWideExpression10ExecutionBenchmarks`.
 
-`ExternalWideExpression11ExecutionBenchmarks` is excluded for now because the current execution-bound native pointer API supports up to ten external arguments.
+`ExternalWideExpression11ExecutionBenchmarks` is excluded for now because the current execution-bound native pointer API
+supports up to ten external arguments.
 
-`ExternalExecutionBenchmarks/Unrolled/**` is excluded because generated unrolled benchmarks need a separate experimental contract.
+`ExternalExecutionBenchmarks/Unrolled/**` is excluded because generated unrolled benchmarks need a separate experimental
+contract.
 
 `ArithmeticExecutionBenchmarks.cs` is excluded because it is a legacy internal comparison.
 

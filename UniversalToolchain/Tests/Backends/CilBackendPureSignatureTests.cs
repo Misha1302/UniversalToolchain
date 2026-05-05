@@ -1,6 +1,4 @@
 using System.Reflection.Emit;
-using DynamicMethodCalling.Core;
-using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Wist;
 using UniversalToolchain.Dialects.Wist.Presets;
 

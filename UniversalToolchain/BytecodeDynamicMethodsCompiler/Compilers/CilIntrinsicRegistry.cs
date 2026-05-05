@@ -4,7 +4,6 @@ namespace BytecodeDynamicMethodsCompiler.Compilers;
 
 internal sealed class CilIntrinsicRegistry
 {
-    private readonly IReadOnlyList<CilIntrinsicDescriptor> _descriptors;
     private readonly IReadOnlyDictionary<string, CilIntrinsicDescriptor> _descriptorsByName;
 
     public CilIntrinsicRegistry()
@@ -101,9 +100,9 @@ internal sealed class CilIntrinsicRegistry
                 Thrower.InvalidOpEx($"Duplicate CIL intrinsic registration: {descriptor.Name}");
         }
 
-        _descriptors = descriptors.AsReadOnly();
+        IReadOnlyList<CilIntrinsicDescriptor> descriptors1 = descriptors.AsReadOnly();
         _descriptorsByName = descriptorsByName;
-        SupportedIntrinsics = _descriptors.Select(x => x.Name).ToArray();
+        SupportedIntrinsics = descriptors1.Select(x => x.Name).ToArray();
     }
 
     public IReadOnlyList<string> SupportedIntrinsics { get; }

@@ -72,8 +72,8 @@ public class DialectDslOrderingTests
         var services = new ServiceCollection();
         services.AddDialectDsl();
         services.AddSingleton(executionLog);
-        services.AddSingleton<IDialectDslFeatureProvider>(provider => new RecordingProviderOmega(builder => builder.RegisterFeature(new OrderedFeature("tests.provider.omega", "omega", new DialectDirectiveParserOrder(DialectDirectiveSlot.Extension, 2))), executionLog));
-        services.AddSingleton<IDialectDslFeatureProvider>(provider => new RecordingProviderAlpha(builder => builder.RegisterFeature(new OrderedFeature("tests.provider.alpha", "alpha", new DialectDirectiveParserOrder(DialectDirectiveSlot.Extension, 1))), executionLog));
+        services.AddSingleton<IDialectDslFeatureProvider>(_ => new RecordingProviderOmega(builder => builder.RegisterFeature(new OrderedFeature("tests.provider.omega", "omega", new DialectDirectiveParserOrder(DialectDirectiveSlot.Extension, 2))), executionLog));
+        services.AddSingleton<IDialectDslFeatureProvider>(_ => new RecordingProviderAlpha(builder => builder.RegisterFeature(new OrderedFeature("tests.provider.alpha", "alpha", new DialectDirectiveParserOrder(DialectDirectiveSlot.Extension, 1))), executionLog));
 
         using var provider = services.BuildServiceProvider();
         var registry = provider.GetRequiredService<DialectDslRegistry>();
@@ -119,10 +119,10 @@ public class DialectDslOrderingTests
     [Test]
     public void Registry_ShouldRejectDuplicateKeywordAndDuplicateIdRegistrations()
     {
-        var duplicateKeyword = Assert.Throws<InvalidOperationException>(() => new DialectDslRegistry(
+        var duplicateKeyword = Assert.Throws<InvalidOperationException>(() => _ = new DialectDslRegistry(
             [new OrderedFeature("tests.alpha", "dup", new DialectDirectiveParserOrder(DialectDirectiveSlot.Extension, 1)), new OrderedFeature("tests.beta", "dup", new DialectDirectiveParserOrder(DialectDirectiveSlot.Extension, 2))],
             []));
-        var duplicateId = Assert.Throws<InvalidOperationException>(() => new DialectDslRegistry(
+        var duplicateId = Assert.Throws<InvalidOperationException>(() => _ = new DialectDslRegistry(
             [new OrderedFeature("tests.same", "alpha", new DialectDirectiveParserOrder(DialectDirectiveSlot.Extension, 1)), new OrderedFeature("tests.same", "beta", new DialectDirectiveParserOrder(DialectDirectiveSlot.Extension, 2))],
             []));
 

@@ -1,3 +1,5 @@
+using ObjectExtensions;
+
 namespace BasicCore.Compilation;
 
 /// <summary>
@@ -57,13 +59,13 @@ public sealed class CompiledArtifact<TCompilationOutput> : ICompiledArtifact<TCo
         for (var i = 0; i < declaredBindings.Count; i++)
         {
             var binding = declaredBindings[i];
-            if (binding is null)
+            if (binding.MakeNullable() is null)
                 Thrower.Argument(nameof(declaredBindings), "Declared bindings must not contain null entries.");
 
             if (string.IsNullOrWhiteSpace(binding.Name))
                 Thrower.Argument(nameof(declaredBindings), "Declared binding name must not be empty.");
 
-            if (binding.Type is null)
+            if (binding.Type.MakeNullable() is null)
                 Thrower.Argument(nameof(declaredBindings), "Declared binding type must not be null.");
 
             snapshot[i] = new ExternalBinding

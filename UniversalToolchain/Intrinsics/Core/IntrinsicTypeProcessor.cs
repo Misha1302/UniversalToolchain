@@ -74,7 +74,7 @@ public static class IntrinsicTypeProcessor
 
         if (name == "load_bool")
         {
-            ProcessTypesLoadBool(instruction, stack);
+            ProcessTypesLoadBool(stack);
             return;
         }
 
@@ -189,7 +189,7 @@ public static class IntrinsicTypeProcessor
         stack.RemoveAt(stack.Count - 1);
     }
 
-    private static void ProcessTypesLoadBool(Instruction instruction, List<Type> stack)
+    private static void ProcessTypesLoadBool(List<Type> stack)
     {
         stack.Add(typeof(bool));
     }
@@ -247,6 +247,7 @@ public static class IntrinsicTypeProcessor
         PopTwoPush(stack, typeof(bool));
     }
 
+    // ReSharper disable UnusedTupleComponentInReturnValue
     private static (string Family, string Operation, Type OperandType) ParseIntrinsicSignature(string name)
     {
         var parts = name.Split('_');

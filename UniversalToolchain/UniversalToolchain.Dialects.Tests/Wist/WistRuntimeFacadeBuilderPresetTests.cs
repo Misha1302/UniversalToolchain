@@ -1,7 +1,7 @@
 using NumbersModule.Core;
 using UniversalToolchain.Dialects.Wist.Facade;
 using UniversalToolchain.Dialects.Wist.Presets;
-using UniversalToolchain.Modules.Tests;
+using UniversalToolchain.Testing.Infrastructure;
 
 namespace UniversalToolchain.Dialects.Tests.Wist;
 

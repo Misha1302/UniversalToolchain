@@ -1,3 +1,5 @@
+using ObjectExtensions;
+
 namespace BasicCore.Core;
 
 public sealed class IntrinsicSemanticCoverageValidator
@@ -72,7 +74,7 @@ public sealed class IntrinsicSemanticCoverageValidator
             }
 
             var descriptors = provider.GetDescriptors()
-                .Where(static x => x != null)
+                .Where(static x => x.MakeNullable() != null)
                 .Where(static x => !EqualityComparer<IntrinsicSymbol>.Default.Equals(x.Symbol, default))
                 .OrderBy(x => x.Symbol.Namespace, StringComparer.Ordinal)
                 .ThenBy(x => x.Symbol.Name, StringComparer.Ordinal)

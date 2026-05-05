@@ -174,7 +174,6 @@ internal static class DialectSemanticNormalization
             var (from, to) = constraint.Kind switch
             {
                 DialectOrderConstraintKind.Before => (constraint.SourceModule, constraint.TargetModule),
-                DialectOrderConstraintKind.After => (constraint.TargetModule, constraint.SourceModule),
                 _ => (constraint.TargetModule, constraint.SourceModule)
             };
 

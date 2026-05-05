@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using ExceptionsManager;
+using ObjectExtensions;
 
 namespace UniversalToolchain.Dialects.Abstractions;
 
@@ -102,7 +103,7 @@ public sealed class DialectDefinition
         var rules = new List<OrderRule>();
         foreach (var rule in orderRules)
         {
-            if (rule == null)
+            if (rule.MakeNullable() == null)
                 Thrower.Argument(nameof(orderRules), "Order rules must not contain null entries.");
 
             rules.Add(rule);
@@ -122,7 +123,7 @@ public sealed class DialectDefinition
             if (string.IsNullOrWhiteSpace(extension.Key))
                 Thrower.Argument(nameof(extensions), "Extension key must not be null or empty.");
 
-            if (extension.Value == null)
+            if (extension.Value.MakeNullable() == null)
                 Thrower.Argument(nameof(extensions), "Extension value must not be null.");
 
             if (snapshot.ContainsKey(extension.Key))

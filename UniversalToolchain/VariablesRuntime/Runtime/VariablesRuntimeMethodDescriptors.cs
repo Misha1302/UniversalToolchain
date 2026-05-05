@@ -1,15 +1,15 @@
 using System.Reflection;
 using BasicCore.Core;
 
-namespace VariablesModule.Runtime;
+namespace VariablesRuntime.Runtime;
 
 public static class VariablesRuntimeMethodDescriptors
 {
-    private static readonly MethodInfo LoadLocalDefinition = typeof(VariablesRuntimeCalls)
+    private static readonly MethodInfo _loadLocalDefinition = typeof(VariablesRuntimeCalls)
         .GetMethod(nameof(VariablesRuntimeCalls.LoadLocal))
         .NotNull();
 
-    private static readonly MethodInfo StoreLocalDefinition = typeof(VariablesRuntimeCalls)
+    private static readonly MethodInfo _storeLocalDefinition = typeof(VariablesRuntimeCalls)
         .GetMethod(nameof(VariablesRuntimeCalls.StoreLocal))
         .NotNull();
 
@@ -20,12 +20,12 @@ public static class VariablesRuntimeMethodDescriptors
     public static MethodInfo CreateLoadLocalMethod(Type valueType)
     {
         valueType = valueType.ArgNotNull();
-        return LoadLocalDefinition.MakeGenericMethod(valueType);
+        return _loadLocalDefinition.MakeGenericMethod(valueType);
     }
 
     public static MethodInfo CreateStoreLocalMethod(Type valueType)
     {
         valueType = valueType.ArgNotNull();
-        return StoreLocalDefinition.MakeGenericMethod(valueType);
+        return _storeLocalDefinition.MakeGenericMethod(valueType);
     }
 }

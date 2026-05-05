@@ -37,7 +37,7 @@ public sealed class WistRuntimePathGuardrailTests
                 Is.EqualTo(WistDialectTestInfrastructure.BuildSelectionAndDiagnosticsSignature(composition)));
             Assert.That(WistDialectTestInfrastructure.BuildConfigurationSignature(facade.Configuration), Is.EqualTo(WistDialectTestInfrastructure.BuildConfigurationSignature(host.Configuration)));
             Assert.That(facade.Configuration.FrontendModules, Is.SupersetOf(expectedShape.FrontendModuleTypes));
-            Assert.That(facade.Configuration.IrModules, Is.EqualTo(expectedShape.IRModuleTypes));
+            Assert.That(facade.Configuration.IrModules, Is.EqualTo(expectedShape.IrModuleTypes));
             Assert.That(
                 facade.Configuration.BackendConfigurations.Select(static x => x.BackendDescriptor.CanonicalId),
                 Is.EqualTo(expectedShape.BackendEntries.Select(static x => x.CanonicalAlias)));
@@ -74,7 +74,7 @@ public sealed class WistRuntimePathGuardrailTests
                 Is.EqualTo(WistDialectTestInfrastructure.BuildSelectionAndDiagnosticsSignature(composition)));
             Assert.That(WistDialectTestInfrastructure.BuildConfigurationSignature(facade.Configuration), Is.EqualTo(WistDialectTestInfrastructure.BuildConfigurationSignature(host.Configuration)));
             Assert.That(facade.Configuration.FrontendModules, Is.SupersetOf(expectedShape.FrontendModuleTypes));
-            Assert.That(facade.Configuration.IrModules, Is.EqualTo(expectedShape.IRModuleTypes));
+            Assert.That(facade.Configuration.IrModules, Is.EqualTo(expectedShape.IrModuleTypes));
             Assert.That(
                 facade.Configuration.BackendConfigurations.Select(static x => x.BackendDescriptor.CanonicalId),
                 Is.EqualTo(expectedShape.BackendEntries.Select(static x => x.CanonicalAlias)));
@@ -147,7 +147,7 @@ public sealed class WistRuntimePathGuardrailTests
             Assert.That(selectedModuleTypes, Is.EqualTo(new[] { "Arithmetic" }));
             Assert.That(shape.FrontendModuleTypes, Is.SupersetOf(requiredFrontendModules));
             Assert.That(shape.FrontendModuleTypes.Except(requiredFrontendModules).Select(static x => x.Name), Is.EqualTo(new[] { "ArithmeticModuleImpl" }));
-            Assert.That(shape.IRModuleTypes, Is.Empty);
+            Assert.That(shape.IrModuleTypes, Is.Empty);
             Assert.That(shape.BackendEntries.Select(static x => x.CanonicalAlias), Is.EqualTo(new[] { "interpreter" }));
         });
     }
@@ -163,7 +163,7 @@ public sealed class WistRuntimePathGuardrailTests
             .Distinct(StringComparer.Ordinal)
             .ToArray();
         var irSignatures = Enumerable.Range(0, 30)
-            .Select(_ => string.Join("|", requiredInfrastructure.GetIRModuleTypes().Select(static x => x.FullName)))
+            .Select(_ => string.Join("|", requiredInfrastructure.GetIrModuleTypes().Select(static x => x.FullName)))
             .Distinct(StringComparer.Ordinal)
             .ToArray();
 
@@ -315,7 +315,7 @@ public sealed class WistRuntimePathGuardrailTests
                     .Select(typeLoader.LoadType)
                     .Where(static x => typeof(IFrontendCoreModule).IsAssignableFrom(x))));
         var expectedIrTypes = DeduplicateStable(
-            requiredInfrastructure.GetIRModuleTypes()
+            requiredInfrastructure.GetIrModuleTypes()
                 .Concat(selection.OrderedModules
                     .Select(typeLoader.LoadType)
                     .Where(static x => typeof(IIRProcessingModule).IsAssignableFrom(x))));
@@ -323,7 +323,7 @@ public sealed class WistRuntimePathGuardrailTests
         Assert.Multiple(() =>
         {
             Assert.That(shape.FrontendModuleTypes, Is.EqualTo(expectedFrontendTypes));
-            Assert.That(shape.IRModuleTypes, Is.EqualTo(expectedIrTypes));
+            Assert.That(shape.IrModuleTypes, Is.EqualTo(expectedIrTypes));
             Assert.That(shape.BackendEntries.Select(static x => x.CanonicalAlias), Is.EqualTo(new[] { "interpreter" }));
         });
     }
@@ -339,7 +339,7 @@ public sealed class WistRuntimePathGuardrailTests
     {
         return string.Join("|", shape.FrontendModuleTypes.Select(static x => x.FullName))
                + "::"
-               + string.Join("|", shape.IRModuleTypes.Select(static x => x.FullName))
+               + string.Join("|", shape.IrModuleTypes.Select(static x => x.FullName))
                + "::"
                + string.Join("|", shape.OptimizerEntries.Select(static x => x.CanonicalAlias))
                + "::"

@@ -4,12 +4,12 @@ namespace NativeMathModule;
 
 public sealed class NativeTypesCapabilityProvider : ILanguageFeatureDescriptorProvider
 {
-    private static readonly LanguageFeatureId FeatureId = new("NativeNumericTypes");
+    private static readonly LanguageFeatureId _featureId = new("NativeNumericTypes");
 
     public IReadOnlyList<LanguageFeatureDescriptor> GetLanguageFeatures() =>
     [
         new(
-            FeatureId,
+            _featureId,
             "Native numeric types",
             LanguageFeatureKind.TypeSystem,
             ["NativeTypes"],

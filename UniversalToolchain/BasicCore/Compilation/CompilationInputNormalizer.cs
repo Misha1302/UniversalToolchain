@@ -1,3 +1,5 @@
+using ObjectExtensions;
+
 namespace BasicCore.Compilation;
 
 public sealed class CompilationInputNormalizer
@@ -12,7 +14,7 @@ public sealed class CompilationInputNormalizer
             bindings.Add(new ExternalBinding
             {
                 Name = pair.Key,
-                Type = pair.Value?.GetType() ?? typeof(object),
+                Type = pair.Value.MakeNullable()?.GetType() ?? typeof(object),
                 Value = pair.Value,
                 Kind = ExternalBindingKind.Variable
             });

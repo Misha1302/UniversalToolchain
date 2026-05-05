@@ -1,7 +1,7 @@
 using System.Reflection;
 using ExceptionsManager;
 
-namespace UniversalToolchain.Dialects.Tests;
+namespace UniversalToolchain.Testing.Infrastructure;
 
 public static class BackendResultAssertions
 {
@@ -56,9 +56,9 @@ public static class BackendResultAssertions
         var method = value.GetType().GetMethod(
             "GetValue",
             BindingFlags.Instance | BindingFlags.Public,
-            binder: null,
-            types: Type.EmptyTypes,
-            modifiers: null);
+            null,
+            Type.EmptyTypes,
+            null);
 
         if (method is null)
             return false;

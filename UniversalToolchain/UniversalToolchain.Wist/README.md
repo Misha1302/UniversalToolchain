@@ -2,7 +2,8 @@
 
 A Wist-first .NET DSL/runtime facade for evaluating restricted formulas and compiling typed fast functions.
 
-This package is the intended first-contact API for .NET developers. It hides the compiler pipeline, dialect runtime host, manifests, `DynamicMethod`, `IAbstractIR`, and session APIs behind a small facade.
+This package is the intended first-contact API for .NET developers. It hides the compiler pipeline, dialect runtime
+host, manifests, `DynamicMethod`, `IAbstractIR`, and session APIs behind a small facade.
 
 ## Install
 
@@ -28,7 +29,8 @@ double result = wist.Evaluate<double>(
     });
 ```
 
-`Evaluate` is intentionally convenient. It may inspect anonymous objects, map argument names, and run through the convenience execution path.
+`Evaluate` is intentionally convenient. It may inspect anonymous objects, map argument names, and run through the
+convenience execution path.
 
 ## Fast execution
 
@@ -50,7 +52,8 @@ for (var i = 0; i < prices.Length; i++)
 }
 ```
 
-`CompileFunc` compiles once and returns a typed function. The hot `Invoke` path does not use dictionaries, anonymous-object reflection, session setup, backend strings, or boxing for typed primitive arguments.
+`CompileFunc` compiles once and returns a typed function. The hot `Invoke` path does not use dictionaries,
+anonymous-object reflection, session setup, backend strings, or boxing for typed primitive arguments.
 
 ## Rule of thumb
 
@@ -100,7 +103,8 @@ WistEngine.CreateTrusted();
 
 ## Security note
 
-Restricted presets limit the selected language surface. They are not a hardened sandbox for arbitrary untrusted code. Treat untrusted script execution as high risk and isolate it at the process/environment level when needed.
+Restricted presets limit the selected language surface. They are not a hardened sandbox for arbitrary untrusted code.
+Treat untrusted script execution as high risk and isolate it at the process/environment level when needed.
 
 ## Current scope
 

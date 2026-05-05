@@ -44,7 +44,7 @@ public sealed class DefaultRuntimeComponentResolver : IRuntimeComponentResolver
             Thrower.InvalidOpEx(
                 $"Runtime activation type '{GetTypeName(type)}' for manifest entry '{entry.ComponentId}' does not declare DialectRuntimeExportAttribute.");
 
-        var descriptor = CreateExportDescriptor(type, export!);
+        var descriptor = CreateExportDescriptor(type, export);
         ValidateResolvedComponent(entry, descriptor);
 
         return CreateResolvedDescriptor(entry, descriptor);

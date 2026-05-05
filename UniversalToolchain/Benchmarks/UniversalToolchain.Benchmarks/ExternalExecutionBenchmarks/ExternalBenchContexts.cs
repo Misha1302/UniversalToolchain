@@ -38,7 +38,6 @@ public class ExternalBenchContext8
     public double H { get; set; }
 }
 
-
 public class ExternalBenchContext10
 {
     public double A { get; set; }

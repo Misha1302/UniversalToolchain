@@ -4,12 +4,12 @@ namespace ConditionsModule;
 
 public sealed class ComparisonCapabilityProvider : ILanguageFeatureDescriptorProvider
 {
-    private static readonly LanguageFeatureId FeatureId = new("ComparisonConditions");
+    private static readonly LanguageFeatureId _featureId = new("ComparisonConditions");
 
     public IReadOnlyList<LanguageFeatureDescriptor> GetLanguageFeatures() =>
     [
         new(
-            FeatureId,
+            _featureId,
             "Comparison conditions",
             LanguageFeatureKind.Syntax,
             ["ComparisonConditions"],

@@ -22,4 +22,7 @@ public static class ObjectExtension
             _immortalObjects.Remove(obj);
         }
     }
+
+    // ReSharper disable once ReturnTypeCanBeNotNullable
+    public static T? MakeNullable<T>(this T obj) => obj;
 }

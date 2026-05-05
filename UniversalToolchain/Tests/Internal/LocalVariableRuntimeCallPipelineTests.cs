@@ -1,6 +1,6 @@
 using System.Reflection.Emit;
 using AbstractIrExtensions;
-using VariablesModule.Runtime;
+using VariablesRuntime.Runtime;
 
 namespace Tests.Internal;
 

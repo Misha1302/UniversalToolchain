@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Runtime.CompilerServices;
 using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
 
@@ -29,8 +28,8 @@ public sealed class DialectCompositionExplanation
         DialectVersion = dialectVersion;
         BuildPlan = buildPlan;
         RuntimeSelection = runtimeSelection;
-        _semanticDiagnostics = new ReadOnlyCollection<DialectDiagnostic>(Snapshot(semanticDiagnostics, nameof(semanticDiagnostics)));
-        _resolutionDiagnostics = new ReadOnlyCollection<DialectDiagnostic>(Snapshot(resolutionDiagnostics, nameof(resolutionDiagnostics)));
+        _semanticDiagnostics = new ReadOnlyCollection<DialectDiagnostic>(Snapshot(semanticDiagnostics));
+        _resolutionDiagnostics = new ReadOnlyCollection<DialectDiagnostic>(Snapshot(resolutionDiagnostics));
     }
 
     public string SourceName { get; }
@@ -49,7 +48,7 @@ public sealed class DialectCompositionExplanation
 
     public IReadOnlyList<DialectDiagnostic> ResolutionDiagnostics => _resolutionDiagnostics;
 
-    private static List<T> Snapshot<T>(IEnumerable<T> source, [CallerArgumentExpression(nameof(source))] string? paramName = null)
+    private static List<T> Snapshot<T>(IEnumerable<T> source)
     {
         source = source.ArgNotNull();
         return source.Select(item => item.NotNull()).ToList();

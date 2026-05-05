@@ -8,6 +8,6 @@ public sealed class WistRequiredInfrastructureModulesProvider : IWistRequiredInf
     public IReadOnlyList<Type> GetFrontendModuleTypes() =>
         [typeof(ProgramStructureFrontendModule)];
 
-    public IReadOnlyList<Type> GetIRModuleTypes() =>
+    public IReadOnlyList<Type> GetIrModuleTypes() =>
         [];
 }

@@ -4,12 +4,12 @@ namespace EqualityModule;
 
 public sealed class EqualityCapabilityProvider : ILanguageFeatureDescriptorProvider
 {
-    private static readonly LanguageFeatureId FeatureId = new("Assignments");
+    private static readonly LanguageFeatureId _featureId = new("Assignments");
 
     public IReadOnlyList<LanguageFeatureDescriptor> GetLanguageFeatures() =>
     [
         new(
-            FeatureId,
+            _featureId,
             "Assignments",
             LanguageFeatureKind.Syntax,
             ["Equality"],

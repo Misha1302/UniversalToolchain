@@ -4,12 +4,12 @@ namespace SemicolonAsNewLineModule;
 
 public sealed class SemicolonAsNewLineCapabilityProvider : ILanguageFeatureDescriptorProvider
 {
-    private static readonly LanguageFeatureId FeatureId = new("SemicolonAsNewLine");
+    private static readonly LanguageFeatureId _featureId = new("SemicolonAsNewLine");
 
     public IReadOnlyList<LanguageFeatureDescriptor> GetLanguageFeatures() =>
     [
         new(
-            FeatureId,
+            _featureId,
             "Semicolon statement separators",
             LanguageFeatureKind.Syntax,
             ["SemicolonAsNewLine"],

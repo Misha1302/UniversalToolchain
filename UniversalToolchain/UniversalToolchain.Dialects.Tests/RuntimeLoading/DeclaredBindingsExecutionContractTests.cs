@@ -4,7 +4,7 @@ using IntermediateRepresentationAbstractions;
 using Microsoft.Extensions.DependencyInjection;
 using NumbersModule.Core;
 using UniversalToolchain.Dialects.Wist;
-using UniversalToolchain.Modules.Tests;
+using UniversalToolchain.Testing.Infrastructure;
 
 namespace UniversalToolchain.Dialects.Tests.RuntimeLoading;
 

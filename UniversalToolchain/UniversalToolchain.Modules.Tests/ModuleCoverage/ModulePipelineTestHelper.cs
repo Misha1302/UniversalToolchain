@@ -1,6 +1,7 @@
 using System.Text;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Wist;
+using UniversalToolchain.Testing.Infrastructure;
 
 namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 

@@ -43,7 +43,7 @@ internal sealed class InterpreterIntrinsicExecutor
             if (state.ValueStack.Count == 0)
                 Thrower.InvalidOpEx("Cannot call method: not enough arguments on the interpreter stack.");
 
-            var value = state.ValueStack.Pop();
+            var value = state.ValueStack.Pop().MakeNullable();
             if (parameters[i].ParameterType.IsByRef)
             {
                 Thrower.InvalidOpEx("By-ref call is not supported by the interpreter intrinsic surface.");

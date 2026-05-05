@@ -4,12 +4,12 @@ namespace IdentifierModule;
 
 public sealed class IdentifierCapabilityProvider : ILanguageFeatureDescriptorProvider
 {
-    private static readonly LanguageFeatureId FeatureId = new("Identifiers");
+    private static readonly LanguageFeatureId _featureId = new("Identifiers");
 
     public IReadOnlyList<LanguageFeatureDescriptor> GetLanguageFeatures() =>
     [
         new(
-            FeatureId,
+            _featureId,
             "Identifiers",
             LanguageFeatureKind.Syntax,
             ["Identifier"],

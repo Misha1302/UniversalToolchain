@@ -1,4 +1,4 @@
-namespace VariablesModule.Runtime;
+namespace VariablesRuntime.Runtime;
 
 public static class VariablesRuntimeCalls
 {

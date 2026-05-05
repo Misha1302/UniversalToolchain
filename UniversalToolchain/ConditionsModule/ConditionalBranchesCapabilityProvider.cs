@@ -4,12 +4,12 @@ namespace ConditionsModule;
 
 public sealed class ConditionalBranchesCapabilityProvider : ILanguageFeatureDescriptorProvider
 {
-    private static readonly LanguageFeatureId FeatureId = new("ConditionalBranches");
+    private static readonly LanguageFeatureId _featureId = new("ConditionalBranches");
 
     public IReadOnlyList<LanguageFeatureDescriptor> GetLanguageFeatures() =>
     [
         new(
-            FeatureId,
+            _featureId,
             "Conditional branches",
             LanguageFeatureKind.Syntax,
             ["Conditions"],

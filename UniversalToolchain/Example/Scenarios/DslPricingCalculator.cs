@@ -1,7 +1,6 @@
 using BasicCore.Compilation;
 using BasicCore.Execution;
 using IntermediateRepresentationAbstractions;
-using DynamicMethodCalling.Core;
 using UniversalToolchain.Dialects.Wist;
 using UniversalToolchain.Dialects.Wist.Presets;
 

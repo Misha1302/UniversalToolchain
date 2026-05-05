@@ -88,7 +88,7 @@ public sealed class IntrinsicSemanticStartupValidationRuntimeTests
         var provider = factory.Create(configuration);
         using var providerLifetime = provider as IDisposable;
         _ = provider.GetServices<IIntrinsicDescriptorProvider>()
-            .Single(static x => x.GetType() == typeof(CountingDescriptorProvider));
+            .Single(static x => x is CountingDescriptorProvider);
 
         Assert.That(CountingDependency.CreationCount, Is.EqualTo(1));
     }

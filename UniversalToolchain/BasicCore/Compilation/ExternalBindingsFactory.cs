@@ -1,3 +1,5 @@
+using ObjectExtensions;
+
 namespace BasicCore.Compilation;
 
 internal static class ExternalBindingsFactory
@@ -19,7 +21,7 @@ internal static class ExternalBindingsFactory
         return parameters.Select(x => new ExternalBinding
         {
             Name = x.Key,
-            Type = x.Value?.GetType() ?? typeof(object),
+            Type = x.Value.MakeNullable()?.GetType() ?? typeof(object),
             Value = x.Value,
             Kind = ExternalBindingKind.Variable
         }).ToList();

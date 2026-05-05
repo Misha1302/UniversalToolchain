@@ -1,8 +1,8 @@
 using System.Reflection.Emit;
-using BasicCore.Compilation;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
+using UniversalToolchain.Dialects.Wist.Presets;
 
 namespace UniversalToolchain.Wist;
 
@@ -19,6 +19,18 @@ public sealed class WistEngine : IDisposable
     {
         _host = host;
         _options = options;
+    }
+
+    /// <summary>
+    ///     Releases the composed Wist runtime.
+    /// </summary>
+    public void Dispose()
+    {
+        if (_disposed)
+            return;
+
+        _host.Dispose();
+        _disposed = true;
     }
 
     /// <summary>
@@ -49,7 +61,7 @@ public sealed class WistEngine : IDisposable
         using var provider = services.BuildServiceProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var composition = workflow.ComposeFile(
-            new UniversalToolchain.Dialects.Wist.Presets.WistShippedDialectFileResolver()
+            new WistShippedDialectFileResolver()
                 .Resolve(WistPresetMapper.ToShippedPreset(options.Preset)));
 
         if (!composition.IsSuccess)
@@ -61,26 +73,17 @@ public sealed class WistEngine : IDisposable
     /// <summary>
     ///     Evaluates source text through the configured convenience backend.
     /// </summary>
-    public T Evaluate<T>(string code)
-    {
-        return WistResultConverter.ConvertTo<T>(_host.Run(code, WistBackendAliases.ToAlias(_options.Backend)));
-    }
+    public T Evaluate<T>(string code) => WistResultConverter.ConvertTo<T>(_host.Run(code, WistBackendAliases.ToAlias(_options.Backend)));
 
     /// <summary>
     ///     Evaluates source text with anonymous-object or dictionary arguments.
     /// </summary>
-    public T Evaluate<T>(string code, object arguments)
-    {
-        return Evaluate<T>(code, WistArgumentReader.FromObject(arguments));
-    }
+    public T Evaluate<T>(string code, object arguments) => Evaluate<T>(code, WistArgumentReader.FromObject(arguments));
 
     /// <summary>
     ///     Evaluates source text with named arguments through the configured convenience backend.
     /// </summary>
-    public T Evaluate<T>(string code, IReadOnlyDictionary<string, object?> arguments)
-    {
-        return WistResultConverter.ConvertTo<T>(_host.Run(code, arguments, WistBackendAliases.ToAlias(_options.Backend)));
-    }
+    public T Evaluate<T>(string code, IReadOnlyDictionary<string, object?> arguments) => WistResultConverter.ConvertTo<T>(_host.Run(code, arguments, WistBackendAliases.ToAlias(_options.Backend)));
 
     /// <summary>
     ///     Validates source text by attempting to compile it for the configured backend.
@@ -149,18 +152,6 @@ public sealed class WistEngine : IDisposable
             WistArgumentReader.TypesFromNamesAndTypes((arg0, typeof(TArg0)), (arg1, typeof(TArg1)), (arg2, typeof(TArg2))));
 
         return new WistFunc<TArg0, TArg1, TArg2, TResult>(dynamicMethod);
-    }
-
-    /// <summary>
-    ///     Releases the composed Wist runtime.
-    /// </summary>
-    public void Dispose()
-    {
-        if (_disposed)
-            return;
-
-        _host.Dispose();
-        _disposed = true;
     }
 
     private DynamicMethod CompileDynamicMethod(string formula, IReadOnlyDictionary<string, Type> bindingTypes)

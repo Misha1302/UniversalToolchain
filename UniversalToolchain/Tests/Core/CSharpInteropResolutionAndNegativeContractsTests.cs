@@ -1,7 +1,6 @@
 using AssemblyFinder;
 using Tests.Infrastructure;
-using UniversalToolchain.Dialects.Tests;
-using UniversalToolchain.Modules.Tests;
+using UniversalToolchain.Testing.Infrastructure;
 
 namespace Tests.Core;
 

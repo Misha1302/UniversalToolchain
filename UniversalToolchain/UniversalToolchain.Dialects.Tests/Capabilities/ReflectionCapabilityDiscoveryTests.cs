@@ -8,7 +8,7 @@ namespace UniversalToolchain.Dialects.Tests.Capabilities;
 
 public class ReflectionCapabilityDiscoveryTests
 {
-    private static readonly FunctionTypeDescriptor NumberType = new("number");
+    private static readonly FunctionTypeDescriptor _numberType = new("number");
     private static int _moduleInstantiationCount;
 
     [SetUp]
@@ -152,7 +152,7 @@ public class ReflectionCapabilityDiscoveryTests
         var selectedCatalog = new SelectedCapabilityCatalogBuilder().Build([typeof(FakeFunctionModuleImpl)]);
         var functionCatalog = new BuiltinFunctionCatalog(selectedCatalog, selectedPlan);
 
-        var resolution = functionCatalog.Resolve("fakeAdd", [NumberType, NumberType], "interpreter");
+        var resolution = functionCatalog.Resolve("fakeAdd", [_numberType, _numberType], "interpreter");
 
         Assert.Multiple(() =>
         {
@@ -173,7 +173,7 @@ public class ReflectionCapabilityDiscoveryTests
         var selectedCatalog = new SelectedCapabilityCatalogBuilder().Build([typeof(FakeFunctionModuleImpl)]);
         var functionCatalog = new BuiltinFunctionCatalog(selectedCatalog, selectedPlan);
 
-        var resolution = functionCatalog.Resolve("missingFunction", [NumberType, NumberType], "interpreter");
+        var resolution = functionCatalog.Resolve("missingFunction", [_numberType, _numberType], "interpreter");
 
         Assert.Multiple(() =>
         {
@@ -195,7 +195,7 @@ public class ReflectionCapabilityDiscoveryTests
         var functionCatalog = new BuiltinFunctionCatalog(selectedCatalog, selectedPlan);
         var explanation = DialectFeatureExplanationProjector.Project(knownCatalog, selectedCatalog, selectedPlan, "FakeDialect");
 
-        var resolution = functionCatalog.Resolve("fakeAdd", [NumberType, NumberType], "interpreter");
+        var resolution = functionCatalog.Resolve("fakeAdd", [_numberType, _numberType], "interpreter");
 
         Assert.Multiple(() =>
         {
@@ -251,20 +251,20 @@ public class ReflectionCapabilityDiscoveryTests
     {
         public IReadOnlyList<BuiltinFunctionDescriptor> GetFunctions() =>
         [
-            new BuiltinFunctionDescriptor(
+            new(
                 "fakeAdd",
                 new LanguageFeatureId("fake-functions"),
-                [new FunctionParameterDescriptor("left", NumberType), new FunctionParameterDescriptor("right", NumberType)],
-                NumberType,
+                [new FunctionParameterDescriptor("left", _numberType), new FunctionParameterDescriptor("right", _numberType)],
+                _numberType,
                 FunctionPurity.Pure,
                 ["interpreter"])
         ];
 
         public IReadOnlyList<BuiltinFunctionRuntimeBinding> GetRuntimeBindings() =>
         [
-            new BuiltinFunctionRuntimeBinding(
-                new BuiltinFunctionSignature("fakeAdd", [NumberType, NumberType]),
-                NumberType,
+            new(
+                new BuiltinFunctionSignature("fakeAdd", [_numberType, _numberType]),
+                _numberType,
                 new LanguageFeatureId("fake-functions"),
                 typeof(FakeRuntimeMethods).GetMethod(nameof(FakeRuntimeMethods.FakeAdd), BindingFlags.Public | BindingFlags.Static)!,
                 ["interpreter"])
@@ -272,7 +272,7 @@ public class ReflectionCapabilityDiscoveryTests
 
         public IReadOnlyList<LanguageFeatureDescriptor> GetLanguageFeatures() =>
         [
-            new LanguageFeatureDescriptor(
+            new(
                 new LanguageFeatureId("fake-functions"),
                 "Fake Functions",
                 LanguageFeatureKind.FunctionSet,
@@ -288,7 +288,7 @@ public class ReflectionCapabilityDiscoveryTests
     {
         public IReadOnlyList<LanguageFeatureDescriptor> GetLanguageFeatures() =>
         [
-            new LanguageFeatureDescriptor(
+            new(
                 new LanguageFeatureId("known-only"),
                 "Known Only",
                 LanguageFeatureKind.Syntax,

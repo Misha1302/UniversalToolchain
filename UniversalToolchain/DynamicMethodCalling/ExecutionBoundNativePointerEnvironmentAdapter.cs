@@ -2,9 +2,9 @@ namespace DynamicMethodCalling;
 
 internal sealed class ExecutionBoundNativePointerEnvironmentAdapter : IExecutionEnvironment
 {
+    private readonly int _argumentCount;
     private readonly IExecutionBoundArgument[]? _currentArguments;
     private readonly object?[]? _fallbackCurrentArguments;
-    private readonly int _argumentCount;
     private readonly IExecutionEnvironment _innerEnvironment;
     private ExternalRuntimeCallProvider? _externalRuntimeCallProvider;
 

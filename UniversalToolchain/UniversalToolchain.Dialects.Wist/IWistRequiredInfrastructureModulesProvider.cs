@@ -7,5 +7,5 @@ public interface IWistRequiredInfrastructureModulesProvider
 {
     IReadOnlyList<Type> GetFrontendModuleTypes();
 
-    IReadOnlyList<Type> GetIRModuleTypes();
+    IReadOnlyList<Type> GetIrModuleTypes();
 }

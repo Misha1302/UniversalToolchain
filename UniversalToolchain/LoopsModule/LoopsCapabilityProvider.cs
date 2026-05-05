@@ -4,12 +4,12 @@ namespace LoopsModule;
 
 public sealed class LoopsCapabilityProvider : ILanguageFeatureDescriptorProvider
 {
-    private static readonly LanguageFeatureId FeatureId = new("LoopStatements");
+    private static readonly LanguageFeatureId _featureId = new("LoopStatements");
 
     public IReadOnlyList<LanguageFeatureDescriptor> GetLanguageFeatures() =>
     [
         new(
-            FeatureId,
+            _featureId,
             "Loop statements",
             LanguageFeatureKind.Syntax,
             ["Loops"],

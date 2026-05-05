@@ -1,6 +1,5 @@
 using System.Reflection;
 using BenchmarkDotNet.Attributes;
-using NUnit.Framework;
 using UniversalToolchain.Benchmarks.ExternalExecutionBenchmarks;
 
 namespace UniversalToolchain.Modules.Tests.Benchmarks;
@@ -8,7 +7,7 @@ namespace UniversalToolchain.Modules.Tests.Benchmarks;
 [TestFixture]
 public sealed class BenchmarkContractTests
 {
-    private static readonly Type[] HotExecutionBenchmarkTypes =
+    private static readonly Type[] _hotExecutionBenchmarkTypes =
     [
         typeof(ExternalSimple3ExecutionBenchmarks),
         typeof(ExternalMedium8ExecutionBenchmarks),
@@ -21,7 +20,7 @@ public sealed class BenchmarkContractTests
     [Test]
     public void HotExecutionBenchmarks_ShouldUseInnerCountAsOperationsPerInvoke()
     {
-        foreach (var benchmarkType in HotExecutionBenchmarkTypes)
+        foreach (var benchmarkType in _hotExecutionBenchmarkTypes)
         {
             var innerCount = GetInnerCount(benchmarkType);
 
@@ -40,7 +39,7 @@ public sealed class BenchmarkContractTests
     [Test]
     public void HotExecutionBenchmarks_ShouldUsePreparedArtifactNames()
     {
-        foreach (var benchmarkType in HotExecutionBenchmarkTypes)
+        foreach (var benchmarkType in _hotExecutionBenchmarkTypes)
         {
             var names = GetBenchmarkMethods(benchmarkType)
                 .Select(static method => method.Name)
@@ -56,7 +55,7 @@ public sealed class BenchmarkContractTests
     [Test]
     public void HotExecutionBenchmarks_ShouldHaveExactlyOneBaseline()
     {
-        foreach (var benchmarkType in HotExecutionBenchmarkTypes)
+        foreach (var benchmarkType in _hotExecutionBenchmarkTypes)
         {
             var baselines = GetBenchmarkMethods(benchmarkType)
                 .Where(static method => method.GetCustomAttribute<BenchmarkAttribute>()?.Baseline == true)
@@ -138,8 +137,5 @@ public sealed class BenchmarkContractTests
         return (int)innerCountField!.GetRawConstantValue()!;
     }
 
-    private static bool IsPowerOfTwo(int value)
-    {
-        return value > 0 && (value & value - 1) == 0;
-    }
+    private static bool IsPowerOfTwo(int value) => value > 0 && (value & value - 1) == 0;
 }

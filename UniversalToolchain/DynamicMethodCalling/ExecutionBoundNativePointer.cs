@@ -19,8 +19,8 @@ public sealed class ExecutionBoundNativePointer<TResult>
 public sealed class ExecutionBoundNativePointer<TArg1, TResult>
 {
     private readonly ExecutionBoundNativePointerEnvironmentAdapter _adapter;
-    private readonly DynamicMethodInvoker<IExecutionEnvironment, TArg1, TResult> _invoker;
     private readonly ExecutionBoundArgument<TArg1> _arg1 = new();
+    private readonly DynamicMethodInvoker<IExecutionEnvironment, TArg1, TResult> _invoker;
 
     internal ExecutionBoundNativePointer(ICompiledArtifact<DynamicMethod> artifact, IExecutionEnvironment environment)
     {
@@ -40,9 +40,9 @@ public sealed class ExecutionBoundNativePointer<TArg1, TResult>
 public sealed class ExecutionBoundNativePointer<TArg1, TArg2, TResult>
 {
     private readonly ExecutionBoundNativePointerEnvironmentAdapter _adapter;
-    private readonly DynamicMethodInvoker<IExecutionEnvironment, TArg1, TArg2, TResult> _invoker;
     private readonly ExecutionBoundArgument<TArg1> _arg1 = new();
     private readonly ExecutionBoundArgument<TArg2> _arg2 = new();
+    private readonly DynamicMethodInvoker<IExecutionEnvironment, TArg1, TArg2, TResult> _invoker;
 
     internal ExecutionBoundNativePointer(ICompiledArtifact<DynamicMethod> artifact, IExecutionEnvironment environment)
     {
@@ -63,10 +63,10 @@ public sealed class ExecutionBoundNativePointer<TArg1, TArg2, TResult>
 public sealed class ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TResult>
 {
     private readonly ExecutionBoundNativePointerEnvironmentAdapter _adapter;
-    private readonly DynamicMethodInvoker<IExecutionEnvironment, TArg1, TArg2, TArg3, TResult> _invoker;
     private readonly ExecutionBoundArgument<TArg1> _arg1 = new();
     private readonly ExecutionBoundArgument<TArg2> _arg2 = new();
     private readonly ExecutionBoundArgument<TArg3> _arg3 = new();
+    private readonly DynamicMethodInvoker<IExecutionEnvironment, TArg1, TArg2, TArg3, TResult> _invoker;
 
     internal ExecutionBoundNativePointer(ICompiledArtifact<DynamicMethod> artifact, IExecutionEnvironment environment)
     {
@@ -88,11 +88,11 @@ public sealed class ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TResult>
 public sealed class ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TResult>
 {
     private readonly ExecutionBoundNativePointerEnvironmentAdapter _adapter;
-    private readonly DynamicMethodInvoker<IExecutionEnvironment, TArg1, TArg2, TArg3, TArg4, TResult> _invoker;
     private readonly ExecutionBoundArgument<TArg1> _arg1 = new();
     private readonly ExecutionBoundArgument<TArg2> _arg2 = new();
     private readonly ExecutionBoundArgument<TArg3> _arg3 = new();
     private readonly ExecutionBoundArgument<TArg4> _arg4 = new();
+    private readonly DynamicMethodInvoker<IExecutionEnvironment, TArg1, TArg2, TArg3, TArg4, TResult> _invoker;
 
     internal ExecutionBoundNativePointer(ICompiledArtifact<DynamicMethod> artifact, IExecutionEnvironment environment)
     {
@@ -115,12 +115,12 @@ public sealed class ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TRes
 public sealed class ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TArg5, TResult>
 {
     private readonly ExecutionBoundNativePointerEnvironmentAdapter _adapter;
-    private readonly DynamicMethodInvoker<IExecutionEnvironment, TArg1, TArg2, TArg3, TArg4, TArg5, TResult> _invoker;
     private readonly ExecutionBoundArgument<TArg1> _arg1 = new();
     private readonly ExecutionBoundArgument<TArg2> _arg2 = new();
     private readonly ExecutionBoundArgument<TArg3> _arg3 = new();
     private readonly ExecutionBoundArgument<TArg4> _arg4 = new();
     private readonly ExecutionBoundArgument<TArg5> _arg5 = new();
+    private readonly DynamicMethodInvoker<IExecutionEnvironment, TArg1, TArg2, TArg3, TArg4, TArg5, TResult> _invoker;
 
     internal ExecutionBoundNativePointer(ICompiledArtifact<DynamicMethod> artifact, IExecutionEnvironment environment)
     {
@@ -144,13 +144,13 @@ public sealed class ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TArg
 public sealed class ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TResult>
 {
     private readonly ExecutionBoundNativePointerEnvironmentAdapter _adapter;
-    private readonly DynamicMethodInvoker<IExecutionEnvironment, TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TResult> _invoker;
     private readonly ExecutionBoundArgument<TArg1> _arg1 = new();
     private readonly ExecutionBoundArgument<TArg2> _arg2 = new();
     private readonly ExecutionBoundArgument<TArg3> _arg3 = new();
     private readonly ExecutionBoundArgument<TArg4> _arg4 = new();
     private readonly ExecutionBoundArgument<TArg5> _arg5 = new();
     private readonly ExecutionBoundArgument<TArg6> _arg6 = new();
+    private readonly DynamicMethodInvoker<IExecutionEnvironment, TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TResult> _invoker;
 
     internal ExecutionBoundNativePointer(ICompiledArtifact<DynamicMethod> artifact, IExecutionEnvironment environment)
     {
@@ -175,7 +175,6 @@ public sealed class ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TArg
 public sealed class ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7, TResult>
 {
     private readonly ExecutionBoundNativePointerEnvironmentAdapter _adapter;
-    private readonly DynamicMethodInvoker<IExecutionEnvironment, TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7, TResult> _invoker;
     private readonly ExecutionBoundArgument<TArg1> _arg1 = new();
     private readonly ExecutionBoundArgument<TArg2> _arg2 = new();
     private readonly ExecutionBoundArgument<TArg3> _arg3 = new();
@@ -183,6 +182,7 @@ public sealed class ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TArg
     private readonly ExecutionBoundArgument<TArg5> _arg5 = new();
     private readonly ExecutionBoundArgument<TArg6> _arg6 = new();
     private readonly ExecutionBoundArgument<TArg7> _arg7 = new();
+    private readonly DynamicMethodInvoker<IExecutionEnvironment, TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7, TResult> _invoker;
 
     internal ExecutionBoundNativePointer(ICompiledArtifact<DynamicMethod> artifact, IExecutionEnvironment environment)
     {
@@ -208,7 +208,6 @@ public sealed class ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TArg
 public sealed class ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7, TArg8, TResult>
 {
     private readonly ExecutionBoundNativePointerEnvironmentAdapter _adapter;
-    private readonly DynamicMethodInvoker<IExecutionEnvironment, TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7, TArg8, TResult> _invoker;
     private readonly ExecutionBoundArgument<TArg1> _arg1 = new();
     private readonly ExecutionBoundArgument<TArg2> _arg2 = new();
     private readonly ExecutionBoundArgument<TArg3> _arg3 = new();
@@ -217,6 +216,7 @@ public sealed class ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TArg
     private readonly ExecutionBoundArgument<TArg6> _arg6 = new();
     private readonly ExecutionBoundArgument<TArg7> _arg7 = new();
     private readonly ExecutionBoundArgument<TArg8> _arg8 = new();
+    private readonly DynamicMethodInvoker<IExecutionEnvironment, TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7, TArg8, TResult> _invoker;
 
     internal ExecutionBoundNativePointer(ICompiledArtifact<DynamicMethod> artifact, IExecutionEnvironment environment)
     {
@@ -243,7 +243,6 @@ public sealed class ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TArg
 public sealed class ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7, TArg8, TArg9, TResult>
 {
     private readonly ExecutionBoundNativePointerEnvironmentAdapter _adapter;
-    private readonly DynamicMethodInvoker<IExecutionEnvironment, TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7, TArg8, TArg9, TResult> _invoker;
     private readonly ExecutionBoundArgument<TArg1> _arg1 = new();
     private readonly ExecutionBoundArgument<TArg2> _arg2 = new();
     private readonly ExecutionBoundArgument<TArg3> _arg3 = new();
@@ -253,6 +252,7 @@ public sealed class ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TArg
     private readonly ExecutionBoundArgument<TArg7> _arg7 = new();
     private readonly ExecutionBoundArgument<TArg8> _arg8 = new();
     private readonly ExecutionBoundArgument<TArg9> _arg9 = new();
+    private readonly DynamicMethodInvoker<IExecutionEnvironment, TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7, TArg8, TArg9, TResult> _invoker;
 
     internal ExecutionBoundNativePointer(ICompiledArtifact<DynamicMethod> artifact, IExecutionEnvironment environment)
     {
@@ -280,8 +280,8 @@ public sealed class ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TArg
 public sealed class ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7, TArg8, TArg9, TArg10, TResult>
 {
     private readonly ExecutionBoundNativePointerEnvironmentAdapter _adapter;
-    private readonly DynamicMethodInvoker<IExecutionEnvironment, TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7, TArg8, TArg9, TArg10, TResult> _invoker;
     private readonly ExecutionBoundArgument<TArg1> _arg1 = new();
+    private readonly ExecutionBoundArgument<TArg10> _arg10 = new();
     private readonly ExecutionBoundArgument<TArg2> _arg2 = new();
     private readonly ExecutionBoundArgument<TArg3> _arg3 = new();
     private readonly ExecutionBoundArgument<TArg4> _arg4 = new();
@@ -290,7 +290,7 @@ public sealed class ExecutionBoundNativePointer<TArg1, TArg2, TArg3, TArg4, TArg
     private readonly ExecutionBoundArgument<TArg7> _arg7 = new();
     private readonly ExecutionBoundArgument<TArg8> _arg8 = new();
     private readonly ExecutionBoundArgument<TArg9> _arg9 = new();
-    private readonly ExecutionBoundArgument<TArg10> _arg10 = new();
+    private readonly DynamicMethodInvoker<IExecutionEnvironment, TArg1, TArg2, TArg3, TArg4, TArg5, TArg6, TArg7, TArg8, TArg9, TArg10, TResult> _invoker;
 
     internal ExecutionBoundNativePointer(ICompiledArtifact<DynamicMethod> artifact, IExecutionEnvironment environment)
     {

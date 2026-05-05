@@ -33,12 +33,12 @@ public sealed class WistDialectExecutionConfigurationBuilder
         var allOptimizers = DeduplicateStable(backends.SelectMany(x => x.OptimizerTypes));
         var knownBackends = DeduplicateStable(backends.Select(x => x.BackendDescriptor), static x => x.BackendId);
         var requiredInfrastructure = DeduplicateStable(
-            shape.RequiredFrontendInfrastructureModuleTypes.Concat(shape.RequiredIRInfrastructureModuleTypes));
+            shape.RequiredFrontendInfrastructureModuleTypes.Concat(shape.RequiredIrInfrastructureModuleTypes));
 
         return new WistDialectExecutionConfiguration(
             shape.DialectName,
             shape.FrontendModuleTypes,
-            shape.IRModuleTypes,
+            shape.IrModuleTypes,
             allOptimizers,
             backends,
             knownBackends,

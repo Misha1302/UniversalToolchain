@@ -8,7 +8,7 @@ namespace UniversalToolchain.Dialects.Tests.Capabilities;
 
 public sealed class FunctionCallsAndSafeMathCapabilityTests
 {
-    private static readonly FunctionTypeDescriptor NumberType = new("number");
+    private static readonly FunctionTypeDescriptor _numberType = new("number");
 
     [Test]
     public void FunctionCallsModule_DeclaresOnlyGenericFunctionCallSyntax()
@@ -52,7 +52,7 @@ public sealed class FunctionCallsAndSafeMathCapabilityTests
         var selectedCatalog = new SelectedCapabilityCatalogBuilder().Build([typeof(SafeMathFunctionsModuleImpl)]);
         var functionCatalog = new BuiltinFunctionCatalog(selectedCatalog, selectedPlan);
 
-        var resolution = functionCatalog.Resolve("clamp", [NumberType, NumberType, NumberType], "interpreter");
+        var resolution = functionCatalog.Resolve("clamp", [_numberType, _numberType, _numberType], "interpreter");
 
         Assert.Multiple(() =>
         {
@@ -72,7 +72,7 @@ public sealed class FunctionCallsAndSafeMathCapabilityTests
         var selectedCatalog = new SelectedCapabilityCatalogBuilder().Build([typeof(SafeMathFunctionsModuleImpl)]);
         var functionCatalog = new BuiltinFunctionCatalog(selectedCatalog, selectedPlan);
 
-        var resolution = functionCatalog.Resolve("round", [NumberType], "interpreter");
+        var resolution = functionCatalog.Resolve("round", [_numberType], "interpreter");
 
         Assert.Multiple(() =>
         {
@@ -92,7 +92,7 @@ public sealed class FunctionCallsAndSafeMathCapabilityTests
         var selectedCatalog = new SelectedCapabilityCatalogBuilder().Build([typeof(FunctionCallsModuleImpl)]);
         var functionCatalog = new BuiltinFunctionCatalog(selectedCatalog, selectedPlan);
 
-        var resolution = functionCatalog.Resolve("clamp", [NumberType, NumberType, NumberType], "interpreter");
+        var resolution = functionCatalog.Resolve("clamp", [_numberType, _numberType, _numberType], "interpreter");
 
         Assert.Multiple(() =>
         {

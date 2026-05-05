@@ -7,7 +7,7 @@ namespace UniversalToolchain.Dialects.Tests;
 
 public class DialectProjectsSmokeTests
 {
-    private static readonly string[] ExpectedExamples =
+    private static readonly string[] _expectedExamples =
     [
         "full-default",
         "full-default-native",
@@ -26,7 +26,7 @@ public class DialectProjectsSmokeTests
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var exampleDirectories = ResolveExampleDirectories();
 
-        Assert.That(exampleDirectories.Select(Path.GetFileName), Is.EquivalentTo(ExpectedExamples));
+        Assert.That(exampleDirectories.Select(Path.GetFileName), Is.EquivalentTo(_expectedExamples));
 
         foreach (var exampleDirectory in exampleDirectories)
         {

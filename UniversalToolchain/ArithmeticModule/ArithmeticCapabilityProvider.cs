@@ -4,12 +4,12 @@ namespace ArithmeticModule;
 
 public sealed class ArithmeticCapabilityProvider : ILanguageFeatureDescriptorProvider
 {
-    private static readonly LanguageFeatureId FeatureId = new("ArithmeticExpressions");
+    private static readonly LanguageFeatureId _featureId = new("ArithmeticExpressions");
 
     public IReadOnlyList<LanguageFeatureDescriptor> GetLanguageFeatures() =>
     [
         new(
-            FeatureId,
+            _featureId,
             "Arithmetic expressions",
             LanguageFeatureKind.Syntax,
             ["Arithmetic"],

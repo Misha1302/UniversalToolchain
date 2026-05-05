@@ -2,7 +2,7 @@ using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Integration;
 
-namespace UniversalToolchain.Dialects.Tests;
+namespace UniversalToolchain.Testing.Infrastructure;
 
 internal static class DialectCompositionTestOverrides
 {

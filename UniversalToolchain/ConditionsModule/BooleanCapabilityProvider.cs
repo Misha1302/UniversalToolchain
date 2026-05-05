@@ -4,12 +4,12 @@ namespace ConditionsModule;
 
 public sealed class BooleanCapabilityProvider : ILanguageFeatureDescriptorProvider
 {
-    private static readonly LanguageFeatureId FeatureId = new("BooleanConditions");
+    private static readonly LanguageFeatureId _featureId = new("BooleanConditions");
 
     public IReadOnlyList<LanguageFeatureDescriptor> GetLanguageFeatures() =>
     [
         new(
-            FeatureId,
+            _featureId,
             "Boolean conditions",
             LanguageFeatureKind.Syntax,
             ["BooleanConditions"],

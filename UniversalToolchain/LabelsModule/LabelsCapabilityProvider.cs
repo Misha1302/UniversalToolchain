@@ -4,12 +4,12 @@ namespace LabelsModule;
 
 public sealed class LabelsCapabilityProvider : ILanguageFeatureDescriptorProvider
 {
-    private static readonly LanguageFeatureId FeatureId = new("LabelsAndGoto");
+    private static readonly LanguageFeatureId _featureId = new("LabelsAndGoto");
 
     public IReadOnlyList<LanguageFeatureDescriptor> GetLanguageFeatures() =>
     [
         new(
-            FeatureId,
+            _featureId,
             "Labels and goto",
             LanguageFeatureKind.Syntax,
             ["Labels"],

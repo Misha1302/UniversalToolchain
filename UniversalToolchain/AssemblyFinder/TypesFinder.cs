@@ -218,6 +218,7 @@ public static class TypesFinder
             }
             catch
             {
+                // ignored
             }
         }
 

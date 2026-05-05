@@ -30,14 +30,14 @@ public sealed class SelectedRuntimeExecutionShapeBuilder
 
         var selectedModules = _moduleClassifier.Classify(selectedRuntimePlan.OrderedModules);
         var requiredFrontendModuleTypes = _requiredInfrastructureModulesProvider.GetFrontendModuleTypes();
-        var requiredIrModuleTypes = _requiredInfrastructureModulesProvider.GetIRModuleTypes();
+        var requiredIrModuleTypes = _requiredInfrastructureModulesProvider.GetIrModuleTypes();
 
         return new SelectedRuntimeExecutionShape(
             buildPlan.Name,
             requiredFrontendModuleTypes,
             selectedModules.FrontendModuleTypes,
             requiredIrModuleTypes,
-            selectedModules.IRModuleTypes,
+            selectedModules.IrModuleTypes,
             selectedRuntimePlan.EnabledOptimizers,
             selectedRuntimePlan.EnabledBackends);
     }

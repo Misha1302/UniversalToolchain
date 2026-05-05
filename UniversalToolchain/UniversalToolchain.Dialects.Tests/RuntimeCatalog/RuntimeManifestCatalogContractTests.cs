@@ -23,7 +23,7 @@ public class RuntimeManifestCatalogContractTests
         var serializer = new RuntimeManifestJsonSerializer();
         var path = WriteManifest(temp.Path, "empty-asm.dialect.runtime.json", "  ", [Module("Arithmetic", "Arithmetic.Type")], serializer);
 
-        var ex = Assert.Throws<ArgumentException>(() => new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([path]), serializer));
+        var ex = Assert.Throws<ArgumentException>(() => _ = new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([path]), serializer));
         Assert.That(ex!.Message, Does.Contain("empty assemblySimpleName"));
     }
 
@@ -34,7 +34,7 @@ public class RuntimeManifestCatalogContractTests
         var serializer = new RuntimeManifestJsonSerializer();
         var path = WriteManifest(temp.Path, "empty-canonical.dialect.runtime.json", "Asm", [Module("  ", "Arithmetic.Type")], serializer);
 
-        var ex = Assert.Throws<ArgumentException>(() => new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([path]), serializer));
+        var ex = Assert.Throws<ArgumentException>(() => _ = new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([path]), serializer));
         Assert.That(ex!.Message, Does.Contain("Canonical alias must not be empty"));
     }
 
@@ -153,7 +153,7 @@ public class RuntimeManifestCatalogContractTests
             {"assemblySimpleName":"Asm","components":[{"kind":"FrontendModule","canonicalAlias":"Arithmetic","aliases":[],"componentId":"frontend.arithmetic","activation":{"activationTypeFullName":" "}}]}
             """);
 
-        var ex = Assert.Throws<ArgumentException>(() => new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([path]), serializer));
+        var ex = Assert.Throws<ArgumentException>(() => _ = new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([path]), serializer));
         Assert.That(ex!.Message, Does.Contain("typeFullName must not be empty"));
     }
 
@@ -219,7 +219,7 @@ public class RuntimeManifestCatalogContractTests
         var firstPath = WriteManifest(temp.Path, "first.dialect.runtime.json", "AAssembly", [first], serializer);
         var secondPath = WriteManifest(temp.Path, "second.dialect.runtime.json", "BAssembly", [second], serializer);
 
-        return Assert.Throws<InvalidOperationException>(() => new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([firstPath, secondPath]), serializer))!;
+        return Assert.Throws<InvalidOperationException>(() => _ = new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([firstPath, secondPath]), serializer))!;
     }
 
     private static FileDialectRuntimeComponentEntry Module(string alias, string _, params string[] aliases) =>

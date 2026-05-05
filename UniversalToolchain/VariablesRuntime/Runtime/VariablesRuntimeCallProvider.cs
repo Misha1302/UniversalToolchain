@@ -1,8 +1,8 @@
-namespace VariablesModule.Runtime;
+namespace VariablesRuntime.Runtime;
 
 public sealed class VariablesRuntimeCallProvider
 {
-    private static readonly RuntimeContextKey ContextKey = new("Variables");
+    private static readonly RuntimeContextKey _contextKey = new("Variables");
 
     private readonly IRuntimeContextStore _contextStore;
 
@@ -14,7 +14,7 @@ public sealed class VariablesRuntimeCallProvider
     public VariablesContext LoadVariablesContext()
     {
         return _contextStore.GetOrCreate(
-            ContextKey,
+            _contextKey,
             static () => new VariablesContext());
     }
 }

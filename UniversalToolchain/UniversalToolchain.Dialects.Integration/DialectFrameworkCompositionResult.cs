@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Runtime.CompilerServices;
 using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Frontend;
@@ -29,8 +28,8 @@ public sealed class DialectFrameworkCompositionResult
         SourceName = sourceName;
         CompiledDialect = compiledDialect;
         BuildPlan = buildPlan;
-        _semanticDiagnostics = new ReadOnlyCollection<DialectDiagnostic>(Snapshot(semanticDiagnostics, nameof(semanticDiagnostics)));
-        _resolutionDiagnostics = new ReadOnlyCollection<DialectDiagnostic>(Snapshot(resolutionDiagnostics, nameof(resolutionDiagnostics)));
+        _semanticDiagnostics = new ReadOnlyCollection<DialectDiagnostic>(Snapshot(semanticDiagnostics));
+        _resolutionDiagnostics = new ReadOnlyCollection<DialectDiagnostic>(Snapshot(resolutionDiagnostics));
         RuntimeSelection = runtimeSelection;
     }
 
@@ -52,7 +51,7 @@ public sealed class DialectFrameworkCompositionResult
         !_semanticDiagnostics.Any(x => x.Severity == DialectDiagnosticSeverity.Error) &&
         !_resolutionDiagnostics.Any(x => x.Severity == DialectDiagnosticSeverity.Error);
 
-    private static List<DialectDiagnostic> Snapshot(IEnumerable<DialectDiagnostic> diagnostics, [CallerArgumentExpression(nameof(diagnostics))] string? paramName = null)
+    private static List<DialectDiagnostic> Snapshot(IEnumerable<DialectDiagnostic> diagnostics)
     {
         return diagnostics.Select(x => x.NotNull()).ToList();
     }

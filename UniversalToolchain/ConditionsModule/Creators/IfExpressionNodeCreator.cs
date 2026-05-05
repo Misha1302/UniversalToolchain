@@ -2,9 +2,9 @@ namespace ConditionsModule.Creators;
 
 public sealed class IfExpressionNodeCreator : IAstNodeCreator
 {
-    private static readonly ExtensibleEnum<AstNodeTag> IfNodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("If");
-    private static readonly ExtensibleEnum<AstNodeTag> ThenNodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("Then");
-    private static readonly ExtensibleEnum<AstNodeTag> ElseNodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("Else");
+    private static readonly ExtensibleEnum<AstNodeTag> _ifNodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("If");
+    private static readonly ExtensibleEnum<AstNodeTag> _thenNodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("Then");
+    private static readonly ExtensibleEnum<AstNodeTag> _elseNodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("Else");
 
     public ExtensibleEnum<AstNodeTag> AstNodeType { get; } = ExtensibleEnum<AstNodeTag>.CreateOrGet("IfExpression");
 
@@ -13,14 +13,14 @@ public sealed class IfExpressionNodeCreator : IAstNodeCreator
         scope = scope.ArgNotNull();
 
         var ifToken = scope.SafeGet(childIndex);
-        if (ifToken?.NodeType != IfNodeType)
+        if (ifToken?.NodeType != _ifNodeType)
             return false;
 
-        var thenIndex = FindNext(scope, childIndex + 1, ThenNodeType);
+        var thenIndex = FindNext(scope, childIndex + 1, _thenNodeType);
         if (thenIndex < 0)
             return false;
 
-        var elseIndex = FindNext(scope, thenIndex + 1, ElseNodeType);
+        var elseIndex = FindNext(scope, thenIndex + 1, _elseNodeType);
         if (elseIndex < 0)
             return false;
 

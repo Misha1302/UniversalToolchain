@@ -1,4 +1,4 @@
-using UniversalToolchain.Modules.Tests;
+using UniversalToolchain.Testing.Infrastructure;
 
 namespace UniversalToolchain.Dialects.Tests;
 
@@ -48,12 +48,12 @@ public sealed class TestingInfrastructureGuardrailTests
     public void DialectTestHostInfrastructure_CreateBackendSpecificHosts_UsesStructuredBackendOverride()
     {
         const string dialectText = """
-                                  dialect StructuredOverride
+                                   dialect StructuredOverride
 
-                                  use Arithmetic,Numbers
+                                   use Arithmetic,Numbers
 
-                                  backend interpreter,compiler
-                                  """;
+                                   backend interpreter,compiler
+                                   """;
 
         using var interpreterHost = DialectTestHostInfrastructure.CreateInterpreterHost(dialectText);
         using var compilerHost = DialectTestHostInfrastructure.CreateCompilerHost(dialectText);
@@ -75,10 +75,10 @@ public sealed class TestingInfrastructureGuardrailTests
     public void BackendParityInfrastructure_RunBoth_UsesCanonicalCompositionBeforeStructuredOverride()
     {
         const string dialectText = """
-                                  dialect Parity
-                                  use Arithmetic,Numbers,CSharpInterop,Identifier,Scopes,Whitespaces
-                                  backend interpreter,compiler
-                                  """;
+                                   dialect Parity
+                                   use Arithmetic,Numbers,CSharpInterop,Identifier,Scopes,Whitespaces
+                                   backend interpreter,compiler
+                                   """;
 
         var (compilerResult, interpreterResult) = BackendParityInfrastructure.RunBoth(
             dialectText,

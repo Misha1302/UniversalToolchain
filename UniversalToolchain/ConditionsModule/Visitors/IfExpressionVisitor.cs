@@ -2,14 +2,14 @@ namespace ConditionsModule.Visitors;
 
 public sealed class IfExpressionVisitor : IAstVisitor
 {
-    private static readonly ExtensibleEnum<AstNodeTag> IfExpressionNodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("IfExpression");
+    private static readonly ExtensibleEnum<AstNodeTag> _ifExpressionNodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("IfExpression");
     private int _ifExpressionSequence;
 
     public void TryVisit(BytecodeVisitorData data)
     {
         data = data.ArgNotNull();
 
-        if (data.Node.NodeType != IfExpressionNodeType)
+        if (data.Node.NodeType != _ifExpressionNodeType)
             return;
 
         if (data.Node.Children.Count != 3)

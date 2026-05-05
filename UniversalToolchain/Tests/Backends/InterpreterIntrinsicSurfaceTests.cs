@@ -1,11 +1,11 @@
-using UniversalToolchain.Dialects.Tests;
+using UniversalToolchain.Testing.Infrastructure;
 
 namespace Tests.Backends;
 
 [TestFixture]
 public sealed class InterpreterIntrinsicSurfaceTests
 {
-    private static readonly string[] ForbiddenIntrinsics =
+    private static readonly string[] _forbiddenIntrinsics =
     [
         "load_bool",
         "boolean_and",
@@ -102,7 +102,7 @@ public sealed class InterpreterIntrinsicSurfaceTests
     [Test]
     public void Interpreter_Guardrail_RejectsAllForbiddenIntrinsicSamples()
     {
-        foreach (var intrinsicName in ForbiddenIntrinsics)
+        foreach (var intrinsicName in _forbiddenIntrinsics)
         {
             var operands = intrinsicName switch
             {
@@ -141,7 +141,7 @@ public sealed class InterpreterIntrinsicSurfaceTests
 
         Assert.That(intrinsics, Is.Not.Empty);
         Assert.That(intrinsics, Is.SubsetOf(new[] { "call C#", "call C# ctor" }));
-        Assert.That(intrinsics, Has.None.Matches<string>(name => ForbiddenIntrinsics.Contains(name, StringComparer.Ordinal)));
+        Assert.That(intrinsics, Has.None.Matches<string>(name => _forbiddenIntrinsics.Contains(name, StringComparer.Ordinal)));
     }
 
     private static IEnumerable<string> CollectIntrinsicNames(IAbstractIR air)

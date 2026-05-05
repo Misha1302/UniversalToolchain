@@ -4,12 +4,12 @@ namespace VariablesModule;
 
 public sealed class VariablesCapabilityProvider : ILanguageFeatureDescriptorProvider
 {
-    private static readonly LanguageFeatureId FeatureId = new("Variables");
+    private static readonly LanguageFeatureId _featureId = new("Variables");
 
     public IReadOnlyList<LanguageFeatureDescriptor> GetLanguageFeatures() =>
     [
         new(
-            FeatureId,
+            _featureId,
             "Variables",
             LanguageFeatureKind.Syntax,
             ["Variables"],

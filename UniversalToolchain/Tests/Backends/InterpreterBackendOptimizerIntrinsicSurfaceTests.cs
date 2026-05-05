@@ -1,4 +1,5 @@
-using UniversalToolchain.Dialects.Tests;
+using AbstractIrConverters;
+using UniversalToolchain.Testing.Infrastructure;
 
 namespace Tests.Backends;
 
@@ -8,7 +9,7 @@ public sealed class InterpreterBackendOptimizerIntrinsicSurfaceTests
     [Test]
     public void InterpreterBackendStub_SupportedIntrinsics_ShouldContainOnlyUniversalCallIntrinsics()
     {
-        var supported = AbstractIrConverters.AbstractIrToAbstractIrStub.SupportedIntrinsicIds;
+        var supported = AbstractIrToAbstractIrStub.SupportedIntrinsicIds;
 
         Assert.That(supported, Does.Contain("call C#"));
         Assert.That(supported, Does.Contain("call C# ctor"));

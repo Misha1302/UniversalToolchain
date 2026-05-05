@@ -364,19 +364,7 @@ internal sealed class AbstractMethodsIntrinsicCompiler
         return typeof(void);
     }
 
-    private static Type GetLoadIntrinsicType(string name)
-    {
-        return name switch
-        {
-            "load_i32" => typeof(int),
-            "load_i64" => typeof(long),
-            "load_f32" => typeof(float),
-            "load_f64" => typeof(double),
-            "load_decimal" => typeof(decimal),
-            _ => Thrower.InvalidOpEx<Type>($"Unknown native number loading {name}")
-        };
-    }
-
+    // ReSharper disable once UnusedTupleComponentInReturnValue
     private static (string Family, string Operation, Type OperandType) ParseIntrinsicSignature(string name)
     {
         var parts = name.Split('_');
@@ -385,7 +373,7 @@ internal sealed class AbstractMethodsIntrinsicCompiler
         if (parts[0] == "cmp")
         {
             Thrower.AssertAlways(parts.Length == 3, $"Unsupported comparison intrinsic name format: {name}");
-            return ("cmp", parts[1], GetTypeFromString(parts[2]));
+            return (parts[0], parts[1], GetTypeFromString(parts[2]));
         }
 
         Thrower.AssertAlways(parts.Length == 2, $"Unsupported intrinsic name format: {name}");
