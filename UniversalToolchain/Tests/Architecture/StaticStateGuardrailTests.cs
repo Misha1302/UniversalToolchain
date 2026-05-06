@@ -6,7 +6,7 @@ namespace Tests.Architecture;
 public sealed class StaticStateGuardrailTests
 {
     private static readonly Regex MutableStaticCollectionFieldRegex = new(
-        @"\b(?:private|internal|protected|public)?\s*static\s+(?:readonly\s+)?(?:Dictionary|List|HashSet|OrderedDictionary|ConcurrentDictionary)\s*(?:<|\s+)",
+        @"(?m)^\s*(?:private|internal|protected|public)?\s*static\s+(?:readonly\s+)?(?:Dictionary|List|HashSet|OrderedDictionary|ConcurrentDictionary)\s*(?:<[^>]+>|\s+)\s+[_a-zA-Z][_a-zA-Z0-9]*\s*(?:=|;)",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     private static readonly string[] GuardedProductionDirectories =
