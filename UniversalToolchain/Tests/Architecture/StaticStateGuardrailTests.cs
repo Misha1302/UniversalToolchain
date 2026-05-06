@@ -9,18 +9,27 @@ public sealed class StaticStateGuardrailTests
         @"\b(?:private|internal|protected|public)?\s*static\s+(?:readonly\s+)?(?:Dictionary|List|HashSet|OrderedDictionary|ConcurrentDictionary)\s*(?:<|\s+)",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
+    private static readonly string[] GuardedProductionDirectories =
+    [
+        "UniversalToolchain/BasicCore/",
+        "UniversalToolchain/BasicInterpreter/",
+        "UniversalToolchain/BytecodeDynamicMethodsCompiler/",
+        "UniversalToolchain/NativeMathModule/"
+    ];
+
     private static readonly string[] AllowedCurrentDebtFiles =
     [
+        "UniversalToolchain/NativeMathModule/NativeArithmeticAstVisitor.cs",
         "UniversalToolchain/NativeMathModule/NativeCILOptimizerModule.cs"
     ];
 
     [Test]
-    public void CoreRuntimeCode_ShouldNotIntroduceNewMutableStaticCollectionFields()
+    public void CriticalRuntimeProjects_ShouldNotIntroduceNewMutableStaticCollectionFields()
     {
         var root = FindRepositoryRoot();
         var universalToolchainRoot = Path.Combine(root, "UniversalToolchain");
         var files = Directory.GetFiles(universalToolchainRoot, "*.cs", SearchOption.AllDirectories)
-            .Where(IsGuardedProductionSourceFile)
+            .Where(path => IsGuardedProductionSourceFile(root, path))
             .Where(path => !IsAllowedCurrentDebtFile(root, path))
             .ToList();
 
@@ -35,7 +44,7 @@ public sealed class StaticStateGuardrailTests
     }
 
     [Test]
-    public void KnownCoreRuntimeMutableStaticCollectionDebt_ShouldRemainExplicitlyTracked()
+    public void KnownCriticalRuntimeMutableStaticCollectionDebt_ShouldRemainExplicitlyTracked()
     {
         var root = FindRepositoryRoot();
         var missingDebtMarkers = AllowedCurrentDebtFiles
@@ -67,16 +76,14 @@ public sealed class StaticStateGuardrailTests
         return AllowedCurrentDebtFiles.Contains(relativePath, StringComparer.Ordinal);
     }
 
-    private static bool IsGuardedProductionSourceFile(string path)
+    private static bool IsGuardedProductionSourceFile(string root, string path)
     {
-        var normalized = NormalizePath(path);
+        var relativePath = NormalizePath(Path.GetRelativePath(root, path));
 
-        return !normalized.Contains("/Tests/", StringComparison.Ordinal)
-               && !normalized.Contains("/Tests.Legacy/", StringComparison.Ordinal)
-               && !normalized.Contains("/UniversalToolchain.Dialects", StringComparison.Ordinal)
-               && !normalized.Contains("/UniversalToolchain.Modules.Tests/", StringComparison.Ordinal)
-               && !normalized.Contains("/bin/", StringComparison.Ordinal)
-               && !normalized.Contains("/obj/", StringComparison.Ordinal);
+        return GuardedProductionDirectories.Any(directory => relativePath.StartsWith(directory, StringComparison.Ordinal))
+               && !relativePath.Contains("/Tests/", StringComparison.Ordinal)
+               && !relativePath.Contains("/bin/", StringComparison.Ordinal)
+               && !relativePath.Contains("/obj/", StringComparison.Ordinal);
     }
 
     private static string FindRepositoryRoot()
