@@ -1,20 +1,13 @@
+using System.Text.RegularExpressions;
+
 namespace Tests.Architecture;
 
 [TestFixture]
 public sealed class StaticStateGuardrailTests
 {
-    private static readonly string[] ForbiddenMutableStaticCollectionPatterns =
-    [
-        "static Dictionary<",
-        "static readonly Dictionary<",
-        "static List<",
-        "static readonly List<",
-        "static HashSet<",
-        "static readonly HashSet<",
-        "static OrderedDictionary",
-        "static ConcurrentDictionary<",
-        "static readonly ConcurrentDictionary<"
-    ];
+    private static readonly Regex MutableStaticCollectionFieldRegex = new(
+        @"\b(?:private|internal|protected|public)?\s*static\s+(?:readonly\s+)?(?:Dictionary|List|HashSet|OrderedDictionary|ConcurrentDictionary)\s*(?:<|\s+)",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
     private static readonly string[] AllowedCurrentDebtFiles =
     [
@@ -22,7 +15,7 @@ public sealed class StaticStateGuardrailTests
     ];
 
     [Test]
-    public void ProductionCode_ShouldNotIntroduceNewMutableStaticCollections()
+    public void ProductionCode_ShouldNotIntroduceNewMutableStaticCollectionFields()
     {
         var root = FindRepositoryRoot();
         var universalToolchainRoot = Path.Combine(root, "UniversalToolchain");
@@ -38,7 +31,7 @@ public sealed class StaticStateGuardrailTests
         Assert.That(
             violations,
             Is.Empty,
-            "Mutable static collections create hidden process-wide state. Add an explicit architectural exception only for known legacy debt.");
+            "Mutable static collection fields create hidden process-wide state. Add an explicit architectural exception only for known legacy debt.");
     }
 
     [Test]
@@ -59,9 +52,9 @@ public sealed class StaticStateGuardrailTests
         var text = File.ReadAllText(path);
         var relativePath = NormalizePath(Path.GetRelativePath(root, path));
 
-        return ForbiddenMutableStaticCollectionPatterns
-            .Where(text.Contains)
-            .Select(pattern => $"{relativePath}: contains '{pattern}'");
+        return MutableStaticCollectionFieldRegex
+            .Matches(text)
+            .Select(match => $"{relativePath}: contains mutable static collection field near '{match.Value.Trim()}'");
     }
 
     private static bool IsAllowedCurrentDebtFile(string root, string path)
