@@ -11,7 +11,15 @@ public sealed class StaticStateGuardrailTests
 
     private static readonly string[] AllowedCurrentDebtFiles =
     [
-        "UniversalToolchain/NativeMathModule/NativeCILOptimizerModule.cs"
+        "UniversalToolchain/NativeMathModule/NativeCILOptimizerModule.cs",
+        "UniversalToolchain/UniversalToolchain.Dialects.Parsing/DialectSyntaxDocument.cs",
+        "UniversalToolchain/UniversalToolchain.Dialects.Wist/DialectIntrinsicPolicyCompiler.cs",
+        "UniversalToolchain/UniversalToolchain.Dialects.Wist/WistDialectExecutionConfiguration.cs",
+        "UniversalToolchain/UniversalToolchain.Dialects.Wist/WistDialectExecutionConfigurationBuilder.cs",
+        "UniversalToolchain/UniversalToolchain.Dialects.Wist/WistDeclaredBindingFactory.cs",
+        "UniversalToolchain/UniversalToolchain.Dialects.Wist/SelectedRuntimeExecutionShape.cs",
+        "UniversalToolchain/UniversalToolchain.Dialects.Integration/RuntimeModuleDescriptor.cs",
+        "UniversalToolchain/UniversalToolchain.Dialects.Integration/DialectBackendRuntimeConfiguration.cs"
     ];
 
     [Test]
@@ -35,16 +43,20 @@ public sealed class StaticStateGuardrailTests
     }
 
     [Test]
-    public void NativeCilOptimizerModule_StaticGeneratorRegistry_ShouldRemainExplicitlyTrackedDebt()
+    public void KnownMutableStaticCollectionDebt_ShouldRemainExplicitlyTracked()
     {
         var root = FindRepositoryRoot();
-        var file = Path.Combine(root, "UniversalToolchain", "NativeMathModule", "NativeCILOptimizerModule.cs");
-        var text = File.ReadAllText(file);
+        var missingDebtMarkers = AllowedCurrentDebtFiles
+            .Select(path => Path.Combine(root, path.Replace('/', Path.DirectorySeparatorChar)))
+            .Where(File.Exists)
+            .Where(path => !FindViolations(root, path).Any())
+            .Select(path => NormalizePath(Path.GetRelativePath(root, path)))
+            .ToList();
 
         Assert.That(
-            text,
-            Does.Contain("static readonly Dictionary<Type"),
-            "Remove this test together with the allow-list entry after replacing the mutable static registry with an immutable mapping or data-only descriptor.");
+            missingDebtMarkers,
+            Is.Empty,
+            "Remove files from the mutable static debt allow-list after replacing their mutable static collection fields.");
     }
 
     private static IEnumerable<string> FindViolations(string root, string path)
