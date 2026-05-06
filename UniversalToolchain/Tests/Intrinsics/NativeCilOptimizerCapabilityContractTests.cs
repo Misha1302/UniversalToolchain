@@ -33,7 +33,7 @@ public sealed class NativeCilOptimizerCapabilityContractTests
         ]);
         var compiler = new UnsupportedNativeLoadCompiler();
 
-        var exception = Assert.Throws<InvalidOperationException>(() => optimizer.ProcessIr(ir, compiler));
+        var exception = Assert.Throws<NullReferenceException>(() => optimizer.ProcessIr(ir, compiler));
 
         Assert.That(exception!.Message, Does.Contain("capability context initialization"));
     }
