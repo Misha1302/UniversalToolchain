@@ -1,4 +1,5 @@
 using UniversalToolchain.Dialects.Core.ServiceCollection;
+using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
 
 namespace Tests.Backends;
@@ -30,8 +31,13 @@ public sealed class CilIntrinsicRegistryCompositionTests
     [Test]
     public void WistCilBackendRegistrar_ShouldExposeRegistryIntrinsicSurface()
     {
+        var services = new ServiceCollection();
+        services.AddWistCilBackend();
+
+        using var provider = services.BuildServiceProvider();
+
         var registry = new CilIntrinsicRegistry();
-        var registrar = new WistCilDialectBackendServiceProvider();
+        var registrar = provider.GetServices<IDialectBackendRuntimeRegistrar>().Single();
 
         Assert.That(registrar.SupportedIntrinsics, Is.EqualTo(registry.SupportedIntrinsics));
     }
