@@ -25,4 +25,13 @@ public sealed class CilIntrinsicRegistryCompositionTests
             Assert.That(compiler.SupportedIntrinsics, Is.EqualTo(firstRegistry.SupportedIntrinsics));
         });
     }
+
+    [Test]
+    public void WistCilBackendRegistrar_ShouldExposeRegistryIntrinsicSurface()
+    {
+        var registry = new CilIntrinsicRegistry();
+        var registrar = new WistCilDialectBackendServiceProvider();
+
+        Assert.That(registrar.SupportedIntrinsics, Is.EqualTo(registry.SupportedIntrinsics));
+    }
 }
