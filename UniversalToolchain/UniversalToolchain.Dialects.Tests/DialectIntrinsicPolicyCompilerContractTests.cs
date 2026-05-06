@@ -16,8 +16,8 @@ public sealed class DialectIntrinsicPolicyCompilerContractTests
         var compiler = new DialectIntrinsicPolicyCompiler<IAbstractIR>(
             inner,
             allowedIntrinsics: [],
-            forbiddenIntrinsics: ["unsafe_reflect"]);
-        var ir = BuildIr(new Instruction(UOpCode.Intrinsic, ["unsafe_reflect"]));
+            forbiddenIntrinsics: ["boolean_not"]);
+        var ir = BuildIr(new Instruction(UOpCode.Intrinsic, ["boolean_not"]));
         var input = new CompilationInput { SourceText = "test" };
 
         var exception = Assert.Throws<InvalidOperationException>(() => compiler.Compile(ir, input));
@@ -38,7 +38,7 @@ public sealed class DialectIntrinsicPolicyCompilerContractTests
             allowedIntrinsics: ["call C#"],
             forbiddenIntrinsics: [],
             hasExplicitAllowList: true);
-        var ir = BuildIr(new Instruction(UOpCode.Intrinsic, ["native_add_i32"]));
+        var ir = BuildIr(new Instruction(UOpCode.Intrinsic, ["boolean_not"]));
         var input = new CompilationInput { SourceText = "test" };
 
         var exception = Assert.Throws<InvalidOperationException>(() => compiler.Compile(ir, input));
@@ -75,9 +75,9 @@ public sealed class DialectIntrinsicPolicyCompilerContractTests
     public void SupportedIntrinsics_ShouldExcludeForbiddenIntrinsicsAndStayDeterministic()
     {
         var compiler = new DialectIntrinsicPolicyCompiler<IAbstractIR>(
-            new TrackingCompiler(["zeta", "unsafe_reflect", "alpha"]),
+            new TrackingCompiler(["zeta", "boolean_not", "alpha"]),
             allowedIntrinsics: [],
-            forbiddenIntrinsics: ["unsafe_reflect"]);
+            forbiddenIntrinsics: ["boolean_not"]);
 
         Assert.That(compiler.SupportedIntrinsics, Is.EqualTo(new[] { "alpha", "zeta" }));
     }
@@ -93,7 +93,7 @@ public sealed class DialectIntrinsicPolicyCompilerContractTests
     {
         public TrackingCompiler(IReadOnlyList<string>? supportedIntrinsics = null)
         {
-            SupportedIntrinsics = supportedIntrinsics ?? ["call C#", "native_add_i32", "unsafe_reflect"];
+            SupportedIntrinsics = supportedIntrinsics ?? ["call C#", "boolean_not"];
         }
 
         public bool WasCalled { get; private set; }
