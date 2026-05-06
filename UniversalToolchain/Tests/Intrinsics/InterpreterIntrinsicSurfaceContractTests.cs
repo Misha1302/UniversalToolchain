@@ -7,7 +7,7 @@ public sealed class InterpreterIntrinsicSurfaceContractTests
     [TestCase("load_external")]
     [TestCase("load_local")]
     [TestCase("store_local")]
-    [TestCase("native_add_i32")]
+    [TestCase("add_i32")]
     public void Execute_WhenBackendSpecificIntrinsicIsPassed_ShouldRejectIt(string intrinsicName)
     {
         var ir = new AbstractIR();
