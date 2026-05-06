@@ -1,4 +1,5 @@
 using UniversalToolchain.Dialects.Core.ServiceCollection;
+using UniversalToolchain.Dialects.Wist;
 
 namespace Tests.Backends;
 
