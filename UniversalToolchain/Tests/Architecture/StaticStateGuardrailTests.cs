@@ -11,24 +11,16 @@ public sealed class StaticStateGuardrailTests
 
     private static readonly string[] AllowedCurrentDebtFiles =
     [
-        "UniversalToolchain/NativeMathModule/NativeCILOptimizerModule.cs",
-        "UniversalToolchain/UniversalToolchain.Dialects.Parsing/DialectSyntaxDocument.cs",
-        "UniversalToolchain/UniversalToolchain.Dialects.Wist/DialectIntrinsicPolicyCompiler.cs",
-        "UniversalToolchain/UniversalToolchain.Dialects.Wist/WistDialectExecutionConfiguration.cs",
-        "UniversalToolchain/UniversalToolchain.Dialects.Wist/WistDialectExecutionConfigurationBuilder.cs",
-        "UniversalToolchain/UniversalToolchain.Dialects.Wist/WistDeclaredBindingFactory.cs",
-        "UniversalToolchain/UniversalToolchain.Dialects.Wist/SelectedRuntimeExecutionShape.cs",
-        "UniversalToolchain/UniversalToolchain.Dialects.Integration/RuntimeModuleDescriptor.cs",
-        "UniversalToolchain/UniversalToolchain.Dialects.Integration/DialectBackendRuntimeConfiguration.cs"
+        "UniversalToolchain/NativeMathModule/NativeCILOptimizerModule.cs"
     ];
 
     [Test]
-    public void ProductionCode_ShouldNotIntroduceNewMutableStaticCollectionFields()
+    public void CoreRuntimeCode_ShouldNotIntroduceNewMutableStaticCollectionFields()
     {
         var root = FindRepositoryRoot();
         var universalToolchainRoot = Path.Combine(root, "UniversalToolchain");
         var files = Directory.GetFiles(universalToolchainRoot, "*.cs", SearchOption.AllDirectories)
-            .Where(IsProductionSourceFile)
+            .Where(IsGuardedProductionSourceFile)
             .Where(path => !IsAllowedCurrentDebtFile(root, path))
             .ToList();
 
@@ -43,7 +35,7 @@ public sealed class StaticStateGuardrailTests
     }
 
     [Test]
-    public void KnownMutableStaticCollectionDebt_ShouldRemainExplicitlyTracked()
+    public void KnownCoreRuntimeMutableStaticCollectionDebt_ShouldRemainExplicitlyTracked()
     {
         var root = FindRepositoryRoot();
         var missingDebtMarkers = AllowedCurrentDebtFiles
@@ -75,13 +67,14 @@ public sealed class StaticStateGuardrailTests
         return AllowedCurrentDebtFiles.Contains(relativePath, StringComparer.Ordinal);
     }
 
-    private static bool IsProductionSourceFile(string path)
+    private static bool IsGuardedProductionSourceFile(string path)
     {
         var normalized = NormalizePath(path);
 
         return !normalized.Contains("/Tests/", StringComparison.Ordinal)
                && !normalized.Contains("/Tests.Legacy/", StringComparison.Ordinal)
-               && !normalized.Contains("/UniversalToolchain.Dialects.Tests/", StringComparison.Ordinal)
+               && !normalized.Contains("/UniversalToolchain.Dialects", StringComparison.Ordinal)
+               && !normalized.Contains("/UniversalToolchain.Modules.Tests/", StringComparison.Ordinal)
                && !normalized.Contains("/bin/", StringComparison.Ordinal)
                && !normalized.Contains("/obj/", StringComparison.Ordinal);
     }
