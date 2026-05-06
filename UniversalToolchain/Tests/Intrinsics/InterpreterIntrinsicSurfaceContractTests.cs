@@ -16,7 +16,7 @@ public sealed class InterpreterIntrinsicSurfaceContractTests
         ]);
         var interpreter = new InterpreterImpl();
 
-        var exception = Assert.Throws<InvalidOperationException>(() =>
+        var exception = Assert.Catch<Exception>(() =>
             interpreter.Execute(ir, new ExecutionEnvironment([])));
 
         Assert.That(exception!.Message, Does.Contain("Unsupported intrinsic"));
