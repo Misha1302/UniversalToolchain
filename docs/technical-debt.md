@@ -1,0 +1,168 @@
+# Technical debt
+
+This document tracks active architectural and repository hygiene debt for UniversalToolchain.
+It replaces the old `UniversalToolchain/TODO.md` file so debt is documented with the rest of the project docs instead of being hidden inside the source tree.
+
+## Runtime discovery and activation
+
+### Problem
+
+Broad reflection-heavy discovery must stay out of the canonical runtime path. The canonical path should keep moving toward manifest-backed selected-component activation.
+
+### Current risk
+
+If eager discovery becomes a hidden decision-maker, unrelated assemblies or test-only exports can affect runtime composition and make repeated runs non-deterministic.
+
+### Desired direction
+
+Keep exact selected-component activation canonical. Scope eager discovery to compatibility, bootstrapping, or explicitly documented tooling scenarios.
+
+### Exit criteria
+
+- Runtime selection is deterministic and manifest-backed.
+- Test-only exports cannot leak into canonical Wist runtime catalogs.
+- Runtime docs clearly distinguish selected activation from compatibility discovery.
+
+## BasicCore stage boundaries
+
+### Problem
+
+`BasicCoreImpl` still carries abstraction leakage around pipeline stage boundaries and extension contracts.
+
+### Current risk
+
+Framework-level code can accumulate dialect/module assumptions and become harder to reuse for non-Wist DSLs.
+
+### Desired direction
+
+Clarify stage contracts and make extension points explicit rather than convention-only.
+
+### Exit criteria
+
+- Frontend, bytecode, AIR, optimization, and backend responsibilities are documented and test-protected.
+- New modules do not need hidden knowledge of internal stage coupling.
+
+## Intrinsic governance
+
+### Problem
+
+Intrinsic generation and consumption still need stronger central contracts to prevent invalid or backend-specific intrinsic usage from leaking across layers.
+
+### Current risk
+
+String-based or backend-specific intrinsics can bypass semantic contracts and create interpreter/compiler parity bugs.
+
+### Desired direction
+
+Move fully toward typed intrinsic payloads and explicit backend capability contracts.
+
+### Exit criteria
+
+- Production emitters no longer generate legacy string-based intrinsic instructions.
+- `InstructionIntrinsicReader` does not need a legacy fallback.
+- Architecture tests reject backend-specific intrinsic leakage into unsupported backends.
+
+## Compiler/interpreter parity
+
+### Problem
+
+Compiler and interpreter behavior parity is central to the project, but supported divergences need to be explicit and tested.
+
+### Current risk
+
+Optimizations, native arithmetic, external calls, or local-variable handling can create backend-specific behavior that is not visible until integration tests fail.
+
+### Desired direction
+
+Keep parity tests around public behavior and add explicit tests for intentional backend differences.
+
+### Exit criteria
+
+- Public language behavior has parity coverage for interpreter and compiled execution.
+- Intentional divergences are documented and tested.
+
+## Global mutable state
+
+### Problem
+
+Global mutable state remains a risk for repeated runs, long-lived hosts, tests, and dynamically composed dialects.
+
+### Current risk
+
+Shared registries, caches, or static mutable collections can make runtime behavior order-dependent.
+
+### Desired direction
+
+Keep mutable static state guarded, scoped, or replaced with injected/deterministic runtime state.
+
+### Exit criteria
+
+- Static mutable state is covered by guardrail tests.
+- Known exceptions have documented rationale and containment boundaries.
+
+## Dialect subsystem maturity
+
+### Problem
+
+The dialect subsystem exists across parsing, core, integration, frontend, and Wist projects, but composition ergonomics and policy depth are still evolving.
+
+### Current risk
+
+The framework may expose too many internal concepts before the external authoring flow is stable.
+
+### Desired direction
+
+Continue improving dialect authoring, runtime profiles, selected runtime plans, and diagnostics without hardcoding Wist-specific assumptions into framework layers.
+
+### Exit criteria
+
+- Dialect authoring docs match real APIs and examples.
+- Runtime profiles and selected plans are understandable from documentation alone.
+- Module/backend authors have clear extension contracts.
+
+## Module grouping and dependency ordering
+
+### Problem
+
+Module grouping and dependency-order concepts are only partially represented.
+
+### Current risk
+
+Composition order can become implicit, fragile, or test-only rather than part of the framework contract.
+
+### Desired direction
+
+Represent module dependencies and ordering as first-class deterministic contracts.
+
+### Exit criteria
+
+- Module order is deterministic.
+- Dependency violations are diagnosed clearly.
+- Tests protect representative module combinations.
+
+## Repository hygiene
+
+### Problem
+
+Generated artifacts, one-off repair scripts, and stale examples can accumulate in source control.
+
+### Current risk
+
+The repository becomes harder to understand and new contributors cannot distinguish canonical code from temporary tooling.
+
+### Desired direction
+
+Keep source control focused on maintained runtime code, tests, docs, examples, and intentionally supported tools.
+
+### Exit criteria
+
+- Obsolete generated artifacts and one-off scripts are removed.
+- Internal tools are documented as internal tools.
+- Examples remain runnable from repository root.
+
+## Long-term research ideas
+
+- CIL optimizer roadmap: SSA-oriented passes, inlining strategy, and backend tuning.
+- Broader frontend/parser strategy experiments: alternative parsing algorithms and extensibility models.
+- Configuration format modernization where it improves determinism and tooling.
+- Optional code generation for repetitive boilerplate where it preserves readability and correctness.
