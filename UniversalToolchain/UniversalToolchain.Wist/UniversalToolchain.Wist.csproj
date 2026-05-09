@@ -12,6 +12,7 @@
         <PackageTags>dotnet;dsl;rules;expression;compiler;interpreter;runtime;wist</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);IncludeProjectReferenceAssembliesInPackage</TargetsForTfmSpecificBuildOutput>
+        <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeRuntimeManifestsInPackage</TargetsForTfmSpecificContentInPackage>
     </PropertyGroup>
 
     <ItemGroup>
@@ -46,6 +47,17 @@
             <BuildOutputInPackage
                 Include="@(ReferenceCopyLocalPaths)"
                 Condition="'%(ReferenceCopyLocalPaths.ReferenceSourceTarget)' == 'ProjectReference'"/>
+        </ItemGroup>
+    </Target>
+
+    <Target Name="IncludeRuntimeManifestsInPackage">
+        <ItemGroup>
+            <TfmSpecificPackageFile Include="$(TargetDir)*.dialect.runtime.json">
+                <PackagePath>contentFiles/any/$(TargetFramework)</PackagePath>
+                <BuildAction>Content</BuildAction>
+                <PackageCopyToOutput>true</PackageCopyToOutput>
+                <PackageFlatten>true</PackageFlatten>
+            </TfmSpecificPackageFile>
         </ItemGroup>
     </Target>
 
