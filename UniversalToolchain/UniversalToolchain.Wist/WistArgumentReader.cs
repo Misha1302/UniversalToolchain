@@ -1,3 +1,4 @@
+using ExceptionsManager;
 using System.Collections;
 using System.Reflection;
 
@@ -23,7 +24,7 @@ internal static class WistArgumentReader
             .ToArray();
 
         if (properties.Length == 0)
-            throw new ArgumentException("Argument object must expose at least one public readable property.", nameof(arguments));
+            Thrower.Argument(nameof(arguments), "Argument object must expose at least one public readable property.");
 
         var result = new Dictionary<string, object?>(StringComparer.Ordinal);
         foreach (var property in properties)
@@ -55,7 +56,10 @@ internal static class WistArgumentReader
         foreach (DictionaryEntry entry in dictionary)
         {
             if (entry.Key is not string name)
-                throw new ArgumentException("Dictionary argument keys must be strings.", nameof(dictionary));
+            {
+                Thrower.Argument(nameof(dictionary), "Dictionary argument keys must be strings.");
+                continue;
+            }
 
             AddArgument(result, name, entry.Value);
         }
@@ -68,7 +72,7 @@ internal static class WistArgumentReader
         ValidateName(name);
 
         if (target.ContainsKey(name))
-            throw new ArgumentException($"Duplicate Wist argument name '{name}'.", nameof(target));
+            Thrower.Argument(nameof(target), $"Duplicate Wist argument name '{name}'.");
 
         target[name] = value;
     }
@@ -76,6 +80,6 @@ internal static class WistArgumentReader
     private static void ValidateName(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
-            throw new ArgumentException("Wist argument names must not be empty.", nameof(name));
+            Thrower.Argument(nameof(name), "Wist argument names must not be empty.");
     }
 }

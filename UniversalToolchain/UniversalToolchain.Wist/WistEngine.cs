@@ -1,3 +1,4 @@
+using ExceptionsManager;
 using System.Reflection.Emit;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Integration;
@@ -53,7 +54,7 @@ public sealed class WistEngine : IDisposable
     /// </summary>
     public static WistEngine Create(WistEngineOptions options)
     {
-        options = options ?? throw new ArgumentNullException(nameof(options));
+        options = options.ArgNotNull();
 
         var services = new ServiceCollection();
         services.AddWistDialectServices();
@@ -65,7 +66,7 @@ public sealed class WistEngine : IDisposable
                 .Resolve(WistPresetMapper.ToShippedPreset(options.Preset)));
 
         if (!composition.IsSuccess)
-            throw new InvalidOperationException(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
+            Thrower.InvalidOpEx(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
 
         return new WistEngine(workflow.CreateHost(composition), options);
     }
@@ -156,7 +157,7 @@ public sealed class WistEngine : IDisposable
 
     private DynamicMethod CompileDynamicMethod(string formula, IReadOnlyDictionary<string, Type> bindingTypes)
     {
-        var artifact = _host.GetBackendSpecificArtifactCompiler<DynamicMethod>("compiler").Compile(formula, CreateDeclaredBindings(bindingTypes));
+        var artifact = _host.GetBackendSpecificArtifactCompiler<DynamicMethod>(WistBackendAliases.CompilerAlias).Compile(formula, CreateDeclaredBindings(bindingTypes));
         return artifact.CompilationOutput;
     }
 

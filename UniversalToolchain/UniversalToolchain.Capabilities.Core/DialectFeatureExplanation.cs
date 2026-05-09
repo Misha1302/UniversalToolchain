@@ -1,3 +1,4 @@
+using ExceptionsManager;
 using System.Collections.ObjectModel;
 using UniversalToolchain.Capabilities.Abstractions;
 using UniversalToolchain.Functions.Abstractions;
@@ -21,11 +22,11 @@ public sealed class DialectFeatureExplanation
         IEnumerable<string> backendSupport)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(dialectName);
-        ArgumentNullException.ThrowIfNull(availableFeatures);
-        ArgumentNullException.ThrowIfNull(unavailableKnownFeatures);
-        ArgumentNullException.ThrowIfNull(availableSymbols);
-        ArgumentNullException.ThrowIfNull(availableFunctions);
-        ArgumentNullException.ThrowIfNull(backendSupport);
+        availableFeatures = availableFeatures.ArgNotNull();
+        unavailableKnownFeatures = unavailableKnownFeatures.ArgNotNull();
+        availableSymbols = availableSymbols.ArgNotNull();
+        availableFunctions = availableFunctions.ArgNotNull();
+        backendSupport = backendSupport.ArgNotNull();
 
         DialectName = dialectName;
         _availableFeatures = new ReadOnlyCollection<LanguageFeatureDescriptor>(availableFeatures.ToList());

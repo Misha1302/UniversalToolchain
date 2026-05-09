@@ -1,3 +1,4 @@
+using ExceptionsManager;
 using UniversalToolchain.Diagnostics.Abstractions;
 
 namespace UniversalToolchain.Capabilities.Core;
@@ -9,7 +10,7 @@ public sealed class CapabilityProviderFactory
         out object? provider,
         out ToolchainDiagnostic? diagnostic)
     {
-        ArgumentNullException.ThrowIfNull(descriptor);
+        descriptor = descriptor.ArgNotNull();
 
         provider = null;
         diagnostic = null;

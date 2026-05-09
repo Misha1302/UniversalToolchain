@@ -10,7 +10,7 @@ public class CSharpFunctionCallsAstVisitor : IAstVisitor
         var argsScope = data.Node.Children[0];
         var arguments = argsScope.Children;
 
-        // Обрабатываем аргументы - они будут положены в стек
+        // Translate arguments; they will be pushed onto the stack.
         foreach (var argument in arguments)
             data.AstToBytecodeTranslator.Translate(argument);
 
@@ -20,12 +20,12 @@ public class CSharpFunctionCallsAstVisitor : IAstVisitor
             $"Call_{fullName}",
             (il, context) =>
             {
-                // Используем типы из стека для разрешения перегрузки
-                // Количество аргументов = количество детей узла
+                // Use stack types for overload resolution.
+                // Argument count equals the child count of the args node.
                 var argCount = arguments.Count;
                 var stackTypes = context.Stack.TakeLast(argCount).ToList();
 
-                // Пытаемся найти метод с учетом типов параметров
+                // Try to find a method with matching parameter types first.
                 var methodInfo = MethodsFinder.GetMethod(fullName, stackTypes.ToArray())
                                  ?? MethodsFinder.GetMethod(fullName, argCount)
                                  ?? MethodsFinder.GetMethod(fullName);

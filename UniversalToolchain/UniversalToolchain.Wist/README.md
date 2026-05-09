@@ -115,3 +115,7 @@ This initial facade intentionally exposes only:
 - typed fast `CompileFunc` overloads for one, two, and three arguments.
 
 Wider arities and reusable object/session-based compiled artifacts can be added after the first API shape is validated.
+
+
+Use `WistEngine` for application-level formula execution.
+Use `WistRuntimeFacadeBuilder` only when working with lower-level Wist runtime or dialect integration scenarios.

@@ -1,3 +1,4 @@
+using ExceptionsManager;
 using UniversalToolchain.Capabilities.Abstractions;
 using UniversalToolchain.Diagnostics.Abstractions;
 using UniversalToolchain.ExpressionTyping.Abstractions;
@@ -9,7 +10,7 @@ public sealed class CapabilityProviderTypeResolver
 {
     public CapabilityDiscoveryResult Resolve(IEnumerable<Type> runtimeComponentImplementationTypes)
     {
-        ArgumentNullException.ThrowIfNull(runtimeComponentImplementationTypes);
+        runtimeComponentImplementationTypes = runtimeComponentImplementationTypes.ArgNotNull();
 
         var descriptors = new List<CapabilityProviderDescriptor>();
         var diagnostics = new List<ToolchainDiagnostic>();
@@ -48,7 +49,7 @@ public sealed class CapabilityProviderTypeResolver
 
     internal static bool ImplementsKnownProviderInterface(Type providerType)
     {
-        ArgumentNullException.ThrowIfNull(providerType);
+        providerType = providerType.ArgNotNull();
 
         return typeof(ILanguageFeatureDescriptorProvider).IsAssignableFrom(providerType) ||
                typeof(IBuiltinFunctionDescriptorProvider).IsAssignableFrom(providerType) ||

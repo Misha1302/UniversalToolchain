@@ -1,3 +1,4 @@
+using ExceptionsManager;
 using System.Collections.ObjectModel;
 using UniversalToolchain.Functions.Abstractions;
 
@@ -9,7 +10,7 @@ public sealed class BuiltinFunctionRuntimeBindingCatalog
 
     public BuiltinFunctionRuntimeBindingCatalog(IEnumerable<BuiltinFunctionRuntimeBinding> runtimeBindings)
     {
-        ArgumentNullException.ThrowIfNull(runtimeBindings);
+        runtimeBindings = runtimeBindings.ArgNotNull();
 
         _runtimeBindings = new ReadOnlyCollection<BuiltinFunctionRuntimeBinding>(runtimeBindings
             .OrderBy(static x => x.Signature.Name, StringComparer.Ordinal)
@@ -23,7 +24,7 @@ public sealed class BuiltinFunctionRuntimeBindingCatalog
     public IReadOnlyList<BuiltinFunctionRuntimeBinding> FindMatchingBindings(string name, IReadOnlyList<FunctionTypeDescriptor> parameterTypes)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentNullException.ThrowIfNull(parameterTypes);
+        parameterTypes = parameterTypes.ArgNotNull();
 
         return _runtimeBindings
             .Where(x => string.Equals(x.Signature.Name, name, StringComparison.Ordinal))

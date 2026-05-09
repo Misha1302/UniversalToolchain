@@ -1,3 +1,4 @@
+using ExceptionsManager;
 using UniversalToolchain.Capabilities.Abstractions;
 using UniversalToolchain.Dialects.Integration;
 
@@ -11,9 +12,9 @@ public static class DialectFeatureExplanationProjector
         SelectedRuntimePlan selectedRuntimePlan,
         string dialectName)
     {
-        ArgumentNullException.ThrowIfNull(knownCapabilityCatalog);
-        ArgumentNullException.ThrowIfNull(selectedCapabilityCatalog);
-        ArgumentNullException.ThrowIfNull(selectedRuntimePlan);
+        knownCapabilityCatalog = knownCapabilityCatalog.ArgNotNull();
+        selectedCapabilityCatalog = selectedCapabilityCatalog.ArgNotNull();
+        selectedRuntimePlan = selectedRuntimePlan.ArgNotNull();
         ArgumentException.ThrowIfNullOrWhiteSpace(dialectName);
 
         var availableFeatureIds = DetermineAvailableFeatureIds(selectedCapabilityCatalog, selectedRuntimePlan);
@@ -53,8 +54,8 @@ public static class DialectFeatureExplanationProjector
         CapabilityCatalog selectedCapabilityCatalog,
         SelectedRuntimePlan selectedRuntimePlan)
     {
-        ArgumentNullException.ThrowIfNull(selectedCapabilityCatalog);
-        ArgumentNullException.ThrowIfNull(selectedRuntimePlan);
+        selectedCapabilityCatalog = selectedCapabilityCatalog.ArgNotNull();
+        selectedRuntimePlan = selectedRuntimePlan.ArgNotNull();
 
         var selectedAliases = GetSelectedRuntimeComponentAliases(selectedRuntimePlan);
         var availableFeatureIds = new HashSet<LanguageFeatureId>();

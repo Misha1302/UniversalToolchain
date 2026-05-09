@@ -1,3 +1,4 @@
+using ExceptionsManager;
 using System.Globalization;
 
 namespace UniversalToolchain.Wist;
@@ -14,7 +15,7 @@ internal static class WistResultConverter
             if (default(T) == null)
                 return default!;
 
-            throw new InvalidCastException($"Cannot convert null Wist result to '{typeof(T)}'.");
+            return Thrower.InvalidCast<T>($"Cannot convert null Wist result to '{typeof(T)}'.");
         }
 
         if (TryReadCustomNumericValue(value, out var numericValue))

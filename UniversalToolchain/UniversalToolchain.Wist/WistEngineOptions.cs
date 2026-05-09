@@ -14,9 +14,4 @@ public sealed class WistEngineOptions
     ///     Gets or sets the backend used by convenience evaluation APIs.
     /// </summary>
     public WistBackend Backend { get; set; } = WistBackend.Compiler;
-
-    /// <summary>
-    ///     Gets or sets a value indicating whether future convenience-level compilation caching may be enabled.
-    /// </summary>
-    public bool EnableCompilationCache { get; set; } = true;
 }

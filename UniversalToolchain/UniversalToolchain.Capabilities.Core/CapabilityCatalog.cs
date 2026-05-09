@@ -1,3 +1,4 @@
+using ExceptionsManager;
 using System.Collections.ObjectModel;
 using UniversalToolchain.Capabilities.Abstractions;
 using UniversalToolchain.Diagnostics.Abstractions;
@@ -25,12 +26,12 @@ public sealed class CapabilityCatalog
         IEnumerable<ToolchainDiagnostic> diagnostics,
         IReadOnlyDictionary<LanguageFeatureId, CapabilityProviderDescriptor>? featureOwnersById = null)
     {
-        ArgumentNullException.ThrowIfNull(providers);
-        ArgumentNullException.ThrowIfNull(languageFeatures);
-        ArgumentNullException.ThrowIfNull(builtinFunctionDescriptors);
-        ArgumentNullException.ThrowIfNull(builtinFunctionRuntimeBindings);
-        ArgumentNullException.ThrowIfNull(expressionTypeRules);
-        ArgumentNullException.ThrowIfNull(diagnostics);
+        providers = providers.ArgNotNull();
+        languageFeatures = languageFeatures.ArgNotNull();
+        builtinFunctionDescriptors = builtinFunctionDescriptors.ArgNotNull();
+        builtinFunctionRuntimeBindings = builtinFunctionRuntimeBindings.ArgNotNull();
+        expressionTypeRules = expressionTypeRules.ArgNotNull();
+        diagnostics = diagnostics.ArgNotNull();
 
         _providers = new ReadOnlyCollection<CapabilityProviderDescriptor>(providers
             .OrderBy(static x => CapabilityProviderTypeResolver.GetTypeName(x.RuntimeComponentImplementationType), StringComparer.Ordinal)
@@ -74,7 +75,7 @@ public sealed class CapabilityCatalog
 
     public bool ContainsProvider(Type providerType)
     {
-        ArgumentNullException.ThrowIfNull(providerType);
+        providerType = providerType.ArgNotNull();
 
         return _providers.Any(x => x.ProviderType == providerType);
     }
@@ -86,9 +87,9 @@ public sealed class CapabilityCatalog
         CapabilityProviderTypeResolver providerTypeResolver,
         CapabilityProviderFactory providerFactory)
     {
-        ArgumentNullException.ThrowIfNull(runtimeComponentImplementationTypes);
-        ArgumentNullException.ThrowIfNull(providerTypeResolver);
-        ArgumentNullException.ThrowIfNull(providerFactory);
+        runtimeComponentImplementationTypes = runtimeComponentImplementationTypes.ArgNotNull();
+        providerTypeResolver = providerTypeResolver.ArgNotNull();
+        providerFactory = providerFactory.ArgNotNull();
 
         var discovery = providerTypeResolver.Resolve(runtimeComponentImplementationTypes);
         var providers = new List<CapabilityProviderDescriptor>();
