@@ -9,7 +9,8 @@ public sealed class CapabilityProviderTypeResolver
 {
     public CapabilityDiscoveryResult Resolve(IEnumerable<Type> runtimeComponentImplementationTypes)
     {
-        ArgumentNullException.ThrowIfNull(runtimeComponentImplementationTypes);
+        if (runtimeComponentImplementationTypes is null)
+            throw new ArgumentNullException(nameof(runtimeComponentImplementationTypes));
 
         var descriptors = new List<CapabilityProviderDescriptor>();
         var diagnostics = new List<ToolchainDiagnostic>();
@@ -48,7 +49,8 @@ public sealed class CapabilityProviderTypeResolver
 
     internal static bool ImplementsKnownProviderInterface(Type providerType)
     {
-        ArgumentNullException.ThrowIfNull(providerType);
+        if (providerType is null)
+            throw new ArgumentNullException(nameof(providerType));
 
         return typeof(ILanguageFeatureDescriptorProvider).IsAssignableFrom(providerType) ||
                typeof(IBuiltinFunctionDescriptorProvider).IsAssignableFrom(providerType) ||

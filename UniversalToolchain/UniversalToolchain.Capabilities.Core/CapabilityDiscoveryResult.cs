@@ -12,8 +12,10 @@ public sealed class CapabilityDiscoveryResult
         IEnumerable<CapabilityProviderDescriptor> providerDescriptors,
         IEnumerable<ToolchainDiagnostic> diagnostics)
     {
-        ArgumentNullException.ThrowIfNull(providerDescriptors);
-        ArgumentNullException.ThrowIfNull(diagnostics);
+        if (providerDescriptors is null)
+            throw new ArgumentNullException(nameof(providerDescriptors));
+        if (diagnostics is null)
+            throw new ArgumentNullException(nameof(diagnostics));
 
         _providerDescriptors = new ReadOnlyCollection<CapabilityProviderDescriptor>(providerDescriptors.ToList());
         _diagnostics = new ReadOnlyCollection<ToolchainDiagnostic>(diagnostics.ToList());

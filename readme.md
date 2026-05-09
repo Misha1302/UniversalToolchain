@@ -43,26 +43,25 @@ Expected output:
 
 ## Programmatic example
 
-A small Wist facade example:
+Use `WistEngine` as the application-level API:
 
 ```csharp
-using var wist = WistRuntimeFacadeBuilder
-    .CreateDefault()
-    .Build();
+using UniversalToolchain.Wist;
 
-var result = wist.Run(
+using var wist = WistEngine.CreateSafeFormulas();
+
+double result = wist.Evaluate<double>(
     "price * 0.9 + fee",
-    new Dictionary<string, object?>
+    new
     {
-        ["price"] = 100.0,
-        ["fee"] = 5.0
-    },
-    backend: "compiler");
-
-var compiledResult = (double)result!; // 95.0
+        price = 100.0,
+        fee = 5.0
+    });
 ```
 
-Use an explicit shipped dialect preset when the runtime surface must be composition-constrained:
+Use `WistRuntimeFacadeBuilder` only for advanced/lower-level Wist runtime and dialect integration scenarios.
+
+## Advanced runtime integration example
 
 ```csharp
 using UniversalToolchain.Dialects.Wist.Presets;
@@ -73,7 +72,8 @@ using var wist = WistRuntimeFacadeBuilder
     .Build();
 
 var attempt = wist.TryCompile(
-    "let discount = 0.9\n price * discount + fee",
+    "let discount = 0.9
+ price * discount + fee",
     new Dictionary<string, Type>
     {
         ["price"] = typeof(double),
@@ -89,7 +89,7 @@ Use UniversalToolchain when:
 - a normal expression evaluator is too narrow for your rules or formulas,
 - users need a syntax that matches your domain instead of C# syntax,
 - you need a dialect profile that allows only selected language features,
-- the same language should support compiler and interpreter modes,
+- the same language should support compiler and interpreter backend aliases,
 - you need an inspectable execution pipeline for validation, diagnostics, or backend work,
 - you want configurable business logic without hardcoding every rule into the application.
 
@@ -195,7 +195,7 @@ Common options:
 - `--backend <compiler|interpreter>`
 - `--dialect-file <path>`
 
-The user-facing `compiler` mode selects the canonical `cil` backend when a dialect declares `backend cil` or the
+The user-facing `compiler` backend alias selects the canonical `cil` backend when a dialect declares `backend cil` or the
 `compiler` alias. `--eval` is a flag; the source expression itself is passed as the positional code argument.
 
 Examples:
@@ -311,3 +311,8 @@ See [Current limitations](docs/limitations.md) for the explicit limitation and w
 ## License
 
 Licensed under Apache License 2.0. See [LICENSE](LICENSE).
+
+
+## Development validation
+
+See [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) for required release commands and manual smoke checks.

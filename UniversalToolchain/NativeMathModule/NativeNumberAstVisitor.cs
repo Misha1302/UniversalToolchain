@@ -21,11 +21,11 @@ public class NativeNumberAstVisitor : IAstVisitor
             $"PushNative_{valueType.Name}_{value}",
             (il, _) =>
             {
-                // Просто пушим значение на стек
+                // Push the parsed value to the stack.
                 il.Push(value);
 
-                // Для числовых типов не нужно дополнительных действий
-                // (в отличие от RealNumberImpl, который требует вызов конструктора)
+                // Numeric types need no extra handling
+                // (unlike RealNumberImpl, which requires a constructor call).
             }
         );
 

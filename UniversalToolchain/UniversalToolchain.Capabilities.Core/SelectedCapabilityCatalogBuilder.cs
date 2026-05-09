@@ -22,7 +22,8 @@ public sealed class SelectedCapabilityCatalogBuilder
 
     public CapabilityCatalog Build(SelectedRuntimePlan selectedRuntimePlan)
     {
-        ArgumentNullException.ThrowIfNull(selectedRuntimePlan);
+        if (selectedRuntimePlan is null)
+            throw new ArgumentNullException(nameof(selectedRuntimePlan));
 
         EnsureTypeLoaderConfigured();
 

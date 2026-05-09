@@ -6,7 +6,8 @@ public static class DialectFeatureExplanationFormatter
 {
     public static string FormatDeterministic(DialectFeatureExplanation explanation)
     {
-        ArgumentNullException.ThrowIfNull(explanation);
+        if (explanation is null)
+            throw new ArgumentNullException(nameof(explanation));
 
         var builder = new StringBuilder();
         builder.AppendLine($"Dialect: {explanation.DialectName}");

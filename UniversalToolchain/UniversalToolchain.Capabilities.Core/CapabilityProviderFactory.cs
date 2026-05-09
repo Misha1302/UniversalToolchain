@@ -9,7 +9,8 @@ public sealed class CapabilityProviderFactory
         out object? provider,
         out ToolchainDiagnostic? diagnostic)
     {
-        ArgumentNullException.ThrowIfNull(descriptor);
+        if (descriptor is null)
+            throw new ArgumentNullException(nameof(descriptor));
 
         provider = null;
         diagnostic = null;

@@ -1,6 +1,6 @@
 namespace NativeMathModule;
 
-// Базовый класс для бинарных операций (как в ArithmeticModule)
+// Base class for binary operations (similar to ArithmeticModule).
 public abstract class NativeBinaryOperationBase(string enumStr) : IAstNodeCreator
 {
     public virtual ExtensibleEnum<AstNodeTag> AstNodeType =>

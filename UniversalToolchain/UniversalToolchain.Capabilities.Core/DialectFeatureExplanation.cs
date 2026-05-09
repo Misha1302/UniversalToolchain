@@ -21,11 +21,16 @@ public sealed class DialectFeatureExplanation
         IEnumerable<string> backendSupport)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(dialectName);
-        ArgumentNullException.ThrowIfNull(availableFeatures);
-        ArgumentNullException.ThrowIfNull(unavailableKnownFeatures);
-        ArgumentNullException.ThrowIfNull(availableSymbols);
-        ArgumentNullException.ThrowIfNull(availableFunctions);
-        ArgumentNullException.ThrowIfNull(backendSupport);
+        if (availableFeatures is null)
+            throw new ArgumentNullException(nameof(availableFeatures));
+        if (unavailableKnownFeatures is null)
+            throw new ArgumentNullException(nameof(unavailableKnownFeatures));
+        if (availableSymbols is null)
+            throw new ArgumentNullException(nameof(availableSymbols));
+        if (availableFunctions is null)
+            throw new ArgumentNullException(nameof(availableFunctions));
+        if (backendSupport is null)
+            throw new ArgumentNullException(nameof(backendSupport));
 
         DialectName = dialectName;
         _availableFeatures = new ReadOnlyCollection<LanguageFeatureDescriptor>(availableFeatures.ToList());

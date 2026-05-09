@@ -9,7 +9,8 @@ public sealed class BuiltinFunctionRuntimeBindingCatalog
 
     public BuiltinFunctionRuntimeBindingCatalog(IEnumerable<BuiltinFunctionRuntimeBinding> runtimeBindings)
     {
-        ArgumentNullException.ThrowIfNull(runtimeBindings);
+        if (runtimeBindings is null)
+            throw new ArgumentNullException(nameof(runtimeBindings));
 
         _runtimeBindings = new ReadOnlyCollection<BuiltinFunctionRuntimeBinding>(runtimeBindings
             .OrderBy(static x => x.Signature.Name, StringComparer.Ordinal)
@@ -23,7 +24,8 @@ public sealed class BuiltinFunctionRuntimeBindingCatalog
     public IReadOnlyList<BuiltinFunctionRuntimeBinding> FindMatchingBindings(string name, IReadOnlyList<FunctionTypeDescriptor> parameterTypes)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentNullException.ThrowIfNull(parameterTypes);
+        if (parameterTypes is null)
+            throw new ArgumentNullException(nameof(parameterTypes));
 
         return _runtimeBindings
             .Where(x => string.Equals(x.Signature.Name, name, StringComparison.Ordinal))

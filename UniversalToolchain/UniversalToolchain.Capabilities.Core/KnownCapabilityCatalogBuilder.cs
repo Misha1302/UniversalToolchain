@@ -22,7 +22,8 @@ public sealed class KnownCapabilityCatalogBuilder
 
     public CapabilityCatalog Build(IRuntimeComponentCatalog runtimeComponentCatalog)
     {
-        ArgumentNullException.ThrowIfNull(runtimeComponentCatalog);
+        if (runtimeComponentCatalog is null)
+            throw new ArgumentNullException(nameof(runtimeComponentCatalog));
 
         EnsureTypeLoaderConfigured();
 

@@ -16,8 +16,10 @@ public sealed class BuiltinFunctionCatalog
         CapabilityCatalog selectedCapabilityCatalog,
         SelectedRuntimePlan selectedRuntimePlan)
     {
-        ArgumentNullException.ThrowIfNull(selectedCapabilityCatalog);
-        ArgumentNullException.ThrowIfNull(selectedRuntimePlan);
+        if (selectedCapabilityCatalog is null)
+            throw new ArgumentNullException(nameof(selectedCapabilityCatalog));
+        if (selectedRuntimePlan is null)
+            throw new ArgumentNullException(nameof(selectedRuntimePlan));
 
         _selectedCapabilityCatalog = selectedCapabilityCatalog;
         _runtimeBindingCatalog = new BuiltinFunctionRuntimeBindingCatalog(selectedCapabilityCatalog.BuiltinFunctionRuntimeBindings);
@@ -33,7 +35,8 @@ public sealed class BuiltinFunctionCatalog
         string backendAlias)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentNullException.ThrowIfNull(argumentTypes);
+        if (argumentTypes is null)
+            throw new ArgumentNullException(nameof(argumentTypes));
         ArgumentException.ThrowIfNullOrWhiteSpace(backendAlias);
 
         var diagnostics = new List<ToolchainDiagnostic>();

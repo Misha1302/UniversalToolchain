@@ -1,5 +1,65 @@
 # UniversalToolchain Documentation
 
+## UniversalToolchain
+
+Build restricted formulas and small DSL runtimes for .NET.
+
+Use it when an expression evaluator is too small,
+C# scripting is too broad,
+and writing a compiler from scratch is too expensive.
+
+## 30-second demo
+
+```csharp
+using UniversalToolchain.Wist;
+
+using var wist = WistEngine.CreateSafeFormulas();
+
+double result = wist.Evaluate<double>(
+    "price * 0.9 + fee",
+    new
+    {
+        price = 100.0,
+        fee = 5.0
+    });
+```
+
+```text
+95
+```
+
+## When to use / when not to use
+
+Use UniversalToolchain when:
+- you need controlled formulas/rules in a .NET app
+- you want to restrict available language features
+- you need a path from interpreter to compiled execution
+- you want reusable DSL infrastructure
+
+Do not use it when:
+- you only need one arithmetic expression
+- you need a hardened sandbox for untrusted code
+- you need a stable production API today
+- you need broad C# scripting
+
+## Preview status
+
+Current status:
+- Wist-first preview
+- .NET 10 baseline
+- compiler + interpreter execution paths
+- restricted dialects are not hardened sandboxes
+- APIs may change before stable release
+
+## I want to...
+
+- [embed formulas in .NET](/start/what-is-wist)
+- [build a restricted DSL](/build-dsls/)
+- [write a module](/write-modules/)
+- [study compiler/runtime internals](/internals/)
+
+
+
 UniversalToolchain is a Wist-first modular .NET DSL/runtime framework.
 
 It helps you build small embeddable languages for .NET applications when a plain expression evaluator is too limited, full C# scripting is too broad, and writing a compiler from scratch would be too expensive.

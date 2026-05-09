@@ -11,7 +11,8 @@ public sealed class ExpressionTypeRuleCatalog
 
     public ExpressionTypeRuleCatalog(IEnumerable<IExpressionTypeRule> rules, IEnumerable<ToolchainDiagnostic>? diagnostics = null)
     {
-        ArgumentNullException.ThrowIfNull(rules);
+        if (rules is null)
+            throw new ArgumentNullException(nameof(rules));
 
         _rules = new ReadOnlyCollection<IExpressionTypeRule>(rules
             .OrderBy(static x => CapabilityProviderTypeResolver.GetTypeName(x.GetType()), StringComparer.Ordinal)
