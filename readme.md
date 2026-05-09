@@ -72,8 +72,10 @@ using var wist = WistRuntimeFacadeBuilder
     .Build();
 
 var attempt = wist.TryCompile(
-    "let discount = 0.9
- price * discount + fee",
+    """
+    let discount = 0.9
+    price * discount + fee
+    """,
     new Dictionary<string, Type>
     {
         ["price"] = typeof(double),
