@@ -11,16 +11,19 @@
         <Description>A Wist-first .NET DSL/runtime facade for evaluating restricted formulas and compiling typed fast functions.</Description>
         <PackageTags>dotnet;dsl;rules;expression;compiler;interpreter;runtime;wist</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
+        <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);IncludeProjectReferenceAssembliesInPackage</TargetsForTfmSpecificBuildOutput>
+        <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeRuntimeManifestsInPackage</TargetsForTfmSpecificContentInPackage>
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\BasicCore\BasicCore.csproj"/>
-        <ProjectReference Include="..\DynamicMethodCalling\DynamicMethodCalling.csproj"/>
-        <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj"/>
-        <ProjectReference Include="..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj"/>
+        <ProjectReference Include="..\BasicCore\BasicCore.csproj" PrivateAssets="all"/>
+        <ProjectReference Include="..\DynamicMethodCalling\DynamicMethodCalling.csproj" PrivateAssets="all"/>
+        <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj" PrivateAssets="all"/>
+        <ProjectReference Include="..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj" PrivateAssets="all"/>
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="GrEmit" Version="3.5.1"/>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1"/>
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.1"/>
     </ItemGroup>
@@ -33,7 +36,30 @@
         <Content Include="..\Dialects\examples\wist\**\dialect.wistdialect">
             <Link>Dialects\examples\wist\%(RecursiveDir)%(Filename)%(Extension)</Link>
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <Pack>true</Pack>
+            <PackagePath>contentFiles/any/$(TargetFramework)/Dialects/examples/wist/%(RecursiveDir)%(Filename)%(Extension)</PackagePath>
+            <PackageCopyToOutput>true</PackageCopyToOutput>
+            <PackageFlatten>false</PackageFlatten>
         </Content>
     </ItemGroup>
+
+    <Target Name="IncludeProjectReferenceAssembliesInPackage" DependsOnTargets="ResolveReferences">
+        <ItemGroup>
+            <BuildOutputInPackage
+                Include="@(ReferenceCopyLocalPaths)"
+                Condition="'%(ReferenceCopyLocalPaths.ReferenceSourceTarget)' == 'ProjectReference'"/>
+        </ItemGroup>
+    </Target>
+
+    <Target Name="IncludeRuntimeManifestsInPackage">
+        <ItemGroup>
+            <TfmSpecificPackageFile Include="$(TargetDir)*.dialect.runtime.json">
+                <PackagePath>contentFiles/any/$(TargetFramework)</PackagePath>
+                <BuildAction>Content</BuildAction>
+                <PackageCopyToOutput>true</PackageCopyToOutput>
+                <PackageFlatten>true</PackageFlatten>
+            </TfmSpecificPackageFile>
+        </ItemGroup>
+    </Target>
 
 </Project>
