@@ -32,6 +32,14 @@ jobs:
       - name: Test
         run: dotnet test UniversalToolchain/Wist.sln -c Release --no-build
 
+      - name: Pack Wist facade
+        run: >
+          dotnet pack UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj
+          -c Release
+          --no-build
+          -o artifacts/packages
+          /p:WarningsAsErrors=NU5118
+
       - name: Install docs dependencies
         run: npm install
 
