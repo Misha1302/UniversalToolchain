@@ -1,3 +1,4 @@
+using ExceptionsManager;
 using System.Collections.ObjectModel;
 using UniversalToolchain.Diagnostics.Abstractions;
 using UniversalToolchain.ExpressionTyping.Abstractions;
@@ -11,8 +12,7 @@ public sealed class ExpressionTypeRuleCatalog
 
     public ExpressionTypeRuleCatalog(IEnumerable<IExpressionTypeRule> rules, IEnumerable<ToolchainDiagnostic>? diagnostics = null)
     {
-        if (rules is null)
-            throw new ArgumentNullException(nameof(rules));
+        rules = rules.ArgNotNull();
 
         _rules = new ReadOnlyCollection<IExpressionTypeRule>(rules
             .OrderBy(static x => CapabilityProviderTypeResolver.GetTypeName(x.GetType()), StringComparer.Ordinal)

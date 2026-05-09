@@ -1,3 +1,4 @@
+using ExceptionsManager;
 using UniversalToolchain.Dialects.Integration;
 
 namespace UniversalToolchain.Capabilities.Core;
@@ -22,8 +23,7 @@ public sealed class SelectedCapabilityCatalogBuilder
 
     public CapabilityCatalog Build(SelectedRuntimePlan selectedRuntimePlan)
     {
-        if (selectedRuntimePlan is null)
-            throw new ArgumentNullException(nameof(selectedRuntimePlan));
+        selectedRuntimePlan = selectedRuntimePlan.ArgNotNull();
 
         EnsureTypeLoaderConfigured();
 

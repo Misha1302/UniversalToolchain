@@ -1,3 +1,4 @@
+using ExceptionsManager;
 using System.Collections.ObjectModel;
 using UniversalToolchain.Capabilities.Abstractions;
 using UniversalToolchain.Diagnostics.Abstractions;
@@ -25,18 +26,12 @@ public sealed class CapabilityCatalog
         IEnumerable<ToolchainDiagnostic> diagnostics,
         IReadOnlyDictionary<LanguageFeatureId, CapabilityProviderDescriptor>? featureOwnersById = null)
     {
-        if (providers is null)
-            throw new ArgumentNullException(nameof(providers));
-        if (languageFeatures is null)
-            throw new ArgumentNullException(nameof(languageFeatures));
-        if (builtinFunctionDescriptors is null)
-            throw new ArgumentNullException(nameof(builtinFunctionDescriptors));
-        if (builtinFunctionRuntimeBindings is null)
-            throw new ArgumentNullException(nameof(builtinFunctionRuntimeBindings));
-        if (expressionTypeRules is null)
-            throw new ArgumentNullException(nameof(expressionTypeRules));
-        if (diagnostics is null)
-            throw new ArgumentNullException(nameof(diagnostics));
+        providers = providers.ArgNotNull();
+        languageFeatures = languageFeatures.ArgNotNull();
+        builtinFunctionDescriptors = builtinFunctionDescriptors.ArgNotNull();
+        builtinFunctionRuntimeBindings = builtinFunctionRuntimeBindings.ArgNotNull();
+        expressionTypeRules = expressionTypeRules.ArgNotNull();
+        diagnostics = diagnostics.ArgNotNull();
 
         _providers = new ReadOnlyCollection<CapabilityProviderDescriptor>(providers
             .OrderBy(static x => CapabilityProviderTypeResolver.GetTypeName(x.RuntimeComponentImplementationType), StringComparer.Ordinal)
@@ -80,8 +75,7 @@ public sealed class CapabilityCatalog
 
     public bool ContainsProvider(Type providerType)
     {
-        if (providerType is null)
-            throw new ArgumentNullException(nameof(providerType));
+        providerType = providerType.ArgNotNull();
 
         return _providers.Any(x => x.ProviderType == providerType);
     }
@@ -93,12 +87,9 @@ public sealed class CapabilityCatalog
         CapabilityProviderTypeResolver providerTypeResolver,
         CapabilityProviderFactory providerFactory)
     {
-        if (runtimeComponentImplementationTypes is null)
-            throw new ArgumentNullException(nameof(runtimeComponentImplementationTypes));
-        if (providerTypeResolver is null)
-            throw new ArgumentNullException(nameof(providerTypeResolver));
-        if (providerFactory is null)
-            throw new ArgumentNullException(nameof(providerFactory));
+        runtimeComponentImplementationTypes = runtimeComponentImplementationTypes.ArgNotNull();
+        providerTypeResolver = providerTypeResolver.ArgNotNull();
+        providerFactory = providerFactory.ArgNotNull();
 
         var discovery = providerTypeResolver.Resolve(runtimeComponentImplementationTypes);
         var providers = new List<CapabilityProviderDescriptor>();

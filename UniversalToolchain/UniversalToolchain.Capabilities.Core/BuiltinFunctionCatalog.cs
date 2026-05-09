@@ -1,3 +1,4 @@
+using ExceptionsManager;
 using UniversalToolchain.Capabilities.Abstractions;
 using UniversalToolchain.Diagnostics.Abstractions;
 using UniversalToolchain.Dialects.Integration;
@@ -16,10 +17,8 @@ public sealed class BuiltinFunctionCatalog
         CapabilityCatalog selectedCapabilityCatalog,
         SelectedRuntimePlan selectedRuntimePlan)
     {
-        if (selectedCapabilityCatalog is null)
-            throw new ArgumentNullException(nameof(selectedCapabilityCatalog));
-        if (selectedRuntimePlan is null)
-            throw new ArgumentNullException(nameof(selectedRuntimePlan));
+        selectedCapabilityCatalog = selectedCapabilityCatalog.ArgNotNull();
+        selectedRuntimePlan = selectedRuntimePlan.ArgNotNull();
 
         _selectedCapabilityCatalog = selectedCapabilityCatalog;
         _runtimeBindingCatalog = new BuiltinFunctionRuntimeBindingCatalog(selectedCapabilityCatalog.BuiltinFunctionRuntimeBindings);
@@ -35,8 +34,7 @@ public sealed class BuiltinFunctionCatalog
         string backendAlias)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        if (argumentTypes is null)
-            throw new ArgumentNullException(nameof(argumentTypes));
+        argumentTypes = argumentTypes.ArgNotNull();
         ArgumentException.ThrowIfNullOrWhiteSpace(backendAlias);
 
         var diagnostics = new List<ToolchainDiagnostic>();

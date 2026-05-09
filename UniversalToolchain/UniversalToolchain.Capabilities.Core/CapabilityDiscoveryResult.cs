@@ -1,3 +1,4 @@
+using ExceptionsManager;
 using System.Collections.ObjectModel;
 using UniversalToolchain.Diagnostics.Abstractions;
 
@@ -12,10 +13,8 @@ public sealed class CapabilityDiscoveryResult
         IEnumerable<CapabilityProviderDescriptor> providerDescriptors,
         IEnumerable<ToolchainDiagnostic> diagnostics)
     {
-        if (providerDescriptors is null)
-            throw new ArgumentNullException(nameof(providerDescriptors));
-        if (diagnostics is null)
-            throw new ArgumentNullException(nameof(diagnostics));
+        providerDescriptors = providerDescriptors.ArgNotNull();
+        diagnostics = diagnostics.ArgNotNull();
 
         _providerDescriptors = new ReadOnlyCollection<CapabilityProviderDescriptor>(providerDescriptors.ToList());
         _diagnostics = new ReadOnlyCollection<ToolchainDiagnostic>(diagnostics.ToList());

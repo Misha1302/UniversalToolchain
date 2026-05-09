@@ -58,6 +58,7 @@ internal static class WistArgumentReader
             if (entry.Key is not string name)
             {
                 Thrower.Argument(nameof(dictionary), "Dictionary argument keys must be strings.");
+                continue;
             }
 
             AddArgument(result, name, entry.Value);

@@ -12,7 +12,13 @@ internal static class WistBackendAliases
         {
             WistBackend.Compiler => CompilerAlias,
             WistBackend.Interpreter => InterpreterAlias,
-            _ => Thrower.Argument(nameof(backend), "Unsupported Wist backend.")
+            _ => ThrowUnsupportedBackend(backend)
         };
+    }
+
+    private static string ThrowUnsupportedBackend(WistBackend backend)
+    {
+        Thrower.Argument(nameof(backend), $"Unsupported Wist backend '{backend}'.");
+        return null!;
     }
 }

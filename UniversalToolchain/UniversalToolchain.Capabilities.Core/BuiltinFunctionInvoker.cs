@@ -8,10 +8,8 @@ public sealed class BuiltinFunctionInvoker
 {
     public BuiltinFunctionInvocationResult Invoke(BuiltinFunctionResolution resolution, IReadOnlyList<object?> arguments)
     {
-        if (resolution is null)
-            throw new ArgumentNullException(nameof(resolution));
-        if (arguments is null)
-            throw new ArgumentNullException(nameof(arguments));
+        resolution = resolution.ArgNotNull();
+        arguments = arguments.ArgNotNull();
 
         if (!resolution.IsSuccess || resolution.RuntimeBinding == null)
             return new BuiltinFunctionInvocationResult(false, null, resolution.Diagnostics);

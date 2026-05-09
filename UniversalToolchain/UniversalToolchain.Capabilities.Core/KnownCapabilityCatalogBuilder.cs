@@ -1,3 +1,4 @@
+using ExceptionsManager;
 using UniversalToolchain.Dialects.Integration;
 
 namespace UniversalToolchain.Capabilities.Core;
@@ -22,8 +23,7 @@ public sealed class KnownCapabilityCatalogBuilder
 
     public CapabilityCatalog Build(IRuntimeComponentCatalog runtimeComponentCatalog)
     {
-        if (runtimeComponentCatalog is null)
-            throw new ArgumentNullException(nameof(runtimeComponentCatalog));
+        runtimeComponentCatalog = runtimeComponentCatalog.ArgNotNull();
 
         EnsureTypeLoaderConfigured();
 

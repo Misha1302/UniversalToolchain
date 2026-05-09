@@ -12,7 +12,13 @@ internal static class WistPresetMapper
             WistPreset.SafeFormulas => WistShippedDialectPresets.PricingRestricted,
             WistPreset.BusinessRules => WistShippedDialectPresets.FullDefaultNative, // Alias of FullTrusted in preview.
             WistPreset.FullTrusted => WistShippedDialectPresets.FullDefaultNative,
-            _ => Thrower.Argument(nameof(preset), "Unsupported Wist preset.")
+            _ => ThrowUnsupportedPreset(preset)
         };
+    }
+
+    private static WistShippedDialectPreset ThrowUnsupportedPreset(WistPreset preset)
+    {
+        Thrower.Argument(nameof(preset), $"Unsupported Wist preset '{preset}'.");
+        return null!;
     }
 }

@@ -1,3 +1,4 @@
+using ExceptionsManager;
 using System.Text;
 
 namespace UniversalToolchain.Capabilities.Core;
@@ -6,8 +7,7 @@ public static class DialectFeatureExplanationFormatter
 {
     public static string FormatDeterministic(DialectFeatureExplanation explanation)
     {
-        if (explanation is null)
-            throw new ArgumentNullException(nameof(explanation));
+        explanation = explanation.ArgNotNull();
 
         var builder = new StringBuilder();
         builder.AppendLine($"Dialect: {explanation.DialectName}");
