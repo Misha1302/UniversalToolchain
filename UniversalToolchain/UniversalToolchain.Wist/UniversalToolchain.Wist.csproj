@@ -11,13 +11,14 @@
         <Description>A Wist-first .NET DSL/runtime facade for evaluating restricted formulas and compiling typed fast functions.</Description>
         <PackageTags>dotnet;dsl;rules;expression;compiler;interpreter;runtime;wist</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
+        <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);IncludeProjectReferenceAssembliesInPackage</TargetsForTfmSpecificBuildOutput>
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\BasicCore\BasicCore.csproj"/>
-        <ProjectReference Include="..\DynamicMethodCalling\DynamicMethodCalling.csproj"/>
-        <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj"/>
-        <ProjectReference Include="..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj"/>
+        <ProjectReference Include="..\BasicCore\BasicCore.csproj" PrivateAssets="all"/>
+        <ProjectReference Include="..\DynamicMethodCalling\DynamicMethodCalling.csproj" PrivateAssets="all"/>
+        <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj" PrivateAssets="all"/>
+        <ProjectReference Include="..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj" PrivateAssets="all"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -39,5 +40,13 @@
             <PackageFlatten>false</PackageFlatten>
         </Content>
     </ItemGroup>
+
+    <Target Name="IncludeProjectReferenceAssembliesInPackage" DependsOnTargets="ResolveReferences">
+        <ItemGroup>
+            <BuildOutputInPackage
+                Include="@(ReferenceCopyLocalPaths)"
+                Condition="'%(ReferenceCopyLocalPaths.ReferenceSourceTarget)' == 'ProjectReference'"/>
+        </ItemGroup>
+    </Target>
 
 </Project>
