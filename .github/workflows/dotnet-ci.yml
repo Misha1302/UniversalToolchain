@@ -70,6 +70,18 @@ jobs:
               throw new InvalidOperationException($"Expected 95, got {result}.");
           }
 
+          var compiled = wist.CompileFunc<double, double, double>(
+              "price * 0.9 + fee",
+              "price",
+              "fee");
+
+          double compiledResult = compiled.Invoke(100.0, 5.0);
+
+          if (Math.Abs(compiledResult - 95.0) > 1e-9)
+          {
+              throw new InvalidOperationException($"Expected 95, got {compiledResult}.");
+          }
+
           Console.WriteLine("UniversalToolchain.Wist package smoke passed.");
           EOF
 
