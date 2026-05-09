@@ -39,6 +39,14 @@ jobs:
           -o artifacts/packages
           /p:WarningsAsErrors=NU5118
 
+      - name: Check Wist facade package artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f artifacts/packages/UniversalToolchain.Wist.0.1.0-preview.1.nupkg
+          test -f artifacts/packages/UniversalToolchain.Wist.0.1.0-preview.1.snupkg
+          ls -la artifacts/packages
+
       - name: Smoke test Wist facade package
         shell: bash
         run: |
