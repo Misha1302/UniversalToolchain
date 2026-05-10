@@ -97,7 +97,7 @@ public sealed class WistEngineSmokeTests
     }
 
     [Test]
-    public void CompileFunc_WhenFormulaUsesUnsupportedSafeFormulaShape_FailsThroughSelectedRuntimePipeline()
+    public void CompileFunc_WhenFormulaUsesUnsupportedSafeFormulaShape_FailsClearly()
     {
         using var wist = WistEngine.CreateSafeFormulas();
 
@@ -110,7 +110,11 @@ public sealed class WistEngineSmokeTests
                 "price",
                 "fee"));
 
-        Assert.That(exception, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(exception, Is.Not.Null);
+            Assert.That(exception!.Message, Is.Not.Empty);
+        });
     }
 
     [Test]
