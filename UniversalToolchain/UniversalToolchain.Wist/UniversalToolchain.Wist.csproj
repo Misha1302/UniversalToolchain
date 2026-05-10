@@ -8,7 +8,7 @@
         <PackageId>UniversalToolchain.Wist</PackageId>
         <Version>0.1.0-preview.1</Version>
         <Title>UniversalToolchain Wist</Title>
-        <Description>A Wist-first .NET DSL/runtime facade for evaluating restricted formulas and compiling typed fast functions.</Description>
+        <Description>A compiler-first Wist facade for compiling typed hot-path formula functions and convenient one-off evaluation.</Description>
         <Authors>Mikhail Razakov</Authors>
         <PackageProjectUrl>https://misha1302.github.io/Wist2/</PackageProjectUrl>
         <RepositoryUrl>https://github.com/Misha1302/Wist2</RepositoryUrl>

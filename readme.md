@@ -2,10 +2,107 @@
 
 Build formulas, rules, and mini-languages for .NET applications.
 
-UniversalToolchain is an embeddable .NET DSL/runtime framework for the moment when a plain expression evaluator is no longer enough.
+UniversalToolchain is an embeddable .NET DSL/runtime framework for the moment when a plain expression evaluator is no
+longer enough.
 
-Wist is the reference language in this repository. It demonstrates the framework through shipped dialect profiles, a
-pricing demo, manifest-backed dialect composition, and compiler/interpreter backends.
+Wist is the reference language in this repository. `UniversalToolchain.Wist` is the intended first-contact facade for
+.NET developers who want formula/rule execution without starting from the lower-level runtime contracts.
+
+**Compiler-first. Interpreter-supported.**
+
+Wist can compile selected formula/rule code into typed CIL-backed execution paths. The performance-oriented path is
+compiled typed invocation, not full convenience evaluation.
+
+## Install
+
+```bash ci-run=false
+dotnet add package UniversalToolchain.Wist --version 0.1.0-preview.1
+```
+
+## Fast path: compile once, invoke many times
+
+Use `WistEngine.CompileFunc` for code that will be invoked repeatedly:
+
+```csharp
+using UniversalToolchain.Wist;
+
+using var wist = WistEngine.CreateSafeFormulas();
+
+var formula = wist.CompileFunc<double, double, double>(
+    "price * 0.9 + fee",
+    "price",
+    "fee");
+
+double result = formula.Invoke(100.0, 5.0);
+```
+
+This is the intended hot path:
+
+- compile once;
+- invoke many times;
+- benchmark compiled `Invoke`, not `Evaluate` in a tight loop.
+
+## One-off Evaluate
+
+Use `Evaluate` for one-off execution, onboarding, tests, validation UI, admin tools, and non-hot paths:
+
+```csharp
+using UniversalToolchain.Wist;
+
+using var wist = WistEngine.CreateSafeFormulas();
+
+double result = wist.Evaluate<double>(
+    "price * 0.9 + fee",
+    new
+    {
+        price = 100.0,
+        fee = 5.0
+    });
+```
+
+`Evaluate` is for convenience. It is not the primary performance path.
+
+## Validation
+
+Use `Validate` when a UI, import flow, or configuration pipeline needs non-throwing validation before execution:
+
+```csharp
+using UniversalToolchain.Wist;
+
+using var wist = WistEngine.CreateSafeFormulas();
+
+var validation = wist.Validate(
+    "price * 0.9 + fee",
+    new
+    {
+        price = 100.0,
+        fee = 5.0
+    });
+```
+
+## Presets
+
+```csharp
+using UniversalToolchain.Wist;
+
+using var safeFormulas = WistEngine.CreateSafeFormulas();
+using var businessRules = WistEngine.CreateBusinessRules();
+using var trusted = WistEngine.CreateTrusted();
+```
+
+`CreateSafeFormulas` is the recommended first-contact preset. `CreateTrusted` enables the trusted Wist profile and must
+not be used for untrusted input.
+
+## Interpreter backend
+
+The interpreter is a correctness, diagnostics, debugging, fallback, and semantic parity backend. The performance-oriented
+path is compiled typed CIL-backed invocation.
+
+## Security and trust
+
+Restricted presets and dialects limit selected language/runtime surface. They are not hardened sandboxes, and compiled
+execution is a performance feature rather than a sandbox boundary. For untrusted code, use process/environment isolation
+with appropriate OS permissions and resource limits. See [docs/SECURITY.md](docs/SECURITY.md).
 
 ## Run the pricing demo
 
@@ -27,7 +124,7 @@ The pricing demo compares three ways to own the same business rule:
 - the shipped `full-default-native` Wist preset for the formula,
 - a restricted pricing dialect with a narrower runtime surface,
 - compiler, interpreter, and fast native invocation paths for the same calculation,
-- rejection of a formula shape that the restricted dialect does not allow.
+- rejection of a formula shape that the restricted dialect composition does not allow.
 
 ## Tiny CLI quick start
 
@@ -41,27 +138,9 @@ Expected output:
 12
 ```
 
-## Programmatic example
-
-Use `WistEngine` as the application-level API:
-
-```csharp
-using UniversalToolchain.Wist;
-
-using var wist = WistEngine.CreateSafeFormulas();
-
-double result = wist.Evaluate<double>(
-    "price * 0.9 + fee",
-    new
-    {
-        price = 100.0,
-        fee = 5.0
-    });
-```
+## Advanced runtime integration example
 
 Use `WistRuntimeFacadeBuilder` only for advanced/lower-level Wist runtime and dialect integration scenarios.
-
-## Advanced runtime integration example
 
 ```csharp
 using UniversalToolchain.Dialects.Wist.Presets;
@@ -294,6 +373,8 @@ See [Current limitations](docs/limitations.md) for the explicit limitation and w
 - Project overview: [readme.md](readme.md)
 - Global project overview: [docs/global-project-overview.md](docs/global-project-overview.md)
 - Project positioning and public wording: [docs/project-positioning.md](docs/project-positioning.md)
+- Performance model: [docs/public/performance-model.md](docs/public/performance-model.md)
+- Preview stability: [docs/public/what-is-stable-in-preview.md](docs/public/what-is-stable-in-preview.md)
 - Current limitations: [docs/limitations.md](docs/limitations.md)
 - Technical due diligence review: [docs/reviews/technical-due-diligence.md](docs/reviews/technical-due-diligence.md)
 - Current runtime pipeline: [docs/current-canonical-runtime-pipeline.md](docs/current-canonical-runtime-pipeline.md)

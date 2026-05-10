@@ -22,7 +22,21 @@ public sealed class WistEngineSmokeTests
     }
 
     [Test]
-    public void CompileFunc_TwoArguments_ReturnsTypedFastFunction()
+    public void CompileFunc_OneArgument_ReturnsExpectedResult()
+    {
+        using var wist = WistEngine.CreateSafeFormulas();
+
+        var formula = wist.CompileFunc<double, double>(
+            "price * 0.9",
+            "price");
+
+        var result = formula.Invoke(100.0d);
+
+        Assert.That(result, Is.EqualTo(90.0d).Within(1e-9));
+    }
+
+    [Test]
+    public void CompileFunc_TwoArguments_ReturnsExpectedResult()
     {
         using var wist = WistEngine.CreateSafeFormulas();
 
@@ -37,7 +51,7 @@ public sealed class WistEngineSmokeTests
     }
 
     [Test]
-    public void CompileFunc_ThreeArguments_ReturnsTypedFastFunction()
+    public void CompileFunc_ThreeArguments_ReturnsExpectedResult()
     {
         using var wist = WistEngine.CreateSafeFormulas();
 
@@ -53,7 +67,7 @@ public sealed class WistEngineSmokeTests
     }
 
     [Test]
-    public void CompileFunc_RepeatedInvoke_ReusesCompiledFunction()
+    public void CompileFunc_InvokeRepeatedly_ReturnsStableResults()
     {
         using var wist = WistEngine.CreateSafeFormulas();
 
@@ -69,6 +83,54 @@ public sealed class WistEngineSmokeTests
         {
             Assert.That(first, Is.EqualTo(95.0d).Within(1e-9));
             Assert.That(second, Is.EqualTo(190.0d).Within(1e-9));
+        });
+    }
+
+    [Test]
+    public void CompileFunc_WhenFormulaInvalid_FailsAtCompilation()
+    {
+        using var wist = WistEngine.CreateSafeFormulas();
+
+        var exception = Assert.Catch(() => wist.CompileFunc<double, double>("price *", "price"));
+
+        Assert.That(exception, Is.Not.Null);
+    }
+
+    [Test]
+    public void CompileFunc_WhenFormulaUsesUnsupportedSafeFormulaShape_FailsThroughSelectedRuntimePipeline()
+    {
+        using var wist = WistEngine.CreateSafeFormulas();
+
+        var exception = Assert.Catch(
+            () => wist.CompileFunc<double, double, double>(
+                """
+                let discount = 0.9
+                price * discount + fee
+                """,
+                "price",
+                "fee"));
+
+        Assert.That(exception, Is.Not.Null);
+    }
+
+    [Test]
+    public void Validate_ValidFormulaWithSampleArguments_ReturnsSuccess()
+    {
+        using var wist = WistEngine.CreateSafeFormulas();
+
+        var result = wist.Validate(
+            "price * 0.9 + fee",
+            new
+            {
+                price = 100.0d,
+                fee = 5.0d
+            });
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsValid, Is.True);
+            Assert.That(result.Message, Is.Null);
+            Assert.That(result.Exception, Is.Null);
         });
     }
 

@@ -15,13 +15,12 @@ using UniversalToolchain.Wist;
 
 using var wist = WistEngine.CreateSafeFormulas();
 
-double result = wist.Evaluate<double>(
+var formula = wist.CompileFunc<double, double, double>(
     "price * 0.9 + fee",
-    new
-    {
-        price = 100.0,
-        fee = 5.0
-    });
+    "price",
+    "fee");
+
+double result = formula.Invoke(100.0, 5.0);
 ```
 
 ```text
@@ -47,7 +46,7 @@ Do not use it when:
 Current status:
 - Wist-first preview
 - .NET 10 baseline
-- compiler + interpreter execution paths
+- compiler-first hot path + interpreter diagnostics/parity backend
 - restricted dialects are not hardened sandboxes
 - APIs may change before stable release
 

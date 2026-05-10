@@ -1,9 +1,12 @@
 # UniversalToolchain.Wist
 
-A Wist-first .NET DSL/runtime facade for evaluating restricted formulas and compiling typed fast functions.
+A compiler-first Wist facade for .NET formula/rule execution.
 
-This package is the intended first-contact API for .NET developers. It hides the compiler pipeline, dialect runtime
-host, manifests, `DynamicMethod`, `IAbstractIR`, and session APIs behind a small facade.
+This package is the intended first-contact API for .NET developers. It hides the compiler pipeline, dialect runtime host,
+manifests, `DynamicMethod`, `IAbstractIR`, and session APIs behind a small facade.
+
+Compiler-first. Interpreter-supported. `CompileFunc` is the primary hot-path API. `Evaluate` is the convenience one-off
+API.
 
 ## Install
 
@@ -11,7 +14,27 @@ host, manifests, `DynamicMethod`, `IAbstractIR`, and session APIs behind a small
 dotnet add package UniversalToolchain.Wist --version 0.1.0-preview.1
 ```
 
-## One-off execution
+## Fast execution: compile once, invoke many times
+
+Use `CompileFunc` when the same formula is executed many times.
+
+```csharp
+using UniversalToolchain.Wist;
+
+using var wist = WistEngine.CreateSafeFormulas();
+
+var formula = wist.CompileFunc<double, double, double>(
+    "price * 0.9 + fee",
+    "price",
+    "fee");
+
+double result = formula.Invoke(100.0, 5.0);
+```
+
+`CompileFunc` compiles once and returns a typed function. The hot `Invoke` path does not use dictionaries,
+anonymous-object reflection, session setup, backend strings, or boxing for typed primitive arguments.
+
+## One-off execution with Evaluate
 
 Use `Evaluate` when a formula is executed rarely or when onboarding matters more than hot-path speed.
 
@@ -30,30 +53,25 @@ double result = wist.Evaluate<double>(
 ```
 
 `Evaluate` is intentionally convenient. It may inspect anonymous objects, map argument names, and run through the
-convenience execution path.
+convenience execution path. It is not the primary performance path.
 
-## Fast execution
+## Validation without throwing
 
-Use `CompileFunc` when the same formula is executed many times.
+Use `Validate` when a UI, import flow, or configuration pipeline needs to check a formula before execution.
 
 ```csharp
 using UniversalToolchain.Wist;
 
 using var wist = WistEngine.CreateSafeFormulas();
 
-var formula = wist.CompileFunc<double, double, double>(
+var validation = wist.Validate(
     "price * 0.9 + fee",
-    "price",
-    "fee");
-
-for (var i = 0; i < prices.Length; i++)
-{
-    results[i] = formula.Invoke(prices[i], fees[i]);
-}
+    new
+    {
+        price = 100.0,
+        fee = 5.0
+    });
 ```
-
-`CompileFunc` compiles once and returns a typed function. The hot `Invoke` path does not use dictionaries,
-anonymous-object reflection, session setup, backend strings, or boxing for typed primitive arguments.
 
 ## Rule of thumb
 
@@ -89,6 +107,33 @@ for (var i = 0; i < prices.Length; i++)
 }
 ```
 
+## Compiler backend and interpreter backend
+
+The compiler backend is the default performance-oriented path for `CompileFunc` and convenience evaluation. The
+interpreter backend remains important for diagnostics, debugging, fallback, education, semantic parity, and backend/module
+development.
+
+The interpreter is not the main performance claim.
+
+## Performance model
+
+Cold path:
+
+```text
+source -> parse -> bind -> runtime selection -> compile/execute
+```
+
+Hot path:
+
+```text
+compiled typed function -> Invoke(arg0, arg1, ...)
+```
+
+The performance claim belongs to compiled typed CIL-backed invocation. It does not apply to `Evaluate`, compile time,
+every possible dialect, every module combination, or every backend.
+
+Do not benchmark `Evaluate` inside a tight loop when evaluating runtime throughput. Benchmark compiled `Invoke`.
+
 ## Presets
 
 ```csharp
@@ -104,9 +149,10 @@ WistEngine.CreateTrusted();
 ## Security note
 
 Restricted presets limit the selected language surface. They are not a hardened sandbox for arbitrary untrusted code.
-Treat untrusted script execution as high risk and isolate it at the process/environment level when needed.
+Compiled execution is a performance feature, not a sandbox boundary. Treat untrusted script execution as high risk and
+isolate it at the process/environment level when needed.
 
-## Current scope
+## Current preview scope
 
 This initial facade intentionally exposes only:
 
@@ -114,7 +160,9 @@ This initial facade intentionally exposes only:
 - validation without throwing;
 - typed fast `CompileFunc` overloads for one, two, and three arguments.
 
-Wider arities and reusable object/session-based compiled artifacts can be added after the first API shape is validated.
+Current preview contracts may change. Wider arities, signature-based compiled APIs, reusable object/session-based compiled
+artifacts, backend-agnostic compiled artifact APIs, and diagnostics shape can evolve after the first API shape is
+validated.
 
 
 Use `WistEngine` for application-level formula execution.

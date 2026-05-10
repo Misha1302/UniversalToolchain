@@ -62,9 +62,21 @@ jobs:
           cat > "$smoke_dir/Program.cs" <<'EOF'
           using UniversalToolchain.Wist;
 
-          using var wist = WistEngine.CreateSafeFormulas();
+          using var safe = WistEngine.CreateSafeFormulas();
 
-          double result = wist.Evaluate<double>(
+          var formula = safe.CompileFunc<double, double, double>(
+              "price * 0.9 + fee",
+              "price",
+              "fee");
+
+          double compiledResult = formula.Invoke(100.0, 5.0);
+
+          if (Math.Abs(compiledResult - 95.0) > 1e-9)
+          {
+              throw new InvalidOperationException($"Expected 95, got {compiledResult}.");
+          }
+
+          double evaluatedResult = safe.Evaluate<double>(
               "price * 0.9 + fee",
               new
               {
@@ -72,22 +84,26 @@ jobs:
                   fee = 5.0
               });
 
-          if (Math.Abs(result - 95.0) > 1e-9)
+          if (Math.Abs(evaluatedResult - 95.0) > 1e-9)
           {
-              throw new InvalidOperationException($"Expected 95, got {result}.");
+              throw new InvalidOperationException($"Expected 95, got {evaluatedResult}.");
           }
 
-          var compiled = wist.CompileFunc<double, double, double>(
+          var validation = safe.Validate(
               "price * 0.9 + fee",
-              "price",
-              "fee");
+              new
+              {
+                  price = 100.0,
+                  fee = 5.0
+              });
 
-          double compiledResult = compiled.Invoke(100.0, 5.0);
-
-          if (Math.Abs(compiledResult - 95.0) > 1e-9)
+          if (!validation.IsValid)
           {
-              throw new InvalidOperationException($"Expected 95, got {compiledResult}.");
+              throw new InvalidOperationException($"Expected validation success, got {validation.Message}.");
           }
+
+          using var business = WistEngine.CreateBusinessRules();
+          using var trusted = WistEngine.CreateTrusted();
 
           Console.WriteLine("UniversalToolchain.Wist package smoke passed.");
           EOF
