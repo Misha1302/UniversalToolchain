@@ -24,7 +24,7 @@ compiled typed function -> Invoke(arg0, arg1, ...)
 
 The cold path pays for source handling and runtime selection. The hot path starts from an already compiled typed function.
 
-## Use CompileFunc for hot paths
+## Use CompileFunc for shipped-preset hot paths
 
 ```csharp
 using UniversalToolchain.Wist;
@@ -39,8 +39,12 @@ var formula = wist.CompileFunc<double, double, double>(
 double result = formula.Invoke(100.0, 5.0);
 ```
 
-Use this shape when the same formula is invoked repeatedly. Compile once, keep the returned function, and call `Invoke`
-from the hot path.
+Use this shape when the same formula is invoked repeatedly through a shipped `WistEngine` preset. Compile once, keep the
+returned function, and call `Invoke` from the hot path.
+
+For custom `.wistdialect` files, use [Custom Dialect Fast Invocation](/build-dsls/custom-dialect-fast-invocation). The
+current custom-dialect path compiles through `WistRuntimeFacade.TryCompile` and reuses compiled artifacts or the
+low-level CIL `DynamicMethod` output.
 
 ## Use Evaluate for one-off execution
 
