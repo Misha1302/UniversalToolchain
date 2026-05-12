@@ -44,8 +44,9 @@ const bookSidebar = [
             { text: '3.4 Module Composition', link: '/build-dsls/module-composition' },
             { text: '3.5 Backend Selection', link: '/build-dsls/backend-selection' },
             { text: '3.6 Embedding in .NET', link: '/build-dsls/embedding-dotnet' },
-            { text: '3.7 Testing a DSL', link: '/build-dsls/testing-dsl' },
-            { text: '3.8 Restricted DSL Security', link: '/build-dsls/restricted-dsl-security' }
+            { text: '3.7 Custom Dialect Fast Invocation', link: '/build-dsls/custom-dialect-fast-invocation' },
+            { text: '3.8 Testing a DSL', link: '/build-dsls/testing-dsl' },
+            { text: '3.9 Restricted DSL Security', link: '/build-dsls/restricted-dsl-security' }
         ]
     },
     {
