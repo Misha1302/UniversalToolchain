@@ -1,29 +1,68 @@
 ---
 title: First Program
-description: Run the smallest useful Wist program and explain what happened internally.
+description: Run the smallest useful Wist program from a .NET host or through the CLI.
 ---
 
 # First Program
 
-This is the shortest practical check that Wist, Wistc and the default runtime path are working.
+This page shows the shortest practical checks for Wist:
 
-## When to read this page
+- package-first usage from a .NET console application;
+- CLI execution from a repository checkout.
 
-Read this after [Installation](/start/installation). It is the first executable page in the documentation.
+## Package-first .NET example
 
-## Goal
+Install the package first:
 
-Run one Wist expression through the CLI and verify the expected output.
+```bash ci-run=false
+dotnet add package UniversalToolchain.Wist --version 0.1.0-preview.1
+```
 
-## Prerequisites
+Then run a simple formula through the public facade:
 
-- You are in the repository root.
-- The .NET solution has been restored and built.
-- You are using the branch required by your current task or pull request.
+```csharp
+using UniversalToolchain.Wist;
 
-## Steps
+using var wist = WistEngine.CreateSafeFormulas();
+
+var formula = wist.CompileFunc<double, double, double>(
+    "price * 0.9 + fee",
+    "price",
+    "fee");
+
+double result = formula.Invoke(100.0, 5.0);
+Console.WriteLine(result); // 95
+```
+
+This is the normal first-contact path for application developers. `CompileFunc` compiles once and returns a typed function that can be invoked repeatedly.
+
+## Trusted C# interop example
+
+Use `CreateTrusted` only for trusted source code controlled by the host application.
+
+```csharp
+using UniversalToolchain.Wist;
+
+using var wist = WistEngine.CreateTrusted();
+
+var calcHypotenuse = wist.CompileFunc<double, double, double>(
+    "System.Math.Sqrt(x * x + y * y)",
+    "x",
+    "y");
+
+double result = calcHypotenuse.Invoke(7.0, 24.0);
+Console.WriteLine(result); // 25
+```
+
+This example uses C# interop and therefore belongs to the trusted profile, not to the restricted safe-formula profile.
+
+## Repository CLI check
+
+Read this section when you have cloned the repository and want to validate the CLI/runtime path.
 
 ### 1. Run the compiler mode quick start
+
+From the repository root:
 
 ```bash
 dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --backend compiler
@@ -59,25 +98,29 @@ dotnet run --project UniversalToolchain/Example/Example.csproj
 
 The pricing demo runs a pricing formula through hardcoded C# logic, the shipped `full-default-native` Wist preset and the shipped `pricing-restricted` dialect. It also demonstrates compiler, interpreter and fast native invocation paths.
 
-## Expected result
-
-The quick start prints `12`. The pricing demo should show matching pricing results across the supported execution paths and should reject the formula shape that the restricted pricing dialect intentionally does not allow.
-
 ## What happened internally
 
 For the simple expression, the runtime path is:
 
 ```text
-source → parser → AST → bytecode/AIR → selected backend → result
+source -> parser -> AST -> bytecode/AIR -> selected backend -> result
 ```
 
-The CLI receives source text as the positional `code` argument. The `--eval` flag tells Wistc to evaluate that argument as an expression and print the result. Wist uses the active dialect to select modules and backends, parses the expression, translates it into intermediate representations and runs it through the selected backend.
+For `CompileFunc`, the important distinction is:
+
+```text
+cold path: source -> parse -> compile
+hot path: typed function -> Invoke(arg0, arg1, ...)
+```
 
 The same source should produce the same observable result in compiler and interpreter modes when both modes are available. This parity is one of the main correctness expectations for Wist backends.
 
 ## Common mistakes
 
-- Running the command from a subdirectory, causing project paths to fail.
+- Installing the package into a project that does not target `net10.0`.
+- Using `CreateTrusted` for untrusted user input.
+- Expecting `System.Math.Sqrt(...)` interop to work in restricted safe-formula presets.
+- Running repository CLI commands from a subdirectory, causing project paths to fail.
 - Using `--backend compiler` with a dialect that exposes only `interpreter`.
 - Assuming all dialects expose all Wist syntax. Syntax exists only when the owning module is selected.
 - Treating restricted dialects as security sandboxes. They restrict composition, but they are not hardened process sandboxes.
