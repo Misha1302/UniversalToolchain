@@ -64,7 +64,7 @@ dotnet run -c Release \
 dotnet run -c Release \
   --project UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj \
   -- \
-  --filter "*External*ExecutionBenchmarks"
+  --filter "*External*ExecutionBenchmarks*"
 ```
 
 Before publishing results, keep the generated files from:

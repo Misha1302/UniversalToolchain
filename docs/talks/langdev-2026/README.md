@@ -53,12 +53,12 @@ graph LR
 
 | Talk claim | Public evidence |
 |---|---|
-| A restricted dialect is assembled from selected language/runtime capabilities | [`PricingRestrictedDialectExecutionTests.cs`](../../../UniversalToolchain/UniversalToolchain.Dialects.Tests/PricingRestrictedDialectExecutionTests.cs) |
-| The same selected language can execute through interpreter and CIL paths | [`WistDialectExecutionParityTests.cs`](../../../UniversalToolchain/UniversalToolchain.Dialects.Tests/Wist/WistDialectExecutionParityTests.cs) |
-| External bindings and local storage must remain semantically distinct | [`InterpreterBindingsParityTests.cs`](../../../UniversalToolchain/Tests/Backends/InterpreterBindingsParityTests.cs) |
-| Compiled artifacts preserve interpreter/compiler semantics | [`RuntimeCompiledArtifactParityTests.cs`](../../../UniversalToolchain/Tests/Backends/RuntimeCompiledArtifactParityTests.cs) |
-| The public pricing scenario compares hardcoded C#, general Wist, and a restricted dialect | [`PricingDiscountScenario.cs`](../../../UniversalToolchain/Example/Scenarios/PricingDiscountScenario.cs) |
-| Public performance claims are limited to already prepared arithmetic artifacts | [benchmark contract](../../../UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/README.md) |
+| A restricted dialect is assembled from selected language/runtime capabilities | [`PricingRestrictedDialectExecutionTests.cs`](https://github.com/Misha1302/Wist2/blob/87952b9c77a91ebfb6deab2d953259798ae7d2e2/UniversalToolchain/UniversalToolchain.Dialects.Tests/PricingRestrictedDialectExecutionTests.cs) |
+| The same selected language can execute through interpreter and CIL paths | [`WistDialectExecutionParityTests.cs`](https://github.com/Misha1302/Wist2/blob/87952b9c77a91ebfb6deab2d953259798ae7d2e2/UniversalToolchain/UniversalToolchain.Dialects.Tests/Wist/WistDialectExecutionParityTests.cs) |
+| External bindings and local storage must remain semantically distinct | [`InterpreterBindingsParityTests.cs`](https://github.com/Misha1302/Wist2/blob/87952b9c77a91ebfb6deab2d953259798ae7d2e2/UniversalToolchain/Tests/Backends/InterpreterBindingsParityTests.cs) |
+| Compiled artifacts preserve interpreter/compiler semantics | [`RuntimeCompiledArtifactParityTests.cs`](https://github.com/Misha1302/Wist2/blob/87952b9c77a91ebfb6deab2d953259798ae7d2e2/UniversalToolchain/Tests/Backends/RuntimeCompiledArtifactParityTests.cs) |
+| The public pricing scenario compares hardcoded C#, general Wist, and a restricted dialect | [`PricingDiscountScenario.cs`](https://github.com/Misha1302/Wist2/blob/87952b9c77a91ebfb6deab2d953259798ae7d2e2/UniversalToolchain/Example/Scenarios/PricingDiscountScenario.cs) |
+| Public performance claims are limited to already prepared arithmetic artifacts | [benchmark contract](https://github.com/Misha1302/Wist2/blob/87952b9c77a91ebfb6deab2d953259798ae7d2e2/UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/README.md) |
 
 ## Reproducible command
 

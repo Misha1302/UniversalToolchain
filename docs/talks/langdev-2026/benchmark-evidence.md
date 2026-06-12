@@ -6,34 +6,50 @@
 
 This is deliberately narrower than saying that Wist is generally as fast as C#.
 
-## Recorded run
+## Current verification runs
 
-The numbers below come from the project article's BenchmarkDotNet run at repository commit:
+The current benchmark suite was executed with BenchmarkDotNet against the six public external arithmetic workloads.
+
+The archived full run was produced from repository commit:
 
 ```text
-687677c61454f5c51ceb7620ccbf831cee3b2e05
+705934e3bb8de35d5be257e77ff8ed68bea954f6
+```
+
+A subsequent run from a clean working tree at the LangDev materials commit reproduced the same rounded results:
+
+```text
+87952b9c77a91ebfb6deab2d953259798ae7d2e2
+```
+
+The clean confirmation result was reported by the project author after repeating the same full command without `ALLOW_DIRTY`. The raw archive preserved from the first full run has SHA-256:
+
+```text
+6cc06aed43a0f2e6a74f8d5f69dfc8522bdf8ce4b2faf1541fde42ed0d4a527f
 ```
 
 Recorded environment:
 
 - Fedora Linux 43;
 - 12th Gen Intel Core i5-1235U;
-- .NET SDK 10.0.104;
-- .NET runtime 10.0.4;
+- .NET SDK 10.0.108;
+- .NET runtime 10.0.8;
 - X64 RyuJIT x86-64-v3;
 - BenchmarkDotNet 0.15.6;
 - Concurrent Workstation GC.
 
-| Workload | C# mean, ns/op | Wist CIL mean, ns/op | Dynamic Expresso, ns/op | NCalc, ns/op | Wist/C# |
-|---|---:|---:|---:|---:|---:|
-| ConstantsHeavy6 | 2.633 | 2.692 | 2.749 | 4.272 | 1.02 |
-| DeepChain6 | 2.643 | 2.714 | 2.790 | 4.204 | 1.03 |
-| Medium8 | 2.801 | 3.055 | 3.103 | 4.406 | 1.09 |
-| RepeatedSubexpressions5 | 2.028 | 2.062 | 2.242 | 3.238 | 1.02 |
-| Simple3 | 1.945 | 1.905 | 1.940 | 2.518 | 0.98 |
-| WideExpression10 | 4.114 | 3.980 | 3.777 | 5.426 | 0.97 |
+| Workload | C# mean, ns/op | Wist CIL mean, ns/op | Wist/C# |
+|---|---:|---:|---:|
+| ConstantsHeavy6 | 2.709 | 2.770 | 1.02 |
+| DeepChain6 | 2.665 | 2.775 | 1.04 |
+| Medium8 | 2.881 | 3.105 | 1.08 |
+| RepeatedSubexpressions5 | 2.094 | 2.124 | 1.01 |
+| Simple3 | 1.963 | 1.957 | 1.00 |
+| WideExpression10 | 4.186 | 4.134 | 0.99 |
 
-BenchmarkDotNet reported `Allocated = 0 B` for the shown measured execution methods.
+The observed Wist/C# range in this run is approximately `0.99` to `1.08`. BenchmarkDotNet reported `Allocated = 0 B` for the shown measured execution methods.
+
+The smoke run is not used as performance evidence. It uses BenchmarkDotNet's `Dry` job with one measured iteration and exists only to verify benchmark discovery and execution.
 
 ## What is measured
 
@@ -58,15 +74,29 @@ These results do not prove:
 
 The specialization architecture extends beyond arithmetic, but the published `within 10%` number is attached only to the listed arithmetic hot-execution scenarios.
 
-## Reproduction command
+BenchmarkDotNet reported that it could not raise the benchmark process priority without additional permissions. The results are therefore presented as a reproducible local engineering measurement, not as an absolute cross-machine performance guarantee.
 
-Run from the repository root after a clean Release build:
+## Reproduction commands
+
+Run from the repository root after a clean Release build.
+
+Smoke verification:
 
 ```bash ci-run=false
 dotnet run -c Release \
   --project UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj \
   -- \
-  --filter "*External*ExecutionBenchmarks"
+  --job dry \
+  --filter "*ExternalSimple3*"
 ```
 
-Before publishing a new result, record the exact Git commit, SDK/runtime, OS, CPU, and preserve the generated files under `BenchmarkDotNet.Artifacts/results/`.
+Full public run:
+
+```bash ci-run=false
+dotnet run -c Release \
+  --project UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj \
+  -- \
+  --filter "*External*ExecutionBenchmarks*"
+```
+
+Before publishing a new result, record the exact Git commit, working-tree state, SDK/runtime, OS, CPU, and preserve the generated files under `BenchmarkDotNet.Artifacts/results/`.
