@@ -13,6 +13,31 @@ Wist is the reference language in this repository. `UniversalToolchain.Wist` is 
 Wist can compile selected formula/rule code into typed CIL-backed execution paths. The performance-oriented path is
 compiled typed invocation, not full convenience evaluation.
 
+<!-- langdev-2026:start -->
+
+> **Featured technical story — LangDev 2026 proposal**
+>
+> **Build the Language, Then Make the Abstractions Disappear: Extensible Programming on .NET**
+>
+> UniversalToolchain composes language features as independent modules,
+> progressively lowers selected semantics through Bytecode and AIR into
+> concrete runtime or typed CIL operations, and checks that interpreter
+> and compiled execution preserve one language.
+>
+> [Read the proposal and run the reproducible demo](docs/talks/langdev-2026/README.md)
+
+### Why this is interesting
+
+- Language features remain modular while the language is being constructed.
+- For supported compiled paths, per-operation module dispatch is removed from the prepared hot invocation path.
+- Typed CIL is handed to the .NET JIT for further optimization.
+- Cross-backend parity tests prevent one DSL from silently becoming two languages.
+- In six selected arithmetic hot-execution workloads, cached Wist CIL artifacts stayed within 10% of a no-inlining C# baseline on the recorded system.
+
+**Conference evidence:** [one-command demo](docs/talks/langdev-2026/README.md#reproducible-command) · [module-to-CIL lowering](docs/talks/langdev-2026/lowering-walkthrough.md) · [semantic-parity regression](docs/talks/langdev-2026/parity-regression.md) · [benchmarks and limitations](docs/talks/langdev-2026/benchmark-evidence.md)
+
+<!-- langdev-2026:end -->
+
 ## Install
 
 ```bash ci-run=false

@@ -27,6 +27,36 @@ double result = formula.Invoke(100.0, 5.0);
 95
 ```
 
+<!-- langdev-2026-site:start -->
+
+## Featured technical story
+
+### Build the Language, Then Make the Abstractions Disappear
+
+UniversalToolchain explores a practical form of extensible programming:
+language features are composed as modules during construction, then
+progressively lowered into concrete runtime or typed CIL operations
+before execution.
+
+The LangDev 2026 proposal demonstrates:
+
+- deterministic dialect and runtime-plan composition;
+- Bytecode → AIR → capability-gated specialization;
+- AIR interpreter and `DynamicMethod`-based CIL execution;
+- a real semantic-parity regression involving external bindings and local-variable shadowing;
+- reproducible regression tests and carefully scoped benchmark evidence.
+
+For supported compiled paths, the prepared hot invocation path does not
+perform per-operation language-module dispatch. The generated typed CIL
+is instead presented to the .NET JIT, while cross-backend tests protect
+the language semantics.
+
+[Read the talk proposal and reproducible demo](https://github.com/Misha1302/Wist2/tree/master/docs/talks/langdev-2026) ·
+[Follow the lowering walkthrough](https://github.com/Misha1302/Wist2/blob/master/docs/talks/langdev-2026/lowering-walkthrough.md) ·
+[Review benchmark evidence](https://github.com/Misha1302/Wist2/blob/master/docs/talks/langdev-2026/benchmark-evidence.md)
+
+<!-- langdev-2026-site:end -->
+
 ## When to use / when not to use
 
 Use UniversalToolchain when:
