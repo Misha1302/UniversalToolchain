@@ -33,6 +33,12 @@ Planning documents are useful context, but they are not automatically current ru
 
 If a future or historical plan contains executable `bash` blocks for removed or not-yet-implemented functionality, convert those blocks to non-executable `text` sketches instead of weakening Markdown checks.
 
+## Proposed architecture designs
+
+These documents describe possible future architecture and must not be treated as implemented runtime behavior:
+
+1. `docs/architecture/flame-ssa-optimizing-backend-design/index.md` — motivation, constraints, architecture, rollout, validation, and licensing plan for an optional SSA optimizing CIL backend based on Flame.
+
 ## Conflict rule
 
 If a Markdown rule and existing code disagree, report the conflict. Do not silently implement around the documentation.
