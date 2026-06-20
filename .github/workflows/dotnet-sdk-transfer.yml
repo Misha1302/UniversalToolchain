@@ -1,0 +1,35 @@
+name: Temporary .NET SDK transfer
+
+on:
+  pull_request:
+    branches:
+      - master
+    paths:
+      - .github/workflows/dotnet-sdk-transfer.yml
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Download official .NET SDK
+        shell: bash
+        run: |
+          curl --fail --location --silent --show-error \
+            --output dotnet-sdk-10.0.301-linux-x64.tar.gz \
+            https://builds.dotnet.microsoft.com/dotnet/Sdk/10.0.301/dotnet-sdk-10.0.301-linux-x64.tar.gz
+
+      - name: Verify Microsoft SHA-512
+        shell: bash
+        run: |
+          echo "cfbeec3a3a1d3ad3e168e37a77c4cc26c23125acd84a86d014047da3ecffce4c368a9acac4d7c950a047fa3d98989ce8aea69f8e5842cb6d330e8911e1c335a7  dotnet-sdk-10.0.301-linux-x64.tar.gz" | sha512sum --check
+
+      - name: Upload SDK
+        uses: actions/upload-artifact@v4
+        with:
+          name: dotnet-sdk-10.0.301-linux-x64
+          path: dotnet-sdk-10.0.301-linux-x64.tar.gz
+          compression-level: 0
+          retention-days: 1
