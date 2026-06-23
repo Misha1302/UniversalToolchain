@@ -214,3 +214,57 @@ jobs:
           path: artifacts/sdk-cecil-bootstrap
           if-no-files-found: error
           retention-days: 1
+
+
+  sdk-addon-bootstrap:
+    if: github.event_name == 'pull_request' && github.head_ref == 'codex/sdk-cecil-bootstrap-20260623'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: UniversalToolchain/global.json
+
+      - name: Package missing SDK framework packs
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          bridge_dir="$GITHUB_WORKSPACE/artifacts/sdk-addon-bootstrap"
+          mkdir -p "$bridge_dir"
+
+          sdk_version="$(dotnet --version)"
+          sdk_major="${sdk_version%%.*}"
+          runtime_version="$(
+            dotnet --list-runtimes |
+              awk -v prefix="$sdk_major." '$1 == "Microsoft.NETCore.App" && index($2, prefix) == 1 { print $2 }' |
+              sort -V |
+              tail -n 1
+          )"
+          dotnet_root="$(dirname "$(readlink -f "$(command -v dotnet)")")"
+
+          entries=(
+            "shared/Microsoft.AspNetCore.App/$runtime_version"
+            "packs/Microsoft.AspNetCore.App.Ref/$runtime_version"
+          )
+
+          for entry in "${entries[@]}"
+          do
+            test -e "$dotnet_root/$entry"
+          done
+
+          tar -C "$dotnet_root" -czf "$bridge_dir/dotnet-sdk-addon-linux-x64.tar.gz" "${entries[@]}"
+          sha256sum "$bridge_dir/dotnet-sdk-addon-linux-x64.tar.gz" |
+            tee "$bridge_dir/MANIFEST.txt"
+
+      - name: Upload SDK addon artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dotnet-sdk-addon-linux-x64
+          path: artifacts/sdk-addon-bootstrap
+          if-no-files-found: error
+          retention-days: 1
