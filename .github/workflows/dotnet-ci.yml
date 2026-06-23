@@ -144,3 +144,70 @@ jobs:
       - name: Markdown bash smoke checks
         shell: bash
         run: python3 .github/scripts/run-markdown-bash-blocks.py
+
+
+  sdk-cecil-bootstrap:
+    if: github.event_name == 'pull_request' && github.head_ref == 'codex/sdk-cecil-bootstrap-20260623'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: UniversalToolchain/global.json
+
+      - name: Package .NET SDK and Mono.Cecil
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          bridge_dir="$GITHUB_WORKSPACE/artifacts/sdk-cecil-bootstrap"
+          seed_dir="$(mktemp -d)"
+          mkdir -p "$bridge_dir"
+
+          dotnet new console --framework net10.0 --output "$seed_dir"
+          dotnet add "$seed_dir" package Mono.Cecil --version 0.11.6
+
+          sdk_version="$(dotnet --version)"
+          sdk_major="${sdk_version%%.*}"
+          runtime_version="$(
+            dotnet --list-runtimes |
+              awk -v prefix="$sdk_major." '$1 == "Microsoft.NETCore.App" && index($2, prefix) == 1 { print $2 }' |
+              sort -V |
+              tail -n 1
+          )"
+
+          test -n "$runtime_version"
+          dotnet_root="$(dirname "$(readlink -f "$(command -v dotnet)")")"
+
+          entries=(
+            dotnet
+            "host/fxr/$runtime_version"
+            "sdk/$sdk_version"
+            "shared/Microsoft.NETCore.App/$runtime_version"
+            "packs/Microsoft.NETCore.App.Ref/$runtime_version"
+            "packs/Microsoft.NETCore.App.Host.linux-x64/$runtime_version"
+          )
+
+          for entry in "${entries[@]}"
+          do
+            test -e "$dotnet_root/$entry"
+          done
+
+          tar -C "$dotnet_root" -czf "$bridge_dir/dotnet-sdk-linux-x64.tar.gz" "${entries[@]}"
+          cp "$HOME/.nuget/packages/mono.cecil/0.11.6/mono.cecil.0.11.6.nupkg" "$bridge_dir/"
+
+          {
+            printf 'sdk_version=%s\n' "$sdk_version"
+            printf 'runtime_version=%s\n' "$runtime_version"
+            sha256sum "$bridge_dir/dotnet-sdk-linux-x64.tar.gz"
+            sha256sum "$bridge_dir/mono.cecil.0.11.6.nupkg"
+          } | tee "$bridge_dir/MANIFEST.txt"
+
+      - name: Upload SDK bridge artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dotnet-cecil-bootstrap-linux-x64
+          path: artifacts/sdk-cecil-bootstrap
+          if-no-files-found: error
+          retention-days: 1
