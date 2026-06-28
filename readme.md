@@ -1,16 +1,16 @@
 # UniversalToolchain
 
-Build formulas, rules, and mini-languages for .NET applications.
+Build formulas, embeddable DSLs, and restricted mini-languages for .NET applications.
 
 UniversalToolchain is an embeddable .NET DSL/runtime framework for the moment when a plain expression evaluator is no
 longer enough.
 
 Wist is the reference language in this repository. `UniversalToolchain.Wist` is the intended first-contact facade for
-.NET developers who want formula/rule execution without starting from the lower-level runtime contracts.
+.NET developers who want formula execution without starting from the lower-level runtime contracts.
 
 **Compiler-first. Interpreter-supported.**
 
-Wist can compile selected formula/rule code into typed CIL-backed execution paths. The performance-oriented path is
+Wist can compile selected formula code into typed CIL-backed execution paths. The performance-oriented path is
 compiled typed invocation, not full convenience evaluation.
 
 <!-- langdev-2026:start -->
@@ -31,18 +31,29 @@ compiled typed invocation, not full convenience evaluation.
 - Language features remain modular while the language is being constructed.
 - For supported compiled paths, per-operation module dispatch is removed from the prepared hot invocation path.
 - Typed CIL is handed to the .NET JIT for further optimization.
-- Cross-backend parity tests prevent one DSL from silently becoming two languages.
+- Cross-backend parity tests guard against one DSL silently becoming two languages.
 - In six selected arithmetic hot-execution workloads, cached Wist CIL artifacts stayed within 10% of a no-inlining C# baseline on the recorded system.
 
 **Conference evidence:** [one-command demo](docs/talks/langdev-2026/README.md#reproducible-command) · [module-to-CIL lowering](docs/talks/langdev-2026/lowering-walkthrough.md) · [semantic-parity regression](docs/talks/langdev-2026/parity-regression.md) · [benchmarks and limitations](docs/talks/langdev-2026/benchmark-evidence.md)
 
 <!-- langdev-2026:end -->
 
-## Install
+## Requirements
+
+- .NET SDK `10.0.103` or a compatible prerelease SDK selected by `UniversalToolchain/global.json`.
+- Target framework: `net10.0`.
+- SDK policy: `rollForward: latestMajor`, `allowPrerelease: true`.
+
+## Install from NuGet
+
+The package metadata in this repository is prepared for `UniversalToolchain.Wist` `0.1.0-preview.1`. The package-first
+command works when that version is available from NuGet.org or another configured package source:
 
 ```bash ci-run=false
 dotnet add package UniversalToolchain.Wist --version 0.1.0-preview.1
 ```
+
+For the current repository state, the source workflow below is the authoritative path.
 
 ## Fast path: compile once, invoke many times
 
@@ -103,6 +114,11 @@ var validation = wist.Validate(
         price = 100.0,
         fee = 5.0
     });
+
+if (!validation.IsValid)
+{
+    Console.WriteLine(validation.Message);
+}
 ```
 
 ## Presets
@@ -115,8 +131,12 @@ using var businessRules = WistEngine.CreateBusinessRules();
 using var trusted = WistEngine.CreateTrusted();
 ```
 
-`CreateSafeFormulas` is the recommended first-contact preset. `CreateTrusted` enables the trusted Wist profile and must
-not be used for untrusted input.
+`CreateSafeFormulas` is the recommended first-contact preset. In this preview, `CreateBusinessRules` is a product-oriented
+alias for the full native Wist profile rather than a separate rules runtime. `CreateTrusted` enables the trusted Wist
+profile and must not be used for untrusted input.
+
+`Safe` means a restricted language/runtime surface. It does not mean arbitrary untrusted code is safe to execute inside
+the current process.
 
 ## Interpreter backend
 
@@ -143,7 +163,7 @@ Code: [UniversalToolchain/Example/Scenarios/PricingDiscountScenario.cs](Universa
 
 ## What this demo shows
 
-The pricing demo compares three ways to own the same business rule:
+The pricing demo compares three ways to own the same pricing calculation:
 
 - hardcoded C# pricing logic,
 - the shipped `full-default-native` Wist preset for the formula,
@@ -192,14 +212,15 @@ var attempt = wist.TryCompile(
 
 Use UniversalToolchain when:
 
-- a normal expression evaluator is too narrow for your rules or formulas,
+- a normal expression evaluator is too narrow for your formulas or DSL code,
 - users need a syntax that matches your domain instead of C# syntax,
 - you need a dialect profile that allows only selected language features,
 - the same language should support compiler and interpreter backend aliases,
 - you need an inspectable execution pipeline for validation, diagnostics, or backend work,
-- you want configurable business logic without hardcoding every rule into the application.
+- you want configurable business logic without hardcoding every formula or policy into the application.
 
-Typical scenarios include pricing formulas, routing rules, internal workflow rules, and DSL experiments inside .NET applications.
+Typical scenarios include pricing formulas, routing policies, internal workflow calculations, and DSL experiments inside
+.NET applications.
 
 ## When not to use UniversalToolchain
 
@@ -209,7 +230,7 @@ Do not start here when:
 - you only need a subset of C# expressions,
 - you only need parser generation,
 - you do not need a DSL or runtime story,
-- a simple library call can already evaluate all rules you plan to support.
+- a simple library call can already evaluate all formulas or policies you plan to support.
 
 For those cases, a smaller evaluator, a rules library, or a parser generator is usually easier to own.
 
@@ -241,7 +262,7 @@ For a stable project map, see [Global project overview](docs/global-project-over
 At a high level:
 
 ```text
-Source -> Lexer/Parser -> AST -> Bytecode/IR -> Optimization -> Compiler/Interpreter -> Execution
+Source -> Lexer/Parser -> AST -> Bytecode -> AIR -> Optimization -> Compiler/Interpreter -> Execution
 ```
 
 Key repository architecture concepts:
@@ -300,6 +321,17 @@ Common options:
 
 - `--backend <compiler|interpreter>`
 - `--dialect-file <path>`
+- `--list-modules`
+
+`run` options:
+
+- `--file <path>`
+- `--eval`
+
+`dialect-demo` options:
+
+- `--file <path>`
+- `--scenario <valid|invalid-syntax|semantic-conflict|unresolved-module>`
 
 The user-facing `compiler` backend alias selects the canonical `cil` backend when a dialect declares `backend cil` or the
 `compiler` alias. `--eval` is a flag; the source expression itself is passed as the positional code argument.
@@ -353,14 +385,6 @@ Public dialect documentation should follow the `.wistdialect` shape used by thes
 
 The current validation baseline is .NET 10 (`net10.0`) with SDK `10.0.103`.
 Active runtime and backend work is being verified there first, so older target frameworks are not the current compatibility target.
-
-## Requirements
-
-- .NET SDK `10.0.103`
-- SDK policy in `UniversalToolchain/global.json`:
-  - `rollForward: latestMajor`
-  - `allowPrerelease: true`
-- Targets: `net10.0`
 
 ## Build and test from source
 

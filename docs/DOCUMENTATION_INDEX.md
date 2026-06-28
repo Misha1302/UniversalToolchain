@@ -38,6 +38,7 @@ If a future or historical plan contains executable `bash` blocks for removed or 
 These documents describe possible future architecture and must not be treated as implemented runtime behavior:
 
 1. `docs/architecture/flame-ssa-optimizing-backend-design/index.md` — motivation, constraints, architecture, rollout, validation, and licensing plan for an optional SSA optimizing CIL backend based on Flame.
+2. `docs/architecture/typed-module-contracts-and-verifiers.md` — design proposal for typed module descriptors, AST ownership, bytecode/AIR verifiers, diagnostics, tests, and staged rollout.
 
 ## Conflict rule
 

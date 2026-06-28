@@ -15,7 +15,7 @@
         <RepositoryType>git</RepositoryType>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-        <PackageTags>dotnet;dsl;rules;expression;compiler;interpreter;runtime;wist</PackageTags>
+        <PackageTags>dotnet;dsl;formula;expression;compiler;interpreter;runtime;wist</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageReleaseNotes>See CHANGELOG.md for release notes.</PackageReleaseNotes>
         <IncludeSymbols>true</IncludeSymbols>

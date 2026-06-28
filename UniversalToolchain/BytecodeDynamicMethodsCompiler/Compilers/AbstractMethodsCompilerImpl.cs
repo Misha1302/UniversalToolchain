@@ -187,14 +187,22 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
 
     private static class GlobalExecutionConstants<T>
     {
+        private static readonly object _sync = new();
         private static readonly List<T> _values = [];
 
         public static int AddValue(T value)
         {
-            _values.Add(value);
-            return _values.Count - 1;
+            lock (_sync)
+            {
+                _values.Add(value);
+                return _values.Count - 1;
+            }
         }
 
-        public static T GetValue(int index) => _values[index];
+        public static T GetValue(int index)
+        {
+            lock (_sync)
+                return _values[index];
+        }
     }
 }

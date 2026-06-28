@@ -1,6 +1,6 @@
 # UniversalToolchain.Wist
 
-A compiler-first Wist facade for .NET formula/rule execution.
+A compiler-first Wist facade for .NET formula execution.
 
 This package is the intended first-contact API for .NET developers. It hides the compiler pipeline, dialect runtime host,
 manifests, `DynamicMethod`, `IAbstractIR`, and session APIs behind a small facade.
@@ -8,7 +8,15 @@ manifests, `DynamicMethod`, `IAbstractIR`, and session APIs behind a small facad
 Compiler-first. Interpreter-supported. `CompileFunc` is the primary hot-path API. `Evaluate` is the convenience one-off
 API.
 
+## Requirements
+
+- .NET SDK `10.0.103` or a compatible prerelease SDK selected by the repository `global.json`.
+- Target framework: `net10.0`.
+
 ## Install
+
+The package metadata in this repository is prepared for `UniversalToolchain.Wist` `0.1.0-preview.1`. This package-first
+command works when that version is available from NuGet.org or another configured package source:
 
 ```bash ci-run=false
 dotnet add package UniversalToolchain.Wist --version 0.1.0-preview.1
@@ -71,6 +79,11 @@ var validation = wist.Validate(
         price = 100.0,
         fee = 5.0
     });
+
+if (!validation.IsValid)
+{
+    Console.WriteLine(validation.Message);
+}
 ```
 
 ## Rule of thumb
@@ -144,7 +157,13 @@ WistEngine.CreateTrusted();
 
 `CreateSafeFormulas` is the recommended first-contact preset for restricted formula scenarios.
 
+In this preview, `CreateBusinessRules` is a product-oriented alias for the full native Wist profile rather than a separate
+rules runtime.
+
 `CreateTrusted` enables the trusted Wist profile and must not be used for untrusted input.
+
+`Safe` means a restricted language/runtime surface. It does not mean arbitrary untrusted code is safe to execute inside
+the current process.
 
 ## Security note
 
