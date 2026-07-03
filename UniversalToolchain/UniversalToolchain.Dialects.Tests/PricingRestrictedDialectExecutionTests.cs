@@ -1,4 +1,5 @@
 using System.Reflection.Emit;
+using BasicCilCompiler.Execution;
 using BasicCore.Execution;
 using IntermediateRepresentationAbstractions;
 using UniversalToolchain.Dialects.Wist;
@@ -79,7 +80,7 @@ public sealed class PricingRestrictedDialectExecutionTests
 
     private static double ExecuteCompilerFormula(WistDialectExecutionHost host)
     {
-        var compiler = host.GetBackendSpecificArtifactCompiler<DynamicMethod>("compiler");
+        var compiler = host.GetBackendSpecificArtifactCompiler<CilCompilationOutput>("compiler");
         var artifact = compiler.Compile(PricingFormula, CreateDeclaredBindings());
         var session = artifact.CreateSession();
         SetPricingArguments(session);

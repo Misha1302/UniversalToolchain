@@ -1,9 +1,13 @@
 using AbstractIrConverters;
+using BasicInterpreter.Contracts;
+using BasicCore.Contracts;
 using BasicCore.ExecutorWrapper;
 using IntermediateRepresentationAbstractions;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core.ServiceCollection;
+using UniversalToolchain.Dialects.Integration;
+using UniversalToolchain.ModuleContracts;
 
 namespace UniversalToolchain.Dialects.Wist;
 
@@ -21,4 +25,13 @@ internal sealed class WistInterpreterDialectBackendServiceProvider : DialectBack
 
     override protected Func<IExecutor<IAbstractIR>> ResolveExecutorFactory(IServiceProvider provider)
         => provider.GetRequiredService<Func<IExecutor<IAbstractIR>>>();
+
+    protected override IReadOnlyList<IBackendPipelineComponent> GetBackendPipelineComponents(
+        IServiceProvider provider,
+        DialectBackendRuntimeConfiguration configuration) =>
+        [
+            new ModuleContractBackendPipelineComponent(
+                InterpreterBackendContractDescriptorProvider.Module.Value,
+                [new InterpreterBackendContractDescriptorProvider(SupportedIntrinsics)])
+        ];
 }

@@ -10,7 +10,7 @@ internal sealed class ModulePipelineTestHelper : IDisposable
     public static readonly string[] FullUniversalModules =
     [
         "Whitespaces", "SemicolonAsNewLine", "Comments", "Numbers", "Identifier", "Arithmetic", "Equality",
-        "Conditions", "ComparisonConditions", "BooleanConditions", "Loops", "Variables", "Scopes", "Labels",
+        "Conditions", "ComparisonConditions", "BooleanConditions", "Loops", "Scopes", "Variables", "Labels",
         "InternalPreprocessorLexemes", "CSharpInterop"
     ];
 

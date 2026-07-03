@@ -7,7 +7,7 @@ public class ModuleCombinationsTests
 {
     private const string DialectText = """
                                        dialect ModuleCombinations
-                                       use Arithmetic,Numbers,Scopes,Whitespaces
+                                       use Arithmetic,BooleanConditions,Comments,ComparisonConditions,Conditions,Equality,Identifier,Labels,Loops,Numbers,Scopes,SemicolonAsNewLine,Variables,Whitespaces
                                        backend compiler,interpreter
                                        """;
 

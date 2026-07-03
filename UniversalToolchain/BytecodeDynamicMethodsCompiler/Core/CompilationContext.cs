@@ -1,12 +1,26 @@
 namespace BytecodeDynamicMethodsCompiler.Core;
 
-internal sealed class CompilationContext(GroboIL il, Dictionary<string, int> externalSlots, int externalArgumentOffset = 0)
+internal sealed class CompilationContext(
+    GroboIL il,
+    Dictionary<string, int> externalSlots,
+    List<object> constantPoolValues,
+    int externalArgumentOffset = 0,
+    int? constantPoolArgumentIndex = null,
+    int? executionEnvironmentArgumentIndex = null)
 {
     public Dictionary<string, int> ExternalSlots { get; } = externalSlots;
     public int ExternalArgumentOffset { get; } = externalArgumentOffset;
+    public int? ConstantPoolArgumentIndex { get; } = constantPoolArgumentIndex;
+    public int? ExecutionEnvironmentArgumentIndex { get; } = executionEnvironmentArgumentIndex;
     public Dictionary<string, GroboIL.Local> LocalVariables { get; } = new();
     public Dictionary<Guid, GroboIL.Label> InstructionLabels { get; } = new();
     public GroboIL Il { get; } = il;
+
+    public int AddConstant(object value)
+    {
+        constantPoolValues.Add(value);
+        return constantPoolValues.Count - 1;
+    }
 
     public GroboIL.Local GetOrCreateLocal(string varName, Type varType, bool initializeWithDefault = false)
     {

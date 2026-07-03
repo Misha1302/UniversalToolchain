@@ -60,20 +60,38 @@ public sealed class DslPricingCalculator : IDisposable
     public double CalculateWithFastInvoker(string formula, double price, double fee)
     {
         var compiledArtifact = CompileWithCompiler(formula);
-        var parameters = compiledArtifact.CompilationOutput.GetParameters();
+        var compilation = compiledArtifact.CompilationOutput;
+        var method = compilation.Method;
+        var parameters = method.GetParameters();
+        var offset = 0;
 
-        if (parameters.Length > 0 && parameters[0].ParameterType == typeof(IExecutionEnvironment))
+        if (parameters.Length > offset && parameters[offset].ParameterType == typeof(ArtifactConstantPool))
+            offset++;
+
+        if (parameters.Length > offset && parameters[offset].ParameterType == typeof(IExecutionEnvironment))
         {
             var environment = new ExecutionEnvironment(compiledArtifact.DeclaredBindings);
             environment.SetExternalValue(compiledArtifact.SlotsByName["price"], price);
             environment.SetExternalValue(compiledArtifact.SlotsByName["fee"], fee);
 
-            var fastInvoker = new DynamicMethodInvoker<IExecutionEnvironment, double, double, double>(compiledArtifact.CompilationOutput);
+            if (compilation.HasConstantPool)
+            {
+                var pooledEnvironmentInvoker = new DynamicMethodInvoker<ArtifactConstantPool, IExecutionEnvironment, double, double, double>(method);
+                return pooledEnvironmentInvoker.Invoke(compilation.ConstantPool.NotNull(), environment, price, fee);
+            }
 
-            return fastInvoker.Invoke(environment, price, fee);
+            var environmentInvoker = new DynamicMethodInvoker<IExecutionEnvironment, double, double, double>(method);
+
+            return environmentInvoker.Invoke(environment, price, fee);
         }
 
-        var rawFastInvoker = new DynamicMethodInvoker<double, double, double>(compiledArtifact.CompilationOutput);
+        if (compilation.HasConstantPool)
+        {
+            var pooledInvoker = new DynamicMethodInvoker<ArtifactConstantPool, double, double, double>(method);
+            return pooledInvoker.Invoke(compilation.ConstantPool.NotNull(), price, fee);
+        }
+
+        var rawFastInvoker = new DynamicMethodInvoker<double, double, double>(method);
 
         return rawFastInvoker.Invoke(price, fee);
     }
@@ -119,9 +137,9 @@ public sealed class DslPricingCalculator : IDisposable
             ["fee"] = typeof(double)
         };
 
-    private ICompiledArtifact<DynamicMethod> CompileWithCompiler(string formula)
+    private ICompiledArtifact<CilCompilationOutput> CompileWithCompiler(string formula)
     {
-        var compiler = _host.GetBackendSpecificArtifactCompiler<DynamicMethod>(CompilerBackendName);
+        var compiler = _host.GetBackendSpecificArtifactCompiler<CilCompilationOutput>(CompilerBackendName);
         return compiler.Compile(formula, CreateDeclaredBindings());
     }
 

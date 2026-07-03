@@ -113,7 +113,7 @@ public class RuntimeStressContractsTests
         {
             var dialectText = i % 2 == 0
                 ? "dialect M1\nuse Arithmetic,Numbers\nbackend compiler,interpreter"
-                : "dialect M2\nuse Arithmetic,Numbers,Variables\n\nbackend compiler,interpreter";
+                : "dialect M2\nuse Arithmetic,Identifier,Numbers,Scopes,Variables\n\nbackend compiler,interpreter";
 
             var composition = workflow.ComposeText(dialectText, $"mixed-{i}");
             if (!composition.IsSuccess)

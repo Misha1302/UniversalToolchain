@@ -16,7 +16,7 @@ public class WistDialectParallelIsolationStressTests
         var dialects = new[]
         {
             "dialect A\nuse Arithmetic,Numbers\n\nbackend interpreter",
-            "dialect B\nuse Arithmetic,Variables,Scopes\nbackend interpreter,compiler",
+            "dialect B\nuse Arithmetic,Scopes,Variables\nbackend interpreter,compiler",
             "dialect C\nuse Arithmetic,Conditions,ComparisonConditions\nbackend compiler"
         };
 

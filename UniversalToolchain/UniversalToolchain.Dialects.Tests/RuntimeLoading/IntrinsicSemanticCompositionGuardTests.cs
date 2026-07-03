@@ -1,6 +1,7 @@
 using BasicCore.Contracts;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Wist;
+using UniversalToolchain.ModuleContracts;
 
 namespace UniversalToolchain.Dialects.Tests.RuntimeLoading;
 
@@ -30,7 +31,9 @@ public sealed class IntrinsicSemanticCompositionGuardTests
             new StaticBackendRegistrarResolver(backendRegistrars),
             new IntrinsicSemanticBootstrapPlanBuilder(),
             new IntrinsicSemanticBootstrapPreProviderValidator(),
-            new IntrinsicSemanticBootstrapRuntimeValidator());
+            new IntrinsicSemanticBootstrapRuntimeValidator(),
+            ModuleContractPipelineProfiles.MigrationWarn,
+            NullModuleContractDiagnosticSink.Instance);
 
     private static IntrinsicSemanticDescriptor CreateDescriptor(string @namespace, string name) =>
         new()

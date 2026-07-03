@@ -1,6 +1,9 @@
 using UniversalToolchain.Capabilities.Core;
 using UniversalToolchain.Dialects.Wist;
 
+if (TryRejectRemovedDialectMutationOption(args, out var removedDialectMutationExitCode))
+    return removedDialectMutationExitCode;
+
 return Parser.Default.ParseArguments<RunOptions, ReplOptions, DialectInspectOptions, DialectDemoOptions, FeaturesOptions>(args)
     .MapResult(
         (RunOptions opts) => RunCommand(opts),
@@ -9,6 +12,32 @@ return Parser.Default.ParseArguments<RunOptions, ReplOptions, DialectInspectOpti
         (DialectDemoOptions opts) => DialectDemoCommand(opts),
         (FeaturesOptions opts) => FeaturesCommand(opts),
         _ => 1);
+
+static bool TryRejectRemovedDialectMutationOption(string[] args, out int exitCode)
+{
+    foreach (var arg in args)
+    {
+        var optionName = arg switch
+        {
+            "--use-native-math" => "use-native-math",
+            "--include-module" => "include-module",
+            "--exclude-module" => "exclude-module",
+            _ when arg.StartsWith("--include-module=", StringComparison.Ordinal) => "include-module",
+            _ when arg.StartsWith("--exclude-module=", StringComparison.Ordinal) => "exclude-module",
+            _ => null
+        };
+
+        if (optionName == null)
+            continue;
+
+        Console.Error.WriteLine($"Option '{optionName}' is unknown");
+        exitCode = 1;
+        return true;
+    }
+
+    exitCode = 0;
+    return false;
+}
 
 int RunCommand(RunOptions options)
 {

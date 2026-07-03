@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Core.ServiceCollection;
 using UniversalToolchain.Dialects.Integration;
 using ServiceLifetime = Microsoft.Extensions.DependencyInjection.ServiceLifetime;
+using UniversalToolchain.ModuleContracts;
 
 namespace UniversalToolchain.Dialects.Wist;
 
@@ -16,17 +17,23 @@ public sealed class WistDialectServiceProviderFactory
     private readonly IntrinsicSemanticBootstrapPlanBuilder _intrinsicBootstrapPlanBuilder;
     private readonly IntrinsicSemanticBootstrapPreProviderValidator _intrinsicBootstrapPreProviderValidator;
     private readonly IntrinsicSemanticBootstrapRuntimeValidator _intrinsicBootstrapRuntimeValidator;
+    private readonly IModuleContractDiagnosticSink _moduleContractDiagnosticSink;
+    private readonly ModuleContractPipelineOptions _moduleContractOptions;
 
     public WistDialectServiceProviderFactory(
         IRuntimeBackendRegistrarResolver backendRegistrarResolver,
         IntrinsicSemanticBootstrapPlanBuilder intrinsicBootstrapPlanBuilder,
         IntrinsicSemanticBootstrapPreProviderValidator intrinsicBootstrapPreProviderValidator,
-        IntrinsicSemanticBootstrapRuntimeValidator intrinsicBootstrapRuntimeValidator)
+        IntrinsicSemanticBootstrapRuntimeValidator intrinsicBootstrapRuntimeValidator,
+        ModuleContractPipelineOptions moduleContractOptions,
+        IModuleContractDiagnosticSink moduleContractDiagnosticSink)
     {
         _backendRegistrarResolver = backendRegistrarResolver.ArgNotNull();
         _intrinsicBootstrapPlanBuilder = intrinsicBootstrapPlanBuilder.ArgNotNull();
         _intrinsicBootstrapPreProviderValidator = intrinsicBootstrapPreProviderValidator.ArgNotNull();
         _intrinsicBootstrapRuntimeValidator = intrinsicBootstrapRuntimeValidator.ArgNotNull();
+        _moduleContractOptions = moduleContractOptions.ArgNotNull();
+        _moduleContractDiagnosticSink = moduleContractDiagnosticSink.ArgNotNull();
     }
 
     public IServiceProvider Create(WistDialectExecutionConfiguration configuration)
@@ -36,6 +43,9 @@ public sealed class WistDialectServiceProviderFactory
         var services = new ServiceCollection();
         services.AddNeutralRuntimeInfrastructure();
         services.AddBasicFrontendPipelineDefaults();
+        services.AddWistModuleContractPipelineServices(
+            _moduleContractOptions,
+            _moduleContractDiagnosticSink);
 
         RegisterModules(services, configuration.FrontendModules, typeof(IFrontendCoreModule), ServiceLifetime.Singleton);
         RegisterModules(services, configuration.IrModules, typeof(IIRProcessingModule), ServiceLifetime.Transient);

@@ -1,6 +1,7 @@
 global using System.Reflection;
 global using System.Reflection.Emit;
 global using AbstractIrExtensions;
+global using BasicCilCompiler.Execution;
 global using BasicCore.Compilation;
 global using BasicCore.Execution;
 global using BasicCore.Contracts;

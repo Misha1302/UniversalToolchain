@@ -12,7 +12,9 @@ public class BasicCoreImpl<TCompilationOutput>(
     IReadOnlyList<IFrontendCoreModule> modules,
     IReadOnlyList<IIRProcessingModule> optimizers,
     IReadOnlyList<IMiddleEndCoreModule<TCompilationOutput>> middleEndModules,
-    IIntrinsicCapabilitySetFactory? intrinsicCapabilitySetFactory = null
+    IIntrinsicCapabilitySetFactory? intrinsicCapabilitySetFactory = null,
+    IReadOnlyList<ICompilationPipelineObserver>? pipelineObservers = null,
+    IReadOnlyList<IBackendPipelineComponent>? backendComponents = null
 ) : ICoreRunnable, ICoreOptimizedRunnable, IExecutableGiver<TCompilationOutput>, IArtifactCompiler<TCompilationOutput>
 {
     private readonly CompilationInputNormalizer _inputNormalizer = new();
@@ -30,7 +32,9 @@ public class BasicCoreImpl<TCompilationOutput>(
             modules,
             optimizers,
             middleEndModules,
-            intrinsicCapabilitySetFactory);
+            intrinsicCapabilitySetFactory,
+            pipelineObservers,
+            backendComponents);
 
     public ICompiledArtifact<TCompilationOutput> Compile(string code, OrderedDictionary<string, Type>? parameters = null)
         => Compile(_inputNormalizer.NormalizeDeclaredInput(code, parameters));

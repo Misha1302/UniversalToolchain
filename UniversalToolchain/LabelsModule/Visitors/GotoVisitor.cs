@@ -1,3 +1,6 @@
+using LabelsModule.Contracts;
+using UniversalToolchain.ModuleContracts;
+
 namespace LabelsModule.Visitors;
 
 public class GotoVisitor(LabelsSharedData labelsSharedData) : IAstVisitor
@@ -11,6 +14,9 @@ public class GotoVisitor(LabelsSharedData labelsSharedData) : IAstVisitor
             $"Goto_!Intrinsic_{name}",
             (il, _) => il.Jmp(labelsSharedData.GetIdByName(name))
         );
-        data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
+        data.Bytecode.Instructions.Add(new BytecodeInstruction(method).WithContract(
+            LabelsContractIds.Module,
+            LabelsContractIds.GotoNode,
+            LabelsContractIds.Goto));
     }
 }

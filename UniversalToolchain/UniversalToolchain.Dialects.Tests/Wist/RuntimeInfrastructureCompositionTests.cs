@@ -1,5 +1,8 @@
 using System.Reflection.Emit;
+using System.Reflection;
 using AbstractIrConverters;
+using BasicCilCompiler.Contracts;
+using BasicCilCompiler.Execution;
 using BasicCore.Capabilities;
 using BasicCore.Contracts;
 using BasicCore.ExecutorWrapper;
@@ -12,6 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core.ServiceCollection;
 using UniversalToolchain.Dialects.Wist;
+using UniversalToolchain.ModuleContracts;
 
 namespace UniversalToolchain.Dialects.Tests.Wist;
 
@@ -34,6 +38,7 @@ public class RuntimeInfrastructureCompositionTests
             Assert.That(provider.GetService<Func<IAbstractMethodsTranslator>>(), Is.Null);
             Assert.That(provider.GetService<AbstractMethodsCompilerImpl>(), Is.Null);
             Assert.That(provider.GetService<AbstractIrToAbstractIrStub>(), Is.Null);
+            Assert.That(provider.GetService<Func<IExecutor<CilCompilationOutput>>>(), Is.Null);
             Assert.That(provider.GetService<Func<IExecutor<DynamicMethod>>>(), Is.Null);
             Assert.That(provider.GetService<Func<IExecutor<IAbstractIR>>>(), Is.Null);
         });
@@ -70,7 +75,8 @@ public class RuntimeInfrastructureCompositionTests
         Assert.Multiple(() =>
         {
             Assert.That(provider.GetService<AbstractMethodsCompilerImpl>(), Is.Not.Null);
-            Assert.That(provider.GetRequiredService<Func<IExecutor<DynamicMethod>>>()(), Is.Not.Null);
+            Assert.That(provider.GetRequiredService<Func<IExecutor<CilCompilationOutput>>>()(), Is.Not.Null);
+            Assert.That(provider.GetService<Func<IExecutor<DynamicMethod>>>(), Is.Null);
             Assert.That(provider.GetService<AbstractIrToAbstractIrStub>(), Is.Null);
             Assert.That(provider.GetService<Func<IExecutor<IAbstractIR>>>(), Is.Null);
         });
@@ -89,6 +95,7 @@ public class RuntimeInfrastructureCompositionTests
             Assert.That(provider.GetService<AbstractIrToAbstractIrStub>(), Is.Not.Null);
             Assert.That(provider.GetRequiredService<Func<IExecutor<IAbstractIR>>>()(), Is.Not.Null);
             Assert.That(provider.GetService<AbstractMethodsCompilerImpl>(), Is.Null);
+            Assert.That(provider.GetService<Func<IExecutor<CilCompilationOutput>>>(), Is.Null);
             Assert.That(provider.GetService<Func<IExecutor<DynamicMethod>>>(), Is.Null);
         });
     }
@@ -150,7 +157,9 @@ public class RuntimeInfrastructureCompositionTests
             new StaticBackendRegistrarResolver(backendRegistrars),
             new IntrinsicSemanticBootstrapPlanBuilder(),
             new IntrinsicSemanticBootstrapPreProviderValidator(),
-            new IntrinsicSemanticBootstrapRuntimeValidator());
+            new IntrinsicSemanticBootstrapRuntimeValidator(),
+            ModuleContractPipelineProfiles.MigrationWarn,
+            NullModuleContractDiagnosticSink.Instance);
 
     private static RuntimeComponentManifestEntry BackendEntry(string alias, Type registrarType)
         => new(
@@ -174,9 +183,13 @@ public class RuntimeInfrastructureCompositionTests
         Assert.Multiple(() =>
         {
             Assert.That(provider.GetService<AbstractMethodsCompilerImpl>(), Is.Not.Null);
-            Assert.That(provider.GetService<Func<IExecutor<DynamicMethod>>>(), Is.Not.Null);
+            Assert.That(provider.GetService<Func<IExecutor<CilCompilationOutput>>>(), Is.Not.Null);
+            Assert.That(provider.GetService<Func<IExecutor<DynamicMethod>>>(), Is.Null);
             Assert.That(provider.GetService<AbstractIrToAbstractIrStub>(), Is.Null);
             Assert.That(provider.GetServices<WistDialectBackendRuntime>().Single().Descriptor.BackendId, Is.EqualTo(WistDialectBackendIds.Cil));
+            Assert.That(
+                ReadBackendContractModuleIds(provider.GetServices<WistDialectBackendRuntime>().Single().Core),
+                Is.EqualTo(new[] { CilBackendContractDescriptorProvider.Module }));
         });
     }
 
@@ -196,7 +209,34 @@ public class RuntimeInfrastructureCompositionTests
             Assert.That(provider.GetService<Func<IExecutor<IAbstractIR>>>(), Is.Not.Null);
             Assert.That(provider.GetService<AbstractMethodsCompilerImpl>(), Is.Null);
             Assert.That(provider.GetServices<WistDialectBackendRuntime>().Single().Descriptor.BackendId, Is.EqualTo(WistDialectBackendIds.Interpreter));
+            Assert.That(
+                ReadBackendContractModuleIds(provider.GetServices<WistDialectBackendRuntime>().Single().Core),
+                Is.EqualTo(new[] { BasicInterpreter.Contracts.InterpreterBackendContractDescriptorProvider.Module }));
         });
+    }
+
+    private static IReadOnlyList<ModuleId> ReadBackendContractModuleIds(ICoreRunnable core)
+    {
+        var builderField = core.GetType().GetField("_preparedExecutionBuilder", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(builderField, Is.Not.Null);
+
+        var builder = builderField!.GetValue(core);
+        Assert.That(builder, Is.Not.Null);
+
+        var componentsField = builder!.GetType().GetField("_backendComponents", BindingFlags.Instance | BindingFlags.NonPublic);
+        Assert.That(componentsField, Is.Not.Null);
+
+        var components = componentsField!.GetValue(builder) as IEnumerable<IBackendPipelineComponent>;
+        Assert.That(components, Is.Not.Null);
+
+        return components!
+            .OfType<IModuleContractBackendPipelineComponent>()
+            .SelectMany(static component => component.DescriptorProviders)
+            .SelectMany(static provider => provider.GetFacets())
+            .Select(static facet => facet.ModuleId)
+            .Distinct()
+            .OrderBy(static id => id.Value, StringComparer.Ordinal)
+            .ToArray();
     }
 
     private static IServiceCollection CreateBackendServiceCollection()

@@ -1,6 +1,6 @@
 namespace BytecodeDynamicMethodsCompiler.Compilers;
 
-public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
+public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<CilCompilationOutput>
 {
     private readonly AbstractMethodsIntrinsicCompiler _intrinsicCompiler;
     private readonly CilAbstractIrTypeSimulator _typeSimulator;
@@ -22,7 +22,7 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
 
     public IReadOnlyList<string> SupportedIntrinsics => _intrinsicCompiler.SupportedIntrinsics;
 
-    public DynamicMethod Compile(IAbstractIR air, CompilationInput input)
+    public CilCompilationOutput Compile(IAbstractIR air, CompilationInput input)
     {
         air = air.ArgNotNull();
         input = input.ArgNotNull();
@@ -30,17 +30,32 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
         var requirements = CilExecutionRequirementAnalyzer.Analyze(air);
         var returnType = GetReturnType(air);
         var externalBindingTypes = input.ExternalBindings.Select(static x => x.Type).ToArray();
+        var hasConstantPool = air.Instructions.Any(static x => x.UOpCode == UOpCode.Push);
         var argsTypes = requirements.RequiresExecutionEnvironment
             ? new[] { typeof(IExecutionEnvironment) }.Concat(externalBindingTypes).ToArray()
             : externalBindingTypes;
-        var externalArgumentOffset = requirements.RequiresExecutionEnvironment ? 1 : 0;
+        if (hasConstantPool)
+            argsTypes = new[] { typeof(ArtifactConstantPool) }.Concat(argsTypes).ToArray();
+
+        var constantPoolArgumentIndex = hasConstantPool ? 0 : (int?)null;
+        var executionEnvironmentArgumentIndex = requirements.RequiresExecutionEnvironment
+            ? hasConstantPool ? 1 : 0
+            : (int?)null;
+        var externalArgumentOffset = (hasConstantPool ? 1 : 0) + (requirements.RequiresExecutionEnvironment ? 1 : 0);
         var externalSlots = input.ExternalBindings
             .Select((binding, slot) => new { binding.Name, Slot = slot })
             .ToDictionary(static x => x.Name, static x => x.Slot);
         var method = new DynamicMethod("main", returnType, argsTypes);
         using var il = new GroboIL(method);
 
-        var context = new CompilationContext(il, externalSlots, externalArgumentOffset);
+        var constantPoolValues = new List<object>();
+        var context = new CompilationContext(
+            il,
+            externalSlots,
+            constantPoolValues,
+            externalArgumentOffset,
+            constantPoolArgumentIndex,
+            executionEnvironmentArgumentIndex);
         var labelStacks = InitializeLabels(context, air);
 
         var typesStack = new List<Type>();
@@ -49,7 +64,9 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
             CompileInstruction(context, instruction, typesStack, labelStacks);
 
         EmitMethodReturn(il, returnType, typesStack);
-        return method;
+        return new CilCompilationOutput(
+            method,
+            hasConstantPool ? new ArtifactConstantPool(constantPoolValues) : null);
     }
 
     private static void EmitMethodReturn(GroboIL il, Type returnType, IReadOnlyList<Type> typesStack)
@@ -111,7 +128,7 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
             case UOpCode.Push:
             {
                 var value = instruction.Operands[0];
-                PushValue(context.Il, value);
+                PushValue(context, value);
                 stack.Push(value.GetType());
                 break;
             }
@@ -172,37 +189,18 @@ public class AbstractMethodsCompilerImpl : IAbstractIrCompiler<DynamicMethod>
         context.Il.MarkLabel(context.InstructionLabels[labelId]);
     }
 
-    private static void PushValue(GroboIL il, object value)
+    private static void PushValue(CompilationContext context, object value)
     {
         var type = value.GetType();
-        var constants = typeof(GlobalExecutionConstants<>).MakeGenericType(type);
-        var loadMethod = constants.GetMethod(nameof(GlobalExecutionConstants<>.GetValue)).NotNull();
-        var addMethod = constants.GetMethod(nameof(GlobalExecutionConstants<>.AddValue)).NotNull();
+        var loadMethod = typeof(ArtifactConstantPool)
+            .GetMethod(nameof(ArtifactConstantPool.GetValue))
+            .NotNull()
+            .MakeGenericMethod(type);
+        var index = context.AddConstant(value);
 
-        var ind = addMethod.Invoke(null, [value]).NotNull().Get<int>();
-
-        il.Ldc_I4(ind);
-        il.Call(loadMethod);
-    }
-
-    private static class GlobalExecutionConstants<T>
-    {
-        private static readonly object _sync = new();
-        private static readonly List<T> _values = [];
-
-        public static int AddValue(T value)
-        {
-            lock (_sync)
-            {
-                _values.Add(value);
-                return _values.Count - 1;
-            }
-        }
-
-        public static T GetValue(int index)
-        {
-            lock (_sync)
-                return _values[index];
-        }
+        Thrower.AssertAlways(context.ConstantPoolArgumentIndex.HasValue, "CIL constant pool argument is required.");
+        context.Il.Ldarg(context.ConstantPoolArgumentIndex.Value);
+        context.Il.Ldc_I4(index);
+        context.Il.Call(loadMethod);
     }
 }

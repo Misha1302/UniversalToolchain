@@ -331,7 +331,7 @@ public class CompiledArtifactContractsTests
         var composition = workflow.ComposeText(
             """
             dialect CompiledArtifactContracts
-            use Whitespaces,SemicolonAsNewLine,Comments,Numbers,Identifier,Arithmetic,Equality,Conditions,Loops,Variables,Scopes,Labels,InternalPreprocessorLexemes,CSharpInterop
+            use Whitespaces,SemicolonAsNewLine,Comments,Numbers,Identifier,Arithmetic,Equality,Conditions,Loops,Scopes,Variables,Labels,InternalPreprocessorLexemes,CSharpInterop
             backend compiler
             """,
             "compiled-artifact-contracts-inline");

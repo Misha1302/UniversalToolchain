@@ -1,0 +1,9 @@
+global using BasicCore.Capabilities;
+global using BasicCore.Contracts;
+global using BasicCore.Core;
+global using BasicCore.ParserWrapper;
+global using BasicCore.TranslatorWrapper;
+global using ExceptionsManager;
+global using IntermediateRepresentationAbstractions;
+global using ObjectExtensions;
+global using UniversalToolchain.Diagnostics.Abstractions;

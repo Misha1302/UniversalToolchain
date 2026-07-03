@@ -2,6 +2,7 @@ global using System.Reflection.Emit;
 global using AbstractIrConverters;
 global using ArithmeticModule;
 global using BasicCilCompiler;
+global using BasicCilCompiler.Execution;
 global using BasicCodeTranslator;
 global using BasicCore;
 global using BasicCore.Contracts;

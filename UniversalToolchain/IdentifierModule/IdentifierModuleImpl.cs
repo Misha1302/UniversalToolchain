@@ -1,5 +1,7 @@
 using UniversalToolchain.Capabilities.Abstractions;
 using UniversalToolchain.Dialects.Abstractions;
+using UniversalToolchain.ModuleContracts;
+using IdentifierModule.Contracts;
 
 namespace IdentifierModule;
 
@@ -7,7 +9,7 @@ namespace IdentifierModule;
 [DialectCapabilityProvider(typeof(IdentifierCapabilityProvider))]
 [DialectRuntimeExport("FrontendModule", "Identifier")]
 [AutoRegisterService]
-public class IdentifierModuleImpl : IFrontendCoreModule
+public class IdentifierModuleImpl : IFrontendCoreModule, IModuleContractDescriptorProvider
 {
     private static readonly IReadOnlyList<LexemeRegistration> _lexemeRegistrations =
     [
@@ -19,4 +21,7 @@ public class IdentifierModuleImpl : IFrontendCoreModule
     ];
 
     public void InitLexer(ILexer lexer) => lexer.AddLexemes(_lexemeRegistrations);
+
+    public IReadOnlyList<IModuleContractFacet> GetFacets() =>
+        new IdentifierModuleContractDescriptorProvider().GetFacets();
 }

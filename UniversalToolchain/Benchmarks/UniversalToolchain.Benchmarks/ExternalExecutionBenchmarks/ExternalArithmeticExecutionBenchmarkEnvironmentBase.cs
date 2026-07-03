@@ -82,11 +82,11 @@ public abstract class ExternalArithmeticExecutionBenchmarkEnvironmentBase
         var host = _host ?? Thrower.InvalidOpEx<WistDialectExecutionHost>(
             "Wist host must be initialized before compilation.");
 
-        var compiler = host.GetBackendSpecificArtifactCompiler<DynamicMethod>("compiler");
+        var compiler = host.GetBackendSpecificArtifactCompiler<BasicCilCompiler.Execution.CilCompilationOutput>("compiler");
         var declaredBindings = CreateDeclaredBindings(bindingNames);
         var compiledArtifact = compiler.Compile(formula, declaredBindings);
 
-        return compiledArtifact.CompilationOutput;
+        return compiledArtifact.CompilationOutput.Method;
     }
 
     protected OrderedDictionary<string, Type> CreateDeclaredBindings(string[] bindingNames)

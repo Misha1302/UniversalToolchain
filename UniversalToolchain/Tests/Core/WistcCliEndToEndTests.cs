@@ -9,7 +9,7 @@ public class WistcCliEndToEndTests
     public void BuildCli()
     {
         var repoRoot = GetRepoRoot();
-        var build = TestContractsInfrastructure.RunProcess("dotnet", "build Wistc/Wistc.csproj -c Release", Path.Combine(repoRoot, "UniversalToolchain"), 180000);
+        var build = TestContractsInfrastructure.RunProcess("dotnet", "build Wistc/Wistc.csproj -c Release -m:1 -nr:false", Path.Combine(repoRoot, "UniversalToolchain"), 180000);
         Assert.That(build.TimedOut, Is.False, $"dotnet build timed out.{Environment.NewLine}{build.StdErr}{Environment.NewLine}{build.StdOut}");
         Assert.That(build.ExitCode, Is.EqualTo(0), build.StdErr + build.StdOut);
 
