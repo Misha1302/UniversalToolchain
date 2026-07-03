@@ -1,0 +1,139 @@
+namespace UniversalToolchain.ModuleContracts;
+
+public sealed class PipelineEffectVerifier
+{
+    public PipelineEffectValidationResult Validate(PipelineEffectValidationRequest request)
+    {
+        request = request.ArgNotNull();
+
+        var available = request.InputFacts.Available.ToHashSet();
+        var invalidated = request.InputFacts.Invalidated.ToHashSet();
+        var diagnostics = new List<ToolchainDiagnostic>();
+        var reverification = new Dictionary<VerifierRuleId, List<CompilerFactId>>();
+
+        var effects = request.ContractTable.PipelineEffectFacets
+            .SelectMany(static facet => facet.Effects.Select(effect => (facet.ModuleId, effect)))
+            .Where(item => item.effect.Stage == request.Stage)
+            .ToArray();
+        if (effects.Length > 0 && (request.PipelineOrder == null || request.PipelineOrder.Count == 0))
+        {
+            diagnostics.Add(new ToolchainDiagnostic(
+                ModuleContractDiagnosticCodes.MissingPipelineOrder,
+                ToolchainDiagnosticSeverity.Error,
+                $"Pipeline effect verification for '{request.Stage}' requires the actual selected pipeline order.",
+                null,
+                [new ToolchainDiagnosticHint("Pass the frontend/optimizer/backend order from the selected runtime/build plan instead of relying on module id sorting.")]));
+
+            return new PipelineEffectValidationResult(
+                new CompilerFactState(available, invalidated),
+                diagnostics,
+                []);
+        }
+
+        var orderIndex = BuildOrderIndex(request.PipelineOrder);
+        effects = effects
+            .OrderBy(item => orderIndex.TryGetValue(item.ModuleId, out var index) ? index : int.MaxValue)
+            .ThenBy(static item => item.ModuleId.Value, StringComparer.Ordinal)
+            .ThenBy(static item => item.effect.EffectId.Value, StringComparer.Ordinal)
+            .ToArray();
+
+        foreach (var item in effects)
+        {
+            var missingRequiredFacts = item.effect.Requires
+                .Where(required => !available.Contains(required))
+                .ToArray();
+
+            if (missingRequiredFacts.Length > 0)
+            {
+                foreach (var required in missingRequiredFacts)
+                {
+                    diagnostics.Add(new ToolchainDiagnostic(
+                        ModuleContractDiagnosticCodes.MissingRequiredCompilerFact,
+                        ToolchainDiagnosticSeverity.Error,
+                        $"Module '{item.ModuleId}' pipeline effect '{item.effect.EffectId}' requires compiler fact '{required}', but it is not available at '{request.Stage}'.",
+                        null,
+                        [new ToolchainDiagnosticHint("Select the producer module earlier in the build plan or add a stage seed for externally guaranteed facts.")]));
+                }
+
+                continue;
+            }
+
+            ApplyEffect(
+                item.ModuleId,
+                item.effect,
+                available,
+                invalidated,
+                diagnostics,
+                reverification,
+                request.VerifierRegistry);
+        }
+
+        return new PipelineEffectValidationResult(
+            new CompilerFactState(available, invalidated),
+            diagnostics
+                .OrderBy(static x => x.Code, StringComparer.Ordinal)
+                .ThenBy(static x => x.Message, StringComparer.Ordinal)
+                .ToArray(),
+            reverification
+                .OrderBy(static x => x.Key.Value, StringComparer.Ordinal)
+                .Select(static x => new ReverificationRequest(
+                    x.Key,
+                    x.Value.OrderBy(static fact => fact.Value, StringComparer.Ordinal).Distinct().ToArray()))
+                .ToArray());
+    }
+
+    private static IReadOnlyDictionary<ModuleId, int> BuildOrderIndex(IReadOnlyList<ModuleId>? pipelineOrder)
+    {
+        if (pipelineOrder == null || pipelineOrder.Count == 0)
+            return new Dictionary<ModuleId, int>();
+
+        var order = new Dictionary<ModuleId, int>();
+        for (var i = 0; i < pipelineOrder.Count; i++)
+            order.TryAdd(pipelineOrder[i], i);
+
+        return order;
+    }
+
+    private static void ApplyEffect(
+        ModuleId moduleId,
+        PipelineEffectContract effect,
+        HashSet<CompilerFactId> available,
+        HashSet<CompilerFactId> invalidated,
+        List<ToolchainDiagnostic> diagnostics,
+        Dictionary<VerifierRuleId, List<CompilerFactId>> reverification,
+        CompilerFactVerifierRegistry verifierRegistry)
+    {
+        foreach (var fact in effect.Preserves.Where(fact => !available.Contains(fact)))
+        {
+            diagnostics.Add(new ToolchainDiagnostic(
+                ModuleContractDiagnosticCodes.MissingRequiredCompilerFact,
+                ToolchainDiagnosticSeverity.Error,
+                $"Module '{moduleId}' pipeline effect '{effect.EffectId}' promises to preserve compiler fact '{fact}', but it is not available at this point.",
+                null,
+                [new ToolchainDiagnosticHint("Move the producer earlier, add an explicit requirement for the preserved fact, or remove the invalid preservation claim.")]));
+        }
+
+        foreach (var fact in effect.Invalidates)
+        {
+            available.Remove(fact);
+            invalidated.Add(fact);
+
+            if (!verifierRegistry.TryGetVerifier(fact, out var verifierRule))
+                continue;
+
+            if (!reverification.TryGetValue(verifierRule, out var facts))
+            {
+                facts = [];
+                reverification[verifierRule] = facts;
+            }
+
+            facts.Add(fact);
+        }
+
+        foreach (var fact in effect.Produces)
+        {
+            available.Add(fact);
+            invalidated.Remove(fact);
+        }
+    }
+}

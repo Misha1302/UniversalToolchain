@@ -7,7 +7,7 @@ public class ErrorCasesTests
 {
     private const string DialectText = """
                                        dialect ErrorCases
-                                       use Whitespaces,SemicolonAsNewLine,Comments,Numbers,Identifier,Arithmetic,Equality,Conditions,Loops,Variables,Scopes,Labels,InternalPreprocessorLexemes,CSharpInterop
+                                       use Whitespaces,SemicolonAsNewLine,Comments,Numbers,Identifier,Arithmetic,Equality,Conditions,Loops,Scopes,Variables,Labels,InternalPreprocessorLexemes,CSharpInterop
 
                                        backend compiler,interpreter
                                        """;

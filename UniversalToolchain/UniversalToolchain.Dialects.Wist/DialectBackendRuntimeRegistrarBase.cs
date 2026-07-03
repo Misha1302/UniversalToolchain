@@ -38,6 +38,11 @@ public abstract class DialectBackendRuntimeRegistrarBase<TCompilationOutput> : I
 
     protected abstract Func<IExecutor<TCompilationOutput>> ResolveExecutorFactory(IServiceProvider provider);
 
+    protected virtual IReadOnlyList<IBackendPipelineComponent> GetBackendPipelineComponents(
+        IServiceProvider provider,
+        DialectBackendRuntimeConfiguration configuration) =>
+        [];
+
     private BasicCoreImpl<TCompilationOutput> CreateCore(IServiceProvider provider, DialectBackendRuntimeConfiguration configuration)
     {
         var capabilitySetFactory = provider.GetRequiredService<IIntrinsicCapabilitySetFactory>();
@@ -45,8 +50,10 @@ public abstract class DialectBackendRuntimeRegistrarBase<TCompilationOutput> : I
             .Select(type => (IIRProcessingModule)provider.GetRequiredService(type))
             .ToList();
         var frontendModules = provider.GetServices<IFrontendCoreModule>().ToList();
+        var pipelineObservers = provider.GetServices<ICompilationPipelineObserver>().ToList();
         var backendCompiler = ResolveBackendCompiler(provider);
         var executorFactory = ResolveExecutorFactory(provider);
+        var backendPipelineComponents = GetBackendPipelineComponents(provider, configuration);
 
         return new BasicCoreImpl<TCompilationOutput>(
             provider.GetRequiredService<Func<ILexer>>(),
@@ -62,6 +69,8 @@ public abstract class DialectBackendRuntimeRegistrarBase<TCompilationOutput> : I
             frontendModules,
             backendOptimizers,
             [],
-            capabilitySetFactory);
+            capabilitySetFactory,
+            pipelineObservers,
+            backendPipelineComponents);
     }
 }

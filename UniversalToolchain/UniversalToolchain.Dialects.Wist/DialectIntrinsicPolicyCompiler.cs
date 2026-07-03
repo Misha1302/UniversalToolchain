@@ -28,6 +28,7 @@ internal sealed class DialectIntrinsicPolicyCompiler<TCompilationOutput> : IAbst
         _forbiddenIntrinsics = CreateSet(forbiddenIntrinsics, nameof(forbiddenIntrinsics));
         _hasExplicitAllowList = hasExplicitAllowList;
         SupportedIntrinsics = _inner.SupportedIntrinsics
+            .Where(x => !_hasExplicitAllowList || _allowedIntrinsics.Contains(x))
             .Where(x => !_forbiddenIntrinsics.Contains(x))
             .OrderBy(x => x, StringComparer.Ordinal)
             .ToList();

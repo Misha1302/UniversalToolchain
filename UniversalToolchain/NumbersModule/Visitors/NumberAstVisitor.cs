@@ -1,3 +1,6 @@
+using NumbersModule.Contracts;
+using UniversalToolchain.ModuleContracts;
+
 namespace NumbersModule.Visitors;
 
 [AutoRegisterService]
@@ -19,6 +22,9 @@ public class NumberAstVisitor : IAstVisitor
                 il.Push(num);
                 il.CallCSharp(typeof(RealNumberImpl).GetConstructor([typeof(double)]).NotNull());
             });
-        data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
+        data.Bytecode.Instructions.Add(new BytecodeInstruction(method).WithContract(
+            NumbersContractIds.Module,
+            NumbersContractIds.NumberNode,
+            NumbersContractIds.PushRealNumber));
     }
 }

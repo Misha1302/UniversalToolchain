@@ -1,13 +1,17 @@
-using System.Reflection.Emit;
+using BasicCilCompiler.Contracts;
+using BasicCilCompiler.Execution;
+using BasicCore.Contracts;
 using BasicCore.ExecutorWrapper;
 using BytecodeDynamicMethodsCompiler.Compilers;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core.ServiceCollection;
+using UniversalToolchain.Dialects.Integration;
+using UniversalToolchain.ModuleContracts;
 
 namespace UniversalToolchain.Dialects.Wist;
 
-internal sealed class WistCilDialectBackendServiceProvider : DialectBackendRuntimeRegistrarBase<DynamicMethod>
+internal sealed class WistCilDialectBackendServiceProvider : DialectBackendRuntimeRegistrarBase<CilCompilationOutput>
 {
     private readonly CilIntrinsicRegistry _intrinsicRegistry = new();
 
@@ -21,6 +25,15 @@ internal sealed class WistCilDialectBackendServiceProvider : DialectBackendRunti
     override protected AbstractMethodsCompilerImpl ResolveBackendCompiler(IServiceProvider provider)
         => provider.GetRequiredService<AbstractMethodsCompilerImpl>();
 
-    override protected Func<IExecutor<DynamicMethod>> ResolveExecutorFactory(IServiceProvider provider)
-        => provider.GetRequiredService<Func<IExecutor<DynamicMethod>>>();
+    override protected Func<IExecutor<CilCompilationOutput>> ResolveExecutorFactory(IServiceProvider provider)
+        => provider.GetRequiredService<Func<IExecutor<CilCompilationOutput>>>();
+
+    protected override IReadOnlyList<IBackendPipelineComponent> GetBackendPipelineComponents(
+        IServiceProvider provider,
+        DialectBackendRuntimeConfiguration configuration) =>
+        [
+            new ModuleContractBackendPipelineComponent(
+                CilBackendContractDescriptorProvider.Module.Value,
+                [new CilBackendContractDescriptorProvider(SupportedIntrinsics)])
+        ];
 }

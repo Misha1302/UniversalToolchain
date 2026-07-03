@@ -1,4 +1,3 @@
-using System.Reflection.Emit;
 using Tests.Infrastructure;
 
 namespace Tests.Backends;
@@ -7,17 +6,18 @@ namespace Tests.Backends;
 public class RuntimeCompiledArtifactBackendSpecificTests
 {
     [Test]
-    public void GetBackendSpecificArtifactCompiler_WithDynamicMethodOutput_ReturnsWorkingCompilerArtifactPath()
+    public void GetBackendSpecificArtifactCompiler_WithCilCompilationOutput_ReturnsWorkingCompilerArtifactPath()
     {
         using var host = RuntimeCompiledArtifactTestFactory.CreateHost();
-        var compiler = host.GetBackendSpecificArtifactCompiler<DynamicMethod>("compiler");
-        var artifact = compiler.Compile("x", new OrderedDictionary<string, Type> { ["x"] = typeof(object) });
+        var compiler = host.GetBackendSpecificArtifactCompiler<CilCompilationOutput>("compiler");
+        var artifact = compiler.Compile("1", new OrderedDictionary<string, Type>());
         var session = artifact.CreateSession();
 
         Assert.Multiple(() =>
         {
             Assert.That(artifact.CompilationOutput, Is.Not.Null);
-            Assert.That(artifact.SlotsByName.ContainsKey("x"), Is.True);
+            Assert.That(artifact.CompilationOutput.Method, Is.Not.Null);
+            Assert.That(artifact.SlotsByName, Is.Empty);
             Assert.That(session, Is.Not.Null);
         });
     }

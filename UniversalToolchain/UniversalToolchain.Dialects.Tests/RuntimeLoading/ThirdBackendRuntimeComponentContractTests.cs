@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Wist;
+using UniversalToolchain.ModuleContracts;
 
 namespace UniversalToolchain.Dialects.Tests.RuntimeLoading;
 
@@ -69,7 +70,9 @@ public sealed class ThirdBackendRuntimeComponentContractTests
             registrarResolver,
             new IntrinsicSemanticBootstrapPlanBuilder(),
             new IntrinsicSemanticBootstrapPreProviderValidator(),
-            new IntrinsicSemanticBootstrapRuntimeValidator());
+            new IntrinsicSemanticBootstrapRuntimeValidator(),
+            ModuleContractPipelineProfiles.MigrationWarn,
+            NullModuleContractDiagnosticSink.Instance);
 
         var serviceProvider = factory.Create(ConfigurationFor(backendEntry));
         try

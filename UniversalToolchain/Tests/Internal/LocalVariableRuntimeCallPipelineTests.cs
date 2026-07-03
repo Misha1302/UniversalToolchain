@@ -134,7 +134,7 @@ public sealed class LocalVariableRuntimeCallPipelineTests
         Assert.Throws<TargetInvocationException>(() => executor.Execute(loadCompiled, environmentB));
     }
 
-    private static DynamicMethod Compile(IAbstractIR ir)
+    private static CilCompilationOutput Compile(IAbstractIR ir)
     {
         var compiler = new AbstractMethodsCompilerImpl();
         return compiler.Compile(ir, new CompilationInput

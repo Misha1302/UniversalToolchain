@@ -1,5 +1,7 @@
 using UniversalToolchain.Capabilities.Abstractions;
 using UniversalToolchain.Dialects.Abstractions;
+using LabelsModule.Contracts;
+using UniversalToolchain.ModuleContracts;
 
 namespace LabelsModule.Module;
 
@@ -7,8 +9,10 @@ namespace LabelsModule.Module;
 [DialectCapabilityProvider(typeof(LabelsCapabilityProvider))]
 [DialectRuntimeExport("FrontendModule", "Labels")]
 [AutoRegisterService]
-public class LabelsModuleImpl : IFrontendCoreModule
+public class LabelsModuleImpl : IFrontendCoreModule, IModuleContractDescriptorProvider
 {
+    private static readonly LabelsModuleContractDescriptorProvider _contractDescriptorProvider = new();
+
     private static readonly IReadOnlyList<LexemeRegistration> _lexemeRegistrations =
     [
         new(":", "Colon"),
@@ -30,4 +34,6 @@ public class LabelsModuleImpl : IFrontendCoreModule
         var labelsSharedData = new LabelsSharedData();
         translator.AddVisitors(new LabelsVisitor(labelsSharedData), new GotoVisitor(labelsSharedData));
     }
+
+    public IReadOnlyList<IModuleContractFacet> GetFacets() => _contractDescriptorProvider.GetFacets();
 }

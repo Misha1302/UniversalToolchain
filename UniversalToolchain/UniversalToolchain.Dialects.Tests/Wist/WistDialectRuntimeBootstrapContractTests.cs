@@ -1,9 +1,11 @@
 using AbstractIrConverters;
+using BasicCore.Contracts;
 using BasicCore.LexerWrapper;
 using BytecodeDynamicMethodsCompiler.Compilers;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Wist;
+using UniversalToolchain.ModuleContracts;
 
 namespace UniversalToolchain.Dialects.Tests.Wist;
 
@@ -35,6 +37,33 @@ public class WistDialectRuntimeBootstrapContractTests
             Assert.That(services.Any(static x => x.ServiceType == typeof(IntrinsicSemanticBootstrapPlanBuilder)), Is.True);
             Assert.That(services.Any(static x => x.ServiceType == typeof(IntrinsicSemanticBootstrapPreProviderValidator)), Is.True);
             Assert.That(services.Any(static x => x.ServiceType == typeof(IntrinsicSemanticBootstrapRuntimeValidator)), Is.True);
+        });
+    }
+
+    [Test]
+    public void AddWistDialectCoreServices_ShouldRegisterModuleContractPipelineObserverDependencies()
+    {
+        var services = new ServiceCollection();
+        services.AddWistDialectCoreServices();
+
+        using var provider = services.BuildServiceProvider();
+        var observers = provider.GetServices<ICompilationPipelineObserver>().ToArray();
+        var options = provider.GetRequiredService<ModuleContractPipelineOptions>();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(options.BytecodeProfile, Is.EqualTo(VerificationSeverityProfile.Strict));
+            Assert.That(options.AirProfile, Is.EqualTo(VerificationSeverityProfile.Strict));
+            Assert.That(options.VerifyLegacyBytecodeOperationNames, Is.False);
+            Assert.That(options.BackendPolicy.RejectNonUniversalIntrinsics, Is.False);
+            Assert.That(provider.GetRequiredService<ISelectedModuleContractTableProvider>(), Is.InstanceOf<SelectedModuleContractTableProvider>());
+            Assert.That(provider.GetRequiredService<IBytecodeObservedEmissionReader>(), Is.InstanceOf<BytecodeObservedEmissionReader>());
+            Assert.That(provider.GetRequiredService<IBytecodeVerifier>(), Is.InstanceOf<BytecodeVerifier>());
+            Assert.That(provider.GetRequiredService<IAirVerifier>(), Is.InstanceOf<AirVerifier>());
+            Assert.That(provider.GetRequiredService<IBackendCapabilitySelectionFactory>(), Is.InstanceOf<BackendCapabilitySelectionFactory>());
+            Assert.That(provider.GetRequiredService<IModuleContractDiagnosticPolicy>(), Is.InstanceOf<ModuleContractDiagnosticPolicy>());
+            Assert.That(provider.GetRequiredService<ICompilerStageFactSeedProvider>(), Is.InstanceOf<CoreCompilerStageFactSeedProvider>());
+            Assert.That(observers, Has.Some.InstanceOf<ModuleContractPipelineObserver>());
         });
     }
 
@@ -236,6 +265,7 @@ public class WistDialectRuntimeBootstrapContractTests
         Assert.Multiple(() =>
         {
             Assert.That(provider.GetService<Func<ILexer>>(), Is.Not.Null);
+            Assert.That(provider.GetServices<ICompilationPipelineObserver>(), Has.Some.InstanceOf<ModuleContractPipelineObserver>());
             Assert.That(provider.GetService<AbstractMethodsCompilerImpl>(), Is.Null);
             Assert.That(provider.GetService<AbstractIrToAbstractIrStub>(), Is.Null);
         });
@@ -254,7 +284,9 @@ public class WistDialectRuntimeBootstrapContractTests
             resolver,
             new IntrinsicSemanticBootstrapPlanBuilder(),
             new IntrinsicSemanticBootstrapPreProviderValidator(),
-            new IntrinsicSemanticBootstrapRuntimeValidator());
+            new IntrinsicSemanticBootstrapRuntimeValidator(),
+            ModuleContractPipelineProfiles.MigrationWarn,
+            NullModuleContractDiagnosticSink.Instance);
         var config = new WistDialectExecutionConfiguration(
             "Demo",
             [],
@@ -348,7 +380,9 @@ public class WistDialectRuntimeBootstrapContractTests
             new StaticBackendRegistrarResolver(backendRegistrars),
             new IntrinsicSemanticBootstrapPlanBuilder(),
             new IntrinsicSemanticBootstrapPreProviderValidator(),
-            new IntrinsicSemanticBootstrapRuntimeValidator());
+            new IntrinsicSemanticBootstrapRuntimeValidator(),
+            ModuleContractPipelineProfiles.MigrationWarn,
+            NullModuleContractDiagnosticSink.Instance);
 
     private static RuntimeComponentManifestEntry BackendEntry(string alias, Type registrarType)
         => new(

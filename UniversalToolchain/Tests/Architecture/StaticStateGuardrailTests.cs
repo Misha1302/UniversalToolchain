@@ -19,7 +19,6 @@ public sealed class StaticStateGuardrailTests
 
     private static readonly string[] AllowedCurrentDebtFiles =
     [
-        "UniversalToolchain/BytecodeDynamicMethodsCompiler/Compilers/AbstractMethodsCompilerImpl.cs",
         "UniversalToolchain/NativeMathModule/NativeArithmeticAstVisitor.cs",
         "UniversalToolchain/NativeMathModule/NativeCILOptimizerModule.cs"
     ];

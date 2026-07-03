@@ -57,7 +57,7 @@ public class WistDialectMinimalRuntimeIsolationTests
         var dialects = new[]
         {
             "dialect A\nuse Arithmetic,Numbers\nbackend interpreter",
-            "dialect B\nuse Arithmetic,Variables,Scopes\nbackend interpreter,compiler\n",
+            "dialect B\nuse Arithmetic,Identifier,Scopes,Variables\nbackend interpreter,compiler\n",
             "dialect C\nuse Arithmetic,Conditions,ComparisonConditions\nbackend compiler"
         };
 
@@ -146,7 +146,7 @@ public class WistDialectMinimalRuntimeIsolationTests
         var scenarios = new[]
         {
             ("dialect A\nuse Arithmetic,Numbers,Whitespaces\nbackend interpreter", "2 + 5", "interpreter"),
-            ("dialect B\nuse Arithmetic,Variables,Scopes,Numbers,Whitespaces\nbackend interpreter,compiler\n", "2 + 5", "interpreter"),
+            ("dialect B\nuse Arithmetic,Identifier,Scopes,Variables,Numbers,Whitespaces\nbackend interpreter,compiler\n", "2 + 5", "interpreter"),
             ("dialect C\nuse Arithmetic,Numbers,Whitespaces\nbackend compiler", "3 + 4", "compiler")
         };
 

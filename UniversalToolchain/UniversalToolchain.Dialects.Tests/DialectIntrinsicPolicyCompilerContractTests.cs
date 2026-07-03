@@ -82,6 +82,18 @@ public sealed class DialectIntrinsicPolicyCompilerContractTests
         Assert.That(compiler.SupportedIntrinsics, Is.EqualTo(new[] { "alpha", "zeta" }));
     }
 
+    [Test]
+    public void SupportedIntrinsics_WhenExplicitAllowListIsEnabled_ShouldExposeOnlyAllowedSupportedIntrinsics()
+    {
+        var compiler = new DialectIntrinsicPolicyCompiler<IAbstractIR>(
+            new TrackingCompiler(["zeta", "boolean_not", "alpha"]),
+            allowedIntrinsics: ["zeta"],
+            forbiddenIntrinsics: [],
+            hasExplicitAllowList: true);
+
+        Assert.That(compiler.SupportedIntrinsics, Is.EqualTo(new[] { "zeta" }));
+    }
+
     private static IAbstractIR BuildIr(params Instruction[] instructions)
     {
         var air = new AbstractIR();

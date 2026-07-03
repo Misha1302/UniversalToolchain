@@ -1,4 +1,5 @@
 using System.Reflection.Emit;
+using BasicCilCompiler.Execution;
 using BasicCore.Execution;
 using IntermediateRepresentationAbstractions;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,7 +13,7 @@ public class DeclaredBindingsExecutionContractTests
 {
     private const string DeclaredBindingsDialectText = """
                                                        dialect DeclaredBindingsDialect
-                                                       use Arithmetic,Identifier,Numbers,Variables,Whitespaces
+                                                       use Arithmetic,Identifier,Numbers,Scopes,Variables,Whitespaces
                                                        backend compiler,interpreter
                                                        """;
 
@@ -21,7 +22,7 @@ public class DeclaredBindingsExecutionContractTests
     {
         using var host = ComposeHost(DeclaredBindingsDialectText);
 
-        var artifact = host.GetBackendSpecificArtifactCompiler<DynamicMethod>("compiler").Compile("left + right", CreateDeclaredBindings());
+        var artifact = host.GetBackendSpecificArtifactCompiler<CilCompilationOutput>("compiler").Compile("left + right", CreateDeclaredBindings());
         var result = artifact.CreateSession().InvokeNamed<object>(CreateArguments(new RealNumberImpl(7), new RealNumberImpl(5)));
 
         Assert.That(BackendParityInfrastructure.AsNumber(result), Is.EqualTo(12d).Within(1e-9));
@@ -43,7 +44,7 @@ public class DeclaredBindingsExecutionContractTests
     {
         using var host = ComposeHost(DeclaredBindingsDialectText);
 
-        var artifact = host.GetBackendSpecificArtifactCompiler<DynamicMethod>("compiler").Compile("right - left", CreateDeclaredBindings());
+        var artifact = host.GetBackendSpecificArtifactCompiler<CilCompilationOutput>("compiler").Compile("right - left", CreateDeclaredBindings());
 
         Assert.Multiple(() =>
         {
@@ -90,7 +91,7 @@ public class DeclaredBindingsExecutionContractTests
     {
         try
         {
-            _ = host.GetBackendSpecificArtifactCompiler<DynamicMethod>("compiler").Compile("left + right", CreateDeclaredBindings());
+            _ = host.GetBackendSpecificArtifactCompiler<CilCompilationOutput>("compiler").Compile("left + right", CreateDeclaredBindings());
         }
         catch (Exception exception)
         {

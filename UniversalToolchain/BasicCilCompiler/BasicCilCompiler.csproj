@@ -11,6 +11,8 @@
     <ItemGroup>
         <ProjectReference Include="..\BasicCore\BasicCore.csproj"/>
         <ProjectReference Include="..\DynamicMethodCalling\DynamicMethodCalling.csproj"/>
+        <ProjectReference Include="..\ObjectExtensions\ObjectExtensions.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.ModuleContracts\UniversalToolchain.ModuleContracts.csproj"/>
     </ItemGroup>
 
 </Project>

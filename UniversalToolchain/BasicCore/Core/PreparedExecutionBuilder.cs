@@ -12,8 +12,13 @@ internal sealed class PreparedExecutionBuilder<TCompilationOutput>(
     IReadOnlyList<IFrontendCoreModule> modules,
     IReadOnlyList<IIRProcessingModule> optimizers,
     IReadOnlyList<IMiddleEndCoreModule<TCompilationOutput>> middleEndModules,
-    IIntrinsicCapabilitySetFactory? intrinsicCapabilitySetFactory = null)
+    IIntrinsicCapabilitySetFactory? intrinsicCapabilitySetFactory = null,
+    IReadOnlyList<ICompilationPipelineObserver>? pipelineObservers = null,
+    IReadOnlyList<IBackendPipelineComponent>? backendComponents = null)
 {
+    private readonly IReadOnlyList<ICompilationPipelineObserver> _pipelineObservers = pipelineObservers ?? [];
+    private readonly IReadOnlyList<IBackendPipelineComponent> _backendComponents = backendComponents ?? [];
+
     public ICompiledArtifact<TCompilationOutput> Compile(CompilationInput input)
     {
         var buildResult = BuildCompilationResult(input);
@@ -71,11 +76,14 @@ internal sealed class PreparedExecutionBuilder<TCompilationOutput>(
         var bytecode = astTranslator.Translate(boundRoot);
 
         var targetBytecode = modules.Aggregate(bytecode, (current, module) => module.ProcessBytecode(current));
+        NotifyAfterBytecode(input, targetBytecode);
         optimizers.ForEach(module => module.InitMethodsTranslator(methodsTranslator));
         optimizers.ForEach(module => module.InitIntrinsicCapabilityContext(optimizerCapabilityContext));
         var air = methodsTranslator.Translate(targetBytecode);
+        NotifyAfterAir(input, air, compiler.SupportedIntrinsics);
 
         var targetIr = optimizers.Aggregate(air, (current, module) => module.ProcessIr(current, compiler));
+        NotifyAfterOptimizedAir(input, targetIr, compiler.SupportedIntrinsics);
         var allowedRuntimeProviderTypes = ExtractAllowedRuntimeProviderTypes(targetIr);
         middleEndModules.ForEach(module => module.InitMethodsCompiler(compiler));
         var compiled = compiler.Compile(targetIr, input);
@@ -89,6 +97,54 @@ internal sealed class PreparedExecutionBuilder<TCompilationOutput>(
             compilationOutput,
             executor,
             allowedRuntimeProviderTypes);
+    }
+
+    private void NotifyAfterBytecode(CompilationInput input, Bytecode bytecode)
+    {
+        if (_pipelineObservers.Count == 0)
+            return;
+
+        var context = new CompilationPipelineBytecodeContext(input, modules, bytecode, _backendComponents);
+        foreach (var observer in _pipelineObservers)
+            observer.AfterBytecode(context);
+    }
+
+    private void NotifyAfterAir(
+        CompilationInput input,
+        IAbstractIR air,
+        IReadOnlyList<string> compilerSupportedIntrinsics)
+    {
+        if (_pipelineObservers.Count == 0)
+            return;
+
+        var context = new CompilationPipelineAirContext(
+            input,
+            modules,
+            optimizers,
+            air,
+            compilerSupportedIntrinsics,
+            _backendComponents);
+        foreach (var observer in _pipelineObservers)
+            observer.AfterAir(context);
+    }
+
+    private void NotifyAfterOptimizedAir(
+        CompilationInput input,
+        IAbstractIR air,
+        IReadOnlyList<string> compilerSupportedIntrinsics)
+    {
+        if (_pipelineObservers.Count == 0)
+            return;
+
+        var context = new CompilationPipelineAirContext(
+            input,
+            modules,
+            optimizers,
+            air,
+            compilerSupportedIntrinsics,
+            _backendComponents);
+        foreach (var observer in _pipelineObservers)
+            observer.AfterOptimizedAir(context);
     }
 
     private static IReadOnlyList<Type> ExtractAllowedRuntimeProviderTypes(IAbstractIR ir)

@@ -291,7 +291,7 @@ public class CilBackendAbstractIrCompilationTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(compiled.ReturnType, Is.EqualTo(typeof(string)));
+            Assert.That(compiled.Method.ReturnType, Is.EqualTo(typeof(string)));
             Assert.That(result, Is.EqualTo("yes"));
         });
     }
@@ -324,7 +324,7 @@ public class CilBackendAbstractIrCompilationTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(compiled.ReturnType, Is.EqualTo(typeof(bool)));
+            Assert.That(compiled.Method.ReturnType, Is.EqualTo(typeof(bool)));
             Assert.That(result, Is.EqualTo(true));
         });
     }
@@ -353,7 +353,7 @@ public class CilBackendAbstractIrCompilationTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(compiled.ReturnType, Is.EqualTo(typeof(int)));
+            Assert.That(compiled.Method.ReturnType, Is.EqualTo(typeof(int)));
             Assert.That(result, Is.EqualTo(41));
         });
     }
@@ -417,6 +417,113 @@ public class CilBackendAbstractIrCompilationTests
         Assert.That(result, Is.EqualTo(false));
     }
 
+    [Test]
+    public void ObjectConstants_AreStoredInArtifactOwnedPool_AndReturnedByReference()
+    {
+        var constant = new ReferenceConstant("same");
+        var ir = BuildIr(new Instruction(UOpCode.Push, [constant]));
+
+        var compiled = Compile(ir);
+        var result = Execute(compiled);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(compiled.ConstantPool, Is.Not.Null);
+            Assert.That(compiled.ConstantPool!.Count, Is.EqualTo(1));
+            Assert.That(compiled.Method.GetParameters().Select(static x => x.ParameterType).ToArray(),
+                Is.EqualTo(new[] { typeof(ArtifactConstantPool) }));
+            Assert.That(result, Is.SameAs(constant));
+        });
+    }
+
+    [Test]
+    public void ObjectConstants_DoNotDeduplicateByValueEquality()
+    {
+        var first = new ValueEqualConstant(7);
+        var second = new ValueEqualConstant(7);
+        var keepSecond = typeof(CilBackendAbstractIrCompilationTests)
+            .GetMethod(nameof(KeepSecond), BindingFlags.NonPublic | BindingFlags.Static)!;
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [first]),
+            new Instruction(UOpCode.Push, [second]),
+            new Instruction(UOpCode.Intrinsic, ["call C#", keepSecond]));
+
+        var compiled = Compile(ir);
+        var result = Execute(compiled);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(compiled.ConstantPool, Is.Not.Null);
+            Assert.That(compiled.ConstantPool!.Count, Is.EqualTo(2));
+            Assert.That(result, Is.SameAs(second));
+        });
+    }
+
+    [Test]
+    public void ObjectConstants_LargePool_PreservesSlotOrderAndReferences()
+    {
+        var constants = Enumerable.Range(0, 128)
+            .Select(static index => new ReferenceConstant($"item-{index}"))
+            .ToArray();
+        var keepSecond = typeof(CilBackendAbstractIrCompilationTests)
+            .GetMethod(nameof(KeepSecond), BindingFlags.NonPublic | BindingFlags.Static)!;
+        var instructions = new List<Instruction> { new(UOpCode.Push, [constants[0]]) };
+        instructions.AddRange(constants.Skip(1).SelectMany(constant => new[]
+        {
+            new Instruction(UOpCode.Push, [constant]),
+            new Instruction(UOpCode.Intrinsic, ["call C#", keepSecond])
+        }));
+
+        var compiled = Compile(BuildIr(instructions.ToArray()));
+        var result = Execute(compiled);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(compiled.ConstantPool, Is.Not.Null);
+            Assert.That(compiled.ConstantPool!.Count, Is.EqualTo(constants.Length));
+            Assert.That(result, Is.SameAs(constants[^1]));
+            for (var i = 0; i < constants.Length; i++)
+                Assert.That(compiled.ConstantPool.GetValue<ReferenceConstant>(i), Is.SameAs(constants[i]), $"slot {i}");
+        });
+    }
+
+    [Test]
+    public void ObjectConstants_WithExecutionScopedProvider_KeepEnvironmentAndExternalOffsets()
+    {
+        var descriptor = new CSharpCallDescriptor(
+            typeof(ConstantProvider).GetMethod(nameof(ConstantProvider.Get))!,
+            new CSharpCallReceiver.ExecutionScopedProvider(typeof(ConstantProvider)));
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [new ReferenceConstant("constant")]),
+            new Instruction(UOpCode.Drop),
+            new Instruction(UOpCode.Intrinsic, ["call C#", descriptor]),
+            new Instruction(UOpCode.Intrinsic, ["load_external", 0, typeof(int)]),
+            new Instruction(UOpCode.Intrinsic, ["call C#", typeof(CilBackendAbstractIrCompilationTests).GetMethod(nameof(Add), BindingFlags.NonPublic | BindingFlags.Static)!]));
+        var input = new CompilationInput
+        {
+            SourceText = string.Empty,
+            ExternalBindings =
+            [
+                new ExternalBinding { Name = "external", Type = typeof(int), Kind = ExternalBindingKind.Variable }
+            ]
+        };
+        var compiler = new AbstractMethodsCompilerImpl();
+        var output = compiler.Compile(ir, input);
+        var environment = new ExecutionEnvironment(
+            input.ExternalBindings,
+            allowedRuntimeProviderTypes: [typeof(ConstantProvider)]);
+        environment.SetExternalValue(0, 5);
+
+        var result = new DynamicMethodExecutor().Execute(output, environment);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(output.Method.GetParameters().Select(static x => x.ParameterType).ToArray(),
+                Is.EqualTo(new[] { typeof(ArtifactConstantPool), typeof(IExecutionEnvironment), typeof(int) }));
+            Assert.That(result, Is.EqualTo(42));
+        });
+    }
+
     private static int AddOne(int value) => value + 1;
 
     private static int IncrementRef(ref int value)
@@ -426,6 +533,10 @@ public class CilBackendAbstractIrCompilationTests
     }
 
     private static int CombineDigits(int acc, int nextDigit) => acc * 10 + nextDigit;
+
+    private static int Add(int left, int right) => left + right;
+
+    private static T KeepSecond<T>(T first, T second) => second;
 
     private static T Echo<T>(T value) => value;
 
@@ -450,17 +561,17 @@ public class CilBackendAbstractIrCompilationTests
         return ir;
     }
 
-    private static DynamicMethod Compile(IAbstractIR ir)
+    private static CilCompilationOutput Compile(IAbstractIR ir)
     {
         var compiler = new AbstractMethodsCompilerImpl();
         var input = new CompilationInput { SourceText = string.Empty };
         return compiler.Compile(ir, input);
     }
 
-    private static object Execute(DynamicMethod method)
+    private static object Execute(CilCompilationOutput output)
     {
         var executor = new DynamicMethodExecutor();
-        return executor.Execute(method, new ExecutionEnvironment([]));
+        return executor.Execute(output, new ExecutionEnvironment([]));
     }
 
     private static object CompileAndExecute(IAbstractIR ir) => Execute(Compile(ir));
@@ -468,5 +579,17 @@ public class CilBackendAbstractIrCompilationTests
     private sealed class ReflectionTarget(int seed)
     {
         public int IncrementBy(int value) => seed + value;
+    }
+
+    private sealed class ReferenceConstant(string value)
+    {
+        public string Value { get; } = value;
+    }
+
+    private sealed record ValueEqualConstant(int Value);
+
+    private sealed class ConstantProvider
+    {
+        public int Get() => 37;
     }
 }

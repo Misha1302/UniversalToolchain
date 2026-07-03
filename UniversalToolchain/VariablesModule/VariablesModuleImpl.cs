@@ -1,5 +1,7 @@
 using UniversalToolchain.Capabilities.Abstractions;
 using UniversalToolchain.Dialects.Abstractions;
+using UniversalToolchain.ModuleContracts;
+using VariablesModule.Contracts;
 
 namespace VariablesModule;
 
@@ -7,8 +9,10 @@ namespace VariablesModule;
 [DialectCapabilityProvider(typeof(VariablesCapabilityProvider))]
 [DialectRuntimeExport("FrontendModule", "Variables")]
 [AutoRegisterService]
-public class VariablesModuleImpl : IFrontendCoreModule
+public class VariablesModuleImpl : IFrontendCoreModule, IModuleContractDescriptorProvider
 {
+    private static readonly VariablesModuleContractDescriptorProvider _contractDescriptorProvider = new();
+
     private static readonly IReadOnlyList<LexemeRegistration> _lexemeRegistrations =
     [
         new(":", "Colon"),
@@ -25,4 +29,6 @@ public class VariablesModuleImpl : IFrontendCoreModule
     public void InitParser(IParser parser) => parser.AddNodeCreators(_nodeCreatorRegistrations);
 
     public void InitAstTranslator(IAstToBytecodeTranslator translator) => translator.AddVisitors(new VariablesVisitor());
+
+    public IReadOnlyList<IModuleContractFacet> GetFacets() => _contractDescriptorProvider.GetFacets();
 }

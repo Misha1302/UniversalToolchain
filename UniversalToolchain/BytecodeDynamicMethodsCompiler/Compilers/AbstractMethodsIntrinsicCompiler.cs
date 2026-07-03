@@ -56,7 +56,10 @@ internal sealed class AbstractMethodsIntrinsicCompiler
             Thrower.AssertAlways(
                 parametersCount == 0,
                 "Execution-scoped provider calls with parameters are not supported in CIL backend yet.");
-            context.Il.Ldarg(0);
+            Thrower.AssertAlways(
+                context.ExecutionEnvironmentArgumentIndex.HasValue,
+                "Execution-scoped provider calls require an execution environment argument.");
+            context.Il.Ldarg(context.ExecutionEnvironmentArgumentIndex.Value);
             context.Il.Ldtoken(executionScopedProvider.ProviderType);
             context.Il.Call(typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle)).NotNull());
             context.Il.Call(typeof(RuntimeCallProviderResolverExtensions)

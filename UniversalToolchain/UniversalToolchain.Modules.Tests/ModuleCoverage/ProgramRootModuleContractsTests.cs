@@ -3,7 +3,7 @@ namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 [TestFixture]
 public class ProgramRootModuleContractsTests
 {
-    private static readonly string[] _modulesWithoutScopes = ["Arithmetic", "Identifier", "Numbers", "Variables", "Whitespaces"];
+    private static readonly string[] _modulesWithoutScopes = ["Arithmetic", "Identifier", "Numbers", "Whitespaces"];
     private static readonly string[] _modulesWithScopes = ["Arithmetic", "Identifier", "Numbers", "Scopes", "Variables", "Whitespaces"];
 
     [Test]

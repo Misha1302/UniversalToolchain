@@ -1,4 +1,6 @@
 using ExceptionsManager;
+using LabelsModule.Contracts;
+using UniversalToolchain.ModuleContracts;
 
 namespace LabelsModule.Visitors;
 
@@ -17,6 +19,9 @@ public class LabelsVisitor(LabelsSharedData labelsSharedData) : IAstVisitor
             $"Label_!Intrinsic_{name}",
             (il, _) => il.SetLabel(labelsSharedData.GetGuidByName(name))
         );
-        data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
+        data.Bytecode.Instructions.Add(new BytecodeInstruction(method).WithContract(
+            LabelsContractIds.Module,
+            LabelsContractIds.LabelNode,
+            LabelsContractIds.Label));
     }
 }

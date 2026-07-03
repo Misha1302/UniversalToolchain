@@ -25,10 +25,10 @@ public class FrameworkNativeVerticalSliceTests
 
             dialect Tiny
 
-            use Arithmetic,Variables,Scopes
+            use Arithmetic,Scopes,Variables
             exclude Legacy
-            requires Arithmetic,Variables,Scopes
-            before Arithmetic,Variables
+            requires Arithmetic,Scopes,Variables
+            before Arithmetic,Scopes
             after Variables,Scopes
             backend interpreter,cil
             allow add_i32
@@ -43,13 +43,13 @@ public class FrameworkNativeVerticalSliceTests
         Assert.Multiple(() =>
         {
             Assert.That(result.Name, Is.EqualTo("Tiny"));
-            Assert.That(result.UseModules, Is.EqualTo(new[] { "Arithmetic", "Variables", "Scopes" }));
+            Assert.That(result.UseModules, Is.EqualTo(new[] { "Arithmetic", "Scopes", "Variables" }));
             Assert.That(result.ExcludeModules, Is.EqualTo(new[] { "Legacy" }));
             Assert.That(result.OrderDirectives.Select(x => (x.Directive, x.SourceModule, x.TargetModule)), Is.EquivalentTo(new[]
             {
-                ("requires", "Arithmetic", "Variables"),
-                ("requires", "Variables", "Scopes"),
-                ("before", "Arithmetic", "Variables"),
+                ("requires", "Arithmetic", "Scopes"),
+                ("requires", "Scopes", "Variables"),
+                ("before", "Arithmetic", "Scopes"),
                 ("after", "Variables", "Scopes")
             }));
             Assert.That(result.BackendDirectives.Select(x => (x.Backend, x.Enabled)), Is.EqualTo(new[]
@@ -83,8 +83,8 @@ public class FrameworkNativeVerticalSliceTests
         const string source =
             """
             dialect Tiny
-            use Variables,Scopes
-            requires Variables,Scopes
+            use Scopes,Variables
+            requires Scopes,Variables
             backend interpreter
             allow add_i32
             enable Ssa

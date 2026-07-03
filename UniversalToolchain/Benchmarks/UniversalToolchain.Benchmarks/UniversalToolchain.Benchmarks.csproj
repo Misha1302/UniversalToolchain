@@ -21,6 +21,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\..\BasicCilCompiler\BasicCilCompiler.csproj"/>
         <ProjectReference Include="..\..\DynamicMethodCalling\DynamicMethodCalling.csproj"/>
         <ProjectReference Include="..\..\ExceptionsManager\ExceptionsManager.csproj"/>
         <ProjectReference Include="..\..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj"/>
@@ -30,7 +31,6 @@
         <PackageReference Include="BenchmarkDotNet" Version="0.15.6"/>
         <PackageReference Include="NCalcSync" Version="5.12.0"/>
         <PackageReference Include="NCalc.LambdaCompilation" Version="5.12.0"/>
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2"/>
         <PackageReference Include="DynamicExpresso.Core" Version="2.19.3"/>
 
     </ItemGroup>

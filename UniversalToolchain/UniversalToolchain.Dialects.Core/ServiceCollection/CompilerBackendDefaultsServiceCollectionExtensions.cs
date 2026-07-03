@@ -1,4 +1,3 @@
-using System.Reflection.Emit;
 using BasicCilCompiler.Execution;
 using BasicCore.ExecutorWrapper;
 using BytecodeDynamicMethodsCompiler.Compilers;
@@ -19,7 +18,7 @@ public static class CompilerBackendDefaultsServiceCollectionExtensions
 
         services.TryAddSingleton<CilIntrinsicRegistry>();
         services.TryAddTransient<AbstractMethodsCompilerImpl>();
-        services.TryAddTransient<Func<IExecutor<DynamicMethod>>>(_ => () => new DynamicMethodExecutor());
+        services.TryAddTransient<Func<IExecutor<CilCompilationOutput>>>(_ => () => new DynamicMethodExecutor());
 
         return services;
     }

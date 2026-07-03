@@ -1,4 +1,6 @@
 using ExceptionsManager;
+using UniversalToolchain.ModuleContracts;
+using VariablesModule.Contracts;
 
 namespace VariablesModule;
 
@@ -97,7 +99,11 @@ public class VariablesVisitor : IAstVisitor
 
                     UpdateWriteType(symbol, variableKey, context.Stack[^1]);
                 });
-            data.Bytecode.Instructions.Add(new BytecodeInstruction(inferMethod));
+            data.Bytecode.Instructions.Add(new BytecodeInstruction(inferMethod).WithContract(
+                VariablesContractIds.Module,
+                VariablesContractIds.VariableNode,
+                VariablesContractIds.WriteTypeInference,
+                VariablesContractIds.ExpectingWriteTypeInference));
             return;
         }
 
@@ -110,7 +116,10 @@ public class VariablesVisitor : IAstVisitor
             }
         );
 
-        data.Bytecode.Instructions.Add(new BytecodeInstruction(loadMethod));
+        data.Bytecode.Instructions.Add(new BytecodeInstruction(loadMethod).WithContract(
+            VariablesContractIds.Module,
+            VariablesContractIds.VariableNode,
+            VariablesContractIds.LocalRead));
     }
 
     private void HandleBoundExternalVariable(
@@ -135,7 +144,11 @@ public class VariablesVisitor : IAstVisitor
                     var inferredType = context.Stack[^1];
                     _variablesTypes[name] = IsConcreteType(inferredType) ? inferredType : symbolType;
                 });
-            data.Bytecode.Instructions.Add(new BytecodeInstruction(inferMethod));
+            data.Bytecode.Instructions.Add(new BytecodeInstruction(inferMethod).WithContract(
+                VariablesContractIds.Module,
+                VariablesContractIds.VariableNode,
+                VariablesContractIds.WriteTypeInference,
+                VariablesContractIds.ExpectingWriteTypeInference));
             return;
         }
 
@@ -150,7 +163,10 @@ public class VariablesVisitor : IAstVisitor
             }
         );
 
-        data.Bytecode.Instructions.Add(new BytecodeInstruction(loadMethod));
+        data.Bytecode.Instructions.Add(new BytecodeInstruction(loadMethod).WithContract(
+            VariablesContractIds.Module,
+            VariablesContractIds.VariableNode,
+            VariablesContractIds.ExternalRead));
     }
 
     private void HandlePreprocessorLexeme(BytecodeVisitorData data)
@@ -166,7 +182,10 @@ public class VariablesVisitor : IAstVisitor
             $"DefineArgument_{paramName}_{type.FullName}",
             (_, _) => _variablesTypes[paramName] = type
         );
-        data.Bytecode.Instructions.Add(new BytecodeInstruction(method));
+        data.Bytecode.Instructions.Add(new BytecodeInstruction(method).WithContract(
+            VariablesContractIds.Module,
+            VariablesContractIds.VariableNode,
+            VariablesContractIds.DefineArgument));
     }
 
     private void HandleVariable(BytecodeVisitorData data)
@@ -185,7 +204,11 @@ public class VariablesVisitor : IAstVisitor
                     var inferredType = context.Stack[^1];
                     _variablesTypes[variableKey] = IsConcreteType(inferredType) ? inferredType : typeof(object);
                 });
-            data.Bytecode.Instructions.Add(new BytecodeInstruction(inferMethod));
+            data.Bytecode.Instructions.Add(new BytecodeInstruction(inferMethod).WithContract(
+                VariablesContractIds.Module,
+                VariablesContractIds.VariableNode,
+                VariablesContractIds.WriteTypeInference,
+                VariablesContractIds.ExpectingWriteTypeInference));
             return;
         }
 
@@ -201,6 +224,9 @@ public class VariablesVisitor : IAstVisitor
             }
         );
 
-        data.Bytecode.Instructions.Add(new BytecodeInstruction(loadMethod));
+        data.Bytecode.Instructions.Add(new BytecodeInstruction(loadMethod).WithContract(
+            VariablesContractIds.Module,
+            VariablesContractIds.VariableNode,
+            VariablesContractIds.LocalRead));
     }
 }

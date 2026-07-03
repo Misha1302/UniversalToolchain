@@ -157,8 +157,8 @@ public sealed class WistEngine : IDisposable
 
     private DynamicMethod CompileDynamicMethod(string formula, IReadOnlyDictionary<string, Type> bindingTypes)
     {
-        var artifact = _host.GetBackendSpecificArtifactCompiler<DynamicMethod>(WistBackendAliases.CompilerAlias).Compile(formula, CreateDeclaredBindings(bindingTypes));
-        return artifact.CompilationOutput;
+        var artifact = _host.GetBackendSpecificArtifactCompiler<BasicCilCompiler.Execution.CilCompilationOutput>(WistBackendAliases.CompilerAlias).Compile(formula, CreateDeclaredBindings(bindingTypes));
+        return artifact.CompilationOutput.Method;
     }
 
     private static OrderedDictionary<string, Type> CreateDeclaredBindings(IReadOnlyDictionary<string, object?> arguments)

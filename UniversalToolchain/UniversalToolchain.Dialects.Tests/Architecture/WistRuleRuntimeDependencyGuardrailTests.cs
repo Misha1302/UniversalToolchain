@@ -40,12 +40,12 @@ public sealed class WistRuleRuntimeDependencyGuardrailTests
 
         while (current != null)
         {
-            if (File.Exists(Path.Combine(current.FullName, "AGENTS.md")))
+            if (File.Exists(Path.Combine(current.FullName, "UniversalToolchain", "Wist.sln")))
                 return current.FullName;
 
             current = current.Parent;
         }
 
-        throw new DirectoryNotFoundException("Repository root with AGENTS.md was not found.");
+        throw new DirectoryNotFoundException("Repository root with UniversalToolchain/Wist.sln was not found.");
     }
 }

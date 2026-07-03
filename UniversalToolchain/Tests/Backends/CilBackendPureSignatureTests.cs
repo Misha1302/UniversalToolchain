@@ -25,10 +25,10 @@ public sealed class CilBackendPureSignatureTests
         };
 
         var compiled = new AbstractMethodsCompilerImpl().Compile(ir, input);
-        var parameterTypes = compiled.GetParameters()
+        var parameterTypes = compiled.Method.GetParameters()
             .Select(static parameter => parameter.ParameterType)
             .ToArray();
-        var invoker = new DynamicMethodInvoker<double, double, double>(compiled);
+        var invoker = new DynamicMethodInvoker<double, double, double>(compiled.Method);
         var result = invoker.Invoke(19.0, 23.0);
 
         Assert.Multiple(() =>
@@ -54,7 +54,7 @@ public sealed class CilBackendPureSignatureTests
         Assert.That(composition.IsSuccess, Is.True);
 
         using var host = workflow.CreateHost(composition);
-        var compiler = host.GetBackendSpecificArtifactCompiler<DynamicMethod>("compiler");
+        var compiler = host.GetBackendSpecificArtifactCompiler<CilCompilationOutput>("compiler");
         var compiled = compiler.Compile(
             "(A * 1.5 + B * 2.0 - C * 3.0 + D / 4.0 + E / 5.0) * 0.75 + F",
             new OrderedDictionary<string, Type>
@@ -63,8 +63,8 @@ public sealed class CilBackendPureSignatureTests
                 ["D"] = typeof(double), ["E"] = typeof(double), ["F"] = typeof(double)
             });
 
-        var parameterTypes = compiled.CompilationOutput.GetParameters().Select(static x => x.ParameterType).ToArray();
-        var invoker = new DynamicMethodInvoker<double, double, double, double, double, double, double>(compiled.CompilationOutput);
+        var parameterTypes = compiled.CompilationOutput.Method.GetParameters().Select(static x => x.ParameterType).ToArray();
+        var invoker = new DynamicMethodInvoker<double, double, double, double, double, double, double>(compiled.CompilationOutput.Method);
         var result = invoker.Invoke(10.0, 20.0, 3.0, 8.0, 5.0, 1.5);
         var expected = (10.0 * 1.5 + 20.0 * 2.0 - 3.0 * 3.0 + 8.0 / 4.0 + 5.0 / 5.0) * 0.75 + 1.5;
 

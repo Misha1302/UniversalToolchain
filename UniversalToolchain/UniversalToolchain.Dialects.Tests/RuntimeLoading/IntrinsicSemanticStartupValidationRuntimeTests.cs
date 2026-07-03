@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core.ServiceCollection;
 using UniversalToolchain.Dialects.Wist;
+using UniversalToolchain.ModuleContracts;
 
 namespace UniversalToolchain.Dialects.Tests.RuntimeLoading;
 
@@ -99,7 +100,9 @@ public sealed class IntrinsicSemanticStartupValidationRuntimeTests
             new StaticBackendRegistrarResolver(backendRegistrars),
             new IntrinsicSemanticBootstrapPlanBuilder(),
             new IntrinsicSemanticBootstrapPreProviderValidator(),
-            new IntrinsicSemanticBootstrapRuntimeValidator());
+            new IntrinsicSemanticBootstrapRuntimeValidator(),
+            ModuleContractPipelineProfiles.MigrationWarn,
+            NullModuleContractDiagnosticSink.Instance);
 
     private static RuntimeComponentManifestEntry BackendEntry(string alias, Type registrarType)
         => new(

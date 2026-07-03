@@ -1,5 +1,7 @@
 using UniversalToolchain.Capabilities.Abstractions;
 using UniversalToolchain.Dialects.Abstractions;
+using UniversalToolchain.ModuleContracts;
+using ScopesModule.Contracts;
 
 namespace ScopesModule.Module;
 
@@ -7,7 +9,7 @@ namespace ScopesModule.Module;
 [DialectCapabilityProvider(typeof(ScopesCapabilityProvider))]
 [DialectRuntimeExport("FrontendModule", "Scopes")]
 [AutoRegisterService]
-public class ScopesModuleImpl : IFrontendCoreModule
+public class ScopesModuleImpl : IFrontendCoreModule, IModuleContractDescriptorProvider
 {
     private static readonly IReadOnlyList<LexemeRegistration> _lexemeRegistrations =
     [
@@ -25,4 +27,7 @@ public class ScopesModuleImpl : IFrontendCoreModule
     public void InitParser(IParser parser) => parser.AddNodeCreators(_nodeCreatorRegistrations);
 
     public void InitAstTranslator(IAstToBytecodeTranslator translator) => translator.AddVisitors(new ScopeAstVisitor());
+
+    public IReadOnlyList<IModuleContractFacet> GetFacets() =>
+        new ScopesModuleContractDescriptorProvider().GetFacets();
 }

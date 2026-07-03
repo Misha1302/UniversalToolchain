@@ -220,7 +220,7 @@ internal static class RuntimeCompiledArtifactTestFactory
         var composition = workflow.ComposeText(
             """
             dialect RuntimeContracts
-            use Whitespaces,SemicolonAsNewLine,Comments,Numbers,Identifier,Arithmetic,Equality,Conditions,Loops,Variables,Scopes,Labels,InternalPreprocessorLexemes,CSharpInterop
+            use Whitespaces,SemicolonAsNewLine,Comments,Numbers,Identifier,Arithmetic,Equality,Conditions,Loops,Scopes,Variables,Labels,InternalPreprocessorLexemes,CSharpInterop
             backend compiler,interpreter
             """,
             "runtime-contracts-inline");
@@ -231,9 +231,9 @@ internal static class RuntimeCompiledArtifactTestFactory
         return workflow.CreateHost(composition);
     }
 
-    public static BasicCoreImpl<DynamicMethod> GetCompilerCore(WistDialectExecutionHost host) =>
-        host.GetCore("compiler") as BasicCoreImpl<DynamicMethod>
-        ?? Thrower.InvalidOpEx<BasicCoreImpl<DynamicMethod>>("Compiler core must be BasicCoreImpl<DynamicMethod>.");
+    public static BasicCoreImpl<CilCompilationOutput> GetCompilerCore(WistDialectExecutionHost host) =>
+        host.GetCore("compiler") as BasicCoreImpl<CilCompilationOutput>
+        ?? Thrower.InvalidOpEx<BasicCoreImpl<CilCompilationOutput>>("Compiler core must be BasicCoreImpl<CilCompilationOutput>.");
 
     public static BasicCoreImpl<IAbstractIR> GetInterpreterCore(WistDialectExecutionHost host) =>
         host.GetCore("interpreter") as BasicCoreImpl<IAbstractIR>

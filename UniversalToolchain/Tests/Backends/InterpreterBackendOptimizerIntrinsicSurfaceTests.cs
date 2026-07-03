@@ -22,7 +22,7 @@ public sealed class InterpreterBackendOptimizerIntrinsicSurfaceTests
     {
         var dialect = """
                       dialect Tiny
-                      use NativeTypes, BooleanConditions, ComparisonConditions, Conditions, Numbers, Scopes, Variables, Whitespaces
+                      use NativeTypes, BooleanConditions, ComparisonConditions, Conditions, Identifier, Numbers, Scopes, Variables, Whitespaces
                       backend interpreter
                       enable ArithmeticOptimization
                       enable BooleanOptimization

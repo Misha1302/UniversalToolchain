@@ -27,6 +27,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\BasicCilCompiler\BasicCilCompiler.csproj" PrivateAssets="all"/>
         <ProjectReference Include="..\BasicCore\BasicCore.csproj" PrivateAssets="all"/>
         <ProjectReference Include="..\DynamicMethodCalling\DynamicMethodCalling.csproj" PrivateAssets="all"/>
         <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj" PrivateAssets="all"/>
@@ -35,8 +36,6 @@
 
     <ItemGroup>
         <PackageReference Include="GrEmit" Version="3.5.1"/>
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.1"/>
-        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.1"/>
     </ItemGroup>
 
     <ItemGroup>

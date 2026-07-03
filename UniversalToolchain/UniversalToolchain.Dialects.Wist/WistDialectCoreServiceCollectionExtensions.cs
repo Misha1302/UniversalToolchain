@@ -7,6 +7,7 @@ using UniversalToolchain.Dialects.Core.Groups;
 using UniversalToolchain.Dialects.Frontend.Composition;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist.Groups;
+using UniversalToolchain.ModuleContracts;
 
 namespace UniversalToolchain.Dialects.Wist;
 
@@ -36,6 +37,9 @@ public static class WistDialectCoreServiceCollectionExtensions
         services.TryAddSingleton<IntrinsicSemanticBootstrapPlanBuilder>();
         services.TryAddSingleton<IntrinsicSemanticBootstrapPreProviderValidator>();
         services.TryAddSingleton<IntrinsicSemanticBootstrapRuntimeValidator>();
+        services.AddWistModuleContractPipelineServices(
+            ModuleContractPipelineProfiles.StrictEnforced,
+            NullModuleContractDiagnosticSink.Instance);
         services.TryAddSingleton<IDialectCompiledDialectBuildPlanBuilder, DialectCompiledDialectBuildPlanBuilder>();
         services.TryAddSingleton<WistDialectExecutionConfigurationBuilder>();
         services.TryAddSingleton<WistDialectServiceProviderFactory>();
