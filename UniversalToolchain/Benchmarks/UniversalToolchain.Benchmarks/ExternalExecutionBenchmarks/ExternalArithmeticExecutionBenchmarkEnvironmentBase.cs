@@ -1,5 +1,6 @@
 using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
+using BasicCilCompiler.Execution;
 using BenchmarkDotNet.Attributes;
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
@@ -77,17 +78,20 @@ public abstract class ExternalArithmeticExecutionBenchmarkEnvironmentBase
         _host = workflow.CreateHost(composition);
     }
 
-    protected DynamicMethod CompileWistDynamicMethod(string formula, string[] bindingNames)
+    protected CilCompilationOutput CompileWistCilOutput(string formula, string[] bindingNames)
     {
         var host = _host ?? Thrower.InvalidOpEx<WistDialectExecutionHost>(
             "Wist host must be initialized before compilation.");
 
-        var compiler = host.GetBackendSpecificArtifactCompiler<BasicCilCompiler.Execution.CilCompilationOutput>("compiler");
+        var compiler = host.GetBackendSpecificArtifactCompiler<CilCompilationOutput>("compiler");
         var declaredBindings = CreateDeclaredBindings(bindingNames);
         var compiledArtifact = compiler.Compile(formula, declaredBindings);
 
-        return compiledArtifact.CompilationOutput.Method;
+        return compiledArtifact.CompilationOutput;
     }
+
+    protected DynamicMethod CompileWistDynamicMethod(string formula, string[] bindingNames)
+        => CompileWistCilOutput(formula, bindingNames).Method;
 
     protected OrderedDictionary<string, Type> CreateDeclaredBindings(string[] bindingNames)
     {

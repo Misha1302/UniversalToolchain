@@ -1,4 +1,5 @@
 using System.Reflection;
+using BasicCilCompiler.Execution;
 using BenchmarkDotNet.Attributes;
 using UniversalToolchain.Benchmarks.ExternalExecutionBenchmarks;
 
@@ -49,6 +50,26 @@ public sealed class BenchmarkContractTests
             Assert.That(names, Does.Contain("DynamicExpresso_CompiledDelegate"));
             Assert.That(names, Does.Contain("NCalc_CompiledLambda"));
             Assert.That(names, Does.Contain("Wist_Cil_DynamicMethodFastInvoker"));
+        }
+    }
+
+    [Test]
+    public void HotExecutionBenchmarks_ShouldUsePureExternalWistFastInvokerSignature()
+    {
+        foreach (var benchmarkType in _hotExecutionBenchmarkTypes)
+        {
+            var invokerField = benchmarkType.GetField(
+                "_wistFastInvoker",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+
+            Assert.That(invokerField, Is.Not.Null, $"{benchmarkType.Name} must declare _wistFastInvoker.");
+
+            var invokerArguments = invokerField!.FieldType.GetGenericArguments();
+
+            Assert.That(
+                invokerArguments,
+                Does.Not.Contain(typeof(ArtifactConstantPool)),
+                $"{benchmarkType.Name} formulas use only primitive numeric constants and must keep pure external Wist signatures.");
         }
     }
 

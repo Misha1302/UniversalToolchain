@@ -1,3 +1,5 @@
+using System;
+
 namespace JetBrains.Annotations;
 
 [AttributeUsage(AttributeTargets.All, Inherited = false)]
