@@ -18,14 +18,14 @@ The current preview package is:
 
 ```text
 PackageId: UniversalToolchain.Wist
-Version: 0.1.0-preview.1
+Version: 0.1.0-preview.2
 Target framework: net10.0
 ```
 
 From a clean .NET project:
 
 ```bash ci-run=false
-dotnet add package UniversalToolchain.Wist --version 0.1.0-preview.1
+dotnet add package UniversalToolchain.Wist --version 0.1.0-preview.2
 ```
 
 Use a `net10.0` project while this preview targets .NET 10:
@@ -104,7 +104,7 @@ Use the branch required by your task. For normal validation, use the branch you 
 
 ```bash
 dotnet restore UniversalToolchain/Wist.sln
-dotnet build UniversalToolchain/Wist.sln -c Release --no-restore
+dotnet build UniversalToolchain/Wist.sln -c Release --no-restore -m:1 -p:BuildInParallel=false
 ```
 
 For quick local work, `dotnet build` from the repository root may also work, but the solution path is the documented validation path.
