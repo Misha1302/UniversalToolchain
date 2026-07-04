@@ -27,7 +27,7 @@ jobs:
         run: dotnet restore UniversalToolchain/Wist.sln
 
       - name: Build
-        run: dotnet build UniversalToolchain/Wist.sln -c Release --no-restore
+        run: dotnet build UniversalToolchain/Wist.sln -c Release --no-restore -m:1 -p:BuildInParallel=false
 
       - name: Test
         run: dotnet test UniversalToolchain/Wist.sln -c Release --no-build
@@ -43,8 +43,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -f artifacts/packages/UniversalToolchain.Wist.0.1.0-preview.1.nupkg
-          test -f artifacts/packages/UniversalToolchain.Wist.0.1.0-preview.1.snupkg
+          package_version="$(sed -nE 's:.*<Version>([^<]+)</Version>.*:\1:p' UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj)"
+          test -n "$package_version"
+          test -f "artifacts/packages/UniversalToolchain.Wist.${package_version}.nupkg"
+          test -f "artifacts/packages/UniversalToolchain.Wist.${package_version}.snupkg"
           ls -la artifacts/packages
 
       - name: Smoke test Wist facade package
@@ -52,11 +54,14 @@ jobs:
         run: |
           set -euo pipefail
 
+          package_version="$(sed -nE 's:.*<Version>([^<]+)</Version>.*:\1:p' UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj)"
+          test -n "$package_version"
+
           smoke_dir="$(mktemp -d)"
           dotnet new console --framework net10.0 --output "$smoke_dir"
 
           dotnet add "$smoke_dir" package UniversalToolchain.Wist \
-            --version 0.1.0-preview.1 \
+            --version "$package_version" \
             --source "$GITHUB_WORKSPACE/artifacts/packages"
 
           cat > "$smoke_dir/Program.cs" <<'EOF'
