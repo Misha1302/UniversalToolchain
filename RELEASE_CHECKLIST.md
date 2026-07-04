@@ -33,7 +33,7 @@ dotnet build UniversalToolchain/Wist.sln -c Release --no-restore
 dotnet test UniversalToolchain/Wist.sln -c Release --no-build
 dotnet pack UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj -c Release -o artifacts/packages /p:WarningsAsErrors=NU5118
 ls -la artifacts/packages
-unzip -l artifacts/packages/UniversalToolchain.Wist.0.1.0-preview.1.nupkg
+unzip -l artifacts/packages/UniversalToolchain.Wist.0.1.0-preview.2.nupkg
 npm install --no-audit --no-fund
 npm run docs:build
 python3 .github/scripts/run-markdown-bash-blocks.py
