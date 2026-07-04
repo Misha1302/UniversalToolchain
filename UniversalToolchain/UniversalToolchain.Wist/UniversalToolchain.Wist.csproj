@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <LangVersion>14</LangVersion>
         <PackageId>UniversalToolchain.Wist</PackageId>
-        <Version>0.1.0-preview.1</Version>
+        <Version>0.1.0-preview.2</Version>
         <Title>UniversalToolchain Wist</Title>
         <Description>A compiler-first Wist facade for compiling typed hot-path formula functions and convenient one-off evaluation.</Description>
         <Authors>Mikhail Razakov</Authors>

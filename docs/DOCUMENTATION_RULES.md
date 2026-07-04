@@ -41,6 +41,48 @@ Current-state documents describe what the repository supports now.
 
 Future or historical documents may describe planned or removed behavior, but they must not contain executable `bash` blocks for commands that do not exist in the current branch.
 
+## Documentation authority metadata
+
+Every substantial architecture, rules, proposal, release, review, or archive
+document must make its authority level clear in the title, introduction, or
+front matter.
+
+Use these authority levels:
+
+- `current`: describes supported behavior on this branch;
+- `proposal`: describes a possible future design;
+- `archive`: preserves historical context;
+- `dated-review`: captures a review snapshot that may become stale;
+- `public-guide`: describes current user-facing behavior.
+
+Do not place future designs under `docs/architecture/` unless the file clearly
+states which parts are implemented now. Use `docs/proposals/` for designs that
+are not current runtime behavior.
+
+Do not place historical project snapshots in the public guide tree. Use
+`docs/archive/` and keep a short pointer from the old path only when link
+compatibility matters.
+
+## Documentation fitness checks
+
+Architecture rules should have at least one of these fitness checks before they
+are treated as active release gates:
+
+- unit or integration tests that fail if the rule is broken;
+- deterministic analyzer or script checks;
+- CI documentation smoke checks;
+- a review checklist item tied to a named document section.
+
+A rule without a fitness check may still guide design, but it must not be sold
+as fully enforced.
+
+Run the lightweight documentation authority check after moving or reclassifying
+documents:
+
+```text
+python3 Tools/check_documentation_status.py
+```
+
 ## Principle
 
 A failing documentation check means documentation and implementation drifted. It does not mean the check should be weakened.

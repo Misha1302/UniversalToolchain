@@ -62,7 +62,9 @@ public sealed class SsaRoundtripRouteTests
         source.Push(3);
         source.Intrinsic(AirIntrinsicIds.AddInt32Unchecked);
 
-        var result = new SsaRoundtripRoute().Run(source, SsaRoutePolicy.Debug);
+        var result = SsaRouteFactory
+            .CreateRoundtripRoute(SsaPreviewRouteProfiles.Create(SsaRoutePolicy.Debug))
+            .Run(source);
 
         Assert.Multiple(() =>
         {

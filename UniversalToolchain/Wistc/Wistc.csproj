@@ -18,7 +18,6 @@
         <ProjectReference Include="..\AbstractIrConverters\AbstractIrConverters.csproj"/>
         <ProjectReference Include="..\ConditionsModule\ConditionsModule.csproj"/>
         <ProjectReference Include="..\CSharpInteropModule\CSharpInteropModule.csproj"/>
-        <ProjectReference Include="..\ExecutorLoggerModule\ExecutorLoggerModule.csproj"/>
         <ProjectReference Include="..\IdentifierModule\IdentifierModule.csproj"/>
         <ProjectReference Include="..\LabelsModule\LabelsModule.csproj"/>
         <ProjectReference Include="..\LoopsModule\LoopsModule.csproj"/>

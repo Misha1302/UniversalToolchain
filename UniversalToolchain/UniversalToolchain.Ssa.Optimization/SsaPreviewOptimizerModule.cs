@@ -23,12 +23,10 @@ public sealed class SsaPreviewOptimizerModule : IIRProcessingModule
         ArgumentNullException.ThrowIfNull(current);
         ArgumentNullException.ThrowIfNull(compiler);
 
-        var lowering = new AirToSsaConverter();
-        var optimizer = new SsaOptimizerPipeline(
-            [new SsaConstantFoldingPass()],
-            SsaCoreDescriptors.ConstantMaterialization,
-            SsaPreviewSemanticDescriptors.ArithmeticInt32);
-        var emission = new SsaToAirConverter();
+        var profile = SsaPreviewRouteProfiles.Create(SsaRoutePolicy.Require);
+        var lowering = SsaRouteFactory.CreateLowerer(profile);
+        var optimizer = SsaRouteFactory.CreateOptimizer(profile);
+        var emission = SsaRouteFactory.CreateEmitter(profile);
 
         var loweringResult = lowering.Run(new AirArtifact(current), new IrPipelineContext());
         var ssaArtifact = loweringResult.Artifact.As<SsaArtifact>();

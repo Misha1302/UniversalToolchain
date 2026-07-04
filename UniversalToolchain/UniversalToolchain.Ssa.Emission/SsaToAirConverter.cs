@@ -16,17 +16,19 @@ public sealed class SsaToAirConverter : IIrConverter
     private readonly StructuralSsaVerifier _ssaVerifier;
     private readonly StructuralAirVerifier _airVerifier;
     private readonly SsaCallableLoweringPlanner _callLoweringPlanner;
+    private readonly SemanticDescriptorSet _semanticDescriptors;
 
     public SsaToAirConverter()
         : this(
-            new StructuralSsaVerifier(SsaCoreDescriptors.ConstantMaterialization, SsaPreviewSemanticDescriptors.ArithmeticInt32),
+            new StructuralSsaVerifier(SsaCoreDescriptors.ConstantMaterialization),
             new StructuralAirVerifier(
                 new AirControlFlowGraphBuilder(),
-                new AirStackAnalyzer(AirCoreIntrinsicDescriptors.DefaultResolver)),
+                new AirStackAnalyzer(AirIntrinsicDescriptorSet.Empty)),
             new SsaCallableLoweringPlanner(
-                SsaPreviewSemanticDescriptors.ArithmeticInt32,
-                SsaPreviewAirIntrinsicLowerings.ArithmeticInt32.ToTargetSet(),
-                AirCoreIntrinsicDescriptors.ArithmeticInt32))
+                SemanticDescriptorSet.Empty,
+                SsaCallableLoweringTargetSet.Empty,
+                AirIntrinsicDescriptorSet.Empty),
+            SemanticDescriptorSet.Empty)
     {
     }
 
@@ -35,9 +37,10 @@ public sealed class SsaToAirConverter : IIrConverter
             ssaVerifier,
             airVerifier,
             new SsaCallableLoweringPlanner(
-                SsaPreviewSemanticDescriptors.ArithmeticInt32,
-                SsaPreviewAirIntrinsicLowerings.ArithmeticInt32.ToTargetSet(),
-                AirCoreIntrinsicDescriptors.ArithmeticInt32))
+                SemanticDescriptorSet.Empty,
+                SsaCallableLoweringTargetSet.Empty,
+                AirIntrinsicDescriptorSet.Empty),
+            SemanticDescriptorSet.Empty)
     {
     }
 
@@ -52,7 +55,8 @@ public sealed class SsaToAirConverter : IIrConverter
             new SsaCallableLoweringPlanner(
                 SsaPreviewSemanticDescriptors.ArithmeticInt32,
                 callLowerings.ToTargetSet(),
-                airIntrinsics))
+                airIntrinsics),
+            SsaPreviewSemanticDescriptors.ArithmeticInt32)
     {
     }
 
@@ -67,7 +71,8 @@ public sealed class SsaToAirConverter : IIrConverter
             new SsaCallableLoweringPlanner(
                 SsaPreviewSemanticDescriptors.ArithmeticInt32,
                 callLoweringTargets,
-                airIntrinsics))
+                airIntrinsics),
+            SsaPreviewSemanticDescriptors.ArithmeticInt32)
     {
     }
 
@@ -78,7 +83,8 @@ public sealed class SsaToAirConverter : IIrConverter
         : this(
             ssaVerifier,
             airVerifier,
-            callLoweringPlanner.AsCallablePlanner())
+            callLoweringPlanner.AsCallablePlanner(),
+            SsaPreviewSemanticDescriptors.ArithmeticInt32)
     {
     }
 
@@ -86,10 +92,24 @@ public sealed class SsaToAirConverter : IIrConverter
         StructuralSsaVerifier ssaVerifier,
         StructuralAirVerifier airVerifier,
         SsaCallableLoweringPlanner callLoweringPlanner)
+        : this(
+            ssaVerifier,
+            airVerifier,
+            callLoweringPlanner,
+            SemanticDescriptorSet.Empty)
+    {
+    }
+
+    public SsaToAirConverter(
+        StructuralSsaVerifier ssaVerifier,
+        StructuralAirVerifier airVerifier,
+        SsaCallableLoweringPlanner callLoweringPlanner,
+        SemanticDescriptorSet semanticDescriptors)
     {
         _ssaVerifier = ssaVerifier ?? throw new ArgumentNullException(nameof(ssaVerifier));
         _airVerifier = airVerifier ?? throw new ArgumentNullException(nameof(airVerifier));
         _callLoweringPlanner = callLoweringPlanner ?? throw new ArgumentNullException(nameof(callLoweringPlanner));
+        _semanticDescriptors = semanticDescriptors ?? throw new ArgumentNullException(nameof(semanticDescriptors));
     }
 
     public IrStageId Id { get; } = new("ssa.to-air.minimal");
@@ -121,8 +141,8 @@ public sealed class SsaToAirConverter : IIrConverter
         }
 
         var semanticDescriptors = managedDescriptors.Count == 0
-            ? SsaPreviewSemanticDescriptors.ArithmeticInt32
-            : MergeSemanticDescriptors(SsaPreviewSemanticDescriptors.ArithmeticInt32, managedDescriptors);
+            ? _semanticDescriptors
+            : MergeSemanticDescriptors(_semanticDescriptors, managedDescriptors);
         var ssaVerifier = managedDescriptors.Count == 0
             ? _ssaVerifier
             : new StructuralSsaVerifier(

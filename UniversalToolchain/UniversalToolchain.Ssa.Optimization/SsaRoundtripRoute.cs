@@ -63,6 +63,7 @@ public sealed class SsaRoundtripRoute
 {
     private readonly AirToSsaConverter _lowering;
     private readonly SsaToAirConverter _emission;
+    private readonly SsaRouteProfile? _profile;
 
     public SsaRoundtripRoute()
         : this(new AirToSsaConverter(), new SsaToAirConverter())
@@ -70,10 +71,19 @@ public sealed class SsaRoundtripRoute
     }
 
     public SsaRoundtripRoute(AirToSsaConverter lowering, SsaToAirConverter emission)
+        : this(lowering, emission, profile: null)
+    {
+    }
+
+    public SsaRoundtripRoute(AirToSsaConverter lowering, SsaToAirConverter emission, SsaRouteProfile? profile)
     {
         _lowering = lowering ?? throw new ArgumentNullException(nameof(lowering));
         _emission = emission ?? throw new ArgumentNullException(nameof(emission));
+        _profile = profile;
     }
+
+    public SsaRouteResult Run(IAbstractIR input, IrPipelineContext? context = null) =>
+        Run(input, _profile?.Policy ?? SsaRoutePolicy.Prefer, context);
 
     public SsaRouteResult Run(IAbstractIR input, SsaRoutePolicy policy, IrPipelineContext? context = null)
     {

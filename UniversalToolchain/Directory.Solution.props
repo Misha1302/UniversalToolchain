@@ -1,0 +1,11 @@
+<Project>
+
+    <PropertyGroup>
+        <!-- Keep solution restore on the deterministic graph path used by this SDK/repository pair. -->
+        <BuildInParallel>false</BuildInParallel>
+        <RestoreBuildInParallel>false</RestoreBuildInParallel>
+        <RestoreUseStaticGraphEvaluation>true</RestoreUseStaticGraphEvaluation>
+        <MSBuildEnableWorkloadResolver>false</MSBuildEnableWorkloadResolver>
+    </PropertyGroup>
+
+</Project>

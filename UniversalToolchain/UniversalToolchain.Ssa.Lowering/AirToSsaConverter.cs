@@ -17,17 +17,21 @@ public sealed class AirToSsaConverter : IIrConverter
     private readonly StructuralSsaVerifier _ssaVerifier;
     private readonly AirIntrinsicDescriptorSet _intrinsicDescriptors;
     private readonly IReadOnlyDictionary<string, CallableId> _intrinsicCallables;
+    private readonly SemanticDescriptorSet _semanticDescriptors;
+    private readonly bool _allowManagedCallables;
 
     public AirToSsaConverter()
         : this(
             new AirControlFlowGraphBuilder(),
-            new AirStackAnalyzer(AirCoreIntrinsicDescriptors.DefaultResolver),
+            new AirStackAnalyzer(AirIntrinsicDescriptorSet.Empty),
             new StructuralAirVerifier(
                 new AirControlFlowGraphBuilder(),
-                new AirStackAnalyzer(AirCoreIntrinsicDescriptors.DefaultResolver)),
-            new StructuralSsaVerifier(SsaCoreDescriptors.ConstantMaterialization, SsaPreviewSemanticDescriptors.ArithmeticInt32),
-            AirCoreIntrinsicDescriptors.ArithmeticInt32,
-            PreviewIntrinsicCallables)
+                new AirStackAnalyzer(AirIntrinsicDescriptorSet.Empty)),
+            new StructuralSsaVerifier(SsaCoreDescriptors.ConstantMaterialization),
+            AirIntrinsicDescriptorSet.Empty,
+            new Dictionary<string, CallableId>(StringComparer.Ordinal),
+            SemanticDescriptorSet.Empty,
+            allowManagedCallables: false)
     {
     }
 
@@ -42,7 +46,9 @@ public sealed class AirToSsaConverter : IIrConverter
             airVerifier,
             ssaVerifier,
             AirIntrinsicDescriptorSet.Empty,
-            new Dictionary<string, CallableId>(StringComparer.Ordinal))
+            new Dictionary<string, CallableId>(StringComparer.Ordinal),
+            SemanticDescriptorSet.Empty,
+            allowManagedCallables: false)
     {
     }
 
@@ -53,6 +59,27 @@ public sealed class AirToSsaConverter : IIrConverter
         StructuralSsaVerifier ssaVerifier,
         AirIntrinsicDescriptorSet intrinsicDescriptors,
         IReadOnlyDictionary<string, CallableId> intrinsicCallables)
+        : this(
+            cfgBuilder,
+            stackAnalyzer,
+            airVerifier,
+            ssaVerifier,
+            intrinsicDescriptors,
+            intrinsicCallables,
+            SemanticDescriptorSet.Empty,
+            allowManagedCallables: false)
+    {
+    }
+
+    public AirToSsaConverter(
+        AirControlFlowGraphBuilder cfgBuilder,
+        AirStackAnalyzer stackAnalyzer,
+        StructuralAirVerifier airVerifier,
+        StructuralSsaVerifier ssaVerifier,
+        AirIntrinsicDescriptorSet intrinsicDescriptors,
+        IReadOnlyDictionary<string, CallableId> intrinsicCallables,
+        SemanticDescriptorSet semanticDescriptors,
+        bool allowManagedCallables)
     {
         _cfgBuilder = cfgBuilder;
         _stackAnalyzer = stackAnalyzer;
@@ -60,16 +87,9 @@ public sealed class AirToSsaConverter : IIrConverter
         _ssaVerifier = ssaVerifier;
         _intrinsicDescriptors = intrinsicDescriptors ?? throw new ArgumentNullException(nameof(intrinsicDescriptors));
         _intrinsicCallables = intrinsicCallables ?? throw new ArgumentNullException(nameof(intrinsicCallables));
+        _semanticDescriptors = semanticDescriptors ?? throw new ArgumentNullException(nameof(semanticDescriptors));
+        _allowManagedCallables = allowManagedCallables;
     }
-
-    private static IReadOnlyDictionary<string, CallableId> PreviewIntrinsicCallables { get; } =
-        new Dictionary<string, CallableId>(StringComparer.Ordinal)
-        {
-            [AirIntrinsicIds.AddInt32Unchecked] = SsaPreviewCallables.AddInt32Unchecked,
-            [AirIntrinsicIds.SubtractInt32Unchecked] = SsaPreviewCallables.SubtractInt32Unchecked,
-            [AirIntrinsicIds.MultiplyInt32Unchecked] = SsaPreviewCallables.MultiplyInt32Unchecked,
-            [AirIntrinsicIds.EqualInt32] = SsaPreviewCallables.EqualInt32
-        };
 
     public IrStageId Id { get; } = new("air.to-ssa.minimal");
 
@@ -109,7 +129,7 @@ public sealed class AirToSsaConverter : IIrConverter
             : new StructuralSsaVerifier(
                 SsaCoreDescriptors.ConstantMaterialization,
                 MergeSemanticDescriptors(
-                    SsaPreviewSemanticDescriptors.ArithmeticInt32,
+                    _semanticDescriptors,
                     lowering.ManagedCallableDescriptors));
         var ssaVerification = ssaVerifier.Verify(artifact, context);
         if (!ssaVerification.IsSuccess)
@@ -197,7 +217,15 @@ public sealed class AirToSsaConverter : IIrConverter
             if (isTerminatorInstruction)
                 break;
 
-            LowerInstruction(block, instruction, lowering, stack, instructions, _intrinsicDescriptors, _intrinsicCallables);
+            LowerInstruction(
+                block,
+                instruction,
+                lowering,
+                stack,
+                instructions,
+                _intrinsicDescriptors,
+                _intrinsicCallables,
+                _allowManagedCallables);
         }
 
         return new SsaBlock(
@@ -214,7 +242,8 @@ public sealed class AirToSsaConverter : IIrConverter
         List<SsaValueId> stack,
         List<ISsaInstruction> instructions,
         AirIntrinsicDescriptorSet intrinsicDescriptors,
-        IReadOnlyDictionary<string, CallableId> intrinsicCallables)
+        IReadOnlyDictionary<string, CallableId> intrinsicCallables,
+        bool allowManagedCallables)
     {
         switch (instruction.UOpCode)
         {
@@ -231,7 +260,15 @@ public sealed class AirToSsaConverter : IIrConverter
                 stack.RemoveAt(stack.Count - 1);
                 return;
             case UOpCode.Intrinsic:
-                LowerIntrinsic(block, instruction, lowering, stack, instructions, intrinsicDescriptors, intrinsicCallables);
+                LowerIntrinsic(
+                    block,
+                    instruction,
+                    lowering,
+                    stack,
+                    instructions,
+                    intrinsicDescriptors,
+                    intrinsicCallables,
+                    allowManagedCallables);
                 return;
             default:
                 ThrowDiagnostics([Diagnostic("air.to-ssa.opcode", $"AIR opcode '{instruction.UOpCode}' in block '{block.Id}' is not supported.")]);
@@ -290,7 +327,8 @@ public sealed class AirToSsaConverter : IIrConverter
         List<SsaValueId> stack,
         List<ISsaInstruction> instructions,
         AirIntrinsicDescriptorSet intrinsicDescriptors,
-        IReadOnlyDictionary<string, CallableId> intrinsicCallables)
+        IReadOnlyDictionary<string, CallableId> intrinsicCallables,
+        bool allowManagedCallables)
     {
         if (instruction.Operands.Count == 0 || instruction.Operands[0] is not string intrinsicId)
         {
@@ -298,13 +336,14 @@ public sealed class AirToSsaConverter : IIrConverter
             return;
         }
 
-        if (TryLowerManagedIntrinsic(block, instruction, lowering, stack, instructions, intrinsicId))
+        if (allowManagedCallables &&
+            TryLowerManagedIntrinsic(block, instruction, lowering, stack, instructions, intrinsicId))
             return;
 
         if (!intrinsicDescriptors.TryGet(intrinsicId, out var descriptor) ||
             !intrinsicCallables.TryGetValue(intrinsicId, out var callable))
         {
-            ThrowDiagnostics([Diagnostic("air.to-ssa.intrinsic", $"AIR Intrinsic '{intrinsicId}' in block '{block.Id}' is not supported by the minimal AIR to SSA converter.")]);
+            ThrowDiagnostics([Diagnostic("air.to-ssa.intrinsic.rule-missing", $"AIR Intrinsic '{intrinsicId}' in block '{block.Id}' has no registered SSA lowering rule in the active SSA route profile.")]);
             return;
         }
 

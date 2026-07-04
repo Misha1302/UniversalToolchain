@@ -5,8 +5,8 @@ A compiler-first Wist facade for .NET formula execution.
 This package is the intended first-contact API for .NET developers. It hides the compiler pipeline, dialect runtime host,
 manifests, `DynamicMethod`, `IAbstractIR`, and session APIs behind a small facade.
 
-Compiler-first. Interpreter-supported. `CompileFunc` is the primary hot-path API. `Evaluate` is the convenience one-off
-API.
+Compiler-first. Interpreter-supported. `Compile<TDelegate>` is the primary hot-path API. `CompileFunc` remains as a
+small compatibility convenience for one, two, and three arguments. `Evaluate` is the convenience one-off API.
 
 ## Requirements
 
@@ -15,22 +15,37 @@ API.
 
 ## Install
 
-The package metadata in this repository is prepared for `UniversalToolchain.Wist` `0.1.0-preview.1`. This package-first
+The package metadata in this repository is prepared for `UniversalToolchain.Wist` `0.1.0-preview.2`. This package-first
 command works when that version is available from NuGet.org or another configured package source:
 
 ```bash ci-run=false
-dotnet add package UniversalToolchain.Wist --version 0.1.0-preview.1
+dotnet add package UniversalToolchain.Wist --version 0.1.0-preview.2
 ```
 
 ## Fast execution: compile once, invoke many times
 
-Use `CompileFunc` when the same formula is executed many times.
+Use `Compile<TDelegate>` when the same formula is executed many times.
 
 ```csharp
 using UniversalToolchain.Wist;
 
 using var wist = WistEngine.CreateSafeFormulas();
 
+var formula = wist.Compile<Func<double, double, double>>(
+    "price * 0.9 + fee",
+    "price",
+    "fee");
+
+double result = formula.CompiledDelegate(100.0, 5.0);
+```
+
+`Compile<TDelegate>` compiles once and returns a typed program with backend-neutral metadata. The hot delegate path does
+not use dictionaries, anonymous-object reflection, session setup, backend strings, or boxing for typed primitive
+arguments.
+
+`CompileFunc` remains available for compatibility and small examples:
+
+```csharp
 var formula = wist.CompileFunc<double, double, double>(
     "price * 0.9 + fee",
     "price",
@@ -38,9 +53,6 @@ var formula = wist.CompileFunc<double, double, double>(
 
 double result = formula.Invoke(100.0, 5.0);
 ```
-
-`CompileFunc` compiles once and returns a typed function. The hot `Invoke` path does not use dictionaries,
-anonymous-object reflection, session setup, backend strings, or boxing for typed primitive arguments.
 
 ## One-off execution with Evaluate
 
@@ -86,11 +98,24 @@ if (!validation.IsValid)
 }
 ```
 
+Use `TryCompile<TDelegate>` when compilation should return diagnostics-like result data instead of throwing:
+
+```csharp
+var compiled = wist.TryCompile<Func<double, double>>(
+    "price *",
+    "price");
+
+if (!compiled.IsSuccess)
+{
+    Console.WriteLine(compiled.Message);
+}
+```
+
 ## Rule of thumb
 
 ```text
 Use Evaluate for one-off execution.
-Use CompileFunc for hot paths.
+Use Compile<TDelegate> for hot paths.
 Compilation is expensive.
 Invocation is fast.
 ```
@@ -109,14 +134,14 @@ for (var i = 0; i < prices.Length; i++)
 Prefer this:
 
 ```csharp
-var formula = wist.CompileFunc<double, double, double>(
+var formula = wist.Compile<Func<double, double, double>>(
     "price * 0.9 + fee",
     "price",
     "fee");
 
 for (var i = 0; i < prices.Length; i++)
 {
-    results[i] = formula.Invoke(prices[i], fees[i]);
+    results[i] = formula.CompiledDelegate(prices[i], fees[i]);
 }
 ```
 
@@ -177,10 +202,12 @@ This initial facade intentionally exposes only:
 
 - convenience `Evaluate<T>`;
 - validation without throwing;
-- typed fast `CompileFunc` overloads for one, two, and three arguments.
+- typed fast `Compile<TDelegate>` and `TryCompile<TDelegate>`;
+- typed fast `CompileFunc` compatibility overloads for one, two, and three arguments;
+- backend-neutral compiled program metadata.
 
-Current preview contracts may change. Wider arities, signature-based compiled APIs, reusable object/session-based compiled
-artifacts, backend-agnostic compiled artifact APIs, and diagnostics shape can evolve after the first API shape is
+Current preview contracts may change. Reusable object/session-based compiled artifacts, richer diagnostics, custom
+function registration, dialect builder APIs, and lower-level pass authoring APIs can evolve after this facade shape is
 validated.
 
 

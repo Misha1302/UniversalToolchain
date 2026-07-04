@@ -10,19 +10,23 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0"/>
-        <PackageReference Include="BenchmarkDotNet" Version="0.15.6"/>
         <PackageReference Include="NUnit" Version="4.2.2"/>
         <PackageReference Include="NUnit.Analyzers" Version="4.4.0"/>
         <PackageReference Include="NUnit3TestAdapter" Version="4.6.0"/>
     </ItemGroup>
 
     <ItemGroup>
+        <!-- Benchmark contract checks depend on the standalone benchmark app and its external comparison packages.
+             Keep them out of the release solution so sidecar restore stays self-contained. -->
+        <Compile Remove="Benchmarks\**\*.cs"/>
+        <None Include="Benchmarks\**\*.cs"/>
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\Tests\Tests.csproj"/>
-        <ProjectReference Include="..\Benchmarks\UniversalToolchain.Benchmarks\UniversalToolchain.Benchmarks.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Dialects.Integration\UniversalToolchain.Dialects.Integration.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj"/>
         <ProjectReference Include="..\NumbersModule\NumbersModule.csproj"/>
-        <ProjectReference Include="..\ExecutorLoggerModule\ExecutorLoggerModule.csproj"/>
         <ProjectReference Include="..\ParserConfigurationModule\ParserConfigurationModule.csproj"/>
     </ItemGroup>
 

@@ -20,7 +20,6 @@ global using DynamicMethodCalling;
 global using DynamicMethodCalling.Core;
 global using EqualityModule;
 global using ExceptionsManager;
-global using ExecutorLoggerModule;
 global using IdentifierModule;
 global using LabelsModule;
 global using NumbersModule;

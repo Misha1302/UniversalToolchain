@@ -7,6 +7,7 @@
              builds without changing legacy transitive-reference behavior globally. -->
         <BuildInParallel>false</BuildInParallel>
         <RestoreBuildInParallel>false</RestoreBuildInParallel>
+        <RestoreUseStaticGraphEvaluation>true</RestoreUseStaticGraphEvaluation>
     </PropertyGroup>
 
     <ItemGroup>

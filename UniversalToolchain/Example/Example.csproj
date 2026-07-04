@@ -8,14 +8,6 @@
         <LangVersion>14</LangVersion>
     </PropertyGroup>
 
-    <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-        <OutputPath>bin</OutputPath>
-    </PropertyGroup>
-
-    <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
-        <OutputPath>bin</OutputPath>
-    </PropertyGroup>
-
     <ItemGroup>
         <ProjectReference Include="..\ArithmeticModule\ArithmeticModule.csproj"/>
         <ProjectReference Include="..\BasicCilCompiler\BasicCilCompiler.csproj"/>
@@ -30,7 +22,6 @@
         <ProjectReference Include="..\AbstractIrConverters\AbstractIrConverters.csproj"/>
         <ProjectReference Include="..\ConditionsModule\ConditionsModule.csproj"/>
         <ProjectReference Include="..\CSharpInteropModule\CSharpInteropModule.csproj"/>
-        <ProjectReference Include="..\ExecutorLoggerModule\ExecutorLoggerModule.csproj"/>
         <ProjectReference Include="..\IdentifierModule\IdentifierModule.csproj"/>
         <ProjectReference Include="..\InternalPreprocessorLexemesModule\InternalPreprocessorLexemesModule.csproj"/>
         <ProjectReference Include="..\LabelsModule\LabelsModule.csproj"/>

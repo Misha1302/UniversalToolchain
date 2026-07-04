@@ -257,6 +257,18 @@ middleEndModules.InitExecutor
 
 This lets middle-end modules adapt backend output and executor wiring.
 
+## Observability and tracing
+
+The supported release does not include the old `logs.txt` text-log pipeline.
+That format covered only an older partial frontend view and did not represent
+AIR, optimized AIR, SSA route stages, verifier diagnostics, backend ownership
+or failed partial traces.
+
+Future tracing should observe the stage boundaries on this page without
+changing semantics. See [Debug Trace v2](/architecture/debug-trace-v2) for the
+decision record and [Debug Trace Schema](/reference/debug-trace-schema) for the
+planned JSON contract.
+
 ## Artifact/session output
 
 `Compile(input)` returns a compiled artifact.

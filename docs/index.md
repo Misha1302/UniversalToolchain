@@ -78,6 +78,7 @@ Current status:
 - .NET 10 baseline
 - compiler-first hot path + interpreter diagnostics/parity backend
 - restricted dialects are not hardened sandboxes
+- legacy text-log debugging has been removed; structured trace is planned but not implemented
 - APIs may change before stable release
 
 ## I want to...
@@ -123,6 +124,7 @@ See [Current Limitations](/limitations) for the current maturity boundaries.
 | Add a language feature | [Modules](/write-modules/) | [Bytecode generation](/write-modules/bytecode-generation) |
 | Study implementation details | [Internals](/internals/) | [Pipeline](/internals/pipeline) |
 | Check precise contracts | [Reference](/reference/) | [Backend contracts](/reference/backend-contracts) |
+| Track debug trace direction | [Debug Trace v2](/architecture/debug-trace-v2) | [Debug Trace Schema](/reference/debug-trace-schema) |
 
 ## Recommended order
 

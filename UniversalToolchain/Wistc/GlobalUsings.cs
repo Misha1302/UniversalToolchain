@@ -11,7 +11,6 @@ global using ConditionsModule;
 global using CSharpInteropModule;
 global using EqualityModule;
 global using ExceptionsManager;
-global using ExecutorLoggerModule;
 global using IdentifierModule;
 global using IntermediateRepresentationAbstractions;
 global using LabelsModule;

@@ -58,11 +58,25 @@ Current-state documents describe what the repository supports now.
 
 Future or historical documents may describe planned or removed behavior, but they must not contain executable `bash` blocks for commands that do not exist in the current branch.
 
+Use `docs/proposals/` for future designs and `docs/archive/` for historical
+context. Do not treat either location as current runtime truth unless a
+current-state document and tests explicitly promote the behavior.
+
+## Documentation authority and fitness
+
+Substantial architecture, rules, proposal, release, review, or archive documents
+must state whether they are current truth, a proposal, archive context, a dated
+review, or a public guide.
+
+Architecture rules should be paired with a practical fitness check before they
+are treated as enforced release gates.
+
 ## Practical validation
 
 For documentation changes that affect public examples, run:
 
 ```text
+python3 Tools/check_documentation_status.py
 python3 .github/scripts/run-markdown-bash-blocks.py
 npm run docs:build
 ```

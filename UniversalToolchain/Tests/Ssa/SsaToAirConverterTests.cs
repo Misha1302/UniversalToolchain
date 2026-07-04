@@ -7,6 +7,7 @@ using UniversalToolchain.Ssa.Abstractions;
 using UniversalToolchain.Ssa.Core;
 using UniversalToolchain.Ssa.Emission;
 using UniversalToolchain.Ssa.Lowering;
+using UniversalToolchain.Ssa.Optimization;
 using UniversalIntermediateRepresentation;
 
 namespace Tests.Ssa;
@@ -28,12 +29,12 @@ public sealed class SsaToAirConverterTests
         source.Push(20);
         source.SetLabel(merge);
 
-        var ssa = new AirToSsaConverter()
+        var ssa = PreviewLowerer()
             .Run(new AirArtifact(source), new IrPipelineContext())
             .Artifact
             .As<SsaArtifact>();
 
-        var result = new SsaToAirConverter().Run(ssa, new IrPipelineContext());
+        var result = PreviewEmitter().Run(ssa, new IrPipelineContext());
         var air = result.Artifact.As<AirArtifact>();
 
         Assert.Multiple(() =>
@@ -140,7 +141,7 @@ public sealed class SsaToAirConverterTests
             ],
             returnType: SsaTypes.Int32));
 
-        var conversion = new SsaToAirConverter().Run(artifact, new IrPipelineContext());
+        var conversion = PreviewEmitter().Run(artifact, new IrPipelineContext());
         var air = conversion.Artifact.As<AirArtifact>();
 
         Assert.Multiple(() =>
@@ -183,7 +184,7 @@ public sealed class SsaToAirConverterTests
             ],
             returnType: SsaTypes.Int32));
 
-        var conversion = new SsaToAirConverter().Run(artifact, new IrPipelineContext());
+        var conversion = PreviewEmitter().Run(artifact, new IrPipelineContext());
         var intrinsic = conversion.Artifact.As<AirArtifact>().Program.Instructions.Single(static x => x.UOpCode == UOpCode.Intrinsic);
 
         Assert.That(intrinsic.Operands, Is.EqualTo(new object[] { AirIntrinsicIds.CallCSharp, method }));
@@ -217,7 +218,7 @@ public sealed class SsaToAirConverterTests
             ],
             returnType: SsaTypes.Object));
 
-        var conversion = new SsaToAirConverter().Run(artifact, new IrPipelineContext());
+        var conversion = PreviewEmitter().Run(artifact, new IrPipelineContext());
         var intrinsic = conversion.Artifact.As<AirArtifact>().Program.Instructions.Single(static x => x.UOpCode == UOpCode.Intrinsic);
 
         Assert.That(intrinsic.Operands, Is.EqualTo(new object[] { AirIntrinsicIds.CallCSharpConstructor, constructor }));
@@ -455,7 +456,7 @@ public sealed class SsaToAirConverterTests
             returnType: SsaTypes.Int32));
 
         var exception = Assert.Throws<SsaToAirEmissionException>(() =>
-            new SsaToAirConverter().Run(artifact, new IrPipelineContext()));
+            PreviewEmitter().Run(artifact, new IrPipelineContext()));
 
         Assert.That(exception!.Diagnostics.Select(static x => x.Code), Does.Contain("ssa.to-air.stack-shape.unsupported"));
     }
@@ -495,7 +496,7 @@ public sealed class SsaToAirConverterTests
             ],
             returnType: SsaTypes.Int32));
 
-        var result = new SsaToAirConverter().Run(artifact, new IrPipelineContext());
+        var result = PreviewEmitter().Run(artifact, new IrPipelineContext());
         var air = result.Artifact.As<AirArtifact>();
 
         Assert.Multiple(() =>
@@ -545,7 +546,7 @@ public sealed class SsaToAirConverterTests
             returnType: SsaTypes.Int32));
 
         var exception = Assert.Throws<SsaToAirEmissionException>(() =>
-            new SsaToAirConverter().Run(artifact, new IrPipelineContext()));
+            PreviewEmitter().Run(artifact, new IrPipelineContext()));
 
         Assert.That(exception!.Diagnostics.Select(static x => x.Code), Does.Contain("ssa.to-air.branch.arguments"));
     }
@@ -592,6 +593,12 @@ public sealed class SsaToAirConverterTests
 
     private static SsaArtifact Artifact(SsaFunction function) =>
         new(new SsaModule(new SsaModuleId("test.module"), [function]));
+
+    private static AirToSsaConverter PreviewLowerer() =>
+        SsaRouteFactory.CreateLowerer(SsaPreviewRouteProfiles.Create(SsaRoutePolicy.Require));
+
+    private static SsaToAirConverter PreviewEmitter() =>
+        SsaRouteFactory.CreateEmitter(SsaPreviewRouteProfiles.Create(SsaRoutePolicy.Require));
 
     private static int AddOne(int value) => value + 1;
 

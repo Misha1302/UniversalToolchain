@@ -160,6 +160,32 @@ Keep source control focused on maintained runtime code, tests, docs, examples, a
 - Internal tools are documented as internal tools.
 - Examples remain runnable from repository root.
 
+## Structured debug traces
+
+### Problem
+
+The previous text-log debugging surface represented only a partial legacy
+pipeline and could mislead users about current AIR, SSA, verifier and backend
+boundaries.
+
+### Current risk
+
+Without a structured trace contract, debugging can collapse multiple compiler
+boundaries into one vague failure point or encourage ad hoc log formats.
+
+### Desired direction
+
+Implement the [Debug Trace v2](/architecture/debug-trace-v2) direction: an
+optional, observer-only, versioned JSON trace over stable compiler stages.
+
+### Exit criteria
+
+- `wistc run --trace trace.json` writes a deterministic structured trace.
+- Trace-enabled execution is semantically equivalent to trace-disabled execution.
+- Failed compilation can flush a partial trace with stage-local diagnostics.
+- Default traces omit source text and runtime values unless explicitly enabled.
+- A future viewer consumes real `trace.json`, not legacy sample logs.
+
 ## Long-term research ideas
 
 - CIL optimizer roadmap: SSA-oriented passes, inlining strategy, and backend tuning.

@@ -362,17 +362,20 @@ public sealed class SsaOptimizationTests
 
     private static IrStageResult RunConstantFolding(SsaArtifact artifact) =>
         new SsaOptimizerPipeline(
-                [new SsaConstantFoldingPass()],
+                [PreviewConstantFoldingPass()],
                 SsaCoreDescriptors.ConstantMaterialization,
                 SsaPreviewSemanticDescriptors.ArithmeticInt32)
             .Run(artifact, new IrPipelineContext());
 
     private static IrStageResult RunPreviewConstantFolding(SsaArtifact artifact) =>
         new SsaOptimizerPipeline(
-                [new SsaConstantFoldingPass()],
+                [PreviewConstantFoldingPass()],
                 SsaCoreDescriptors.ConstantMaterialization,
                 SsaPreviewSemanticDescriptors.ArithmeticInt32)
             .Run(artifact, new IrPipelineContext());
+
+    private static SsaConstantFoldingPass PreviewConstantFoldingPass() =>
+        new(SsaPreviewSemanticDescriptors.ArithmeticInt32, new SsaPreviewInt32ConstantEvaluator());
 
     private static SsaArtifact CreateConstantBinaryArtifact(CallableId callable, int leftValue, int rightValue, SsaTypeId? resultType = null)
     {

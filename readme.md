@@ -46,37 +46,37 @@ compiled typed invocation, not full convenience evaluation.
 
 ## Install from NuGet
 
-The package metadata in this repository is prepared for `UniversalToolchain.Wist` `0.1.0-preview.1`. The package-first
+The package metadata in this repository is prepared for `UniversalToolchain.Wist` `0.1.0-preview.2`. The package-first
 command works when that version is available from NuGet.org or another configured package source:
 
 ```bash ci-run=false
-dotnet add package UniversalToolchain.Wist --version 0.1.0-preview.1
+dotnet add package UniversalToolchain.Wist --version 0.1.0-preview.2
 ```
 
 For the current repository state, the source workflow below is the authoritative path.
 
 ## Fast path: compile once, invoke many times
 
-Use `WistEngine.CompileFunc` for code that will be invoked repeatedly:
+Use `WistEngine.Compile<TDelegate>` for code that will be invoked repeatedly:
 
 ```csharp
 using UniversalToolchain.Wist;
 
 using var wist = WistEngine.CreateSafeFormulas();
 
-var formula = wist.CompileFunc<double, double, double>(
+var formula = wist.Compile<Func<double, double, double>>(
     "price * 0.9 + fee",
     "price",
     "fee");
 
-double result = formula.Invoke(100.0, 5.0);
+double result = formula.CompiledDelegate(100.0, 5.0);
 ```
 
 This is the intended hot path:
 
 - compile once;
 - invoke many times;
-- benchmark compiled `Invoke`, not `Evaluate` in a tight loop.
+- benchmark compiled delegate invocation, not `Evaluate` in a tight loop.
 
 ## One-off Evaluate
 

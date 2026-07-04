@@ -1,5 +1,5 @@
-using ExceptionsManager;
 using System.Reflection.Emit;
+using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
@@ -116,6 +116,42 @@ public sealed class WistEngine : IDisposable
         catch (Exception ex)
         {
             return WistValidationResult.Failure(ex);
+        }
+    }
+
+    /// <summary>
+    ///     Compiles source text into a typed delegate-backed Wist program.
+    /// </summary>
+    public WistProgram<TDelegate> Compile<TDelegate>(string formula, params string[] parameterNames)
+        where TDelegate : Delegate
+    {
+        var signature = WistDelegateSignature.FromDelegate<TDelegate>(parameterNames);
+        var dynamicMethod = CompileDynamicMethod(formula, signature.BindingTypes);
+        var compiledDelegate = (TDelegate)dynamicMethod.CreateDelegate(typeof(TDelegate));
+
+        return new WistProgram<TDelegate>(
+            compiledDelegate,
+            new WistProgramMetadata(
+                formula,
+                WistBackendAliases.CompilerAlias,
+                signature.ParameterNames,
+                signature.ParameterTypes,
+                signature.ReturnType));
+    }
+
+    /// <summary>
+    ///     Attempts to compile source text into a typed delegate-backed Wist program without throwing.
+    /// </summary>
+    public WistCompileResult<TDelegate> TryCompile<TDelegate>(string formula, params string[] parameterNames)
+        where TDelegate : Delegate
+    {
+        try
+        {
+            return WistCompileResult<TDelegate>.Success(Compile<TDelegate>(formula, parameterNames));
+        }
+        catch (Exception ex)
+        {
+            return WistCompileResult<TDelegate>.Failure(ex);
         }
     }
 

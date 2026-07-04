@@ -12,7 +12,7 @@ public sealed class SsaConstantFoldingPass : IIrOptimizationPass
 
     public SsaConstantFoldingPass()
         : this(
-            SsaPreviewSemanticDescriptors.ArithmeticInt32,
+            SemanticDescriptorSet.Empty,
             new SsaPreviewInt32ConstantEvaluator())
     {
     }

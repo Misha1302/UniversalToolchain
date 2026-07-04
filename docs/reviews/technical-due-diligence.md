@@ -1,4 +1,13 @@
+---
+status: dated-review
+last_verified: 2026-07-04
+current_truth: ../CURRENT_ARCHITECTURE_STATUS.md
+---
+
 # Technical Due Diligence Review
+
+This is a review snapshot. Use `docs/CURRENT_ARCHITECTURE_STATUS.md` as the
+current implementation source of truth before acting on any finding here.
 
 > This is an external-style technical review of UniversalToolchain/Wist.
 > It is intentionally evaluative: it records strengths, risks, hidden contracts, and roadmap candidates.

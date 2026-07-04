@@ -181,11 +181,16 @@ Do not rely only on:
 - the demo application;
 - README examples;
 - benchmark output;
+- legacy debug log artifacts;
 - one happy-path source file;
 - compiler mode only;
 - full-default dialect only.
 
 A module that works only in a broad profile may still be incorrectly integrated.
+
+Do not add tests that require `logs.txt` or the removed legacy log viewer. For
+debuggability, prefer diagnostics, verifier output, parity tests and future
+structured trace assertions once the trace contract exists.
 
 ## Suggested PR checklist
 

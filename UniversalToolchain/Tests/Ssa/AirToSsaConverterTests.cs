@@ -2,8 +2,11 @@ using IntermediateRepresentationAbstractions;
 using System.Reflection;
 using UniversalToolchain.Air.Analysis;
 using UniversalToolchain.Ir.Abstractions;
+using UniversalToolchain.Semantics.Abstractions;
 using UniversalToolchain.Ssa.Abstractions;
+using UniversalToolchain.Ssa.Core;
 using UniversalToolchain.Ssa.Lowering;
+using UniversalToolchain.Ssa.Optimization;
 using UniversalIntermediateRepresentation;
 
 namespace Tests.Ssa;
@@ -25,7 +28,7 @@ public sealed class AirToSsaConverterTests
         ir.Push(20);
         ir.SetLabel(merge);
 
-        var result = new AirToSsaConverter().Run(new AirArtifact(ir), new IrPipelineContext());
+        var result = PreviewLowerer().Run(new AirArtifact(ir), new IrPipelineContext());
         var artifact = result.Artifact.As<SsaArtifact>();
 
         Assert.That(artifact.Kind, Is.EqualTo(SsaIrKinds.Ssa));
@@ -42,7 +45,7 @@ public sealed class AirToSsaConverterTests
         ir.Push(3);
         ir.Intrinsic(AirIntrinsicIds.AddInt32Unchecked);
 
-        var result = new AirToSsaConverter().Run(new AirArtifact(ir), new IrPipelineContext());
+        var result = PreviewLowerer().Run(new AirArtifact(ir), new IrPipelineContext());
         var block = result.Artifact.As<SsaArtifact>().Module.Functions.Single().Blocks.Single();
         var call = block.Instructions.OfType<SsaCall>().Single();
 
@@ -66,7 +69,7 @@ public sealed class AirToSsaConverterTests
             new(UOpCode.Intrinsic, [AirIntrinsicIds.CallCSharp, method])
         });
 
-        var result = new AirToSsaConverter().Run(new AirArtifact(ir), new IrPipelineContext());
+        var result = PreviewLowerer().Run(new AirArtifact(ir), new IrPipelineContext());
         var block = result.Artifact.As<SsaArtifact>().Module.Functions.Single().Blocks.Single();
         var call = block.Instructions.OfType<SsaCall>().Single();
 
@@ -82,14 +85,18 @@ public sealed class AirToSsaConverterTests
     [Test]
     public void Run_WhenAirUsesManagedConstructor_ProducesObjectCallableInstruction()
     {
-        var constructor = typeof(ManagedTestBox).GetConstructor(Type.EmptyTypes)!;
+        var constructor = typeof(ManagedTestBox).GetConstructor(
+            BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
+            binder: null,
+            types: Type.EmptyTypes,
+            modifiers: null)!;
         var ir = new AbstractIR();
         ir.AppendInstructions(new List<Instruction>
         {
             new(UOpCode.Intrinsic, [AirIntrinsicIds.CallCSharpConstructor, constructor])
         });
 
-        var result = new AirToSsaConverter().Run(new AirArtifact(ir), new IrPipelineContext());
+        var result = PreviewLowerer().Run(new AirArtifact(ir), new IrPipelineContext());
         var block = result.Artifact.As<SsaArtifact>().Module.Functions.Single().Blocks.Single();
         var call = block.Instructions.OfType<SsaCall>().Single();
 
@@ -113,6 +120,33 @@ public sealed class AirToSsaConverterTests
 
         Assert.That(exception!.Diagnostics.Select(static x => x.Code), Does.Contain("air.stack.invalid"));
     }
+
+    [Test]
+    public void Run_WhenPreviewIntrinsicHasNoRegisteredPack_RejectsWithMissingRuleDiagnostic()
+    {
+        var ir = new AbstractIR();
+        ir.Push(2);
+        ir.Push(3);
+        ir.Intrinsic(AirIntrinsicIds.AddInt32Unchecked);
+
+        var converter = new AirToSsaConverter(
+            new AirControlFlowGraphBuilder(),
+            new AirStackAnalyzer(AirCoreIntrinsicDescriptors.ArithmeticInt32),
+            new StructuralAirVerifier(
+                new AirControlFlowGraphBuilder(),
+                new AirStackAnalyzer(AirCoreIntrinsicDescriptors.ArithmeticInt32)),
+            new StructuralSsaVerifier(SsaCoreDescriptors.ConstantMaterialization),
+            AirCoreIntrinsicDescriptors.ArithmeticInt32,
+            new Dictionary<string, CallableId>(StringComparer.Ordinal));
+
+        var exception = Assert.Throws<AirToSsaConversionException>(() =>
+            converter.Run(new AirArtifact(ir), new IrPipelineContext()));
+
+        Assert.That(exception!.Diagnostics.Select(static x => x.Code), Does.Contain("air.to-ssa.intrinsic.rule-missing"));
+    }
+
+    private static AirToSsaConverter PreviewLowerer() =>
+        SsaRouteFactory.CreateLowerer(SsaPreviewRouteProfiles.Create(SsaRoutePolicy.Require));
 
     private static int AddOne(int value) => value + 1;
 

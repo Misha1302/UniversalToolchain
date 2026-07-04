@@ -27,6 +27,7 @@ Breaking these rules is a release-blocking architecture defect.
 9. All discovery, catalog building, diagnostics, schema output, feature reports, CLI output, and overload resolution must be deterministic.
 10. Architecture shortcuts are worse than incomplete features.
 11. Language syntax must not be recognized through ad hoc raw-source parsing. Regular expressions, line splitting, substring checks, and manual source scans are forbidden for language constructs outside the owning lexer/parser/AST/extractor pipeline.
+12. Architecture rules that protect extensibility must be backed by tests, deterministic checks, or explicit review checklist items before they are treated as enforced release gates.
 
 ## 3. Single Responsibility Doctrine
 
@@ -178,3 +179,60 @@ When adding convenience layers, catalogs, discovery paths, facades, or product p
 - deterministic provider discovery and report ordering;
 - facade reuse of the existing runtime pipeline;
 - absence of repeated reflection scans in hot execution paths.
+
+## 8. Hardcode taxonomy
+
+Not every literal is an architecture defect. These categories define what is
+allowed and what requires a shared contract.
+
+Allowed literals:
+
+- test input strings and expected diagnostics inside focused tests;
+- public CLI option names, diagnostic ids, and file extensions defined by a
+  single documented contract;
+- stable display text in documentation, help, and examples;
+- local constants that do not select runtime behavior.
+
+Restricted literals:
+
+- module aliases, dialect ids, profile ids, backend ids, capability ids, rule
+  ids, intrinsic names, and function names;
+- protocol-like strings shared across parser, resolver, compiler, runtime, CLI,
+  docs, or tests;
+- reflection type/member names.
+
+Restricted literals must be owned by one of:
+
+- a descriptor/provider contract;
+- a central constants type at the owning boundary;
+- a manifest or dialect definition;
+- a test fixture that explicitly represents external input.
+
+Forbidden hardcode:
+
+- framework code branching on shipped profile ids;
+- parser/resolver/runtime code branching on concrete module or function names
+  owned by providers;
+- CLI/facade code using magic names to activate runtime behavior;
+- raw-source pattern matching to detect language constructs;
+- duplicated string constants that act as hidden contracts between layers.
+
+If a change needs a new literal that selects behavior, first decide who owns the
+concept. Then expose it through the owner instead of copying the string.
+
+## 9. Extensibility fitness rule
+
+Extensibility claims must be testable.
+
+When adding or changing a framework extension point, add or update at least one
+fitness check that proves a second module, dialect, backend, provider, or profile
+can use the same path without adding a special case.
+
+Preferred checks:
+
+- a non-Wist or non-SafeMath module fixture using the same provider path;
+- a negative test proving generic layers do not reference concrete shipped names;
+- deterministic ordering tests for discovery/catalog/report output;
+- backend capability tests that reject unsupported intrinsics cleanly;
+- documentation smoke checks that prevent current docs from advertising removed
+  surfaces.

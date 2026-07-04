@@ -17,7 +17,6 @@
 
     <ItemGroup>
         <ProjectReference Include="..\BasicCilCompiler\BasicCilCompiler.csproj"/>
-        <ProjectReference Include="..\ExecutorLoggerModule\ExecutorLoggerModule.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Diagnostics.Abstractions\UniversalToolchain.Diagnostics.Abstractions.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Capabilities.Abstractions\UniversalToolchain.Capabilities.Abstractions.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Capabilities.Core\UniversalToolchain.Capabilities.Core.csproj"/>

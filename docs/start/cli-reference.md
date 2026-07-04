@@ -34,6 +34,12 @@ The `--` separates `dotnet run` options from Wistc options.
 
 `compiler` is a user-facing backend alias. In dialect files, the backend id is usually `cil`.
 
+## Debug trace status
+
+The current release does not support a `--trace` option and does not emit `logs.txt`.
+
+The legacy text-log viewer/logger has been removed from the release surface. The intended replacement is a future structured JSON trace described in [Debug Trace v2](/architecture/debug-trace-v2) and [Debug Trace Schema](/reference/debug-trace-schema). Until that CLI exists, use normal diagnostics, tests, dialect inspection commands and backend parity checks.
+
 ## Minimal expression
 
 ```text

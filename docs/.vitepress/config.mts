@@ -97,8 +97,9 @@ const bookSidebar = [
             { text: '6.6 AIR Reference', link: '/reference/air-reference' },
             { text: '6.7 Intrinsics Reference', link: '/reference/intrinsics-reference' },
             { text: '6.8 Backend Contracts', link: '/reference/backend-contracts' },
-            { text: '6.9 Project Rules', link: '/reference/project-rules' },
-            { text: '6.10 Documentation Rules', link: '/reference/documentation-rules' }
+            { text: '6.9 Debug Trace Schema', link: '/reference/debug-trace-schema' },
+            { text: '6.10 Project Rules', link: '/reference/project-rules' },
+            { text: '6.11 Documentation Rules', link: '/reference/documentation-rules' }
         ]
     }
 ]

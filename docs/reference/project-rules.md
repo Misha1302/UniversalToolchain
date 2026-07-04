@@ -28,6 +28,8 @@ The source of truth is [`docs/PROJECT_RULES.md`](/PROJECT_RULES). Do not treat t
 | Architecture | avoid hidden authorities and concrete Wist/profile coupling in framework layers |
 | DI/reflection | centralize reflection and keep behavior deterministic |
 | Testing | add tests for non-trivial parsing, binding, intrinsic, optimizer, parity and DI changes |
+| Hardcode control | behavior-selection strings need a clear owner and must not leak into generic framework layers |
+| Fitness checks | new architecture rules need practical tests, scripts, CI checks, or review checklist coverage |
 
 ## High-impact rules for documentation work
 
@@ -78,6 +80,7 @@ The canonical rules forbid, among other things:
 - stateful mutable static fields in new code;
 - convenience layers that become hidden framework authorities;
 - framework-level branching on concrete shipped profile ids when a general path exists.
+- hardcoded product, profile, module, backend, rule, intrinsic, or function names in generic framework layers.
 
 ## Contributor checklist
 

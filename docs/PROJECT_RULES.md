@@ -17,6 +17,9 @@ The goal is to keep the codebase deterministic, readable, easy to review, and co
 7. Preserve the project's existing universality, layering, and composition principles instead of narrowing them for local convenience.
 8. Prefer designs where loss of universality requires an explicit architectural change rather than a small special-case patch.
 9. Convenience layers must remain optional and must not become hidden framework-level sources of truth.
+10. New behavior-selection strings must have one clear owner: descriptor, provider, manifest, dialect definition, CLI contract, or shared constant at the owning boundary.
+11. Do not hardcode product, profile, module, backend, rule, intrinsic, or function names in generic framework layers.
+12. A new architectural rule should include a practical fitness check: test, analyzer, script, CI smoke check, or explicit review checklist entry.
 
 ---
 

@@ -20,6 +20,17 @@ callable-first baseline archive:
   sequences.
 - The roundtrip route has explicit `Off`, `Prefer`, `Require` and `Debug`
   policies for no-optimization routing.
+- Preview arithmetic and managed-call support are now selected through explicit
+  SSA route profiles instead of being hidden in default AIR/SSA converters.
+
+## Release surface cleanup
+
+- Removed the unsupported `LogsViewer` UI from the release package.
+- Removed `ExecutorLoggerModule` and `logs.txt` tests from the public solution
+  surface.
+- Added the Debug Trace v2 decision record and planned schema reference.
+- Kept current diagnostics, verifier and observer infrastructure as the
+  supported near-term debugging surface.
 
 ## Regression coverage
 
