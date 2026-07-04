@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <LangVersion>14</LangVersion>
+        <EmitDialectRuntimeManifest>true</EmitDialectRuntimeManifest>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\BasicCore\BasicCore.csproj"/>
+        <ProjectReference Include="..\IntermediateRepresentationAbstractions\IntermediateRepresentationAbstractions.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Dialects.Abstractions\UniversalToolchain.Dialects.Abstractions.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Ir.Abstractions\UniversalToolchain.Ir.Abstractions.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Semantics.Abstractions\UniversalToolchain.Semantics.Abstractions.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Ssa.Abstractions\UniversalToolchain.Ssa.Abstractions.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Ssa.Core\UniversalToolchain.Ssa.Core.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Ssa.Emission\UniversalToolchain.Ssa.Emission.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Ssa.Lowering\UniversalToolchain.Ssa.Lowering.csproj"/>
+    </ItemGroup>
+
+</Project>

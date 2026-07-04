@@ -49,9 +49,19 @@
         <ProjectReference Include="..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.ModuleContracts\UniversalToolchain.ModuleContracts.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Wist.Contracts\UniversalToolchain.Wist.Contracts.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Air.Analysis\UniversalToolchain.Air.Analysis.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Ir.Abstractions\UniversalToolchain.Ir.Abstractions.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Semantics.Abstractions\UniversalToolchain.Semantics.Abstractions.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.StandardSemantics\UniversalToolchain.StandardSemantics.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Ssa.Abstractions\UniversalToolchain.Ssa.Abstractions.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Ssa.Core\UniversalToolchain.Ssa.Core.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Ssa.Emission\UniversalToolchain.Ssa.Emission.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Ssa.Lowering\UniversalToolchain.Ssa.Lowering.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Ssa.Optimization\UniversalToolchain.Ssa.Optimization.csproj"/>
         <ProjectReference Include="..\CommentsModule\CommentsModule.csproj"/>
         <ProjectReference Include="..\Example\Example.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Testing.Infrastructure\UniversalToolchain.Testing.Infrastructure.csproj"/>
+        <ProjectReference Include="..\Wistc\Wistc.csproj" ReferenceOutputAssembly="false"/>
     </ItemGroup>
 
     <ItemGroup>

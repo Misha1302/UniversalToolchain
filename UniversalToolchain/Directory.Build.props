@@ -1,5 +1,14 @@
 <Project>
 
+    <PropertyGroup>
+        <!-- The net10 preview SDK used by this repository can fail project-reference graph
+             discovery nondeterministically when restore/build walks this large graph in
+             parallel. Keep project-reference traversal serial for reproducible local and CI
+             builds without changing legacy transitive-reference behavior globally. -->
+        <BuildInParallel>false</BuildInParallel>
+        <RestoreBuildInParallel>false</RestoreBuildInParallel>
+    </PropertyGroup>
+
     <ItemGroup>
         <FrameworkReference Include="Microsoft.AspNetCore.App" />
         <Reference Include="System.Reflection.MetadataLoadContext"

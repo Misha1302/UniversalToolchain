@@ -47,6 +47,38 @@ Expected direction:
 - Keep backend selection in the selected runtime plan.
 - Keep facades thin and free from concrete backend artifact branching.
 
+## Callable-first SSA pre-release boundary
+
+Current limitation:
+
+- SSA is a pre-release intermediate layer, not the default production route.
+- Arithmetic and managed calls are represented as ordinary callables with
+  semantic descriptors, but the bridge still covers a deliberately small
+  subset.
+- The no-optimization `AIR -> SSA -> AIR` route is available behind explicit
+  route policies (`Off`, `Prefer`, `Require`, `Debug`), but dialect syntax for
+  those policies is not final.
+- Managed callable descriptors support bool, int32, float64 and managed object
+  references. Unsupported CLR value types, unresolved generic methods and
+  execution-scoped provider descriptors are rejected rather than guessed.
+- `SSA -> AIR` emission still requires AIR-compatible stack shape for the
+  supported subset. It is not yet a general SSA scheduler.
+- Callable lowering can select AIR intrinsic and managed-call targets for the
+  current AIR route. CIL opcode and interpreter-primitive targets are explicit
+  diagnostics until those routes are implemented.
+- Constant folding is descriptor-driven and trust-gated, but only local
+  constant folding is implemented.
+
+Expected direction:
+
+- Keep SSA structural and callable-first.
+- Move more runtime/library operations into descriptor packages instead of SSA
+  core opcodes.
+- Add backend capability planning before lowering callables to AIR intrinsics,
+  CIL opcodes, managed calls or interpreter primitives.
+- Add differential interpreter/CIL tests before making broad performance or
+  parity claims for the SSA route.
+
 ## Bytecode tags and verifier coverage
 
 Current limitation:

@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <LangVersion>14</LangVersion>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\IntermediateRepresentationAbstractions\IntermediateRepresentationAbstractions.csproj"/>
+        <ProjectReference Include="..\UniversalIntermediateRepresentation\UniversalIntermediateRepresentation.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Air.Analysis\UniversalToolchain.Air.Analysis.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Ir.Abstractions\UniversalToolchain.Ir.Abstractions.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Semantics.Abstractions\UniversalToolchain.Semantics.Abstractions.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Ssa.Abstractions\UniversalToolchain.Ssa.Abstractions.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Ssa.Core\UniversalToolchain.Ssa.Core.csproj"/>
+    </ItemGroup>
+
+</Project>

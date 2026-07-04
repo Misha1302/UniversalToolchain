@@ -9,11 +9,22 @@ public class WistcCliEndToEndTests
     public void BuildCli()
     {
         var repoRoot = GetRepoRoot();
-        var build = TestContractsInfrastructure.RunProcess("dotnet", "build Wistc/Wistc.csproj -c Release -m:1 -nr:false", Path.Combine(repoRoot, "UniversalToolchain"), 180000);
+        var toolchainRoot = Path.Combine(repoRoot, "UniversalToolchain");
+        var configuration = ResolveBuildConfiguration();
+
+        _cliDllPath = ResolveCliDllPath(repoRoot, configuration);
+        if (File.Exists(_cliDllPath))
+            return;
+
+        var restore = TestContractsInfrastructure.RunProcess("dotnet", "restore Wistc/Wistc.csproj --source packages --ignore-failed-sources", toolchainRoot, 180000);
+        Assert.That(restore.TimedOut, Is.False, $"dotnet restore timed out.{Environment.NewLine}{restore.StdErr}{Environment.NewLine}{restore.StdOut}");
+        Assert.That(restore.ExitCode, Is.EqualTo(0), restore.StdErr + restore.StdOut);
+
+        var build = TestContractsInfrastructure.RunProcess("dotnet", $"build Wistc/Wistc.csproj -c {configuration} --no-restore -m:1 -nr:false", toolchainRoot, 420000);
         Assert.That(build.TimedOut, Is.False, $"dotnet build timed out.{Environment.NewLine}{build.StdErr}{Environment.NewLine}{build.StdOut}");
         Assert.That(build.ExitCode, Is.EqualTo(0), build.StdErr + build.StdOut);
 
-        _cliDllPath = ResolveCliDllPath(repoRoot);
+        _cliDllPath = ResolveCliDllPath(repoRoot, configuration);
         Assert.That(File.Exists(_cliDllPath), Is.True, $"CLI assembly not found at '{_cliDllPath}'.");
     }
 
@@ -142,9 +153,23 @@ public class WistcCliEndToEndTests
         return dialectPath;
     }
 
-    private static string ResolveCliDllPath(string repoRoot)
+    private static string ResolveBuildConfiguration()
     {
-        var binDirectory = Path.Combine(repoRoot, "UniversalToolchain", "Wistc", "bin", "Release");
+        var testDirectory = TestContext.CurrentContext.TestDirectory;
+        var segments = testDirectory.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        var binIndex = Array.LastIndexOf(segments, "bin");
+        if (binIndex >= 0 && binIndex + 1 < segments.Length && !string.IsNullOrWhiteSpace(segments[binIndex + 1]))
+            return segments[binIndex + 1];
+
+        return "Debug";
+    }
+
+    private static string ResolveCliDllPath(string repoRoot, string configuration)
+    {
+        var binDirectory = Path.Combine(repoRoot, "UniversalToolchain", "Wistc", "bin", configuration);
+        if (!Directory.Exists(binDirectory))
+            return Path.Combine(binDirectory, "net10.0", "Wistc.dll");
+
         var candidates = Directory.EnumerateFiles(binDirectory, "Wistc.dll", SearchOption.AllDirectories).ToArray();
 
         return candidates

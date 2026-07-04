@@ -1,4 +1,5 @@
 using BasicCore.Capabilities;
+using BasicCore.Ir;
 
 namespace BasicCore.Core;
 
@@ -82,7 +83,8 @@ internal sealed class PreparedExecutionBuilder<TCompilationOutput>(
         var air = methodsTranslator.Translate(targetBytecode);
         NotifyAfterAir(input, air, compiler.SupportedIntrinsics);
 
-        var targetIr = optimizers.Aggregate(air, (current, module) => module.ProcessIr(current, compiler));
+        var irPipeline = new AirOnlyIrPipelineExecutor<TCompilationOutput>(optimizers, compiler);
+        var targetIr = irPipeline.Optimize(air);
         NotifyAfterOptimizedAir(input, targetIr, compiler.SupportedIntrinsics);
         var allowedRuntimeProviderTypes = ExtractAllowedRuntimeProviderTypes(targetIr);
         middleEndModules.ForEach(module => module.InitMethodsCompiler(compiler));

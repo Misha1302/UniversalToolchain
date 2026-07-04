@@ -19,6 +19,7 @@ Read these when the task touches architecture, syntax, ownership, or cleanup:
 
 1. `docs/ARCHITECTURE_RULES.md`
 2. `docs/SYNTAX_OWNERSHIP_RULES.md`
+3. `docs/architecture/ir-routing-foundation.md` — current generic IR routing contracts and AIR-only compatibility bridge.
 
 ## Current user-facing overview
 
@@ -39,6 +40,9 @@ These documents describe possible future architecture and must not be treated as
 
 1. `docs/architecture/flame-ssa-optimizing-backend-design/index.md` — motivation, constraints, architecture, rollout, validation, and licensing plan for an optional SSA optimizing CIL backend based on Flame.
 2. `docs/architecture/typed-module-contracts-and-verifiers.md` — design proposal for typed module descriptors, AST ownership, bytecode/AIR verifiers, diagnostics, tests, and staged rollout.
+3. `docs/architecture/ir-routing-foundation.md` — implemented generic IR contracts, AIR CFG/stack verification, minimal SSA model, structural verifier, current minimal AIR-to-SSA/SSA-to-AIR converter boundaries and first verifier-gated SSA optimization boundary.
+4. `docs/architecture/callable-first-ssa.md` — implemented callable-first SSA foundation plus current route boundaries and future direction.
+5. `docs/releases/ssa-route-correctness-2026-07-04.md` — release note for the no-optimization SSA route correctness pass.
 
 ## Conflict rule
 

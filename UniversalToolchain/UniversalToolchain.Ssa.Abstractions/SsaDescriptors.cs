@@ -1,0 +1,189 @@
+using System.Collections.ObjectModel;
+using UniversalToolchain.Semantics.Abstractions;
+
+namespace UniversalToolchain.Ssa.Abstractions;
+
+public enum SsaEffectKind
+{
+    Pure,
+    ReadsMemory,
+    WritesMemory,
+    CallsExternalCode,
+    Terminates
+}
+
+public sealed class SsaEffectSummary
+{
+    private readonly ReadOnlyCollection<SsaEffectKind> _effects;
+
+    public SsaEffectSummary(IEnumerable<SsaEffectKind>? effects = null)
+    {
+        _effects = new ReadOnlyCollection<SsaEffectKind>((effects ?? [])
+            .Distinct()
+            .Order()
+            .ToList());
+    }
+
+    public static SsaEffectSummary Pure { get; } = new();
+
+    public IReadOnlyList<SsaEffectKind> Effects => _effects;
+
+    public bool IsPure => _effects.Count == 0 || _effects.All(static x => x == SsaEffectKind.Pure);
+}
+
+public sealed class SsaOpDescriptor
+{
+    public SsaOpDescriptor(
+        SsaOpId id,
+        IEnumerable<SsaTypeId>? operandTypes = null,
+        IEnumerable<SsaTypeId>? resultTypes = null,
+        SsaEffectSummary? effects = null,
+        IEnumerable<SsaAttributeKey>? requiredAttributes = null,
+        IEnumerable<SsaAttributeKey>? allowedAttributes = null)
+    {
+        Id = id;
+        OperandTypes = new ReadOnlyCollection<SsaTypeId>((operandTypes ?? []).ToList());
+        ResultTypes = new ReadOnlyCollection<SsaTypeId>((resultTypes ?? []).ToList());
+        Effects = effects ?? SsaEffectSummary.Pure;
+
+        var required = (requiredAttributes ?? []).Distinct().Order().ToList();
+        var allowed = (allowedAttributes ?? []).Distinct().Order().ToList();
+        foreach (var requiredAttribute in required)
+        {
+            if (!allowed.Contains(requiredAttribute))
+                allowed.Add(requiredAttribute);
+        }
+
+        allowed.Sort();
+        RequiredAttributes = new ReadOnlyCollection<SsaAttributeKey>(required);
+        AllowedAttributes = new ReadOnlyCollection<SsaAttributeKey>(allowed);
+    }
+
+    public SsaOpId Id { get; }
+
+    public IReadOnlyList<SsaTypeId> OperandTypes { get; }
+
+    public IReadOnlyList<SsaTypeId> ResultTypes { get; }
+
+    public SsaEffectSummary Effects { get; }
+
+    public IReadOnlyList<SsaAttributeKey> RequiredAttributes { get; }
+
+    public IReadOnlyList<SsaAttributeKey> AllowedAttributes { get; }
+}
+
+public sealed class SsaDescriptorSet
+{
+    private readonly ReadOnlyCollection<SsaOpDescriptor> _descriptors;
+    private readonly Dictionary<SsaOpId, SsaOpDescriptor> _byId;
+
+    public SsaDescriptorSet(IEnumerable<SsaOpDescriptor>? descriptors = null)
+    {
+        var ordered = (descriptors ?? [])
+            .OrderBy(static x => x.Id)
+            .ToList();
+
+        _byId = new Dictionary<SsaOpId, SsaOpDescriptor>();
+        foreach (var descriptor in ordered)
+        {
+            if (!_byId.TryAdd(descriptor.Id, descriptor))
+                throw new ArgumentException($"Duplicate SSA operation descriptor '{descriptor.Id}'.", nameof(descriptors));
+        }
+
+        _descriptors = new ReadOnlyCollection<SsaOpDescriptor>(ordered);
+    }
+
+    public static SsaDescriptorSet Empty { get; } = new();
+
+    public IReadOnlyList<SsaOpDescriptor> Values => _descriptors;
+
+    public bool TryGet(SsaOpId id, out SsaOpDescriptor descriptor) => _byId.TryGetValue(id, out descriptor!);
+}
+
+public static class SsaCoreDescriptors
+{
+    public static SsaDescriptorSet ConstantMaterialization { get; } = new(
+    [
+        new SsaOpDescriptor(
+            SsaOperations.ConstantInt32,
+            resultTypes: [SsaTypes.Int32],
+            requiredAttributes: [SsaAttributeKeys.ConstantValue],
+            allowedAttributes: [SsaAttributeKeys.ConstantValue]),
+        new SsaOpDescriptor(
+            SsaOperations.ConstantBool,
+            resultTypes: [SsaTypes.Bool],
+            requiredAttributes: [SsaAttributeKeys.ConstantValue],
+            allowedAttributes: [SsaAttributeKeys.ConstantValue]),
+        new SsaOpDescriptor(
+            SsaOperations.ConstantFloat64,
+            resultTypes: [SsaTypes.Float64],
+            requiredAttributes: [SsaAttributeKeys.ConstantValue],
+            allowedAttributes: [SsaAttributeKeys.ConstantValue])
+    ]);
+}
+
+public static class SsaPreviewSemanticDescriptors
+{
+    public static SemanticDescriptorSet ArithmeticInt32 { get; } = new(
+        types:
+        [
+            new SemanticTypeDescriptor(
+                SsaPreviewSemanticTypes.Bool,
+                SemanticTypeTraits.Predicate | SemanticTypeTraits.ValueObject | SemanticTypeTraits.Immutable,
+                "preview bool"),
+            new SemanticTypeDescriptor(
+                SsaPreviewSemanticTypes.Int32,
+                SemanticTypeTraits.Numeric | SemanticTypeTraits.ValueObject | SemanticTypeTraits.Immutable,
+                "preview int32"),
+            new SemanticTypeDescriptor(
+                SsaPreviewSemanticTypes.Float64,
+                SemanticTypeTraits.Numeric | SemanticTypeTraits.ValueObject | SemanticTypeTraits.Immutable,
+                "preview float64"),
+            new SemanticTypeDescriptor(
+                SsaPreviewSemanticTypes.Object,
+                SemanticTypeTraits.Reference | SemanticTypeTraits.RuntimeManaged,
+                "runtime managed object")
+        ],
+        callables:
+        [
+            new CallableDescriptor(
+                SsaPreviewCallables.AddInt32Unchecked,
+                new CallableSignature(
+                    [SsaPreviewSemanticTypes.Int32, SsaPreviewSemanticTypes.Int32],
+                    [SsaPreviewSemanticTypes.Int32]),
+                effects: SemanticEffectSummary.Pure,
+                determinism: Determinism.Deterministic,
+                algebraicTraits: AlgebraicTraits.Commutative | AlgebraicTraits.Associative,
+                trustLevel: SemanticTrustLevel.BuiltInTrusted,
+                displayName: "preview unchecked int32 addition"),
+            new CallableDescriptor(
+                SsaPreviewCallables.SubtractInt32Unchecked,
+                new CallableSignature(
+                    [SsaPreviewSemanticTypes.Int32, SsaPreviewSemanticTypes.Int32],
+                    [SsaPreviewSemanticTypes.Int32]),
+                effects: SemanticEffectSummary.Pure,
+                determinism: Determinism.Deterministic,
+                trustLevel: SemanticTrustLevel.BuiltInTrusted,
+                displayName: "preview unchecked int32 subtraction"),
+            new CallableDescriptor(
+                SsaPreviewCallables.MultiplyInt32Unchecked,
+                new CallableSignature(
+                    [SsaPreviewSemanticTypes.Int32, SsaPreviewSemanticTypes.Int32],
+                    [SsaPreviewSemanticTypes.Int32]),
+                effects: SemanticEffectSummary.Pure,
+                determinism: Determinism.Deterministic,
+                algebraicTraits: AlgebraicTraits.Commutative | AlgebraicTraits.Associative,
+                trustLevel: SemanticTrustLevel.BuiltInTrusted,
+                displayName: "preview unchecked int32 multiplication"),
+            new CallableDescriptor(
+                SsaPreviewCallables.EqualInt32,
+                new CallableSignature(
+                    [SsaPreviewSemanticTypes.Int32, SsaPreviewSemanticTypes.Int32],
+                    [SsaPreviewSemanticTypes.Bool]),
+                effects: SemanticEffectSummary.Pure,
+                determinism: Determinism.Deterministic,
+                algebraicTraits: AlgebraicTraits.Commutative | AlgebraicTraits.Comparison,
+                trustLevel: SemanticTrustLevel.BuiltInTrusted,
+                displayName: "preview int32 equality")
+        ]);
+}
