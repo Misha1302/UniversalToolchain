@@ -15,7 +15,7 @@ This page shows the shortest practical checks for Wist:
 Install the package first:
 
 ```bash ci-run=false
-dotnet add package UniversalToolchain.Wist --version 0.1.0-preview.1
+dotnet add package UniversalToolchain.Wist --version 0.1.0-preview.2
 ```
 
 Then run a simple formula through the public facade:
