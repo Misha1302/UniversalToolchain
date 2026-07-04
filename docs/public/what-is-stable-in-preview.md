@@ -1,6 +1,6 @@
 # What is stable in this preview
 
-UniversalToolchain.Wist `0.1.0-preview.1` is a first public preview. It is stable enough to try in controlled evaluation
+UniversalToolchain.Wist `0.1.0-preview.2` is a public preview. It is stable enough to try in controlled evaluation
 and prototype scenarios, but it is not a stable 1.0 contract.
 
 ## Stable enough to try
