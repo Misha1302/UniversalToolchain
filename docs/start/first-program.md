@@ -8,6 +8,7 @@ description: Run the smallest useful Wist program from a .NET host or through th
 This page shows the shortest practical checks for Wist:
 
 - package-first usage from a .NET console application;
+- validation before execution;
 - CLI execution from a repository checkout.
 
 ## Package-first .NET example
@@ -18,23 +19,52 @@ Install the package first:
 dotnet add package UniversalToolchain.Wist --version 0.1.0-preview.2
 ```
 
-Then run a simple formula through the public facade:
+Then compile a small controlled formula through the public facade:
 
 ```csharp
 using UniversalToolchain.Wist;
 
-using var wist = WistEngine.CreateSafeFormulas();
+using var rules = WistEngine.CreateSafeFormulas();
 
-var formula = wist.CompileFunc<double, double, double>(
-    "price * 0.9 + fee",
-    "price",
-    "fee");
+var rolloutScore = rules.Compile<Func<double, double, double, double>>(
+    "usage * 0.7 + reliability * 0.3 - incidents * 15.0",
+    "usage",
+    "reliability",
+    "incidents");
 
-double result = formula.Invoke(100.0, 5.0);
-Console.WriteLine(result); // 95
+double score = rolloutScore.CompiledDelegate(100.0, 90.0, 1.0);
+bool enableNewDashboard = score >= 80.0;
+
+Console.WriteLine(score);              // 82
+Console.WriteLine(enableNewDashboard); // True
 ```
 
-This is the normal first-contact path for application developers. `CompileFunc` compiles once and returns a typed function that can be invoked repeatedly.
+This is the normal first-contact path for application developers: compile once, keep the returned typed function, and call the compiled delegate from the hot path.
+
+## Validate before storing or executing rules
+
+```csharp
+using UniversalToolchain.Wist;
+
+using var rules = WistEngine.CreateSafeFormulas();
+
+var validation = rules.Validate(
+    """
+    let score = usage * 0.7
+    score
+    """,
+    new
+    {
+        usage = 100.0,
+        reliability = 90.0,
+        incidents = 1.0
+    });
+
+Console.WriteLine(validation.IsValid); // false
+Console.WriteLine(validation.Message);
+```
+
+The restricted safe-formula preset does not enable statement-style bindings such as `let`. If your application needs them, choose or build a dialect that explicitly includes those capabilities.
 
 ## Trusted C# interop example
 
@@ -90,13 +120,13 @@ Expected output:
 
 The interpreter path is useful when validating semantic parity. If a selected dialect does not expose `interpreter`, Wistc will reject that backend alias.
 
-### 3. Run the pricing demo
+### 3. Run the showcase demo
 
 ```bash
 dotnet run --project UniversalToolchain/Example/Example.csproj
 ```
 
-The pricing demo runs a pricing formula through hardcoded C# logic, the shipped `full-default-native` Wist preset and the shipped `pricing-restricted` dialect. It also demonstrates compiler, interpreter and fast native invocation paths.
+The showcase demo runs a user/LLM-suggested numeric decision formula through the safe Wist facade, compiles it into a typed delegate, and demonstrates restricted-surface rejection before execution.
 
 ## What happened internally
 
@@ -106,11 +136,11 @@ For the simple expression, the runtime path is:
 source -> parser -> AST -> bytecode/AIR -> selected backend -> result
 ```
 
-For `CompileFunc`, the important distinction is:
+For `Compile<TDelegate>`, the important distinction is:
 
 ```text
 cold path: source -> parse -> compile
-hot path: typed function -> Invoke(arg0, arg1, ...)
+hot path: typed delegate -> Invoke(arg0, arg1, ...)
 ```
 
 The same source should produce the same observable result in compiler and interpreter modes when both modes are available. This parity is one of the main correctness expectations for Wist backends.
@@ -127,4 +157,4 @@ The same source should produce the same observable result in compiler and interp
 
 ## Next
 
-Read the [CLI Reference](/start/cli-reference) if you want the command surface, or continue with the [Mental Model](/start/mental-model) and the [Wist Syntax Tour](/wist/syntax-tour).
+Read the [Showcase](/start/showcase), the [CLI Reference](/start/cli-reference), the [Mental Model](/start/mental-model), or the [Wist Syntax Tour](/wist/syntax-tour).
