@@ -24,7 +24,7 @@ compiled typed function -> Invoke(arg0, arg1, ...)
 
 The cold path pays for source handling and runtime selection. The hot path starts from an already compiled typed function.
 
-## Use `Compile<TDelegate>` for shipped-preset hot paths
+## Use typed `Compile` for shipped-preset hot paths
 
 ```csharp
 using UniversalToolchain.Wist;
@@ -107,5 +107,5 @@ invocation is the performance-oriented path.
 Fast compiled execution is not sandboxing.
 
 Restricted dialects and presets limit selected language/runtime surface. They do not create a hardened sandbox for
-arbitrary untrusted code. Untrusted code requires process/environment isolation, restricted OS permissions, and resource
-limits outside the runtime.
+hostile or arbitrary user-supplied input. For that scenario, isolate execution outside the runtime with appropriate
+process, environment, permission, and resource controls.
