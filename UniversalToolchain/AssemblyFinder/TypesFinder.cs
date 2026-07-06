@@ -88,6 +88,11 @@ public static class TypesFinder
             _badAssemblies.Add(Path.GetFileName(path));
             return false;
         }
+        catch (FileLoadException)
+        {
+            _badAssemblies.Add(Path.GetFileName(path));
+            return false;
+        }
         catch (UnauthorizedAccessException)
         {
             return false;
@@ -134,15 +139,19 @@ public static class TypesFinder
                 _badAssemblies.Add(fullName);
                 return false;
             }
-            catch (FileLoadException ex) when (ex.Message.Contains("administrator") || ex.Message.Contains("elevated"))
+            catch (FileLoadException)
             {
+                // Assembly discovery is best-effort. Test runners and optional tooling can place
+                // incompatible assemblies or mismatched dependency identities in the output directory.
+                // Such assemblies must not prevent C# interop from finding usable application types.
                 _badAssemblies.Add(fullName);
                 return false;
             }
             catch (Exception ex) when (ex is FileNotFoundException or
                                            DirectoryNotFoundException or
                                            UnauthorizedAccessException or
-                                           PathTooLongException)
+                                           PathTooLongException or
+                                           InvalidOperationException)
             {
                 _badAssemblies.Add(fullName);
                 return false;
