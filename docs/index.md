@@ -1,149 +1,91 @@
 # UniversalToolchain Documentation
 
-## UniversalToolchain
+## Do not execute AI-generated code. Execute tiny rules in a language your .NET app controls.
 
-Build restricted formulas and small DSL runtimes for .NET.
+UniversalToolchain is a compiler/runtime framework for restricted formulas and application DSLs.
 
-Use it when an expression evaluator is too small,
-C# scripting is too broad,
-and writing a compiler from scratch is too expensive.
+It is useful when configuration turns into logic, expression evaluators become too small, and C# scripting is too broad for the surface you want to expose.
+
+```text
+admin / config / LLM suggestion
+        -> tiny rule text
+        -> restricted Wist formula surface
+        -> validation or rejection
+        -> interpreter for diagnostics
+        -> CIL-backed typed delegate for hot paths
+        -> your application decides the side effect
+```
+
+Wist is the reference language. UniversalToolchain is the framework behind it.
 
 ## 30-second demo
 
 ```csharp
 using UniversalToolchain.Wist;
 
-using var wist = WistEngine.CreateSafeFormulas();
+using var rules = WistEngine.CreateSafeFormulas();
 
-var formula = wist.CompileFunc<double, double, double>(
-    "price * 0.9 + fee",
-    "price",
-    "fee");
+var rolloutScore = rules.Compile<Func<double, double, double, double>>(
+    "usage * 0.7 + reliability * 0.3 - incidents * 15.0",
+    "usage",
+    "reliability",
+    "incidents");
 
-double result = formula.Invoke(100.0, 5.0);
+double score = rolloutScore.CompiledDelegate(100.0, 90.0, 1.0);
+bool enableNewDashboard = score >= 80.0;
 ```
+
+The rule returns data. Your application performs the action.
+
+## Why developers should care
+
+Most apps grow through this path:
 
 ```text
-95
+hardcoded C# logic
+        -> configurable formulas
+        -> user/admin/LLM-suggested rules
+        -> restricted application DSL
+        -> compiled hot path
 ```
 
-<!-- langdev-2026-site:start -->
+UniversalToolchain gives you a middle ground between JSON-rule trees and broad scripting.
 
-## Featured technical story
+## What is stable enough to show in the preview
 
-### Build the Language, Then Make the Abstractions Disappear
+- `WistEngine` facade for application-level formula execution.
+- Restricted arithmetic/formula preset through `CreateSafeFormulas()` and `CreateRestrictedArithmetic()`.
+- One-off `Evaluate<T>()` for previews and non-hot paths.
+- `Validate()` and `TryCompile<TDelegate>()` for non-throwing validation flows.
+- `Compile<TDelegate>()` and `CompileFunc(...)` for typed compiled invocation.
+- Interpreter/compiler split for diagnostics, backend work, and parity checks.
 
-UniversalToolchain explores a practical form of extensible programming:
-language features are composed as modules during construction, then
-progressively lowered into concrete runtime or typed CIL operations
-before execution.
+The larger business-rule DSL direction is intentional, but the current public claim is scoped to supported formula shapes.
 
-The LangDev 2026 proposal demonstrates:
+## Start here
 
-- deterministic dialect and runtime-plan composition;
-- Bytecode → AIR → capability-gated specialization;
-- AIR interpreter and `DynamicMethod`-based CIL execution;
-- a real semantic-parity regression involving external bindings and local-variable shadowing;
-- reproducible regression tests and carefully scoped benchmark evidence.
-
-For supported compiled paths, the prepared hot invocation path does not
-perform per-operation language-module dispatch. The generated typed CIL
-is instead presented to the .NET JIT, while cross-backend tests protect
-the language semantics.
-
-[Read the talk proposal and reproducible demo](https://github.com/Misha1302/Wist2/tree/master/docs/talks/langdev-2026) ·
-[Follow the lowering walkthrough](https://github.com/Misha1302/Wist2/blob/master/docs/talks/langdev-2026/lowering-walkthrough.md) ·
-[Review benchmark evidence](https://github.com/Misha1302/Wist2/blob/master/docs/talks/langdev-2026/benchmark-evidence.md)
-
-<!-- langdev-2026-site:end -->
-
-## When to use / when not to use
-
-Use UniversalToolchain when:
-- you need controlled formulas/rules in a .NET app
-- you want to restrict available language features
-- you need a path from interpreter to compiled execution
-- you want reusable DSL infrastructure
-
-Do not use it when:
-- you only need one arithmetic expression
-- you need a hardened sandbox for untrusted code
-- you need a stable production API today
-- you need broad C# scripting
-
-## Preview status
-
-Current status:
-- Wist-first preview
-- .NET 10 baseline
-- compiler-first hot path + interpreter diagnostics/parity backend
-- restricted dialects are not hardened sandboxes
-- legacy text-log debugging has been removed; the redacted `trace.json` v2 artifact is implemented, while a full viewer and fine-grained stage dumps remain future work
-- APIs may change before stable release
-
-## I want to...
-
-- [embed formulas in .NET](/start/what-is-wist)
-- [build a restricted DSL](/build-dsls/)
-- [write a module](/write-modules/)
-- [study compiler/runtime internals](/internals/)
-
-
-
-UniversalToolchain is a Wist-first modular .NET DSL/runtime framework.
-
-It helps you build small embeddable languages for .NET applications when a plain expression evaluator is too limited, full C# scripting is too broad, and writing a compiler from scratch would be too expensive.
-
-Wist is the reference language built on top of UniversalToolchain. It is not the main product; it demonstrates how the framework pieces fit together.
-
-> This documentation is written as a developer manual. It is not a landing page, a project report, or a promotional overview.
-
-## In 60 seconds
-
-- **UniversalToolchain** is the framework.
-- **Wist** is the reference language used to validate the framework.
-- **Dialects** select modules, optimizers, security posture and execution backends.
-- **Modules** own reusable language features such as syntax, AST translation and bytecode behavior.
-- **Backends** execute the selected language surface through interpreter or compiled execution paths.
-- **Bytecode** and **AIR** keep frontend semantics separate from backend execution.
-
-A typical use case is a .NET application that needs configurable formulas or restricted business rules without exposing a full general-purpose language.
+| Goal | Start here |
+|---|---|
+| Install the package | [Installation](/start/installation) |
+| Run the first program | [First Program](/start/first-program) |
+| See the product showcase | [Showcase: controlled rules](/start/showcase) |
+| Understand Wist | [What is Wist?](/start/what-is-wist) |
+| Build a restricted DSL | [Building DSLs](/build-dsls/) |
+| Study internals | [Pipeline](/internals/pipeline) |
 
 ## What this is not
 
-UniversalToolchain is not a production-grade sandbox, not a replacement for C#, and not a finished general-purpose language workbench. Restricted dialects control language composition, but untrusted execution still needs external process or environment isolation.
+UniversalToolchain is not a hardened sandbox, not a replacement for C#, and not a finished general-purpose language workbench. Restricted dialects control the selected language/runtime surface, but untrusted execution still needs external process or environment isolation.
 
-See [Current Limitations](/limitations) for the current maturity boundaries.
+See [Current Limitations](/limitations) and [Restricted DSL Security](/build-dsls/restricted-dsl-security) before exposing user-authored formulas.
 
-## Entry points
-
-| Goal | Start here | Continue with |
-|---|---|---|
-| Run the reference language | [Start](/start/) | [Wist](/wist/) |
-| Compose a DSL | [Dialects](/build-dsls/) | [Module composition](/build-dsls/module-composition) |
-| Add a language feature | [Modules](/write-modules/) | [Bytecode generation](/write-modules/bytecode-generation) |
-| Study implementation details | [Internals](/internals/) | [Pipeline](/internals/pipeline) |
-| Check precise contracts | [Reference](/reference/) | [Backend contracts](/reference/backend-contracts) |
-| Track debug trace direction | [Debug Trace v2](/architecture/debug-trace-v2) | [Debug Trace Schema](/reference/debug-trace-schema) |
-
-## Recommended order
-
-1. [Start here](/start/)
-2. [Run the first Wist program](/start/first-program)
-3. [Read the mental model](/start/mental-model)
-4. [Build a minimal DSL](/build-dsls/minimal-dsl)
-5. [Write a module](/write-modules/)
-6. [Read the pipeline overview](/internals/pipeline)
-7. [Use the reference section](/reference/)
-
-## Pipeline
+## Architecture in one picture
 
 ```text
 .NET host application
   -> Wist or custom DSL source
   -> dialect-selected modules and backends
-  -> lexer modules
-  -> parser modules
+  -> lexer/parser modules
   -> AST
   -> bytecode + semantic tags
   -> AIR
@@ -162,9 +104,3 @@ See [Current Limitations](/limitations) for the current maturity boundaries.
 | [Modules](/write-modules/) | Extension points for adding language features. |
 | [Internals](/internals/) | Compiler pipeline, bytecode, AIR, optimizers, and backends. |
 | [Reference](/reference/) | Exact technical contracts and reference material. |
-
-## Project model
-
-UniversalToolchain is not a single monolithic compiler.
-
-The core idea is to make language features composable, testable, and reusable across dialects. Wist exists as the reference language that demonstrates how the framework pieces fit together.
