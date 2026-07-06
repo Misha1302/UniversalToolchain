@@ -22,10 +22,10 @@ jobs:
           global-json-file: UniversalToolchain/global.json
 
       - name: Restore benchmark project
-        run: dotnet restore UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj -p:Platform="Any CPU"
+        run: dotnet restore UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj
 
       - name: Build benchmark project
-        run: dotnet build UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj -c Release --no-restore -p:Platform="Any CPU"
+        run: dotnet build UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj -c Release --no-restore
 
       - name: Run benchmarks
         run: >
