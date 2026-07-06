@@ -14,6 +14,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\UniversalToolchain.Wist\UniversalToolchain.Wist.csproj"/>
         <ProjectReference Include="..\ArithmeticModule\ArithmeticModule.csproj"/>
         <ProjectReference Include="..\BasicCilCompiler\BasicCilCompiler.csproj"/>
         <ProjectReference Include="..\BasicCodeTranslator\BasicCodeTranslator.csproj"/>
