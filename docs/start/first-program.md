@@ -49,10 +49,7 @@ using UniversalToolchain.Wist;
 using var rules = WistEngine.CreateSafeFormulas();
 
 var validation = rules.Validate(
-    """
-    let score = usage * 0.7
-    score
-    """,
+    "let score = usage * 0.7\nscore",
     new
     {
         usage = 100.0,
