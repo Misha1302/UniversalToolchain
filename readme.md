@@ -1,5 +1,8 @@
 # UniversalToolchain
 
+[![NuGet](https://img.shields.io/nuget/vpre/UniversalToolchain.Wist.svg)](https://www.nuget.org/packages/UniversalToolchain.Wist)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/UniversalToolchain.Wist.svg)](https://www.nuget.org/packages/UniversalToolchain.Wist)
+
 **Do not execute AI-generated code. Execute tiny rules in a language your .NET app controls.**
 
 UniversalToolchain is a compiler/runtime framework for restricted formulas and application DSLs.
@@ -106,13 +109,13 @@ The current public preview is intentionally scoped:
 
 ## Install
 
-The package metadata in this repository is prepared for `UniversalToolchain.Wist` `0.1.0-preview.2`.
+`UniversalToolchain.Wist` `0.1.0-preview.2` is published on NuGet: <https://www.nuget.org/packages/UniversalToolchain.Wist/0.1.0-preview.2>.
 
 ```bash ci-run=false
 dotnet add package UniversalToolchain.Wist --version 0.1.0-preview.2
 ```
 
-For the current repository state, source checkout is still the authoritative path.
+Use source checkout when developing framework internals, modules, dialects, or repository documentation.
 
 Requirements:
 
