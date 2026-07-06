@@ -5,8 +5,10 @@ on:
   pull_request:
     paths:
       - "UniversalToolchain/Benchmarks/**"
-      - "UniversalToolchain/UniversalToolchain.Wist/**"
-      - "UniversalToolchain/UniversalToolchain.Dialects.Wist/**"
+      - "UniversalToolchain/UniversalToolchain.Wist/**/*.cs"
+      - "UniversalToolchain/UniversalToolchain.Wist/**/*.csproj"
+      - "UniversalToolchain/UniversalToolchain.Dialects.Wist/**/*.cs"
+      - "UniversalToolchain/UniversalToolchain.Dialects.Wist/**/*.csproj"
       - ".github/workflows/benchmark-smoke.yml"
 
 jobs:
@@ -23,10 +25,10 @@ jobs:
           global-json-file: UniversalToolchain/global.json
 
       - name: Restore benchmark project
-        run: dotnet restore UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj -p:Platform="Any CPU"
+        run: dotnet restore UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj
 
       - name: Build benchmark project
-        run: dotnet build UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj -c Release --no-restore -p:Platform="Any CPU"
+        run: dotnet build UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj -c Release --no-restore
 
       - name: Benchmark self-test
         run: >

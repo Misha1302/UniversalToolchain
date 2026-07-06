@@ -20,11 +20,14 @@ This project is a measurement surface, not marketing proof.
 
 ## Smoke
 
-```bash
+The smoke command performs restore, Release build, benchmark self-test, and a BenchmarkDotNet dry job. It is intentionally
+slower than ordinary documentation snippets, so the markdown checker gives this fenced block an explicit timeout.
+
+```bash ci-timeout=240s
 unset PLATFORM
 export DOTNET_CLI_HOME="$PWD/.dotnet-home"
-dotnet restore UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj -p:Platform="Any CPU"
-dotnet build UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj -c Release --no-restore -p:Platform="Any CPU"
+dotnet restore UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj
+dotnet build UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj -c Release --no-restore
 dotnet run -c Release --no-build \
   --project UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj \
   -- \
@@ -39,7 +42,7 @@ dotnet run -c Release --no-build \
 
 ## Full run
 
-```bash
+```bash ci-run=false
 unset PLATFORM
 export DOTNET_CLI_HOME="$PWD/.dotnet-home"
 dotnet run -c Release \

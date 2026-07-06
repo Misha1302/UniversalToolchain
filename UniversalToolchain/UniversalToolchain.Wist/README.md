@@ -1,95 +1,68 @@
 # UniversalToolchain.Wist
 
-A compiler-first Wist facade for .NET formula execution.
+**Tiny controlled rules for .NET applications.**
 
-This package is the intended first-contact API for .NET developers. It hides the compiler pipeline, dialect runtime host,
-manifests, `DynamicMethod`, `IAbstractIR`, and session APIs behind a small facade.
+`UniversalToolchain.Wist` is the first-contact package for UniversalToolchain. It gives .NET applications a small facade for restricted formula execution without exposing the lower-level compiler pipeline, dialect host, manifests, `DynamicMethod`, AIR, or session APIs.
 
-Compiler-first. Interpreter-supported. `Compile<TDelegate>` is the primary hot-path API. `CompileFunc` remains as a
-small compatibility convenience for one, two, and three arguments. `Evaluate` is the convenience one-off API.
+Use it when configuration starts turning into logic:
 
-## Requirements
-
-- .NET SDK `10.0.103` or a compatible prerelease SDK selected by the repository `global.json`.
-- Target framework: `net10.0`.
+```text
+admin / config / LLM suggestion
+        -> tiny rule text
+        -> restricted formula surface
+        -> validation or rejection
+        -> typed compiled delegate for hot paths
+        -> your application decides the side effect
+```
 
 ## Install
 
-The package metadata in this repository is prepared for `UniversalToolchain.Wist` `0.1.0-preview.2`. This package-first
-command works when that version is available from NuGet.org or another configured package source:
+The package metadata in this repository is prepared for `UniversalToolchain.Wist` `0.1.0-preview.2`.
 
 ```bash ci-run=false
 dotnet add package UniversalToolchain.Wist --version 0.1.0-preview.2
 ```
 
-## Fast execution: compile once, invoke many times
+Requirements:
 
-Use `Compile<TDelegate>` when the same formula is executed many times.
+- target framework: `net10.0`;
+- .NET SDK `10.0.103` or a compatible prerelease SDK accepted by the repository `global.json`.
 
-```csharp
-using UniversalToolchain.Wist;
-
-using var wist = WistEngine.CreateSafeFormulas();
-
-var formula = wist.Compile<Func<double, double, double>>(
-    "price * 0.9 + fee",
-    "price",
-    "fee");
-
-double result = formula.CompiledDelegate(100.0, 5.0);
-```
-
-`Compile<TDelegate>` compiles once and returns a typed program with backend-neutral metadata. The hot delegate path does
-not use dictionaries, anonymous-object reflection, session setup, backend strings, or boxing for typed primitive
-arguments.
-
-`CompileFunc` remains available for compatibility and small examples:
-
-```csharp
-var formula = wist.CompileFunc<double, double, double>(
-    "price * 0.9 + fee",
-    "price",
-    "fee");
-
-double result = formula.Invoke(100.0, 5.0);
-```
-
-## One-off execution with Evaluate
-
-Use `Evaluate` when a formula is executed rarely or when onboarding matters more than hot-path speed.
+## 30-second example
 
 ```csharp
 using UniversalToolchain.Wist;
 
-using var wist = WistEngine.CreateSafeFormulas();
+using var rules = WistEngine.CreateSafeFormulas();
 
-double result = wist.Evaluate<double>(
-    "price * 0.9 + fee",
-    new
-    {
-        price = 100.0,
-        fee = 5.0
-    });
+var rolloutScore = rules.Compile<Func<double, double, double, double>>(
+    "usage * 0.7 + reliability * 0.3 - incidents * 15.0",
+    "usage",
+    "reliability",
+    "incidents");
+
+double score = rolloutScore.CompiledDelegate(100.0, 90.0, 1.0);
+bool enableNewDashboard = score >= 80.0;
 ```
 
-`Evaluate` is intentionally convenient. It may inspect anonymous objects, map argument names, and run through the
-convenience execution path. It is not the primary performance path.
+The formula returns data. The host application performs the action.
 
 ## Validation without throwing
 
-Use `Validate` when a UI, import flow, or configuration pipeline needs to check a formula before execution.
+Use `Validate` before storing or executing user/admin/config-supplied formulas:
 
 ```csharp
 using UniversalToolchain.Wist;
 
-using var wist = WistEngine.CreateSafeFormulas();
+using var rules = WistEngine.CreateSafeFormulas();
 
-var validation = wist.Validate(
-    "price * 0.9 + fee",
+var validation = rules.Validate(
+    "let score = usage * 0.7\nscore",
     new
     {
-        price = 100.0,
-        fee = 5.0
+        usage = 100.0,
+        reliability = 90.0,
+        incidents = 1.0
     });
 
 if (!validation.IsValid)
@@ -98,79 +71,44 @@ if (!validation.IsValid)
 }
 ```
 
-Use `TryCompile<TDelegate>` when compilation should return diagnostics-like result data instead of throwing:
+The current safe-formula preset starts narrow. Statement-style bindings such as `let` are rejected by that restricted surface.
+
+## Hot path vs convenience path
+
+Use `Evaluate<T>` for one-off previews, admin tools, tests, and non-hot paths:
 
 ```csharp
-var compiled = wist.TryCompile<Func<double, double>>(
-    "price *",
-    "price");
+double score = rules.Evaluate<double>(
+    "usage * 0.7 + reliability * 0.3",
+    new
+    {
+        usage = 100.0,
+        reliability = 90.0
+    });
+```
 
-if (!compiled.IsSuccess)
+Use `Compile<TDelegate>` when the same formula is invoked repeatedly:
+
+```csharp
+var formula = rules.Compile<Func<double, double, double>>(
+    "usage * weight",
+    "usage",
+    "weight");
+
+for (var i = 0; i < usages.Length; i++)
 {
-    Console.WriteLine(compiled.Message);
+    results[i] = formula.CompiledDelegate(usages[i], weights[i]);
 }
 ```
 
-## Rule of thumb
+Rule of thumb:
 
 ```text
 Use Evaluate for one-off execution.
 Use Compile<TDelegate> for hot paths.
 Compilation is expensive.
-Invocation is fast.
+Invocation is the performance-oriented path.
 ```
-
-Avoid this in production hot loops:
-
-```csharp
-for (var i = 0; i < prices.Length; i++)
-{
-    results[i] = wist.Evaluate<double>(
-        "price * 0.9 + fee",
-        new { price = prices[i], fee = fees[i] });
-}
-```
-
-Prefer this:
-
-```csharp
-var formula = wist.Compile<Func<double, double, double>>(
-    "price * 0.9 + fee",
-    "price",
-    "fee");
-
-for (var i = 0; i < prices.Length; i++)
-{
-    results[i] = formula.CompiledDelegate(prices[i], fees[i]);
-}
-```
-
-## Compiler backend and interpreter backend
-
-The compiler backend is the default performance-oriented path for `CompileFunc` and convenience evaluation. The
-interpreter backend remains important for diagnostics, debugging, fallback, education, semantic parity, and backend/module
-development.
-
-The interpreter is not the main performance claim.
-
-## Performance model
-
-Cold path:
-
-```text
-source -> parse -> bind -> runtime selection -> compile/execute
-```
-
-Hot path:
-
-```text
-compiled typed function -> Invoke(arg0, arg1, ...)
-```
-
-The performance claim belongs to compiled typed CIL-backed invocation. It does not apply to `Evaluate`, compile time,
-every possible dialect, every module combination, or every backend.
-
-Do not benchmark `Evaluate` inside a tight loop when evaluating runtime throughput. Benchmark compiled `Invoke`.
 
 ## Presets
 
@@ -184,40 +122,22 @@ WistEngine.CreateBusinessRules();
 WistEngine.CreateTrusted();
 ```
 
-`CreateRestrictedArithmetic` is the recommended first-contact preset for restricted formula scenarios. It maps to the
-shipped `pricing-restricted` profile in this preview.
+`CreateRestrictedArithmetic` is the recommended first-contact preset for restricted formulas. `CreateSafeFormulas` remains a compatibility alias for it.
 
-`CreateFullNativePreview` maps to the broad native Wist preview profile. It is useful for trusted full-language Wist
-experiments, not for untrusted input.
+`CreateFullNativePreview`, `CreateBusinessRules`, and `CreateTrusted` are broad trusted-preview entry points in this preview. Do not use them for arbitrary untrusted input.
 
-`CreateSafeFormulas` remains a compatibility alias for `CreateRestrictedArithmetic`.
+## Security and trust
 
-`CreateBusinessRules` and `CreateTrusted` remain compatibility aliases for `CreateFullNativePreview` in this preview.
-They do not represent a separate stable business-rules runtime or a hardened trust boundary.
-
-`Safe` means a restricted language/runtime surface. It does not mean arbitrary untrusted code is safe to execute inside
-the current process.
-
-## Security note
-
-Restricted presets limit the selected language surface. They are not a hardened sandbox for arbitrary untrusted code.
-Compiled execution is a performance feature, not a sandbox boundary. Treat untrusted script execution as high risk and
-isolate it at the process/environment level when needed.
+Restricted presets limit the selected language/runtime surface. They are not hardened sandboxes for arbitrary untrusted code. Compiled execution is a performance feature, not a sandbox boundary. Treat untrusted script execution as high risk and isolate it at the process/environment level when needed.
 
 ## Current preview scope
 
-This initial facade intentionally exposes only:
+This facade currently exposes:
 
 - convenience `Evaluate<T>`;
-- validation without throwing;
+- non-throwing `Validate`;
 - typed fast `Compile<TDelegate>` and `TryCompile<TDelegate>`;
 - typed fast `CompileFunc` compatibility overloads for one, two, and three arguments;
 - backend-neutral compiled program metadata.
 
-Current preview contracts may change. Reusable object/session-based compiled artifacts, richer diagnostics, custom
-function registration, dialect builder APIs, and lower-level pass authoring APIs can evolve after this facade shape is
-validated.
-
-
-Use `WistEngine` for application-level formula execution.
-Use `WistRuntimeFacadeBuilder` only when working with lower-level Wist runtime or dialect integration scenarios.
+The larger direction is controlled application DSLs for .NET. The current stable preview claim is restricted numeric/formula execution, validation, and typed compiled invocation for supported shapes.
