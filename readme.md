@@ -1,73 +1,147 @@
 # UniversalToolchain
 
-Build formulas, embeddable DSLs, and restricted mini-languages for .NET applications.
+**Do not execute AI-generated code. Execute tiny rules in a language your .NET app controls.**
 
-UniversalToolchain is an embeddable .NET DSL/runtime framework for the moment when a plain expression evaluator is no
-longer enough.
+UniversalToolchain is a compiler/runtime framework for restricted formulas and application DSLs.
 
-Wist is the reference language in this repository. `UniversalToolchain.Wist` is the intended first-contact facade for
-.NET developers who want formula execution without starting from the lower-level runtime contracts.
+Start with small numeric rules. Validate them before execution. Interpret them when diagnostics matter. Compile hot paths into typed .NET delegates when throughput matters.
 
-**Compiler-first. Interpreter-supported.**
+```text
+admin / config / LLM suggestion
+        -> tiny rule text
+        -> restricted Wist formula surface
+        -> validation or rejection
+        -> interpreter for diagnostics
+        -> CIL-backed typed delegate for hot paths
+        -> your application decides the side effect
+```
 
-Wist can compile selected formula code into typed CIL-backed execution paths. The performance-oriented path is
-compiled typed invocation, not full convenience evaluation.
+Wist is the reference language in this repository. `UniversalToolchain.Wist` is the first-contact facade for .NET developers.
 
-## Current release scope
+## 30-second demo
 
-This repository state is positioned as a scoped public preview of the Wist facade and runtime foundations, not as a
-finalized 1.0 platform. The releaseable claim is formula evaluation, validation, restricted/full shipped Wist presets,
-CLI smoke coverage, package smoke coverage, and typed compiled invocation for supported shapes.
+A product manager, admin UI, config file, or LLM can suggest a rollout score formula:
 
-Neutral runtime host extraction, structured JSON trace, FunctionCalls/SafeMath, and the SSA route are active foundations
-with documented preview limits. They are not advertised here as a stable standalone runtime package family, a full trace
-viewer, a complete function authoring system, or a production SSA optimizer/backend layer.
+```text
+usage * 0.7 + reliability * 0.3 - incidents * 15.0
+```
 
-<!-- langdev-2026:start -->
+Your application owns the inputs, compiles the approved formula once, and decides what the score means:
 
-> **Featured technical story — LangDev 2026 proposal**
->
-> **Build the Language, Then Make the Abstractions Disappear: Extensible Programming on .NET**
->
-> UniversalToolchain composes language features as independent modules,
-> progressively lowers selected semantics through Bytecode and AIR into
-> concrete runtime or typed CIL operations, and checks that interpreter
-> and compiled execution preserve one language.
->
-> [Read the proposal and run the reproducible demo](docs/talks/langdev-2026/README.md)
+```csharp
+using UniversalToolchain.Wist;
 
-### Why this is interesting
+using var rules = WistEngine.CreateSafeFormulas();
 
-- Language features remain modular while the language is being constructed.
-- For supported compiled paths, per-operation module dispatch is removed from the prepared hot invocation path.
-- Typed CIL is handed to the .NET JIT for further optimization.
-- Cross-backend parity tests guard against one DSL silently becoming two languages.
-- Current benchmarks are split into hot prepared execution, convenience `Evaluate`, and cold compilation stories; publish numbers only with raw BenchmarkDotNet artifacts and environment metadata.
+var rolloutScore = rules.Compile<Func<double, double, double, double>>(
+    "usage * 0.7 + reliability * 0.3 - incidents * 15.0",
+    "usage",
+    "reliability",
+    "incidents");
 
-**Conference evidence:** [one-command demo](docs/talks/langdev-2026/README.md#reproducible-command) · [module-to-CIL lowering](docs/talks/langdev-2026/lowering-walkthrough.md) · [semantic-parity regression](docs/talks/langdev-2026/parity-regression.md) · [benchmarks and limitations](docs/talks/langdev-2026/benchmark-evidence.md)
+double score = rolloutScore.CompiledDelegate(100.0, 90.0, 1.0);
+bool enableNewDashboard = score >= 80.0;
+```
 
-<!-- langdev-2026:end -->
+The rule returns data. Your .NET application performs the action.
 
-## Requirements
+## The important part: rejection before execution
 
-- .NET SDK `10.0.103` or a compatible prerelease SDK selected by `UniversalToolchain/global.json`.
-- Target framework: `net10.0`.
-- SDK policy: `rollForward: latestMajor`, `allowPrerelease: true`.
+The preview safe-formula profile intentionally starts narrow. Statement-style bindings are not part of that restricted surface:
 
-## Install from NuGet
+```csharp
+using UniversalToolchain.Wist;
 
-The package metadata in this repository is prepared for `UniversalToolchain.Wist` `0.1.0-preview.2`. The package-first
-command works when that version is available from NuGet.org or another configured package source:
+using var rules = WistEngine.CreateSafeFormulas();
+
+var validation = rules.Validate(
+    """
+    let score = usage * 0.7
+    score
+    """,
+    new
+    {
+        usage = 100.0,
+        reliability = 90.0,
+        incidents = 1.0
+    });
+
+Console.WriteLine(validation.IsValid); // false
+Console.WriteLine(validation.Message); // Feature 'let' is not enabled by this preset.
+```
+
+That is the core product idea: your app does not accept an arbitrary programming language just because somebody wants configurable logic.
+
+## Why this exists
+
+Most applications eventually move through this path:
+
+```text
+hardcoded C# logic
+        -> configurable formulas
+        -> user/admin/LLM-suggested rules
+        -> restricted application DSL
+        -> compiled hot path
+```
+
+Without a language/runtime layer, teams usually choose one of two bad extremes:
+
+- encode logic as unreadable JSON trees;
+- expose a broad scripting language and hope nothing surprising happens.
+
+UniversalToolchain is for the middle ground: a language surface your application can own.
+
+## What is real in this preview
+
+The current public preview is intentionally scoped:
+
+| Capability | Current status |
+|---|---|
+| `WistEngine` facade | available in `UniversalToolchain.Wist` |
+| Restricted arithmetic/formula preset | available through `CreateSafeFormulas()` / `CreateRestrictedArithmetic()` |
+| One-off evaluation | available through `Evaluate<T>()` |
+| Non-throwing validation | available through `Validate()` and `TryCompile<TDelegate>()` |
+| Typed compiled hot path | available through `Compile<TDelegate>()` and `CompileFunc(...)` |
+| Interpreter backend | available for diagnostics, fallback, and semantic parity work |
+| Dialect composition | available through shipped `.wistdialect` profiles and lower-level APIs |
+| Full business-rule DSL | direction, not a stable 1.0 claim |
+| Hardened sandboxing | not claimed |
+
+## Install
+
+The package metadata in this repository is prepared for `UniversalToolchain.Wist` `0.1.0-preview.2`.
 
 ```bash ci-run=false
 dotnet add package UniversalToolchain.Wist --version 0.1.0-preview.2
 ```
 
-For the current repository state, the source workflow below is the authoritative path.
+For the current repository state, source checkout is still the authoritative path.
+
+Requirements:
+
+- .NET SDK `10.0.103` or a compatible prerelease SDK selected by `UniversalToolchain/global.json`.
+- Target framework: `net10.0`.
+- SDK policy: `rollForward: latestMajor`, `allowPrerelease: true`.
+
+## Run the showcase demo
+
+From the repository root:
+
+```bash ci-timeout=240
+dotnet run --project UniversalToolchain/Example/Example.csproj
+```
+
+The demo shows:
+
+- a user/LLM-suggested numeric decision rule;
+- compilation into a typed CIL-backed delegate;
+- repeated invocation without reparsing;
+- app-owned side effects;
+- restricted-surface rejection before execution.
 
 ## Fast path: compile once, invoke many times
 
-Use `WistEngine.Compile<TDelegate>` for code that will be invoked repeatedly:
+Use `Compile<TDelegate>` when a formula is invoked repeatedly:
 
 ```csharp
 using UniversalToolchain.Wist;
@@ -75,22 +149,23 @@ using UniversalToolchain.Wist;
 using var wist = WistEngine.CreateSafeFormulas();
 
 var formula = wist.Compile<Func<double, double, double>>(
-    "price * 0.9 + fee",
-    "price",
-    "fee");
+    "usage * weight",
+    "usage",
+    "weight");
 
-double result = formula.CompiledDelegate(100.0, 5.0);
+double result = formula.CompiledDelegate(100.0, 0.7);
 ```
 
 This is the intended hot path:
 
 - compile once;
-- invoke many times;
+- keep the returned program;
+- invoke the typed delegate repeatedly;
 - benchmark compiled delegate invocation, not `Evaluate` in a tight loop.
 
 ## One-off Evaluate
 
-Use `Evaluate` for one-off execution, onboarding, tests, validation UI, admin tools, and non-hot paths:
+Use `Evaluate` for onboarding, admin previews, tests, validation UI, and non-hot paths:
 
 ```csharp
 using UniversalToolchain.Wist;
@@ -98,38 +173,15 @@ using UniversalToolchain.Wist;
 using var wist = WistEngine.CreateSafeFormulas();
 
 double result = wist.Evaluate<double>(
-    "price * 0.9 + fee",
+    "usage * 0.7 + reliability * 0.3",
     new
     {
-        price = 100.0,
-        fee = 5.0
+        usage = 100.0,
+        reliability = 90.0
     });
 ```
 
-`Evaluate` is for convenience. It is not the primary performance path.
-
-## Validation
-
-Use `Validate` when a UI, import flow, or configuration pipeline needs non-throwing validation before execution:
-
-```csharp
-using UniversalToolchain.Wist;
-
-using var wist = WistEngine.CreateSafeFormulas();
-
-var validation = wist.Validate(
-    "price * 0.9 + fee",
-    new
-    {
-        price = 100.0,
-        fee = 5.0
-    });
-
-if (!validation.IsValid)
-{
-    Console.WriteLine(validation.Message);
-}
-```
+`Evaluate` is a convenience path. It is not the primary performance claim.
 
 ## Presets
 
@@ -145,52 +197,68 @@ using var businessRules = WistEngine.CreateBusinessRules();
 using var trusted = WistEngine.CreateTrusted();
 ```
 
-`CreateRestrictedArithmetic` is the recommended first-contact preset. It maps to the shipped `pricing-restricted` profile.
+`CreateRestrictedArithmetic` is the recommended first-contact preset. It maps to the shipped `pricing-restricted` profile in this preview.
+
 `CreateFullNativePreview` maps to the broad native Wist preview profile and must not be used for untrusted input.
 
-`CreateSafeFormulas` remains a compatibility alias for `CreateRestrictedArithmetic`. `CreateBusinessRules` and
-`CreateTrusted` remain compatibility aliases for `CreateFullNativePreview`; they do not represent a separate stable
-business-rules runtime or a hardened trust boundary.
+`CreateSafeFormulas` remains a compatibility alias for `CreateRestrictedArithmetic`. `CreateBusinessRules` and `CreateTrusted` remain compatibility aliases for `CreateFullNativePreview`; they do not represent a separate stable business-rules runtime or a hardened trust boundary.
 
-`Safe` means a restricted language/runtime surface. It does not mean arbitrary untrusted code is safe to execute inside
-the current process.
+## What this is not
 
-## Interpreter backend
+UniversalToolchain is not:
 
-The interpreter is a correctness, diagnostics, debugging, fallback, and semantic parity backend. The performance-oriented
-path is compiled typed CIL-backed invocation.
+- a hardened sandbox for arbitrary untrusted code;
+- a replacement for C#;
+- a finished general-purpose language workbench;
+- only a calculator;
+- only a parser generator.
 
-## Security and trust
+Restricted presets and dialects limit selected language/runtime surface. They are not process isolation, resource isolation, or a security boundary by themselves. For untrusted execution, use process/environment isolation with appropriate OS permissions and resource limits. See [docs/SECURITY.md](docs/SECURITY.md).
 
-Restricted presets and dialects limit selected language/runtime surface. They are not hardened sandboxes, and compiled
-execution is a performance feature rather than a sandbox boundary. For untrusted code, use process/environment isolation
-with appropriate OS permissions and resource limits. See [docs/SECURITY.md](docs/SECURITY.md).
+## When to use UniversalToolchain
 
-## Run the pricing demo
+Use it when:
 
-```bash
-dotnet run --project UniversalToolchain/Example/Example.csproj
+- JSON configuration is starting to become logic;
+- expression evaluators are too small for the direction of your product;
+- C# scripting is too broad for the surface you want to expose;
+- you want user/admin/LLM-suggested formulas to pass through validation before execution;
+- you need both interpreter and compiler paths for the same language surface;
+- you want configurable .NET logic without hardcoding every formula into the application.
+
+Typical scenarios:
+
+- scoring and rollout formulas;
+- alerting and monitoring formulas;
+- workflow decision scores;
+- LMS/autograding scores;
+- pricing and commission formulas;
+- restricted DSL experiments inside .NET applications.
+
+## Architecture at a glance
+
+```text
+Source
+  -> Lexer / Parser
+  -> AST
+  -> Bytecode
+  -> AIR
+  -> Optimizers
+  -> Compiler / Interpreter
+  -> Execution
 ```
 
-This runs a pricing formula through hardcoded C#, the shipped `full-default-native` Wist preset, and the shipped
-`pricing-restricted` dialect. It shows the same calculation executed through compiler, interpreter, and fast native
-invocation paths, plus rejection of a formula that the restricted dialect composition does not allow.
+Key project ideas:
 
-Code: [UniversalToolchain/Example/Scenarios/PricingDiscountScenario.cs](UniversalToolchain/Example/Scenarios/PricingDiscountScenario.cs) and [UniversalToolchain/Example/Scenarios/DslPricingCalculator.cs](UniversalToolchain/Example/Scenarios/DslPricingCalculator.cs).
+- framework-first, composition-based pipeline design;
+- Wist as the reference language, not the only product direction;
+- dialect-driven runtime composition through `.wistdialect` files;
+- dual backend model: `compiler` and `interpreter`;
+- semantic parity checks so one DSL does not silently become two languages.
 
-## What this demo shows
+## CLI quick start
 
-The pricing demo compares three ways to own the same pricing calculation:
-
-- hardcoded C# pricing logic,
-- the shipped `full-default-native` Wist preset for the formula,
-- a restricted pricing dialect with a narrower runtime surface,
-- compiler, interpreter, and fast native invocation paths for the same calculation,
-- rejection of a formula shape that the restricted dialect composition does not allow.
-
-## Tiny CLI quick start
-
-```bash
+```bash ci-timeout=240
 dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --backend compiler
 ```
 
@@ -198,187 +266,6 @@ Expected output:
 
 ```text
 12
-```
-
-## Advanced runtime integration example
-
-Use `WistRuntimeFacadeBuilder` only for advanced/lower-level Wist runtime and dialect integration scenarios.
-
-```csharp
-using UniversalToolchain.Dialects.Wist.Presets;
-
-using var wist = WistRuntimeFacadeBuilder
-    .CreateDefault()
-    .WithShippedDialectPreset(WistShippedDialectPresets.PricingRestricted)
-    .Build();
-
-var attempt = wist.TryCompile(
-    """
-    let discount = 0.9
-    price * discount + fee
-    """,
-    new Dictionary<string, Type>
-    {
-        ["price"] = typeof(double),
-        ["fee"] = typeof(double)
-    },
-    backend: "interpreter");
-```
-
-## When to use UniversalToolchain
-
-Use UniversalToolchain when:
-
-- a normal expression evaluator is too narrow for your formulas or DSL code,
-- users need a syntax that matches your domain instead of C# syntax,
-- you need a dialect profile that allows only selected language features,
-- the same language should support compiler and interpreter backend aliases,
-- you need an inspectable execution pipeline for validation, diagnostics, or backend work,
-- you want configurable business logic without hardcoding every formula or policy into the application.
-
-Typical scenarios include pricing formulas, routing policies, internal workflow calculations, and DSL experiments inside
-.NET applications.
-
-## When not to use UniversalToolchain
-
-Do not start here when:
-
-- you only need trivial arithmetic formulas,
-- you only need a subset of C# expressions,
-- you only need parser generation,
-- you do not need a DSL or runtime story,
-- a simple library call can already evaluate all formulas or policies you plan to support.
-
-For those cases, a smaller evaluator, a rules library, or a parser generator is usually easier to own.
-
-## Comparison
-
-For a practical positioning guide against the nearest alternatives, see [UniversalToolchain vs Nearby Alternatives](docs/alternatives.md).
-
-At a high level:
-
-- **NCalc / Dynamic Expresso** are strong when you only need expression evaluation.
-- **RulesEngine** is strong when you need JSON-defined business rules in a .NET application.
-- **ANTLR / csly / Irony** are strong when parser construction is the main problem.
-- **JetBrains MPS** is strong when the target is a full language workbench with richer tooling.
-- **UniversalToolchain** becomes relevant when you need a restricted, embeddable DSL/runtime stack for .NET rather than only a parser, evaluator, or workbench.
-
-## Why this project exists
-
-Many language projects repeatedly rebuild the same layers: parsing, AST/IR transforms, runtime composition, and execution. UniversalToolchain focuses on reusable composition so capabilities can be assembled from modules instead of hardcoded into one implementation path. See [Why this exists](docs/why-this-exists.md) for the longer product and architecture rationale.
-
-This repository contains:
-
-- **UniversalToolchain**: reusable framework infrastructure.
-- **Wist**: a reference language used to validate and evolve the framework architecture.
-
-For a stable project map, see [Global project overview](docs/global-project-overview.md). For a stricter boundary between framework, reference language, and current limitations, see [Project positioning](docs/project-positioning.md). For an external-style evaluative architecture review, see [Technical due diligence review](docs/reviews/technical-due-diligence.md).
-
-## Architecture at a glance
-
-At a high level:
-
-```text
-Source -> Lexer/Parser -> AST -> Bytecode -> AIR -> Optimization -> Compiler/Interpreter -> Execution
-```
-
-Key repository architecture concepts:
-
-- framework-first, composition-based pipeline design,
-- dual backends (`compiler`, `interpreter`),
-- dialect-driven runtime composition via `.wistdialect` files,
-- manifest-backed runtime selection before host creation,
-- bytecode/AIR as semantic pipeline layers,
-- CLI and programmatic entry points for validation and integration.
-
-## Canonical Wist runtime path
-
-Normal Wist dialect execution follows this path:
-
-```text
-dialect source -> dialect compilation -> build plan -> manifest-backed runtime selection -> host creation -> execution
-```
-
-Composition and host creation are separate stages. `ComposeText`/`ComposeFile` compile the dialect DSL, build a
-deterministic plan, and resolve selected modules, optimizers, and backends from runtime manifests. `CreateHost` then
-builds the runtime provider for that resolved selection and activates only the selected backend registrars.
-
-The selection-driven path is the main dialect execution story. Runtime activation in that path uses targeted, exact loading
-of selected runtime component and registrar types from manifests. Shipped profiles do not require explicit backend imports in
-normal CLI, facade, or example usage. Broad eager discovery and compatibility helpers still exist, but they are not the
-canonical path for running shipped dialect profiles.
-
-## How features plug into the pipeline
-
-Framework features are introduced through extension points instead of one monolithic compiler path.
-
-For example, a frontend module can participate in several stages:
-
-- text preprocessing,
-- lexer initialization,
-- lexeme post-processing,
-- parser initialization,
-- AST post-processing,
-- bytecode post-processing,
-- AST-to-bytecode translator initialization.
-
-Module authoring is convention-heavy. Before adding or changing modules, read [Module authoring guide](docs/guides/module-authoring.md) and [Module contracts](docs/contracts/module-contracts.md).
-
-## CLI usage (`Wistc`)
-
-Available verbs:
-
-- `run`
-- `repl`
-- `dialect-inspect`
-- `dialect-demo`
-- `features`
-
-Common options:
-
-- `--backend <compiler|interpreter>`
-- `--dialect-file <path>`
-- `--list-modules`
-
-`run` options:
-
-- `--file <path>`
-- `--eval`
-
-`dialect-demo` options:
-
-- `--file <path>`
-- `--scenario <valid|invalid-syntax|semantic-conflict|unresolved-module>`
-
-The user-facing `compiler` backend alias selects the canonical `cil` backend when a dialect declares `backend cil` or the
-`compiler` alias. `--eval` is a flag; the source expression itself is passed as the positional code argument.
-
-Examples:
-
-```bash ci-timeout=240
-# Run a .wist file with an explicit dialect definition
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/full-default/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/full-default/program.wist --backend interpreter
-
-# Evaluate one expression
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --backend compiler
-```
-
-```bash ci-run=false
-# Start REPL
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- repl --backend compiler
-```
-
-## Dialect usage
-
-```bash ci-timeout=240
-# Run code with a dialect definition
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/full-default/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/full-default/program.wist --backend interpreter
-
-# Inspect a dialect file
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- dialect-inspect --file UniversalToolchain/Dialects/examples/wist/full-default/dialect.wistdialect
-
-# Run the dialect demo workflow
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- dialect-demo --file UniversalToolchain/Dialects/examples/wist/full-default/dialect.wistdialect
 ```
 
 ## Dialect examples
@@ -390,78 +277,43 @@ Located under `UniversalToolchain/Dialects/examples/wist`:
 - `function-calls-safe-math`: neutral FunctionCalls + SafeMath profile without rule declarations.
 - `minimal-arithmetic`: smallest interpreter arithmetic profile.
 - `minimal-arithmetic-native`: smallest native arithmetic profile over `cil`.
-- `pricing-restricted`: composition-constrained pricing profile with a restricted runtime surface.
+- `pricing-restricted`: composition-constrained formula profile with a restricted runtime surface.
 - `restricted-sandbox`: composition-constrained profile, not a hardened sandbox guarantee.
 
-These directories are runnable canonical references for the manifest-driven dialect path. Each README includes
-repository-root CLI commands, expected behavior, and the capabilities intentionally excluded by that profile.
+## Technical story
 
-Public dialect documentation should follow the `.wistdialect` shape used by these shipped profiles. Secondary parser experiments must not be treated as the runtime dialect contract unless the runtime path is intentionally migrated to them.
+UniversalToolchain also has a compiler/runtime research angle: language features are composed as modules, selected semantics lower through Bytecode and AIR, and supported hot paths become typed CIL operations handed to the .NET JIT.
 
-## Why .NET 10 right now?
+Conference-oriented material:
 
-The current validation baseline is .NET 10 (`net10.0`) with SDK `10.0.103`.
-Active runtime and backend work is being verified there first, so older target frameworks are not the current compatibility target.
+- [LangDev 2026 proposal](docs/talks/langdev-2026/README.md)
+- [Module-to-CIL lowering walkthrough](docs/talks/langdev-2026/lowering-walkthrough.md)
+- [Semantic parity regression](docs/talks/langdev-2026/parity-regression.md)
+- [Benchmark evidence and limitations](docs/talks/langdev-2026/benchmark-evidence.md)
 
 ## Build and test from source
 
 From repository root:
 
 ```bash ci-run=false
-dotnet restore UniversalToolchain/Wist.sln
-dotnet build UniversalToolchain/Wist.sln -c Release --no-restore
-dotnet test UniversalToolchain/Tests/Tests.csproj -c Release --no-build
-dotnet test UniversalToolchain/UniversalToolchain.Modules.Tests/UniversalToolchain.Modules.Tests.csproj -c Release --no-build
-dotnet test UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolchain.Dialects.Tests.csproj -c Release --no-build
+dotnet restore UniversalToolchain/Wist.sln -p:Platform="Any CPU"
+dotnet build UniversalToolchain/Wist.sln -c Release --no-restore -p:Platform="Any CPU"
+dotnet test UniversalToolchain/Wist.sln -c Release --no-build -p:Platform="Any CPU"
 ```
 
-## Security note
+## Documentation map
 
-The repository does **not** claim hardened sandboxing for untrusted code. Use process/environment isolation for
-untrusted execution scenarios.
-See [docs/SECURITY.md](docs/SECURITY.md) for the trust model.
-
-## Known limitations
-
-This repository is actively evolving, and some areas are intentionally treated as design-in-progress:
-
-- some bootstrap/runtime wiring is still concrete rather than fully descriptor-driven,
-- reflection-based interop/discovery helpers still exist for compatibility and bootstrap scenarios,
-- constrained dialect composition is not equivalent to hardened sandboxing,
-- bytecode tags and module authoring contracts are being formalized,
-- backend-agnostic artifact handling is still an active architecture area,
-- the reference language Wist is still the main proving ground for framework decisions.
-
-See [Current limitations](docs/limitations.md) for the explicit limitation and wording guide.
-
-## Canonical documentation map
-
-- Project overview: [readme.md](readme.md)
-- Global project overview: [docs/global-project-overview.md](docs/global-project-overview.md)
-- Project positioning and public wording: [docs/project-positioning.md](docs/project-positioning.md)
+- Start: [docs/index.md](docs/index.md)
+- Installation: [docs/start/installation.md](docs/start/installation.md)
+- First program: [docs/start/first-program.md](docs/start/first-program.md)
+- Project positioning: [docs/project-positioning.md](docs/project-positioning.md)
 - Performance model: [docs/public/performance-model.md](docs/public/performance-model.md)
 - Preview stability: [docs/public/what-is-stable-in-preview.md](docs/public/what-is-stable-in-preview.md)
 - Current limitations: [docs/limitations.md](docs/limitations.md)
-- Technical due diligence review: [docs/reviews/technical-due-diligence.md](docs/reviews/technical-due-diligence.md)
-- Current runtime pipeline: [docs/current-canonical-runtime-pipeline.md](docs/current-canonical-runtime-pipeline.md)
-- Runtime manifest activation model: [docs/runtime-manifest-activation-model.md](docs/runtime-manifest-activation-model.md)
-- Runtime manifest format: [docs/runtime-manifest-format.md](docs/runtime-manifest-format.md)
-- Bytecode and AIR architecture: [docs/architecture/bytecode-and-air.md](docs/architecture/bytecode-and-air.md)
-- Backend and semantic parity contracts: [docs/architecture/backends-and-parity.md](docs/architecture/backends-and-parity.md)
-- Module authoring guide: [docs/guides/module-authoring.md](docs/guides/module-authoring.md)
-- Module hidden contracts: [docs/contracts/module-contracts.md](docs/contracts/module-contracts.md)
 - Architecture guardrails: [docs/ARCHITECTURE_RULES.md](docs/ARCHITECTURE_RULES.md)
-- Why this exists: [docs/why-this-exists.md](docs/why-this-exists.md)
-- Nearby alternatives: [docs/alternatives.md](docs/alternatives.md)
-- Coding standards: [docs/PROJECT_RULES.md](docs/PROJECT_RULES.md)
 - Contribution workflow: [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)
 - Security policy: [docs/SECURITY.md](docs/SECURITY.md)
 
 ## License
 
 Licensed under Apache License 2.0. See [LICENSE](LICENSE).
-
-
-## Development validation
-
-See [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md) for required release commands and manual smoke checks.
