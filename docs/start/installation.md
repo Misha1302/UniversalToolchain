@@ -43,16 +43,16 @@ using UniversalToolchain.Wist;
 
 using var wist = WistEngine.CreateSafeFormulas();
 
-var formula = wist.CompileFunc<double, double, double>(
+var formula = wist.Compile<Func<double, double, double>>(
     "price * 0.9 + fee",
     "price",
     "fee");
 
-double result = formula.Invoke(100.0, 5.0);
+double result = formula.CompiledDelegate(100.0, 5.0);
 Console.WriteLine(result); // 95
 ```
 
-This is the recommended first-contact shape: compile once, keep the returned typed function and call `Invoke` from the hot path.
+This is the recommended first-contact shape for preview.2: use `Compile<TDelegate>`, compile once, keep the returned typed program and call `CompiledDelegate` from the hot path.
 
 ## Trusted interop example
 
@@ -63,12 +63,12 @@ using UniversalToolchain.Wist;
 
 using var wist = WistEngine.CreateTrusted();
 
-var calcHypotenuse = wist.CompileFunc<double, double, double>(
+var calcHypotenuse = wist.Compile<Func<double, double, double>>(
     "System.Math.Sqrt(x * x + y * y)",
     "x",
     "y");
 
-double result = calcHypotenuse.Invoke(7.0, 24.0);
+double result = calcHypotenuse.CompiledDelegate(7.0, 24.0);
 Console.WriteLine(result); // 25
 ```
 

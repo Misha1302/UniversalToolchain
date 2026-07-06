@@ -42,10 +42,7 @@ internal static class WistArgumentReader
     {
         var result = new Dictionary<string, Type>(StringComparer.Ordinal);
         foreach (var argument in arguments)
-        {
-            ValidateName(argument.Name);
-            result[argument.Name] = argument.Type;
-        }
+            AddArgumentType(result, argument.Name, argument.Type);
 
         return result;
     }
@@ -65,6 +62,16 @@ internal static class WistArgumentReader
         }
 
         return result;
+    }
+
+    private static void AddArgumentType(IDictionary<string, Type> target, string name, Type type)
+    {
+        ValidateName(name);
+
+        if (target.ContainsKey(name))
+            Thrower.Argument(nameof(target), $"Duplicate Wist argument name '{name}'.");
+
+        target[name] = type.ArgNotNull();
     }
 
     private static void AddArgument(IDictionary<string, object?> target, string name, object? value)

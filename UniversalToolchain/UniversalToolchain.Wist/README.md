@@ -137,7 +137,7 @@ This facade currently exposes:
 - convenience `Evaluate<T>`;
 - non-throwing `Validate`;
 - typed fast `Compile<TDelegate>` and `TryCompile<TDelegate>`;
-- typed fast `CompileFunc` compatibility overloads for one, two, and three arguments;
+- `CompileFunc` compatibility overloads for one, two, and three arguments;
 - backend-neutral compiled program metadata.
 
 The larger direction is controlled application DSLs for .NET. The current stable preview claim is restricted numeric/formula execution, validation, and typed compiled invocation for supported shapes.

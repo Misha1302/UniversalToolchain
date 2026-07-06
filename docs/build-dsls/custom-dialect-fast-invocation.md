@@ -14,15 +14,15 @@ using UniversalToolchain.Wist;
 
 using var wist = WistEngine.CreateSafeFormulas();
 
-var formula = wist.CompileFunc<double, double, double>(
+var formula = wist.Compile<Func<double, double, double>>(
     "price * 0.9 + fee",
     "price",
     "fee");
 
-double result = formula.Invoke(100.0, 5.0);
+double result = formula.CompiledDelegate(100.0, 5.0);
 ```
 
-For custom dialects there is no `WistRuntimeFacade.CompileFunc<...>(...)` method yet. The current practical path is to build a runtime from a dialect file, compile once, and reuse the compiled artifact.
+For custom dialects there is no `WistRuntimeFacade.Compile<TDelegate>(...)` method yet. The current practical path is to build a runtime from a dialect file, compile once, and reuse the compiled artifact.
 
 ## Example dialect file
 
@@ -179,7 +179,7 @@ If this guard fails, use `artifact.CreateSession()` instead.
 
 | Scenario | Recommended API |
 |---|---|
-| Shipped preset, formula hot path | `WistEngine.CompileFunc` |
+| Shipped preset, formula hot path | `WistEngine.Compile<TDelegate>` |
 | Custom dialect, one-off execution | `runtime.Run(...)` |
 | Custom dialect, repeated execution | `runtime.TryCompile(...)` + `artifact.CreateSession()` |
 | Custom dialect, low-level CIL invocation | `ICompiledArtifact<DynamicMethod>` + `DynamicMethodInvoker`, after signature validation |
@@ -205,15 +205,15 @@ Fast compiled execution is not sandboxing. It improves hot-path throughput; it d
 
 ## Future API direction
 
-The current code is usable but too low-level for most users. A future API should hide the `DynamicMethod` cast and expose a custom-dialect equivalent of `WistEngine.CompileFunc`:
+The current code is usable but too low-level for most users. A future API should hide the `DynamicMethod` cast and expose a custom-dialect equivalent of `WistEngine.Compile<TDelegate>`:
 
 ```csharp
-var formula = runtime.CompileFunc<double, double, double>(
+var formula = runtime.Compile<Func<double, double, double>>(
     "price * 0.9 + fee",
     "price",
     "fee");
 
-double result = formula.Invoke(100.0, 5.0);
+double result = formula.CompiledDelegate(100.0, 5.0);
 ```
 
 Until that exists, use artifact sessions for normal custom-dialect reuse and the `DynamicMethod` path only as a low-level CIL escape hatch.

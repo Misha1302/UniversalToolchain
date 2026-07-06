@@ -213,7 +213,7 @@ public sealed class WistEngineSmokeTests
     }
 
     [Test]
-    public void CompileFunc_WhenFormulaUsesUnsupportedSafeFormulaShape_FailsClearly()
+    public void CompileFunc_WhenFormulaUsesUnsupportedSafeFormulaShape_FailsWithoutFacadeSyntaxScan()
     {
         using var wist = WistEngine.CreateSafeFormulas();
 
@@ -229,10 +229,25 @@ public sealed class WistEngineSmokeTests
         Assert.Multiple(() =>
         {
             Assert.That(exception, Is.Not.Null);
-            Assert.That(exception, Is.TypeOf<WistDialectFeatureException>());
-            Assert.That(exception!.Message, Does.Contain("Feature 'let' is not enabled"));
-            Assert.That(exception.Message, Does.Contain("SafeFormulas"));
-            Assert.That(exception.Message, Does.Contain("Variables"));
+            Assert.That(exception!.Message, Is.Not.Empty);
+        });
+    }
+
+    [Test]
+    public void CompileFunc_WhenParameterNamesAreDuplicated_FailsClearly()
+    {
+        using var wist = WistEngine.CreateSafeFormulas();
+
+        var exception = Assert.Catch(
+            () => wist.CompileFunc<double, double, double>(
+                "price * 0.9 + price",
+                "price",
+                "price"));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(exception, Is.Not.Null);
+            Assert.That(exception!.Message, Does.Contain("Duplicate Wist argument name"));
         });
     }
 
@@ -276,10 +291,8 @@ public sealed class WistEngineSmokeTests
         Assert.Multiple(() =>
         {
             Assert.That(result.IsValid, Is.False);
-            Assert.That(result.Message, Does.Contain("Feature 'let' is not enabled"));
-            Assert.That(result.Message, Does.Contain("SafeFormulas"));
-            Assert.That(result.Message, Does.Contain("Variables"));
-            Assert.That(result.Exception, Is.TypeOf<WistDialectFeatureException>());
+            Assert.That(result.Message, Is.Not.Empty);
+            Assert.That(result.Exception, Is.Not.Null);
         });
     }
 }

@@ -1,5 +1,4 @@
 using System.Reflection.Emit;
-using CommonExceptions;
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Integration;
@@ -235,57 +234,11 @@ public sealed class WistEngine : IDisposable
         }
     }
 
-    private Exception NormalizeUserFacingException(string code, Exception exception)
+    private static Exception NormalizeUserFacingException(string code, Exception exception)
     {
-        if (TryCreateDisabledFeatureException(code, exception, out var disabledFeatureException))
-            return disabledFeatureException;
-
+        _ = code.ArgNotNull();
         return exception;
     }
-
-    private bool TryCreateDisabledFeatureException(string code, Exception exception, out Exception result)
-    {
-        result = null!;
-
-        if (!UsesRestrictedFormulaSurface(_options.Preset))
-            return false;
-
-        if (exception is not LexerException)
-            return false;
-
-        if (!ContainsTokenBoundary(code, "let"))
-            return false;
-
-        result = new WistDialectFeatureException(
-            $"Feature 'let' is not enabled by preset '{_options.Preset}'. " +
-            "The selected restricted formula dialect excludes variable declarations from the Variables module. " +
-            "Use WistPreset.FullNativePreview or a custom dialect that includes Variables when statement-style bindings are required.",
-            exception);
-        return true;
-    }
-
-    private static bool UsesRestrictedFormulaSurface(WistPreset preset) =>
-        preset is WistPreset.RestrictedArithmetic or WistPreset.SafeFormulas;
-
-    private static bool ContainsTokenBoundary(string code, string token)
-    {
-        for (var index = 0; index <= code.Length - token.Length; index++)
-        {
-            if (!string.Equals(code.Substring(index, token.Length), token, StringComparison.Ordinal))
-                continue;
-
-            var hasLeftBoundary = index == 0 || !IsIdentifierCharacter(code[index - 1]);
-            var rightIndex = index + token.Length;
-            var hasRightBoundary = rightIndex == code.Length || !IsIdentifierCharacter(code[rightIndex]);
-            if (hasLeftBoundary && hasRightBoundary)
-                return true;
-        }
-
-        return false;
-    }
-
-    private static bool IsIdentifierCharacter(char value) =>
-        char.IsLetterOrDigit(value) || value == '_';
 
     private static OrderedDictionary<string, Type> CreateDeclaredBindings(IReadOnlyDictionary<string, object?> arguments)
     {

@@ -25,16 +25,16 @@ using UniversalToolchain.Wist;
 
 using var wist = WistEngine.CreateSafeFormulas();
 
-var formula = wist.CompileFunc<double, double, double>(
+var formula = wist.Compile<Func<double, double, double>>(
     "price * 0.9 + fee",
     "price",
     "fee");
 
-double result = formula.Invoke(100.0, 5.0);
+double result = formula.CompiledDelegate(100.0, 5.0);
 Console.WriteLine(result); // 95
 ```
 
-This is the normal first-contact path for application developers. `CompileFunc` compiles once and returns a typed function that can be invoked repeatedly.
+This is the normal preview.2 first-contact path for application developers. `Compile<TDelegate>` compiles once and returns a typed program whose delegate can be invoked repeatedly.
 
 ## Trusted C# interop example
 
@@ -45,12 +45,12 @@ using UniversalToolchain.Wist;
 
 using var wist = WistEngine.CreateTrusted();
 
-var calcHypotenuse = wist.CompileFunc<double, double, double>(
+var calcHypotenuse = wist.Compile<Func<double, double, double>>(
     "System.Math.Sqrt(x * x + y * y)",
     "x",
     "y");
 
-double result = calcHypotenuse.Invoke(7.0, 24.0);
+double result = calcHypotenuse.CompiledDelegate(7.0, 24.0);
 Console.WriteLine(result); // 25
 ```
 
@@ -106,7 +106,7 @@ For the simple expression, the runtime path is:
 source -> parser -> AST -> bytecode/AIR -> selected backend -> result
 ```
 
-For `CompileFunc`, the important distinction is:
+For compiled formulas, the important distinction is:
 
 ```text
 cold path: source -> parse -> compile

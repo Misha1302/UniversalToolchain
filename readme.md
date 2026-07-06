@@ -64,7 +64,7 @@ var validation = rules.Validate(
     });
 
 Console.WriteLine(validation.IsValid); // false
-Console.WriteLine(validation.Message); // Feature 'let' is not enabled by this preset.
+Console.WriteLine(validation.Message); // Prints the restricted-surface validation error.
 ```
 
 That is the core product idea: your app does not accept an arbitrary programming language just because somebody wants configurable logic.
@@ -98,7 +98,7 @@ The current public preview is intentionally scoped:
 | Restricted arithmetic/formula preset | available through `CreateSafeFormulas()` / `CreateRestrictedArithmetic()` |
 | One-off evaluation | available through `Evaluate<T>()` |
 | Non-throwing validation | available through `Validate()` and `TryCompile<TDelegate>()` |
-| Typed compiled hot path | available through `Compile<TDelegate>()` and `CompileFunc(...)` |
+| Typed compiled hot path | available through `Compile<TDelegate>()`; compatibility `CompileFunc(...)` overloads remain |
 | Interpreter backend | available for diagnostics, fallback, and semantic parity work |
 | Dialect composition | available through shipped `.wistdialect` profiles and lower-level APIs |
 | Full business-rule DSL | direction, not a stable 1.0 claim |

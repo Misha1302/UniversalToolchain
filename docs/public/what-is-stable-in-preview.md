@@ -10,7 +10,9 @@ and prototype scenarios, but it is not a stable 1.0 contract.
 - `WistEngine.CreateFullNativePreview`;
 - compatibility aliases `WistEngine.CreateSafeFormulas`, `WistEngine.CreateBusinessRules`, and `WistEngine.CreateTrusted`
   with their documented preview mappings;
-- `CompileFunc` for one, two, and three arguments;
+- `Compile<TDelegate>` for typed delegate-backed hot-path formulas;
+- `TryCompile<TDelegate>` for non-throwing typed delegate compilation;
+- compatibility `CompileFunc` overloads for one, two, and three arguments;
 - `Evaluate`;
 - `Validate`;
 - packaged Wist facade usage from a clean .NET project.
@@ -18,7 +20,7 @@ and prototype scenarios, but it is not a stable 1.0 contract.
 ## Preview / may change
 
 - wider `CompileFunc` arities;
-- signature-based compiled API;
+- additional signature-based compiled API shapes;
 - object/session-based compiled artifacts;
 - diagnostics shape;
 - product-oriented preset names beyond their documented preview alias mappings;
