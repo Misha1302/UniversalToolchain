@@ -69,16 +69,28 @@ jobs:
 
           using var safe = WistEngine.CreateSafeFormulas();
 
-          var formula = safe.CompileFunc<double, double, double>(
+          var compiledProgram = safe.Compile<Func<double, double, double>>(
               "price * 0.9 + fee",
               "price",
               "fee");
 
-          double compiledResult = formula.Invoke(100.0, 5.0);
+          double compiledResult = compiledProgram.CompiledDelegate(100.0, 5.0);
 
           if (Math.Abs(compiledResult - 95.0) > 1e-9)
           {
               throw new InvalidOperationException($"Expected 95, got {compiledResult}.");
+          }
+
+          var compatibilityFunction = safe.CompileFunc<double, double, double>(
+              "price * 0.9 + fee",
+              "price",
+              "fee");
+
+          double compatibilityResult = compatibilityFunction.Invoke(100.0, 5.0);
+
+          if (Math.Abs(compatibilityResult - 95.0) > 1e-9)
+          {
+              throw new InvalidOperationException($"Expected 95, got {compatibilityResult}.");
           }
 
           double evaluatedResult = safe.Evaluate<double>(
