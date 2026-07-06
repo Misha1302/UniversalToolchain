@@ -4,7 +4,8 @@
         <DialectRuntimeManifestEmitterProjectPath>$(MSBuildThisFileDirectory)UniversalToolchain.Dialects.ManifestEmitter/UniversalToolchain.Dialects.ManifestEmitter.csproj</DialectRuntimeManifestEmitterProjectPath>
         <DialectRuntimeManifestEmitterTargetFramework>net10.0</DialectRuntimeManifestEmitterTargetFramework>
         <DialectRuntimeManifestEmitterPlatformSegment Condition="'$(Platform)' != '' and '$(Platform)' != 'AnyCPU'">$(Platform)/</DialectRuntimeManifestEmitterPlatformSegment>
-        <DialectRuntimeManifestEmitterDll>$(MSBuildThisFileDirectory)UniversalToolchain.Dialects.ManifestEmitter/bin/$(DialectRuntimeManifestEmitterPlatformSegment)$(Configuration)/$(DialectRuntimeManifestEmitterTargetFramework)/UniversalToolchain.Dialects.ManifestEmitter.dll</DialectRuntimeManifestEmitterDll>
+        <DialectRuntimeManifestEmitterProjectBinDll>$(MSBuildThisFileDirectory)UniversalToolchain.Dialects.ManifestEmitter/bin/$(DialectRuntimeManifestEmitterPlatformSegment)$(Configuration)/$(DialectRuntimeManifestEmitterTargetFramework)/UniversalToolchain.Dialects.ManifestEmitter.dll</DialectRuntimeManifestEmitterProjectBinDll>
+        <DialectRuntimeManifestEmitterTargetDirDll>$(TargetDir)UniversalToolchain.Dialects.ManifestEmitter.dll</DialectRuntimeManifestEmitterTargetDirDll>
         <DialectRuntimeManifestFileSuffix>.dialect.runtime.json</DialectRuntimeManifestFileSuffix>
     </PropertyGroup>
 
@@ -21,9 +22,17 @@
             Condition="'$(EmitDialectRuntimeManifest)' == 'true' and '$(DesignTimeBuild)' != 'true' and '$(MSBuildProjectFullPath)' != '$(DialectRuntimeManifestEmitterProjectPath)'">
         <PropertyGroup>
             <DialectRuntimeManifestOutputPath>$(TargetDir)$(AssemblyName)$(DialectRuntimeManifestFileSuffix)</DialectRuntimeManifestOutputPath>
+            <!-- BenchmarkDotNet and other isolated builds override OutDir/TargetDir for the whole graph.
+                 In that mode the emitter project is built into the isolated TargetDir, not its source-tree bin folder.
+                 Prefer the isolated copy when present, then fall back to the normal project bin path. -->
+            <DialectRuntimeManifestEmitterResolvedDll Condition="Exists('$(DialectRuntimeManifestEmitterTargetDirDll)')">$(DialectRuntimeManifestEmitterTargetDirDll)</DialectRuntimeManifestEmitterResolvedDll>
+            <DialectRuntimeManifestEmitterResolvedDll Condition="'$(DialectRuntimeManifestEmitterResolvedDll)' == '' and Exists('$(DialectRuntimeManifestEmitterProjectBinDll)')">$(DialectRuntimeManifestEmitterProjectBinDll)</DialectRuntimeManifestEmitterResolvedDll>
         </PropertyGroup>
 
-        <Exec Command="&quot;$(DOTNET_HOST_PATH)&quot; &quot;$(DialectRuntimeManifestEmitterDll)&quot; --assembly &quot;$(TargetPath)&quot; --output &quot;$(DialectRuntimeManifestOutputPath)&quot;"/>
+        <Error Condition="'$(DialectRuntimeManifestEmitterResolvedDll)' == ''"
+               Text="Dialect runtime manifest emitter was not found. Checked '$(DialectRuntimeManifestEmitterTargetDirDll)' and '$(DialectRuntimeManifestEmitterProjectBinDll)'."/>
+
+        <Exec Command="&quot;$(DOTNET_HOST_PATH)&quot; &quot;$(DialectRuntimeManifestEmitterResolvedDll)&quot; --assembly &quot;$(TargetPath)&quot; --output &quot;$(DialectRuntimeManifestOutputPath)&quot;"/>
 
         <ItemGroup>
             <FileWrites Include="$(DialectRuntimeManifestOutputPath)"/>

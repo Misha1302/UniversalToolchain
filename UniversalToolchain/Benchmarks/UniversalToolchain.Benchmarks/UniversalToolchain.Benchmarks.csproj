@@ -44,15 +44,30 @@
     </ItemGroup>
 
     <PropertyGroup>
-        <BenchmarkDialectRuntimeManifestPlatformSegment Condition="'$(Platform)' != '' and '$(Platform)' != 'AnyCPU'">$(Platform)\</BenchmarkDialectRuntimeManifestPlatformSegment>
+        <BenchmarkDialectRuntimeManifestPlatformSegment Condition="'$(Platform)' != '' and '$(Platform)' != 'AnyCPU'">$(Platform)/</BenchmarkDialectRuntimeManifestPlatformSegment>
     </PropertyGroup>
 
     <Target Name="CopyBenchmarkDialectRuntimeManifests" AfterTargets="Build">
         <ItemGroup>
-            <_BenchmarkDialectRuntimeManifests Include="$(MSBuildProjectDirectory)\..\..\*\bin\$(BenchmarkDialectRuntimeManifestPlatformSegment)$(Configuration)\$(TargetFramework)\*.dialect.runtime.json"/>
+            <_BenchmarkDialectRuntimeManifests Include="$(MSBuildProjectDirectory)/../../*/bin/$(BenchmarkDialectRuntimeManifestPlatformSegment)$(Configuration)/$(TargetFramework)/*.dialect.runtime.json"/>
         </ItemGroup>
 
         <Copy SourceFiles="@(_BenchmarkDialectRuntimeManifests)"
+              DestinationFolder="$(TargetDir)"
+              SkipUnchangedFiles="true"/>
+    </Target>
+
+    <Target Name="CopyBenchmarkRuntimeDllClosure" AfterTargets="Build">
+        <ItemGroup>
+            <!-- BenchmarkDotNet builds and executes a child project from an isolated output directory.
+                 Runtime modules are discovered from manifests and loaded dynamically, so their transitive
+                 dependencies are not always represented in the child project's deps.json. Copy the source-run
+                 runtime closure into the current TargetDir so dynamically loaded modules resolve the same way
+                 under BDN as they do under a normal source-tree benchmark run. -->
+            <_BenchmarkRuntimeDllClosure Include="$(MSBuildProjectDirectory)/../../*/bin/$(BenchmarkDialectRuntimeManifestPlatformSegment)$(Configuration)/$(TargetFramework)/*.dll"/>
+        </ItemGroup>
+
+        <Copy SourceFiles="@(_BenchmarkRuntimeDllClosure)"
               DestinationFolder="$(TargetDir)"
               SkipUnchangedFiles="true"/>
     </Target>

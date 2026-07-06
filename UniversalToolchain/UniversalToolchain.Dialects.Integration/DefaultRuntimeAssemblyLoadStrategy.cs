@@ -6,6 +6,8 @@ namespace UniversalToolchain.Dialects.Integration;
 
 public sealed class DefaultRuntimeAssemblyLoadStrategy : IRuntimeAssemblyLoadStrategy
 {
+    private readonly object _resolvingHandlerLock = new();
+    private bool _resolvingHandlerRegistered;
     private readonly IRuntimeAssemblyLocator _locator;
 
     public DefaultRuntimeAssemblyLoadStrategy(IRuntimeAssemblyLocator locator)
@@ -20,9 +22,57 @@ public sealed class DefaultRuntimeAssemblyLoadStrategy : IRuntimeAssemblyLoadStr
         if (string.IsNullOrWhiteSpace(assemblySimpleName))
             Thrower.Argument(nameof(assemblySimpleName), "Assembly simple name must not be empty.");
 
+        EnsureResolvingHandlerRegistered();
+
         return TryGetAlreadyLoadedAssembly(assemblySimpleName)
                ?? TryLoadBySimpleName(assemblySimpleName)
                ?? LoadAssemblyFromResolvedPath(assemblySimpleName);
+    }
+
+
+    private void EnsureResolvingHandlerRegistered()
+    {
+        if (_resolvingHandlerRegistered)
+            return;
+
+        lock (_resolvingHandlerLock)
+        {
+            if (_resolvingHandlerRegistered)
+                return;
+
+            AssemblyLoadContext.Default.Resolving += ResolveFromConfiguredRuntimeRoots;
+            _resolvingHandlerRegistered = true;
+        }
+    }
+
+    private Assembly? ResolveFromConfiguredRuntimeRoots(AssemblyLoadContext context, AssemblyName assemblyName)
+    {
+        var simpleName = assemblyName.Name;
+        if (string.IsNullOrWhiteSpace(simpleName))
+            return null;
+
+        var alreadyLoaded = TryGetAlreadyLoadedAssembly(simpleName);
+        if (alreadyLoaded != null)
+            return alreadyLoaded;
+
+        if (!_locator.TryResolveAssemblyPath(simpleName, out var absolutePath) || string.IsNullOrWhiteSpace(absolutePath))
+            return null;
+
+        if (!Path.IsPathRooted(absolutePath))
+            return null;
+
+        try
+        {
+            return context.LoadFromAssemblyPath(absolutePath);
+        }
+        catch (FileLoadException)
+        {
+            return TryGetAlreadyLoadedAssembly(simpleName);
+        }
+        catch (BadImageFormatException)
+        {
+            return null;
+        }
     }
 
     private static Assembly? TryGetAlreadyLoadedAssembly(string assemblySimpleName)
