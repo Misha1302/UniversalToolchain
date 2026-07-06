@@ -24,7 +24,7 @@ compiled typed function -> Invoke(arg0, arg1, ...)
 
 The cold path pays for source handling and runtime selection. The hot path starts from an already compiled typed function.
 
-## Use Compile<TDelegate> for shipped-preset hot paths
+## Use `Compile<TDelegate>` for shipped-preset hot paths
 
 ```csharp
 using UniversalToolchain.Wist;
