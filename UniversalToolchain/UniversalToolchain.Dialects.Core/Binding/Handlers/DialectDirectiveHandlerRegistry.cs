@@ -2,7 +2,7 @@ using ExceptionsManager;
 
 namespace UniversalToolchain.Dialects.Core.Binding.Handlers;
 
-internal sealed class DialectDirectiveHandlerRegistry
+public sealed class DialectDirectiveHandlerRegistry
 {
     private readonly IDialectDirectiveHandler[] _handlers;
 
@@ -15,11 +15,17 @@ internal sealed class DialectDirectiveHandlerRegistry
             .OrderBy(static x => x.Order)
             .ThenBy(static x => x.GetType().FullName, StringComparer.Ordinal)
             .ToArray();
+
+        var duplicateName = _handlers
+            .GroupBy(static x => x.Name, StringComparer.Ordinal)
+            .FirstOrDefault(static x => x.Count() > 1);
+        if (duplicateName != null)
+            Thrower.InvalidOpEx($"Dialect directive semantic handler family '{duplicateName.Key}' is registered more than once.");
     }
 
     public IReadOnlyList<IDialectDirectiveHandler> Handlers => _handlers;
 
-    public void Apply(DialectBindingExecutionContext context)
+    public void Apply(DialectDirectiveBindingContext context)
     {
         context = context.ArgNotNull();
 
@@ -30,6 +36,9 @@ internal sealed class DialectDirectiveHandlerRegistry
     private static IDialectDirectiveHandler ValidateHandler(IDialectDirectiveHandler handler)
     {
         handler = handler.ArgNotNull();
+
+        if (string.IsNullOrWhiteSpace(handler.Name))
+            Thrower.InvalidOpEx("Dialect directive semantic handler name must not be empty.");
 
         return handler;
     }

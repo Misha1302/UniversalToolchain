@@ -2,7 +2,7 @@ using UniversalToolchain.Dialects.Abstractions;
 
 namespace UniversalToolchain.Dialects.Core.Binding.Handlers;
 
-internal sealed class DialectDirectiveHandlerContext
+public sealed class DialectDirectiveHandlerContext
 {
     private DialectDirectiveHandlerContext(
         string moduleConflictCode,

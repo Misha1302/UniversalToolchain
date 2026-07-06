@@ -118,7 +118,7 @@ public class WistDialectProfileContractTests
     private static string GetDialectFilePath(string dialectName) =>
         Path.GetFullPath(Path.Combine(GetRepositoryRoot(), "Dialects", "examples", "wist", dialectName, "dialect.wistdialect"));
 
-    private static string GetRepositoryRoot() => TestContext.CurrentContext.TestDirectory;
+    private static string GetRepositoryRoot() => TestSourcePaths.ToolchainRoot;
 
     private static IReadOnlyList<string> GetDirectiveItems(string source, string directive)
     {

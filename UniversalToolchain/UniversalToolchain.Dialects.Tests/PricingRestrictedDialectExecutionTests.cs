@@ -114,12 +114,5 @@ public sealed class PricingRestrictedDialectExecutionTests
     private static WistDialectExecutionHost CreatePricingHost()
         => DialectTestHostInfrastructure.CreateHostFromDialectText(File.ReadAllText(GetDialectFilePath()));
 
-    private static string GetDialectFilePath()
-        => Path.GetFullPath(Path.Combine(
-            TestContext.CurrentContext.TestDirectory,
-            "Dialects",
-            "examples",
-            "wist",
-            "pricing-restricted",
-            "dialect.wistdialect"));
+    private static string GetDialectFilePath() => TestSourcePaths.WistExampleDialectPath("pricing-restricted");
 }

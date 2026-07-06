@@ -2,6 +2,9 @@
 from __future__ import annotations
 
 import shlex
+import os
+import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -9,6 +12,21 @@ from dataclasses import dataclass
 from pathlib import Path
 
 DEFAULT_BASH_BLOCK_TIMEOUT = "60s"
+MARKDOWN_DISCOVERY_EXCLUDED_DIRECTORIES = {
+    ".git",
+    ".hg",
+    ".svn",
+    ".cache",
+    ".idea",
+    ".vs",
+    ".vscode",
+    "artifacts",
+    "bin",
+    "dist",
+    "node_modules",
+    "obj",
+    "packages",
+}
 
 
 @dataclass(frozen=True)
@@ -30,19 +48,40 @@ def GetRepositoryRoot() -> Path:
     return Path(__file__).resolve().parents[2]
 
 
-def GetTrackedMarkdownFiles(repositoryRoot: Path) -> list[Path]:
+def TryGetTrackedMarkdownFiles(repositoryRoot: Path) -> list[Path] | None:
     result = subprocess.run(
         ["git", "ls-files"],
         cwd=repositoryRoot,
-        check=True,
         capture_output=True,
         text=True,
     )
+
+    if result.returncode != 0:
+        return None
 
     markdownFiles = [
         repositoryRoot / line
         for line in result.stdout.splitlines()
         if line.endswith(".md")
+    ]
+
+    return sorted(markdownFiles)
+
+
+def IsMarkdownDiscoveryExcluded(markdownFilePath: Path, repositoryRoot: Path) -> bool:
+    relativeParts = markdownFilePath.relative_to(repositoryRoot).parts
+    return any(part in MARKDOWN_DISCOVERY_EXCLUDED_DIRECTORIES for part in relativeParts)
+
+
+def GetMarkdownFiles(repositoryRoot: Path) -> list[Path]:
+    trackedMarkdownFiles = TryGetTrackedMarkdownFiles(repositoryRoot)
+    if trackedMarkdownFiles is not None:
+        return trackedMarkdownFiles
+
+    markdownFiles = [
+        markdownFilePath
+        for markdownFilePath in repositoryRoot.rglob("*.md")
+        if not IsMarkdownDiscoveryExcluded(markdownFilePath, repositoryRoot)
     ]
 
     return sorted(markdownFiles)
@@ -158,12 +197,122 @@ def BuildCommand(block: BashBlock, scriptPath: Path) -> list[str]:
     return ["timeout", timeoutValue, "bash", str(scriptPath)]
 
 
+def BuildProcessEnvironment(repositoryRoot: Path) -> dict[str, str]:
+    environment = os.environ.copy()
+    environment.pop("PLATFORM", None)
+    environment.setdefault("DOTNET_CLI_HOME", str(repositoryRoot / ".dotnet-home"))
+    environment.setdefault("DOTNET_SKIP_FIRST_TIME_EXPERIENCE", "1")
+    environment.setdefault("DOTNET_NOLOGO", "1")
+    environment.setdefault("NuGetAudit", "false")
+
+    candidateNuGetPackagePaths = [
+        repositoryRoot / "UniversalToolchain" / "packages",
+        Path("/workspace/nuget_wist2_minimal_0705_unpack/packages"),
+    ]
+    if "NUGET_PACKAGES" not in environment:
+        for candidateNuGetPackagePath in candidateNuGetPackagePaths:
+            if candidateNuGetPackagePath.exists() and any(candidateNuGetPackagePath.iterdir()):
+                environment["NUGET_PACKAGES"] = str(candidateNuGetPackagePath)
+                break
+
+    if shutil.which("dotnet", path=environment.get("PATH")) is not None:
+        return environment
+
+    candidateDotnetPaths = [
+        repositoryRoot / ".dotnet" / "dotnet",
+        repositoryRoot.parent / ".dotnet" / "dotnet",
+        Path("/workspace/.dotnet/dotnet"),
+    ]
+    for candidateDotnetPath in candidateDotnetPaths:
+        if not candidateDotnetPath.exists():
+            continue
+
+        dotnetDirectory = str(candidateDotnetPath.parent)
+        currentPath = environment.get("PATH", "")
+        environment["PATH"] = dotnetDirectory if currentPath == "" else f"{dotnetDirectory}{os.pathsep}{currentPath}"
+        return environment
+
+    return environment
+
+
 def PrintStream(name: str, value: str) -> None:
     if value == "":
         return
 
     print(f"[{name}]")
     print(value, end="" if value.endswith("\n") else "\n")
+
+
+DOTNET_RUN_PROJECT_PATTERN = re.compile(r"(^|\s)dotnet\s+run\s+--project\s+([^\s\\]+)")
+
+
+def FindRunnableDotnetProjects(blocks: list[BashBlock]) -> list[str]:
+    projects: set[str] = set()
+    for block in blocks:
+        if not ShouldRunBlock(block):
+            continue
+
+        for match in DOTNET_RUN_PROJECT_PATTERN.finditer(block.content):
+            projects.add(match.group(2))
+
+    return sorted(projects)
+
+
+def EnsureDotnetRunProjectsAreBuilt(repositoryRoot: Path, blocks: list[BashBlock]) -> None:
+    projects = FindRunnableDotnetProjects(blocks)
+    if len(projects) == 0:
+        return
+
+    environment = BuildProcessEnvironment(repositoryRoot)
+    for project in projects:
+        if not project.endswith(".csproj"):
+            continue
+
+        projectPath = repositoryRoot / project
+        if not projectPath.exists():
+            continue
+
+        print(f"::group::Markdown prebuild: {project}")
+        try:
+            result = subprocess.run(
+                [
+                    "dotnet",
+                    "build",
+                    project,
+                    "-c",
+                    "Debug",
+                    "-p:NuGetAudit=false",
+                ],
+                cwd=repositoryRoot,
+                env=environment,
+                capture_output=True,
+                text=True,
+            )
+            PrintStream("stdout", result.stdout)
+            PrintStream("stderr", result.stderr)
+            if result.returncode != 0:
+                raise RuntimeError(
+                    f"Markdown prebuild failed for {project} with exit code {result.returncode}."
+                )
+        finally:
+            print("::endgroup::")
+
+
+def RewriteDotnetRunLineForCi(line: str) -> str:
+    strippedLine = line.lstrip()
+    indentation = line[: len(line) - len(strippedLine)]
+    if strippedLine.startswith("dotnet run --project "):
+        return indentation + strippedLine.replace(
+            "dotnet run --project ",
+            "dotnet run --no-restore --no-build --project ",
+            1,
+        )
+
+    return line
+
+
+def RewriteScriptContentForCi(content: str) -> str:
+    return "\n".join(RewriteDotnetRunLineForCi(line) for line in content.splitlines())
 
 
 def HasCommandDirectives(block: BashBlock) -> bool:
@@ -270,7 +419,7 @@ def RunCommand(repositoryRoot: Path, block: BashBlock, command: BashCommand) -> 
 
     with tempfile.NamedTemporaryFile("w", suffix=".sh", delete=False, encoding="utf-8") as tempScript:
         tempScript.write("set -euo pipefail\n")
-        tempScript.write(command.command)
+        tempScript.write(RewriteScriptContentForCi(command.command))
         tempScript.write("\n")
         tempScriptPath = Path(tempScript.name)
 
@@ -278,6 +427,7 @@ def RunCommand(repositoryRoot: Path, block: BashBlock, command: BashCommand) -> 
         result = subprocess.run(
             BuildCommand(block, tempScriptPath),
             cwd=repositoryRoot,
+            env=BuildProcessEnvironment(repositoryRoot),
             capture_output=True,
             text=True,
         )
@@ -301,7 +451,7 @@ def RunWholeBlock(repositoryRoot: Path, block: BashBlock) -> None:
 
     with tempfile.NamedTemporaryFile("w", suffix=".sh", delete=False, encoding="utf-8") as tempScript:
         tempScript.write("set -euo pipefail\n")
-        tempScript.write(block.content)
+        tempScript.write(RewriteScriptContentForCi(block.content))
         tempScript.write("\n")
         tempScriptPath = Path(tempScript.name)
 
@@ -310,6 +460,7 @@ def RunWholeBlock(repositoryRoot: Path, block: BashBlock) -> None:
         result = subprocess.run(
             command,
             cwd=repositoryRoot,
+            env=BuildProcessEnvironment(repositoryRoot),
             capture_output=True,
             text=True,
         )
@@ -351,16 +502,18 @@ def RunBlock(repositoryRoot: Path, block: BashBlock, blockIndex: int, totalBlock
 
 def main() -> int:
     repositoryRoot = GetRepositoryRoot()
-    markdownFiles = GetTrackedMarkdownFiles(repositoryRoot)
+    markdownFiles = GetMarkdownFiles(repositoryRoot)
 
     allBlocks: list[BashBlock] = []
     for markdownFile in markdownFiles:
         allBlocks.extend(ExtractBashBlocks(markdownFile))
 
     if len(allBlocks) == 0:
-        raise RuntimeError("No bash fenced code blocks were found in tracked markdown files.")
+        raise RuntimeError("No bash fenced code blocks were found in markdown files.")
 
-    print(f"Found {len(allBlocks)} bash fenced code blocks across tracked markdown files.")
+    EnsureDotnetRunProjectsAreBuilt(repositoryRoot, allBlocks)
+
+    print(f"Found {len(allBlocks)} bash fenced code blocks across markdown files.")
 
     for index, block in enumerate(allBlocks, start=1):
         RunBlock(repositoryRoot, block, index, len(allBlocks))

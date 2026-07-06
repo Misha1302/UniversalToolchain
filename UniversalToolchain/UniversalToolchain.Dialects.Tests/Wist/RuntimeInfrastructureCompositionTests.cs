@@ -14,6 +14,7 @@ using IntermediateRepresentationAbstractions;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core.ServiceCollection;
+using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
 using UniversalToolchain.ModuleContracts;
 
@@ -187,8 +188,12 @@ public class RuntimeInfrastructureCompositionTests
             Assert.That(provider.GetService<Func<IExecutor<DynamicMethod>>>(), Is.Null);
             Assert.That(provider.GetService<AbstractIrToAbstractIrStub>(), Is.Null);
             Assert.That(provider.GetServices<WistDialectBackendRuntime>().Single().Descriptor.BackendId, Is.EqualTo(WistDialectBackendIds.Cil));
+            Assert.That(provider.GetServices<ToolchainBackendRuntime>().Single().Descriptor.BackendId, Is.EqualTo(WistDialectBackendIds.Cil));
             Assert.That(
                 ReadBackendContractModuleIds(provider.GetServices<WistDialectBackendRuntime>().Single().Core),
+                Is.EqualTo(new[] { CilBackendContractDescriptorProvider.Module }));
+            Assert.That(
+                ReadBackendContractModuleIds(provider.GetServices<ToolchainBackendRuntime>().Single().Core),
                 Is.EqualTo(new[] { CilBackendContractDescriptorProvider.Module }));
         });
     }
@@ -209,8 +214,12 @@ public class RuntimeInfrastructureCompositionTests
             Assert.That(provider.GetService<Func<IExecutor<IAbstractIR>>>(), Is.Not.Null);
             Assert.That(provider.GetService<AbstractMethodsCompilerImpl>(), Is.Null);
             Assert.That(provider.GetServices<WistDialectBackendRuntime>().Single().Descriptor.BackendId, Is.EqualTo(WistDialectBackendIds.Interpreter));
+            Assert.That(provider.GetServices<ToolchainBackendRuntime>().Single().Descriptor.BackendId, Is.EqualTo(WistDialectBackendIds.Interpreter));
             Assert.That(
                 ReadBackendContractModuleIds(provider.GetServices<WistDialectBackendRuntime>().Single().Core),
+                Is.EqualTo(new[] { BasicInterpreter.Contracts.InterpreterBackendContractDescriptorProvider.Module }));
+            Assert.That(
+                ReadBackendContractModuleIds(provider.GetServices<ToolchainBackendRuntime>().Single().Core),
                 Is.EqualTo(new[] { BasicInterpreter.Contracts.InterpreterBackendContractDescriptorProvider.Module }));
         });
     }

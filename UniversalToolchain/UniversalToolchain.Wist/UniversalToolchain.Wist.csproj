@@ -36,11 +36,12 @@
 
     <ItemGroup>
         <PackageReference Include="GrEmit" Version="3.5.1"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2"/>
     </ItemGroup>
 
     <ItemGroup>
         <None Include="README.md" Pack="true" PackagePath="\"/>
-        <None Include="..\..\CHANGELOG.md" Pack="true" PackagePath="\"/>
+        <None Include="CHANGELOG.md" Pack="true" PackagePath="\"/>
     </ItemGroup>
 
     <ItemGroup>

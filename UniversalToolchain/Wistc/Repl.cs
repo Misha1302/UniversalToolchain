@@ -21,6 +21,9 @@ public class Repl
             Console.Write("> ");
             input = ReadLine();
 
+            if (input == null)
+                break;
+
             if (string.IsNullOrWhiteSpace(input))
                 continue;
 

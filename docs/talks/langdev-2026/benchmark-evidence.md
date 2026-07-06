@@ -1,102 +1,80 @@
 # Benchmark evidence and claim boundary
 
-## Claim used in the proposal
+## Current status
 
-> In selected arithmetic hot-execution benchmarks, cached Wist CIL artifacts remain within 10% of a no-inlining C# baseline and allocate no memory during the measured execution phase.
+The old external/generated arithmetic benchmark suite has been retired. It mixed too much benchmark scaffolding with
+public claims and was too easy to misread as a broad “Wist is near C#” statement.
 
-This is deliberately narrower than saying that Wist is generally as fast as C#.
+The current benchmark surface is intentionally smaller and split by measurement story:
 
-## Current verification runs
+- `FormulaHotPathBenchmarks` — already prepared formula artifacts only;
+- `FormulaConvenienceBenchmarks` — public `Evaluate` convenience overhead;
+- `FormulaCompilationBenchmarks` — engine creation and formula compilation cost.
 
-The current benchmark suite was executed with BenchmarkDotNet against the six public external arithmetic workloads.
+No historic table should be reused as current performance evidence unless the exact commit, raw BenchmarkDotNet artifacts,
+SDK/runtime, CPU, OS and clean working-tree state are preserved next to the claim.
 
-The archived full run was produced from repository commit:
+## Claim boundary
 
-```text
-705934e3bb8de35d5be257e77ff8ed68bea954f6
-```
+Allowed:
 
-A subsequent run from a clean working tree at the LangDev materials commit reproduced the same rounded results:
+> In the recorded prepared hot-execution scenario, the Wist compiled delegate invocation path was measured against the listed baseline under the listed environment.
 
-```text
-87952b9c77a91ebfb6deab2d953259798ae7d2e2
-```
+Forbidden:
 
-The clean confirmation result was reported by the project author after repeating the same full command without `ALLOW_DIRTY`. The raw archive preserved from the first full run has SHA-256:
+> UniversalToolchain is faster than C#.
 
-```text
-6cc06aed43a0f2e6a74f8d5f69dfc8522bdf8ce4b2faf1541fde42ed0d4a527f
-```
+Forbidden:
 
-Recorded environment:
+> The preview benchmark suite proves production performance.
 
-- Fedora Linux 43;
-- 12th Gen Intel Core i5-1235U;
-- .NET SDK 10.0.108;
-- .NET runtime 10.0.8;
-- X64 RyuJIT x86-64-v3;
-- BenchmarkDotNet 0.15.6;
-- Concurrent Workstation GC.
+## What is measured now
 
-| Workload | C# mean, ns/op | Wist CIL mean, ns/op | Wist/C# |
-|---|---:|---:|---:|
-| ConstantsHeavy6 | 2.709 | 2.770 | 1.02 |
-| DeepChain6 | 2.665 | 2.775 | 1.04 |
-| Medium8 | 2.881 | 3.105 | 1.08 |
-| RepeatedSubexpressions5 | 2.094 | 2.124 | 1.01 |
-| Simple3 | 1.963 | 1.957 | 1.00 |
-| WideExpression10 | 4.186 | 4.134 | 0.99 |
+`FormulaHotPathBenchmarks` measures repeated invocation of already prepared artifacts:
 
-The observed Wist/C# range in this run is approximately `0.99` to `1.08`. BenchmarkDotNet reported `Allocated = 0 B` for the shown measured execution methods.
-
-The smoke run is not used as performance evidence. It uses BenchmarkDotNet's `Dry` job with one measured iteration and exists only to verify benchmark discovery and execution.
-
-## What is measured
-
-The public external arithmetic suite measures repeated invocation of already prepared artifacts:
-
-- `CSharp_NoInliningMethod`;
-- `DynamicExpresso_CompiledDelegate`;
+- `CSharp_PreparedDelegate`;
 - `NCalc_CompiledLambda`;
-- `Wist_Cil_DynamicMethodFastInvoker`.
+- `Wist_CompiledDelegate`;
+- `Wist_CompileFuncFastInvoker`.
 
-Parsing, compilation, dialect composition, and host setup occur outside the benchmark method.
+Parsing, compilation, dialect composition and host setup occur outside the hot benchmark method.
 
-## What is not proven
+`FormulaConvenienceBenchmarks` intentionally measures per-call `Evaluate` overhead and must not be compared directly with
+hot compiled delegate execution.
 
-These results do not prove:
-
-- that Wist is always faster than C# or other engines;
-- that parsing or compilation is free;
-- that control flow, calls, or arbitrary DSL programs have the same ratio;
-- that the same nanosecond-level result will reproduce on every CPU or runtime build;
-- that restricted dialects are security sandboxes.
-
-The specialization architecture extends beyond arithmetic, but the published `within 10%` number is attached only to the listed arithmetic hot-execution scenarios.
-
-BenchmarkDotNet reported that it could not raise the benchmark process priority without additional permissions. The results are therefore presented as a reproducible local engineering measurement, not as an absolute cross-machine performance guarantee.
+`FormulaCompilationBenchmarks` intentionally measures compilation/setup cost and must not be used for hot-throughput claims.
 
 ## Reproduction commands
 
-Run from the repository root after a clean Release build.
+Run from the repository root.
 
 Smoke verification:
 
 ```bash ci-run=false
-dotnet run -c Release \
+unset PLATFORM
+dotnet restore UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj -p:Platform="Any CPU"
+dotnet build UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj -c Release --no-restore -p:Platform="Any CPU"
+dotnet run -c Release --no-build \
+  --project UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj \
+  -- \
+  --self-test
+
+dotnet run -c Release --no-build \
   --project UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj \
   -- \
   --job dry \
-  --filter "*ExternalSimple3*"
+  --filter "*FormulaHotPathBenchmarks*"
 ```
 
 Full public run:
 
 ```bash ci-run=false
+unset PLATFORM
 dotnet run -c Release \
   --project UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj \
   -- \
-  --filter "*External*ExecutionBenchmarks*"
+  --filter "*Formula*"
 ```
 
-Before publishing a new result, record the exact Git commit, working-tree state, SDK/runtime, OS, CPU, and preserve the generated files under `BenchmarkDotNet.Artifacts/results/`.
+Before publishing a new result, record the exact Git commit, working-tree state, SDK/runtime, OS, CPU, and preserve the
+generated files under `BenchmarkDotNet.Artifacts/results/`.

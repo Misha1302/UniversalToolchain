@@ -4,6 +4,24 @@ This document describes the currently supported surface of the branch. It is int
 
 Use it to distinguish current behavior from future or historical design plans.
 
+## Release positioning
+
+Status: public preview / release-gate scope, not a finalized 1.0 platform.
+
+This branch can be released as a scoped Wist facade preview when build, test,
+package, CLI and documentation checks pass. Do not describe it as a completed
+general-purpose DSL workbench, a hardened sandbox, a stable generic runtime
+package family, or a production SSA optimizer/backend layer.
+
+The supported release claim is narrower:
+
+- `UniversalToolchain.Wist` provides a first-contact Wist facade for controlled
+  formula evaluation, validation and typed compiled invocation;
+- shipped dialect presets demonstrate restricted and full Wist profiles with
+  documented preview mappings;
+- neutral runtime host, structured trace and SSA route exist as current
+  foundations with the limitations listed below.
+
 ## Rules feature
 
 Status: removed from this branch.
@@ -63,6 +81,28 @@ Current policy:
 
 Forbidden interpreter intrinsics include `load_local`, `store_local`, `load_local_ref`, `load_external`, `store_external`, `load_*`, `add_*`, `sub_*`, `mul_*`, `div_*`, `cmp_*`, `load_bool`, and boolean operation intrinsics.
 
+## Neutral runtime host
+
+Status: first neutral execution host extracted inside the dialect integration boundary.
+
+Currently supported:
+
+- `ToolchainRuntimeHost` executes a selected dialect runtime configuration through backend-neutral `IArtifactCompiler` and `ICompiledArtifact` contracts;
+- `ToolchainBackendRuntime` wraps selected backend runtimes without naming Wist facade types;
+- Wist execution host remains as compatibility/convenience wrapper over the neutral runtime host;
+- backend registrars register both the neutral runtime wrapper and the Wist compatibility runtime wrapper.
+
+Not final yet:
+
+- there is no standalone `UniversalToolchain.Runtime` package/project boundary;
+- public non-Wist convenience APIs still need a stable embedding surface;
+- Wist shipped presets remain reference-language assets, not generic runtime truth.
+
+Required policy:
+
+- new runtime execution behavior should target the neutral host/contracts first;
+- Wist facade APIs must remain thin wrappers over selected runtime plans and compiled artifacts.
+
 ## Local variables runtime path
 
 Status: migrated to execution-scoped C# runtime calls.
@@ -85,6 +125,22 @@ Future direction:
 - any local-variable optimization must operate on generated C# runtime call patterns;
 - such optimization may compress runtime-call patterns to local intrinsics only for backends that explicitly support those intrinsics;
 - do not reintroduce local-variable intrinsics into the interpreter or static/global variable storage.
+
+## Structured debug trace
+
+Status: first CLI artifact phase implemented.
+
+Currently supported:
+
+- `wistc run --trace trace.json ...` writes a versioned JSON artifact;
+- source text and runtime values are redacted by default;
+- the trace includes source length/hash, dialect/backend metadata, coarse stages and result/error summary.
+
+Not final yet:
+
+- lexer/parser/AST/bytecode/AIR/SSA/backend artifact dumps are not emitted as detailed trace stages;
+- there is no visual trace viewer;
+- schema compatibility is protected for the first artifact shape only.
 
 ## Generic IR routing and SSA foundation
 
@@ -204,6 +260,7 @@ Required policy:
 - new IR layers must be introduced through generic IR contracts and verifiers;
 - `BasicCore` must not hardcode SSA, Wist, or backend-specific routing branches;
 - existing interpreter and CIL paths remain AIR consumers until a separate verified route is added.
+- see `docs/architecture/ssa-coverage-matrix.md` before expanding SSA conversion or optimization support.
 
 ## Interpreter intrinsic surface
 

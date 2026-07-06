@@ -8,7 +8,7 @@ public sealed class WistEngineOptions
     /// <summary>
     ///     Gets or sets the shipped Wist preset used by the engine.
     /// </summary>
-    public WistPreset Preset { get; set; } = WistPreset.SafeFormulas;
+    public WistPreset Preset { get; set; } = WistPreset.RestrictedArithmetic;
 
     /// <summary>
     ///     Gets or sets the backend used by convenience evaluation APIs.

@@ -59,5 +59,5 @@ public sealed class WistRuntimeFacadeBuilderPresetTests
         };
 
     private static string GetDialectFilePath(WistShippedDialectPreset preset)
-        => Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, preset.RelativeDialectFilePath));
+        => Path.GetFullPath(Path.Combine(UniversalToolchain.Dialects.Tests.TestSourcePaths.ToolchainRoot, preset.RelativeDialectFilePath));
 }

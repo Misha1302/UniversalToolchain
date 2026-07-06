@@ -93,7 +93,7 @@ The current validation baseline is .NET 10 and target framework `net10.0`. Older
 
 From the repository root:
 
-```bash
+```bash ci-run=false
 git status
 git branch --show-current
 ```
@@ -102,7 +102,7 @@ Use the branch required by your task. For normal validation, use the branch you 
 
 ### 2. Restore and build the .NET solution
 
-```bash
+```bash ci-run=false
 dotnet restore UniversalToolchain/Wist.sln
 dotnet build UniversalToolchain/Wist.sln -c Release --no-restore -m:1 -p:BuildInParallel=false
 ```
@@ -123,7 +123,7 @@ The Markdown command runner intentionally skips this block because it is a local
 
 ### 4. Install documentation dependencies
 
-```bash
+```bash ci-run=false
 npm install
 ```
 
@@ -137,7 +137,7 @@ This starts the VitePress development server for the `docs/` directory. The comm
 
 ### 6. Build the documentation site
 
-```bash
+```bash ci-run=false
 npm run docs:build
 ```
 

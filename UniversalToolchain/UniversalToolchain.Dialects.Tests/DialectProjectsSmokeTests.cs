@@ -63,9 +63,7 @@ public class DialectProjectsSmokeTests
 
     private static IReadOnlyList<string> ResolveExampleDirectories()
     {
-        var root = Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "Dialects", "examples", "wist"));
-        if (!Directory.Exists(root))
-            Thrower.FileNotFound(root);
+        var root = TestSourcePaths.WistExamplesRoot;
 
         return Directory.EnumerateDirectories(root)
             .OrderBy(Path.GetFileName, StringComparer.Ordinal)

@@ -22,6 +22,26 @@ public sealed class WistEngineSmokeTests
     }
 
     [Test]
+    public void Evaluate_WithExplicitPresetFactories_ReturnsExpectedDouble()
+    {
+        using var restrictedArithmetic = WistEngine.CreateRestrictedArithmetic();
+        using var fullNativePreview = WistEngine.CreateFullNativePreview();
+
+        var restrictedResult = restrictedArithmetic.Evaluate<double>(
+            "price * 0.9 + fee",
+            new { price = 100.0d, fee = 5.0d });
+        var fullResult = fullNativePreview.Evaluate<double>(
+            "price * 0.9 + fee",
+            new { price = 100.0d, fee = 5.0d });
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(restrictedResult, Is.EqualTo(95.0d).Within(1e-9));
+            Assert.That(fullResult, Is.EqualTo(95.0d).Within(1e-9));
+        });
+    }
+
+    [Test]
     public void CompileFunc_OneArgument_ReturnsExpectedResult()
     {
         using var wist = WistEngine.CreateSafeFormulas();
@@ -209,7 +229,10 @@ public sealed class WistEngineSmokeTests
         Assert.Multiple(() =>
         {
             Assert.That(exception, Is.Not.Null);
-            Assert.That(exception!.Message, Is.Not.Empty);
+            Assert.That(exception, Is.TypeOf<WistDialectFeatureException>());
+            Assert.That(exception!.Message, Does.Contain("Feature 'let' is not enabled"));
+            Assert.That(exception.Message, Does.Contain("SafeFormulas"));
+            Assert.That(exception.Message, Does.Contain("Variables"));
         });
     }
 
@@ -253,8 +276,10 @@ public sealed class WistEngineSmokeTests
         Assert.Multiple(() =>
         {
             Assert.That(result.IsValid, Is.False);
-            Assert.That(result.Message, Is.Not.Empty);
-            Assert.That(result.Exception, Is.Not.Null);
+            Assert.That(result.Message, Does.Contain("Feature 'let' is not enabled"));
+            Assert.That(result.Message, Does.Contain("SafeFormulas"));
+            Assert.That(result.Message, Does.Contain("Variables"));
+            Assert.That(result.Exception, Is.TypeOf<WistDialectFeatureException>());
         });
     }
 }

@@ -8,7 +8,7 @@
 
 What fascinated me was not merely making a DSL extensible, but making its extension machinery disappear before execution.
 
-UniversalToolchain explores this form of extensible programming on .NET. Language features are authored as independent modules, composed into dialects, and lowered through Bytecode and Abstract IR. Specialization extends beyond arithmetic: local variables, external bindings, control flow, calls, and typed operations become concrete runtime or CIL operations, removing language-construction machinery from the hot path. In selected arithmetic hot-execution benchmarks, cached Wist CIL artifacts remain within 10% of a no-inlining C# baseline and allocate no memory during the measured execution phase.
+UniversalToolchain explores this form of extensible programming on .NET. Language features are authored as independent modules, composed into dialects, and lowered through Bytecode and Abstract IR. Specialization extends beyond arithmetic: local variables, external bindings, control flow, calls, and typed operations become concrete runtime or CIL operations, removing language-construction machinery from prepared execution paths. The current benchmark suite is deliberately scoped to separate hot prepared invocation, convenience evaluation overhead, and cold compilation cost before making performance claims.
 
 I will demonstrate this journey with a restricted pricing DSL: assemble the language, inspect its deterministic runtime plan and intermediate representations, then execute one formula through both an AIR interpreter and a DynamicMethod-based CIL backend.
 

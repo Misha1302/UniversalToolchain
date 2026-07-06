@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core;
 using UniversalToolchain.Dialects.Core.Groups;
+using UniversalToolchain.Dialects.Core.ServiceCollection;
 using UniversalToolchain.Dialects.Frontend.Composition;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist.Groups;
@@ -24,6 +25,7 @@ public static class WistDialectCoreServiceCollectionExtensions
         services = services.ArgNotNull();
 
         services.AddDialectDslDefaultComposition();
+        services.AddDialectSemanticBindingBuiltIns();
 
         services.TryAddEnumerable(ServiceDescriptor.Singleton<IDialectGroupProvider, WistDialectGroupProvider>());
         services.TryAddSingleton<IDialectGroupCatalog, CompositeDialectGroupCatalog>();

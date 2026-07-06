@@ -175,17 +175,25 @@ Do not benchmark `Evaluate` inside a tight loop when evaluating runtime throughp
 ## Presets
 
 ```csharp
+WistEngine.CreateRestrictedArithmetic();
+WistEngine.CreateFullNativePreview();
+
+// Compatibility aliases:
 WistEngine.CreateSafeFormulas();
 WistEngine.CreateBusinessRules();
 WistEngine.CreateTrusted();
 ```
 
-`CreateSafeFormulas` is the recommended first-contact preset for restricted formula scenarios.
+`CreateRestrictedArithmetic` is the recommended first-contact preset for restricted formula scenarios. It maps to the
+shipped `pricing-restricted` profile in this preview.
 
-In this preview, `CreateBusinessRules` is a product-oriented alias for the full native Wist profile rather than a separate
-rules runtime.
+`CreateFullNativePreview` maps to the broad native Wist preview profile. It is useful for trusted full-language Wist
+experiments, not for untrusted input.
 
-`CreateTrusted` enables the trusted Wist profile and must not be used for untrusted input.
+`CreateSafeFormulas` remains a compatibility alias for `CreateRestrictedArithmetic`.
+
+`CreateBusinessRules` and `CreateTrusted` remain compatibility aliases for `CreateFullNativePreview` in this preview.
+They do not represent a separate stable business-rules runtime or a hardened trust boundary.
 
 `Safe` means a restricted language/runtime surface. It does not mean arbitrary untrusted code is safe to execute inside
 the current process.

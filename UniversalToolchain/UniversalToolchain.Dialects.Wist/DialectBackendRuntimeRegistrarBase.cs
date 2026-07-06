@@ -29,6 +29,7 @@ public abstract class DialectBackendRuntimeRegistrarBase<TCompilationOutput> : I
         services.AddTransient<ICoreRunnable>(provider => CreateCore(provider, configuration));
         services.AddTransient<ICoreOptimizedRunnable>(provider => CreateCore(provider, configuration));
         services.AddTransient<IExecutableGiver<TCompilationOutput>>(provider => CreateCore(provider, configuration));
+        services.AddTransient(provider => new ToolchainBackendRuntime(configuration.BackendDescriptor, CreateCore(provider, configuration)));
         services.AddTransient(provider => new WistDialectBackendRuntime(configuration.BackendDescriptor, CreateCore(provider, configuration)));
     }
 

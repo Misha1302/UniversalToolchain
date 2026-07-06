@@ -8,16 +8,16 @@ internal sealed class ModuleDirectiveHandler : IDialectDirectiveHandler
 
     public string Name => "Module";
 
-    public void Apply(DialectBindingExecutionContext context)
+    public void Apply(DialectDirectiveBindingContext context)
     {
         var activeModules = DialectSemanticNormalization.NormalizeActiveModules(
-            context.Source.UseModules,
-            context.Source.ExcludeModules,
-            context.Diagnostics,
+            context.UseModules,
+            context.ExcludeModules,
+            context.DiagnosticsList,
             context.DirectiveContext.ModuleConflictCode);
 
-        context.Builder.SetModulePolicy(new ModulePolicy(
+        context.SetModulePolicy(new ModulePolicy(
             activeModules,
-            context.Source.ExcludeModules.Distinct(StringComparer.Ordinal).OrderBy(x => x, StringComparer.Ordinal)));
+            context.ExcludeModules.Distinct(StringComparer.Ordinal).OrderBy(x => x, StringComparer.Ordinal)));
     }
 }

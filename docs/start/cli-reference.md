@@ -31,14 +31,19 @@ The `--` separates `dotnet run` options from Wistc options.
 | `--backend compiler` | Runs through the user-facing compiler alias when the selected dialect exposes CIL. |
 | `--backend interpreter` | Runs through the interpreter backend alias when the selected dialect exposes the interpreter backend. |
 | `--list-modules` | Lists available runtime components and exits. |
+| `--trace path/to/trace.json` | Writes a redacted structured JSON trace for the run. |
 
 `compiler` is a user-facing backend alias. In dialect files, the backend id is usually `cil`.
 
-## Debug trace status
+## Debug trace
 
-The current release does not support a `--trace` option and does not emit `logs.txt`.
+The current release supports a structured redacted trace artifact:
 
-The legacy text-log viewer/logger has been removed from the release surface. The intended replacement is a future structured JSON trace described in [Debug Trace v2](/architecture/debug-trace-v2) and [Debug Trace Schema](/reference/debug-trace-schema). Until that CLI exists, use normal diagnostics, tests, dialect inspection commands and backend parity checks.
+```text
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "2 + 3 * 4" --backend interpreter --trace trace.json
+```
+
+The trace is JSON and redacts source text/runtime values by default. Schema `wist-debug-trace/2` records source length/hash, dialect/backend selection, bounded coarse runtime stages and result or error summary. It does not restore `logs.txt` and it is not a full visual viewer yet.
 
 ## Minimal expression
 

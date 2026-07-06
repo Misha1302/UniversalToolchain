@@ -1,4 +1,7 @@
 using Wistc;
+using System.Text.Json;
+using CommandLine;
+using BasicCore.Contracts;
 
 namespace UniversalToolchain.Dialects.Tests.Wist;
 
@@ -42,6 +45,141 @@ public sealed class WistCliDefaultAndListingTests
         Assert.That(output.IndexOf("  Alpha", StringComparison.Ordinal), Is.LessThan(output.IndexOf("  Beta", StringComparison.Ordinal)));
     }
 
+    [Test]
+    public void Parser_Help_DoesNotSelectDefaultRepl()
+    {
+        var result = Parser.Default.ParseArguments<RunOptions, ReplOptions, DialectInspectOptions, DialectDemoOptions, FeaturesOptions>(["--help"]);
+
+        var exitCode = result.MapResult<RunOptions, ReplOptions, DialectInspectOptions, DialectDemoOptions, FeaturesOptions, int>(
+            _ => 10,
+            _ => 11,
+            _ => 12,
+            _ => 13,
+            _ => 14,
+            errors =>
+            {
+                var message = errors.Single().Message;
+                Assert.That(message, Does.StartWith("Usage: wistc <command>"));
+                Assert.That(message, Does.Contain("repl"));
+                return 0;
+            });
+
+        Assert.That(exitCode, Is.EqualTo(0));
+    }
+
+    [Test]
+    public void Parser_UnknownOption_DoesNotFallThroughToDefaultRepl()
+    {
+        var result = Parser.Default.ParseArguments<RunOptions, ReplOptions, DialectInspectOptions, DialectDemoOptions, FeaturesOptions>(["--definitely-unknown"]);
+
+        var exitCode = result.MapResult<RunOptions, ReplOptions, DialectInspectOptions, DialectDemoOptions, FeaturesOptions, int>(
+            _ => 10,
+            _ => 11,
+            _ => 12,
+            _ => 13,
+            _ => 14,
+            errors =>
+            {
+                Assert.That(errors.Single().Message, Is.EqualTo("Unknown option '--definitely-unknown'."));
+                return 1;
+            });
+
+        Assert.That(exitCode, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void Repl_Run_ExitsOnEndOfInput()
+    {
+        var originalIn = Console.In;
+        var originalOut = Console.Out;
+        using var input = new StringReader(string.Empty);
+        using var output = new StringWriter();
+
+        try
+        {
+            Console.SetIn(input);
+            Console.SetOut(output);
+
+            var exitCode = new Repl(new ThrowingCoreRunnable()).Run();
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(exitCode, Is.EqualTo(0));
+                Assert.That(output.ToString(), Is.EqualTo("> "));
+            });
+        }
+        finally
+        {
+            Console.SetIn(originalIn);
+            Console.SetOut(originalOut);
+        }
+    }
+
+    [Test]
+    public void TraceWriter_WriteSuccess_RedactsSourceAndRuntimeValues()
+    {
+        var tracePath = Path.Combine(TestContext.CurrentContext.WorkDirectory, $"trace-{Guid.NewGuid():N}.json");
+        const string source = "secret_price + 10";
+
+        WistCliTraceWriter.WriteSuccess(tracePath, source, "TraceDialect", "interpreter", 15);
+
+        using var document = JsonDocument.Parse(File.ReadAllText(tracePath));
+        var root = document.RootElement;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(root.GetProperty("schemaVersion").GetString(), Is.EqualTo(WistCliTraceWriter.SchemaVersion));
+            Assert.That(root.GetProperty("metadata").GetProperty("dialect").GetString(), Is.EqualTo("TraceDialect"));
+            Assert.That(root.GetProperty("metadata").GetProperty("sourceRedacted").GetBoolean(), Is.True);
+            Assert.That(root.GetProperty("metadata").GetProperty("runtimeValuesRedacted").GetBoolean(), Is.True);
+            Assert.That(root.GetProperty("source").GetProperty("length").GetInt32(), Is.EqualTo(source.Length));
+            Assert.That(root.GetProperty("source").TryGetProperty("text", out _), Is.False);
+            Assert.That(root.ToString(), Does.Not.Contain("secret_price"));
+            Assert.That(root.GetProperty("stages").GetArrayLength(), Is.GreaterThanOrEqualTo(6));
+            Assert.That(root.GetProperty("result").GetProperty("status").GetString(), Is.EqualTo("success"));
+        });
+    }
+
+    [Test]
+    public void TraceWriter_WriteFailure_UsesDeterministicTimestampAndTruncatesMetadata()
+    {
+        var tracePath = Path.Combine(TestContext.CurrentContext.WorkDirectory, $"trace-{Guid.NewGuid():N}.json");
+        var timestamp = new DateTimeOffset(2026, 7, 5, 12, 0, 0, TimeSpan.Zero);
+        var exception = new InvalidOperationException(new string('x', 40));
+
+        WistCliTraceWriter.WriteFailure(
+            tracePath,
+            "secret_value",
+            "TraceDialect",
+            "interpreter",
+            exception,
+            new WistCliTraceOptions(timestamp, 12));
+
+        using var document = JsonDocument.Parse(File.ReadAllText(tracePath));
+        var root = document.RootElement;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(root.GetProperty("createdAtUtc").GetString(), Does.StartWith("2026-07-05T12:00:00"));
+            Assert.That(root.GetProperty("result").GetProperty("errorMessage").GetString(), Is.EqualTo("xxxxxxxxxxxx..."));
+            Assert.That(root.ToString(), Does.Not.Contain("secret_value"));
+            Assert.That(
+                root.GetProperty("stages").EnumerateArray().Select(static x => x.GetProperty("id").GetString()),
+                Is.EqualTo(WistCliTraceStageCatalog.OrderedStages.Select(static x => x.Id)));
+            Assert.That(
+                root.GetProperty("stages").EnumerateArray().Select(static x => x.GetProperty("status").GetString()),
+                Is.EqualTo(new[]
+                {
+                    WistCliTraceStageStatus.Success,
+                    WistCliTraceStageStatus.Success,
+                    WistCliTraceStageStatus.Success,
+                    WistCliTraceStageStatus.Failed,
+                    WistCliTraceStageStatus.Skipped,
+                    WistCliTraceStageStatus.Skipped
+                }));
+        });
+    }
+
     private static RuntimeComponentManifestEntry Entry(
         RuntimeComponentKind kind,
         string canonicalAlias,
@@ -77,6 +215,14 @@ public sealed class WistCliDefaultAndListingTests
         {
             entry = entries.FirstOrDefault(x => x.AllAliases.Contains(alias, StringComparer.Ordinal));
             return entry != null;
+        }
+    }
+
+    private sealed class ThrowingCoreRunnable : ICoreRunnable
+    {
+        public object? Run(string code, Dictionary<string, object>? args = null)
+        {
+            throw new InvalidOperationException("REPL should not execute code when input is already at EOF.");
         }
     }
 }

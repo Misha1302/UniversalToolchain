@@ -8,8 +8,8 @@ internal sealed class CapabilityDirectiveHandler : IDialectDirectiveHandler
 
     public string Name => "Capability";
 
-    public void Apply(DialectBindingExecutionContext context)
+    public void Apply(DialectDirectiveBindingContext context)
     {
-        context.Builder.SetCapabilityPolicy(new CapabilityPolicy(context.Source.Capabilities.OrderBy(x => x.Key, StringComparer.Ordinal)));
+        context.SetCapabilityPolicy(new CapabilityPolicy(context.Capabilities.OrderBy(x => x.Key, StringComparer.Ordinal)));
     }
 }

@@ -13,6 +13,16 @@ Wist is the reference language in this repository. `UniversalToolchain.Wist` is 
 Wist can compile selected formula code into typed CIL-backed execution paths. The performance-oriented path is
 compiled typed invocation, not full convenience evaluation.
 
+## Current release scope
+
+This repository state is positioned as a scoped public preview of the Wist facade and runtime foundations, not as a
+finalized 1.0 platform. The releaseable claim is formula evaluation, validation, restricted/full shipped Wist presets,
+CLI smoke coverage, package smoke coverage, and typed compiled invocation for supported shapes.
+
+Neutral runtime host extraction, structured JSON trace, FunctionCalls/SafeMath, and the SSA route are active foundations
+with documented preview limits. They are not advertised here as a stable standalone runtime package family, a full trace
+viewer, a complete function authoring system, or a production SSA optimizer/backend layer.
+
 <!-- langdev-2026:start -->
 
 > **Featured technical story — LangDev 2026 proposal**
@@ -32,7 +42,7 @@ compiled typed invocation, not full convenience evaluation.
 - For supported compiled paths, per-operation module dispatch is removed from the prepared hot invocation path.
 - Typed CIL is handed to the .NET JIT for further optimization.
 - Cross-backend parity tests guard against one DSL silently becoming two languages.
-- In six selected arithmetic hot-execution workloads, cached Wist CIL artifacts stayed within 10% of a no-inlining C# baseline on the recorded system.
+- Current benchmarks are split into hot prepared execution, convenience `Evaluate`, and cold compilation stories; publish numbers only with raw BenchmarkDotNet artifacts and environment metadata.
 
 **Conference evidence:** [one-command demo](docs/talks/langdev-2026/README.md#reproducible-command) · [module-to-CIL lowering](docs/talks/langdev-2026/lowering-walkthrough.md) · [semantic-parity regression](docs/talks/langdev-2026/parity-regression.md) · [benchmarks and limitations](docs/talks/langdev-2026/benchmark-evidence.md)
 
@@ -126,14 +136,21 @@ if (!validation.IsValid)
 ```csharp
 using UniversalToolchain.Wist;
 
+using var restrictedArithmetic = WistEngine.CreateRestrictedArithmetic();
+using var fullNativePreview = WistEngine.CreateFullNativePreview();
+
+// Compatibility aliases:
 using var safeFormulas = WistEngine.CreateSafeFormulas();
 using var businessRules = WistEngine.CreateBusinessRules();
 using var trusted = WistEngine.CreateTrusted();
 ```
 
-`CreateSafeFormulas` is the recommended first-contact preset. In this preview, `CreateBusinessRules` is a product-oriented
-alias for the full native Wist profile rather than a separate rules runtime. `CreateTrusted` enables the trusted Wist
-profile and must not be used for untrusted input.
+`CreateRestrictedArithmetic` is the recommended first-contact preset. It maps to the shipped `pricing-restricted` profile.
+`CreateFullNativePreview` maps to the broad native Wist preview profile and must not be used for untrusted input.
+
+`CreateSafeFormulas` remains a compatibility alias for `CreateRestrictedArithmetic`. `CreateBusinessRules` and
+`CreateTrusted` remain compatibility aliases for `CreateFullNativePreview`; they do not represent a separate stable
+business-rules runtime or a hardened trust boundary.
 
 `Safe` means a restricted language/runtime surface. It does not mean arbitrary untrusted code is safe to execute inside
 the current process.

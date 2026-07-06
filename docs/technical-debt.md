@@ -62,6 +62,17 @@ Move fully toward typed intrinsic payloads and explicit backend capability contr
 - `InstructionIntrinsicReader` does not need a legacy fallback.
 - Architecture tests reject backend-specific intrinsic leakage into unsupported backends.
 
+## Legacy compatibility burn-down
+
+| Legacy path | Current owner | Why it exists | Replacement | Removal gate |
+|---|---|---|---|---|
+| `InstructionIntrinsicReader` legacy decoder fallback | `BasicCore` intrinsic pipeline | Reads older string-shaped intrinsic payloads | Typed intrinsic payload/descriptor contract | All production emitters produce typed payloads and compatibility fixtures pass without fallback |
+| `LegacyAirOptimizerStage` | AIR optimizer pipeline | Adapts older AIR optimizers into the current pipeline | Native `IIrStage` optimizers with fact contracts | Every shipped optimizer exposes required/preserved/invalidated facts |
+| `ModuleContractEnforcementPolicy.LegacyCompatible` | Module contract migration layer | Allows modules without full descriptors during migration | Strict module contract descriptors | All shipped modules have descriptors and strict tests cover examples |
+| Wist facade compatibility APIs | `UniversalToolchain.Wist` / `UniversalToolchain.Dialects.Wist.Facade` | Keeps first-contact Wist users stable | Thin wrappers over neutral runtime host and compiled artifact sessions | Public docs recommend neutral/custom-dialect path for non-Wist DSLs and wrappers stay delegation-only |
+
+New production legacy fallback requires an owner, replacement and removal gate in this table.
+
 ## Compiler/interpreter parity
 
 ### Problem
@@ -175,8 +186,9 @@ boundaries into one vague failure point or encourage ad hoc log formats.
 
 ### Desired direction
 
-Implement the [Debug Trace v2](/architecture/debug-trace-v2) direction: an
-optional, observer-only, versioned JSON trace over stable compiler stages.
+Continue the [Debug Trace v2](/architecture/debug-trace-v2) direction. The first
+`wistc run --trace` artifact is implemented, but fine-grained lexer/parser,
+bytecode, AIR, SSA and backend artifact stages are not complete yet.
 
 ### Exit criteria
 

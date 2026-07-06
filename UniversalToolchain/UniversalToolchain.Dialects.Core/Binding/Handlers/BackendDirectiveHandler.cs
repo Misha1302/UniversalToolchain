@@ -8,16 +8,16 @@ internal sealed class BackendDirectiveHandler : IDialectDirectiveHandler
 
     public string Name => "Backend";
 
-    public void Apply(DialectBindingExecutionContext context)
+    public void Apply(DialectDirectiveBindingContext context)
     {
         var backendMap = DialectSemanticNormalization.NormalizeBackendRules(
-            context.Source.BackendDirectives,
+            context.BackendDirectives,
             x => x.Backend,
             x => x.Enabled,
-            context.Diagnostics,
+            context.DiagnosticsList,
             context.DirectiveContext.BackendContradictionCode);
 
-        context.Builder.SetBackendPolicy(new BackendPolicy(
+        context.SetBackendPolicy(new BackendPolicy(
             backendMap.Where(x => x.Value).Select(x => x.Key).OrderBy(x => x, Comparer<DialectBackendId>.Default),
             backendMap.Where(x => !x.Value).Select(x => x.Key).OrderBy(x => x, Comparer<DialectBackendId>.Default)));
     }

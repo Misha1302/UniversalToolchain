@@ -58,11 +58,7 @@ public class WistDialectMinimalRuntimeSmokeTests
         return services.BuildServiceProvider();
     }
 
-    private static string ResolveExampleDirectory(string name)
-    {
-        var path = Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "Dialects", "examples", "wist", name));
-        return path;
-    }
+    private static string ResolveExampleDirectory(string name) => TestSourcePaths.WistExampleDirectory(name);
 
     private static double ToDouble(object? value)
     {

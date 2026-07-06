@@ -95,14 +95,7 @@ public sealed class WistDialectBackendMatrixTests
         });
     }
 
-    private static string ResolveExampleDirectory(string name)
-    {
-        var path = Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "Dialects", "examples", "wist", name));
-        if (!Directory.Exists(path))
-            Thrower.FileNotFound(path);
-
-        return path;
-    }
+    private static string ResolveExampleDirectory(string name) => UniversalToolchain.Dialects.Tests.TestSourcePaths.WistExampleDirectory(name);
 
     private static ServiceProvider CreateProvider()
     {

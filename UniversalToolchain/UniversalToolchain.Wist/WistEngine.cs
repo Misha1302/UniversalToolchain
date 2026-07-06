@@ -1,4 +1,5 @@
 using System.Reflection.Emit;
+using CommonExceptions;
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Integration;
@@ -35,17 +36,27 @@ public sealed class WistEngine : IDisposable
     }
 
     /// <summary>
-    ///     Creates a safe formula-oriented Wist engine.
+    ///     Creates a restricted arithmetic/formula Wist engine.
+    /// </summary>
+    public static WistEngine CreateRestrictedArithmetic() => Create(new WistEngineOptions { Preset = WistPreset.RestrictedArithmetic });
+
+    /// <summary>
+    ///     Creates a full native Wist preview engine. Do not use this for untrusted input.
+    /// </summary>
+    public static WistEngine CreateFullNativePreview() => Create(new WistEngineOptions { Preset = WistPreset.FullNativePreview });
+
+    /// <summary>
+    ///     Creates a safe formula-oriented Wist engine. Compatibility alias for <see cref="CreateRestrictedArithmetic"/>.
     /// </summary>
     public static WistEngine CreateSafeFormulas() => Create(new WistEngineOptions { Preset = WistPreset.SafeFormulas });
 
     /// <summary>
-    ///     Creates a business-rule oriented Wist engine.
+    ///     Creates a business-rule oriented Wist engine. Compatibility alias for <see cref="CreateFullNativePreview"/> in this preview.
     /// </summary>
     public static WistEngine CreateBusinessRules() => Create(new WistEngineOptions { Preset = WistPreset.BusinessRules });
 
     /// <summary>
-    ///     Creates a full trusted Wist engine. Do not use this for untrusted input.
+    ///     Creates a full trusted Wist engine. Compatibility alias for <see cref="CreateFullNativePreview"/>; do not use this for untrusted input.
     /// </summary>
     public static WistEngine CreateTrusted() => Create(new WistEngineOptions { Preset = WistPreset.FullTrusted });
 
@@ -74,7 +85,17 @@ public sealed class WistEngine : IDisposable
     /// <summary>
     ///     Evaluates source text through the configured convenience backend.
     /// </summary>
-    public T Evaluate<T>(string code) => WistResultConverter.ConvertTo<T>(_host.Run(code, WistBackendAliases.ToAlias(_options.Backend)));
+    public T Evaluate<T>(string code)
+    {
+        try
+        {
+            return WistResultConverter.ConvertTo<T>(_host.Run(code, WistBackendAliases.ToAlias(_options.Backend)));
+        }
+        catch (Exception ex)
+        {
+            throw NormalizeUserFacingException(code, ex);
+        }
+    }
 
     /// <summary>
     ///     Evaluates source text with anonymous-object or dictionary arguments.
@@ -84,7 +105,17 @@ public sealed class WistEngine : IDisposable
     /// <summary>
     ///     Evaluates source text with named arguments through the configured convenience backend.
     /// </summary>
-    public T Evaluate<T>(string code, IReadOnlyDictionary<string, object?> arguments) => WistResultConverter.ConvertTo<T>(_host.Run(code, arguments, WistBackendAliases.ToAlias(_options.Backend)));
+    public T Evaluate<T>(string code, IReadOnlyDictionary<string, object?> arguments)
+    {
+        try
+        {
+            return WistResultConverter.ConvertTo<T>(_host.Run(code, arguments, WistBackendAliases.ToAlias(_options.Backend)));
+        }
+        catch (Exception ex)
+        {
+            throw NormalizeUserFacingException(code, ex);
+        }
+    }
 
     /// <summary>
     ///     Validates source text by attempting to compile it for the configured backend.
@@ -98,7 +129,7 @@ public sealed class WistEngine : IDisposable
         }
         catch (Exception ex)
         {
-            return WistValidationResult.Failure(ex);
+            return WistValidationResult.Failure(NormalizeUserFacingException(code, ex));
         }
     }
 
@@ -115,7 +146,7 @@ public sealed class WistEngine : IDisposable
         }
         catch (Exception ex)
         {
-            return WistValidationResult.Failure(ex);
+            return WistValidationResult.Failure(NormalizeUserFacingException(code, ex));
         }
     }
 
@@ -193,9 +224,68 @@ public sealed class WistEngine : IDisposable
 
     private DynamicMethod CompileDynamicMethod(string formula, IReadOnlyDictionary<string, Type> bindingTypes)
     {
-        var artifact = _host.GetBackendSpecificArtifactCompiler<BasicCilCompiler.Execution.CilCompilationOutput>(WistBackendAliases.CompilerAlias).Compile(formula, CreateDeclaredBindings(bindingTypes));
-        return artifact.CompilationOutput.Method;
+        try
+        {
+            var artifact = _host.GetBackendSpecificArtifactCompiler<BasicCilCompiler.Execution.CilCompilationOutput>(WistBackendAliases.CompilerAlias).Compile(formula, CreateDeclaredBindings(bindingTypes));
+            return artifact.CompilationOutput.Method;
+        }
+        catch (Exception ex)
+        {
+            throw NormalizeUserFacingException(formula, ex);
+        }
     }
+
+    private Exception NormalizeUserFacingException(string code, Exception exception)
+    {
+        if (TryCreateDisabledFeatureException(code, exception, out var disabledFeatureException))
+            return disabledFeatureException;
+
+        return exception;
+    }
+
+    private bool TryCreateDisabledFeatureException(string code, Exception exception, out Exception result)
+    {
+        result = null!;
+
+        if (!UsesRestrictedFormulaSurface(_options.Preset))
+            return false;
+
+        if (exception is not LexerException)
+            return false;
+
+        if (!ContainsTokenBoundary(code, "let"))
+            return false;
+
+        result = new WistDialectFeatureException(
+            $"Feature 'let' is not enabled by preset '{_options.Preset}'. " +
+            "The selected restricted formula dialect excludes variable declarations from the Variables module. " +
+            "Use WistPreset.FullNativePreview or a custom dialect that includes Variables when statement-style bindings are required.",
+            exception);
+        return true;
+    }
+
+    private static bool UsesRestrictedFormulaSurface(WistPreset preset) =>
+        preset is WistPreset.RestrictedArithmetic or WistPreset.SafeFormulas;
+
+    private static bool ContainsTokenBoundary(string code, string token)
+    {
+        for (var index = 0; index <= code.Length - token.Length; index++)
+        {
+            if (!string.Equals(code.Substring(index, token.Length), token, StringComparison.Ordinal))
+                continue;
+
+            var hasLeftBoundary = index == 0 || !IsIdentifierCharacter(code[index - 1]);
+            var rightIndex = index + token.Length;
+            var hasRightBoundary = rightIndex == code.Length || !IsIdentifierCharacter(code[rightIndex]);
+            if (hasLeftBoundary && hasRightBoundary)
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool IsIdentifierCharacter(char value) =>
+        char.IsLetterOrDigit(value) || value == '_';
 
     private static OrderedDictionary<string, Type> CreateDeclaredBindings(IReadOnlyDictionary<string, object?> arguments)
     {

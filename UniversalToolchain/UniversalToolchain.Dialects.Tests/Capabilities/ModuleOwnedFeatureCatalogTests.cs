@@ -118,24 +118,7 @@ public sealed class ModuleOwnedFeatureCatalogTests
     }
 
     private static string GetDialectPath(string dialectName) =>
-        Path.GetFullPath(Path.Combine(
-            TestContext.CurrentContext.TestDirectory,
-            "..",
-            "..",
-            "..",
-            "..",
-            "Dialects",
-            "examples",
-            "wist",
-            dialectName,
-            "dialect.wistdialect"));
+        UniversalToolchain.Dialects.Tests.TestSourcePaths.WistExampleDialectPath(dialectName);
 
-    private static string GetRepositoryRoot() =>
-        Path.GetFullPath(Path.Combine(
-            TestContext.CurrentContext.TestDirectory,
-            "..",
-            "..",
-            "..",
-            "..",
-            ".."));
+    private static string GetRepositoryRoot() => UniversalToolchain.Dialects.Tests.TestSourcePaths.RepositoryRoot;
 }

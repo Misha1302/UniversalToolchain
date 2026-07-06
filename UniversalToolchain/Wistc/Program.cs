@@ -11,7 +11,24 @@ return Parser.Default.ParseArguments<RunOptions, ReplOptions, DialectInspectOpti
         (DialectInspectOptions opts) => DialectInspectCommand(opts),
         (DialectDemoOptions opts) => DialectDemoCommand(opts),
         (FeaturesOptions opts) => FeaturesCommand(opts),
-        _ => 1);
+        errors =>
+        {
+            var hasHelp = false;
+            foreach (var error in errors)
+            {
+                if (error.Message.StartsWith("Usage:", StringComparison.Ordinal))
+                {
+                    Console.WriteLine(error.Message);
+                    hasHelp = true;
+                }
+                else
+                {
+                    Console.Error.WriteLine(error.Message);
+                }
+            }
+
+            return hasHelp ? 0 : 1;
+        });
 
 static bool TryRejectRemovedDialectMutationOption(string[] args, out int exitCode)
 {
@@ -63,6 +80,7 @@ int RunCommand(RunOptions options)
             if (result != null)
                 Console.WriteLine(result);
 
+            WriteTraceIfRequested(options, code, dialectHost.Configuration.DialectName, result);
             return 0;
         }
 
@@ -71,10 +89,12 @@ int RunCommand(RunOptions options)
         if (runtimeResult != null)
             Console.WriteLine(runtimeResult);
 
+        WriteTraceIfRequested(options, code, host.Configuration.DialectName, runtimeResult);
         return 0;
     }
     catch (WistException ex)
     {
+        WriteFailureTraceIfRequested(options, ex);
         Console.Error.WriteLine(ex.ToString());
         if (Debugger.IsAttached)
             Console.Error.WriteLine(ex.StackTrace);
@@ -83,12 +103,29 @@ int RunCommand(RunOptions options)
     }
     catch (Exception ex)
     {
+        WriteFailureTraceIfRequested(options, ex);
         Console.Error.WriteLine($"Error: {ex.Message}");
         if (Debugger.IsAttached)
             Console.Error.WriteLine(ex.StackTrace);
 
         return 1;
     }
+}
+
+void WriteTraceIfRequested(RunOptions options, string code, string dialect, object? result)
+{
+    if (string.IsNullOrWhiteSpace(options.TracePath))
+        return;
+
+    WistCliTraceWriter.WriteSuccess(options.TracePath, code, dialect, options.Backend, result);
+}
+
+void WriteFailureTraceIfRequested(RunOptions options, Exception exception)
+{
+    if (string.IsNullOrWhiteSpace(options.TracePath))
+        return;
+
+    WistCliTraceWriter.WriteFailure(options.TracePath, options.Code ?? string.Empty, options.DialectFile ?? "unknown", options.Backend, exception);
 }
 
 int ReplCommand(ReplOptions options)

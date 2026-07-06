@@ -6,9 +6,10 @@ and prototype scenarios, but it is not a stable 1.0 contract.
 ## Stable enough to try
 
 - `WistEngine`;
-- `WistEngine.CreateSafeFormulas`;
-- `WistEngine.CreateBusinessRules`;
-- `WistEngine.CreateTrusted`;
+- `WistEngine.CreateRestrictedArithmetic`;
+- `WistEngine.CreateFullNativePreview`;
+- compatibility aliases `WistEngine.CreateSafeFormulas`, `WistEngine.CreateBusinessRules`, and `WistEngine.CreateTrusted`
+  with their documented preview mappings;
 - `CompileFunc` for one, two, and three arguments;
 - `Evaluate`;
 - `Validate`;
@@ -20,6 +21,7 @@ and prototype scenarios, but it is not a stable 1.0 contract.
 - signature-based compiled API;
 - object/session-based compiled artifacts;
 - diagnostics shape;
+- product-oriented preset names beyond their documented preview alias mappings;
 - backend-agnostic compiled artifact API;
 - third-party DSL authoring ergonomics;
 - backend authoring contracts;

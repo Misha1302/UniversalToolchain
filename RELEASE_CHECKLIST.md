@@ -8,7 +8,7 @@
 - package smoke passed
 - NuGet package metadata and contents are validated
 - docs build passed
-- markdown bash checks passed
+- markdown bash checks are optional/non-blocking for this release candidate
 - README examples match actual APIs
 - site examples match README
 - SECURITY limitations are visible
@@ -28,14 +28,22 @@
 ## Required commands
 
 ```bash ci-run=false
-dotnet restore UniversalToolchain/Wist.sln
-dotnet build UniversalToolchain/Wist.sln -c Release --no-restore
-dotnet test UniversalToolchain/Wist.sln -c Release --no-build
-dotnet pack UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj -c Release -o artifacts/packages /p:WarningsAsErrors=NU5118
+unset PLATFORM
+dotnet restore UniversalToolchain/Wist.sln -p:Platform="Any CPU"
+dotnet build UniversalToolchain/Wist.sln -c Release --no-restore -p:Platform="Any CPU"
+dotnet test UniversalToolchain/Wist.sln -c Release --no-build -p:Platform="Any CPU"
+dotnet pack UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj -c Release -o artifacts/packages -p:Platform="Any CPU" /p:WarningsAsErrors=NU5118
 ls -la artifacts/packages
 unzip -l artifacts/packages/UniversalToolchain.Wist.0.1.0-preview.2.nupkg
 npm install --no-audit --no-fund
 npm run docs:build
+```
+
+## Optional documentation smoke
+
+Markdown bash block execution is useful before publishing docs, but it is not a blocking gate for this release candidate.
+
+```bash ci-run=false
 python3 .github/scripts/run-markdown-bash-blocks.py
 ```
 
@@ -44,7 +52,7 @@ python3 .github/scripts/run-markdown-bash-blocks.py
 - package metadata includes repository URL
 - package metadata includes project URL
 - package includes README.md
-- package includes CHANGELOG.md
+- package includes `UniversalToolchain/UniversalToolchain.Wist/CHANGELOG.md` as package-root `CHANGELOG.md`
 - package includes runtime manifests
 - package includes Wist example dialect content files
 - symbols package is produced

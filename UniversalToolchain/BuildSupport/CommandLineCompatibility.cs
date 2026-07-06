@@ -72,8 +72,19 @@ internal sealed class Parser
     public ParserResult<object> ParseArguments<T1, T2, T3, T4, T5>(IEnumerable<string> args)
     {
         var tokens = args.ToArray();
-        var optionType = ResolveVerbType(tokens, typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5));
-        return ParserResult<object>.Parsed(Parse(optionType, tokens));
+        var optionTypes = new[] { typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5) };
+        if (TryCreateHelpResult(tokens, optionTypes, out var helpText))
+            return ParserResult<object>.Failed(new CommandLineHelpRequestedException(helpText));
+
+        try
+        {
+            var optionType = ResolveVerbType(tokens, optionTypes);
+            return ParserResult<object>.Parsed(Parse(optionType, tokens));
+        }
+        catch (Exception ex)
+        {
+            return ParserResult<object>.Failed(ex);
+        }
     }
 
     private static Type ResolveVerbType(string[] args, params Type[] optionTypes)
@@ -111,10 +122,7 @@ internal sealed class Parser
 
             var property = FindOptionProperty(optionType, token);
             if (property == null)
-            {
-                index++;
-                continue;
-            }
+                throw new ArgumentException($"Unknown option '{token}'.");
 
             if (property.PropertyType == typeof(bool))
             {
@@ -190,6 +198,72 @@ internal sealed class Parser
 
     private static bool IsMissing(object? value) => value is null or "";
 
+    private static bool TryCreateHelpResult(string[] args, IReadOnlyList<Type> optionTypes, out string helpText)
+    {
+        helpText = string.Empty;
+        if (!args.Any(static x => x is "--help" or "-h" or "help"))
+            return false;
+
+        var first = args.FirstOrDefault(static arg => !arg.StartsWith("-", StringComparison.Ordinal));
+        var verbType = !string.IsNullOrWhiteSpace(first)
+            ? optionTypes.FirstOrDefault(type => string.Equals(GetVerb(type).Name, first, StringComparison.OrdinalIgnoreCase))
+            : null;
+
+        helpText = verbType == null ? FormatGlobalHelp(optionTypes) : FormatVerbHelp(verbType);
+        return true;
+    }
+
+    private static string FormatGlobalHelp(IReadOnlyList<Type> optionTypes)
+    {
+        var lines = new List<string>
+        {
+            "Usage: wistc <command> [options]",
+            "",
+            "Commands:"
+        };
+
+        foreach (var type in optionTypes.OrderBy(static x => GetVerb(x).Name, StringComparer.Ordinal))
+        {
+            var verb = GetVerb(type);
+            var defaultSuffix = verb.IsDefault ? " (default)" : string.Empty;
+            lines.Add($"  {verb.Name}{defaultSuffix}  {verb.HelpText ?? string.Empty}".TrimEnd());
+        }
+
+        lines.Add("");
+        lines.Add("Use 'wistc <command> --help' for command-specific options.");
+        return string.Join(Environment.NewLine, lines);
+    }
+
+    private static string FormatVerbHelp(Type optionType)
+    {
+        var verb = GetVerb(optionType);
+        var lines = new List<string>
+        {
+            $"Usage: wistc {verb.Name} [options]",
+            "",
+            verb.HelpText ?? string.Empty,
+            "",
+            "Options:"
+        };
+
+        foreach (var property in GetAllProperties(optionType))
+        {
+            var option = property.GetCustomAttribute<OptionAttribute>();
+            if (option != null)
+            {
+                var shortName = option.ShortName.HasValue ? $"-{option.ShortName.Value}, " : string.Empty;
+                lines.Add($"  {shortName}--{option.LongName}  {option.HelpText ?? string.Empty}".TrimEnd());
+                continue;
+            }
+
+            var value = property.GetCustomAttribute<ValueAttribute>();
+            if (value != null)
+                lines.Add($"  <{value.MetaName ?? property.Name}>  {value.HelpText ?? string.Empty}".TrimEnd());
+        }
+
+        return string.Join(Environment.NewLine, lines.Where(static x => x.Length > 0));
+    }
+
     private static IEnumerable<PropertyInfo> GetAllProperties(Type type)
     {
         for (var current = type; current != null; current = current.BaseType)
@@ -239,3 +313,5 @@ internal sealed class ParserResult<T>
 }
 
 internal sealed record Error(string Message);
+
+internal sealed class CommandLineHelpRequestedException(string helpText) : Exception(helpText);

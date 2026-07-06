@@ -10,6 +10,11 @@
     <ItemGroup>
     </ItemGroup>
 
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2"/>
+    </ItemGroup>
+
     <ItemGroup>
         <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj"/>
         <ProjectReference Include="..\AbstractIrConverters\AbstractIrConverters.csproj"/>

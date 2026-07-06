@@ -8,8 +8,8 @@ internal sealed class SecurityDirectiveHandler : IDialectDirectiveHandler
 
     public string Name => "Security";
 
-    public void Apply(DialectBindingExecutionContext context)
+    public void Apply(DialectDirectiveBindingContext context)
     {
-        context.Builder.SetSecurityPolicy(context.Source.SecurityProfile.HasValue ? new SecurityPolicy(context.Source.SecurityProfile.Value) : null);
+        context.SetSecurityPolicy(context.SecurityProfile.HasValue ? new SecurityPolicy(context.SecurityProfile.Value) : null);
     }
 }

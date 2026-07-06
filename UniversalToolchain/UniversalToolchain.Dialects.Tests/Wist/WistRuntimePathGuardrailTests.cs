@@ -1,6 +1,7 @@
 using BasicCore.Contracts;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
+using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
 using UniversalToolchain.Dialects.Wist.Facade;
 using UniversalToolchain.Dialects.Wist.Presets;
@@ -121,6 +122,72 @@ public sealed class WistRuntimePathGuardrailTests
             Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
             Assert.That(composition.RuntimeSelection, Is.InstanceOf<SelectedRuntimePlan>());
             Assert.That(registrar.RegisterRuntimeCallCount, Is.EqualTo(0));
+        });
+    }
+
+    [Test]
+    public void CreateRuntimeHost_CanonicalPath_RunsThroughNeutralRuntimeHost()
+    {
+        using var provider = WistDialectTestInfrastructure.CreateCanonicalProvider();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+        var composition = workflow.ComposeText(
+            "dialect NeutralHost\nuse Arithmetic,Numbers,Whitespaces\nbackend interpreter",
+            "neutral-host");
+
+        Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
+
+        using var runtimeHost = workflow.CreateRuntimeHost(composition);
+        var result = runtimeHost.Run("2 + 3 * 4", "interpreter");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(runtimeHost, Is.InstanceOf<ToolchainRuntimeHost>());
+            Assert.That(runtimeHost.Configuration.DialectName, Is.EqualTo("NeutralHost"));
+            Assert.That(result?.ToString(), Is.EqualTo("14"));
+        });
+    }
+
+    [Test]
+    public void CreateRuntimeHost_RequestEnvelope_RunsThroughNeutralRuntimeHost()
+    {
+        using var provider = WistDialectTestInfrastructure.CreateCanonicalProvider();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+        var composition = workflow.ComposeText(
+            "dialect NeutralRequest\nuse Arithmetic,Numbers,Whitespaces\nbackend interpreter",
+            "neutral-request");
+
+        Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
+
+        using var runtimeHost = workflow.CreateRuntimeHost(composition);
+        var result = runtimeHost.Run(new ToolchainRuntimeRunRequest("2 + 5", "interpreter"));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.DialectName, Is.EqualTo("NeutralRequest"));
+            Assert.That(result.Backend, Is.EqualTo("interpreter"));
+            Assert.That(result.Value?.ToString(), Is.EqualTo("7"));
+        });
+    }
+
+    [Test]
+    public void ComposeText_WithRuntimeProfile_AppliesProfileDefaultsBeforeSelection()
+    {
+        using var provider = WistDialectTestInfrastructure.CreateCanonicalProvider();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+        var profile = new RuntimeProfileDefinition(
+            "minimal-interpreter",
+            defaultModules: ["Arithmetic", "Numbers", "Whitespaces"],
+            defaultBackends: [new DialectBackendId("interpreter")]);
+
+        var composition = workflow.ComposeText("dialect ProfiledRuntime", "profiled-runtime", profile);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
+            Assert.That(composition.BuildPlan!.OrderedModules, Is.SupersetOf(new[] { "Arithmetic", "Numbers", "Whitespaces" }));
+            Assert.That(
+                ((SelectedRuntimePlan)composition.RuntimeSelection!).EnabledBackends.Select(static x => x.CanonicalAlias),
+                Is.EqualTo(new[] { "interpreter" }));
         });
     }
 

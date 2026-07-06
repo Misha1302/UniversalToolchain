@@ -179,8 +179,7 @@ public class WistRuntimeManifestMetadataValidationTests
     [Test]
     public void DirectoryBuildTargets_EmitManifestOnlyWhenProjectOptedIn()
     {
-        var testDir = TestContext.CurrentContext.TestDirectory;
-        var sourcePath = Path.GetFullPath(Path.Combine(testDir, "..", "..", "..", "..", "Directory.Build.targets"));
+        var sourcePath = Path.Combine(TestSourcePaths.ToolchainRoot, "Directory.Build.targets");
         var source = File.ReadAllText(sourcePath);
 
         Assert.Multiple(() =>
@@ -197,8 +196,7 @@ public class WistRuntimeManifestMetadataValidationTests
     [Test]
     public void MetadataEmitter_UsesMetadataOnlyInspection()
     {
-        var testDir = TestContext.CurrentContext.TestDirectory;
-        var sourcePath = Path.GetFullPath(Path.Combine(testDir, "..", "..", "..", "..", "UniversalToolchain.Dialects.ManifestEmitter", "Program.cs"));
+        var sourcePath = Path.Combine(TestSourcePaths.ToolchainRoot, "UniversalToolchain.Dialects.ManifestEmitter", "Program.cs");
         var source = File.ReadAllText(sourcePath);
 
         Assert.Multiple(() =>
@@ -268,8 +266,12 @@ public class WistRuntimeManifestMetadataValidationTests
         var outputPath = Path.Combine(temp.Path, $"{Path.GetFileNameWithoutExtension(assemblyPath)}.dialect.runtime.json");
         var repoRoot = GetRepoRoot();
         var emitterProject = Path.Combine(repoRoot, "UniversalToolchain.Dialects.ManifestEmitter", "UniversalToolchain.Dialects.ManifestEmitter.csproj");
+        var dotnetHostPath = ResolveDotnetHostPath();
+        var configuration = ResolveBuildConfiguration();
+        var platform = ResolveBuildPlatform();
+        var platformArgument = string.IsNullOrWhiteSpace(platform) ? string.Empty : $" -p:Platform=\"{platform}\"";
 
-        var start = new ProcessStartInfo("dotnet", $"run --project \"{emitterProject}\" -- --assembly \"{assemblyPath}\" --output \"{outputPath}\"")
+        var start = new ProcessStartInfo(dotnetHostPath, $"run --no-restore --project \"{emitterProject}\" -c {configuration}{platformArgument} -- --assembly \"{assemblyPath}\" --output \"{outputPath}\"")
         {
             RedirectStandardError = true,
             RedirectStandardOutput = true,
@@ -283,7 +285,12 @@ public class WistRuntimeManifestMetadataValidationTests
             return (string.Empty, new FileDialectRuntimeManifestDocument(string.Empty, []));
         }
 
-        process.WaitForExit();
+        var completed = process.WaitForExit(120_000);
+        if (!completed)
+        {
+            process.Kill(entireProcessTree: true);
+            Assert.Fail("Manifest emitter process timed out.");
+        }
 
         Assert.That(process.ExitCode, Is.EqualTo(0), process.StandardError.ReadToEnd());
 
@@ -292,9 +299,52 @@ public class WistRuntimeManifestMetadataValidationTests
         return (json, serializer.Deserialize(json));
     }
 
-    private static string GetRepoRoot() => Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", ".."));
 
-    private static string GetDialectPath(string dialectName) => Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", "Dialects", "examples", "wist", dialectName, "dialect.wistdialect"));
+    private static string ResolveDotnetHostPath()
+    {
+        var hostPath = Environment.GetEnvironmentVariable("DOTNET_HOST_PATH");
+        if (!string.IsNullOrWhiteSpace(hostPath))
+            return hostPath;
+
+        return Environment.ProcessPath ?? "dotnet";
+    }
+
+    private static string ResolveBuildConfiguration()
+    {
+        var segments = TestContext.CurrentContext.TestDirectory.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        var binIndex = Array.LastIndexOf(segments, "bin");
+        if (binIndex >= 0)
+        {
+            var configuration = segments
+                .Skip(binIndex + 1)
+                .FirstOrDefault(static segment =>
+                    segment.Equals("Debug", StringComparison.OrdinalIgnoreCase) ||
+                    segment.Equals("Release", StringComparison.OrdinalIgnoreCase));
+
+            if (!string.IsNullOrWhiteSpace(configuration))
+                return configuration;
+        }
+
+        return "Debug";
+    }
+
+    private static string? ResolveBuildPlatform()
+    {
+        var segments = TestContext.CurrentContext.TestDirectory.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+        var binIndex = Array.LastIndexOf(segments, "bin");
+        if (binIndex < 0 || binIndex + 1 >= segments.Length)
+            return null;
+
+        var first = segments[binIndex + 1];
+        if (first.Equals("Debug", StringComparison.OrdinalIgnoreCase) || first.Equals("Release", StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        return first;
+    }
+
+    private static string GetRepoRoot() => TestSourcePaths.ToolchainRoot;
+
+    private static string GetDialectPath(string dialectName) => TestSourcePaths.WistExampleDialectPath(dialectName);
 
     private static IReadOnlySet<string> GetLoadedModuleAssemblies()
     {

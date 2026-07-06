@@ -1,6 +1,9 @@
 using UniversalToolchain.Dialects.Abstractions;
+using UniversalToolchain.Dialects.Core;
 using UniversalToolchain.Dialects.Core.Binding;
 using UniversalToolchain.Dialects.Core.Binding.Handlers;
+using UniversalToolchain.Dialects.Core.Groups;
+using UniversalToolchain.Dialects.Parsing;
 
 namespace UniversalToolchain.Dialects.Tests;
 
@@ -17,7 +20,7 @@ public class DialectDirectiveHandlerRegistryTests
             new RegistryOrderingHandlerA(applied)
         ]);
 
-        registry.Apply(new DialectBindingExecutionContext(new TestBindingSource(), new DialectDefinitionBuilder(), []));
+        registry.Apply(new DialectDirectiveBindingContext(new TestBindingSource(), new DialectDefinitionBuilder(), []));
 
         Assert.Multiple(() =>
         {
@@ -41,7 +44,7 @@ public class DialectDirectiveHandlerRegistryTests
         var source = new TestBindingSource { InputKind = DialectBindingInputKind.Compiled };
         var builder = new DialectDefinitionBuilder();
         var diagnostics = new List<DialectDiagnostic>();
-        var context = new DialectBindingExecutionContext(source, builder, diagnostics);
+        var context = new DialectDirectiveBindingContext(source, builder, diagnostics);
 
         registry.Apply(context);
 
@@ -57,13 +60,52 @@ public class DialectDirectiveHandlerRegistryTests
         });
     }
 
+    [Test]
+    public void Registry_RejectsDuplicateSemanticHandlerFamilies()
+    {
+        Assert.That(
+            () => new DialectDirectiveHandlerRegistry(
+            [
+                new DuplicateFamilyHandlerA(),
+                new DuplicateFamilyHandlerB()
+            ]),
+            Throws.TypeOf<InvalidOperationException>().With.Message.Contain("DuplicateFamily"));
+    }
+
+    [Test]
+    public void BuildPlanBuilder_CanUseInjectedSemanticHandlerWithoutEditingCentralBinder()
+    {
+        var document = new DialectSyntaxDocument(
+            "Injected",
+            null,
+            [],
+            [],
+            [],
+            [],
+            [],
+            [],
+            null,
+            [],
+            null);
+        var registry = new DialectDirectiveHandlerRegistry(
+        [
+            ..DialectDefinitionSemanticBinder.CreateDefaultDirectiveHandlerRegistry().Handlers,
+            new InjectedWarningHandler()
+        ]);
+        var builder = new DialectBuildPlanBuilder(new DialectGroupExpander(new EmptyDialectGroupCatalog()), registry);
+
+        var plan = builder.Build(document);
+
+        Assert.That(plan.ValidationResult.Diagnostics.Select(static x => x.Code), Does.Contain("T900"));
+    }
+
     private sealed class RegistryOrderingHandlerA(List<string> applied) : IDialectDirectiveHandler
     {
         public int Order => 0;
 
         public string Name => "A";
 
-        public void Apply(DialectBindingExecutionContext context)
+        public void Apply(DialectDirectiveBindingContext context)
         {
             applied.Add("A");
         }
@@ -75,7 +117,7 @@ public class DialectDirectiveHandlerRegistryTests
 
         public string Name => "B";
 
-        public void Apply(DialectBindingExecutionContext context)
+        public void Apply(DialectDirectiveBindingContext context)
         {
             applied.Add("B");
         }
@@ -87,7 +129,7 @@ public class DialectDirectiveHandlerRegistryTests
 
         public string Name => "C";
 
-        public void Apply(DialectBindingExecutionContext context)
+        public void Apply(DialectDirectiveBindingContext context)
         {
             applied.Add("C");
         }
@@ -95,7 +137,7 @@ public class DialectDirectiveHandlerRegistryTests
 
     private sealed class RegistryContextCapturingHandler : IDialectDirectiveHandler
     {
-        public DialectBindingExecutionContext? Context { get; private set; }
+        public DialectDirectiveBindingContext? Context { get; private set; }
 
         public IDialectBindingSource? Source { get; private set; }
 
@@ -108,14 +150,48 @@ public class DialectDirectiveHandlerRegistryTests
 
         public string Name => "Capture";
 
-        public void Apply(DialectBindingExecutionContext context)
+        public void Apply(DialectDirectiveBindingContext context)
         {
             Context = context;
             Source = context.Source;
             Builder = context.Builder;
-            Diagnostics = context.Diagnostics;
+            Diagnostics = context.DiagnosticsList;
             DirectiveContext = context.DirectiveContext;
-            context.Diagnostics.Add(new DialectDiagnostic("T001", "Test diagnostic.", DialectDiagnosticSeverity.Info));
+            context.AddDiagnostic(new DialectDiagnostic("T001", "Test diagnostic.", DialectDiagnosticSeverity.Info));
+        }
+    }
+
+    private sealed class DuplicateFamilyHandlerA : IDialectDirectiveHandler
+    {
+        public int Order => 0;
+
+        public string Name => "DuplicateFamily";
+
+        public void Apply(DialectDirectiveBindingContext context)
+        {
+        }
+    }
+
+    private sealed class DuplicateFamilyHandlerB : IDialectDirectiveHandler
+    {
+        public int Order => 1;
+
+        public string Name => "DuplicateFamily";
+
+        public void Apply(DialectDirectiveBindingContext context)
+        {
+        }
+    }
+
+    private sealed class InjectedWarningHandler : IDialectDirectiveHandler
+    {
+        public int Order => 100;
+
+        public string Name => "InjectedWarning";
+
+        public void Apply(DialectDirectiveBindingContext context)
+        {
+            context.AddDiagnostic(new DialectDiagnostic("T900", "Injected semantic handler was applied.", DialectDiagnosticSeverity.Warning));
         }
     }
 

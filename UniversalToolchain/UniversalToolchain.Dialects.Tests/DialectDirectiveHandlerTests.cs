@@ -252,7 +252,7 @@ public class DialectDirectiveHandlerTests
         return builder;
     }
 
-    private static DialectBindingExecutionContext CreateContext(IDialectBindingSource source, DialectDefinitionBuilder builder, List<DialectDiagnostic> diagnostics) => new(source, builder, diagnostics);
+    private static DialectDirectiveBindingContext CreateContext(IDialectBindingSource source, DialectDefinitionBuilder builder, List<DialectDiagnostic> diagnostics) => new(source, builder, diagnostics);
 
     private static DialectDefinitionBuilder CreateBuilderWithPolicyDefaults()
     {
@@ -344,7 +344,7 @@ public class DialectDirectiveHandlerTests
 
         public string Name => "A";
 
-        public void Apply(DialectBindingExecutionContext context)
+        public void Apply(DialectDirectiveBindingContext context)
         {
             applied.Add("A");
         }
@@ -356,7 +356,7 @@ public class DialectDirectiveHandlerTests
 
         public string Name => "B";
 
-        public void Apply(DialectBindingExecutionContext context)
+        public void Apply(DialectDirectiveBindingContext context)
         {
             applied.Add("B");
         }
@@ -368,7 +368,7 @@ public class DialectDirectiveHandlerTests
 
         public string Name => "Late";
 
-        public void Apply(DialectBindingExecutionContext context)
+        public void Apply(DialectDirectiveBindingContext context)
         {
             applied.Add("Late");
         }

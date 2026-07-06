@@ -11,7 +11,7 @@ plans as current truth.
 | Level | Location | Meaning |
 |---|---|---|
 | Current truth | `docs/CURRENT_ARCHITECTURE_STATUS.md`, `docs/ARCHITECTURE_RULES.md`, `docs/PROJECT_RULES.md`, `docs/DOCUMENTATION_RULES.md` | May govern implementation and review. |
-| Current implementation detail | `docs/architecture/ir-routing-foundation.md`, `docs/architecture/callable-first-ssa.md`, `docs/architecture/debug-trace-v2.md`, `docs/releases/ssa-route-correctness-2026-07-04.md` | Current for the named subsystem only. |
+| Current implementation detail | `docs/architecture/ir-routing-foundation.md`, `docs/architecture/callable-first-ssa.md`, `docs/architecture/ssa-coverage-matrix.md`, `docs/architecture/debug-trace-v2.md`, `docs/public-claim-ledger.md`, `docs/reference/benchmark-methodology.md`, `docs/releases/ssa-route-correctness-2026-07-04.md` | Current for the named subsystem only. |
 | Public docs | `docs/start/`, `docs/wist/`, `docs/build-dsls/`, `docs/write-modules/`, `docs/reference/`, `docs/internals/` | Must match current behavior before release. |
 | Proposals | `docs/proposals/` | Design input only until implemented and tested. |
 | Archive | `docs/archive/` | Historical context only. |
@@ -36,6 +36,7 @@ cleanup:
 1. `docs/SYNTAX_OWNERSHIP_RULES.md`
 2. `docs/architecture/ir-routing-foundation.md`
 3. `docs/architecture/callable-first-ssa.md`
+4. `docs/architecture/ssa-coverage-matrix.md`
 
 ## Current user-facing overview
 

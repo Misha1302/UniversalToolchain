@@ -11,4 +11,7 @@ public class RunOptions : CommonOptions
 
     [Option('e', "eval", HelpText = "Evaluate expression and print result")]
     public bool Evaluate { get; set; }
+
+    [Option("trace", HelpText = "Write a redacted structured JSON trace artifact for this run")]
+    public string? TracePath { get; set; }
 }

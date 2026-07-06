@@ -11,7 +11,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <FrameworkReference Include="Microsoft.AspNetCore.App" />
         <Reference Include="System.Reflection.MetadataLoadContext"
                    HintPath="$(MSBuildToolsPath)/System.Reflection.MetadataLoadContext.dll"
                    Condition="Exists('$(MSBuildToolsPath)/System.Reflection.MetadataLoadContext.dll')" />

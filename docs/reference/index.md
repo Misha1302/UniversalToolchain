@@ -32,7 +32,8 @@ Use reference pages when you need to answer questions such as:
 | [AIR Reference](/reference/air-reference) | AIR opcode table and instruction contracts |
 | [Intrinsics Reference](/reference/intrinsics-reference) | intrinsic symbols, type arguments and capability expectations |
 | [Backend Contracts](/reference/backend-contracts) | interpreter/CIL/shared backend obligations |
-| [Debug Trace Schema](/reference/debug-trace-schema) | planned structured trace contract and current unsupported status |
+| [Runtime Profiles](/reference/runtime-profiles) | runtime profile defaults, builder API and profile applicator boundaries |
+| [Debug Trace Schema](/reference/debug-trace-schema) | current redacted structured trace artifact contract and remaining gaps |
 | [Project Rules](/reference/project-rules) | coding and contribution rules relevant to documentation and internals |
 | [Documentation Rules](/reference/documentation-rules) | documentation synchronization and executable example rules |
 

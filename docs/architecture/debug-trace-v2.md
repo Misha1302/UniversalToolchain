@@ -5,7 +5,7 @@ description: Decision record for replacing legacy text logs with structured comp
 
 # Debug Trace v2
 
-Status: decision recorded, implementation not complete.
+Status: first CLI artifact phase implemented; full stage coverage remains roadmap.
 
 Date: 2026-07-04
 
@@ -42,13 +42,13 @@ Historical archive material may mention older logging experiments, but current d
 
 ## Target Shape
 
-The intended future user-facing shape is:
+The first implemented user-facing shape is:
 
 ```text
 wistc run --trace trace.json --eval "2+3"
 ```
 
-That command is a target, not a current release guarantee. Until the trace CLI is implemented, users should rely on existing tests, diagnostics, dialect inspection commands and backend parity checks.
+That command writes a redacted `trace.json` with source summary, runtime selection, coarse execution stage and result/error summary. Fine-grained lexer/parser/bytecode/AIR/SSA stage dumps remain future work.
 
 ## Trace Contract Principles
 
@@ -56,7 +56,7 @@ A future trace must:
 
 - be optional;
 - be observer-only and not alter compilation or execution semantics;
-- write deterministic JSON with a `schemaVersion`;
+- write JSON with a `schemaVersion`;
 - represent stage ownership and failure location;
 - keep Bytecode, AIR and SSA as distinct artifact kinds;
 - attach diagnostics to the stage that produced them;

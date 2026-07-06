@@ -10,7 +10,7 @@ namespace UniversalToolchain.Dialects.Wist;
 /// <summary>
 ///     Immutable execution configuration resolved from a dialect build plan and runtime composition.
 /// </summary>
-public sealed class WistDialectExecutionConfiguration
+public sealed class WistDialectExecutionConfiguration : IToolchainRuntimeConfiguration
 {
     private readonly ReadOnlyCollection<DialectBackendRuntimeConfiguration> _backendConfigurations;
     private readonly ReadOnlyCollection<Type> _frontendModules;

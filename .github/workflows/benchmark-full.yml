@@ -6,7 +6,7 @@ on:
       filter:
         description: "BenchmarkDotNet filter"
         required: false
-        default: "*External*ExecutionBenchmarks"
+        default: "*Formula*"
 
 jobs:
   benchmark-full:
@@ -21,15 +21,15 @@ jobs:
         with:
           global-json-file: UniversalToolchain/global.json
 
-      - name: Restore
-        run: dotnet restore UniversalToolchain/Wist.sln
+      - name: Restore benchmark project
+        run: dotnet restore UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj -p:Platform="Any CPU"
 
-      - name: Build
-        run: dotnet build UniversalToolchain/Wist.sln -c Release --no-restore
+      - name: Build benchmark project
+        run: dotnet build UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj -c Release --no-restore -p:Platform="Any CPU"
 
       - name: Run benchmarks
         run: >
-          dotnet run -c Release
+          dotnet run -c Release --no-build
           --project UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj
           --
           --filter "${{ inputs.filter }}"

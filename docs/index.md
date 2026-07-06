@@ -78,7 +78,7 @@ Current status:
 - .NET 10 baseline
 - compiler-first hot path + interpreter diagnostics/parity backend
 - restricted dialects are not hardened sandboxes
-- legacy text-log debugging has been removed; structured trace is planned but not implemented
+- legacy text-log debugging has been removed; the redacted `trace.json` v2 artifact is implemented, while a full viewer and fine-grained stage dumps remain future work
 - APIs may change before stable release
 
 ## I want to...

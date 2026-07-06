@@ -71,12 +71,5 @@ public sealed class WistRuntimeFacadeSmokeTests
             ["fee"] = typeof(double)
         };
 
-    private static string GetDialectFilePath()
-        => Path.GetFullPath(Path.Combine(
-            TestContext.CurrentContext.TestDirectory,
-            "Dialects",
-            "examples",
-            "wist",
-            "pricing-restricted",
-            "dialect.wistdialect"));
+    private static string GetDialectFilePath() => TestSourcePaths.WistExampleDialectPath("pricing-restricted");
 }

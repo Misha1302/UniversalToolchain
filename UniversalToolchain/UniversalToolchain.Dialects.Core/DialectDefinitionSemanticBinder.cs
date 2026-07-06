@@ -9,15 +9,7 @@ namespace UniversalToolchain.Dialects.Core;
 
 internal static class DialectDefinitionSemanticBinder
 {
-    private static readonly DialectDirectiveHandlerRegistry _directiveHandlerRegistry = new(
-    [
-        new ModuleDirectiveHandler(),
-        new BackendDirectiveHandler(),
-        new IntrinsicDirectiveHandler(),
-        new OptimizerDirectiveHandler(),
-        new SecurityDirectiveHandler(),
-        new CapabilityDirectiveHandler()
-    ]);
+    private static readonly DialectDirectiveHandlerRegistry _defaultDirectiveHandlerRegistry = CreateDefaultDirectiveHandlerRegistry();
 
     public static DialectDefinition Bind(DialectSyntaxDocument syntaxDocument, List<DialectDiagnostic> diagnostics)
     {
@@ -25,7 +17,7 @@ internal static class DialectDefinitionSemanticBinder
 
         diagnostics = diagnostics.ArgNotNull();
 
-        return BindCore(new SyntaxDialectBindingSource(syntaxDocument), diagnostics);
+        return BindCore(new SyntaxDialectBindingSource(syntaxDocument), diagnostics, _defaultDirectiveHandlerRegistry);
     }
 
     public static DialectDefinition Bind(DialectDefinitionSlice compiledDialect, List<DialectDiagnostic> diagnostics)
@@ -34,21 +26,29 @@ internal static class DialectDefinitionSemanticBinder
 
         diagnostics = diagnostics.ArgNotNull();
 
-        return BindCore(new CompiledDialectBindingSource(compiledDialect), diagnostics);
+        return BindCore(new CompiledDialectBindingSource(compiledDialect), diagnostics, _defaultDirectiveHandlerRegistry);
     }
 
     internal static DialectDefinition BindCore(IDialectBindingSource source, List<DialectDiagnostic> diagnostics)
+        => BindCore(source, diagnostics, _defaultDirectiveHandlerRegistry);
+
+    internal static DialectDefinition BindCore(
+        IDialectBindingSource source,
+        List<DialectDiagnostic> diagnostics,
+        DialectDirectiveHandlerRegistry directiveHandlerRegistry)
     {
         source = source.ArgNotNull();
 
         diagnostics = diagnostics.ArgNotNull();
 
+        directiveHandlerRegistry = directiveHandlerRegistry.ArgNotNull();
+
         var builder = new DialectDefinitionBuilder();
 
         builder.SetIdentity(source.Name, source.Version, source.BaseDialectName);
         builder.SetOrderRules(DialectOrderConstraintMapper.ToDefinitionRules(DialectOrderConstraintMapper.FromBindingRules(source.OrderRules)));
-        var context = new DialectBindingExecutionContext(source, builder, diagnostics);
-        _directiveHandlerRegistry.Apply(context);
+        var context = new DialectDirectiveBindingContext(source, builder, diagnostics);
+        directiveHandlerRegistry.Apply(context);
 
         return builder.Build();
     }
@@ -60,10 +60,28 @@ internal static class DialectDefinitionSemanticBinder
         string cycleMessagePrefix,
         string? missingReferenceCode = null,
         string? missingReferenceMessagePrefix = null)
+        => BuildPlanCore(
+            source,
+            diagnostics,
+            cycleCode,
+            cycleMessagePrefix,
+            _defaultDirectiveHandlerRegistry,
+            missingReferenceCode,
+            missingReferenceMessagePrefix);
+
+    internal static DialectBuildPlan BuildPlanCore(
+        IDialectBindingSource source,
+        List<DialectDiagnostic> diagnostics,
+        string cycleCode,
+        string cycleMessagePrefix,
+        DialectDirectiveHandlerRegistry directiveHandlerRegistry,
+        string? missingReferenceCode = null,
+        string? missingReferenceMessagePrefix = null)
     {
         source = source.ArgNotNull();
 
         diagnostics = diagnostics.ArgNotNull();
+        directiveHandlerRegistry = directiveHandlerRegistry.ArgNotNull();
 
         if (string.IsNullOrWhiteSpace(cycleCode))
             Thrower.Argument(nameof(cycleCode), "Cycle diagnostic code must not be empty.");
@@ -77,7 +95,7 @@ internal static class DialectDefinitionSemanticBinder
         if (missingReferenceMessagePrefix != null && string.IsNullOrWhiteSpace(missingReferenceMessagePrefix))
             Thrower.Argument(nameof(missingReferenceMessagePrefix), "Missing-reference diagnostic message prefix must be null or non-empty.");
 
-        var definition = BindCore(source, diagnostics);
+        var definition = BindCore(source, diagnostics, directiveHandlerRegistry);
 
         return DialectDefinitionBuildPlanProjector.Project(
             definition,
@@ -87,4 +105,14 @@ internal static class DialectDefinitionSemanticBinder
             missingReferenceCode,
             missingReferenceMessagePrefix);
     }
+
+    internal static DialectDirectiveHandlerRegistry CreateDefaultDirectiveHandlerRegistry() => new(
+    [
+        new ModuleDirectiveHandler(),
+        new BackendDirectiveHandler(),
+        new IntrinsicDirectiveHandler(),
+        new OptimizerDirectiveHandler(),
+        new SecurityDirectiveHandler(),
+        new CapabilityDirectiveHandler()
+    ]);
 }

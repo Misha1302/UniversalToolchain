@@ -5,9 +5,8 @@ on:
   pull_request:
     paths:
       - "UniversalToolchain/Benchmarks/**"
+      - "UniversalToolchain/UniversalToolchain.Wist/**"
       - "UniversalToolchain/UniversalToolchain.Dialects.Wist/**"
-      - "UniversalToolchain/DynamicMethodCalling/**"
-      - "UniversalToolchain/UniversalToolchain.Modules.Tests/**"
       - ".github/workflows/benchmark-smoke.yml"
 
 jobs:
@@ -23,19 +22,23 @@ jobs:
         with:
           global-json-file: UniversalToolchain/global.json
 
-      - name: Restore
-        run: dotnet restore UniversalToolchain/Wist.sln
+      - name: Restore benchmark project
+        run: dotnet restore UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj -p:Platform="Any CPU"
 
-      - name: Build
-        run: dotnet build UniversalToolchain/Wist.sln -c Release --no-restore
+      - name: Build benchmark project
+        run: dotnet build UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj -c Release --no-restore -p:Platform="Any CPU"
 
-      - name: Benchmark contract tests
-        run: dotnet test UniversalToolchain/UniversalToolchain.Modules.Tests/UniversalToolchain.Modules.Tests.csproj -c Release --no-build --filter "FullyQualifiedName~BenchmarkContractTests"
-
-      - name: Hot execution dry smoke
+      - name: Benchmark self-test
         run: >
-          dotnet run -c Release
+          dotnet run -c Release --no-build
+          --project UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj
+          --
+          --self-test
+
+      - name: Benchmark discovery dry run
+        run: >
+          dotnet run -c Release --no-build
           --project UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj
           --
           --job dry
-          --filter "*ExternalSimple3*"
+          --filter "*FormulaHotPathBenchmarks*"

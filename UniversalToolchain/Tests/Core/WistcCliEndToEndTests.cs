@@ -16,7 +16,7 @@ public class WistcCliEndToEndTests
         if (File.Exists(_cliDllPath))
             return;
 
-        var restore = TestContractsInfrastructure.RunProcess("dotnet", "restore Wistc/Wistc.csproj --source packages --ignore-failed-sources", toolchainRoot, 180000);
+        var restore = TestContractsInfrastructure.RunProcess("dotnet", BuildCliRestoreArguments(), toolchainRoot, 180000);
         Assert.That(restore.TimedOut, Is.False, $"dotnet restore timed out.{Environment.NewLine}{restore.StdErr}{Environment.NewLine}{restore.StdOut}");
         Assert.That(restore.ExitCode, Is.EqualTo(0), restore.StdErr + restore.StdOut);
 
@@ -146,6 +146,17 @@ public class WistcCliEndToEndTests
 
     private static CliResult RunCli(string args) => TestContractsInfrastructure.RunProcess("dotnet", $"\"{_cliDllPath}\" {args}", Path.GetDirectoryName(_cliDllPath)!, 30000);
 
+    private static string BuildCliRestoreArguments()
+    {
+        var args = "restore Wistc/Wistc.csproj --ignore-failed-sources";
+        var localNuGetSource = Environment.GetEnvironmentVariable("WIST_TEST_NUGET_SOURCE");
+        return string.IsNullOrWhiteSpace(localNuGetSource)
+            ? args
+            : args + $" --source {QuoteArgument(localNuGetSource)}";
+    }
+
+    private static string QuoteArgument(string value) => $"\"{value.Replace("\"", "\\\"", StringComparison.Ordinal)}\"";
+
     private static string WriteMinimalDialect(string root, string fileName)
     {
         var dialectPath = Path.Combine(root, fileName);
@@ -158,25 +169,36 @@ public class WistcCliEndToEndTests
         var testDirectory = TestContext.CurrentContext.TestDirectory;
         var segments = testDirectory.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
         var binIndex = Array.LastIndexOf(segments, "bin");
-        if (binIndex >= 0 && binIndex + 1 < segments.Length && !string.IsNullOrWhiteSpace(segments[binIndex + 1]))
-            return segments[binIndex + 1];
+        if (binIndex >= 0)
+        {
+            var configuration = segments
+                .Skip(binIndex + 1)
+                .FirstOrDefault(static segment =>
+                    segment.Equals("Debug", StringComparison.OrdinalIgnoreCase) ||
+                    segment.Equals("Release", StringComparison.OrdinalIgnoreCase));
+
+            if (!string.IsNullOrWhiteSpace(configuration))
+                return configuration;
+        }
 
         return "Debug";
     }
 
     private static string ResolveCliDllPath(string repoRoot, string configuration)
     {
-        var binDirectory = Path.Combine(repoRoot, "UniversalToolchain", "Wistc", "bin", configuration);
-        if (!Directory.Exists(binDirectory))
-            return Path.Combine(binDirectory, "net10.0", "Wistc.dll");
+        var binRoot = Path.Combine(repoRoot, "UniversalToolchain", "Wistc", "bin");
+        if (!Directory.Exists(binRoot))
+            return Path.Combine(binRoot, configuration, "net10.0", "Wistc.dll");
 
-        var candidates = Directory.EnumerateFiles(binDirectory, "Wistc.dll", SearchOption.AllDirectories).ToArray();
+        var candidates = Directory.EnumerateFiles(binRoot, "Wistc.dll", SearchOption.AllDirectories).ToArray();
 
         return candidates
-            .OrderByDescending(static x => x.Contains($"{Path.DirectorySeparatorChar}net", StringComparison.Ordinal))
+            .OrderByDescending(path => path.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+                .Any(segment => segment.Equals(configuration, StringComparison.OrdinalIgnoreCase)))
+            .ThenByDescending(static x => x.Contains($"{Path.DirectorySeparatorChar}net", StringComparison.Ordinal))
             .ThenByDescending(File.GetLastWriteTimeUtc)
-            .FirstOrDefault() ?? Path.Combine(binDirectory, "net10.0", "Wistc.dll");
+            .FirstOrDefault() ?? Path.Combine(binRoot, configuration, "net10.0", "Wistc.dll");
     }
 
-    private static string GetRepoRoot() => Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", ".."));
+    private static string GetRepoRoot() => TestSourcePaths.RepositoryRoot;
 }

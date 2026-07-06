@@ -69,24 +69,8 @@ public sealed class FunctionCallsSourceExecutionTests
         });
     }
 
-    private static string ResolveFunctionCallsSafeMathDialectFile()
-    {
-        var path = Path.GetFullPath(Path.Combine(
-            TestContext.CurrentContext.TestDirectory,
-            "..",
-            "..",
-            "..",
-            "..",
-            "Dialects",
-            "examples",
-            "wist",
-            "function-calls-safe-math",
-            "dialect.wistdialect"));
-        if (!File.Exists(path))
-            Thrower.FileNotFound(path);
-
-        return path;
-    }
+    private static string ResolveFunctionCallsSafeMathDialectFile() =>
+        UniversalToolchain.Dialects.Tests.TestSourcePaths.WistExampleDialectPath("function-calls-safe-math");
 
     private static ServiceProvider CreateProvider()
     {

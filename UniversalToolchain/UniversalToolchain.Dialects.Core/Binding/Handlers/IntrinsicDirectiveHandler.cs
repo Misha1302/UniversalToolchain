@@ -8,17 +8,17 @@ internal sealed class IntrinsicDirectiveHandler : IDialectDirectiveHandler
 
     public string Name => "Intrinsic";
 
-    public void Apply(DialectBindingExecutionContext context)
+    public void Apply(DialectDirectiveBindingContext context)
     {
         var intrinsicDirectives = DialectSemanticNormalization.NormalizeIntrinsicRules(
-            context.Source.IntrinsicDirectives,
+            context.IntrinsicDirectives,
             x => x.Name,
             x => x.Target,
             x => x.Allowed,
-            context.Diagnostics,
+            context.DiagnosticsList,
             context.DirectiveContext.IntrinsicContradictionCode);
 
-        context.Builder.SetIntrinsicPolicy(new IntrinsicPolicy(
+        context.SetIntrinsicPolicy(new IntrinsicPolicy(
             intrinsicDirectives.Where(x => x.Allowed).Select(FormatRuleName),
             intrinsicDirectives.Where(x => !x.Allowed).Select(FormatRuleName)));
     }

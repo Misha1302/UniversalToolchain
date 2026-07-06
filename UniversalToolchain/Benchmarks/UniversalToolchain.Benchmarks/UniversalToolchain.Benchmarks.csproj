@@ -6,40 +6,55 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <LangVersion>14</LangVersion>
+        <IsPackable>false</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
-        <!-- Legacy and generated benchmark experiments are intentionally excluded from the public benchmark surface.
-             They can be restored later as explicitly experimental benchmarks after their OperationsPerInvoke contract
-             and generation pipeline are fixed. -->
-        <Compile Remove="ArithmeticExecutionBenchmarks.cs"/>
-        <Compile Remove="ExternalExecutionBenchmarks\ExternalWideExpression11ExecutionBenchmarks.cs"/>
-        <Compile Remove="ExternalExecutionBenchmarks\Unrolled\**\*.cs"/>
-        <None Include="ArithmeticExecutionBenchmarks.cs"/>
-        <None Include="ExternalExecutionBenchmarks\ExternalWideExpression11ExecutionBenchmarks.cs"/>
-        <None Include="ExternalExecutionBenchmarks\Unrolled\**\*"/>
-    </ItemGroup>
+        <ProjectReference Include="..\..\UniversalToolchain.Wist\UniversalToolchain.Wist.csproj"/>
 
-    <ItemGroup>
-        <ProjectReference Include="..\..\BasicCilCompiler\BasicCilCompiler.csproj"/>
-        <ProjectReference Include="..\..\DynamicMethodCalling\DynamicMethodCalling.csproj"/>
-        <ProjectReference Include="..\..\ExceptionsManager\ExceptionsManager.csproj"/>
-        <ProjectReference Include="..\..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj"/>
+        <!-- Keep source-tree benchmark runs behaviorally equivalent to package-consumer runs.
+             UniversalToolchain.Wist package consumers receive the module assemblies/manifests as package content;
+             project-reference benchmark runs need direct references so the same runtime descriptors are copied to output. -->
+        <ProjectReference Include="..\..\ArithmeticModule\ArithmeticModule.csproj" PrivateAssets="all"/>
+        <ProjectReference Include="..\..\CSharpInteropModule\CSharpInteropModule.csproj" PrivateAssets="all"/>
+        <ProjectReference Include="..\..\CommentsModule\CommentsModule.csproj" PrivateAssets="all"/>
+        <ProjectReference Include="..\..\ConditionsModule\ConditionsModule.csproj" PrivateAssets="all"/>
+        <ProjectReference Include="..\..\EqualityModule\EqualityModule.csproj" PrivateAssets="all"/>
+        <ProjectReference Include="..\..\FunctionCallsModule\FunctionCallsModule.csproj" PrivateAssets="all"/>
+        <ProjectReference Include="..\..\IdentifierModule\IdentifierModule.csproj" PrivateAssets="all"/>
+        <ProjectReference Include="..\..\InternalPreprocessorLexemesModule\InternalPreprocessorLexemesModule.csproj" PrivateAssets="all"/>
+        <ProjectReference Include="..\..\LabelsModule\LabelsModule.csproj" PrivateAssets="all"/>
+        <ProjectReference Include="..\..\LocalVariablesOptimizerModule\LocalVariablesOptimizerModule.csproj" PrivateAssets="all"/>
+        <ProjectReference Include="..\..\LoopsModule\LoopsModule.csproj" PrivateAssets="all"/>
+        <ProjectReference Include="..\..\NativeMathModule\NativeMathModule.csproj" PrivateAssets="all"/>
+        <ProjectReference Include="..\..\NumbersModule\NumbersModule.csproj" PrivateAssets="all"/>
+        <ProjectReference Include="..\..\ParametersSetterModule\ParametersSetterModule.csproj" PrivateAssets="all"/>
+        <ProjectReference Include="..\..\SafeMathFunctionsModule\SafeMathFunctionsModule.csproj" PrivateAssets="all"/>
+        <ProjectReference Include="..\..\ScopesModule\ScopesModule.csproj" PrivateAssets="all"/>
+        <ProjectReference Include="..\..\SemicolonAsNewLineModule\SemicolonAsNewLineModule.csproj" PrivateAssets="all"/>
+        <ProjectReference Include="..\..\UniversalToolchain.Ssa.Optimization\UniversalToolchain.Ssa.Optimization.csproj" PrivateAssets="all"/>
+        <ProjectReference Include="..\..\VariablesModule\VariablesModule.csproj" PrivateAssets="all"/>
+        <ProjectReference Include="..\..\WhitespacesModule\WhitespacesModule.csproj" PrivateAssets="all"/>
     </ItemGroup>
 
     <ItemGroup>
         <PackageReference Include="BenchmarkDotNet" Version="0.15.6"/>
         <PackageReference Include="NCalcSync" Version="5.12.0"/>
         <PackageReference Include="NCalc.LambdaCompilation" Version="5.12.0"/>
-        <PackageReference Include="DynamicExpresso.Core" Version="2.19.3"/>
-
     </ItemGroup>
 
-    <ItemGroup>
-        <Content Include="..\..\Dialects\examples\wist\full-default-native\dialect.wistdialect">
-            <Link>Dialects\examples\wist\full-default-native\dialect.wistdialect</Link>
-            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-        </Content>
-    </ItemGroup>
+    <PropertyGroup>
+        <BenchmarkDialectRuntimeManifestPlatformSegment Condition="'$(Platform)' != '' and '$(Platform)' != 'AnyCPU'">$(Platform)\</BenchmarkDialectRuntimeManifestPlatformSegment>
+    </PropertyGroup>
+
+    <Target Name="CopyBenchmarkDialectRuntimeManifests" AfterTargets="Build">
+        <ItemGroup>
+            <_BenchmarkDialectRuntimeManifests Include="$(MSBuildProjectDirectory)\..\..\*\bin\$(BenchmarkDialectRuntimeManifestPlatformSegment)$(Configuration)\$(TargetFramework)\*.dialect.runtime.json"/>
+        </ItemGroup>
+
+        <Copy SourceFiles="@(_BenchmarkDialectRuntimeManifests)"
+              DestinationFolder="$(TargetDir)"
+              SkipUnchangedFiles="true"/>
+    </Target>
 
 </Project>

@@ -8,17 +8,17 @@ internal sealed class OptimizerDirectiveHandler : IDialectDirectiveHandler
 
     public string Name => "Optimizer";
 
-    public void Apply(DialectBindingExecutionContext context)
+    public void Apply(DialectDirectiveBindingContext context)
     {
         var optimizerDirectives = DialectSemanticNormalization.NormalizeOptimizerRules(
-            context.Source.OptimizerDirectives,
+            context.OptimizerDirectives,
             x => x.Name,
             x => x.Target,
             x => x.Enabled,
-            context.Diagnostics,
+            context.DiagnosticsList,
             context.DirectiveContext.OptimizerContradictionCode);
 
-        context.Builder.SetOptimizerPolicy(new OptimizerPolicy(
+        context.SetOptimizerPolicy(new OptimizerPolicy(
             optimizerDirectives.Where(x => x.Enabled).Select(FormatRuleName),
             optimizerDirectives.Where(x => !x.Enabled).Select(FormatRuleName)));
     }

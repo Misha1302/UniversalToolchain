@@ -23,23 +23,24 @@ public sealed class ShippedDefaultConsumerGuardrailTests
     }
 
     [Test]
-    public void BenchmarkEnvironment_UsesFullDefaultNativeShippedPreset()
+    public void BenchmarkEnvironment_UsesPublicWistFacadeInsteadOfHardcodedDialectPaths()
     {
         var source = ReadRepositoryFile(
             "UniversalToolchain",
             "Benchmarks",
             "UniversalToolchain.Benchmarks",
-            "ArithmeticExecutionBenchmarks.cs");
+            "FormulaHotPathBenchmarks.cs");
 
         Assert.Multiple(() =>
         {
-            Assert.That(source, Does.Contain("Resolve(WistShippedDialectPresets.FullDefaultNative)"));
+            Assert.That(source, Does.Contain("WistEngine.CreateSafeFormulas()"));
+            Assert.That(source, Does.Not.Contain("Path.Combine(AppContext.BaseDirectory"));
             Assert.That(source, Does.Not.Contain("\"full-default-native\""));
         });
     }
 
     [Test]
-    public void DefaultConsumers_ResolveThroughWistShippedDialectFileResolver()
+    public void DefaultConsumers_ResolveThroughCanonicalWistEntryPoints()
     {
         var calculatorSource = ReadRepositoryFile(
             "UniversalToolchain",
@@ -50,12 +51,12 @@ public sealed class ShippedDefaultConsumerGuardrailTests
             "UniversalToolchain",
             "Benchmarks",
             "UniversalToolchain.Benchmarks",
-            "ArithmeticExecutionBenchmarks.cs");
+            "FormulaHotPathBenchmarks.cs");
 
         Assert.Multiple(() =>
         {
             Assert.That(calculatorSource, Does.Contain("new WistShippedDialectFileResolver().Resolve(dialectPreset)"));
-            Assert.That(benchmarkSource, Does.Contain("new WistShippedDialectFileResolver().Resolve(WistShippedDialectPresets.FullDefaultNative)"));
+            Assert.That(benchmarkSource, Does.Contain("WistEngine.CreateSafeFormulas()"));
             Assert.That(calculatorSource, Does.Not.Contain("Path.Combine("));
             Assert.That(benchmarkSource, Does.Not.Contain("Path.Combine(AppContext.BaseDirectory"));
         });
@@ -72,7 +73,7 @@ public sealed class ShippedDefaultConsumerGuardrailTests
                 "UniversalToolchain",
                 "Benchmarks",
                 "UniversalToolchain.Benchmarks",
-                "ArithmeticExecutionBenchmarks.cs"));
+                "FormulaHotPathBenchmarks.cs"));
 
         Assert.Multiple(() =>
         {
@@ -85,6 +86,5 @@ public sealed class ShippedDefaultConsumerGuardrailTests
     private static string ReadRepositoryFile(params string[] parts)
         => File.ReadAllText(Path.Combine([GetRepositoryRoot(), .. parts]));
 
-    private static string GetRepositoryRoot()
-        => Path.GetFullPath(Path.Combine(TestContext.CurrentContext.TestDirectory, "..", "..", "..", "..", ".."));
+    private static string GetRepositoryRoot() => UniversalToolchain.Dialects.Tests.TestSourcePaths.RepositoryRoot;
 }
