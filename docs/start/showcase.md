@@ -1,5 +1,5 @@
 ---
-title: Showcase: controlled rules
+title: "Showcase: controlled rules"
 description: Show how UniversalToolchain turns tiny user, admin or AI-suggested formulas into validated and compiled .NET decisions.
 ---
 
