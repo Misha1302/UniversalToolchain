@@ -22,8 +22,6 @@ public sealed class DefaultRuntimeAssemblyLoadStrategy : IRuntimeAssemblyLoadStr
         if (string.IsNullOrWhiteSpace(assemblySimpleName))
             Thrower.Argument(nameof(assemblySimpleName), "Assembly simple name must not be empty.");
 
-        EnsureResolvingHandlerRegistered();
-
         return TryGetAlreadyLoadedAssembly(assemblySimpleName)
                ?? TryLoadBySimpleName(assemblySimpleName)
                ?? LoadAssemblyFromResolvedPath(assemblySimpleName);
@@ -109,6 +107,8 @@ public sealed class DefaultRuntimeAssemblyLoadStrategy : IRuntimeAssemblyLoadStr
 
         if (!Path.IsPathRooted(absolutePath))
             Thrower.Argument(nameof(absolutePath), $"Assembly locator returned non-absolute path '{absolutePath}'.");
+
+        EnsureResolvingHandlerRegistered();
 
         return AssemblyLoadContext.Default.LoadFromAssemblyPath(absolutePath);
     }
