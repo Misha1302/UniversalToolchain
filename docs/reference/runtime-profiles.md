@@ -42,11 +42,11 @@ Profiles can provide:
 
 | Default | Dialect directive emitted when missing |
 |---|---|
-| modules | `use <module>` |
-| backends | `backend <backend>` |
-| optimizers | `enable optimizer <optimizer> for any` |
-| security | `security <profile>` |
-| capabilities | `capability <name> = <true|false>` |
+| modules | `use {module}` |
+| backends | `backend {backend}` |
+| optimizers | `enable optimizer {optimizer} for any` |
+| security | `security {profile}` |
+| capabilities | `capability {name} = true/false` |
 
 The applicator records provenance for every source and profile directive. Strict mode reports conflicts such as a source
 excluding a module that the selected profile would add.
