@@ -1,5 +1,8 @@
 # UniversalToolchain.Wist
 
+[![NuGet](https://img.shields.io/nuget/vpre/UniversalToolchain.Wist.svg)](https://www.nuget.org/packages/UniversalToolchain.Wist)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/UniversalToolchain.Wist.svg)](https://www.nuget.org/packages/UniversalToolchain.Wist)
+
 **Tiny controlled rules for .NET applications.**
 
 `UniversalToolchain.Wist` is the first-contact package for UniversalToolchain. It gives .NET applications a small facade for restricted formula execution without exposing the lower-level compiler pipeline, dialect host, manifests, `DynamicMethod`, AIR, or session APIs.
@@ -17,7 +20,7 @@ admin / config / LLM suggestion
 
 ## Install
 
-The package metadata in this repository is prepared for `UniversalToolchain.Wist` `0.1.0-preview.2`.
+`UniversalToolchain.Wist` `0.1.0-preview.2` is published on NuGet: <https://www.nuget.org/packages/UniversalToolchain.Wist/0.1.0-preview.2>.
 
 ```bash ci-run=false
 dotnet add package UniversalToolchain.Wist --version 0.1.0-preview.2
