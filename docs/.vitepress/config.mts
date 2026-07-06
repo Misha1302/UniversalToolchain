@@ -17,10 +17,11 @@ const bookSidebar = [
         items: [
             { text: '1.1 Installation', link: '/start/installation' },
             { text: '1.2 First Program', link: '/start/first-program' },
-            { text: '1.3 CLI Reference', link: '/start/cli-reference' },
-            { text: '1.4 Wist Overview', link: '/wist/' },
-            { text: '1.5 Wist Syntax Tour', link: '/wist/syntax-tour' },
-            { text: '1.6 Examples', link: '/wist/examples' }
+            { text: '1.3 Showcase: controlled rules', link: '/start/showcase' },
+            { text: '1.4 CLI Reference', link: '/start/cli-reference' },
+            { text: '1.5 Wist Overview', link: '/wist/' },
+            { text: '1.6 Wist Syntax Tour', link: '/wist/syntax-tour' },
+            { text: '1.7 Examples', link: '/wist/examples' }
         ]
     },
     {
