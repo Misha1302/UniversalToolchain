@@ -13,7 +13,8 @@
 - site examples match README
 - SECURITY limitations are visible
 - version updated
-- root README first public API example uses CompileFunc, not Evaluate
+- root README first public API example uses `Compile<TDelegate>`, not `Evaluate`
+- `CompileFunc` is documented only as a compatibility convenience for small examples
 - NuGet/package README presents fast execution before one-off execution
 - performance model doc exists
 - preview stability doc exists
@@ -21,7 +22,7 @@
 - docs do not advertise Evaluate as the performance path
 - docs do not claim hardened sandboxing
 - security note is visible near compiled/restricted execution docs
-- package smoke validates CompileFunc, Evaluate, and Validate
+- package smoke validates `Compile<TDelegate>`, `CompileFunc`, `Evaluate`, and `Validate`
 - CLI smoke validates compiler backend, interpreter backend, and restricted dialect rejection
 - benchmark dry smoke genuinely executes at least one benchmark or is replaced by a meaningful benchmark contract smoke
 
@@ -29,10 +30,10 @@
 
 ```bash ci-run=false
 unset PLATFORM
-dotnet restore UniversalToolchain/Wist.sln -p:Platform="Any CPU"
-dotnet build UniversalToolchain/Wist.sln -c Release --no-restore -p:Platform="Any CPU"
-dotnet test UniversalToolchain/Wist.sln -c Release --no-build -p:Platform="Any CPU"
-dotnet pack UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj -c Release -o artifacts/packages -p:Platform="Any CPU" /p:WarningsAsErrors=NU5118
+dotnet restore UniversalToolchain/Wist.sln
+dotnet build UniversalToolchain/Wist.sln -c Release --no-restore -m:1 -p:BuildInParallel=false
+dotnet test UniversalToolchain/Wist.sln -c Release --no-build
+dotnet pack UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj -c Release -o artifacts/packages /p:WarningsAsErrors=NU5118
 ls -la artifacts/packages
 unzip -l artifacts/packages/UniversalToolchain.Wist.0.1.0-preview.2.nupkg
 npm install --no-audit --no-fund
@@ -59,7 +60,8 @@ python3 .github/scripts/run-markdown-bash-blocks.py
 
 ## Manual smoke
 - run simple formula through WistEngine
-- run compiled formula through WistEngine.CompileFunc
+- run compiled formula through `WistEngine.Compile<TDelegate>`
+- run compatibility compiled formula through `WistEngine.CompileFunc`
 - validate a simple formula through WistEngine.Validate
 - run CLI compiler backend
 - run CLI interpreter backend
