@@ -55,7 +55,7 @@ public sealed class SsaRoundtripRouteTests
     }
 
     [Test]
-    public void Run_WhenPolicyIsDebugAndRouteIsSupported_ReturnsRoundtrippedAir()
+    public void Run_WhenPolicyIsDebugAndRouteIsSupported_ReturnsOptimizedRoundtrippedAir()
     {
         var source = new AbstractIR();
         source.Push(2);
@@ -70,6 +70,34 @@ public sealed class SsaRoundtripRouteTests
         {
             Assert.That(result.UsedSsa, Is.True);
             Assert.That(result.FellBackToInput, Is.False);
+            Assert.That(result.Diagnostics, Is.Empty);
+            Assert.That(result.Program.Instructions.Select(static x => x.UOpCode), Is.EqualTo(new[]
+            {
+                UOpCode.Label,
+                UOpCode.Push
+            }));
+            Assert.That(result.Program.Instructions[1].Operands.Single(), Is.EqualTo(5));
+        });
+    }
+
+    [Test]
+    public void Run_WhenUsingRawConvertersWithoutProfile_DoesNotRunOptimizationPasses()
+    {
+        var source = new AbstractIR();
+        source.Push(2);
+        source.Push(3);
+        source.Intrinsic(AirIntrinsicIds.AddInt32Unchecked);
+
+        var result = new SsaRoundtripRoute(
+                SsaRouteFactory.CreateLowerer(SsaPreviewRouteProfiles.Create(SsaRoutePolicy.Debug)),
+                SsaRouteFactory.CreateEmitter(SsaPreviewRouteProfiles.Create(SsaRoutePolicy.Debug)))
+            .Run(source, SsaRoutePolicy.Debug);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.UsedSsa, Is.True);
+            Assert.That(result.FellBackToInput, Is.False);
+            Assert.That(result.Diagnostics, Is.Empty);
             Assert.That(result.Program.Instructions.Select(static x => x.UOpCode), Is.EqualTo(new[]
             {
                 UOpCode.Label,
