@@ -193,16 +193,16 @@ public sealed class SsaPreviewRouteIntegrationRegressionTests
     private static bool IsAirStructurallyValid(IAbstractIR program) =>
         new StructuralAirVerifier().Verify(new AirArtifact(program), new IrPipelineContext()).IsSuccess;
 
-    private static IEnumerable<ConstantValue> ReadConstants(SsaArtifact artifact) =>
-        artifact.Module.Functions
-            .SelectMany(static function => function.Blocks)
-            .SelectMany(static block => block.Instructions)
-            .Where(SsaConstantReader.TryRead)
-            .Select(instruction =>
-            {
-                _ = SsaConstantReader.TryRead(instruction, out var constant);
-                return constant;
-            });
+    private static IEnumerable<ConstantValue> ReadConstants(SsaArtifact artifact)
+    {
+        foreach (var instruction in artifact.Module.Functions
+                     .SelectMany(static function => function.Blocks)
+                     .SelectMany(static block => block.Instructions))
+        {
+            if (SsaConstantReader.TryRead(instruction, out var constant))
+                yield return constant;
+        }
+    }
 
     private static SsaArtifact BranchArtifact()
     {
