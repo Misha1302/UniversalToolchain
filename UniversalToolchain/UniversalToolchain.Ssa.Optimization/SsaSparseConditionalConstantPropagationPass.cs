@@ -65,7 +65,7 @@ public sealed class SsaSparseConditionalConstantPropagationPass : IIrOptimizatio
 
     private SsaFunction RewriteFunction(SsaFunction function)
     {
-        if (!function.Blocks.Any(static x => x.Id == x.Id) ||
+        if (function.Blocks.Count == 0 ||
             !function.Blocks.Any(block => block.Id == function.EntryBlockId))
         {
             return function;
@@ -116,7 +116,7 @@ public sealed class SsaSparseConditionalConstantPropagationPass : IIrOptimizatio
         if (instruction.Results.Count == 1 &&
             SsaConstantReader.TryRead(instruction, out var constant))
         {
-            return state.SetValue(instruction.Results[0].Id, SccpValue.Constant(constant));
+            return state.SetValue(instruction.Results[0].Id, SccpValue.ForConstant(constant));
         }
 
         var evaluation = EvaluateInstruction(instruction, state);
@@ -124,7 +124,7 @@ public sealed class SsaSparseConditionalConstantPropagationPass : IIrOptimizatio
             return false;
 
         if (evaluation.Kind == InstructionEvaluationKind.Constant)
-            return state.SetValue(instruction.Results[0].Id, SccpValue.Constant(evaluation.Constant!));
+            return state.SetValue(instruction.Results[0].Id, SccpValue.ForConstant(evaluation.Value!));
 
         var changed = false;
         foreach (var result in instruction.Results)
@@ -149,14 +149,14 @@ public sealed class SsaSparseConditionalConstantPropagationPass : IIrOptimizatio
             if (lattice.Kind == SccpValueKind.Unknown)
                 return InstructionEvaluation.Wait;
 
-            if (lattice.Kind == SccpValueKind.Overdefined || lattice.Constant is null)
+            if (lattice.Kind == SccpValueKind.Overdefined || lattice.Value is null)
                 return InstructionEvaluation.Overdefined;
 
-            arguments.Add(lattice.Constant);
+            arguments.Add(lattice.Value);
         }
 
         return _constantEvaluator.TryEvaluate(descriptor, arguments, out var result)
-            ? InstructionEvaluation.Constant(result)
+            ? InstructionEvaluation.ForConstant(result)
             : InstructionEvaluation.Overdefined;
     }
 
@@ -233,10 +233,10 @@ public sealed class SsaSparseConditionalConstantPropagationPass : IIrOptimizatio
             return instruction;
 
         var value = state.GetValue(instruction.Results[0].Id);
-        if (value.Kind != SccpValueKind.Constant || value.Constant is null)
+        if (value.Kind != SccpValueKind.Constant || value.Value is null)
             return instruction;
 
-        return SsaConstantMaterializer.TryCreate(instruction, value.Constant) ?? instruction;
+        return SsaConstantMaterializer.TryCreate(instruction, value.Value) ?? instruction;
     }
 
     private static SsaTerminator? RewriteTerminator(SsaTerminator? terminator, SccpState state)
@@ -262,9 +262,9 @@ public sealed class SsaSparseConditionalConstantPropagationPass : IIrOptimizatio
     {
         result = default;
         return value.Kind == SccpValueKind.Constant &&
-               value.Constant is not null &&
-               value.Constant.Type == SsaPreviewSemanticTypes.Bool &&
-               bool.TryParse(value.Constant.CanonicalValue, out result);
+               value.Value is not null &&
+               value.Value.Type == SsaPreviewSemanticTypes.Bool &&
+               bool.TryParse(value.Value.CanonicalValue, out result);
     }
 
     private sealed class SccpState
@@ -289,8 +289,9 @@ public sealed class SsaSparseConditionalConstantPropagationPass : IIrOptimizatio
 
         public bool SetValue(SsaValueId valueId, SccpValue value)
         {
-            var joined = SccpValue.Join(GetValue(valueId), value);
-            if (joined.Equals(GetValue(valueId)))
+            var current = GetValue(valueId);
+            var joined = SccpValue.Join(current, value);
+            if (joined.Equals(current))
                 return false;
 
             _values[valueId] = joined;
@@ -307,14 +308,14 @@ public sealed class SsaSparseConditionalConstantPropagationPass : IIrOptimizatio
         Overdefined
     }
 
-    private readonly record struct SccpValue(SccpValueKind Kind, ConstantValue? Constant)
+    private readonly record struct SccpValue(SccpValueKind Kind, ConstantValue? Value)
     {
         public static SccpValue Unknown { get; } = new(SccpValueKind.Unknown, null);
 
         public static SccpValue Overdefined { get; } = new(SccpValueKind.Overdefined, null);
 
-        public static SccpValue Constant(ConstantValue constant) =>
-            new(SccpValueKind.Constant, constant ?? throw new ArgumentNullException(nameof(constant)));
+        public static SccpValue ForConstant(ConstantValue value) =>
+            new(SccpValueKind.Constant, value ?? throw new ArgumentNullException(nameof(value)));
 
         public static SccpValue Join(SccpValue current, SccpValue incoming)
         {
@@ -327,7 +328,7 @@ public sealed class SsaSparseConditionalConstantPropagationPass : IIrOptimizatio
             if (current.Kind == SccpValueKind.Overdefined || incoming.Kind == SccpValueKind.Overdefined)
                 return Overdefined;
 
-            return Equals(current.Constant, incoming.Constant) ? current : Overdefined;
+            return Equals(current.Value, incoming.Value) ? current : Overdefined;
         }
     }
 
@@ -338,13 +339,13 @@ public sealed class SsaSparseConditionalConstantPropagationPass : IIrOptimizatio
         Overdefined
     }
 
-    private readonly record struct InstructionEvaluation(InstructionEvaluationKind Kind, ConstantValue? Constant)
+    private readonly record struct InstructionEvaluation(InstructionEvaluationKind Kind, ConstantValue? Value)
     {
         public static InstructionEvaluation Wait { get; } = new(InstructionEvaluationKind.Wait, null);
 
         public static InstructionEvaluation Overdefined { get; } = new(InstructionEvaluationKind.Overdefined, null);
 
-        public static InstructionEvaluation Constant(ConstantValue constant) =>
-            new(InstructionEvaluationKind.Constant, constant ?? throw new ArgumentNullException(nameof(constant)));
+        public static InstructionEvaluation ForConstant(ConstantValue value) =>
+            new(InstructionEvaluationKind.Constant, value ?? throw new ArgumentNullException(nameof(value)));
     }
 }
