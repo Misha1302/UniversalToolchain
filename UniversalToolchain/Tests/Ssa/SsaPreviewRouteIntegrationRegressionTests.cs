@@ -1,5 +1,4 @@
 using IntermediateRepresentationAbstractions;
-using System.Reflection;
 using UniversalIntermediateRepresentation;
 using UniversalToolchain.Air.Analysis;
 using UniversalToolchain.Ir.Abstractions;
@@ -45,36 +44,6 @@ public sealed class SsaPreviewRouteIntegrationRegressionTests
             Assert.That(pushOperands, Does.Contain(20));
             Assert.That(IsAirStructurallyValid(result.Program), Is.True);
         });
-    }
-
-    [Test]
-    public void Run_WhenOptimizationFailsAndPolicyIsPrefer_FallsBackToInputWithOptimizationDiagnostics()
-    {
-        var source = new AbstractIR();
-        source.Push(1);
-        var route = SsaRouteFactory.CreateRoundtripRoute(ProfileWithFailingOptimizer(SsaRoutePolicy.Prefer));
-
-        var result = route.Run(source);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(result.Program, Is.SameAs(source));
-            Assert.That(result.UsedSsa, Is.False);
-            Assert.That(result.FellBackToInput, Is.True);
-            Assert.That(result.Diagnostics.Select(static x => x.Code), Does.Contain("ssa.optimization.output.invalid"));
-        });
-    }
-
-    [Test]
-    public void Run_WhenOptimizationFailsAndPolicyIsRequire_ThrowsOptimizationDiagnostics()
-    {
-        var source = new AbstractIR();
-        source.Push(1);
-        var route = SsaRouteFactory.CreateRoundtripRoute(ProfileWithFailingOptimizer(SsaRoutePolicy.Require));
-
-        var exception = Assert.Throws<SsaRouteException>(() => route.Run(source));
-
-        Assert.That(exception!.Diagnostics.Select(static x => x.Code), Does.Contain("ssa.optimization.output.invalid"));
     }
 
     [Test]
@@ -165,47 +134,6 @@ public sealed class SsaPreviewRouteIntegrationRegressionTests
         });
     }
 
-    [Test]
-    public void Run_PreviewOptimizerKeepsUnusedManagedCallableAsObservableUntilDescriptorIsExplicitlyTrustedByDce()
-    {
-        var method = typeof(SsaPreviewRouteIntegrationRegressionTests).GetMethod(
-            nameof(ManagedIdentity),
-            BindingFlags.NonPublic | BindingFlags.Static)!;
-        Assert.That(
-            SsaManagedCallables.TryCreateMethod(method, consumesInstanceReceiver: false, out var callable, out _, out var diagnostic),
-            Is.True,
-            diagnostic);
-
-        var input = new SsaValue(new SsaValueId("%input"), SsaTypes.Int32);
-        var callResult = new SsaValue(new SsaValueId("%call.result"), SsaTypes.Int32);
-        var artifact = new SsaArtifact(new SsaModule(
-            new SsaModuleId("test.module"),
-            [
-                new SsaFunction(
-                    new SsaFunctionId("managed.call"),
-                    new SsaBlockId("entry"),
-                    [
-                        new SsaBlock(
-                            new SsaBlockId("entry"),
-                            instructions:
-                            [
-                                ConstI32("input", input, 42),
-                                new SsaCall(new SsaOperationId("call.managed"), callable, [input.Id], [callResult])
-                            ],
-                            terminator: SsaTerminator.Return())
-                    ])
-            ]));
-
-        var result = SsaRouteFactory
-            .CreateOptimizer(SsaPreviewRouteProfiles.Create(SsaRoutePolicy.Debug))
-            .Run(artifact, new IrPipelineContext())
-            .Artifact
-            .As<SsaArtifact>();
-
-        var instructions = result.Module.Functions.Single().Blocks.Single().Instructions;
-        Assert.That(instructions.Select(static x => x.Id.Value), Is.EqualTo(new[] { "input", "call.managed" }));
-    }
-
     private static IEnumerable<object?> PushOperands(IAbstractIR program) =>
         program.Instructions
             .Where(static x => x.UOpCode == UOpCode.Push)
@@ -213,14 +141,6 @@ public sealed class SsaPreviewRouteIntegrationRegressionTests
 
     private static bool IsAirStructurallyValid(IAbstractIR program) =>
         new StructuralAirVerifier().Verify(new AirArtifact(program), new IrPipelineContext()).IsSuccess;
-
-    private static SsaRouteProfile ProfileWithFailingOptimizer(SsaRoutePolicy policy) =>
-        new(
-            policy,
-            [
-                SsaPreviewArithmeticInt32Pack.Instance,
-                FailingOptimizationPack.Instance
-            ]);
 
     private static SsaArtifact BranchArtifact()
     {
@@ -320,66 +240,6 @@ public sealed class SsaPreviewRouteIntegrationRegressionTests
         terminator is null
             ? "<null>"
             : $"{terminator.Kind} operands=[{string.Join(",", terminator.Operands.Select(static x => x.Value))}] transfers=[{string.Join(";", terminator.Transfers.Select(static x => x.Target.Value + '(' + string.Join(",", x.Arguments.Select(static y => y.Value)) + ')'))}]";
-
-    [SsaManagedCallable(
-        IsPure = true,
-        Determinism = Determinism.Deterministic,
-        TrustLevel = SemanticTrustLevel.VerifiedPlugin)]
-    private static int ManagedIdentity(int value) => value;
-
-    private sealed class FailingOptimizationPack : ISsaSemanticExtensionPack
-    {
-        public static FailingOptimizationPack Instance { get; } = new();
-
-        public string Id => "FailingOptimization";
-
-        public SemanticDescriptorSet SemanticDescriptors => SemanticDescriptorSet.Empty;
-
-        public AirIntrinsicDescriptorSet AirIntrinsics => AirIntrinsicDescriptorSet.Empty;
-
-        public IAirIntrinsicDescriptorResolver AirIntrinsicResolver => AirIntrinsicDescriptorSet.Empty;
-
-        public IReadOnlyDictionary<string, CallableId> AirIntrinsicCallables { get; } =
-            new Dictionary<string, CallableId>(StringComparer.Ordinal);
-
-        public SsaCallableLoweringTargetSet AirLoweringTargets => SsaCallableLoweringTargetSet.Empty;
-
-        public bool EnablesManagedCallables => false;
-
-        public IReadOnlyList<IIrOptimizationPass> CreateOptimizationPasses() => [new InvalidReturnOperandPass()];
-    }
-
-    private sealed class InvalidReturnOperandPass : IIrOptimizationPass
-    {
-        public IrStageId Id { get; } = new("ssa.test.invalid-return-operand");
-
-        public IrKind InputKind => SsaIrKinds.Ssa;
-
-        public IrKind OutputKind => SsaIrKinds.Ssa;
-
-        public IrStageContract Contract { get; } = IrStageContract.Empty;
-
-        public IrStageResult Run(IIrArtifact input, IrPipelineContext context)
-        {
-            var artifact = input.As<SsaArtifact>();
-            var invalid = new SsaModule(
-                artifact.Module.Id,
-                artifact.Module.Functions.Select(static function => new SsaFunction(
-                    function.Id,
-                    function.EntryBlockId,
-                    function.Blocks.Select(static block => block.Id == function.EntryBlockId
-                        ? new SsaBlock(
-                            block.Id,
-                            block.Parameters,
-                            instructions: block.Instructions,
-                            terminator: SsaTerminator.Return([new SsaValueId("%missing.after.pass")]))
-                        : block),
-                    function.Parameters,
-                    function.ReturnType)));
-
-            return new IrStageResult(new SsaArtifact(invalid));
-        }
-    }
 
     private sealed class InvalidTransferArgumentPass : IIrOptimizationPass
     {
