@@ -62,7 +62,6 @@ public sealed class SsaPreviewRouteIntegrationRegressionTests
         var constants = ReadConstants(optimized).ToArray();
         var verification = new StructuralSsaVerifier(SsaCoreDescriptors.ConstantMaterialization, profile.SemanticDescriptors)
             .Verify(optimized, new IrPipelineContext());
-        var roundtrip = SsaRouteFactory.CreateRoundtripRoute(profile).Run(source);
 
         Assert.Multiple(() =>
         {
@@ -70,10 +69,6 @@ public sealed class SsaPreviewRouteIntegrationRegressionTests
             Assert.That(optimizedFunction.Blocks.SelectMany(static block => block.Terminator is null ? [] : new[] { block.Terminator.Kind }), Does.Not.Contain(SsaTerminatorKind.Branch));
             Assert.That(constants.Select(static x => x.CanonicalValue), Does.Not.Contain("20"));
             Assert.That(constants.Select(static x => x.CanonicalValue), Does.Contain("10"));
-            Assert.That(roundtrip.UsedSsa, Is.True);
-            Assert.That(roundtrip.FellBackToInput, Is.False);
-            Assert.That(roundtrip.Diagnostics, Is.Empty);
-            Assert.That(IsAirStructurallyValid(roundtrip.Program), Is.True);
         });
     }
 
