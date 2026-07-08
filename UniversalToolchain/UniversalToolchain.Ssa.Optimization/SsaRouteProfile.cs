@@ -193,7 +193,11 @@ public sealed class SsaPreviewArithmeticInt32Pack : ISsaSemanticExtensionPack
     public bool EnablesManagedCallables => false;
 
     public IReadOnlyList<IIrOptimizationPass> CreateOptimizationPasses() =>
-        [new SsaConstantFoldingPass(SemanticDescriptors, new SsaPreviewInt32ConstantEvaluator())];
+    [
+        new SsaConstantFoldingPass(SemanticDescriptors, new SsaPreviewInt32ConstantEvaluator()),
+        new SsaBranchFoldingAndCleanupPass(),
+        new SsaDeadPureInstructionEliminationPass(SsaCoreDescriptors.ConstantMaterialization, SemanticDescriptors)
+    ];
 }
 
 public sealed class SsaManagedCallablePack : ISsaSemanticExtensionPack

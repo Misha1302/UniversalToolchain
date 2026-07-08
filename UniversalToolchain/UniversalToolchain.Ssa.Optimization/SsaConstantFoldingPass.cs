@@ -1,4 +1,3 @@
-using System.Globalization;
 using UniversalToolchain.Ir.Abstractions;
 using UniversalToolchain.Semantics.Abstractions;
 using UniversalToolchain.Ssa.Abstractions;
@@ -88,7 +87,7 @@ public sealed class SsaConstantFoldingPass : IIrOptimizationPass
             return null;
         }
 
-        return CreateConstantInstruction(instruction, result);
+        return SsaConstantMaterializer.TryCreate(instruction, result);
     }
 
     private bool TryGetDescriptor(ISsaInstruction instruction, out CallableDescriptor descriptor)
@@ -125,72 +124,15 @@ public sealed class SsaConstantFoldingPass : IIrOptimizationPass
         return true;
     }
 
-    private static SsaOperation? CreateConstantInstruction(ISsaInstruction source, ConstantValue value)
-    {
-        if (source.Results.Count != 1 ||
-            !SameType(source.Results[0].Type, value.Type))
-        {
-            return null;
-        }
-
-        if (source.Results[0].Type == SsaTypes.Int32 &&
-            int.TryParse(value.CanonicalValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out var intValue))
-        {
-            return ConstantInt32(source, intValue);
-        }
-
-        if (source.Results[0].Type == SsaTypes.Bool &&
-            bool.TryParse(value.CanonicalValue, out var boolValue))
-        {
-            return ConstantBool(source, boolValue);
-        }
-
-        return null;
-    }
-
-    private static SsaOperation ConstantInt32(ISsaInstruction source, int value) =>
-        new(
-            source.Id,
-            SsaOperations.ConstantInt32,
-            results: source.Results,
-            attributes: new SsaAttributeBag([new SsaAttribute(SsaAttributeKeys.ConstantValue, value.ToString(CultureInfo.InvariantCulture))]));
-
-    private static SsaOperation ConstantBool(ISsaInstruction source, bool value) =>
-        new(
-            source.Id,
-            SsaOperations.ConstantBool,
-            results: source.Results,
-            attributes: new SsaAttributeBag([new SsaAttribute(SsaAttributeKeys.ConstantValue, value.ToString())]));
-
     private static void RecordResultConstants(ISsaInstruction instruction, IDictionary<SsaValueId, ConstantValue> constants)
     {
         foreach (var result in instruction.Results)
             constants.Remove(result.Id);
 
-        if (instruction is not SsaOperation operation ||
-            operation.Results.Count != 1 ||
-            !operation.Attributes.TryGet(SsaAttributeKeys.ConstantValue, out var attribute))
+        if (instruction.Results.Count == 1 &&
+            SsaConstantReader.TryRead(instruction, out var constant))
         {
-            return;
-        }
-
-        var resultValue = operation.Results[0];
-        if (operation.OpId == SsaOperations.ConstantInt32 &&
-            resultValue.Type == SsaTypes.Int32 &&
-            int.TryParse(attribute.Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out _))
-        {
-            constants[resultValue.Id] = new ConstantValue(SsaPreviewSemanticTypes.Int32, attribute.Value);
-            return;
-        }
-
-        if (operation.OpId == SsaOperations.ConstantBool &&
-            resultValue.Type == SsaTypes.Bool &&
-            bool.TryParse(attribute.Value, out _))
-        {
-            constants[resultValue.Id] = new ConstantValue(SsaPreviewSemanticTypes.Bool, attribute.Value);
+            constants[instruction.Results[0].Id] = constant;
         }
     }
-
-    private static bool SameType(SsaTypeId ssaType, SemanticTypeId semanticType) =>
-        string.Equals(ssaType.Value, semanticType.Value, StringComparison.Ordinal);
 }
