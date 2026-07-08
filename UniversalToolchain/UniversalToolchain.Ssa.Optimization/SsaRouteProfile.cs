@@ -195,6 +195,7 @@ public sealed class SsaPreviewArithmeticInt32Pack : ISsaSemanticExtensionPack
     public IReadOnlyList<IIrOptimizationPass> CreateOptimizationPasses() =>
     [
         new SsaConstantFoldingPass(SemanticDescriptors, new SsaPreviewInt32ConstantEvaluator()),
+        new SsaSparseConditionalConstantPropagationPass(SemanticDescriptors, new SsaPreviewInt32ConstantEvaluator()),
         new SsaBranchFoldingAndCleanupPass(),
         new SsaDeadPureInstructionEliminationPass(SsaCoreDescriptors.ConstantMaterialization, SemanticDescriptors)
     ];
