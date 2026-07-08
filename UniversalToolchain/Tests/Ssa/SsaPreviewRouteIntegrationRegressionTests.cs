@@ -310,7 +310,7 @@ public sealed class SsaPreviewRouteIntegrationRegressionTests
         instruction switch
         {
             SsaOperation operation =>
-                $"op {operation.Id.Value} {operation.OpId.Value} [{string.Join(",", operation.Operands.Select(static x => x.Value))}] -> [{string.Join(",", operation.Results.Select(static x => x.Id.Value + ':' + x.Type.Value))}] {string.Join(",", operation.Attributes.Values.Select(static x => x.Key + '=' + x.Value))}",
+                $"op {operation.Id.Value} {operation.OpId.Value} [{string.Join(",", operation.Operands.Select(static x => x.Value))}] -> [{string.Join(",", operation.Results.Select(static x => x.Id.Value + ':' + x.Type.Value))}] {string.Join(",", operation.Attributes.Values.Select(static x => x.Key.Value + '=' + x.Value))}",
             SsaCall call =>
                 $"call {call.Id.Value} {call.Callee.Value} [{string.Join(",", call.Operands.Select(static x => x.Value))}] -> [{string.Join(",", call.Results.Select(static x => x.Id.Value + ':' + x.Type.Value))}]",
             _ => $"unknown {instruction.Id.Value}"
