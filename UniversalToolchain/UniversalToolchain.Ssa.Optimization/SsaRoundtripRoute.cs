@@ -57,7 +57,7 @@ public sealed class SsaRouteException : InvalidOperationException
 }
 
 /// <summary>
-/// Runs the verifier-gated AIR -> SSA -> AIR route without applying SSA optimization passes.
+/// Runs the verifier-gated AIR -> SSA -> optional profile optimization -> AIR route.
 /// </summary>
 public sealed class SsaRoundtripRoute
 {
@@ -116,11 +116,27 @@ public sealed class SsaRoundtripRoute
         {
             var loweringResult = _lowering.Run(new AirArtifact(input), context);
             var ssaArtifact = loweringResult.Artifact.As<SsaArtifact>();
-            var emissionResult = _emission.Run(ssaArtifact, new IrPipelineContext(context.Capabilities, loweringResult.Facts));
+            var ssaFacts = loweringResult.Facts;
+
+            if (_profile is not null)
+            {
+                var optimizationResult = SsaRouteFactory
+                    .CreateOptimizer(_profile)
+                    .Run(ssaArtifact, new IrPipelineContext(context.Capabilities, ssaFacts));
+                ssaArtifact = optimizationResult.Artifact.As<SsaArtifact>();
+                ssaFacts = optimizationResult.Facts;
+            }
+
+            var emissionResult = _emission.Run(ssaArtifact, new IrPipelineContext(context.Capabilities, ssaFacts));
             output = emissionResult.Artifact.As<AirArtifact>().Program;
             return true;
         }
         catch (AirToSsaConversionException exception)
+        {
+            diagnostics = ConvertDiagnostics(exception.Diagnostics);
+            return false;
+        }
+        catch (SsaOptimizationException exception)
         {
             diagnostics = ConvertDiagnostics(exception.Diagnostics);
             return false;
