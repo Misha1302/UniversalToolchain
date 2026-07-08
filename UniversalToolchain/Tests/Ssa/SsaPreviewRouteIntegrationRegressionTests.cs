@@ -47,6 +47,45 @@ public sealed class SsaPreviewRouteIntegrationRegressionTests
     }
 
     [Test]
+    public void Run_WhenSccpPropagatesConstantThroughJumpStack_RemovesConditionalJumpAndUnselectedArm()
+    {
+        var test = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc");
+        var then = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd");
+        var merge = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee");
+        var source = new AbstractIR();
+        source.Push(1);
+        source.Jmp(test);
+        source.SetLabel(test);
+        source.Push(1);
+        source.Intrinsic(AirIntrinsicIds.EqualInt32);
+        source.JmpIf(then);
+        source.Push(20);
+        source.Jmp(merge);
+        source.SetLabel(then);
+        source.Push(10);
+        source.SetLabel(merge);
+
+        var result = SsaRouteFactory
+            .CreateRoundtripRoute(SsaPreviewRouteProfiles.Create(SsaRoutePolicy.Debug))
+            .Run(source);
+
+        var opcodes = result.Program.Instructions.Select(static x => x.UOpCode).ToArray();
+        var pushOperands = PushOperands(result.Program).ToArray();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.UsedSsa, Is.True);
+            Assert.That(result.FellBackToInput, Is.False);
+            Assert.That(result.Diagnostics, Is.Empty);
+            Assert.That(opcodes, Does.Not.Contain(UOpCode.JmpIf));
+            Assert.That(opcodes, Does.Not.Contain(UOpCode.Intrinsic));
+            Assert.That(pushOperands, Does.Not.Contain(20));
+            Assert.That(pushOperands, Does.Contain(10));
+            Assert.That(IsAirStructurallyValid(result.Program), Is.True);
+        });
+    }
+
+    [Test]
     public void Run_PreviewOptimizerPipelineProducesStructurallyVerifiedSsa()
     {
         var input = BranchArtifact();
