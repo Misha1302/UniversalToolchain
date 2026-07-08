@@ -47,41 +47,33 @@ public sealed class SsaPreviewRouteIntegrationRegressionTests
     }
 
     [Test]
-    public void Run_WhenSccpPropagatesConstantThroughJumpStack_RemovesConditionalJumpAndUnselectedArm()
+    public void Run_WhenSccpPropagatesConstantThroughJumpStack_RemovesBranchAndUnselectedArmFromLoweredSsa()
     {
-        var test = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc");
-        var then = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd");
-        var merge = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee");
-        var source = new AbstractIR();
-        source.Push(1);
-        source.Jmp(test);
-        source.SetLabel(test);
-        source.Push(1);
-        source.Intrinsic(AirIntrinsicIds.EqualInt32);
-        source.JmpIf(then);
-        source.Push(20);
-        source.Jmp(merge);
-        source.SetLabel(then);
-        source.Push(10);
-        source.SetLabel(merge);
-
-        var result = SsaRouteFactory
-            .CreateRoundtripRoute(SsaPreviewRouteProfiles.Create(SsaRoutePolicy.Debug))
-            .Run(source);
-
-        var opcodes = result.Program.Instructions.Select(static x => x.UOpCode).ToArray();
-        var pushOperands = PushOperands(result.Program).ToArray();
+        var source = SccpCrossBlockAirProgram();
+        var profile = SsaPreviewRouteProfiles.Create(SsaRoutePolicy.Debug);
+        var lowerer = SsaRouteFactory.CreateLowerer(profile);
+        var optimizer = SsaRouteFactory.CreateOptimizer(profile);
+        var loweringResult = lowerer.Run(new AirArtifact(source), new IrPipelineContext());
+        var optimized = optimizer
+            .Run(loweringResult.Artifact.As<SsaArtifact>(), new IrPipelineContext(CapabilitySet.Empty, loweringResult.Facts))
+            .Artifact
+            .As<SsaArtifact>();
+        var optimizedFunction = optimized.Module.Functions.Single();
+        var constants = ReadConstants(optimized).ToArray();
+        var verification = new StructuralSsaVerifier(SsaCoreDescriptors.ConstantMaterialization, profile.SemanticDescriptors)
+            .Verify(optimized, new IrPipelineContext());
+        var roundtrip = SsaRouteFactory.CreateRoundtripRoute(profile).Run(source);
 
         Assert.Multiple(() =>
         {
-            Assert.That(result.UsedSsa, Is.True);
-            Assert.That(result.FellBackToInput, Is.False);
-            Assert.That(result.Diagnostics, Is.Empty);
-            Assert.That(opcodes, Does.Not.Contain(UOpCode.JmpIf));
-            Assert.That(opcodes, Does.Not.Contain(UOpCode.Intrinsic));
-            Assert.That(pushOperands, Does.Not.Contain(20));
-            Assert.That(pushOperands, Does.Contain(10));
-            Assert.That(IsAirStructurallyValid(result.Program), Is.True);
+            Assert.That(verification.IsSuccess, Is.True, string.Join("; ", verification.Diagnostics.Select(static x => $"{x.Code}: {x.Message}")));
+            Assert.That(optimizedFunction.Blocks.SelectMany(static block => block.Terminator is null ? [] : new[] { block.Terminator.Kind }), Does.Not.Contain(SsaTerminatorKind.Branch));
+            Assert.That(constants.Select(static x => x.CanonicalValue), Does.Not.Contain("20"));
+            Assert.That(constants.Select(static x => x.CanonicalValue), Does.Contain("10"));
+            Assert.That(roundtrip.UsedSsa, Is.True);
+            Assert.That(roundtrip.FellBackToInput, Is.False);
+            Assert.That(roundtrip.Diagnostics, Is.Empty);
+            Assert.That(IsAirStructurallyValid(roundtrip.Program), Is.True);
         });
     }
 
@@ -173,6 +165,26 @@ public sealed class SsaPreviewRouteIntegrationRegressionTests
         });
     }
 
+    private static AbstractIR SccpCrossBlockAirProgram()
+    {
+        var test = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc");
+        var then = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd");
+        var merge = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee");
+        var source = new AbstractIR();
+        source.Push(1);
+        source.Jmp(test);
+        source.SetLabel(test);
+        source.Push(1);
+        source.Intrinsic(AirIntrinsicIds.EqualInt32);
+        source.JmpIf(then);
+        source.Push(20);
+        source.Jmp(merge);
+        source.SetLabel(then);
+        source.Push(10);
+        source.SetLabel(merge);
+        return source;
+    }
+
     private static IEnumerable<object?> PushOperands(IAbstractIR program) =>
         program.Instructions
             .Where(static x => x.UOpCode == UOpCode.Push)
@@ -180,6 +192,17 @@ public sealed class SsaPreviewRouteIntegrationRegressionTests
 
     private static bool IsAirStructurallyValid(IAbstractIR program) =>
         new StructuralAirVerifier().Verify(new AirArtifact(program), new IrPipelineContext()).IsSuccess;
+
+    private static IEnumerable<ConstantValue> ReadConstants(SsaArtifact artifact) =>
+        artifact.Module.Functions
+            .SelectMany(static function => function.Blocks)
+            .SelectMany(static block => block.Instructions)
+            .Where(SsaConstantReader.TryRead)
+            .Select(instruction =>
+            {
+                _ = SsaConstantReader.TryRead(instruction, out var constant);
+                return constant;
+            });
 
     private static SsaArtifact BranchArtifact()
     {
