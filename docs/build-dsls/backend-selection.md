@@ -12,7 +12,7 @@ Wist currently exposes two user-facing backend modes:
 - `interpreter`
 - `compiler`
 
-The `compiler` mode selects the CIL backend when the active dialect exposes the `cil` backend. The `interpreter` mode selects the interpreter backend when the active dialect exposes `interpreter`.
+The `.wistdialect` file names the canonical backend ids exposed by the dialect, such as `cil` and `interpreter`. The CLI and facade accept user-facing aliases: `compiler` requests the selected CIL backend when the active dialect exposes `cil`; `interpreter` requests the interpreter backend when the active dialect exposes `interpreter`. Do not add a new backend by editing only these aliases; new backends must be discoverable through runtime manifests and registrars.
 
 ## When to read this page
 

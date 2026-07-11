@@ -69,9 +69,6 @@ public class NativeTypesOptimizerModule : IIRProcessingModule
     private bool IsNativeArithmeticPattern(Instruction inst1, Instruction inst2, Instruction inst3) =>
         inst1.UOpCode == UOpCode.Push &&
         inst2.UOpCode == UOpCode.Push &&
-        inst3.UOpCode == UOpCode.Intrinsic &&
-        inst3.Operands[0] is string name &&
-        name == "call C#" &&
-        inst3.Operands[1] is MethodInfo method &&
+        CSharpCallIntrinsicReader.TryGetCallMethod(inst3, out var method) &&
         method.DeclaringType == typeof(NativeArithmetic);
 }

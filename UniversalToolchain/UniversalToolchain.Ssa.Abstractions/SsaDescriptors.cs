@@ -120,6 +120,30 @@ public static class SsaCoreDescriptors
             requiredAttributes: [SsaAttributeKeys.ConstantValue],
             allowedAttributes: [SsaAttributeKeys.ConstantValue])
     ]);
+
+
+    public static SsaDescriptorSet CoreOperations { get; } = new(
+    [
+        .. ConstantMaterialization.Values,
+        new SsaOpDescriptor(
+            SsaOperations.LoadExternalInt32,
+            resultTypes: [SsaTypes.Int32],
+            effects: new SsaEffectSummary([SsaEffectKind.ReadsMemory]),
+            requiredAttributes: [SsaAttributeKeys.ExternalSlot],
+            allowedAttributes: [SsaAttributeKeys.ExternalSlot]),
+        new SsaOpDescriptor(
+            SsaOperations.LoadExternalBool,
+            resultTypes: [SsaTypes.Bool],
+            effects: new SsaEffectSummary([SsaEffectKind.ReadsMemory]),
+            requiredAttributes: [SsaAttributeKeys.ExternalSlot],
+            allowedAttributes: [SsaAttributeKeys.ExternalSlot]),
+        new SsaOpDescriptor(
+            SsaOperations.LoadExternalFloat64,
+            resultTypes: [SsaTypes.Float64],
+            effects: new SsaEffectSummary([SsaEffectKind.ReadsMemory]),
+            requiredAttributes: [SsaAttributeKeys.ExternalSlot],
+            allowedAttributes: [SsaAttributeKeys.ExternalSlot])
+    ]);
 }
 
 public static class SsaPreviewSemanticDescriptors

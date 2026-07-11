@@ -20,10 +20,10 @@ admin / config / LLM suggestion
 
 ## Install
 
-`UniversalToolchain.Wist` `0.1.0-preview.2` is published on NuGet: <https://www.nuget.org/packages/UniversalToolchain.Wist/0.1.0-preview.2>.
+After the preview package is published, install `UniversalToolchain.Wist` `0.1.0-preview.4` from NuGet: <https://www.nuget.org/packages/UniversalToolchain.Wist/0.1.0-preview.4>. Until that package exists, use a local package produced by `dotnet pack` or a source checkout.
 
 ```bash ci-run=false
-dotnet add package UniversalToolchain.Wist --version 0.1.0-preview.2
+dotnet add package UniversalToolchain.Wist --version 0.1.0-preview.4
 ```
 
 Requirements:
@@ -36,7 +36,7 @@ Requirements:
 ```csharp
 using UniversalToolchain.Wist;
 
-using var rules = WistEngine.CreateSafeFormulas();
+using var rules = WistEngine.CreateRestrictedArithmetic();
 
 var rolloutScore = rules.Compile<Func<double, double, double, double>>(
     "usage * 0.7 + reliability * 0.3 - incidents * 15.0",
@@ -57,7 +57,7 @@ Use `Validate` before storing or executing user/admin/config-supplied formulas:
 ```csharp
 using UniversalToolchain.Wist;
 
-using var rules = WistEngine.CreateSafeFormulas();
+using var rules = WistEngine.CreateRestrictedArithmetic();
 
 var validation = rules.Validate(
     "let score = usage * 0.7\nscore",
@@ -74,7 +74,7 @@ if (!validation.IsValid)
 }
 ```
 
-The current safe-formula preset starts narrow. Statement-style bindings such as `let` are rejected by that restricted surface.
+The current restricted arithmetic preset starts narrow. Statement-style bindings such as `let` are rejected by that restricted surface.
 
 ## Hot path vs convenience path
 
@@ -113,21 +113,63 @@ Compilation is expensive.
 Invocation is the performance-oriented path.
 ```
 
+## Experimental SSA route
+
+SSA is opt-in and remains an experimental compiler feature. Enable it through the facade; a physical dialect file is not required:
+
+```csharp
+using UniversalToolchain.Wist;
+
+using var rules = WistEngine.Create(new WistEngineOptions
+{
+    Preset = WistPreset.RestrictedArithmetic,
+    Optimization = new WistOptimizationOptions
+    {
+        Ssa = new WistSsaOptions
+        {
+            Policy = WistSsaPolicy.Prefer,
+            DiagnosticLevel = WistSsaDiagnosticLevel.Detailed
+        }
+    }
+});
+
+var compiled = rules.Compile<Func<int, int>>("value * 2 + 3", "value");
+int value = compiled.CompiledDelegate(20);
+
+var report = compiled.Metadata.OptimizationReport.Ssa;
+Console.WriteLine($"used={report.UsedSsa}, fallback={report.FellBackToAir}");
+Console.WriteLine(string.Join(", ", report.ExecutedPasses));
+```
+
+Policy semantics:
+
+- `Disabled`: do not attempt the SSA route;
+- `Prefer`: attempt SSA and return to the original AIR only for known unsupported-route diagnostics;
+- `Require`: fail compilation when the supported SSA route cannot complete;
+- `Debug`: behave like `Require` and retain detailed stage trace entries.
+
+`TryCompile` and `Validate` preserve the optimization report even when `Require` or `Debug` fails. Unexpected optimizer defects never become a silent `Prefer` fallback.
+
+The current SSA route is not a sandbox, not an SSA-native backend, and not a performance guarantee. It is a verifier-gated `AIR -> SSA -> AIR` optimization boundary for the currently supported subset.
+
 ## Presets
 
 ```csharp
 WistEngine.CreateRestrictedArithmetic();
 WistEngine.CreateFullNativePreview();
 
-// Compatibility aliases:
-WistEngine.CreateSafeFormulas();
-WistEngine.CreateBusinessRules();
-WistEngine.CreateTrusted();
+using var trustedInterop = WistEngine.Create(new WistEngineOptions
+{
+    Preset = WistPreset.FullNativePreview,
+    AllowedAssemblies = [typeof(Math).Assembly]
+});
+
+// Obsolete compatibility aliases remain available for preview.2 migration.
 ```
 
 `CreateRestrictedArithmetic` is the recommended first-contact preset for restricted formulas. `CreateSafeFormulas` remains a compatibility alias for it.
 
-`CreateFullNativePreview`, `CreateBusinessRules`, and `CreateTrusted` are broad trusted-preview entry points in this preview. Do not use them for arbitrary untrusted input.
+`CreateFullNativePreview` selects the broad language profile, but it does not implicitly expose CLR assemblies. Add only reviewed assemblies through `AllowedAssemblies`. `CreateBusinessRules` and `CreateTrusted` remain obsolete migration aliases.
 
 ## Security and trust
 
@@ -144,3 +186,11 @@ This facade currently exposes:
 - backend-neutral compiled program metadata.
 
 The larger direction is controlled application DSLs for .NET. The current stable preview claim is restricted numeric/formula execution, validation, and typed compiled invocation for supported shapes.
+
+## Resource limits and diagnostics
+
+`WistEngineOptions.ResourceLimits` enforces host-owned preflight limits for source length and parameter count. `Validate` and `TryCompile` return structured `WistDiagnostic` values with stable codes, severity, stage, span when available, message, and hints. These limits do not provide execution timeouts, memory quotas, or process isolation.
+
+CLR interop and type directives resolve only against the shipped `BasicStdLib` assembly plus the immutable host allowlist in `WistEngineOptions.AllowedAssemblies`; dialect implementation assemblies, the AppDomain, and the output directory are not discovery sources.
+
+Only the facade reference assembly under `ref/net10.0/UniversalToolchain.Wist.dll` is the supported compile-time API boundary. Its reviewed exported surface is recorded in `PublicAPI.Shipped.txt` in the source repository. The 64 assemblies under `lib/net10.0` form the runtime closure; all except the facade are implementation dependencies and are not compatibility promises.

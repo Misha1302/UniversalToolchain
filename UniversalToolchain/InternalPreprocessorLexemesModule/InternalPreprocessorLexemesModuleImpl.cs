@@ -8,14 +8,12 @@ namespace InternalPreprocessorLexemesModule;
 [AutoRegisterService]
 public class InternalPreprocessorLexemesModuleImpl : IFrontendCoreModule
 {
-    private const string PreprocessorLexemeName = "Preprocessor lexeme";
-
     public void InitLexer(ILexer lexer)
     {
         lexer.Configuration.TryAddPattern(
             new LexemePattern(
                 "\\#\\!\\[[^\\n\\]]*(?:\\]|(?=\\n|$))",
-                LexemeType.CreateOrGet(PreprocessorLexemeName)
+                LexemeType.CreateOrGet(PreprocessorLexemeContracts.NodeTypeName)
             ),
             priority: 100_000_000_000
         );
@@ -25,10 +23,10 @@ public class InternalPreprocessorLexemesModuleImpl : IFrontendCoreModule
     {
         foreach (var lexeme in current)
         {
-            if (lexeme.LexemePattern?.LexemeType.GetName() != PreprocessorLexemeName)
+            if (lexeme.LexemePattern?.LexemeType.GetName() != PreprocessorLexemeContracts.NodeTypeName)
                 continue;
 
-            WistThrower.Parser(
+            ToolchainThrower.Parser(
                 "preprocessor token is internal-only",
                 new SourceLocation { Line = lexeme.LineNumber, Column = lexeme.CharNumber }
             );

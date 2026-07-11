@@ -36,10 +36,16 @@ public sealed class SsaPreviewOptimizerModuleTests
         var source = new AbstractIR();
         source.Intrinsic("custom.intrinsic");
 
-        var exception = Assert.Throws<AirToSsaConversionException>(() =>
+        var exception = Assert.Throws<SsaRouteException>(() =>
             new SsaPreviewOptimizerModule().ProcessIr(source, new PassthroughCompiler()));
 
-        Assert.That(exception!.Diagnostics.Select(static x => x.Severity), Does.Contain(IrDiagnosticSeverity.Error));
+        Assert.Multiple(() =>
+        {
+            Assert.That(exception!.InnerException, Is.TypeOf<AirToSsaConversionException>());
+            Assert.That(exception.Diagnostics, Is.Not.Empty);
+            Assert.That(exception.Report.UsedSsa, Is.False);
+            Assert.That(exception.Report.FellBackToInput, Is.False);
+        });
     }
 
     [Test]

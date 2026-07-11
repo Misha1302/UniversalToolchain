@@ -5,6 +5,7 @@ import shlex
 import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import tempfile
@@ -12,6 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 DEFAULT_BASH_BLOCK_TIMEOUT = "60s"
+MARKDOWN_DOTNET_CONFIGURATION = "Release"
 MARKDOWN_DISCOVERY_EXCLUDED_DIRECTORIES = {
     ".git",
     ".hg",
@@ -192,9 +194,20 @@ def ShouldRunBlock(block: BashBlock) -> bool:
     return ParseBooleanAttribute(rawValue, "ci-run")
 
 
-def BuildCommand(block: BashBlock, scriptPath: Path) -> list[str]:
-    timeoutValue = block.attributes.get("ci-timeout", DEFAULT_BASH_BLOCK_TIMEOUT)
-    return ["timeout", timeoutValue, "bash", str(scriptPath)]
+def ParseTimeoutSeconds(rawValue: str) -> float:
+    match = re.fullmatch(r"([0-9]+(?:\.[0-9]+)?)([smhd]?)", rawValue.strip())
+    if match is None:
+        raise ValueError(
+            f"Unsupported ci-timeout value '{rawValue}'. Use seconds or an s/m/h/d suffix."
+        )
+
+    amount = float(match.group(1))
+    multiplier = {"": 1.0, "s": 1.0, "m": 60.0, "h": 3600.0, "d": 86400.0}[match.group(2)]
+    seconds = amount * multiplier
+    if seconds <= 0:
+        raise ValueError("ci-timeout must be greater than zero")
+
+    return seconds
 
 
 def BuildProcessEnvironment(repositoryRoot: Path) -> dict[str, str]:
@@ -203,6 +216,7 @@ def BuildProcessEnvironment(repositoryRoot: Path) -> dict[str, str]:
     environment.setdefault("DOTNET_CLI_HOME", str(repositoryRoot / ".dotnet-home"))
     environment.setdefault("DOTNET_SKIP_FIRST_TIME_EXPERIENCE", "1")
     environment.setdefault("DOTNET_NOLOGO", "1")
+    environment.setdefault("DOTNET_CLI_DO_NOT_USE_MSBUILD_SERVER", "1")
     environment.setdefault("NuGetAudit", "false")
 
     candidateNuGetPackagePaths = [
@@ -214,6 +228,19 @@ def BuildProcessEnvironment(repositoryRoot: Path) -> dict[str, str]:
             if candidateNuGetPackagePath.exists() and any(candidateNuGetPackagePath.iterdir()):
                 environment["NUGET_PACKAGES"] = str(candidateNuGetPackagePath)
                 break
+
+    configuredDotnet = environment.get("DOTNET")
+    if configuredDotnet:
+        configuredDotnetPath = Path(configuredDotnet).expanduser()
+        if configuredDotnetPath.is_file():
+            dotnetDirectory = str(configuredDotnetPath.resolve().parent)
+            currentPath = environment.get("PATH", "")
+            environment["PATH"] = (
+                dotnetDirectory
+                if currentPath == ""
+                else f"{dotnetDirectory}{os.pathsep}{currentPath}"
+            )
+            return environment
 
     if shutil.which("dotnet", path=environment.get("PATH")) is not None:
         return environment
@@ -229,10 +256,74 @@ def BuildProcessEnvironment(repositoryRoot: Path) -> dict[str, str]:
 
         dotnetDirectory = str(candidateDotnetPath.parent)
         currentPath = environment.get("PATH", "")
-        environment["PATH"] = dotnetDirectory if currentPath == "" else f"{dotnetDirectory}{os.pathsep}{currentPath}"
+        environment["PATH"] = (
+            dotnetDirectory
+            if currentPath == ""
+            else f"{dotnetDirectory}{os.pathsep}{currentPath}"
+        )
         return environment
 
     return environment
+
+
+def RunScriptProcess(
+    repositoryRoot: Path,
+    block: BashBlock,
+    scriptPath: Path,
+) -> subprocess.CompletedProcess[str]:
+    timeoutValue = block.attributes.get("ci-timeout", DEFAULT_BASH_BLOCK_TIMEOUT)
+    timeoutSeconds = ParseTimeoutSeconds(timeoutValue)
+
+    # File-backed output avoids a deadlock where a detached descendant keeps a PIPE
+    # open after the shell has been terminated. The release gate must always return
+    # a bounded success or failure.
+    with tempfile.TemporaryFile(mode="w+", encoding="utf-8") as stdoutFile, \
+         tempfile.TemporaryFile(mode="w+", encoding="utf-8") as stderrFile:
+        process = subprocess.Popen(
+            ["bash", str(scriptPath)],
+            cwd=repositoryRoot,
+            env=BuildProcessEnvironment(repositoryRoot),
+            stdout=stdoutFile,
+            stderr=stderrFile,
+            text=True,
+            start_new_session=True,
+        )
+
+        timedOut = False
+        try:
+            process.wait(timeout=timeoutSeconds)
+        except subprocess.TimeoutExpired:
+            timedOut = True
+            try:
+                os.killpg(process.pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+
+            try:
+                process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+                process.wait(timeout=5)
+
+        stdoutFile.seek(0)
+        stderrFile.seek(0)
+        stdout = stdoutFile.read()
+        stderr = stderrFile.read()
+
+    if timedOut:
+        PrintStream("stdout", stdout)
+        PrintStream("stderr", stderr)
+        raise RuntimeError(f"Command timed out after {timeoutValue}.")
+
+    return subprocess.CompletedProcess(
+        args=["bash", str(scriptPath)],
+        returncode=process.returncode,
+        stdout=stdout,
+        stderr=stderr,
+    )
 
 
 def PrintStream(name: str, value: str) -> None:
@@ -258,61 +349,93 @@ def FindRunnableDotnetProjects(blocks: list[BashBlock]) -> list[str]:
     return sorted(projects)
 
 
+def ResolveBuiltProjectAssembly(repositoryRoot: Path, project: str) -> Path | None:
+    projectPath = repositoryRoot / project
+    if not projectPath.exists():
+        return None
+
+    assemblyName = projectPath.stem
+    outputRoot = projectPath.parent / "bin"
+    if not outputRoot.exists():
+        return None
+
+    candidates = [
+        candidate
+        for candidate in outputRoot.glob(
+            f"**/{MARKDOWN_DOTNET_CONFIGURATION}/**/{assemblyName}.dll"
+        )
+        if "ref" not in candidate.relative_to(outputRoot).parts
+    ]
+    if len(candidates) == 0:
+        return None
+
+    # Prefer the ordinary AnyCPU-style output over platform-specific duplicates,
+    # then keep selection deterministic.
+    return min(
+        candidates,
+        key=lambda candidate: (
+            len(candidate.relative_to(outputRoot).parts),
+            candidate.as_posix(),
+        ),
+    )
+
+
 def EnsureDotnetRunProjectsAreBuilt(repositoryRoot: Path, blocks: list[BashBlock]) -> None:
-    projects = FindRunnableDotnetProjects(blocks)
-    if len(projects) == 0:
+    missingProjects = [
+        project
+        for project in FindRunnableDotnetProjects(blocks)
+        if project.endswith(".csproj")
+        and ResolveBuiltProjectAssembly(repositoryRoot, project) is None
+    ]
+
+    if len(missingProjects) == 0:
         return
 
-    environment = BuildProcessEnvironment(repositoryRoot)
-    for project in projects:
-        if not project.endswith(".csproj"):
-            continue
-
-        projectPath = repositoryRoot / project
-        if not projectPath.exists():
-            continue
-
-        print(f"::group::Markdown prebuild: {project}")
-        try:
-            result = subprocess.run(
-                [
-                    "dotnet",
-                    "build",
-                    project,
-                    "-c",
-                    "Debug",
-                    "-p:NuGetAudit=false",
-                ],
-                cwd=repositoryRoot,
-                env=environment,
-                capture_output=True,
-                text=True,
-            )
-            PrintStream("stdout", result.stdout)
-            PrintStream("stderr", result.stderr)
-            if result.returncode != 0:
-                raise RuntimeError(
-                    f"Markdown prebuild failed for {project} with exit code {result.returncode}."
-                )
-        finally:
-            print("::endgroup::")
+    missingText = "\n".join(f"- {project}" for project in missingProjects)
+    raise RuntimeError(
+        "Markdown command validation requires the canonical Release build first. "
+        "Run './build.sh --skip-docs --skip-pack', then rerun the Markdown checker. "
+        f"Missing Release outputs:\n{missingText}"
+    )
 
 
-def RewriteDotnetRunLineForCi(line: str) -> str:
+def RewriteDotnetRunLineForCi(line: str, repositoryRoot: Path) -> str:
     strippedLine = line.lstrip()
     indentation = line[: len(line) - len(strippedLine)]
-    if strippedLine.startswith("dotnet run --project "):
-        return indentation + strippedLine.replace(
-            "dotnet run --project ",
-            "dotnet run --no-restore --no-build --project ",
-            1,
+    prefix = "dotnet run --project "
+    if not strippedLine.startswith(prefix):
+        return line
+
+    commandParts = shlex.split(strippedLine)
+    try:
+        projectIndex = commandParts.index("--project") + 1
+    except (ValueError, IndexError) as exception:
+        raise ValueError(f"Unable to parse dotnet run command: {line}") from exception
+
+    project = commandParts[projectIndex]
+    assemblyPath = ResolveBuiltProjectAssembly(repositoryRoot, project)
+    if assemblyPath is None:
+        raise RuntimeError(
+            f"Release output for Markdown project '{project}' was not found. "
+            "Run the canonical Release build first."
         )
 
-    return line
+    try:
+        separatorIndex = commandParts.index("--", projectIndex + 1)
+        applicationArguments = commandParts[separatorIndex + 1 :]
+    except ValueError:
+        applicationArguments = commandParts[projectIndex + 1 :]
+
+    relativeAssemblyPath = assemblyPath.relative_to(repositoryRoot)
+    rewrittenParts = ["dotnet", relativeAssemblyPath.as_posix(), *applicationArguments]
+    return indentation + shlex.join(rewrittenParts)
 
 
-def RewriteScriptContentForCi(content: str) -> str:
-    return "\n".join(RewriteDotnetRunLineForCi(line) for line in content.splitlines())
+def RewriteScriptContentForCi(content: str, repositoryRoot: Path) -> str:
+    return "\n".join(
+        RewriteDotnetRunLineForCi(line, repositoryRoot)
+        for line in content.splitlines()
+    )
 
 
 def HasCommandDirectives(block: BashBlock) -> bool:
@@ -419,18 +542,12 @@ def RunCommand(repositoryRoot: Path, block: BashBlock, command: BashCommand) -> 
 
     with tempfile.NamedTemporaryFile("w", suffix=".sh", delete=False, encoding="utf-8") as tempScript:
         tempScript.write("set -euo pipefail\n")
-        tempScript.write(RewriteScriptContentForCi(command.command))
+        tempScript.write(RewriteScriptContentForCi(command.command, repositoryRoot))
         tempScript.write("\n")
         tempScriptPath = Path(tempScript.name)
 
     try:
-        result = subprocess.run(
-            BuildCommand(block, tempScriptPath),
-            cwd=repositoryRoot,
-            env=BuildProcessEnvironment(repositoryRoot),
-            capture_output=True,
-            text=True,
-        )
+        result = RunScriptProcess(repositoryRoot, block, tempScriptPath)
 
         PrintStream("stdout", result.stdout)
         PrintStream("stderr", result.stderr)
@@ -451,19 +568,12 @@ def RunWholeBlock(repositoryRoot: Path, block: BashBlock) -> None:
 
     with tempfile.NamedTemporaryFile("w", suffix=".sh", delete=False, encoding="utf-8") as tempScript:
         tempScript.write("set -euo pipefail\n")
-        tempScript.write(RewriteScriptContentForCi(block.content))
+        tempScript.write(RewriteScriptContentForCi(block.content, repositoryRoot))
         tempScript.write("\n")
         tempScriptPath = Path(tempScript.name)
 
     try:
-        command = BuildCommand(block, tempScriptPath)
-        result = subprocess.run(
-            command,
-            cwd=repositoryRoot,
-            env=BuildProcessEnvironment(repositoryRoot),
-            capture_output=True,
-            text=True,
-        )
+        result = RunScriptProcess(repositoryRoot, block, tempScriptPath)
 
         PrintStream("stdout", result.stdout)
         PrintStream("stderr", result.stderr)
@@ -501,6 +611,11 @@ def RunBlock(repositoryRoot: Path, block: BashBlock, blockIndex: int, totalBlock
 
 
 def main() -> int:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(line_buffering=True)
+    if hasattr(sys.stderr, "reconfigure"):
+        sys.stderr.reconfigure(line_buffering=True)
+
     repositoryRoot = GetRepositoryRoot()
     markdownFiles = GetMarkdownFiles(repositoryRoot)
 

@@ -80,8 +80,10 @@ Run the lightweight documentation authority check after moving or reclassifying
 documents:
 
 ```text
-python3 Tools/check_documentation_status.py
+npm run docs:status
 ```
+
+`npm run docs:status` delegates to `Tools/check_documentation_status.py`.
 
 ## Principle
 

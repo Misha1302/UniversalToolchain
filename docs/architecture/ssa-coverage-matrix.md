@@ -14,22 +14,41 @@ It is a coverage contract, not a promise that SSA is the default optimizer/backe
 
 | Area | Status | Evidence |
 |---|---|---|
+| Public Wist opt-in | Supported | `WistEngineOptions.Optimization.Ssa` and facade end-to-end tests |
+| Policies | `Disabled`, `Prefer`, `Require`, `Debug` | `SsaRoundtripRouteTests`; only known unsupported diagnostics may fall back under `Prefer` |
+| Observability | Supported | `WistOptimizationReport` exposes route, fallback, profile, counts, passes, diagnostics, and trace |
 | AIR artifact input | Supported for `AirArtifact` only | `AirToSsaConverter.Run` rejects non-AIR artifacts |
-| Structural AIR verification before lowering | Supported | `StructuralAirVerifier` is called before conversion |
-| Structural SSA verification after lowering | Supported | `StructuralSsaVerifier` is called before returning SSA |
-| `Nop`, `Label`, `Annotate` | Supported as no-op SSA-lowering metadata | `AirToSsaConverter.LowerInstruction` |
-| `Push bool` | Supported | lowers to `ssa.const.bool` |
-| `Push int` | Supported | lowers to `ssa.const.i32` |
-| `Push double` | Supported | lowers to `ssa.const.f64` |
-| `Drop` | Supported with stack-underflow diagnostic | `air.to-ssa.stack-underflow` |
-| `Intrinsic` with descriptor/callable mapping | Supported for registered shapes | `LowerIntrinsic` and managed-callable tests |
-| Branch terminators | Preview-supported through CFG/block lowering | `SsaRoundtripRouteTests` |
-| Zero or one return value | Supported | `air.to-ssa.return-arity` rejects multi-return |
-| Multiple incompatible return types | Rejected | `air.to-ssa.return-type` |
-| Unsupported push value type | Rejected | `air.to-ssa.push-type` |
-| Unsupported opcode | Rejected | `air.to-ssa.opcode` |
-| SSA to AIR emission | Preview-supported for current SSA subset | `SsaToAirConverter` tests |
-| SSA local constant folding | Preview-supported with facts | `SsaConstantFoldingPass` tests |
+| AIR/SSA/AIR verification | Supported | structural verifiers run before lowering, after lowering/passes, and after emission |
+| External parameter values | Supported for current typed subset | AIR external-value references lower to SSA parameters |
+| `Push bool/int/double` | Supported | canonical SSA constants |
+| `Drop` | Supported with deterministic underflow diagnostics | `air.to-ssa.stack-underflow` |
+| Native Wist int32 add/subtract/multiply | Supported and optimizable | `WistNativeArithmeticSsaProjection` maps to canonical callable IDs |
+| Registered AIR intrinsics | Supported for registered descriptors | descriptor-driven lowering tests |
+| Managed static/instance/constructor calls | Supported for mapped CLR types | exact execution-scoped binding set, no production rediscovery |
+| Duplicate equivalent managed bindings | Supported | structural binding equivalence regression |
+| Conflicting/missing bindings | Rejected | deterministic lowering/emission diagnostics |
+| Branch terminators and block arguments | Preview-supported | CFG, dominance, block-argument, and route tests |
+| Zero or one return value | Supported | multi-return is explicitly rejected |
+| SSA to AIR emission | Supported for current legal stack-schedulable subset | `SsaToAirConverter` tests |
+| Constant folding | Supported for trusted deterministic descriptors | `SsaConstantFoldingPass` tests |
+| SCCP-lite | Supported | block-argument constant propagation tests |
+| Branch/unreachable cleanup | Supported | branch folding and cleanup tests |
+| Dead pure instruction elimination | Supported | effect-aware elimination tests |
+| Extension-pack/pass conflicts | Fail-fast | route profile construction tests |
+
+## Stable Unsupported-Shape Diagnostics
+
+The route rejects unsupported shapes with explicit codes rather than guessing:
+
+- `air.to-ssa.stack-underflow` — an instruction consumes more values than the analyzed AIR stack contains;
+- `air.to-ssa.return-arity` — more than one return value is requested;
+- `air.to-ssa.return-type` — return paths disagree on the current supported result type;
+- `air.to-ssa.push-type` — a pushed CLR/runtime value type has no current SSA mapping;
+- `air.to-ssa.opcode` — the AIR opcode is outside the registered lowering surface;
+- `air.to-ssa.managed-call.projection.unregistered` — a projection selected a callable with no active semantic descriptor;
+- `ssa.optimization.managed-call.binding.missing` and `ssa.to-air.managed-call.binding.missing` — a managed callable lost its execution-scoped binding.
+
+Under `Prefer`, only explicitly classified unsupported-shape diagnostics may trigger a controlled AIR fallback. `Require` and `Debug` preserve the route report and fail instead of silently changing execution strategy.
 
 ## Not Production-Ready Yet
 
@@ -40,7 +59,7 @@ It is a coverage contract, not a promise that SSA is the default optimizer/backe
 | Multi-return SSA shapes | Explicit function signature model and AIR lowering policy |
 | Arbitrary SSA scheduling | Dominance/use verification and emission legality tests |
 | SSA-native backend | Separate backend contract or proven AIR-lowering contract |
-| Optimizer suite beyond local constant folding | Required/preserved/invalidated facts per pass |
+| Broader optimizer suite (GVN/CSE, LICM, inlining) | Required/preserved/invalidated facts and differential tests per pass |
 
 ## Expansion Rule
 

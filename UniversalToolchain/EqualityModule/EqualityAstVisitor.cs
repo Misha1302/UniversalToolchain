@@ -43,9 +43,6 @@ public class EqualityAstVisitor : IAstVisitor
             return;
         }
 
-        if (targetNode.NodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("Variable"))
-            Thrower.InvalidOpEx("Assignment target must be a variable.");
-
-        il.SetValueToLocal(targetNode.Text, context.Stack[^1]);
+        Thrower.InvalidOpEx("Assignment target must be a bound writable symbol.");
     }
 }

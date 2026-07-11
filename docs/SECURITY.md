@@ -24,3 +24,14 @@ Internal targeted runtime activation (exact loading of selected component/regist
 
 This repository is currently developed on the default development branch and targets .NET 10 (`net10.0`). Security fixes
 are expected to be applied there.
+
+## Preview.3 host controls
+
+The public facade now applies two bounded controls before composition or execution:
+
+- `WistEngineOptions.AllowedAssemblies` is the explicit host CLR type/method allowlist. Only the shipped `BasicStdLib` assembly is added by the runtime; selected dialect implementation assemblies are not exposed. Runtime discovery does not inspect `AppDomain.CurrentDomain`, `AppContext.BaseDirectory`, or recursively load DLLs from disk.
+- `WistEngineOptions.ResourceLimits` limits UTF-16 source length and external parameter count. Limit failures use stable structured diagnostic codes (`UTC-WIST-001` and `UTC-WIST-002`).
+
+These are defense-in-depth and denial-of-service preflight checks, not a sandbox. They do not interrupt a long-running compiled delegate, constrain heap allocation, isolate native calls, or revoke capabilities after a host deliberately adds an assembly. For arbitrary untrusted authors, execute in a separate constrained process/container and enforce wall-clock, CPU, memory, filesystem, network, and identity limits outside Wist.
+
+The name `CreateRestrictedArithmetic` describes the actual guarantee. The old `CreateSafeFormulas` alias is obsolete because “safe” could be misread as process isolation.

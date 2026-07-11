@@ -34,13 +34,19 @@ public static class DialectTestHostInfrastructure
     ///     Creates a host by composing the original dialect through the canonical pipeline,
     ///     then applying a structured test-only backend override to the build plan.
     /// </summary>
-    public static WistDialectExecutionHost CreateInterpreterHost(string dialectText) => CreateHostWithOnlyBackend(dialectText, "interpreter");
+    public static WistDialectExecutionHost CreateInterpreterHost(
+        string dialectText,
+        IReadOnlyCollection<System.Reflection.Assembly>? allowedAssemblies = null) =>
+        CreateHostWithOnlyBackend(dialectText, "interpreter", allowedAssemblies);
 
     /// <summary>
     ///     Creates a host by composing the original dialect through the canonical pipeline,
     ///     then applying a structured test-only backend override to the build plan.
     /// </summary>
-    public static WistDialectExecutionHost CreateCompilerHost(string dialectText) => CreateHostWithOnlyBackend(dialectText, "compiler");
+    public static WistDialectExecutionHost CreateCompilerHost(
+        string dialectText,
+        IReadOnlyCollection<System.Reflection.Assembly>? allowedAssemblies = null) =>
+        CreateHostWithOnlyBackend(dialectText, "compiler", allowedAssemblies);
 
     /// <summary>
     ///     Executes code in both backends and verifies semantic parity.
@@ -52,7 +58,10 @@ public static class DialectTestHostInfrastructure
         return compilerResult.Value;
     }
 
-    private static WistDialectExecutionHost CreateHostWithOnlyBackend(string dialectText, string backend)
+    private static WistDialectExecutionHost CreateHostWithOnlyBackend(
+        string dialectText,
+        string backend,
+        IReadOnlyCollection<System.Reflection.Assembly>? allowedAssemblies)
     {
         if (string.IsNullOrWhiteSpace(dialectText))
             Thrower.Argument(nameof(dialectText), "Dialect text must not be empty.");
@@ -71,7 +80,12 @@ public static class DialectTestHostInfrastructure
         if (!overriddenComposition.IsSuccess)
             Thrower.InvalidOpEx(FormatComposition(overriddenComposition));
 
-        return workflow.CreateHost(overriddenComposition);
+        return workflow.CreateHost(
+            overriddenComposition,
+            new WistRuntimeServiceOptions
+            {
+                AllowedAssemblies = allowedAssemblies ?? Array.Empty<System.Reflection.Assembly>()
+            });
     }
 
     private static string FormatComposition(DialectFrameworkCompositionResult composition) =>

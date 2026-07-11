@@ -33,7 +33,7 @@ public sealed class ShippedDefaultConsumerGuardrailTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(source, Does.Contain("WistEngine.CreateSafeFormulas()"));
+            Assert.That(source, Does.Contain("WistEngine.CreateRestrictedArithmetic()"));
             Assert.That(source, Does.Not.Contain("Path.Combine(AppContext.BaseDirectory"));
             Assert.That(source, Does.Not.Contain("\"full-default-native\""));
         });
@@ -56,7 +56,7 @@ public sealed class ShippedDefaultConsumerGuardrailTests
         Assert.Multiple(() =>
         {
             Assert.That(calculatorSource, Does.Contain("new WistShippedDialectFileResolver().Resolve(dialectPreset)"));
-            Assert.That(benchmarkSource, Does.Contain("WistEngine.CreateSafeFormulas()"));
+            Assert.That(benchmarkSource, Does.Contain("WistEngine.CreateRestrictedArithmetic()"));
             Assert.That(calculatorSource, Does.Not.Contain("Path.Combine("));
             Assert.That(benchmarkSource, Does.Not.Contain("Path.Combine(AppContext.BaseDirectory"));
         });

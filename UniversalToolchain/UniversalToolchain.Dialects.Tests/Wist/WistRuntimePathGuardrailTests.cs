@@ -192,6 +192,52 @@ public sealed class WistRuntimePathGuardrailTests
     }
 
     [Test]
+    public void ComposeText_WithRuntimeProfile_AppliesDefaultsToCompactWistSyntax()
+    {
+        using var provider = WistDialectTestInfrastructure.CreateCanonicalProvider();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+        var profile = RuntimeProfileDefinitionBuilder
+            .Create("ssa")
+            .EnableOptimizer("Ssa")
+            .Build();
+
+        var composition = workflow.ComposeText(
+            "dialect Compact\nuse Identifier,NativeTypes,Scopes,Variables,Whitespaces\nbackend cil,interpreter\nsecurity restricted",
+            "compact-profile",
+            profile,
+            RuntimeProfileOverridePolicy.StrictNoConflicts);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
+            Assert.That(composition.BuildPlan!.OptimizerDirectives.Any(static x => x.Name == "Ssa" && x.Enabled), Is.True);
+        });
+    }
+
+    [Test]
+    public void ComposeText_WithRuntimeProfile_StrictModeRejectsDisabledOptimizerConflict()
+    {
+        using var provider = WistDialectTestInfrastructure.CreateCanonicalProvider();
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+        var profile = RuntimeProfileDefinitionBuilder
+            .Create("ssa")
+            .EnableOptimizer("Ssa")
+            .Build();
+
+        var composition = workflow.ComposeText(
+            "dialect Conflict\ndisable Ssa\nbackend interpreter",
+            "compact-conflict",
+            profile,
+            RuntimeProfileOverridePolicy.StrictNoConflicts);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(composition.IsSuccess, Is.False);
+            Assert.That(composition.SemanticDiagnostics.Any(static x => x.Code == "R301"), Is.True);
+        });
+    }
+
+    [Test]
     public void SelectedRuntimeExecutionShapeBuilder_Build_UsesOnlySelectedModulesAndExplicitRequiredInfrastructure()
     {
         using var provider = WistDialectTestInfrastructure.CreateCanonicalProvider();

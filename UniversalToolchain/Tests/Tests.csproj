@@ -21,6 +21,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\ArithmeticModule\ArithmeticModule.csproj"/>
+        <ProjectReference Include="..\AssemblyFinder\AssemblyFinder.csproj"/>
         <ProjectReference Include="..\BasicCilCompiler\BasicCilCompiler.csproj"/>
         <ProjectReference Include="..\BasicCodeTranslator\BasicCodeTranslator.csproj"/>
         <ProjectReference Include="..\BasicCore\BasicCore.csproj"/>

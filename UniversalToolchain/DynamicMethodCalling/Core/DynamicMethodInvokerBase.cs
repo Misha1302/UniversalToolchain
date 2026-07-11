@@ -4,6 +4,12 @@ public class DynamicMethodInvokerBase<TReturn>
 {
     // ReSharper disable once StaticMemberInGenericType
     private static readonly MethodInfo _getMethodDescriptorMethod;
+
+    // The raw function pointer is only valid while the DynamicMethod and its runtime handle
+    // remain reachable. Keep both as instance-owned lifetime roots instead of placing every
+    // compiled method in process-wide static storage.
+    private readonly DynamicMethod _dynamicMethod;
+    private readonly RuntimeMethodHandle _methodHandle;
     protected readonly nint FunctionPointer;
 
     static DynamicMethodInvokerBase()
@@ -21,8 +27,13 @@ public class DynamicMethodInvokerBase<TReturn>
 
         ValidateSignature(dynamicMethod, expectedParameterTypes);
 
-        CompileMethod(dynamicMethod);
-        FunctionPointer = GetFunctionPointerInternal(dynamicMethod);
+        _dynamicMethod = dynamicMethod;
+        _methodHandle = GetMethodHandle(dynamicMethod);
+
+        RuntimeHelpers.PrepareMethod(_methodHandle);
+        FunctionPointer = _methodHandle.GetFunctionPointer();
+
+        Thrower.AssertAlways(FunctionPointer != IntPtr.Zero);
     }
 
     private static void ValidateSignature(DynamicMethod dynamicMethod, IReadOnlyList<Type> expectedParameterTypes)
@@ -48,23 +59,6 @@ public class DynamicMethodInvokerBase<TReturn>
         }
     }
 
-    private nint GetFunctionPointerInternal(DynamicMethod dynamicMethod)
-    {
-        var handle = (RuntimeMethodHandle)_getMethodDescriptorMethod.Invoke(dynamicMethod, null)!;
-        var functionPtr = handle.GetFunctionPointer();
-
-        Thrower.AssertAlways(functionPtr != IntPtr.Zero);
-
-        dynamicMethod.MakeImmortal();
-        handle.MakeImmortal();
-        functionPtr.MakeImmortal();
-
-        return functionPtr;
-    }
-
-    private void CompileMethod(DynamicMethod dynamicMethod)
-    {
-        var handle = (RuntimeMethodHandle)_getMethodDescriptorMethod.Invoke(dynamicMethod, null)!;
-        RuntimeHelpers.PrepareMethod(handle);
-    }
+    private static RuntimeMethodHandle GetMethodHandle(DynamicMethod dynamicMethod) =>
+        (RuntimeMethodHandle)_getMethodDescriptorMethod.Invoke(dynamicMethod, null)!;
 }

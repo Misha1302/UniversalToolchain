@@ -1,0 +1,10 @@
+dialect SsaPreview
+use Identifier,NativeTypes,Scopes,Variables,Whitespaces
+exclude Arithmetic,BooleanConditions,Comments,ComparisonConditions,Conditions,CSharpInterop,Equality,Labels,Loops,ParametersSetter,SemicolonAsNewLine
+backend cil,interpreter
+enable ArithmeticOptimization
+enable EGraphOptimization
+enable NativeCilOptimization
+enable NativeTypesOptimization
+enable Ssa
+security restricted

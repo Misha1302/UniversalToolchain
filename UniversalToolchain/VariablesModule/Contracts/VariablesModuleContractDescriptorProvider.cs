@@ -1,5 +1,6 @@
+using IdentifierModule.Contracts;
+using ScopesModule.Contracts;
 using UniversalToolchain.ModuleContracts;
-using UniversalToolchain.Wist.Contracts;
 
 namespace VariablesModule.Contracts;
 
@@ -33,7 +34,7 @@ public sealed class VariablesModuleContractDescriptorProvider : IModuleContractD
             [
                 new BytecodeEmissionContract(
                     VariablesContractIds.VariableNode,
-                    [VariablesContractIds.ExpectingWriteTypeInference],
+                    [VariablesContractIds.WriteTargetTypeInference],
                     [
                         VariablesContractIds.LocalRead,
                         VariablesContractIds.ExternalRead,
@@ -82,8 +83,8 @@ public sealed class VariablesModuleContractDescriptorProvider : IModuleContractD
                     VariablesEffects.LowerVariableAccess,
                     CompilerPipelineStage.Bytecode,
                     [
-                        WistIdentifierFacts.IdentifiersAvailable,
-                        WistScopesFacts.ScopesLocalsBound
+                        IdentifierFacts.IdentifiersAvailable,
+                        ScopesFacts.ScopesLocalsBound
                     ],
                     [
                         VariablesFacts.LocalsDeclared,

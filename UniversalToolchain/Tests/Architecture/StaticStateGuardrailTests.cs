@@ -14,7 +14,13 @@ public sealed class StaticStateGuardrailTests
         "UniversalToolchain/BasicCore/",
         "UniversalToolchain/BasicInterpreter/",
         "UniversalToolchain/BytecodeDynamicMethodsCompiler/",
-        "UniversalToolchain/NativeMathModule/"
+        "UniversalToolchain/NativeMathModule/",
+        "UniversalToolchain/AssemblyFinder/",
+        "UniversalToolchain/DynamicMethodCalling/",
+        "UniversalToolchain/ObjectExtensions/",
+        "UniversalToolchain/CSharpInteropModule/",
+        "UniversalToolchain/VariablesModule/",
+        "UniversalToolchain/UniversalToolchain.Wist/"
     ];
 
     private static readonly string[] AllowedCurrentDebtFiles =
@@ -41,6 +47,53 @@ public sealed class StaticStateGuardrailTests
             violations,
             Is.Empty,
             "Mutable static collection fields create hidden process-wide state. Add an explicit architectural exception only for known legacy debt.");
+    }
+
+    [Test]
+    public void DiscoveryAndDynamicMethodLifetimeBoundaries_ShouldRemainProcessLocalAndExplicit()
+    {
+        var root = FindRepositoryRoot();
+        var relevantFiles = new[]
+        {
+            "UniversalToolchain/AssemblyFinder/ImmutableTypeCatalog.cs",
+            "UniversalToolchain/AssemblyFinder/TypeCatalogFactory.cs",
+            "UniversalToolchain/AssemblyFinder/TypesFinder.cs",
+            "UniversalToolchain/DynamicMethodCalling/Core/DynamicMethodInvokerBase.cs",
+            "UniversalToolchain/ObjectExtensions/ObjectExtension.cs"
+        };
+
+        var source = string.Join(
+            Environment.NewLine,
+            relevantFiles.Select(path => File.ReadAllText(Path.Combine(root, path.Replace('/', Path.DirectorySeparatorChar)))));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(source, Does.Not.Contain("AppDomain.CurrentDomain"));
+            Assert.That(source, Does.Not.Contain("AppContext.BaseDirectory"));
+            Assert.That(source, Does.Not.Contain("SearchOption.AllDirectories"));
+            Assert.That(source, Does.Not.Contain("LoadFromAssemblyPath"));
+            Assert.That(source, Does.Not.Contain("MakeImmortal"));
+            Assert.That(source, Does.Not.Contain("_immortalObjects"));
+        });
+    }
+
+    [Test]
+    public void VendoredPackageFeed_ShouldContainOnlyCanonicalRootNugetPackages()
+    {
+        var root = FindRepositoryRoot();
+        var packageRoot = Path.Combine(root, "UniversalToolchain", "packages");
+        var files = Directory.GetFiles(packageRoot, "*", SearchOption.AllDirectories);
+
+        var violations = files
+            .Select(path => NormalizePath(Path.GetRelativePath(packageRoot, path)))
+            .Where(relativePath => relativePath.Contains('/', StringComparison.Ordinal)
+                                   || !relativePath.EndsWith(".nupkg", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        Assert.That(
+            violations,
+            Is.Empty,
+            "The vendored feed must contain only canonical root-level .nupkg files; cache artifacts and opaque extensions are forbidden.");
     }
 
     [Test]

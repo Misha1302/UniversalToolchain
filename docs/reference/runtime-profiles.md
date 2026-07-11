@@ -20,7 +20,7 @@ var profile = RuntimeProfileDefinitionBuilder
     .Describe("Release defaults")
     .UseModules("Arithmetic", "Numbers")
     .EnableBackend("cil")
-    .EnableOptimizer("SsaPreview")
+    .EnableOptimizer("Ssa")
     .Security(SecurityProfile.Restricted)
     .Capability("safe-math")
     .Build();
@@ -52,6 +52,8 @@ The applicator records provenance for every source and profile directive. Strict
 excluding a module that the selected profile would add.
 
 ## Boundaries
+
+The generic profile model uses canonical directives. Wist applies the same structured profile through its Wist-aware applicator, which preserves compact Wist syntax such as `use A,B` and `enable Ssa` rather than reparsing generated generic DSL text.
 
 Profiles are source defaults only. They do not:
 

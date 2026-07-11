@@ -6,24 +6,29 @@
         <Nullable>enable</Nullable>
         <LangVersion>14</LangVersion>
         <PackageId>UniversalToolchain.Wist</PackageId>
-        <Version>0.1.0-preview.2</Version>
+        <Version>0.1.0-preview.4</Version>
         <Title>UniversalToolchain Wist</Title>
-        <Description>A compiler-first Wist facade for compiling typed hot-path formula functions and convenient one-off evaluation.</Description>
+        <Description>A compiler-first Wist facade for typed formula delegates, structured diagnostics, and an observable experimental SSA route.</Description>
         <Authors>Mikhail Razakov</Authors>
         <PackageProjectUrl>https://misha1302.github.io/Wist2/</PackageProjectUrl>
         <RepositoryUrl>https://github.com/Misha1302/Wist2</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-        <PackageTags>dotnet;dsl;formula;expression;compiler;interpreter;runtime;wist</PackageTags>
+        <PackageTags>dotnet;dsl;formula;expression;compiler;interpreter;runtime;ssa;wist</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageReleaseNotes>See CHANGELOG.md for release notes.</PackageReleaseNotes>
         <IncludeSymbols>true</IncludeSymbols>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
         <DebugType>portable</DebugType>
         <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+        <!-- NU5131 normally expects a matching ref assembly for every lib assembly. This
+             package intentionally exposes only the facade in ref/ while keeping the
+             implementation closure runtime-only in lib/. The package-surface checker
+             verifies that boundary explicitly. -->
+        <NoWarn>$(NoWarn);NU5131</NoWarn>
         <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);IncludeProjectReferenceAssembliesInPackage</TargetsForTfmSpecificBuildOutput>
-        <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeRuntimeManifestsInPackage</TargetsForTfmSpecificContentInPackage>
+        <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeFacadeReferenceAssemblyInPackage;IncludeRuntimeManifestsInPackage</TargetsForTfmSpecificContentInPackage>
     </PropertyGroup>
 
     <ItemGroup>
@@ -57,9 +62,25 @@
 
     <Target Name="IncludeProjectReferenceAssembliesInPackage" DependsOnTargets="ResolveReferences">
         <ItemGroup>
+            <!-- Runtime implementation closure. The facade reference assembly under ref/
+                 is the only compile-time contract selected by NuGet. -->
             <BuildOutputInPackage
                 Include="@(ReferenceCopyLocalPaths)"
-                Condition="'%(ReferenceCopyLocalPaths.ReferenceSourceTarget)' == 'ProjectReference'"/>
+                Condition="'%(ReferenceCopyLocalPaths.ReferenceSourceTarget)' == 'ProjectReference' and '%(ReferenceCopyLocalPaths.Extension)' == '.dll'" />
+        </ItemGroup>
+    </Target>
+
+    <Target Name="IncludeFacadeReferenceAssemblyInPackage" DependsOnTargets="Build">
+        <PropertyGroup>
+            <WistFacadeReferenceAssembly>$(IntermediateOutputPath)ref/$(TargetFileName)</WistFacadeReferenceAssembly>
+        </PropertyGroup>
+        <Error Condition="!Exists('$(WistFacadeReferenceAssembly)')"
+               Text="Wist facade reference assembly was not produced at '$(WistFacadeReferenceAssembly)'." />
+        <ItemGroup>
+            <TfmSpecificPackageFile Include="$(WistFacadeReferenceAssembly)">
+                <PackagePath>ref/$(TargetFramework)</PackagePath>
+                <BuildAction>None</BuildAction>
+            </TfmSpecificPackageFile>
         </ItemGroup>
     </Target>
 

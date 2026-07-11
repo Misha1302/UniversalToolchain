@@ -121,6 +121,8 @@ public static class AirIntrinsicIds
 
     public const string CallCSharpConstructor = "call C# ctor";
 
+    public const string LoadExternal = "load_external";
+
     public const string AddInt32Unchecked = "add_i32";
 
     public const string SubtractInt32Unchecked = "sub_i32";
@@ -348,6 +350,73 @@ public sealed class AirManagedCallIntrinsicDescriptorResolver : IAirIntrinsicDes
     }
 }
 
+public sealed class AirExternalLoadIntrinsicDescriptorResolver : IAirIntrinsicDescriptorResolver
+{
+    public static AirExternalLoadIntrinsicDescriptorResolver Instance { get; } = new();
+
+    public bool TryResolve(Instruction instruction, out AirIntrinsicDescriptor descriptor, out string? diagnostic)
+    {
+        ArgumentNullException.ThrowIfNull(instruction);
+
+        descriptor = default!;
+        diagnostic = null;
+        if (instruction.Operands.Count == 0 ||
+            instruction.Operands[0] is not string intrinsicId ||
+            !string.Equals(intrinsicId, AirIntrinsicIds.LoadExternal, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        if (instruction.Operands.Count != 3)
+        {
+            diagnostic = $"AIR intrinsic '{AirIntrinsicIds.LoadExternal}' expects slot and CLR type data operands.";
+            return false;
+        }
+
+        if (instruction.Operands[1] is not int slot || slot < 0)
+        {
+            diagnostic = $"AIR intrinsic '{AirIntrinsicIds.LoadExternal}' requires a non-negative Int32 slot operand.";
+            return false;
+        }
+
+        if (instruction.Operands[2] is not Type valueType || !TryMapClrType(valueType, out var resultType))
+        {
+            diagnostic = $"AIR intrinsic '{AirIntrinsicIds.LoadExternal}' has unsupported CLR value type '{instruction.Operands[2]?.ToString() ?? "<null>"}'.";
+            return false;
+        }
+
+        descriptor = new AirIntrinsicDescriptor(
+            AirIntrinsicIds.LoadExternal,
+            resultTypes: [resultType],
+            dataOperandCount: 2);
+        return true;
+    }
+
+    private static bool TryMapClrType(Type type, out AirValueTypeId airType)
+    {
+        if (type == typeof(bool))
+        {
+            airType = AirValueTypes.Bool;
+            return true;
+        }
+
+        if (type == typeof(int))
+        {
+            airType = AirValueTypes.Int32;
+            return true;
+        }
+
+        if (type == typeof(double))
+        {
+            airType = AirValueTypes.Float64;
+            return true;
+        }
+
+        airType = default;
+        return false;
+    }
+}
+
 public static class AirCoreIntrinsicDescriptors
 {
     public static AirIntrinsicDescriptorSet ArithmeticInt32 { get; } = new(
@@ -374,6 +443,7 @@ public static class AirCoreIntrinsicDescriptors
         new AirIntrinsicDescriptorResolverSet(
         [
             AirManagedCallIntrinsicDescriptorResolver.Instance,
+            AirExternalLoadIntrinsicDescriptorResolver.Instance,
             ArithmeticInt32
         ]);
 }

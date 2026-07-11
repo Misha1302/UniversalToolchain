@@ -13,14 +13,14 @@ and writing a compiler from scratch is too expensive.
 ```csharp
 using UniversalToolchain.Wist;
 
-using var wist = WistEngine.CreateSafeFormulas();
+using var wist = WistEngine.CreateRestrictedArithmetic();
 
-var formula = wist.CompileFunc<double, double, double>(
+var formula = wist.Compile<Func<double, double, double>>(
     "price * 0.9 + fee",
     "price",
     "fee");
 
-double result = formula.Invoke(100.0, 5.0);
+double result = formula.CompiledDelegate(100.0, 5.0);
 ```
 
 ```text

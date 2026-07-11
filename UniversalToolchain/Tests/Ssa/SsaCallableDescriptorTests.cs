@@ -105,6 +105,47 @@ public sealed class SsaCallableDescriptorTests
     }
 
     [Test]
+    public void SsaManagedCallableBindingSet_WhenSameMethodIsLoweredTwice_AcceptsEquivalentDescriptors()
+    {
+        var method = typeof(SsaCallableDescriptorTests).GetMethod(
+            nameof(TrustedManagedAdd),
+            BindingFlags.NonPublic | BindingFlags.Static)!;
+
+        Assert.That(
+            SsaManagedCallables.TryCreateMethod(
+                method,
+                consumesInstanceReceiver: false,
+                out var firstCallable,
+                out var firstDescriptor,
+                out var firstDiagnostic),
+            Is.True,
+            firstDiagnostic);
+        Assert.That(
+            SsaManagedCallables.TryCreateMethod(
+                method,
+                consumesInstanceReceiver: false,
+                out var secondCallable,
+                out var secondDescriptor,
+                out var secondDiagnostic),
+            Is.True,
+            secondDiagnostic);
+
+        Assert.That(firstDescriptor, Is.Not.SameAs(secondDescriptor));
+
+        var bindings = new SsaManagedCallableBindingSet(
+        [
+            new SsaManagedCallableBinding(firstCallable, firstDescriptor, method),
+            new SsaManagedCallableBinding(secondCallable, secondDescriptor, method)
+        ]);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(bindings.Values, Has.Count.EqualTo(1));
+            Assert.That(bindings.Values.Single().Callable, Is.EqualTo(firstCallable));
+        });
+    }
+
+    [Test]
     public void SsaManagedCallables_WhenUnknownTrustMethodDeclaresAlgebraicTraits_DescriptorSetRejectsIt()
     {
         var method = typeof(SsaCallableDescriptorTests).GetMethod(

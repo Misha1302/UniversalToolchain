@@ -81,13 +81,18 @@ public sealed class WistDialectExecutionWorkflow
         sourceText = sourceText.ArgNotNull();
         runtimeProfile = runtimeProfile.ArgNotNull();
 
-        var profiledSource = new RuntimeProfileApplicator().Apply(sourceText, runtimeProfile, overridePolicy);
+        var compiledSource = CompileSourceText(sourceText);
+        var profiledSource = new WistRuntimeProfileApplicator().Apply(
+            sourceText,
+            compiledSource,
+            runtimeProfile,
+            overridePolicy);
         if (!profiledSource.CanCompose)
         {
             return new DialectFrameworkCompositionResult(
                 sourceName,
-                null,
-                null,
+                compiledSource,
+                _buildPlanBuilder.Build(compiledSource),
                 profiledSource.Diagnostics.Where(static x => x.Severity == DialectDiagnosticSeverity.Error),
                 []);
         }
@@ -104,20 +109,34 @@ public sealed class WistDialectExecutionWorkflow
     }
 
     public WistDialectExecutionHost CreateHost(DialectFrameworkCompositionResult compositionResult)
+        => CreateHost(compositionResult, new WistRuntimeServiceOptions());
+
+    public WistDialectExecutionHost CreateHost(
+        DialectFrameworkCompositionResult compositionResult,
+        WistRuntimeServiceOptions runtimeServiceOptions)
     {
         var configuration = GetConfiguration(compositionResult);
-        return new WistDialectExecutionHost(CreateRuntimeHost(configuration), configuration);
+        return new WistDialectExecutionHost(CreateRuntimeHost(configuration, runtimeServiceOptions), configuration);
     }
 
     public ToolchainRuntimeHost CreateRuntimeHost(DialectFrameworkCompositionResult compositionResult)
+        => CreateRuntimeHost(compositionResult, new WistRuntimeServiceOptions());
+
+    public ToolchainRuntimeHost CreateRuntimeHost(
+        DialectFrameworkCompositionResult compositionResult,
+        WistRuntimeServiceOptions runtimeServiceOptions)
     {
         var configuration = GetConfiguration(compositionResult);
-        return CreateRuntimeHost(configuration);
+        return CreateRuntimeHost(configuration, runtimeServiceOptions);
     }
 
-    private ToolchainRuntimeHost CreateRuntimeHost(WistDialectExecutionConfiguration configuration)
+    private ToolchainRuntimeHost CreateRuntimeHost(
+        WistDialectExecutionConfiguration configuration,
+        WistRuntimeServiceOptions runtimeServiceOptions)
     {
-        var provider = _serviceProviderFactory.Create(configuration);
+        runtimeServiceOptions = runtimeServiceOptions.ArgNotNull();
+
+        var provider = _serviceProviderFactory.Create(configuration, runtimeServiceOptions);
         return new ToolchainRuntimeHost(provider, configuration);
     }
 

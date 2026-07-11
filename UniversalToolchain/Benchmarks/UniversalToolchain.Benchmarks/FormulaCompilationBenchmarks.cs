@@ -13,7 +13,7 @@ public class FormulaCompilationBenchmarks
     private WistEngine? _warmEngine;
 
     [GlobalSetup]
-    public void Setup() => _warmEngine = WistEngine.CreateSafeFormulas();
+    public void Setup() => _warmEngine = WistEngine.CreateRestrictedArithmetic();
 
     [GlobalCleanup]
     public void Cleanup() => _warmEngine?.Dispose();
@@ -28,7 +28,7 @@ public class FormulaCompilationBenchmarks
     [Benchmark]
     public Func<double, double, double, double> Wist_CreateEngineAndCompile()
     {
-        using var wist = WistEngine.CreateSafeFormulas();
+        using var wist = WistEngine.CreateRestrictedArithmetic();
         return wist.Compile<Func<double, double, double, double>>(Formula, "A", "B", "C").CompiledDelegate;
     }
 

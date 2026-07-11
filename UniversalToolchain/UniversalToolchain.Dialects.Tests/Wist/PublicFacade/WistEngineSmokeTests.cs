@@ -1,3 +1,4 @@
+#pragma warning disable CS0618 // Legacy CompileFunc compatibility contracts are intentionally exercised here.
 using UniversalToolchain.Wist;
 
 namespace UniversalToolchain.Dialects.Tests.Wist.PublicFacade;
@@ -6,9 +7,27 @@ namespace UniversalToolchain.Dialects.Tests.Wist.PublicFacade;
 public sealed class WistEngineSmokeTests
 {
     [Test]
+    public void PublicDiagnostics_UseFacadeOwnedContractTypes()
+    {
+        var properties = typeof(WistDiagnostic).GetProperties().ToDictionary(static property => property.Name);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(properties[nameof(WistDiagnostic.Severity)].PropertyType, Is.EqualTo(typeof(WistDiagnosticSeverity)));
+            Assert.That(properties[nameof(WistDiagnostic.Span)].PropertyType, Is.EqualTo(typeof(WistSourceSpan)));
+            Assert.That(properties[nameof(WistDiagnostic.Hints)].PropertyType, Is.EqualTo(typeof(IReadOnlyList<WistDiagnosticHint>)));
+            Assert.That(typeof(WistDiagnosticSeverity).Assembly, Is.EqualTo(typeof(WistEngine).Assembly));
+            Assert.That(typeof(WistSourceSpan).Assembly, Is.EqualTo(typeof(WistEngine).Assembly));
+            Assert.That(typeof(WistDiagnosticHint).Assembly, Is.EqualTo(typeof(WistEngine).Assembly));
+            Assert.That(typeof(WistOptimizationReport).Assembly, Is.EqualTo(typeof(WistEngine).Assembly));
+            Assert.That(typeof(WistSsaOptimizationReport).Assembly, Is.EqualTo(typeof(WistEngine).Assembly));
+        });
+    }
+
+    [Test]
     public void Evaluate_WithAnonymousArguments_ReturnsExpectedDouble()
     {
-        using var wist = WistEngine.CreateSafeFormulas();
+        using var wist = WistEngine.CreateRestrictedArithmetic();
 
         var result = wist.Evaluate<double>(
             "price * 0.9 + fee",
@@ -42,9 +61,37 @@ public sealed class WistEngineSmokeTests
     }
 
     [Test]
+    public void FullNativePreview_ClrInteropWithoutHostAllowlist_FailsClearly()
+    {
+        using var wist = WistEngine.CreateFullNativePreview();
+
+        var result = wist.TryCompile<Func<double>>("System.Math.Sqrt(16.0)");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Diagnostics, Is.Not.Empty);
+        });
+    }
+
+    [Test]
+    public void FullNativePreview_ClrInteropWithExplicitHostAllowlist_Succeeds()
+    {
+        using var wist = WistEngine.Create(new WistEngineOptions
+        {
+            Preset = WistPreset.FullNativePreview,
+            AllowedAssemblies = [typeof(Math).Assembly]
+        });
+
+        var program = wist.Compile<Func<double>>("System.Math.Sqrt(16.0)");
+
+        Assert.That(program.CompiledDelegate(), Is.EqualTo(4.0d).Within(1e-9));
+    }
+
+    [Test]
     public void CompileFunc_OneArgument_ReturnsExpectedResult()
     {
-        using var wist = WistEngine.CreateSafeFormulas();
+        using var wist = WistEngine.CreateRestrictedArithmetic();
 
         var formula = wist.CompileFunc<double, double>(
             "price * 0.9",
@@ -58,7 +105,7 @@ public sealed class WistEngineSmokeTests
     [Test]
     public void CompileFunc_TwoArguments_ReturnsExpectedResult()
     {
-        using var wist = WistEngine.CreateSafeFormulas();
+        using var wist = WistEngine.CreateRestrictedArithmetic();
 
         var formula = wist.CompileFunc<double, double, double>(
             "price * 0.9 + fee",
@@ -73,7 +120,7 @@ public sealed class WistEngineSmokeTests
     [Test]
     public void CompileFunc_ThreeArguments_ReturnsExpectedResult()
     {
-        using var wist = WistEngine.CreateSafeFormulas();
+        using var wist = WistEngine.CreateRestrictedArithmetic();
 
         var formula = wist.CompileFunc<double, double, double, double>(
             "A + B * C / 5.0",
@@ -89,7 +136,7 @@ public sealed class WistEngineSmokeTests
     [Test]
     public void CompileFunc_InvokeRepeatedly_ReturnsStableResults()
     {
-        using var wist = WistEngine.CreateSafeFormulas();
+        using var wist = WistEngine.CreateRestrictedArithmetic();
 
         var formula = wist.CompileFunc<double, double, double>(
             "price * 0.9 + fee",
@@ -107,9 +154,25 @@ public sealed class WistEngineSmokeTests
     }
 
     [Test]
+    public void CompileFunc_InstanceOwnedLifetimeRoots_SurviveFullGarbageCollection()
+    {
+        using var wist = WistEngine.CreateRestrictedArithmetic();
+
+        var formula = wist.CompileFunc<double, double>(
+            "price * 0.9",
+            "price");
+
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
+
+        Assert.That(formula.Invoke(100.0d), Is.EqualTo(90.0d).Within(1e-9));
+    }
+
+    [Test]
     public void Compile_Delegate_ReturnsExpectedResultAndMetadata()
     {
-        using var wist = WistEngine.CreateSafeFormulas();
+        using var wist = WistEngine.CreateRestrictedArithmetic();
 
         var program = wist.Compile<Func<double, double, double>>(
             "price * 0.9 + fee",
@@ -131,7 +194,7 @@ public sealed class WistEngineSmokeTests
     [Test]
     public void Compile_Delegate_InvokeRepeatedly_ReturnsStableResults()
     {
-        using var wist = WistEngine.CreateSafeFormulas();
+        using var wist = WistEngine.CreateRestrictedArithmetic();
 
         var program = wist.Compile<Func<double, double, double>>(
             "price * 0.9 + fee",
@@ -151,7 +214,7 @@ public sealed class WistEngineSmokeTests
     [Test]
     public void TryCompile_Delegate_WhenFormulaInvalid_ReturnsFailureWithoutThrowing()
     {
-        using var wist = WistEngine.CreateSafeFormulas();
+        using var wist = WistEngine.CreateRestrictedArithmetic();
 
         var result = wist.TryCompile<Func<double, double>>(
             "price *",
@@ -169,7 +232,7 @@ public sealed class WistEngineSmokeTests
     [Test]
     public void TryCompile_Delegate_WhenDelegateReturnsVoid_ReturnsFailureWithoutThrowing()
     {
-        using var wist = WistEngine.CreateSafeFormulas();
+        using var wist = WistEngine.CreateRestrictedArithmetic();
 
         var result = wist.TryCompile<Action<double>>(
             "price * 0.9",
@@ -187,7 +250,7 @@ public sealed class WistEngineSmokeTests
     [Test]
     public void Compile_Delegate_WhenParameterNamesAreDuplicated_FailsClearly()
     {
-        using var wist = WistEngine.CreateSafeFormulas();
+        using var wist = WistEngine.CreateRestrictedArithmetic();
 
         var exception = Assert.Catch(
             () => wist.Compile<Func<double, double, double>>(
@@ -205,7 +268,7 @@ public sealed class WistEngineSmokeTests
     [Test]
     public void CompileFunc_WhenFormulaInvalid_FailsAtCompilation()
     {
-        using var wist = WistEngine.CreateSafeFormulas();
+        using var wist = WistEngine.CreateRestrictedArithmetic();
 
         var exception = Assert.Catch(() => wist.CompileFunc<double, double>("price *", "price"));
 
@@ -215,7 +278,7 @@ public sealed class WistEngineSmokeTests
     [Test]
     public void CompileFunc_WhenFormulaUsesUnsupportedSafeFormulaShape_FailsWithoutFacadeSyntaxScan()
     {
-        using var wist = WistEngine.CreateSafeFormulas();
+        using var wist = WistEngine.CreateRestrictedArithmetic();
 
         var exception = Assert.Catch(
             () => wist.CompileFunc<double, double, double>(
@@ -236,7 +299,7 @@ public sealed class WistEngineSmokeTests
     [Test]
     public void CompileFunc_WhenParameterNamesAreDuplicated_FailsClearly()
     {
-        using var wist = WistEngine.CreateSafeFormulas();
+        using var wist = WistEngine.CreateRestrictedArithmetic();
 
         var exception = Assert.Catch(
             () => wist.CompileFunc<double, double, double>(
@@ -254,7 +317,7 @@ public sealed class WistEngineSmokeTests
     [Test]
     public void Validate_ValidFormulaWithSampleArguments_ReturnsSuccess()
     {
-        using var wist = WistEngine.CreateSafeFormulas();
+        using var wist = WistEngine.CreateRestrictedArithmetic();
 
         var result = wist.Validate(
             "price * 0.9 + fee",
@@ -275,7 +338,7 @@ public sealed class WistEngineSmokeTests
     [Test]
     public void Validate_InvalidFormula_ReturnsFailureWithoutThrowing()
     {
-        using var wist = WistEngine.CreateSafeFormulas();
+        using var wist = WistEngine.CreateRestrictedArithmetic();
 
         var result = wist.Validate(
             """
@@ -295,4 +358,235 @@ public sealed class WistEngineSmokeTests
             Assert.That(result.Exception, Is.Not.Null);
         });
     }
+
+    [Test]
+    public void Validate_WhenSourceLimitIsExceeded_ReturnsStableStructuredDiagnostic()
+    {
+        using var wist = WistEngine.Create(new WistEngineOptions
+        {
+            Preset = WistPreset.RestrictedArithmetic,
+            ResourceLimits = new WistResourceLimits
+            {
+                MaxSourceLength = 8,
+                MaxParameterCount = 4
+            }
+        });
+
+        var result = wist.Validate("123456789");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsValid, Is.False);
+            Assert.That(result.Diagnostics, Has.Count.EqualTo(1));
+            Assert.That(result.Diagnostics[0].Code, Is.EqualTo(WistDiagnosticCodes.SourceLimitExceeded));
+            Assert.That(result.Diagnostics[0].Stage, Is.EqualTo("Policy"));
+            Assert.That(result.Exception, Is.TypeOf<WistResourceLimitException>());
+        });
+    }
+
+    [Test]
+    public void TryCompile_WhenParameterLimitIsExceeded_ReturnsStableStructuredDiagnostic()
+    {
+        using var wist = WistEngine.Create(new WistEngineOptions
+        {
+            Preset = WistPreset.RestrictedArithmetic,
+            ResourceLimits = new WistResourceLimits
+            {
+                MaxSourceLength = 128,
+                MaxParameterCount = 1
+            }
+        });
+
+        var result = wist.TryCompile<Func<double, double, double>>("left + right", "left", "right");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Diagnostics, Has.Count.EqualTo(1));
+            Assert.That(result.Diagnostics[0].Code, Is.EqualTo(WistDiagnosticCodes.ParameterLimitExceeded));
+            Assert.That(result.Diagnostics[0].Stage, Is.EqualTo("Policy"));
+        });
+    }
+
+    [Test]
+    public void Create_SnapshotsMutableHostOptions()
+    {
+        var limits = new WistResourceLimits
+        {
+            MaxSourceLength = 16,
+            MaxParameterCount = 2
+        };
+        var options = new WistEngineOptions
+        {
+            Preset = WistPreset.RestrictedArithmetic,
+            ResourceLimits = limits
+        };
+
+        using var wist = WistEngine.Create(options);
+        limits.MaxSourceLength = 1;
+
+        var result = wist.Evaluate<double>("1 + 2");
+
+        Assert.That(result, Is.EqualTo(3.0d).Within(1e-9));
+    }
+
+
+    [Test]
+    public void Compile_WithSsaPrefer_UsesRouteForAlreadyOptimizedInt32Arithmetic()
+    {
+        using var wist = WistEngine.Create(new WistEngineOptions
+        {
+            Preset = WistPreset.RestrictedArithmetic,
+            Optimization = new WistOptimizationOptions
+            {
+                Ssa = new WistSsaOptions
+                {
+                    Policy = WistSsaPolicy.Prefer,
+                    DiagnosticLevel = WistSsaDiagnosticLevel.Detailed
+                }
+            }
+        });
+
+        var program = wist.Compile<Func<int>>("2 + 3");
+        var report = program.Metadata.OptimizationReport.Ssa;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(program.CompiledDelegate(), Is.EqualTo(5));
+            Assert.That(report.UsedSsa, Is.True);
+            Assert.That(report.FellBackToAir, Is.False);
+            Assert.That(report.ExecutedPasses, Is.Not.Empty);
+            Assert.That(report.InputAirInstructionCount, Is.GreaterThan(0));
+            Assert.That(report.OutputAirInstructionCount, Is.GreaterThan(0));
+            Assert.That(report.Trace.Select(static entry => entry.Stage), Does.Contain("optimization"));
+            Assert.That(report.Trace.Select(static entry => entry.Stage), Does.Contain("emission"));
+        });
+    }
+
+    [Test]
+    public void Compile_WithSsaPrefer_ParameterExpressionUsesExternalSlotWithoutFallback()
+    {
+        using var wist = WistEngine.Create(new WistEngineOptions
+        {
+            Preset = WistPreset.RestrictedArithmetic,
+            Optimization = new WistOptimizationOptions
+            {
+                Ssa = new WistSsaOptions
+                {
+                    Policy = WistSsaPolicy.Prefer,
+                    DiagnosticLevel = WistSsaDiagnosticLevel.Detailed
+                }
+            }
+        });
+
+        var program = wist.Compile<Func<int, int>>("value + 3", "value");
+        var report = program.Metadata.OptimizationReport.Ssa;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(program.CompiledDelegate(39), Is.EqualTo(42));
+            Assert.That(report.UsedSsa, Is.True);
+            Assert.That(report.FellBackToAir, Is.False);
+            Assert.That(report.Diagnostics, Is.Empty);
+            Assert.That(report.ExecutedPasses, Is.Not.Empty);
+        });
+    }
+
+    [Test]
+    public void Compile_WithSsaDebug_PreservesManagedDivisionBindingWithoutFallback()
+    {
+        using var wist = WistEngine.Create(new WistEngineOptions
+        {
+            Preset = WistPreset.RestrictedArithmetic,
+            Optimization = new WistOptimizationOptions
+            {
+                Ssa = new WistSsaOptions
+                {
+                    Policy = WistSsaPolicy.Debug,
+                    DiagnosticLevel = WistSsaDiagnosticLevel.Detailed
+                }
+            }
+        });
+
+        var program = wist.Compile<Func<int>>("8 / 2");
+        var report = program.Metadata.OptimizationReport.Ssa;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(program.CompiledDelegate(), Is.EqualTo(4));
+            Assert.That(report.UsedSsa, Is.True);
+            Assert.That(report.FellBackToAir, Is.False);
+            Assert.That(report.Trace.Select(static entry => entry.Stage), Does.Contain("emission"));
+        });
+    }
+
+    [Test]
+    public void Compile_WithRepeatedManagedDivision_ReusesEquivalentExecutionBinding()
+    {
+        using var wist = WistEngine.Create(new WistEngineOptions
+        {
+            Preset = WistPreset.RestrictedArithmetic,
+            Optimization = new WistOptimizationOptions
+            {
+                Ssa = new WistSsaOptions
+                {
+                    Policy = WistSsaPolicy.Debug,
+                    DiagnosticLevel = WistSsaDiagnosticLevel.Detailed
+                }
+            }
+        });
+
+        var program = wist.Compile<Func<int>>("8 / 2 + 9 / 3");
+        var report = program.Metadata.OptimizationReport.Ssa;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(program.CompiledDelegate(), Is.EqualTo(7));
+            Assert.That(report.UsedSsa, Is.True);
+            Assert.That(report.FellBackToAir, Is.False);
+            Assert.That(report.Diagnostics, Is.Empty);
+        });
+    }
+
+    [Test]
+    public void Create_FromInlineDialectText_ComposesWithoutTemporaryFile()
+    {
+        const string dialect = """
+            dialect InlineRestricted
+            use NativeTypes, Numbers, Scopes, Whitespaces
+            backend cil
+            security restricted
+            """;
+        using var wist = WistEngine.Create(WistEngineOptions.FromDialectText(dialect));
+
+        Assert.That(wist.Evaluate<int>("2 + 3"), Is.EqualTo(5));
+    }
+
+    [Test]
+    public void Create_SnapshotsMutableOptimizationOptions()
+    {
+        var ssa = new WistSsaOptions { Policy = WistSsaPolicy.Prefer };
+        var options = new WistEngineOptions
+        {
+            Preset = WistPreset.RestrictedArithmetic,
+            Optimization = new WistOptimizationOptions { Ssa = ssa }
+        };
+
+        using var wist = WistEngine.Create(options);
+        ssa.Policy = WistSsaPolicy.Disabled;
+
+        var program = wist.Compile<Func<int>>("2 + 3");
+        Assert.That(program.Metadata.OptimizationReport.Ssa.RequestedPolicy, Is.EqualTo(WistSsaPolicy.Prefer));
+    }
+
+    [Test]
+    public void PublicOperations_AfterDispose_FailClearly()
+    {
+        var wist = WistEngine.CreateRestrictedArithmetic();
+        wist.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() => wist.Evaluate<double>("1 + 2"));
+    }
 }
+
+#pragma warning restore CS0618

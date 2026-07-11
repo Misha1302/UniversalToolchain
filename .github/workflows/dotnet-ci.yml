@@ -23,14 +23,8 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Restore
-        run: dotnet restore UniversalToolchain/Wist.sln
-
-      - name: Build
-        run: dotnet build UniversalToolchain/Wist.sln -c Release --no-restore -m:1 -p:BuildInParallel=false
-
-      - name: Test
-        run: dotnet test UniversalToolchain/Wist.sln -c Release --no-build
+      - name: Restore, build, and test through canonical entrypoint
+        run: ./build.sh --skip-docs --skip-pack
 
       - name: Pack Wist facade
         run: >
@@ -38,6 +32,9 @@ jobs:
           -c Release
           -o artifacts/packages
           /p:WarningsAsErrors=NU5118
+
+      - name: Enforce Wist package boundary
+        run: python3 Tools/check-wist-package-surface.py artifacts/packages/*.nupkg
 
       - name: Check Wist facade package artifacts
         shell: bash
@@ -67,9 +64,9 @@ jobs:
           cat > "$smoke_dir/Program.cs" <<'EOF'
           using UniversalToolchain.Wist;
 
-          using var safe = WistEngine.CreateSafeFormulas();
+          using var restricted = WistEngine.CreateRestrictedArithmetic();
 
-          var compiledProgram = safe.Compile<Func<double, double, double>>(
+          var compiledProgram = restricted.Compile<Func<double, double, double>>(
               "price * 0.9 + fee",
               "price",
               "fee");
@@ -81,19 +78,7 @@ jobs:
               throw new InvalidOperationException($"Expected 95, got {compiledResult}.");
           }
 
-          var compatibilityFunction = safe.CompileFunc<double, double, double>(
-              "price * 0.9 + fee",
-              "price",
-              "fee");
-
-          double compatibilityResult = compatibilityFunction.Invoke(100.0, 5.0);
-
-          if (Math.Abs(compatibilityResult - 95.0) > 1e-9)
-          {
-              throw new InvalidOperationException($"Expected 95, got {compatibilityResult}.");
-          }
-
-          double evaluatedResult = safe.Evaluate<double>(
+          double evaluatedResult = restricted.Evaluate<double>(
               "price * 0.9 + fee",
               new
               {
@@ -106,7 +91,7 @@ jobs:
               throw new InvalidOperationException($"Expected 95, got {evaluatedResult}.");
           }
 
-          var validation = safe.Validate(
+          var validation = restricted.Validate(
               "price * 0.9 + fee",
               new
               {
@@ -119,32 +104,11 @@ jobs:
               throw new InvalidOperationException($"Expected validation success, got {validation.Message}.");
           }
 
-          using var business = WistEngine.CreateBusinessRules();
-          var businessValidation = business.Validate(
-              "price * 0.9 + fee",
-              new
-              {
-                  price = 100.0,
-                  fee = 5.0
-              });
-
-          if (!businessValidation.IsValid)
+          using var fullNative = WistEngine.CreateFullNativePreview();
+          var fullNativeValidation = fullNative.Validate("1 + 2");
+          if (!fullNativeValidation.IsValid)
           {
-              throw new InvalidOperationException($"Expected business preset validation success, got {businessValidation.Message}.");
-          }
-
-          using var trusted = WistEngine.CreateTrusted();
-          var trustedValidation = trusted.Validate(
-              "price * 0.9 + fee",
-              new
-              {
-                  price = 100.0,
-                  fee = 5.0
-              });
-
-          if (!trustedValidation.IsValid)
-          {
-              throw new InvalidOperationException($"Expected trusted preset validation success, got {trustedValidation.Message}.");
+              throw new InvalidOperationException($"Expected full-native validation success, got {fullNativeValidation.Message}.");
           }
 
           Console.WriteLine("UniversalToolchain.Wist package smoke passed.");
@@ -153,7 +117,7 @@ jobs:
           dotnet run --project "$smoke_dir" -c Release
 
       - name: Install docs dependencies
-        run: npm install
+        run: npm ci --no-audit --no-fund
 
       - name: Build docs
         run: npm run docs:build

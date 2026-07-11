@@ -38,7 +38,9 @@ public sealed class SelectedModuleContractTableProvider(
 
         var selectedModules = selectedComponents
             .SelectMany(ReadSelectedModuleIds)
-            .Concat(backendComponents.SelectMany(ReadSelectedBackendModuleIds))
+            .Concat(backendComponents
+                .OfType<IModuleContractBackendPipelineComponent>()
+                .SelectMany(ReadSelectedBackendModuleIds))
             .Concat([
                 KnownCoreModuleIds.CompilerFacts,
                 KnownCoreModuleIds.BackendCapabilities
@@ -67,19 +69,18 @@ public sealed class SelectedModuleContractTableProvider(
         return [CreateLegacyModuleId(component.GetType())];
     }
 
-    internal static IReadOnlyList<ModuleId> ReadSelectedBackendModuleIds(IBackendPipelineComponent component)
+    internal static IReadOnlyList<ModuleId> ReadSelectedBackendModuleIds(IModuleContractBackendPipelineComponent component)
     {
-        if (component is IModuleContractBackendPipelineComponent contractComponent)
-        {
-            var descriptorModuleIds = contractComponent.DescriptorProviders
-                .SelectMany(static provider => provider.GetFacets())
-                .Select(static facet => facet.ModuleId)
-                .Distinct()
-                .OrderBy(static id => id.Value, StringComparer.Ordinal)
-                .ToArray();
-            if (descriptorModuleIds.Length > 0)
-                return descriptorModuleIds;
-        }
+        component = component.ArgNotNull();
+
+        var descriptorModuleIds = component.DescriptorProviders
+            .SelectMany(static provider => provider.GetFacets())
+            .Select(static facet => facet.ModuleId)
+            .Distinct()
+            .OrderBy(static id => id.Value, StringComparer.Ordinal)
+            .ToArray();
+        if (descriptorModuleIds.Length > 0)
+            return descriptorModuleIds;
 
         return [CreateBackendModuleId(component.ComponentId)];
     }

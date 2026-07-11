@@ -179,9 +179,19 @@ public sealed class SsaModule
     public IReadOnlyList<SsaFunction> Functions { get; }
 }
 
-public sealed class SsaArtifact(SsaModule module) : IIrArtifact
+public sealed class SsaArtifact : IIrArtifact
 {
+    public SsaArtifact(
+        SsaModule module,
+        SsaManagedCallableBindingSet? managedCallableBindings = null)
+    {
+        Module = module ?? throw new ArgumentNullException(nameof(module));
+        ManagedCallableBindings = managedCallableBindings ?? SsaManagedCallableBindingSet.Empty;
+    }
+
     public IrKind Kind => SsaIrKinds.Ssa;
 
-    public SsaModule Module { get; } = module;
+    public SsaModule Module { get; }
+
+    public SsaManagedCallableBindingSet ManagedCallableBindings { get; }
 }

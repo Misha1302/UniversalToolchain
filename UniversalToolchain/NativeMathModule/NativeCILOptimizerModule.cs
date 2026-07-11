@@ -193,13 +193,7 @@ public class NativeCilOptimizerModule : IIRProcessingModule
 
     private static bool IsLoadEnvironmentCall(Instruction instruction)
     {
-        if (!IntrinsicInstructionNormalizer.TryNormalize(instruction, out var normalized))
-            return false;
-
-        if (normalized.Operands.Count < 2 || normalized.Operands[0].Get<string>() != "call C#")
-            return false;
-
-        return normalized.Operands[1] is CSharpCallDescriptor descriptor
+        return CSharpCallIntrinsicReader.TryGetCallDescriptor(instruction, out var descriptor)
                && descriptor.Receiver is CSharpCallReceiver.ExecutionScopedProvider provider
                && provider.ProviderType == typeof(ExternalRuntimeCallProvider)
                && descriptor.Method.Name == nameof(ExternalRuntimeCallProvider.LoadEnvironment);
@@ -209,18 +203,7 @@ public class NativeCilOptimizerModule : IIRProcessingModule
     {
         valueType = default!;
 
-        if (!IntrinsicInstructionNormalizer.TryNormalize(instruction, out var normalized))
-            return false;
-
-        if (normalized.Operands.Count < 2 || normalized.Operands[0].Get<string>() != "call C#")
-            return false;
-
-        var operand = normalized.Operands[1];
-        var method = operand as MethodInfo;
-        if (operand is CSharpCallDescriptor descriptor)
-            method = descriptor.Method;
-
-        if (method == null)
+        if (!CSharpCallIntrinsicReader.TryGetCallMethod(instruction, out var method))
             return false;
 
         if (!method.IsGenericMethod || method.GetGenericMethodDefinition() != typeof(ExternalRuntimeCalls)

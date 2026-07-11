@@ -20,8 +20,7 @@ dotnet build UniversalToolchain/Wist.sln -c Release --no-restore
 dotnet test UniversalToolchain/Wist.sln -c Release --no-build
 ```
 
-This validation path runs all test projects currently included in `UniversalToolchain/Wist.sln`, including
-`UniversalToolchain/Tests.Legacy/Tests.Legacy.csproj`.
+This validation path runs all test projects currently included in `UniversalToolchain/Wist.sln`. Historical or quarantined tests must live under `Tests/Legacy` inside the active test project unless a separate legacy project is explicitly reintroduced into the solution.
 The CI workflow runs the same restore, build, and test commands as dedicated steps before Markdown smoke checks; this local validation block is not executed again by the Markdown runner to avoid duplicating the full suite inside documentation validation.
 
 ## Change expectations
@@ -32,7 +31,7 @@ The CI workflow runs the same restore, build, and test commands as dedicated ste
 - Preserve the project's existing universality, layering, and composition principles.
 - Do not make convenience entities easy to grow into hidden sources of framework truth.
 - Prefer designs where reducing universality requires an explicit architectural change rather than a tiny local patch.
-- New tests must not inherit from `Tests.Legacy.LegacyTestBase`; use `Tests.Infrastructure.DialectTestHostInfrastructure` with `Tests.Infrastructure.BackendParityInfrastructure`.
+- New tests must not inherit from `LegacyTestBase`; use `Tests.Infrastructure.DialectTestHostInfrastructure` with `Tests.Infrastructure.BackendParityInfrastructure`.
 - If behavior changes, add or update tests in the same change.
 - If structure/behavior meaningfully changes, update docs in the same change.
 - When changing runtime manifests, runtime catalogs, exact activation, backend registrar resolution, or canonical bootstrap behavior, update canonical docs in the same change: `readme.md`, `docs/current-canonical-runtime-pipeline.md`, `docs/runtime-manifest-activation-model.md`, and `docs/runtime-manifest-format.md` when manifest shape/semantics change.
@@ -60,13 +59,13 @@ The CI workflow runs the same restore, build, and test commands as dedicated ste
 
 ## Test suite rules
 
-- New tests must not inherit from `LegacyTestBase`.
+- New tests must not inherit from `LegacyTestBase` or other historical/quarantine fixture bases.
 - Backend-specific checks belong in `Tests/Backends`.
 - Public behavior tests belong in `Tests/Core`.
 - Implementation-detail checks belong in `Tests/Internal`.
 - Reusable helpers belong in `Tests/Infrastructure`.
 - Repetition and parallel stability checks belong in `Tests/Stress`.
-- Historical or quarantine tests must live in an explicit legacy project or `Tests/Legacy`.
+- Historical or quarantine tests must live in `Tests/Legacy` unless an explicit legacy project is added to the solution and documented in this file.
 - New explicit single-backend tests must use `DialectTestHostInfrastructure`.
 - Backend parity checks must use `BackendParityInfrastructure`.
 - Do not leave inactive tests hidden behind `<Compile Remove=...>` in the active project.

@@ -35,7 +35,7 @@ public sealed class ContractNamespaceAndAliasTests
     [Test]
     public void Resolve_WhenLegacyAliasExists_ReturnsReplacementAndMigrationDiagnostic()
     {
-        var replacement = CreateId("wist.variables", "expecting-write-type-inference");
+        var replacement = CreateId("wist.variables", "write-target-type-inference");
         var catalog = new ContractAliasCatalog(
         [
             new CompatibilityAliasRecord(

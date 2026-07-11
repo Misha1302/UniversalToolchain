@@ -105,7 +105,12 @@ public class WistDialectExecutionIntegrationTests
         var example = ResolveExampleDirectory("full-default");
 
         var result = workflow.ComposeFile(Path.Combine(example, "dialect.wistdialect"));
-        using var host = workflow.CreateHost(result);
+        using var host = workflow.CreateHost(
+            result,
+            new WistRuntimeServiceOptions
+            {
+                AllowedAssemblies = [typeof(RealNumberImpl).Assembly]
+            });
         const string code = "NumbersModule.Core.RealNumberImpl.Add(2, 5)";
 
         var interpreterValue = host.Run(code, "interpreter");

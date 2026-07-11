@@ -10,11 +10,11 @@ public static class DialectDefinitionSliceParseErrors
     {
         if (token == null)
         {
-            WistThrower.Parser(message);
+            ToolchainThrower.Parser(message);
             Thrower.InvalidOpEx("Unreachable parser error path.");
         }
 
-        WistThrower.Parser(
+        ToolchainThrower.Parser(
             message,
             new SourceLocation
             {

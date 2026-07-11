@@ -159,7 +159,7 @@ public sealed class SsaToAirConverterTests
     {
         var method = typeof(SsaToAirConverterTests).GetMethod(nameof(AddOne), BindingFlags.NonPublic | BindingFlags.Static)!;
         Assert.That(
-            SsaManagedCallables.TryCreateMethod(method, consumesInstanceReceiver: false, out var callable, out _, out var diagnostic),
+            SsaManagedCallables.TryCreateMethod(method, consumesInstanceReceiver: false, out var callable, out var descriptor, out var diagnostic),
             Is.True,
             diagnostic);
 
@@ -182,7 +182,8 @@ public sealed class SsaToAirConverterTests
                     ],
                     terminator: SsaTerminator.Return([result.Id]))
             ],
-            returnType: SsaTypes.Int32));
+            returnType: SsaTypes.Int32),
+            new SsaManagedCallableBinding(callable, descriptor, method));
 
         var conversion = PreviewEmitter().Run(artifact, new IrPipelineContext());
         var intrinsic = conversion.Artifact.As<AirArtifact>().Program.Instructions.Single(static x => x.UOpCode == UOpCode.Intrinsic);
@@ -195,7 +196,7 @@ public sealed class SsaToAirConverterTests
     {
         var constructor = typeof(ManagedTestBox).GetConstructor(Type.EmptyTypes)!;
         Assert.That(
-            SsaManagedCallables.TryCreateConstructor(constructor, out var callable, out _, out var diagnostic),
+            SsaManagedCallables.TryCreateConstructor(constructor, out var callable, out var descriptor, out var diagnostic),
             Is.True,
             diagnostic);
 
@@ -216,7 +217,8 @@ public sealed class SsaToAirConverterTests
                     ],
                     terminator: SsaTerminator.Return([result.Id]))
             ],
-            returnType: SsaTypes.Object));
+            returnType: SsaTypes.Object),
+            new SsaManagedCallableBinding(callable, descriptor, constructor));
 
         var conversion = PreviewEmitter().Run(artifact, new IrPipelineContext());
         var intrinsic = conversion.Artifact.As<AirArtifact>().Program.Instructions.Single(static x => x.UOpCode == UOpCode.Intrinsic);
@@ -288,7 +290,7 @@ public sealed class SsaToAirConverterTests
     {
         var method = typeof(SsaToAirConverterTests).GetMethod(nameof(AddPair), BindingFlags.NonPublic | BindingFlags.Static)!;
         Assert.That(
-            SsaManagedCallables.TryCreateMethod(method, consumesInstanceReceiver: false, out var callable, out _, out var diagnostic),
+            SsaManagedCallables.TryCreateMethod(method, consumesInstanceReceiver: false, out var callable, out var descriptor, out var diagnostic),
             Is.True,
             diagnostic);
 
@@ -313,7 +315,8 @@ public sealed class SsaToAirConverterTests
                     ],
                     terminator: SsaTerminator.Return([result.Id]))
             ],
-            returnType: SsaTypes.Int32));
+            returnType: SsaTypes.Int32),
+            new SsaManagedCallableBinding(callable, descriptor, method));
         var converter = new SsaToAirConverter(
             new StructuralSsaVerifier(SsaCoreDescriptors.ConstantMaterialization, SsaPreviewSemanticDescriptors.ArithmeticInt32),
             new StructuralAirVerifier(),
@@ -330,7 +333,7 @@ public sealed class SsaToAirConverterTests
     }
 
     [Test]
-    public void Run_WhenManagedCallableDescriptorHasMismatchedTypes_ThrowsManagedDescriptorShapeDiagnostic()
+    public void Run_WhenManagedCallableBindingDescriptorHasMismatchedTypes_FailsStructuralVerification()
     {
         var method = typeof(SsaToAirConverterTests).GetMethod(nameof(AddOne), BindingFlags.NonPublic | BindingFlags.Static)!;
         Assert.That(
@@ -340,7 +343,7 @@ public sealed class SsaToAirConverterTests
 
         var input = new SsaValue(new SsaValueId("%input"), SsaTypes.Int32);
         var result = new SsaValue(new SsaValueId("%result"), SsaTypes.Int32);
-        var artifact = Artifact(new SsaFunction(
+        var function = new SsaFunction(
             new SsaFunctionId("main"),
             new SsaBlockId("entry"),
             [
@@ -357,7 +360,7 @@ public sealed class SsaToAirConverterTests
                     ],
                     terminator: SsaTerminator.Return([result.Id]))
             ],
-            returnType: SsaTypes.Int32));
+            returnType: SsaTypes.Int32);
         var mismatchedDescriptors = new SemanticDescriptorSet(
             types:
             [
@@ -375,6 +378,10 @@ public sealed class SsaToAirConverterTests
                     determinism: Determinism.Deterministic,
                     trustLevel: SemanticTrustLevel.BuiltInTrusted)
             ]);
+        var mismatchedDescriptor = mismatchedDescriptors.Callables.Single();
+        var artifact = Artifact(
+            function,
+            new SsaManagedCallableBinding(callable, mismatchedDescriptor, method));
         var planner = new SsaCallableLoweringPlanner(
             mismatchedDescriptors,
             SsaCallableLoweringTargetSet.Empty,
@@ -387,7 +394,7 @@ public sealed class SsaToAirConverterTests
         var exception = Assert.Throws<SsaToAirEmissionException>(() =>
             converter.Run(artifact, new IrPipelineContext()));
 
-        Assert.That(exception!.Diagnostics.Select(static x => x.Code), Does.Contain("ssa.to-air.managed-call-descriptor.shape"));
+        Assert.That(exception!.Diagnostics.Select(static x => x.Code), Does.Contain("ssa.call.argument-type"));
     }
 
     [Test]
@@ -591,8 +598,14 @@ public sealed class SsaToAirConverterTests
             returnType: SsaTypes.Int32));
     }
 
-    private static SsaArtifact Artifact(SsaFunction function) =>
-        new(new SsaModule(new SsaModuleId("test.module"), [function]));
+    private static SsaArtifact Artifact(
+        SsaFunction function,
+        params SsaManagedCallableBinding[] managedCallableBindings) =>
+        new(
+            new SsaModule(new SsaModuleId("test.module"), [function]),
+            managedCallableBindings.Length == 0
+                ? SsaManagedCallableBindingSet.Empty
+                : new SsaManagedCallableBindingSet(managedCallableBindings));
 
     private static AirToSsaConverter PreviewLowerer() =>
         SsaRouteFactory.CreateLowerer(SsaPreviewRouteProfiles.Create(SsaRoutePolicy.Require));

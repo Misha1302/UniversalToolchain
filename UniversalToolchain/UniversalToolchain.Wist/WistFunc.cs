@@ -1,62 +1,74 @@
-using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
+using BasicCilCompiler.Execution;
 using DynamicMethodCalling.Core;
 
 namespace UniversalToolchain.Wist;
 
-/// <summary>
-///     Represents a compiled one-argument Wist function with typed fast invocation.
-/// </summary>
 public sealed class WistFunc<TArg0, TResult>
 {
-    private readonly DynamicMethodInvoker<TArg0, TResult> _invoker;
+    private readonly Func<TArg0, TResult> _invoke;
 
-    internal WistFunc(DynamicMethod dynamicMethod)
+    internal WistFunc(CilCompilationOutput output)
     {
-        _invoker = new DynamicMethodInvoker<TArg0, TResult>(dynamicMethod);
+        ArgumentNullException.ThrowIfNull(output);
+        if (output.HasConstantPool)
+        {
+            _invoke = (Func<TArg0, TResult>)output.Method.CreateDelegate(
+                typeof(Func<TArg0, TResult>),
+                output.ConstantPool);
+            return;
+        }
+
+        var invoker = new DynamicMethodInvoker<TArg0, TResult>(output.Method);
+        _invoke = invoker.Invoke;
     }
 
-    /// <summary>
-    ///     Invokes the compiled function without dictionary, reflection, or session overhead.
-    /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public TResult Invoke(TArg0 arg0) => _invoker.Invoke(arg0);
+    public TResult Invoke(TArg0 arg0) => _invoke(arg0);
 }
 
-/// <summary>
-///     Represents a compiled two-argument Wist function with typed fast invocation.
-/// </summary>
 public sealed class WistFunc<TArg0, TArg1, TResult>
 {
-    private readonly DynamicMethodInvoker<TArg0, TArg1, TResult> _invoker;
+    private readonly Func<TArg0, TArg1, TResult> _invoke;
 
-    internal WistFunc(DynamicMethod dynamicMethod)
+    internal WistFunc(CilCompilationOutput output)
     {
-        _invoker = new DynamicMethodInvoker<TArg0, TArg1, TResult>(dynamicMethod);
+        ArgumentNullException.ThrowIfNull(output);
+        if (output.HasConstantPool)
+        {
+            _invoke = (Func<TArg0, TArg1, TResult>)output.Method.CreateDelegate(
+                typeof(Func<TArg0, TArg1, TResult>),
+                output.ConstantPool);
+            return;
+        }
+
+        var invoker = new DynamicMethodInvoker<TArg0, TArg1, TResult>(output.Method);
+        _invoke = invoker.Invoke;
     }
 
-    /// <summary>
-    ///     Invokes the compiled function without dictionary, reflection, or session overhead.
-    /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public TResult Invoke(TArg0 arg0, TArg1 arg1) => _invoker.Invoke(arg0, arg1);
+    public TResult Invoke(TArg0 arg0, TArg1 arg1) => _invoke(arg0, arg1);
 }
 
-/// <summary>
-///     Represents a compiled three-argument Wist function with typed fast invocation.
-/// </summary>
 public sealed class WistFunc<TArg0, TArg1, TArg2, TResult>
 {
-    private readonly DynamicMethodInvoker<TArg0, TArg1, TArg2, TResult> _invoker;
+    private readonly Func<TArg0, TArg1, TArg2, TResult> _invoke;
 
-    internal WistFunc(DynamicMethod dynamicMethod)
+    internal WistFunc(CilCompilationOutput output)
     {
-        _invoker = new DynamicMethodInvoker<TArg0, TArg1, TArg2, TResult>(dynamicMethod);
+        ArgumentNullException.ThrowIfNull(output);
+        if (output.HasConstantPool)
+        {
+            _invoke = (Func<TArg0, TArg1, TArg2, TResult>)output.Method.CreateDelegate(
+                typeof(Func<TArg0, TArg1, TArg2, TResult>),
+                output.ConstantPool);
+            return;
+        }
+
+        var invoker = new DynamicMethodInvoker<TArg0, TArg1, TArg2, TResult>(output.Method);
+        _invoke = invoker.Invoke;
     }
 
-    /// <summary>
-    ///     Invokes the compiled function without dictionary, reflection, or session overhead.
-    /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public TResult Invoke(TArg0 arg0, TArg1 arg1, TArg2 arg2) => _invoker.Invoke(arg0, arg1, arg2);
+    public TResult Invoke(TArg0 arg0, TArg1 arg1, TArg2 arg2) => _invoke(arg0, arg1, arg2);
 }

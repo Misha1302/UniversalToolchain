@@ -20,7 +20,7 @@ public sealed class SsaToAirConverter : IIrConverter
 
     public SsaToAirConverter()
         : this(
-            new StructuralSsaVerifier(SsaCoreDescriptors.ConstantMaterialization),
+            new StructuralSsaVerifier(SsaCoreDescriptors.CoreOperations),
             new StructuralAirVerifier(
                 new AirControlFlowGraphBuilder(),
                 new AirStackAnalyzer(AirIntrinsicDescriptorSet.Empty)),
@@ -158,6 +158,10 @@ public sealed class SsaToAirConverter : IIrConverter
         var air = new AbstractIR();
         var state = new EmissionState(function);
         var planner = _callLoweringPlanner.WithAdditionalCallables(managedDescriptors);
+        if (ssaArtifact.ManagedCallableBindings.Values.Count != 0)
+        {
+            planner = planner.WithManagedBindings(ssaArtifact.ManagedCallableBindings);
+        }
 
         foreach (var block in state.Blocks)
         {
@@ -242,6 +246,24 @@ public sealed class SsaToAirConverter : IIrConverter
         EmissionState state,
         List<SsaValueId> stack)
     {
+        if (TryGetExternalLoadType(operation.OpId, out var externalType))
+        {
+            var slot = ReadExternalSlot(block, operation);
+            air.AppendInstructions(
+            [
+                new Instruction(UOpCode.Intrinsic, ["load_external", slot, externalType])
+            ]);
+
+            if (state.IsUnusedSingleResult(operation))
+            {
+                air.Drop();
+                return;
+            }
+
+            stack.Add(operation.Results.Single().Id);
+            return;
+        }
+
         if (operation.OpId == SsaOperations.ConstantInt32)
         {
             if (state.IsUnusedPureResult(operation))
@@ -569,6 +591,48 @@ public sealed class SsaToAirConverter : IIrConverter
         ]);
     }
 
+    private static bool TryGetExternalLoadType(SsaOpId operation, out Type valueType)
+    {
+        if (operation == SsaOperations.LoadExternalInt32)
+        {
+            valueType = typeof(int);
+            return true;
+        }
+
+        if (operation == SsaOperations.LoadExternalBool)
+        {
+            valueType = typeof(bool);
+            return true;
+        }
+
+        if (operation == SsaOperations.LoadExternalFloat64)
+        {
+            valueType = typeof(double);
+            return true;
+        }
+
+        valueType = default!;
+        return false;
+    }
+
+    private static int ReadExternalSlot(SsaBlock block, SsaOperation operation)
+    {
+        var slot = -1;
+        if (!operation.Attributes.TryGet(SsaAttributeKeys.ExternalSlot, out var attribute) ||
+            !int.TryParse(attribute.Value, NumberStyles.None, CultureInfo.InvariantCulture, out slot) ||
+            slot < 0)
+        {
+            ThrowDiagnostics(
+            [
+                Diagnostic(
+                    "ssa.to-air.external-slot",
+                    $"SSA external load '{operation.Id}' in block '{block.Id}' has an invalid external slot attribute.")
+            ]);
+        }
+
+        return slot;
+    }
+
     private static int ReadInt32Constant(SsaBlock block, SsaOperation operation)
     {
         var value = ReadConstant(block, operation);
@@ -674,21 +738,18 @@ public sealed class SsaToAirConverter : IIrConverter
         SsaArtifact artifact,
         List<IrDiagnostic> diagnostics)
     {
-        var descriptors = new Dictionary<CallableId, CallableDescriptor>();
+        var descriptors = artifact.ManagedCallableBindings.Values.ToDictionary(
+            static binding => binding.Callable,
+            static binding => binding.Descriptor);
+
         foreach (var call in artifact.Module.Functions.SelectMany(static function => function.Blocks).SelectMany(static block => block.Calls))
         {
-            if (!SsaManagedCallables.IsManagedCallable(call.Callee))
+            if (!SsaManagedCallables.IsManagedCallable(call.Callee) || descriptors.ContainsKey(call.Callee))
                 continue;
 
-            if (!SsaManagedCallables.TryResolve(call.Callee, out var resolution, out var diagnostic))
-            {
-                diagnostics.Add(Diagnostic(
-                    "ssa.to-air.managed-call.resolve",
-                    $"SSA managed call '{call.Id}' to '{call.Callee}' cannot be resolved. {diagnostic}"));
-                continue;
-            }
-
-            descriptors.TryAdd(resolution.Descriptor.Id, resolution.Descriptor);
+            diagnostics.Add(Diagnostic(
+                "ssa.to-air.managed-call.binding.missing",
+                $"SSA managed call '{call.Id}' to '{call.Callee}' has no execution-scoped managed member binding."));
         }
 
         return descriptors.Values.ToArray();

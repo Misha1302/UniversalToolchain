@@ -1,3 +1,4 @@
+using AssemblyFinder;
 using ArithmeticModule.Module;
 using BasicCore.Contracts;
 using BasicParser.Core;
@@ -71,6 +72,8 @@ public class ParserConfigurationModuleDiRegistrationTests
     private static ServiceProvider CreateServiceProvider(ActionType actionType, string configPath)
     {
         var services = new ServiceCollection();
+        services.AddSingleton<ITypeCatalog>(TypeCatalogFactory.Create(Array.Empty<System.Reflection.Assembly>()));
+        services.AddSingleton<IMethodResolver, DeterministicMethodResolver>();
         services.AddSingleton<IFrontendCoreModule, ScopesModuleImpl>();
         services.AddSingleton<IFrontendCoreModule, ArithmeticModuleImpl>();
         services.AddSingleton<IFrontendCoreModule, VariablesModuleImpl>();

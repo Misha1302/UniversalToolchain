@@ -19,6 +19,7 @@ public sealed class AirToSsaConverter : IIrConverter
     private readonly IReadOnlyDictionary<string, CallableId> _intrinsicCallables;
     private readonly SemanticDescriptorSet _semanticDescriptors;
     private readonly bool _allowManagedCallables;
+    private readonly IReadOnlyList<ISsaManagedCallableProjection> _managedCallableProjections;
 
     public AirToSsaConverter()
         : this(
@@ -27,7 +28,7 @@ public sealed class AirToSsaConverter : IIrConverter
             new StructuralAirVerifier(
                 new AirControlFlowGraphBuilder(),
                 new AirStackAnalyzer(AirIntrinsicDescriptorSet.Empty)),
-            new StructuralSsaVerifier(SsaCoreDescriptors.ConstantMaterialization),
+            new StructuralSsaVerifier(SsaCoreDescriptors.CoreOperations),
             AirIntrinsicDescriptorSet.Empty,
             new Dictionary<string, CallableId>(StringComparer.Ordinal),
             SemanticDescriptorSet.Empty,
@@ -79,7 +80,8 @@ public sealed class AirToSsaConverter : IIrConverter
         AirIntrinsicDescriptorSet intrinsicDescriptors,
         IReadOnlyDictionary<string, CallableId> intrinsicCallables,
         SemanticDescriptorSet semanticDescriptors,
-        bool allowManagedCallables)
+        bool allowManagedCallables,
+        IEnumerable<ISsaManagedCallableProjection>? managedCallableProjections = null)
     {
         _cfgBuilder = cfgBuilder;
         _stackAnalyzer = stackAnalyzer;
@@ -89,6 +91,7 @@ public sealed class AirToSsaConverter : IIrConverter
         _intrinsicCallables = intrinsicCallables ?? throw new ArgumentNullException(nameof(intrinsicCallables));
         _semanticDescriptors = semanticDescriptors ?? throw new ArgumentNullException(nameof(semanticDescriptors));
         _allowManagedCallables = allowManagedCallables;
+        _managedCallableProjections = (managedCallableProjections ?? []).ToArray();
     }
 
     public IrStageId Id { get; } = new("air.to-ssa.minimal");
@@ -122,7 +125,9 @@ public sealed class AirToSsaConverter : IIrConverter
         var module = new SsaModule(
             new SsaModuleId("air.module"),
             [LowerFunction(cfg, stackAnalysis, lowering)]);
-        var artifact = new SsaArtifact(module);
+        var artifact = new SsaArtifact(
+            module,
+            new SsaManagedCallableBindingSet(lowering.ManagedCallableBindings));
 
         var ssaVerifier = lowering.ManagedCallableDescriptors.Count == 0
             ? _ssaVerifier
@@ -225,7 +230,9 @@ public sealed class AirToSsaConverter : IIrConverter
                 instructions,
                 _intrinsicDescriptors,
                 _intrinsicCallables,
-                _allowManagedCallables);
+                _allowManagedCallables,
+                _managedCallableProjections,
+                _semanticDescriptors);
         }
 
         return new SsaBlock(
@@ -243,7 +250,9 @@ public sealed class AirToSsaConverter : IIrConverter
         List<ISsaInstruction> instructions,
         AirIntrinsicDescriptorSet intrinsicDescriptors,
         IReadOnlyDictionary<string, CallableId> intrinsicCallables,
-        bool allowManagedCallables)
+        bool allowManagedCallables,
+        IReadOnlyList<ISsaManagedCallableProjection> managedCallableProjections,
+        SemanticDescriptorSet semanticDescriptors)
     {
         switch (instruction.UOpCode)
         {
@@ -268,7 +277,9 @@ public sealed class AirToSsaConverter : IIrConverter
                     instructions,
                     intrinsicDescriptors,
                     intrinsicCallables,
-                    allowManagedCallables);
+                    allowManagedCallables,
+                    managedCallableProjections,
+                    semanticDescriptors);
                 return;
             default:
                 ThrowDiagnostics([Diagnostic("air.to-ssa.opcode", $"AIR opcode '{instruction.UOpCode}' in block '{block.Id}' is not supported.")]);
@@ -287,6 +298,12 @@ public sealed class AirToSsaConverter : IIrConverter
             ThrowDiagnostics([Diagnostic("air.to-ssa.push", $"AIR Push in block '{block.Id}' must have exactly one operand.")]);
 
         var value = instruction.Operands[0];
+        if (value is AirExternalValueReference external)
+        {
+            LowerExternalValue(block, external, lowering, stack, instructions);
+            return;
+        }
+
         var result = new SsaValue(lowering.NextValue(), value switch
         {
             bool => SsaTypes.Bool,
@@ -320,6 +337,40 @@ public sealed class AirToSsaConverter : IIrConverter
         stack.Add(result.Id);
     }
 
+    private static void LowerExternalValue(
+        AirBasicBlock block,
+        AirExternalValueReference external,
+        LoweringState lowering,
+        List<SsaValueId> stack,
+        List<ISsaInstruction> instructions)
+    {
+        var (type, operation) = external.ValueType == typeof(int)
+            ? (SsaTypes.Int32, SsaOperations.LoadExternalInt32)
+            : external.ValueType == typeof(bool)
+                ? (SsaTypes.Bool, SsaOperations.LoadExternalBool)
+                : external.ValueType == typeof(double)
+                    ? (SsaTypes.Float64, SsaOperations.LoadExternalFloat64)
+                    : throw new AirToSsaConversionException(
+                    [
+                        Diagnostic(
+                            "air.to-ssa.external-type",
+                            $"AIR external load in block '{block.Id}' has unsupported value type '{external.ValueType.FullName}'.")
+                    ]);
+
+        var result = new SsaValue(lowering.NextValue(), type);
+        instructions.Add(new SsaOperation(
+            lowering.NextOperation(),
+            operation,
+            results: [result],
+            attributes: new SsaAttributeBag(
+            [
+                new SsaAttribute(
+                    SsaAttributeKeys.ExternalSlot,
+                    external.Slot.ToString(CultureInfo.InvariantCulture))
+            ])));
+        stack.Add(result.Id);
+    }
+
     private static void LowerIntrinsic(
         AirBasicBlock block,
         Instruction instruction,
@@ -328,7 +379,9 @@ public sealed class AirToSsaConverter : IIrConverter
         List<ISsaInstruction> instructions,
         AirIntrinsicDescriptorSet intrinsicDescriptors,
         IReadOnlyDictionary<string, CallableId> intrinsicCallables,
-        bool allowManagedCallables)
+        bool allowManagedCallables,
+        IReadOnlyList<ISsaManagedCallableProjection> managedCallableProjections,
+        SemanticDescriptorSet semanticDescriptors)
     {
         if (instruction.Operands.Count == 0 || instruction.Operands[0] is not string intrinsicId)
         {
@@ -337,7 +390,15 @@ public sealed class AirToSsaConverter : IIrConverter
         }
 
         if (allowManagedCallables &&
-            TryLowerManagedIntrinsic(block, instruction, lowering, stack, instructions, intrinsicId))
+            TryLowerManagedIntrinsic(
+                block,
+                instruction,
+                lowering,
+                stack,
+                instructions,
+                intrinsicId,
+                managedCallableProjections,
+                semanticDescriptors))
             return;
 
         if (!intrinsicDescriptors.TryGet(intrinsicId, out var descriptor) ||
@@ -377,10 +438,19 @@ public sealed class AirToSsaConverter : IIrConverter
         LoweringState lowering,
         List<SsaValueId> stack,
         List<ISsaInstruction> instructions,
-        string intrinsicId)
+        string intrinsicId,
+        IReadOnlyList<ISsaManagedCallableProjection> managedCallableProjections,
+        SemanticDescriptorSet semanticDescriptors)
     {
         if (intrinsicId == AirIntrinsicIds.CallCSharp)
-            return LowerManagedMethodCall(block, instruction, lowering, stack, instructions);
+            return LowerManagedMethodCall(
+                block,
+                instruction,
+                lowering,
+                stack,
+                instructions,
+                managedCallableProjections,
+                semanticDescriptors);
 
         if (intrinsicId == AirIntrinsicIds.CallCSharpConstructor)
             return LowerManagedConstructorCall(block, instruction, lowering, stack, instructions);
@@ -393,7 +463,9 @@ public sealed class AirToSsaConverter : IIrConverter
         Instruction instruction,
         LoweringState lowering,
         List<SsaValueId> stack,
-        List<ISsaInstruction> instructions)
+        List<ISsaInstruction> instructions,
+        IReadOnlyList<ISsaManagedCallableProjection> managedCallableProjections,
+        SemanticDescriptorSet semanticDescriptors)
     {
         if (!AirManagedCallIntrinsicDescriptorResolver.Instance.TryResolve(instruction, out var airDescriptor, out var airDiagnostic))
         {
@@ -405,12 +477,37 @@ public sealed class AirToSsaConverter : IIrConverter
             ThrowDiagnostics([Diagnostic("air.to-ssa.managed-call", $"AIR managed call in block '{block.Id}' is not supported. {diagnostic}")]);
         }
 
+        foreach (var projection in managedCallableProjections)
+        {
+            if (!projection.TryProject(method!, consumesInstanceReceiver, out var projectedCallable))
+                continue;
+
+            if (!semanticDescriptors.TryGetCallable(projectedCallable, out _))
+            {
+                ThrowDiagnostics([
+                    Diagnostic(
+                        "air.to-ssa.managed-call.projection.unregistered",
+                        $"Managed-call projection mapped '{method}' to unregistered SSA callable '{projectedCallable}'.")
+                ]);
+            }
+
+            LowerResolvedIntrinsic(
+                block,
+                lowering,
+                stack,
+                instructions,
+                AirIntrinsicIds.CallCSharp,
+                airDescriptor!,
+                projectedCallable);
+            return true;
+        }
+
         if (!SsaManagedCallables.TryCreateMethod(method!, consumesInstanceReceiver, out var callable, out var semanticDescriptor, out diagnostic))
         {
             ThrowDiagnostics([Diagnostic("air.to-ssa.managed-call", $"AIR managed method '{method}' in block '{block.Id}' cannot be represented as SSA callable. {diagnostic}")]);
         }
 
-        lowering.AddManagedCallableDescriptor(semanticDescriptor);
+        lowering.AddManagedCallableBinding(callable, semanticDescriptor, method!);
         LowerResolvedIntrinsic(block, lowering, stack, instructions, AirIntrinsicIds.CallCSharp, airDescriptor!, callable);
         return true;
     }
@@ -438,7 +535,7 @@ public sealed class AirToSsaConverter : IIrConverter
             ThrowDiagnostics([Diagnostic("air.to-ssa.managed-ctor", $"AIR managed constructor '{constructor}' in block '{block.Id}' cannot be represented as SSA callable. {diagnostic}")]);
         }
 
-        lowering.AddManagedCallableDescriptor(semanticDescriptor);
+        lowering.AddManagedCallableBinding(callable, semanticDescriptor, constructor);
         LowerResolvedIntrinsic(block, lowering, stack, instructions, AirIntrinsicIds.CallCSharpConstructor, airDescriptor!, callable);
         return true;
     }
@@ -615,7 +712,7 @@ public sealed class AirToSsaConverter : IIrConverter
     private sealed class LoweringState
     {
         private readonly Dictionary<AirBlockId, SsaBlockId> _blockIds;
-        private readonly Dictionary<CallableId, CallableDescriptor> _managedCallableDescriptors = new();
+        private readonly Dictionary<CallableId, SsaManagedCallableBinding> _managedCallableBindings = new();
         private int _nextOperation;
         private int _nextValue;
 
@@ -627,7 +724,10 @@ public sealed class AirToSsaConverter : IIrConverter
 
         public AirStackAnalysisResult StackAnalysis { get; }
 
-        public IReadOnlyList<CallableDescriptor> ManagedCallableDescriptors => _managedCallableDescriptors.Values.ToArray();
+        public IReadOnlyList<SsaManagedCallableBinding> ManagedCallableBindings => _managedCallableBindings.Values.ToArray();
+
+        public IReadOnlyList<CallableDescriptor> ManagedCallableDescriptors =>
+            _managedCallableBindings.Values.Select(static binding => binding.Descriptor).ToArray();
 
         public SsaBlockId MapBlock(AirBlockId blockId) => _blockIds[blockId];
 
@@ -635,9 +735,27 @@ public sealed class AirToSsaConverter : IIrConverter
 
         public SsaValueId NextValue() => new($"%v{_nextValue++:0000}");
 
-        public void AddManagedCallableDescriptor(CallableDescriptor descriptor)
+        public void AddManagedCallableBinding(
+            CallableId callable,
+            CallableDescriptor descriptor,
+            System.Reflection.MethodBase member)
         {
-            _managedCallableDescriptors.TryAdd(descriptor.Id, descriptor);
+            var binding = new SsaManagedCallableBinding(callable, descriptor, member);
+            if (_managedCallableBindings.TryGetValue(callable, out var existing))
+            {
+                if (!existing.IsEquivalentTo(binding))
+                {
+                    ThrowDiagnostics([
+                        Diagnostic(
+                            "air.to-ssa.managed-call.binding.conflict",
+                            $"Managed callable '{callable}' resolved to incompatible execution-scoped bindings.")
+                    ]);
+                }
+
+                return;
+            }
+
+            _managedCallableBindings.Add(callable, binding);
         }
     }
 }

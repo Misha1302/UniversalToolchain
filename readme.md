@@ -34,7 +34,7 @@ Your application owns the inputs, compiles the approved formula once, and decide
 ```csharp
 using UniversalToolchain.Wist;
 
-using var rules = WistEngine.CreateSafeFormulas();
+using var rules = WistEngine.CreateRestrictedArithmetic();
 
 var rolloutScore = rules.Compile<Func<double, double, double, double>>(
     "usage * 0.7 + reliability * 0.3 - incidents * 15.0",
@@ -50,12 +50,12 @@ The rule returns data. Your .NET application performs the action.
 
 ## The important part: rejection before execution
 
-The preview safe-formula profile intentionally starts narrow. Statement-style bindings are not part of that restricted surface:
+The restricted arithmetic profile intentionally starts narrow. Statement-style bindings are not part of that restricted surface:
 
 ```csharp
 using UniversalToolchain.Wist;
 
-using var rules = WistEngine.CreateSafeFormulas();
+using var rules = WistEngine.CreateRestrictedArithmetic();
 
 var validation = rules.Validate(
     "let score = usage * 0.7\nscore",
@@ -98,21 +98,22 @@ The current public preview is intentionally scoped:
 | Capability | Current status |
 |---|---|
 | `WistEngine` facade | available in `UniversalToolchain.Wist` |
-| Restricted arithmetic/formula preset | available through `CreateSafeFormulas()` / `CreateRestrictedArithmetic()` |
+| Restricted arithmetic/formula preset | available through `CreateRestrictedArithmetic()`; obsolete `CreateSafeFormulas()` remains for source compatibility |
 | One-off evaluation | available through `Evaluate<T>()` |
 | Non-throwing validation | available through `Validate()` and `TryCompile<TDelegate>()` |
 | Typed compiled hot path | available through `Compile<TDelegate>()`; compatibility `CompileFunc(...)` overloads remain |
 | Interpreter backend | available for diagnostics, fallback, and semantic parity work |
 | Dialect composition | available through shipped `.wistdialect` profiles and lower-level APIs |
+| Experimental SSA route | opt-in through `WistEngineOptions.Optimization.Ssa`, with an observable report and controlled `Prefer` fallback |
 | Full business-rule DSL | direction, not a stable 1.0 claim |
 | Hardened sandboxing | not claimed |
 
 ## Install
 
-`UniversalToolchain.Wist` `0.1.0-preview.2` is published on NuGet: <https://www.nuget.org/packages/UniversalToolchain.Wist/0.1.0-preview.2>.
+After the preview package is published, install `UniversalToolchain.Wist` `0.1.0-preview.4` from NuGet: <https://www.nuget.org/packages/UniversalToolchain.Wist/0.1.0-preview.4>. Until that package exists, use a local package produced by `dotnet pack` or a source checkout.
 
 ```bash ci-run=false
-dotnet add package UniversalToolchain.Wist --version 0.1.0-preview.2
+dotnet add package UniversalToolchain.Wist --version 0.1.0-preview.4
 ```
 
 Use source checkout when developing framework internals, modules, dialects, or repository documentation.
@@ -121,7 +122,7 @@ Requirements:
 
 - .NET SDK `10.0.103` or a compatible prerelease SDK selected by `UniversalToolchain/global.json`.
 - Target framework: `net10.0`.
-- SDK policy: `rollForward: latestMajor`, `allowPrerelease: true`.
+- SDK policy: `rollForward: latestFeature`, `allowPrerelease: true`.
 
 ## Run the included formula demo
 
@@ -140,7 +141,7 @@ Use `Compile<TDelegate>` when a formula is invoked repeatedly:
 ```csharp
 using UniversalToolchain.Wist;
 
-using var wist = WistEngine.CreateSafeFormulas();
+using var wist = WistEngine.CreateRestrictedArithmetic();
 
 var formula = wist.Compile<Func<double, double, double>>(
     "usage * weight",
@@ -164,7 +165,7 @@ Use `Evaluate` for onboarding, admin previews, tests, validation UI, and non-hot
 ```csharp
 using UniversalToolchain.Wist;
 
-using var wist = WistEngine.CreateSafeFormulas();
+using var wist = WistEngine.CreateRestrictedArithmetic();
 
 double result = wist.Evaluate<double>(
     "usage * 0.7 + reliability * 0.3",
@@ -177,6 +178,31 @@ double result = wist.Evaluate<double>(
 
 `Evaluate` is a convenience path. It is not the primary performance claim.
 
+## Experimental SSA route
+
+SSA is optional and remains an experimental compiler feature. It can be enabled without a physical dialect file:
+
+```csharp
+using var wist = WistEngine.Create(new WistEngineOptions
+{
+    Preset = WistPreset.RestrictedArithmetic,
+    Optimization = new WistOptimizationOptions
+    {
+        Ssa = new WistSsaOptions
+        {
+            Policy = WistSsaPolicy.Prefer,
+            DiagnosticLevel = WistSsaDiagnosticLevel.Detailed
+        }
+    }
+});
+
+var program = wist.Compile<Func<int, int>>("value * 2 + 3", "value");
+Console.WriteLine(program.CompiledDelegate(20)); // 43
+Console.WriteLine(program.Metadata.OptimizationReport.Ssa.UsedSsa);
+```
+
+`Prefer` may return to the original AIR only for known unsupported-route diagnostics. `Require` and `Debug` fail instead; unexpected optimizer defects are never converted into silent fallback. The route is `AIR -> SSA -> AIR`, not an SSA-native backend or a performance guarantee.
+
 ## Presets
 
 ```csharp
@@ -184,16 +210,16 @@ using UniversalToolchain.Wist;
 
 using var restrictedArithmetic = WistEngine.CreateRestrictedArithmetic();
 using var fullNativePreview = WistEngine.CreateFullNativePreview();
-
-// Compatibility aliases:
-using var safeFormulas = WistEngine.CreateSafeFormulas();
-using var businessRules = WistEngine.CreateBusinessRules();
-using var trusted = WistEngine.CreateTrusted();
+using var trustedInterop = WistEngine.Create(new WistEngineOptions
+{
+    Preset = WistPreset.FullNativePreview,
+    AllowedAssemblies = [typeof(Math).Assembly]
+});
 ```
 
 `CreateRestrictedArithmetic` is the recommended first-contact preset. It maps to the shipped `pricing-restricted` profile in this preview.
 
-`CreateFullNativePreview` maps to the broad native Wist preview profile and must not be used for untrusted input.
+`CreateFullNativePreview` maps to the broad native Wist preview profile, but CLR interop remains empty except for the shipped standard library until the host supplies `AllowedAssemblies`. It must not be used for untrusted input.
 
 `CreateSafeFormulas` remains a compatibility alias for `CreateRestrictedArithmetic`. `CreateBusinessRules` and `CreateTrusted` remain compatibility aliases for `CreateFullNativePreview`; they do not represent a separate stable business-rules runtime or a hardened trust boundary.
 
@@ -287,13 +313,22 @@ Conference-oriented material:
 
 ## Build and test from source
 
-From repository root:
+Use the canonical repository entrypoint from the repository root:
 
 ```bash ci-run=false
-dotnet restore UniversalToolchain/Wist.sln -p:Platform="Any CPU"
-dotnet build UniversalToolchain/Wist.sln -c Release --no-restore -p:Platform="Any CPU"
-dotnet test UniversalToolchain/Wist.sln -c Release --no-build -p:Platform="Any CPU"
+./build.sh
 ```
+
+The wrapper performs serial restore/build for the large project graph, runs the three test projects, packs the public facade, validates package-surface growth, builds the documentation with `npm ci`, and runs Markdown checks. Useful bounded variants:
+
+```bash ci-run=false
+./build.sh --skip-docs
+./build.sh --skip-docs --skip-pack
+```
+
+On Windows PowerShell, use `./build.ps1` with `-SkipDocs` or `-SkipPack`. Set `DOTNET` to an explicit host path when the SDK is supplied by an offline sidecar.
+
+Do not replace this entrypoint in release evidence with an ad-hoc parallel solution build: the current .NET 10 project-reference graph is intentionally restored and built serially for deterministic behavior.
 
 ## Documentation map
 

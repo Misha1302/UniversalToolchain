@@ -23,6 +23,7 @@
         <ProjectReference Include="..\BasicCilCompiler\BasicCilCompiler.csproj"/>
         <ProjectReference Include="..\BasicCore\BasicCore.csproj"/>
         <ProjectReference Include="..\BasicInterpreter\BasicInterpreter.csproj"/>
+        <ProjectReference Include="..\BasicStdLib\BasicStdLib.csproj"/>
         <ProjectReference Include="..\BytecodeDynamicMethodsCompiler\BytecodeDynamicMethodsCompiler.csproj"/>
         <ProjectReference Include="..\CommentsModule\CommentsModule.csproj"/>
         <ProjectReference Include="..\ConditionsModule\ConditionsModule.csproj"/>

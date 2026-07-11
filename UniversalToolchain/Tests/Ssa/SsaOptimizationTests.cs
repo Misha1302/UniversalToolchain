@@ -338,7 +338,8 @@ public sealed class SsaOptimizationTests
                     ],
                     terminator: SsaTerminator.Return([resultValue.Id]))
             ],
-            returnType: SsaTypes.Int32));
+            returnType: SsaTypes.Int32),
+            new SsaManagedCallableBinding(callable, descriptor, method));
         var semanticDescriptors = new SemanticDescriptorSet(
             types: [new SemanticTypeDescriptor(SsaPreviewSemanticTypes.Int32)],
             callables: [descriptor]);
@@ -413,8 +414,14 @@ public sealed class SsaOptimizationTests
         return attribute.Value;
     }
 
-    private static SsaArtifact Artifact(SsaFunction function) =>
-        new(new SsaModule(new SsaModuleId("test.module"), [function]));
+    private static SsaArtifact Artifact(
+        SsaFunction function,
+        params SsaManagedCallableBinding[] managedCallableBindings) =>
+        new(
+            new SsaModule(new SsaModuleId("test.module"), [function]),
+            managedCallableBindings.Length == 0
+                ? SsaManagedCallableBindingSet.Empty
+                : new SsaManagedCallableBindingSet(managedCallableBindings));
 
     private static class TestCallables
     {

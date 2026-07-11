@@ -24,11 +24,20 @@ public class VariablesModuleImpl : IFrontendCoreModule, IModuleContractDescripto
         new(-1.5f, new VariablesNodeCreator())
     ];
 
+    private readonly ITypeCatalog _typeCatalog;
+
+    public VariablesModuleImpl(ITypeCatalog typeCatalog)
+    {
+        _typeCatalog = typeCatalog.ArgNotNull();
+    }
+
     public void InitLexer(ILexer lexer) => lexer.AddLexemes(_lexemeRegistrations);
 
     public void InitParser(IParser parser) => parser.AddNodeCreators(_nodeCreatorRegistrations);
 
-    public void InitAstTranslator(IAstToBytecodeTranslator translator) => translator.AddVisitors(new VariablesVisitor());
+    public void InitAstTranslator(IAstToBytecodeTranslator translator) => translator.AddVisitors(new VariablesVisitor(_typeCatalog));
+
+    public IReadOnlyList<IAstBindingRule> GetAstBindingRules() => [new VariablesBindingRule()];
 
     public IReadOnlyList<IModuleContractFacet> GetFacets() => _contractDescriptorProvider.GetFacets();
 }

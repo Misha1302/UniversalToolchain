@@ -15,6 +15,7 @@ public static class GenericAbstractIrExtensions
 
     public static void CallCSharp<TIdentifier>(this IGenericAbstractIR<TIdentifier> air, MethodInfo methodBody)
     {
+        methodBody = methodBody.ArgNotNull();
         air.Intrinsic("call C#", methodBody);
     }
 
@@ -26,6 +27,7 @@ public static class GenericAbstractIrExtensions
 
     public static void CallCSharp<TIdentifier>(this IGenericAbstractIR<TIdentifier> air, ConstructorInfo ctor)
     {
+        ctor = ctor.ArgNotNull();
         air.Intrinsic("call C# ctor", ctor);
     }
 

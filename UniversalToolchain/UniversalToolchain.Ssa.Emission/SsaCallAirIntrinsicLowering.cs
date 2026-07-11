@@ -142,26 +142,36 @@ public sealed class SsaCallableLoweringPlanner
     private readonly SemanticDescriptorSet _semanticDescriptors;
     private readonly SsaCallableLoweringTargetSet _targets;
     private readonly AirIntrinsicDescriptorSet _airIntrinsics;
+    private readonly SsaManagedCallableBindingSet? _managedBindings;
 
     public SsaCallableLoweringPlanner(
         SemanticDescriptorSet semanticDescriptors,
         SsaCallableLoweringTargetSet targets,
-        AirIntrinsicDescriptorSet airIntrinsics)
+        AirIntrinsicDescriptorSet airIntrinsics,
+        SsaManagedCallableBindingSet? managedBindings = null)
     {
         _semanticDescriptors = semanticDescriptors ?? throw new ArgumentNullException(nameof(semanticDescriptors));
         _targets = targets ?? throw new ArgumentNullException(nameof(targets));
         _airIntrinsics = airIntrinsics ?? throw new ArgumentNullException(nameof(airIntrinsics));
+        _managedBindings = managedBindings;
     }
 
     public SsaCallableLoweringPlanner WithSemanticDescriptors(SemanticDescriptorSet semanticDescriptors) =>
-        new(semanticDescriptors, _targets, _airIntrinsics);
+        new(semanticDescriptors, _targets, _airIntrinsics, _managedBindings);
+
+    public SsaCallableLoweringPlanner WithManagedBindings(SsaManagedCallableBindingSet managedBindings) =>
+        new(_semanticDescriptors, _targets, _airIntrinsics, managedBindings ?? throw new ArgumentNullException(nameof(managedBindings)));
 
     public SsaCallableLoweringPlanner WithAdditionalCallables(IReadOnlyList<CallableDescriptor> additionalCallables)
     {
         ArgumentNullException.ThrowIfNull(additionalCallables);
         return additionalCallables.Count == 0
             ? this
-            : new SsaCallableLoweringPlanner(MergeSemanticDescriptors(_semanticDescriptors, additionalCallables), _targets, _airIntrinsics);
+            : new SsaCallableLoweringPlanner(
+                MergeSemanticDescriptors(_semanticDescriptors, additionalCallables),
+                _targets,
+                _airIntrinsics,
+                _managedBindings);
     }
 
     public bool TrySelect(SsaCall call, out SsaCallableLoweringPlan plan, out SsaCallableLoweringFailure failure)
@@ -288,7 +298,7 @@ public sealed class SsaCallableLoweringPlanner
         return true;
     }
 
-    private static bool TryPlanManagedCall(
+    private bool TryPlanManagedCall(
         SsaCall call,
         CallableDescriptor callable,
         SsaCallableLoweringTarget target,
@@ -298,24 +308,24 @@ public sealed class SsaCallableLoweringPlanner
         plan = default!;
         failure = default!;
 
-        if (!SsaManagedCallables.TryResolve(call.Callee, out var resolution, out var diagnostic))
+        if (_managedBindings is not null && _managedBindings.TryGet(call.Callee, out var binding))
         {
-            failure = new SsaCallableLoweringFailure(
-                "ssa.to-air.managed-call.resolve",
-                $"SSA managed call '{call.Id}' to '{call.Callee}' cannot be resolved. {diagnostic}");
-            return false;
+            if (!SignaturesMatch(callable.Signature, binding.Descriptor.Signature))
+            {
+                failure = new SsaCallableLoweringFailure(
+                    "ssa.to-air.managed-call-descriptor.shape",
+                    $"SSA managed call '{call.Id}' descriptor signature does not match its execution-scoped binding descriptor.");
+                return false;
+            }
+
+            plan = new SsaCallableLoweringPlan(callable, target, managedMember: binding.Member);
+            return true;
         }
 
-        if (!SignaturesMatch(callable.Signature, resolution.Descriptor.Signature))
-        {
-            failure = new SsaCallableLoweringFailure(
-                "ssa.to-air.managed-call-descriptor.shape",
-                $"SSA managed call '{call.Id}' descriptor signature does not match the resolved managed member descriptor.");
-            return false;
-        }
-
-        plan = new SsaCallableLoweringPlan(callable, target, managedMember: resolution.Member);
-        return true;
+        failure = new SsaCallableLoweringFailure(
+            "ssa.to-air.managed-call.binding.missing",
+            $"SSA managed call '{call.Id}' to '{call.Callee}' has no execution-scoped managed member binding.");
+        return false;
     }
 
     private static bool SignaturesMatch(CallableSignature left, CallableSignature right) =>

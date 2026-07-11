@@ -18,8 +18,8 @@ public class VariablesNodeCreator : IAstNodeCreator
                 scope[childIndex].Children.Add(scope[childIndex + 1]);
                 scope[childIndex].Children.Add(scope[childIndex + 2]);
                 scope[childIndex].NodeType = AstNodeType;
-                scope[childIndex].AddTag("VariableDefinition");
-                scope[childIndex].AddTag("VariableDefinitionWithType");
+                scope[childIndex].AddTag(VariablesAstContracts.DefinitionTag);
+                scope[childIndex].AddTag(VariablesAstContracts.DefinitionWithTypeTag);
                 scope.Children.RemoveAt(childIndex + 2);
                 scope.Children.RemoveAt(childIndex + 1);
 
@@ -28,8 +28,8 @@ public class VariablesNodeCreator : IAstNodeCreator
             else
             {
                 scope[childIndex].NodeType = AstNodeType;
-                scope[childIndex].AddTag("VariableDefinition");
-                scope[childIndex].AddTag("VariableDefinitionWithoutType");
+                scope[childIndex].AddTag(VariablesAstContracts.DefinitionTag);
+                scope[childIndex].AddTag(VariablesAstContracts.DefinitionWithoutTypeTag);
 
                 scope.Children.RemoveAt(childIndex - 1);
             }

@@ -71,7 +71,7 @@ public class CommentsModuleImpl : IFrontendCoreModule
         if (state == CommentScanState.BlockComment)
         {
             var location = new LexemeValue("/*", null, blockCommentStartIndex, code);
-            WistThrower.Lexer(
+            ToolchainThrower.Lexer(
                 "Unterminated block comment (comment).",
                 new SourceLocation { Line = location.LineNumber, Column = location.CharNumber }
             );

@@ -42,7 +42,7 @@ public class FormulaHotPathBenchmarks
         var nCalcExpression = new Expression(FormulaBenchmarkData.NCalcFormula(Workload));
         _nCalc = nCalcExpression.ToLambda<FormulaBenchContext, double>();
 
-        _wist = WistEngine.CreateSafeFormulas();
+        _wist = WistEngine.CreateRestrictedArithmetic();
         _wistCompiledDelegate = _wist
             .Compile<Func<double, double, double, double>>(FormulaBenchmarkData.WistFormula(Workload), "A", "B", "C")
             .CompiledDelegate;

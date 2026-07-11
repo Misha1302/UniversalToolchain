@@ -50,7 +50,7 @@ public class BasicLexerImpl(LexerConfiguration configuration) : ILexer
             {
                 var invalidSegment = code[index..(lexeme?.StartIndex ?? code.Length)];
                 var invalidLexeme = new LexemeValue(invalidSegment, null, index, code);
-                WistThrower.Lexer(
+                ToolchainThrower.Lexer(
                     $"Invalid token '{invalidSegment}'.",
                     new SourceLocation { Line = invalidLexeme.LineNumber, Column = invalidLexeme.CharNumber }
                 );

@@ -27,7 +27,7 @@ select dialect or preset
   -> receive result or explicit failure
 ```
 
-The facade is an entry point into the same dialect/runtime composition model. It is not a second implementation of Wist.
+The facade is an entry point into the same dialect/runtime composition model. It is not a second implementation of Wist. This page uses lower-level dialect-runtime APIs; first-contact application code should prefer the `UniversalToolchain.Wist` package facade unless it specifically needs custom dialect composition.
 
 ## Example: restricted pricing expression
 

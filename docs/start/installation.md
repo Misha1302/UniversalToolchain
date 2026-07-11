@@ -7,25 +7,25 @@ description: Show how to install UniversalToolchain.Wist from NuGet.org or prepa
 
 This page shows two installation paths:
 
-- install the published `UniversalToolchain.Wist` package from NuGet.org for application usage;
+- install the `UniversalToolchain.Wist` package from NuGet.org after the preview package is published, or use a locally packed `.nupkg` before publication;
 - clone and build the repository for development, tests and documentation work.
 
 ## Package-first installation
 
-`UniversalToolchain.Wist` is the intended first-contact package for .NET developers. It exposes the `WistEngine` facade and hides the lower-level dialect/runtime pipeline for normal formula usage.
+`UniversalToolchain.Wist` is the intended first-contact package for .NET developers. Before the public NuGet package exists, produce and consume a local `.nupkg` from `dotnet pack`; after publication, use the NuGet command below. It exposes the `WistEngine` facade and hides the lower-level dialect/runtime pipeline for normal formula usage.
 
 The current preview package is:
 
 ```text
 PackageId: UniversalToolchain.Wist
-Version: 0.1.0-preview.2
+Version: 0.1.0-preview.4
 Target framework: net10.0
 ```
 
 From a clean .NET project:
 
 ```bash ci-run=false
-dotnet add package UniversalToolchain.Wist --version 0.1.0-preview.2
+dotnet add package UniversalToolchain.Wist --version 0.1.0-preview.4
 ```
 
 Use a `net10.0` project while this preview targets .NET 10:
@@ -41,7 +41,7 @@ After installing the package, create a small console program:
 ```csharp
 using UniversalToolchain.Wist;
 
-using var wist = WistEngine.CreateSafeFormulas();
+using var wist = WistEngine.CreateRestrictedArithmetic();
 
 var formula = wist.Compile<Func<double, double, double>>(
     "price * 0.9 + fee",
@@ -52,16 +52,20 @@ double result = formula.CompiledDelegate(100.0, 5.0);
 Console.WriteLine(result); // 95
 ```
 
-This is the recommended first-contact shape for preview.2: use `Compile<TDelegate>`, compile once, keep the returned typed program and call `CompiledDelegate` from the hot path.
+This is the recommended first-contact shape for preview.4: use `Compile<TDelegate>`, compile once, keep the returned typed program and call `CompiledDelegate` from the hot path.
 
 ## Trusted interop example
 
-Use `CreateTrusted` only when the Wist source is trusted by the host application. This preset can expose broader language/runtime capabilities, including C# interop.
+Use the full native preview only when the Wist source is trusted by the host application. CLR interop is available only for assemblies explicitly selected by the host.
 
 ```csharp
 using UniversalToolchain.Wist;
 
-using var wist = WistEngine.CreateTrusted();
+using var wist = WistEngine.Create(new WistEngineOptions
+{
+    Preset = WistPreset.FullNativePreview,
+    AllowedAssemblies = [typeof(Math).Assembly]
+});
 
 var calcHypotenuse = wist.Compile<Func<double, double, double>>(
     "System.Math.Sqrt(x * x + y * y)",
@@ -72,7 +76,7 @@ double result = calcHypotenuse.CompiledDelegate(7.0, 24.0);
 Console.WriteLine(result); // 25
 ```
 
-Do not use `CreateTrusted` for arbitrary user-authored code. For untrusted or semi-trusted formula input, start with `CreateSafeFormulas` and external process/resource isolation when needed.
+Do not expose CLR assemblies to arbitrary user-authored code. For untrusted or semi-trusted formula input, start with `CreateRestrictedArithmetic` and use external process/resource isolation when needed.
 
 ## Repository development prerequisites
 
@@ -103,11 +107,12 @@ Use the branch required by your task. For normal validation, use the branch you 
 ### 2. Restore and build the .NET solution
 
 ```bash ci-run=false
-dotnet restore UniversalToolchain/Wist.sln
-dotnet build UniversalToolchain/Wist.sln -c Release --no-restore -m:1 -p:BuildInParallel=false
+./build.sh --skip-docs
 ```
 
-For quick local work, `dotnet build` from the repository root may also work, but the solution path is the documented validation path.
+This is the canonical repository build path. It serializes restore/build, runs all three test projects, packs the facade, and checks the package surface. Use `./build.ps1 -SkipDocs` on Windows.
+
+Do not use a bare repository-root `dotnet build` as release evidence; it does not express the repository's serial build contract.
 
 ### 3. Run tests when changing behavior
 
@@ -124,7 +129,7 @@ The Markdown command runner intentionally skips this block because it is a local
 ### 4. Install documentation dependencies
 
 ```bash ci-run=false
-npm install
+npm ci
 ```
 
 ### 5. Run the documentation site locally
@@ -149,7 +154,7 @@ After completing the package path:
 
 - the host project references `UniversalToolchain.Wist`;
 - `using UniversalToolchain.Wist;` resolves;
-- `WistEngine.CreateSafeFormulas()` can compile and invoke a typed formula.
+- `WistEngine.CreateRestrictedArithmetic()` can compile and invoke a typed formula.
 
 After completing the repository path:
 
@@ -161,12 +166,12 @@ After completing the repository path:
 ## Common mistakes
 
 - Installing the package into a project that does not target `net10.0`.
-- Using `CreateTrusted` for untrusted user input.
+- Exposing CLR assemblies to untrusted user input.
 - Expecting C# interop to be available in restricted formula presets.
 - Running repository commands from inside `docs/` instead of the repository root.
 - Validating a different branch from the one you plan to push or open a pull request from.
 - Installing an older .NET SDK that cannot build `net10.0` projects.
-- Forgetting `npm install` before `npm run docs:dev` or `npm run docs:build`.
+- Forgetting `npm ci` before `npm run docs:dev` or `npm run docs:build`.
 - Treating docs build success as runtime validation. Documentation build does not replace .NET tests.
 
 ## Next

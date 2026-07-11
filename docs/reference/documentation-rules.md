@@ -76,7 +76,7 @@ are treated as enforced release gates.
 For documentation changes that affect public examples, run:
 
 ```text
-python3 Tools/check_documentation_status.py
+npm run docs:status
 python3 .github/scripts/run-markdown-bash-blocks.py
 npm run docs:build
 ```

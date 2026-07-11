@@ -8,6 +8,8 @@ public abstract class BoundAstNode : AstNode
         Symbol = symbol;
         foreach (var tag in source.CurrentTags)
             AddTag(tag);
+        foreach (var tag in source.LocalSemanticTags)
+            AddSemanticTag(tag);
     }
 
     public Symbol Symbol { get; }
@@ -33,6 +35,8 @@ public sealed class BoundAssignment : AstNode
     {
         foreach (var tag in source.CurrentTags)
             AddTag(tag);
+        foreach (var tag in source.LocalSemanticTags)
+            AddSemanticTag(tag);
     }
 }
 
@@ -42,6 +46,8 @@ public sealed class BoundCall : AstNode
     {
         foreach (var tag in source.CurrentTags)
             AddTag(tag);
+        foreach (var tag in source.LocalSemanticTags)
+            AddSemanticTag(tag);
     }
 }
 
@@ -51,5 +57,7 @@ public sealed class BoundBinaryOperator : AstNode
     {
         foreach (var tag in source.CurrentTags)
             AddTag(tag);
+        foreach (var tag in source.LocalSemanticTags)
+            AddSemanticTag(tag);
     }
 }

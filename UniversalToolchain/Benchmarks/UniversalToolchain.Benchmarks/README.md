@@ -21,9 +21,10 @@ This project is a measurement surface, not marketing proof.
 ## Smoke
 
 The smoke command performs restore, Release build, benchmark self-test, and a BenchmarkDotNet dry job. It is intentionally
-slower than ordinary documentation snippets, so the markdown checker gives this fenced block an explicit timeout.
+kept outside the generic Markdown snippet checker because it rebuilds a large project graph and belongs to the dedicated
+benchmark/release gate rather than documentation validation. Run it explicitly before publishing performance evidence.
 
-```bash ci-timeout=240s
+```bash ci-run=false
 unset PLATFORM
 export DOTNET_CLI_HOME="$PWD/.dotnet-home"
 dotnet restore UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj

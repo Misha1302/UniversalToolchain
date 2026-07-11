@@ -8,7 +8,7 @@
 - package smoke passed
 - NuGet package metadata and contents are validated
 - docs build passed
-- markdown bash checks are optional/non-blocking for this release candidate
+- markdown bash checks passed, with historical/heavy examples explicitly marked `ci-run=false`
 - README examples match actual APIs
 - site examples match README
 - SECURITY limitations are visible
@@ -26,23 +26,34 @@
 - CLI smoke validates compiler backend, interpreter backend, and restricted dialect rejection
 - benchmark dry smoke genuinely executes at least one benchmark or is replaced by a meaningful benchmark contract smoke
 
+## Evidence log
+
+Fill this before tagging/publishing. Do not mark a gate complete without the observed command/status.
+
+| Gate | Required evidence | Status / observed result |
+|---|---|---|
+| Canonical build/test | `./build.sh --skip-docs --skip-pack` | PASS — Release build, 0 warnings/errors |
+| Restore/build details | serial restore/build performed by `build.sh` | PASS — offline serial restore and `-m:1` build |
+| Release tests | three explicit test projects executed by `build.sh` | PASS — 429 + 287 + 585 = 1,301 |
+| Package | `dotnet pack ...UniversalToolchain.Wist.csproj -c Release` and package-surface check | PASS — 1 ref facade DLL, 64 runtime DLLs |
+| Consumer smoke | clean external `net10.0` app consuming the local package | PASS — restore/build/run/publish/published run |
+| CLI smoke | compiler, interpreter, restricted rejection | PASS — covered by canonical dialect/CLI regression suite |
+| Docs status | `python3 Tools/check_documentation_status.py` | PASS — 142 Markdown files |
+| Markdown smoke | `python3 .github/scripts/run-markdown-bash-blocks.py` | PASS — 20 executed, 32 explicit skips |
+| Docs build | `npm run docs:build` | PASS — VitePress production build |
+| Benchmark self-test | restore/build `UniversalToolchain.Benchmarks` and run `--self-test` | BLOCKED IN FINAL OFFLINE ENVIRONMENT — BenchmarkDotNet/NCalc packages absent from supplied feeds; no performance claim |
+
 ## Required commands
 
 ```bash ci-run=false
-unset PLATFORM
-dotnet restore UniversalToolchain/Wist.sln
-dotnet build UniversalToolchain/Wist.sln -c Release --no-restore -m:1 -p:BuildInParallel=false
-dotnet test UniversalToolchain/Wist.sln -c Release --no-build
-dotnet pack UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj -c Release -o artifacts/packages /p:WarningsAsErrors=NU5118
+./build.sh
 ls -la artifacts/packages
-unzip -l artifacts/packages/UniversalToolchain.Wist.0.1.0-preview.2.nupkg
-npm install --no-audit --no-fund
-npm run docs:build
+unzip -l artifacts/packages/UniversalToolchain.Wist.0.1.0-preview.4.nupkg
 ```
 
-## Optional documentation smoke
+## Documentation smoke
 
-Markdown bash block execution is useful before publishing docs, but it is not a blocking gate for this release candidate.
+Executable Markdown blocks are a blocking release gate inside `build.sh`. Historical or heavyweight benchmark examples stay visible with `ci-run=false` and must be covered by their dedicated/manual gate rather than silently timing out the documentation runner.
 
 ```bash ci-run=false
 python3 .github/scripts/run-markdown-bash-blocks.py

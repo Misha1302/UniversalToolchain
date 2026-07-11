@@ -51,33 +51,19 @@ Expected direction:
 
 Current limitation:
 
-- SSA is a pre-release intermediate layer, not the default production route.
-- Arithmetic and managed calls are represented as ordinary callables with
-  semantic descriptors, but the bridge still covers a deliberately small
-  subset.
-- The no-optimization `AIR -> SSA -> AIR` route is available behind explicit
-  route policies (`Off`, `Prefer`, `Require`, `Debug`), but dialect syntax for
-  those policies is not final.
-- Managed callable descriptors support bool, int32, float64 and managed object
-  references. Unsupported CLR value types, unresolved generic methods and
-  execution-scoped provider descriptors are rejected rather than guessed.
-- `SSA -> AIR` emission still requires AIR-compatible stack shape for the
-  supported subset. It is not yet a general SSA scheduler.
-- Callable lowering can select AIR intrinsic and managed-call targets for the
-  current AIR route. CIL opcode and interpreter-primitive targets are explicit
-  diagnostics until those routes are implemented.
-- Constant folding is descriptor-driven and trust-gated, but only local
-  constant folding is implemented.
+- SSA is opt-in experimental infrastructure, not the default route or an SSA-native backend.
+- The public facade can select `Disabled`, `Prefer`, `Require`, or `Debug` and exposes an optimization report, but low-level `UniversalToolchain.Ssa.*` contracts may still change before 1.0.
+- Wist int32 add/subtract/multiply have canonical projections; other supported managed operations round-trip through exact execution-scoped method bindings and may not be optimizable.
+- CLR value mapping, multi-return functions, arbitrary SSA scheduling, and backend-native lowering remain limited.
+- `Prefer` falls back only for known unsupported-route diagnostics. Unexpected optimizer defects are failures, not silent fallback.
+- The route adds compilation work. No speed advantage is claimed without reproducible end-to-end measurements.
 
 Expected direction:
 
-- Keep SSA structural and callable-first.
-- Move more runtime/library operations into descriptor packages instead of SSA
-  core opcodes.
-- Add backend capability planning before lowering callables to AIR intrinsics,
-  CIL opcodes, managed calls or interpreter primitives.
-- Add differential interpreter/CIL tests before making broad performance or
-  parity claims for the SSA route.
+- Expand canonical callable projection only when semantic and differential tests exist.
+- Add backend capability planning and eventually a justified SSA-native backend or a proven AIR-emission contract.
+- Add broader passes only with explicit facts/effects and benchmark validity checks.
+- Keep the supported facade independent from experimental low-level SSA types.
 
 ## Bytecode tags and verifier coverage
 

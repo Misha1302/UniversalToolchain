@@ -5,11 +5,16 @@ namespace UniversalToolchain.Wist;
 /// </summary>
 public sealed class WistValidationResult
 {
-    private WistValidationResult(bool isValid, string? message, Exception? exception)
+    private WistValidationResult(
+        bool isValid,
+        IReadOnlyList<WistDiagnostic> diagnostics,
+        Exception? exception,
+        WistOptimizationReport optimizationReport)
     {
         IsValid = isValid;
-        Message = message;
+        Diagnostics = diagnostics;
         Exception = exception;
+        OptimizationReport = optimizationReport ?? throw new ArgumentNullException(nameof(optimizationReport));
     }
 
     /// <summary>
@@ -18,16 +23,33 @@ public sealed class WistValidationResult
     public bool IsValid { get; }
 
     /// <summary>
-    ///     Gets a human-readable validation message.
+    ///     Gets stable structured diagnostics produced by validation.
     /// </summary>
-    public string? Message { get; }
+    public IReadOnlyList<WistDiagnostic> Diagnostics { get; }
 
     /// <summary>
-    ///     Gets the captured exception for advanced diagnostics.
+    ///     Gets the first error message for compatibility with the preview.2 facade.
+    /// </summary>
+    public string? Message => Diagnostics
+        .FirstOrDefault(static diagnostic => diagnostic.Severity == WistDiagnosticSeverity.Error)
+        ?.Message;
+
+    /// <summary>
+    ///     Gets the captured exception for unexpected-fault investigation.
     /// </summary>
     public Exception? Exception { get; }
 
-    internal static WistValidationResult Success() => new(true, null, null);
+    /// <summary>
+    /// Gets the observed optimization-route report, including reports captured before a failure.
+    /// </summary>
+    public WistOptimizationReport OptimizationReport { get; }
 
-    internal static WistValidationResult Failure(Exception exception) => new(false, exception.Message, exception);
+    internal static WistValidationResult Success(WistOptimizationReport optimizationReport) =>
+        new(true, Array.Empty<WistDiagnostic>(), null, optimizationReport);
+
+    internal static WistValidationResult Failure(
+        Exception exception,
+        IReadOnlyList<WistDiagnostic> diagnostics,
+        WistOptimizationReport optimizationReport) =>
+        new(false, diagnostics, exception, optimizationReport);
 }

@@ -8,6 +8,7 @@
         <BuildInParallel>false</BuildInParallel>
         <RestoreBuildInParallel>false</RestoreBuildInParallel>
         <RestoreUseStaticGraphEvaluation>true</RestoreUseStaticGraphEvaluation>
+        <UseSharedCompilation>false</UseSharedCompilation>
     </PropertyGroup>
 
     <ItemGroup>

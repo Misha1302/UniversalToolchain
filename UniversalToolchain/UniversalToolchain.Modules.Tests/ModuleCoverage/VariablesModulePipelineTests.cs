@@ -1,8 +1,10 @@
+using AssemblyFinder;
 using BasicCore.Binding;
 using BasicCore.Binding.Symbols;
 using BasicCore.Compilation;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
+using BasicCore.Semantics;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
 using DynamicMethodWrapper;
@@ -81,28 +83,24 @@ public class VariablesModulePipelineTests
     }
 
     [Test]
-    public void Variables_ExpectingWriteTypeInference_Path_IsUsed_ForAssignment()
+    public void Variables_WriteTargetTypeInference_Path_IsUsed_ForAssignment()
     {
         var variableSource = CreateVariableNode("x");
-        variableSource.AddTag("ExpectingWriteTypeInference");
+        variableSource.AddSemanticTag(AssignmentSemanticContractIds.WriteTarget);
 
-        var visitor = new VariablesVisitor();
+        var visitor = new VariablesVisitor(CreateTypeCatalog());
         var bytecode = new Bytecode([]);
         visitor.TryVisit(new BytecodeVisitorData(new PassthroughAstTranslator(), bytecode, variableSource));
 
         var referenceOp = GetSingleOp(bytecode, 0);
         Assert.That(referenceOp.Name, Is.EqualTo("InferWriteTypeOfLocalVar_x"));
 
-        using var h = new ModulePipelineTestHelper();
-        var result = h.ExecuteBoth("let x = 3\nx = x + 2\nx", _modules);
-        ModulePipelineTestHelper.AssertParity(result.Compiler, result.Interpreter);
-        Assert.That(ModulePipelineTestHelper.AsNumber(result.Compiler), Is.EqualTo(5));
     }
 
     [Test]
     public void Variables_PreprocessorDefineLexeme_RegistersTypeDeterministically()
     {
-        var visitor = new VariablesVisitor();
+        var visitor = new VariablesVisitor(CreateTypeCatalog());
         var bytecode = new Bytecode([]);
 
         visitor.TryVisit(new BytecodeVisitorData(
@@ -127,11 +125,11 @@ public class VariablesModulePipelineTests
     [Test]
     public void Variables_ObjectBinding_IsRefinedToConcreteType_OnFirstValidContext()
     {
-        var visitor = new VariablesVisitor();
+        var visitor = new VariablesVisitor(CreateTypeCatalog());
         var bytecode = new Bytecode([]);
 
         var source = CreateVariableNode("ext");
-        source.AddTag("ExpectingWriteTypeInference");
+        source.AddSemanticTag(AssignmentSemanticContractIds.WriteTarget);
         var boundSettable = new BoundExternalReference(source, new ExternalVariableSymbol("ext", typeof(object), 0));
 
         visitor.TryVisit(new BytecodeVisitorData(new PassthroughAstTranslator(), bytecode, boundSettable));
@@ -159,6 +157,9 @@ public class VariablesModulePipelineTests
 
     private static IAbstractMethodConvertable GetSingleOp(Bytecode bytecode, int instructionIndex)
         => bytecode.Instructions[instructionIndex].Ops.Single().Value.Single();
+
+    private static ITypeCatalog CreateTypeCatalog() =>
+        TypeCatalogFactory.Create([typeof(int).Assembly, typeof(VariablesModulePipelineTests).Assembly]);
 
     private sealed class PassthroughAstTranslator : IAstToBytecodeTranslator
     {

@@ -53,6 +53,15 @@ public static class WistShippedDialectPresets
         "Pricing restricted",
         "Restricted Wist dialect for pricing formulas.");
 
+
+    /// <summary>
+    /// Gets the experimental restricted arithmetic preset with the verifier-gated SSA route enabled.
+    /// </summary>
+    public static WistShippedDialectPreset SsaPreview { get; } = Create(
+        "ssa-preview",
+        "SSA preview",
+        "Experimental restricted arithmetic Wist dialect with SSA optimization enabled.");
+
     /// <summary>
     ///     Gets the restricted sandbox Wist dialect preset.
     /// </summary>
@@ -71,6 +80,7 @@ public static class WistShippedDialectPresets
         MinimalArithmetic,
         MinimalArithmeticNative,
         PricingRestricted,
+        SsaPreview,
         RestrictedSandbox
     ];
 

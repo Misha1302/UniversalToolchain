@@ -1,3 +1,5 @@
+using BasicCore.Semantics;
+
 namespace EqualityModule;
 
 public class ValuesSetNodeCreator : IAstNodeCreator
@@ -14,7 +16,7 @@ public class ValuesSetNodeCreator : IAstNodeCreator
         eqNode.Children.AddRange(scope[childIndex - 1], scope[childIndex + 1]);
         scope.Children.RemoveAt(childIndex + 1);
         scope.Children.RemoveAt(childIndex - 1);
-        eqNode.Children[^2].AddTag("ExpectingWriteTypeInference");
+        eqNode.Children[^2].AddSemanticTag(AssignmentSemanticContractIds.WriteTarget);
 
         return true;
     }

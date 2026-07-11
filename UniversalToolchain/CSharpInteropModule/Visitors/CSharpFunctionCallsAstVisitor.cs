@@ -2,6 +2,13 @@ namespace CSharpInteropModule.Visitors;
 
 public class CSharpFunctionCallsAstVisitor : IAstVisitor
 {
+    private readonly IMethodResolver _methodResolver;
+
+    public CSharpFunctionCallsAstVisitor(IMethodResolver methodResolver)
+    {
+        _methodResolver = methodResolver.ArgNotNull();
+    }
+
     public void TryVisit(BytecodeVisitorData data)
     {
         if (data.Node.NodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("CSharpFunctionCall"))
@@ -26,12 +33,12 @@ public class CSharpFunctionCallsAstVisitor : IAstVisitor
                 var stackTypes = context.Stack.TakeLast(argCount).ToList();
 
                 // Try to find a method with matching parameter types first.
-                var methodInfo = MethodsFinder.GetMethod(fullName, stackTypes.ToArray())
-                                 ?? MethodsFinder.GetMethod(fullName, argCount)
-                                 ?? MethodsFinder.GetMethod(fullName);
+                var methodInfo = _methodResolver.GetMethod(fullName, stackTypes)
+                                 ?? _methodResolver.GetMethod(fullName, argCount)
+                                 ?? _methodResolver.GetMethod(fullName);
 
                 if (methodInfo == null)
-                    WistThrower.Import($"Method '{fullName}({argCount} args)' not found in imported assemblies.");
+                    ToolchainThrower.Import($"Method '{fullName}({argCount} args)' not found in imported assemblies.");
 
                 il.CallCSharp(methodInfo.NotNull());
             }

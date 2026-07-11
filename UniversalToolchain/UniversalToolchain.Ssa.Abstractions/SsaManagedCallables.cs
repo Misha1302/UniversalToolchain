@@ -4,19 +4,6 @@ using UniversalToolchain.Semantics.Abstractions;
 
 namespace UniversalToolchain.Ssa.Abstractions;
 
-public sealed class SsaManagedCallableResolution
-{
-    public SsaManagedCallableResolution(CallableDescriptor descriptor, MethodBase member)
-    {
-        Descriptor = descriptor ?? throw new ArgumentNullException(nameof(descriptor));
-        Member = member ?? throw new ArgumentNullException(nameof(member));
-    }
-
-    public CallableDescriptor Descriptor { get; }
-
-    public MethodBase Member { get; }
-}
-
 internal sealed record SsaManagedCallableSemantics(
     SemanticEffectSummary Effects,
     Determinism Determinism,
@@ -89,116 +76,6 @@ public static class SsaManagedCallables
                 EncodeTypeList(parameters)));
 
         return TryCreateConstructorDescriptor(callable, constructor, out descriptor, out diagnostic);
-    }
-
-    public static bool TryResolve(CallableId callable, out SsaManagedCallableResolution resolution, out string? diagnostic)
-    {
-        resolution = default!;
-        diagnostic = null;
-
-        if (callable.Value.StartsWith(MethodPrefix, StringComparison.Ordinal))
-            return TryResolveMethod(callable, out resolution, out diagnostic);
-
-        if (callable.Value.StartsWith(ConstructorPrefix, StringComparison.Ordinal))
-            return TryResolveConstructor(callable, out resolution, out diagnostic);
-
-        diagnostic = $"Callable '{callable}' is not a managed callable.";
-        return false;
-    }
-
-    private static bool TryResolveMethod(
-        CallableId callable,
-        out SsaManagedCallableResolution resolution,
-        out string? diagnostic)
-    {
-        resolution = default!;
-        diagnostic = null;
-
-        var parts = callable.Value[MethodPrefix.Length..].Split(':');
-        if (parts.Length != 5)
-        {
-            diagnostic = $"Managed method callable '{callable}' has invalid identifier shape.";
-            return false;
-        }
-
-        if (!TryResolveType(Decode(parts[0]), out var declaringType, out diagnostic) ||
-            !TryResolveType(Decode(parts[3]), out var returnType, out diagnostic) ||
-            !TryDecodeTypeList(parts[4], out var parameterTypes, out diagnostic))
-        {
-            return false;
-        }
-
-        var methodName = Decode(parts[1]);
-        bool consumesInstanceReceiver;
-        switch (parts[2])
-        {
-            case "0":
-                consumesInstanceReceiver = false;
-                break;
-            case "1":
-                consumesInstanceReceiver = true;
-                break;
-            default:
-                diagnostic = $"Managed method callable '{callable}' has invalid receiver flag '{parts[2]}'.";
-                return false;
-        }
-
-        var method = declaringType
-            .GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static | BindingFlags.Instance)
-            .Where(x => x.Name == methodName)
-            .SingleOrDefault(x =>
-                x.ReturnType == returnType &&
-                x.GetParameters().Select(static p => p.ParameterType).SequenceEqual(parameterTypes));
-        if (method is null)
-        {
-            diagnostic = $"Managed method callable '{callable}' could not be resolved in loaded assemblies.";
-            return false;
-        }
-
-        if (!TryCreateMethodDescriptor(callable, method, consumesInstanceReceiver, out var descriptor, out diagnostic))
-            return false;
-
-        resolution = new SsaManagedCallableResolution(descriptor, method);
-        return true;
-    }
-
-    private static bool TryResolveConstructor(
-        CallableId callable,
-        out SsaManagedCallableResolution resolution,
-        out string? diagnostic)
-    {
-        resolution = default!;
-        diagnostic = null;
-
-        var parts = callable.Value[ConstructorPrefix.Length..].Split(':');
-        if (parts.Length != 2)
-        {
-            diagnostic = $"Managed constructor callable '{callable}' has invalid identifier shape.";
-            return false;
-        }
-
-        if (!TryResolveType(Decode(parts[0]), out var declaringType, out diagnostic) ||
-            !TryDecodeTypeList(parts[1], out var parameterTypes, out diagnostic))
-        {
-            return false;
-        }
-
-        var constructor = declaringType.GetConstructor(
-            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
-            binder: null,
-            types: parameterTypes,
-            modifiers: null);
-        if (constructor is null)
-        {
-            diagnostic = $"Managed constructor callable '{callable}' could not be resolved in loaded assemblies.";
-            return false;
-        }
-
-        if (!TryCreateConstructorDescriptor(callable, constructor, out var descriptor, out diagnostic))
-            return false;
-
-        resolution = new SsaManagedCallableResolution(descriptor, constructor);
-        return true;
     }
 
     private static bool TryCreateMethodDescriptor(
@@ -419,54 +296,10 @@ public static class SsaManagedCallables
     private static string EncodeTypeList(IEnumerable<Type> types) =>
         string.Join(";", types.Select(static type => Encode(TypeName(type))));
 
-    private static bool TryDecodeTypeList(string encoded, out Type[] types, out string? diagnostic)
-    {
-        diagnostic = null;
-        if (encoded.Length == 0)
-        {
-            types = [];
-            return true;
-        }
-
-        var resolved = new List<Type>();
-        foreach (var part in encoded.Split(';'))
-        {
-            if (!TryResolveType(Decode(part), out var type, out diagnostic))
-            {
-                types = [];
-                return false;
-            }
-
-            resolved.Add(type);
-        }
-
-        types = resolved.ToArray();
-        return true;
-    }
-
-    private static bool TryResolveType(string assemblyQualifiedName, out Type type, out string? diagnostic)
-    {
-        type = Type.GetType(assemblyQualifiedName, throwOnError: false)!;
-        if (type is not null)
-        {
-            diagnostic = null;
-            return true;
-        }
-
-        diagnostic = $"CLR type '{assemblyQualifiedName}' could not be resolved.";
-        return false;
-    }
-
     private static string Encode(string value)
     {
         var encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(value));
         return encoded.TrimEnd('=').Replace('+', '-').Replace('/', '_');
     }
 
-    private static string Decode(string value)
-    {
-        var padded = value.Replace('-', '+').Replace('_', '/');
-        padded = padded.PadRight(padded.Length + ((4 - padded.Length % 4) % 4), '=');
-        return Encoding.UTF8.GetString(Convert.FromBase64String(padded));
-    }
 }

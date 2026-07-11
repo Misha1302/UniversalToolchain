@@ -28,7 +28,7 @@ public class ScopesCreator : IAstNodeCreator
             if (opensCount < 0)
             {
                 var lexeme = child.LexemeValue;
-                WistThrower.Parser(
+                ToolchainThrower.Parser(
                     "Unexpected token '}'. Expected: identifier or '('.",
                     new SourceLocation { Line = lexeme?.LineNumber ?? -1, Column = lexeme?.CharNumber ?? -1 }
                 );
@@ -55,7 +55,7 @@ public class ScopesCreator : IAstNodeCreator
         }
 
         if (opensCount != 0)
-            WistThrower.Parser("Unexpected end of input. Expected: ')' to close scope.");
+            ToolchainThrower.Parser("Unexpected end of input. Expected: ')' to close scope.");
 
         return done;
     }

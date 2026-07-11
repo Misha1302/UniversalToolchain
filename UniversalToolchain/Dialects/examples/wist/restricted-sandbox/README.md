@@ -1,8 +1,8 @@
-# Restricted sandbox dialect
+# Composition-restricted profile (`restricted-sandbox`)
 
 ## What this example demonstrates
 
-This example demonstrates a composition-constrained profile aimed at a narrower runtime surface.
+This example demonstrates a composition-constrained profile aimed at a narrower runtime surface. The directory keeps the historical `restricted-sandbox` preset name for compatibility, but this is not a hardened sandbox.
 
 ## Enabled modules/backends/features
 

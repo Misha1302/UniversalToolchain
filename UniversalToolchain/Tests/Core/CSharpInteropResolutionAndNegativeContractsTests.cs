@@ -38,12 +38,15 @@ public class CSharpInteropResolutionAndNegativeContractsTests
     }
 
     [Test]
-    public void MethodsFinder_ShouldFailPredictably_ForAmbiguousOverloadSignature()
+    public void ExplicitMethodResolver_ShouldFailPredictably_ForAmbiguousOverloadSignature()
     {
-        var exception = Assert.Throws<AmbiguousMatchException>(() =>
-            MethodsFinder.GetMethod($"{typeof(InteropContractsHost).FullName}.Pick", [typeof(int), typeof(int)]));
+        var catalog = TypeCatalogFactory.Create([typeof(InteropContractsHost).Assembly]);
+        var resolver = new DeterministicMethodResolver(catalog);
 
-        Assert.That(exception!.Message, Does.Contain("Ambiguous match"));
+        var exception = Assert.Throws<AmbiguousMatchException>(() =>
+            resolver.GetMethod($"{typeof(InteropContractsHost).FullName}.Ambiguous", [typeof(int), typeof(int)]));
+
+        Assert.That(exception!.Message, Does.Contain("ambiguous").IgnoreCase);
     }
 
     [Test]
@@ -72,7 +75,9 @@ public class CSharpInteropResolutionAndNegativeContractsTests
     {
         var compilerResult = BackendParityInfrastructure.ExecuteSafely(() =>
         {
-            using var compilerHost = DialectTestHostInfrastructure.CreateCompilerHost(DialectText);
+            using var compilerHost = DialectTestHostInfrastructure.CreateCompilerHost(
+                DialectText,
+                [typeof(string).Assembly, typeof(InteropContractsHost).Assembly]);
             return compilerHost.Run(code, "compiler");
         });
 
@@ -87,6 +92,8 @@ internal static class InteropContractsHost
 {
     public static string Pick(int left, long right) => "int-long";
     public static string Pick(long left, int right) => "long-int";
+    public static string Ambiguous(IComparable left, object right) => "comparable-object";
+    public static string Ambiguous(object left, IComparable right) => "object-comparable";
 
     [SuppressMessage("Performance", "CA1822", Justification = "The method is used by name in a negative C# interop resolution contract test.")]
     [SuppressMessage("ReSharper", "UnusedMember.Local", Justification = "The method is intentionally non-public and resolved by name in a negative interop test.")]

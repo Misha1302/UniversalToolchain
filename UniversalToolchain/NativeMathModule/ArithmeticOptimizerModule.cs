@@ -64,30 +64,14 @@ public class ArithmeticOptimizerModule : IIRProcessingModule
         {
             var instruction = instructions[i];
 
-            if (instruction.UOpCode == UOpCode.Intrinsic &&
-                instruction.Operands.Count >= 2 &&
-                (string)instruction.Operands[0] == "call C#")
+            if (CSharpCallIntrinsicReader.TryGetCallMethod(instruction, out var method) &&
+                method.DeclaringType == typeof(NativeArithmetic))
             {
-                var method = instruction.Operands[1] switch
+                var intrinsicInstruction = CreateArithmeticInstruction(method);
+                if (intrinsicInstruction != null)
                 {
-                    MethodInfo methodInfo => methodInfo,
-                    CSharpCallDescriptor descriptor => descriptor.Method,
-                    _ => null
-                };
-                if (method == null)
-                {
-                    context.NewInstructions.Add(instruction);
+                    context.NewInstructions.Add(intrinsicInstruction);
                     continue;
-                }
-
-                if (method.DeclaringType == typeof(NativeArithmetic))
-                {
-                    var intrinsicInstruction = CreateArithmeticInstruction(method);
-                    if (intrinsicInstruction != null)
-                    {
-                        context.NewInstructions.Add(intrinsicInstruction);
-                        continue;
-                    }
                 }
             }
 

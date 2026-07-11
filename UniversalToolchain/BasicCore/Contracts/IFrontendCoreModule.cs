@@ -16,6 +16,7 @@ public interface IFrontendCoreModule
 
     AstNode ProcessAst(AstNode astRoot) => astRoot;
 
+    IReadOnlyList<IAstBindingRule> GetAstBindingRules() => [];
 
     Bytecode ProcessBytecode(Bytecode current) => current;
 

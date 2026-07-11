@@ -172,7 +172,9 @@ public sealed class ModuleContractPipelineObserver : ICompilationPipelineObserve
             .Cast<object>()
             .Concat(optimizers)
             .SelectMany(SelectedModuleContractTableProvider.ReadSelectedModuleIds)
-            .Concat(backendComponents.SelectMany(SelectedModuleContractTableProvider.ReadSelectedBackendModuleIds))
+            .Concat(backendComponents
+                .OfType<IModuleContractBackendPipelineComponent>()
+                .SelectMany(SelectedModuleContractTableProvider.ReadSelectedBackendModuleIds))
             .Concat([
                 KnownCoreModuleIds.CompilerFacts,
                 KnownCoreModuleIds.BackendCapabilities

@@ -19,19 +19,8 @@ internal static class CilExecutionRequirementAnalyzer
 
     private static bool RequiresExecutionEnvironment(Instruction instruction)
     {
-        if (instruction.UOpCode != UOpCode.Intrinsic)
-            return false;
-
-        var normalizedInstruction = IntrinsicInstructionNormalizer.NormalizeOrThrow(instruction);
-        var intrinsicName = normalizedInstruction.Operands[0].Get<string>();
-
-        if (intrinsicName != "call C#")
-            return false;
-
-        var operand = normalizedInstruction.Operands[1];
-        var descriptor = operand as CSharpCallDescriptor;
-
-        return descriptor?.Receiver is CSharpCallReceiver.ExecutionScopedProvider;
+        return CSharpCallIntrinsicReader.TryGetCallDescriptor(instruction, out var descriptor)
+               && descriptor.Receiver is CSharpCallReceiver.ExecutionScopedProvider;
     }
 }
 

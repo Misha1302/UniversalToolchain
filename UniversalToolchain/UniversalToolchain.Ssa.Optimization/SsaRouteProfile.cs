@@ -9,10 +9,10 @@ using UniversalToolchain.Ssa.Lowering;
 
 namespace UniversalToolchain.Ssa.Optimization;
 
-public sealed record SsaDiagnosticMode(string Id)
+public enum SsaDiagnosticMode
 {
-    public static SsaDiagnosticMode Default { get; } = new("default");
-    public static SsaDiagnosticMode Verbose { get; } = new("verbose");
+    Default,
+    Verbose
 }
 
 public interface ISsaSemanticExtensionPack
@@ -36,16 +36,34 @@ public interface ISsaSemanticExtensionPack
 
 public sealed class SsaRouteProfile
 {
+    private readonly ReadOnlyCollection<IIrOptimizationPass> _optimizationPasses;
+
     public SsaRouteProfile(
         SsaRoutePolicy policy,
         IEnumerable<ISsaSemanticExtensionPack>? extensionPacks = null,
         CapabilitySet? targetCapabilities = null,
-        SsaDiagnosticMode? diagnostics = null)
+        SsaDiagnosticMode diagnostics = SsaDiagnosticMode.Default,
+        string id = SsaPreviewRouteProfiles.ProfileId)
     {
+        if (!Enum.IsDefined(policy))
+            throw new ArgumentOutOfRangeException(nameof(policy), policy, "SSA route policy is not defined.");
+        if (!Enum.IsDefined(diagnostics))
+            throw new ArgumentOutOfRangeException(nameof(diagnostics), diagnostics, "SSA diagnostic mode is not defined.");
+        if (string.IsNullOrWhiteSpace(id))
+            throw new ArgumentException("SSA route profile identifier must not be empty.", nameof(id));
+
         Policy = policy;
-        ExtensionPacks = new ReadOnlyCollection<ISsaSemanticExtensionPack>((extensionPacks ?? []).ToArray());
-        TargetCapabilities = targetCapabilities ?? CapabilitySet.Empty;
-        Diagnostics = diagnostics ?? SsaDiagnosticMode.Default;
+        Id = id.Trim();
+        var packs = (extensionPacks ?? []).ToArray();
+        var duplicatePack = packs
+            .GroupBy(static pack => pack.Id, StringComparer.Ordinal)
+            .FirstOrDefault(static group => group.Count() > 1);
+        if (duplicatePack is not null)
+            throw new ArgumentException($"SSA profile '{Id}' contains duplicate extension pack id '{duplicatePack.Key}'.", nameof(extensionPacks));
+
+        ExtensionPacks = new ReadOnlyCollection<ISsaSemanticExtensionPack>(packs);
+        TargetCapabilities = new CapabilitySet((targetCapabilities ?? CapabilitySet.Empty).Values);
+        Diagnostics = diagnostics;
 
         SemanticDescriptors = MergeSemanticDescriptors(ExtensionPacks.Select(static x => x.SemanticDescriptors));
         AirIntrinsics = MergeAirIntrinsics(ExtensionPacks.Select(static x => x.AirIntrinsics));
@@ -54,7 +72,18 @@ public sealed class SsaRouteProfile
         AirIntrinsicCallables = MergeAirIntrinsicCallables(ExtensionPacks);
         AirLoweringTargets = MergeAirLoweringTargets(ExtensionPacks.Select(static x => x.AirLoweringTargets));
         EnablesManagedCallables = ExtensionPacks.Any(static x => x.EnablesManagedCallables);
+
+        var passes = ExtensionPacks.SelectMany(static pack => pack.CreateOptimizationPasses()).ToArray();
+        var duplicatePass = passes
+            .GroupBy(static pass => pass.Id)
+            .FirstOrDefault(static group => group.Count() > 1);
+        if (duplicatePass is not null)
+            throw new ArgumentException($"SSA profile '{Id}' contains duplicate optimizer pass id '{duplicatePass.Key}'.", nameof(extensionPacks));
+
+        _optimizationPasses = new ReadOnlyCollection<IIrOptimizationPass>(passes);
     }
+
+    public string Id { get; }
 
     public SsaRoutePolicy Policy { get; }
 
@@ -76,26 +105,34 @@ public sealed class SsaRouteProfile
 
     public bool EnablesManagedCallables { get; }
 
-    public IReadOnlyList<IIrOptimizationPass> CreateOptimizationPasses() =>
-        ExtensionPacks.SelectMany(static x => x.CreateOptimizationPasses()).ToArray();
+    public IReadOnlyList<IIrOptimizationPass> CreateOptimizationPasses() => _optimizationPasses;
 
     private static SemanticDescriptorSet MergeSemanticDescriptors(IEnumerable<SemanticDescriptorSet> descriptorSets)
     {
         var sets = descriptorSets.ToArray();
-        return new SemanticDescriptorSet(
-            sets.SelectMany(static x => x.Types)
-                .GroupBy(static x => x.Id)
-                .Select(static x => x.First()),
-            sets.SelectMany(static x => x.Callables)
-                .GroupBy(static x => x.Id)
-                .Select(static x => x.First()));
+        var types = MergeById(
+            sets.SelectMany(static x => x.Types),
+            static x => x.Id,
+            SemanticTypeFingerprint,
+            "semantic type");
+        var callables = MergeById(
+            sets.SelectMany(static x => x.Callables),
+            static x => x.Id,
+            CallableFingerprint,
+            "callable");
+        return new SemanticDescriptorSet(types, callables);
     }
 
-    private static AirIntrinsicDescriptorSet MergeAirIntrinsics(IEnumerable<AirIntrinsicDescriptorSet> descriptorSets) =>
-        new(descriptorSets
-            .SelectMany(static x => x.Values)
-            .GroupBy(static x => x.Id, StringComparer.Ordinal)
-            .Select(static x => x.First()));
+    private static AirIntrinsicDescriptorSet MergeAirIntrinsics(IEnumerable<AirIntrinsicDescriptorSet> descriptorSets)
+    {
+        var values = MergeById(
+            descriptorSets.SelectMany(static x => x.Values),
+            static x => x.Id,
+            AirIntrinsicFingerprint,
+            "AIR intrinsic",
+            StringComparer.Ordinal);
+        return new AirIntrinsicDescriptorSet(values);
+    }
 
     private static IReadOnlyDictionary<string, CallableId> MergeAirIntrinsicCallables(IEnumerable<ISsaSemanticExtensionPack> packs)
     {
@@ -108,11 +145,63 @@ public sealed class SsaRouteProfile
             map[pair.Key] = pair.Value;
         }
 
-        return map;
+        return new ReadOnlyDictionary<string, CallableId>(map);
     }
 
     private static SsaCallableLoweringTargetSet MergeAirLoweringTargets(IEnumerable<SsaCallableLoweringTargetSet> targetSets) =>
         new(targetSets.SelectMany(static x => x.Values));
+
+    private static IReadOnlyList<T> MergeById<T, TId>(
+        IEnumerable<T> values,
+        Func<T, TId> idSelector,
+        Func<T, string> fingerprint,
+        string kind,
+        IEqualityComparer<TId>? comparer = null)
+        where TId : notnull
+    {
+        var byId = new Dictionary<TId, (T Value, string Fingerprint)>(comparer);
+        foreach (var value in values)
+        {
+            var id = idSelector(value);
+            var candidateFingerprint = fingerprint(value);
+            if (byId.TryGetValue(id, out var existing))
+            {
+                if (!string.Equals(existing.Fingerprint, candidateFingerprint, StringComparison.Ordinal))
+                    throw new ArgumentException($"SSA extension packs define conflicting {kind} descriptors for '{id}'.");
+
+                continue;
+            }
+
+            byId.Add(id, (value, candidateFingerprint));
+        }
+
+        return byId.Values
+            .Select(static pair => pair.Value)
+            .ToArray();
+    }
+
+    private static string SemanticTypeFingerprint(SemanticTypeDescriptor descriptor) =>
+        $"{descriptor.Traits}|{descriptor.DisplayName}";
+
+    private static string CallableFingerprint(CallableDescriptor descriptor) =>
+        string.Join(
+            "|",
+            string.Join(",", descriptor.Signature.ParameterTypes),
+            string.Join(",", descriptor.Signature.ResultTypes),
+            string.Join(",", descriptor.Effects.Effects),
+            descriptor.Determinism,
+            descriptor.AlgebraicTraits,
+            descriptor.TrustLevel,
+            descriptor.DisplayName,
+            string.Join(",", descriptor.RequiredAttributes),
+            string.Join(",", descriptor.AllowedAttributes));
+
+    private static string AirIntrinsicFingerprint(AirIntrinsicDescriptor descriptor) =>
+        string.Join(
+            "|",
+            string.Join(",", descriptor.ParameterTypes),
+            string.Join(",", descriptor.ResultTypes),
+            descriptor.DataOperandCount);
 }
 
 public sealed class SsaRouteProfileBuilder
@@ -121,17 +210,33 @@ public sealed class SsaRouteProfileBuilder
     private SsaRoutePolicy _policy;
     private CapabilitySet _capabilities = CapabilitySet.Empty;
     private SsaDiagnosticMode _diagnostics = SsaDiagnosticMode.Default;
+    private string _id = SsaPreviewRouteProfiles.ProfileId;
 
     private SsaRouteProfileBuilder(SsaRoutePolicy policy)
     {
+        if (!Enum.IsDefined(policy))
+            throw new ArgumentOutOfRangeException(nameof(policy), policy, "SSA route policy is not defined.");
+
         _policy = policy;
     }
 
     public static SsaRouteProfileBuilder Create(SsaRoutePolicy policy = SsaRoutePolicy.Prefer) =>
         new(policy);
 
+    public SsaRouteProfileBuilder WithId(string id)
+    {
+        if (string.IsNullOrWhiteSpace(id))
+            throw new ArgumentException("SSA route profile identifier must not be empty.", nameof(id));
+
+        _id = id.Trim();
+        return this;
+    }
+
     public SsaRouteProfileBuilder WithPolicy(SsaRoutePolicy policy)
     {
+        if (!Enum.IsDefined(policy))
+            throw new ArgumentOutOfRangeException(nameof(policy), policy, "SSA route policy is not defined.");
+
         _policy = policy;
         return this;
     }
@@ -139,6 +244,8 @@ public sealed class SsaRouteProfileBuilder
     public SsaRouteProfileBuilder AddPack(ISsaSemanticExtensionPack pack)
     {
         ArgumentNullException.ThrowIfNull(pack);
+        if (string.IsNullOrWhiteSpace(pack.Id))
+            throw new ArgumentException("SSA extension pack identifier must not be empty.", nameof(pack));
         if (_packs.Any(x => string.Equals(x.Id, pack.Id, StringComparison.Ordinal)))
             throw new ArgumentException($"SSA profile already contains extension pack '{pack.Id}'.", nameof(pack));
 
@@ -148,18 +255,21 @@ public sealed class SsaRouteProfileBuilder
 
     public SsaRouteProfileBuilder RequireTargetCapabilities(CapabilitySet capabilities)
     {
-        _capabilities = capabilities ?? throw new ArgumentNullException(nameof(capabilities));
+        _capabilities = new CapabilitySet((capabilities ?? throw new ArgumentNullException(nameof(capabilities))).Values);
         return this;
     }
 
     public SsaRouteProfileBuilder WithDiagnostics(SsaDiagnosticMode diagnostics)
     {
-        _diagnostics = diagnostics ?? throw new ArgumentNullException(nameof(diagnostics));
+        if (!Enum.IsDefined(diagnostics))
+            throw new ArgumentOutOfRangeException(nameof(diagnostics), diagnostics, "SSA diagnostic mode is not defined.");
+
+        _diagnostics = diagnostics;
         return this;
     }
 
     public SsaRouteProfile Build() =>
-        new(_policy, _packs, _capabilities, _diagnostics);
+        new(_policy, _packs, _capabilities, _diagnostics, _id);
 }
 
 public sealed class SsaPreviewArithmeticInt32Pack : ISsaSemanticExtensionPack
@@ -179,13 +289,13 @@ public sealed class SsaPreviewArithmeticInt32Pack : ISsaSemanticExtensionPack
     public IAirIntrinsicDescriptorResolver AirIntrinsicResolver => AirIntrinsics;
 
     public IReadOnlyDictionary<string, CallableId> AirIntrinsicCallables { get; } =
-        new Dictionary<string, CallableId>(StringComparer.Ordinal)
+        new ReadOnlyDictionary<string, CallableId>(new Dictionary<string, CallableId>(StringComparer.Ordinal)
         {
             [AirIntrinsicIds.AddInt32Unchecked] = SsaPreviewCallables.AddInt32Unchecked,
             [AirIntrinsicIds.SubtractInt32Unchecked] = SsaPreviewCallables.SubtractInt32Unchecked,
             [AirIntrinsicIds.MultiplyInt32Unchecked] = SsaPreviewCallables.MultiplyInt32Unchecked,
             [AirIntrinsicIds.EqualInt32] = SsaPreviewCallables.EqualInt32
-        };
+        });
 
     public SsaCallableLoweringTargetSet AirLoweringTargets =>
         SsaPreviewAirIntrinsicLowerings.ArithmeticInt32.ToTargetSet();
@@ -197,7 +307,7 @@ public sealed class SsaPreviewArithmeticInt32Pack : ISsaSemanticExtensionPack
         new SsaConstantFoldingPass(SemanticDescriptors, new SsaPreviewInt32ConstantEvaluator()),
         new SsaSparseConditionalConstantPropagationPass(SemanticDescriptors, new SsaPreviewInt32ConstantEvaluator()),
         new SsaBranchFoldingAndCleanupPass(),
-        new SsaDeadPureInstructionEliminationPass(SsaCoreDescriptors.ConstantMaterialization, SemanticDescriptors)
+        new SsaDeadPureInstructionEliminationPass(SsaCoreDescriptors.CoreOperations, SemanticDescriptors)
     ];
 }
 
@@ -211,21 +321,21 @@ public sealed class SsaManagedCallablePack : ISsaSemanticExtensionPack
 
     public string Id => "ManagedCallable";
 
-    public SemanticDescriptorSet SemanticDescriptors { get; } = new(
-        types:
-        [
-            new SemanticTypeDescriptor(SsaPreviewSemanticTypes.Bool),
-            new SemanticTypeDescriptor(SsaPreviewSemanticTypes.Int32),
-            new SemanticTypeDescriptor(SsaPreviewSemanticTypes.Float64),
-            new SemanticTypeDescriptor(SsaPreviewSemanticTypes.Object)
-        ]);
+    // Managed callable descriptors are execution-scoped and are carried by
+    // SsaManagedCallableBindingSet. Core preview type descriptors have one
+    // canonical owner: SsaPreviewArithmeticInt32Pack.
+    public SemanticDescriptorSet SemanticDescriptors => SemanticDescriptorSet.Empty;
 
     public AirIntrinsicDescriptorSet AirIntrinsics => AirIntrinsicDescriptorSet.Empty;
 
-    public IAirIntrinsicDescriptorResolver AirIntrinsicResolver => AirManagedCallIntrinsicDescriptorResolver.Instance;
+    public IAirIntrinsicDescriptorResolver AirIntrinsicResolver => new AirIntrinsicDescriptorResolverSet(
+    [
+        AirManagedCallIntrinsicDescriptorResolver.Instance,
+        AirExternalLoadIntrinsicDescriptorResolver.Instance
+    ]);
 
     public IReadOnlyDictionary<string, CallableId> AirIntrinsicCallables { get; } =
-        new Dictionary<string, CallableId>(StringComparer.Ordinal);
+        new ReadOnlyDictionary<string, CallableId>(new Dictionary<string, CallableId>(StringComparer.Ordinal));
 
     public SsaCallableLoweringTargetSet AirLoweringTargets => SsaCallableLoweringTargetSet.Empty;
 
@@ -236,9 +346,18 @@ public sealed class SsaManagedCallablePack : ISsaSemanticExtensionPack
 
 public static class SsaPreviewRouteProfiles
 {
-    public static SsaRouteProfile Create(SsaRoutePolicy policy = SsaRoutePolicy.Prefer) =>
+    public const string ProfileId = "preview-int32-managed";
+
+    public static SsaRouteProfile Create(
+        SsaRoutePolicy policy = SsaRoutePolicy.Prefer,
+        SsaDiagnosticMode diagnostics = SsaDiagnosticMode.Default,
+        CapabilitySet? targetCapabilities = null,
+        string profileId = ProfileId) =>
         SsaRouteProfileBuilder
             .Create(policy)
+            .WithId(profileId)
+            .WithDiagnostics(diagnostics)
+            .RequireTargetCapabilities(targetCapabilities ?? CapabilitySet.Empty)
             .AddPack(SsaPreviewArithmeticInt32Pack.Instance)
             .AddPack(SsaManagedCallablePack.Instance)
             .Build();
@@ -246,7 +365,9 @@ public static class SsaPreviewRouteProfiles
 
 public static class SsaRouteFactory
 {
-    public static AirToSsaConverter CreateLowerer(SsaRouteProfile profile)
+    public static AirToSsaConverter CreateLowerer(
+        SsaRouteProfile profile,
+        IEnumerable<ISsaManagedCallableProjection>? managedCallableProjections = null)
     {
         ArgumentNullException.ThrowIfNull(profile);
 
@@ -256,11 +377,12 @@ public static class SsaRouteFactory
             new StructuralAirVerifier(
                 new AirControlFlowGraphBuilder(),
                 new AirStackAnalyzer(profile.AirIntrinsicResolver)),
-            new StructuralSsaVerifier(SsaCoreDescriptors.ConstantMaterialization, profile.SemanticDescriptors),
+            new StructuralSsaVerifier(SsaCoreDescriptors.CoreOperations, profile.SemanticDescriptors),
             profile.AirIntrinsics,
             profile.AirIntrinsicCallables,
             profile.SemanticDescriptors,
-            profile.EnablesManagedCallables);
+            profile.EnablesManagedCallables,
+            managedCallableProjections);
     }
 
     public static SsaToAirConverter CreateEmitter(SsaRouteProfile profile)
@@ -268,7 +390,7 @@ public static class SsaRouteFactory
         ArgumentNullException.ThrowIfNull(profile);
 
         return new SsaToAirConverter(
-            new StructuralSsaVerifier(SsaCoreDescriptors.ConstantMaterialization, profile.SemanticDescriptors),
+            new StructuralSsaVerifier(SsaCoreDescriptors.CoreOperations, profile.SemanticDescriptors),
             new StructuralAirVerifier(
                 new AirControlFlowGraphBuilder(),
                 new AirStackAnalyzer(profile.AirIntrinsicResolver)),
@@ -285,10 +407,12 @@ public static class SsaRouteFactory
 
         return new SsaOptimizerPipeline(
             profile.CreateOptimizationPasses(),
-            SsaCoreDescriptors.ConstantMaterialization,
+            SsaCoreDescriptors.CoreOperations,
             profile.SemanticDescriptors);
     }
 
-    public static SsaRoundtripRoute CreateRoundtripRoute(SsaRouteProfile profile) =>
-        new(CreateLowerer(profile), CreateEmitter(profile), profile);
+    public static SsaRoundtripRoute CreateRoundtripRoute(
+        SsaRouteProfile profile,
+        IEnumerable<ISsaManagedCallableProjection>? managedCallableProjections = null) =>
+        new(CreateLowerer(profile, managedCallableProjections), CreateEmitter(profile), profile);
 }

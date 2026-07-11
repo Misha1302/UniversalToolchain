@@ -20,12 +20,20 @@ public sealed class SsaOptimizerPipeline
         _descriptors = descriptors ?? throw new ArgumentNullException(nameof(descriptors));
         _semanticDescriptors = semanticDescriptors ?? SemanticDescriptorSet.Empty;
 
+        var duplicatePass = _passes
+            .GroupBy(static pass => pass.Id)
+            .FirstOrDefault(static group => group.Count() > 1);
+        if (duplicatePass is not null)
+            throw new ArgumentException($"Duplicate SSA optimizer pass id '{duplicatePass.Key}'.", nameof(passes));
+
         foreach (var pass in _passes)
         {
             if (pass.InputKind != SsaIrKinds.Ssa || pass.OutputKind != SsaIrKinds.Ssa)
                 throw new ArgumentException($"SSA optimizer pass '{pass.Id}' must preserve SSA IR kind.", nameof(passes));
         }
     }
+
+    public IReadOnlyList<IrStageId> PassIds => _passes.Select(static pass => pass.Id).ToArray();
 
     public IrStageResult Run(SsaArtifact artifact, IrPipelineContext context)
     {
@@ -131,22 +139,19 @@ public sealed class SsaOptimizerPipeline
         SsaArtifact artifact,
         List<IrDiagnostic> diagnostics)
     {
-        var descriptors = new Dictionary<CallableId, CallableDescriptor>();
+        var descriptors = artifact.ManagedCallableBindings.Values.ToDictionary(
+            static binding => binding.Callable,
+            static binding => binding.Descriptor);
+
         foreach (var call in artifact.Module.Functions.SelectMany(static function => function.Blocks).SelectMany(static block => block.Calls))
         {
-            if (!SsaManagedCallables.IsManagedCallable(call.Callee))
+            if (!SsaManagedCallables.IsManagedCallable(call.Callee) || descriptors.ContainsKey(call.Callee))
                 continue;
 
-            if (!SsaManagedCallables.TryResolve(call.Callee, out var resolution, out var diagnostic))
-            {
-                diagnostics.Add(new IrDiagnostic(
-                    IrDiagnosticSeverity.Error,
-                    "ssa.optimization.managed-call.resolve",
-                    $"SSA managed call '{call.Id}' to '{call.Callee}' cannot be resolved. {diagnostic}"));
-                continue;
-            }
-
-            descriptors.TryAdd(resolution.Descriptor.Id, resolution.Descriptor);
+            diagnostics.Add(new IrDiagnostic(
+                IrDiagnosticSeverity.Error,
+                "ssa.optimization.managed-call.binding.missing",
+                $"SSA managed call '{call.Id}' to '{call.Callee}' has no execution-scoped managed member binding."));
         }
 
         return descriptors.Values.ToArray();

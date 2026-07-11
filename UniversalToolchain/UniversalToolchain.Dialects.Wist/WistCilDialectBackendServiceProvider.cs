@@ -2,12 +2,14 @@ using BasicCilCompiler.Contracts;
 using BasicCilCompiler.Execution;
 using BasicCore.Contracts;
 using BasicCore.ExecutorWrapper;
+using BasicCore.Execution;
 using BytecodeDynamicMethodsCompiler.Compilers;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core.ServiceCollection;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.ModuleContracts;
+using VariablesRuntime.Runtime;
 
 namespace UniversalToolchain.Dialects.Wist;
 
@@ -34,6 +36,10 @@ internal sealed class WistCilDialectBackendServiceProvider : DialectBackendRunti
         [
             new ModuleContractBackendPipelineComponent(
                 CilBackendContractDescriptorProvider.Module.Value,
-                [new CilBackendContractDescriptorProvider(SupportedIntrinsics)])
+                [new CilBackendContractDescriptorProvider(SupportedIntrinsics)]),
+            new RuntimeProviderPolicyComponent([
+                typeof(ExternalRuntimeCallProvider),
+                typeof(VariablesRuntimeCallProvider)
+            ])
         ];
 }

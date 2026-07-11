@@ -1,0 +1,228 @@
+type enum UniversalToolchain.Wist.WistBackend
+field UniversalToolchain.Wist.WistBackend UniversalToolchain.Wist.WistBackend.Compiler = 0
+field UniversalToolchain.Wist.WistBackend UniversalToolchain.Wist.WistBackend.Interpreter = 1
+field System.Int32 UniversalToolchain.Wist.WistBackend.value__
+type class UniversalToolchain.Wist.WistCompileResult<TDelegate>
+property System.Collections.Generic.IReadOnlyList<UniversalToolchain.Wist.WistDiagnostic> UniversalToolchain.Wist.WistCompileResult<TDelegate>.Diagnostics { get; }
+property System.Exception UniversalToolchain.Wist.WistCompileResult<TDelegate>.Exception { get; }
+property System.Boolean UniversalToolchain.Wist.WistCompileResult<TDelegate>.IsSuccess { get; }
+property System.String UniversalToolchain.Wist.WistCompileResult<TDelegate>.Message { get; }
+property UniversalToolchain.Wist.WistOptimizationReport UniversalToolchain.Wist.WistCompileResult<TDelegate>.OptimizationReport { get; }
+property UniversalToolchain.Wist.WistProgram<TDelegate> UniversalToolchain.Wist.WistCompileResult<TDelegate>.Program { get; }
+type class UniversalToolchain.Wist.WistDiagnostic
+ctor UniversalToolchain.Wist.WistDiagnostic(System.String Code, UniversalToolchain.Wist.WistDiagnosticSeverity Severity, System.String Stage, System.String SourceName, System.String Message, UniversalToolchain.Wist.WistSourceSpan Span, System.Collections.Generic.IReadOnlyList<UniversalToolchain.Wist.WistDiagnosticHint> Hints)
+property System.String UniversalToolchain.Wist.WistDiagnostic.Code { get; set; }
+property System.Collections.Generic.IReadOnlyList<UniversalToolchain.Wist.WistDiagnosticHint> UniversalToolchain.Wist.WistDiagnostic.Hints { get; set; }
+property System.String UniversalToolchain.Wist.WistDiagnostic.Message { get; set; }
+property UniversalToolchain.Wist.WistDiagnosticSeverity UniversalToolchain.Wist.WistDiagnostic.Severity { get; set; }
+property System.String UniversalToolchain.Wist.WistDiagnostic.SourceName { get; set; }
+property UniversalToolchain.Wist.WistSourceSpan UniversalToolchain.Wist.WistDiagnostic.Span { get; set; }
+property System.String UniversalToolchain.Wist.WistDiagnostic.Stage { get; set; }
+method UniversalToolchain.Wist.WistDiagnostic UniversalToolchain.Wist.WistDiagnostic.<Clone>$()
+method System.Void UniversalToolchain.Wist.WistDiagnostic.Deconstruct(System.String& Code, UniversalToolchain.Wist.WistDiagnosticSeverity& Severity, System.String& Stage, System.String& SourceName, System.String& Message, UniversalToolchain.Wist.WistSourceSpan& Span, System.Collections.Generic.IReadOnlyList<UniversalToolchain.Wist.WistDiagnosticHint>& Hints)
+method System.Boolean UniversalToolchain.Wist.WistDiagnostic.Equals(System.Object obj)
+method System.Boolean UniversalToolchain.Wist.WistDiagnostic.Equals(UniversalToolchain.Wist.WistDiagnostic other)
+method System.Int32 UniversalToolchain.Wist.WistDiagnostic.GetHashCode()
+method System.String UniversalToolchain.Wist.WistDiagnostic.ToString()
+type static-class UniversalToolchain.Wist.WistDiagnosticCodes
+field System.String UniversalToolchain.Wist.WistDiagnosticCodes.AmbiguousResolution = UTC-WIST-RESOLVE-002
+field System.String UniversalToolchain.Wist.WistDiagnosticCodes.CompilationFailure = UTC-WIST-COMPILE-001
+field System.String UniversalToolchain.Wist.WistDiagnosticCodes.DialectFailure = UTC-WIST-DIALECT-001
+field System.String UniversalToolchain.Wist.WistDiagnosticCodes.ExecutionFailure = UTC-WIST-EXEC-001
+field System.String UniversalToolchain.Wist.WistDiagnosticCodes.LexerFailure = UTC-WIST-LEX-001
+field System.String UniversalToolchain.Wist.WistDiagnosticCodes.ParameterLimitExceeded = UTC-WIST-002
+field System.String UniversalToolchain.Wist.WistDiagnosticCodes.ParserFailure = UTC-WIST-PARSE-001
+field System.String UniversalToolchain.Wist.WistDiagnosticCodes.SourceLimitExceeded = UTC-WIST-001
+field System.String UniversalToolchain.Wist.WistDiagnosticCodes.SsaRouteFailure = UTC-WIST-SSA-001
+field System.String UniversalToolchain.Wist.WistDiagnosticCodes.TypeResolutionFailure = UTC-WIST-RESOLVE-001
+field System.String UniversalToolchain.Wist.WistDiagnosticCodes.UnexpectedFailure = UTC-WIST-999
+field System.String UniversalToolchain.Wist.WistDiagnosticCodes.ValidationFailure = UTC-WIST-VALIDATE-001
+type class UniversalToolchain.Wist.WistDiagnosticHint
+ctor UniversalToolchain.Wist.WistDiagnosticHint(System.String Message)
+property System.String UniversalToolchain.Wist.WistDiagnosticHint.Message { get; set; }
+method UniversalToolchain.Wist.WistDiagnosticHint UniversalToolchain.Wist.WistDiagnosticHint.<Clone>$()
+method System.Void UniversalToolchain.Wist.WistDiagnosticHint.Deconstruct(System.String& Message)
+method System.Boolean UniversalToolchain.Wist.WistDiagnosticHint.Equals(System.Object obj)
+method System.Boolean UniversalToolchain.Wist.WistDiagnosticHint.Equals(UniversalToolchain.Wist.WistDiagnosticHint other)
+method System.Int32 UniversalToolchain.Wist.WistDiagnosticHint.GetHashCode()
+method System.String UniversalToolchain.Wist.WistDiagnosticHint.ToString()
+type enum UniversalToolchain.Wist.WistDiagnosticSeverity
+field UniversalToolchain.Wist.WistDiagnosticSeverity UniversalToolchain.Wist.WistDiagnosticSeverity.Error = 2
+field UniversalToolchain.Wist.WistDiagnosticSeverity UniversalToolchain.Wist.WistDiagnosticSeverity.Info = 0
+field UniversalToolchain.Wist.WistDiagnosticSeverity UniversalToolchain.Wist.WistDiagnosticSeverity.Warning = 1
+field System.Int32 UniversalToolchain.Wist.WistDiagnosticSeverity.value__
+type class UniversalToolchain.Wist.WistDialectFeatureException
+ctor UniversalToolchain.Wist.WistDialectFeatureException(System.String message, System.Exception inner)
+type abstract-class UniversalToolchain.Wist.WistDialectSource
+method UniversalToolchain.Wist.WistDialectSource UniversalToolchain.Wist.WistDialectSource.<Clone>$()
+method System.Boolean UniversalToolchain.Wist.WistDialectSource.Equals(System.Object obj)
+method System.Boolean UniversalToolchain.Wist.WistDialectSource.Equals(UniversalToolchain.Wist.WistDialectSource other)
+method UniversalToolchain.Wist.WistDialectSource UniversalToolchain.Wist.WistDialectSource.FromFile(System.String path)
+method UniversalToolchain.Wist.WistDialectSource UniversalToolchain.Wist.WistDialectSource.FromShippedPreset(System.String presetId)
+method UniversalToolchain.Wist.WistDialectSource UniversalToolchain.Wist.WistDialectSource.FromText(System.String sourceText, System.String sourceName)
+method System.Int32 UniversalToolchain.Wist.WistDialectSource.GetHashCode()
+method System.String UniversalToolchain.Wist.WistDialectSource.ToString()
+type class UniversalToolchain.Wist.WistDialectSource+File
+ctor UniversalToolchain.Wist.WistDialectSource+File(System.String Path)
+property System.String UniversalToolchain.Wist.WistDialectSource+File.Path { get; set; }
+method UniversalToolchain.Wist.WistDialectSource+File UniversalToolchain.Wist.WistDialectSource+File.<Clone>$()
+method System.Void UniversalToolchain.Wist.WistDialectSource+File.Deconstruct(System.String& Path)
+method System.Boolean UniversalToolchain.Wist.WistDialectSource+File.Equals(System.Object obj)
+method System.Boolean UniversalToolchain.Wist.WistDialectSource+File.Equals(UniversalToolchain.Wist.WistDialectSource other)
+method System.Boolean UniversalToolchain.Wist.WistDialectSource+File.Equals(UniversalToolchain.Wist.WistDialectSource+File other)
+method System.Int32 UniversalToolchain.Wist.WistDialectSource+File.GetHashCode()
+method System.String UniversalToolchain.Wist.WistDialectSource+File.ToString()
+type class UniversalToolchain.Wist.WistDialectSource+ShippedPreset
+ctor UniversalToolchain.Wist.WistDialectSource+ShippedPreset(System.String PresetId)
+property System.String UniversalToolchain.Wist.WistDialectSource+ShippedPreset.PresetId { get; set; }
+method UniversalToolchain.Wist.WistDialectSource+ShippedPreset UniversalToolchain.Wist.WistDialectSource+ShippedPreset.<Clone>$()
+method System.Void UniversalToolchain.Wist.WistDialectSource+ShippedPreset.Deconstruct(System.String& PresetId)
+method System.Boolean UniversalToolchain.Wist.WistDialectSource+ShippedPreset.Equals(System.Object obj)
+method System.Boolean UniversalToolchain.Wist.WistDialectSource+ShippedPreset.Equals(UniversalToolchain.Wist.WistDialectSource other)
+method System.Boolean UniversalToolchain.Wist.WistDialectSource+ShippedPreset.Equals(UniversalToolchain.Wist.WistDialectSource+ShippedPreset other)
+method System.Int32 UniversalToolchain.Wist.WistDialectSource+ShippedPreset.GetHashCode()
+method System.String UniversalToolchain.Wist.WistDialectSource+ShippedPreset.ToString()
+type class UniversalToolchain.Wist.WistDialectSource+Text
+ctor UniversalToolchain.Wist.WistDialectSource+Text(System.String SourceText, System.String SourceName)
+property System.String UniversalToolchain.Wist.WistDialectSource+Text.SourceName { get; set; }
+property System.String UniversalToolchain.Wist.WistDialectSource+Text.SourceText { get; set; }
+method UniversalToolchain.Wist.WistDialectSource+Text UniversalToolchain.Wist.WistDialectSource+Text.<Clone>$()
+method System.Void UniversalToolchain.Wist.WistDialectSource+Text.Deconstruct(System.String& SourceText, System.String& SourceName)
+method System.Boolean UniversalToolchain.Wist.WistDialectSource+Text.Equals(System.Object obj)
+method System.Boolean UniversalToolchain.Wist.WistDialectSource+Text.Equals(UniversalToolchain.Wist.WistDialectSource other)
+method System.Boolean UniversalToolchain.Wist.WistDialectSource+Text.Equals(UniversalToolchain.Wist.WistDialectSource+Text other)
+method System.Int32 UniversalToolchain.Wist.WistDialectSource+Text.GetHashCode()
+method System.String UniversalToolchain.Wist.WistDialectSource+Text.ToString()
+type class UniversalToolchain.Wist.WistEngine
+method UniversalToolchain.Wist.WistProgram<TDelegate> UniversalToolchain.Wist.WistEngine.Compile``1(System.String formula, System.String[] parameterNames)
+method UniversalToolchain.Wist.WistFunc<TArg0, TResult> UniversalToolchain.Wist.WistEngine.CompileFunc``2(System.String formula, System.String arg0)
+method UniversalToolchain.Wist.WistFunc<TArg0, TArg1, TResult> UniversalToolchain.Wist.WistEngine.CompileFunc``3(System.String formula, System.String arg0, System.String arg1)
+method UniversalToolchain.Wist.WistFunc<TArg0, TArg1, TArg2, TResult> UniversalToolchain.Wist.WistEngine.CompileFunc``4(System.String formula, System.String arg0, System.String arg1, System.String arg2)
+method UniversalToolchain.Wist.WistEngine UniversalToolchain.Wist.WistEngine.Create(UniversalToolchain.Wist.WistEngineOptions options)
+method UniversalToolchain.Wist.WistEngine UniversalToolchain.Wist.WistEngine.CreateBusinessRules()
+method UniversalToolchain.Wist.WistEngine UniversalToolchain.Wist.WistEngine.CreateFullNativePreview()
+method UniversalToolchain.Wist.WistEngine UniversalToolchain.Wist.WistEngine.CreateRestrictedArithmetic()
+method UniversalToolchain.Wist.WistEngine UniversalToolchain.Wist.WistEngine.CreateSafeFormulas()
+method UniversalToolchain.Wist.WistEngine UniversalToolchain.Wist.WistEngine.CreateTrusted()
+method System.Void UniversalToolchain.Wist.WistEngine.Dispose()
+method T UniversalToolchain.Wist.WistEngine.Evaluate``1(System.String code)
+method T UniversalToolchain.Wist.WistEngine.Evaluate``1(System.String code, System.Collections.Generic.IReadOnlyDictionary<System.String, System.Object> arguments)
+method T UniversalToolchain.Wist.WistEngine.Evaluate``1(System.String code, System.Object arguments)
+method UniversalToolchain.Wist.WistCompileResult<TDelegate> UniversalToolchain.Wist.WistEngine.TryCompile``1(System.String formula, System.String[] parameterNames)
+method UniversalToolchain.Wist.WistValidationResult UniversalToolchain.Wist.WistEngine.Validate(System.String code)
+method UniversalToolchain.Wist.WistValidationResult UniversalToolchain.Wist.WistEngine.Validate(System.String code, System.Object sampleArguments)
+type class UniversalToolchain.Wist.WistEngineOptions
+ctor UniversalToolchain.Wist.WistEngineOptions()
+property System.Collections.Generic.IReadOnlyCollection<System.Reflection.Assembly> UniversalToolchain.Wist.WistEngineOptions.AllowedAssemblies { get; set; }
+property UniversalToolchain.Wist.WistBackend UniversalToolchain.Wist.WistEngineOptions.Backend { get; set; }
+property System.String UniversalToolchain.Wist.WistEngineOptions.BackendAlias { get; set; }
+property UniversalToolchain.Wist.WistDialectSource UniversalToolchain.Wist.WistEngineOptions.DialectSource { get; set; }
+property UniversalToolchain.Wist.WistOptimizationOptions UniversalToolchain.Wist.WistEngineOptions.Optimization { get; set; }
+property UniversalToolchain.Wist.WistPreset UniversalToolchain.Wist.WistEngineOptions.Preset { get; set; }
+property UniversalToolchain.Wist.WistResourceLimits UniversalToolchain.Wist.WistEngineOptions.ResourceLimits { get; set; }
+method UniversalToolchain.Wist.WistEngineOptions UniversalToolchain.Wist.WistEngineOptions.FromDialectFile(System.String path)
+method UniversalToolchain.Wist.WistEngineOptions UniversalToolchain.Wist.WistEngineOptions.FromDialectText(System.String sourceText, System.String sourceName)
+method UniversalToolchain.Wist.WistEngineOptions UniversalToolchain.Wist.WistEngineOptions.FromPresetId(System.String presetId)
+type class UniversalToolchain.Wist.WistFunc<TArg0, TResult>
+method TResult UniversalToolchain.Wist.WistFunc<TArg0, TResult>.Invoke(TArg0 arg0)
+type class UniversalToolchain.Wist.WistFunc<TArg0, TArg1, TResult>
+method TResult UniversalToolchain.Wist.WistFunc<TArg0, TArg1, TResult>.Invoke(TArg0 arg0, TArg1 arg1)
+type class UniversalToolchain.Wist.WistFunc<TArg0, TArg1, TArg2, TResult>
+method TResult UniversalToolchain.Wist.WistFunc<TArg0, TArg1, TArg2, TResult>.Invoke(TArg0 arg0, TArg1 arg1, TArg2 arg2)
+type class UniversalToolchain.Wist.WistOptimizationOptions
+ctor UniversalToolchain.Wist.WistOptimizationOptions()
+property UniversalToolchain.Wist.WistSsaOptions UniversalToolchain.Wist.WistOptimizationOptions.Ssa { get; set; }
+type class UniversalToolchain.Wist.WistOptimizationReport
+ctor UniversalToolchain.Wist.WistOptimizationReport(UniversalToolchain.Wist.WistSsaOptimizationReport ssa)
+property UniversalToolchain.Wist.WistSsaOptimizationReport UniversalToolchain.Wist.WistOptimizationReport.Ssa { get; }
+type enum UniversalToolchain.Wist.WistPreset
+field UniversalToolchain.Wist.WistPreset UniversalToolchain.Wist.WistPreset.BusinessRules = 3
+field UniversalToolchain.Wist.WistPreset UniversalToolchain.Wist.WistPreset.FullNativePreview = 1
+field UniversalToolchain.Wist.WistPreset UniversalToolchain.Wist.WistPreset.FullTrusted = 4
+field UniversalToolchain.Wist.WistPreset UniversalToolchain.Wist.WistPreset.RestrictedArithmetic = 0
+field UniversalToolchain.Wist.WistPreset UniversalToolchain.Wist.WistPreset.SafeFormulas = 2
+field System.Int32 UniversalToolchain.Wist.WistPreset.value__
+type class UniversalToolchain.Wist.WistProgramMetadata
+ctor UniversalToolchain.Wist.WistProgramMetadata(System.String sourceText, System.String backend, System.Collections.Generic.IReadOnlyList<System.String> parameterNames, System.Collections.Generic.IReadOnlyList<System.Type> parameterTypes, System.Type returnType, UniversalToolchain.Wist.WistOptimizationReport optimizationReport)
+property System.String UniversalToolchain.Wist.WistProgramMetadata.Backend { get; }
+property UniversalToolchain.Wist.WistOptimizationReport UniversalToolchain.Wist.WistProgramMetadata.OptimizationReport { get; }
+property System.Collections.Generic.IReadOnlyList<System.String> UniversalToolchain.Wist.WistProgramMetadata.ParameterNames { get; }
+property System.Collections.Generic.IReadOnlyList<System.Type> UniversalToolchain.Wist.WistProgramMetadata.ParameterTypes { get; }
+property System.Type UniversalToolchain.Wist.WistProgramMetadata.ReturnType { get; }
+property System.String UniversalToolchain.Wist.WistProgramMetadata.SourceText { get; }
+type class UniversalToolchain.Wist.WistProgram<TDelegate>
+property TDelegate UniversalToolchain.Wist.WistProgram<TDelegate>.CompiledDelegate { get; }
+property UniversalToolchain.Wist.WistProgramMetadata UniversalToolchain.Wist.WistProgram<TDelegate>.Metadata { get; }
+type class UniversalToolchain.Wist.WistResourceLimitException
+property System.String UniversalToolchain.Wist.WistResourceLimitException.DiagnosticCode { get; }
+type class UniversalToolchain.Wist.WistResourceLimits
+ctor UniversalToolchain.Wist.WistResourceLimits()
+field System.Int32 UniversalToolchain.Wist.WistResourceLimits.DefaultMaxParameterCount = 64
+field System.Int32 UniversalToolchain.Wist.WistResourceLimits.DefaultMaxSourceLength = 65536
+property System.Int32 UniversalToolchain.Wist.WistResourceLimits.MaxParameterCount { get; set; }
+property System.Int32 UniversalToolchain.Wist.WistResourceLimits.MaxSourceLength { get; set; }
+type class UniversalToolchain.Wist.WistSourceSpan
+ctor UniversalToolchain.Wist.WistSourceSpan(System.String SourceName, System.Int32 StartLine, System.Int32 StartColumn, System.Int32 EndLine, System.Int32 EndColumn)
+property System.Int32 UniversalToolchain.Wist.WistSourceSpan.EndColumn { get; set; }
+property System.Int32 UniversalToolchain.Wist.WistSourceSpan.EndLine { get; set; }
+property System.String UniversalToolchain.Wist.WistSourceSpan.SourceName { get; set; }
+property System.Int32 UniversalToolchain.Wist.WistSourceSpan.StartColumn { get; set; }
+property System.Int32 UniversalToolchain.Wist.WistSourceSpan.StartLine { get; set; }
+method UniversalToolchain.Wist.WistSourceSpan UniversalToolchain.Wist.WistSourceSpan.<Clone>$()
+method System.Void UniversalToolchain.Wist.WistSourceSpan.Deconstruct(System.String& SourceName, System.Int32& StartLine, System.Int32& StartColumn, System.Int32& EndLine, System.Int32& EndColumn)
+method System.Boolean UniversalToolchain.Wist.WistSourceSpan.Equals(System.Object obj)
+method System.Boolean UniversalToolchain.Wist.WistSourceSpan.Equals(UniversalToolchain.Wist.WistSourceSpan other)
+method System.Int32 UniversalToolchain.Wist.WistSourceSpan.GetHashCode()
+method System.String UniversalToolchain.Wist.WistSourceSpan.ToString()
+type enum UniversalToolchain.Wist.WistSsaDiagnosticLevel
+field UniversalToolchain.Wist.WistSsaDiagnosticLevel UniversalToolchain.Wist.WistSsaDiagnosticLevel.Detailed = 1
+field UniversalToolchain.Wist.WistSsaDiagnosticLevel UniversalToolchain.Wist.WistSsaDiagnosticLevel.Summary = 0
+field System.Int32 UniversalToolchain.Wist.WistSsaDiagnosticLevel.value__
+type class UniversalToolchain.Wist.WistSsaOptimizationReport
+ctor UniversalToolchain.Wist.WistSsaOptimizationReport(UniversalToolchain.Wist.WistSsaPolicy requestedPolicy, System.Boolean usedSsa, System.Boolean fellBackToAir, System.String profile, System.Int32 inputAirInstructionCount, System.Int32 outputAirInstructionCount, System.Collections.Generic.IEnumerable<System.String> executedPasses, System.Collections.Generic.IEnumerable<UniversalToolchain.Wist.WistSsaRouteDiagnostic> diagnostics, System.Collections.Generic.IEnumerable<UniversalToolchain.Wist.WistSsaTraceEntry> trace)
+property System.Collections.Generic.IReadOnlyList<UniversalToolchain.Wist.WistSsaRouteDiagnostic> UniversalToolchain.Wist.WistSsaOptimizationReport.Diagnostics { get; }
+property System.Collections.Generic.IReadOnlyList<System.String> UniversalToolchain.Wist.WistSsaOptimizationReport.ExecutedPasses { get; }
+property System.Boolean UniversalToolchain.Wist.WistSsaOptimizationReport.FellBackToAir { get; }
+property System.Int32 UniversalToolchain.Wist.WistSsaOptimizationReport.InputAirInstructionCount { get; }
+property System.Int32 UniversalToolchain.Wist.WistSsaOptimizationReport.OutputAirInstructionCount { get; }
+property System.String UniversalToolchain.Wist.WistSsaOptimizationReport.Profile { get; }
+property UniversalToolchain.Wist.WistSsaPolicy UniversalToolchain.Wist.WistSsaOptimizationReport.RequestedPolicy { get; }
+property System.Collections.Generic.IReadOnlyList<UniversalToolchain.Wist.WistSsaTraceEntry> UniversalToolchain.Wist.WistSsaOptimizationReport.Trace { get; }
+property System.Boolean UniversalToolchain.Wist.WistSsaOptimizationReport.UsedSsa { get; }
+type class UniversalToolchain.Wist.WistSsaOptions
+ctor UniversalToolchain.Wist.WistSsaOptions()
+property UniversalToolchain.Wist.WistSsaDiagnosticLevel UniversalToolchain.Wist.WistSsaOptions.DiagnosticLevel { get; set; }
+property UniversalToolchain.Wist.WistSsaPolicy UniversalToolchain.Wist.WistSsaOptions.Policy { get; set; }
+type enum UniversalToolchain.Wist.WistSsaPolicy
+field UniversalToolchain.Wist.WistSsaPolicy UniversalToolchain.Wist.WistSsaPolicy.Debug = 3
+field UniversalToolchain.Wist.WistSsaPolicy UniversalToolchain.Wist.WistSsaPolicy.Disabled = 0
+field UniversalToolchain.Wist.WistSsaPolicy UniversalToolchain.Wist.WistSsaPolicy.Prefer = 1
+field UniversalToolchain.Wist.WistSsaPolicy UniversalToolchain.Wist.WistSsaPolicy.Require = 2
+field System.Int32 UniversalToolchain.Wist.WistSsaPolicy.value__
+type class UniversalToolchain.Wist.WistSsaRouteDiagnostic
+ctor UniversalToolchain.Wist.WistSsaRouteDiagnostic(System.String Code, System.String Message)
+property System.String UniversalToolchain.Wist.WistSsaRouteDiagnostic.Code { get; set; }
+property System.String UniversalToolchain.Wist.WistSsaRouteDiagnostic.Message { get; set; }
+method UniversalToolchain.Wist.WistSsaRouteDiagnostic UniversalToolchain.Wist.WistSsaRouteDiagnostic.<Clone>$()
+method System.Void UniversalToolchain.Wist.WistSsaRouteDiagnostic.Deconstruct(System.String& Code, System.String& Message)
+method System.Boolean UniversalToolchain.Wist.WistSsaRouteDiagnostic.Equals(System.Object obj)
+method System.Boolean UniversalToolchain.Wist.WistSsaRouteDiagnostic.Equals(UniversalToolchain.Wist.WistSsaRouteDiagnostic other)
+method System.Int32 UniversalToolchain.Wist.WistSsaRouteDiagnostic.GetHashCode()
+method System.String UniversalToolchain.Wist.WistSsaRouteDiagnostic.ToString()
+type class UniversalToolchain.Wist.WistSsaTraceEntry
+ctor UniversalToolchain.Wist.WistSsaTraceEntry(System.String Stage, System.String Message, System.Nullable<System.Int32> InstructionCount)
+property System.Nullable<System.Int32> UniversalToolchain.Wist.WistSsaTraceEntry.InstructionCount { get; set; }
+property System.String UniversalToolchain.Wist.WistSsaTraceEntry.Message { get; set; }
+property System.String UniversalToolchain.Wist.WistSsaTraceEntry.Stage { get; set; }
+method UniversalToolchain.Wist.WistSsaTraceEntry UniversalToolchain.Wist.WistSsaTraceEntry.<Clone>$()
+method System.Void UniversalToolchain.Wist.WistSsaTraceEntry.Deconstruct(System.String& Stage, System.String& Message, System.Nullable<System.Int32>& InstructionCount)
+method System.Boolean UniversalToolchain.Wist.WistSsaTraceEntry.Equals(System.Object obj)
+method System.Boolean UniversalToolchain.Wist.WistSsaTraceEntry.Equals(UniversalToolchain.Wist.WistSsaTraceEntry other)
+method System.Int32 UniversalToolchain.Wist.WistSsaTraceEntry.GetHashCode()
+method System.String UniversalToolchain.Wist.WistSsaTraceEntry.ToString()
+type class UniversalToolchain.Wist.WistValidationResult
+property System.Collections.Generic.IReadOnlyList<UniversalToolchain.Wist.WistDiagnostic> UniversalToolchain.Wist.WistValidationResult.Diagnostics { get; }
+property System.Exception UniversalToolchain.Wist.WistValidationResult.Exception { get; }
+property System.Boolean UniversalToolchain.Wist.WistValidationResult.IsValid { get; }
+property System.String UniversalToolchain.Wist.WistValidationResult.Message { get; }
+property UniversalToolchain.Wist.WistOptimizationReport UniversalToolchain.Wist.WistValidationResult.OptimizationReport { get; }

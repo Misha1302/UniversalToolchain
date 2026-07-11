@@ -1,8 +1,11 @@
+using BasicCore.Semantics;
+
 namespace BasicCore.ParserWrapper;
 
 public class AstNode
 {
     private readonly HashSet<string> _currentTags = [];
+    private readonly HashSet<AstSemanticTagId> _localSemanticTags = [];
     public readonly LexemeValue? LexemeValue;
     public AstNodeType NodeType;
 
@@ -14,6 +17,8 @@ public class AstNode
     }
 
     public IReadOnlySet<string> CurrentTags => _currentTags;
+
+    public IReadOnlySet<AstSemanticTagId> LocalSemanticTags => _localSemanticTags;
 
     public AstNode? Parent { get; internal set; }
 
@@ -34,6 +39,13 @@ public class AstNode
     {
         _currentTags.Add(tag);
     }
+
+    public void AddSemanticTag(AstSemanticTagId tag)
+    {
+        _localSemanticTags.Add(tag);
+    }
+
+    public bool HasLocalSemanticTag(AstSemanticTagId tag) => _localSemanticTags.Contains(tag);
 
     public AstNode? SafeGet(int index) => index >= 0 && index < Children.Count ? Children[index] : null;
 

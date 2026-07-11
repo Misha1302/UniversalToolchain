@@ -71,7 +71,8 @@ internal sealed class PreparedExecutionBuilder<TCompilationOutput>(
         var astRoot = parser.Parse(targetLexemes);
 
         var targetRoot = modules.Aggregate(astRoot, (current, module) => module.ProcessAst(current));
-        var boundRoot = new Binder(input.ExternalBindings).Bind(targetRoot);
+        var bindingRules = modules.SelectMany(static module => module.GetAstBindingRules()).ToArray();
+        var boundRoot = new Binder(input.ExternalBindings, bindingRules).Bind(targetRoot);
 
         modules.ForEach(module => module.InitAstTranslator(astTranslator, modules));
         var bytecode = astTranslator.Translate(boundRoot);
@@ -86,7 +87,7 @@ internal sealed class PreparedExecutionBuilder<TCompilationOutput>(
         var irPipeline = new AirOnlyIrPipelineExecutor<TCompilationOutput>(optimizers, compiler);
         var targetIr = irPipeline.Optimize(air);
         NotifyAfterOptimizedAir(input, targetIr, compiler.SupportedIntrinsics);
-        var allowedRuntimeProviderTypes = ExtractAllowedRuntimeProviderTypes(targetIr);
+        var allowedRuntimeProviderTypes = ResolveAllowedRuntimeProviderTypes();
         middleEndModules.ForEach(module => module.InitMethodsCompiler(compiler));
         var compiled = compiler.Compile(targetIr, input);
 
@@ -149,26 +150,13 @@ internal sealed class PreparedExecutionBuilder<TCompilationOutput>(
             observer.AfterOptimizedAir(context);
     }
 
-    private static IReadOnlyList<Type> ExtractAllowedRuntimeProviderTypes(IAbstractIR ir)
-    {
-        var providers = new HashSet<Type>();
-        foreach (var instruction in ir.Instructions)
-        {
-            if (instruction.UOpCode != UOpCode.Intrinsic || instruction.Operands.Count < 2)
-                continue;
-
-            if (!Equals(instruction.Operands[0], "call C#"))
-                continue;
-
-            if (instruction.Operands[1] is not CSharpCallDescriptor descriptor)
-                continue;
-
-            if (descriptor.Receiver is CSharpCallReceiver.ExecutionScopedProvider executionScopedProvider)
-                providers.Add(executionScopedProvider.ProviderType);
-        }
-
-        return providers.ToList();
-    }
+    private IReadOnlyList<Type> ResolveAllowedRuntimeProviderTypes() =>
+        _backendComponents
+            .OfType<IRuntimeProviderPolicyComponent>()
+            .SelectMany(static component => component.AllowedRuntimeProviderTypes)
+            .Distinct()
+            .OrderBy(static type => type.FullName, StringComparer.Ordinal)
+            .ToArray();
 }
 
 internal sealed class CompilationBuildResult<TCompilationOutput>(

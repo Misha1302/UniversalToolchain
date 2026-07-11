@@ -18,3 +18,9 @@ global using IntermediateRepresentationAbstractions;
 global using LexemeType = BasicTypesExtensions.ExtensibleEnum<BasicCore.LexerWrapper.LexemeTag>;
 global using Microsoft.Extensions.DependencyInjection;
 global using UniversalToolchain.Ir.Abstractions;
+
+global using BasicCore.Semantics;
+
+global using BasicCore.Builtins;
+
+global using BasicCore.Legacy;

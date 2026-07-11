@@ -10,7 +10,7 @@ public sealed class SsaDeadPureInstructionEliminationPass : IIrOptimizationPass
     private readonly SemanticDescriptorSet _semanticDescriptors;
 
     public SsaDeadPureInstructionEliminationPass()
-        : this(SsaCoreDescriptors.ConstantMaterialization, SemanticDescriptorSet.Empty)
+        : this(SsaCoreDescriptors.CoreOperations, SemanticDescriptorSet.Empty)
     {
     }
 
@@ -39,7 +39,7 @@ public sealed class SsaDeadPureInstructionEliminationPass : IIrOptimizationPass
         ArgumentNullException.ThrowIfNull(context);
 
         var artifact = input.As<SsaArtifact>();
-        return new IrStageResult(new SsaArtifact(RewriteModule(artifact.Module)));
+        return new IrStageResult(new SsaArtifact(RewriteModule(artifact.Module), artifact.ManagedCallableBindings));
     }
 
     private SsaModule RewriteModule(SsaModule module) =>

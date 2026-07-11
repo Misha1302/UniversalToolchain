@@ -42,7 +42,7 @@ public sealed class SsaConstantFoldingPass : IIrOptimizationPass
 
         var artifact = input.As<SsaArtifact>();
         var module = RewriteModule(artifact.Module);
-        return new IrStageResult(new SsaArtifact(module));
+        return new IrStageResult(new SsaArtifact(module, artifact.ManagedCallableBindings));
     }
 
     private SsaModule RewriteModule(SsaModule module) =>

@@ -29,7 +29,7 @@ The cold path pays for source handling and runtime selection. The hot path start
 ```csharp
 using UniversalToolchain.Wist;
 
-using var wist = WistEngine.CreateSafeFormulas();
+using var wist = WistEngine.CreateRestrictedArithmetic();
 
 var formula = wist.Compile<Func<double, double, double>>(
     "price * 0.9 + fee",
@@ -52,7 +52,7 @@ low-level CIL `DynamicMethod` output.
 ```csharp
 using UniversalToolchain.Wist;
 
-using var wist = WistEngine.CreateSafeFormulas();
+using var wist = WistEngine.CreateRestrictedArithmetic();
 
 double result = wist.Evaluate<double>(
     "price * 0.9 + fee",

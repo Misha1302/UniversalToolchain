@@ -253,8 +253,33 @@ public sealed class AirStackAnalyzer
             int => state.Push(AirValueTypes.Int32),
             double => state.Push(AirValueTypes.Float64),
             string => state.Push(AirValueTypes.Object),
+            AirExternalValueReference external when TryMapExternalType(external.ValueType, out var externalType) => state.Push(externalType),
             _ => UnsupportedPush(blockId, instructionIndex, instruction, state, diagnostics)
         };
+    }
+
+    private static bool TryMapExternalType(Type type, out AirValueTypeId airType)
+    {
+        if (type == typeof(bool))
+        {
+            airType = AirValueTypes.Bool;
+            return true;
+        }
+
+        if (type == typeof(int))
+        {
+            airType = AirValueTypes.Int32;
+            return true;
+        }
+
+        if (type == typeof(double))
+        {
+            airType = AirValueTypes.Float64;
+            return true;
+        }
+
+        airType = default;
+        return false;
     }
 
     private static AirStackState UnsupportedPush(

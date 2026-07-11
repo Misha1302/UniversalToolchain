@@ -15,7 +15,7 @@ This page shows the shortest practical checks for Wist:
 Install the package first:
 
 ```bash ci-run=false
-dotnet add package UniversalToolchain.Wist --version 0.1.0-preview.2
+dotnet add package UniversalToolchain.Wist --version 0.1.0-preview.4
 ```
 
 Then run a simple formula through the public facade:
@@ -23,7 +23,7 @@ Then run a simple formula through the public facade:
 ```csharp
 using UniversalToolchain.Wist;
 
-using var wist = WistEngine.CreateSafeFormulas();
+using var wist = WistEngine.CreateRestrictedArithmetic();
 
 var formula = wist.Compile<Func<double, double, double>>(
     "price * 0.9 + fee",
@@ -34,16 +34,20 @@ double result = formula.CompiledDelegate(100.0, 5.0);
 Console.WriteLine(result); // 95
 ```
 
-This is the normal preview.2 first-contact path for application developers. `Compile<TDelegate>` compiles once and returns a typed program whose delegate can be invoked repeatedly.
+This is the normal preview.4 first-contact path for application developers. `Compile<TDelegate>` compiles once and returns a typed program whose delegate can be invoked repeatedly.
 
 ## Trusted C# interop example
 
-Use `CreateTrusted` only for trusted source code controlled by the host application.
+Enable CLR interop only for trusted source code controlled by the host application, and expose each host assembly explicitly.
 
 ```csharp
 using UniversalToolchain.Wist;
 
-using var wist = WistEngine.CreateTrusted();
+using var wist = WistEngine.Create(new WistEngineOptions
+{
+    Preset = WistPreset.FullNativePreview,
+    AllowedAssemblies = [typeof(Math).Assembly]
+});
 
 var calcHypotenuse = wist.Compile<Func<double, double, double>>(
     "System.Math.Sqrt(x * x + y * y)",
@@ -54,7 +58,7 @@ double result = calcHypotenuse.CompiledDelegate(7.0, 24.0);
 Console.WriteLine(result); // 25
 ```
 
-This example uses C# interop and therefore belongs to the trusted profile, not to the restricted safe-formula profile.
+This example uses C# interop and therefore belongs to the trusted profile, not to the restricted arithmetic profile.
 
 ## Repository CLI check
 
@@ -118,8 +122,8 @@ The same source should produce the same observable result in compiler and interp
 ## Common mistakes
 
 - Installing the package into a project that does not target `net10.0`.
-- Using `CreateTrusted` for untrusted user input.
-- Expecting `System.Math.Sqrt(...)` interop to work in restricted safe-formula presets.
+- Exposing CLR assemblies to untrusted user input.
+- Expecting `System.Math.Sqrt(...)` interop to work without adding `typeof(Math).Assembly` to `AllowedAssemblies`.
 - Running repository CLI commands from a subdirectory, causing project paths to fail.
 - Using `--backend compiler` with a dialect that exposes only `interpreter`.
 - Assuming all dialects expose all Wist syntax. Syntax exists only when the owning module is selected.

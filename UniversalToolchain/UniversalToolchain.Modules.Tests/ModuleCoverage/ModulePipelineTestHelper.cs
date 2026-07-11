@@ -47,7 +47,20 @@ internal sealed class ModulePipelineTestHelper : IDisposable
         if (!composition.IsSuccess)
             throw new InvalidOperationException(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
 
-        return _workflow.CreateHost(composition);
+        return _workflow.CreateHost(
+            composition,
+            new WistRuntimeServiceOptions
+            {
+                // The module-contract suite intentionally exercises CLR interop against
+                // NumbersModule. Declare that host capability explicitly instead of relying
+                // on AppDomain/output-directory discovery.
+                AllowedAssemblies =
+                [
+                    typeof(int).Assembly,
+                    typeof(NumbersModule.Core.RealNumberImpl).Assembly,
+                    typeof(ModulePipelineTestHelper).Assembly
+                ]
+            });
     }
 
     public DialectFrameworkCompositionResult Compose(IEnumerable<string> modules, IEnumerable<string>? optimizers = null, IEnumerable<string>? backends = null)

@@ -1,5 +1,4 @@
 using UniversalToolchain.ModuleContracts;
-using UniversalToolchain.Wist.Contracts;
 
 namespace ScopesModule.Contracts;
 
@@ -18,7 +17,7 @@ public sealed class ScopesModuleContractDescriptorProvider : IModuleContractDesc
             ScopesContractIds.Module,
             [
                 new CompilerFactOwnershipContract(
-                    WistScopesFacts.ScopesLocalsBound,
+                    ScopesFacts.ScopesLocalsBound,
                     ScopesContractIds.Module)
             ]),
         new PipelineEffectFacet(
@@ -28,7 +27,7 @@ public sealed class ScopesModuleContractDescriptorProvider : IModuleContractDesc
                     ScopesEffects.BindScopeLocals,
                     CompilerPipelineStage.Bytecode,
                     [],
-                    [WistScopesFacts.ScopesLocalsBound],
+                    [ScopesFacts.ScopesLocalsBound],
                     [],
                     [])
             ])

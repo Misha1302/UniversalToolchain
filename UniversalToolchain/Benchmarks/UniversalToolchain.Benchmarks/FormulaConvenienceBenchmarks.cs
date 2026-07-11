@@ -27,10 +27,10 @@ public class FormulaConvenienceBenchmarks
     {
         (_a, _b, _c) = FormulaBenchmarkData.CreateInputs();
         _cSharp = FormulaBenchmarkData.CSharpDelegate(FormulaWorkload.SimpleArithmetic);
-        _compilerEngine = WistEngine.CreateSafeFormulas();
+        _compilerEngine = WistEngine.CreateRestrictedArithmetic();
         _interpreterEngine = WistEngine.Create(new WistEngineOptions
         {
-            Preset = WistPreset.SafeFormulas,
+            Preset = WistPreset.RestrictedArithmetic,
             Backend = WistBackend.Interpreter
         });
 

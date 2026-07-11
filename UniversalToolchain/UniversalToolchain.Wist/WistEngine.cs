@@ -1,30 +1,38 @@
-using System.Reflection.Emit;
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
 using UniversalToolchain.Dialects.Wist.Presets;
+using UniversalToolchain.Ssa.Optimization;
 
 namespace UniversalToolchain.Wist;
 
 /// <summary>
-///     Public Wist facade for convenient evaluation and typed fast compiled functions.
+/// Public Wist facade for convenient evaluation and typed compiled functions.
 /// </summary>
 public sealed class WistEngine : IDisposable
 {
     private readonly WistDialectExecutionHost _host;
     private readonly WistEngineOptions _options;
+    private readonly IWistDelegateCompiler _delegateCompiler;
+    private readonly WistResourceLimits _resourceLimits;
+    private readonly SsaRouteReportCollector _ssaReportCollector;
     private bool _disposed;
 
-    private WistEngine(WistDialectExecutionHost host, WistEngineOptions options)
+    private WistEngine(
+        WistDialectExecutionHost host,
+        WistEngineOptions options,
+        IWistDelegateCompiler delegateCompiler,
+        WistResourceLimits resourceLimits,
+        SsaRouteReportCollector ssaReportCollector)
     {
         _host = host;
         _options = options;
+        _delegateCompiler = delegateCompiler;
+        _resourceLimits = resourceLimits;
+        _ssaReportCollector = ssaReportCollector;
     }
 
-    /// <summary>
-    ///     Releases the composed Wist runtime.
-    /// </summary>
     public void Dispose()
     {
         if (_disposed)
@@ -34,130 +42,229 @@ public sealed class WistEngine : IDisposable
         _disposed = true;
     }
 
-    /// <summary>
-    ///     Creates a restricted arithmetic/formula Wist engine.
-    /// </summary>
-    public static WistEngine CreateRestrictedArithmetic() => Create(new WistEngineOptions { Preset = WistPreset.RestrictedArithmetic });
+    public static WistEngine CreateRestrictedArithmetic() =>
+        Create(new WistEngineOptions { Preset = WistPreset.RestrictedArithmetic });
+
+    public static WistEngine CreateFullNativePreview() =>
+        Create(new WistEngineOptions { Preset = WistPreset.FullNativePreview });
+
+    [Obsolete("Use CreateRestrictedArithmetic(). The restricted preset is not a security sandbox.")]
+    public static WistEngine CreateSafeFormulas() => CreateRestrictedArithmetic();
+
+    [Obsolete("Use CreateFullNativePreview() and explicitly review the trust boundary.")]
+    public static WistEngine CreateBusinessRules() => CreateFullNativePreview();
+
+    [Obsolete("Use CreateFullNativePreview(). This preset is only for trusted input.")]
+    public static WistEngine CreateTrusted() => CreateFullNativePreview();
 
     /// <summary>
-    ///     Creates a full native Wist preview engine. Do not use this for untrusted input.
-    /// </summary>
-    public static WistEngine CreateFullNativePreview() => Create(new WistEngineOptions { Preset = WistPreset.FullNativePreview });
-
-    /// <summary>
-    ///     Creates a safe formula-oriented Wist engine. Compatibility alias for <see cref="CreateRestrictedArithmetic"/>.
-    /// </summary>
-    public static WistEngine CreateSafeFormulas() => Create(new WistEngineOptions { Preset = WistPreset.SafeFormulas });
-
-    /// <summary>
-    ///     Creates a business-rule oriented Wist engine. Compatibility alias for <see cref="CreateFullNativePreview"/> in this preview.
-    /// </summary>
-    public static WistEngine CreateBusinessRules() => Create(new WistEngineOptions { Preset = WistPreset.BusinessRules });
-
-    /// <summary>
-    ///     Creates a full trusted Wist engine. Compatibility alias for <see cref="CreateFullNativePreview"/>; do not use this for untrusted input.
-    /// </summary>
-    public static WistEngine CreateTrusted() => Create(new WistEngineOptions { Preset = WistPreset.FullTrusted });
-
-    /// <summary>
-    ///     Creates a Wist engine from public facade options.
+    /// Creates a Wist engine from public facade options. Options are snapshotted at creation time.
     /// </summary>
     public static WistEngine Create(WistEngineOptions options)
     {
         options = options.ArgNotNull();
+        var resourceLimits = options.ResourceLimits.ArgNotNull().SnapshotValidated();
+        var optimization = options.Optimization.ArgNotNull().SnapshotValidated();
+        var allowedAssemblies = options.AllowedAssemblies.ArgNotNull().ToArray();
+
+        if (allowedAssemblies.Any(static assembly => assembly is null))
+            Thrower.Argument(nameof(options.AllowedAssemblies), "The allowed assembly collection must not contain null values.");
+
+        var optionsSnapshot = new WistEngineOptions
+        {
+            Preset = options.Preset,
+            DialectSource = options.DialectSource,
+            Backend = options.Backend,
+            BackendAlias = options.BackendAlias,
+            AllowedAssemblies = allowedAssemblies,
+            ResourceLimits = resourceLimits,
+            Optimization = optimization
+        };
 
         var services = new ServiceCollection();
         services.AddWistDialectServices();
 
         using var provider = services.BuildServiceProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var composition = workflow.ComposeFile(
-            new WistShippedDialectFileResolver()
-                .Resolve(WistPresetMapper.ToShippedPreset(options.Preset)));
+        var source = ResolveDialectSource(optionsSnapshot);
+        var composition = Compose(workflow, source, optimization.Ssa);
 
         if (!composition.IsSuccess)
-            Thrower.InvalidOpEx(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
+        {
+            Thrower.InvalidOpEx(
+                DialectCompositionExplanationFormatter.FormatDeterministic(
+                    DialectCompositionExplanationProjector.Project(composition)));
+        }
 
-        return new WistEngine(workflow.CreateHost(composition), options);
+        var reportCollector = new SsaRouteReportCollector();
+        var runtimeServiceOptions = new WistRuntimeServiceOptions
+        {
+            AllowedAssemblies = allowedAssemblies,
+            SsaExecution = CreateSsaExecutionOptions(optimization.Ssa),
+            SsaReportSink = reportCollector
+        };
+
+        return new WistEngine(
+            workflow.CreateHost(composition, runtimeServiceOptions),
+            optionsSnapshot,
+            new WistCilDelegateCompiler(),
+            resourceLimits,
+            reportCollector);
     }
 
-    /// <summary>
-    ///     Evaluates source text through the configured convenience backend.
-    /// </summary>
     public T Evaluate<T>(string code)
     {
-        try
-        {
-            return WistResultConverter.ConvertTo<T>(_host.Run(code, WistBackendAliases.ToAlias(_options.Backend)));
-        }
-        catch (Exception ex)
-        {
-            throw NormalizeUserFacingException(code, ex);
-        }
+        ThrowIfDisposed();
+        EnsureSourceWithinLimits(code);
+        return WistResultConverter.ConvertTo<T>(_host.Run(code, ResolveBackendAlias(_options)));
     }
 
-    /// <summary>
-    ///     Evaluates source text with anonymous-object or dictionary arguments.
-    /// </summary>
-    public T Evaluate<T>(string code, object arguments) => Evaluate<T>(code, WistArgumentReader.FromObject(arguments));
+    public T Evaluate<T>(string code, object arguments)
+    {
+        arguments = arguments.ArgNotNull();
+        return Evaluate<T>(code, WistArgumentReader.FromObject(arguments));
+    }
 
-    /// <summary>
-    ///     Evaluates source text with named arguments through the configured convenience backend.
-    /// </summary>
     public T Evaluate<T>(string code, IReadOnlyDictionary<string, object?> arguments)
     {
-        try
-        {
-            return WistResultConverter.ConvertTo<T>(_host.Run(code, arguments, WistBackendAliases.ToAlias(_options.Backend)));
-        }
-        catch (Exception ex)
-        {
-            throw NormalizeUserFacingException(code, ex);
-        }
+        ThrowIfDisposed();
+        EnsureSourceWithinLimits(code);
+        arguments = arguments.ArgNotNull();
+        EnsureParameterCountWithinLimits(arguments.Count);
+        return WistResultConverter.ConvertTo<T>(_host.Run(code, arguments, ResolveBackendAlias(_options)));
     }
 
-    /// <summary>
-    ///     Validates source text by attempting to compile it for the configured backend.
-    /// </summary>
     public WistValidationResult Validate(string code)
     {
+        ThrowIfDisposed();
+        using var capture = _ssaReportCollector.BeginCapture();
+
         try
         {
-            _ = _host.Compile(code, null, WistBackendAliases.ToAlias(_options.Backend));
-            return WistValidationResult.Success();
+            EnsureSourceWithinLimits(code);
+            _ = _host.Compile(code, null, ResolveBackendAlias(_options));
+            return WistValidationResult.Success(CreateOptimizationReport(capture.Report));
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            return WistValidationResult.Failure(NormalizeUserFacingException(code, ex));
+            return WistValidationResult.Failure(
+                exception,
+                WistDiagnosticFactory.FromException(exception, "Validation"),
+                CreateOptimizationReport(capture.Report));
         }
     }
 
-    /// <summary>
-    ///     Validates source text with sample arguments by attempting to compile it for the configured backend.
-    /// </summary>
     public WistValidationResult Validate(string code, object sampleArguments)
     {
+        ThrowIfDisposed();
+        using var capture = _ssaReportCollector.BeginCapture();
+
         try
         {
-            var declaredBindings = CreateDeclaredBindings(WistArgumentReader.FromObject(sampleArguments));
-            _ = _host.Compile(code, declaredBindings, WistBackendAliases.ToAlias(_options.Backend));
-            return WistValidationResult.Success();
+            EnsureSourceWithinLimits(code);
+            sampleArguments = sampleArguments.ArgNotNull();
+            var argumentTypes = WistArgumentReader.FromObject(sampleArguments);
+            EnsureParameterCountWithinLimits(argumentTypes.Count);
+            var declaredBindings = CreateDeclaredBindings(argumentTypes);
+            _ = _host.Compile(code, declaredBindings, ResolveBackendAlias(_options));
+            return WistValidationResult.Success(CreateOptimizationReport(capture.Report));
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            return WistValidationResult.Failure(NormalizeUserFacingException(code, ex));
+            return WistValidationResult.Failure(
+                exception,
+                WistDiagnosticFactory.FromException(exception, "Validation"),
+                CreateOptimizationReport(capture.Report));
         }
     }
 
-    /// <summary>
-    ///     Compiles source text into a typed delegate-backed Wist program.
-    /// </summary>
     public WistProgram<TDelegate> Compile<TDelegate>(string formula, params string[] parameterNames)
         where TDelegate : Delegate
     {
+        ThrowIfDisposed();
+        using var capture = _ssaReportCollector.BeginCapture();
+        return CompileCore<TDelegate>(formula, parameterNames, () => CreateOptimizationReport(capture.Report));
+    }
+
+    public WistCompileResult<TDelegate> TryCompile<TDelegate>(string formula, params string[] parameterNames)
+        where TDelegate : Delegate
+    {
+        ThrowIfDisposed();
+        using var capture = _ssaReportCollector.BeginCapture();
+
+        try
+        {
+            var program = CompileCore<TDelegate>(formula, parameterNames, () => CreateOptimizationReport(capture.Report));
+            return WistCompileResult<TDelegate>.Success(program);
+        }
+        catch (Exception exception)
+        {
+            return WistCompileResult<TDelegate>.Failure(
+                exception,
+                WistDiagnosticFactory.FromException(exception, "Compilation"),
+                CreateOptimizationReport(capture.Report));
+        }
+    }
+
+    [Obsolete("Use Compile<Func<TArg0, TResult>>(formula, arg0).")]
+    public WistFunc<TArg0, TResult> CompileFunc<TArg0, TResult>(string formula, string arg0)
+    {
+        ThrowIfDisposed();
+        EnsureSourceWithinLimits(formula);
+        EnsureParameterCountWithinLimits(1);
+        return _delegateCompiler.CompileFunc<TArg0, TResult>(
+            _host,
+            formula,
+            CreateDeclaredBindings(WistArgumentReader.TypesFromNamesAndTypes((arg0, typeof(TArg0)))));
+    }
+
+    [Obsolete("Use Compile<Func<TArg0, TArg1, TResult>>(formula, arg0, arg1).")]
+    public WistFunc<TArg0, TArg1, TResult> CompileFunc<TArg0, TArg1, TResult>(string formula, string arg0, string arg1)
+    {
+        ThrowIfDisposed();
+        EnsureSourceWithinLimits(formula);
+        EnsureParameterCountWithinLimits(2);
+        return _delegateCompiler.CompileFunc<TArg0, TArg1, TResult>(
+            _host,
+            formula,
+            CreateDeclaredBindings(WistArgumentReader.TypesFromNamesAndTypes((arg0, typeof(TArg0)), (arg1, typeof(TArg1)))));
+    }
+
+    [Obsolete("Use Compile<Func<TArg0, TArg1, TArg2, TResult>>(formula, arg0, arg1, arg2).")]
+    public WistFunc<TArg0, TArg1, TArg2, TResult> CompileFunc<TArg0, TArg1, TArg2, TResult>(
+        string formula,
+        string arg0,
+        string arg1,
+        string arg2)
+    {
+        ThrowIfDisposed();
+        EnsureSourceWithinLimits(formula);
+        EnsureParameterCountWithinLimits(3);
+        return _delegateCompiler.CompileFunc<TArg0, TArg1, TArg2, TResult>(
+            _host,
+            formula,
+            CreateDeclaredBindings(
+                WistArgumentReader.TypesFromNamesAndTypes(
+                    (arg0, typeof(TArg0)),
+                    (arg1, typeof(TArg1)),
+                    (arg2, typeof(TArg2)))));
+    }
+
+    private WistProgram<TDelegate> CompileCore<TDelegate>(
+        string formula,
+        string[] parameterNames,
+        Func<WistOptimizationReport> reportFactory)
+        where TDelegate : Delegate
+    {
+        EnsureSourceWithinLimits(formula);
+        parameterNames = parameterNames.ArgNotNull();
+        EnsureParameterCountWithinLimits(parameterNames.Length);
+
         var signature = WistDelegateSignature.FromDelegate<TDelegate>(parameterNames);
-        var dynamicMethod = CompileDynamicMethod(formula, signature.BindingTypes);
-        var compiledDelegate = (TDelegate)dynamicMethod.CreateDelegate(typeof(TDelegate));
+        var compiledDelegate = _delegateCompiler.CompileDelegate<TDelegate>(
+            _host,
+            formula,
+            CreateDeclaredBindings(signature.BindingTypes));
 
         return new WistProgram<TDelegate>(
             compiledDelegate,
@@ -166,79 +273,132 @@ public sealed class WistEngine : IDisposable
                 WistBackendAliases.CompilerAlias,
                 signature.ParameterNames,
                 signature.ParameterTypes,
-                signature.ReturnType));
+                signature.ReturnType,
+                reportFactory()));
     }
 
-    /// <summary>
-    ///     Attempts to compile source text into a typed delegate-backed Wist program without throwing.
-    /// </summary>
-    public WistCompileResult<TDelegate> TryCompile<TDelegate>(string formula, params string[] parameterNames)
-        where TDelegate : Delegate
+    private static DialectFrameworkCompositionResult Compose(
+        WistDialectExecutionWorkflow workflow,
+        ResolvedDialectSource source,
+        WistSsaOptions ssa)
     {
-        try
+        if (ssa.Policy == WistSsaPolicy.Disabled)
+            return workflow.ComposeText(source.SourceText, source.SourceName);
+
+        var profile = RuntimeProfileDefinitionBuilder
+            .Create("wist-public-ssa")
+            .Describe("Enables the experimental verifier-gated SSA route selected by WistEngineOptions.")
+            .EnableOptimizer("Ssa")
+            .Build();
+        return workflow.ComposeText(
+            source.SourceText,
+            source.SourceName,
+            profile,
+            RuntimeProfileOverridePolicy.StrictNoConflicts);
+    }
+
+    private static SsaRuntimeExecutionOptions CreateSsaExecutionOptions(WistSsaOptions options) => new()
+    {
+        Policy = options.Policy switch
         {
-            return WistCompileResult<TDelegate>.Success(Compile<TDelegate>(formula, parameterNames));
-        }
-        catch (Exception ex)
+            WistSsaPolicy.Disabled => SsaRoutePolicy.Off,
+            WistSsaPolicy.Prefer => SsaRoutePolicy.Prefer,
+            WistSsaPolicy.Require => SsaRoutePolicy.Require,
+            WistSsaPolicy.Debug => SsaRoutePolicy.Debug,
+            _ => throw new ArgumentOutOfRangeException(nameof(options.Policy))
+        },
+        Diagnostics = options.DiagnosticLevel == WistSsaDiagnosticLevel.Detailed
+            ? SsaDiagnosticMode.Verbose
+            : SsaDiagnosticMode.Default,
+        ProfileId = SsaPreviewRouteProfiles.ProfileId
+    };
+
+    private WistOptimizationReport CreateOptimizationReport(SsaRouteReport? report)
+    {
+        var requested = _options.Optimization.Ssa.Policy;
+        if (report is null)
         {
-            return WistCompileResult<TDelegate>.Failure(ex);
+            if (requested == WistSsaPolicy.Disabled)
+                return WistOptimizationReport.Disabled;
+
+            return new WistOptimizationReport(
+                new WistSsaOptimizationReport(
+                    requested,
+                    usedSsa: false,
+                    fellBackToAir: false,
+                    profile: null,
+                    inputAirInstructionCount: 0,
+                    outputAirInstructionCount: 0,
+                    diagnostics:
+                    [
+                        new WistSsaRouteDiagnostic(
+                            "wist.ssa.report.missing",
+                            "The SSA optimizer was requested, but no route report was published before the operation completed.")
+                    ]));
         }
+
+        return new WistOptimizationReport(
+            new WistSsaOptimizationReport(
+                requested,
+                report.UsedSsa,
+                report.FellBackToInput,
+                report.ProfileId,
+                report.InputAirInstructionCount,
+                report.OutputAirInstructionCount,
+                report.ExecutedPasses,
+                report.Diagnostics.Select(static diagnostic =>
+                    new WistSsaRouteDiagnostic(diagnostic.Code, diagnostic.Message)),
+                report.Trace.Select(static entry =>
+                    new WistSsaTraceEntry(entry.Stage, entry.Message, entry.InstructionCount))));
     }
 
-    /// <summary>
-    ///     Compiles a one-argument CIL-backed typed fast function.
-    /// </summary>
-    public WistFunc<TArg0, TResult> CompileFunc<TArg0, TResult>(string formula, string arg0)
+    private static ResolvedDialectSource ResolveDialectSource(WistEngineOptions options)
     {
-        var dynamicMethod = CompileDynamicMethod(
-            formula,
-            WistArgumentReader.TypesFromNamesAndTypes((arg0, typeof(TArg0))));
-
-        return new WistFunc<TArg0, TResult>(dynamicMethod);
-    }
-
-    /// <summary>
-    ///     Compiles a two-argument CIL-backed typed fast function.
-    /// </summary>
-    public WistFunc<TArg0, TArg1, TResult> CompileFunc<TArg0, TArg1, TResult>(string formula, string arg0, string arg1)
-    {
-        var dynamicMethod = CompileDynamicMethod(
-            formula,
-            WistArgumentReader.TypesFromNamesAndTypes((arg0, typeof(TArg0)), (arg1, typeof(TArg1))));
-
-        return new WistFunc<TArg0, TArg1, TResult>(dynamicMethod);
-    }
-
-    /// <summary>
-    ///     Compiles a three-argument CIL-backed typed fast function.
-    /// </summary>
-    public WistFunc<TArg0, TArg1, TArg2, TResult> CompileFunc<TArg0, TArg1, TArg2, TResult>(string formula, string arg0, string arg1, string arg2)
-    {
-        var dynamicMethod = CompileDynamicMethod(
-            formula,
-            WistArgumentReader.TypesFromNamesAndTypes((arg0, typeof(TArg0)), (arg1, typeof(TArg1)), (arg2, typeof(TArg2))));
-
-        return new WistFunc<TArg0, TArg1, TArg2, TResult>(dynamicMethod);
-    }
-
-    private DynamicMethod CompileDynamicMethod(string formula, IReadOnlyDictionary<string, Type> bindingTypes)
-    {
-        try
+        var resolver = new WistShippedDialectFileResolver();
+        return options.DialectSource switch
         {
-            var artifact = _host.GetBackendSpecificArtifactCompiler<BasicCilCompiler.Execution.CilCompilationOutput>(WistBackendAliases.CompilerAlias).Compile(formula, CreateDeclaredBindings(bindingTypes));
-            return artifact.CompilationOutput.Method;
-        }
-        catch (Exception ex)
-        {
-            throw NormalizeUserFacingException(formula, ex);
-        }
+            WistDialectSource.File file => ReadDialectFile(Path.GetFullPath(file.Path)),
+            WistDialectSource.ShippedPreset preset =>
+                ReadDialectFile(resolver.Resolve(WistShippedDialectPresets.GetRequired(preset.PresetId))),
+            WistDialectSource.Text text => new ResolvedDialectSource(text.SourceText, text.SourceName),
+            null => ReadDialectFile(resolver.Resolve(WistPresetMapper.ToShippedPreset(options.Preset))),
+            _ => Thrower.InvalidOpEx<ResolvedDialectSource>("Unsupported Wist dialect source.")
+        };
     }
 
-    private static Exception NormalizeUserFacingException(string code, Exception exception)
+    private static ResolvedDialectSource ReadDialectFile(string path) =>
+        new(File.ReadAllText(path), Path.GetFileName(path));
+
+    private static string ResolveBackendAlias(WistEngineOptions options)
     {
-        _ = code.ArgNotNull();
-        return exception;
+        if (!string.IsNullOrWhiteSpace(options.BackendAlias))
+            return options.BackendAlias;
+
+        return WistBackendAliases.ToAlias(options.Backend);
     }
+
+    private void EnsureSourceWithinLimits(string code)
+    {
+        code = code.ArgNotNull();
+        if (code.Length <= _resourceLimits.MaxSourceLength)
+            return;
+
+        throw new WistResourceLimitException(
+            WistDiagnosticCodes.SourceLimitExceeded,
+            $"Wist source length {code.Length} exceeds the configured maximum of {_resourceLimits.MaxSourceLength} UTF-16 code units.");
+    }
+
+    private void EnsureParameterCountWithinLimits(int count)
+    {
+        if (count <= _resourceLimits.MaxParameterCount)
+            return;
+
+        throw new WistResourceLimitException(
+            WistDiagnosticCodes.ParameterLimitExceeded,
+            $"Wist parameter count {count} exceeds the configured maximum of {_resourceLimits.MaxParameterCount}.");
+    }
+
+    private void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(_disposed, this);
 
     private static OrderedDictionary<string, Type> CreateDeclaredBindings(IReadOnlyDictionary<string, object?> arguments)
     {
@@ -257,4 +417,6 @@ public sealed class WistEngine : IDisposable
 
         return bindings;
     }
+
+    private sealed record ResolvedDialectSource(string SourceText, string SourceName);
 }

@@ -1,4 +1,6 @@
 using ExceptionsManager;
+using InternalPreprocessorLexemesModule;
+using BasicCore.Semantics;
 using UniversalToolchain.ModuleContracts;
 using VariablesModule.Contracts;
 
@@ -6,11 +8,17 @@ namespace VariablesModule;
 
 public class VariablesVisitor : IAstVisitor
 {
+    private readonly ITypeCatalog _typeCatalog;
     private readonly OrderedDictionary<string, Type> _variablesTypes = [];
+
+    public VariablesVisitor(ITypeCatalog typeCatalog)
+    {
+        _typeCatalog = typeCatalog.ArgNotNull();
+    }
 
     public void TryVisit(BytecodeVisitorData data)
     {
-        if (data.Node.NodeType == ExtensibleEnum<AstNodeTag>.CreateOrGet("Preprocessor lexeme"))
+        if (PreprocessorLexemeContracts.IsPreprocessorLexeme(data.Node))
         {
             HandlePreprocessorLexeme(data);
             return;
@@ -88,7 +96,7 @@ public class VariablesVisitor : IAstVisitor
         if (IsConcreteType(symbol.Type))
             _variablesTypes[variableKey] = symbol.Type;
 
-        if (data.Node.AllTags.Contains("ExpectingWriteTypeInference"))
+        if (data.Node.HasLocalSemanticTag(AssignmentSemanticContractIds.WriteTarget))
         {
             var inferMethod = new AbstractMethodImpl(
                 $"InferWriteTypeOfLocalVar_{displayName}",
@@ -103,7 +111,7 @@ public class VariablesVisitor : IAstVisitor
                 VariablesContractIds.Module,
                 VariablesContractIds.VariableNode,
                 VariablesContractIds.WriteTypeInference,
-                VariablesContractIds.ExpectingWriteTypeInference));
+                VariablesContractIds.WriteTargetTypeInference));
             return;
         }
 
@@ -129,7 +137,7 @@ public class VariablesVisitor : IAstVisitor
         Type symbolType,
         bool canAssign)
     {
-        if (data.Node.AllTags.Contains("ExpectingWriteTypeInference"))
+        if (data.Node.HasLocalSemanticTag(AssignmentSemanticContractIds.WriteTarget))
         {
             if (!canAssign)
                 Thrower.InvalidOpEx($"External constant '{name}' cannot be assigned.");
@@ -148,7 +156,7 @@ public class VariablesVisitor : IAstVisitor
                 VariablesContractIds.Module,
                 VariablesContractIds.VariableNode,
                 VariablesContractIds.WriteTypeInference,
-                VariablesContractIds.ExpectingWriteTypeInference));
+                VariablesContractIds.WriteTargetTypeInference));
             return;
         }
 
@@ -171,12 +179,11 @@ public class VariablesVisitor : IAstVisitor
 
     private void HandlePreprocessorLexeme(BytecodeVisitorData data)
     {
-        var text = data.Node.Text[3..^1].Split();
-        if (text is not ["define", _, "as", _])
+        if (!PreprocessorLexemeContracts.TryReadDefineDirective(data.Node, out var directive))
             return;
 
-        var paramName = text[1];
-        var type = TypesFinder.GetType(text[3]);
+        var paramName = directive.Name;
+        var type = _typeCatalog.ResolveRequiredType(directive.TypeName);
         _variablesTypes[paramName] = type;
         var method = new AbstractMethodImpl(
             $"DefineArgument_{paramName}_{type.FullName}",
@@ -192,7 +199,7 @@ public class VariablesVisitor : IAstVisitor
     {
         var variableKey = data.Node.Text;
 
-        if (data.Node.AllTags.Contains("ExpectingWriteTypeInference"))
+        if (data.Node.HasLocalSemanticTag(AssignmentSemanticContractIds.WriteTarget))
         {
             var inferMethod = new AbstractMethodImpl(
                 $"InferWriteTypeOfLocalVar_{data.Node.Text}",
@@ -208,7 +215,7 @@ public class VariablesVisitor : IAstVisitor
                 VariablesContractIds.Module,
                 VariablesContractIds.VariableNode,
                 VariablesContractIds.WriteTypeInference,
-                VariablesContractIds.ExpectingWriteTypeInference));
+                VariablesContractIds.WriteTargetTypeInference));
             return;
         }
 

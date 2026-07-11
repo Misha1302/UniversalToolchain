@@ -83,6 +83,28 @@ public sealed class AirToSsaConverterTests
     }
 
     [Test]
+    public void Run_WhenManagedProjectionReturnsUnregisteredCallable_RejectsProjection()
+    {
+        var method = typeof(AirToSsaConverterTests).GetMethod(nameof(AddOne), BindingFlags.NonPublic | BindingFlags.Static)!;
+        var ir = new AbstractIR();
+        ir.Push(41);
+        ir.AppendInstructions(new List<Instruction>
+        {
+            new(UOpCode.Intrinsic, [AirIntrinsicIds.CallCSharp, method])
+        });
+        var converter = SsaRouteFactory.CreateLowerer(
+            SsaPreviewRouteProfiles.Create(SsaRoutePolicy.Require),
+            [new UnregisteredProjection()]);
+
+        var exception = Assert.Throws<AirToSsaConversionException>(() =>
+            converter.Run(new AirArtifact(ir), new IrPipelineContext()));
+
+        Assert.That(
+            exception!.Diagnostics.Select(static diagnostic => diagnostic.Code),
+            Does.Contain("air.to-ssa.managed-call.projection.unregistered"));
+    }
+
+    [Test]
     public void Run_WhenAirUsesManagedConstructor_ProducesObjectCallableInstruction()
     {
         var constructor = typeof(ManagedTestBox).GetConstructor(
@@ -149,6 +171,18 @@ public sealed class AirToSsaConverterTests
         SsaRouteFactory.CreateLowerer(SsaPreviewRouteProfiles.Create(SsaRoutePolicy.Require));
 
     private static int AddOne(int value) => value + 1;
+
+    private sealed class UnregisteredProjection : ISsaManagedCallableProjection
+    {
+        public bool TryProject(
+            MethodInfo method,
+            bool consumesInstanceReceiver,
+            out CallableId callable)
+        {
+            callable = new CallableId("test.unregistered.projection");
+            return true;
+        }
+    }
 
     private sealed class ManagedTestBox;
 }

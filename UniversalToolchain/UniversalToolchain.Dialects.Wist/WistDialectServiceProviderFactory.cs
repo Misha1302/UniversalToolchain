@@ -1,3 +1,4 @@
+using AssemblyFinder;
 using BasicCore.Contracts;
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
@@ -5,6 +6,8 @@ using UniversalToolchain.Dialects.Core.ServiceCollection;
 using UniversalToolchain.Dialects.Integration;
 using ServiceLifetime = Microsoft.Extensions.DependencyInjection.ServiceLifetime;
 using UniversalToolchain.ModuleContracts;
+using UniversalToolchain.Ssa.Abstractions;
+using UniversalToolchain.Ssa.Optimization;
 
 namespace UniversalToolchain.Dialects.Wist;
 
@@ -36,11 +39,20 @@ public sealed class WistDialectServiceProviderFactory
         _moduleContractDiagnosticSink = moduleContractDiagnosticSink.ArgNotNull();
     }
 
-    public IServiceProvider Create(WistDialectExecutionConfiguration configuration)
+    public IServiceProvider Create(WistDialectExecutionConfiguration configuration) =>
+        Create(configuration, new WistRuntimeServiceOptions());
+
+    public IServiceProvider Create(
+        WistDialectExecutionConfiguration configuration,
+        WistRuntimeServiceOptions runtimeServiceOptions)
     {
         configuration = configuration.ArgNotNull();
+        runtimeServiceOptions = runtimeServiceOptions.ArgNotNull();
 
         var services = new ServiceCollection();
+        RegisterExecutionScopedRuntimeOptions(services, runtimeServiceOptions);
+        RegisterExplicitTypeCatalog(services, runtimeServiceOptions);
+        services.AddSingleton<ISsaManagedCallableProjection, WistNativeArithmeticSsaProjection>();
         services.AddNeutralRuntimeInfrastructure();
         services.AddBasicFrontendPipelineDefaults();
         services.AddWistModuleContractPipelineServices(
@@ -59,6 +71,35 @@ public sealed class WistDialectServiceProviderFactory
         var provider = services.BuildServiceProvider();
         _intrinsicBootstrapRuntimeValidator.Validate(provider, bootstrapPlan);
         return provider;
+    }
+
+
+    private static void RegisterExecutionScopedRuntimeOptions(
+        IServiceCollection services,
+        WistRuntimeServiceOptions runtimeServiceOptions)
+    {
+        var ssaExecution = runtimeServiceOptions.SsaExecution.ArgNotNull().SnapshotValidated();
+        var reportSink = runtimeServiceOptions.SsaReportSink.ArgNotNull();
+
+        services.AddSingleton(ssaExecution);
+        services.AddSingleton(reportSink);
+        services.AddSingleton<ISsaRouteReportSink>(reportSink);
+    }
+
+    private static void RegisterExplicitTypeCatalog(
+        IServiceCollection services,
+        WistRuntimeServiceOptions runtimeServiceOptions)
+    {
+        // The shipped standard library is part of the Wist runtime contract. Every other CLR
+        // assembly must be selected explicitly by the host; dialect/runtime implementation
+        // assemblies are intentionally not exposed as an interop surface.
+        var exposedAssemblies = runtimeServiceOptions.AllowedAssemblies
+            .Append(typeof(BasicStdLib.Main).Assembly)
+            .Distinct()
+            .ToArray();
+
+        services.AddSingleton<ITypeCatalog>(TypeCatalogFactory.Create(exposedAssemblies));
+        services.AddSingleton<IMethodResolver, DeterministicMethodResolver>();
     }
 
     private static void RegisterModules(IServiceCollection services, IEnumerable<Type> types, Type serviceType, ServiceLifetime lifetime)

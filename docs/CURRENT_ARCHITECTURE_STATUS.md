@@ -8,6 +8,8 @@ Use it to distinguish current behavior from future or historical design plans.
 
 Status: public preview / release-gate scope, not a finalized 1.0 platform.
 
+Latest architecture/release-hardening pass: v7 (preview.4 SSA public-API candidate). The canonical validation entrypoint is `./build.sh`; release evidence must record the exact SDK, restore source policy, build result, three test-project totals, package-surface check, external consumer smoke, and documentation checks.
+
 This branch can be released as a scoped Wist facade preview when build, test,
 package, CLI and documentation checks pass. Do not describe it as a completed
 general-purpose DSL workbench, a hardened sandbox, a stable generic runtime
@@ -21,6 +23,15 @@ The supported release claim is narrower:
   documented preview mappings;
 - neutral runtime host, structured trace and SSA route exist as current
   foundations with the limitations listed below.
+
+### Preview.3 boundary changes
+
+- CLR type/method discovery is execution-scoped and immutable. Hosts supply `AllowedAssemblies`; only shipped `BasicStdLib` is added automatically, and AIR/SSA/backends do not scan dialect implementation assemblies, the AppDomain, or the filesystem.
+- Dynamic-method invokers own their method and runtime handle lifetime; compiled functions are no longer rooted in process-wide static storage.
+- `Validate` and `TryCompile` expose structured diagnostics with stable Wist codes and stage metadata.
+- Source length and external parameter count are bounded by host-owned preflight limits. These controls are not execution-time or memory isolation.
+- `CreateSafeFormulas`, `CreateBusinessRules`, `CreateTrusted`, and `CompileFunc` are obsolete compatibility APIs. First-party code uses `CreateRestrictedArithmetic` and `Compile<TDelegate>`.
+- `UniversalToolchain.Wist.dll` is the supported public facade. The current broad physical package closure remains tracked debt and is protected from accidental growth, not declared stable.
 
 ## Rules feature
 
@@ -144,123 +155,68 @@ Not final yet:
 
 ## Generic IR routing and SSA foundation
 
-Status: callable-first pre-release foundation plus minimal SSA
-model/verifier/conversion/optimization boundary, a no-optimization
-`AIR -> SSA -> AIR` route, and opt-in preview runtime wiring through a dialect
-optimizer.
+Status: experimental, verifier-gated `AIR -> SSA -> AIR` optimization route with a public Wist facade option. It is not an SSA-native backend and is not enabled by default.
 
-Currently supported:
+Current public Wist contract:
 
-- generic IR identity and pipeline contracts in `UniversalToolchain.Ir.Abstractions`;
-- the existing AIR boundary wrapped as `AirArtifact`;
-- AIR-only legacy optimizer execution through a generic stage adapter inside `BasicCore`;
-- deterministic AIR CFG construction and structural AIR verification in `UniversalToolchain.Air.Analysis`;
-- typed AIR stack analysis for the current generic subset;
-- immutable SSA model and `SsaArtifact` in `UniversalToolchain.Ssa.Abstractions`;
-- structural SSA verifier in `UniversalToolchain.Ssa.Core`;
-- descriptor-driven SSA operations with deterministic descriptor snapshots;
-- shared SSA structural verification fact in `SsaFacts.StructuralVerification`;
-- minimal `AIR -> SSA` converter in `UniversalToolchain.Ssa.Lowering`;
-- minimal verifier-gated `SSA -> AIR` converter in
-  `UniversalToolchain.Ssa.Emission`;
-- verifier-gated SSA optimizer pipeline and local int32 constant folding pass
-  in `UniversalToolchain.Ssa.Optimization`.
-- verifier-gated `SsaRoundtripRoute` with `Off`, `Prefer`, `Require` and
-  `Debug` policies for running `AIR -> SSA -> AIR` without applying SSA
-  optimization passes;
-- callable-first semantic descriptors, including managed `MethodInfo` and
-  `ConstructorInfo` callables with conservative default effects and optional
-  trusted `SsaManagedCallableAttribute` declarations;
-- managed static methods, stack-receiver instance methods and constructors can
-  round-trip through `AIR -> SSA -> AIR` as regular `SsaCall` instructions,
-  lowering back to the ordinary AIR `call C#` and `call C# ctor` runtime
-  surfaces.
-- callable lowering is target-shaped: AIR intrinsic and managed-call targets
-  can emit to the current AIR route; CIL opcode and interpreter-primitive
-  targets are explicit unsupported targets for this route; ambiguity is reported
-  only when multiple supported targets share the best priority;
-- opt-in `Ssa` runtime optimizer manifest entry implemented by
-  `SsaPreviewOptimizerModule`, which runs `AIR -> SSA -> SSA optimization ->
-  AIR` without changing default Wist dialect profiles.
+- `WistEngineOptions.Optimization.Ssa` selects `Disabled`, `Prefer`, `Require`, or `Debug`;
+- `Summary` and `Detailed` diagnostics are supported;
+- `Validate`, `TryCompile`, and successful compiled programs expose a `WistOptimizationReport`;
+- the report records actual route use, fallback, profile, instruction counts, executed passes, diagnostics, and debug trace;
+- only known unsupported-route diagnostics may fall back under `Prefer`; unexpected optimizer defects fail with structured diagnostic code `UTC-WIST-SSA-001`;
+- `WistDialectSource.FromText` and `WistEngineOptions.FromDialectText` allow inline dialects without temporary files;
+- the shipped `ssa-preview` example demonstrates the opt-in route.
 
-Verified on 2026-07-03:
+Current internal contract:
 
-- the uploaded local NuGet package bundle restored the test dependencies
-  required by `Tests.csproj`, including NUnit, NUnit3TestAdapter,
-  Microsoft.NET.Test.Sdk, coverlet and SharpFuzz;
-- `Tests.csproj` restore and build succeeded with the local .NET 10 SDK and
-  local package feeds;
-- focused AIR/SSA tests passed 16/16;
-- after the SSA optimization addition, focused AIR/SSA tests passed 20/20;
-- after the SSA emission addition, focused AIR/SSA tests passed 23/23;
-- after the SSA contract hardening pass, focused AIR/SSA tests passed 27/27,
-  including return-shape/type validation, SSA fact propagation, optimizer fact
-  effects and SSA-to-AIR CFG layout regression coverage;
-- grouped contract/runtime regression checks passed 294/294 across
-  `Tests.Ir`, `Tests.Architecture`, `Tests.Internal`, `Tests.Intrinsics`,
-  `Tests.Backends`, `Tests.Stress`, and `Tests.Core` except CLI e2e;
-- broader grouped NUnit execution passed 310/321 discovered test cases across
-  `Tests.Air`, `Tests.Ssa`, `Tests.Ir`, `Tests.Architecture`,
-  `Tests.Internal`, `Tests.Intrinsics`, `Tests.Core` except CLI e2e,
-  `Tests.Backends` and `Tests.Stress`;
-- `Wistc` Release build succeeded, and direct CLI smoke checks for
-  `run --eval --backend interpreter "1 + 2"` and
-  `run --eval --backend compiler "1 + 2"` both returned `3`;
-- after the SSA model/verifier addition, `UniversalToolchain.Ssa.Core` builds
-  successfully with its project references;
-- after the AIR analysis/lowering addition, `UniversalToolchain.Ssa.Lowering`
-  builds successfully with its project references;
-- after the SSA emission addition, `UniversalToolchain.Ssa.Emission` builds
-  successfully with its project references;
-- a no-package smoke runner verified valid `AIR -> SSA` conversion and the
-  unsupported-intrinsic failure path.
+- generic IR identity and pipeline contracts live in `UniversalToolchain.Ir.Abstractions`;
+- AIR is structurally verified before lowering, SSA is verified after lowering and after every pass, and emitted AIR is verified again;
+- the immutable SSA model uses block arguments, typed values, callable descriptors, facts, effects, and deterministic descriptor snapshots;
+- the route includes local constant folding, SCCP-lite, branch folding/unreachable-block cleanup, and dead pure-instruction elimination;
+- Wist projects native int32 add/subtract/multiply calls onto canonical SSA callables so supported arithmetic can be optimized rather than merely round-tripped;
+- managed calls carry exact execution-scoped `MethodInfo`/`ConstructorInfo` bindings through lowering, optimization, and emission; production SSA code does not rediscover methods through `AppDomain`, `Type.GetType`, or filesystem scanning;
+- repeated equivalent bindings are compared structurally, while conflicting bindings and duplicate extension-pack/pass identifiers fail fast;
+- target capabilities and diagnostic modes affect route construction and execution rather than acting as stored no-op options;
+- the runtime optimizer alias is `Ssa`; `SsaPreview` is not a supported alias.
 
-Verified on 2026-07-04:
+Current boundary:
 
-- `Directory.Build.props` now disables parallel project-reference restore/build
-  traversal because the local .NET 10 SDK can otherwise fail this repository's
-  large project graph with silent `MSBuild` task failures;
-- the SSA/AIR projects declare the project references they consume directly;
-- `UniversalToolchain.Ssa.Core`, `UniversalToolchain.Ssa.Lowering`,
-  `UniversalToolchain.Ssa.Emission` and
-  `UniversalToolchain.Ssa.Optimization` all build in Release;
-- `UniversalToolchain.Ssa.Optimization` emits
-  `UniversalToolchain.Ssa.Optimization.dialect.runtime.json` with the canonical
-  optimizer alias `Ssa`;
-- `Tests.csproj` restore succeeded against the local package cache, with
-  external `NU1900` vulnerability-feed warnings for `api.nuget.org`;
-- `Tests.csproj` Release build succeeded with 45 `NU1900` warnings and
-  0 errors.
-- after the opt-in SSA preview optimizer wiring, `Tests.csproj` Release build
-  succeeded with 0 warnings and 0 errors, and focused `Tests.Ssa` passed 32/32.
-- after the callable-first pre-release pass, focused `Tests.Ssa` passed 61/61
-  with managed callable attributes, trust-boundary tests, unsupported CLR type
-  and open-generic rejection tests, managed static method/constructor
-  round-trip tests and trusted pure managed callable folding coverage.
-- after the no-optimization SSA route and callable lowering review fixes,
-  focused `Tests.Ssa` passed 70/70 and full `Tests.csproj` passed 379/379
-  on the local .NET 10 sidecar with local package feeds.
-
-Not implemented yet:
-
-- complete AIR to SSA conversion for all existing AIR intrinsics and runtime value types;
-- complete SSA to AIR lowering for arbitrary SSA stack scheduling,
-  multi-return shapes and backend execution beyond the current AIR intrinsic
-  and managed-call lowering surfaces;
-- a full SSA optimizer suite beyond the initial local constant folding pass;
-- dialect syntax for intermediate-layer policies;
-- SSA-native backend support.
-- execution-scoped provider descriptors and unresolved generic methods are not
-  backend-neutral SSA managed callables yet;
-- CLR type mapping is still limited to bool, int32, float64 and managed object
-  references.
+- supported Wist arithmetic and selected managed calls can use the route;
+- unsupported shapes are rejected or, only under `Prefer`, reported as a controlled fallback;
+- CLR value mapping and arbitrary SSA scheduling remain intentionally limited;
+- CIL and interpreter continue to consume emitted AIR;
+- no numerical performance advantage is claimed without a dedicated reproducible benchmark run;
+- low-level `UniversalToolchain.Ssa.*` APIs remain experimental and are not part of the supported `UniversalToolchain.Wist` facade contract.
 
 Required policy:
 
-- new IR layers must be introduced through generic IR contracts and verifiers;
-- `BasicCore` must not hardcode SSA, Wist, or backend-specific routing branches;
-- existing interpreter and CIL paths remain AIR consumers until a separate verified route is added.
-- see `docs/architecture/ssa-coverage-matrix.md` before expanding SSA conversion or optimization support.
+- new IR behavior must enter through generic contracts, explicit descriptors/bindings, and verifier-backed tests;
+- `BasicCore` must not acquire Wist- or SSA-specific routing branches;
+- broad conversion/optimization support requires differential or oracle coverage first;
+- see `docs/architecture/ssa-coverage-matrix.md` before extending the route.
+
+## Architecture-hardcode v4 status
+
+Current behavior after v4:
+
+- runtime provider allowlists are owned by selected backend/runtime composition, not inferred from optimized AIR;
+- `RuntimeProviderPolicyComponent` is an auxiliary backend pipeline component and is excluded from module-contract selected-module tables unless a component explicitly implements the module-contract backend component interface;
+- reusable modules `IdentifierModule`, `ScopesModule` and `VariablesModule` use module-owned facts rather than `UniversalToolchain.Wist.Contracts`;
+- production optimizer/runtime planning reads C# calls through the typed/legacy `CSharpCallIntrinsicReader` path instead of comparing the raw `"call C#"` display string;
+- `CallCSharp(...)` helper emission remains legacy-compatible so existing runtime/parity tests observe the normalized `call C#` AIR shape.
+
+Verified after v4:
+
+- `dotnet build Wist.sln` passed in the user environment;
+- `dotnet test Wist.sln` passed in the user environment;
+- the v4 report records sandbox restore/build limitations separately and should not be upgraded to a sandbox full-suite claim.
+
+Required policy:
+
+- auxiliary runtime/backend policy components must not become selected module-contract participants by convention;
+- provider authorization remains composition-owned;
+- AIR may request provider-backed calls but must not be the source of provider authorization;
+- future intrinsic migrations must preserve legacy compatibility at decoder/emission boundaries until all compatibility tests and public docs are intentionally migrated.
 
 ## Interpreter intrinsic surface
 

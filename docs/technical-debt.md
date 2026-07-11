@@ -204,3 +204,14 @@ bytecode, AIR, SSA and backend artifact stages are not complete yet.
 - Broader frontend/parser strategy experiments: alternative parsing algorithms and extensibility models.
 - Configuration format modernization where it improves determinism and tooling.
 - Optional code generation for repetitive boilerplate where it preserves readability and correctness.
+
+## Release-hardening debt ledger (preview.3)
+
+| Debt | Canonical owner | Current control | Exit metric | Target decision |
+|---|---|---|---|---|
+| Physical NuGet closure remains broad | `UniversalToolchain.Wist.csproj` | Package check rejects test/benchmark assemblies and growth beyond 64 DLLs | Split optional SSA/tooling and reduce the default runtime closure without breaking an external consumer | Before stable 1.0 |
+| No in-process execution timeout or memory quota | Host integration/security boundary | Restricted composition plus source/parameter preflight limits | Documented out-of-process runner or explicit decision that only trusted operators are supported | Before accepting arbitrary user-authored rules |
+| Compatibility aliases and `CompileFunc` remain | `UniversalToolchain.Wist` facade | APIs are `[Obsolete]`; docs and CI use `CreateRestrictedArithmetic` + `Compile<TDelegate>` | No first-party usage; removal in the next intentional breaking preview/stable boundary | Before stable 1.0 |
+| Serial solution build is slow | Repository build contract | `build.sh`/`build.ps1`, CI uses canonical entrypoint | Measured clean build time and either fixed project graph or accepted documented threshold | Re-evaluate after SDK feature-band upgrade |
+
+Owners must update this table with evidence, not only a status adjective. Package boundary work is complete only when the external-consumer smoke passes with the smaller closure; resource isolation is complete only when limits are enforced by a separate execution boundary or the product scope excludes untrusted authors.

@@ -8,7 +8,10 @@ public static class VariablesContractIds
 
     public static AstNodeKind VariableNode { get; } = new("wist.variables.ast.variable");
 
-    public static BytecodeTagId ExpectingWriteTypeInference { get; } = new("wist.variables.tag.expecting-write-type-inference");
+    public static BytecodeTagId WriteTargetTypeInference { get; } = new("wist.variables.tag.write-target-type-inference");
+
+    [Obsolete("Use WriteTargetTypeInference. The old name described a cross-module implementation detail, not the bytecode contract.")]
+    public static BytecodeTagId ExpectingWriteTypeInference => WriteTargetTypeInference;
 
     public static BytecodePatternId LocalRead { get; } = new("wist.variables.bytecode.local-read");
 

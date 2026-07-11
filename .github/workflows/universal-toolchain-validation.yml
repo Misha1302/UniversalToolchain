@@ -21,24 +21,15 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 10.0.x
+          global-json-file: UniversalToolchain/global.json
 
       - name: Install ripgrep
         run: |
           sudo apt-get update
           sudo apt-get install -y ripgrep
 
-      - name: Restore
-        run: dotnet restore UniversalToolchain/Wist.sln
-
-      - name: Build manifest emitter
-        run: dotnet build UniversalToolchain/UniversalToolchain.Dialects.ManifestEmitter/UniversalToolchain.Dialects.ManifestEmitter.csproj -c Release --no-restore
-
-      - name: Build
-        run: dotnet build UniversalToolchain/Wist.sln -c Release --no-restore -m:1 -p:BuildInParallel=false
-
-      - name: Test
-        run: dotnet test UniversalToolchain/Wist.sln -c Release --no-build
+      - name: Restore, build, and test through canonical entrypoint
+        run: ./build.sh --skip-docs --skip-pack
 
       - name: BasicCore must not depend on high-level layers or concrete feature modules
         run: |

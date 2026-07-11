@@ -1,5 +1,4 @@
 using UniversalToolchain.ModuleContracts;
-using UniversalToolchain.Wist.Contracts;
 
 namespace IdentifierModule.Contracts;
 
@@ -19,7 +18,7 @@ public sealed class IdentifierModuleContractDescriptorProvider : IModuleContract
             IdentifierContractIds.Module,
             [
                 new CompilerFactOwnershipContract(
-                    WistIdentifierFacts.IdentifiersAvailable,
+                    IdentifierFacts.IdentifiersAvailable,
                     IdentifierContractIds.Module)
             ]),
         new PipelineEffectFacet(
@@ -29,7 +28,7 @@ public sealed class IdentifierModuleContractDescriptorProvider : IModuleContract
                     IdentifierEffects.RegisterIdentifierSyntax,
                     CompilerPipelineStage.Bytecode,
                     [KnownCoreCompilerFacts.LexemesGenerated],
-                    [WistIdentifierFacts.IdentifiersAvailable],
+                    [IdentifierFacts.IdentifiersAvailable],
                     [],
                     [])
             ])

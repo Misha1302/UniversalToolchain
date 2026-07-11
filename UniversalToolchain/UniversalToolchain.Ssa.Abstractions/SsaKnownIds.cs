@@ -20,11 +20,19 @@ public static class SsaOperations
     public static SsaOpId ConstantBool { get; } = new("core.const.bool");
 
     public static SsaOpId ConstantFloat64 { get; } = new("core.const.f64");
+
+    public static SsaOpId LoadExternalInt32 { get; } = new("core.external.load.i32");
+
+    public static SsaOpId LoadExternalBool { get; } = new("core.external.load.bool");
+
+    public static SsaOpId LoadExternalFloat64 { get; } = new("core.external.load.f64");
 }
 
 public static class SsaAttributeKeys
 {
     public static SsaAttributeKey ConstantValue { get; } = new("ssa.constant.value");
+
+    public static SsaAttributeKey ExternalSlot { get; } = new("ssa.external.slot");
 }
 
 public static class SsaPreviewSemanticTypes

@@ -1,3 +1,4 @@
+using BasicCore.Builtins;
 using IntermediateRepresentationAbstractions;
 using UniversalIntermediateRepresentation;
 using UniversalToolchain.Air.Analysis;
@@ -71,12 +72,80 @@ public sealed class SsaRoundtripRouteTests
             Assert.That(result.UsedSsa, Is.True);
             Assert.That(result.FellBackToInput, Is.False);
             Assert.That(result.Diagnostics, Is.Empty);
+            Assert.That(result.Report.ExecutedPasses, Is.Not.Empty);
+            Assert.That(result.Report.Trace.Select(static entry => entry.Stage), Does.Contain("optimization"));
+            Assert.That(result.Report.OutputAirInstructionCount, Is.LessThan(result.Report.InputAirInstructionCount));
             Assert.That(result.Program.Instructions.Select(static x => x.UOpCode), Is.EqualTo(new[]
             {
                 UOpCode.Label,
                 UOpCode.Push
             }));
             Assert.That(result.Program.Instructions[1].Operands.Single(), Is.EqualTo(5));
+        });
+    }
+
+    [Test]
+    public void Run_WhenInputUsesTypedLoadConstant_NormalizesBeforeSsa()
+    {
+        var source = new AbstractIR();
+        source.AppendInstructions(
+        [
+            BuiltinIntrinsicInstruction.Create(
+                BuiltinIntrinsicSymbols.Core.LoadConst,
+                typeof(int),
+                [42])
+        ]);
+
+        var result = SsaRouteFactory
+            .CreateRoundtripRoute(SsaPreviewRouteProfiles.Create(SsaRoutePolicy.Debug))
+            .Run(source);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.UsedSsa, Is.True);
+            Assert.That(result.FellBackToInput, Is.False);
+            Assert.That(result.Report.Trace.Select(static entry => entry.Stage), Does.Contain("normalization"));
+            Assert.That(result.Program.Instructions.Select(static instruction => instruction.UOpCode), Is.EqualTo(new[]
+            {
+                UOpCode.Label,
+                UOpCode.Push
+            }));
+            Assert.That(result.Program.Instructions[1].Operands.Single(), Is.EqualTo(42));
+        });
+    }
+
+    [Test]
+    public void Run_WhenInputLoadsExternalInt32_PreservesSlotAcrossRoundtrip()
+    {
+        var source = new AbstractIR();
+        source.AppendInstructions(
+        [
+            BuiltinIntrinsicInstruction.Create(
+                BuiltinIntrinsicSymbols.Core.LoadExternal,
+                typeof(int),
+                [3])
+        ]);
+        source.Push(2);
+        source.Intrinsic(AirIntrinsicIds.AddInt32Unchecked);
+
+        var result = SsaRouteFactory
+            .CreateRoundtripRoute(SsaPreviewRouteProfiles.Create(SsaRoutePolicy.Debug))
+            .Run(source);
+
+        var externalLoad = result.Program.Instructions.Single(static instruction =>
+            instruction.UOpCode == UOpCode.Intrinsic &&
+            instruction.Operands.FirstOrDefault() as string == AirIntrinsicIds.LoadExternal);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.UsedSsa, Is.True);
+            Assert.That(result.FellBackToInput, Is.False);
+            Assert.That(externalLoad.Operands, Is.EqualTo(new object[]
+            {
+                AirIntrinsicIds.LoadExternal,
+                3,
+                typeof(int)
+            }));
         });
     }
 

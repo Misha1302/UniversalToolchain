@@ -29,7 +29,7 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
             }
             catch (Exception ex) when (ex is not RuntimeExecutionException)
             {
-                WistThrower.Runtime(
+                ToolchainThrower.Runtime(
                     $"Error executing instruction '{instruction.UOpCode}' at pc={programCounter}, stack={state.ValueStack.Count}. {ex.Message}",
                     ex
                 );

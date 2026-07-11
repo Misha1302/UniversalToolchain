@@ -12,7 +12,7 @@ If you only need a shipped preset, prefer the high-level API:
 ```csharp
 using UniversalToolchain.Wist;
 
-using var wist = WistEngine.CreateSafeFormulas();
+using var wist = WistEngine.CreateRestrictedArithmetic();
 
 var formula = wist.Compile<Func<double, double, double>>(
     "price * 0.9 + fee",
@@ -22,7 +22,7 @@ var formula = wist.Compile<Func<double, double, double>>(
 double result = formula.CompiledDelegate(100.0, 5.0);
 ```
 
-For custom dialects there is no `WistRuntimeFacade.Compile<TDelegate>(...)` method yet. The current practical path is to build a runtime from a dialect file, compile once, and reuse the compiled artifact.
+For custom dialects there is no `WistRuntimeFacade.Compile<TDelegate>(...)` method yet. The current practical path is to build a runtime from a dialect file, compile once, and reuse the compiled artifact. This is a lower-level preview API for source/runtime authors; the stable first-contact facade remains `UniversalToolchain.Wist` plus shipped presets.
 
 ## Example dialect file
 
@@ -113,6 +113,8 @@ double second = session.Run<double>();
 ```
 
 ## Low-level CIL fast path
+
+This section is an escape hatch for backend/runtime authors and performance investigations, not the package-first stable facade. Prefer artifact sessions unless you have verified the exact CIL artifact shape.
 
 For the lowest-overhead CIL path, compile with the `compiler` backend, cast the artifact to `ICompiledArtifact<DynamicMethod>`, and wrap the generated method in `DynamicMethodInvoker`.
 

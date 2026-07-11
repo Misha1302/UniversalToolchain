@@ -60,7 +60,7 @@ public sealed class SsaSparseConditionalConstantPropagationPass : IIrOptimizatio
 
         var artifact = input.As<SsaArtifact>();
         var module = new SsaModule(artifact.Module.Id, artifact.Module.Functions.Select(RewriteFunction));
-        return new IrStageResult(new SsaArtifact(module));
+        return new IrStageResult(new SsaArtifact(module, artifact.ManagedCallableBindings));
     }
 
     private SsaFunction RewriteFunction(SsaFunction function)

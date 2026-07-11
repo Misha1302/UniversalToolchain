@@ -3,7 +3,6 @@ using NumbersModule.Contracts;
 using IdentifierModule.Contracts;
 using ScopesModule.Contracts;
 using UniversalToolchain.ModuleContracts;
-using UniversalToolchain.Wist.Contracts;
 using VariablesModule.Contracts;
 
 namespace Tests.Internal.ModuleContracts;
@@ -87,8 +86,8 @@ public sealed class ModuleDescriptorProviderTests
         Assert.That(numbers.OfType<ISyntaxContractFacet>().Single().Lexemes.Select(static x => x.LexemeId), Does.Contain("Number"));
         Assert.That(variables.OfType<ISyntaxContractFacet>().Single().Lexemes.Select(static x => x.LexemeId), Does.Contain("Let"));
         Assert.That(labels.OfType<ISyntaxContractFacet>().Single().Lexemes.Select(static x => x.LexemeId), Does.Contain("Goto"));
-        Assert.That(identifiers.OfType<ICompilerFactOwnershipFacet>().Single().Facts.Select(static x => x.FactId), Does.Contain(WistIdentifierFacts.IdentifiersAvailable));
-        Assert.That(scopes.OfType<ICompilerFactOwnershipFacet>().Single().Facts.Select(static x => x.FactId), Does.Contain(WistScopesFacts.ScopesLocalsBound));
+        Assert.That(identifiers.OfType<ICompilerFactOwnershipFacet>().Single().Facts.Select(static x => x.FactId), Does.Contain(IdentifierFacts.IdentifiersAvailable));
+        Assert.That(scopes.OfType<ICompilerFactOwnershipFacet>().Single().Facts.Select(static x => x.FactId), Does.Contain(ScopesFacts.ScopesLocalsBound));
     }
 
     [Test]
@@ -107,7 +106,7 @@ public sealed class ModuleDescriptorProviderTests
                 .AirEmissions
                 .SelectMany(static x => x.RequiredCapabilities),
             Does.Contain(KnownCoreBackendCapabilities.ObjectConstruction));
-        Assert.That(variablesEffect.Requires, Does.Contain(WistScopesFacts.ScopesLocalsBound));
+        Assert.That(variablesEffect.Requires, Does.Contain(ScopesFacts.ScopesLocalsBound));
         Assert.That(
             report.ContractTable.AirFacets
                 .Single(static x => x.ModuleId == VariablesContractIds.Module)

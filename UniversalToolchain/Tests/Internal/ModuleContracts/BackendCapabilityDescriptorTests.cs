@@ -38,6 +38,29 @@ public sealed class BackendCapabilityDescriptorTests
         });
     }
 
+
+    [Test]
+    public void AuxiliaryBackendPipelineComponents_ShouldNotBecomeSelectedContractModules()
+    {
+        var provider = new SelectedModuleContractTableProvider(
+            ModuleContractPipelineProfiles.StrictEnforced.EnforcementPolicy,
+            new ModuleContractSelectionBuilder());
+
+        var report = provider.Build(
+            [],
+            [],
+            [new AuxiliaryBackendComponent("runtime-provider-policy")]);
+
+        Assert.That(report, Is.Not.Null);
+        Assert.Multiple(() =>
+        {
+            Assert.That(report!.Diagnostics, Is.Empty);
+            Assert.That(
+                report.ModuleStatuses.Select(static status => status.ModuleId.Value),
+                Does.Not.Contain("backend.runtime.provider.policy"));
+        });
+    }
+
     [Test]
     public void BackendSpecificDescriptorProviders_ShouldUseBackendOwnedCapabilityNamespaces()
     {
@@ -129,6 +152,11 @@ public sealed class BackendCapabilityDescriptorTests
         Assert.Throws<InvalidOperationException>(() =>
             new BackendCapabilitySelectionFactory(AirBackendPolicy.CapabilityGated)
                 .Create(table, ["load_i32", "call C#"]));
+    }
+
+    private sealed class AuxiliaryBackendComponent(string componentId) : IBackendPipelineComponent
+    {
+        public string ComponentId { get; } = componentId;
     }
 
     private static IReadOnlyList<string> GetCapabilityIds(IModuleContractDescriptorProvider provider) =>
