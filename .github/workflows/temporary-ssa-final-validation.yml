@@ -1,9 +1,9 @@
 name: Temporary SSA final validation
 
 on:
-  pull_request:
+  push:
     branches:
-      - master
+      - fix/ssa-route-execution-contracts-20260715
 
 permissions:
   contents: write
