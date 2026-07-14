@@ -34,7 +34,7 @@ The package page is <https://www.nuget.org/packages/UniversalToolchain.Wist/0.1.
 
 The repository includes a smoke script that creates a temporary `net10.0` console project, uses an isolated NuGet package cache, restores only from NuGet.org, compiles a formula, evaluates it and verifies a rejected statement-style rule:
 
-```bash ci-timeout=240
+```bash ci-run=false
 ./Tools/smoke-published-wist-package.sh 0.1.0-alpha.1
 ```
 

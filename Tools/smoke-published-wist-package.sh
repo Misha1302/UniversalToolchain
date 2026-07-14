@@ -41,16 +41,13 @@ using UniversalToolchain.Wist;
 
 using var rules = WistEngine.CreateRestrictedArithmetic();
 
-var compiled = rules.Compile<Func<double, double, double>>(
+var pricing = rules.Compile<Func<double, double, double>>(
     "price * 0.9 + fee",
     "price",
     "fee");
 
-double compiledResult = compiled.CompiledDelegate(100.0, 5.0);
-if (Math.Abs(compiledResult - 95.0) > 1e-9)
-{
-    throw new InvalidOperationException($"Expected compiled result 95, got {compiledResult}.");
-}
+double pricingResult = pricing.CompiledDelegate(100.0, 5.0);
+AssertClose(95.0, pricingResult, "pricing compiled result");
 
 double evaluatedResult = rules.Evaluate<double>(
     "price * 0.9 + fee",
@@ -59,11 +56,22 @@ double evaluatedResult = rules.Evaluate<double>(
         price = 100.0,
         fee = 5.0
     });
+AssertClose(95.0, evaluatedResult, "pricing evaluated result");
 
-if (Math.Abs(evaluatedResult - 95.0) > 1e-9)
-{
-    throw new InvalidOperationException($"Expected evaluated result 95, got {evaluatedResult}.");
-}
+var rollout = rules.Compile<Func<double, double, double, double>>(
+    "usage * 0.7 + reliability * 0.3 - incidents * 15.0",
+    "usage",
+    "reliability",
+    "incidents");
+AssertClose(82.0, rollout.CompiledDelegate(100.0, 90.0, 1.0), "rollout result");
+
+var lms = rules.Compile<Func<double, double, double, double, double>>(
+    "correct * pointsPerTask - penalties * penaltyPoints",
+    "correct",
+    "pointsPerTask",
+    "penalties",
+    "penaltyPoints");
+AssertClose(84.0, lms.CompiledDelegate(18.0, 5.0, 2.0, 3.0), "LMS result");
 
 var rejected = rules.Validate(
     "let total = price * 0.9\ntotal",
@@ -75,6 +83,14 @@ var rejected = rules.Validate(
 if (rejected.IsValid)
 {
     throw new InvalidOperationException("Expected the restricted preset to reject statement-style bindings.");
+}
+
+static void AssertClose(double expected, double actual, string label)
+{
+    if (Math.Abs(expected - actual) > 1e-9)
+    {
+        throw new InvalidOperationException($"Expected {label} {expected}, got {actual}.");
+    }
 }
 EOF
 
