@@ -185,7 +185,7 @@ This facade currently exposes:
 - typed fast `Compile<TDelegate>` and `TryCompile<TDelegate>`;
 - backend-neutral compiled program metadata.
 
-The larger direction is controlled application DSLs for .NET. The current stable alpha claim is restricted numeric/formula execution, validation, and typed compiled invocation for supported shapes.
+The larger direction is controlled application DSLs for .NET. The current alpha claim is restricted numeric/formula execution, validation, and typed compiled invocation for supported shapes.
 
 ## Resource limits and diagnostics
 

@@ -91,7 +91,7 @@ Without a language/runtime layer, teams usually choose one of two bad extremes:
 
 UniversalToolchain is for the middle ground: a language surface your application can own.
 
-## What is real in this alpha
+## What is real in alpha.1
 
 The current public alpha is intentionally scoped:
 
