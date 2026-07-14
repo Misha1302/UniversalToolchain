@@ -78,6 +78,7 @@ def main() -> int:
         ROOT / '.github/scripts/run-markdown-bash-blocks.py',
         ROOT / 'docs/start/installation.md',
         ROOT / 'docs/CURRENT_ARCHITECTURE_STATUS.md',
+        ROOT / 'docs/public/what-is-stable-in-alpha.md',
         ROOT / 'UniversalToolchain/Dialects/examples/wist/function-calls-safe-math/README.md',
     ]
     for path in required_files:
@@ -88,15 +89,19 @@ def main() -> int:
     if package_json.exists() and '"docs:status"' not in package_json.read_text(encoding='utf-8'):
         errors.append('package.json: missing docs:status script')
 
-    prepublish_phrases = [
-        '`UniversalToolchain.Wist` `0.1.0-preview.3` is published on NuGet',
-        'is published on NuGet: <https://www.nuget.org/packages/UniversalToolchain.Wist/0.1.0-preview.3>',
+    forbidden_legacy_stage_phrases = [
+        'what-is-stable-in-preview',
+        'public preview',
+        'current preview',
+        'preview package',
+        'Wist facade preview',
+        'Preview status',
     ]
     for path in markdown_files:
         text = path.read_text(encoding='utf-8')
-        for phrase in prepublish_phrases:
+        for phrase in forbidden_legacy_stage_phrases:
             if phrase in text:
-                errors.append(f'{rel(path)}: pre-publish wording still claims NuGet publication')
+                errors.append(f'{rel(path)}: legacy preview-stage wording remains: {phrase}')
 
     docs_index = ROOT / 'docs/index.md'
     if docs_index.exists():
