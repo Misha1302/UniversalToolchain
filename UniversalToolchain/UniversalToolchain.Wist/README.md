@@ -80,7 +80,7 @@ The current restricted arithmetic preset starts narrow. Statement-style bindings
 
 ## Hot path vs convenience path
 
-Use `Evaluate<T>` for one-off previews, admin tools, tests, and non-hot paths:
+Use `Evaluate<T>` for one-off trial runs, admin tools, tests, and non-hot paths:
 
 ```csharp
 double score = rules.Evaluate<double>(
@@ -176,7 +176,7 @@ using var trustedInterop = WistEngine.Create(new WistEngineOptions
 
 Restricted presets limit the selected language/runtime surface. They are not hardened sandboxes for arbitrary untrusted code. Compiled execution is a performance feature, not a sandbox boundary. Treat untrusted script execution as high risk and isolate it at the process/environment level when needed.
 
-## Current preview scope
+## Current alpha scope
 
 This facade currently exposes:
 
@@ -185,7 +185,7 @@ This facade currently exposes:
 - typed fast `Compile<TDelegate>` and `TryCompile<TDelegate>`;
 - backend-neutral compiled program metadata.
 
-The larger direction is controlled application DSLs for .NET. The current stable preview claim is restricted numeric/formula execution, validation, and typed compiled invocation for supported shapes.
+The larger direction is controlled application DSLs for .NET. The current alpha claim is restricted numeric/formula execution, validation, and typed compiled invocation for supported shapes.
 
 ## Resource limits and diagnostics
 

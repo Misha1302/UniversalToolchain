@@ -4,7 +4,7 @@ using UniversalToolchain.Ir.Abstractions;
 namespace UniversalToolchain.Ssa.Optimization;
 
 /// <summary>
-/// Immutable runtime configuration for the preview SSA optimizer module.
+/// Immutable runtime configuration for the alpha SSA optimizer module.
 /// </summary>
 public sealed class SsaRuntimeExecutionOptions
 {

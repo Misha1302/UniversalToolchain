@@ -91,7 +91,7 @@ A compatible migration can be staged:
 
 1. Introduce semantic requirement descriptors alongside `SupportedBackendAliases`.
 2. Prefer requirements when present.
-3. Preserve aliases as a legacy narrowing constraint during preview.
+3. Preserve aliases as a legacy narrowing constraint during alpha.
 4. Add diagnostics when aliases and requirements conflict.
 5. Migrate built-in providers.
 6. Remove or deprecate alias coupling only after all shipped providers and tests are migrated.

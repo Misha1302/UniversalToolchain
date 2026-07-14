@@ -154,15 +154,15 @@ public static class SsaSemanticDescriptors
             new SemanticTypeDescriptor(
                 SsaSemanticTypes.Bool,
                 SemanticTypeTraits.Predicate | SemanticTypeTraits.ValueObject | SemanticTypeTraits.Immutable,
-                "preview bool"),
+                "alpha bool"),
             new SemanticTypeDescriptor(
                 SsaSemanticTypes.Int32,
                 SemanticTypeTraits.Numeric | SemanticTypeTraits.ValueObject | SemanticTypeTraits.Immutable,
-                "preview int32"),
+                "alpha int32"),
             new SemanticTypeDescriptor(
                 SsaSemanticTypes.Float64,
                 SemanticTypeTraits.Numeric | SemanticTypeTraits.ValueObject | SemanticTypeTraits.Immutable,
-                "preview float64"),
+                "alpha float64"),
             new SemanticTypeDescriptor(
                 SsaSemanticTypes.Object,
                 SemanticTypeTraits.Reference | SemanticTypeTraits.RuntimeManaged,
@@ -179,7 +179,7 @@ public static class SsaSemanticDescriptors
                 determinism: Determinism.Deterministic,
                 algebraicTraits: AlgebraicTraits.Commutative | AlgebraicTraits.Associative,
                 trustLevel: SemanticTrustLevel.BuiltInTrusted,
-                displayName: "preview unchecked int32 addition"),
+                displayName: "alpha unchecked int32 addition"),
             new CallableDescriptor(
                 SsaCallables.SubtractInt32Unchecked,
                 new CallableSignature(
@@ -188,7 +188,7 @@ public static class SsaSemanticDescriptors
                 effects: SemanticEffectSummary.Pure,
                 determinism: Determinism.Deterministic,
                 trustLevel: SemanticTrustLevel.BuiltInTrusted,
-                displayName: "preview unchecked int32 subtraction"),
+                displayName: "alpha unchecked int32 subtraction"),
             new CallableDescriptor(
                 SsaCallables.MultiplyInt32Unchecked,
                 new CallableSignature(
@@ -198,7 +198,7 @@ public static class SsaSemanticDescriptors
                 determinism: Determinism.Deterministic,
                 algebraicTraits: AlgebraicTraits.Commutative | AlgebraicTraits.Associative,
                 trustLevel: SemanticTrustLevel.BuiltInTrusted,
-                displayName: "preview unchecked int32 multiplication"),
+                displayName: "alpha unchecked int32 multiplication"),
             new CallableDescriptor(
                 SsaCallables.EqualInt32,
                 new CallableSignature(
@@ -208,6 +208,6 @@ public static class SsaSemanticDescriptors
                 determinism: Determinism.Deterministic,
                 algebraicTraits: AlgebraicTraits.Commutative | AlgebraicTraits.Comparison,
                 trustLevel: SemanticTrustLevel.BuiltInTrusted,
-                displayName: "preview int32 equality")
+                displayName: "alpha int32 equality")
         ]);
 }

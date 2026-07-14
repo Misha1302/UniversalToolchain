@@ -20,7 +20,7 @@ callable-first baseline archive:
   sequences.
 - The roundtrip route has explicit `Off`, `Prefer`, `Require` and `Debug`
   policies for no-optimization routing.
-- Preview arithmetic and managed-call support are now selected through explicit
+- Alpha arithmetic and managed-call support are now selected through explicit
   SSA route profiles instead of being hidden in default AIR/SSA converters.
 
 ## Release surface cleanup

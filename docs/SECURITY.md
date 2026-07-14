@@ -25,7 +25,7 @@ Internal targeted runtime activation (exact loading of selected component/regist
 This repository is currently developed on the default development branch and targets .NET 10 (`net10.0`). Security fixes
 are expected to be applied there.
 
-## Preview.3 host controls
+## Alpha host controls
 
 The public facade now applies two bounded controls before composition or execution:
 

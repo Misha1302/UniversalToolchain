@@ -5,7 +5,7 @@ description: Source-level runtime profile defaults and builder API.
 
 # Runtime Profiles
 
-Status: public preview API.
+Status: public alpha API.
 
 Runtime profiles apply deterministic source-level defaults before dialect composition. They do not replace runtime
 component manifests and they are not deployment profiles.

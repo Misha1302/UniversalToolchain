@@ -8,8 +8,8 @@ Stages:
 
 1. IR inspection only.
 2. Internal experimental execution.
-3. Explicit opt-in preview backend.
-4. Offline artifact preview.
+3. Explicit opt-in alpha backend.
+4. Offline artifact inspection.
 5. Performance and lifecycle evidence.
 6. Documented supported subset.
 7. Stable optional backend package.
@@ -201,7 +201,7 @@ Deliverables:
 - break-even analysis;
 - memory and artifact-size evidence;
 - supported workload guidance;
-- stable preview/stable decision.
+- stable alpha/stable decision.
 
 Exit criteria:
 
@@ -210,7 +210,7 @@ Exit criteria:
 
 ## 37. Acceptance criteria for the first useful release
 
-The first user-meaningful preview should satisfy all of the following:
+The first user-meaningful alpha should satisfy all of the following:
 
 1. Installation is optional and does not change default Wist dependencies.
 2. `compiler` still resolves to `cil`.

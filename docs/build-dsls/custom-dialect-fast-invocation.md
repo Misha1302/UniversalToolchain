@@ -22,7 +22,7 @@ var formula = wist.Compile<Func<double, double, double>>(
 double result = formula.CompiledDelegate(100.0, 5.0);
 ```
 
-For custom dialects there is no `WistRuntimeFacade.Compile<TDelegate>(...)` method yet. The current practical path is to build a runtime from a dialect file, compile once, and reuse the compiled artifact. This is a lower-level preview API for source/runtime authors; the stable first-contact facade remains `UniversalToolchain.Wist` plus shipped presets.
+For custom dialects there is no `WistRuntimeFacade.Compile<TDelegate>(...)` method yet. The current practical path is to build a runtime from a dialect file, compile once, and reuse the compiled artifact. This is a lower-level alpha API for source/runtime authors; the stable first-contact facade remains `UniversalToolchain.Wist` plus shipped presets.
 
 ## Example dialect file
 

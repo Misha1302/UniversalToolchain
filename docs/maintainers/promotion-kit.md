@@ -5,7 +5,7 @@ description: Canonical launch messages, claim boundaries and feedback metrics fo
 
 # Maintainer Promotion Kit
 
-This page is for maintainers preparing a public Wist announcement. It keeps the product message aligned with the current preview and avoids claims the repository does not prove.
+This page is for maintainers preparing a public Wist announcement. It keeps the product message aligned with the current alpha and avoids claims the repository does not prove.
 
 ## Canonical message
 
@@ -36,7 +36,7 @@ Use `Wist` and `UniversalToolchain.Wist` as the first-contact product names. Int
 - Do not say Wist runs arbitrary untrusted code safely.
 - Do not claim that every Wist program performs like handwritten C#.
 - Do not present the experimental SSA route as an SSA-native backend or a general speed guarantee.
-- Do not describe the current preview as a finished business-rule platform or universal language workbench.
+- Do not describe the current alpha as a finished business-rule platform or universal language workbench.
 
 ## Reddit or .NET community post
 
@@ -62,7 +62,7 @@ Use `Wist` and `UniversalToolchain.Wist` as the first-contact product names. Int
 
 > Wist lets a .NET host validate small numeric rules, compile an approved formula into a typed delegate and keep side effects in ordinary application code. It is backed by a larger modular DSL/runtime framework with interpreter and CIL paths.
 >
-> The current preview is intentionally narrow: it is not a hardened sandbox or a finished general-purpose language workbench. The repository includes a clean-room NuGet smoke check and copy-ready pricing, rollout and LMS examples.
+> The current alpha is intentionally narrow: it is not a hardened sandbox or a finished general-purpose language workbench. The repository includes a clean-room NuGet smoke check and copy-ready pricing, rollout and LMS examples.
 
 ## LinkedIn post
 
@@ -70,7 +70,7 @@ Use `Wist` and `UniversalToolchain.Wist` as the first-contact product names. Int
 >
 > The host application controls the inputs, validates the rule, compiles an approved formula once and receives a typed delegate. The formula returns data; the application still owns authorization, persistence and side effects.
 >
-> The project also explores modular dialect composition, interpreter/CIL semantic parity and an observable experimental SSA route. The current release is deliberately a preview, not a sandbox claim.
+> The project also explores modular dialect composition, interpreter/CIL semantic parity and an observable experimental SSA route. The current release is deliberately a alpha, not a sandbox claim.
 >
 > I am looking for .NET developers who can try the clean-room quickstart and report where the first ten minutes are confusing.
 

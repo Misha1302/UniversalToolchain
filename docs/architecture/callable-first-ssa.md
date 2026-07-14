@@ -5,7 +5,7 @@ constant folding, constants-only SSA core descriptors, managed callable
 descriptors, a no-optimization SSA roundtrip route and the first
 capability-checked callable lowering planner in code.
 
-The current SSA preview route remains:
+The current SSA alpha route remains:
 
 ```text
 AIR -> SSA -> SSA optimization -> AIR
@@ -52,7 +52,7 @@ ordinary callables with semantic descriptors.
 ## Implemented foundation in this increment
 
 This increment adds the first foundation layer without replacing the existing
-preview pipeline:
+alpha pipeline:
 
 - `UniversalToolchain.Semantics.Abstractions`
   - `SemanticTypeId`;
@@ -94,8 +94,8 @@ preview pipeline:
   - `AirIntrinsicDescriptorSet`;
   - stack analysis for explicitly described AIR intrinsics.
 - `UniversalToolchain.Ssa.Lowering` / `UniversalToolchain.Ssa.Emission`
-  - preview int32 arithmetic AIR intrinsics are lowered to `SsaCall`;
-  - preview int32 arithmetic `SsaCall` instructions are emitted back to
+  - alpha int32 arithmetic AIR intrinsics are lowered to `SsaCall`;
+  - alpha int32 arithmetic `SsaCall` instructions are emitted back to
     verifiable AIR intrinsics;
   - supported managed static methods, instance methods with a stack receiver,
     and constructors are represented as managed `SsaCall` instructions and can
@@ -131,7 +131,7 @@ that do not yet have a valid route target.
 - trusted pure managed callables can be folded when a bounded evaluator is
   explicitly provided for their descriptor.
 
-Legacy preview arithmetic operation ids such as `core.add`, `core.sub`,
+Legacy alpha arithmetic operation ids such as `core.add`, `core.sub`,
 `core.mul` and `core.eq` are no longer public SSA known ids and are not part of
 the active core descriptor route. Constants are still materialized as
 `SsaOperation` until the constant model is generalized.
@@ -223,7 +223,7 @@ for them.
    bool/int32/float64/object mapping.
 2. Extend `SSA -> AIR` emission beyond the current AIR-compatible stack subset
    and add executable CIL/interpreter routes for their explicit target kinds.
-3. Extend the constant model beyond preview int32/bool materialization so
+3. Extend the constant model beyond alpha int32/bool materialization so
    folded values are not tied to `SsaOperations.ConstantInt32` and
    `SsaOperations.ConstantBool`.
 4. Add dialect syntax for intermediate-layer policies such as `off`, `prefer`,

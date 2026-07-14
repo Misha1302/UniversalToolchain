@@ -196,7 +196,7 @@ bytecode, AIR, SSA and backend artifact stages are not complete yet.
 - Configuration format modernization where it improves determinism and tooling.
 - Optional code generation for repetitive boilerplate where it preserves readability and correctness.
 
-## Release-hardening debt ledger (preview.3)
+## Release-hardening debt ledger (legacy cycle 3)
 
 | Debt | Canonical owner | Current control | Exit metric | Target decision |
 |---|---|---|---|---|

@@ -47,7 +47,7 @@ public sealed class SsaRouteIntegrationRegressionTests
     }
 
     [Test]
-    public void Run_PreviewOptimizerPipelineProducesStructurallyVerifiedSsa()
+    public void Run_AlphaOptimizerPipelineProducesStructurallyVerifiedSsa()
     {
         var input = BranchArtifact();
         var profile = SsaRouteProfiles.Create(SsaRoutePolicy.Debug);
@@ -81,7 +81,7 @@ public sealed class SsaRouteIntegrationRegressionTests
     }
 
     [Test]
-    public void Run_PreviewOptimizerPipelineIsIdempotentOnFoldedBranchShape()
+    public void Run_AlphaOptimizerPipelineIsIdempotentOnFoldedBranchShape()
     {
         var profile = SsaRouteProfiles.Create(SsaRoutePolicy.Debug);
         var pipeline = SsaRouteFactory.CreateOptimizer(profile);

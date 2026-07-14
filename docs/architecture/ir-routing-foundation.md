@@ -2,7 +2,7 @@
 
 Status: current foundation with a minimal SSA model, structural verifier,
 AIR/SSA conversion boundary, first verifier-gated optimization boundary and
-opt-in dialect optimizer wiring for the preview SSA route.
+opt-in dialect optimizer wiring for the alpha SSA route.
 
 UniversalToolchain now exposes minimal generic IR routing contracts in
 `UniversalToolchain.Ir.Abstractions`.
@@ -63,7 +63,7 @@ without replacing the current semantic boundary.
 `IAirOptimizer` contract through the generic stage pipeline. This is the normal
 AIR runtime route, not a second compatibility runtime.
 
-SSA execution is available only as an explicit preview optimizer selected
+SSA execution is available only as an explicit alpha optimizer selected
 through the normal dialect optimizer directive path:
 
 ```text
@@ -93,7 +93,7 @@ The first SSA slice implements:
 - basic dominance/use-before-definition validation for reachable blocks.
 
 The default core descriptor snapshot currently covers neutral int32 arithmetic
-and comparison descriptors only as preview compatibility for the first
+and comparison descriptors only as alpha compatibility for the first
 AIR/SSA/AIR route. The long-term direction is callable-first SSA: arithmetic,
 runtime calls, constructors and intrinsics should be modeled as semantic
 callable descriptors outside the structural SSA core. Extensions must provide
@@ -186,7 +186,7 @@ wiring it into the runtime path:
 - folded instructions preserve the original result SSA value ids, so downstream
   terminators and block transfers do not need a separate rename map.
 
-The initial pass covers preview int32 arithmetic callables lowered from AIR
+The initial pass covers alpha int32 arithmetic callables lowered from AIR
 intrinsics. It does not perform cross-block propagation, dead-code elimination,
 algebraic simplification, effectful folding or runtime/backend selection.
 

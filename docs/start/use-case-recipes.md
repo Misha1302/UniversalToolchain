@@ -115,10 +115,10 @@ Before using a configurable rule in an application:
 5. Store the last known-good rule so an invalid update does not replace working behavior.
 6. Treat restricted syntax as a language-surface limit, not as process isolation or a hardened sandbox.
 
-## When not to use this preview
+## When not to use this alpha
 
-Do not use the current restricted arithmetic preset when you need arbitrary C# execution, process isolation, execution timeouts, memory quotas or a stable full business-rule language. Those are outside the current preview claim.
+Do not use the current restricted arithmetic preset when you need arbitrary C# execution, process isolation, execution timeouts, memory quotas or a stable full business-rule language. Those are outside the current alpha claim.
 
 ## Next
 
-Read [What is stable in preview?](/public/what-is-stable-in-preview), the [Performance Model](/public/performance-model) and [Security](/SECURITY) before integrating the package into a consequential workflow.
+Read [What is stable in alpha?](/public/what-is-stable-in-alpha), the [Performance Model](/public/performance-model) and [Security](/SECURITY) before integrating the package into a consequential workflow.

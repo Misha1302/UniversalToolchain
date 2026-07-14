@@ -26,7 +26,7 @@ Forbidden:
 
 Forbidden:
 
-> The preview benchmark suite proves production performance.
+> The alpha benchmark suite proves production performance.
 
 ## What is measured now
 

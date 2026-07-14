@@ -54,7 +54,7 @@ Forbidden:
 
 Forbidden:
 
-> Preview benchmark results prove production performance.
+> Alpha benchmark results prove production performance.
 
 ## Offline Restore
 

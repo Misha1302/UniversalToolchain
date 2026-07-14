@@ -234,7 +234,7 @@ public sealed class SsaOptimizationTests
             ],
             returnType: SsaTypes.Int32));
 
-        var optimized = RunPreviewConstantFolding(artifact).Artifact.As<SsaArtifact>();
+        var optimized = RunAlphaConstantFolding(artifact).Artifact.As<SsaArtifact>();
         var block = optimized.Module.Functions.Single().Blocks.Single();
         var folded = block.Instructions[2];
 
@@ -363,19 +363,19 @@ public sealed class SsaOptimizationTests
 
     private static IrStageResult RunConstantFolding(SsaArtifact artifact) =>
         new SsaOptimizerPipeline(
-                [PreviewConstantFoldingPass()],
+                [AlphaConstantFoldingPass()],
                 SsaCoreDescriptors.ConstantMaterialization,
                 SsaSemanticDescriptors.ArithmeticInt32)
             .Run(artifact, new IrPipelineContext());
 
-    private static IrStageResult RunPreviewConstantFolding(SsaArtifact artifact) =>
+    private static IrStageResult RunAlphaConstantFolding(SsaArtifact artifact) =>
         new SsaOptimizerPipeline(
-                [PreviewConstantFoldingPass()],
+                [AlphaConstantFoldingPass()],
                 SsaCoreDescriptors.ConstantMaterialization,
                 SsaSemanticDescriptors.ArithmeticInt32)
             .Run(artifact, new IrPipelineContext());
 
-    private static SsaConstantFoldingPass PreviewConstantFoldingPass() =>
+    private static SsaConstantFoldingPass AlphaConstantFoldingPass() =>
         new(SsaSemanticDescriptors.ArithmeticInt32, new SsaInt32ConstantEvaluator());
 
     private static SsaArtifact CreateConstantBinaryArtifact(CallableId callable, int leftValue, int rightValue, SsaTypeId? resultType = null)
