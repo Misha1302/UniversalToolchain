@@ -92,8 +92,19 @@ public sealed class SsaDeadPureInstructionEliminationPass : IIrOptimizationPass
     private static (SsaFunction Function, bool Changed) RemoveUnusedBlockParameters(
         SsaFunction function)
     {
+        var nonRewritableTargets = function.Blocks
+            .Select(static block => block.Terminator)
+            .Where(static terminator =>
+                terminator is not null &&
+                terminator.Kind is not (SsaTerminatorKind.Jump or SsaTerminatorKind.Branch))
+            .SelectMany(static terminator => terminator!.Transfers)
+            .Select(static transfer => transfer.Target)
+            .ToHashSet();
         var removals = function.Blocks
-            .Where(block => block.Id != function.EntryBlockId && block.Parameters.Count != 0)
+            .Where(block =>
+                block.Id != function.EntryBlockId &&
+                block.Parameters.Count != 0 &&
+                !nonRewritableTargets.Contains(block.Id))
             .Select(block => new
             {
                 block.Id,
