@@ -4,6 +4,10 @@ using UniversalToolchain.Ssa.Abstractions;
 
 namespace UniversalToolchain.Ssa.Optimization;
 
+/// <summary>
+/// Removes dead trusted pure instructions and then removes non-entry block
+/// parameters whose incoming values are no longer observed.
+/// </summary>
 public sealed class SsaDeadPureInstructionEliminationPass : IIrOptimizationPass
 {
     private readonly SsaDescriptorSet _descriptors;
@@ -39,7 +43,8 @@ public sealed class SsaDeadPureInstructionEliminationPass : IIrOptimizationPass
         ArgumentNullException.ThrowIfNull(context);
 
         var artifact = input.As<SsaArtifact>();
-        return new IrStageResult(new SsaArtifact(RewriteModule(artifact.Module), artifact.ManagedCallableBindings));
+        return new IrStageResult(
+            new SsaArtifact(RewriteModule(artifact.Module), artifact.ManagedCallableBindings));
     }
 
     private SsaModule RewriteModule(SsaModule module) =>
@@ -47,27 +52,152 @@ public sealed class SsaDeadPureInstructionEliminationPass : IIrOptimizationPass
 
     private SsaFunction RewriteFunction(SsaFunction function)
     {
-        var useDef = SsaUseDefMap.Build(function);
-        var liveInstructions = ComputeLiveInstructions(function, useDef);
+        var current = function;
+        while (true)
+        {
+            var useDef = SsaUseDefMap.Build(current);
+            var liveInstructions = ComputeLiveInstructions(current, useDef);
+            var instructionsChanged = current.Blocks.Any(block =>
+                block.Instructions.Any(instruction => !liveInstructions.Contains(instruction.Id)));
+            var rewritten = new SsaFunction(
+                current.Id,
+                current.EntryBlockId,
+                current.Blocks.Select(block => RewriteBlock(block, liveInstructions)),
+                current.Parameters,
+                current.ReturnType);
+            var (pruned, parametersChanged) = RemoveUnusedBlockParameters(rewritten);
 
-        return new SsaFunction(
-            function.Id,
-            function.EntryBlockId,
-            function.Blocks.Select(block => RewriteBlock(block, liveInstructions)),
-            function.Parameters,
-            function.ReturnType);
+            if (!instructionsChanged && !parametersChanged)
+                return pruned;
+
+            current = pruned;
+        }
     }
 
-    private SsaBlock RewriteBlock(SsaBlock block, IReadOnlySet<SsaOperationId> liveInstructions)
+    private static SsaBlock RewriteBlock(
+        SsaBlock block,
+        IReadOnlySet<SsaOperationId> liveInstructions)
     {
         var instructions = block.Instructions
             .Where(instruction => liveInstructions.Contains(instruction.Id))
             .ToArray();
 
-        return new SsaBlock(block.Id, block.Parameters, terminator: block.Terminator, instructions: instructions);
+        return new SsaBlock(
+            block.Id,
+            block.Parameters,
+            terminator: block.Terminator,
+            instructions: instructions);
     }
 
-    private HashSet<SsaOperationId> ComputeLiveInstructions(SsaFunction function, SsaUseDefMap useDef)
+    private static (SsaFunction Function, bool Changed) RemoveUnusedBlockParameters(
+        SsaFunction function)
+    {
+        var removals = function.Blocks
+            .Where(block => block.Id != function.EntryBlockId && block.Parameters.Count != 0)
+            .Select(block => new
+            {
+                block.Id,
+                Indices = FindUnusedParameterIndices(block)
+            })
+            .Where(static item => item.Indices.Count != 0)
+            .ToDictionary(static item => item.Id, static item => item.Indices);
+
+        if (removals.Count == 0)
+            return (function, false);
+
+        return (
+            new SsaFunction(
+                function.Id,
+                function.EntryBlockId,
+                function.Blocks.Select(block => RewriteBlockParametersAndTransfers(block, removals)),
+                function.Parameters,
+                function.ReturnType),
+            true);
+    }
+
+    private static IReadOnlySet<int> FindUnusedParameterIndices(SsaBlock block)
+    {
+        var used = new HashSet<SsaValueId>(
+            block.Instructions.SelectMany(static instruction => instruction.Operands));
+        if (block.Terminator is not null)
+        {
+            used.UnionWith(block.Terminator.Operands);
+            used.UnionWith(block.Terminator.Transfers.SelectMany(static transfer => transfer.Arguments));
+        }
+
+        return block.Parameters
+            .Select(static (parameter, index) => (parameter, index))
+            .Where(item => !used.Contains(item.parameter.Value.Id))
+            .Select(static item => item.index)
+            .ToHashSet();
+    }
+
+    private static SsaBlock RewriteBlockParametersAndTransfers(
+        SsaBlock block,
+        IReadOnlyDictionary<SsaBlockId, IReadOnlySet<int>> removals)
+    {
+        var parameters = removals.TryGetValue(block.Id, out var removedParameters)
+            ? block.Parameters.Where((_, index) => !removedParameters.Contains(index)).ToArray()
+            : block.Parameters;
+
+        return new SsaBlock(
+            block.Id,
+            parameters,
+            instructions: block.Instructions,
+            terminator: RewriteTerminator(block.Terminator, removals));
+    }
+
+    private static SsaTerminator? RewriteTerminator(
+        SsaTerminator? terminator,
+        IReadOnlyDictionary<SsaBlockId, IReadOnlySet<int>> removals)
+    {
+        if (terminator is null)
+            return null;
+
+        return terminator.Kind switch
+        {
+            SsaTerminatorKind.Return => SsaTerminator.Return(terminator.Operands),
+            SsaTerminatorKind.Jump => RewriteJump(terminator.Transfers.Single(), removals),
+            SsaTerminatorKind.Branch => RewriteBranch(terminator, removals),
+            SsaTerminatorKind.Unreachable => SsaTerminator.Unreachable(),
+            _ => terminator
+        };
+    }
+
+    private static SsaTerminator RewriteJump(
+        SsaBlockTransfer transfer,
+        IReadOnlyDictionary<SsaBlockId, IReadOnlySet<int>> removals) =>
+        SsaTerminator.Jump(transfer.Target, FilterArguments(transfer, removals));
+
+    private static SsaTerminator RewriteBranch(
+        SsaTerminator terminator,
+        IReadOnlyDictionary<SsaBlockId, IReadOnlySet<int>> removals)
+    {
+        var first = terminator.Transfers[0];
+        var second = terminator.Transfers[1];
+        return SsaTerminator.Branch(
+            terminator.Operands.Single(),
+            first.Target,
+            FilterArguments(first, removals),
+            second.Target,
+            FilterArguments(second, removals));
+    }
+
+    private static IReadOnlyList<SsaValueId> FilterArguments(
+        SsaBlockTransfer transfer,
+        IReadOnlyDictionary<SsaBlockId, IReadOnlySet<int>> removals)
+    {
+        if (!removals.TryGetValue(transfer.Target, out var removedIndices))
+            return transfer.Arguments;
+
+        return transfer.Arguments
+            .Where((_, index) => !removedIndices.Contains(index))
+            .ToArray();
+    }
+
+    private HashSet<SsaOperationId> ComputeLiveInstructions(
+        SsaFunction function,
+        SsaUseDefMap useDef)
     {
         var liveValues = new HashSet<SsaValueId>();
         var liveInstructions = new HashSet<SsaOperationId>();
