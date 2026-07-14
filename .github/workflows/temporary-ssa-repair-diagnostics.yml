@@ -79,12 +79,10 @@ jobs:
               raise SystemExit('EmitOperation insertion anchor not found')
           text = text.replace(operation_anchor, helper + operation_anchor, 1)
 
-          state_anchor = '''        public bool IsUnusedPureResult(SsaOperation operation) =>
-                  operation.Results.Count == 1 && !_useCounts.ContainsKey(operation.Results.Single().Id);'''
+          state_anchor = '        public bool IsUnusedPureResult(SsaOperation operation) =>'
           state_replacement = '''        public bool IsUnused(SsaValueId valueId) => !_useCounts.ContainsKey(valueId);
 
-                  public bool IsUnusedPureResult(SsaOperation operation) =>
-                  operation.Results.Count == 1 && !_useCounts.ContainsKey(operation.Results.Single().Id);'''
+                  public bool IsUnusedPureResult(SsaOperation operation) =>'''
           if state_anchor not in text:
               raise SystemExit('EmissionState unused-value insertion anchor not found')
           text = text.replace(state_anchor, state_replacement, 1)
