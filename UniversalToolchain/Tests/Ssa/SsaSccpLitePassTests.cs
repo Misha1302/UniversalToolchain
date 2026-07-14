@@ -49,11 +49,15 @@ public sealed class SsaSccpLitePassTests
             terminator: SsaTerminator.Return([elseValue.Id]));
 
         var optimized = Run(ModuleWith(entry, test, thenBlock, elseBlock));
-        var optimizedTest = optimized.Functions.Single().Blocks.Single(block => block.Id.Value == "test");
+        var optimizedFunction = optimized.Functions.Single();
+        var optimizedEntry = optimizedFunction.Blocks.Single(block => block.Id.Value == "entry");
+        var optimizedTest = optimizedFunction.Blocks.Single(block => block.Id.Value == "test");
 
         Assert.Multiple(() =>
         {
-            Assert.That(optimized.Functions.Single().Blocks.Select(static x => x.Id.Value), Is.EqualTo(new[] { "entry", "test", "then" }));
+            Assert.That(optimizedFunction.Blocks.Select(static x => x.Id.Value), Is.EqualTo(new[] { "entry", "test", "then" }));
+            Assert.That(optimizedEntry.Terminator!.Transfers.Single().Arguments, Is.Empty);
+            Assert.That(optimizedTest.Parameters, Is.Empty);
             Assert.That(optimizedTest.Instructions[1], Is.TypeOf<SsaOperation>());
             Assert.That(((SsaOperation)optimizedTest.Instructions[1]).OpId, Is.EqualTo(SsaOperations.ConstantBool));
             Assert.That(optimizedTest.Terminator?.Kind, Is.EqualTo(SsaTerminatorKind.Jump));
@@ -110,11 +114,17 @@ public sealed class SsaSccpLitePassTests
                     [entry, left, right, merge],
                     returnType: SsaTypes.Int32)
             ]));
-        var optimizedMerge = optimized.Functions.Single().Blocks.Single(block => block.Id.Value == "merge");
+        var optimizedFunction = optimized.Functions.Single();
+        var optimizedLeft = optimizedFunction.Blocks.Single(block => block.Id.Value == "left");
+        var optimizedRight = optimizedFunction.Blocks.Single(block => block.Id.Value == "right");
+        var optimizedMerge = optimizedFunction.Blocks.Single(block => block.Id.Value == "merge");
 
         Assert.Multiple(() =>
         {
-            Assert.That(optimized.Functions.Single().Blocks.Select(static x => x.Id.Value), Is.EqualTo(new[] { "entry", "left", "right", "merge" }));
+            Assert.That(optimizedFunction.Blocks.Select(static x => x.Id.Value), Is.EqualTo(new[] { "entry", "left", "right", "merge" }));
+            Assert.That(optimizedMerge.Parameters.Select(static parameter => parameter.Value.Id), Is.EqualTo(new[] { mergeArgument.Value.Id }));
+            Assert.That(optimizedLeft.Terminator!.Transfers.Single().Arguments, Is.EqualTo(new[] { leftValue.Id }));
+            Assert.That(optimizedRight.Terminator!.Transfers.Single().Arguments, Is.EqualTo(new[] { rightValue.Id }));
             Assert.That(optimizedMerge.Instructions[1], Is.TypeOf<SsaCall>());
             Assert.That(((SsaCall)optimizedMerge.Instructions[1]).Callee, Is.EqualTo(SsaCallables.AddInt32Unchecked));
         });
