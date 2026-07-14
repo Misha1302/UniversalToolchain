@@ -25,13 +25,15 @@ public sealed class SsaRouteOperationalContractTests
 
         Assert.Multiple(() =>
         {
-  Assert.That(result.Program, Is.SameAs(source));
-  Assert.That(result.FellBackToInput, Is.True);
-  Assert.That(result.Diagnostics.Select(static diagnostic => diagnostic.Code),
-      Does.Contain("ssa.optimization.output.invalid"));
-  Assert.That(result.Report.ExecutedPasses,
-      Is.EqualTo(new[] { "first.pass", "invalid.pass" }));
-  Assert.That(neverRun.Count, Is.Zero);
+            Assert.That(result.Program, Is.SameAs(source));
+            Assert.That(result.FellBackToInput, Is.True);
+            Assert.That(
+                result.Diagnostics.Select(static diagnostic => diagnostic.Code),
+                Does.Contain("ssa.optimization.output.invalid"));
+            Assert.That(
+                result.Report.ExecutedPasses,
+                Is.EqualTo(new[] { "first.pass", "invalid.pass" }));
+            Assert.That(neverRun.Count, Is.Zero);
         });
     }
 
@@ -44,15 +46,17 @@ public sealed class SsaRouteOperationalContractTests
         source.Push(42);
 
         var exception = Assert.Throws<SsaRouteException>(() =>
-  SsaRouteFactory.CreateRoundtripRoute(profile).Run(source));
+            SsaRouteFactory.CreateRoundtripRoute(profile).Run(source));
 
         Assert.Multiple(() =>
         {
-  Assert.That(exception!.Diagnostics.Select(static diagnostic => diagnostic.Code),
-      Does.Contain("ssa.optimization.output.invalid"));
-  Assert.That(exception.Report.ExecutedPasses,
-      Is.EqualTo(new[] { "first.pass", "invalid.pass" }));
-  Assert.That(neverRun.Count, Is.Zero);
+            Assert.That(
+                exception!.Diagnostics.Select(static diagnostic => diagnostic.Code),
+                Does.Contain("ssa.optimization.output.invalid"));
+            Assert.That(
+                exception.Report.ExecutedPasses,
+                Is.EqualTo(new[] { "first.pass", "invalid.pass" }));
+            Assert.That(neverRun.Count, Is.Zero);
         });
     }
 
@@ -60,12 +64,12 @@ public sealed class SsaRouteOperationalContractTests
     public void CreateOptimizationPasses_CreatesFreshInstancesForEachPipeline()
     {
         var profile = SsaRouteProfileBuilder
-  .Create(SsaRoutePolicy.Require)
-  .WithId("fresh-pass-profile")
-  .AddPack(new FactoryPack(
-      "fresh-pass-pack",
-      static () => [new IdentityPass("fresh.pass")]))
-  .Build();
+            .Create(SsaRoutePolicy.Require)
+            .WithId("fresh-pass-profile")
+            .AddPack(new FactoryPack(
+                "fresh-pass-pack",
+                static () => [new IdentityPass("fresh.pass")]))
+            .Build();
 
         var first = profile.CreateOptimizationPasses().Single();
         var second = profile.CreateOptimizationPasses().Single();
@@ -79,28 +83,34 @@ public sealed class SsaRouteOperationalContractTests
         var source = SccpCrossBlockAirProgram();
 
         var result = SsaRouteFactory
-  .CreateRoundtripRoute(SsaRouteProfiles.Create(SsaRoutePolicy.Debug))
-  .Run(source);
+            .CreateRoundtripRoute(SsaRouteProfiles.Create(SsaRoutePolicy.Debug))
+            .Run(source);
 
-        var opcodes = result.Program.Instructions.Select(static instruction => instruction.UOpCode).ToArray();
+        var opcodes = result.Program.Instructions
+            .Select(static instruction => instruction.UOpCode)
+            .ToArray();
         var pushes = result.Program.Instructions
-  .Where(static instruction => instruction.UOpCode == UOpCode.Push)
-  .SelectMany(static instruction => instruction.Operands)
-  .ToArray();
+            .Where(static instruction => instruction.UOpCode == UOpCode.Push)
+            .SelectMany(static instruction => instruction.Operands)
+            .ToArray();
         var verification = new StructuralAirVerifier()
-  .Verify(new AirArtifact(result.Program), new IrPipelineContext());
+            .Verify(new AirArtifact(result.Program), new IrPipelineContext());
 
         Assert.Multiple(() =>
         {
-  Assert.That(result.UsedSsa, Is.True);
-  Assert.That(result.FellBackToInput, Is.False);
-  Assert.That(result.Diagnostics, Is.Empty);
-  Assert.That(opcodes, Does.Not.Contain(UOpCode.JmpIf));
-  Assert.That(pushes, Does.Not.Contain(20));
-  Assert.That(pushes, Does.Contain(10));
-  Assert.That(verification.IsSuccess, Is.True,
-      string.Join("; ", verification.Diagnostics.Select(static diagnostic =>
-$"{diagnostic.Code}: {diagnostic.Message}")));
+            Assert.That(result.UsedSsa, Is.True);
+            Assert.That(result.FellBackToInput, Is.False);
+            Assert.That(result.Diagnostics, Is.Empty);
+            Assert.That(opcodes, Does.Not.Contain(UOpCode.JmpIf));
+            Assert.That(pushes, Does.Not.Contain(20));
+            Assert.That(pushes, Does.Contain(10));
+            Assert.That(
+                verification.IsSuccess,
+                Is.True,
+                string.Join(
+                    "; ",
+                    verification.Diagnostics.Select(static diagnostic =>
+                        $"{diagnostic.Code}: {diagnostic.Message}")));
         });
     }
 
@@ -108,17 +118,17 @@ $"{diagnostic.Code}: {diagnostic.Message}")));
         SsaRoutePolicy policy,
         PassRunCounter neverRun) =>
         SsaRouteProfileBuilder
-  .Create(policy)
-  .WithId($"optimizer-failure-{policy}")
-  .AddPack(new FactoryPack(
-      "optimizer-failure-pack",
-      () =>
-      [
-new IdentityPass("first.pass"),
-new InvalidEntryPass("invalid.pass"),
-new IdentityPass("never.pass", neverRun)
-      ]))
-  .Build();
+            .Create(policy)
+            .WithId($"optimizer-failure-{policy}")
+            .AddPack(new FactoryPack(
+                "optimizer-failure-pack",
+                () =>
+                [
+                    new IdentityPass("first.pass"),
+                    new InvalidEntryPass("invalid.pass"),
+                    new IdentityPass("never.pass", neverRun)
+                ]))
+            .Build();
 
     private static AbstractIR SccpCrossBlockAirProgram()
     {
@@ -153,7 +163,7 @@ new IdentityPass("never.pass", neverRun)
         public IAirIntrinsicDescriptorResolver AirIntrinsicResolver => AirIntrinsicDescriptorSet.Empty;
 
         public IReadOnlyDictionary<string, CallableId> AirIntrinsicCallables { get; } =
-  new Dictionary<string, CallableId>(StringComparer.Ordinal);
+            new Dictionary<string, CallableId>(StringComparer.Ordinal);
 
         public SsaCallableLoweringTargetSet AirLoweringTargets => SsaCallableLoweringTargetSet.Empty;
 
@@ -178,13 +188,14 @@ new IdentityPass("never.pass", neverRun)
         public IrKind OutputKind => SsaIrKinds.Ssa;
 
         public IrStageContract Contract { get; } =
-  new(preservesFacts: [SsaFacts.StructuralVerification]);
+            new(preservesFacts: [SsaFacts.StructuralVerification]);
 
         public IrStageResult Run(IIrArtifact input, IrPipelineContext context)
         {
-  if (counter is not null)
-      counter.Count++;
-  return new IrStageResult(input, context.Facts);
+            if (counter is not null)
+                counter.Count++;
+
+            return new IrStageResult(input, context.Facts);
         }
     }
 
@@ -197,21 +208,21 @@ new IdentityPass("never.pass", neverRun)
         public IrKind OutputKind => SsaIrKinds.Ssa;
 
         public IrStageContract Contract { get; } =
-  new(preservesFacts: [SsaFacts.StructuralVerification]);
+            new(preservesFacts: [SsaFacts.StructuralVerification]);
 
         public IrStageResult Run(IIrArtifact input, IrPipelineContext context)
         {
-  var artifact = input.As<SsaArtifact>();
-  var invalid = new SsaModule(
-      artifact.Module.Id,
-      artifact.Module.Functions.Select(static function => new SsaFunction(
-function.Id,
-new SsaBlockId("missing.entry"),
-function.Blocks,
-function.Parameters,
-function.ReturnType)));
+            var artifact = input.As<SsaArtifact>();
+            var invalid = new SsaModule(
+                artifact.Module.Id,
+                artifact.Module.Functions.Select(static function => new SsaFunction(
+                    function.Id,
+                    new SsaBlockId("missing.entry"),
+                    function.Blocks,
+                    function.Parameters,
+                    function.ReturnType)));
 
-  return new IrStageResult(new SsaArtifact(invalid), context.Facts);
+            return new IrStageResult(new SsaArtifact(invalid), context.Facts);
         }
     }
 }
