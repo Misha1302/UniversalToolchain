@@ -44,7 +44,7 @@ jobs:
               raise SystemExit('test using insertion point not found in bootstrap')
           script = script.replace(using_needle, using_replacement, 1)
 
-          emitter_patch = r'''
+          emitter_patch = r"""
           python3 <<'PY_EMITTER'
           from pathlib import Path
 
@@ -91,7 +91,7 @@ jobs:
 
           path.write_text(text, encoding='utf-8')
           PY_EMITTER
-          '''
+          """
           script_anchor = 'set -Eeuo pipefail\n'
           if script_anchor not in script:
               raise SystemExit('bootstrap shell strict-mode anchor not found')
