@@ -35,7 +35,13 @@ public sealed class SsaOptimizerPipeline
 
     public IReadOnlyList<IrStageId> PassIds => _passes.Select(static pass => pass.Id).ToArray();
 
-    public IrStageResult Run(SsaArtifact artifact, IrPipelineContext context)
+    public IrStageResult Run(SsaArtifact artifact, IrPipelineContext context) =>
+        Run(artifact, context, onPassExecuted: null);
+
+    internal IrStageResult Run(
+        SsaArtifact artifact,
+        IrPipelineContext context,
+        Action<IrStageId>? onPassExecuted)
     {
         ArgumentNullException.ThrowIfNull(artifact);
         ArgumentNullException.ThrowIfNull(context);
@@ -49,6 +55,7 @@ public sealed class SsaOptimizerPipeline
             ValidateContract(pass, context.Capabilities, facts);
 
             var result = pass.Run(current, new IrPipelineContext(context.Capabilities, facts));
+            onPassExecuted?.Invoke(pass.Id);
             current = result.Artifact.As<SsaArtifact>();
             facts = ApplyFactEffects(pass.Contract, facts);
             VerifyOrThrow(current.As<SsaArtifact>(), context, "ssa.optimization.output.invalid", $"SSA artifact is invalid after optimization pass '{pass.Id}'");
