@@ -1,0 +1,70 @@
+name: Temporary SSA repair diagnostics
+
+on:
+  pull_request:
+    branches:
+      - master
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose-repair:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repair branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/ssa-route-execution-contracts-20260715
+          fetch-depth: 0
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Extract and run bootstrap
+        id: repair
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          import base64, gzip, re
+
+          workflow = Path('.github/workflows/temporary-ssa-execution-contract-repair.yml').read_text(encoding='utf-8')
+          match = re.search(r'^\s*BOOTSTRAP_GZIP_BASE64:\s*(\S+)\s*$', workflow, re.MULTILINE)
+          if match is None:
+              raise SystemExit('BOOTSTRAP_GZIP_BASE64 not found')
+          script = gzip.decompress(base64.b64decode(match.group(1))).decode('utf-8')
+          marker = 'git add -A'
+          if marker not in script:
+              raise SystemExit('git add marker not found in bootstrap')
+          script = script.replace(
+              marker,
+              "rm -f .github/workflows/temporary-ssa-repair-diagnostics.yml\n" + marker,
+              1,
+          )
+          Path('/tmp/ssa-bootstrap.sh').write_text(script, encoding='utf-8')
+          PY
+          chmod +x /tmp/ssa-bootstrap.sh
+          set +e
+          /tmp/ssa-bootstrap.sh > /tmp/ssa-bootstrap.log 2>&1
+          status=$?
+          set -e
+          cat /tmp/ssa-bootstrap.log
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+
+      - name: Upload complete repair log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ssa-repair-diagnostics
+          path: /tmp/ssa-bootstrap.log
+          if-no-files-found: error
+
+      - name: Enforce repair success
+        if: always()
+        shell: bash
+        run: |
+          test "${{ steps.repair.outputs.status }}" = "0"
