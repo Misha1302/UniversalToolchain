@@ -6,11 +6,11 @@ Use it to distinguish current behavior from future or historical design plans.
 
 ## Release positioning
 
-Status: public preview / release-gate scope, not a finalized 1.0 platform.
+Status: public alpha / release-gate scope, not a finalized 1.0 platform.
 
 Latest architecture/release-hardening pass: v9 (AIR contracts, frontend lifecycle, capability ownership, and lazy backend activation). The canonical validation entrypoint is `./build.sh`; release evidence must record the exact SDK, restore source policy, build result, three test-project totals, package-surface check, external consumer smoke, and documentation checks.
 
-This branch can be released as a scoped Wist facade preview when build, test,
+This branch can be released as a scoped Wist facade alpha when build, test,
 package, CLI and documentation checks pass. Do not describe it as a completed
 general-purpose DSL workbench, a hardened sandbox, a stable generic runtime
 package family, or a production SSA optimizer/backend layer.
@@ -20,11 +20,11 @@ The supported release claim is narrower:
 - `UniversalToolchain.Wist` provides a first-contact Wist facade for controlled
   formula evaluation, validation and typed compiled invocation;
 - shipped dialect presets demonstrate restricted and full Wist profiles with
-  documented preview mappings;
+  documented alpha mappings;
 - neutral runtime host, structured trace and SSA route exist as current
   foundations with the limitations listed below.
 
-### Preview.5 v9 abstraction and correctness changes
+### Legacy cycle 5 / v9 abstraction and correctness changes
 
 - Frontend configuration modules no longer retain one-shot initialization state; every fresh parser/lexer receives the selected configuration.
 - Lexer configuration files are parsed and validated as complete snapshots before the live lexer is replaced.
@@ -38,7 +38,7 @@ The supported release claim is narrower:
 
 Current verification for the completed second pass: 1,325 repository tests passed with 0 failures and 0 skips. See `VERIFICATION.md` for the exact evidence boundary.
 
-### Preview.4 v8 hardening changes
+### Legacy cycle 4 / v8 hardening changes
 
 - The generic dialect frontend registers neutral intrinsic and frontend services through compile-time extension methods; it no longer resolves Core assembly, type, or method names through reflection.
 - `BasicCore` no longer references `SettableGettableModule`; local-reference stack typing uses the backend-neutral CLR by-ref type contract.
@@ -56,7 +56,7 @@ Remaining boundary:
 - parser-order persistence still identifies a creator by its registered CLR type plus instance index because the parser creator contract does not yet expose a stable semantic creator ID; loading now fails closed on any drift instead of guessing.
 - extension intrinsics without a known generic stack model remain capability-validated but cannot yet contribute precise generic stack effects.
 
-### Preview.3 boundary changes
+### Legacy cycle 3 boundary changes
 
 - CLR type/method discovery is execution-scoped and immutable. Hosts supply `AllowedAssemblies`; only shipped `BasicStdLib` is added automatically, and AIR/SSA/backends do not scan dialect implementation assemblies, the AppDomain, or the filesystem.
 - Dynamic-method invokers own their method and runtime handle lifetime; compiled functions are no longer rooted in process-wide static storage.
@@ -209,7 +209,7 @@ Current internal contract:
 - managed calls carry exact execution-scoped `MethodInfo`/`ConstructorInfo` bindings through lowering, optimization, and emission; production SSA code does not rediscover methods through `AppDomain`, `Type.GetType`, or filesystem scanning;
 - repeated equivalent bindings are compared structurally, while conflicting bindings and duplicate extension-pack/pass identifiers fail fast;
 - target capabilities and diagnostic modes affect route construction and execution rather than acting as stored no-op options;
-- the runtime optimizer alias is `Ssa`; preview-specific aliases are not part of the runtime contract.
+- the runtime optimizer alias is `Ssa`; alpha-specific aliases are not part of the runtime contract.
 
 Current boundary:
 

@@ -1,13 +1,13 @@
-# SSA preview route tests
+# SSA alpha route tests
 
-The preview SSA route is expected to run profile-owned optimization passes between `AIR -> SSA` lowering and `SSA -> AIR` emission.
+The alpha SSA route is expected to run profile-owned optimization passes between `AIR -> SSA` lowering and `SSA -> AIR` emission.
 
 The focused roundtrip tests protect two separate contracts:
 
 - `SsaRouteFactory.CreateRoundtripRoute(profile)` must use the profile optimizer pipeline before emission.
 - Raw `new SsaRoundtripRoute(lowerer, emitter)` remains a plain roundtrip path and does not run optimizers implicitly.
 
-This distinction matters because the preview arithmetic profile now owns the safe pass sequence:
+This distinction matters because the alpha arithmetic profile now owns the safe pass sequence:
 
 1. `SsaConstantFoldingPass`
 2. `SsaBranchFoldingAndCleanupPass`

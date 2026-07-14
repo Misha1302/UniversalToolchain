@@ -5,7 +5,7 @@ using UniversalToolchain.Ssa.Abstractions;
 namespace UniversalToolchain.Ssa.Optimization;
 
 /// <summary>
-/// Conservative sparse conditional constant propagation for preview SSA.
+/// Conservative sparse conditional constant propagation for alpha SSA.
 ///
 /// This pass intentionally keeps the first slice small:
 /// - tracks executable blocks and constants at SSA value granularity;

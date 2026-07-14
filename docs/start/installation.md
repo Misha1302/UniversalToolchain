@@ -14,7 +14,7 @@ This page shows two installation paths:
 
 `UniversalToolchain.Wist` is the intended first-contact package for .NET developers. Version `0.1.0-alpha.1` is published on NuGet.org. The package exposes the `WistEngine` facade and hides the lower-level dialect/runtime pipeline for normal formula usage.
 
-The current preview package is:
+The current alpha package is:
 
 ```text
 PackageId: UniversalToolchain.Wist
@@ -44,7 +44,7 @@ Expected final line:
 Published UniversalToolchain.Wist 0.1.0-alpha.1 smoke passed.
 ```
 
-Use a `net10.0` project while this preview targets .NET 10:
+Use a `net10.0` project while this alpha targets .NET 10:
 
 ```xml
 <TargetFramework>net10.0</TargetFramework>
@@ -72,7 +72,7 @@ This is the recommended first-contact shape for alpha.1: use `Compile<TDelegate>
 
 ## Trusted interop example
 
-Use the full native preview only when the Wist source is trusted by the host application. CLR interop is available only for assemblies explicitly selected by the host.
+Use the full native alpha only when the Wist source is trusted by the host application. CLR interop is available only for assemblies explicitly selected by the host.
 
 ```csharp
 using UniversalToolchain.Wist;

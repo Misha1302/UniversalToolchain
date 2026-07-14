@@ -6,7 +6,7 @@ namespace UniversalToolchain.Dialects.Tests.Wist.PublicFacade;
 public sealed class WistPublicApiBaselineTests
 {
     [Test]
-    public void ExportedFacadeApi_MatchesReviewedPreviewBaseline()
+    public void ExportedFacadeApi_MatchesReviewedAlphaBaseline()
     {
         var baselinePath = FindRepositoryFile(
             "UniversalToolchain",

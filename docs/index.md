@@ -71,10 +71,10 @@ Do not use it when:
 - you need a stable production API today
 - you need broad C# scripting
 
-## Preview status
+## Alpha status
 
 Current status:
-- Wist-first preview
+- Wist-first alpha
 - .NET 10 baseline
 - compiler-first hot path + interpreter diagnostics/parity backend
 - restricted dialects are not hardened sandboxes

@@ -43,12 +43,12 @@ public sealed class WistEngineSmokeTests
     public void Evaluate_WithExplicitPresetFactories_ReturnsExpectedDouble()
     {
         using var restrictedArithmetic = WistEngine.CreateRestrictedArithmetic();
-        using var fullNativePreview = WistEngine.CreateFullNative();
+        using var fullNativeAlpha = WistEngine.CreateFullNative();
 
         var restrictedResult = restrictedArithmetic.Evaluate<double>(
             "price * 0.9 + fee",
             new { price = 100.0d, fee = 5.0d });
-        var fullResult = fullNativePreview.Evaluate<double>(
+        var fullResult = fullNativeAlpha.Evaluate<double>(
             "price * 0.9 + fee",
             new { price = 100.0d, fee = 5.0d });
 

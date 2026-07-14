@@ -37,7 +37,7 @@ public enum WistSsaDiagnosticLevel
 }
 
 /// <summary>
-/// Public, facade-owned SSA configuration. SSA remains experimental in preview releases.
+/// Public, facade-owned SSA configuration. SSA remains experimental in alpha releases.
 /// </summary>
 public sealed class WistSsaOptions
 {

@@ -322,7 +322,7 @@ public sealed class SsaManagedCallablePack : ISsaSemanticExtensionPack
     public string Id => "ManagedCallable";
 
     // Managed callable descriptors are execution-scoped and are carried by
-    // SsaManagedCallableBindingSet. Core preview type descriptors have one
+    // SsaManagedCallableBindingSet. Core alpha-stage type descriptors have one
     // canonical owner: SsaArithmeticInt32Pack.
     public SemanticDescriptorSet SemanticDescriptors => SemanticDescriptorSet.Empty;
 

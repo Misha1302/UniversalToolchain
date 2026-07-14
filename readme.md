@@ -91,9 +91,9 @@ Without a language/runtime layer, teams usually choose one of two bad extremes:
 
 UniversalToolchain is for the middle ground: a language surface your application can own.
 
-## What is real in this preview
+## What is real in this alpha
 
-The current public preview is intentionally scoped:
+The current public alpha is intentionally scoped:
 
 | Capability | Current status |
 |---|---|
@@ -172,7 +172,7 @@ This is the intended hot path:
 
 ## One-off Evaluate
 
-Use `Evaluate` for onboarding, admin previews, tests, validation UI, and non-hot paths:
+Use `Evaluate` for onboarding, admin trial runs, tests, validation UI, and non-hot paths:
 
 ```csharp
 using UniversalToolchain.Wist;
@@ -229,9 +229,9 @@ using var trustedInterop = WistEngine.Create(new WistEngineOptions
 });
 ```
 
-`CreateRestrictedArithmetic` is the recommended first-contact preset. It maps to the shipped `pricing-restricted` profile in this preview.
+`CreateRestrictedArithmetic` is the recommended first-contact preset. It maps to the shipped `pricing-restricted` profile in this alpha.
 
-`CreateFullNative` maps to the broad native Wist preview profile, but CLR interop remains empty except for the shipped standard library until the host supplies `AllowedAssemblies`. It must not be used for untrusted input.
+`CreateFullNative` maps to the broad native Wist alpha profile, but CLR interop remains empty except for the shipped standard library until the host supplies `AllowedAssemblies`. It must not be used for untrusted input.
 
 The facade intentionally exposes only the two explicit presets above. Product-specific policy belongs in a reviewed `WistEngineOptions` composition, not in ambiguous trust or business-rule aliases.
 
@@ -351,7 +351,7 @@ Do not replace this entrypoint in release evidence with an ad-hoc parallel solut
 - Project positioning: [docs/project-positioning.md](docs/project-positioning.md)
 - Maintainer promotion kit: [docs/maintainers/promotion-kit.md](docs/maintainers/promotion-kit.md)
 - Performance model: [docs/public/performance-model.md](docs/public/performance-model.md)
-- Preview stability: [docs/public/what-is-stable-in-preview.md](docs/public/what-is-stable-in-preview.md)
+- Alpha stability: [docs/public/what-is-stable-in-alpha.md](docs/public/what-is-stable-in-alpha.md)
 - Current limitations: [docs/limitations.md](docs/limitations.md)
 - Architecture guardrails: [docs/ARCHITECTURE_RULES.md](docs/ARCHITECTURE_RULES.md)
 - Contribution workflow: [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)

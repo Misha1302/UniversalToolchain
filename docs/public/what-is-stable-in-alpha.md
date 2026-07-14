@@ -1,6 +1,6 @@
-# What is stable in this preview
+# What is stable in this alpha
 
-UniversalToolchain.Wist `0.1.0-alpha.1` is a public preview. It is stable enough to try in controlled evaluation
+UniversalToolchain.Wist `0.1.0-alpha.1` is a public alpha. It is stable enough to try in controlled evaluation
 and prototype scenarios, but it is not a stable 1.0 contract.
 
 ## Stable enough to try
@@ -17,7 +17,7 @@ and prototype scenarios, but it is not a stable 1.0 contract.
 - facade-owned SSA optimization reports on validation, `TryCompile`, and compiled program metadata;
 - a reviewed facade API baseline in `UniversalToolchain.Wist/PublicAPI.Shipped.txt`.
 
-## Preview / may change
+## Alpha / may change
 
 - additional typed delegate arities and signature shapes;
 - additional signature-based compiled API shapes;

@@ -5,7 +5,7 @@ description: Current supported and unsupported AIR to SSA shapes.
 
 # SSA Coverage Matrix
 
-Status: preview infrastructure with oracle-first expansion.
+Status: alpha infrastructure with oracle-first expansion.
 
 This page records the current SSA route as implemented in `UniversalToolchain.Ssa.*`.
 It is a coverage contract, not a promise that SSA is the default optimizer/backend layer.
@@ -27,7 +27,7 @@ It is a coverage contract, not a promise that SSA is the default optimizer/backe
 | Managed static/instance/constructor calls | Supported for mapped CLR types | exact execution-scoped binding set, no production rediscovery |
 | Duplicate equivalent managed bindings | Supported | structural binding equivalence regression |
 | Conflicting/missing bindings | Rejected | deterministic lowering/emission diagnostics |
-| Branch terminators and block arguments | Preview-supported | CFG, dominance, block-argument, and route tests |
+| Branch terminators and block arguments | Alpha-supported | CFG, dominance, block-argument, and route tests |
 | Zero or one return value | Supported | multi-return is explicitly rejected |
 | SSA to AIR emission | Supported for current legal stack-schedulable subset | `SsaToAirConverter` tests |
 | Constant folding | Supported for trusted deterministic descriptors | `SsaConstantFoldingPass` tests |

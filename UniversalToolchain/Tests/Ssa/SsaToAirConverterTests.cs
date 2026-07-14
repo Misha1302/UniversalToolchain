@@ -31,12 +31,12 @@ public sealed class SsaToAirConverterTests
         source.Push(20);
         source.SetLabel(merge);
 
-        var ssa = PreviewLowerer()
+        var ssa = AlphaLowerer()
             .Run(new AirArtifact(source), new IrPipelineContext())
             .Artifact
             .As<SsaArtifact>();
 
-        var result = PreviewEmitter().Run(ssa, new IrPipelineContext());
+        var result = AlphaEmitter().Run(ssa, new IrPipelineContext());
         var air = result.Artifact.As<AirArtifact>();
 
         Assert.Multiple(() =>
@@ -118,7 +118,7 @@ public sealed class SsaToAirConverterTests
     }
 
     [Test]
-    public void Run_WhenSsaContainsPreviewArithmeticCallable_LowersToVerifiableAirIntrinsic()
+    public void Run_WhenSsaContainsAlphaArithmeticCallable_LowersToVerifiableAirIntrinsic()
     {
         var left = new SsaValue(new SsaValueId("%left"), SsaTypes.Int32);
         var right = new SsaValue(new SsaValueId("%right"), SsaTypes.Int32);
@@ -143,7 +143,7 @@ public sealed class SsaToAirConverterTests
             ],
             returnType: SsaTypes.Int32));
 
-        var conversion = PreviewEmitter().Run(artifact, new IrPipelineContext());
+        var conversion = AlphaEmitter().Run(artifact, new IrPipelineContext());
         var air = conversion.Artifact.As<AirArtifact>();
 
         Assert.Multiple(() =>
@@ -189,7 +189,7 @@ public sealed class SsaToAirConverterTests
             returnType: SsaTypes.Int32),
             new SsaManagedCallableBinding(callable, descriptor, method));
 
-        var conversion = PreviewEmitter().Run(artifact, new IrPipelineContext());
+        var conversion = AlphaEmitter().Run(artifact, new IrPipelineContext());
         var intrinsic = conversion.Artifact.As<AirArtifact>().Program.Instructions.Single(static x => x.UOpCode == UOpCode.Intrinsic);
 
         var invocation = IntrinsicInstructionView.ReadOrThrow(intrinsic).Invocation;
@@ -229,7 +229,7 @@ public sealed class SsaToAirConverterTests
             returnType: SsaTypes.Object),
             new SsaManagedCallableBinding(callable, descriptor, constructor));
 
-        var conversion = PreviewEmitter().Run(artifact, new IrPipelineContext());
+        var conversion = AlphaEmitter().Run(artifact, new IrPipelineContext());
         var intrinsic = conversion.Artifact.As<AirArtifact>().Program.Instructions.Single(static x => x.UOpCode == UOpCode.Intrinsic);
 
         var invocation = IntrinsicInstructionView.ReadOrThrow(intrinsic).Invocation;
@@ -243,7 +243,7 @@ public sealed class SsaToAirConverterTests
     [Test]
     public void Run_WhenCallableLoweringTargetsUnavailableIntrinsic_ThrowsCapabilityDiagnostic()
     {
-        var artifact = CreatePreviewAddArtifact();
+        var artifact = CreateAlphaAddArtifact();
         var converter = new SsaToAirConverter(
             new StructuralSsaVerifier(SsaCoreDescriptors.ConstantMaterialization, SsaSemanticDescriptors.ArithmeticInt32),
             new StructuralAirVerifier(),
@@ -259,7 +259,7 @@ public sealed class SsaToAirConverterTests
     [Test]
     public void Run_WhenCallableLoweringIntrinsicShapeDoesNotMatchDescriptor_ThrowsShapeDiagnostic()
     {
-        var artifact = CreatePreviewAddArtifact();
+        var artifact = CreateAlphaAddArtifact();
         var badLowering = new SsaCallAirIntrinsicLoweringSet(
         [
             new SsaCallAirIntrinsicLowering(
@@ -281,7 +281,7 @@ public sealed class SsaToAirConverterTests
     [Test]
     public void Run_WhenCallableHasTwoSupportedSamePriorityTargets_ThrowsAmbiguousTargetDiagnostic()
     {
-        var artifact = CreatePreviewAddArtifact();
+        var artifact = CreateAlphaAddArtifact();
         var targets = new SsaCallableLoweringTargetSet(
         [
             SsaCallableLoweringTarget.AirIntrinsic(SsaCallables.AddInt32Unchecked, AirIntrinsicIds.AddInt32Unchecked),
@@ -483,7 +483,7 @@ public sealed class SsaToAirConverterTests
             returnType: SsaTypes.Int32));
 
         var exception = Assert.Throws<SsaToAirEmissionException>(() =>
-            PreviewEmitter().Run(artifact, new IrPipelineContext()));
+            AlphaEmitter().Run(artifact, new IrPipelineContext()));
 
         Assert.That(exception!.Diagnostics.Select(static x => x.Code), Does.Contain("ssa.to-air.stack-shape.unsupported"));
     }
@@ -523,7 +523,7 @@ public sealed class SsaToAirConverterTests
             ],
             returnType: SsaTypes.Int32));
 
-        var result = PreviewEmitter().Run(artifact, new IrPipelineContext());
+        var result = AlphaEmitter().Run(artifact, new IrPipelineContext());
         var air = result.Artifact.As<AirArtifact>();
 
         Assert.Multiple(() =>
@@ -573,7 +573,7 @@ public sealed class SsaToAirConverterTests
             returnType: SsaTypes.Int32));
 
         var exception = Assert.Throws<SsaToAirEmissionException>(() =>
-            PreviewEmitter().Run(artifact, new IrPipelineContext()));
+            AlphaEmitter().Run(artifact, new IrPipelineContext()));
 
         Assert.That(exception!.Diagnostics.Select(static x => x.Code), Does.Contain("ssa.to-air.branch.arguments"));
     }
@@ -592,7 +592,7 @@ public sealed class SsaToAirConverterTests
             results: [result],
             attributes: new SsaAttributeBag([new SsaAttribute(SsaAttributeKeys.ConstantValue, value.ToString())]));
 
-    private static SsaArtifact CreatePreviewAddArtifact()
+    private static SsaArtifact CreateAlphaAddArtifact()
     {
         var left = new SsaValue(new SsaValueId("%left"), SsaTypes.Int32);
         var right = new SsaValue(new SsaValueId("%right"), SsaTypes.Int32);
@@ -627,10 +627,10 @@ public sealed class SsaToAirConverterTests
                 ? SsaManagedCallableBindingSet.Empty
                 : new SsaManagedCallableBindingSet(managedCallableBindings));
 
-    private static AirToSsaConverter PreviewLowerer() =>
+    private static AirToSsaConverter AlphaLowerer() =>
         SsaRouteFactory.CreateLowerer(SsaRouteProfiles.Create(SsaRoutePolicy.Require));
 
-    private static SsaToAirConverter PreviewEmitter() =>
+    private static SsaToAirConverter AlphaEmitter() =>
         SsaRouteFactory.CreateEmitter(SsaRouteProfiles.Create(SsaRoutePolicy.Require));
 
     private static int AddOne(int value) => value + 1;
