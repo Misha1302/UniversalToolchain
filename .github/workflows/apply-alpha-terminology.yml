@@ -1,0 +1,180 @@
+name: Apply alpha terminology migration
+
+on:
+  push:
+    branches:
+      - docs-alpha-terminology-20260715
+    paths:
+      - .github/workflows/apply-alpha-terminology.yml
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: docs-alpha-terminology-20260715
+      - name: Replace public preview terminology with alpha
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+
+          root = Path('.')
+          old_status = root / 'docs/public/what-is-stable-in-preview.md'
+          new_status = root / 'docs/public/what-is-stable-in-alpha.md'
+          if not old_status.exists():
+              raise SystemExit(f'missing expected file: {old_status}')
+          old_status.rename(new_status)
+
+          markdown_paths = [p for p in root.rglob('*.md') if '.git' not in p.parts]
+
+          direct_replacements = {
+              'docs/public/what-is-stable-in-preview.md': 'docs/public/what-is-stable-in-alpha.md',
+              '/public/what-is-stable-in-preview': '/public/what-is-stable-in-alpha',
+              'what-is-stable-in-preview': 'what-is-stable-in-alpha',
+              'What is stable in preview?': 'What is stable in alpha?',
+              'Preview stability': 'Alpha stability',
+              'one-off previews': 'one-off trial runs',
+              'admin previews': 'admin trial runs',
+              'Offline artifact preview': 'Offline artifact inspection',
+              'offline artifact preview': 'offline artifact inspection',
+              'Preview.5 v9': 'Legacy cycle 5 / v9',
+              'Preview.4 v8': 'Legacy cycle 4 / v8',
+              'Preview.3 boundary': 'Legacy cycle 3 boundary',
+              'Preview.3 host controls': 'Alpha host controls',
+              'preview.3': 'legacy cycle 3',
+              'preview.2': 'earlier facade release',
+          }
+
+          def transform_prose_line(line: str) -> str:
+              parts = line.split('`')
+              for index in range(0, len(parts), 2):
+                  part = parts[index]
+                  for old, new in direct_replacements.items():
+                      part = part.replace(old, new)
+                  part = re.sub(r'\bPreview\b', 'Alpha', part)
+                  part = re.sub(r'\bpreview\b', 'alpha', part)
+                  parts[index] = part
+              return '`'.join(parts)
+
+          for path in markdown_paths:
+              text = path.read_text(encoding='utf-8')
+              for old, new in direct_replacements.items():
+                  text = text.replace(old, new)
+              output = []
+              in_fence = False
+              for line in text.splitlines(keepends=True):
+                  stripped = line.lstrip()
+                  if stripped.startswith('```'):
+                      in_fence = not in_fence
+                      output.append(line)
+                  elif in_fence:
+                      output.append(line)
+                  else:
+                      output.append(transform_prose_line(line))
+              path.write_text(''.join(output), encoding='utf-8')
+
+          code_replacements = {
+              'UniversalToolchain/UniversalToolchain.Wist/WistOptimizationOptions.cs': [
+                  ('preview releases', 'alpha releases'),
+              ],
+              'UniversalToolchain/UniversalToolchain.Wist/WistValidationResult.cs': [
+                  ('compatibility with the preview.2 facade', 'compatibility with earlier facade releases'),
+              ],
+              'UniversalToolchain/UniversalToolchain.Ssa.Abstractions/SsaDescriptors.cs': [
+                  ('"preview ', '"alpha '),
+              ],
+              'UniversalToolchain/UniversalToolchain.Ssa.Optimization/SsaRouteProfile.cs': [
+                  ('Core preview type descriptors', 'Core alpha-stage type descriptors'),
+              ],
+              'UniversalToolchain/UniversalToolchain.Ssa.Optimization/SsaRuntimeExecution.cs': [
+                  ('preview SSA optimizer module', 'alpha SSA optimizer module'),
+              ],
+              'UniversalToolchain/UniversalToolchain.Ssa.Optimization/SsaSparseConditionalConstantPropagationPass.cs': [
+                  ('for preview SSA', 'for alpha SSA'),
+              ],
+          }
+          for relative, replacements in code_replacements.items():
+              path = root / relative
+              text = path.read_text(encoding='utf-8')
+              for old, new in replacements:
+                  text = text.replace(old, new)
+              path.write_text(text, encoding='utf-8')
+
+          test_paths = [
+              root / 'UniversalToolchain/Tests/Ssa/AirToSsaConverterTests.cs',
+              root / 'UniversalToolchain/Tests/Ssa/SsaOptimizationTests.cs',
+              root / 'UniversalToolchain/Tests/Ssa/SsaRouteIntegrationRegressionTests.cs',
+              root / 'UniversalToolchain/Tests/Ssa/SsaToAirConverterTests.cs',
+              root / 'UniversalToolchain/UniversalToolchain.Dialects.Tests/Wist/PublicFacade/WistEngineSmokeTests.cs',
+              root / 'UniversalToolchain/UniversalToolchain.Dialects.Tests/Wist/PublicFacade/WistPublicApiBaselineTests.cs',
+          ]
+          for path in test_paths:
+              text = path.read_text(encoding='utf-8')
+              text = text.replace('Preview', 'Alpha').replace('preview', 'alpha')
+              path.write_text(text, encoding='utf-8')
+
+          checker = root / 'Tools/check_documentation_status.py'
+          text = checker.read_text(encoding='utf-8')
+          marker = "        ROOT / 'docs/CURRENT_ARCHITECTURE_STATUS.md',\n"
+          required = "        ROOT / 'docs/public/what-is-stable-in-alpha.md',\n"
+          if required not in text:
+              text = text.replace(marker, marker + required)
+          old_block = """    prepublish_phrases = [
+          '`UniversalToolchain.Wist` `0.1.0-preview.3` is published on NuGet',
+          'is published on NuGet: <https://www.nuget.org/packages/UniversalToolchain.Wist/0.1.0-preview.3>',
+      ]
+      for path in markdown_files:
+          text = path.read_text(encoding='utf-8')
+          for phrase in prepublish_phrases:
+              if phrase in text:
+                  errors.append(f'{rel(path)}: pre-publish wording still claims NuGet publication')
+  """
+          new_block = """    forbidden_legacy_stage_phrases = [
+          'what-is-stable-in-preview',
+          'public preview',
+          'current preview',
+          'preview package',
+          'Wist facade preview',
+          'Preview status',
+      ]
+      for path in markdown_files:
+          text = path.read_text(encoding='utf-8')
+          for phrase in forbidden_legacy_stage_phrases:
+              if phrase in text:
+                  errors.append(f'{rel(path)}: legacy preview-stage wording remains: {phrase}')
+  """
+          if old_block not in text:
+              raise SystemExit('documentation status checker block did not match expected baseline')
+          checker.write_text(text.replace(old_block, new_block), encoding='utf-8')
+          PY
+
+          rm -f alpha-terminology-report.txt
+          rm -f .github/workflows/audit-alpha-terminology.yml
+          rm -f .github/workflows/apply-alpha-terminology.yml
+
+          python3 Tools/check_documentation_status.py
+          if git grep -n -i -- 'preview' -- '*.md'; then
+            echo 'Unexpected preview wording remains in Markdown.' >&2
+            exit 1
+          fi
+
+          find . -type f \
+            ! -path './.git/*' \
+            ! -path './MANIFEST.sha256' \
+            -print0 \
+            | sort -z \
+            | xargs -0 sha256sum > MANIFEST.sha256
+
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'docs: use alpha terminology consistently'
+          git push origin HEAD:docs-alpha-terminology-20260715
