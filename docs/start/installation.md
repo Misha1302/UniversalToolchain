@@ -7,12 +7,12 @@ description: Show how to install UniversalToolchain.Wist from NuGet.org or prepa
 
 This page shows two installation paths:
 
-- install the `UniversalToolchain.Wist` package from NuGet.org after the preview package is published, or use a locally packed `.nupkg` before publication;
-- clone and build the repository for development, tests and documentation work.
+- install the published `UniversalToolchain.Wist` package from NuGet.org;
+- clone and build the repository for framework development, tests and documentation work.
 
 ## Package-first installation
 
-`UniversalToolchain.Wist` is the intended first-contact package for .NET developers. Before the public NuGet package exists, produce and consume a local `.nupkg` from `dotnet pack`; after publication, use the NuGet command below. It exposes the `WistEngine` facade and hides the lower-level dialect/runtime pipeline for normal formula usage.
+`UniversalToolchain.Wist` is the intended first-contact package for .NET developers. Version `0.1.0-alpha.1` is published on NuGet.org. The package exposes the `WistEngine` facade and hides the lower-level dialect/runtime pipeline for normal formula usage.
 
 The current preview package is:
 
@@ -26,6 +26,22 @@ From a clean .NET project:
 
 ```bash ci-run=false
 dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.1
+```
+
+The package page is <https://www.nuget.org/packages/UniversalToolchain.Wist/0.1.0-alpha.1>.
+
+### Clean-room published-package check
+
+The repository includes a smoke script that creates a temporary `net10.0` console project, uses an isolated NuGet package cache, restores only from NuGet.org, compiles a formula, evaluates it and verifies a rejected statement-style rule:
+
+```bash ci-run=false
+./Tools/smoke-published-wist-package.sh 0.1.0-alpha.1
+```
+
+Expected final line:
+
+```text
+Published UniversalToolchain.Wist 0.1.0-alpha.1 smoke passed.
 ```
 
 Use a `net10.0` project while this preview targets .NET 10:

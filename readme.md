@@ -110,10 +110,22 @@ The current public preview is intentionally scoped:
 
 ## Install
 
-After the preview package is published, install `UniversalToolchain.Wist` `0.1.0-alpha.1` from NuGet: <https://www.nuget.org/packages/UniversalToolchain.Wist/0.1.0-alpha.1>. Until that package exists, use a local package produced by `dotnet pack` or a source checkout.
+Install the published `UniversalToolchain.Wist` `0.1.0-alpha.1` package from NuGet: <https://www.nuget.org/packages/UniversalToolchain.Wist/0.1.0-alpha.1>.
 
 ```bash ci-run=false
 dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.1
+```
+
+Verify the exact public package in a clean temporary project:
+
+```bash ci-run=false
+./Tools/smoke-published-wist-package.sh 0.1.0-alpha.1
+```
+
+Expected final line:
+
+```text
+Published UniversalToolchain.Wist 0.1.0-alpha.1 smoke passed.
 ```
 
 Use source checkout when developing framework internals, modules, dialects, or repository documentation.
@@ -335,7 +347,9 @@ Do not replace this entrypoint in release evidence with an ad-hoc parallel solut
 - Start: [docs/index.md](docs/index.md)
 - Installation: [docs/start/installation.md](docs/start/installation.md)
 - First program: [docs/start/first-program.md](docs/start/first-program.md)
+- Use-case recipes: [docs/start/use-case-recipes.md](docs/start/use-case-recipes.md)
 - Project positioning: [docs/project-positioning.md](docs/project-positioning.md)
+- Maintainer promotion kit: [docs/maintainers/promotion-kit.md](docs/maintainers/promotion-kit.md)
 - Performance model: [docs/public/performance-model.md](docs/public/performance-model.md)
 - Preview stability: [docs/public/what-is-stable-in-preview.md](docs/public/what-is-stable-in-preview.md)
 - Current limitations: [docs/limitations.md](docs/limitations.md)

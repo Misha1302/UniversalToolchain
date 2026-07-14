@@ -1,0 +1,45 @@
+name: Published Wist package smoke
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 4 * * 1"
+  push:
+    branches:
+      - master
+    paths:
+      - .github/workflows/published-package-smoke.yml
+      - Tools/smoke-published-wist-package.sh
+      - UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj
+      - UniversalToolchain/UniversalToolchain.Wist/README.md
+      - docs/start/installation.md
+  pull_request:
+    paths:
+      - .github/workflows/published-package-smoke.yml
+      - Tools/smoke-published-wist-package.sh
+      - UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj
+      - UniversalToolchain/UniversalToolchain.Wist/README.md
+      - docs/start/installation.md
+
+permissions:
+  contents: read
+
+env:
+  PUBLISHED_WIST_VERSION: 0.1.0-alpha.1
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: UniversalToolchain/global.json
+
+      - name: Install and execute the published package
+        run: ./Tools/smoke-published-wist-package.sh "$PUBLISHED_WIST_VERSION"

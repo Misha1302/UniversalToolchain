@@ -12,11 +12,13 @@ This page shows the shortest practical checks for Wist:
 
 ## Package-first .NET example
 
-Install the package first:
+Install the published package first:
 
 ```bash ci-run=false
 dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.1
 ```
+
+For a clean-room NuGet.org check, run `./Tools/smoke-published-wist-package.sh 0.1.0-alpha.1` from a repository checkout.
 
 Then run a simple formula through the public facade:
 
@@ -131,4 +133,4 @@ The same source should produce the same observable result in compiler and interp
 
 ## Next
 
-Read the [CLI Reference](/start/cli-reference) if you want the command surface, or continue with the [Mental Model](/start/mental-model) and the [Wist Syntax Tour](/wist/syntax-tour).
+Continue with the [Use-case Recipes](/start/use-case-recipes) for three copy-ready application scenarios. Read the [CLI Reference](/start/cli-reference) for the command surface, or continue with the [Mental Model](/start/mental-model) and the [Wist Syntax Tour](/wist/syntax-tour).

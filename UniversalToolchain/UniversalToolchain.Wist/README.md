@@ -20,11 +20,13 @@ admin / config / LLM suggestion
 
 ## Install
 
-After the preview package is published, install `UniversalToolchain.Wist` `0.1.0-alpha.1` from NuGet: <https://www.nuget.org/packages/UniversalToolchain.Wist/0.1.0-alpha.1>. Until that package exists, use a local package produced by `dotnet pack` or a source checkout.
+Install the published `UniversalToolchain.Wist` `0.1.0-alpha.1` package from NuGet: <https://www.nuget.org/packages/UniversalToolchain.Wist/0.1.0-alpha.1>.
 
 ```bash ci-run=false
 dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.1
 ```
+
+For a clean-room install and execution check, follow the [package installation guide](https://misha1302.github.io/Wist2/start/installation).
 
 Requirements:
 
