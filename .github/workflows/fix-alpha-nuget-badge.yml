@@ -1,0 +1,63 @@
+name: Apply exact alpha NuGet badge
+
+on:
+  push:
+    branches:
+      - fix/alpha-nuget-badge-20260715
+    paths:
+      - .github/workflows/fix-alpha-nuget-badge.yml
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/alpha-nuget-badge-20260715
+
+      - name: Pin badges to the published alpha
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          old='[![NuGet](https://img.shields.io/nuget/vpre/UniversalToolchain.Wist.svg)](https://www.nuget.org/packages/UniversalToolchain.Wist)'
+          new='[![NuGet](https://img.shields.io/badge/nuget-v0.1.0--alpha.1-512BD4.svg)](https://www.nuget.org/packages/UniversalToolchain.Wist/0.1.0-alpha.1)'
+
+          python3 - "$old" "$new" <<'PY'
+          from pathlib import Path
+          import sys
+
+          old, new = sys.argv[1:]
+          paths = [
+              Path('readme.md'),
+              Path('UniversalToolchain/UniversalToolchain.Wist/README.md'),
+          ]
+
+          for path in paths:
+              text = path.read_text(encoding='utf-8')
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{path}: expected exactly one old badge, found {count}')
+              path.write_text(text.replace(old, new), encoding='utf-8')
+          PY
+
+          find . -type f \
+            ! -path './.git/*' \
+            ! -path './MANIFEST.sha256' \
+            ! -path './.github/workflows/fix-alpha-nuget-badge.yml' \
+            -print0 \
+            | sort -z \
+            | xargs -0 sha256sum > MANIFEST.sha256
+
+          git diff --check
+          git grep -n 'nuget/vpre/UniversalToolchain.Wist' -- readme.md UniversalToolchain/UniversalToolchain.Wist/README.md && exit 1 || true
+          git grep -n 'v0.1.0--alpha.1' -- readme.md UniversalToolchain/UniversalToolchain.Wist/README.md
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add readme.md UniversalToolchain/UniversalToolchain.Wist/README.md MANIFEST.sha256
+          git commit -m 'docs: pin NuGet badges to alpha.1'
+          git push origin HEAD:fix/alpha-nuget-badge-20260715
