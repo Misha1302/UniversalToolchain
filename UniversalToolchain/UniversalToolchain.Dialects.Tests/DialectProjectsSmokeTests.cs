@@ -16,8 +16,8 @@ public class DialectProjectsSmokeTests
         "minimal-arithmetic-grouped",
         "minimal-arithmetic-native",
         "pricing-restricted",
-        "restricted-sandbox",
-        "ssa-preview"
+        "composition-restricted",
+        "ssa"
     ];
 
     [Test]

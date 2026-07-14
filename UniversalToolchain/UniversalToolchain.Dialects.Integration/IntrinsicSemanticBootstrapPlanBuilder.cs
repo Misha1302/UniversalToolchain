@@ -21,7 +21,7 @@ public sealed class IntrinsicSemanticBootstrapPlanBuilder
             .ToList();
 
         var moduleTypes = GetRegisteredImplementationTypes(services, typeof(IFrontendCoreModule))
-            .Concat(GetRegisteredImplementationTypes(services, typeof(IIRProcessingModule)))
+            .Concat(GetRegisteredImplementationTypes(services, typeof(IAirOptimizer)))
             .Distinct()
             .OrderBy(x => x.FullName, StringComparer.Ordinal)
             .ToList();

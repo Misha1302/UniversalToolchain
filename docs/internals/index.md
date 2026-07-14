@@ -78,7 +78,7 @@ The simplified model is useful for learning. Internals should use the precise li
 | `Binder` | Binds external inputs before translation. |
 | `IAstToBytecodeTranslator` | Runs AST visitors and produces bytecode. |
 | `IAbstractMethodsTranslator` | Converts bytecode methods/operations into AIR. |
-| `IIRProcessingModule` | Initializes intrinsic capability context and transforms AIR. |
+| `IAirOptimizer` | Initializes intrinsic capability context and transforms AIR. |
 | `IAbstractIrCompiler<T>` | Compiles AIR into a backend-specific artifact. |
 | `IMiddleEndCoreModule<T>` | Initializes compiler/executor integration and post-processes compilation output. |
 | `IExecutor<T>` | Executes a compiled artifact/session. |

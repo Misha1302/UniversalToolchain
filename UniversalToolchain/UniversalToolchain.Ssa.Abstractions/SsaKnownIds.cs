@@ -35,7 +35,7 @@ public static class SsaAttributeKeys
     public static SsaAttributeKey ExternalSlot { get; } = new("ssa.external.slot");
 }
 
-public static class SsaPreviewSemanticTypes
+public static class SsaSemanticTypes
 {
     public static SemanticTypeId Bool { get; } = new(SsaTypes.Bool.Value);
 
@@ -46,7 +46,7 @@ public static class SsaPreviewSemanticTypes
     public static SemanticTypeId Object { get; } = new(SsaTypes.Object.Value);
 }
 
-public static class SsaPreviewCallables
+public static class SsaCallables
 {
     public static CallableId AddInt32Unchecked { get; } = new("ssa.preview.i32.add.unchecked");
 

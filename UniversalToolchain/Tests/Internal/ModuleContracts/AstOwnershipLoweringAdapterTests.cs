@@ -6,22 +6,6 @@ namespace Tests.Internal.ModuleContracts;
 public sealed class AstOwnershipLoweringAdapterTests
 {
     [Test]
-    public void Lower_WhenLegacyVisitorIsWrapped_RunsExistingVisitorAgainstSameBytecode()
-    {
-        var moduleId = new ModuleId("wist.test");
-        var nodeKind = new AstNodeKind("wist.test.ast.node");
-        var bytecode = new Bytecode([]);
-        var adapter = new LegacyAstVisitorLoweringAdapter(moduleId, nodeKind, new RecordingVisitor());
-        var context = new AstNodeLoweringContext(new NoopTranslator(bytecode), bytecode);
-
-        var result = adapter.Lower(CreateNode("LegacyNode"), context);
-
-        Assert.That(result.Diagnostics, Is.Empty);
-        Assert.That(result.Bytecode.Instructions, Has.Count.EqualTo(1));
-        Assert.That(result.Bytecode.Instructions[0].Ops.SelectMany(static x => x.Value).Single().Name, Is.EqualTo("legacy-record"));
-    }
-
-    [Test]
     public void ValidateLowerer_WhenOwnershipMatches_ReturnsNoDiagnostics()
     {
         var moduleId = new ModuleId("wist.test");
@@ -77,21 +61,6 @@ public sealed class AstOwnershipLoweringAdapterTests
                     moduleId,
                     [])
             ]);
-
-    private sealed class RecordingVisitor : IAstVisitor
-    {
-        public void TryVisit(BytecodeVisitorData data)
-        {
-            data.Bytecode.Instructions.Add(new BytecodeInstruction(new AbstractMethodImpl("legacy-record", (_, _) => { })));
-        }
-    }
-
-    private sealed class NoopTranslator(Bytecode bytecode) : IAstToBytecodeTranslator
-    {
-        public BytecodeTranslatorConfiguration Configuration { get; } = new([]);
-
-        public Bytecode Translate(AstNode root) => bytecode;
-    }
 
     private sealed class StubLowerer(ModuleId moduleId, AstNodeKind nodeKind) : IAstNodeLowerer
     {

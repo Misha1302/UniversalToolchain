@@ -15,7 +15,7 @@ This page shows the shortest practical checks for Wist:
 Install the package first:
 
 ```bash ci-run=false
-dotnet add package UniversalToolchain.Wist --version 0.1.0-preview.4
+dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.1
 ```
 
 Then run a simple formula through the public facade:
@@ -34,7 +34,7 @@ double result = formula.CompiledDelegate(100.0, 5.0);
 Console.WriteLine(result); // 95
 ```
 
-This is the normal preview.4 first-contact path for application developers. `Compile<TDelegate>` compiles once and returns a typed program whose delegate can be invoked repeatedly.
+This is the normal alpha.1 first-contact path for application developers. `Compile<TDelegate>` compiles once and returns a typed program whose delegate can be invoked repeatedly.
 
 ## Trusted C# interop example
 
@@ -45,7 +45,7 @@ using UniversalToolchain.Wist;
 
 using var wist = WistEngine.Create(new WistEngineOptions
 {
-    Preset = WistPreset.FullNativePreview,
+    Preset = WistPreset.FullNative,
     AllowedAssemblies = [typeof(Math).Assembly]
 });
 

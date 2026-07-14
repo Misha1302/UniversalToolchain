@@ -35,7 +35,7 @@ Forbidden:
 - `CSharp_PreparedDelegate`;
 - `NCalc_CompiledLambda`;
 - `Wist_CompiledDelegate`;
-- `Wist_CompileFuncFastInvoker`.
+- `Wist_CompiledDelegateFastInvoker`.
 
 Parsing, compilation, dialect composition and host setup occur outside the hot benchmark method.
 

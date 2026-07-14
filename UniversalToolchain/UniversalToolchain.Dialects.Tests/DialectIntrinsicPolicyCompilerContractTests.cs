@@ -1,5 +1,6 @@
 using BasicCore.Compilation;
 using BasicCore.Contracts;
+using BasicCore.Core;
 using IntermediateRepresentationAbstractions;
 using UniversalIntermediateRepresentation;
 using UniversalToolchain.Dialects.Wist;
@@ -17,7 +18,7 @@ public sealed class DialectIntrinsicPolicyCompilerContractTests
             inner,
             allowedIntrinsics: [],
             forbiddenIntrinsics: ["boolean_not"]);
-        var ir = BuildIr(new Instruction(UOpCode.Intrinsic, ["boolean_not"]));
+        var ir = BuildIr(IntrinsicInstructionFactory.CreateForCapability("boolean_not"));
         var input = new CompilationInput { SourceText = "test" };
 
         var exception = Assert.Throws<InvalidOperationException>(() => compiler.Compile(ir, input));
@@ -38,7 +39,7 @@ public sealed class DialectIntrinsicPolicyCompilerContractTests
             allowedIntrinsics: ["call C#"],
             forbiddenIntrinsics: [],
             hasExplicitAllowList: true);
-        var ir = BuildIr(new Instruction(UOpCode.Intrinsic, ["boolean_not"]));
+        var ir = BuildIr(IntrinsicInstructionFactory.CreateForCapability("boolean_not"));
         var input = new CompilationInput { SourceText = "test" };
 
         var exception = Assert.Throws<InvalidOperationException>(() => compiler.Compile(ir, input));
@@ -59,7 +60,7 @@ public sealed class DialectIntrinsicPolicyCompilerContractTests
             allowedIntrinsics: ["call C#"],
             forbiddenIntrinsics: [],
             hasExplicitAllowList: true);
-        var ir = BuildIr(new Instruction(UOpCode.Intrinsic, ["call C#", typeof(Math).GetMethod(nameof(Math.Abs), [typeof(int)])!]));
+        var ir = BuildIr(IntrinsicInstructionFactory.CreateForCapability("call C#", typeof(Math).GetMethod(nameof(Math.Abs), [typeof(int)])!));
         var input = new CompilationInput { SourceText = "test" };
 
         var result = compiler.Compile(ir, input);

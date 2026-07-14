@@ -18,9 +18,6 @@
         <Compile Include="$(MSBuildThisFileDirectory)BuildSupport/JetBrainsAnnotations.cs"
                  Link="BuildSupport/JetBrainsAnnotations.cs"
                  Condition="Exists('$(MSBuildThisFileDirectory)BuildSupport/JetBrainsAnnotations.cs')" />
-        <Compile Include="$(MSBuildThisFileDirectory)BuildSupport/CommandLineCompatibility.cs"
-                 Link="BuildSupport/CommandLineCompatibility.cs"
-                 Condition="'$(MSBuildProjectName)' == 'Wistc' and Exists('$(MSBuildThisFileDirectory)BuildSupport/CommandLineCompatibility.cs')" />
     </ItemGroup>
 
 </Project>

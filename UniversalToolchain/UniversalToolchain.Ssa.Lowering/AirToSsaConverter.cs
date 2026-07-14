@@ -1,3 +1,5 @@
+using BasicCore.Core;
+using BasicCore.Contracts;
 using IntermediateRepresentationAbstractions;
 using System.Globalization;
 using System.Reflection;
@@ -297,11 +299,23 @@ public sealed class AirToSsaConverter : IIrConverter
         if (instruction.Operands.Count != 1)
             ThrowDiagnostics([Diagnostic("air.to-ssa.push", $"AIR Push in block '{block.Id}' must have exactly one operand.")]);
 
-        var value = instruction.Operands[0];
-        if (value is AirExternalValueReference external)
+        var operand = instruction.Operands[0];
+        if (operand is AirExternalValueReference external)
         {
             LowerExternalValue(block, external, lowering, stack, instructions);
             return;
+        }
+
+        var value = AirPushOperand.GetValue(operand);
+        if (value is null)
+        {
+            var declaredType = AirPushOperand.GetDeclaredType(operand);
+            throw new AirToSsaConversionException(
+            [
+                Diagnostic(
+                    "air.to-ssa.push-null",
+                    $"AIR null constant of declared type '{declaredType}' in block '{block.Id}' is not representable by the selected SSA dialect.")
+            ]);
         }
 
         var result = new SsaValue(lowering.NextValue(), value switch
@@ -383,16 +397,16 @@ public sealed class AirToSsaConverter : IIrConverter
         IReadOnlyList<ISsaManagedCallableProjection> managedCallableProjections,
         SemanticDescriptorSet semanticDescriptors)
     {
-        if (instruction.Operands.Count == 0 || instruction.Operands[0] is not string intrinsicId)
+        if (!AirIntrinsicInvocationReader.TryRead(instruction, out var invocation, out var intrinsicId, out var payloadDiagnostic))
         {
-            ThrowDiagnostics([Diagnostic("air.to-ssa.intrinsic", $"AIR Intrinsic in block '{block.Id}' must start with a string intrinsic identifier.")]);
+            ThrowDiagnostics([Diagnostic("air.to-ssa.intrinsic.typed-payload-required", $"AIR Intrinsic in block '{block.Id}' has an invalid payload. {payloadDiagnostic}")]);
             return;
         }
 
         if (allowManagedCallables &&
             TryLowerManagedIntrinsic(
                 block,
-                instruction,
+                invocation,
                 lowering,
                 stack,
                 instructions,
@@ -408,9 +422,9 @@ public sealed class AirToSsaConverter : IIrConverter
             return;
         }
 
-        if (instruction.Operands.Count - 1 != descriptor.DataOperandCount)
+        if (invocation.DataOperands.Count != descriptor.DataOperandCount)
         {
-            ThrowDiagnostics([Diagnostic("air.to-ssa.intrinsic-shape", $"AIR Intrinsic '{intrinsicId}' in block '{block.Id}' has {instruction.Operands.Count - 1} data operands; expected {descriptor.DataOperandCount}.")]);
+            ThrowDiagnostics([Diagnostic("air.to-ssa.intrinsic-shape", $"AIR Intrinsic '{intrinsicId}' in block '{block.Id}' has {invocation.DataOperands.Count} data operands; expected {descriptor.DataOperandCount}.")]);
         }
 
         if (stack.Count < descriptor.ParameterTypes.Count)
@@ -434,7 +448,7 @@ public sealed class AirToSsaConverter : IIrConverter
 
     private static bool TryLowerManagedIntrinsic(
         AirBasicBlock block,
-        Instruction instruction,
+        IntrinsicInvocation invocation,
         LoweringState lowering,
         List<SsaValueId> stack,
         List<ISsaInstruction> instructions,
@@ -445,7 +459,7 @@ public sealed class AirToSsaConverter : IIrConverter
         if (intrinsicId == AirIntrinsicIds.CallCSharp)
             return LowerManagedMethodCall(
                 block,
-                instruction,
+                invocation,
                 lowering,
                 stack,
                 instructions,
@@ -453,26 +467,26 @@ public sealed class AirToSsaConverter : IIrConverter
                 semanticDescriptors);
 
         if (intrinsicId == AirIntrinsicIds.CallCSharpConstructor)
-            return LowerManagedConstructorCall(block, instruction, lowering, stack, instructions);
+            return LowerManagedConstructorCall(block, invocation, lowering, stack, instructions);
 
         return false;
     }
 
     private static bool LowerManagedMethodCall(
         AirBasicBlock block,
-        Instruction instruction,
+        BasicCore.Contracts.IntrinsicInvocation invocation,
         LoweringState lowering,
         List<SsaValueId> stack,
         List<ISsaInstruction> instructions,
         IReadOnlyList<ISsaManagedCallableProjection> managedCallableProjections,
         SemanticDescriptorSet semanticDescriptors)
     {
-        if (!AirManagedCallIntrinsicDescriptorResolver.Instance.TryResolve(instruction, out var airDescriptor, out var airDiagnostic))
+        if (!AirManagedCallIntrinsicDescriptorResolver.Instance.TryResolve(IntrinsicInstructionFactory.Create(invocation), out var airDescriptor, out var airDiagnostic))
         {
             ThrowDiagnostics([Diagnostic("air.to-ssa.managed-call", $"AIR managed call in block '{block.Id}' is not supported. {airDiagnostic}")]);
         }
 
-        if (!TryExtractManagedMethod(instruction, out var method, out var consumesInstanceReceiver, out var diagnostic))
+        if (!TryExtractManagedMethod(invocation, out var method, out var consumesInstanceReceiver, out var diagnostic))
         {
             ThrowDiagnostics([Diagnostic("air.to-ssa.managed-call", $"AIR managed call in block '{block.Id}' is not supported. {diagnostic}")]);
         }
@@ -514,22 +528,22 @@ public sealed class AirToSsaConverter : IIrConverter
 
     private static bool LowerManagedConstructorCall(
         AirBasicBlock block,
-        Instruction instruction,
+        IntrinsicInvocation invocation,
         LoweringState lowering,
         List<SsaValueId> stack,
         List<ISsaInstruction> instructions)
     {
-        if (!AirManagedCallIntrinsicDescriptorResolver.Instance.TryResolve(instruction, out var airDescriptor, out var airDiagnostic))
+        if (!AirManagedCallIntrinsicDescriptorResolver.Instance.TryResolve(IntrinsicInstructionFactory.Create(invocation), out var airDescriptor, out var airDiagnostic))
         {
             ThrowDiagnostics([Diagnostic("air.to-ssa.managed-ctor", $"AIR managed constructor call in block '{block.Id}' is not supported. {airDiagnostic}")]);
         }
 
-        if (instruction.Operands.Count != 2 || instruction.Operands[1] is not ConstructorInfo constructor)
+        if (invocation.DataOperands.Count != 1 || invocation.DataOperands[0] is not ConstructorInfo constructor)
         {
             ThrowDiagnostics([Diagnostic("air.to-ssa.managed-ctor", $"AIR managed constructor call in block '{block.Id}' requires a ConstructorInfo operand.")]);
         }
 
-        constructor = (ConstructorInfo)instruction.Operands[1];
+        constructor = (ConstructorInfo)invocation.DataOperands[0]!;
         if (!SsaManagedCallables.TryCreateConstructor(constructor, out var callable, out var semanticDescriptor, out var diagnostic))
         {
             ThrowDiagnostics([Diagnostic("air.to-ssa.managed-ctor", $"AIR managed constructor '{constructor}' in block '{block.Id}' cannot be represented as SSA callable. {diagnostic}")]);
@@ -569,7 +583,7 @@ public sealed class AirToSsaConverter : IIrConverter
     }
 
     private static bool TryExtractManagedMethod(
-        Instruction instruction,
+        BasicCore.Contracts.IntrinsicInvocation invocation,
         out MethodInfo method,
         out bool consumesInstanceReceiver,
         out string? diagnostic)
@@ -578,36 +592,29 @@ public sealed class AirToSsaConverter : IIrConverter
         consumesInstanceReceiver = false;
         diagnostic = null;
 
-        if (instruction.Operands.Count != 2)
+        if (invocation.DataOperands.Count != 1)
         {
             diagnostic = $"AIR intrinsic '{AirIntrinsicIds.CallCSharp}' expects one data operand.";
             return false;
         }
 
-        if (instruction.Operands[1] is MethodInfo methodInfo)
+        if (invocation.DataOperands[0] is MethodInfo methodInfo)
         {
             method = methodInfo;
             consumesInstanceReceiver = !methodInfo.IsStatic;
             return true;
         }
 
-        var operand = instruction.Operands[1];
-        var operandType = operand?.GetType();
-        var methodProperty = operandType?.GetProperty("Method", BindingFlags.Public | BindingFlags.Instance);
-        if (methodProperty?.GetValue(operand) is not MethodInfo descriptorMethod)
+        if (invocation.DataOperands[0] is not IManagedCallDescriptor descriptor)
         {
-            diagnostic = $"AIR intrinsic '{AirIntrinsicIds.CallCSharp}' requires MethodInfo or a descriptor with MethodInfo Method property.";
+            diagnostic = $"AIR intrinsic '{AirIntrinsicIds.CallCSharp}' requires MethodInfo or CSharpCallDescriptor.";
             return false;
         }
 
-        var receiverProperty = operandType!.GetProperty("Receiver", BindingFlags.Public | BindingFlags.Instance);
-        var receiver = receiverProperty?.GetValue(operand);
-        var receiverTypeName = receiver?.GetType().FullName ?? string.Empty;
-        if (receiverTypeName.EndsWith("+Static", StringComparison.Ordinal) ||
-            receiverTypeName.EndsWith(".Static", StringComparison.Ordinal))
+        if (descriptor.ReceiverKind == ManagedCallReceiverKind.Static)
         {
-            method = descriptorMethod;
-            consumesInstanceReceiver = !descriptorMethod.IsStatic;
+            method = descriptor.Method;
+            consumesInstanceReceiver = !descriptor.Method.IsStatic;
             return true;
         }
 

@@ -4,6 +4,10 @@ namespace BasicInterpreter.Contracts;
 
 public sealed class InterpreterBackendContractDescriptorProvider : IModuleContractDescriptorProvider
 {
+    private static readonly ContractNamespaceOwner InterpreterNamespace = ContractNamespaceOwner.Reserved("interpreter-backend", "interpreter");
+
+    public IReadOnlyList<ContractNamespaceOwner> NamespaceOwners => [ContractNamespaceOwner.Backend, InterpreterNamespace];
+
     private readonly IReadOnlyList<IntrinsicSymbolId> _supportedIntrinsics;
 
     public InterpreterBackendContractDescriptorProvider(IEnumerable<string>? supportedIntrinsics = null)

@@ -85,7 +85,7 @@ public sealed class BytecodeContractMetadataTests
     {
         var sink = new RecordingSink();
         var observer = CreateObserver(
-            ModuleContractPipelineProfiles.MigrationWarn,
+            ModuleContractPipelineProfiles.Warn,
             sink);
         var bytecode = new Bytecode(
         [

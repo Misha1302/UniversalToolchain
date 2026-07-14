@@ -159,7 +159,7 @@ public class RuntimeInfrastructureCompositionTests
             new IntrinsicSemanticBootstrapPlanBuilder(),
             new IntrinsicSemanticBootstrapPreProviderValidator(),
             new IntrinsicSemanticBootstrapRuntimeValidator(),
-            ModuleContractPipelineProfiles.MigrationWarn,
+            ModuleContractPipelineProfiles.Warn,
             NullModuleContractDiagnosticSink.Instance);
 
     private static RuntimeComponentManifestEntry BackendEntry(string alias, Type registrarType)

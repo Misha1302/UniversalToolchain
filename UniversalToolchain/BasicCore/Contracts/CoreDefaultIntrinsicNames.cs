@@ -1,5 +1,4 @@
 using BasicCore.Capabilities;
-using BasicCore.Legacy;
 
 namespace BasicCore.Contracts;
 
@@ -13,10 +12,10 @@ internal static class CoreDefaultIntrinsicNames
 
     private static string Encode(IntrinsicSymbol symbol)
     {
-        if (LegacyCapabilityNameEncoder.TryEncode(symbol, [], out var name))
+        if (IntrinsicCapabilityNameEncoder.TryEncode(symbol, [], out var name))
             return name;
 
-        Thrower.InvalidOpEx($"Core intrinsic '{symbol}' cannot be encoded as a legacy compiler capability name.");
+        Thrower.InvalidOpEx($"Core intrinsic '{symbol}' cannot be encoded as a compiler capability identifier.");
         return string.Empty;
     }
 }

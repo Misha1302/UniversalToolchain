@@ -27,8 +27,8 @@ public sealed class RuntimeModuleDescriptor
         implementationType = implementationType.ArgNotNull();
 
         if (!typeof(IFrontendCoreModule).IsAssignableFrom(implementationType) &&
-            !typeof(IIRProcessingModule).IsAssignableFrom(implementationType))
-            Thrower.Argument(nameof(implementationType), "Module type must implement IFrontendCoreModule or IIRProcessingModule.");
+            !typeof(IAirOptimizer).IsAssignableFrom(implementationType))
+            Thrower.Argument(nameof(implementationType), "Module type must implement IFrontendCoreModule or IAirOptimizer.");
 
         var resolvedCanonicalId = canonicalId ?? implementationType.FullName;
         if (string.IsNullOrWhiteSpace(resolvedCanonicalId))
@@ -53,7 +53,7 @@ public sealed class RuntimeModuleDescriptor
 
     public bool IsFrontendModule => typeof(IFrontendCoreModule).IsAssignableFrom(ImplementationType);
 
-    public bool IsIrProcessingModule => typeof(IIRProcessingModule).IsAssignableFrom(ImplementationType);
+    public bool IsAirOptimizer => typeof(IAirOptimizer).IsAssignableFrom(ImplementationType);
 
     private static List<string> SnapshotAliases(IEnumerable<string>? aliases, string paramName, string canonicalId)
     {

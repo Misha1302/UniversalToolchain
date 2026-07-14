@@ -1,9 +1,7 @@
-using SettableGettableModule.Core;
-
 namespace BasicCore.Core.Rules;
 
 /// <summary>
-///     Pushes a <see cref="VariableReference{T}" /> for the resolved local value type.
+///     Pushes a managed by-reference type for the resolved local value type.
 /// </summary>
 public sealed class LoadLocalRefStackRule : IIntrinsicStackRule
 {
@@ -14,6 +12,6 @@ public sealed class LoadLocalRefStackRule : IIntrinsicStackRule
             $"Intrinsic '{invocation.Symbol}' requires exactly one type argument.");
 
         var valueType = context.Resolve(invocation.TypeArguments[0]);
-        stack.Add(typeof(VariableReference<>).MakeGenericType(valueType));
+        stack.Add(valueType.MakeByRefType());
     }
 }

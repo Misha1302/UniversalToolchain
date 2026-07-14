@@ -1,6 +1,0 @@
-dialect RestrictedSandbox
-use Arithmetic,BooleanConditions,Comments,ComparisonConditions,Conditions,Equality,Numbers,Scopes,Whitespaces
-exclude CSharpInterop,Identifier,InternalPreprocessorLexemes,Labels,Loops,NativeTypes,ParametersSetter,SemicolonAsNewLine,Variables
-backend interpreter
-security restricted
-capability sandbox

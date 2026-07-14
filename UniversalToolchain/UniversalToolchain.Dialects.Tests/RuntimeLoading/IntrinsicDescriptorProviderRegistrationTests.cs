@@ -89,7 +89,7 @@ public class IntrinsicDescriptorProviderRegistrationTests
             new IntrinsicSemanticBootstrapPlanBuilder(),
             new IntrinsicSemanticBootstrapPreProviderValidator(),
             new IntrinsicSemanticBootstrapRuntimeValidator(),
-            ModuleContractPipelineProfiles.MigrationWarn,
+            ModuleContractPipelineProfiles.Warn,
             NullModuleContractDiagnosticSink.Instance);
 
     private static ServiceProvider CreateProvider(
@@ -114,7 +114,7 @@ public class IntrinsicDescriptorProviderRegistrationTests
 
     [IntrinsicDescriptorProvider(typeof(BooleanIntrinsicDescriptorProvider))]
     [IntrinsicDescriptorProvider(typeof(BooleanIntrinsicDescriptorProvider))]
-    private sealed class DuplicateBooleanOptimizerModule : IIRProcessingModule;
+    private sealed class DuplicateBooleanOptimizerModule : IAirOptimizer;
 
     private sealed class StaticBackendRegistrarResolver(IEnumerable<IDialectBackendRuntimeRegistrar> backendRegistrars) : IRuntimeBackendRegistrarResolver
     {

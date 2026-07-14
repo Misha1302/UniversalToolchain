@@ -1,3 +1,5 @@
+using BasicCore.Capabilities;
+using BasicCore.Core;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
@@ -53,10 +55,10 @@ public sealed class SsaToAirConverter : IIrConverter
             ssaVerifier,
             airVerifier,
             new SsaCallableLoweringPlanner(
-                SsaPreviewSemanticDescriptors.ArithmeticInt32,
+                SsaSemanticDescriptors.ArithmeticInt32,
                 callLowerings.ToTargetSet(),
                 airIntrinsics),
-            SsaPreviewSemanticDescriptors.ArithmeticInt32)
+            SsaSemanticDescriptors.ArithmeticInt32)
     {
     }
 
@@ -69,10 +71,10 @@ public sealed class SsaToAirConverter : IIrConverter
             ssaVerifier,
             airVerifier,
             new SsaCallableLoweringPlanner(
-                SsaPreviewSemanticDescriptors.ArithmeticInt32,
+                SsaSemanticDescriptors.ArithmeticInt32,
                 callLoweringTargets,
                 airIntrinsics),
-            SsaPreviewSemanticDescriptors.ArithmeticInt32)
+            SsaSemanticDescriptors.ArithmeticInt32)
     {
     }
 
@@ -84,7 +86,7 @@ public sealed class SsaToAirConverter : IIrConverter
             ssaVerifier,
             airVerifier,
             callLoweringPlanner.AsCallablePlanner(),
-            SsaPreviewSemanticDescriptors.ArithmeticInt32)
+            SsaSemanticDescriptors.ArithmeticInt32)
     {
     }
 
@@ -251,7 +253,7 @@ public sealed class SsaToAirConverter : IIrConverter
             var slot = ReadExternalSlot(block, operation);
             air.AppendInstructions(
             [
-                new Instruction(UOpCode.Intrinsic, ["load_external", slot, externalType])
+                IntrinsicInstructionFactory.CreateForCapability(IntrinsicCapabilityIds.LoadExternal, slot, externalType)
             ]);
 
             if (state.IsUnusedSingleResult(operation))
@@ -399,16 +401,14 @@ public sealed class SsaToAirConverter : IIrConverter
         switch (plan.ManagedMember)
         {
             case System.Reflection.MethodInfo method:
-                air.AppendInstructions(new List<Instruction>
-                {
-                    new(UOpCode.Intrinsic, [AirIntrinsicIds.CallCSharp, method])
-                });
+                air.AppendInstructions([
+                    IntrinsicInstructionFactory.CreateForCapability(AirIntrinsicIds.CallCSharp, method)
+                ]);
                 break;
             case System.Reflection.ConstructorInfo constructor:
-                air.AppendInstructions(new List<Instruction>
-                {
-                    new(UOpCode.Intrinsic, [AirIntrinsicIds.CallCSharpConstructor, constructor])
-                });
+                air.AppendInstructions([
+                    IntrinsicInstructionFactory.CreateForCapability(AirIntrinsicIds.CallCSharpConstructor, constructor)
+                ]);
                 break;
             default:
                 ThrowDiagnostics([Diagnostic("ssa.to-air.managed-call.member", $"SSA managed call '{call.Id}' resolved to unsupported member kind '{plan.ManagedMember?.GetType().Name ?? "<null>"}'.")]);

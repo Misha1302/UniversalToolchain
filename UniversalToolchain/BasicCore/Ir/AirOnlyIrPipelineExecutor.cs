@@ -1,16 +1,12 @@
 namespace BasicCore.Ir;
 
-internal sealed class AirOnlyIrPipelineExecutor<TCompilationOutput>
+internal sealed class AirOnlyIrPipelineExecutor
 {
-    private readonly IAbstractIrCompiler<TCompilationOutput> _compiler;
-    private readonly IReadOnlyList<IIRProcessingModule> _optimizers;
+    private readonly IReadOnlyList<IAirOptimizer> _optimizers;
 
-    public AirOnlyIrPipelineExecutor(
-        IReadOnlyList<IIRProcessingModule> optimizers,
-        IAbstractIrCompiler<TCompilationOutput> compiler)
+    public AirOnlyIrPipelineExecutor(IReadOnlyList<IAirOptimizer> optimizers)
     {
         _optimizers = optimizers.ArgNotNull();
-        _compiler = compiler.ArgNotNull();
     }
 
     public IAbstractIR Optimize(IAbstractIR air)
@@ -20,10 +16,7 @@ internal sealed class AirOnlyIrPipelineExecutor<TCompilationOutput>
         IIrArtifact current = new AirArtifact(air);
         var context = new IrPipelineContext();
         foreach (var optimizer in _optimizers)
-        {
-            var stage = new LegacyAirOptimizerStage<TCompilationOutput>(optimizer, _compiler);
-            current = stage.Run(current, context).Artifact;
-        }
+            current = optimizer.Run(current, context).Artifact;
 
         return current.As<AirArtifact>().Program;
     }

@@ -127,7 +127,7 @@ Interfaces must start with `I`.
 Examples:
 - `ICoreRunnable`
 - `IAbstractMethodsTranslator`
-- `IIRProcessingModule`
+- `IAirOptimizer`
 
 ### 3.6 Attribute naming
 Attribute types must end with `Attribute`.
@@ -746,7 +746,7 @@ public Runner Build(string profileId)
     if (profileId == "full-default")
         return BuildFullDefault();
 
-    if (profileId == "restricted-sandbox")
+    if (profileId == "composition-restricted")
         return BuildRestrictedSandboxWithExtraRules();
 
     throw new InvalidOperationException();

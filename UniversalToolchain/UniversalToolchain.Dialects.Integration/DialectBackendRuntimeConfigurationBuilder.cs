@@ -62,9 +62,9 @@ public sealed class DialectBackendRuntimeConfigurationBuilder
                 $"Runtime component '{entry.CanonicalAlias}' has kind '{RuntimeComponentKindCodec.Format(entry.Kind)}', but '{RuntimeComponentKindCodec.Format(RuntimeComponentKind.Optimizer)}' was expected.");
 
         var type = _typeLoader.LoadType(entry);
-        if (!typeof(IIRProcessingModule).IsAssignableFrom(type))
+        if (!typeof(IAirOptimizer).IsAssignableFrom(type))
             Thrower.InvalidOpEx(
-                $"Runtime optimizer '{entry.CanonicalAlias}' resolves to type '{DisplayName(type)}', but the type does not implement IIRProcessingModule.");
+                $"Runtime optimizer '{entry.CanonicalAlias}' resolves to type '{DisplayName(type)}', but the type does not implement IAirOptimizer.");
 
         return type;
     }

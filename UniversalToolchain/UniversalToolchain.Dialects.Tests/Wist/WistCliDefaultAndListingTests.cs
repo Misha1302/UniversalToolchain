@@ -1,6 +1,5 @@
 using Wistc;
 using System.Text.Json;
-using CommandLine;
 using BasicCore.Contracts;
 
 namespace UniversalToolchain.Dialects.Tests.Wist;
@@ -48,43 +47,29 @@ public sealed class WistCliDefaultAndListingTests
     [Test]
     public void Parser_Help_DoesNotSelectDefaultRepl()
     {
-        var result = Parser.Default.ParseArguments<RunOptions, ReplOptions, DialectInspectOptions, DialectDemoOptions, FeaturesOptions>(["--help"]);
+        var result = WistCliParser.Parse(["--help"]);
 
-        var exitCode = result.MapResult<RunOptions, ReplOptions, DialectInspectOptions, DialectDemoOptions, FeaturesOptions, int>(
-            _ => 10,
-            _ => 11,
-            _ => 12,
-            _ => 13,
-            _ => 14,
-            errors =>
-            {
-                var message = errors.Single().Message;
-                Assert.That(message, Does.StartWith("Usage: wistc <command>"));
-                Assert.That(message, Does.Contain("repl"));
-                return 0;
-            });
-
-        Assert.That(exitCode, Is.EqualTo(0));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsSuccess, Is.False);
+            var message = result.Errors.Single().Message;
+            Assert.That(message, Does.StartWith("Usage: wistc <command>"));
+            Assert.That(message, Does.Contain("repl"));
+            Assert.That(result.Options, Is.Null);
+        });
     }
 
     [Test]
     public void Parser_UnknownOption_DoesNotFallThroughToDefaultRepl()
     {
-        var result = Parser.Default.ParseArguments<RunOptions, ReplOptions, DialectInspectOptions, DialectDemoOptions, FeaturesOptions>(["--definitely-unknown"]);
+        var result = WistCliParser.Parse(["--definitely-unknown"]);
 
-        var exitCode = result.MapResult<RunOptions, ReplOptions, DialectInspectOptions, DialectDemoOptions, FeaturesOptions, int>(
-            _ => 10,
-            _ => 11,
-            _ => 12,
-            _ => 13,
-            _ => 14,
-            errors =>
-            {
-                Assert.That(errors.Single().Message, Is.EqualTo("Unknown option '--definitely-unknown'."));
-                return 1;
-            });
-
-        Assert.That(exitCode, Is.EqualTo(1));
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Errors.Single().Message, Is.EqualTo("Unknown option '--definitely-unknown'."));
+            Assert.That(result.Options, Is.Null);
+        });
     }
 
     [Test]

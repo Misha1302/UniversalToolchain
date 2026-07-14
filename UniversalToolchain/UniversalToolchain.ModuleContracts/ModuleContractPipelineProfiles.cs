@@ -6,16 +6,16 @@ public static class ModuleContractPipelineProfiles
     {
         BytecodeProfile = VerificationSeverityProfile.Observe,
         AirProfile = VerificationSeverityProfile.Observe,
-        EnforcementPolicy = ModuleContractEnforcementPolicy.LegacyCompatible,
+        EnforcementPolicy = ModuleContractEnforcementPolicy.AllowUndeclared,
         BackendPolicy = AirBackendPolicy.CapabilityGated,
         VerifyLegacyBytecodeOperationNames = false
     };
 
-    public static ModuleContractPipelineOptions MigrationWarn => new()
+    public static ModuleContractPipelineOptions Warn => new()
     {
         BytecodeProfile = VerificationSeverityProfile.Warn,
         AirProfile = VerificationSeverityProfile.Warn,
-        EnforcementPolicy = ModuleContractEnforcementPolicy.LegacyCompatible,
+        EnforcementPolicy = ModuleContractEnforcementPolicy.AllowUndeclared,
         BackendPolicy = AirBackendPolicy.CapabilityGated,
         VerifyLegacyBytecodeOperationNames = false
     };

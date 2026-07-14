@@ -129,7 +129,7 @@ public class WistDialectExecutionIntegrationTests
     {
         using var provider = CreateProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var example = ResolveExampleDirectory("restricted-sandbox");
+        var example = ResolveExampleDirectory("composition-restricted");
 
         var result = workflow.ComposeFile(Path.Combine(example, "dialect.wistdialect"));
         using var host = workflow.CreateHost(result);
@@ -144,7 +144,7 @@ public class WistDialectExecutionIntegrationTests
     {
         using var provider = CreateProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var example = ResolveExampleDirectory("restricted-sandbox");
+        var example = ResolveExampleDirectory("composition-restricted");
 
         var result = workflow.ComposeFile(Path.Combine(example, "dialect.wistdialect"));
         using var host = workflow.CreateHost(result);
@@ -159,7 +159,7 @@ public class WistDialectExecutionIntegrationTests
     {
         using var provider = CreateProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var example = ResolveExampleDirectory("restricted-sandbox");
+        var example = ResolveExampleDirectory("composition-restricted");
 
         var result = workflow.ComposeFile(Path.Combine(example, "dialect.wistdialect"));
         using var host = workflow.CreateHost(result);
@@ -178,7 +178,7 @@ public class WistDialectExecutionIntegrationTests
     {
         using var provider = CreateProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var example = ResolveExampleDirectory("restricted-sandbox");
+        var example = ResolveExampleDirectory("composition-restricted");
 
         var result = workflow.ComposeFile(Path.Combine(example, "dialect.wistdialect"));
         using var host = workflow.CreateHost(result);

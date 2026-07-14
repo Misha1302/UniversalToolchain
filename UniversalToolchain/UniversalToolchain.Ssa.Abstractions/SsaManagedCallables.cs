@@ -93,7 +93,7 @@ public static class SsaManagedCallables
 
         var parameterTypes = new List<SemanticTypeId>();
         if (consumesInstanceReceiver)
-            parameterTypes.Add(SsaPreviewSemanticTypes.Object);
+            parameterTypes.Add(SsaSemanticTypes.Object);
 
         foreach (var parameter in method.GetParameters())
         {
@@ -154,7 +154,7 @@ public static class SsaManagedCallables
         var semantics = ResolveConstructorSemantics(constructor);
         descriptor = new CallableDescriptor(
             callable,
-            new CallableSignature(parameterTypes, [SsaPreviewSemanticTypes.Object]),
+            new CallableSignature(parameterTypes, [SsaSemanticTypes.Object]),
             effects: semantics.Effects,
             determinism: semantics.Determinism,
             algebraicTraits: semantics.AlgebraicTraits,

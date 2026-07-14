@@ -10,7 +10,7 @@ namespace ConditionsModule.Optimizers;
 [AutoRegisterService]
 [IntrinsicDescriptorProvider(typeof(ComparisonIntrinsicDescriptorProvider))]
 [UsedImplicitly]
-public class ComparisonIntrinsicOptimizerModule : IIRProcessingModule
+public class ComparisonIntrinsicOptimizerModule : IAirOptimizer
 {
     private static readonly IReadOnlyList<Type> _supportedComparisonTypes =
     [
@@ -36,7 +36,7 @@ public class ComparisonIntrinsicOptimizerModule : IIRProcessingModule
         _capabilityContext = capabilityContext;
     }
 
-    public IAbstractIR ProcessIr<TCompilationOutput>(IAbstractIR current, IAbstractIrCompiler<TCompilationOutput> compiler)
+    public IAbstractIR Optimize(IAbstractIR current)
     {
         if (_capabilityContext == null)
             Thrower.InvalidOpEx("Comparison optimizer requires intrinsic capability context initialization.");
@@ -87,7 +87,7 @@ public class ComparisonIntrinsicOptimizerModule : IIRProcessingModule
     {
         if (instruction.UOpCode == UOpCode.Push)
         {
-            stack.Push(instruction.Operands[0].GetType());
+            stack.Push(AirPushOperand.GetDeclaredType(instruction.Operands[0]));
             return;
         }
 

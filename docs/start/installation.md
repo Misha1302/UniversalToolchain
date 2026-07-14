@@ -18,14 +18,14 @@ The current preview package is:
 
 ```text
 PackageId: UniversalToolchain.Wist
-Version: 0.1.0-preview.4
+Version: 0.1.0-alpha.1
 Target framework: net10.0
 ```
 
 From a clean .NET project:
 
 ```bash ci-run=false
-dotnet add package UniversalToolchain.Wist --version 0.1.0-preview.4
+dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.1
 ```
 
 Use a `net10.0` project while this preview targets .NET 10:
@@ -52,7 +52,7 @@ double result = formula.CompiledDelegate(100.0, 5.0);
 Console.WriteLine(result); // 95
 ```
 
-This is the recommended first-contact shape for preview.4: use `Compile<TDelegate>`, compile once, keep the returned typed program and call `CompiledDelegate` from the hot path.
+This is the recommended first-contact shape for alpha.1: use `Compile<TDelegate>`, compile once, keep the returned typed program and call `CompiledDelegate` from the hot path.
 
 ## Trusted interop example
 
@@ -63,7 +63,7 @@ using UniversalToolchain.Wist;
 
 using var wist = WistEngine.Create(new WistEngineOptions
 {
-    Preset = WistPreset.FullNativePreview,
+    Preset = WistPreset.FullNative,
     AllowedAssemblies = [typeof(Math).Assembly]
 });
 

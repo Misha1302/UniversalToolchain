@@ -4,9 +4,9 @@ namespace NativeMathModule;
 [DialectRuntimeExport("Optimizer", "NativeTypesOptimization")]
 [AutoRegisterService]
 [ArithmeticModeCompatibility(ArithmeticMode.Native)]
-public class NativeTypesOptimizerModule : IIRProcessingModule
+public class NativeTypesOptimizerModule : IAirOptimizer
 {
-    public IAbstractIR ProcessIr<TCompilationOutput>(IAbstractIR current, IAbstractIrCompiler<TCompilationOutput> compiler)
+    public IAbstractIR Optimize(IAbstractIR current)
     {
         InitIntrinsics();
 
@@ -31,11 +31,10 @@ public class NativeTypesOptimizerModule : IIRProcessingModule
         {
             // Match: push, push, and then a NativeArithmetic call.
             if (i + 2 < instructions.Count &&
-                IsNativeArithmeticPattern(instructions[i], instructions[i + 1], instructions[i + 2]))
+                TryGetNativeArithmeticMethod(instructions[i], instructions[i + 1], instructions[i + 2], out var method))
             {
                 var left = instructions[i].Operands[0];
                 var right = instructions[i + 1].Operands[0];
-                var method = (MethodInfo)instructions[i + 2].Operands[1];
 
                 try
                 {
@@ -66,9 +65,16 @@ public class NativeTypesOptimizerModule : IIRProcessingModule
         return resultAir;
     }
 
-    private bool IsNativeArithmeticPattern(Instruction inst1, Instruction inst2, Instruction inst3) =>
-        inst1.UOpCode == UOpCode.Push &&
-        inst2.UOpCode == UOpCode.Push &&
-        CSharpCallIntrinsicReader.TryGetCallMethod(inst3, out var method) &&
-        method.DeclaringType == typeof(NativeArithmetic);
+    private static bool TryGetNativeArithmeticMethod(
+        Instruction inst1,
+        Instruction inst2,
+        Instruction inst3,
+        out MethodInfo method)
+    {
+        method = default!;
+        return inst1.UOpCode == UOpCode.Push &&
+               inst2.UOpCode == UOpCode.Push &&
+               CSharpCallIntrinsicReader.TryGetCallMethod(inst3, out method) &&
+               method.DeclaringType == typeof(NativeArithmetic);
+    }
 }

@@ -27,7 +27,7 @@ public sealed record CompilationPipelineBytecodeContext(
 public sealed record CompilationPipelineAirContext(
     CompilationInput Input,
     IReadOnlyList<IFrontendCoreModule> FrontendModules,
-    IReadOnlyList<IIRProcessingModule> Optimizers,
+    IReadOnlyList<IAirOptimizer> Optimizers,
     IAbstractIR Air,
     IReadOnlyList<string> CompilerSupportedIntrinsics,
     IReadOnlyList<IBackendPipelineComponent>? BackendComponents = null);

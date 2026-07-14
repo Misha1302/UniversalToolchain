@@ -4,31 +4,35 @@ using UniversalToolchain.Dialects.Wist;
 if (TryRejectRemovedDialectMutationOption(args, out var removedDialectMutationExitCode))
     return removedDialectMutationExitCode;
 
-return Parser.Default.ParseArguments<RunOptions, ReplOptions, DialectInspectOptions, DialectDemoOptions, FeaturesOptions>(args)
-    .MapResult(
-        (RunOptions opts) => RunCommand(opts),
-        (ReplOptions opts) => ReplCommand(opts),
-        (DialectInspectOptions opts) => DialectInspectCommand(opts),
-        (DialectDemoOptions opts) => DialectDemoCommand(opts),
-        (FeaturesOptions opts) => FeaturesCommand(opts),
-        errors =>
+var parseResult = WistCliParser.Parse(args);
+if (!parseResult.IsSuccess)
+{
+    var hasHelp = false;
+    foreach (var error in parseResult.Errors)
+    {
+        if (error.Message.StartsWith("Usage:", StringComparison.Ordinal))
         {
-            var hasHelp = false;
-            foreach (var error in errors)
-            {
-                if (error.Message.StartsWith("Usage:", StringComparison.Ordinal))
-                {
-                    Console.WriteLine(error.Message);
-                    hasHelp = true;
-                }
-                else
-                {
-                    Console.Error.WriteLine(error.Message);
-                }
-            }
+            Console.WriteLine(error.Message);
+            hasHelp = true;
+        }
+        else
+        {
+            Console.Error.WriteLine(error.Message);
+        }
+    }
 
-            return hasHelp ? 0 : 1;
-        });
+    return hasHelp ? 0 : 1;
+}
+
+return parseResult.Options switch
+{
+    RunOptions options => RunCommand(options),
+    ReplOptions options => ReplCommand(options),
+    DialectInspectOptions options => DialectInspectCommand(options),
+    DialectDemoOptions options => DialectDemoCommand(options),
+    FeaturesOptions options => FeaturesCommand(options),
+    _ => throw new InvalidOperationException("The CLI parser returned an unsupported options type.")
+};
 
 static bool TryRejectRemovedDialectMutationOption(string[] args, out int exitCode)
 {

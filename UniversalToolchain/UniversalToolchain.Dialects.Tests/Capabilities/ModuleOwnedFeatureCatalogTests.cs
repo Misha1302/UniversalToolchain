@@ -52,7 +52,7 @@ public sealed class ModuleOwnedFeatureCatalogTests
     [Test]
     public void FeatureExplanation_RestrictedProfile_DoesNotExposeCSharpInterop()
     {
-        var explanation = BuildExplanation("restricted-sandbox");
+        var explanation = BuildExplanation("composition-restricted");
 
         Assert.Multiple(() =>
         {

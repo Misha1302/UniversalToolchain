@@ -1,3 +1,5 @@
+using BasicCore.Core;
+using BasicCore.Capabilities;
 using System.Collections.ObjectModel;
 using System.Reflection;
 using IntermediateRepresentationAbstractions;
@@ -72,11 +74,8 @@ public sealed class AirIntrinsicDescriptorSet : IAirIntrinsicDescriptorResolver
         descriptor = default!;
         diagnostic = null;
 
-        if (instruction.Operands.Count == 0 || instruction.Operands[0] is not string intrinsicId)
-        {
-            diagnostic = "AIR Intrinsic must start with a string intrinsic identifier.";
+        if (!AirIntrinsicInvocationReader.TryRead(instruction, out _, out var intrinsicId, out diagnostic))
             return false;
-        }
 
         if (TryGet(intrinsicId, out descriptor))
             return true;
@@ -117,11 +116,11 @@ public sealed class AirIntrinsicDescriptorResolverSet : IAirIntrinsicDescriptorR
 
 public static class AirIntrinsicIds
 {
-    public const string CallCSharp = "call C#";
+    public const string CallCSharp = IntrinsicCapabilityIds.CallCSharp;
 
-    public const string CallCSharpConstructor = "call C# ctor";
+    public const string CallCSharpConstructor = IntrinsicCapabilityIds.CallCSharpConstructor;
 
-    public const string LoadExternal = "load_external";
+    public const string LoadExternal = IntrinsicCapabilityIds.LoadExternal;
 
     public const string AddInt32Unchecked = "add_i32";
 
@@ -143,33 +142,30 @@ public sealed class AirManagedCallIntrinsicDescriptorResolver : IAirIntrinsicDes
         descriptor = default!;
         diagnostic = null;
 
-        if (instruction.Operands.Count == 0 || instruction.Operands[0] is not string intrinsicId)
-        {
-            diagnostic = "AIR Intrinsic must start with a string intrinsic identifier.";
+        if (!AirIntrinsicInvocationReader.TryRead(instruction, out var invocation, out var intrinsicId, out diagnostic))
             return false;
-        }
 
         if (intrinsicId == AirIntrinsicIds.CallCSharp)
-            return TryResolveMethod(instruction, out descriptor, out diagnostic);
+            return TryResolveMethod(invocation, out descriptor, out diagnostic);
 
         if (intrinsicId == AirIntrinsicIds.CallCSharpConstructor)
-            return TryResolveConstructor(instruction, out descriptor, out diagnostic);
+            return TryResolveConstructor(invocation, out descriptor, out diagnostic);
 
         return false;
     }
 
-    private static bool TryResolveMethod(Instruction instruction, out AirIntrinsicDescriptor descriptor, out string? diagnostic)
+    private static bool TryResolveMethod(BasicCore.Contracts.IntrinsicInvocation invocation, out AirIntrinsicDescriptor descriptor, out string? diagnostic)
     {
         descriptor = default!;
         diagnostic = null;
 
-        if (instruction.Operands.Count != 2)
+        if (invocation.DataOperands.Count != 1)
         {
             diagnostic = $"AIR intrinsic '{AirIntrinsicIds.CallCSharp}' expects one data operand.";
             return false;
         }
 
-        if (!TryExtractMethod(instruction.Operands[1], out var method, out var consumesInstanceReceiver, out diagnostic))
+        if (!TryExtractMethod(invocation.DataOperands[0], out var method, out var consumesInstanceReceiver, out diagnostic))
             return false;
 
         if (!TryCreateParameterTypes(method, consumesInstanceReceiver, out var parameterTypes, out diagnostic))
@@ -186,18 +182,18 @@ public sealed class AirManagedCallIntrinsicDescriptorResolver : IAirIntrinsicDes
         return true;
     }
 
-    private static bool TryResolveConstructor(Instruction instruction, out AirIntrinsicDescriptor descriptor, out string? diagnostic)
+    private static bool TryResolveConstructor(BasicCore.Contracts.IntrinsicInvocation invocation, out AirIntrinsicDescriptor descriptor, out string? diagnostic)
     {
         descriptor = default!;
         diagnostic = null;
 
-        if (instruction.Operands.Count != 2)
+        if (invocation.DataOperands.Count != 1)
         {
             diagnostic = $"AIR intrinsic '{AirIntrinsicIds.CallCSharpConstructor}' expects one data operand.";
             return false;
         }
 
-        if (instruction.Operands[1] is not ConstructorInfo ctor)
+        if (invocation.DataOperands[0] is not ConstructorInfo ctor)
         {
             diagnostic = $"AIR intrinsic '{AirIntrinsicIds.CallCSharpConstructor}' requires a ConstructorInfo data operand.";
             return false;
@@ -240,26 +236,20 @@ public sealed class AirManagedCallIntrinsicDescriptorResolver : IAirIntrinsicDes
             return true;
         }
 
-        var operandType = operand?.GetType();
-        var methodProperty = operandType?.GetProperty("Method", BindingFlags.Public | BindingFlags.Instance);
-        if (methodProperty?.GetValue(operand) is not MethodInfo descriptorMethod)
+        if (operand is not IManagedCallDescriptor descriptor)
         {
-            diagnostic = $"AIR intrinsic '{AirIntrinsicIds.CallCSharp}' requires a MethodInfo or descriptor with MethodInfo Method property.";
+            diagnostic = $"AIR intrinsic '{AirIntrinsicIds.CallCSharp}' requires a MethodInfo or CSharpCallDescriptor.";
             return false;
         }
 
-        var receiverProperty = operandType!.GetProperty("Receiver", BindingFlags.Public | BindingFlags.Instance);
-        var receiver = receiverProperty?.GetValue(operand);
-        var receiverTypeName = receiver?.GetType().FullName ?? string.Empty;
-        if (receiverTypeName.EndsWith("+Static", StringComparison.Ordinal) ||
-            receiverTypeName.EndsWith(".Static", StringComparison.Ordinal))
+        if (descriptor.ReceiverKind == ManagedCallReceiverKind.Static)
         {
-            method = descriptorMethod;
-            consumesInstanceReceiver = !descriptorMethod.IsStatic;
+            method = descriptor.Method;
+            consumesInstanceReceiver = !descriptor.Method.IsStatic;
             return true;
         }
 
-        diagnostic = $"AIR intrinsic '{AirIntrinsicIds.CallCSharp}' supports MethodInfo and static C# call descriptors; execution-scoped provider descriptors are runtime-bound and are not representable in backend-neutral stack analysis yet.";
+        diagnostic = $"AIR intrinsic '{AirIntrinsicIds.CallCSharp}' cannot project an execution-scoped provider call into backend-neutral stack analysis.";
         return false;
     }
 
@@ -360,28 +350,27 @@ public sealed class AirExternalLoadIntrinsicDescriptorResolver : IAirIntrinsicDe
 
         descriptor = default!;
         diagnostic = null;
-        if (instruction.Operands.Count == 0 ||
-            instruction.Operands[0] is not string intrinsicId ||
+        if (!AirIntrinsicInvocationReader.TryRead(instruction, out var invocation, out var intrinsicId, out diagnostic) ||
             !string.Equals(intrinsicId, AirIntrinsicIds.LoadExternal, StringComparison.Ordinal))
         {
             return false;
         }
 
-        if (instruction.Operands.Count != 3)
+        if (invocation.DataOperands.Count != 2)
         {
             diagnostic = $"AIR intrinsic '{AirIntrinsicIds.LoadExternal}' expects slot and CLR type data operands.";
             return false;
         }
 
-        if (instruction.Operands[1] is not int slot || slot < 0)
+        if (invocation.DataOperands[0] is not int slot || slot < 0)
         {
             diagnostic = $"AIR intrinsic '{AirIntrinsicIds.LoadExternal}' requires a non-negative Int32 slot operand.";
             return false;
         }
 
-        if (instruction.Operands[2] is not Type valueType || !TryMapClrType(valueType, out var resultType))
+        if (invocation.DataOperands[1] is not Type valueType || !TryMapClrType(valueType, out var resultType))
         {
-            diagnostic = $"AIR intrinsic '{AirIntrinsicIds.LoadExternal}' has unsupported CLR value type '{instruction.Operands[2]?.ToString() ?? "<null>"}'.";
+            diagnostic = $"AIR intrinsic '{AirIntrinsicIds.LoadExternal}' has unsupported CLR value type '{invocation.DataOperands[1]?.ToString() ?? "<null>"}'.";
             return false;
         }
 

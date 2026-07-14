@@ -85,7 +85,7 @@ public sealed class HardcodeBoundaryGuardrailTests
 
         var files = guardedDirectories.SelectMany(directory => ProductionFiles(root, directory)).ToList();
         AssertNoPatterns(root, files, ["WistThrower"],
-            "Generic framework/runtime layers must use ToolchainThrower; WistThrower is only a compatibility alias at the Wist edge.");
+            "Generic framework/runtime layers must use ToolchainThrower; the removed WistThrower compatibility alias must not return.");
     }
 
     [Test]

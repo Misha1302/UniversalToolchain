@@ -210,13 +210,13 @@ At this point, execution semantics are represented as backend-facing AIR instruc
 
 ## IR optimization
 
-Selected IR processing modules transform AIR:
+Selected AIR optimizers transform the current representation:
 
 ```text
-optimizers.ProcessIr(current, compiler)
+current = optimizer.Optimize(current)
 ```
 
-The backend compiler is passed into the optimizer stage so optimizers can respect backend capabilities. This is a guardrail: backend-specific optimized instructions should not be emitted for backends that cannot consume them.
+Before optimization, each optimizer receives an `IOptimizerIntrinsicCapabilityContext` derived from the selected backend. Backend-specific instructions therefore remain capability-gated without passing a concrete compiler through the optimizer API.
 
 ## Runtime provider extraction
 

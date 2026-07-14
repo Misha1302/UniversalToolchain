@@ -1,4 +1,5 @@
 using BasicCore.Builtins;
+using BasicCore.Core;
 using IntermediateRepresentationAbstractions;
 using UniversalIntermediateRepresentation;
 using UniversalToolchain.Air.Analysis;
@@ -64,7 +65,7 @@ public sealed class SsaRoundtripRouteTests
         source.Intrinsic(AirIntrinsicIds.AddInt32Unchecked);
 
         var result = SsaRouteFactory
-            .CreateRoundtripRoute(SsaPreviewRouteProfiles.Create(SsaRoutePolicy.Debug))
+            .CreateRoundtripRoute(SsaRouteProfiles.Create(SsaRoutePolicy.Debug))
             .Run(source);
 
         Assert.Multiple(() =>
@@ -97,7 +98,7 @@ public sealed class SsaRoundtripRouteTests
         ]);
 
         var result = SsaRouteFactory
-            .CreateRoundtripRoute(SsaPreviewRouteProfiles.Create(SsaRoutePolicy.Debug))
+            .CreateRoundtripRoute(SsaRouteProfiles.Create(SsaRoutePolicy.Debug))
             .Run(source);
 
         Assert.Multiple(() =>
@@ -129,23 +130,21 @@ public sealed class SsaRoundtripRouteTests
         source.Intrinsic(AirIntrinsicIds.AddInt32Unchecked);
 
         var result = SsaRouteFactory
-            .CreateRoundtripRoute(SsaPreviewRouteProfiles.Create(SsaRoutePolicy.Debug))
+            .CreateRoundtripRoute(SsaRouteProfiles.Create(SsaRoutePolicy.Debug))
             .Run(source);
 
         var externalLoad = result.Program.Instructions.Single(static instruction =>
             instruction.UOpCode == UOpCode.Intrinsic &&
-            instruction.Operands.FirstOrDefault() as string == AirIntrinsicIds.LoadExternal);
+            BuiltinIntrinsicInstruction.Is(instruction, BuiltinIntrinsicSymbols.Core.LoadExternal));
+        var invocation = IntrinsicInstructionView.ReadOrThrow(externalLoad).Invocation;
 
         Assert.Multiple(() =>
         {
             Assert.That(result.UsedSsa, Is.True);
             Assert.That(result.FellBackToInput, Is.False);
-            Assert.That(externalLoad.Operands, Is.EqualTo(new object[]
-            {
-                AirIntrinsicIds.LoadExternal,
-                3,
-                typeof(int)
-            }));
+            Assert.That(invocation.Symbol, Is.EqualTo(BuiltinIntrinsicSymbols.Core.LoadExternal));
+            Assert.That(invocation.TypeArguments.Select(static x => x.RuntimeType), Is.EqualTo(new[] { typeof(int) }));
+            Assert.That(invocation.DataOperands, Is.EqualTo(new object?[] { 3, typeof(int) }));
         });
     }
 
@@ -158,8 +157,8 @@ public sealed class SsaRoundtripRouteTests
         source.Intrinsic(AirIntrinsicIds.AddInt32Unchecked);
 
         var result = new SsaRoundtripRoute(
-                SsaRouteFactory.CreateLowerer(SsaPreviewRouteProfiles.Create(SsaRoutePolicy.Debug)),
-                SsaRouteFactory.CreateEmitter(SsaPreviewRouteProfiles.Create(SsaRoutePolicy.Debug)))
+                SsaRouteFactory.CreateLowerer(SsaRouteProfiles.Create(SsaRoutePolicy.Debug)),
+                SsaRouteFactory.CreateEmitter(SsaRouteProfiles.Create(SsaRoutePolicy.Debug)))
             .Run(source, SsaRoutePolicy.Debug);
 
         Assert.Multiple(() =>

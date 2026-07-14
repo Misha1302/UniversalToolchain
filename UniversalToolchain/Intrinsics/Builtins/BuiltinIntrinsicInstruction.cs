@@ -1,12 +1,11 @@
+using BasicCore.Contracts;
 using BasicCore.Core;
-using BasicCore.Legacy;
+using IntermediateRepresentationAbstractions;
 
 namespace BasicCore.Builtins;
 
 public static class BuiltinIntrinsicInstruction
 {
-    private static readonly ILegacyIntrinsicDecoder _legacyDecoder = new LegacyIntrinsicDecoder();
-
     public static Instruction Create(IntrinsicSymbol symbol) => Create(symbol, [], []);
 
     public static Instruction Create(IntrinsicSymbol symbol, IReadOnlyList<object?> dataOperands) => Create(symbol, [], dataOperands);
@@ -25,13 +24,8 @@ public static class BuiltinIntrinsicInstruction
         IReadOnlyList<object?> dataOperands) =>
         IntrinsicInstructionFactory.Create(new IntrinsicInvocation(symbol, typeArguments, dataOperands));
 
-    public static bool TryGetInvocation(Instruction instruction, out IntrinsicInvocation invocation)
-    {
-        if (instruction.TryGetTypedIntrinsicInvocation(out invocation))
-            return true;
-
-        return _legacyDecoder.TryDecode(instruction, out invocation);
-    }
+    public static bool TryGetInvocation(Instruction instruction, out IntrinsicInvocation invocation) =>
+        instruction.TryGetTypedIntrinsicInvocation(out invocation);
 
     public static bool Is(Instruction instruction, IntrinsicSymbol symbol) => TryGetInvocation(instruction, out var invocation) && invocation.Symbol == symbol;
 }

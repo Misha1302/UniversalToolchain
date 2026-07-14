@@ -25,7 +25,7 @@ public sealed class SsaSparseConditionalConstantPropagationPass : IIrOptimizatio
     public SsaSparseConditionalConstantPropagationPass()
         : this(
             SemanticDescriptorSet.Empty,
-            new SsaPreviewInt32ConstantEvaluator())
+            new SsaInt32ConstantEvaluator())
     {
     }
 
@@ -263,7 +263,7 @@ public sealed class SsaSparseConditionalConstantPropagationPass : IIrOptimizatio
         result = default;
         return value.Kind == SccpValueKind.Constant &&
                value.Value is not null &&
-               value.Value.Type == SsaPreviewSemanticTypes.Bool &&
+               value.Value.Type == SsaSemanticTypes.Bool &&
                bool.TryParse(value.Value.CanonicalValue, out result);
     }
 

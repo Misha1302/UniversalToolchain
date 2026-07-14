@@ -52,10 +52,10 @@ public sealed class InterpreterBackendOptimizerIntrinsicSurfaceTests
             if (instruction.UOpCode != UOpCode.Intrinsic)
                 continue;
 
-            if (!IntrinsicInstructionNormalizer.TryNormalize(instruction, out var normalizedInstruction))
-                Assert.Fail($"Failed to normalize intrinsic instruction: {instruction}");
+            if (!IntrinsicInstructionView.TryRead(instruction, out var intrinsic))
+                Assert.Fail($"Failed to read typed intrinsic instruction: {instruction}");
 
-            yield return (string)normalizedInstruction.Operands[0];
+            yield return intrinsic.CapabilityId;
         }
     }
 }

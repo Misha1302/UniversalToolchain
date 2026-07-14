@@ -2,6 +2,22 @@ namespace UniversalToolchain.ModuleContracts;
 
 public sealed class AirVerifier : IAirVerifier
 {
+    private readonly AirStackDisciplineVerifier _stackVerifier;
+
+    public AirVerifier()
+        : this(CreateDefaultIntrinsicReader(), CreateDefaultIntrinsicProcessor())
+    {
+    }
+
+    public AirVerifier(
+        IInstructionIntrinsicReader intrinsicReader,
+        IIntrinsicTypeStackProcessor intrinsicTypeStackProcessor)
+    {
+        _stackVerifier = new AirStackDisciplineVerifier(
+            intrinsicReader.ArgNotNull(),
+            intrinsicTypeStackProcessor.ArgNotNull());
+    }
+
     public AirVerificationResult Verify(AirVerificationRequest request)
     {
         request = request.ArgNotNull();
@@ -13,8 +29,15 @@ public sealed class AirVerifier : IAirVerifier
             request.ContractTable,
             request.BackendSelection,
             severity));
-        diagnostics.AddRange(VerifyInstructionSchemas(request.Air, severity));
-        diagnostics.AddRange(VerifyBranchTargets(request.Air, severity));
+
+        var schemaDiagnostics = VerifyInstructionSchemas(request.Air, severity).ToArray();
+        var branchDiagnostics = VerifyBranchTargets(request.Air, severity).ToArray();
+        diagnostics.AddRange(schemaDiagnostics);
+        diagnostics.AddRange(branchDiagnostics);
+
+        if (schemaDiagnostics.Length == 0 && branchDiagnostics.Length == 0)
+            diagnostics.AddRange(_stackVerifier.Verify(request.Air, severity));
+
         diagnostics.AddRange(VerifyIntrinsicSupport(
             request.Air,
             request.ContractTable,
@@ -69,7 +92,7 @@ public sealed class AirVerifier : IAirVerifier
             var isValid = instruction.UOpCode switch
             {
                 UOpCode.Nop or UOpCode.Drop => instruction.Operands.Count == 0,
-                UOpCode.Push => instruction.Operands.Count == 1,
+                UOpCode.Push => instruction.Operands.Count == 1 && instruction.Operands[0] is not null,
                 UOpCode.Jmp or UOpCode.JmpIf or UOpCode.JmpIfNot or UOpCode.Label =>
                     instruction.Operands.Count == 1 && instruction.Operands[0] is Guid,
                 UOpCode.Annotate => true,
@@ -90,7 +113,7 @@ public sealed class AirVerifier : IAirVerifier
     {
         var labels = air.Instructions
             .Where(static x => x.UOpCode == UOpCode.Label && x.Operands.Count == 1 && x.Operands[0] is Guid)
-            .Select(static x => x.Operands[0].Get<Guid>())
+            .Select(static x => (Guid)x.Operands[0]!)
             .GroupBy(static x => x)
             .ToArray();
         var labelSet = labels.Select(static x => x.Key).ToHashSet();
@@ -208,7 +231,7 @@ public sealed class AirVerifier : IAirVerifier
         if (instruction.Operands.Count != 1 || instruction.Operands[0] is not IntrinsicInvocation invocation)
             return false;
 
-        intrinsicId = LegacyCapabilityNameEncoder.TryEncode(invocation.Symbol, invocation.TypeArguments, out var encodedName)
+        intrinsicId = IntrinsicCapabilityNameEncoder.TryEncode(invocation.Symbol, invocation.TypeArguments, out var encodedName)
             ? new IntrinsicSymbolId(encodedName)
             : new IntrinsicSymbolId(invocation.Symbol.ToString());
         return true;
@@ -228,4 +251,16 @@ public sealed class AirVerifier : IAirVerifier
             $"AIR instruction at index {instructionIndex} has {reason} for opcode '{instruction.UOpCode}'.",
             null,
             [new ToolchainDiagnosticHint("Emit AIR through the structured AIR builder or match the opcode operand contract before verification.")]);
+
+    private static IInstructionIntrinsicReader CreateDefaultIntrinsicReader() => new InstructionIntrinsicReader();
+
+    private static IIntrinsicTypeStackProcessor CreateDefaultIntrinsicProcessor()
+    {
+        var typeContext = new IntrinsicTypeResolutionContext();
+        var provider = new BasicCore.Builtins.CoreIntrinsicDescriptorProvider(
+            new MethodCallTypeSemanticsResolver());
+        var catalog = new IntrinsicCatalogBuilder().Build([provider]);
+        return new IntrinsicTypeStackProcessor(catalog, typeContext);
+    }
+
 }

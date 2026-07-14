@@ -6,6 +6,13 @@ namespace FunctionCallsModule;
 [AutoRegisterService]
 public sealed class FunctionCallsModuleImpl : IFrontendCoreModule
 {
+    private readonly CapabilityCatalog _capabilityCatalog;
+
+    public FunctionCallsModuleImpl(CapabilityCatalog capabilityCatalog)
+    {
+        _capabilityCatalog = capabilityCatalog.ArgNotNull();
+    }
+
     private static readonly IReadOnlyList<LexemeRegistration> _lexemeRegistrations =
     [
         new(",", "Comma")
@@ -20,11 +27,8 @@ public sealed class FunctionCallsModuleImpl : IFrontendCoreModule
 
     public void InitAstTranslator(IAstToBytecodeTranslator translator, IReadOnlyList<IFrontendCoreModule> selectedModules)
     {
-        selectedModules = selectedModules.ArgNotNull();
-
-        var capabilityCatalog = new SelectedCapabilityCatalogBuilder()
-            .Build(selectedModules.Select(static x => x.GetType()));
-
-        translator.Configuration.Visitors.Add(new FunctionCallsAstVisitor(capabilityCatalog));
+        translator = translator.ArgNotNull();
+        selectedModules.ArgNotNull();
+        translator.Configuration.Visitors.Add(new FunctionCallsAstVisitor(_capabilityCatalog));
     }
 }

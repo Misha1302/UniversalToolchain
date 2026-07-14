@@ -11,6 +11,8 @@ namespace IdentifierModule;
 [AutoRegisterService]
 public class IdentifierModuleImpl : IFrontendCoreModule, IModuleContractDescriptorProvider
 {
+    public IReadOnlyList<ContractNamespaceOwner> NamespaceOwners => [ContractNamespaceOwner.Wist];
+
     private static readonly IReadOnlyList<LexemeRegistration> _lexemeRegistrations =
     [
         new(

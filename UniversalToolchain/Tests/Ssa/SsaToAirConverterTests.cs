@@ -1,3 +1,5 @@
+using BasicCore.Builtins;
+using BasicCore.Core;
 using IntermediateRepresentationAbstractions;
 using System.Reflection;
 using UniversalToolchain.Air.Analysis;
@@ -133,7 +135,7 @@ public sealed class SsaToAirConverterTests
                         ConstI32("right", right, 3),
                         new SsaCall(
                             new SsaOperationId("call.add"),
-                            SsaPreviewCallables.AddInt32Unchecked,
+                            SsaCallables.AddInt32Unchecked,
                             [left.Id, right.Id],
                             [result])
                     ],
@@ -147,9 +149,11 @@ public sealed class SsaToAirConverterTests
         Assert.Multiple(() =>
         {
             Assert.That(air.Program.Instructions.Select(static x => x.UOpCode), Does.Contain(UOpCode.Intrinsic));
-            Assert.That(
-                air.Program.Instructions.Single(static x => x.UOpCode == UOpCode.Intrinsic).Operands,
-                Is.EqualTo(new object[] { AirIntrinsicIds.AddInt32Unchecked }));
+            var invocation = IntrinsicInstructionView.ReadOrThrow(
+                air.Program.Instructions.Single(static x => x.UOpCode == UOpCode.Intrinsic)).Invocation;
+            Assert.That(invocation.Symbol, Is.EqualTo(BuiltinIntrinsicSymbols.Arithmetic.Add));
+            Assert.That(invocation.TypeArguments.Select(static x => x.RuntimeType), Is.EqualTo(new[] { typeof(int) }));
+            Assert.That(invocation.DataOperands, Is.Empty);
             Assert.That(conversion.Facts.Contains(AirFacts.StructuralVerification), Is.True);
         });
     }
@@ -188,7 +192,12 @@ public sealed class SsaToAirConverterTests
         var conversion = PreviewEmitter().Run(artifact, new IrPipelineContext());
         var intrinsic = conversion.Artifact.As<AirArtifact>().Program.Instructions.Single(static x => x.UOpCode == UOpCode.Intrinsic);
 
-        Assert.That(intrinsic.Operands, Is.EqualTo(new object[] { AirIntrinsicIds.CallCSharp, method }));
+        var invocation = IntrinsicInstructionView.ReadOrThrow(intrinsic).Invocation;
+        Assert.Multiple(() =>
+        {
+            Assert.That(invocation.Symbol, Is.EqualTo(BuiltinIntrinsicSymbols.Core.CallCSharp));
+            Assert.That(invocation.DataOperands, Is.EqualTo(new object?[] { method }));
+        });
     }
 
     [Test]
@@ -223,7 +232,12 @@ public sealed class SsaToAirConverterTests
         var conversion = PreviewEmitter().Run(artifact, new IrPipelineContext());
         var intrinsic = conversion.Artifact.As<AirArtifact>().Program.Instructions.Single(static x => x.UOpCode == UOpCode.Intrinsic);
 
-        Assert.That(intrinsic.Operands, Is.EqualTo(new object[] { AirIntrinsicIds.CallCSharpConstructor, constructor }));
+        var invocation = IntrinsicInstructionView.ReadOrThrow(intrinsic).Invocation;
+        Assert.Multiple(() =>
+        {
+            Assert.That(invocation.Symbol, Is.EqualTo(BuiltinIntrinsicSymbols.Core.CallCSharpCtor));
+            Assert.That(invocation.DataOperands, Is.EqualTo(new object?[] { constructor }));
+        });
     }
 
     [Test]
@@ -231,9 +245,9 @@ public sealed class SsaToAirConverterTests
     {
         var artifact = CreatePreviewAddArtifact();
         var converter = new SsaToAirConverter(
-            new StructuralSsaVerifier(SsaCoreDescriptors.ConstantMaterialization, SsaPreviewSemanticDescriptors.ArithmeticInt32),
+            new StructuralSsaVerifier(SsaCoreDescriptors.ConstantMaterialization, SsaSemanticDescriptors.ArithmeticInt32),
             new StructuralAirVerifier(),
-            SsaPreviewAirIntrinsicLowerings.ArithmeticInt32,
+            SsaAirIntrinsicLowerings.ArithmeticInt32,
             AirIntrinsicDescriptorSet.Empty);
 
         var exception = Assert.Throws<SsaToAirEmissionException>(() =>
@@ -249,11 +263,11 @@ public sealed class SsaToAirConverterTests
         var badLowering = new SsaCallAirIntrinsicLoweringSet(
         [
             new SsaCallAirIntrinsicLowering(
-                SsaPreviewCallables.AddInt32Unchecked,
+                SsaCallables.AddInt32Unchecked,
                 AirIntrinsicIds.EqualInt32)
         ]);
         var converter = new SsaToAirConverter(
-            new StructuralSsaVerifier(SsaCoreDescriptors.ConstantMaterialization, SsaPreviewSemanticDescriptors.ArithmeticInt32),
+            new StructuralSsaVerifier(SsaCoreDescriptors.ConstantMaterialization, SsaSemanticDescriptors.ArithmeticInt32),
             new StructuralAirVerifier(),
             badLowering,
             AirCoreIntrinsicDescriptors.ArithmeticInt32);
@@ -270,11 +284,11 @@ public sealed class SsaToAirConverterTests
         var artifact = CreatePreviewAddArtifact();
         var targets = new SsaCallableLoweringTargetSet(
         [
-            SsaCallableLoweringTarget.AirIntrinsic(SsaPreviewCallables.AddInt32Unchecked, AirIntrinsicIds.AddInt32Unchecked),
-            SsaCallableLoweringTarget.AirIntrinsic(SsaPreviewCallables.AddInt32Unchecked, AirIntrinsicIds.SubtractInt32Unchecked)
+            SsaCallableLoweringTarget.AirIntrinsic(SsaCallables.AddInt32Unchecked, AirIntrinsicIds.AddInt32Unchecked),
+            SsaCallableLoweringTarget.AirIntrinsic(SsaCallables.AddInt32Unchecked, AirIntrinsicIds.SubtractInt32Unchecked)
         ]);
         var converter = new SsaToAirConverter(
-            new StructuralSsaVerifier(SsaCoreDescriptors.ConstantMaterialization, SsaPreviewSemanticDescriptors.ArithmeticInt32),
+            new StructuralSsaVerifier(SsaCoreDescriptors.ConstantMaterialization, SsaSemanticDescriptors.ArithmeticInt32),
             new StructuralAirVerifier(),
             targets,
             AirCoreIntrinsicDescriptors.ArithmeticInt32);
@@ -318,7 +332,7 @@ public sealed class SsaToAirConverterTests
             returnType: SsaTypes.Int32),
             new SsaManagedCallableBinding(callable, descriptor, method));
         var converter = new SsaToAirConverter(
-            new StructuralSsaVerifier(SsaCoreDescriptors.ConstantMaterialization, SsaPreviewSemanticDescriptors.ArithmeticInt32),
+            new StructuralSsaVerifier(SsaCoreDescriptors.ConstantMaterialization, SsaSemanticDescriptors.ArithmeticInt32),
             new StructuralAirVerifier(),
             new SsaCallableLoweringTargetSet(
             [
@@ -329,7 +343,13 @@ public sealed class SsaToAirConverterTests
         var conversion = converter.Run(artifact, new IrPipelineContext());
         var intrinsic = conversion.Artifact.As<AirArtifact>().Program.Instructions.Single(static x => x.UOpCode == UOpCode.Intrinsic);
 
-        Assert.That(intrinsic.Operands, Is.EqualTo(new object[] { AirIntrinsicIds.AddInt32Unchecked }));
+        var invocation = IntrinsicInstructionView.ReadOrThrow(intrinsic).Invocation;
+        Assert.Multiple(() =>
+        {
+            Assert.That(invocation.Symbol, Is.EqualTo(BuiltinIntrinsicSymbols.Arithmetic.Add));
+            Assert.That(invocation.TypeArguments.Select(static x => x.RuntimeType), Is.EqualTo(new[] { typeof(int) }));
+            Assert.That(invocation.DataOperands, Is.Empty);
+        });
     }
 
     [Test]
@@ -387,7 +407,7 @@ public sealed class SsaToAirConverterTests
             SsaCallableLoweringTargetSet.Empty,
             AirCoreIntrinsicDescriptors.ArithmeticInt32);
         var converter = new SsaToAirConverter(
-            new StructuralSsaVerifier(SsaCoreDescriptors.ConstantMaterialization, SsaPreviewSemanticDescriptors.ArithmeticInt32),
+            new StructuralSsaVerifier(SsaCoreDescriptors.ConstantMaterialization, SsaSemanticDescriptors.ArithmeticInt32),
             new StructuralAirVerifier(),
             planner);
 
@@ -454,7 +474,7 @@ public sealed class SsaToAirConverterTests
                         ConstI32("input", input, 2),
                         new SsaCall(
                             new SsaOperationId("call.add"),
-                            SsaPreviewCallables.AddInt32Unchecked,
+                            SsaCallables.AddInt32Unchecked,
                             [input.Id, input.Id],
                             [result])
                     ],
@@ -589,7 +609,7 @@ public sealed class SsaToAirConverterTests
                         ConstI32("right", right, 3),
                         new SsaCall(
                             new SsaOperationId("call.add"),
-                            SsaPreviewCallables.AddInt32Unchecked,
+                            SsaCallables.AddInt32Unchecked,
                             [left.Id, right.Id],
                             [result])
                     ],
@@ -608,10 +628,10 @@ public sealed class SsaToAirConverterTests
                 : new SsaManagedCallableBindingSet(managedCallableBindings));
 
     private static AirToSsaConverter PreviewLowerer() =>
-        SsaRouteFactory.CreateLowerer(SsaPreviewRouteProfiles.Create(SsaRoutePolicy.Require));
+        SsaRouteFactory.CreateLowerer(SsaRouteProfiles.Create(SsaRoutePolicy.Require));
 
     private static SsaToAirConverter PreviewEmitter() =>
-        SsaRouteFactory.CreateEmitter(SsaPreviewRouteProfiles.Create(SsaRoutePolicy.Require));
+        SsaRouteFactory.CreateEmitter(SsaRouteProfiles.Create(SsaRoutePolicy.Require));
 
     private static int AddOne(int value) => value + 1;
 

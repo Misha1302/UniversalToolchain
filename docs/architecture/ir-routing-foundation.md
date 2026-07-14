@@ -42,7 +42,7 @@ SSA-specific code lives outside the generic IR layer:
 - `UniversalToolchain.Ssa.Optimization` defines a verifier-gated SSA optimizer
   pipeline plus the first local constant folding pass over pure core int32
   operations.
-- `UniversalToolchain.Ssa.Optimization` also exposes `SsaPreviewOptimizerModule`
+- `UniversalToolchain.Ssa.Optimization` also exposes `SsaOptimizerModule`
   as a manifest-driven optimizer alias `Ssa`. The adapter runs the current
   verifier-gated `AIR -> SSA -> SSA optimization -> AIR` route when a dialect
   explicitly enables it.
@@ -59,9 +59,9 @@ Source/Text -> Lexer/Parser -> AST -> Bytecode -> AIR -> AIR optimizers -> Backe
 `AirArtifact` so future pipeline planners can treat AIR as a normal IR artifact
 without replacing the current semantic boundary.
 
-`BasicCore` uses an internal AIR-only executor that adapts legacy
-`IIRProcessingModule` optimizers through the generic stage contract. This is a
-compatibility bridge, not a second runtime.
+`BasicCore` uses an internal AIR-only executor that invokes the canonical
+`IAirOptimizer` contract through the generic stage pipeline. This is the normal
+AIR runtime route, not a second compatibility runtime.
 
 SSA execution is available only as an explicit preview optimizer selected
 through the normal dialect optimizer directive path:

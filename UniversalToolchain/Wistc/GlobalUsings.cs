@@ -6,7 +6,6 @@ global using BasicCore.Contracts;
 global using BasicCore.Core;
 global using BasicLexer;
 global using BasicParser;
-global using CommandLine;
 global using ConditionsModule;
 global using CSharpInteropModule;
 global using EqualityModule;

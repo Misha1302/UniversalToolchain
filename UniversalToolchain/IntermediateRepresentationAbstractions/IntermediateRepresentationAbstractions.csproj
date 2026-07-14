@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <TargetFramework>net10.0</TargetFramework>
@@ -9,6 +9,21 @@
 
     <ItemGroup>
         <ProjectReference Include="..\UniversalToolchain.Ir.Abstractions\UniversalToolchain.Ir.Abstractions.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Include="..\Intrinsics\Contracts\IntrinsicSymbol.cs" Link="Intrinsics\Contracts\IntrinsicSymbol.cs"/>
+        <Compile Include="..\Intrinsics\Contracts\IntrinsicTypeArgument.cs" Link="Intrinsics\Contracts\IntrinsicTypeArgument.cs"/>
+        <Compile Include="..\Intrinsics\Contracts\IntrinsicInvocation.cs" Link="Intrinsics\Contracts\IntrinsicInvocation.cs"/>
+        <Compile Include="..\Intrinsics\Builtins\BuiltinIntrinsicSymbols.cs" Link="Intrinsics\Builtins\BuiltinIntrinsicSymbols.cs"/>
+        <Compile Include="..\Intrinsics\Builtins\BuiltinIntrinsicInstruction.cs" Link="Intrinsics\Builtins\BuiltinIntrinsicInstruction.cs"/>
+        <Compile Include="..\Intrinsics\Capabilities\IntrinsicCapabilityNameEncoder.cs" Link="Intrinsics\Capabilities\IntrinsicCapabilityNameEncoder.cs"/>
+        <Compile Include="..\Intrinsics\Capabilities\IntrinsicCapabilityIds.cs" Link="Intrinsics\Capabilities\IntrinsicCapabilityIds.cs"/>
+        <Compile Include="..\Intrinsics\Capabilities\IntrinsicTypeTokenMap.cs" Link="Intrinsics\Capabilities\IntrinsicTypeTokenMap.cs"/>
+        <Compile Include="..\Intrinsics\Core\InstructionIntrinsicExtensions.cs" Link="Intrinsics\Core\InstructionIntrinsicExtensions.cs"/>
+        <Compile Include="..\Intrinsics\Core\IntrinsicInstructionFactory.cs" Link="Intrinsics\Core\IntrinsicInstructionFactory.cs"/>
+        <Compile Include="..\Intrinsics\Core\IntrinsicInvocationFactory.cs" Link="Intrinsics\Core\IntrinsicInvocationFactory.cs"/>
+        <Compile Include="..\Intrinsics\Core\IntrinsicInstructionView.cs" Link="Intrinsics\Core\IntrinsicInstructionView.cs"/>
     </ItemGroup>
 
 </Project>

@@ -1,4 +1,5 @@
 using System.Reflection;
+using IntermediateRepresentationAbstractions;
 
 namespace BasicCore.Core.Rules;
 
@@ -25,11 +26,11 @@ public sealed class CSharpCallStackRule : IIntrinsicStackRule
         MethodCallResolution resolution;
         if (invocation.DataOperands[0] is MethodInfo methodInfo)
             resolution = _resolver.ResolveForStack(methodInfo, stack);
-        else if (invocation.DataOperands[0] is CSharpCallDescriptor descriptor)
+        else if (invocation.DataOperands[0] is IManagedCallDescriptor descriptor)
             resolution = _resolver.ResolveForStack(descriptor, stack);
         else
             resolution = Thrower.InvalidOpEx<MethodCallResolution>(
-                $"Intrinsic '{invocation.Symbol}' requires DataOperands[0] to be MethodInfo or CSharpCallDescriptor.");
+                $"Intrinsic '{invocation.Symbol}' requires DataOperands[0] to be MethodInfo or IManagedCallDescriptor.");
 
         Thrower.AssertAlways(
             stack.Count >= resolution.ConsumedTypes.Count,

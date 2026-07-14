@@ -46,32 +46,23 @@ Clarify stage contracts and make extension points explicit rather than conventio
 
 ### Problem
 
-Intrinsic generation and consumption still need stronger central contracts to prevent invalid or backend-specific intrinsic usage from leaking across layers.
+Intrinsic generation and consumption need one canonical representation so backend-specific details cannot leak across layers.
 
-### Current risk
+### Current control
 
-String-based or backend-specific intrinsics can bypass semantic contracts and create interpreter/compiler parity bugs.
-
-### Desired direction
-
-Move fully toward typed intrinsic payloads and explicit backend capability contracts.
+Production AIR uses structured `IntrinsicInvocation` payloads. Stable capability identifiers are metadata produced by the encoder, not instruction operands that require decoding.
 
 ### Exit criteria
 
-- Production emitters no longer generate legacy string-based intrinsic instructions.
-- `InstructionIntrinsicReader` does not need a legacy fallback.
-- Architecture tests reject backend-specific intrinsic leakage into unsupported backends.
+- Production emitters generate only `IntrinsicInvocation` payloads.
+- Architecture tests reject raw string intrinsic payloads.
+- Backend capability identifiers remain metadata and are never decoded from AIR operands.
 
-## Legacy compatibility burn-down
+## Explicit compatibility boundary
 
-| Legacy path | Current owner | Why it exists | Replacement | Removal gate |
-|---|---|---|---|---|
-| `InstructionIntrinsicReader` legacy decoder fallback | `BasicCore` intrinsic pipeline | Reads older string-shaped intrinsic payloads | Typed intrinsic payload/descriptor contract | All production emitters produce typed payloads and compatibility fixtures pass without fallback |
-| `LegacyAirOptimizerStage` | AIR optimizer pipeline | Adapts older AIR optimizers into the current pipeline | Native `IIrStage` optimizers with fact contracts | Every shipped optimizer exposes required/preserved/invalidated facts |
-| `ModuleContractEnforcementPolicy.LegacyCompatible` | Module contract migration layer | Allows modules without full descriptors during migration | Strict module contract descriptors | All shipped modules have descriptors and strict tests cover examples |
-| Wist facade compatibility APIs | `UniversalToolchain.Wist` / `UniversalToolchain.Dialects.Wist.Facade` | Keeps first-contact Wist users stable | Thin wrappers over neutral runtime host and compiled artifact sessions | Public docs recommend neutral/custom-dialect path for non-Wist DSLs and wrappers stay delegation-only |
+`ModuleContractEnforcementPolicy.AllowUndeclared` is retained only for the Wist observation profile while shipped modules finish declaring complete bytecode and AIR contracts. It emits diagnostics instead of silently accepting unknown operations. The removal gate is full strict-profile coverage for every shipped module and example.
 
-New production legacy fallback requires an owner, replacement and removal gate in this table.
+No other production compatibility adapter or legacy payload decoder is supported.
 
 ## Compiler/interpreter parity
 
@@ -211,7 +202,6 @@ bytecode, AIR, SSA and backend artifact stages are not complete yet.
 |---|---|---|---|---|
 | Physical NuGet closure remains broad | `UniversalToolchain.Wist.csproj` | Package check rejects test/benchmark assemblies and growth beyond 64 DLLs | Split optional SSA/tooling and reduce the default runtime closure without breaking an external consumer | Before stable 1.0 |
 | No in-process execution timeout or memory quota | Host integration/security boundary | Restricted composition plus source/parameter preflight limits | Documented out-of-process runner or explicit decision that only trusted operators are supported | Before accepting arbitrary user-authored rules |
-| Compatibility aliases and `CompileFunc` remain | `UniversalToolchain.Wist` facade | APIs are `[Obsolete]`; docs and CI use `CreateRestrictedArithmetic` + `Compile<TDelegate>` | No first-party usage; removal in the next intentional breaking preview/stable boundary | Before stable 1.0 |
 | Serial solution build is slow | Repository build contract | `build.sh`/`build.ps1`, CI uses canonical entrypoint | Measured clean build time and either fixed project graph or accepted documented threshold | Re-evaluate after SDK feature-band upgrade |
 
 Owners must update this table with evidence, not only a status adjective. Package boundary work is complete only when the external-consumer smoke passes with the smaller closure; resource isolation is complete only when limits are enforced by a separate execution boundary or the product scope excludes untrusted authors.

@@ -32,25 +32,75 @@ public sealed class ContractNamespaceAndAliasTests
         Assert.That(diagnostics[0].Code, Is.EqualTo(ModuleContractDiagnosticCodes.InvalidNamespaceOwnership));
     }
 
+
     [Test]
-    public void Resolve_WhenLegacyAliasExists_ReturnsReplacementAndMigrationDiagnostic()
+    public void ValidateOwnership_WithPackageDefinedReservation_DoesNotRequireGenericAssemblyChange()
     {
-        var replacement = CreateId("wist.variables", "write-target-type-inference");
-        var catalog = new ContractAliasCatalog(
-        [
-            new CompatibilityAliasRecord(
-                "ExpectingWriteTypeInference",
-                replacement,
-                ModuleContractSchemaVersions.Current,
-                ModuleContractSchemaVersions.Current)
-        ]);
+        var owner = ContractNamespaceOwner.Reserved("vendor-optimizer", "vendor.optimizer");
+        var id = CreateId("vendor.optimizer.rules", "fold");
 
-        var result = catalog.Resolve("ExpectingWriteTypeInference");
+        var diagnostics = ContractNamespacePolicy.ValidateOwnership(id, owner, [owner]);
 
-        Assert.That(result.IsMatch, Is.True);
-        Assert.That(result.Replacement, Is.EqualTo(replacement));
-        Assert.That(result.Diagnostics, Has.Count.EqualTo(1));
-        Assert.That(result.Diagnostics[0].Code, Is.EqualTo(ModuleContractDiagnosticCodes.DeprecatedAlias));
+        Assert.That(diagnostics, Is.Empty);
+    }
+
+    [Test]
+    public void ValidateOwnership_ExternalOwnerCannotUsePackageDefinedReservation()
+    {
+        var reservation = ContractNamespaceOwner.Reserved("vendor", "vendor.contracts");
+        var id = CreateId("vendor.contracts.rules", "fold");
+
+        var diagnostics = ContractNamespacePolicy.ValidateOwnership(
+            id,
+            ContractNamespaceOwner.External("extension"),
+            [reservation]);
+
+        Assert.That(diagnostics, Has.Count.EqualTo(1));
+        Assert.That(diagnostics[0].Code, Is.EqualTo(ModuleContractDiagnosticCodes.InvalidNamespaceOwnership));
+    }
+
+    [Test]
+    public void ValidateOwnership_WhenIdentifierEqualsReservedRoot_AcceptsRoot()
+    {
+        var diagnostics = ContractNamespacePolicy.ValidateOwnership(
+            "wist",
+            ContractNamespaceOwner.Wist);
+
+        Assert.That(diagnostics, Is.Empty);
+    }
+
+    [Test]
+    public void Build_WithDeclaredNamespaceOwner_ValidatesOwnedFacetIdentifiers()
+    {
+        var module = new ModuleId("wist.example");
+        var table = new ModuleContractTableBuilder()
+            .AddFacet(new BackendCapabilityFacet(
+                module,
+                [new BackendCapabilityContract(new BackendCapabilityId("core.backend.invalid-owner"), [])]))
+            .AddNamespaceOwners(module, [ContractNamespaceOwner.Wist])
+            .Build();
+
+        Assert.That(
+            table.Diagnostics.Select(static diagnostic => diagnostic.Code),
+            Does.Contain(ModuleContractDiagnosticCodes.InvalidNamespaceOwnership));
+    }
+
+    [Test]
+    public void Build_WithMultipleDeclaredNamespaces_AcceptsBackendModuleAndCapabilityPrefixes()
+    {
+        var module = new ModuleId("backend.example");
+        var packageNamespace = ContractNamespaceOwner.Reserved("example-backend", "example");
+        var table = new ModuleContractTableBuilder()
+            .AddFacet(new BackendCapabilityFacet(
+                module,
+                [new BackendCapabilityContract(new BackendCapabilityId("example.backend.native"), [])]))
+            .AddNamespaceOwners(module, [ContractNamespaceOwner.Backend, packageNamespace])
+            .Build();
+
+        Assert.That(
+            table.Diagnostics.Where(static diagnostic =>
+                diagnostic.Code == ModuleContractDiagnosticCodes.InvalidNamespaceOwnership),
+            Is.Empty);
     }
 
     [Test]

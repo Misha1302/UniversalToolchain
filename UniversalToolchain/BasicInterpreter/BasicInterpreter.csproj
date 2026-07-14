@@ -8,10 +8,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\BasicCodeTranslator\BasicCodeTranslator.csproj"/>
-        <ProjectReference Include="..\BytecodeDynamicMethodsCompiler\BytecodeDynamicMethodsCompiler.csproj"/>
-        <ProjectReference Include="..\UniversalIntermediateRepresentation\UniversalIntermediateRepresentation.csproj"/>
+        <ProjectReference Include="..\BasicCore\BasicCore.csproj"/>
         <ProjectReference Include="..\CommonExceptions\CommonExceptions.csproj"/>
+        <ProjectReference Include="..\DotnetHelper\DotnetHelper.csproj"/>
+        <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj"/>
+        <ProjectReference Include="..\IntermediateRepresentationAbstractions\IntermediateRepresentationAbstractions.csproj"/>
+        <ProjectReference Include="..\ObjectExtensions\ObjectExtensions.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.ModuleContracts\UniversalToolchain.ModuleContracts.csproj"/>
     </ItemGroup>
 

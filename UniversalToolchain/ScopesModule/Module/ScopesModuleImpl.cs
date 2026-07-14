@@ -11,6 +11,8 @@ namespace ScopesModule.Module;
 [AutoRegisterService]
 public class ScopesModuleImpl : IFrontendCoreModule, IModuleContractDescriptorProvider
 {
+    public IReadOnlyList<ContractNamespaceOwner> NamespaceOwners => [ContractNamespaceOwner.Wist];
+
     private static readonly IReadOnlyList<LexemeRegistration> _lexemeRegistrations =
     [
         new(@"\(", "OpenPar"),

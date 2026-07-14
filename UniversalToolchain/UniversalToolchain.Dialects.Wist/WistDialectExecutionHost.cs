@@ -47,10 +47,6 @@ public sealed class WistDialectExecutionHost : IDisposable
         return _runtimeHost.GetBackendSpecificArtifactCompiler<TCompilationOutput>(backend);
     }
 
-    [Obsolete("Use backend-neutral GetArtifactCompiler(string), Compile(...), or Run(...) unless typed backend internals are the purpose of the caller.")]
-    public IArtifactCompiler<TCompilationOutput> GetArtifactCompiler<TCompilationOutput>(string backend)
-        => GetBackendSpecificArtifactCompiler<TCompilationOutput>(backend);
-
     public ICompiledArtifact Compile(
         string code,
         OrderedDictionary<string, Type>? declaredBindings,

@@ -4,11 +4,12 @@ using ExceptionsManager;
 
 namespace UniversalToolchain.Dialects.Integration;
 
-public sealed class DefaultRuntimeAssemblyLoadStrategy : IRuntimeAssemblyLoadStrategy
+public sealed class DefaultRuntimeAssemblyLoadStrategy : IRuntimeAssemblyLoadStrategy, IDisposable
 {
     private readonly object _resolvingHandlerLock = new();
     private bool _resolvingHandlerRegistered;
     private readonly IRuntimeAssemblyLocator _locator;
+    private bool _disposed;
 
     public DefaultRuntimeAssemblyLoadStrategy(IRuntimeAssemblyLocator locator)
     {
@@ -19,22 +20,59 @@ public sealed class DefaultRuntimeAssemblyLoadStrategy : IRuntimeAssemblyLoadStr
 
     public Assembly LoadAssembly(string assemblySimpleName)
     {
-        if (string.IsNullOrWhiteSpace(assemblySimpleName))
-            Thrower.Argument(nameof(assemblySimpleName), "Assembly simple name must not be empty.");
+        lock (_resolvingHandlerLock)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
 
-        return TryGetAlreadyLoadedAssembly(assemblySimpleName)
-               ?? TryLoadBySimpleName(assemblySimpleName)
-               ?? LoadAssemblyFromResolvedPath(assemblySimpleName);
+            if (string.IsNullOrWhiteSpace(assemblySimpleName))
+                Thrower.Argument(nameof(assemblySimpleName), "Assembly simple name must not be empty.");
+
+            var alreadyLoaded = TryGetAlreadyLoadedAssembly(assemblySimpleName);
+            if (alreadyLoaded != null)
+                return alreadyLoaded;
+
+            var loadedByName = TryLoadBySimpleName(assemblySimpleName);
+            if (loadedByName != null)
+                return loadedByName;
+
+            // Resolve the root path exactly once before installing the process-wide
+            // dependency callback. The callback is needed while LoadFromAssemblyPath
+            // loads transitive dependencies, but using it for the root probe would
+            // duplicate locator calls and blur root/dependency ownership.
+            var absolutePath = ResolveRequiredAssemblyPath(assemblySimpleName);
+            EnsureResolvingHandlerRegistered();
+            return AssemblyLoadContext.Default.LoadFromAssemblyPath(absolutePath);
+        }
     }
 
+    public void Dispose()
+    {
+        lock (_resolvingHandlerLock)
+        {
+            if (_disposed)
+                return;
+
+            if (_resolvingHandlerRegistered)
+            {
+                AssemblyLoadContext.Default.Resolving -= ResolveFromConfiguredRuntimeRoots;
+                _resolvingHandlerRegistered = false;
+            }
+
+            _disposed = true;
+        }
+    }
 
     private void EnsureResolvingHandlerRegistered()
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+
         if (_resolvingHandlerRegistered)
             return;
 
         lock (_resolvingHandlerLock)
         {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+
             if (_resolvingHandlerRegistered)
                 return;
 
@@ -45,6 +83,9 @@ public sealed class DefaultRuntimeAssemblyLoadStrategy : IRuntimeAssemblyLoadStr
 
     private Assembly? ResolveFromConfiguredRuntimeRoots(AssemblyLoadContext context, AssemblyName assemblyName)
     {
+        if (Volatile.Read(ref _disposed))
+            return null;
+
         var simpleName = assemblyName.Name;
         if (string.IsNullOrWhiteSpace(simpleName))
             return null;
@@ -100,7 +141,7 @@ public sealed class DefaultRuntimeAssemblyLoadStrategy : IRuntimeAssemblyLoadStr
         }
     }
 
-    private Assembly LoadAssemblyFromResolvedPath(string assemblySimpleName)
+    private string ResolveRequiredAssemblyPath(string assemblySimpleName)
     {
         if (!_locator.TryResolveAssemblyPath(assemblySimpleName, out var absolutePath) || string.IsNullOrWhiteSpace(absolutePath))
             Thrower.FileNotFound($"Assembly '{assemblySimpleName}' was not found in configured runtime assembly locator search roots.");
@@ -108,8 +149,6 @@ public sealed class DefaultRuntimeAssemblyLoadStrategy : IRuntimeAssemblyLoadStr
         if (!Path.IsPathRooted(absolutePath))
             Thrower.Argument(nameof(absolutePath), $"Assembly locator returned non-absolute path '{absolutePath}'.");
 
-        EnsureResolvingHandlerRegistered();
-
-        return AssemblyLoadContext.Default.LoadFromAssemblyPath(absolutePath);
+        return absolutePath;
     }
 }

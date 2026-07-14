@@ -71,7 +71,7 @@ public sealed class AstOwnershipRegistry
             ToolchainDiagnosticSeverity.Warning,
             $"AST node '{nodeKind}' has no declared lowering owner.",
             null,
-            [new ToolchainDiagnosticHint("Declare an AST ownership facet or keep the module at LegacyImplicit compatibility.")])
+            [new ToolchainDiagnosticHint("Declare an AST ownership facet or keep the module explicitly Undeclared.")])
     ];
 
     private static IReadOnlyList<ToolchainDiagnostic> CreateMultipleOwnersDiagnostic(

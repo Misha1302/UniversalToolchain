@@ -37,7 +37,7 @@ public class RuntimeOptimizerDescriptorContractsTests
         Assert.Throws<ArgumentException>(() => { _ = new RuntimeOptimizerDescriptor(" ", typeof(TestOptimizerModule)); });
     }
 
-    private sealed class TestOptimizerModule : IIRProcessingModule;
+    private sealed class TestOptimizerModule : IAirOptimizer;
 
     private sealed class InvalidOptimizerType;
 }

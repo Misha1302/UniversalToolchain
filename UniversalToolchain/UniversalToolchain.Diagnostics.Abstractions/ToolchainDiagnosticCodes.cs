@@ -13,4 +13,5 @@ public static class ToolchainDiagnosticCodes
     public const string TypeMismatch = "UTC-TYPE-001";
 
     public const string CapabilityProviderInvalid = "UTC-CAP-001";
+    public const string DuplicateLanguageFeature = "UTC-CAP-002";
 }

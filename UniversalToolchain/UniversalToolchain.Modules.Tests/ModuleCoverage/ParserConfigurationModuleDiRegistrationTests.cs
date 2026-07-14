@@ -49,6 +49,35 @@ public class ParserConfigurationModuleDiRegistrationTests
     }
 
     [Test]
+    public void ParserOrderConfiguration_WithStaleEntry_DoesNotMutateLiveParser()
+    {
+        using var services = CreateServiceProvider(ActionType.DumpConfiguration, _testConfigPath);
+        var parser = CreateConfiguredParser(services);
+        var before = parser.Configuration.NodeCreators
+            .Select(static level => (level.Key, Creators: level.Value.ToArray()))
+            .ToArray();
+
+        File.WriteAllText(_testConfigPath, "999|Missing.Creator|0|Missing");
+        var module = new ParserConfigurationModuleImpl(ActionType.ReadConfiguration, _testConfigPath);
+
+        Assert.Throws<InvalidOperationException>(() => module.InitParser(parser));
+
+        var after = parser.Configuration.NodeCreators
+            .Select(static level => (level.Key, Creators: level.Value.ToArray()))
+            .ToArray();
+
+        Assert.That(after, Has.Length.EqualTo(before.Length));
+        for (var index = 0; index < before.Length; index++)
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(after[index].Key, Is.EqualTo(before[index].Key));
+                Assert.That(after[index].Creators, Is.EqualTo(before[index].Creators));
+            });
+        }
+    }
+
+    [Test]
     public void ParserOrderConfiguration_WithActionTypeRead_AppliesConfiguredCreatorPriorities()
     {
         const string configuredAdditionPriority = "999.00|ArithmeticModule.Creators.AdditionOperationNodeCreator|0|Addition";

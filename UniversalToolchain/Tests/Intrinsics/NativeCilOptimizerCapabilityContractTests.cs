@@ -17,7 +17,7 @@ public sealed class NativeCilOptimizerCapabilityContractTests
         ]);
         var compiler = new UnsupportedNativeLoadCompiler();
 
-        var result = optimizer.ProcessIr(ir, compiler);
+        var result = optimizer.Optimize(ir);
 
         Assert.That(result, Is.SameAs(ir));
         Assert.That(result.Instructions, Is.EqualTo(ir.Instructions));
@@ -33,7 +33,7 @@ public sealed class NativeCilOptimizerCapabilityContractTests
         ]);
         var compiler = new UnsupportedNativeLoadCompiler();
 
-        var exception = Assert.Throws<NullReferenceException>(() => optimizer.ProcessIr(ir, compiler));
+        var exception = Assert.Throws<NullReferenceException>(() => optimizer.Optimize(ir));
 
         Assert.That(exception!.Message, Does.Contain("capability context initialization"));
     }

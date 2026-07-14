@@ -19,23 +19,16 @@ public sealed class SsaAndLegacyDocumentationGuardrailTests
     }
 
     [Test]
-    public void LegacyCompatibilityBurnDown_DocumentsKnownProductionLegacyPaths()
+    public void CompatibilityBoundary_DocumentsOnlyExplicitUndeclaredModuleObservation()
     {
         var debt = File.ReadAllText(FindRepositoryFile("docs", "technical-debt.md"));
-        var knownPaths = new[]
-        {
-            "`InstructionIntrinsicReader` legacy decoder fallback",
-            "LegacyAirOptimizerStage",
-            "ModuleContractEnforcementPolicy.LegacyCompatible",
-            "Wist facade compatibility APIs"
-        };
 
         Assert.Multiple(() =>
         {
-            foreach (var path in knownPaths)
-                Assert.That(debt, Does.Contain(path));
-
-            Assert.That(debt, Does.Contain("New production legacy fallback requires an owner, replacement and removal gate"));
+            Assert.That(debt, Does.Contain("ModuleContractEnforcementPolicy.AllowUndeclared"));
+            Assert.That(debt, Does.Not.Contain("LegacyAirOptimizerStage"));
+            Assert.That(debt, Does.Not.Contain("legacy decoder fallback"));
+            Assert.That(debt, Does.Not.Contain("CompileFunc"));
         });
     }
 

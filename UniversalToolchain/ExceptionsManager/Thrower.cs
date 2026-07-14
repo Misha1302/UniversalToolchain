@@ -81,6 +81,10 @@ public static class Thrower
     }
 
     [DoesNotReturn]
+    public static T Argument<T>(string paramName, string message) =>
+        throw new ArgumentException(FormatMessage(message, $"Invalid value for argument '{paramName}'."), paramName);
+
+    [DoesNotReturn]
     public static T ArgumentOutOfRange<T>(string paramName = "", string message = "") => throw new ArgumentOutOfRangeException(paramName, FormatMessage(message, "Argument value is out of range."));
 
     [DoesNotReturn]

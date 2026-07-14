@@ -1,3 +1,5 @@
+using BasicCore.Capabilities;
+using BasicCore.Builtins;
 namespace AbstractIrExtensions;
 
 public static class GenericAbstractIrExtensions
@@ -16,19 +18,19 @@ public static class GenericAbstractIrExtensions
     public static void CallCSharp<TIdentifier>(this IGenericAbstractIR<TIdentifier> air, MethodInfo methodBody)
     {
         methodBody = methodBody.ArgNotNull();
-        air.Intrinsic("call C#", methodBody);
+        air.Intrinsic(IntrinsicCapabilityIds.CallCSharp, methodBody);
     }
 
     public static void CallCSharp<TIdentifier>(this IGenericAbstractIR<TIdentifier> air, CSharpCallDescriptor descriptor)
     {
         descriptor = descriptor.ArgNotNull();
-        air.Intrinsic("call C#", descriptor);
+        air.Intrinsic(IntrinsicCapabilityIds.CallCSharp, descriptor);
     }
 
     public static void CallCSharp<TIdentifier>(this IGenericAbstractIR<TIdentifier> air, ConstructorInfo ctor)
     {
         ctor = ctor.ArgNotNull();
-        air.Intrinsic("call C# ctor", ctor);
+        air.Intrinsic(IntrinsicCapabilityIds.CallCSharpConstructor, ctor);
     }
 
     public static void Rotate<TIdentifier>(this IGenericAbstractIR<TIdentifier> air, params Type[] types)

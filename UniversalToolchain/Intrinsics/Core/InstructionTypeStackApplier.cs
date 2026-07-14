@@ -24,7 +24,7 @@ public static class InstructionTypeStackApplier
                     break;
 
                 case UOpCode.Push:
-                    stack.Add(instruction.Operands[0].GetType());
+                    stack.Add(AirPushOperand.GetDeclaredType(instruction.Operands[0]));
                     break;
 
                 case UOpCode.Drop:

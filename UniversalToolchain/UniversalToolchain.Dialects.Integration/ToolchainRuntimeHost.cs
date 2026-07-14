@@ -2,6 +2,7 @@ using BasicCore.Compilation;
 using BasicCore.Contracts;
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
+using UniversalToolchain.Dialects.Abstractions;
 
 namespace UniversalToolchain.Dialects.Integration;
 
@@ -13,23 +14,44 @@ public sealed class ToolchainRuntimeHost : IDisposable
     private readonly IToolchainRuntimeConfiguration _configuration;
     private readonly IToolchainArtifactExecutor _executor;
     private readonly IServiceProvider _serviceProvider;
+    private readonly IReadOnlyDictionary<DialectBackendId, ToolchainBackendRuntimeRegistration> _runtimeRegistrations;
+    private readonly ServiceProviderOwnership _serviceProviderOwnership;
+    private bool _disposed;
 
     public ToolchainRuntimeHost(
         IServiceProvider serviceProvider,
         IToolchainRuntimeConfiguration configuration,
         IToolchainArtifactExecutor? executor = null)
+        : this(serviceProvider, configuration, ServiceProviderOwnership.Borrowed, executor)
+    {
+    }
+
+    public ToolchainRuntimeHost(
+        IServiceProvider serviceProvider,
+        IToolchainRuntimeConfiguration configuration,
+        ServiceProviderOwnership serviceProviderOwnership,
+        IToolchainArtifactExecutor? executor = null)
     {
         _serviceProvider = serviceProvider.ArgNotNull();
         _configuration = configuration.ArgNotNull();
+        _serviceProviderOwnership = serviceProviderOwnership;
         _executor = executor ?? DefaultToolchainArtifactExecutor.Instance;
+        _runtimeRegistrations = BuildRuntimeRegistrationMap(_serviceProvider);
     }
 
     public IToolchainRuntimeConfiguration Configuration => _configuration;
 
     public void Dispose()
     {
-        if (_serviceProvider is IDisposable disposable)
+        if (_disposed)
+            return;
+
+        _disposed = true;
+        if (_serviceProviderOwnership == ServiceProviderOwnership.Owned &&
+            _serviceProvider is IDisposable disposable)
+        {
             disposable.Dispose();
+        }
     }
 
     public ICoreRunnable GetCore(string backend)
@@ -106,11 +128,38 @@ public sealed class ToolchainRuntimeHost : IDisposable
         if (!_configuration.TryGetEnabledBackend(backendId, out var backendConfiguration))
             Thrower.InvalidOpEx($"Dialect '{_configuration.DialectName}' does not enable backend '{backend}'.");
 
-        var runtime = _serviceProvider.GetServices<ToolchainBackendRuntime>()
-            .FirstOrDefault(x => x.Descriptor.BackendId == backendConfiguration.BackendDescriptor.BackendId);
-        if (runtime == null)
-            Thrower.InvalidOpEx<ToolchainBackendRuntime>($"Backend core '{backendConfiguration.BackendDescriptor.CanonicalId}' was not registered.");
+        if (!_runtimeRegistrations.TryGetValue(
+                backendConfiguration.BackendDescriptor.BackendId,
+                out var registration))
+        {
+            Thrower.InvalidOpEx<ToolchainBackendRuntime>(
+                $"Backend core '{backendConfiguration.BackendDescriptor.CanonicalId}' was not registered.");
+        }
 
-        return runtime;
+        return registration.Resolve(_serviceProvider);
     }
+
+    private static IReadOnlyDictionary<DialectBackendId, ToolchainBackendRuntimeRegistration> BuildRuntimeRegistrationMap(
+        IServiceProvider serviceProvider)
+    {
+        var registrations = serviceProvider
+            .GetService<IEnumerable<ToolchainBackendRuntimeRegistration>>()?
+            .ToArray() ?? [];
+        var duplicates = registrations
+            .GroupBy(static registration => registration.Descriptor.BackendId)
+            .Where(static group => group.Count() > 1)
+            .Select(static group => group.Key)
+            .OrderBy(static backendId => backendId.Value, StringComparer.Ordinal)
+            .ToArray();
+
+        if (duplicates.Length != 0)
+        {
+            Thrower.InvalidOpEx(
+                "Multiple runtime registrations were found for backend id(s): " +
+                string.Join(", ", duplicates.Select(static backendId => backendId.Value)) + ".");
+        }
+
+        return registrations.ToDictionary(static registration => registration.Descriptor.BackendId);
+    }
+
 }

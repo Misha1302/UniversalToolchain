@@ -2,8 +2,7 @@ namespace UniversalToolchain.ModuleContracts;
 
 public enum ModuleContractCompatibilityStatus
 {
-    LegacyImplicit,
-    PartiallyDeclared,
+    Undeclared,
     Declared,
     Verified,
     Enforced

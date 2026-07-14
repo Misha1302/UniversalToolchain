@@ -10,12 +10,12 @@ public sealed class SelectedModuleContractTableProvider(
 
     public ModuleContractSelectionReport? Build(
         IReadOnlyList<IFrontendCoreModule> frontendModules,
-        IReadOnlyList<IIRProcessingModule> optimizers) =>
+        IReadOnlyList<IAirOptimizer> optimizers) =>
         Build(frontendModules, optimizers, []);
 
     public ModuleContractSelectionReport? Build(
         IReadOnlyList<IFrontendCoreModule> frontendModules,
-        IReadOnlyList<IIRProcessingModule> optimizers,
+        IReadOnlyList<IAirOptimizer> optimizers,
         IReadOnlyList<IBackendPipelineComponent> backendComponents)
     {
         frontendModules = frontendModules.ArgNotNull();

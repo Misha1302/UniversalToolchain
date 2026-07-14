@@ -112,7 +112,7 @@ public sealed class SsaRouteProfileTests
     {
         var source = new AbstractIR();
         source.Push(42);
-        var profile = SsaPreviewRouteProfiles.Create(
+        var profile = SsaRouteProfiles.Create(
             SsaRoutePolicy.Require,
             diagnostics: SsaDiagnosticMode.Verbose);
 

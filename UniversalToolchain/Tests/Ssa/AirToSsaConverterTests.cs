@@ -51,7 +51,7 @@ public sealed class AirToSsaConverterTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(call.Callee, Is.EqualTo(SsaPreviewCallables.AddInt32Unchecked));
+            Assert.That(call.Callee, Is.EqualTo(SsaCallables.AddInt32Unchecked));
             Assert.That(call.Operands, Has.Count.EqualTo(2));
             Assert.That(call.Results.Single().Type, Is.EqualTo(SsaTypes.Int32));
             Assert.That(block.Terminator!.Operands, Is.EqualTo(new[] { call.Results.Single().Id }));
@@ -66,7 +66,7 @@ public sealed class AirToSsaConverterTests
         ir.Push(41);
         ir.AppendInstructions(new List<Instruction>
         {
-            new(UOpCode.Intrinsic, [AirIntrinsicIds.CallCSharp, method])
+            IntrinsicInstructionFactory.CreateForCapability(AirIntrinsicIds.CallCSharp, method)
         });
 
         var result = PreviewLowerer().Run(new AirArtifact(ir), new IrPipelineContext());
@@ -83,6 +83,30 @@ public sealed class AirToSsaConverterTests
     }
 
     [Test]
+    public void Run_WhenAirUsesTypedManagedCallDescriptor_ProducesManagedCallableInstruction()
+    {
+        var method = typeof(AirToSsaConverterTests).GetMethod(nameof(AddOne), BindingFlags.NonPublic | BindingFlags.Static)!;
+        var descriptor = new CSharpCallDescriptor(method, new CSharpCallReceiver.Static());
+        var ir = new AbstractIR();
+        ir.Push(41);
+        ir.AppendInstructions(
+        [
+            IntrinsicInstructionFactory.CreateForCapability(AirIntrinsicIds.CallCSharp, descriptor)
+        ]);
+
+        var result = PreviewLowerer().Run(new AirArtifact(ir), new IrPipelineContext());
+        var block = result.Artifact.As<SsaArtifact>().Module.Functions.Single().Blocks.Single();
+        var call = block.Instructions.OfType<SsaCall>().Single();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(SsaManagedCallables.IsManagedCallable(call.Callee), Is.True);
+            Assert.That(call.Operands, Has.Count.EqualTo(1));
+            Assert.That(call.Results.Single().Type, Is.EqualTo(SsaTypes.Int32));
+        });
+    }
+
+    [Test]
     public void Run_WhenManagedProjectionReturnsUnregisteredCallable_RejectsProjection()
     {
         var method = typeof(AirToSsaConverterTests).GetMethod(nameof(AddOne), BindingFlags.NonPublic | BindingFlags.Static)!;
@@ -90,10 +114,10 @@ public sealed class AirToSsaConverterTests
         ir.Push(41);
         ir.AppendInstructions(new List<Instruction>
         {
-            new(UOpCode.Intrinsic, [AirIntrinsicIds.CallCSharp, method])
+            IntrinsicInstructionFactory.CreateForCapability(AirIntrinsicIds.CallCSharp, method)
         });
         var converter = SsaRouteFactory.CreateLowerer(
-            SsaPreviewRouteProfiles.Create(SsaRoutePolicy.Require),
+            SsaRouteProfiles.Create(SsaRoutePolicy.Require),
             [new UnregisteredProjection()]);
 
         var exception = Assert.Throws<AirToSsaConversionException>(() =>
@@ -115,7 +139,7 @@ public sealed class AirToSsaConverterTests
         var ir = new AbstractIR();
         ir.AppendInstructions(new List<Instruction>
         {
-            new(UOpCode.Intrinsic, [AirIntrinsicIds.CallCSharpConstructor, constructor])
+            IntrinsicInstructionFactory.CreateForCapability(AirIntrinsicIds.CallCSharpConstructor, constructor)
         });
 
         var result = PreviewLowerer().Run(new AirArtifact(ir), new IrPipelineContext());
@@ -168,7 +192,7 @@ public sealed class AirToSsaConverterTests
     }
 
     private static AirToSsaConverter PreviewLowerer() =>
-        SsaRouteFactory.CreateLowerer(SsaPreviewRouteProfiles.Create(SsaRoutePolicy.Require));
+        SsaRouteFactory.CreateLowerer(SsaRouteProfiles.Create(SsaRoutePolicy.Require));
 
     private static int AddOne(int value) => value + 1;
 

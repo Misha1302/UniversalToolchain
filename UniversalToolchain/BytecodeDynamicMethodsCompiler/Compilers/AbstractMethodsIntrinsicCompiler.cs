@@ -1,4 +1,7 @@
+using BasicCore.Builtins;
+using BasicCore.Capabilities;
 using BasicCore.Core;
+using IntermediateRepresentationAbstractions;
 
 namespace BytecodeDynamicMethodsCompiler.Compilers;
 
@@ -20,11 +23,9 @@ internal sealed class AbstractMethodsIntrinsicCompiler
 
     public void Compile(CompilationContext context, Instruction instruction, List<Type> stack)
     {
-        var normalizedInstruction = IntrinsicInstructionNormalizer.NormalizeOrThrow(instruction);
-
-        var name = normalizedInstruction.Operands[0].Get<string>();
-        var descriptor = _registry.GetRequired(name);
-        descriptor.Compile(context, normalizedInstruction, stack);
+        var intrinsic = IntrinsicInstructionView.ReadOrThrow(instruction);
+        var descriptor = _registry.GetRequired(intrinsic.CapabilityId);
+        descriptor.Compile(context, instruction, stack);
     }
 
     public void ProcessTypes(Instruction instruction, List<Type> stack)
@@ -34,15 +35,16 @@ internal sealed class AbstractMethodsIntrinsicCompiler
 
     internal static void CompileCallCSharp(CompilationContext context, Instruction instruction, List<Type> stack)
     {
-        var operand = instruction.Operands[1];
-        var descriptor = operand as CSharpCallDescriptor;
+        var invocation = IntrinsicInstructionView.ReadOrThrow(instruction).Invocation;
+        var operand = invocation.GetRequiredDataOperand(0);
+        var descriptor = operand as IManagedCallDescriptor;
         var method = descriptor?.Method ?? operand.Get<MethodInfo>();
         Thrower.AssertAlways(method.DeclaringType != null);
 
         var parametersCount = method.GetParameters().Length;
         var stackTypes = stack.TakeLast(parametersCount).ToList();
         var targetTypes = GenericTypeResolver.GetParameterTypes(method, stackTypes).ToList();
-        var useExecutionScopedProvider = descriptor?.Receiver is CSharpCallReceiver.ExecutionScopedProvider;
+        var useExecutionScopedProvider = descriptor?.ReceiverKind == ManagedCallReceiverKind.ExecutionScopedProvider;
         if (!method.IsStatic && !useExecutionScopedProvider)
         {
             targetTypes.Insert(0, method.DeclaringType);
@@ -51,21 +53,27 @@ internal sealed class AbstractMethodsIntrinsicCompiler
 
         CastValuesToTypes(context.Il, targetTypes, stackTypes);
         method = GenericTypeResolver.MakeGenericMethod(method, targetTypes);
-        if (descriptor?.Receiver is CSharpCallReceiver.ExecutionScopedProvider executionScopedProvider)
+        if (useExecutionScopedProvider)
         {
-            Thrower.AssertAlways(
-                parametersCount == 0,
-                "Execution-scoped provider calls with parameters are not supported in CIL backend yet.");
             Thrower.AssertAlways(
                 context.ExecutionEnvironmentArgumentIndex.HasValue,
                 "Execution-scoped provider calls require an execution environment argument.");
+            var providerType = descriptor!.ExecutionScopedProviderType.NotNull();
+            var argumentLocals = new GroboIL.Local[targetTypes.Count];
+            for (var i = targetTypes.Count - 1; i >= 0; i--)
+            {
+                argumentLocals[i] = context.Il.DeclareLocal(targetTypes[i]);
+                context.Il.Stloc(argumentLocals[i]);
+            }
             context.Il.Ldarg(context.ExecutionEnvironmentArgumentIndex.Value);
-            context.Il.Ldtoken(executionScopedProvider.ProviderType);
+            context.Il.Ldtoken(providerType);
             context.Il.Call(typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle)).NotNull());
             context.Il.Call(typeof(RuntimeCallProviderResolverExtensions)
                 .GetMethod(nameof(RuntimeCallProviderResolverExtensions.GetRequiredProvider))
                 .NotNull());
-            context.Il.Castclass(executionScopedProvider.ProviderType);
+            context.Il.Castclass(providerType);
+            for (var i = 0; i < argumentLocals.Length; i++)
+                context.Il.Ldloc(argumentLocals[i]);
             context.Il.Call(method);
         }
         else
@@ -80,7 +88,8 @@ internal sealed class AbstractMethodsIntrinsicCompiler
 
     internal static void CompileCallCSharpCtor(CompilationContext context, Instruction instruction, List<Type> stack)
     {
-        var ctor = instruction.Operands[1].Get<ConstructorInfo>();
+        var invocation = IntrinsicInstructionView.ReadOrThrow(instruction).Invocation;
+        var ctor = invocation.GetRequiredDataOperand<ConstructorInfo>(0);
         Thrower.AssertAlways(ctor.DeclaringType != null);
 
         var targetTypes = ctor.GetParameters().Select(x => x.ParameterType).ToList();
@@ -95,8 +104,9 @@ internal sealed class AbstractMethodsIntrinsicCompiler
 
     internal static void CompileStoreLocal(CompilationContext context, Instruction instruction, List<Type> stack)
     {
-        var varName = instruction.Operands[1].Get<string>();
-        var varType = instruction.Operands[2].Get<Type>();
+        var invocation = IntrinsicInstructionView.ReadOrThrow(instruction).Invocation;
+        var varName = invocation.GetRequiredDataOperand<string>(0);
+        var varType = GetRuntimeType(invocation, IntrinsicInstructionView.ReadOrThrow(instruction).CapabilityId, dataOperandTypeIndex: 1);
 
         if (context.ExternalSlots.TryGetValue(varName, out var slot))
             context.Il.Starg(slot + context.ExternalArgumentOffset);
@@ -108,8 +118,9 @@ internal sealed class AbstractMethodsIntrinsicCompiler
 
     internal static void CompileLoadLocal(CompilationContext context, Instruction instruction, List<Type> stack)
     {
-        var varName = instruction.Operands[1].Get<string>();
-        var varType = instruction.Operands[2].Get<Type>();
+        var invocation = IntrinsicInstructionView.ReadOrThrow(instruction).Invocation;
+        var varName = invocation.GetRequiredDataOperand<string>(0);
+        var varType = GetRuntimeType(invocation, IntrinsicInstructionView.ReadOrThrow(instruction).CapabilityId, dataOperandTypeIndex: 1);
 
         if (context.ExternalSlots.TryGetValue(varName, out var slot))
             context.Il.Ldarg(slot + context.ExternalArgumentOffset);
@@ -121,8 +132,9 @@ internal sealed class AbstractMethodsIntrinsicCompiler
 
     internal static void CompileLoadLocalRef(CompilationContext context, Instruction instruction, List<Type> stack)
     {
-        var varName = instruction.Operands[1].Get<string>();
-        var varType = instruction.Operands[2].Get<Type>();
+        var invocation = IntrinsicInstructionView.ReadOrThrow(instruction).Invocation;
+        var varName = invocation.GetRequiredDataOperand<string>(0);
+        var varType = GetRuntimeType(invocation, IntrinsicInstructionView.ReadOrThrow(instruction).CapabilityId, dataOperandTypeIndex: 1);
 
         context.Il.Ldloca(context.GetOrCreateLocal(varName, varType, true));
         stack.Push(varType.MakeByRefType());
@@ -130,15 +142,17 @@ internal sealed class AbstractMethodsIntrinsicCompiler
 
     internal static void CompileLoadExternal(CompilationContext context, Instruction instruction, List<Type> stack)
     {
-        var slot = instruction.Operands[1].Get<int>();
-        var varType = instruction.Operands[2].Get<Type>();
+        var invocation = IntrinsicInstructionView.ReadOrThrow(instruction).Invocation;
+        var slot = invocation.GetRequiredDataOperand<int>(0);
+        var varType = GetRuntimeType(invocation, IntrinsicInstructionView.ReadOrThrow(instruction).CapabilityId, dataOperandTypeIndex: 1);
         context.Il.Ldarg(slot + context.ExternalArgumentOffset);
         stack.Push(varType);
     }
 
     internal static void CompileStoreExternal(CompilationContext context, Instruction instruction, List<Type> stack)
     {
-        var slot = instruction.Operands[1].Get<int>();
+        var invocation = IntrinsicInstructionView.ReadOrThrow(instruction).Invocation;
+        var slot = invocation.GetRequiredDataOperand<int>(0);
         context.Il.Starg(slot + context.ExternalArgumentOffset);
         stack.Pop();
     }
@@ -146,28 +160,30 @@ internal sealed class AbstractMethodsIntrinsicCompiler
 
     internal static void CompileLoadBool(CompilationContext context, Instruction instruction, List<Type> stack)
     {
-        var value = instruction.Operands[1].Get<bool>();
+        var invocation = IntrinsicInstructionView.ReadOrThrow(instruction).Invocation;
+        var value = invocation.GetRequiredDataOperand<bool>(0);
         context.Il.Ldc_I4(value ? 1 : 0);
         stack.Push(typeof(bool));
     }
 
     internal static void CompileBooleanAnd(CompilationContext context, Instruction instruction, List<Type> stack)
     {
-        EnsureBinaryBoolOperands(stack, instruction.Operands[0].Get<string>());
+        EnsureBinaryBoolOperands(stack, IntrinsicInstructionView.ReadOrThrow(instruction).CapabilityId);
         context.Il.And();
         PopTwoPush(stack, typeof(bool));
     }
 
     internal static void CompileBooleanOr(CompilationContext context, Instruction instruction, List<Type> stack)
     {
-        EnsureBinaryBoolOperands(stack, instruction.Operands[0].Get<string>());
+        EnsureBinaryBoolOperands(stack, IntrinsicInstructionView.ReadOrThrow(instruction).CapabilityId);
         context.Il.Or();
         PopTwoPush(stack, typeof(bool));
     }
 
     internal static void CompileBooleanNot(CompilationContext context, Instruction instruction, List<Type> stack)
     {
-        Thrower.AssertAlways(stack.Count >= 1, $"Not enough values on stack for {instruction.Operands[0].Get<string>()}");
+        var intrinsicName = IntrinsicInstructionView.ReadOrThrow(instruction).CapabilityId;
+        Thrower.AssertAlways(stack.Count >= 1, $"Not enough values on stack for {intrinsicName}");
         Thrower.AssertAlways(stack[^1] == typeof(bool), "Expected boolean operand");
 
         context.Il.Ldc_I4(1);
@@ -178,46 +194,25 @@ internal sealed class AbstractMethodsIntrinsicCompiler
 
     internal static void LoadNativeNumber(CompilationContext context, Instruction instruction, List<Type> stack)
     {
-        var name = instruction.Operands[0].Get<string>();
-        var arg = instruction.Operands[1];
+        var invocation = IntrinsicInstructionView.ReadOrThrow(instruction).Invocation;
+        var intrinsic = IntrinsicInstructionView.ReadOrThrow(instruction);
+        var runtimeType = GetRuntimeType(invocation, intrinsic.CapabilityId);
+        var value = invocation.GetRequiredDataOperand(0);
 
-        if (name == "load_i32")
-        {
-            context.Il.Ldc_I4(arg.Get<int>());
-            stack.Push(typeof(int));
-            return;
-        }
+        if (runtimeType == typeof(int))
+            context.Il.Ldc_I4(value.Get<int>());
+        else if (runtimeType == typeof(long))
+            context.Il.Ldc_I8(value.Get<long>());
+        else if (runtimeType == typeof(float))
+            context.Il.Ldc_R4(value.Get<float>());
+        else if (runtimeType == typeof(double))
+            context.Il.Ldc_R8(value.Get<double>());
+        else if (runtimeType == typeof(decimal))
+            EmitDecimalLiteral(context.Il, value.Get<decimal>());
+        else
+            Thrower.InvalidOpEx($"Unsupported native constant type '{runtimeType}'.");
 
-        if (name == "load_i64")
-        {
-            context.Il.Ldc_I8(arg.Get<long>());
-            stack.Push(typeof(long));
-            return;
-        }
-
-        if (name == "load_f32")
-        {
-            context.Il.Ldc_R4(arg.Get<float>());
-            stack.Push(typeof(float));
-            return;
-        }
-
-        if (name == "load_f64")
-        {
-            context.Il.Ldc_R8(arg.Get<double>());
-            stack.Push(typeof(double));
-            return;
-        }
-
-        if (name == "load_decimal")
-        {
-            var dec = arg.Get<decimal>();
-            EmitDecimalLiteral(context.Il, dec);
-            stack.Push(typeof(decimal));
-            return;
-        }
-
-        Thrower.InvalidOpEx($"Unknown native number loading {name}");
+        stack.Push(runtimeType);
     }
 
     private static void EmitDecimalLiteral(GroboIL il, decimal value)
@@ -238,10 +233,11 @@ internal sealed class AbstractMethodsIntrinsicCompiler
 
     internal static void CompileArithmeticIntrinsic(CompilationContext context, Instruction instruction, List<Type> stack)
     {
-        var name = instruction.Operands[0].Get<string>();
-        var (_, operation, operandType) = ParseIntrinsicSignature(name);
+        var intrinsic = IntrinsicInstructionView.ReadOrThrow(instruction);
+        var operandType = GetRuntimeType(intrinsic.Invocation, intrinsic.CapabilityId);
+        var operation = GetArithmeticOperation(intrinsic.Invocation.Symbol, intrinsic.CapabilityId);
 
-        Thrower.AssertAlways(stack.Count >= 2, $"Not enough values on stack for binary operation {name}");
+        Thrower.AssertAlways(stack.Count >= 2, $"Not enough values on stack for binary operation {intrinsic.CapabilityId}");
 
         if (operandType == typeof(decimal))
         {
@@ -250,7 +246,9 @@ internal sealed class AbstractMethodsIntrinsicCompiler
             return;
         }
 
-        Thrower.AssertAlways(stack[^1] == operandType && stack[^2] == operandType, $"Type mismatch for operation {name}");
+        Thrower.AssertAlways(
+            stack[^1] == operandType && stack[^2] == operandType,
+            $"Type mismatch for operation {intrinsic.CapabilityId}");
 
         CompilePrimitiveArithmetic(context.Il, operation);
         PopTwoPush(stack, operandType);
@@ -301,12 +299,14 @@ internal sealed class AbstractMethodsIntrinsicCompiler
 
     internal static void CompileComparisonIntrinsic(CompilationContext context, Instruction instruction, List<Type> stack)
     {
-        var name = instruction.Operands[0].Get<string>();
-        var (_, operation, operandType) = ParseIntrinsicSignature(name);
+        var intrinsic = IntrinsicInstructionView.ReadOrThrow(instruction);
+        var operandType = GetRuntimeType(intrinsic.Invocation, intrinsic.CapabilityId);
+        var operation = GetComparisonOperation(intrinsic.Invocation.Symbol, intrinsic.CapabilityId);
 
-        Thrower.AssertAlways(stack.Count >= 2, $"Not enough values on stack for comparison {name}");
-
-        Thrower.AssertAlways(stack[^1] == operandType && stack[^2] == operandType, $"Type mismatch for operation {name}");
+        Thrower.AssertAlways(stack.Count >= 2, $"Not enough values on stack for comparison {intrinsic.CapabilityId}");
+        Thrower.AssertAlways(
+            stack[^1] == operandType && stack[^2] == operandType,
+            $"Type mismatch for operation {intrinsic.CapabilityId}");
 
         CompilePrimitiveComparison(context.Il, operation);
         PopTwoPush(stack, typeof(bool));
@@ -350,37 +350,54 @@ internal sealed class AbstractMethodsIntrinsicCompiler
         }
     }
 
-    private static Type GetTypeFromString(string typeStr)
+    private static string GetArithmeticOperation(IntrinsicSymbol symbol, string capabilityId)
     {
-        if (typeStr == "i32")
-            return typeof(int);
-        if (typeStr == "i64")
-            return typeof(long);
-        if (typeStr == "f32")
-            return typeof(float);
-        if (typeStr == "f64")
-            return typeof(double);
-        if (typeStr == "decimal")
-            return typeof(decimal);
+        if (symbol == BuiltinIntrinsicSymbols.Arithmetic.Add) return "add";
+        if (symbol == BuiltinIntrinsicSymbols.Arithmetic.Subtract) return "sub";
+        if (symbol == BuiltinIntrinsicSymbols.Arithmetic.Multiply) return "mul";
+        if (symbol == BuiltinIntrinsicSymbols.Arithmetic.Divide) return "div";
 
-        Thrower.InvalidOpEx($"Unsupported type string: {typeStr}");
-        return typeof(void);
+        var separator = capabilityId.IndexOf('_');
+        return separator > 0
+            ? capabilityId[..separator]
+            : Thrower.InvalidOpEx<string>($"Unsupported arithmetic intrinsic symbol '{symbol}'.");
     }
 
-    // ReSharper disable once UnusedTupleComponentInReturnValue
-    private static (string Family, string Operation, Type OperandType) ParseIntrinsicSignature(string name)
+    private static string GetComparisonOperation(IntrinsicSymbol symbol, string capabilityId)
     {
-        var parts = name.Split('_');
-        Thrower.AssertAlways(parts.Length >= 2, $"Unsupported intrinsic name format: {name}");
+        if (symbol == BuiltinIntrinsicSymbols.Comparison.Equal) return "eq";
+        if (symbol == BuiltinIntrinsicSymbols.Comparison.NotEqual) return "ne";
+        if (symbol == BuiltinIntrinsicSymbols.Comparison.Greater) return "gt";
+        if (symbol == BuiltinIntrinsicSymbols.Comparison.GreaterOrEqual) return "ge";
+        if (symbol == BuiltinIntrinsicSymbols.Comparison.Less) return "lt";
+        if (symbol == BuiltinIntrinsicSymbols.Comparison.LessOrEqual) return "le";
 
-        if (parts[0] == "cmp")
+        var parts = capabilityId.Split('_');
+        return parts.Length == 3 && parts[0] == "cmp"
+            ? parts[1]
+            : Thrower.InvalidOpEx<string>($"Unsupported comparison intrinsic symbol '{symbol}'.");
+    }
+
+    private static Type GetRuntimeType(
+        IntrinsicInvocation invocation,
+        string capabilityId,
+        int? dataOperandTypeIndex = null)
+    {
+        if (invocation.TypeArguments.Count == 1)
+            return invocation.TypeArguments[0].RuntimeType;
+
+        if (dataOperandTypeIndex.HasValue &&
+            invocation.DataOperands.Count > dataOperandTypeIndex.Value &&
+            invocation.DataOperands[dataOperandTypeIndex.Value] is Type dataType)
         {
-            Thrower.AssertAlways(parts.Length == 3, $"Unsupported comparison intrinsic name format: {name}");
-            return (parts[0], parts[1], GetTypeFromString(parts[2]));
+            return dataType;
         }
 
-        Thrower.AssertAlways(parts.Length == 2, $"Unsupported intrinsic name format: {name}");
-        return (parts[0], parts[0], GetTypeFromString(parts[1]));
+        var token = capabilityId[(capabilityId.LastIndexOf('_') + 1)..];
+        return IntrinsicTypeTokenMap.TryResolveType(token, out var runtimeType)
+            ? runtimeType
+            : Thrower.InvalidOpEx<Type>(
+                $"Intrinsic '{capabilityId}' requires one type argument or a known type token.");
     }
 
     private static void CastValuesToTypes(GroboIL il, IReadOnlyList<Type> targetTypes, IReadOnlyList<Type> stackTypes)

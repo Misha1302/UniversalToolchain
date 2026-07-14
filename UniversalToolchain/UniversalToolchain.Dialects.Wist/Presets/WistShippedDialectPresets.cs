@@ -57,18 +57,18 @@ public static class WistShippedDialectPresets
     /// <summary>
     /// Gets the experimental restricted arithmetic preset with the verifier-gated SSA route enabled.
     /// </summary>
-    public static WistShippedDialectPreset SsaPreview { get; } = Create(
-        "ssa-preview",
-        "SSA preview",
-        "Experimental restricted arithmetic Wist dialect with SSA optimization enabled.");
+    public static WistShippedDialectPreset Ssa { get; } = Create(
+        "ssa",
+        "SSA",
+        "Restricted arithmetic Wist dialect with verifier-gated SSA optimization enabled.");
 
     /// <summary>
     ///     Gets the restricted sandbox Wist dialect preset.
     /// </summary>
-    public static WistShippedDialectPreset RestrictedSandbox { get; } = Create(
-        "restricted-sandbox",
-        "Restricted sandbox",
-        "Restricted Wist sandbox dialect.");
+    public static WistShippedDialectPreset CompositionRestricted { get; } = Create(
+        "composition-restricted",
+        "Composition restricted",
+        "Composition-constrained Wist dialect; not a process-isolation boundary.");
 
     /// <summary>
     ///     Gets all shipped Wist dialect presets.
@@ -80,8 +80,8 @@ public static class WistShippedDialectPresets
         MinimalArithmetic,
         MinimalArithmeticNative,
         PricingRestricted,
-        SsaPreview,
-        RestrictedSandbox
+        Ssa,
+        CompositionRestricted
     ];
 
     /// <summary>

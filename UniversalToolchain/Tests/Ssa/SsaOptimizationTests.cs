@@ -13,7 +13,7 @@ public sealed class SsaOptimizationTests
     [Test]
     public void Run_WithConstantBinaryInt32Callable_FoldsToConstant()
     {
-        var artifact = CreateConstantBinaryArtifact(SsaPreviewCallables.AddInt32Unchecked, 2, 3);
+        var artifact = CreateConstantBinaryArtifact(SsaCallables.AddInt32Unchecked, 2, 3);
 
         var result = RunConstantFolding(artifact);
         var operations = result.Artifact.As<SsaArtifact>().Module.Functions.Single().Blocks.Single().Operations;
@@ -33,7 +33,7 @@ public sealed class SsaOptimizationTests
     [Test]
     public void Run_WithConstantEqualCallable_FoldsToBoolConstant()
     {
-        var artifact = CreateConstantBinaryArtifact(SsaPreviewCallables.EqualInt32, 7, 7, SsaTypes.Bool);
+        var artifact = CreateConstantBinaryArtifact(SsaCallables.EqualInt32, 7, 7, SsaTypes.Bool);
 
         var result = RunConstantFolding(artifact);
         var folded = result.Artifact.As<SsaArtifact>().Module.Functions.Single().Blocks.Single().Operations[2];
@@ -49,7 +49,7 @@ public sealed class SsaOptimizationTests
     [Test]
     public void Run_WithOverflowingConstantBinaryInt32Callable_UsesUncheckedInt32Semantics()
     {
-        var artifact = CreateConstantBinaryArtifact(SsaPreviewCallables.AddInt32Unchecked, int.MaxValue, 1);
+        var artifact = CreateConstantBinaryArtifact(SsaCallables.AddInt32Unchecked, int.MaxValue, 1);
 
         var result = RunConstantFolding(artifact);
         var folded = result.Artifact.As<SsaArtifact>().Module.Functions.Single().Blocks.Single().Operations[2];
@@ -78,7 +78,7 @@ public sealed class SsaOptimizationTests
                         ConstI32("c", constant, 4),
                         new SsaCall(
                             new SsaOperationId("call.add"),
-                            SsaPreviewCallables.AddInt32Unchecked,
+                            SsaCallables.AddInt32Unchecked,
                             [parameter.Value.Id, constant.Id],
                             [result])
                     ],
@@ -92,7 +92,7 @@ public sealed class SsaOptimizationTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(add.Callee, Is.EqualTo(SsaPreviewCallables.AddInt32Unchecked));
+            Assert.That(add.Callee, Is.EqualTo(SsaCallables.AddInt32Unchecked));
             Assert.That(add.Operands, Is.EqualTo(new[] { parameter.Value.Id, constant.Id }));
         });
     }
@@ -111,7 +111,7 @@ public sealed class SsaOptimizationTests
                     [
                         new SsaCall(
                             new SsaOperationId("call.add"),
-                            SsaPreviewCallables.AddInt32Unchecked,
+                            SsaCallables.AddInt32Unchecked,
                             [new SsaValueId("%missing"), new SsaValueId("%missing2")],
                             [result])
                     ],
@@ -131,14 +131,14 @@ public sealed class SsaOptimizationTests
         var produced = new FactId("ssa.test.produced");
         var preserved = new FactId("ssa.test.preserved");
         var invalidated = new FactId("ssa.test.invalidated");
-        var artifact = CreateConstantBinaryArtifact(SsaPreviewCallables.AddInt32Unchecked, 1, 2);
+        var artifact = CreateConstantBinaryArtifact(SsaCallables.AddInt32Unchecked, 1, 2);
         var context = new IrPipelineContext(
             facts: new IrFactSet([preserved, invalidated]));
 
         var result = new SsaOptimizerPipeline(
             [new FactEffectProbePass(produced, preserved, invalidated)],
             SsaCoreDescriptors.ConstantMaterialization,
-            SsaPreviewSemanticDescriptors.ArithmeticInt32).Run(artifact, context);
+            SsaSemanticDescriptors.ArithmeticInt32).Run(artifact, context);
 
         Assert.Multiple(() =>
         {
@@ -153,12 +153,12 @@ public sealed class SsaOptimizationTests
     public void Run_IgnoresFactsReturnedOutsideDeclaredContract()
     {
         var undeclared = new FactId("ssa.test.undeclared");
-        var artifact = CreateConstantBinaryArtifact(SsaPreviewCallables.AddInt32Unchecked, 1, 2);
+        var artifact = CreateConstantBinaryArtifact(SsaCallables.AddInt32Unchecked, 1, 2);
 
         var result = new SsaOptimizerPipeline(
             [new UndeclaredFactProbePass(undeclared)],
             SsaCoreDescriptors.ConstantMaterialization,
-            SsaPreviewSemanticDescriptors.ArithmeticInt32).Run(artifact, new IrPipelineContext());
+            SsaSemanticDescriptors.ArithmeticInt32).Run(artifact, new IrPipelineContext());
 
         Assert.Multiple(() =>
         {
@@ -226,7 +226,7 @@ public sealed class SsaOptimizationTests
                         ConstI32("right", right, 2),
                         new SsaCall(
                             new SsaOperationId("call.add"),
-                            SsaPreviewCallables.AddInt32Unchecked,
+                            SsaCallables.AddInt32Unchecked,
                             [left.Id, right.Id],
                             [resultValue])
                     ],
@@ -252,14 +252,14 @@ public sealed class SsaOptimizationTests
     {
         var untrustedCallable = new CallableId("plugin.untrusted.identity");
         var semanticDescriptors = new SemanticDescriptorSet(
-            types: [new SemanticTypeDescriptor(SsaPreviewSemanticTypes.Int32)],
+            types: [new SemanticTypeDescriptor(SsaSemanticTypes.Int32)],
             callables:
             [
                 new CallableDescriptor(
                     untrustedCallable,
                     new CallableSignature(
-                        [SsaPreviewSemanticTypes.Int32],
-                        [SsaPreviewSemanticTypes.Int32]),
+                        [SsaSemanticTypes.Int32],
+                        [SsaSemanticTypes.Int32]),
                     effects: SemanticEffectSummary.Pure,
                     determinism: Determinism.Deterministic,
                     trustLevel: SemanticTrustLevel.UserProvidedUnchecked)
@@ -341,7 +341,7 @@ public sealed class SsaOptimizationTests
             returnType: SsaTypes.Int32),
             new SsaManagedCallableBinding(callable, descriptor, method));
         var semanticDescriptors = new SemanticDescriptorSet(
-            types: [new SemanticTypeDescriptor(SsaPreviewSemanticTypes.Int32)],
+            types: [new SemanticTypeDescriptor(SsaSemanticTypes.Int32)],
             callables: [descriptor]);
 
         var result = new SsaOptimizerPipeline(
@@ -365,18 +365,18 @@ public sealed class SsaOptimizationTests
         new SsaOptimizerPipeline(
                 [PreviewConstantFoldingPass()],
                 SsaCoreDescriptors.ConstantMaterialization,
-                SsaPreviewSemanticDescriptors.ArithmeticInt32)
+                SsaSemanticDescriptors.ArithmeticInt32)
             .Run(artifact, new IrPipelineContext());
 
     private static IrStageResult RunPreviewConstantFolding(SsaArtifact artifact) =>
         new SsaOptimizerPipeline(
                 [PreviewConstantFoldingPass()],
                 SsaCoreDescriptors.ConstantMaterialization,
-                SsaPreviewSemanticDescriptors.ArithmeticInt32)
+                SsaSemanticDescriptors.ArithmeticInt32)
             .Run(artifact, new IrPipelineContext());
 
     private static SsaConstantFoldingPass PreviewConstantFoldingPass() =>
-        new(SsaPreviewSemanticDescriptors.ArithmeticInt32, new SsaPreviewInt32ConstantEvaluator());
+        new(SsaSemanticDescriptors.ArithmeticInt32, new SsaInt32ConstantEvaluator());
 
     private static SsaArtifact CreateConstantBinaryArtifact(CallableId callable, int leftValue, int rightValue, SsaTypeId? resultType = null)
     {
@@ -483,7 +483,7 @@ public sealed class SsaOptimizationTests
             IReadOnlyList<ConstantValue> arguments,
             out ConstantValue result)
         {
-            result = new ConstantValue(SsaPreviewSemanticTypes.Int32, "999");
+            result = new ConstantValue(SsaSemanticTypes.Int32, "999");
             return true;
         }
     }
@@ -505,8 +505,8 @@ public sealed class SsaOptimizationTests
             result = default!;
             if (descriptor.Id != callable ||
                 arguments.Count != 2 ||
-                arguments[0].Type != SsaPreviewSemanticTypes.Int32 ||
-                arguments[1].Type != SsaPreviewSemanticTypes.Int32 ||
+                arguments[0].Type != SsaSemanticTypes.Int32 ||
+                arguments[1].Type != SsaSemanticTypes.Int32 ||
                 !int.TryParse(arguments[0].CanonicalValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out var left) ||
                 !int.TryParse(arguments[1].CanonicalValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out var right))
             {
@@ -514,7 +514,7 @@ public sealed class SsaOptimizationTests
             }
 
             result = new ConstantValue(
-                SsaPreviewSemanticTypes.Int32,
+                SsaSemanticTypes.Int32,
                 TrustedManagedAdd(left, right).ToString(CultureInfo.InvariantCulture));
             return true;
         }

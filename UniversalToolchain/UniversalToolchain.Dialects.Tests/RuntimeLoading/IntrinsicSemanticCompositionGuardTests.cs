@@ -32,7 +32,7 @@ public sealed class IntrinsicSemanticCompositionGuardTests
             new IntrinsicSemanticBootstrapPlanBuilder(),
             new IntrinsicSemanticBootstrapPreProviderValidator(),
             new IntrinsicSemanticBootstrapRuntimeValidator(),
-            ModuleContractPipelineProfiles.MigrationWarn,
+            ModuleContractPipelineProfiles.Warn,
             NullModuleContractDiagnosticSink.Instance);
 
     private static IntrinsicSemanticDescriptor CreateDescriptor(string @namespace, string name) =>

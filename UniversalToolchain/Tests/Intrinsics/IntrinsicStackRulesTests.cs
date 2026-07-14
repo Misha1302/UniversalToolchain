@@ -1,5 +1,4 @@
 using BasicCore.Core.Rules;
-using SettableGettableModule.Core;
 
 namespace Tests.Intrinsics;
 
@@ -63,7 +62,7 @@ public sealed class IntrinsicStackRulesTests
     }
 
     [Test]
-    public void LoadLocalRefStackRule_ShouldPushVariableReferenceOfResolvedType()
+    public void LoadLocalRefStackRule_ShouldPushManagedByRefType()
     {
         var rule = new LoadLocalRefStackRule();
         var stack = new List<Type>();
@@ -71,7 +70,7 @@ public sealed class IntrinsicStackRulesTests
 
         rule.Apply(invocation, stack, _context);
 
-        Assert.That(stack, Is.EqualTo(new[] { typeof(VariableReference<int>) }));
+        Assert.That(stack, Is.EqualTo(new[] { typeof(int).MakeByRefType() }));
     }
 
     private static IntrinsicInvocation CreateInvocation(

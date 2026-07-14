@@ -20,11 +20,11 @@ public sealed class ComparisonIntrinsicOptimizerTypeFlowTests
         var input = CreateIr(
             new Instruction(UOpCode.Push, [1.0d]),
             new Instruction(UOpCode.Push, [2.0d]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", lessOrEqualMethod!]));
+            IntrinsicInstructionFactory.CreateForCapability("call C#", lessOrEqualMethod!));
 
-        Assert.DoesNotThrow(() => optimizer.ProcessIr(input, new FakeCompiler()));
+        Assert.DoesNotThrow(() => optimizer.Optimize(input));
 
-        var optimized = optimizer.ProcessIr(input, new FakeCompiler());
+        var optimized = optimizer.Optimize(input);
 
         Assert.That(BuiltinIntrinsicInstruction.Is(optimized.Instructions[^1], BuiltinIntrinsicSymbols.Comparison.LessOrEqual), Is.True);
     }

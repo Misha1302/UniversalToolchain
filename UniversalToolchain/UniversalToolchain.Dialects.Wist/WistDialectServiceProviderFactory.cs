@@ -1,3 +1,5 @@
+using UniversalToolchain.Diagnostics.Abstractions;
+using UniversalToolchain.Capabilities.Core;
 using AssemblyFinder;
 using BasicCore.Contracts;
 using ExceptionsManager;
@@ -58,10 +60,11 @@ public sealed class WistDialectServiceProviderFactory
         services.AddWistModuleContractPipelineServices(
             _moduleContractOptions,
             _moduleContractDiagnosticSink);
+        RegisterCapabilityCatalog(services, configuration);
 
         RegisterModules(services, configuration.FrontendModules, typeof(IFrontendCoreModule), ServiceLifetime.Singleton);
-        RegisterModules(services, configuration.IrModules, typeof(IIRProcessingModule), ServiceLifetime.Transient);
-        RegisterModules(services, configuration.Optimizers, typeof(IIRProcessingModule), ServiceLifetime.Transient);
+        RegisterModules(services, configuration.IrModules, typeof(IAirOptimizer), ServiceLifetime.Transient);
+        RegisterModules(services, configuration.Optimizers, typeof(IAirOptimizer), ServiceLifetime.Transient);
         RegisterIntrinsicDescriptorProviders(services, configuration);
         RegisterBackendRuntimes(services, configuration);
 
@@ -73,6 +76,35 @@ public sealed class WistDialectServiceProviderFactory
         return provider;
     }
 
+
+    private static void RegisterCapabilityCatalog(
+        IServiceCollection services,
+        WistDialectExecutionConfiguration configuration)
+    {
+        var componentTypes = configuration.RequiredInfrastructureModules
+            .Concat(configuration.FrontendModules)
+            .Concat(configuration.IrModules)
+            .Concat(configuration.Optimizers)
+            .Concat(configuration.BackendConfigurations.SelectMany(static backend => backend.OptimizerTypes))
+            .Concat(configuration.BackendConfigurations.Select(static backend => backend.BackendDescriptor.MetadataOwnerType))
+            .Distinct()
+            .OrderBy(static type => type.FullName, StringComparer.Ordinal)
+            .ToArray();
+        var catalog = new SelectedCapabilityCatalogBuilder().Build(componentTypes);
+        var errors = catalog.Diagnostics
+            .Where(static diagnostic => diagnostic.Severity == ToolchainDiagnosticSeverity.Error)
+            .ToArray();
+
+        if (errors.Length != 0)
+        {
+            var details = string.Join(
+                Environment.NewLine,
+                errors.Select(static diagnostic => $"[{diagnostic.Code}] {diagnostic.Message}"));
+            Thrower.InvalidOpEx($"Selected runtime capability catalog is invalid:{Environment.NewLine}{details}");
+        }
+
+        services.AddSingleton(catalog);
+    }
 
     private static void RegisterExecutionScopedRuntimeOptions(
         IServiceCollection services,

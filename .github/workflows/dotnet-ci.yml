@@ -104,7 +104,7 @@ jobs:
               throw new InvalidOperationException($"Expected validation success, got {validation.Message}.");
           }
 
-          using var fullNative = WistEngine.CreateFullNativePreview();
+          using var fullNative = WistEngine.CreateFullNative();
           var fullNativeValidation = fullNative.Validate("1 + 2");
           if (!fullNativeValidation.IsValid)
           {

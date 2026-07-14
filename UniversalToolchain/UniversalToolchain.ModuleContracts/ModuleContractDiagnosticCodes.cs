@@ -5,9 +5,8 @@ public static class ModuleContractDiagnosticCodes
     public const string DuplicateFacet = "UT-CONTRACT-001";
     public const string DuplicateId = "UT-CONTRACT-002";
     public const string InvalidNamespaceOwnership = "UT-CONTRACT-003";
-    public const string DeprecatedAlias = "UT-CONTRACT-004";
     public const string SchemaDowngrade = "UT-CONTRACT-005";
-    public const string LegacyImplicitModule = "UT-CONTRACT-006";
+    public const string UndeclaredModule = "UT-CONTRACT-006";
     public const string NewModuleMissingDescriptor = "UT-CONTRACT-007";
     public const string DeclaredModuleMissingDescriptor = "UT-CONTRACT-008";
     public const string MissingFacetKindOrder = "UT-CONTRACT-009";
@@ -27,6 +26,7 @@ public static class ModuleContractDiagnosticCodes
     public const string BytecodeStackEffectMismatch = "UT-BYTECODE-STACK-001";
     public const string InvalidBytecodeContractMetadata = "UT-BYTECODE-METADATA-001";
     public const string InvalidAirOperandSchema = "UT-AIR-SCHEMA-001";
+    public const string InvalidAirStackDiscipline = "UT-AIR-STACK-001";
     public const string MissingAirBranchTarget = "UT-AIR-BRANCH-001";
     public const string DuplicateAirLabel = "UT-AIR-BRANCH-002";
     public const string UnsupportedAirIntrinsic = "UT-AIR-INTRINSIC-001";

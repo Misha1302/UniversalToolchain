@@ -8,7 +8,7 @@ public sealed class IntrinsicTypeProcessorTests
     [Test]
     public void LoadF64_PushesDoubleType()
     {
-        var instruction = new Instruction(UOpCode.Intrinsic, ["load_f64", 1.5d]);
+        var instruction = IntrinsicInstructionFactory.CreateForCapability("load_f64", 1.5d);
         var stack = new List<Type>();
 
         IntrinsicTypeProcessor.ProcessTypes(instruction, stack);
@@ -19,7 +19,7 @@ public sealed class IntrinsicTypeProcessorTests
     [Test]
     public void AddF64_ReplacesTwoDoubleOperands_WithDoubleResult()
     {
-        var instruction = new Instruction(UOpCode.Intrinsic, ["add_f64"]);
+        var instruction = IntrinsicInstructionFactory.CreateForCapability("add_f64");
         var stack = new List<Type> { typeof(double), typeof(double) };
 
         IntrinsicTypeProcessor.ProcessTypes(instruction, stack);
@@ -30,7 +30,7 @@ public sealed class IntrinsicTypeProcessorTests
     [Test]
     public void CmpLeF64_ReplacesTwoDoubleOperands_WithBooleanResult()
     {
-        var instruction = new Instruction(UOpCode.Intrinsic, ["cmp_le_f64"]);
+        var instruction = IntrinsicInstructionFactory.CreateForCapability("cmp_le_f64");
         var stack = new List<Type> { typeof(double), typeof(double) };
 
         IntrinsicTypeProcessor.ProcessTypes(instruction, stack);
@@ -41,7 +41,7 @@ public sealed class IntrinsicTypeProcessorTests
     [Test]
     public void LoadLocalRef_PushesByRefType()
     {
-        var instruction = new Instruction(UOpCode.Intrinsic, ["load_local_ref", "x", typeof(int)]);
+        var instruction = IntrinsicInstructionFactory.CreateForCapability("load_local_ref", "x", typeof(int));
         var stack = new List<Type>();
 
         IntrinsicTypeProcessor.ProcessTypes(instruction, stack);
@@ -53,7 +53,7 @@ public sealed class IntrinsicTypeProcessorTests
     public void ProcessTypes_LoadLocalRef_PushesByRefType()
     {
         var stack = new List<Type>();
-        var instruction = new Instruction(UOpCode.Intrinsic, ["load_local_ref", "x", typeof(int)]);
+        var instruction = IntrinsicInstructionFactory.CreateForCapability("load_local_ref", "x", typeof(int));
 
         IntrinsicTypeProcessor.ProcessTypes(instruction, stack);
 
@@ -96,48 +96,48 @@ public sealed class IntrinsicTypeProcessorTests
         var exception = Assert.Throws<InvalidOperationException>(() => IntrinsicTypeProcessor.ProcessTypes(instruction, stack));
 
         Assert.That(exception, Is.Not.Null);
-        Assert.That(exception!.Message, Does.Contain("Unsupported intrinsic instruction payload"));
+        Assert.That(exception!.Message, Does.Contain("exactly one structured IntrinsicInvocation payload"));
     }
 
     private static (Instruction Instruction, List<Type> Stack) CreateScenario(string name)
     {
         if (name == "call C#")
-            return (new Instruction(UOpCode.Intrinsic, ["call C#", typeof(Math).GetMethod(nameof(Math.Abs), [typeof(int)])!]), [typeof(int)]);
+            return (IntrinsicInstructionFactory.CreateForCapability("call C#", typeof(Math).GetMethod(nameof(Math.Abs), [typeof(int)])!), [typeof(int)]);
 
         if (name == "call C# ctor")
-            return (new Instruction(UOpCode.Intrinsic, ["call C# ctor", typeof(Uri).GetConstructor([typeof(string)])!]), [typeof(string)]);
+            return (IntrinsicInstructionFactory.CreateForCapability("call C# ctor", typeof(Uri).GetConstructor([typeof(string)])!), [typeof(string)]);
 
         if (name == "store_local")
-            return (new Instruction(UOpCode.Intrinsic, ["store_local", "x", typeof(int)]), [typeof(int)]);
+            return (IntrinsicInstructionFactory.CreateForCapability("store_local", "x", typeof(int)), [typeof(int)]);
 
         if (name == "load_local")
-            return (new Instruction(UOpCode.Intrinsic, ["load_local", "x", typeof(int)]), []);
+            return (IntrinsicInstructionFactory.CreateForCapability("load_local", "x", typeof(int)), []);
 
         if (name == "load_local_ref")
-            return (new Instruction(UOpCode.Intrinsic, ["load_local_ref", "x", typeof(int)]), []);
+            return (IntrinsicInstructionFactory.CreateForCapability("load_local_ref", "x", typeof(int)), []);
 
         if (name == "load_external")
-            return (new Instruction(UOpCode.Intrinsic, ["load_external", 0, typeof(int)]), []);
+            return (IntrinsicInstructionFactory.CreateForCapability("load_external", 0, typeof(int)), []);
 
         if (name == "store_external")
-            return (new Instruction(UOpCode.Intrinsic, ["store_external", 0]), [typeof(int)]);
+            return (IntrinsicInstructionFactory.CreateForCapability("store_external", 0), [typeof(int)]);
 
         if (name == "load_bool")
-            return (new Instruction(UOpCode.Intrinsic, ["load_bool", true]), []);
+            return (IntrinsicInstructionFactory.CreateForCapability("load_bool", true), []);
 
         if (name == "boolean_and" || name == "boolean_or")
-            return (new Instruction(UOpCode.Intrinsic, [name]), [typeof(bool), typeof(bool)]);
+            return (IntrinsicInstructionFactory.CreateForCapability(name), [typeof(bool), typeof(bool)]);
 
         if (name == "boolean_not")
-            return (new Instruction(UOpCode.Intrinsic, ["boolean_not"]), [typeof(bool)]);
+            return (IntrinsicInstructionFactory.CreateForCapability("boolean_not"), [typeof(bool)]);
 
         if (name.StartsWith("load_", StringComparison.Ordinal))
-            return (new Instruction(UOpCode.Intrinsic, [name, 1]), []);
+            return (IntrinsicInstructionFactory.CreateForCapability(name, 1), []);
 
         if (name.StartsWith("cmp_", StringComparison.Ordinal))
         {
             var operandType = ResolveOperandType(name);
-            return (new Instruction(UOpCode.Intrinsic, [name]), [operandType, operandType]);
+            return (IntrinsicInstructionFactory.CreateForCapability(name), [operandType, operandType]);
         }
 
         if (name.StartsWith("add_", StringComparison.Ordinal)
@@ -146,7 +146,7 @@ public sealed class IntrinsicTypeProcessorTests
             || name.StartsWith("div_", StringComparison.Ordinal))
         {
             var operandType = ResolveOperandType(name);
-            return (new Instruction(UOpCode.Intrinsic, [name]), [operandType, operandType]);
+            return (IntrinsicInstructionFactory.CreateForCapability(name), [operandType, operandType]);
         }
 
         Thrower.InvalidOpEx($"Unsupported intrinsic test scenario '{name}'.");

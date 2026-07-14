@@ -88,7 +88,7 @@ Before: `PreparedExecutionBuilder.ExtractAllowedRuntimeProviderTypes` matched `i
 
 After:
 
-- It uses `InstructionIntrinsicReader` + `LegacyIntrinsicDecoder`.
+- At the reviewed commit it used `InstructionIntrinsicReader` plus a legacy string decoder; the current pipeline accepts structured intrinsics only.
 - It checks `BuiltinIntrinsicSymbols.Core.CallCSharp`.
 - `IAbstractIrCompiler` default supported intrinsics now use `CoreDefaultIntrinsicNames` and `LegacyCapabilityNameEncoder` instead of embedding raw strings directly in the interface.
 

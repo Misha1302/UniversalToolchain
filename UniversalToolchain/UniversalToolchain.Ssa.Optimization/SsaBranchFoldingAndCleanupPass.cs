@@ -77,7 +77,7 @@ public sealed class SsaBranchFoldingAndCleanupPass : IIrOptimizationPass
             }
 
             if (!SsaConstantReader.TryRead(instruction, out var constant) ||
-                constant.Type != SsaPreviewSemanticTypes.Bool)
+                constant.Type != SsaSemanticTypes.Bool)
             {
                 return false;
             }

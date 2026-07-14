@@ -35,7 +35,7 @@ public sealed class InterpreterIntrinsicSurfaceTests
         var abs = typeof(Math).GetMethod(nameof(Math.Abs), [typeof(int)])!;
         var ir = BuildIr(
             new Instruction(UOpCode.Push, [-12]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", abs]));
+            IntrinsicInstructionFactory.CreateForCapability("call C#", abs));
 
         var result = ExecuteInInterpreter(ir);
 
@@ -49,7 +49,7 @@ public sealed class InterpreterIntrinsicSurfaceTests
         var ir = BuildIr(
             new Instruction(UOpCode.Push, [1]),
             new Instruction(UOpCode.Push, [2]),
-            new Instruction(UOpCode.Intrinsic, ["call C# ctor", ctor]));
+            IntrinsicInstructionFactory.CreateForCapability("call C# ctor", ctor));
 
         var result = ExecuteInInterpreter(ir);
 
@@ -62,7 +62,7 @@ public sealed class InterpreterIntrinsicSurfaceTests
     [TestCase("load_local_ref", "x", typeof(int))]
     public void Interpreter_Rejects_LocalIntrinsics(string intrinsicName, object arg1, object arg2)
     {
-        var ir = BuildIr(new Instruction(UOpCode.Intrinsic, [intrinsicName, arg1, arg2]));
+        var ir = BuildIr(IntrinsicInstructionFactory.CreateForCapability(intrinsicName, arg1, arg2));
 
         var ex = Assert.Throws<RuntimeExecutionException>(() => ExecuteInInterpreter(ir));
 
@@ -77,9 +77,7 @@ public sealed class InterpreterIntrinsicSurfaceTests
     [TestCase("boolean_and")]
     public void Interpreter_Rejects_ArithmeticAndComparisonIntrinsics(string intrinsicName, params object[] args)
     {
-        var operands = new List<object> { intrinsicName };
-        operands.AddRange(args);
-        var ir = BuildIr(new Instruction(UOpCode.Intrinsic, operands));
+        var ir = BuildIr(IntrinsicInstructionFactory.CreateForCapability(intrinsicName, args));
 
         var ex = Assert.Throws<RuntimeExecutionException>(() => ExecuteInInterpreter(ir));
 
@@ -91,7 +89,7 @@ public sealed class InterpreterIntrinsicSurfaceTests
     [TestCase("store_external", 0, typeof(int))]
     public void Interpreter_Rejects_ExternalIntrinsics(string intrinsicName, object arg1, object arg2)
     {
-        var ir = BuildIr(new Instruction(UOpCode.Intrinsic, [intrinsicName, arg1, arg2]));
+        var ir = BuildIr(IntrinsicInstructionFactory.CreateForCapability(intrinsicName, arg1, arg2));
 
         var ex = Assert.Throws<RuntimeExecutionException>(() => ExecuteInInterpreter(ir));
 
@@ -104,16 +102,16 @@ public sealed class InterpreterIntrinsicSurfaceTests
     {
         foreach (var intrinsicName in _forbiddenIntrinsics)
         {
-            var operands = intrinsicName switch
+            var dataOperands = intrinsicName switch
             {
-                "load_bool" => new List<object> { intrinsicName, true },
-                "load_i32" or "load_i64" or "load_f32" or "load_f64" or "load_decimal" => new List<object> { intrinsicName, 1 },
-                "load_external" or "store_external" => new List<object> { intrinsicName, 0, typeof(int) },
-                "load_local" or "store_local" or "load_local_ref" => new List<object> { intrinsicName, "x", typeof(int) },
-                _ => new List<object> { intrinsicName }
+                "load_bool" => new object?[] { true },
+                "load_i32" or "load_i64" or "load_f32" or "load_f64" or "load_decimal" => [1],
+                "load_external" or "store_external" => [0, typeof(int)],
+                "load_local" or "store_local" or "load_local_ref" => ["x", typeof(int)],
+                _ => []
             };
 
-            var ir = BuildIr(new Instruction(UOpCode.Intrinsic, operands));
+            var ir = BuildIr(IntrinsicInstructionFactory.CreateForCapability(intrinsicName, dataOperands));
             var ex = Assert.Throws<RuntimeExecutionException>(() => ExecuteInInterpreter(ir), intrinsicName);
             Assert.That(ex!.Message, Does.Contain("supports only 'call C#' and 'call C# ctor'"), intrinsicName);
         }
@@ -151,8 +149,7 @@ public sealed class InterpreterIntrinsicSurfaceTests
             if (instruction.UOpCode != UOpCode.Intrinsic)
                 continue;
 
-            var normalized = IntrinsicInstructionNormalizer.NormalizeOrThrow(instruction);
-            yield return (string)normalized.Operands[0];
+            yield return IntrinsicInstructionView.ReadOrThrow(instruction).CapabilityId;
         }
     }
 

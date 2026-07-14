@@ -164,7 +164,7 @@ Examples are located under `UniversalToolchain/Dialects/examples/wist`:
 | `minimal-arithmetic` | Smallest interpreter arithmetic profile. |
 | `minimal-arithmetic-native` | Smallest native arithmetic profile over `cil`. |
 | `pricing-restricted` | Composition-constrained pricing profile with a restricted runtime surface. |
-| `restricted-sandbox` | Composition-constrained profile; not an isolation guarantee. |
+| `composition-restricted` | Composition-constrained profile; not an isolation guarantee. |
 
 ## How it fits into the pipeline
 
@@ -174,7 +174,7 @@ Examples are located under `UniversalToolchain/Dialects/examples/wist`:
 
 - Do not document rules as an available public runtime feature. `rule-schema`, `rule-run`, raw-source RuleSet MVP parsing and `RuleDeclarationsModule` are temporarily removed.
 - Keep dialect files explicit. A future reader should be able to see which syntax and backend paths are available.
-- Do not treat `restricted-sandbox` as a process isolation guarantee.
+- Do not treat `composition-restricted` as a process isolation guarantee.
 - Do not add raw-source parsing workarounds for missing language features. Syntax must be owned by lexer/parser/AST/module code.
 - Keep public dialect examples aligned with the shipped runtime dialect frontend, not with secondary parser experiments.
 

@@ -431,7 +431,7 @@ public sealed class WistRuntimePathGuardrailTests
             requiredInfrastructure.GetIrModuleTypes()
                 .Concat(selection.OrderedModules
                     .Select(typeLoader.LoadType)
-                    .Where(static x => typeof(IIRProcessingModule).IsAssignableFrom(x))));
+                    .Where(static x => typeof(IAirOptimizer).IsAssignableFrom(x))));
 
         Assert.Multiple(() =>
         {

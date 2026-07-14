@@ -4,6 +4,10 @@ namespace BasicCilCompiler.Contracts;
 
 public sealed class CilBackendContractDescriptorProvider : IModuleContractDescriptorProvider
 {
+    private static readonly ContractNamespaceOwner CilNamespace = ContractNamespaceOwner.Reserved("cil-backend", "cil");
+
+    public IReadOnlyList<ContractNamespaceOwner> NamespaceOwners => [ContractNamespaceOwner.Backend, CilNamespace];
+
     private readonly IReadOnlyList<IntrinsicSymbolId> _supportedIntrinsics;
 
     public CilBackendContractDescriptorProvider(IEnumerable<string>? supportedIntrinsics = null)

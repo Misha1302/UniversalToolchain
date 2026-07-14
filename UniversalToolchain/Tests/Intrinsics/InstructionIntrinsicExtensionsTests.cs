@@ -1,5 +1,4 @@
 using BasicCore.Builtins;
-using BasicCore.Legacy;
 
 namespace Tests.Intrinsics;
 
@@ -44,7 +43,7 @@ public sealed class InstructionIntrinsicExtensionsTests
     }
 
     [Test]
-    public void TryGetTypedIntrinsicInvocation_ShouldReturnFalse_ForLegacyStringOperands()
+    public void TryGetTypedIntrinsicInvocation_ShouldReturnFalse_ForStringShapedPayload()
     {
         var instruction = new Instruction(UOpCode.Intrinsic, ["boolean_not"]);
 
@@ -68,7 +67,20 @@ public sealed class InstructionIntrinsicExtensionsTests
     }
 
     [Test]
-    public void InstructionTypeStackApplier_ShouldUseTypedIntrinsicInvocation_WithoutLegacyDecoding()
+    public void CreateForCapability_ShouldStillCreateCanonicalTypedShape()
+    {
+        var instruction = IntrinsicInstructionFactory.CreateForCapability("custom.capability", 42);
+
+        var success = IntrinsicInstructionView.TryRead(instruction, out var intrinsic);
+
+        Assert.That(success, Is.True);
+        Assert.That(intrinsic.CapabilityId, Is.EqualTo("custom.capability"));
+        Assert.That(intrinsic.DataOperands, Is.EqualTo(new object?[] { 42 }));
+        Assert.That(instruction.Operands.Count, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void InstructionTypeStackApplier_ShouldUseTypedIntrinsicInvocation()
     {
         var invocation = CreateInvocation(
             BuiltinIntrinsicSymbols.Core.LoadConst,
@@ -86,18 +98,18 @@ public sealed class InstructionIntrinsicExtensionsTests
         InstructionTypeStackApplier.Apply(
             [instruction],
             stack,
-            new InstructionIntrinsicReader(new ThrowingLegacyIntrinsicDecoder()),
+            new InstructionIntrinsicReader(),
             processor);
 
         Assert.That(stack, Is.EqualTo(new[] { typeof(int) }));
     }
 
     [Test]
-    public void InstructionIntrinsicReader_ShouldUseTypedIntrinsicInvocation_WithoutLegacyDecoding()
+    public void InstructionIntrinsicReader_ShouldReadTypedIntrinsicInvocation()
     {
         var invocation = CreateInvocation(BuiltinIntrinsicSymbols.Boolean.Not);
         var instruction = IntrinsicInstructionFactory.Create(invocation);
-        var reader = new InstructionIntrinsicReader(new ThrowingLegacyIntrinsicDecoder());
+        var reader = new InstructionIntrinsicReader();
 
         var success = reader.TryRead(instruction, out var decodedInvocation);
 
@@ -106,17 +118,15 @@ public sealed class InstructionIntrinsicExtensionsTests
     }
 
     [Test]
-    public void InstructionIntrinsicReader_ShouldUseLegacyDecoder_AsFallback()
+    public void InstructionIntrinsicReader_ShouldRejectStringShapedPayload()
     {
         var instruction = new Instruction(UOpCode.Intrinsic, ["boolean_not"]);
-        var legacyDecoder = new RecordingLegacyIntrinsicDecoder(CreateInvocation(BuiltinIntrinsicSymbols.Boolean.Not));
-        var reader = new InstructionIntrinsicReader(legacyDecoder);
+        var reader = new InstructionIntrinsicReader();
 
         var success = reader.TryRead(instruction, out var invocation);
 
-        Assert.That(success, Is.True);
-        Assert.That(invocation.Symbol, Is.EqualTo(BuiltinIntrinsicSymbols.Boolean.Not));
-        Assert.That(legacyDecoder.CallCount, Is.EqualTo(1));
+        Assert.That(success, Is.False);
+        Assert.That(invocation, Is.EqualTo(default(IntrinsicInvocation)));
     }
 
     [Test]
@@ -134,11 +144,10 @@ public sealed class InstructionIntrinsicExtensionsTests
         var exception = Assert.Throws<InvalidOperationException>(() => InstructionTypeStackApplier.Apply(
             [instruction],
             stack,
-            new InstructionIntrinsicReader(new LegacyIntrinsicDecoder()),
+            new InstructionIntrinsicReader(),
             processor));
 
         Assert.That(exception!.Message, Does.Contain("Unable to read intrinsic invocation"));
-        Assert.That(exception.Message, Does.Contain("unknown_intrinsic"));
     }
 
     private static IntrinsicInvocation CreateInvocation(
@@ -149,21 +158,4 @@ public sealed class InstructionIntrinsicExtensionsTests
             symbol ?? BuiltinIntrinsicSymbols.Boolean.Not,
             typeArguments ?? [],
             dataOperands ?? []);
-
-    private sealed class ThrowingLegacyIntrinsicDecoder : ILegacyIntrinsicDecoder
-    {
-        public bool TryDecode(Instruction instruction, out IntrinsicInvocation invocation) => throw new AssertionException("Legacy decoder should not be used for typed intrinsic instructions.");
-    }
-
-    private sealed class RecordingLegacyIntrinsicDecoder(IntrinsicInvocation invocation) : ILegacyIntrinsicDecoder
-    {
-        public int CallCount { get; private set; }
-
-        public bool TryDecode(Instruction instruction, out IntrinsicInvocation decodedInvocation)
-        {
-            CallCount++;
-            decodedInvocation = invocation;
-            return true;
-        }
-    }
 }

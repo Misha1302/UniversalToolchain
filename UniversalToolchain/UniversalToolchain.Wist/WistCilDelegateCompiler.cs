@@ -17,24 +17,6 @@ internal sealed class WistCilDelegateCompiler : IWistDelegateCompiler
             : (TDelegate)output.Method.CreateDelegate(typeof(TDelegate));
     }
 
-    public WistFunc<TArg0, TResult> CompileFunc<TArg0, TResult>(
-        WistDialectExecutionHost host,
-        string formula,
-        OrderedDictionary<string, Type> declaredBindings) =>
-        new(CompileOutput(host, formula, declaredBindings));
-
-    public WistFunc<TArg0, TArg1, TResult> CompileFunc<TArg0, TArg1, TResult>(
-        WistDialectExecutionHost host,
-        string formula,
-        OrderedDictionary<string, Type> declaredBindings) =>
-        new(CompileOutput(host, formula, declaredBindings));
-
-    public WistFunc<TArg0, TArg1, TArg2, TResult> CompileFunc<TArg0, TArg1, TArg2, TResult>(
-        WistDialectExecutionHost host,
-        string formula,
-        OrderedDictionary<string, Type> declaredBindings) =>
-        new(CompileOutput(host, formula, declaredBindings));
-
     private static CilCompilationOutput CompileOutput(
         WistDialectExecutionHost host,
         string formula,

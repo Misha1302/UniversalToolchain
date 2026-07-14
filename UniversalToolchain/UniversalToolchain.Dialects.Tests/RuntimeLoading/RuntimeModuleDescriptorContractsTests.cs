@@ -13,9 +13,9 @@ public class RuntimeModuleDescriptorContractsTests
         Assert.Multiple(() =>
         {
             Assert.That(frontendDescriptor.IsFrontendModule, Is.True);
-            Assert.That(frontendDescriptor.IsIrProcessingModule, Is.False);
+            Assert.That(frontendDescriptor.IsAirOptimizer, Is.False);
             Assert.That(irDescriptor.IsFrontendModule, Is.False);
-            Assert.That(irDescriptor.IsIrProcessingModule, Is.True);
+            Assert.That(irDescriptor.IsAirOptimizer, Is.True);
         });
     }
 
@@ -54,7 +54,7 @@ public class RuntimeModuleDescriptorContractsTests
 
     private sealed class TestFrontendModule : IFrontendCoreModule;
 
-    private sealed class TestIrModule : IIRProcessingModule;
+    private sealed class TestIrModule : IAirOptimizer;
 
     private sealed class InvalidModuleType;
 }

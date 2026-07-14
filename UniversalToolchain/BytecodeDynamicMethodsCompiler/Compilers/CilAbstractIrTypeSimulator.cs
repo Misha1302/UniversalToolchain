@@ -48,7 +48,7 @@ internal sealed class CilAbstractIrTypeSimulator
             case UOpCode.Annotate:
                 return;
             case UOpCode.Push:
-                stack.Push(instruction.Operands[0].GetType());
+                stack.Push(AirPushOperand.GetDeclaredType(instruction.Operands[0]));
                 return;
             case UOpCode.Drop:
                 stack.Pop();
@@ -80,7 +80,7 @@ internal sealed class CilAbstractIrTypeSimulator
         IDictionary<Guid, List<Type>> labelStacks
     )
     {
-        var labelId = instruction.Operands[0].Get<Guid>();
+        var labelId = GetRequiredLabelId(instruction);
         labelStacks[labelId] = [.. stack];
     }
 
@@ -90,11 +90,20 @@ internal sealed class CilAbstractIrTypeSimulator
         IDictionary<Guid, List<Type>> labelStacks
     )
     {
-        var labelId = instruction.Operands[0].Get<Guid>();
+        var labelId = GetRequiredLabelId(instruction);
         if (!labelStacks.TryGetValue(labelId, out var savedStack))
             return;
 
         stack.Clear();
         stack.AddRange(savedStack);
     }
+    private static Guid GetRequiredLabelId(Instruction instruction)
+    {
+        if (instruction.Operands.Count == 1 && instruction.Operands[0] is Guid labelId)
+            return labelId;
+
+        return Thrower.InvalidOpEx<Guid>(
+            $"AIR instruction '{instruction.UOpCode}' requires exactly one Guid label operand.");
+    }
+
 }

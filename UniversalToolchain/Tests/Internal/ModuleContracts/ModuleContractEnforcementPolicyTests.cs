@@ -16,21 +16,21 @@ public sealed class ModuleContractEnforcementPolicyTests
 
         Assert.That(report.Diagnostics.Single().Code, Is.EqualTo(ModuleContractDiagnosticCodes.NewModuleMissingDescriptor));
         Assert.That(report.Diagnostics.Single().Severity, Is.EqualTo(ToolchainDiagnosticSeverity.Error));
-        Assert.That(report.ModuleStatuses.Single().Status, Is.EqualTo(ModuleContractCompatibilityStatus.LegacyImplicit));
+        Assert.That(report.ModuleStatuses.Single().Status, Is.EqualTo(ModuleContractCompatibilityStatus.Undeclared));
     }
 
     [Test]
-    public void Build_WhenLegacyModuleHasNoDescriptor_KeepsExplicitLegacyStatus()
+    public void Build_WhenAcceptedUndeclaredModuleHasNoDescriptor_KeepsExplicitStatus()
     {
-        var moduleId = new ModuleId("test.legacy-module");
+        var moduleId = new ModuleId("test.undeclared-module");
         var policy = ModuleContractEnforcementPolicy.EnforceNewModules(
-            [new ModuleContractStatusDeclaration(moduleId, ModuleContractCompatibilityStatus.LegacyImplicit)]);
+            [new ModuleContractStatusDeclaration(moduleId, ModuleContractCompatibilityStatus.Undeclared)]);
 
         var report = new ModuleContractSelectionBuilder().Build([moduleId], [], policy);
 
-        Assert.That(report.Diagnostics.Single().Code, Is.EqualTo(ModuleContractDiagnosticCodes.LegacyImplicitModule));
+        Assert.That(report.Diagnostics.Single().Code, Is.EqualTo(ModuleContractDiagnosticCodes.UndeclaredModule));
         Assert.That(report.Diagnostics.Single().Severity, Is.EqualTo(ToolchainDiagnosticSeverity.Warning));
-        Assert.That(report.ModuleStatuses.Single().Status, Is.EqualTo(ModuleContractCompatibilityStatus.LegacyImplicit));
+        Assert.That(report.ModuleStatuses.Single().Status, Is.EqualTo(ModuleContractCompatibilityStatus.Undeclared));
     }
 
     [Test]
@@ -69,7 +69,7 @@ public sealed class ModuleContractEnforcementPolicyTests
     }
 
     [Test]
-    public void SelectionBuilder_ShouldNotExposeImplicitLegacyCompatibleBuildOverload()
+    public void SelectionBuilder_ShouldNotExposeImplicitAllowUndeclaredBuildOverload()
     {
         var implicitBuildOverloads = typeof(ModuleContractSelectionBuilder)
             .GetMethods()
@@ -80,7 +80,7 @@ public sealed class ModuleContractEnforcementPolicyTests
         Assert.That(
             implicitBuildOverloads,
             Is.Empty,
-            "Production selection must pass an explicit enforcement policy; legacy compatibility is available only through BuildLegacyCompatible.");
+            "Production selection must pass an explicit enforcement policy; undeclared-module handling is available only through an explicit policy.");
     }
 
     private sealed class SingleFacetProvider(IModuleContractFacet facet) : IModuleContractDescriptorProvider

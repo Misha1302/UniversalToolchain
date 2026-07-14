@@ -1,3 +1,4 @@
+using BasicCore.Core;
 using ExceptionsManager;
 
 namespace UniversalIntermediateRepresentation;
@@ -15,7 +16,7 @@ public class GenericAbstractIR<TIdentifier> : IGenericAbstractIR<TIdentifier>
 
     public void Push<T>(T value)
     {
-        _instructions.Add(new Instruction(UOpCode.Push, [value!]));
+        _instructions.Add(new Instruction(UOpCode.Push, [AirPushOperand.Create(value)]));
     }
 
     public void Drop()
@@ -49,11 +50,13 @@ public class GenericAbstractIR<TIdentifier> : IGenericAbstractIR<TIdentifier>
         _instructions.AddRange(annotations.Select(ann => new Instruction(UOpCode.Annotate, ann)));
     }
 
-    public void Intrinsic(object instructionIdentifier, params List<object> operands)
+    public void Intrinsic(string capabilityId, params object?[] dataOperands)
     {
-        instructionIdentifier = instructionIdentifier.ArgNotNull();
-        operands = operands.ArgNotNull();
-        _instructions.Add(new Instruction(UOpCode.Intrinsic, [instructionIdentifier, ..operands]));
+        if (string.IsNullOrWhiteSpace(capabilityId))
+            throw new ArgumentException("Intrinsic capability identifier must not be empty.", nameof(capabilityId));
+
+        dataOperands = dataOperands.ArgNotNull();
+        _instructions.Add(IntrinsicInstructionFactory.CreateForCapability(capabilityId, dataOperands));
     }
 
 

@@ -40,8 +40,7 @@ double result = formula.CompiledDelegate(100.0, 5.0);
 ```
 
 Use this shape when the same formula is invoked repeatedly through a shipped `WistEngine` preset. Compile once, keep the
-returned program, and call `CompiledDelegate` from the hot path. `CompileFunc` remains as a preview compatibility
-convenience for small one-, two- and three-argument examples.
+returned program, and call `CompiledDelegate` from the hot path.
 
 For custom `.wistdialect` files, use [Custom Dialect Fast Invocation](/build-dsls/custom-dialect-fast-invocation). The
 current custom-dialect path compiles through `WistRuntimeFacade.TryCompile` and reuses compiled artifacts or the

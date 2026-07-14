@@ -98,10 +98,10 @@ The current public preview is intentionally scoped:
 | Capability | Current status |
 |---|---|
 | `WistEngine` facade | available in `UniversalToolchain.Wist` |
-| Restricted arithmetic/formula preset | available through `CreateRestrictedArithmetic()`; obsolete `CreateSafeFormulas()` remains for source compatibility |
+| Restricted arithmetic/formula preset | available through `CreateRestrictedArithmetic()` |
 | One-off evaluation | available through `Evaluate<T>()` |
 | Non-throwing validation | available through `Validate()` and `TryCompile<TDelegate>()` |
-| Typed compiled hot path | available through `Compile<TDelegate>()`; compatibility `CompileFunc(...)` overloads remain |
+| Typed compiled hot path | available through `Compile<TDelegate>()` |
 | Interpreter backend | available for diagnostics, fallback, and semantic parity work |
 | Dialect composition | available through shipped `.wistdialect` profiles and lower-level APIs |
 | Experimental SSA route | opt-in through `WistEngineOptions.Optimization.Ssa`, with an observable report and controlled `Prefer` fallback |
@@ -110,10 +110,10 @@ The current public preview is intentionally scoped:
 
 ## Install
 
-After the preview package is published, install `UniversalToolchain.Wist` `0.1.0-preview.4` from NuGet: <https://www.nuget.org/packages/UniversalToolchain.Wist/0.1.0-preview.4>. Until that package exists, use a local package produced by `dotnet pack` or a source checkout.
+After the preview package is published, install `UniversalToolchain.Wist` `0.1.0-alpha.1` from NuGet: <https://www.nuget.org/packages/UniversalToolchain.Wist/0.1.0-alpha.1>. Until that package exists, use a local package produced by `dotnet pack` or a source checkout.
 
 ```bash ci-run=false
-dotnet add package UniversalToolchain.Wist --version 0.1.0-preview.4
+dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.1
 ```
 
 Use source checkout when developing framework internals, modules, dialects, or repository documentation.
@@ -209,19 +209,19 @@ Console.WriteLine(program.Metadata.OptimizationReport.Ssa.UsedSsa);
 using UniversalToolchain.Wist;
 
 using var restrictedArithmetic = WistEngine.CreateRestrictedArithmetic();
-using var fullNativePreview = WistEngine.CreateFullNativePreview();
+using var fullNativePreview = WistEngine.CreateFullNative();
 using var trustedInterop = WistEngine.Create(new WistEngineOptions
 {
-    Preset = WistPreset.FullNativePreview,
+    Preset = WistPreset.FullNative,
     AllowedAssemblies = [typeof(Math).Assembly]
 });
 ```
 
 `CreateRestrictedArithmetic` is the recommended first-contact preset. It maps to the shipped `pricing-restricted` profile in this preview.
 
-`CreateFullNativePreview` maps to the broad native Wist preview profile, but CLR interop remains empty except for the shipped standard library until the host supplies `AllowedAssemblies`. It must not be used for untrusted input.
+`CreateFullNative` maps to the broad native Wist preview profile, but CLR interop remains empty except for the shipped standard library until the host supplies `AllowedAssemblies`. It must not be used for untrusted input.
 
-`CreateSafeFormulas` remains a compatibility alias for `CreateRestrictedArithmetic`. `CreateBusinessRules` and `CreateTrusted` remain compatibility aliases for `CreateFullNativePreview`; they do not represent a separate stable business-rules runtime or a hardened trust boundary.
+The facade intentionally exposes only the two explicit presets above. Product-specific policy belongs in a reviewed `WistEngineOptions` composition, not in ambiguous trust or business-rule aliases.
 
 ## What this is not
 
@@ -298,7 +298,7 @@ Located under `UniversalToolchain/Dialects/examples/wist`:
 - `minimal-arithmetic`: smallest interpreter arithmetic profile.
 - `minimal-arithmetic-native`: smallest native arithmetic profile over `cil`.
 - `pricing-restricted`: composition-constrained formula profile with a restricted runtime surface.
-- `restricted-sandbox`: composition-constrained profile, not a hardened sandbox guarantee.
+- `composition-restricted`: composition-constrained profile, not a hardened sandbox guarantee.
 
 ## Technical story
 

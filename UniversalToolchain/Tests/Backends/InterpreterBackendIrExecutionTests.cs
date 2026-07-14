@@ -33,10 +33,10 @@ public class InterpreterBackendIrExecutionTests
 
         var ir = BuildIr(
             new Instruction(UOpCode.Push, ["ab"]),
-            new Instruction(UOpCode.Intrinsic, ["call C# ctor", ctor!]),
+            IntrinsicInstructionFactory.CreateForCapability("call C# ctor", ctor!),
             new Instruction(UOpCode.Push, ["cd"]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", append!]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", toString!])
+            IntrinsicInstructionFactory.CreateForCapability("call C#", append!),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", toString!)
         );
 
         var result = ExecuteInInterpreter(ir);
@@ -52,7 +52,7 @@ public class InterpreterBackendIrExecutionTests
 
         var ir = BuildIr(
             new Instruction(UOpCode.Push, [123]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", genericEcho!])
+            IntrinsicInstructionFactory.CreateForCapability("call C#", genericEcho!)
         );
 
         var result = ExecuteInInterpreter(ir);
@@ -67,7 +67,7 @@ public class InterpreterBackendIrExecutionTests
 
         var ir = BuildIr(
             new Instruction(UOpCode.Push, [9]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", sqrtMethod!])
+            IntrinsicInstructionFactory.CreateForCapability("call C#", sqrtMethod!)
         );
 
         var result = ExecuteInInterpreter(ir);
@@ -79,7 +79,7 @@ public class InterpreterBackendIrExecutionTests
     public void InstanceCallWithoutInstance_ThrowsMeaningfulException()
     {
         var toString = typeof(StringBuilder).GetMethod(nameof(StringBuilder.ToString), Type.EmptyTypes);
-        var ir = BuildIr(new Instruction(UOpCode.Intrinsic, ["call C#", toString!]));
+        var ir = BuildIr(IntrinsicInstructionFactory.CreateForCapability("call C#", toString!));
 
         var exception = Assert.Throws<RuntimeExecutionException>(() => ExecuteInInterpreter(ir));
 
@@ -93,7 +93,7 @@ public class InterpreterBackendIrExecutionTests
 
         var ir = BuildIr(
             new Instruction(UOpCode.Push, [1]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", compareMethod!])
+            IntrinsicInstructionFactory.CreateForCapability("call C#", compareMethod!)
         );
 
         var exception = Assert.Throws<RuntimeExecutionException>(() => ExecuteInInterpreter(ir));
@@ -104,11 +104,11 @@ public class InterpreterBackendIrExecutionTests
     [Test]
     public void UnknownIntrinsic_ThrowsMeaningfulException()
     {
-        var ir = BuildIr(new Instruction(UOpCode.Intrinsic, ["unknown intrinsic"]));
+        var ir = BuildIr(IntrinsicInstructionFactory.CreateForCapability("unknown intrinsic"));
 
         var exception = Assert.Throws<RuntimeExecutionException>(() => ExecuteInInterpreter(ir));
 
-        Assert.That(exception!.Message, Does.Contain("Unsupported intrinsic instruction payload"));
+        Assert.That(exception!.Message, Does.Contain("Unsupported intrinsic"));
     }
 
     [Test]
@@ -132,14 +132,14 @@ public class InterpreterBackendIrExecutionTests
             new Instruction(UOpCode.Push, [false]),
             new Instruction(UOpCode.JmpIf, [innerTrue]),
             new Instruction(UOpCode.Push, [2]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", combineMethod!]),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", combineMethod!),
             new Instruction(UOpCode.Jmp, [endInner]),
             new Instruction(UOpCode.Label, [innerTrue]),
             new Instruction(UOpCode.Push, [9]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", combineMethod!]),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", combineMethod!),
             new Instruction(UOpCode.Label, [endInner]),
             new Instruction(UOpCode.Push, [3]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", combineMethod!])
+            IntrinsicInstructionFactory.CreateForCapability("call C#", combineMethod!)
         );
 
         var result = ExecuteInInterpreter(ir);

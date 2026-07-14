@@ -27,7 +27,6 @@ public class FormulaHotPathBenchmarks
     private Func<double, double, double, double> _cSharp = null!;
     private Func<FormulaBenchContext, double> _nCalc = null!;
     private Func<double, double, double, double> _wistCompiledDelegate = null!;
-    private WistFunc<double, double, double, double> _wistCompileFunc = null!;
 
     [Params(FormulaWorkload.SimpleArithmetic, FormulaWorkload.DeepArithmetic, FormulaWorkload.RepeatedSubexpressions)]
     public FormulaWorkload Workload { get; set; }
@@ -46,7 +45,6 @@ public class FormulaHotPathBenchmarks
         _wistCompiledDelegate = _wist
             .Compile<Func<double, double, double, double>>(FormulaBenchmarkData.WistFormula(Workload), "A", "B", "C")
             .CompiledDelegate;
-        _wistCompileFunc = _wist.CompileFunc<double, double, double, double>(FormulaBenchmarkData.WistFormula(Workload), "A", "B", "C");
 
         AssertParity();
     }
@@ -96,19 +94,6 @@ public class FormulaHotPathBenchmarks
         return sum;
     }
 
-    [Benchmark(OperationsPerInvoke = Operations)]
-    public double Wist_CompileFuncFastInvoker()
-    {
-        var sum = 0.0;
-        for (var k = 0; k < Operations; k++)
-        {
-            var i = NextIndex();
-            sum += _wistCompileFunc.Invoke(_a[i], _b[i], _c[i]);
-        }
-
-        return sum;
-    }
-
     private int NextIndex()
     {
         var i = _index;
@@ -130,7 +115,6 @@ public class FormulaHotPathBenchmarks
 
             FormulaBenchmarkData.AssertClose(expected, _nCalc(_context), nameof(NCalc_CompiledLambda), i);
             FormulaBenchmarkData.AssertClose(expected, _wistCompiledDelegate(_a[i], _b[i], _c[i]), nameof(Wist_CompiledDelegate), i);
-            FormulaBenchmarkData.AssertClose(expected, _wistCompileFunc.Invoke(_a[i], _b[i], _c[i]), nameof(Wist_CompileFuncFastInvoker), i);
         }
     }
 }

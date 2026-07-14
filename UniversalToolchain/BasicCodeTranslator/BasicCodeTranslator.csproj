@@ -8,8 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\BasicParser\BasicParser.csproj"/>
-        <ProjectReference Include="..\DynamicMethodWrapper\DynamicMethodWrapper.csproj"/>
+        <ProjectReference Include="..\BasicCore\BasicCore.csproj"/>
     </ItemGroup>
 
 </Project>

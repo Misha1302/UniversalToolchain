@@ -146,64 +146,64 @@ public static class SsaCoreDescriptors
     ]);
 }
 
-public static class SsaPreviewSemanticDescriptors
+public static class SsaSemanticDescriptors
 {
     public static SemanticDescriptorSet ArithmeticInt32 { get; } = new(
         types:
         [
             new SemanticTypeDescriptor(
-                SsaPreviewSemanticTypes.Bool,
+                SsaSemanticTypes.Bool,
                 SemanticTypeTraits.Predicate | SemanticTypeTraits.ValueObject | SemanticTypeTraits.Immutable,
                 "preview bool"),
             new SemanticTypeDescriptor(
-                SsaPreviewSemanticTypes.Int32,
+                SsaSemanticTypes.Int32,
                 SemanticTypeTraits.Numeric | SemanticTypeTraits.ValueObject | SemanticTypeTraits.Immutable,
                 "preview int32"),
             new SemanticTypeDescriptor(
-                SsaPreviewSemanticTypes.Float64,
+                SsaSemanticTypes.Float64,
                 SemanticTypeTraits.Numeric | SemanticTypeTraits.ValueObject | SemanticTypeTraits.Immutable,
                 "preview float64"),
             new SemanticTypeDescriptor(
-                SsaPreviewSemanticTypes.Object,
+                SsaSemanticTypes.Object,
                 SemanticTypeTraits.Reference | SemanticTypeTraits.RuntimeManaged,
                 "runtime managed object")
         ],
         callables:
         [
             new CallableDescriptor(
-                SsaPreviewCallables.AddInt32Unchecked,
+                SsaCallables.AddInt32Unchecked,
                 new CallableSignature(
-                    [SsaPreviewSemanticTypes.Int32, SsaPreviewSemanticTypes.Int32],
-                    [SsaPreviewSemanticTypes.Int32]),
+                    [SsaSemanticTypes.Int32, SsaSemanticTypes.Int32],
+                    [SsaSemanticTypes.Int32]),
                 effects: SemanticEffectSummary.Pure,
                 determinism: Determinism.Deterministic,
                 algebraicTraits: AlgebraicTraits.Commutative | AlgebraicTraits.Associative,
                 trustLevel: SemanticTrustLevel.BuiltInTrusted,
                 displayName: "preview unchecked int32 addition"),
             new CallableDescriptor(
-                SsaPreviewCallables.SubtractInt32Unchecked,
+                SsaCallables.SubtractInt32Unchecked,
                 new CallableSignature(
-                    [SsaPreviewSemanticTypes.Int32, SsaPreviewSemanticTypes.Int32],
-                    [SsaPreviewSemanticTypes.Int32]),
+                    [SsaSemanticTypes.Int32, SsaSemanticTypes.Int32],
+                    [SsaSemanticTypes.Int32]),
                 effects: SemanticEffectSummary.Pure,
                 determinism: Determinism.Deterministic,
                 trustLevel: SemanticTrustLevel.BuiltInTrusted,
                 displayName: "preview unchecked int32 subtraction"),
             new CallableDescriptor(
-                SsaPreviewCallables.MultiplyInt32Unchecked,
+                SsaCallables.MultiplyInt32Unchecked,
                 new CallableSignature(
-                    [SsaPreviewSemanticTypes.Int32, SsaPreviewSemanticTypes.Int32],
-                    [SsaPreviewSemanticTypes.Int32]),
+                    [SsaSemanticTypes.Int32, SsaSemanticTypes.Int32],
+                    [SsaSemanticTypes.Int32]),
                 effects: SemanticEffectSummary.Pure,
                 determinism: Determinism.Deterministic,
                 algebraicTraits: AlgebraicTraits.Commutative | AlgebraicTraits.Associative,
                 trustLevel: SemanticTrustLevel.BuiltInTrusted,
                 displayName: "preview unchecked int32 multiplication"),
             new CallableDescriptor(
-                SsaPreviewCallables.EqualInt32,
+                SsaCallables.EqualInt32,
                 new CallableSignature(
-                    [SsaPreviewSemanticTypes.Int32, SsaPreviewSemanticTypes.Int32],
-                    [SsaPreviewSemanticTypes.Bool]),
+                    [SsaSemanticTypes.Int32, SsaSemanticTypes.Int32],
+                    [SsaSemanticTypes.Bool]),
                 effects: SemanticEffectSummary.Pure,
                 determinism: Determinism.Deterministic,
                 algebraicTraits: AlgebraicTraits.Commutative | AlgebraicTraits.Comparison,

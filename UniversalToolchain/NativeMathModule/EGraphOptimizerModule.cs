@@ -9,7 +9,7 @@ namespace NativeMathModule;
 [AutoRegisterService]
 [IntrinsicDescriptorProvider(typeof(ArithmeticIntrinsicDescriptorProvider))]
 [ArithmeticModeCompatibility(ArithmeticMode.Native)]
-public class EGraphOptimizerModule : IIRProcessingModule
+public class EGraphOptimizerModule : IAirOptimizer
 {
     private static readonly IReadOnlyList<Type> _supportedArithmeticTypes =
     [
@@ -25,7 +25,7 @@ public class EGraphOptimizerModule : IIRProcessingModule
         _capabilityContext = capabilityContext;
     }
 
-    public IAbstractIR ProcessIr<TCompilationOutput>(IAbstractIR current, IAbstractIrCompiler<TCompilationOutput> compiler)
+    public IAbstractIR Optimize(IAbstractIR current)
     {
         if (_capabilityContext == null)
             Thrower.InvalidOpEx("E-graph optimizer requires intrinsic capability context initialization.");
@@ -106,7 +106,11 @@ public class EGraphOptimizerModule : IIRProcessingModule
             {
                 case UOpCode.Push:
                 {
-                    if (instruction.Operands.Count != 1 || !TryCreateConstExpr(instruction.Operands[0], out var constExpr))
+                    if (instruction.Operands.Count != 1)
+                        return block;
+
+                    var value = AirPushOperand.GetValue(instruction.Operands[0]);
+                    if (value is null || !TryCreateConstExpr(value, out var constExpr))
                         return block;
                     expressionStack.Push(constExpr);
                     break;

@@ -115,8 +115,21 @@ public sealed class CapabilityCatalog
             if (provider is ILanguageFeatureDescriptorProvider languageFeatureDescriptorProvider)
                 foreach (var feature in languageFeatureDescriptorProvider.GetLanguageFeatures())
                 {
+                    if (featureOwnersById.TryGetValue(feature.FeatureId, out var existingOwner))
+                    {
+                        diagnostics.Add(new ToolchainDiagnostic(
+                            ToolchainDiagnosticCodes.DuplicateLanguageFeature,
+                            ToolchainDiagnosticSeverity.Error,
+                            $"Language feature id '{feature.FeatureId.Value}' is declared by both " +
+                            $"'{CapabilityProviderTypeResolver.GetTypeName(existingOwner.ProviderType)}' and " +
+                            $"'{CapabilityProviderTypeResolver.GetTypeName(descriptor.ProviderType)}'.",
+                            null,
+                            [new ToolchainDiagnosticHint("Assign one canonical provider to each language feature id or introduce an explicit merge contract.")]));
+                        continue;
+                    }
+
                     features.Add(feature);
-                    featureOwnersById.TryAdd(feature.FeatureId, descriptor);
+                    featureOwnersById.Add(feature.FeatureId, descriptor);
                 }
 
             if (provider is IBuiltinFunctionDescriptorProvider builtinFunctionDescriptorProvider)

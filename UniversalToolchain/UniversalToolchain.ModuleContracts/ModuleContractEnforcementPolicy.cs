@@ -18,11 +18,11 @@ public sealed class ModuleContractEnforcementPolicy
 
     public bool RequireNewModulesDeclared { get; }
 
-    public static ModuleContractEnforcementPolicy LegacyCompatible { get; } = new([], false);
+    public static ModuleContractEnforcementPolicy AllowUndeclared { get; } = new([], false);
 
     public static ModuleContractEnforcementPolicy EnforceNewModules(
-        IEnumerable<ModuleContractStatusDeclaration> legacyStatuses) =>
-        new(legacyStatuses, true);
+        IEnumerable<ModuleContractStatusDeclaration> acceptedUndeclaredModules) =>
+        new(acceptedUndeclaredModules, true);
 
     public bool TryGetExplicitStatus(
         ModuleId moduleId,

@@ -95,15 +95,9 @@ method System.Int32 UniversalToolchain.Wist.WistDialectSource+Text.GetHashCode()
 method System.String UniversalToolchain.Wist.WistDialectSource+Text.ToString()
 type class UniversalToolchain.Wist.WistEngine
 method UniversalToolchain.Wist.WistProgram<TDelegate> UniversalToolchain.Wist.WistEngine.Compile``1(System.String formula, System.String[] parameterNames)
-method UniversalToolchain.Wist.WistFunc<TArg0, TResult> UniversalToolchain.Wist.WistEngine.CompileFunc``2(System.String formula, System.String arg0)
-method UniversalToolchain.Wist.WistFunc<TArg0, TArg1, TResult> UniversalToolchain.Wist.WistEngine.CompileFunc``3(System.String formula, System.String arg0, System.String arg1)
-method UniversalToolchain.Wist.WistFunc<TArg0, TArg1, TArg2, TResult> UniversalToolchain.Wist.WistEngine.CompileFunc``4(System.String formula, System.String arg0, System.String arg1, System.String arg2)
 method UniversalToolchain.Wist.WistEngine UniversalToolchain.Wist.WistEngine.Create(UniversalToolchain.Wist.WistEngineOptions options)
-method UniversalToolchain.Wist.WistEngine UniversalToolchain.Wist.WistEngine.CreateBusinessRules()
-method UniversalToolchain.Wist.WistEngine UniversalToolchain.Wist.WistEngine.CreateFullNativePreview()
+method UniversalToolchain.Wist.WistEngine UniversalToolchain.Wist.WistEngine.CreateFullNative()
 method UniversalToolchain.Wist.WistEngine UniversalToolchain.Wist.WistEngine.CreateRestrictedArithmetic()
-method UniversalToolchain.Wist.WistEngine UniversalToolchain.Wist.WistEngine.CreateSafeFormulas()
-method UniversalToolchain.Wist.WistEngine UniversalToolchain.Wist.WistEngine.CreateTrusted()
 method System.Void UniversalToolchain.Wist.WistEngine.Dispose()
 method T UniversalToolchain.Wist.WistEngine.Evaluate``1(System.String code)
 method T UniversalToolchain.Wist.WistEngine.Evaluate``1(System.String code, System.Collections.Generic.IReadOnlyDictionary<System.String, System.Object> arguments)
@@ -123,12 +117,6 @@ property UniversalToolchain.Wist.WistResourceLimits UniversalToolchain.Wist.Wist
 method UniversalToolchain.Wist.WistEngineOptions UniversalToolchain.Wist.WistEngineOptions.FromDialectFile(System.String path)
 method UniversalToolchain.Wist.WistEngineOptions UniversalToolchain.Wist.WistEngineOptions.FromDialectText(System.String sourceText, System.String sourceName)
 method UniversalToolchain.Wist.WistEngineOptions UniversalToolchain.Wist.WistEngineOptions.FromPresetId(System.String presetId)
-type class UniversalToolchain.Wist.WistFunc<TArg0, TResult>
-method TResult UniversalToolchain.Wist.WistFunc<TArg0, TResult>.Invoke(TArg0 arg0)
-type class UniversalToolchain.Wist.WistFunc<TArg0, TArg1, TResult>
-method TResult UniversalToolchain.Wist.WistFunc<TArg0, TArg1, TResult>.Invoke(TArg0 arg0, TArg1 arg1)
-type class UniversalToolchain.Wist.WistFunc<TArg0, TArg1, TArg2, TResult>
-method TResult UniversalToolchain.Wist.WistFunc<TArg0, TArg1, TArg2, TResult>.Invoke(TArg0 arg0, TArg1 arg1, TArg2 arg2)
 type class UniversalToolchain.Wist.WistOptimizationOptions
 ctor UniversalToolchain.Wist.WistOptimizationOptions()
 property UniversalToolchain.Wist.WistSsaOptions UniversalToolchain.Wist.WistOptimizationOptions.Ssa { get; set; }
@@ -136,11 +124,8 @@ type class UniversalToolchain.Wist.WistOptimizationReport
 ctor UniversalToolchain.Wist.WistOptimizationReport(UniversalToolchain.Wist.WistSsaOptimizationReport ssa)
 property UniversalToolchain.Wist.WistSsaOptimizationReport UniversalToolchain.Wist.WistOptimizationReport.Ssa { get; }
 type enum UniversalToolchain.Wist.WistPreset
-field UniversalToolchain.Wist.WistPreset UniversalToolchain.Wist.WistPreset.BusinessRules = 3
-field UniversalToolchain.Wist.WistPreset UniversalToolchain.Wist.WistPreset.FullNativePreview = 1
-field UniversalToolchain.Wist.WistPreset UniversalToolchain.Wist.WistPreset.FullTrusted = 4
+field UniversalToolchain.Wist.WistPreset UniversalToolchain.Wist.WistPreset.FullNative = 1
 field UniversalToolchain.Wist.WistPreset UniversalToolchain.Wist.WistPreset.RestrictedArithmetic = 0
-field UniversalToolchain.Wist.WistPreset UniversalToolchain.Wist.WistPreset.SafeFormulas = 2
 field System.Int32 UniversalToolchain.Wist.WistPreset.value__
 type class UniversalToolchain.Wist.WistProgramMetadata
 ctor UniversalToolchain.Wist.WistProgramMetadata(System.String sourceText, System.String backend, System.Collections.Generic.IReadOnlyList<System.String> parameterNames, System.Collections.Generic.IReadOnlyList<System.Type> parameterTypes, System.Type returnType, UniversalToolchain.Wist.WistOptimizationReport optimizationReport)

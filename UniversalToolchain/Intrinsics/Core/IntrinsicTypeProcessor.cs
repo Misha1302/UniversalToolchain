@@ -1,5 +1,6 @@
 using System.Reflection;
-using ObjectExtensions;
+using IntermediateRepresentationAbstractions;
+using BasicCore.Capabilities;
 
 namespace BasicCore.Core;
 
@@ -8,301 +9,205 @@ public static class IntrinsicTypeProcessor
     public static void ProcessTypes(Instruction instruction, List<Type> stack)
     {
         instruction = instruction.ArgNotNull();
-
         stack = stack.ArgNotNull();
 
-        if (instruction.UOpCode != UOpCode.Intrinsic)
-            Thrower.InvalidOpEx("Instruction must be an intrinsic opcode.");
+        var intrinsic = IntrinsicInstructionView.ReadOrThrow(instruction);
+        var invocation = intrinsic.Invocation;
+        var symbol = invocation.Symbol;
 
-        var normalizedInstruction = NormalizeInstruction(instruction);
-        ProcessNormalizedInstruction(normalizedInstruction, stack);
+        if (symbol == BuiltinIntrinsicSymbols.Core.CallCSharp)
+            ProcessTypesCallCSharp(invocation, intrinsic.CapabilityId, stack);
+        else if (symbol == BuiltinIntrinsicSymbols.Core.CallCSharpCtor)
+            ProcessTypesCallCSharpCtor(invocation, intrinsic.CapabilityId, stack);
+        else if (symbol == BuiltinIntrinsicSymbols.Storage.StoreLocal)
+            PopOne(intrinsic.CapabilityId, stack);
+        else if (symbol == BuiltinIntrinsicSymbols.Storage.LoadLocal)
+            stack.Add(invocation.GetRequiredSingleRuntimeType());
+        else if (symbol == BuiltinIntrinsicSymbols.Storage.LoadLocalRef)
+            stack.Add(invocation.GetRequiredSingleRuntimeType().MakeByRefType());
+        else if (symbol == BuiltinIntrinsicSymbols.Core.LoadExternal)
+            stack.Add(invocation.GetRequiredSingleRuntimeType());
+        else if (symbol == BuiltinIntrinsicSymbols.Core.StoreExternal)
+            PopOne(intrinsic.CapabilityId, stack);
+        else if (symbol == BuiltinIntrinsicSymbols.Core.LoadConst)
+            stack.Add(invocation.GetRequiredSingleRuntimeType());
+        else if (symbol == BuiltinIntrinsicSymbols.Boolean.And || symbol == BuiltinIntrinsicSymbols.Boolean.Or)
+            ProcessBooleanBinary(intrinsic.CapabilityId, stack);
+        else if (symbol == BuiltinIntrinsicSymbols.Boolean.Not)
+            ProcessBooleanUnary(intrinsic.CapabilityId, stack);
+        else if (symbol.Namespace == BuiltinIntrinsicSymbols.Arithmetic.Add.Namespace)
+            ProcessArithmetic(invocation.GetRequiredSingleRuntimeType(), intrinsic.CapabilityId, stack);
+        else if (symbol.Namespace == BuiltinIntrinsicSymbols.Comparison.Equal.Namespace)
+            ProcessComparison(invocation.GetRequiredSingleRuntimeType(), intrinsic.CapabilityId, stack);
+        else if (string.Equals(symbol.Namespace, IntrinsicCapabilityNameEncoder.CapabilityNamespace, StringComparison.Ordinal))
+            ProcessCapabilityOnlyIntrinsic(intrinsic, stack);
+        else
+            Thrower.InvalidOpEx($"Unknown intrinsic '{symbol}'.");
     }
 
-    private static Instruction NormalizeInstruction(Instruction instruction)
+    private static void ProcessTypesCallCSharp(
+        IntrinsicInvocation invocation,
+        string capabilityId,
+        List<Type> stack)
     {
-        if (instruction.Operands.Count > 0 && instruction.Operands[0] is string)
-            return instruction;
-
-        return IntrinsicInstructionNormalizer.NormalizeOrThrow(instruction);
-    }
-
-    private static void ProcessNormalizedInstruction(Instruction instruction, List<Type> stack)
-    {
-        var name = instruction.Operands[0].Get<string>();
-
-        if (name == "call C#")
-        {
-            ProcessTypesCallCSharp(instruction, stack);
-            return;
-        }
-
-        if (name == "call C# ctor")
-        {
-            ProcessTypesCallCSharpCtor(instruction, stack);
-            return;
-        }
-
-        if (name == "store_local")
-        {
-            ProcessTypesStoreLocal(instruction, stack);
-            return;
-        }
-
-        if (name == "load_local")
-        {
-            ProcessTypesLoadLocal(instruction, stack);
-            return;
-        }
-
-        if (name == "load_local_ref")
-        {
-            ProcessTypesLoadLocalRef(instruction, stack);
-            return;
-        }
-
-        if (name == "load_external")
-        {
-            ProcessTypesLoadExternal(instruction, stack);
-            return;
-        }
-
-        if (name == "store_external")
-        {
-            ProcessTypesStoreExternal(instruction, stack);
-            return;
-        }
-
-        if (name == "load_bool")
-        {
-            ProcessTypesLoadBool(stack);
-            return;
-        }
-
-        if (name == "boolean_and")
-        {
-            ProcessTypesBooleanAnd(instruction, stack);
-            return;
-        }
-
-        if (name == "boolean_or")
-        {
-            ProcessTypesBooleanOr(instruction, stack);
-            return;
-        }
-
-        if (name == "boolean_not")
-        {
-            ProcessTypesBooleanNot(instruction, stack);
-            return;
-        }
-
-        if (name.StartsWith("load_", StringComparison.Ordinal))
-        {
-            ProcessTypesLoadNativeNumber(instruction, stack);
-            return;
-        }
-
-        if (name.StartsWith("add_", StringComparison.Ordinal)
-            || name.StartsWith("sub_", StringComparison.Ordinal)
-            || name.StartsWith("mul_", StringComparison.Ordinal)
-            || name.StartsWith("div_", StringComparison.Ordinal))
-        {
-            ProcessTypesArithmeticIntrinsic(instruction, stack);
-            return;
-        }
-
-        if (name.StartsWith("cmp_", StringComparison.Ordinal))
-        {
-            ProcessTypesComparisonIntrinsic(instruction, stack);
-            return;
-        }
-
-        Thrower.InvalidOpEx($"Unknown intrinsic '{name}'.");
-    }
-
-    private static void ProcessTypesCallCSharp(Instruction instruction, List<Type> stack)
-    {
+        var operand = invocation.GetRequiredDataOperand(0);
         var resolver = new MethodCallTypeSemanticsResolver();
 
         MethodCallResolution resolution;
-        if (instruction.Operands[1] is MethodInfo method)
+        if (operand is MethodInfo method)
             resolution = resolver.ResolveForStack(method, stack);
-        else if (instruction.Operands[1] is CSharpCallDescriptor descriptor)
+        else if (operand is IManagedCallDescriptor descriptor)
             resolution = resolver.ResolveForStack(descriptor, stack);
         else
-            resolution = Thrower.InvalidOpEx<MethodCallResolution>("call C# requires MethodInfo or CSharpCallDescriptor operand.");
+            resolution = Thrower.InvalidOpEx<MethodCallResolution>(
+                "CallCSharp requires MethodInfo or IManagedCallDescriptor data operand.");
 
         Thrower.AssertAlways(
             stack.Count >= resolution.ConsumedTypes.Count,
-            $"Not enough values on stack for intrinsic '{instruction.Operands[0].Get<string>()}'.");
+            $"Not enough values on stack for intrinsic '{capabilityId}'.");
 
         PopMany(stack, resolution.ConsumedTypes.Count);
         if (resolution.ReturnType != typeof(void))
             stack.Add(resolution.ReturnType);
     }
 
-    private static void ProcessTypesCallCSharpCtor(Instruction instruction, List<Type> stack)
+    private static void ProcessTypesCallCSharpCtor(
+        IntrinsicInvocation invocation,
+        string capabilityId,
+        List<Type> stack)
     {
-        var ctor = instruction.Operands[1].Get<ConstructorInfo>();
+        var ctor = invocation.GetRequiredDataOperand<ConstructorInfo>(0);
         Thrower.AssertAlways(ctor.DeclaringType != null, $"Constructor '{ctor}' must have a declaring type.");
 
         var parametersCount = ctor.GetParameters().Length;
         Thrower.AssertAlways(
             stack.Count >= parametersCount,
-            $"Not enough values on stack for intrinsic '{instruction.Operands[0].Get<string>()}'.");
+            $"Not enough values on stack for intrinsic '{capabilityId}'.");
 
         PopMany(stack, parametersCount);
         stack.Add(ctor.DeclaringType);
     }
 
-    private static void ProcessTypesStoreLocal(Instruction instruction, List<Type> stack)
+    private static void ProcessCapabilityOnlyIntrinsic(
+        IntrinsicInstructionView intrinsic,
+        List<Type> stack)
     {
+        var id = intrinsic.CapabilityId;
+
+        if (id == IntrinsicCapabilityIds.CallCSharp)
+        {
+            ProcessTypesCallCSharp(intrinsic.Invocation, id, stack);
+            return;
+        }
+
+        if (id == IntrinsicCapabilityIds.CallCSharpConstructor)
+        {
+            ProcessTypesCallCSharpCtor(intrinsic.Invocation, id, stack);
+            return;
+        }
+
+        if (id == IntrinsicCapabilityIds.StoreLocal || id == IntrinsicCapabilityIds.StoreExternal)
+        {
+            PopOne(id, stack);
+            return;
+        }
+
+        if (id is IntrinsicCapabilityIds.LoadLocal or IntrinsicCapabilityIds.LoadLocalReference or IntrinsicCapabilityIds.LoadExternal)
+        {
+            var runtimeType = intrinsic.DataOperands.Count >= 2
+                ? intrinsic.DataOperands[1] as Type
+                : null;
+            if (runtimeType is null)
+                throw new InvalidOperationException(
+                    $"Capability intrinsic '{id}' requires a CLR Type data operand at index 1.");
+
+            stack.Add(id == IntrinsicCapabilityIds.LoadLocalReference ? runtimeType.MakeByRefType() : runtimeType);
+            return;
+        }
+
+        if (id is IntrinsicCapabilityIds.BooleanAnd or IntrinsicCapabilityIds.BooleanOr)
+        {
+            ProcessBooleanBinary(id, stack);
+            return;
+        }
+
+        if (id == IntrinsicCapabilityIds.BooleanNot)
+        {
+            ProcessBooleanUnary(id, stack);
+            return;
+        }
+
+        if (id.StartsWith("load_", StringComparison.Ordinal))
+        {
+            stack.Add(GetTypeFromCapabilityId(id, "load_"));
+            return;
+        }
+
+        if (id.StartsWith("add_", StringComparison.Ordinal) ||
+            id.StartsWith("sub_", StringComparison.Ordinal) ||
+            id.StartsWith("mul_", StringComparison.Ordinal) ||
+            id.StartsWith("div_", StringComparison.Ordinal))
+        {
+            ProcessArithmetic(GetTypeFromCapabilityId(id, id[..4]), id, stack);
+            return;
+        }
+
+        if (id.StartsWith("cmp_", StringComparison.Ordinal))
+        {
+            var token = id[(id.LastIndexOf('_') + 1)..];
+            ProcessComparison(GetTypeFromToken(token, id), id, stack);
+            return;
+        }
+
+        Thrower.InvalidOpEx($"Unknown intrinsic capability '{id}'.");
+    }
+
+    private static Type GetTypeFromCapabilityId(string id, string prefix) =>
+        GetTypeFromToken(id[prefix.Length..], id);
+
+    private static Type GetTypeFromToken(string token, string capabilityId) =>
+        IntrinsicTypeTokenMap.TryResolveType(token, out var type)
+            ? type
+            : Thrower.InvalidOpEx<Type>(
+                $"Intrinsic capability '{capabilityId}' contains unsupported type token '{token}'.");
+
+    private static void ProcessArithmetic(Type operandType, string capabilityId, List<Type> stack)
+    {
+        Thrower.AssertAlways(stack.Count >= 2, $"Not enough values on stack for intrinsic '{capabilityId}'.");
         Thrower.AssertAlways(
-            stack.Count >= 1,
-            $"Not enough values on stack for intrinsic '{instruction.Operands[0].Get<string>()}'.");
-        stack.RemoveAt(stack.Count - 1);
-    }
-
-    private static void ProcessTypesLoadLocal(Instruction instruction, List<Type> stack)
-    {
-        var varType = instruction.Operands[2].Get<Type>();
-        stack.Add(varType);
-    }
-
-    private static void ProcessTypesLoadLocalRef(Instruction instruction, List<Type> stack)
-    {
-        var varType = instruction.Operands[2].Get<Type>();
-        stack.Add(varType.MakeByRefType());
-    }
-
-    private static void ProcessTypesLoadExternal(Instruction instruction, List<Type> stack)
-    {
-        var varType = instruction.Operands[2].Get<Type>();
-        stack.Add(varType);
-    }
-
-    private static void ProcessTypesStoreExternal(Instruction instruction, List<Type> stack)
-    {
-        Thrower.AssertAlways(
-            stack.Count >= 1,
-            $"Not enough values on stack for intrinsic '{instruction.Operands[0].Get<string>()}'.");
-        stack.RemoveAt(stack.Count - 1);
-    }
-
-    private static void ProcessTypesLoadBool(List<Type> stack)
-    {
-        stack.Add(typeof(bool));
-    }
-
-    private static void ProcessTypesBooleanAnd(Instruction instruction, List<Type> stack)
-    {
-        EnsureBinaryBoolOperands(stack, instruction.Operands[0].Get<string>());
-        PopTwoPush(stack, typeof(bool));
-    }
-
-    private static void ProcessTypesBooleanOr(Instruction instruction, List<Type> stack)
-    {
-        EnsureBinaryBoolOperands(stack, instruction.Operands[0].Get<string>());
-        PopTwoPush(stack, typeof(bool));
-    }
-
-    private static void ProcessTypesBooleanNot(Instruction instruction, List<Type> stack)
-    {
-        Thrower.AssertAlways(
-            stack.Count >= 1,
-            $"Not enough values on stack for intrinsic '{instruction.Operands[0].Get<string>()}'.");
-        Thrower.AssertAlways(
-            stack[^1] == typeof(bool),
-            $"Intrinsic '{instruction.Operands[0].Get<string>()}' requires a boolean operand.");
-
-        stack.RemoveAt(stack.Count - 1);
-        stack.Add(typeof(bool));
-    }
-
-    private static void ProcessTypesLoadNativeNumber(Instruction instruction, List<Type> stack)
-    {
-        var name = instruction.Operands[0].Get<string>();
-        stack.Add(GetLoadIntrinsicType(name));
-    }
-
-    private static void ProcessTypesArithmeticIntrinsic(Instruction instruction, List<Type> stack)
-    {
-        var name = instruction.Operands[0].Get<string>();
-        var (_, _, operandType) = ParseIntrinsicSignature(name);
-
-        Thrower.AssertAlways(stack.Count >= 2, $"Not enough values on stack for intrinsic '{name}'.");
-        Thrower.AssertAlways(stack[^1] == operandType && stack[^2] == operandType, $"Type mismatch for intrinsic '{name}'.");
-
+            stack[^1] == operandType && stack[^2] == operandType,
+            $"Type mismatch for intrinsic '{capabilityId}'.");
         PopTwoPush(stack, operandType);
     }
 
-    private static void ProcessTypesComparisonIntrinsic(Instruction instruction, List<Type> stack)
+    private static void ProcessComparison(Type operandType, string capabilityId, List<Type> stack)
     {
-        var name = instruction.Operands[0].Get<string>();
-        var (_, _, operandType) = ParseIntrinsicSignature(name);
-
-        Thrower.AssertAlways(stack.Count >= 2, $"Not enough values on stack for intrinsic '{name}'.");
-        Thrower.AssertAlways(stack[^1] == operandType && stack[^2] == operandType, $"Type mismatch for intrinsic '{name}'.");
-
+        Thrower.AssertAlways(stack.Count >= 2, $"Not enough values on stack for intrinsic '{capabilityId}'.");
+        Thrower.AssertAlways(
+            stack[^1] == operandType && stack[^2] == operandType,
+            $"Type mismatch for intrinsic '{capabilityId}'.");
         PopTwoPush(stack, typeof(bool));
     }
 
-    // ReSharper disable UnusedTupleComponentInReturnValue
-    private static (string Family, string Operation, Type OperandType) ParseIntrinsicSignature(string name)
+    private static void ProcessBooleanBinary(string capabilityId, List<Type> stack)
     {
-        var parts = name.Split('_');
-        Thrower.AssertAlways(parts.Length >= 2, $"Unsupported intrinsic name format: {name}");
-
-        if (parts[0] == "cmp")
-        {
-            Thrower.AssertAlways(parts.Length == 3, $"Unsupported comparison intrinsic name format: {name}");
-            return ("cmp", parts[1], GetTypeFromString(parts[2]));
-        }
-
-        Thrower.AssertAlways(parts.Length == 2, $"Unsupported intrinsic name format: {name}");
-        return (parts[0], parts[0], GetTypeFromString(parts[1]));
-    }
-
-    private static Type GetTypeFromString(string typeStr)
-    {
-        if (typeStr == "i32")
-            return typeof(int);
-
-        if (typeStr == "i64")
-            return typeof(long);
-
-        if (typeStr == "f32")
-            return typeof(float);
-
-        if (typeStr == "f64")
-            return typeof(double);
-
-        if (typeStr == "decimal")
-            return typeof(decimal);
-
-        return Thrower.InvalidOpEx<Type>($"Unsupported intrinsic type token: {typeStr}");
-    }
-
-    private static Type GetLoadIntrinsicType(string name)
-    {
-        return name switch
-        {
-            "load_i32" => typeof(int),
-            "load_i64" => typeof(long),
-            "load_f32" => typeof(float),
-            "load_f64" => typeof(double),
-            "load_decimal" => typeof(decimal),
-            "load_bool" => typeof(bool),
-            _ => Thrower.InvalidOpEx<Type>($"Unknown load intrinsic '{name}'.")
-        };
-    }
-
-    private static void EnsureBinaryBoolOperands(List<Type> stack, string intrinsicName)
-    {
-        Thrower.AssertAlways(stack.Count >= 2, $"Not enough values on stack for intrinsic '{intrinsicName}'.");
+        Thrower.AssertAlways(stack.Count >= 2, $"Not enough values on stack for intrinsic '{capabilityId}'.");
         Thrower.AssertAlways(
             stack[^1] == typeof(bool) && stack[^2] == typeof(bool),
-            $"Intrinsic '{intrinsicName}' requires two boolean operands.");
+            $"Intrinsic '{capabilityId}' requires two boolean operands.");
+        PopTwoPush(stack, typeof(bool));
+    }
+
+    private static void ProcessBooleanUnary(string capabilityId, List<Type> stack)
+    {
+        Thrower.AssertAlways(stack.Count >= 1, $"Not enough values on stack for intrinsic '{capabilityId}'.");
+        Thrower.AssertAlways(stack[^1] == typeof(bool), $"Intrinsic '{capabilityId}' requires a boolean operand.");
+    }
+
+    private static void PopOne(string capabilityId, List<Type> stack)
+    {
+        Thrower.AssertAlways(stack.Count >= 1, $"Not enough values on stack for intrinsic '{capabilityId}'.");
+        stack.RemoveAt(stack.Count - 1);
     }
 
     private static void PopTwoPush(List<Type> stack, Type resultType)
@@ -315,7 +220,6 @@ public static class IntrinsicTypeProcessor
     private static void PopMany(List<Type> stack, int count)
     {
         Thrower.AssertAlways(stack.Count >= count, $"Cannot pop {count} values from a stack of size {stack.Count}.");
-
         for (var i = 0; i < count; i++)
             stack.RemoveAt(stack.Count - 1);
     }

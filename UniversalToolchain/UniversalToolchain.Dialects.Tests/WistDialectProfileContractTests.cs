@@ -43,7 +43,7 @@ public class WistDialectProfileContractTests
     [Test]
     public void RestrictedSandbox_DialectFile_IsInterpreterOnly_AndDisablesInteropStateAndControlFlow()
     {
-        var source = File.ReadAllText(GetDialectFilePath("restricted-sandbox"));
+        var source = File.ReadAllText(GetDialectFilePath("composition-restricted"));
 
         Assert.Multiple(() =>
         {
@@ -58,14 +58,14 @@ public class WistDialectProfileContractTests
     }
 
     [Test]
-    public void RestrictedSandbox_Compose_ContainsRestrictedSecurityAndSandboxCapability()
+    public void CompositionRestricted_Compose_ContainsRestrictedSecurityAndCapability()
     {
-        var source = File.ReadAllText(GetDialectFilePath("restricted-sandbox"));
+        var source = File.ReadAllText(GetDialectFilePath("composition-restricted"));
 
         Assert.Multiple(() =>
         {
             Assert.That(source, Does.Contain("security restricted"));
-            Assert.That(source, Does.Contain("capability sandbox"));
+            Assert.That(source, Does.Contain("capability composition-restricted"));
             Assert.That(source, Does.Not.Contain("capability unsafe-interop"));
         });
     }

@@ -27,17 +27,17 @@ public sealed class SelectedRuntimeModuleClassifier
             var moduleEntry = entry.ArgNotNull();
             var type = LoadModuleType(moduleEntry);
             var isFrontendModule = typeof(IFrontendCoreModule).IsAssignableFrom(type);
-            var isIrModule = typeof(IIRProcessingModule).IsAssignableFrom(type);
+            var isAirOptimizer = typeof(IAirOptimizer).IsAssignableFrom(type);
 
             if (isFrontendModule)
                 frontendModuleTypes.Add(type);
 
-            if (isIrModule)
+            if (isAirOptimizer)
                 irModuleTypes.Add(type);
 
-            if (!isFrontendModule && !isIrModule)
+            if (!isFrontendModule && !isAirOptimizer)
                 Thrower.InvalidOpEx(
-                    $"Runtime module '{moduleEntry.CanonicalAlias}' resolves to type '{DisplayName(type)}', but the type does not implement IFrontendCoreModule or IIRProcessingModule.");
+                    $"Runtime module '{moduleEntry.CanonicalAlias}' resolves to type '{DisplayName(type)}', but the type does not implement IFrontendCoreModule or IAirOptimizer.");
         }
 
         return new SelectedRuntimeModuleClassification(frontendModuleTypes, irModuleTypes);

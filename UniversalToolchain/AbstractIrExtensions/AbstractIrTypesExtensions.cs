@@ -24,7 +24,7 @@ public static class AbstractIrTypesExtensions
 
             var t = instruction.UOpCode;
             if (t == UOpCode.Nop) continue;
-            else if (t == UOpCode.Push) stack.Push(instruction.Operands[0].GetType());
+            else if (t == UOpCode.Push) stack.Push(AirPushOperand.GetDeclaredType(instruction.Operands[0]));
             else if (t == UOpCode.Drop) stack.Pop();
             else if (t == UOpCode.Jmp) continue;
             else if (t == UOpCode.JmpIf) stack.Pop();

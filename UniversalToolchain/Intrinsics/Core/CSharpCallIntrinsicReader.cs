@@ -1,53 +1,47 @@
 using System.Reflection;
 using BasicCore.Builtins;
+using BasicCore.Capabilities;
 using BasicCore.Contracts;
+using IntermediateRepresentationAbstractions;
 
 namespace BasicCore.Core;
 
 /// <summary>
 ///     Reads C# call intrinsics through the canonical intrinsic model.
-///     String spellings such as legacy display names are intentionally isolated in the legacy decoder.
 /// </summary>
 public static class CSharpCallIntrinsicReader
 {
     public static bool TryGetCallOperand(Instruction instruction, out object? operand)
     {
         operand = null;
-
-        if (!BuiltinIntrinsicInstruction.TryGetInvocation(instruction, out var invocation))
+        if (!IntrinsicInstructionView.TryRead(instruction, out var intrinsic))
             return false;
-
-        if (invocation.Symbol != BuiltinIntrinsicSymbols.Core.CallCSharp || invocation.DataOperands.Count == 0)
+        if (!string.Equals(intrinsic.CapabilityId, IntrinsicCapabilityIds.CallCSharp, StringComparison.Ordinal) ||
+            intrinsic.Invocation.DataOperands.Count == 0)
             return false;
-
-        operand = invocation.DataOperands[0];
+        operand = intrinsic.Invocation.DataOperands[0];
         return true;
     }
 
     public static bool TryGetCallMethod(Instruction instruction, out MethodInfo method)
     {
         method = default!;
-
         if (!TryGetCallOperand(instruction, out var operand))
             return false;
-
         method = operand switch
         {
             MethodInfo methodInfo => methodInfo,
-            CSharpCallDescriptor descriptor => descriptor.Method,
+            IManagedCallDescriptor descriptor => descriptor.Method,
             _ => null!
         };
-
         return method != null;
     }
 
-    public static bool TryGetCallDescriptor(Instruction instruction, out CSharpCallDescriptor descriptor)
+    public static bool TryGetCallDescriptor(Instruction instruction, out IManagedCallDescriptor descriptor)
     {
         descriptor = default!;
-
-        if (!TryGetCallOperand(instruction, out var operand) || operand is not CSharpCallDescriptor candidate)
+        if (!TryGetCallOperand(instruction, out var operand) || operand is not IManagedCallDescriptor candidate)
             return false;
-
         descriptor = candidate;
         return true;
     }

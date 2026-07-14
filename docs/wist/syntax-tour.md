@@ -156,7 +156,7 @@ Expected result:
 7
 ```
 
-Do not use this in restricted dialects. Interop is intentionally excluded from examples such as `restricted-sandbox`.
+Do not use this in restricted dialects. Interop is intentionally excluded from examples such as `composition-restricted`.
 
 ## Expected result
 

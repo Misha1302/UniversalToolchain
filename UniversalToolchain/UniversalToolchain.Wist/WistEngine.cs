@@ -45,17 +45,8 @@ public sealed class WistEngine : IDisposable
     public static WistEngine CreateRestrictedArithmetic() =>
         Create(new WistEngineOptions { Preset = WistPreset.RestrictedArithmetic });
 
-    public static WistEngine CreateFullNativePreview() =>
-        Create(new WistEngineOptions { Preset = WistPreset.FullNativePreview });
-
-    [Obsolete("Use CreateRestrictedArithmetic(). The restricted preset is not a security sandbox.")]
-    public static WistEngine CreateSafeFormulas() => CreateRestrictedArithmetic();
-
-    [Obsolete("Use CreateFullNativePreview() and explicitly review the trust boundary.")]
-    public static WistEngine CreateBusinessRules() => CreateFullNativePreview();
-
-    [Obsolete("Use CreateFullNativePreview(). This preset is only for trusted input.")]
-    public static WistEngine CreateTrusted() => CreateFullNativePreview();
+    public static WistEngine CreateFullNative() =>
+        Create(new WistEngineOptions { Preset = WistPreset.FullNative });
 
     /// <summary>
     /// Creates a Wist engine from public facade options. Options are snapshotted at creation time.
@@ -206,49 +197,8 @@ public sealed class WistEngine : IDisposable
         }
     }
 
-    [Obsolete("Use Compile<Func<TArg0, TResult>>(formula, arg0).")]
-    public WistFunc<TArg0, TResult> CompileFunc<TArg0, TResult>(string formula, string arg0)
-    {
-        ThrowIfDisposed();
-        EnsureSourceWithinLimits(formula);
-        EnsureParameterCountWithinLimits(1);
-        return _delegateCompiler.CompileFunc<TArg0, TResult>(
-            _host,
-            formula,
-            CreateDeclaredBindings(WistArgumentReader.TypesFromNamesAndTypes((arg0, typeof(TArg0)))));
-    }
 
-    [Obsolete("Use Compile<Func<TArg0, TArg1, TResult>>(formula, arg0, arg1).")]
-    public WistFunc<TArg0, TArg1, TResult> CompileFunc<TArg0, TArg1, TResult>(string formula, string arg0, string arg1)
-    {
-        ThrowIfDisposed();
-        EnsureSourceWithinLimits(formula);
-        EnsureParameterCountWithinLimits(2);
-        return _delegateCompiler.CompileFunc<TArg0, TArg1, TResult>(
-            _host,
-            formula,
-            CreateDeclaredBindings(WistArgumentReader.TypesFromNamesAndTypes((arg0, typeof(TArg0)), (arg1, typeof(TArg1)))));
-    }
 
-    [Obsolete("Use Compile<Func<TArg0, TArg1, TArg2, TResult>>(formula, arg0, arg1, arg2).")]
-    public WistFunc<TArg0, TArg1, TArg2, TResult> CompileFunc<TArg0, TArg1, TArg2, TResult>(
-        string formula,
-        string arg0,
-        string arg1,
-        string arg2)
-    {
-        ThrowIfDisposed();
-        EnsureSourceWithinLimits(formula);
-        EnsureParameterCountWithinLimits(3);
-        return _delegateCompiler.CompileFunc<TArg0, TArg1, TArg2, TResult>(
-            _host,
-            formula,
-            CreateDeclaredBindings(
-                WistArgumentReader.TypesFromNamesAndTypes(
-                    (arg0, typeof(TArg0)),
-                    (arg1, typeof(TArg1)),
-                    (arg2, typeof(TArg2)))));
-    }
 
     private WistProgram<TDelegate> CompileCore<TDelegate>(
         string formula,
@@ -310,7 +260,7 @@ public sealed class WistEngine : IDisposable
         Diagnostics = options.DiagnosticLevel == WistSsaDiagnosticLevel.Detailed
             ? SsaDiagnosticMode.Verbose
             : SsaDiagnosticMode.Default,
-        ProfileId = SsaPreviewRouteProfiles.ProfileId
+        ProfileId = SsaRouteProfiles.ProfileId
     };
 
     private WistOptimizationReport CreateOptimizationReport(SsaRouteReport? report)

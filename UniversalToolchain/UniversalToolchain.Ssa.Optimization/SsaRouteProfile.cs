@@ -43,7 +43,7 @@ public sealed class SsaRouteProfile
         IEnumerable<ISsaSemanticExtensionPack>? extensionPacks = null,
         CapabilitySet? targetCapabilities = null,
         SsaDiagnosticMode diagnostics = SsaDiagnosticMode.Default,
-        string id = SsaPreviewRouteProfiles.ProfileId)
+        string id = SsaRouteProfiles.ProfileId)
     {
         if (!Enum.IsDefined(policy))
             throw new ArgumentOutOfRangeException(nameof(policy), policy, "SSA route policy is not defined.");
@@ -210,7 +210,7 @@ public sealed class SsaRouteProfileBuilder
     private SsaRoutePolicy _policy;
     private CapabilitySet _capabilities = CapabilitySet.Empty;
     private SsaDiagnosticMode _diagnostics = SsaDiagnosticMode.Default;
-    private string _id = SsaPreviewRouteProfiles.ProfileId;
+    private string _id = SsaRouteProfiles.ProfileId;
 
     private SsaRouteProfileBuilder(SsaRoutePolicy policy)
     {
@@ -272,17 +272,17 @@ public sealed class SsaRouteProfileBuilder
         new(_policy, _packs, _capabilities, _diagnostics, _id);
 }
 
-public sealed class SsaPreviewArithmeticInt32Pack : ISsaSemanticExtensionPack
+public sealed class SsaArithmeticInt32Pack : ISsaSemanticExtensionPack
 {
-    public static SsaPreviewArithmeticInt32Pack Instance { get; } = new();
+    public static SsaArithmeticInt32Pack Instance { get; } = new();
 
-    private SsaPreviewArithmeticInt32Pack()
+    private SsaArithmeticInt32Pack()
     {
     }
 
     public string Id => "PreviewArithmeticInt32";
 
-    public SemanticDescriptorSet SemanticDescriptors => SsaPreviewSemanticDescriptors.ArithmeticInt32;
+    public SemanticDescriptorSet SemanticDescriptors => SsaSemanticDescriptors.ArithmeticInt32;
 
     public AirIntrinsicDescriptorSet AirIntrinsics => AirCoreIntrinsicDescriptors.ArithmeticInt32;
 
@@ -291,21 +291,21 @@ public sealed class SsaPreviewArithmeticInt32Pack : ISsaSemanticExtensionPack
     public IReadOnlyDictionary<string, CallableId> AirIntrinsicCallables { get; } =
         new ReadOnlyDictionary<string, CallableId>(new Dictionary<string, CallableId>(StringComparer.Ordinal)
         {
-            [AirIntrinsicIds.AddInt32Unchecked] = SsaPreviewCallables.AddInt32Unchecked,
-            [AirIntrinsicIds.SubtractInt32Unchecked] = SsaPreviewCallables.SubtractInt32Unchecked,
-            [AirIntrinsicIds.MultiplyInt32Unchecked] = SsaPreviewCallables.MultiplyInt32Unchecked,
-            [AirIntrinsicIds.EqualInt32] = SsaPreviewCallables.EqualInt32
+            [AirIntrinsicIds.AddInt32Unchecked] = SsaCallables.AddInt32Unchecked,
+            [AirIntrinsicIds.SubtractInt32Unchecked] = SsaCallables.SubtractInt32Unchecked,
+            [AirIntrinsicIds.MultiplyInt32Unchecked] = SsaCallables.MultiplyInt32Unchecked,
+            [AirIntrinsicIds.EqualInt32] = SsaCallables.EqualInt32
         });
 
     public SsaCallableLoweringTargetSet AirLoweringTargets =>
-        SsaPreviewAirIntrinsicLowerings.ArithmeticInt32.ToTargetSet();
+        SsaAirIntrinsicLowerings.ArithmeticInt32.ToTargetSet();
 
     public bool EnablesManagedCallables => false;
 
     public IReadOnlyList<IIrOptimizationPass> CreateOptimizationPasses() =>
     [
-        new SsaConstantFoldingPass(SemanticDescriptors, new SsaPreviewInt32ConstantEvaluator()),
-        new SsaSparseConditionalConstantPropagationPass(SemanticDescriptors, new SsaPreviewInt32ConstantEvaluator()),
+        new SsaConstantFoldingPass(SemanticDescriptors, new SsaInt32ConstantEvaluator()),
+        new SsaSparseConditionalConstantPropagationPass(SemanticDescriptors, new SsaInt32ConstantEvaluator()),
         new SsaBranchFoldingAndCleanupPass(),
         new SsaDeadPureInstructionEliminationPass(SsaCoreDescriptors.CoreOperations, SemanticDescriptors)
     ];
@@ -323,7 +323,7 @@ public sealed class SsaManagedCallablePack : ISsaSemanticExtensionPack
 
     // Managed callable descriptors are execution-scoped and are carried by
     // SsaManagedCallableBindingSet. Core preview type descriptors have one
-    // canonical owner: SsaPreviewArithmeticInt32Pack.
+    // canonical owner: SsaArithmeticInt32Pack.
     public SemanticDescriptorSet SemanticDescriptors => SemanticDescriptorSet.Empty;
 
     public AirIntrinsicDescriptorSet AirIntrinsics => AirIntrinsicDescriptorSet.Empty;
@@ -344,7 +344,7 @@ public sealed class SsaManagedCallablePack : ISsaSemanticExtensionPack
     public IReadOnlyList<IIrOptimizationPass> CreateOptimizationPasses() => [];
 }
 
-public static class SsaPreviewRouteProfiles
+public static class SsaRouteProfiles
 {
     public const string ProfileId = "preview-int32-managed";
 
@@ -358,7 +358,7 @@ public static class SsaPreviewRouteProfiles
             .WithId(profileId)
             .WithDiagnostics(diagnostics)
             .RequireTargetCapabilities(targetCapabilities ?? CapabilitySet.Empty)
-            .AddPack(SsaPreviewArithmeticInt32Pack.Instance)
+            .AddPack(SsaArithmeticInt32Pack.Instance)
             .AddPack(SsaManagedCallablePack.Instance)
             .Build();
 }

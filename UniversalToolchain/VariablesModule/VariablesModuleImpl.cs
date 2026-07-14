@@ -11,6 +11,8 @@ namespace VariablesModule;
 [AutoRegisterService]
 public class VariablesModuleImpl : IFrontendCoreModule, IModuleContractDescriptorProvider
 {
+    public IReadOnlyList<ContractNamespaceOwner> NamespaceOwners => _contractDescriptorProvider.NamespaceOwners;
+
     private static readonly VariablesModuleContractDescriptorProvider _contractDescriptorProvider = new();
 
     private static readonly IReadOnlyList<LexemeRegistration> _lexemeRegistrations =

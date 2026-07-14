@@ -6,6 +6,8 @@ namespace VariablesModule.Contracts;
 
 public sealed class VariablesModuleContractDescriptorProvider : IModuleContractDescriptorProvider
 {
+    public IReadOnlyList<ContractNamespaceOwner> NamespaceOwners => [ContractNamespaceOwner.Wist];
+
     public IReadOnlyList<IModuleContractFacet> GetFacets() =>
     [
         new SyntaxContractFacet(

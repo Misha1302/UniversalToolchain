@@ -1,6 +1,7 @@
 using BasicCore.Builtins;
 using BasicCore.Capabilities;
 using BasicCore.Execution;
+using IntermediateRepresentationAbstractions;
 using UniversalToolchain.Dialects.Integration;
 
 namespace NativeMathModule;
@@ -10,7 +11,7 @@ namespace NativeMathModule;
 [AutoRegisterService]
 [IntrinsicDescriptorProvider(typeof(CoreIntrinsicDescriptorProvider))]
 [ArithmeticModeCompatibility(ArithmeticMode.Native)]
-public class NativeCilOptimizerModule : IIRProcessingModule
+public class NativeCilOptimizerModule : IAirOptimizer
 {
     // Maps constants to typed load-constant intrinsics for backends that support them.
     private static readonly Dictionary<Type, Action<Instruction, CompilationContext>> _cilGenerators = new();
@@ -36,7 +37,7 @@ public class NativeCilOptimizerModule : IIRProcessingModule
         _capabilityContext = capabilityContext.NotNull("Argument 'capabilityContext' cannot be null.");
     }
 
-    public IAbstractIR ProcessIr<TCompilationOutput>(IAbstractIR current, IAbstractIrCompiler<TCompilationOutput> compiler)
+    public IAbstractIR Optimize(IAbstractIR current)
     {
         var capabilityContext = _capabilityContext.NotNull(
             "Native CIL optimizer requires intrinsic capability context initialization.");
@@ -70,7 +71,7 @@ public class NativeCilOptimizerModule : IIRProcessingModule
     {
         _cilGenerators[typeof(int)] = (instruction, context) =>
         {
-            var value = instruction.Operands[0].Get<int>();
+            var value = (int)AirPushOperand.GetValue(instruction.Operands[0])!;
             context.NewInstructions.Add(BuiltinIntrinsicInstruction.Create(
                 BuiltinIntrinsicSymbols.Core.LoadConst,
                 typeof(int),
@@ -79,7 +80,7 @@ public class NativeCilOptimizerModule : IIRProcessingModule
 
         _cilGenerators[typeof(long)] = (instruction, context) =>
         {
-            var value = instruction.Operands[0].Get<long>();
+            var value = (long)AirPushOperand.GetValue(instruction.Operands[0])!;
             context.NewInstructions.Add(BuiltinIntrinsicInstruction.Create(
                 BuiltinIntrinsicSymbols.Core.LoadConst,
                 typeof(long),
@@ -88,7 +89,7 @@ public class NativeCilOptimizerModule : IIRProcessingModule
 
         _cilGenerators[typeof(float)] = (instruction, context) =>
         {
-            var value = instruction.Operands[0].Get<float>();
+            var value = (float)AirPushOperand.GetValue(instruction.Operands[0])!;
             context.NewInstructions.Add(BuiltinIntrinsicInstruction.Create(
                 BuiltinIntrinsicSymbols.Core.LoadConst,
                 typeof(float),
@@ -97,7 +98,7 @@ public class NativeCilOptimizerModule : IIRProcessingModule
 
         _cilGenerators[typeof(double)] = (instruction, context) =>
         {
-            var value = instruction.Operands[0].Get<double>();
+            var value = (double)AirPushOperand.GetValue(instruction.Operands[0])!;
             context.NewInstructions.Add(BuiltinIntrinsicInstruction.Create(
                 BuiltinIntrinsicSymbols.Core.LoadConst,
                 typeof(double),
@@ -106,7 +107,7 @@ public class NativeCilOptimizerModule : IIRProcessingModule
 
         _cilGenerators[typeof(decimal)] = (instruction, context) =>
         {
-            var value = instruction.Operands[0].Get<decimal>();
+            var value = (decimal)AirPushOperand.GetValue(instruction.Operands[0])!;
             context.NewInstructions.Add(BuiltinIntrinsicInstruction.Create(
                 BuiltinIntrinsicSymbols.Core.LoadConst,
                 typeof(decimal),
@@ -133,10 +134,10 @@ public class NativeCilOptimizerModule : IIRProcessingModule
 
             if (optimizeLoadConst && instruction.UOpCode == UOpCode.Push && instruction.Operands.Count == 1)
             {
-                var value = instruction.Operands[0];
-                var valueType = value.GetType();
+                var value = AirPushOperand.GetValue(instruction.Operands[0]);
+                var valueType = value?.GetType();
 
-                if (_cilGenerators.TryGetValue(valueType, out var generator))
+                if (valueType is not null && _cilGenerators.TryGetValue(valueType, out var generator))
                 {
                     changed = true;
                     generator(instruction, context);
@@ -194,8 +195,8 @@ public class NativeCilOptimizerModule : IIRProcessingModule
     private static bool IsLoadEnvironmentCall(Instruction instruction)
     {
         return CSharpCallIntrinsicReader.TryGetCallDescriptor(instruction, out var descriptor)
-               && descriptor.Receiver is CSharpCallReceiver.ExecutionScopedProvider provider
-               && provider.ProviderType == typeof(ExternalRuntimeCallProvider)
+               && descriptor.ReceiverKind == ManagedCallReceiverKind.ExecutionScopedProvider
+               && descriptor.ExecutionScopedProviderType == typeof(ExternalRuntimeCallProvider)
                && descriptor.Method.Name == nameof(ExternalRuntimeCallProvider.LoadEnvironment);
     }
 

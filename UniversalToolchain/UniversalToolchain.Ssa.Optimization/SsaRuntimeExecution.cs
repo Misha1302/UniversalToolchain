@@ -16,7 +16,7 @@ public sealed class SsaRuntimeExecutionOptions
 
     public CapabilitySet TargetCapabilities { get; init; } = CapabilitySet.Empty;
 
-    public string ProfileId { get; init; } = SsaPreviewRouteProfiles.ProfileId;
+    public string ProfileId { get; init; } = SsaRouteProfiles.ProfileId;
 
     public SsaRuntimeExecutionOptions SnapshotValidated()
     {

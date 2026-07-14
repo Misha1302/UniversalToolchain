@@ -1,4 +1,5 @@
-using ObjectExtensions;
+using BasicCore.Contracts;
+using IntermediateRepresentationAbstractions;
 
 namespace BasicCore.Core;
 
@@ -7,22 +8,15 @@ public static class InstructionIntrinsicExtensions
     public static bool TryGetTypedIntrinsicInvocation(this Instruction instruction, out IntrinsicInvocation invocation)
     {
         invocation = default!;
-
-        if (instruction.MakeNullable() == null)
+        if (instruction == null || instruction.UOpCode != UOpCode.Intrinsic)
             return false;
-
-        if (instruction.UOpCode != UOpCode.Intrinsic)
-            return false;
-
-        if (instruction.Operands.Count != 1)
-            return false;
-
-        if (instruction.Operands[0] is not IntrinsicInvocation typedInvocation)
+        if (instruction.Operands.Count != 1 || instruction.Operands[0] is not IntrinsicInvocation typedInvocation)
             return false;
 
         invocation = typedInvocation;
         return true;
     }
 
-    public static bool IsTypedIntrinsicInvocation(this Instruction instruction) => instruction.TryGetTypedIntrinsicInvocation(out _);
+    public static bool IsTypedIntrinsicInvocation(this Instruction instruction) =>
+        instruction.TryGetTypedIntrinsicInvocation(out _);
 }

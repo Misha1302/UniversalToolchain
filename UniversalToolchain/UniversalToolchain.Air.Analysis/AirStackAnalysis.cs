@@ -115,7 +115,46 @@ public sealed class AirStackAnalyzer
             }
         }
 
+        VerifyTerminalStates(graph, exitStates, diagnostics);
         return new AirStackAnalysisResult(entryStates, exitStates, diagnostics);
+    }
+
+    private static void VerifyTerminalStates(
+        AirControlFlowGraph graph,
+        IReadOnlyDictionary<AirBlockId, AirStackState> exitStates,
+        List<string> diagnostics)
+    {
+        AirStackState? canonical = null;
+        AirBlockId canonicalBlock = default;
+
+        foreach (var block in graph.Blocks
+                     .Where(static block => block.Terminator.Successors.Count == 0)
+                     .OrderBy(static block => block.Id))
+        {
+            if (!exitStates.TryGetValue(block.Id, out var state))
+                continue;
+
+            if (state.Types.Count > 1)
+            {
+                diagnostics.Add(
+                    $"AIR terminal block '{block.Id}' finishes with {state.Types.Count} evaluation-stack values {state}; expected zero or one.");
+                continue;
+            }
+
+            if (canonical is null)
+            {
+                canonical = state;
+                canonicalBlock = block.Id;
+                continue;
+            }
+
+            if (!canonical.Equals(state))
+            {
+                diagnostics.Add(
+                    $"AIR terminal blocks '{canonicalBlock}' and '{block.Id}' expose incompatible return-stack shapes: " +
+                    $"{canonical} versus {state}.");
+            }
+        }
     }
 
     private static bool MergeEntry(
@@ -193,9 +232,9 @@ public sealed class AirStackAnalyzer
         List<string> diagnostics,
         IAirIntrinsicDescriptorResolver intrinsicResolver)
     {
-        if (instruction.Operands.Count == 0 || instruction.Operands[0] is not string intrinsicId)
+        if (!AirIntrinsicInvocationReader.TryRead(instruction, out var invocation, out var intrinsicId, out var payloadDiagnostic))
         {
-            diagnostics.Add($"AIR Intrinsic at instruction {instructionIndex} in block '{blockId}' must start with a string intrinsic identifier.");
+            diagnostics.Add($"AIR Intrinsic at instruction {instructionIndex} in block '{blockId}' has an invalid payload. {payloadDiagnostic}");
             return state;
         }
 
@@ -205,7 +244,7 @@ public sealed class AirStackAnalyzer
             return state;
         }
 
-        var dataOperandCount = instruction.Operands.Count - 1;
+        var dataOperandCount = invocation.DataOperands.Count;
         if (dataOperandCount != descriptor.DataOperandCount)
         {
             diagnostics.Add($"AIR Intrinsic '{intrinsicId}' at instruction {instructionIndex} in block '{blockId}' has {dataOperandCount} data operands; expected {descriptor.DataOperandCount}.");
@@ -253,9 +292,25 @@ public sealed class AirStackAnalyzer
             int => state.Push(AirValueTypes.Int32),
             double => state.Push(AirValueTypes.Float64),
             string => state.Push(AirValueTypes.Object),
+            AirConstant constant when TryMapConstantType(constant.DeclaredType, out var constantType) => state.Push(constantType),
             AirExternalValueReference external when TryMapExternalType(external.ValueType, out var externalType) => state.Push(externalType),
             _ => UnsupportedPush(blockId, instructionIndex, instruction, state, diagnostics)
         };
+    }
+
+    private static bool TryMapConstantType(Type type, out AirValueTypeId airType)
+    {
+        if (TryMapExternalType(type, out airType))
+            return true;
+
+        if (!type.IsValueType || Nullable.GetUnderlyingType(type) is not null)
+        {
+            airType = AirValueTypes.Object;
+            return true;
+        }
+
+        airType = default;
+        return false;
     }
 
     private static bool TryMapExternalType(Type type, out AirValueTypeId airType)

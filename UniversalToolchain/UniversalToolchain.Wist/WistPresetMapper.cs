@@ -10,10 +10,7 @@ internal static class WistPresetMapper
         return preset switch
         {
             WistPreset.RestrictedArithmetic => WistShippedDialectPresets.PricingRestricted,
-            WistPreset.FullNativePreview => WistShippedDialectPresets.FullDefaultNative,
-            WistPreset.SafeFormulas => WistShippedDialectPresets.PricingRestricted,
-            WistPreset.BusinessRules => WistShippedDialectPresets.FullDefaultNative,
-            WistPreset.FullTrusted => WistShippedDialectPresets.FullDefaultNative,
+            WistPreset.FullNative => WistShippedDialectPresets.FullDefaultNative,
             _ => ThrowUnsupportedPreset(preset)
         };
     }

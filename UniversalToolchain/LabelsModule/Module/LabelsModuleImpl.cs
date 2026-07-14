@@ -11,6 +11,8 @@ namespace LabelsModule.Module;
 [AutoRegisterService]
 public class LabelsModuleImpl : IFrontendCoreModule, IModuleContractDescriptorProvider
 {
+    public IReadOnlyList<ContractNamespaceOwner> NamespaceOwners => _contractDescriptorProvider.NamespaceOwners;
+
     private static readonly LabelsModuleContractDescriptorProvider _contractDescriptorProvider = new();
 
     private static readonly IReadOnlyList<LexemeRegistration> _lexemeRegistrations =

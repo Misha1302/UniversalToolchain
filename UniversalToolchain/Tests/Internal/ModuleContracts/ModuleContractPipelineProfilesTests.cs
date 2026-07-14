@@ -6,9 +6,9 @@ namespace Tests.Internal.ModuleContracts;
 public sealed class ModuleContractPipelineProfilesTests
 {
     [Test]
-    public void MigrationWarn_IsExplicitMigrationSafeProfile()
+    public void Warn_IsExplicitObservationProfile()
     {
-        var options = ModuleContractPipelineProfiles.MigrationWarn;
+        var options = ModuleContractPipelineProfiles.Warn;
 
         Assert.That(options.BytecodeProfile, Is.EqualTo(VerificationSeverityProfile.Warn));
         Assert.That(options.AirProfile, Is.EqualTo(VerificationSeverityProfile.Warn));

@@ -47,7 +47,7 @@ public class BasicCoreOrchestrationInternalBehaviorTests
             "optimizer.InitMethodsTranslator",
             "optimizer.InitIntrinsicCapabilityContext",
             "methodsTranslator.Translate",
-            "optimizer.ProcessIr",
+            "optimizer.Optimize",
             "middle.InitMethodsCompiler",
             "compiler.Compile",
             "middle.ProcessCompilation",
@@ -80,7 +80,7 @@ public class BasicCoreOrchestrationInternalBehaviorTests
         Assert.That(calls.IndexOf("module.ProcessBytecode"), Is.LessThan(calls.IndexOf("observer.AfterBytecode")));
         Assert.That(calls.IndexOf("observer.AfterBytecode"), Is.LessThan(calls.IndexOf("methodsTranslator.Translate")));
         Assert.That(calls.IndexOf("methodsTranslator.Translate"), Is.LessThan(calls.IndexOf("observer.AfterAir")));
-        Assert.That(calls.IndexOf("optimizer.ProcessIr"), Is.LessThan(calls.IndexOf("observer.AfterOptimizedAir")));
+        Assert.That(calls.IndexOf("optimizer.Optimize"), Is.LessThan(calls.IndexOf("observer.AfterOptimizedAir")));
         Assert.That(calls.IndexOf("observer.AfterOptimizedAir"), Is.LessThan(calls.IndexOf("compiler.Compile")));
     }
 
@@ -335,15 +335,15 @@ public class BasicCoreOrchestrationInternalBehaviorTests
         }
     }
 
-    private sealed class TrackingOptimizer(List<string> calls) : IIRProcessingModule
+    private sealed class TrackingOptimizer(List<string> calls) : IAirOptimizer
     {
         public void InitMethodsTranslator(IAbstractMethodsTranslator methodsTranslator) => calls.Add("optimizer.InitMethodsTranslator");
 
         public void InitIntrinsicCapabilityContext(IOptimizerIntrinsicCapabilityContext capabilityContext) => calls.Add("optimizer.InitIntrinsicCapabilityContext");
 
-        public IAbstractIR ProcessIr<TCompilationOutput>(IAbstractIR current, IAbstractIrCompiler<TCompilationOutput> compiler)
+        public IAbstractIR Optimize(IAbstractIR current)
         {
-            calls.Add("optimizer.ProcessIr");
+            calls.Add("optimizer.Optimize");
             return current;
         }
     }

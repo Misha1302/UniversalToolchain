@@ -1,6 +1,5 @@
 using BasicCore.Builtins;
 using BasicCore.Core.Rules;
-using SettableGettableModule.Core;
 
 namespace Tests.Intrinsics;
 
@@ -135,7 +134,7 @@ public sealed class BuiltInDescriptorProvidersTests
         descriptor.ValidationRule.Validate(invocation, _context);
         descriptor.StackRule.Apply(invocation, stack, _context);
 
-        Assert.That(stack, Is.EqualTo(new[] { typeof(VariableReference<int>) }));
+        Assert.That(stack, Is.EqualTo(new[] { typeof(int).MakeByRefType() }));
     }
 
     private static IntrinsicInvocation CreateInvocation(

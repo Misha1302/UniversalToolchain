@@ -22,5 +22,3 @@ global using UniversalToolchain.Ir.Abstractions;
 global using BasicCore.Semantics;
 
 global using BasicCore.Builtins;
-
-global using BasicCore.Legacy;

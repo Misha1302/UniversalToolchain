@@ -25,6 +25,9 @@ public sealed class AirControlFlowGraphBuilder
         var leaders = BuildLeaders(instructions, labels, diagnostics);
         var blockStarts = leaders.Order().ToArray();
         var blockIdsByStart = blockStarts.ToDictionary(static x => x, x => CreateBlockId(x, instructions[x]));
+        var syntheticExitId = instructions[^1].UOpCode is UOpCode.JmpIf or UOpCode.JmpIfNot
+            ? new AirBlockId("__synthetic_exit")
+            : (AirBlockId?)null;
 
         var blocksWithoutPredecessors = new List<AirBasicBlock>();
         var allSuccessors = new List<AirControlFlowEdge>();
@@ -34,7 +37,15 @@ public sealed class AirControlFlowGraphBuilder
             var end = i + 1 < blockStarts.Length ? blockStarts[i + 1] : instructions.Count;
             var id = blockIdsByStart[start];
             var body = instructions.Skip(start).Take(end - start).ToList();
-            var terminator = BuildTerminator(id, body, end, instructions.Count, blockIdsByStart, labels, diagnostics);
+            var terminator = BuildTerminator(
+                id,
+                body,
+                end,
+                instructions.Count,
+                blockIdsByStart,
+                labels,
+                diagnostics,
+                syntheticExitId);
             allSuccessors.AddRange(terminator.Successors);
 
             blocksWithoutPredecessors.Add(new AirBasicBlock(
@@ -43,6 +54,16 @@ public sealed class AirControlFlowGraphBuilder
                 end,
                 body,
                 terminator));
+        }
+
+        if (syntheticExitId.HasValue)
+        {
+            blocksWithoutPredecessors.Add(new AirBasicBlock(
+                syntheticExitId.Value,
+                instructions.Count,
+                instructions.Count,
+                [],
+                new AirBlockTerminator(AirBlockTerminatorKind.End)));
         }
 
         var predecessorsByTarget = allSuccessors
@@ -78,6 +99,12 @@ public sealed class AirControlFlowGraphBuilder
             }
 
             var label = instruction.Operands[0];
+            if (label is null)
+            {
+                diagnostics.Add($"Instruction {index} has a null Label operand.");
+                continue;
+            }
+
             if (!labels.TryAdd(label, index))
                 diagnostics.Add($"Duplicate AIR label '{label}' at instruction {index}.");
         }
@@ -123,7 +150,8 @@ public sealed class AirControlFlowGraphBuilder
         int instructionCount,
         IReadOnlyDictionary<int, AirBlockId> blockIdsByStart,
         IReadOnlyDictionary<object, int> labels,
-        List<string> diagnostics)
+        List<string> diagnostics,
+        AirBlockId? syntheticExitId)
     {
         if (body.Count == 0)
             return new AirBlockTerminator(AirBlockTerminatorKind.End);
@@ -156,12 +184,16 @@ public sealed class AirControlFlowGraphBuilder
                 successors.Add(new AirControlFlowEdge(blockId, target, targetKind));
             }
 
+            var fallthroughKind = last.UOpCode == UOpCode.JmpIf
+                ? AirControlFlowEdgeKind.ConditionFalse
+                : AirControlFlowEdgeKind.ConditionTrue;
             if (endIndex < instructionCount && blockIdsByStart.TryGetValue(endIndex, out var fallthrough))
             {
-                var fallthroughKind = last.UOpCode == UOpCode.JmpIf
-                    ? AirControlFlowEdgeKind.ConditionFalse
-                    : AirControlFlowEdgeKind.ConditionTrue;
                 successors.Add(new AirControlFlowEdge(blockId, fallthrough, fallthroughKind));
+            }
+            else if (endIndex == instructionCount && syntheticExitId.HasValue)
+            {
+                successors.Add(new AirControlFlowEdge(blockId, syntheticExitId.Value, fallthroughKind));
             }
 
             return new AirBlockTerminator(AirBlockTerminatorKind.ConditionalJump, last, successors);
@@ -213,13 +245,19 @@ public sealed class AirControlFlowGraphBuilder
         }
 
         target = instruction.Operands[0];
+        if (target is null)
+        {
+            diagnostics.Add($"Instruction {instructionIndex} has a null {instruction.UOpCode} target.");
+            return false;
+        }
+
         return true;
     }
 
     private static AirBlockId CreateBlockId(int startInstructionIndex, Instruction firstInstruction)
     {
         if (firstInstruction.UOpCode == UOpCode.Label && firstInstruction.Operands.Count == 1)
-            return new AirBlockId("label_" + Sanitize(firstInstruction.Operands[0].ToString() ?? "unknown"));
+            return new AirBlockId("label_" + Sanitize(firstInstruction.Operands[0]?.ToString() ?? "unknown"));
 
         return new AirBlockId($"b{startInstructionIndex:0000}");
     }

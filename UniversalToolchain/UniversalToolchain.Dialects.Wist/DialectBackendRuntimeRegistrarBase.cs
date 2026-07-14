@@ -26,11 +26,22 @@ public abstract class DialectBackendRuntimeRegistrarBase<TCompilationOutput> : I
 
         RegisterBackendDefaults(services);
 
-        services.AddTransient<ICoreRunnable>(provider => CreateCore(provider, configuration));
-        services.AddTransient<ICoreOptimizedRunnable>(provider => CreateCore(provider, configuration));
-        services.AddTransient<IExecutableGiver<TCompilationOutput>>(provider => CreateCore(provider, configuration));
-        services.AddTransient(provider => new ToolchainBackendRuntime(configuration.BackendDescriptor, CreateCore(provider, configuration)));
-        services.AddTransient(provider => new WistDialectBackendRuntime(configuration.BackendDescriptor, CreateCore(provider, configuration)));
+        var registration = new ToolchainBackendRuntimeRegistration(
+            configuration.BackendDescriptor,
+            provider => new ToolchainBackendRuntime(
+                configuration.BackendDescriptor,
+                CreateCore(provider, configuration)));
+
+        services.AddSingleton(registration);
+        services.AddSingleton<ToolchainBackendRuntime>(provider => registration.Resolve(provider));
+        services.AddSingleton<ICoreRunnable>(provider => registration.Resolve(provider).Core);
+        services.AddSingleton<ICoreOptimizedRunnable>(provider =>
+            (ICoreOptimizedRunnable)registration.Resolve(provider).Core);
+        services.AddSingleton<IExecutableGiver<TCompilationOutput>>(provider =>
+            (IExecutableGiver<TCompilationOutput>)registration.Resolve(provider).Core);
+        services.AddSingleton(provider => new WistDialectBackendRuntime(
+            configuration.BackendDescriptor,
+            registration.Resolve(provider).Core));
     }
 
     protected abstract void RegisterBackendDefaults(IServiceCollection services);
@@ -48,7 +59,7 @@ public abstract class DialectBackendRuntimeRegistrarBase<TCompilationOutput> : I
     {
         var capabilitySetFactory = provider.GetRequiredService<IIntrinsicCapabilitySetFactory>();
         var backendOptimizers = configuration.OptimizerTypes
-            .Select(type => (IIRProcessingModule)provider.GetRequiredService(type))
+            .Select(type => (IAirOptimizer)provider.GetRequiredService(type))
             .ToList();
         var frontendModules = provider.GetServices<IFrontendCoreModule>().ToList();
         var pipelineObservers = provider.GetServices<ICompilationPipelineObserver>().ToList();

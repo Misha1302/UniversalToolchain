@@ -11,7 +11,7 @@ internal sealed class PreparedExecutionBuilder<TCompilationOutput>(
     Func<IAbstractIrCompiler<TCompilationOutput>> compilerFactory,
     Func<IExecutor<TCompilationOutput>> executorFactory,
     IReadOnlyList<IFrontendCoreModule> modules,
-    IReadOnlyList<IIRProcessingModule> optimizers,
+    IReadOnlyList<IAirOptimizer> optimizers,
     IReadOnlyList<IMiddleEndCoreModule<TCompilationOutput>> middleEndModules,
     IIntrinsicCapabilitySetFactory? intrinsicCapabilitySetFactory = null,
     IReadOnlyList<ICompilationPipelineObserver>? pipelineObservers = null,
@@ -84,7 +84,7 @@ internal sealed class PreparedExecutionBuilder<TCompilationOutput>(
         var air = methodsTranslator.Translate(targetBytecode);
         NotifyAfterAir(input, air, compiler.SupportedIntrinsics);
 
-        var irPipeline = new AirOnlyIrPipelineExecutor<TCompilationOutput>(optimizers, compiler);
+        var irPipeline = new AirOnlyIrPipelineExecutor(optimizers);
         var targetIr = irPipeline.Optimize(air);
         NotifyAfterOptimizedAir(input, targetIr, compiler.SupportedIntrinsics);
         var allowedRuntimeProviderTypes = ResolveAllowedRuntimeProviderTypes();

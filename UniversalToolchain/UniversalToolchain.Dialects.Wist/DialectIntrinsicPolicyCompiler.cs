@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using BasicCore.Capabilities;
 using BasicCore.Compilation;
 using BasicCore.Contracts;
 using BasicCore.Core;
@@ -53,10 +54,10 @@ internal sealed class DialectIntrinsicPolicyCompiler<TCompilationOutput> : IAbst
             if (instruction.UOpCode != UOpCode.Intrinsic)
                 continue;
 
-            if (!IntrinsicInstructionNormalizer.TryNormalize(instruction, out var normalizedInstruction))
-                Thrower.InvalidOpEx($"Intrinsic payload cannot be validated against dialect policy: {instruction}");
+            if (!instruction.TryGetTypedIntrinsicInvocation(out var invocation))
+                Thrower.InvalidOpEx($"Intrinsic payload must contain a typed IntrinsicInvocation: {instruction}");
 
-            var intrinsicName = normalizedInstruction.Operands[0].Get<string>();
+            var intrinsicName = IntrinsicCapabilityNameEncoder.EncodeOrThrow(invocation);
 
             if (_forbiddenIntrinsics.Contains(intrinsicName))
                 Thrower.InvalidOpEx($"Intrinsic '{intrinsicName}' is forbidden by the selected dialect.");

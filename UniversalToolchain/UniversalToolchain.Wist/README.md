@@ -20,10 +20,10 @@ admin / config / LLM suggestion
 
 ## Install
 
-After the preview package is published, install `UniversalToolchain.Wist` `0.1.0-preview.4` from NuGet: <https://www.nuget.org/packages/UniversalToolchain.Wist/0.1.0-preview.4>. Until that package exists, use a local package produced by `dotnet pack` or a source checkout.
+After the preview package is published, install `UniversalToolchain.Wist` `0.1.0-alpha.1` from NuGet: <https://www.nuget.org/packages/UniversalToolchain.Wist/0.1.0-alpha.1>. Until that package exists, use a local package produced by `dotnet pack` or a source checkout.
 
 ```bash ci-run=false
-dotnet add package UniversalToolchain.Wist --version 0.1.0-preview.4
+dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.1
 ```
 
 Requirements:
@@ -156,20 +156,19 @@ The current SSA route is not a sandbox, not an SSA-native backend, and not a per
 
 ```csharp
 WistEngine.CreateRestrictedArithmetic();
-WistEngine.CreateFullNativePreview();
+WistEngine.CreateFullNative();
 
 using var trustedInterop = WistEngine.Create(new WistEngineOptions
 {
-    Preset = WistPreset.FullNativePreview,
+    Preset = WistPreset.FullNative,
     AllowedAssemblies = [typeof(Math).Assembly]
 });
 
-// Obsolete compatibility aliases remain available for preview.2 migration.
 ```
 
-`CreateRestrictedArithmetic` is the recommended first-contact preset for restricted formulas. `CreateSafeFormulas` remains a compatibility alias for it.
+`CreateRestrictedArithmetic` is the recommended first-contact preset for restricted formulas.
 
-`CreateFullNativePreview` selects the broad language profile, but it does not implicitly expose CLR assemblies. Add only reviewed assemblies through `AllowedAssemblies`. `CreateBusinessRules` and `CreateTrusted` remain obsolete migration aliases.
+`CreateFullNative` selects the broad language profile, but it does not implicitly expose CLR assemblies. Add only reviewed assemblies through `AllowedAssemblies`. The facade deliberately does not expose ambiguous “safe”, “trusted”, or “business rules” aliases.
 
 ## Security and trust
 
@@ -182,7 +181,6 @@ This facade currently exposes:
 - convenience `Evaluate<T>`;
 - non-throwing `Validate`;
 - typed fast `Compile<TDelegate>` and `TryCompile<TDelegate>`;
-- `CompileFunc` compatibility overloads for one, two, and three arguments;
 - backend-neutral compiled program metadata.
 
 The larger direction is controlled application DSLs for .NET. The current stable preview claim is restricted numeric/formula execution, validation, and typed compiled invocation for supported shapes.

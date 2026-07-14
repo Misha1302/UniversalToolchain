@@ -12,6 +12,6 @@ public interface IGenericAbstractIR<TIdentifier>
     void JmpIfNot(TIdentifier identifier);
     void SetLabel(TIdentifier label);
     void Annotate(params List<object>[] annotations);
-    void Intrinsic(object instructionIdentifier, params List<object> operands);
+    void Intrinsic(string capabilityId, params object?[] dataOperands);
     void AppendInstructions(IReadOnlyList<Instruction> instructions);
 }

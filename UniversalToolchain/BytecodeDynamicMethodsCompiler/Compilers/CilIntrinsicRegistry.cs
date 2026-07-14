@@ -1,3 +1,4 @@
+using BasicCore.Capabilities;
 using BasicCore.Core;
 
 namespace BytecodeDynamicMethodsCompiler.Compilers;
@@ -36,31 +37,31 @@ public sealed class CilIntrinsicRegistry
         ) => Register(descriptors, name, compile, IntrinsicTypeProcessor.ProcessTypes);
 
         carriedRegister(
-            "call C#",
+            IntrinsicCapabilityIds.CallCSharp,
             AbstractMethodsIntrinsicCompiler.CompileCallCSharp
         );
         carriedRegister(
-            "call C# ctor",
+            IntrinsicCapabilityIds.CallCSharpConstructor,
             AbstractMethodsIntrinsicCompiler.CompileCallCSharpCtor
         );
         carriedRegister(
-            "store_local",
+            IntrinsicCapabilityIds.StoreLocal,
             AbstractMethodsIntrinsicCompiler.CompileStoreLocal
         );
         carriedRegister(
-            "load_local",
+            IntrinsicCapabilityIds.LoadLocal,
             AbstractMethodsIntrinsicCompiler.CompileLoadLocal
         );
         carriedRegister(
-            "load_local_ref",
+            IntrinsicCapabilityIds.LoadLocalReference,
             AbstractMethodsIntrinsicCompiler.CompileLoadLocalRef
         );
         carriedRegister(
-            "load_external",
+            IntrinsicCapabilityIds.LoadExternal,
             AbstractMethodsIntrinsicCompiler.CompileLoadExternal
         );
         carriedRegister(
-            "store_external",
+            IntrinsicCapabilityIds.StoreExternal,
             AbstractMethodsIntrinsicCompiler.CompileStoreExternal
         );
         carriedRegister(
@@ -69,16 +70,16 @@ public sealed class CilIntrinsicRegistry
         );
         Register(
             descriptors,
-            "boolean_and",
+            IntrinsicCapabilityIds.BooleanAnd,
             AbstractMethodsIntrinsicCompiler.CompileBooleanAnd,
             IntrinsicTypeProcessor.ProcessTypes
         );
         carriedRegister(
-            "boolean_or",
+            IntrinsicCapabilityIds.BooleanOr,
             AbstractMethodsIntrinsicCompiler.CompileBooleanOr
         );
         carriedRegister(
-            "boolean_not",
+            IntrinsicCapabilityIds.BooleanNot,
             AbstractMethodsIntrinsicCompiler.CompileBooleanNot
         );
         carriedRegister(

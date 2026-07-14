@@ -137,7 +137,7 @@ public sealed class WistDialectExecutionWorkflow
         runtimeServiceOptions = runtimeServiceOptions.ArgNotNull();
 
         var provider = _serviceProviderFactory.Create(configuration, runtimeServiceOptions);
-        return new ToolchainRuntimeHost(provider, configuration);
+        return new ToolchainRuntimeHost(provider, configuration, ServiceProviderOwnership.Owned);
     }
 
     private WistDialectExecutionConfiguration GetConfiguration(DialectFrameworkCompositionResult compositionResult)

@@ -165,7 +165,7 @@ public sealed class ModuleContractPipelineObserver : ICompilationPipelineObserve
 
     private static IReadOnlyList<ModuleId> BuildPipelineOrder(
         IReadOnlyList<IFrontendCoreModule> frontendModules,
-        IReadOnlyList<IIRProcessingModule> optimizers,
+        IReadOnlyList<IAirOptimizer> optimizers,
         IReadOnlyList<IBackendPipelineComponent> backendComponents)
     {
         return frontendModules

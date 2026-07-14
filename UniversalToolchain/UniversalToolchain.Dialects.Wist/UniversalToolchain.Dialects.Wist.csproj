@@ -42,6 +42,8 @@
         <ProjectReference Include="..\SafeMathFunctionsModule\SafeMathFunctionsModule.csproj"/>
         <ProjectReference Include="..\ScopesModule\ScopesModule.csproj"/>
         <ProjectReference Include="..\SemicolonAsNewLineModule\SemicolonAsNewLineModule.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Capabilities.Core\UniversalToolchain.Capabilities.Core.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Diagnostics.Abstractions\UniversalToolchain.Diagnostics.Abstractions.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Dialects.Core\UniversalToolchain.Dialects.Core.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Dialects.Frontend\UniversalToolchain.Dialects.Frontend.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Dialects.Integration\UniversalToolchain.Dialects.Integration.csproj"/>

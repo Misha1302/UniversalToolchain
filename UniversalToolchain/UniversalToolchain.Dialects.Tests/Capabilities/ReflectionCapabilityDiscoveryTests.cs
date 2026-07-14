@@ -109,6 +109,24 @@ public class ReflectionCapabilityDiscoveryTests
     }
 
     [Test]
+    public void SelectedCatalog_DuplicateLanguageFeatureId_ReturnsDeterministicError()
+    {
+        var catalog = new SelectedCapabilityCatalogBuilder().Build(
+            [typeof(DuplicateAlphaModuleImpl), typeof(DuplicateZetaModuleImpl)]);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(catalog.LanguageFeatures.Select(static x => x.FeatureId.Value),
+                Is.EqualTo(new[] { "duplicate-feature" }));
+            Assert.That(catalog.Diagnostics, Has.Count.EqualTo(1));
+            Assert.That(catalog.Diagnostics[0].Code, Is.EqualTo(ToolchainDiagnosticCodes.DuplicateLanguageFeature));
+            Assert.That(catalog.Diagnostics[0].Severity, Is.EqualTo(ToolchainDiagnosticSeverity.Error));
+            Assert.That(catalog.TryGetOwningProvider(new LanguageFeatureId("duplicate-feature"), out var owner), Is.True);
+            Assert.That(owner.ProviderType, Is.EqualTo(typeof(DuplicateAlphaCapabilityProvider)));
+        });
+    }
+
+    [Test]
     public void FeatureExplanation_ReportsSelectedFeatureAvailable()
     {
         var selectedPlan = new SelectedRuntimePlan(
@@ -244,6 +262,16 @@ public class ReflectionCapabilityDiscoveryTests
     {
     }
 
+    [DialectCapabilityProvider(typeof(DuplicateAlphaCapabilityProvider))]
+    private sealed class DuplicateAlphaModuleImpl
+    {
+    }
+
+    [DialectCapabilityProvider(typeof(DuplicateZetaCapabilityProvider))]
+    private sealed class DuplicateZetaModuleImpl
+    {
+    }
+
     private sealed class FakeFunctionCapabilityProvider :
         ILanguageFeatureDescriptorProvider,
         IBuiltinFunctionDescriptorProvider,
@@ -299,6 +327,27 @@ public class ReflectionCapabilityDiscoveryTests
                 "Feature used to prove known but unselected reporting.")
         ];
     }
+
+    private sealed class DuplicateAlphaCapabilityProvider : ILanguageFeatureDescriptorProvider
+    {
+        public IReadOnlyList<LanguageFeatureDescriptor> GetLanguageFeatures() => [CreateDuplicateFeature("Alpha")];
+    }
+
+    private sealed class DuplicateZetaCapabilityProvider : ILanguageFeatureDescriptorProvider
+    {
+        public IReadOnlyList<LanguageFeatureDescriptor> GetLanguageFeatures() => [CreateDuplicateFeature("Zeta")];
+    }
+
+    private static LanguageFeatureDescriptor CreateDuplicateFeature(string displayName) =>
+        new(
+            new LanguageFeatureId("duplicate-feature"),
+            displayName,
+            LanguageFeatureKind.Syntax,
+            [],
+            [],
+            [],
+            [],
+            "Duplicate-feature collision test.");
 
     private sealed class ZetaPrimaryCapabilityProvider : ILanguageFeatureDescriptorProvider
     {

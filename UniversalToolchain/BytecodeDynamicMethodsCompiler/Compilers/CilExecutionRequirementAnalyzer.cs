@@ -1,4 +1,5 @@
 using BasicCore.Core;
+using IntermediateRepresentationAbstractions;
 
 namespace BytecodeDynamicMethodsCompiler.Compilers;
 
@@ -20,7 +21,7 @@ internal static class CilExecutionRequirementAnalyzer
     private static bool RequiresExecutionEnvironment(Instruction instruction)
     {
         return CSharpCallIntrinsicReader.TryGetCallDescriptor(instruction, out var descriptor)
-               && descriptor.Receiver is CSharpCallReceiver.ExecutionScopedProvider;
+               && descriptor.ReceiverKind == ManagedCallReceiverKind.ExecutionScopedProvider;
     }
 }
 

@@ -57,21 +57,22 @@ public sealed class ModuleDescriptorProviderTests
     }
 
     [Test]
-    public void Build_WhenSelectedModuleHasNoDescriptor_ClassifiesAsLegacyImplicitWarning()
+    public void Build_WhenSelectedModuleHasNoDescriptor_ClassifiesAsUndeclaredWarning()
     {
-        var report = new ModuleContractSelectionBuilder().BuildLegacyCompatible(
+        var report = new ModuleContractSelectionBuilder().Build(
             [
                 NumbersContractIds.Module,
                 new ModuleId("wist.legacy")
             ],
             [
                 new NumbersModuleContractDescriptorProvider()
-            ]);
+            ],
+            ModuleContractEnforcementPolicy.AllowUndeclared);
 
-        Assert.That(report.Diagnostics.Select(static x => x.Code), Does.Contain(ModuleContractDiagnosticCodes.LegacyImplicitModule));
+        Assert.That(report.Diagnostics.Select(static x => x.Code), Does.Contain(ModuleContractDiagnosticCodes.UndeclaredModule));
         Assert.That(
             report.ModuleStatuses.Single(static x => x.ModuleId == new ModuleId("wist.legacy")).Status,
-            Is.EqualTo(ModuleContractCompatibilityStatus.LegacyImplicit));
+            Is.EqualTo(ModuleContractCompatibilityStatus.Undeclared));
     }
 
     [Test]

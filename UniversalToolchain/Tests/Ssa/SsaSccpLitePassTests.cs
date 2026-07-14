@@ -29,7 +29,7 @@ public sealed class SsaSccpLitePassTests
                 SsaConstantMaterializer.Int32(new SsaOperationId("one"), one, 1),
                 new SsaCall(
                     new SsaOperationId("equals"),
-                    SsaPreviewCallables.EqualInt32,
+                    SsaCallables.EqualInt32,
                     [testArgument.Value.Id, one.Id],
                     [condition])
             ],
@@ -95,7 +95,7 @@ public sealed class SsaSccpLitePassTests
                 SsaConstantMaterializer.Int32(new SsaOperationId("one"), one, 1),
                 new SsaCall(
                     new SsaOperationId("add"),
-                    SsaPreviewCallables.AddInt32Unchecked,
+                    SsaCallables.AddInt32Unchecked,
                     [mergeArgument.Value.Id, one.Id],
                     [result])
             ],
@@ -116,7 +116,7 @@ public sealed class SsaSccpLitePassTests
         {
             Assert.That(optimized.Functions.Single().Blocks.Select(static x => x.Id.Value), Is.EqualTo(new[] { "entry", "left", "right", "merge" }));
             Assert.That(optimizedMerge.Instructions[1], Is.TypeOf<SsaCall>());
-            Assert.That(((SsaCall)optimizedMerge.Instructions[1]).Callee, Is.EqualTo(SsaPreviewCallables.AddInt32Unchecked));
+            Assert.That(((SsaCall)optimizedMerge.Instructions[1]).Callee, Is.EqualTo(SsaCallables.AddInt32Unchecked));
         });
     }
 
@@ -140,12 +140,12 @@ public sealed class SsaSccpLitePassTests
         var optimized = Run(
             ModuleWith(block),
             new SemanticDescriptorSet(
-                types: [new SemanticTypeDescriptor(SsaPreviewSemanticTypes.Int32)],
+                types: [new SemanticTypeDescriptor(SsaSemanticTypes.Int32)],
                 callables:
                 [
                     new CallableDescriptor(
                         callable,
-                        new CallableSignature([SsaPreviewSemanticTypes.Int32, SsaPreviewSemanticTypes.Int32], [SsaPreviewSemanticTypes.Int32]),
+                        new CallableSignature([SsaSemanticTypes.Int32, SsaSemanticTypes.Int32], [SsaSemanticTypes.Int32]),
                         effects: SemanticEffectSummary.Pure,
                         determinism: Determinism.Deterministic,
                         trustLevel: SemanticTrustLevel.UserProvidedUnchecked)
@@ -158,8 +158,8 @@ public sealed class SsaSccpLitePassTests
     private static SsaModule Run(SsaModule module, SemanticDescriptorSet? descriptors = null)
     {
         var result = new SsaSparseConditionalConstantPropagationPass(
-                descriptors ?? SsaPreviewSemanticDescriptors.ArithmeticInt32,
-                new SsaPreviewInt32ConstantEvaluator())
+                descriptors ?? SsaSemanticDescriptors.ArithmeticInt32,
+                new SsaInt32ConstantEvaluator())
             .Run(new SsaArtifact(module), new IrPipelineContext());
 
         return result.Artifact.As<SsaArtifact>().Module;

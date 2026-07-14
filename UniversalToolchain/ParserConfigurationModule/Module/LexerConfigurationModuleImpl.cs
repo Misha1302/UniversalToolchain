@@ -1,22 +1,21 @@
+using System.Globalization;
+
 namespace ParserConfigurationModule.Module;
 
 /// <summary>
-///     <para> You can fix lexer modules execution order like this: </para>
-///     1. Dump lexer configuration to file <br />
-///     2. Rearrange patterns by hand <br />
-///     3. Read configuration from file <br />
-///     <para> For correct work this module have to execute InitLexer after all others plugins </para>
+///     Dumps or reapplies lexer pattern priorities. Loading is strict and transactional:
+///     malformed entries fail before the live lexer configuration is modified.
 /// </summary>
-/// <param name="actionType">dump or read configuration</param>
-/// <param name="path">path to file</param>
-public class LexerConfigurationModuleImpl(ActionType actionType, string path = "LexerConfiguration.txt") : IFrontendCoreModule
+/// <param name="actionType">Dump or read configuration.</param>
+/// <param name="path">Configuration file path.</param>
+public sealed class LexerConfigurationModuleImpl(ActionType actionType, string path = "LexerConfiguration.txt") : IFrontendCoreModule
 {
-    private bool _isInitialized;
+    private const string FormatVersion = "2";
+    private static readonly UTF8Encoding _strictUtf8 = new(false, true);
 
     public void InitLexer(ILexer lexer)
     {
-        if (_isInitialized) return;
-        _isInitialized = true;
+        lexer = lexer.ArgNotNull();
 
         switch (actionType)
         {
@@ -36,14 +35,28 @@ public class LexerConfigurationModuleImpl(ActionType actionType, string path = "
     {
         try
         {
-            var configurationText = new ConfigurationDumper(lexer).Dump();
-            File.WriteAllText(path, configurationText);
-            Debug.WriteLine($"Lexer configuration dumped to {Path.GetFullPath(path)}");
+            var configurationText = ConfigurationDumper.Dump(lexer.Configuration.CreateSnapshot());
+            var fullPath = Path.GetFullPath(path);
+            var directory = Path.GetDirectoryName(fullPath)!;
+            Directory.CreateDirectory(directory);
+
+            var temporaryPath = Path.Combine(directory, $".{Path.GetFileName(fullPath)}.{Guid.NewGuid():N}.tmp");
+            try
+            {
+                File.WriteAllText(temporaryPath, configurationText, new UTF8Encoding(false));
+                File.Move(temporaryPath, fullPath, true);
+            }
+            finally
+            {
+                if (File.Exists(temporaryPath))
+                    File.Delete(temporaryPath);
+            }
+
+            Debug.WriteLine($"Lexer configuration dumped to {fullPath}");
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            Debug.WriteLine($"Failed to dump lexer configuration: {ex.Message}");
-            Thrower.InvalidOpEx($"Failed to dump lexer configuration: {ex.Message}");
+            throw new InvalidOperationException($"Failed to dump lexer configuration to '{path}'.", exception);
         }
     }
 
@@ -58,183 +71,142 @@ public class LexerConfigurationModuleImpl(ActionType actionType, string path = "
             }
 
             var configText = File.ReadAllText(path);
-            new ConfigurationLoader(lexer).Load(configText);
+            var snapshot = ConfigurationLoader.Build(configText);
+            lexer.Configuration.ReplaceWith(snapshot);
             Debug.WriteLine($"Lexer configuration loaded from {Path.GetFullPath(path)}");
         }
-        catch (Exception ex)
+        catch (Exception exception)
         {
-            Debug.WriteLine($"Failed to load lexer configuration: {ex.Message}");
-            Thrower.InvalidOpEx($"Failed to load lexer configuration: {ex.Message}");
+            throw new InvalidOperationException($"Failed to load lexer configuration from '{path}'.", exception);
         }
     }
 
-    // Helper classes for logic encapsulation
-    private class ConfigurationDumper(ILexer lexer)
+    private static class ConfigurationDumper
     {
-        public string Dump()
+        public static string Dump(IReadOnlyList<LexerPatternRegistration> patterns)
         {
-            var patterns = CollectAllPatterns();
-            return GenerateDumpContent(patterns);
-        }
+            patterns = patterns.ArgNotNull();
 
-        private List<(float Priority, LexemePattern Pattern, bool Ignore)> CollectAllPatterns()
-        {
-            var result = new List<(float, LexemePattern, bool)>();
-
-            var patternsCollection = lexer.Configuration.LevelCollectionPatterns;
-            if (patternsCollection is LevelCollection<float, LexemePattern> levelCollection)
-                foreach (var level in levelCollection)
-                {
-                    foreach (var pattern in level.Value)
-                    {
-                        var ignore = lexer.Configuration.LexemesToIgnore.Contains(pattern.LexemeType);
-                        result.Add((level.Key, pattern, ignore));
-                    }
-                }
-
-            return result;
-        }
-
-        private string GenerateDumpContent(List<(float Priority, LexemePattern Pattern, bool Ignore)> patterns)
-        {
             var lines = new List<string>
             {
                 "# Lexer Configuration Dump",
-                $"# Generated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}",
+                $"# Format-Version: {FormatVersion}",
                 "# Format: <priority>|<base64_encoded_pattern>|<lexeme_type>|<ignore_flag>",
-                "# Pattern is base64 encoded to avoid issues with | character in regex patterns",
-                ""
+                "# Pattern is base64 encoded so regular expressions may contain pipe characters.",
+                string.Empty
             };
 
-            lines.AddRange(patterns
-                .OrderBy(x => x.Priority)
-                .Select(FormatPatternLine));
-
+            lines.AddRange(patterns.Select(FormatPatternLine));
             return string.Join(Environment.NewLine, lines);
         }
 
-        private string FormatPatternLine((float Priority, LexemePattern Pattern, bool Ignore) item)
+        private static string FormatPatternLine(LexerPatternRegistration item)
         {
-            // Encode pattern in base64 to avoid issues with | character
             var encodedPattern = Convert.ToBase64String(Encoding.UTF8.GetBytes(item.Pattern.Pattern));
-            var lexemeType = item.Pattern.LexemeType.GetName();
-
-            return $"{item.Priority:F2}|{encodedPattern}|{lexemeType}|{item.Ignore}";
+            return string.Join(
+                '|',
+                item.Priority.ToString("R", CultureInfo.InvariantCulture),
+                encodedPattern,
+                item.Pattern.LexemeType.GetName(),
+                item.Ignore.ToString(CultureInfo.InvariantCulture));
         }
     }
 
-    private class ConfigurationLoader(ILexer lexer)
+    private static class ConfigurationLoader
     {
-        public void Load(string configText)
+        public static IReadOnlyList<LexerPatternRegistration> Build(string configText)
         {
-            var lines = ParseConfigurationLines(configText);
-            ClearCurrentConfiguration();
-            ApplyNewConfiguration(lines);
+            configText = configText.ArgNotNull();
+
+            var parsedLines = ParseConfigurationLines(configText);
+            ValidateDuplicates(parsedLines);
+
+            return parsedLines
+                .Select(static line => new LexerPatternRegistration(
+                    line.Priority,
+                    new LexemePattern(line.Pattern, ExtensibleEnum<LexemeTag>.CreateOrGet(line.LexemeType)),
+                    line.Ignore))
+                .ToArray();
         }
 
-        private List<ConfigLine> ParseConfigurationLines(string configText)
+        private static IReadOnlyList<ConfigLine> ParseConfigurationLines(string configText)
         {
-            var lines = new List<ConfigLine>();
+            var result = new List<ConfigLine>();
             var lineNumber = 0;
 
             foreach (var rawLine in configText.Split('\n'))
             {
                 lineNumber++;
                 var line = rawLine.Trim();
-
-                if (string.IsNullOrEmpty(line) || line.StartsWith('#'))
+                if (line.Length == 0 || line.StartsWith('#'))
                     continue;
 
-                var parts = line.Split('|', 4);
-                if (parts.Length < 3)
+                var parts = line.Split('|');
+                if (parts.Length != 4)
+                    throw new FormatException($"Line {lineNumber} must contain exactly four pipe-separated fields.");
+
+                if (!float.TryParse(parts[0].Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out var priority) ||
+                    !float.IsFinite(priority))
                 {
-                    Debug.WriteLine($"Warning: Invalid format in line {lineNumber}: {line}");
-                    continue;
+                    throw new FormatException($"Line {lineNumber} contains invalid finite priority '{parts[0].Trim()}'.");
                 }
 
-                if (!float.TryParse(parts[0].Trim(), out var priority))
-                {
-                    Debug.WriteLine($"Warning: Invalid priority in line {lineNumber}: {line}");
-                    continue;
-                }
-
-                var encodedPattern = parts[1].Trim();
+                var pattern = DecodePattern(parts[1].Trim(), lineNumber);
                 var lexemeType = parts[2].Trim();
-                var ignore = parts.Length > 3 && bool.TryParse(parts[3].Trim(), out var ignoreFlag) && ignoreFlag;
+                if (lexemeType.Length == 0)
+                    throw new FormatException($"Line {lineNumber} contains an empty lexeme type.");
+
+                if (!bool.TryParse(parts[3].Trim(), out var ignore))
+                    throw new FormatException($"Line {lineNumber} contains invalid ignore flag '{parts[3].Trim()}'.");
 
                 try
                 {
-                    var pattern = DecodePattern(encodedPattern);
-                    lines.Add(new ConfigLine(priority, pattern, lexemeType, ignore));
+                    _ = new Regex(pattern, RegexOptions.None, TimeSpan.FromMilliseconds(100));
                 }
-                catch (Exception ex)
+                catch (ArgumentException exception)
                 {
-                    Debug.WriteLine($"Warning: Failed to decode pattern in line {lineNumber}: {ex.Message}");
+                    throw new FormatException($"Line {lineNumber} contains invalid regex pattern.", exception);
                 }
+
+                result.Add(new ConfigLine(lineNumber, priority, pattern, lexemeType, ignore));
             }
 
-            return lines;
+            return result;
         }
 
-        private string DecodePattern(string encodedPattern)
-        {
-            // Decode from base64
-            var bytes = Convert.FromBase64String(encodedPattern);
-            return Encoding.UTF8.GetString(bytes);
-        }
-
-        private void ClearCurrentConfiguration()
+        private static string DecodePattern(string encodedPattern, int lineNumber)
         {
             try
             {
-                var patternsCollection = lexer.Configuration.LevelCollectionPatterns;
-                if (patternsCollection is LevelCollection<float, LexemePattern> levelCollection)
-                    levelCollection.Clear();
-
-                // Clear list of ignored lexemes
-                lexer.Configuration.LexemesToIgnore.Clear();
+                return _strictUtf8.GetString(Convert.FromBase64String(encodedPattern));
             }
-            catch (Exception ex)
+            catch (Exception exception) when (exception is FormatException or DecoderFallbackException)
             {
-                Debug.WriteLine($"Warning: Could not clear lexer configuration: {ex.Message}");
-                // Continue operation
+                throw new FormatException($"Line {lineNumber} contains an invalid Base64/UTF-8 pattern payload.", exception);
             }
         }
 
-        private void ApplyNewConfiguration(List<ConfigLine> lines)
+        private static void ValidateDuplicates(IReadOnlyList<ConfigLine> lines)
         {
-            foreach (var line in lines.OrderByDescending(x => x.Priority))
+            var pairs = new HashSet<(string Pattern, string LexemeType)>();
+            var patternTexts = new HashSet<string>(StringComparer.Ordinal);
+            var lexemeTypes = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var line in lines)
             {
-                try
-                {
-                    // Create lexeme type
-                    var lexemeType = ExtensibleEnum<LexemeTag>.CreateOrGet(line.LexemeType);
-
-                    // Check pattern validity
-                    try
-                    {
-                        // Create Regex for syntax checking
-                        _ = new Regex(line.Pattern, RegexOptions.None, TimeSpan.FromMilliseconds(100));
-                    }
-                    catch (RegexParseException ex)
-                    {
-                        Debug.WriteLine($"Warning: Invalid regex pattern '{line.Pattern}': {ex.Message}");
-                        continue;
-                    }
-
-                    // Create pattern
-                    var pattern = new LexemePattern(line.Pattern, lexemeType);
-
-                    // Add to configuration
-                    lexer.Configuration.TryUncheckedAddPattern(pattern, line.Ignore, line.Priority);
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"Warning: Failed to add pattern {line.Pattern}: {ex.Message}");
-                }
+                if (!pairs.Add((line.Pattern, line.LexemeType)))
+                    throw new FormatException($"Line {line.LineNumber} duplicates lexer pattern '{line.Pattern}' for lexeme type '{line.LexemeType}'.");
+                if (!patternTexts.Add(line.Pattern))
+                    throw new FormatException($"Line {line.LineNumber} assigns lexer regex '{line.Pattern}' to more than one lexeme type.");
+                if (!lexemeTypes.Add(line.LexemeType))
+                    throw new FormatException($"Line {line.LineNumber} assigns lexeme type '{line.LexemeType}' more than one regex.");
             }
         }
 
-        private record ConfigLine(float Priority, string Pattern, string LexemeType, bool Ignore);
+        private sealed record ConfigLine(
+            int LineNumber,
+            float Priority,
+            string Pattern,
+            string LexemeType,
+            bool Ignore);
     }
 }

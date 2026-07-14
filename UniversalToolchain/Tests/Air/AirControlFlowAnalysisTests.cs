@@ -56,7 +56,28 @@ public sealed class AirControlFlowAnalysisTests
     }
 
     [Test]
-    public void Verify_WhenConditionalJumpHasNoFallthrough_ReturnsTerminatorShapeDiagnostic()
+    public void Verify_WhenTerminalConditionalFallthroughLeavesTwoValues_ReturnsDiagnostic()
+    {
+        var loop = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee");
+        var ir = new AbstractIR();
+        ir.Push(10);
+        ir.Push(20);
+        ir.SetLabel(loop);
+        ir.Push(true);
+        ir.JmpIf(loop);
+
+        var result = new StructuralAirVerifier().Verify(new AirArtifact(ir), new IrPipelineContext());
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.IsSuccess, Is.False);
+            Assert.That(result.Diagnostics.Select(static x => x.Code), Does.Contain("air.stack.invalid"));
+            Assert.That(result.Diagnostics.Select(static x => x.Message), Has.Some.Contains("terminal block"));
+        });
+    }
+
+    [Test]
+    public void Build_WhenConditionalJumpIsLast_ModelsExplicitTerminalFallthrough()
     {
         var loop = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd");
         var ir = new AbstractIR();
@@ -64,9 +85,15 @@ public sealed class AirControlFlowAnalysisTests
         ir.Push(true);
         ir.JmpIf(loop);
 
-        var result = new StructuralAirVerifier().Verify(new AirArtifact(ir), new IrPipelineContext());
+        var build = new AirControlFlowGraphBuilder().Build(ir.Instructions);
+        var verification = new StructuralAirVerifier().Verify(new AirArtifact(ir), new IrPipelineContext());
 
-        Assert.That(result.IsSuccess, Is.False);
-        Assert.That(result.Diagnostics.Select(static x => x.Code), Does.Contain("air.terminator.target-count"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(build.Diagnostics, Is.Empty);
+            Assert.That(build.Graph.Blocks.Select(static x => x.Id.ToString()), Does.Contain("__synthetic_exit"));
+            Assert.That(build.Graph.Blocks[0].Terminator.Successors, Has.Count.EqualTo(2));
+            Assert.That(verification.IsSuccess, Is.True);
+        });
     }
 }

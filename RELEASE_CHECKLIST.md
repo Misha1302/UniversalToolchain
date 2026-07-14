@@ -1,80 +1,54 @@
-# Release Checklist
+# Abstraction-fix second-cycle release checklist
 
-## Required
-- master is green
-- dotnet restore passed
-- dotnet build passed
-- dotnet test passed
-- package smoke passed
-- NuGet package metadata and contents are validated
-- docs build passed
-- markdown bash checks passed, with historical/heavy examples explicitly marked `ci-run=false`
-- README examples match actual APIs
-- site examples match README
-- SECURITY limitations are visible
-- version updated
-- root README first public API example uses `Compile<TDelegate>`, not `Evaluate`
-- `CompileFunc` is documented only as a compatibility convenience for small examples
-- NuGet/package README presents fast execution before one-off execution
-- performance model doc exists
-- preview stability doc exists
-- docs distinguish cold path and hot path
-- docs do not advertise Evaluate as the performance path
-- docs do not claim hardened sandboxing
-- security note is visible near compiled/restricted execution docs
-- package smoke validates `Compile<TDelegate>`, `CompileFunc`, `Evaluate`, and `Validate`
-- CLI smoke validates compiler backend, interpreter backend, and restricted dialect rejection
-- benchmark dry smoke genuinely executes at least one benchmark or is replaced by a meaningful benchmark contract smoke
+Validation date: 2026-07-14.
 
-## Evidence log
+## Source and behavior
 
-Fill this before tagging/publishing. Do not mark a gate complete without the observed command/status.
+- [x] input archive and recursive manifest verified before editing
+- [x] frontend configuration modules remain instance-stateless
+- [x] lexer configuration replacement is strict and transactional
+- [x] regex and lexeme-type ownership collisions are rejected before publication
+- [x] failed preparation invalidates the previous artifact
+- [x] AIR instruction payloads remain immutable snapshots
+- [x] null constants are explicitly typed and backend-parity tested
+- [x] interpreter preserves declared AIR type for typed null
+- [x] public `InterpreterState.ValueStack : Stack<object?>` contract is preserved
+- [x] final conditional fallthrough is explicit in the CFG
+- [x] terminal stack shape is checked by shared AIR stack analysis
+- [x] extension intrinsics require semantic stack descriptors
+- [x] all managed-call consumers use the neutral descriptor contract
+- [x] execution-scoped provider calls with arguments have backend parity
+- [x] duplicate language-feature IDs fail composition
+- [x] FunctionCalls consumes one composition-scoped capability catalog
+- [x] only the requested backend runtime is activated
+- [x] invalid runtime factory results are validated before publication
+- [x] runtime cache is isolated per service provider / DI container
 
-| Gate | Required evidence | Status / observed result |
-|---|---|---|
-| Canonical build/test | `./build.sh --skip-docs --skip-pack` | PASS — Release build, 0 warnings/errors |
-| Restore/build details | serial restore/build performed by `build.sh` | PASS — offline serial restore and `-m:1` build |
-| Release tests | three explicit test projects executed by `build.sh` | PASS — 429 + 287 + 585 = 1,301 |
-| Package | `dotnet pack ...UniversalToolchain.Wist.csproj -c Release` and package-surface check | PASS — 1 ref facade DLL, 64 runtime DLLs |
-| Consumer smoke | clean external `net10.0` app consuming the local package | PASS — restore/build/run/publish/published run |
-| CLI smoke | compiler, interpreter, restricted rejection | PASS — covered by canonical dialect/CLI regression suite |
-| Docs status | `python3 Tools/check_documentation_status.py` | PASS — 142 Markdown files |
-| Markdown smoke | `python3 .github/scripts/run-markdown-bash-blocks.py` | PASS — 20 executed, 32 explicit skips |
-| Docs build | `npm run docs:build` | PASS — VitePress production build |
-| Benchmark self-test | restore/build `UniversalToolchain.Benchmarks` and run `--self-test` | BLOCKED IN FINAL OFFLINE ENVIRONMENT — BenchmarkDotNet/NCalc packages absent from supplied feeds; no performance claim |
+## Build and tests
 
-## Required commands
+- [x] full Debug solution build passed: 74/74 solution projects
+- [x] standalone benchmark project built; all 75/75 repository `.csproj` projects compile
+- [x] compiler warnings: 0
+- [x] compiler errors: 0
+- [x] core suite passed: 452/452
+- [x] module suite passed: 288/288
+- [x] dialect/runtime/facade suite passed: 585/585
+- [x] total passed: 1,325; failed: 0; skipped: 0
+- [x] all 21 runtime manifests generated through the repository emitter
 
-```bash ci-run=false
-./build.sh
-ls -la artifacts/packages
-unzip -l artifacts/packages/UniversalToolchain.Wist.0.1.0-preview.4.nupkg
-```
+## Artifact
 
-## Documentation smoke
+- [x] stale `CHANGELOG.md` excluded
+- [x] `bin`, `obj`, Git metadata, caches and logs removed
+- [x] secret-like and unsafe archive paths rejected
+- [x] recursive manifest regenerated after cleanup
+- [x] clean-unpack recursive manifest verification passed
+- [x] final archive SHA-256 generated and rechecked
 
-Executable Markdown blocks are a blocking release gate inside `build.sh`. Historical or heavyweight benchmark examples stay visible with `ci-run=false` and must be covered by their dedicated/manual gate rather than silently timing out the documentation runner.
+## Not revalidated in this cycle
 
-```bash ci-run=false
-python3 .github/scripts/run-markdown-bash-blocks.py
-```
-
-## Package checks
-- package metadata uses Apache-2.0 license expression
-- package metadata includes repository URL
-- package metadata includes project URL
-- package includes README.md
-- package includes `UniversalToolchain/UniversalToolchain.Wist/CHANGELOG.md` as package-root `CHANGELOG.md`
-- package includes runtime manifests
-- package includes Wist example dialect content files
-- symbols package is produced
-
-## Manual smoke
-- run simple formula through WistEngine
-- run compiled formula through `WistEngine.Compile<TDelegate>`
-- run compatibility compiled formula through `WistEngine.CompileFunc`
-- validate a simple formula through WistEngine.Validate
-- run CLI compiler backend
-- run CLI interpreter backend
-- run restricted dialect rejection case
-- run benchmark smoke or benchmark contract tests and confirm the command does not report zero executed benchmarks as success
+- NuGet package and symbols surface;
+- external consumer restore/publish smoke;
+- VitePress documentation build;
+- benchmark-performance claims;
+- hostile-code or production workload isolation.

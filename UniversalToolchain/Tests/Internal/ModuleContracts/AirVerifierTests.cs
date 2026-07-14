@@ -1,3 +1,5 @@
+using BasicCore.Capabilities;
+using BasicCore.Validation;
 using UniversalToolchain.Diagnostics.Abstractions;
 using UniversalToolchain.ModuleContracts;
 
@@ -66,13 +68,32 @@ public sealed class AirVerifierTests
     }
 
     [Test]
-    public void Verify_WhenSelectedCapabilitySupportsIntrinsic_ReturnsValidResult()
+    public void Verify_WhenSelectedCapabilitySupportsIntrinsicButSemanticsAreMissing_ReturnsStackDiagnostic()
     {
         var table = CreateTable(includeBackendOnlySupport: true);
         var selection = BackendCapabilitySelection.FromContracts(table, [_compilerCapability]);
         var air = CreateIntrinsicAir(_backendOnlyIntrinsic);
 
         var result = new AirVerifier().Verify(new AirVerificationRequest(
+            air,
+            table,
+            selection,
+            VerificationSeverityProfile.Strict));
+
+        Assert.That(result.IsValid, Is.False);
+        Assert.That(result.Diagnostics.Select(static x => x.Code),
+            Does.Contain(ModuleContractDiagnosticCodes.InvalidAirStackDiscipline));
+    }
+
+    [Test]
+    public void Verify_WhenSelectedCapabilityAndSemanticDescriptorSupportIntrinsic_ReturnsValidResult()
+    {
+        var table = CreateTable(includeBackendOnlySupport: true);
+        var selection = BackendCapabilitySelection.FromContracts(table, [_compilerCapability]);
+        var air = CreateIntrinsicAir(_backendOnlyIntrinsic);
+        var verifier = CreateVerifierWithBackendOnlyIntrinsicSemantics();
+
+        var result = verifier.Verify(new AirVerificationRequest(
             air,
             table,
             selection,
@@ -120,6 +141,104 @@ public sealed class AirVerifierTests
     }
 
     [Test]
+    public void Verify_WhenDropConsumesEmptyStack_ReturnsStackDiagnostic()
+    {
+        var air = new AbstractIR();
+        air.AppendInstructions([new Instruction(UOpCode.Drop)]);
+        var table = CreateTable(includeBackendOnlySupport: true);
+        var selection = BackendCapabilitySelection.FromContracts(table, [_compilerCapability]);
+
+        var result = new AirVerifier().Verify(new AirVerificationRequest(
+            air,
+            table,
+            selection,
+            VerificationSeverityProfile.Strict));
+
+        Assert.That(result.IsValid, Is.False);
+        Assert.That(result.Diagnostics.Select(static x => x.Code),
+            Does.Contain(ModuleContractDiagnosticCodes.InvalidAirStackDiscipline));
+    }
+
+    [Test]
+    public void Verify_WhenConditionalJumpConsumesNonBoolean_ReturnsStackDiagnostic()
+    {
+        var target = Guid.NewGuid();
+        var air = new AbstractIR();
+        air.Push(1);
+        air.JmpIf(target);
+        air.AppendInstructions([new Instruction(UOpCode.Label, [target])]);
+        var table = CreateTable(includeBackendOnlySupport: true);
+        var selection = BackendCapabilitySelection.FromContracts(table, [_compilerCapability]);
+
+        var result = new AirVerifier().Verify(new AirVerificationRequest(
+            air,
+            table,
+            selection,
+            VerificationSeverityProfile.Strict));
+
+        Assert.That(result.IsValid, Is.False);
+        Assert.That(result.Diagnostics.Select(static x => x.Code),
+            Does.Contain(ModuleContractDiagnosticCodes.InvalidAirStackDiscipline));
+    }
+
+    [Test]
+    public void Verify_WhenTerminalStackContainsTwoValues_ReturnsStackDiagnostic()
+    {
+        var air = new AbstractIR();
+        air.Push(1);
+        air.Push(2);
+        var table = CreateTable(includeBackendOnlySupport: true);
+        var selection = BackendCapabilitySelection.FromContracts(table, [_compilerCapability]);
+
+        var result = new AirVerifier().Verify(new AirVerificationRequest(
+            air,
+            table,
+            selection,
+            VerificationSeverityProfile.Strict));
+
+        Assert.That(result.IsValid, Is.False);
+        Assert.That(result.Diagnostics.Select(static x => x.Code),
+            Does.Contain(ModuleContractDiagnosticCodes.InvalidAirStackDiscipline));
+    }
+
+    [Test]
+    public void Verify_WhenPushContainsRawNull_ReturnsSchemaDiagnostic()
+    {
+        var air = new AbstractIR();
+        air.AppendInstructions([new Instruction(UOpCode.Push, [null])]);
+        var table = CreateTable(includeBackendOnlySupport: true);
+        var selection = BackendCapabilitySelection.FromContracts(table, [_compilerCapability]);
+
+        var result = new AirVerifier().Verify(new AirVerificationRequest(
+            air,
+            table,
+            selection,
+            VerificationSeverityProfile.Strict));
+
+        Assert.That(result.IsValid, Is.False);
+        Assert.That(result.Diagnostics.Select(static x => x.Code),
+            Does.Contain(ModuleContractDiagnosticCodes.InvalidAirOperandSchema));
+    }
+
+    [Test]
+    public void Verify_WhenPushContainsTypedNull_ReturnsValidResult()
+    {
+        var air = new AbstractIR();
+        air.Push<string?>(null);
+        var table = CreateTable(includeBackendOnlySupport: true);
+        var selection = BackendCapabilitySelection.FromContracts(table, [_compilerCapability]);
+
+        var result = new AirVerifier().Verify(new AirVerificationRequest(
+            air,
+            table,
+            selection,
+            VerificationSeverityProfile.Strict));
+
+        Assert.That(result.IsValid, Is.True);
+        Assert.That(result.Diagnostics, Is.Empty);
+    }
+
+    [Test]
     public void Validate_WhenOptimizerEmitsUnsupportedIntrinsic_ReturnsLegalityDiagnostic()
     {
         var table = CreateTable(includeBackendOnlySupport: false);
@@ -135,6 +254,14 @@ public sealed class AirVerifierTests
 
         Assert.That(result.IsValid, Is.False);
         Assert.That(result.Diagnostics.Select(static x => x.Code), Does.Contain(ModuleContractDiagnosticCodes.UnsupportedAirIntrinsic));
+    }
+
+    private static AirVerifier CreateVerifierWithBackendOnlyIntrinsicSemantics()
+    {
+        var catalog = new IntrinsicCatalogBuilder().Build([new BackendOnlyIntrinsicDescriptorProvider()]);
+        return new AirVerifier(
+            new InstructionIntrinsicReader(),
+            new IntrinsicTypeStackProcessor(catalog, new IntrinsicTypeResolutionContext()));
     }
 
     private static IAbstractIR CreateIntrinsicAir(IntrinsicSymbolId intrinsic)
@@ -172,4 +299,30 @@ public sealed class AirVerifierTests
                 ]))
             .Build();
     }
+    private sealed class BackendOnlyIntrinsicDescriptorProvider : IIntrinsicDescriptorProvider
+    {
+        public IReadOnlyList<IntrinsicSemanticDescriptor> GetDescriptors() =>
+        [
+            new()
+            {
+                Symbol = new IntrinsicSymbol(
+                    IntrinsicCapabilityNameEncoder.CapabilityNamespace,
+                    _backendOnlyIntrinsic.Value),
+                Category = IntrinsicCategory.BackendSpecific,
+                StackRule = new NoStackEffectRule(),
+                ValidationRule = new NoValidationRule()
+            }
+        ];
+    }
+
+    private sealed class NoStackEffectRule : IIntrinsicStackRule
+    {
+        public void Apply(
+            IntrinsicInvocation invocation,
+            List<Type> stack,
+            IIntrinsicTypeResolutionContext context)
+        {
+        }
+    }
+
 }

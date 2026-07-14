@@ -11,6 +11,8 @@ namespace NumbersModule.Module;
 [ArithmeticModeCompatibility(ArithmeticMode.Universal)]
 public class NumbersModuleImpl : IFrontendCoreModule, IModuleContractDescriptorProvider
 {
+    public IReadOnlyList<ContractNamespaceOwner> NamespaceOwners => _contractDescriptorProvider.NamespaceOwners;
+
     private static readonly NumbersModuleContractDescriptorProvider _contractDescriptorProvider = new();
 
     private static readonly IReadOnlyList<LexemeRegistration> _lexemeRegistrations =

@@ -16,8 +16,12 @@ public sealed class LocalVariableRuntimeCallPipelineTests
         ir.LdLoc("x", typeof(int));
 
         var callOperands = ir.Instructions
-            .Where(static x => x.UOpCode == UOpCode.Intrinsic && x.Operands.Count > 1 && Equals(x.Operands[0], "call C#"))
-            .Select(static x => x.Operands[1])
+            .Where(static x => CSharpCallIntrinsicReader.TryGetCallOperand(x, out _))
+            .Select(static x =>
+            {
+                CSharpCallIntrinsicReader.TryGetCallOperand(x, out var operand);
+                return operand;
+            })
             .ToList();
 
         Assert.That(callOperands.Any(static x => x is CSharpCallDescriptor), Is.True);
@@ -25,8 +29,12 @@ public sealed class LocalVariableRuntimeCallPipelineTests
         Assert.That(callOperands.Any(static x => x is MethodInfo method && method.DeclaringType != null && method.DeclaringType.Name.Contains("VariablesContainer", StringComparison.Ordinal)), Is.False);
 
         var intrinsicNames = ir.Instructions
-            .Where(static x => x.UOpCode == UOpCode.Intrinsic)
-            .Select(static x => x.Operands[0].ToString())
+            .Where(static x => IntrinsicInstructionView.TryRead(x, out _))
+            .Select(static x =>
+            {
+                IntrinsicInstructionView.TryRead(x, out var intrinsic);
+                return intrinsic.CapabilityId;
+            })
             .ToList();
 
         Assert.That(intrinsicNames.Contains("load_local"), Is.False);

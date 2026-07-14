@@ -11,9 +11,9 @@ public sealed class CilBackendPureSignatureTests
     public void Compile_PureExternalArithmeticIr_ShouldNotRequireExecutionEnvironmentArgument()
     {
         var ir = BuildIr(
-            new Instruction(UOpCode.Intrinsic, ["load_external", 0, typeof(double)]),
-            new Instruction(UOpCode.Intrinsic, ["load_external", 1, typeof(double)]),
-            new Instruction(UOpCode.Intrinsic, ["add_f64"]));
+            IntrinsicInstructionFactory.CreateForCapability("load_external", 0, typeof(double)),
+            IntrinsicInstructionFactory.CreateForCapability("load_external", 1, typeof(double)),
+            IntrinsicInstructionFactory.CreateForCapability("add_f64"));
         var input = new CompilationInput
         {
             SourceText = string.Empty,

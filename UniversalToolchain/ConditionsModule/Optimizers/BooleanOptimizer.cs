@@ -10,7 +10,7 @@ namespace ConditionsModule.Optimizers;
 [AutoRegisterService]
 [IntrinsicDescriptorProvider(typeof(BooleanIntrinsicDescriptorProvider))]
 [UsedImplicitly]
-public class BooleanOptimizerModule : IIRProcessingModule
+public class BooleanOptimizerModule : IAirOptimizer
 {
     private IOptimizerIntrinsicCapabilityContext? _capabilityContext;
 
@@ -19,7 +19,7 @@ public class BooleanOptimizerModule : IIRProcessingModule
         _capabilityContext = capabilityContext.NotNull("Argument 'capabilityContext' cannot be null.");
     }
 
-    public IAbstractIR ProcessIr<TCompilationOutput>(IAbstractIR current, IAbstractIrCompiler<TCompilationOutput> compiler)
+    public IAbstractIR Optimize(IAbstractIR current)
     {
         var capabilityContext = _capabilityContext.NotNull(
             "Boolean optimizer requires intrinsic capability context initialization.");

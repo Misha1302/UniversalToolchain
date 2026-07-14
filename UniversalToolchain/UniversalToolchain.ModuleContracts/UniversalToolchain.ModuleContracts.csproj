@@ -11,6 +11,7 @@
         <ProjectReference Include="..\BasicCore\BasicCore.csproj"/>
         <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Diagnostics.Abstractions\UniversalToolchain.Diagnostics.Abstractions.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Air.Analysis\UniversalToolchain.Air.Analysis.csproj"/>
     </ItemGroup>
 
 </Project>

@@ -2,6 +2,7 @@ using AssemblyFinder;
 using BasicCore.Binding;
 using BasicCore.Binding.Symbols;
 using BasicCore.Compilation;
+using BasicCore.Core;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using BasicCore.Semantics;
@@ -119,7 +120,9 @@ public class VariablesModulePipelineTests
         var loadOp = GetSingleOp(bytecode, 1);
         var ir = loadOp.GetAbstractIR(new IAbstractMethodConvertable.Context([]));
 
-        Assert.That(ir.Instructions.SelectMany(static i => i.Operands).Any(static o => o.ToString()?.Contains("Int32", StringComparison.Ordinal) == true), Is.True);
+        Assert.That(ir.Instructions.Any(static instruction =>
+            CSharpCallIntrinsicReader.TryGetCallMethod(instruction, out var method) &&
+            (method.ReturnType == typeof(int) || method.GetGenericArguments().Contains(typeof(int)))), Is.True);
     }
 
     [Test]
@@ -143,7 +146,9 @@ public class VariablesModulePipelineTests
         var loadOp = GetSingleOp(bytecode, 1);
         var ir = loadOp.GetAbstractIR(new IAbstractMethodConvertable.Context([]));
 
-        Assert.That(ir.Instructions.SelectMany(static i => i.Operands).Any(static o => o.ToString()?.Contains("Int32", StringComparison.Ordinal) == true), Is.True);
+        Assert.That(ir.Instructions.Any(static instruction =>
+            CSharpCallIntrinsicReader.TryGetCallMethod(instruction, out var method) &&
+            (method.ReturnType == typeof(int) || method.GetGenericArguments().Contains(typeof(int)))), Is.True);
     }
 
     private static AstNode CreateVariableNode(string name)

@@ -7,7 +7,7 @@ description: Explain optimization passes and their contracts.
 
 Optimizers transform AIR while preserving observable program behavior.
 
-In UniversalToolchain, optimizers are implemented as `IIRProcessingModule` instances. They are selected by dialect/runtime composition and run after bytecode has been translated into AIR.
+In UniversalToolchain, optimizers implement the `IAirOptimizer` contract. They are selected by dialect/runtime composition and run after bytecode has been translated into AIR.
 
 ## Place in the pipeline
 
@@ -18,21 +18,21 @@ modules.ProcessBytecode
   -> optimizers.InitMethodsTranslator
   -> optimizers.InitIntrinsicCapabilityContext
   -> methodsTranslator.Translate(bytecode)
-  -> optimizers.ProcessIr(current, compiler)
+  -> current = optimizer.Optimize(current)
   -> compiler.Compile
 ```
 
 This order matters. Optimizers may prepare the bytecode-to-AIR translator, receive backend capability context and then transform AIR before backend compilation.
 
-## IIRProcessingModule hooks
+## IAirOptimizer hooks
 
-`IIRProcessingModule` exposes three responsibilities:
+`IAirOptimizer` exposes three responsibilities:
 
 | Hook | Purpose |
 |---|---|
 | `InitMethodsTranslator` | configure bytecode-to-AIR translation before AIR exists |
 | `InitIntrinsicCapabilityContext` | receive backend intrinsic capability information |
-| `ProcessIr` | transform AIR after translation and before backend compilation |
+| `Optimize` | transform AIR after translation and before backend compilation |
 
 A module may use only one hook or all three.
 
@@ -112,17 +112,13 @@ Therefore optimizer order must be deterministic and tested when behavior depends
 
 Optimizers may hold state such as a received capability context.
 
-That state must be initialized before `ProcessIr` and must not leak across incompatible compilation paths. If an optimizer requires initialization, it should fail explicitly when used incorrectly.
+That state must be initialized before `Optimize` and must not leak across incompatible compilation paths. If an optimizer requires initialization, it should fail explicitly when used incorrectly.
 
 Prefer request-scoped or build-scoped state. Be cautious with static mutable collections.
 
-## Backend compiler parameter
+## Backend capability boundary
 
-`ProcessIr<TCompilationOutput>` receives the selected backend compiler.
-
-This is a signal that optimization is backend-aware. The optimizer should use backend capabilities and contracts to decide whether a transformation is valid.
-
-Do not use this parameter to special-case unrelated runtime behavior or to bypass dialect composition.
+`Optimize` does not receive a concrete compiler. Backend awareness enters through the initialized intrinsic capability context, keeping optimizer logic independent from compiler implementations while still preventing unsupported rewrites.
 
 ## What optimizers must not do
 

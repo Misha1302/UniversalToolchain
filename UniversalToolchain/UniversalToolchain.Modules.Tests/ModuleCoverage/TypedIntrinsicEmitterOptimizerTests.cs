@@ -29,9 +29,9 @@ public sealed class TypedIntrinsicEmitterOptimizerTests
         var input = CreateIr(
             new Instruction(UOpCode.Push, [2]),
             new Instruction(UOpCode.Push, [3]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", method!]));
+            IntrinsicInstructionFactory.CreateForCapability("call C#", method!));
 
-        var result = optimizer.ProcessIr(input, new FakeCompiler());
+        var result = optimizer.Optimize(input);
 
         Assert.That(result, Is.SameAs(input));
     }
@@ -48,9 +48,9 @@ public sealed class TypedIntrinsicEmitterOptimizerTests
         var input = CreateIr(
             new Instruction(UOpCode.Push, [2]),
             new Instruction(UOpCode.Push, [3]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", method!]));
+            IntrinsicInstructionFactory.CreateForCapability("call C#", method!));
 
-        var result = optimizer.ProcessIr(input, new FakeCompiler());
+        var result = optimizer.Optimize(input);
 
         AssertTypedIntrinsic(result.Instructions[^1], BuiltinIntrinsicSymbols.Arithmetic.Add, typeof(int));
     }
@@ -66,10 +66,10 @@ public sealed class TypedIntrinsicEmitterOptimizerTests
         Assert.That(method, Is.Not.Null);
 
         var input = CreateIr(
-            new Instruction(UOpCode.Intrinsic, ["load_local", "flag", typeof(bool)]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", method!]));
+            IntrinsicInstructionFactory.CreateForCapability("load_local", "flag", typeof(bool)),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", method!));
 
-        var result = optimizer.ProcessIr(input, new FakeCompiler());
+        var result = optimizer.Optimize(input);
 
         Assert.That(result, Is.SameAs(input));
     }
@@ -86,10 +86,10 @@ public sealed class TypedIntrinsicEmitterOptimizerTests
         Assert.That(method, Is.Not.Null);
 
         var input = CreateIr(
-            new Instruction(UOpCode.Intrinsic, ["load_local", "flag", typeof(bool)]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", method!]));
+            IntrinsicInstructionFactory.CreateForCapability("load_local", "flag", typeof(bool)),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", method!));
 
-        var result = optimizer.ProcessIr(input, new FakeCompiler());
+        var result = optimizer.Optimize(input);
 
         Assert.That(BuiltinIntrinsicInstruction.Is(result.Instructions[^1], BuiltinIntrinsicSymbols.Boolean.Not), Is.True);
     }
@@ -107,9 +107,9 @@ public sealed class TypedIntrinsicEmitterOptimizerTests
         var input = CreateIr(
             new Instruction(UOpCode.Push, [1]),
             new Instruction(UOpCode.Push, [2]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", method!]));
+            IntrinsicInstructionFactory.CreateForCapability("call C#", method!));
 
-        var result = optimizer.ProcessIr(input, new FakeCompiler());
+        var result = optimizer.Optimize(input);
 
         Assert.That(result, Is.SameAs(input));
     }
@@ -124,9 +124,9 @@ public sealed class TypedIntrinsicEmitterOptimizerTests
         var input = CreateIr(
             new Instruction(UOpCode.Push, [1]),
             new Instruction(UOpCode.Push, [2]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", method!]));
+            IntrinsicInstructionFactory.CreateForCapability("call C#", method!));
 
-        var result = optimizer.ProcessIr(input, new FakeCompiler());
+        var result = optimizer.Optimize(input);
 
         AssertTypedIntrinsic(result.Instructions[^1], BuiltinIntrinsicSymbols.Comparison.Less, typeof(int));
     }
@@ -143,7 +143,7 @@ public sealed class TypedIntrinsicEmitterOptimizerTests
 
         var input = CreateIr(new Instruction(UOpCode.Push, [1.5d]));
 
-        var result = optimizer.ProcessIr(input, new FakeCompiler());
+        var result = optimizer.Optimize(input);
 
         Assert.That(result, Is.SameAs(input));
     }
@@ -161,31 +161,31 @@ public sealed class TypedIntrinsicEmitterOptimizerTests
 
         var input = CreateIr(new Instruction(UOpCode.Push, [1.5d]));
 
-        var result = optimizer.ProcessIr(input, new FakeCompiler());
+        var result = optimizer.Optimize(input);
 
         AssertTypedIntrinsic(result.Instructions[0], BuiltinIntrinsicSymbols.Core.LoadConst, typeof(double), 1.5d);
     }
 
     [Test]
-    public void NativeCilOptimizer_WhenCapabilitySupportsRequestedExternalType_RewritesLegacyExternalLoadSequence()
+    public void NativeCilOptimizer_WhenCapabilitySupportsRequestedExternalType_RewritesManagedCallSequence()
     {
         var optimizer = CreateOptimizer(
             new NativeCilOptimizerModule(),
             (BuiltinIntrinsicSymbols.Core.LoadExternal, typeof(double)));
 
         var input = CreateIr(
-            new Instruction(UOpCode.Intrinsic, ["call C#", ExternalRuntimeMethodDescriptors.LoadEnvironmentDescriptor]),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", ExternalRuntimeMethodDescriptors.LoadEnvironmentDescriptor),
             new Instruction(UOpCode.Push, [2]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", ExternalRuntimeMethodDescriptors.CreateLoadExternalMethod(typeof(double))]));
+            IntrinsicInstructionFactory.CreateForCapability("call C#", ExternalRuntimeMethodDescriptors.CreateLoadExternalMethod(typeof(double))));
 
-        var result = optimizer.ProcessIr(input, new FakeCompiler());
+        var result = optimizer.Optimize(input);
 
         Assert.That(result.Instructions, Has.Count.EqualTo(1));
         AssertTypedIntrinsic(result.Instructions[0], BuiltinIntrinsicSymbols.Core.LoadExternal, typeof(double), 2);
     }
 
     [Test]
-    public void NativeCilOptimizer_WhenCapabilityDoesNotSupportRequestedExternalType_KeepsLegacyExternalLoadSequence()
+    public void NativeCilOptimizer_WhenCapabilityDoesNotSupportRequestedExternalType_KeepsManagedCallSequence()
     {
         var optimizer = CreateOptimizer(
             new NativeCilOptimizerModule(),
@@ -195,11 +195,11 @@ public sealed class TypedIntrinsicEmitterOptimizerTests
             (BuiltinIntrinsicSymbols.Core.LoadExternal, typeof(decimal)));
 
         var input = CreateIr(
-            new Instruction(UOpCode.Intrinsic, ["call C#", ExternalRuntimeMethodDescriptors.LoadEnvironmentDescriptor]),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", ExternalRuntimeMethodDescriptors.LoadEnvironmentDescriptor),
             new Instruction(UOpCode.Push, [2]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", ExternalRuntimeMethodDescriptors.CreateLoadExternalMethod(typeof(double))]));
+            IntrinsicInstructionFactory.CreateForCapability("call C#", ExternalRuntimeMethodDescriptors.CreateLoadExternalMethod(typeof(double))));
 
-        var result = optimizer.ProcessIr(input, new FakeCompiler());
+        var result = optimizer.Optimize(input);
 
         Assert.That(result, Is.SameAs(input));
     }
@@ -213,11 +213,11 @@ public sealed class TypedIntrinsicEmitterOptimizerTests
             (BuiltinIntrinsicSymbols.Core.LoadExternal, typeof(double)));
 
         var input = CreateIr(
-            new Instruction(UOpCode.Intrinsic, ["call C#", ExternalRuntimeMethodDescriptors.LoadEnvironmentDescriptor]),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", ExternalRuntimeMethodDescriptors.LoadEnvironmentDescriptor),
             new Instruction(UOpCode.Push, [2]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", ExternalRuntimeMethodDescriptors.CreateLoadExternalMethod(typeof(double))]));
+            IntrinsicInstructionFactory.CreateForCapability("call C#", ExternalRuntimeMethodDescriptors.CreateLoadExternalMethod(typeof(double))));
 
-        var result = optimizer.ProcessIr(input, new FakeCompiler());
+        var result = optimizer.Optimize(input);
 
         Assert.That(result.Instructions, Has.Count.EqualTo(1));
         AssertTypedIntrinsic(result.Instructions[0], BuiltinIntrinsicSymbols.Core.LoadExternal, typeof(double), 2);
@@ -235,7 +235,7 @@ public sealed class TypedIntrinsicEmitterOptimizerTests
             new Instruction(UOpCode.Push, [0]),
             BuiltinIntrinsicInstruction.Create(BuiltinIntrinsicSymbols.Arithmetic.Add, typeof(int)));
 
-        var result = optimizer.ProcessIr(input, new FakeCompiler());
+        var result = optimizer.Optimize(input);
 
         Assert.That(result, Is.SameAs(input));
     }
@@ -243,7 +243,7 @@ public sealed class TypedIntrinsicEmitterOptimizerTests
     private static TOptimizer CreateOptimizer<TOptimizer>(
         TOptimizer optimizer,
         params (IntrinsicSymbol Symbol, Type? RuntimeType)[] supportedIntrinsics)
-        where TOptimizer : IIRProcessingModule
+        where TOptimizer : IAirOptimizer
     {
         optimizer.InitIntrinsicCapabilityContext(new OptimizerIntrinsicCapabilityContext(new FakeCapabilitySet(supportedIntrinsics)));
         return optimizer;
@@ -316,13 +316,6 @@ public sealed class TypedIntrinsicEmitterOptimizerTests
         var ir = new AbstractIR();
         ir.AppendInstructions(instructions);
         return ir;
-    }
-
-    private sealed class FakeCompiler : IAbstractIrCompiler<object>
-    {
-        public IReadOnlyList<string> SupportedIntrinsics => [];
-
-        public object Compile(IAbstractIR air, CompilationInput input) => throw new NotSupportedException();
     }
 
     private sealed class FakeCapabilitySet(

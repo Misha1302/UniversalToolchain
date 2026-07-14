@@ -16,17 +16,16 @@
         <ProjectReference Include="..\BasicTypesExtensions\BasicTypesExtensions.csproj"/>
         <ProjectReference Include="..\DotnetHelper\DotnetHelper.csproj"/>
         <ProjectReference Include="..\DynamicMethodWrapper\DynamicMethodWrapper.csproj"/>
+        <ProjectReference Include="..\IntermediateRepresentationAbstractions\IntermediateRepresentationAbstractions.csproj"/>
         <ProjectReference Include="..\ObjectExtensions\ObjectExtensions.csproj"/>
-        <ProjectReference Include="..\SettableGettableModule\SettableGettableModule.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Ir.Abstractions\UniversalToolchain.Ir.Abstractions.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-        <Compile Include="..\Intrinsics\Builtins\*.cs" Link="Intrinsics\Builtins\%(Filename)%(Extension)"/>
-        <Compile Include="..\Intrinsics\Capabilities\*.cs" Link="Intrinsics\Capabilities\%(Filename)%(Extension)"/>
-        <Compile Include="..\Intrinsics\Contracts\*.cs" Link="Intrinsics\Contracts\%(Filename)%(Extension)"/>
-        <Compile Include="..\Intrinsics\Core\**\*.cs" Link="Intrinsics\Core\%(RecursiveDir)%(Filename)%(Extension)"/>
-        <Compile Include="..\Intrinsics\Legacy\*.cs" Link="Intrinsics\Legacy\%(Filename)%(Extension)"/>
+        <Compile Include="..\Intrinsics\Builtins\*.cs" Exclude="..\Intrinsics\Builtins\BuiltinIntrinsicSymbols.cs;..\Intrinsics\Builtins\BuiltinIntrinsicInstruction.cs" Link="Intrinsics\Builtins\%(Filename)%(Extension)"/>
+        <Compile Include="..\Intrinsics\Capabilities\*.cs" Exclude="..\Intrinsics\Capabilities\IntrinsicCapabilityNameEncoder.cs;..\Intrinsics\Capabilities\IntrinsicCapabilityIds.cs;..\Intrinsics\Capabilities\IntrinsicTypeTokenMap.cs" Link="Intrinsics\Capabilities\%(Filename)%(Extension)"/>
+        <Compile Include="..\Intrinsics\Contracts\*.cs" Exclude="..\Intrinsics\Contracts\IntrinsicSymbol.cs;..\Intrinsics\Contracts\IntrinsicTypeArgument.cs;..\Intrinsics\Contracts\IntrinsicInvocation.cs" Link="Intrinsics\Contracts\%(Filename)%(Extension)"/>
+        <Compile Include="..\Intrinsics\Core\**\*.cs" Exclude="..\Intrinsics\Core\InstructionIntrinsicExtensions.cs;..\Intrinsics\Core\IntrinsicInstructionFactory.cs;..\Intrinsics\Core\IntrinsicInvocationFactory.cs;..\Intrinsics\Core\IntrinsicInstructionView.cs" Link="Intrinsics\Core\%(RecursiveDir)%(Filename)%(Extension)"/>
         <Compile Include="..\Intrinsics\Validation\*.cs" Link="Intrinsics\Validation\%(Filename)%(Extension)"/>
     </ItemGroup>
 

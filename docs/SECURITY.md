@@ -34,4 +34,4 @@ The public facade now applies two bounded controls before composition or executi
 
 These are defense-in-depth and denial-of-service preflight checks, not a sandbox. They do not interrupt a long-running compiled delegate, constrain heap allocation, isolate native calls, or revoke capabilities after a host deliberately adds an assembly. For arbitrary untrusted authors, execute in a separate constrained process/container and enforce wall-clock, CPU, memory, filesystem, network, and identity limits outside Wist.
 
-The name `CreateRestrictedArithmetic` describes the actual guarantee. The old `CreateSafeFormulas` alias is obsolete because “safe” could be misread as process isolation.
+The name `CreateRestrictedArithmetic` describes the actual guarantee. Ambiguous “safe” or “trusted” aliases are intentionally not part of the public API because they could be misread as process-isolation guarantees.

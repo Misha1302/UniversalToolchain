@@ -30,16 +30,19 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
             catch (Exception ex) when (ex is not RuntimeExecutionException)
             {
                 ToolchainThrower.Runtime(
-                    $"Error executing instruction '{instruction.UOpCode}' at pc={programCounter}, stack={state.ValueStack.Count}. {ex.Message}",
+                    $"Error executing instruction '{instruction.UOpCode}' at pc={programCounter}, stack={state.EvaluationStackCount}. {ex.Message}",
                     ex
                 );
             }
         }
 
-        if (state.ValueStack.Count == 0)
-            return null;
-
-        return state.ValueStack.Peek();
+        return state.EvaluationStackCount switch
+        {
+            0 => null,
+            1 => state.PeekEvaluationValue().Value,
+            _ => throw new RuntimeExecutionException(
+                $"AIR execution finished with {state.EvaluationStackCount} evaluation-stack values; expected zero or one.")
+        };
     }
 
     private void ExecuteInstruction(Instruction instruction, InterpreterState state)
@@ -49,36 +52,32 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
             case UOpCode.Nop:
                 break;
             case UOpCode.Push:
-                state.ValueStack.Push(instruction.Operands[0]);
+                var operand = GetRequiredOperand(instruction, 0);
+                state.PushEvaluationValue(
+                    AirPushOperand.GetValue(operand),
+                    AirPushOperand.GetDeclaredType(operand));
                 break;
             case UOpCode.Drop:
-                if (state.ValueStack.Count > 0)
-                    state.ValueStack.Pop();
+                _ = PopRequired(state, instruction.UOpCode);
                 break;
             case UOpCode.Jmp:
-                var labelId = instruction.Operands[0].Get<Guid>();
+                var labelId = GetRequiredOperand(instruction, 0).NotNull().Get<Guid>();
                 state.InstructionPointer = state.GetLabelPosition(labelId);
                 break;
             case UOpCode.JmpIf:
-                if (state.ValueStack.Count > 0)
+                var condition = PopRequired(state, instruction.UOpCode).Value.NotNull().Get<bool>();
+                if (condition)
                 {
-                    var condition = state.ValueStack.Pop().Get<bool>();
-                    if (condition)
-                    {
-                        labelId = instruction.Operands[0].Get<Guid>();
-                        state.InstructionPointer = state.GetLabelPosition(labelId);
-                    }
+                    labelId = GetRequiredOperand(instruction, 0).NotNull().Get<Guid>();
+                    state.InstructionPointer = state.GetLabelPosition(labelId);
                 }
                 break;
             case UOpCode.JmpIfNot:
-                if (state.ValueStack.Count > 0)
+                condition = PopRequired(state, instruction.UOpCode).Value.NotNull().Get<bool>();
+                if (!condition)
                 {
-                    var condition = state.ValueStack.Pop().Get<bool>();
-                    if (!condition)
-                    {
-                        labelId = instruction.Operands[0].Get<Guid>();
-                        state.InstructionPointer = state.GetLabelPosition(labelId);
-                    }
+                    labelId = GetRequiredOperand(instruction, 0).NotNull().Get<Guid>();
+                    state.InstructionPointer = state.GetLabelPosition(labelId);
                 }
                 break;
             case UOpCode.Label:
@@ -92,6 +91,25 @@ public class InterpreterImpl : IExecutor<IAbstractIR>
                 CompilerAssert.Unreachable($"Unknown instruction '{instruction.UOpCode}'.");
                 break;
         }
+    }
+
+
+    private static object? GetRequiredOperand(Instruction instruction, int index)
+    {
+        if (instruction.Operands.Count <= index)
+        {
+            return Thrower.InvalidOpEx<object?>(
+                $"Instruction '{instruction.UOpCode}' requires operand at index {index}.");
+        }
+
+        return instruction.Operands[index];
+    }
+
+    private static InterpreterStackValue PopRequired(InterpreterState state, UOpCode opcode)
+    {
+        if (state.EvaluationStackCount == 0)
+            return Thrower.InvalidOpEx<InterpreterStackValue>($"Instruction '{opcode}' requires a value on the evaluation stack.");
+        return state.PopEvaluationValue();
     }
 
     private void ExecuteIntrinsic(Instruction instruction, InterpreterState state)

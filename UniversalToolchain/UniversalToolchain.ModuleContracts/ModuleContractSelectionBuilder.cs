@@ -2,14 +2,6 @@ namespace UniversalToolchain.ModuleContracts;
 
 public sealed class ModuleContractSelectionBuilder
 {
-    public ModuleContractSelectionReport BuildLegacyCompatible(
-        IEnumerable<ModuleId> selectedModules,
-        IEnumerable<IModuleContractDescriptorProvider> descriptorProviders) =>
-        Build(
-            selectedModules,
-            descriptorProviders,
-            ModuleContractEnforcementPolicy.LegacyCompatible);
-
     public ModuleContractSelectionReport Build(
         IEnumerable<ModuleId> selectedModules,
         IEnumerable<IModuleContractDescriptorProvider> descriptorProviders,
@@ -27,17 +19,32 @@ public sealed class ModuleContractSelectionBuilder
             .Select(static x => x.Value)
             .ToHashSet(StringComparer.Ordinal);
 
-        var facets = descriptorProviders
-            .SelectMany(static x => x.GetFacets())
-            .Where(x => selectedModuleSet.Contains(x.ModuleId.Value))
+        var providerDescriptors = descriptorProviders
+            .Select(provider => new
+            {
+                Provider = provider,
+                Facets = provider.GetFacets()
+                    .Where(x => selectedModuleSet.Contains(x.ModuleId.Value))
+                    .ToArray()
+            })
+            .Where(static descriptor => descriptor.Facets.Length > 0)
+            .ToArray();
+        var facets = providerDescriptors
+            .SelectMany(static descriptor => descriptor.Facets)
             .OrderBy(static x => x.ModuleId.Value, StringComparer.Ordinal)
             .ThenBy(static x => ContractFacetKindOrder.GetSortKey(x.Kind))
             .ThenBy(static x => x.GetType().FullName, StringComparer.Ordinal)
             .ToArray();
 
-        var table = new ModuleContractTableBuilder()
-            .AddFacets(facets)
-            .Build();
+        var tableBuilder = new ModuleContractTableBuilder()
+            .AddFacets(facets);
+        foreach (var descriptor in providerDescriptors)
+        {
+            foreach (var moduleId in descriptor.Facets.Select(static facet => facet.ModuleId).Distinct())
+                tableBuilder.AddNamespaceOwners(moduleId, descriptor.Provider.NamespaceOwners);
+        }
+
+        var table = tableBuilder.Build();
 
         var declaredModuleIds = facets
             .Select(static x => x.ModuleId.Value)
@@ -52,7 +59,7 @@ public sealed class ModuleContractSelectionBuilder
                 var hasExplicitStatus = enforcementPolicy.TryGetExplicitStatus(moduleId, out var explicitStatus);
                 var inferredStatus = declaredModuleIds.Contains(moduleId.Value)
                     ? ModuleContractCompatibilityStatus.Declared
-                    : ModuleContractCompatibilityStatus.LegacyImplicit;
+                    : ModuleContractCompatibilityStatus.Undeclared;
 
                 return new SelectedModuleContractStatus(
                     moduleId,
@@ -89,29 +96,22 @@ public sealed class ModuleContractSelectionBuilder
         if (enforcementPolicy.RequireNewModulesDeclared
             && !enforcementPolicy.ExplicitStatuses.ContainsKey(moduleId))
         {
-            if (IsLegacyClrCompatibilityDebt(moduleId))
-                return CreateLegacyImplicitDiagnostic(moduleId);
-
             return new ToolchainDiagnostic(
                 ModuleContractDiagnosticCodes.NewModuleMissingDescriptor,
                 ToolchainDiagnosticSeverity.Error,
-                $"Selected module '{moduleId}' has no module contract descriptor and is not listed in the legacy compatibility baseline.",
+                $"Selected module '{moduleId}' has no module contract descriptor and is not explicitly accepted as Undeclared.",
                 null,
-                [new ToolchainDiagnosticHint("New modules must provide descriptors at Declared level or be added to an explicit legacy compatibility plan.")]);
+                [new ToolchainDiagnosticHint("New modules must provide descriptors at Declared level or be explicitly accepted as Undeclared by the selected policy.")]);
         }
 
-        return CreateLegacyImplicitDiagnostic(moduleId);
+        return CreateUndeclaredDiagnostic(moduleId);
     }
 
-    private static ToolchainDiagnostic CreateLegacyImplicitDiagnostic(ModuleId moduleId) =>
+    private static ToolchainDiagnostic CreateUndeclaredDiagnostic(ModuleId moduleId) =>
         new(
-                ModuleContractDiagnosticCodes.LegacyImplicitModule,
+                ModuleContractDiagnosticCodes.UndeclaredModule,
                 ToolchainDiagnosticSeverity.Warning,
-                $"Selected module '{moduleId}' has no module contract descriptor and is treated as LegacyImplicit.",
+                $"Selected module '{moduleId}' has no module contract descriptor and is explicitly treated as Undeclared.",
                 null,
-                [new ToolchainDiagnosticHint("Add an IModuleContractDescriptorProvider before moving this module to Declared or stricter compatibility status.")]);
-
-    private static bool IsLegacyClrCompatibilityDebt(ModuleId moduleId) =>
-        moduleId.Value.StartsWith("legacy.clr.", StringComparison.Ordinal)
-        && !moduleId.Value.StartsWith("legacy.clr.tests.", StringComparison.Ordinal);
+                [new ToolchainDiagnosticHint("Add an IModuleContractDescriptorProvider before moving this module to Declared or a stricter status.")]);
 }

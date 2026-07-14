@@ -7,9 +7,8 @@ public sealed record IntrinsicInvocation
         IReadOnlyList<IntrinsicTypeArgument> typeArguments,
         IReadOnlyList<object?> dataOperands)
     {
-        typeArguments = typeArguments.ArgNotNull();
-
-        dataOperands = dataOperands.ArgNotNull();
+        ArgumentNullException.ThrowIfNull(typeArguments);
+        ArgumentNullException.ThrowIfNull(dataOperands);
 
         Symbol = symbol;
         TypeArguments = [.. typeArguments];

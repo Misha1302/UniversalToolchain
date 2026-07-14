@@ -51,7 +51,7 @@ def main() -> int:
             raise SystemExit(f"{package}: forbidden assemblies: {', '.join(forbidden)}")
         if len(runtime_dlls) > MAX_RUNTIME_DLLS:
             raise SystemExit(
-                f"{package}: runtime DLL count grew beyond the reviewed preview.4 ceiling "
+                f"{package}: runtime DLL count grew beyond the reviewed release ceiling "
                 f"({len(runtime_dlls)} > {MAX_RUNTIME_DLLS}). Review the package boundary explicitly."
             )
 

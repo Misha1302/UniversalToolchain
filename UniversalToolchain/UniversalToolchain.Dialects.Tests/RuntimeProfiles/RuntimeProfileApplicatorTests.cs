@@ -83,7 +83,7 @@ public sealed class RuntimeProfileApplicatorTests
                 .Describe("Release defaults")
                 .UseModules("Arithmetic", "Arithmetic", "Numbers")
                 .EnableBackend("cil")
-                .EnableOptimizer("SsaPreview")
+                .EnableOptimizer("Ssa")
                 .Security(SecurityProfile.Restricted)
                 .Capability("safe-math")
                 .Capability("native-interop", enabled: false))
@@ -97,7 +97,7 @@ public sealed class RuntimeProfileApplicatorTests
             Assert.That(resolved.Description, Is.EqualTo("Release defaults"));
             Assert.That(resolved.DefaultModules, Is.EqualTo(new[] { "Arithmetic", "Numbers" }));
             Assert.That(resolved.DefaultBackends.Select(static x => x.Value), Is.EqualTo(new[] { "cil" }));
-            Assert.That(resolved.DefaultOptimizers, Is.EqualTo(new[] { "SsaPreview" }));
+            Assert.That(resolved.DefaultOptimizers, Is.EqualTo(new[] { "Ssa" }));
             Assert.That(resolved.DefaultSecurityProfile, Is.EqualTo(SecurityProfile.Restricted));
             Assert.That(resolved.DefaultCapabilities["safe-math"], Is.True);
             Assert.That(resolved.DefaultCapabilities["native-interop"], Is.False);

@@ -89,11 +89,32 @@ public class RuntimeAssemblyLoadStrategyContractTests
         });
     }
 
+
+    [Test]
+    public void DefaultStrategy_AfterDispose_RejectsFurtherLoads()
+    {
+        var strategy = new DefaultRuntimeAssemblyLoadStrategy(new MissingRuntimeAssemblyLocator());
+
+        strategy.Dispose();
+
+        Assert.Throws<ObjectDisposedException>(() => strategy.LoadAssembly("Missing.Assembly"));
+    }
+
     private static RuntimeComponentManifestEntry Entry(string assemblySimpleName, string componentId) =>
         new(RuntimeComponentKind.FrontendModule, "Arithmetic", [], new RuntimeComponentId(componentId), assemblySimpleName);
 
     private static DefaultRuntimeComponentResolver CreateResolver(IRuntimeAssemblyLoadStrategy strategy)
         => new(new DefaultRuntimeAssemblyTypeLoader(strategy));
+
+
+    private sealed class MissingRuntimeAssemblyLocator : IRuntimeAssemblyLocator
+    {
+        public bool TryResolveAssemblyPath(string assemblySimpleName, out string? absolutePath)
+        {
+            absolutePath = null;
+            return false;
+        }
+    }
 
     private sealed class CountingAssemblyLoadStrategy(Assembly assembly) : IRuntimeAssemblyLoadStrategy
     {

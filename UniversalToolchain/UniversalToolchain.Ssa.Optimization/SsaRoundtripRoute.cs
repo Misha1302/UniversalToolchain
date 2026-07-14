@@ -1,5 +1,6 @@
+using BasicCore.Builtins;
+using BasicCore.Contracts;
 using BasicCore.Core;
-using BasicCore.Legacy;
 using IntermediateRepresentationAbstractions;
 using UniversalToolchain.Air.Analysis;
 using UniversalToolchain.Ir.Abstractions;
@@ -221,12 +222,12 @@ public sealed class SsaRoundtripRoute
 
         try
         {
-            var normalizedInput = NormalizeIntrinsicPayloads(input);
+            var normalizedInput = PrepareIntrinsicPayloads(input);
             if (!ReferenceEquals(normalizedInput, input))
             {
                 trace?.Add(new SsaRouteTraceEntry(
                     "normalization",
-                    "Normalized legacy intrinsic payloads to the canonical AIR intrinsic shape.",
+                    "Prepared typed intrinsic payloads for SSA lowering.",
                     normalizedInput.Instructions.Count));
             }
 
@@ -300,104 +301,89 @@ public sealed class SsaRoundtripRoute
     }
 
 
-    private static IAbstractIR NormalizeIntrinsicPayloads(IAbstractIR input)
+    private static IAbstractIR PrepareIntrinsicPayloads(IAbstractIR input)
     {
         var changed = false;
-        var normalized = new List<Instruction>(input.Instructions.Count);
+        var prepared = new List<Instruction>(input.Instructions.Count);
 
         for (var index = 0; index < input.Instructions.Count; index++)
         {
             var instruction = input.Instructions[index];
             if (instruction.UOpCode != UOpCode.Intrinsic)
             {
-                normalized.Add(CloneInstruction(instruction));
+                prepared.Add(CloneInstruction(instruction));
                 continue;
             }
 
-            Instruction canonical;
-            if (instruction.Operands.Count != 0 && instruction.Operands[0] is string)
-            {
-                canonical = instruction;
-            }
-            else if (!IntrinsicInstructionNormalizer.TryNormalize(instruction, out canonical))
+            if (!instruction.TryGetTypedIntrinsicInvocation(out var invocation))
             {
                 throw new AirToSsaConversionException(
                 [
                     new IrDiagnostic(
                         IrDiagnosticSeverity.Error,
-                        "air.to-ssa.intrinsic.normalize",
-                        $"AIR Intrinsic at instruction {index} uses an unsupported legacy payload '{instruction.Operands.FirstOrDefault()?.GetType().FullName ?? "<null>"}'.")
+                        "air.to-ssa.intrinsic.typed-payload-required",
+                        $"AIR Intrinsic at instruction {index} must contain exactly one IntrinsicInvocation payload.")
                 ]);
             }
-            else
-            {
-                changed = true;
-            }
 
-            if (TryNormalizeExternalLoad(canonical, instruction, out var externalLoad))
+            if (TryPrepareExternalLoad(invocation, instruction, out var externalLoad))
             {
                 changed = true;
-                normalized.Add(externalLoad);
+                prepared.Add(externalLoad);
                 continue;
             }
 
-            if (TryNormalizeLoadConstant(canonical, instruction, out var push))
+            if (TryPrepareLoadConstant(invocation, instruction, out var push))
             {
                 changed = true;
-                normalized.Add(push);
+                prepared.Add(push);
                 continue;
             }
 
-            normalized.Add(new Instruction(
-                canonical.UOpCode,
-                [.. canonical.Operands],
-                [.. instruction.Metadata],
-                instruction.Comment));
+            prepared.Add(CloneInstruction(instruction));
         }
 
-        return changed ? new NormalizedAirProgram(normalized) : input;
+        return changed ? new NormalizedAirProgram(prepared) : input;
     }
 
-
-    private static bool TryNormalizeExternalLoad(
-        Instruction canonical,
+    private static bool TryPrepareExternalLoad(
+        IntrinsicInvocation invocation,
         Instruction source,
-        out Instruction normalized)
+        out Instruction prepared)
     {
-        normalized = default!;
-        if (canonical.Operands.Count != 3 ||
-            canonical.Operands[0] is not string intrinsicId ||
-            !string.Equals(intrinsicId, "load_external", StringComparison.Ordinal) ||
-            canonical.Operands[1] is not int slot ||
-            canonical.Operands[2] is not Type valueType)
+        prepared = default!;
+        if (invocation.Symbol != BuiltinIntrinsicSymbols.Core.LoadExternal ||
+            invocation.DataOperands.Count != 1 ||
+            invocation.DataOperands[0] is not int slot ||
+            invocation.TypeArguments.Count != 1)
         {
             return false;
         }
 
-        normalized = new Instruction(
+        prepared = new Instruction(
             UOpCode.Push,
-            [new AirExternalValueReference(slot, valueType)],
+            [new AirExternalValueReference(slot, invocation.TypeArguments[0].RuntimeType)],
             [.. source.Metadata],
             source.Comment);
         return true;
     }
 
-    private static bool TryNormalizeLoadConstant(
-        Instruction canonical,
+    private static bool TryPrepareLoadConstant(
+        IntrinsicInvocation invocation,
         Instruction source,
-        out Instruction normalized)
+        out Instruction prepared)
     {
-        normalized = default!;
-        if (canonical.Operands.Count != 2 ||
-            canonical.Operands[0] is not string intrinsicId ||
-            !LegacyIntrinsicNameParser.TryParseLoadConst(intrinsicId, out _, out _))
+        prepared = default!;
+        if (invocation.Symbol != BuiltinIntrinsicSymbols.Core.LoadConst ||
+            invocation.DataOperands.Count != 1 ||
+            invocation.DataOperands[0] is not { } value)
         {
             return false;
         }
 
-        normalized = new Instruction(
+        prepared = new Instruction(
             UOpCode.Push,
-            [canonical.Operands[1]],
+            [value],
             [.. source.Metadata],
             source.Comment);
         return true;
@@ -420,7 +406,7 @@ public sealed class SsaRoundtripRoute
         public void JmpIfNot(Guid identifier) => throw Immutable();
         public void SetLabel(Guid label) => throw Immutable();
         public void Annotate(params List<object>[] annotations) => throw Immutable();
-        public void Intrinsic(object instructionIdentifier, params List<object> operands) => throw Immutable();
+        public void Intrinsic(string capabilityId, params object?[] dataOperands) => throw Immutable();
         public void AppendInstructions(IReadOnlyList<Instruction> instructions) => throw Immutable();
 
         private static InvalidOperationException Immutable() =>

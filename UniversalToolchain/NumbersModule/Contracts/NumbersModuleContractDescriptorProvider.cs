@@ -4,6 +4,8 @@ namespace NumbersModule.Contracts;
 
 public sealed class NumbersModuleContractDescriptorProvider : IModuleContractDescriptorProvider
 {
+    public IReadOnlyList<ContractNamespaceOwner> NamespaceOwners => [ContractNamespaceOwner.Wist];
+
     public IReadOnlyList<IModuleContractFacet> GetFacets() =>
     [
         new SyntaxContractFacet(

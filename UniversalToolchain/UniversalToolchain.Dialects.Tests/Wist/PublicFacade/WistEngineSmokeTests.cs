@@ -1,4 +1,3 @@
-#pragma warning disable CS0618 // Legacy CompileFunc compatibility contracts are intentionally exercised here.
 using UniversalToolchain.Wist;
 
 namespace UniversalToolchain.Dialects.Tests.Wist.PublicFacade;
@@ -44,7 +43,7 @@ public sealed class WistEngineSmokeTests
     public void Evaluate_WithExplicitPresetFactories_ReturnsExpectedDouble()
     {
         using var restrictedArithmetic = WistEngine.CreateRestrictedArithmetic();
-        using var fullNativePreview = WistEngine.CreateFullNativePreview();
+        using var fullNativePreview = WistEngine.CreateFullNative();
 
         var restrictedResult = restrictedArithmetic.Evaluate<double>(
             "price * 0.9 + fee",
@@ -61,9 +60,9 @@ public sealed class WistEngineSmokeTests
     }
 
     [Test]
-    public void FullNativePreview_ClrInteropWithoutHostAllowlist_FailsClearly()
+    public void FullNative_ClrInteropWithoutHostAllowlist_FailsClearly()
     {
-        using var wist = WistEngine.CreateFullNativePreview();
+        using var wist = WistEngine.CreateFullNative();
 
         var result = wist.TryCompile<Func<double>>("System.Math.Sqrt(16.0)");
 
@@ -75,98 +74,17 @@ public sealed class WistEngineSmokeTests
     }
 
     [Test]
-    public void FullNativePreview_ClrInteropWithExplicitHostAllowlist_Succeeds()
+    public void FullNative_ClrInteropWithExplicitHostAllowlist_Succeeds()
     {
         using var wist = WistEngine.Create(new WistEngineOptions
         {
-            Preset = WistPreset.FullNativePreview,
+            Preset = WistPreset.FullNative,
             AllowedAssemblies = [typeof(Math).Assembly]
         });
 
         var program = wist.Compile<Func<double>>("System.Math.Sqrt(16.0)");
 
         Assert.That(program.CompiledDelegate(), Is.EqualTo(4.0d).Within(1e-9));
-    }
-
-    [Test]
-    public void CompileFunc_OneArgument_ReturnsExpectedResult()
-    {
-        using var wist = WistEngine.CreateRestrictedArithmetic();
-
-        var formula = wist.CompileFunc<double, double>(
-            "price * 0.9",
-            "price");
-
-        var result = formula.Invoke(100.0d);
-
-        Assert.That(result, Is.EqualTo(90.0d).Within(1e-9));
-    }
-
-    [Test]
-    public void CompileFunc_TwoArguments_ReturnsExpectedResult()
-    {
-        using var wist = WistEngine.CreateRestrictedArithmetic();
-
-        var formula = wist.CompileFunc<double, double, double>(
-            "price * 0.9 + fee",
-            "price",
-            "fee");
-
-        var result = formula.Invoke(100.0d, 5.0d);
-
-        Assert.That(result, Is.EqualTo(95.0d).Within(1e-9));
-    }
-
-    [Test]
-    public void CompileFunc_ThreeArguments_ReturnsExpectedResult()
-    {
-        using var wist = WistEngine.CreateRestrictedArithmetic();
-
-        var formula = wist.CompileFunc<double, double, double, double>(
-            "A + B * C / 5.0",
-            "A",
-            "B",
-            "C");
-
-        var result = formula.Invoke(10.0d, 20.0d, 30.0d);
-
-        Assert.That(result, Is.EqualTo(130.0d).Within(1e-9));
-    }
-
-    [Test]
-    public void CompileFunc_InvokeRepeatedly_ReturnsStableResults()
-    {
-        using var wist = WistEngine.CreateRestrictedArithmetic();
-
-        var formula = wist.CompileFunc<double, double, double>(
-            "price * 0.9 + fee",
-            "price",
-            "fee");
-
-        var first = formula.Invoke(100.0d, 5.0d);
-        var second = formula.Invoke(200.0d, 10.0d);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(first, Is.EqualTo(95.0d).Within(1e-9));
-            Assert.That(second, Is.EqualTo(190.0d).Within(1e-9));
-        });
-    }
-
-    [Test]
-    public void CompileFunc_InstanceOwnedLifetimeRoots_SurviveFullGarbageCollection()
-    {
-        using var wist = WistEngine.CreateRestrictedArithmetic();
-
-        var formula = wist.CompileFunc<double, double>(
-            "price * 0.9",
-            "price");
-
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
-        GC.Collect();
-
-        Assert.That(formula.Invoke(100.0d), Is.EqualTo(90.0d).Within(1e-9));
     }
 
     [Test]
@@ -262,55 +180,6 @@ public sealed class WistEngineSmokeTests
         {
             Assert.That(exception, Is.Not.Null);
             Assert.That(exception!.Message, Does.Contain("Duplicate parameter name"));
-        });
-    }
-
-    [Test]
-    public void CompileFunc_WhenFormulaInvalid_FailsAtCompilation()
-    {
-        using var wist = WistEngine.CreateRestrictedArithmetic();
-
-        var exception = Assert.Catch(() => wist.CompileFunc<double, double>("price *", "price"));
-
-        Assert.That(exception, Is.Not.Null);
-    }
-
-    [Test]
-    public void CompileFunc_WhenFormulaUsesUnsupportedSafeFormulaShape_FailsWithoutFacadeSyntaxScan()
-    {
-        using var wist = WistEngine.CreateRestrictedArithmetic();
-
-        var exception = Assert.Catch(
-            () => wist.CompileFunc<double, double, double>(
-                """
-                let discount = 0.9
-                price * discount + fee
-                """,
-                "price",
-                "fee"));
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(exception, Is.Not.Null);
-            Assert.That(exception!.Message, Is.Not.Empty);
-        });
-    }
-
-    [Test]
-    public void CompileFunc_WhenParameterNamesAreDuplicated_FailsClearly()
-    {
-        using var wist = WistEngine.CreateRestrictedArithmetic();
-
-        var exception = Assert.Catch(
-            () => wist.CompileFunc<double, double, double>(
-                "price * 0.9 + price",
-                "price",
-                "price"));
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(exception, Is.Not.Null);
-            Assert.That(exception!.Message, Does.Contain("Duplicate Wist argument name"));
         });
     }
 

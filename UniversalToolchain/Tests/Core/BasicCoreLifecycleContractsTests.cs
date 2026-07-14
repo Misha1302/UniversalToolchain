@@ -4,6 +4,28 @@ namespace Tests.Core;
 public class BasicCoreLifecycleContractsTests
 {
     [Test]
+    public void FailedPrepareToRun_InvalidatesPreviouslyPreparedProgram()
+    {
+        var compiler = new ConditionalCompiler();
+        var core = new BasicCoreImpl<string>(
+            () => new PassthroughLexer(),
+            () => new PassthroughParser(),
+            () => new PassthroughAstTranslator(),
+            () => new PassthroughMethodsTranslator(),
+            () => compiler,
+            () => new PassthroughExecutor(),
+            [],
+            [],
+            []);
+
+        core.PrepareToRun("program-A");
+        Assert.That(core.RunPrepared(), Is.EqualTo("program-A"));
+
+        Assert.Throws<InvalidOperationException>(() => core.PrepareToRun("broken-program-B"));
+        Assert.Throws<InvalidOperationException>(() => core.RunPrepared());
+    }
+
+    [Test]
     public void RunPrepared_WithoutPrepareToRun_ShouldThrowInvalidOperationException()
     {
         var core = CreateCore();
@@ -54,6 +76,17 @@ public class BasicCoreLifecycleContractsTests
     private sealed class PassthroughMethodsTranslator : IAbstractMethodsTranslator
     {
         public IAbstractIR Translate(Bytecode bytecode) => new AbstractIR();
+    }
+
+    private sealed class ConditionalCompiler : IAbstractIrCompiler<string>
+    {
+        public string Compile(IAbstractIR air, CompilationInput input)
+        {
+            if (input.SourceText == "broken-program-B")
+                throw new InvalidOperationException("compile failed");
+
+            return input.SourceText;
+        }
     }
 
     private sealed class PassthroughCompiler : IAbstractIrCompiler<string>

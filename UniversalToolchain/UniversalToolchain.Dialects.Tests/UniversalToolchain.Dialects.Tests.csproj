@@ -95,24 +95,24 @@
             <Link>Dialects\examples\wist\minimal-arithmetic\README.md</Link>
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
-        <Content Include="..\Dialects\examples\wist\restricted-sandbox\dialect.wistdialect">
-            <Link>Dialects\examples\wist\restricted-sandbox\dialect.wistdialect</Link>
+        <Content Include="..\Dialects\examples\wist\composition-restricted\dialect.wistdialect">
+            <Link>Dialects\examples\wist\composition-restricted\dialect.wistdialect</Link>
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
-        <Content Include="..\Dialects\examples\wist\restricted-sandbox\forbidden-interop.wist">
-            <Link>Dialects\examples\wist\restricted-sandbox\forbidden-interop.wist</Link>
+        <Content Include="..\Dialects\examples\wist\composition-restricted\forbidden-interop.wist">
+            <Link>Dialects\examples\wist\composition-restricted\forbidden-interop.wist</Link>
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
-        <Content Include="..\Dialects\examples\wist\restricted-sandbox\forbidden-program.wist">
-            <Link>Dialects\examples\wist\restricted-sandbox\forbidden-program.wist</Link>
+        <Content Include="..\Dialects\examples\wist\composition-restricted\forbidden-program.wist">
+            <Link>Dialects\examples\wist\composition-restricted\forbidden-program.wist</Link>
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
-        <Content Include="..\Dialects\examples\wist\restricted-sandbox\program.wist">
-            <Link>Dialects\examples\wist\restricted-sandbox\program.wist</Link>
+        <Content Include="..\Dialects\examples\wist\composition-restricted\program.wist">
+            <Link>Dialects\examples\wist\composition-restricted\program.wist</Link>
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
-        <Content Include="..\Dialects\examples\wist\restricted-sandbox\README.md">
-            <Link>Dialects\examples\wist\restricted-sandbox\README.md</Link>
+        <Content Include="..\Dialects\examples\wist\composition-restricted\README.md">
+            <Link>Dialects\examples\wist\composition-restricted\README.md</Link>
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </Content>
         <Content Include="..\Dialects\examples\wist\pricing-restricted\dialect.wistdialect">

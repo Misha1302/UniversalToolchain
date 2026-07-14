@@ -1,6 +1,5 @@
 using AbstractIrConverters;
 using BasicCore.Builtins;
-using BasicCore.Legacy;
 
 namespace Tests.Internal;
 
@@ -49,13 +48,12 @@ public class BytecodeConverterContractsTests
         var converter = CreateConverter();
         var bytecode = new Bytecode([
             new BytecodeInstruction(new StubConvertable("bad", _ =>
-                CreateIr(new Instruction(UOpCode.Intrinsic, ["not_registered"]))))
+                CreateIr(IntrinsicInstructionFactory.CreateForCapability("not_registered"))))
         ]);
 
         var exception = Assert.Throws<InvalidOperationException>(() => converter.Translate(bytecode));
 
-        Assert.That(exception!.Message, Does.Contain("Unable to read intrinsic invocation"));
-        Assert.That(exception.Message, Does.Contain("not_registered"));
+        Assert.That(exception!.Message, Does.Contain("not_registered"));
     }
 
     [Test]
@@ -77,7 +75,7 @@ public class BytecodeConverterContractsTests
 
     private static BytecodeToAbstractIrConverterImpl CreateConverter() =>
         new(
-            new InstructionIntrinsicReader(new LegacyIntrinsicDecoder()),
+            new InstructionIntrinsicReader(),
             CreateTypeStackProcessor());
 
     private static IIntrinsicTypeStackProcessor CreateTypeStackProcessor()

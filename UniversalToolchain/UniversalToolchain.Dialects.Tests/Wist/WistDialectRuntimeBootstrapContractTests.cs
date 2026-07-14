@@ -52,8 +52,8 @@ public class WistDialectRuntimeBootstrapContractTests
 
         Assert.Multiple(() =>
         {
-            Assert.That(options.BytecodeProfile, Is.EqualTo(VerificationSeverityProfile.Strict));
-            Assert.That(options.AirProfile, Is.EqualTo(VerificationSeverityProfile.Strict));
+            Assert.That(options.BytecodeProfile, Is.EqualTo(VerificationSeverityProfile.Warn));
+            Assert.That(options.AirProfile, Is.EqualTo(VerificationSeverityProfile.Warn));
             Assert.That(options.VerifyLegacyBytecodeOperationNames, Is.False);
             Assert.That(options.BackendPolicy.RejectNonUniversalIntrinsics, Is.False);
             Assert.That(provider.GetRequiredService<ISelectedModuleContractTableProvider>(), Is.InstanceOf<SelectedModuleContractTableProvider>());
@@ -285,7 +285,7 @@ public class WistDialectRuntimeBootstrapContractTests
             new IntrinsicSemanticBootstrapPlanBuilder(),
             new IntrinsicSemanticBootstrapPreProviderValidator(),
             new IntrinsicSemanticBootstrapRuntimeValidator(),
-            ModuleContractPipelineProfiles.MigrationWarn,
+            ModuleContractPipelineProfiles.Warn,
             NullModuleContractDiagnosticSink.Instance);
         var config = new WistDialectExecutionConfiguration(
             "Demo",
@@ -381,7 +381,7 @@ public class WistDialectRuntimeBootstrapContractTests
             new IntrinsicSemanticBootstrapPlanBuilder(),
             new IntrinsicSemanticBootstrapPreProviderValidator(),
             new IntrinsicSemanticBootstrapRuntimeValidator(),
-            ModuleContractPipelineProfiles.MigrationWarn,
+            ModuleContractPipelineProfiles.Warn,
             NullModuleContractDiagnosticSink.Instance);
 
     private static RuntimeComponentManifestEntry BackendEntry(string alias, Type registrarType)

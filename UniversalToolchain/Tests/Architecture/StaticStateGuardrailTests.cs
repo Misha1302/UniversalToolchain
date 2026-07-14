@@ -57,7 +57,6 @@ public sealed class StaticStateGuardrailTests
         {
             "UniversalToolchain/AssemblyFinder/ImmutableTypeCatalog.cs",
             "UniversalToolchain/AssemblyFinder/TypeCatalogFactory.cs",
-            "UniversalToolchain/AssemblyFinder/TypesFinder.cs",
             "UniversalToolchain/DynamicMethodCalling/Core/DynamicMethodInvokerBase.cs",
             "UniversalToolchain/ObjectExtensions/ObjectExtension.cs"
         };

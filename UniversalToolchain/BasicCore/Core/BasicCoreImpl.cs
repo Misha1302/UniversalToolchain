@@ -10,7 +10,7 @@ public class BasicCoreImpl<TCompilationOutput>(
     Func<IAbstractIrCompiler<TCompilationOutput>> compilerFactory,
     Func<IExecutor<TCompilationOutput>> executorFactory,
     IReadOnlyList<IFrontendCoreModule> modules,
-    IReadOnlyList<IIRProcessingModule> optimizers,
+    IReadOnlyList<IAirOptimizer> optimizers,
     IReadOnlyList<IMiddleEndCoreModule<TCompilationOutput>> middleEndModules,
     IIntrinsicCapabilitySetFactory? intrinsicCapabilitySetFactory = null,
     IReadOnlyList<ICompilationPipelineObserver>? pipelineObservers = null,
@@ -72,6 +72,9 @@ public class BasicCoreImpl<TCompilationOutput>(
 
     public void PrepareToRun(CompilationInput input)
     {
+        // A failed build must invalidate the previously prepared execution. Keeping the old
+        // session would make RunPrepared execute a different program than the caller requested.
+        _prepared.Value = null;
         _prepared.Value = _preparedExecutionBuilder.Build(input);
     }
 }

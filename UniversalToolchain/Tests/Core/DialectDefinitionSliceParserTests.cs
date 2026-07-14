@@ -27,7 +27,7 @@ public class DialectDefinitionSliceParserTests
     public void Parse_WithValidAst_ReturnsExpectedNonNullSliceAndBasicInvariants()
     {
         var registry = CreateRegistry();
-        var ast = ParseAst("dialect Tiny\nuse Arithmetic,Variables\nsecurity trusted\ncapability sandbox\n");
+        var ast = ParseAst("dialect Tiny\nuse Arithmetic,Variables\nsecurity trusted\ncapability composition-restricted\n");
         var parser = new DialectDefinitionSliceParser(registry);
 
         var slice = parser.Parse(ast);
@@ -43,7 +43,7 @@ public class DialectDefinitionSliceParserTests
             Assert.That(slice.IntrinsicDirectives, Is.Empty);
             Assert.That(slice.OptimizerDirectives, Is.Empty);
             Assert.That(slice.SecurityProfile, Is.EqualTo(DialectSecurityProfile.Trusted));
-            Assert.That(slice.CapabilityDirectives.Select(x => (x.Name, x.Value)), Is.EqualTo(new[] { ("sandbox", true) }));
+            Assert.That(slice.CapabilityDirectives.Select(x => (x.Name, x.Value)), Is.EqualTo(new[] { ("composition-restricted", true) }));
         });
     }
 

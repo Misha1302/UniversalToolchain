@@ -35,11 +35,11 @@ public class CilBackendAbstractIrCompilationTests
         var registry = new CilIntrinsicRegistry();
         var representativeCases = new[]
         {
-            ("load_f64", new Instruction(UOpCode.Intrinsic, ["load_f64", 1.5d]), new List<Type>()),
-            ("boolean_not", new Instruction(UOpCode.Intrinsic, ["boolean_not"]), new List<Type> { typeof(bool) }),
-            ("add_i32", new Instruction(UOpCode.Intrinsic, ["add_i32"]), new List<Type> { typeof(int), typeof(int) }),
-            ("cmp_le_f64", new Instruction(UOpCode.Intrinsic, ["cmp_le_f64"]), new List<Type> { typeof(double), typeof(double) }),
-            ("load_local", new Instruction(UOpCode.Intrinsic, ["load_local", "x", typeof(int)]), new List<Type>())
+            ("load_f64", IntrinsicInstructionFactory.CreateForCapability("load_f64", 1.5d), new List<Type>()),
+            ("boolean_not", IntrinsicInstructionFactory.CreateForCapability("boolean_not"), new List<Type> { typeof(bool) }),
+            ("add_i32", IntrinsicInstructionFactory.CreateForCapability("add_i32"), new List<Type> { typeof(int), typeof(int) }),
+            ("cmp_le_f64", IntrinsicInstructionFactory.CreateForCapability("cmp_le_f64"), new List<Type> { typeof(double), typeof(double) }),
+            ("load_local", IntrinsicInstructionFactory.CreateForCapability("load_local", "x", typeof(int)), new List<Type>())
         };
 
         foreach (var (name, instruction, initialStack) in representativeCases)
@@ -62,9 +62,9 @@ public class CilBackendAbstractIrCompilationTests
 
         var ir = BuildIr(
             new Instruction(UOpCode.Push, [41]),
-            new Instruction(UOpCode.Intrinsic, ["store_local", "x", typeof(int)]),
-            new Instruction(UOpCode.Intrinsic, ["load_local", "x", typeof(int)]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", addOneMethod!])
+            IntrinsicInstructionFactory.CreateForCapability("store_local", "x", typeof(int)),
+            IntrinsicInstructionFactory.CreateForCapability("load_local", "x", typeof(int)),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", addOneMethod!)
         );
 
         var result = CompileAndExecute(ir);
@@ -101,7 +101,7 @@ public class CilBackendAbstractIrCompilationTests
 
         var ir = BuildIr(
             new Instruction(UOpCode.Push, ["generic"]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", genericEcho!])
+            IntrinsicInstructionFactory.CreateForCapability("call C#", genericEcho!)
         );
 
         var result = CompileAndExecute(ir);
@@ -117,9 +117,9 @@ public class CilBackendAbstractIrCompilationTests
 
         var ir = BuildIr(
             new Instruction(UOpCode.Push, [40]),
-            new Instruction(UOpCode.Intrinsic, ["call C# ctor", ctor!]),
+            IntrinsicInstructionFactory.CreateForCapability("call C# ctor", ctor!),
             new Instruction(UOpCode.Push, [2]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", increment!])
+            IntrinsicInstructionFactory.CreateForCapability("call C#", increment!)
         );
 
         var result = CompileAndExecute(ir);
@@ -135,9 +135,9 @@ public class CilBackendAbstractIrCompilationTests
 
         var ir = BuildIr(
             new Instruction(UOpCode.Push, [41]),
-            new Instruction(UOpCode.Intrinsic, ["store_local", "x", typeof(int)]),
-            new Instruction(UOpCode.Intrinsic, ["load_local_ref", "x", typeof(int)]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", incrementRef!])
+            IntrinsicInstructionFactory.CreateForCapability("store_local", "x", typeof(int)),
+            IntrinsicInstructionFactory.CreateForCapability("load_local_ref", "x", typeof(int)),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", incrementRef!)
         );
 
         var result = CompileAndExecute(ir);
@@ -151,7 +151,7 @@ public class CilBackendAbstractIrCompilationTests
         var ir = BuildIr(
             new Instruction(UOpCode.Push, [7]),
             new Instruction(UOpCode.Push, [3]),
-            new Instruction(UOpCode.Intrinsic, ["cmp_gt_i32"])
+            IntrinsicInstructionFactory.CreateForCapability("cmp_gt_i32")
         );
 
         var result = CompileAndExecute(ir);
@@ -165,7 +165,7 @@ public class CilBackendAbstractIrCompilationTests
         var ir = BuildIr(
             new Instruction(UOpCode.Push, [2.5d]),
             new Instruction(UOpCode.Push, [2.5d]),
-            new Instruction(UOpCode.Intrinsic, ["cmp_le_f64"])
+            IntrinsicInstructionFactory.CreateForCapability("cmp_le_f64")
         );
 
         var result = CompileAndExecute(ir);
@@ -179,7 +179,7 @@ public class CilBackendAbstractIrCompilationTests
         var ir = BuildIr(
             new Instruction(UOpCode.Push, [19]),
             new Instruction(UOpCode.Push, [23]),
-            new Instruction(UOpCode.Intrinsic, ["add_i32"])
+            IntrinsicInstructionFactory.CreateForCapability("add_i32")
         );
 
         var result = CompileAndExecute(ir);
@@ -192,7 +192,7 @@ public class CilBackendAbstractIrCompilationTests
     {
         var ir = BuildIr(
             new Instruction(UOpCode.Push, [true]),
-            new Instruction(UOpCode.Intrinsic, ["boolean_not"])
+            IntrinsicInstructionFactory.CreateForCapability("boolean_not")
         );
 
         var result = CompileAndExecute(ir);
@@ -203,7 +203,7 @@ public class CilBackendAbstractIrCompilationTests
     [Test]
     public void UnknownNumericLoaderIntrinsic_ThrowsInvalidOperationException()
     {
-        var ir = BuildIr(new Instruction(UOpCode.Intrinsic, ["load_x128", 1]));
+        var ir = BuildIr(IntrinsicInstructionFactory.CreateForCapability("load_x128", 1));
 
         Assert.Throws<InvalidOperationException>(() => CompileAndExecute(ir));
     }
@@ -243,24 +243,24 @@ public class CilBackendAbstractIrCompilationTests
             new Instruction(UOpCode.Drop),
             new Instruction(UOpCode.Label, [branch1]),
             new Instruction(UOpCode.Push, [1]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", combineMethod!]),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", combineMethod!),
             new Instruction(UOpCode.Push, [true]),
             new Instruction(UOpCode.JmpIf, [branch2]),
             new Instruction(UOpCode.Jmp, [finish]),
             new Instruction(UOpCode.Label, [branch2]),
             new Instruction(UOpCode.Push, [2]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", combineMethod!]),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", combineMethod!),
             new Instruction(UOpCode.Push, [false]),
             new Instruction(UOpCode.JmpIf, [branch3]),
             new Instruction(UOpCode.Push, [3]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", combineMethod!]),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", combineMethod!),
             new Instruction(UOpCode.Jmp, [afterInner]),
             new Instruction(UOpCode.Label, [branch3]),
             new Instruction(UOpCode.Push, [8]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", combineMethod!]),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", combineMethod!),
             new Instruction(UOpCode.Label, [afterInner]),
             new Instruction(UOpCode.Push, [4]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", combineMethod!]),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", combineMethod!),
             new Instruction(UOpCode.Label, [finish])
         );
 
@@ -277,7 +277,7 @@ public class CilBackendAbstractIrCompilationTests
         var ir = BuildIr(
             new Instruction(UOpCode.Push, [7]),
             new Instruction(UOpCode.Push, [3]),
-            new Instruction(UOpCode.Intrinsic, ["cmp_gt_i32"]),
+            IntrinsicInstructionFactory.CreateForCapability("cmp_gt_i32"),
             new Instruction(UOpCode.JmpIf, [branchTrue]),
             new Instruction(UOpCode.Push, ["no"]),
             new Instruction(UOpCode.Jmp, [end]),
@@ -310,7 +310,7 @@ public class CilBackendAbstractIrCompilationTests
             new Instruction(UOpCode.Label, [outerTrue]),
             new Instruction(UOpCode.Push, [2.5d]),
             new Instruction(UOpCode.Push, [2.5d]),
-            new Instruction(UOpCode.Intrinsic, ["cmp_le_f64"]),
+            IntrinsicInstructionFactory.CreateForCapability("cmp_le_f64"),
             new Instruction(UOpCode.JmpIf, [innerTrue]),
             new Instruction(UOpCode.Push, [false]),
             new Instruction(UOpCode.Jmp, [end]),
@@ -338,14 +338,14 @@ public class CilBackendAbstractIrCompilationTests
             new Instruction(UOpCode.Push, [true]),
             new Instruction(UOpCode.JmpIf, [branchTrue]),
             new Instruction(UOpCode.Push, [41]),
-            new Instruction(UOpCode.Intrinsic, ["store_local", "x", typeof(int)]),
+            IntrinsicInstructionFactory.CreateForCapability("store_local", "x", typeof(int)),
             new Instruction(UOpCode.Jmp, [end]),
             new Instruction(UOpCode.Label, [branchTrue]),
             new Instruction(UOpCode.Push, [40]),
-            new Instruction(UOpCode.Intrinsic, ["store_local", "x", typeof(int)]),
+            IntrinsicInstructionFactory.CreateForCapability("store_local", "x", typeof(int)),
             new Instruction(UOpCode.Label, [end]),
-            new Instruction(UOpCode.Intrinsic, ["load_local", "x", typeof(int)]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", typeof(CilBackendAbstractIrCompilationTests).GetMethod(nameof(AddOne), BindingFlags.NonPublic | BindingFlags.Static)!])
+            IntrinsicInstructionFactory.CreateForCapability("load_local", "x", typeof(int)),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", typeof(CilBackendAbstractIrCompilationTests).GetMethod(nameof(AddOne), BindingFlags.NonPublic | BindingFlags.Static)!)
         );
 
         var compiled = Compile(ir);
@@ -374,14 +374,14 @@ public class CilBackendAbstractIrCompilationTests
             new Instruction(UOpCode.Push, [true]),
             new Instruction(UOpCode.JmpIf, [toBranch]),
             new Instruction(UOpCode.Push, [77]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", combineMethod!]),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", combineMethod!),
             new Instruction(UOpCode.Jmp, [end]),
             new Instruction(UOpCode.Label, [toBranch]),
             new Instruction(UOpCode.Push, [5]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", combineMethod!]),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", combineMethod!),
             new Instruction(UOpCode.Label, [end]),
             new Instruction(UOpCode.Push, [6]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", combineMethod!])
+            IntrinsicInstructionFactory.CreateForCapability("call C#", combineMethod!)
         );
 
         var result = CompileAndExecute(ir);
@@ -446,7 +446,7 @@ public class CilBackendAbstractIrCompilationTests
         var ir = BuildIr(
             new Instruction(UOpCode.Push, [first]),
             new Instruction(UOpCode.Push, [second]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", keepSecond]));
+            IntrinsicInstructionFactory.CreateForCapability("call C#", keepSecond));
 
         var compiled = Compile(ir);
         var result = Execute(compiled);
@@ -471,7 +471,7 @@ public class CilBackendAbstractIrCompilationTests
         instructions.AddRange(constants.Skip(1).SelectMany(constant => new[]
         {
             new Instruction(UOpCode.Push, [constant]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", keepSecond])
+            IntrinsicInstructionFactory.CreateForCapability("call C#", keepSecond)
         }));
 
         var compiled = Compile(BuildIr(instructions.ToArray()));
@@ -496,9 +496,9 @@ public class CilBackendAbstractIrCompilationTests
         var ir = BuildIr(
             new Instruction(UOpCode.Push, [new ReferenceConstant("constant")]),
             new Instruction(UOpCode.Drop),
-            new Instruction(UOpCode.Intrinsic, ["call C#", descriptor]),
-            new Instruction(UOpCode.Intrinsic, ["load_external", 0, typeof(int)]),
-            new Instruction(UOpCode.Intrinsic, ["call C#", typeof(CilBackendAbstractIrCompilationTests).GetMethod(nameof(Add), BindingFlags.NonPublic | BindingFlags.Static)!]));
+            IntrinsicInstructionFactory.CreateForCapability("call C#", descriptor),
+            IntrinsicInstructionFactory.CreateForCapability("load_external", 0, typeof(int)),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", typeof(CilBackendAbstractIrCompilationTests).GetMethod(nameof(Add), BindingFlags.NonPublic | BindingFlags.Static)!));
         var input = new CompilationInput
         {
             SourceText = string.Empty,

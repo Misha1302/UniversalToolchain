@@ -90,7 +90,7 @@ public class WistDialectBackendCompatibilityTests
                 new DialectBuildPlan("Demo", null, ["UnsupportedModule"], [], [], [], [], null, [], new DialectValidationResult([])),
                 new SelectedRuntimePlan([module], [], [], [])));
 
-        Assert.That(exception!.Message, Does.Contain("UnsupportedModule").And.Contain(nameof(IFrontendCoreModule)).And.Contain(nameof(IIRProcessingModule)));
+        Assert.That(exception!.Message, Does.Contain("UnsupportedModule").And.Contain(nameof(IFrontendCoreModule)).And.Contain(nameof(IAirOptimizer)));
     }
 
     [Test]
@@ -117,7 +117,7 @@ public class WistDialectBackendCompatibilityTests
                     new DialectValidationResult([])),
                 new SelectedRuntimePlan([], [optimizer], [backend], [])));
 
-        Assert.That(exception!.Message, Does.Contain("UnsupportedOptimization").And.Contain(nameof(IIRProcessingModule)));
+        Assert.That(exception!.Message, Does.Contain("UnsupportedOptimization").And.Contain(nameof(IAirOptimizer)));
     }
 
     private static WistDialectExecutionConfigurationBuilder CreateBuilder(IRuntimeComponentTypeLoader typeLoader) =>

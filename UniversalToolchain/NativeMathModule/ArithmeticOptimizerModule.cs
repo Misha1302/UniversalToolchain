@@ -10,7 +10,7 @@ namespace NativeMathModule;
 [IntrinsicDescriptorProvider(typeof(ArithmeticIntrinsicDescriptorProvider))]
 [ArithmeticModeCompatibility(ArithmeticMode.Native)]
 [UsedImplicitly]
-public class ArithmeticOptimizerModule : IIRProcessingModule
+public class ArithmeticOptimizerModule : IAirOptimizer
 {
     // Lightweight e-graph-inspired symbolic simplifier for straight-line postfix IR.
     // This is intentionally not a full equality-saturation e-graph engine.
@@ -28,7 +28,7 @@ public class ArithmeticOptimizerModule : IIRProcessingModule
         _capabilityContext = capabilityContext;
     }
 
-    public IAbstractIR ProcessIr<TCompilationOutput>(IAbstractIR current, IAbstractIrCompiler<TCompilationOutput> compiler)
+    public IAbstractIR Optimize(IAbstractIR current)
     {
         if (_capabilityContext == null)
             Thrower.InvalidOpEx("Arithmetic optimizer requires intrinsic capability context initialization.");
@@ -236,11 +236,7 @@ public class ArithmeticOptimizerModule : IIRProcessingModule
             return true;
 
         return BuiltinIntrinsicInstruction.Is(instruction, BuiltinIntrinsicSymbols.Storage.LoadLocal) ||
-               BuiltinIntrinsicInstruction.Is(instruction, BuiltinIntrinsicSymbols.Storage.LoadLocalRef) ||
-               instruction.UOpCode == UOpCode.Intrinsic &&
-               instruction.Operands.Count > 0 &&
-               instruction.Operands[0] is string intrinsicName &&
-               intrinsicName.StartsWith("ldloc", StringComparison.Ordinal);
+               BuiltinIntrinsicInstruction.Is(instruction, BuiltinIntrinsicSymbols.Storage.LoadLocalRef);
     }
 
     private static bool Replace3With1(List<Instruction> instructions, int index, Instruction replacement)
@@ -269,8 +265,12 @@ public class ArithmeticOptimizerModule : IIRProcessingModule
         if (instruction.UOpCode != UOpCode.Push || instruction.Operands.Count != 1)
             return false;
 
-        value = instruction.Operands[0];
-        return value is int or long or float or double or decimal;
+        var candidate = AirPushOperand.GetValue(instruction.Operands[0]);
+        if (candidate is not (int or long or float or double or decimal))
+            return false;
+
+        value = candidate;
+        return true;
     }
 
     private static bool IsIntegerSuffix(string suffix) => suffix is "i32" or "i64";

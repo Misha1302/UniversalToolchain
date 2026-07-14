@@ -20,7 +20,6 @@ internal static class BenchmarkSelfTest
             AssertFinite(benchmark.CSharp_PreparedDelegate(), $"{nameof(FormulaHotPathBenchmarks)}.{nameof(benchmark.CSharp_PreparedDelegate)}[{workload}]");
             AssertFinite(benchmark.NCalc_CompiledLambda(), $"{nameof(FormulaHotPathBenchmarks)}.{nameof(benchmark.NCalc_CompiledLambda)}[{workload}]");
             AssertFinite(benchmark.Wist_CompiledDelegate(), $"{nameof(FormulaHotPathBenchmarks)}.{nameof(benchmark.Wist_CompiledDelegate)}[{workload}]");
-            AssertFinite(benchmark.Wist_CompileFuncFastInvoker(), $"{nameof(FormulaHotPathBenchmarks)}.{nameof(benchmark.Wist_CompileFuncFastInvoker)}[{workload}]");
         }
         finally
         {

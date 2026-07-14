@@ -23,7 +23,7 @@ public static class SsaConstantReader
             result.Type == SsaTypes.Int32 &&
             int.TryParse(attribute.Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out _))
         {
-            constant = new ConstantValue(SsaPreviewSemanticTypes.Int32, attribute.Value);
+            constant = new ConstantValue(SsaSemanticTypes.Int32, attribute.Value);
             return true;
         }
 
@@ -31,7 +31,7 @@ public static class SsaConstantReader
             result.Type == SsaTypes.Bool &&
             bool.TryParse(attribute.Value, out _))
         {
-            constant = new ConstantValue(SsaPreviewSemanticTypes.Bool, attribute.Value);
+            constant = new ConstantValue(SsaSemanticTypes.Bool, attribute.Value);
             return true;
         }
 
@@ -39,7 +39,7 @@ public static class SsaConstantReader
             result.Type == SsaTypes.Float64 &&
             double.TryParse(attribute.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out _))
         {
-            constant = new ConstantValue(SsaPreviewSemanticTypes.Float64, attribute.Value);
+            constant = new ConstantValue(SsaSemanticTypes.Float64, attribute.Value);
             return true;
         }
 

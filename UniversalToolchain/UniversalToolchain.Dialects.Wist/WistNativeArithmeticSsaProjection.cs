@@ -31,9 +31,9 @@ internal sealed class WistNativeArithmeticSsaProjection : ISsaManagedCallablePro
 
         callable = method.Name switch
         {
-            nameof(NativeArithmetic.Add) => SsaPreviewCallables.AddInt32Unchecked,
-            nameof(NativeArithmetic.Subtract) => SsaPreviewCallables.SubtractInt32Unchecked,
-            nameof(NativeArithmetic.Multiply) => SsaPreviewCallables.MultiplyInt32Unchecked,
+            nameof(NativeArithmetic.Add) => SsaCallables.AddInt32Unchecked,
+            nameof(NativeArithmetic.Subtract) => SsaCallables.SubtractInt32Unchecked,
+            nameof(NativeArithmetic.Multiply) => SsaCallables.MultiplyInt32Unchecked,
             _ => default
         };
 

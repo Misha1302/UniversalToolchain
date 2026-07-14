@@ -1,3 +1,5 @@
+using BasicCore.Contracts;
+
 namespace BasicCore.Builtins;
 
 public static class BuiltinIntrinsicSymbols

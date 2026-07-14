@@ -69,8 +69,8 @@ public sealed class SsaModelTests
         Assert.Multiple(() =>
         {
             Assert.That(block.Instructions, Is.EqualTo(new ISsaInstruction[] { call, operation }));
-            Assert.That(block.Calls, Is.EqualTo(new[] { call }));
-            Assert.That(block.Operations, Is.EqualTo(new[] { operation }));
+            Assert.That(block.Instructions.OfType<SsaCall>(), Is.EqualTo(new[] { call }));
+            Assert.That(block.Instructions.OfType<SsaOperation>(), Is.EqualTo(new[] { operation }));
         });
     }
 

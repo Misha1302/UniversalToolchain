@@ -12,6 +12,6 @@ public sealed class CompilerIntrinsicCapabilityAdapter<TCompilationOutput> : IIn
     }
 
     public bool Supports(IntrinsicSymbol symbol, IReadOnlyList<IntrinsicTypeArgument> typeArguments) =>
-        LegacyCapabilityNameEncoder.TryEncode(symbol, typeArguments, out var capabilityName)
+        IntrinsicCapabilityNameEncoder.TryEncode(symbol, typeArguments, out var capabilityName)
         && _compiler.SupportedIntrinsics.Contains(capabilityName);
 }

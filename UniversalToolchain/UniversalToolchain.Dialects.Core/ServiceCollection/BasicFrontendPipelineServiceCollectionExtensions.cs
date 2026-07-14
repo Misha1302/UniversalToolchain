@@ -1,40 +1,17 @@
-using AbstractIrConverters;
-using BasicCodeTranslator;
-using BasicCore.Contracts;
-using BasicCore.Core;
-using BasicCore.LexerWrapper;
-using BasicCore.ParserWrapper;
-using BasicCore.TranslatorWrapper;
-using BasicLexer.Core;
-using BasicParser.Core;
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace UniversalToolchain.Dialects.Core.ServiceCollection;
 
 /// <summary>
-///     Registers the built-in concrete frontend and lowering pipeline defaults.
+///     Compatibility entry point for the built-in frontend defaults.
 /// </summary>
 public static class BasicFrontendPipelineServiceCollectionExtensions
 {
     public static IServiceCollection AddBasicFrontendPipelineDefaults(this IServiceCollection services)
     {
         services = services.ArgNotNull();
-
-        services.AddTransient<Func<ILexer>>(_ =>
-            () => new BasicLexerImpl(new LexerConfiguration([])));
-
-        services.AddTransient<Func<IParser>>(_ =>
-            () => new BasicParserImpl(new ParserConfiguration([])));
-
-        services.AddTransient<Func<IAstToBytecodeTranslator>>(_ =>
-            () => new BasicAstToBytecodeTranslatorImpl(new BytecodeTranslatorConfiguration([])));
-
-        services.AddTransient<Func<IAbstractMethodsTranslator>>(sp =>
-            () => new BytecodeToAbstractIrConverterImpl(
-                sp.GetRequiredService<IInstructionIntrinsicReader>(),
-                sp.GetRequiredService<IIntrinsicTypeStackProcessor>()));
-
-        return services;
+        return UniversalToolchain.Dialects.Frontend.Registration.BasicFrontendPipelineServiceCollectionExtensions
+            .AddBasicFrontendPipelineDefaults(services);
     }
 }

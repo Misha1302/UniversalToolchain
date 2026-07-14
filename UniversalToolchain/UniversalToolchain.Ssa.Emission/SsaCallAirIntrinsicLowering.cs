@@ -397,19 +397,19 @@ public sealed class SsaCallableLoweringPlanner
 
     private static bool TryMapType(SemanticTypeId semanticType, out AirValueTypeId airType)
     {
-        if (semanticType == SsaPreviewSemanticTypes.Bool)
+        if (semanticType == SsaSemanticTypes.Bool)
         {
             airType = AirValueTypes.Bool;
             return true;
         }
 
-        if (semanticType == SsaPreviewSemanticTypes.Int32)
+        if (semanticType == SsaSemanticTypes.Int32)
         {
             airType = AirValueTypes.Int32;
             return true;
         }
 
-        if (semanticType == SsaPreviewSemanticTypes.Float64)
+        if (semanticType == SsaSemanticTypes.Float64)
         {
             airType = AirValueTypes.Float64;
             return true;
@@ -560,13 +560,13 @@ public sealed class SsaCallAirIntrinsicLoweringPlanner
     }
 }
 
-public static class SsaPreviewAirIntrinsicLowerings
+public static class SsaAirIntrinsicLowerings
 {
     public static SsaCallAirIntrinsicLoweringSet ArithmeticInt32 { get; } = new(
     [
-        new SsaCallAirIntrinsicLowering(SsaPreviewCallables.AddInt32Unchecked, AirIntrinsicIds.AddInt32Unchecked),
-        new SsaCallAirIntrinsicLowering(SsaPreviewCallables.SubtractInt32Unchecked, AirIntrinsicIds.SubtractInt32Unchecked),
-        new SsaCallAirIntrinsicLowering(SsaPreviewCallables.MultiplyInt32Unchecked, AirIntrinsicIds.MultiplyInt32Unchecked),
-        new SsaCallAirIntrinsicLowering(SsaPreviewCallables.EqualInt32, AirIntrinsicIds.EqualInt32)
+        new SsaCallAirIntrinsicLowering(SsaCallables.AddInt32Unchecked, AirIntrinsicIds.AddInt32Unchecked),
+        new SsaCallAirIntrinsicLowering(SsaCallables.SubtractInt32Unchecked, AirIntrinsicIds.SubtractInt32Unchecked),
+        new SsaCallAirIntrinsicLowering(SsaCallables.MultiplyInt32Unchecked, AirIntrinsicIds.MultiplyInt32Unchecked),
+        new SsaCallAirIntrinsicLowering(SsaCallables.EqualInt32, AirIntrinsicIds.EqualInt32)
     ]);
 }
