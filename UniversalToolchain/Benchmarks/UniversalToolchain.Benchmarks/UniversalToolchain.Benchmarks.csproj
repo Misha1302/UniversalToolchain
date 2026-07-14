@@ -15,26 +15,26 @@
         <!-- Keep source-tree benchmark runs behaviorally equivalent to package-consumer runs.
              UniversalToolchain.Wist package consumers receive the module assemblies/manifests as package content;
              project-reference benchmark runs need direct references so the same runtime descriptors are copied to output. -->
-        <ProjectReference Include="..\..\ArithmeticModule\ArithmeticModule.csproj" PrivateAssets="all"/>
-        <ProjectReference Include="..\..\CSharpInteropModule\CSharpInteropModule.csproj" PrivateAssets="all"/>
-        <ProjectReference Include="..\..\CommentsModule\CommentsModule.csproj" PrivateAssets="all"/>
-        <ProjectReference Include="..\..\ConditionsModule\ConditionsModule.csproj" PrivateAssets="all"/>
-        <ProjectReference Include="..\..\EqualityModule\EqualityModule.csproj" PrivateAssets="all"/>
-        <ProjectReference Include="..\..\FunctionCallsModule\FunctionCallsModule.csproj" PrivateAssets="all"/>
-        <ProjectReference Include="..\..\IdentifierModule\IdentifierModule.csproj" PrivateAssets="all"/>
-        <ProjectReference Include="..\..\InternalPreprocessorLexemesModule\InternalPreprocessorLexemesModule.csproj" PrivateAssets="all"/>
-        <ProjectReference Include="..\..\LabelsModule\LabelsModule.csproj" PrivateAssets="all"/>
-        <ProjectReference Include="..\..\LocalVariablesOptimizerModule\LocalVariablesOptimizerModule.csproj" PrivateAssets="all"/>
-        <ProjectReference Include="..\..\LoopsModule\LoopsModule.csproj" PrivateAssets="all"/>
-        <ProjectReference Include="..\..\NativeMathModule\NativeMathModule.csproj" PrivateAssets="all"/>
-        <ProjectReference Include="..\..\NumbersModule\NumbersModule.csproj" PrivateAssets="all"/>
-        <ProjectReference Include="..\..\ParametersSetterModule\ParametersSetterModule.csproj" PrivateAssets="all"/>
-        <ProjectReference Include="..\..\SafeMathFunctionsModule\SafeMathFunctionsModule.csproj" PrivateAssets="all"/>
-        <ProjectReference Include="..\..\ScopesModule\ScopesModule.csproj" PrivateAssets="all"/>
-        <ProjectReference Include="..\..\SemicolonAsNewLineModule\SemicolonAsNewLineModule.csproj" PrivateAssets="all"/>
-        <ProjectReference Include="..\..\UniversalToolchain.Ssa.Optimization\UniversalToolchain.Ssa.Optimization.csproj" PrivateAssets="all"/>
-        <ProjectReference Include="..\..\VariablesModule\VariablesModule.csproj" PrivateAssets="all"/>
-        <ProjectReference Include="..\..\WhitespacesModule\WhitespacesModule.csproj" PrivateAssets="all"/>
+        <ProjectReference Include="..\..\ArithmeticModule\ArithmeticModule.csproj"/>
+        <ProjectReference Include="..\..\CSharpInteropModule\CSharpInteropModule.csproj"/>
+        <ProjectReference Include="..\..\CommentsModule\CommentsModule.csproj"/>
+        <ProjectReference Include="..\..\ConditionsModule\ConditionsModule.csproj"/>
+        <ProjectReference Include="..\..\EqualityModule\EqualityModule.csproj"/>
+        <ProjectReference Include="..\..\FunctionCallsModule\FunctionCallsModule.csproj"/>
+        <ProjectReference Include="..\..\IdentifierModule\IdentifierModule.csproj"/>
+        <ProjectReference Include="..\..\InternalPreprocessorLexemesModule\InternalPreprocessorLexemesModule.csproj"/>
+        <ProjectReference Include="..\..\LabelsModule\LabelsModule.csproj"/>
+        <ProjectReference Include="..\..\LocalVariablesOptimizerModule\LocalVariablesOptimizerModule.csproj"/>
+        <ProjectReference Include="..\..\LoopsModule\LoopsModule.csproj"/>
+        <ProjectReference Include="..\..\NativeMathModule\NativeMathModule.csproj"/>
+        <ProjectReference Include="..\..\NumbersModule\NumbersModule.csproj"/>
+        <ProjectReference Include="..\..\ParametersSetterModule\ParametersSetterModule.csproj"/>
+        <ProjectReference Include="..\..\SafeMathFunctionsModule\SafeMathFunctionsModule.csproj"/>
+        <ProjectReference Include="..\..\ScopesModule\ScopesModule.csproj"/>
+        <ProjectReference Include="..\..\SemicolonAsNewLineModule\SemicolonAsNewLineModule.csproj"/>
+        <ProjectReference Include="..\..\UniversalToolchain.Ssa.Optimization\UniversalToolchain.Ssa.Optimization.csproj"/>
+        <ProjectReference Include="..\..\VariablesModule\VariablesModule.csproj"/>
+        <ProjectReference Include="..\..\WhitespacesModule\WhitespacesModule.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
