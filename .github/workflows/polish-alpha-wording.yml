@@ -1,0 +1,59 @@
+name: Polish alpha wording
+
+on:
+  push:
+    branches:
+      - docs-alpha-terminology-20260715
+    paths:
+      - .github/workflows/polish-alpha-wording.yml
+
+permissions:
+  contents: write
+
+jobs:
+  polish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: docs-alpha-terminology-20260715
+      - name: Polish wording and refresh manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+
+          edits = {
+              'readme.md': [
+                  ('## What is real in this alpha', '## What is real in alpha.1'),
+              ],
+              'docs/public/what-is-stable-in-alpha.md': [
+                  ('# What is stable in this alpha', '# What is stable in alpha.1'),
+                  ('## Alpha / may change', '## Alpha surface / may change'),
+              ],
+              'UniversalToolchain/UniversalToolchain.Wist/README.md': [
+                  ('The current stable alpha claim is', 'The current alpha claim is'),
+              ],
+          }
+          for relative, replacements in edits.items():
+              path = Path(relative)
+              text = path.read_text(encoding='utf-8')
+              for old, new in replacements:
+                  if old not in text:
+                      raise SystemExit(f'missing expected wording in {relative}: {old}')
+                  text = text.replace(old, new)
+              path.write_text(text, encoding='utf-8')
+          PY
+          python3 Tools/check_documentation_status.py
+          find . -type f \
+            ! -path './.git/*' \
+            ! -path './MANIFEST.sha256' \
+            ! -path './.github/workflows/polish-alpha-wording.yml' \
+            -print0 | sort -z | xargs -0 sha256sum > MANIFEST.sha256
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'docs: polish alpha release wording'
+          git push origin HEAD:docs-alpha-terminology-20260715
