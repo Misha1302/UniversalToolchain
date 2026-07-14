@@ -14,14 +14,14 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          global-json-file: global.json
+          global-json-file: UniversalToolchain/global.json
 
       - name: Run canonical validation and capture tail
         id: validation
         shell: bash
         run: |
           set +e
-          ./build.sh > validation.log 2>&1
+          ./build.sh --skip-docs --skip-pack > validation.log 2>&1
           status=$?
           tail -n 400 validation.log > validation-tail.log
           echo "status=$status" >> "$GITHUB_OUTPUT"
