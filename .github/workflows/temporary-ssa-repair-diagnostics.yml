@@ -44,6 +44,59 @@ jobs:
               raise SystemExit('test using insertion point not found in bootstrap')
           script = script.replace(using_needle, using_replacement, 1)
 
+          emitter_patch = r'''
+          python3 <<'PY_EMITTER'
+          from pathlib import Path
+
+          path = Path('UniversalToolchain/UniversalToolchain.Ssa.Emission/SsaToAirConverter.cs')
+          text = path.read_text(encoding='utf-8')
+
+          old = '''        var stack = block.Parameters.Select(static x => x.Value.Id).ToList();
+                  foreach (var instruction in block.Instructions)'''
+          new = '''        var stack = block.Parameters.Select(static x => x.Value.Id).ToList();
+                  DropUnusedTrailingBlockParameters(air, state, stack);
+                  foreach (var instruction in block.Instructions)'''
+          if old not in text:
+              raise SystemExit('EmitBlock stack initialization anchor not found')
+          text = text.replace(old, new, 1)
+
+          operation_anchor = '''    private static void EmitOperation(
+                  AbstractIR air,'''
+          helper = '''    private static void DropUnusedTrailingBlockParameters(
+                  AbstractIR air,
+                  EmissionState state,
+                  List<SsaValueId> stack)
+              {
+                  while (stack.Count > 0 && state.IsUnused(stack[^1]))
+                  {
+                      air.Drop();
+                      stack.RemoveAt(stack.Count - 1);
+                  }
+              }
+
+          '''
+          if operation_anchor not in text:
+              raise SystemExit('EmitOperation insertion anchor not found')
+          text = text.replace(operation_anchor, helper + operation_anchor, 1)
+
+          state_anchor = '''        public bool IsUnusedPureResult(SsaOperation operation) =>
+                  operation.Results.Count == 1 && !_useCounts.ContainsKey(operation.Results.Single().Id);'''
+          state_replacement = '''        public bool IsUnused(SsaValueId valueId) => !_useCounts.ContainsKey(valueId);
+
+                  public bool IsUnusedPureResult(SsaOperation operation) =>
+                  operation.Results.Count == 1 && !_useCounts.ContainsKey(operation.Results.Single().Id);'''
+          if state_anchor not in text:
+              raise SystemExit('EmissionState unused-value insertion anchor not found')
+          text = text.replace(state_anchor, state_replacement, 1)
+
+          path.write_text(text, encoding='utf-8')
+          PY_EMITTER
+          '''
+          script_anchor = 'set -Eeuo pipefail\n'
+          if script_anchor not in script:
+              raise SystemExit('bootstrap shell strict-mode anchor not found')
+          script = script.replace(script_anchor, script_anchor + emitter_patch, 1)
+
           marker = 'git add -A'
           if marker not in script:
               raise SystemExit('git add marker not found in bootstrap')
