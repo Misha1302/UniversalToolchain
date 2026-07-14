@@ -1,0 +1,123 @@
+name: Apply alpha terminology migration v4
+
+on:
+  push:
+    branches:
+      - docs-alpha-terminology-20260715
+    paths:
+      - .github/workflows/apply-alpha-terminology-v4.yml
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: docs-alpha-terminology-20260715
+      - name: Apply alpha terminology changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 <<'PY'
+          from pathlib import Path
+          import re
+
+          root = Path('.')
+          old_status = root / 'docs/public/what-is-stable-in-preview.md'
+          new_status = root / 'docs/public/what-is-stable-in-alpha.md'
+          if not old_status.exists():
+              raise SystemExit(f'missing expected file: {old_status}')
+          old_status.rename(new_status)
+
+          direct = {
+              'docs/public/what-is-stable-in-preview.md': 'docs/public/what-is-stable-in-alpha.md',
+              '/public/what-is-stable-in-preview': '/public/what-is-stable-in-alpha',
+              'what-is-stable-in-preview': 'what-is-stable-in-alpha',
+              'What is stable in preview?': 'What is stable in alpha?',
+              'Preview stability': 'Alpha stability',
+              'one-off previews': 'one-off trial runs',
+              'admin previews': 'admin trial runs',
+              'Offline artifact preview': 'Offline artifact inspection',
+              'offline artifact preview': 'offline artifact inspection',
+              'Preview.5 v9': 'Legacy cycle 5 / v9',
+              'Preview.4 v8': 'Legacy cycle 4 / v8',
+              'Preview.3 boundary': 'Legacy cycle 3 boundary',
+              'Preview.3 host controls': 'Alpha host controls',
+              'preview.3': 'legacy cycle 3',
+              'preview.2': 'earlier facade release',
+          }
+
+          def prose(line: str) -> str:
+              parts = line.split('`')
+              for i in range(0, len(parts), 2):
+                  value = parts[i]
+                  for old, new in direct.items():
+                      value = value.replace(old, new)
+                  value = re.sub(r'\bPreview\b', 'Alpha', value)
+                  value = re.sub(r'\bpreview\b', 'alpha', value)
+                  parts[i] = value
+              return '`'.join(parts)
+
+          for path in [p for p in root.rglob('*.md') if '.git' not in p.parts]:
+              text = path.read_text(encoding='utf-8')
+              for old, new in direct.items():
+                  text = text.replace(old, new)
+              output = []
+              fenced = False
+              for line in text.splitlines(keepends=True):
+                  if line.lstrip().startswith('```'):
+                      fenced = not fenced
+                      output.append(line)
+                  elif fenced:
+                      output.append(line)
+                  else:
+                      output.append(prose(line))
+              path.write_text(''.join(output), encoding='utf-8')
+
+          code_edits = {
+              'UniversalToolchain/UniversalToolchain.Wist/WistOptimizationOptions.cs': [('preview releases', 'alpha releases')],
+              'UniversalToolchain/UniversalToolchain.Wist/WistValidationResult.cs': [('compatibility with the preview.2 facade', 'compatibility with earlier facade releases')],
+              'UniversalToolchain/UniversalToolchain.Ssa.Abstractions/SsaDescriptors.cs': [('"preview ', '"alpha ')],
+              'UniversalToolchain/UniversalToolchain.Ssa.Optimization/SsaRouteProfile.cs': [('Core preview type descriptors', 'Core alpha-stage type descriptors')],
+              'UniversalToolchain/UniversalToolchain.Ssa.Optimization/SsaRuntimeExecution.cs': [('preview SSA optimizer module', 'alpha SSA optimizer module')],
+              'UniversalToolchain/UniversalToolchain.Ssa.Optimization/SsaSparseConditionalConstantPropagationPass.cs': [('for preview SSA', 'for alpha SSA')],
+          }
+          for relative, edits in code_edits.items():
+              path = root / relative
+              text = path.read_text(encoding='utf-8')
+              for old, new in edits:
+                  text = text.replace(old, new)
+              path.write_text(text, encoding='utf-8')
+
+          for relative in [
+              'UniversalToolchain/Tests/Ssa/AirToSsaConverterTests.cs',
+              'UniversalToolchain/Tests/Ssa/SsaOptimizationTests.cs',
+              'UniversalToolchain/Tests/Ssa/SsaRouteIntegrationRegressionTests.cs',
+              'UniversalToolchain/Tests/Ssa/SsaToAirConverterTests.cs',
+              'UniversalToolchain/UniversalToolchain.Dialects.Tests/Wist/PublicFacade/WistEngineSmokeTests.cs',
+              'UniversalToolchain/UniversalToolchain.Dialects.Tests/Wist/PublicFacade/WistPublicApiBaselineTests.cs',
+          ]:
+              path = root / relative
+              path.write_text(path.read_text(encoding='utf-8').replace('Preview', 'Alpha').replace('preview', 'alpha'), encoding='utf-8')
+          PY
+
+          find . -type f \
+            ! -path './.git/*' \
+            ! -path './MANIFEST.sha256' \
+            ! -path './alpha-terminology-report.txt' \
+            ! -path './.github/workflows/audit-alpha-terminology.yml' \
+            ! -path './.github/workflows/apply-alpha-terminology.yml' \
+            ! -path './.github/workflows/apply-alpha-terminology-v2.yml' \
+            ! -path './.github/workflows/apply-alpha-terminology-v3.yml' \
+            ! -path './.github/workflows/apply-alpha-terminology-v4.yml' \
+            -print0 | sort -z | xargs -0 sha256sum > MANIFEST.sha256
+
+          git diff --check
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'docs: use alpha terminology consistently'
+          git push origin HEAD:docs-alpha-terminology-20260715
