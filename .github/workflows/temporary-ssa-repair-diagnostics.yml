@@ -37,6 +37,13 @@ jobs:
           if match is None:
               raise SystemExit('BOOTSTRAP_GZIP_BASE64 not found')
           script = gzip.decompress(base64.b64decode(match.group(1))).decode('utf-8')
+
+          using_needle = 'using UniversalToolchain.Ssa.Core;\nusing UniversalToolchain.Ssa.Optimization;'
+          using_replacement = 'using UniversalToolchain.Ssa.Core;\nusing UniversalToolchain.Ssa.Emission;\nusing UniversalToolchain.Ssa.Optimization;'
+          if using_needle not in script:
+              raise SystemExit('test using insertion point not found in bootstrap')
+          script = script.replace(using_needle, using_replacement, 1)
+
           marker = 'git add -A'
           if marker not in script:
               raise SystemExit('git add marker not found in bootstrap')
