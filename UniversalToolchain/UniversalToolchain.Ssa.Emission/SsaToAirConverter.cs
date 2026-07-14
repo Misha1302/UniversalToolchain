@@ -217,6 +217,7 @@ public sealed class SsaToAirConverter : IIrConverter
         air.SetLabel(state.LabelFor(block.Id));
 
         var stack = block.Parameters.Select(static x => x.Value.Id).ToList();
+        DropUnusedTrailingBlockParameters(air, state, stack);
         foreach (var instruction in block.Instructions)
         {
             switch (instruction)
@@ -239,6 +240,18 @@ public sealed class SsaToAirConverter : IIrConverter
         }
 
         EmitTerminator(air, block, state, stack);
+    }
+
+    private static void DropUnusedTrailingBlockParameters(
+        AbstractIR air,
+        EmissionState state,
+        List<SsaValueId> stack)
+    {
+        while (stack.Count > 0 && state.IsUnused(stack[^1]))
+        {
+            air.Drop();
+            stack.RemoveAt(stack.Count - 1);
+        }
     }
 
     private static void EmitOperation(
@@ -803,6 +816,8 @@ public sealed class SsaToAirConverter : IIrConverter
             var index = _blockIndexes[blockId] + 1;
             return index < Blocks.Count ? Blocks[index] : null;
         }
+
+        public bool IsUnused(SsaValueId valueId) => !_useCounts.ContainsKey(valueId);
 
         public bool IsUnusedPureResult(SsaOperation operation) =>
             operation.Results.Count == 1 && !_useCounts.ContainsKey(operation.Results.Single().Id);
