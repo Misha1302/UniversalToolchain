@@ -1,6 +1,6 @@
 # UniversalToolchain.Wist
 
-[![NuGet](https://img.shields.io/nuget/vpre/UniversalToolchain.Wist.svg)](https://www.nuget.org/packages/UniversalToolchain.Wist)
+[![NuGet](https://img.shields.io/badge/nuget-v0.1.0--alpha.1-512BD4.svg)](https://www.nuget.org/packages/UniversalToolchain.Wist/0.1.0-alpha.1)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/UniversalToolchain.Wist.svg)](https://www.nuget.org/packages/UniversalToolchain.Wist)
 
 **Tiny controlled rules for .NET applications.**
