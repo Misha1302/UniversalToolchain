@@ -4,6 +4,7 @@ using UniversalToolchain.Air.Analysis;
 using UniversalToolchain.Ir.Abstractions;
 using UniversalToolchain.Semantics.Abstractions;
 using UniversalToolchain.Ssa.Abstractions;
+using UniversalToolchain.Ssa.Emission;
 using UniversalToolchain.Ssa.Optimization;
 
 namespace Tests.Ssa;
