@@ -43,3 +43,6 @@ project_code_bundle.md
 /artifacts/
 /*.log
 /publish-alpha.sh
+
+# Local .NET CLI state
+.dotnet-home/
