@@ -11,13 +11,15 @@ namespace Tests.Ssa;
 [TestFixture]
 public sealed class SsaRouteExecutionContractTests
 {
+    private static readonly CapabilityId MissingCapability = new("test.missing-capability");
+
     [Test]
-    public void Run_WhenControlledOptimizerFailureUsesPrefer_ReportsOnlyCompletedPassesAndFallsBack()
+    public void Run_WhenOptimizerCapabilityIsMissingAndPolicyIsPrefer_ReportsOnlyCompletedPassesAndFallsBack()
     {
         var profile = CreateProfile(
             SsaRoutePolicy.Prefer,
             new IdentityPass("test.first"),
-            new ControlledFailurePass("test.fail"),
+            new IdentityPass("test.unsupported", MissingCapability),
             new IdentityPass("test.after"));
         var source = SourceWithConstant();
 
@@ -29,17 +31,17 @@ public sealed class SsaRouteExecutionContractTests
             Assert.That(result.UsedSsa, Is.False);
             Assert.That(result.FellBackToInput, Is.True);
             Assert.That(result.Report.ExecutedPasses, Is.EqualTo(new[] { "test.first" }));
-            Assert.That(result.Diagnostics.Select(static diagnostic => diagnostic.Code), Does.Contain("test.optimization.failed"));
+            Assert.That(result.Diagnostics.Select(static diagnostic => diagnostic.Code), Does.Contain("ssa.optimization.capability.missing"));
         });
     }
 
     [Test]
-    public void Run_WhenControlledOptimizerFailureUsesRequire_ReportsOnlyCompletedPassesAndThrows()
+    public void Run_WhenOptimizerCapabilityIsMissingAndPolicyIsRequire_ReportsOnlyCompletedPassesAndThrows()
     {
         var profile = CreateProfile(
             SsaRoutePolicy.Require,
             new IdentityPass("test.first"),
-            new ControlledFailurePass("test.fail"),
+            new IdentityPass("test.unsupported", MissingCapability),
             new IdentityPass("test.after"));
         var source = SourceWithConstant();
 
@@ -50,7 +52,7 @@ public sealed class SsaRouteExecutionContractTests
         {
             Assert.That(exception!.Report.FellBackToInput, Is.False);
             Assert.That(exception.Report.ExecutedPasses, Is.EqualTo(new[] { "test.first" }));
-            Assert.That(exception.Diagnostics.Select(static diagnostic => diagnostic.Code), Does.Contain("test.optimization.failed"));
+            Assert.That(exception.Diagnostics.Select(static diagnostic => diagnostic.Code), Does.Contain("ssa.optimization.capability.missing"));
         });
     }
 
@@ -201,32 +203,28 @@ public sealed class SsaRouteExecutionContractTests
         public IReadOnlyList<IIrOptimizationPass> CreateOptimizationPasses() => [new SingleUseIdentityPass()];
     }
 
-    private class IdentityPass(string id) : IIrOptimizationPass
+    private class IdentityPass : IIrOptimizationPass
     {
-        public IrStageId Id { get; } = new(id);
+        public IdentityPass(string id, CapabilityId? requiredCapability = null)
+        {
+            Id = new IrStageId(id);
+            Contract = requiredCapability is null
+                ? new IrStageContract(preservesFacts: [SsaFacts.StructuralVerification])
+                : new IrStageContract(
+                    preservesFacts: [SsaFacts.StructuralVerification],
+                    requiresCapabilities: [requiredCapability.Value]);
+        }
+
+        public IrStageId Id { get; }
 
         public IrKind InputKind => SsaIrKinds.Ssa;
 
         public IrKind OutputKind => SsaIrKinds.Ssa;
 
-        public IrStageContract Contract { get; } =
-            new(preservesFacts: [SsaFacts.StructuralVerification]);
+        public IrStageContract Contract { get; }
 
         public virtual IrStageResult Run(IIrArtifact input, IrPipelineContext context) =>
             new(input, context.Facts);
-    }
-
-    private sealed class ControlledFailurePass(string id) : IdentityPass(id)
-    {
-        public override IrStageResult Run(IIrArtifact input, IrPipelineContext context) =>
-            throw new SsaOptimizationException(
-                "Synthetic controlled optimizer failure",
-                [
-                    new IrDiagnostic(
-                        IrDiagnosticSeverity.Error,
-                        "test.optimization.failed",
-                        "Synthetic controlled optimizer failure.")
-                ]);
     }
 
     private sealed class UnexpectedFailurePass(string id) : IdentityPass(id)
