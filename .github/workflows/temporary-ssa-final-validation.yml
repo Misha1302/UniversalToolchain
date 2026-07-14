@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - fix/ssa-route-execution-contracts-20260715
+  pull_request:
+    branches:
+      - master
 
 permissions:
   contents: write
