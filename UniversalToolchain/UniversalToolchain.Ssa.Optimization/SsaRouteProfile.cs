@@ -36,8 +36,6 @@ public interface ISsaSemanticExtensionPack
 
 public sealed class SsaRouteProfile
 {
-    private readonly ReadOnlyCollection<IIrOptimizationPass> _optimizationPasses;
-
     public SsaRouteProfile(
         SsaRoutePolicy policy,
         IEnumerable<ISsaSemanticExtensionPack>? extensionPacks = null,
@@ -73,14 +71,7 @@ public sealed class SsaRouteProfile
         AirLoweringTargets = MergeAirLoweringTargets(ExtensionPacks.Select(static x => x.AirLoweringTargets));
         EnablesManagedCallables = ExtensionPacks.Any(static x => x.EnablesManagedCallables);
 
-        var passes = ExtensionPacks.SelectMany(static pack => pack.CreateOptimizationPasses()).ToArray();
-        var duplicatePass = passes
-            .GroupBy(static pass => pass.Id)
-            .FirstOrDefault(static group => group.Count() > 1);
-        if (duplicatePass is not null)
-            throw new ArgumentException($"SSA profile '{Id}' contains duplicate optimizer pass id '{duplicatePass.Key}'.", nameof(extensionPacks));
-
-        _optimizationPasses = new ReadOnlyCollection<IIrOptimizationPass>(passes);
+        _ = CreateOptimizationPasses();
     }
 
     public string Id { get; }
@@ -105,7 +96,17 @@ public sealed class SsaRouteProfile
 
     public bool EnablesManagedCallables { get; }
 
-    public IReadOnlyList<IIrOptimizationPass> CreateOptimizationPasses() => _optimizationPasses;
+    public IReadOnlyList<IIrOptimizationPass> CreateOptimizationPasses()
+    {
+        var passes = ExtensionPacks.SelectMany(static pack => pack.CreateOptimizationPasses()).ToArray();
+        var duplicatePass = passes
+            .GroupBy(static pass => pass.Id)
+            .FirstOrDefault(static group => group.Count() > 1);
+        if (duplicatePass is not null)
+            throw new ArgumentException($"SSA profile '{Id}' contains duplicate optimizer pass id '{duplicatePass.Key}'.", nameof(ExtensionPacks));
+
+        return passes;
+    }
 
     private static SemanticDescriptorSet MergeSemanticDescriptors(IEnumerable<SemanticDescriptorSet> descriptorSets)
     {
