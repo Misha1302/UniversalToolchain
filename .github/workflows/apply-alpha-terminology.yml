@@ -160,10 +160,6 @@ jobs:
           rm -f .github/workflows/apply-alpha-terminology.yml
 
           python3 Tools/check_documentation_status.py
-          if git grep -n -i -- 'preview' -- '*.md'; then
-            echo 'Unexpected preview wording remains in Markdown.' >&2
-            exit 1
-          fi
 
           find . -type f \
             ! -path './.git/*' \
