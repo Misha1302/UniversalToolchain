@@ -218,7 +218,7 @@ public sealed class SsaRoundtripRoute
         IrPipelineContext context,
         List<SsaRouteTraceEntry>? trace)
     {
-        var executedPasses = Array.Empty<string>();
+        var executedPasses = new List<string>();
 
         try
         {
@@ -240,16 +240,17 @@ public sealed class SsaRoundtripRoute
             if (_profile is not null)
             {
                 var optimizer = SsaRouteFactory.CreateOptimizer(_profile);
-                executedPasses = optimizer.PassIds.Select(static x => x.ToString()).ToArray();
+                var plannedPasses = optimizer.PassIds.Select(static x => x.ToString()).ToArray();
                 trace?.Add(new SsaRouteTraceEntry(
                     "optimization",
-                    executedPasses.Length == 0
+                    plannedPasses.Length == 0
                         ? "SSA profile contains no optimization passes."
-                        : $"Running SSA passes: {string.Join(", ", executedPasses)}."));
+                        : $"Running SSA passes: {string.Join(", ", plannedPasses)}."));
 
                 var optimizationResult = optimizer.Run(
                     ssaArtifact,
-                    new IrPipelineContext(context.Capabilities, ssaFacts));
+                    new IrPipelineContext(context.Capabilities, ssaFacts),
+                    passId => executedPasses.Add(passId.ToString()));
                 ssaArtifact = optimizationResult.Artifact.As<SsaArtifact>();
                 ssaFacts = optimizationResult.Facts;
                 trace?.Add(new SsaRouteTraceEntry("optimization", "SSA optimization and post-pass verification succeeded."));
@@ -299,7 +300,6 @@ public sealed class SsaRoundtripRoute
                 exception);
         }
     }
-
 
     private static IAbstractIR PrepareIntrinsicPayloads(IAbstractIR input)
     {
