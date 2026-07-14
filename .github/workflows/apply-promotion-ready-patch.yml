@@ -1,0 +1,449 @@
+name: Apply promotion-ready quickstart patch
+
+on:
+  push:
+    branches:
+      - promotion-ready-quickstart-20260714
+    paths:
+      - .github/workflows/apply-promotion-ready-patch.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: promotion-ready-quickstart-20260714
+          fetch-depth: 0
+
+      - name: Apply bounded promotion patch
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python3 - <<'PY'
+          from pathlib import Path
+
+          root = Path.cwd()
+
+          def replace_once(relative_path: str, old: str, new: str) -> None:
+              path = root / relative_path
+              text = path.read_text(encoding="utf-8")
+              count = text.count(old)
+              if count != 1:
+                  raise RuntimeError(
+                      f"Expected exactly one match in {relative_path}, found {count}: {old[:120]!r}"
+                  )
+              path.write_text(text.replace(old, new), encoding="utf-8")
+
+          replace_once(
+              "readme.md",
+              "After the preview package is published, install `UniversalToolchain.Wist` `0.1.0-alpha.1` from NuGet: <https://www.nuget.org/packages/UniversalToolchain.Wist/0.1.0-alpha.1>. Until that package exists, use a local package produced by `dotnet pack` or a source checkout.\n\n```bash ci-run=false\ndotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.1\n```",
+              "Install the published `UniversalToolchain.Wist` `0.1.0-alpha.1` package from NuGet: <https://www.nuget.org/packages/UniversalToolchain.Wist/0.1.0-alpha.1>.\n\n```bash ci-run=false\ndotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.1\n```\n\nVerify the exact public package in a clean temporary project:\n\n```bash ci-run=false\n./Tools/smoke-published-wist-package.sh 0.1.0-alpha.1\n```\n\nExpected final line:\n\n```text\nPublished UniversalToolchain.Wist 0.1.0-alpha.1 smoke passed.\n```"
+          )
+
+          replace_once(
+              "readme.md",
+              "- Installation: [docs/start/installation.md](docs/start/installation.md)\n- First program: [docs/start/first-program.md](docs/start/first-program.md)\n- Project positioning: [docs/project-positioning.md](docs/project-positioning.md)",
+              "- Installation: [docs/start/installation.md](docs/start/installation.md)\n- First program: [docs/start/first-program.md](docs/start/first-program.md)\n- Use-case recipes: [docs/start/use-case-recipes.md](docs/start/use-case-recipes.md)\n- Project positioning: [docs/project-positioning.md](docs/project-positioning.md)\n- Maintainer promotion kit: [docs/maintainers/promotion-kit.md](docs/maintainers/promotion-kit.md)"
+          )
+
+          replace_once(
+              "UniversalToolchain/UniversalToolchain.Wist/README.md",
+              "After the preview package is published, install `UniversalToolchain.Wist` `0.1.0-alpha.1` from NuGet: <https://www.nuget.org/packages/UniversalToolchain.Wist/0.1.0-alpha.1>. Until that package exists, use a local package produced by `dotnet pack` or a source checkout.\n\n```bash ci-run=false\ndotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.1\n```",
+              "Install the published `UniversalToolchain.Wist` `0.1.0-alpha.1` package from NuGet: <https://www.nuget.org/packages/UniversalToolchain.Wist/0.1.0-alpha.1>.\n\n```bash ci-run=false\ndotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.1\n```\n\nFor a clean-room install and execution check, follow the [package installation guide](https://misha1302.github.io/Wist2/start/installation)."
+          )
+
+          replace_once(
+              "docs/start/installation.md",
+              "- install the `UniversalToolchain.Wist` package from NuGet.org after the preview package is published, or use a locally packed `.nupkg` before publication;\n- clone and build the repository for development, tests and documentation work.",
+              "- install the published `UniversalToolchain.Wist` package from NuGet.org;\n- clone and build the repository for framework development, tests and documentation work."
+          )
+
+          replace_once(
+              "docs/start/installation.md",
+              "`UniversalToolchain.Wist` is the intended first-contact package for .NET developers. Before the public NuGet package exists, produce and consume a local `.nupkg` from `dotnet pack`; after publication, use the NuGet command below. It exposes the `WistEngine` facade and hides the lower-level dialect/runtime pipeline for normal formula usage.",
+              "`UniversalToolchain.Wist` is the intended first-contact package for .NET developers. Version `0.1.0-alpha.1` is published on NuGet.org. The package exposes the `WistEngine` facade and hides the lower-level dialect/runtime pipeline for normal formula usage."
+          )
+
+          replace_once(
+              "docs/start/installation.md",
+              "```bash ci-run=false\ndotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.1\n```\n\nUse a `net10.0` project while this preview targets .NET 10:",
+              "```bash ci-run=false\ndotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.1\n```\n\nThe package page is <https://www.nuget.org/packages/UniversalToolchain.Wist/0.1.0-alpha.1>.\n\n### Clean-room published-package check\n\nThe repository includes a smoke script that creates a temporary `net10.0` console project, uses an isolated NuGet package cache, restores only from NuGet.org, compiles a formula, evaluates it and verifies a rejected statement-style rule:\n\n```bash ci-timeout=240\n./Tools/smoke-published-wist-package.sh 0.1.0-alpha.1\n```\n\nExpected final line:\n\n```text\nPublished UniversalToolchain.Wist 0.1.0-alpha.1 smoke passed.\n```\n\nUse a `net10.0` project while this preview targets .NET 10:"
+          )
+
+          replace_once(
+              "docs/start/first-program.md",
+              "Install the package first:\n\n```bash ci-run=false\ndotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.1\n```",
+              "Install the published package first:\n\n```bash ci-run=false\ndotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.1\n```\n\nFor a clean-room NuGet.org check, run `./Tools/smoke-published-wist-package.sh 0.1.0-alpha.1` from a repository checkout."
+          )
+
+          replace_once(
+              "docs/start/first-program.md",
+              "Read the [CLI Reference](/start/cli-reference) if you want the command surface, or continue with the [Mental Model](/start/mental-model) and the [Wist Syntax Tour](/wist/syntax-tour).",
+              "Continue with the [Use-case Recipes](/start/use-case-recipes) for three copy-ready application scenarios. Read the [CLI Reference](/start/cli-reference) for the command surface, or continue with the [Mental Model](/start/mental-model) and the [Wist Syntax Tour](/wist/syntax-tour)."
+          )
+
+          replace_once(
+              "docs/.vitepress/config.mts",
+              "            { text: '1.1 Installation', link: '/start/installation' },\n            { text: '1.2 First Program', link: '/start/first-program' },\n            { text: '1.3 CLI Reference', link: '/start/cli-reference' },\n            { text: '1.4 Wist Overview', link: '/wist/' },\n            { text: '1.5 Wist Syntax Tour', link: '/wist/syntax-tour' },\n            { text: '1.6 Examples', link: '/wist/examples' }",
+              "            { text: '1.1 Installation', link: '/start/installation' },\n            { text: '1.2 First Program', link: '/start/first-program' },\n            { text: '1.3 Use-case Recipes', link: '/start/use-case-recipes' },\n            { text: '1.4 CLI Reference', link: '/start/cli-reference' },\n            { text: '1.5 Wist Overview', link: '/wist/' },\n            { text: '1.6 Wist Syntax Tour', link: '/wist/syntax-tour' },\n            { text: '1.7 Examples', link: '/wist/examples' }"
+          )
+
+          use_case_recipes = r'''---
+          title: Use-case Recipes
+          description: Copy-ready Wist examples for pricing, rollout scoring and LMS scoring.
+          ---
+
+          # Use-case Recipes
+
+          These examples use the current public `UniversalToolchain.Wist` facade and the restricted arithmetic preset. They deliberately keep side effects in the .NET host:
+
+          ```text
+          rule text -> validate or compile -> numeric result -> host application decides the action
+          ```
+
+          Install the package:
+
+          ```bash ci-run=false
+          dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.1
+          ```
+
+          ## Pricing and commission
+
+          Compile a reviewed commission formula once and invoke the typed delegate for each order:
+
+          ```csharp
+          using UniversalToolchain.Wist;
+
+          using var rules = WistEngine.CreateRestrictedArithmetic();
+
+          var commission = rules.Compile<Func<double, double, double, double>>(
+              "gross * rate - fixedFee",
+              "gross",
+              "rate",
+              "fixedFee");
+
+          double payout = commission.CompiledDelegate(5_000.0, 0.05, 25.0);
+          Console.WriteLine(payout); // 225
+          ```
+
+          The rule returns a number. The host still owns payment creation, authorization, persistence and audit logging.
+
+          ## Rollout score
+
+          Keep rollout policy configurable without letting the formula enable a feature directly:
+
+          ```csharp
+          using UniversalToolchain.Wist;
+
+          using var rules = WistEngine.CreateRestrictedArithmetic();
+
+          var rolloutScore = rules.Compile<Func<double, double, double, double>>(
+              "usage * 0.7 + reliability * 0.3 - incidents * 15.0",
+              "usage",
+              "reliability",
+              "incidents");
+
+          double score = rolloutScore.CompiledDelegate(100.0, 90.0, 1.0);
+          bool enableNewDashboard = score >= 80.0;
+          ```
+
+          The threshold and the feature switch remain ordinary reviewed .NET code.
+
+          ## LMS or autograding score
+
+          Use a small rule for a score that changes more often than the surrounding application:
+
+          ```csharp
+          using UniversalToolchain.Wist;
+
+          using var rules = WistEngine.CreateRestrictedArithmetic();
+
+          var finalScore = rules.Compile<Func<double, double, double, double, double>>(
+              "correct * pointsPerTask - penalties * penaltyPoints",
+              "correct",
+              "pointsPerTask",
+              "penalties",
+              "penaltyPoints");
+
+          double score = finalScore.CompiledDelegate(18.0, 5.0, 2.0, 3.0);
+          Console.WriteLine(score); // 84
+          ```
+
+          Enrollment state, grade publication and permissions stay outside the rule.
+
+          ## Reject a broader language shape
+
+          Validate before storing an admin-, config- or LLM-suggested formula:
+
+          ```csharp
+          using UniversalToolchain.Wist;
+
+          using var rules = WistEngine.CreateRestrictedArithmetic();
+
+          var validation = rules.Validate(
+              "let score = correct * pointsPerTask\nscore",
+              new
+              {
+                  correct = 18.0,
+                  pointsPerTask = 5.0
+              });
+
+          Console.WriteLine(validation.IsValid); // false
+          Console.WriteLine(validation.Message);
+          ```
+
+          The restricted arithmetic surface intentionally rejects statement-style bindings such as `let`.
+
+          ## Integration checklist
+
+          Before using a configurable rule in an application:
+
+          1. Define the exact numeric inputs owned by the host.
+          2. Validate the text before storing or activating it.
+          3. Compile once after approval; do not compile inside the hot loop.
+          4. Keep side effects, authorization and persistence in ordinary .NET code.
+          5. Store the last known-good rule so an invalid update does not replace working behavior.
+          6. Treat restricted syntax as a language-surface limit, not as process isolation or a hardened sandbox.
+
+          ## When not to use this preview
+
+          Do not use the current restricted arithmetic preset when you need arbitrary C# execution, process isolation, execution timeouts, memory quotas or a stable full business-rule language. Those are outside the current preview claim.
+
+          ## Next
+
+          Read [What is stable in preview?](/public/what-is-stable-in-preview), the [Performance Model](/public/performance-model) and [Security](/SECURITY) before integrating the package into a consequential workflow.
+          '''
+          use_case_recipes = "\n".join(line[10:] if line.startswith("          ") else line for line in use_case_recipes.splitlines()) + "\n"
+          (root / "docs/start/use-case-recipes.md").write_text(use_case_recipes, encoding="utf-8")
+
+          promotion_kit = r'''---
+          title: Maintainer Promotion Kit
+          description: Canonical launch messages, claim boundaries and feedback metrics for Wist.
+          ---
+
+          # Maintainer Promotion Kit
+
+          This page is for maintainers preparing a public Wist announcement. It keeps the product message aligned with the current preview and avoids claims the repository does not prove.
+
+          ## Canonical message
+
+          > Wist is a .NET package for validating restricted numeric rules and compiling approved formulas into typed delegates. Your application owns the inputs and side effects.
+
+          Use `Wist` and `UniversalToolchain.Wist` as the first-contact product names. Introduce `UniversalToolchain` as the underlying modular DSL/runtime framework only after the practical formula example is clear.
+
+          ## Demonstration order
+
+          1. Show a useful formula with named host inputs.
+          2. Compile it into a typed delegate.
+          3. Show a broader statement-style rule being rejected.
+          4. Explain that the host owns side effects and authorization.
+          5. Link to the clean-room NuGet smoke command.
+          6. Only then discuss dialect composition, interpreter/CIL parity, AIR or experimental SSA.
+
+          ## Claims that are supported
+
+          - A public `UniversalToolchain.Wist` facade exists for .NET applications.
+          - `CreateRestrictedArithmetic()` provides the recommended first-contact formula surface.
+          - `Validate`, `Evaluate<T>` and typed `Compile<TDelegate>` paths exist.
+          - The package has interpreter and CIL-oriented execution paths within the documented supported surface.
+          - SSA is optional, observable and experimental.
+
+          ## Claims to avoid
+
+          - Do not call the restricted preset a hardened sandbox.
+          - Do not say Wist runs arbitrary untrusted code safely.
+          - Do not claim that every Wist program performs like handwritten C#.
+          - Do not present the experimental SSA route as an SSA-native backend or a general speed guarantee.
+          - Do not describe the current preview as a finished business-rule platform or universal language workbench.
+
+          ## Reddit or .NET community post
+
+          **Title**
+
+          > I built a .NET package that compiles restricted formulas into typed delegates
+
+          **Body**
+
+          > I am building Wist, a small first-contact facade over a modular .NET DSL/runtime framework. The practical use case is configurable numeric rules: the host application defines inputs, validates rule text, compiles an approved formula once and invokes a typed delegate on the hot path.
+          >
+          > The restricted preset intentionally rejects broader statement-style shapes, and I am not presenting it as a hardened sandbox. Side effects, authorization and persistence remain in the host application.
+          >
+          > The package is `UniversalToolchain.Wist` on NuGet. I would especially value feedback on the installation path, diagnostics and which real formula use cases are missing.
+
+          ## Show HN post
+
+          **Title**
+
+          > Show HN: Wist – restricted formulas compiled to typed .NET delegates
+
+          **Body**
+
+          > Wist lets a .NET host validate small numeric rules, compile an approved formula into a typed delegate and keep side effects in ordinary application code. It is backed by a larger modular DSL/runtime framework with interpreter and CIL paths.
+          >
+          > The current preview is intentionally narrow: it is not a hardened sandbox or a finished general-purpose language workbench. The repository includes a clean-room NuGet smoke check and copy-ready pricing, rollout and LMS examples.
+
+          ## LinkedIn post
+
+          > I published the first alpha of `UniversalToolchain.Wist`, a .NET facade for restricted numeric rules.
+          >
+          > The host application controls the inputs, validates the rule, compiles an approved formula once and receives a typed delegate. The formula returns data; the application still owns authorization, persistence and side effects.
+          >
+          > The project also explores modular dialect composition, interpreter/CIL semantic parity and an observable experimental SSA route. The current release is deliberately a preview, not a sandbox claim.
+          >
+          > I am looking for .NET developers who can try the clean-room quickstart and report where the first ten minutes are confusing.
+
+          ## Russian Telegram post
+
+          > Выпустил первую alpha-версию `UniversalToolchain.Wist` — пакета для небольших управляемых формул внутри .NET-приложений.
+          >
+          > Приложение само задаёт входные данные, проверяет текст правила и компилирует одобренную формулу в типизированный delegate. Формула возвращает число, а авторизация, сохранение данных и реальные действия остаются в обычном C#-коде.
+          >
+          > Это не обещание безопасного запуска произвольного кода и не готовая универсальная rule-engine платформа. Сейчас мне особенно нужна обратная связь по установке, диагностике и реальным сценариям формул.
+
+          ## Feedback request
+
+          Ask testers for observed behavior rather than general approval:
+
+          1. Could you install and run the package without opening the architecture docs?
+          2. At which exact command or API call did you hesitate?
+          3. What formula or rule would you try in a real application?
+          4. Which diagnostic or trust boundary was unclear?
+          5. What would stop you from trying Wist in a small internal tool?
+
+          ## First launch metrics
+
+          Track:
+
+          - successful clean-room package runs;
+          - time from opening the repository to the first numeric result;
+          - independent issues or discussions from external users;
+          - real formulas attempted, not only stars or impressions;
+          - one external example or pull request.
+
+          Rework onboarding before increasing promotion if testers cannot reach the first result in ten minutes.
+          '''
+          promotion_kit = "\n".join(line[10:] if line.startswith("          ") else line for line in promotion_kit.splitlines()) + "\n"
+          promotion_path = root / "docs/maintainers/promotion-kit.md"
+          promotion_path.parent.mkdir(parents=True, exist_ok=True)
+          promotion_path.write_text(promotion_kit, encoding="utf-8")
+
+          smoke_script = r'''#!/usr/bin/env bash
+          set -Eeuo pipefail
+
+          PACKAGE_VERSION="${1:-0.1.0-alpha.1}"
+          NUGET_SOURCE="${NUGET_SOURCE:-https://api.nuget.org/v3/index.json}"
+          SMOKE_DIR="$(mktemp -d)"
+
+          cleanup() {
+              rm -rf "$SMOKE_DIR"
+          }
+          trap cleanup EXIT
+
+          cat > "$SMOKE_DIR/NuGet.Config" <<EOF
+          <?xml version="1.0" encoding="utf-8"?>
+          <configuration>
+            <packageSources>
+              <clear />
+              <add key="nuget.org" value="$NUGET_SOURCE" protocolVersion="3" />
+            </packageSources>
+          </configuration>
+          EOF
+
+          dotnet new console --framework net10.0 --output "$SMOKE_DIR" --force >/dev/null
+
+          export NUGET_PACKAGES="$SMOKE_DIR/packages"
+          export NUGET_HTTP_CACHE_PATH="$SMOKE_DIR/http-cache"
+          export DOTNET_CLI_HOME="$SMOKE_DIR/dotnet-home"
+          export DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
+          export DOTNET_NOLOGO=1
+          export NuGetAudit=false
+
+          (
+              cd "$SMOKE_DIR"
+              dotnet add package UniversalToolchain.Wist \
+                  --version "$PACKAGE_VERSION" \
+                  --source "$NUGET_SOURCE"
+          )
+
+          cat > "$SMOKE_DIR/Program.cs" <<'EOF'
+          using UniversalToolchain.Wist;
+
+          using var rules = WistEngine.CreateRestrictedArithmetic();
+
+          var compiled = rules.Compile<Func<double, double, double>>(
+              "price * 0.9 + fee",
+              "price",
+              "fee");
+
+          double compiledResult = compiled.CompiledDelegate(100.0, 5.0);
+          if (Math.Abs(compiledResult - 95.0) > 1e-9)
+          {
+              throw new InvalidOperationException($"Expected compiled result 95, got {compiledResult}.");
+          }
+
+          double evaluatedResult = rules.Evaluate<double>(
+              "price * 0.9 + fee",
+              new
+              {
+                  price = 100.0,
+                  fee = 5.0
+              });
+
+          if (Math.Abs(evaluatedResult - 95.0) > 1e-9)
+          {
+              throw new InvalidOperationException($"Expected evaluated result 95, got {evaluatedResult}.");
+          }
+
+          var rejected = rules.Validate(
+              "let total = price * 0.9\ntotal",
+              new
+              {
+                  price = 100.0
+              });
+
+          if (rejected.IsValid)
+          {
+              throw new InvalidOperationException("Expected the restricted preset to reject statement-style bindings.");
+          }
+          EOF
+
+          dotnet run --project "$SMOKE_DIR" -c Release --no-restore >/dev/null
+
+          metadata_path="$NUGET_PACKAGES/universaltoolchain.wist/$PACKAGE_VERSION/.nupkg.metadata"
+          test -f "$metadata_path"
+          grep -Fq "$NUGET_SOURCE" "$metadata_path"
+
+          printf 'Published UniversalToolchain.Wist %s smoke passed.\n' "$PACKAGE_VERSION"
+          '''
+          smoke_script = "\n".join(line[10:] if line.startswith("          ") else line for line in smoke_script.splitlines()) + "\n"
+          smoke_path = root / "Tools/smoke-published-wist-package.sh"
+          smoke_path.write_text(smoke_script, encoding="utf-8")
+          smoke_path.chmod(0o755)
+          PY
+
+          bash -n Tools/smoke-published-wist-package.sh
+          git diff --check
+
+      - name: Commit bounded patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add readme.md \
+                  UniversalToolchain/UniversalToolchain.Wist/README.md \
+                  docs/start/installation.md \
+                  docs/start/first-program.md \
+                  docs/start/use-case-recipes.md \
+                  docs/maintainers/promotion-kit.md \
+                  docs/.vitepress/config.mts \
+                  Tools/smoke-published-wist-package.sh
+          git commit -m "docs: make Wist package launch-ready"
+          git push origin HEAD:promotion-ready-quickstart-20260714
