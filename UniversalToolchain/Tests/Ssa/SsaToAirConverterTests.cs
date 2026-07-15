@@ -459,7 +459,7 @@ public sealed class SsaToAirConverterTests
     }
 
     [Test]
-    public void Run_WhenSsaValueIsUsedTwiceWithoutTempStrategy_ThrowsStackShapeDiagnostic()
+    public void Run_WhenSsaValueIsUsedTwiceWithoutTempStrategy_ThrowsValueReuseDiagnostic()
     {
         var input = new SsaValue(new SsaValueId("%input"), SsaTypes.Int32);
         var result = new SsaValue(new SsaValueId("%result"), SsaTypes.Int32);
@@ -485,7 +485,7 @@ public sealed class SsaToAirConverterTests
         var exception = Assert.Throws<SsaToAirEmissionException>(() =>
             AlphaEmitter().Run(artifact, new IrPipelineContext()));
 
-        Assert.That(exception!.Diagnostics.Select(static x => x.Code), Does.Contain("ssa.to-air.stack-shape.unsupported"));
+        Assert.That(exception!.Diagnostics.Select(static x => x.Code), Does.Contain("ssa.to-air.value-reuse.unsupported"));
     }
 
     [Test]

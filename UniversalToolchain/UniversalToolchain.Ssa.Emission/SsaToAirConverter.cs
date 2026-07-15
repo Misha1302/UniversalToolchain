@@ -157,7 +157,6 @@ public sealed class SsaToAirConverter : IIrConverter
         }
 
         var function = SelectFunction(ssaArtifact!.Module);
-        var air = new AbstractIR();
         var state = new EmissionState(function);
         var planner = _callLoweringPlanner.WithAdditionalCallables(managedDescriptors);
         if (ssaArtifact.ManagedCallableBindings.Values.Count != 0)
@@ -165,6 +164,11 @@ public sealed class SsaToAirConverter : IIrConverter
             planner = planner.WithManagedBindings(ssaArtifact.ManagedCallableBindings);
         }
 
+        var valueReuseDiagnostics = SsaToAirValueReusePreflight.Analyze(function, planner);
+        if (valueReuseDiagnostics.Count != 0)
+            ThrowDiagnostics(valueReuseDiagnostics);
+
+        var air = new AbstractIR();
         foreach (var block in state.Blocks)
         {
             EmitBlock(air, block, state, planner);
