@@ -23,9 +23,9 @@
     <circle cx="132" cy="239" r="7" fill="#fbbf24"/>
     <circle cx="158" cy="239" r="7" fill="#4ade80"/>
     <text x="102" y="301" fill="#93c5fd" font-family="JetBrains Mono, Consolas, monospace" font-size="27">usage * 0.7 + reliability * 0.3 - incidents * 15</text>
-    <text x="102" y="363" fill="#4ade80" font-family="JetBrains Mono, Consolas, monospace" font-size="25">✓ validated before execution</text>
-    <text x="102" y="407" fill="#4ade80" font-family="JetBrains Mono, Consolas, monospace" font-size="25">✓ compiled once to Func&lt;double, double, double, double&gt;</text>
-    <text x="102" y="451" fill="#fbbf24" font-family="JetBrains Mono, Consolas, monospace" font-size="25">score = 82.0  →  host application decides the action</text>
+    <text x="102" y="363" fill="#4ade80" font-family="JetBrains Mono, Consolas, monospace" font-size="25">VALIDATED before execution</text>
+    <text x="102" y="407" fill="#4ade80" font-family="JetBrains Mono, Consolas, monospace" font-size="25">COMPILED once to Func&lt;double, double, double, double&gt;</text>
+    <text x="102" y="451" fill="#fbbf24" font-family="JetBrains Mono, Consolas, monospace" font-size="25">score = 82.0  |  host application decides the action</text>
   </g>
 
   <rect x="72" y="530" width="410" height="58" rx="29" fill="#312e81" stroke="#818cf8"/>
