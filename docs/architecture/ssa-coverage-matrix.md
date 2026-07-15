@@ -47,7 +47,8 @@ The route rejects unsupported shapes with explicit codes rather than guessing:
 - `air.to-ssa.push-type` — a pushed CLR/runtime value type has no current SSA mapping;
 - `air.to-ssa.opcode` — the AIR opcode is outside the registered lowering surface;
 - `air.to-ssa.managed-call.projection.unregistered` — a projection selected a callable with no active semantic descriptor;
-- `ssa.optimization.managed-call.binding.missing` and `ssa.to-air.managed-call.binding.missing` — a managed callable lost its execution-scoped binding.
+- `ssa.optimization.managed-call.binding.missing` and `ssa.to-air.managed-call.binding.missing` — a managed callable lost its execution-scoped binding;
+- `ssa.to-air.value-reuse.unsupported` — legal SSA requires a duplicated or spilled stack value, but the minimal AIR emitter has no repeated-value scheduling strategy.
 
 Under `Prefer`, only explicitly classified unsupported-shape diagnostics may trigger a controlled AIR fallback. `Require` and `Debug` preserve the route report and fail instead of silently changing execution strategy.
 
@@ -58,7 +59,7 @@ Under `Prefer`, only explicitly classified unsupported-shape diagnostics may tri
 | Complete AIR intrinsic coverage | Differential tests per intrinsic family |
 | Full runtime value type mapping | Type mapping table and verifier tests |
 | Multi-return SSA shapes | Explicit function signature model and AIR lowering policy |
-| Arbitrary SSA scheduling | Dominance/use verification and emission legality tests |
+| Arbitrary SSA scheduling | Add duplication/spill scheduling, then relax the explicit repeated-value preflight diagnostic with differential emission tests |
 | SSA-native backend | Separate backend contract or proven AIR-lowering contract |
 | Broader optimizer suite (cross-block GVN, LICM, inlining) | Required/preserved/invalidated facts and differential tests per pass |
 
