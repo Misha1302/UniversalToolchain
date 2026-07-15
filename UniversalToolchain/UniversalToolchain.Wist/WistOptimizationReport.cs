@@ -86,6 +86,19 @@ public sealed class WistSsaOptimizationReport
         outputAirInstructionCount: 0);
 }
 
-public sealed record WistSsaRouteDiagnostic(string Code, string Message);
+/// <summary>
+/// Facade-owned SSA route diagnostic. Stage is a stable lowercase route stage such as
+/// <c>lowering</c>, <c>optimization</c>, <c>emission</c>, or <c>route</c> when known.
+/// </summary>
+public sealed record WistSsaRouteDiagnostic(string Code, string Message)
+{
+    public WistSsaRouteDiagnostic(string code, string message, string? stage)
+        : this(code, message)
+    {
+        Stage = string.IsNullOrWhiteSpace(stage) ? null : stage.Trim();
+    }
+
+    public string? Stage { get; init; }
+}
 
 public sealed record WistSsaTraceEntry(string Stage, string Message, int? InstructionCount);
