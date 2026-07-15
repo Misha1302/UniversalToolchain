@@ -16,7 +16,7 @@ It is a coverage contract, not a promise that SSA is the default optimizer/backe
 |---|---|---|
 | Public Wist opt-in | Supported | `WistEngineOptions.Optimization.Ssa` and facade end-to-end tests |
 | Policies | `Disabled`, `Prefer`, `Require`, `Debug` | `SsaRoundtripRouteTests`; only known unsupported diagnostics may fall back under `Prefer` |
-| Observability | Supported | `WistOptimizationReport` exposes route, fallback, profile, counts, passes, diagnostics, and trace |
+| Observability | Supported | `WistOptimizationReport` exposes route, fallback, profile, counts, passes, stage-qualified diagnostics, and trace |
 | AIR artifact input | Supported for `AirArtifact` only | `AirToSsaConverter.Run` rejects non-AIR artifacts |
 | AIR/SSA/AIR verification | Supported | structural verifiers run before lowering, after lowering/passes, and after emission |
 | External parameter values | Supported for current typed subset | AIR external-value references lower to SSA parameters |
@@ -49,6 +49,8 @@ The route rejects unsupported shapes with explicit codes rather than guessing:
 - `air.to-ssa.managed-call.projection.unregistered` — a projection selected a callable with no active semantic descriptor;
 - `ssa.optimization.managed-call.binding.missing` and `ssa.to-air.managed-call.binding.missing` — a managed callable lost its execution-scoped binding;
 - `ssa.to-air.value-reuse.unsupported` — legal SSA requires a duplicated or spilled stack value, but the minimal AIR emitter has no repeated-value scheduling strategy.
+
+Route diagnostics preserve their canonical stage (`lowering`, `optimization`, `emission`, or `route`) through the low-level report and the public Wist optimization report. Public failure diagnostics project those values as `SSA Lowering`, `SSA Optimization`, `SSA Emission`, or `SSA Route`.
 
 Under `Prefer`, only explicitly classified unsupported-shape diagnostics may trigger a controlled AIR fallback. `Require` and `Debug` preserve the route report and fail instead of silently changing execution strategy.
 

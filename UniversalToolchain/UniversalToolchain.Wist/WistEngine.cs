@@ -283,7 +283,8 @@ public sealed class WistEngine : IDisposable
                     [
                         new WistSsaRouteDiagnostic(
                             "wist.ssa.report.missing",
-                            "The SSA optimizer was requested, but no route report was published before the operation completed.")
+                            "The SSA optimizer was requested, but no route report was published before the operation completed.",
+                            "route")
                     ]));
         }
 
@@ -297,7 +298,10 @@ public sealed class WistEngine : IDisposable
                 report.OutputAirInstructionCount,
                 report.ExecutedPasses,
                 report.Diagnostics.Select(static diagnostic =>
-                    new WistSsaRouteDiagnostic(diagnostic.Code, diagnostic.Message)),
+                    new WistSsaRouteDiagnostic(
+                        diagnostic.Code,
+                        diagnostic.Message,
+                        diagnostic.Stage)),
                 report.Trace.Select(static entry =>
                     new WistSsaTraceEntry(entry.Stage, entry.Message, entry.InstructionCount))));
     }
