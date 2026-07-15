@@ -11,6 +11,8 @@ public static class SsaOptimizationFacts
 
     public static FactId SparseConditionalConstantPropagated { get; } = new("ssa.optimization.sccp-lite");
 
+    public static FactId LocalCommonSubexpressionsEliminated { get; } = new("ssa.optimization.cse.local");
+
     public static FactId DeadPureInstructionsEliminated { get; } = new("ssa.optimization.dead-pure-instructions-eliminated");
 
     public static FactId BranchesFolded { get; } = new("ssa.optimization.branches-folded");
