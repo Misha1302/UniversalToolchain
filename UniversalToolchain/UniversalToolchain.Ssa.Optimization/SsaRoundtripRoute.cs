@@ -18,7 +18,16 @@ public enum SsaRoutePolicy
     Debug
 }
 
-public sealed record SsaRouteDiagnostic(string Code, string Message);
+public sealed record SsaRouteDiagnostic(string Code, string Message)
+{
+    public SsaRouteDiagnostic(string code, string message, string? stage)
+        : this(code, message)
+    {
+        Stage = string.IsNullOrWhiteSpace(stage) ? null : stage.Trim();
+    }
+
+    public string? Stage { get; init; }
+}
 
 public sealed record SsaRouteTraceEntry(string Stage, string Message, int? InstructionCount = null);
 
@@ -114,6 +123,10 @@ public sealed class SsaRouteException : InvalidOperationException
 public sealed class SsaRoundtripRoute
 {
     private const string UnprofiledId = "unprofiled-roundtrip";
+    private const string LoweringStage = "lowering";
+    private const string OptimizationStage = "optimization";
+    private const string EmissionStage = "emission";
+    private const string RouteStage = "route";
     private readonly AirToSsaConverter _lowering;
     private readonly SsaToAirConverter _emission;
     private readonly SsaRouteProfile? _profile;
@@ -152,7 +165,7 @@ public sealed class SsaRoundtripRoute
 
         if (policy == SsaRoutePolicy.Off)
         {
-            trace?.Add(new SsaRouteTraceEntry("route", "SSA route is disabled by policy.", inputCount));
+            trace?.Add(new SsaRouteTraceEntry(RouteStage, "SSA route is disabled by policy.", inputCount));
             return new SsaRouteResult(
                 input,
                 new SsaRouteReport(
@@ -231,18 +244,18 @@ public sealed class SsaRoundtripRoute
                     normalizedInput.Instructions.Count));
             }
 
-            trace?.Add(new SsaRouteTraceEntry("lowering", "Lowering AIR to SSA started.", normalizedInput.Instructions.Count));
+            trace?.Add(new SsaRouteTraceEntry(LoweringStage, "Lowering AIR to SSA started.", normalizedInput.Instructions.Count));
             var loweringResult = _lowering.Run(new AirArtifact(normalizedInput), context);
             var ssaArtifact = loweringResult.Artifact.As<SsaArtifact>();
             var ssaFacts = loweringResult.Facts;
-            trace?.Add(new SsaRouteTraceEntry("lowering", "AIR to SSA lowering and verification succeeded."));
+            trace?.Add(new SsaRouteTraceEntry(LoweringStage, "AIR to SSA lowering and verification succeeded."));
 
             if (_profile is not null)
             {
                 var optimizer = SsaRouteFactory.CreateOptimizer(_profile);
                 var plannedPasses = optimizer.PassIds.Select(static x => x.ToString()).ToArray();
                 trace?.Add(new SsaRouteTraceEntry(
-                    "optimization",
+                    OptimizationStage,
                     plannedPasses.Length == 0
                         ? "SSA profile contains no optimization passes."
                         : $"Running SSA passes: {string.Join(", ", plannedPasses)}."));
@@ -253,28 +266,40 @@ public sealed class SsaRoundtripRoute
                     passId => executedPasses.Add(passId.ToString()));
                 ssaArtifact = optimizationResult.Artifact.As<SsaArtifact>();
                 ssaFacts = optimizationResult.Facts;
-                trace?.Add(new SsaRouteTraceEntry("optimization", "SSA optimization and post-pass verification succeeded."));
+                trace?.Add(new SsaRouteTraceEntry(OptimizationStage, "SSA optimization and post-pass verification succeeded."));
             }
 
-            trace?.Add(new SsaRouteTraceEntry("emission", "SSA to AIR emission started."));
+            trace?.Add(new SsaRouteTraceEntry(EmissionStage, "SSA to AIR emission started."));
             var emissionResult = _emission.Run(
                 ssaArtifact,
                 new IrPipelineContext(context.Capabilities, ssaFacts));
             var output = emissionResult.Artifact.As<AirArtifact>().Program;
-            trace?.Add(new SsaRouteTraceEntry("emission", "SSA to AIR emission succeeded.", output.Instructions.Count));
+            trace?.Add(new SsaRouteTraceEntry(EmissionStage, "SSA to AIR emission succeeded.", output.Instructions.Count));
             return new RoundtripOutcome(output, [], executedPasses, null);
         }
         catch (AirToSsaConversionException exception)
         {
-            return new RoundtripOutcome(null, ConvertDiagnostics(exception.Diagnostics), executedPasses, exception);
+            return new RoundtripOutcome(
+                null,
+                ConvertDiagnostics(exception.Diagnostics, LoweringStage),
+                executedPasses,
+                exception);
         }
         catch (SsaOptimizationException exception)
         {
-            return new RoundtripOutcome(null, ConvertDiagnostics(exception.Diagnostics), executedPasses, exception);
+            return new RoundtripOutcome(
+                null,
+                ConvertDiagnostics(exception.Diagnostics, OptimizationStage),
+                executedPasses,
+                exception);
         }
         catch (SsaToAirEmissionException exception)
         {
-            return new RoundtripOutcome(null, ConvertDiagnostics(exception.Diagnostics), executedPasses, exception);
+            return new RoundtripOutcome(
+                null,
+                ConvertDiagnostics(exception.Diagnostics, EmissionStage),
+                executedPasses,
+                exception);
         }
         catch (Exception exception) when (exception is not SsaRouteException)
         {
@@ -294,13 +319,13 @@ public sealed class SsaRoundtripRoute
                     [
                         new SsaRouteDiagnostic(
                             "ssa.route.unexpected",
-                            $"Unexpected SSA route failure in '{exception.GetType().Name}': {exception.Message}")
+                            $"Unexpected SSA route failure in '{exception.GetType().Name}': {exception.Message}",
+                            RouteStage)
                     ],
                     trace: trace),
                 exception);
         }
     }
-
 
     private static IAbstractIR PrepareIntrinsicPayloads(IAbstractIR input)
     {
@@ -422,8 +447,13 @@ public sealed class SsaRoundtripRoute
             : null;
     }
 
-    private static IReadOnlyList<SsaRouteDiagnostic> ConvertDiagnostics(IEnumerable<IrDiagnostic> diagnostics) =>
-        diagnostics.Select(static x => new SsaRouteDiagnostic(x.Code, x.Message)).ToArray();
+    private static IReadOnlyList<SsaRouteDiagnostic> ConvertDiagnostics(
+        IEnumerable<IrDiagnostic> diagnostics,
+        string stage) =>
+        diagnostics.Select(diagnostic => new SsaRouteDiagnostic(
+            diagnostic.Code,
+            diagnostic.Message,
+            stage)).ToArray();
 
     private sealed record RoundtripOutcome(
         IAbstractIR? Output,

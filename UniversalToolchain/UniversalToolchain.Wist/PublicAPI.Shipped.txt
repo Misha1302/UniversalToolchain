@@ -186,8 +186,10 @@ field UniversalToolchain.Wist.WistSsaPolicy UniversalToolchain.Wist.WistSsaPolic
 field System.Int32 UniversalToolchain.Wist.WistSsaPolicy.value__
 type class UniversalToolchain.Wist.WistSsaRouteDiagnostic
 ctor UniversalToolchain.Wist.WistSsaRouteDiagnostic(System.String Code, System.String Message)
+ctor UniversalToolchain.Wist.WistSsaRouteDiagnostic(System.String code, System.String message, System.String stage)
 property System.String UniversalToolchain.Wist.WistSsaRouteDiagnostic.Code { get; set; }
 property System.String UniversalToolchain.Wist.WistSsaRouteDiagnostic.Message { get; set; }
+property System.String UniversalToolchain.Wist.WistSsaRouteDiagnostic.Stage { get; set; }
 method UniversalToolchain.Wist.WistSsaRouteDiagnostic UniversalToolchain.Wist.WistSsaRouteDiagnostic.<Clone>$()
 method System.Void UniversalToolchain.Wist.WistSsaRouteDiagnostic.Deconstruct(System.String& Code, System.String& Message)
 method System.Boolean UniversalToolchain.Wist.WistSsaRouteDiagnostic.Equals(System.Object obj)
