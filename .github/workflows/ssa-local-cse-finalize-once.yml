@@ -29,80 +29,55 @@ jobs:
           def replace_once(path, old, new):
               file = pathlib.Path(path)
               text = file.read_text(encoding='utf-8')
-              if old in text:
-                  file.write_text(text.replace(old, new, 1), encoding='utf-8')
-                  return
-              if new not in text:
-                  raise SystemExit(f'Expected integration marker missing in {path}')
+              count = text.count(old)
+              if count == 0:
+                  if new in text:
+                      return
+                  raise SystemExit(f'Expected integration marker missing in {path}: {old!r}')
+              if count != 1:
+                  raise SystemExit(f'Expected one integration marker in {path}, found {count}: {old!r}')
+              file.write_text(text.replace(old, new, 1), encoding='utf-8')
 
+          cse = 'UniversalToolchain/UniversalToolchain.Ssa.Optimization/SsaLocalCommonSubexpressionEliminationPass.cs'
           replace_once(
-              'UniversalToolchain/UniversalToolchain.Ssa.Optimization/SsaLocalCommonSubexpressionEliminationPass.cs',
-              '''    private SsaBlock EliminateLocalDuplicates(
-                  SsaBlock block,
-                  IDictionary<SsaValueId, SsaValueId> substitutions)
-              {
-                  var available = new Dictionary<ExpressionKey, SsaValueId>();
-                  var localSubstitutions = new Dictionary<SsaValueId, SsaValueId>();
-                  var instructions = new List<ISsaInstruction>(block.Instructions.Count);
-
-                  foreach (var instruction in block.Instructions)
-                  {
-                      var rewritten = RewriteInstructionUses(instruction, localSubstitutions);''',
-              '''    private SsaBlock EliminateLocalDuplicates(
-                  SsaBlock block,
-                  Dictionary<SsaValueId, SsaValueId> substitutions)
-              {
-                  var available = new Dictionary<ExpressionKey, SsaValueId>();
-                  var instructions = new List<ISsaInstruction>(block.Instructions.Count);
-
-                  foreach (var instruction in block.Instructions)
-                  {
-                      var rewritten = RewriteInstructionUses(instruction, substitutions);''')
-
+              cse,
+              '        IDictionary<SsaValueId, SsaValueId> substitutions)',
+              '        Dictionary<SsaValueId, SsaValueId> substitutions)')
           replace_once(
-              'UniversalToolchain/UniversalToolchain.Ssa.Optimization/SsaLocalCommonSubexpressionEliminationPass.cs',
-              '''            var canonical = Resolve(existing, localSubstitutions);
-                      localSubstitutions[result] = canonical;
-                      substitutions[result] = canonical;
-                  }
-
-                  return new SsaBlock(
-                      block.Id,
-                      block.Parameters,
-                      instructions: instructions,
-                      terminator: RewriteTerminatorUses(block.Terminator, localSubstitutions));''',
-              '''            var canonical = Resolve(existing, substitutions);
-                      substitutions[result] = canonical;
-                  }
-
-                  return new SsaBlock(
-                      block.Id,
-                      block.Parameters,
-                      instructions: instructions,
-                      terminator: RewriteTerminatorUses(block.Terminator, substitutions));''')
+              cse,
+              '        var localSubstitutions = new Dictionary<SsaValueId, SsaValueId>();\n',
+              '')
+          replace_once(
+              cse,
+              '            var rewritten = RewriteInstructionUses(instruction, localSubstitutions);',
+              '            var rewritten = RewriteInstructionUses(instruction, substitutions);')
+          replace_once(
+              cse,
+              '            var canonical = Resolve(existing, localSubstitutions);',
+              '            var canonical = Resolve(existing, substitutions);')
+          replace_once(
+              cse,
+              '            localSubstitutions[result] = canonical;\n',
+              '')
+          replace_once(
+              cse,
+              '            terminator: RewriteTerminatorUses(block.Terminator, localSubstitutions));',
+              '            terminator: RewriteTerminatorUses(block.Terminator, substitutions));')
 
           replace_once(
               'UniversalToolchain/UniversalToolchain.Ssa.Optimization/SsaRouteProfile.cs',
-              '''        new SsaSparseConditionalConstantPropagationPass(SemanticDescriptors, new SsaInt32ConstantEvaluator()),
-                      new SsaBranchFoldingAndCleanupPass(),
-                      new SsaDeadPureInstructionEliminationPass(SsaCoreDescriptors.CoreOperations, SemanticDescriptors)''',
-              '''        new SsaSparseConditionalConstantPropagationPass(SemanticDescriptors, new SsaInt32ConstantEvaluator()),
-                      new SsaBranchFoldingAndCleanupPass(),
-                      new SsaLocalCommonSubexpressionEliminationPass(SemanticDescriptors),
-                      new SsaDeadPureInstructionEliminationPass(SsaCoreDescriptors.CoreOperations, SemanticDescriptors)''')
+              '        new SsaBranchFoldingAndCleanupPass(),\n        new SsaDeadPureInstructionEliminationPass(SsaCoreDescriptors.CoreOperations, SemanticDescriptors)',
+              '        new SsaBranchFoldingAndCleanupPass(),\n        new SsaLocalCommonSubexpressionEliminationPass(SemanticDescriptors),\n        new SsaDeadPureInstructionEliminationPass(SsaCoreDescriptors.CoreOperations, SemanticDescriptors)')
 
           replace_once(
               'docs/architecture/ssa-coverage-matrix.md',
-              '''| SCCP-lite | Supported | block-argument constant propagation tests |
-              | Branch/unreachable cleanup | Supported | branch folding and cleanup tests |''',
-              '''| SCCP-lite | Supported | block-argument constant propagation tests |
-              | Local common-subexpression elimination | Supported for trusted deterministic pure expressions within one block | local CSE safety and substitution regressions |
-              | Branch/unreachable cleanup | Supported | branch folding and cleanup tests |''')
+              '| SCCP-lite | Supported | block-argument constant propagation tests |\n| Branch/unreachable cleanup | Supported | branch folding and cleanup tests |',
+              '| SCCP-lite | Supported | block-argument constant propagation tests |\n| Local common-subexpression elimination | Supported for trusted deterministic pure expressions within one block | local CSE safety and substitution regressions |\n| Branch/unreachable cleanup | Supported | branch folding and cleanup tests |')
 
           replace_once(
               'docs/architecture/ssa-coverage-matrix.md',
-              '''| Broader optimizer suite (GVN/CSE, LICM, inlining) | Required/preserved/invalidated facts and differential tests per pass |''',
-              '''| Broader optimizer suite (cross-block GVN, LICM, inlining) | Required/preserved/invalidated facts and differential tests per pass |''')
+              '| Broader optimizer suite (GVN/CSE, LICM, inlining) | Required/preserved/invalidated facts and differential tests per pass |',
+              '| Broader optimizer suite (cross-block GVN, LICM, inlining) | Required/preserved/invalidated facts and differential tests per pass |')
 
           excluded = {
               'MANIFEST.sha256',
