@@ -26,54 +26,48 @@ jobs:
           import pathlib
           import subprocess
 
-          def replace_once(path, old, new):
-              file = pathlib.Path(path)
-              text = file.read_text(encoding='utf-8')
-              count = text.count(old)
-              if count == 0:
-                  if new in text:
-                      return
-                  raise SystemExit(f'Expected marker missing in {path}: {old!r}')
-              if count != 1:
-                  raise SystemExit(f'Expected one marker in {path}, found {count}: {old!r}')
-              file.write_text(text.replace(old, new, 1), encoding='utf-8')
+          route = pathlib.Path('UniversalToolchain/UniversalToolchain.Ssa.Optimization/SsaRoundtripRoute.cs')
+          lines = route.read_text(encoding='utf-8').splitlines()
+          marker = 'throw new ArgumentOutOfRangeException(nameof(outputAirInstructionCount));'
+          indices = [index for index, line in enumerate(lines) if line.strip() == marker]
+          if len(indices) != 1:
+              raise SystemExit(f'Expected one output-count guard, found {len(indices)}')
+          insert_at = indices[0] + 1
+          sentinel = '        if (usedSsa && fellBackToInput)'
+          if sentinel not in lines:
+              guards = [
+                  '        if (usedSsa && fellBackToInput)',
+                  '            throw new ArgumentException("An SSA route cannot both succeed and fall back to its input.");',
+                  '        if (policy == SsaRoutePolicy.Off && (usedSsa || fellBackToInput))',
+                  '            throw new ArgumentException("A disabled SSA route cannot be reported as used or fallen back.");',
+                  '        if (fellBackToInput && policy != SsaRoutePolicy.Prefer)',
+                  '            throw new ArgumentException("Only the Prefer SSA policy may fall back to its input.");',
+                  '        if (fellBackToInput && outputAirInstructionCount != inputAirInstructionCount)',
+                  '        {',
+                  '            throw new ArgumentException(',
+                  '                "An SSA fallback must preserve the input AIR instruction count.",',
+                  '                nameof(outputAirInstructionCount));',
+                  '        }',
+              ]
+              lines[insert_at:insert_at] = guards
+              route.write_text('\n'.join(lines) + '\n', encoding='utf-8')
 
-          route = 'UniversalToolchain/UniversalToolchain.Ssa.Optimization/SsaRoundtripRoute.cs'
-          replace_once(
-              route,
-              '''        if (outputAirInstructionCount < 0)
-                          throw new ArgumentOutOfRangeException(nameof(outputAirInstructionCount));
-
-                      Policy = policy;''',
-              '''        if (outputAirInstructionCount < 0)
-                          throw new ArgumentOutOfRangeException(nameof(outputAirInstructionCount));
-                      if (usedSsa && fellBackToInput)
-                          throw new ArgumentException("An SSA route cannot both succeed and fall back to its input.");
-                      if (policy == SsaRoutePolicy.Off && (usedSsa || fellBackToInput))
-                          throw new ArgumentException("A disabled SSA route cannot be reported as used or fallen back.");
-                      if (fellBackToInput && policy != SsaRoutePolicy.Prefer)
-                          throw new ArgumentException("Only the Prefer SSA policy may fall back to its input.");
-                      if (fellBackToInput && outputAirInstructionCount != inputAirInstructionCount)
-                      {
-                          throw new ArgumentException(
-                              "An SSA fallback must preserve the input AIR instruction count.",
-                              nameof(outputAirInstructionCount));
-                      }
-
-                      Policy = policy;''')
-
-          docs = 'docs/architecture/ssa-coverage-matrix.md'
-          replace_once(
-              docs,
-              '| Observability | Supported | `WistOptimizationReport` exposes route, fallback, profile, counts, passes, stage-qualified diagnostics, and trace |',
-              '| Observability | Supported | `WistOptimizationReport` exposes route, fallback, profile, counts, passes, stage-qualified diagnostics, and trace |\n| Route report state invariants | Enforced | impossible success/fallback/policy/count combinations are rejected by `SsaRouteReportInvariantTests` |')
+          docs = pathlib.Path('docs/architecture/ssa-coverage-matrix.md')
+          text = docs.read_text(encoding='utf-8')
+          row = '| Route report state invariants | Enforced | impossible success/fallback/policy/count combinations are rejected by `SsaRouteReportInvariantTests` |'
+          if row not in text:
+              marker = '| Observability | Supported | `WistOptimizationReport` exposes route, fallback, profile, counts, passes, stage-qualified diagnostics, and trace |'
+              if text.count(marker) != 1:
+                  raise SystemExit('Expected one observability row')
+              text = text.replace(marker, marker + '\n' + row, 1)
+              docs.write_text(text, encoding='utf-8')
 
           excluded = {
               'MANIFEST.sha256',
               '.github/workflows/ssa-route-report-invariants-finalize-once.yml',
           }
           paths = subprocess.check_output(['git', 'ls-files', '-z']).split(b'\0')
-          lines = []
+          manifest = []
           for raw in paths:
               if not raw:
                   continue
@@ -81,8 +75,8 @@ jobs:
               if path in excluded:
                   continue
               digest = hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()
-              lines.append(f'{digest}  ./{path}\n')
-          pathlib.Path('MANIFEST.sha256').write_text(''.join(lines), encoding='utf-8')
+              manifest.append(f'{digest}  ./{path}\n')
+          pathlib.Path('MANIFEST.sha256').write_text(''.join(manifest), encoding='utf-8')
           PY
 
       - name: Commit finalized integration when changed
