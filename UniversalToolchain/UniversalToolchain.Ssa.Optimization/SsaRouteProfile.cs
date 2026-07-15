@@ -318,6 +318,7 @@ public sealed class SsaArithmeticInt32Pack : ISsaSemanticExtensionPack
         new SsaConstantFoldingPass(SemanticDescriptors, new SsaInt32ConstantEvaluator()),
         new SsaSparseConditionalConstantPropagationPass(SemanticDescriptors, new SsaInt32ConstantEvaluator()),
         new SsaBranchFoldingAndCleanupPass(),
+        new SsaLocalCommonSubexpressionEliminationPass(SemanticDescriptors),
         new SsaDeadPureInstructionEliminationPass(SsaCoreDescriptors.CoreOperations, SemanticDescriptors)
     ];
 }

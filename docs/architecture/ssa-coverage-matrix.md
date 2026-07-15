@@ -32,6 +32,7 @@ It is a coverage contract, not a promise that SSA is the default optimizer/backe
 | SSA to AIR emission | Supported for current legal stack-schedulable subset | `SsaToAirConverter` tests |
 | Constant folding | Supported for trusted deterministic descriptors | `SsaConstantFoldingPass` tests |
 | SCCP-lite | Supported | block-argument constant propagation tests |
+| Local common-subexpression elimination | Supported for trusted deterministic pure expressions within one block | local CSE safety and substitution regressions |
 | Branch/unreachable cleanup | Supported | branch folding and cleanup tests |
 | Dead pure instruction elimination | Supported | effect-aware elimination tests |
 | Extension-pack/pass conflicts | Fail-fast | route profile construction tests |
@@ -59,7 +60,7 @@ Under `Prefer`, only explicitly classified unsupported-shape diagnostics may tri
 | Multi-return SSA shapes | Explicit function signature model and AIR lowering policy |
 | Arbitrary SSA scheduling | Dominance/use verification and emission legality tests |
 | SSA-native backend | Separate backend contract or proven AIR-lowering contract |
-| Broader optimizer suite (GVN/CSE, LICM, inlining) | Required/preserved/invalidated facts and differential tests per pass |
+| Broader optimizer suite (cross-block GVN, LICM, inlining) | Required/preserved/invalidated facts and differential tests per pass |
 
 ## Expansion Rule
 

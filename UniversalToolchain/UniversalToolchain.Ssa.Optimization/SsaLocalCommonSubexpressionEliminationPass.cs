@@ -90,15 +90,14 @@ public sealed class SsaLocalCommonSubexpressionEliminationPass : IIrOptimization
 
     private SsaBlock EliminateLocalDuplicates(
         SsaBlock block,
-        IDictionary<SsaValueId, SsaValueId> substitutions)
+        Dictionary<SsaValueId, SsaValueId> substitutions)
     {
         var available = new Dictionary<ExpressionKey, SsaValueId>();
-        var localSubstitutions = new Dictionary<SsaValueId, SsaValueId>();
         var instructions = new List<ISsaInstruction>(block.Instructions.Count);
 
         foreach (var instruction in block.Instructions)
         {
-            var rewritten = RewriteInstructionUses(instruction, localSubstitutions);
+            var rewritten = RewriteInstructionUses(instruction, substitutions);
             if (!TryCreateExpressionKey(rewritten, out var key))
             {
                 instructions.Add(rewritten);
@@ -113,8 +112,7 @@ public sealed class SsaLocalCommonSubexpressionEliminationPass : IIrOptimization
                 continue;
             }
 
-            var canonical = Resolve(existing, localSubstitutions);
-            localSubstitutions[result] = canonical;
+            var canonical = Resolve(existing, substitutions);
             substitutions[result] = canonical;
         }
 
@@ -122,7 +120,7 @@ public sealed class SsaLocalCommonSubexpressionEliminationPass : IIrOptimization
             block.Id,
             block.Parameters,
             instructions: instructions,
-            terminator: RewriteTerminatorUses(block.Terminator, localSubstitutions));
+            terminator: RewriteTerminatorUses(block.Terminator, substitutions));
     }
 
     private bool TryCreateExpressionKey(
