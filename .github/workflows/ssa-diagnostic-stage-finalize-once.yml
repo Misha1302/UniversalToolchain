@@ -41,22 +41,16 @@ jobs:
           engine = 'UniversalToolchain/UniversalToolchain.Wist/WistEngine.cs'
           replace_once(
               engine,
-              '''                        new WistSsaRouteDiagnostic(
-                                      "wist.ssa.report.missing",
-                                      "The SSA optimizer was requested, but no route report was published before the operation completed.")''',
-              '''                        new WistSsaRouteDiagnostic(
-                                      "wist.ssa.report.missing",
-                                      "The SSA optimizer was requested, but no route report was published before the operation completed.",
-                                      "route")''')
+              '                            "The SSA optimizer was requested, but no route report was published before the operation completed.")',
+              '                            "The SSA optimizer was requested, but no route report was published before the operation completed.",\n'
+              '                            "route")')
           replace_once(
               engine,
-              '''                report.Diagnostics.Select(static diagnostic =>
-                                  new WistSsaRouteDiagnostic(diagnostic.Code, diagnostic.Message)),''',
-              '''                report.Diagnostics.Select(static diagnostic =>
-                                  new WistSsaRouteDiagnostic(
-                                      diagnostic.Code,
-                                      diagnostic.Message,
-                                      diagnostic.Stage)),''')
+              '                    new WistSsaRouteDiagnostic(diagnostic.Code, diagnostic.Message)),',
+              '                    new WistSsaRouteDiagnostic(\n'
+              '                        diagnostic.Code,\n'
+              '                        diagnostic.Message,\n'
+              '                        diagnostic.Stage)),')
 
           api = 'UniversalToolchain/UniversalToolchain.Wist/PublicAPI.Shipped.txt'
           replace_once(
