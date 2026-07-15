@@ -38,32 +38,18 @@ jobs:
                   raise SystemExit(f'Expected one marker in {path}, found {count}: {old!r}')
               file.write_text(text.replace(old, new, 1), encoding='utf-8')
 
+          converter = 'UniversalToolchain/UniversalToolchain.Ssa.Emission/SsaToAirConverter.cs'
+          replace_once(converter, '        var air = new AbstractIR();\n', '')
           replace_once(
-              'UniversalToolchain/UniversalToolchain.Ssa.Emission/SsaToAirConverter.cs',
-              '''        var function = SelectFunction(ssaArtifact!.Module);
-                      var air = new AbstractIR();
-                      var state = new EmissionState(function);
-                      var planner = _callLoweringPlanner.WithAdditionalCallables(managedDescriptors);
-                      if (ssaArtifact.ManagedCallableBindings.Values.Count != 0)
-                      {
-                          planner = planner.WithManagedBindings(ssaArtifact.ManagedCallableBindings);
-                      }
-
-                      foreach (var block in state.Blocks)''',
-              '''        var function = SelectFunction(ssaArtifact!.Module);
-                      var state = new EmissionState(function);
-                      var planner = _callLoweringPlanner.WithAdditionalCallables(managedDescriptors);
-                      if (ssaArtifact.ManagedCallableBindings.Values.Count != 0)
-                      {
-                          planner = planner.WithManagedBindings(ssaArtifact.ManagedCallableBindings);
-                      }
-
-                      var valueReuseDiagnostics = SsaToAirValueReusePreflight.Analyze(function, planner);
+              converter,
+              '        foreach (var block in state.Blocks)\n',
+              '''        var valueReuseDiagnostics = SsaToAirValueReusePreflight.Analyze(function, planner);
                       if (valueReuseDiagnostics.Count != 0)
                           ThrowDiagnostics(valueReuseDiagnostics);
 
                       var air = new AbstractIR();
-                      foreach (var block in state.Blocks)''')
+                      foreach (var block in state.Blocks)
+              ''')
 
           replace_once(
               'UniversalToolchain/Tests/Ssa/SsaToAirConverterTests.cs',
