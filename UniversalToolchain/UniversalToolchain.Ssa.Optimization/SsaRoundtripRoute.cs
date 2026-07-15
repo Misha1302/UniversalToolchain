@@ -52,6 +52,18 @@ public sealed class SsaRouteReport
             throw new ArgumentOutOfRangeException(nameof(inputAirInstructionCount));
         if (outputAirInstructionCount < 0)
             throw new ArgumentOutOfRangeException(nameof(outputAirInstructionCount));
+        if (usedSsa && fellBackToInput)
+            throw new ArgumentException("An SSA route cannot both succeed and fall back to its input.");
+        if (policy == SsaRoutePolicy.Off && (usedSsa || fellBackToInput))
+            throw new ArgumentException("A disabled SSA route cannot be reported as used or fallen back.");
+        if (fellBackToInput && policy != SsaRoutePolicy.Prefer)
+            throw new ArgumentException("Only the Prefer SSA policy may fall back to its input.");
+        if (fellBackToInput && outputAirInstructionCount != inputAirInstructionCount)
+        {
+            throw new ArgumentException(
+                "An SSA fallback must preserve the input AIR instruction count.",
+                nameof(outputAirInstructionCount));
+        }
 
         Policy = policy;
         ProfileId = profileId.Trim();

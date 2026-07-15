@@ -17,6 +17,7 @@ It is a coverage contract, not a promise that SSA is the default optimizer/backe
 | Public Wist opt-in | Supported | `WistEngineOptions.Optimization.Ssa` and facade end-to-end tests |
 | Policies | `Disabled`, `Prefer`, `Require`, `Debug` | `SsaRoundtripRouteTests`; only known unsupported diagnostics may fall back under `Prefer` |
 | Observability | Supported | `WistOptimizationReport` exposes route, fallback, profile, counts, passes, stage-qualified diagnostics, and trace |
+| Route report state invariants | Enforced | impossible success/fallback/policy/count combinations are rejected by `SsaRouteReportInvariantTests` |
 | AIR artifact input | Supported for `AirArtifact` only | `AirToSsaConverter.Run` rejects non-AIR artifacts |
 | AIR/SSA/AIR verification | Supported | structural verifiers run before lowering, after lowering/passes, and after emission |
 | External parameter values | Supported for current typed subset | AIR external-value references lower to SSA parameters |
