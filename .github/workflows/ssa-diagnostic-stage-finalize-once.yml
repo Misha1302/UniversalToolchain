@@ -1,0 +1,114 @@
+name: Finalize SSA diagnostic stages once
+
+on:
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Patch facade mapping, API baseline, docs, and manifest
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          import pathlib
+          import subprocess
+
+          def replace_once(path, old, new):
+              file = pathlib.Path(path)
+              text = file.read_text(encoding='utf-8')
+              count = text.count(old)
+              if count == 0:
+                  if new in text:
+                      return
+                  raise SystemExit(f'Expected marker missing in {path}: {old!r}')
+              if count != 1:
+                  raise SystemExit(f'Expected one marker in {path}, found {count}: {old!r}')
+              file.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          engine = 'UniversalToolchain/UniversalToolchain.Wist/WistEngine.cs'
+          replace_once(
+              engine,
+              '''                        new WistSsaRouteDiagnostic(
+                                      "wist.ssa.report.missing",
+                                      "The SSA optimizer was requested, but no route report was published before the operation completed.")''',
+              '''                        new WistSsaRouteDiagnostic(
+                                      "wist.ssa.report.missing",
+                                      "The SSA optimizer was requested, but no route report was published before the operation completed.",
+                                      "route")''')
+          replace_once(
+              engine,
+              '''                report.Diagnostics.Select(static diagnostic =>
+                                  new WistSsaRouteDiagnostic(diagnostic.Code, diagnostic.Message)),''',
+              '''                report.Diagnostics.Select(static diagnostic =>
+                                  new WistSsaRouteDiagnostic(
+                                      diagnostic.Code,
+                                      diagnostic.Message,
+                                      diagnostic.Stage)),''')
+
+          api = 'UniversalToolchain/UniversalToolchain.Wist/PublicAPI.Shipped.txt'
+          replace_once(
+              api,
+              'ctor UniversalToolchain.Wist.WistSsaRouteDiagnostic(System.String Code, System.String Message)\n',
+              'ctor UniversalToolchain.Wist.WistSsaRouteDiagnostic(System.String Code, System.String Message)\n'
+              'ctor UniversalToolchain.Wist.WistSsaRouteDiagnostic(System.String code, System.String message, System.String stage)\n')
+          replace_once(
+              api,
+              'property System.String UniversalToolchain.Wist.WistSsaRouteDiagnostic.Message { get; set; }\n',
+              'property System.String UniversalToolchain.Wist.WistSsaRouteDiagnostic.Message { get; set; }\n'
+              'property System.String UniversalToolchain.Wist.WistSsaRouteDiagnostic.Stage { get; set; }\n')
+
+          docs = 'docs/architecture/ssa-coverage-matrix.md'
+          replace_once(
+              docs,
+              '| Observability | Supported | `WistOptimizationReport` exposes route, fallback, profile, counts, passes, diagnostics, and trace |',
+              '| Observability | Supported | `WistOptimizationReport` exposes route, fallback, profile, counts, passes, stage-qualified diagnostics, and trace |')
+          replace_once(
+              docs,
+              'Under `Prefer`, only explicitly classified unsupported-shape diagnostics may trigger a controlled AIR fallback. `Require` and `Debug` preserve the route report and fail instead of silently changing execution strategy.',
+              'Route diagnostics preserve their canonical stage (`lowering`, `optimization`, `emission`, or `route`) through the low-level report and the public Wist optimization report. Public failure diagnostics project those values as `SSA Lowering`, `SSA Optimization`, `SSA Emission`, or `SSA Route`.\n\nUnder `Prefer`, only explicitly classified unsupported-shape diagnostics may trigger a controlled AIR fallback. `Require` and `Debug` preserve the route report and fail instead of silently changing execution strategy.')
+
+          excluded = {
+              'MANIFEST.sha256',
+              '.github/workflows/ssa-diagnostic-stage-finalize-once.yml',
+          }
+          paths = subprocess.check_output(['git', 'ls-files', '-z']).split(b'\0')
+          lines = []
+          for raw in paths:
+              if not raw:
+                  continue
+              path = raw.decode('utf-8')
+              if path in excluded:
+                  continue
+              digest = hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()
+              lines.append(f'{digest}  ./{path}\n')
+          pathlib.Path('MANIFEST.sha256').write_text(''.join(lines), encoding='utf-8')
+          PY
+
+      - name: Commit finalized integration when changed
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            exit 0
+          fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add \
+            UniversalToolchain/UniversalToolchain.Wist/WistEngine.cs \
+            UniversalToolchain/UniversalToolchain.Wist/PublicAPI.Shipped.txt \
+            docs/architecture/ssa-coverage-matrix.md \
+            MANIFEST.sha256
+          git commit -m "ssa: propagate diagnostic stages through Wist facade"
+          git push origin "HEAD:${{ github.head_ref }}"
