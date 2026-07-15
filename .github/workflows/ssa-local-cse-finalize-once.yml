@@ -1,0 +1,138 @@
+name: Finalize local CSE integration once
+
+on:
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Patch integration files and refresh manifest
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          import pathlib
+          import subprocess
+
+          def replace_once(path, old, new):
+              file = pathlib.Path(path)
+              text = file.read_text(encoding='utf-8')
+              if old in text:
+                  file.write_text(text.replace(old, new, 1), encoding='utf-8')
+                  return
+              if new not in text:
+                  raise SystemExit(f'Expected integration marker missing in {path}')
+
+          replace_once(
+              'UniversalToolchain/UniversalToolchain.Ssa.Optimization/SsaLocalCommonSubexpressionEliminationPass.cs',
+              '''    private SsaBlock EliminateLocalDuplicates(
+                  SsaBlock block,
+                  IDictionary<SsaValueId, SsaValueId> substitutions)
+              {
+                  var available = new Dictionary<ExpressionKey, SsaValueId>();
+                  var localSubstitutions = new Dictionary<SsaValueId, SsaValueId>();
+                  var instructions = new List<ISsaInstruction>(block.Instructions.Count);
+
+                  foreach (var instruction in block.Instructions)
+                  {
+                      var rewritten = RewriteInstructionUses(instruction, localSubstitutions);''',
+              '''    private SsaBlock EliminateLocalDuplicates(
+                  SsaBlock block,
+                  Dictionary<SsaValueId, SsaValueId> substitutions)
+              {
+                  var available = new Dictionary<ExpressionKey, SsaValueId>();
+                  var instructions = new List<ISsaInstruction>(block.Instructions.Count);
+
+                  foreach (var instruction in block.Instructions)
+                  {
+                      var rewritten = RewriteInstructionUses(instruction, substitutions);''')
+
+          replace_once(
+              'UniversalToolchain/UniversalToolchain.Ssa.Optimization/SsaLocalCommonSubexpressionEliminationPass.cs',
+              '''            var canonical = Resolve(existing, localSubstitutions);
+                      localSubstitutions[result] = canonical;
+                      substitutions[result] = canonical;
+                  }
+
+                  return new SsaBlock(
+                      block.Id,
+                      block.Parameters,
+                      instructions: instructions,
+                      terminator: RewriteTerminatorUses(block.Terminator, localSubstitutions));''',
+              '''            var canonical = Resolve(existing, substitutions);
+                      substitutions[result] = canonical;
+                  }
+
+                  return new SsaBlock(
+                      block.Id,
+                      block.Parameters,
+                      instructions: instructions,
+                      terminator: RewriteTerminatorUses(block.Terminator, substitutions));''')
+
+          replace_once(
+              'UniversalToolchain/UniversalToolchain.Ssa.Optimization/SsaRouteProfile.cs',
+              '''        new SsaSparseConditionalConstantPropagationPass(SemanticDescriptors, new SsaInt32ConstantEvaluator()),
+                      new SsaBranchFoldingAndCleanupPass(),
+                      new SsaDeadPureInstructionEliminationPass(SsaCoreDescriptors.CoreOperations, SemanticDescriptors)''',
+              '''        new SsaSparseConditionalConstantPropagationPass(SemanticDescriptors, new SsaInt32ConstantEvaluator()),
+                      new SsaBranchFoldingAndCleanupPass(),
+                      new SsaLocalCommonSubexpressionEliminationPass(SemanticDescriptors),
+                      new SsaDeadPureInstructionEliminationPass(SsaCoreDescriptors.CoreOperations, SemanticDescriptors)''')
+
+          replace_once(
+              'docs/architecture/ssa-coverage-matrix.md',
+              '''| SCCP-lite | Supported | block-argument constant propagation tests |
+              | Branch/unreachable cleanup | Supported | branch folding and cleanup tests |''',
+              '''| SCCP-lite | Supported | block-argument constant propagation tests |
+              | Local common-subexpression elimination | Supported for trusted deterministic pure expressions within one block | local CSE safety and substitution regressions |
+              | Branch/unreachable cleanup | Supported | branch folding and cleanup tests |''')
+
+          replace_once(
+              'docs/architecture/ssa-coverage-matrix.md',
+              '''| Broader optimizer suite (GVN/CSE, LICM, inlining) | Required/preserved/invalidated facts and differential tests per pass |''',
+              '''| Broader optimizer suite (cross-block GVN, LICM, inlining) | Required/preserved/invalidated facts and differential tests per pass |''')
+
+          excluded = {
+              'MANIFEST.sha256',
+              '.github/workflows/ssa-local-cse-finalize-once.yml',
+          }
+          paths = subprocess.check_output(['git', 'ls-files', '-z']).split(b'\0')
+          lines = []
+          for raw in paths:
+              if not raw:
+                  continue
+              path = raw.decode('utf-8')
+              if path in excluded:
+                  continue
+              digest = hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()
+              lines.append(f'{digest}  ./{path}\n')
+          pathlib.Path('MANIFEST.sha256').write_text(''.join(lines), encoding='utf-8')
+          PY
+
+      - name: Commit finalized integration when changed
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            exit 0
+          fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add \
+            UniversalToolchain/UniversalToolchain.Ssa.Optimization/SsaLocalCommonSubexpressionEliminationPass.cs \
+            UniversalToolchain/UniversalToolchain.Ssa.Optimization/SsaRouteProfile.cs \
+            docs/architecture/ssa-coverage-matrix.md \
+            MANIFEST.sha256
+          git commit -m "ssa: wire local CSE into preview profile"
+          git push origin "HEAD:${{ github.head_ref }}"
