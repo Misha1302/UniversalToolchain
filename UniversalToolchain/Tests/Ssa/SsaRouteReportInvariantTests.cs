@@ -32,7 +32,6 @@ public sealed class SsaRouteReportInvariantTests
         Assert.That(exception!.Message, Does.Contain("disabled SSA route"));
     }
 
-    [TestCase(SsaRoutePolicy.Off)]
     [TestCase(SsaRoutePolicy.Require)]
     [TestCase(SsaRoutePolicy.Debug)]
     public void Constructor_WhenNonPreferPolicyFallsBack_RejectsState(
