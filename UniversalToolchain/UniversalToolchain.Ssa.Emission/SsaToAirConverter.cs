@@ -165,12 +165,12 @@ public sealed class SsaToAirConverter : IIrConverter
         }
 
         var valueReuseDiagnostics = SsaToAirValueReusePreflight.Analyze(function, planner);
-            if (valueReuseDiagnostics.Count != 0)
-                ThrowDiagnostics(valueReuseDiagnostics);
+        if (valueReuseDiagnostics.Count != 0)
+            ThrowDiagnostics(valueReuseDiagnostics);
 
-            var air = new AbstractIR();
-            foreach (var block in state.Blocks)
-            {
+        var air = new AbstractIR();
+        foreach (var block in state.Blocks)
+        {
             EmitBlock(air, block, state, planner);
         }
 

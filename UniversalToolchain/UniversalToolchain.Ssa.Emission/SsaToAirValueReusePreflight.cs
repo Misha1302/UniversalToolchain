@@ -107,13 +107,12 @@ internal static class SsaToAirValueReusePreflight
     private static bool IsSupportedStackOperation(SsaOperation operation) =>
         operation.Operands.Count == 0 &&
         operation.Results.Count == 1 &&
-        operation.OpId is var opId &&
-        (opId == SsaOperations.ConstantInt32 ||
-         opId == SsaOperations.ConstantBool ||
-         opId == SsaOperations.ConstantFloat64 ||
-         opId == SsaOperations.LoadExternalInt32 ||
-         opId == SsaOperations.LoadExternalBool ||
-         opId == SsaOperations.LoadExternalFloat64);
+        (operation.OpId == SsaOperations.ConstantInt32 ||
+         operation.OpId == SsaOperations.ConstantBool ||
+         operation.OpId == SsaOperations.ConstantFloat64 ||
+         operation.OpId == SsaOperations.LoadExternalInt32 ||
+         operation.OpId == SsaOperations.LoadExternalBool ||
+         operation.OpId == SsaOperations.LoadExternalFloat64);
 
     private static void AddUses(
         Dictionary<SsaValueId, List<string>> uses,
