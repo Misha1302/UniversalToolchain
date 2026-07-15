@@ -32,7 +32,7 @@ It is a coverage contract, not a promise that SSA is the default optimizer/backe
 | SSA to AIR emission | Supported for current legal stack-schedulable subset | `SsaToAirConverter` tests |
 | Constant folding | Supported for trusted deterministic descriptors | `SsaConstantFoldingPass` tests |
 | SCCP-lite | Supported | block-argument constant propagation tests |
-| Local common-subexpression elimination | Supported for trusted deterministic pure expressions within one block | local CSE safety and substitution regressions |
+| Local common-subexpression elimination | Explicit SSA pass only; gated from the preview AIR roundtrip until repeated-value scheduling is supported | local CSE safety, substitution, and profile-gate regressions |
 | Branch/unreachable cleanup | Supported | branch folding and cleanup tests |
 | Dead pure instruction elimination | Supported | effect-aware elimination tests |
 | Extension-pack/pass conflicts | Fail-fast | route profile construction tests |
