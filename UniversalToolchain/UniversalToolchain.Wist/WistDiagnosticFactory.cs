@@ -50,14 +50,14 @@ internal static class WistDiagnosticFactory
         string sourceName)
     {
         var routeDiagnostics = exception.Diagnostics.Count == 0
-            ? [new SsaRouteDiagnostic("ssa.route.failed", exception.Message)]
+            ? [new SsaRouteDiagnostic("ssa.route.failed", exception.Message, "route")]
             : exception.Diagnostics;
 
         return routeDiagnostics
             .Select(diagnostic => new WistDiagnostic(
                 WistDiagnosticCodes.SsaRouteFailure,
                 WistDiagnosticSeverity.Error,
-                "Optimization",
+                ResolveSsaDiagnosticStage(diagnostic.Stage),
                 sourceName,
                 $"{diagnostic.Code}: {diagnostic.Message}",
                 Span: null,
@@ -68,6 +68,16 @@ internal static class WistDiagnosticFactory
                 ]))
             .ToArray();
     }
+
+    private static string ResolveSsaDiagnosticStage(string? stage) =>
+        stage switch
+        {
+            "lowering" => "SSA Lowering",
+            "optimization" => "SSA Optimization",
+            "emission" => "SSA Emission",
+            "route" => "SSA Route",
+            _ => "Optimization"
+        };
 
     private static string ResolveCode(Exception exception, string? stage, string operationStage)
     {
