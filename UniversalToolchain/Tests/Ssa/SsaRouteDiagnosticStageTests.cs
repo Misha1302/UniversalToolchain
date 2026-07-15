@@ -6,6 +6,7 @@ using UniversalToolchain.Air.Analysis;
 using UniversalToolchain.Ir.Abstractions;
 using UniversalToolchain.Semantics.Abstractions;
 using UniversalToolchain.Ssa.Abstractions;
+using UniversalToolchain.Ssa.Emission;
 using UniversalToolchain.Ssa.Optimization;
 
 namespace Tests.Ssa;
@@ -54,8 +55,12 @@ public sealed class SsaRouteDiagnosticStageTests
             .Build();
         var source = new AbstractIR();
         source.Push(2);
-        source.Push(2);
+        source.Push(3);
         source.Intrinsic(AirIntrinsicIds.AddInt32Unchecked);
+        source.Push(2);
+        source.Push(3);
+        source.Intrinsic(AirIntrinsicIds.AddInt32Unchecked);
+        source.Intrinsic(AirIntrinsicIds.MultiplyInt32Unchecked);
 
         var exception = Assert.Throws<SsaRouteException>(() =>
             SsaRouteFactory.CreateRoundtripRoute(profile).Run(source));
