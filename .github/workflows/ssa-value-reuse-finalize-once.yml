@@ -1,0 +1,117 @@
+name: Finalize SSA value-reuse preflight once
+
+on:
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Patch converter, tests, docs, and manifest
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          import pathlib
+          import subprocess
+
+          def replace_once(path, old, new):
+              file = pathlib.Path(path)
+              text = file.read_text(encoding='utf-8')
+              count = text.count(old)
+              if count == 0:
+                  if new in text:
+                      return
+                  raise SystemExit(f'Expected marker missing in {path}: {old!r}')
+              if count != 1:
+                  raise SystemExit(f'Expected one marker in {path}, found {count}: {old!r}')
+              file.write_text(text.replace(old, new, 1), encoding='utf-8')
+
+          replace_once(
+              'UniversalToolchain/UniversalToolchain.Ssa.Emission/SsaToAirConverter.cs',
+              '''        var function = SelectFunction(ssaArtifact!.Module);
+                      var air = new AbstractIR();
+                      var state = new EmissionState(function);
+                      var planner = _callLoweringPlanner.WithAdditionalCallables(managedDescriptors);
+                      if (ssaArtifact.ManagedCallableBindings.Values.Count != 0)
+                      {
+                          planner = planner.WithManagedBindings(ssaArtifact.ManagedCallableBindings);
+                      }
+
+                      foreach (var block in state.Blocks)''',
+              '''        var function = SelectFunction(ssaArtifact!.Module);
+                      var state = new EmissionState(function);
+                      var planner = _callLoweringPlanner.WithAdditionalCallables(managedDescriptors);
+                      if (ssaArtifact.ManagedCallableBindings.Values.Count != 0)
+                      {
+                          planner = planner.WithManagedBindings(ssaArtifact.ManagedCallableBindings);
+                      }
+
+                      var valueReuseDiagnostics = SsaToAirValueReusePreflight.Analyze(function, planner);
+                      if (valueReuseDiagnostics.Count != 0)
+                          ThrowDiagnostics(valueReuseDiagnostics);
+
+                      var air = new AbstractIR();
+                      foreach (var block in state.Blocks)''')
+
+          replace_once(
+              'UniversalToolchain/Tests/Ssa/SsaToAirConverterTests.cs',
+              'public void Run_WhenSsaValueIsUsedTwiceWithoutTempStrategy_ThrowsStackShapeDiagnostic()',
+              'public void Run_WhenSsaValueIsUsedTwiceWithoutTempStrategy_ThrowsValueReuseDiagnostic()')
+          replace_once(
+              'UniversalToolchain/Tests/Ssa/SsaToAirConverterTests.cs',
+              'Assert.That(exception!.Diagnostics.Select(static x => x.Code), Does.Contain("ssa.to-air.stack-shape.unsupported"));',
+              'Assert.That(exception!.Diagnostics.Select(static x => x.Code), Does.Contain("ssa.to-air.value-reuse.unsupported"));')
+
+          replace_once(
+              'docs/architecture/ssa-coverage-matrix.md',
+              '- `ssa.optimization.managed-call.binding.missing` and `ssa.to-air.managed-call.binding.missing` — a managed callable lost its execution-scoped binding.',
+              '- `ssa.optimization.managed-call.binding.missing` and `ssa.to-air.managed-call.binding.missing` — a managed callable lost its execution-scoped binding;\n- `ssa.to-air.value-reuse.unsupported` — legal SSA requires a duplicated or spilled stack value, but the minimal AIR emitter has no repeated-value scheduling strategy.')
+          replace_once(
+              'docs/architecture/ssa-coverage-matrix.md',
+              '| Arbitrary SSA scheduling | Dominance/use verification and emission legality tests |',
+              '| Arbitrary SSA scheduling | Add duplication/spill scheduling, then relax the explicit repeated-value preflight diagnostic with differential emission tests |')
+
+          excluded = {
+              'MANIFEST.sha256',
+              '.github/workflows/ssa-value-reuse-finalize-once.yml',
+          }
+          paths = subprocess.check_output(['git', 'ls-files', '-z']).split(b'\0')
+          lines = []
+          for raw in paths:
+              if not raw:
+                  continue
+              path = raw.decode('utf-8')
+              if path in excluded:
+                  continue
+              digest = hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()
+              lines.append(f'{digest}  ./{path}\n')
+          pathlib.Path('MANIFEST.sha256').write_text(''.join(lines), encoding='utf-8')
+          PY
+
+      - name: Commit finalized integration when changed
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            exit 0
+          fi
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add \
+            UniversalToolchain/UniversalToolchain.Ssa.Emission/SsaToAirConverter.cs \
+            UniversalToolchain/Tests/Ssa/SsaToAirConverterTests.cs \
+            docs/architecture/ssa-coverage-matrix.md \
+            MANIFEST.sha256
+          git commit -m "ssa: run value-reuse preflight before AIR emission"
+          git push origin "HEAD:${{ github.head_ref }}"
