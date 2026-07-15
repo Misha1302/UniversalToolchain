@@ -8,16 +8,16 @@
         <PackageId>UniversalToolchain.Wist</PackageId>
         <Version>0.1.0-alpha.1</Version>
         <Title>UniversalToolchain Wist</Title>
-        <Description>A compiler-first Wist facade for typed formula delegates, structured diagnostics, and an observable experimental SSA route.</Description>
+        <Description>Restricted formulas for .NET: validate rules, evaluate diagnostics, and compile approved formulas into typed delegates while the host owns inputs and side effects.</Description>
         <Authors>Mikhail Razakov</Authors>
         <PackageProjectUrl>https://misha1302.github.io/Wist2/</PackageProjectUrl>
         <RepositoryUrl>https://github.com/Misha1302/Wist2</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-        <PackageTags>dotnet;dsl;formula;expression;compiler;interpreter;runtime;ssa;wist</PackageTags>
+        <PackageTags>dotnet;csharp;rule-engine;expression-engine;embedded-dsl;business-rules;formula;compiler;interpreter;cil;runtime;language-tooling;ssa;wist</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
-        <PackageReleaseNotes>Alpha release with AIR, verifier, lifecycle, configuration, SSA/backend parity, and runtime-composition hardening.</PackageReleaseNotes>
+        <PackageReleaseNotes>First public Wist alpha with a restricted arithmetic preset, validation, one-off evaluation, typed delegate compilation, structured diagnostics, host-owned preflight limits, interpreter/CIL paths, and an optional observable SSA experiment.</PackageReleaseNotes>
         <IncludeSymbols>true</IncludeSymbols>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
         <DebugType>portable</DebugType>
