@@ -1,3 +1,4 @@
+using UniversalToolchain.Ir.Abstractions;
 using UniversalToolchain.Ssa.Optimization;
 
 namespace Tests.Ssa;
@@ -11,9 +12,11 @@ public sealed class SsaLocalCseProfileGateTests
         var passIds = SsaRouteProfiles
             .Create(SsaRoutePolicy.Debug)
             .CreateOptimizationPasses()
-            .Select(static pass => pass.Id.Value)
+            .Select(static pass => pass.Id)
             .ToArray();
 
-        Assert.That(passIds, Does.Not.Contain("ssa.optimization.cse.local"));
+        Assert.That(
+            passIds,
+            Does.Not.Contain(new IrStageId("ssa.optimization.cse.local")));
     }
 }
