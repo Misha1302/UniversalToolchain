@@ -62,10 +62,24 @@ jobs:
       - name: Run and verify sample
         shell: bash
         run: |
-          set -euo pipefail
-          output="$(dotnet samples/Wist.RolloutScoring/bin/Release/net10.0/Wist.RolloutScoring.dll)"
-          printf '%s\n' "$output"
-          grep -Fq '✓ validated before execution' <<<"$output"
-          grep -Fq '✓ compiled once to Func<double, double, double, double>' <<<"$output"
-          grep -Fq '✓ score: 82.0 -> enable dashboard: True' <<<"$output"
-          grep -Fq '✗ rejected a statement-style rule before execution' <<<"$output"
+          set -uo pipefail
+          log="$RUNNER_TEMP/wist-rollout-sample.log"
+          status=0
+          dotnet samples/Wist.RolloutScoring/bin/Release/net10.0/Wist.RolloutScoring.dll >"$log" 2>&1 || status=$?
+          cat "$log"
+          if ((status != 0)); then
+            exit "$status"
+          fi
+          grep -Fq '✓ validated before execution' "$log"
+          grep -Fq '✓ compiled once to Func<double, double, double, double>' "$log"
+          grep -Fq '✓ score: 82.0 -> enable dashboard: True' "$log"
+          grep -Fq '✗ rejected a statement-style rule before execution' "$log"
+
+      - name: Upload sample failure log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wist-rollout-sample-failure
+          path: ${{ runner.temp }}/wist-rollout-sample.log
+          if-no-files-found: error
+          retention-days: 3
