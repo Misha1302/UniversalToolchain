@@ -1,0 +1,1 @@
+Run the one-time Wist repository finalization workflow.
