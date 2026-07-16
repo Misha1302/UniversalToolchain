@@ -1,0 +1,71 @@
+name: Wist Rollout Sample Smoke
+
+on:
+  pull_request:
+    paths:
+      - 'readme.md'
+      - 'samples/Wist.RolloutScoring/**'
+      - 'UniversalToolchain/UniversalToolchain.Wist/**'
+      - 'UniversalToolchain/UniversalToolchain.Dialects.Wist/**'
+      - 'UniversalToolchain/Dialects/examples/wist/pricing-restricted/**'
+      - 'build.sh'
+      - 'build.ps1'
+      - '.github/workflows/wist-rollout-sample-smoke.yml'
+  push:
+    branches: [ master ]
+    paths:
+      - 'readme.md'
+      - 'samples/Wist.RolloutScoring/**'
+      - 'UniversalToolchain/UniversalToolchain.Wist/**'
+      - 'UniversalToolchain/UniversalToolchain.Dialects.Wist/**'
+      - 'UniversalToolchain/Dialects/examples/wist/pricing-restricted/**'
+      - 'build.sh'
+      - 'build.ps1'
+      - '.github/workflows/wist-rollout-sample-smoke.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  rollout-sample:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: UniversalToolchain/global.json
+
+      - name: Restore sample
+        run: >
+          dotnet restore samples/Wist.RolloutScoring/Wist.RolloutScoring.csproj
+          --disable-parallel
+          -p:RestoreBuildInParallel=false
+          -p:UseSharedCompilation=false
+          -p:NuGetAudit=false
+          --verbosity quiet
+
+      - name: Build sample
+        run: >
+          dotnet build samples/Wist.RolloutScoring/Wist.RolloutScoring.csproj
+          -c Release
+          --no-restore
+          -m:1
+          -p:BuildInParallel=false
+          -p:UseSharedCompilation=false
+          -p:NuGetAudit=false
+          --verbosity quiet
+
+      - name: Run and verify sample
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$(dotnet samples/Wist.RolloutScoring/bin/Release/net10.0/Wist.RolloutScoring.dll)"
+          printf '%s\n' "$output"
+          grep -Fq '✓ validated before execution' <<<"$output"
+          grep -Fq '✓ compiled once to Func<double, double, double, double>' <<<"$output"
+          grep -Fq '✓ score: 82.0 -> enable dashboard: True' <<<"$output"
+          grep -Fq '✗ rejected a statement-style rule before execution' <<<"$output"
