@@ -10,4 +10,14 @@
   <ItemGroup>
     <ProjectReference Include="../../UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj" />
   </ItemGroup>
+
+  <!-- ProjectReference consumers do not receive NuGet contentFiles automatically.
+       Copy only the shipped profile used by CreateRestrictedArithmetic so the
+       source sample exercises the same resolver contract as a package consumer. -->
+  <ItemGroup>
+    <Content Include="../../UniversalToolchain/Dialects/examples/wist/pricing-restricted/dialect.wistdialect">
+      <Link>Dialects/examples/wist/pricing-restricted/dialect.wistdialect</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
 </Project>
