@@ -9,6 +9,14 @@
 
   <ItemGroup>
     <ProjectReference Include="../../UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj" />
+
+    <!-- The facade package contains its runtime closure. A source ProjectReference
+         consumer must make the restricted preset's non-transitive module outputs
+         direct copy-local inputs so their generated runtime manifests propagate. -->
+    <ProjectReference Include="../../UniversalToolchain/IdentifierModule/IdentifierModule.csproj" PrivateAssets="all" />
+    <ProjectReference Include="../../UniversalToolchain/ScopesModule/ScopesModule.csproj" PrivateAssets="all" />
+    <ProjectReference Include="../../UniversalToolchain/VariablesModule/VariablesModule.csproj" PrivateAssets="all" />
+    <ProjectReference Include="../../UniversalToolchain/WhitespacesModule/WhitespacesModule.csproj" PrivateAssets="all" />
   </ItemGroup>
 
   <!-- ProjectReference consumers do not receive NuGet contentFiles automatically.
