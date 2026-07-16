@@ -36,6 +36,9 @@ export DOTNET_CLI_DO_NOT_USE_MSBUILD_SERVER=1
 
 dotnet_command="${DOTNET:-dotnet}"
 solution="UniversalToolchain/Wist.sln"
+markdown_sample_projects=(
+  samples/Wist.RolloutScoring/Wist.RolloutScoring.csproj
+)
 restore_source_args=()
 if [[ -n "${NUGET_CONFIG:-}" ]]; then
   restore_source_args+=(--configfile "$NUGET_CONFIG")
@@ -48,6 +51,15 @@ fi
   -p:UseSharedCompilation=false \
   -p:NuGetAudit=false
 
+for sample_project in "${markdown_sample_projects[@]}"; do
+  "$dotnet_command" restore "$sample_project" \
+    --disable-parallel \
+    "${restore_source_args[@]}" \
+    -p:RestoreBuildInParallel=false \
+    -p:UseSharedCompilation=false \
+    -p:NuGetAudit=false
+done
+
 "$dotnet_command" build "$solution" \
   -c "$configuration" \
   --no-restore \
@@ -55,6 +67,20 @@ fi
   -p:BuildInParallel=false \
   -p:UseSharedCompilation=false \
   -p:NuGetAudit=false
+
+# The Markdown checker rewrites runnable `dotnet run --project` fences to
+# `--no-build --no-restore`. Keep their Release outputs owned by the canonical
+# build entrypoint instead of allowing documentation validation to perform an
+# implicit restore or build.
+for sample_project in "${markdown_sample_projects[@]}"; do
+  "$dotnet_command" build "$sample_project" \
+    -c "$configuration" \
+    --no-restore \
+    -m:1 \
+    -p:BuildInParallel=false \
+    -p:UseSharedCompilation=false \
+    -p:NuGetAudit=false
+done
 
 for test_project in \
   UniversalToolchain/Tests/Tests.csproj \

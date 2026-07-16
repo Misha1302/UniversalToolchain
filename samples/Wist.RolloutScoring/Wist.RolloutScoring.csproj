@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>14</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj" />
+
+    <!-- The facade package contains its runtime closure. A source ProjectReference
+         consumer must make the restricted preset's non-transitive module outputs
+         direct copy-local inputs so their generated runtime manifests propagate. -->
+    <ProjectReference Include="../../UniversalToolchain/IdentifierModule/IdentifierModule.csproj" PrivateAssets="all" />
+    <ProjectReference Include="../../UniversalToolchain/ScopesModule/ScopesModule.csproj" PrivateAssets="all" />
+    <ProjectReference Include="../../UniversalToolchain/VariablesModule/VariablesModule.csproj" PrivateAssets="all" />
+    <ProjectReference Include="../../UniversalToolchain/WhitespacesModule/WhitespacesModule.csproj" PrivateAssets="all" />
+  </ItemGroup>
+
+  <!-- ProjectReference consumers do not receive NuGet contentFiles automatically.
+       Copy only the shipped profile used by CreateRestrictedArithmetic so the
+       source sample exercises the same resolver contract as a package consumer. -->
+  <ItemGroup>
+    <Content Include="../../UniversalToolchain/Dialects/examples/wist/pricing-restricted/dialect.wistdialect">
+      <Link>Dialects/examples/wist/pricing-restricted/dialect.wistdialect</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <!-- The sample lives outside UniversalToolchain/, so it would not discover the
+       canonical Directory.Build.targets by directory traversal. Import it
+       explicitly to propagate referenced *.dialect.runtime.json manifests. -->
+  <Import Project="../../UniversalToolchain/Directory.Build.targets" />
+</Project>

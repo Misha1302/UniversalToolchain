@@ -12,6 +12,9 @@ $env:PLATFORM = $null
 $env:DOTNET_CLI_DO_NOT_USE_MSBUILD_SERVER = "1"
 $dotnet = if ($env:DOTNET) { $env:DOTNET } else { "dotnet" }
 $solution = "UniversalToolchain/Wist.sln"
+$markdownSampleProjects = @(
+    "samples/Wist.RolloutScoring/Wist.RolloutScoring.csproj"
+)
 
 function Invoke-CheckedNative {
     param(
@@ -27,18 +30,31 @@ function Invoke-CheckedNative {
     }
 }
 
-$restoreArguments = @(
-    "restore", $solution,
-    "--disable-parallel",
-    "-p:RestoreBuildInParallel=false",
-    "-p:UseSharedCompilation=false",
-    "-p:NuGetAudit=false"
-)
-if ($env:NUGET_CONFIG) {
-    $restoreArguments += @("--configfile", $env:NUGET_CONFIG)
+function New-RestoreArguments {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Project
+    )
+
+    $arguments = @(
+        "restore", $Project,
+        "--disable-parallel",
+        "-p:RestoreBuildInParallel=false",
+        "-p:UseSharedCompilation=false",
+        "-p:NuGetAudit=false"
+    )
+    if ($env:NUGET_CONFIG) {
+        $arguments += @("--configfile", $env:NUGET_CONFIG)
+    }
+
+    return $arguments
 }
 
-Invoke-CheckedNative $dotnet $restoreArguments
+Invoke-CheckedNative $dotnet (New-RestoreArguments $solution)
+foreach ($project in $markdownSampleProjects) {
+    Invoke-CheckedNative $dotnet (New-RestoreArguments $project)
+}
+
 Invoke-CheckedNative $dotnet @(
     "build", $solution,
     "-c", $Configuration,
@@ -48,6 +64,21 @@ Invoke-CheckedNative $dotnet @(
     "-p:UseSharedCompilation=false",
     "-p:NuGetAudit=false"
 )
+
+# The Markdown checker rewrites runnable `dotnet run --project` fences to
+# `--no-build --no-restore`. Keep their Release outputs owned by this canonical
+# entrypoint instead of allowing documentation validation to restore or build.
+foreach ($project in $markdownSampleProjects) {
+    Invoke-CheckedNative $dotnet @(
+        "build", $project,
+        "-c", $Configuration,
+        "--no-restore",
+        "-m:1",
+        "-p:BuildInParallel=false",
+        "-p:UseSharedCompilation=false",
+        "-p:NuGetAudit=false"
+    )
+}
 
 $testProjects = @(
     "UniversalToolchain/Tests/Tests.csproj",
