@@ -1,6 +1,6 @@
 # REBASE 2026 speaker preparation notes
 
-Authority: proposal.
+Status: proposal.
 
 These notes support delivery of the talk. They are not part of the submission abstract.
 
