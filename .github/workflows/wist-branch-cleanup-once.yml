@@ -12,13 +12,13 @@ on:
       - '.github/workflows/wist-branch-cleanup-once.yml'
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   cleanup:
     runs-on: ubuntu-latest
     env:
-      ADMIN_TOKEN: ${{ secrets.WIST_ADMIN_TOKEN }}
+      ADMIN_TOKEN: ${{ github.token }}
       OWNER: Misha1302
       REPO: Wist2
       WORKFLOW_PATH: .github/workflows/wist-branch-cleanup-once.yml
@@ -28,22 +28,22 @@ jobs:
         run: |
           set -euo pipefail
           if [[ -z "${ADMIN_TOKEN:-}" ]]; then
-            echo 'Repository secret WIST_ADMIN_TOKEN is missing or empty.' >&2
+            echo 'GitHub Actions token is missing or empty.' >&2
             exit 1
           fi
 
-          status="$(curl -sS -o /tmp/user.json -w '%{http_code}' \
+          status="$(curl -sS -o /tmp/repository.json -w '%{http_code}' \
             -H "Authorization: Bearer ${ADMIN_TOKEN}" \
             -H 'Accept: application/vnd.github+json' \
             -H 'X-GitHub-Api-Version: 2022-11-28' \
-            https://api.github.com/user)"
+            "https://api.github.com/repos/${OWNER}/${REPO}")"
 
           if [[ "$status" != "200" ]]; then
-            echo "WIST_ADMIN_TOKEN was rejected by GitHub (HTTP ${status})." >&2
+            echo "GitHub Actions token cannot access the repository (HTTP ${status})." >&2
             exit 1
           fi
 
-          jq -e '.login == "Misha1302"' /tmp/user.json >/dev/null
+          jq -e --arg expected "${OWNER}/${REPO}" '.full_name == $expected' /tmp/repository.json >/dev/null
 
       - name: Delete inactive branches safely
         shell: bash
@@ -201,7 +201,8 @@ jobs:
           set -euo pipefail
 
           if [[ -z "${ADMIN_TOKEN:-}" ]]; then
-            exit 0
+            echo 'GitHub Actions token is missing; cannot remove one-time workflow.' >&2
+            exit 1
           fi
 
           api() {
