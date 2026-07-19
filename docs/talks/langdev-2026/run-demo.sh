@@ -85,4 +85,4 @@ dotnet test \
     --filter "FullyQualifiedName~PricingRestrictedDialectExecutionTests|FullyQualifiedName~WistDialectExecutionParityTests"
 
 echo
-echo "LangDev 2026 demonstration verification completed successfully."
+echo "Talk demonstration verification completed successfully."

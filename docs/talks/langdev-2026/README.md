@@ -4,6 +4,8 @@
 
 **Extensible Programming on .NET**
 
+> The REBASE 2026 adaptation has a separate [reviewer landing page, submission, and 30-minute outline](../rebase-2026/README.md). This directory remains the original LangDev-specific evidence packet and shared reproducible demonstration.
+
 UniversalToolchain explores a practical form of extensible programming: language features are authored as independent modules, composed into a restricted dialect, progressively lowered through Bytecode and Abstract IR, and executed either by an AIR interpreter or by a CIL backend built on `DynamicMethod`.
 
 The central question of the talk is:
@@ -81,10 +83,10 @@ Expected high-level result:
 ```text
 Pricing results match.
 The restricted dialect rejects the unsupported binding shape.
-Focused parity suites: 30 tests passed, 0 failed.
+All focused interpreter/CIL parity and restricted-dialect suites pass.
 ```
 
-The exact console shape produced by the current pricing demonstration is recorded in [expected-output.txt](expected-output.txt).
+The exact console shape produced by the current pricing demonstration is recorded in [expected-output.txt](expected-output.txt). The test runner reports the currently discovered test count; the documentation intentionally does not hard-code a count that may change as regression coverage grows.
 
 ## Talk structure
 

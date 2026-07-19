@@ -51,7 +51,7 @@ module-owned syntax/semantics
 
 Clarify that the module/plugin abstraction is primarily a construction-time mechanism; the hot compiled path invokes a prepared typed artifact.
 
-Show the arithmetic benchmark table briefly, including the measurement boundary and limitations.
+Show the performance model and measurement boundary briefly. Prepared invocation, convenience evaluation, and compilation/setup cost must remain separate. Show numeric results only when a fresh reproducible run records the exact commit, environment, raw artifacts, and comparison contract.
 
 ## 16:00-21:30 — When one DSL became two languages
 
