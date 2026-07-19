@@ -4,7 +4,7 @@ Status: proposal.
 
 ## Build the Language, Then Make the Abstractions Disappear
 
-**Engineering an Extensible .NET DSL Runtime**
+**From Feature Modules to Typed CIL**
 
 UniversalToolchain/Wist2 builds restricted .NET DSLs from independently selected feature modules. Module selection defines the language during construction; supported operations are then lowered through Bytecode and Abstract IR into either an AIR interpreter or typed CIL emitted with `DynamicMethod`.
 
