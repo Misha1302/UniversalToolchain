@@ -1,0 +1,215 @@
+name: One-time Wist Branch Cleanup
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - '.github/workflows/wist-branch-cleanup-once.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    env:
+      ADMIN_TOKEN: ${{ secrets.WIST_ADMIN_TOKEN }}
+      OWNER: Misha1302
+      REPO: Wist2
+      WORKFLOW_PATH: .github/workflows/wist-branch-cleanup-once.yml
+    steps:
+      - name: Validate administrative token
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${ADMIN_TOKEN:-}" ]]; then
+            echo 'Repository secret WIST_ADMIN_TOKEN is missing or empty.' >&2
+            exit 1
+          fi
+
+          status="$(curl -sS -o /tmp/user.json -w '%{http_code}' \
+            -H "Authorization: Bearer ${ADMIN_TOKEN}" \
+            -H 'Accept: application/vnd.github+json' \
+            -H 'X-GitHub-Api-Version: 2022-11-28' \
+            https://api.github.com/user)"
+
+          if [[ "$status" != "200" ]]; then
+            echo "WIST_ADMIN_TOKEN was rejected by GitHub (HTTP ${status})." >&2
+            exit 1
+          fi
+
+          jq -e '.login == "Misha1302"' /tmp/user.json >/dev/null
+
+      - name: Delete inactive branches safely
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          api() {
+            local method="$1"
+            local path="$2"
+            local data="${3-}"
+            local args=(
+              -fsS --retry 3 --retry-all-errors
+              -X "$method"
+              -H "Authorization: Bearer ${ADMIN_TOKEN}"
+              -H 'Accept: application/vnd.github+json'
+              -H 'X-GitHub-Api-Version: 2022-11-28'
+            )
+            if [[ -n "$data" ]]; then
+              args+=(-H 'Content-Type: application/json' --data "$data")
+            fi
+            curl "${args[@]}" "https://api.github.com${path}"
+          }
+
+          collect_pages() {
+            local path_prefix="$1"
+            local page=1
+            local result='[]'
+            while :; do
+              local separator='?'
+              if [[ "$path_prefix" == *'?'* ]]; then
+                separator='&'
+              fi
+              local batch
+              batch="$(api GET "${path_prefix}${separator}per_page=100&page=${page}")"
+              result="$(jq -nc --argjson left "$result" --argjson right "$batch" '$left + $right')"
+              if (( $(jq 'length' <<<"$batch") < 100 )); then
+                break
+              fi
+              page=$((page + 1))
+            done
+            printf '%s' "$result"
+          }
+
+          repo_state="$(api GET "/repos/${OWNER}/${REPO}")"
+          default_branch="$(jq -er '.default_branch' <<<"$repo_state")"
+          branches="$(collect_pages "/repos/${OWNER}/${REPO}/branches")"
+          pulls="$(collect_pages "/repos/${OWNER}/${REPO}/pulls?state=all")"
+          full_repo="${OWNER}/${REPO}"
+
+          : > /tmp/deleted.tsv
+          : > /tmp/preserved.tsv
+          : > /tmp/failed.tsv
+
+          mapfile -t branch_names < <(jq -r '.[].name' <<<"$branches" | sort)
+
+          for branch in "${branch_names[@]}"; do
+            if [[ "$branch" == "$default_branch" ]]; then
+              printf '%s\t%s\n' "$branch" 'default branch' >> /tmp/preserved.tsv
+              continue
+            fi
+
+            open_pr_count="$(jq --arg branch "$branch" --arg repo "$full_repo" \
+              '[.[] | select(.state == "open" and .head.ref == $branch and .head.repo.full_name == $repo)] | length' \
+              <<<"$pulls")"
+
+            if (( open_pr_count > 0 )); then
+              printf '%s\t%s\n' "$branch" 'head of an open pull request' >> /tmp/preserved.tsv
+              continue
+            fi
+
+            closed_pr_count="$(jq --arg branch "$branch" --arg repo "$full_repo" \
+              '[.[] | select(.state == "closed" and .head.ref == $branch and .head.repo.full_name == $repo)] | length' \
+              <<<"$pulls")"
+
+            reason=''
+            if (( closed_pr_count > 0 )); then
+              reason='closed pull-request branch'
+            else
+              encoded_branch="$(jq -rn --arg value "$branch" '$value | @uri')"
+              compare="$(api GET "/repos/${OWNER}/${REPO}/compare/${default_branch}...${encoded_branch}")"
+              ahead_by="$(jq -er '.ahead_by' <<<"$compare")"
+              if (( ahead_by == 0 )); then
+                reason='fully contained in default branch'
+              else
+                printf '%s\t%s\n' "$branch" "unique commits and no closed PR (${ahead_by} commit(s) ahead)" >> /tmp/preserved.tsv
+                continue
+              fi
+            fi
+
+            encoded_ref="$(jq -rn --arg value "heads/${branch}" '$value | @uri')"
+            if api DELETE "/repos/${OWNER}/${REPO}/git/refs/${encoded_ref}" >/tmp/delete-response.json 2>/tmp/delete-error.txt; then
+              printf '%s\t%s\n' "$branch" "$reason" >> /tmp/deleted.tsv
+            else
+              error_text="$(tr '\n' ' ' </tmp/delete-error.txt | sed 's/[[:space:]]\+/ /g')"
+              printf '%s\t%s\n' "$branch" "${reason}; deletion failed: ${error_text}" >> /tmp/failed.tsv
+            fi
+          done
+
+          deleted_count="$(wc -l </tmp/deleted.tsv | tr -d ' ')"
+          preserved_count="$(wc -l </tmp/preserved.tsv | tr -d ' ')"
+          failed_count="$(wc -l </tmp/failed.tsv | tr -d ' ')"
+
+          {
+            echo '## One-time branch cleanup'
+            echo
+            echo "- Deleted: ${deleted_count}"
+            echo "- Preserved: ${preserved_count}"
+            echo "- Failed: ${failed_count}"
+            echo
+            echo '### Deleted'
+            if [[ -s /tmp/deleted.tsv ]]; then
+              awk -F '\t' '{printf "- `%s` — %s\n", $1, $2}' /tmp/deleted.tsv
+            else
+              echo '- None'
+            fi
+            echo
+            echo '### Preserved'
+            if [[ -s /tmp/preserved.tsv ]]; then
+              awk -F '\t' '{printf "- `%s` — %s\n", $1, $2}' /tmp/preserved.tsv
+            else
+              echo '- None'
+            fi
+            if [[ -s /tmp/failed.tsv ]]; then
+              echo
+              echo '### Failed'
+              awk -F '\t' '{printf "- `%s` — %s\n", $1, $2}' /tmp/failed.tsv
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if (( failed_count > 0 )); then
+            echo "${failed_count} branch deletion(s) failed." >&2
+            exit 1
+          fi
+
+      - name: Remove one-time cleanup workflow
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${ADMIN_TOKEN:-}" ]]; then
+            exit 0
+          fi
+
+          api() {
+            local method="$1"
+            local path="$2"
+            local data="${3-}"
+            local args=(
+              -fsS --retry 3 --retry-all-errors
+              -X "$method"
+              -H "Authorization: Bearer ${ADMIN_TOKEN}"
+              -H 'Accept: application/vnd.github+json'
+              -H 'X-GitHub-Api-Version: 2022-11-28'
+            )
+            if [[ -n "$data" ]]; then
+              args+=(-H 'Content-Type: application/json' --data "$data")
+            fi
+            curl "${args[@]}" "https://api.github.com${path}"
+          }
+
+          encoded_path="$(jq -rn --arg value "$WORKFLOW_PATH" '$value | @uri')"
+          if ! workflow_state="$(api GET "/repos/${OWNER}/${REPO}/contents/${encoded_path}?ref=master" 2>/dev/null)"; then
+            exit 0
+          fi
+
+          workflow_sha="$(jq -er '.sha' <<<"$workflow_state")"
+          delete_payload="$(jq -nc \
+            --arg message 'chore: remove completed one-time branch cleanup workflow' \
+            --arg sha "$workflow_sha" \
+            --arg branch master \
+            '{message: $message, sha: $sha, branch: $branch}')"
+
+          api DELETE "/repos/${OWNER}/${REPO}/contents/${encoded_path}" "$delete_payload" >/dev/null
