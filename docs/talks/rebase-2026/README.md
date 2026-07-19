@@ -66,7 +66,7 @@ Code evidence snapshot: [`b965466e1880a2d3a9172972e05d2cbd740c891a`](https://git
 | The pricing scenario compares hardcoded C#, general Wist, and a restricted dialect | [`PricingDiscountScenario.cs`](https://github.com/Misha1302/Wist2/blob/b965466e1880a2d3a9172972e05d2cbd740c891a/UniversalToolchain/Example/Scenarios/PricingDiscountScenario.cs) |
 | Performance measurements separate prepared invocation, convenience evaluation, and compilation cost | [benchmark contract](https://github.com/Misha1302/Wist2/blob/b965466e1880a2d3a9172972e05d2cbd740c891a/UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/README.md) |
 
-The demo inspects the selected runtime plan and runs the same pricing formula through general and restricted language paths. It also rejects a feature excluded from the restricted dialect and executes the focused interpreter/CIL parity suites.
+The demo inspects the selected runtime plan and runs the same pricing formula through general and restricted language paths. It also rejects a feature excluded from the restricted dialect and executes the focused interpreter/CIL parity suites. Together, these steps keep language composition, semantic lowering, optimization, and backend execution visibly separate.
 
 ## Why the failure matters
 
