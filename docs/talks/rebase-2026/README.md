@@ -44,8 +44,8 @@ graph LR
     C --> D[Lexer / Parser / AST]
     D --> E[Bytecode]
     E --> F[Abstract IR]
+    F --> H[AIR interpreter / reference path]
     F --> G[Capability-aware optimization]
-    G --> H[AIR interpreter]
     G --> I[CIL compiler / DynamicMethod]
     K[Backend intrinsic capabilities] -. constrain rewrites .-> G
     I --> J[.NET JIT machine code]
