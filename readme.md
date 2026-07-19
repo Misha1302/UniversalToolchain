@@ -27,11 +27,14 @@ Compile a reviewed rollout formula once and invoke the typed delegate repeatedly
 using UniversalToolchain.Wist;
 
 using var rules = WistEngine.CreateRestrictedArithmetic();
+
 const string formula =
     "usage * 0.7 + reliability * 0.3 - incidents * 15.0";
+
 var validation = rules.Validate(
     formula,
     new { usage = 100.0, reliability = 90.0, incidents = 1.0 });
+
 if (!validation.IsValid)
     throw new InvalidOperationException(validation.Message);
 
