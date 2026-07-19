@@ -9,16 +9,18 @@ These notes support delivery of the talk. They are not part of the submission ab
 - Explain only the architecture needed for the running example.
 - Do not use class diagrams or long interface inventories.
 - Keep semantic parity as evidence for the architecture, not as a replacement for the main topic.
+- Scope capability claims to the optimizer behavior and intrinsic contracts actually shown.
 - Do not claim production deployment, hardened sandboxing, stable 1.0 compatibility, or general parity with handwritten C#.
 
 ## Demonstration sequence
 
-1. Show the pricing formula and the three execution paths.
-2. Show equal results.
-3. Show rejection of the excluded statement-style feature.
-4. Inspect the selected runtime plan.
-5. Trace one operation from module contribution to typed CIL.
-6. Show the fixed binding/local regression tests.
+1. Show the pricing formula.
+2. Compare hardcoded C#, the general Wist dialect, and the restricted Wist dialect.
+3. Expand the Wist results to show compiler/interpreter parity and the prepared fast-invoker path used by the general dialect.
+4. Show rejection of the excluded statement-style feature.
+5. Inspect the selected runtime plan and backend capabilities.
+6. Trace one native-load operation from module contribution through AIR and intrinsic-capability checks to typed CIL.
+7. Move to the separate binding/local regression and show the current passing parity tests.
 
 Do not intentionally break the current runtime during the talk. Use the preserved reproducer and the current passing regression tests.
 

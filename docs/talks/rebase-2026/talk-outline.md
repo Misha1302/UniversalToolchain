@@ -7,7 +7,7 @@ Status: proposal.
 Open with the pipeline:
 
 ```text
-feature modules -> dialect -> Bytecode -> AIR -> typed operations -> CIL -> JIT code
+feature modules -> dialect -> Bytecode -> AIR -> optimization -> backend -> execution
 ```
 
 Then state the two requirements:
@@ -15,7 +15,7 @@ Then state the two requirements:
 - the language surface must be selected modularly and deterministically;
 - interpreter and compiled execution must preserve the same observable semantics.
 
-The question is not whether modules can be added. It is whether their dispatch can disappear from a prepared execution path without moving language semantics into a backend.
+The question is not whether modules can be added. It is whether their dispatch can disappear from a prepared compiled path without moving language semantics into a backend.
 
 ## 3:00-7:00 — How the language is assembled
 
@@ -33,33 +33,35 @@ Introduce only the boundaries needed for the rest of the talk:
 Use `price * 0.9 + fee` as the running example.
 
 1. Run the hardcoded C# implementation.
-2. Run the general Wist dialect.
-3. Run the restricted pricing dialect.
+2. Run the general Wist dialect through compiler, interpreter, and prepared fast-invoker paths.
+3. Run the restricted pricing dialect through compiler and interpreter paths.
 4. Compare the results.
 5. Show the restricted dialect rejecting statement-style binding syntax that it did not select.
-6. Inspect the deterministic runtime plan and the selected interpreter/CIL capabilities.
+6. Inspect the deterministic runtime plan and selected backend capabilities.
 
 The scenario keeps the domain simple while making feature selection and execution-path differences visible.
 
 ## 13:00-19:00 — From a module to typed CIL
 
-Trace one representative operation:
+Trace one representative native-load operation:
 
 ```text
 module-owned syntax and semantics
 -> Bytecode contribution
--> AIR operation
--> capability-gated typed lowering
+-> AIR sequence
+-> intrinsic-capability check
+-> typed load intrinsic
 -> DynamicMethod CIL
 -> .NET JIT
 ```
 
 Make the claim precise:
 
-- modules and dialect selection are construction-time mechanisms;
-- supported compiled operations become typed operations in a prepared artifact;
-- the hot invocation path does not perform per-operation module dispatch;
-- unsupported specialization keeps the portable representation;
+- modules and dialect selection are construction-time and preparation-time mechanisms;
+- the demonstrated native-load optimizer rewrites only when the required intrinsic capability is declared;
+- when the capability is absent, it keeps the corresponding portable AIR sequence;
+- supported compiled operations become emitted CIL in a prepared delegate;
+- the hot invocation path does not perform per-operation module-registry dispatch;
 - none of this guarantees universal JIT inlining or handwritten-C# performance.
 
 Briefly show the performance model. Prepared invocation, convenience evaluation, and compilation/setup cost are separate measurements and must not be compared as one benchmark.

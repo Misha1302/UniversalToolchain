@@ -32,7 +32,7 @@ Only when the selected backend supports the required intrinsic does the optimize
 - typed constant loads;
 - typed external-binding loads.
 
-If the capability is absent, the optimizer preserves the portable representation.
+If the capability is absent, the optimizer preserves the corresponding portable AIR sequence.
 
 ## 4. Locals and external bindings become concrete storage operations
 
@@ -58,6 +58,6 @@ This is not a claim that every helper call is guaranteed to be inlined by every 
 
 ## 6. Why semantic parity is the second half of the design
 
-Specialization is useful only if the representation change preserves meaning. The interpreter remains the semantic reference path, and the CIL path is checked against it through the parity fixtures linked from the [main talk page](README.md).
+Specialization is useful only if the representation change preserves meaning. The interpreter remains the semantic reference path, and the CIL path is checked against it through parity fixtures linked from the [REBASE proposal page](../rebase-2026/README.md) and the [original LangDev page](README.md).
 
 The binding regression case demonstrates why this matters: if lexical locals and external slots are not explicitly distinguished, a more concrete backend representation can silently redefine the language.
