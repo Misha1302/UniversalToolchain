@@ -4,7 +4,7 @@ Status: proposal.
 
 ## Title
 
-**Build the Language, Then Make the Abstractions Disappear: Engineering an Extensible .NET DSL Runtime**
+**Build the Language, Then Make the Abstractions Disappear: From Feature Modules to Typed CIL**
 
 ## Abstract
 
