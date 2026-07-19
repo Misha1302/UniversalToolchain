@@ -2,6 +2,10 @@
 name: One-time Wist Branch Cleanup
 
 on:
+  pull_request:
+    branches: [ master ]
+    paths:
+      - '.github/workflows/wist-branch-cleanup-once.yml'
   push:
     branches: [ master ]
     paths:
@@ -178,13 +182,20 @@ jobs:
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
+          echo '=== deleted branches ==='
+          cat /tmp/deleted.tsv
+          echo '=== preserved branches ==='
+          cat /tmp/preserved.tsv
+          echo '=== failed deletions ==='
+          cat /tmp/failed.tsv
+
           if (( failed_count > 0 )); then
             echo "${failed_count} branch deletion(s) failed." >&2
             exit 1
           fi
 
       - name: Remove one-time cleanup workflow
-        if: always()
+        if: ${{ always() && github.event_name == 'push' }}
         shell: bash
         run: |
           set -euo pipefail
