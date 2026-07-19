@@ -14,7 +14,7 @@ The talk builds a small pricing DSL and follows it through dialect selection, de
 
 Specialization is gated by declared backend capabilities. Frontend modules do not branch on a backend implementation. If a capability is missing, the portable representation remains unchanged.
 
-The first implementation got this boundary wrong. External bindings and lexical locals were mapped through incompatible storage assumptions, so the interpreter and CIL backend could disagree on the same program. The fix was not a backend patch: bindings and locals received distinct semantic identities, storage mapping moved behind backend contracts, composition remained deterministic, and shared regression tests covered shadowing, nested scopes, unused inputs, and repeated reads and writes.
+The first implementation got this boundary wrong. External bindings and lexical locals were mapped through incompatible storage assumptions, so the interpreter and CIL backend could disagree on the same program. A backend patch would have hidden the ownership error. Instead, bindings and locals received distinct semantic identities, storage mapping moved behind backend contracts, composition remained deterministic, and shared regression tests covered shadowing, nested scopes, unused inputs, and repeated reads and writes.
 
 The code and tests are public and the demonstration is reproducible. UniversalToolchain/Wist2 is still an alpha project, so the talk states the current trade-offs and limits instead of presenting a production deployment or hardened sandbox.
 
