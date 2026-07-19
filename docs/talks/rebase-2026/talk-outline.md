@@ -1,50 +1,49 @@
 # Thirty-minute REBASE talk outline
 
-## 0:00-3:00 — The disappearing abstraction
+Authority: proposal.
 
-Open with the practical question:
+## 0:00-3:00 — The problem
 
-> Can a language remain extensible while it is being assembled, but execute as a prepared concrete artifact without letting each backend redefine its semantics?
-
-Show the short pipeline:
+Open with the pipeline:
 
 ```text
 feature modules -> dialect -> Bytecode -> AIR -> typed operations -> CIL -> JIT code
 ```
 
-State both constraints immediately:
+Then state the two requirements:
 
-- feature selection must remain modular and deterministic;
-- the interpreter and compiler must still execute one language.
+- the language surface must be selected modularly and deterministically;
+- interpreter and compiled execution must preserve the same observable semantics.
 
-## 3:00-7:00 — Extensible programming, concretely
+The question is not whether modules can be added. It is whether their dispatch can disappear from a prepared execution path without moving language semantics into a backend.
 
-Explain only the architecture required for the rest of the talk:
+## 3:00-7:00 — How the language is assembled
 
-- independent language feature modules;
-- dialect composition as explicit feature selection;
-- deterministic runtime-plan construction;
-- Bytecode as the frontend composition boundary;
-- AIR as the optimizer/backend execution boundary;
-- backend capability queries instead of concrete backend-name checks.
+Introduce only the boundaries needed for the rest of the talk:
 
-Avoid class diagrams and long interface inventories.
+- feature modules own syntax and semantic contributions;
+- a dialect selects modules, optimizers, capabilities, and backends;
+- the selected configuration becomes a deterministic runtime plan;
+- Bytecode is the frontend composition boundary;
+- AIR is the optimizer and backend boundary;
+- optimizers query capabilities rather than concrete backend names.
 
-## 7:00-13:00 — Restricted pricing DSL demonstration
+## 7:00-13:00 — Restricted pricing DSL
 
-1. Show `price * 0.9 + fee` as the smallest useful formula.
-2. Run the hardcoded C# path.
-3. Run the general Wist dialect.
-4. Run the restricted pricing dialect.
-5. Show equal results through the prepared paths.
-6. Show the restricted dialect rejecting statement-style binding syntax that was not selected.
-7. Inspect the deterministic runtime plan and selected interpreter/CIL capabilities.
+Use `price * 0.9 + fee` as the running example.
 
-The point is not pricing itself. The scenario makes language-surface selection and execution-path differences visible without requiring domain-specific background.
+1. Run the hardcoded C# implementation.
+2. Run the general Wist dialect.
+3. Run the restricted pricing dialect.
+4. Compare the results.
+5. Show the restricted dialect rejecting statement-style binding syntax that it did not select.
+6. Inspect the deterministic runtime plan and the selected interpreter/CIL capabilities.
 
-## 13:00-19:00 — Where the abstractions go
+The scenario keeps the domain simple while making feature selection and execution-path differences visible.
 
-Trace one representative operation through the pipeline:
+## 13:00-19:00 — From a module to typed CIL
+
+Trace one representative operation:
 
 ```text
 module-owned syntax and semantics
@@ -55,18 +54,19 @@ module-owned syntax and semantics
 -> .NET JIT
 ```
 
-Clarify the exact claim:
+Make the claim precise:
 
-- language modules and dialect selection are construction-time mechanisms;
+- modules and dialect selection are construction-time mechanisms;
 - supported compiled operations become typed operations in a prepared artifact;
 - the hot invocation path does not perform per-operation module dispatch;
-- this does not promise universal JIT inlining or handwritten-C# performance.
+- unsupported specialization keeps the portable representation;
+- none of this guarantees universal JIT inlining or handwritten-C# performance.
 
-Present the performance **model and measurement boundary**, not an unqualified benchmark table. Prepared invocation, convenience evaluation, and compilation/setup cost must be measured separately. Show numeric results only when a fresh run preserves the exact commit, environment, raw BenchmarkDotNet artifacts, and comparison contract.
+Briefly show the performance model. Prepared invocation, convenience evaluation, and compilation/setup cost are separate measurements and must not be compared as one benchmark.
 
-## 19:00-25:00 — When specialization threatened semantics
+## 19:00-25:00 — The regression that exposed the boundary
 
-Present the preserved external-binding/local-variable regression:
+Use the preserved scenario:
 
 ```text
 let i = 0
@@ -76,47 +76,33 @@ i = i + 1
 price + fee * i
 ```
 
-Explain:
+Explain the failure in order:
 
-- how interpreter and CIL storage assumptions could diverge;
-- why patching one generated instruction would hide the ownership error;
-- why external bindings and lexical locals need distinct semantic identities;
-- how late backend-specific storage mapping preserves the language contract;
-- how parity tests cover declaration order, unused bindings, nested scopes, repeated access, and shadowing.
+1. External bindings and lexical locals acquired incompatible storage assumptions.
+2. Interpreter and CIL execution could therefore disagree on the same program.
+3. Patching one generated instruction would have hidden the ownership error.
+4. Bindings and locals were given distinct semantic identities before backend storage allocation.
+5. Backend contracts now own physical mapping, while parity tests cover declaration order, unused bindings, repeated access, nested scopes, and shadowing.
 
-Use the current fixed regression tests as evidence. Do not break the current runtime live on stage.
+Show the current fixed regression tests as evidence.
 
-## 25:00-28:00 — Reusable engineering rules
+## 25:00-28:00 — Three conclusions
 
-Leave the audience with five rules:
+1. **Define the language before activating a backend.** Compose features first, and keep semantic identities in backend-independent representations.
+2. **Specialize by capability, not by implementation name.** Optimizers may change representation only when the selected backend proves support.
+3. **Use the interpreter as a semantic reference.** Test parity across dialect configurations, storage layouts, scope shapes, and optimizer states rather than treating the interpreter as only a slow fallback.
 
-1. Compose language features before backend activation.
-2. Put semantic identities in backend-independent representations.
-3. Let optimizers query capabilities instead of concrete backend names.
-4. Treat the interpreter as a semantic reference implementation, not merely a slow fallback.
-5. Test parity across dialect configurations, storage shapes, and optimizer states.
-
-Briefly connect the rules to expression engines, rule runtimes, query compilers, template engines, and tiered language implementations.
+These rules apply to expression evaluators, rule runtimes, query compilers, template engines, and other systems that maintain interpreted and compiled paths.
 
 ## 28:00-30:00 — Limits and closing
 
-State the current boundary explicitly:
+State the current limits directly:
 
-- open-source alpha, not a production deployment report;
+- the project is an open-source alpha, not a production deployment report;
 - restricted dialect composition is not hardened sandboxing;
-- generic third-party DSL authoring remains less mature than the Wist-first path;
-- performance evidence is scenario- and environment-bounded.
+- generic third-party DSL authoring is less mature than the Wist-first path;
+- performance evidence is tied to recorded scenarios and environments.
 
 Close with:
 
 > Extensible during construction. Specialized during execution. One semantics across supported runtimes.
-
-## Demonstration fallback
-
-Prepare three levels:
-
-- **Primary:** run the shared demo script after restoring and building before the session.
-- **Fallback:** use a terminal recording of the same command and results.
-- **Last resort:** use screenshots, the committed expected output, and direct links to the focused regression tests.
-
-Never depend on conference Wi-Fi. Restore and build before the session; use `--no-restore --no-build` for live commands after the environment is prepared.
