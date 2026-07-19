@@ -6,9 +6,9 @@ Status: proposal.
 
 **From Feature Modules to Typed CIL**
 
-UniversalToolchain/Wist2 builds restricted .NET DSLs from independently selected feature modules. Module selection defines the language during construction; supported operations are then lowered through Bytecode and Abstract IR into either an AIR interpreter or typed CIL emitted with `DynamicMethod`.
+UniversalToolchain/Wist2 builds restricted .NET DSLs from independently selected feature modules. Module selection defines the language before execution. Programs are then lowered through Bytecode and Abstract IR; AIR can be interpreted directly or compiled to typed CIL emitted with `DynamicMethod`.
 
-The difficult part is keeping those execution paths as one language. A real regression involving external bindings, lexical locals, and shadowing exposed how backend storage choices had leaked into semantics. That failure makes the boundary between language construction, lowering, backend specialization, and semantic verification concrete.
+The difficult part is keeping those paths as one language. A real regression involving external bindings, lexical locals, and shadowing exposed how backend storage choices had leaked into semantics. That failure makes the boundary between language construction, lowering, backend specialization, and semantic verification concrete.
 
 ## Reviewer path
 
@@ -26,13 +26,13 @@ Supporting technical material:
 - [semantic-parity regression case study](../langdev-2026/parity-regression.md);
 - [performance measurement boundary](../langdev-2026/benchmark-evidence.md).
 
-The original `langdev-2026` directory remains the shared technical evidence packet. This directory contains the REBASE-specific submission and 30-minute structure.
+The original `langdev-2026` directory remains the shared technical evidence packet. Its documents retain their original event history; the claim-to-code links on this page are the authoritative evidence map for the REBASE proposal.
 
 ## What the talk shows
 
 - Feature modules own syntax and semantic contributions, and a dialect selects the allowed language surface.
 - Bytecode is the frontend composition boundary; AIR is the optimizer and backend boundary.
-- Backend capabilities, not backend names, decide whether a portable operation can be specialized into a concrete interpreter or CIL operation.
+- The demonstrated native-load optimizer queries intrinsic capabilities before replacing portable AIR with typed load operations; it does not branch on concrete backend types.
 - The interpreter is the reference execution path, while cross-backend tests protect external bindings, lexical locals, shadowing, nested scopes, and compiled artifacts.
 
 ## Architecture
@@ -44,29 +44,31 @@ graph LR
     C --> D[Lexer / Parser / AST]
     D --> E[Bytecode]
     E --> F[Abstract IR]
-    F --> G[Capability-gated specialization]
+    F --> G[Capability-aware optimization]
     G --> H[AIR interpreter]
-    G --> I[CIL / DynamicMethod]
+    G --> I[CIL compiler / DynamicMethod]
+    K[Backend intrinsic capabilities] -. constrain rewrites .-> G
     I --> J[.NET JIT machine code]
     H -. semantic parity .-> I
 ```
 
-For supported compiled paths, module selection and plugin dispatch happen during construction. The prepared artifact executes lowered typed operations. This claim does not imply universal JIT inlining or handwritten-C# performance.
+For supported compiled paths, module selection and plugin dispatch happen during language and runtime preparation. The generated delegate executes emitted CIL rather than consulting the module registry for each operation. This claim does not imply universal JIT inlining or handwritten-C# performance.
 
 ## Demonstration and evidence
 
-Code evidence snapshot: [`b965466e1880a2d3a9172972e05d2cbd740c891a`](https://github.com/Misha1302/Wist2/tree/b965466e1880a2d3a9172972e05d2cbd740c891a).
+All claim-to-code links below are pinned to one code evidence snapshot: [`499529af506939c8047387e3f05598459bd7edfd`](https://github.com/Misha1302/Wist2/tree/499529af506939c8047387e3f05598459bd7edfd).
 
 | Claim | Public evidence |
 |---|---|
-| A restricted dialect is assembled from selected language/runtime capabilities | [`PricingRestrictedDialectExecutionTests.cs`](https://github.com/Misha1302/Wist2/blob/b965466e1880a2d3a9172972e05d2cbd740c891a/UniversalToolchain/UniversalToolchain.Dialects.Tests/PricingRestrictedDialectExecutionTests.cs) |
-| The same selected language executes through interpreter and CIL paths | [`WistDialectExecutionParityTests.cs`](https://github.com/Misha1302/Wist2/blob/b965466e1880a2d3a9172972e05d2cbd740c891a/UniversalToolchain/UniversalToolchain.Dialects.Tests/Wist/WistDialectExecutionParityTests.cs) |
-| External bindings and local storage remain semantically distinct | [`InterpreterBindingsParityTests.cs`](https://github.com/Misha1302/Wist2/blob/b965466e1880a2d3a9172972e05d2cbd740c891a/UniversalToolchain/Tests/Backends/InterpreterBindingsParityTests.cs) |
-| Compiled artifacts preserve interpreter/compiler semantics | [`RuntimeCompiledArtifactParityTests.cs`](https://github.com/Misha1302/Wist2/blob/b965466e1880a2d3a9172972e05d2cbd740c891a/UniversalToolchain/Tests/Backends/RuntimeCompiledArtifactParityTests.cs) |
-| The pricing scenario compares hardcoded C#, general Wist, and a restricted dialect | [`PricingDiscountScenario.cs`](https://github.com/Misha1302/Wist2/blob/b965466e1880a2d3a9172972e05d2cbd740c891a/UniversalToolchain/Example/Scenarios/PricingDiscountScenario.cs) |
-| Performance measurements separate prepared invocation, convenience evaluation, and compilation cost | [benchmark contract](https://github.com/Misha1302/Wist2/blob/b965466e1880a2d3a9172972e05d2cbd740c891a/UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/README.md) |
+| A restricted dialect is assembled from selected language/runtime capabilities | [`PricingRestrictedDialectExecutionTests.cs`](https://github.com/Misha1302/Wist2/blob/499529af506939c8047387e3f05598459bd7edfd/UniversalToolchain/UniversalToolchain.Dialects.Tests/PricingRestrictedDialectExecutionTests.cs) |
+| The same selected language executes through interpreter and CIL paths | [`WistDialectExecutionParityTests.cs`](https://github.com/Misha1302/Wist2/blob/499529af506939c8047387e3f05598459bd7edfd/UniversalToolchain/UniversalToolchain.Dialects.Tests/Wist/WistDialectExecutionParityTests.cs) |
+| External bindings and local storage remain semantically distinct | [`InterpreterBindingsParityTests.cs`](https://github.com/Misha1302/Wist2/blob/499529af506939c8047387e3f05598459bd7edfd/UniversalToolchain/Tests/Backends/InterpreterBindingsParityTests.cs) |
+| Compiled artifacts preserve interpreter/compiler semantics | [`RuntimeCompiledArtifactParityTests.cs`](https://github.com/Misha1302/Wist2/blob/499529af506939c8047387e3f05598459bd7edfd/UniversalToolchain/Tests/Backends/RuntimeCompiledArtifactParityTests.cs) |
+| The pricing scenario compares hardcoded C#, general Wist, and a restricted dialect | [`PricingDiscountScenario.cs`](https://github.com/Misha1302/Wist2/blob/499529af506939c8047387e3f05598459bd7edfd/UniversalToolchain/Example/Scenarios/PricingDiscountScenario.cs) |
+| Native-load rewrites are gated by intrinsic capabilities and preserve unmatched AIR | [`NativeCilOptimizerModule.cs`](https://github.com/Misha1302/Wist2/blob/499529af506939c8047387e3f05598459bd7edfd/UniversalToolchain/NativeMathModule/NativeCILOptimizerModule.cs) |
+| Performance measurements separate prepared invocation, convenience evaluation, and compilation cost | [benchmark contract](https://github.com/Misha1302/Wist2/blob/499529af506939c8047387e3f05598459bd7edfd/UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/README.md) |
 
-The demo inspects the selected runtime plan and runs the same pricing formula through general and restricted language paths. It also rejects a feature excluded from the restricted dialect and executes the focused interpreter/CIL parity suites. Together, these steps keep language composition, semantic lowering, optimization, and backend execution visibly separate.
+The pricing demo inspects the selected runtime plan, compares hardcoded C# with general and restricted Wist dialects, and rejects a feature excluded from the restricted dialect. The focused regression suites separately exercise lexical locals, shadowing, nested scopes, external bindings, and interpreter/CIL parity. Together, these steps keep language composition, semantic lowering, optimization, and backend execution visibly separate.
 
 ## Why the failure matters
 
