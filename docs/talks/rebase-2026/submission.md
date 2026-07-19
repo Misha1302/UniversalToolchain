@@ -16,7 +16,7 @@ Specialization is gated by declared backend capabilities. Frontend modules do no
 
 The first implementation got this boundary wrong. External bindings and lexical locals were mapped through incompatible storage assumptions, so the interpreter and CIL backend could disagree on the same program. The fix was not a backend patch: bindings and locals received distinct semantic identities, storage mapping moved behind backend contracts, composition remained deterministic, and shared regression tests covered shadowing, nested scopes, unused inputs, and repeated reads and writes.
 
-UniversalToolchain/Wist2 is an independent open-source alpha project. This is an implementation case study with public code, reproducible tests, explicit trade-offs, and known limits; it is not a production-deployment or hardened-sandbox claim.
+The code and tests are public and the demonstration is reproducible. UniversalToolchain/Wist2 is still an alpha project, so the talk states the current trade-offs and limits instead of presenting a production deployment or hardened sandbox.
 
 ## Short bio
 
