@@ -1,6 +1,6 @@
 # REBASE 2026 talk proposal
 
-Authority: proposal.
+Status: proposal.
 
 ## Build the Language, Then Make the Abstractions Disappear
 
@@ -20,12 +20,11 @@ The difficult part is keeping those execution paths as one language. A real regr
 ./docs/talks/langdev-2026/run-demo.sh
 ```
 
-Supporting material:
+Supporting technical material:
 
 - [module-to-CIL lowering walkthrough](../langdev-2026/lowering-walkthrough.md);
 - [semantic-parity regression case study](../langdev-2026/parity-regression.md);
-- [performance measurement boundary](../langdev-2026/benchmark-evidence.md);
-- [speaker preparation notes](speaker-notes.md).
+- [performance measurement boundary](../langdev-2026/benchmark-evidence.md).
 
 The original `langdev-2026` directory remains the shared technical evidence packet. This directory contains the REBASE-specific submission and 30-minute structure.
 
@@ -76,3 +75,5 @@ Any runtime with interpreted and compiled paths can change representation withou
 ## Current limits
 
 UniversalToolchain is the reusable framework; Wist is its reference language and proving ground. The project is an open-source alpha, not a production deployment report or a hardened in-process sandbox. The Wist-first path is more mature than generic third-party DSL authoring, the API is not yet a stable 1.0 contract, and performance conclusions are limited to explicitly recorded scenarios and environments.
+
+Delivery and fallback details are kept separately in [speaker preparation notes](speaker-notes.md).
