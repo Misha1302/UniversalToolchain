@@ -1,3 +1,4 @@
+# Installed first; this follow-up commit triggers the one-time cleanup.
 name: One-time Wist Branch Cleanup
 
 on:
