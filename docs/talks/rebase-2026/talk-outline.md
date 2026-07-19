@@ -1,6 +1,6 @@
 # Thirty-minute REBASE talk outline
 
-Authority: proposal.
+Status: proposal.
 
 ## 0:00-3:00 — The problem
 
