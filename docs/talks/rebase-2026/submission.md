@@ -1,26 +1,26 @@
 # REBASE 2026 submission
 
+Authority: proposal.
+
 ## Title
 
 **Build the Language, Then Make the Abstractions Disappear: Engineering an Extensible .NET DSL Runtime**
 
 ## Abstract
 
-Extensible language architectures are often modular while they are being built but remain abstract while they execute. UniversalToolchain/Wist2 explores a different boundary: compose a language from independent feature modules, then progressively lower the selected semantics into a deterministic runtime plan and concrete interpreter or typed CIL operations.
+UniversalToolchain/Wist2 lets a .NET host assemble a restricted DSL from independent feature modules, then lower the selected semantics to an AIR interpreter or typed CIL. The modules need to remain visible while the language is being built, but they should not require per-operation dispatch once a compiled artifact is prepared.
 
-In this talk, I will build a restricted pricing DSL from independently selected language modules and trace one program through dialect composition, Bytecode, Abstract IR, and two execution paths: an AIR interpreter and a `DynamicMethod`-based CIL backend. The demonstration covers external bindings, lexical local variables, arithmetic, backend capabilities, and the rejection of language features that were not included in the selected dialect.
+The talk follows a small pricing DSL through the whole path: dialect selection, deterministic runtime planning, Bytecode, Abstract IR, capability-gated lowering, and execution through an AIR interpreter and a `DynamicMethod`-based CIL backend. The demo uses external bindings, lexical locals, and arithmetic, and shows the restricted dialect rejecting syntax for a feature it did not select.
 
-The central engineering question is how to preserve extensibility during language construction without keeping language-construction machinery in prepared execution paths. I will show how capability-gated lowering allows supported operations to become concrete runtime or CIL operations while keeping frontend semantics independent from a particular backend.
+Capability checks decide which portable operations can become concrete runtime or CIL operations. Frontend modules do not branch on a backend implementation, and unsupported specialization leaves the portable representation intact.
 
-Specialization also creates a dangerous failure mode: different backends can quietly turn one DSL into two languages. A real regression involving external bindings and local-variable shadowing will serve as a case study. I will explain how explicit semantic identities, storage contracts, deterministic composition, and cross-backend regression tests prevent this divergence.
+That separation was tested by a real failure. External bindings and local variables were mapped through incompatible storage assumptions, so the interpreter and CIL backend could disagree on the same program. The fix was not a backend patch: bindings and locals received distinct semantic identities, storage mapping moved behind backend contracts, composition remained deterministic, and shared regression tests covered shadowing, nested scopes, unused inputs, and repeated reads and writes.
 
-The audience will leave with a practical architecture for building DSL runtimes that remain open to extension during construction, become concrete before execution, and preserve one language semantics across supported backends.
-
-UniversalToolchain/Wist2 is an independent open-source alpha project. The talk presents a reproducible architecture, implementation experience, design trade-offs, and current limitations rather than claiming production deployment.
+UniversalToolchain/Wist2 is an independent open-source alpha project. This is an implementation case study with public code, reproducible tests, explicit trade-offs, and known limits; it is not a production-deployment or hardened-sandbox claim.
 
 ## Short bio
 
-Mikhail Razakov is the creator and primary developer of UniversalToolchain/Wist2, an independent open-source .NET framework for building and executing embeddable domain-specific languages. His work focuses on modular language composition, intermediate representations, interpreters, typed CIL generation, runtime specialization, compiler verification, and semantic consistency across execution backends. In summer 2026, he is a compiler engineering intern at MCST and an incoming Software Engineering student at HSE University. He also teaches programming and writes about compilers, virtual machines, and .NET runtime internals.
+Mikhail Razakov is the creator and primary developer of UniversalToolchain/Wist2, an independent open-source .NET framework for embeddable domain-specific languages. He works on modular language composition, intermediate representations, interpreters, typed CIL generation, runtime specialization, compiler verification, and semantic consistency between execution backends. In summer 2026, he is a compiler engineering intern at MCST and an incoming Software Engineering student at HSE University. He also teaches programming and writes about compilers, virtual machines, and .NET runtime internals.
 
 ## Form material URL
 
