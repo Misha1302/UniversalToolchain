@@ -62,6 +62,14 @@ jobs:
             curl "${args[@]}" "https://api.github.com${path}"
           }
 
+          encode_ref() {
+            python3 - "$1" <<'PY'
+          import sys
+          from urllib.parse import quote
+          print(quote(sys.argv[1], safe='/'))
+          PY
+          }
+
           collect_pages() {
             local path_prefix="$1"
             local page=1
@@ -117,8 +125,9 @@ jobs:
             if (( closed_pr_count > 0 )); then
               reason='closed pull-request branch'
             else
-              encoded_branch="$(jq -rn --arg value "$branch" '$value | @uri')"
-              compare="$(api GET "/repos/${OWNER}/${REPO}/compare/${default_branch}...${encoded_branch}")"
+              encoded_default="$(encode_ref "$default_branch")"
+              encoded_branch="$(encode_ref "$branch")"
+              compare="$(api GET "/repos/${OWNER}/${REPO}/compare/${encoded_default}...${encoded_branch}")"
               ahead_by="$(jq -er '.ahead_by' <<<"$compare")"
               if (( ahead_by == 0 )); then
                 reason='fully contained in default branch'
@@ -128,8 +137,8 @@ jobs:
               fi
             fi
 
-            encoded_ref="$(jq -rn --arg value "heads/${branch}" '$value | @uri')"
-            if api DELETE "/repos/${OWNER}/${REPO}/git/refs/${encoded_ref}" >/tmp/delete-response.json 2>/tmp/delete-error.txt; then
+            encoded_branch="$(encode_ref "$branch")"
+            if api DELETE "/repos/${OWNER}/${REPO}/git/refs/heads/${encoded_branch}" >/tmp/delete-response.json 2>/tmp/delete-error.txt; then
               printf '%s\t%s\n' "$branch" "$reason" >> /tmp/deleted.tsv
             else
               error_text="$(tr '\n' ' ' </tmp/delete-error.txt | sed 's/[[:space:]]\+/ /g')"
@@ -200,8 +209,7 @@ jobs:
             curl "${args[@]}" "https://api.github.com${path}"
           }
 
-          encoded_path="$(jq -rn --arg value "$WORKFLOW_PATH" '$value | @uri')"
-          if ! workflow_state="$(api GET "/repos/${OWNER}/${REPO}/contents/${encoded_path}?ref=master" 2>/dev/null)"; then
+          if ! workflow_state="$(api GET "/repos/${OWNER}/${REPO}/contents/${WORKFLOW_PATH}?ref=master" 2>/dev/null)"; then
             exit 0
           fi
 
@@ -212,4 +220,4 @@ jobs:
             --arg branch master \
             '{message: $message, sha: $sha, branch: $branch}')"
 
-          api DELETE "/repos/${OWNER}/${REPO}/contents/${encoded_path}" "$delete_payload" >/dev/null
+          api DELETE "/repos/${OWNER}/${REPO}/contents/${WORKFLOW_PATH}" "$delete_payload" >/dev/null
