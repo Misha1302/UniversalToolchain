@@ -8,7 +8,7 @@
 
 Extensible language architectures are often modular while they are being built but remain abstract while they execute. UniversalToolchain/Wist2 explores a different boundary: compose a language from independent feature modules, then progressively lower the selected semantics into a deterministic runtime plan and concrete interpreter or typed CIL operations.
 
-In this talk, I will build a restricted pricing DSL from independently selected language modules and trace one program through dialect composition, Bytecode, Abstract IR, and two execution paths: an AIR interpreter and a `DynamicMethod`-based CIL backend. The demonstration covers external bindings, local variables, arithmetic, control flow, backend capabilities, and the rejection of language features that were not included in the selected dialect.
+In this talk, I will build a restricted pricing DSL from independently selected language modules and trace one program through dialect composition, Bytecode, Abstract IR, and two execution paths: an AIR interpreter and a `DynamicMethod`-based CIL backend. The demonstration covers external bindings, lexical local variables, arithmetic, backend capabilities, and the rejection of language features that were not included in the selected dialect.
 
 The central engineering question is how to preserve extensibility during language construction without keeping language-construction machinery in prepared execution paths. I will show how capability-gated lowering allows supported operations to become concrete runtime or CIL operations while keeping frontend semantics independent from a particular backend.
 
