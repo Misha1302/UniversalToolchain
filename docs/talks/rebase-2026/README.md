@@ -75,4 +75,4 @@ Any runtime with interpreted and compiled paths can change representation withou
 
 ## Current limits
 
-UniversalToolchain/Wist2 is an open-source alpha, not a production deployment report or a hardened in-process sandbox. The Wist-first path is more mature than generic third-party DSL authoring, the API is not yet a stable 1.0 contract, and performance conclusions are limited to explicitly recorded scenarios and environments.
+UniversalToolchain is the reusable framework; Wist is its reference language and proving ground. The project is an open-source alpha, not a production deployment report or a hardened in-process sandbox. The Wist-first path is more mature than generic third-party DSL authoring, the API is not yet a stable 1.0 contract, and performance conclusions are limited to explicitly recorded scenarios and environments.
