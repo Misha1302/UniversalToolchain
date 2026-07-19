@@ -36,14 +36,14 @@ language-tooling
 ssa
 ```
 
-## Social preview and README demo
+## Social preview and README image
 
 1. Open **Settings → General → Social preview**.
 2. Upload `docs/assets/wist-social-preview.png`; it is already rendered at `1280×640`.
 3. Verify the preview in a private message or link-preview debugger before the public launch.
-4. Confirm that `docs/assets/wist-demo.gif` animates near the top of `readme.md` on desktop and mobile widths.
+4. Confirm that `docs/assets/wist-social-preview.png` renders near the top of `readme.md` on desktop and mobile widths.
 
-`docs/assets/wist-social-preview.svg` remains the editable source for future visual changes. The PNG is the canonical upload artifact; the GIF is the first-contact README demonstration.
+`docs/assets/wist-social-preview.svg` remains the editable source for future visual changes. The PNG is the canonical social-preview and first-contact README image.
 
 ## Canonical repository routing
 
@@ -73,7 +73,7 @@ Before increasing promotion:
 - fix onboarding when a tester cannot reach the first result within ten minutes;
 - confirm README, NuGet README, docs site, and GitHub About text use the same product sentence;
 - confirm the social preview renders legibly at small size;
-- confirm the animated README demo renders and loops correctly.
+- confirm the static README image renders correctly on desktop and mobile widths.
 
 ## Launch sequence
 
