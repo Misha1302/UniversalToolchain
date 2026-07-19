@@ -66,7 +66,7 @@ Code evidence snapshot: [`b965466e1880a2d3a9172972e05d2cbd740c891a`](https://git
 | The pricing scenario compares hardcoded C#, general Wist, and a restricted dialect | [`PricingDiscountScenario.cs`](https://github.com/Misha1302/Wist2/blob/b965466e1880a2d3a9172972e05d2cbd740c891a/UniversalToolchain/Example/Scenarios/PricingDiscountScenario.cs) |
 | Performance measurements separate prepared invocation, convenience evaluation, and compilation cost | [benchmark contract](https://github.com/Misha1302/Wist2/blob/b965466e1880a2d3a9172972e05d2cbd740c891a/UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/README.md) |
 
-The demo inspects the selected runtime plan, runs the same pricing formula through general and restricted language paths, rejects a feature excluded from the restricted dialect, and executes the focused interpreter/CIL parity suites.
+The demo inspects the selected runtime plan and runs the same pricing formula through general and restricted language paths. It also rejects a feature excluded from the restricted dialect and executes the focused interpreter/CIL parity suites.
 
 ## Why the failure matters
 
@@ -74,6 +74,6 @@ Any runtime with interpreted and compiled paths can change representation withou
 
 ## Current limits
 
-UniversalToolchain is the reusable framework; Wist is its reference language and proving ground. The project is an open-source alpha, not a production deployment report or a hardened in-process sandbox. The Wist-first path is more mature than generic third-party DSL authoring, the API is not yet a stable 1.0 contract, and performance conclusions are limited to explicitly recorded scenarios and environments.
+UniversalToolchain is the reusable framework; Wist is its reference language and proving ground. The project is an open-source alpha, not a production deployment report or a hardened in-process sandbox. The Wist-first path is more mature than generic third-party DSL authoring. The API is not yet a stable 1.0 contract, and performance conclusions are limited to explicitly recorded scenarios and environments.
 
 Delivery and fallback details are kept separately in [speaker preparation notes](speaker-notes.md).
