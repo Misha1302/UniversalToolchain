@@ -92,7 +92,7 @@ Show the current fixed regression tests as evidence.
 2. **Specialize by capability, not by implementation name.** Optimizers may change representation only when the selected backend proves support.
 3. **Use the interpreter as a semantic reference.** Test parity across dialect configurations, storage layouts, scope shapes, and optimizer states rather than treating the interpreter as only a slow fallback.
 
-These rules apply to expression evaluators, rule runtimes, query compilers, template engines, and other systems that maintain interpreted and compiled paths.
+The same boundary appears in expression evaluators, rule runtimes, query compilers, and template engines whenever interpreted and compiled paths share one language contract.
 
 ## 28:00-30:00 — Limits and closing
 
