@@ -8,13 +8,13 @@ Authority: proposal.
 
 ## Abstract
 
-UniversalToolchain/Wist2 lets a .NET host assemble a restricted DSL from independent feature modules, then lower the selected semantics to an AIR interpreter or typed CIL. The modules need to remain visible while the language is being built, but they should not require per-operation dispatch once a compiled artifact is prepared.
+UniversalToolchain/Wist2 lets a .NET host assemble a restricted DSL from independent feature modules, then lower the selected semantics to an AIR interpreter or typed CIL. Language composition belongs in the build phase; a prepared compiled delegate should not dispatch through the module system for every operation.
 
-The talk follows a small pricing DSL through the whole path: dialect selection, deterministic runtime planning, Bytecode, Abstract IR, capability-gated lowering, and execution through an AIR interpreter and a `DynamicMethod`-based CIL backend. The demo uses external bindings, lexical locals, and arithmetic, and shows the restricted dialect rejecting syntax for a feature it did not select.
+The talk builds a small pricing DSL and follows it through dialect selection, deterministic runtime planning, Bytecode, Abstract IR, capability-gated lowering, and execution through an AIR interpreter and a `DynamicMethod`-based CIL backend. The demo uses external bindings, lexical locals, and arithmetic, and shows the restricted dialect rejecting syntax for a feature it did not select.
 
-Capability checks decide which portable operations can become concrete runtime or CIL operations. Frontend modules do not branch on a backend implementation, and unsupported specialization leaves the portable representation intact.
+Specialization is gated by declared backend capabilities. Frontend modules never branch on a backend implementation. If a capability is missing, the portable representation remains unchanged.
 
-That separation was tested by a real failure. External bindings and local variables were mapped through incompatible storage assumptions, so the interpreter and CIL backend could disagree on the same program. The fix was not a backend patch: bindings and locals received distinct semantic identities, storage mapping moved behind backend contracts, composition remained deterministic, and shared regression tests covered shadowing, nested scopes, unused inputs, and repeated reads and writes.
+The first implementation got this boundary wrong. External bindings and lexical locals were mapped through incompatible storage assumptions, so the interpreter and CIL backend could disagree on the same program. The fix was not a backend patch: bindings and locals received distinct semantic identities, storage mapping moved behind backend contracts, composition remained deterministic, and shared regression tests covered shadowing, nested scopes, unused inputs, and repeated reads and writes.
 
 UniversalToolchain/Wist2 is an independent open-source alpha project. This is an implementation case study with public code, reproducible tests, explicit trade-offs, and known limits; it is not a production-deployment or hardened-sandbox claim.
 
