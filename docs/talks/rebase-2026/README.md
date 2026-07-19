@@ -6,9 +6,9 @@ Authority: proposal.
 
 **Engineering an Extensible .NET DSL Runtime**
 
-UniversalToolchain/Wist2 builds restricted .NET DSLs from independently selected feature modules. The modules choose the language during construction; supported operations are then lowered through Bytecode and Abstract IR into either an AIR interpreter or typed CIL emitted with `DynamicMethod`.
+UniversalToolchain/Wist2 builds restricted .NET DSLs from independently selected feature modules. Module selection defines the language during construction; supported operations are then lowered through Bytecode and Abstract IR into either an AIR interpreter or typed CIL emitted with `DynamicMethod`.
 
-The difficult part is keeping those execution paths as one language. A real regression involving external bindings, lexical locals, and shadowing exposed where backend storage choices had leaked into semantics. The talk uses that failure to explain the boundary between language construction, lowering, backend specialization, and semantic verification.
+The difficult part is keeping those execution paths as one language. A real regression involving external bindings, lexical locals, and shadowing exposed how backend storage choices had leaked into semantics. That failure makes the boundary between language construction, lowering, backend specialization, and semantic verification concrete.
 
 ## Reviewer path
 
