@@ -1,8 +1,7 @@
 name: One-time Wist Visual Refresh
 
-# Triggered through a reviewed merge so GitHub Actions runs the one-time publication job.
 on:
-  push:
+  pull_request:
     branches: [ master ]
     paths:
       - '.github/workflows/wist-visual-refresh-once.yml'
@@ -14,10 +13,10 @@ jobs:
   refresh:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout pull-request branch
         uses: actions/checkout@v4
         with:
-          ref: master
+          ref: ${{ github.head_ref }}
           fetch-depth: 0
 
       - name: Setup Python
@@ -95,12 +94,14 @@ jobs:
           rm -f .github/workflows/wist-visual-refresh-once.yml
           git diff --check
 
-      - name: Commit generated assets
+      - name: Commit generated assets to pull-request branch
         shell: bash
+        env:
+          HEAD_REF: ${{ github.head_ref }}
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add readme.md docs/assets/wist-readme-hero.svg docs/assets/wist-readme-hero.png docs/assets/wist-social-preview.svg docs/assets/wist-social-preview.png docs/maintainers/repository-settings.md .github/workflows/wist-visual-refresh-once.yml
           git commit -m 'docs: publish final Wist visual assets'
-          git push origin HEAD:master
+          git push origin "HEAD:${HEAD_REF}"
