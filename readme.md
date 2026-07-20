@@ -4,7 +4,7 @@
 [![NuGet Downloads](https://img.shields.io/nuget/dt/UniversalToolchain.Wist.svg)](https://www.nuget.org/packages/UniversalToolchain.Wist)
 
 <p align="center">
-  <img src="docs/assets/wist-social-preview.png" alt="Wist validates a restricted formula, compiles it into a typed .NET delegate, and rejects a broader statement-style rule." width="80%" />
+  <img src="docs/assets/wist-social-preview.svg" alt="Wist validates a restricted formula, compiles it into a typed .NET delegate, and rejects a broader statement-style rule." width="80%" />
 </p>
 
 **Validate restricted formulas, then compile approved rules into typed .NET delegates.**
@@ -207,8 +207,8 @@ Read [the contribution guide](docs/CONTRIBUTING.md). Small documentation, diagno
 
 - [Promotion kit](docs/maintainers/promotion-kit.md)
 - [Repository settings and launch checklist](docs/maintainers/repository-settings.md)
-- Static README and social preview: [`docs/assets/wist-social-preview.png`](docs/assets/wist-social-preview.png)
-- Editable social-preview source: [`docs/assets/wist-social-preview.svg`](docs/assets/wist-social-preview.svg)
+- README hero: [`docs/assets/wist-social-preview.svg`](docs/assets/wist-social-preview.svg)
+- Ready-to-upload social preview: [`docs/assets/wist-social-preview.png`](docs/assets/wist-social-preview.png)
 
 ## License
 
