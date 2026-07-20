@@ -62,7 +62,6 @@ jobs:
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
-          import re
 
           readme_path = Path('readme.md')
           readme = readme_path.read_text(encoding='utf-8')
@@ -76,19 +75,14 @@ jobs:
               1,
           )
 
-          material_pattern = re.compile(
-              r'- Static README and social preview: \[`docs/assets/wist-social-preview\.png`\]\(docs/assets/wist-social-preview\.png\)\n'
-              r'- Editable social-preview source: \[`docs/assets/wist-social-preview\.svg`\]\(docs/assets/wist-social-preview\.svg\)'
-          )
-          replacement = (
-              '- README hero: [`docs/assets/wist-readme-hero.svg`](docs/assets/wist-readme-hero.svg)\n'
-              '- GitHub social preview: [`docs/assets/wist-social-preview.png`](docs/assets/wist-social-preview.png)\n'
-              '- Editable visual sources: [`wist-readme-hero.svg`](docs/assets/wist-readme-hero.svg) and '
-              '[`wist-social-preview.svg`](docs/assets/wist-social-preview.svg)'
-          )
-          readme, count = material_pattern.subn(replacement, readme, count=1)
-          if count != 1:
-              raise SystemExit(f'unexpected README material replacement count: {count}')
+          old_material = '''- README hero: [`docs/assets/wist-social-preview.svg`](docs/assets/wist-social-preview.svg)
+          - Ready-to-upload social preview: [`docs/assets/wist-social-preview.png`](docs/assets/wist-social-preview.png)'''
+          new_material = '''- README hero: [`docs/assets/wist-readme-hero.svg`](docs/assets/wist-readme-hero.svg)
+          - Ready-to-upload social preview: [`docs/assets/wist-social-preview.png`](docs/assets/wist-social-preview.png)
+          - Editable visual sources: [`wist-readme-hero.svg`](docs/assets/wist-readme-hero.svg) and [`wist-social-preview.svg`](docs/assets/wist-social-preview.svg)'''
+          if readme.count(old_material) != 1:
+              raise SystemExit(f'unexpected README material block count: {readme.count(old_material)}')
+          readme = readme.replace(old_material, new_material, 1)
           readme_path.write_text(readme, encoding='utf-8')
 
           settings_path = Path('docs/maintainers/repository-settings.md')
