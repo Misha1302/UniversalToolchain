@@ -1,5 +1,6 @@
 name: One-time Wist Visual Refresh
 
+# Triggered through a reviewed merge so GitHub Actions runs the one-time publication job.
 on:
   push:
     branches: [ master ]
