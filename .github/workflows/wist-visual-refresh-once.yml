@@ -1,0 +1,105 @@
+name: One-time Wist Visual Refresh
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - '.github/workflows/wist-visual-refresh-once.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Render and synchronize visual assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check 'cairosvg==2.7.1'
+          python - <<'PY'
+          from pathlib import Path
+          import cairosvg
+
+          root = Path('.')
+          assets = root / 'docs' / 'assets'
+
+          cairosvg.svg2png(
+              url=str(assets / 'wist-readme-hero.svg'),
+              write_to=str(assets / 'wist-readme-hero.png'),
+              output_width=1280,
+              output_height=640,
+          )
+          cairosvg.svg2png(
+              url=str(assets / 'wist-social-preview.svg'),
+              write_to=str(assets / 'wist-social-preview.png'),
+              output_width=1280,
+              output_height=640,
+          )
+
+          readme_path = root / 'readme.md'
+          readme = readme_path.read_text(encoding='utf-8')
+          old_image = '  <img src="docs/assets/wist-social-preview.svg" alt="Wist validates a restricted formula, compiles it into a typed .NET delegate, and rejects a broader statement-style rule." width="80%" />'
+          new_image = '  <img src="docs/assets/wist-readme-hero.svg" alt="Wist validates restricted formulas and compiles approved rules into typed .NET delegates." width="80%" />'
+          if old_image not in readme:
+              raise SystemExit('README hero reference changed unexpectedly')
+          readme = readme.replace(old_image, new_image, 1)
+
+          old_material = '''- Static README and social preview: [`docs/assets/wist-social-preview.png`](docs/assets/wist-social-preview.png)
+          - Editable social-preview source: [`docs/assets/wist-social-preview.svg`](docs/assets/wist-social-preview.svg)'''
+          new_material = '''- README hero: [`docs/assets/wist-readme-hero.svg`](docs/assets/wist-readme-hero.svg)
+          - GitHub social preview: [`docs/assets/wist-social-preview.png`](docs/assets/wist-social-preview.png)
+          - Editable visual sources: [`wist-readme-hero.svg`](docs/assets/wist-readme-hero.svg) and [`wist-social-preview.svg`](docs/assets/wist-social-preview.svg)'''
+          if old_material not in readme:
+              raise SystemExit('README maintainer visual list changed unexpectedly')
+          readme = readme.replace(old_material, new_material, 1)
+          readme_path.write_text(readme, encoding='utf-8')
+
+          settings_path = root / 'docs' / 'maintainers' / 'repository-settings.md'
+          settings = settings_path.read_text(encoding='utf-8')
+          old_settings = '''## Social preview and README image
+
+          1. Open **Settings → General → Social preview**.
+          2. Upload `docs/assets/wist-social-preview.png`; it is rendered at `1280×640` for GitHub's upload surface.
+          3. Verify the preview in a private message or link-preview debugger before the public launch.
+          4. Confirm that `docs/assets/wist-social-preview.svg` renders near the top of `readme.md` on desktop and mobile widths.
+
+          `docs/assets/wist-social-preview.svg` is the canonical vector README hero and editable source. The PNG remains the ready-to-upload GitHub social-preview artifact.'''
+          new_settings = '''## Social preview and README image
+
+          1. Open **Settings → General → Social preview**.
+          2. Upload `docs/assets/wist-social-preview.png`; it is rendered at `1280×640` from the dedicated social-preview SVG.
+          3. Verify the preview in a private message or link-preview debugger before the public launch.
+          4. Confirm that `docs/assets/wist-readme-hero.svg` renders near the top of `readme.md` on desktop and mobile widths.
+
+          `docs/assets/wist-readme-hero.svg` is the canonical README hero. `docs/assets/wist-social-preview.svg` is the editable source for the ready-to-upload PNG social preview.'''
+          if old_settings not in settings:
+              raise SystemExit('Repository visual checklist changed unexpectedly')
+          settings = settings.replace(old_settings, new_settings, 1)
+          settings_path.write_text(settings, encoding='utf-8')
+          PY
+
+          rm -f .github/workflows/wist-visual-refresh-once.yml
+          git diff --check
+
+      - name: Commit generated assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add readme.md docs/assets/wist-readme-hero.svg docs/assets/wist-readme-hero.png docs/assets/wist-social-preview.svg docs/assets/wist-social-preview.png docs/maintainers/repository-settings.md .github/workflows/wist-visual-refresh-once.yml
+          git commit -m 'docs: publish final Wist visual assets'
+          git push origin HEAD:master
