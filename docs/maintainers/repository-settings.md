@@ -39,11 +39,11 @@ ssa
 ## Social preview and README image
 
 1. Open **Settings → General → Social preview**.
-2. Upload `docs/assets/wist-social-preview.png`; it is rendered at `1280×640` for GitHub's upload surface.
+2. Upload `docs/assets/wist-social-preview.png`; it is rendered at `1280×640` from the dedicated social-preview SVG.
 3. Verify the preview in a private message or link-preview debugger before the public launch.
-4. Confirm that `docs/assets/wist-social-preview.svg` renders near the top of `readme.md` on desktop and mobile widths.
+4. Confirm that `docs/assets/wist-readme-hero.svg` renders near the top of `readme.md` on desktop and mobile widths.
 
-`docs/assets/wist-social-preview.svg` is the canonical vector README hero and editable source. The PNG remains the ready-to-upload GitHub social-preview artifact.
+`docs/assets/wist-readme-hero.svg` is the canonical README hero. `docs/assets/wist-social-preview.svg` is the editable source for the ready-to-upload PNG social preview.
 
 ## Canonical repository routing
 
