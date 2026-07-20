@@ -24,74 +24,103 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Render and synchronize visual assets
+      - name: Install SVG renderer
+        run: python -m pip install --disable-pip-version-check 'cairosvg==2.7.1'
+
+      - name: Render 1280x640 PNG assets
         shell: bash
         run: |
           set -euo pipefail
-          python -m pip install --disable-pip-version-check 'cairosvg==2.7.1'
           python - <<'PY'
           from pathlib import Path
           import cairosvg
 
-          root = Path('.')
-          assets = root / 'docs' / 'assets'
-
-          cairosvg.svg2png(
-              url=str(assets / 'wist-readme-hero.svg'),
-              write_to=str(assets / 'wist-readme-hero.png'),
-              output_width=1280,
-              output_height=640,
+          assets = Path('docs/assets')
+          pairs = (
+              ('wist-readme-hero.svg', 'wist-readme-hero.png'),
+              ('wist-social-preview.svg', 'wist-social-preview.png'),
           )
-          cairosvg.svg2png(
-              url=str(assets / 'wist-social-preview.svg'),
-              write_to=str(assets / 'wist-social-preview.png'),
-              output_width=1280,
-              output_height=640,
-          )
+          for source_name, output_name in pairs:
+              source = assets / source_name
+              output = assets / output_name
+              if not source.is_file():
+                  raise SystemExit(f'missing source: {source}')
+              cairosvg.svg2png(
+                  url=str(source),
+                  write_to=str(output),
+                  output_width=1280,
+                  output_height=640,
+              )
+              if not output.is_file() or output.stat().st_size < 10_000:
+                  raise SystemExit(f'invalid render: {output}')
+              print(f'{output}: {output.stat().st_size} bytes')
+          PY
 
-          readme_path = root / 'readme.md'
+      - name: Synchronize README and maintainer references
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          readme_path = Path('readme.md')
           readme = readme_path.read_text(encoding='utf-8')
-          old_image = '  <img src="docs/assets/wist-social-preview.svg" alt="Wist validates a restricted formula, compiles it into a typed .NET delegate, and rejects a broader statement-style rule." width="80%" />'
-          new_image = '  <img src="docs/assets/wist-readme-hero.svg" alt="Wist validates restricted formulas and compiles approved rules into typed .NET delegates." width="80%" />'
-          if old_image not in readme:
-              raise SystemExit('README hero reference changed unexpectedly')
-          readme = readme.replace(old_image, new_image, 1)
+          old_src = 'src="docs/assets/wist-social-preview.svg"'
+          if readme.count(old_src) != 1:
+              raise SystemExit(f'unexpected README old hero count: {readme.count(old_src)}')
+          readme = readme.replace(old_src, 'src="docs/assets/wist-readme-hero.svg"', 1)
+          readme = readme.replace(
+              'alt="Wist validates a restricted formula, compiles it into a typed .NET delegate, and rejects a broader statement-style rule."',
+              'alt="Wist validates restricted formulas and compiles approved rules into typed .NET delegates."',
+              1,
+          )
 
-          old_material = '''- Static README and social preview: [`docs/assets/wist-social-preview.png`](docs/assets/wist-social-preview.png)
-          - Editable social-preview source: [`docs/assets/wist-social-preview.svg`](docs/assets/wist-social-preview.svg)'''
-          new_material = '''- README hero: [`docs/assets/wist-readme-hero.svg`](docs/assets/wist-readme-hero.svg)
-          - GitHub social preview: [`docs/assets/wist-social-preview.png`](docs/assets/wist-social-preview.png)
-          - Editable visual sources: [`wist-readme-hero.svg`](docs/assets/wist-readme-hero.svg) and [`wist-social-preview.svg`](docs/assets/wist-social-preview.svg)'''
-          if old_material not in readme:
-              raise SystemExit('README maintainer visual list changed unexpectedly')
-          readme = readme.replace(old_material, new_material, 1)
+          material_pattern = re.compile(
+              r'- Static README and social preview: \[`docs/assets/wist-social-preview\.png`\]\(docs/assets/wist-social-preview\.png\)\n'
+              r'- Editable social-preview source: \[`docs/assets/wist-social-preview\.svg`\]\(docs/assets/wist-social-preview\.svg\)'
+          )
+          replacement = (
+              '- README hero: [`docs/assets/wist-readme-hero.svg`](docs/assets/wist-readme-hero.svg)\n'
+              '- GitHub social preview: [`docs/assets/wist-social-preview.png`](docs/assets/wist-social-preview.png)\n'
+              '- Editable visual sources: [`wist-readme-hero.svg`](docs/assets/wist-readme-hero.svg) and '
+              '[`wist-social-preview.svg`](docs/assets/wist-social-preview.svg)'
+          )
+          readme, count = material_pattern.subn(replacement, readme, count=1)
+          if count != 1:
+              raise SystemExit(f'unexpected README material replacement count: {count}')
           readme_path.write_text(readme, encoding='utf-8')
 
-          settings_path = root / 'docs' / 'maintainers' / 'repository-settings.md'
+          settings_path = Path('docs/maintainers/repository-settings.md')
           settings = settings_path.read_text(encoding='utf-8')
-          old_settings = '''## Social preview and README image
-
-          1. Open **Settings → General → Social preview**.
-          2. Upload `docs/assets/wist-social-preview.png`; it is rendered at `1280×640` for GitHub's upload surface.
-          3. Verify the preview in a private message or link-preview debugger before the public launch.
-          4. Confirm that `docs/assets/wist-social-preview.svg` renders near the top of `readme.md` on desktop and mobile widths.
-
-          `docs/assets/wist-social-preview.svg` is the canonical vector README hero and editable source. The PNG remains the ready-to-upload GitHub social-preview artifact.'''
-          new_settings = '''## Social preview and README image
-
-          1. Open **Settings → General → Social preview**.
-          2. Upload `docs/assets/wist-social-preview.png`; it is rendered at `1280×640` from the dedicated social-preview SVG.
-          3. Verify the preview in a private message or link-preview debugger before the public launch.
-          4. Confirm that `docs/assets/wist-readme-hero.svg` renders near the top of `readme.md` on desktop and mobile widths.
-
-          `docs/assets/wist-readme-hero.svg` is the canonical README hero. `docs/assets/wist-social-preview.svg` is the editable source for the ready-to-upload PNG social preview.'''
-          if old_settings not in settings:
-              raise SystemExit('Repository visual checklist changed unexpectedly')
-          settings = settings.replace(old_settings, new_settings, 1)
+          replacements = (
+              (
+                  "2. Upload `docs/assets/wist-social-preview.png`; it is rendered at `1280×640` for GitHub's upload surface.",
+                  '2. Upload `docs/assets/wist-social-preview.png`; it is rendered at `1280×640` from the dedicated social-preview SVG.',
+              ),
+              (
+                  '4. Confirm that `docs/assets/wist-social-preview.svg` renders near the top of `readme.md` on desktop and mobile widths.',
+                  '4. Confirm that `docs/assets/wist-readme-hero.svg` renders near the top of `readme.md` on desktop and mobile widths.',
+              ),
+              (
+                  '`docs/assets/wist-social-preview.svg` is the canonical vector README hero and editable source. The PNG remains the ready-to-upload GitHub social-preview artifact.',
+                  '`docs/assets/wist-readme-hero.svg` is the canonical README hero. `docs/assets/wist-social-preview.svg` is the editable source for the ready-to-upload PNG social preview.',
+              ),
+          )
+          for old, new in replacements:
+              if settings.count(old) != 1:
+                  raise SystemExit(f'unexpected settings replacement count for: {old}')
+              settings = settings.replace(old, new, 1)
           settings_path.write_text(settings, encoding='utf-8')
           PY
 
-          rm -f .github/workflows/wist-visual-refresh-once.yml
+      - name: Validate generated state
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -F 'docs/assets/wist-readme-hero.svg' readme.md
+          test -s docs/assets/wist-readme-hero.png
+          test -s docs/assets/wist-social-preview.png
           git diff --check
 
       - name: Commit generated assets to pull-request branch
@@ -100,6 +129,7 @@ jobs:
           HEAD_REF: ${{ github.head_ref }}
         run: |
           set -euo pipefail
+          rm -f .github/workflows/wist-visual-refresh-once.yml
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add readme.md docs/assets/wist-readme-hero.svg docs/assets/wist-readme-hero.png docs/assets/wist-social-preview.svg docs/assets/wist-social-preview.png docs/maintainers/repository-settings.md .github/workflows/wist-visual-refresh-once.yml
