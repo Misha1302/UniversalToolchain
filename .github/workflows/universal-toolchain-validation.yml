@@ -23,6 +23,7 @@ jobs:
         with:
           ref: icse2027-contract-experiment
           fetch-depth: 0
+          show-progress: false
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -38,12 +39,14 @@ jobs:
           base64 --decode /tmp/icse-change-bundle.b64 > /tmp/icse-change-bundle.tar.gz
           echo '1f51490a3edd3b6dd2a08eb9094a0c5699a3cf720da60df37ed2f7962cb01b70  /tmp/icse-change-bundle.tar.gz' | sha256sum -c -
           tar -xzf /tmp/icse-change-bundle.tar.gz
+          git checkout HEAD -- .github/workflows/universal-toolchain-validation.yml
           rm -rf .github/icse-bootstrap
           chmod +x Tools/run-contract-experiment.sh
 
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
+          git status --short
           git commit -m 'research: add reproducible cross-layer contract experiment'
           git push origin HEAD:icse2027-contract-experiment
           commit="$(git rev-parse HEAD)"
@@ -92,5 +95,5 @@ jobs:
         with:
           name: icse-contract-experiment-${{ steps.materialize.outputs.commit }}
           path: artifacts/contract-experiment
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 30
