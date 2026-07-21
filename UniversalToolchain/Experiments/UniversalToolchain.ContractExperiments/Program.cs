@@ -1,5 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json;
+using BasicCore.Core;
+using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using DynamicMethodWrapper;
 using IntermediateRepresentationAbstractions;
@@ -13,6 +15,8 @@ internal enum ExperimentMode { B0, B1, B2 }
 
 internal sealed record MutationCase(
     string Id,
+    string OperatorId,
+    string StudySet,
     string Family,
     string ExpectedCode,
     Func<ExperimentMode, ExperimentOutcome> Execute);
@@ -26,6 +30,8 @@ internal sealed record ExperimentOutcome(
 internal sealed record ResultRecord(
     string Commit,
     string MutationId,
+    string OperatorId,
+    string StudySet,
     string Family,
     string Mode,
     int Repetition,
@@ -47,8 +53,12 @@ internal static class Program
                      ?? Environment.GetEnvironmentVariable("ICSE_EXPERIMENT_COMMIT")
                      ?? "local-uncommitted";
         var cases = BuildCases();
-        if (cases.Count != 40)
-            throw new InvalidOperationException($"Expected 40 frozen mutations, found {cases.Count}.");
+        var primaryCases = cases.Where(static x => x.StudySet == "primary").ToArray();
+        var challengeCases = cases.Where(static x => x.StudySet == "challenge").ToArray();
+        if (primaryCases.Length != 40 || primaryCases.Select(static x => x.OperatorId).Distinct().Count() != 32)
+            throw new InvalidOperationException("Expected 40 primary instances representing 32 operator shapes.");
+        if (challengeCases.Length != 10 || challengeCases.Select(static x => x.OperatorId).Distinct().Count() != 10)
+            throw new InvalidOperationException("Expected 10 post-freeze challenge operators.");
 
         var results = new List<ResultRecord>();
         foreach (var mutation in cases.OrderBy(static x => x.Id, StringComparer.Ordinal))
@@ -61,6 +71,8 @@ internal static class Program
                     results.Add(new ResultRecord(
                         commit,
                         mutation.Id,
+                        mutation.OperatorId,
+                        mutation.StudySet,
                         mutation.Family,
                         mode.ToString(),
                         repetition,
@@ -111,6 +123,7 @@ internal static class Program
         AddFactCases(cases);
         AddAirStructureCases(cases);
         AddCapabilityCases(cases);
+        AddChallengeCases(cases);
         return cases;
     }
 
@@ -180,7 +193,8 @@ internal static class Program
                 5 or 6 => ModuleContractDiagnosticCodes.UndeclaredBytecodeProducer,
                 _ => ModuleContractDiagnosticCodes.BytecodeStackEffectMismatch
             };
-            cases.Add(new MutationCase(id, "bytecode-drift", expected, mode => ExecuteBytecodeMutation(mode, id, variant, expected)));
+            var operatorId = $"BYTE-{(index + 1) / 2:00}";
+            cases.Add(new MutationCase(id, operatorId, "primary", "bytecode-drift", expected, mode => ExecuteBytecodeMutation(mode, id, variant, expected)));
         }
     }
 
@@ -221,12 +235,19 @@ internal static class Program
                 5 or 6 => ModuleContractDiagnosticCodes.MissingBackendCapability,
                 _ => ModuleContractDiagnosticCodes.InterpreterBackendIntrinsicViolation
             };
-            cases.Add(new MutationCase(id, "capability-target", expected, mode => ExecuteCapabilityMutation(mode, id, variant, expected)));
+            var operatorId = $"CAP-{(index + 1) / 2:00}";
+            cases.Add(new MutationCase(id, operatorId, "primary", "capability-target", expected, mode => ExecuteCapabilityMutation(mode, id, variant, expected)));
         }
     }
 
-    private static MutationCase TableCase(string id, string family, string expectedCode, Func<IReadOnlyList<ToolchainDiagnostic>> diagnosticsFactory) =>
-        new(id, family, expectedCode, mode => Timed("contract-table", () =>
+    private static MutationCase TableCase(
+        string id,
+        string family,
+        string expectedCode,
+        Func<IReadOnlyList<ToolchainDiagnostic>> diagnosticsFactory,
+        string? operatorId = null,
+        string studySet = "primary") =>
+        new(id, operatorId ?? id, studySet, family, expectedCode, mode => Timed("contract-table", () =>
         {
             if (mode == ExperimentMode.B0)
                 return (false, (string?)null);
@@ -235,7 +256,7 @@ internal static class Program
         }));
 
     private static MutationCase AstOwnershipCase(string id, string expectedCode, bool duplicate, bool zero) =>
-        new(id, "ownership", expectedCode, mode => Timed("ast-ownership", () =>
+        new(id, id, "primary", "ownership", expectedCode, mode => Timed("ast-ownership", () =>
         {
             if (mode == ExperimentMode.B0)
                 return (false, (string?)null);
@@ -298,7 +319,7 @@ internal static class Program
     }
 
     private static MutationCase PipelineCase(string id, string expectedCode, PipelineMutation mutation) =>
-        new(id, "facts-order-reverification", expectedCode, mode => Timed("pipeline-effects", () =>
+        new(id, id, "primary", "facts-order-reverification", expectedCode, mode => Timed("pipeline-effects", () =>
         {
             if (mode == ExperimentMode.B0)
                 return (false, (string?)null);
@@ -363,7 +384,7 @@ internal static class Program
     }
 
     private static MutationCase AirCase(string id, string family, string expectedCode, Action<AbstractIR> mutate) =>
-        new(id, family, expectedCode, mode => Timed("air-structure", () =>
+        new(id, id, "primary", family, expectedCode, mode => Timed("air-structure", () =>
         {
             var table = CleanCapabilityTable(id);
             var selection = BackendCapabilitySelection.FromContracts(table, [new BackendCapabilityId($"experiment.{id.ToLowerInvariant()}.cap")]);
@@ -403,6 +424,189 @@ internal static class Program
             return (diagnostic != null, diagnostic?.Code);
         });
 
+
+    private static void AddChallengeCases(List<MutationCase> cases)
+    {
+        cases.Add(TableCase(
+            "CH-NS-01",
+            "challenge-contract-selection",
+            ModuleContractDiagnosticCodes.InvalidNamespaceOwnership,
+            static () =>
+            {
+                var module = new ModuleId("wist.challenge.namespace");
+                return new ModuleContractTableBuilder()
+                    .AddFacet(new BackendCapabilityFacet(
+                        module,
+                        [new BackendCapabilityContract(new BackendCapabilityId("core.backend.challenge"), [])]))
+                    .AddNamespaceOwners(module, [ContractNamespaceOwner.Wist])
+                    .Build()
+                    .Diagnostics;
+            },
+            studySet: "challenge"));
+
+        cases.Add(TableCase(
+            "CH-SCHEMA-01",
+            "challenge-contract-selection",
+            ModuleContractDiagnosticCodes.SchemaDowngrade,
+            static () => new ModuleContractTableBuilder
+                {
+                    SupportedSchemaVersion = new ContractSchemaVersion(1, 0)
+                }
+                .AddFacet(new AstContractFacet(new ModuleId("core.challenge.schema"), [])
+                {
+                    SchemaVersion = new ContractSchemaVersion(2, 0)
+                })
+                .Build()
+                .Diagnostics,
+            studySet: "challenge"));
+
+        cases.Add(ChallengeSelectionCase(
+            "CH-SELECT-01",
+            ModuleContractDiagnosticCodes.NewModuleMissingDescriptor,
+            static () => ModuleContractEnforcementPolicy.EnforceNewModules([])));
+        cases.Add(ChallengeSelectionCase(
+            "CH-SELECT-02",
+            ModuleContractDiagnosticCodes.DeclaredModuleMissingDescriptor,
+            static () => ModuleContractEnforcementPolicy.EnforceNewModules(
+                [new ModuleContractStatusDeclaration(
+                    new ModuleId("challenge.selection"),
+                    ModuleContractCompatibilityStatus.Declared)])));
+        cases.Add(ChallengeSelectionCase(
+            "CH-SELECT-03",
+            ModuleContractDiagnosticCodes.UndeclaredModule,
+            static () => ModuleContractEnforcementPolicy.EnforceNewModules(
+                [new ModuleContractStatusDeclaration(
+                    new ModuleId("challenge.selection"),
+                    ModuleContractCompatibilityStatus.Undeclared)])));
+
+        cases.Add(new MutationCase(
+            "CH-LOWER-01",
+            "CH-LOWER-01",
+            "challenge",
+            "challenge-ownership",
+            ModuleContractDiagnosticCodes.LowererOwnershipMismatch,
+            mode => Timed("challenge-lowerer", () =>
+            {
+                if (mode == ExperimentMode.B0)
+                    return (false, (string?)null);
+                var node = new AstNodeKind("challenge.lowerer.node");
+                var owner = new ModuleId("challenge.lowerer.owner");
+                var lowerer = new ChallengeLowerer(new ModuleId("challenge.lowerer.other"), node);
+                var table = new ModuleContractTableBuilder()
+                    .AddFacet(AstFacet(owner, node.Value))
+                    .Build();
+                var diagnostic = AstOwnershipRegistry.FromTable(table)
+                    .ValidateLowerer(lowerer)
+                    .FirstOrDefault(static x => x.Code == ModuleContractDiagnosticCodes.LowererOwnershipMismatch);
+                return (diagnostic != null, diagnostic?.Code);
+            })));
+
+        cases.Add(TableCase(
+            "CH-FACT-01",
+            "challenge-facts",
+            ModuleContractDiagnosticCodes.UnknownCompilerFact,
+            static () =>
+            {
+                var module = new ModuleId("challenge.fact.module");
+                var unknown = new CompilerFactId("challenge.fact.unknown");
+                return new ModuleContractTableBuilder()
+                    .AddFacet(new PipelineEffectFacet(
+                        module,
+                        [new PipelineEffectContract(
+                            new CompilerEffectId("challenge.fact.effect"),
+                            CompilerPipelineStage.Air,
+                            [unknown],
+                            [],
+                            [],
+                            [])]))
+                    .Build()
+                    .Diagnostics;
+            },
+            studySet: "challenge"));
+
+        cases.Add(ChallengeMetadataCase("CH-META-01", BytecodeContractMetadata.ProducerModulePrefix));
+        cases.Add(ChallengeMetadataCase("CH-META-02", BytecodeContractMetadata.SourceNodePrefix));
+
+        cases.Add(new MutationCase(
+            "CH-CAP-01",
+            "CH-CAP-01",
+            "challenge",
+            "challenge-capability-selection",
+            ModuleContractDiagnosticCodes.MultipleBackendCapabilityFacets,
+            mode => Timed("challenge-capability-selection", () =>
+            {
+                var first = new ModuleId("backend.challenge.first");
+                var second = new ModuleId("backend.challenge.second");
+                var table = new ModuleContractTableBuilder()
+                    .AddFacet(new BackendCapabilityFacet(
+                        first,
+                        [new BackendCapabilityContract(new BackendCapabilityId("backend.challenge.first.cap"), [])]))
+                    .AddFacet(new BackendCapabilityFacet(
+                        second,
+                        [new BackendCapabilityContract(new BackendCapabilityId("backend.challenge.second.cap"), [])]))
+                    .Build();
+                try
+                {
+                    _ = new BackendCapabilitySelectionFactory(AirBackendPolicy.CapabilityGated)
+                        .Create(table, []);
+                    return (false, (string?)null);
+                }
+                catch (InvalidOperationException)
+                {
+                    return (true, ModuleContractDiagnosticCodes.MultipleBackendCapabilityFacets);
+                }
+            })));
+    }
+
+    private static MutationCase ChallengeSelectionCase(
+        string id,
+        string expectedCode,
+        Func<ModuleContractEnforcementPolicy> policyFactory) =>
+        new(
+            id,
+            id,
+            "challenge",
+            "challenge-contract-selection",
+            expectedCode,
+            mode => Timed("challenge-selection", () =>
+            {
+                if (mode == ExperimentMode.B0)
+                    return (false, (string?)null);
+                var module = new ModuleId("challenge.selection");
+                var report = new ModuleContractSelectionBuilder().Build([module], [], policyFactory());
+                var diagnostic = report.Diagnostics.FirstOrDefault(x => x.Code == expectedCode);
+                return (diagnostic != null, diagnostic?.Code);
+            }));
+
+    private static MutationCase ChallengeMetadataCase(string id, string prefix) =>
+        new(
+            id,
+            id,
+            "challenge",
+            "challenge-bytecode-metadata",
+            ModuleContractDiagnosticCodes.InvalidBytecodeContractMetadata,
+            mode => Timed("challenge-bytecode-metadata", () =>
+            {
+                if (mode == ExperimentMode.B0)
+                    return (false, (string?)null);
+                var instruction = new BytecodeInstruction(new AbstractMethodImpl("challenge-metadata", (_, _) => { }));
+                instruction.Tags.Add(prefix + "first");
+                instruction.Tags.Add(prefix + "second");
+                var diagnostic = BytecodeContractMetadata.Validate(instruction)
+                    .FirstOrDefault(static x => x.Code == ModuleContractDiagnosticCodes.InvalidBytecodeContractMetadata);
+                return (diagnostic != null, diagnostic?.Code);
+            }));
+
+    private sealed class ChallengeLowerer(ModuleId moduleId, AstNodeKind nodeKind) : IAstNodeLowerer
+    {
+        public ModuleId ModuleId { get; } = moduleId;
+
+        public AstNodeKind NodeKind { get; } = nodeKind;
+
+        public LoweringResult Lower(AstNode node, AstNodeLoweringContext context) =>
+            new(new Bytecode([]), []);
+    }
+
     private static AstContractFacet AstFacet(ModuleId module, string node) =>
         new(module, [new AstOwnershipContract(new AstNodeKind(node), AstOwnershipMode.Exclusive, module, [])]);
 
@@ -435,39 +639,184 @@ internal static class Program
                 var group = results.Where(x => x.MutationId == mutation.Id && x.Mode == mode).ToArray();
                 if (group.Length != Repetitions)
                     throw new InvalidOperationException($"Incomplete triplet for {mutation.Id}/{mode}.");
-                if (group.Select(static x => (x.Detected, x.DiagnosticCode)).Distinct().Count() != 1)
+                if (group.Select(static x => (x.Detected, x.DiagnosticCode, x.Boundary)).Distinct().Count() != 1)
                     throw new InvalidOperationException($"Flaky classification for {mutation.Id}/{mode}.");
             }
+        }
+
+        foreach (var group in results
+                     .Where(static x => x.StudySet is "primary" or "challenge")
+                     .GroupBy(static x => (x.StudySet, x.OperatorId, x.Mode)))
+        {
+            if (group.Select(static x => x.Detected).Distinct().Count() != 1)
+                throw new InvalidOperationException($"Operator shape {group.Key} has inconsistent instance classifications.");
         }
     }
 
     private static IReadOnlyList<ResultRecord> RunCleanCorpus(string commit)
     {
         var records = new List<ResultRecord>();
-        for (var sample = 1; sample <= 100; sample++)
+        var families = new (string Name, Func<int, ExperimentMode, ExperimentOutcome> Execute)[]
         {
-            foreach (var mode in Enum.GetValues<ExperimentMode>())
+            ("clean-ownership", RunCleanOwnership),
+            ("clean-bytecode", RunCleanBytecode),
+            ("clean-facts", RunCleanFacts),
+            ("clean-air", RunCleanAir),
+            ("clean-capability", RunCleanCapability)
+        };
+
+        foreach (var family in families)
+        {
+            for (var sample = 1; sample <= 20; sample++)
             {
-                var outcome = Timed("clean", () =>
+                foreach (var mode in Enum.GetValues<ExperimentMode>())
                 {
-                    var module = new ModuleId($"experiment.clean.{sample}");
-                    var fact = new CompilerFactId($"experiment.clean.{sample}.fact");
-                    var table = new ModuleContractTableBuilder()
-                        .AddFacet(new CompilerFactOwnershipFacet(module, [new CompilerFactOwnershipContract(fact, module)]))
-                        .AddFacet(new PipelineEffectFacet(module, [new PipelineEffectContract(new CompilerEffectId($"experiment.clean.{sample}.effect"), CompilerPipelineStage.Air, [], [fact], [], [])]))
-                        .Build();
-                    if (table.Diagnostics.Count != 0)
-                        return (true, table.Diagnostics[0].Code);
-                    if (mode == ExperimentMode.B0)
-                        return (false, (string?)null);
-                    var validation = new PipelineEffectVerifier().Validate(new PipelineEffectValidationRequest(table, CompilerPipelineStage.Air, CompilerFactState.Empty, CompilerFactVerifierRegistry.Core, [module]));
-                    return (validation.Diagnostics.Count != 0 || (mode == ExperimentMode.B2 && validation.ReverificationRequests.Count != 0), validation.Diagnostics.FirstOrDefault()?.Code);
-                });
-                records.Add(new ResultRecord(commit, $"CLEAN-{sample:000}", "clean", mode.ToString(), 1, outcome.Detected, outcome.DiagnosticCode, outcome.Boundary, outcome.ElapsedTicks));
+                    var outcome = family.Execute(sample, mode);
+                    records.Add(new ResultRecord(
+                        commit,
+                        $"CLEAN-{family.Name[6..].ToUpperInvariant()}-{sample:00}",
+                        $"CLEAN-{family.Name[6..].ToUpperInvariant()}-{sample:00}",
+                        "control",
+                        family.Name,
+                        mode.ToString(),
+                        1,
+                        outcome.Detected,
+                        outcome.DiagnosticCode,
+                        outcome.Boundary,
+                        outcome.ElapsedTicks));
+                }
             }
         }
+
         return records;
     }
+
+    private static ExperimentOutcome RunCleanOwnership(int sample, ExperimentMode mode) =>
+        Timed("clean-ownership", () =>
+        {
+            if (mode == ExperimentMode.B0)
+                return (false, (string?)null);
+            var module = new ModuleId($"experiment.clean.ownership.{sample}");
+            var node = new AstNodeKind($"experiment.clean.ownership.{sample}.node");
+            var table = new ModuleContractTableBuilder()
+                .AddFacet(AstFacet(module, node.Value))
+                .Build();
+            var diagnostics = AstOwnershipRegistry.FromTable(table)
+                .ValidateLowerer(new ChallengeLowerer(module, node));
+            return (diagnostics.Count != 0, diagnostics.FirstOrDefault()?.Code);
+        });
+
+    private static ExperimentOutcome RunCleanBytecode(int sample, ExperimentMode mode) =>
+        Timed("clean-bytecode", () =>
+        {
+            if (mode == ExperimentMode.B0)
+                return (false, (string?)null);
+            var module = new ModuleId($"experiment.clean.bytecode.{sample}");
+            var node = new AstNodeKind($"experiment.clean.bytecode.{sample}.node");
+            var pattern = new BytecodePatternId($"experiment.clean.bytecode.{sample}.pattern");
+            var tag = new BytecodeTagId($"experiment.clean.bytecode.{sample}.tag");
+            var table = new ModuleContractTableBuilder()
+                .AddFacet(new BytecodeContractFacet(
+                    module,
+                    [new BytecodeEmissionContract(node, [tag], [pattern], StackEffect.Unknown, SideEffectPolicy.Pure)]))
+                .Build();
+            var instruction = new BytecodeInstruction(new AbstractMethodImpl("clean-bytecode", (_, _) => { }))
+                .WithContract(module, node, pattern, tag);
+            var bytecode = new Bytecode([instruction]);
+            var metadata = BytecodeContractMetadata.Validate(instruction);
+            if (metadata.Count != 0)
+                return (true, metadata[0].Code);
+            var observed = new BytecodeObservedEmissionReader().Read(bytecode);
+            var verification = new BytecodeVerifier().Verify(new BytecodeVerificationRequest(
+                bytecode,
+                table,
+                VerificationSeverityProfile.Strict,
+                observed,
+                false));
+            return (verification.Diagnostics.Count != 0, verification.Diagnostics.FirstOrDefault()?.Code);
+        });
+
+    private static ExperimentOutcome RunCleanFacts(int sample, ExperimentMode mode) =>
+        Timed("clean-facts", () =>
+        {
+            if (mode == ExperimentMode.B0)
+                return (false, (string?)null);
+            var module = new ModuleId($"experiment.clean.facts.{sample}");
+            var fact = new CompilerFactId($"experiment.clean.facts.{sample}.fact");
+            var table = new ModuleContractTableBuilder()
+                .AddFacet(new CompilerFactOwnershipFacet(module, [new CompilerFactOwnershipContract(fact, module)]))
+                .AddFacet(new PipelineEffectFacet(
+                    module,
+                    [new PipelineEffectContract(
+                        new CompilerEffectId($"experiment.clean.facts.{sample}.effect"),
+                        CompilerPipelineStage.Air,
+                        [],
+                        [fact],
+                        [],
+                        [])]))
+                .Build();
+            if (table.Diagnostics.Count != 0)
+                return (true, table.Diagnostics[0].Code);
+            var validation = new PipelineEffectVerifier().Validate(new PipelineEffectValidationRequest(
+                table,
+                CompilerPipelineStage.Air,
+                CompilerFactState.Empty,
+                CompilerFactVerifierRegistry.Core,
+                [module]));
+            var detected = validation.Diagnostics.Count != 0 ||
+                           (mode == ExperimentMode.B2 && validation.ReverificationRequests.Count != 0);
+            return (detected, validation.Diagnostics.FirstOrDefault()?.Code);
+        });
+
+    private static ExperimentOutcome RunCleanAir(int sample, ExperimentMode mode) =>
+        Timed("clean-air", () =>
+        {
+            var table = CleanCapabilityTable($"clean-air-{sample}");
+            var selection = BackendCapabilitySelection.FromContracts(
+                table,
+                [new BackendCapabilityId($"experiment.clean-air-{sample}.cap")]);
+            var air = new AbstractIR();
+            air.Push(sample);
+            var result = new AirVerifier().Verify(new AirVerificationRequest(
+                air,
+                table,
+                selection,
+                VerificationSeverityProfile.Strict));
+            return (result.Diagnostics.Count != 0, result.Diagnostics.FirstOrDefault()?.Code);
+        });
+
+    private static ExperimentOutcome RunCleanCapability(int sample, ExperimentMode mode) =>
+        Timed("clean-capability", () =>
+        {
+            var module = new ModuleId($"experiment.clean.capability.{sample}");
+            var capability = new BackendCapabilityId($"experiment.clean.capability.{sample}.cap");
+            var intrinsic = new IntrinsicSymbolId("load_i32");
+            var table = new ModuleContractTableBuilder()
+                .AddFacet(new AirContractFacet(
+                    module,
+                    [new AirEmissionContract(
+                        new BytecodePatternId($"experiment.clean.capability.{sample}.source"),
+                        [new AirPatternId($"experiment.clean.capability.{sample}.pattern")],
+                        [intrinsic],
+                        [capability])]))
+                .AddFacet(new BackendCapabilityFacet(
+                    module,
+                    [new BackendCapabilityContract(capability, [intrinsic])]))
+                .Build();
+            var selection = new BackendCapabilitySelection([capability], [intrinsic]);
+            var air = new AbstractIR();
+            air.AppendInstructions([
+                new Instruction(
+                    UOpCode.Intrinsic,
+                    [IntrinsicInvocationFactory.ForCapability(intrinsic.Value, [sample])])
+            ]);
+            var result = new AirVerifier().Verify(new AirVerificationRequest(
+                air,
+                table,
+                selection,
+                VerificationSeverityProfile.Strict));
+            return (result.Diagnostics.Count != 0, result.Diagnostics.FirstOrDefault()?.Code);
+        });
 
     private sealed record PerformanceSummary(
         int Samples,
@@ -477,7 +826,7 @@ internal static class Program
 
     private static PerformanceSummary MeasurePerformance()
     {
-        const int samples = 31;
+        const int samples = 33;
         const int iterations = 2_000;
         var measurements = Enum.GetNames<ExperimentMode>()
             .ToDictionary(static mode => mode, static _ => new List<double>());
@@ -505,9 +854,16 @@ internal static class Program
             _ = effectVerifier.Validate(effectRequest);
         }
 
+        var counterbalancedOrders = new[]
+        {
+            new[] { ExperimentMode.B0, ExperimentMode.B1, ExperimentMode.B2 },
+            new[] { ExperimentMode.B1, ExperimentMode.B2, ExperimentMode.B0 },
+            new[] { ExperimentMode.B2, ExperimentMode.B0, ExperimentMode.B1 }
+        };
+
         for (var sample = 0; sample < samples; sample++)
         {
-            foreach (var mode in Enum.GetValues<ExperimentMode>())
+            foreach (var mode in counterbalancedOrders[sample % counterbalancedOrders.Length])
             {
                 var stopwatch = Stopwatch.StartNew();
                 for (var iteration = 0; iteration < iterations; iteration++)
@@ -547,43 +903,90 @@ internal static class Program
 
     private static object BuildSummary(IReadOnlyList<ResultRecord> allResults, PerformanceSummary performance)
     {
-        var mutationResults = allResults.Where(static x => !x.MutationId.StartsWith("CLEAN-", StringComparison.Ordinal)).ToArray();
-        var cleanResults = allResults.Where(static x => x.MutationId.StartsWith("CLEAN-", StringComparison.Ordinal)).ToArray();
-        var stable = mutationResults.GroupBy(static x => (x.MutationId, x.Mode)).Select(static g => g.First()).ToArray();
-        var byMode = stable.GroupBy(static x => x.Mode).ToDictionary(
+        var stable = allResults
+            .Where(static x => x.StudySet is "primary" or "challenge")
+            .GroupBy(static x => (x.MutationId, x.Mode))
+            .Select(static g => g.First())
+            .ToArray();
+        var controls = allResults.Where(static x => x.StudySet == "control").ToArray();
+
+        static object SummarizeSet(IReadOnlyList<ResultRecord> rows)
+        {
+            var operatorRows = rows
+                .GroupBy(static x => (x.OperatorId, x.Mode))
+                .Select(static g => g.First())
+                .ToArray();
+            var byMode = operatorRows.GroupBy(static x => x.Mode).ToDictionary(
+                static g => g.Key,
+                static g => new
+                {
+                    Operators = g.Count(),
+                    Detected = g.Count(static x => x.Detected),
+                    Localized = g.Count(static x => x.Detected && x.DiagnosticCode != null)
+                });
+            var byFamily = operatorRows
+                .GroupBy(static x => (x.Family, x.Mode))
+                .OrderBy(static g => g.Key.Family)
+                .ThenBy(static g => g.Key.Mode)
+                .Select(static g => new
+                {
+                    g.Key.Family,
+                    g.Key.Mode,
+                    Operators = g.Count(),
+                    Detected = g.Count(static x => x.Detected)
+                })
+                .ToArray();
+            return new
+            {
+                InstanceCount = rows.Select(static x => x.MutationId).Distinct().Count(),
+                OperatorCount = operatorRows.Select(static x => x.OperatorId).Distinct().Count(),
+                FamilyCount = operatorRows.Select(static x => x.Family).Distinct().Count(),
+                ByMode = byMode,
+                ByFamily = byFamily
+            };
+        }
+
+        var primary = stable.Where(static x => x.StudySet == "primary").ToArray();
+        var challenge = stable.Where(static x => x.StudySet == "challenge").ToArray();
+        var cleanByMode = controls.GroupBy(static x => x.Mode).ToDictionary(
             static g => g.Key,
             static g => new
             {
-                Mutations = g.Count(),
-                Detected = g.Count(static x => x.Detected),
-                Localized = g.Count(static x => x.Detected && x.DiagnosticCode != null)
+                Runs = g.Count(),
+                FalsePositives = g.Count(static x => x.Detected),
+                Families = g.Select(static x => x.Family).Distinct().Count()
             });
-        var byFamily = stable.GroupBy(static x => (x.Family, x.Mode)).OrderBy(static g => g.Key.Family).ThenBy(static g => g.Key.Mode).Select(static g => new
-        {
-            g.Key.Family,
-            g.Key.Mode,
-            Mutations = g.Count(),
-            Detected = g.Count(static x => x.Detected)
-        }).ToArray();
-        var cleanByMode = cleanResults.GroupBy(static x => x.Mode).ToDictionary(
-            static g => g.Key,
-            static g => new { Runs = g.Count(), FalsePositives = g.Count(static x => x.Detected) });
+        var cleanByFamily = controls
+            .GroupBy(static x => (x.Family, x.Mode))
+            .OrderBy(static g => g.Key.Family)
+            .ThenBy(static g => g.Key.Mode)
+            .Select(static g => new
+            {
+                g.Key.Family,
+                g.Key.Mode,
+                Runs = g.Count(),
+                FalsePositives = g.Count(static x => x.Detected)
+            })
+            .ToArray();
+
         return new
         {
-            MutationCount = stable.Select(static x => x.MutationId).Distinct().Count(),
-            FamilyCount = stable.Select(static x => x.Family).Distinct().Count(),
             Repetitions,
-            ByMode = byMode,
-            ByFamily = byFamily,
+            Primary = SummarizeSet(primary),
+            Challenge = SummarizeSet(challenge),
             Clean = cleanByMode,
+            CleanByFamily = cleanByFamily,
             Performance = performance
         };
     }
 
     private static string BuildMutationCatalog(IEnumerable<MutationCase> cases)
     {
-        var lines = new List<string> { "mutation_id,family,expected_diagnostic" };
-        lines.AddRange(cases.OrderBy(static x => x.Id, StringComparer.Ordinal).Select(static x => $"{x.Id},{x.Family},{x.ExpectedCode}"));
+        var lines = new List<string> { "study_set,mutation_id,operator_id,family,expected_diagnostic" };
+        lines.AddRange(cases
+            .OrderBy(static x => x.StudySet, StringComparer.Ordinal)
+            .ThenBy(static x => x.Id, StringComparer.Ordinal)
+            .Select(static x => $"{x.StudySet},{x.Id},{x.OperatorId},{x.Family},{x.ExpectedCode}"));
         return string.Join(Environment.NewLine, lines) + Environment.NewLine;
     }
 }
