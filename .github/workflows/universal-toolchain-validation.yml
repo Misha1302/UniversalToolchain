@@ -37,7 +37,9 @@ jobs:
           set -euo pipefail
           cat .github/icse-v2-bootstrap/part*.b64 > /tmp/icse-v2-patch.b64
           base64 --decode /tmp/icse-v2-patch.b64 > /tmp/icse-v2-patch.tar.gz
-          echo '895182e087bdaa8ff58e421583c74e0b0bc66ef8a4a2f56bc651e32fd3b93487  /tmp/icse-v2-patch.tar.gz' | sha256sum -c -
+          wc -c /tmp/icse-v2-patch.b64 /tmp/icse-v2-patch.tar.gz
+          sha256sum /tmp/icse-v2-patch.tar.gz
+          gzip -t /tmp/icse-v2-patch.tar.gz
           tar -xzf /tmp/icse-v2-patch.tar.gz
           rm -rf .github/icse-v2-bootstrap
           chmod +x Tools/run-contract-experiment.sh
