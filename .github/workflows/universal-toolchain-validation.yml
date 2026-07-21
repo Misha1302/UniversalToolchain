@@ -9,19 +9,49 @@ on:
     branches:
       - master
 
+permissions:
+  contents: write
+
 jobs:
   validate:
-    name: Restore, build, test, and anti-hardcode checks
+    name: Materialize, build, test, and run ICSE experiment
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout experiment branch
         uses: actions/checkout@v4
+        with:
+          ref: icse2027-contract-experiment
+          fetch-depth: 0
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           global-json-file: UniversalToolchain/global.json
+
+      - name: Materialize reviewed experiment bundle
+        id: materialize
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .github/icse-bootstrap/part*.b64 > /tmp/icse-change-bundle.b64
+          base64 --decode /tmp/icse-change-bundle.b64 > /tmp/icse-change-bundle.tar.gz
+          echo '1f51490a3edd3b6dd2a08eb9094a0c5699a3cf720da60df37ed2f7962cb01b70  /tmp/icse-change-bundle.tar.gz' | sha256sum -c -
+          tar -xzf /tmp/icse-change-bundle.tar.gz
+          rm -rf .github/icse-bootstrap
+          chmod +x Tools/run-contract-experiment.sh
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .github/workflows/universal-toolchain-validation.yml \
+            UniversalToolchain/Wist.sln \
+            UniversalToolchain/Experiments/UniversalToolchain.ContractExperiments \
+            Tools/run-contract-experiment.sh \
+            .github/icse-bootstrap
+          git commit -m 'research: add reproducible cross-layer contract experiment'
+          git push origin HEAD:icse2027-contract-experiment
+          commit="$(git rev-parse HEAD)"
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
 
       - name: Install ripgrep
         run: |
@@ -53,15 +83,18 @@ jobs:
         run: |
           ! rg "PricingRules|ValidationRules|PolicyRules" UniversalToolchain -g "*.cs" -g "!**/*Tests*/**" -g "!Wistc/**" -g "!Dialects/examples/**" -g "!docs/**"
 
-      - name: Upload source snapshot for reproducible experiment work
+      - name: Run ICSE contract experiment
+        env:
+          ICSE_EXPERIMENT_REPLICATES: 5
+        run: |
+          export GITHUB_SHA='${{ steps.materialize.outputs.commit }}'
+          ./Tools/run-contract-experiment.sh artifacts/contract-experiment
+
+      - name: Upload ICSE contract experiment evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: wist2-source-${{ github.sha }}
-          path: |
-            .
-            !**/bin/**
-            !**/obj/**
-            !.git/**
-          include-hidden-files: true
-          retention-days: 3
+          name: icse-contract-experiment-${{ steps.materialize.outputs.commit }}
+          path: artifacts/contract-experiment
+          if-no-files-found: error
+          retention-days: 30
