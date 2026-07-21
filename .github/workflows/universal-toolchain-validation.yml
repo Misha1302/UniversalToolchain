@@ -10,20 +10,84 @@ on:
       - master
 
 jobs:
-  export-source:
-    name: Export current experiment source
+  validate:
+    name: Build, test, guard, and measure contract experiment
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Upload source snapshot
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: UniversalToolchain/global.json
+
+      - name: Install ripgrep
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ripgrep
+
+      - name: Capture environment and canonical build/test log
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/ci-evidence
+          git rev-parse HEAD > artifacts/ci-evidence/commit.txt
+          git status --porcelain=v1 > artifacts/ci-evidence/git-status.txt
+          dotnet --info > artifacts/ci-evidence/dotnet-info.txt
+          uname -a > artifacts/ci-evidence/uname.txt
+          ./build.sh --skip-docs --skip-pack 2>&1 | tee artifacts/ci-evidence/build-test.log
+
+      - name: BasicCore must not depend on high-level layers or concrete feature modules
+        run: |
+          ! rg "UniversalToolchain\.Rules|UniversalToolchain\.Dialects\.Wist|SafeMathFunctionsModule|ConditionsModule" UniversalToolchain/BasicCore -g "*.cs" -g "*.csproj"
+
+      - name: Wist layer must not know SafeMath implementation
+        run: |
+          ! rg "SafeMathFunctionsModule|typeof\(SafeMathFunctions\)|nameof\(SafeMathFunctions" UniversalToolchain/UniversalToolchain.Dialects.Wist -g "*.cs"
+
+      - name: Parser and resolver must not hardcode SafeMath function names
+        run: |
+          ! rg '"clamp"|"min"|"max"|"abs"' UniversalToolchain -g "*.cs" -g "!**/SafeMathFunctionsModule/**" -g "!**/*Tests*/**" -g "!**/docs/**"
+
+      - name: IfExpression must not hardcode external module implementation details
+        run: |
+          ! rg "\b(RealNumberImpl|Addition|Multiplication|GreaterOrEqual|LessOrEqual)\b|NumbersModule\.Core" \
+            UniversalToolchain/ConditionsModule \
+            -g "*IfExpression*.cs"
+
+      - name: Framework must not branch on product profile names
+        run: |
+          ! rg "PricingRules|ValidationRules|PolicyRules" UniversalToolchain -g "*.cs" -g "!**/*Tests*/**" -g "!Wistc/**" -g "!Dialects/examples/**" -g "!docs/**"
+
+      - name: Run ICSE contract experiment
+        env:
+          ICSE_EXPERIMENT_REPLICATES: 5
+        run: ./Tools/run-contract-experiment.sh artifacts/contract-experiment
+
+      - name: Seal complete evidence package
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -d artifacts/contract-experiment ]]; then
+            mkdir -p artifacts/contract-experiment/ci
+            cp -a artifacts/ci-evidence/. artifacts/contract-experiment/ci/
+            (
+              cd artifacts/contract-experiment
+              find . -type f ! -name MANIFEST.sha256 -print0 \
+                | sort -z \
+                | xargs -0 sha256sum > MANIFEST.sha256
+              sha256sum -c MANIFEST.sha256
+            )
+          fi
+
+      - name: Upload ICSE contract experiment evidence
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: current-experiment-source-${{ github.sha }}
-          path: |
-            .
-            !**/bin/**
-            !**/obj/**
-            !.git/**
-          include-hidden-files: true
-          retention-days: 3
+          name: icse-contract-experiment-${{ github.sha }}
+          path: artifacts/contract-experiment
+          if-no-files-found: error
+          retention-days: 30
