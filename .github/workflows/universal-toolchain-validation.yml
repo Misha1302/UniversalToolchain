@@ -9,79 +9,21 @@ on:
     branches:
       - master
 
-permissions:
-  contents: write
-
 jobs:
   validate:
-    name: Materialize v2 study, build, test, guard, and measure
+    name: Build, test, guard, and measure contract experiment
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout experiment branch
+      - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: icse2027-contract-experiment
-          fetch-depth: 0
           show-progress: false
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           global-json-file: UniversalToolchain/global.json
-
-      - name: Materialize reviewed v2 experiment bundle
-        id: materialize
-        shell: bash
-        run: |
-          set -u
-          mkdir -p artifacts/bootstrap-diagnostics
-          cat .github/icse-v2-bootstrap/part*.b64 > /tmp/icse-v2-patch.b64
-          wc -c /tmp/icse-v2-patch.b64 | tee artifacts/bootstrap-diagnostics/base64-size.txt
-          sha256sum /tmp/icse-v2-patch.b64 | tee artifacts/bootstrap-diagnostics/base64-sha256.txt
-
-          set +e
-          base64 --decode /tmp/icse-v2-patch.b64 > /tmp/icse-v2-patch.tar.gz 2> artifacts/bootstrap-diagnostics/base64-decode.stderr
-          decode_status=$?
-          echo "$decode_status" > artifacts/bootstrap-diagnostics/base64-decode.status
-          wc -c /tmp/icse-v2-patch.tar.gz > artifacts/bootstrap-diagnostics/tar-size.txt
-          sha256sum /tmp/icse-v2-patch.tar.gz > artifacts/bootstrap-diagnostics/tar-sha256.txt
-          gzip -t /tmp/icse-v2-patch.tar.gz 2> artifacts/bootstrap-diagnostics/gzip-test.stderr
-          gzip_status=$?
-          echo "$gzip_status" > artifacts/bootstrap-diagnostics/gzip-test.status
-          tar -tzf /tmp/icse-v2-patch.tar.gz > artifacts/bootstrap-diagnostics/tar-list.txt 2> artifacts/bootstrap-diagnostics/tar-list.stderr
-          tar_status=$?
-          echo "$tar_status" > artifacts/bootstrap-diagnostics/tar-list.status
-          set -e
-
-          if [[ "$decode_status" -ne 0 || "$gzip_status" -ne 0 || "$tar_status" -ne 0 ]]; then
-            echo "Bootstrap archive validation failed: decode=$decode_status gzip=$gzip_status tar=$tar_status" | tee artifacts/bootstrap-diagnostics/failure.txt
-            exit 1
-          fi
-
-          tar -xzf /tmp/icse-v2-patch.tar.gz
-          git checkout HEAD -- .github/workflows/universal-toolchain-validation.yml
-          rm -rf .github/icse-v2-bootstrap
-          chmod +x Tools/run-contract-experiment.sh
-
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
-          git status --short | tee artifacts/bootstrap-diagnostics/git-status-before-commit.txt
-          git commit -m 'research: strengthen contract study with challenge operators and stratified controls' 2>&1 | tee artifacts/bootstrap-diagnostics/git-commit.log
-          commit_status=${PIPESTATUS[0]}
-          if [[ "$commit_status" -ne 0 ]]; then
-            echo "$commit_status" > artifacts/bootstrap-diagnostics/git-commit.status
-            exit "$commit_status"
-          fi
-          git push origin HEAD:icse2027-contract-experiment 2>&1 | tee artifacts/bootstrap-diagnostics/git-push.log
-          push_status=${PIPESTATUS[0]}
-          echo "$push_status" > artifacts/bootstrap-diagnostics/git-push.status
-          if [[ "$push_status" -ne 0 ]]; then
-            exit "$push_status"
-          fi
-          commit="$(git rev-parse HEAD)"
-          echo "commit=$commit" >> "$GITHUB_OUTPUT"
 
       - name: Install ripgrep
         run: |
@@ -125,9 +67,7 @@ jobs:
         env:
           ICSE_EXPERIMENT_REPLICATES: 5
           ICSE_CI_EVIDENCE_DIR: artifacts/ci-evidence
-        run: |
-          export GITHUB_SHA='${{ steps.materialize.outputs.commit }}'
-          ./Tools/run-contract-experiment.sh artifacts/contract-experiment
+        run: ./Tools/run-contract-experiment.sh artifacts/contract-experiment
 
       - name: Seal complete evidence package
         if: always()
@@ -150,9 +90,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: icse-contract-experiment-${{ steps.materialize.outputs.commit || github.sha }}
-          path: |
-            artifacts/contract-experiment
-            artifacts/bootstrap-diagnostics
+          name: icse-contract-experiment-${{ github.sha }}
+          path: artifacts/contract-experiment
           if-no-files-found: error
           retention-days: 90
