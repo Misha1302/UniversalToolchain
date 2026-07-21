@@ -52,3 +52,16 @@ jobs:
       - name: Framework must not branch on product profile names
         run: |
           ! rg "PricingRules|ValidationRules|PolicyRules" UniversalToolchain -g "*.cs" -g "!**/*Tests*/**" -g "!Wistc/**" -g "!Dialects/examples/**" -g "!docs/**"
+
+      - name: Upload source snapshot for reproducible experiment work
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wist2-source-${{ github.sha }}
+          path: |
+            .
+            !**/bin/**
+            !**/obj/**
+            !.git/**
+          include-hidden-files: true
+          retention-days: 3
