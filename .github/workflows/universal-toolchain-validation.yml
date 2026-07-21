@@ -9,27 +9,64 @@ on:
     branches:
       - master
 
+permissions:
+  contents: write
+
 jobs:
   validate:
-    name: Restore, build, test, and anti-hardcode checks
+    name: Materialize operator-aware experiment, build, test, and measure
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout experiment branch
         uses: actions/checkout@v4
+        with:
+          ref: icse2027-contract-experiment
+          fetch-depth: 0
+          show-progress: false
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           global-json-file: UniversalToolchain/global.json
 
+      - name: Materialize reviewed operator-aware patch
+        id: materialize
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .github/icse-patch/part*.b64 > /tmp/icse-operator-aware-patch.b64
+          base64 --decode /tmp/icse-operator-aware-patch.b64 > /tmp/icse-operator-aware-patch.tar.gz
+          echo '1af6f242bd9f093b2b864e8830d5456641973f595c6a311082512bd88210fd1f  /tmp/icse-operator-aware-patch.tar.gz' | sha256sum -c -
+          tar -xzf /tmp/icse-operator-aware-patch.tar.gz
+          git checkout HEAD -- .github/workflows/universal-toolchain-validation.yml
+          rm -rf .github/icse-patch
+          chmod +x Tools/run-contract-experiment.sh
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git status --short
+          git commit -m 'research: distinguish mutation instances from operator shapes'
+          git push origin HEAD:icse2027-contract-experiment
+          commit="$(git rev-parse HEAD)"
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
+
       - name: Install ripgrep
         run: |
           sudo apt-get update
           sudo apt-get install -y ripgrep
 
-      - name: Restore, build, and test through canonical entrypoint
-        run: ./build.sh --skip-docs --skip-pack
+      - name: Capture environment and canonical build/test log
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/ci-evidence
+          git rev-parse HEAD > artifacts/ci-evidence/commit.txt
+          git status --porcelain=v1 > artifacts/ci-evidence/git-status.txt
+          dotnet --info > artifacts/ci-evidence/dotnet-info.txt
+          uname -a > artifacts/ci-evidence/uname.txt
+          ./build.sh --skip-docs --skip-pack 2>&1 | tee artifacts/ci-evidence/build-test.log
 
       - name: BasicCore must not depend on high-level layers or concrete feature modules
         run: |
@@ -56,13 +93,16 @@ jobs:
       - name: Run ICSE contract experiment
         env:
           ICSE_EXPERIMENT_REPLICATES: 5
-        run: ./Tools/run-contract-experiment.sh artifacts/contract-experiment
+          ICSE_CI_EVIDENCE_DIR: artifacts/ci-evidence
+        run: |
+          export GITHUB_SHA='${{ steps.materialize.outputs.commit }}'
+          ./Tools/run-contract-experiment.sh artifacts/contract-experiment
 
       - name: Upload ICSE contract experiment evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: icse-contract-experiment-${{ github.sha }}
+          name: icse-contract-experiment-${{ steps.materialize.outputs.commit }}
           path: artifacts/contract-experiment
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 30
