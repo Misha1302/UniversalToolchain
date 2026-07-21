@@ -60,6 +60,7 @@ jobs:
           fi
 
           tar -xzf /tmp/icse-v2-patch.tar.gz
+          git checkout HEAD -- .github/workflows/universal-toolchain-validation.yml
           rm -rf .github/icse-v2-bootstrap
           chmod +x Tools/run-contract-experiment.sh
 
