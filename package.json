@@ -4,7 +4,9 @@
     "docs:dev": "vitepress dev docs --host 0.0.0.0",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs --host 0.0.0.0",
-    "docs:status": "python3 Tools/check_documentation_status.py"
+    "docs:status": "python3 Tools/check_documentation_status.py",
+    "docs:links": "python3 Tools/check_documentation_links.py",
+    "docs:check": "npm run docs:status && npm run docs:links && npm run docs:build"
   },
   "devDependencies": {
     "vitepress": "1.6.4"

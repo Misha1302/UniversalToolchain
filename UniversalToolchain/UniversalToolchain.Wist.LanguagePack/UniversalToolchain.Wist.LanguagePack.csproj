@@ -1,0 +1,68 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>14</LangVersion>
+    <IsPackable>true</IsPackable>
+    <PackageId>UniversalToolchain.Wist.LanguagePack</PackageId>
+    <Version>0.3.0-alpha.1</Version>
+    <Description>Wist contribution pack and legacy-dialect runtime adapter for the external UniversalToolchain Language SDK.</Description>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeToolchainFeatureManifest</TargetsForTfmSpecificContentInPackage>
+  </PropertyGroup>
+  <ItemGroup>
+    <AssemblyMetadata Include="UniversalToolchain.PackageVersion" Value="$(Version)" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\UniversalToolchain.FeatureSdk\UniversalToolchain.FeatureSdk.csproj" />
+    <ProjectReference Include="..\UniversalToolchain.Runtime\UniversalToolchain.Runtime.csproj" />
+    <ProjectReference Include="..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\UniversalToolchain.FeatureManifestEmitter\UniversalToolchain.FeatureManifestEmitter.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+    <ProjectReference Include="..\UniversalToolchain.Wist\UniversalToolchain.Wist.csproj" />
+  </ItemGroup>
+  <Target Name="EmitToolchainFeatureManifest" AfterTargets="Build" Condition="'$(DesignTimeBuild)' != 'true'">
+    <PropertyGroup>
+      <ToolchainFeatureManifestPath>$(TargetDir)$(AssemblyName).toolchain.feature.json</ToolchainFeatureManifestPath>
+      <FeatureEmitterPath>$(MSBuildThisFileDirectory)..\UniversalToolchain.FeatureManifestEmitter\$(OutputPath)UniversalToolchain.FeatureManifestEmitter.dll</FeatureEmitterPath>
+    </PropertyGroup>
+    <Exec Command="&quot;$(DOTNET_HOST_PATH)&quot; &quot;$(FeatureEmitterPath)&quot; &quot;$(TargetPath)&quot; &quot;$(ToolchainFeatureManifestPath)&quot;" />
+  </Target>
+  <Target Name="ExposeWistRuntimeClosureToProjectReferences" BeforeTargets="_GetCopyToOutputDirectoryItemsFromThisProject">
+    <PropertyGroup>
+      <WistRuntimeOutputDirectory>$(MSBuildThisFileDirectory)..\UniversalToolchain.Wist\$(OutputPath)</WistRuntimeOutputDirectory>
+    </PropertyGroup>
+    <ItemGroup>
+      <WistRuntimeFileForCopy Include="$(WistRuntimeOutputDirectory)*.dll;$(WistRuntimeOutputDirectory)*.dialect.runtime.json">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </WistRuntimeFileForCopy>
+    </ItemGroup>
+    <AssignTargetPath Files="@(WistRuntimeFileForCopy)" RootFolder="$(WistRuntimeOutputDirectory)">
+      <Output TaskParameter="AssignedFiles" ItemName="ContentWithTargetPath" />
+    </AssignTargetPath>
+  </Target>
+  <Target Name="CollectWistRuntimeManifests" AfterTargets="Build">
+    <ItemGroup>
+      <WistRuntimeManifest Include="$(MSBuildThisFileDirectory)..\UniversalToolchain.Wist\$(OutputPath)*.dialect.runtime.json" />
+    </ItemGroup>
+    <Error Condition="'@(WistRuntimeManifest)' == ''" Text="The Wist runtime manifest closure was not produced before the language pack build." />
+    <Copy SourceFiles="@(WistRuntimeManifest)" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
+  </Target>
+  <Target Name="IncludeToolchainFeatureManifest" DependsOnTargets="EmitToolchainFeatureManifest;CollectWistRuntimeManifests">
+    <ItemGroup>
+      <TfmSpecificPackageFile Include="$(ToolchainFeatureManifestPath)">
+        <PackagePath>contentFiles/any/$(TargetFramework)</PackagePath>
+        <BuildAction>Content</BuildAction>
+        <PackageCopyToOutput>true</PackageCopyToOutput>
+        <PackageFlatten>true</PackageFlatten>
+      </TfmSpecificPackageFile>
+      <TfmSpecificPackageFile Include="$(TargetDir)*.dialect.runtime.json">
+        <PackagePath>contentFiles/any/$(TargetFramework)</PackagePath>
+        <BuildAction>Content</BuildAction>
+        <PackageCopyToOutput>true</PackageCopyToOutput>
+        <PackageFlatten>true</PackageFlatten>
+      </TfmSpecificPackageFile>
+    </ItemGroup>
+  </Target>
+</Project>

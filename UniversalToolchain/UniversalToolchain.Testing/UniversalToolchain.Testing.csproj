@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>14</LangVersion>
+    <IsPackable>true</IsPackable>
+    <PackageId>UniversalToolchain.Testing</PackageId>
+    <Version>0.3.0-alpha.1</Version>
+    <Description>Framework-neutral contract and backend parity helpers for UniversalToolchain languages.</Description>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\UniversalToolchain.Runtime\UniversalToolchain.Runtime.csproj" />
+  </ItemGroup>
+</Project>

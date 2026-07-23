@@ -7,7 +7,7 @@ description: Make module ownership and extension contracts visible in the public
 
 This page summarizes the contracts module authors must preserve when adding or changing Wist/UniversalToolchain language features.
 
-For the full source document, see `docs/contracts/module-contracts.md`. This reference page exists because these contracts are part of the public module-authoring route, not hidden project notes.
+This page is the canonical public contract for Wist compiler-module authors. Repository-only architecture and coding policies live under `internal-docs/policies-and-reports/`.
 
 ## Why this page exists
 

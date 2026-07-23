@@ -7,7 +7,7 @@ description: Summarize documentation synchronization and executable example rule
 
 Markdown files in this repository are architectural source material, not optional notes.
 
-For the full source document, see `docs/DOCUMENTATION_RULES.md`. This page exposes the rules in the public documentation route so contributors can find them from the sidebar.
+This page is the canonical public summary. The repository-only agent/maintainer policy is `internal-docs/policies-and-reports/DOCUMENTATION_RULES.md`.
 
 ## Core rule
 
@@ -58,8 +58,8 @@ Current-state documents describe what the repository supports now.
 
 Future or historical documents may describe planned or removed behavior, but they must not contain executable `bash` blocks for commands that do not exist in the current branch.
 
-Use `docs/proposals/` for future designs and `docs/archive/` for historical
-context. Do not treat either location as current runtime truth unless a
+Use `internal-docs/proposals/` for future designs and `internal-docs/archive/` for historical
+context. These directories are repository-only and excluded from the public site. Do not treat either location as current runtime truth unless a
 current-state document and tests explicitly promote the behavior.
 
 ## Documentation authority and fitness

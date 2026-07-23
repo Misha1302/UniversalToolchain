@@ -30,13 +30,16 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$root"
 
 # Environment variables such as Docker's PLATFORM become global MSBuild properties.
-# They must not redirect outputs or invalidate solution platform mappings.
 unset PLATFORM || true
 export DOTNET_CLI_DO_NOT_USE_MSBUILD_SERVER=1
+export MSBUILDDISABLENODEREUSE=1
 
 dotnet_command="${DOTNET:-dotnet}"
 solution="UniversalToolchain/Wist.sln"
+test_manifest="eng/test-projects.txt"
+package_manifest="eng/package-projects.txt"
 markdown_sample_projects=(
+  samples/Acme.PricingLanguage/Acme.PricingLanguage.csproj
   samples/Wist.RolloutScoring/Wist.RolloutScoring.csproj
 )
 restore_source_args=()
@@ -44,8 +47,14 @@ if [[ -n "${NUGET_CONFIG:-}" ]]; then
   restore_source_args+=(--configfile "$NUGET_CONFIG")
 fi
 
+read_manifest() {
+  local path="$1"
+  sed -e 's/[[:space:]]*$//' -e '/^[[:space:]]*#/d' -e '/^[[:space:]]*$/d' "$path"
+}
+
 "$dotnet_command" restore "$solution" \
   --disable-parallel \
+  --disable-build-servers \
   "${restore_source_args[@]}" \
   -p:RestoreBuildInParallel=false \
   -p:UseSharedCompilation=false \
@@ -54,6 +63,7 @@ fi
 for sample_project in "${markdown_sample_projects[@]}"; do
   "$dotnet_command" restore "$sample_project" \
     --disable-parallel \
+    --disable-build-servers \
     "${restore_source_args[@]}" \
     -p:RestoreBuildInParallel=false \
     -p:UseSharedCompilation=false \
@@ -63,53 +73,79 @@ done
 "$dotnet_command" build "$solution" \
   -c "$configuration" \
   --no-restore \
+  --disable-build-servers \
   -m:1 \
   -p:BuildInParallel=false \
   -p:UseSharedCompilation=false \
   -p:NuGetAudit=false
 
-# The Markdown checker rewrites runnable `dotnet run --project` fences to
-# `--no-build --no-restore`. Keep their Release outputs owned by the canonical
-# build entrypoint instead of allowing documentation validation to perform an
-# implicit restore or build.
+# Runnable Markdown samples are built by the canonical entrypoint so docs checks
+# can execute with --no-build --no-restore.
 for sample_project in "${markdown_sample_projects[@]}"; do
   "$dotnet_command" build "$sample_project" \
     -c "$configuration" \
     --no-restore \
+    --disable-build-servers \
     -m:1 \
     -p:BuildInParallel=false \
     -p:UseSharedCompilation=false \
     -p:NuGetAudit=false
 done
 
-for test_project in \
-  UniversalToolchain/Tests/Tests.csproj \
-  UniversalToolchain/UniversalToolchain.Modules.Tests/UniversalToolchain.Modules.Tests.csproj \
-  UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolchain.Dialects.Tests.csproj; do
+mapfile -t test_projects < <(read_manifest "$test_manifest")
+if [[ "${#test_projects[@]}" -eq 0 ]]; then
+  echo "No test projects declared in $test_manifest" >&2
+  exit 1
+fi
+for test_project in "${test_projects[@]}"; do
   "$dotnet_command" test "$test_project" \
     -c "$configuration" \
     --no-build \
     --no-restore \
+    --disable-build-servers \
     -p:UseSharedCompilation=false \
     -p:NuGetAudit=false
- done
+done
 
 if [[ "$skip_pack" == false ]]; then
+  rm -rf artifacts/packages
   mkdir -p artifacts/packages
-  "$dotnet_command" pack \
-    UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj \
-    -c "$configuration" \
-    --no-restore \
-    -o artifacts/packages \
-    /p:WarningsAsErrors=NU5118 \
-    -p:UseSharedCompilation=false \
-    -p:NuGetAudit=false
-  python3 Tools/check-wist-package-surface.py artifacts/packages/*.nupkg
+  mapfile -t package_projects < <(read_manifest "$package_manifest")
+  if [[ "${#package_projects[@]}" -eq 0 ]]; then
+    echo "No package projects declared in $package_manifest" >&2
+    exit 1
+  fi
+  for package_project in "${package_projects[@]}"; do
+    "$dotnet_command" pack "$package_project" \
+      -c "$configuration" \
+      --no-restore \
+      --disable-build-servers \
+      -o artifacts/packages \
+      /p:WarningsAsErrors=NU5118 \
+      -p:UseSharedCompilation=false \
+      -p:NuGetAudit=false
+  done
+
+  python3 Tools/check-language-sdk-package-matrix.py \
+    --root "$root" \
+    --manifest "$package_manifest" \
+    --packages artifacts/packages
+
+  wist_version="$(sed -nE 's:.*<Version>([^<]+)</Version>.*:\1:p' UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj)"
+  test -n "$wist_version"
+  python3 Tools/check-wist-package-surface.py \
+    "artifacts/packages/UniversalToolchain.Wist.${wist_version}.nupkg"
+
+  python3 Tools/smoke-language-sdk-packages.py \
+    --root "$root" \
+    --packages artifacts/packages \
+    --dotnet "$dotnet_command"
 fi
 
 if [[ "$skip_docs" == false ]]; then
   npm ci --no-audit --no-fund
+  npm run docs:status
+  npm run docs:links
   npm run docs:build
-  python3 Tools/check_documentation_status.py
   python3 .github/scripts/run-markdown-bash-blocks.py
 fi

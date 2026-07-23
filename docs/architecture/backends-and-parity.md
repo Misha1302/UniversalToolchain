@@ -72,23 +72,23 @@ Rules:
 
 ## Compiled artifact boundary
 
-Backend outputs should be hidden behind backend-agnostic execution contracts where possible.
+The repository already implements two neutral boundaries:
 
-Known design debt:
+- Wist dialect integration uses `IArtifactCompiler`, `ICompiledArtifact` and `ICompiledArtifactSession`;
+- external languages use typed `LanguageArtifact<T>` routes and an exact backend executor selected by `LanguagePlan`.
 
-- Wist-facing convenience code may still know too much about concrete artifact shapes, such as interpreter-ready AIR versus CIL `DynamicMethod` artifacts.
-- Adding a new serious backend may currently require changes in Wist-facing code.
+The remaining design debt is adoption and validation, not absence of the abstraction:
 
-Target direction:
+- some low-level Wist fast-invocation helpers still intentionally expose `DynamicMethod`;
+- Wist compatibility adapters must reject generic routes they cannot faithfully execute;
+- a third production-scale backend is still needed to pressure-test every convenience and packaging boundary.
 
 ```text
-selected backend
+selected backend and typed terminal contract
 -> backend compiler/executor
--> backend-agnostic executable artifact contract
+-> neutral artifact/session or generic route result
 -> facade/host execution
 ```
-
-The facade should request execution through backend identity and selected runtime configuration, not by branching on concrete artifact classes.
 
 ## Backend author checklist
 

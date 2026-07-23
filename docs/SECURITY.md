@@ -1,37 +1,73 @@
-# Security Policy
+---
+title: Security Policy and Trust Boundaries
+description: Vulnerability reporting, Wist host controls, generic runtime policy and privacy limits.
+audience: security-platform-reviewer
+status: current
+lastVerifiedAgainst: language-authoring-p0-p1-hardening-2026-07-23.1
+---
 
-## Reporting a vulnerability
+# Security policy and trust boundaries
 
-Please report security vulnerabilities privately by opening a GitHub Security Advisory for this repository (preferred)
-or by contacting the maintainer directly.
+## Report a vulnerability
 
-Do **not** disclose vulnerabilities publicly before a fix is available and maintainers have completed triage.
+Use a private GitHub Security Advisory for the repository or contact the maintainer directly. Do not publish exploitable details before triage and a fix.
 
-## Execution trust model
+## Core trust statement
 
-This repository includes runtime execution facilities (`Wistc run`, REPL, and programmatic execution hosts).
+UniversalToolchain executes code and extension components inside the host process. Restricted composition, deterministic plans and explicit capability policy are **not** equivalent to a hardened sandbox.
 
-Dialect examples can constrain composition (for example, arithmetic-only interpreter profiles), but those constraints
-must **not** be interpreted as fully hardened sandbox guarantees unless explicit code-level isolation controls are added
-and verified.
+For hostile input or hostile packages, isolate execution in a constrained process/container and enforce wall-clock, CPU, memory, filesystem, network and identity limits outside the framework.
 
-Treat untrusted script execution as high risk. If you must run untrusted input, isolate it at the process/environment
-level and disable unsafe capabilities by composition.
+## Wist host controls
 
-Internal targeted runtime activation (exact loading of selected component/registrar types) is an implementation detail, not a sandbox boundary. Constrained dialect composition is still not equivalent to hardened sandboxing. Do not treat "exact activation" as a security guarantee for untrusted code execution.
+The Wist facade provides bounded defense-in-depth controls:
 
-## Supported versions
+- explicit `AllowedAssemblies` for host CLR resolution;
+- source-length and external-parameter preflight limits;
+- restricted presets that omit broader language/runtime features;
+- structured diagnostics before execution where possible.
 
-This repository is currently developed on the default development branch and targets .NET 10 (`net10.0`). Security fixes
-are expected to be applied there.
+These controls do not interrupt a long-running delegate, bound heap allocation, revoke an already allowed assembly or isolate native calls.
 
-## Alpha host controls
+## Generic Language Runtime policy
 
-The public facade now applies two bounded controls before composition or execution:
+`LanguageRuntimePolicy` can require deterministic components, forbid host interop and bound source length/external parameter count. The generic route provider validates declared `LanguageRuntimeComponentTraits` before session creation.
 
-- `WistEngineOptions.AllowedAssemblies` is the explicit host CLR type/method allowlist. Only the shipped `BasicStdLib` assembly is added by the runtime; selected dialect implementation assemblies are not exposed. Runtime discovery does not inspect `AppDomain.CurrentDomain`, `AppContext.BaseDirectory`, or recursively load DLLs from disk.
-- `WistEngineOptions.ResourceLimits` limits UTF-16 source length and external parameter count. Limit failures use stable structured diagnostic codes (`UTC-WIST-001` and `UTC-WIST-002`).
+Traits are package attestations. A malicious package can lie in its implementation; policy validation is not a cryptographic proof of behavior.
 
-These are defense-in-depth and denial-of-service preflight checks, not a sandbox. They do not interrupt a long-running compiled delegate, constrain heap allocation, isolate native calls, or revoke capabilities after a host deliberately adds an assembly. For arbitrary untrusted authors, execute in a separate constrained process/container and enforce wall-clock, CPU, memory, filesystem, network, and identity limits outside Wist.
+Exact package-manifest binding prevents accidental or unauthorized drift between the package graph used for planning and the package descriptors supplied for runtime assembly. It does not make the selected implementation trustworthy.
 
-The name `CreateRestrictedArithmetic` describes the actual guarantee. Ambiguous “safe” or “trusted” aliases are intentionally not part of the public API because they could be misread as process-isolation guarantees.
+
+## Threat-scenario matrix
+
+| Scenario | Framework control | Required host control |
+|---|---|---|
+| untrusted formula text | restricted Wist surface, source/parameter preflight limits, structured diagnostics | process-level CPU/time/memory limits; approval and rollback policy |
+| untrusted language package | exact package/manifest binding and declared runtime traits | do not load into a trusted host process; isolate and review package code |
+| excessive or non-terminating execution | no universal interruption guarantee | execute in a killable process/container with wall-clock and resource quotas |
+| host interop abuse | allowlisted assemblies and profile/capability selection | expose only reviewed host APIs; avoid broad reflection or ambient credentials |
+| trace or diagnostic disclosure | raw source/arguments/result are not directly serialized by default | treat exception messages and trace files as sensitive; apply storage/redaction policy |
+| source retention | source identity is visible in program/artifact metadata | minimize retention, control memory dumps and avoid logging metadata source text |
+| mutable component state leakage | `PerSession` ownership and singleton trait checks | validate custom component thread safety and avoid cross-tenant runtime reuse |
+| package graph drift | plan/manifest identity and runtime assembly checks | pin package versions, retain release artifacts and regenerate plans through an approved migration |
+
+The table describes defense in depth, not a formal sandbox or proof against malicious in-process code.
+
+## Component lifecycle
+
+`PerSession` components are isolated by construction and owned by the session. Explicit stateless singletons must be non-disposable and implement `IStatelessLanguageRuntimeComponent`. Reusing a `PerSession` instance across sessions is rejected.
+
+This reduces accidental state leakage; it is not a general memory-isolation mechanism.
+
+## Source and trace privacy
+
+- `WistProgramMetadata.SourceText` and low-level `ICompiledArtifact.SourceText` retain full source text in memory;
+- generic `LanguageExecutionRequest` retains its typed input artifact and argument references for the call;
+- CLI trace defaults avoid direct serialization of raw source, arguments and result values;
+- trace error fields may still contain lower-level `exception.Message`; current length sanitization does not prove secret removal.
+
+Do not treat trace files as automatically safe for unrestricted distribution. Apply normal secret handling, storage access and retention controls.
+
+## Supported branch
+
+The project currently develops security fixes on the default branch and targets .NET 10 (`net10.0`).

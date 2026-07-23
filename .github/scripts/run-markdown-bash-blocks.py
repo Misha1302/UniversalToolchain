@@ -25,6 +25,7 @@ MARKDOWN_DISCOVERY_EXCLUDED_DIRECTORIES = {
     "artifacts",
     "bin",
     "dist",
+    "internal-docs",
     "node_modules",
     "obj",
     "packages",
@@ -78,7 +79,11 @@ def IsMarkdownDiscoveryExcluded(markdownFilePath: Path, repositoryRoot: Path) ->
 def GetMarkdownFiles(repositoryRoot: Path) -> list[Path]:
     trackedMarkdownFiles = TryGetTrackedMarkdownFiles(repositoryRoot)
     if trackedMarkdownFiles is not None:
-        return trackedMarkdownFiles
+        return [
+            markdownFilePath
+            for markdownFilePath in trackedMarkdownFiles
+            if not IsMarkdownDiscoveryExcluded(markdownFilePath, repositoryRoot)
+        ]
 
     markdownFiles = [
         markdownFilePath

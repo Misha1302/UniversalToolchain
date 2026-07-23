@@ -1,9 +1,15 @@
 ---
 title: Build DSLs
 description: Show how to compose existing modules into a new dialect.
+audience: wist-dialect-author
+status: current
+lastVerifiedAgainst: language-authoring-p0-p1-hardening-2026-07-23.1
 ---
 
 # Build DSLs
+
+> **Scope:** this section documents Wist `.wistdialect` composition and embedding. For an independent non-Wist language, use [External Language Authoring](/language-authoring/).
+
 
 UniversalToolchain is designed for building small, explicit DSL runtimes instead of hardcoding every rule, formula or workflow directly into application code.
 

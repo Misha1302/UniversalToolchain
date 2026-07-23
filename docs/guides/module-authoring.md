@@ -141,4 +141,4 @@ When the feature touches optimizers or intrinsics, add backend-capability tests 
 - The module can be excluded by dialect composition.
 - Restricted dialects reject the feature when it is not selected.
 - Interpreter and CIL behavior is tested when both backends support the feature.
-- The module follows `docs/PROJECT_RULES.md` and `docs/ARCHITECTURE_RULES.md`.
+- The module follows `internal-docs/policies-and-reports/PROJECT_RULES.md` and `internal-docs/policies-and-reports/ARCHITECTURE_RULES.md` (repository-only policies).

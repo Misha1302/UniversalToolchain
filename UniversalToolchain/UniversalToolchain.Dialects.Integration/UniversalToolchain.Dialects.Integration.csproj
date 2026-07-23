@@ -20,6 +20,7 @@
         <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Dialects.Abstractions\UniversalToolchain.Dialects.Abstractions.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Dialects.Core\UniversalToolchain.Dialects.Core.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Dialects.Frontend\UniversalToolchain.Dialects.Frontend.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Dialects.Parsing\UniversalToolchain.Dialects.Parsing.csproj"/>
     </ItemGroup>
 

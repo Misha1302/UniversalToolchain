@@ -1,67 +1,46 @@
 ---
 title: Start Here
-description: Give developers the fastest path from zero to understanding and running Wist.
+description: Choose the Wist, external language-authoring or framework-internals route.
+audience: wist-application-developer
+status: current
+lastVerifiedAgainst: language-authoring-p0-p1-hardening-2026-07-23.1
 ---
 
-# Start Here
+# Start here
 
-This page introduces **UniversalToolchain** and the **Wist** reference language, explains the practical reason the project exists, and helps you choose your route through the documentation.
+UniversalToolchain is a modular .NET compiler/runtime framework. **Wist** is its reference language and packaged formula API. The repository also exposes a separate **External Language Authoring SDK** for independent non-Wist languages.
 
-## When to read this page
+## Choose the correct surface
 
-Read this page if you have just discovered the repository and want to understand the project before going deep into implementation details.
+| You need to... | Use |
+|---|---|
+| validate restricted numeric formulas and compile typed delegates | `UniversalToolchain.Wist`; start with [First Program](/start/first-program) |
+| create an independent language package with your own syntax artifacts and backends | `UniversalToolchain.LanguageAuthoring`; start with [Language Authoring Quickstart](/language-authoring/quickstart) |
+| configure a shipped Wist language/runtime surface | Wist `.wistdialect` profiles; start with [Dialect Files](/build-dsls/dialect-files) |
+| add syntax to the existing Wist frontend pipeline | supported Wist compiler-module contracts; start with [Choose an Extension Type](/write-modules/choose-extension-type) |
+| understand implementation boundaries | [Physical Project Map](/architecture/project-map) and [Lowering Walkthrough](/architecture/lowering-walkthrough) |
 
-## Goal
+## Core model
 
-Understand what UniversalToolchain is, what Wist is, when the project is useful, and where to start.
+```text
+Wist application path
+source -> Wist frontend -> Bytecode -> AIR -> optimizer/backend -> typed delegate or execution result
 
-## Project overview
+Generic language-authoring path
+package descriptors + runtime registrations -> LanguageDefinition -> LanguagePlan -> typed artifact route -> exact backend executor
+```
 
-- **UniversalToolchain** is a Wist-first modular .NET framework for building embeddable DSL runtimes. It provides infrastructure for lexing, parsing, abstract syntax trees (AST), bytecode/AIR layers, optimizers and execution backends.
-- **Wist** is the reference language built on top of UniversalToolchain. It demonstrates how to assemble modules into a usable language and provides CLI and programmatic entry points.
-- **Modules** are reusable language features. They can contribute lexer, parser, AST translation, bytecode and IR behavior.
-- **Dialects** select modules, backends and optimizations. They describe a chosen language/runtime surface instead of hardcoding one compiler profile.
+The generic SDK does not force every language through Wist AST, Bytecode or AIR. Those are Wist/framework artifact protocols, not universal mandatory stages.
 
-## Use it when
+## Current maturity
 
-- you want configurable formulas or restricted business rules inside a .NET application;
-- you need language features to be selectable and testable as modules;
-- you want a reference language that demonstrates a modular compiler/runtime pipeline;
-- you need to compare interpreter and compiled execution paths for the same language surface.
+- Wist `0.1.0-alpha.1` is a controlled-evaluation/prototype package, not a stable 1.0 contract.
+- Generic language authoring is a low-level alpha with typed routing, deterministic planning and runtime lifecycle contracts.
+- Restricted composition is not a hardened sandbox.
+- Public evidence and current gaps are tracked under [Evidence and Release Status](/evidence/).
 
-## Do not treat it as
+## Recommended next step
 
-- a hardened sandbox for untrusted code;
-- a drop-in replacement for C# scripting;
-- a mature general-purpose language workbench;
-- a simple expression evaluator with no compiler/runtime concepts.
-
-For the current maturity boundaries, read [Current Limitations](/limitations).
-
-## Identify your route
-
-| User type | What to read first | Then read |
-|---|---|---|
-| **Wist user** (run programs, learn syntax) | [First Program](/start/first-program), [CLI Reference](/start/cli-reference) | [Syntax Tour](/wist/syntax-tour), [Examples](/wist/examples) |
-| **DSL developer** (compose your own language) | [Mental Model](/start/mental-model), [Dialect Files](/build-dsls/dialect-files) | [Minimal DSL](/build-dsls/minimal-dsl), [Embedding in .NET](/build-dsls/embedding-dotnet) |
-| **Module author** (add new language features) | [Write Modules](/write-modules/) | [Module Contracts](/reference/module-contracts), [Testing a Module](/write-modules/testing-module) |
-| **Runtime/compiler engineer** | [Pipeline](/internals/pipeline) | [Bytecode](/internals/bytecode), [AIR](/internals/air), [Backends](/internals/backends) |
-| **Contributor/maintainer** | [Internals](/internals/) | [Project Rules](/reference/project-rules), [Documentation Rules](/reference/documentation-rules) |
-| **Reference user** | [Reference](/reference/) | [Backend Contracts](/reference/backend-contracts), [Module Reference](/reference/module-reference) |
-
-## Recommended order
-
-1. [First Program](/start/first-program)
-2. [CLI Reference](/start/cli-reference)
-3. [Mental Model](/start/mental-model)
-4. [Syntax Tour](/wist/syntax-tour)
-5. [Dialect Files](/build-dsls/dialect-files)
-6. [Minimal DSL](/build-dsls/minimal-dsl)
-7. [Embedding in .NET](/build-dsls/embedding-dotnet)
-8. [Write Modules](/write-modules/)
-9. [Pipeline overview](/internals/pipeline)
-10. [Reference](/reference/)
-
-## Next
-
-Continue with [First Program](/start/first-program) to run your first Wist expression.
+- Application developer: [Install Wist](/start/installation), then follow [Production Integration](/start/production-integration) before implementing hot updates.
+- Language author: [Build the Acme sample](/language-authoring/quickstart).
+- Compiler/runtime contributor: [Read the project map](/architecture/project-map).

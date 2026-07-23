@@ -1,121 +1,150 @@
-# Wist2 0.1.0-alpha.1 second-cycle verification record
+# Wist2 P0/P1 language-authoring hardening verification record
 
 ## Environment
 
-- Validation date: 2026-07-14.
+- Validation date: 2026-07-23.
 - Target environment: Linux x64.
-- SDK used: `.NET SDK 10.0.301` from the supplied sidecar.
-- Repository SDK policy: `10.0.103`, `rollForward: latestFeature`, `allowPrerelease: true`.
-- Package mode: offline local NuGet caches; NuGet audit disabled because network access was unavailable.
-- Source baseline: `Wist2-0.1.0-alpha.1-abstraction-fixes-20260714.tar.gz` for the adversarial second cycle.
+- SDK used: .NET SDK 10.0.301 from the supplied offline sidecar.
+- Repository SDK policy: 10.0.103 with `rollForward: latestFeature` and prerelease enabled.
+- Source baseline: `Wist2-language-authoring-composition-hardening-2026-07-22.1.zip`.
+- Package dependency mode: supplied local NuGet sidecars only; `NUGET_CERT_REVOCATION_MODE=offline` was used solely for isolated offline verification.
 
-The supplied "complete" sidecar does not contain every direct package used by the repository,
-including `Microsoft.Extensions.DependencyInjection 10.0.2`. Restore therefore also used the
-supplied minimal Wist2 package cache.
+The baseline recursive manifest was checked before modification. The final handoff regenerates the manifest after generated outputs are removed and verifies it again from a clean extraction.
 
-## Block-by-block verification
+## Corrected P0/P1 contracts
 
-### Archive and source baseline
+This revision closes the P0/P1 findings from the post-hardening review:
 
-- Input archive SHA-256 checked before extraction.
-- Archive paths inspected for traversal and unsafe entries.
-- Existing recursive manifest verified before editing.
-- Source diff reviewed against the first-cycle archive after implementation.
+- `build.sh`, `build.ps1` and both validation workflows use the same `eng/test-projects.txt` and `eng/package-projects.txt` contracts;
+- the canonical test matrix contains all four test projects, including `UniversalToolchain.LanguageSdk.Tests`;
+- the canonical package matrix builds and validates all eight SDK/template packages plus the Wist facade;
+- package validation checks filename/nuspec identity, package-family dependency versions, embedded Wist manifest identity and template contents;
+- clean-room package smoke installs `ut-language`, generates a dotted-name project and runs an independently packaged cross-package language;
+- authored runtime catalogs store factories and registrations rather than mutable component instances;
+- `PerSession` is the safe default lifetime, while `SingletonStateless` requires an explicit stateless marker and rejects disposable instances;
+- runtime sessions own per-session components and release synchronous/asynchronous resources in reverse construction order;
+- disposal is idempotent, waits for in-flight operations and rejects execution after disposal;
+- per-session factories that reuse an instance across sessions fail closed;
+- typed and untyped artifact contracts never connect through wildcard compatibility;
+- the generic route runtime rejects legacy untyped executable routes before session construction;
+- Wist compatibility artifacts carry explicit protocol identities while remaining isolated behind the Wist compatibility provider;
+- manifest and lock schema v5 use `universaltoolchain-json-v1` canonicalization and SHA-256 over compact UTF-8 bytes without platform-dependent line endings;
+- SDK/template package versions are `0.3.0-alpha.1`; the existing Wist facade remains `0.1.0-alpha.1`.
 
-### AIR, verifier and SSA boundary
+The retained boundary is unchanged: this remains a contribution/pass/route/runtime SDK rather than a declarative grammar, binder or type-system workbench.
 
-- Final conditional fallthrough represented by a synthetic terminal block.
-- `AirStackAnalyzer` checks terminal cardinality and return-shape compatibility.
-- Typed-null declared types survive interpreter execution and generic resolution.
-- Neutral managed-call descriptors pass analysis, simulation, interpreter and CIL execution.
-- Execution-scoped provider methods with arguments have interpreter/CIL parity.
-- SSA and optimizer projects rebuilt after the shared analysis change.
+## Canonical release gate
 
-### Lifecycle, configuration and composition
-
-- Parser/lexer modules remain instance-stateless.
-- Lexer snapshot replacement is atomic for malformed input and ownership collisions.
-- Prepared-artifact invalidation remains covered.
-- Backend runtime caching is isolated per `IServiceProvider` and validate-before-publish remains intact.
-- Public `InterpreterState.ValueStack` API compatibility is covered by regression test.
-
-## Build verification
-
-Final command shape:
+Command:
 
 ```bash ci-run=false
-dotnet build UniversalToolchain/Wist.sln \
-  --no-restore \
-  -c Debug \
-  -m:1 \
-  -p:BuildInParallel=false \
-  -p:UseSharedCompilation=false \
-  -p:NuGetAudit=false \
-  --disable-build-servers
+./build.sh --skip-docs
 ```
 
-Final result:
+Observed result on the final source revision:
 
-- **74/74 projects in `Wist.sln` built**;
-- the standalone benchmark project outside the solution also built successfully;
-- **75/75 repository `.csproj` projects compile**;
-- **0 warnings**;
-- **0 errors**;
-- all **21** manifest-emitting assemblies generated their runtime manifests through the repository's
-  `UniversalToolchain.Dialects.ManifestEmitter` path.
+- solution restore succeeded from local package sources;
+- documentation sample restore succeeded;
+- **85/85 solution projects built**;
+- build warnings: **0**;
+- build errors: **0**;
+- `samples/Wist.RolloutScoring` built separately with **0 warnings / 0 errors**;
+- all test projects declared by `eng/test-projects.txt` executed;
+- all projects declared by `eng/package-projects.txt` were packed and validated;
+- template and external cross-package consumer smoke checks passed.
 
-## Final test results
+Build servers and MSBuild node reuse are explicitly disabled by the canonical scripts to prevent orphaned workers in constrained and CI environments.
 
-The following suites were run sequentially against the final solution build:
+## Regression tests
 
-| Assembly | Passed | Failed | Skipped |
+| Test project | Passed | Failed | Skipped |
 |---|---:|---:|---:|
-| `Tests.dll` | 452 | 0 | 0 |
-| `UniversalToolchain.Modules.Tests.dll` | 288 | 0 | 0 |
-| `UniversalToolchain.Dialects.Tests.dll` | 585 | 0 | 0 |
-| **Total** | **1,325** | **0** | **0** |
+| `Tests` | 482 | 0 | 0 |
+| `UniversalToolchain.Modules.Tests` | 288 | 0 | 0 |
+| `UniversalToolchain.Dialects.Tests` | 588 | 0 | 0 |
+| `UniversalToolchain.LanguageSdk.Tests` | 53 | 0 | 0 |
+| **Total** | **1,411** | **0** | **0** |
 
-Representative command:
+The language-SDK suite includes dedicated coverage for:
 
-```bash ci-run=false
-dotnet test <test-project>.csproj \
-  --no-build \
-  --no-restore \
-  -c Debug \
-  --logger "console;verbosity=minimal"
-```
+- cross-package route execution and exact package-manifest binding;
+- same-artifact pass ordering and feature/capability isolation;
+- exact executor selection and Wist compatibility fail-closed behavior;
+- per-session mutable-state isolation;
+- synchronous and asynchronous disposal ownership;
+- idempotent disposal and execution-after-dispose rejection;
+- reused per-session component rejection;
+- explicit stateless-singleton requirements;
+- strict typed/untyped route compatibility;
+- schema-v5 canonical manifest and lock serialization;
+- shared canonical test/package manifests.
 
-## Adversarial findings during the second cycle
+## Package and consumer gate
 
-The repeated review found issues that the first green suite did not prove:
+The canonical matrix produced and verified **9** packages:
 
-1. typed null lost its declared type inside the interpreter stack;
-2. backend layers still contained concrete-descriptor assumptions;
-3. execution-scoped CIL calls did not support parameters;
-4. final conditional fallthrough was absent from the CFG;
-5. structural stack analysis did not own terminal-shape validation;
-6. lexer loader uniqueness rules were weaker than the live configuration rules;
-7. lazy runtime cache leaked across DI containers;
-8. an intermediate fix accidentally changed the public `ValueStack` property type.
+SDK/template family `0.3.0-alpha.1`:
 
-Each item was reproduced or protected by a focused regression before final full-suite execution.
+- `UniversalToolchain.Language.Abstractions`;
+- `UniversalToolchain.FeatureSdk`;
+- `UniversalToolchain.LanguageSdk`;
+- `UniversalToolchain.Runtime`;
+- `UniversalToolchain.LanguageAuthoring`;
+- `UniversalToolchain.Testing`;
+- `UniversalToolchain.Templates`;
+- `UniversalToolchain.Wist.LanguagePack`.
 
-## Final artifact checks
+Facade:
 
-Before handoff, the release process performs:
+- `UniversalToolchain.Wist` `0.1.0-alpha.1`.
 
-- whitespace/error-marker review of changed source files;
-- removal of `bin`, `obj`, Git metadata, caches, logs and temporary files;
-- rejection of `CHANGELOG.md`, secret-like and runtime/build artifacts;
-- recursive regeneration of `MANIFEST.sha256` after cleanup;
-- deterministic archive creation;
-- clean extraction into a new directory;
-- verification of every recursive manifest entry and archive SHA-256.
+Observed package checks:
+
+- exact package set: **9/9**;
+- Wist facade surface: **1 compile DLL, 64 runtime DLLs**, within the declared ceiling;
+- Wist LanguagePack embedded descriptor: schema v5, `universaltoolchain-json-v1`, SHA-256, matching package ID/version;
+- clean `dotnet new ut-language -n Contoso.RuleLanguage` restore/run result: `42`;
+- clean external cross-package NuGet consumer result: `cross-package-consumer: 42`.
+
+## Baseline documentation checks (supplied archive)
+
+The following results belong to the supplied `2026-07-23.1` language-authoring hardening baseline before the documentation split described below.
+
+- documentation status checker passed for **158 Markdown files**;
+- all **55 Markdown bash blocks** executed successfully or were explicitly marked non-CI;
+- independent non-Wist sample output: `35.0:35.0`;
+- Wist rollout sample produced the documented scoring output;
+- architecture documentation now records component lifetimes, disposal ownership, strict legacy-contract migration and schema-v5 canonical hashing.
+
+## Final artifact gate
+
+Before packaging, the release tree is cleaned of:
+
+- `bin`, `obj`, `artifacts`, generated `.vitepress/dist` and `node_modules`;
+- `.git`, IDE metadata, test outputs and caches;
+- secret-like files;
+- stale `MANIFEST.sha256`;
+- `CHANGELOG.md`, which is excluded from this bundle family.
+
+A recursive SHA-256 manifest is generated for every retained file except the manifest itself. The ZIP is then extracted to a new directory and checked for manifest equality, forbidden paths and an offline restore/build/run of the independent non-Wist sample.
 
 ## Evidence boundary
 
-Verified here: requested source corrections, final Debug solution build, all three repository test
-assemblies, generated runtime manifests and final source-archive integrity.
+Verified: canonical build, all 1,411 tests, nine-package matrix, Wist package surface, template consumer, external cross-package NuGet consumer, runtime lifecycle isolation/disposal, strict typed contracts, schema-v5 canonicalization, documentation status and Markdown command execution.
 
-Not revalidated in this cycle: NuGet pack/package surface, external consumer restore/publish smoke,
-documentation-site build, benchmark performance and production or hostile-code workloads.
+Not claimed: stable 1.0 API compatibility, arbitrary grammar/binder/type-system authoring, hostile-extension sandboxing, production workload certification or new performance superiority.
+
+
+## Documentation hardening delta (2026-07-23.2)
+
+The documentation-only revision separates public developer documentation from internal reviews/proposals and adds a task-oriented Language Authoring route. No `.cs`, `.csproj`, `.sln`, `.props` or `.targets` file differs from the supplied baseline.
+
+Independently executed in the revision workspace:
+
+- `Tools/check_documentation_status.py`: **107 public Markdown files, 46 internal Markdown files**;
+- `Tools/check_documentation_links.py`: public links, anchors, assets, sidebar targets and public/internal split passed;
+- Python checker compilation, workflow YAML parsing and `build.sh` syntax validation passed;
+- `samples/Acme.PricingLanguage` restored from the offline package cache, built with **0 warnings / 0 errors**, and produced `35.0:35.0`;
+- VitePress configuration passed TypeScript syntax analysis; only the unavailable `vitepress` module remained unresolved in that isolated syntax check.
+
+The VitePress HTML build was not rerun in the verification container because both the internal npm gateway and direct npm registry access were unavailable (`503` / DNS `EAI_AGAIN`). The checked-in CI gate remains `npm run docs:check`; it must run in an environment with the lockfile dependencies available before release publication.

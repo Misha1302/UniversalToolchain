@@ -77,7 +77,7 @@ Important registered services include:
 | `WistDialectServiceProviderFactory` | creates the selected runtime service provider |
 | `WistDialectExecutionWorkflow` | composes dialect text/files and creates execution hosts |
 
-This is a Wist-first composition path. It should not be described as a fully generic language-workbench API unless the generic layer provides the same capability directly.
+This section describes the Wist compatibility composition path. The external Language Authoring stack now provides a separate generic package/plan/route runtime; it does not replace these Wist-specific services.
 
 ## Workflow object
 

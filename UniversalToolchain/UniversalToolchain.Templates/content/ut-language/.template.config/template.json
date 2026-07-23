@@ -1,0 +1,11 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "UniversalToolchain",
+  "classifications": ["Compiler", "DSL", ".NET"],
+  "identity": "UniversalToolchain.Templates.Language",
+  "name": "UniversalToolchain external language",
+  "shortName": "ut-language",
+  "sourceName": "TemplateLanguage",
+  "preferNameDirectory": true,
+  "tags": { "language": "C#", "type": "project" }
+}

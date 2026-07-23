@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - 'docs/**'
+      - 'internal-docs/**'
+      - 'Tools/check_documentation_*.py'
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/docs-check.yml'
@@ -14,6 +16,8 @@ on:
       - main
     paths:
       - 'docs/**'
+      - 'internal-docs/**'
+      - 'Tools/check_documentation_*.py'
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/docs-check.yml'
@@ -37,6 +41,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
+
+      - name: Validate documentation structure and links
+        run: npm run docs:status && npm run docs:links
 
       - name: Build documentation
         run: npm run docs:build

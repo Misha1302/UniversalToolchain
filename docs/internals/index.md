@@ -5,6 +5,9 @@ description: Give a map of the compiler pipeline and runtime architecture.
 
 # Internals Overview
 
+> **Scope:** these pages primarily describe the Wist compiler/runtime implementation. Generic package planning and typed routes are documented under [External Language Authoring](/language-authoring/).
+
+
 This section documents how UniversalToolchain currently works internally.
 
 It is written for maintainers, backend authors, module authors and reviewers who need more than the public “source → execution” mental model.

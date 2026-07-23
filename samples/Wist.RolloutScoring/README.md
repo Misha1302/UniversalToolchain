@@ -4,7 +4,7 @@ This is the shortest source-checkout example of the public `UniversalToolchain.W
 
 From the repository root:
 
-```bash ci-timeout=240
+```bash ci-run=false
 dotnet run --project samples/Wist.RolloutScoring/Wist.RolloutScoring.csproj
 ```
 

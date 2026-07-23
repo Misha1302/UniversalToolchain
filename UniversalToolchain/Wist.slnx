@@ -78,4 +78,15 @@
   <Project Path="VariablesRuntime/VariablesRuntime.csproj" />
   <Project Path="WhitespacesModule/WhitespacesModule.csproj" />
   <Project Path="Wistc/Wistc.csproj" />
+  <Project Path="../samples/Acme.PricingLanguage/Acme.PricingLanguage.csproj" />
+  <Project Path="UniversalToolchain.FeatureManifestEmitter/UniversalToolchain.FeatureManifestEmitter.csproj" />
+  <Project Path="UniversalToolchain.FeatureSdk/UniversalToolchain.FeatureSdk.csproj" />
+  <Project Path="UniversalToolchain.Language.Abstractions/UniversalToolchain.Language.Abstractions.csproj" />
+  <Project Path="UniversalToolchain.LanguageAuthoring/UniversalToolchain.LanguageAuthoring.csproj" />
+  <Project Path="UniversalToolchain.LanguageSdk.Tests/UniversalToolchain.LanguageSdk.Tests.csproj" />
+  <Project Path="UniversalToolchain.LanguageSdk/UniversalToolchain.LanguageSdk.csproj" />
+  <Project Path="UniversalToolchain.Runtime/UniversalToolchain.Runtime.csproj" />
+  <Project Path="UniversalToolchain.Templates/UniversalToolchain.Templates.csproj" />
+  <Project Path="UniversalToolchain.Testing/UniversalToolchain.Testing.csproj" />
+  <Project Path="UniversalToolchain.Wist.LanguagePack/UniversalToolchain.Wist.LanguagePack.csproj" />
 </Solution>

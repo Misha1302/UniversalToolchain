@@ -1,3 +1,9 @@
+---
+audience: framework-contributor
+status: current
+lastVerifiedAgainst: language-authoring-p0-p1-hardening-2026-07-23.1
+---
+
 # Contributing
 
 ## Before you start
@@ -5,9 +11,10 @@
 - Use .NET SDK `10.0.103` (see `UniversalToolchain/global.json`).
 - Read canonical repo docs:
     - `readme.md` (project overview and scope)
-    - `docs/project-positioning.md` (framework/reference-language boundary)
-    - `docs/PROJECT_RULES.md` (coding standards)
-    - `docs/ARCHITECTURE_RULES.md` (architecture guardrails)
+    - [Current Architecture Status](/CURRENT_ARCHITECTURE_STATUS) and [Project Map](/architecture/project-map) for public current-state boundaries
+    - `internal-docs/policies-and-reports/project-positioning.md` for repository-only positioning policy
+    - `internal-docs/policies-and-reports/PROJECT_RULES.md` for repository-only coding standards
+    - `internal-docs/policies-and-reports/ARCHITECTURE_RULES.md` for repository-only architecture guardrails
     - `AGENTS.md` when making AI-assisted or agent-driven changes
 
 ## Build and test
@@ -52,7 +59,7 @@ The CI workflow runs the same restore, build, and test commands as dedicated ste
 ## Module and pipeline expectations
 
 - Read `docs/guides/module-authoring.md` before adding or reshaping a module.
-- Read `docs/contracts/module-contracts.md` before changing token names, parser creator priorities, AST visitors, shared state, bytecode tags, or backend capability behavior.
+- Read [Module Contracts](/reference/module-contracts) before changing token names, parser creator priorities, AST visitors, shared state, bytecode tags, or backend capability behavior.
 - Read `docs/architecture/bytecode-and-air.md` before changing bytecode, AIR, translation, or optimizer semantics.
 - Read `docs/architecture/backends-and-parity.md` before changing backend behavior, backend artifacts, intrinsics, or parity tests.
 - Do not add convention-only hidden contracts when a documented contract, verifier, shared constant, or test can make the rule explicit.

@@ -1,0 +1,10 @@
+# Canonical public package matrix.
+UniversalToolchain/UniversalToolchain.Language.Abstractions/UniversalToolchain.Language.Abstractions.csproj
+UniversalToolchain/UniversalToolchain.FeatureSdk/UniversalToolchain.FeatureSdk.csproj
+UniversalToolchain/UniversalToolchain.LanguageSdk/UniversalToolchain.LanguageSdk.csproj
+UniversalToolchain/UniversalToolchain.Runtime/UniversalToolchain.Runtime.csproj
+UniversalToolchain/UniversalToolchain.LanguageAuthoring/UniversalToolchain.LanguageAuthoring.csproj
+UniversalToolchain/UniversalToolchain.Testing/UniversalToolchain.Testing.csproj
+UniversalToolchain/UniversalToolchain.Templates/UniversalToolchain.Templates.csproj
+UniversalToolchain/UniversalToolchain.Wist.LanguagePack/UniversalToolchain.Wist.LanguagePack.csproj
+UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj

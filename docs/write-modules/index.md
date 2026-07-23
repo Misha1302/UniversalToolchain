@@ -1,11 +1,17 @@
 ---
-title: Write Modules
+title: Wist Compiler Module Authoring
 description: Introduce language module development.
+audience: wist-compiler-contributor
+status: current-wist-specific
+lastVerifiedAgainst: language-authoring-p0-p1-hardening-2026-07-23.1
 ---
 
-# Write Modules
+# Wist compiler module authoring
 
-A module is the normal way to add a language feature to Wist or to a UniversalToolchain-based DSL. This section gives the lifecycle for module authors without pretending that every extension point is already fully formalized.
+> **Status:** this is the supported Wist-specific extension path for the shipped reference language and its compiler modules. It is not deprecated. New independent non-Wist languages should start with [External Language Authoring](/language-authoring/) instead of inheriting Wist frontend contracts.
+
+
+A module is the normal way to add syntax or semantics to the existing Wist frontend/compiler pipeline. This section gives the lifecycle for module authors without pretending that every extension point is already fully formalized.
 
 ## Recommended path
 
@@ -30,7 +36,7 @@ Understand the expected path from syntax idea to tested language feature.
 - Read [Mental Model](/start/mental-model).
 - Read [Dialect Files](/build-dsls/dialect-files).
 - Build the repository and run relevant tests before changing behavior.
-- Review `docs/guides/module-authoring.md` and `docs/contracts/module-contracts.md` before implementing a real module.
+- Review `docs/guides/module-authoring.md` and `docs/reference/module-contracts.md` before implementing a real module.
 
 ## Lifecycle
 
@@ -153,4 +159,4 @@ This is why module work requires both implementation tests and architecture disc
 
 ## Next
 
-Continue with [Choose an Extension Type](/write-modules/choose-extension-type), [Create Your First Module](/write-modules/create-your-first-module), and [Runtime Manifests](/write-modules/runtime-manifests), then use [Module Authoring Guide](/guides/module-authoring) and [Module Contracts](/contracts/module-contracts) for deeper review.
+Continue with [Choose an Extension Type](/write-modules/choose-extension-type), [Create Your First Module](/write-modules/create-your-first-module), and [Runtime Manifests](/write-modules/runtime-manifests), then use [Module Authoring Guide](/guides/module-authoring) and [Module Contracts](/reference/module-contracts) for deeper review.

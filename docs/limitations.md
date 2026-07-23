@@ -1,166 +1,58 @@
-# Current Limitations
+---
+title: Current Limitations
+description: Accurate limits of Wist and the external Language Authoring alpha.
+audience: all-technical-users
+status: current
+lastVerifiedAgainst: language-authoring-p0-p1-hardening-2026-07-23.1
+---
 
-This document records known limitations so the project can be presented honestly and improved deliberately.
+# Current limitations
 
-A limitation is not a failure. It is a boundary that must not be hidden behind marketing language or convenience APIs.
+## Generic language authoring is low-level
 
-## Wist-first framework maturity
+Implemented: typed package/contribution planning, artifact routing, runtime assembly, policy and lifecycle.
 
-UniversalToolchain is the framework, and Wist is the reference language.
+Not implemented as a high-level authoring product:
 
-Current limitation:
+- grammar or parser generation;
+- binder/type-system DSL;
+- automatic derivation of verifier and backend contracts from operations;
+- IDE/editor workbench;
+- incremental parsing protocols;
+- stable 1.0 compatibility.
 
-- The strongest runnable path is still Wist-first.
-- The generic third-party DSL authoring surface is not yet as polished as the Wist convenience path.
-- Some examples and facades naturally point users toward Wist-specific APIs.
+The current SDK helps compose implementations; it does not generate a language implementation.
 
-Expected direction:
+## Backend-neutral runtime status
 
-- Keep Wist as a proving ground.
-- Make generic framework APIs clearer.
-- Prevent Wist convenience layers from becoming framework truth.
+Backend-neutral artifact/session contracts and generic typed route execution are implemented. The remaining limitations are different:
 
-## Dialect DSL extensibility
+- Wist legacy surfaces still require compatibility adapters;
+- the generic API is alpha and may evolve;
+- a third independent production-scale backend has not yet validated every abstraction boundary;
+- high-level backend authoring ergonomics remain sparse.
 
-Current limitation:
+Do not describe backend-neutral artifacts as future-only work.
 
-- Runtime composition is more modular than the dialect DSL directive layer.
-- Some directive handling may still be implemented through concrete registries or framework-owned handlers.
+## Wist-specific boundaries
 
-Expected direction:
+- Wist remains the most mature language path;
+- Wist compiler module authoring still contains hidden token, parser-priority, visitor and Bytecode-tag contracts;
+- Bytecode tag taxonomy and verification are incomplete;
+- the callable-first SSA route supports a bounded subset and may round-trip opaque managed calls without optimizing them;
+- `Prefer` falls back only for known unsupported-route diagnostics.
 
-- Make dialect directive handling composable through explicit registration.
-- Preserve deterministic ordering and diagnostics.
-- Allow new directive families without editing central framework code when possible.
+## Security
 
-## Backend abstraction
+Restricted dialects and runtime policies constrain selected components. They are not hardened sandboxing. Hostile input or hostile extension packages require external process/environment isolation, resource controls and a trust model.
 
-Current limitation:
+## Performance
 
-- Current Wist-facing execution paths may know about concrete backend artifact shapes.
-- Interpreter and CIL are supported concepts, but backend-agnostic artifact handling is not fully generalized.
-- Adding a third serious backend may require Wist-facing changes.
+Only tied, reproducible benchmark scenarios support performance claims. Compilation, `Evaluate`, interpreter execution and prepared typed-delegate invocation are separate workloads.
 
-Expected direction:
+## Documentation and ecosystem
 
-- Introduce backend-agnostic compiled/executable artifact contracts.
-- Keep backend selection in the selected runtime plan.
-- Keep facades thin and free from concrete backend artifact branching.
-
-## Callable-first SSA pre-release boundary
-
-Current limitation:
-
-- SSA is opt-in experimental infrastructure, not the default route or an SSA-native backend.
-- The public facade can select `Disabled`, `Prefer`, `Require`, or `Debug` and exposes an optimization report, but low-level `UniversalToolchain.Ssa.*` contracts may still change before 1.0.
-- Wist int32 add/subtract/multiply have canonical projections; other supported managed operations round-trip through exact execution-scoped method bindings and may not be optimizable.
-- CLR value mapping, multi-return functions, arbitrary SSA scheduling, and backend-native lowering remain limited.
-- `Prefer` falls back only for known unsupported-route diagnostics. Unexpected optimizer defects are failures, not silent fallback.
-- The route adds compilation work. No speed advantage is claimed without reproducible end-to-end measurements.
-
-Expected direction:
-
-- Expand canonical callable projection only when semantic and differential tests exist.
-- Add backend capability planning and eventually a justified SSA-native backend or a proven AIR-emission contract.
-- Add broader passes only with explicit facts/effects and benchmark validity checks.
-- Keep the supported facade independent from experimental low-level SSA types.
-
-## Bytecode tags and verifier coverage
-
-Current limitation:
-
-- Bytecode tags are powerful but can behave like undocumented string contracts.
-- A full tag taxonomy, producer/consumer matrix, and verifier layer should be strengthened.
-
-Expected direction:
-
-- Centralize tag declarations.
-- Add bytecode validation.
-- Document stack effects, safety metadata, and backend-lowering requirements where possible.
-
-## Module authoring safety
-
-Current limitation:
-
-- Module authoring follows a recognizable pattern, but many contracts are easy to miss.
-- Token names, parser priorities, visitor ownership, shared state, and backend capability requirements can be fragile.
-
-Expected direction:
-
-- Treat `docs/guides/module-authoring.md` and `docs/contracts/module-contracts.md` as mandatory guidance.
-- Add sample modules and template tests.
-- Add architecture guardrail tests for new extension surfaces.
-
-## AI-generated changes
-
-Current limitation:
-
-- AI agents can imitate nearby module code while missing hidden contracts.
-- This is risky for parser priority, visitor ownership, bytecode tags, shared state, and backend-specific intrinsics.
-
-Expected direction:
-
-- Use explicit prompts and architecture docs.
-- Require tests for generated modules.
-- Prefer machine-checkable contracts over convention-only rules.
-
-## Performance claims
-
-Current limitation:
-
-- The architecture is designed to support optimized compiled execution.
-- Near-C# performance should not be claimed publicly without current, reproducible benchmark evidence.
-- Compile time, execution time, interpreter time, and CIL execution time must be measured separately.
-
-Expected direction:
-
-- Maintain reproducible benchmarks.
-- Document benchmark methodology.
-- Keep interpreter correctness and CIL performance as separate claims.
-
-## Sandboxing and security
-
-Current limitation:
-
-- Restricted dialect composition is not the same as hardened sandboxing.
-- Reflection and interop require careful trust boundaries.
-- Untrusted execution needs process/environment isolation.
-
-Expected direction:
-
-- Keep `docs/SECURITY.md` authoritative for trust boundaries.
-- Keep interop restrictions explicit.
-- Do not market restricted dialects as a complete security sandbox.
-
-## Documentation completeness
-
-Current limitation:
-
-- The repository has strong architecture rules and runtime pipeline docs, but some contributor-facing contracts are still being formalized.
-
-Expected direction:
-
-- Keep README concise.
-- Move deep contracts into focused docs.
-- Update docs in the same change as architectural behavior changes.
-
-## Public wording to avoid
-
-Avoid these claims unless they are backed by implementation and tests:
-
-- fully universal language workbench;
-- production-grade sandbox;
-- arbitrary backend support with no framework changes;
-- near-C# speed in general;
-- AI-safe module generation by convention alone;
-- all bytecode tags are formally verified.
-
-## Public wording to prefer
-
-Prefer this wording:
-
-> UniversalToolchain is a Wist-first modular .NET DSL/runtime framework prototype with manifest-backed runtime selection, explicit architecture guardrails, and a reference language used to validate the framework.
-
-Prefer this limitation statement:
-
-> Generic dialect-DSL extension, backend-agnostic compiled artifacts, bytecode tag verification, and outsider-friendly module authoring are active design areas rather than finished product promises.
+- external package authoring is new and has limited third-party use;
+- generic API reference is not yet generated from a stable public API baseline;
+- version negotiation and migration tooling are early;
+- documentation snippets are protected by repository checks but do not replace consumer-level compatibility tests.

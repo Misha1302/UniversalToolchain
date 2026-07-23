@@ -1,76 +1,32 @@
 using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
-using UniversalToolchain.Dialects.Core;
-using UniversalToolchain.Dialects.Frontend;
 using UniversalToolchain.Dialects.Integration;
 
 namespace UniversalToolchain.Dialects.Wist;
 
+/// <summary>
+/// Wist adapter over the language-neutral composition workflow and Wist runtime activation.
+/// </summary>
 public sealed class WistDialectExecutionWorkflow
 {
-    private readonly IDialectCompiledDialectBuildPlanBuilder _buildPlanBuilder;
-    private readonly IDialectDslCompilerFactory _compilerFactory;
     private readonly WistDialectExecutionConfigurationBuilder _configurationBuilder;
-    private readonly SelectedRuntimePlanResolver _resolver;
     private readonly WistDialectServiceProviderFactory _serviceProviderFactory;
+    private readonly ToolchainCompositionWorkflow _workflow;
 
     public WistDialectExecutionWorkflow(
-        IDialectDslCompilerFactory compilerFactory,
-        IDialectCompiledDialectBuildPlanBuilder buildPlanBuilder,
-        SelectedRuntimePlanResolver resolver,
+        ToolchainCompositionWorkflow workflow,
         WistDialectExecutionConfigurationBuilder configurationBuilder,
         WistDialectServiceProviderFactory serviceProviderFactory)
     {
-        compilerFactory = compilerFactory.ArgNotNull();
-
-        buildPlanBuilder = buildPlanBuilder.ArgNotNull();
-
-        resolver = resolver.ArgNotNull();
-
-        configurationBuilder = configurationBuilder.ArgNotNull();
-
-        serviceProviderFactory = serviceProviderFactory.ArgNotNull();
-
-        _compilerFactory = compilerFactory;
-        _buildPlanBuilder = buildPlanBuilder;
-        _resolver = resolver;
-        _configurationBuilder = configurationBuilder;
-        _serviceProviderFactory = serviceProviderFactory;
+        _workflow = workflow.ArgNotNull();
+        _configurationBuilder = configurationBuilder.ArgNotNull();
+        _serviceProviderFactory = serviceProviderFactory.ArgNotNull();
     }
 
-    public DialectFrameworkCompositionResult ComposeFile(string filePath)
-    {
-        if (string.IsNullOrWhiteSpace(filePath))
-            Thrower.Argument(nameof(filePath), "Dialect file path must not be empty.");
+    public DialectFrameworkCompositionResult ComposeFile(string filePath) => _workflow.ComposeFile(filePath);
 
-        if (!File.Exists(filePath))
-            Thrower.FileNotFound(filePath);
-
-        return ComposeText(File.ReadAllText(filePath), Path.GetFileName(filePath));
-    }
-
-    public DialectFrameworkCompositionResult ComposeText(string sourceText, string sourceName)
-    {
-        sourceText = sourceText.ArgNotNull();
-
-        if (string.IsNullOrWhiteSpace(sourceName))
-            Thrower.Argument(nameof(sourceName), "Source name must not be empty.");
-
-        var compiled = CompileSourceText(sourceText);
-        var buildPlan = _buildPlanBuilder.Build(compiled);
-        var semanticErrors = buildPlan.ValidationResult.Diagnostics.Where(x => x.Severity == DialectDiagnosticSeverity.Error).ToList();
-
-        if (!buildPlan.CanBuild)
-            return new DialectFrameworkCompositionResult(sourceName, compiled, buildPlan, semanticErrors, []);
-
-        var selectedRuntimePlan = _resolver.Resolve(buildPlan);
-        var resolutionErrors = selectedRuntimePlan.Diagnostics
-            .Where(x => x.Severity == DialectDiagnosticSeverity.Error)
-            .Where(x => !semanticErrors.Contains(x))
-            .ToList();
-
-        return new DialectFrameworkCompositionResult(sourceName, compiled, buildPlan, semanticErrors, resolutionErrors, selectedRuntimePlan);
-    }
+    public DialectFrameworkCompositionResult ComposeText(string sourceText, string sourceName) =>
+        _workflow.ComposeText(sourceText, sourceName);
 
     public DialectFrameworkCompositionResult ComposeText(
         string sourceText,
@@ -81,7 +37,8 @@ public sealed class WistDialectExecutionWorkflow
         sourceText = sourceText.ArgNotNull();
         runtimeProfile = runtimeProfile.ArgNotNull();
 
-        var compiledSource = CompileSourceText(sourceText);
+        var baseline = _workflow.ComposeText(sourceText, sourceName);
+        var compiledSource = baseline.CompiledDialect ?? throw new InvalidOperationException("Dialect source did not compile.");
         var profiledSource = new WistRuntimeProfileApplicator().Apply(
             sourceText,
             compiledSource,
@@ -92,24 +49,16 @@ public sealed class WistDialectExecutionWorkflow
             return new DialectFrameworkCompositionResult(
                 sourceName,
                 compiledSource,
-                _buildPlanBuilder.Build(compiledSource),
+                baseline.BuildPlan!,
                 profiledSource.Diagnostics.Where(static x => x.Severity == DialectDiagnosticSeverity.Error),
                 []);
         }
 
-        return ComposeText(profiledSource.SourceText, sourceName);
+        return _workflow.ComposeText(profiledSource.SourceText, sourceName);
     }
 
-    private DialectDefinitionSlice CompileSourceText(string sourceText)
-    {
-        sourceText = sourceText.ArgNotNull();
-
-        using var compiler = _compilerFactory.Create();
-        return compiler.Compile(sourceText);
-    }
-
-    public WistDialectExecutionHost CreateHost(DialectFrameworkCompositionResult compositionResult)
-        => CreateHost(compositionResult, new WistRuntimeServiceOptions());
+    public WistDialectExecutionHost CreateHost(DialectFrameworkCompositionResult compositionResult) =>
+        CreateHost(compositionResult, new WistRuntimeServiceOptions());
 
     public WistDialectExecutionHost CreateHost(
         DialectFrameworkCompositionResult compositionResult,
@@ -119,8 +68,8 @@ public sealed class WistDialectExecutionWorkflow
         return new WistDialectExecutionHost(CreateRuntimeHost(configuration, runtimeServiceOptions), configuration);
     }
 
-    public ToolchainRuntimeHost CreateRuntimeHost(DialectFrameworkCompositionResult compositionResult)
-        => CreateRuntimeHost(compositionResult, new WistRuntimeServiceOptions());
+    public ToolchainRuntimeHost CreateRuntimeHost(DialectFrameworkCompositionResult compositionResult) =>
+        CreateRuntimeHost(compositionResult, new WistRuntimeServiceOptions());
 
     public ToolchainRuntimeHost CreateRuntimeHost(
         DialectFrameworkCompositionResult compositionResult,
@@ -135,7 +84,6 @@ public sealed class WistDialectExecutionWorkflow
         WistRuntimeServiceOptions runtimeServiceOptions)
     {
         runtimeServiceOptions = runtimeServiceOptions.ArgNotNull();
-
         var provider = _serviceProviderFactory.Create(configuration, runtimeServiceOptions);
         return new ToolchainRuntimeHost(provider, configuration, ServiceProviderOwnership.Owned);
     }
@@ -143,15 +91,10 @@ public sealed class WistDialectExecutionWorkflow
     private WistDialectExecutionConfiguration GetConfiguration(DialectFrameworkCompositionResult compositionResult)
     {
         compositionResult = compositionResult.ArgNotNull();
-
         if (!compositionResult.IsSuccess || compositionResult.BuildPlan == null)
             Thrower.Argument(nameof(compositionResult), "Dialect composition result must be successful before a runtime host can be created.");
-
         if (compositionResult.RuntimeSelection is not SelectedRuntimePlan)
-            Thrower.Argument(
-                nameof(compositionResult),
-                "Dialect composition result does not contain a selected runtime plan for Wist execution.");
-
+            Thrower.Argument(nameof(compositionResult), "Dialect composition result does not contain a selected runtime plan for Wist execution.");
         var selectedRuntimePlan = (SelectedRuntimePlan)compositionResult.RuntimeSelection;
         return _configurationBuilder.Build(compositionResult.BuildPlan, selectedRuntimePlan);
     }

@@ -148,7 +148,11 @@ for (var index = 0; index < usages.Length; index++)
 
 Benchmark compiled delegate invocation separately from parsing and compilation. The project does not claim that every Wist program outperforms handwritten C#.
 
-See [the public performance model](docs/public/performance-model.md) for benchmark boundaries and interpretation.
+See [the performance model](docs/reference/performance-model.md) for benchmark boundaries and interpretation.
+
+## External language authoring alpha
+
+External .NET projects can define non-Wist languages through `UniversalToolchain.LanguageAuthoring`. A single typed registration creates both descriptor metadata and immutable runtime components; independently shipped packages are assembled against the exact manifest hashes captured by the plan. The planner supports configurable entry artifacts, package-level extensions, deterministic same-artifact pass ordering, planning-only definitions, exact backend executor selection and fail-closed runtime policy. The Wist adapter rejects routes it cannot faithfully execute instead of ignoring them. Start with the [External Language Authoring quickstart](docs/language-authoring/quickstart.md), then use the [deep SDK architecture reference](docs/architecture/external-language-authoring-sdk.md). The independent `samples/Acme.PricingLanguage` and `dotnet new ut-language` exercise the non-Wist path. High-level grammar, binder and operation authoring remain future work.
 
 ## UniversalToolchain underneath Wist
 
@@ -170,9 +174,10 @@ Technical material:
 - [Project documentation](docs/index.md)
 - [Installation and clean-room smoke](docs/start/installation.md)
 - [Use-case recipes](docs/start/use-case-recipes.md)
-- [Alpha stability contract](docs/public/what-is-stable-in-alpha.md)
-- [Architecture guardrails](docs/ARCHITECTURE_RULES.md)
-- [LangDev 2026 proposal](docs/talks/langdev-2026/README.md)
+- [Wist alpha stability contract](docs/evidence/wist-stability-v0.1.0-alpha.1.md)
+- [External Language Authoring quickstart](docs/language-authoring/quickstart.md)
+- [Architecture and project map](docs/architecture/project-map.md)
+- [LangDev 2026 proposal](internal-docs/talks/langdev-2026/README.md)
 
 ## Build and verify from source
 
@@ -205,8 +210,8 @@ Read [the contribution guide](docs/CONTRIBUTING.md). Small documentation, diagno
 
 ## Maintainer launch material
 
-- [Promotion kit](docs/maintainers/promotion-kit.md)
-- [Repository settings and launch checklist](docs/maintainers/repository-settings.md)
+- [Promotion kit](internal-docs/maintainers/promotion-kit.md)
+- [Repository settings and launch checklist](internal-docs/maintainers/repository-settings.md)
 - README hero: [`docs/assets/wist-readme-hero.svg`](docs/assets/wist-readme-hero.svg)
 - Ready-to-upload social preview: [`docs/assets/wist-social-preview.png`](docs/assets/wist-social-preview.png)
 - Editable visual sources: [`wist-readme-hero.svg`](docs/assets/wist-readme-hero.svg) and [`wist-social-preview.svg`](docs/assets/wist-social-preview.svg)

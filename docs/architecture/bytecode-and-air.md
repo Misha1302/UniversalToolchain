@@ -163,4 +163,4 @@ Important future improvements:
 - documented tag producer/consumer matrix;
 - stack-effect validation where possible;
 - clearer split between semantic AIR and backend-lowered AIR if those roles diverge;
-- backend-agnostic compiled artifact abstraction.
+- broader Wist adoption of the already implemented backend-neutral artifact/session and generic typed-route contracts.

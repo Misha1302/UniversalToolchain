@@ -121,4 +121,4 @@ Do not use the current restricted arithmetic preset when you need arbitrary C# e
 
 ## Next
 
-Read [What is stable in alpha?](/public/what-is-stable-in-alpha), the [Performance Model](/public/performance-model) and [Security](/SECURITY) before integrating the package into a consequential workflow.
+Read [Wist alpha stability](/evidence/wist-stability-v0.1.0-alpha.1), the [Performance Model](/reference/performance-model) and [Security](/SECURITY) before integrating the package into a consequential workflow.

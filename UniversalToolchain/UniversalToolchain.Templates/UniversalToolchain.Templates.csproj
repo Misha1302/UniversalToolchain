@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <PackageId>UniversalToolchain.Templates</PackageId>
+    <Version>0.3.0-alpha.1</Version>
+    <PackageType>Template</PackageType>
+    <IsPackable>true</IsPackable>
+    <IncludeContentInPack>true</IncludeContentInPack>
+    <ContentTargetFolders>content</ContentTargetFolders>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <EnableDefaultNoneItems>false</EnableDefaultNoneItems>
+    <NoDefaultExcludes>true</NoDefaultExcludes>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <Description>dotnet new templates for contribution-planned external UniversalToolchain languages.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="content\**\*" Exclude="content\**\bin\**;content\**\obj\**" Pack="true" PackagePath="%(RecursiveDir)%(Filename)%(Extension)" />
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

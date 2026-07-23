@@ -37,6 +37,9 @@ jobs:
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
 
+      - name: Validate documentation structure and links
+        run: npm run docs:status && npm run docs:links
+
       - name: Build documentation
         run: npm run docs:build
 

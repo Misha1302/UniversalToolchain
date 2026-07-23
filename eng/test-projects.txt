@@ -1,0 +1,5 @@
+# Canonical test assemblies. Keep this list shared by build.sh, build.ps1 and release validation.
+UniversalToolchain/Tests/Tests.csproj
+UniversalToolchain/UniversalToolchain.Modules.Tests/UniversalToolchain.Modules.Tests.csproj
+UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolchain.Dialects.Tests.csproj
+UniversalToolchain/UniversalToolchain.LanguageSdk.Tests/UniversalToolchain.LanguageSdk.Tests.csproj

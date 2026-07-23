@@ -43,6 +43,7 @@ public static class WistDialectCoreServiceCollectionExtensions
             ModuleContractPipelineProfiles.Warn,
             NullModuleContractDiagnosticSink.Instance);
         services.TryAddSingleton<IDialectCompiledDialectBuildPlanBuilder, DialectCompiledDialectBuildPlanBuilder>();
+        services.TryAddSingleton<ToolchainCompositionWorkflow>();
         services.TryAddSingleton<WistDialectExecutionConfigurationBuilder>();
         services.TryAddSingleton<WistDialectServiceProviderFactory>();
         services.TryAddSingleton<WistDialectExecutionWorkflow>();
