@@ -1,0 +1,46 @@
+
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniversalToolchain.PlanFuzz.Core", "UniversalToolchain.PlanFuzz.Core\UniversalToolchain.PlanFuzz.Core.csproj", "{C60E0D3B-84D9-48C3-8C3E-5F3F2948BEA1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniversalToolchain.PlanFuzz.Adapter.Acme", "UniversalToolchain.PlanFuzz.Adapter.Acme\UniversalToolchain.PlanFuzz.Adapter.Acme.csproj", "{4B6BBAC3-1659-4555-944B-211DDBF8D203}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniversalToolchain.PlanFuzz.Cli", "UniversalToolchain.PlanFuzz.Cli\UniversalToolchain.PlanFuzz.Cli.csproj", "{E7AB56F5-07C8-4556-BEB3-158BDF67BA99}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniversalToolchain.PlanFuzz.Tests", "UniversalToolchain.PlanFuzz.Tests\UniversalToolchain.PlanFuzz.Tests.csproj", "{EF2A972E-15C0-46DC-8212-0A018C58197C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UniversalToolchain.PlanFuzz.IntegrationTests", "UniversalToolchain.PlanFuzz.IntegrationTests\UniversalToolchain.PlanFuzz.IntegrationTests.csproj", "{006240D6-D4FD-4617-B3A3-36DC40FA4008}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C60E0D3B-84D9-48C3-8C3E-5F3F2948BEA1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C60E0D3B-84D9-48C3-8C3E-5F3F2948BEA1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C60E0D3B-84D9-48C3-8C3E-5F3F2948BEA1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C60E0D3B-84D9-48C3-8C3E-5F3F2948BEA1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4B6BBAC3-1659-4555-944B-211DDBF8D203}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4B6BBAC3-1659-4555-944B-211DDBF8D203}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4B6BBAC3-1659-4555-944B-211DDBF8D203}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4B6BBAC3-1659-4555-944B-211DDBF8D203}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E7AB56F5-07C8-4556-BEB3-158BDF67BA99}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E7AB56F5-07C8-4556-BEB3-158BDF67BA99}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E7AB56F5-07C8-4556-BEB3-158BDF67BA99}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E7AB56F5-07C8-4556-BEB3-158BDF67BA99}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EF2A972E-15C0-46DC-8212-0A018C58197C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF2A972E-15C0-46DC-8212-0A018C58197C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EF2A972E-15C0-46DC-8212-0A018C58197C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EF2A972E-15C0-46DC-8212-0A018C58197C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{006240D6-D4FD-4617-B3A3-36DC40FA4008}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{006240D6-D4FD-4617-B3A3-36DC40FA4008}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{006240D6-D4FD-4617-B3A3-36DC40FA4008}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{006240D6-D4FD-4617-B3A3-36DC40FA4008}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

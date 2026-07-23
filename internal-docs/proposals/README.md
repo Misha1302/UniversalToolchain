@@ -10,7 +10,7 @@ the current-state documents are updated.
 
 | Proposal | Purpose | Status |
 |---|---|---|
-| [PlanFuzz](planfuzz/README.md) | Configuration-aware differential testing across programs, language plans, routes, backends and runtime lifecycles | Proposed research direction |
+| [PlanFuzz](planfuzz/README.md) | Configuration-aware differential testing across programs, language plans, routes, backends and runtime lifecycles | Phase 0 and Acme vertical slice implemented experimentally; later stages proposed |
 | [Typed module contracts and verifiers](typed-module-contracts-and-verifiers.md) | Typed ownership, fact/effect and verifier contracts for compiler modules | Design proposal |
 | [Flame SSA optimizing backend](flame-ssa-optimizing-backend-design/index.md) | Target architecture and rollout plan for an SSA-oriented optimizing backend | Design proposal |
 

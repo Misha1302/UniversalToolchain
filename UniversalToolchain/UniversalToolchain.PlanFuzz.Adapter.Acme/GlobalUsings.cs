@@ -1,0 +1,11 @@
+global using System.Globalization;
+global using System.Security.Cryptography;
+global using System.Text;
+global using System.Text.Json;
+global using ExceptionsManager;
+global using UniversalToolchain.FeatureSdk;
+global using UniversalToolchain.Language.Abstractions;
+global using UniversalToolchain.LanguageAuthoring;
+global using UniversalToolchain.LanguageSdk;
+global using UniversalToolchain.PlanFuzz;
+global using UniversalToolchain.Runtime;

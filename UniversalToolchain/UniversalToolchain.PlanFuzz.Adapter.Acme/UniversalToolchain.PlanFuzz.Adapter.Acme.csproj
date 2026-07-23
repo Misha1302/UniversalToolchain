@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>14</LangVersion>
+    <IsPackable>false</IsPackable>
+    <Description>Independent non-Wist PlanFuzz adapter for the Acme pricing language fixture.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj" />
+    <ProjectReference Include="..\UniversalToolchain.PlanFuzz.Core\UniversalToolchain.PlanFuzz.Core.csproj" />
+    <ProjectReference Include="..\UniversalToolchain.LanguageAuthoring\UniversalToolchain.LanguageAuthoring.csproj" />
+    <ProjectReference Include="..\UniversalToolchain.LanguageSdk\UniversalToolchain.LanguageSdk.csproj" />
+    <ProjectReference Include="..\UniversalToolchain.Runtime\UniversalToolchain.Runtime.csproj" />
+  </ItemGroup>
+</Project>

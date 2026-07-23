@@ -1,187 +1,236 @@
 # PlanFuzz
 
-## Техническое задание на конфигурационно-ориентированное дифференциальное тестирование расширяемых языков
+## Техническое задание на систему конфигурационно-ориентированного дифференциального тестирования расширяемых языков
 
-**Версия ТЗ:** 0.2  
+**Версия ТЗ:** 0.3  
 **Дата:** 24 июля 2026 г.  
 **Целевой репозиторий:** `Misha1302/Wist2`  
-**GitHub baseline публикации:** `master@7f2b5819f712d03c39270349b6b39e914b79e008`  
-**Инспектированный source bundle:** `Wist2-language-authoring-multi-user-documentation-2026-07-23.3(2).zip`  
-**Целевая платформа:** .NET 10, C# 14, Linux x64; Windows — воспроизведение и CI  
-**Статус:** proposal / implementation-ready specification; описанная система ещё не реализована
+**GitHub baseline:** `master@7f2b5819f712d03c39270349b6b39e914b79e008`; реализация развивается поверх PlanFuzz proposal branch  
+**Целевая платформа:** .NET 10, C# 14, Linux x64; Windows поддерживается на уровне воспроизведения и CI  
+**Статус документа:** living implementation and experiment specification; Phase 0 и первый Acme vertical slice реализованы, последующие этапы остаются gated  
 
 ---
 
-## 1. Назначение и позиционирование
+> **Статус реализации.** Этот документ задаёт целевую систему целиком. Фактически реализованный subset и проверенные observables перечислены в [implementation-status.md](implementation-status.md). Наличие требования ниже не означает, что соответствующий oracle, adapter, reducer или campaign stage уже реализован.
 
-PlanFuzz — исследовательский слой над UniversalToolchain, предназначенный для автоматического поиска дефектов, возникающих на пересечении:
+# 1. Назначение
+
+PlanFuzz — исследовательский инструмент для автоматического обнаружения дефектов, возникающих на пересечении:
 
 - входной программы;
-- выбранных возможностей языка;
+- выбранных языковых возможностей;
 - package/contribution composition;
 - artifact routes;
-- backend'ов;
+- backend’ов;
 - optimizer/IR routes;
 - fallback policy;
-- component lifetime;
 - runtime lifecycle и execution schedule.
 
-Обычный compiler fuzzer главным образом изменяет программу. PlanFuzz изменяет программу, исполняемый language plan и маршрут исполнения, после чего проверяет явно заданные дифференциальные и метаморфические отношения.
+Обычный compiler fuzzer преимущественно изменяет программу. PlanFuzz должен изменять и программу, и исполняемый языковой план, и маршрут исполнения, после чего проверять заданные метаморфические отношения и сквозные архитектурные инварианты.
 
 Каноническая модель testcase:
 
 ```text
 TestCase = Program
          × LanguagePlanVariant
-         × BackendOrOptimizationVariant
+         × Backend/OptimizationVariant
          × ExecutionSchedule
-         × ApplicableOracleSet
+         × OracleSet
 ```
 
-PlanFuzz не предполагает, что все варианты должны завершаться успешно или возвращать одинаковое значение. Для каждой пары или группы вариантов заранее задаётся тип отношения:
-
-- semantic equivalence;
-- same normalized failure;
-- deterministic composition;
-- negative-surface preservation;
-- extension noninterference;
-- controlled fallback;
-- state isolation;
-- route conformance;
-- expected fail-closed rejection.
-
-Документ хранится в `internal-docs/proposals/planfuzz/` как следующая ступень развития, а не как описание текущей функциональности. До реализации authoritative sources — существующий код, тесты, runtime contracts и current-architecture документы.
+PlanFuzz не должен предполагать, что все варианты обязаны завершаться успешно или возвращать одинаковое значение. Каждый вариант обязан сопровождаться явным типом ожидаемого отношения: эквивалентность, одинаковая категория отказа, отсутствие новой возможности, детерминизм композиции, изоляция состояния либо ожидаемое fail-closed отклонение.
 
 ---
 
-## 2. Исследовательская гипотеза
+# 2. Целевой исследовательский результат
+
+## 2.1. Центральная гипотеза
 
 > Конфигурационно-ориентированная генерация и проверка программ, language plans, execution routes и lifecycle schedules обнаруживает классы дефектов расширяемых компиляторов, которые не обнаруживаются program-only fuzzing и обычными handwritten tests при сопоставимом бюджете исполнения.
 
-### 2.1. Исследовательские вопросы
+## 2.2. Основные исследовательские вопросы
 
-**RQ1 — Defect discovery.** Находит ли PlanFuzz реальные ранее неизвестные дефекты взаимодействия composition, backend'ов, оптимизаций и lifecycle?
+### RQ1. Defect discovery
 
-**RQ2 — Incremental value.** Какие дефекты становятся обнаружимыми только после добавления отдельных измерений:
+Обнаруживает ли PlanFuzz реальные ранее неизвестные дефекты, связанные с взаимодействием plan composition, backend’ов, оптимизаций и lifecycle?
+
+### RQ2. Incremental value
+
+Какие дефекты обнаруживаются только при добавлении следующих измерений:
 
 1. program generation;
 2. plan mutation;
-3. backend/optimization variation;
+3. optimization/backend variation;
 4. lifecycle scheduling;
 5. negative-surface oracle?
 
-**RQ3 — Cost.** Как распределяется стоимость по generation, plan compilation, runtime creation, execution, oracle evaluation, confirmation и reduction?
+### RQ3. Cost
 
-**RQ4 — Reduction.** Насколько reducer уменьшает программу, plan delta и schedule, сохраняя один defect fingerprint?
+Какова стоимость PlanFuzz по фазам:
 
-**RQ5 — Generality.** Работает ли один generic core минимум для Wist и независимого `Acme.PricingLanguage`?
+- generation;
+- plan compilation;
+- runtime creation;
+- execution;
+- oracle evaluation;
+- replay;
+- reduction?
 
-### 2.2. Условия научно сильного результата
+### RQ4. Reduction quality
 
-Исследовательская гипотеза получает поддержку только если одновременно выполнено:
+Насколько reducer уменьшает программу, plan delta и schedule, сохраняя тот же defect fingerprint?
 
-1. Найдены подтверждённые дефекты минимум двух root-cause classes.
-2. Минимум один дефект требует изменения plan, route или lifecycle и не воспроизводится program-only baseline.
+### RQ5. Generality
+
+Работает ли общий механизм минимум для двух независимо устроенных языков:
+
+- Wist как reference language;
+- `Acme.PricingLanguage` как non-Wist external language?
+
+## 2.3. Условия научно сильного результата
+
+Работа считается исследовательски успешной, если выполнены все условия:
+
+1. Найдены подтверждённые дефекты минимум двух различных root-cause classes.
+2. Минимум один дефект требует изменения language plan, route или lifecycle и не воспроизводится program-only baseline.
 3. Каждый засчитанный дефект:
-   - воспроизводится в fresh-process strict mode;
+   - воспроизводится в strict isolated mode;
    - имеет минимизированный testcase;
    - имеет root-cause analysis;
-   - закреплён regression test;
-   - отделён от seeded faults.
-4. Проведено равнобюджетное сравнение минимум с двумя baseline-режимами.
+   - получил regression test;
+   - отделён от seeded mutants.
+4. Проведено сравнение с минимум двумя baseline-режимами.
 5. Сохранён воспроизводимый raw evidence package.
 
-Seeded faults проверяют адекватность инструмента и не считаются найденными реальными дефектами.
+Seeded/fault-injected defects используются только для проверки адекватности инструмента и не засчитываются как реальные найденные дефекты.
 
 ---
 
-## 3. Baseline и архитектурные инварианты
+# 3. Baseline и доказательная граница
 
-Текущий repository baseline предоставляет необходимые предпосылки:
+## 3.1. Фактически инспектированный baseline
 
-- typed language packages и contributions;
-- immutable `LanguagePlan` и canonical plan hash;
-- configurable entry artifacts и artifact routes;
-- exact executor selection;
-- component lifetimes;
+В baseline присутствуют:
+
+- `UniversalToolchain.Language.Abstractions`;
+- `UniversalToolchain.FeatureSdk`;
+- `UniversalToolchain.LanguageSdk`;
+- `UniversalToolchain.LanguageAuthoring`;
+- `UniversalToolchain.Runtime`;
+- `UniversalToolchain.Testing`;
+- `UniversalToolchain.Wist`;
 - Wist interpreter/CIL paths;
 - verifier-gated Wist `AIR -> SSA -> AIR` route;
-- независимый `samples/Acme.PricingLanguage`;
-- reusable testing contracts.
+- `samples/Acme.PricingLanguage` с interpreter и compiled backend;
+- schema-v5 language lock serialization;
+- deterministic `LanguagePlan.PlanHash`;
+- exact runtime provider/contribution/backend/contract checks;
+- component lifetimes `PerSession` и `SingletonStateless`;
+- disposal and in-flight-operation coordination.
 
-Числа из `VERIFICATION.md` инспектированного bundle являются recorded evidence, а не повторным clean run при публикации этого proposal.
+Рекурсивный `MANIFEST.sha256` распакованного baseline проверен: 1552 записи прошли проверку.
 
-Реализация обязана сохранять границы:
+`VERIFICATION.md` baseline фиксирует 1411 успешных тестов, 85/85 построенных проектов и девять проверенных packages. В рамках составления этого ТЗ clean build и повторный запуск 1411 тестов не выполнялись; эти числа считаются записанным baseline evidence, а не новым воспроизведением.
 
-1. Generic PlanFuzz core не знает Wist-specific IDs, syntax, modules или backend types.
-2. Wist-specific поведение находится только в Wist adapter.
-3. Program generation и reduction работают с adapter-owned structured model, а не распознают raw source регулярными выражениями.
-4. Existing planning/runtime contracts остаются authoritative; PlanFuzz не создаёт второй execution model.
-5. Frontend не получает зависимости от backend implementation.
-6. Unsupported behavior не превращается в silent success.
-7. Plans, descriptors, cases и observations являются immutable snapshots на границах.
-8. Глобальные mutable registries запрещены.
-9. Reflection допускается только как bounded deterministic mechanism над выбранными components.
-10. Существующие проверки не ослабляются ради generated cases.
-11. Research tooling не расширяет public Wist package surface без отдельного non-Wist use case и compatibility review.
+## 3.2. Архитектурные ограничения baseline
+
+PlanFuzz обязан сохранять следующие границы:
+
+- generic core не знает Wist-specific IDs, modules, syntax или backend types;
+- Wist-specific поведение находится только в Wist adapter;
+- PlanFuzz core не распознаёт синтаксис из raw source;
+- program generation и reduction используют adapter-owned structured model;
+- frontend не получает зависимость от backend implementation;
+- runtime исполняет именно route, зафиксированный в `LanguagePlan`;
+- unsupported behavior не превращается в silent success;
+- `LanguagePlan`, descriptors и observations рассматриваются как immutable snapshots;
+- отсутствуют глобальные mutable registries;
+- reflection, если используется, ограничена явно выбранными packages/components и не выполняется в hot execution path;
+- существующие проверки не ослабляются ради пропуска generated cases.
 
 ---
 
-## 4. Область работ
+# 4. Область работ
 
-### 4.1. MVP
+## 4.1. Входит в MVP
 
-В MVP входят:
+1. Детерминированный campaign coordinator.
+2. Версионированный формат testcase.
+3. Изолированный worker process.
+4. Generic adapter contract.
+5. Adapter для `Acme.PricingLanguage`.
+6. Adapter для Wist restricted arithmetic.
+7. Плановые вариации и package-order permutations.
+8. Backend parity.
+9. Plan determinism.
+10. Optimization/route parity для применимого Wist subset.
+11. Controlled fallback checks.
+12. Negative-surface checks.
+13. Runtime isolation/lifecycle scenarios.
+14. Typed value and failure normalization.
+15. Finding replay, deduplication и reduction.
+16. Seeded fault fixtures.
+17. CLI и machine-readable reports.
+18. Raw research artifact output.
 
-- deterministic campaign coordinator;
-- versioned testcase format;
-- isolated worker process;
-- generic language adapter contract;
-- Acme adapter;
-- Wist restricted-arithmetic adapter;
-- plan variations и package-order permutations;
-- backend parity;
-- plan determinism;
-- optimization/route parity для применимого Wist subset;
-- controlled fallback;
-- negative-surface checks;
-- runtime/session isolation scenarios;
-- typed value and failure normalization;
-- replay, deduplication и reduction;
-- seeded fault fixtures;
-- CLI и machine-readable reports;
-- reproducible research artifacts.
+## 4.2. Входит в расширенную версию
 
-### 4.2. Расширенная версия
-
-После MVP допускаются:
-
-- Wist locals, scopes, conditions, loops и SafeMath calls;
+- Wist conditions, locals, scopes, loops и SafeMath calls;
 - concurrent schedules;
-- third independent adapter;
+- richer negative program generation;
+- external third-party language adapter;
 - coverage-guided scheduling;
-- adaptive mutator weighting;
 - distributed workers;
-- cross-SDK и cross-OS campaigns.
+- optional code coverage;
+- adaptive mutator weighting;
+- cross-SDK/cross-OS differential campaigns.
 
-### 4.3. Не входит
+## 4.3. Не входит
 
-- новый parser generator;
-- grammar inference;
+- создание нового parser generator;
+- общий grammar inference;
 - формальное доказательство корректности UniversalToolchain;
 - hostile-extension sandbox;
 - fuzzing произвольного CLR IL;
-- security claim о безопасном исполнении hostile code;
-- замена существующих unit/integration tests;
-- автоматическое объявление любого расхождения compiler bug;
-- Wist performance claims;
-- blind AppDomain/filesystem plugin discovery.
+- security claim о безопасном исполнении недоверенного кода;
+- замена всех существующих unit/integration tests;
+- автоматическое принятие найденного расхождения за compiler bug;
+- performance benchmark самого Wist языка;
+- скрытая загрузка произвольных plugins через AppDomain/filesystem scan.
 
 ---
 
-## 5. Структура solution
+# 5. Термины
 
-Предлагаемые проекты:
+**Campaign** — одно детерминированное исследовательское выполнение с фиксированными options, seed, adapter versions и environment record.
+
+**Case** — полностью сериализуемый набор входов, variants, schedule и oracle contracts.
+
+**Variant** — одна конкретная конфигурация plan/backend/optimization/runtime.
+
+**Relation** — ожидаемая связь между observations двух или нескольких variants.
+
+**Observation** — нормализованный результат одной execution attempt, включая stage, value, failure, trace и process status.
+
+**Finding** — подтверждённое нарушение oracle contract.
+
+**Defect fingerprint** — стабильная семантическая сигнатура finding для deduplication и reduction.
+
+**Strict mode** — fresh worker process для каждого testcase с timeout и kill-tree.
+
+**Fast mode** — опциональный reused worker для предварительного исследования; finding не считается подтверждённым без strict replay.
+
+**Seeded fault** — намеренно добавленный test-only defect, проверяющий, что соответствующий oracle способен сработать.
+
+**Negative surface** — набор features, contributions, capabilities, providers, intrinsics и execution paths, которые language plan обязуется не допускать.
+
+---
+
+# 6. Архитектура решения
+
+## 6.1. Проекты
+
+MVP должен состоять из следующих проектов:
 
 ```text
 UniversalToolchain/
@@ -189,68 +238,259 @@ UniversalToolchain/
   UniversalToolchain.PlanFuzz.Adapter.Acme/
   UniversalToolchain.PlanFuzz.Adapter.Wist/
   UniversalToolchain.PlanFuzz.Cli/
-  UniversalToolchain.PlanFuzz.Worker/
   UniversalToolchain.PlanFuzz.Tests/
   UniversalToolchain.PlanFuzz.IntegrationTests/
 ```
 
-### 5.1. `UniversalToolchain.PlanFuzz.Core`
+### `UniversalToolchain.PlanFuzz.Core`
 
 Содержит:
 
 - campaign engine;
 - deterministic PRNG;
 - testcase schema/model;
-- adapter abstractions;
-- execution protocol DTOs;
+- execution protocol;
 - observation model;
 - oracle engine;
-- corpus/finding storage;
+- corpus and finding storage;
 - reducer orchestration;
-- report builders.
+- report builders;
+- generic adapter contracts.
 
-Core не ссылается на Wist facade, parser, AST classes или concrete backend projects.
+Разрешённые зависимости:
 
-### 5.2. Adapters
+- `UniversalToolchain.Language.Abstractions`;
+- `UniversalToolchain.LanguageSdk` только через стабильные plan/lock DTO или выделенный abstraction package;
+- стандартная библиотека .NET.
 
-Adapter владеет:
+Запрещённые зависимости:
 
-- structured program model;
-- generator;
-- renderer;
-- semantic input generator;
-- plan-variant generator;
-- observation normalizer;
-- relation applicability facts;
-- program reducer;
-- adapter-specific trace extraction.
+- `UniversalToolchain.Wist`;
+- Wist modules;
+- Wist AST types;
+- `BasicCilCompiler`;
+- `BasicInterpreter`;
+- конкретные backend types;
+- test projects.
 
-Acme — первый vertical slice. Wist подключается после подтверждения generic path.
+### `UniversalToolchain.PlanFuzz.Adapter.Acme`
 
-### 5.3. Worker
+Содержит structured model, generator, renderer, plan variants, execution adapter и reducer для Acme.
 
-Worker — отдельный executable, который:
+### `UniversalToolchain.PlanFuzz.Adapter.Wist`
 
-1. читает ровно один request из stdin или файла;
-2. проверяет schema/version;
-3. загружает только выбранный adapter;
-4. исполняет variants;
-5. возвращает bounded response;
-6. завершается с определённым exit code.
+Содержит Wist-specific structured models, renderer, plan/profile variants, backend mapping, SSA policy mapping и diagnostic normalization.
 
-Coordinator владеет timeout, kill-tree, confirmation и artifact preservation.
+### `UniversalToolchain.PlanFuzz.Cli`
+
+Содержит:
+
+- command parsing;
+- campaign orchestration;
+- worker launch;
+- replay;
+- reduction command;
+- inspect/report commands.
+
+### Tests
+
+- `UniversalToolchain.PlanFuzz.Tests` — unit and property-like tests.
+- `UniversalToolchain.PlanFuzz.IntegrationTests` — out-of-process, package/order/backend/lifecycle tests.
+
+## 6.2. Направление зависимостей
+
+```text
+PlanFuzz.Cli
+  -> PlanFuzz.Core
+  -> adapter registry
+       -> Adapter.Acme
+       -> Adapter.Wist
+
+Adapter.Acme
+  -> Language SDK / Runtime / Acme package factory
+
+Adapter.Wist
+  -> Wist facade or Wist language-pack adapter
+  -> Wist-specific testing helpers
+
+PlanFuzz.Core
+  -X-> Wist
+  -X-> Acme
+  -X-> concrete backend implementation
+```
+
+## 6.3. Extension model
+
+Для MVP adapters регистрируются явно в CLI composition root. Blind runtime scanning запрещён.
+
+В будущем допускается статический generated registry или explicit package list. Dynamic plugin loading не входит в MVP.
 
 ---
 
-## 6. Testcase model
+# 7. Принципы реализации
 
-Минимальная логическая модель:
+1. **Correctness before throughput.** Сначала strict deterministic path, затем fast exploration.
+2. **One semantic owner.** PlanFuzz не дублирует parser, planner или runtime semantics.
+3. **No raw string contracts.** IDs и categories typed/versioned.
+4. **Fail closed.** Неизвестная schema, adapter, oracle или version прекращает выполнение case.
+5. **Relation-aware generation.** Mutator обязан объявить ожидаемое отношение.
+6. **Typed observations.** Value сравнивается по type/value contract, не по `ToString()`.
+7. **No silent fallback.** Fallback является observable event.
+8. **No publication by implementation.** Наличие инструмента не доказывает исследовательский claim.
+9. **Reproducibility first.** Case и evidence должны воспроизводиться без исходного campaign process.
+10. **Bounded everything.** Размеры, время, attempts, logs, source, trace и reducer budgets ограничены.
+
+---
+
+# 8. Determinism model
+
+## 8.1. Требования к PRNG
+
+Использовать собственную стабильную реализацию PRNG с фиксированным algorithm ID, например:
+
+```text
+xoshiro256** / planfuzz-prng-v1
+```
+
+Запрещено использовать `System.Random` как cross-version reproducibility contract.
+
+PRNG API:
 
 ```csharp
-public sealed record ResearchTestCase(
-    string SchemaVersion,
-    string CaseId,
-    ulong Seed,
+public interface IPlanFuzzRandom
+{
+    ulong NextUInt64();
+    int NextInt32(int exclusiveUpperBound);
+    bool NextBoolean();
+    T Pick<T>(IReadOnlyList<T> items);
+    IPlanFuzzRandom Fork(string domain);
+}
+```
+
+`Fork(domain)` обязан создавать независимый stream через hash master state + UTF-8 domain, а не потреблять случайное число из родителя.
+
+Домены:
+
+```text
+case/<index>
+program
+inputs
+plan
+backend
+schedule
+reduction/<step>
+```
+
+## 8.2. Campaign identity
+
+Campaign manifest включает:
+
+- master seed;
+- PRNG algorithm/version;
+- adapter IDs/versions;
+- testcase schema version;
+- mutator-set version;
+- oracle-set version;
+- repository commit/archive hash;
+- .NET SDK/runtime identity;
+- OS/architecture;
+- relevant environment options.
+
+## 8.3. Golden tests
+
+Обязательны tests:
+
+- первые N значений PRNG для фиксированного seed;
+- одинаковый fork domain — одинаковый stream;
+- разные domains — разные streams;
+- generated case JSON идентичен byte-for-byte;
+- изменение числа соседних cases не меняет case с тем же index;
+- canonical case ID стабилен.
+
+---
+
+# 9. Testcase schema
+
+## 9.1. Формат
+
+Файл `case.json`:
+
+```json
+{
+  "schemaVersion": 1,
+  "caseId": "sha256:...",
+  "campaign": {
+    "masterSeed": "1844674407370955161",
+    "caseIndex": 42,
+    "caseSeed": "...",
+    "prng": "planfuzz-prng-v1"
+  },
+  "adapter": {
+    "id": "acme-pricing",
+    "version": "1"
+  },
+  "program": {
+    "modelKind": "acme-decimal-expression-v1",
+    "model": {},
+    "renderedSource": "unitPrice * quantity - discount",
+    "classification": "ValidDeterministic"
+  },
+  "variants": [],
+  "schedule": {},
+  "oracles": [],
+  "environmentRequirements": {},
+  "provenance": {}
+}
+```
+
+## 9.2. Case identity
+
+```text
+CaseId = SHA256(CanonicalJson(SemanticCaseBody))
+```
+
+Не включать в semantic identity:
+
+- timestamps;
+- output path;
+- process ID;
+- machine-specific temp paths;
+- absolute repository path;
+- elapsed time;
+- stdout/stderr ordering.
+
+Включать:
+
+- seed/index;
+- adapter/version;
+- structured program;
+- variants;
+- schedule;
+- oracle contracts;
+- semantic limits;
+- mutation and seeded-fault IDs.
+
+## 9.3. Compatibility
+
+- Unknown major schema version — reject.
+- Unknown required enum/field — reject.
+- Unknown optional extension namespace — preserve or explicitly reject according to declared policy.
+- No implicit default for semantic fields.
+- Migration tool required before changing stored corpus schema.
+
+## 9.4. Immutability
+
+DTO constructors copy mutable collections. JSON deserialization produces fully validated immutable object graph.
+
+---
+
+# 10. Core domain model
+
+Минимальные типы:
+
+```csharp
+public sealed record PlanFuzzCase(
+    CaseIdentity Identity,
     AdapterIdentity Adapter,
     ProgramDocument Program,
     IReadOnlyList<ExecutionVariant> Variants,
@@ -258,789 +498,1521 @@ public sealed record ResearchTestCase(
     IReadOnlyList<OracleContract> Oracles,
     EnvironmentRequirements Environment,
     CaseProvenance Provenance);
+
+public sealed record ExecutionVariant(
+    VariantId Id,
+    LanguagePlanDocument Plan,
+    BackendRouteSelection Route,
+    RuntimePolicyDocument RuntimePolicy,
+    InputDocument Inputs,
+    ExpectedRelationRole Role);
+
+public sealed record OracleContract(
+    OracleId Id,
+    IReadOnlyList<VariantId> Subjects,
+    OraclePreconditions Preconditions,
+    ComparisonPolicy Policy);
 ```
 
-### 6.1. Требования к формату
-
-- canonical UTF-8 JSON;
-- stable property order;
-- invariant-culture numbers;
-- no timestamps in semantic identity;
-- explicit schema version;
-- deterministic `CaseId = SHA256(canonical semantic payload)`;
-- unknown required field/version fail closed;
-- extensions хранятся в typed adapter-owned namespace;
-- secrets и raw environment variables не сериализуются.
-
-### 6.2. Variant
-
-Variant фиксирует:
-
-- language definition/package set;
-- package/contribution order;
-- entry artifact;
-- artifact route;
-- backend/executor;
-- optimizer/SSA policy;
-- fallback policy;
-- component lifetime policy;
-- input values;
-- resource limits;
-- expected relation role.
-
-Нельзя восстанавливать semantic variant из display name или concrete type name.
-
-### 6.3. Relation
-
-Для изменения plan требуется тип отношения:
-
-```text
-Equivalent
-EquivalentOnSharedDomain
-ExpectedSameFailure
-NegativeSurfacePreserving
-ExtensionNoninterfering
-DeterministicRebuild
-ExpectedFailClosed
-IntentionallyDifferent
-```
-
-Oracle запускается только при выполненных preconditions соответствующего relation.
+Каждый ID должен быть стабильной value-semantic сущностью, а не `Type.Name`.
 
 ---
 
-## 7. Determinism
+# 11. Adapter contract
 
-PlanFuzz должен использовать собственный versioned PRNG contract. Нельзя считать `System.Random` стабильным cross-version serialization contract.
-
-Campaign identity включает:
-
-- master seed;
-- PRNG algorithm/version;
-- adapter version;
-- testcase schema version;
-- mutator set version;
-- oracle set version;
-- repository commit;
-- runtime/SDK identity.
-
-Каждый case использует детерминированно выведенный seed, чтобы изменение количества соседних cases не меняло уже сохранённые testcases.
-
-Повторный запуск одинакового campaign manifest обязан генерировать одинаковые canonical cases и variant order. Environment-specific runtime observations могут отличаться только в заранее классифицированных полях.
-
----
-
-## 8. Program generation
-
-### 8.1. Общие требования
-
-Generator:
-
-- строит well-typed structured programs;
-- ограничивает глубину, node count и evaluation cost;
-- избегает undefined/unspecified semantics;
-- сохраняет renderer determinism;
-- умеет порождать positive и intentional-negative cases отдельно;
-- публикует coverage features каждого case.
-
-### 8.2. Acme Level 0
-
-Минимальная грамматика модели:
-
-```text
-DecimalExpression := Constant
-                   | Parameter
-                   | Add(Expression, Expression)
-                   | Subtract(Expression, Expression)
-                   | Multiply(Expression, Expression)
-```
-
-Обязательные значения:
-
-- `0`, `1`, `-1`;
-- дробные значения;
-- большие и малые decimal;
-- повторные параметры;
-- вложенные операции;
-- neutral/absorbing forms.
-
-### 8.3. Wist Level 0
-
-Restricted arithmetic subset:
-
-- numeric constants;
-- external parameters;
-- unary minus, если canonical parser semantics подтверждена;
-- `+`, `-`, `*`, `/`;
-- parentheses;
-- bounded exceptional cases, например division by zero, только с нормализованной failure relation.
-
-Следующие уровни добавляют calls, conditions, locals/scopes и bounded loops по одному после стабилизации oracle model.
-
----
-
-## 9. Plan mutation
-
-Mutator не должен произвольно портить JSON. Он работает через typed plan-definition/build APIs или через adapter-owned typed deltas.
-
-Обязательные семейства:
-
-1. physical registration/package order permutation;
-2. independent contribution order permutation;
-3. equivalent alias/preset selection;
-4. backend variant selection;
-5. optimizer/SSA policy variation;
-6. classified fallback variation;
-7. add unused independent extension;
-8. exclude capability/feature;
-9. unavailable/ambiguous contribution negative case;
-10. component lifetime variation where contract allows;
-11. lock/plan rebuild determinism;
-12. resource-limit boundary variation.
-
-Каждый mutator обязан вернуть:
-
-- generated variant;
-- declared relation to source variant;
-- applicability facts;
-- provenance and mutation ID;
-- expected changed and unchanged dimensions.
-
----
-
-## 10. Execution schedule
-
-MVP schedules:
-
-```text
-SingleRun
-RepeatedRun(count)
-TwoSessionsInterleaved
-DisposeOneSessionThenRunOther
-SuccessfulPrepareThenFailedPrepareThenRun
-RebuildSamePlan
-```
-
-Extended schedules:
-
-- bounded parallel calls;
-- cancellation;
-- concurrent dispose;
-- retry after failed activation;
-- repeated runtime construction.
-
-Schedule operations сериализуются явно. Worker не скрывает lifecycle действия внутри adapter.
-
----
-
-## 11. Isolation protocol
-
-### 11.1. Strict mode
-
-Каждый testcase исполняется в fresh process. Coordinator обязан:
-
-- установить wall-clock timeout;
-- ограничить stdout/stderr;
-- уничтожить process tree;
-- различать normal response, timeout, crash, protocol error и infrastructure failure;
-- сохранить request, response и bounded logs;
-- повторить candidate finding 3/3 в новых processes.
-
-### 11.2. Fast mode
-
-Допускается reused worker только для exploration. Finding из fast mode не считается подтверждённым без strict replay.
-
-### 11.3. Exit semantics
-
-Рекомендуемые коды:
-
-```text
-0  valid response produced
-10 testcase/schema rejected
-20 adapter unavailable
-30 controlled execution failure encoded in response
-40 worker internal error
-50 timeout enforced by coordinator
-60 crash or protocol corruption
-```
-
-Program failure кодируется в response и не смешивается с worker failure.
-
----
-
-## 12. Observation model
-
-Observation содержит:
+## 11.1. Generic interface
 
 ```csharp
-public sealed record ExecutionObservation(
-    ObservationStatus Status,
-    ExecutionStage Stage,
-    TypedValueSnapshot? Value,
-    NormalizedFailure? Failure,
-    PlanSnapshot Plan,
-    RouteSnapshot Route,
-    LifecycleTrace Lifecycle,
-    ProcessSnapshot Process,
-    TimingSnapshot Timing);
+public interface IPlanFuzzLanguageAdapter
+{
+    AdapterIdentity Identity { get; }
+    AdapterCapabilities Capabilities { get; }
+
+    GeneratedProgram GenerateProgram(
+        IPlanFuzzRandom random,
+        GenerationProfile profile);
+
+    IReadOnlyList<PlanVariant> GenerateVariants(
+        GeneratedProgram program,
+        IPlanFuzzRandom random,
+        VariantProfile profile);
+
+    WorkerExecutionRequest CreateExecutionRequest(
+        PlanFuzzCase testCase,
+        ExecutionVariant variant);
+
+    NormalizedObservation Normalize(
+        WorkerExecutionResponse response,
+        ExecutionVariant variant);
+
+    OracleApplicability DescribeApplicability(
+        PlanFuzzCase testCase,
+        OracleContract oracle);
+
+    IEnumerable<CaseReduction> ProposeReductions(
+        PlanFuzzCase testCase,
+        FindingFingerprint fingerprint);
+}
 ```
 
-### 12.1. Typed values
+Это логический контракт. Фактическая сигнатура может быть разбита на generator/executor/reducer interfaces, если это уменьшает зависимости.
 
-Сравнение через `ToString()` запрещено. Snapshot хранит:
+## 11.2. Обязанности adapter
 
-- canonical type identity;
-- value kind;
-- invariant canonical representation;
-- exact bytes/bits where meaningful;
-- null/type information.
+Adapter владеет:
 
-Для float/double policy задаётся oracle contract: bit-exact, numeric with NaN/signed-zero rules или explicit tolerance. Нельзя неявно использовать tolerance для integer/decimal.
+- structured syntax model;
+- program renderer;
+- input generation;
+- plan variants;
+- relation preconditions;
+- value normalization;
+- adapter-specific failure mapping;
+- adapter-specific reduction;
+- optional trace extraction.
 
-### 12.2. Failures
+Core владеет:
 
-Normalized failure включает:
+- deterministic scheduling;
+- process isolation;
+- generic testcase storage;
+- oracle invocation;
+- finding confirmation;
+- deduplication;
+- reducer orchestration;
+- campaign reporting.
 
-- category;
-- pipeline stage;
-- stable diagnostic code, если доступен;
-- exception type category;
-- bounded sanitized message fingerprint;
-- timeout/crash distinction;
-- unsupported-vs-internal classification.
+## 11.3. Versioning
 
-Полный exception text не является semantic identity и может содержать volatile или sensitive data.
+Adapter version меняется при изменении:
 
-### 12.3. Traces
+- generated semantics;
+- renderer;
+- normalization;
+- plan variant semantics;
+- reduction behavior;
+- relation applicability.
 
-Trace должен быть bounded и versioned. Минимальные события:
-
-- plan selected;
-- route selected;
-- contribution activated;
-- backend/executor resolved;
-- optimizer/SSA path selected;
-- fallback decision;
-- session created/disposed;
-- provider/component activation.
-
-Instrumentation предпочтительно добавлять через adapter/decorator. Новый production observer contract вводится только при доказанном independent non-Wist use case.
+Cosmetic log changes version не требуют.
 
 ---
 
-## 13. Oracle engine
+# 12. Program models
 
-Каждый oracle возвращает:
+## 12.1. Общие требования
+
+Generator обязан:
+
+- строить well-typed program model;
+- ограничивать depth/node count/evaluation cost;
+- избегать undefined or intentionally unspecified semantics;
+- разделять valid и intentional-negative profiles;
+- обеспечивать deterministic rendering;
+- сохранять structured model в testcase;
+- публиковать semantic features для coverage.
+
+## 12.2. Acme Level 0
+
+Structured model:
+
+```text
+DecimalExpression :=
+    Constant(decimal)
+  | Parameter(unitPrice | quantity | discount)
+  | Add(left, right)
+  | Subtract(left, right)
+  | Multiply(left, right)
+```
+
+Параметры:
+
+```text
+unitPrice: decimal
+quantity: decimal
+conversionRate: decimal
+fixedFee: decimal
+```
+
+Минимальная shipped Acme syntax может быть уже существующей. Adapter обязан рендерить только поддерживаемый subset и не подменять production parser.
+
+Value corpus:
+
+- 0;
+- 1;
+- -1;
+- min/max bounded decimal;
+- fractions;
+- values close to scale boundary;
+- repeated parameters;
+- nested neutral forms;
+- multiplication by 0/1;
+- subtraction from self.
+
+Избегать overflow, если case не классифицирован как expected same failure.
+
+## 12.3. Wist Level 0
+
+Structured model restricted arithmetic:
+
+```text
+WistExpression :=
+    Number
+  | ExternalParameter
+  | UnaryMinus
+  | Add
+  | Subtract
+  | Multiply
+  | DivideNonZero
+  | Parenthesized
+```
+
+Начальный numeric profile:
+
+- `double` или один другой явно выбранный type;
+- finite values по умолчанию;
+- NaN/Infinity отдельным profile;
+- division denominator bounded away from zero;
+- exact comparison policy заранее определён.
+
+## 12.4. Wist Level 1+
+
+После Level 0:
+
+- SafeMath calls;
+- boolean/comparison;
+- conditions;
+- locals;
+- scopes;
+- loops с bounded iteration proof;
+- typed null;
+- external managed calls только в trusted profile.
+
+Каждое расширение должно добавляться отдельным generation capability и ablation dimension.
+
+---
+
+# 13. Plan variation
+
+## 13.1. Relation-aware mutator contract
+
+```csharp
+public interface IPlanVariantMutator
+{
+    MutatorIdentity Identity { get; }
+    bool IsApplicable(BaseVariant input, ProgramFacts facts);
+    PlanMutationResult Apply(BaseVariant input, IPlanFuzzRandom random);
+}
+
+public sealed record PlanMutationResult(
+    ExecutionVariant Variant,
+    ExpectedRelation Relation,
+    MutationProofFacts Facts);
+```
+
+Mutator не имеет права сообщать `Equivalent`, если его transformation может менять semantics для данного program/profile.
+
+## 13.2. Обязательные mutators
+
+1. Registry insertion order permutation.
+2. Equivalent package enumeration order.
+3. Explicit backend selection.
+4. Enable/disable optimizer при proven shared semantics.
+5. SSA policy variation `Disabled/Prefer/Require` по applicability.
+6. Add unused independent feature.
+7. Remove used feature — expected fail closed.
+8. Exclude capability.
+9. Introduce conflicting package contribution — expected deterministic failure.
+10. Change component lifetime.
+11. Change artifact route where semantic equivalence declared.
+12. Change package version/hash for lock mismatch negative case.
+
+## 13.3. Запрещённые naïve mutations
+
+- удаление случайного feature с ожиданием same result;
+- смена numeric profile без conversion policy;
+- включение unsafe optimizer без semantic descriptors;
+- перестановка passes, если order не заявлен commutative;
+- сравнение `Prefer` и `Require` без классификации unsupported shape;
+- добавление provider, имеющего side effects, как independent feature.
+
+---
+
+# 14. Execution variants
+
+Variant обязан фиксировать:
+
+- package registry snapshot;
+- language definition;
+- canonical lock;
+- plan hash;
+- entry artifact;
+- route contributions;
+- backend/contribution ID;
+- optimizer/SSA policy;
+- fallback policy;
+- runtime policy;
+- component lifetimes;
+- input values;
+- resource limits;
+- expected relation role;
+- mutation/seeded-fault provenance.
+
+Worker не должен самостоятельно выбирать «лучший доступный backend». Он исполняет зафиксированный variant либо возвращает explicit route/provider error.
+
+---
+
+# 15. Изоляция worker process
+
+## 15.1. Strict worker
+
+Coordinator для каждого testcase:
+
+1. создаёт immutable request file;
+2. запускает worker;
+3. передаёт один case/variant;
+4. читает bounded stdout/stderr асинхронно;
+5. применяет timeout;
+6. при timeout убивает process tree;
+7. атомарно сохраняет response;
+8. проверяет response identity;
+9. завершает worker.
+
+Findings подтверждаются только strict workers.
+
+## 15.2. Fast worker
+
+Допускается опционально:
+
+- worker обрабатывает bounded batch;
+- перезапуск после N cases;
+- no finding confirmation;
+- используется только для exploration.
+
+## 15.3. Exit codes
+
+```text
+0  execution completed; observation available
+2  invalid case/schema
+3  unsupported adapter/version
+4  deterministic program failure captured
+5  worker internal failure
+6  timeout recorded by coordinator
+7  cancellation
+```
+
+Program failure не равен process failure. Если программа ожидаемо rejected, worker должен вернуть валидную observation, а не crash.
+
+## 15.4. Output bounds
+
+- stdout max bytes;
+- stderr max bytes;
+- trace max entries/bytes;
+- source max bytes;
+- observation max bytes;
+- truncation explicit.
+
+## 15.5. Path policy
+
+- coordinator owns campaign root;
+- worker не читает arbitrary path из testcase;
+- artifact path canonicalized;
+- path traversal rejected;
+- symlink policy explicit;
+- no environment-secret dump.
+
+---
+
+# 16. Observation model
+
+## 16.1. DTO
+
+```csharp
+public sealed record NormalizedObservation(
+    ObservationSchemaVersion Schema,
+    CaseId CaseId,
+    VariantId VariantId,
+    ExecutionStatus Status,
+    ValueSnapshot? Value,
+    FailureSnapshot? Failure,
+    PlanSnapshot Plan,
+    RouteSnapshot Route,
+    TraceSnapshot Trace,
+    ProcessSnapshot Process,
+    EnvironmentSnapshot Environment,
+    ObservationCompleteness Completeness);
+```
+
+## 16.2. Typed value snapshot
+
+```csharp
+public sealed record ValueSnapshot(
+    string SemanticType,
+    ValueEncoding Encoding,
+    string CanonicalValue,
+    IReadOnlyDictionary<string, string> Properties);
+```
+
+Не использовать:
+
+```csharp
+actual?.ToString()
+```
+
+как основной oracle.
+
+## 16.3. Numeric policies
+
+### Integer/decimal
+
+Exact canonical comparison, если semantics exact.
+
+### Floating point
+
+Policy задаёт:
+
+- bitwise equality;
+- IEEE semantic equality;
+- tolerance;
+- NaN equivalence;
+- signed zero distinction.
+
+Tolerance не может быть global default без обоснования.
+
+## 16.4. Failure snapshot
+
+```csharp
+public sealed record FailureSnapshot(
+    FailureStage Stage,
+    string Category,
+    string? StableCode,
+    string? ExceptionType,
+    BoundedMessage Message,
+    SourceSpan? Span,
+    bool Expected);
+```
+
+Сравнение по category/stage/code; raw message используется только как evidence и diagnostic aid.
+
+## 16.5. Plan snapshot
+
+- `PlanHash`;
+- canonical lock hash;
+- ordered selected features;
+- ordered selected contributions;
+- selected routes;
+- selected executor;
+- policies/lifetimes;
+- normalized planning failure.
+
+## 16.6. Trace snapshot
+
+Минимальные события:
+
+- contribution selected;
+- runtime component activated;
+- executor resolved;
+- route stage executed;
+- fallback decision;
+- session created/disposed;
+- worker timeout/process failure.
+
+Instrumentation должна быть adapter/decorator-owned. Не расширять production public API только ради research tool без independent use case.
+
+---
+
+# 17. Oracle engine
+
+## 17.1. Contract
+
+```csharp
+public interface IPlanFuzzOracle
+{
+    OracleIdentity Identity { get; }
+    OracleApplicability CheckApplicability(OracleContext context);
+    OracleResult Evaluate(OracleContext context);
+}
+```
+
+OracleResult:
 
 ```text
 Passed
-Failed
+Violated
 NotApplicable
 Inconclusive
 InfrastructureFailure
 ```
 
-`NotApplicable` не засчитывается как passed. `InfrastructureFailure` не считается compiler defect.
+## 17.2. Общие требования
 
-### O-001 Backend parity
-
-**Preconditions:** общий language subset, одинаковые inputs, два backends заявляют support, execution semantics сопоставимы.
-
-**Check:** совпадают typed value либо normalized failure category/stage.
-
-### O-002 Optimization/route parity
-
-**Preconditions:** один source plan, route transformation заявлена semantics-preserving, unsupported fallback классифицирован.
-
-**Check:** baseline и optimized/SSA route эквивалентны; internal pass failure не маскируется fallback.
-
-### O-003 Plan determinism
-
-**Preconditions:** различается только физический enumeration/registration order или другой declared-nonsemantic фактор.
-
-**Check:** совпадают canonical plan, plan hash, selected routes, diagnostics и execution observation.
-
-### O-004 Negative-surface preservation
-
-**Preconditions:** feature/capability/contribution явно исключена.
-
-**Check:** исключённый owner не активирован, intrinsic/provider не появился, fallback не расширил surface, syntax/program отклоняется на ожидаемой стадии.
-
-### O-005 Extension noninterference
-
-**Preconditions:** добавленная extension независима и не используется программой.
-
-**Check:** поведение исходной программы и существующий route не меняются.
-
-### O-006 Controlled fallback
-
-**Preconditions:** policy допускает fallback только для конкретной unsupported classification.
-
-**Check:** unsupported shape может перейти в допустимый fallback; verifier/pass/internal defect обязан завершиться failure и не превращаться в success.
-
-### O-007 Session/runtime isolation
-
-**Check:** две sessions одного artifact не разделяют mutable values; dispose одной session не ломает другую; `PerSession` components не переиспользуются; `SingletonStateless` не приобретает mutable execution state.
-
-### O-008 Route conformance
-
-**Check:** фактически выбранный executor, contracts и artifacts соответствуют `LanguagePlan`; нет wildcard/concrete-name substitution.
-
-### O-009 Canonical lock consistency
-
-**Check:** одинаковая semantic configuration даёт одинаковый lock; lock and plan hash согласованы; altered content/hash/version fail closed.
-
-### O-010 Diagnostic determinism
-
-**Check:** повторный invalid case сохраняет category, stage и stable code независимо от enumeration order; volatile text не участвует в fingerprint.
-
-### O-011 Resource-limit consistency
-
-**Check:** boundary inputs одинаково отклоняются до expensive/unsafe stages для сравниваемых routes.
-
-### O-012 Worker robustness
-
-**Check:** malformed request, timeout, crash и oversized output классифицируются как infrastructure/protocol outcome, а не semantic finding.
+- oracle pure относительно observations;
+- deterministic;
+- no hidden runtime execution;
+- applicability проверяется до evaluation;
+- missing evidence не считается pass;
+- unknown status fail closed;
+- result содержит explanation и fingerprint material;
+- oracle version входит в case/campaign identity.
 
 ---
 
-## 14. Finding lifecycle
+# 18. Обязательные oracles
 
-Состояния:
+## O-001. Backend parity
+
+### Проверяет
+
+Два backend’а одного shared language subset возвращают эквивалентный typed result либо одинаковую normalized failure.
+
+### Preconditions
+
+- один program model;
+- один semantic input;
+- оба backend’а объявляют поддержку feature set;
+- relation `EquivalentOnSharedDomain`;
+- нет intentionally different route.
+
+### Сравнение
+
+- status;
+- value semantic type;
+- canonical value;
+- failure stage/category/code.
+
+### Seeded fault
+
+Compiled Acme backend меняет subtraction на addition.
+
+---
+
+## O-002. Optimization/route parity
+
+### Проверяет
+
+Включение optimization или `AIR -> SSA -> AIR` route не меняет semantics.
+
+### Preconditions
+
+- base and optimized variants;
+- program входит в supported optimizer subset;
+- no unknown side-effect callable;
+- route completed без classified fallback либо fallback является отдельным checked relation.
+
+### Seeded fault
+
+Optimizer заменяет `x - y` на `x + y`.
+
+---
+
+## O-003. Plan determinism
+
+### Проверяет
+
+Equivalent physical discovery/registration order не меняет canonical plan.
+
+### Сравнение
+
+- plan hash;
+- canonical lock;
+- selected features;
+- selected contributions;
+- route order;
+- diagnostics.
+
+### Seeded fault
+
+Planner использует first registration wins при equal candidates вместо deterministic resolution/conflict.
+
+---
+
+## O-004. Negative-surface preservation
+
+### Проверяет
+
+Если capability/feature/provider отсутствует в selected plan, ни activation trace, ни route, ни runtime call не использует его.
+
+Формально:
+
+```text
+f ∉ SelectedSurface(P)
+⇒
+Owner(f) ∉ ActivationTrace(P, program)
+```
+
+### Preconditions
+
+- negative surface declared;
+- trace complete для нужного класса events;
+- program/plan relation требует exclusion.
+
+### Seeded faults
+
+- activate-all-before-filter;
+- provider allowlist derived from AIR;
+- fallback reintroduces excluded feature.
+
+---
+
+## O-005. Extension noninterference
+
+### Проверяет
+
+Добавление independent unused feature не меняет semantics и selected route для программы, которая feature не использует.
+
+### Preconditions
+
+- independence declared;
+- no override/shared slot conflict;
+- no global side effect;
+- source unchanged.
+
+---
+
+## O-006. Controlled fallback
+
+### Проверяет
+
+Fallback разрешён только для classified unsupported shape, но не для optimizer defect/internal exception.
+
+### Cases
+
+- `Disabled` — SSA не запрашивается;
+- `Prefer` + classified unsupported — AIR fallback разрешён;
+- `Prefer` + pass defect — failure;
+- `Require` + unsupported — failure;
+- `Debug` — detailed evidence, no silent masking.
+
+### Seeded fault
+
+Catch-all exception превращается в successful AIR fallback.
+
+---
+
+## O-007. Session/runtime-state isolation
+
+### Проверяет
+
+Разные sessions одного artifact и разные runtime instances не разделяют mutable local/input state.
+
+### Schedule
+
+```text
+create artifact A
+create session S1(args1)
+create session S2(args2)
+run S1
+run S2
+run S1 again
+```
+
+Expected: результат S1 стабилен.
+
+### Seeded fault
+
+Global/static dictionary хранит current arguments.
+
+---
+
+## O-008. Route conformance
+
+### Проверяет
+
+Фактически executed components соответствуют planned route и selected executor identity.
+
+### Сравнение
+
+- planned stage IDs;
+- actual stage events;
+- executor ID;
+- backend ID;
+- entry/output artifact contracts.
+
+### Seeded fault
+
+Runtime silently chooses another executor with compatible type but wrong contribution ID.
+
+---
+
+## O-009. Canonical lock consistency
+
+### Проверяет
+
+Повторное compile одного definition/registry создаёт byte-identical canonical lock и plan hash.
+
+Проверяет также exact package manifest hash binding.
+
+---
+
+## O-010. Diagnostic determinism
+
+Equivalent failure case даёт одинаковые:
+
+- stage;
+- stable code;
+- category;
+- span;
+- normalized hints.
+
+Raw stack trace не входит в semantic equality.
+
+---
+
+## O-011. Resource-limit consistency
+
+Equivalent variants одинаково применяют semantic resource limits:
+
+- source length;
+- parameter count;
+- node count;
+- execution step budget, если доступен.
+
+Не утверждает process isolation.
+
+---
+
+## O-012. Worker robustness
+
+Проверяет:
+
+- timeout contained;
+- malformed response rejected;
+- missing response classified as infrastructure;
+- crash не считается program failure;
+- partial JSON не считается observation;
+- process tree killed.
+
+---
+
+# 19. Oracle applicability
+
+## 19.1. Проблема
+
+Большинство ложных positives в metamorphic testing возникает, когда relation объявлена слишком широко.
+
+## 19.2. Applicability facts
+
+Примеры:
+
+```text
+UsesOnlySharedBackendFeatures
+HasNoUnknownEffects
+SsaShapeSupported
+NoFloatingUndefinedPolicy
+IndependentExtension
+NegativeSurfaceTraceComplete
+BoundedExecution
+CanonicalFailureComparable
+```
+
+## 19.3. Правило
+
+```text
+applicable = RequiredFacts(oracle) ⊆ Facts(case, variants)
+```
+
+Если facts отсутствуют:
+
+- `NotApplicable`, если relation не обещана;
+- `Inconclusive`, если evidence неполно;
+- `InfrastructureFailure`, если required observation потеряна;
+- `Violated`, если testcase explicitly обещает relation, а вариант не исполнил contract.
+
+`NotApplicable` не засчитывается как pass в coverage metrics.
+
+---
+
+# 20. Execution schedules
+
+## 20.1. Минимальные schedules
+
+1. compile once, run once;
+2. compile once, invoke repeatedly;
+3. one artifact, two sessions;
+4. interleaved sessions;
+5. two runtimes from one definition;
+6. dispose session then run;
+7. dispose one runtime while other remains;
+8. failed prepare after successful prepare;
+9. synchronous and asynchronous disposal;
+10. bounded concurrent invocations.
+
+## 20.2. Schedule model
+
+```csharp
+public sealed record ExecutionSchedule(
+    IReadOnlyList<ScheduleStep> Steps,
+    SchedulePolicy Policy);
+
+public abstract record ScheduleStep;
+public sealed record CompileStep(string ArtifactName) : ScheduleStep;
+public sealed record CreateSessionStep(string Artifact, string Session, InputDocument Inputs) : ScheduleStep;
+public sealed record RunStep(string Session, string ResultSlot) : ScheduleStep;
+public sealed record DisposeStep(string Resource) : ScheduleStep;
+public sealed record AwaitStep(string Operation) : ScheduleStep;
+```
+
+## 20.3. Determinism
+
+Concurrency tests используют explicit barriers, latches и schedules. Нельзя считать `Thread.Sleep` достаточным способом воспроизведения race.
+
+---
+
+# 21. Failure taxonomy
+
+```text
+ProgramRejected
+PlanRejected
+RouteUnavailable
+BackendUnsupported
+ClassifiedFallback
+OptimizerFailure
+VerifierFailure
+RuntimeFailure
+Timeout
+Crash
+InfrastructureFailure
+OracleViolation
+Inconclusive
+```
+
+Каждый failure содержит:
+
+- stage;
+- category;
+- stable code, если доступен;
+- variant ID;
+- adapter ID/version;
+- bounded message;
+- process exit classification;
+- expected/unexpected marker.
+
+Запрещено объединять:
+
+- compiler error и worker crash;
+- timeout и slow success;
+- expected rejection и infrastructure failure;
+- unsupported route и silent fallback;
+- seeded fault и real defect.
+
+---
+
+# 22. Finding model
+
+## 22.1. Candidate finding
+
+Создаётся, когда oracle возвращает `Violated`.
+
+Содержит:
+
+- case ID;
+- oracle ID/version;
+- subjects;
+- normalized diff;
+- plan/route fingerprints;
+- seeded mutation ID;
+- environment identity;
+- replay state.
+
+## 22.2. Confirmation
+
+Default confirmation:
+
+- 3 fresh-process strict replays;
+- одинаковый semantic fingerprint;
+- no infrastructure failure;
+- no environment drift.
+
+Statuses:
 
 ```text
 Candidate
-Confirming
 Confirmed
-Reducing
-Reduced
-TriagedRealDefect
-TriagedSeededFault
-TriagedFalsePositive
-TriagedFlaky
-TriagedInfrastructure
-Inconclusive
+Flaky
+InfrastructureBlocked
+FalsePositive
+KnownDefect
+SeededFault
 Fixed
-RegressionProtected
 ```
 
-### 14.1. Confirmation
-
-Candidate становится confirmed только после 3/3 одинаковых strict fresh-process replays с одним semantic fingerprint.
-
-### 14.2. Fingerprint
-
-Fingerprint строится из:
-
-- oracle ID/version;
-- adapter ID/version;
-- normalized status/stage/category pair;
-- route/backend identities;
-- stable diagnostic/trace discriminators;
-- optional top owned frame or invariant ID.
-
-Он не включает timestamps, temp paths, PID и полный message text.
-
-### 14.3. Triage package
-
-Для каждого confirmed finding сохраняются:
-
-- original and reduced testcase;
-- canonical JSON;
-- campaign manifest;
-- environment record;
-- all variant observations;
-- confirmation runs;
-- reducer history;
-- fingerprint;
-- preliminary invariant/root-cause notes;
-- fix/regression reference после исправления.
-
----
-
-## 15. Reducer
-
-Reducer минимизирует четыре измерения независимо и затем совместно:
-
-1. program AST/model;
-2. plan delta/package set;
-3. variants/oracles;
-4. execution schedule and inputs.
-
-### 15.1. Predicate
-
-Reduction step принимается только если:
-
-- case schema remains valid;
-- oracle remains applicable;
-- same semantic fingerprint reproduces 3/3 strict runs;
-- complexity metric strictly decreases.
-
-### 15.2. Program reduction
-
-Adapter предоставляет type-preserving operations:
-
-- replace subtree with child;
-- replace expression with typed constant/parameter;
-- remove unused declaration/branch;
-- reduce nesting;
-- simplify input values.
-
-### 15.3. Plan reduction
-
-- remove irrelevant package/contribution;
-- remove nonessential option;
-- collapse order delta;
-- reduce route to smallest differentiating pair;
-- remove unused capabilities.
-
-### 15.4. Schedule reduction
-
-- remove operations;
-- reduce repetitions;
-- shrink interleaving;
-- remove unrelated sessions/dispose actions.
-
-Reduction history должна быть replayable.
-
----
-
-## 16. Corpus и artifact layout
-
-Corpus types:
-
-- hand-authored seeds;
-- generated non-findings with new semantic coverage;
-- confirmed reduced findings;
-- regression corpus;
-- seeded-fault corpus;
-- invalid/protocol corpus.
-
-Предлагаемый layout:
+## 22.3. Fingerprint
 
 ```text
-artifacts/planfuzz/<campaign-id>/
-  campaign.json
-  environment.json
-  cases/
-  observations/
-  findings/
-  corpus/
-  metrics/
-  logs/
-  report.md
-  report.json
-  MANIFEST.sha256
+SHA256(
+  oracle ID/version
+  + normalized failure/value difference
+  + relevant route identity
+  + stage/category/code
+)
 ```
 
-Campaign artifacts не коммитятся в обычный source tree, кроме малого curated regression corpus. Raw publication artifacts поставляются отдельно и имеют recursive manifest.
+Не включать:
+
+- random temp path;
+- timestamp;
+- PID;
+- full raw stack trace;
+- absolute source path;
+- elapsed time.
+
+## 22.4. Deduplication
+
+Группировать по fingerprint, но сохранять:
+
+- first case;
+- smallest case;
+- count;
+- seeds;
+- environments;
+- all raw observations.
 
 ---
 
-## 17. CLI
+# 23. Reducer
 
-Предлагаемые команды:
+## 23.1. Цель
+
+Минимизировать:
+
+```text
+(program, plan delta, variants, schedule, inputs)
+```
+
+при сохранении одного target fingerprint.
+
+## 23.2. Complexity metric
+
+Лексикографически:
+
+1. program node count;
+2. plan mutation count;
+3. schedule step count;
+4. variant count;
+5. input complexity;
+6. source length.
+
+## 23.3. Reduction order
+
+1. Удалить non-subject variants.
+2. Удалить oracle-irrelevant schedule steps.
+3. Удалить unused plan deltas/features.
+4. Упростить program tree.
+5. Упростить constants/inputs.
+6. Уменьшить resource limits до минимально достаточных.
+
+## 23.4. Acceptance
+
+Candidate reduction принимается, если:
+
+- schema valid;
+- adapter renders it;
+- required relation remains applicable;
+- same target fingerprint воспроизводится M/N раз;
+- no new infrastructure failure;
+- complexity strictly decreases.
+
+## 23.5. Reducer cache
+
+Key:
+
+```text
+SHA256(canonical candidate + environment identity + oracle version)
+```
+
+Value:
+
+```text
+SameFingerprint | Different | Invalid | InfrastructureFailure
+```
+
+Infrastructure failure не кешируется как semantic rejection.
+
+## 23.6. Reduction history
+
+Сохранять:
+
+- candidate hash;
+- mutation;
+- complexity before/after;
+- replay result;
+- accepted/rejected;
+- timestamp only as metadata, not semantic identity.
+
+---
+
+# 24. Seeded fault suite
+
+## 24.1. Требования
+
+- fault code находится только в test fixtures/test-owned adapter wrapper;
+- disabled by default;
+- имеет stable ID;
+- не попадает в production package;
+- не меняет unrelated variants;
+- expected oracle/fingerprint documented.
+
+## 24.2. Mandatory faults
+
+| ID | Fault | Expected oracle |
+|---|---|---|
+| SF-001 | Acme compiled subtract performs addition | O-001 |
+| SF-002 | Registry order changes selected owner | O-003 |
+| SF-003 | Optimizer changes subtraction semantics | O-002 |
+| SF-004 | Prefer swallows internal optimizer exception | O-006 |
+| SF-005 | Excluded provider activated | O-004 |
+| SF-006 | Session state stored globally | O-007 |
+| SF-007 | Runtime chooses wrong same-contract executor | O-008 |
+| SF-008 | Lock serializer uses enumeration order | O-009 |
+| SF-009 | Worker hangs | O-012 |
+| SF-010 | Diagnostic code depends on backend | O-010 |
+
+## 24.3. Mutation score
+
+```text
+mutation score = detected mandatory seeded faults / enabled mandatory seeded faults
+```
+
+Каждый oracle должен иметь минимум один unit fault и один out-of-process replay fault, если применимо.
+
+---
+
+# 25. CLI
+
+## 25.1. Commands
 
 ```text
 planfuzz campaign
 planfuzz replay
 planfuzz reduce
-planfuzz triage
-planfuzz list-adapters
-planfuzz validate-case
-planfuzz summarize
+planfuzz inspect
+planfuzz adapters
+planfuzz corpus add
+planfuzz report
+planfuzz worker execute
 ```
 
-Пример после реализации:
+## 25.2. Campaign example
 
 ```bash
-dotnet run --project UniversalToolchain/UniversalToolchain.PlanFuzz.Cli -- \
-  campaign --adapter acme --seed 1 --cases 10000 --mode strict
-
-dotnet run --project UniversalToolchain/UniversalToolchain.PlanFuzz.Cli -- \
-  campaign --adapter wist --profile restricted-arithmetic \
-  --seed 1 --cases 5000 --mode strict
+planfuzz campaign \
+  --adapter acme \
+  --seed 12345 \
+  --cases 10000 \
+  --mode strict \
+  --workers 4 \
+  --timeout 5s \
+  --output artifacts/planfuzz/acme-12345
 ```
 
-CLI всегда печатает campaign ID, artifact path, generated/executed counts, oracle outcomes, candidates, confirmed findings, infrastructure failures и exit status.
+## 25.3. Replay example
 
-Exit code `0` означает успешное выполнение campaign, а не отсутствие findings. Отдельная policy определяет, когда confirmed finding делает CI job failed.
+```bash
+planfuzz replay \
+  --case findings/O-003/case.json \
+  --repeat 3 \
+  --strict
+```
 
----
+## 25.4. Reduce example
 
-## 18. Seeded fault suite
+```bash
+planfuzz reduce \
+  --finding findings/O-001/finding.json \
+  --budget 30m \
+  --replay 3
+```
 
-Минимальные seeded faults:
+## 25.5. Exit codes
 
-1. wrong arithmetic in one backend;
-2. order-dependent plan hash;
-3. wrong route contribution selected;
-4. excluded contribution activated;
-5. internal optimizer failure silently falls back;
-6. shared mutable `PerSession` state;
-7. mutable/disposable stateless singleton misuse;
-8. typed/untyped wildcard route accepted;
-9. wrong executor identity;
-10. component claims deterministic but varies;
-11. stale Wist prepared program after failed prepare;
-12. optimization miscompile.
+```text
+0 no confirmed finding
+1 usage/config error
+2 infrastructure failure
+3 confirmed finding exists
+4 interrupted
+```
 
-Каждый fault обязан:
-
-- активироваться только test configuration;
-- обнаруживаться предназначенным oracle;
-- иметь negative control;
-- подтверждаться и сокращаться;
-- не учитываться как real discovered defect.
-
-Если mandatory fault не обнаруживается, соответствующий oracle не считается готовым.
+Точные codes worker и coordinator разделить; shell automation не должна parsing text logs.
 
 ---
 
-## 19. Testing strategy
+# 26. Artifact layout
 
-### 19.1. Unit tests
+```text
+artifacts/planfuzz/<campaign-id>/
+  campaign.json
+  environment.json
+  state.json
+  summary.json
+  cases/
+  observations/
+  candidates/
+  findings/
+    <oracle>/<fingerprint>/
+      finding.json
+      original/
+      minimized/
+      replay/
+      triage.md
+  corpus/
+  metrics/
+  logs/
+  MANIFEST.sha256
+```
 
-- PRNG vectors;
-- canonical serialization/hash;
-- relation applicability;
-- typed value normalization;
-- failure classification;
+## 26.1. Atomicity
+
+- write temp file;
+- flush;
+- atomic rename;
+- update state after durable artifact;
+- resume ignores incomplete temp files;
+- partial attempt marked explicitly.
+
+## 26.2. Recursive manifest
+
+Manifest includes all files except itself and temporary files.
+
+Before publication:
+
+```bash
+sha256sum -c MANIFEST.sha256
+```
+
+## 26.3. Environment record
+
+- commit/archive hash;
+- dirty marker;
+- SDK/runtime versions;
+- OS/kernel/architecture;
+- CPU count/model;
+- relevant env flags;
+- adapter versions;
+- case/oracle/mutator versions;
+- command line;
+- NuGet source/cache policy.
+
+Не сохранять secrets.
+
+---
+
+# 27. Campaign coordinator
+
+## 27.1. State machine
+
+```text
+Created
+Generating
+Executing
+Confirming
+Reducing
+Completed
+Cancelled
+Failed
+```
+
+## 27.2. Resume
+
+Campaign может продолжаться после interruption:
+
+- canonical case files immutable;
+- completed observation recognised by valid hash/schema;
+- incomplete attempts rerun;
+- seed/index mapping unchanged;
+- duplicate worker completion idempotent;
+- reducer state checkpointed.
+
+## 27.3. Scheduling
+
+Первая версия:
+
+- fixed bounded worker count;
+- deterministic case assignment;
+- completion order не влияет на semantic report ordering;
+- stdout/report sorted by case ID/index;
+- no unbounded queue.
+
+## 27.4. Budgets
+
+Поддержать минимум:
+
+- max cases;
+- wall-clock campaign budget;
+- per-worker timeout;
+- confirmation attempts;
+- reducer budget;
+- max findings per fingerprint/oracle;
+- max artifact bytes.
+
+---
+
+# 28. Метрики
+
+## 28.1. Correctness/reliability
+
+- generated cases;
+- valid/rejected;
+- completed/timed out/crashed;
+- applicable/not-applicable oracles;
+- candidate/confirmed/flaky findings;
+- false positives;
+- infrastructure failures;
+- seeded mutation score;
+- real defects by root-cause class.
+
+## 28.2. Semantic coverage
+
+Не ограничиваться line coverage.
+
+- language features used;
+- feature pairs/triples;
+- plan mutations;
+- backend pairs;
+- optimizer/SSA policies;
+- failure stages;
+- fallback classes;
+- lifecycle schedules;
+- route shapes;
+- capability presence/absence;
+- callable effect/trust categories.
+
+## 28.3. Cost
+
+- generation time;
+- plan compilation;
+- worker startup;
+- runtime creation;
+- execution;
+- oracle evaluation;
+- replay;
+- reduction;
+- artifact I/O;
+- peak memory where measurable.
+
+## 28.4. Reduction
+
+- original/minimized nodes;
+- plan deltas;
+- schedule steps;
+- source bytes;
+- reduction time;
+- attempts;
+- reproduction rate.
+
+---
+
+# 29. Research experiment protocol
+
+## 29.1. Modes
+
+### B0 — Existing tests
+
+Контрольная характеристика текущего suite, без искусственного пересчёта на case budget.
+
+### B1 — Program-only generation
+
+- fixed plan;
+- fixed backend pair;
+- no plan mutation;
+- no lifecycle schedules beyond run once.
+
+### B2 — Pairwise plan enumeration
+
+- generated programs;
+- deterministic pairwise plan/backend combinations;
+- no feedback/adaptive weighting;
+- no lifecycle dimension.
+
+### PF — Full PlanFuzz
+
+- program generation;
+- plan mutations;
+- route/backend variants;
+- lifecycle schedules;
+- full oracle set.
+
+## 29.2. Equal budget
+
+Primary comparison по wall-clock.
+
+Secondary:
+
+- execution count;
+- CPU time;
+- unique program count;
+- plan count.
+
+## 29.3. Repetitions
+
+Не менее пяти campaign seeds для research-grade comparison. Confidence intervals/bootstrap для time-to-first-defect и defect count, если данных достаточно.
+
+## 29.4. Ablations
+
+- PF minus plan mutation;
+- PF minus lifecycle;
+- PF minus negative-surface oracle;
+- PF minus reducer;
+- PF without strict confirmation for cost only.
+
+## 29.5. Counting defects
+
+Считать уникальный root cause, а не каждую программу.
+
+Таблица:
+
+```text
+Defect ID
+Root-cause class
+Affected layer
+Found by mode
+Needs plan mutation?
+Needs lifecycle?
+Oracle
+Seeded/real
+Fixed?
+Regression test?
+```
+
+## 29.6. Stop rules
+
+Pilot stage прекращается/перепланируется, если:
+
+- false-positive rate >10%;
+- infrastructure failure >2%;
+- same-case replay <95% для deterministic profiles;
+- reducer меняет fingerprint;
+- clean baseline содержит необъяснённые findings;
+- manifest/replay не работает на clean environment.
+
+---
+
+# 30. Testing strategy
+
+## 30.1. Unit
+
+- PRNG golden values;
+- canonical JSON;
+- ID hashing;
+- DTO immutability;
+- adapter renderer;
+- value normalization;
+- oracle applicability;
+- each oracle pass/fail/NA;
 - fingerprint stability;
-- reducer metrics;
-- bounded log handling.
+- reducer monotonicity;
+- manifest generation.
 
-### 19.2. Property tests
+## 30.2. Integration
 
-- serialize/deserialize/canonicalize idempotence;
-- same seed -> same cases;
-- nonsemantic order permutations -> same plan;
-- reducer never increases complexity;
-- accepted reduction preserves fingerprint;
-- inapplicable oracle never reports passed/failed.
-
-### 19.3. Integration tests
-
+- coordinator-worker protocol;
+- timeout + kill-tree;
+- crash/malformed response;
 - Acme interpreter/compiled parity;
 - Wist interpreter/CIL parity;
-- applicable SSA policy matrix;
-- worker timeout/crash/protocol paths;
+- package order determinism;
+- lock consistency;
 - session isolation;
-- controlled fallback;
-- canonical lock consistency;
-- finding replay across processes.
+- route conformance;
+- three-attempt confirmation;
+- CLI exit codes.
 
-### 19.4. Architecture tests
+## 30.3. Architecture guards
 
-- Core has no Wist references;
-- adapters do not leak into production package closure;
-- no raw syntax recognition in Core;
-- no concrete backend-name branching in generic layer;
-- no weakening of existing parity/verifier tests.
+- Core has no Wist dependency;
+- Core has no concrete backend dependency;
+- adapters do not leak into production facade;
+- no unbounded process output;
+- no raw exception-message-only comparison;
+- no `System.Random` in generation;
+- no source regex parser in core;
+- no PlanFuzz package in Wist NuGet closure;
+- no reflection scan outside selected packages.
 
-Existing relevant tests remain mandatory. PlanFuzz не заменяет их и не может объявляться green только по собственному suite.
+## 30.4. Seeded fault adequacy
 
----
-
-## 20. CI strategy
-
-### Pull request gate
-
-Только bounded deterministic smoke:
-
-- unit tests;
-- seeded-fault subset;
-- 50–200 Acme cases;
-- fixed seed;
-- strict replay одного fixture;
-- artifact upload только при failure.
-
-### Scheduled campaign
-
-- larger case budget;
-- multiple fixed seeds;
-- Acme and Wist adapters;
-- metrics/artifact upload;
-- controlled timeout;
-- no automatic issue creation before confirmation/deduplication.
-
-### Release gate
-
-PlanFuzz не становится обязательным release gate, пока campaign не стабилен, false-positive rate не измерен и runtime budget не ограничен.
+- every mandatory oracle detects corresponding seeded fault;
+- no unrelated oracle required for detection;
+- clean control remains pass;
+- fault disabled by default;
+- out-of-process replay stable.
 
 ---
 
-## 21. Experiment design
+# 31. CI integration
 
-Сравниваются режимы:
+## 31.1. Pull request gate
 
-**B0 — Existing tests.** Текущий handwritten suite и architecture checks.
+Не запускать большой fuzz campaign на каждый PR.
 
-**B1 — Program-only.** Тот же structured generator, но один fixed plan/backend matrix без plan/lifecycle mutation.
+PR gate:
 
-**B2 — Pairwise plan enumeration.** Pairwise combinations configuration dimensions с одинаковым program budget.
+- PlanFuzz unit tests;
+- integration smoke 20–100 deterministic cases;
+- seeded fault focused tests;
+- canonical serialization golden tests;
+- process timeout smoke;
+- architecture guards.
 
-**PF — Full PlanFuzz.** Program + plan + route/backend + lifecycle + oracle-aware generation.
+## 31.2. Scheduled campaign
 
-### 21.1. Equal budget
+Nightly/weekly:
 
-Основное сравнение использует одинаковый wall-clock или execution-attempt budget. Дополнительно публикуются cases/sec и phase costs.
+- fixed-seed regression corpus;
+- rotating-seed exploration;
+- strict workers;
+- artifact upload;
+- no automatic bug classification without triage.
 
-### 21.2. Ablations
+## 31.3. Release gate
 
-Отключаются по одному:
-
-- plan mutation;
-- route variation;
-- lifecycle scheduling;
-- negative-surface oracle;
-- reduction;
-- applicability filtering.
-
-### 21.3. Метрики
-
-- unique confirmed real defects;
-- time to first defect;
-- defects per execution-hour;
-- root-cause classes;
-- candidate-to-real ratio;
-- false-positive and flaky rates;
-- semantic dimension coverage;
-- reduction ratio/time;
-- worker/process overhead;
-- replay success rate.
-
-Реальный defect считается один раз по root cause, даже если найден множеством cases/oracles.
+PlanFuzz не является release blocker для Wist alpha до отдельного решения. Однако подтверждённый semantic defect, затрагивающий shipped path, обязан стать release blocker согласно severity policy.
 
 ---
 
-## 22. Этапы реализации
+# 32. Robustness and safety
 
-### Phase 0 — Baseline lock and skeleton
+- Worker input path must be confined to campaign root or explicitly allowed path.
+- No dynamic arbitrary assembly loading from testcase.
+- Adapter IDs resolve only from built-in registry in MVP.
+- Case source/trace size bounded.
+- Stdout/stderr bounded with truncation marker.
+- Worker timeout configurable, default finite.
+- Kill entire process tree.
+- Atomic writes for case/observation/state.
+- Partial observation is marked incomplete, never parsed as success.
+- Generated loops bounded unless dedicated timeout campaign.
+- OOM cases limited in default profile.
+- Raw source and exception messages may contain sensitive data for future external adapters; report redaction policy must be extensible.
+
+---
+
+# 33. Implementation phases
+
+## Phase 0 — Baseline lock and design skeleton
 
 Deliverables:
 
-- project skeleton;
-- architecture decision record;
-- testcase/worker schemas;
-- deterministic PRNG;
-- artifact layout;
-- adapter contract;
-- no-op worker roundtrip.
+- project files;
+- case schema v1;
+- adapter interface;
+- PRNG v1;
+- canonical serializer;
+- architecture docs;
+- focused tests.
 
 Acceptance:
 
-- Core has no Wist dependencies;
-- same seed produces byte-identical cases;
-- request/response roundtrip works in fresh process;
-- docs checks remain green.
+- existing repo untouched semantically;
+- same seed yields same case JSON;
+- Core has no Wist dependency;
+- all projects build.
 
-### Phase 1 — Acme vertical slice
+## Phase 1 — Acme vertical slice
 
 Deliverables:
 
-- structured Acme generator/renderer;
-- order mutation;
-- interpreter/compiled variants;
-- typed decimal snapshots;
-- backend parity;
-- plan determinism;
-- replay;
-- one wrong-arithmetic seeded fault.
+- Acme generator;
+- two backends;
+- O-001, O-003, O-009;
+- strict worker;
+- CLI campaign/replay;
+- basic finding output.
 
 Acceptance:
 
-- complete generate-to-finding path;
-- seeded fault detected and replayed 3/3;
-- clean Acme campaign has no unexplained finding;
-- 10,000 fixed-seed pilot completes within bounded budget.
+- 10 000 valid cases complete;
+- no unexplained clean-baseline findings;
+- wrong arithmetic seeded fault detected and replayed 3/3;
+- order-dependent plan seeded fault detected;
+- worker timeout contained.
 
-### Phase 2 — Wist arithmetic and route matrix
+## Phase 2 — Wist arithmetic and SSA matrix
 
 Deliverables:
 
-- restricted arithmetic adapter;
+- Wist Level 0 model/renderer;
 - interpreter/CIL variants;
-- applicable SSA policies;
-- normalized diagnostics;
-- optimization parity and controlled fallback.
+- SSA Disabled/Prefer/Require variants;
+- O-002 and O-006;
+- structured Wist diagnostic normalization.
 
 Acceptance:
 
-- shared subset declared explicitly;
-- unsupported shapes classified;
-- internal seeded pass defect never falls back to success;
-- 5,000-case Wist pilot completes with triaged outcomes.
+- 5 000 Wist cases;
+- no string-only value comparison;
+- `Require` and `Prefer` policies classified correctly;
+- optimization miscompile seeded fault detected;
+- silent fallback seeded fault detected.
 
-### Phase 3 — Lifecycle and negative surface
+## Phase 3 — Lifecycle and negative surface
 
 Deliverables:
 
-- session schedules;
-- lifecycle trace;
-- excluded capability/contribution variants;
-- state isolation and negative-surface oracles.
+- execution schedules;
+- runtime trace decorators;
+- O-004, O-005, O-007, O-008;
+- lifecycle seeded faults.
 
 Acceptance:
 
-- seeded state leak detected;
-- unused/excluded component activation detectable;
-- disposed-session behavior classified;
-- traces bounded and deterministic enough for fingerprints.
+- two-runtime isolation cases pass clean baseline;
+- excluded activation fault detected;
+- wrong route/executor identity detected;
+- disposal scenarios deterministic.
 
-### Phase 4 — Reducer and corpus
+## Phase 4 — Reducer and corpus
 
 Deliverables:
 
-- program/plan/schedule reduction;
-- corpus storage;
-- deduplication;
-- reduction history.
+- program/plan/schedule reducers;
+- finding deduplication;
+- corpus store;
+- regression seed promotion.
 
 Acceptance:
 
-- every mandatory seeded fault reduces;
-- reduced case reproduces 3/3;
-- complexity monotonically decreases;
-- history is replayable.
+- every mandatory seeded fault reduced;
+- reduced case reproduces fingerprint 3/3;
+- no accepted reduction enlarges defined complexity metric;
+- reduction history replayable.
 
-### Phase 5 — Research campaigns
+## Phase 5 — Research campaigns
 
 Deliverables:
 
 - B1/B2/PF modes;
+- semantic coverage;
 - ablations;
-- semantic coverage metrics;
 - raw reports;
 - triage workflow.
 
 Acceptance:
 
 - equal-budget comparison complete;
-- real/seeded/flaky/infrastructure outcomes separate;
-- all confirmed findings classified;
-- raw artifact manifest preserved.
+- all findings classified;
+- real/seeded/false-positive counts separate;
+- raw artifacts and environment manifest preserved.
 
-### Phase 6 — External validation
+## Phase 6 — External validation
 
-Recommended:
+Optional but strongly recommended:
 
-- third adapter;
-- independent clean-machine replay;
-- artifact evaluation package;
-- external maintainer confirmation where possible.
+- third independent adapter;
+- external maintainer reproduction;
+- clean-machine artifact run;
+- artifact evaluation package.
 
 ---
 
-## 23. Definition of Done
+# 34. Definition of Done
 
-PlanFuzz MVP реализован только если одновременно:
+PlanFuzz MVP считается реализованным только если одновременно выполнено:
 
 1. Core не содержит Wist-specific hardcode.
-2. Generation deterministic and versioned.
-3. Strict out-of-process execution работает с timeout/kill-tree.
-4. Acme и Wist adapters используют один core path.
-5. Реализованы минимум семь обязательных oracles:
+2. Case generation deterministic и versioned.
+3. Strict out-of-process execution работает.
+4. Acme и Wist adapters работают через один core path.
+5. Минимум семь обязательных oracles реализованы:
    - backend parity;
    - optimization parity;
    - plan determinism;
@@ -1048,75 +2020,125 @@ PlanFuzz MVP реализован только если одновременно
    - controlled fallback;
    - state isolation;
    - route conformance.
-6. Mandatory seeded-fault suite проходит.
-7. Replay and reduction воспроизводимы.
+6. Mandatory seeded fault suite проходит.
+7. Finding replay и reduction воспроизводимы.
 8. Clean baseline campaigns не содержат необъяснённых false positives.
-9. Existing relevant suite remains green.
-10. CLI examples and documentation smoke pass.
+9. Existing relevant test suite остаётся green.
+10. Документация и CLI examples проходят smoke checks.
 11. Campaign artifact имеет recursive manifest.
-12. Reports раздельно учитывают real defects, seeded faults, flaky outcomes, infrastructure failures и inconclusive cases.
+12. Research report отделяет:
+    - actual defects;
+    - seeded faults;
+    - flaky outcomes;
+    - infrastructure failures;
+    - inconclusive cases.
 
-Реализация MVP сама по себе не доказывает исследовательскую гипотезу. Publication-ready claim требует реальных confirmed findings и controlled baseline comparison.
-
----
-
-## 24. Риски и replan triggers
-
-### R1. Нет реальных дефектов
-
-**Trigger:** Acme + Wist pilots находят только seeded faults и known regressions.
-
-**Action:** усилить plan/lifecycle mutations, расширить Wist surface, добавить third adapter или сузить claim до negative-surface/route-conformance testing. Не утверждать превосходство без данных.
-
-### R2. Высокий false-positive rate
-
-**Trigger:** более 10% candidates после triage — ошибки oracle/model.
-
-**Action:** остановить большой campaign, усилить applicability facts и typed snapshots, разделить positive/negative profiles.
-
-### R3. Process startup доминирует
-
-**Trigger:** более 70% strict campaign time уходит на startup.
-
-**Action:** оставить fresh-process confirmation, добавить bounded batch workers только для exploration.
-
-### R4. Generator становится вторым parser
-
-**Trigger:** Core или reducer анализирует raw source regex'ами.
-
-**Action:** остановить развитие этой ветки и вернуть adapter-owned structured model + renderer.
-
-### R5. Research tool загрязняет packages
-
-**Trigger:** public Wist API/package closure изменяется без необходимости.
-
-**Action:** вынести instrumentation в decorators/adapters; новый production contract требует независимого use case.
-
-### R6. Novelty boundary слаба
-
-**Trigger:** literature review обнаруживает близкий configuration-aware compiler fuzzer.
-
-**Action:** сравнить точные dimensions/oracles; сфокусировать вклад на executable language plans, negative surface, lifecycle или route conformance; не выдумывать algorithmic novelty.
+Научная статья не считается доказанной только фактом реализации MVP. Для publication-ready claim дополнительно требуются реальные подтверждённые findings и controlled comparison с baselines.
 
 ---
 
-## 25. Первый mergeable milestone
+# 35. Риски и replan triggers
 
-Кодирование должно начинаться с узкого vertical slice:
+## R1. Инструмент не находит реальных дефектов
+
+**Trigger:** после Acme + Wist pilot найдены только seeded faults и known regressions.
+
+**Action:**
+
+- усилить plan/lifecycle mutations;
+- добавить broader Wist surface;
+- добавить third-party adapter;
+- сузить research claim до negative-surface or route-conformance testing;
+- не писать, что техника превосходит baseline без данных.
+
+## R2. Слишком много ложных расхождений
+
+**Trigger:** >10% candidates после triage оказываются oracle/model errors.
+
+**Action:**
+
+- остановить большой campaign;
+- усилить applicability facts;
+- улучшить typed snapshots;
+- разделить valid/negative profiles;
+- добавить oracle-focused tests.
+
+## R3. Worker startup доминирует cost
+
+**Trigger:** >70% времени strict campaign уходит на process startup.
+
+**Action:**
+
+- сохранить strict confirmation;
+- добавить bounded batch workers для exploration;
+- перезапускать worker после N cases;
+- findings подтверждать только fresh process.
+
+## R4. Wist generator становится вторым parser
+
+**Trigger:** generator/reducer анализирует raw source regex’ами.
+
+**Action:**
+
+- остановить extension;
+- вернуть structured model + renderer;
+- parser ownership остаётся у Wist.
+
+## R5. Research tool загрязняет production packages
+
+**Trigger:** Wist package closure или public API изменяются без необходимости.
+
+**Action:**
+
+- вынести instrumentation в decorators/adapters;
+- исключить PlanFuzz projects из package matrix;
+- public observer добавлять только с independent non-Wist use case.
+
+## R6. Novelty boundary оказывается слабее ожидаемой
+
+**Trigger:** literature review показывает близкий configuration-aware compiler fuzzer.
+
+**Action:**
+
+- сравнить exact dimensions/oracles;
+- сфокусироваться на negative surface, executable language plans, lifecycle или route conformance;
+- сменить claim с algorithmic novelty на new empirical defect class/tool evaluation.
+
+---
+
+# 36. Открытые решения, которые нужно зафиксировать до кодирования Phase 2
+
+1. Остаётся ли PlanFuzz internal research tool или планируется отдельный NuGet package?
+2. Нужен ли generic production observer contract или достаточно adapter decorators?
+3. Какой Wist numeric semantic profile является canonical для exact comparison?
+4. Какие SSA unsupported diagnostics считаются classified fallback?
+5. Какие Wist features входят в shared interpreter/CIL subset для первого experiment?
+6. Нужен ли reverse loader для schema-v5 language lock или достаточно canonical serialization checks?
+7. Как хранить full source в artifacts при внешних adapters?
+8. Какой third independent language/system будет использоваться для external validation?
+9. Какой final equal-budget protocol фиксируется до publication run?
+
+Эти вопросы не блокируют Phase 0–1. Пункты 2–5 блокируют окончательный Wist oracle contract.
+
+---
+
+# 37. Рекомендуемый первый vertical slice
+
+Первый mergeable milestone должен быть намеренно узким:
 
 ```text
 Acme structured generator
-+ registry-order mutation
++ registry order mutation
 + interpreter/compiled variants
-+ typed decimal observation
-+ backend parity
-+ plan determinism
++ typed decimal snapshot
++ backend parity oracle
++ plan determinism oracle
 + fresh worker per case
 + finding replay
 + wrong-arithmetic seeded fault
 ```
 
-Сначала доказывается полный путь:
+Не начинать одновременно с Wist loops, concurrency, reducer и coverage guidance. Сначала необходимо доказать полный путь:
 
 ```text
 generate
@@ -1125,26 +2147,25 @@ generate
 -> observe
 -> compare
 -> confirm
--> preserve evidence
+-> preserve finding artifact
 ```
 
-Нельзя одновременно начинать с Wist loops, concurrency, reducer и coverage guidance. Каждое новое измерение добавляется после того, как предыдущий путь детерминирован, replayable и защищён seeded fault.
+После этого добавлять Wist и новые dimensions по одному, сохраняя baseline comparison.
 
 ---
 
-## 26. Итоговый комплект поставки
+# 38. Итоговый комплект поставки
 
 ```text
 Source code
-CLI and worker executables
+CLI executable
 Acme adapter
 Wist adapter
-Versioned testcase and protocol schemas
 Seeded fault fixtures
 Unit/integration/architecture tests
 Deterministic seed corpus
-Finding replay and reducer
-Campaign artifact writer
+Campaign artifacts
+Reducer
 Research protocol
 Raw CSV/JSON results
 Markdown report
@@ -1152,4 +2173,20 @@ Reproduction scripts
 Recursive SHA-256 manifest
 ```
 
-Точные project paths и команды должны быть синхронизированы с фактической solution/package matrix при реализации. Proposal не является основанием добавлять несуществующие команды в public user documentation.
+Минимальный acceptance command set должен быть задокументирован после реализации, например:
+
+```bash
+./build.sh --skip-docs
+
+dotnet test UniversalToolchain/UniversalToolchain.PlanFuzz.Tests/UniversalToolchain.PlanFuzz.Tests.csproj
+
+dotnet test UniversalToolchain/UniversalToolchain.PlanFuzz.IntegrationTests/UniversalToolchain.PlanFuzz.IntegrationTests.csproj
+
+dotnet run --project UniversalToolchain/UniversalToolchain.PlanFuzz.Cli -- \
+  campaign --adapter acme --seed 1 --cases 10000 --mode strict
+
+dotnet run --project UniversalToolchain/UniversalToolchain.PlanFuzz.Cli -- \
+  campaign --adapter wist --profile restricted-arithmetic --seed 1 --cases 5000 --mode strict
+```
+
+Точные paths и команды должны быть синхронизированы с фактическими project names и canonical test matrix при реализации.

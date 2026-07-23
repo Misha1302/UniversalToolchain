@@ -57,6 +57,20 @@ Source/Text -> Lexer/Parser -> AST -> Bytecode -> AIR -> Optimization -> Backend
 
 Bytecode and AIR remain separate semantic boundaries. Wist runtime selection goes through dialect build plans, manifests and capabilities. Interpreter/CIL parity remains required for shared supported behavior.
 
+## Experimental PlanFuzz research tooling
+
+The repository includes a non-packable PlanFuzz Phase 0 and Acme vertical slice for configuration-aware differential testing. The implemented experimental surface contains:
+
+- a language-neutral deterministic testcase, observation and oracle core;
+- an independent Acme pricing-language adapter with interpreter and compiled execution;
+- equivalent registry-order plan variants;
+- backend-parity, plan-determinism and canonical-lock consistency oracles;
+- fresh-process testcase execution, bounded timeout handling, replay and recursive artifact manifests;
+- a test-only wrong-arithmetic seeded fault used to verify detection and stable confirmation;
+- a bounded `UniversalToolchain/PlanFuzz.sln` built by both canonical repository entrypoints alongside the main solution.
+
+This tooling is not part of the public Wist package, does not establish publication claims and has not yet been extended to Wist or SSA routes. Seeded faults are validation fixtures rather than discovered project defects.
+
 ## Experimental or incomplete
 
 - low-level generic SDK compatibility is alpha;

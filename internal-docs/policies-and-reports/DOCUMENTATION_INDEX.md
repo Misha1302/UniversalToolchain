@@ -39,6 +39,14 @@ This repository separates public current documentation from repository-only poli
 3. `docs/reference/lifecycle-concurrency-privacy.md`
 4. `docs/evidence/language-authoring-alpha.md`
 
+### PlanFuzz research tooling
+
+1. `internal-docs/proposals/planfuzz/README.md`
+2. `internal-docs/proposals/planfuzz/technical-specification.ru.md`
+3. `internal-docs/proposals/planfuzz/implementation-status.md`
+4. `docs/CURRENT_ARCHITECTURE_STATUS.md`
+5. PlanFuzz source and focused tests
+
 ### Wist compiler/module changes
 
 1. `docs/write-modules/`

@@ -24,6 +24,18 @@ This page maps conceptual architecture to the repository. It is a navigation aid
 | Wist compatibility pack | `UniversalToolchain.Wist.LanguagePack` | Wist feature/runtime pack and legacy adapter | Language SDK and Wist dialect tests |
 | independent reference consumer | `samples/Acme.PricingLanguage` | custom syntax, parser, interpreter and compiled backend | solution build and sample run |
 
+## Experimental research tooling
+
+| Role | Project | Key types | Main verification |
+|---|---|---|---|
+| deterministic PlanFuzz contracts | `UniversalToolchain.PlanFuzz.Core` | `PlanFuzzTestCase`, `PlanFuzzObservation`, adapter and oracle contracts, replay records | `UniversalToolchain.PlanFuzz.Tests` |
+| independent Acme adapter | `UniversalToolchain.PlanFuzz.Adapter.Acme` | structured generator, plan variants and typed decimal executor | unit and strict-process replay tests |
+| coordinator and worker CLI | `UniversalToolchain.PlanFuzz.Cli` | generation, isolated workers, replay, campaign and artifact manifest | `UniversalToolchain.PlanFuzz.IntegrationTests` |
+
+These projects are non-packable experimental research tooling. They do not extend the public Wist package surface.
+
+They are grouped in `UniversalToolchain/PlanFuzz.sln`; `build.sh` and `build.ps1` build this bounded solution alongside `Wist.sln` before executing `eng/test-projects.txt`.
+
 ## Wist compiler/runtime stack
 
 | Role | Representative projects |
@@ -49,6 +61,8 @@ The canonical test list is declared in `eng/test-projects.txt`. In the verified 
 - `Tests`;
 - `UniversalToolchain.Modules.Tests`;
 - `UniversalToolchain.Dialects.Tests`;
-- `UniversalToolchain.LanguageSdk.Tests`.
+- `UniversalToolchain.LanguageSdk.Tests`;
+- `UniversalToolchain.PlanFuzz.Tests`;
+- `UniversalToolchain.PlanFuzz.IntegrationTests`.
 
-Do not infer coverage from project count alone. Use [current verification](/evidence/current-verification) for the tied evidence record.
+The historical verification page remains tied to the pre-PlanFuzz artifact until the full canonical build and test run is repeated. Do not infer coverage from project count alone. Use [current verification](/evidence/current-verification) for the tied evidence record.
