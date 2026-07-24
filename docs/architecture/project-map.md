@@ -3,7 +3,7 @@ title: Physical Project Map
 description: Map architectural roles to projects, key types and tests.
 audience: framework-contributor
 status: current
-lastVerifiedAgainst: language-authoring-p0-p1-hardening-2026-07-23.1
+lastVerifiedAgainst: planfuzz-phase0-phase1-integration
 ---
 
 # Physical project map
@@ -28,9 +28,9 @@ This page maps conceptual architecture to the repository. It is a navigation aid
 
 | Role | Project | Key types | Main verification |
 |---|---|---|---|
-| deterministic PlanFuzz contracts | `UniversalToolchain.PlanFuzz.Core` | `PlanFuzzTestCase`, `PlanFuzzObservation`, adapter and oracle contracts, replay records | `UniversalToolchain.PlanFuzz.Tests` |
+| deterministic PlanFuzz contracts | `UniversalToolchain.PlanFuzz.Core` | `PlanFuzzTestCase`, `PlanFuzzObservation`, adapter/oracle contracts, strict replay records | `UniversalToolchain.PlanFuzz.Tests` |
 | independent Acme adapter | `UniversalToolchain.PlanFuzz.Adapter.Acme` | structured generator, plan variants and typed decimal executor | unit and strict-process replay tests |
-| Wist Level 0 adapter | `UniversalToolchain.PlanFuzz.Adapter.Wist` | restricted `Int32` model, interpreter/compiler matrix, SSA policy mapping and route evidence | direct oracle tests and clean fresh-process parameter replay |
+| Wist Level 0 adapter | `UniversalToolchain.PlanFuzz.Adapter.Wist` | restricted `Int32` model, opt-in regression corpus, interpreter/compiler matrix, SSA policy mapping and route evidence | direct oracle tests and clean fresh-process parameter replay |
 | coordinator and worker CLI | `UniversalToolchain.PlanFuzz.Cli` | generation, isolated workers, replay, campaign and artifact manifest | `UniversalToolchain.PlanFuzz.IntegrationTests` |
 
 These projects are non-packable experimental research tooling. They do not extend the public Wist package surface.
@@ -57,7 +57,7 @@ They are grouped in `UniversalToolchain/PlanFuzz.sln`; `build.sh` and `build.ps1
 
 ## Test projects
 
-The canonical test list is declared in `eng/test-projects.txt`. On the PlanFuzz research branch it contains:
+The canonical test list is declared in `eng/test-projects.txt` and contains:
 
 - `Tests`;
 - `UniversalToolchain.Modules.Tests`;
@@ -66,4 +66,4 @@ The canonical test list is declared in `eng/test-projects.txt`. On the PlanFuzz 
 - `UniversalToolchain.PlanFuzz.Tests`;
 - `UniversalToolchain.PlanFuzz.IntegrationTests`.
 
-The historical verification page remains tied to the pre-PlanFuzz artifact until the full canonical build and test run is repeated. Do not infer coverage from project count alone. Use [current verification](/evidence/current-verification) for the tied evidence record.
+Do not infer coverage from project count alone. The checked-in `VERIFICATION.md`, canonical GitHub Actions run and recursive manifest jointly define the tied evidence record.
