@@ -5,7 +5,7 @@ description: Current implemented surfaces, experimental areas and tied verificat
 
 # Current architecture status
 
-This page describes the supplied language-authoring hardening baseline. Historical cycle notes are stored under `internal-docs/` and are not current architecture authority.
+This page describes the supplied language-authoring hardening baseline plus the integrated PlanFuzz research tooling. Historical cycle notes are stored under `internal-docs/` and are not current architecture authority.
 
 ## Current public/product surface
 
@@ -59,7 +59,7 @@ Bytecode and AIR remain separate semantic boundaries. Wist runtime selection goe
 
 ## Experimental PlanFuzz research tooling
 
-The repository's stacked research branches include non-packable PlanFuzz Phase 0–1 tooling for configuration-aware differential testing:
+The repository includes non-packable PlanFuzz Phase 0–1 tooling for configuration-aware differential testing:
 
 - a language-neutral deterministic testcase, observation and oracle core;
 - independent Acme and Wist adapters with adapter-owned structured generators;
@@ -70,10 +70,12 @@ The repository's stacked research branches include non-packable PlanFuzz Phase 0
 - Wist route/fallback evidence without Wist-specific diagnostic ownership in the generic core;
 - fresh-process execution, bounded timeout/output handling, replay and recursive artifact manifests;
 - exact replay fingerprints separated from coarser campaign-triage class fingerprints;
+- clean, confirmed, flaky, inconclusive and infrastructure outcomes kept distinct;
+- default discovery generation separated from an explicit `--include-regressions` corpus;
 - test-only Acme seeded faults kept separate from current Wist findings;
 - a configuration-complete `UniversalToolchain/PlanFuzz.sln` built by canonical repository entrypoints.
 
-This tooling is not part of the public Wist package and does not establish publication claims. The Wist pilot exposed reproducible current defects tracked in #302, #303 and #307, but normalized finding classes are not treated as proven root causes. Lifecycle, negative-surface and reducer stages remain incomplete.
+This tooling is not part of the public Wist package and does not establish publication claims. The preserved regression-inclusive Wist pilot records reproducible behaviors tracked in #302, #303 and #307, but its normalized finding classes are not treated as proven root causes or clean discovery yield. Lifecycle, negative-surface and reducer stages remain incomplete.
 
 ## Experimental or incomplete
 
@@ -87,14 +89,6 @@ This tooling is not part of the public Wist package and does not establish publi
 
 ## Verification identity
 
-The supplied `VERIFICATION.md` records:
-
-```text
-85 / 85 solution projects built
-1,411 tests succeeded
-0 failed
-0 skipped
-9 package outputs checked
-```
+`VERIFICATION.md` is the canonical checked-in verification record. GitHub Actions additionally enforces the canonical build/test/package path, documentation checks, rollout smoke and recursive manifest equality for the integrated revision.
 
 See [Current Verification](/evidence/current-verification) for the evidence boundary.
