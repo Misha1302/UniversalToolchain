@@ -17,25 +17,33 @@ internal sealed class PlanFuzzCampaignRunner
         int confirmationCount,
         string outputDirectory,
         string? seededFaultId,
+        bool includeRegressionCorpus,
         CancellationToken cancellationToken)
     {
         if (caseCount <= 0)
             return Thrower.Argument<PlanFuzzCampaignSummary>(nameof(caseCount), "Case count must be positive.");
         if (confirmationCount <= 0)
             return Thrower.Argument<PlanFuzzCampaignSummary>(nameof(confirmationCount), "Confirmation count must be positive.");
+        if (includeRegressionCorpus &&
+            !_adapter.Descriptor.Capabilities.Contains("regression-corpus", StringComparer.Ordinal))
+        {
+            return Thrower.NotSupported<PlanFuzzCampaignSummary>(
+                $"Adapter '{_adapter.Descriptor.AdapterId}' does not expose a regression corpus.");
+        }
+
         outputDirectory = PlanFuzzOutputDirectory.PrepareEmpty(outputDirectory, nameof(outputDirectory));
         var clean = 0;
         var confirmed = 0;
         var flaky = 0;
         var infrastructure = 0;
-        var findingFingerprints = new HashSet<string>(StringComparer.Ordinal);
+        var findingClasses = new HashSet<string>(StringComparer.Ordinal);
         for (var index = 0; index < caseCount; index++)
         {
             cancellationToken.ThrowIfCancellationRequested();
             var testCase = _adapter.GenerateCase(
                 campaignSeed,
                 index,
-                new PlanFuzzCaseGenerationOptions(seededFaultId));
+                new PlanFuzzCaseGenerationOptions(seededFaultId, includeRegressionCorpus));
             var caseDirectory = Path.Combine(outputDirectory, "cases", testCase.CaseId);
             Directory.CreateDirectory(caseDirectory);
             var casePath = Path.Combine(caseDirectory, "case.json");
@@ -49,7 +57,7 @@ internal sealed class PlanFuzzCampaignRunner
             {
                 confirmed++;
                 if (replay.ConfirmedClassFingerprint != null)
-                    findingFingerprints.Add(replay.ConfirmedClassFingerprint);
+                    findingClasses.Add(replay.ConfirmedClassFingerprint);
             }
             else if (replay.IsClean)
                 clean++;
@@ -66,11 +74,12 @@ internal sealed class PlanFuzzCampaignRunner
             caseCount,
             clean,
             confirmed,
-            findingFingerprints.Count,
+            findingClasses.Count,
             flaky,
             infrastructure,
             _adapter.Descriptor.AdapterId,
-            seededFaultId);
+            seededFaultId,
+            includeRegressionCorpus);
         PlanFuzzAtomicFile.WriteAllText(Path.Combine(outputDirectory, "summary.json"), SerializeSummary(summary));
         PlanFuzzArtifactManifest.Write(outputDirectory);
         return summary;
@@ -92,16 +101,17 @@ internal sealed class PlanFuzzCampaignRunner
         using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true }))
         {
             writer.WriteStartObject();
-            writer.WriteNumber("schemaVersion", 2);
+            writer.WriteNumber("schemaVersion", 3);
             writer.WriteString("adapterId", summary.AdapterId);
             writer.WriteNumber("campaignSeed", summary.CampaignSeed);
             writer.WriteNumber("requestedCases", summary.RequestedCases);
             writer.WriteNumber("completedCases", summary.CompletedCases);
             writer.WriteNumber("cleanCases", summary.CleanCases);
             writer.WriteNumber("confirmedFindings", summary.ConfirmedFindings);
-            writer.WriteNumber("distinctFindingFingerprints", summary.DistinctFindingFingerprints);
+            writer.WriteNumber("distinctFindingClasses", summary.DistinctFindingClasses);
             writer.WriteNumber("flakyCases", summary.FlakyCases);
             writer.WriteNumber("infrastructureFailures", summary.InfrastructureFailures);
+            writer.WriteBoolean("includedRegressionCorpus", summary.IncludedRegressionCorpus);
             if (summary.SeededFaultId != null)
                 writer.WriteString("seededFaultId", summary.SeededFaultId);
             writer.WriteEndObject();
