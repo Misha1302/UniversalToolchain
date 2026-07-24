@@ -4,10 +4,10 @@ b2105db459e765101e2d5a1dd40161f68e845671572b675a1f04ab649743d0f9  ./.github/scri
 5968e65e75732de586a6f08040a0f087dfc11ba618d483c3b2a48c5522f7ea62  ./.github/workflows/benchmark-smoke.yml
 a8fc00bfb36e0ccd5248908aa42a005912161283a06fb20ddabdf988d3de99b8  ./.github/workflows/deploy-docs.yml
 cc90d8d4a42139f99658882c36727217a8950cd4a5fe6acbec2ae21ec0ea2f16  ./.github/workflows/docs-check.yml
-794224fd5c0a214091ee10d0adaa37e4a5636a0aea81bf7127dc93c1530113ec  ./.github/workflows/dotnet-ci.yml
+7732caedf9d2510e71b148779dd6024a1d25d986353d1743afccc2ff8d43a699  ./.github/workflows/dotnet-ci.yml
 0e46dd53aecbfe718898d14703505d65ed9c3fb2007d493b380903fa2481086f  ./.github/workflows/published-package-smoke.yml
 8ef0d4db376c033e5cf63c56c88db0bd80344d6ab0983c0e79d3a33596238314  ./.github/workflows/universal-toolchain-validation.yml
-83e576f1553fdaebf46d0d3a732474e42a438d4ec9d46d75b14fe8b71527b493  ./.github/workflows/wist-rollout-sample-smoke.yml
+4177b9d99cf78190996c6c90828b85779c2a05f44f8428308d5252d1285b8ce9  ./.github/workflows/wist-rollout-sample-smoke.yml
 c70629d51f41b6b15e1a387a9eca5afaabca7a05bf7e0bc99a2496b7558629a7  ./.gitignore
 0aead39c385370bb61ab09add9a2f5a67270aaa3a8afb925b9a544ad7f69f57d  ./AGENTS.md
 de85858c58e0054ea4bf2c8e4ca9a97c9caaac368290813a0207a056e82ec49b  ./LICENSE
@@ -1456,8 +1456,8 @@ cdd8dbb0491f0811675766b9c3ec331bd68ccb179e72399c277fb8249c1c78d4  ./UniversalToo
 8b8407838fbf79c794d9037e07336b08d3694f8b9f99f106b876e6997db69887  ./UniversalToolchain/project_as_file/script_to_one_file.py
 4460579c34daf3d72d38f1c7076050d1a0be90c4869513b85dbd548a1cb695b5  ./UniversalToolchain/project_as_file/simple_to_one_file.sh
 6bb88c6789cc6f3ed2da00c0c8d86ee22e93beb8711ac31925572e254f7cf4f7  ./VERIFICATION.md
-ffa6cb924d0b9f4800cbabe55630f15a36c6d0d2e427e0d019f5b8429cf00119  ./build.ps1
-449251b6dd1492464045caf19f0b9c66a2d43f3a1a861cd40f326607ad3d4c7d  ./build.sh
+a6bb9fbdb7923012912155416ff39308acd0ce90fa89d742907545a1bec10441  ./build.ps1
+0825c47e4c2da73391959681b4500b6bf052b38ed953f298221cb6ed24fa0afc  ./build.sh
 4a10a013a69c88f7648481d683f817c40289af17664632ec71386d6a79242d61  ./docs/.vitepress/config.mts
 dba82172effba612b684ee00ea8ddcb230da464e849a8e40de28c97baa737601  ./docs/.vitepress/theme/index.ts
 e69ea38f9dc63353153285a8f5d683f7199dc9d62e72e06aa06ab4b9c4c8b4a3  ./docs/.vitepress/theme/style.css
