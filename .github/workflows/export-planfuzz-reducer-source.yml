@@ -1,0 +1,29 @@
+name: Export PlanFuzz reducer source
+
+on:
+  push:
+    branches:
+      - research/planfuzz-reducer
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Create source archive
+        shell: bash
+        run: tar --exclude=.git -czf "$RUNNER_TEMP/wist2-planfuzz-reducer-source.tar.gz" .
+
+      - name: Upload source archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: wist2-planfuzz-reducer-source
+          path: ${{ runner.temp }}/wist2-planfuzz-reducer-source.tar.gz
+          if-no-files-found: error
+          retention-days: 1
