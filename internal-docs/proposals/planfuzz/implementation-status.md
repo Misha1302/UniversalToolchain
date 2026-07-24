@@ -19,7 +19,7 @@ The implementation remains non-packable and does not extend the public `Universa
 | `UniversalToolchain.PlanFuzz.Adapter.Wist` | structured restricted-`Int32` generator, opt-in regression corpus, interpreter/compiler variants, SSA `Disabled`/`Prefer`/`Require` policies and Wist-owned route evidence |
 | `UniversalToolchain.PlanFuzz.Cli` | explicit adapter registration, generation, isolated workers, replay, bounded campaigns and recursive artifact manifests |
 | `UniversalToolchain.PlanFuzz.Tests` | deterministic contracts, serialization, oracle behavior, evidence-completeness checks, class-fingerprint separation and direct adapter tests |
-| `UniversalToolchain.PlanFuzz.IntegrationTests` | fresh-process Acme replay and a clean Wist external-parameter SSA control |
+| `UniversalToolchain.PlanFuzz.IntegrationTests` | fresh-process Acme/Wist replay and CLI outcome-boundary tests |
 
 The configuration-complete research graph is declared in `UniversalToolchain/PlanFuzz.sln`. Canonical Bash and PowerShell entrypoints build it alongside `Wist.sln` and use the shared test manifest.
 
@@ -28,8 +28,8 @@ The configuration-complete research graph is declared in `UniversalToolchain/Pla
 - PRNG: `xoshiro256starstar-v1` with SHA-256 domain-separated forks.
 - Testcase schema: version 1 with canonical body hashing and recorded case identity.
 - Observation schema: version 2; schema-v1 observations remain readable.
-- Replay report schema: version 2.
-- Campaign summary schema: version 3; it reports `distinctFindingClasses`, not a misleading unique-defect count.
+- Replay report schema: version 3 with a distinct `inconclusive` state.
+- Campaign summary schema: version 3; it reports `distinctFindingClasses`, `inconclusiveCases` and whether the regression corpus was included.
 - Typed values: `decimal`, `bool`, `string` and `Int32` snapshots without semantic comparison through `ToString()`.
 - Generic oracles:
   - `O-001` backend parity;
@@ -42,6 +42,7 @@ The configuration-complete research graph is declared in `UniversalToolchain/Pla
 - Coarser class fingerprints remove concrete values and duplicate diagnostics for campaign triage. They are not root-cause identities and are never reported as unique defects without manual analysis.
 - A replay is clean only when it has at least one oracle result and every declared oracle returns `Passed`.
 - A violation is confirmed only when every attempt has at least one violation, no infrastructure failure, no `Inconclusive`/`NotApplicable` result, and one stable exact fingerprint.
+- Incomplete oracle evidence is reported as inconclusive, not clean or flaky.
 - Replay and campaign output roots must be empty, and every result tree receives a recursive `MANIFEST.sha256`.
 
 ## Wist Level 0 scope
@@ -104,17 +105,24 @@ The machine-readable record is [phase1-wist-pilot-summary.json](evidence/phase1-
 
 The Wist regression corpus uses real current implementation behavior. Its cases protect reproducibility and do not count as independent rediscoveries. No publication claim follows from these results. Root-cause confirmation, regression fixes, reducer output and controlled baseline comparisons remain required.
 
-## Verification baseline
+## Verified integration gate
 
-Before the evidence-hardening changes, GitHub Actions verified:
+GitHub Actions executed the canonical repository entrypoint after evidence hardening:
 
 ```text
-canonical tests: 1431 passed, 0 failed, 0 skipped
-package matrix: 9 packages verified
-clean template and cross-package consumer smokes: passed
+Tests:                                       482 passed
+UniversalToolchain.Modules.Tests:            288 passed
+UniversalToolchain.Dialects.Tests:           588 passed
+UniversalToolchain.LanguageSdk.Tests:         53 passed
+UniversalToolchain.PlanFuzz.Tests:             23 passed
+UniversalToolchain.PlanFuzz.IntegrationTests:   6 passed
+--------------------------------------------------------
+Total:                                      1440 passed
+Failed:                                        0
+Skipped:                                       0
 ```
 
-The final integrated head must rerun the same canonical pipeline, documentation checks, rollout sample smoke and recursive manifest check before merge. The PR description is the current owner of the final verified head and exact post-hardening test count.
+The same gate completed Release builds with zero warnings and errors, verified nine packages, checked the Wist package surface and passed clean template and cross-package consumer smokes.
 
 ## Not yet implemented
 
