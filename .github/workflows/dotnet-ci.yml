@@ -91,9 +91,7 @@ jobs:
         run: python3 .github/scripts/run-markdown-bash-blocks.py
 
   refresh-manifest:
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'push' && github.event.head_commit.message == 'ci: add manifest refresh maintenance')
+    if: github.event_name == 'workflow_dispatch'
     permissions:
       contents: write
     runs-on: ubuntu-latest
