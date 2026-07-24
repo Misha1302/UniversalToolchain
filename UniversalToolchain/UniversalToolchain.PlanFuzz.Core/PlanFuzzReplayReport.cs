@@ -1,7 +1,7 @@
 namespace UniversalToolchain.PlanFuzz;
 
 /// <summary>
-/// Summarizes strict replay confirmation without conflating clean, flaky, and infrastructure outcomes.
+/// Summarizes strict replay confirmation without conflating clean, flaky, inconclusive, and infrastructure outcomes.
 /// </summary>
 public sealed class PlanFuzzReplayReport
 {
@@ -27,7 +27,11 @@ public sealed class PlanFuzzReplayReport
             attempt.OracleResults.Count > 0 &&
             attempt.OracleResults.All(static result => result.Status == PlanFuzzOracleStatus.Passed));
         IsInfrastructureFailure = snapshot.Any(static attempt => attempt.HasInfrastructureFailure);
-        IsFlaky = !IsConfirmedViolation && !IsClean && !IsInfrastructureFailure;
+        IsInconclusive = !IsConfirmedViolation &&
+                         !IsClean &&
+                         !IsInfrastructureFailure &&
+                         snapshot.Any(static attempt => !HasCompleteOracleEvidence(attempt));
+        IsFlaky = !IsConfirmedViolation && !IsClean && !IsInfrastructureFailure && !IsInconclusive;
         ConfirmedFingerprint = IsConfirmedViolation ? snapshot[0].Fingerprint : null;
         ConfirmedClassFingerprint = IsConfirmedViolation ? snapshot[0].ClassFingerprint : null;
     }
@@ -37,6 +41,7 @@ public sealed class PlanFuzzReplayReport
     public bool IsConfirmedViolation { get; }
     public bool IsClean { get; }
     public bool IsFlaky { get; }
+    public bool IsInconclusive { get; }
     public bool IsInfrastructureFailure { get; }
     public string? ConfirmedFingerprint { get; }
     public string? ConfirmedClassFingerprint { get; }
