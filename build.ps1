@@ -8,6 +8,11 @@ param(
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $root
+
+# NuGet.config declares this repository-local feed. It is optional in clean
+# checkouts, but NuGet requires every configured local source path to exist.
+New-Item -ItemType Directory -Force -Path "UniversalToolchain/packages" | Out-Null
+
 $env:PLATFORM = $null
 $env:DOTNET_CLI_DO_NOT_USE_MSBUILD_SERVER = "1"
 $env:MSBUILDDISABLENODEREUSE = "1"
