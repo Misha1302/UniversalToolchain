@@ -15,10 +15,16 @@ public sealed class PlanFuzzReplayReport
 
         CaseId = caseId;
         Attempts = new ReadOnlyCollection<PlanFuzzReplayAttempt>(snapshot);
-        IsConfirmedViolation = snapshot.All(static attempt => attempt.HasViolation && !attempt.HasInfrastructureFailure) &&
-                               snapshot.Select(static attempt => attempt.Fingerprint).Distinct(StringComparer.Ordinal).Count() == 1;
+        IsConfirmedViolation = snapshot.All(static attempt =>
+                                   attempt.HasViolation &&
+                                   !attempt.HasInfrastructureFailure &&
+                                   HasCompleteOracleEvidence(attempt)) &&
+                               snapshot.Select(static attempt => attempt.Fingerprint)
+                                   .Distinct(StringComparer.Ordinal)
+                                   .Count() == 1;
         IsClean = snapshot.All(static attempt =>
             !attempt.HasInfrastructureFailure &&
+            attempt.OracleResults.Count > 0 &&
             attempt.OracleResults.All(static result => result.Status == PlanFuzzOracleStatus.Passed));
         IsInfrastructureFailure = snapshot.Any(static attempt => attempt.HasInfrastructureFailure);
         IsFlaky = !IsConfirmedViolation && !IsClean && !IsInfrastructureFailure;
@@ -34,4 +40,9 @@ public sealed class PlanFuzzReplayReport
     public bool IsInfrastructureFailure { get; }
     public string? ConfirmedFingerprint { get; }
     public string? ConfirmedClassFingerprint { get; }
+
+    private static bool HasCompleteOracleEvidence(PlanFuzzReplayAttempt attempt) =>
+        attempt.OracleResults.Count > 0 &&
+        attempt.OracleResults.All(static result =>
+            result.Status is PlanFuzzOracleStatus.Passed or PlanFuzzOracleStatus.Violated);
 }
