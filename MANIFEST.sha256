@@ -1610,7 +1610,7 @@ c4281bde7595100008c6d7e45026821a38918a24b6246db86ab49a1b9d940f10  ./internal-doc
 e629b3183fcbc5790c8273c021977c9ce18b331744c34af31e096ff847e1efcd  ./internal-docs/proposals/flame-ssa-optimizing-backend-design/06-security-parity-testing-and-licensing.md
 45c8ad8131346741b17ca41541339d7d57bf7b3c10b1f12f932f117d5e4b7ed7  ./internal-docs/proposals/flame-ssa-optimizing-backend-design/07-rollout-implementation-and-acceptance.md
 c2ad9377ae7bc3d1c5c25255b658a425f16106ead1bd4cd06ca9e1382a31f9e8  ./internal-docs/proposals/flame-ssa-optimizing-backend-design/index.md
-194c3b954028fe9802e6af93ad4e166207d6094b08254fd1e05ed3890d9fdda5  ./internal-docs/proposals/planfuzz/README.md
+5d8c8bf6117f9d61d9c815bb2d2759dae0b802556caf4812309b857f1c2963e8  ./internal-docs/proposals/planfuzz/README.md
 cdf0891e7a75d2e10f7ab5609778130c4f36590bfeb0d7197fd1332ed09d7409  ./internal-docs/proposals/planfuzz/evidence/phase1-wist-pilot-summary.json
 93ed87eaed4a0eaffe482a4e69de590a894cc3f5a161dd98191bea78018bd919  ./internal-docs/proposals/planfuzz/implementation-status.md
 27592adfe81d08926e63779861a3c1e98358a035ed07a7ecafac4beb6d6c46f2  ./internal-docs/proposals/planfuzz/technical-specification.ru.md
