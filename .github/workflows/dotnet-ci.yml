@@ -47,6 +47,33 @@ jobs:
         shell: bash
         run: exit "${{ steps.canonical.outputs.status }}"
 
+      - name: Generate recursive manifest candidate
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+          import subprocess
+
+          paths = subprocess.check_output(["git", "ls-files", "-z"]).split(b"\0")
+          with Path("${{ runner.temp }}/MANIFEST.sha256").open("w", encoding="utf-8", newline="\n") as output:
+              for raw_path in sorted(path for path in paths if path and path != b"MANIFEST.sha256"):
+                  path = raw_path.decode("utf-8")
+                  digest = sha256(Path(path).read_bytes()).hexdigest()
+                  output.write(f"{digest}  ./{path}\n")
+          PY
+
+      - name: Upload recursive manifest candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: recursive-manifest-candidate
+          path: ${{ runner.temp }}/MANIFEST.sha256
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: Verify recursive manifest
+        run: cmp MANIFEST.sha256 "$RUNNER_TEMP/MANIFEST.sha256"
+
       - name: Canonical package matrix and consumer smokes
         run: echo "Validated by build.sh through eng/package-projects.txt"
 
