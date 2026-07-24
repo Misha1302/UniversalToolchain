@@ -1,0 +1,29 @@
+name: Export fix branch source
+
+on:
+  push:
+    branches:
+      - fix/planfuzz-regressions-302-303-307
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Create source archive
+        shell: bash
+        run: tar --exclude=.git -czf "$RUNNER_TEMP/wist2-fix-source.tar.gz" .
+
+      - name: Upload source archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: wist2-fix-source
+          path: ${{ runner.temp }}/wist2-fix-source.tar.gz
+          if-no-files-found: error
+          retention-days: 1
