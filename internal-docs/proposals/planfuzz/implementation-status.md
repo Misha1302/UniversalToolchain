@@ -2,8 +2,6 @@
 
 Status: implemented experimental research tooling, not a public package or a shipped Wist feature.
 
-Branch stack:
-
 ```text
 PlanFuzz proposal
 -> Phase 0: language-neutral core and Acme vertical slice
@@ -18,9 +16,9 @@ The implementation remains non-packable and does not extend the public `Universa
 |---|---|
 | `UniversalToolchain.PlanFuzz.Core` | deterministic PRNG, versioned testcase/observation contracts, exact replay fingerprints, normalized finding-class fingerprints, adapter/oracle registries and five generic oracle families |
 | `UniversalToolchain.PlanFuzz.Adapter.Acme` | independent structured pricing generator, registry-order variants, interpreter/compiled execution and test-only wrong-arithmetic fault |
-| `UniversalToolchain.PlanFuzz.Adapter.Wist` | structured restricted-`Int32` generator, interpreter/compiler variants, SSA `Disabled`/`Prefer`/`Require` policies and Wist-owned route evidence |
+| `UniversalToolchain.PlanFuzz.Adapter.Wist` | structured restricted-`Int32` generator, opt-in regression corpus, interpreter/compiler variants, SSA `Disabled`/`Prefer`/`Require` policies and Wist-owned route evidence |
 | `UniversalToolchain.PlanFuzz.Cli` | explicit adapter registration, generation, isolated workers, replay, bounded campaigns and recursive artifact manifests |
-| `UniversalToolchain.PlanFuzz.Tests` | deterministic contracts, serialization, oracle behavior, class-fingerprint separation and direct adapter tests |
+| `UniversalToolchain.PlanFuzz.Tests` | deterministic contracts, serialization, oracle behavior, evidence-completeness checks, class-fingerprint separation and direct adapter tests |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | fresh-process Acme replay and a clean Wist external-parameter SSA control |
 
 The configuration-complete research graph is declared in `UniversalToolchain/PlanFuzz.sln`. Canonical Bash and PowerShell entrypoints build it alongside `Wist.sln` and use the shared test manifest.
@@ -31,6 +29,7 @@ The configuration-complete research graph is declared in `UniversalToolchain/Pla
 - Testcase schema: version 1 with canonical body hashing and recorded case identity.
 - Observation schema: version 2; schema-v1 observations remain readable.
 - Replay report schema: version 2.
+- Campaign summary schema: version 3; it reports `distinctFindingClasses`, not a misleading unique-defect count.
 - Typed values: `decimal`, `bool`, `string` and `Int32` snapshots without semantic comparison through `ToString()`.
 - Generic oracles:
   - `O-001` backend parity;
@@ -41,7 +40,8 @@ The configuration-complete research graph is declared in `UniversalToolchain/Pla
 - Wist route evidence records policy, route use, fallback state/classification, profile, instruction counts, executed passes and stable diagnostic code/stage pairs.
 - Exact fingerprints preserve testcase-level evidence and remain authoritative for repeated replay confirmation.
 - Coarser class fingerprints remove concrete values and duplicate diagnostics for campaign triage. They are not root-cause identities and are never reported as unique defects without manual analysis.
-- A replay is clean only when every declared oracle returns `Passed`; `NotApplicable` and `Inconclusive` are not silently accepted.
+- A replay is clean only when it has at least one oracle result and every declared oracle returns `Passed`.
+- A violation is confirmed only when every attempt has at least one violation, no infrastructure failure, no `Inconclusive`/`NotApplicable` result, and one stable exact fingerprint.
 - Replay and campaign output roots must be empty, and every result tree receives a recursive `MANIFEST.sha256`.
 
 ## Wist Level 0 scope
@@ -56,7 +56,7 @@ IntExpression := Constant
                | Multiply
 ```
 
-Values are deliberately bounded to avoid overflow in the valid deterministic profile. Every testcase compares:
+The only external parameter is exactly `x`. Backend/configuration pairs are validated fail-closed before execution. Values are deliberately bounded to avoid overflow in the valid deterministic profile. Every testcase compares:
 
 ```text
 interpreter + SSA Disabled
@@ -67,25 +67,21 @@ compiler    + SSA Require
 
 The generic core contains no Wist syntax, feature IDs, backend classes or diagnostic allowlist. Wist-specific fallback classification remains inside `UniversalToolchain.PlanFuzz.Adapter.Wist`.
 
-## Focused verification
+## Discovery versus regression verification
 
-Observed locally with the repository's .NET 10/offline package sidecar:
+Default Wist generation is discovery-only. It does not prepend known issue triggers.
+
+Known minimized cases for #302, #303 and #307 are available only through the explicit CLI option:
 
 ```text
-PlanFuzz solution build: 0 warnings, 0 errors
-UniversalToolchain.PlanFuzz.Tests: 16 passed
-UniversalToolchain.PlanFuzz.IntegrationTests: 4 passed
-clean external-parameter SSA control (`x + 3`): 2/2 fresh-process attempts clean
-curated issue #302 replay: 3/3, stable exact fingerprint
-curated issue #303 replay: 3/3, stable exact fingerprint
-curated issue #307 replay: 3/3, stable exact fingerprint
-full canonical `./build.sh --skip-docs`: passed
-canonical tests: 1431 passed, 0 failed, 0 skipped
-package matrix: 9 packages verified
-clean template and cross-package consumer smokes: passed
+--include-regressions
 ```
 
-The strict Wist pilot used seed `20260724`, 25 cases and three fresh worker processes per case:
+Adapters that do not advertise the `regression-corpus` capability reject that option instead of silently ignoring it. Campaign summaries record whether the corpus was included.
+
+## Preserved Phase 1 pilot
+
+The preserved pilot used seed `20260724`, 25 cases, three fresh worker processes per case, and **included the regression corpus**:
 
 ```text
 4 clean cases
@@ -95,20 +91,30 @@ The strict Wist pilot used seed `20260724`, 25 cases and three fresh worker proc
 0 infrastructure failures
 ```
 
-Twenty-one violating testcases do **not** mean twenty-one defects. The two normalized classes are also only triage groups:
+Twenty-one violating testcases do **not** mean twenty-one defects. The two normalized classes are only triage groups:
 
 1. interpreter success versus compiler failure with `air.stack.invalid` route evidence — includes minimized issues #302 and #303;
 2. unclassified `ssa.operation.descriptor.missing` fallback/failure — includes issue #307.
 
-The machine-readable record is [phase1-wist-pilot-summary.json](evidence/phase1-wist-pilot-summary.json). Raw replay trees remain a separate research artifact rather than source-tree content.
+The machine-readable record is [phase1-wist-pilot-summary.json](evidence/phase1-wist-pilot-summary.json). Raw replay trees remain a separate research artifact rather than source-tree content. The old pilot is preserved for reproducibility, not presented as a clean discovery-yield experiment.
 
 ## Seeded and real-evidence boundary
 
 `SF-001-wrong-backend-arithmetic` changes only the test-owned compiled Acme implementation. It validates discovery and confirmation but is never counted as a UniversalToolchain defect.
 
-The Wist Phase 1 pilot uses real current implementation behavior. Its first two cases are curated regressions for already opened issues #302 and #303; the third is the minimized #307 trigger. Their inclusion protects reproducibility but is not counted as independent rediscovery.
+The Wist regression corpus uses real current implementation behavior. Its cases protect reproducibility and do not count as independent rediscoveries. No publication claim follows from these results. Root-cause confirmation, regression fixes, reducer output and controlled baseline comparisons remain required.
 
-No publication claim follows from these results. Root-cause confirmation, regression fixes, reducer output and controlled baseline comparisons remain required.
+## Verification baseline
+
+Before the evidence-hardening changes, GitHub Actions verified:
+
+```text
+canonical tests: 1431 passed, 0 failed, 0 skipped
+package matrix: 9 packages verified
+clean template and cross-package consumer smokes: passed
+```
+
+The final integrated head must rerun the same canonical pipeline, documentation checks, rollout sample smoke and recursive manifest check before merge. The PR description is the current owner of the final verified head and exact post-hardening test count.
 
 ## Not yet implemented
 
@@ -119,9 +125,9 @@ No publication claim follows from these results. Root-cause confirmation, regres
 - equal-budget program-only/pairwise/full-PlanFuzz comparison;
 - third external adapter and publication-scale clean-machine evaluation.
 
-## Next mergeable milestone
+## Next milestone
 
-1. Land the proposal, Acme core and Wist Level 0 stack with green canonical CI.
+1. Land the proposal, Acme core and Wist Level 0 as one verified integrated change.
 2. Implement multidimensional reduction while preserving exact fingerprints.
 3. Add negative-surface and lifecycle traces without widening the public Wist package surface.
-4. Fix and regression-protect #302, #303 and #307, then rerun the same preserved pilot.
+4. Fix and regression-protect #302, #303 and #307, then rerun both discovery-only and regression-inclusive campaigns separately.
