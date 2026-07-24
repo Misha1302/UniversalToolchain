@@ -109,6 +109,7 @@ public static class PlanFuzzCommandHost
         Console.WriteLine($"confirmedViolation: {report.IsConfirmedViolation}");
         Console.WriteLine($"clean: {report.IsClean}");
         Console.WriteLine($"flaky: {report.IsFlaky}");
+        Console.WriteLine($"inconclusive: {report.IsInconclusive}");
         Console.WriteLine($"infrastructureFailure: {report.IsInfrastructureFailure}");
         if (report.ConfirmedFingerprint != null)
             Console.WriteLine($"fingerprint: {report.ConfirmedFingerprint}");
@@ -116,6 +117,10 @@ public static class PlanFuzzCommandHost
             Console.WriteLine($"classFingerprint: {report.ConfirmedClassFingerprint}");
         if (report.IsInfrastructureFailure)
             return PlanFuzzExitCodes.InfrastructureFailure;
+        if (report.IsInconclusive)
+            return PlanFuzzExitCodes.Inconclusive;
+        if (report.IsFlaky)
+            return PlanFuzzExitCodes.Flaky;
         return report.IsConfirmedViolation ? PlanFuzzExitCodes.Finding : PlanFuzzExitCodes.Success;
     }
 
@@ -141,6 +146,10 @@ public static class PlanFuzzCommandHost
             .ConfigureAwait(false);
         if (summary.InfrastructureFailures > 0)
             return PlanFuzzExitCodes.InfrastructureFailure;
+        if (summary.InconclusiveCases > 0)
+            return PlanFuzzExitCodes.Inconclusive;
+        if (summary.FlakyCases > 0)
+            return PlanFuzzExitCodes.Flaky;
         return summary.ConfirmedFindings > 0 ? PlanFuzzExitCodes.Finding : PlanFuzzExitCodes.Success;
     }
 
