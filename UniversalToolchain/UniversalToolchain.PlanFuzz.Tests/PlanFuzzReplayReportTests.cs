@@ -6,14 +6,7 @@ public sealed class PlanFuzzReplayReportTests
     [Test]
     public void InconclusiveOracleResultIsNotReportedAsClean()
     {
-        var observation = new PlanFuzzObservation(
-            "case",
-            "variant",
-            "backend",
-            PlanFuzzExecutionOutcome.Success,
-            PlanFuzzValueSnapshot.FromDecimal(1m),
-            null,
-            null);
+        var observation = CreateObservation();
         var oracleResult = new PlanFuzzOracleResult(
             "contract",
             PlanFuzzOracleIds.BackendParity,
@@ -25,12 +18,64 @@ public sealed class PlanFuzzReplayReportTests
 
         var report = new PlanFuzzReplayReport("case", [attempt]);
 
+        AssertIncomplete(report);
+    }
+
+    [Test]
+    public void ViolationWithAnotherInconclusiveOracleIsNotConfirmed()
+    {
+        var observation = CreateObservation();
+        var violation = new PlanFuzzOracleResult(
+            "violated-contract",
+            PlanFuzzOracleIds.BackendParity,
+            1,
+            PlanFuzzOracleStatus.Violated,
+            "Mismatch.",
+            "mismatch");
+        var inconclusive = new PlanFuzzOracleResult(
+            "inconclusive-contract",
+            PlanFuzzOracleIds.ControlledFallback,
+            1,
+            PlanFuzzOracleStatus.Inconclusive,
+            "Route evidence is incomplete.",
+            "missing-route");
+        var attempt = new PlanFuzzReplayAttempt(1, [observation], [violation, inconclusive]);
+
+        var report = new PlanFuzzReplayReport("case", [attempt]);
+
+        AssertIncomplete(report);
+    }
+
+    [Test]
+    public void EmptyOracleResultSetIsNotReportedAsClean()
+    {
+        var attempt = new PlanFuzzReplayAttempt(1, [CreateObservation()], []);
+
+        var report = new PlanFuzzReplayReport("case", [attempt]);
+
+        AssertIncomplete(report);
+    }
+
+    private static PlanFuzzObservation CreateObservation() =>
+        new(
+            "case",
+            "variant",
+            "backend",
+            PlanFuzzExecutionOutcome.Success,
+            PlanFuzzValueSnapshot.FromDecimal(1m),
+            null,
+            null);
+
+    private static void AssertIncomplete(PlanFuzzReplayReport report)
+    {
         Assert.Multiple(() =>
         {
             Assert.That(report.IsClean, Is.False);
             Assert.That(report.IsConfirmedViolation, Is.False);
             Assert.That(report.IsInfrastructureFailure, Is.False);
             Assert.That(report.IsFlaky, Is.True);
+            Assert.That(report.ConfirmedFingerprint, Is.Null);
+            Assert.That(report.ConfirmedClassFingerprint, Is.Null);
         });
     }
 }
