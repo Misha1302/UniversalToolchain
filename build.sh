@@ -29,6 +29,10 @@ done
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$root"
 
+# NuGet.config declares this repository-local feed. It is optional in clean
+# checkouts, but NuGet requires every configured local source path to exist.
+mkdir -p UniversalToolchain/packages
+
 # Environment variables such as Docker's PLATFORM become global MSBuild properties.
 unset PLATFORM || true
 export DOTNET_CLI_DO_NOT_USE_MSBUILD_SERVER=1
