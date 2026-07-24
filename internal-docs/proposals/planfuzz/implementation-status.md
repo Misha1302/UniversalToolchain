@@ -103,21 +103,38 @@ The machine-readable record is [phase1-wist-pilot-summary.json](evidence/phase1-
 
 `SF-001-wrong-backend-arithmetic` changes only the test-owned compiled Acme implementation. It validates discovery and confirmation but is never counted as a UniversalToolchain defect.
 
-The Wist regression corpus uses real current implementation behavior. Its cases protect reproducibility and do not count as independent rediscoveries. No publication claim follows from these results. Root-cause confirmation, regression fixes, reducer output and controlled baseline comparisons remain required.
+The Wist regression corpus preserves the historical triggers for #302, #303 and #307. Their root causes are now confirmed and the current source tree contains owner-layer fixes plus direct regression tests. These cases validate non-regression and do not count as independent rediscoveries. No publication claim follows from these results; reducer output and controlled baseline comparisons remain required.
+
+## Post-fix regression verification
+
+The repaired source state addresses the three tracked behaviors without weakening PlanFuzz or expanding fallback:
+
+- **#302:** the arithmetic peephole no longer treats the slot operand inside a multi-instruction external-load sequence as a complete arithmetic operand; zero-multiplication folding requires the opposite side to be a proven single-value producer.
+- **#303:** typed zero materialization boxes the `i32` branch before switch-expression numeric unification, preserving `System.Int32` instead of widening it to `System.Int64`.
+- **#307:** dynamically reconstructed SSA verifiers retain all core operation descriptors when managed-call descriptors are added, so `core.external.load.i32` remains available through lowering and emission.
+
+Direct owner tests and Wist public-path PlanFuzz tests cover all three fixes. Two bounded smoke campaigns used seed `20260724`, three cases and three fresh-process attempts per case:
+
+```text
+discovery-only:       3 clean, 0 findings, 0 flaky, 0 inconclusive, 0 infrastructure failures
+regression-inclusive: 3 clean, 0 findings, 0 flaky, 0 inconclusive, 0 infrastructure failures
+```
+
+These are deterministic post-fix smokes, not publication-scale discovery or baseline evidence.
 
 ## Verified integration gate
 
 GitHub Actions executed the canonical repository entrypoint after evidence hardening:
 
 ```text
-Tests:                                       482 passed
-UniversalToolchain.Modules.Tests:            288 passed
+Tests:                                       483 passed
+UniversalToolchain.Modules.Tests:            290 passed
 UniversalToolchain.Dialects.Tests:           588 passed
 UniversalToolchain.LanguageSdk.Tests:         53 passed
-UniversalToolchain.PlanFuzz.Tests:             23 passed
+UniversalToolchain.PlanFuzz.Tests:             26 passed
 UniversalToolchain.PlanFuzz.IntegrationTests:   6 passed
 --------------------------------------------------------
-Total:                                      1440 passed
+Total:                                      1446 passed
 Failed:                                        0
 Skipped:                                       0
 ```
@@ -135,7 +152,7 @@ The same gate completed Release builds with zero warnings and errors, verified n
 
 ## Next milestone
 
-1. Land the proposal, Acme core and Wist Level 0 as one verified integrated change.
+1. Scale post-fix discovery-only and regression-inclusive campaigns while keeping their evidence separate.
 2. Implement multidimensional reduction while preserving exact fingerprints.
 3. Add negative-surface and lifecycle traces without widening the public Wist package surface.
-4. Fix and regression-protect #302, #303 and #307, then rerun both discovery-only and regression-inclusive campaigns separately.
+4. Run equal-budget program-only, pairwise and full-PlanFuzz baselines after the reducer and additional oracles are stable.

@@ -134,7 +134,7 @@ public sealed class AirToSsaConverter : IIrConverter
         var ssaVerifier = lowering.ManagedCallableDescriptors.Count == 0
             ? _ssaVerifier
             : new StructuralSsaVerifier(
-                SsaCoreDescriptors.ConstantMaterialization,
+                SsaCoreDescriptors.CoreOperations,
                 MergeSemanticDescriptors(
                     _semanticDescriptors,
                     lowering.ManagedCallableDescriptors));

@@ -140,7 +140,7 @@ def main() -> int:
 
     verification = ROOT / 'VERIFICATION.md'
     verification_text = verification.read_text(encoding='utf-8') if verification.exists() else ''
-    for expected in ('1,440', 'UniversalToolchain.PlanFuzz.Tests', 'UniversalToolchain.PlanFuzz.IntegrationTests'):
+    for expected in ('1,446', 'UniversalToolchain.PlanFuzz.Tests', 'UniversalToolchain.PlanFuzz.IntegrationTests'):
         if expected not in verification_text:
             errors.append(f'VERIFICATION.md: integrated verification marker is missing: {expected}')
 

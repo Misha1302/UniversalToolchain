@@ -52,7 +52,7 @@ generate
 -> replayable artifact with SHA-256 manifest
 ```
 
-Confirmed, clean, flaky, inconclusive and infrastructure outcomes remain separate. Known Wist cases for #302, #303 and #307 are available only through explicit regression-corpus opt-in and do not count as fresh rediscoveries.
+Confirmed, clean, flaky, inconclusive and infrastructure outcomes remain separate. Historical Wist triggers for #302, #303 and #307 remain available only through explicit regression-corpus opt-in; the current source state fixes and regression-protects them, and replaying them does not count as fresh rediscovery.
 
 ## Required architecture boundaries
 

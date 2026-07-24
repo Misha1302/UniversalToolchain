@@ -56,6 +56,64 @@ public sealed class TypedIntrinsicEmitterOptimizerTests
     }
 
     [Test]
+    public void ArithmeticOptimizer_WhenZeroPrecedesManagedExternalLoad_DoesNotConsumePartialOperandSequence()
+    {
+        var optimizer = CreateOptimizer(
+            new ArithmeticOptimizerModule(),
+            CreateArithmeticCapabilities(true).ToArray());
+        var multiply = typeof(NativeArithmetic)
+            .GetMethod(nameof(NativeArithmetic.Multiply), BindingFlags.Public | BindingFlags.Static)!
+            .MakeGenericMethod(typeof(int));
+
+        var input = CreateIr(
+            new Instruction(UOpCode.Push, [0]),
+            IntrinsicInstructionFactory.CreateForCapability(
+                "call C#",
+                ExternalRuntimeMethodDescriptors.LoadEnvironmentDescriptor),
+            new Instruction(UOpCode.Push, [0]),
+            IntrinsicInstructionFactory.CreateForCapability(
+                "call C#",
+                ExternalRuntimeMethodDescriptors.CreateLoadExternalMethod(typeof(int))),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", multiply));
+
+        var result = optimizer.Optimize(input);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Instructions, Has.Count.EqualTo(5));
+            Assert.That(AirPushOperand.GetValue(result.Instructions[0].Operands.Single()), Is.EqualTo(0));
+            Assert.That(CSharpCallIntrinsicReader.TryGetCallDescriptor(result.Instructions[1], out _), Is.True);
+            Assert.That(AirPushOperand.GetValue(result.Instructions[2].Operands.Single()), Is.EqualTo(0));
+            Assert.That(CSharpCallIntrinsicReader.TryGetCallMethod(result.Instructions[3], out _), Is.True);
+            AssertTypedIntrinsic(result.Instructions[4], BuiltinIntrinsicSymbols.Arithmetic.Multiply, typeof(int));
+        });
+    }
+
+    [Test]
+    public void ArithmeticOptimizer_WhenFoldingInt32ZeroMultiplication_PreservesInt32RuntimeType()
+    {
+        var optimizer = CreateOptimizer(
+            new ArithmeticOptimizerModule(),
+            CreateArithmeticCapabilities(true).ToArray());
+        var multiply = typeof(NativeArithmetic)
+            .GetMethod(nameof(NativeArithmetic.Multiply), BindingFlags.Public | BindingFlags.Static)!
+            .MakeGenericMethod(typeof(int));
+        var input = CreateIr(
+            new Instruction(UOpCode.Push, [0]),
+            new Instruction(UOpCode.Push, [1]),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", multiply));
+
+        var result = optimizer.Optimize(input);
+        var value = AirPushOperand.GetValue(result.Instructions.Single().Operands.Single());
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(value, Is.TypeOf<int>());
+            Assert.That(value, Is.EqualTo(0));
+        });
+    }
+
+    [Test]
     public void BooleanOptimizer_WhenCapabilityIncomplete_ReturnsInputUnchanged()
     {
         var optimizer = CreateOptimizer(

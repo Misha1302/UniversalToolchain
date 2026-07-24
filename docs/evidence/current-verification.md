@@ -3,7 +3,7 @@ title: Current Verification
 description: Verification record for the integrated language-authoring and PlanFuzz research revision.
 audience: maintainer-or-evaluator
 status: current
-lastVerifiedAgainst: planfuzz-phase0-phase1-integration
+lastVerifiedAgainst: planfuzz-regression-repair-302-303-307
 ---
 
 # Current verification
@@ -24,7 +24,7 @@ It restores and builds both `UniversalToolchain/Wist.sln` and the configuration-
 Release builds succeeded
 0 build warnings
 0 build errors
-1,440 tests succeeded
+1,446 tests succeeded
 0 failed
 0 skipped
 9 NuGet packages checked
@@ -36,13 +36,13 @@ Per-project test counts:
 
 | Project | Passed | Failed | Skipped |
 |---|---:|---:|---:|
-| `Tests` | 482 | 0 | 0 |
-| `UniversalToolchain.Modules.Tests` | 288 | 0 | 0 |
+| `Tests` | 483 | 0 | 0 |
+| `UniversalToolchain.Modules.Tests` | 290 | 0 | 0 |
 | `UniversalToolchain.Dialects.Tests` | 588 | 0 | 0 |
 | `UniversalToolchain.LanguageSdk.Tests` | 53 | 0 | 0 |
-| `UniversalToolchain.PlanFuzz.Tests` | 23 | 0 | 0 |
+| `UniversalToolchain.PlanFuzz.Tests` | 26 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 6 | 0 | 0 |
-| **Total** | **1,440** | **0** | **0** |
+| **Total** | **1,446** | **0** | **0** |
 
 The root `VERIFICATION.md` is the detailed authority for commands, environment, package checks and the PlanFuzz evidence boundary.
 
@@ -64,6 +64,6 @@ GitHub Actions additionally verifies the Wist rollout sample and compares `MANIF
 
 Verified PlanFuzz behavior includes the language-neutral core, Acme and Wist adapters, five oracle families, fresh-process strict replay, complete-evidence confirmation, separate inconclusive/flaky states, opt-in known regressions and distinct exact/class fingerprints.
 
-The preserved Wist pilot included the regression corpus. Its violating-case count is not a clean discovery-yield result, and its normalized classes are not unique-defect or root-cause counts.
+The preserved Wist pilot included the regression corpus. Its violating-case count is not a clean discovery-yield result, and its normalized classes are not unique-defect or root-cause counts. The current source state fixes and regression-protects #302, #303 and #307 at their owner boundaries. Separate three-case, three-attempt discovery-only and regression-inclusive fresh-process smokes are clean; these bounded smokes are not publication-scale evidence.
 
 Reduction, negative-surface/lifecycle campaigns, equal-budget baselines, a third adapter and publication novelty remain unverified future work.
