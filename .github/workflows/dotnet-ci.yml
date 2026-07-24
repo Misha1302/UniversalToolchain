@@ -24,7 +24,13 @@ jobs:
           node-version: "22"
 
       - name: Restore, build, and test through canonical entrypoint
-        run: ./build.sh --skip-docs
+        shell: bash
+        run: |
+          set +e
+          ./build.sh --skip-docs > "$RUNNER_TEMP/canonical-build.log" 2>&1
+          status=$?
+          tail -n 200 "$RUNNER_TEMP/canonical-build.log"
+          exit "$status"
 
       - name: Canonical package matrix and consumer smokes
         run: echo "Validated by build.sh through eng/package-projects.txt"
