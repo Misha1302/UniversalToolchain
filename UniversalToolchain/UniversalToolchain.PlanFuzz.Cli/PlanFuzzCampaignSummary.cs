@@ -6,8 +6,9 @@ internal sealed record PlanFuzzCampaignSummary(
     int CompletedCases,
     int CleanCases,
     int ConfirmedFindings,
-    int DistinctFindingFingerprints,
+    int DistinctFindingClasses,
     int FlakyCases,
     int InfrastructureFailures,
     string AdapterId,
-    string? SeededFaultId);
+    string? SeededFaultId,
+    bool IncludedRegressionCorpus);
