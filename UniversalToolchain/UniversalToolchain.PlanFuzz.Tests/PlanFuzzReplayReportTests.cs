@@ -4,7 +4,7 @@ namespace UniversalToolchain.PlanFuzz.Tests;
 public sealed class PlanFuzzReplayReportTests
 {
     [Test]
-    public void InconclusiveOracleResultIsNotReportedAsClean()
+    public void InconclusiveOracleResultIsNotReportedAsCleanOrFlaky()
     {
         var observation = CreateObservation();
         var oracleResult = new PlanFuzzOracleResult(
@@ -18,7 +18,7 @@ public sealed class PlanFuzzReplayReportTests
 
         var report = new PlanFuzzReplayReport("case", [attempt]);
 
-        AssertIncomplete(report);
+        AssertInconclusive(report);
     }
 
     [Test]
@@ -43,17 +43,41 @@ public sealed class PlanFuzzReplayReportTests
 
         var report = new PlanFuzzReplayReport("case", [attempt]);
 
-        AssertIncomplete(report);
+        AssertInconclusive(report);
     }
 
     [Test]
-    public void EmptyOracleResultSetIsNotReportedAsClean()
+    public void EmptyOracleResultSetIsInconclusiveRatherThanClean()
     {
         var attempt = new PlanFuzzReplayAttempt(1, [CreateObservation()], []);
 
         var report = new PlanFuzzReplayReport("case", [attempt]);
 
-        AssertIncomplete(report);
+        AssertInconclusive(report);
+    }
+
+    [Test]
+    public void StableViolationsWithDifferentExactFingerprintsAreFlaky()
+    {
+        var first = new PlanFuzzReplayAttempt(
+            1,
+            [CreateObservation()],
+            [CreateViolation("first")]);
+        var second = new PlanFuzzReplayAttempt(
+            2,
+            [CreateObservation()],
+            [CreateViolation("second")]);
+
+        var report = new PlanFuzzReplayReport("case", [first, second]);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(report.IsConfirmedViolation, Is.False);
+            Assert.That(report.IsClean, Is.False);
+            Assert.That(report.IsInfrastructureFailure, Is.False);
+            Assert.That(report.IsInconclusive, Is.False);
+            Assert.That(report.IsFlaky, Is.True);
+        });
     }
 
     private static PlanFuzzObservation CreateObservation() =>
@@ -66,14 +90,24 @@ public sealed class PlanFuzzReplayReportTests
             null,
             null);
 
-    private static void AssertIncomplete(PlanFuzzReplayReport report)
+    private static PlanFuzzOracleResult CreateViolation(string material) =>
+        new(
+            "contract",
+            PlanFuzzOracleIds.BackendParity,
+            1,
+            PlanFuzzOracleStatus.Violated,
+            "Mismatch.",
+            material);
+
+    private static void AssertInconclusive(PlanFuzzReplayReport report)
     {
         Assert.Multiple(() =>
         {
             Assert.That(report.IsClean, Is.False);
             Assert.That(report.IsConfirmedViolation, Is.False);
             Assert.That(report.IsInfrastructureFailure, Is.False);
-            Assert.That(report.IsFlaky, Is.True);
+            Assert.That(report.IsFlaky, Is.False);
+            Assert.That(report.IsInconclusive, Is.True);
             Assert.That(report.ConfirmedFingerprint, Is.Null);
             Assert.That(report.ConfirmedClassFingerprint, Is.Null);
         });
