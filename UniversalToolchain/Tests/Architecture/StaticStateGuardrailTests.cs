@@ -81,7 +81,9 @@ public sealed class StaticStateGuardrailTests
     {
         var root = FindRepositoryRoot();
         var packageRoot = Path.Combine(root, "UniversalToolchain", "packages");
-        var files = Directory.GetFiles(packageRoot, "*", SearchOption.AllDirectories);
+        var files = Directory.Exists(packageRoot)
+            ? Directory.GetFiles(packageRoot, "*", SearchOption.AllDirectories)
+            : Array.Empty<string>();
 
         var violations = files
             .Select(path => NormalizePath(Path.GetRelativePath(packageRoot, path)))

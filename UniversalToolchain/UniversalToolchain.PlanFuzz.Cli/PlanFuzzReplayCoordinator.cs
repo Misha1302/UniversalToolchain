@@ -19,8 +19,7 @@ internal sealed class PlanFuzzReplayCoordinator
         if (repeatCount <= 0)
             return Thrower.Argument<PlanFuzzReplayReport>(nameof(repeatCount), "Replay count must be positive.");
         testcasePath = Path.GetFullPath(testcasePath.ArgNotNull());
-        outputDirectory = Path.GetFullPath(outputDirectory.ArgNotNull());
-        Directory.CreateDirectory(outputDirectory);
+        outputDirectory = PlanFuzzOutputDirectory.PrepareEmpty(outputDirectory, nameof(outputDirectory));
         var testCase = PlanFuzzTestCaseSerializer.Deserialize(File.ReadAllText(testcasePath));
         PlanFuzzAtomicFile.WriteAllText(
             Path.Combine(outputDirectory, "case.json"),

@@ -56,7 +56,7 @@ They are grouped in `UniversalToolchain/PlanFuzz.sln`; `build.sh` and `build.ps1
 
 ## Test projects
 
-The canonical test list is declared in `eng/test-projects.txt`. In the verified language-authoring hardening artifact it contains:
+The canonical test list is declared in `eng/test-projects.txt`. On the PlanFuzz research branch it contains:
 
 - `Tests`;
 - `UniversalToolchain.Modules.Tests`;

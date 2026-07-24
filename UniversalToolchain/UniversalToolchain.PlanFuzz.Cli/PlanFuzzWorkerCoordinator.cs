@@ -2,6 +2,9 @@ namespace UniversalToolchain.PlanFuzz.Cli;
 
 internal sealed class PlanFuzzWorkerCoordinator
 {
+    private const int MaximumCapturedCharacters = 65_536;
+    private const string TruncationMarker = "\n[planfuzz output truncated]";
+
     private readonly TimeSpan _timeout;
 
     public PlanFuzzWorkerCoordinator(TimeSpan timeout)
@@ -26,8 +29,8 @@ internal sealed class PlanFuzzWorkerCoordinator
             return InfrastructureResult(testCase, "worker-start", "Worker process did not start.", PlanFuzzExitCodes.InfrastructureFailure);
         }
 
-        var stdoutTask = process.StandardOutput.ReadToEndAsync(cancellationToken);
-        var stderrTask = process.StandardError.ReadToEndAsync(cancellationToken);
+        var stdoutTask = ReadBoundedAsync(process.StandardOutput, cancellationToken);
+        var stderrTask = ReadBoundedAsync(process.StandardError, cancellationToken);
         using var timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeoutSource.CancelAfter(_timeout);
         try
@@ -46,6 +49,13 @@ internal sealed class PlanFuzzWorkerCoordinator
                     $"Worker exceeded timeout {_timeout.TotalSeconds.ToString("0.###", CultureInfo.InvariantCulture)} seconds."))
                 .ToArray();
             return new PlanFuzzWorkerResult(observations, PlanFuzzExitCodes.Timeout, stdout, stderr, TimedOut: true);
+        }
+        catch (OperationCanceledException)
+        {
+            TryKill(process);
+            _ = await CompleteCaptureAsync(stdoutTask).ConfigureAwait(false);
+            _ = await CompleteCaptureAsync(stderrTask).ConfigureAwait(false);
+            throw;
         }
 
         var standardOutput = await stdoutTask.ConfigureAwait(false);
@@ -166,6 +176,31 @@ internal sealed class PlanFuzzWorkerCoordinator
         testCase.Variants
             .Select(variant => PlanFuzzObservation.InfrastructureFailure(testCase.CaseId, variant, category, message))
             .ToArray();
+
+    private static async Task<string> ReadBoundedAsync(
+        StreamReader reader,
+        CancellationToken cancellationToken)
+    {
+        var builder = new StringBuilder(capacity: 4_096);
+        var buffer = new char[4_096];
+        var truncated = false;
+        while (true)
+        {
+            var read = await reader.ReadAsync(buffer.AsMemory(), cancellationToken).ConfigureAwait(false);
+            if (read == 0)
+                break;
+
+            var remaining = MaximumCapturedCharacters - builder.Length;
+            if (remaining > 0)
+                builder.Append(buffer, 0, Math.Min(remaining, read));
+            if (read > remaining)
+                truncated = true;
+        }
+
+        if (truncated)
+            builder.Append(TruncationMarker);
+        return builder.ToString();
+    }
 
     private static async Task<string> CompleteCaptureAsync(Task<string> captureTask)
     {

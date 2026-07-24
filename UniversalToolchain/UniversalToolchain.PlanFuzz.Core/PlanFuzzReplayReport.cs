@@ -17,7 +17,9 @@ public sealed class PlanFuzzReplayReport
         Attempts = new ReadOnlyCollection<PlanFuzzReplayAttempt>(snapshot);
         IsConfirmedViolation = snapshot.All(static attempt => attempt.HasViolation && !attempt.HasInfrastructureFailure) &&
                                snapshot.Select(static attempt => attempt.Fingerprint).Distinct(StringComparer.Ordinal).Count() == 1;
-        IsClean = snapshot.All(static attempt => !attempt.HasViolation && !attempt.HasInfrastructureFailure);
+        IsClean = snapshot.All(static attempt =>
+            !attempt.HasInfrastructureFailure &&
+            attempt.OracleResults.All(static result => result.Status == PlanFuzzOracleStatus.Passed));
         IsInfrastructureFailure = snapshot.Any(static attempt => attempt.HasInfrastructureFailure);
         IsFlaky = !IsConfirmedViolation && !IsClean && !IsInfrastructureFailure;
         ConfirmedFingerprint = IsConfirmedViolation ? snapshot[0].Fingerprint : null;

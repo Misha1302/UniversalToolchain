@@ -23,8 +23,7 @@ internal sealed class PlanFuzzCampaignRunner
             return Thrower.Argument<PlanFuzzCampaignSummary>(nameof(caseCount), "Case count must be positive.");
         if (confirmationCount <= 0)
             return Thrower.Argument<PlanFuzzCampaignSummary>(nameof(confirmationCount), "Confirmation count must be positive.");
-        outputDirectory = Path.GetFullPath(outputDirectory.ArgNotNull());
-        Directory.CreateDirectory(outputDirectory);
+        outputDirectory = PlanFuzzOutputDirectory.PrepareEmpty(outputDirectory, nameof(outputDirectory));
         var clean = 0;
         var confirmed = 0;
         var flaky = 0;

@@ -28,7 +28,9 @@ The bounded research graph is declared in `UniversalToolchain/PlanFuzz.sln`. The
   - `O-003` plan determinism;
   - `O-009` canonical lock consistency.
 - Strict replay starts one fresh worker process per testcase attempt, executes the requested variants inside that isolated process, applies a timeout to the attempt, captures bounded process evidence and writes atomic observation files. Variants share the process only within one attempt so backend parity does not pay process-startup cost per variant; repeated confirmations always use new processes.
+- Replay and campaign output roots must be empty before execution, preventing stale evidence from being mixed into a new result.
 - A finding is confirmed only when every requested replay contains the same violation fingerprint and no infrastructure failure.
+- A replay is classified as clean only when every declared oracle returns `Passed`; `NotApplicable` and `Inconclusive` are not silently counted as clean.
 - Every replay and campaign directory receives a recursive `MANIFEST.sha256`.
 
 ## Seeded fault boundary
@@ -43,8 +45,8 @@ The focused verification performed for this branch includes:
 
 ```text
 UniversalToolchain/PlanFuzz.sln: build succeeded, 0 warnings, 0 errors
-UniversalToolchain.PlanFuzz.Tests: 7 passed
-UniversalToolchain.PlanFuzz.IntegrationTests: 2 passed
+UniversalToolchain.PlanFuzz.Tests: 8 passed
+UniversalToolchain.PlanFuzz.IntegrationTests: 3 passed
 clean strict replay: 2/2 attempts clean
 seeded-fault strict replay: 3/3 attempts, one stable fingerprint
 clean bounded campaign: 100/100 cases clean, 0 flaky, 0 infrastructure failures

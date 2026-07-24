@@ -44,6 +44,28 @@ public sealed class StrictReplayTests
     }
 
     [Test]
+    public async Task ReplayRejectsNonEmptyOutputDirectory()
+    {
+        var casePath = await GenerateCaseAsync(faultId: null);
+        var output = Path.Combine(_temporaryDirectory, "stale-replay");
+        Directory.CreateDirectory(output);
+        await File.WriteAllTextAsync(Path.Combine(output, "stale.txt"), "stale evidence");
+
+        var exitCode = await PlanFuzzCommandHost.RunAsync(
+        [
+            "replay", "--case", casePath, "--output", output,
+            "--repeat", "1", "--timeout-seconds", "20"
+        ]);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(exitCode, Is.EqualTo(PlanFuzzExitCodes.InvalidCase));
+            Assert.That(File.Exists(Path.Combine(output, "stale.txt")), Is.True);
+            Assert.That(File.Exists(Path.Combine(output, "replay-report.json")), Is.False);
+        });
+    }
+
+    [Test]
     public async Task SeededFaultIsConfirmedThreeOutOfThreeWithStableFingerprint()
     {
         var casePath = await GenerateCaseAsync(AcmePlanFuzzConstants.WrongArithmeticFault);
