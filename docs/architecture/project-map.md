@@ -3,7 +3,7 @@ title: Physical Project Map
 description: Map architectural roles to projects, key types and tests.
 audience: framework-contributor
 status: current
-lastVerifiedAgainst: language-authoring-p0-p1-hardening-2026-07-23.1
+lastVerifiedAgainst: planfuzz-phase0-phase1-integration
 ---
 
 # Physical project map
@@ -23,6 +23,19 @@ This page maps conceptual architecture to the repository. It is a navigation aid
 | package template | `UniversalToolchain.Templates` | `ut-language` template | clean template consumer smoke |
 | Wist compatibility pack | `UniversalToolchain.Wist.LanguagePack` | Wist feature/runtime pack and legacy adapter | Language SDK and Wist dialect tests |
 | independent reference consumer | `samples/Acme.PricingLanguage` | custom syntax, parser, interpreter and compiled backend | solution build and sample run |
+
+## Experimental research tooling
+
+| Role | Project | Key types | Main verification |
+|---|---|---|---|
+| deterministic PlanFuzz contracts | `UniversalToolchain.PlanFuzz.Core` | `PlanFuzzTestCase`, `PlanFuzzObservation`, adapter/oracle contracts, strict replay records | `UniversalToolchain.PlanFuzz.Tests` |
+| independent Acme adapter | `UniversalToolchain.PlanFuzz.Adapter.Acme` | structured generator, plan variants and typed decimal executor | unit and strict-process replay tests |
+| Wist Level 0 adapter | `UniversalToolchain.PlanFuzz.Adapter.Wist` | restricted `Int32` model, opt-in regression corpus, interpreter/compiler matrix, SSA policy mapping and route evidence | direct oracle tests and clean fresh-process parameter replay |
+| coordinator and worker CLI | `UniversalToolchain.PlanFuzz.Cli` | generation, isolated workers, replay, campaign and artifact manifest | `UniversalToolchain.PlanFuzz.IntegrationTests` |
+
+These projects are non-packable experimental research tooling. They do not extend the public Wist package surface.
+
+They are grouped in `UniversalToolchain/PlanFuzz.sln`; `build.sh` and `build.ps1` build this configuration-complete research solution alongside `Wist.sln` before executing `eng/test-projects.txt`.
 
 ## Wist compiler/runtime stack
 
@@ -44,11 +57,13 @@ This page maps conceptual architecture to the repository. It is a navigation aid
 
 ## Test projects
 
-The canonical test list is declared in `eng/test-projects.txt`. In the verified language-authoring hardening artifact it contains:
+The canonical test list is declared in `eng/test-projects.txt` and contains:
 
 - `Tests`;
 - `UniversalToolchain.Modules.Tests`;
 - `UniversalToolchain.Dialects.Tests`;
-- `UniversalToolchain.LanguageSdk.Tests`.
+- `UniversalToolchain.LanguageSdk.Tests`;
+- `UniversalToolchain.PlanFuzz.Tests`;
+- `UniversalToolchain.PlanFuzz.IntegrationTests`.
 
-Do not infer coverage from project count alone. Use [current verification](/evidence/current-verification) for the tied evidence record.
+Do not infer coverage from project count alone. The checked-in `VERIFICATION.md`, canonical GitHub Actions run and recursive manifest jointly define the tied evidence record.

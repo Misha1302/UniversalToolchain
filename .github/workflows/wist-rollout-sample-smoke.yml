@@ -39,6 +39,9 @@ jobs:
         with:
           global-json-file: UniversalToolchain/global.json
 
+      - name: Prepare optional local NuGet feed
+        run: mkdir -p UniversalToolchain/packages
+
       - name: Restore sample
         run: >
           dotnet restore samples/Wist.RolloutScoring/Wist.RolloutScoring.csproj
@@ -81,5 +84,5 @@ jobs:
         with:
           name: wist-rollout-sample-failure
           path: ${{ runner.temp }}/wist-rollout-sample.log
-          if-no-files-found: error
+          if-no-files-found: ignore
           retention-days: 3

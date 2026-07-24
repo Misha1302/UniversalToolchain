@@ -1,25 +1,30 @@
 ---
 title: Current Verification
-description: Verification record for the language-authoring hardening baseline and this documentation revision.
+description: Verification record for the integrated language-authoring and PlanFuzz research revision.
+audience: maintainer-or-evaluator
+status: current
+lastVerifiedAgainst: planfuzz-phase0-phase1-integration
 ---
 
 # Current verification
 
-## Project baseline
+## Verified revision
 
-The documentation revision starts from:
+The canonical GitHub Actions gate runs:
 
-```text
-Artifact: Wist2-language-authoring-p0-p1-hardening-2026-07-23.1(1).zip
+```bash ci-run=false
+./build.sh --skip-docs
 ```
 
-The embedded `VERIFICATION.md` records a Linux x64 offline verification using .NET SDK 10.0.301 and local package sidecars.
+It restores and builds both `UniversalToolchain/Wist.sln` and the configuration-complete `UniversalToolchain/PlanFuzz.sln`, executes the shared test manifest, packs the canonical package matrix and runs clean consumer smokes.
 
 ## Recorded project result
 
 ```text
-85 / 85 solution projects built
-1,411 tests succeeded
+Release builds succeeded
+0 build warnings
+0 build errors
+1,440 tests succeeded
 0 failed
 0 skipped
 9 NuGet packages checked
@@ -29,24 +34,36 @@ cross-package package consumer smoke passed
 
 Per-project test counts:
 
-| Project | Passed |
-|---|---:|
-| `Tests` | 482 |
-| `UniversalToolchain.Modules.Tests` | 288 |
-| `UniversalToolchain.Dialects.Tests` | 588 |
-| `UniversalToolchain.LanguageSdk.Tests` | 53 |
+| Project | Passed | Failed | Skipped |
+|---|---:|---:|---:|
+| `Tests` | 482 | 0 | 0 |
+| `UniversalToolchain.Modules.Tests` | 288 | 0 | 0 |
+| `UniversalToolchain.Dialects.Tests` | 588 | 0 | 0 |
+| `UniversalToolchain.LanguageSdk.Tests` | 53 | 0 | 0 |
+| `UniversalToolchain.PlanFuzz.Tests` | 23 | 0 | 0 |
+| `UniversalToolchain.PlanFuzz.IntegrationTests` | 6 | 0 | 0 |
+| **Total** | **1,440** | **0** | **0** |
 
-This page reports the supplied artifact's recorded verification. The root `VERIFICATION.md` is the detailed authority for commands, environment and package checks.
+The root `VERIFICATION.md` is the detailed authority for commands, environment, package checks and the PlanFuzz evidence boundary.
 
-## Documentation revision checks
+## Additional CI gates
 
-The revised documentation archive must pass from a clean extraction:
+The integrated revision must also pass:
 
 ```bash ci-run=false
 npm ci --no-audit --no-fund
 npm run docs:status
 npm run docs:links
 npm run docs:build
+python3 .github/scripts/run-markdown-bash-blocks.py
 ```
 
-The release handoff also validates recursive manifest integrity, archive path safety, generated-output exclusion and absence of production-code changes relative to the supplied baseline.
+GitHub Actions additionally verifies the Wist rollout sample and compares `MANIFEST.sha256` with a freshly generated manifest over all tracked source files except the manifest itself.
+
+## Evidence boundary
+
+Verified PlanFuzz behavior includes the language-neutral core, Acme and Wist adapters, five oracle families, fresh-process strict replay, complete-evidence confirmation, separate inconclusive/flaky states, opt-in known regressions and distinct exact/class fingerprints.
+
+The preserved Wist pilot included the regression corpus. Its violating-case count is not a clean discovery-yield result, and its normalized classes are not unique-defect or root-cause counts.
+
+Reduction, negative-surface/lifecycle campaigns, equal-budget baselines, a third adapter and publication novelty remain unverified future work.

@@ -29,13 +29,20 @@ done
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$root"
 
+# NuGet.config declares this repository-local feed. It is optional in clean
+# checkouts, but NuGet requires every configured local source path to exist.
+mkdir -p UniversalToolchain/packages
+
 # Environment variables such as Docker's PLATFORM become global MSBuild properties.
 unset PLATFORM || true
 export DOTNET_CLI_DO_NOT_USE_MSBUILD_SERVER=1
 export MSBUILDDISABLENODEREUSE=1
 
 dotnet_command="${DOTNET:-dotnet}"
-solution="UniversalToolchain/Wist.sln"
+solutions=(
+  "UniversalToolchain/Wist.sln"
+  "UniversalToolchain/PlanFuzz.sln"
+)
 test_manifest="eng/test-projects.txt"
 package_manifest="eng/package-projects.txt"
 markdown_sample_projects=(
@@ -52,13 +59,15 @@ read_manifest() {
   sed -e 's/[[:space:]]*$//' -e '/^[[:space:]]*#/d' -e '/^[[:space:]]*$/d' "$path"
 }
 
-"$dotnet_command" restore "$solution" \
-  --disable-parallel \
-  --disable-build-servers \
-  "${restore_source_args[@]}" \
-  -p:RestoreBuildInParallel=false \
-  -p:UseSharedCompilation=false \
-  -p:NuGetAudit=false
+for solution in "${solutions[@]}"; do
+  "$dotnet_command" restore "$solution" \
+    --disable-parallel \
+    --disable-build-servers \
+    "${restore_source_args[@]}" \
+    -p:RestoreBuildInParallel=false \
+    -p:UseSharedCompilation=false \
+    -p:NuGetAudit=false
+done
 
 for sample_project in "${markdown_sample_projects[@]}"; do
   "$dotnet_command" restore "$sample_project" \
@@ -70,14 +79,16 @@ for sample_project in "${markdown_sample_projects[@]}"; do
     -p:NuGetAudit=false
 done
 
-"$dotnet_command" build "$solution" \
-  -c "$configuration" \
-  --no-restore \
-  --disable-build-servers \
-  -m:1 \
-  -p:BuildInParallel=false \
-  -p:UseSharedCompilation=false \
-  -p:NuGetAudit=false
+for solution in "${solutions[@]}"; do
+  "$dotnet_command" build "$solution" \
+    -c "$configuration" \
+    --no-restore \
+    --disable-build-servers \
+    -m:1 \
+    -p:BuildInParallel=false \
+    -p:UseSharedCompilation=false \
+    -p:NuGetAudit=false
+done
 
 # Runnable Markdown samples are built by the canonical entrypoint so docs checks
 # can execute with --no-build --no-restore.

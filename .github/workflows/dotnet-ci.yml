@@ -4,9 +4,13 @@ on:
   push:
     branches: [ "**" ]
   pull_request:
+  workflow_dispatch:
 
 jobs:
   build-test:
+    if: github.event_name != 'workflow_dispatch'
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
 
     steps:
@@ -23,8 +27,55 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Restore, build, and test through canonical entrypoint
-        run: ./build.sh --skip-docs
+      - name: Run canonical entrypoint
+        id: canonical
+        shell: bash
+        run: |
+          set +e
+          ./build.sh --skip-docs > "$RUNNER_TEMP/canonical-build.log" 2>&1
+          status=$?
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          tail -n 200 "$RUNNER_TEMP/canonical-build.log"
+          exit 0
+
+      - name: Upload canonical build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: canonical-build-log
+          path: ${{ runner.temp }}/canonical-build.log
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: Enforce canonical entrypoint result
+        shell: bash
+        run: exit "${{ steps.canonical.outputs.status }}"
+
+      - name: Generate recursive manifest candidate
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+          import subprocess
+
+          paths = subprocess.check_output(["git", "ls-files", "-z"]).split(b"\0")
+          with Path("${{ runner.temp }}/MANIFEST.sha256").open("w", encoding="utf-8", newline="\n") as output:
+              for raw_path in sorted(path for path in paths if path and path != b"MANIFEST.sha256"):
+                  path = raw_path.decode("utf-8")
+                  output.write(f"{sha256(Path(path).read_bytes()).hexdigest()}  ./{path}\n")
+          PY
+
+      - name: Upload recursive manifest candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: recursive-manifest-candidate
+          path: ${{ runner.temp }}/MANIFEST.sha256
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: Verify recursive manifest
+        run: cmp MANIFEST.sha256 "$RUNNER_TEMP/MANIFEST.sha256"
 
       - name: Canonical package matrix and consumer smokes
         run: echo "Validated by build.sh through eng/package-projects.txt"
@@ -38,3 +89,40 @@ jobs:
       - name: Markdown bash smoke checks
         shell: bash
         run: python3 .github/scripts/run-markdown-bash-blocks.py
+
+  refresh-manifest:
+    if: github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref_name }}
+
+      - name: Refresh recursive manifest
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+          import subprocess
+
+          paths = subprocess.check_output(["git", "ls-files", "-z"]).split(b"\0")
+          with Path("MANIFEST.sha256").open("w", encoding="utf-8", newline="\n") as output:
+              for raw_path in sorted(path for path in paths if path and path != b"MANIFEST.sha256"):
+                  path = raw_path.decode("utf-8")
+                  output.write(f"{sha256(Path(path).read_bytes()).hexdigest()}  ./{path}\n")
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add MANIFEST.sha256
+          git diff --cached --check
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "chore: refresh recursive manifest"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>14</LangVersion>
+    <IsPackable>false</IsPackable>
+    <Description>PlanFuzz adapter for the documented Wist restricted Int32 arithmetic subset.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj" />
+    <ProjectReference Include="..\UniversalToolchain.PlanFuzz.Core\UniversalToolchain.PlanFuzz.Core.csproj" />
+    <ProjectReference Include="..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj" />
+    <ProjectReference Include="..\UniversalToolchain.Wist\UniversalToolchain.Wist.csproj" />
+  </ItemGroup>
+</Project>

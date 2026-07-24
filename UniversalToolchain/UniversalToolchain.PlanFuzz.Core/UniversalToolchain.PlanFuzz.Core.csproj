@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>14</LangVersion>
+    <IsPackable>false</IsPackable>
+    <Description>Language-neutral deterministic testcase, observation, oracle, and replay contracts for PlanFuzz research tooling.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj" />
+    <ProjectReference Include="..\UniversalToolchain.Language.Abstractions\UniversalToolchain.Language.Abstractions.csproj" />
+    <ProjectReference Include="..\UniversalToolchain.LanguageSdk\UniversalToolchain.LanguageSdk.csproj" />
+  </ItemGroup>
+</Project>

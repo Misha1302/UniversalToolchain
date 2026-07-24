@@ -8,11 +8,19 @@ param(
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $root
+
+# NuGet.config declares this repository-local feed. It is optional in clean
+# checkouts, but NuGet requires every configured local source path to exist.
+New-Item -ItemType Directory -Force -Path "UniversalToolchain/packages" | Out-Null
+
 $env:PLATFORM = $null
 $env:DOTNET_CLI_DO_NOT_USE_MSBUILD_SERVER = "1"
 $env:MSBUILDDISABLENODEREUSE = "1"
 $dotnet = if ($env:DOTNET) { $env:DOTNET } else { "dotnet" }
-$solution = "UniversalToolchain/Wist.sln"
+$solutions = @(
+    "UniversalToolchain/Wist.sln",
+    "UniversalToolchain/PlanFuzz.sln"
+)
 $testManifest = "eng/test-projects.txt"
 $packageManifest = "eng/package-projects.txt"
 $markdownSampleProjects = @(
@@ -57,21 +65,25 @@ function New-RestoreArguments {
     return $arguments
 }
 
-Invoke-CheckedNative $dotnet (New-RestoreArguments $solution)
+foreach ($solution in $solutions) {
+    Invoke-CheckedNative $dotnet (New-RestoreArguments $solution)
+}
 foreach ($project in $markdownSampleProjects) {
     Invoke-CheckedNative $dotnet (New-RestoreArguments $project)
 }
 
-Invoke-CheckedNative $dotnet @(
-    "build", $solution,
-    "-c", $Configuration,
-    "--no-restore",
-    "--disable-build-servers",
-    "-m:1",
-    "-p:BuildInParallel=false",
-    "-p:UseSharedCompilation=false",
-    "-p:NuGetAudit=false"
-)
+foreach ($solution in $solutions) {
+    Invoke-CheckedNative $dotnet @(
+        "build", $solution,
+        "-c", $Configuration,
+        "--no-restore",
+        "--disable-build-servers",
+        "-m:1",
+        "-p:BuildInParallel=false",
+        "-p:UseSharedCompilation=false",
+        "-p:NuGetAudit=false"
+    )
+}
 
 foreach ($project in $markdownSampleProjects) {
     Invoke-CheckedNative $dotnet @(

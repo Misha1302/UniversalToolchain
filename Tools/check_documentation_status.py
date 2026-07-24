@@ -139,8 +139,10 @@ def main() -> int:
                 errors.append(f'package.json: missing {script} script')
 
     verification = ROOT / 'VERIFICATION.md'
-    if not verification.exists() or '1,411' not in verification.read_text(encoding='utf-8'):
-        errors.append('VERIFICATION.md: expected tied 1,411-test language-authoring baseline is missing')
+    verification_text = verification.read_text(encoding='utf-8') if verification.exists() else ''
+    for expected in ('1,440', 'UniversalToolchain.PlanFuzz.Tests', 'UniversalToolchain.PlanFuzz.IntegrationTests'):
+        if expected not in verification_text:
+            errors.append(f'VERIFICATION.md: integrated verification marker is missing: {expected}')
 
     public_text = '\n'.join(path.read_text(encoding='utf-8') for path in public_files)
     forbidden = {
