@@ -35,6 +35,7 @@ internal sealed class PlanFuzzCampaignRunner
         var clean = 0;
         var confirmed = 0;
         var flaky = 0;
+        var inconclusive = 0;
         var infrastructure = 0;
         var findingClasses = new HashSet<string>(StringComparer.Ordinal);
         for (var index = 0; index < caseCount; index++)
@@ -63,9 +64,11 @@ internal sealed class PlanFuzzCampaignRunner
                 clean++;
             else if (replay.IsInfrastructureFailure)
                 infrastructure++;
+            else if (replay.IsInconclusive)
+                inconclusive++;
             else
                 flaky++;
-            WriteProgress(index + 1, caseCount, clean, confirmed, flaky, infrastructure);
+            WriteProgress(index + 1, caseCount, clean, confirmed, flaky, inconclusive, infrastructure);
         }
 
         var summary = new PlanFuzzCampaignSummary(
@@ -76,6 +79,7 @@ internal sealed class PlanFuzzCampaignRunner
             confirmed,
             findingClasses.Count,
             flaky,
+            inconclusive,
             infrastructure,
             _adapter.Descriptor.AdapterId,
             seededFaultId,
@@ -85,13 +89,21 @@ internal sealed class PlanFuzzCampaignRunner
         return summary;
     }
 
-    private static void WriteProgress(int completed, int requested, int clean, int confirmed, int flaky, int infrastructure)
+    private static void WriteProgress(
+        int completed,
+        int requested,
+        int clean,
+        int confirmed,
+        int flaky,
+        int inconclusive,
+        int infrastructure)
     {
         Console.WriteLine(
             $"cases: {completed.ToString(CultureInfo.InvariantCulture)}/{requested.ToString(CultureInfo.InvariantCulture)}; " +
             $"clean: {clean.ToString(CultureInfo.InvariantCulture)}; " +
             $"confirmed: {confirmed.ToString(CultureInfo.InvariantCulture)}; " +
             $"flaky: {flaky.ToString(CultureInfo.InvariantCulture)}; " +
+            $"inconclusive: {inconclusive.ToString(CultureInfo.InvariantCulture)}; " +
             $"infrastructure: {infrastructure.ToString(CultureInfo.InvariantCulture)}");
     }
 
@@ -110,6 +122,7 @@ internal sealed class PlanFuzzCampaignRunner
             writer.WriteNumber("confirmedFindings", summary.ConfirmedFindings);
             writer.WriteNumber("distinctFindingClasses", summary.DistinctFindingClasses);
             writer.WriteNumber("flakyCases", summary.FlakyCases);
+            writer.WriteNumber("inconclusiveCases", summary.InconclusiveCases);
             writer.WriteNumber("infrastructureFailures", summary.InfrastructureFailures);
             writer.WriteBoolean("includedRegressionCorpus", summary.IncludedRegressionCorpus);
             if (summary.SeededFaultId != null)
