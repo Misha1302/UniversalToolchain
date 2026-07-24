@@ -52,6 +52,83 @@ public sealed class WistPlanFuzzAdapterTests
     }
 
     [Test]
+    public void DiscoveryGenerationDoesNotInjectKnownRegressionsByDefault()
+    {
+        var adapter = new WistPlanFuzzAdapter();
+
+        var testCase = adapter.GenerateCase(20260724, 0, new PlanFuzzCaseGenerationOptions());
+        var model = WistIntProgramModel.FromPayload(testCase.Program.Model);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(model.Origin, Is.EqualTo("generated"));
+            Assert.That(model.Origin, Does.Not.StartWith("regression-corpus:"));
+        });
+    }
+
+    [Test]
+    public void RegressionCorpusIsIncludedOnlyByExplicitOptIn()
+    {
+        var adapter = new WistPlanFuzzAdapter();
+
+        var testCase = adapter.GenerateCase(
+            20260724,
+            0,
+            new PlanFuzzCaseGenerationOptions(includeRegressionCorpus: true));
+        var model = WistIntProgramModel.FromPayload(testCase.Program.Model);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(model.Origin, Is.EqualTo("regression-corpus:issue-302"));
+            Assert.That(testCase.Program.SourceText, Is.EqualTo("(0 * x)"));
+        });
+    }
+
+    [Test]
+    public void LevelZeroRejectsUnexpectedExternalParameterNames()
+    {
+        Assert.That(
+            () => WistIntExpression.Parameter("y"),
+            Throws.TypeOf<NotSupportedException>());
+    }
+
+    [Test]
+    public void InterpreterRejectsAnSsaEnabledConfigurationAsInfrastructureFailure()
+    {
+        var adapter = new WistPlanFuzzAdapter();
+        var canonical = adapter.CreateCase(
+            1,
+            102,
+            102,
+            new WistIntProgramModel(WistIntExpression.Constant(1), 0, "test"));
+        var invalidVariant = new PlanFuzzPlanVariant(
+            "interpreter.invalid",
+            WistPlanFuzzConstants.PreferConfiguration,
+            WistPlanFuzzConstants.InterpreterBackend,
+            PlanFuzzVariantRole.Baseline,
+            PlanFuzzExpectedRelation.SameSemantics);
+        var invalidCase = new PlanFuzzTestCase(
+            canonical.SchemaVersion,
+            canonical.AdapterId,
+            canonical.AdapterVersion,
+            canonical.CampaignSeed,
+            canonical.CaseIndex,
+            canonical.CaseSeed,
+            canonical.PrngAlgorithm,
+            canonical.Program,
+            [invalidVariant],
+            []);
+
+        var observation = adapter.Execute(invalidCase, invalidVariant);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(observation.Outcome, Is.EqualTo(PlanFuzzExecutionOutcome.InfrastructureFailure));
+            Assert.That(observation.Failure?.Category, Is.EqualTo("variant-configuration"));
+        });
+    }
+
+    [Test]
     public void ObservationRouteRoundtripPreservesEvidence()
     {
         var route = new PlanFuzzRouteSnapshot(
@@ -92,8 +169,8 @@ public sealed class WistPlanFuzzAdapterTests
         var adapter = new WistPlanFuzzAdapter();
         var testCase = adapter.CreateCase(
             1,
-            102,
-            102,
+            103,
+            103,
             new WistIntProgramModel(WistIntExpression.Constant(1), 0, "test"));
         var variant = testCase.GetRequiredVariant("compiler.ssa-prefer");
         var observation = new PlanFuzzObservation(
