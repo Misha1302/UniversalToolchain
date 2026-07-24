@@ -65,10 +65,14 @@ public static class PlanFuzzCommandHost
         var seed = commandLine.GetUInt64("--seed", 1);
         var index = commandLine.GetInt64("--index", 0, 0);
         var output = Path.GetFullPath(commandLine.GetRequired("--out"));
+        var includeRegressionCorpus = commandLine.HasOption("--include-regressions");
+        ValidateRegressionCorpusSupport(adapter, includeRegressionCorpus);
         var testCase = adapter.GenerateCase(
             seed,
             index,
-            new PlanFuzzCaseGenerationOptions(commandLine.GetOptional("--fault")));
+            new PlanFuzzCaseGenerationOptions(
+                commandLine.GetOptional("--fault"),
+                includeRegressionCorpus));
         PlanFuzzAtomicFile.WriteAllText(output, PlanFuzzTestCaseSerializer.Serialize(testCase));
         Console.WriteLine(testCase.CaseId);
         return PlanFuzzExitCodes.Success;
@@ -123,6 +127,8 @@ public static class PlanFuzzCommandHost
         var confirmationCount = commandLine.GetInt32("--repeat", 1, 1);
         var timeoutSeconds = commandLine.GetInt32("--timeout-seconds", 30, 1);
         var output = commandLine.GetRequired("--output");
+        var includeRegressionCorpus = commandLine.HasOption("--include-regressions");
+        ValidateRegressionCorpusSupport(adapter, includeRegressionCorpus);
         var summary = await new PlanFuzzCampaignRunner(adapter, TimeSpan.FromSeconds(timeoutSeconds))
             .RunAsync(
                 seed,
@@ -130,6 +136,7 @@ public static class PlanFuzzCommandHost
                 confirmationCount,
                 output,
                 commandLine.GetOptional("--fault"),
+                includeRegressionCorpus,
                 cancellationToken)
             .ConfigureAwait(false);
         if (summary.InfrastructureFailures > 0)
@@ -176,6 +183,18 @@ public static class PlanFuzzCommandHost
     private static IPlanFuzzLanguageAdapter ResolveAdapter(string adapterId) =>
         CreateRegistry().GetRequired(adapterId);
 
+    private static void ValidateRegressionCorpusSupport(
+        IPlanFuzzLanguageAdapter adapter,
+        bool includeRegressionCorpus)
+    {
+        if (includeRegressionCorpus &&
+            !adapter.Descriptor.Capabilities.Contains("regression-corpus", StringComparer.Ordinal))
+        {
+            Thrower.NotSupported(
+                $"Adapter '{adapter.Descriptor.AdapterId}' does not expose a regression corpus.");
+        }
+    }
+
     private static int UnknownCommand(string command)
     {
         Console.Error.WriteLine($"Unknown PlanFuzz command '{command}'.");
@@ -189,10 +208,10 @@ public static class PlanFuzzCommandHost
         Console.WriteLine();
         Console.WriteLine("Commands:");
         Console.WriteLine("  list-adapters");
-        Console.WriteLine("  generate --adapter acme-pricing|wist-restricted-int32 --seed 1 --index 0 --out case.json [--fault <id>]");
+        Console.WriteLine("  generate --adapter acme-pricing|wist-restricted-int32 --seed 1 --index 0 --out case.json [--fault <id>] [--include-regressions]");
         Console.WriteLine("  inspect --case case.json");
         Console.WriteLine("  replay --case case.json --output artifacts/replay --repeat 3 --timeout-seconds 30");
-        Console.WriteLine("  campaign --adapter acme-pricing|wist-restricted-int32 --seed 1 --cases 100 --output artifacts/campaign [--repeat 3]");
+        Console.WriteLine("  campaign --adapter acme-pricing|wist-restricted-int32 --seed 1 --cases 100 --output artifacts/campaign [--repeat 3] [--include-regressions]");
         Console.WriteLine("  worker execute-case --case case.json --observations observations.json");
     }
 }
