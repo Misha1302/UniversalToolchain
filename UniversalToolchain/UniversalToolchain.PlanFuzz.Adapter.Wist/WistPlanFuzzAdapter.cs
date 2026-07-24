@@ -25,7 +25,7 @@ public sealed class WistPlanFuzzAdapter : IPlanFuzzLanguageAdapter
         WistPlanFuzzConstants.AdapterVersion,
         WistPlanFuzzConstants.LanguageId,
         WistPlanFuzzConstants.GeneratorSchemaVersion,
-        ["backend-parity", "optimization-route-parity", "controlled-fallback", "restricted-int32"]);
+        ["backend-parity", "optimization-route-parity", "controlled-fallback", "restricted-int32", "regression-corpus"]);
 
     public PlanFuzzTestCase GenerateCase(
         ulong campaignSeed,
@@ -45,7 +45,10 @@ public sealed class WistPlanFuzzAdapter : IPlanFuzzLanguageAdapter
             campaignSeed,
             caseIndex,
             caseSeed,
-            _generator.Generate(new PlanFuzzRandom(caseSeed).Fork("program"), caseIndex));
+            _generator.Generate(
+                new PlanFuzzRandom(caseSeed).Fork("program"),
+                caseIndex,
+                options.IncludeRegressionCorpus));
     }
 
     public PlanFuzzTestCase CreateCase(
@@ -154,6 +157,10 @@ public sealed class WistPlanFuzzAdapter : IPlanFuzzLanguageAdapter
                 "Testcase program model is not supported by the Wist adapter.");
         }
 
+        var variantFailure = ValidateVariant(testCase, variant);
+        if (variantFailure != null)
+            return variantFailure;
+
         WistIntProgramModel model;
         try
         {
@@ -176,9 +183,75 @@ public sealed class WistPlanFuzzAdapter : IPlanFuzzLanguageAdapter
                 "Structured Wist program model does not reproduce the recorded source text.");
         }
 
-        return StringComparer.Ordinal.Equals(variant.BackendId, WistPlanFuzzConstants.InterpreterBackend)
-            ? ExecuteInterpreter(testCase, variant, model)
-            : ExecuteCompiler(testCase, variant, model);
+        if (StringComparer.Ordinal.Equals(variant.BackendId, WistPlanFuzzConstants.InterpreterBackend))
+            return ExecuteInterpreter(testCase, variant, model);
+        if (StringComparer.Ordinal.Equals(variant.BackendId, WistPlanFuzzConstants.CompilerBackend))
+            return ExecuteCompiler(testCase, variant, model);
+        return PlanFuzzObservation.InfrastructureFailure(
+            testCase.CaseId,
+            variant,
+            "variant-backend",
+            $"Unknown Wist PlanFuzz backend '{variant.BackendId}'.");
+    }
+
+    private static PlanFuzzObservation? ValidateVariant(
+        PlanFuzzTestCase testCase,
+        PlanFuzzPlanVariant variant)
+    {
+        PlanFuzzPlanVariant declared;
+        try
+        {
+            declared = testCase.GetRequiredVariant(variant.VariantId);
+        }
+        catch (InvalidOperationException exception)
+        {
+            return PlanFuzzObservation.InfrastructureFailure(
+                testCase.CaseId,
+                variant,
+                "variant-identity",
+                Bound(exception.Message));
+        }
+
+        if (!StringComparer.Ordinal.Equals(declared.BackendId, variant.BackendId) ||
+            !StringComparer.Ordinal.Equals(declared.ConfigurationId, variant.ConfigurationId))
+        {
+            return PlanFuzzObservation.InfrastructureFailure(
+                testCase.CaseId,
+                variant,
+                "variant-identity",
+                "Execution variant does not match the testcase-declared backend and configuration.");
+        }
+
+        if (StringComparer.Ordinal.Equals(variant.BackendId, WistPlanFuzzConstants.InterpreterBackend))
+        {
+            return StringComparer.Ordinal.Equals(variant.ConfigurationId, WistPlanFuzzConstants.DisabledConfiguration)
+                ? null
+                : PlanFuzzObservation.InfrastructureFailure(
+                    testCase.CaseId,
+                    variant,
+                    "variant-configuration",
+                    "The Wist interpreter variant only supports the SSA-disabled configuration.");
+        }
+
+        if (!StringComparer.Ordinal.Equals(variant.BackendId, WistPlanFuzzConstants.CompilerBackend))
+        {
+            return PlanFuzzObservation.InfrastructureFailure(
+                testCase.CaseId,
+                variant,
+                "variant-backend",
+                $"Unknown Wist PlanFuzz backend '{variant.BackendId}'.");
+        }
+
+        var supported = StringComparer.Ordinal.Equals(variant.ConfigurationId, WistPlanFuzzConstants.DisabledConfiguration) ||
+                        StringComparer.Ordinal.Equals(variant.ConfigurationId, WistPlanFuzzConstants.PreferConfiguration) ||
+                        StringComparer.Ordinal.Equals(variant.ConfigurationId, WistPlanFuzzConstants.RequireConfiguration);
+        return supported
+            ? null
+            : PlanFuzzObservation.InfrastructureFailure(
+                testCase.CaseId,
+                variant,
+                "variant-configuration",
+                $"Unknown Wist PlanFuzz compiler configuration '{variant.ConfigurationId}'.");
     }
 
     private static PlanFuzzObservation ExecuteInterpreter(
@@ -250,27 +323,25 @@ public sealed class WistPlanFuzzAdapter : IPlanFuzzLanguageAdapter
                     route);
             }
         }
-        else
+
+        var parameterlessResult = engine.TryCompile<Func<int>>(testCase.Program.SourceText);
+        var parameterlessRoute = CreateRoute(parameterlessResult.OptimizationReport.Ssa);
+        if (!parameterlessResult.IsSuccess)
+            return CompilationFailure(testCase, variant, parameterlessResult.Diagnostics, parameterlessResult.Exception, parameterlessRoute);
+        try
         {
-            var result = engine.TryCompile<Func<int>>(testCase.Program.SourceText);
-            var route = CreateRoute(result.OptimizationReport.Ssa);
-            if (!result.IsSuccess)
-                return CompilationFailure(testCase, variant, result.Diagnostics, result.Exception, route);
-            try
-            {
-                return Success(testCase, variant, result.Program!.CompiledDelegate(), route);
-            }
-            catch (Exception exception)
-            {
-                return Failure(
-                    testCase,
-                    variant,
-                    exception.GetType().FullName ?? exception.GetType().Name,
-                    "execution",
-                    "wist.compiled-invocation.failure",
-                    exception.Message,
-                    route);
-            }
+            return Success(testCase, variant, parameterlessResult.Program!.CompiledDelegate(), parameterlessRoute);
+        }
+        catch (Exception exception)
+        {
+            return Failure(
+                testCase,
+                variant,
+                exception.GetType().FullName ?? exception.GetType().Name,
+                "execution",
+                "wist.compiled-invocation.failure",
+                exception.Message,
+                parameterlessRoute);
         }
     }
 
