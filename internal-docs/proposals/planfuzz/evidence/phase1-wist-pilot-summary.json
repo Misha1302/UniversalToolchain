@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "date": "2026-07-24",
   "adapter": {
     "id": "wist-restricted-int32",
@@ -10,6 +10,7 @@
     "seed": 20260724,
     "caseCount": 25,
     "freshProcessAttemptsPerCase": 3,
+    "includedRegressionCorpus": true,
     "cleanCases": 4,
     "confirmedViolatingCases": 21,
     "distinctNormalizedFindingClasses": 2,
@@ -67,6 +68,7 @@
     "confirmedViolatingCaseIsNotUniqueDefect": true,
     "normalizedClassIsNotProvenRootCause": true,
     "seededFaultsCountedAsRealDefects": false,
+    "knownRegressionCorpusSeparatedFromDefaultDiscovery": true,
     "publicationClaimEstablished": false
   }
 }
