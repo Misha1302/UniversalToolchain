@@ -1,6 +1,7 @@
 using BasicCore.Builtins;
 using BasicCore.Core;
 using IntermediateRepresentationAbstractions;
+using System.Reflection;
 using UniversalIntermediateRepresentation;
 using UniversalToolchain.Air.Analysis;
 using UniversalToolchain.Ssa.Optimization;
@@ -149,6 +150,42 @@ public sealed class SsaRoundtripRouteTests
     }
 
     [Test]
+    public void Run_WhenManagedCallableAndExternalLoadCoexist_PreservesCoreDescriptorsAcrossRoundtrip()
+    {
+        var method = typeof(SsaRoundtripRouteTests)
+            .GetMethod(nameof(AddOne), BindingFlags.NonPublic | BindingFlags.Static)!;
+        var source = new AbstractIR();
+        source.AppendInstructions(
+        [
+            BuiltinIntrinsicInstruction.Create(
+                BuiltinIntrinsicSymbols.Core.LoadExternal,
+                typeof(int),
+                [0])
+        ]);
+        source.Push(40);
+        source.AppendInstructions(
+        [
+            IntrinsicInstructionFactory.CreateForCapability(AirIntrinsicIds.CallCSharp, method)
+        ]);
+        source.Intrinsic(AirIntrinsicIds.AddInt32Unchecked);
+
+        var result = SsaRouteFactory
+            .CreateRoundtripRoute(SsaRouteProfiles.Create(SsaRoutePolicy.Require))
+            .Run(source);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.UsedSsa, Is.True);
+            Assert.That(result.FellBackToInput, Is.False);
+            Assert.That(result.Diagnostics, Is.Empty);
+            Assert.That(result.Program.Instructions.Any(static instruction =>
+                BuiltinIntrinsicInstruction.Is(instruction, BuiltinIntrinsicSymbols.Core.LoadExternal)), Is.True);
+            Assert.That(result.Program.Instructions.Any(static instruction =>
+                CSharpCallIntrinsicReader.TryGetCallMethod(instruction, out _)), Is.True);
+        });
+    }
+
+    [Test]
     public void Run_WhenUsingRawConvertersWithoutProfile_DoesNotRunOptimizationPasses()
     {
         var source = new AbstractIR();
@@ -175,4 +212,6 @@ public sealed class SsaRoundtripRouteTests
             }));
         });
     }
+    private static int AddOne(int value) => value + 1;
+
 }

@@ -157,7 +157,7 @@ public class ArithmeticOptimizerModule : IAirOptimizer
             {
                 if (IsOne(leftValue) && IsSingleValueProducer(right))
                     return Replace3With1(instructions, index, right);
-                if (IsIntegerSuffix(suffix) && IsZero(leftValue))
+                if (IsIntegerSuffix(suffix) && IsZero(leftValue) && IsSingleValueProducer(right))
                     return Replace3With1(instructions, index, new Instruction(UOpCode.Push, [GetTypedZero(suffix)]));
             }
 
@@ -165,7 +165,7 @@ public class ArithmeticOptimizerModule : IAirOptimizer
             {
                 if (IsOne(rightValue) && IsSingleValueProducer(left))
                     return Replace3With1(instructions, index, left);
-                if (IsIntegerSuffix(suffix) && IsZero(rightValue))
+                if (IsIntegerSuffix(suffix) && IsZero(rightValue) && IsSingleValueProducer(left))
                     return Replace3With1(instructions, index, new Instruction(UOpCode.Push, [GetTypedZero(suffix)]));
             }
         }
@@ -236,7 +236,9 @@ public class ArithmeticOptimizerModule : IAirOptimizer
             return true;
 
         return BuiltinIntrinsicInstruction.Is(instruction, BuiltinIntrinsicSymbols.Storage.LoadLocal) ||
-               BuiltinIntrinsicInstruction.Is(instruction, BuiltinIntrinsicSymbols.Storage.LoadLocalRef);
+               BuiltinIntrinsicInstruction.Is(instruction, BuiltinIntrinsicSymbols.Storage.LoadLocalRef) ||
+               BuiltinIntrinsicInstruction.Is(instruction, BuiltinIntrinsicSymbols.Core.LoadConst) ||
+               BuiltinIntrinsicInstruction.Is(instruction, BuiltinIntrinsicSymbols.Core.LoadExternal);
     }
 
     private static bool Replace3With1(List<Instruction> instructions, int index, Instruction replacement)
@@ -297,7 +299,7 @@ public class ArithmeticOptimizerModule : IAirOptimizer
 
     private static object GetTypedZero(string suffix) => suffix switch
     {
-        "i32" => 0,
+        "i32" => (object)0,
         "i64" => 0L,
         _ => 0
     };

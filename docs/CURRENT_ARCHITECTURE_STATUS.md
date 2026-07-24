@@ -75,7 +75,7 @@ The repository includes non-packable PlanFuzz Phase 0–1 tooling for configurat
 - test-only Acme seeded faults kept separate from current Wist findings;
 - a configuration-complete `UniversalToolchain/PlanFuzz.sln` built by canonical repository entrypoints.
 
-This tooling is not part of the public Wist package and does not establish publication claims. The preserved regression-inclusive Wist pilot records reproducible behaviors tracked in #302, #303 and #307, but its normalized finding classes are not treated as proven root causes or clean discovery yield. Lifecycle, negative-surface and reducer stages remain incomplete.
+This tooling is not part of the public Wist package and does not establish publication claims. The preserved regression-inclusive Wist pilot records the historical behaviors tracked in #302, #303 and #307, while the current source state fixes and regression-protects those behaviors at the arithmetic-optimizer and SSA-verifier owner boundaries. The pilot's normalized finding classes remain historical triage groups rather than clean discovery yield. Lifecycle, negative-surface and reducer stages remain incomplete.
 
 ## Experimental or incomplete
 

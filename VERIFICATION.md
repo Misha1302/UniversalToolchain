@@ -2,7 +2,7 @@
 
 ## Environment
 
-- Validation date: 2026-07-24.
+- Validation date: 2026-07-25.
 - Target environment: GitHub Actions Ubuntu 24.04, Linux x64.
 - SDK policy: `UniversalToolchain/global.json` with .NET 10 feature-band roll-forward.
 - Canonical command: `./build.sh --skip-docs`.
@@ -41,7 +41,7 @@ Command:
 ./build.sh --skip-docs
 ```
 
-Observed result on the PlanFuzz evidence-hardening revision:
+Observed result on the PlanFuzz regression-repair revision:
 
 - both `UniversalToolchain/Wist.sln` and the configuration-complete `UniversalToolchain/PlanFuzz.sln` restored and built;
 - build warnings: **0**;
@@ -57,13 +57,13 @@ Build servers and MSBuild node reuse are explicitly disabled by the canonical sc
 
 | Test project | Passed | Failed | Skipped |
 |---|---:|---:|---:|
-| `Tests` | 482 | 0 | 0 |
-| `UniversalToolchain.Modules.Tests` | 288 | 0 | 0 |
+| `Tests` | 483 | 0 | 0 |
+| `UniversalToolchain.Modules.Tests` | 290 | 0 | 0 |
 | `UniversalToolchain.Dialects.Tests` | 588 | 0 | 0 |
 | `UniversalToolchain.LanguageSdk.Tests` | 53 | 0 | 0 |
-| `UniversalToolchain.PlanFuzz.Tests` | 23 | 0 | 0 |
+| `UniversalToolchain.PlanFuzz.Tests` | 26 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 6 | 0 | 0 |
-| **Total** | **1,440** | **0** | **0** |
+| **Total** | **1,446** | **0** | **0** |
 
 The PlanFuzz suites include dedicated coverage for:
 
@@ -76,7 +76,10 @@ The PlanFuzz suites include dedicated coverage for:
 - Wist Level 0 backend/configuration fail-closed validation;
 - default discovery generation remaining separate from the opt-in Wist regression corpus;
 - Acme rejecting a Wist-only regression-corpus option;
-- seeded-fault detection without counting the seeded implementation as a product defect.
+- seeded-fault detection without counting the seeded implementation as a product defect;
+- `0 * x` preserving backend parity without consuming part of the external-load sequence;
+- `(0 * 1) - 1` preserving the `System.Int32` contract;
+- `x + (-2)` retaining the external-load descriptor and completing the required SSA route.
 
 The language-SDK suite continues to cover cross-package route execution, exact package-manifest binding, pass ordering, feature/capability isolation, executor selection, lifecycle ownership, disposal, strict artifact compatibility and schema-v5 canonicalization.
 
@@ -129,9 +132,9 @@ Verified:
 - strict evidence-completeness semantics;
 - opt-in regression corpus;
 - separate exact and class fingerprints;
-- reproducible current behaviors tracked by #302, #303 and #307.
+- owner-layer fixes and direct regressions for the historical behaviors tracked by #302, #303 and #307.
 
-The preserved 25-case Wist pilot included the regression corpus. Its 21 violating cases and two normalized classes are not presented as clean discovery yield or as a root-cause count.
+The preserved 25-case Wist pilot included the regression corpus. Its 21 violating cases and two normalized classes are retained as historical evidence and are not presented as clean discovery yield or as a root-cause count. Post-fix discovery-only and regression-inclusive smokes each completed three cases with three fresh-process attempts per case and reported only clean outcomes.
 
 Not yet claimed:
 

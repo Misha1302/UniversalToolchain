@@ -148,7 +148,7 @@ public sealed class SsaToAirConverter : IIrConverter
         var ssaVerifier = managedDescriptors.Count == 0
             ? _ssaVerifier
             : new StructuralSsaVerifier(
-                SsaCoreDescriptors.ConstantMaterialization,
+                SsaCoreDescriptors.CoreOperations,
                 semanticDescriptors);
         var ssaVerification = ssaVerifier.Verify(input, context);
         if (!ssaVerification.IsSuccess)

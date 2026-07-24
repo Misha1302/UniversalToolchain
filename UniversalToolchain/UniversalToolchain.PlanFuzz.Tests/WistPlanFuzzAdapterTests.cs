@@ -52,6 +52,51 @@ public sealed class WistPlanFuzzAdapterTests
     }
 
     [Test]
+    public void ConstantLeftMultiplicationWithParameterPreservesBackendParity()
+    {
+        AssertSuccessfulParity(
+            WistIntExpression.Multiply(WistIntExpression.Constant(0), WistIntExpression.Parameter()),
+            7,
+            "0");
+    }
+
+    [Test]
+    public void FoldedZeroMultiplicationBeforeSubtractionPreservesInt32()
+    {
+        AssertSuccessfulParity(
+            WistIntExpression.Subtract(
+                WistIntExpression.Multiply(WistIntExpression.Constant(0), WistIntExpression.Constant(1)),
+                WistIntExpression.Constant(1)),
+            0,
+            "-1");
+    }
+
+    [Test]
+    public void NegativeLiteralWithExternalParameterPreservesSsaRoute()
+    {
+        var adapter = new WistPlanFuzzAdapter();
+        var model = new WistIntProgramModel(
+            WistIntExpression.Add(WistIntExpression.Parameter(), WistIntExpression.Constant(-2)),
+            2,
+            "test");
+        var testCase = adapter.CreateCase(1, 104, 104, model);
+
+        var observations = testCase.Variants.Select(variant => adapter.Execute(testCase, variant)).ToArray();
+        var results = new PlanFuzzOracleEngine().Evaluate(testCase, observations);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(observations, Has.All.Property(nameof(PlanFuzzObservation.Outcome)).EqualTo(PlanFuzzExecutionOutcome.Success));
+            Assert.That(observations.Select(static observation => observation.Value?.CanonicalValue), Has.All.EqualTo("0"));
+            Assert.That(results, Has.All.Property(nameof(PlanFuzzOracleResult.Status)).EqualTo(PlanFuzzOracleStatus.Passed));
+            Assert.That(observations.Where(static observation => observation.VariantId.StartsWith("compiler.ssa-", StringComparison.Ordinal))
+                .Select(static observation => observation.Route?.UsedRoute), Has.All.True);
+            Assert.That(observations.Where(static observation => observation.VariantId.StartsWith("compiler.ssa-", StringComparison.Ordinal))
+                .Select(static observation => observation.Route?.Diagnostics.Count), Has.All.EqualTo(0));
+        });
+    }
+
+    [Test]
     public void DiscoveryGenerationDoesNotInjectKnownRegressionsByDefault()
     {
         var adapter = new WistPlanFuzzAdapter();
@@ -205,4 +250,23 @@ public sealed class WistPlanFuzzAdapterTests
 
         Assert.That(result.Status, Is.EqualTo(PlanFuzzOracleStatus.Violated));
     }
+
+    private static void AssertSuccessfulParity(WistIntExpression expression, int parameterValue, string expectedValue)
+    {
+        var adapter = new WistPlanFuzzAdapter();
+        var model = new WistIntProgramModel(expression, parameterValue, "test");
+        var testCase = adapter.CreateCase(1, 105, 105, model);
+
+        var observations = testCase.Variants.Select(variant => adapter.Execute(testCase, variant)).ToArray();
+        var results = new PlanFuzzOracleEngine().Evaluate(testCase, observations);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(observations, Has.All.Property(nameof(PlanFuzzObservation.Outcome)).EqualTo(PlanFuzzExecutionOutcome.Success));
+            Assert.That(observations.Select(static observation => observation.Value?.TypeIdentity), Has.All.EqualTo("System.Int32"));
+            Assert.That(observations.Select(static observation => observation.Value?.CanonicalValue), Has.All.EqualTo(expectedValue));
+            Assert.That(results, Has.All.Property(nameof(PlanFuzzOracleResult.Status)).EqualTo(PlanFuzzOracleStatus.Passed));
+        });
+    }
+
 }
