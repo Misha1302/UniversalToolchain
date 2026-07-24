@@ -190,7 +190,7 @@ public static class PlanFuzzCommandHost
         if (includeRegressionCorpus &&
             !adapter.Descriptor.Capabilities.Contains("regression-corpus", StringComparer.Ordinal))
         {
-            Thrower.NotSupported(
+            Thrower.NotSupported<object>(
                 $"Adapter '{adapter.Descriptor.AdapterId}' does not expose a regression corpus.");
         }
     }
