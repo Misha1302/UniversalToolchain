@@ -1,36 +1,48 @@
 namespace UniversalToolchain.PlanFuzz.Adapter.Wist;
 
 /// <summary>
-/// Generates bounded deterministic restricted-arithmetic programs and retains a tiny curated regression prefix.
+/// Generates bounded deterministic restricted-arithmetic programs and exposes known regressions only by explicit opt-in.
 /// </summary>
 public sealed class WistIntProgramGenerator
 {
     private static readonly int[] InterestingValues = [-3, -2, -1, 0, 1, 2, 3];
 
-    public WistIntProgramModel Generate(PlanFuzzRandom random, long caseIndex)
+    public WistIntProgramModel Generate(
+        PlanFuzzRandom random,
+        long caseIndex,
+        bool includeRegressionCorpus)
     {
         random = random.ArgNotNull();
-        return caseIndex switch
+        if (includeRegressionCorpus && TryCreateRegressionCase(caseIndex, out var regression))
+            return regression;
+
+        return new WistIntProgramModel(
+            GenerateExpression(random.Fork("expression"), depth: 3, forceParameter: random.NextBoolean()),
+            InterestingValues[random.Fork("input").NextInt32(InterestingValues.Length)],
+            "generated");
+    }
+
+    private static bool TryCreateRegressionCase(long caseIndex, out WistIntProgramModel model)
+    {
+        model = caseIndex switch
         {
             0 => new WistIntProgramModel(
                 WistIntExpression.Multiply(WistIntExpression.Constant(0), WistIntExpression.Parameter()),
                 7,
-                "curated-regression:issue-302"),
+                "regression-corpus:issue-302"),
             1 => new WistIntProgramModel(
                 WistIntExpression.Subtract(
                     WistIntExpression.Multiply(WistIntExpression.Constant(0), WistIntExpression.Constant(1)),
                     WistIntExpression.Constant(1)),
                 0,
-                "curated-regression:issue-303"),
+                "regression-corpus:issue-303"),
             2 => new WistIntProgramModel(
                 WistIntExpression.Add(WistIntExpression.Parameter(), WistIntExpression.Constant(-2)),
                 2,
-                "curated-ssa-parameter-smoke"),
-            _ => new WistIntProgramModel(
-                GenerateExpression(random.Fork("expression"), depth: 3, forceParameter: random.NextBoolean()),
-                InterestingValues[random.Fork("input").NextInt32(InterestingValues.Length)],
-                "generated")
+                "regression-corpus:issue-307"),
+            _ => null!
         };
+        return model != null;
     }
 
     private static WistIntExpression GenerateExpression(
