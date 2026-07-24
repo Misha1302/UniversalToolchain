@@ -8,6 +8,7 @@ internal sealed record PlanFuzzCampaignSummary(
     int ConfirmedFindings,
     int DistinctFindingClasses,
     int FlakyCases,
+    int InconclusiveCases,
     int InfrastructureFailures,
     string AdapterId,
     string? SeededFaultId,
