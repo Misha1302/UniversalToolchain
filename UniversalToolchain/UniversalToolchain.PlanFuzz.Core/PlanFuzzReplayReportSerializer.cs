@@ -17,6 +17,7 @@ public static class PlanFuzzReplayReportSerializer
             writer.WriteBoolean("confirmedViolation", report.IsConfirmedViolation);
             writer.WriteBoolean("clean", report.IsClean);
             writer.WriteBoolean("flaky", report.IsFlaky);
+            writer.WriteBoolean("inconclusive", report.IsInconclusive);
             writer.WriteBoolean("infrastructureFailure", report.IsInfrastructureFailure);
             if (report.ConfirmedFingerprint != null)
                 writer.WriteString("confirmedFingerprint", report.ConfirmedFingerprint);
