@@ -1,23 +1,17 @@
-name: .NET CI Manifest Bootstrap
+name: .NET CI
 
 on:
+  push:
+    branches: [ "**" ]
   pull_request:
 
-permissions:
-  contents: write
-
 jobs:
-  build-test-and-refresh-manifest:
-    if: >-
-      github.event.pull_request.head.repo.full_name == github.repository &&
-      github.head_ref == 'research/planfuzz-phase1-wist'
+  build-test:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -34,10 +28,10 @@ jobs:
         shell: bash
         run: |
           set +e
-          ./build.sh --skip-docs > /tmp/canonical-build.log 2>&1
+          ./build.sh --skip-docs > "$RUNNER_TEMP/canonical-build.log" 2>&1
           status=$?
           echo "status=$status" >> "$GITHUB_OUTPUT"
-          tail -n 200 /tmp/canonical-build.log
+          tail -n 200 "$RUNNER_TEMP/canonical-build.log"
           exit 0
 
       - name: Upload canonical build log
@@ -45,7 +39,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: canonical-build-log
-          path: /tmp/canonical-build.log
+          path: ${{ runner.temp }}/canonical-build.log
           if-no-files-found: error
           retention-days: 3
 
@@ -53,7 +47,7 @@ jobs:
         shell: bash
         run: exit "${{ steps.canonical.outputs.status }}"
 
-      - name: Prepare final workflow and recursive manifest
+      - name: Generate recursive manifest candidate
         shell: bash
         run: |
           python3 - <<'PY'
@@ -61,133 +55,34 @@ jobs:
           from pathlib import Path
           import subprocess
 
-          final_workflow = r'''name: .NET CI
-
-          on:
-            push:
-              branches: [ "**" ]
-            pull_request:
-
-          permissions:
-            contents: read
-
-          jobs:
-            build-test:
-              runs-on: ubuntu-latest
-
-              steps:
-                - name: Checkout
-                  uses: actions/checkout@v4
-
-                - name: Setup .NET
-                  uses: actions/setup-dotnet@v4
-                  with:
-                    global-json-file: UniversalToolchain/global.json
-
-                - name: Setup Node.js
-                  uses: actions/setup-node@v4
-                  with:
-                    node-version: "22"
-
-                - name: Run canonical entrypoint
-                  id: canonical
-                  shell: bash
-                  run: |
-                    set +e
-                    ./build.sh --skip-docs > /tmp/canonical-build.log 2>&1
-                    status=$?
-                    echo "status=$status" >> "$GITHUB_OUTPUT"
-                    tail -n 200 /tmp/canonical-build.log
-                    exit 0
-
-                - name: Upload canonical build log
-                  if: always()
-                  uses: actions/upload-artifact@v4
-                  with:
-                    name: canonical-build-log
-                    path: /tmp/canonical-build.log
-                    if-no-files-found: error
-                    retention-days: 3
-
-                - name: Enforce canonical entrypoint result
-                  shell: bash
-                  run: exit "__STATUS_EXPRESSION__"
-
-                - name: Generate recursive manifest candidate
-                  shell: bash
-                  run: |
-                    python3 - <<'PY_INNER'
-                    from hashlib import sha256
-                    from pathlib import Path
-                    import subprocess
-
-                    paths = subprocess.check_output(["git", "ls-files", "-z"]).split(b"\0")
-                    with Path("/tmp/MANIFEST.sha256").open("w", encoding="utf-8", newline="\n") as output:
-                        for raw_path in sorted(path for path in paths if path and path != b"MANIFEST.sha256"):
-                            path = raw_path.decode("utf-8")
-                            digest = sha256(Path(path).read_bytes()).hexdigest()
-                            output.write(f"{digest}  ./{path}\n")
-                    PY_INNER
-
-                - name: Upload recursive manifest candidate
-                  uses: actions/upload-artifact@v4
-                  with:
-                    name: recursive-manifest-candidate
-                    path: /tmp/MANIFEST.sha256
-                    if-no-files-found: error
-                    retention-days: 3
-
-                - name: Verify recursive manifest
-                  run: cmp MANIFEST.sha256 /tmp/MANIFEST.sha256
-
-                - name: Canonical package matrix and consumer smokes
-                  run: echo "Validated by build.sh through eng/package-projects.txt"
-
-                - name: Install docs dependencies
-                  run: npm ci --no-audit --no-fund
-
-                - name: Validate and build docs
-                  run: npm run docs:status && npm run docs:links && npm run docs:build
-
-                - name: Markdown bash smoke checks
-                  shell: bash
-                  run: python3 .github/scripts/run-markdown-bash-blocks.py
-          '''
-          final_workflow = final_workflow.replace("__STATUS_EXPRESSION__", "${" + "{ steps.canonical.outputs.status }}")
-          final_workflow = "\n".join(line[10:] if line.startswith("          ") else line for line in final_workflow.splitlines()) + "\n"
-          final_path = Path("/tmp/dotnet-ci.final.yml")
-          final_path.write_text(final_workflow, encoding="utf-8", newline="\n")
-
           paths = subprocess.check_output(["git", "ls-files", "-z"]).split(b"\0")
-          manifest_path = Path("/tmp/MANIFEST.sha256")
-          with manifest_path.open("w", encoding="utf-8", newline="\n") as output:
+          with Path("${{ runner.temp }}/MANIFEST.sha256").open("w", encoding="utf-8", newline="\n") as output:
               for raw_path in sorted(path for path in paths if path and path != b"MANIFEST.sha256"):
                   path = raw_path.decode("utf-8")
-                  data = final_path.read_bytes() if path == ".github/workflows/dotnet-ci.yml" else Path(path).read_bytes()
-                  output.write(f"{sha256(data).hexdigest()}  ./{path}\n")
+                  digest = sha256(Path(path).read_bytes()).hexdigest()
+                  output.write(f"{digest}  ./{path}\n")
           PY
 
       - name: Upload recursive manifest candidate
         uses: actions/upload-artifact@v4
         with:
           name: recursive-manifest-candidate
-          path: /tmp/MANIFEST.sha256
+          path: ${{ runner.temp }}/MANIFEST.sha256
           if-no-files-found: error
           retention-days: 3
 
-      - name: Commit final workflow and manifest
+      - name: Verify recursive manifest
+        run: cmp MANIFEST.sha256 "$RUNNER_TEMP/MANIFEST.sha256"
+
+      - name: Canonical package matrix and consumer smokes
+        run: echo "Validated by build.sh through eng/package-projects.txt"
+
+      - name: Install docs dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Validate and build docs
+        run: npm run docs:status && npm run docs:links && npm run docs:build
+
+      - name: Markdown bash smoke checks
         shell: bash
-        env:
-          HEAD_BRANCH: ${{ github.head_ref }}
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin "$HEAD_BRANCH"
-          git checkout -B "$HEAD_BRANCH" "origin/$HEAD_BRANCH"
-          cp /tmp/dotnet-ci.final.yml .github/workflows/dotnet-ci.yml
-          cp /tmp/MANIFEST.sha256 MANIFEST.sha256
-          git add .github/workflows/dotnet-ci.yml MANIFEST.sha256
-          git diff --cached --check
-          git commit -m "chore: refresh recursive manifest"
-          git push origin "HEAD:$HEAD_BRANCH"
+        run: python3 .github/scripts/run-markdown-bash-blocks.py
