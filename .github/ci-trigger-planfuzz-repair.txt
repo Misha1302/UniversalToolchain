@@ -1,0 +1,1 @@
+Temporary CI trigger for PR #308. This file is removed in the next commit.
