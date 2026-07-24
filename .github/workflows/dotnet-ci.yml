@@ -23,14 +23,29 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Restore, build, and test through canonical entrypoint
+      - name: Run canonical entrypoint
+        id: canonical
         shell: bash
         run: |
           set +e
           ./build.sh --skip-docs > "$RUNNER_TEMP/canonical-build.log" 2>&1
           status=$?
+          echo "status=$status" >> "$GITHUB_OUTPUT"
           tail -n 200 "$RUNNER_TEMP/canonical-build.log"
-          exit "$status"
+          exit 0
+
+      - name: Upload canonical build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: canonical-build-log
+          path: ${{ runner.temp }}/canonical-build.log
+          if-no-files-found: error
+          retention-days: 3
+
+      - name: Enforce canonical entrypoint result
+        shell: bash
+        run: exit "${{ steps.canonical.outputs.status }}"
 
       - name: Canonical package matrix and consumer smokes
         run: echo "Validated by build.sh through eng/package-projects.txt"
