@@ -41,6 +41,11 @@ public sealed class WistIntExpression
     {
         if (string.IsNullOrWhiteSpace(name))
             return Thrower.Argument<WistIntExpression>(nameof(name), "Parameter name must not be empty.");
+        if (!StringComparer.Ordinal.Equals(name, "x"))
+        {
+            return Thrower.NotSupported<WistIntExpression>(
+                $"Wist PlanFuzz Level 0 supports only the external Int32 parameter 'x', not '{name}'.");
+        }
         return new WistIntExpression(WistIntExpressionKind.Parameter, null, name, null, null);
     }
 
