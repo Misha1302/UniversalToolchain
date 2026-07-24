@@ -1,13 +1,14 @@
-# PlanFuzz research proposal
+# PlanFuzz
 
-**Status:** Phase 0 (Acme) and Phase 1 (Wist restricted Int32 plus SSA route/fallback evidence) are implemented on stacked research branches; lifecycle, negative-surface and reduction stages remain proposals.
-**Repository baseline:** `master@7f2b5819f712d03c39270349b6b39e914b79e008`.
+**Status:** Phase 0–1 is implemented and merged into `master` by #306 (`8f299906a822ff7c536b7079ae9df7422a485a78`). Lifecycle, negative-surface, reduction and controlled-baseline stages remain open research work.
+
 **Specification:** [Russian implementation and experiment specification](technical-specification.ru.md).
-**Implementation evidence:** [Phase 0–1 status and Wist pilot](implementation-status.md).
+
+**Implementation evidence:** [Phase 0–1 status and preserved Wist pilot](implementation-status.md).
 
 ## Purpose
 
-PlanFuzz is the next research layer for UniversalToolchain after the external language-authoring SDK. The SDK makes language packages, artifact routes, backend executors, component lifetimes and canonical plans explicit. PlanFuzz uses those contracts as a test space rather than treating a compiler testcase as source text alone.
+PlanFuzz is the configuration-aware testing layer built on top of the external language-authoring SDK. The SDK makes language packages, artifact routes, backend executors, component lifetimes and canonical plans explicit. PlanFuzz uses those contracts as a test space rather than treating a compiler testcase as source text alone.
 
 A testcase is modeled as:
 
@@ -21,22 +22,25 @@ program
 
 The central hypothesis is that configuration-aware differential and metamorphic testing can find defects at the intersections of language features, package contributions, artifact routes, backends, fallback policies and runtime lifecycles that program-only fuzzing and handwritten tests miss under a comparable execution budget.
 
-## Implemented slices
+## Merged implementation
+
+The integrated baseline provides:
 
 ```text
-Acme structured generator
-+ registry-order mutation
-+ interpreter/compiled variants
-+ typed decimal observations
-+ backend-parity oracle
-+ plan-determinism oracle
-+ canonical-lock oracle
+language-neutral deterministic core
++ Acme structured generator
++ Wist restricted-Int32 generator
++ registry-order and backend/SSA variants
++ typed decimal and Int32 observations
++ backend, route, plan, fallback and canonical-lock oracles
 + fresh worker process per testcase attempt
-+ deterministic replay and recursive artifact manifest
-+ one seeded wrong-arithmetic fault
++ deterministic strict replay and campaign artifacts
++ exact fingerprints separated from triage classes
++ opt-in known-regression corpus
++ one test-owned Acme wrong-arithmetic fault
 ```
 
-The implemented evidence path is:
+The evidence path is:
 
 ```text
 generate
@@ -48,7 +52,7 @@ generate
 -> replayable artifact with SHA-256 manifest
 ```
 
-The second implemented slice adds a structured Wist restricted-`Int32` adapter, interpreter/compiler and SSA `Disabled`/`Prefer`/`Require` variants, `O-002` route parity, `O-006` controlled fallback, route observations and separate exact/class fingerprints. Negative-surface checks, lifecycle schedules and testcase reduction remain gated follow-up work.
+Confirmed, clean, flaky, inconclusive and infrastructure outcomes remain separate. Known Wist cases for #302, #303 and #307 are available only through explicit regression-corpus opt-in and do not count as fresh rediscoveries.
 
 ## Required architecture boundaries
 
@@ -56,25 +60,30 @@ The second implemented slice adds a structured Wist restricted-`Int32` adapter, 
 2. Program generation and reduction use adapter-owned structured models.
 3. Existing runtime planning and executor-selection contracts remain authoritative.
 4. Unsupported behavior is classified explicitly and never normalized into silent success.
-5. Findings are confirmed out of process before they are counted as defects.
+5. Findings are confirmed out of process with complete oracle evidence before they are counted.
 6. Seeded faults, real defects, flaky outcomes, infrastructure failures and inconclusive cases remain separate.
 7. Research instrumentation must not expand the public Wist package surface without an independent non-Wist use case and compatibility review.
 
 ## Remaining implementation stages
 
-1. Worker-timeout and order-dependent-plan seeded faults.
-2. Lifecycle and negative-surface traces.
+1. Negative-surface and extension-noninterference oracles.
+2. Lifecycle/session/concurrency schedules.
 3. Multidimensional reducer and stable finding corpus.
-4. Equal-budget baselines, ablations and publication evidence.
-5. Third adapter and clean-machine artifact replay.
+4. Equal-budget baselines and ablations.
+5. Third adapter and clean-machine publication-scale replay.
 
 ## Research boundary
 
-Seeded faults validate the tool but do not count as discovered compiler defects. A publication claim requires confirmed previously unknown defects, minimized testcases, root-cause analysis, regression tests and raw reproducible evidence.
+The preserved Wist pilot included known regression cases. Its violating-case count is not clean discovery yield, and normalized finding classes are not unique-defect or root-cause identities.
+
+Seeded faults validate the tool but do not count as discovered compiler defects. Publication claims require confirmed previously unknown defects, minimized testcases, root-cause analysis, regression tests and raw reproducible evidence.
 
 Related current documentation:
 
+- [Current architecture status](../../../docs/CURRENT_ARCHITECTURE_STATUS.md)
+- [Current verification](../../../docs/evidence/current-verification.md)
 - [External language-authoring SDK](../../../docs/architecture/external-language-authoring-sdk.md)
 - [Language-authoring workflow](../../../docs/language-authoring/index.md)
 - [Callable-first SSA route](../../../docs/architecture/callable-first-ssa.md)
-- [Current architecture status](../../../docs/CURRENT_ARCHITECTURE_STATUS.md)
+
+Further stages are tracked in #298.
