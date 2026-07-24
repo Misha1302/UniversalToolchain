@@ -20,6 +20,8 @@ public static class PlanFuzzReplayReportSerializer
             writer.WriteBoolean("infrastructureFailure", report.IsInfrastructureFailure);
             if (report.ConfirmedFingerprint != null)
                 writer.WriteString("confirmedFingerprint", report.ConfirmedFingerprint);
+            if (report.ConfirmedClassFingerprint != null)
+                writer.WriteString("confirmedClassFingerprint", report.ConfirmedClassFingerprint);
             writer.WritePropertyName("attempts");
             writer.WriteStartArray();
             foreach (var attempt in report.Attempts)
@@ -27,6 +29,7 @@ public static class PlanFuzzReplayReportSerializer
                 writer.WriteStartObject();
                 writer.WriteNumber("attemptNumber", attempt.AttemptNumber);
                 writer.WriteString("fingerprint", attempt.Fingerprint);
+                writer.WriteString("classFingerprint", attempt.ClassFingerprint);
                 writer.WriteBoolean("hasViolation", attempt.HasViolation);
                 writer.WriteBoolean("hasInfrastructureFailure", attempt.HasInfrastructureFailure);
                 writer.WritePropertyName("oracleResults");
@@ -40,6 +43,7 @@ public static class PlanFuzzReplayReportSerializer
                     writer.WriteString("status", result.Status.ToString());
                     writer.WriteString("summary", result.Summary);
                     writer.WriteString("fingerprintMaterial", result.FingerprintMaterial);
+                    writer.WriteString("classFingerprintMaterial", result.EffectiveClassFingerprintMaterial);
                     writer.WriteEndObject();
                 }
                 writer.WriteEndArray();

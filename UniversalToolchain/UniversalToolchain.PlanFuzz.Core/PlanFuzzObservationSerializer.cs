@@ -18,38 +18,10 @@ public static class PlanFuzzObservationSerializer
             writer.WriteString("variantId", observation.VariantId);
             writer.WriteString("backendId", observation.BackendId);
             writer.WriteString("outcome", observation.Outcome.ToString());
-            if (observation.Value != null)
-            {
-                writer.WritePropertyName("value");
-                writer.WriteStartObject();
-                writer.WriteString("typeIdentity", observation.Value.TypeIdentity);
-                writer.WriteString("canonicalValue", observation.Value.CanonicalValue);
-                writer.WriteEndObject();
-            }
-            if (observation.Failure != null)
-            {
-                writer.WritePropertyName("failure");
-                writer.WriteStartObject();
-                writer.WriteString("failureType", observation.Failure.FailureType);
-                writer.WriteString("stage", observation.Failure.Stage);
-                writer.WriteString("category", observation.Failure.Category);
-                if (observation.Failure.Message != null)
-                    writer.WriteString("message", observation.Failure.Message);
-                writer.WriteEndObject();
-            }
-            if (observation.Plan != null)
-            {
-                writer.WritePropertyName("plan");
-                writer.WriteStartObject();
-                writer.WriteString("planHash", observation.Plan.PlanHash);
-                writer.WriteString("canonicalLockSha256", observation.Plan.CanonicalLockSha256);
-                writer.WriteString("repeatedCanonicalLockSha256", observation.Plan.RepeatedCanonicalLockSha256);
-                writer.WriteString("canonicalLockSemanticSha256", observation.Plan.CanonicalLockSemanticSha256);
-                writer.WriteString("prettyLockSemanticSha256", observation.Plan.PrettyLockSemanticSha256);
-                writer.WriteNumber("lockSchemaVersion", observation.Plan.LockSchemaVersion);
-                writer.WriteString("lockCanonicalization", observation.Plan.LockCanonicalization);
-                writer.WriteEndObject();
-            }
+            WriteValue(writer, observation.Value);
+            WriteFailure(writer, observation.Failure);
+            WritePlan(writer, observation.Plan);
+            WriteRoute(writer, observation.Route);
             writer.WriteEndObject();
         }
         return Encoding.UTF8.GetString(stream.ToArray()).Replace("\r\n", "\n", StringComparison.Ordinal) + "\n";
@@ -61,42 +33,16 @@ public static class PlanFuzzObservationSerializer
         using var document = JsonDocument.Parse(json);
         var root = document.RootElement;
         var schemaVersion = root.GetProperty("schemaVersion").GetInt32();
-        if (schemaVersion != PlanFuzzConstants.ObservationSchemaVersion)
+        if (schemaVersion is not 1 and not PlanFuzzConstants.ObservationSchemaVersion)
             return Thrower.NotSupported<PlanFuzzObservation>($"Unsupported observation schema version '{schemaVersion}'.");
         var canonicalization = root.GetProperty("canonicalization").GetString();
         if (!StringComparer.Ordinal.Equals(canonicalization, PlanFuzzConstants.Canonicalization))
             return Thrower.NotSupported<PlanFuzzObservation>($"Unsupported observation canonicalization '{canonicalization}'.");
 
-        PlanFuzzValueSnapshot? value = null;
-        if (root.TryGetProperty("value", out var valueElement))
-        {
-            value = new PlanFuzzValueSnapshot(
-                valueElement.GetProperty("typeIdentity").GetString().NotNull(),
-                valueElement.GetProperty("canonicalValue").GetString().NotNull());
-        }
-
-        PlanFuzzFailureSnapshot? failure = null;
-        if (root.TryGetProperty("failure", out var failureElement))
-        {
-            failure = new PlanFuzzFailureSnapshot(
-                failureElement.GetProperty("failureType").GetString().NotNull(),
-                failureElement.GetProperty("stage").GetString().NotNull(),
-                failureElement.GetProperty("category").GetString().NotNull(),
-                failureElement.TryGetProperty("message", out var message) ? message.GetString() : null);
-        }
-
-        PlanFuzzPlanSnapshot? plan = null;
-        if (root.TryGetProperty("plan", out var planElement))
-        {
-            plan = new PlanFuzzPlanSnapshot(
-                planElement.GetProperty("planHash").GetString().NotNull(),
-                planElement.GetProperty("canonicalLockSha256").GetString().NotNull(),
-                planElement.GetProperty("repeatedCanonicalLockSha256").GetString().NotNull(),
-                planElement.GetProperty("canonicalLockSemanticSha256").GetString().NotNull(),
-                planElement.GetProperty("prettyLockSemanticSha256").GetString().NotNull(),
-                planElement.GetProperty("lockSchemaVersion").GetInt32(),
-                planElement.GetProperty("lockCanonicalization").GetString().NotNull());
-        }
+        var value = ReadValue(root);
+        var failure = ReadFailure(root);
+        var plan = ReadPlan(root);
+        var route = schemaVersion >= 2 ? ReadRoute(root) : null;
 
         return new PlanFuzzObservation(
             root.GetProperty("caseId").GetString().NotNull(),
@@ -105,6 +51,136 @@ public static class PlanFuzzObservationSerializer
             Enum.Parse<PlanFuzzExecutionOutcome>(root.GetProperty("outcome").GetString().NotNull(), ignoreCase: false),
             value,
             failure,
-            plan);
+            plan,
+            route);
+    }
+
+    private static void WriteValue(Utf8JsonWriter writer, PlanFuzzValueSnapshot? value)
+    {
+        if (value == null)
+            return;
+        writer.WritePropertyName("value");
+        writer.WriteStartObject();
+        writer.WriteString("typeIdentity", value.TypeIdentity);
+        writer.WriteString("canonicalValue", value.CanonicalValue);
+        writer.WriteEndObject();
+    }
+
+    private static void WriteFailure(Utf8JsonWriter writer, PlanFuzzFailureSnapshot? failure)
+    {
+        if (failure == null)
+            return;
+        writer.WritePropertyName("failure");
+        writer.WriteStartObject();
+        writer.WriteString("failureType", failure.FailureType);
+        writer.WriteString("stage", failure.Stage);
+        writer.WriteString("category", failure.Category);
+        if (failure.Message != null)
+            writer.WriteString("message", failure.Message);
+        writer.WriteEndObject();
+    }
+
+    private static void WritePlan(Utf8JsonWriter writer, PlanFuzzPlanSnapshot? plan)
+    {
+        if (plan == null)
+            return;
+        writer.WritePropertyName("plan");
+        writer.WriteStartObject();
+        writer.WriteString("planHash", plan.PlanHash);
+        writer.WriteString("canonicalLockSha256", plan.CanonicalLockSha256);
+        writer.WriteString("repeatedCanonicalLockSha256", plan.RepeatedCanonicalLockSha256);
+        writer.WriteString("canonicalLockSemanticSha256", plan.CanonicalLockSemanticSha256);
+        writer.WriteString("prettyLockSemanticSha256", plan.PrettyLockSemanticSha256);
+        writer.WriteNumber("lockSchemaVersion", plan.LockSchemaVersion);
+        writer.WriteString("lockCanonicalization", plan.LockCanonicalization);
+        writer.WriteEndObject();
+    }
+
+    private static void WriteRoute(Utf8JsonWriter writer, PlanFuzzRouteSnapshot? route)
+    {
+        if (route == null)
+            return;
+        writer.WritePropertyName("route");
+        writer.WriteStartObject();
+        writer.WriteString("routeId", route.RouteId);
+        writer.WriteString("requestedPolicy", route.RequestedPolicy);
+        writer.WriteBoolean("usedRoute", route.UsedRoute);
+        writer.WriteBoolean("fellBack", route.FellBack);
+        writer.WriteString("fallbackKind", route.FallbackKind.ToString());
+        if (route.Profile != null)
+            writer.WriteString("profile", route.Profile);
+        writer.WriteNumber("inputInstructionCount", route.InputInstructionCount);
+        writer.WriteNumber("outputInstructionCount", route.OutputInstructionCount);
+        writer.WritePropertyName("executedPasses");
+        writer.WriteStartArray();
+        foreach (var pass in route.ExecutedPasses)
+            writer.WriteStringValue(pass);
+        writer.WriteEndArray();
+        writer.WritePropertyName("diagnostics");
+        writer.WriteStartArray();
+        foreach (var diagnostic in route.Diagnostics)
+        {
+            writer.WriteStartObject();
+            writer.WriteString("code", diagnostic.Code);
+            if (diagnostic.Stage != null)
+                writer.WriteString("stage", diagnostic.Stage);
+            writer.WriteEndObject();
+        }
+        writer.WriteEndArray();
+        writer.WriteEndObject();
+    }
+
+    private static PlanFuzzValueSnapshot? ReadValue(JsonElement root)
+    {
+        if (!root.TryGetProperty("value", out var element))
+            return null;
+        return new PlanFuzzValueSnapshot(
+            element.GetProperty("typeIdentity").GetString().NotNull(),
+            element.GetProperty("canonicalValue").GetString().NotNull());
+    }
+
+    private static PlanFuzzFailureSnapshot? ReadFailure(JsonElement root)
+    {
+        if (!root.TryGetProperty("failure", out var element))
+            return null;
+        return new PlanFuzzFailureSnapshot(
+            element.GetProperty("failureType").GetString().NotNull(),
+            element.GetProperty("stage").GetString().NotNull(),
+            element.GetProperty("category").GetString().NotNull(),
+            element.TryGetProperty("message", out var message) ? message.GetString() : null);
+    }
+
+    private static PlanFuzzPlanSnapshot? ReadPlan(JsonElement root)
+    {
+        if (!root.TryGetProperty("plan", out var element))
+            return null;
+        return new PlanFuzzPlanSnapshot(
+            element.GetProperty("planHash").GetString().NotNull(),
+            element.GetProperty("canonicalLockSha256").GetString().NotNull(),
+            element.GetProperty("repeatedCanonicalLockSha256").GetString().NotNull(),
+            element.GetProperty("canonicalLockSemanticSha256").GetString().NotNull(),
+            element.GetProperty("prettyLockSemanticSha256").GetString().NotNull(),
+            element.GetProperty("lockSchemaVersion").GetInt32(),
+            element.GetProperty("lockCanonicalization").GetString().NotNull());
+    }
+
+    private static PlanFuzzRouteSnapshot? ReadRoute(JsonElement root)
+    {
+        if (!root.TryGetProperty("route", out var element))
+            return null;
+        return new PlanFuzzRouteSnapshot(
+            element.GetProperty("routeId").GetString().NotNull(),
+            element.GetProperty("requestedPolicy").GetString().NotNull(),
+            element.GetProperty("usedRoute").GetBoolean(),
+            element.GetProperty("fellBack").GetBoolean(),
+            Enum.Parse<PlanFuzzFallbackKind>(element.GetProperty("fallbackKind").GetString().NotNull(), ignoreCase: false),
+            element.TryGetProperty("profile", out var profile) ? profile.GetString() : null,
+            element.GetProperty("inputInstructionCount").GetInt32(),
+            element.GetProperty("outputInstructionCount").GetInt32(),
+            element.GetProperty("executedPasses").EnumerateArray().Select(static value => value.GetString().NotNull()).ToArray(),
+            element.GetProperty("diagnostics").EnumerateArray().Select(static diagnostic =>
+                new PlanFuzzRouteDiagnosticSnapshot(
+                    diagnostic.GetProperty("code").GetString().NotNull(),
+                    diagnostic.TryGetProperty("stage", out var stage) ? stage.GetString() : null)).ToArray());
     }
 }

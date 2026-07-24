@@ -21,7 +21,7 @@ public sealed class SsaAndLegacyDocumentationGuardrailTests
     [Test]
     public void CompatibilityBoundary_DocumentsOnlyExplicitUndeclaredModuleObservation()
     {
-        var debt = File.ReadAllText(FindRepositoryFile("docs", "technical-debt.md"));
+        var debt = File.ReadAllText(FindRepositoryFile("internal-docs", "policies-and-reports", "technical-debt.md"));
 
         Assert.Multiple(() =>
         {

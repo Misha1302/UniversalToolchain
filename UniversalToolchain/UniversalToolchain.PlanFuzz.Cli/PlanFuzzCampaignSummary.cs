@@ -6,6 +6,7 @@ internal sealed record PlanFuzzCampaignSummary(
     int CompletedCases,
     int CleanCases,
     int ConfirmedFindings,
+    int DistinctFindingFingerprints,
     int FlakyCases,
     int InfrastructureFailures,
     string AdapterId,

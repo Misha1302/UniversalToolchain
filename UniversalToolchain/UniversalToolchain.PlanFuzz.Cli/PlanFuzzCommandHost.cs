@@ -108,6 +108,8 @@ public static class PlanFuzzCommandHost
         Console.WriteLine($"infrastructureFailure: {report.IsInfrastructureFailure}");
         if (report.ConfirmedFingerprint != null)
             Console.WriteLine($"fingerprint: {report.ConfirmedFingerprint}");
+        if (report.ConfirmedClassFingerprint != null)
+            Console.WriteLine($"classFingerprint: {report.ConfirmedClassFingerprint}");
         if (report.IsInfrastructureFailure)
             return PlanFuzzExitCodes.InfrastructureFailure;
         return report.IsConfirmedViolation ? PlanFuzzExitCodes.Finding : PlanFuzzExitCodes.Success;
@@ -167,7 +169,9 @@ public static class PlanFuzzCommandHost
     }
 
     private static PlanFuzzAdapterRegistry CreateRegistry() =>
-        new PlanFuzzAdapterRegistry().Add(new AcmePlanFuzzAdapter());
+        new PlanFuzzAdapterRegistry()
+            .Add(new AcmePlanFuzzAdapter())
+            .Add(new WistPlanFuzzAdapter());
 
     private static IPlanFuzzLanguageAdapter ResolveAdapter(string adapterId) =>
         CreateRegistry().GetRequired(adapterId);
@@ -185,10 +189,10 @@ public static class PlanFuzzCommandHost
         Console.WriteLine();
         Console.WriteLine("Commands:");
         Console.WriteLine("  list-adapters");
-        Console.WriteLine("  generate --adapter acme --seed 1 --index 0 --out case.json [--fault SF-001-wrong-backend-arithmetic]");
+        Console.WriteLine("  generate --adapter acme-pricing|wist-restricted-int32 --seed 1 --index 0 --out case.json [--fault <id>]");
         Console.WriteLine("  inspect --case case.json");
         Console.WriteLine("  replay --case case.json --output artifacts/replay --repeat 3 --timeout-seconds 30");
-        Console.WriteLine("  campaign --adapter acme --seed 1 --cases 100 --output artifacts/campaign [--repeat 3]");
+        Console.WriteLine("  campaign --adapter acme-pricing|wist-restricted-int32 --seed 1 --cases 100 --output artifacts/campaign [--repeat 3]");
         Console.WriteLine("  worker execute-case --case case.json --observations observations.json");
     }
 }

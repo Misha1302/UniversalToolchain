@@ -31,7 +31,8 @@ public sealed class BackendParityOracle : IPlanFuzzOracle
                     context,
                     PlanFuzzOracleStatus.Violated,
                     "A valid deterministic testcase failed on both backends.",
-                    $"unexpected-shared-failure:{Describe(first)}|{Describe(second)}");
+                    $"unexpected-shared-failure:{Describe(first)}|{Describe(second)}",
+                    $"unexpected-shared-failure:{DescribeClass(first)}|{DescribeClass(second)}");
             }
 
             return Result(context, PlanFuzzOracleStatus.Passed, "Backend observations are semantically equivalent.", "equal");
@@ -41,7 +42,8 @@ public sealed class BackendParityOracle : IPlanFuzzOracle
             context,
             PlanFuzzOracleStatus.Violated,
             $"Backend parity mismatch between '{first.VariantId}' and '{second.VariantId}'.",
-            $"{Describe(first)}|{Describe(second)}");
+            $"{Describe(first)}|{Describe(second)}",
+            $"{DescribeClass(first)}|{DescribeClass(second)}");
     }
 
     private static bool TryGetPair(
@@ -59,10 +61,23 @@ public sealed class BackendParityOracle : IPlanFuzzOracle
             ? $"{observation.BackendId}:success:{observation.Value?.TypeIdentity}:{observation.Value?.CanonicalValue}"
             : $"{observation.BackendId}:{observation.Outcome}:{observation.Failure?.FailureType}:{observation.Failure?.Stage}:{observation.Failure?.Category}";
 
+    private static string DescribeClass(PlanFuzzObservation observation) =>
+        observation.Outcome == PlanFuzzExecutionOutcome.Success
+            ? $"{observation.BackendId}:success:{observation.Value?.TypeIdentity}"
+            : $"{observation.BackendId}:{observation.Outcome}:{observation.Failure?.FailureType}:{observation.Failure?.Stage}:{observation.Failure?.Category}";
+
     private PlanFuzzOracleResult Result(
         PlanFuzzOracleContext context,
         PlanFuzzOracleStatus status,
         string summary,
-        string fingerprintMaterial) =>
-        new(context.Contract.ContractId, OracleId, OracleVersion, status, summary, fingerprintMaterial);
+        string fingerprintMaterial,
+        string? classFingerprintMaterial = null) =>
+        new(
+            context.Contract.ContractId,
+            OracleId,
+            OracleVersion,
+            status,
+            summary,
+            fingerprintMaterial,
+            classFingerprintMaterial);
 }

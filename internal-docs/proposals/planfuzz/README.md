@@ -1,9 +1,9 @@
 # PlanFuzz research proposal
 
-**Status:** Phase 0 and the first Acme vertical slice are implemented on the research branch; Wist, SSA, lifecycle and reduction stages remain proposals.  
-**Repository baseline:** `master@7f2b5819f712d03c39270349b6b39e914b79e008`.  
-**Specification:** [Russian implementation and experiment specification](technical-specification.ru.md).  
-**Implementation evidence:** [Phase 0 and Acme status](implementation-status.md).
+**Status:** Phase 0 (Acme) and Phase 1 (Wist restricted Int32 plus SSA route/fallback evidence) are implemented on stacked research branches; lifecycle, negative-surface and reduction stages remain proposals.
+**Repository baseline:** `master@7f2b5819f712d03c39270349b6b39e914b79e008`.
+**Specification:** [Russian implementation and experiment specification](technical-specification.ru.md).
+**Implementation evidence:** [Phase 0–1 status and Wist pilot](implementation-status.md).
 
 ## Purpose
 
@@ -21,7 +21,7 @@ program
 
 The central hypothesis is that configuration-aware differential and metamorphic testing can find defects at the intersections of language features, package contributions, artifact routes, backends, fallback policies and runtime lifecycles that program-only fuzzing and handwritten tests miss under a comparable execution budget.
 
-## Implemented first slice
+## Implemented slices
 
 ```text
 Acme structured generator
@@ -48,7 +48,7 @@ generate
 -> replayable artifact with SHA-256 manifest
 ```
 
-Wist, SSA-route variation, negative-surface checks, lifecycle schedules and testcase reduction are introduced only after this slice remains deterministic under bounded campaigns and CI.
+The second implemented slice adds a structured Wist restricted-`Int32` adapter, interpreter/compiler and SSA `Disabled`/`Prefer`/`Require` variants, `O-002` route parity, `O-006` controlled fallback, route observations and separate exact/class fingerprints. Negative-surface checks, lifecycle schedules and testcase reduction remain gated follow-up work.
 
 ## Required architecture boundaries
 
@@ -62,13 +62,11 @@ Wist, SSA-route variation, negative-surface checks, lifecycle schedules and test
 
 ## Remaining implementation stages
 
-1. Bounded Acme campaign evidence and worker-timeout fault injection.
-2. Wist restricted-arithmetic interpreter/CIL matrix.
-3. Applicable `AIR -> SSA -> AIR` policy variation and controlled-fallback oracle.
-4. Lifecycle and negative-surface traces.
-5. Multidimensional reducer and stable finding corpus.
-6. Equal-budget baselines, ablations and publication evidence.
-7. Third adapter and clean-machine artifact replay.
+1. Worker-timeout and order-dependent-plan seeded faults.
+2. Lifecycle and negative-surface traces.
+3. Multidimensional reducer and stable finding corpus.
+4. Equal-budget baselines, ablations and publication evidence.
+5. Third adapter and clean-machine artifact replay.
 
 ## Research boundary
 

@@ -38,7 +38,8 @@ public sealed class CanonicalLockConsistencyOracle : IPlanFuzzOracle
                     context,
                     PlanFuzzOracleStatus.Violated,
                     $"Canonical lock consistency failed for variant '{observation.VariantId}'.",
-                    $"{observation.VariantId}:{plan.CanonicalLockSha256}:{plan.RepeatedCanonicalLockSha256}:{plan.CanonicalLockSemanticSha256}:{plan.PrettyLockSemanticSha256}:{plan.LockSchemaVersion}:{plan.LockCanonicalization}");
+                    $"{observation.VariantId}:{plan.CanonicalLockSha256}:{plan.RepeatedCanonicalLockSha256}:{plan.CanonicalLockSemanticSha256}:{plan.PrettyLockSemanticSha256}:{plan.LockSchemaVersion}:{plan.LockCanonicalization}",
+                    $"canonical-lock-consistency:{observation.VariantId}");
             }
         }
 
@@ -49,6 +50,7 @@ public sealed class CanonicalLockConsistencyOracle : IPlanFuzzOracle
         PlanFuzzOracleContext context,
         PlanFuzzOracleStatus status,
         string summary,
-        string fingerprintMaterial) =>
-        new(context.Contract.ContractId, OracleId, OracleVersion, status, summary, fingerprintMaterial);
+        string fingerprintMaterial,
+        string? classFingerprintMaterial = null) =>
+        new(context.Contract.ContractId, OracleId, OracleVersion, status, summary, fingerprintMaterial, classFingerprintMaterial);
 }

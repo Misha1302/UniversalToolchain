@@ -59,17 +59,21 @@ Bytecode and AIR remain separate semantic boundaries. Wist runtime selection goe
 
 ## Experimental PlanFuzz research tooling
 
-The repository includes a non-packable PlanFuzz Phase 0 and Acme vertical slice for configuration-aware differential testing. The implemented experimental surface contains:
+The repository's stacked research branches include non-packable PlanFuzz Phase 0–1 tooling for configuration-aware differential testing:
 
 - a language-neutral deterministic testcase, observation and oracle core;
-- an independent Acme pricing-language adapter with interpreter and compiled execution;
-- equivalent registry-order plan variants;
-- backend-parity, plan-determinism and canonical-lock consistency oracles;
-- fresh-process testcase execution, bounded timeout handling, replay and recursive artifact manifests;
-- a test-only wrong-arithmetic seeded fault used to verify detection and stable confirmation;
-- a bounded `UniversalToolchain/PlanFuzz.sln` built by both canonical repository entrypoints alongside the main solution.
+- independent Acme and Wist adapters with adapter-owned structured generators;
+- Acme interpreter/compiled and registry-order variants;
+- Wist interpreter/compiler plus SSA `Disabled`, `Prefer` and `Require` variants;
+- backend-parity, optimization-route-parity, plan-determinism, controlled-fallback and canonical-lock oracles;
+- typed decimal and `Int32` observations;
+- Wist route/fallback evidence without Wist-specific diagnostic ownership in the generic core;
+- fresh-process execution, bounded timeout/output handling, replay and recursive artifact manifests;
+- exact replay fingerprints separated from coarser campaign-triage class fingerprints;
+- test-only Acme seeded faults kept separate from current Wist findings;
+- a configuration-complete `UniversalToolchain/PlanFuzz.sln` built by canonical repository entrypoints.
 
-This tooling is not part of the public Wist package, does not establish publication claims and has not yet been extended to Wist or SSA routes. Seeded faults are validation fixtures rather than discovered project defects.
+This tooling is not part of the public Wist package and does not establish publication claims. The Wist pilot exposed reproducible current defects tracked in #302, #303 and #307, but normalized finding classes are not treated as proven root causes. Lifecycle, negative-surface and reducer stages remain incomplete.
 
 ## Experimental or incomplete
 

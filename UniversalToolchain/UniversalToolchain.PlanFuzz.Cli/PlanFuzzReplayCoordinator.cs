@@ -99,6 +99,7 @@ internal sealed class PlanFuzzReplayCoordinator
                 writer.WriteString("status", result.Status.ToString());
                 writer.WriteString("summary", result.Summary);
                 writer.WriteString("fingerprintMaterial", result.FingerprintMaterial);
+                writer.WriteString("classFingerprintMaterial", result.EffectiveClassFingerprintMaterial);
                 writer.WriteEndObject();
             }
             writer.WriteEndArray();

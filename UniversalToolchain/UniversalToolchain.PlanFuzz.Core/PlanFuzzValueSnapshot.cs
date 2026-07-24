@@ -5,6 +5,9 @@ namespace UniversalToolchain.PlanFuzz;
 /// </summary>
 public sealed record PlanFuzzValueSnapshot(string TypeIdentity, string CanonicalValue)
 {
+    public static PlanFuzzValueSnapshot FromInt32(int value) =>
+        new(typeof(int).FullName.NotNull(), value.ToString(CultureInfo.InvariantCulture));
+
     public static PlanFuzzValueSnapshot FromDecimal(decimal value) =>
         new(typeof(decimal).FullName.NotNull(), value.ToString("G29", CultureInfo.InvariantCulture));
 

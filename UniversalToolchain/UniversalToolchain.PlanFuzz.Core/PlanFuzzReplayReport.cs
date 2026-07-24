@@ -23,6 +23,7 @@ public sealed class PlanFuzzReplayReport
         IsInfrastructureFailure = snapshot.Any(static attempt => attempt.HasInfrastructureFailure);
         IsFlaky = !IsConfirmedViolation && !IsClean && !IsInfrastructureFailure;
         ConfirmedFingerprint = IsConfirmedViolation ? snapshot[0].Fingerprint : null;
+        ConfirmedClassFingerprint = IsConfirmedViolation ? snapshot[0].ClassFingerprint : null;
     }
 
     public string CaseId { get; }
@@ -32,4 +33,5 @@ public sealed class PlanFuzzReplayReport
     public bool IsFlaky { get; }
     public bool IsInfrastructureFailure { get; }
     public string? ConfirmedFingerprint { get; }
+    public string? ConfirmedClassFingerprint { get; }
 }

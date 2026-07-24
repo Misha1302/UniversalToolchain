@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-07-24",
+  "adapter": {
+    "id": "wist-restricted-int32",
+    "version": "0.1.0",
+    "language": "UniversalToolchain.Wist.RestrictedArithmetic"
+  },
+  "campaign": {
+    "seed": 20260724,
+    "caseCount": 25,
+    "freshProcessAttemptsPerCase": 3,
+    "cleanCases": 4,
+    "confirmedViolatingCases": 21,
+    "distinctNormalizedFindingClasses": 2,
+    "flakyCases": 0,
+    "infrastructureFailures": 0,
+    "rawCampaignManifestSha256": "357a40c63dfe6696cec3cbb8d1b4c84cea3bd9a0cf647194cd11c2087d35c62d",
+    "reclassifiedSummarySha256": "ae432202c5c1da13cda1523a0bc550b800f26a478b1e02ea06b8957a55662dc8"
+  },
+  "findingClasses": [
+    {
+      "fingerprint": "bb233469745ba18fd24fe496005dc033e3e4917cdde2a37b01df9e462c9253b4",
+      "caseCount": 11,
+      "observedShape": "interpreter success versus compiler failure, combined with unclassified air.stack.invalid SSA-route evidence",
+      "relatedIssues": [
+        302,
+        303
+      ]
+    },
+    {
+      "fingerprint": "9076590930c54e482e22f69ab2bd799e1cc171ff0f4a755db1123410bdcdbee0",
+      "caseCount": 10,
+      "observedShape": "SSA Prefer fallback and SSA Require failure caused by ssa.operation.descriptor.missing",
+      "relatedIssues": [
+        307
+      ]
+    }
+  ],
+  "curatedReplays": [
+    {
+      "issue": 302,
+      "source": "(0 * x)",
+      "caseId": "69666eb5898abbd85c5a6e96a691766c4dd64907894ff786d9dcea215beae948",
+      "exactFingerprint": "87fa502e1fcf962edb4925ace8b10fee887cf7d4634fa60edc936f58db00a132",
+      "classFingerprint": "bb233469745ba18fd24fe496005dc033e3e4917cdde2a37b01df9e462c9253b4",
+      "freshProcessConfirmation": "3/3"
+    },
+    {
+      "issue": 303,
+      "source": "((0 * 1) - 1)",
+      "caseId": "c155a13d4be167846d21acd2b5691ef692b11bd1eed494601226e6934bae181d",
+      "exactFingerprint": "843bae30fc137fa6db72406153ac8bff4148cf2aa2caf095ee37c57f3f73e3eb",
+      "classFingerprint": "bb233469745ba18fd24fe496005dc033e3e4917cdde2a37b01df9e462c9253b4",
+      "freshProcessConfirmation": "3/3"
+    },
+    {
+      "issue": 307,
+      "source": "(x + (-2))",
+      "caseId": "8984b86905d9e84f1966aa5667c1317d9f66db1e22c70aa98d1d6553130df87d",
+      "exactFingerprint": "0018ed6927220a30a045f833e9049ad19dd2449db03597c0048c8bf95d0e6d0b",
+      "classFingerprint": "9076590930c54e482e22f69ab2bd799e1cc171ff0f4a755db1123410bdcdbee0",
+      "freshProcessConfirmation": "3/3"
+    }
+  ],
+  "interpretation": {
+    "confirmedViolatingCaseIsNotUniqueDefect": true,
+    "normalizedClassIsNotProvenRootCause": true,
+    "seededFaultsCountedAsRealDefects": false,
+    "publicationClaimEstablished": false
+  }
+}

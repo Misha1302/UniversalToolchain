@@ -34,7 +34,8 @@ public sealed class PlanDeterminismOracle : IPlanFuzzOracle
                 context,
                 PlanFuzzOracleStatus.Violated,
                 $"Equivalent variants '{first.VariantId}' and '{second.VariantId}' produced different plan identities.",
-                $"{first.Plan.PlanHash}:{first.Plan.CanonicalLockSha256}|{second.Plan.PlanHash}:{second.Plan.CanonicalLockSha256}");
+                $"{first.Plan.PlanHash}:{first.Plan.CanonicalLockSha256}|{second.Plan.PlanHash}:{second.Plan.CanonicalLockSha256}",
+                "plan-identity-mismatch");
         }
 
         if (!PlanFuzzObservationComparer.AreSemanticallyEquivalent(first, second))
@@ -43,7 +44,8 @@ public sealed class PlanDeterminismOracle : IPlanFuzzOracle
                 context,
                 PlanFuzzOracleStatus.Violated,
                 $"Equivalent plan variants '{first.VariantId}' and '{second.VariantId}' produced different behavior.",
-                $"behavior:{first.Outcome}:{first.Value?.CanonicalValue}|{second.Outcome}:{second.Value?.CanonicalValue}");
+                $"behavior:{first.Outcome}:{first.Value?.CanonicalValue}|{second.Outcome}:{second.Value?.CanonicalValue}",
+                $"behavior:{first.Outcome}:{first.Value?.TypeIdentity}|{second.Outcome}:{second.Value?.TypeIdentity}");
         }
 
         return Result(context, PlanFuzzOracleStatus.Passed, "Equivalent variants produced the same plan identity and behavior.", "equal");
@@ -53,6 +55,7 @@ public sealed class PlanDeterminismOracle : IPlanFuzzOracle
         PlanFuzzOracleContext context,
         PlanFuzzOracleStatus status,
         string summary,
-        string fingerprintMaterial) =>
-        new(context.Contract.ContractId, OracleId, OracleVersion, status, summary, fingerprintMaterial);
+        string fingerprintMaterial,
+        string? classFingerprintMaterial = null) =>
+        new(context.Contract.ContractId, OracleId, OracleVersion, status, summary, fingerprintMaterial, classFingerprintMaterial);
 }

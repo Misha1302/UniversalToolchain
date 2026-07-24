@@ -15,6 +15,7 @@
   <ItemGroup>
     <ProjectReference Include="..\UniversalToolchain.PlanFuzz.Core\UniversalToolchain.PlanFuzz.Core.csproj" />
     <ProjectReference Include="..\UniversalToolchain.PlanFuzz.Adapter.Acme\UniversalToolchain.PlanFuzz.Adapter.Acme.csproj" />
+    <ProjectReference Include="..\UniversalToolchain.PlanFuzz.Adapter.Wist\UniversalToolchain.PlanFuzz.Adapter.Wist.csproj" />
   </ItemGroup>
   <ItemGroup><Using Include="NUnit.Framework" /></ItemGroup>
 </Project>

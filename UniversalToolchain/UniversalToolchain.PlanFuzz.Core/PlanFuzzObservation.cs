@@ -12,7 +12,8 @@ public sealed class PlanFuzzObservation
         PlanFuzzExecutionOutcome outcome,
         PlanFuzzValueSnapshot? value,
         PlanFuzzFailureSnapshot? failure,
-        PlanFuzzPlanSnapshot? plan)
+        PlanFuzzPlanSnapshot? plan,
+        PlanFuzzRouteSnapshot? route = null)
     {
         if (string.IsNullOrWhiteSpace(caseId))
             Thrower.Argument(nameof(caseId), "Case ID must not be empty.");
@@ -32,6 +33,7 @@ public sealed class PlanFuzzObservation
         Value = value;
         Failure = failure;
         Plan = plan;
+        Route = route;
     }
 
     public string CaseId { get; }
@@ -41,6 +43,7 @@ public sealed class PlanFuzzObservation
     public PlanFuzzValueSnapshot? Value { get; }
     public PlanFuzzFailureSnapshot? Failure { get; }
     public PlanFuzzPlanSnapshot? Plan { get; }
+    public PlanFuzzRouteSnapshot? Route { get; }
 
     public static PlanFuzzObservation Timeout(string caseId, PlanFuzzPlanVariant variant, string message) =>
         new(

@@ -8,3 +8,4 @@ global using System.Text.Json;
 global using ExceptionsManager;
 global using UniversalToolchain.PlanFuzz;
 global using UniversalToolchain.PlanFuzz.Adapter.Acme;
+global using UniversalToolchain.PlanFuzz.Adapter.Wist;

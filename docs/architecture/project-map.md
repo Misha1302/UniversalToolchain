@@ -30,11 +30,12 @@ This page maps conceptual architecture to the repository. It is a navigation aid
 |---|---|---|---|
 | deterministic PlanFuzz contracts | `UniversalToolchain.PlanFuzz.Core` | `PlanFuzzTestCase`, `PlanFuzzObservation`, adapter and oracle contracts, replay records | `UniversalToolchain.PlanFuzz.Tests` |
 | independent Acme adapter | `UniversalToolchain.PlanFuzz.Adapter.Acme` | structured generator, plan variants and typed decimal executor | unit and strict-process replay tests |
+| Wist Level 0 adapter | `UniversalToolchain.PlanFuzz.Adapter.Wist` | restricted `Int32` model, interpreter/compiler matrix, SSA policy mapping and route evidence | direct oracle tests and clean fresh-process parameter replay |
 | coordinator and worker CLI | `UniversalToolchain.PlanFuzz.Cli` | generation, isolated workers, replay, campaign and artifact manifest | `UniversalToolchain.PlanFuzz.IntegrationTests` |
 
 These projects are non-packable experimental research tooling. They do not extend the public Wist package surface.
 
-They are grouped in `UniversalToolchain/PlanFuzz.sln`; `build.sh` and `build.ps1` build this bounded solution alongside `Wist.sln` before executing `eng/test-projects.txt`.
+They are grouped in `UniversalToolchain/PlanFuzz.sln`; `build.sh` and `build.ps1` build this configuration-complete research solution alongside `Wist.sln` before executing `eng/test-projects.txt`.
 
 ## Wist compiler/runtime stack
 

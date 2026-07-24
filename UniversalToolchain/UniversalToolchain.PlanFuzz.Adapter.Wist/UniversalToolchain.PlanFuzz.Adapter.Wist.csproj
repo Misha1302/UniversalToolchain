@@ -1,18 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>14</LangVersion>
     <IsPackable>false</IsPackable>
-    <AssemblyName>planfuzz</AssemblyName>
-    <Description>Deterministic strict-process coordinator and worker CLI for PlanFuzz research campaigns.</Description>
+    <Description>PlanFuzz adapter for the documented Wist restricted Int32 arithmetic subset.</Description>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj" />
     <ProjectReference Include="..\UniversalToolchain.PlanFuzz.Core\UniversalToolchain.PlanFuzz.Core.csproj" />
-    <ProjectReference Include="..\UniversalToolchain.PlanFuzz.Adapter.Acme\UniversalToolchain.PlanFuzz.Adapter.Acme.csproj" />
-    <ProjectReference Include="..\UniversalToolchain.PlanFuzz.Adapter.Wist\UniversalToolchain.PlanFuzz.Adapter.Wist.csproj" />
+    <ProjectReference Include="..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj" />
+    <ProjectReference Include="..\UniversalToolchain.Wist\UniversalToolchain.Wist.csproj" />
   </ItemGroup>
 </Project>

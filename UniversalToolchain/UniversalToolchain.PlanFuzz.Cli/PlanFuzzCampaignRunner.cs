@@ -28,6 +28,7 @@ internal sealed class PlanFuzzCampaignRunner
         var confirmed = 0;
         var flaky = 0;
         var infrastructure = 0;
+        var findingFingerprints = new HashSet<string>(StringComparer.Ordinal);
         for (var index = 0; index < caseCount; index++)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -45,7 +46,11 @@ internal sealed class PlanFuzzCampaignRunner
                 confirmationCount,
                 cancellationToken).ConfigureAwait(false);
             if (replay.IsConfirmedViolation)
+            {
                 confirmed++;
+                if (replay.ConfirmedClassFingerprint != null)
+                    findingFingerprints.Add(replay.ConfirmedClassFingerprint);
+            }
             else if (replay.IsClean)
                 clean++;
             else if (replay.IsInfrastructureFailure)
@@ -61,6 +66,7 @@ internal sealed class PlanFuzzCampaignRunner
             caseCount,
             clean,
             confirmed,
+            findingFingerprints.Count,
             flaky,
             infrastructure,
             _adapter.Descriptor.AdapterId,
@@ -86,13 +92,14 @@ internal sealed class PlanFuzzCampaignRunner
         using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true }))
         {
             writer.WriteStartObject();
-            writer.WriteNumber("schemaVersion", 1);
+            writer.WriteNumber("schemaVersion", 2);
             writer.WriteString("adapterId", summary.AdapterId);
             writer.WriteNumber("campaignSeed", summary.CampaignSeed);
             writer.WriteNumber("requestedCases", summary.RequestedCases);
             writer.WriteNumber("completedCases", summary.CompletedCases);
             writer.WriteNumber("cleanCases", summary.CleanCases);
             writer.WriteNumber("confirmedFindings", summary.ConfirmedFindings);
+            writer.WriteNumber("distinctFindingFingerprints", summary.DistinctFindingFingerprints);
             writer.WriteNumber("flakyCases", summary.FlakyCases);
             writer.WriteNumber("infrastructureFailures", summary.InfrastructureFailures);
             if (summary.SeededFaultId != null)

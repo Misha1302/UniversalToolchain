@@ -6,6 +6,8 @@ namespace UniversalToolchain.PlanFuzz;
 public static class PlanFuzzOracleIds
 {
     public const string BackendParity = "O-001-backend-parity";
+    public const string OptimizationRouteParity = "O-002-optimization-route-parity";
     public const string PlanDeterminism = "O-003-plan-determinism";
+    public const string ControlledFallback = "O-006-controlled-fallback";
     public const string CanonicalLockConsistency = "O-009-canonical-lock-consistency";
 }

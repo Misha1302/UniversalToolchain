@@ -55,7 +55,9 @@ public sealed class PlanFuzzOracleEngine
     private static IEnumerable<IPlanFuzzOracle> CreateDefaults() =>
     [
         new BackendParityOracle(),
+        new OptimizationRouteParityOracle(),
         new PlanDeterminismOracle(),
+        new ControlledFallbackOracle(),
         new CanonicalLockConsistencyOracle()
     ];
 }
