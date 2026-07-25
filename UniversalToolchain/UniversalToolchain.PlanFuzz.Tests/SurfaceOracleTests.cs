@@ -90,6 +90,10 @@ public sealed class SurfaceOracleTests
                 ["feature:core"], ["contribution:active", "contribution:active"], [], [], [], ["contribution:active"]));
             Assert.Throws<ArgumentException>(() => Surface(
                 ["feature:core"], ["contribution:active"], ["contribution:active"], [], [], ["contribution:active"]));
+            Assert.Throws<ArgumentException>(() => Surface(
+                ["feature:core"], ["contribution:active"], [], [], [], ["contribution:outside"]));
+            Assert.Throws<ArgumentException>(() => Surface(
+                ["feature:core"], [], [], [], [], []));
             Assert.Throws<ArgumentException>(() => new PlanFuzzSurfaceSnapshot(
                 99,
                 ["feature:core"],
@@ -228,6 +232,54 @@ public sealed class SurfaceOracleTests
             Assert.That(forward.Status, Is.EqualTo(PlanFuzzOracleStatus.Passed));
             Assert.That(reverse.Status, Is.EqualTo(PlanFuzzOracleStatus.Passed));
             Assert.That(reverse.FingerprintMaterial, Is.EqualTo(forward.FingerprintMaterial));
+        });
+    }
+
+    [TestCase(true, false)]
+    [TestCase(false, true)]
+    public void ExtensionNoninterferenceRejectsAdditionsMissingOneEvidenceDomain(
+        bool addSurface,
+        bool addOwner)
+    {
+        var baselineVariant = Variant("baseline");
+        var extendedVariant = Variant("extended", PlanFuzzVariantRole.EquivalentMutation);
+        var contract = new PlanFuzzOracleContract(
+            "extension",
+            PlanFuzzOracleIds.ExtensionNoninterference,
+            2,
+            [baselineVariant.VariantId, extendedVariant.VariantId]);
+        var testCase = CreateCase([baselineVariant, extendedVariant], [contract]);
+        var baseline = Observation(
+            testCase,
+            baselineVariant,
+            1,
+            Surface(["feature:core"], ["contribution:active"], [], [], [], ["contribution:active"]));
+        string[] extendedSurfaces = addSurface
+            ? ["feature:core", "feature:extension"]
+            : ["feature:core"];
+        string[] extendedOwners = addOwner
+            ? ["contribution:active", "contribution:extension"]
+            : ["contribution:active"];
+        string[] independentSurfaces = addSurface ? ["feature:extension"] : [];
+        string[] independentOwners = addOwner ? ["contribution:extension"] : [];
+        var extended = Observation(
+            testCase,
+            extendedVariant,
+            1,
+            Surface(
+                extendedSurfaces,
+                extendedOwners,
+                [],
+                independentSurfaces,
+                independentOwners,
+                ["contribution:active"]));
+
+        var result = new PlanFuzzOracleEngine().Evaluate(testCase, [baseline, extended]).Single();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Status, Is.EqualTo(PlanFuzzOracleStatus.InfrastructureFailure));
+            Assert.That(result.FingerprintMaterial, Is.EqualTo("invalid-or-ambiguous-delta"));
         });
     }
 
