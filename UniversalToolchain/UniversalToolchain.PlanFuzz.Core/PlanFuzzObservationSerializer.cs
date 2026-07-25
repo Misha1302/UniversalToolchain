@@ -8,11 +8,14 @@ public static class PlanFuzzObservationSerializer
     public static string Serialize(PlanFuzzObservation observation, bool indented = true)
     {
         observation = observation.ArgNotNull();
+        var schemaVersion = observation.Surface?.EvidenceContractVersion == 1
+            ? 3
+            : PlanFuzzConstants.ObservationSchemaVersion;
         using var stream = new MemoryStream();
         using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = indented }))
         {
             writer.WriteStartObject();
-            writer.WriteNumber("schemaVersion", PlanFuzzConstants.ObservationSchemaVersion);
+            writer.WriteNumber("schemaVersion", schemaVersion);
             writer.WriteString("canonicalization", PlanFuzzConstants.Canonicalization);
             writer.WriteString("caseId", observation.CaseId);
             writer.WriteString("variantId", observation.VariantId);
@@ -22,7 +25,7 @@ public static class PlanFuzzObservationSerializer
             WriteFailure(writer, observation.Failure);
             WritePlan(writer, observation.Plan);
             WriteRoute(writer, observation.Route);
-            WriteSurface(writer, observation.Surface);
+            WriteSurface(writer, observation.Surface, schemaVersion);
             writer.WriteEndObject();
         }
         return Encoding.UTF8.GetString(stream.ToArray()).Replace("\r\n", "\n", StringComparison.Ordinal) + "\n";
@@ -34,7 +37,7 @@ public static class PlanFuzzObservationSerializer
         using var document = JsonDocument.Parse(json);
         var root = document.RootElement;
         var schemaVersion = root.GetProperty("schemaVersion").GetInt32();
-        if (schemaVersion is not 1 and not 2 and not PlanFuzzConstants.ObservationSchemaVersion)
+        if (schemaVersion is not 1 and not 2 and not 3 and not PlanFuzzConstants.ObservationSchemaVersion)
             return Thrower.NotSupported<PlanFuzzObservation>($"Unsupported observation schema version '{schemaVersion}'.");
         var canonicalization = root.GetProperty("canonicalization").GetString();
         if (!StringComparer.Ordinal.Equals(canonicalization, PlanFuzzConstants.Canonicalization))
@@ -44,7 +47,7 @@ public static class PlanFuzzObservationSerializer
         var failure = ReadFailure(root);
         var plan = ReadPlan(root);
         var route = schemaVersion >= 2 ? ReadRoute(root) : null;
-        var surface = schemaVersion >= 3 ? ReadSurface(root) : null;
+        var surface = schemaVersion >= 3 ? ReadSurface(root, schemaVersion) : null;
 
         return new PlanFuzzObservation(
             root.GetProperty("caseId").GetString().NotNull(),
@@ -134,17 +137,36 @@ public static class PlanFuzzObservationSerializer
     }
 
 
-    private static void WriteSurface(Utf8JsonWriter writer, PlanFuzzSurfaceSnapshot? surface)
+    private static void WriteSurface(
+        Utf8JsonWriter writer,
+        PlanFuzzSurfaceSnapshot? surface,
+        int observationSchemaVersion)
     {
         if (surface == null)
             return;
         writer.WritePropertyName("surface");
         writer.WriteStartObject();
-        WriteStrings(writer, "selectedSurfaceIds", surface.SelectedSurfaceIds);
-        WriteStrings(writer, "excludedSurfaceIds", surface.ExcludedSurfaceIds);
-        WriteStrings(writer, "declaredIndependentSurfaceIds", surface.DeclaredIndependentSurfaceIds);
-        WriteStrings(writer, "activatedOwnerIds", surface.ActivatedOwnerIds);
-        writer.WriteBoolean("activationTraceComplete", surface.ActivationTraceComplete);
+        if (observationSchemaVersion == 3)
+        {
+            WriteStrings(writer, "selectedSurfaceIds", surface.SelectedSurfaceIds);
+            WriteStrings(writer, "excludedSurfaceIds", surface.ExcludedOwnerIds);
+            WriteStrings(writer, "declaredIndependentSurfaceIds", surface.DeclaredIndependentSurfaceIds);
+            WriteStrings(writer, "activatedOwnerIds", surface.ActivatedOwnerIds);
+            writer.WriteBoolean(
+                "activationTraceComplete",
+                surface.ActivationTraceStatus == PlanFuzzActivationTraceStatus.Complete);
+        }
+        else
+        {
+            writer.WriteNumber("evidenceContractVersion", surface.EvidenceContractVersion);
+            WriteStrings(writer, "selectedSurfaceIds", surface.SelectedSurfaceIds);
+            WriteStrings(writer, "selectedOwnerIds", surface.SelectedOwnerIds);
+            WriteStrings(writer, "excludedOwnerIds", surface.ExcludedOwnerIds);
+            WriteStrings(writer, "declaredIndependentSurfaceIds", surface.DeclaredIndependentSurfaceIds);
+            WriteStrings(writer, "declaredIndependentOwnerIds", surface.DeclaredIndependentOwnerIds);
+            WriteStrings(writer, "activatedOwnerIds", surface.ActivatedOwnerIds);
+            writer.WriteString("activationTraceStatus", surface.ActivationTraceStatus.ToString());
+        }
         writer.WriteString("traceKind", surface.TraceKind);
         writer.WriteString("routeIdentity", surface.RouteIdentity);
         writer.WriteEndObject();
@@ -212,16 +234,33 @@ public static class PlanFuzzObservationSerializer
                     diagnostic.GetProperty("code").GetString().NotNull(),
                     diagnostic.TryGetProperty("stage", out var stage) ? stage.GetString() : null)).ToArray());
     }
-    private static PlanFuzzSurfaceSnapshot? ReadSurface(JsonElement root)
+    private static PlanFuzzSurfaceSnapshot? ReadSurface(JsonElement root, int observationSchemaVersion)
     {
         if (!root.TryGetProperty("surface", out var element))
             return null;
+        if (observationSchemaVersion == 3)
+        {
+#pragma warning disable CS0618
+            return new PlanFuzzSurfaceSnapshot(
+                ReadStrings(element, "selectedSurfaceIds"),
+                ReadStrings(element, "excludedSurfaceIds"),
+                ReadStrings(element, "declaredIndependentSurfaceIds"),
+                ReadStrings(element, "activatedOwnerIds"),
+                element.GetProperty("activationTraceComplete").GetBoolean(),
+                element.GetProperty("traceKind").GetString().NotNull(),
+                element.GetProperty("routeIdentity").GetString().NotNull());
+#pragma warning restore CS0618
+        }
+
         return new PlanFuzzSurfaceSnapshot(
+            element.GetProperty("evidenceContractVersion").GetInt32(),
             ReadStrings(element, "selectedSurfaceIds"),
-            ReadStrings(element, "excludedSurfaceIds"),
+            ReadStrings(element, "selectedOwnerIds"),
+            ReadStrings(element, "excludedOwnerIds"),
             ReadStrings(element, "declaredIndependentSurfaceIds"),
+            ReadStrings(element, "declaredIndependentOwnerIds"),
             ReadStrings(element, "activatedOwnerIds"),
-            element.GetProperty("activationTraceComplete").GetBoolean(),
+            Enum.Parse<PlanFuzzActivationTraceStatus>(element.GetProperty("activationTraceStatus").GetString().NotNull(), ignoreCase: false),
             element.GetProperty("traceKind").GetString().NotNull(),
             element.GetProperty("routeIdentity").GetString().NotNull());
     }

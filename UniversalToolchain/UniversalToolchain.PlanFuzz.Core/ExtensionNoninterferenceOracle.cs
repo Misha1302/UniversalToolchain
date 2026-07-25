@@ -1,55 +1,85 @@
 namespace UniversalToolchain.PlanFuzz;
 
 /// <summary>
-/// Verifies that one explicitly declared independent, unused surface extension changes neither semantics nor selected execution route.
+/// Verifies that one explicitly declared independent, unused extension changes neither semantics nor selected execution route.
 /// </summary>
 public sealed class ExtensionNoninterferenceOracle : IPlanFuzzOracle
 {
     public string OracleId => PlanFuzzOracleIds.ExtensionNoninterference;
-    public int OracleVersion => 1;
+    public int OracleVersion => 2;
 
     public PlanFuzzOracleResult Evaluate(PlanFuzzOracleContext context)
     {
         context = context.ArgNotNull();
         if (context.Contract.VariantIds.Count != 2)
             return Result(context, PlanFuzzOracleStatus.NotApplicable, "Extension noninterference requires exactly two variants.", "invalid-arity");
-        if (!context.TryGetObservation(context.Contract.VariantIds[0], out var baseline) ||
-            !context.TryGetObservation(context.Contract.VariantIds[1], out var extended))
+
+        var observations = new List<PlanFuzzObservation>();
+        foreach (var variantId in context.Contract.VariantIds)
         {
-            return Result(context, PlanFuzzOracleStatus.InfrastructureFailure, "One or more required observations are missing.", "missing-observation");
+            if (!context.TryGetObservation(variantId, out var observation))
+                return Result(context, PlanFuzzOracleStatus.InfrastructureFailure, $"Observation '{variantId}' is missing.", $"missing-observation:{variantId}");
+            observations.Add(observation);
         }
 
-        var pair = new[] { baseline, extended };
+        var pair = observations.ToArray();
         if (PlanFuzzObservationComparer.HasInfrastructureFailure(pair))
             return Result(context, PlanFuzzOracleStatus.InfrastructureFailure, "Infrastructure failure prevents extension-noninterference evaluation.", "infrastructure");
         if (PlanFuzzObservationComparer.HasTimeout(pair))
             return Result(context, PlanFuzzOracleStatus.Inconclusive, "Worker timeout prevents extension-noninterference evaluation.", "timeout");
-        if (baseline.Surface == null || extended.Surface == null)
+        if (pair.Any(static observation => observation.Surface == null))
             return Result(context, PlanFuzzOracleStatus.Inconclusive, "One or more variants did not publish surface evidence.", "missing-surface");
-        if (!baseline.Surface.ActivationTraceComplete || !extended.Surface.ActivationTraceComplete)
+        if (pair.Any(static observation => observation.Surface!.EvidenceContractVersion != PlanFuzzSurfaceSnapshot.CurrentEvidenceContractVersion))
+            return Result(context, PlanFuzzOracleStatus.Inconclusive, "Extension noninterference requires the current surface evidence contract.", "legacy-evidence");
+        if (pair.Any(static observation => observation.Surface!.ActivationTraceStatus != PlanFuzzActivationTraceStatus.Complete))
             return Result(context, PlanFuzzOracleStatus.Inconclusive, "Extension noninterference requires complete activation traces.", "incomplete-trace");
-        if (!StringComparer.Ordinal.Equals(baseline.Surface.TraceKind, extended.Surface.TraceKind))
-            return Result(context, PlanFuzzOracleStatus.NotApplicable, "Surface traces use different evidence contracts.", "trace-kind-mismatch");
 
-        var removed = baseline.Surface.SelectedSurfaceIds
-            .Except(extended.Surface.SelectedSurfaceIds, StringComparer.Ordinal)
-            .OrderBy(static value => value, StringComparer.Ordinal)
-            .ToArray();
-        var added = extended.Surface.SelectedSurfaceIds
-            .Except(baseline.Surface.SelectedSurfaceIds, StringComparer.Ordinal)
-            .OrderBy(static value => value, StringComparer.Ordinal)
-            .ToArray();
-        if (removed.Length != 0 || added.Length == 0)
-            return Result(context, PlanFuzzOracleStatus.NotApplicable, "The compared variants are not a pure additive extension pair.", $"invalid-delta:removed={string.Join(',', removed)}:added={string.Join(',', added)}");
+        var first = observations[0];
+        var second = observations[1];
+        var firstToSecond = DescribeAdditiveDelta(first.Surface!, second.Surface!);
+        var secondToFirst = DescribeAdditiveDelta(second.Surface!, first.Surface!);
+        var directions = new[]
+        {
+            (Baseline: first, Extended: second, Delta: firstToSecond),
+            (Baseline: second, Extended: first, Delta: secondToFirst)
+        }.Where(static direction => direction.Delta.IsPureAdditive).ToArray();
 
-        var undeclared = added
+        if (directions.Length == 0)
+        {
+            if (firstToSecond.IsEqual && secondToFirst.IsEqual)
+                return Result(context, PlanFuzzOracleStatus.NotApplicable, "The compared variants contain no extension delta.", "no-delta");
+            return Result(context, PlanFuzzOracleStatus.InfrastructureFailure, "The O-005 contract does not describe one unambiguous pure additive extension pair.", "invalid-or-ambiguous-delta");
+        }
+        if (directions.Length != 1)
+            return Result(context, PlanFuzzOracleStatus.InfrastructureFailure, "The O-005 contract has an ambiguous extension direction.", "ambiguous-delta");
+
+        var direction = directions[0];
+        var baseline = direction.Baseline;
+        var extended = direction.Extended;
+        var addedSurfaces = direction.Delta.AddedSurfaces;
+        var addedOwners = direction.Delta.AddedOwners;
+
+        if (!StringComparer.Ordinal.Equals(baseline.Surface!.TraceKind, extended.Surface!.TraceKind))
+            return Result(context, PlanFuzzOracleStatus.Inconclusive, "Surface traces use different evidence contracts.", "trace-kind-mismatch");
+
+        var undeclaredSurfaces = addedSurfaces
             .Except(extended.Surface.DeclaredIndependentSurfaceIds, StringComparer.Ordinal)
             .OrderBy(static value => value, StringComparer.Ordinal)
             .ToArray();
-        if (undeclared.Length != 0)
-            return Result(context, PlanFuzzOracleStatus.NotApplicable, "The added surface is not fully declared independent.", $"undeclared:{string.Join(',', undeclared)}");
+        var undeclaredOwners = addedOwners
+            .Except(extended.Surface.DeclaredIndependentOwnerIds, StringComparer.Ordinal)
+            .OrderBy(static value => value, StringComparer.Ordinal)
+            .ToArray();
+        if (undeclaredSurfaces.Length != 0 || undeclaredOwners.Length != 0)
+        {
+            return Result(
+                context,
+                PlanFuzzOracleStatus.InfrastructureFailure,
+                "The additive extension is not fully declared independent in both surface and owner domains.",
+                $"undeclared-surfaces={string.Join(',', undeclaredSurfaces)}:undeclared-owners={string.Join(',', undeclaredOwners)}");
+        }
 
-        var activatedAdded = added
+        var activatedAdded = addedOwners
             .Intersect(extended.Surface.ActivatedOwnerIds, StringComparer.Ordinal)
             .OrderBy(static value => value, StringComparer.Ordinal)
             .ToArray();
@@ -97,6 +127,21 @@ public sealed class ExtensionNoninterferenceOracle : IPlanFuzzOracle
         return Result(context, PlanFuzzOracleStatus.Passed, "The declared unused extension preserves semantics, route and activation behavior.", "equal");
     }
 
+    private static AdditiveDelta DescribeAdditiveDelta(PlanFuzzSurfaceSnapshot baseline, PlanFuzzSurfaceSnapshot extended)
+    {
+        var removedSurfaces = baseline.SelectedSurfaceIds.Except(extended.SelectedSurfaceIds, StringComparer.Ordinal).ToArray();
+        var addedSurfaces = extended.SelectedSurfaceIds.Except(baseline.SelectedSurfaceIds, StringComparer.Ordinal)
+            .OrderBy(static value => value, StringComparer.Ordinal).ToArray();
+        var removedOwners = baseline.SelectedOwnerIds.Except(extended.SelectedOwnerIds, StringComparer.Ordinal).ToArray();
+        var addedOwners = extended.SelectedOwnerIds.Except(baseline.SelectedOwnerIds, StringComparer.Ordinal)
+            .OrderBy(static value => value, StringComparer.Ordinal).ToArray();
+        return new AdditiveDelta(
+            removedSurfaces.Length == 0 && removedOwners.Length == 0 && (addedSurfaces.Length != 0 || addedOwners.Length != 0),
+            removedSurfaces.Length == 0 && removedOwners.Length == 0 && addedSurfaces.Length == 0 && addedOwners.Length == 0,
+            addedSurfaces,
+            addedOwners);
+    }
+
     private static string Describe(PlanFuzzObservation observation) =>
         observation.Outcome == PlanFuzzExecutionOutcome.Success
             ? $"{observation.BackendId}:success:{observation.Value?.TypeIdentity}:{observation.Value?.CanonicalValue}"
@@ -114,4 +159,10 @@ public sealed class ExtensionNoninterferenceOracle : IPlanFuzzOracle
         string fingerprintMaterial,
         string? classFingerprintMaterial = null) =>
         new(context.Contract.ContractId, OracleId, OracleVersion, status, summary, fingerprintMaterial, classFingerprintMaterial);
+
+    private sealed record AdditiveDelta(
+        bool IsPureAdditive,
+        bool IsEqual,
+        string[] AddedSurfaces,
+        string[] AddedOwners);
 }

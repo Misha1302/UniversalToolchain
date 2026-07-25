@@ -1,6 +1,6 @@
 # PlanFuzz
 
-**Status:** Phase 0–1 is merged by #306, the three first Wist findings are repaired by #308, Phase 2 adds deterministic program/plan reduction, and Phase 3 adds explicit negative-surface and extension-noninterference evidence. Lifecycle, schedule reduction and controlled-baseline stages remain open research work.
+**Status:** Phase 0–1 is merged by #306, the three first Wist findings are repaired by #308, Phase 2 adds deterministic program/plan reduction, and Phase 3a hardens observed negative-surface and extension-noninterference evidence. The remaining Phase 3 lifecycle/schedule slice, schedule reduction and controlled-baseline stages remain open research work.
 
 **Specification:** [Russian implementation and experiment specification](technical-specification.ru.md).
 
@@ -40,7 +40,7 @@ language-neutral deterministic core
 + one test-owned Acme wrong-arithmetic fault
 + adapter-owned structured program reduction
 + generic plan-contract and unreferenced-variant reduction
-+ complete selected/excluded surface and activation-owner evidence
++ fail-closed schema-v4 selected-surface/owner and observed activation evidence
 + fresh-process exact-fingerprint acceptance
 ```
 
@@ -71,7 +71,7 @@ Confirmed, clean, flaky, inconclusive and infrastructure outcomes remain separat
 
 ## Remaining implementation stages
 
-1. Lifecycle/session/concurrency schedules and schedule-dimension reduction.
+1. Complete Phase 3 with lifecycle/session/concurrency schedules and schedule-dimension reduction.
 2. Remaining timeout/order/optimizer seeded faults.
 3. Remaining seeded faults and a stable minimized finding corpus.
 4. Equal-budget baselines and ablations.

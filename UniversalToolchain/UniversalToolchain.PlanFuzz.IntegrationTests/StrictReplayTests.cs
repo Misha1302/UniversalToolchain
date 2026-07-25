@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using UniversalToolchain.PlanFuzz.Adapter.Acme;
 using UniversalToolchain.PlanFuzz.Cli;
@@ -93,26 +94,61 @@ public sealed class StrictReplayTests
 
     [TestCase(AcmePlanFuzzConstants.ExcludedActivationFault)]
     [TestCase(AcmePlanFuzzConstants.ExtensionInterferenceFault)]
-    public async Task SurfaceSeededFaultIsConfirmedInFreshProcesses(string faultId)
+    public async Task SurfaceSeededFaultIsConfirmedThroughObservedRuntimeEvidence(string faultId)
     {
         var casePath = await GenerateCaseAsync(faultId);
         var output = Path.Combine(_temporaryDirectory, $"surface-fault-{faultId}");
         var exitCode = await PlanFuzzCommandHost.RunAsync(
         [
             "replay", "--case", casePath, "--output", output,
-            "--repeat", "2", "--timeout-seconds", "20"
+            "--repeat", "3", "--timeout-seconds", "20"
         ]);
         using var document = JsonDocument.Parse(File.ReadAllText(Path.Combine(output, "replay-report.json")));
         var attempts = document.RootElement.GetProperty("attempts").EnumerateArray().ToArray();
+        var observationName = StringComparer.Ordinal.Equals(faultId, AcmePlanFuzzConstants.ExcludedActivationFault)
+            ? "seeded-excluded-activation.interpreter.observation.json"
+            : "seeded-extension-interference.interpreter.observation.json";
+        var observations = Enumerable.Range(1, 3)
+            .Select(attempt => PlanFuzzObservationSerializer.Deserialize(File.ReadAllText(Path.Combine(
+                output,
+                "attempts",
+                attempt.ToString("D3", CultureInfo.InvariantCulture),
+                observationName))))
+            .ToArray();
+        var independentOwner = $"contribution:{AcmePlanFuzzConstants.IndependentContributionId}";
 
         Assert.Multiple(() =>
         {
             Assert.That(exitCode, Is.EqualTo(PlanFuzzExitCodes.Finding));
             Assert.That(document.RootElement.GetProperty("confirmedViolation").GetBoolean(), Is.True);
-            Assert.That(attempts, Has.Length.EqualTo(2));
+            Assert.That(attempts, Has.Length.EqualTo(3));
             Assert.That(attempts.Select(static attempt => attempt.GetProperty("fingerprint").GetString())
                 .Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1));
+            Assert.That(observations.Select(static observation => observation.Surface?.EvidenceContractVersion),
+                Is.All.EqualTo(PlanFuzzSurfaceSnapshot.CurrentEvidenceContractVersion));
+            Assert.That(observations.Select(static observation => observation.Surface?.ActivationTraceStatus),
+                Is.All.EqualTo(PlanFuzzActivationTraceStatus.Complete));
+            Assert.That(observations.Select(static observation => observation.Surface?.TraceKind),
+                Is.All.EqualTo("observed-language-route-runtime-v2"));
+            Assert.That(observations.Select(static observation => observation.Surface?.ActivatedOwnerIds),
+                Has.All.Contains(independentOwner));
         });
+
+        if (StringComparer.Ordinal.Equals(faultId, AcmePlanFuzzConstants.ExcludedActivationFault))
+        {
+            Assert.That(observations.Select(static observation => observation.Surface?.ExcludedOwnerIds),
+                Has.All.Contains(independentOwner));
+        }
+        else
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(observations.Select(static observation => observation.Surface?.DeclaredIndependentOwnerIds),
+                    Has.All.Contains(independentOwner));
+                Assert.That(observations.Select(static observation => observation.Value?.CanonicalValue)
+                    .Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1));
+            });
+        }
     }
 
     [Test]

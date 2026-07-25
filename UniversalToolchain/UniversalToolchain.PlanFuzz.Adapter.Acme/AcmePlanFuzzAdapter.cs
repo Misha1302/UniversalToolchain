@@ -103,17 +103,17 @@ public sealed class AcmePlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzPro
             new(
                 "negative-surface.baseline",
                 PlanFuzzOracleIds.NegativeSurfacePreservation,
-                1,
+                2,
                 ["baseline.interpreter", "baseline.compiled"]),
             new(
                 "extension-noninterference.interpreter",
                 PlanFuzzOracleIds.ExtensionNoninterference,
-                1,
+                2,
                 ["baseline.interpreter", "independent-extension.interpreter"]),
             new(
                 "extension-noninterference.compiled",
                 PlanFuzzOracleIds.ExtensionNoninterference,
-                1,
+                2,
                 ["baseline.compiled", "independent-extension.compiled"]),
             new(
                 "canonical-lock.all",
@@ -149,7 +149,7 @@ public sealed class AcmePlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzPro
             oracleContracts.Add(new PlanFuzzOracleContract(
                 "negative-surface.seeded-excluded-activation",
                 PlanFuzzOracleIds.NegativeSurfacePreservation,
-                1,
+                2,
                 ["seeded-excluded-activation.interpreter"]));
         }
         else if (StringComparer.Ordinal.Equals(options.SeededFaultId, AcmePlanFuzzConstants.ExtensionInterferenceFault))
@@ -164,7 +164,7 @@ public sealed class AcmePlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzPro
             oracleContracts.Add(new PlanFuzzOracleContract(
                 "extension-noninterference.seeded",
                 PlanFuzzOracleIds.ExtensionNoninterference,
-                1,
+                2,
                 ["baseline.interpreter", "seeded-extension-interference.interpreter"]));
         }
 
@@ -261,13 +261,19 @@ public sealed class AcmePlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzPro
         var includeIndependentExtension =
             StringComparer.Ordinal.Equals(variant.ConfigurationId, AcmePlanFuzzConstants.IndependentExtensionConfiguration) ||
             StringComparer.Ordinal.Equals(variant.ConfigurationId, AcmePlanFuzzConstants.ExtensionInterferenceConfiguration);
-        var seedExcludedActivation = StringComparer.Ordinal.Equals(
+        var runtimeFaultMode = StringComparer.Ordinal.Equals(
             variant.ConfigurationId,
-            AcmePlanFuzzConstants.ExcludedActivationConfiguration);
-        var seedExtensionInterference = StringComparer.Ordinal.Equals(
-            variant.ConfigurationId,
-            AcmePlanFuzzConstants.ExtensionInterferenceConfiguration);
-        var targetPackage = AcmePricingLanguagePackageFactory.Create(wrongArithmetic);
+            AcmePlanFuzzConstants.ExcludedActivationConfiguration)
+            ? AcmeRuntimeFaultMode.ActivateExcludedOwner
+            : StringComparer.Ordinal.Equals(variant.ConfigurationId, AcmePlanFuzzConstants.ExtensionInterferenceConfiguration)
+                ? AcmeRuntimeFaultMode.ExtensionInterference
+                : AcmeRuntimeFaultMode.None;
+        var activationTrace = new AcmeActivationTrace();
+        var independentExtension = new AcmeIndependentExtensionRuntimeHook(activationTrace);
+        var targetPackage = AcmePricingLanguagePackageFactory.Create(
+            wrongArithmetic,
+            activationTrace,
+            independentExtension);
         var unrelatedPackage = AcmePricingLanguagePackageFactory.CreateUnrelated();
         var registry = new LanguagePackageRegistry();
         if (StringComparer.Ordinal.Equals(variant.ConfigurationId, AcmePlanFuzzConstants.ReversedRegistryConfiguration))
@@ -294,10 +300,17 @@ public sealed class AcmePlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzPro
         }
 
         var planSnapshot = CreatePlanSnapshot(plan);
-        var surfaceSnapshot = CreateSurfaceSnapshot(plan, variant.BackendId, includeIndependentExtension, seedExcludedActivation);
         try
         {
-            using var runtime = LanguageRuntime.Create(plan, new ILanguageRouteComponentSource[] { targetPackage });
+            var provider = LanguageRouteRuntimeAssembler.CreateProvider(
+                plan,
+                new ILanguageRouteComponentSource[] { targetPackage });
+            var recordingProvider = new AcmeRecordingRuntimeProvider(
+                provider,
+                activationTrace,
+                independentExtension,
+                runtimeFaultMode);
+            using var runtime = LanguageRuntime.Create(plan, recordingProvider);
             var result = runtime.Run(new LanguageExecutionRequest(
                 testCase.Program.SourceText,
                 new BackendId(variant.BackendId)));
@@ -309,8 +322,12 @@ public sealed class AcmePlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzPro
                     "value-type",
                     $"Acme backend returned '{result.Value?.GetType().FullName ?? "null"}' instead of decimal.");
             }
-            if (seedExtensionInterference)
-                decimalValue += 1m;
+            var surfaceSnapshot = CreateSurfaceSnapshot(
+                plan,
+                variant.BackendId,
+                includeIndependentExtension,
+                activationTrace.Snapshot(),
+                PlanFuzzActivationTraceStatus.Complete);
             return new PlanFuzzObservation(
                 testCase.CaseId,
                 variant.VariantId,
@@ -337,7 +354,12 @@ public sealed class AcmePlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzPro
                     exception.Message),
                 planSnapshot,
                 null,
-                surfaceSnapshot);
+                CreateSurfaceSnapshot(
+                    plan,
+                    variant.BackendId,
+                    includeIndependentExtension,
+                    activationTrace.Snapshot(),
+                    PlanFuzzActivationTraceStatus.Partial));
         }
     }
 
@@ -394,7 +416,8 @@ public sealed class AcmePlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzPro
         LanguagePlan plan,
         string backendId,
         bool includeIndependentExtension,
-        bool seedExcludedActivation)
+        IReadOnlyList<string> activatedOwnerIds,
+        PlanFuzzActivationTraceStatus traceStatus)
     {
         var backend = new BackendId(backendId);
         var route = plan.Routes[backend];
@@ -402,44 +425,34 @@ public sealed class AcmePlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzPro
             item.Contribution.Slot == LanguageSlots.Backends &&
             item.Contribution.SupportedBackends.Contains(backend) &&
             item.Contribution.BackendInputContract == route.TargetContract);
-        var selected = plan.Features
-            .Select(static item => SurfaceFeature(item.Feature.Id.Value))
-            .Concat(plan.Contributions.Select(static item => SurfaceContribution(item.Contribution.Id.Value)))
+        var selectedSurfaces = plan.Features
+            .Select(static item => AcmeActivationTrace.SurfaceFeature(item.Feature.Id.Value))
             .ToArray();
-        var independent = includeIndependentExtension
-            ? IndependentSurfaceIds()
+        var selectedOwners = plan.Contributions
+            .Select(static item => AcmeActivationTrace.SurfaceContribution(item.Contribution.Id.Value))
+            .ToArray();
+        string[] independentSurfaces = includeIndependentExtension
+            ? [AcmeActivationTrace.SurfaceFeature(AcmePlanFuzzConstants.IndependentFeatureId)]
             : [];
-        var excluded = includeIndependentExtension
+        string[] independentOwners = includeIndependentExtension
+            ? [AcmeActivationTrace.SurfaceContribution(AcmePlanFuzzConstants.IndependentContributionId)]
+            : [];
+        string[] excludedOwners = includeIndependentExtension
             ? []
-            : IndependentSurfaceIds();
-        var activated = route.Steps
-            .Select(static step => SurfaceContribution(step.ContributionId.Value))
-            .Append(SurfaceContribution(backendOwner.Contribution.Id.Value))
-            .Concat(plan.RuntimeProviderContribution == null
-                ? []
-                : [SurfaceContribution(plan.RuntimeProviderContribution.Contribution.Id.Value)])
-            .ToList();
-        if (seedExcludedActivation)
-            activated.Add(SurfaceContribution(AcmePlanFuzzConstants.IndependentContributionId));
+            : [AcmeActivationTrace.SurfaceContribution(AcmePlanFuzzConstants.IndependentContributionId)];
 
         return new PlanFuzzSurfaceSnapshot(
-            selected,
-            excluded,
-            independent,
-            activated,
-            activationTraceComplete: true,
-            traceKind: "language-route-runtime-v1",
+            PlanFuzzSurfaceSnapshot.CurrentEvidenceContractVersion,
+            selectedSurfaces,
+            selectedOwners,
+            excludedOwners,
+            independentSurfaces,
+            independentOwners,
+            activatedOwnerIds,
+            traceStatus,
+            traceKind: "observed-language-route-runtime-v2",
             routeIdentity: CreateRouteIdentity(route, backendOwner.Contribution.Id));
     }
-
-    private static string[] IndependentSurfaceIds() =>
-    [
-        SurfaceFeature(AcmePlanFuzzConstants.IndependentFeatureId),
-        SurfaceContribution(AcmePlanFuzzConstants.IndependentContributionId)
-    ];
-
-    private static string SurfaceFeature(string id) => $"feature:{id}";
-    private static string SurfaceContribution(string id) => $"contribution:{id}";
 
     private static string CreateRouteIdentity(LanguageArtifactRoute route, LanguageContributionId backendOwner) =>
         $"backend:{route.Backend.Value}|source:{DescribeContract(route.SourceContract)}|steps:{string.Join(',', route.Steps.Select(static step => step.ContributionId.Value))}|target:{DescribeContract(route.TargetContract)}|executor:{backendOwner.Value}";
