@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-07-25",
+  "scope": "PlanFuzz Phase 3 negative-surface and extension-noninterference verification",
+  "adapter": {
+    "id": "acme-pricing",
+    "version": "0.2.0",
+    "generatorSchemaVersion": "acme-pricing-generator-v2"
+  },
+  "observationSchemaVersion": 3,
+  "cleanCampaign": {
+    "seed": 20260725,
+    "requestedCases": 25,
+    "completedCases": 25,
+    "repeat": 2,
+    "cleanCases": 25,
+    "confirmedFindings": 0,
+    "distinctFindingClasses": 0,
+    "flakyCases": 0,
+    "inconclusiveCases": 0,
+    "infrastructureFailures": 0,
+    "summarySha256": "6eabb0efeeabd81cd3c7b1a736aba85d9c603bca31a95f27389d5ae4e6ca49b9",
+    "manifestSha256": "f617357fe833ae060174e5c80a8c8cba55cf097261349a387a487c486b9a5c92"
+  },
+  "seededFaultReplays": [
+    {
+      "faultId": "SF-002-excluded-owner-activation",
+      "oracleId": "O-004-negative-surface-preservation",
+      "repeat": 3,
+      "confirmedViolation": true,
+      "flaky": false,
+      "inconclusive": false,
+      "infrastructureFailure": false,
+      "exactFingerprint": "baaf6e71d0845061fbb529edd77dd209fb34828d06ef9edffcc0c01d0a414a02",
+      "replayReportSha256": "a5fa5c8bab080241dd90870b051139e02f8d54c6e20477247ffda3d765490be9"
+    },
+    {
+      "faultId": "SF-003-extension-noninterference",
+      "oracleId": "O-005-extension-noninterference",
+      "repeat": 3,
+      "confirmedViolation": true,
+      "flaky": false,
+      "inconclusive": false,
+      "infrastructureFailure": false,
+      "exactFingerprint": "2e00f4d3a7184be2f4691e3ed170027f45d14888e086d57f6e50c2b90baa18cb",
+      "replayReportSha256": "01488bae071bb53e1d2ce016174d354043509512ca10c821937a0e5edd0701ed"
+    }
+  ],
+  "claimBoundary": "The campaign is a bounded stability and oracle-adequacy smoke. Seeded faults are test-owned and do not count as discovered compiler defects. This evidence does not establish equal-budget superiority, publication novelty or production certification."
+}

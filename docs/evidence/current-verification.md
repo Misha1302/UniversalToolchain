@@ -40,9 +40,9 @@ Per-project test counts:
 | `UniversalToolchain.Modules.Tests` | 290 | 0 | 0 |
 | `UniversalToolchain.Dialects.Tests` | 588 | 0 | 0 |
 | `UniversalToolchain.LanguageSdk.Tests` | 53 | 0 | 0 |
-| `UniversalToolchain.PlanFuzz.Tests` | 29 | 0 | 0 |
-| `UniversalToolchain.PlanFuzz.IntegrationTests` | 8 | 0 | 0 |
-| **Total** | **1,451** | **0** | **0** |
+| `UniversalToolchain.PlanFuzz.Tests` | 35 | 0 | 0 |
+| `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
+| **Total** | **1,459** | **0** | **0** |
 
 The root `VERIFICATION.md` is the detailed authority for commands, environment, package checks and the PlanFuzz evidence boundary.
 
@@ -62,8 +62,8 @@ GitHub Actions additionally verifies the Wist rollout sample and compares `MANIF
 
 ## Evidence boundary
 
-Verified PlanFuzz behavior includes the language-neutral core, Acme and Wist adapters, five oracle families, fresh-process strict replay, complete-evidence confirmation, separate inconclusive/flaky states, opt-in known regressions, distinct exact/class fingerprints and deterministic program/plan reduction guarded by exact-fingerprint replay.
+Verified PlanFuzz behavior includes the language-neutral core, Acme and Wist adapters, seven oracle families, fresh-process strict replay, complete-evidence confirmation, separate inconclusive/flaky states, opt-in known regressions, distinct exact/class fingerprints and deterministic program/plan reduction guarded by exact-fingerprint replay.
 
-The preserved Wist pilot included the regression corpus. Its violating-case count is not a clean discovery-yield result, and its normalized classes are not unique-defect or root-cause counts. The current source state fixes and regression-protects #302, #303 and #307 at their owner boundaries. Separate three-case, three-attempt discovery-only and regression-inclusive fresh-process smokes are clean. A later discovery-only stability smoke completed 50 Acme cases with two attempts and 20 Wist cases with one attempt, all clean. These bounded smokes are not publication-scale evidence or controlled baselines.
+The preserved Wist pilot included the regression corpus. Its violating-case count is not a clean discovery-yield result, and its normalized classes are not unique-defect or root-cause counts. The current source state fixes and regression-protects #302, #303 and #307 at their owner boundaries. Separate three-case, three-attempt discovery-only and regression-inclusive fresh-process smokes are clean. A later discovery-only stability smoke completed 50 Acme cases with two attempts and 20 Wist cases with one attempt, all clean. Phase 3 additionally completed 25 Acme cases with two attempts across the selected-but-unused extension dimension, all clean, while both test-owned surface faults were confirmed in three fresh processes. These bounded smokes are not publication-scale evidence or controlled baselines.
 
-Schedule reduction, negative-surface/lifecycle campaigns, equal-budget baselines, a third adapter and publication novelty remain unverified future work.
+Schedule reduction, lifecycle/concurrency campaigns, equal-budget baselines, a third adapter and publication novelty remain unverified future work.

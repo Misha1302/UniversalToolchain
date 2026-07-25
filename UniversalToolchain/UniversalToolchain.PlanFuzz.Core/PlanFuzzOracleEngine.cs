@@ -57,6 +57,8 @@ public sealed class PlanFuzzOracleEngine
         new BackendParityOracle(),
         new OptimizationRouteParityOracle(),
         new PlanDeterminismOracle(),
+        new NegativeSurfacePreservationOracle(),
+        new ExtensionNoninterferenceOracle(),
         new ControlledFallbackOracle(),
         new CanonicalLockConsistencyOracle()
     ];

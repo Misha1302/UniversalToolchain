@@ -187,6 +187,14 @@ public sealed class WistPlanFuzzAdapterTests
             4,
             ["fold"],
             [new PlanFuzzRouteDiagnosticSnapshot("unsupported", "emission")]);
+        var surface = new PlanFuzzSurfaceSnapshot(
+            ["feature:core"],
+            ["contribution:excluded"],
+            ["feature:extension"],
+            ["contribution:active"],
+            activationTraceComplete: true,
+            "test-trace-v1",
+            "route:test");
         var observation = new PlanFuzzObservation(
             "case",
             "variant",
@@ -195,7 +203,8 @@ public sealed class WistPlanFuzzAdapterTests
             PlanFuzzValueSnapshot.FromInt32(7),
             null,
             null,
-            route);
+            route,
+            surface);
 
         var roundtripped = PlanFuzzObservationSerializer.Deserialize(PlanFuzzObservationSerializer.Serialize(observation));
 
@@ -205,6 +214,11 @@ public sealed class WistPlanFuzzAdapterTests
             Assert.That(roundtripped.Route!.FellBack, Is.True);
             Assert.That(roundtripped.Route.FallbackKind, Is.EqualTo(PlanFuzzFallbackKind.ClassifiedUnsupportedShape));
             Assert.That(roundtripped.Route.Diagnostics.Single().Code, Is.EqualTo("unsupported"));
+            Assert.That(roundtripped.Surface, Is.Not.Null);
+            Assert.That(roundtripped.Surface!.SelectedSurfaceIds, Is.EqualTo(new[] { "feature:core" }));
+            Assert.That(roundtripped.Surface.ExcludedSurfaceIds, Is.EqualTo(new[] { "contribution:excluded" }));
+            Assert.That(roundtripped.Surface.ActivationTraceComplete, Is.True);
+            Assert.That(roundtripped.Surface.RouteIdentity, Is.EqualTo("route:test"));
         });
     }
 
