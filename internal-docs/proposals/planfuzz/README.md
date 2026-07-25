@@ -40,7 +40,7 @@ language-neutral deterministic core
 + one test-owned Acme wrong-arithmetic fault
 + adapter-owned structured program reduction
 + generic plan-contract and unreferenced-variant reduction
-+ fail-closed schema-v4 selected-surface/owner and observed activation evidence
++ fail-closed schema-v5 surface/owner evidence with explicit independent-extension bindings
 + fresh-process exact-fingerprint acceptance
 ```
 
