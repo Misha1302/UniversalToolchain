@@ -158,7 +158,7 @@ jobs:
           cp Tools/finalize_planfuzz_o005_evidence.py "$RUNNER_TEMP/finalize_planfuzz_o005_evidence.py"
           git rm .github/planfuzz-o005-evidence-trigger Tools/finalize_planfuzz_o005_evidence.py
           git checkout origin/master -- .github/workflows/dotnet-ci.yml
-          dotnet build UniversalToolchain/UniversalToolchain.PlanFuzz.Cli/UniversalToolchain.PlanFuzz.Cli.csproj -c Release
+          ./build.sh --skip-docs
           echo "EVIDENCE_ROOT=$RUNNER_TEMP/o005-evidence" >> "$GITHUB_ENV"
           mkdir -p "$RUNNER_TEMP/o005-evidence"
 
