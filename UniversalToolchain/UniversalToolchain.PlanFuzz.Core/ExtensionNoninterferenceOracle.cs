@@ -71,30 +71,37 @@ public sealed class ExtensionNoninterferenceOracle : IPlanFuzzOracle
             .ToArray();
         if (activatedAdded.Length != 0)
         {
-            var material = string.Join(',', activatedAdded);
-            exactDimensions.Add($"extension-activated:{material}");
+            exactDimensions.Add("extension-activated:" + PlanFuzzFingerprintEncoding.EncodeSequence(activatedAdded));
             classDimensions.Add("extension-activated");
             summaries.Add("the declared unused extension became active");
         }
 
         if (!StringComparer.Ordinal.Equals(baseline.Surface.RouteIdentity, extended.Surface.RouteIdentity))
         {
-            exactDimensions.Add($"route:{baseline.Surface.RouteIdentity}|{extended.Surface.RouteIdentity}");
+            exactDimensions.Add("route:" + PlanFuzzFingerprintEncoding.EncodeFields(
+                baseline.Surface.RouteIdentity,
+                extended.Surface.RouteIdentity));
             classDimensions.Add("route-changed");
             summaries.Add("the selected execution route changed");
         }
 
         if (!baseline.Surface.ActivatedOwnerIds.SequenceEqual(extended.Surface.ActivatedOwnerIds, StringComparer.Ordinal))
         {
-            exactDimensions.Add($"activation:{string.Join(',', baseline.Surface.ActivatedOwnerIds)}|{string.Join(',', extended.Surface.ActivatedOwnerIds)}");
+            exactDimensions.Add("activation:" + PlanFuzzFingerprintEncoding.EncodeFields(
+                PlanFuzzFingerprintEncoding.EncodeSequence(baseline.Surface.ActivatedOwnerIds),
+                PlanFuzzFingerprintEncoding.EncodeSequence(extended.Surface.ActivatedOwnerIds)));
             classDimensions.Add("activation-changed");
             summaries.Add("the activated-owner set changed");
         }
 
         if (!PlanFuzzObservationComparer.AreSemanticallyEquivalent(baseline, extended))
         {
-            exactDimensions.Add($"behavior:{Describe(baseline)}|{Describe(extended)}");
-            classDimensions.Add($"behavior:{DescribeClass(baseline)}|{DescribeClass(extended)}");
+            exactDimensions.Add("behavior:" + PlanFuzzFingerprintEncoding.EncodeFields(
+                Describe(baseline),
+                Describe(extended)));
+            classDimensions.Add("behavior:" + PlanFuzzFingerprintEncoding.EncodeFields(
+                DescribeClass(baseline),
+                DescribeClass(extended)));
             summaries.Add("observable semantics changed");
         }
 
@@ -104,8 +111,8 @@ public sealed class ExtensionNoninterferenceOracle : IPlanFuzzOracle
                 context,
                 PlanFuzzOracleStatus.Violated,
                 "Extension noninterference failed: " + string.Join("; ", summaries) + ".",
-                string.Join('|', exactDimensions),
-                string.Join('|', classDimensions));
+                PlanFuzzFingerprintEncoding.EncodeSequence(exactDimensions),
+                PlanFuzzFingerprintEncoding.EncodeSequence(classDimensions));
         }
 
         return Result(context, PlanFuzzOracleStatus.Passed, "The declared unused extension preserves semantics, route and activation behavior.", "equal");
@@ -198,13 +205,30 @@ public sealed class ExtensionNoninterferenceOracle : IPlanFuzzOracle
 
     private static string Describe(PlanFuzzObservation observation) =>
         observation.Outcome == PlanFuzzExecutionOutcome.Success
-            ? $"{observation.BackendId}:success:{observation.Value?.TypeIdentity}:{observation.Value?.CanonicalValue}"
-            : $"{observation.BackendId}:{observation.Outcome}:{observation.Failure?.FailureType}:{observation.Failure?.Stage}:{observation.Failure?.Category}";
+            ? PlanFuzzFingerprintEncoding.EncodeFields(
+                observation.BackendId,
+                "success",
+                observation.Value?.TypeIdentity ?? string.Empty,
+                observation.Value?.CanonicalValue ?? string.Empty)
+            : PlanFuzzFingerprintEncoding.EncodeFields(
+                observation.BackendId,
+                observation.Outcome.ToString(),
+                observation.Failure?.FailureType ?? string.Empty,
+                observation.Failure?.Stage ?? string.Empty,
+                observation.Failure?.Category ?? string.Empty);
 
     private static string DescribeClass(PlanFuzzObservation observation) =>
         observation.Outcome == PlanFuzzExecutionOutcome.Success
-            ? $"{observation.BackendId}:success:{observation.Value?.TypeIdentity}"
-            : $"{observation.BackendId}:{observation.Outcome}:{observation.Failure?.FailureType}:{observation.Failure?.Stage}:{observation.Failure?.Category}";
+            ? PlanFuzzFingerprintEncoding.EncodeFields(
+                observation.BackendId,
+                "success",
+                observation.Value?.TypeIdentity ?? string.Empty)
+            : PlanFuzzFingerprintEncoding.EncodeFields(
+                observation.BackendId,
+                observation.Outcome.ToString(),
+                observation.Failure?.FailureType ?? string.Empty,
+                observation.Failure?.Stage ?? string.Empty,
+                observation.Failure?.Category ?? string.Empty);
 
     private PlanFuzzOracleResult Result(
         PlanFuzzOracleContext context,
