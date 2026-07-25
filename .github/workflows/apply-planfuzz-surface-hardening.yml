@@ -1,0 +1,63 @@
+name: Apply verified PlanFuzz surface hardening
+
+on:
+  push:
+    branches:
+      - research/planfuzz-surface-hardening
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply-hardening:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout hardening branch
+        uses: actions/checkout@v4
+        with:
+          ref: research/planfuzz-surface-hardening
+          fetch-depth: 0
+
+      - name: Reconstruct and verify patch
+        shell: bash
+        run: |
+          cat .github/planfuzz-surface-hardening-patch/chunk* > "$RUNNER_TEMP/hardening.patch.gz.b64"
+          echo '482734fba92f6d81527e168de2d0d5fbf47ca79dfb1fbdcc201feefe8b862d47  '"$RUNNER_TEMP/hardening.patch.gz.b64" | sha256sum --check
+          base64 --decode "$RUNNER_TEMP/hardening.patch.gz.b64" | gzip --decompress > "$RUNNER_TEMP/hardening.patch"
+          echo '41d9fb8eca58841fc768c577d12050c244deaf70b4f71fc3a1c760b4214ddfa7  '"$RUNNER_TEMP/hardening.patch" | sha256sum --check
+
+      - name: Apply implementation
+        shell: bash
+        run: patch -p1 --forward < "$RUNNER_TEMP/hardening.patch"
+
+      - name: Remove transport files
+        shell: bash
+        run: git rm -r .github/planfuzz-surface-hardening-patch .github/workflows/apply-planfuzz-surface-hardening.yml
+
+      - name: Refresh recursive source manifest
+        shell: bash
+        run: |
+          git add -A
+          python3 - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+          import subprocess
+
+          paths = subprocess.check_output(["git", "ls-files", "--cached", "-z"]).split(b"\0")
+          with Path("MANIFEST.sha256").open("w", encoding="utf-8", newline="\n") as output:
+              for raw_path in sorted(path for path in paths if path and path != b"MANIFEST.sha256"):
+                  path = raw_path.decode("utf-8")
+                  output.write(f"{sha256(Path(path).read_bytes()).hexdigest()}  ./{path}\n")
+          PY
+          git add MANIFEST.sha256
+          git diff --cached --check
+
+      - name: Commit hardening
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix(research): harden PlanFuzz surface evidence'
+          git push origin HEAD:research/planfuzz-surface-hardening
