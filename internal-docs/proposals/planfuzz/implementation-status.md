@@ -1,4 +1,4 @@
-# PlanFuzz Phase 0–3 implementation status
+# PlanFuzz Phase 0–3a implementation status
 
 Status: implemented experimental research tooling, not a public package or a shipped Wist feature.
 
@@ -7,7 +7,7 @@ PlanFuzz proposal
 -> Phase 0: language-neutral core and Acme vertical slice
 -> Phase 1: Wist restricted Int32 matrix and route/fallback evidence
 -> Phase 2: deterministic program/plan reduction with exact-fingerprint confirmation
--> Phase 3: explicit surface/activation evidence and absence/extension oracles
+-> Phase 3a: hardened observed surface/owner evidence and absence/extension oracles
 ```
 
 The implementation remains non-packable and does not extend the public `UniversalToolchain.Wist` or NuGet package surface.
@@ -29,7 +29,7 @@ The configuration-complete research graph is declared in `UniversalToolchain/Pla
 
 - PRNG: `xoshiro256starstar-v1` with SHA-256 domain-separated forks.
 - Testcase schema: version 1 with canonical body hashing and recorded case identity.
-- Observation schema: version 3 with optional selected-surface and activation evidence; schema-v1 and schema-v2 observations remain readable.
+- Observation schema: version 4 with fail-closed surface/owner evidence contract v2; schema-v1 through schema-v3 observations remain readable, but legacy surface evidence cannot satisfy current O-004/O-005 proofs.
 - Replay report schema: version 3 with a distinct `inconclusive` state.
 - Campaign summary schema: version 3; it reports `distinctFindingClasses`, `inconclusiveCases` and whether the regression corpus was included.
 - Typed values: `decimal`, `bool`, `string` and `Int32` snapshots without semantic comparison through `ToString()`.
@@ -42,9 +42,9 @@ The configuration-complete research graph is declared in `UniversalToolchain/Pla
   - `O-006` controlled fallback;
   - `O-009` canonical lock consistency.
 - Wist route evidence records policy, route use, fallback state/classification, profile, instruction counts, executed passes and stable diagnostic code/stage pairs.
-- Surface evidence records the selected and excluded surface, explicitly independent additions, activated owners, trace completeness, evidence-contract identity and selected route identity.
-- `O-004` never passes an incomplete trace and detects any `excluded ∩ activated` owner.
-- `O-005` applies only to a pure additive, explicitly independent surface delta and requires unchanged semantics, route identity and activation owners.
+- Surface evidence separates selected surface IDs from selected/excluded owner IDs, declares independent additions in both domains, records observed activated owners, uses a typed `Unsupported`/`Partial`/`Complete` trace status, and carries evidence-contract and route identities.
+- `O-004` is invariant to contract variant order, aggregates all variants, gives confirmed violations precedence over incomplete peers, and compares only explicit excluded-owner IDs with observed activated-owner IDs.
+- `O-005` derives baseline/extension direction structurally rather than from contract order, requires a pure additive delta in both surface and owner domains, and requires unchanged semantics, route identity and activation owners.
 - Exact fingerprints preserve testcase-level evidence and remain authoritative for repeated replay confirmation.
 - Coarser class fingerprints remove concrete values and duplicate diagnostics for campaign triage. They are not root-cause identities and are never reported as unique defects without manual analysis.
 - A replay is clean only when it has at least one oracle result and every declared oracle returns `Passed`.
@@ -161,23 +161,27 @@ Wist: 20/20 clean, repeat 1, 0 findings, 0 flaky, 0 inconclusive, 0 infrastructu
 
 The machine-readable summary is [phase2-reducer-smoke-summary.json](evidence/phase2-reducer-smoke-summary.json). Raw evidence trees were generated with recursive manifests and remain external research artifacts. This smoke establishes post-change stability only; it is not an equal-budget baseline comparison and does not establish superiority or novelty.
 
-## Surface and extension contracts
+## Phase 3a surface and extension contracts
 
-Phase 3 adds two generic oracle families without adding Acme or Wist identifiers to the core:
+Phase 3a hardens the two generic surface-oracle families without adding Acme or Wist identifiers to the core:
 
-- `O-004` negative-surface preservation checks complete activation traces and rejects activation of any explicitly excluded owner;
-- `O-005` extension noninterference compares a baseline with a pure additive, explicitly independent extension and requires equal semantics, selected route identity and activated-owner evidence.
+- `O-004` negative-surface preservation consumes current, complete observed traces and rejects activation of explicitly excluded owners; its status and fingerprint are deterministic under variant permutation;
+- `O-005` extension noninterference derives the additive direction from evidence rather than contract order and requires equal semantics, selected route identity and activated-owner evidence.
 
-The Acme adapter now includes a real selected-but-unused extension contribution on an unreachable artifact route. Baseline variants declare that feature and contribution excluded; extension variants select them and declare them independent. The route-runtime evidence contract derives activated owners from the exact selected transform steps, backend executor owner and runtime-provider owner.
+Observation schema v4 introduces surface evidence contract v2. Current evidence uses separate selected-surface, selected-owner, excluded-owner, independent-surface and independent-owner sets. Blank, duplicate, contradictory and out-of-domain IDs are rejected. Schema-v3 evidence remains readable for historical replay but is classified `Inconclusive` by current surface oracles.
 
-Two test-owned seeded faults validate oracle adequacy in three fresh processes each:
+The Acme adapter records activation at the actual parser, transformer, executor and runtime-provider components. The selected-but-unused extension remains on an unreachable artifact route in clean cases. The two surface faults now execute inside a test-owned runtime-provider wrapper and invoke extension-owned activation/interference logic through the ordinary runtime path; the adapter no longer edits observations after execution.
+
+The canonical seeded-fault IDs are:
 
 ```text
-SF-002 excluded-owner activation: confirmed 3/3, exact fingerprint baaf6e71d0845061fbb529edd77dd209fb34828d06ef9edffcc0c01d0a414a02
-SF-003 extension interference:     confirmed 3/3, exact fingerprint 2e00f4d3a7184be2f4691e3ed170027f45d14888e086d57f6e50c2b90baa18cb
+SF-005 excluded provider activation: confirmed 3/3, exact fingerprint bf57d3379510c29467b2081397bfafe1496ef6025273b1e7ef0c2f6ef571e78b
+SF-011 extension noninterference:   confirmed 3/3, exact fingerprint d4f4021a581a3dacd432aa85e97e602e586da371e9911b2b0757063e184923f3
 ```
 
-A clean Acme campaign using seed `20260725` completed 25/25 cases with two fresh-process attempts per case and zero findings, flaky, inconclusive or infrastructure outcomes. The machine-readable record is [phase3-surface-oracles-smoke-summary.json](evidence/phase3-surface-oracles-smoke-summary.json). This is bounded stability and oracle-adequacy evidence, not a controlled research baseline.
+The former Phase 3 records using `SF-002-excluded-owner-activation` and `SF-003-extension-noninterference` are superseded: those IDs conflicted with the canonical catalog and their fingerprints must not be mixed with the hardened evidence.
+
+A clean Acme campaign using seed `20260725` completed 25/25 cases with two fresh-process attempts per case and zero findings, flaky, inconclusive or infrastructure outcomes. The machine-readable record is [phase3-surface-oracles-smoke-summary.json](evidence/phase3-surface-oracles-smoke-summary.json). This is bounded Phase 3a stability and harness-adequacy evidence, not a controlled research baseline.
 
 ## Verified integration gate
 
@@ -188,10 +192,10 @@ Tests:                                       483 passed
 UniversalToolchain.Modules.Tests:            290 passed
 UniversalToolchain.Dialects.Tests:           588 passed
 UniversalToolchain.LanguageSdk.Tests:         53 passed
-UniversalToolchain.PlanFuzz.Tests:             35 passed
+UniversalToolchain.PlanFuzz.Tests:             41 passed
 UniversalToolchain.PlanFuzz.IntegrationTests:  10 passed
 --------------------------------------------------------
-Total:                                      1459 passed
+Total:                                      1465 passed
 Failed:                                        0
 Skipped:                                       0
 ```

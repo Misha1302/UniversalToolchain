@@ -41,7 +41,7 @@ Command:
 ./build.sh --skip-docs
 ```
 
-Expected canonical result on the PlanFuzz surface-oracle revision:
+Observed result on the hardened PlanFuzz Phase 3a surface-evidence revision:
 
 - both `UniversalToolchain/Wist.sln` and the configuration-complete `UniversalToolchain/PlanFuzz.sln` restored and built;
 - build warnings: **0**;
@@ -61,15 +61,15 @@ Build servers and MSBuild node reuse are explicitly disabled by the canonical sc
 | `UniversalToolchain.Modules.Tests` | 290 | 0 | 0 |
 | `UniversalToolchain.Dialects.Tests` | 588 | 0 | 0 |
 | `UniversalToolchain.LanguageSdk.Tests` | 53 | 0 | 0 |
-| `UniversalToolchain.PlanFuzz.Tests` | 35 | 0 | 0 |
+| `UniversalToolchain.PlanFuzz.Tests` | 41 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
-| **Total** | **1,459** | **0** | **0** |
+| **Total** | **1,465** | **0** | **0** |
 
 The PlanFuzz suites include dedicated coverage for:
 
 - deterministic PRNG and testcase identity;
 - observation and replay serialization compatibility;
-- backend, route, plan, negative-surface, extension-noninterference, fallback and canonical-lock oracle behavior;
+- backend, route, plan, fallback and canonical-lock oracle behavior;
 - strict replay confirmation in fresh processes;
 - incomplete evidence remaining inconclusive rather than clean or flaky;
 - different exact violation fingerprints remaining flaky rather than confirmed;
@@ -127,7 +127,8 @@ The workflow-only manifest refresh path is explicit `workflow_dispatch`; no one-
 Verified:
 
 - language-neutral core with Acme and Wist adapters;
-- seven generic oracle families;
+- seven generic oracle families, including order-independent O-004 negative-surface preservation and structurally oriented O-005 extension noninterference;
+- observation schema v4 with fail-closed surface/owner evidence contract v2 and typed trace completeness;
 - fresh-process replay and campaign artifact manifests;
 - strict evidence-completeness semantics;
 - opt-in regression corpus;
@@ -136,16 +137,14 @@ Verified:
 - adapter-owned structured program reduction and generic plan-contract/variant pruning;
 - fresh-process acceptance only when the original exact fingerprint is preserved;
 - auditable rejection of clean, flaky, inconclusive and infrastructure candidates;
-- observation schema v3 selected/excluded surface evidence with backward reads for schema v1/v2;
-- complete-trace negative-surface enforcement and pure-additive declared-independent extension noninterference;
-- three-process confirmation of the two test-owned surface seeded faults.
+- test-owned runtime-provider seeded faults for canonical SF-005 and SF-011, confirmed through ordinary observed activation evidence in three fresh processes.
 
-The preserved 25-case Wist pilot included the regression corpus. Its 21 violating cases and two normalized classes are retained as historical evidence and are not presented as clean discovery yield or as a root-cause count. Post-fix discovery-only and regression-inclusive smokes each completed three cases with three fresh-process attempts per case and reported only clean outcomes. An expanded discovery-only stability smoke completed 50 Acme cases with two attempts and 20 Wist cases with one attempt, also with only clean outcomes. The Phase 3 surface smoke completed 25 Acme cases with two attempts and only clean outcomes; both test-owned surface faults were independently confirmed 3/3 in fresh processes.
+The preserved 25-case Wist pilot included the regression corpus. Its 21 violating cases and two normalized classes are retained as historical evidence and are not presented as clean discovery yield or as a root-cause count. Post-fix discovery-only and regression-inclusive smokes each completed three cases with three fresh-process attempts per case and reported only clean outcomes. An expanded discovery-only stability smoke completed 50 Acme cases with two attempts and 20 Wist cases with one attempt, also with only clean outcomes.
 
 Not yet claimed:
 
-- lifecycle schedule generation and schedule reduction;
-- lifecycle/session/concurrency campaigns;
+- completion of Phase 3 lifecycle/session/concurrency schedules or schedule reduction;
+- lifecycle and concurrency campaigns;
 - equal-budget baseline superiority;
 - a third external adapter;
 - publication novelty or acceptance likelihood;

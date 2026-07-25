@@ -9,14 +9,20 @@ internal static class AcmePricingLanguagePackageFactory
     private static readonly LanguageArtifactKind<string> IndependentInput = new("acme.pricing.independent.input");
     private static readonly LanguageArtifactKind<string> IndependentOutput = new("acme.pricing.independent.output");
     private static readonly LanguageSlotId IndependentSlot = new("acme.pricing.independent-slot");
+    private static readonly LanguageRuntimeComponentTraits Traits = LanguageRuntimeComponentTraits.DeterministicNoHostInterop;
 
-    public static AuthoredLanguagePackage Create(bool wrongArithmetic)
+    public static AuthoredLanguagePackage Create(
+        bool wrongArithmetic,
+        AcmeActivationTrace trace,
+        AcmeIndependentExtensionRuntimeHook independentExtension)
     {
-        var builder = LanguagePackageBuilder.Create(AcmePlanFuzzConstants.LanguageId, AcmePlanFuzzConstants.LanguageVersion)
-            .AddFeature(AcmePlanFuzzConstants.CoreFeatureId, feature => ConfigureFeature(feature, wrongArithmetic))
-            .AddFeature(AcmePlanFuzzConstants.IndependentFeatureId, ConfigureIndependentFeature)
-            .UseRouteRuntime("acme.pricing.runtime", AcmePlanFuzzConstants.LanguageVersion);
-        return builder.Build();
+        trace = trace.ArgNotNull();
+        independentExtension = independentExtension.ArgNotNull();
+        return LanguagePackageBuilder.Create(AcmePlanFuzzConstants.LanguageId, AcmePlanFuzzConstants.LanguageVersion)
+            .AddFeature(AcmePlanFuzzConstants.CoreFeatureId, feature => ConfigureFeature(feature, wrongArithmetic, trace))
+            .AddFeature(AcmePlanFuzzConstants.IndependentFeatureId, feature => ConfigureIndependentFeature(feature, independentExtension))
+            .UseRouteRuntime("acme.pricing.runtime", AcmePlanFuzzConstants.LanguageVersion)
+            .Build();
     }
 
     public static AuthoredLanguagePackage CreateUnrelated() =>
@@ -37,65 +43,92 @@ internal static class AcmePricingLanguagePackageFactory
         return builder.Build();
     }
 
-    private static void ConfigureIndependentFeature(LanguageFeatureBuilder feature) =>
-        feature.AddTransformer(
+    private static void ConfigureIndependentFeature(
+        LanguageFeatureBuilder feature,
+        AcmeIndependentExtensionRuntimeHook independentExtension) =>
+        feature.AddTransformerFactory(
             AcmePlanFuzzConstants.IndependentContributionId,
             IndependentSlot,
             IndependentInput,
             IndependentOutput,
-            static (value, _) => value,
-            LanguageRuntimeComponentTraits.DeterministicNoHostInterop,
+            _ => new DelegateLanguageArtifactTransformer<string, string>(
+                new LanguageContributionId(AcmePlanFuzzConstants.IndependentContributionId),
+                IndependentInput,
+                IndependentOutput,
+                (value, _) => independentExtension.Transform(value),
+                Traits),
+            Traits,
             cost: 1);
 
-    private static void ConfigureFeature(LanguageFeatureBuilder feature, bool wrongArithmetic)
+    private static void ConfigureFeature(LanguageFeatureBuilder feature, bool wrongArithmetic, AcmeActivationTrace trace)
     {
-        feature
-            .AddTransformer(
-                "acme.pricing.parse",
-                LanguageSlots.FrontendParser,
+        feature.AddTransformerFactory(
+            "acme.pricing.parse",
+            LanguageSlots.FrontendParser,
+            StandardLanguageArtifactKinds.SourceText,
+            Syntax,
+            _ => new DelegateLanguageArtifactTransformer<string, AcmePricingExpression>(
+                new LanguageContributionId("acme.pricing.parse"),
                 StandardLanguageArtifactKinds.SourceText,
                 Syntax,
-                static (source, _) => AcmePricingExpression.Parse(source),
-                LanguageRuntimeComponentTraits.DeterministicNoHostInterop,
-                cost: 1);
+                (source, _) =>
+                {
+                    trace.RecordContribution("acme.pricing.parse");
+                    return AcmePricingExpression.Parse(source);
+                },
+                Traits),
+            Traits,
+            cost: 1);
 
-        if (wrongArithmetic)
-        {
-            feature.AddTransformer(
-                "acme.pricing.compile",
-                LanguageSlots.Lowering,
+        feature.AddTransformerFactory(
+            "acme.pricing.compile",
+            LanguageSlots.Lowering,
+            Syntax,
+            Executable,
+            _ => new DelegateLanguageArtifactTransformer<AcmePricingExpression, Func<decimal>>(
+                new LanguageContributionId("acme.pricing.compile"),
                 Syntax,
                 Executable,
-                static (expression, _) => expression.CompileWrongArithmetic(),
-                LanguageRuntimeComponentTraits.DeterministicNoHostInterop,
-                cost: 1,
-                supportedBackends: [Compiled]);
-        }
-        else
-        {
-            feature.AddTransformer(
-                "acme.pricing.compile",
-                LanguageSlots.Lowering,
-                Syntax,
-                Executable,
-                static (expression, _) => expression.Compile(),
-                LanguageRuntimeComponentTraits.DeterministicNoHostInterop,
-                cost: 1,
-                supportedBackends: [Compiled]);
-        }
+                (expression, _) =>
+                {
+                    trace.RecordContribution("acme.pricing.compile");
+                    return wrongArithmetic ? expression.CompileWrongArithmetic() : expression.Compile();
+                },
+                Traits),
+            Traits,
+            cost: 1,
+            supportedBackends: [Compiled]);
 
         feature
-            .AddBackend(
+            .AddBackendFactory(
                 Interpreter,
                 new LanguageContributionId("acme.pricing.interpreter"),
                 Syntax,
-                static (expression, _) => expression.Evaluate(),
-                LanguageRuntimeComponentTraits.DeterministicNoHostInterop)
-            .AddBackend(
+                _ => new DelegateLanguageArtifactExecutor<AcmePricingExpression, decimal>(
+                    new LanguageContributionId("acme.pricing.interpreter"),
+                    Interpreter,
+                    Syntax,
+                    (expression, _) =>
+                    {
+                        trace.RecordContribution("acme.pricing.interpreter");
+                        return expression.Evaluate();
+                    },
+                    Traits),
+                Traits)
+            .AddBackendFactory(
                 Compiled,
                 new LanguageContributionId("acme.pricing.compiled"),
                 Executable,
-                static (program, _) => program(),
-                LanguageRuntimeComponentTraits.DeterministicNoHostInterop);
+                _ => new DelegateLanguageArtifactExecutor<Func<decimal>, decimal>(
+                    new LanguageContributionId("acme.pricing.compiled"),
+                    Compiled,
+                    Executable,
+                    (program, _) =>
+                    {
+                        trace.RecordContribution("acme.pricing.compiled");
+                        return program();
+                    },
+                    Traits),
+                Traits);
     }
 }

@@ -188,12 +188,15 @@ public sealed class WistPlanFuzzAdapterTests
             ["fold"],
             [new PlanFuzzRouteDiagnosticSnapshot("unsupported", "emission")]);
         var surface = new PlanFuzzSurfaceSnapshot(
-            ["feature:core"],
+            PlanFuzzSurfaceSnapshot.CurrentEvidenceContractVersion,
+            ["feature:core", "feature:extension"],
+            ["contribution:active", "contribution:extension"],
             ["contribution:excluded"],
             ["feature:extension"],
+            ["contribution:extension"],
             ["contribution:active"],
-            activationTraceComplete: true,
-            "test-trace-v1",
+            PlanFuzzActivationTraceStatus.Complete,
+            "test-trace-v2",
             "route:test");
         var observation = new PlanFuzzObservation(
             "case",
@@ -215,9 +218,9 @@ public sealed class WistPlanFuzzAdapterTests
             Assert.That(roundtripped.Route.FallbackKind, Is.EqualTo(PlanFuzzFallbackKind.ClassifiedUnsupportedShape));
             Assert.That(roundtripped.Route.Diagnostics.Single().Code, Is.EqualTo("unsupported"));
             Assert.That(roundtripped.Surface, Is.Not.Null);
-            Assert.That(roundtripped.Surface!.SelectedSurfaceIds, Is.EqualTo(new[] { "feature:core" }));
-            Assert.That(roundtripped.Surface.ExcludedSurfaceIds, Is.EqualTo(new[] { "contribution:excluded" }));
-            Assert.That(roundtripped.Surface.ActivationTraceComplete, Is.True);
+            Assert.That(roundtripped.Surface!.SelectedSurfaceIds, Is.EqualTo(new[] { "feature:core", "feature:extension" }));
+            Assert.That(roundtripped.Surface.ExcludedOwnerIds, Is.EqualTo(new[] { "contribution:excluded" }));
+            Assert.That(roundtripped.Surface.ActivationTraceStatus, Is.EqualTo(PlanFuzzActivationTraceStatus.Complete));
             Assert.That(roundtripped.Surface.RouteIdentity, Is.EqualTo("route:test"));
         });
     }

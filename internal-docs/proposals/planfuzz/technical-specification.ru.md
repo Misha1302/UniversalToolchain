@@ -842,7 +842,37 @@ public sealed record NormalizedObservation(
     ObservationCompleteness Completeness);
 ```
 
-## 16.2. Typed value snapshot
+## 16.2. Surface/owner evidence contract
+
+Текущий observation schema — v4. Surface evidence contract v2 разделяет semantic surface IDs и runtime owner IDs:
+
+```csharp
+public sealed record SurfaceEvidence(
+    int EvidenceContractVersion,
+    IReadOnlyList<string> SelectedSurfaceIds,
+    IReadOnlyList<string> SelectedOwnerIds,
+    IReadOnlyList<string> ExcludedOwnerIds,
+    IReadOnlyList<string> DeclaredIndependentSurfaceIds,
+    IReadOnlyList<string> DeclaredIndependentOwnerIds,
+    IReadOnlyList<string> ActivatedOwnerIds,
+    ActivationTraceStatus ActivationTraceStatus,
+    string TraceKind,
+    string RouteIdentity);
+```
+
+Инварианты fail-closed:
+
+- blank, whitespace-surrounded и duplicate IDs rejected;
+- selected и excluded owner sets disjoint;
+- independent IDs являются subset соответствующего selected domain;
+- activated owner должен быть selected либо explicitly excluded;
+- `Complete` требует непустого selected-owner set;
+- unknown evidence-contract version и unknown trace status rejected;
+- schema-v1..v3 остаются читаемыми для истории, но legacy surface evidence не может дать `Passed` текущим O-004/O-005.
+
+`ActivationTraceStatus` — typed enum: `Unsupported`, `Partial`, `Complete`. Boolean completeness больше не является текущим контрактом.
+
+## 16.3. Typed value snapshot
 
 ```csharp
 public sealed record ValueSnapshot(
@@ -1041,9 +1071,19 @@ Owner(f) ∉ ActivationTrace(P, program)
 
 ### Preconditions
 
-- negative surface declared;
-- trace complete для нужного класса events;
+- отрицание нормализовано в явный `ExcludedOwnerIds`, а не смешано с feature/capability IDs;
+- используется текущая версия evidence contract;
+- trace имеет статус `Complete` для заявленного `traceKind`;
+- каждый activated owner объявлен selected либо explicitly excluded;
 - program/plan relation требует exclusion.
+
+Oracle агрегирует все variants независимо от их порядка. Детерминированный приоритет результата:
+
+```text
+Violated > InfrastructureFailure > Inconclusive > NotApplicable > Passed
+```
+
+Подтверждённое пересечение `ExcludedOwnerIds ∩ ActivatedOwnerIds` не может быть скрыто неполной трассой другого variant.
 
 ### Seeded faults
 
@@ -1061,10 +1101,14 @@ Owner(f) ∉ ActivationTrace(P, program)
 
 ### Preconditions
 
-- independence declared;
+- baseline/extension direction выводится из strict additive relation, а не из порядка variant IDs;
+- additions declared independently в surface и owner domains;
+- current complete traces use the same evidence contract and `traceKind`;
 - no override/shared slot conflict;
 - no global side effect;
 - source unchanged.
+
+Malformed, non-additive или неоднозначная пара является contract/infrastructure failure, а не тихим `NotApplicable`.
 
 ---
 
@@ -1465,6 +1509,11 @@ Infrastructure failure не кешируется как semantic rejection.
 | SF-008 | Lock serializer uses enumeration order | O-009 |
 | SF-009 | Worker hangs | O-012 |
 | SF-010 | Diagnostic code depends on backend | O-010 |
+| SF-011 | Independent extension activates and changes behavior through a test-owned runtime provider | O-005 |
+
+Historical Phase 3a artifacts that used `SF-002-excluded-owner-activation` and `SF-003-extension-noninterference` are superseded: those IDs conflict with this canonical table. They remain historical records only and their fingerprints must not be combined with current evidence.
+
+Seeded faults must execute inside test-owned package/runtime components and reach observations through normal instrumentation. Direct post-execution mutation of values, traces or owner sets does not satisfy mutation-adequacy evidence.
 
 ## 24.3. Mutation score
 
@@ -1945,6 +1994,8 @@ Acceptance:
 - silent fallback seeded fault detected.
 
 ## Phase 3 — Lifecycle and negative surface
+
+Implemented Phase 3a slice: schema-v4 fail-closed observed surface/owner evidence plus hardened O-004/O-005. Lifecycle/session/concurrency schedules, O-007/O-008 and disposal acceptance remain incomplete; therefore Phase 3 as a whole is not complete.
 
 Deliverables:
 

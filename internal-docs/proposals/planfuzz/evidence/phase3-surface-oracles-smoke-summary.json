@@ -1,13 +1,15 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "date": "2026-07-25",
-  "scope": "PlanFuzz Phase 3 negative-surface and extension-noninterference verification",
+  "scope": "PlanFuzz Phase 3a surface-oracle contract hardening",
   "adapter": {
     "id": "acme-pricing",
-    "version": "0.2.0",
-    "generatorSchemaVersion": "acme-pricing-generator-v2"
+    "version": "0.3.0",
+    "generatorSchemaVersion": "acme-pricing-generator-v3"
   },
-  "observationSchemaVersion": 3,
+  "observationSchemaVersion": 4,
+  "surfaceEvidenceContractVersion": 2,
+  "traceKind": "observed-language-route-runtime-v2",
   "cleanCampaign": {
     "seed": 20260725,
     "requestedCases": 25,
@@ -20,31 +22,50 @@
     "inconclusiveCases": 0,
     "infrastructureFailures": 0,
     "summarySha256": "6eabb0efeeabd81cd3c7b1a736aba85d9c603bca31a95f27389d5ae4e6ca49b9",
-    "manifestSha256": "f617357fe833ae060174e5c80a8c8cba55cf097261349a387a487c486b9a5c92"
+    "manifestSha256": "103e81d9442dbe5a0701494bd6495729a08a08cc07c9d70dc9e14ee953ccc460"
   },
   "seededFaultReplays": [
     {
-      "faultId": "SF-002-excluded-owner-activation",
+      "faultId": "SF-005-excluded-provider-activated",
       "oracleId": "O-004-negative-surface-preservation",
+      "oracleVersion": 2,
+      "mechanism": "test-owned runtime provider invokes the excluded extension-owned activation hook",
       "repeat": 3,
       "confirmedViolation": true,
       "flaky": false,
       "inconclusive": false,
       "infrastructureFailure": false,
-      "exactFingerprint": "baaf6e71d0845061fbb529edd77dd209fb34828d06ef9edffcc0c01d0a414a02",
-      "replayReportSha256": "a5fa5c8bab080241dd90870b051139e02f8d54c6e20477247ffda3d765490be9"
+      "caseId": "fb214ed1de78873106e1743b64156264bd84e8c510f3156972a92b17d90dff64",
+      "exactFingerprint": "bf57d3379510c29467b2081397bfafe1496ef6025273b1e7ef0c2f6ef571e78b",
+      "classFingerprint": "3690fb10fb77861254881caacd3192e7ab7d374d095fe579a0bd8108bc9ed84c",
+      "replayReportSha256": "ab62459222ee61f42dc96d37ec58ba5eb1ca77c60d19ccbd84a96c6897607a1d",
+      "manifestSha256": "ef33c6f994dd93738392d01835a3e46e9866a222df157995c3f3fa26b635ff8f"
     },
     {
-      "faultId": "SF-003-extension-noninterference",
+      "faultId": "SF-011-extension-noninterference",
       "oracleId": "O-005-extension-noninterference",
+      "oracleVersion": 2,
+      "mechanism": "test-owned runtime provider invokes extension-owned interference logic that activates its owner and changes the result",
       "repeat": 3,
       "confirmedViolation": true,
       "flaky": false,
       "inconclusive": false,
       "infrastructureFailure": false,
-      "exactFingerprint": "2e00f4d3a7184be2f4691e3ed170027f45d14888e086d57f6e50c2b90baa18cb",
-      "replayReportSha256": "01488bae071bb53e1d2ce016174d354043509512ca10c821937a0e5edd0701ed"
+      "caseId": "df68aae93e53188a714a49d2c781df97b59e95a694c8596eaf2ce212c0bb539c",
+      "exactFingerprint": "d4f4021a581a3dacd432aa85e97e602e586da371e9911b2b0757063e184923f3",
+      "classFingerprint": "d4f4021a581a3dacd432aa85e97e602e586da371e9911b2b0757063e184923f3",
+      "replayReportSha256": "d9ba482e97b95b960c22bc0a7e496d794389a5c2200b7cd4d0cd906683097db0",
+      "manifestSha256": "149c95e1bee828242041544f3c28cebe82341276fb42da63d76b602f753fa5b2"
     }
   ],
-  "claimBoundary": "The campaign is a bounded stability and oracle-adequacy smoke. Seeded faults are test-owned and do not count as discovered compiler defects. This evidence does not establish equal-budget superiority, publication novelty or production certification."
+  "supersedes": {
+    "adapterVersion": "0.2.0",
+    "observationSchemaVersion": 3,
+    "faultIds": [
+      "SF-002-excluded-owner-activation",
+      "SF-003-extension-noninterference"
+    ],
+    "reason": "Those IDs conflicted with the canonical seeded-fault catalog, and their observations were mutated after execution rather than produced by runtime mechanisms. Their fingerprints remain historical and must not be mixed with this evidence."
+  },
+  "claimBoundary": "This is bounded Phase 3a stability and harness-adequacy evidence. The runtime faults are test-owned and do not count as discovered compiler defects. Lifecycle/session/concurrency schedules, schedule reduction, equal-budget superiority, publication novelty and production certification remain unverified."
 }
