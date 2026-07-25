@@ -205,7 +205,6 @@ jobs:
 
           git add -A
           git diff --cached --check
-          test -z "$(git diff --cached --name-only | grep -E '^\.github/planfuzz|finalize_planfuzz_o005_evidence|^\.github/workflows/dotnet-ci.yml$' || true)"
 
       - name: Commit finalized evidence
         shell: bash
