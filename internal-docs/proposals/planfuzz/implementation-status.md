@@ -192,10 +192,10 @@ Tests:                                       483 passed
 UniversalToolchain.Modules.Tests:            290 passed
 UniversalToolchain.Dialects.Tests:           588 passed
 UniversalToolchain.LanguageSdk.Tests:         53 passed
-UniversalToolchain.PlanFuzz.Tests:             39 passed
+UniversalToolchain.PlanFuzz.Tests:             41 passed
 UniversalToolchain.PlanFuzz.IntegrationTests:  10 passed
 --------------------------------------------------------
-Total:                                      1463 passed
+Total:                                      1465 passed
 Failed:                                        0
 Skipped:                                       0
 ```
