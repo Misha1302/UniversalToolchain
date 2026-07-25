@@ -150,59 +150,102 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Generate and finalize evidence
+      - name: Prepare evidence workspace
         shell: bash
         run: |
           set -Eeuo pipefail
-          test -f .github/planfuzz-o005-evidence-trigger || exit 0
+          test -f .github/planfuzz-o005-evidence-trigger
           cp Tools/finalize_planfuzz_o005_evidence.py "$RUNNER_TEMP/finalize_planfuzz_o005_evidence.py"
           git rm .github/planfuzz-o005-evidence-trigger Tools/finalize_planfuzz_o005_evidence.py
           git checkout origin/master -- .github/workflows/dotnet-ci.yml
-
           dotnet build UniversalToolchain/UniversalToolchain.PlanFuzz.Cli/UniversalToolchain.PlanFuzz.Cli.csproj -c Release
+          echo "EVIDENCE_ROOT=$RUNNER_TEMP/o005-evidence" >> "$GITHUB_ENV"
+          mkdir -p "$RUNNER_TEMP/o005-evidence"
+
+      - name: Generate clean campaign evidence
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          dotnet run --project UniversalToolchain/UniversalToolchain.PlanFuzz.Cli/UniversalToolchain.PlanFuzz.Cli.csproj -c Release --no-build -- \
+            campaign --adapter acme-pricing --seed 20260725 --cases 25 --repeat 2 --timeout-seconds 20 --output "$EVIDENCE_ROOT/clean"
+
+      - name: Generate SF-005 replay evidence
+        shell: bash
+        run: |
+          set -Eeuo pipefail
           cli=(dotnet run --project UniversalToolchain/UniversalToolchain.PlanFuzz.Cli/UniversalToolchain.PlanFuzz.Cli.csproj -c Release --no-build --)
-          root="$RUNNER_TEMP/o005-evidence"
-          mkdir -p "$root"
+          "${cli[@]}" generate --adapter acme-pricing --seed 20260725 --index 0 --fault SF-005-excluded-provider-activated --out "$EVIDENCE_ROOT/SF-005-case.json"
+          set +e
+          "${cli[@]}" replay --case "$EVIDENCE_ROOT/SF-005-case.json" --output "$EVIDENCE_ROOT/SF-005-replay" --repeat 3 --timeout-seconds 20
+          status=$?
+          set -e
+          test "$status" -eq 4
 
-          "${cli[@]}" campaign \
-            --adapter acme-pricing \
-            --seed 20260725 \
-            --cases 25 \
-            --repeat 2 \
-            --timeout-seconds 20 \
-            --output "$root/clean"
+      - name: Generate SF-011 replay evidence
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          cli=(dotnet run --project UniversalToolchain/UniversalToolchain.PlanFuzz.Cli/UniversalToolchain.PlanFuzz.Cli.csproj -c Release --no-build --)
+          "${cli[@]}" generate --adapter acme-pricing --seed 20260725 --index 0 --fault SF-011-extension-noninterference --out "$EVIDENCE_ROOT/SF-011-case.json"
+          set +e
+          "${cli[@]}" replay --case "$EVIDENCE_ROOT/SF-011-case.json" --output "$EVIDENCE_ROOT/SF-011-replay" --repeat 3 --timeout-seconds 20
+          status=$?
+          set -e
+          test "$status" -eq 4
 
-          for fault in SF-005-excluded-provider-activated SF-011-extension-noninterference; do
-            case_path="$root/$fault-case.json"
-            replay_path="$root/$fault-replay"
-            "${cli[@]}" generate \
-              --adapter acme-pricing \
-              --seed 20260725 \
-              --index 0 \
-              --fault "$fault" \
-              --out "$case_path"
-            set +e
-            "${cli[@]}" replay \
-              --case "$case_path" \
-              --output "$replay_path" \
-              --repeat 3 \
-              --timeout-seconds 20
-            status=$?
-            set -e
-            test "$status" -eq 4
-          done
+      - name: Upload raw O-005 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: o005-raw-evidence
+          path: ${{ runner.temp }}/o005-evidence
+          if-no-files-found: warn
+          retention-days: 3
 
+      - name: Finalize evidence and documentation
+        id: finalizer
+        shell: bash
+        run: |
+          set +e
           python3 "$RUNNER_TEMP/finalize_planfuzz_o005_evidence.py" \
-            --clean "$root/clean" \
-            --sf005 "$root/SF-005-excluded-provider-activated-replay" \
-            --sf011 "$root/SF-011-extension-noninterference-replay"
+            --clean "$EVIDENCE_ROOT/clean" \
+            --sf005 "$EVIDENCE_ROOT/SF-005-replay" \
+            --sf011 "$EVIDENCE_ROOT/SF-011-replay" \
+            > "$RUNNER_TEMP/o005-finalizer.log" 2>&1
+          status=$?
+          cat "$RUNNER_TEMP/o005-finalizer.log"
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          exit 0
 
-          npm ci --no-audit --no-fund
+      - name: Upload O-005 finalizer diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: o005-finalizer-diagnostics
+          path: ${{ runner.temp }}/o005-finalizer.log
+          if-no-files-found: warn
+          retention-days: 3
+
+      - name: Enforce finalizer result
+        shell: bash
+        run: exit "${{ steps.finalizer.outputs.status }}"
+
+      - name: Install docs dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Validate finalized documentation
+        shell: bash
+        run: |
+          set -Eeuo pipefail
           npm run docs:status
           npm run docs:links
           npm run docs:build
           python3 .github/scripts/run-markdown-bash-blocks.py
 
+      - name: Stage finalized evidence
+        shell: bash
+        run: |
+          set -Eeuo pipefail
           git add -A
           git diff --cached --check
 
