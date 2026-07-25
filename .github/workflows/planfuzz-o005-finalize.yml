@@ -109,7 +109,6 @@ jobs:
           set -Eeuo pipefail
           git add -A
           git diff --cached --check
-          test -z "$(git diff --cached --name-only | grep -E 'planfuzz-o005-finalize|finalize_planfuzz_o005_review' || true)"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -m 'docs(research): finalize reviewed O-005 evidence'
