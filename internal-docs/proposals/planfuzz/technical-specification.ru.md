@@ -844,9 +844,14 @@ public sealed record NormalizedObservation(
 
 ## 16.2. Surface/owner evidence contract
 
-Текущий observation schema — v4. Surface evidence contract v2 разделяет semantic surface IDs и runtime owner IDs:
+Текущий observation schema — v5. Surface evidence contract v3 разделяет semantic surface IDs и runtime owner IDs и явно связывает каждый independent extension с обоими доменами:
 
 ```csharp
+public sealed record IndependentExtensionEvidence(
+    string ExtensionId,
+    IReadOnlyList<string> SurfaceIds,
+    IReadOnlyList<string> OwnerIds);
+
 public sealed record SurfaceEvidence(
     int EvidenceContractVersion,
     IReadOnlyList<string> SelectedSurfaceIds,
@@ -854,6 +859,7 @@ public sealed record SurfaceEvidence(
     IReadOnlyList<string> ExcludedOwnerIds,
     IReadOnlyList<string> DeclaredIndependentSurfaceIds,
     IReadOnlyList<string> DeclaredIndependentOwnerIds,
+    IReadOnlyList<IndependentExtensionEvidence> IndependentExtensions,
     IReadOnlyList<string> ActivatedOwnerIds,
     ActivationTraceStatus ActivationTraceStatus,
     string TraceKind,
@@ -868,7 +874,14 @@ public sealed record SurfaceEvidence(
 - activated owner должен быть selected либо explicitly excluded;
 - `Complete` требует непустого selected-owner set;
 - unknown evidence-contract version и unknown trace status rejected;
-- schema-v1..v3 остаются читаемыми для истории, но legacy surface evidence не может дать `Passed` текущим O-004/O-005.
+- extension IDs unique;
+- каждый independent surface/owner принадлежит ровно одному binding;
+- bindings покрывают declared-independent sets точно, без пропусков и лишних IDs;
+- schema-v1..v3 остаются читаемыми для истории;
+- observation schema владеет допустимой evidence version: schema-v4 принимает только evidence-v2 и не может объявить себя v3;
+- schema-v4/evidence-v2 остаётся пригодной для O-004, но не может дать `Passed` текущему O-005 без explicit bindings;
+- extension bindings сравниваются структурно по `ExtensionId`, `SurfaceIds` и `OwnerIds`; delimiter-concatenated synthetic identity запрещена;
+- adapter-controlled fingerprint fields и sequences кодируются однозначно через UTF-8 byte-length prefixes; `string.Join` не является допустимым identity contract.
 
 `ActivationTraceStatus` — typed enum: `Unsupported`, `Partial`, `Complete`. Boolean completeness больше не является текущим контрактом.
 
@@ -1097,18 +1110,33 @@ Violated > InfrastructureFailure > Inconclusive > NotApplicable > Passed
 
 ### Проверяет
 
-Добавление independent unused feature не меняет semantics и selected route для программы, которая feature не использует.
+Добавление одного independent unused extension не меняет semantics, selected route или фактически activated owners для программы, которая extension не использует.
 
 ### Preconditions
 
 - baseline/extension direction выводится из strict additive relation, а не из порядка variant IDs;
-- additions declared independently в surface и owner domains;
+- в selected surface и selected owner domains нет удалений и есть непустые additions;
+- additions точно совпадают с newly declared independent surface/owner IDs;
+- появляется ровно один новый `IndependentExtensionEvidence`, который связывает exact added surfaces и owners одним stable extension ID;
+- все прежние extension bindings сохраняются и сравниваются структурно, без строковой delimiter-кодировки;
+- `Extended.ExcludedOwnerIds = Baseline.ExcludedOwnerIds − AddedOwnerIds`; unrelated exclusion policy не меняется;
 - current complete traces use the same evidence contract and `traceKind`;
 - no override/shared slot conflict;
 - no global side effect;
 - source unchanged.
 
-Malformed, non-additive или неоднозначная пара является contract/infrastructure failure, а не тихим `NotApplicable`.
+Malformed, non-additive, policy-changing, unbound или неоднозначная пара является contract/infrastructure failure, а не тихим `NotApplicable`.
+
+Oracle не завершает evaluation на первом симптоме. Он детерминированно агрегирует:
+
+```text
+extension-owner activated
+route identity changed
+activated-owner set changed
+observable semantics changed
+```
+
+Exact fingerprint содержит все конкретные observed dimensions; class fingerprint сохраняет категории без concrete values. Оба material contracts используют однозначное length-prefixed encoding для dynamic fields и sequences. Activation-only и activation-plus-semantic-interference обязаны иметь разные exact fingerprints, чтобы replay/reduction не подменял исходный механизм более слабым.
 
 ---
 
@@ -1513,7 +1541,7 @@ Infrastructure failure не кешируется как semantic rejection.
 
 Historical Phase 3a artifacts that used `SF-002-excluded-owner-activation` and `SF-003-extension-noninterference` are superseded: those IDs conflict with this canonical table. They remain historical records only and their fingerprints must not be combined with current evidence.
 
-Seeded faults must execute inside test-owned package/runtime components and reach observations through normal instrumentation. Direct post-execution mutation of values, traces or owner sets does not satisfy mutation-adequacy evidence.
+Seeded faults must execute inside test-owned package/runtime components and reach observations through normal instrumentation. Direct post-execution mutation of values, traces or owner sets does not satisfy mutation-adequacy evidence. Multi-dimensional faults such as SF-011 must retain every observed violation dimension in the exact fingerprint; preserving only the first symptom is insufficient for replay/reduction identity.
 
 ## 24.3. Mutation score
 

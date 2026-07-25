@@ -194,9 +194,15 @@ public sealed class WistPlanFuzzAdapterTests
             ["contribution:excluded"],
             ["feature:extension"],
             ["contribution:extension"],
+            [
+                new PlanFuzzIndependentExtensionEvidence(
+                    "extension:test",
+                    ["feature:extension"],
+                    ["contribution:extension"])
+            ],
             ["contribution:active"],
             PlanFuzzActivationTraceStatus.Complete,
-            "test-trace-v2",
+            "test-trace-v3",
             "route:test");
         var observation = new PlanFuzzObservation(
             "case",
@@ -221,6 +227,9 @@ public sealed class WistPlanFuzzAdapterTests
             Assert.That(roundtripped.Surface!.SelectedSurfaceIds, Is.EqualTo(new[] { "feature:core", "feature:extension" }));
             Assert.That(roundtripped.Surface.ExcludedOwnerIds, Is.EqualTo(new[] { "contribution:excluded" }));
             Assert.That(roundtripped.Surface.ActivationTraceStatus, Is.EqualTo(PlanFuzzActivationTraceStatus.Complete));
+            Assert.That(roundtripped.Surface.IndependentExtensions.Single().ExtensionId, Is.EqualTo("extension:test"));
+            Assert.That(roundtripped.Surface.IndependentExtensions.Single().SurfaceIds, Is.EqualTo(new[] { "feature:extension" }));
+            Assert.That(roundtripped.Surface.IndependentExtensions.Single().OwnerIds, Is.EqualTo(new[] { "contribution:extension" }));
             Assert.That(roundtripped.Surface.RouteIdentity, Is.EqualTo("route:test"));
         });
     }
@@ -316,5 +325,4 @@ public sealed class WistPlanFuzzAdapterTests
             Assert.That(first.Select(static candidate => candidate.Program.SourceText), Does.Contain("(5 - 2)"));
         });
     }
-
 }

@@ -108,12 +108,12 @@ public sealed class AcmePlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzPro
             new(
                 "extension-noninterference.interpreter",
                 PlanFuzzOracleIds.ExtensionNoninterference,
-                2,
+                3,
                 ["baseline.interpreter", "independent-extension.interpreter"]),
             new(
                 "extension-noninterference.compiled",
                 PlanFuzzOracleIds.ExtensionNoninterference,
-                2,
+                3,
                 ["baseline.compiled", "independent-extension.compiled"]),
             new(
                 "canonical-lock.all",
@@ -164,7 +164,7 @@ public sealed class AcmePlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzPro
             oracleContracts.Add(new PlanFuzzOracleContract(
                 "extension-noninterference.seeded",
                 PlanFuzzOracleIds.ExtensionNoninterference,
-                2,
+                3,
                 ["baseline.interpreter", "seeded-extension-interference.interpreter"]));
         }
 
@@ -267,7 +267,9 @@ public sealed class AcmePlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzPro
             ? AcmeRuntimeFaultMode.ActivateExcludedOwner
             : StringComparer.Ordinal.Equals(variant.ConfigurationId, AcmePlanFuzzConstants.ExtensionInterferenceConfiguration)
                 ? AcmeRuntimeFaultMode.ExtensionInterference
-                : AcmeRuntimeFaultMode.None;
+                : StringComparer.Ordinal.Equals(variant.ConfigurationId, AcmePlanFuzzConstants.SurfaceEvidenceFailureConfiguration)
+                    ? AcmeRuntimeFaultMode.UnknownOwnerEvidence
+                    : AcmeRuntimeFaultMode.None;
         var activationTrace = new AcmeActivationTrace();
         var independentExtension = new AcmeIndependentExtensionRuntimeHook(activationTrace);
         var targetPackage = AcmePricingLanguagePackageFactory.Create(
@@ -300,6 +302,8 @@ public sealed class AcmePlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzPro
         }
 
         var planSnapshot = CreatePlanSnapshot(plan);
+        LanguageExecutionResult? executionResult = null;
+        Exception? executionException = null;
         try
         {
             var provider = LanguageRouteRuntimeAssembler.CreateProvider(
@@ -311,35 +315,45 @@ public sealed class AcmePlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzPro
                 independentExtension,
                 runtimeFaultMode);
             using var runtime = LanguageRuntime.Create(plan, recordingProvider);
-            var result = runtime.Run(new LanguageExecutionRequest(
+            executionResult = runtime.Run(new LanguageExecutionRequest(
                 testCase.Program.SourceText,
                 new BackendId(variant.BackendId)));
-            if (result.Value is not decimal decimalValue)
-            {
-                return PlanFuzzObservation.InfrastructureFailure(
-                    testCase.CaseId,
-                    variant,
-                    "value-type",
-                    $"Acme backend returned '{result.Value?.GetType().FullName ?? "null"}' instead of decimal.");
-            }
-            var surfaceSnapshot = CreateSurfaceSnapshot(
+        }
+        catch (Exception exception)
+        {
+            executionException = exception;
+        }
+
+        var traceStatus = executionException == null
+            ? PlanFuzzActivationTraceStatus.Complete
+            : PlanFuzzActivationTraceStatus.Partial;
+        PlanFuzzSurfaceSnapshot surfaceSnapshot;
+        try
+        {
+            surfaceSnapshot = CreateSurfaceSnapshot(
                 plan,
                 variant.BackendId,
                 includeIndependentExtension,
                 activationTrace.Snapshot(),
-                PlanFuzzActivationTraceStatus.Complete);
+                traceStatus);
+        }
+        catch (Exception evidenceException)
+        {
             return new PlanFuzzObservation(
                 testCase.CaseId,
                 variant.VariantId,
                 variant.BackendId,
-                PlanFuzzExecutionOutcome.Success,
-                PlanFuzzValueSnapshot.FromDecimal(decimalValue),
+                PlanFuzzExecutionOutcome.InfrastructureFailure,
                 null,
-                planSnapshot,
-                null,
-                surfaceSnapshot);
+                new PlanFuzzFailureSnapshot(
+                    evidenceException.GetType().FullName ?? evidenceException.GetType().Name,
+                    "observation",
+                    "surface-evidence",
+                    evidenceException.Message),
+                planSnapshot);
         }
-        catch (Exception exception)
+
+        if (executionException != null)
         {
             return new PlanFuzzObservation(
                 testCase.CaseId,
@@ -348,19 +362,43 @@ public sealed class AcmePlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzPro
                 PlanFuzzExecutionOutcome.ProgramFailure,
                 null,
                 new PlanFuzzFailureSnapshot(
-                    exception.GetType().FullName ?? exception.GetType().Name,
+                    executionException.GetType().FullName ?? executionException.GetType().Name,
                     "execution",
                     "exception",
-                    exception.Message),
+                    executionException.Message),
                 planSnapshot,
                 null,
-                CreateSurfaceSnapshot(
-                    plan,
-                    variant.BackendId,
-                    includeIndependentExtension,
-                    activationTrace.Snapshot(),
-                    PlanFuzzActivationTraceStatus.Partial));
+                surfaceSnapshot);
         }
+
+        if (executionResult!.Value is not decimal decimalValue)
+        {
+            return new PlanFuzzObservation(
+                testCase.CaseId,
+                variant.VariantId,
+                variant.BackendId,
+                PlanFuzzExecutionOutcome.InfrastructureFailure,
+                null,
+                new PlanFuzzFailureSnapshot(
+                    "value-type",
+                    "observation",
+                    "value-type",
+                    $"Acme backend returned '{executionResult.Value?.GetType().FullName ?? "null"}' instead of decimal."),
+                planSnapshot,
+                null,
+                surfaceSnapshot);
+        }
+
+        return new PlanFuzzObservation(
+            testCase.CaseId,
+            variant.VariantId,
+            variant.BackendId,
+            PlanFuzzExecutionOutcome.Success,
+            PlanFuzzValueSnapshot.FromDecimal(decimalValue),
+            null,
+            planSnapshot,
+            null,
+            surfaceSnapshot);
     }
 
     private void EnsureReductionSchema(PlanFuzzTestCase testCase)
@@ -437,6 +475,15 @@ public sealed class AcmePlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzPro
         string[] independentOwners = includeIndependentExtension
             ? [AcmeActivationTrace.SurfaceContribution(AcmePlanFuzzConstants.IndependentContributionId)]
             : [];
+        PlanFuzzIndependentExtensionEvidence[] independentExtensions = includeIndependentExtension
+            ?
+            [
+                new PlanFuzzIndependentExtensionEvidence(
+                    AcmePlanFuzzConstants.IndependentExtensionEvidenceId,
+                    independentSurfaces,
+                    independentOwners)
+            ]
+            : [];
         string[] excludedOwners = includeIndependentExtension
             ? []
             : [AcmeActivationTrace.SurfaceContribution(AcmePlanFuzzConstants.IndependentContributionId)];
@@ -448,9 +495,10 @@ public sealed class AcmePlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzPro
             excludedOwners,
             independentSurfaces,
             independentOwners,
+            independentExtensions,
             activatedOwnerIds,
             traceStatus,
-            traceKind: "observed-language-route-runtime-v2",
+            traceKind: "observed-language-route-runtime-v3",
             routeIdentity: CreateRouteIdentity(route, backendOwner.Contribution.Id));
     }
 

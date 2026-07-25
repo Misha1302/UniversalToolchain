@@ -27,7 +27,6 @@ internal sealed class AcmeActivationTrace
     public static string SurfaceContribution(string id) => $"contribution:{id}";
 }
 
-
 internal sealed class AcmeIndependentExtensionRuntimeHook
 {
     private readonly AcmeActivationTrace _trace;
@@ -55,7 +54,8 @@ internal enum AcmeRuntimeFaultMode
 {
     None,
     ActivateExcludedOwner,
-    ExtensionInterference
+    ExtensionInterference,
+    UnknownOwnerEvidence
 }
 
 internal sealed class AcmeRecordingRuntimeProvider : ILanguageRuntimeProvider, ILanguageRuntimePolicyValidator
@@ -121,6 +121,8 @@ internal sealed class AcmeRecordingRuntimeProvider : ILanguageRuntimeProvider, I
             _trace.RecordContribution(_runtimeContributionId.Value);
             if (_faultMode == AcmeRuntimeFaultMode.ActivateExcludedOwner)
                 _independentExtension.Activate();
+            else if (_faultMode == AcmeRuntimeFaultMode.UnknownOwnerEvidence)
+                _trace.RecordContribution(AcmePlanFuzzConstants.UnknownOwnerId);
 
             var result = _inner.Run(request);
             if (_faultMode != AcmeRuntimeFaultMode.ExtensionInterference)

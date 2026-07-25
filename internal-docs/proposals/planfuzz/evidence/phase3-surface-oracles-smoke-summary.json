@@ -1,15 +1,15 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "date": "2026-07-25",
-  "scope": "PlanFuzz Phase 3a surface-oracle contract hardening",
+  "scope": "PlanFuzz Phase 3a O-004/O-005 identity and adversarial review hardening",
   "adapter": {
     "id": "acme-pricing",
-    "version": "0.3.0",
-    "generatorSchemaVersion": "acme-pricing-generator-v3"
+    "version": "0.4.0",
+    "generatorSchemaVersion": "acme-pricing-generator-v4"
   },
-  "observationSchemaVersion": 4,
-  "surfaceEvidenceContractVersion": 2,
-  "traceKind": "observed-language-route-runtime-v2",
+  "observationSchemaVersion": 5,
+  "surfaceEvidenceContractVersion": 3,
+  "traceKind": "observed-language-route-runtime-v3",
   "cleanCampaign": {
     "seed": 20260725,
     "requestedCases": 25,
@@ -22,7 +22,7 @@
     "inconclusiveCases": 0,
     "infrastructureFailures": 0,
     "summarySha256": "6eabb0efeeabd81cd3c7b1a736aba85d9c603bca31a95f27389d5ae4e6ca49b9",
-    "manifestSha256": "103e81d9442dbe5a0701494bd6495729a08a08cc07c9d70dc9e14ee953ccc460"
+    "manifestSha256": "f2bcb1f29a66b40a64537937d4a0540fc2712358c4e16570a0810f5317de4db0"
   },
   "seededFaultReplays": [
     {
@@ -35,37 +35,55 @@
       "flaky": false,
       "inconclusive": false,
       "infrastructureFailure": false,
-      "caseId": "fb214ed1de78873106e1743b64156264bd84e8c510f3156972a92b17d90dff64",
-      "exactFingerprint": "bf57d3379510c29467b2081397bfafe1496ef6025273b1e7ef0c2f6ef571e78b",
-      "classFingerprint": "3690fb10fb77861254881caacd3192e7ab7d374d095fe579a0bd8108bc9ed84c",
-      "replayReportSha256": "ab62459222ee61f42dc96d37ec58ba5eb1ca77c60d19ccbd84a96c6897607a1d",
-      "manifestSha256": "ef33c6f994dd93738392d01835a3e46e9866a222df157995c3f3fa26b635ff8f"
+      "caseId": "affc1c006109fc58dfacbb9ecacad28882393055fab9cca62640a7d3030a02d0",
+      "exactFingerprint": "46c4fa3590782a3883b2d9834bee020abbd71b9b32549aab789b40f1c6fdff9d",
+      "classFingerprint": "965c5698dbe1e3e10abaa7f8f7db5b5f8ca86caece2da6ed3be51f9c9c124e7f",
+      "replayReportSha256": "daf85672bde090007a09b57ce14765e14e4d14694ec50dca70e205b0f781afdf",
+      "manifestSha256": "4ba504caa75f85659cdf0f156c2d9529f004ad0df736e3214b752302f3796e95"
     },
     {
       "faultId": "SF-011-extension-noninterference",
       "oracleId": "O-005-extension-noninterference",
-      "oracleVersion": 2,
-      "mechanism": "test-owned runtime provider invokes extension-owned interference logic that activates its owner and changes the result",
+      "oracleVersion": 3,
+      "mechanism": "test-owned runtime provider activates the bound extension owner and changes the result; O-005 exact identity aggregates both dimensions",
       "repeat": 3,
       "confirmedViolation": true,
       "flaky": false,
       "inconclusive": false,
       "infrastructureFailure": false,
-      "caseId": "df68aae93e53188a714a49d2c781df97b59e95a694c8596eaf2ce212c0bb539c",
-      "exactFingerprint": "d4f4021a581a3dacd432aa85e97e602e586da371e9911b2b0757063e184923f3",
-      "classFingerprint": "d4f4021a581a3dacd432aa85e97e602e586da371e9911b2b0757063e184923f3",
-      "replayReportSha256": "d9ba482e97b95b960c22bc0a7e496d794389a5c2200b7cd4d0cd906683097db0",
-      "manifestSha256": "149c95e1bee828242041544f3c28cebe82341276fb42da63d76b602f753fa5b2"
+      "caseId": "9f1fa434ea4cca2e1bccd39eac854000ed2ac9b025ad442c96817a48149e0566",
+      "exactFingerprint": "6a8d83564d8d6192e0db9c730da8eb29e2685acc35450c36860fae70967f5102",
+      "classFingerprint": "0476291f0e8795745041a4ef3da3112d882c31069a6197dcd732ad6ead9e6050",
+      "replayReportSha256": "addc4db533245979bea93f82cc7b0cef4cc6a3d379b3e3ad86a3a34474f70a20",
+      "manifestSha256": "bcbf031bb46c620de4741cee7d81ee215d8fd2cd8b44d28c078064a0920696dd"
     }
   ],
   "supersedes": {
-    "adapterVersion": "0.2.0",
-    "observationSchemaVersion": 3,
-    "faultIds": [
-      "SF-002-excluded-owner-activation",
-      "SF-003-extension-noninterference"
-    ],
-    "reason": "Those IDs conflicted with the canonical seeded-fault catalog, and their observations were mutated after execution rather than produced by runtime mechanisms. Their fingerprints remain historical and must not be mixed with this evidence."
+    "historicalMisnumberedEvidence": {
+      "adapterVersion": "0.2.0",
+      "observationSchemaVersion": 3,
+      "faultIds": [
+        "SF-002-excluded-owner-activation",
+        "SF-003-extension-noninterference"
+      ],
+      "reason": "Those IDs conflicted with the canonical seeded-fault catalog, and their observations were mutated after execution rather than produced by runtime mechanisms. Their fingerprints remain historical and must not be mixed with this evidence."
+    },
+    "schemaV4O005V2Evidence": {
+      "adapterVersion": "0.3.0",
+      "observationSchemaVersion": 4,
+      "surfaceEvidenceContractVersion": 2,
+      "oracleVersion": 2,
+      "sf011ExactFingerprint": "d4f4021a581a3dacd432aa85e97e602e586da371e9911b2b0757063e184923f3",
+      "reason": "O-005 v2 stopped at extension-owner activation and omitted simultaneous semantic interference from exact identity."
+    }
   },
-  "claimBoundary": "This is bounded Phase 3a stability and harness-adequacy evidence. The runtime faults are test-owned and do not count as discovered compiler defects. Lifecycle/session/concurrency schedules, schedule reduction, equal-budget superiority, publication novelty and production certification remain unverified."
+  "claimBoundary": "This is bounded Phase 3a stability and harness-identity evidence. The runtime faults are test-owned and do not count as discovered compiler defects. Lifecycle/session/concurrency schedules, schedule reduction, equal-budget superiority, publication novelty and production certification remain unverified.",
+  "reviewedImplementationHead": "bb36c3a237557c33bcf8a867817eb64694717ca0",
+  "adversarialReview": {
+    "schemaV4CannotClaimEvidenceContractV3": true,
+    "extensionBindingsComparedStructurally": true,
+    "delimiterDerivedBindingIdentityForbidden": true,
+    "fingerprintMaterialUsesLengthPrefixedEncoding": true,
+    "regressionTestsAdded": 4
+  }
 }
