@@ -2,6 +2,7 @@ using BasicCore.Capabilities;
 using BasicCore.Contracts;
 using BasicCore.Builtins;
 using BasicCore.Core;
+using BasicCore.Execution;
 using IntermediateRepresentationAbstractions;
 
 namespace BasicInterpreter;
@@ -47,9 +48,11 @@ internal sealed class InterpreterIntrinsicExecutor
         var targetTypes = GenericTypeResolver.GetParameterTypes(method, argumentTypes).ToList();
         for (var i = 0; i < args.Length; i++)
         {
-            if (args[i] == null || targetTypes[i] == args[i]!.GetType() || targetTypes[i].IsByRef)
+            if (targetTypes[i].IsByRef)
                 continue;
-            args[i] = ConvertValue(args[i]!, targetTypes[i]);
+            if (args[i] != null && targetTypes[i].IsInstanceOfType(args[i]))
+                continue;
+            args[i] = RuntimeValueConversion.Convert(args[i], targetTypes[i]);
         }
         method = GenericTypeResolver.MakeGenericMethod(method, targetTypes.ToArray());
 
@@ -75,12 +78,6 @@ internal sealed class InterpreterIntrinsicExecutor
             state.PushEvaluationValue(result, method.ReturnType);
     }
 
-    private static object ConvertValue(object value, Type targetType)
-    {
-        try { return Convert.ChangeType(value, targetType); }
-        catch { return value; }
-    }
-
     private static void ExecuteCallCSharpCtor(IntrinsicInvocation invocation, InterpreterState state)
     {
         var ctor = invocation.GetRequiredDataOperand<ConstructorInfo>(0);
@@ -90,7 +87,10 @@ internal sealed class InterpreterIntrinsicExecutor
         {
             if (state.EvaluationStackCount == 0)
                 Thrower.InvalidOpEx("Cannot call constructor: not enough arguments on the interpreter stack.");
-            args[i] = state.PopEvaluationValue().Value;
+            var value = state.PopEvaluationValue().Value;
+            args[i] = value != null && parameters[i].ParameterType.IsInstanceOfType(value)
+                ? value
+                : RuntimeValueConversion.Convert(value, parameters[i].ParameterType);
         }
         var instance = ctor.Invoke(args);
         state.PushEvaluationValue(instance.NotNull(), ctor.DeclaringType.NotNull());

@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
 using UniversalToolchain.Language.Abstractions;
 using UniversalToolchain.LanguageSdk;
@@ -24,6 +25,7 @@ public sealed class WistLanguageRuntimeProvider : ILanguageRuntimeProvider, ILan
         ArgumentNullException.ThrowIfNull(policy);
         ArgumentNullException.ThrowIfNull(options);
         ValidateCanonicalRoute(plan);
+        WistModuleSelection.ValidateCanonicalPackageProvenance(plan);
         if (policy.RequireDeterminism)
         {
             throw new InvalidOperationException(
@@ -41,6 +43,7 @@ public sealed class WistLanguageRuntimeProvider : ILanguageRuntimeProvider, ILan
         ArgumentNullException.ThrowIfNull(plan);
         ArgumentNullException.ThrowIfNull(options);
         ValidateCanonicalRoute(plan);
+        WistModuleSelection.ValidateCanonicalPackageProvenance(plan);
         return new WistLanguageRuntimeSession(plan, options);
     }
 
@@ -96,9 +99,38 @@ public sealed class WistLanguageRuntimeProvider : ILanguageRuntimeProvider, ILan
                         .Select(static diagnostic => $"[{diagnostic.Code}] {diagnostic.Message}"));
                 throw new InvalidOperationException($"Generated Wist dialect could not be composed:{Environment.NewLine}{details}");
             }
+            ValidateExactRuntimeSelection(plan, composition.RuntimeSelection as SelectedRuntimePlan);
             _host = workflow.CreateHost(
                 composition,
                 new WistRuntimeServiceOptions { AllowedAssemblies = options.AllowedAssemblies });
+        }
+
+
+        private static void ValidateExactRuntimeSelection(LanguagePlan plan, SelectedRuntimePlan? selectedRuntimePlan)
+        {
+            if (selectedRuntimePlan == null || !selectedRuntimePlan.IsResolved)
+                throw new InvalidOperationException("Generated Wist dialect did not produce a resolved runtime selection.");
+
+            var expectedModules = WistModuleSelection.GetModuleAliases(plan).ToHashSet(StringComparer.Ordinal);
+            var actualModules = selectedRuntimePlan.OrderedModules
+                .Select(static entry => entry.CanonicalAlias)
+                .ToHashSet(StringComparer.Ordinal);
+            if (!expectedModules.SetEquals(actualModules))
+            {
+                throw new InvalidOperationException(
+                    $"Wist runtime module selection differs from the verified language plan. " +
+                    $"Expected [{string.Join(", ", expectedModules.OrderBy(static x => x, StringComparer.Ordinal))}], " +
+                    $"actual [{string.Join(", ", actualModules.OrderBy(static x => x, StringComparer.Ordinal))}].");
+            }
+
+            var expectedBackends = WistModuleSelection.GetExpectedRuntimeBackendAliases(plan);
+            var actualBackends = selectedRuntimePlan.EnabledBackends
+                .Select(static entry => entry.CanonicalAlias)
+                .ToHashSet(StringComparer.Ordinal);
+            if (!expectedBackends.SetEquals(actualBackends))
+                throw new InvalidOperationException("Wist runtime backend selection differs from the verified language plan.");
+            if (selectedRuntimePlan.EnabledOptimizers.Count != 0)
+                throw new InvalidOperationException("The compatibility language plan did not select runtime optimizers, but the composed dialect did.");
         }
 
         public LanguageExecutionResult Run(LanguageExecutionRequest request)
@@ -114,7 +146,7 @@ public sealed class WistLanguageRuntimeProvider : ILanguageRuntimeProvider, ILan
 }
 
 #pragma warning disable CS0618
-[Obsolete("Use WistLanguageRuntimeProvider with LanguageRuntimeProviderRegistry.")]
+[Obsolete("[UTL-DEP-005] Use WistLanguageRuntimeProvider with LanguageRuntimeProviderRegistry. Removal is blocked by the shipped-preset parity gate.")]
 public sealed class WistLanguageRuntimePack : ILanguageRuntimePack, ILanguageRuntimePolicyValidator
 {
     private static readonly WistLanguageFeaturePackage FeaturePackage = new();

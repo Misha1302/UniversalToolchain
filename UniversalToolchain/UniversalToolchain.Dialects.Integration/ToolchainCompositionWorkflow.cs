@@ -43,10 +43,22 @@ public sealed class ToolchainCompositionWorkflow
         using var compiler = _compilerFactory.Create();
         var compiled = compiler.Compile(sourceText);
         var buildPlan = _buildPlanBuilder.Build(compiled);
+        return ComposeCompiled(sourceName, compiled, buildPlan);
+    }
+
+    public DialectFrameworkCompositionResult ComposeCompiled(
+        string sourceName,
+        DialectDefinitionSlice compiled,
+        DialectBuildPlan buildPlan)
+    {
+        if (string.IsNullOrWhiteSpace(sourceName))
+            Thrower.Argument(nameof(sourceName), "Source name must not be empty.");
+        compiled = compiled.ArgNotNull();
+        buildPlan = buildPlan.ArgNotNull();
+
         var semanticErrors = buildPlan.ValidationResult.Diagnostics
             .Where(static x => x.Severity == DialectDiagnosticSeverity.Error)
             .ToArray();
-
         if (!buildPlan.CanBuild)
             return new DialectFrameworkCompositionResult(sourceName, compiled, buildPlan, semanticErrors, []);
 

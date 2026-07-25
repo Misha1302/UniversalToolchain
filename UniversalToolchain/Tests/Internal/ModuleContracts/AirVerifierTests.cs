@@ -239,6 +239,50 @@ public sealed class AirVerifierTests
     }
 
     [Test]
+    public void StackVerifier_ExpectedDomainFailure_ReturnsUserDiagnostic()
+    {
+        var air = CreateIntrinsicAir(_backendOnlyIntrinsic);
+        var verifier = new AirVerifier(
+            new InstructionIntrinsicReader(),
+            new ThrowingStackProcessor(new InvalidOperationException("invalid user program")));
+        var table = CreateTable(includeBackendOnlySupport: true);
+        var selection = BackendCapabilitySelection.FromContracts(table, [_compilerCapability]);
+
+        var result = verifier.Verify(new AirVerificationRequest(
+            air,
+            table,
+            selection,
+            VerificationSeverityProfile.Strict));
+
+        Assert.That(result.Diagnostics.Single().Message, Does.Contain("invalid user program"));
+    }
+
+    [Test]
+    public void StackVerifier_UnexpectedImplementationFailure_PropagatesAsInternalFailure()
+    {
+        var air = CreateIntrinsicAir(_backendOnlyIntrinsic);
+        var verifier = new AirVerifier(
+            new InstructionIntrinsicReader(),
+            new ThrowingStackProcessor(new NullReferenceException("implementation defect")));
+        var table = CreateTable(includeBackendOnlySupport: true);
+        var selection = BackendCapabilitySelection.FromContracts(table, [_compilerCapability]);
+
+        var exception = Assert.Throws<InternalVerifierException>(() =>
+            verifier.Verify(new AirVerificationRequest(
+                air,
+                table,
+                selection,
+                VerificationSeverityProfile.Warn)));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(exception!.Verifier, Is.EqualTo("AirStackDisciplineVerifier"));
+            Assert.That(exception.InnerException, Is.TypeOf<NullReferenceException>());
+            Assert.That(exception.Message, Does.Contain("Internal verifier failure"));
+        });
+    }
+
+    [Test]
     public void Validate_WhenOptimizerEmitsUnsupportedIntrinsic_ReturnsLegalityDiagnostic()
     {
         var table = CreateTable(includeBackendOnlySupport: false);
@@ -299,6 +343,11 @@ public sealed class AirVerifierTests
                 ]))
             .Build();
     }
+    private sealed class ThrowingStackProcessor(Exception exception) : IIntrinsicTypeStackProcessor
+    {
+        public void Process(IntrinsicInvocation invocation, List<Type> stack) => throw exception;
+    }
+
     private sealed class BackendOnlyIntrinsicDescriptorProvider : IIntrinsicDescriptorProvider
     {
         public IReadOnlyList<IntrinsicSemanticDescriptor> GetDescriptors() =>

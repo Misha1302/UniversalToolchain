@@ -42,6 +42,7 @@ public sealed class LanguageRuntime : IDisposable, IAsyncDisposable
     {
         ArgumentNullException.ThrowIfNull(plan);
         ArgumentNullException.ThrowIfNull(provider);
+        LanguagePlanVerifier.Verify(plan);
         options ??= new LanguageRuntimeOptions();
 
         if (plan.RuntimeProvider == null || plan.RuntimeProviderContribution == null)
@@ -88,7 +89,7 @@ public sealed class LanguageRuntime : IDisposable, IAsyncDisposable
     }
 
 #pragma warning disable CS0618
-    [Obsolete("Use an ILanguageRuntimeProvider or LanguageRuntimeProviderRegistry.")]
+    [Obsolete("[UTL-DEP-004] Use an ILanguageRuntimeProvider or LanguageRuntimeProviderRegistry. Removal is blocked by the shipped-preset parity gate.")]
     public static LanguageRuntime Create(
         LanguagePlan plan,
         ILanguageRuntimePack runtimePack,

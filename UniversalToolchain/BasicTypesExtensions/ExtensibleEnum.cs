@@ -1,47 +1,33 @@
 namespace BasicTypesExtensions;
 
-/// <typeparam name="TTag">Tag ('name') of your enum. LexemeTag or NodeTag, for example</typeparam>
-public class ExtensibleEnum<TTag> : IEquatable<ExtensibleEnum<TTag>>
+/// <typeparam name="TTag">Tag ('name') of your enum. LexemeTag or NodeTag, for example.</typeparam>
+public sealed class ExtensibleEnum<TTag> : IEquatable<ExtensibleEnum<TTag>>
 {
-    private readonly int _value;
+    private readonly string _name;
 
-    internal ExtensibleEnum(int value)
+    internal ExtensibleEnum(string name)
     {
-        Thrower.AssertAlways(value >= 0);
-        _value = value;
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Extensible enum identity must not be empty.", nameof(name));
+        _name = name;
     }
 
-    public bool Equals(ExtensibleEnum<TTag>? other)
-    {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-        return _value == other._value;
-    }
+    public bool Equals(ExtensibleEnum<TTag>? other) =>
+        other != null && StringComparer.Ordinal.Equals(_name, other._name);
 
-    public static ExtensibleEnum<TTag> Get(string name) => EnumGenerator.Instance<TTag>().Get<TTag>(name);
+    public static ExtensibleEnum<TTag> Get(string name) => new(name);
 
-    public static ExtensibleEnum<TTag> CreateOrGet(string name) => EnumGenerator.Instance<TTag>().CreateOrGet<TTag>(name);
+    public static ExtensibleEnum<TTag> CreateOrGet(string name) => new(name);
 
-    public override string ToString() => EnumGenerator.Instance<TTag>().GetName(_value);
+    public override string ToString() => _name;
 
-    public override bool Equals(object? obj)
-    {
-        if (obj is null) return false;
-        if (ReferenceEquals(this, obj)) return true;
-        if (obj.GetType() != GetType()) return false;
-        return Equals((ExtensibleEnum<TTag>)obj);
-    }
+    public override bool Equals(object? obj) => obj is ExtensibleEnum<TTag> other && Equals(other);
 
-    public static bool operator ==(ExtensibleEnum<TTag>? lhs, ExtensibleEnum<TTag>? rhs)
-    {
-        if (lhs is null && rhs is null) return true;
-        if (lhs is null || rhs is null) return false;
-        return lhs.Equals(rhs);
-    }
+    public static bool operator ==(ExtensibleEnum<TTag>? lhs, ExtensibleEnum<TTag>? rhs) => Equals(lhs, rhs);
 
-    public static bool operator !=(ExtensibleEnum<TTag>? lhs, ExtensibleEnum<TTag>? rhs) => !(lhs == rhs);
+    public static bool operator !=(ExtensibleEnum<TTag>? lhs, ExtensibleEnum<TTag>? rhs) => !Equals(lhs, rhs);
 
-    public override int GetHashCode() => _value;
+    public override int GetHashCode() => StringComparer.Ordinal.GetHashCode(_name);
 
-    public string GetName() => EnumGenerator.Instance<TTag>().GetName(_value);
+    public string GetName() => _name;
 }

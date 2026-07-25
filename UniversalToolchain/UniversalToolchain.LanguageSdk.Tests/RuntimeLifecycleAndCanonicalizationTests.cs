@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Security.Cryptography;
 using UniversalToolchain.FeatureSdk;
 using UniversalToolchain.Language.Abstractions;
@@ -30,6 +31,134 @@ public sealed class RuntimeLifecycleAndCanonicalizationTests
             Assert.That(firstValue, Is.EqualTo(1));
             Assert.That(secondValue, Is.EqualTo(1));
         });
+    }
+
+    [Test]
+    public async Task ReentrantDispose_FailsImmediatelyWithoutDeadlock()
+    {
+        LanguageRuntime? runtime = null;
+        var fixture = CreateLifecycleFixture(
+            _ => new CallbackTransformer(
+                "lifecycle.parse",
+                StandardLanguageArtifactKinds.SourceText,
+                LifecycleSyntax,
+                () => runtime!.Dispose()));
+        runtime = LanguageRuntime.Create(fixture.Plan, new ILanguageRouteComponentSource[] { fixture.Package });
+
+        var runTask = Task.Run(() => runtime.Run(new LanguageExecutionRequest("ignored", LifecycleBackend)));
+        var completed = await Task.WhenAny(runTask, Task.Delay(TimeSpan.FromSeconds(3)));
+
+        Assert.That(completed, Is.SameAs(runTask), "Reentrant disposal must not self-deadlock.");
+        var exception = Assert.ThrowsAsync<InvalidOperationException>(async () => await runTask);
+        Assert.That(exception!.Message, Does.Contain("currently owns one of its operation leases"));
+
+        runtime.Dispose();
+    }
+
+    [Test]
+    public async Task ExternalConcurrentDispose_WaitsForInFlightOperationAndRejectsNewOperations()
+    {
+        using var entered = new ManualResetEventSlim();
+        using var release = new ManualResetEventSlim();
+        var fixture = CreateLifecycleFixture(
+            _ => new BlockingTransformer(
+                "lifecycle.parse",
+                StandardLanguageArtifactKinds.SourceText,
+                LifecycleSyntax,
+                entered,
+                release));
+        var runtime = LanguageRuntime.Create(fixture.Plan, new ILanguageRouteComponentSource[] { fixture.Package });
+        var runTask = Task.Run(() => runtime.Run(new LanguageExecutionRequest("ignored", LifecycleBackend)));
+        Assert.That(entered.Wait(TimeSpan.FromSeconds(3)), Is.True);
+
+        var disposeTask = Task.Run(runtime.Dispose);
+        Assert.That(disposeTask.Wait(TimeSpan.FromMilliseconds(100)), Is.False);
+        Assert.Throws<ObjectDisposedException>(() =>
+            runtime.Run(new LanguageExecutionRequest("ignored", LifecycleBackend)));
+
+        release.Set();
+        await Task.WhenAll(runTask, disposeTask).WaitAsync(TimeSpan.FromSeconds(3));
+        Assert.That(runTask.Result.Value, Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task ConcurrentDispose_BoundedStressRemainsDeterministic()
+    {
+        const int iterations = 32;
+        for (var iteration = 0; iteration < iterations; iteration++)
+        {
+            using var entered = new ManualResetEventSlim();
+            using var release = new ManualResetEventSlim();
+            var fixture = CreateLifecycleFixture(
+                _ => new BlockingTransformer(
+                    "lifecycle.parse",
+                    StandardLanguageArtifactKinds.SourceText,
+                    LifecycleSyntax,
+                    entered,
+                    release));
+            var runtime = LanguageRuntime.Create(fixture.Plan, new ILanguageRouteComponentSource[] { fixture.Package });
+            var runTask = Task.Run(() => runtime.Run(new LanguageExecutionRequest("ignored", LifecycleBackend)));
+            Assert.That(entered.Wait(TimeSpan.FromSeconds(1)), Is.True, $"Iteration {iteration} did not enter the operation.");
+
+            var disposeTask = Task.Run(runtime.Dispose);
+            await Task.Delay(5);
+            Assert.That(disposeTask.IsCompleted, Is.False, $"Iteration {iteration} disposed before the lease was released.");
+            Assert.Throws<ObjectDisposedException>(() =>
+                runtime.Run(new LanguageExecutionRequest("ignored", LifecycleBackend)));
+
+            release.Set();
+            await Task.WhenAll(runTask, disposeTask).WaitAsync(TimeSpan.FromSeconds(1));
+            Assert.That(runTask.Result.Value, Is.EqualTo(1));
+        }
+    }
+
+    [Test]
+    public void LanguagePlan_HasNoPublicConstructor_AndVerifierDetectsHashTampering()
+    {
+        var plan = CreatePlanForPackage(CreateCanonicalPackage());
+        var backingField = typeof(LanguagePlan).GetField("<PlanHash>k__BackingField", BindingFlags.Instance | BindingFlags.NonPublic);
+
+        Assert.That(typeof(LanguagePlan).GetConstructors(BindingFlags.Instance | BindingFlags.Public), Is.Empty);
+        Assert.That(backingField, Is.Not.Null);
+        backingField!.SetValue(plan, new string('0', 64));
+
+        Assert.Throws<LanguagePlanVerificationException>(() => LanguagePlanVerifier.Verify(plan));
+    }
+
+    [Test]
+    public void PlanHash_IsIndependentOfFeatureAndBackendInsertionOrder()
+    {
+        var package = LanguagePackageBuilder.Create("Canonical.Order", "1")
+            .AddFeature("canonical.a", feature => feature.AddTransformer(
+                "canonical.parse",
+                LanguageSlots.FrontendParser,
+                StandardLanguageArtifactKinds.SourceText,
+                LifecycleSyntax,
+                static (source, _) => int.Parse(source),
+                SafeTraits))
+            .AddFeature("canonical.b", feature => feature.AddPass(
+                "canonical.pass",
+                LanguageSlots.Optimizers,
+                LifecycleSyntax,
+                static (value, _) => value,
+                SafeTraits))
+            .AddBackend(LifecycleBackend.Value, "canonical.backend", LifecycleSyntax, static (value, _) => value, SafeTraits)
+            .UseRouteRuntime("canonical.runtime", "1")
+            .Build();
+        var registry = new LanguagePackageRegistry().AddPackage(package);
+        var compiler = new LanguageCompiler(registry);
+        var first = compiler.Compile(LanguageDefinitionBuilder.Create("Canonical.Order", "1")
+            .UseFeature("canonical.a").UseFeature("canonical.b")
+            .EnableBackend(LifecycleBackend)
+            .UseRuntimeProvider("canonical.runtime", "1")
+            .Build()).GetRequiredPlan();
+        var second = compiler.Compile(LanguageDefinitionBuilder.Create("Canonical.Order", "1")
+            .UseFeature("canonical.b").UseFeature("canonical.a")
+            .EnableBackend(LifecycleBackend)
+            .UseRuntimeProvider("canonical.runtime", "1")
+            .Build()).GetRequiredPlan();
+
+        Assert.That(second.PlanHash, Is.EqualTo(first.PlanHash));
     }
 
     [Test]
@@ -313,6 +442,45 @@ public sealed class RuntimeLifecycleAndCanonicalizationTests
     }
 
     private sealed record LifecycleFixture(AuthoredLanguagePackage Package, LanguagePlan Plan);
+
+    private sealed class CallbackTransformer(
+        string contributionId,
+        LanguageArtifactKind<string> source,
+        LanguageArtifactKind<int> target,
+        Action callback) : ILanguageArtifactTransformer<string, int>
+    {
+        public LanguageContributionId ContributionId { get; } = new(contributionId);
+        public LanguageArtifactKind<string> TypedSourceKind { get; } = source;
+        public LanguageArtifactKind<int> TypedTargetKind { get; } = target;
+        public LanguageRuntimeComponentTraits TypedTraits => SafeTraits;
+
+        public int Transform(string value, LanguageArtifactTransformationContext context)
+        {
+            callback();
+            return 1;
+        }
+    }
+
+    private sealed class BlockingTransformer(
+        string contributionId,
+        LanguageArtifactKind<string> source,
+        LanguageArtifactKind<int> target,
+        ManualResetEventSlim entered,
+        ManualResetEventSlim release) : ILanguageArtifactTransformer<string, int>
+    {
+        public LanguageContributionId ContributionId { get; } = new(contributionId);
+        public LanguageArtifactKind<string> TypedSourceKind { get; } = source;
+        public LanguageArtifactKind<int> TypedTargetKind { get; } = target;
+        public LanguageRuntimeComponentTraits TypedTraits => SafeTraits;
+
+        public int Transform(string value, LanguageArtifactTransformationContext context)
+        {
+            entered.Set();
+            if (!release.Wait(TimeSpan.FromSeconds(3)))
+                throw new TimeoutException("Test operation release was not signalled.");
+            return 1;
+        }
+    }
 
     private sealed class CountingTransformer(
         string contributionId,

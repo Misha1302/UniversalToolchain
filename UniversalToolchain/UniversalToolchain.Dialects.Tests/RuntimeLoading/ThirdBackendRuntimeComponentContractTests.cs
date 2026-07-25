@@ -72,7 +72,7 @@ public sealed class ThirdBackendRuntimeComponentContractTests
             new IntrinsicSemanticBootstrapPreProviderValidator(),
             new IntrinsicSemanticBootstrapRuntimeValidator(),
             ModuleContractPipelineProfiles.Warn,
-            NullModuleContractDiagnosticSink.Instance);
+            new InMemoryModuleContractDiagnosticSink());
 
         var serviceProvider = factory.Create(ConfigurationFor(backendEntry));
         try

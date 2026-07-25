@@ -107,11 +107,20 @@ internal sealed class AirStackDisciplineVerifier
             {
                 SimulateInstruction(instruction, stack, instructionIndex, block.Id, severity, diagnostics);
             }
-            catch (Exception exception)
+            catch (AirVerificationDomainException exception)
             {
                 diagnostics.Add(CreateDiagnostic(
                     severity,
                     $"AIR instruction {instructionIndex} in block '{block.Id}' violates stack discipline: {exception.Message}"));
+            }
+            catch (Exception exception)
+            {
+                throw new InternalVerifierException(
+                    nameof(AirStackDisciplineVerifier),
+                    "stack simulation",
+                    instructionIndex,
+                    block.Id.ToString(),
+                    exception);
             }
 
             if (diagnostics.Count != diagnosticsBefore)
@@ -162,12 +171,19 @@ internal sealed class AirStackDisciplineVerifier
                 return;
             case UOpCode.Intrinsic:
                 if (!_intrinsicReader.TryRead(instruction, out var invocation))
-                    throw new InvalidOperationException("Intrinsic instruction does not contain a canonical typed invocation.");
+                    throw new AirVerificationDomainException("Intrinsic instruction does not contain a canonical typed invocation.");
 
-                _intrinsicTypeStackProcessor.Process(invocation, stack);
+                try
+                {
+                    _intrinsicTypeStackProcessor.Process(invocation, stack);
+                }
+                catch (Exception exception) when (exception is InvalidOperationException or ArgumentException)
+                {
+                    throw new AirVerificationDomainException(exception.Message, exception);
+                }
                 return;
             default:
-                throw new InvalidOperationException($"Unknown AIR opcode '{instruction.UOpCode}'.");
+                throw new AirVerificationDomainException($"Unknown AIR opcode '{instruction.UOpCode}'.");
         }
     }
 

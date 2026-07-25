@@ -8,18 +8,12 @@ internal static class WistLegacyDialectAdapter
     public static string BuildDialectText(LanguagePlan plan)
     {
         ArgumentNullException.ThrowIfNull(plan);
-        var aliases = plan.Contributions
-            .Select(static x => x.Contribution.Metadata.TryGetValue("wist.moduleAlias", out var alias) ? alias : null)
-            .Where(static x => !string.IsNullOrWhiteSpace(x))
-            .Cast<string>()
-            .Distinct(StringComparer.Ordinal)
-            .OrderBy(static x => x, StringComparer.Ordinal)
-            .ToArray();
-        if (aliases.Length == 0)
-            throw new InvalidOperationException("The language plan contains no Wist module contributions.");
+        var aliases = WistModuleSelection.GetModuleAliases(plan);
+        if (aliases.Count == 0)
+            throw new InvalidOperationException("The language plan contains no canonical Wist module contributions.");
 
         var name = SanitizeDialectName(plan.Definition.Id.Value);
-        var backends = string.Join(",", plan.Definition.Backends.Select(static x => x.Value).OrderBy(static x => x, StringComparer.Ordinal));
+        var backends = string.Join(",", WistModuleSelection.GetExpectedRuntimeBackendAliases(plan).OrderBy(static x => x, StringComparer.Ordinal));
         return $"dialect {name}{Environment.NewLine}use {string.Join(",", aliases)}{Environment.NewLine}backend {backends}{Environment.NewLine}";
     }
 

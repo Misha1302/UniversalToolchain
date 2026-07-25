@@ -1,4 +1,5 @@
 using System.Reflection;
+using UniversalToolchain.ModuleContracts;
 using UniversalToolchain.Ssa.Optimization;
 
 namespace UniversalToolchain.Dialects.Wist;
@@ -22,4 +23,10 @@ public sealed class WistRuntimeServiceOptions
     /// Gets the report sink used by the host facade to observe the actual SSA route.
     /// </summary>
     public ISsaRouteReportSink SsaReportSink { get; init; } = NullSsaRouteReportSink.Instance;
+
+    /// <summary>
+    /// Gets an execution-scoped module-contract verification override. When omitted, the host-level
+    /// pipeline options and diagnostic sink registered with the dialect service provider are used.
+    /// </summary>
+    public ModuleContractVerificationOptions? ModuleContracts { get; init; }
 }

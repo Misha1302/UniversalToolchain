@@ -129,7 +129,7 @@ public sealed class StrictReplayTests
             Assert.That(observations.Select(static observation => observation.Surface?.ActivationTraceStatus),
                 Is.All.EqualTo(PlanFuzzActivationTraceStatus.Complete));
             Assert.That(observations.Select(static observation => observation.Surface?.TraceKind),
-                Is.All.EqualTo("observed-language-route-runtime-v3"));
+                Is.All.EqualTo("observed-language-route-runtime-v2"));
             Assert.That(observations.Select(static observation => observation.Surface?.ActivatedOwnerIds),
                 Has.All.Contains(independentOwner));
         });
@@ -145,62 +145,10 @@ public sealed class StrictReplayTests
             {
                 Assert.That(observations.Select(static observation => observation.Surface?.DeclaredIndependentOwnerIds),
                     Has.All.Contains(independentOwner));
-                Assert.That(observations.Select(static observation => observation.Surface?.IndependentExtensions.Single().OwnerIds),
-                    Has.All.Contains(independentOwner));
                 Assert.That(observations.Select(static observation => observation.Value?.CanonicalValue)
                     .Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1));
             });
         }
-    }
-
-    [Test]
-    public async Task ExtensionInterferenceFingerprintContainsActivationAndSemanticDimensions()
-    {
-        var casePath = await GenerateCaseAsync(AcmePlanFuzzConstants.ExtensionInterferenceFault);
-        var output = Path.Combine(_temporaryDirectory, "surface-fault-identity");
-        var exitCode = await PlanFuzzCommandHost.RunAsync(
-        [
-            "replay", "--case", casePath, "--output", output,
-            "--repeat", "3", "--timeout-seconds", "20"
-        ]);
-
-        var materials = new List<string>();
-        for (var attempt = 1; attempt <= 3; attempt++)
-        {
-            var attemptDirectory = Path.Combine(
-                output,
-                "attempts",
-                attempt.ToString("D3", CultureInfo.InvariantCulture));
-            var baseline = PlanFuzzObservationSerializer.Deserialize(File.ReadAllText(Path.Combine(
-                attemptDirectory,
-                "baseline.interpreter.observation.json")));
-            var seeded = PlanFuzzObservationSerializer.Deserialize(File.ReadAllText(Path.Combine(
-                attemptDirectory,
-                "seeded-extension-interference.interpreter.observation.json")));
-            using var oracleDocument = JsonDocument.Parse(File.ReadAllText(Path.Combine(
-                attemptDirectory,
-                "oracle-results.json")));
-            var result = oracleDocument.RootElement.GetProperty("results").EnumerateArray()
-                .Single(item => StringComparer.Ordinal.Equals(
-                    item.GetProperty("contractId").GetString(),
-                    "extension-noninterference.seeded"));
-            materials.Add(result.GetProperty("fingerprintMaterial").GetString()!);
-
-            Assert.Multiple(() =>
-            {
-                Assert.That(seeded.Value?.CanonicalValue, Is.Not.EqualTo(baseline.Value?.CanonicalValue));
-                Assert.That(result.GetProperty("oracleVersion").GetInt32(), Is.EqualTo(3));
-                Assert.That(result.GetProperty("status").GetString(), Is.EqualTo(nameof(PlanFuzzOracleStatus.Violated)));
-                Assert.That(result.GetProperty("fingerprintMaterial").GetString(), Does.Contain("extension-activated:"));
-                Assert.That(result.GetProperty("fingerprintMaterial").GetString(), Does.Contain("behavior:"));
-            });
-        }
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(exitCode, Is.EqualTo(PlanFuzzExitCodes.Finding));
-            Assert.That(materials.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1));
-        });
     }
 
     [Test]

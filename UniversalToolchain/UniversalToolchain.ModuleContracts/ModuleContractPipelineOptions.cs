@@ -2,6 +2,8 @@ namespace UniversalToolchain.ModuleContracts;
 
 public sealed record ModuleContractPipelineOptions
 {
+    public bool Enabled { get; init; } = true;
+
     public required VerificationSeverityProfile BytecodeProfile { get; init; }
 
     public required VerificationSeverityProfile AirProfile { get; init; }

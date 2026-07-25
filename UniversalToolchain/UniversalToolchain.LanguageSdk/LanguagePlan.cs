@@ -4,17 +4,39 @@ using UniversalToolchain.Language.Abstractions;
 
 namespace UniversalToolchain.LanguageSdk;
 
-public sealed record ResolvedLanguageFeature(
-    LanguagePackageId PackageId,
-    LanguageVersion PackageVersion,
-    string ManifestSha256,
-    LanguageFeatureDescriptor Feature);
+public sealed record ResolvedLanguageFeature
+{
+    internal ResolvedLanguageFeature(
+        LanguagePackageRegistrationIdentity packageIdentity,
+        LanguageFeatureDescriptor feature)
+    {
+        PackageIdentity = packageIdentity ?? throw new ArgumentNullException(nameof(packageIdentity));
+        Feature = feature ?? throw new ArgumentNullException(nameof(feature));
+    }
 
-public sealed record ResolvedLanguageContribution(
-    LanguagePackageId PackageId,
-    LanguageVersion PackageVersion,
-    string ManifestSha256,
-    LanguageContributionDescriptor Contribution);
+    public LanguagePackageRegistrationIdentity PackageIdentity { get; }
+    public LanguagePackageId PackageId => PackageIdentity.PackageId;
+    public LanguageVersion PackageVersion => PackageIdentity.PackageVersion;
+    public string ManifestSha256 => PackageIdentity.ManifestSha256;
+    public LanguageFeatureDescriptor Feature { get; }
+}
+
+public sealed record ResolvedLanguageContribution
+{
+    internal ResolvedLanguageContribution(
+        LanguagePackageRegistrationIdentity packageIdentity,
+        LanguageContributionDescriptor contribution)
+    {
+        PackageIdentity = packageIdentity ?? throw new ArgumentNullException(nameof(packageIdentity));
+        Contribution = contribution ?? throw new ArgumentNullException(nameof(contribution));
+    }
+
+    public LanguagePackageRegistrationIdentity PackageIdentity { get; }
+    public LanguagePackageId PackageId => PackageIdentity.PackageId;
+    public LanguageVersion PackageVersion => PackageIdentity.PackageVersion;
+    public string ManifestSha256 => PackageIdentity.ManifestSha256;
+    public LanguageContributionDescriptor Contribution { get; }
+}
 
 public sealed record LanguageArtifactRouteStep(
     LanguageContributionId ContributionId,
@@ -22,7 +44,7 @@ public sealed record LanguageArtifactRouteStep(
     LanguageArtifactContract TargetContract,
     int Cost)
 {
-    [Obsolete("Use typed LanguageArtifactContract values. Untyped route steps are supported only for fully legacy untyped pipelines.")]
+    [Obsolete("[UTL-DEP-007] Use typed LanguageArtifactContract values. Untyped route steps remain only behind the typed-route compatibility gate.")]
     public LanguageArtifactRouteStep(
         LanguageContributionId contributionId,
         LanguageArtifactKindId source,
@@ -62,7 +84,7 @@ public sealed class LanguageArtifactRoute
             throw new ArgumentException("Artifact route does not reach its declared target contract.", nameof(steps));
     }
 
-    [Obsolete("Use typed LanguageArtifactContract values. Untyped routes are supported only for fully legacy untyped pipelines.")]
+    [Obsolete("[UTL-DEP-008] Use typed LanguageArtifactContract values. Untyped routes remain only behind the typed-route compatibility gate.")]
     public LanguageArtifactRoute(
         BackendId backend,
         LanguageArtifactKindId source,
@@ -92,13 +114,12 @@ public sealed class LanguageArtifactRoute
 
 public sealed class LanguagePlan
 {
-    public LanguagePlan(
+    internal LanguagePlan(
         LanguageDefinition definition,
         IEnumerable<ResolvedLanguageFeature> features,
         IEnumerable<ResolvedLanguageContribution> contributions,
         ResolvedLanguageContribution? runtimeProviderContribution,
-        IEnumerable<LanguageArtifactRoute> routes,
-        string planHash)
+        IEnumerable<LanguageArtifactRoute> routes)
     {
         Definition = definition ?? throw new ArgumentNullException(nameof(definition));
         Features = new ReadOnlyCollection<ResolvedLanguageFeature>(features.ToList());
@@ -110,9 +131,6 @@ public sealed class LanguagePlan
         RuntimeProviderContribution = runtimeProviderContribution;
         Routes = new ReadOnlyDictionary<BackendId, LanguageArtifactRoute>(
             routes.ToDictionary(static x => x.Backend));
-        PlanHash = string.IsNullOrWhiteSpace(planHash)
-            ? throw new ArgumentException("Plan hash must not be empty.", nameof(planHash))
-            : planHash;
 
         if (runtimeProviderContribution != null)
         {
@@ -126,6 +144,14 @@ public sealed class LanguagePlan
         {
             throw new ArgumentException("An executable language plan requires a runtime provider contribution.", nameof(runtimeProviderContribution));
         }
+
+        PlanHash = LanguagePlanCanonicalizer.ComputeHash(
+            Definition,
+            Features,
+            Contributions,
+            RuntimeProviderContribution,
+            Routes.Values);
+        LanguagePlanVerifier.Verify(this);
 
         Summary = new LanguagePlanSummary(
             definition.Id,

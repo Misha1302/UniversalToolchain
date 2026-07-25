@@ -1,3 +1,5 @@
+using System.Reflection;
+
 namespace BasicCore.Execution;
 
 public sealed class ExecutionEnvironment : IExecutionEnvironment, IExternalBindingsLayoutProvider
@@ -60,21 +62,39 @@ public sealed class ExecutionEnvironment : IExecutionEnvironment, IExternalBindi
 
     private object CreateRuntimeProvider(Type providerType)
     {
-        var constructors = providerType.GetConstructors();
-        foreach (var constructor in constructors)
+        var supportedConstructors = providerType.GetConstructors()
+            .Where(static constructor => IsSupportedProviderConstructor(constructor.GetParameters()))
+            .OrderBy(static constructor => FormatConstructorSignature(constructor), StringComparer.Ordinal)
+            .ToArray();
+
+        if (supportedConstructors.Length == 0)
         {
-            var parameters = constructor.GetParameters();
-            if (parameters.Length == 1 && parameters[0].ParameterType == typeof(IRuntimeContextStore))
-                return constructor.Invoke([this]).NotNull();
-            if (parameters.Length == 1 && parameters[0].ParameterType == typeof(IExecutionEnvironment))
-                return constructor.Invoke([this]).NotNull();
+            return Thrower.InvalidOpEx<object>(
+                $"Runtime call provider '{providerType.FullName}' must expose exactly one supported public constructor: " +
+                "(), (IRuntimeContextStore), or (IExecutionEnvironment).");
         }
 
-        var parameterless = providerType.GetConstructor(Type.EmptyTypes);
-        if (parameterless != null)
-            return parameterless.Invoke(null).NotNull();
+        if (supportedConstructors.Length != 1)
+        {
+            return Thrower.InvalidOpEx<object>(
+                $"Runtime call provider '{providerType.FullName}' has ambiguous supported constructors: " +
+                $"{string.Join(", ", supportedConstructors.Select(FormatConstructorSignature))}. " +
+                "Expose exactly one supported constructor or use an explicit provider factory.");
+        }
 
-        return Thrower.InvalidOpEx<object>(
-            $"Runtime call provider '{providerType.FullName}' must expose either a parameterless constructor or a constructor that accepts IRuntimeContextStore.");
+        var constructor = supportedConstructors[0];
+        var parameters = constructor.GetParameters();
+        return parameters.Length == 0
+            ? constructor.Invoke(null).NotNull()
+            : constructor.Invoke([this]).NotNull();
     }
+
+    private static bool IsSupportedProviderConstructor(IReadOnlyList<ParameterInfo> parameters) =>
+        parameters.Count == 0 ||
+        parameters.Count == 1 &&
+        (parameters[0].ParameterType == typeof(IRuntimeContextStore) ||
+         parameters[0].ParameterType == typeof(IExecutionEnvironment));
+
+    private static string FormatConstructorSignature(ConstructorInfo constructor) =>
+        $"({string.Join(", ", constructor.GetParameters().Select(static parameter => parameter.ParameterType.Name))})";
 }

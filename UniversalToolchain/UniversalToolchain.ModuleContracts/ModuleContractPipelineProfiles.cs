@@ -37,4 +37,17 @@ public static class ModuleContractPipelineProfiles
         BackendPolicy = AirBackendPolicy.UniversalInterpreter,
         VerifyLegacyBytecodeOperationNames = false
     };
+
+    /// <summary>
+    /// Fail-closed verification severity while retaining the explicitly documented alpha legacy allowance.
+    /// New module packages should use StrictEnforced instead.
+    /// </summary>
+    public static ModuleContractPipelineOptions StrictLegacyCompatible => new()
+    {
+        BytecodeProfile = VerificationSeverityProfile.Strict,
+        AirProfile = VerificationSeverityProfile.Strict,
+        EnforcementPolicy = ModuleContractEnforcementPolicy.AllowUndeclared,
+        BackendPolicy = AirBackendPolicy.CapabilityGated,
+        VerifyLegacyBytecodeOperationNames = false
+    };
 }

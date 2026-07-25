@@ -11,6 +11,10 @@ public static class WistFeatureIds
     public static LanguageFeatureId Arithmetic { get; } = new("wist.arithmetic");
     public static LanguageFeatureId Identifiers { get; } = new("wist.identifiers");
     public static LanguageFeatureId Variables { get; } = new("wist.variables");
+    public static LanguageFeatureId Comparisons { get; } = new("wist.comparisons");
+    public static LanguageFeatureId BooleanLogic { get; } = new("wist.boolean-logic");
+    public static LanguageFeatureId ConditionalControlFlow { get; } = new("wist.conditional-control-flow");
+    /// <summary>Compatibility aggregate that activates comparisons, boolean logic and conditional control flow.</summary>
     public static LanguageFeatureId Conditions { get; } = new("wist.conditions");
 }
 
@@ -27,7 +31,11 @@ public static class WistContributionIds
     public static LanguageContributionId ArithmeticModule { get; } = new("wist.module.arithmetic");
     public static LanguageContributionId IdentifiersModule { get; } = new("wist.module.identifiers");
     public static LanguageContributionId VariablesModule { get; } = new("wist.module.variables");
-    public static LanguageContributionId ConditionsModule { get; } = new("wist.module.conditions");
+    public static LanguageContributionId ComparisonsModule { get; } = new("wist.module.comparisons");
+    public static LanguageContributionId BooleanLogicModule { get; } = new("wist.module.boolean-logic");
+    public static LanguageContributionId ConditionalControlFlowModule { get; } = new("wist.module.conditional-control-flow");
+    [Obsolete("[UTL-DEP-006] Use ComparisonsModule, BooleanLogicModule, or ConditionalControlFlowModule. Removal requires conditions split-feature parity.")]
+    public static LanguageContributionId ConditionsModule => ComparisonsModule;
 }
 
 public static class WistArtifactKinds
@@ -65,12 +73,19 @@ public sealed class WistLanguageFeaturePackage : ILanguageExtensionPackage
             Feature(WistFeatureIds.Arithmetic, WistContributionIds.ArithmeticModule, [WistFeatureIds.Numbers]),
             Feature(WistFeatureIds.Identifiers, WistContributionIds.IdentifiersModule, [WistFeatureIds.Scopes]),
             Feature(WistFeatureIds.Variables, WistContributionIds.VariablesModule, [WistFeatureIds.Identifiers, WistFeatureIds.Numbers]),
-            Feature(WistFeatureIds.Conditions, WistContributionIds.ConditionsModule, [WistFeatureIds.Arithmetic])
+            Feature(WistFeatureIds.Comparisons, WistContributionIds.ComparisonsModule, [WistFeatureIds.Arithmetic]),
+            Feature(WistFeatureIds.BooleanLogic, WistContributionIds.BooleanLogicModule, [WistFeatureIds.Comparisons]),
+            Feature(WistFeatureIds.ConditionalControlFlow, WistContributionIds.ConditionalControlFlowModule, [WistFeatureIds.BooleanLogic]),
+            Feature(
+                WistFeatureIds.Conditions,
+                [WistContributionIds.ComparisonsModule, WistContributionIds.BooleanLogicModule, WistContributionIds.ConditionalControlFlowModule],
+                [WistFeatureIds.Arithmetic])
         ],
         new Dictionary<string, string>
         {
             ["language"] = "Wist",
-            ["status"] = "reference-contribution-pack-alpha"
+            ["status"] = "wist-subset-alpha",
+            ["positioning"] = "Wist subset alpha; not a full replacement for shipped Wist presets"
         },
         [
             new LanguageContributionDescriptor(
@@ -134,17 +149,24 @@ public sealed class WistLanguageFeaturePackage : ILanguageExtensionPackage
             Module(WistContributionIds.ArithmeticModule, "Arithmetic"),
             Module(WistContributionIds.IdentifiersModule, "Identifier"),
             Module(WistContributionIds.VariablesModule, "Variables"),
-            Module(WistContributionIds.ConditionsModule, "ComparisonConditions")
+            Module(WistContributionIds.ComparisonsModule, "ComparisonConditions"),
+            Module(WistContributionIds.BooleanLogicModule, "BooleanConditions"),
+            Module(WistContributionIds.ConditionalControlFlowModule, "Conditions")
         ]);
 
     private static LanguageFeatureDescriptor Feature(
         LanguageFeatureId id,
         LanguageContributionId contribution,
+        IEnumerable<LanguageFeatureId>? requires = null) => Feature(id, [contribution], requires);
+
+    private static LanguageFeatureDescriptor Feature(
+        LanguageFeatureId id,
+        IEnumerable<LanguageContributionId> contributions,
         IEnumerable<LanguageFeatureId>? requires = null) => new(
             id,
             requires,
             supportedBackends: [new BackendId("cil"), new BackendId("interpreter")],
-            contributions: [contribution]);
+            contributions: contributions);
 
     private static LanguageContributionDescriptor Module(LanguageContributionId id, string moduleAlias) => new(
         id,

@@ -1,16 +1,18 @@
+using System.Collections.Frozen;
+
 namespace NativeMathModule;
 
 [AutoRegisterService]
 [ArithmeticModeCompatibility(ArithmeticMode.Native)]
 public class NativeArithmeticAstVisitor : IAstVisitor
 {
-    private static readonly Dictionary<string, string> _opToMethodName = new()
+    private static readonly FrozenDictionary<string, string> _opToMethodName = new Dictionary<string, string>
     {
         ["+"] = "Add",
         ["-"] = "Subtract",
         ["*"] = "Multiply",
         ["/"] = "Divide"
-    };
+    }.ToFrozenDictionary(StringComparer.Ordinal);
 
     public void TryVisit(BytecodeVisitorData data)
     {

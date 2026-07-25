@@ -43,7 +43,7 @@ public sealed record LanguageRuntimePolicy
     public static LanguageRuntimePolicy Default { get; } = new();
 }
 
-[Obsolete("Use LanguageRuntimeProviderReference. Runtime packs remain a compatibility surface for the alpha.")]
+[Obsolete("[UTL-DEP-001] Use LanguageRuntimeProviderReference. Removal is blocked by the shipped-preset parity gate.")]
 public sealed record LanguageRuntimePackReference(LanguagePackageId PackageId, LanguageVersion Version);
 
 public sealed record LanguageRuntimeProviderReference(

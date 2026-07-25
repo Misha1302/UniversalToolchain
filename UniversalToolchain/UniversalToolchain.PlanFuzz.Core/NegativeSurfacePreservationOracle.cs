@@ -23,39 +23,32 @@ public sealed class NegativeSurfacePreservationOracle : IPlanFuzzOracle
         {
             if (!context.TryGetObservation(variantId, out var observation))
             {
-                infrastructure.Add(PlanFuzzFingerprintEncoding.EncodeFields(variantId, "missing-observation"));
+                infrastructure.Add($"{variantId}:missing-observation");
                 continue;
             }
             if (observation.Outcome == PlanFuzzExecutionOutcome.InfrastructureFailure)
             {
-                infrastructure.Add(PlanFuzzFingerprintEncoding.EncodeFields(variantId, "infrastructure"));
+                infrastructure.Add($"{variantId}:infrastructure");
                 continue;
             }
             if (observation.Outcome == PlanFuzzExecutionOutcome.Timeout)
             {
-                inconclusive.Add(PlanFuzzFingerprintEncoding.EncodeFields(variantId, "timeout"));
+                inconclusive.Add($"{variantId}:timeout");
                 continue;
             }
             if (observation.Surface == null)
             {
-                inconclusive.Add(PlanFuzzFingerprintEncoding.EncodeFields(variantId, "missing-surface"));
+                inconclusive.Add($"{variantId}:missing-surface");
                 continue;
             }
-            if (observation.Surface.EvidenceContractVersion < PlanFuzzSurfaceSnapshot.MinimumNegativeSurfaceEvidenceContractVersion ||
-                observation.Surface.EvidenceContractVersion > PlanFuzzSurfaceSnapshot.CurrentEvidenceContractVersion)
+            if (observation.Surface.EvidenceContractVersion != PlanFuzzSurfaceSnapshot.CurrentEvidenceContractVersion)
             {
-                inconclusive.Add(PlanFuzzFingerprintEncoding.EncodeFields(
-                    variantId,
-                    "legacy-evidence",
-                    observation.Surface.EvidenceContractVersion.ToString(CultureInfo.InvariantCulture)));
+                inconclusive.Add($"{variantId}:legacy-evidence-v{observation.Surface.EvidenceContractVersion}");
                 continue;
             }
             if (observation.Surface.ActivationTraceStatus != PlanFuzzActivationTraceStatus.Complete)
             {
-                inconclusive.Add(PlanFuzzFingerprintEncoding.EncodeFields(
-                    variantId,
-                    observation.Surface.ActivationTraceStatus.ToString(),
-                    observation.Surface.TraceKind));
+                inconclusive.Add($"{variantId}:{observation.Surface.ActivationTraceStatus}:{observation.Surface.TraceKind}");
                 continue;
             }
             if (observation.Surface.ExcludedOwnerIds.Count == 0)
@@ -72,11 +65,8 @@ public sealed class NegativeSurfacePreservationOracle : IPlanFuzzOracle
 
         if (violations.Count != 0)
         {
-            var material = PlanFuzzFingerprintEncoding.EncodeSequence(violations.Select(static violation =>
-                PlanFuzzFingerprintEncoding.EncodeFields(
-                    violation.VariantId,
-                    violation.TraceKind,
-                    PlanFuzzFingerprintEncoding.EncodeSequence(violation.Owners))));
+            var material = string.Join('|', violations.Select(static violation =>
+                $"{violation.VariantId}:{violation.TraceKind}:{string.Join(',', violation.Owners)}"));
             var owners = violations.SelectMany(static violation => violation.Owners)
                 .Distinct(StringComparer.Ordinal)
                 .OrderBy(static owner => owner, StringComparer.Ordinal)
@@ -86,21 +76,19 @@ public sealed class NegativeSurfacePreservationOracle : IPlanFuzzOracle
                 PlanFuzzOracleStatus.Violated,
                 "One or more variants activated owner(s) explicitly excluded from their selected surface.",
                 material,
-                "excluded-owner-activated:" + PlanFuzzFingerprintEncoding.EncodeSequence(owners));
+                $"excluded-owner-activated:{string.Join(',', owners)}");
         }
 
         if (infrastructure.Count != 0)
         {
-            var material = PlanFuzzFingerprintEncoding.EncodeSequence(
-                infrastructure.OrderBy(static item => item, StringComparer.Ordinal));
+            var material = string.Join('|', infrastructure.OrderBy(static item => item, StringComparer.Ordinal));
             return Result(context, PlanFuzzOracleStatus.InfrastructureFailure, "Infrastructure evidence is missing for one or more negative-surface variants.", material);
         }
 
         if (inconclusive.Count != 0)
         {
-            var material = PlanFuzzFingerprintEncoding.EncodeSequence(
-                inconclusive.OrderBy(static item => item, StringComparer.Ordinal));
-            return Result(context, PlanFuzzOracleStatus.Inconclusive, "One or more variants lack complete owner-activation evidence.", material);
+            var material = string.Join('|', inconclusive.OrderBy(static item => item, StringComparer.Ordinal));
+            return Result(context, PlanFuzzOracleStatus.Inconclusive, "One or more variants lack current complete activation evidence.", material);
         }
 
         return evaluated == 0

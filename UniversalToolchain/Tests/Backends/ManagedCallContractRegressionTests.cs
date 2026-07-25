@@ -55,6 +55,51 @@ public sealed class ManagedCallContractRegressionTests
     }
 
     [Test]
+    public void ManagedCall_StringToIntegerConversion_HasBackendParity()
+    {
+        var method = typeof(ManagedCallContractRegressionTests)
+            .GetMethod(nameof(IdentityInt), BindingFlags.NonPublic | BindingFlags.Static)!;
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, ["42"]),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", method));
+
+        var interpreterResult = new InterpreterImpl().Execute(ir, new ExecutionEnvironment([]));
+        var output = new AbstractMethodsCompilerImpl().Compile(ir, new CompilationInput { SourceText = string.Empty });
+        var cilResult = new DynamicMethodExecutor().Execute(output, new ExecutionEnvironment([]));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(interpreterResult, Is.EqualTo(42));
+            Assert.That(cilResult, Is.EqualTo(42));
+        });
+    }
+
+    [TestCase("not-an-int", RuntimeValueConversionFailureKind.InvalidFormat)]
+    [TestCase("999999999999999999999999999", RuntimeValueConversionFailureKind.Overflow)]
+    public void ManagedCall_ConversionFailureKind_HasBackendParity(
+        string value,
+        RuntimeValueConversionFailureKind expectedKind)
+    {
+        var method = typeof(ManagedCallContractRegressionTests)
+            .GetMethod(nameof(IdentityInt), BindingFlags.NonPublic | BindingFlags.Static)!;
+        var ir = BuildIr(
+            new Instruction(UOpCode.Push, [value]),
+            IntrinsicInstructionFactory.CreateForCapability("call C#", method));
+
+        var interpreterFailure = Assert.Catch(() =>
+            new InterpreterImpl().Execute(ir, new ExecutionEnvironment([])));
+        var output = new AbstractMethodsCompilerImpl().Compile(ir, new CompilationInput { SourceText = string.Empty });
+        var cilFailure = Assert.Catch(() =>
+            new DynamicMethodExecutor().Execute(output, new ExecutionEnvironment([])));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(FindConversionFailure(interpreterFailure!), Is.EqualTo(expectedKind));
+            Assert.That(FindConversionFailure(cilFailure!), Is.EqualTo(expectedKind));
+        });
+    }
+
+    [Test]
     public void ExecutionScopedProviderCall_WithArguments_HasBackendParity()
     {
         var descriptor = new TestDescriptor(
@@ -80,6 +125,18 @@ public sealed class ManagedCallContractRegressionTests
 
     private static string GetTypeName<T>(T value) => typeof(T).Name;
     private static int AddOne(int value) => value + 1;
+    private static int IdentityInt(int value) => value;
+
+    private static RuntimeValueConversionFailureKind? FindConversionFailure(Exception exception)
+    {
+        for (Exception? current = exception; current != null; current = current.InnerException)
+        {
+            if (current is RuntimeValueConversionException conversion)
+                return conversion.FailureKind;
+        }
+
+        return null;
+    }
 
     private static IAbstractIR BuildIr(params Instruction[] instructions)
     {

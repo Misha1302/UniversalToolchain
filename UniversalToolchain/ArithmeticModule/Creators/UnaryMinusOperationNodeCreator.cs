@@ -1,3 +1,5 @@
+using System.Collections.Frozen;
+
 namespace ArithmeticModule.Creators;
 
 public class UnaryMinusOperationNodeCreator : IAstNodeCreator
@@ -5,8 +7,8 @@ public class UnaryMinusOperationNodeCreator : IAstNodeCreator
     private static readonly ExtensibleEnum<AstNodeTag> _subtractionNodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("Subtraction");
     private static readonly ExtensibleEnum<AstNodeTag> _unaryMinusNodeType = ExtensibleEnum<AstNodeTag>.CreateOrGet("UnaryMinus");
 
-    private static readonly HashSet<ExtensibleEnum<AstNodeTag>> _nonOperandNodeTypes =
-    [
+    private static readonly FrozenSet<ExtensibleEnum<AstNodeTag>> _nonOperandNodeTypes = new[]
+    {
         ExtensibleEnum<AstNodeTag>.CreateOrGet("Addition"),
         ExtensibleEnum<AstNodeTag>.CreateOrGet("Subtraction"),
         ExtensibleEnum<AstNodeTag>.CreateOrGet("Multiplication"),
@@ -19,7 +21,7 @@ public class UnaryMinusOperationNodeCreator : IAstNodeCreator
         ExtensibleEnum<AstNodeTag>.CreateOrGet("While"),
         ExtensibleEnum<AstNodeTag>.CreateOrGet("Equality"),
         ExtensibleEnum<AstNodeTag>.CreateOrGet("Colon")
-    ];
+    }.ToFrozenSet();
 
     public ExtensibleEnum<AstNodeTag> AstNodeType => _subtractionNodeType;
 

@@ -90,7 +90,7 @@ public class IntrinsicDescriptorProviderRegistrationTests
             new IntrinsicSemanticBootstrapPreProviderValidator(),
             new IntrinsicSemanticBootstrapRuntimeValidator(),
             ModuleContractPipelineProfiles.Warn,
-            NullModuleContractDiagnosticSink.Instance);
+            new InMemoryModuleContractDiagnosticSink());
 
     private static ServiceProvider CreateProvider(
         IReadOnlyList<Type>? frontendModules = null,

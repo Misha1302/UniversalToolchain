@@ -891,7 +891,7 @@ public interface ILanguageRuntimeProvider
     ILanguageRuntimeSession CreateSession(LanguagePlan plan, LanguageRuntimeOptions options);
 }
 
-[Obsolete("Use ILanguageRuntimeProvider and LanguageRuntimeProviderRegistry.")]
+[Obsolete("[UTL-DEP-003] Use ILanguageRuntimeProvider and LanguageRuntimeProviderRegistry. Removal is blocked by the shipped-preset parity gate.")]
 public interface ILanguageRuntimePack
 {
     LanguagePackageId PackageId { get; }

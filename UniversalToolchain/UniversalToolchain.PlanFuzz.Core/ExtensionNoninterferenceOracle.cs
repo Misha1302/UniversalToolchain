@@ -6,7 +6,7 @@ namespace UniversalToolchain.PlanFuzz;
 public sealed class ExtensionNoninterferenceOracle : IPlanFuzzOracle
 {
     public string OracleId => PlanFuzzOracleIds.ExtensionNoninterference;
-    public int OracleVersion => 3;
+    public int OracleVersion => 2;
 
     public PlanFuzzOracleResult Evaluate(PlanFuzzOracleContext context)
     {
@@ -30,25 +30,25 @@ public sealed class ExtensionNoninterferenceOracle : IPlanFuzzOracle
         if (pair.Any(static observation => observation.Surface == null))
             return Result(context, PlanFuzzOracleStatus.Inconclusive, "One or more variants did not publish surface evidence.", "missing-surface");
         if (pair.Any(static observation => observation.Surface!.EvidenceContractVersion != PlanFuzzSurfaceSnapshot.CurrentEvidenceContractVersion))
-            return Result(context, PlanFuzzOracleStatus.Inconclusive, "Extension noninterference requires schema-v5 extension-binding evidence.", "legacy-evidence");
+            return Result(context, PlanFuzzOracleStatus.Inconclusive, "Extension noninterference requires the current surface evidence contract.", "legacy-evidence");
         if (pair.Any(static observation => observation.Surface!.ActivationTraceStatus != PlanFuzzActivationTraceStatus.Complete))
             return Result(context, PlanFuzzOracleStatus.Inconclusive, "Extension noninterference requires complete activation traces.", "incomplete-trace");
 
         var first = observations[0];
         var second = observations[1];
-        var firstToSecond = DescribeExtensionDelta(first.Surface!, second.Surface!);
-        var secondToFirst = DescribeExtensionDelta(second.Surface!, first.Surface!);
+        var firstToSecond = DescribeAdditiveDelta(first.Surface!, second.Surface!);
+        var secondToFirst = DescribeAdditiveDelta(second.Surface!, first.Surface!);
         var directions = new[]
         {
             (Baseline: first, Extended: second, Delta: firstToSecond),
             (Baseline: second, Extended: first, Delta: secondToFirst)
-        }.Where(static direction => direction.Delta.IsStrictSingleExtension).ToArray();
+        }.Where(static direction => direction.Delta.IsPureAdditive).ToArray();
 
         if (directions.Length == 0)
         {
             if (firstToSecond.IsEqual && secondToFirst.IsEqual)
                 return Result(context, PlanFuzzOracleStatus.NotApplicable, "The compared variants contain no extension delta.", "no-delta");
-            return Result(context, PlanFuzzOracleStatus.InfrastructureFailure, "The O-005 contract does not describe one strict single-extension pair.", "invalid-or-ambiguous-delta");
+            return Result(context, PlanFuzzOracleStatus.InfrastructureFailure, "The O-005 contract does not describe one unambiguous pure additive extension pair.", "invalid-or-ambiguous-delta");
         }
         if (directions.Length != 1)
             return Result(context, PlanFuzzOracleStatus.InfrastructureFailure, "The O-005 contract has an ambiguous extension direction.", "ambiguous-delta");
@@ -56,14 +56,28 @@ public sealed class ExtensionNoninterferenceOracle : IPlanFuzzOracle
         var direction = directions[0];
         var baseline = direction.Baseline;
         var extended = direction.Extended;
+        var addedSurfaces = direction.Delta.AddedSurfaces;
         var addedOwners = direction.Delta.AddedOwners;
 
         if (!StringComparer.Ordinal.Equals(baseline.Surface!.TraceKind, extended.Surface!.TraceKind))
             return Result(context, PlanFuzzOracleStatus.Inconclusive, "Surface traces use different evidence contracts.", "trace-kind-mismatch");
 
-        var exactDimensions = new List<string>();
-        var classDimensions = new List<string>();
-        var summaries = new List<string>();
+        var undeclaredSurfaces = addedSurfaces
+            .Except(extended.Surface.DeclaredIndependentSurfaceIds, StringComparer.Ordinal)
+            .OrderBy(static value => value, StringComparer.Ordinal)
+            .ToArray();
+        var undeclaredOwners = addedOwners
+            .Except(extended.Surface.DeclaredIndependentOwnerIds, StringComparer.Ordinal)
+            .OrderBy(static value => value, StringComparer.Ordinal)
+            .ToArray();
+        if (undeclaredSurfaces.Length != 0 || undeclaredOwners.Length != 0)
+        {
+            return Result(
+                context,
+                PlanFuzzOracleStatus.InfrastructureFailure,
+                "The additive extension is not fully declared independent in both surface and owner domains.",
+                $"undeclared-surfaces={string.Join(',', undeclaredSurfaces)}:undeclared-owners={string.Join(',', undeclaredOwners)}");
+        }
 
         var activatedAdded = addedOwners
             .Intersect(extended.Surface.ActivatedOwnerIds, StringComparer.Ordinal)
@@ -71,56 +85,49 @@ public sealed class ExtensionNoninterferenceOracle : IPlanFuzzOracle
             .ToArray();
         if (activatedAdded.Length != 0)
         {
-            exactDimensions.Add("extension-activated:" + PlanFuzzFingerprintEncoding.EncodeSequence(activatedAdded));
-            classDimensions.Add("extension-activated");
-            summaries.Add("the declared unused extension became active");
+            var material = string.Join(',', activatedAdded);
+            return Result(
+                context,
+                PlanFuzzOracleStatus.Violated,
+                "The declared unused extension became active.",
+                $"extension-activated:{material}",
+                $"extension-activated:{material}");
         }
 
         if (!StringComparer.Ordinal.Equals(baseline.Surface.RouteIdentity, extended.Surface.RouteIdentity))
         {
-            exactDimensions.Add("route:" + PlanFuzzFingerprintEncoding.EncodeFields(
-                baseline.Surface.RouteIdentity,
-                extended.Surface.RouteIdentity));
-            classDimensions.Add("route-changed");
-            summaries.Add("the selected execution route changed");
+            return Result(
+                context,
+                PlanFuzzOracleStatus.Violated,
+                "The declared unused extension changed the selected execution route.",
+                $"route:{baseline.Surface.RouteIdentity}|{extended.Surface.RouteIdentity}",
+                "extension-route-changed");
         }
 
         if (!baseline.Surface.ActivatedOwnerIds.SequenceEqual(extended.Surface.ActivatedOwnerIds, StringComparer.Ordinal))
         {
-            exactDimensions.Add("activation:" + PlanFuzzFingerprintEncoding.EncodeFields(
-                PlanFuzzFingerprintEncoding.EncodeSequence(baseline.Surface.ActivatedOwnerIds),
-                PlanFuzzFingerprintEncoding.EncodeSequence(extended.Surface.ActivatedOwnerIds)));
-            classDimensions.Add("activation-changed");
-            summaries.Add("the activated-owner set changed");
+            return Result(
+                context,
+                PlanFuzzOracleStatus.Violated,
+                "The declared unused extension changed activation behavior.",
+                $"activation:{string.Join(',', baseline.Surface.ActivatedOwnerIds)}|{string.Join(',', extended.Surface.ActivatedOwnerIds)}",
+                "extension-activation-changed");
         }
 
         if (!PlanFuzzObservationComparer.AreSemanticallyEquivalent(baseline, extended))
         {
-            exactDimensions.Add("behavior:" + PlanFuzzFingerprintEncoding.EncodeFields(
-                Describe(baseline),
-                Describe(extended)));
-            classDimensions.Add("behavior:" + PlanFuzzFingerprintEncoding.EncodeFields(
-                DescribeClass(baseline),
-                DescribeClass(extended)));
-            summaries.Add("observable semantics changed");
-        }
-
-        if (exactDimensions.Count != 0)
-        {
             return Result(
                 context,
                 PlanFuzzOracleStatus.Violated,
-                "Extension noninterference failed: " + string.Join("; ", summaries) + ".",
-                PlanFuzzFingerprintEncoding.EncodeSequence(exactDimensions),
-                PlanFuzzFingerprintEncoding.EncodeSequence(classDimensions));
+                "The declared unused extension changed observable semantics.",
+                $"behavior:{Describe(baseline)}|{Describe(extended)}",
+                $"behavior:{DescribeClass(baseline)}|{DescribeClass(extended)}");
         }
 
         return Result(context, PlanFuzzOracleStatus.Passed, "The declared unused extension preserves semantics, route and activation behavior.", "equal");
     }
 
-    private static ExtensionDelta DescribeExtensionDelta(
-        PlanFuzzSurfaceSnapshot baseline,
-        PlanFuzzSurfaceSnapshot extended)
+    private static AdditiveDelta DescribeAdditiveDelta(PlanFuzzSurfaceSnapshot baseline, PlanFuzzSurfaceSnapshot extended)
     {
         var removedSurfaces = baseline.SelectedSurfaceIds.Except(extended.SelectedSurfaceIds, StringComparer.Ordinal).ToArray();
         var addedSurfaces = extended.SelectedSurfaceIds.Except(baseline.SelectedSurfaceIds, StringComparer.Ordinal)
@@ -128,107 +135,22 @@ public sealed class ExtensionNoninterferenceOracle : IPlanFuzzOracle
         var removedOwners = baseline.SelectedOwnerIds.Except(extended.SelectedOwnerIds, StringComparer.Ordinal).ToArray();
         var addedOwners = extended.SelectedOwnerIds.Except(baseline.SelectedOwnerIds, StringComparer.Ordinal)
             .OrderBy(static value => value, StringComparer.Ordinal).ToArray();
-
-        var removedIndependentSurfaces = baseline.DeclaredIndependentSurfaceIds
-            .Except(extended.DeclaredIndependentSurfaceIds, StringComparer.Ordinal).ToArray();
-        var addedIndependentSurfaces = extended.DeclaredIndependentSurfaceIds
-            .Except(baseline.DeclaredIndependentSurfaceIds, StringComparer.Ordinal)
-            .OrderBy(static value => value, StringComparer.Ordinal).ToArray();
-        var removedIndependentOwners = baseline.DeclaredIndependentOwnerIds
-            .Except(extended.DeclaredIndependentOwnerIds, StringComparer.Ordinal).ToArray();
-        var addedIndependentOwners = extended.DeclaredIndependentOwnerIds
-            .Except(baseline.DeclaredIndependentOwnerIds, StringComparer.Ordinal)
-            .OrderBy(static value => value, StringComparer.Ordinal).ToArray();
-
-        var baselineBindings = ToBindingMap(baseline.IndependentExtensions);
-        var extendedBindings = ToBindingMap(extended.IndependentExtensions);
-        var removedBindings = baselineBindings
-            .Where(binding =>
-                !extendedBindings.TryGetValue(binding.Key, out var extendedBinding) ||
-                !BindingsEqual(binding.Value, extendedBinding))
-            .Select(static binding => binding.Value)
-            .ToArray();
-        var addedBindings = extendedBindings
-            .Where(binding =>
-                !baselineBindings.TryGetValue(binding.Key, out var baselineBinding) ||
-                !BindingsEqual(binding.Value, baselineBinding))
-            .Select(static binding => binding.Value)
-            .ToArray();
-
-        var expectedExcludedOwners = baseline.ExcludedOwnerIds
-            .Except(addedOwners, StringComparer.Ordinal)
-            .OrderBy(static value => value, StringComparer.Ordinal)
-            .ToArray();
-
-        var selectedDeltaIsAdditive =
-            removedSurfaces.Length == 0 &&
-            removedOwners.Length == 0 &&
-            addedSurfaces.Length != 0 &&
-            addedOwners.Length != 0;
-        var declarationsMatchSelectedDelta =
-            removedIndependentSurfaces.Length == 0 &&
-            removedIndependentOwners.Length == 0 &&
-            addedIndependentSurfaces.SequenceEqual(addedSurfaces, StringComparer.Ordinal) &&
-            addedIndependentOwners.SequenceEqual(addedOwners, StringComparer.Ordinal);
-        var exclusionPolicyIsPreserved =
-            extended.ExcludedOwnerIds.SequenceEqual(expectedExcludedOwners, StringComparer.Ordinal);
-        var bindingIsExact =
-            removedBindings.Length == 0 &&
-            addedBindings.Length == 1 &&
-            addedBindings[0].SurfaceIds.SequenceEqual(addedSurfaces, StringComparer.Ordinal) &&
-            addedBindings[0].OwnerIds.SequenceEqual(addedOwners, StringComparer.Ordinal);
-        var bindingsAreEqual = removedBindings.Length == 0 && addedBindings.Length == 0;
-
-        return new ExtensionDelta(
-            selectedDeltaIsAdditive && declarationsMatchSelectedDelta && exclusionPolicyIsPreserved && bindingIsExact,
-            removedSurfaces.Length == 0 &&
-            removedOwners.Length == 0 &&
-            addedSurfaces.Length == 0 &&
-            addedOwners.Length == 0 &&
-            baseline.DeclaredIndependentSurfaceIds.SequenceEqual(extended.DeclaredIndependentSurfaceIds, StringComparer.Ordinal) &&
-            baseline.DeclaredIndependentOwnerIds.SequenceEqual(extended.DeclaredIndependentOwnerIds, StringComparer.Ordinal) &&
-            baseline.ExcludedOwnerIds.SequenceEqual(extended.ExcludedOwnerIds, StringComparer.Ordinal) &&
-            bindingsAreEqual,
+        return new AdditiveDelta(
+            removedSurfaces.Length == 0 && removedOwners.Length == 0 && addedSurfaces.Length != 0 && addedOwners.Length != 0,
+            removedSurfaces.Length == 0 && removedOwners.Length == 0 && addedSurfaces.Length == 0 && addedOwners.Length == 0,
             addedSurfaces,
             addedOwners);
     }
 
-    private static Dictionary<string, PlanFuzzIndependentExtensionEvidence> ToBindingMap(
-        IEnumerable<PlanFuzzIndependentExtensionEvidence> bindings) =>
-        bindings.ToDictionary(static binding => binding.ExtensionId, StringComparer.Ordinal);
-
-    private static bool BindingsEqual(
-        PlanFuzzIndependentExtensionEvidence left,
-        PlanFuzzIndependentExtensionEvidence right) =>
-        left.SurfaceIds.SequenceEqual(right.SurfaceIds, StringComparer.Ordinal) &&
-        left.OwnerIds.SequenceEqual(right.OwnerIds, StringComparer.Ordinal);
-
     private static string Describe(PlanFuzzObservation observation) =>
         observation.Outcome == PlanFuzzExecutionOutcome.Success
-            ? PlanFuzzFingerprintEncoding.EncodeFields(
-                observation.BackendId,
-                "success",
-                observation.Value?.TypeIdentity ?? string.Empty,
-                observation.Value?.CanonicalValue ?? string.Empty)
-            : PlanFuzzFingerprintEncoding.EncodeFields(
-                observation.BackendId,
-                observation.Outcome.ToString(),
-                observation.Failure?.FailureType ?? string.Empty,
-                observation.Failure?.Stage ?? string.Empty,
-                observation.Failure?.Category ?? string.Empty);
+            ? $"{observation.BackendId}:success:{observation.Value?.TypeIdentity}:{observation.Value?.CanonicalValue}"
+            : $"{observation.BackendId}:{observation.Outcome}:{observation.Failure?.FailureType}:{observation.Failure?.Stage}:{observation.Failure?.Category}";
 
     private static string DescribeClass(PlanFuzzObservation observation) =>
         observation.Outcome == PlanFuzzExecutionOutcome.Success
-            ? PlanFuzzFingerprintEncoding.EncodeFields(
-                observation.BackendId,
-                "success",
-                observation.Value?.TypeIdentity ?? string.Empty)
-            : PlanFuzzFingerprintEncoding.EncodeFields(
-                observation.BackendId,
-                observation.Outcome.ToString(),
-                observation.Failure?.FailureType ?? string.Empty,
-                observation.Failure?.Stage ?? string.Empty,
-                observation.Failure?.Category ?? string.Empty);
+            ? $"{observation.BackendId}:success:{observation.Value?.TypeIdentity}"
+            : $"{observation.BackendId}:{observation.Outcome}:{observation.Failure?.FailureType}:{observation.Failure?.Stage}:{observation.Failure?.Category}";
 
     private PlanFuzzOracleResult Result(
         PlanFuzzOracleContext context,
@@ -238,8 +160,8 @@ public sealed class ExtensionNoninterferenceOracle : IPlanFuzzOracle
         string? classFingerprintMaterial = null) =>
         new(context.Contract.ContractId, OracleId, OracleVersion, status, summary, fingerprintMaterial, classFingerprintMaterial);
 
-    private sealed record ExtensionDelta(
-        bool IsStrictSingleExtension,
+    private sealed record AdditiveDelta(
+        bool IsPureAdditive,
         bool IsEqual,
         string[] AddedSurfaces,
         string[] AddedOwners);

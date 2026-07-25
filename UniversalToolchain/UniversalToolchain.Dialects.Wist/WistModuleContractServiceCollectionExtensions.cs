@@ -16,6 +16,8 @@ internal static class WistModuleContractServiceCollectionExtensions
         services = services.ArgNotNull();
         options = options.ArgNotNull();
         diagnosticSink = diagnosticSink.ArgNotNull();
+        if (options.Enabled && diagnosticSink is NullModuleContractDiagnosticSink)
+            throw new ArgumentException("Enabled module-contract verification requires an observable diagnostic sink.", nameof(diagnosticSink));
 
         services.TryAddSingleton(options);
         services.TryAddSingleton<IModuleContractDiagnosticSink>(diagnosticSink);

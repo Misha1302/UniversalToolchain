@@ -40,8 +40,8 @@ public static class WistDialectCoreServiceCollectionExtensions
         services.TryAddSingleton<IntrinsicSemanticBootstrapPreProviderValidator>();
         services.TryAddSingleton<IntrinsicSemanticBootstrapRuntimeValidator>();
         services.AddWistModuleContractPipelineServices(
-            ModuleContractPipelineProfiles.Warn,
-            NullModuleContractDiagnosticSink.Instance);
+            ModuleContractPipelineProfiles.StrictLegacyCompatible,
+            new InMemoryModuleContractDiagnosticSink());
         services.TryAddSingleton<IDialectCompiledDialectBuildPlanBuilder, DialectCompiledDialectBuildPlanBuilder>();
         services.TryAddSingleton<ToolchainCompositionWorkflow>();
         services.TryAddSingleton<WistDialectExecutionConfigurationBuilder>();

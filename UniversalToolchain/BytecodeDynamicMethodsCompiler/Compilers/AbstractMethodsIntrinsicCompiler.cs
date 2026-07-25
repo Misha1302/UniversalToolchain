@@ -1,6 +1,7 @@
 using BasicCore.Builtins;
 using BasicCore.Capabilities;
 using BasicCore.Core;
+using BasicCore.Execution;
 using IntermediateRepresentationAbstractions;
 
 namespace BytecodeDynamicMethodsCompiler.Compilers;
@@ -442,18 +443,14 @@ internal sealed class AbstractMethodsIntrinsicCompiler
 
         if (targetType.IsByRef || sourceType.IsByRef)
         {
-            Thrower.AssertAlways(targetType == sourceType, $"Cannot cast {sourceType} to {targetType}");
+            Thrower.AssertAlways(targetType == sourceType, $"Cannot convert by-ref value {sourceType} to {targetType}");
             return false;
         }
-
-        if (sourceType.IsValueType && !targetType.IsValueType)
-            return true;
 
         if (!sourceType.IsValueType && !targetType.IsValueType && targetType.IsAssignableFrom(sourceType))
             return false;
 
-        Thrower.InvalidOpEx($"Cannot cast {sourceType} to {targetType}");
-        return false;
+        return true;
     }
 
     private static void EmitCast(GroboIL il, Type sourceType, Type targetType)
@@ -463,22 +460,26 @@ internal sealed class AbstractMethodsIntrinsicCompiler
 
         if (targetType.IsByRef || sourceType.IsByRef)
         {
-            Thrower.AssertAlways(targetType == sourceType, $"Cannot cast {sourceType} to {targetType}");
-            return;
-        }
-
-        if (sourceType.IsValueType && !targetType.IsValueType)
-        {
-            il.Box(sourceType);
-            if (targetType != typeof(object))
-                il.Castclass(targetType);
+            Thrower.AssertAlways(targetType == sourceType, $"Cannot convert by-ref value {sourceType} to {targetType}");
             return;
         }
 
         if (!sourceType.IsValueType && !targetType.IsValueType && targetType.IsAssignableFrom(sourceType))
             return;
 
-        Thrower.InvalidOpEx($"Cannot cast {sourceType} to {targetType}");
+        if (sourceType.IsValueType)
+            il.Box(sourceType);
+
+        il.Ldtoken(targetType);
+        il.Call(typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle)).NotNull());
+        il.Call(typeof(RuntimeValueConversion)
+            .GetMethod(nameof(RuntimeValueConversion.Convert), [typeof(object), typeof(Type)])
+            .NotNull());
+
+        if (targetType.IsValueType)
+            il.Unbox_Any(targetType);
+        else
+            il.Castclass(targetType);
     }
 
     private static void EnsureBinaryBoolOperands(List<Type> stack, string intrinsicName)

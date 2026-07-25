@@ -1,0 +1,619 @@
+{
+  "schemaVersion": 1,
+  "asOf": "2026-07-25",
+  "genericPackVersion": "0.3.0-alpha.1",
+  "genericPackPositioning": "Wist subset alpha",
+  "replacementClaimAllowed": false,
+  "replacementGate": {
+    "requiredPresetStatuses": [
+      "Equivalent",
+      "EquivalentWithKnownDifferences"
+    ],
+    "currentState": "Blocked",
+    "reason": "Only minimal-arithmetic has executable generic-pack equivalence; shipped presets with legacy-only modules, optimizers or policies remain partial."
+  },
+  "statusVocabulary": [
+    "Missing",
+    "Partial",
+    "Equivalent",
+    "EquivalentWithKnownDifferences",
+    "Deprecated",
+    "Removed"
+  ],
+  "backends": [
+    {
+      "legacyAlias": "interpreter",
+      "typedBackendId": "interpreter",
+      "runtimeRoute": "source.text<string> -> wist.syntax-tree/v1 -> wist.air/v1 -> backend artifact",
+      "tests": [
+        "ConditionsAggregate_ProvidesControlFlowBooleanLogicAndComparisonsOnBothBackends",
+        "ManagedCallContractRegressionTests"
+      ],
+      "knownSemanticDifferences": [],
+      "status": "Equivalent"
+    },
+    {
+      "legacyAlias": "cil (legacy alias: compiler)",
+      "typedBackendId": "cil",
+      "runtimeRoute": "source.text<string> -> wist.syntax-tree/v1 -> wist.air/v1 -> backend artifact",
+      "tests": [
+        "ConditionsAggregate_ProvidesControlFlowBooleanLogicAndComparisonsOnBothBackends",
+        "ManagedCallContractRegressionTests"
+      ],
+      "knownSemanticDifferences": [
+        "Public typed ID is cil; legacy runtime also accepts compiler as a compatibility alias."
+      ],
+      "status": "EquivalentWithKnownDifferences"
+    }
+  ],
+  "modules": [
+    {
+      "legacyAlias": "Arithmetic",
+      "typedFeatureId": "wist.arithmetic",
+      "runtimeRoute": "source.text<string> -> wist.syntax-tree/v1 -> wist.air/v1 -> backend artifact",
+      "interpreterSupport": "Verified",
+      "cilSupport": "Verified",
+      "tests": [
+        "WistRemediationRegressionTests",
+        "existing Wist dialect backend parity suites"
+      ],
+      "knownSemanticDifferences": [],
+      "status": "Equivalent"
+    },
+    {
+      "legacyAlias": "BooleanConditions",
+      "typedFeatureId": "wist.boolean-logic",
+      "runtimeRoute": "source.text<string> -> wist.syntax-tree/v1 -> wist.air/v1 -> backend artifact",
+      "interpreterSupport": "Verified",
+      "cilSupport": "Verified",
+      "tests": [
+        "WistRemediationRegressionTests",
+        "existing Wist dialect backend parity suites"
+      ],
+      "knownSemanticDifferences": [],
+      "status": "Equivalent"
+    },
+    {
+      "legacyAlias": "Comments",
+      "typedFeatureId": null,
+      "runtimeRoute": null,
+      "interpreterSupport": "LegacyOnly",
+      "cilSupport": "LegacyOnly",
+      "tests": [],
+      "knownSemanticDifferences": [
+        "No typed LanguagePack feature/contribution exists for this legacy module."
+      ],
+      "status": "Missing"
+    },
+    {
+      "legacyAlias": "ComparisonConditions",
+      "typedFeatureId": "wist.comparisons",
+      "runtimeRoute": "source.text<string> -> wist.syntax-tree/v1 -> wist.air/v1 -> backend artifact",
+      "interpreterSupport": "Verified",
+      "cilSupport": "Verified",
+      "tests": [
+        "WistRemediationRegressionTests",
+        "existing Wist dialect backend parity suites"
+      ],
+      "knownSemanticDifferences": [],
+      "status": "Equivalent"
+    },
+    {
+      "legacyAlias": "Conditions",
+      "typedFeatureId": "wist.conditional-control-flow / wist.conditions aggregate",
+      "runtimeRoute": "source.text<string> -> wist.syntax-tree/v1 -> wist.air/v1 -> backend artifact",
+      "interpreterSupport": "Verified",
+      "cilSupport": "Verified",
+      "tests": [
+        "WistRemediationRegressionTests",
+        "existing Wist dialect backend parity suites"
+      ],
+      "knownSemanticDifferences": [],
+      "status": "Equivalent"
+    },
+    {
+      "legacyAlias": "CSharpInterop",
+      "typedFeatureId": null,
+      "runtimeRoute": null,
+      "interpreterSupport": "LegacyOnly",
+      "cilSupport": "LegacyOnly",
+      "tests": [],
+      "knownSemanticDifferences": [
+        "No typed LanguagePack feature/contribution exists for this legacy module."
+      ],
+      "status": "Missing"
+    },
+    {
+      "legacyAlias": "Equality",
+      "typedFeatureId": null,
+      "runtimeRoute": null,
+      "interpreterSupport": "LegacyOnly",
+      "cilSupport": "LegacyOnly",
+      "tests": [],
+      "knownSemanticDifferences": [
+        "No typed LanguagePack feature/contribution exists for this legacy module."
+      ],
+      "status": "Missing"
+    },
+    {
+      "legacyAlias": "FunctionCalls",
+      "typedFeatureId": null,
+      "runtimeRoute": null,
+      "interpreterSupport": "LegacyOnly",
+      "cilSupport": "LegacyOnly",
+      "tests": [],
+      "knownSemanticDifferences": [
+        "No typed LanguagePack feature/contribution exists for this legacy module."
+      ],
+      "status": "Missing"
+    },
+    {
+      "legacyAlias": "Identifier",
+      "typedFeatureId": "wist.identifiers",
+      "runtimeRoute": "source.text<string> -> wist.syntax-tree/v1 -> wist.air/v1 -> backend artifact",
+      "interpreterSupport": "Verified",
+      "cilSupport": "Verified",
+      "tests": [
+        "WistRemediationRegressionTests",
+        "existing Wist dialect backend parity suites"
+      ],
+      "knownSemanticDifferences": [],
+      "status": "Equivalent"
+    },
+    {
+      "legacyAlias": "InternalPreprocessorLexemes",
+      "typedFeatureId": null,
+      "runtimeRoute": null,
+      "interpreterSupport": "LegacyOnly",
+      "cilSupport": "LegacyOnly",
+      "tests": [],
+      "knownSemanticDifferences": [
+        "No typed LanguagePack feature/contribution exists for this legacy module."
+      ],
+      "status": "Missing"
+    },
+    {
+      "legacyAlias": "Labels",
+      "typedFeatureId": null,
+      "runtimeRoute": null,
+      "interpreterSupport": "LegacyOnly",
+      "cilSupport": "LegacyOnly",
+      "tests": [],
+      "knownSemanticDifferences": [
+        "No typed LanguagePack feature/contribution exists for this legacy module."
+      ],
+      "status": "Missing"
+    },
+    {
+      "legacyAlias": "Loops",
+      "typedFeatureId": null,
+      "runtimeRoute": null,
+      "interpreterSupport": "LegacyOnly",
+      "cilSupport": "LegacyOnly",
+      "tests": [],
+      "knownSemanticDifferences": [
+        "No typed LanguagePack feature/contribution exists for this legacy module."
+      ],
+      "status": "Missing"
+    },
+    {
+      "legacyAlias": "NativeTypes",
+      "typedFeatureId": null,
+      "runtimeRoute": null,
+      "interpreterSupport": "LegacyOnly",
+      "cilSupport": "LegacyOnly",
+      "tests": [],
+      "knownSemanticDifferences": [
+        "No typed LanguagePack feature/contribution exists for this legacy module."
+      ],
+      "status": "Missing"
+    },
+    {
+      "legacyAlias": "Numbers",
+      "typedFeatureId": "wist.numbers",
+      "runtimeRoute": "source.text<string> -> wist.syntax-tree/v1 -> wist.air/v1 -> backend artifact",
+      "interpreterSupport": "Verified",
+      "cilSupport": "Verified",
+      "tests": [
+        "WistRemediationRegressionTests",
+        "existing Wist dialect backend parity suites"
+      ],
+      "knownSemanticDifferences": [],
+      "status": "Equivalent"
+    },
+    {
+      "legacyAlias": "ParametersSetter",
+      "typedFeatureId": null,
+      "runtimeRoute": null,
+      "interpreterSupport": "LegacyOnly",
+      "cilSupport": "LegacyOnly",
+      "tests": [],
+      "knownSemanticDifferences": [
+        "No typed LanguagePack feature/contribution exists for this legacy module."
+      ],
+      "status": "Missing"
+    },
+    {
+      "legacyAlias": "SafeMathFunctions",
+      "typedFeatureId": null,
+      "runtimeRoute": null,
+      "interpreterSupport": "LegacyOnly",
+      "cilSupport": "LegacyOnly",
+      "tests": [],
+      "knownSemanticDifferences": [
+        "No typed LanguagePack feature/contribution exists for this legacy module."
+      ],
+      "status": "Missing"
+    },
+    {
+      "legacyAlias": "Scopes",
+      "typedFeatureId": "wist.scopes",
+      "runtimeRoute": "source.text<string> -> wist.syntax-tree/v1 -> wist.air/v1 -> backend artifact",
+      "interpreterSupport": "Verified",
+      "cilSupport": "Verified",
+      "tests": [
+        "WistRemediationRegressionTests",
+        "existing Wist dialect backend parity suites"
+      ],
+      "knownSemanticDifferences": [],
+      "status": "Equivalent"
+    },
+    {
+      "legacyAlias": "SemicolonAsNewLine",
+      "typedFeatureId": null,
+      "runtimeRoute": null,
+      "interpreterSupport": "LegacyOnly",
+      "cilSupport": "LegacyOnly",
+      "tests": [],
+      "knownSemanticDifferences": [
+        "No typed LanguagePack feature/contribution exists for this legacy module."
+      ],
+      "status": "Missing"
+    },
+    {
+      "legacyAlias": "TextualAddition",
+      "typedFeatureId": null,
+      "runtimeRoute": null,
+      "interpreterSupport": "LegacyOnly",
+      "cilSupport": "LegacyOnly",
+      "tests": [],
+      "knownSemanticDifferences": [
+        "No typed LanguagePack feature/contribution exists for this legacy module."
+      ],
+      "status": "Missing"
+    },
+    {
+      "legacyAlias": "Variables",
+      "typedFeatureId": "wist.variables",
+      "runtimeRoute": "source.text<string> -> wist.syntax-tree/v1 -> wist.air/v1 -> backend artifact",
+      "interpreterSupport": "Verified",
+      "cilSupport": "Verified",
+      "tests": [
+        "WistRemediationRegressionTests",
+        "existing Wist dialect backend parity suites"
+      ],
+      "knownSemanticDifferences": [],
+      "status": "Equivalent"
+    },
+    {
+      "legacyAlias": "Whitespaces",
+      "typedFeatureId": "wist.whitespaces",
+      "runtimeRoute": "source.text<string> -> wist.syntax-tree/v1 -> wist.air/v1 -> backend artifact",
+      "interpreterSupport": "Verified",
+      "cilSupport": "Verified",
+      "tests": [
+        "WistRemediationRegressionTests",
+        "existing Wist dialect backend parity suites"
+      ],
+      "knownSemanticDifferences": [],
+      "status": "Equivalent"
+    }
+  ],
+  "optimizers": [
+    {
+      "legacyAlias": "ArithmeticOptimization",
+      "typedFeatureId": null,
+      "runtimeRoute": null,
+      "interpreterSupport": "LegacyOnly",
+      "cilSupport": "LegacyOnly",
+      "tests": [],
+      "knownSemanticDifferences": [
+        "Generic Wist LanguagePack currently selects no optimizer contributions."
+      ],
+      "status": "Missing"
+    },
+    {
+      "legacyAlias": "BooleanOptimization",
+      "typedFeatureId": null,
+      "runtimeRoute": null,
+      "interpreterSupport": "LegacyOnly",
+      "cilSupport": "LegacyOnly",
+      "tests": [],
+      "knownSemanticDifferences": [
+        "Generic Wist LanguagePack currently selects no optimizer contributions."
+      ],
+      "status": "Missing"
+    },
+    {
+      "legacyAlias": "ComparisonIntrinsicOptimization",
+      "typedFeatureId": null,
+      "runtimeRoute": null,
+      "interpreterSupport": "LegacyOnly",
+      "cilSupport": "LegacyOnly",
+      "tests": [],
+      "knownSemanticDifferences": [
+        "Generic Wist LanguagePack currently selects no optimizer contributions."
+      ],
+      "status": "Missing"
+    },
+    {
+      "legacyAlias": "EGraphOptimization",
+      "typedFeatureId": null,
+      "runtimeRoute": null,
+      "interpreterSupport": "LegacyOnly",
+      "cilSupport": "LegacyOnly",
+      "tests": [],
+      "knownSemanticDifferences": [
+        "Generic Wist LanguagePack currently selects no optimizer contributions."
+      ],
+      "status": "Missing"
+    },
+    {
+      "legacyAlias": "NativeCilOptimization",
+      "typedFeatureId": null,
+      "runtimeRoute": null,
+      "interpreterSupport": "LegacyOnly",
+      "cilSupport": "LegacyOnly",
+      "tests": [],
+      "knownSemanticDifferences": [
+        "Generic Wist LanguagePack currently selects no optimizer contributions."
+      ],
+      "status": "Missing"
+    },
+    {
+      "legacyAlias": "NativeTypesOptimization",
+      "typedFeatureId": null,
+      "runtimeRoute": null,
+      "interpreterSupport": "LegacyOnly",
+      "cilSupport": "LegacyOnly",
+      "tests": [],
+      "knownSemanticDifferences": [
+        "Generic Wist LanguagePack currently selects no optimizer contributions."
+      ],
+      "status": "Missing"
+    },
+    {
+      "legacyAlias": "Ssa",
+      "typedFeatureId": null,
+      "runtimeRoute": null,
+      "interpreterSupport": "LegacyOnly",
+      "cilSupport": "LegacyOnly",
+      "tests": [],
+      "knownSemanticDifferences": [
+        "Generic Wist LanguagePack currently selects no optimizer contributions."
+      ],
+      "status": "Missing"
+    }
+  ],
+  "presets": [
+    {
+      "id": "minimal-arithmetic",
+      "legacyModules": [
+        "Arithmetic",
+        "Numbers",
+        "Scopes",
+        "Whitespaces"
+      ],
+      "legacyBackends": [
+        "interpreter"
+      ],
+      "legacyOptimizers": [],
+      "typedFeatures": [
+        "wist.arithmetic"
+      ],
+      "tests": [
+        "MinimalArithmeticPreset_GenericPack_HasExecutableEquivalence"
+      ],
+      "knownSemanticDifferences": [],
+      "status": "Equivalent"
+    },
+    {
+      "id": "full-default",
+      "legacyModules": [
+        "Arithmetic",
+        "BooleanConditions",
+        "Comments",
+        "ComparisonConditions",
+        "Conditions",
+        "CSharpInterop",
+        "Equality",
+        "Identifier",
+        "Labels",
+        "Loops",
+        "Numbers",
+        "Scopes",
+        "SemicolonAsNewLine",
+        "Variables",
+        "Whitespaces"
+      ],
+      "legacyBackends": [
+        "cil",
+        "interpreter"
+      ],
+      "legacyOptimizers": [
+        "BooleanOptimization",
+        "ComparisonIntrinsicOptimization"
+      ],
+      "typedFeatures": [
+        "wist.arithmetic",
+        "wist.boolean-logic",
+        "wist.comparisons",
+        "wist.conditional-control-flow",
+        "wist.identifiers",
+        "wist.variables"
+      ],
+      "tests": [],
+      "knownSemanticDifferences": [
+        "Comments, CSharpInterop, Equality, Labels, Loops, SemicolonAsNewLine and both optimizers are not represented by the generic pack."
+      ],
+      "status": "Partial"
+    },
+    {
+      "id": "full-default-native",
+      "legacyModules": [
+        "BooleanConditions",
+        "Comments",
+        "ComparisonConditions",
+        "Conditions",
+        "CSharpInterop",
+        "Equality",
+        "Identifier",
+        "Labels",
+        "Loops",
+        "NativeTypes",
+        "Scopes",
+        "SemicolonAsNewLine",
+        "Variables",
+        "Whitespaces"
+      ],
+      "legacyBackends": [
+        "cil",
+        "interpreter"
+      ],
+      "legacyOptimizers": [
+        "ArithmeticOptimization",
+        "BooleanOptimization",
+        "ComparisonIntrinsicOptimization",
+        "EGraphOptimization",
+        "NativeCilOptimization",
+        "NativeTypesOptimization"
+      ],
+      "typedFeatures": [
+        "wist.boolean-logic",
+        "wist.comparisons",
+        "wist.conditional-control-flow",
+        "wist.identifiers",
+        "wist.variables"
+      ],
+      "tests": [],
+      "knownSemanticDifferences": [
+        "NativeTypes, interop, structural modules and all optimizers are outside the generic pack."
+      ],
+      "status": "Partial"
+    },
+    {
+      "id": "minimal-arithmetic-native",
+      "legacyModules": [
+        "NativeTypes",
+        "Numbers",
+        "Scopes",
+        "Whitespaces"
+      ],
+      "legacyBackends": [
+        "cil"
+      ],
+      "legacyOptimizers": [
+        "ArithmeticOptimization",
+        "EGraphOptimization",
+        "NativeCilOptimization",
+        "NativeTypesOptimization"
+      ],
+      "typedFeatures": [
+        "wist.numbers"
+      ],
+      "tests": [],
+      "knownSemanticDifferences": [
+        "NativeTypes and native optimizers are not represented by the generic pack."
+      ],
+      "status": "Partial"
+    },
+    {
+      "id": "pricing-restricted",
+      "legacyModules": [
+        "Identifier",
+        "NativeTypes",
+        "Scopes",
+        "Variables",
+        "Whitespaces"
+      ],
+      "legacyBackends": [
+        "cil",
+        "interpreter"
+      ],
+      "legacyOptimizers": [
+        "ArithmeticOptimization",
+        "EGraphOptimization",
+        "NativeCilOptimization",
+        "NativeTypesOptimization"
+      ],
+      "typedFeatures": [
+        "wist.identifiers",
+        "wist.variables"
+      ],
+      "tests": [],
+      "knownSemanticDifferences": [
+        "NativeTypes, optimizer selection, exclusions and restricted-security policy are not represented as an equivalent generic preset."
+      ],
+      "status": "Partial"
+    },
+    {
+      "id": "ssa",
+      "legacyModules": [
+        "Identifier",
+        "NativeTypes",
+        "Scopes",
+        "Variables",
+        "Whitespaces"
+      ],
+      "legacyBackends": [
+        "cil",
+        "interpreter"
+      ],
+      "legacyOptimizers": [
+        "ArithmeticOptimization",
+        "EGraphOptimization",
+        "NativeCilOptimization",
+        "NativeTypesOptimization",
+        "Ssa"
+      ],
+      "typedFeatures": [
+        "wist.identifiers",
+        "wist.variables"
+      ],
+      "tests": [],
+      "knownSemanticDifferences": [
+        "SSA and native optimizer route are not represented by the generic pack."
+      ],
+      "status": "Partial"
+    },
+    {
+      "id": "composition-restricted",
+      "legacyModules": [
+        "Arithmetic",
+        "BooleanConditions",
+        "Comments",
+        "ComparisonConditions",
+        "Conditions",
+        "Equality",
+        "Numbers",
+        "Scopes",
+        "Whitespaces"
+      ],
+      "legacyBackends": [
+        "interpreter"
+      ],
+      "legacyOptimizers": [],
+      "typedFeatures": [
+        "wist.arithmetic",
+        "wist.boolean-logic",
+        "wist.comparisons",
+        "wist.conditional-control-flow"
+      ],
+      "tests": [],
+      "knownSemanticDifferences": [
+        "Comments, Equality, exclusions, composition-restricted capability and security semantics are not equivalent."
+      ],
+      "status": "Partial"
+    }
+  ]
+}

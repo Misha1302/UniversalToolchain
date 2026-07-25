@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using BasicCore.Builtins;
 using BasicCore.Capabilities;
 using BasicCore.Execution;
@@ -14,7 +15,7 @@ namespace NativeMathModule;
 public class NativeCilOptimizerModule : IAirOptimizer
 {
     // Maps constants to typed load-constant intrinsics for backends that support them.
-    private static readonly Dictionary<Type, Action<Instruction, CompilationContext>> _cilGenerators = new();
+    private static readonly FrozenDictionary<Type, Action<Instruction, CompilationContext>> _cilGenerators = CreateCilGenerators();
 
     private static readonly IReadOnlyList<Type> _supportedLoadTypes =
     [
@@ -26,11 +27,6 @@ public class NativeCilOptimizerModule : IAirOptimizer
     ];
 
     private IOptimizerIntrinsicCapabilityContext? _capabilityContext;
-
-    static NativeCilOptimizerModule()
-    {
-        InitializeCilGenerators();
-    }
 
     public void InitIntrinsicCapabilityContext(IOptimizerIntrinsicCapabilityContext capabilityContext)
     {
@@ -67,52 +63,53 @@ public class NativeCilOptimizerModule : IAirOptimizer
         return _supportedLoadTypes.Any(type => capabilityContext.Supports(BuiltinIntrinsicSymbols.Core.LoadExternal, type));
     }
 
-    private static void InitializeCilGenerators()
+    private static FrozenDictionary<Type, Action<Instruction, CompilationContext>> CreateCilGenerators()
     {
-        _cilGenerators[typeof(int)] = (instruction, context) =>
+        var generators = new Dictionary<Type, Action<Instruction, CompilationContext>>
         {
-            var value = (int)AirPushOperand.GetValue(instruction.Operands[0])!;
-            context.NewInstructions.Add(BuiltinIntrinsicInstruction.Create(
-                BuiltinIntrinsicSymbols.Core.LoadConst,
-                typeof(int),
-                [value]));
+            [typeof(int)] = (instruction, context) =>
+            {
+                var value = (int)AirPushOperand.GetValue(instruction.Operands[0])!;
+                context.NewInstructions.Add(BuiltinIntrinsicInstruction.Create(
+                    BuiltinIntrinsicSymbols.Core.LoadConst,
+                    typeof(int),
+                    [value]));
+            },
+            [typeof(long)] = (instruction, context) =>
+            {
+                var value = (long)AirPushOperand.GetValue(instruction.Operands[0])!;
+                context.NewInstructions.Add(BuiltinIntrinsicInstruction.Create(
+                    BuiltinIntrinsicSymbols.Core.LoadConst,
+                    typeof(long),
+                    [value]));
+            },
+            [typeof(float)] = (instruction, context) =>
+            {
+                var value = (float)AirPushOperand.GetValue(instruction.Operands[0])!;
+                context.NewInstructions.Add(BuiltinIntrinsicInstruction.Create(
+                    BuiltinIntrinsicSymbols.Core.LoadConst,
+                    typeof(float),
+                    [value]));
+            },
+            [typeof(double)] = (instruction, context) =>
+            {
+                var value = (double)AirPushOperand.GetValue(instruction.Operands[0])!;
+                context.NewInstructions.Add(BuiltinIntrinsicInstruction.Create(
+                    BuiltinIntrinsicSymbols.Core.LoadConst,
+                    typeof(double),
+                    [value]));
+            },
+            [typeof(decimal)] = (instruction, context) =>
+            {
+                var value = (decimal)AirPushOperand.GetValue(instruction.Operands[0])!;
+                context.NewInstructions.Add(BuiltinIntrinsicInstruction.Create(
+                    BuiltinIntrinsicSymbols.Core.LoadConst,
+                    typeof(decimal),
+                    [value]));
+            }
         };
 
-        _cilGenerators[typeof(long)] = (instruction, context) =>
-        {
-            var value = (long)AirPushOperand.GetValue(instruction.Operands[0])!;
-            context.NewInstructions.Add(BuiltinIntrinsicInstruction.Create(
-                BuiltinIntrinsicSymbols.Core.LoadConst,
-                typeof(long),
-                [value]));
-        };
-
-        _cilGenerators[typeof(float)] = (instruction, context) =>
-        {
-            var value = (float)AirPushOperand.GetValue(instruction.Operands[0])!;
-            context.NewInstructions.Add(BuiltinIntrinsicInstruction.Create(
-                BuiltinIntrinsicSymbols.Core.LoadConst,
-                typeof(float),
-                [value]));
-        };
-
-        _cilGenerators[typeof(double)] = (instruction, context) =>
-        {
-            var value = (double)AirPushOperand.GetValue(instruction.Operands[0])!;
-            context.NewInstructions.Add(BuiltinIntrinsicInstruction.Create(
-                BuiltinIntrinsicSymbols.Core.LoadConst,
-                typeof(double),
-                [value]));
-        };
-
-        _cilGenerators[typeof(decimal)] = (instruction, context) =>
-        {
-            var value = (decimal)AirPushOperand.GetValue(instruction.Operands[0])!;
-            context.NewInstructions.Add(BuiltinIntrinsicInstruction.Create(
-                BuiltinIntrinsicSymbols.Core.LoadConst,
-                typeof(decimal),
-                [value]));
-        };
+        return generators.ToFrozenDictionary();
     }
 
     private IAbstractIR OptimizeNativeLoads(IAbstractIR air, bool optimizeLoadConst, bool optimizeLoadExternal, IOptimizerIntrinsicCapabilityContext capabilityContext)

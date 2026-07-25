@@ -39,22 +39,17 @@ public sealed class WistDialectExecutionWorkflow
 
         var baseline = _workflow.ComposeText(sourceText, sourceName);
         var compiledSource = baseline.CompiledDialect ?? throw new InvalidOperationException("Dialect source did not compile.");
-        var profiledSource = new WistRuntimeProfileApplicator().Apply(
-            sourceText,
+        var baselinePlan = baseline.BuildPlan ?? throw new InvalidOperationException("Dialect source did not produce a build plan.");
+        if (!baseline.IsSuccess)
+            return baseline;
+
+        var overlay = new WistRuntimeProfilePlanOverlayBuilder().Build(
             compiledSource,
+            baselinePlan,
             runtimeProfile,
             overridePolicy);
-        if (!profiledSource.CanCompose)
-        {
-            return new DialectFrameworkCompositionResult(
-                sourceName,
-                compiledSource,
-                baseline.BuildPlan!,
-                profiledSource.Diagnostics.Where(static x => x.Severity == DialectDiagnosticSeverity.Error),
-                []);
-        }
-
-        return _workflow.ComposeText(profiledSource.SourceText, sourceName);
+        var profiledPlan = overlay.Apply(baselinePlan);
+        return _workflow.ComposeCompiled(sourceName, compiledSource, profiledPlan);
     }
 
     public WistDialectExecutionHost CreateHost(DialectFrameworkCompositionResult compositionResult) =>

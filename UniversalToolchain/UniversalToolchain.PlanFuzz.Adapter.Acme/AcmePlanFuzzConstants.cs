@@ -6,10 +6,10 @@ namespace UniversalToolchain.PlanFuzz.Adapter.Acme;
 public static class AcmePlanFuzzConstants
 {
     public const string AdapterId = "acme-pricing";
-    public const string AdapterVersion = "0.4.0";
+    public const string AdapterVersion = "0.3.0";
     public const string LanguageId = "Acme.PricingLanguage";
     public const string LanguageVersion = "1.0.0";
-    public const string GeneratorSchemaVersion = "acme-pricing-generator-v4";
+    public const string GeneratorSchemaVersion = "acme-pricing-generator-v3";
     public const string ModelKind = "acme.pricing.expression";
     public const int ModelSchemaVersion = 1;
     public const string InterpreterBackend = "interpreter";
@@ -20,7 +20,6 @@ public static class AcmePlanFuzzConstants
     public const string IndependentExtensionConfiguration = "independent-extension";
     public const string ExcludedActivationConfiguration = "seeded-excluded-owner-activation";
     public const string ExtensionInterferenceConfiguration = "seeded-extension-interference";
-    public const string SurfaceEvidenceFailureConfiguration = "test-surface-evidence-failure";
     public const string RegistryOrderMutation = "PM-001-registry-order-permutation";
     public const string IndependentExtensionMutation = "PM-002-independent-unused-extension";
     public const string WrongArithmeticFault = "SF-001-wrong-backend-arithmetic";
@@ -29,6 +28,4 @@ public static class AcmePlanFuzzConstants
     public const string CoreFeatureId = "acme.pricing.core";
     public const string IndependentFeatureId = "acme.pricing.independent-extension";
     public const string IndependentContributionId = "acme.pricing.independent-transform";
-    public const string IndependentExtensionEvidenceId = "acme.pricing.extension.independent";
-    public const string UnknownOwnerId = "acme.pricing.unknown-owner";
 }

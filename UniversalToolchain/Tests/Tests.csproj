@@ -66,6 +66,23 @@
     </ItemGroup>
 
     <ItemGroup>
+        <None Update="Architecture/static-state-exceptions.json">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Reference Include="Microsoft.CodeAnalysis">
+            <HintPath>$(MSBuildToolsPath)/Roslyn/bincore/Microsoft.CodeAnalysis.dll</HintPath>
+            <Private>true</Private>
+        </Reference>
+        <Reference Include="Microsoft.CodeAnalysis.CSharp">
+            <HintPath>$(MSBuildToolsPath)/Roslyn/bincore/Microsoft.CodeAnalysis.CSharp.dll</HintPath>
+            <Private>true</Private>
+        </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
         <Using Include="NUnit.Framework"/>
     </ItemGroup>
 </Project>

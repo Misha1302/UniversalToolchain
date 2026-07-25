@@ -10,7 +10,7 @@ public static class ExternalRuntimeCalls
         if (value is T typed)
             return typed;
 
-        return (T)Convert.ChangeType(value.NotNull(), typeof(T));
+        return RuntimeValueConversionService.Default.Convert<T>(value);
     }
 
     public static void StoreExternal<T>(T value, int slot, IExecutionEnvironment environment)

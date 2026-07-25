@@ -1,7 +1,9 @@
 using BasicCore.Contracts;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
+using UniversalToolchain.Dialects.Core;
 using UniversalToolchain.Dialects.Integration;
+using UniversalToolchain.Dialects.Frontend;
 using UniversalToolchain.Dialects.Wist;
 using UniversalToolchain.Dialects.Wist.Facade;
 using UniversalToolchain.Dialects.Wist.Presets;
@@ -166,6 +168,36 @@ public sealed class WistRuntimePathGuardrailTests
             Assert.That(result.DialectName, Is.EqualTo("NeutralRequest"));
             Assert.That(result.Backend, Is.EqualTo("interpreter"));
             Assert.That(result.Value?.ToString(), Is.EqualTo("7"));
+        });
+    }
+
+    [Test]
+    public void ComposeText_WithTypedRuntimeProfile_InvokesDialectParserExactlyOnce()
+    {
+        using var provider = WistDialectTestInfrastructure.CreateCanonicalProvider();
+        var countingFactory = new CountingCompilerFactory(provider.GetRequiredService<IDialectDslCompilerFactory>());
+        var neutralWorkflow = new ToolchainCompositionWorkflow(
+            countingFactory,
+            provider.GetRequiredService<IDialectCompiledDialectBuildPlanBuilder>(),
+            provider.GetRequiredService<SelectedRuntimePlanResolver>());
+        var workflow = new WistDialectExecutionWorkflow(
+            neutralWorkflow,
+            provider.GetRequiredService<WistDialectExecutionConfigurationBuilder>(),
+            provider.GetRequiredService<WistDialectServiceProviderFactory>());
+        var profile = new RuntimeProfileDefinition(
+            "typed-overlay",
+            defaultModules: ["Arithmetic", "Numbers", "Whitespaces"],
+            defaultBackends: [new DialectBackendId("interpreter")]);
+
+        var composition = workflow.ComposeText("dialect TypedOverlay", "typed-overlay", profile);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
+            Assert.That(countingFactory.CreateCount, Is.EqualTo(1),
+                "A typed runtime profile must not be rendered to DSL and parsed a second time.");
+            Assert.That(composition.CompiledDialect, Is.Not.Null);
+            Assert.That(composition.BuildPlan!.OrderedModules, Is.EqualTo(new[] { "Arithmetic", "Numbers", "Whitespaces" }));
         });
     }
 
@@ -471,6 +503,17 @@ public sealed class WistRuntimePathGuardrailTests
         }
 
         return snapshot;
+    }
+
+    private sealed class CountingCompilerFactory(IDialectDslCompilerFactory inner) : IDialectDslCompilerFactory
+    {
+        public int CreateCount { get; private set; }
+
+        public DialectDslCompiler Create()
+        {
+            CreateCount++;
+            return inner.Create();
+        }
     }
 
     private sealed class CountingRegistrar(string backendId) : IDialectBackendRuntimeRegistrar

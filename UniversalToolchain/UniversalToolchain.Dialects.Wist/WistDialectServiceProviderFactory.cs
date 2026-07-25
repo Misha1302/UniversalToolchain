@@ -50,6 +50,8 @@ public sealed class WistDialectServiceProviderFactory
     {
         configuration = configuration.ArgNotNull();
         runtimeServiceOptions = runtimeServiceOptions.ArgNotNull();
+        var (moduleContractOptions, moduleContractDiagnosticSink) =
+            ResolveModuleContractVerification(runtimeServiceOptions.ModuleContracts);
 
         var services = new ServiceCollection();
         RegisterExecutionScopedRuntimeOptions(services, runtimeServiceOptions);
@@ -58,8 +60,8 @@ public sealed class WistDialectServiceProviderFactory
         services.AddNeutralRuntimeInfrastructure();
         services.AddBasicFrontendPipelineDefaults();
         services.AddWistModuleContractPipelineServices(
-            _moduleContractOptions,
-            _moduleContractDiagnosticSink);
+            moduleContractOptions,
+            moduleContractDiagnosticSink);
         RegisterCapabilityCatalog(services, configuration);
 
         RegisterModules(services, configuration.FrontendModules, typeof(IFrontendCoreModule), ServiceLifetime.Singleton);
@@ -74,6 +76,25 @@ public sealed class WistDialectServiceProviderFactory
         var provider = services.BuildServiceProvider();
         _intrinsicBootstrapRuntimeValidator.Validate(provider, bootstrapPlan);
         return provider;
+    }
+
+
+    private (ModuleContractPipelineOptions Options, IModuleContractDiagnosticSink Sink) ResolveModuleContractVerification(
+        ModuleContractVerificationOptions? executionOverride)
+    {
+        if (executionOverride != null)
+        {
+            var snapshot = executionOverride.SnapshotValidated();
+            return (snapshot.PipelineOptions, snapshot.DiagnosticSink);
+        }
+
+        if (_moduleContractOptions.Enabled && _moduleContractDiagnosticSink is NullModuleContractDiagnosticSink)
+        {
+            throw new InvalidOperationException(
+                "Enabled host-level module-contract verification requires an observable diagnostic sink.");
+        }
+
+        return (_moduleContractOptions, _moduleContractDiagnosticSink);
     }
 
 

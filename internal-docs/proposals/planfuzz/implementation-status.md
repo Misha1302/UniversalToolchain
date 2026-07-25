@@ -29,7 +29,7 @@ The configuration-complete research graph is declared in `UniversalToolchain/Pla
 
 - PRNG: `xoshiro256starstar-v1` with SHA-256 domain-separated forks.
 - Testcase schema: version 1 with canonical body hashing and recorded case identity.
-- Observation schema: version 5 with fail-closed surface/owner evidence contract v3 and explicit independent-extension bindings; schema-v1 through schema-v4 observations remain readable, schema-v4 is fixed to evidence contract v2, and binding-free evidence cannot satisfy current O-005 proof.
+- Observation schema: version 4 with fail-closed surface/owner evidence contract v2; schema-v1 through schema-v3 observations remain readable, but legacy surface evidence cannot satisfy current O-004/O-005 proofs.
 - Replay report schema: version 3 with a distinct `inconclusive` state.
 - Campaign summary schema: version 3; it reports `distinctFindingClasses`, `inconclusiveCases` and whether the regression corpus was included.
 - Typed values: `decimal`, `bool`, `string` and `Int32` snapshots without semantic comparison through `ToString()`.
@@ -42,10 +42,10 @@ The configuration-complete research graph is declared in `UniversalToolchain/Pla
   - `O-006` controlled fallback;
   - `O-009` canonical lock consistency.
 - Wist route evidence records policy, route use, fallback state/classification, profile, instruction counts, executed passes and stable diagnostic code/stage pairs.
-- Surface evidence separates selected surface IDs from selected/excluded owner IDs, binds each declared independent extension to its exact surface and owner sets, records observed activated owners, uses a typed `Unsupported`/`Partial`/`Complete` trace status, and carries evidence-contract and route identities.
+- Surface evidence separates selected surface IDs from selected/excluded owner IDs, declares independent additions in both domains, records observed activated owners, uses a typed `Unsupported`/`Partial`/`Complete` trace status, and carries evidence-contract and route identities.
 - `O-004` is invariant to contract variant order, aggregates all variants, gives confirmed violations precedence over incomplete peers, and compares only explicit excluded-owner IDs with observed activated-owner IDs.
-- `O-005` derives baseline/extension direction structurally rather than from contract order, compares extension IDs and exact surface/owner sets structurally, requires one exact new binding, preserves unrelated exclusion/declaration policy, and aggregates activation, route, activated-owner and semantic violations into deterministic exact/class identities.
-- Exact fingerprints preserve testcase-level evidence and remain authoritative for repeated replay confirmation. O-004/O-005 encode adapter-controlled strings with deterministic UTF-8 length prefixes rather than ambiguous delimiter joins.
+- `O-005` derives baseline/extension direction structurally rather than from contract order, requires a pure additive delta in both surface and owner domains, and requires unchanged semantics, route identity and activation owners.
+- Exact fingerprints preserve testcase-level evidence and remain authoritative for repeated replay confirmation.
 - Coarser class fingerprints remove concrete values and duplicate diagnostics for campaign triage. They are not root-cause identities and are never reported as unique defects without manual analysis.
 - A replay is clean only when it has at least one oracle result and every declared oracle returns `Passed`.
 - A violation is confirmed only when every attempt has at least one violation, no infrastructure failure, no `Inconclusive`/`NotApplicable` result, and one stable exact fingerprint.
@@ -166,20 +166,20 @@ The machine-readable summary is [phase2-reducer-smoke-summary.json](evidence/pha
 Phase 3a hardens the two generic surface-oracle families without adding Acme or Wist identifiers to the core:
 
 - `O-004` negative-surface preservation consumes current, complete observed traces and rejects activation of explicitly excluded owners; its status and fingerprint are deterministic under variant permutation;
-- `O-005` extension noninterference derives the additive direction from evidence rather than contract order, proves one strict extension delta including exclusion policy and binding identity, and aggregates every observed interference dimension before fingerprinting.
+- `O-005` extension noninterference derives the additive direction from evidence rather than contract order and requires equal semantics, selected route identity and activated-owner evidence.
 
-Observation schema v5 introduces surface evidence contract v3. Current evidence uses separate selected-surface, selected-owner and excluded-owner sets plus explicit independent-extension records binding each stable extension ID to its exact surface and owner sets. Blank, duplicate, contradictory, overlapping, unbound and out-of-domain IDs are rejected. Schema-v3 remains historical; schema-v4 is constrained to evidence-v2, remains usable by O-004, and is `Inconclusive` for current O-005. Binding equality is structural; delimiter-derived synthetic identities are forbidden. Fingerprint sequences use length-prefixed encoding, so one ID containing delimiters cannot alias multiple IDs.
+Observation schema v4 introduces surface evidence contract v2. Current evidence uses separate selected-surface, selected-owner, excluded-owner, independent-surface and independent-owner sets. Blank, duplicate, contradictory and out-of-domain IDs are rejected. Schema-v3 evidence remains readable for historical replay but is classified `Inconclusive` by current surface oracles.
 
 The Acme adapter records activation at the actual parser, transformer, executor and runtime-provider components. The selected-but-unused extension remains on an unreachable artifact route in clean cases. The two surface faults now execute inside a test-owned runtime-provider wrapper and invoke extension-owned activation/interference logic through the ordinary runtime path; the adapter no longer edits observations after execution.
 
 The canonical seeded-fault IDs are:
 
 ```text
-SF-005 excluded provider activation: confirmed 3/3, exact fingerprint aa4ba9f1dc47a02f35e2177ac9d7aca39d4831665baac8fc9a92e5c44860880b
-SF-011 extension noninterference:   confirmed 3/3, exact fingerprint b4f04f732f69c4349c191896713d8340089718b4516a3fa30b428abac06f369e
+SF-005 excluded provider activation: confirmed 3/3, exact fingerprint bf57d3379510c29467b2081397bfafe1496ef6025273b1e7ef0c2f6ef571e78b
+SF-011 extension noninterference:   confirmed 3/3, exact fingerprint d4f4021a581a3dacd432aa85e97e602e586da371e9911b2b0757063e184923f3
 ```
 
-The former Phase 3 records using `SF-002-excluded-owner-activation` and `SF-003-extension-noninterference` remain superseded. The schema-v4/O-005-v2 SF-011 fingerprint is also superseded because it stopped at owner activation and omitted the simultaneous semantic interference; it must not be mixed with schema-v5/O-005-v3 evidence.
+The former Phase 3 records using `SF-002-excluded-owner-activation` and `SF-003-extension-noninterference` are superseded: those IDs conflicted with the canonical catalog and their fingerprints must not be mixed with the hardened evidence.
 
 A clean Acme campaign using seed `20260725` completed 25/25 cases with two fresh-process attempts per case and zero findings, flaky, inconclusive or infrastructure outcomes. The machine-readable record is [phase3-surface-oracles-smoke-summary.json](evidence/phase3-surface-oracles-smoke-summary.json). This is bounded Phase 3a stability and harness-adequacy evidence, not a controlled research baseline.
 
@@ -192,10 +192,10 @@ Tests:                                       483 passed
 UniversalToolchain.Modules.Tests:            290 passed
 UniversalToolchain.Dialects.Tests:           588 passed
 UniversalToolchain.LanguageSdk.Tests:         53 passed
-UniversalToolchain.PlanFuzz.Tests:             52 passed
-UniversalToolchain.PlanFuzz.IntegrationTests:  11 passed
+UniversalToolchain.PlanFuzz.Tests:             41 passed
+UniversalToolchain.PlanFuzz.IntegrationTests:  10 passed
 --------------------------------------------------------
-Total:                                      1477 passed
+Total:                                      1465 passed
 Failed:                                        0
 Skipped:                                       0
 ```

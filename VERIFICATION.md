@@ -61,14 +61,14 @@ Build servers and MSBuild node reuse are explicitly disabled by the canonical sc
 | `UniversalToolchain.Modules.Tests` | 290 | 0 | 0 |
 | `UniversalToolchain.Dialects.Tests` | 588 | 0 | 0 |
 | `UniversalToolchain.LanguageSdk.Tests` | 53 | 0 | 0 |
-| `UniversalToolchain.PlanFuzz.Tests` | 52 | 0 | 0 |
-| `UniversalToolchain.PlanFuzz.IntegrationTests` | 11 | 0 | 0 |
-| **Total** | **1,477** | **0** | **0** |
+| `UniversalToolchain.PlanFuzz.Tests` | 41 | 0 | 0 |
+| `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
+| **Total** | **1,465** | **0** | **0** |
 
 The PlanFuzz suites include dedicated coverage for:
 
 - deterministic PRNG and testcase identity;
-- observation and replay serialization compatibility across schema v1-v5; schema-v4 is fixed to evidence contract v2 and cannot forge current v3 proof;
+- observation and replay serialization compatibility;
 - backend, route, plan, fallback and canonical-lock oracle behavior;
 - strict replay confirmation in fresh processes;
 - incomplete evidence remaining inconclusive rather than clean or flaky;
@@ -77,8 +77,6 @@ The PlanFuzz suites include dedicated coverage for:
 - default discovery generation remaining separate from the opt-in Wist regression corpus;
 - Acme rejecting a Wist-only regression-corpus option;
 - seeded-fault detection without counting the seeded implementation as a product defect;
-- strict O-005 rejection of unrelated exclusion-policy changes, unbound surface/owner deltas, incomplete declarations and structurally reassociated extension bindings;
-- fresh-process SF-011 fingerprints that include both owner activation and semantic interference;
 - `0 * x` preserving backend parity without consuming part of the external-load sequence;
 - `(0 * 1) - 1` preserving the `System.Int32` contract;
 - `x + (-2)` retaining the external-load descriptor and completing the required SSA route.
@@ -130,19 +128,16 @@ Verified:
 
 - language-neutral core with Acme and Wist adapters;
 - seven generic oracle families, including order-independent O-004 negative-surface preservation and structurally oriented O-005 extension noninterference;
-- observation schema v5 with fail-closed surface/owner evidence contract v3, explicit single-extension surface/owner bindings and typed trace completeness;
+- observation schema v4 with fail-closed surface/owner evidence contract v2 and typed trace completeness;
 - fresh-process replay and campaign artifact manifests;
 - strict evidence-completeness semantics;
 - opt-in regression corpus;
-- separate exact and class fingerprints, with O-005 exact identity aggregating activation, route, owner-set and semantic violation dimensions;
+- separate exact and class fingerprints;
 - owner-layer fixes and direct regressions for the historical behaviors tracked by #302, #303 and #307;
 - adapter-owned structured program reduction and generic plan-contract/variant pruning;
 - fresh-process acceptance only when the original exact fingerprint is preserved;
 - auditable rejection of clean, flaky, inconclusive and infrastructure candidates;
-- test-owned runtime-provider seeded faults for canonical SF-005 and SF-011, confirmed through ordinary schema-v5 observed activation evidence in three fresh processes;
-- variant-scoped normalization of malformed Acme surface evidence without losing the plan snapshot or crashing the worker;
-- adversarial rejection of schema-v4 evidence-version forgery and delimiter-collision binding reassociation;
-- unambiguous UTF-8 length-prefixed O-004/O-005 fingerprint material, including regressions for comma-containing IDs versus multiple IDs.
+- test-owned runtime-provider seeded faults for canonical SF-005 and SF-011, confirmed through ordinary observed activation evidence in three fresh processes.
 
 The preserved 25-case Wist pilot included the regression corpus. Its 21 violating cases and two normalized classes are retained as historical evidence and are not presented as clean discovery yield or as a root-cause count. Post-fix discovery-only and regression-inclusive smokes each completed three cases with three fresh-process attempts per case and reported only clean outcomes. An expanded discovery-only stability smoke completed 50 Acme cases with two attempts and 20 Wist cases with one attempt, also with only clean outcomes.
 

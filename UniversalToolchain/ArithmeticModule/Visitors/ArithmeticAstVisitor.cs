@@ -1,16 +1,18 @@
+using System.Collections.Frozen;
+
 namespace ArithmeticModule.Visitors;
 
 [AutoRegisterService]
 [ArithmeticModeCompatibility(ArithmeticMode.Universal)]
 public class ArithmeticAstVisitor : IAstVisitor
 {
-    private static readonly Dictionary<string, string> _opToName = new()
+    private static readonly FrozenDictionary<string, string> _opToName = new Dictionary<string, string>
     {
         ["+"] = "Add",
         ["-"] = "Sub",
         ["*"] = "Mul",
         ["/"] = "Div"
-    };
+    }.ToFrozenDictionary(StringComparer.Ordinal);
 
     public void TryVisit(BytecodeVisitorData data)
     {

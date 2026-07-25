@@ -17,10 +17,6 @@ public sealed class ModuleContractDiagnosticPolicy(IModuleContractDiagnosticSink
         if (errors.Length == 0)
             return;
 
-        Thrower.InvalidOpEx(
-            $"Module contract {stage} failed: {string.Join("; ", errors.Select(FormatDiagnostic))}");
+        throw new ModuleContractVerificationException(stage, errors);
     }
-
-    private static string FormatDiagnostic(ToolchainDiagnostic diagnostic) =>
-        $"{diagnostic.Code}: {diagnostic.Message}";
 }

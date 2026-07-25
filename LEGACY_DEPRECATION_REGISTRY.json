@@ -1,0 +1,189 @@
+{
+  "schemaVersion": 1,
+  "asOf": "2026-07-25",
+  "currentCompatibilityVersion": "0.3.0-alpha.1",
+  "parityMatrix": "WIST_PARITY_MATRIX.json",
+  "policy": {
+    "removalAllowedOnlyWhenAllShippedPresetsEquivalent": true,
+    "requiredExitEvidence": [
+      "shipped presets migrated",
+      "examples and docs migrated",
+      "compatibility tests pass",
+      "downstream usage assessed",
+      "warning-as-error phase completed"
+    ]
+  },
+  "entries": [
+    {
+      "owner": "UniversalToolchain language/runtime maintainers",
+      "firstDeprecatedVersion": "0.3.0-alpha.1",
+      "warningAsErrorNotBefore": "0.5.0",
+      "removalNotBefore": "1.0.0",
+      "usageAssessment": "Required before warning-as-error and removal.",
+      "migrationGuide": "docs/migration/WIST_LEGACY_MIGRATION_RU.md",
+      "status": "Deprecated",
+      "exitCriteria": [
+        "replacement API is covered by compatibility tests",
+        "repository examples/docs no longer use the legacy symbol",
+        "downstream usage assessment is recorded",
+        "applicable parity gate is satisfied"
+      ],
+      "id": "UTL-DEP-001",
+      "symbol": "UniversalToolchain.Language.Abstractions.LanguageRuntimePackReference",
+      "replacement": "LanguageRuntimeProviderReference",
+      "parityGate": "all-shipped-presets-equivalent"
+    },
+    {
+      "owner": "UniversalToolchain language/runtime maintainers",
+      "firstDeprecatedVersion": "0.3.0-alpha.1",
+      "warningAsErrorNotBefore": "0.5.0",
+      "removalNotBefore": "1.0.0",
+      "usageAssessment": "Required before warning-as-error and removal.",
+      "migrationGuide": "docs/migration/WIST_LEGACY_MIGRATION_RU.md",
+      "status": "Deprecated",
+      "exitCriteria": [
+        "replacement API is covered by compatibility tests",
+        "repository examples/docs no longer use the legacy symbol",
+        "downstream usage assessment is recorded",
+        "applicable parity gate is satisfied"
+      ],
+      "id": "UTL-DEP-002",
+      "symbol": "UniversalToolchain.LanguageSdk.LanguageDefinitionBuilder.UseRuntimePack",
+      "replacement": "UseRuntimeProvider",
+      "parityGate": "all-shipped-presets-equivalent"
+    },
+    {
+      "owner": "UniversalToolchain language/runtime maintainers",
+      "firstDeprecatedVersion": "0.3.0-alpha.1",
+      "warningAsErrorNotBefore": "0.5.0",
+      "removalNotBefore": "1.0.0",
+      "usageAssessment": "Required before warning-as-error and removal.",
+      "migrationGuide": "docs/migration/WIST_LEGACY_MIGRATION_RU.md",
+      "status": "Deprecated",
+      "exitCriteria": [
+        "replacement API is covered by compatibility tests",
+        "repository examples/docs no longer use the legacy symbol",
+        "downstream usage assessment is recorded",
+        "applicable parity gate is satisfied"
+      ],
+      "id": "UTL-DEP-003",
+      "symbol": "UniversalToolchain.Runtime.ILanguageRuntimePack",
+      "replacement": "ILanguageRuntimeProvider + LanguageRuntimeProviderRegistry",
+      "parityGate": "all-shipped-presets-equivalent"
+    },
+    {
+      "owner": "UniversalToolchain language/runtime maintainers",
+      "firstDeprecatedVersion": "0.3.0-alpha.1",
+      "warningAsErrorNotBefore": "0.5.0",
+      "removalNotBefore": "1.0.0",
+      "usageAssessment": "Required before warning-as-error and removal.",
+      "migrationGuide": "docs/migration/WIST_LEGACY_MIGRATION_RU.md",
+      "status": "Deprecated",
+      "exitCriteria": [
+        "replacement API is covered by compatibility tests",
+        "repository examples/docs no longer use the legacy symbol",
+        "downstream usage assessment is recorded",
+        "applicable parity gate is satisfied"
+      ],
+      "id": "UTL-DEP-004",
+      "symbol": "UniversalToolchain.Runtime.LanguageRuntime.Create(LanguagePlan, ILanguageRuntimePack, LanguageRuntimeOptions?)",
+      "replacement": "LanguageRuntime.Create(LanguagePlan, ILanguageRuntimeProvider/LanguageRuntimeProviderRegistry, LanguageRuntimeOptions?)",
+      "parityGate": "all-shipped-presets-equivalent"
+    },
+    {
+      "owner": "UniversalToolchain language/runtime maintainers",
+      "firstDeprecatedVersion": "0.3.0-alpha.1",
+      "warningAsErrorNotBefore": "0.5.0",
+      "removalNotBefore": "1.0.0",
+      "usageAssessment": "Required before warning-as-error and removal.",
+      "migrationGuide": "docs/migration/WIST_LEGACY_MIGRATION_RU.md",
+      "status": "Deprecated",
+      "exitCriteria": [
+        "replacement API is covered by compatibility tests",
+        "repository examples/docs no longer use the legacy symbol",
+        "downstream usage assessment is recorded",
+        "applicable parity gate is satisfied"
+      ],
+      "id": "UTL-DEP-005",
+      "symbol": "UniversalToolchain.Wist.LanguagePack.WistLanguageRuntimePack",
+      "replacement": "WistLanguageRuntimeProvider + LanguageRuntimeProviderRegistry",
+      "parityGate": "all-shipped-presets-equivalent"
+    },
+    {
+      "owner": "UniversalToolchain language/runtime maintainers",
+      "firstDeprecatedVersion": "0.3.0-alpha.1",
+      "warningAsErrorNotBefore": "0.5.0",
+      "removalNotBefore": "1.0.0",
+      "usageAssessment": "Required before warning-as-error and removal.",
+      "migrationGuide": "docs/migration/WIST_LEGACY_MIGRATION_RU.md",
+      "status": "Deprecated",
+      "exitCriteria": [
+        "replacement API is covered by compatibility tests",
+        "repository examples/docs no longer use the legacy symbol",
+        "downstream usage assessment is recorded",
+        "applicable parity gate is satisfied"
+      ],
+      "id": "UTL-DEP-006",
+      "symbol": "UniversalToolchain.Wist.LanguagePack.WistContributionIds.ConditionsModule",
+      "replacement": "ComparisonsModule / BooleanLogicModule / ConditionalControlFlowModule",
+      "parityGate": "conditions-split-feature-parity"
+    },
+    {
+      "owner": "UniversalToolchain language/runtime maintainers",
+      "firstDeprecatedVersion": "0.3.0-alpha.1",
+      "warningAsErrorNotBefore": "0.5.0",
+      "removalNotBefore": "1.0.0",
+      "usageAssessment": "Required before warning-as-error and removal.",
+      "migrationGuide": "docs/migration/WIST_LEGACY_MIGRATION_RU.md",
+      "status": "Deprecated",
+      "exitCriteria": [
+        "replacement API is covered by compatibility tests",
+        "repository examples/docs no longer use the legacy symbol",
+        "downstream usage assessment is recorded",
+        "applicable parity gate is satisfied"
+      ],
+      "id": "UTL-DEP-007",
+      "symbol": "UniversalToolchain.LanguageSdk.LanguageArtifactRouteStep(LanguageContributionId, LanguageArtifactKindId, LanguageArtifactKindId, int)",
+      "replacement": "typed LanguageArtifactContract constructor",
+      "parityGate": "typed-route-compatibility"
+    },
+    {
+      "owner": "UniversalToolchain language/runtime maintainers",
+      "firstDeprecatedVersion": "0.3.0-alpha.1",
+      "warningAsErrorNotBefore": "0.5.0",
+      "removalNotBefore": "1.0.0",
+      "usageAssessment": "Required before warning-as-error and removal.",
+      "migrationGuide": "docs/migration/WIST_LEGACY_MIGRATION_RU.md",
+      "status": "Deprecated",
+      "exitCriteria": [
+        "replacement API is covered by compatibility tests",
+        "repository examples/docs no longer use the legacy symbol",
+        "downstream usage assessment is recorded",
+        "applicable parity gate is satisfied"
+      ],
+      "id": "UTL-DEP-008",
+      "symbol": "UniversalToolchain.LanguageSdk.LanguageArtifactRoute(BackendId, LanguageArtifactKindId, LanguageArtifactKindId, IEnumerable<LanguageArtifactRouteStep>)",
+      "replacement": "typed LanguageArtifactContract constructor",
+      "parityGate": "typed-route-compatibility"
+    },
+    {
+      "owner": "UniversalToolchain language/runtime maintainers",
+      "firstDeprecatedVersion": "0.3.0-alpha.1",
+      "warningAsErrorNotBefore": "0.5.0",
+      "removalNotBefore": "1.0.0",
+      "usageAssessment": "Required before warning-as-error and removal.",
+      "migrationGuide": "docs/migration/WIST_LEGACY_MIGRATION_RU.md",
+      "status": "Deprecated",
+      "exitCriteria": [
+        "replacement API is covered by compatibility tests",
+        "repository examples/docs no longer use the legacy symbol",
+        "downstream usage assessment is recorded",
+        "applicable parity gate is satisfied"
+      ],
+      "id": "UTL-DEP-009",
+      "symbol": "BasicTypesExtensions.EnumGenerator",
+      "replacement": "ExtensibleEnum<TTag> or ExtensibleEnumCatalog<TTag>",
+      "parityGate": "stable-runtime-identity"
+    }
+  ]
+}

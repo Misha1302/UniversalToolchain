@@ -125,7 +125,7 @@ public sealed class BytecodeContractMetadataTests
                     new BytecodePatternId("wist.numbers.bytecode.not-declared"))
         ]);
 
-        Assert.Throws<InvalidOperationException>(() => observer.AfterBytecode(new CompilationPipelineBytecodeContext(
+        Assert.Throws<ModuleContractVerificationException>(() => observer.AfterBytecode(new CompilationPipelineBytecodeContext(
             new CompilationInput { SourceText = "1" },
             [new NumbersModule.Module.NumbersModuleImpl()],
             bytecode)));

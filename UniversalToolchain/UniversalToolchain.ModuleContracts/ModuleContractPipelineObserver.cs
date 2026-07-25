@@ -40,6 +40,8 @@ public sealed class ModuleContractPipelineObserver : ICompilationPipelineObserve
     public void AfterBytecode(CompilationPipelineBytecodeContext context)
     {
         context = context.ArgNotNull();
+        if (!_options.Enabled)
+            return;
 
         var report = _tableProvider.Build(context.FrontendModules, [], context.BackendComponents ?? []);
         if (report == null)
@@ -86,6 +88,9 @@ public sealed class ModuleContractPipelineObserver : ICompilationPipelineObserve
 
     private void VerifyAir(CompilationPipelineAirContext context, string stage)
     {
+        if (!_options.Enabled)
+            return;
+
         var report = _tableProvider.Build(context.FrontendModules, context.Optimizers, context.BackendComponents ?? []);
         if (report == null)
             return;

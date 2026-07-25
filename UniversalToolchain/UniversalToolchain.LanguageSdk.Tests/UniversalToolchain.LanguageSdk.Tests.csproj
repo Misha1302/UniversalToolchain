@@ -15,6 +15,7 @@
   <ItemGroup>
     <ProjectReference Include="..\UniversalToolchain.LanguageSdk\UniversalToolchain.LanguageSdk.csproj" />
     <ProjectReference Include="..\UniversalToolchain.LanguageAuthoring\UniversalToolchain.LanguageAuthoring.csproj" />
+    <ProjectReference Include="..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj" />
     <ProjectReference Include="..\UniversalToolchain.Runtime\UniversalToolchain.Runtime.csproj" />
     <ProjectReference Include="..\UniversalToolchain.Testing\UniversalToolchain.Testing.csproj" />
     <ProjectReference Include="..\UniversalToolchain.Wist.LanguagePack\UniversalToolchain.Wist.LanguagePack.csproj" />

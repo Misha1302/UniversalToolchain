@@ -64,7 +64,7 @@ public sealed class LanguageDefinitionBuilder
         return this;
     }
 
-    [Obsolete("Use UseRuntimeProvider. Runtime packs remain a compatibility alias for the alpha.")]
+    [Obsolete("[UTL-DEP-002] Use UseRuntimeProvider. Removal is blocked by the shipped-preset parity gate.")]
     public LanguageDefinitionBuilder UseRuntimePack(string packageId, string version) =>
         UseRuntimeProvider(packageId, version);
 
