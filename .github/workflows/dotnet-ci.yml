@@ -126,3 +126,55 @@ jobs:
           fi
           git commit -m "chore: refresh recursive manifest"
           git push origin "HEAD:${GITHUB_REF_NAME}"
+
+  finalize-planfuzz-manifest:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/research/planfuzz-surface-hardening' && github.actor != 'github-actions[bot]'
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout hardening branch
+        uses: actions/checkout@v4
+        with:
+          ref: research/planfuzz-surface-hardening
+          fetch-depth: 0
+
+      - name: Restore canonical workflow and refresh manifest
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          git fetch origin master
+          git rm .github/planfuzz-manifest-refresh-trigger
+          git checkout origin/master -- .github/workflows/dotnet-ci.yml
+          git add -A
+          python3 - <<'PY'
+          from hashlib import sha256
+          from pathlib import Path
+          import subprocess
+
+          paths = subprocess.check_output(["git", "ls-files", "--cached", "-z"]).split(b"\0")
+          with Path("MANIFEST.sha256").open("w", encoding="utf-8", newline="\n") as output:
+              for raw_path in sorted(path for path in paths if path and path != b"MANIFEST.sha256"):
+                  path = raw_path.decode("utf-8")
+                  output.write(f"{sha256(Path(path).read_bytes()).hexdigest()}  ./{path}\n")
+          PY
+          git add MANIFEST.sha256
+          git diff --cached --check
+          expected="$RUNNER_TEMP/expected-paths.txt"
+          actual="$RUNNER_TEMP/actual-paths.txt"
+          printf '%s\n' \
+            '.github/planfuzz-manifest-refresh-trigger' \
+            '.github/workflows/dotnet-ci.yml' \
+            'MANIFEST.sha256' | sort > "$expected"
+          git diff --cached --name-only | sort > "$actual"
+          diff -u "$expected" "$actual"
+
+      - name: Commit final manifest
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'chore: refresh recursive manifest'
+          git push origin HEAD:research/planfuzz-surface-hardening
