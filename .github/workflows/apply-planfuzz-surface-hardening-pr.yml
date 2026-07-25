@@ -23,7 +23,7 @@ jobs:
         shell: bash
         run: |
           cat > "$RUNNER_TEMP/PARTS.sha256" <<'EOF'
-          d8b01489122c4881e5c99030b815c7d20dff224cf3d256652add884b77373158  .github/planfuzz-surface-hardening-patch/chunk00
+          aadc17adf43a26dc298d243c5fb93ca55ee1e764714c3a09ef99e1d92d6593a6  .github/planfuzz-surface-hardening-patch/chunk00
           ad2cb106dcaaac6e328594c32cead1e5df90b32ea0ed49a9ae4d0f06a2aa2bbe  .github/planfuzz-surface-hardening-tail/part05
           c8aeb043e6c860fb7eb20b6fee09662694ab1be1a8692a37d271d384f25a3a4e  .github/planfuzz-surface-hardening-tail/part06
           8a86e96b2eab7e36d95175ebfb39cdd6305d84c7b12831e0cf512ec1c50904ac  .github/planfuzz-surface-hardening-tail/part07
