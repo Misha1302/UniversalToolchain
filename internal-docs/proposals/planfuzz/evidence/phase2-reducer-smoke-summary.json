@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "revisionKind": "planfuzz-deterministic-reducer-candidate",
+  "validationDate": "2026-07-25",
+  "reduction": {
+    "adapterId": "acme-pricing",
+    "seededFaultId": "SF-001-wrong-backend-arithmetic",
+    "replayAttemptsPerCandidate": 2,
+    "candidateEvaluations": 29,
+    "acceptedSteps": 2,
+    "completed": true,
+    "exactFingerprint": "e71be55efb8304d2f3491e4de5f4745706a52de0eb728359ea908d1feae3f0a2",
+    "cleanCaseRejectedAsInvalidReductionInput": true
+  },
+  "discoveryOnlyCampaigns": [
+    {
+      "adapterId": "acme-pricing",
+      "campaignSeed": 20260725,
+      "requestedCases": 50,
+      "completedCases": 50,
+      "freshProcessAttemptsPerCase": 2,
+      "cleanCases": 50,
+      "confirmedFindings": 0,
+      "flakyCases": 0,
+      "inconclusiveCases": 0,
+      "infrastructureFailures": 0,
+      "includedRegressionCorpus": false,
+      "summarySha256": "45d4c01795cf0ea64d4a62ddcc165e7d4318ee47202d3518fe45b8967da970ad",
+      "manifestSha256": "93c2fd610875775f1d5a780d5c83d02f217344a981cc0769fdedd94e80b30669"
+    },
+    {
+      "adapterId": "wist-restricted-int32",
+      "campaignSeed": 20260725,
+      "requestedCases": 20,
+      "completedCases": 20,
+      "freshProcessAttemptsPerCase": 1,
+      "cleanCases": 20,
+      "confirmedFindings": 0,
+      "flakyCases": 0,
+      "inconclusiveCases": 0,
+      "infrastructureFailures": 0,
+      "includedRegressionCorpus": false,
+      "summarySha256": "c921fe09f68e19fb026c0f483dfc1cf6f4ca7a8ba393253a01f1b4817775d332",
+      "manifestSha256": "102a42f0b95ce3d0c3a4188b82fc2faad92bd458388c1075b1f92b8538bba910"
+    }
+  ],
+  "claimBoundary": "Regression and stability evidence only; not an equal-budget baseline, discovery-yield, novelty, or publication claim."
+}

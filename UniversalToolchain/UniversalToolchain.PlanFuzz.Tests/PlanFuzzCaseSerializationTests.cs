@@ -45,4 +45,32 @@ public sealed class PlanFuzzCaseSerializationTests
             () => PlanFuzzTestCaseSerializer.Deserialize(tampered),
             Throws.TypeOf<InvalidOperationException>());
     }
+    [Test]
+    public void ContractReductionPrunesUnreferencedVariantsWithoutChangingProvenance()
+    {
+        var adapter = new AcmePlanFuzzAdapter();
+        var original = adapter.GenerateCase(
+            123,
+            0,
+            new PlanFuzzCaseGenerationOptions(AcmePlanFuzzConstants.WrongArithmeticFault));
+        var violationContract = original.OracleContracts.Single(static contract =>
+            contract.ContractId == "backend-parity.seeded-wrong-arithmetic");
+
+        var reduced = PlanFuzzTestCaseTransform.WithContractsAndReferencedVariants(
+            original,
+            [violationContract]);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(reduced.OracleContracts.Select(static contract => contract.ContractId),
+                Is.EqualTo(new[] { "backend-parity.seeded-wrong-arithmetic" }));
+            Assert.That(reduced.Variants.Select(static variant => variant.VariantId),
+                Is.EqualTo(new[] { "baseline.interpreter", "seeded-wrong-arithmetic.compiled" }));
+            Assert.That(reduced.CampaignSeed, Is.EqualTo(original.CampaignSeed));
+            Assert.That(reduced.CaseIndex, Is.EqualTo(original.CaseIndex));
+            Assert.That(reduced.CaseSeed, Is.EqualTo(original.CaseSeed));
+            Assert.That(reduced.CaseId, Is.Not.EqualTo(original.CaseId));
+        });
+    }
+
 }

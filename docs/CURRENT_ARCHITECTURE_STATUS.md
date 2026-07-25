@@ -59,7 +59,7 @@ Bytecode and AIR remain separate semantic boundaries. Wist runtime selection goe
 
 ## Experimental PlanFuzz research tooling
 
-The repository includes non-packable PlanFuzz Phase 0–1 tooling for configuration-aware differential testing:
+The repository includes non-packable PlanFuzz Phase 0–2 tooling for configuration-aware differential testing:
 
 - a language-neutral deterministic testcase, observation and oracle core;
 - independent Acme and Wist adapters with adapter-owned structured generators;
@@ -73,9 +73,10 @@ The repository includes non-packable PlanFuzz Phase 0–1 tooling for configurat
 - clean, confirmed, flaky, inconclusive and infrastructure outcomes kept distinct;
 - default discovery generation separated from an explicit `--include-regressions` corpus;
 - test-only Acme seeded faults kept separate from current Wist findings;
-- a configuration-complete `UniversalToolchain/PlanFuzz.sln` built by canonical repository entrypoints.
+- a configuration-complete `UniversalToolchain/PlanFuzz.sln` built by canonical repository entrypoints;
+- deterministic adapter-owned program reduction plus generic oracle-contract/variant pruning, with every accepted candidate reconfirmed in fresh processes against the original exact fingerprint.
 
-This tooling is not part of the public Wist package and does not establish publication claims. The preserved regression-inclusive Wist pilot records the historical behaviors tracked in #302, #303 and #307, while the current source state fixes and regression-protects those behaviors at the arithmetic-optimizer and SSA-verifier owner boundaries. The pilot's normalized finding classes remain historical triage groups rather than clean discovery yield. Lifecycle, negative-surface and reducer stages remain incomplete.
+This tooling is not part of the public Wist package and does not establish publication claims. The preserved regression-inclusive Wist pilot records the historical behaviors tracked in #302, #303 and #307, while the current source state fixes and regression-protects those behaviors at the arithmetic-optimizer and SSA-verifier owner boundaries. The pilot's normalized finding classes remain historical triage groups rather than clean discovery yield. Program/plan reduction is implemented; lifecycle, negative-surface and schedule-reduction stages remain incomplete.
 
 ## Experimental or incomplete
 

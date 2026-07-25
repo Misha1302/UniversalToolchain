@@ -3,7 +3,7 @@ namespace UniversalToolchain.PlanFuzz.Adapter.Wist;
 /// <summary>
 /// Implements PlanFuzz Phase 1 for the documented Wist restricted Int32 arithmetic subset.
 /// </summary>
-public sealed class WistPlanFuzzAdapter : IPlanFuzzLanguageAdapter
+public sealed class WistPlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzProgramReducer
 {
     private static readonly IReadOnlySet<string> ClassifiedUnsupportedDiagnostics = new HashSet<string>(StringComparer.Ordinal)
     {
@@ -25,7 +25,7 @@ public sealed class WistPlanFuzzAdapter : IPlanFuzzLanguageAdapter
         WistPlanFuzzConstants.AdapterVersion,
         WistPlanFuzzConstants.LanguageId,
         WistPlanFuzzConstants.GeneratorSchemaVersion,
-        ["backend-parity", "optimization-route-parity", "controlled-fallback", "restricted-int32", "regression-corpus"]);
+        ["backend-parity", "optimization-route-parity", "controlled-fallback", "restricted-int32", "regression-corpus", "program-reduction"]);
 
     public PlanFuzzTestCase GenerateCase(
         ulong campaignSeed,
@@ -132,6 +132,26 @@ public sealed class WistPlanFuzzAdapter : IPlanFuzzLanguageAdapter
             contracts);
     }
 
+    public long GetProgramComplexity(PlanFuzzTestCase testCase)
+    {
+        testCase = testCase.ArgNotNull();
+        EnsureReductionSchema(testCase);
+        return WistIntProgramReducer.GetComplexity(
+            WistIntProgramModel.FromPayload(testCase.Program.Model));
+    }
+
+    public IReadOnlyList<PlanFuzzProgramReductionCandidate> GetProgramReductionCandidates(
+        PlanFuzzTestCase testCase)
+    {
+        testCase = testCase.ArgNotNull();
+        EnsureReductionSchema(testCase);
+        var model = WistIntProgramModel.FromPayload(testCase.Program.Model);
+        if (!StringComparer.Ordinal.Equals(model.RenderSource(), testCase.Program.SourceText))
+            return Thrower.InvalidOpEx<IReadOnlyList<PlanFuzzProgramReductionCandidate>>(
+                "Structured Wist program model does not reproduce the recorded source text.");
+        return WistIntProgramReducer.CreateCandidates(testCase, model);
+    }
+
     public PlanFuzzObservation Execute(
         PlanFuzzTestCase testCase,
         PlanFuzzPlanVariant variant)
@@ -192,6 +212,20 @@ public sealed class WistPlanFuzzAdapter : IPlanFuzzLanguageAdapter
             variant,
             "variant-backend",
             $"Unknown Wist PlanFuzz backend '{variant.BackendId}'.");
+    }
+
+    private void EnsureReductionSchema(PlanFuzzTestCase testCase)
+    {
+        if (!StringComparer.Ordinal.Equals(testCase.AdapterId, Descriptor.AdapterId) ||
+            !StringComparer.Ordinal.Equals(testCase.AdapterVersion, Descriptor.AdapterVersion))
+        {
+            Thrower.Argument(nameof(testCase), "Testcase adapter identity does not match the Wist reducer.");
+        }
+        if (!StringComparer.Ordinal.Equals(testCase.Program.ModelKind, WistPlanFuzzConstants.ModelKind) ||
+            testCase.Program.ModelSchemaVersion != WistPlanFuzzConstants.ModelSchemaVersion)
+        {
+            Thrower.Argument(nameof(testCase), "Testcase program model is not supported by the Wist reducer.");
+        }
     }
 
     private static PlanFuzzObservation? ValidateVariant(
