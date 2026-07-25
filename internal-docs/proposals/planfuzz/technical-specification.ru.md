@@ -878,7 +878,9 @@ public sealed record SurfaceEvidence(
 - каждый independent surface/owner принадлежит ровно одному binding;
 - bindings покрывают declared-independent sets точно, без пропусков и лишних IDs;
 - schema-v1..v3 остаются читаемыми для истории;
-- schema-v4/evidence-v2 остаётся пригодной для O-004, но не может дать `Passed` текущему O-005 без explicit bindings.
+- observation schema владеет допустимой evidence version: schema-v4 принимает только evidence-v2 и не может объявить себя v3;
+- schema-v4/evidence-v2 остаётся пригодной для O-004, но не может дать `Passed` текущему O-005 без explicit bindings;
+- extension bindings сравниваются структурно по `ExtensionId`, `SurfaceIds` и `OwnerIds`; delimiter-concatenated synthetic identity запрещена.
 
 `ActivationTraceStatus` — typed enum: `Unsupported`, `Partial`, `Complete`. Boolean completeness больше не является текущим контрактом.
 
@@ -1115,7 +1117,7 @@ Violated > InfrastructureFailure > Inconclusive > NotApplicable > Passed
 - в selected surface и selected owner domains нет удалений и есть непустые additions;
 - additions точно совпадают с newly declared independent surface/owner IDs;
 - появляется ровно один новый `IndependentExtensionEvidence`, который связывает exact added surfaces и owners одним stable extension ID;
-- все прежние extension bindings сохраняются;
+- все прежние extension bindings сохраняются и сравниваются структурно, без строковой delimiter-кодировки;
 - `Extended.ExcludedOwnerIds = Baseline.ExcludedOwnerIds − AddedOwnerIds`; unrelated exclusion policy не меняется;
 - current complete traces use the same evidence contract and `traceKind`;
 - no override/shared slot conflict;

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 3,
   "date": "2026-07-25",
-  "scope": "PlanFuzz Phase 3a O-005 evidence-identity hardening",
+  "scope": "PlanFuzz Phase 3a O-005 evidence-identity and adversarial review hardening",
   "adapter": {
     "id": "acme-pricing",
     "version": "0.4.0",
@@ -77,5 +77,12 @@
       "reason": "O-005 v2 stopped at extension-owner activation and omitted simultaneous semantic interference from exact identity."
     }
   },
-  "claimBoundary": "This is bounded Phase 3a stability and harness-identity evidence. The runtime faults are test-owned and do not count as discovered compiler defects. Lifecycle/session/concurrency schedules, schedule reduction, equal-budget superiority, publication novelty and production certification remain unverified."
+  "claimBoundary": "This is bounded Phase 3a stability and harness-identity evidence. The runtime faults are test-owned and do not count as discovered compiler defects. Lifecycle/session/concurrency schedules, schedule reduction, equal-budget superiority, publication novelty and production certification remain unverified.",
+  "reviewedImplementationHead": "0079ae983747d9f4d3f38561e7b162b9df7acac8",
+  "adversarialReview": {
+    "schemaV4CannotClaimEvidenceContractV3": true,
+    "extensionBindingsComparedStructurally": true,
+    "delimiterDerivedBindingIdentityForbidden": true,
+    "regressionTestsAdded": 2
+  }
 }
