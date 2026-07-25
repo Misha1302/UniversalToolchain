@@ -41,7 +41,8 @@ public sealed class NegativeSurfacePreservationOracle : IPlanFuzzOracle
                 inconclusive.Add($"{variantId}:missing-surface");
                 continue;
             }
-            if (observation.Surface.EvidenceContractVersion != PlanFuzzSurfaceSnapshot.CurrentEvidenceContractVersion)
+            if (observation.Surface.EvidenceContractVersion < PlanFuzzSurfaceSnapshot.MinimumNegativeSurfaceEvidenceContractVersion ||
+                observation.Surface.EvidenceContractVersion > PlanFuzzSurfaceSnapshot.CurrentEvidenceContractVersion)
             {
                 inconclusive.Add($"{variantId}:legacy-evidence-v{observation.Surface.EvidenceContractVersion}");
                 continue;
@@ -88,7 +89,7 @@ public sealed class NegativeSurfacePreservationOracle : IPlanFuzzOracle
         if (inconclusive.Count != 0)
         {
             var material = string.Join('|', inconclusive.OrderBy(static item => item, StringComparer.Ordinal));
-            return Result(context, PlanFuzzOracleStatus.Inconclusive, "One or more variants lack current complete activation evidence.", material);
+            return Result(context, PlanFuzzOracleStatus.Inconclusive, "One or more variants lack complete owner-activation evidence.", material);
         }
 
         return evaluated == 0
