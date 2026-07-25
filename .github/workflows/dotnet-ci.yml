@@ -126,3 +126,92 @@ jobs:
           fi
           git commit -m "chore: refresh recursive manifest"
           git push origin "HEAD:${GITHUB_REF_NAME}"
+
+  finalize-o005-evidence:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/research/planfuzz-o005-evidence-hardening' && github.actor != 'github-actions[bot]'
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout research branch
+        uses: actions/checkout@v4
+        with:
+          ref: research/planfuzz-o005-evidence-hardening
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: UniversalToolchain/global.json
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Generate and finalize evidence
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          test -f .github/planfuzz-o005-evidence-trigger || exit 0
+          cp Tools/finalize_planfuzz_o005_evidence.py "$RUNNER_TEMP/finalize_planfuzz_o005_evidence.py"
+          git rm .github/planfuzz-o005-evidence-trigger Tools/finalize_planfuzz_o005_evidence.py
+          git checkout origin/master -- .github/workflows/dotnet-ci.yml
+
+          dotnet build UniversalToolchain/UniversalToolchain.PlanFuzz.Cli/UniversalToolchain.PlanFuzz.Cli.csproj -c Release
+          cli=(dotnet run --project UniversalToolchain/UniversalToolchain.PlanFuzz.Cli/UniversalToolchain.PlanFuzz.Cli.csproj -c Release --no-build --)
+          root="$RUNNER_TEMP/o005-evidence"
+          mkdir -p "$root"
+
+          "${cli[@]}" campaign \
+            --adapter acme-pricing \
+            --seed 20260725 \
+            --cases 25 \
+            --repeat 2 \
+            --timeout-seconds 20 \
+            --output "$root/clean"
+
+          for fault in SF-005-excluded-provider-activated SF-011-extension-noninterference; do
+            case_path="$root/$fault-case.json"
+            replay_path="$root/$fault-replay"
+            "${cli[@]}" generate \
+              --adapter acme-pricing \
+              --seed 20260725 \
+              --index 0 \
+              --fault "$fault" \
+              --out "$case_path"
+            set +e
+            "${cli[@]}" replay \
+              --case "$case_path" \
+              --output "$replay_path" \
+              --repeat 3 \
+              --timeout-seconds 20
+            status=$?
+            set -e
+            test "$status" -eq 4
+          done
+
+          python3 "$RUNNER_TEMP/finalize_planfuzz_o005_evidence.py" \
+            --clean "$root/clean" \
+            --sf005 "$root/SF-005-excluded-provider-activated-replay" \
+            --sf011 "$root/SF-011-extension-noninterference-replay"
+
+          npm ci --no-audit --no-fund
+          npm run docs:status
+          npm run docs:links
+          npm run docs:build
+          python3 .github/scripts/run-markdown-bash-blocks.py
+
+          git add -A
+          git diff --cached --check
+          test -z "$(git diff --cached --name-only | grep -E '^\.github/planfuzz|finalize_planfuzz_o005_evidence|^\.github/workflows/dotnet-ci.yml$' || true)"
+
+      - name: Commit finalized evidence
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'docs(research): finalize O-005 evidence identity'
+          git push origin HEAD:research/planfuzz-o005-evidence-hardening
