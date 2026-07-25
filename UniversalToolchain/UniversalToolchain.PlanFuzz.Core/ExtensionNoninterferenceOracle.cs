@@ -136,7 +136,7 @@ public sealed class ExtensionNoninterferenceOracle : IPlanFuzzOracle
         var addedOwners = extended.SelectedOwnerIds.Except(baseline.SelectedOwnerIds, StringComparer.Ordinal)
             .OrderBy(static value => value, StringComparer.Ordinal).ToArray();
         return new AdditiveDelta(
-            removedSurfaces.Length == 0 && removedOwners.Length == 0 && (addedSurfaces.Length != 0 || addedOwners.Length != 0),
+            removedSurfaces.Length == 0 && removedOwners.Length == 0 && addedSurfaces.Length != 0 && addedOwners.Length != 0,
             removedSurfaces.Length == 0 && removedOwners.Length == 0 && addedSurfaces.Length == 0 && addedOwners.Length == 0,
             addedSurfaces,
             addedOwners);
