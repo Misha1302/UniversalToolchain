@@ -19,13 +19,33 @@ jobs:
           ref: research/planfuzz-surface-hardening
           fetch-depth: 0
 
-      - name: Reconstruct and verify patch
+      - name: Verify and reconstruct patch
         shell: bash
         run: |
-          cat .github/planfuzz-surface-hardening-patch/chunk* > "$RUNNER_TEMP/hardening.patch.gz.b64"
+          cat > "$RUNNER_TEMP/PARTS.sha256" <<'EOF'
+          d8b01489122c4881e5c99030b815c7d20dff224cf3d256652add884b77373158  .github/planfuzz-surface-hardening-patch/chunk00
+          ad2cb106dcaaac6e328594c32cead1e5df90b32ea0ed49a9ae4d0f06a2aa2bbe  .github/planfuzz-surface-hardening-tail/part05
+          c8aeb043e6c860fb7eb20b6fee09662694ab1be1a8692a37d271d384f25a3a4e  .github/planfuzz-surface-hardening-tail/part06
+          8a86e96b2eab7e36d95175ebfb39cdd6305d84c7b12831e0cf512ec1c50904ac  .github/planfuzz-surface-hardening-tail/part07
+          06bd0a69935a9b1a3370549526c7871f1008653e6bf83bed8452cf620fe7ede1  .github/planfuzz-surface-hardening-tail/part08
+          0c3539e457f387d49906d9379ce2ea265861d011effcd47e818c7429cc500d8d  .github/planfuzz-surface-hardening-tail/part09
+          fe59fa20da3e69f39300bf93997f51bfdee790f793e8b5a3cd13897606dff84e  .github/planfuzz-surface-hardening-tail/part10
+          802b15a809cae221d77091568396f9b9a2971ec2cc2bfa0b49d392679bf42d31  .github/planfuzz-surface-hardening-tail/part11
+          3e98da1b26796e6c65cd4a94b6c3ee6f668c9981c1552fdaf46be557bac3119a  .github/planfuzz-surface-hardening-tail/part12
+          1a6d287487134277f900f88a8c13749833814f42a5da536d92670503d975496b  .github/planfuzz-surface-hardening-tail/part13
+          296ed8426f8e24b06094746ee11513843c5f5dc7dc0b404495e71e944fded93c  .github/planfuzz-surface-hardening-tail/part14
+          4a7db1af8273f79b2469a6e151f269355bd8d1bc4be5204363e0c102c63a0bda  .github/planfuzz-surface-hardening-tail/part15
+          b7acb3c3e75019ed367dc9f2f31fb05a7a41a0eb042578f31ebf069f640cc407  .github/planfuzz-surface-hardening-tail/part16
+          b32a79c69a24699e55ad61f6bd7ea30c9c00b014a363ba3c83f888fe854028eb  .github/planfuzz-surface-hardening-tail/part17
+          559a425701032fc88a488eeb4b48f68ee38bf48ad38f72f12f7f3449b9bbe71d  .github/planfuzz-surface-hardening-tail/part18
+          d9ae55ee1cb790cd33e3f51de4eb8130a031bc38c727b93336849cb2173b0097  .github/planfuzz-surface-hardening-tail/part19
+          EOF
+          sha256sum --check "$RUNNER_TEMP/PARTS.sha256"
+          cat .github/planfuzz-surface-hardening-patch/chunk00 .github/planfuzz-surface-hardening-tail/part* > "$RUNNER_TEMP/hardening.patch.gz.b64"
           echo '59232208ea2dc1a7102bca457224cfeeea447caea7472185d838540aa576d74e  '"$RUNNER_TEMP/hardening.patch.gz.b64" | sha256sum --check
           base64 --decode "$RUNNER_TEMP/hardening.patch.gz.b64" | gzip --decompress > "$RUNNER_TEMP/hardening.patch"
           echo 'c576024ef868e7bf04efe90af97c84f8eb94c065323168e169170cb21de0057d  '"$RUNNER_TEMP/hardening.patch" | sha256sum --check
+          patch -p1 --batch --dry-run < "$RUNNER_TEMP/hardening.patch"
 
       - name: Apply implementation
         shell: bash
@@ -33,7 +53,7 @@ jobs:
 
       - name: Remove transport files
         shell: bash
-        run: git rm -r .github/planfuzz-surface-hardening-patch .github/workflows/apply-planfuzz-surface-hardening.yml .github/workflows/apply-planfuzz-surface-hardening-pr.yml .github/workflows/diagnose-planfuzz-surface-hardening.yml .github/planfuzz-surface-hardening-trigger
+        run: git rm -r .github/planfuzz-surface-hardening-patch .github/planfuzz-surface-hardening-tail .github/workflows/apply-planfuzz-surface-hardening.yml .github/workflows/apply-planfuzz-surface-hardening-pr.yml .github/workflows/diagnose-planfuzz-surface-hardening.yml .github/planfuzz-surface-hardening-trigger
 
       - name: Refresh recursive source manifest
         shell: bash
