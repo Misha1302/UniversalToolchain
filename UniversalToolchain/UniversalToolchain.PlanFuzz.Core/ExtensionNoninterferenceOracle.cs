@@ -133,15 +133,19 @@ public sealed class ExtensionNoninterferenceOracle : IPlanFuzzOracle
             .Except(baseline.DeclaredIndependentOwnerIds, StringComparer.Ordinal)
             .OrderBy(static value => value, StringComparer.Ordinal).ToArray();
 
-        var baselineBindings = baseline.IndependentExtensions
-            .Select(static extension => extension.CanonicalIdentity)
-            .ToHashSet(StringComparer.Ordinal);
-        var extendedBindings = extended.IndependentExtensions
-            .Select(static extension => extension.CanonicalIdentity)
-            .ToHashSet(StringComparer.Ordinal);
-        var removedBindings = baselineBindings.Except(extendedBindings, StringComparer.Ordinal).ToArray();
-        var addedBindings = extended.IndependentExtensions
-            .Where(extension => !baselineBindings.Contains(extension.CanonicalIdentity))
+        var baselineBindings = ToBindingMap(baseline.IndependentExtensions);
+        var extendedBindings = ToBindingMap(extended.IndependentExtensions);
+        var removedBindings = baselineBindings
+            .Where(binding =>
+                !extendedBindings.TryGetValue(binding.Key, out var extendedBinding) ||
+                !BindingsEqual(binding.Value, extendedBinding))
+            .Select(static binding => binding.Value)
+            .ToArray();
+        var addedBindings = extendedBindings
+            .Where(binding =>
+                !baselineBindings.TryGetValue(binding.Key, out var baselineBinding) ||
+                !BindingsEqual(binding.Value, baselineBinding))
+            .Select(static binding => binding.Value)
             .ToArray();
 
         var expectedExcludedOwners = baseline.ExcludedOwnerIds
@@ -166,6 +170,7 @@ public sealed class ExtensionNoninterferenceOracle : IPlanFuzzOracle
             addedBindings.Length == 1 &&
             addedBindings[0].SurfaceIds.SequenceEqual(addedSurfaces, StringComparer.Ordinal) &&
             addedBindings[0].OwnerIds.SequenceEqual(addedOwners, StringComparer.Ordinal);
+        var bindingsAreEqual = removedBindings.Length == 0 && addedBindings.Length == 0;
 
         return new ExtensionDelta(
             selectedDeltaIsAdditive && declarationsMatchSelectedDelta && exclusionPolicyIsPreserved && bindingIsExact,
@@ -176,10 +181,20 @@ public sealed class ExtensionNoninterferenceOracle : IPlanFuzzOracle
             baseline.DeclaredIndependentSurfaceIds.SequenceEqual(extended.DeclaredIndependentSurfaceIds, StringComparer.Ordinal) &&
             baseline.DeclaredIndependentOwnerIds.SequenceEqual(extended.DeclaredIndependentOwnerIds, StringComparer.Ordinal) &&
             baseline.ExcludedOwnerIds.SequenceEqual(extended.ExcludedOwnerIds, StringComparer.Ordinal) &&
-            baselineBindings.SetEquals(extendedBindings),
+            bindingsAreEqual,
             addedSurfaces,
             addedOwners);
     }
+
+    private static Dictionary<string, PlanFuzzIndependentExtensionEvidence> ToBindingMap(
+        IEnumerable<PlanFuzzIndependentExtensionEvidence> bindings) =>
+        bindings.ToDictionary(static binding => binding.ExtensionId, StringComparer.Ordinal);
+
+    private static bool BindingsEqual(
+        PlanFuzzIndependentExtensionEvidence left,
+        PlanFuzzIndependentExtensionEvidence right) =>
+        left.SurfaceIds.SequenceEqual(right.SurfaceIds, StringComparer.Ordinal) &&
+        left.OwnerIds.SequenceEqual(right.OwnerIds, StringComparer.Ordinal);
 
     private static string Describe(PlanFuzzObservation observation) =>
         observation.Outcome == PlanFuzzExecutionOutcome.Success
