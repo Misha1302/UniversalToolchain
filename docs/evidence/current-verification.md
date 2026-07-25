@@ -24,7 +24,7 @@ It restores and builds both `UniversalToolchain/Wist.sln` and the configuration-
 Release builds succeeded
 0 build warnings
 0 build errors
-1,463 tests succeeded
+1,465 tests succeeded
 0 failed
 0 skipped
 9 NuGet packages checked
@@ -40,9 +40,9 @@ Per-project test counts:
 | `UniversalToolchain.Modules.Tests` | 290 | 0 | 0 |
 | `UniversalToolchain.Dialects.Tests` | 588 | 0 | 0 |
 | `UniversalToolchain.LanguageSdk.Tests` | 53 | 0 | 0 |
-| `UniversalToolchain.PlanFuzz.Tests` | 39 | 0 | 0 |
+| `UniversalToolchain.PlanFuzz.Tests` | 41 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
-| **Total** | **1,463** | **0** | **0** |
+| **Total** | **1,465** | **0** | **0** |
 
 The root `VERIFICATION.md` is the detailed authority for commands, environment, package checks and the PlanFuzz evidence boundary.
 
