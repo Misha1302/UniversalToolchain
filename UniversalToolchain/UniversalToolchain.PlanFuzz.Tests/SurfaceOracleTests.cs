@@ -80,6 +80,78 @@ public sealed class SurfaceOracleTests
     }
 
     [Test]
+    public void ObservationSchemaVersionFourRemainsReadableButCannotPassCurrentExtensionOracle()
+    {
+        const string baselineJson = """
+        {
+          "schemaVersion": 4,
+          "canonicalization": "planfuzz-json-v1",
+          "caseId": "case",
+          "variantId": "baseline",
+          "backendId": "backend",
+          "outcome": "Success",
+          "value": { "typeIdentity": "System.Int32", "canonicalValue": "1" },
+          "surface": {
+            "evidenceContractVersion": 2,
+            "selectedSurfaceIds": ["feature:core"],
+            "selectedOwnerIds": ["contribution:active"],
+            "excludedOwnerIds": ["contribution:extension"],
+            "declaredIndependentSurfaceIds": [],
+            "declaredIndependentOwnerIds": [],
+            "activatedOwnerIds": ["contribution:active"],
+            "activationTraceStatus": "Complete",
+            "traceKind": "observed-language-route-runtime-v2",
+            "routeIdentity": "route:baseline"
+          }
+        }
+        """;
+        const string extendedJson = """
+        {
+          "schemaVersion": 4,
+          "canonicalization": "planfuzz-json-v1",
+          "caseId": "case",
+          "variantId": "extended",
+          "backendId": "backend",
+          "outcome": "Success",
+          "value": { "typeIdentity": "System.Int32", "canonicalValue": "1" },
+          "surface": {
+            "evidenceContractVersion": 2,
+            "selectedSurfaceIds": ["feature:core", "feature:extension"],
+            "selectedOwnerIds": ["contribution:active", "contribution:extension"],
+            "excludedOwnerIds": [],
+            "declaredIndependentSurfaceIds": ["feature:extension"],
+            "declaredIndependentOwnerIds": ["contribution:extension"],
+            "activatedOwnerIds": ["contribution:active"],
+            "activationTraceStatus": "Complete",
+            "traceKind": "observed-language-route-runtime-v2",
+            "routeIdentity": "route:baseline"
+          }
+        }
+        """;
+        var baselineVariant = Variant("baseline");
+        var extendedVariant = Variant("extended", PlanFuzzVariantRole.EquivalentMutation);
+        var contract = new PlanFuzzOracleContract(
+            "extension",
+            PlanFuzzOracleIds.ExtensionNoninterference,
+            3,
+            [baselineVariant.VariantId, extendedVariant.VariantId]);
+        var testCase = CreateCase([baselineVariant, extendedVariant], [contract]);
+        var baseline = PlanFuzzObservationSerializer.Deserialize(baselineJson);
+        var extended = PlanFuzzObservationSerializer.Deserialize(extendedJson);
+
+        var result = new PlanFuzzOracleEngine().Evaluate(testCase, [baseline, extended]).Single();
+        using var roundTrip = JsonDocument.Parse(PlanFuzzObservationSerializer.Serialize(extended));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(extended.Surface?.EvidenceContractVersion, Is.EqualTo(2));
+            Assert.That(roundTrip.RootElement.GetProperty("schemaVersion").GetInt32(), Is.EqualTo(4));
+            Assert.That(result.Status, Is.EqualTo(PlanFuzzOracleStatus.Inconclusive));
+            Assert.That(result.FingerprintMaterial, Is.EqualTo("legacy-evidence"));
+        });
+    }
+
+    [Test]
     public void SurfaceEvidenceRejectsBlankDuplicateAndContradictoryOwnerIds()
     {
         Assert.Multiple(() =>
@@ -101,9 +173,10 @@ public sealed class SurfaceOracleTests
                 [],
                 [],
                 [],
+                [],
                 ["contribution:active"],
                 PlanFuzzActivationTraceStatus.Complete,
-                "test-trace-v1",
+                "test-trace-v3",
                 "route:baseline"));
             Assert.Throws<ArgumentException>(() => new PlanFuzzSurfaceSnapshot(
                 PlanFuzzSurfaceSnapshot.CurrentEvidenceContractVersion,
@@ -112,9 +185,10 @@ public sealed class SurfaceOracleTests
                 [],
                 [],
                 [],
+                [],
                 ["contribution:active"],
                 (PlanFuzzActivationTraceStatus)999,
-                "test-trace-v1",
+                "test-trace-v3",
                 "route:baseline"));
         });
     }
@@ -124,10 +198,69 @@ public sealed class SurfaceOracleTests
     {
         Assert.Multiple(() =>
         {
-            Assert.Throws<ArgumentException>(() => Surface(
-                ["feature:core"], ["contribution:active"], [], ["feature:extension"], [], ["contribution:active"]));
-            Assert.Throws<ArgumentException>(() => Surface(
-                ["feature:core"], ["contribution:active"], [], [], ["contribution:extension"], ["contribution:active"]));
+            Assert.Throws<ArgumentException>(() => new PlanFuzzSurfaceSnapshot(
+                PlanFuzzSurfaceSnapshot.CurrentEvidenceContractVersion,
+                ["feature:core"],
+                ["contribution:active"],
+                [],
+                ["feature:extension"],
+                ["contribution:extension"],
+                [Extension("extension", ["feature:extension"], ["contribution:extension"])],
+                ["contribution:active"],
+                PlanFuzzActivationTraceStatus.Complete,
+                "test-trace-v3",
+                "route:baseline"));
+            Assert.Throws<ArgumentException>(() => new PlanFuzzSurfaceSnapshot(
+                PlanFuzzSurfaceSnapshot.CurrentEvidenceContractVersion,
+                ["feature:core", "feature:extension"],
+                ["contribution:active"],
+                [],
+                ["feature:extension"],
+                ["contribution:extension"],
+                [Extension("extension", ["feature:extension"], ["contribution:extension"])],
+                ["contribution:active"],
+                PlanFuzzActivationTraceStatus.Complete,
+                "test-trace-v3",
+                "route:baseline"));
+        });
+    }
+
+    [Test]
+    public void SurfaceEvidenceRejectsIncompleteOrAmbiguousExtensionBindings()
+    {
+        Assert.Multiple(() =>
+        {
+            Assert.Throws<ArgumentException>(() => new PlanFuzzSurfaceSnapshot(
+                PlanFuzzSurfaceSnapshot.CurrentEvidenceContractVersion,
+                ["feature:core", "feature:extension"],
+                ["contribution:active", "contribution:extension"],
+                [],
+                ["feature:extension"],
+                ["contribution:extension"],
+                [],
+                ["contribution:active"],
+                PlanFuzzActivationTraceStatus.Complete,
+                "test-trace-v3",
+                "route:baseline"));
+            Assert.Throws<ArgumentException>(() => new PlanFuzzSurfaceSnapshot(
+                PlanFuzzSurfaceSnapshot.CurrentEvidenceContractVersion,
+                ["feature:core", "feature:a", "feature:b"],
+                ["contribution:active", "contribution:extension"],
+                [],
+                ["feature:a", "feature:b"],
+                ["contribution:extension"],
+                [
+                    Extension("extension:a", ["feature:a"], ["contribution:extension"]),
+                    Extension("extension:b", ["feature:b"], ["contribution:extension"])
+                ],
+                ["contribution:active"],
+                PlanFuzzActivationTraceStatus.Complete,
+                "test-trace-v3",
+                "route:baseline"));
+            Assert.Throws<ArgumentException>(() => new PlanFuzzIndependentExtensionEvidence(
+                "extension",
+                [],
+                ["contribution:extension"]));
         });
     }
 
@@ -176,18 +309,40 @@ public sealed class SurfaceOracleTests
     }
 
     [Test]
-    public void NegativeSurfacePassesOnlyCurrentCompleteOwnerEvidence()
+    public void NegativeSurfacePassesEvidenceVersionTwoAndCurrentEvidence()
     {
         var (testCase, variant) = CreateSingleVariantCase();
-        var observation = Observation(
+        var current = Observation(
             testCase,
             variant,
             1,
             Surface(["feature:core"], ["contribution:active"], ["contribution:excluded"], [], [], ["contribution:active"]));
+#pragma warning disable CS0618
+        var versionTwo = Observation(
+            testCase,
+            variant,
+            1,
+            new PlanFuzzSurfaceSnapshot(
+                2,
+                ["feature:core"],
+                ["contribution:active"],
+                ["contribution:excluded"],
+                [],
+                [],
+                ["contribution:active"],
+                PlanFuzzActivationTraceStatus.Complete,
+                "test-trace-v2",
+                "route:baseline"));
+#pragma warning restore CS0618
 
-        var result = new PlanFuzzOracleEngine().Evaluate(testCase, [observation]).Single();
+        var currentResult = new PlanFuzzOracleEngine().Evaluate(testCase, [current]).Single();
+        var versionTwoResult = new PlanFuzzOracleEngine().Evaluate(testCase, [versionTwo]).Single();
 
-        Assert.That(result.Status, Is.EqualTo(PlanFuzzOracleStatus.Passed));
+        Assert.Multiple(() =>
+        {
+            Assert.That(currentResult.Status, Is.EqualTo(PlanFuzzOracleStatus.Passed));
+            Assert.That(versionTwoResult.Status, Is.EqualTo(PlanFuzzOracleStatus.Passed));
+        });
     }
 
     [Test]
@@ -220,11 +375,11 @@ public sealed class SurfaceOracleTests
 
         var forward = new ExtensionNoninterferenceOracle().Evaluate(new PlanFuzzOracleContext(
             testCase,
-            new PlanFuzzOracleContract("extension", PlanFuzzOracleIds.ExtensionNoninterference, 2, [baselineVariant.VariantId, extendedVariant.VariantId]),
+            new PlanFuzzOracleContract("extension", PlanFuzzOracleIds.ExtensionNoninterference, 3, [baselineVariant.VariantId, extendedVariant.VariantId]),
             observations));
         var reverse = new ExtensionNoninterferenceOracle().Evaluate(new PlanFuzzOracleContext(
             testCase,
-            new PlanFuzzOracleContract("extension", PlanFuzzOracleIds.ExtensionNoninterference, 2, [extendedVariant.VariantId, baselineVariant.VariantId]),
+            new PlanFuzzOracleContract("extension", PlanFuzzOracleIds.ExtensionNoninterference, 3, [extendedVariant.VariantId, baselineVariant.VariantId]),
             observations));
 
         Assert.Multiple(() =>
@@ -246,7 +401,7 @@ public sealed class SurfaceOracleTests
         var contract = new PlanFuzzOracleContract(
             "extension",
             PlanFuzzOracleIds.ExtensionNoninterference,
-            2,
+            3,
             [baselineVariant.VariantId, extendedVariant.VariantId]);
         var testCase = CreateCase([baselineVariant, extendedVariant], [contract]);
         var baseline = Observation(
@@ -260,8 +415,6 @@ public sealed class SurfaceOracleTests
         string[] extendedOwners = addOwner
             ? ["contribution:active", "contribution:extension"]
             : ["contribution:active"];
-        string[] independentSurfaces = addSurface ? ["feature:extension"] : [];
-        string[] independentOwners = addOwner ? ["contribution:extension"] : [];
         var extended = Observation(
             testCase,
             extendedVariant,
@@ -270,8 +423,8 @@ public sealed class SurfaceOracleTests
                 extendedSurfaces,
                 extendedOwners,
                 [],
-                independentSurfaces,
-                independentOwners,
+                [],
+                [],
                 ["contribution:active"]));
 
         var result = new PlanFuzzOracleEngine().Evaluate(testCase, [baseline, extended]).Single();
@@ -284,16 +437,122 @@ public sealed class SurfaceOracleTests
     }
 
     [Test]
-    public void ExtensionNoninterferenceRejectsRouteChangeEvenWhenValuesMatch()
+    public void ExtensionNoninterferenceRejectsUnrelatedExcludedOwnerPolicyChange()
     {
         var baselineVariant = Variant("baseline");
         var extendedVariant = Variant("extended", PlanFuzzVariantRole.EquivalentMutation);
         var contract = new PlanFuzzOracleContract(
             "extension",
             PlanFuzzOracleIds.ExtensionNoninterference,
-            2,
+            3,
             [baselineVariant.VariantId, extendedVariant.VariantId]);
         var testCase = CreateCase([baselineVariant, extendedVariant], [contract]);
+        var baseline = Observation(
+            testCase,
+            baselineVariant,
+            1,
+            Surface(
+                ["feature:core"],
+                ["contribution:active"],
+                ["contribution:extension", "contribution:unrelated"],
+                [],
+                [],
+                ["contribution:active"]));
+        var extended = Observation(
+            testCase,
+            extendedVariant,
+            1,
+            Surface(
+                ["feature:core", "feature:extension"],
+                ["contribution:active", "contribution:extension"],
+                [],
+                ["feature:extension"],
+                ["contribution:extension"],
+                ["contribution:active"]));
+
+        var result = new PlanFuzzOracleEngine().Evaluate(testCase, [baseline, extended]).Single();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Status, Is.EqualTo(PlanFuzzOracleStatus.InfrastructureFailure));
+            Assert.That(result.FingerprintMaterial, Is.EqualTo("invalid-or-ambiguous-delta"));
+        });
+    }
+
+    [Test]
+    public void ExtensionNoninterferenceAggregatesAllViolationDimensions()
+    {
+        var (testCase, baselineVariant, extendedVariant) = CreateExtensionCase();
+        var baseline = Observation(
+            testCase,
+            baselineVariant,
+            1,
+            Surface(["feature:core"], ["contribution:active"], ["contribution:extension"], [], [], ["contribution:active"]));
+        var extended = Observation(
+            testCase,
+            extendedVariant,
+            2,
+            Surface(
+                ["feature:core", "feature:extension"],
+                ["contribution:active", "contribution:extension"],
+                [],
+                ["feature:extension"],
+                ["contribution:extension"],
+                ["contribution:active", "contribution:extension"],
+                routeIdentity: "route:changed"));
+
+        var result = new PlanFuzzOracleEngine().Evaluate(testCase, [baseline, extended]).Single();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Status, Is.EqualTo(PlanFuzzOracleStatus.Violated));
+            Assert.That(result.FingerprintMaterial, Does.Contain("extension-activated:contribution:extension"));
+            Assert.That(result.FingerprintMaterial, Does.Contain("route:route:baseline|route:changed"));
+            Assert.That(result.FingerprintMaterial, Does.Contain("activation:"));
+            Assert.That(result.FingerprintMaterial, Does.Contain("behavior:"));
+            Assert.That(result.EffectiveClassFingerprintMaterial, Does.Contain("extension-activated"));
+            Assert.That(result.EffectiveClassFingerprintMaterial, Does.Contain("route-changed"));
+            Assert.That(result.EffectiveClassFingerprintMaterial, Does.Contain("activation-changed"));
+            Assert.That(result.EffectiveClassFingerprintMaterial, Does.Contain("behavior:"));
+        });
+    }
+
+    [Test]
+    public void ExtensionNoninterferenceExactFingerprintDistinguishesActivationOnlyFromSemanticInterference()
+    {
+        var (testCase, baselineVariant, extendedVariant) = CreateExtensionCase();
+        var baseline = Observation(
+            testCase,
+            baselineVariant,
+            1,
+            Surface(["feature:core"], ["contribution:active"], ["contribution:extension"], [], [], ["contribution:active"]));
+        var activatedSurface = Surface(
+            ["feature:core", "feature:extension"],
+            ["contribution:active", "contribution:extension"],
+            [],
+            ["feature:extension"],
+            ["contribution:extension"],
+            ["contribution:active", "contribution:extension"]);
+        var activationOnly = Observation(testCase, extendedVariant, 1, activatedSurface);
+        var activationAndSemantics = Observation(testCase, extendedVariant, 2, activatedSurface);
+
+        var activationOnlyResult = new PlanFuzzOracleEngine().Evaluate(testCase, [baseline, activationOnly]).Single();
+        var combinedResult = new PlanFuzzOracleEngine().Evaluate(testCase, [baseline, activationAndSemantics]).Single();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(activationOnlyResult.Status, Is.EqualTo(PlanFuzzOracleStatus.Violated));
+            Assert.That(combinedResult.Status, Is.EqualTo(PlanFuzzOracleStatus.Violated));
+            Assert.That(activationOnlyResult.FingerprintMaterial, Does.Not.Contain("behavior:"));
+            Assert.That(combinedResult.FingerprintMaterial, Does.Contain("behavior:"));
+            Assert.That(combinedResult.FingerprintMaterial, Is.Not.EqualTo(activationOnlyResult.FingerprintMaterial));
+        });
+    }
+
+    [Test]
+    public void ExtensionNoninterferenceRejectsRouteChangeEvenWhenValuesMatch()
+    {
+        var (testCase, baselineVariant, extendedVariant) = CreateExtensionCase();
         var baseline = Observation(
             testCase,
             baselineVariant,
@@ -317,7 +576,7 @@ public sealed class SurfaceOracleTests
         Assert.Multiple(() =>
         {
             Assert.That(result.Status, Is.EqualTo(PlanFuzzOracleStatus.Violated));
-            Assert.That(result.EffectiveClassFingerprintMaterial, Is.EqualTo("extension-route-changed"));
+            Assert.That(result.EffectiveClassFingerprintMaterial, Is.EqualTo("route-changed"));
         });
     }
 
@@ -326,6 +585,18 @@ public sealed class SurfaceOracleTests
         var variant = Variant("baseline");
         var contract = new PlanFuzzOracleContract("surface", PlanFuzzOracleIds.NegativeSurfacePreservation, 2, [variant.VariantId]);
         return (CreateCase([variant], [contract]), variant);
+    }
+
+    private static (PlanFuzzTestCase TestCase, PlanFuzzPlanVariant Baseline, PlanFuzzPlanVariant Extended) CreateExtensionCase()
+    {
+        var baseline = Variant("baseline");
+        var extended = Variant("extended", PlanFuzzVariantRole.EquivalentMutation);
+        var contract = new PlanFuzzOracleContract(
+            "extension",
+            PlanFuzzOracleIds.ExtensionNoninterference,
+            3,
+            [baseline.VariantId, extended.VariantId]);
+        return (CreateCase([baseline, extended], [contract]), baseline, extended);
     }
 
     private static PlanFuzzTestCase CreateCase(
@@ -364,6 +635,12 @@ public sealed class SurfaceOracleTests
             null,
             surface);
 
+    private static PlanFuzzIndependentExtensionEvidence Extension(
+        string extensionId,
+        IEnumerable<string> surfaces,
+        IEnumerable<string> owners) =>
+        new(extensionId, surfaces, owners);
+
     private static PlanFuzzSurfaceSnapshot Surface(
         IEnumerable<string> selectedSurfaces,
         IEnumerable<string> selectedOwners,
@@ -372,16 +649,25 @@ public sealed class SurfaceOracleTests
         IEnumerable<string> independentOwners,
         IEnumerable<string> activatedOwners,
         PlanFuzzActivationTraceStatus traceStatus = PlanFuzzActivationTraceStatus.Complete,
-        string routeIdentity = "route:baseline") =>
-        new(
+        string routeIdentity = "route:baseline")
+    {
+        var independentSurfaceSnapshot = independentSurfaces.ToArray();
+        var independentOwnerSnapshot = independentOwners.ToArray();
+        PlanFuzzIndependentExtensionEvidence[] extensions =
+            independentSurfaceSnapshot.Length != 0 && independentOwnerSnapshot.Length != 0
+                ? [Extension("extension:test", independentSurfaceSnapshot, independentOwnerSnapshot)]
+                : [];
+        return new PlanFuzzSurfaceSnapshot(
             PlanFuzzSurfaceSnapshot.CurrentEvidenceContractVersion,
             selectedSurfaces,
             selectedOwners,
             excludedOwners,
-            independentSurfaces,
-            independentOwners,
+            independentSurfaceSnapshot,
+            independentOwnerSnapshot,
+            extensions,
             activatedOwners,
             traceStatus,
-            "test-trace-v2",
+            "test-trace-v3",
             routeIdentity);
+    }
 }
