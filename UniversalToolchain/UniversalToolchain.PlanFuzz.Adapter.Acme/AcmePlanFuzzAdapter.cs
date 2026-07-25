@@ -12,7 +12,7 @@ public sealed class AcmePlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzPro
         AcmePlanFuzzConstants.AdapterVersion,
         AcmePlanFuzzConstants.LanguageId,
         AcmePlanFuzzConstants.GeneratorSchemaVersion,
-        ["backend-parity", "plan-determinism", "canonical-lock", "seeded-fault", "program-reduction"]);
+        ["backend-parity", "plan-determinism", "canonical-lock", "negative-surface", "extension-noninterference", "seeded-fault", "program-reduction"]);
 
     public PlanFuzzTestCase GenerateCase(
         ulong campaignSeed,
@@ -23,7 +23,9 @@ public sealed class AcmePlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzPro
         if (caseIndex < 0)
             return Thrower.Argument<PlanFuzzTestCase>(nameof(caseIndex), "Case index must not be negative.");
         if (options.SeededFaultId != null &&
-            !StringComparer.Ordinal.Equals(options.SeededFaultId, AcmePlanFuzzConstants.WrongArithmeticFault))
+            !StringComparer.Ordinal.Equals(options.SeededFaultId, AcmePlanFuzzConstants.WrongArithmeticFault) &&
+            !StringComparer.Ordinal.Equals(options.SeededFaultId, AcmePlanFuzzConstants.ExcludedActivationFault) &&
+            !StringComparer.Ordinal.Equals(options.SeededFaultId, AcmePlanFuzzConstants.ExtensionInterferenceFault))
         {
             return Thrower.NotSupported<PlanFuzzTestCase>($"Unknown Acme seeded fault '{options.SeededFaultId}'.");
         }
@@ -64,7 +66,21 @@ public sealed class AcmePlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzPro
                 AcmePlanFuzzConstants.CompiledBackend,
                 PlanFuzzVariantRole.EquivalentMutation,
                 PlanFuzzExpectedRelation.SameSemantics,
-                AcmePlanFuzzConstants.RegistryOrderMutation)
+                AcmePlanFuzzConstants.RegistryOrderMutation),
+            new(
+                "independent-extension.interpreter",
+                AcmePlanFuzzConstants.IndependentExtensionConfiguration,
+                AcmePlanFuzzConstants.InterpreterBackend,
+                PlanFuzzVariantRole.EquivalentMutation,
+                PlanFuzzExpectedRelation.SameSemantics,
+                AcmePlanFuzzConstants.IndependentExtensionMutation),
+            new(
+                "independent-extension.compiled",
+                AcmePlanFuzzConstants.IndependentExtensionConfiguration,
+                AcmePlanFuzzConstants.CompiledBackend,
+                PlanFuzzVariantRole.EquivalentMutation,
+                PlanFuzzExpectedRelation.SameSemantics,
+                AcmePlanFuzzConstants.IndependentExtensionMutation)
         };
 
         var oracleContracts = new List<PlanFuzzOracleContract>
@@ -85,13 +101,28 @@ public sealed class AcmePlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzPro
                 1,
                 ["baseline.compiled", "registry-reversed.compiled"]),
             new(
+                "negative-surface.baseline",
+                PlanFuzzOracleIds.NegativeSurfacePreservation,
+                1,
+                ["baseline.interpreter", "baseline.compiled"]),
+            new(
+                "extension-noninterference.interpreter",
+                PlanFuzzOracleIds.ExtensionNoninterference,
+                1,
+                ["baseline.interpreter", "independent-extension.interpreter"]),
+            new(
+                "extension-noninterference.compiled",
+                PlanFuzzOracleIds.ExtensionNoninterference,
+                1,
+                ["baseline.compiled", "independent-extension.compiled"]),
+            new(
                 "canonical-lock.all",
                 PlanFuzzOracleIds.CanonicalLockConsistency,
                 1,
                 variants.Select(static variant => variant.VariantId))
         };
 
-        if (options.SeededFaultId != null)
+        if (StringComparer.Ordinal.Equals(options.SeededFaultId, AcmePlanFuzzConstants.WrongArithmeticFault))
         {
             variants.Add(new PlanFuzzPlanVariant(
                 "seeded-wrong-arithmetic.compiled",
@@ -105,13 +136,44 @@ public sealed class AcmePlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzPro
                 PlanFuzzOracleIds.BackendParity,
                 1,
                 ["baseline.interpreter", "seeded-wrong-arithmetic.compiled"]));
-            oracleContracts.RemoveAll(static contract => StringComparer.Ordinal.Equals(contract.ContractId, "canonical-lock.all"));
-            oracleContracts.Add(new PlanFuzzOracleContract(
-                "canonical-lock.all",
-                PlanFuzzOracleIds.CanonicalLockConsistency,
-                1,
-                variants.Select(static variant => variant.VariantId)));
         }
+        else if (StringComparer.Ordinal.Equals(options.SeededFaultId, AcmePlanFuzzConstants.ExcludedActivationFault))
+        {
+            variants.Add(new PlanFuzzPlanVariant(
+                "seeded-excluded-activation.interpreter",
+                AcmePlanFuzzConstants.ExcludedActivationConfiguration,
+                AcmePlanFuzzConstants.InterpreterBackend,
+                PlanFuzzVariantRole.SeededFault,
+                PlanFuzzExpectedRelation.ExpectedDifference,
+                seededFaultId: AcmePlanFuzzConstants.ExcludedActivationFault));
+            oracleContracts.Add(new PlanFuzzOracleContract(
+                "negative-surface.seeded-excluded-activation",
+                PlanFuzzOracleIds.NegativeSurfacePreservation,
+                1,
+                ["seeded-excluded-activation.interpreter"]));
+        }
+        else if (StringComparer.Ordinal.Equals(options.SeededFaultId, AcmePlanFuzzConstants.ExtensionInterferenceFault))
+        {
+            variants.Add(new PlanFuzzPlanVariant(
+                "seeded-extension-interference.interpreter",
+                AcmePlanFuzzConstants.ExtensionInterferenceConfiguration,
+                AcmePlanFuzzConstants.InterpreterBackend,
+                PlanFuzzVariantRole.SeededFault,
+                PlanFuzzExpectedRelation.ExpectedDifference,
+                seededFaultId: AcmePlanFuzzConstants.ExtensionInterferenceFault));
+            oracleContracts.Add(new PlanFuzzOracleContract(
+                "extension-noninterference.seeded",
+                PlanFuzzOracleIds.ExtensionNoninterference,
+                1,
+                ["baseline.interpreter", "seeded-extension-interference.interpreter"]));
+        }
+
+        oracleContracts.RemoveAll(static contract => StringComparer.Ordinal.Equals(contract.ContractId, "canonical-lock.all"));
+        oracleContracts.Add(new PlanFuzzOracleContract(
+            "canonical-lock.all",
+            PlanFuzzOracleIds.CanonicalLockConsistency,
+            1,
+            variants.Select(static variant => variant.VariantId)));
 
         return new PlanFuzzTestCase(
             PlanFuzzConstants.CaseSchemaVersion,
@@ -196,6 +258,15 @@ public sealed class AcmePlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzPro
         var wrongArithmetic = StringComparer.Ordinal.Equals(
             variant.ConfigurationId,
             AcmePlanFuzzConstants.WrongArithmeticConfiguration);
+        var includeIndependentExtension =
+            StringComparer.Ordinal.Equals(variant.ConfigurationId, AcmePlanFuzzConstants.IndependentExtensionConfiguration) ||
+            StringComparer.Ordinal.Equals(variant.ConfigurationId, AcmePlanFuzzConstants.ExtensionInterferenceConfiguration);
+        var seedExcludedActivation = StringComparer.Ordinal.Equals(
+            variant.ConfigurationId,
+            AcmePlanFuzzConstants.ExcludedActivationConfiguration);
+        var seedExtensionInterference = StringComparer.Ordinal.Equals(
+            variant.ConfigurationId,
+            AcmePlanFuzzConstants.ExtensionInterferenceConfiguration);
         var targetPackage = AcmePricingLanguagePackageFactory.Create(wrongArithmetic);
         var unrelatedPackage = AcmePricingLanguagePackageFactory.CreateUnrelated();
         var registry = new LanguagePackageRegistry();
@@ -214,7 +285,7 @@ public sealed class AcmePlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzPro
         try
         {
             plan = new LanguageCompiler(registry)
-                .Compile(AcmePricingLanguagePackageFactory.CreateDefinition())
+                .Compile(AcmePricingLanguagePackageFactory.CreateDefinition(includeIndependentExtension))
                 .GetRequiredPlan();
         }
         catch (Exception exception)
@@ -223,6 +294,7 @@ public sealed class AcmePlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzPro
         }
 
         var planSnapshot = CreatePlanSnapshot(plan);
+        var surfaceSnapshot = CreateSurfaceSnapshot(plan, variant.BackendId, includeIndependentExtension, seedExcludedActivation);
         try
         {
             using var runtime = LanguageRuntime.Create(plan, new ILanguageRouteComponentSource[] { targetPackage });
@@ -237,6 +309,8 @@ public sealed class AcmePlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzPro
                     "value-type",
                     $"Acme backend returned '{result.Value?.GetType().FullName ?? "null"}' instead of decimal.");
             }
+            if (seedExtensionInterference)
+                decimalValue += 1m;
             return new PlanFuzzObservation(
                 testCase.CaseId,
                 variant.VariantId,
@@ -244,7 +318,9 @@ public sealed class AcmePlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzPro
                 PlanFuzzExecutionOutcome.Success,
                 PlanFuzzValueSnapshot.FromDecimal(decimalValue),
                 null,
-                planSnapshot);
+                planSnapshot,
+                null,
+                surfaceSnapshot);
         }
         catch (Exception exception)
         {
@@ -259,7 +335,9 @@ public sealed class AcmePlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzPro
                     "execution",
                     "exception",
                     exception.Message),
-                planSnapshot);
+                planSnapshot,
+                null,
+                surfaceSnapshot);
         }
     }
 
@@ -311,6 +389,63 @@ public sealed class AcmePlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzPro
             canonicalDocument.RootElement.GetProperty("schemaVersion").GetInt32(),
             canonicalDocument.RootElement.GetProperty("canonicalization").GetString().NotNull());
     }
+
+    private static PlanFuzzSurfaceSnapshot CreateSurfaceSnapshot(
+        LanguagePlan plan,
+        string backendId,
+        bool includeIndependentExtension,
+        bool seedExcludedActivation)
+    {
+        var backend = new BackendId(backendId);
+        var route = plan.Routes[backend];
+        var backendOwner = plan.Contributions.Single(item =>
+            item.Contribution.Slot == LanguageSlots.Backends &&
+            item.Contribution.SupportedBackends.Contains(backend) &&
+            item.Contribution.BackendInputContract == route.TargetContract);
+        var selected = plan.Features
+            .Select(static item => SurfaceFeature(item.Feature.Id.Value))
+            .Concat(plan.Contributions.Select(static item => SurfaceContribution(item.Contribution.Id.Value)))
+            .ToArray();
+        var independent = includeIndependentExtension
+            ? IndependentSurfaceIds()
+            : [];
+        var excluded = includeIndependentExtension
+            ? []
+            : IndependentSurfaceIds();
+        var activated = route.Steps
+            .Select(static step => SurfaceContribution(step.ContributionId.Value))
+            .Append(SurfaceContribution(backendOwner.Contribution.Id.Value))
+            .Concat(plan.RuntimeProviderContribution == null
+                ? []
+                : [SurfaceContribution(plan.RuntimeProviderContribution.Contribution.Id.Value)])
+            .ToList();
+        if (seedExcludedActivation)
+            activated.Add(SurfaceContribution(AcmePlanFuzzConstants.IndependentContributionId));
+
+        return new PlanFuzzSurfaceSnapshot(
+            selected,
+            excluded,
+            independent,
+            activated,
+            activationTraceComplete: true,
+            traceKind: "language-route-runtime-v1",
+            routeIdentity: CreateRouteIdentity(route, backendOwner.Contribution.Id));
+    }
+
+    private static string[] IndependentSurfaceIds() =>
+    [
+        SurfaceFeature(AcmePlanFuzzConstants.IndependentFeatureId),
+        SurfaceContribution(AcmePlanFuzzConstants.IndependentContributionId)
+    ];
+
+    private static string SurfaceFeature(string id) => $"feature:{id}";
+    private static string SurfaceContribution(string id) => $"contribution:{id}";
+
+    private static string CreateRouteIdentity(LanguageArtifactRoute route, LanguageContributionId backendOwner) =>
+        $"backend:{route.Backend.Value}|source:{DescribeContract(route.SourceContract)}|steps:{string.Join(',', route.Steps.Select(static step => step.ContributionId.Value))}|target:{DescribeContract(route.TargetContract)}|executor:{backendOwner.Value}";
+
+    private static string DescribeContract(LanguageArtifactContract contract) =>
+        $"{contract.Kind.Value}@{contract.ValueTypeIdentity ?? "untyped"}";
 
     private static string ComputeSha256(byte[] bytes) =>
         Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant();

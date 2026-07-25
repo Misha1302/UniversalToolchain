@@ -59,24 +59,24 @@ Bytecode and AIR remain separate semantic boundaries. Wist runtime selection goe
 
 ## Experimental PlanFuzz research tooling
 
-The repository includes non-packable PlanFuzz Phase 0–2 tooling for configuration-aware differential testing:
+The repository includes non-packable PlanFuzz Phase 0–3 tooling for configuration-aware differential testing:
 
 - a language-neutral deterministic testcase, observation and oracle core;
 - independent Acme and Wist adapters with adapter-owned structured generators;
 - Acme interpreter/compiled and registry-order variants;
 - Wist interpreter/compiler plus SSA `Disabled`, `Prefer` and `Require` variants;
-- backend-parity, optimization-route-parity, plan-determinism, controlled-fallback and canonical-lock oracles;
-- typed decimal and `Int32` observations;
+- backend-parity, optimization-route-parity, plan-determinism, negative-surface, extension-noninterference, controlled-fallback and canonical-lock oracles;
+- typed decimal and `Int32` observations plus versioned selected/excluded-surface and activation-owner evidence;
 - Wist route/fallback evidence without Wist-specific diagnostic ownership in the generic core;
 - fresh-process execution, bounded timeout/output handling, replay and recursive artifact manifests;
 - exact replay fingerprints separated from coarser campaign-triage class fingerprints;
 - clean, confirmed, flaky, inconclusive and infrastructure outcomes kept distinct;
 - default discovery generation separated from an explicit `--include-regressions` corpus;
-- test-only Acme seeded faults kept separate from current Wist findings;
+- test-only Acme wrong-arithmetic, excluded-activation and extension-interference faults kept separate from current Wist findings;
 - a configuration-complete `UniversalToolchain/PlanFuzz.sln` built by canonical repository entrypoints;
 - deterministic adapter-owned program reduction plus generic oracle-contract/variant pruning, with every accepted candidate reconfirmed in fresh processes against the original exact fingerprint.
 
-This tooling is not part of the public Wist package and does not establish publication claims. The preserved regression-inclusive Wist pilot records the historical behaviors tracked in #302, #303 and #307, while the current source state fixes and regression-protects those behaviors at the arithmetic-optimizer and SSA-verifier owner boundaries. The pilot's normalized finding classes remain historical triage groups rather than clean discovery yield. Program/plan reduction is implemented; lifecycle, negative-surface and schedule-reduction stages remain incomplete.
+This tooling is not part of the public Wist package and does not establish publication claims. The preserved regression-inclusive Wist pilot records the historical behaviors tracked in #302, #303 and #307, while the current source state fixes and regression-protects those behaviors at the arithmetic-optimizer and SSA-verifier owner boundaries. The pilot's normalized finding classes remain historical triage groups rather than clean discovery yield. Program/plan reduction and the seven-oracle surface contract are implemented; lifecycle schedules and schedule reduction remain incomplete.
 
 ## Experimental or incomplete
 

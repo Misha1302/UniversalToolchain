@@ -1,6 +1,6 @@
 # PlanFuzz
 
-**Status:** Phase 0–1 is merged by #306, the three first Wist findings are repaired by #308, and Phase 2 adds deterministic program/plan reduction. Lifecycle, negative-surface, schedule reduction and controlled-baseline stages remain open research work.
+**Status:** Phase 0–1 is merged by #306, the three first Wist findings are repaired by #308, Phase 2 adds deterministic program/plan reduction, and Phase 3 adds explicit negative-surface and extension-noninterference evidence. Lifecycle, schedule reduction and controlled-baseline stages remain open research work.
 
 **Specification:** [Russian implementation and experiment specification](technical-specification.ru.md).
 
@@ -32,7 +32,7 @@ language-neutral deterministic core
 + Wist restricted-Int32 generator
 + registry-order and backend/SSA variants
 + typed decimal and Int32 observations
-+ backend, route, plan, fallback and canonical-lock oracles
++ backend, route, plan, negative-surface, extension-noninterference, fallback and canonical-lock oracles
 + fresh worker process per testcase attempt
 + deterministic strict replay and campaign artifacts
 + exact fingerprints separated from triage classes
@@ -40,6 +40,7 @@ language-neutral deterministic core
 + one test-owned Acme wrong-arithmetic fault
 + adapter-owned structured program reduction
 + generic plan-contract and unreferenced-variant reduction
++ complete selected/excluded surface and activation-owner evidence
 + fresh-process exact-fingerprint acceptance
 ```
 
@@ -70,8 +71,8 @@ Confirmed, clean, flaky, inconclusive and infrastructure outcomes remain separat
 
 ## Remaining implementation stages
 
-1. Negative-surface and extension-noninterference oracles.
-2. Lifecycle/session/concurrency schedules and schedule-dimension reduction.
+1. Lifecycle/session/concurrency schedules and schedule-dimension reduction.
+2. Remaining timeout/order/optimizer seeded faults.
 3. Remaining seeded faults and a stable minimized finding corpus.
 4. Equal-budget baselines and ablations.
 5. Third adapter and clean-machine publication-scale replay.

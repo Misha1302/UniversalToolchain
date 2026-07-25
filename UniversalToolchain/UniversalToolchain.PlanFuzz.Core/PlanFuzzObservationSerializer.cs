@@ -22,6 +22,7 @@ public static class PlanFuzzObservationSerializer
             WriteFailure(writer, observation.Failure);
             WritePlan(writer, observation.Plan);
             WriteRoute(writer, observation.Route);
+            WriteSurface(writer, observation.Surface);
             writer.WriteEndObject();
         }
         return Encoding.UTF8.GetString(stream.ToArray()).Replace("\r\n", "\n", StringComparison.Ordinal) + "\n";
@@ -33,7 +34,7 @@ public static class PlanFuzzObservationSerializer
         using var document = JsonDocument.Parse(json);
         var root = document.RootElement;
         var schemaVersion = root.GetProperty("schemaVersion").GetInt32();
-        if (schemaVersion is not 1 and not PlanFuzzConstants.ObservationSchemaVersion)
+        if (schemaVersion is not 1 and not 2 and not PlanFuzzConstants.ObservationSchemaVersion)
             return Thrower.NotSupported<PlanFuzzObservation>($"Unsupported observation schema version '{schemaVersion}'.");
         var canonicalization = root.GetProperty("canonicalization").GetString();
         if (!StringComparer.Ordinal.Equals(canonicalization, PlanFuzzConstants.Canonicalization))
@@ -43,6 +44,7 @@ public static class PlanFuzzObservationSerializer
         var failure = ReadFailure(root);
         var plan = ReadPlan(root);
         var route = schemaVersion >= 2 ? ReadRoute(root) : null;
+        var surface = schemaVersion >= 3 ? ReadSurface(root) : null;
 
         return new PlanFuzzObservation(
             root.GetProperty("caseId").GetString().NotNull(),
@@ -52,7 +54,8 @@ public static class PlanFuzzObservationSerializer
             value,
             failure,
             plan,
-            route);
+            route,
+            surface);
     }
 
     private static void WriteValue(Utf8JsonWriter writer, PlanFuzzValueSnapshot? value)
@@ -130,6 +133,32 @@ public static class PlanFuzzObservationSerializer
         writer.WriteEndObject();
     }
 
+
+    private static void WriteSurface(Utf8JsonWriter writer, PlanFuzzSurfaceSnapshot? surface)
+    {
+        if (surface == null)
+            return;
+        writer.WritePropertyName("surface");
+        writer.WriteStartObject();
+        WriteStrings(writer, "selectedSurfaceIds", surface.SelectedSurfaceIds);
+        WriteStrings(writer, "excludedSurfaceIds", surface.ExcludedSurfaceIds);
+        WriteStrings(writer, "declaredIndependentSurfaceIds", surface.DeclaredIndependentSurfaceIds);
+        WriteStrings(writer, "activatedOwnerIds", surface.ActivatedOwnerIds);
+        writer.WriteBoolean("activationTraceComplete", surface.ActivationTraceComplete);
+        writer.WriteString("traceKind", surface.TraceKind);
+        writer.WriteString("routeIdentity", surface.RouteIdentity);
+        writer.WriteEndObject();
+    }
+
+    private static void WriteStrings(Utf8JsonWriter writer, string propertyName, IEnumerable<string> values)
+    {
+        writer.WritePropertyName(propertyName);
+        writer.WriteStartArray();
+        foreach (var value in values)
+            writer.WriteStringValue(value);
+        writer.WriteEndArray();
+    }
+
     private static PlanFuzzValueSnapshot? ReadValue(JsonElement root)
     {
         if (!root.TryGetProperty("value", out var element))
@@ -183,4 +212,23 @@ public static class PlanFuzzObservationSerializer
                     diagnostic.GetProperty("code").GetString().NotNull(),
                     diagnostic.TryGetProperty("stage", out var stage) ? stage.GetString() : null)).ToArray());
     }
+    private static PlanFuzzSurfaceSnapshot? ReadSurface(JsonElement root)
+    {
+        if (!root.TryGetProperty("surface", out var element))
+            return null;
+        return new PlanFuzzSurfaceSnapshot(
+            ReadStrings(element, "selectedSurfaceIds"),
+            ReadStrings(element, "excludedSurfaceIds"),
+            ReadStrings(element, "declaredIndependentSurfaceIds"),
+            ReadStrings(element, "activatedOwnerIds"),
+            element.GetProperty("activationTraceComplete").GetBoolean(),
+            element.GetProperty("traceKind").GetString().NotNull(),
+            element.GetProperty("routeIdentity").GetString().NotNull());
+    }
+
+    private static string[] ReadStrings(JsonElement element, string propertyName) =>
+        element.GetProperty(propertyName).EnumerateArray()
+            .Select(static value => value.GetString().NotNull())
+            .ToArray();
+
 }

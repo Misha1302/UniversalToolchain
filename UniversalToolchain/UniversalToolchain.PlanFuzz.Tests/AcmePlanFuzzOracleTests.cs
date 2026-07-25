@@ -6,7 +6,7 @@ namespace UniversalToolchain.PlanFuzz.Tests;
 public sealed class AcmePlanFuzzOracleTests
 {
     [Test]
-    public void CleanAcmeCasePassesBackendPlanAndLockOracles()
+    public void CleanAcmeCasePassesAllSevenGenericOracleFamilies()
     {
         var adapter = new AcmePlanFuzzAdapter();
         var testCase = adapter.GenerateCase(123, 0, new PlanFuzzCaseGenerationOptions());
@@ -14,7 +14,11 @@ public sealed class AcmePlanFuzzOracleTests
         var results = new PlanFuzzOracleEngine().Evaluate(testCase, observations);
 
         Assert.That(results, Has.All.Property(nameof(PlanFuzzOracleResult.Status)).EqualTo(PlanFuzzOracleStatus.Passed));
-        Assert.That(observations.Select(static item => item.Plan?.PlanHash).Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1));
+        Assert.That(observations.Select(static item => item.Plan?.PlanHash).Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(2));
+        Assert.That(results.Select(static result => result.OracleId).Distinct(StringComparer.Ordinal),
+            Does.Contain(PlanFuzzOracleIds.NegativeSurfacePreservation));
+        Assert.That(results.Select(static result => result.OracleId).Distinct(StringComparer.Ordinal),
+            Does.Contain(PlanFuzzOracleIds.ExtensionNoninterference));
     }
 
     [Test]
@@ -38,6 +42,51 @@ public sealed class AcmePlanFuzzOracleTests
                 Is.EqualTo(PlanFuzzOracleStatus.Passed));
         });
     }
+
+    [Test]
+    public void ExcludedActivationSeededFaultIsDetectedWithoutCorruptingCleanSurfaceContracts()
+    {
+        var adapter = new AcmePlanFuzzAdapter();
+        var testCase = adapter.GenerateCase(
+            123,
+            0,
+            new PlanFuzzCaseGenerationOptions(AcmePlanFuzzConstants.ExcludedActivationFault));
+        var observations = testCase.Variants.Select(variant => adapter.Execute(testCase, variant)).ToArray();
+        var results = new PlanFuzzOracleEngine().Evaluate(testCase, observations);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(results.Single(result => result.ContractId == "negative-surface.baseline").Status,
+                Is.EqualTo(PlanFuzzOracleStatus.Passed));
+            Assert.That(results.Single(result => result.ContractId == "negative-surface.seeded-excluded-activation").Status,
+                Is.EqualTo(PlanFuzzOracleStatus.Violated));
+            Assert.That(results.Single(result => result.ContractId == "extension-noninterference.interpreter").Status,
+                Is.EqualTo(PlanFuzzOracleStatus.Passed));
+        });
+    }
+
+    [Test]
+    public void ExtensionInterferenceSeededFaultIsDetectedWithoutWeakeningCleanExtensionContract()
+    {
+        var adapter = new AcmePlanFuzzAdapter();
+        var testCase = adapter.GenerateCase(
+            123,
+            0,
+            new PlanFuzzCaseGenerationOptions(AcmePlanFuzzConstants.ExtensionInterferenceFault));
+        var observations = testCase.Variants.Select(variant => adapter.Execute(testCase, variant)).ToArray();
+        var results = new PlanFuzzOracleEngine().Evaluate(testCase, observations);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(results.Single(result => result.ContractId == "extension-noninterference.interpreter").Status,
+                Is.EqualTo(PlanFuzzOracleStatus.Passed));
+            Assert.That(results.Single(result => result.ContractId == "extension-noninterference.seeded").Status,
+                Is.EqualTo(PlanFuzzOracleStatus.Violated));
+            Assert.That(results.Single(result => result.ContractId == "negative-surface.baseline").Status,
+                Is.EqualTo(PlanFuzzOracleStatus.Passed));
+        });
+    }
+
     [Test]
     public void StructuredProgramReductionIsDeterministicAndStrictlyDecreasesComplexity()
     {

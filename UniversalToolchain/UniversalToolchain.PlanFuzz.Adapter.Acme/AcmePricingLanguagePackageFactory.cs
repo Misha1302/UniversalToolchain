@@ -6,11 +6,15 @@ internal static class AcmePricingLanguagePackageFactory
     private static readonly BackendId Compiled = new(AcmePlanFuzzConstants.CompiledBackend);
     private static readonly LanguageArtifactKind<AcmePricingExpression> Syntax = new("acme.pricing.syntax");
     private static readonly LanguageArtifactKind<Func<decimal>> Executable = new("acme.pricing.executable");
+    private static readonly LanguageArtifactKind<string> IndependentInput = new("acme.pricing.independent.input");
+    private static readonly LanguageArtifactKind<string> IndependentOutput = new("acme.pricing.independent.output");
+    private static readonly LanguageSlotId IndependentSlot = new("acme.pricing.independent-slot");
 
     public static AuthoredLanguagePackage Create(bool wrongArithmetic)
     {
         var builder = LanguagePackageBuilder.Create(AcmePlanFuzzConstants.LanguageId, AcmePlanFuzzConstants.LanguageVersion)
-            .AddFeature("acme.pricing.core", feature => ConfigureFeature(feature, wrongArithmetic))
+            .AddFeature(AcmePlanFuzzConstants.CoreFeatureId, feature => ConfigureFeature(feature, wrongArithmetic))
+            .AddFeature(AcmePlanFuzzConstants.IndependentFeatureId, ConfigureIndependentFeature)
             .UseRouteRuntime("acme.pricing.runtime", AcmePlanFuzzConstants.LanguageVersion);
         return builder.Build();
     }
@@ -20,14 +24,28 @@ internal static class AcmePricingLanguagePackageFactory
             .AddFeature("acme.unrelated.feature", static _ => { })
             .Build();
 
-    public static LanguageDefinition CreateDefinition() =>
-        LanguageDefinitionBuilder.Create(AcmePlanFuzzConstants.LanguageId, AcmePlanFuzzConstants.LanguageVersion)
-            .UseFeature("acme.pricing.core")
+    public static LanguageDefinition CreateDefinition(bool includeIndependentExtension = false)
+    {
+        var builder = LanguageDefinitionBuilder.Create(AcmePlanFuzzConstants.LanguageId, AcmePlanFuzzConstants.LanguageVersion)
+            .UseFeature(AcmePlanFuzzConstants.CoreFeatureId)
             .EnableBackend(Interpreter)
             .EnableBackend(Compiled)
             .UseRuntimeProvider("acme.pricing.runtime", AcmePlanFuzzConstants.LanguageVersion)
-            .WithRuntimePolicy(new LanguageRuntimePolicy(RequireDeterminism: true, MaximumSourceLength: 256))
-            .Build();
+            .WithRuntimePolicy(new LanguageRuntimePolicy(RequireDeterminism: true, MaximumSourceLength: 256));
+        if (includeIndependentExtension)
+            builder.UseFeature(AcmePlanFuzzConstants.IndependentFeatureId);
+        return builder.Build();
+    }
+
+    private static void ConfigureIndependentFeature(LanguageFeatureBuilder feature) =>
+        feature.AddTransformer(
+            AcmePlanFuzzConstants.IndependentContributionId,
+            IndependentSlot,
+            IndependentInput,
+            IndependentOutput,
+            static (value, _) => value,
+            LanguageRuntimeComponentTraits.DeterministicNoHostInterop,
+            cost: 1);
 
     private static void ConfigureFeature(LanguageFeatureBuilder feature, bool wrongArithmetic)
     {

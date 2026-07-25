@@ -91,6 +91,30 @@ public sealed class StrictReplayTests
         });
     }
 
+    [TestCase(AcmePlanFuzzConstants.ExcludedActivationFault)]
+    [TestCase(AcmePlanFuzzConstants.ExtensionInterferenceFault)]
+    public async Task SurfaceSeededFaultIsConfirmedInFreshProcesses(string faultId)
+    {
+        var casePath = await GenerateCaseAsync(faultId);
+        var output = Path.Combine(_temporaryDirectory, $"surface-fault-{faultId}");
+        var exitCode = await PlanFuzzCommandHost.RunAsync(
+        [
+            "replay", "--case", casePath, "--output", output,
+            "--repeat", "2", "--timeout-seconds", "20"
+        ]);
+        using var document = JsonDocument.Parse(File.ReadAllText(Path.Combine(output, "replay-report.json")));
+        var attempts = document.RootElement.GetProperty("attempts").EnumerateArray().ToArray();
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(exitCode, Is.EqualTo(PlanFuzzExitCodes.Finding));
+            Assert.That(document.RootElement.GetProperty("confirmedViolation").GetBoolean(), Is.True);
+            Assert.That(attempts, Has.Length.EqualTo(2));
+            Assert.That(attempts.Select(static attempt => attempt.GetProperty("fingerprint").GetString())
+                .Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1));
+        });
+    }
+
     [Test]
     public async Task ReplayWithoutOracleContractsReturnsInconclusive()
     {

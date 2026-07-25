@@ -1,4 +1,4 @@
-# PlanFuzz Phase 0–2 implementation status
+# PlanFuzz Phase 0–3 implementation status
 
 Status: implemented experimental research tooling, not a public package or a shipped Wist feature.
 
@@ -7,6 +7,7 @@ PlanFuzz proposal
 -> Phase 0: language-neutral core and Acme vertical slice
 -> Phase 1: Wist restricted Int32 matrix and route/fallback evidence
 -> Phase 2: deterministic program/plan reduction with exact-fingerprint confirmation
+-> Phase 3: explicit surface/activation evidence and absence/extension oracles
 ```
 
 The implementation remains non-packable and does not extend the public `UniversalToolchain.Wist` or NuGet package surface.
@@ -15,8 +16,8 @@ The implementation remains non-packable and does not extend the public `Universa
 
 | Project | Responsibility |
 |---|---|
-| `UniversalToolchain.PlanFuzz.Core` | deterministic PRNG, versioned testcase/observation contracts, exact replay fingerprints, normalized finding-class fingerprints, adapter/oracle registries, five generic oracle families and language-neutral reduction contracts |
-| `UniversalToolchain.PlanFuzz.Adapter.Acme` | independent structured pricing generator and reducer, registry-order variants, interpreter/compiled execution and test-only wrong-arithmetic fault |
+| `UniversalToolchain.PlanFuzz.Core` | deterministic PRNG, versioned testcase/observation contracts, exact replay fingerprints, normalized finding-class fingerprints, adapter/oracle registries, seven generic oracle families, explicit surface/activation evidence and language-neutral reduction contracts |
+| `UniversalToolchain.PlanFuzz.Adapter.Acme` | independent structured pricing generator and reducer, registry-order and selected-but-unused extension variants, interpreter/compiled execution and three test-only seeded faults |
 | `UniversalToolchain.PlanFuzz.Adapter.Wist` | structured restricted-`Int32` generator and reducer, opt-in regression corpus, interpreter/compiler variants, SSA `Disabled`/`Prefer`/`Require` policies and Wist-owned route evidence |
 | `UniversalToolchain.PlanFuzz.Cli` | explicit adapter registration, generation, isolated workers, replay, deterministic reduction, bounded campaigns and recursive artifact manifests |
 | `UniversalToolchain.PlanFuzz.Tests` | deterministic contracts, serialization, oracle behavior, evidence-completeness checks, class-fingerprint separation, reduction transforms and direct adapter tests |
@@ -28,7 +29,7 @@ The configuration-complete research graph is declared in `UniversalToolchain/Pla
 
 - PRNG: `xoshiro256starstar-v1` with SHA-256 domain-separated forks.
 - Testcase schema: version 1 with canonical body hashing and recorded case identity.
-- Observation schema: version 2; schema-v1 observations remain readable.
+- Observation schema: version 3 with optional selected-surface and activation evidence; schema-v1 and schema-v2 observations remain readable.
 - Replay report schema: version 3 with a distinct `inconclusive` state.
 - Campaign summary schema: version 3; it reports `distinctFindingClasses`, `inconclusiveCases` and whether the regression corpus was included.
 - Typed values: `decimal`, `bool`, `string` and `Int32` snapshots without semantic comparison through `ToString()`.
@@ -36,9 +37,14 @@ The configuration-complete research graph is declared in `UniversalToolchain/Pla
   - `O-001` backend parity;
   - `O-002` optimization/route parity;
   - `O-003` plan determinism;
+  - `O-004` negative-surface preservation;
+  - `O-005` extension noninterference;
   - `O-006` controlled fallback;
   - `O-009` canonical lock consistency.
 - Wist route evidence records policy, route use, fallback state/classification, profile, instruction counts, executed passes and stable diagnostic code/stage pairs.
+- Surface evidence records the selected and excluded surface, explicitly independent additions, activated owners, trace completeness, evidence-contract identity and selected route identity.
+- `O-004` never passes an incomplete trace and detects any `excluded ∩ activated` owner.
+- `O-005` applies only to a pure additive, explicitly independent surface delta and requires unchanged semantics, route identity and activation owners.
 - Exact fingerprints preserve testcase-level evidence and remain authoritative for repeated replay confirmation.
 - Coarser class fingerprints remove concrete values and duplicate diagnostics for campaign triage. They are not root-cause identities and are never reported as unique defects without manual analysis.
 - A replay is clean only when it has at least one oracle result and every declared oracle returns `Passed`.
@@ -155,6 +161,24 @@ Wist: 20/20 clean, repeat 1, 0 findings, 0 flaky, 0 inconclusive, 0 infrastructu
 
 The machine-readable summary is [phase2-reducer-smoke-summary.json](evidence/phase2-reducer-smoke-summary.json). Raw evidence trees were generated with recursive manifests and remain external research artifacts. This smoke establishes post-change stability only; it is not an equal-budget baseline comparison and does not establish superiority or novelty.
 
+## Surface and extension contracts
+
+Phase 3 adds two generic oracle families without adding Acme or Wist identifiers to the core:
+
+- `O-004` negative-surface preservation checks complete activation traces and rejects activation of any explicitly excluded owner;
+- `O-005` extension noninterference compares a baseline with a pure additive, explicitly independent extension and requires equal semantics, selected route identity and activated-owner evidence.
+
+The Acme adapter now includes a real selected-but-unused extension contribution on an unreachable artifact route. Baseline variants declare that feature and contribution excluded; extension variants select them and declare them independent. The route-runtime evidence contract derives activated owners from the exact selected transform steps, backend executor owner and runtime-provider owner.
+
+Two test-owned seeded faults validate oracle adequacy in three fresh processes each:
+
+```text
+SF-002 excluded-owner activation: confirmed 3/3, exact fingerprint baaf6e71d0845061fbb529edd77dd209fb34828d06ef9edffcc0c01d0a414a02
+SF-003 extension interference:     confirmed 3/3, exact fingerprint 2e00f4d3a7184be2f4691e3ed170027f45d14888e086d57f6e50c2b90baa18cb
+```
+
+A clean Acme campaign using seed `20260725` completed 25/25 cases with two fresh-process attempts per case and zero findings, flaky, inconclusive or infrastructure outcomes. The machine-readable record is [phase3-surface-oracles-smoke-summary.json](evidence/phase3-surface-oracles-smoke-summary.json). This is bounded stability and oracle-adequacy evidence, not a controlled research baseline.
+
 ## Verified integration gate
 
 GitHub Actions executed the canonical repository entrypoint after evidence hardening:
@@ -164,10 +188,10 @@ Tests:                                       483 passed
 UniversalToolchain.Modules.Tests:            290 passed
 UniversalToolchain.Dialects.Tests:           588 passed
 UniversalToolchain.LanguageSdk.Tests:         53 passed
-UniversalToolchain.PlanFuzz.Tests:             29 passed
-UniversalToolchain.PlanFuzz.IntegrationTests:   8 passed
+UniversalToolchain.PlanFuzz.Tests:             35 passed
+UniversalToolchain.PlanFuzz.IntegrationTests:  10 passed
 --------------------------------------------------------
-Total:                                      1451 passed
+Total:                                      1459 passed
 Failed:                                        0
 Skipped:                                       0
 ```
@@ -176,7 +200,6 @@ The same gate completed Release builds with zero warnings and errors, verified n
 
 ## Not yet implemented
 
-- negative-surface and extension-noninterference oracles;
 - lifecycle/session/concurrency schedules and schedule reduction;
 - order-dependent plan, worker-hang and Wist optimizer seeded faults;
 - equal-budget program-only/pairwise/full-PlanFuzz comparison;
@@ -184,7 +207,7 @@ The same gate completed Release builds with zero warnings and errors, verified n
 
 ## Next milestone
 
-1. Add negative-surface and extension-noninterference oracles without widening the public Wist package surface.
-2. Add lifecycle/session/concurrency schedules, then extend reduction to the schedule dimension.
-3. Add the remaining seeded faults and prove they are detected and reducible.
-4. Run equal-budget program-only, pairwise and full-PlanFuzz baselines after the additional oracles and schedules are stable.
+1. Add lifecycle/session/concurrency schedules, then extend reduction to the schedule dimension.
+2. Add worker-timeout, order-dependent-plan and Wist-optimizer seeded faults and prove they are detected and reducible.
+3. Run equal-budget program-only, pairwise and full-PlanFuzz baselines after schedule evidence is stable.
+4. Add a third external adapter and clean-machine publication artifact.
