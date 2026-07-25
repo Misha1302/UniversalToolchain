@@ -128,7 +128,7 @@ jobs:
           git push origin "HEAD:${GITHUB_REF_NAME}"
 
   finalize-o005-evidence:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/research/planfuzz-o005-evidence-hardening' && github.actor != 'github-actions[bot]'
+    if: github.event_name == 'pull_request' && github.head_ref == 'research/planfuzz-o005-evidence-hardening' && github.actor != 'github-actions[bot]'
     permissions:
       contents: write
     runs-on: ubuntu-latest
