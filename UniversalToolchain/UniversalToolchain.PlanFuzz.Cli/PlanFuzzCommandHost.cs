@@ -23,6 +23,7 @@ public static class PlanFuzzCommandHost
                 "generate" => Generate(commandLine),
                 "inspect" => Inspect(commandLine),
                 "replay" => await ReplayAsync(commandLine, cancellationToken).ConfigureAwait(false),
+                "reduce" => await ReduceAsync(commandLine, cancellationToken).ConfigureAwait(false),
                 "campaign" => await CampaignAsync(commandLine, cancellationToken).ConfigureAwait(false),
                 "worker" => await WorkerAsync(commandLine).ConfigureAwait(false),
                 _ => UnknownCommand(commandLine.Positionals[0])
@@ -124,6 +125,45 @@ public static class PlanFuzzCommandHost
         return report.IsConfirmedViolation ? PlanFuzzExitCodes.Finding : PlanFuzzExitCodes.Success;
     }
 
+    private static async Task<int> ReduceAsync(PlanFuzzCommandLine commandLine, CancellationToken cancellationToken)
+    {
+        var testcasePath = commandLine.GetRequired("--case");
+        var output = commandLine.GetOptional("--output") ?? Path.Combine(
+            Path.GetDirectoryName(Path.GetFullPath(testcasePath)).NotNull(),
+            "reduction");
+        var repeat = commandLine.GetInt32("--repeat", 3, 1);
+        var timeoutSeconds = commandLine.GetInt32("--timeout-seconds", 30, 1);
+        var maximumCandidates = commandLine.GetInt32("--max-candidates", 100, 1);
+        var testCase = PlanFuzzTestCaseSerializer.Deserialize(File.ReadAllText(testcasePath));
+        var adapter = ResolveAdapter(testCase.AdapterId);
+        var report = await new PlanFuzzReductionCoordinator(adapter, TimeSpan.FromSeconds(timeoutSeconds))
+            .ReduceAsync(
+                testcasePath,
+                output,
+                repeat,
+                maximumCandidates,
+                cancellationToken)
+            .ConfigureAwait(false);
+
+        Console.WriteLine($"originalCaseId: {report.OriginalCase.CaseId}");
+        Console.WriteLine($"reducedCaseId: {report.ReducedCase.CaseId}");
+        Console.WriteLine($"completed: {report.Completed}");
+        Console.WriteLine($"candidateEvaluations: {report.Attempts.Count}");
+        Console.WriteLine($"acceptedSteps: {report.AcceptedSteps}");
+        if (report.TargetFingerprint != null)
+            Console.WriteLine($"fingerprint: {report.TargetFingerprint}");
+
+        if (report.OriginalReplay.IsInfrastructureFailure)
+            return PlanFuzzExitCodes.InfrastructureFailure;
+        if (report.OriginalReplay.IsInconclusive)
+            return PlanFuzzExitCodes.Inconclusive;
+        if (report.OriginalReplay.IsFlaky)
+            return PlanFuzzExitCodes.Flaky;
+        if (!report.OriginalReplay.IsConfirmedViolation)
+            return PlanFuzzExitCodes.InvalidCase;
+        return report.Completed ? PlanFuzzExitCodes.Finding : PlanFuzzExitCodes.UnhandledFailure;
+    }
+
     private static async Task<int> CampaignAsync(PlanFuzzCommandLine commandLine, CancellationToken cancellationToken)
     {
         var adapter = ResolveAdapter(commandLine.GetOptional("--adapter") ?? AcmePlanFuzzConstants.AdapterId);
@@ -220,6 +260,7 @@ public static class PlanFuzzCommandHost
         Console.WriteLine("  generate --adapter acme-pricing|wist-restricted-int32 --seed 1 --index 0 --out case.json [--fault <id>] [--include-regressions]");
         Console.WriteLine("  inspect --case case.json");
         Console.WriteLine("  replay --case case.json --output artifacts/replay --repeat 3 --timeout-seconds 30");
+        Console.WriteLine("  reduce --case case.json --output artifacts/reduction --repeat 3 --timeout-seconds 30 [--max-candidates 100]");
         Console.WriteLine("  campaign --adapter acme-pricing|wist-restricted-int32 --seed 1 --cases 100 --output artifacts/campaign [--repeat 3] [--include-regressions]");
         Console.WriteLine("  worker execute-case --case case.json --observations observations.json");
     }

@@ -269,4 +269,35 @@ public sealed class WistPlanFuzzAdapterTests
         });
     }
 
+    [Test]
+    public void StructuredWistReductionIsDeterministicAndUsesOnlySimplerModels()
+    {
+        var adapter = new WistPlanFuzzAdapter();
+        var testCase = adapter.CreateCase(
+            1,
+            106,
+            106,
+            new WistIntProgramModel(
+                WistIntExpression.Multiply(
+                    WistIntExpression.Add(WistIntExpression.Parameter(), WistIntExpression.Constant(8)),
+                    WistIntExpression.Subtract(WistIntExpression.Constant(5), WistIntExpression.Constant(2))),
+                12,
+                "test"));
+        var reducer = (IPlanFuzzProgramReducer)adapter;
+
+        var first = reducer.GetProgramReductionCandidates(testCase);
+        var second = reducer.GetProgramReductionCandidates(testCase);
+        var originalComplexity = reducer.GetProgramComplexity(testCase);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(first.Select(static candidate => candidate.CandidateId),
+                Is.EqualTo(second.Select(static candidate => candidate.CandidateId)));
+            Assert.That(first, Is.Not.Empty);
+            Assert.That(first, Has.All.Property(nameof(PlanFuzzProgramReductionCandidate.Complexity)).LessThan(originalComplexity));
+            Assert.That(first.Select(static candidate => candidate.Program.SourceText), Does.Contain("(x + 8)"));
+            Assert.That(first.Select(static candidate => candidate.Program.SourceText), Does.Contain("(5 - 2)"));
+        });
+    }
+
 }

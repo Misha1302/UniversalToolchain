@@ -41,7 +41,7 @@ Command:
 ./build.sh --skip-docs
 ```
 
-Observed result on the PlanFuzz regression-repair revision:
+Observed result on the deterministic PlanFuzz reducer revision:
 
 - both `UniversalToolchain/Wist.sln` and the configuration-complete `UniversalToolchain/PlanFuzz.sln` restored and built;
 - build warnings: **0**;
@@ -61,9 +61,9 @@ Build servers and MSBuild node reuse are explicitly disabled by the canonical sc
 | `UniversalToolchain.Modules.Tests` | 290 | 0 | 0 |
 | `UniversalToolchain.Dialects.Tests` | 588 | 0 | 0 |
 | `UniversalToolchain.LanguageSdk.Tests` | 53 | 0 | 0 |
-| `UniversalToolchain.PlanFuzz.Tests` | 26 | 0 | 0 |
-| `UniversalToolchain.PlanFuzz.IntegrationTests` | 6 | 0 | 0 |
-| **Total** | **1,446** | **0** | **0** |
+| `UniversalToolchain.PlanFuzz.Tests` | 29 | 0 | 0 |
+| `UniversalToolchain.PlanFuzz.IntegrationTests` | 8 | 0 | 0 |
+| **Total** | **1,451** | **0** | **0** |
 
 The PlanFuzz suites include dedicated coverage for:
 
@@ -132,14 +132,17 @@ Verified:
 - strict evidence-completeness semantics;
 - opt-in regression corpus;
 - separate exact and class fingerprints;
-- owner-layer fixes and direct regressions for the historical behaviors tracked by #302, #303 and #307.
+- owner-layer fixes and direct regressions for the historical behaviors tracked by #302, #303 and #307;
+- adapter-owned structured program reduction and generic plan-contract/variant pruning;
+- fresh-process acceptance only when the original exact fingerprint is preserved;
+- auditable rejection of clean, flaky, inconclusive and infrastructure candidates.
 
-The preserved 25-case Wist pilot included the regression corpus. Its 21 violating cases and two normalized classes are retained as historical evidence and are not presented as clean discovery yield or as a root-cause count. Post-fix discovery-only and regression-inclusive smokes each completed three cases with three fresh-process attempts per case and reported only clean outcomes.
+The preserved 25-case Wist pilot included the regression corpus. Its 21 violating cases and two normalized classes are retained as historical evidence and are not presented as clean discovery yield or as a root-cause count. Post-fix discovery-only and regression-inclusive smokes each completed three cases with three fresh-process attempts per case and reported only clean outcomes. An expanded discovery-only stability smoke completed 50 Acme cases with two attempts and 20 Wist cases with one attempt, also with only clean outcomes.
 
 Not yet claimed:
 
 - seven-oracle MVP completion;
-- testcase/plan/schedule reduction;
+- lifecycle schedule generation and schedule reduction;
 - negative-surface and lifecycle campaigns;
 - equal-budget baseline superiority;
 - a third external adapter;

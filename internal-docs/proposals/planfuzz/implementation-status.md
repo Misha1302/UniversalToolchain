@@ -1,4 +1,4 @@
-# PlanFuzz Phase 0–1 implementation status
+# PlanFuzz Phase 0–2 implementation status
 
 Status: implemented experimental research tooling, not a public package or a shipped Wist feature.
 
@@ -6,6 +6,7 @@ Status: implemented experimental research tooling, not a public package or a shi
 PlanFuzz proposal
 -> Phase 0: language-neutral core and Acme vertical slice
 -> Phase 1: Wist restricted Int32 matrix and route/fallback evidence
+-> Phase 2: deterministic program/plan reduction with exact-fingerprint confirmation
 ```
 
 The implementation remains non-packable and does not extend the public `UniversalToolchain.Wist` or NuGet package surface.
@@ -14,12 +15,12 @@ The implementation remains non-packable and does not extend the public `Universa
 
 | Project | Responsibility |
 |---|---|
-| `UniversalToolchain.PlanFuzz.Core` | deterministic PRNG, versioned testcase/observation contracts, exact replay fingerprints, normalized finding-class fingerprints, adapter/oracle registries and five generic oracle families |
-| `UniversalToolchain.PlanFuzz.Adapter.Acme` | independent structured pricing generator, registry-order variants, interpreter/compiled execution and test-only wrong-arithmetic fault |
-| `UniversalToolchain.PlanFuzz.Adapter.Wist` | structured restricted-`Int32` generator, opt-in regression corpus, interpreter/compiler variants, SSA `Disabled`/`Prefer`/`Require` policies and Wist-owned route evidence |
-| `UniversalToolchain.PlanFuzz.Cli` | explicit adapter registration, generation, isolated workers, replay, bounded campaigns and recursive artifact manifests |
-| `UniversalToolchain.PlanFuzz.Tests` | deterministic contracts, serialization, oracle behavior, evidence-completeness checks, class-fingerprint separation and direct adapter tests |
-| `UniversalToolchain.PlanFuzz.IntegrationTests` | fresh-process Acme/Wist replay and CLI outcome-boundary tests |
+| `UniversalToolchain.PlanFuzz.Core` | deterministic PRNG, versioned testcase/observation contracts, exact replay fingerprints, normalized finding-class fingerprints, adapter/oracle registries, five generic oracle families and language-neutral reduction contracts |
+| `UniversalToolchain.PlanFuzz.Adapter.Acme` | independent structured pricing generator and reducer, registry-order variants, interpreter/compiled execution and test-only wrong-arithmetic fault |
+| `UniversalToolchain.PlanFuzz.Adapter.Wist` | structured restricted-`Int32` generator and reducer, opt-in regression corpus, interpreter/compiler variants, SSA `Disabled`/`Prefer`/`Require` policies and Wist-owned route evidence |
+| `UniversalToolchain.PlanFuzz.Cli` | explicit adapter registration, generation, isolated workers, replay, deterministic reduction, bounded campaigns and recursive artifact manifests |
+| `UniversalToolchain.PlanFuzz.Tests` | deterministic contracts, serialization, oracle behavior, evidence-completeness checks, class-fingerprint separation, reduction transforms and direct adapter tests |
+| `UniversalToolchain.PlanFuzz.IntegrationTests` | fresh-process Acme/Wist replay, exact-fingerprint reduction and CLI outcome-boundary tests |
 
 The configuration-complete research graph is declared in `UniversalToolchain/PlanFuzz.sln`. Canonical Bash and PowerShell entrypoints build it alongside `Wist.sln` and use the shared test manifest.
 
@@ -43,7 +44,9 @@ The configuration-complete research graph is declared in `UniversalToolchain/Pla
 - A replay is clean only when it has at least one oracle result and every declared oracle returns `Passed`.
 - A violation is confirmed only when every attempt has at least one violation, no infrastructure failure, no `Inconclusive`/`NotApplicable` result, and one stable exact fingerprint.
 - Incomplete oracle evidence is reported as inconclusive, not clean or flaky.
-- Replay and campaign output roots must be empty, and every result tree receives a recursive `MANIFEST.sha256`.
+- Replay, reduction and campaign output roots must be empty, and every result tree receives a recursive `MANIFEST.sha256`.
+- Reduction candidates are adapter-owned structured models or generic plan-contract projections; raw-source regex rewriting is not used.
+- A candidate is accepted only after complete fresh-process confirmation with the original exact fingerprint. Clean, flaky, inconclusive and infrastructure outcomes are retained as rejected evidence.
 
 ## Wist Level 0 scope
 
@@ -122,6 +125,36 @@ regression-inclusive: 3 clean, 0 findings, 0 flaky, 0 inconclusive, 0 infrastruc
 
 These are deterministic post-fix smokes, not publication-scale discovery or baseline evidence.
 
+## Deterministic reduction
+
+Phase 2 adds a bounded `reduce` command:
+
+```text
+planfuzz reduce
+  --case case.json
+  --output artifacts/reduction
+  --repeat 3
+  --timeout-seconds 30
+  --max-candidates 100
+```
+
+The generic coordinator never parses a language's source text. Acme and Wist expose deterministic candidates from their structured program models, while the core can remove passing oracle contracts and prune variants that no longer contribute to a violation. Every candidate is replayed in fresh worker processes and is accepted only when the original exact confirmed fingerprint remains unchanged.
+
+The Acme seeded wrong-arithmetic integration case is reducible: the verified smoke evaluated 29 candidates, accepted two steps, preserved fingerprint `e71be55efb8304d2f3491e4de5f4745706a52de0eb728359ea908d1feae3f0a2`, and reduced the plan to the variants and contract required by the violation. Re-running reduction from the same testcase produces the same ordered candidate set and final testcase; this is covered by deterministic unit contracts rather than an additional long-running fresh-process loop in CI.
+
+A clean testcase is rejected as a reduction precondition failure, but still receives `original-case.json`, `reduced-case.json`, `reduction-report.json`, replay evidence and a recursive manifest.
+
+## Expanded post-fix discovery smoke
+
+A larger non-publication smoke used seed `20260725` with the regression corpus disabled:
+
+```text
+Acme: 50/50 clean, repeat 2, 0 findings, 0 flaky, 0 inconclusive, 0 infrastructure failures
+Wist: 20/20 clean, repeat 1, 0 findings, 0 flaky, 0 inconclusive, 0 infrastructure failures
+```
+
+The machine-readable summary is [phase2-reducer-smoke-summary.json](evidence/phase2-reducer-smoke-summary.json). Raw evidence trees were generated with recursive manifests and remain external research artifacts. This smoke establishes post-change stability only; it is not an equal-budget baseline comparison and does not establish superiority or novelty.
+
 ## Verified integration gate
 
 GitHub Actions executed the canonical repository entrypoint after evidence hardening:
@@ -131,10 +164,10 @@ Tests:                                       483 passed
 UniversalToolchain.Modules.Tests:            290 passed
 UniversalToolchain.Dialects.Tests:           588 passed
 UniversalToolchain.LanguageSdk.Tests:         53 passed
-UniversalToolchain.PlanFuzz.Tests:             26 passed
-UniversalToolchain.PlanFuzz.IntegrationTests:   6 passed
+UniversalToolchain.PlanFuzz.Tests:             29 passed
+UniversalToolchain.PlanFuzz.IntegrationTests:   8 passed
 --------------------------------------------------------
-Total:                                      1446 passed
+Total:                                      1451 passed
 Failed:                                        0
 Skipped:                                       0
 ```
@@ -144,15 +177,14 @@ The same gate completed Release builds with zero warnings and errors, verified n
 ## Not yet implemented
 
 - negative-surface and extension-noninterference oracles;
-- lifecycle/session/concurrency schedules;
-- testcase and plan reduction;
+- lifecycle/session/concurrency schedules and schedule reduction;
 - order-dependent plan, worker-hang and Wist optimizer seeded faults;
 - equal-budget program-only/pairwise/full-PlanFuzz comparison;
 - third external adapter and publication-scale clean-machine evaluation.
 
 ## Next milestone
 
-1. Scale post-fix discovery-only and regression-inclusive campaigns while keeping their evidence separate.
-2. Implement multidimensional reduction while preserving exact fingerprints.
-3. Add negative-surface and lifecycle traces without widening the public Wist package surface.
-4. Run equal-budget program-only, pairwise and full-PlanFuzz baselines after the reducer and additional oracles are stable.
+1. Add negative-surface and extension-noninterference oracles without widening the public Wist package surface.
+2. Add lifecycle/session/concurrency schedules, then extend reduction to the schedule dimension.
+3. Add the remaining seeded faults and prove they are detected and reducible.
+4. Run equal-budget program-only, pairwise and full-PlanFuzz baselines after the additional oracles and schedules are stable.

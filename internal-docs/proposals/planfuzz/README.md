@@ -1,6 +1,6 @@
 # PlanFuzz
 
-**Status:** Phase 0–1 is implemented and merged into `master` by #306 (`8f299906a822ff7c536b7079ae9df7422a485a78`). Lifecycle, negative-surface, reduction and controlled-baseline stages remain open research work.
+**Status:** Phase 0–1 is merged by #306, the three first Wist findings are repaired by #308, and Phase 2 adds deterministic program/plan reduction. Lifecycle, negative-surface, schedule reduction and controlled-baseline stages remain open research work.
 
 **Specification:** [Russian implementation and experiment specification](technical-specification.ru.md).
 
@@ -38,6 +38,9 @@ language-neutral deterministic core
 + exact fingerprints separated from triage classes
 + opt-in known-regression corpus
 + one test-owned Acme wrong-arithmetic fault
++ adapter-owned structured program reduction
++ generic plan-contract and unreferenced-variant reduction
++ fresh-process exact-fingerprint acceptance
 ```
 
 The evidence path is:
@@ -49,6 +52,7 @@ generate
 -> typed observation normalization
 -> oracle evaluation
 -> repeated fresh-process confirmation
+-> deterministic program/plan reduction when requested
 -> replayable artifact with SHA-256 manifest
 ```
 
@@ -67,8 +71,8 @@ Confirmed, clean, flaky, inconclusive and infrastructure outcomes remain separat
 ## Remaining implementation stages
 
 1. Negative-surface and extension-noninterference oracles.
-2. Lifecycle/session/concurrency schedules.
-3. Multidimensional reducer and stable finding corpus.
+2. Lifecycle/session/concurrency schedules and schedule-dimension reduction.
+3. Remaining seeded faults and a stable minimized finding corpus.
 4. Equal-budget baselines and ablations.
 5. Third adapter and clean-machine publication-scale replay.
 

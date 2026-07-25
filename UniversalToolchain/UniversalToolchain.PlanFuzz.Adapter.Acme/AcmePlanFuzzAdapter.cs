@@ -3,7 +3,7 @@ namespace UniversalToolchain.PlanFuzz.Adapter.Acme;
 /// <summary>
 /// Implements the first independent non-Wist PlanFuzz vertical slice.
 /// </summary>
-public sealed class AcmePlanFuzzAdapter : IPlanFuzzLanguageAdapter
+public sealed class AcmePlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzProgramReducer
 {
     private readonly AcmePricingProgramGenerator _generator = new();
 
@@ -12,7 +12,7 @@ public sealed class AcmePlanFuzzAdapter : IPlanFuzzLanguageAdapter
         AcmePlanFuzzConstants.AdapterVersion,
         AcmePlanFuzzConstants.LanguageId,
         AcmePlanFuzzConstants.GeneratorSchemaVersion,
-        ["backend-parity", "plan-determinism", "canonical-lock", "seeded-fault"]);
+        ["backend-parity", "plan-determinism", "canonical-lock", "seeded-fault", "program-reduction"]);
 
     public PlanFuzzTestCase GenerateCase(
         ulong campaignSeed,
@@ -124,6 +124,26 @@ public sealed class AcmePlanFuzzAdapter : IPlanFuzzLanguageAdapter
             program,
             variants,
             oracleContracts);
+    }
+
+    public long GetProgramComplexity(PlanFuzzTestCase testCase)
+    {
+        testCase = testCase.ArgNotNull();
+        EnsureReductionSchema(testCase);
+        return AcmePricingProgramReducer.GetComplexity(
+            AcmePricingProgramModel.FromPayload(testCase.Program.Model));
+    }
+
+    public IReadOnlyList<PlanFuzzProgramReductionCandidate> GetProgramReductionCandidates(
+        PlanFuzzTestCase testCase)
+    {
+        testCase = testCase.ArgNotNull();
+        EnsureReductionSchema(testCase);
+        var model = AcmePricingProgramModel.FromPayload(testCase.Program.Model);
+        if (!StringComparer.Ordinal.Equals(model.RenderSource(), testCase.Program.SourceText))
+            return Thrower.InvalidOpEx<IReadOnlyList<PlanFuzzProgramReductionCandidate>>(
+                "Structured Acme program model does not reproduce the recorded source text.");
+        return AcmePricingProgramReducer.CreateCandidates(testCase, model);
     }
 
     public PlanFuzzObservation Execute(
@@ -240,6 +260,20 @@ public sealed class AcmePlanFuzzAdapter : IPlanFuzzLanguageAdapter
                     "exception",
                     exception.Message),
                 planSnapshot);
+        }
+    }
+
+    private void EnsureReductionSchema(PlanFuzzTestCase testCase)
+    {
+        if (!StringComparer.Ordinal.Equals(testCase.AdapterId, Descriptor.AdapterId) ||
+            !StringComparer.Ordinal.Equals(testCase.AdapterVersion, Descriptor.AdapterVersion))
+        {
+            Thrower.Argument(nameof(testCase), "Testcase adapter identity does not match the Acme reducer.");
+        }
+        if (!StringComparer.Ordinal.Equals(testCase.Program.ModelKind, AcmePlanFuzzConstants.ModelKind) ||
+            testCase.Program.ModelSchemaVersion != AcmePlanFuzzConstants.ModelSchemaVersion)
+        {
+            Thrower.Argument(nameof(testCase), "Testcase program model is not supported by the Acme reducer.");
         }
     }
 
