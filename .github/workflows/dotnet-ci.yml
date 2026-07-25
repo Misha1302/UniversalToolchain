@@ -156,6 +156,7 @@ jobs:
           set -Eeuo pipefail
           test -f .github/planfuzz-o005-evidence-trigger
           cp Tools/finalize_planfuzz_o005_evidence.py "$RUNNER_TEMP/finalize_planfuzz_o005_evidence.py"
+          sed -i 's|ROOT = Path(__file__).resolve().parents\[1\]|ROOT = Path.cwd()|' "$RUNNER_TEMP/finalize_planfuzz_o005_evidence.py"
           git rm .github/planfuzz-o005-evidence-trigger Tools/finalize_planfuzz_o005_evidence.py
           git checkout origin/master -- .github/workflows/dotnet-ci.yml
           ./build.sh --skip-docs
