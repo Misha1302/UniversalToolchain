@@ -61,9 +61,9 @@ Build servers and MSBuild node reuse are explicitly disabled by the canonical sc
 | `UniversalToolchain.Modules.Tests` | 290 | 0 | 0 |
 | `UniversalToolchain.Dialects.Tests` | 588 | 0 | 0 |
 | `UniversalToolchain.LanguageSdk.Tests` | 53 | 0 | 0 |
-| `UniversalToolchain.PlanFuzz.Tests` | 50 | 0 | 0 |
+| `UniversalToolchain.PlanFuzz.Tests` | 52 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 11 | 0 | 0 |
-| **Total** | **1,475** | **0** | **0** |
+| **Total** | **1,477** | **0** | **0** |
 
 The PlanFuzz suites include dedicated coverage for:
 
@@ -141,7 +141,8 @@ Verified:
 - auditable rejection of clean, flaky, inconclusive and infrastructure candidates;
 - test-owned runtime-provider seeded faults for canonical SF-005 and SF-011, confirmed through ordinary schema-v5 observed activation evidence in three fresh processes;
 - variant-scoped normalization of malformed Acme surface evidence without losing the plan snapshot or crashing the worker;
-- adversarial rejection of schema-v4 evidence-version forgery and delimiter-collision binding reassociation.
+- adversarial rejection of schema-v4 evidence-version forgery and delimiter-collision binding reassociation;
+- unambiguous UTF-8 length-prefixed O-004/O-005 fingerprint material, including regressions for comma-containing IDs versus multiple IDs.
 
 The preserved 25-case Wist pilot included the regression corpus. Its 21 violating cases and two normalized classes are retained as historical evidence and are not presented as clean discovery yield or as a root-cause count. Post-fix discovery-only and regression-inclusive smokes each completed three cases with three fresh-process attempts per case and reported only clean outcomes. An expanded discovery-only stability smoke completed 50 Acme cases with two attempts and 20 Wist cases with one attempt, also with only clean outcomes.
 

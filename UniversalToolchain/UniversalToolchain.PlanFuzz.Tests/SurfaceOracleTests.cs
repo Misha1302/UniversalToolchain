@@ -506,8 +506,11 @@ public sealed class SurfaceOracleTests
         Assert.Multiple(() =>
         {
             Assert.That(result.Status, Is.EqualTo(PlanFuzzOracleStatus.Violated));
-            Assert.That(result.FingerprintMaterial, Does.Contain("extension-activated:contribution:extension"));
-            Assert.That(result.FingerprintMaterial, Does.Contain("route:route:baseline|route:changed"));
+            Assert.That(result.FingerprintMaterial, Does.Contain("extension-activated:"));
+            Assert.That(result.FingerprintMaterial, Does.Contain("contribution:extension"));
+            Assert.That(result.FingerprintMaterial, Does.Contain("route:"));
+            Assert.That(result.FingerprintMaterial, Does.Contain("route:baseline"));
+            Assert.That(result.FingerprintMaterial, Does.Contain("route:changed"));
             Assert.That(result.FingerprintMaterial, Does.Contain("activation:"));
             Assert.That(result.FingerprintMaterial, Does.Contain("behavior:"));
             Assert.That(result.EffectiveClassFingerprintMaterial, Does.Contain("extension-activated"));
@@ -576,7 +579,7 @@ public sealed class SurfaceOracleTests
         Assert.Multiple(() =>
         {
             Assert.That(result.Status, Is.EqualTo(PlanFuzzOracleStatus.Violated));
-            Assert.That(result.EffectiveClassFingerprintMaterial, Is.EqualTo("route-changed"));
+            Assert.That(result.EffectiveClassFingerprintMaterial, Does.Contain("route-changed"));
         });
     }
 

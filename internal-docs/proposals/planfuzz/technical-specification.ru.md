@@ -880,7 +880,8 @@ public sealed record SurfaceEvidence(
 - schema-v1..v3 остаются читаемыми для истории;
 - observation schema владеет допустимой evidence version: schema-v4 принимает только evidence-v2 и не может объявить себя v3;
 - schema-v4/evidence-v2 остаётся пригодной для O-004, но не может дать `Passed` текущему O-005 без explicit bindings;
-- extension bindings сравниваются структурно по `ExtensionId`, `SurfaceIds` и `OwnerIds`; delimiter-concatenated synthetic identity запрещена.
+- extension bindings сравниваются структурно по `ExtensionId`, `SurfaceIds` и `OwnerIds`; delimiter-concatenated synthetic identity запрещена;
+- adapter-controlled fingerprint fields и sequences кодируются однозначно через UTF-8 byte-length prefixes; `string.Join` не является допустимым identity contract.
 
 `ActivationTraceStatus` — typed enum: `Unsupported`, `Partial`, `Complete`. Boolean completeness больше не является текущим контрактом.
 
@@ -1135,7 +1136,7 @@ activated-owner set changed
 observable semantics changed
 ```
 
-Exact fingerprint содержит все конкретные observed dimensions; class fingerprint сохраняет категории без concrete values. Activation-only и activation-plus-semantic-interference обязаны иметь разные exact fingerprints, чтобы replay/reduction не подменял исходный механизм более слабым.
+Exact fingerprint содержит все конкретные observed dimensions; class fingerprint сохраняет категории без concrete values. Оба material contracts используют однозначное length-prefixed encoding для dynamic fields и sequences. Activation-only и activation-plus-semantic-interference обязаны иметь разные exact fingerprints, чтобы replay/reduction не подменял исходный механизм более слабым.
 
 ---
 

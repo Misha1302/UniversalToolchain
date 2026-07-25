@@ -1,7 +1,7 @@
 {
   "schemaVersion": 3,
   "date": "2026-07-25",
-  "scope": "PlanFuzz Phase 3a O-005 evidence-identity and adversarial review hardening",
+  "scope": "PlanFuzz Phase 3a O-004/O-005 identity and adversarial review hardening",
   "adapter": {
     "id": "acme-pricing",
     "version": "0.4.0",
@@ -36,10 +36,10 @@
       "inconclusive": false,
       "infrastructureFailure": false,
       "caseId": "affc1c006109fc58dfacbb9ecacad28882393055fab9cca62640a7d3030a02d0",
-      "exactFingerprint": "aa4ba9f1dc47a02f35e2177ac9d7aca39d4831665baac8fc9a92e5c44860880b",
-      "classFingerprint": "3690fb10fb77861254881caacd3192e7ab7d374d095fe579a0bd8108bc9ed84c",
-      "replayReportSha256": "796387b32cc1f6d8aad937f7e2f0023bec9b342541a4b16a3618428111c7f52c",
-      "manifestSha256": "38d330c7066c3e1369b35823e4af234879391ab1b97de74ee242e4e35c9f7986"
+      "exactFingerprint": "46c4fa3590782a3883b2d9834bee020abbd71b9b32549aab789b40f1c6fdff9d",
+      "classFingerprint": "965c5698dbe1e3e10abaa7f8f7db5b5f8ca86caece2da6ed3be51f9c9c124e7f",
+      "replayReportSha256": "daf85672bde090007a09b57ce14765e14e4d14694ec50dca70e205b0f781afdf",
+      "manifestSha256": "4ba504caa75f85659cdf0f156c2d9529f004ad0df736e3214b752302f3796e95"
     },
     {
       "faultId": "SF-011-extension-noninterference",
@@ -52,10 +52,10 @@
       "inconclusive": false,
       "infrastructureFailure": false,
       "caseId": "9f1fa434ea4cca2e1bccd39eac854000ed2ac9b025ad442c96817a48149e0566",
-      "exactFingerprint": "b4f04f732f69c4349c191896713d8340089718b4516a3fa30b428abac06f369e",
-      "classFingerprint": "8d6d2c5f8bffaf14c588ee92e3ba6839637798f5084ae9e8218062c2d96495a9",
-      "replayReportSha256": "8e79083e2494c3c3a96ce8318b0c88b5ea06f7bb75dc54b9ea35341774fbe402",
-      "manifestSha256": "7b213d29c5c56c4281bfce1a87694921ceae976b8635aa5ba3ca63df88be66a1"
+      "exactFingerprint": "6a8d83564d8d6192e0db9c730da8eb29e2685acc35450c36860fae70967f5102",
+      "classFingerprint": "0476291f0e8795745041a4ef3da3112d882c31069a6197dcd732ad6ead9e6050",
+      "replayReportSha256": "addc4db533245979bea93f82cc7b0cef4cc6a3d379b3e3ad86a3a34474f70a20",
+      "manifestSha256": "bcbf031bb46c620de4741cee7d81ee215d8fd2cd8b44d28c078064a0920696dd"
     }
   ],
   "supersedes": {
@@ -78,11 +78,12 @@
     }
   },
   "claimBoundary": "This is bounded Phase 3a stability and harness-identity evidence. The runtime faults are test-owned and do not count as discovered compiler defects. Lifecycle/session/concurrency schedules, schedule reduction, equal-budget superiority, publication novelty and production certification remain unverified.",
-  "reviewedImplementationHead": "0079ae983747d9f4d3f38561e7b162b9df7acac8",
+  "reviewedImplementationHead": "bb36c3a237557c33bcf8a867817eb64694717ca0",
   "adversarialReview": {
     "schemaV4CannotClaimEvidenceContractV3": true,
     "extensionBindingsComparedStructurally": true,
     "delimiterDerivedBindingIdentityForbidden": true,
-    "regressionTestsAdded": 2
+    "fingerprintMaterialUsesLengthPrefixedEncoding": true,
+    "regressionTestsAdded": 4
   }
 }

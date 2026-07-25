@@ -45,7 +45,7 @@ The configuration-complete research graph is declared in `UniversalToolchain/Pla
 - Surface evidence separates selected surface IDs from selected/excluded owner IDs, binds each declared independent extension to its exact surface and owner sets, records observed activated owners, uses a typed `Unsupported`/`Partial`/`Complete` trace status, and carries evidence-contract and route identities.
 - `O-004` is invariant to contract variant order, aggregates all variants, gives confirmed violations precedence over incomplete peers, and compares only explicit excluded-owner IDs with observed activated-owner IDs.
 - `O-005` derives baseline/extension direction structurally rather than from contract order, compares extension IDs and exact surface/owner sets structurally, requires one exact new binding, preserves unrelated exclusion/declaration policy, and aggregates activation, route, activated-owner and semantic violations into deterministic exact/class identities.
-- Exact fingerprints preserve testcase-level evidence and remain authoritative for repeated replay confirmation.
+- Exact fingerprints preserve testcase-level evidence and remain authoritative for repeated replay confirmation. O-004/O-005 encode adapter-controlled strings with deterministic UTF-8 length prefixes rather than ambiguous delimiter joins.
 - Coarser class fingerprints remove concrete values and duplicate diagnostics for campaign triage. They are not root-cause identities and are never reported as unique defects without manual analysis.
 - A replay is clean only when it has at least one oracle result and every declared oracle returns `Passed`.
 - A violation is confirmed only when every attempt has at least one violation, no infrastructure failure, no `Inconclusive`/`NotApplicable` result, and one stable exact fingerprint.
@@ -168,7 +168,7 @@ Phase 3a hardens the two generic surface-oracle families without adding Acme or 
 - `O-004` negative-surface preservation consumes current, complete observed traces and rejects activation of explicitly excluded owners; its status and fingerprint are deterministic under variant permutation;
 - `O-005` extension noninterference derives the additive direction from evidence rather than contract order, proves one strict extension delta including exclusion policy and binding identity, and aggregates every observed interference dimension before fingerprinting.
 
-Observation schema v5 introduces surface evidence contract v3. Current evidence uses separate selected-surface, selected-owner and excluded-owner sets plus explicit independent-extension records binding each stable extension ID to its exact surface and owner sets. Blank, duplicate, contradictory, overlapping, unbound and out-of-domain IDs are rejected. Schema-v3 remains historical; schema-v4 is constrained to evidence-v2, remains usable by O-004, and is `Inconclusive` for current O-005. Binding equality is structural; delimiter-derived synthetic identities are forbidden.
+Observation schema v5 introduces surface evidence contract v3. Current evidence uses separate selected-surface, selected-owner and excluded-owner sets plus explicit independent-extension records binding each stable extension ID to its exact surface and owner sets. Blank, duplicate, contradictory, overlapping, unbound and out-of-domain IDs are rejected. Schema-v3 remains historical; schema-v4 is constrained to evidence-v2, remains usable by O-004, and is `Inconclusive` for current O-005. Binding equality is structural; delimiter-derived synthetic identities are forbidden. Fingerprint sequences use length-prefixed encoding, so one ID containing delimiters cannot alias multiple IDs.
 
 The Acme adapter records activation at the actual parser, transformer, executor and runtime-provider components. The selected-but-unused extension remains on an unreachable artifact route in clean cases. The two surface faults now execute inside a test-owned runtime-provider wrapper and invoke extension-owned activation/interference logic through the ordinary runtime path; the adapter no longer edits observations after execution.
 
@@ -192,10 +192,10 @@ Tests:                                       483 passed
 UniversalToolchain.Modules.Tests:            290 passed
 UniversalToolchain.Dialects.Tests:           588 passed
 UniversalToolchain.LanguageSdk.Tests:         53 passed
-UniversalToolchain.PlanFuzz.Tests:             50 passed
+UniversalToolchain.PlanFuzz.Tests:             52 passed
 UniversalToolchain.PlanFuzz.IntegrationTests:  11 passed
 --------------------------------------------------------
-Total:                                      1475 passed
+Total:                                      1477 passed
 Failed:                                        0
 Skipped:                                       0
 ```
