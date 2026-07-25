@@ -166,10 +166,10 @@ public sealed class PlanFuzzSurfaceSnapshot
         string traceKind,
         string routeIdentity)
     {
-        if (evidenceContractVersion is not 2 and not CurrentEvidenceContractVersion)
-            Thrower.Argument(nameof(evidenceContractVersion), "Binding-free surface evidence must use contract version 2 or an empty version-3 independent-extension surface.");
+        if (evidenceContractVersion != 2)
+            Thrower.Argument(nameof(evidenceContractVersion), "Binding-free surface evidence must use contract version 2.");
 
-        var state = CreateValidated(
+        return CreateValidated(
             evidenceContractVersion,
             selectedSurfaceIds,
             selectedOwnerIds,
@@ -181,12 +181,6 @@ public sealed class PlanFuzzSurfaceSnapshot
             activationTraceStatus,
             traceKind,
             routeIdentity);
-        if (evidenceContractVersion == CurrentEvidenceContractVersion &&
-            (state.DeclaredIndependentSurfaceIds.Count != 0 || state.DeclaredIndependentOwnerIds.Count != 0))
-        {
-            Thrower.Argument(nameof(declaredIndependentSurfaceIds), "Evidence contract version 3 requires explicit bindings for every independent surface and owner.");
-        }
-        return state;
     }
 
     private static SnapshotState CreateValidated(
