@@ -26,9 +26,6 @@ public sealed class PlanFuzzIndependentExtensionEvidence
     public IReadOnlyList<string> SurfaceIds { get; }
     public IReadOnlyList<string> OwnerIds { get; }
 
-    internal string CanonicalIdentity =>
-        $"{ExtensionId}|surfaces:{string.Join(',', SurfaceIds)}|owners:{string.Join(',', OwnerIds)}";
-
     private static IReadOnlyList<string> Snapshot(IEnumerable<string> values, string parameterName)
     {
         if (values == null)
