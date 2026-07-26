@@ -2,6 +2,9 @@ name: Deploy documentation to GitHub Pages
 
 on:
   push:
+    # The compatibility branch `main` exists for stable links only. Publishing from
+    # both refs creates duplicate deployments for the same commit and can violate
+    # the github-pages environment branch policy.
     branches:
       - master
     paths:
