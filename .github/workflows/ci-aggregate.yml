@@ -40,7 +40,7 @@ jobs:
             let stableCompletedSnapshots = 0;
             let previousCompletedIds = '';
 
-            async function publish(state, description) {
+            async function publish(state, description, targetUrl = null) {
               await github.rest.repos.createCommitStatus({
                 owner,
                 repo,
@@ -48,7 +48,7 @@ jobs:
                 state,
                 context: statusContext,
                 description: description.slice(0, 140),
-                target_url: `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`,
+                target_url: targetUrl ?? `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`,
               });
             }
 
@@ -74,9 +74,12 @@ jobs:
               if (missingRequired.length > 0 || active.length > 0) {
                 stableCompletedSnapshots = 0;
                 previousCompletedIds = '';
-                core.info(
-                  `Waiting: missing=[${missingRequired.join(', ')}], active=[${active.map(run => `${run.name}:${run.status}`).join(', ')}]`,
-                );
+                const waiting = [
+                  ...missingRequired.map(name => `missing:${name}`),
+                  ...active.map(run => `${run.name}:${run.status}`),
+                ];
+                await publish('pending', `Waiting: ${waiting.join(', ')}`);
+                core.info(`Waiting: ${waiting.join(', ')}`);
                 await new Promise(resolve => setTimeout(resolve, 15000));
                 continue;
               }
@@ -97,13 +100,18 @@ jobs:
 
               const failed = runs.filter(run => !acceptableConclusions.has(run.conclusion));
               if (failed.length > 0) {
-                const summary = failed.map(run => `${run.name}:${run.conclusion}`).join(', ');
-                await publish('failure', `Failed workflows: ${summary}`);
+                const primary = failed[0];
+                const summary = failed.map(run => `${run.name}#${run.id}:${run.conclusion}`).join(', ');
+                await publish(
+                  'failure',
+                  `Failed: ${primary.name} #${primary.id} (${primary.conclusion})`,
+                  primary.html_url,
+                );
                 core.setFailed(`Failed workflows: ${summary}`);
                 return;
               }
 
-              const summary = runs.map(run => `${run.name}:${run.conclusion}`).join(', ');
+              const summary = runs.map(run => `${run.name}#${run.id}:${run.conclusion}`).join(', ');
               core.info(`All workflows succeeded: ${summary}`);
               await publish('success', `${runs.length} workflows completed successfully`);
               return;
