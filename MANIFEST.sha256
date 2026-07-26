@@ -4,7 +4,7 @@ b2105db459e765101e2d5a1dd40161f68e845671572b675a1f04ab649743d0f9  ./.github/scri
 5968e65e75732de586a6f08040a0f087dfc11ba618d483c3b2a48c5522f7ea62  ./.github/workflows/benchmark-smoke.yml
 a8fc00bfb36e0ccd5248908aa42a005912161283a06fb20ddabdf988d3de99b8  ./.github/workflows/deploy-docs.yml
 cc90d8d4a42139f99658882c36727217a8950cd4a5fe6acbec2ae21ec0ea2f16  ./.github/workflows/docs-check.yml
-85d29c593472e257911c6e9ad54bf750bbd4ea038430714575d51abddc99cfb1  ./.github/workflows/dotnet-ci.yml
+5a6c9597adc68aa0aee70da727790a634442064eafb20e4fba1dcbc919e87fb1  ./.github/workflows/dotnet-ci.yml
 0e46dd53aecbfe718898d14703505d65ed9c3fb2007d493b380903fa2481086f  ./.github/workflows/published-package-smoke.yml
 8ef0d4db376c033e5cf63c56c88db0bd80344d6ab0983c0e79d3a33596238314  ./.github/workflows/universal-toolchain-validation.yml
 4177b9d99cf78190996c6c90828b85779c2a05f44f8428308d5252d1285b8ce9  ./.github/workflows/wist-rollout-sample-smoke.yml
@@ -1500,7 +1500,7 @@ a6bb9fbdb7923012912155416ff39308acd0ce90fa89d742907545a1bec10441  ./build.ps1
 dba82172effba612b684ee00ea8ddcb230da464e849a8e40de28c97baa737601  ./docs/.vitepress/theme/index.ts
 e69ea38f9dc63353153285a8f5d683f7199dc9d62e72e06aa06ab4b9c4c8b4a3  ./docs/.vitepress/theme/style.css
 910e2cfe84ff08945e326244fb241d963d4923fae0017af9550b1d8df2e9ba23  ./docs/CONTRIBUTING.md
-24e919c191d861c79a489a8cdd08b575eda1a3385f259c6eaafaaba5db10de0e  ./docs/CURRENT_ARCHITECTURE_STATUS.md
+213067fc944d143dbc69765179cfd0f9b4845202c07fe0e7dbed8cc2d1b731e1  ./docs/CURRENT_ARCHITECTURE_STATUS.md
 ee7962f829e2c1157f5801005dd81fd446cf784c8e1887feb6650f98febc6b58  ./docs/SECURITY.md
 8a08f9df3e26343bf889a629c790e3bc3cbfe062c3790f17b2cebd730cb42889  ./docs/alternatives.md
 3cf44e9c2ff428df5777c6296382f7a6a48498a0d0e9571aa1aa446042793275  ./docs/architecture/backends-and-parity.md
