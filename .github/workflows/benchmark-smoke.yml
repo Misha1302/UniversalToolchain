@@ -38,11 +38,26 @@ jobs:
         with:
           global-json-file: UniversalToolchain/global.json
 
+      - name: Prepare optional local NuGet feed
+        run: mkdir -p UniversalToolchain/packages
+
       - name: Restore benchmark project
-        run: dotnet restore UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj
+        run: >
+          dotnet restore UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj
+          --disable-parallel
+          -p:RestoreBuildInParallel=false
+          -p:UseSharedCompilation=false
+          -p:NuGetAudit=false
 
       - name: Build benchmark project
-        run: dotnet build UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj -c Release --no-restore
+        run: >
+          dotnet build UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj
+          -c Release
+          --no-restore
+          -m:1
+          -p:BuildInParallel=false
+          -p:UseSharedCompilation=false
+          -p:NuGetAudit=false
 
       - name: Benchmark self-test
         run: >
