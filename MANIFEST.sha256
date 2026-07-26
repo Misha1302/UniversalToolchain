@@ -2,7 +2,7 @@
 b2105db459e765101e2d5a1dd40161f68e845671572b675a1f04ab649743d0f9  ./.github/scripts/run-markdown-bash-blocks.py
 5fc01359ef37c83c932eb9bb334959d53e003885248f8cb098e93e79da735c31  ./.github/workflows/benchmark-full.yml
 5968e65e75732de586a6f08040a0f087dfc11ba618d483c3b2a48c5522f7ea62  ./.github/workflows/benchmark-smoke.yml
-a8fc00bfb36e0ccd5248908aa42a005912161283a06fb20ddabdf988d3de99b8  ./.github/workflows/deploy-docs.yml
+2ff82e5c4c591fba2541176b55760d522d88c35cb2278036487916f7eba0fb7e  ./.github/workflows/deploy-docs.yml
 cc90d8d4a42139f99658882c36727217a8950cd4a5fe6acbec2ae21ec0ea2f16  ./.github/workflows/docs-check.yml
 5a6c9597adc68aa0aee70da727790a634442064eafb20e4fba1dcbc919e87fb1  ./.github/workflows/dotnet-ci.yml
 0e46dd53aecbfe718898d14703505d65ed9c3fb2007d493b380903fa2481086f  ./.github/workflows/published-package-smoke.yml
