@@ -10,6 +10,20 @@ on:
       - "UniversalToolchain/UniversalToolchain.Dialects.Wist/**/*.cs"
       - "UniversalToolchain/UniversalToolchain.Dialects.Wist/**/*.csproj"
       - ".github/workflows/benchmark-smoke.yml"
+  push:
+    branches:
+      - master
+    paths:
+      - "UniversalToolchain/Benchmarks/**"
+      - "UniversalToolchain/UniversalToolchain.Wist/**/*.cs"
+      - "UniversalToolchain/UniversalToolchain.Wist/**/*.csproj"
+      - "UniversalToolchain/UniversalToolchain.Dialects.Wist/**/*.cs"
+      - "UniversalToolchain/UniversalToolchain.Dialects.Wist/**/*.csproj"
+      - ".github/ci-trigger"
+      - ".github/workflows/benchmark-smoke.yml"
+
+permissions:
+  contents: read
 
 jobs:
   benchmark-smoke:
