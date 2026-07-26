@@ -88,6 +88,13 @@ This tooling is not part of the public Wist package and does not establish publi
 - Wist Bytecode tag verification remains incomplete;
 - no hardened in-process sandbox is claimed.
 
+## Migration and deprecation governance
+
+The current migration and removal contracts are documented in:
+
+- [Legacy deprecation/removal gate](./architecture/legacy-deprecation-gate.md);
+- [Wist legacy migration guide (Russian)](./migration/WIST_LEGACY_MIGRATION_RU.md).
+
 ## Verification identity
 
 `VERIFICATION.md` is the canonical checked-in verification record. GitHub Actions additionally enforces the canonical build/test/package path, documentation checks, rollout smoke and recursive manifest equality for the integrated revision.
