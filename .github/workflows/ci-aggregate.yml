@@ -1,0 +1,105 @@
+name: CI aggregate
+
+on:
+  push:
+    branches:
+      - master
+
+permissions:
+  actions: read
+  contents: read
+  statuses: write
+
+jobs:
+  aggregate:
+    name: Wait for all workflows
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Wait for all push workflows for this commit
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const sha = context.sha;
+            const branch = context.ref.replace('refs/heads/', '');
+            const statusContext = 'ci/aggregate';
+            const acceptableConclusions = new Set(['success', 'skipped', 'neutral']);
+            const requiredWorkflows = new Set(['.NET CI', 'UniversalToolchain validation']);
+            const deadline = Date.now() + 20 * 60 * 1000;
+            let stableCompletedSnapshots = 0;
+            let previousCompletedIds = '';
+
+            async function publish(state, description) {
+              await github.rest.repos.createCommitStatus({
+                owner,
+                repo,
+                sha,
+                state,
+                context: statusContext,
+                description: description.slice(0, 140),
+                target_url: `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`,
+              });
+            }
+
+            await publish('pending', 'Waiting for all workflows on this commit');
+
+            while (Date.now() < deadline) {
+              const response = await github.rest.actions.listWorkflowRunsForRepo({
+                owner,
+                repo,
+                branch,
+                event: 'push',
+                head_sha: sha,
+                per_page: 100,
+              });
+
+              const runs = response.data.workflow_runs.filter(
+                run => run.id !== context.runId && run.name !== context.workflow,
+              );
+              const names = new Set(runs.map(run => run.name));
+              const missingRequired = [...requiredWorkflows].filter(name => !names.has(name));
+              const active = runs.filter(run => run.status !== 'completed');
+
+              if (missingRequired.length > 0 || active.length > 0) {
+                stableCompletedSnapshots = 0;
+                previousCompletedIds = '';
+                core.info(
+                  `Waiting: missing=[${missingRequired.join(', ')}], active=[${active.map(run => `${run.name}:${run.status}`).join(', ')}]`,
+                );
+                await new Promise(resolve => setTimeout(resolve, 15000));
+                continue;
+              }
+
+              const completedIds = runs.map(run => run.id).sort((a, b) => a - b).join(',');
+              if (completedIds === previousCompletedIds) {
+                stableCompletedSnapshots += 1;
+              } else {
+                stableCompletedSnapshots = 1;
+                previousCompletedIds = completedIds;
+              }
+
+              if (stableCompletedSnapshots < 2) {
+                core.info('All observed workflows completed; waiting for one stable confirmation snapshot.');
+                await new Promise(resolve => setTimeout(resolve, 15000));
+                continue;
+              }
+
+              const failed = runs.filter(run => !acceptableConclusions.has(run.conclusion));
+              if (failed.length > 0) {
+                const summary = failed.map(run => `${run.name}:${run.conclusion}`).join(', ');
+                await publish('failure', `Failed workflows: ${summary}`);
+                core.setFailed(`Failed workflows: ${summary}`);
+                return;
+              }
+
+              const summary = runs.map(run => `${run.name}:${run.conclusion}`).join(', ');
+              core.info(`All workflows succeeded: ${summary}`);
+              await publish('success', `${runs.length} workflows completed successfully`);
+              return;
+            }
+
+            await publish('failure', 'Timed out waiting for workflows');
+            core.setFailed('Timed out waiting for all workflows on this commit.');
