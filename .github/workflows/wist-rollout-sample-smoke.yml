@@ -21,6 +21,7 @@ on:
       - 'UniversalToolchain/Dialects/examples/wist/pricing-restricted/**'
       - 'build.sh'
       - 'build.ps1'
+      - '.github/ci-trigger'
       - '.github/workflows/wist-rollout-sample-smoke.yml'
 
 permissions:
