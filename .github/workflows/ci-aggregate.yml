@@ -27,7 +27,15 @@ jobs:
             const branch = context.ref.replace('refs/heads/', '');
             const statusContext = 'ci/aggregate';
             const acceptableConclusions = new Set(['success', 'skipped', 'neutral']);
-            const requiredWorkflows = new Set(['.NET CI', 'UniversalToolchain validation']);
+            const requiredWorkflows = new Set([
+              '.NET CI',
+              'UniversalToolchain validation',
+              'Docs Check',
+              'Deploy documentation to GitHub Pages',
+              'Published Wist package smoke',
+              'Wist Rollout Sample Smoke',
+              'Benchmark Smoke',
+            ]);
             const deadline = Date.now() + 20 * 60 * 1000;
             let stableCompletedSnapshots = 0;
             let previousCompletedIds = '';
@@ -44,7 +52,7 @@ jobs:
               });
             }
 
-            await publish('pending', 'Waiting for all workflows on this commit');
+            await publish('pending', 'Waiting for the complete CI suite on this commit');
 
             while (Date.now() < deadline) {
               const response = await github.rest.actions.listWorkflowRunsForRepo({
@@ -82,7 +90,7 @@ jobs:
               }
 
               if (stableCompletedSnapshots < 2) {
-                core.info('All observed workflows completed; waiting for one stable confirmation snapshot.');
+                core.info('All required workflows completed; waiting for one stable confirmation snapshot.');
                 await new Promise(resolve => setTimeout(resolve, 15000));
                 continue;
               }
@@ -101,5 +109,5 @@ jobs:
               return;
             }
 
-            await publish('failure', 'Timed out waiting for workflows');
-            core.setFailed('Timed out waiting for all workflows on this commit.');
+            await publish('failure', 'Timed out waiting for the complete CI suite');
+            core.setFailed('Timed out waiting for the complete CI suite on this commit.');
