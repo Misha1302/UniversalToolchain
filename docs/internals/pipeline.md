@@ -77,7 +77,7 @@ lexer
 parser
 AST translator
 bytecode-to-AIR translator
-backend compiler
+backend cil
 executor
 intrinsic capability set
 optimizer capability context
@@ -238,7 +238,7 @@ Middle-end modules initialize the compiler:
 middleEndModules.InitMethodsCompiler(compiler)
 ```
 
-Then the backend compiler compiles AIR:
+Then the backend cil compiles AIR:
 
 ```text
 compiler.Compile(targetIr, input)

@@ -8,7 +8,7 @@ namespace Example.Scenarios;
 
 public sealed class DslPricingCalculator : IDisposable
 {
-    private const string CompilerBackendName = "compiler";
+    private const string CilBackendName = "cil";
     private const string InterpreterBackendName = "interpreter";
 
     private readonly WistDialectExecutionHost _host;
@@ -119,15 +119,24 @@ public sealed class DslPricingCalculator : IDisposable
         var services = new ServiceCollection();
         services.AddWistDialectServices();
 
-        using var provider = services.BuildServiceProvider();
-        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var dialectFilePath = new WistShippedDialectFileResolver().Resolve(dialectPreset);
-        var dialect = workflow.ComposeFile(dialectFilePath);
+        ServiceProvider? provider = services.BuildServiceProvider();
+        try
+        {
+            var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+            var dialectFilePath = new WistShippedDialectFileResolver().Resolve(dialectPreset);
+            var dialect = workflow.ComposeFile(dialectFilePath);
 
-        if (!dialect.IsSuccess)
-            Thrower.InvalidOpEx(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(dialect)));
+            if (!dialect.IsSuccess)
+                Thrower.InvalidOpEx(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(dialect)));
 
-        return workflow.CreateHost(dialect);
+            var owner = provider;
+            provider = null;
+            return workflow.CreateHost(dialect, new WistRuntimeServiceOptions(), owner);
+        }
+        finally
+        {
+            provider?.Dispose();
+        }
     }
 
     private static OrderedDictionary<string, Type> CreateDeclaredBindings() =>
@@ -139,7 +148,7 @@ public sealed class DslPricingCalculator : IDisposable
 
     private ICompiledArtifact<CilCompilationOutput> CompileWithCompiler(string formula)
     {
-        var compiler = _host.GetBackendSpecificArtifactCompiler<CilCompilationOutput>(CompilerBackendName);
+        var compiler = _host.GetBackendSpecificArtifactCompiler<CilCompilationOutput>(CilBackendName);
         return compiler.Compile(formula, CreateDeclaredBindings());
     }
 

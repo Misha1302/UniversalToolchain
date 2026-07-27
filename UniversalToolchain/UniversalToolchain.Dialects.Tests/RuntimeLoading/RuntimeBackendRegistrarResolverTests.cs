@@ -77,19 +77,6 @@ public sealed class RuntimeBackendRegistrarResolverTests
         Assert.That(registrar, Is.InstanceOf<SimpleRegistrar>());
     }
 
-    [Test]
-    public void Resolve_WhenLegacyRegistrarAssemblyIsMissing_UsesBackendAssemblyFallback()
-    {
-        var resolver = new DefaultRuntimeBackendRegistrarResolver(
-            new StubAssemblyTypeLoader([("TestAssembly", typeof(SimpleRegistrar).FullName!, typeof(SimpleRegistrar))]),
-            new ServiceCollection().BuildServiceProvider());
-
-        var entry = Entry("backend", typeof(SimpleRegistrar).FullName);
-        var registrar = resolver.Resolve(entry);
-
-        Assert.That(registrar, Is.InstanceOf<SimpleRegistrar>());
-    }
-
     private static RuntimeComponentManifestEntry Entry(string alias, string? registrarTypeFullName)
         => new(
             RuntimeComponentKind.Backend,
@@ -97,7 +84,11 @@ public sealed class RuntimeBackendRegistrarResolverTests
             [],
             RuntimeComponentIdFactory.Create(RuntimeComponentKind.Backend, alias),
             "TestAssembly",
-            new RuntimeComponentActivationInfo(typeof(object).FullName!, registrarTypeFullName));
+            new RuntimeComponentActivationInfo(
+                new RuntimeTypeReference("TestAssembly", typeof(object).FullName!),
+                registrarTypeFullName == null
+                    ? null
+                    : new RuntimeTypeReference("TestAssembly", registrarTypeFullName)));
 
     private static RuntimeComponentManifestEntry Entry(string alias, RuntimeTypeReference registrarTypeReference)
         => new(

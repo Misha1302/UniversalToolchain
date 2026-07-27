@@ -26,8 +26,13 @@ public sealed class SelectedModuleContractTableProvider(
             .Cast<object>()
             .Concat(optimizers)
             .ToArray();
+        var declaredRuntimeProviders = selectedComponents
+            .Where(static component => component is not IModuleContractDescriptorProvider)
+            .Select(static component => new DeclaredRuntimeComponentContractDescriptorProvider(component.GetType()))
+            .ToArray();
         var providers = selectedComponents
             .OfType<IModuleContractDescriptorProvider>()
+            .Concat(declaredRuntimeProviders)
             .Concat(backendComponents
                 .OfType<IModuleContractBackendPipelineComponent>()
                 .SelectMany(static component => component.DescriptorProviders))
@@ -54,19 +59,18 @@ public sealed class SelectedModuleContractTableProvider(
 
     internal static IReadOnlyList<ModuleId> ReadSelectedModuleIds(object component)
     {
-        if (component is IModuleContractDescriptorProvider provider)
-        {
-            var descriptorModuleIds = provider
-                .GetFacets()
-                .Select(static facet => facet.ModuleId)
-                .Distinct()
-                .OrderBy(static id => id.Value, StringComparer.Ordinal)
-                .ToArray();
-            if (descriptorModuleIds.Length > 0)
-                return descriptorModuleIds;
-        }
-
-        return [CreateLegacyModuleId(component.GetType())];
+        component = component.ArgNotNull();
+        var provider = component as IModuleContractDescriptorProvider
+                       ?? new DeclaredRuntimeComponentContractDescriptorProvider(component.GetType());
+        var descriptorModuleIds = provider
+            .GetFacets()
+            .Select(static facet => facet.ModuleId)
+            .Distinct()
+            .OrderBy(static id => id.Value, StringComparer.Ordinal)
+            .ToArray();
+        if (descriptorModuleIds.Length == 0)
+            throw new InvalidOperationException($"Module contract provider '{provider.GetType().FullName}' declares no module identity.");
+        return descriptorModuleIds;
     }
 
     internal static IReadOnlyList<ModuleId> ReadSelectedBackendModuleIds(IModuleContractBackendPipelineComponent component)
@@ -83,22 +87,6 @@ public sealed class SelectedModuleContractTableProvider(
             return descriptorModuleIds;
 
         return [CreateBackendModuleId(component.ComponentId)];
-    }
-
-    private static ModuleId CreateLegacyModuleId(Type type)
-    {
-        var typeName = type.FullName ?? type.Name;
-        var normalized = new string(typeName
-            .Select(static ch => char.IsLetterOrDigit(ch) ? char.ToLowerInvariant(ch) : '.')
-            .ToArray());
-        while (normalized.Contains("..", StringComparison.Ordinal))
-            normalized = normalized.Replace("..", ".", StringComparison.Ordinal);
-
-        normalized = normalized.Trim('.');
-        if (string.IsNullOrWhiteSpace(normalized))
-            normalized = "unknown";
-
-        return new ModuleId($"legacy.clr.{normalized}");
     }
 
     private static ModuleId CreateBackendModuleId(string componentId)

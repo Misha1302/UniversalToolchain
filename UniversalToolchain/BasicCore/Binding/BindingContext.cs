@@ -4,6 +4,7 @@ public sealed class BindingContext
 {
     private readonly Dictionary<string, Symbol> _externals;
     private readonly Dictionary<string, LocalVariableSymbol> _locals = new();
+    private int _nextLocalDeclarationOrdinal;
 
     public BindingContext(IReadOnlyList<ExternalBinding> externalBindings)
     {
@@ -16,7 +17,7 @@ public sealed class BindingContext
 
     public LocalVariableSymbol DeclareLocal(string name, Type type)
     {
-        var symbol = new LocalVariableSymbol(name, type);
+        var symbol = new LocalVariableSymbol(name, type, _nextLocalDeclarationOrdinal++);
         _locals[symbol.Name] = symbol;
         return symbol;
     }
@@ -24,14 +25,6 @@ public sealed class BindingContext
     public bool TryGetLocal(string name, out LocalVariableSymbol symbol) => _locals.TryGetValue(name, out symbol!);
 
     public bool TryGetExternal(string name, out Symbol symbol) => _externals.TryGetValue(name, out symbol!);
-
-    public LocalVariableSymbol GetOrDeclareInferredLocal(string name)
-    {
-        if (_locals.TryGetValue(name, out var local))
-            return local;
-
-        return DeclareLocal(name, typeof(object));
-    }
 
     private static Symbol CreateExternalSymbol(ExternalBinding binding, int slot) => binding.Kind switch
     {

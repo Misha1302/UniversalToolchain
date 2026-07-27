@@ -12,36 +12,36 @@ This page shows two installation paths:
 
 ## Package-first installation
 
-`UniversalToolchain.Wist` is the intended first-contact package for .NET developers. Version `0.1.0-alpha.1` is published on NuGet.org. The package exposes the `WistEngine` facade and hides the lower-level dialect/runtime pipeline for normal formula usage.
+`UniversalToolchain.Wist` is the intended first-contact package for .NET developers. This source tree builds and verifies version `0.1.0-alpha.3`; that is a local release-artifact statement, not a claim that the same version is already published on NuGet.org. The package exposes the `WistEngine` facade and hides the lower-level dialect/runtime pipeline for normal formula usage.
 
 The current alpha package is:
 
 ```text
 PackageId: UniversalToolchain.Wist
-Version: 0.1.0-alpha.1
+Version: 0.1.0-alpha.3
 Target framework: net10.0
 ```
 
 From a clean .NET project:
 
 ```bash ci-run=false
-dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.1
+dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.3 --source ./artifacts/packages
 ```
 
-The package page is <https://www.nuget.org/packages/UniversalToolchain.Wist/0.1.0-alpha.1>.
+The NuGet.org package page is <https://www.nuget.org/packages/UniversalToolchain.Wist>. Use its displayed version for published-package checks.
 
 ### Clean-room published-package check
 
 The repository includes a smoke script that creates a temporary `net10.0` console project, uses an isolated NuGet package cache, restores only from NuGet.org, compiles a formula, evaluates it and verifies a rejected statement-style rule:
 
 ```bash ci-run=false
-./Tools/smoke-published-wist-package.sh 0.1.0-alpha.1
+./Tools/smoke-published-wist-package.sh "$PUBLISHED_WIST_VERSION"
 ```
 
 Expected final line:
 
 ```text
-Published UniversalToolchain.Wist 0.1.0-alpha.1 smoke passed.
+Published UniversalToolchain.Wist <explicit-version> smoke passed.
 ```
 
 Use a `net10.0` project while this alpha targets .NET 10:
@@ -79,7 +79,7 @@ using UniversalToolchain.Wist;
 
 using var wist = WistEngine.Create(new WistEngineOptions
 {
-    Preset = WistPreset.FullNative,
+    DialectSource = WistDialectSource.FromShippedPreset("full-default-native"),
     AllowedAssemblies = [typeof(Math).Assembly]
 });
 

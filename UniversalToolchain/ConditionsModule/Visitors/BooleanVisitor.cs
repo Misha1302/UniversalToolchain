@@ -51,9 +51,9 @@ public class BooleanVisitor : IAstVisitor
         var isAnd = op.GetName() == "And";
 
         // Generate unique labels for short-circuit flow control.
-        var falseLabel = Guid.NewGuid();
-        var trueLabel = Guid.NewGuid();
-        var endLabel = Guid.NewGuid();
+        var falseLabel = DeterministicAstLabelId.Create(data.Node, "false");
+        var trueLabel = DeterministicAstLabelId.Create(data.Node, "true");
+        var endLabel = DeterministicAstLabelId.Create(data.Node, "end");
 
         // 1. Evaluate the left operand.
         data.AstToBytecodeTranslator.Translate(data.Node.Children[0]);

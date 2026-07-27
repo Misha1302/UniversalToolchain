@@ -14,7 +14,7 @@ public class DeclaredBindingsExecutionContractTests
     private const string DeclaredBindingsDialectText = """
                                                        dialect DeclaredBindingsDialect
                                                        use Arithmetic,Identifier,Numbers,Scopes,Variables,Whitespaces
-                                                       backend compiler,interpreter
+                                                       backend cil,interpreter
                                                        """;
 
     [Test]
@@ -22,7 +22,7 @@ public class DeclaredBindingsExecutionContractTests
     {
         using var host = ComposeHost(DeclaredBindingsDialectText);
 
-        var artifact = host.GetBackendSpecificArtifactCompiler<CilCompilationOutput>("compiler").Compile("left + right", CreateDeclaredBindings());
+        var artifact = host.GetBackendSpecificArtifactCompiler<CilCompilationOutput>("cil").Compile("left + right", CreateDeclaredBindings());
         var result = artifact.CreateSession().InvokeNamed<object>(CreateArguments(new RealNumberImpl(7), new RealNumberImpl(5)));
 
         Assert.That(BackendParityInfrastructure.AsNumber(result), Is.EqualTo(12d).Within(1e-9));
@@ -44,7 +44,7 @@ public class DeclaredBindingsExecutionContractTests
     {
         using var host = ComposeHost(DeclaredBindingsDialectText);
 
-        var artifact = host.GetBackendSpecificArtifactCompiler<CilCompilationOutput>("compiler").Compile("right - left", CreateDeclaredBindings());
+        var artifact = host.GetBackendSpecificArtifactCompiler<CilCompilationOutput>("cil").Compile("right - left", CreateDeclaredBindings());
 
         Assert.Multiple(() =>
         {
@@ -60,7 +60,7 @@ public class DeclaredBindingsExecutionContractTests
         const string invalidDialectText = """
                                           dialect InvalidDeclaredBindingsDialect
                                           use Arithmetic,Numbers,Whitespaces
-                                          backend compiler,interpreter
+                                          backend cil,interpreter
                                           """;
 
         using var host = ComposeHost(invalidDialectText);
@@ -78,20 +78,29 @@ public class DeclaredBindingsExecutionContractTests
 
     private static WistDialectExecutionHost ComposeHost(string dialectText)
     {
-        using var provider = CreateWorkflowProviderWithCilAndInterpreter();
-        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var composition = workflow.ComposeText(dialectText, "declared-bindings-inline");
-        if (!composition.IsSuccess)
-            throw new InvalidOperationException(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
+        ServiceProvider? provider = CreateWorkflowProviderWithCilAndInterpreter();
+        try
+        {
+            var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+            var composition = workflow.ComposeText(dialectText, "declared-bindings-inline");
+            if (!composition.IsSuccess)
+                throw new InvalidOperationException(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
 
-        return workflow.CreateHost(composition);
+            var owner = provider;
+            provider = null;
+            return workflow.CreateHost(composition, new WistRuntimeServiceOptions(), owner);
+        }
+        finally
+        {
+            provider?.Dispose();
+        }
     }
 
     private static Exception CaptureCompilerFailure(WistDialectExecutionHost host)
     {
         try
         {
-            _ = host.GetBackendSpecificArtifactCompiler<CilCompilationOutput>("compiler").Compile("left + right", CreateDeclaredBindings());
+            _ = host.GetBackendSpecificArtifactCompiler<CilCompilationOutput>("cil").Compile("left + right", CreateDeclaredBindings());
         }
         catch (Exception exception)
         {

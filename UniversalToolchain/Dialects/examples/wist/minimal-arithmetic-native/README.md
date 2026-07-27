@@ -10,7 +10,7 @@ This is the smallest native arithmetic-oriented dialect composition in the repos
 - Backend: `cil`
 - Enabled optimizer flags: `ArithmeticOptimization`, `EGraphOptimization`, `NativeCilOptimization`,
   `NativeTypesOptimization`
-- User-facing CLI mode: `--backend compiler` selects the canonical `cil` backend.
+- User-facing CLI mode: `--backend cil` selects the canonical `cil` backend.
 
 ## Intentionally excluded capabilities
 
@@ -24,7 +24,7 @@ From repository root:
 
 ```bash ci-timeout=240
 dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- dialect-inspect --file UniversalToolchain/Dialects/examples/wist/minimal-arithmetic-native/dialect.wistdialect
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/minimal-arithmetic-native/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/minimal-arithmetic-native/program.wist --backend compiler
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/minimal-arithmetic-native/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/minimal-arithmetic-native/program.wist --backend cil
 ```
 
 ## Expected behavior/result

@@ -34,7 +34,7 @@ The generic SDK does not force every language through Wist AST, Bytecode or AIR.
 
 ## Current maturity
 
-- Wist `0.1.0-alpha.1` is a controlled-evaluation/prototype package, not a stable 1.0 contract.
+- Wist `0.1.0-alpha.3` is a controlled-evaluation/prototype package, not a stable 1.0 contract.
 - Generic language authoring is a low-level alpha with typed routing, deterministic planning and runtime lifecycle contracts.
 - Restricted composition is not a hardened sandbox.
 - Public evidence and current gaps are tracked under [Evidence and Release Status](/evidence/).

@@ -1,3 +1,4 @@
+using UniversalToolchain.Testing.Infrastructure;
 using System.Globalization;
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,10 +22,10 @@ public sealed class WistDialectBackendMatrixTests
         var code = File.ReadAllText(Path.Combine(@case.ExampleDirectory, "program.wist"));
 
         var interpreter = Execute(host, code, "interpreter");
-        var compiler = Execute(host, code, "compiler");
+        var compiler = Execute(host, code, "cil");
 
         AssertBackendOutcome(interpreter, @case.InterpreterExpected, "interpreter");
-        AssertBackendOutcome(compiler, @case.CompilerExpected, "compiler");
+        AssertBackendOutcome(compiler, @case.CompilerExpected, "cil");
 
         if (@case.InterpreterExpected.IsSuccess && @case.CompilerExpected.IsSuccess)
             Assert.That(interpreter.ValueText, Is.EqualTo(compiler.ValueText), "Backend result parity failed.");
@@ -38,7 +39,7 @@ public sealed class WistDialectBackendMatrixTests
         yield return BuildCase(
             "minimal-arithmetic",
             ExpectedOutcome.Success("14"),
-            ExpectedOutcome.Failure("Unknown backend 'compiler'"));
+            ExpectedOutcome.Failure("Unknown backend 'cil'"));
 
         yield return BuildCase(
             "full-default",
@@ -108,6 +109,9 @@ public sealed class WistDialectBackendMatrixTests
 
     private static string Normalize(object? value)
     {
+        if (value is not null && value.GetType().GetMethod("GetValue", Type.EmptyTypes) is not null)
+            return BackendResultAssertions.AsNumber(value).ToString("G17", CultureInfo.InvariantCulture);
+
         return value switch
         {
             RealNumberImpl number => number.GetValue().ToString(CultureInfo.InvariantCulture),

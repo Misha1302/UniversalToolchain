@@ -15,8 +15,7 @@ public sealed class BytecodeVerifier : IBytecodeVerifier
         diagnostics.AddRange(VerifyInstructionPatterns(
             request.Bytecode,
             declaredPatterns,
-            severity,
-            request.VerifyLegacyOperationNames));
+            severity));
         diagnostics.AddRange(VerifyObservedEmissions(
             request.ObservedEmissions ?? [],
             request.ContractTable,
@@ -61,17 +60,16 @@ public sealed class BytecodeVerifier : IBytecodeVerifier
                 severity,
                 $"Bytecode tag '{tag}' is not declared by any selected module contract.",
                 null,
-                [new ToolchainDiagnosticHint("Declare the tag in a bytecode contract facet or map the legacy string through an explicit alias.")]);
+                [new ToolchainDiagnosticHint("Declare the tag in a bytecode contract facet or declare it through typed contract metadata.")]);
         }
     }
 
     private static IEnumerable<ToolchainDiagnostic> VerifyInstructionPatterns(
         Bytecode bytecode,
         HashSet<string> declaredPatterns,
-        ToolchainDiagnosticSeverity severity,
-        bool verifyLegacyOperationNames)
+        ToolchainDiagnosticSeverity severity)
     {
-        foreach (var pattern in ReadInstructionPatterns(bytecode, verifyLegacyOperationNames)
+        foreach (var pattern in ReadInstructionPatterns(bytecode)
                      .OrderBy(static x => x, StringComparer.Ordinal))
         {
             if (declaredPatterns.Contains(pattern))
@@ -82,7 +80,7 @@ public sealed class BytecodeVerifier : IBytecodeVerifier
                 severity,
                 $"Bytecode pattern '{pattern}' is not declared by any selected module contract.",
                 null,
-                [new ToolchainDiagnosticHint("Declare the emitted operation shape or keep this verifier in warning mode for legacy modules.")]);
+                [new ToolchainDiagnosticHint("Declare the emitted operation shape.")]);
         }
     }
 
@@ -98,24 +96,12 @@ public sealed class BytecodeVerifier : IBytecodeVerifier
         }
     }
 
-    private static IEnumerable<string> ReadInstructionPatterns(Bytecode bytecode, bool verifyLegacyOperationNames)
+    private static IEnumerable<string> ReadInstructionPatterns(Bytecode bytecode)
     {
         foreach (var instruction in bytecode.Instructions)
         {
-            var contractPatterns = BytecodeContractMetadata.ReadPatterns(instruction);
-            if (contractPatterns.Count > 0)
-            {
-                foreach (var pattern in contractPatterns)
-                    yield return pattern.Value;
-
-                continue;
-            }
-
-            if (!verifyLegacyOperationNames)
-                continue;
-
-            foreach (var pattern in instruction.Ops.SelectMany(static x => x.Value).Select(static x => x.Name))
-                yield return pattern;
+            foreach (var pattern in BytecodeContractMetadata.ReadPatterns(instruction))
+                yield return pattern.Value;
         }
     }
 

@@ -33,7 +33,7 @@ Rules are currently removed from the public runtime surface. Do not treat rule s
 Run a simple expression through the Wist CLI:
 
 ```bash
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --backend compiler
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --backend cil
 ```
 
 Expected output:
@@ -64,7 +64,7 @@ Wist-specific code orchestrates one concrete language. UniversalToolchain remain
 
 - Wist programs run under a selected dialect.
 - Syntax is only available when the dialect includes the owning module.
-- `compiler` is the user-facing mode for the CIL backend.
+- `cil` is the user-facing mode for the CIL backend.
 - `interpreter` runs through the interpreter backend when the dialect enables it.
 - Restricted dialects are composition constraints, not hardened sandboxes.
 - Rules are not currently a public runtime capability.

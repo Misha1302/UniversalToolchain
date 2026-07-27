@@ -1,16 +1,15 @@
-using System.Text.Json;
-
 namespace UniversalToolchain.PlanFuzz.Tests;
 
 [TestFixture]
 public sealed class SurfaceOracleTests
 {
-    [Test]
-    public void ObservationSchemaVersionTwoRemainsReadableWithoutSurfaceEvidence()
+    [TestCase(2)]
+    [TestCase(3)]
+    public void HistoricalObservationSchemasAreRejected(int schemaVersion)
     {
-        const string json = """
+        var json = $$"""
         {
-          "schemaVersion": 2,
+          "schemaVersion": {{schemaVersion}},
           "canonicalization": "planfuzz-json-v1",
           "caseId": "case",
           "variantId": "variant",
@@ -23,60 +22,10 @@ public sealed class SurfaceOracleTests
         }
         """;
 
-        var observation = PlanFuzzObservationSerializer.Deserialize(json);
+        var exception = Assert.Throws<NotSupportedException>(() =>
+            PlanFuzzObservationSerializer.Deserialize(json));
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(observation.Value?.CanonicalValue, Is.EqualTo("1"));
-            Assert.That(observation.Surface, Is.Null);
-        });
-    }
-
-    [Test]
-    public void ObservationSchemaVersionThreeRemainsReadableButCannotPassCurrentSurfaceOracles()
-    {
-        const string json = """
-        {
-          "schemaVersion": 3,
-          "canonicalization": "planfuzz-json-v1",
-          "caseId": "case",
-          "variantId": "baseline",
-          "backendId": "backend",
-          "outcome": "Success",
-          "value": {
-            "typeIdentity": "System.Int32",
-            "canonicalValue": "1"
-          },
-          "surface": {
-            "selectedSurfaceIds": ["feature:core"],
-            "excludedSurfaceIds": ["contribution:excluded"],
-            "declaredIndependentSurfaceIds": [],
-            "activatedOwnerIds": ["contribution:active"],
-            "activationTraceComplete": true,
-            "traceKind": "legacy-v1",
-            "routeIdentity": "route:legacy"
-          }
-        }
-        """;
-        var variant = Variant("baseline");
-        var testCase = CreateCase(
-            [variant],
-            [new PlanFuzzOracleContract("negative", PlanFuzzOracleIds.NegativeSurfacePreservation, 2, [variant.VariantId])]);
-
-        var observation = PlanFuzzObservationSerializer.Deserialize(json);
-        var result = new PlanFuzzOracleEngine().Evaluate(testCase, [observation]).Single();
-        var roundTrip = PlanFuzzObservationSerializer.Serialize(observation);
-        using var roundTripDocument = JsonDocument.Parse(roundTrip);
-        var roundTrippedObservation = PlanFuzzObservationSerializer.Deserialize(roundTrip);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(observation.Surface?.EvidenceContractVersion, Is.EqualTo(1));
-            Assert.That(roundTripDocument.RootElement.GetProperty("schemaVersion").GetInt32(), Is.EqualTo(3));
-            Assert.That(roundTrippedObservation.Surface?.EvidenceContractVersion, Is.EqualTo(1));
-            Assert.That(result.Status, Is.EqualTo(PlanFuzzOracleStatus.Inconclusive));
-            Assert.That(result.FingerprintMaterial, Does.Contain("legacy-evidence"));
-        });
+        Assert.That(exception!.Message, Does.Contain("Expected '4'"));
     }
 
     [Test]

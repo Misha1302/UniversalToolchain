@@ -2,7 +2,7 @@
 
 ## Environment
 
-- Validation date: 2026-07-25.
+- Validation date: 2026-07-27.
 - Target environment: GitHub Actions Ubuntu 24.04, Linux x64.
 - SDK policy: `UniversalToolchain/global.json` with .NET 10 feature-band roll-forward.
 - Canonical command: `./build.sh --skip-docs`.
@@ -14,7 +14,7 @@ The recursive manifest is verified independently from generated build outputs. `
 
 The repository keeps the P0/P1 language-authoring contracts and adds PlanFuzz as a non-packable research layer:
 
-- `build.sh`, `build.ps1` and validation workflows use the same `eng/test-projects.txt` and `eng/package-projects.txt` contracts;
+- `build.sh` and `build.ps1` execute the exact, timeout-bounded `eng/test-counts.json` contract and use `eng/package-projects.txt` for the release package matrix;
 - the canonical package matrix builds and validates all eight SDK/template packages plus the Wist facade;
 - package validation checks filename/nuspec identity, package-family dependency versions, embedded Wist manifest identity and template contents;
 - clean-room package smoke installs `ut-language`, generates a dotted-name project and runs an independently packaged cross-package language;
@@ -22,7 +22,7 @@ The repository keeps the P0/P1 language-authoring contracts and adds PlanFuzz as
 - `PerSession` is the safe default lifetime, while `SingletonStateless` requires an explicit stateless marker and rejects disposable instances;
 - runtime sessions own per-session components and release synchronous/asynchronous resources in reverse construction order;
 - typed and untyped artifact contracts never connect through wildcard compatibility;
-- Wist compatibility artifacts carry explicit protocol identities while remaining isolated behind the Wist compatibility provider;
+- typed Wist artifacts carry explicit protocol identities and are executed through the canonical Wist runtime provider;
 - manifest and lock schema v5 use `universaltoolchain-json-v1` canonicalization and SHA-256 over compact UTF-8 bytes without platform-dependent line endings;
 - PlanFuzz core remains language-neutral, while Acme and Wist own their structured generators and execution adapters;
 - PlanFuzz observations are typed and replayed in fresh worker processes with timeout, process-tree termination and bounded output capture;
@@ -47,7 +47,7 @@ Observed result on the hardened PlanFuzz Phase 3a surface-evidence revision:
 - build warnings: **0**;
 - build errors: **0**;
 - `samples/Acme.PricingLanguage` and `samples/Wist.RolloutScoring` restored and built through the canonical path;
-- all test projects declared by `eng/test-projects.txt` executed;
+- every entry declared by `eng/test-counts.json` executed with its own timeout and exact TRX pass/fail/skip verification;
 - all projects declared by `eng/package-projects.txt` were packed and validated;
 - template and external cross-package consumer smoke checks passed.
 
@@ -57,13 +57,13 @@ Build servers and MSBuild node reuse are explicitly disabled by the canonical sc
 
 | Test project | Passed | Failed | Skipped |
 |---|---:|---:|---:|
-| `Tests` | 483 | 0 | 0 |
-| `UniversalToolchain.Modules.Tests` | 290 | 0 | 0 |
-| `UniversalToolchain.Dialects.Tests` | 588 | 0 | 0 |
-| `UniversalToolchain.LanguageSdk.Tests` | 53 | 0 | 0 |
+| `Tests` | 507 | 0 | 0 |
+| `UniversalToolchain.Modules.Tests` | 293 | 0 | 0 |
+| `UniversalToolchain.Dialects.Tests` | 614 | 0 | 0 |
+| `UniversalToolchain.LanguageSdk.Tests` | 80 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.Tests` | 41 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
-| **Total** | **1,465** | **0** | **0** |
+| **Total** | **1,545** | **0** | **0** |
 
 The PlanFuzz suites include dedicated coverage for:
 
@@ -87,7 +87,7 @@ The language-SDK suite continues to cover cross-package route execution, exact p
 
 The canonical matrix produced and verified **9** packages.
 
-SDK/template family `0.3.0-alpha.1`:
+Core SDK/template family `0.3.0-alpha.1`:
 
 - `UniversalToolchain.Language.Abstractions`;
 - `UniversalToolchain.FeatureSdk`;
@@ -96,16 +96,19 @@ SDK/template family `0.3.0-alpha.1`:
 - `UniversalToolchain.LanguageAuthoring`;
 - `UniversalToolchain.Testing`;
 - `UniversalToolchain.Templates`;
+
+Wist typed language pack `0.3.0-alpha.2`:
+
 - `UniversalToolchain.Wist.LanguagePack`.
 
 Facade:
 
-- `UniversalToolchain.Wist` `0.1.0-alpha.1`.
+- `UniversalToolchain.Wist` `0.1.0-alpha.3`.
 
 Observed package checks:
 
 - exact package set: **9/9**;
-- Wist facade surface: **1 compile DLL, 64 runtime DLLs**, within the declared ceiling;
+- Wist facade surface: exact **1 compile DLL and 64 runtime DLLs**, byte-bound to trusted build outputs;
 - Wist LanguagePack embedded descriptor: schema v5, `universaltoolchain-json-v1`, SHA-256, matching package ID/version;
 - clean `dotnet new ut-language -n Contoso.RuleLanguage` restore/run result: `42`;
 - clean external cross-package NuGet consumer result: `cross-package-consumer: 42`.

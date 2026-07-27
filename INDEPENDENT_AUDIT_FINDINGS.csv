@@ -1,0 +1,13 @@
+FindingId,Severity,Title,Status,Owner,RegressionEvidence
+R-01,Critical,Restricted CSharpInterop policy bypass,Fixed,WistLanguageRuntimeProvider,IndependentAuditRegressionTests
+R-02,High,Direct CreateSession policy bypass,Fixed,WistLanguageRuntimeProvider,IndependentAuditRegressionTests
+R-03,High,Missing unsafe-interop capability in typed presets,Fixed,WistLanguageDefinitions / WistDialectPlanFactory,IndependentAuditRegressionTests
+R-04,Medium,Noncanonical case-insensitive preset identity,Fixed,WistLanguageDefinitions,IndependentAuditRegressionTests
+R-05,High,False ProgramStructure typed-feature claim,Fixed,WIST_PARITY_MATRIX / architecture gate,WistMigrationGateTests
+R-06,High,Overbroad Equivalent release status,Fixed,WIST_PARITY_MATRIX / reports,WistMigrationGateTests
+R-07,High,Session-only parity smoke,Fixed,LanguageSdk tests,ShippedPresets_ExecuteRepresentativeParityCases
+R-08,Critical,Installer could verify stale binaries,Fixed,Installer,Installer stale-output smoke
+R-09,High,Installer accepted arbitrary clean checkout,Fixed,Installer,Installer baseline negative smoke
+R-10,Medium,Commit failure could report success,Fixed,Installer,Installer commit-failure smoke
+R-11,Medium,Nondeterministic capability directive order,Fixed,WistDialectPlanFactory,Deterministic materialization review
+R-12,Low,Stale legacy-adapter package description,Fixed,LanguagePack package metadata,Package matrix/inspection

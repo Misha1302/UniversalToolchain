@@ -6,14 +6,14 @@ public class RuntimeKnownBackendsProviderContractTests
     public void KnownBackendsProvider_ShouldReturnCatalogBackends()
     {
         var catalog = new StaticCatalog([
-            Entry(RuntimeComponentKind.Backend, "compiler", "Meta.Compiler"),
+            Entry(RuntimeComponentKind.Backend, "cil", "Meta.Compiler"),
             Entry(RuntimeComponentKind.Backend, "interpreter", "Meta.Interpreter")
         ]);
 
         var provider = new RuntimeKnownBackendsProvider(catalog, new StubTypeLoader());
         var known = provider.GetKnownBackends();
 
-        Assert.That(known.Select(static x => x.CanonicalId), Is.EqualTo(new[] { "compiler", "interpreter" }));
+        Assert.That(known.Select(static x => x.CanonicalId), Is.EqualTo(new[] { "cil", "interpreter" }));
     }
 
     [Test]
@@ -53,14 +53,14 @@ public class RuntimeKnownBackendsProviderContractTests
     {
         var catalog = new StaticCatalog([
             Entry(RuntimeComponentKind.Backend, "interpreter", "Meta.Interpreter"),
-            Entry(RuntimeComponentKind.Backend, "compiler", "Meta.Compiler")
+            Entry(RuntimeComponentKind.Backend, "cil", "Meta.Compiler")
         ]);
 
         var provider = new RuntimeKnownBackendsProvider(
             catalog,
             new StubTypeLoader());
 
-        Assert.That(provider.GetKnownBackends().Select(static x => x.CanonicalId), Is.EqualTo(new[] { "compiler", "interpreter" }));
+        Assert.That(provider.GetKnownBackends().Select(static x => x.CanonicalId), Is.EqualTo(new[] { "cil", "interpreter" }));
     }
 
     [Test]
@@ -75,7 +75,8 @@ public class RuntimeKnownBackendsProviderContractTests
     }
 
     private static RuntimeComponentManifestEntry Entry(RuntimeComponentKind kind, string canonical, string _, params string[] aliases)
-        => new(kind, canonical, aliases, RuntimeComponentIdFactory.Create(kind, canonical), "Assembly");
+        => new(kind, canonical, aliases, RuntimeComponentIdFactory.Create(kind, canonical), "Assembly",
+            new RuntimeComponentActivationInfo(new RuntimeTypeReference("Assembly", "Test.Activation.Type")));
 
     private sealed class StubTypeLoader : IRuntimeComponentTypeLoader
     {

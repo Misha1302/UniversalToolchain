@@ -8,10 +8,10 @@ namespace Tests.Intrinsics;
 public sealed class IntrinsicCapabilityServiceCollectionTests
 {
     [Test]
-    public void AddCoreRuntimeInfrastructure_ShouldRegisterCapabilitySetFactory()
+    public void AddNeutralRuntimeInfrastructure_ShouldRegisterCapabilitySetFactory()
     {
         var services = new ServiceCollection();
-        services.AddCoreRuntimeInfrastructure();
+        services.AddNeutralRuntimeInfrastructure();
 
         using var provider = services.BuildServiceProvider();
         var factory = provider.GetRequiredService<IIntrinsicCapabilitySetFactory>();
@@ -26,10 +26,10 @@ public sealed class IntrinsicCapabilityServiceCollectionTests
     }
 
     [Test]
-    public void AddCoreRuntimeInfrastructure_ShouldRegisterInstructionIntrinsicReader()
+    public void AddNeutralRuntimeInfrastructure_ShouldRegisterInstructionIntrinsicReader()
     {
         var services = new ServiceCollection();
-        services.AddCoreRuntimeInfrastructure();
+        services.AddNeutralRuntimeInfrastructure();
 
         using var provider = services.BuildServiceProvider();
         var reader = provider.GetRequiredService<IInstructionIntrinsicReader>();

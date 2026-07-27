@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "totalPassed": 1545,
+  "main": [
+    {
+      "label": "Core",
+      "documentationName": "Tests",
+      "runner": "assembly",
+      "path": "UniversalToolchain/Tests/bin/Release/net10.0/Tests.dll",
+      "timeoutSeconds": 480,
+      "expectedPassed": 507
+    },
+    {
+      "label": "Modules",
+      "documentationName": "UniversalToolchain.Modules.Tests",
+      "runner": "project",
+      "path": "UniversalToolchain/UniversalToolchain.Modules.Tests/UniversalToolchain.Modules.Tests.csproj",
+      "timeoutSeconds": 600,
+      "expectedPassed": 293
+    },
+    {
+      "label": "Dialects",
+      "documentationName": "UniversalToolchain.Dialects.Tests",
+      "runner": "project",
+      "path": "UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolchain.Dialects.Tests.csproj",
+      "timeoutSeconds": 600,
+      "expectedPassed": 614
+    },
+    {
+      "label": "LanguageSdk",
+      "documentationName": "UniversalToolchain.LanguageSdk.Tests",
+      "runner": "assembly",
+      "path": "UniversalToolchain/UniversalToolchain.LanguageSdk.Tests/bin/Release/net10.0/UniversalToolchain.LanguageSdk.Tests.dll",
+      "timeoutSeconds": 420,
+      "expectedPassed": 80
+    },
+    {
+      "label": "PlanFuzz",
+      "documentationName": "UniversalToolchain.PlanFuzz.Tests",
+      "runner": "assembly",
+      "path": "UniversalToolchain/UniversalToolchain.PlanFuzz.Tests/bin/Release/net10.0/UniversalToolchain.PlanFuzz.Tests.dll",
+      "timeoutSeconds": 420,
+      "expectedPassed": 41
+    }
+  ],
+  "isolated": [
+    {
+      "label": "Integration.ReductionClean",
+      "documentationName": "UniversalToolchain.PlanFuzz.IntegrationTests",
+      "runner": "filter",
+      "path": "UniversalToolchain/UniversalToolchain.PlanFuzz.IntegrationTests/bin/Release/net10.0/UniversalToolchain.PlanFuzz.IntegrationTests.dll",
+      "filter": "ReductionRejectsACleanCaseButStillWritesAuditableEvidence",
+      "timeoutSeconds": 180,
+      "expectedPassed": 1
+    },
+    {
+      "label": "Integration.ReductionFault",
+      "documentationName": "UniversalToolchain.PlanFuzz.IntegrationTests",
+      "runner": "filter",
+      "path": "UniversalToolchain/UniversalToolchain.PlanFuzz.IntegrationTests/bin/Release/net10.0/UniversalToolchain.PlanFuzz.IntegrationTests.dll",
+      "filter": "SeededFaultReductionPreservesExactFingerprintAndShrinksThePlan",
+      "timeoutSeconds": 180,
+      "expectedPassed": 1
+    },
+    {
+      "label": "Integration.AcmeOption",
+      "documentationName": "UniversalToolchain.PlanFuzz.IntegrationTests",
+      "runner": "filter",
+      "path": "UniversalToolchain/UniversalToolchain.PlanFuzz.IntegrationTests/bin/Release/net10.0/UniversalToolchain.PlanFuzz.IntegrationTests.dll",
+      "filter": "AcmeRejectsTheWistOnlyRegressionCorpusOption",
+      "timeoutSeconds": 180,
+      "expectedPassed": 1
+    },
+    {
+      "label": "Integration.CleanReplay",
+      "documentationName": "UniversalToolchain.PlanFuzz.IntegrationTests",
+      "runner": "filter",
+      "path": "UniversalToolchain/UniversalToolchain.PlanFuzz.IntegrationTests/bin/Release/net10.0/UniversalToolchain.PlanFuzz.IntegrationTests.dll",
+      "filter": "CleanCaseReplaysInFreshProcessesWithoutFindings",
+      "timeoutSeconds": 180,
+      "expectedPassed": 1
+    },
+    {
+      "label": "Integration.OutputDirectory",
+      "documentationName": "UniversalToolchain.PlanFuzz.IntegrationTests",
+      "runner": "filter",
+      "path": "UniversalToolchain/UniversalToolchain.PlanFuzz.IntegrationTests/bin/Release/net10.0/UniversalToolchain.PlanFuzz.IntegrationTests.dll",
+      "filter": "ReplayRejectsNonEmptyOutputDirectory",
+      "timeoutSeconds": 180,
+      "expectedPassed": 1
+    },
+    {
+      "label": "Integration.NoOracle",
+      "documentationName": "UniversalToolchain.PlanFuzz.IntegrationTests",
+      "runner": "filter",
+      "path": "UniversalToolchain/UniversalToolchain.PlanFuzz.IntegrationTests/bin/Release/net10.0/UniversalToolchain.PlanFuzz.IntegrationTests.dll",
+      "filter": "ReplayWithoutOracleContractsReturnsInconclusive",
+      "timeoutSeconds": 180,
+      "expectedPassed": 1
+    },
+    {
+      "label": "Integration.SeededFault",
+      "documentationName": "UniversalToolchain.PlanFuzz.IntegrationTests",
+      "runner": "filter",
+      "path": "UniversalToolchain/UniversalToolchain.PlanFuzz.IntegrationTests/bin/Release/net10.0/UniversalToolchain.PlanFuzz.IntegrationTests.dll",
+      "filter": "SeededFaultIsConfirmedThreeOutOfThreeWithStableFingerprint",
+      "timeoutSeconds": 180,
+      "expectedPassed": 1
+    },
+    {
+      "label": "Integration.WistParameter",
+      "documentationName": "UniversalToolchain.PlanFuzz.IntegrationTests",
+      "runner": "filter",
+      "path": "UniversalToolchain/UniversalToolchain.PlanFuzz.IntegrationTests/bin/Release/net10.0/UniversalToolchain.PlanFuzz.IntegrationTests.dll",
+      "filter": "CleanWistParameterCaseReplaysTwiceInFreshProcesses",
+      "timeoutSeconds": 180,
+      "expectedPassed": 1
+    },
+    {
+      "label": "Integration.SurfaceFaults",
+      "documentationName": "UniversalToolchain.PlanFuzz.IntegrationTests",
+      "runner": "filter",
+      "path": "UniversalToolchain/UniversalToolchain.PlanFuzz.IntegrationTests/bin/Release/net10.0/UniversalToolchain.PlanFuzz.IntegrationTests.dll",
+      "filter": "SurfaceSeededFaultIsConfirmedThroughObservedRuntimeEvidence",
+      "timeoutSeconds": 180,
+      "expectedPassed": 2
+    }
+  ]
+}

@@ -98,7 +98,7 @@ backend cil,interpreter
 
 Currently documented user-facing modes are:
 
-- `compiler`, which maps to the CIL backend when the dialect exposes `cil`;
+- `cil`, which maps to the CIL backend when the dialect exposes `cil`;
 - `interpreter`, which runs through the interpreter backend when exposed.
 
 Some dialects expose both `cil` and `interpreter`. Others expose only one backend.

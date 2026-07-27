@@ -231,11 +231,12 @@ const evidenceSidebar = [
             { text: 'Maintainer and Release Guide', link: '/evidence/maintainer-guide' },
             { text: 'Current Verification', link: '/evidence/current-verification' },
             { text: 'Language Authoring Alpha', link: '/evidence/language-authoring-alpha' },
-            { text: 'Wist Alpha Stability', link: '/evidence/wist-stability-v0.1.0-alpha.1' },
+            { text: 'Wist Alpha Stability', link: '/evidence/wist-stability-v0.1.0-alpha.3' },
             { text: 'External Authoring Hardening', link: '/releases/external-language-authoring-hardening-2026-07-21' },
             { text: 'Composition Hardening', link: '/releases/external-language-composition-hardening-2026-07-22' },
             { text: 'Contribution Planning', link: '/releases/external-language-contribution-planning-2026-07-21' },
             { text: 'SSA Route Correctness', link: '/releases/ssa-route-correctness-2026-07-04' },
+            { text: 'Wist 0.1.0-alpha.3 Hardening', link: '/releases/v0.1.0-alpha.3-boundary-hardening' },
             { text: 'Wist 0.1.0-alpha.1', link: '/releases/v0.1.0-alpha.1' }
         ]
     },

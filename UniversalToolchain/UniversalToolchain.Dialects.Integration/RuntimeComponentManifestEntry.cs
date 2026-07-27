@@ -6,7 +6,7 @@ public sealed record RuntimeComponentManifestEntry(
     IReadOnlyList<string> Aliases,
     RuntimeComponentId ComponentId,
     string AssemblySimpleName,
-    RuntimeComponentActivationInfo? Activation = null)
+    RuntimeComponentActivationInfo Activation)
 {
     public IReadOnlyList<string> AllAliases => [CanonicalAlias, .. Aliases];
 }

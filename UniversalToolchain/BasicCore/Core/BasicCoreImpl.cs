@@ -62,9 +62,9 @@ public class BasicCoreImpl<TCompilationOutput>(
 
     public object? Run(string code, Dictionary<string, object>? parameters = null)
     {
-        PrepareToRun(_inputNormalizer.NormalizeRuntimeInput(code, parameters));
-
-        return RunPrepared();
+        var prepared = _preparedExecutionBuilder.Build(
+            _inputNormalizer.NormalizeRuntimeInput(code, parameters));
+        return prepared.Session.Run();
     }
 
     public TCompilationOutput GetExecutable(string code, OrderedDictionary<string, Type>? parameters = null)

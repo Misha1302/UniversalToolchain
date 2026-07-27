@@ -52,7 +52,7 @@ public sealed class TestingInfrastructureGuardrailTests
 
                                    use Arithmetic,Numbers
 
-                                   backend interpreter,compiler
+                                   backend interpreter,cil
                                    """;
 
         using var interpreterHost = DialectTestHostInfrastructure.CreateInterpreterHost(dialectText);
@@ -77,7 +77,7 @@ public sealed class TestingInfrastructureGuardrailTests
         const string dialectText = """
                                    dialect Parity
                                    use Arithmetic,Numbers,CSharpInterop,Identifier,Scopes,Whitespaces
-                                   backend interpreter,compiler
+                                   backend interpreter,cil
                                    """;
 
         var (compilerResult, interpreterResult) = BackendParityInfrastructure.RunBoth(

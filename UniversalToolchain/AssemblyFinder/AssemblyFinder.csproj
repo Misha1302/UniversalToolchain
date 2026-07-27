@@ -9,6 +9,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj"/>
+        <ProjectReference Include="..\DotnetHelper\DotnetHelper.csproj"/>
     </ItemGroup>
 
 </Project>

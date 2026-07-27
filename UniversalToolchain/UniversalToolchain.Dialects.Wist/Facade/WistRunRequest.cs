@@ -5,12 +5,12 @@ namespace UniversalToolchain.Dialects.Wist.Facade;
 /// <summary>
 ///     Describes one Wist facade execution request.
 /// </summary>
-public sealed class WistRunRequest
+internal sealed class WistRunRequest
 {
     public WistRunRequest(
         string code,
         IReadOnlyDictionary<string, object?> arguments,
-        string backend = "compiler")
+        string backend = "cil")
     {
         code = code.ArgNotNull();
         arguments = arguments.ArgNotNull();

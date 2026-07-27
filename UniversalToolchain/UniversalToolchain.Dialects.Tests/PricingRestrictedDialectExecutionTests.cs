@@ -80,7 +80,7 @@ public sealed class PricingRestrictedDialectExecutionTests
 
     private static double ExecuteCompilerFormula(WistDialectExecutionHost host)
     {
-        var compiler = host.GetBackendSpecificArtifactCompiler<CilCompilationOutput>("compiler");
+        var compiler = host.GetBackendSpecificArtifactCompiler<CilCompilationOutput>("cil");
         var artifact = compiler.Compile(PricingFormula, CreateDeclaredBindings());
         var session = artifact.CreateSession();
         SetPricingArguments(session);

@@ -10,7 +10,7 @@ lastVerifiedAgainst: language-authoring-p0-p1-hardening-2026-07-23.1
 
 - [Current verification](/evidence/current-verification)
 - [Generic language-authoring alpha status](/evidence/language-authoring-alpha)
-- [Wist 0.1.0-alpha.1 stability](/evidence/wist-stability-v0.1.0-alpha.1)
+- [Wist 0.1.0-alpha.3 stability](/evidence/wist-stability-v0.1.0-alpha.3)
 - [Benchmark methodology](/reference/benchmark-methodology)
 - [Performance model](/reference/performance-model)
 - [Release notes](/releases/external-language-authoring-hardening-2026-07-21)

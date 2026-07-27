@@ -44,15 +44,6 @@ public sealed record LanguageArtifactRouteStep(
     LanguageArtifactContract TargetContract,
     int Cost)
 {
-    [Obsolete("[UTL-DEP-007] Use typed LanguageArtifactContract values. Untyped route steps remain only behind the typed-route compatibility gate.")]
-    public LanguageArtifactRouteStep(
-        LanguageContributionId contributionId,
-        LanguageArtifactKindId source,
-        LanguageArtifactKindId target,
-        int cost)
-        : this(contributionId, new LanguageArtifactContract(source), new LanguageArtifactContract(target), cost)
-    {
-    }
 
     public LanguageArtifactKindId Source => SourceContract.Kind;
     public LanguageArtifactKindId Target => TargetContract.Kind;
@@ -84,15 +75,6 @@ public sealed class LanguageArtifactRoute
             throw new ArgumentException("Artifact route does not reach its declared target contract.", nameof(steps));
     }
 
-    [Obsolete("[UTL-DEP-008] Use typed LanguageArtifactContract values. Untyped routes remain only behind the typed-route compatibility gate.")]
-    public LanguageArtifactRoute(
-        BackendId backend,
-        LanguageArtifactKindId source,
-        LanguageArtifactKindId target,
-        IEnumerable<LanguageArtifactRouteStep> steps)
-        : this(backend, new LanguageArtifactContract(source), new LanguageArtifactContract(target), steps)
-    {
-    }
 
     public BackendId Backend { get; }
     public LanguageArtifactContract SourceContract { get; }

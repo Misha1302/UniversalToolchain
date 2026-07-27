@@ -6,9 +6,9 @@ namespace UniversalToolchain.Dialects.Wist;
 /// <summary>
 /// Wist compatibility view over the backend-neutral immutable runtime configuration.
 /// </summary>
-public sealed class WistDialectExecutionConfiguration : ToolchainRuntimeConfiguration
+internal sealed class WistDialectExecutionConfiguration : ToolchainRuntimeConfiguration
 {
-    public WistDialectExecutionConfiguration(
+    internal WistDialectExecutionConfiguration(
         string dialectName,
         IEnumerable<Type> frontendModules,
         IEnumerable<Type> irModules,

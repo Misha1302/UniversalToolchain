@@ -15,10 +15,10 @@ This page shows the shortest practical checks for Wist:
 Install the published package first:
 
 ```bash ci-run=false
-dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.1
+dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.3 --source ./artifacts/packages
 ```
 
-For a clean-room NuGet.org check, run `./Tools/smoke-published-wist-package.sh 0.1.0-alpha.1` from a repository checkout.
+For a clean-room NuGet.org check, set `PUBLISHED_WIST_VERSION` to the version shown on the package page and run `./Tools/smoke-published-wist-package.sh "$PUBLISHED_WIST_VERSION"` from a repository checkout.
 
 Then run a simple formula through the public facade:
 
@@ -47,7 +47,7 @@ using UniversalToolchain.Wist;
 
 using var wist = WistEngine.Create(new WistEngineOptions
 {
-    Preset = WistPreset.FullNative,
+    DialectSource = WistDialectSource.FromShippedPreset("full-default-native"),
     AllowedAssemblies = [typeof(Math).Assembly]
 });
 
@@ -66,12 +66,12 @@ This example uses C# interop and therefore belongs to the trusted profile, not t
 
 Read this section when you have cloned the repository and want to validate the CLI/runtime path.
 
-### 1. Run the compiler mode quick start
+### 1. Run the CIL mode quick start
 
 From the repository root:
 
 ```bash
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --backend compiler
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --backend cil
 ```
 
 Expected output:
@@ -80,7 +80,7 @@ Expected output:
 12
 ```
 
-`compiler` is the user-facing backend alias that selects the CIL backend when the active dialect exposes the CIL backend.
+`cil` is the user-facing backend alias that selects the CIL backend when the active dialect exposes the CIL backend.
 
 ### 2. Run the same expression through the interpreter
 
@@ -127,7 +127,7 @@ The same source should produce the same observable result in compiler and interp
 - Exposing CLR assemblies to untrusted user input.
 - Expecting `System.Math.Sqrt(...)` interop to work without adding `typeof(Math).Assembly` to `AllowedAssemblies`.
 - Running repository CLI commands from a subdirectory, causing project paths to fail.
-- Using `--backend compiler` with a dialect that exposes only `interpreter`.
+- Using `--backend cil` with a dialect that exposes only `interpreter`.
 - Assuming all dialects expose all Wist syntax. Syntax exists only when the owning module is selected.
 - Treating restricted dialects as security sandboxes. They restrict composition, but they are not hardened process sandboxes.
 

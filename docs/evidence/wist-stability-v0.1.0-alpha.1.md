@@ -1,6 +1,8 @@
 ---
 title: Wist 0.1.0-alpha.1 Stability
-description: Public package contract and relationship to the generic framework alpha.
+description: Historical public package contract for the superseded alpha.1 release.
+navigation: hidden
+statusReason: Superseded by Wist 0.1.0-alpha.2 stability.
 ---
 
 # Wist 0.1.0-alpha.1 stability

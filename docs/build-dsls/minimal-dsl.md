@@ -132,7 +132,7 @@ The dialect file is compiled into a build plan, resolved against runtime manifes
 
 - Starting with `full-default` and removing features without testing the result.
 - Forgetting `Identifier` when adding `Variables`.
-- Enabling `compiler` mode in the CLI while the dialect declares only `backend interpreter`.
+- Enabling `cil` mode in the CLI while the dialect declares only `backend interpreter`.
 - Adding `CSharpInterop` or interop capabilities to a DSL intended for restricted user-authored formulas.
 - Documenting rules as available. Rule runtime functionality is currently removed from the public surface.
 - Copying syntax from secondary parser experiments instead of the runtime `.wistdialect` format used by shipped profiles.

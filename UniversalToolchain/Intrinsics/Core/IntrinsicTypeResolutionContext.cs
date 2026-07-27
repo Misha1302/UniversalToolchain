@@ -1,3 +1,5 @@
+using DotnetHelper;
+
 namespace BasicCore.Core;
 
 public sealed class IntrinsicTypeResolutionContext : IIntrinsicTypeResolutionContext
@@ -9,6 +11,7 @@ public sealed class IntrinsicTypeResolutionContext : IIntrinsicTypeResolutionCon
         if (expected == actual)
             return true;
 
-        return expected.IsAssignableFrom(actual);
+        return expected.IsAssignableFrom(actual) ||
+               UserDefinedConversionResolver.CanConvert(actual, expected);
     }
 }

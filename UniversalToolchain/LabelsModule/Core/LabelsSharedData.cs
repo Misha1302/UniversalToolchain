@@ -1,3 +1,6 @@
+using System.Security.Cryptography;
+using System.Text;
+
 namespace LabelsModule.Core;
 
 public class LabelsSharedData
@@ -10,9 +13,11 @@ public class LabelsSharedData
 
     private Guid GetOrCreateIdByName(string name)
     {
-        if (_nameToId.TryGetValue(name, out var existingId)) return existingId;
+        if (_nameToId.TryGetValue(name, out var existingId))
+            return existingId;
 
-        var id = Guid.NewGuid();
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes($"wist-label:{name}"));
+        var id = new Guid(hash.AsSpan(0, 16));
         _nameToId[name] = id;
         return id;
     }

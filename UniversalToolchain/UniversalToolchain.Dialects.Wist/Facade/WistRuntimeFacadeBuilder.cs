@@ -8,7 +8,7 @@ namespace UniversalToolchain.Dialects.Wist.Facade;
 /// <summary>
 ///     Builds Wist runtime facades without exposing service wiring to first-contact users.
 /// </summary>
-public sealed class WistRuntimeFacadeBuilder
+internal sealed class WistRuntimeFacadeBuilder
 {
     private string? _dialectFilePath;
     private WistShippedDialectPreset _preset = WistShippedDialectPresets.Default;
@@ -57,15 +57,24 @@ public sealed class WistRuntimeFacadeBuilder
         var services = new ServiceCollection();
         services.AddWistDialectServices();
 
-        using var provider = services.BuildServiceProvider();
-        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var dialectFilePath = _dialectFilePath ?? new WistShippedDialectFileResolver().Resolve(_preset);
-        var composition = workflow.ComposeFile(dialectFilePath);
+        ServiceProvider? provider = services.BuildServiceProvider();
+        try
+        {
+            var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+            var dialectFilePath = _dialectFilePath ?? new WistShippedDialectFileResolver().Resolve(_preset);
+            var composition = workflow.ComposeFile(dialectFilePath);
 
-        if (!composition.IsSuccess)
-            Thrower.InvalidOpEx(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
+            if (!composition.IsSuccess)
+                Thrower.InvalidOpEx(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
 
-        var host = workflow.CreateHost(composition);
-        return new WistRuntimeFacade(host, composition);
+            var owner = provider;
+            provider = null;
+            var host = workflow.CreateHost(composition, new WistRuntimeServiceOptions(), owner);
+            return new WistRuntimeFacade(host, composition);
+        }
+        finally
+        {
+            provider?.Dispose();
+        }
     }
 }

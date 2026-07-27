@@ -28,13 +28,6 @@ public sealed class WistValidationResult
     public IReadOnlyList<WistDiagnostic> Diagnostics { get; }
 
     /// <summary>
-    ///     Gets the first error message for compatibility with earlier facade releases.
-    /// </summary>
-    public string? Message => Diagnostics
-        .FirstOrDefault(static diagnostic => diagnostic.Severity == WistDiagnosticSeverity.Error)
-        ?.Message;
-
-    /// <summary>
     ///     Gets the captured exception for unexpected-fault investigation.
     /// </summary>
     public Exception? Exception { get; }

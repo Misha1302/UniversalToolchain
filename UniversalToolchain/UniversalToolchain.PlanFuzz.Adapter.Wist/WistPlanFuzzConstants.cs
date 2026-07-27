@@ -6,14 +6,14 @@ namespace UniversalToolchain.PlanFuzz.Adapter.Wist;
 public static class WistPlanFuzzConstants
 {
     public const string AdapterId = "wist-restricted-int32";
-    public const string AdapterVersion = "0.1.0";
+    public const string AdapterVersion = "0.2.0";
     public const string LanguageId = "UniversalToolchain.Wist.RestrictedArithmetic";
-    public const string GeneratorSchemaVersion = "wist-restricted-int32-generator-v1";
+    public const string GeneratorSchemaVersion = "wist-restricted-int32-generator-v2";
     public const string ModelKind = "wist.restricted.int32.expression";
     public const int ModelSchemaVersion = 1;
 
     public const string InterpreterBackend = "interpreter";
-    public const string CompilerBackend = "compiler";
+    public const string CilBackend = "cil";
     public const string DisabledConfiguration = "wist.ssa.disabled";
     public const string PreferConfiguration = "wist.ssa.prefer";
     public const string RequireConfiguration = "wist.ssa.require";

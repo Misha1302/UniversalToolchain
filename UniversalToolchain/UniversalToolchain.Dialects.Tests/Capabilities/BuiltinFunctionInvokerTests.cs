@@ -54,5 +54,6 @@ public sealed class BuiltinFunctionInvokerTests
 
     private static RuntimeComponentManifestEntry CreateEntry(string alias, string id, RuntimeComponentKind kind = RuntimeComponentKind.FrontendModule) =>
         new(kind, alias, [
-        ], new RuntimeComponentId(id), "TestAssembly");
+        ], new RuntimeComponentId(id), "TestAssembly",
+            new RuntimeComponentActivationInfo(new RuntimeTypeReference("TestAssembly", "Test.Activation.Type")));
 }

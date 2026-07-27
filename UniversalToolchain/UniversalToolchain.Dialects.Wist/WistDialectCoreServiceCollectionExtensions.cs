@@ -15,7 +15,7 @@ namespace UniversalToolchain.Dialects.Wist;
 /// <summary>
 ///     Registers Wist dialect orchestration services without runtime catalog or resolution policy services.
 /// </summary>
-public static class WistDialectCoreServiceCollectionExtensions
+internal static class WistDialectCoreServiceCollectionExtensions
 {
     /// <summary>
     ///     Adds the core services required to compile dialect definitions and orchestrate Wist execution workflows.
@@ -40,7 +40,7 @@ public static class WistDialectCoreServiceCollectionExtensions
         services.TryAddSingleton<IntrinsicSemanticBootstrapPreProviderValidator>();
         services.TryAddSingleton<IntrinsicSemanticBootstrapRuntimeValidator>();
         services.AddWistModuleContractPipelineServices(
-            ModuleContractPipelineProfiles.StrictLegacyCompatible,
+            ModuleContractPipelineProfiles.StrictEnforced,
             new InMemoryModuleContractDiagnosticSink());
         services.TryAddSingleton<IDialectCompiledDialectBuildPlanBuilder, DialectCompiledDialectBuildPlanBuilder>();
         services.TryAddSingleton<ToolchainCompositionWorkflow>();

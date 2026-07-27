@@ -15,7 +15,6 @@ public sealed class ModuleContractPipelineProfilesTests
         Assert.That(options.AirProfile, Is.EqualTo(VerificationSeverityProfile.Warn));
         Assert.That(options.EnforcementPolicy.RequireNewModulesDeclared, Is.False);
         Assert.That(options.BackendPolicy, Is.EqualTo(AirBackendPolicy.CapabilityGated));
-        Assert.That(options.VerifyLegacyBytecodeOperationNames, Is.False);
     }
 
     [Test]
@@ -27,7 +26,6 @@ public sealed class ModuleContractPipelineProfilesTests
         Assert.That(options.AirProfile, Is.EqualTo(VerificationSeverityProfile.Strict));
         Assert.That(options.EnforcementPolicy.RequireNewModulesDeclared, Is.True);
         Assert.That(options.BackendPolicy, Is.EqualTo(AirBackendPolicy.CapabilityGated));
-        Assert.That(options.VerifyLegacyBytecodeOperationNames, Is.False);
     }
 
     [Test]
@@ -39,7 +37,6 @@ public sealed class ModuleContractPipelineProfilesTests
         Assert.That(options.AirProfile, Is.EqualTo(VerificationSeverityProfile.Strict));
         Assert.That(options.EnforcementPolicy.RequireNewModulesDeclared, Is.True);
         Assert.That(options.BackendPolicy, Is.EqualTo(AirBackendPolicy.UniversalInterpreter));
-        Assert.That(options.VerifyLegacyBytecodeOperationNames, Is.False);
     }
 }
 

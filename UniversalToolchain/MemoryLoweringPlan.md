@@ -10,7 +10,7 @@
 - Dialect source is compiled into a build plan before runtime host creation.
 - `ComposeText` and `ComposeFile` produce a selected runtime plan and do not create a host.
 - `CreateHost` builds runtime provider state from the selected plan.
-- Backend aliases such as `compiler` resolve to canonical backend aliases declared in manifests.
+- Backend IDs such as `cil` are declared canonically in manifests.
 
 ### Partially implemented behavior
 

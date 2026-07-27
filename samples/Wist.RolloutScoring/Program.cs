@@ -14,7 +14,8 @@ var inputs = new
 
 var validation = rules.Validate(formula, inputs);
 if (!validation.IsValid)
-    throw new InvalidOperationException($"The documented rollout formula must validate: {validation.Message}");
+    throw new InvalidOperationException(
+        $"The documented rollout formula must validate: {string.Join("; ", validation.Diagnostics.Select(static diagnostic => diagnostic.Message))}");
 
 var rolloutScore = rules.Compile<Func<double, double, double, double>>(
     formula,

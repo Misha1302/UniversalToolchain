@@ -43,13 +43,6 @@ public sealed class WistCompileResult<TDelegate>
     /// </summary>
     public WistOptimizationReport OptimizationReport { get; }
 
-    /// <summary>
-    ///     Gets the first error message when compilation failed.
-    /// </summary>
-    public string? Message => Diagnostics
-        .FirstOrDefault(static diagnostic => diagnostic.Severity == WistDiagnosticSeverity.Error)
-        ?.Message;
-
     internal static WistCompileResult<TDelegate> Success(WistProgram<TDelegate> program) =>
         new(program, Array.Empty<WistDiagnostic>(), null, program.Metadata.OptimizationReport);
 

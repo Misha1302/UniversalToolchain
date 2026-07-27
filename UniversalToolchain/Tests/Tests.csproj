@@ -50,6 +50,7 @@
         <ProjectReference Include="..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.ModuleContracts\UniversalToolchain.ModuleContracts.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Wist.Contracts\UniversalToolchain.Wist.Contracts.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Wist.LanguagePack\UniversalToolchain.Wist.LanguagePack.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Air.Analysis\UniversalToolchain.Air.Analysis.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Ir.Abstractions\UniversalToolchain.Ir.Abstractions.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Semantics.Abstractions\UniversalToolchain.Semantics.Abstractions.csproj"/>

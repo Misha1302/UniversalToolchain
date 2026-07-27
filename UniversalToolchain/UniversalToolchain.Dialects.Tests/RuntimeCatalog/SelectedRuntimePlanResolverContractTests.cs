@@ -19,11 +19,11 @@ public class SelectedRuntimePlanResolverContractTests
     public void Resolve_ShouldSortBackendsDeterministically()
     {
         var resolver = CreateResolver();
-        var plan = BuildPlan(["Arithmetic"], [new DialectBackendId("interpreter"), new DialectBackendId("compiler")]);
+        var plan = BuildPlan(["Arithmetic"], [new DialectBackendId("interpreter"), new DialectBackendId("cil")]);
 
         var selected = resolver.Resolve(plan);
 
-        Assert.That(selected.EnabledBackends.Select(static x => x.CanonicalAlias), Is.EqualTo(new[] { "compiler", "interpreter" }));
+        Assert.That(selected.EnabledBackends.Select(static x => x.CanonicalAlias), Is.EqualTo(new[] { "cil", "interpreter" }));
     }
 
     [Test]
@@ -46,7 +46,7 @@ public class SelectedRuntimePlanResolverContractTests
             [new DialectBackendId("interpreter")],
             [
                 new OptimizerBuildDirective("CommonOpt", true, DialectBackendSelector.Any),
-                new OptimizerBuildDirective("CompilerOnlyOpt", true, DialectBackendSelector.For(new DialectBackendId("compiler"))),
+                new OptimizerBuildDirective("CompilerOnlyOpt", true, DialectBackendSelector.For(new DialectBackendId("cil"))),
                 new OptimizerBuildDirective("InterpreterOnlyOpt", true, DialectBackendSelector.For(new DialectBackendId("interpreter")))
             ]);
 
@@ -91,7 +91,7 @@ public class SelectedRuntimePlanResolverContractTests
         var resolver = CreateResolver();
         var plan = BuildPlan(
             ["Numbers", "Arithmetic"],
-            [new DialectBackendId("interpreter"), new DialectBackendId("compiler"), new DialectBackendId("interpreter")],
+            [new DialectBackendId("interpreter"), new DialectBackendId("cil"), new DialectBackendId("interpreter")],
             [
                 new OptimizerBuildDirective("InterpreterOnlyOpt", true, DialectBackendSelector.For(new DialectBackendId("interpreter"))),
                 new OptimizerBuildDirective("CommonOpt", true, DialectBackendSelector.Any)
@@ -173,7 +173,7 @@ public class SelectedRuntimePlanResolverContractTests
         {
             Entry(RuntimeComponentKind.FrontendModule, "Arithmetic", "Asm.Modules.Arithmetic"),
             Entry(RuntimeComponentKind.FrontendModule, "Numbers", "Asm.Modules.Numbers"),
-            Entry(RuntimeComponentKind.Backend, "compiler", "Asm.Backend.Compiler", "cil"),
+            Entry(RuntimeComponentKind.Backend, "cil", "Asm.Backend.Cil"),
             Entry(RuntimeComponentKind.Backend, "interpreter", "Asm.Backend.Interpreter", "vm"),
             Entry(RuntimeComponentKind.Optimizer, "CommonOpt", "Asm.Optimizers.Common"),
             Entry(RuntimeComponentKind.Optimizer, "InterpreterOnlyOpt", "Asm.Optimizers.Interpreter"),
@@ -184,7 +184,8 @@ public class SelectedRuntimePlanResolverContractTests
     }
 
     private static RuntimeComponentManifestEntry Entry(RuntimeComponentKind kind, string canonicalAlias, string _, params string[] aliases)
-        => new(kind, canonicalAlias, aliases, RuntimeComponentIdFactory.Create(kind, canonicalAlias), "TestAssembly");
+        => new(kind, canonicalAlias, aliases, RuntimeComponentIdFactory.Create(kind, canonicalAlias), "TestAssembly",
+            new RuntimeComponentActivationInfo(new RuntimeTypeReference("TestAssembly", "Test.Activation.Type")));
 
     private sealed class StaticCatalog : IRuntimeComponentCatalog
     {

@@ -17,7 +17,7 @@ public class RuntimeBackendIntrinsicRegistryTests
     public void CreateDescriptors_CommonIntrinsics_AreMappedToAnySelector()
     {
         var descriptors = RuntimeBackendIntrinsicRegistry.CreateDescriptors([
-            FakeRegistrar.Compiler(["common", "compiler-only"]),
+            FakeRegistrar.Cil(["common", "compiler-only"]),
             FakeRegistrar.Interpreter(["common", "interpreter-only"])
         ]);
 
@@ -30,7 +30,7 @@ public class RuntimeBackendIntrinsicRegistryTests
     public void CreateDescriptors_BackendSpecificIntrinsics_RemainScopedToBackend()
     {
         var descriptors = RuntimeBackendIntrinsicRegistry.CreateDescriptors([
-            FakeRegistrar.Compiler(["common", "compiler-only"]),
+            FakeRegistrar.Cil(["common", "compiler-only"]),
             FakeRegistrar.Interpreter(["common", "interpreter-only"])
         ]);
 
@@ -39,7 +39,7 @@ public class RuntimeBackendIntrinsicRegistryTests
             var compilerOnly = descriptors.Single(static x => x.CanonicalId == "compiler-only");
             var interpreterOnly = descriptors.Single(static x => x.CanonicalId == "interpreter-only");
 
-            Assert.That(compilerOnly.Target, Is.EqualTo(DialectBackendSelector.For(FakeRegistrar.CompilerBackendId)));
+            Assert.That(compilerOnly.Target, Is.EqualTo(DialectBackendSelector.For(FakeRegistrar.CilBackendId)));
             Assert.That(interpreterOnly.Target, Is.EqualTo(DialectBackendSelector.For(FakeRegistrar.InterpreterBackendId)));
         });
     }
@@ -49,7 +49,7 @@ public class RuntimeBackendIntrinsicRegistryTests
     {
         var descriptors = RuntimeBackendIntrinsicRegistry.CreateDescriptors([
             FakeRegistrar.Interpreter(["common", "beta"]),
-            FakeRegistrar.Compiler(["common", "alpha"])
+            FakeRegistrar.Cil(["common", "alpha"])
         ]);
 
         var ordered = descriptors
@@ -58,7 +58,7 @@ public class RuntimeBackendIntrinsicRegistryTests
 
         Assert.That(ordered, Is.EqualTo(new[]
         {
-            "alpha@compiler",
+            "alpha@cil",
             "beta@interpreter",
             "common@any"
         }));
@@ -68,18 +68,18 @@ public class RuntimeBackendIntrinsicRegistryTests
     public void CreateDescriptors_DuplicateBackendProviders_Throws()
     {
         var ex = Assert.Throws<InvalidOperationException>(() => RuntimeBackendIntrinsicRegistry.CreateDescriptors([
-            FakeRegistrar.Compiler(["common"]),
-            FakeRegistrar.Compiler(["other"])
+            FakeRegistrar.Cil(["common"]),
+            FakeRegistrar.Cil(["other"])
         ]));
 
-        Assert.That(ex!.Message, Does.Contain("Duplicate backend provider registration for backend 'compiler'"));
+        Assert.That(ex!.Message, Does.Contain("Duplicate backend provider registration for backend 'cil'"));
     }
 
     [Test]
     public void CreateDescriptors_NullSupportedIntrinsics_Throws()
     {
         var ex = Assert.Throws<InvalidOperationException>(() => RuntimeBackendIntrinsicRegistry.CreateDescriptors([
-            FakeRegistrar.CompilerWithNullIntrinsics()
+            FakeRegistrar.CilWithNullIntrinsics()
         ]));
 
         Assert.That(ex!.Message, Does.Contain("returned null supported intrinsics"));
@@ -91,7 +91,7 @@ public class RuntimeBackendIntrinsicRegistryTests
         IDialectBackendRuntimeRegistrar? nullRegistrar = null;
 
         var ex = Assert.Throws<NullReferenceException>(() => RuntimeBackendIntrinsicRegistry.CreateDescriptors([
-            FakeRegistrar.Compiler(["common"]),
+            FakeRegistrar.Cil(["common"]),
             nullRegistrar!
         ]));
 
@@ -100,7 +100,7 @@ public class RuntimeBackendIntrinsicRegistryTests
 
     private sealed class FakeRegistrar(DialectBackendId backendId, IReadOnlyList<string>? supportedIntrinsics) : IDialectBackendRuntimeRegistrar
     {
-        public static DialectBackendId CompilerBackendId { get; } = new("compiler");
+        public static DialectBackendId CilBackendId { get; } = new("cil");
         public static DialectBackendId InterpreterBackendId { get; } = new("interpreter");
 
         public DialectBackendId BackendId { get; } = backendId;
@@ -111,10 +111,10 @@ public class RuntimeBackendIntrinsicRegistryTests
         {
         }
 
-        public static FakeRegistrar Compiler(IReadOnlyList<string> intrinsics) => new(CompilerBackendId, intrinsics);
+        public static FakeRegistrar Cil(IReadOnlyList<string> intrinsics) => new(CilBackendId, intrinsics);
 
         public static FakeRegistrar Interpreter(IReadOnlyList<string> intrinsics) => new(InterpreterBackendId, intrinsics);
 
-        public static FakeRegistrar CompilerWithNullIntrinsics() => new(CompilerBackendId, null);
+        public static FakeRegistrar CilWithNullIntrinsics() => new(CilBackendId, null);
     }
 }

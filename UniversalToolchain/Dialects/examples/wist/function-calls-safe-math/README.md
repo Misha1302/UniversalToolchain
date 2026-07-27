@@ -18,7 +18,7 @@ From repository root:
 ```bash
 dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- dialect-inspect --file UniversalToolchain/Dialects/examples/wist/function-calls-safe-math/dialect.wistdialect
 dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/function-calls-safe-math/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/function-calls-safe-math/program.wist --backend interpreter
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/function-calls-safe-math/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/function-calls-safe-math/program.wist --backend compiler
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/function-calls-safe-math/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/function-calls-safe-math/program.wist --backend cil
 ```
 
 ## Expected behavior/result

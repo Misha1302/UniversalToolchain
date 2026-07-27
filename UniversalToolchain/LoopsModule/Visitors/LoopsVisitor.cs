@@ -13,8 +13,8 @@ public class LoopsVisitor : IAstVisitor
 
     private static void VisitWhile(BytecodeVisitorData data)
     {
-        var loopStartLabel = Guid.NewGuid();
-        var loopEndLabel = Guid.NewGuid();
+        var loopStartLabel = DeterministicAstLabelId.Create(data.Node, "while-start");
+        var loopEndLabel = DeterministicAstLabelId.Create(data.Node, "while-end");
 
         data.Bytecode.Instructions.Add(new BytecodeInstruction(
             new AbstractMethodImpl($"WhileStart_!Intrinsic_{loopStartLabel}", (il, _) => il.SetLabel(loopStartLabel))));
@@ -33,8 +33,8 @@ public class LoopsVisitor : IAstVisitor
 
     private static void VisitFor(BytecodeVisitorData data)
     {
-        var loopStartLabel = Guid.NewGuid();
-        var loopEndLabel = Guid.NewGuid();
+        var loopStartLabel = DeterministicAstLabelId.Create(data.Node, "for-start");
+        var loopEndLabel = DeterministicAstLabelId.Create(data.Node, "for-end");
 
         data.AstToBytecodeTranslator.Translate(data.Node.Children[0]); // init
 

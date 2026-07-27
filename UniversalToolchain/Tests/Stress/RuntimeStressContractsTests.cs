@@ -18,7 +18,7 @@ public class RuntimeStressContractsTests
         var signatures = new List<string>(RepeatCount);
         for (var i = 0; i < RepeatCount; i++)
         {
-            var composition = workflow.ComposeText("dialect Repeat\nuse Arithmetic,Numbers,Variables\n\nbackend compiler,interpreter", $"repeat-{i}");
+            var composition = workflow.ComposeText("dialect Repeat\nuse Arithmetic,Numbers,Variables\n\nbackend cil,interpreter", $"repeat-{i}");
             Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
             using var host = workflow.CreateHost(composition);
             signatures.Add(TestContractsInfrastructure.BuildSelectionSignature(composition) + "##" + TestContractsInfrastructure.BuildHostSignature(host));
@@ -35,7 +35,7 @@ public class RuntimeStressContractsTests
 
         var signatures = await Task.WhenAll(Enumerable.Range(0, ParallelCount).Select(i => Task.Run(() =>
         {
-            var composition = workflow.ComposeText("dialect Parallel\nuse Arithmetic,Numbers\nbackend compiler,interpreter", $"parallel-{i}");
+            var composition = workflow.ComposeText("dialect Parallel\nuse Arithmetic,Numbers\nbackend cil,interpreter", $"parallel-{i}");
             if (!composition.IsSuccess)
                 return "compose-failed:" + FormatComposition(composition);
 
@@ -51,8 +51,8 @@ public class RuntimeStressContractsTests
     public void ManifestCatalogLoading_ShouldRemainStable_After100Repeats()
     {
         using var temp = new TempDirectory();
-        var first = TestContractsInfrastructure.WriteManifest(temp.Path, "a.dialect.runtime.json", "A.Assembly", [new FileDialectRuntimeComponentEntry("FrontendModule", "Arithmetic", ["arith"], "ArithmeticModule.Module.ArithmeticModuleImpl")]);
-        var second = TestContractsInfrastructure.WriteManifest(temp.Path, "b.dialect.runtime.json", "B.Assembly", [new FileDialectRuntimeComponentEntry("Backend", "interpreter", ["vm"], "BasicInterpreter.Implementations.BasicInterpreter")]);
+        var first = TestContractsInfrastructure.WriteManifest(temp.Path, "a.dialect.runtime.json", "A.Assembly", [new FileDialectRuntimeComponentEntry("FrontendModule", "Arithmetic", ["arith"], "frontend.arithmetic", new FileRuntimeComponentActivationEntry(new RuntimeTypeReference("A.Assembly", "ArithmeticModule.Module.ArithmeticModuleImpl")))]);
+        var second = TestContractsInfrastructure.WriteManifest(temp.Path, "b.dialect.runtime.json", "B.Assembly", [new FileDialectRuntimeComponentEntry("Backend", "interpreter", ["vm"], "backend.interpreter", new FileRuntimeComponentActivationEntry(new RuntimeTypeReference("B.Assembly", "BasicInterpreter.Implementations.BasicInterpreter")))]);
         var serializer = new RuntimeManifestJsonSerializer();
 
         var signatures = new List<string>(RepeatCount);
@@ -90,7 +90,7 @@ public class RuntimeStressContractsTests
     {
         using var provider = TestContractsInfrastructure.CreateWorkflowProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var composition = workflow.ComposeText("dialect Backends\nuse Arithmetic\nbackend compiler,interpreter", "backends");
+        var composition = workflow.ComposeText("dialect Backends\nuse Arithmetic\nbackend cil,interpreter", "backends");
         Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
 
         var signatures = new List<string>(RepeatCount);
@@ -112,15 +112,15 @@ public class RuntimeStressContractsTests
         var tasks = Enumerable.Range(0, ParallelCount).Select(i => Task.Run(() =>
         {
             var dialectText = i % 2 == 0
-                ? "dialect M1\nuse Arithmetic,Numbers\nbackend compiler,interpreter"
-                : "dialect M2\nuse Arithmetic,Identifier,Numbers,Scopes,Variables\n\nbackend compiler,interpreter";
+                ? "dialect M1\nuse Arithmetic,Numbers\nbackend cil,interpreter"
+                : "dialect M2\nuse Arithmetic,Identifier,Numbers,Scopes,Variables\n\nbackend cil,interpreter";
 
             var composition = workflow.ComposeText(dialectText, $"mixed-{i}");
             if (!composition.IsSuccess)
                 return "compose-failed:" + FormatComposition(composition);
 
             using var host = workflow.CreateHost(composition);
-            var runResult = host.Run("1+2", i % 2 == 0 ? "interpreter" : "compiler");
+            var runResult = host.Run("1+2", i % 2 == 0 ? "interpreter" : "cil");
             return TestContractsInfrastructure.BuildSelectionSignature(composition) + "##" + TestContractsInfrastructure.BuildHostSignature(host) + "##" + (runResult?.ToString() ?? "<null>");
         }));
 

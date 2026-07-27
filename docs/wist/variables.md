@@ -146,7 +146,7 @@ This requires variables plus loop and comparison support. Parentheses around the
 - Using variables in a minimal arithmetic dialect.
 - Treating runtime arguments and local variables as the same storage concept.
 - Testing only variable declaration but not reassignment.
-- Testing compiler mode but forgetting interpreter/compiler parity for variable mutation.
+- Testing CIL mode but forgetting interpreter/compiler parity for variable mutation.
 
 ## Next
 

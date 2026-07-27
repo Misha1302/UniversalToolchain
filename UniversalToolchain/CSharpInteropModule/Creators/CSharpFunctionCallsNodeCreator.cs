@@ -2,11 +2,9 @@ namespace CSharpInteropModule.Creators;
 
 public class CSharpFunctionCallsNodeCreator : IAstNodeCreator
 {
-    private readonly IMethodResolver _methodResolver;
-
     public CSharpFunctionCallsNodeCreator(IMethodResolver methodResolver)
     {
-        _methodResolver = methodResolver.ArgNotNull();
+        _ = methodResolver.ArgNotNull();
     }
 
     public ExtensibleEnum<AstNodeTag> AstNodeType { get; } = ExtensibleEnum<AstNodeTag>.CreateOrGet("CSharpFunctionCall");
@@ -20,19 +18,19 @@ public class CSharpFunctionCallsNodeCreator : IAstNodeCreator
         if (child.NodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("Identifier"))
             return false;
 
-        // Classify a syntactically qualified call as CLR interop as soon as its declaring type
-        // belongs to the explicit catalog. Method visibility and overload validity are checked
-        // by the visitor so unsupported calls fail with a deterministic ImportException instead
-        // of silently falling through to variable resolution.
-        if (!_methodResolver.CanResolveDeclaringType(child.Text))
+        // A qualified identifier followed by an argument scope is CLR-interop syntax. The
+        // explicit type catalog and method resolver remain the authority for whether it is
+        // allowed; denied types and missing methods must fail as interop errors instead of
+        // falling through to variable binding. A dotted type annotation is not a call.
+        if (!child.Text.Contains('.', StringComparison.Ordinal))
             return false;
 
-        if (childIndex + 1 >= scope.Children.Count)
+        var argumentsScope = scope.SafeGet(childIndex + 1);
+        if (argumentsScope?.NodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("Scope"))
             return false;
 
         child.NodeType = AstNodeType;
-
-        child.Children.Add(scope.Children[childIndex + 1]);
+        child.Children.Add(argumentsScope);
         scope.Children.RemoveAt(childIndex + 1);
         return true;
     }

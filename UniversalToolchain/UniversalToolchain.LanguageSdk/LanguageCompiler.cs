@@ -203,7 +203,7 @@ public sealed class LanguageCompiler
             .Where(x => !definition.ExcludedContributions.Contains(x.Contribution.Id))
             .Where(x => x.Package.ToolchainApiVersion == definition.ToolchainApiVersion)
             .Where(x => _registry.IsContributionEligible(x.Contribution.Id, activeFeatureIds))
-            .Where(x => x.Contribution.RuntimeInputContracts.Count == 0 || definition.Backends.All(x.Contribution.RuntimeInputs.ContainsKey))
+            .Where(x => x.Contribution.RuntimeInputContracts.Count == 0 || definition.Backends.All(x.Contribution.RuntimeInputContracts.ContainsKey))
             .ToArray();
         if (definition.RuntimeProvider != null)
         {

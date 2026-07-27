@@ -40,7 +40,7 @@ public class RuntimeAssemblyLoadStrategyContractTests
 
         var ex = Assert.Throws<InvalidOperationException>(() => loader.LoadType(Entry("ArithmeticModule", "frontend.missing")));
 
-        Assert.That(ex!.Message, Does.Contain("frontend.missing"));
+        Assert.That(ex!.Message, Does.Contain("Missing.Component.Type"));
     }
 
     [Test]
@@ -101,7 +101,17 @@ public class RuntimeAssemblyLoadStrategyContractTests
     }
 
     private static RuntimeComponentManifestEntry Entry(string assemblySimpleName, string componentId) =>
-        new(RuntimeComponentKind.FrontendModule, "Arithmetic", [], new RuntimeComponentId(componentId), assemblySimpleName);
+        new(
+            RuntimeComponentKind.FrontendModule,
+            "Arithmetic",
+            [],
+            new RuntimeComponentId(componentId),
+            assemblySimpleName,
+            new RuntimeComponentActivationInfo(
+                new RuntimeTypeReference(assemblySimpleName,
+                    componentId == "frontend.arithmetic"
+                        ? typeof(ArithmeticModuleImpl).FullName!
+                        : "Missing.Component.Type")));
 
     private static DefaultRuntimeComponentResolver CreateResolver(IRuntimeAssemblyLoadStrategy strategy)
         => new(new DefaultRuntimeAssemblyTypeLoader(strategy));

@@ -32,7 +32,7 @@ services.AddWistCilBackend();
 services.AddWistInterpreterBackend();
 ```
 
-These helpers register backend registrars directly and are useful for compatibility paths, legacy tests, benchmarks or specialized manual wiring.
+These helpers register known backend registrars directly and are useful for focused tests, benchmarks or specialized manual wiring.
 
 They are not the normal shipped-profile execution contract. Normal CLI, facade and shipped dialect execution should resolve backend manifest entries and activate the selected backend registrars from those manifests.
 
@@ -77,7 +77,7 @@ Important registered services include:
 | `WistDialectServiceProviderFactory` | creates the selected runtime service provider |
 | `WistDialectExecutionWorkflow` | composes dialect text/files and creates execution hosts |
 
-This section describes the Wist compatibility composition path. The external Language Authoring stack now provides a separate generic package/plan/route runtime; it does not replace these Wist-specific services.
+This section describes the canonical Wist dialect composition path. The external Language Authoring stack selects typed Wist contributions and passes a deterministic dialect slice into these Wist-specific services; it does not duplicate their execution responsibilities.
 
 ## Workflow object
 
@@ -151,7 +151,7 @@ DI/runtime composition changes should test:
 - duplicate or conflicting runtime exports;
 - restricted dialect surface;
 - selected backend activation from manifests;
-- compatibility backend registration helpers separately from canonical shipped runtime paths;
+- manual backend registration helpers separately from canonical manifest-driven runtime paths;
 - execution host creation from successful composition only.
 
 ## Common mistakes
@@ -160,7 +160,7 @@ DI/runtime composition changes should test:
 - Adding a module service without a stable dialect alias or runtime export.
 - Making Wist convenience APIs the only true framework path.
 - Assuming all registered backends are available to every dialect.
-- Presenting compatibility backend helper methods as the normal shipped profile bootstrap path.
+- Presenting manual backend helper methods as the normal shipped profile bootstrap path.
 - Letting reflection discovery decide behavior without deterministic ordering tests.
 
 ## Next

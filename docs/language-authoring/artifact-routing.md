@@ -23,7 +23,7 @@ A contract has:
 
 For independently versioned packages, use an explicit stable contract identity. The CLR-derived identity intentionally excludes assembly version, culture and public-key token, but it still describes a CLR-shaped local contract rather than a cross-ecosystem protocol.
 
-Typed and legacy untyped contracts do not connect through wildcard semantics. The generic route runtime requires typed executable contracts.
+Typed and planning-only untyped contracts do not connect through wildcard semantics. The generic route runtime requires typed executable contracts.
 
 ## Conversions versus passes
 

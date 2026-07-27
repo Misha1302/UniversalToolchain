@@ -73,9 +73,11 @@ public sealed class FileBasedRuntimeComponentCatalog : IRuntimeComponentCatalog
     {
         var kind = RuntimeComponentKindCodec.Parse(component.Kind, manifestPath);
         var canonicalAlias = component.CanonicalAlias;
-        var componentId = string.IsNullOrWhiteSpace(component.ComponentId)
-            ? RuntimeComponentIdFactory.Create(kind, canonicalAlias)
-            : new RuntimeComponentId(component.ComponentId);
+        if (string.IsNullOrWhiteSpace(component.ComponentId))
+            Thrower.InvalidOpEx($"Runtime component '{canonicalAlias}' in manifest '{manifestPath}' must declare componentId.");
+        if (component.Activation == null)
+            Thrower.InvalidOpEx($"Runtime component '{component.ComponentId}' in manifest '{manifestPath}' must declare exact activation metadata.");
+        var componentId = new RuntimeComponentId(component.ComponentId);
 
         return Normalize(new RuntimeComponentManifestEntry(
             kind,
@@ -122,15 +124,15 @@ public sealed class FileBasedRuntimeComponentCatalog : IRuntimeComponentCatalog
         };
     }
 
-    private static RuntimeComponentActivationInfo? ToRuntimeActivation(FileRuntimeComponentActivationEntry? activation) =>
-        activation == null
-            ? null
-            : new RuntimeComponentActivationInfo(activation.ActivationType, activation.RegistrarType);
-
-    private static RuntimeComponentActivationInfo? NormalizeActivation(RuntimeComponentActivationInfo? activation, string ownerAssemblySimpleName)
+    private static RuntimeComponentActivationInfo ToRuntimeActivation(FileRuntimeComponentActivationEntry? activation)
     {
-        if (activation == null)
-            return null;
+        activation = activation.NotNull(nameof(activation));
+        return new RuntimeComponentActivationInfo(activation.ActivationType, activation.RegistrarType);
+    }
+
+    private static RuntimeComponentActivationInfo NormalizeActivation(RuntimeComponentActivationInfo? activation, string ownerAssemblySimpleName)
+    {
+        activation = activation.NotNull(nameof(activation));
 
         var activationType = NormalizeTypeReference(
             activation.ActivationType,
@@ -160,10 +162,10 @@ public sealed class FileBasedRuntimeComponentCatalog : IRuntimeComponentCatalog
 
         var typeFullName = NormalizeRequiredText(typeReference.TypeFullName, paramName, emptyTypeMessage);
 
-        var assemblySimpleName = NormalizeOptionalText(typeReference.AssemblySimpleName);
-        if (assemblySimpleName == null ||
-            string.Equals(assemblySimpleName, RuntimeAssemblyIdentity.UnspecifiedAssemblySimpleName, StringComparison.Ordinal))
-            assemblySimpleName = ownerAssemblySimpleName;
+        var assemblySimpleName = NormalizeRequiredText(
+            typeReference.AssemblySimpleName,
+            paramName,
+            "Runtime activation type must declare exact assemblySimpleName.");
 
         return new RuntimeTypeReference(assemblySimpleName, typeFullName);
     }

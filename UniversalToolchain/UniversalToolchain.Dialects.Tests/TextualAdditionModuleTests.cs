@@ -8,13 +8,13 @@ public sealed class TextualAdditionModuleTests
     private const string TextualAdditionDialect = """
                                                   dialect TextualAdditionDemo
                                                   use Whitespaces,Numbers,Scopes,Arithmetic,TextualAddition
-                                                  backend compiler,interpreter
+                                                  backend cil,interpreter
                                                   """;
 
     private const string ArithmeticOnlyDialect = """
                                                  dialect ArithmeticOnlyDemo
                                                  use Whitespaces,Numbers,Scopes,Arithmetic
-                                                 backend compiler,interpreter
+                                                 backend cil,interpreter
                                                  """;
 
     [Test]

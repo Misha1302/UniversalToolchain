@@ -6,7 +6,7 @@ namespace UniversalToolchain.Dialects.Wist.Facade;
 /// <summary>
 ///     Captures the outcome of a Wist facade compilation attempt.
 /// </summary>
-public sealed class WistTryCompileResult
+internal sealed class WistTryCompileResult
 {
     private WistTryCompileResult(bool isSuccess, ICompiledArtifact? artifact, Exception? exception)
     {

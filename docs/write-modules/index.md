@@ -103,7 +103,7 @@ Do not rely on undocumented tag strings without a producer/consumer test.
 
 ### 6. Support backend behavior
 
-A feature is not complete until the intended backend paths understand it. For language semantics, prefer tests that run the same source through both interpreter and compiler modes when both are available.
+A feature is not complete until the intended backend paths understand it. For language semantics, prefer tests that run the same source through both interpreter and CIL modes when both are available.
 
 If a feature is intentionally backend-specific, document that limitation in the module reference and dialect examples.
 

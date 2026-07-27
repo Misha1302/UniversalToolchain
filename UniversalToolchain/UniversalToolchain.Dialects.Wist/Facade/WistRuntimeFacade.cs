@@ -6,7 +6,7 @@ namespace UniversalToolchain.Dialects.Wist.Facade;
 /// <summary>
 ///     Provides a small Wist-specific programmatic entry point over the dialect execution host.
 /// </summary>
-public sealed class WistRuntimeFacade : IDisposable
+internal sealed class WistRuntimeFacade : IDisposable
 {
     private readonly WistDialectExecutionHost _host;
 
@@ -28,7 +28,7 @@ public sealed class WistRuntimeFacade : IDisposable
     public object? Run(
         string code,
         IReadOnlyDictionary<string, object?> arguments,
-        string backend = "compiler")
+        string backend = "cil")
         => Run(new WistRunRequest(code, arguments, backend));
 
     /// <summary>
@@ -38,10 +38,11 @@ public sealed class WistRuntimeFacade : IDisposable
     {
         request = request.ArgNotNull();
 
-        return _host.Run(
-            request.Code,
-            request.Arguments,
-            request.Backend);
+        return WistRuntimeValueNormalizer.Normalize(
+            _host.Run(
+                request.Code,
+                request.Arguments,
+                request.Backend));
     }
 
     /// <summary>
@@ -50,7 +51,7 @@ public sealed class WistRuntimeFacade : IDisposable
     public WistTryCompileResult TryCompile(
         string code,
         IReadOnlyDictionary<string, Type> declaredBindings,
-        string backend = "compiler")
+        string backend = "cil")
     {
         try
         {

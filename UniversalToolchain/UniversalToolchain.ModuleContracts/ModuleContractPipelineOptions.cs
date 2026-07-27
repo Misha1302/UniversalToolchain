@@ -12,5 +12,4 @@ public sealed record ModuleContractPipelineOptions
 
     public required AirBackendPolicy BackendPolicy { get; init; }
 
-    public required bool VerifyLegacyBytecodeOperationNames { get; init; }
 }

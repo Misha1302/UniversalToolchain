@@ -20,7 +20,7 @@ public class DialectCompositionExplanationProjectorTests
         {
             Assert.That(explanation.BuildPlan, Is.Not.Null);
             Assert.That(explanation.BuildPlan!.CanBuild, Is.True);
-            Assert.That(explanation.BuildPlan.EnabledBackends.Select(static x => x.Value), Is.EqualTo(new[] { "compiler" }));
+            Assert.That(explanation.BuildPlan.EnabledBackends.Select(static x => x.Value), Is.EqualTo(new[] { "cil" }));
         });
     }
 
@@ -113,7 +113,7 @@ public class DialectCompositionExplanationProjectorTests
             "Demo",
             "1.0.0",
             orderedModules,
-            [new DialectBackendId("compiler")],
+            [new DialectBackendId("cil")],
             [new DialectBackendId("legacy")],
             [new IntrinsicBuildDirective("Math.Abs", true, DialectBackendSelector.Any)],
             [],
@@ -121,7 +121,7 @@ public class DialectCompositionExplanationProjectorTests
             [new KeyValuePair<string, bool>("unsafe-interop", false)],
             new DialectValidationResult());
 
-    private static RuntimeComponentManifestEntry Entry(string alias) => new(RuntimeComponentKind.FrontendModule, alias, [], new RuntimeComponentId(alias + "-id"), "Assembly");
+    private static RuntimeComponentManifestEntry Entry(string alias) => new(RuntimeComponentKind.FrontendModule, alias, [], new RuntimeComponentId(alias + "-id"), "Assembly", new RuntimeComponentActivationInfo(new RuntimeTypeReference("Assembly", "Test.Activation.Type")));
 
     private static DialectDiagnostic Diagnostic(string code) => new(code, $"{code}-message", DialectDiagnosticSeverity.Warning);
 

@@ -21,7 +21,7 @@ This page maps conceptual architecture to the repository. It is a navigation aid
 | route assembly and execution | `UniversalToolchain.Runtime` | `LanguageRuntime`, `LanguageRouteRuntimeAssembler`, component registrations, providers and sessions | lifecycle and external execution tests |
 | reusable contract tests | `UniversalToolchain.Testing` | `LanguageContractSuite` | sample/package consumers |
 | package template | `UniversalToolchain.Templates` | `ut-language` template | clean template consumer smoke |
-| Wist compatibility pack | `UniversalToolchain.Wist.LanguagePack` | Wist feature/runtime pack and legacy adapter | Language SDK and Wist dialect tests |
+| Wist typed language pack | `UniversalToolchain.Wist.LanguagePack` | canonical Wist feature descriptors, preset imports and runtime provider over the Wist dialect runtime | Language SDK and Wist dialect tests |
 | independent reference consumer | `samples/Acme.PricingLanguage` | custom syntax, parser, interpreter and compiled backend | solution build and sample run |
 
 ## Experimental research tooling

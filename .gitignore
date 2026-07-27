@@ -1,6 +1,7 @@
 # Build artifacts
 bin/
 obj/
+TestResults/
 /packages/
 
 # .NET user/IDE files

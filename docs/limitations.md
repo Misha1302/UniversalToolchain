@@ -27,7 +27,7 @@ The current SDK helps compose implementations; it does not generate a language i
 
 Backend-neutral artifact/session contracts and generic typed route execution are implemented. The remaining limitations are different:
 
-- Wist legacy surfaces still require compatibility adapters;
+- Wist shipped presets use the canonical typed package/runtime path, but the generic SDK still exposes planning-only untyped artifact contracts that cannot participate in executable routes;
 - the generic API is alpha and may evolve;
 - a third independent production-scale backend has not yet validated every abstraction boundary;
 - high-level backend authoring ergonomics remain sparse.

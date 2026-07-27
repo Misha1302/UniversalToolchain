@@ -9,7 +9,7 @@ This page describes the supplied language-authoring hardening baseline plus the 
 
 ## Current public/product surface
 
-`UniversalToolchain.Wist` `0.1.0-alpha.1` provides:
+`UniversalToolchain.Wist` `0.1.0-alpha.3` provides:
 
 - `WistEngine`;
 - restricted arithmetic and broader native presets;
@@ -87,13 +87,6 @@ This tooling is not part of the public Wist package and does not establish publi
 - runtime component traits are package attestations, not hostile-extension proof;
 - Wist Bytecode tag verification remains incomplete;
 - no hardened in-process sandbox is claimed.
-
-## Migration and deprecation governance
-
-The current migration and removal contracts are documented in:
-
-- [Legacy deprecation/removal gate](./architecture/legacy-deprecation-gate.md);
-- [Wist legacy migration guide (Russian)](./migration/WIST_LEGACY_MIGRATION_RU.md).
 
 ## Verification identity
 

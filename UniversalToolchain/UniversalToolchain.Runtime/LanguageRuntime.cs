@@ -88,54 +88,6 @@ public sealed class LanguageRuntime : IDisposable, IAsyncDisposable
         return new LanguageRuntime(plan, provider.CreateSession(plan, options));
     }
 
-#pragma warning disable CS0618
-    [Obsolete("[UTL-DEP-004] Use an ILanguageRuntimeProvider or LanguageRuntimeProviderRegistry. Removal is blocked by the shipped-preset parity gate.")]
-    public static LanguageRuntime Create(
-        LanguagePlan plan,
-        ILanguageRuntimePack runtimePack,
-        LanguageRuntimeOptions? options = null)
-    {
-        ArgumentNullException.ThrowIfNull(plan);
-        ArgumentNullException.ThrowIfNull(runtimePack);
-        options ??= new LanguageRuntimeOptions();
-        var providerId = new LanguageRuntimeProviderId(runtimePack.PackageId.Value);
-        if (plan.RuntimeProvider == null)
-            throw new InvalidOperationException("The language plan is planning-only and cannot create a runtime session.");
-        if (providerId != plan.RuntimeProvider.ProviderId || runtimePack.PackageVersion != plan.RuntimeProvider.Version)
-        {
-            throw new InvalidOperationException(
-                $"Language plan requires runtime provider '{plan.RuntimeProvider.ProviderId.Value}' version '{plan.RuntimeProvider.Version.Value}', " +
-                $"but legacy pack '{runtimePack.PackageId.Value}' version '{runtimePack.PackageVersion.Value}' was supplied.");
-        }
-        if (runtimePack.ToolchainApiVersion != plan.Definition.ToolchainApiVersion)
-            throw new InvalidOperationException("Runtime pack Toolchain API version does not match the language plan.");
-        var missingFeatures = plan.Features.Select(static x => x.Feature.Id)
-            .Where(feature => !runtimePack.SupportedFeatures.Contains(feature))
-            .ToArray();
-        if (missingFeatures.Length != 0)
-        {
-            throw new InvalidOperationException(
-                $"Runtime pack does not support feature(s): {string.Join(", ", missingFeatures.Select(static x => x.Value))}.");
-        }
-        var missingBackends = plan.Definition.Backends
-            .Where(backend => !runtimePack.SupportedBackends.Contains(backend))
-            .ToArray();
-        if (missingBackends.Length != 0)
-        {
-            throw new InvalidOperationException(
-                $"Runtime pack does not support backend(s): {string.Join(", ", missingBackends.Select(static x => x.Value))}.");
-        }
-        var policyValidator = runtimePack as ILanguageRuntimePolicyValidator;
-        if (policyValidator == null &&
-            (plan.Definition.RuntimePolicy.RequireDeterminism || !plan.Definition.RuntimePolicy.AllowHostInterop))
-        {
-            throw new InvalidOperationException(
-                $"Legacy runtime pack '{runtimePack.PackageId.Value}' does not implement fail-closed runtime-policy validation.");
-        }
-        policyValidator?.ValidatePolicy(plan, plan.Definition.RuntimePolicy, options);
-        return new LanguageRuntime(plan, runtimePack.CreateSession(plan, options));
-    }
-#pragma warning restore CS0618
 
     public LanguageExecutionResult Run(LanguageExecutionRequest request)
     {

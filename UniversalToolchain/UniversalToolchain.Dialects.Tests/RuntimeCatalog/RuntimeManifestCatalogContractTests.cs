@@ -23,8 +23,8 @@ public class RuntimeManifestCatalogContractTests
         var serializer = new RuntimeManifestJsonSerializer();
         var path = WriteManifest(temp.Path, "empty-asm.dialect.runtime.json", "  ", [Module("Arithmetic", "Arithmetic.Type")], serializer);
 
-        var ex = Assert.Throws<ArgumentException>(() => _ = new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([path]), serializer));
-        Assert.That(ex!.Message, Does.Contain("empty assemblySimpleName"));
+        var ex = Assert.Throws<InvalidOperationException>(() => _ = new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([path]), serializer));
+        Assert.That(ex!.Message, Does.Contain("must declare assemblySimpleName"));
     }
 
     [Test]
@@ -39,19 +39,18 @@ public class RuntimeManifestCatalogContractTests
     }
 
     [Test]
-    public void LoadEntries_ShouldDeriveComponentIdFromKindAndAlias_WhenMissingInManifest()
+    public void LoadEntries_ShouldRejectMissingComponentId()
     {
         using var temp = new TempDirectory();
         var serializer = new RuntimeManifestJsonSerializer();
-        var path = WriteManifest(temp.Path, "empty-type.dialect.runtime.json", "Asm", [new FileDialectRuntimeComponentEntry("FrontendModule", "Arithmetic", [], " ")], serializer);
+        var path = WriteManifest(temp.Path, "empty-type.dialect.runtime.json", "Asm", [new FileDialectRuntimeComponentEntry("FrontendModule", "Arithmetic", [], " ", new FileRuntimeComponentActivationEntry(new RuntimeTypeReference("Asm", "Arithmetic.Type")))], serializer);
 
-        var catalog = new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([path]), serializer);
-        Assert.That(catalog.TryResolveModule("Arithmetic", out var entry), Is.True);
-        Assert.That(entry!.ComponentId.Value, Is.EqualTo("frontend.arithmetic"));
+        var ex = Assert.Throws<InvalidOperationException>(() => _ = new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([path]), serializer));
+        Assert.That(ex!.Message, Does.Contain("must declare componentId"));
     }
 
     [Test]
-    public void LoadEntries_ManifestWithoutActivationMetadata_AcceptsEntry()
+    public void LoadEntries_ManifestWithoutActivationMetadata_IsRejected()
     {
         using var temp = new TempDirectory();
         var serializer = new RuntimeManifestJsonSerializer();
@@ -62,10 +61,8 @@ public class RuntimeManifestCatalogContractTests
             {"assemblySimpleName":"Asm","components":[{"kind":"FrontendModule","canonicalAlias":"Arithmetic","aliases":[],"componentId":"frontend.arithmetic"}]}
             """);
 
-        var catalog = new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([path]), serializer);
-
-        Assert.That(catalog.TryResolveModule("Arithmetic", out var entry), Is.True);
-        Assert.That(entry!.Activation, Is.Null);
+        var ex = Assert.Throws<InvalidOperationException>(() => _ = new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([path]), serializer));
+        Assert.That(ex!.Message, Does.Contain("must declare activation.activationType"));
     }
 
     [Test]
@@ -77,7 +74,7 @@ public class RuntimeManifestCatalogContractTests
             temp.Path,
             "with-activation.dialect.runtime.json",
             """
-            {"assemblySimpleName":"Asm","components":[{"kind":"FrontendModule","canonicalAlias":"Arithmetic","aliases":[],"componentId":"frontend.arithmetic","activation":{"activationTypeFullName":"Modules.ArithmeticModule","registrarTypeFullName":"Modules.ArithmeticRegistrar"}}]}
+            {"assemblySimpleName":"Asm","components":[{"kind":"FrontendModule","canonicalAlias":"Arithmetic","aliases":[],"componentId":"frontend.arithmetic","activation":{"activationType":{"assemblySimpleName":"Asm","typeFullName":"Modules.ArithmeticModule"},"registrarType":{"assemblySimpleName":"Asm","typeFullName":"Modules.ArithmeticRegistrar"}}}]}
             """);
 
         var catalog = new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([path]), serializer);
@@ -101,7 +98,9 @@ public class RuntimeManifestCatalogContractTests
                     "Arithmetic",
                     [],
                     "frontend.arithmetic",
-                    new FileRuntimeComponentActivationEntry(" Modules.ArithmeticModule ", " Modules.ArithmeticRegistrar "))
+                    new FileRuntimeComponentActivationEntry(
+                        new RuntimeTypeReference("Asm", "Modules.ArithmeticModule"),
+                        new RuntimeTypeReference("Asm", "Modules.ArithmeticRegistrar")))
             ],
             serializer);
 
@@ -150,11 +149,11 @@ public class RuntimeManifestCatalogContractTests
             temp.Path,
             "empty-activation-type.dialect.runtime.json",
             """
-            {"assemblySimpleName":"Asm","components":[{"kind":"FrontendModule","canonicalAlias":"Arithmetic","aliases":[],"componentId":"frontend.arithmetic","activation":{"activationTypeFullName":" "}}]}
+            {"assemblySimpleName":"Asm","components":[{"kind":"FrontendModule","canonicalAlias":"Arithmetic","aliases":[],"componentId":"frontend.arithmetic","activation":{"activationType":{"assemblySimpleName":"Asm","typeFullName":" "}}}]}
             """);
 
-        var ex = Assert.Throws<ArgumentException>(() => _ = new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([path]), serializer));
-        Assert.That(ex!.Message, Does.Contain("typeFullName must not be empty"));
+        var ex = Assert.Throws<InvalidOperationException>(() => _ = new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([path]), serializer));
+        Assert.That(ex!.Message, Does.Contain("must declare exact assemblySimpleName and typeFullName"));
     }
 
     [Test]
@@ -181,7 +180,7 @@ public class RuntimeManifestCatalogContractTests
     public void Catalog_ShouldRejectDuplicateBackendAlias()
     {
         var ex = BuildDuplicateAliasCatalogException(
-            Backend("compiler", "Compiler.Type", "runtime"),
+            Backend("cil", "Compiler.Type", "runtime"),
             Backend("interpreter", "Interpreter.Type", "runtime"));
 
         Assert.That(ex.Message, Does.Contain("Duplicate runtime backend alias 'runtime'"));
@@ -222,14 +221,35 @@ public class RuntimeManifestCatalogContractTests
         return Assert.Throws<InvalidOperationException>(() => _ = new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([firstPath, secondPath]), serializer))!;
     }
 
-    private static FileDialectRuntimeComponentEntry Module(string alias, string _, params string[] aliases) =>
-        new("FrontendModule", alias, aliases, RuntimeComponentIdFactory.Create(RuntimeComponentKind.FrontendModule, alias).Value);
+    private static FileDialectRuntimeComponentEntry Module(string alias, string typeFullName, params string[] aliases) =>
+        Entry(RuntimeComponentKind.FrontendModule, "FrontendModule", alias, typeFullName, aliases);
 
-    private static FileDialectRuntimeComponentEntry Optimizer(string alias, string _, params string[] aliases) =>
-        new("Optimizer", alias, aliases, RuntimeComponentIdFactory.Create(RuntimeComponentKind.Optimizer, alias).Value);
+    private static FileDialectRuntimeComponentEntry Optimizer(string alias, string typeFullName, params string[] aliases) =>
+        Entry(RuntimeComponentKind.Optimizer, "Optimizer", alias, typeFullName, aliases);
 
-    private static FileDialectRuntimeComponentEntry Backend(string alias, string _, params string[] aliases) =>
-        new("Backend", alias, aliases, RuntimeComponentIdFactory.Create(RuntimeComponentKind.Backend, alias).Value);
+    private static FileDialectRuntimeComponentEntry Backend(string alias, string typeFullName, params string[] aliases) =>
+        Entry(RuntimeComponentKind.Backend, "Backend", alias, typeFullName, aliases);
+
+    private static FileDialectRuntimeComponentEntry Entry(
+        RuntimeComponentKind kind,
+        string kindText,
+        string alias,
+        string typeFullName,
+        IReadOnlyList<string> aliases)
+    {
+        var normalizedAlias = alias.Trim();
+        var assemblySimpleName = typeFullName.Contains('.', StringComparison.Ordinal)
+            ? typeFullName[..typeFullName.IndexOf('.', StringComparison.Ordinal)]
+            : "TestAssembly";
+
+        return new FileDialectRuntimeComponentEntry(
+            kindText,
+            alias,
+            aliases,
+            RuntimeComponentIdFactory.Create(kind, normalizedAlias).Value,
+            new FileRuntimeComponentActivationEntry(
+                new RuntimeTypeReference(assemblySimpleName, typeFullName.Trim())));
+    }
 
     private static string WriteManifest(string root, string fileName, string assemblySimpleName, IReadOnlyList<FileDialectRuntimeComponentEntry> components, IRuntimeManifestSerializer serializer)
     {

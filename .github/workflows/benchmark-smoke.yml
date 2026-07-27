@@ -10,20 +10,6 @@ on:
       - "UniversalToolchain/UniversalToolchain.Dialects.Wist/**/*.cs"
       - "UniversalToolchain/UniversalToolchain.Dialects.Wist/**/*.csproj"
       - ".github/workflows/benchmark-smoke.yml"
-  push:
-    branches:
-      - master
-    paths:
-      - "UniversalToolchain/Benchmarks/**"
-      - "UniversalToolchain/UniversalToolchain.Wist/**/*.cs"
-      - "UniversalToolchain/UniversalToolchain.Wist/**/*.csproj"
-      - "UniversalToolchain/UniversalToolchain.Dialects.Wist/**/*.cs"
-      - "UniversalToolchain/UniversalToolchain.Dialects.Wist/**/*.csproj"
-      - ".github/ci-trigger"
-      - ".github/workflows/benchmark-smoke.yml"
-
-permissions:
-  contents: read
 
 jobs:
   benchmark-smoke:
@@ -38,26 +24,11 @@ jobs:
         with:
           global-json-file: UniversalToolchain/global.json
 
-      - name: Prepare optional local NuGet feed
-        run: mkdir -p UniversalToolchain/packages
-
       - name: Restore benchmark project
-        run: >
-          dotnet restore UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj
-          --disable-parallel
-          -p:RestoreBuildInParallel=false
-          -p:UseSharedCompilation=false
-          -p:NuGetAudit=false
+        run: dotnet restore UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj
 
       - name: Build benchmark project
-        run: >
-          dotnet build UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj
-          -c Release
-          --no-restore
-          -m:1
-          -p:BuildInParallel=false
-          -p:UseSharedCompilation=false
-          -p:NuGetAudit=false
+        run: dotnet build UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj -c Release --no-restore
 
       - name: Benchmark self-test
         run: >

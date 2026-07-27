@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <LangVersion>14</LangVersion>
         <PackageId>UniversalToolchain.Wist</PackageId>
-        <Version>0.1.0-alpha.1</Version>
+        <Version>0.1.0-alpha.3</Version>
         <Title>UniversalToolchain Wist</Title>
         <Description>Restricted formulas for .NET: validate rules, evaluate diagnostics, and compile approved formulas into typed delegates while the host owns inputs and side effects.</Description>
         <Authors>Mikhail Razakov</Authors>
@@ -17,7 +17,7 @@
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <PackageTags>dotnet;csharp;rule-engine;expression-engine;embedded-dsl;business-rules;formula;compiler;interpreter;cil;runtime;language-tooling;ssa;wist</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
-        <PackageReleaseNotes>First public Wist alpha with a restricted arithmetic preset, validation, one-off evaluation, typed delegate compilation, structured diagnostics, host-owned preflight limits, interpreter/CIL paths, and an optional observable SSA experiment.</PackageReleaseNotes>
+        <PackageReleaseNotes>Hardening alpha: backend-consistent compilation, fail-fast preset/backend validation, isolated root-authoritative runtime loading, runtime identity generation 2, exact package closure validation, and clean-package consumer smoke coverage. This release intentionally does not provide binary compatibility with pre-hardening 1.0.0.0 runtime assemblies.</PackageReleaseNotes>
         <IncludeSymbols>true</IncludeSymbols>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
         <DebugType>portable</DebugType>

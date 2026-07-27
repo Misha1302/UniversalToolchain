@@ -43,9 +43,6 @@ public sealed record LanguageRuntimePolicy
     public static LanguageRuntimePolicy Default { get; } = new();
 }
 
-[Obsolete("[UTL-DEP-001] Use LanguageRuntimeProviderReference. Removal is blocked by the shipped-preset parity gate.")]
-public sealed record LanguageRuntimePackReference(LanguagePackageId PackageId, LanguageVersion Version);
-
 public sealed record LanguageRuntimeProviderReference(
     LanguageRuntimeProviderId ProviderId,
     LanguageVersion Version);
@@ -92,28 +89,6 @@ public sealed class LanguageDefinition
             throw new ArgumentException("A runtime provider cannot be selected for a planning-only language definition.", nameof(runtimeProvider));
     }
 
-#pragma warning disable CS0618
-    public LanguageDefinition(
-        LanguageId id,
-        LanguageVersion version,
-        ToolchainApiVersion toolchainApiVersion,
-        IEnumerable<LanguageFeatureId> selectedFeatures,
-        IEnumerable<BackendId> backends,
-        LanguageRuntimePackReference runtimePack,
-        LanguageRuntimePolicy? runtimePolicy = null,
-        IReadOnlyDictionary<string, string>? metadata = null)
-        : this(
-            id,
-            version,
-            toolchainApiVersion,
-            selectedFeatures,
-            backends,
-            new LanguageRuntimeProviderReference(new LanguageRuntimeProviderId(runtimePack.PackageId.Value), runtimePack.Version),
-            runtimePolicy,
-            metadata)
-    {
-    }
-#pragma warning restore CS0618
 
     public LanguageId Id { get; }
     public LanguageVersion Version { get; }

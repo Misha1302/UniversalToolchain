@@ -21,8 +21,8 @@ public class ConditionsVisitor : IAstVisitor
         // If condition
         data.AstToBytecodeTranslator.Translate(data.Node.Children[0]);
 
-        var endLabel = Guid.NewGuid();
-        var elseLabel = Guid.NewGuid();
+        var endLabel = DeterministicAstLabelId.Create(data.Node, "end");
+        var elseLabel = DeterministicAstLabelId.Create(data.Node, "else");
 
         // Conditional jump if false
         var condJumpMethod = new AbstractMethodImpl(

@@ -77,7 +77,7 @@ Reviews, proposals and talks must not appear in the public source tree merely be
 
 ## Package version synchronization
 
-The generic SDK/template family currently uses `0.3.0-alpha.1`; the Wist facade uses `0.1.0-alpha.1`. Do not duplicate version strings in additional tutorials without updating the documentation status checker or deriving them from one build metadata source.
+The generic SDK/template family remains `0.3.0-alpha.1`; `UniversalToolchain.Wist.LanguagePack` is `0.3.0-alpha.2`; the Wist facade is `0.1.0-alpha.3`. Do not duplicate version strings in additional tutorials without updating the documentation status checker or deriving them from one build metadata source.
 
 For generic package migrations, follow [Package Versioning and Migrations](/language-authoring/versioning-and-migrations).
 

@@ -7,12 +7,12 @@ description: Explain interpreter, CIL, and backend choice.
 
 Backends decide how a composed DSL program is executed after parsing and lowering.
 
-Wist currently exposes two user-facing backend modes:
+Wist currently exposes two canonical backend IDs:
 
 - `interpreter`
-- `compiler`
+- `cil`
 
-The `.wistdialect` file names the canonical backend ids exposed by the dialect, such as `cil` and `interpreter`. The CLI and facade accept user-facing aliases: `compiler` requests the selected CIL backend when the active dialect exposes `cil`; `interpreter` requests the interpreter backend when the active dialect exposes `interpreter`. Do not add a new backend by editing only these aliases; new backends must be discoverable through runtime manifests and registrars.
+The `.wistdialect` file, CLI and facade use the same canonical backend IDs: `cil` and `interpreter`. Compatibility aliases are not supported. New backends must be discoverable through runtime manifests and registrars.
 
 ## When to read this page
 
@@ -49,7 +49,7 @@ dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file
 
 ### CIL compiler
 
-Use compiler mode when you want:
+Use the `cil` backend when you want:
 
 - faster repeated execution;
 - native .NET execution paths;
@@ -70,7 +70,7 @@ enable NativeTypesOptimization
 Run example:
 
 ```bash
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/minimal-arithmetic-native/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/minimal-arithmetic-native/program.wist --backend compiler
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/minimal-arithmetic-native/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/minimal-arithmetic-native/program.wist --backend cil
 ```
 
 ### Both backends
@@ -95,9 +95,9 @@ When both are enabled, tests should run the same source through both modes and c
 |---|---|
 | First prototype of a narrow DSL | `interpreter` |
 | Debugging parser/AST/lowering behavior | `interpreter` |
-| Performance-sensitive formula execution | `compiler`, after parity tests |
+| Performance-sensitive formula execution | `cil`, after parity tests |
 | Documentation examples for semantics | both, when available |
-| Restricted user-authored formulas | usually `compiler` or `interpreter`, but only with a narrow module set |
+| Restricted user-authored formulas | usually `cil` or `interpreter`, but only with a narrow module set |
 | Backend feature development | both, with explicit parity and negative tests |
 
 The backend choice is not a substitute for language restriction. A CIL-backed DSL can still be too broad if the dialect selects unnecessary modules.
@@ -121,7 +121,7 @@ var result = runtime.Run(
         ["price"] = 100,
         ["fee"] = 5
     },
-    backend: "compiler");
+    backend: "cil");
 ```
 
 The facade still uses the composed dialect runtime. It should not be treated as a separate language implementation.
@@ -130,7 +130,7 @@ The facade still uses the composed dialect runtime. It should not be treated as 
 
 A backend selection should fail when:
 
-- the CLI asks for `compiler`, but the dialect exposes only `interpreter`;
+- the CLI asks for `cil`, but the dialect exposes only `interpreter`;
 - the CLI asks for `interpreter`, but the dialect exposes only `cil`;
 - a selected module emits semantics the backend cannot execute;
 - an optimizer lowers to backend-specific intrinsics that the backend does not support.
@@ -153,7 +153,7 @@ Parity does not mean every backend must support every dialect. A dialect may int
 
 ## Common mistakes
 
-- Documenting `compiler` as available for a dialect that exposes only `interpreter`.
+- Documenting `cil` as available for a dialect that exposes only `interpreter`.
 - Enabling CIL-specific optimizers without proving base semantics first.
 - Treating the interpreter as a fallback when the selected backend fails.
 - Adding backend-specific intrinsics to a general interpreter surface.
@@ -166,4 +166,4 @@ Continue with [Testing a DSL](/build-dsls/testing-dsl).
 
 ## Backend contract invariant
 
-A backend is selected by backend id or alias. The repository currently ships built-in aliases such as `interpreter`, `compiler`, and `cil`, but those aliases are implementations, not a closed runtime model. A backend is considered first-class only if it can be discovered from runtime manifests, registered through its backend registrar, selected by dialect/runtime configuration, and executed through the backend-neutral artifact/session contract without editing `WistRuntimeFacade`.
+A backend is selected by its canonical backend ID. The repository currently ships `interpreter` and `cil`; compatibility aliases are intentionally unsupported. A backend is considered first-class only if it can be discovered from runtime manifests, registered through its backend registrar, selected by dialect/runtime configuration, and executed through the backend-neutral artifact/session contract without editing `WistRuntimeFacade`.

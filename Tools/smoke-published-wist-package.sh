@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-PACKAGE_VERSION="${1:-0.1.0-alpha.1}"
+PACKAGE_VERSION="${1:?usage: $0 <published-version>}"
 NUGET_SOURCE="${NUGET_SOURCE:-https://api.nuget.org/v3/index.json}"
 SMOKE_DIR="$(mktemp -d)"
 

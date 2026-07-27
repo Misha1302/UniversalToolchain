@@ -46,7 +46,7 @@ var result = runtime.Run(
         ["price"] = 100,
         ["fee"] = 5
     },
-    backend: "compiler");
+    backend: "cil");
 ```
 
 Expected numeric result:
@@ -85,7 +85,7 @@ Do not embed `full-default` only because it is convenient. A broad profile expos
 
 ## Backend selection
 
-`backend: "compiler"` requests the CIL-backed compiler path when the selected dialect exposes CIL. `backend: "interpreter"` requests the interpreter path when exposed.
+`backend: "cil"` requests the CIL-backed compiler path when the selected dialect exposes CIL. `backend: "interpreter"` requests the interpreter path when exposed.
 
 When both backends are available, add parity tests for important formulas. When only one backend is available, test that the unsupported backend request fails explicitly.
 

@@ -147,7 +147,7 @@ Choose examples that belong to the module and its documented dependencies.
 
 ## Backend availability tests
 
-If a dialect exposes only `interpreter`, asking for `compiler` should fail.
+If a dialect exposes only `interpreter`, asking for `cil` should fail.
 
 If a dialect exposes only `cil`, asking for `interpreter` should fail.
 
@@ -183,7 +183,7 @@ Do not rely only on:
 - benchmark output;
 - legacy debug log artifacts;
 - one happy-path source file;
-- compiler mode only;
+- CIL mode only;
 - full-default dialect only.
 
 A module that works only in a broad profile may still be incorrectly integrated.

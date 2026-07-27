@@ -69,7 +69,7 @@ public class WistDialectExecutionHostContractTests
     public void GetCore_WithUnknownMode_ThrowsInvalidOperationException_WithSupportedModesList()
     {
         var exception = CaptureGetCoreFailure(
-            "dialect Demo\nuse Arithmetic,Numbers\nbackend compiler,interpreter",
+            "dialect Demo\nuse Arithmetic,Numbers\nbackend cil,interpreter",
             "unknown-mode");
 
         Assert.That(exception.Message, Does.Contain("Supported backends:"));
@@ -90,9 +90,9 @@ public class WistDialectExecutionHostContractTests
     {
         var exception = CaptureGetCoreFailure(
             "dialect Demo\nuse Arithmetic,Numbers\nbackend interpreter",
-            "compiler");
+            "cil");
 
-        Assert.That(exception.Message, Does.Contain("Unknown backend 'compiler'"));
+        Assert.That(exception.Message, Does.Contain("Unknown backend 'cil'"));
     }
 
     [Test]

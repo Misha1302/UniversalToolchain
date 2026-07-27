@@ -12,10 +12,11 @@ namespace UniversalToolchain.Wist;
 /// </summary>
 public sealed class WistEngine : IDisposable
 {
-    private readonly WistDialectExecutionHost _host;
+    private WistDialectExecutionHost? _host;
     private readonly WistEngineOptions _options;
     private readonly IWistDelegateCompiler _delegateCompiler;
     private readonly WistResourceLimits _resourceLimits;
+    private WistRuntimeBoundary? _runtimeBoundary;
     private readonly SsaRouteReportCollector _ssaReportCollector;
     private bool _disposed;
 
@@ -24,12 +25,14 @@ public sealed class WistEngine : IDisposable
         WistEngineOptions options,
         IWistDelegateCompiler delegateCompiler,
         WistResourceLimits resourceLimits,
+        WistRuntimeBoundary runtimeBoundary,
         SsaRouteReportCollector ssaReportCollector)
     {
         _host = host;
         _options = options;
         _delegateCompiler = delegateCompiler;
         _resourceLimits = resourceLimits;
+        _runtimeBoundary = runtimeBoundary;
         _ssaReportCollector = ssaReportCollector;
     }
 
@@ -38,15 +41,18 @@ public sealed class WistEngine : IDisposable
         if (_disposed)
             return;
 
-        _host.Dispose();
         _disposed = true;
+        var host = _host;
+        _host = null;
+        _runtimeBoundary = null;
+        host?.Dispose();
     }
 
     public static WistEngine CreateRestrictedArithmetic() =>
-        Create(new WistEngineOptions { Preset = WistPreset.RestrictedArithmetic });
+        Create(WistEngineOptions.FromPresetId("pricing-restricted"));
 
     public static WistEngine CreateFullNative() =>
-        Create(new WistEngineOptions { Preset = WistPreset.FullNative });
+        Create(WistEngineOptions.FromPresetId("full-default-native"));
 
     /// <summary>
     /// Creates a Wist engine from public facade options. Options are snapshotted at creation time.
@@ -63,10 +69,8 @@ public sealed class WistEngine : IDisposable
 
         var optionsSnapshot = new WistEngineOptions
         {
-            Preset = options.Preset,
-            DialectSource = options.DialectSource,
-            Backend = options.Backend,
-            BackendAlias = options.BackendAlias,
+            DialectSource = options.DialectSource.ArgNotNull(),
+            BackendId = RequireBackendId(options.BackendId),
             AllowedAssemblies = allowedAssemblies,
             ResourceLimits = resourceLimits,
             Optimization = optimization
@@ -75,39 +79,59 @@ public sealed class WistEngine : IDisposable
         var services = new ServiceCollection();
         services.AddWistDialectServices();
 
-        using var provider = services.BuildServiceProvider();
-        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var source = ResolveDialectSource(optionsSnapshot);
-        var composition = Compose(workflow, source, optimization.Ssa);
-
-        if (!composition.IsSuccess)
+        ServiceProvider? compositionProvider = services.BuildServiceProvider();
+        try
         {
-            Thrower.InvalidOpEx(
-                DialectCompositionExplanationFormatter.FormatDeterministic(
-                    DialectCompositionExplanationProjector.Project(composition)));
+            var workflow = compositionProvider.GetRequiredService<WistDialectExecutionWorkflow>();
+            var source = ResolveDialectSource(optionsSnapshot);
+            var composition = Compose(workflow, source, optimization.Ssa);
+
+            if (!composition.IsSuccess)
+            {
+                Thrower.InvalidOpEx(
+                    DialectCompositionExplanationFormatter.FormatDeterministic(
+                        DialectCompositionExplanationProjector.Project(composition)));
+            }
+
+            var reportCollector = new SsaRouteReportCollector();
+            var runtimeServiceOptions = new WistRuntimeServiceOptions
+            {
+                AllowedAssemblies = allowedAssemblies,
+                SsaExecution = CreateSsaExecutionOptions(optimization.Ssa),
+                SsaReportSink = reportCollector
+            };
+
+            var compositionOwner = compositionProvider;
+            compositionProvider = null;
+            var host = workflow.CreateHost(composition, runtimeServiceOptions, compositionOwner);
+            try
+            {
+                EnsureBackendEnabled(host.Configuration, optionsSnapshot.BackendId);
+                return new WistEngine(
+                    host,
+                    optionsSnapshot,
+                    new WistBackendDelegateCompiler(),
+                    resourceLimits,
+                    WistRuntimeBoundary.Create(host.Configuration),
+                    reportCollector);
+            }
+            catch
+            {
+                host.Dispose();
+                throw;
+            }
         }
-
-        var reportCollector = new SsaRouteReportCollector();
-        var runtimeServiceOptions = new WistRuntimeServiceOptions
+        finally
         {
-            AllowedAssemblies = allowedAssemblies,
-            SsaExecution = CreateSsaExecutionOptions(optimization.Ssa),
-            SsaReportSink = reportCollector
-        };
-
-        return new WistEngine(
-            workflow.CreateHost(composition, runtimeServiceOptions),
-            optionsSnapshot,
-            new WistCilDelegateCompiler(),
-            resourceLimits,
-            reportCollector);
+            compositionProvider?.Dispose();
+        }
     }
 
     public T Evaluate<T>(string code)
     {
         ThrowIfDisposed();
         EnsureSourceWithinLimits(code);
-        return WistResultConverter.ConvertTo<T>(_host.Run(code, ResolveBackendAlias(_options)));
+        return WistResultConverter.ConvertTo<T>(Host.Run(code, _options.BackendId));
     }
 
     public T Evaluate<T>(string code, object arguments)
@@ -122,7 +146,8 @@ public sealed class WistEngine : IDisposable
         EnsureSourceWithinLimits(code);
         arguments = arguments.ArgNotNull();
         EnsureParameterCountWithinLimits(arguments.Count);
-        return WistResultConverter.ConvertTo<T>(_host.Run(code, arguments, ResolveBackendAlias(_options)));
+        var normalizedArguments = RuntimeBoundary.NormalizeArguments(arguments);
+        return WistResultConverter.ConvertTo<T>(Host.Run(code, normalizedArguments, _options.BackendId));
     }
 
     public WistValidationResult Validate(string code)
@@ -133,7 +158,7 @@ public sealed class WistEngine : IDisposable
         try
         {
             EnsureSourceWithinLimits(code);
-            _ = _host.Compile(code, null, ResolveBackendAlias(_options));
+            _ = Host.Compile(code, null, _options.BackendId);
             return WistValidationResult.Success(CreateOptimizationReport(capture.Report));
         }
         catch (Exception exception)
@@ -154,10 +179,10 @@ public sealed class WistEngine : IDisposable
         {
             EnsureSourceWithinLimits(code);
             sampleArguments = sampleArguments.ArgNotNull();
-            var argumentTypes = WistArgumentReader.FromObject(sampleArguments);
+            var argumentTypes = RuntimeBoundary.NormalizeArguments(WistArgumentReader.FromObject(sampleArguments));
             EnsureParameterCountWithinLimits(argumentTypes.Count);
             var declaredBindings = CreateDeclaredBindings(argumentTypes);
-            _ = _host.Compile(code, declaredBindings, ResolveBackendAlias(_options));
+            _ = Host.Compile(code, declaredBindings, _options.BackendId);
             return WistValidationResult.Success(CreateOptimizationReport(capture.Report));
         }
         catch (Exception exception)
@@ -212,15 +237,17 @@ public sealed class WistEngine : IDisposable
 
         var signature = WistDelegateSignature.FromDelegate<TDelegate>(parameterNames);
         var compiledDelegate = _delegateCompiler.CompileDelegate<TDelegate>(
-            _host,
+            Host,
             formula,
-            CreateDeclaredBindings(signature.BindingTypes));
+            CreateDeclaredBindings(signature.BindingTypes, RuntimeBoundary.NormalizeDeclaredType),
+            _options.BackendId,
+            RuntimeBoundary);
 
         return new WistProgram<TDelegate>(
             compiledDelegate,
             new WistProgramMetadata(
                 formula,
-                WistBackendAliases.CompilerAlias,
+                _options.BackendId,
                 signature.ParameterNames,
                 signature.ParameterTypes,
                 signature.ReturnType,
@@ -315,7 +342,6 @@ public sealed class WistEngine : IDisposable
             WistDialectSource.ShippedPreset preset =>
                 ReadDialectFile(resolver.Resolve(WistShippedDialectPresets.GetRequired(preset.PresetId))),
             WistDialectSource.Text text => new ResolvedDialectSource(text.SourceText, text.SourceName),
-            null => ReadDialectFile(resolver.Resolve(WistPresetMapper.ToShippedPreset(options.Preset))),
             _ => Thrower.InvalidOpEx<ResolvedDialectSource>("Unsupported Wist dialect source.")
         };
     }
@@ -323,12 +349,35 @@ public sealed class WistEngine : IDisposable
     private static ResolvedDialectSource ReadDialectFile(string path) =>
         new(File.ReadAllText(path), Path.GetFileName(path));
 
-    private static string ResolveBackendAlias(WistEngineOptions options)
+    private static void EnsureBackendEnabled(
+        WistDialectExecutionConfiguration configuration,
+        string backend)
     {
-        if (!string.IsNullOrWhiteSpace(options.BackendAlias))
-            return options.BackendAlias;
+        if (configuration.TryResolveKnownBackendId(backend, out var backendId) &&
+            configuration.TryGetEnabledBackend(backendId, out _))
+        {
+            return;
+        }
 
-        return WistBackendAliases.ToAlias(options.Backend);
+        var enabled = string.Join(
+            ", ",
+            configuration.EnabledBackends
+                .Select(static descriptor => descriptor.CanonicalId)
+                .OrderBy(static id => id, StringComparer.Ordinal));
+        Thrower.ArgumentOutOfRange<object>(
+            nameof(WistEngineOptions.BackendId),
+            $"Dialect '{configuration.DialectName}' does not enable backend '{backend}'. Enabled backends: {enabled}.");
+    }
+
+    private static string RequireBackendId(string backendId)
+    {
+        if (string.Equals(backendId, "cil", StringComparison.Ordinal) ||
+            string.Equals(backendId, "interpreter", StringComparison.Ordinal))
+            return backendId;
+
+        return Thrower.ArgumentOutOfRange<string>(
+            nameof(backendId),
+            $"Unsupported Wist backend '{backendId}'. Expected 'cil' or 'interpreter'.");
     }
 
     private void EnsureSourceWithinLimits(string code)
@@ -352,6 +401,24 @@ public sealed class WistEngine : IDisposable
             $"Wist parameter count {count} exceeds the configured maximum of {_resourceLimits.MaxParameterCount}.");
     }
 
+    private WistDialectExecutionHost Host
+    {
+        get
+        {
+            ThrowIfDisposed();
+            return _host!;
+        }
+    }
+
+    private WistRuntimeBoundary RuntimeBoundary
+    {
+        get
+        {
+            ThrowIfDisposed();
+            return _runtimeBoundary!;
+        }
+    }
+
     private void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(_disposed, this);
 
     private static OrderedDictionary<string, Type> CreateDeclaredBindings(IReadOnlyDictionary<string, object?> arguments)
@@ -363,11 +430,13 @@ public sealed class WistEngine : IDisposable
         return bindings;
     }
 
-    private static OrderedDictionary<string, Type> CreateDeclaredBindings(IReadOnlyDictionary<string, Type> bindingTypes)
+    private static OrderedDictionary<string, Type> CreateDeclaredBindings(
+        IReadOnlyDictionary<string, Type> bindingTypes,
+        Func<Type, Type>? typeNormalizer = null)
     {
         var bindings = new OrderedDictionary<string, Type>();
         foreach (var binding in bindingTypes)
-            bindings[binding.Key] = binding.Value;
+            bindings[binding.Key] = typeNormalizer?.Invoke(binding.Value) ?? binding.Value;
 
         return bindings;
     }

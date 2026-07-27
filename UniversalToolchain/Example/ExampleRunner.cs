@@ -2,7 +2,7 @@ using UniversalToolchain.Dialects.Wist;
 
 namespace Example;
 
-public class ExampleRunner
+public sealed class ExampleRunner : IDisposable
 {
     private readonly WistDialectExecutionHost _host;
 
@@ -11,21 +11,32 @@ public class ExampleRunner
         var services = new ServiceCollection();
         services.AddWistDialectServices();
 
-        using var provider = services.BuildServiceProvider();
-        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var composition = workflow.ComposeText(
+        ServiceProvider? provider = services.BuildServiceProvider();
+        try
+        {
+            var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+            var composition = workflow.ComposeText(
             """
             dialect ExampleNative
             use Whitespaces,SemicolonAsNewLine,Comments,Numbers,Identifier,Arithmetic,NativeTypes,Equality,Conditions,Loops,Scopes,Variables,Labels,InternalPreprocessorLexemes,CSharpInterop
-            backend compiler,interpreter
+            backend cil,interpreter
             """,
             "example-inline");
 
-        if (!composition.IsSuccess)
-            Thrower.InvalidOpEx(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
+            if (!composition.IsSuccess)
+                Thrower.InvalidOpEx(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
 
-        _host = workflow.CreateHost(composition);
+            var owner = provider;
+            provider = null;
+            _host = workflow.CreateHost(composition, new WistRuntimeServiceOptions(), owner);
+        }
+        finally
+        {
+            provider?.Dispose();
+        }
     }
+
+    public void Dispose() => _host.Dispose();
 
     public void RunInterpreter(string code)
     {
@@ -34,6 +45,6 @@ public class ExampleRunner
 
     public void RunCompiled(string code, OrderedDictionary<string, Type> _)
     {
-        Console.WriteLine("Result: " + _host.Run(code, "compiler"));
+        Console.WriteLine("Result: " + _host.Run(code, "cil"));
     }
 }

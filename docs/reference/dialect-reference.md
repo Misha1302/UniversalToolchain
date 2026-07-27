@@ -51,7 +51,7 @@ security trusted
 capability unsafe-interop
 ```
 
-The user-facing CLI alias `compiler` selects the `cil` backend when the active dialect exposes it. Dialect files should still declare the backend id `cil`.
+The user-facing CLI alias `cil` selects the `cil` backend when the active dialect exposes it. Dialect files should still declare the backend id `cil`.
 
 ## Directive reference
 
@@ -118,7 +118,7 @@ Currently shipped Wist backends include:
 | Dialect backend id | User-facing mode |
 |---|---|
 | `interpreter` | `interpreter` |
-| `cil` | `compiler` |
+| `cil` | `cil` |
 
 Backend identifiers are not a closed conceptual model. A backend is usable only when the runtime catalog contains a matching backend manifest entry and registrar.
 

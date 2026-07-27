@@ -16,7 +16,7 @@ public sealed class WistLanguageRuntimeProvider : ILanguageRuntimeProvider, ILan
     public LanguageRuntimeProviderId ProviderId => WistLanguageFeaturePackage.RuntimeProviderId;
     public LanguageVersion ProviderVersion => WistLanguageFeaturePackage.PackageVersion;
     public ToolchainApiVersion ToolchainApiVersion => ToolchainApi.Current;
-    public LanguageContributionId RuntimeContributionId => WistContributionIds.LegacyRuntimeAdapter;
+    public LanguageContributionId RuntimeContributionId => WistContributionIds.RuntimeProvider;
     public IReadOnlyCollection<BackendId> SupportedBackends => Backends;
 
     public void ValidatePolicy(LanguagePlan plan, LanguageRuntimePolicy policy, LanguageRuntimeOptions options)
@@ -29,12 +29,22 @@ public sealed class WistLanguageRuntimeProvider : ILanguageRuntimeProvider, ILan
         if (policy.RequireDeterminism)
         {
             throw new InvalidOperationException(
-                "The legacy Wist compatibility provider does not expose complete component-level determinism evidence.");
+                "The Wist runtime provider cannot satisfy required determinism evidence for its composed module pipeline.");
         }
-        if (!policy.AllowHostInterop && options.AllowedAssemblies.Count != 0)
+        var selectedModules = WistModuleSelection.GetModuleAliases(plan);
+        var selectsCSharpInterop = selectedModules.Contains("CSharpInterop", StringComparer.Ordinal);
+        var unsafeInteropDirective = ReadBooleanMetadata(plan, "wist.capability.unsafe-interop");
+
+        if (!policy.AllowHostInterop &&
+            (selectsCSharpInterop || unsafeInteropDirective == true || options.AllowedAssemblies.Count != 0))
         {
             throw new InvalidOperationException(
-                "The Wist language plan forbids host interop, but allowed host assemblies were supplied.");
+                "The Wist language plan forbids host interop, but CSharp interop, the unsafe-interop capability, or allowed host assemblies were selected.");
+        }
+        if (selectsCSharpInterop && unsafeInteropDirective == false)
+        {
+            throw new InvalidOperationException(
+                "The Wist language plan selects CSharpInterop while explicitly disabling the unsafe-interop capability.");
         }
     }
 
@@ -42,9 +52,20 @@ public sealed class WistLanguageRuntimeProvider : ILanguageRuntimeProvider, ILan
     {
         ArgumentNullException.ThrowIfNull(plan);
         ArgumentNullException.ThrowIfNull(options);
-        ValidateCanonicalRoute(plan);
-        WistModuleSelection.ValidateCanonicalPackageProvenance(plan);
+        // CreateSession is public through ILanguageRuntimeProvider. Revalidate here so
+        // callers cannot bypass policy enforcement by skipping LanguageRuntime.Create.
+        ValidatePolicy(plan, plan.Definition.RuntimePolicy, options);
         return new WistLanguageRuntimeSession(plan, options);
+    }
+
+
+    private static bool? ReadBooleanMetadata(LanguagePlan plan, string key)
+    {
+        if (!plan.Definition.Metadata.TryGetValue(key, out var value))
+            return null;
+        return bool.TryParse(value, out var parsed)
+            ? parsed
+            : throw new InvalidOperationException($"Wist metadata '{key}' must contain a Boolean value.");
     }
 
     private static void ValidateCanonicalRoute(LanguagePlan plan)
@@ -52,10 +73,10 @@ public sealed class WistLanguageRuntimeProvider : ILanguageRuntimeProvider, ILan
         if (!LanguageArtifactRoute.ContractsConnect(plan.Definition.EntryArtifact, StandardLanguageArtifactKinds.SourceText.Contract))
         {
             throw new InvalidOperationException(
-                "The legacy Wist compatibility provider accepts only the canonical source.text<string> entry artifact.");
+                "The Wist runtime provider accepts only the canonical source.text<string> entry artifact.");
         }
-        if (plan.RuntimeProviderContribution?.Contribution.Id != WistContributionIds.LegacyRuntimeAdapter)
-            throw new InvalidOperationException("The Wist provider requires the canonical legacy runtime-adapter contribution.");
+        if (plan.RuntimeProviderContribution?.Contribution.Id != WistContributionIds.RuntimeProvider)
+            throw new InvalidOperationException("The Wist provider requires the canonical runtime-provider contribution.");
 
         foreach (var route in plan.Routes.Values)
         {
@@ -63,7 +84,7 @@ public sealed class WistLanguageRuntimeProvider : ILanguageRuntimeProvider, ILan
                 ? WistContributionIds.InterpreterBackend
                 : route.Backend == CilBackend
                     ? WistContributionIds.CilBackend
-                    : throw new InvalidOperationException($"Backend '{route.Backend.Value}' is not supported by the Wist compatibility provider.");
+                    : throw new InvalidOperationException($"Backend '{route.Backend.Value}' is not supported by Wist.");
             var expected = new[]
             {
                 WistContributionIds.Frontend,
@@ -74,7 +95,7 @@ public sealed class WistLanguageRuntimeProvider : ILanguageRuntimeProvider, ILan
             if (!actual.SequenceEqual(expected))
             {
                 throw new InvalidOperationException(
-                    $"The Wist compatibility provider cannot execute custom artifact route '{string.Join(" -> ", actual.Select(static id => id.Value))}'.");
+                    $"The Wist provider cannot execute custom artifact route '{string.Join(" -> ", actual.Select(static id => id.Value))}'.");
             }
         }
     }
@@ -85,31 +106,47 @@ public sealed class WistLanguageRuntimeProvider : ILanguageRuntimeProvider, ILan
 
         public WistLanguageRuntimeSession(LanguagePlan plan, LanguageRuntimeOptions options)
         {
-            var dialectText = WistLegacyDialectAdapter.BuildDialectText(plan);
+            var dialectDefinition = WistDialectPlanFactory.Create(plan);
             var services = new ServiceCollection();
             services.AddWistDialectServices();
-            using var provider = services.BuildServiceProvider();
-            var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-            var composition = workflow.ComposeText(dialectText, $"{plan.Definition.Id.Value}.generated.wistdialect");
-            if (!composition.IsSuccess)
+            ServiceProvider? provider = services.BuildServiceProvider();
+            try
             {
-                var details = string.Join(
-                    Environment.NewLine,
-                    composition.SemanticDiagnostics.Concat(composition.ResolutionDiagnostics)
-                        .Select(static diagnostic => $"[{diagnostic.Code}] {diagnostic.Message}"));
-                throw new InvalidOperationException($"Generated Wist dialect could not be composed:{Environment.NewLine}{details}");
-            }
-            ValidateExactRuntimeSelection(plan, composition.RuntimeSelection as SelectedRuntimePlan);
-            _host = workflow.CreateHost(
-                composition,
-                new WistRuntimeServiceOptions { AllowedAssemblies = options.AllowedAssemblies });
-        }
+                var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+                var composition = workflow.ComposeDefinition(
+                    $"{plan.Definition.Id.Value}.typed",
+                    dialectDefinition);
+                if (!composition.IsSuccess)
+                {
+                    var details = string.Join(
+                        Environment.NewLine,
+                        composition.SemanticDiagnostics.Concat(composition.ResolutionDiagnostics)
+                            .Select(static diagnostic => $"[{diagnostic.Code}] {diagnostic.Message}"));
+                    throw new InvalidOperationException($"Typed Wist plan could not be composed:{Environment.NewLine}{details}");
+                }
 
+                ValidateExactRuntimeSelection(plan, composition.RuntimeSelection as SelectedRuntimePlan);
+
+                // The composition provider owns the runtime assembly load strategy used by
+                // the selected components. Transfer that ownership to the returned host so
+                // its collectible AssemblyLoadContext remains alive for the entire session.
+                var owner = provider;
+                provider = null;
+                _host = workflow.CreateHost(
+                    composition,
+                    new WistRuntimeServiceOptions { AllowedAssemblies = options.AllowedAssemblies },
+                    owner);
+            }
+            finally
+            {
+                provider?.Dispose();
+            }
+        }
 
         private static void ValidateExactRuntimeSelection(LanguagePlan plan, SelectedRuntimePlan? selectedRuntimePlan)
         {
             if (selectedRuntimePlan == null || !selectedRuntimePlan.IsResolved)
-                throw new InvalidOperationException("Generated Wist dialect did not produce a resolved runtime selection.");
+                throw new InvalidOperationException("Typed Wist plan did not produce a resolved runtime selection.");
 
             var expectedModules = WistModuleSelection.GetModuleAliases(plan).ToHashSet(StringComparer.Ordinal);
             var actualModules = selectedRuntimePlan.OrderedModules
@@ -123,14 +160,19 @@ public sealed class WistLanguageRuntimeProvider : ILanguageRuntimeProvider, ILan
                     $"actual [{string.Join(", ", actualModules.OrderBy(static x => x, StringComparer.Ordinal))}].");
             }
 
+            var expectedOptimizers = WistModuleSelection.GetOptimizerAliases(plan).ToHashSet(StringComparer.Ordinal);
+            var actualOptimizers = selectedRuntimePlan.EnabledOptimizers
+                .Select(static entry => entry.CanonicalAlias)
+                .ToHashSet(StringComparer.Ordinal);
+            if (!expectedOptimizers.SetEquals(actualOptimizers))
+                throw new InvalidOperationException("Wist runtime optimizer selection differs from the verified language plan.");
+
             var expectedBackends = WistModuleSelection.GetExpectedRuntimeBackendAliases(plan);
             var actualBackends = selectedRuntimePlan.EnabledBackends
                 .Select(static entry => entry.CanonicalAlias)
                 .ToHashSet(StringComparer.Ordinal);
             if (!expectedBackends.SetEquals(actualBackends))
                 throw new InvalidOperationException("Wist runtime backend selection differs from the verified language plan.");
-            if (selectedRuntimePlan.EnabledOptimizers.Count != 0)
-                throw new InvalidOperationException("The compatibility language plan did not select runtime optimizers, but the composed dialect did.");
         }
 
         public LanguageExecutionResult Run(LanguageExecutionRequest request)
@@ -138,31 +180,9 @@ public sealed class WistLanguageRuntimeProvider : ILanguageRuntimeProvider, ILan
             var value = request.Arguments.Count == 0
                 ? _host.Run(request.GetRequiredInput<string>(), request.Backend.Value)
                 : _host.Run(request.GetRequiredInput<string>(), request.Arguments, request.Backend.Value);
-            return new LanguageExecutionResult(request.Backend, value);
+            return new LanguageExecutionResult(request.Backend, WistRuntimeValueNormalizer.Normalize(value));
         }
 
         public void Dispose() => _host.Dispose();
     }
 }
-
-#pragma warning disable CS0618
-[Obsolete("[UTL-DEP-005] Use WistLanguageRuntimeProvider with LanguageRuntimeProviderRegistry. Removal is blocked by the shipped-preset parity gate.")]
-public sealed class WistLanguageRuntimePack : ILanguageRuntimePack, ILanguageRuntimePolicyValidator
-{
-    private static readonly WistLanguageFeaturePackage FeaturePackage = new();
-    private readonly WistLanguageRuntimeProvider _provider = new();
-
-    public LanguagePackageId PackageId => WistLanguageFeaturePackage.PackageId;
-    public LanguageVersion PackageVersion => WistLanguageFeaturePackage.PackageVersion;
-    public ToolchainApiVersion ToolchainApiVersion => ToolchainApi.Current;
-    public IReadOnlyCollection<LanguageFeatureId> SupportedFeatures =>
-        FeaturePackage.Descriptor.Features.Select(static feature => feature.Id).ToArray();
-    public IReadOnlyCollection<BackendId> SupportedBackends => _provider.SupportedBackends;
-
-    public void ValidatePolicy(LanguagePlan plan, LanguageRuntimePolicy policy, LanguageRuntimeOptions options) =>
-        _provider.ValidatePolicy(plan, policy, options);
-
-    public ILanguageRuntimeSession CreateSession(LanguagePlan plan, LanguageRuntimeOptions options) =>
-        _provider.CreateSession(plan, options);
-}
-#pragma warning restore CS0618

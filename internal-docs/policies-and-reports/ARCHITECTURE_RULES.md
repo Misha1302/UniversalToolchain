@@ -185,7 +185,7 @@ LanguageDefinition
 -> per-backend artifact routes
 -> immutable LanguagePlan
 -> exact runtime provider
--> transformer route or language-owned legacy adapter
+-> transformer route or language-owned domain adapter
 -> host/executor
 ```
 

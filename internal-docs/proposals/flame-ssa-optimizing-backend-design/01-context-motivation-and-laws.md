@@ -11,7 +11,7 @@ Source/Text
   -> Bytecode
   -> AIR
   -> AIR processing modules
-  -> selected backend compiler
+  -> selected backend cil
   -> compiled artifact
   -> execution session
 ```

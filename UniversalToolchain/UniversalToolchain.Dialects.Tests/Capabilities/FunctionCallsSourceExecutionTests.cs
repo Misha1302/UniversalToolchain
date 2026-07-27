@@ -1,3 +1,4 @@
+using UniversalToolchain.Testing.Infrastructure;
 using System.Globalization;
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
@@ -30,7 +31,7 @@ public sealed class FunctionCallsSourceExecutionTests
         using var host = workflow.CreateHost(composition);
 
         var interpreter = Normalize(host.Run(source, "interpreter"));
-        var compiler = Normalize(host.Run(source, "compiler"));
+        var compiler = Normalize(host.Run(source, "cil"));
 
         Assert.Multiple(() =>
         {
@@ -60,7 +61,7 @@ public sealed class FunctionCallsSourceExecutionTests
 
         using var host = workflow.CreateHost(composition);
         var interpreter = Normalize(host.Run(source, "interpreter"));
-        var compiler = Normalize(host.Run(source, "compiler"));
+        var compiler = Normalize(host.Run(source, "cil"));
 
         Assert.Multiple(() =>
         {
@@ -83,6 +84,9 @@ public sealed class FunctionCallsSourceExecutionTests
 
     private static string Normalize(object? value)
     {
+        if (value is not null && value.GetType().GetMethod("GetValue", Type.EmptyTypes) is not null)
+            return BackendResultAssertions.AsNumber(value).ToString("G17", CultureInfo.InvariantCulture);
+
         return value switch
         {
             RealNumberImpl number => number.GetValue().ToString(CultureInfo.InvariantCulture),

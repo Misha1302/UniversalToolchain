@@ -15,6 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Abstractions;
 using UniversalToolchain.Dialects.Core.ServiceCollection;
 using UniversalToolchain.Dialects.Integration;
+using UniversalToolchain.Dialects.Frontend.Registration;
 using UniversalToolchain.Dialects.Wist;
 using UniversalToolchain.ModuleContracts;
 
@@ -102,22 +103,6 @@ public class RuntimeInfrastructureCompositionTests
     }
 
     [Test]
-    public void AddCoreRuntimeInfrastructure_ShouldRemainEquivalentToCombinedDefaultWrappers()
-    {
-        var wrapperServices = new ServiceCollection();
-        wrapperServices.AddCoreRuntimeInfrastructure();
-
-        var combinedServices = new ServiceCollection();
-        combinedServices
-            .AddNeutralRuntimeInfrastructure()
-            .AddBasicFrontendPipelineDefaults()
-            .AddCompilerBackendDefaults()
-            .AddInterpreterBackendDefaults();
-
-        Assert.That(BuildServiceSignature(wrapperServices), Is.EqualTo(BuildServiceSignature(combinedServices)));
-    }
-
-    [Test]
     public void WistDialectServiceProviderFactory_ShouldUseNeutralInfrastructurePlusFrontendDefaults()
     {
         var descriptor = new RuntimeBackendDescriptor(new DialectBackendId("noop"), typeof(NoopRegistrar), ["noop"]);
@@ -169,7 +154,9 @@ public class RuntimeInfrastructureCompositionTests
             [],
             RuntimeComponentIdFactory.Create(RuntimeComponentKind.Backend, alias),
             registrarType.Assembly.GetName().Name!,
-            new RuntimeComponentActivationInfo(typeof(object).FullName!, registrarType.FullName));
+            new RuntimeComponentActivationInfo(
+                new RuntimeTypeReference(registrarType.Assembly.GetName().Name!, typeof(object).FullName!),
+                new RuntimeTypeReference(registrarType.Assembly.GetName().Name!, registrarType.FullName!)));
 
     [Test]
     public void CilBackendRegistrar_ShouldRegisterCompilerDefaultsThroughSharedBase()
@@ -177,7 +164,7 @@ public class RuntimeInfrastructureCompositionTests
         var services = CreateBackendServiceCollection();
         var registrar = new WistCilDialectBackendServiceProvider();
 
-        registrar.RegisterRuntime(services, CreateBackendConfiguration(WistDialectBackendIds.Cil, typeof(WistCilDialectBackendServiceProvider), "compiler"));
+        registrar.RegisterRuntime(services, CreateBackendConfiguration(WistDialectBackendIds.Cil, typeof(WistCilDialectBackendServiceProvider), "cil"));
 
         using var provider = services.BuildServiceProvider();
 

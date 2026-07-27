@@ -74,22 +74,22 @@ public sealed class WistPlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzPro
                 PlanFuzzVariantRole.Baseline,
                 PlanFuzzExpectedRelation.SameSemantics),
             new PlanFuzzPlanVariant(
-                "compiler.disabled",
+                "cil.disabled",
                 WistPlanFuzzConstants.DisabledConfiguration,
-                WistPlanFuzzConstants.CompilerBackend,
+                WistPlanFuzzConstants.CilBackend,
                 PlanFuzzVariantRole.Baseline,
                 PlanFuzzExpectedRelation.SameSemantics),
             new PlanFuzzPlanVariant(
-                "compiler.ssa-prefer",
+                "cil.ssa-prefer",
                 WistPlanFuzzConstants.PreferConfiguration,
-                WistPlanFuzzConstants.CompilerBackend,
+                WistPlanFuzzConstants.CilBackend,
                 PlanFuzzVariantRole.EquivalentMutation,
                 PlanFuzzExpectedRelation.SameSemantics,
                 WistPlanFuzzConstants.SsaPreferMutation),
             new PlanFuzzPlanVariant(
-                "compiler.ssa-require",
+                "cil.ssa-require",
                 WistPlanFuzzConstants.RequireConfiguration,
-                WistPlanFuzzConstants.CompilerBackend,
+                WistPlanFuzzConstants.CilBackend,
                 PlanFuzzVariantRole.EquivalentMutation,
                 PlanFuzzExpectedRelation.SameSemantics,
                 WistPlanFuzzConstants.SsaRequireMutation)
@@ -101,22 +101,22 @@ public sealed class WistPlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzPro
                 "backend-parity.disabled",
                 PlanFuzzOracleIds.BackendParity,
                 1,
-                ["interpreter.disabled", "compiler.disabled"]),
+                ["interpreter.disabled", "cil.disabled"]),
             new PlanFuzzOracleContract(
                 "route-parity.prefer",
                 PlanFuzzOracleIds.OptimizationRouteParity,
                 1,
-                ["compiler.disabled", "compiler.ssa-prefer"]),
+                ["cil.disabled", "cil.ssa-prefer"]),
             new PlanFuzzOracleContract(
                 "route-parity.require",
                 PlanFuzzOracleIds.OptimizationRouteParity,
                 1,
-                ["compiler.disabled", "compiler.ssa-require"]),
+                ["cil.disabled", "cil.ssa-require"]),
             new PlanFuzzOracleContract(
                 "controlled-fallback.prefer",
                 PlanFuzzOracleIds.ControlledFallback,
                 1,
-                ["compiler.ssa-prefer"])
+                ["cil.ssa-prefer"])
         };
 
         return new PlanFuzzTestCase(
@@ -205,7 +205,7 @@ public sealed class WistPlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzPro
 
         if (StringComparer.Ordinal.Equals(variant.BackendId, WistPlanFuzzConstants.InterpreterBackend))
             return ExecuteInterpreter(testCase, variant, model);
-        if (StringComparer.Ordinal.Equals(variant.BackendId, WistPlanFuzzConstants.CompilerBackend))
+        if (StringComparer.Ordinal.Equals(variant.BackendId, WistPlanFuzzConstants.CilBackend))
             return ExecuteCompiler(testCase, variant, model);
         return PlanFuzzObservation.InfrastructureFailure(
             testCase.CaseId,
@@ -267,7 +267,7 @@ public sealed class WistPlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzPro
                     "The Wist interpreter variant only supports the SSA-disabled configuration.");
         }
 
-        if (!StringComparer.Ordinal.Equals(variant.BackendId, WistPlanFuzzConstants.CompilerBackend))
+        if (!StringComparer.Ordinal.Equals(variant.BackendId, WistPlanFuzzConstants.CilBackend))
         {
             return PlanFuzzObservation.InfrastructureFailure(
                 testCase.CaseId,
@@ -298,8 +298,8 @@ public sealed class WistPlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzPro
         {
             using var engine = WistEngine.Create(new WistEngineOptions
             {
-                Preset = WistPreset.RestrictedArithmetic,
-                Backend = WistBackend.Interpreter,
+                DialectSource = WistDialectSource.FromShippedPreset("pricing-restricted"),
+                BackendId = "interpreter",
                 Optimization = CreateOptimization(WistSsaPolicy.Disabled)
             });
             var value = model.UsesParameter
@@ -330,8 +330,8 @@ public sealed class WistPlanFuzzAdapter : IPlanFuzzLanguageAdapter, IPlanFuzzPro
         var policy = ResolvePolicy(variant.ConfigurationId);
         using var engine = WistEngine.Create(new WistEngineOptions
         {
-            Preset = WistPreset.RestrictedArithmetic,
-            Backend = WistBackend.Compiler,
+            DialectSource = WistDialectSource.FromShippedPreset("pricing-restricted"),
+            BackendId = "cil",
             Optimization = CreateOptimization(policy)
         });
 

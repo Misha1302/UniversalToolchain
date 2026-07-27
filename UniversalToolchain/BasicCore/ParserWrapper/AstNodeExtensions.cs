@@ -2,7 +2,7 @@ namespace BasicCore.ParserWrapper;
 
 public static class AstNodeExtensions
 {
-    public static readonly string ParserHandledTag = "ParserHandled_" + Guid.NewGuid();
+    public const string ParserHandledTag = "universal-toolchain.parser.handled";
 
     public static bool IsParserHandled(this AstNode node) => node.CurrentTags.Contains(ParserHandledTag);
 

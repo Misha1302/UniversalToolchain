@@ -56,7 +56,7 @@ CompilationInput
   -> bytecode post-processing
   -> bytecode-to-AIR translation
   -> IR optimizers
-  -> backend compiler
+  -> backend cil
   -> middle-end modules
   -> compiled artifact/session
 ```

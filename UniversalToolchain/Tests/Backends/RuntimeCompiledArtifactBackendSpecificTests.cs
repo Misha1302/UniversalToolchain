@@ -9,7 +9,7 @@ public class RuntimeCompiledArtifactBackendSpecificTests
     public void GetBackendSpecificArtifactCompiler_WithCilCompilationOutput_ReturnsWorkingCompilerArtifactPath()
     {
         using var host = RuntimeCompiledArtifactTestFactory.CreateHost();
-        var compiler = host.GetBackendSpecificArtifactCompiler<CilCompilationOutput>("compiler");
+        var compiler = host.GetBackendSpecificArtifactCompiler<CilCompilationOutput>("cil");
         var artifact = compiler.Compile("1", new OrderedDictionary<string, Type>());
         var session = artifact.CreateSession();
 
@@ -27,6 +27,6 @@ public class RuntimeCompiledArtifactBackendSpecificTests
     {
         using var host = RuntimeCompiledArtifactTestFactory.CreateHost();
 
-        Assert.Throws<InvalidOperationException>(() => host.GetBackendSpecificArtifactCompiler<IAbstractIR>("compiler"));
+        Assert.Throws<InvalidOperationException>(() => host.GetBackendSpecificArtifactCompiler<IAbstractIR>("cil"));
     }
 }

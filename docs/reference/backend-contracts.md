@@ -16,7 +16,7 @@ Current Wist-facing modes:
 | Mode | Meaning |
 |---|---|
 | `interpreter` | execute AIR through the interpreter backend |
-| `compiler` | compile through the CIL backend when the selected runtime exposes CIL |
+| `cil` | compile through the CIL backend when the selected runtime exposes CIL |
 
 Dialect files decide which backend modes are available for a runtime host.
 
@@ -67,9 +67,9 @@ The CIL backend is a compiler, not a second interpreter. Its type simulation and
 
 Availability is selected by dialect/runtime composition.
 
-A dialect exposing only `interpreter` should reject `compiler` mode.
+A dialect exposing only `interpreter` should reject `cil` mode.
 
-A dialect exposing only CIL/compiler mode should reject `interpreter` mode.
+A dialect exposing only CIL/CIL mode should reject `interpreter` mode.
 
 Do not silently fall back to a different backend when the requested mode is unavailable.
 

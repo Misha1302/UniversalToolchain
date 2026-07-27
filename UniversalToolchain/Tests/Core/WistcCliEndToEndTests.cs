@@ -31,7 +31,7 @@ public class WistcCliEndToEndTests
     private static string _cliDllPath = string.Empty;
 
     [Test]
-    [TestCase("compiler")]
+    [TestCase("cil")]
     [TestCase("interpreter")]
     public void RunEval_ShouldSucceed_ForSupportedBackends(string backend)
     {

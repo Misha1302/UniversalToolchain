@@ -3,90 +3,69 @@ using ExceptionsManager;
 
 namespace UniversalToolchain.Dialects.Wist.Presets;
 
-/// <summary>
-///     Provides the optional catalog of Wist dialect files shipped with this repository.
-/// </summary>
+/// <summary>Provides the exact catalog of executable Wist dialect profiles shipped with the runtime.</summary>
 public static class WistShippedDialectPresets
 {
-    /// <summary>
-    ///     Gets the default shipped Wist dialect preset.
-    /// </summary>
     public static WistShippedDialectPreset Default => FullDefault;
 
-    /// <summary>
-    ///     Gets the full default Wist dialect preset.
-    /// </summary>
     public static WistShippedDialectPreset FullDefault { get; } = Create(
-        "full-default",
-        "Full default",
-        "General-purpose Wist dialect with compiler and interpreter backends.");
+        "full-default", "Full default",
+        "General-purpose Wist dialect with CIL and interpreter backends.",
+        "cil", "cil", "interpreter");
 
-    /// <summary>
-    ///     Gets the full default Wist dialect preset with native runtime features.
-    /// </summary>
     public static WistShippedDialectPreset FullDefaultNative { get; } = Create(
-        "full-default-native",
-        "Full default native",
-        "General-purpose Wist dialect with native runtime features.");
+        "full-default-native", "Full default native",
+        "General-purpose Wist dialect with native runtime features.",
+        "cil", "cil", "interpreter");
 
-    /// <summary>
-    ///     Gets the minimal arithmetic Wist dialect preset.
-    /// </summary>
+    public static WistShippedDialectPreset FunctionCallsSafeMath { get; } = Create(
+        "function-calls-safe-math", "Function calls safe math",
+        "Restricted function-call profile exposing the approved safe-math catalog.",
+        "cil", "cil", "interpreter");
+
     public static WistShippedDialectPreset MinimalArithmetic { get; } = Create(
-        "minimal-arithmetic",
-        "Minimal arithmetic",
-        "Small arithmetic-only Wist dialect.");
+        "minimal-arithmetic", "Minimal arithmetic",
+        "Small interpreter-only arithmetic dialect.",
+        "interpreter", "interpreter");
 
-    /// <summary>
-    ///     Gets the minimal arithmetic Wist dialect preset with native runtime features.
-    /// </summary>
+    public static WistShippedDialectPreset MinimalArithmeticGrouped { get; } = Create(
+        "minimal-arithmetic-grouped", "Minimal arithmetic grouped",
+        "Small interpreter-only arithmetic dialect assembled through the ArithmeticCore group.",
+        "interpreter", "interpreter");
+
     public static WistShippedDialectPreset MinimalArithmeticNative { get; } = Create(
-        "minimal-arithmetic-native",
-        "Minimal arithmetic native",
-        "Small arithmetic-only Wist dialect with native runtime features.");
+        "minimal-arithmetic-native", "Minimal arithmetic native",
+        "Small CIL-only arithmetic dialect with native runtime features.",
+        "cil", "cil");
 
-    /// <summary>
-    ///     Gets the restricted pricing Wist dialect preset.
-    /// </summary>
     public static WistShippedDialectPreset PricingRestricted { get; } = Create(
-        "pricing-restricted",
-        "Pricing restricted",
-        "Restricted Wist dialect for pricing formulas.");
+        "pricing-restricted", "Pricing restricted",
+        "Restricted Wist dialect for pricing formulas.",
+        "cil", "cil", "interpreter");
 
-
-    /// <summary>
-    /// Gets the experimental restricted arithmetic preset with the verifier-gated SSA route enabled.
-    /// </summary>
     public static WistShippedDialectPreset Ssa { get; } = Create(
-        "ssa",
-        "SSA",
-        "Restricted arithmetic Wist dialect with verifier-gated SSA optimization enabled.");
+        "ssa", "SSA",
+        "Restricted arithmetic Wist dialect with verifier-gated SSA optimization enabled.",
+        "cil", "cil", "interpreter");
 
-    /// <summary>
-    ///     Gets the restricted sandbox Wist dialect preset.
-    /// </summary>
     public static WistShippedDialectPreset CompositionRestricted { get; } = Create(
-        "composition-restricted",
-        "Composition restricted",
-        "Composition-constrained Wist dialect; not a process-isolation boundary.");
+        "composition-restricted", "Composition restricted",
+        "Composition-constrained interpreter-only Wist dialect; not a process-isolation boundary.",
+        "interpreter", "interpreter");
 
-    /// <summary>
-    ///     Gets all shipped Wist dialect presets.
-    /// </summary>
     public static IReadOnlyList<WistShippedDialectPreset> All { get; } =
     [
         FullDefault,
         FullDefaultNative,
+        FunctionCallsSafeMath,
         MinimalArithmetic,
+        MinimalArithmeticGrouped,
         MinimalArithmeticNative,
         PricingRestricted,
         Ssa,
         CompositionRestricted
     ];
 
-    /// <summary>
-    ///     Attempts to get a shipped Wist dialect preset by identifier.
-    /// </summary>
     public static bool TryGet(string presetId, [NotNullWhen(true)] out WistShippedDialectPreset? preset)
     {
         if (string.IsNullOrWhiteSpace(presetId))
@@ -99,9 +78,6 @@ public static class WistShippedDialectPresets
         return preset != null;
     }
 
-    /// <summary>
-    ///     Gets a shipped Wist dialect preset by identifier or throws when it is not known.
-    /// </summary>
     public static WistShippedDialectPreset GetRequired(string presetId)
     {
         if (TryGet(presetId, out var preset))
@@ -112,10 +88,17 @@ public static class WistShippedDialectPresets
             $"Unknown shipped Wist dialect preset '{presetId}'.");
     }
 
-    private static WistShippedDialectPreset Create(string id, string displayName, string description)
+    private static WistShippedDialectPreset Create(
+        string id,
+        string displayName,
+        string description,
+        string defaultBackend,
+        params string[] supportedBackends)
         => new(
             id,
             Path.Combine("Dialects", "examples", "wist", id, "dialect.wistdialect"),
             displayName,
-            description);
+            description,
+            defaultBackend,
+            supportedBackends);
 }

@@ -1,3 +1,4 @@
+using BasicCore.Binding;
 using NumbersModule.Core;
 using Tests.Infrastructure;
 using UniversalToolchain.Dialects.Wist;
@@ -220,29 +221,51 @@ public class InterpreterBindingsParityTests
     }
 
     [Test]
-    public void UnknownVariableAccess_WhenStrictFailureExists_ShouldExposeMeaningfulError()
+    public void UnknownVariableAccess_FailsClosedWithDeterministicIdentifierDiagnostic()
     {
         using var host = CreateHost();
         var declared = new OrderedDictionary<string, Type>
         {
             ["price"] = typeof(RealNumberImpl)
         };
-
         var arguments = new List<KeyValuePair<string, object>>
         {
             new("price", new RealNumberImpl(2.0))
         };
-        try
+
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            ParityBackendExecutionAdapter.RunCompiled(host, "cil", "unknown + price", declared, arguments));
+
+        Assert.That(exception!.ToString(), Does.Contain("Unknown identifier 'unknown'"));
+    }
+
+    [Test]
+    public void LocalVariableStorageKeys_AreStableAcrossIndependentBindingContexts()
+    {
+        var first = new BindingContext([]);
+        var second = new BindingContext([]);
+
+        var firstKeys = new[]
         {
-            _ = ParityBackendExecutionAdapter.RunCompiled(host, "compiler", "unknown + price", declared, arguments);
-            Assert.Pass("Current runtime allows the scenario without strict unknown-variable failure.");
-        }
-        catch (Exception ex)
+            first.DeclareLocal("x", typeof(int)).StorageKey,
+            first.DeclareLocal("y", typeof(double)).StorageKey
+        };
+        var secondKeys = new[]
         {
-            var message = ex.ToString();
-            Assert.That(message, Does.Contain("unknown").IgnoreCase,
-                "Strict unknown-variable failure must mention the unresolved variable name.");
-        }
+            second.DeclareLocal("x", typeof(int)).StorageKey,
+            second.DeclareLocal("y", typeof(double)).StorageKey
+        };
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(firstKeys, Is.EqualTo(secondKeys));
+            Assert.That(firstKeys, Is.EqualTo(new[]
+            {
+                "local:00000000:x",
+                "local:00000001:y"
+            }));
+            Assert.That(firstKeys, Has.None.Contains("-"));
+        });
     }
 
     private static (double CompilerNumeric, double InterpreterNumeric) RunWithBindingsInBothBackends(
@@ -251,7 +274,7 @@ public class InterpreterBindingsParityTests
         IReadOnlyList<NamedArgument> arguments)
     {
         var mappedArguments = MapArguments(arguments);
-        var compilerResult = BackendExecutionResult.Success(RunCompiled("compiler", code, declared, mappedArguments));
+        var compilerResult = BackendExecutionResult.Success(RunCompiled("cil", code, declared, mappedArguments));
         var interpreterResult = BackendExecutionResult.Success(RunCompiled("interpreter", code, declared, mappedArguments));
 
         BackendParityInfrastructure.AssertSemanticParity(compilerResult, interpreterResult);
@@ -286,7 +309,7 @@ public class InterpreterBindingsParityTests
         IReadOnlyList<NamedArgument> arguments)
     {
         var mappedArguments = MapArguments(arguments);
-        var compilerOutcome = TryRunSingleBackend(() => RunCompiled("compiler", code, declared, mappedArguments));
+        var compilerOutcome = TryRunSingleBackend(() => RunCompiled("cil", code, declared, mappedArguments));
         var interpreterOutcome = TryRunSingleBackend(() => RunCompiled("interpreter", code, declared, mappedArguments));
         return (compilerOutcome, interpreterOutcome);
     }

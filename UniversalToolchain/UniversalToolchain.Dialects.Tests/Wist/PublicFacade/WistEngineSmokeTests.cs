@@ -78,7 +78,7 @@ public sealed class WistEngineSmokeTests
     {
         using var wist = WistEngine.Create(new WistEngineOptions
         {
-            Preset = WistPreset.FullNative,
+            DialectSource = WistDialectSource.FromShippedPreset("full-default-native"),
             AllowedAssemblies = [typeof(Math).Assembly]
         });
 
@@ -102,7 +102,7 @@ public sealed class WistEngineSmokeTests
         Assert.Multiple(() =>
         {
             Assert.That(result, Is.EqualTo(95.0d).Within(1e-9));
-            Assert.That(program.Metadata.Backend, Is.EqualTo("compiler"));
+            Assert.That(program.Metadata.Backend, Is.EqualTo("cil"));
             Assert.That(program.Metadata.ParameterNames, Is.EqualTo(new[] { "price", "fee" }));
             Assert.That(program.Metadata.ParameterTypes, Is.EqualTo(new[] { typeof(double), typeof(double) }));
             Assert.That(program.Metadata.ReturnType, Is.EqualTo(typeof(double)));
@@ -143,7 +143,7 @@ public sealed class WistEngineSmokeTests
             Assert.That(result.IsSuccess, Is.False);
             Assert.That(result.Program, Is.Null);
             Assert.That(result.Exception, Is.Not.Null);
-            Assert.That(result.Message, Is.Not.Empty);
+            Assert.That(result.Diagnostics, Has.Some.Matches<WistDiagnostic>(static diagnostic => !string.IsNullOrWhiteSpace(diagnostic.Message)));
         });
     }
 
@@ -161,7 +161,7 @@ public sealed class WistEngineSmokeTests
             Assert.That(result.IsSuccess, Is.False);
             Assert.That(result.Program, Is.Null);
             Assert.That(result.Exception, Is.Not.Null);
-            Assert.That(result.Message, Does.Contain("return a value"));
+            Assert.That(result.Diagnostics.Select(static diagnostic => diagnostic.Message), Has.Some.Contains("return a value"));
         });
     }
 
@@ -199,7 +199,7 @@ public sealed class WistEngineSmokeTests
         Assert.Multiple(() =>
         {
             Assert.That(result.IsValid, Is.True);
-            Assert.That(result.Message, Is.Null);
+            Assert.That(result.Diagnostics, Is.Empty);
             Assert.That(result.Exception, Is.Null);
         });
     }
@@ -223,7 +223,7 @@ public sealed class WistEngineSmokeTests
         Assert.Multiple(() =>
         {
             Assert.That(result.IsValid, Is.False);
-            Assert.That(result.Message, Is.Not.Empty);
+            Assert.That(result.Diagnostics, Has.Some.Matches<WistDiagnostic>(static diagnostic => !string.IsNullOrWhiteSpace(diagnostic.Message)));
             Assert.That(result.Exception, Is.Not.Null);
         });
     }
@@ -233,7 +233,7 @@ public sealed class WistEngineSmokeTests
     {
         using var wist = WistEngine.Create(new WistEngineOptions
         {
-            Preset = WistPreset.RestrictedArithmetic,
+            DialectSource = WistDialectSource.FromShippedPreset("pricing-restricted"),
             ResourceLimits = new WistResourceLimits
             {
                 MaxSourceLength = 8,
@@ -258,7 +258,7 @@ public sealed class WistEngineSmokeTests
     {
         using var wist = WistEngine.Create(new WistEngineOptions
         {
-            Preset = WistPreset.RestrictedArithmetic,
+            DialectSource = WistDialectSource.FromShippedPreset("pricing-restricted"),
             ResourceLimits = new WistResourceLimits
             {
                 MaxSourceLength = 128,
@@ -287,7 +287,7 @@ public sealed class WistEngineSmokeTests
         };
         var options = new WistEngineOptions
         {
-            Preset = WistPreset.RestrictedArithmetic,
+            DialectSource = WistDialectSource.FromShippedPreset("pricing-restricted"),
             ResourceLimits = limits
         };
 
@@ -305,7 +305,7 @@ public sealed class WistEngineSmokeTests
     {
         using var wist = WistEngine.Create(new WistEngineOptions
         {
-            Preset = WistPreset.RestrictedArithmetic,
+            DialectSource = WistDialectSource.FromShippedPreset("pricing-restricted"),
             Optimization = new WistOptimizationOptions
             {
                 Ssa = new WistSsaOptions
@@ -337,7 +337,7 @@ public sealed class WistEngineSmokeTests
     {
         using var wist = WistEngine.Create(new WistEngineOptions
         {
-            Preset = WistPreset.RestrictedArithmetic,
+            DialectSource = WistDialectSource.FromShippedPreset("pricing-restricted"),
             Optimization = new WistOptimizationOptions
             {
                 Ssa = new WistSsaOptions
@@ -366,7 +366,7 @@ public sealed class WistEngineSmokeTests
     {
         using var wist = WistEngine.Create(new WistEngineOptions
         {
-            Preset = WistPreset.RestrictedArithmetic,
+            DialectSource = WistDialectSource.FromShippedPreset("pricing-restricted"),
             Optimization = new WistOptimizationOptions
             {
                 Ssa = new WistSsaOptions
@@ -394,7 +394,7 @@ public sealed class WistEngineSmokeTests
     {
         using var wist = WistEngine.Create(new WistEngineOptions
         {
-            Preset = WistPreset.RestrictedArithmetic,
+            DialectSource = WistDialectSource.FromShippedPreset("pricing-restricted"),
             Optimization = new WistOptimizationOptions
             {
                 Ssa = new WistSsaOptions
@@ -437,7 +437,7 @@ public sealed class WistEngineSmokeTests
         var ssa = new WistSsaOptions { Policy = WistSsaPolicy.Prefer };
         var options = new WistEngineOptions
         {
-            Preset = WistPreset.RestrictedArithmetic,
+            DialectSource = WistDialectSource.FromShippedPreset("pricing-restricted"),
             Optimization = new WistOptimizationOptions { Ssa = ssa }
         };
 

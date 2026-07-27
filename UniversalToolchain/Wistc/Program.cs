@@ -275,38 +275,48 @@ string GetCode(RunOptions options)
 
 WistDialectExecutionHost CreateDefaultHost(CommonOptions options)
 {
-    using var provider = CreateDialectWorkflowProvider();
-    var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-    var plan = new WistCliDialectPlanBuilder().Build(options);
-
-    return plan.Kind switch
+    ServiceProvider? provider = CreateDialectWorkflowProvider();
+    try
     {
-        WistCliDialectPlanKind.Preset => CreateHostFromPreset(workflow, plan.BasePreset),
-        _ => Thrower.ArgumentOutOfRange<WistDialectExecutionHost>(nameof(plan.Kind), $"Unsupported CLI dialect plan kind '{plan.Kind}'.")
-    };
-}
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+        var plan = new WistCliDialectPlanBuilder().Build(options);
+        if (plan.Kind != WistCliDialectPlanKind.Preset)
+            return Thrower.ArgumentOutOfRange<WistDialectExecutionHost>(nameof(plan.Kind), $"Unsupported CLI dialect plan kind '{plan.Kind}'.");
 
-WistDialectExecutionHost CreateHostFromPreset(WistDialectExecutionWorkflow workflow, WistShippedDialectPreset preset)
-{
-    var dialectFilePath = new WistShippedDialectFileResolver().Resolve(preset);
-    var composition = workflow.ComposeFile(dialectFilePath);
+        var dialectFilePath = new WistShippedDialectFileResolver().Resolve(plan.BasePreset);
+        var composition = workflow.ComposeFile(dialectFilePath);
+        if (!composition.IsSuccess)
+            Thrower.InvalidOpEx(FormatComposition(composition));
 
-    if (!composition.IsSuccess)
-        Thrower.InvalidOpEx(FormatComposition(composition));
-
-    return workflow.CreateHost(composition);
+        var owner = provider;
+        provider = null;
+        return workflow.CreateHost(composition, new WistRuntimeServiceOptions(), owner);
+    }
+    finally
+    {
+        provider?.Dispose();
+    }
 }
 
 WistDialectExecutionHost CreateDialectHost(string dialectFile)
 {
-    using var provider = CreateDialectWorkflowProvider();
-    var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-    var result = workflow.ComposeFile(dialectFile);
+    ServiceProvider? provider = CreateDialectWorkflowProvider();
+    try
+    {
+        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+        var result = workflow.ComposeFile(dialectFile);
 
-    if (!result.IsSuccess)
-        Thrower.InvalidOpEx(FormatComposition(result));
+        if (!result.IsSuccess)
+            Thrower.InvalidOpEx(FormatComposition(result));
 
-    return workflow.CreateHost(result);
+        var owner = provider;
+        provider = null;
+        return workflow.CreateHost(result, new WistRuntimeServiceOptions(), owner);
+    }
+    finally
+    {
+        provider?.Dispose();
+    }
 }
 
 ServiceProvider CreateDialectWorkflowProvider()

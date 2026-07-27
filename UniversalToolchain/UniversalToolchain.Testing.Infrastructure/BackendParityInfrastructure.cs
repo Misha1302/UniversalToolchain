@@ -22,7 +22,7 @@ public static class BackendParityInfrastructure
         if (!baseComposition.IsSuccess)
             Thrower.InvalidOpEx(FormatComposition(baseComposition));
 
-        var compilerComposition = DialectCompositionTestOverrides.WithOnlyBackend(baseComposition, resolver, "compiler");
+        var compilerComposition = DialectCompositionTestOverrides.WithOnlyBackend(baseComposition, resolver, "cil");
         var interpreterComposition = DialectCompositionTestOverrides.WithOnlyBackend(baseComposition, resolver, "interpreter");
         if (!compilerComposition.IsSuccess)
             Thrower.InvalidOpEx(FormatComposition(compilerComposition));
@@ -32,7 +32,7 @@ public static class BackendParityInfrastructure
         using var compilerHost = workflow.CreateHost(compilerComposition);
         using var interpreterHost = workflow.CreateHost(interpreterComposition);
 
-        var compilerResult = ExecuteHostSafely(compilerHost, code, "compiler");
+        var compilerResult = ExecuteHostSafely(compilerHost, code, "cil");
         var interpreterResult = ExecuteHostSafely(interpreterHost, code, "interpreter");
         return (compilerResult, interpreterResult);
     }

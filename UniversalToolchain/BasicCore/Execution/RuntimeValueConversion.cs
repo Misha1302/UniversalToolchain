@@ -1,3 +1,4 @@
+using DotnetHelper;
 using System.Globalization;
 
 namespace BasicCore.Execution;
@@ -72,6 +73,10 @@ public sealed class RuntimeValueConversionService : IRuntimeValueConversionServi
         {
             if (effectiveTarget.IsEnum)
                 return ConvertEnum(value, sourceType, effectiveTarget);
+
+            var userDefinedConversion = UserDefinedConversionResolver.Find(sourceType, effectiveTarget);
+            if (userDefinedConversion != null)
+                return userDefinedConversion.Invoke(null, [value]);
 
             if (WouldLosePrecision(value, sourceType, effectiveTarget))
             {

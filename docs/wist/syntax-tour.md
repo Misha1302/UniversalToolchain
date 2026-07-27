@@ -171,7 +171,7 @@ Each syntax feature is introduced by one or more modules. Modules register lexer
 - Trying to use variables in a dialect that omits `Variables` or `Identifier`.
 - Trying to use loops in a dialect that omits `Loops`.
 - Treating the parenthesized `while` condition examples as the only valid form.
-- Using `compiler` mode with a dialect that only exposes `interpreter`.
+- Using `cil` mode with a dialect that only exposes `interpreter`.
 - Assuming restricted dialects are hardened sandboxes. They constrain composition, but process isolation is still required for untrusted execution.
 
 ## Next

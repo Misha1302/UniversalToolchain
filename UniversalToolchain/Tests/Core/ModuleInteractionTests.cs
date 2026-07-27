@@ -8,7 +8,7 @@ public class ModuleInteractionTests
     private const string DialectText = """
                                        dialect ModuleInteraction
                                        use Arithmetic,Numbers,CSharpInterop,Identifier,Scopes,Whitespaces
-                                       backend compiler,interpreter
+                                       backend cil,interpreter
                                        """;
 
     [Test]

@@ -26,6 +26,16 @@ public class BasicCoreLifecycleContractsTests
     }
 
     [Test]
+    public void Run_DoesNotReplaceExplicitlyPreparedExecution()
+    {
+        var core = CreateCore();
+        core.PrepareToRun("prepared-program");
+
+        Assert.That(core.Run("one-shot-program"), Is.EqualTo("one-shot-program"));
+        Assert.That(core.RunPrepared(), Is.EqualTo("prepared-program"));
+    }
+
+    [Test]
     public void RunPrepared_WithoutPrepareToRun_ShouldThrowInvalidOperationException()
     {
         var core = CreateCore();

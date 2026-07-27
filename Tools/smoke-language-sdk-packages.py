@@ -8,6 +8,7 @@ import subprocess
 import tempfile
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from xml.sax.saxutils import escape
 
 
 def run(command: list[str], *, cwd: Path | None = None, env: dict[str, str] | None = None) -> None:
@@ -30,13 +31,8 @@ def project_version(project: Path) -> str:
     return value
 
 
-def restore_args(package_dir: Path, config_file: str | None) -> list[str]:
-    result = ["--source", str(package_dir)]
-    if config_file:
-        result += ["--configfile", config_file]
-    else:
-        result += ["--source", "https://api.nuget.org/v3/index.json"]
-    return result
+def restore_args(config_file: Path) -> list[str]:
+    return ["--configfile", str(config_file)]
 
 
 def main() -> None:
@@ -44,6 +40,10 @@ def main() -> None:
     parser.add_argument("--root", type=Path, default=Path.cwd())
     parser.add_argument("--packages", type=Path, default=Path("artifacts/packages"))
     parser.add_argument("--dotnet", default=os.environ.get("DOTNET", "dotnet"))
+    parser.add_argument(
+        "--dependency-source",
+        default=os.environ.get("WIST_DEPENDENCY_SOURCE", "https://api.nuget.org/v3/index.json"),
+    )
     args = parser.parse_args()
 
     root = args.root.resolve()
@@ -56,13 +56,32 @@ def main() -> None:
     if not template_package.is_file():
         raise RuntimeError(f"Template package not found: {template_package}")
 
-    env = os.environ.copy()
-    env.setdefault("DOTNET_CLI_TELEMETRY_OPTOUT", "1")
-    env.setdefault("DOTNET_NOLOGO", "1")
-    config_file = env.get("NUGET_CONFIG")
-
     with tempfile.TemporaryDirectory(prefix="ut-language-sdk-smoke-") as temporary:
         temp = Path(temporary)
+        config_file = temp / "NuGet.Config"
+        config_file.write_text(
+            "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
+            "<configuration><packageSources><clear />"
+            f"<add key=\"release-packages\" value=\"{escape(str(package_dir))}\" />"
+            f"<add key=\"dependencies\" value=\"{escape(args.dependency_source)}\" />"
+            "</packageSources><config>"
+            f"<add key=\"globalPackagesFolder\" value=\"{escape(str(temp / 'packages'))}\" />"
+            "<add key=\"signatureValidationMode\" value=\"accept\" />"
+            "</config></configuration>\n",
+            encoding="utf-8",
+        )
+        env = os.environ.copy()
+        env.update(
+            {
+                "DOTNET_CLI_HOME": str(temp / "dotnet-home"),
+                "NUGET_PACKAGES": str(temp / "packages"),
+                "NUGET_HTTP_CACHE_PATH": str(temp / "http-cache"),
+                "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+                "DOTNET_NOLOGO": "1",
+                "DOTNET_SKIP_FIRST_TIME_EXPERIENCE": "1",
+                "NuGetAudit": "false",
+            }
+        )
         hive = temp / "template-hive"
         generated = temp / "Contoso.RuleLanguage"
         run([
@@ -92,7 +111,7 @@ def main() -> None:
             "--disable-parallel",
             "--disable-build-servers",
             "-p:NuGetAudit=false",
-            *restore_args(package_dir, config_file),
+            *restore_args(config_file),
         ], env=env)
         run([
             args.dotnet,
@@ -175,7 +194,7 @@ Console.WriteLine("cross-package-consumer: 42");
             "--disable-parallel",
             "--disable-build-servers",
             "-p:NuGetAudit=false",
-            *restore_args(package_dir, config_file),
+            *restore_args(config_file),
         ], env=env)
         run([
             args.dotnet,

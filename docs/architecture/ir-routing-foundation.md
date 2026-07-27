@@ -229,6 +229,5 @@ build traverses it in parallel. `Directory.Build.props` therefore sets
 
 This is a build-system workaround only. It does not change runtime references or
 IR routing behavior. New SSA/AIR projects should still declare every project
-whose public types they consume directly; legacy projects may continue to rely on
-their existing transitive-reference behavior until they are cleaned up in a
-separate compatibility pass.
+whose public types they consume directly; projects with existing transitive-reference behavior may keep it temporarily
+until their direct public-type dependencies are declared in a separate cleanup.

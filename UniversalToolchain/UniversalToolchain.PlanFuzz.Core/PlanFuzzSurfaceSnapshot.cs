@@ -52,39 +52,6 @@ public sealed class PlanFuzzSurfaceSnapshot
             Thrower.Argument(nameof(selectedOwnerIds), "A complete activation trace requires at least one selected owner.");
     }
 
-    /// <summary>
-    /// Legacy schema-v3 compatibility constructor. Legacy evidence remains readable but is not
-    /// upgraded to the current owner-domain evidence contract or validated as current proof.
-    /// </summary>
-    [Obsolete("Use the schema-v4 constructor with explicit owner sets and trace status.")]
-    public PlanFuzzSurfaceSnapshot(
-        IEnumerable<string>? selectedSurfaceIds,
-        IEnumerable<string>? excludedSurfaceIds,
-        IEnumerable<string>? declaredIndependentSurfaceIds,
-        IEnumerable<string>? activatedOwnerIds,
-        bool activationTraceComplete,
-        string traceKind,
-        string routeIdentity)
-    {
-        if (string.IsNullOrWhiteSpace(traceKind))
-            Thrower.Argument(nameof(traceKind), "Surface trace kind must not be empty.");
-        if (string.IsNullOrWhiteSpace(routeIdentity))
-            Thrower.Argument(nameof(routeIdentity), "Surface route identity must not be empty.");
-
-        EvidenceContractVersion = 1;
-        SelectedSurfaceIds = LegacySnapshot(selectedSurfaceIds);
-        SelectedOwnerIds = [];
-        ExcludedOwnerIds = LegacySnapshot(excludedSurfaceIds);
-        DeclaredIndependentSurfaceIds = LegacySnapshot(declaredIndependentSurfaceIds);
-        DeclaredIndependentOwnerIds = [];
-        ActivatedOwnerIds = LegacySnapshot(activatedOwnerIds);
-        ActivationTraceStatus = activationTraceComplete
-            ? PlanFuzzActivationTraceStatus.Complete
-            : PlanFuzzActivationTraceStatus.Partial;
-        TraceKind = traceKind.Trim();
-        RouteIdentity = routeIdentity.Trim();
-    }
-
     public int EvidenceContractVersion { get; }
     public IReadOnlyList<string> SelectedSurfaceIds { get; }
     public IReadOnlyList<string> SelectedOwnerIds { get; }
@@ -95,12 +62,6 @@ public sealed class PlanFuzzSurfaceSnapshot
     public PlanFuzzActivationTraceStatus ActivationTraceStatus { get; }
     public string TraceKind { get; }
     public string RouteIdentity { get; }
-
-    [Obsolete("Use ExcludedOwnerIds. Schema v3 used a mixed-domain name.")]
-    public IReadOnlyList<string> ExcludedSurfaceIds => ExcludedOwnerIds;
-
-    [Obsolete("Use ActivationTraceStatus.")]
-    public bool ActivationTraceComplete => ActivationTraceStatus == PlanFuzzActivationTraceStatus.Complete;
 
     private static IReadOnlyList<string> Snapshot(IEnumerable<string> values, string parameterName)
     {
@@ -118,14 +79,6 @@ public sealed class PlanFuzzSurfaceSnapshot
         Array.Sort(snapshot, StringComparer.Ordinal);
         return new ReadOnlyCollection<string>(snapshot);
     }
-
-    private static IReadOnlyList<string> LegacySnapshot(IEnumerable<string>? values) =>
-        new ReadOnlyCollection<string>((values ?? [])
-            .Where(static value => !string.IsNullOrWhiteSpace(value))
-            .Select(static value => value.Trim())
-            .Distinct(StringComparer.Ordinal)
-            .OrderBy(static value => value, StringComparer.Ordinal)
-            .ToArray());
 
     private static void EnsureSubset(
         IEnumerable<string> subset,

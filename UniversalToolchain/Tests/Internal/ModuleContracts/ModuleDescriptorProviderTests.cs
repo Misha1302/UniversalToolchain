@@ -130,12 +130,10 @@ public sealed class ModuleDescriptorProviderTests
             ModuleContractPipelineProfiles.StrictEnforced.EnforcementPolicy,
             new ModuleContractSelectionBuilder());
 
-        var report = provider.Build([new UndeclaredFrontendModule()], []);
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            provider.Build([new UndeclaredFrontendModule()], []));
 
-        Assert.That(report, Is.Not.Null);
-        Assert.That(
-            report!.Diagnostics.Select(static x => x.Code),
-            Does.Contain(ModuleContractDiagnosticCodes.NewModuleMissingDescriptor));
+        Assert.That(exception!.Message, Does.Contain("must declare DialectRuntimeExportAttribute"));
     }
 
     private sealed class UndeclaredFrontendModule : IFrontendCoreModule;

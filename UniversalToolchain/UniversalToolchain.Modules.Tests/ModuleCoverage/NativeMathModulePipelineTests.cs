@@ -68,13 +68,13 @@ public class NativeMathModulePipelineTests
     {
         using var h = new ModulePipelineTestHelper();
 
-        var universalComposition = h.Compose(_universalModules, backends: ["compiler", "interpreter"]);
+        var universalComposition = h.Compose(_universalModules, backends: ["cil", "interpreter"]);
         Assert.That(
             universalComposition.IsSuccess,
             Is.True,
             "Universal profile composition failed: " + string.Join("\n", universalComposition.SemanticDiagnostics.Concat(universalComposition.ResolutionDiagnostics).Select(static d => d.Message)));
 
-        var nativeComposition = h.Compose(_nativeModules, backends: ["compiler", "interpreter"]);
+        var nativeComposition = h.Compose(_nativeModules, backends: ["cil", "interpreter"]);
         Assert.That(
             nativeComposition.IsSuccess,
             Is.True,

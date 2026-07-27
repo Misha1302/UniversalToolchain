@@ -5,4 +5,4 @@ public sealed record FileDialectRuntimeComponentEntry(
     string CanonicalAlias,
     IReadOnlyList<string> Aliases,
     string ComponentId,
-    FileRuntimeComponentActivationEntry? Activation = null);
+    FileRuntimeComponentActivationEntry Activation);

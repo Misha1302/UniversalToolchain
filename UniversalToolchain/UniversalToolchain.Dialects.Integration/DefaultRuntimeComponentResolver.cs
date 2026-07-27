@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Reflection;
 using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
@@ -7,9 +6,6 @@ namespace UniversalToolchain.Dialects.Integration;
 
 public sealed class DefaultRuntimeComponentResolver : IRuntimeComponentResolver
 {
-    private readonly ConcurrentDictionary<string, Lazy<IReadOnlyDictionary<RuntimeComponentId, RuntimeComponentExportDescriptor>>>
-        _assemblyComponentIndexCache = new(StringComparer.Ordinal);
-
     private readonly IRuntimeAssemblyTypeLoader _assemblyTypeLoader;
 
     public DefaultRuntimeComponentResolver(IRuntimeAssemblyLoadStrategy assemblyLoadStrategy)
@@ -19,26 +15,17 @@ public sealed class DefaultRuntimeComponentResolver : IRuntimeComponentResolver
 
     public DefaultRuntimeComponentResolver(IRuntimeAssemblyTypeLoader assemblyTypeLoader)
     {
-        assemblyTypeLoader = assemblyTypeLoader.ArgNotNull();
-
-        _assemblyTypeLoader = assemblyTypeLoader;
+        _assemblyTypeLoader = assemblyTypeLoader.ArgNotNull();
     }
 
     public RuntimeComponentDescriptor Resolve(RuntimeComponentManifestEntry entry)
     {
         entry = entry.ArgNotNull();
-
-        if (entry.Activation != null)
-            return ResolveExactActivation(entry);
-
-        return ResolveLegacyScannedActivation(entry);
-    }
-
-    private RuntimeComponentDescriptor ResolveExactActivation(RuntimeComponentManifestEntry entry)
-    {
-        var activationTypeReference = entry.Activation!.ActivationType;
-        var assemblySimpleName = ResolveAssemblySimpleName(activationTypeReference.AssemblySimpleName, entry.AssemblySimpleName);
-        var type = _assemblyTypeLoader.LoadType(assemblySimpleName, activationTypeReference.TypeFullName);
+        var activation = entry.Activation ?? Thrower.InvalidOpEx<RuntimeComponentActivationInfo>(
+            $"Runtime component '{entry.ComponentId}' must declare exact activation metadata.");
+        var type = _assemblyTypeLoader.LoadType(
+            activation.ActivationType.AssemblySimpleName,
+            activation.ActivationType.TypeFullName);
         var export = type.GetCustomAttribute<DialectRuntimeExportAttribute>(false);
         if (export == null)
             Thrower.InvalidOpEx(
@@ -46,103 +33,59 @@ public sealed class DefaultRuntimeComponentResolver : IRuntimeComponentResolver
 
         var descriptor = CreateExportDescriptor(type, export);
         ValidateResolvedComponent(entry, descriptor);
-
-        return CreateResolvedDescriptor(entry, descriptor);
-    }
-
-    private RuntimeComponentDescriptor ResolveLegacyScannedActivation(RuntimeComponentManifestEntry entry)
-    {
-        var index = GetAssemblyComponentIndex(entry.AssemblySimpleName);
-        if (index.TryGetValue(entry.ComponentId, out var descriptor))
-        {
-            ValidateResolvedComponent(entry, descriptor);
-            return CreateResolvedDescriptor(entry, descriptor);
-        }
-
-        return Thrower.InvalidOpEx<RuntimeComponentDescriptor>(
-            $"Runtime component '{entry.ComponentId}' was not found in assembly '{entry.AssemblySimpleName}'.");
-    }
-
-    private IReadOnlyDictionary<RuntimeComponentId, RuntimeComponentExportDescriptor> GetAssemblyComponentIndex(string assemblySimpleName)
-    {
-        var lazy = _assemblyComponentIndexCache.GetOrAdd(
-            assemblySimpleName,
-            static (name, resolver) => new Lazy<IReadOnlyDictionary<RuntimeComponentId, RuntimeComponentExportDescriptor>>(
-                () => resolver.BuildAssemblyComponentIndex(name),
-                LazyThreadSafetyMode.ExecutionAndPublication),
-            this);
-
-        return lazy.Value;
-    }
-
-    private IReadOnlyDictionary<RuntimeComponentId, RuntimeComponentExportDescriptor> BuildAssemblyComponentIndex(string assemblySimpleName)
-    {
-        var assembly = _assemblyTypeLoader.LoadAssembly(assemblySimpleName);
-        var descriptors = new Dictionary<RuntimeComponentId, RuntimeComponentExportDescriptor>();
-
-        foreach (var type in GetLoadableTypes(assembly))
-        {
-            var export = type.GetCustomAttribute<DialectRuntimeExportAttribute>(false);
-            if (export == null)
-                continue;
-
-            var descriptor = CreateExportDescriptor(type, export);
-            if (!descriptors.TryAdd(descriptor.Id, descriptor))
-                Thrower.InvalidOpEx("Duplicate runtime component id detected during assembly component indexing.");
-        }
-
-        return descriptors;
-    }
-
-    private static IEnumerable<Type> GetLoadableTypes(Assembly assembly)
-    {
-        try
-        {
-            return assembly.GetTypes();
-        }
-        catch (ReflectionTypeLoadException exception)
-        {
-            return exception.Types.Where(static type => type != null).Cast<Type>();
-        }
-    }
-
-    private static RuntimeComponentExportDescriptor CreateExportDescriptor(Type type, DialectRuntimeExportAttribute export)
-    {
-        var kind = RuntimeComponentKindCodec.Parse(export.ComponentKind, type.AssemblyQualifiedName ?? type.Name);
-        var canonicalAlias = export.CanonicalAlias;
-        var id = RuntimeComponentIdFactory.Create(kind, canonicalAlias);
-        return new RuntimeComponentExportDescriptor(id, kind, canonicalAlias, type);
-    }
-
-    private static void ValidateResolvedComponent(RuntimeComponentManifestEntry entry, RuntimeComponentExportDescriptor descriptor)
-    {
-        if (descriptor.Kind != entry.Kind)
-            Thrower.InvalidOpEx(
-                $"Runtime manifest entry '{entry.ComponentId}' resolves to type '{GetTypeName(descriptor.ActivationType)}', but the exported component kind is '{RuntimeComponentKindCodec.Format(descriptor.Kind)}' " +
-                $"instead of '{RuntimeComponentKindCodec.Format(entry.Kind)}'.");
-
-        if (!string.Equals(descriptor.CanonicalAlias, entry.CanonicalAlias, StringComparison.Ordinal))
-            Thrower.InvalidOpEx(
-                $"Runtime manifest entry '{entry.ComponentId}' resolves to type '{GetTypeName(descriptor.ActivationType)}', but the exported canonical alias is '{descriptor.CanonicalAlias}' " +
-                $"instead of '{entry.CanonicalAlias}'.");
-    }
-
-    private static RuntimeComponentDescriptor CreateResolvedDescriptor(
-        RuntimeComponentManifestEntry entry,
-        RuntimeComponentExportDescriptor descriptor) =>
-        new(
+        ValidateAliases(entry, type);
+        return new RuntimeComponentDescriptor(
             entry.ComponentId,
             entry.Kind,
             entry.CanonicalAlias,
             entry.Aliases,
             descriptor.ActivationType);
+    }
+
+    private static RuntimeComponentExportDescriptor CreateExportDescriptor(Type type, DialectRuntimeExportAttribute export)
+    {
+        var kind = RuntimeComponentKindCodec.Parse(export.ComponentKind, type.AssemblyQualifiedName ?? type.Name);
+        return new RuntimeComponentExportDescriptor(
+            RuntimeComponentIdFactory.Create(kind, export.CanonicalAlias),
+            kind,
+            export.CanonicalAlias,
+            type);
+    }
+
+    private static void ValidateResolvedComponent(RuntimeComponentManifestEntry entry, RuntimeComponentExportDescriptor descriptor)
+    {
+        if (descriptor.Id != entry.ComponentId)
+            Thrower.InvalidOpEx(
+                $"Runtime activation type '{GetTypeName(descriptor.ActivationType)}' exports component id '{descriptor.Id}', not manifest id '{entry.ComponentId}'.");
+        if (descriptor.Kind != entry.Kind)
+            Thrower.InvalidOpEx(
+                $"Runtime manifest entry '{entry.ComponentId}' resolves to type '{GetTypeName(descriptor.ActivationType)}', but the exported component kind is '{RuntimeComponentKindCodec.Format(descriptor.Kind)}' instead of '{RuntimeComponentKindCodec.Format(entry.Kind)}'.");
+        if (!string.Equals(descriptor.CanonicalAlias, entry.CanonicalAlias, StringComparison.Ordinal))
+            Thrower.InvalidOpEx(
+                $"Runtime manifest entry '{entry.ComponentId}' resolves to type '{GetTypeName(descriptor.ActivationType)}', but the exported canonical alias is '{descriptor.CanonicalAlias}' instead of '{entry.CanonicalAlias}'.");
+    }
+
+    private static void ValidateAliases(RuntimeComponentManifestEntry entry, Type activationType)
+    {
+        var declaredAliases = activationType
+            .GetCustomAttributes<DialectRuntimeAliasAttribute>(false)
+            .Select(static attribute => attribute.Alias?.Trim())
+            .Where(static alias => !string.IsNullOrWhiteSpace(alias))
+            .Select(static alias => alias!)
+            .Where(alias => !string.Equals(alias, entry.CanonicalAlias, StringComparison.Ordinal))
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(static alias => alias, StringComparer.Ordinal)
+            .ToArray();
+
+        if (!declaredAliases.SequenceEqual(entry.Aliases, StringComparer.Ordinal))
+        {
+            Thrower.InvalidOpEx(
+                $"Runtime manifest aliases for component '{entry.ComponentId}' do not match aliases declared by activation type '{GetTypeName(activationType)}'. " +
+                $"Manifest: [{string.Join(", ", entry.Aliases)}]; assembly: [{string.Join(", ", declaredAliases)}].");
+        }
+    }
 
     private static string GetTypeName(Type type) => type.FullName ?? type.Name;
-
-    private static string ResolveAssemblySimpleName(string assemblySimpleName, string fallbackAssemblySimpleName) =>
-        string.Equals(assemblySimpleName, RuntimeAssemblyIdentity.UnspecifiedAssemblySimpleName, StringComparison.Ordinal)
-            ? fallbackAssemblySimpleName
-            : assemblySimpleName;
 
     private sealed record RuntimeComponentExportDescriptor(
         RuntimeComponentId Id,

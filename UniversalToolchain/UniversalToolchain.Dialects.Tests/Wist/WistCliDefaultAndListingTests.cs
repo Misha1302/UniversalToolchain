@@ -20,13 +20,13 @@ public sealed class WistCliDefaultAndListingTests
         var output = WistCliRuntimeListingFormatter.Format(new StaticCatalog(
             [Entry(RuntimeComponentKind.FrontendModule, "Arithmetic", [], "frontend.arithmetic", "ArithmeticModule")],
             [],
-            [Entry(RuntimeComponentKind.Backend, "cil", ["compiler"], "backend.cil", "UniversalToolchain.Dialects.Wist")]));
+            [Entry(RuntimeComponentKind.Backend, "cil", [], "backend.cil", "UniversalToolchain.Dialects.Wist")]));
 
         Assert.Multiple(() =>
         {
             Assert.That(output, Does.Contain("Modules:"));
             Assert.That(output, Does.Contain("Arithmetic | id: frontend.arithmetic | assembly: ArithmeticModule"));
-            Assert.That(output, Does.Contain("cil | aliases: compiler | id: backend.cil | assembly: UniversalToolchain.Dialects.Wist"));
+            Assert.That(output, Does.Contain("cil | id: backend.cil | assembly: UniversalToolchain.Dialects.Wist"));
         });
     }
 
@@ -171,7 +171,8 @@ public sealed class WistCliDefaultAndListingTests
         IReadOnlyList<string> aliases,
         string componentId,
         string assemblySimpleName)
-        => new(kind, canonicalAlias, aliases, new RuntimeComponentId(componentId), assemblySimpleName);
+        => new(kind, canonicalAlias, aliases, new RuntimeComponentId(componentId), assemblySimpleName,
+            new RuntimeComponentActivationInfo(new RuntimeTypeReference(assemblySimpleName, "Test.Activation.Type")));
 
     private sealed class StaticCatalog(
         IReadOnlyList<RuntimeComponentManifestEntry> modules,

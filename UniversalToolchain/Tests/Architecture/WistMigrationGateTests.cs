@@ -1,163 +1,235 @@
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using UniversalToolchain.Dialects.Wist.Presets;
+using UniversalToolchain.FeatureSdk;
+using UniversalToolchain.Language.Abstractions;
+using UniversalToolchain.Wist.LanguagePack;
 
 namespace Tests.Architecture;
 
 [TestFixture]
 public sealed partial class WistMigrationGateTests
 {
-    private static readonly HashSet<string> AllowedStatuses =
-    [
-        "Missing",
-        "Partial",
-        "Equivalent",
-        "EquivalentWithKnownDifferences",
-        "Deprecated",
-        "Removed"
-    ];
-
     [Test]
-    public void ParityMatrix_CoversEveryProductionRuntimeExportAndShippedPreset()
+    public void ParityMatrix_MapsTypedFeaturesAndInfrastructureOwners()
     {
         var root = FindRepositoryRoot();
         using var document = JsonDocument.Parse(File.ReadAllText(Path.Combine(root, "WIST_PARITY_MATRIX.json")));
         var matrix = document.RootElement;
+        var descriptor = new WistLanguageFeaturePackage().Descriptor;
+        var violations = new List<string>();
 
         Assert.Multiple(() =>
         {
-            Assert.That(matrix.GetProperty("genericPackPositioning").GetString(), Is.EqualTo("Wist subset alpha"));
-            Assert.That(matrix.GetProperty("replacementClaimAllowed").GetBoolean(), Is.False);
+            Assert.That(
+                matrix.GetProperty("genericPackPositioning").GetString(),
+                Is.EqualTo("Canonical typed Wist authoring package over the canonical Wist dialect runtime"));
+            Assert.That(matrix.GetProperty("replacementClaimAllowed").GetBoolean(), Is.True);
+            Assert.That(
+                matrix.GetProperty("replacementGate").GetProperty("scope").GetString(),
+                Is.EqualTo("shipped presets and typed runtime selection"));
         });
 
-        var moduleAliases = ReadStringSet(matrix.GetProperty("modules"), "legacyAlias");
-        var optimizerAliases = ReadStringSet(matrix.GetProperty("optimizers"), "legacyAlias");
-        var backendIds = ReadStringSet(matrix.GetProperty("backends"), "typedBackendId");
-        var exported = ScanProductionRuntimeExports(root);
-        var violations = new List<string>();
+        var featureById = descriptor.Features.ToDictionary(static feature => feature.Id);
+        var contributionById = descriptor.Contributions.ToDictionary(static contribution => contribution.Id);
+        var typedModuleAliases = descriptor.Contributions
+            .Where(static contribution => contribution.Slot == LanguageSlots.FrontendSyntax)
+            .Select(static contribution => contribution.Metadata.GetValueOrDefault("wist.moduleAlias"))
+            .Where(static alias => !string.IsNullOrWhiteSpace(alias))
+            .Select(static alias => alias!)
+            .ToHashSet(StringComparer.Ordinal);
+        var typedOptimizerAliases = descriptor.Contributions
+            .Where(static contribution => contribution.Slot == LanguageSlots.Optimizers)
+            .Select(static contribution => contribution.Metadata.GetValueOrDefault("wist.optimizerAlias"))
+            .Where(static alias => !string.IsNullOrWhiteSpace(alias))
+            .Select(static alias => alias!)
+            .ToHashSet(StringComparer.Ordinal);
 
-        foreach (var export in exported)
+        var matrixModuleAliases = ReadStringSet(matrix.GetProperty("modules"), "runtimeAlias");
+        var matrixInfrastructureAliases = ReadStringSet(matrix.GetProperty("infrastructureModules"), "runtimeAlias");
+        var matrixOptimizerAliases = ReadStringSet(matrix.GetProperty("optimizers"), "runtimeAlias");
+        var matrixBackendIds = ReadStringSet(matrix.GetProperty("backends"), "typedBackendId");
+
+        if (!matrixModuleAliases.SetEquals(typedModuleAliases))
+            violations.Add("Parity matrix module aliases differ from typed Wist module contributions.");
+        if (!matrixOptimizerAliases.SetEquals(typedOptimizerAliases))
+            violations.Add("Parity matrix optimizer aliases differ from typed Wist optimizer contributions.");
+        if (!matrixBackendIds.SetEquals(new WistLanguageRuntimeProvider().SupportedBackends.Select(static backend => backend.Value)))
+            violations.Add("Parity matrix backend IDs differ from the Wist runtime provider.");
+
+        ValidateFeatureMappings(
+            matrix.GetProperty("modules"),
+            "wist.moduleAlias",
+            featureById,
+            contributionById,
+            violations);
+        ValidateFeatureMappings(
+            matrix.GetProperty("optimizers"),
+            "wist.optimizerAlias",
+            featureById,
+            contributionById,
+            violations);
+
+        var exports = ScanProductionRuntimeExports(root);
+        var expectedInfrastructureAliases = exports
+            .Where(static export => export.Kind == "FrontendModule")
+            .Select(static export => export.Alias)
+            .Where(alias => !typedModuleAliases.Contains(alias))
+            .ToHashSet(StringComparer.Ordinal);
+        if (!matrixInfrastructureAliases.SetEquals(expectedInfrastructureAliases))
+            violations.Add("Parity matrix infrastructure modules differ from non-selectable production runtime exports.");
+
+        foreach (var entry in matrix.GetProperty("infrastructureModules").EnumerateArray())
+        {
+            if (string.IsNullOrWhiteSpace(entry.GetProperty("typedOwner").GetString()))
+                violations.Add($"Infrastructure module '{entry.GetProperty("runtimeAlias").GetString()}' has no typed owner.");
+        }
+
+        foreach (var export in exports)
         {
             var covered = export.Kind switch
             {
-                "FrontendModule" => moduleAliases.Contains(export.Alias),
-                "Optimizer" => optimizerAliases.Contains(export.Alias),
-                "Backend" => backendIds.Contains(export.Alias),
+                "FrontendModule" => matrixModuleAliases.Contains(export.Alias) || matrixInfrastructureAliases.Contains(export.Alias),
+                "Optimizer" => matrixOptimizerAliases.Contains(export.Alias),
+                "Backend" => matrixBackendIds.Contains(export.Alias),
                 _ => true
             };
             if (!covered)
                 violations.Add($"{export.Kind} '{export.Alias}' from {export.RelativePath} is missing from WIST_PARITY_MATRIX.json");
         }
 
-        var presetIds = ReadStringSet(matrix.GetProperty("presets"), "id");
-        foreach (var preset in WistShippedDialectPresets.All)
+        var matrixPresetIds = ReadStringSet(matrix.GetProperty("presets"), "id");
+        var shippedPresetIds = WistShippedDialectPresets.All.Select(static x => x.Id).ToHashSet(StringComparer.Ordinal);
+        var typedPresetIds = WistLanguageDefinitions.PresetIds.ToHashSet(StringComparer.Ordinal);
+        if (!matrixPresetIds.SetEquals(shippedPresetIds))
+            violations.Add("Parity matrix preset IDs differ from shipped dialect presets.");
+        if (!matrixPresetIds.SetEquals(typedPresetIds))
+            violations.Add("Parity matrix preset IDs differ from typed Wist definitions.");
+
+        var availableEvidenceTests = ScanNUnitTestNames(root);
+        var allowedStatuses = ReadStringSet(matrix.GetProperty("statusVocabulary"));
+        var expectedStatuses = new Dictionary<string, string>(StringComparer.Ordinal)
         {
-            if (!presetIds.Contains(preset.Id))
-                violations.Add($"Shipped preset '{preset.Id}' is missing from WIST_PARITY_MATRIX.json");
-        }
-
-        Assert.That(violations, Is.Empty);
-    }
-
-    [Test]
-    public void ParityMatrix_EquivalentPresetRequiresExecutableEquivalenceTest()
-    {
-        var root = FindRepositoryRoot();
-        using var document = JsonDocument.Parse(File.ReadAllText(Path.Combine(root, "WIST_PARITY_MATRIX.json")));
-        var violations = new List<string>();
-
-        foreach (var sectionName in new[] { "modules", "optimizers", "backends", "presets" })
+            ["modules"] = "SelectionEquivalent",
+            ["infrastructureModules"] = "InfrastructureEquivalent",
+            ["optimizers"] = "SelectionEquivalent",
+            ["backends"] = "ExecutableEquivalent",
+            ["presets"] = "ExecutableEquivalent"
+        };
+        foreach (var (sectionName, expectedStatus) in expectedStatuses)
         {
-            foreach (var entry in document.RootElement.GetProperty(sectionName).EnumerateArray())
+            foreach (var entry in matrix.GetProperty(sectionName).EnumerateArray())
             {
-                var status = entry.GetProperty("status").GetString() ?? string.Empty;
-                if (!AllowedStatuses.Contains(status))
-                    violations.Add($"{sectionName} contains unsupported status '{status}'.");
-
-                if (sectionName == "presets" && status is "Equivalent" or "EquivalentWithKnownDifferences")
+                var status = entry.GetProperty("status").GetString();
+                if (status == null || !allowedStatuses.Contains(status))
+                    violations.Add($"{sectionName} contains an unknown status '{status}'.");
+                if (status != expectedStatus)
+                    violations.Add($"{sectionName} must use status '{expectedStatus}', not '{status}'.");
+                var evidenceTests = entry.GetProperty("tests")
+                    .EnumerateArray()
+                    .Select(static test => test.GetString())
+                    .Where(static test => !string.IsNullOrWhiteSpace(test))
+                    .Select(static test => test!)
+                    .ToArray();
+                if (evidenceTests.Length == 0)
                 {
-                    var tests = entry.GetProperty("tests").EnumerateArray().Select(static x => x.GetString()).Where(static x => !string.IsNullOrWhiteSpace(x)).ToArray();
-                    if (tests.Length == 0)
-                        violations.Add($"Equivalent preset '{entry.GetProperty("id").GetString()}' has no executable equivalence test.");
+                    violations.Add($"{sectionName} contains an entry without evidence references.");
+                }
+                foreach (var evidenceTest in evidenceTests)
+                {
+                    if (!availableEvidenceTests.Contains(evidenceTest))
+                        violations.Add($"{sectionName} references missing NUnit evidence test '{evidenceTest}'.");
                 }
             }
         }
 
-        var allPresetsEquivalent = document.RootElement.GetProperty("presets").EnumerateArray()
-            .All(static entry => entry.GetProperty("status").GetString() is "Equivalent" or "EquivalentWithKnownDifferences");
-        var replacementAllowed = document.RootElement.GetProperty("replacementClaimAllowed").GetBoolean();
-        if (replacementAllowed != allPresetsEquivalent)
-            violations.Add("replacementClaimAllowed must exactly match shipped-preset parity completion.");
-
-        var markdown = File.ReadAllText(Path.Combine(root, "WIST_PARITY_MATRIX_RU.md"));
-        if (!markdown.Contains("Wist subset alpha", StringComparison.Ordinal) ||
-            !markdown.Contains("не полная замена", StringComparison.OrdinalIgnoreCase))
-        {
-            violations.Add("Public parity matrix must position the generic pack as Wist subset alpha, not a full replacement.");
-        }
-
         Assert.That(violations, Is.Empty);
+    }
+
+    private static void ValidateFeatureMappings(
+        JsonElement entries,
+        string aliasMetadataKey,
+        IReadOnlyDictionary<LanguageFeatureId, LanguageFeatureDescriptor> featureById,
+        IReadOnlyDictionary<LanguageContributionId, LanguageContributionDescriptor> contributionById,
+        ICollection<string> violations)
+    {
+        foreach (var entry in entries.EnumerateArray())
+        {
+            var runtimeAlias = entry.GetProperty("runtimeAlias").GetString()!;
+            var featureId = new LanguageFeatureId(entry.GetProperty("typedFeatureId").GetString()!);
+            if (!featureById.TryGetValue(featureId, out var feature))
+            {
+                violations.Add($"Runtime alias '{runtimeAlias}' references missing typed feature '{featureId.Value}'.");
+                continue;
+            }
+
+            var mappedAliases = feature.Contributions
+                .Where(contributionById.ContainsKey)
+                .Select(contributionId => contributionById[contributionId].Metadata.GetValueOrDefault(aliasMetadataKey))
+                .Where(static alias => !string.IsNullOrWhiteSpace(alias))
+                .ToHashSet(StringComparer.Ordinal);
+            if (!mappedAliases.Contains(runtimeAlias))
+            {
+                violations.Add(
+                    $"Typed feature '{featureId.Value}' does not select runtime alias '{runtimeAlias}' through '{aliasMetadataKey}'.");
+            }
+        }
     }
 
     [Test]
-    public void LegacyDeprecationRegistry_IsVersionedOwnedAndBlockedByParity()
+    public void RemovedLegacySurface_CannotReturn()
     {
         var root = FindRepositoryRoot();
-        using var registryDocument = JsonDocument.Parse(File.ReadAllText(Path.Combine(root, "LEGACY_DEPRECATION_REGISTRY.json")));
-        using var matrixDocument = JsonDocument.Parse(File.ReadAllText(Path.Combine(root, "WIST_PARITY_MATRIX.json")));
-        var entries = registryDocument.RootElement.GetProperty("entries").EnumerateArray().ToArray();
         var violations = new List<string>();
-        var ids = new HashSet<string>(StringComparer.Ordinal);
-        var symbols = new HashSet<string>(StringComparer.Ordinal);
-        var source = string.Join(
-            Environment.NewLine,
-            EnumerateProductionSources(root).Select(File.ReadAllText));
-
-        foreach (var entry in entries)
+        var removedPaths = new[]
         {
-            var id = Required(entry, "id", violations);
-            var symbol = Required(entry, "symbol", violations);
-            Required(entry, "owner", violations);
-            Required(entry, "replacement", violations);
-            Required(entry, "firstDeprecatedVersion", violations);
-            Required(entry, "warningAsErrorNotBefore", violations);
-            Required(entry, "removalNotBefore", violations);
-            Required(entry, "usageAssessment", violations);
-            Required(entry, "migrationGuide", violations);
-            Required(entry, "parityGate", violations);
-
-            if (id.Length != 0 && !ids.Add(id))
-                violations.Add($"Duplicate deprecation id '{id}'.");
-            if (symbol.Length != 0 && !symbols.Add(symbol))
-                violations.Add($"Duplicate deprecated symbol '{symbol}'.");
-            if (id.Length != 0 && !source.Contains(id, StringComparison.Ordinal))
-                violations.Add($"Deprecation id '{id}' is not present in a production [Obsolete] message.");
-            if (entry.GetProperty("exitCriteria").GetArrayLength() == 0)
-                violations.Add($"Deprecation entry '{id}' has no exit criteria.");
-            if (entry.GetProperty("status").GetString() == "Removed")
-                violations.Add($"Deprecation entry '{id}' is marked Removed before the parity gate is complete.");
+            "LEGACY_DEPRECATION_REGISTRY.json",
+            "MIGRATION_NOTES_RU.md",
+            "UniversalToolchain/BasicTypesExtensions/EnumGenerator.cs",
+            "UniversalToolchain/UniversalToolchain.Wist.LanguagePack/WistLegacyDialectAdapter.cs",
+            "UniversalToolchain/UniversalToolchain.Wist/WistBackend.cs",
+            "UniversalToolchain/UniversalToolchain.Wist/WistBackendAliases.cs",
+            "UniversalToolchain/UniversalToolchain.Wist/WistPreset.cs",
+            "UniversalToolchain/UniversalToolchain.Wist/WistPresetMapper.cs",
+            "docs/architecture/legacy-deprecation-gate.md",
+            "docs/migration/WIST_LEGACY_MIGRATION_RU.md"
+        };
+        foreach (var relativePath in removedPaths)
+        {
+            if (File.Exists(Path.Combine(root, relativePath.Replace('/', Path.DirectorySeparatorChar))))
+                violations.Add($"Removed legacy file returned: {relativePath}");
         }
 
-        var allPresetsEquivalent = matrixDocument.RootElement.GetProperty("presets").EnumerateArray()
-            .All(static entry => entry.GetProperty("status").GetString() is "Equivalent" or "EquivalentWithKnownDifferences");
-        if (!allPresetsEquivalent && entries.Any(static entry => entry.GetProperty("status").GetString() == "Removed"))
-            violations.Add("Legacy API cannot be removed while any shipped preset remains Partial or Missing.");
+        var prohibitedPatterns = new (string Name, Regex Pattern)[]
+        {
+            ("runtime-pack reference", new Regex(@"\bLanguageRuntimePackReference\b", RegexOptions.CultureInvariant)),
+            ("runtime-pack interface", new Regex(@"\bILanguageRuntimePack\b", RegexOptions.CultureInvariant)),
+            ("runtime-pack builder method", new Regex(@"\bUseRuntimePack\s*\(", RegexOptions.CultureInvariant)),
+            ("legacy dialect adapter", new Regex(@"\bWistLegacyDialectAdapter\b", RegexOptions.CultureInvariant)),
+            ("preset enum", new Regex(@"\bWistPreset\b", RegexOptions.CultureInvariant)),
+            ("backend enum", new Regex(@"\bWistBackend\b", RegexOptions.CultureInvariant)),
+            ("enum facade", new Regex(@"\bEnumGenerator\b", RegexOptions.CultureInvariant)),
+            ("legacy directive option", new Regex(@"\bEnableLegacyDirectiveDefinitions\b", RegexOptions.CultureInvariant)),
+            ("legacy contract profile", new Regex(@"\bStrictLegacyCompatible\b", RegexOptions.CultureInvariant)),
+            ("legacy bytecode option", new Regex(@"\bVerifyLegacyBytecodeOperationNames\b", RegexOptions.CultureInvariant)),
+            ("compiler backend alias attribute", new Regex(@"DialectRuntimeAlias\s*\(\s*""compiler""", RegexOptions.CultureInvariant)),
+            ("compiler backend alias literal", new Regex(@"""compiler""", RegexOptions.CultureInvariant)),
+            ("compiler PlanFuzz variant prefix", new Regex(@"\bcompiler\.(?:disabled|ssa-[a-z0-9-]+)\b", RegexOptions.CultureInvariant))
+        };
 
-        var migrationGuide = Path.Combine(root, "docs", "migration", "WIST_LEGACY_MIGRATION_RU.md");
-        if (!File.Exists(migrationGuide))
-            violations.Add("Wist legacy migration guide is missing.");
+        foreach (var path in EnumerateProductionSources(root))
+        {
+            var source = File.ReadAllText(path);
+            foreach (var (name, pattern) in prohibitedPatterns)
+            {
+                if (pattern.IsMatch(source))
+                    violations.Add($"{name} found in {NormalizePath(Path.GetRelativePath(root, path))}");
+            }
+        }
 
         Assert.That(violations, Is.Empty);
-    }
-
-    private static string Required(JsonElement element, string property, ICollection<string> violations)
-    {
-        if (!element.TryGetProperty(property, out var value) || string.IsNullOrWhiteSpace(value.GetString()))
-        {
-            violations.Add($"Required deprecation field '{property}' is missing or empty.");
-            return string.Empty;
-        }
-        return value.GetString()!;
     }
 
     private static HashSet<string> ReadStringSet(JsonElement array, string property) =>
@@ -166,6 +238,43 @@ public sealed partial class WistMigrationGateTests
             .Where(static value => !string.IsNullOrWhiteSpace(value))
             .Select(static value => value!)
             .ToHashSet(StringComparer.Ordinal);
+
+    private static HashSet<string> ReadStringSet(JsonElement array) =>
+        array.EnumerateArray()
+            .Select(static entry => entry.GetString())
+            .Where(static value => !string.IsNullOrWhiteSpace(value))
+            .Select(static value => value!)
+            .ToHashSet(StringComparer.Ordinal);
+
+    private static HashSet<string> ScanNUnitTestNames(string root)
+    {
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var path in Directory.EnumerateFiles(Path.Combine(root, "UniversalToolchain"), "*.cs", SearchOption.AllDirectories))
+        {
+            var normalized = NormalizePath(path);
+            if (normalized.Contains("/bin/", StringComparison.Ordinal)
+                || normalized.Contains("/obj/", StringComparison.Ordinal)
+                || !IsTestSourcePath(normalized))
+            {
+                continue;
+            }
+
+            var rootNode = CSharpSyntaxTree.ParseText(File.ReadAllText(path)).GetRoot();
+            foreach (var method in rootNode.DescendantNodes().OfType<MethodDeclarationSyntax>())
+            {
+                var isNUnitTest = method.AttributeLists
+                    .SelectMany(static list => list.Attributes)
+                    .Select(static attribute => attribute.Name.ToString())
+                    .Any(static name => name is "Test" or "TestCase" or "TestCaseSource"
+                                         || name.EndsWith(".Test", StringComparison.Ordinal)
+                                         || name.EndsWith(".TestCase", StringComparison.Ordinal)
+                                         || name.EndsWith(".TestCaseSource", StringComparison.Ordinal));
+                if (isNUnitTest)
+                    names.Add(method.Identifier.ValueText);
+            }
+        }
+        return names;
+    }
 
     private static IReadOnlyList<RuntimeExport> ScanProductionRuntimeExports(string root)
     {

@@ -182,7 +182,7 @@ The syntax exists only when the dialect selects the module:
 ```text
 dialect TextualAdditionDemo
 use Whitespaces,Numbers,Scopes,Arithmetic,TextualAddition
-backend compiler,interpreter
+backend cil,interpreter
 ```
 
 Without `TextualAddition`, `2 plus 3` should be rejected. This is part of the module contract, not an optional nicety.
@@ -202,13 +202,13 @@ public sealed class TextualAdditionModuleTests
     private const string TextualAdditionDialect = """
                                                  dialect TextualAdditionDemo
                                                  use Whitespaces,Numbers,Scopes,Arithmetic,TextualAddition
-                                                 backend compiler,interpreter
+                                                 backend cil,interpreter
                                                  """;
 
     private const string ArithmeticOnlyDialect = """
                                                 dialect ArithmeticOnlyDemo
                                                 use Whitespaces,Numbers,Scopes,Arithmetic
-                                                backend compiler,interpreter
+                                                backend cil,interpreter
                                                 """;
 
     [Test]

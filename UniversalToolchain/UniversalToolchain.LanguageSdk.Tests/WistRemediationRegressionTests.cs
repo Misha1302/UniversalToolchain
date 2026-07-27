@@ -51,7 +51,7 @@ public sealed class WistRemediationRegressionTests
                 transformation: new ArtifactTransformationDescriptor(air, output, 1),
                 backendInputContract: output),
             new(
-                WistContributionIds.LegacyRuntimeAdapter,
+                WistContributionIds.RuntimeProvider,
                 LanguageSlots.RuntimeProvider,
                 LanguageSlotMultiplicity.Single,
                 ContributionMergePolicy.RejectDuplicate,
@@ -67,7 +67,7 @@ public sealed class WistRemediationRegressionTests
                 LanguageSlots.Tooling,
                 metadata: new Dictionary<string, string>
                 {
-                    ["wist.moduleAlias"] = "Variables\nbackend compiler\nuse Comments"
+                    ["wist.moduleAlias"] = "Variables\nbackend cil\nuse Comments"
                 })
         };
         var package = new TestPackage(new LanguagePackageDescriptor(
@@ -180,7 +180,7 @@ public sealed class WistRemediationRegressionTests
                 plan,
                 new LanguageRuntimeProviderRegistry().AddProvider(new WistLanguageRuntimeProvider())));
 
-        Assert.That(exception!.Message, Does.Contain("expected manifest digest"));
+        Assert.That(exception!.Message, Does.Contain("not owned by the canonical Wist package"));
     }
 
     [TestCase("if 2 == 2 (1) else (2)", 1)]
@@ -245,6 +245,35 @@ public sealed class WistRemediationRegressionTests
         {
             Assert.That(genericResult?.GetType(), Is.EqualTo(legacyResult?.GetType()));
             Assert.That(genericResult?.ToString(), Is.EqualTo(legacyResult?.ToString()));
+        });
+    }
+
+
+    [TestCase(WistLanguageDefinitions.FullDefaultId)]
+    [TestCase(WistLanguageDefinitions.FullDefaultNativeId)]
+    [TestCase(WistLanguageDefinitions.FunctionCallsSafeMathId)]
+    [TestCase(WistLanguageDefinitions.MinimalArithmeticId)]
+    [TestCase(WistLanguageDefinitions.MinimalArithmeticGroupedId)]
+    [TestCase(WistLanguageDefinitions.MinimalArithmeticNativeId)]
+    [TestCase(WistLanguageDefinitions.PricingRestrictedId)]
+    [TestCase(WistLanguageDefinitions.SsaId)]
+    [TestCase(WistLanguageDefinitions.CompositionRestrictedId)]
+    public void ShippedPresets_CreateTypedRuntimeSessions(string presetId)
+    {
+        var packageRegistry = new LanguagePackageRegistry().AddPackage(new WistLanguageFeaturePackage());
+        var plan = new LanguageCompiler(packageRegistry)
+            .Compile(WistLanguageDefinitions.Create(presetId))
+            .GetRequiredPlan();
+
+        using var runtime = LanguageRuntime.Create(
+            plan,
+            new LanguageRuntimeProviderRegistry().AddProvider(new WistLanguageRuntimeProvider()));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(runtime, Is.Not.Null);
+            Assert.That(plan.Definition.Metadata["wist.preset"], Is.EqualTo(presetId));
+            Assert.That(plan.Definition.Backends, Is.Not.Empty);
         });
     }
 

@@ -20,14 +20,6 @@ public enum ContributionMergePolicy
 public sealed class ArtifactTransformationDescriptor
 {
     public ArtifactTransformationDescriptor(
-        LanguageArtifactKindId source,
-        LanguageArtifactKindId target,
-        int cost = 100)
-        : this(new LanguageArtifactContract(source), new LanguageArtifactContract(target), cost)
-    {
-    }
-
-    public ArtifactTransformationDescriptor(
         LanguageArtifactContract source,
         LanguageArtifactContract target,
         int cost = 100)
@@ -74,7 +66,6 @@ public sealed class LanguageContributionDescriptor
         ArtifactTransformationDescriptor? transformation = null,
         LanguageRuntimeProviderId? runtimeProviderId = null,
         LanguageVersion? runtimeProviderVersion = null,
-        IReadOnlyDictionary<BackendId, LanguageArtifactKindId>? runtimeInputs = null,
         int order = 0,
         IReadOnlyDictionary<string, string>? metadata = null,
         IReadOnlyDictionary<BackendId, LanguageArtifactContract>? runtimeInputContracts = null,
@@ -95,9 +86,7 @@ public sealed class LanguageContributionDescriptor
         Transformation = transformation;
         RuntimeProviderId = runtimeProviderId;
         RuntimeProviderVersion = runtimeProviderVersion;
-        RuntimeInputContracts = SnapshotRuntimeInputContracts(runtimeInputs, runtimeInputContracts);
-        RuntimeInputs = new ReadOnlyDictionary<BackendId, LanguageArtifactKindId>(
-            RuntimeInputContracts.ToDictionary(static pair => pair.Key, static pair => pair.Value.Kind));
+        RuntimeInputContracts = SnapshotRuntimeInputContracts(runtimeInputContracts);
         BackendInputContract = backendInputContract;
         BeforeContributions = Snapshot(beforeContributions);
         AfterContributions = Snapshot(afterContributions);
@@ -108,8 +97,8 @@ public sealed class LanguageContributionDescriptor
             throw new ArgumentException("A single-owner slot must reject duplicates or use an explicit replacement policy.", nameof(mergePolicy));
         if (runtimeProviderId.HasValue != runtimeProviderVersion.HasValue)
             throw new ArgumentException("Runtime provider ID and version must be declared together.", nameof(runtimeProviderVersion));
-        if (runtimeProviderId == null && RuntimeInputs.Count != 0)
-            throw new ArgumentException("Runtime inputs may be declared only by a runtime-provider contribution.", nameof(runtimeInputs));
+        if (runtimeProviderId == null && RuntimeInputContracts.Count != 0)
+            throw new ArgumentException("Runtime inputs may be declared only by a runtime-provider contribution.", nameof(runtimeInputContracts));
         if (backendInputContract != null && slot != LanguageSlots.Backends)
             throw new ArgumentException("A backend input contract may be declared only by a backend contribution.", nameof(backendInputContract));
         if (mergePolicy == ContributionMergePolicy.Decorate && transformation?.IsPass != true)
@@ -131,7 +120,6 @@ public sealed class LanguageContributionDescriptor
     public ArtifactTransformationDescriptor? Transformation { get; }
     public LanguageRuntimeProviderId? RuntimeProviderId { get; }
     public LanguageVersion? RuntimeProviderVersion { get; }
-    public IReadOnlyDictionary<BackendId, LanguageArtifactKindId> RuntimeInputs { get; }
     public IReadOnlyDictionary<BackendId, LanguageArtifactContract> RuntimeInputContracts { get; }
     public LanguageArtifactContract? BackendInputContract { get; }
     public IReadOnlyList<LanguageContributionId> BeforeContributions { get; }
@@ -143,22 +131,11 @@ public sealed class LanguageContributionDescriptor
         new ReadOnlyCollection<T>((values ?? []).Distinct().OrderBy(static x => x.ToString(), StringComparer.Ordinal).ToList());
 
     private static IReadOnlyDictionary<BackendId, LanguageArtifactContract> SnapshotRuntimeInputContracts(
-        IReadOnlyDictionary<BackendId, LanguageArtifactKindId>? legacyInputs,
         IReadOnlyDictionary<BackendId, LanguageArtifactContract>? typedInputs)
     {
-        if (legacyInputs != null && typedInputs != null)
-            throw new ArgumentException("Specify either runtimeInputs or runtimeInputContracts, not both.", nameof(typedInputs));
         var result = new Dictionary<BackendId, LanguageArtifactContract>();
-        if (typedInputs != null)
-        {
-            foreach (var pair in typedInputs)
-                result.Add(pair.Key, pair.Value);
-        }
-        else
-        {
-            foreach (var pair in legacyInputs ?? new Dictionary<BackendId, LanguageArtifactKindId>())
-                result.Add(pair.Key, new LanguageArtifactContract(pair.Value));
-        }
+        foreach (var pair in typedInputs ?? new Dictionary<BackendId, LanguageArtifactContract>())
+            result.Add(pair.Key, pair.Value);
         return new ReadOnlyDictionary<BackendId, LanguageArtifactContract>(result);
     }
 

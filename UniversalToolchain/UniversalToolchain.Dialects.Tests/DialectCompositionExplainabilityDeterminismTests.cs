@@ -14,7 +14,7 @@ public class DialectCompositionExplainabilityDeterminismTests
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         for (var i = 0; i < 40; i++)
         {
-            var result = workflow.ComposeText("dialect Stable\nuse Arithmetic,Numbers,Whitespaces\nbackend interpreter,compiler", "stable");
+            var result = workflow.ComposeText("dialect Stable\nuse Arithmetic,Numbers,Whitespaces\nbackend interpreter,cil", "stable");
             Assert.That(result.IsSuccess, Is.True);
 
             var explanation = DialectCompositionExplanationProjector.Project(result);

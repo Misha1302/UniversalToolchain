@@ -5,7 +5,7 @@ using UniversalToolchain.Dialects.Integration;
 
 namespace UniversalToolchain.Dialects.Wist;
 
-public static class WistCilBackendServiceCollectionExtensions
+internal static class WistCilBackendServiceCollectionExtensions
 {
     /// <summary>
     ///     Registers the Wist CIL backend registrar as a compatibility convenience. Canonical shipped runtime paths

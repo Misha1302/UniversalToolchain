@@ -41,7 +41,41 @@ public class VariablesModulePipelineTests
     public void Variables_UnknownVariable_FailsDeterministically()
     {
         using var h = new ModulePipelineTestHelper();
-        h.AssertFailsContaining("unknownVariable", _modules, string.Empty);
+        h.AssertFailsContaining(
+            "unknownVariable",
+            _modules,
+            "Unknown identifier 'unknownVariable'");
+    }
+
+    [TestCase("let value: System.DateTime = 1\nvalue", "Unknown declared type 'System.DateTime'")]
+        public void Variables_UnapprovedDeclaredType_FailsClosed(string source, string expectedMessage)
+    {
+        using var h = new ModulePipelineTestHelper();
+
+        h.AssertFailsContaining(source, _modules, expectedMessage);
+    }
+
+    [Test]
+    public void Variables_AssemblyQualifiedDeclaredType_IsRejectedByBinderPolicy()
+    {
+        var variableNode = CreateVariableNode("value");
+        variableNode.AddTag("VariableDefinition");
+        variableNode.AddTag("VariableDefinitionWithType");
+        variableNode.Children.Add(new AstNode(
+            ExtensibleEnum<AstNodeTag>.CreateOrGet("Type"),
+            new LexemeValue("System.Int32, System.Private.CoreLib", null, -1, null),
+            []));
+
+        var ruleType = typeof(VariablesVisitor).Assembly.GetType(
+            "VariablesModule.VariablesBindingRule",
+            throwOnError: true)!;
+        var rule = Activator.CreateInstance(ruleType, nonPublic: true)!;
+        var bind = ruleType.GetMethod("Bind")!;
+        var invocation = Assert.Throws<System.Reflection.TargetInvocationException>(() =>
+            bind.Invoke(rule, [variableNode, new BindingContext([]), (Func<AstNode, AstNode>)(static node => node)]));
+
+        Assert.That(invocation!.InnerException, Is.TypeOf<InvalidOperationException>());
+        Assert.That(invocation.InnerException!.Message, Does.Contain("Assembly-qualified declared type"));
     }
 
     [Test]

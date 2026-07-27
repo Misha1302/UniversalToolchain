@@ -130,7 +130,7 @@ Do not use optimizers to hide missing language semantics. First make the unoptim
 
 - Assuming arithmetic implies variables. It does not.
 - Assuming arithmetic implies conditions. It does not.
-- Using `compiler` mode with an interpreter-only arithmetic dialect.
+- Using `cil` mode with an interpreter-only arithmetic dialect.
 - Enabling native optimizers before testing the base expression behavior.
 - Treating benchmark output as a substitute for semantic tests.
 

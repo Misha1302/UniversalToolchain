@@ -23,8 +23,13 @@ public sealed class WistPlanFuzzAdapterTests
             Assert.That(observations, Has.All.Property(nameof(PlanFuzzObservation.Outcome)).EqualTo(PlanFuzzExecutionOutcome.Success));
             Assert.That(observations.Select(static observation => observation.Value?.CanonicalValue), Has.All.EqualTo("5"));
             Assert.That(results, Has.All.Property(nameof(PlanFuzzOracleResult.Status)).EqualTo(PlanFuzzOracleStatus.Passed));
-            Assert.That(observations.Single(static observation => observation.VariantId == "compiler.ssa-prefer").Route?.UsedRoute, Is.True);
-            Assert.That(observations.Single(static observation => observation.VariantId == "compiler.ssa-require").Route?.UsedRoute, Is.True);
+            Assert.That(testCase.AdapterVersion, Is.EqualTo("0.2.0"));
+            Assert.That(testCase.Variants.Any(static variant =>
+                variant.VariantId.StartsWith("compiler.", StringComparison.Ordinal)), Is.False);
+            Assert.That(testCase.Variants.Where(static variant => variant.BackendId == WistPlanFuzzConstants.CilBackend)
+                .All(static variant => variant.VariantId.StartsWith("cil.", StringComparison.Ordinal)), Is.True);
+            Assert.That(observations.Single(static observation => observation.VariantId == "cil.ssa-prefer").Route?.UsedRoute, Is.True);
+            Assert.That(observations.Single(static observation => observation.VariantId == "cil.ssa-require").Route?.UsedRoute, Is.True);
         });
     }
 
@@ -46,7 +51,7 @@ public sealed class WistPlanFuzzAdapterTests
             Assert.That(observations, Has.All.Property(nameof(PlanFuzzObservation.Outcome)).EqualTo(PlanFuzzExecutionOutcome.Success));
             Assert.That(observations.Select(static observation => observation.Value?.CanonicalValue), Has.All.EqualTo("42"));
             Assert.That(results, Has.All.Property(nameof(PlanFuzzOracleResult.Status)).EqualTo(PlanFuzzOracleStatus.Passed));
-            Assert.That(observations.Where(static observation => observation.VariantId.StartsWith("compiler.ssa-", StringComparison.Ordinal))
+            Assert.That(observations.Where(static observation => observation.VariantId.StartsWith("cil.ssa-", StringComparison.Ordinal))
                 .Select(static observation => observation.Route?.Diagnostics.Count), Has.All.EqualTo(0));
         });
     }
@@ -89,9 +94,9 @@ public sealed class WistPlanFuzzAdapterTests
             Assert.That(observations, Has.All.Property(nameof(PlanFuzzObservation.Outcome)).EqualTo(PlanFuzzExecutionOutcome.Success));
             Assert.That(observations.Select(static observation => observation.Value?.CanonicalValue), Has.All.EqualTo("0"));
             Assert.That(results, Has.All.Property(nameof(PlanFuzzOracleResult.Status)).EqualTo(PlanFuzzOracleStatus.Passed));
-            Assert.That(observations.Where(static observation => observation.VariantId.StartsWith("compiler.ssa-", StringComparison.Ordinal))
+            Assert.That(observations.Where(static observation => observation.VariantId.StartsWith("cil.ssa-", StringComparison.Ordinal))
                 .Select(static observation => observation.Route?.UsedRoute), Has.All.True);
-            Assert.That(observations.Where(static observation => observation.VariantId.StartsWith("compiler.ssa-", StringComparison.Ordinal))
+            Assert.That(observations.Where(static observation => observation.VariantId.StartsWith("cil.ssa-", StringComparison.Ordinal))
                 .Select(static observation => observation.Route?.Diagnostics.Count), Has.All.EqualTo(0));
         });
     }
@@ -201,7 +206,7 @@ public sealed class WistPlanFuzzAdapterTests
         var observation = new PlanFuzzObservation(
             "case",
             "variant",
-            "compiler",
+            "cil",
             PlanFuzzExecutionOutcome.Success,
             PlanFuzzValueSnapshot.FromInt32(7),
             null,
@@ -234,7 +239,7 @@ public sealed class WistPlanFuzzAdapterTests
             103,
             103,
             new WistIntProgramModel(WistIntExpression.Constant(1), 0, "test"));
-        var variant = testCase.GetRequiredVariant("compiler.ssa-prefer");
+        var variant = testCase.GetRequiredVariant("cil.ssa-prefer");
         var observation = new PlanFuzzObservation(
             testCase.CaseId,
             variant.VariantId,

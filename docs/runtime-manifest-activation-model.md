@@ -31,5 +31,4 @@ Reflection is still part of the runtime infrastructure, but its role is constrai
 - scoped to selected manifest entries,
 - used for exact type activation and backend registrar resolution.
 
-Broad eager assembly/type discovery is not the canonical runtime execution story.
-Compatibility and eager discovery helpers may exist for legacy/manual wiring, but they are not the source of truth for dialect composition.
+Broad eager assembly/type discovery is not part of runtime manifest execution. Manual dependency-injection wiring may register known components directly, but manifest-based activation requires exact assembly, component and type identities and never scans an assembly to infer them.

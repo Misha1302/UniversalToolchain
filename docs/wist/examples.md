@@ -179,7 +179,7 @@ Expected result:
 15
 ```
 
-This is the shipped `full-default` example shape. It is useful for validating a broader Wist dialect over both interpreter and compiler modes. The current `for` parser expects initialization, condition, update and body to be grouped.
+This is the shipped `full-default` example shape. It is useful for validating a broader Wist dialect over both interpreter and CIL modes. The current `for` parser expects initialization, condition, update and body to be grouped.
 
 ## Nested loop aggregate
 

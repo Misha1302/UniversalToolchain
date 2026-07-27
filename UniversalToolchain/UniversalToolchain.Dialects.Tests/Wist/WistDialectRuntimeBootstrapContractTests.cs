@@ -54,7 +54,6 @@ public class WistDialectRuntimeBootstrapContractTests
         {
             Assert.That(options.BytecodeProfile, Is.EqualTo(VerificationSeverityProfile.Strict));
             Assert.That(options.AirProfile, Is.EqualTo(VerificationSeverityProfile.Strict));
-            Assert.That(options.VerifyLegacyBytecodeOperationNames, Is.False);
             Assert.That(options.BackendPolicy.RejectNonUniversalIntrinsics, Is.False);
             Assert.That(provider.GetRequiredService<ISelectedModuleContractTableProvider>(), Is.InstanceOf<SelectedModuleContractTableProvider>());
             Assert.That(provider.GetRequiredService<IBytecodeObservedEmissionReader>(), Is.InstanceOf<BytecodeObservedEmissionReader>());
@@ -192,7 +191,7 @@ public class WistDialectRuntimeBootstrapContractTests
 
         using var provider = services.BuildServiceProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var composition = workflow.ComposeText("dialect ShippedBackends\nuse Arithmetic\nbackend interpreter,compiler", "shipped-backends");
+        var composition = workflow.ComposeText("dialect ShippedBackends\nuse Arithmetic\nbackend interpreter,cil", "shipped-backends");
 
         Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
 
@@ -211,7 +210,7 @@ public class WistDialectRuntimeBootstrapContractTests
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
 
         var interpreterOnly = workflow.ComposeText("dialect InterpreterOnly\nuse Arithmetic\nbackend interpreter", "interpreter-only");
-        var compilerRequested = workflow.ComposeText("dialect NeedsCompiler\nuse Arithmetic\nbackend compiler", "needs-compiler");
+        var compilerRequested = workflow.ComposeText("dialect NeedsCompiler\nuse Arithmetic\nbackend cil", "needs-compiler");
 
         Assert.That(interpreterOnly.IsSuccess, Is.True, FormatComposition(interpreterOnly));
         using var interpreterHost = workflow.CreateHost(interpreterOnly);
@@ -237,7 +236,7 @@ public class WistDialectRuntimeBootstrapContractTests
 
             using var provider = services.BuildServiceProvider();
             var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-            var composition = workflow.ComposeText("dialect Stable\nuse Arithmetic,Numbers\nbackend interpreter,compiler", $"stable-{i}");
+            var composition = workflow.ComposeText("dialect Stable\nuse Arithmetic,Numbers\nbackend interpreter,cil", $"stable-{i}");
             Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
 
             using var host = workflow.CreateHost(composition);
@@ -335,7 +334,7 @@ public class WistDialectRuntimeBootstrapContractTests
         for (var i = 0; i < 30; i++)
         {
             var composition = workflow.ComposeText(
-                "dialect Stable\nuse Arithmetic,Numbers,Whitespaces\n\nbackend interpreter,compiler",
+                "dialect Stable\nuse Arithmetic,Numbers,Whitespaces\n\nbackend interpreter,cil",
                 $"stable-{i}");
 
             Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
@@ -362,7 +361,7 @@ public class WistDialectRuntimeBootstrapContractTests
 
         using var provider = services.BuildServiceProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var composition = workflow.ComposeText("dialect Stable\nuse Arithmetic,Numbers\nbackend interpreter,compiler", "inline");
+        var composition = workflow.ComposeText("dialect Stable\nuse Arithmetic,Numbers\nbackend interpreter,cil", "inline");
 
         var signatures = new List<string>();
         for (var i = 0; i < 30; i++)
@@ -391,7 +390,9 @@ public class WistDialectRuntimeBootstrapContractTests
             [],
             RuntimeComponentIdFactory.Create(RuntimeComponentKind.Backend, alias),
             registrarType.Assembly.GetName().Name!,
-            new RuntimeComponentActivationInfo(typeof(object).FullName!, registrarType.FullName));
+            new RuntimeComponentActivationInfo(
+                new RuntimeTypeReference(registrarType.Assembly.GetName().Name!, typeof(object).FullName!),
+                new RuntimeTypeReference(registrarType.Assembly.GetName().Name!, registrarType.FullName!)));
 
     private static string FormatComposition(DialectFrameworkCompositionResult composition) => DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition));
 

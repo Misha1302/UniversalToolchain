@@ -43,7 +43,7 @@ solutions=(
   "UniversalToolchain/Wist.sln"
   "UniversalToolchain/PlanFuzz.sln"
 )
-test_manifest="eng/test-projects.txt"
+test_contract="eng/test-counts.json"
 package_manifest="eng/package-projects.txt"
 markdown_sample_projects=(
   samples/Acme.PricingLanguage/Acme.PricingLanguage.csproj
@@ -103,20 +103,15 @@ for sample_project in "${markdown_sample_projects[@]}"; do
     -p:NuGetAudit=false
 done
 
-mapfile -t test_projects < <(read_manifest "$test_manifest")
-if [[ "${#test_projects[@]}" -eq 0 ]]; then
-  echo "No test projects declared in $test_manifest" >&2
-  exit 1
-fi
-for test_project in "${test_projects[@]}"; do
-  "$dotnet_command" test "$test_project" \
-    -c "$configuration" \
-    --no-build \
-    --no-restore \
-    --disable-build-servers \
-    -p:UseSharedCompilation=false \
-    -p:NuGetAudit=false
-done
+python3 Tools/run-test-contract.py \
+  --root "$root" \
+  --manifest "$test_contract" \
+  --dotnet "$dotnet_command" \
+  --configuration "$configuration"
+python3 Tools/test-test-contract-mutants.py \
+  --root "$root" \
+  --manifest "$test_contract" \
+  --results-directory artifacts/test-contract
 
 if [[ "$skip_pack" == false ]]; then
   rm -rf artifacts/packages
@@ -126,6 +121,18 @@ if [[ "$skip_pack" == false ]]; then
     echo "No package projects declared in $package_manifest" >&2
     exit 1
   fi
+  # The package manifest may include projects that are not part of either
+  # solution (for example, the dotnet template package). Restore every
+  # declared package project explicitly before using --no-restore for pack.
+  for package_project in "${package_projects[@]}"; do
+    "$dotnet_command" restore "$package_project" \
+      --disable-parallel \
+      --disable-build-servers \
+      "${restore_source_args[@]}" \
+      -p:RestoreBuildInParallel=false \
+      -p:UseSharedCompilation=false \
+      -p:NuGetAudit=false
+  done
   for package_project in "${package_projects[@]}"; do
     "$dotnet_command" pack "$package_project" \
       -c "$configuration" \
@@ -137,6 +144,9 @@ if [[ "$skip_pack" == false ]]; then
       -p:NuGetAudit=false
   done
 
+  python3 Tools/check-wist-api-compatibility.py
+  python3 Tools/test-wist-api-compatibility-mutants.py --root "$root"
+
   python3 Tools/check-language-sdk-package-matrix.py \
     --root "$root" \
     --manifest "$package_manifest" \
@@ -144,13 +154,51 @@ if [[ "$skip_pack" == false ]]; then
 
   wist_version="$(sed -nE 's:.*<Version>([^<]+)</Version>.*:\1:p' UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj)"
   test -n "$wist_version"
+  wist_package="artifacts/packages/UniversalToolchain.Wist.${wist_version}.nupkg"
+  wist_reference_assembly="$(find UniversalToolchain/UniversalToolchain.Wist/bin -type f -path "*/$configuration/net10.0/UniversalToolchain.Wist.dll" -print -quit)"
+  test -n "$wist_reference_assembly"
+  wist_reference_dir="$(dirname "$wist_reference_assembly")"
+  wist_compile_reference="$(find UniversalToolchain/UniversalToolchain.Wist/obj -type f -path "*/$configuration/net10.0/ref/UniversalToolchain.Wist.dll" -print -quit)"
+  test -n "$wist_compile_reference"
   python3 Tools/check-wist-package-surface.py \
-    "artifacts/packages/UniversalToolchain.Wist.${wist_version}.nupkg"
+    --reference-dir "$wist_reference_dir" \
+    --compile-reference "$wist_compile_reference" \
+    "$wist_package"
+  python3 Tools/test-wist-package-surface-mutants.py \
+    --root "$root" \
+    --reference-dir "$wist_reference_dir" \
+    --compile-reference "$wist_compile_reference" \
+    "$wist_package"
+  python3 Tools/smoke-wist-package.py \
+    --package-dir artifacts/packages \
+    --version "$wist_version" \
+    --dotnet "$dotnet_command"
 
   python3 Tools/smoke-language-sdk-packages.py \
     --root "$root" \
     --packages artifacts/packages \
     --dotnet "$dotnet_command"
+
+  mapfile -t release_artifacts < <(find artifacts/packages -maxdepth 1 -type f \
+    \( -name '*.nupkg' -o -name '*.snupkg' \) -printf '%P\n' | sort)
+  if [[ "${#release_artifacts[@]}" -eq 0 ]]; then
+    echo "No release package artifacts found" >&2
+    exit 1
+  fi
+  release_artifact_paths=()
+  for artifact in "${release_artifacts[@]}"; do
+    release_artifact_paths+=("packages/$artifact")
+  done
+  python3 Tools/release-integrity.py write \
+    --base artifacts \
+    --manifest artifacts/RELEASE-INTEGRITY.json \
+    --root-output artifacts/RELEASE-INTEGRITY.root.sha256 \
+    "${release_artifact_paths[@]}"
+  python3 Tools/release-integrity.py verify \
+    --base artifacts \
+    --manifest artifacts/RELEASE-INTEGRITY.json \
+    --expected-root-file artifacts/RELEASE-INTEGRITY.root.sha256
+  python3 Tools/test-release-integrity-mutants.py --root "$root" "$wist_package"
 fi
 
 if [[ "$skip_docs" == false ]]; then

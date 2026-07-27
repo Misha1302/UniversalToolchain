@@ -12,7 +12,7 @@ source
   -> AIR
   -> AIR processing modules allowed by selected backend capabilities
   -> shared AIR verifier
-  -> backend compiler
+  -> backend cil
        interpreter:
          AIR artifact
        cil:

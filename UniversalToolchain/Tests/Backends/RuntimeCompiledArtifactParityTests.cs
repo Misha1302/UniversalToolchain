@@ -15,7 +15,7 @@ public class RuntimeCompiledArtifactParityTests
             ["y"] = typeof(object)
         };
 
-        var compilerArtifact = ParityBackendExecutionAdapter.CompileSnapshot(host, "compiler", "x", declared);
+        var compilerArtifact = ParityBackendExecutionAdapter.CompileSnapshot(host, "cil", "x", declared);
         var interpreterArtifact = ParityBackendExecutionAdapter.CompileSnapshot(host, "interpreter", "x", declared);
 
         Assert.That(compilerArtifact.DeclaredBindingNames,

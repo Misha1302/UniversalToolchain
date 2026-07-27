@@ -11,7 +11,7 @@ For Wist, the most important parity boundary is interpreter vs. CIL compiler.
 
 ## What parity is
 
-When a dialect exposes both `interpreter` and `compiler`, the same program should produce equivalent results through both modes:
+When a dialect exposes both `interpreter` and `cil`, the same program should produce equivalent results through both modes:
 
 ```text
 same dialect
@@ -161,7 +161,7 @@ A backend-affecting change should have parity cases for:
 
 ## Common mistakes
 
-- Testing compiler mode only.
+- Testing CIL mode only.
 - Treating interpreter success as proof that CIL works.
 - Treating CIL success as proof that semantics are correct.
 - Comparing performance before proving correctness.

@@ -69,7 +69,7 @@ If a dialect declares:
 backend interpreter
 ```
 
-then asking for compiler mode should fail.
+then asking for CIL mode should fail.
 
 If a dialect declares:
 
@@ -144,15 +144,15 @@ This is not only a security concern. It also keeps the product behavior predicta
 | Dialect | Valid program | Invalid program | Backends |
 |---|---|---|---|
 | `minimal-arithmetic` | `2 + 3 * 4` | `let x = 2` | `interpreter` |
-| `minimal-arithmetic-native` | `2 + 3 * 4` | unsupported non-arithmetic syntax | `compiler` |
+| `minimal-arithmetic-native` | `2 + 3 * 4` | unsupported non-arithmetic syntax | `cil` |
 | `pricing-restricted` | pricing expression with declared inputs | interop or unrelated syntax | selected restricted backend path |
-| `full-default` | broad Wist examples | invalid syntax only | `compiler`, `interpreter` |
+| `full-default` | broad Wist examples | invalid syntax only | `cil`, `interpreter` |
 
 ## What not to test as a shortcut
 
 Do not test only the final demo application. Demo success does not prove the dialect surface is correct.
 
-Do not test only compiler mode. Interpreter/compiler drift is one of the easiest ways to make the project look correct while breaking semantic guarantees.
+Do not test only CIL mode. Interpreter/compiler drift is one of the easiest ways to make the project look correct while breaking semantic guarantees.
 
 Do not treat benchmark success as correctness. A fast wrong backend is still wrong.
 

@@ -43,7 +43,7 @@ public sealed class PlanFuzzFindingClassificationTests
         var variant = new PlanFuzzPlanVariant(
             "routed",
             "configuration",
-            "compiler",
+            "cil",
             PlanFuzzVariantRole.EquivalentMutation,
             PlanFuzzExpectedRelation.SameSemantics);
         var contract = new PlanFuzzOracleContract(

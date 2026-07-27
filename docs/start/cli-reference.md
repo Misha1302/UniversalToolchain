@@ -5,7 +5,7 @@ description: Document the current Wistc command surface used by onboarding examp
 
 # CLI Reference
 
-This page documents the Wist command-line surface used by the public examples. It is a practical reference for running source text, files, dialect files and backend aliases from the repository checkout.
+This page documents the Wist command-line surface used by the public examples. It is a practical reference for running source text, files, dialect files and canonical backend IDs from the repository checkout.
 
 ## When to read this page
 
@@ -28,12 +28,12 @@ The `--` separates `dotnet run` options from Wistc options.
 | `--eval` | Treats the positional `code` argument as an expression and prints the result. |
 | `--file path/to/program.wist` | Runs a source file. |
 | `--dialect-file path/to/dialect.wistdialect` | Uses an explicit dialect file instead of the default runtime surface. |
-| `--backend compiler` | Runs through the user-facing compiler alias when the selected dialect exposes CIL. |
-| `--backend interpreter` | Runs through the interpreter backend alias when the selected dialect exposes the interpreter backend. |
+| `--backend cil` | Runs through the CIL backend when the selected dialect exposes `cil`. |
+| `--backend interpreter` | Runs through the interpreter backend when the selected dialect exposes `interpreter`. |
 | `--list-modules` | Lists available runtime components and exits. |
 | `--trace path/to/trace.json` | Writes a redacted structured JSON trace for the run. |
 
-`compiler` is a user-facing backend alias. In dialect files, the backend id is usually `cil`.
+Only canonical backend IDs are accepted; compatibility aliases are not supported.
 
 ## Debug trace
 
@@ -48,7 +48,7 @@ The trace is JSON and redacts source text/runtime values by default. Schema `wis
 ## Minimal expression
 
 ```text
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --backend compiler
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --eval "(2 + 2) * 3" --backend cil
 ```
 
 Expected output:
@@ -75,26 +75,19 @@ dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file
 
 Use this form for documentation examples, tests and local debugging because the program and dialect are both explicit.
 
-## Backend alias versus dialect backend id
+## Canonical backend IDs
 
-Wistc accepts backend aliases such as `compiler` and `interpreter`. Dialect files select backend ids such as `cil` and `interpreter`.
+Wistc and dialect files use the same IDs: `cil` and `interpreter`. There is no alias translation layer.
 
-The mapping is intentional:
-
-| CLI backend alias | Dialect backend requirement |
-|---|---|
-| `compiler` | selected dialect exposes `cil` |
-| `interpreter` | selected dialect exposes `interpreter` |
-
-A dialect that exposes only `interpreter` should reject `--backend compiler`. A dialect that exposes only `cil` should reject `--backend interpreter`. Silent fallback would hide composition errors.
+A dialect that exposes only `interpreter` should reject `--backend cil`. A dialect that exposes only `cil` should reject `--backend interpreter`. Silent fallback would hide composition errors.
 
 ## Common failures
 
 | Symptom | Likely cause |
 |---|---|
 | Project path cannot be found | Command was run from the wrong directory. Run from the repository root. |
-| Compiler backend alias is rejected | The selected dialect does not expose the `cil` backend. |
-| Interpreter backend alias is rejected | The selected dialect does not expose the `interpreter` backend. |
+| CIL backend is rejected | The selected dialect does not expose the `cil` backend. |
+| Interpreter backend is rejected | The selected dialect does not expose the `interpreter` backend. |
 | Syntax is rejected | The dialect does not select the module that owns the syntax. |
 | Interop expression is rejected | The selected dialect does not include trusted interop support. |
 | Dialect file fails to parse | The file may use syntax from a secondary parser path instead of the runtime `.wistdialect` format. |
@@ -109,7 +102,7 @@ use Arithmetic,Numbers,Scopes,Whitespaces
 backend interpreter
 ```
 
-For a CIL-capable dialect, select the `cil` backend id and request it from the CLI through `--backend compiler`:
+For a CIL-capable dialect, select the `cil` backend id and request it from the CLI through `--backend cil`:
 
 ```text
 dialect MinimalArithmeticNative

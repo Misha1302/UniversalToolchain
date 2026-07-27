@@ -85,7 +85,7 @@ Typical properties:
 - narrow module set;
 - no interop modules;
 - deterministic input bindings;
-- compiler mode only when performance matters and CIL support is available;
+- CIL mode only when performance matters and CIL support is available;
 - negative tests for syntax that must remain unavailable.
 
 ### Workflow DSL

@@ -225,7 +225,8 @@ public class ReflectionCapabilityDiscoveryTests
 
     private static RuntimeComponentManifestEntry CreateEntry(string alias, string id, RuntimeComponentKind kind = RuntimeComponentKind.FrontendModule) =>
         new(kind, alias, [
-        ], new RuntimeComponentId(id), "TestAssembly");
+        ], new RuntimeComponentId(id), "TestAssembly",
+            new RuntimeComponentActivationInfo(new RuntimeTypeReference("TestAssembly", "Test.Activation.Type")));
 
     [DialectCapabilityProvider(typeof(FakeFunctionCapabilityProvider))]
     private sealed class FakeFunctionModuleImpl

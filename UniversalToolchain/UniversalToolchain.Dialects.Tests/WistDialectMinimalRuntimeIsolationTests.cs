@@ -41,7 +41,7 @@ public class WistDialectMinimalRuntimeIsolationTests
 
         for (var i = 0; i < 40; i++)
         {
-            var result = workflow.ComposeText("dialect Stable\nuse Arithmetic,Numbers,Whitespaces\n\nbackend interpreter,compiler", $"stable-{i}");
+            var result = workflow.ComposeText("dialect Stable\nuse Arithmetic,Numbers,Whitespaces\n\nbackend interpreter,cil", $"stable-{i}");
             Assert.That(result.IsSuccess, Is.True, FormatComposition(result));
             signatures.Add(WistDialectTestInfrastructure.BuildSelectionAndDiagnosticsSignature(result));
         }
@@ -57,8 +57,8 @@ public class WistDialectMinimalRuntimeIsolationTests
         var dialects = new[]
         {
             "dialect A\nuse Arithmetic,Numbers\nbackend interpreter",
-            "dialect B\nuse Arithmetic,Identifier,Scopes,Variables\nbackend interpreter,compiler\n",
-            "dialect C\nuse Arithmetic,Conditions,ComparisonConditions\nbackend compiler"
+            "dialect B\nuse Arithmetic,Identifier,Scopes,Variables\nbackend interpreter,cil\n",
+            "dialect C\nuse Arithmetic,Conditions,ComparisonConditions\nbackend cil"
         };
 
         var tasks = Enumerable.Range(0, 30)
@@ -105,7 +105,7 @@ public class WistDialectMinimalRuntimeIsolationTests
     {
         using var provider = CreateMinimalProvider();
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var result = workflow.ComposeText("dialect StableHost\nuse Arithmetic,Numbers,Whitespaces\nbackend interpreter,compiler", "stable-host");
+        var result = workflow.ComposeText("dialect StableHost\nuse Arithmetic,Numbers,Whitespaces\nbackend interpreter,cil", "stable-host");
         Assert.That(result.IsSuccess, Is.True, FormatComposition(result));
 
         var signatures = new List<string>();
@@ -146,8 +146,8 @@ public class WistDialectMinimalRuntimeIsolationTests
         var scenarios = new[]
         {
             ("dialect A\nuse Arithmetic,Numbers,Whitespaces\nbackend interpreter", "2 + 5", "interpreter"),
-            ("dialect B\nuse Arithmetic,Identifier,Scopes,Variables,Numbers,Whitespaces\nbackend interpreter,compiler\n", "2 + 5", "interpreter"),
-            ("dialect C\nuse Arithmetic,Numbers,Whitespaces\nbackend compiler", "3 + 4", "compiler")
+            ("dialect B\nuse Arithmetic,Identifier,Scopes,Variables,Numbers,Whitespaces\nbackend interpreter,cil\n", "2 + 5", "interpreter"),
+            ("dialect C\nuse Arithmetic,Numbers,Whitespaces\nbackend cil", "3 + 4", "cil")
         };
 
         var results = await Task.WhenAll(Enumerable.Range(0, 30).Select(i => Task.Run(() =>
@@ -204,7 +204,7 @@ public class WistDialectMinimalRuntimeIsolationTests
             manifestPath,
             serializer.Serialize(new FileDialectRuntimeManifestDocument(
                 "ForeignBackendAssembly",
-                [new FileDialectRuntimeComponentEntry("Backend", "foreign-backend", ["foreign"], "Foreign.Backend.Type")])));
+                [new FileDialectRuntimeComponentEntry("Backend", "foreign-backend", ["foreign"], "backend.foreign", new FileRuntimeComponentActivationEntry(new RuntimeTypeReference("ForeignBackendAssembly", "Foreign.Backend.Type")))])));
 
         var services = new ServiceCollection();
         services.AddSingleton(new RuntimeArtifactLocatorOptions { SearchRoots = [temp.Path], IncludeAppContextBaseDirectory = true });

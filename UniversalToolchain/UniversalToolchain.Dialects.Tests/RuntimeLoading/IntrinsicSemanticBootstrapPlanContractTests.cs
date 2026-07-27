@@ -91,7 +91,7 @@ public sealed class IntrinsicSemanticBootstrapPlanContractTests
     private static ServiceCollection CreateServices()
     {
         var services = new ServiceCollection();
-        services.AddCoreRuntimeInfrastructure();
+        services.AddNeutralRuntimeInfrastructure();
         return services;
     }
 

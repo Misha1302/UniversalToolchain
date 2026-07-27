@@ -1,3 +1,4 @@
+using UniversalToolchain.Testing.Infrastructure;
 using System.Globalization;
 using BasicCore.ParserWrapper;
 using BasicTypesExtensions;
@@ -84,7 +85,7 @@ public class WistDialectExecutionParityTests
 
         var interpreterException = Assert.Throws<InvalidOperationException>(() => host.Run("if 1.0 < 2.0 then 10.0 else", "interpreter"));
 
-        var compilerException = Assert.Throws<InvalidOperationException>(() => host.Run("if 1.0 < 2.0 then 10.0 else", "compiler"));
+        var compilerException = Assert.Throws<InvalidOperationException>(() => host.Run("if 1.0 < 2.0 then 10.0 else", "cil"));
 
         Assert.Multiple(() =>
         {
@@ -101,7 +102,7 @@ public class WistDialectExecutionParityTests
         using var host = ComposeAndCreateHost(CreateFullDialect());
 
         var interpreterException = Assert.Throws<InvalidOperationException>(() => host.Run("if 1.0 then 10.0 else 20.0", "interpreter"));
-        var compilerException = Assert.Throws<InvalidOperationException>(() => host.Run("if 1.0 then 10.0 else 20.0", "compiler"));
+        var compilerException = Assert.Throws<InvalidOperationException>(() => host.Run("if 1.0 then 10.0 else 20.0", "cil"));
 
         Assert.Multiple(() =>
         {
@@ -157,7 +158,7 @@ public class WistDialectExecutionParityTests
     {
         using var host = ComposeAndCreateHost(dialect);
         var interpreter = ToDouble(host.Run(program, "interpreter"));
-        var compiler = ToDouble(host.Run(program, "compiler"));
+        var compiler = ToDouble(host.Run(program, "cil"));
 
         Assert.Multiple(() =>
         {
@@ -168,13 +169,22 @@ public class WistDialectExecutionParityTests
 
     private static WistDialectExecutionHost ComposeAndCreateHost(string dialect)
     {
-        using var provider = CreateWorkflowProviderWithCilAndInterpreter();
-        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var composition = workflow.ComposeText(dialect, "inline-dialect");
-        if (!composition.IsSuccess)
-            Thrower.InvalidOpEx(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
+        ServiceProvider? provider = CreateWorkflowProviderWithCilAndInterpreter();
+        try
+        {
+            var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+            var composition = workflow.ComposeText(dialect, "inline-dialect");
+            if (!composition.IsSuccess)
+                Thrower.InvalidOpEx(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
 
-        return workflow.CreateHost(composition);
+            var owner = provider;
+            provider = null;
+            return workflow.CreateHost(composition, new WistRuntimeServiceOptions(), owner);
+        }
+        finally
+        {
+            provider?.Dispose();
+        }
     }
 
     private static ServiceProvider CreateWorkflowProviderWithCilAndInterpreter()
@@ -190,20 +200,9 @@ public class WistDialectExecutionParityTests
                                                  dialect D
                                                  use Arithmetic,BooleanConditions,Comments,ComparisonConditions,Conditions,Equality,Identifier,Labels,Loops,Numbers,Scopes,SemicolonAsNewLine,Variables,Whitespaces
 
-                                                 backend compiler,interpreter
+                                                 backend cil,interpreter
                                                  """;
 
-    private static double ToDouble(object? value)
-    {
-        return value switch
-        {
-            RealNumberImpl number => number.GetValue(),
-            int intValue => intValue,
-            long longValue => longValue,
-            double doubleValue => doubleValue,
-            float floatValue => floatValue,
-            decimal decimalValue => (double)decimalValue,
-            _ => Convert.ToDouble(value, CultureInfo.InvariantCulture)
-        };
-    }
+    private static double ToDouble(object? value) => BackendResultAssertions.AsNumber(value);
+
 }

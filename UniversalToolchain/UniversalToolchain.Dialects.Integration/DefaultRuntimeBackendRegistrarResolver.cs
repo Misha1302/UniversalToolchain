@@ -33,8 +33,9 @@ public sealed class DefaultRuntimeBackendRegistrarResolver : IRuntimeBackendRegi
             Thrower.InvalidOpEx(
                 $"Runtime backend manifest entry '{backendEntry.CanonicalAlias}' does not declare registrarTypeFullName activation metadata.");
 
-        var registrarAssemblySimpleName = ResolveAssemblySimpleName(registrarTypeReference.AssemblySimpleName, backendEntry.AssemblySimpleName);
-        var registrarType = _typeLoader.LoadType(registrarAssemblySimpleName, registrarTypeReference.TypeFullName);
+        var registrarType = _typeLoader.LoadType(
+            registrarTypeReference.AssemblySimpleName,
+            registrarTypeReference.TypeFullName);
         if (!typeof(IDialectBackendRuntimeRegistrar).IsAssignableFrom(registrarType))
             Thrower.InvalidOpEx(
                 $"Runtime backend registrar type '{DisplayName(registrarType)}' for backend '{backendEntry.CanonicalAlias}' does not implement IDialectBackendRuntimeRegistrar.");
@@ -50,8 +51,4 @@ public sealed class DefaultRuntimeBackendRegistrarResolver : IRuntimeBackendRegi
 
     private static string DisplayName(Type type) => type.FullName ?? type.Name;
 
-    private static string ResolveAssemblySimpleName(string assemblySimpleName, string fallbackAssemblySimpleName) =>
-        string.Equals(assemblySimpleName, RuntimeAssemblyIdentity.UnspecifiedAssemblySimpleName, StringComparison.Ordinal)
-            ? fallbackAssemblySimpleName
-            : assemblySimpleName;
 }

@@ -9,6 +9,13 @@
         <RestoreBuildInParallel>false</RestoreBuildInParallel>
         <RestoreUseStaticGraphEvaluation>true</RestoreUseStaticGraphEvaluation>
         <UseSharedCompilation>false</UseSharedCompilation>
+
+        <!-- Runtime identity generation 2 intentionally breaks binary unification with
+             pre-hardening checkouts. The old graph shipped every assembly as 1.0.0.0,
+             allowing incompatible DLLs to bind by simple identity and fail much later. -->
+        <AssemblyVersion>2.0.0.0</AssemblyVersion>
+        <FileVersion>2.0.0.0</FileVersion>
+        <Deterministic>true</Deterministic>
     </PropertyGroup>
 
     <ItemGroup>

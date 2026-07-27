@@ -2,16 +2,13 @@ name: Deploy documentation to GitHub Pages
 
 on:
   push:
-    # The compatibility branch `main` exists for stable links only. Publishing from
-    # both refs creates duplicate deployments for the same commit and can violate
-    # the github-pages environment branch policy.
     branches:
       - master
+      - main
     paths:
       - 'docs/**'
       - 'package.json'
       - 'package-lock.json'
-      - '.github/ci-trigger'
       - '.github/workflows/deploy-docs.yml'
   workflow_dispatch:
 
@@ -55,7 +52,6 @@ jobs:
           path: docs/.vitepress/dist
 
   deploy:
-    if: github.ref == 'refs/heads/master'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

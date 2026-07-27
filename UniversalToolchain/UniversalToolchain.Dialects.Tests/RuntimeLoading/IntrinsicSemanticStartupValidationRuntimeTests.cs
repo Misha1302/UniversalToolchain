@@ -33,7 +33,7 @@ public sealed class IntrinsicSemanticStartupValidationRuntimeTests
     public void RuntimeStartupValidation_ShouldFail_WhenAttributedModuleProviderIsMissing()
     {
         var services = new ServiceCollection();
-        services.AddCoreRuntimeInfrastructure();
+        services.AddNeutralRuntimeInfrastructure();
         services.AddSingleton<IFrontendCoreModule, MissingProviderFrontendModule>();
 
         using var provider = services.BuildServiceProvider();
@@ -111,7 +111,9 @@ public sealed class IntrinsicSemanticStartupValidationRuntimeTests
             [],
             RuntimeComponentIdFactory.Create(RuntimeComponentKind.Backend, alias),
             registrarType.Assembly.GetName().Name!,
-            new RuntimeComponentActivationInfo(typeof(object).FullName!, registrarType.FullName));
+            new RuntimeComponentActivationInfo(
+                new RuntimeTypeReference(registrarType.Assembly.GetName().Name!, typeof(object).FullName!),
+                new RuntimeTypeReference(registrarType.Assembly.GetName().Name!, registrarType.FullName!)));
 
     private static IntrinsicSemanticDescriptor CreateDescriptor(string @namespace, string name) =>
         new()

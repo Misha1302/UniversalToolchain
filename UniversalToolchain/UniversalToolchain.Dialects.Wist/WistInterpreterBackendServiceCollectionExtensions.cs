@@ -5,7 +5,7 @@ using UniversalToolchain.Dialects.Integration;
 
 namespace UniversalToolchain.Dialects.Wist;
 
-public static class WistInterpreterBackendServiceCollectionExtensions
+internal static class WistInterpreterBackendServiceCollectionExtensions
 {
     /// <summary>
     ///     Registers the Wist interpreter backend registrar as a compatibility convenience. Canonical shipped runtime

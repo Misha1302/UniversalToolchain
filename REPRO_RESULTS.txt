@@ -1,53 +1,55 @@
+Wist no-legacy third-audit verification record
+Date: 2026-07-26
+
 Environment:
 - OS: Debian GNU/Linux 13, linux-x64
-- dotnet --info: SDK 10.0.301; MSBuild 18.6.4; host/runtime 10.0.9
-- repository baseline SHA: b2058f803a678d673398e834eab88f152f37c4c7
-- original Wist.zip SHA-256: 0c6e4551607d8b21b0455454d5c0c34b23bf3c19eb0d086adb0f9bf884d218ff
-- baseline MANIFEST.sha256: 1657/1657 verified
+- .NET SDK: 10.0.301
+- .NET runtime: 10.0.9
+- restore/package tests: external local NuGet sidecar and global package cache
+- PLATFORM / Platform / RuntimeIdentifier: unset
 
-Commands and observed exit codes:
-- dotnet restore UniversalToolchain/Wist.sln (offline cache/config): 0
-- dotnet build UniversalToolchain/Wist.sln --configuration Release --no-restore: 0; 0 warnings; 0 errors
-- dotnet build UniversalToolchain/PlanFuzz.sln --configuration Release: 0; 0 warnings; 0 errors
-- dotnet build samples/Acme.PricingLanguage/Acme.PricingLanguage.csproj --configuration Release: 0
-- dotnet build samples/Wist.RolloutScoring/Wist.RolloutScoring.csproj --configuration Release: 0
-- dotnet test Tests.csproj --configuration Release --no-build: 0 (506/506)
-- dotnet test UniversalToolchain.Modules.Tests.csproj --configuration Release --no-build --blame-hang --blame-hang-timeout 45s: 0 (290/290)
-- dotnet test UniversalToolchain.Dialects.Tests.csproj --configuration Release --no-build --blame-hang --blame-hang-timeout 45s: 0 (589/589)
-- dotnet test UniversalToolchain.LanguageSdk.Tests.csproj --configuration Release --no-build: 0 (68/68)
-- dotnet test UniversalToolchain.PlanFuzz.Tests.csproj --configuration Release --no-build: 0 (41/41)
-- dotnet test UniversalToolchain.PlanFuzz.IntegrationTests.csproj --configuration Release --no-build --blame-hang --blame-hang-timeout 45s: 0 (10/10)
-- package matrix checker: 0; 9 packages verified
-- package surface checker: 0; 1 compile DLL, 64 runtime DLLs, ceiling 64
-- offline template/cross-package consumer smoke: 0; output 42 / 42
-- git diff --check: 0
+Third-audit findings fixed:
+- R-13 installer zero-test false-green through unmatched VSTest filter
+- R-14 current documentation contradicted current-only contracts
+- R-15 PlanFuzz current evidence IDs retained compiler.* prefix
+- R-16 parity evidence names were not resolved to real NUnit tests
+- R-17 canonical test count was stale/duplicated
 
-Test totals:
-- total: 1504
-- passed: 1504
-- failed: 0
-- skipped: 0
-- duration: approximately 86.6 seconds as the sum of test-run reported durations (not aggregate wall-clock/build time)
+Canonical test plan:
+- Tests: 505
+- UniversalToolchain.Modules.Tests: 290
+- UniversalToolchain.Dialects.Tests: 584
+- UniversalToolchain.LanguageSdk.Tests: 78
+- UniversalToolchain.PlanFuzz.Tests: 41
+- UniversalToolchain.PlanFuzz.IntegrationTests: 10
+- TOTAL: 1508
 
-Repeated/race tests:
-- Runtime lifecycle filter: 20 iterations x 5 tests; all passed.
-- Extensible identity/order filter: 10 iterations x 2 tests; all passed.
-- Runtime lifecycle suite includes a bounded 32-cycle concurrent operation/dispose stress test.
+Verification method:
+- exact TRX parsing through Tools/verify_trx_count.py
+- missing TRX, zero matches, unexpected count, non-Passed outcome, failed/notExecuted counters all fail closed
+- installer plan and verification docs read eng/test-counts.json
 
-Known limitations/blockers:
-- F-10 remains PartiallyFixed: generic Wist is a verified subset, not a full replacement; six shipped presets are Partial and optimizer parity is Missing.
-- Plain testhost intermittently stalled in this container for larger projects without reporting a failed test. Sequential isolated runs with blame-hang completed successfully; dump collection did not trigger on the successful runs.
-- Initial bounded baseline full build was not accepted as baseline proof; final remediated Release graph and every test project were independently verified.
+Working-tree results before packaging:
+- Wist.sln: Build succeeded; warnings 0; errors 0
+- PlanFuzz.sln: Build succeeded; warnings 0; errors 0
+- both samples: Build succeeded; warnings 0; errors 0
+- tests: 1508 passed, 0 failed, 0 skipped
+- package matrix: 9/9
+- Wist package surface: 1 compile DLL, 64 runtime DLLs
+- template consumer: 42
+- cross-package consumer: cross-package-consumer: 42
+- documentation status/link gates: passed
 
-Clean artifact verification:
-- preliminary ZIP path safety: passed; no absolute/backslash/parent traversal entries
-- top-level directories: exactly one (`Wist-remediated-2026-07-25`)
-- source payload: 1683 manifest entries plus `MANIFEST.sha256`
-- forbidden directory/file/secret-like scan: passed
-- staging vs unpacked tree before build: byte-for-byte identical (`diff -qr`, 0 differences)
-- unpacked `sha256sum -c MANIFEST.sha256`: passed
-- clean restore after explicit `unset PLATFORM`: passed
-- clean Release project builds: Tests, Modules.Tests, Dialects.Tests, LanguageSdk.Tests, PlanFuzz.sln and both samples; 0 warnings, 0 errors
-- clean-unpack tests: 1504/1504 passed, 0 failed, 0 skipped
-- aggregate cold `Wist.sln` invocation exceeded the per-process execution window before its summary; it was not counted as a clean build success. All six test owner graphs and their dependencies were instead built independently and then fully tested.
-- only release reports and the recursive manifest are regenerated after the clean test; production/test source bytes are unchanged in the final payload
+Clean source-candidate results:
+- Wist.sln: Build succeeded; warnings 0; errors 0
+- PlanFuzz.sln: Build succeeded; warnings 0; errors 0
+- both samples: Build succeeded; warnings 0; errors 0
+- exact TRX test plan: 1508 passed, 0 failed, 0 skipped/not-executed
+- package matrix: 9/9
+- Wist package surface: 1 compile DLL, 64 runtime DLLs
+- template consumer: 42
+- cross-package consumer: cross-package-consumer: 42
+- documentation status/link gates: passed
+- source-only candidate: 1684 files total, 1683 manifest entries
+
+Final ZIP structure and installer smoke are additionally verified against the released artifact.

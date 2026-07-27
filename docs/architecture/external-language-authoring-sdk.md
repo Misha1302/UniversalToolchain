@@ -59,7 +59,7 @@ The descriptor cannot claim `source.text<string> -> acme.syntax<MySyntaxTree>` w
 
 Package-level `AddTransformer`, `AddPass` and `AddBackend` registrations support backend-only, optimizer-only and infrastructure packages. An executable language may be composed entirely from package-level contributions and therefore does not require a synthetic feature solely to seed the graph.
 
-The lower-level descriptor API remains available for package generators, manifest readers and compatibility adapters.
+The lower-level descriptor API remains available for package generators and manifest readers.
 
 ## Typed artifact contracts
 
@@ -79,7 +79,7 @@ The explicit contract identity is the recommended public-package form because it
 
 Route planning connects stages only when their artifact IDs and available type identities are compatible. A same-ID `object`/`string` mismatch is rejected with `UTL2201` during planning instead of failing inside `Run()`.
 
-Legacy untyped descriptors remain readable for migration and compatibility adapters, but canonical executable plans and the generic route runtime require explicit type identities. Typed and untyped contracts never connect through wildcard semantics. New packages should use:
+Planning-only untyped descriptors remain available as an explicit non-executable surface, but schema-v5 manifests, canonical executable plans and the generic route runtime require explicit type identities. Typed and untyped contracts never connect through wildcard semantics. New packages should use:
 
 - `LanguageArtifactKind<T>`;
 - `ArtifactTransformationDescriptor.Create<TSource,TTarget>`;
@@ -207,11 +207,11 @@ A provider must implement `ILanguageRuntimePolicyValidator`. The generic route p
 - a deterministic plan rejects unknown or non-deterministic components;
 - a plan that forbids host interop rejects components not explicitly declared host-interop-free;
 - allowed host assemblies are rejected when host interop is disabled;
-- obsolete compatibility runtime paths apply the same fail-closed rule.
+- every public runtime-provider entry point applies the same fail-closed rule.
 
 The authoring API requires an explicit `LanguageRuntimeComponentTraits` argument for every transformer and executor. These traits are package attestations; hostile extensions still require process isolation and a trust model.
 
-## Wist isolation and compatibility boundary
+## Wist isolation and runtime boundary
 
 The generic projects do not reference Wist:
 
@@ -222,7 +222,7 @@ The generic projects do not reference Wist:
 - `UniversalToolchain.LanguageAuthoring`;
 - `UniversalToolchain.Testing`.
 
-Wist compatibility is owned by `UniversalToolchain.Wist.LanguagePack`. Its legacy provider validates that the plan contains the exact canonical Wist entry, frontend, lowering and backend route before delegating to the existing Wist host. It rejects custom routes that it cannot faithfully execute instead of silently ignoring them.
+`UniversalToolchain.Wist.LanguagePack` owns the typed Wist package and runtime provider. The provider validates that a plan contains the exact canonical Wist entry, frontend, lowering and backend route, converts the selected typed contributions to a deterministic `DialectDefinitionSlice`, and delegates execution to the canonical Wist dialect runtime. Unsupported custom routes are rejected instead of being silently ignored.
 
 Wist package descriptor, runtime provider and NuGet package versions are derived from one assembly metadata source.
 
@@ -232,11 +232,11 @@ Wist package descriptor, runtime provider and NuGet package versions are derived
 
 `dotnet new ut-language` creates a standalone non-Wist language using `UniversalToolchain.LanguageAuthoring`. Template replacement controls package, feature, contribution, runtime and artifact identifiers; no `Acme.Pricing` or Wist identifier is embedded in generated projects.
 
-## Manifest and lock compatibility
+## Manifest and lock contract
 
 Schema v5 includes typed transformation endpoints, backend input contracts, pass ordering, runtime inputs, route steps and the plan entry artifact. It also defines `universaltoolchain-json-v1` canonicalization and SHA-256 over compact UTF-8 bytes without a BOM or platform-dependent line ending. Pretty JSON always uses LF but is not itself the package-identity input.
 
-The reader remains compatible with schema v1-v4 manifests. Legacy untyped contracts may be read for migration, but they must be hydrated to explicit contract identities before generic route execution. Plan hashes include the entry artifact, selected contributions and typed route contracts, so changing an executable contract changes the reproducible plan identity.
+The reader accepts schema v5 only. Older manifest schemas must be migrated before loading; they are not normalized implicitly. Executable transformation endpoints, backend inputs and runtime inputs require explicit contract identities. Plan hashes include the entry artifact, selected contributions and typed route contracts, so changing an executable contract changes the reproducible plan identity.
 
 ## Current boundary
 

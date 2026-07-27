@@ -1,6 +1,6 @@
 # UniversalToolchain.Wist
 
-[![NuGet](https://img.shields.io/badge/nuget-v0.1.0--alpha.1-512BD4.svg)](https://www.nuget.org/packages/UniversalToolchain.Wist/0.1.0-alpha.1)
+[![NuGet](https://img.shields.io/nuget/vpre/UniversalToolchain.Wist.svg)](https://www.nuget.org/packages/UniversalToolchain.Wist)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/UniversalToolchain.Wist.svg)](https://www.nuget.org/packages/UniversalToolchain.Wist)
 
 **Tiny controlled rules for .NET applications.**
@@ -20,10 +20,10 @@ admin / config / LLM suggestion
 
 ## Install
 
-Install the published `UniversalToolchain.Wist` `0.1.0-alpha.1` package from NuGet: <https://www.nuget.org/packages/UniversalToolchain.Wist/0.1.0-alpha.1>.
+This source tree builds the verified `UniversalToolchain.Wist` `0.1.0-alpha.3` release artifact. This statement does not imply that the package has already been published to NuGet.org.
 
 ```bash ci-run=false
-dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.1
+dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.3 --source ./artifacts/packages
 ```
 
 For a clean-room install and execution check, follow the [package installation guide](https://misha1302.github.io/Wist2/start/installation).
@@ -72,7 +72,7 @@ var validation = rules.Validate(
 
 if (!validation.IsValid)
 {
-    Console.WriteLine(validation.Message);
+    Console.WriteLine(string.Join("; ", validation.Diagnostics.Select(diagnostic => diagnostic.Message)));
 }
 ```
 
@@ -124,7 +124,7 @@ using UniversalToolchain.Wist;
 
 using var rules = WistEngine.Create(new WistEngineOptions
 {
-    Preset = WistPreset.RestrictedArithmetic,
+    DialectSource = WistDialectSource.FromShippedPreset("pricing-restricted"),
     Optimization = new WistOptimizationOptions
     {
         Ssa = new WistSsaOptions
@@ -162,7 +162,7 @@ WistEngine.CreateFullNative();
 
 using var trustedInterop = WistEngine.Create(new WistEngineOptions
 {
-    Preset = WistPreset.FullNative,
+    DialectSource = WistDialectSource.FromShippedPreset("full-default-native"),
     AllowedAssemblies = [typeof(Math).Assembly]
 });
 

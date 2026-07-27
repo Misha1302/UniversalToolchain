@@ -570,7 +570,7 @@ public sealed class ExternalLanguageAuthoringTests
         public LanguageRuntimeProviderId ProviderId => WistLanguageFeaturePackage.RuntimeProviderId;
         public LanguageVersion ProviderVersion => new("9.9.9");
         public ToolchainApiVersion ToolchainApiVersion => ToolchainApi.Current;
-        public LanguageContributionId RuntimeContributionId => WistContributionIds.LegacyRuntimeAdapter;
+        public LanguageContributionId RuntimeContributionId => WistContributionIds.RuntimeProvider;
         public IReadOnlyCollection<BackendId> SupportedBackends => [new BackendId("cil"), new BackendId("interpreter")];
         public ILanguageRuntimeSession CreateSession(LanguagePlan plan, LanguageRuntimeOptions options) => throw new NotSupportedException();
     }

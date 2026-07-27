@@ -2,7 +2,7 @@ name: .NET CI
 
 on:
   push:
-    branches: [ master ]
+    branches: [ "**" ]
   pull_request:
   workflow_dispatch:
 
@@ -91,7 +91,7 @@ jobs:
         run: python3 .github/scripts/run-markdown-bash-blocks.py
 
   refresh-manifest:
-    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[refresh-manifest]')
+    if: github.event_name == 'workflow_dispatch'
     permissions:
       contents: write
     runs-on: ubuntu-latest
@@ -103,13 +103,9 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.ref_name }}
 
-      - name: Refresh recursive manifest and trigger the complete suite
+      - name: Refresh recursive manifest
         shell: bash
         run: |
-          # The token gives all path-filtered workflows one common, observable
-          # trigger. It is written before hashing, so the bot commit is internally
-          # consistent and can pass the strict manifest comparison itself.
-          printf '%s\n' "${GITHUB_SHA}:${GITHUB_RUN_ID}:${GITHUB_RUN_ATTEMPT}" > .github/ci-trigger
           python3 - <<'PY'
           from hashlib import sha256
           from pathlib import Path
@@ -123,10 +119,10 @@ jobs:
           PY
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .github/ci-trigger MANIFEST.sha256
+          git add MANIFEST.sha256
           git diff --cached --check
           if git diff --cached --quiet; then
             exit 0
           fi
-          git commit -m "chore: refresh recursive manifest and run full CI"
+          git commit -m "chore: refresh recursive manifest"
           git push origin "HEAD:${GITHUB_REF_NAME}"

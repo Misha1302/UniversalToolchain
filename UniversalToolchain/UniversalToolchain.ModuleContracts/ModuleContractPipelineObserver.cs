@@ -68,8 +68,7 @@ public sealed class ModuleContractPipelineObserver : ICompilationPipelineObserve
             context.Bytecode,
             report.ContractTable,
             _options.BytecodeProfile,
-            readResult.ObservedEmissions,
-            _options.VerifyLegacyBytecodeOperationNames));
+            readResult.ObservedEmissions));
 
         _diagnosticPolicy.ReportAndThrowIfErrors("bytecode contract verification", verification.Diagnostics);
     }

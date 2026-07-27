@@ -18,7 +18,7 @@ bytecode
   -> bytecode-to-AIR translator
   -> AIR instructions
   -> optimizers
-  -> backend compiler/interpreter
+  -> backend cil/interpreter
 ```
 
 The fixed AIR opcode set is small. `UOpCode.Intrinsic` is used for operations that need a typed, named operation beyond `Push`, `Drop`, labels and jumps.

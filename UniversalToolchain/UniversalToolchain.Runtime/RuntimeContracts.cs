@@ -111,10 +111,6 @@ public sealed class LanguageArtifact<T> : LanguageArtifact
     public LanguageArtifact(LanguageArtifactKind<T> kind, T value)
         : base((kind ?? throw new ArgumentNullException(nameof(kind))).Contract) => Value = value;
 
-    [Obsolete("Use LanguageArtifactKind<T> so the artifact ID and CLR value type share one contract.")]
-    public LanguageArtifact(LanguageArtifactKindId kind, T value)
-        : base(new LanguageArtifactContract(kind, LanguageTypeIdentity.For<T>())) => Value = value;
-
     public T Value { get; }
     public override Type ValueType => typeof(T);
 }
@@ -529,10 +525,6 @@ public sealed class LanguageRouteComponentRegistry
         return this;
     }
 
-    [Obsolete("Register a component factory. Instance registration is allowed only for explicitly stateless singleton components.")]
-    public LanguageRouteComponentRegistry AddTransformer(ILanguageArtifactTransformer transformer) =>
-        AddTransformer(LanguageTransformerRegistration.FromStatelessSingleton(transformer));
-
     public LanguageRouteComponentRegistry AddExecutor(LanguageExecutorRegistration registration)
     {
         ArgumentNullException.ThrowIfNull(registration);
@@ -547,10 +539,6 @@ public sealed class LanguageRouteComponentRegistry
         _executors.Add(registration);
         return this;
     }
-
-    [Obsolete("Register a component factory. Instance registration is allowed only for explicitly stateless singleton components.")]
-    public LanguageRouteComponentRegistry AddExecutor(ILanguageArtifactExecutor executor) =>
-        AddExecutor(LanguageExecutorRegistration.FromStatelessSingleton(executor));
 
     public LanguageRouteComponentRegistry AddCatalog(LanguageRouteComponentCatalog catalog)
     {
@@ -887,17 +875,6 @@ public interface ILanguageRuntimeProvider
     LanguageVersion ProviderVersion { get; }
     ToolchainApiVersion ToolchainApiVersion { get; }
     LanguageContributionId RuntimeContributionId { get; }
-    IReadOnlyCollection<BackendId> SupportedBackends { get; }
-    ILanguageRuntimeSession CreateSession(LanguagePlan plan, LanguageRuntimeOptions options);
-}
-
-[Obsolete("[UTL-DEP-003] Use ILanguageRuntimeProvider and LanguageRuntimeProviderRegistry. Removal is blocked by the shipped-preset parity gate.")]
-public interface ILanguageRuntimePack
-{
-    LanguagePackageId PackageId { get; }
-    LanguageVersion PackageVersion { get; }
-    ToolchainApiVersion ToolchainApiVersion { get; }
-    IReadOnlyCollection<LanguageFeatureId> SupportedFeatures { get; }
     IReadOnlyCollection<BackendId> SupportedBackends { get; }
     ILanguageRuntimeSession CreateSession(LanguagePlan plan, LanguageRuntimeOptions options);
 }

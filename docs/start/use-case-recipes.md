@@ -14,7 +14,7 @@ rule text -> validate or compile -> numeric result -> host application decides t
 Install the package:
 
 ```bash ci-run=false
-dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.1
+dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.3 --source ./artifacts/packages
 ```
 
 ## Pricing and commission
@@ -99,7 +99,7 @@ var validation = rules.Validate(
     });
 
 Console.WriteLine(validation.IsValid); // false
-Console.WriteLine(validation.Message);
+Console.WriteLine(string.Join("; ", validation.Diagnostics.Select(diagnostic => diagnostic.Message)));
 ```
 
 The restricted arithmetic surface intentionally rejects statement-style bindings such as `let`.
@@ -121,4 +121,4 @@ Do not use the current restricted arithmetic preset when you need arbitrary C# e
 
 ## Next
 
-Read [Wist alpha stability](/evidence/wist-stability-v0.1.0-alpha.1), the [Performance Model](/reference/performance-model) and [Security](/SECURITY) before integrating the package into a consequential workflow.
+Read [Wist alpha stability](/evidence/wist-stability-v0.1.0-alpha.3), the [Performance Model](/reference/performance-model) and [Security](/SECURITY) before integrating the package into a consequential workflow.

@@ -1,0 +1,12 @@
+result,dependencies,done_condition,validation,status,evidence
+Baseline lock,none,SHA and source identity recorded,sha256 + git baseline,done,cf176cc... baseline; API snapshot provenance
+Runtime boundary,Baseline lock,No implementation type crosses facade; numeric args work,focused boundary tests + full Dialects suite,done,WistRuntimeBoundaryContractTests
+Runtime lifecycle,Runtime boundary,All isolated contexts collectible after Dispose,"individual, reachable-engine and 8-engine tests",done,WistRuntimeBoundaryContractTests; BasicCoreLifecycleContractsTests
+CLR interop adaptation,Runtime boundary,Trusted full-default supports internal↔CLR implicit conversion,CIL/interpreter tests and package semantic smoke,done,Sqrt(16)+1 contract
+Exact test gate,Build graph,Every declared test executes under timeout with exact outcomes,TRX verification + four mutants,done,run-test-contract.py
+API compatibility gate,Baseline lock,Every actual delta classified against pinned prior snapshot,two API mutants,done,check-wist-api-compatibility.py
+Package/preset gate,Build graph,Exact payloads and semantic preset identities,six package mutants + clean consumer,done,check/smoke Wist package tools
+LanguagePack quality,Package/preset gate,README present in packed artifact,package matrix,done,LanguagePack README
+Canonical warm-cache run,All implementation tasks,"1545 tests, packages, consumers, integrity",./build.sh --skip-docs,done,canonical-build-final.log; integrity root ac138cbcd8612bf136284e354543307a5f655484d65af3004726e51565d43d3a
+Clean-unpack run,Canonical warm-cache run,Same result from delivered ZIP with empty caches/build outputs,./build.sh --skip-docs,pending,final clean-unpack log
+Delivery,Clean-unpack run,Source/package/evidence archives hash-verified,manifest + SHA256SUMS,pending,final-delivery

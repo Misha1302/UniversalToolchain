@@ -112,7 +112,7 @@ def main() -> int:
         'evidence/maintainer-guide.md',
         'evidence/current-verification.md',
         'evidence/language-authoring-alpha.md',
-        'evidence/wist-stability-v0.1.0-alpha.1.md',
+        'evidence/wist-stability-v0.1.0-alpha.3.md',
         'CURRENT_ARCHITECTURE_STATUS.md',
         'SECURITY.md',
         'limitations.md',
@@ -138,17 +138,71 @@ def main() -> int:
             if script not in scripts:
                 errors.append(f'package.json: missing {script} script')
 
+    test_counts_path = ROOT / 'eng' / 'test-counts.json'
+    if not test_counts_path.exists():
+        errors.append('eng/test-counts.json: canonical test-count contract is missing')
+        test_counts = None
+    else:
+        test_counts = json.loads(test_counts_path.read_text(encoding='utf-8'))
+        if test_counts.get('schemaVersion') != 1:
+            errors.append('eng/test-counts.json: unsupported schemaVersion')
+        entries = [*test_counts.get('main', []), *test_counts.get('isolated', [])]
+        computed_total = sum(entry.get('expectedPassed', 0) for entry in entries)
+        if computed_total != test_counts.get('totalPassed'):
+            errors.append(
+                f'eng/test-counts.json: totalPassed is {test_counts.get("totalPassed")}, '
+                f'but entries sum to {computed_total}'
+            )
+
     verification = ROOT / 'VERIFICATION.md'
     verification_text = verification.read_text(encoding='utf-8') if verification.exists() else ''
-    for expected in ('1,465', 'UniversalToolchain.PlanFuzz.Tests', 'UniversalToolchain.PlanFuzz.IntegrationTests'):
-        if expected not in verification_text:
-            errors.append(f'VERIFICATION.md: integrated verification marker is missing: {expected}')
+    current_verification = DOCS / 'evidence' / 'current-verification.md'
+    current_verification_text = current_verification.read_text(encoding='utf-8') if current_verification.exists() else ''
+    if test_counts is not None:
+        main_entries = test_counts.get('main', [])
+        isolated_total = sum(entry['expectedPassed'] for entry in test_counts.get('isolated', []))
+        expected_rows = [
+            (entry['documentationName'], entry['expectedPassed']) for entry in main_entries
+        ]
+        expected_rows.append(('UniversalToolchain.PlanFuzz.IntegrationTests', isolated_total))
+        for doc_name, text in (
+            ('VERIFICATION.md', verification_text),
+            ('docs/evidence/current-verification.md', current_verification_text),
+        ):
+            for project_name, expected_passed in expected_rows:
+                row = f'| `{project_name}` | {expected_passed} | 0 | 0 |'
+                if row not in text:
+                    errors.append(f'{doc_name}: canonical test-count row is missing: {row}')
+            total = test_counts['totalPassed']
+            total_row = f'| **Total** | **{total:,}** | **0** | **0** |'
+            if total_row not in text:
+                errors.append(f'{doc_name}: canonical total row is missing: {total_row}')
 
-    public_text = '\n'.join(path.read_text(encoding='utf-8') for path in public_files)
+    current_public_files = [
+        path for path in public_files
+        if not rel(path).startswith('docs/releases/')
+    ]
+    current_internal_files = [
+        path for path in internal_files
+        if not rel(path).startswith(('internal-docs/archive/', 'internal-docs/reviews/'))
+    ]
+    public_text = '\n'.join(path.read_text(encoding='utf-8') for path in current_public_files)
+    current_documentation_text = '\n'.join(
+        path.read_text(encoding='utf-8')
+        for path in [*current_public_files, *current_internal_files]
+    )
     forbidden = {
         'backend-agnostic artifact handling is not fully generalized': 'implemented neutral/generic runtime is described as future-only',
+        'Wist legacy surfaces still require compatibility adapters': 'removed Wist compatibility surface is described as active',
+        'Wist feature/runtime pack and legacy adapter': 'Wist package is described as a legacy adapter',
+        'Its legacy provider': 'Wist runtime provider is described as legacy',
+        'The reader remains compatible with schema v1-v4 manifests': 'removed feature-manifest schema readers are described as supported',
+        'accepts older manifest forms (legacy type fields)': 'removed runtime-manifest fallback is described as supported',
+        'Compatibility and eager discovery helpers may exist for legacy/manual wiring': 'removed assembly-discovery fallback is described as supported',
+        'Wist compatibility adapters must reject generic routes': 'removed Wist adapter path is described as active',
         'Introduce backend-agnostic compiled/executable artifact contracts': 'implemented artifact contracts are described as future work',
         'Current verification: 1,325 tests': 'stale test count remains',
+        '1,465 tests succeeded': 'stale integrated test count remains',
         'docs/public/what-is-stable-in-alpha.md': 'static-public Markdown path remains',
         'docs/public/performance-model.md': 'static-public Markdown path remains',
         'LogsViewer/server.py': 'removed LogsViewer path remains in public docs',
@@ -156,6 +210,17 @@ def main() -> int:
     for phrase, reason in forbidden.items():
         if phrase in public_text:
             errors.append(f'public docs: {reason}: {phrase}')
+
+    current_forbidden = {
+        'schema-v1 through schema-v3 observations remain readable': 'removed PlanFuzz schema readers are described as supported',
+        'Schema-v3 evidence remains readable': 'removed PlanFuzz schema-v3 replay is described as supported',
+        'interpreter/compiler variants': 'removed compiler backend terminology remains active',
+        'compiler    + SSA': 'removed compiler backend verification row remains active',
+        'Total:                                      1465 passed': 'stale canonical test count remains active',
+    }
+    for phrase, reason in current_forbidden.items():
+        if phrase in current_documentation_text:
+            errors.append(f'current docs: {reason}: {phrase}')
 
     root_readme = (ROOT / 'readme.md').read_text(encoding='utf-8')
     if '](docs/maintainers/' in root_readme or '](docs/talks/' in root_readme:

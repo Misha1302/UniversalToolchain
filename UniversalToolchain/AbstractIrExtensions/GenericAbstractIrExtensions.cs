@@ -35,7 +35,10 @@ public static class GenericAbstractIrExtensions
 
     public static void Rotate<TIdentifier>(this IGenericAbstractIR<TIdentifier> air, params Type[] types)
     {
-        var locals = types.Select(_ => Guid.NewGuid().ToString()).ToArray();
+        var instructionOffset = air.Instructions.Count;
+        var locals = types
+            .Select((type, index) => $"__rotate_{instructionOffset:D8}_{index:D4}_{type.FullName}")
+            .ToArray();
         for (var i = 0; i < locals.Length; i++)
             air.SetValueToLocal(locals[i], types[i]);
         for (var i = 0; i < locals.Length; i++)

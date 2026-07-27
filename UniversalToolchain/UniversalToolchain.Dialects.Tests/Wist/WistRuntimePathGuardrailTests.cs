@@ -39,8 +39,12 @@ public sealed class WistRuntimePathGuardrailTests
                 WistDialectTestInfrastructure.BuildSelectionAndDiagnosticsSignature(facade.Composition),
                 Is.EqualTo(WistDialectTestInfrastructure.BuildSelectionAndDiagnosticsSignature(composition)));
             Assert.That(WistDialectTestInfrastructure.BuildConfigurationSignature(facade.Configuration), Is.EqualTo(WistDialectTestInfrastructure.BuildConfigurationSignature(host.Configuration)));
-            Assert.That(facade.Configuration.FrontendModules, Is.SupersetOf(expectedShape.FrontendModuleTypes));
-            Assert.That(facade.Configuration.IrModules, Is.EqualTo(expectedShape.IrModuleTypes));
+            Assert.That(
+                facade.Configuration.FrontendModules.Select(static type => type.FullName),
+                Is.SupersetOf(expectedShape.FrontendModuleTypes.Select(static type => type.FullName)));
+            Assert.That(
+                facade.Configuration.IrModules.Select(static type => type.FullName),
+                Is.EqualTo(expectedShape.IrModuleTypes.Select(static type => type.FullName)));
             Assert.That(
                 facade.Configuration.BackendConfigurations.Select(static x => x.BackendDescriptor.CanonicalId),
                 Is.EqualTo(expectedShape.BackendEntries.Select(static x => x.CanonicalAlias)));
@@ -76,8 +80,12 @@ public sealed class WistRuntimePathGuardrailTests
                 WistDialectTestInfrastructure.BuildSelectionAndDiagnosticsSignature(facade.Composition),
                 Is.EqualTo(WistDialectTestInfrastructure.BuildSelectionAndDiagnosticsSignature(composition)));
             Assert.That(WistDialectTestInfrastructure.BuildConfigurationSignature(facade.Configuration), Is.EqualTo(WistDialectTestInfrastructure.BuildConfigurationSignature(host.Configuration)));
-            Assert.That(facade.Configuration.FrontendModules, Is.SupersetOf(expectedShape.FrontendModuleTypes));
-            Assert.That(facade.Configuration.IrModules, Is.EqualTo(expectedShape.IrModuleTypes));
+            Assert.That(
+                facade.Configuration.FrontendModules.Select(static type => type.FullName),
+                Is.SupersetOf(expectedShape.FrontendModuleTypes.Select(static type => type.FullName)));
+            Assert.That(
+                facade.Configuration.IrModules.Select(static type => type.FullName),
+                Is.EqualTo(expectedShape.IrModuleTypes.Select(static type => type.FullName)));
             Assert.That(
                 facade.Configuration.BackendConfigurations.Select(static x => x.BackendDescriptor.CanonicalId),
                 Is.EqualTo(expectedShape.BackendEntries.Select(static x => x.CanonicalAlias)));
@@ -326,7 +334,7 @@ public sealed class WistRuntimePathGuardrailTests
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var shapeBuilder = provider.GetRequiredService<SelectedRuntimeExecutionShapeBuilder>();
         var composition = workflow.ComposeText(
-            "dialect Stable\nuse Arithmetic,Numbers,Whitespaces\n\nbackend interpreter,compiler",
+            "dialect Stable\nuse Arithmetic,Numbers,Whitespaces\n\nbackend interpreter,cil",
             "stable");
 
         Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
@@ -347,7 +355,7 @@ public sealed class WistRuntimePathGuardrailTests
         var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
         var configurationBuilder = provider.GetRequiredService<WistDialectExecutionConfigurationBuilder>();
         var composition = workflow.ComposeText(
-            "dialect Stable\nuse Arithmetic,Numbers,Whitespaces\n\nbackend interpreter,compiler",
+            "dialect Stable\nuse Arithmetic,Numbers,Whitespaces\n\nbackend interpreter,cil",
             "stable");
 
         Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
@@ -369,10 +377,10 @@ public sealed class WistRuntimePathGuardrailTests
         var shapeBuilder = provider.GetRequiredService<SelectedRuntimeExecutionShapeBuilder>();
 
         var shippedNamedComposition = workflow.ComposeText(
-            "dialect full-default\nuse Arithmetic,Numbers,Whitespaces\n\nbackend interpreter,compiler",
+            "dialect full-default\nuse Arithmetic,Numbers,Whitespaces\n\nbackend interpreter,cil",
             "full-default");
         var arbitraryNamedComposition = workflow.ComposeText(
-            "dialect RuntimePathGuardrail\nuse Arithmetic,Numbers,Whitespaces\n\nbackend interpreter,compiler",
+            "dialect RuntimePathGuardrail\nuse Arithmetic,Numbers,Whitespaces\n\nbackend interpreter,cil",
             "runtime-path-guardrail");
 
         Assert.Multiple(() =>

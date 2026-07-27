@@ -18,7 +18,7 @@ public class WistRuntimeManifestMetadataValidationTests
 
         var document = new FileDialectRuntimeManifestDocument(
             "ArithmeticModule",
-            [new FileDialectRuntimeComponentEntry("FrontendModule", "Arithmetic", [], "frontend.arithmetic")]);
+            [new FileDialectRuntimeComponentEntry("FrontendModule", "Arithmetic", [], "frontend.arithmetic", new FileRuntimeComponentActivationEntry(new RuntimeTypeReference("ArithmeticModule", "ArithmeticModule.Module.ArithmeticModuleImpl")))]);
         File.WriteAllText(manifestPath, serializer.Serialize(document));
 
         var catalog = new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([manifestPath]), serializer);
@@ -252,10 +252,10 @@ public class WistRuntimeManifestMetadataValidationTests
 
         File.WriteAllText(first, serializer.Serialize(new FileDialectRuntimeManifestDocument(
             "AAssembly",
-            [new FileDialectRuntimeComponentEntry(kind, "Alias", [], $"{kind.ToLowerInvariant()}.alias")])));
+            [new FileDialectRuntimeComponentEntry(kind, "Alias", [], $"{kind.ToLowerInvariant()}.alias", new FileRuntimeComponentActivationEntry(new RuntimeTypeReference("AAssembly", "Test.AliasA")))])));
         File.WriteAllText(second, serializer.Serialize(new FileDialectRuntimeManifestDocument(
             "BAssembly",
-            [new FileDialectRuntimeComponentEntry(kind, "Alias", [], $"{kind.ToLowerInvariant()}.alias2")])));
+            [new FileDialectRuntimeComponentEntry(kind, "Alias", [], $"{kind.ToLowerInvariant()}.alias2", new FileRuntimeComponentActivationEntry(new RuntimeTypeReference("BAssembly", "Test.AliasB")))])));
 
         return Assert.Throws<InvalidOperationException>(() => { _ = new FileBasedRuntimeComponentCatalog(new StaticManifestLocator([first, second]), serializer); })!;
     }

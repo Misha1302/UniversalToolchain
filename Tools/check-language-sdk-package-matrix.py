@@ -104,6 +104,8 @@ def main() -> None:
                     )
 
             if package_id == "UniversalToolchain.Wist.LanguagePack":
+                if "README.md" not in archive.namelist():
+                    fail("Wist LanguagePack package does not contain README.md")
                 names = [name for name in archive.namelist() if name.endswith(".toolchain.feature.json")]
                 if len(names) != 1:
                     fail(f"Wist LanguagePack contains {len(names)} feature manifests")

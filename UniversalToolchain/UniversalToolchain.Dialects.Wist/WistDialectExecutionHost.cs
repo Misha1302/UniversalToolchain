@@ -8,29 +8,41 @@ namespace UniversalToolchain.Dialects.Wist;
 /// <summary>
 ///     Provides backend-aware access to a dialect-configured Wist runtime.
 /// </summary>
-public sealed class WistDialectExecutionHost : IDisposable
+internal sealed class WistDialectExecutionHost : IDisposable
 {
     private readonly ToolchainRuntimeHost _runtimeHost;
+    private readonly IDisposable? _compositionServicesOwner;
 
-    public WistDialectExecutionHost(IServiceProvider serviceProvider, WistDialectExecutionConfiguration configuration)
-        : this(new ToolchainRuntimeHost(serviceProvider.ArgNotNull(), configuration.ArgNotNull()), configuration)
+    internal WistDialectExecutionHost(IServiceProvider serviceProvider, WistDialectExecutionConfiguration configuration)
+        : this(new ToolchainRuntimeHost(serviceProvider.ArgNotNull(), configuration.ArgNotNull()), configuration, null)
     {
     }
 
-    internal WistDialectExecutionHost(ToolchainRuntimeHost runtimeHost, WistDialectExecutionConfiguration configuration)
+    internal WistDialectExecutionHost(
+        ToolchainRuntimeHost runtimeHost,
+        WistDialectExecutionConfiguration configuration,
+        IDisposable? compositionServicesOwner = null)
     {
         runtimeHost = runtimeHost.ArgNotNull();
         configuration = configuration.ArgNotNull();
 
         Configuration = configuration;
         _runtimeHost = runtimeHost;
+        _compositionServicesOwner = compositionServicesOwner;
     }
 
     public WistDialectExecutionConfiguration Configuration { get; }
 
     public void Dispose()
     {
-        _runtimeHost.Dispose();
+        try
+        {
+            _runtimeHost.Dispose();
+        }
+        finally
+        {
+            _compositionServicesOwner?.Dispose();
+        }
     }
 
     public ICoreRunnable GetCore(string backend)

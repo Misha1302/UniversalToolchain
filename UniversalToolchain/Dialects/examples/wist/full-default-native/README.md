@@ -12,7 +12,7 @@ to the native arithmetic/type stack and enables native optimizations.
 - Backends: `cil`, `interpreter`
 - Enabled optimizer flags: `ArithmeticOptimization`, `BooleanOptimization`, `ComparisonIntrinsicOptimization`,
   `EGraphOptimization`, `NativeCilOptimization`, `NativeTypesOptimization`
-- User-facing CLI mode: `--backend compiler` selects the canonical `cil` backend.
+- User-facing CLI mode: `--backend cil` selects the canonical `cil` backend.
 
 ## Intentionally excluded capabilities
 
@@ -26,7 +26,7 @@ From repository root:
 ```bash ci-timeout=240
 dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- dialect-inspect --file UniversalToolchain/Dialects/examples/wist/full-default-native/dialect.wistdialect
 dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/full-default-native/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/full-default-native/program.wist --backend interpreter
-dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/full-default-native/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/full-default-native/program.wist --backend compiler
+dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- run --dialect-file UniversalToolchain/Dialects/examples/wist/full-default-native/dialect.wistdialect --file UniversalToolchain/Dialects/examples/wist/full-default-native/program.wist --backend cil
 ```
 
 ## Expected behavior/result

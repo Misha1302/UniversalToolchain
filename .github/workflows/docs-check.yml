@@ -13,13 +13,13 @@ on:
   push:
     branches:
       - master
+      - main
     paths:
       - 'docs/**'
       - 'internal-docs/**'
       - 'Tools/check_documentation_*.py'
       - 'package.json'
       - 'package-lock.json'
-      - '.github/ci-trigger'
       - '.github/workflows/docs-check.yml'
       - '.github/workflows/deploy-docs.yml'
 

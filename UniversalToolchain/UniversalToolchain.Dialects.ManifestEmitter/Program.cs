@@ -86,9 +86,10 @@ internal static class ManifestEmitter
 
         var aliases = type.CustomAttributes
             .Where(static x => x.AttributeType.FullName == RuntimeAliasAttributeFullName)
-            .Select(static x => x.ConstructorArguments[0].Value?.ToString())
+            .Select(static x => x.ConstructorArguments[0].Value?.ToString()?.Trim())
             .Where(static x => !string.IsNullOrWhiteSpace(x))
             .Select(static x => x!)
+            .Where(x => !string.Equals(x, canonicalAlias, StringComparison.Ordinal))
             .Distinct(StringComparer.Ordinal)
             .OrderBy(static x => x, StringComparer.Ordinal)
             .ToList();

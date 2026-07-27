@@ -29,25 +29,23 @@ public static class LanguageFeatureManifestSerializer
         using var document = JsonDocument.Parse(json);
         var root = document.RootElement;
         var schemaVersion = root.GetProperty("schemaVersion").GetInt32();
-        if (schemaVersion is < 1 or > SchemaVersion)
-            throw new InvalidDataException("Unsupported toolchain feature manifest schema version.");
-        if (schemaVersion >= 5)
+        if (schemaVersion != SchemaVersion)
+            throw new InvalidDataException($"Unsupported toolchain feature manifest schema version '{schemaVersion}'. Expected '{SchemaVersion}'.");
+        var canonicalization = root.GetProperty("canonicalization").GetString();
+        var hashAlgorithm = root.GetProperty("hashAlgorithm").GetString();
+        if (!StringComparer.Ordinal.Equals(canonicalization, Canonicalization) ||
+            !StringComparer.Ordinal.Equals(hashAlgorithm, HashAlgorithm))
         {
-            var canonicalization = root.GetProperty("canonicalization").GetString();
-            var hashAlgorithm = root.GetProperty("hashAlgorithm").GetString();
-            if (!StringComparer.Ordinal.Equals(canonicalization, Canonicalization) ||
-                !StringComparer.Ordinal.Equals(hashAlgorithm, HashAlgorithm))
-            {
-                throw new InvalidDataException("Unsupported toolchain feature manifest canonicalization contract.");
-            }
+            throw new InvalidDataException("Unsupported toolchain feature manifest canonicalization contract.");
         }
         var package = root.GetProperty("package");
         var features = package.GetProperty("features").EnumerateArray()
-            .Select(element => ReadFeature(element, schemaVersion))
+            .Select(ReadFeature)
             .ToArray();
-        var contributions = schemaVersion >= 2 && package.TryGetProperty("contributions", out var contributionArray)
-            ? contributionArray.EnumerateArray().Select(ReadContribution).ToArray()
-            : [];
+        var contributions = package.GetProperty("contributions")
+            .EnumerateArray()
+            .Select(ReadContribution)
+            .ToArray();
         return new LanguagePackageDescriptor(
             new LanguagePackageId(package.GetProperty("id").GetString()!),
             new LanguageVersion(package.GetProperty("version").GetString()!),
@@ -168,15 +166,13 @@ public static class LanguageFeatureManifestSerializer
         writer.WriteEndObject();
     }
 
-    private static LanguageFeatureDescriptor ReadFeature(JsonElement element, int schemaVersion) => new(
+    private static LanguageFeatureDescriptor ReadFeature(JsonElement element) => new(
         new LanguageFeatureId(element.GetProperty("id").GetString()!),
         ReadStrings(element, "requires").Select(static x => new LanguageFeatureId(x)),
         ReadStrings(element, "conflicts").Select(static x => new LanguageFeatureId(x)),
         ReadStrings(element, "supportedBackends").Select(static x => new BackendId(x)),
         ReadMetadata(element),
-        schemaVersion >= 2
-            ? ReadStrings(element, "contributions").Select(static x => new LanguageContributionId(x))
-            : []);
+        ReadStrings(element, "contributions").Select(static x => new LanguageContributionId(x)));
 
     private static LanguageContributionDescriptor ReadContribution(JsonElement element)
     {
@@ -195,27 +191,20 @@ public static class LanguageFeatureManifestSerializer
 
         LanguageRuntimeProviderId? runtimeProviderId = null;
         LanguageVersion? runtimeProviderVersion = null;
-        IReadOnlyDictionary<BackendId, LanguageArtifactKindId>? runtimeInputs = null;
         IReadOnlyDictionary<BackendId, LanguageArtifactContract>? runtimeInputContracts = null;
         if (element.TryGetProperty("runtimeProvider", out var runtimeProviderElement))
         {
             runtimeProviderId = new LanguageRuntimeProviderId(runtimeProviderElement.GetProperty("id").GetString()!);
             runtimeProviderVersion = new LanguageVersion(runtimeProviderElement.GetProperty("version").GetString()!);
-            var inputProperties = runtimeProviderElement.GetProperty("inputs").EnumerateObject().ToArray();
-            if (inputProperties.Length != 0 && inputProperties[0].Value.ValueKind == JsonValueKind.Object)
-            {
-                runtimeInputContracts = inputProperties.ToDictionary(
+            runtimeInputContracts = runtimeProviderElement.GetProperty("inputs")
+                .EnumerateObject()
+                .ToDictionary(
                     static x => new BackendId(x.Name),
-                    static x => new LanguageArtifactContract(
-                        new LanguageArtifactKindId(x.Value.GetProperty("kind").GetString()!),
-                        x.Value.TryGetProperty("type", out var type) ? type.GetString() : null));
-            }
-            else
-            {
-                runtimeInputs = inputProperties.ToDictionary(
-                    static x => new BackendId(x.Name),
-                    static x => new LanguageArtifactKindId(x.Value.GetString()!));
-            }
+                    static x => x.Value.ValueKind == JsonValueKind.Object
+                        ? new LanguageArtifactContract(
+                            new LanguageArtifactKindId(x.Value.GetProperty("kind").GetString()!),
+                            x.Value.TryGetProperty("type", out var type) ? type.GetString() : null)
+                        : throw new InvalidDataException("Runtime provider inputs must use typed object contracts."));
         }
 
         LanguageArtifactContract? backendInputContract = null;
@@ -240,7 +229,6 @@ public static class LanguageFeatureManifestSerializer
             transformation,
             runtimeProviderId,
             runtimeProviderVersion,
-            runtimeInputs,
             element.TryGetProperty("order", out var order) ? order.GetInt32() : 0,
             ReadMetadata(element),
             runtimeInputContracts,

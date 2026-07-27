@@ -1,3 +1,5 @@
+using LabelsModule.Core;
+
 namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 
 [TestFixture]
@@ -70,5 +72,23 @@ public class LabelsModulePipelineTests
         var r = h.ExecuteBoth("@x: 2", _modules);
         ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
         Assert.That(ModulePipelineTestHelper.AsNumber(r.Compiler), Is.EqualTo(2));
+    }
+
+    [Test]
+    public void Labels_SameSourceName_ProducesStableIdentityAcrossIndependentScopes()
+    {
+        var first = new LabelsSharedData();
+        var second = new LabelsSharedData();
+
+        var firstLoop = first.GetIdByName("@loop");
+        var secondLoop = second.GetIdByName("@loop");
+        var end = first.GetIdByName("@end");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(firstLoop, Is.EqualTo(secondLoop));
+            Assert.That(end, Is.Not.EqualTo(firstLoop));
+            Assert.That(first.GetIdByName("@loop"), Is.EqualTo(firstLoop));
+        });
     }
 }

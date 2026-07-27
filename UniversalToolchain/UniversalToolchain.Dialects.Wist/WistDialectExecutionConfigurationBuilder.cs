@@ -4,7 +4,7 @@ using UniversalToolchain.Dialects.Integration;
 
 namespace UniversalToolchain.Dialects.Wist;
 
-public sealed class WistDialectExecutionConfigurationBuilder
+internal sealed class WistDialectExecutionConfigurationBuilder
 {
     private readonly DialectBackendRuntimeConfigurationBuilder _backendConfigurationBuilder;
     private readonly SelectedRuntimeExecutionShapeBuilder _shapeBuilder;

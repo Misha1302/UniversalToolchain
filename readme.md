@@ -1,6 +1,6 @@
 # Wist for .NET
 
-[![NuGet](https://img.shields.io/badge/nuget-v0.1.0--alpha.1-512BD4.svg)](https://www.nuget.org/packages/UniversalToolchain.Wist/0.1.0-alpha.1)
+[![NuGet](https://img.shields.io/nuget/vpre/UniversalToolchain.Wist.svg)](https://www.nuget.org/packages/UniversalToolchain.Wist)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/UniversalToolchain.Wist.svg)](https://www.nuget.org/packages/UniversalToolchain.Wist)
 
 <p align="center">
@@ -18,7 +18,7 @@ UniversalToolchain is the modular compiler/runtime framework underneath Wist. St
 Install the public alpha:
 
 ```bash ci-run=false
-dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.1
+dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.3 --source ./artifacts/packages
 ```
 
 Compile a reviewed rollout formula once and invoke the typed delegate repeatedly:
@@ -174,7 +174,7 @@ Technical material:
 - [Project documentation](docs/index.md)
 - [Installation and clean-room smoke](docs/start/installation.md)
 - [Use-case recipes](docs/start/use-case-recipes.md)
-- [Wist alpha stability contract](docs/evidence/wist-stability-v0.1.0-alpha.1.md)
+- [Wist alpha stability contract](docs/evidence/wist-stability-v0.1.0-alpha.3.md)
 - [External Language Authoring quickstart](docs/language-authoring/quickstart.md)
 - [Architecture and project map](docs/architecture/project-map.md)
 - [LangDev 2026 proposal](internal-docs/talks/langdev-2026/README.md)

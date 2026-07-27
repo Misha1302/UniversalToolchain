@@ -9,7 +9,7 @@ public class ExecutionRepeatabilitySmokeTests
                                        dialect TestUniversal
                                        use Whitespaces,SemicolonAsNewLine,Comments,Numbers,Identifier,Arithmetic,Equality,Conditions,Loops,Scopes,Variables,Labels,InternalPreprocessorLexemes,CSharpInterop
 
-                                       backend compiler,interpreter
+                                       backend cil,interpreter
                                        """;
 
     [Test]

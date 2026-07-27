@@ -33,7 +33,7 @@ internal sealed class ModulePipelineTestHelper : IDisposable
     {
         var moduleList = Materialize(modules);
         var optimizerList = optimizers == null ? null : Materialize(optimizers);
-        var backendList = backends == null ? ["compiler", "interpreter"] : Materialize(backends);
+        var backendList = backends == null ? ["cil", "interpreter"] : Materialize(backends);
 
         var modulesLine = string.Join(',', moduleList);
         var optimizerLine = optimizerList == null ? string.Empty : $"\nenable {string.Join(',', optimizerList)}";
@@ -73,16 +73,16 @@ internal sealed class ModulePipelineTestHelper : IDisposable
     }
 
     public object? ExecuteCompiler(string code, IEnumerable<string> modules, IEnumerable<string>? optimizers = null)
-        => Execute(code, "compiler", modules, optimizers);
+        => Execute(code, "cil", modules, optimizers);
 
     public object? ExecuteInterpreter(string code, IEnumerable<string> modules, IEnumerable<string>? optimizers = null)
         => Execute(code, "interpreter", modules, optimizers);
 
     public (object? Compiler, object? Interpreter) ExecuteBoth(string code, IEnumerable<string> modules, IEnumerable<string>? optimizers = null)
     {
-        using var host = CreateHost(modules, optimizers, ["compiler", "interpreter"]);
+        using var host = CreateHost(modules, optimizers, ["cil", "interpreter"]);
         var interpreter = host.Run(code, "interpreter");
-        var compiler = host.Run(code, "compiler");
+        var compiler = host.Run(code, "cil");
         return (compiler, interpreter);
     }
 
@@ -156,7 +156,7 @@ internal sealed class ModulePipelineTestHelper : IDisposable
     public void AssertFailsContaining(string code, IEnumerable<string> modules, string expectedFragment)
     {
         var moduleList = Materialize(modules);
-        var dialectText = BuildDialectText("Inline", moduleList, null, ["compiler", "interpreter"]);
+        var dialectText = BuildDialectText("Inline", moduleList, null, ["cil", "interpreter"]);
         var (compilerResult, interpreterResult) = BackendParityInfrastructure.RunBoth(dialectText, code);
 
         Assert.That(compilerResult.IsSuccess, Is.False);
@@ -164,14 +164,20 @@ internal sealed class ModulePipelineTestHelper : IDisposable
 
         var compilerExceptionText = GetComparableException(compilerResult.Exception!).ToString();
         var interpreterExceptionText = GetComparableException(interpreterResult.Exception!).ToString();
-        Assert.That(compilerExceptionText.Contains(expectedFragment, StringComparison.OrdinalIgnoreCase), Is.True);
-        Assert.That(interpreterExceptionText.Contains(expectedFragment, StringComparison.OrdinalIgnoreCase), Is.True);
+        Assert.That(
+            compilerExceptionText.Contains(expectedFragment, StringComparison.OrdinalIgnoreCase),
+            Is.True,
+            $"Compiler failure did not contain '{expectedFragment}': {compilerExceptionText}");
+        Assert.That(
+            interpreterExceptionText.Contains(expectedFragment, StringComparison.OrdinalIgnoreCase),
+            Is.True,
+            $"Interpreter failure did not contain '{expectedFragment}': {interpreterExceptionText}");
     }
 
     public void AssertFails(string code, IEnumerable<string> modules)
     {
         var moduleList = Materialize(modules);
-        var dialectText = BuildDialectText("Inline", moduleList, null, ["compiler", "interpreter"]);
+        var dialectText = BuildDialectText("Inline", moduleList, null, ["cil", "interpreter"]);
         var (compilerResult, interpreterResult) = BackendParityInfrastructure.RunBoth(dialectText, code);
 
         Assert.That(compilerResult.IsSuccess, Is.False);
@@ -181,7 +187,7 @@ internal sealed class ModulePipelineTestHelper : IDisposable
     public void AssertCompilerAndInterpreterFailSameWay(string code, IEnumerable<string> modules)
     {
         var moduleList = Materialize(modules);
-        var dialectText = BuildDialectText("Inline", moduleList, null, ["compiler", "interpreter"]);
+        var dialectText = BuildDialectText("Inline", moduleList, null, ["cil", "interpreter"]);
         var (compilerResult, interpreterResult) = BackendParityInfrastructure.RunBoth(dialectText, code);
 
         Assert.That(compilerResult.IsSuccess, Is.False);

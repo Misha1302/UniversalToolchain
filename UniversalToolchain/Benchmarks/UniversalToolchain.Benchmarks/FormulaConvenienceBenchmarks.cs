@@ -30,8 +30,8 @@ public class FormulaConvenienceBenchmarks
         _compilerEngine = WistEngine.CreateRestrictedArithmetic();
         _interpreterEngine = WistEngine.Create(new WistEngineOptions
         {
-            Preset = WistPreset.RestrictedArithmetic,
-            Backend = WistBackend.Interpreter
+            DialectSource = WistDialectSource.FromShippedPreset("pricing-restricted"),
+            BackendId = "interpreter"
         });
 
         AssertParity();

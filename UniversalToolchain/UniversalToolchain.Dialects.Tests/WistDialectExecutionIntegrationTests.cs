@@ -1,3 +1,4 @@
+using UniversalToolchain.Testing.Infrastructure;
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
 using NumbersModule.Core;
@@ -36,7 +37,7 @@ public class WistDialectExecutionIntegrationTests
         var result = workflow.ComposeFile(Path.Combine(example, "dialect.wistdialect"));
         using var host = workflow.CreateHost(result);
         var interpreterValue = host.Run(code, "interpreter");
-        var compilerValue = host.Run(code, "compiler");
+        var compilerValue = host.Run(code, "cil");
 
         Assert.Multiple(() =>
         {
@@ -58,7 +59,7 @@ public class WistDialectExecutionIntegrationTests
         var result = workflow.ComposeFile(Path.Combine(example, "dialect.wistdialect"));
         using var host = workflow.CreateHost(result);
         var interpreterValue = host.Run(code, "interpreter");
-        var compilerValue = host.Run(code, "compiler");
+        var compilerValue = host.Run(code, "cil");
 
         Assert.Multiple(() =>
         {
@@ -87,7 +88,7 @@ public class WistDialectExecutionIntegrationTests
                    """;
 
         var interpreterValue = host.Run(code, "interpreter");
-        var compilerValue = host.Run(code, "compiler");
+        var compilerValue = host.Run(code, "cil");
 
         Assert.Multiple(() =>
         {
@@ -114,7 +115,7 @@ public class WistDialectExecutionIntegrationTests
         const string code = "NumbersModule.Core.RealNumberImpl.Add(2, 5)";
 
         var interpreterValue = host.Run(code, "interpreter");
-        var compilerValue = host.Run(code, "compiler");
+        var compilerValue = host.Run(code, "cil");
 
         Assert.Multiple(() =>
         {
@@ -134,9 +135,9 @@ public class WistDialectExecutionIntegrationTests
         var result = workflow.ComposeFile(Path.Combine(example, "dialect.wistdialect"));
         using var host = workflow.CreateHost(result);
 
-        var ex = Assert.Throws<InvalidOperationException>(() => host.GetCore("compiler"));
+        var ex = Assert.Throws<InvalidOperationException>(() => host.GetCore("cil"));
 
-        Assert.That(ex!.Message, Does.Contain("Unknown backend 'compiler'"));
+        Assert.That(ex!.Message, Does.Contain("Unknown backend 'cil'"));
     }
 
     [Test]
@@ -199,17 +200,6 @@ public class WistDialectExecutionIntegrationTests
 
     private static string ResolveExampleDirectory(string name) => TestSourcePaths.WistExampleDirectory(name);
 
-    private static double ToDouble(object? value)
-    {
-        return value switch
-        {
-            RealNumberImpl number => number.GetValue(),
-            int intValue => intValue,
-            long longValue => longValue,
-            double doubleValue => doubleValue,
-            float floatValue => floatValue,
-            decimal decimalValue => (double)decimalValue,
-            _ => Thrower.InvalidCast<double>($"Unsupported result value '{value?.GetType().FullName ?? "<null>"}'.")
-        };
-    }
+    private static double ToDouble(object? value) => BackendResultAssertions.AsNumber(value);
+
 }

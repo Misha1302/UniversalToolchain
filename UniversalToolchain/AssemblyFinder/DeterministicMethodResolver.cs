@@ -1,3 +1,4 @@
+using DotnetHelper;
 namespace AssemblyFinder;
 
 /// <summary>
@@ -243,7 +244,8 @@ public sealed class DeterministicMethodResolver : IMethodResolver
 
     private static bool IsTypeCompatible(Type source, Type target)
     {
-        if (source == target || target.IsAssignableFrom(source))
+        if (source == target || target.IsAssignableFrom(source) ||
+            UserDefinedConversionResolver.CanConvert(source, target))
             return true;
 
         if (Nullable.GetUnderlyingType(target) is { } underlyingType)

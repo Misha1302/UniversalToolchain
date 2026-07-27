@@ -80,12 +80,12 @@ The repository already implements two neutral boundaries:
 The remaining design debt is adoption and validation, not absence of the abstraction:
 
 - some low-level Wist fast-invocation helpers still intentionally expose `DynamicMethod`;
-- Wist compatibility adapters must reject generic routes they cannot faithfully execute;
+- the Wist runtime provider must reject typed routes it cannot faithfully execute;
 - a third production-scale backend is still needed to pressure-test every convenience and packaging boundary.
 
 ```text
 selected backend and typed terminal contract
--> backend compiler/executor
+-> backend cil/executor
 -> neutral artifact/session or generic route result
 -> facade/host execution
 ```

@@ -27,7 +27,7 @@ Wist demonstrates several UniversalToolchain ideas in one concrete language:
 
 - syntax is contributed by modules;
 - dialect files select which syntax and runtime features are available;
-- the same source can run through interpreter and compiler modes when both are exposed;
+- the same source can run through interpreter and CIL modes when both are exposed;
 - restricted dialects can intentionally remove features from the language surface;
 - module and backend choices must be tested instead of assumed.
 

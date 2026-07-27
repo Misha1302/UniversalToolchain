@@ -14,6 +14,10 @@ public readonly struct RealNumberImpl(double value) : ICustomNumber<RealNumberIm
 
     public static RealNumberImpl Create(double value) => new(value);
 
+    public static implicit operator double(RealNumberImpl value) => value.GetValue();
+
+    public static implicit operator RealNumberImpl(double value) => new(value);
+
     public override string ToString() => value.ToString(CultureInfo.InvariantCulture);
 
     public int CompareTo(RealNumberImpl other)

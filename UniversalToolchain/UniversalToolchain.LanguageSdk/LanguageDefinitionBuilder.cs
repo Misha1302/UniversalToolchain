@@ -64,10 +64,6 @@ public sealed class LanguageDefinitionBuilder
         return this;
     }
 
-    [Obsolete("[UTL-DEP-002] Use UseRuntimeProvider. Removal is blocked by the shipped-preset parity gate.")]
-    public LanguageDefinitionBuilder UseRuntimePack(string packageId, string version) =>
-        UseRuntimeProvider(packageId, version);
-
     public LanguageDefinitionBuilder PreferCapabilityProvider(
         LanguageCapabilityId capability,
         LanguageContributionId contribution)

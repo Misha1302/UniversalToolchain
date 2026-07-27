@@ -30,10 +30,9 @@ This applies to:
 
 Structured references make activation deterministic and unambiguous across assemblies.
 
-## Canonical emission and compatibility fallback
+## Canonical emission and exact loading
 
-Canonical manifest emission writes structured activation references for both activation and registrar types.
-The runtime serializer still accepts older manifest forms (legacy type fields) as compatibility input and normalizes them into the runtime activation model.
+Canonical manifest emission writes structured activation references for both activation and registrar types. The runtime serializer requires the current structured form with explicit assembly, component and activation type identities. Older manifest forms are rejected and must be migrated explicitly.
 
 ## What runtime infrastructure uses it for
 

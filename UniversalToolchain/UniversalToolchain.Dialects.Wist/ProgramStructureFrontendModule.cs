@@ -3,9 +3,11 @@ using BasicCore.ParserWrapper;
 using BasicCore.Registration;
 using BasicCore.TranslatorWrapper;
 using BasicTypesExtensions;
+using UniversalToolchain.Dialects.Abstractions;
 
 namespace UniversalToolchain.Dialects.Wist;
 
+[DialectRuntimeExport("FrontendModule", "ProgramStructure")]
 public sealed class ProgramStructureFrontendModule : IFrontendCoreModule
 {
     public void InitAstTranslator(IAstToBytecodeTranslator translator)

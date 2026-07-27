@@ -9,7 +9,7 @@ namespace UniversalToolchain.Dialects.Integration;
 /// <summary>
 ///     Executes source through a selected dialect runtime plan without depending on a concrete reference language facade.
 /// </summary>
-public sealed class ToolchainRuntimeHost : IDisposable
+internal sealed class ToolchainRuntimeHost : IDisposable
 {
     private readonly IToolchainRuntimeConfiguration _configuration;
     private readonly IToolchainArtifactExecutor _executor;

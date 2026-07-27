@@ -24,8 +24,7 @@ public sealed class BytecodeContractMetadataTests
         var result = new BytecodeVerifier().Verify(new BytecodeVerificationRequest(
             bytecode,
             table,
-            VerificationSeverityProfile.Strict,
-            VerifyLegacyOperationNames: false));
+            VerificationSeverityProfile.Strict));
 
         Assert.That(result.IsValid, Is.True);
         Assert.That(result.Diagnostics, Is.Empty);

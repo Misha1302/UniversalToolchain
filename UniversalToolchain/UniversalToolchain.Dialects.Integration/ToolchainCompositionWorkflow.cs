@@ -46,6 +46,18 @@ public sealed class ToolchainCompositionWorkflow
         return ComposeCompiled(sourceName, compiled, buildPlan);
     }
 
+    public DialectFrameworkCompositionResult ComposeDefinition(
+        string sourceName,
+        DialectDefinitionSlice definition)
+    {
+        if (string.IsNullOrWhiteSpace(sourceName))
+            Thrower.Argument(nameof(sourceName), "Source name must not be empty.");
+        definition = definition.ArgNotNull();
+
+        var buildPlan = _buildPlanBuilder.Build(definition);
+        return ComposeCompiled(sourceName, definition, buildPlan);
+    }
+
     public DialectFrameworkCompositionResult ComposeCompiled(
         string sourceName,
         DialectDefinitionSlice compiled,

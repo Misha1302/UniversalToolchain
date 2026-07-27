@@ -18,7 +18,7 @@ public class MinimalRuntimeSelectionTests
         const string source = """
                               dialect Deterministic
                               use Arithmetic,Numbers,Variables
-                              backend interpreter,compiler
+                              backend interpreter,cil
 
                               """;
 

@@ -215,24 +215,33 @@ internal static class RuntimeCompiledArtifactTestFactory
         services.AddWistCilBackend();
         services.AddWistInterpreterBackend();
 
-        using var provider = services.BuildServiceProvider();
-        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var composition = workflow.ComposeText(
-            """
-            dialect RuntimeContracts
-            use Whitespaces,SemicolonAsNewLine,Comments,Numbers,Identifier,Arithmetic,Equality,Conditions,Loops,Scopes,Variables,Labels,InternalPreprocessorLexemes,CSharpInterop
-            backend compiler,interpreter
-            """,
-            "runtime-contracts-inline");
+        ServiceProvider? provider = services.BuildServiceProvider();
+        try
+        {
+            var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+            var composition = workflow.ComposeText(
+                """
+                dialect RuntimeContracts
+                use Whitespaces,SemicolonAsNewLine,Comments,Numbers,Identifier,Arithmetic,Equality,Conditions,Loops,Scopes,Variables,Labels,InternalPreprocessorLexemes,CSharpInterop
+                backend cil,interpreter
+                """,
+                "runtime-contracts-inline");
 
-        if (!composition.IsSuccess)
-            Thrower.InvalidOpEx(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
+            if (!composition.IsSuccess)
+                Thrower.InvalidOpEx(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
 
-        return workflow.CreateHost(composition);
+            var owner = provider;
+            provider = null;
+            return workflow.CreateHost(composition, new WistRuntimeServiceOptions(), owner);
+        }
+        finally
+        {
+            provider?.Dispose();
+        }
     }
 
     public static BasicCoreImpl<CilCompilationOutput> GetCompilerCore(WistDialectExecutionHost host) =>
-        host.GetCore("compiler") as BasicCoreImpl<CilCompilationOutput>
+        host.GetCore("cil") as BasicCoreImpl<CilCompilationOutput>
         ?? Thrower.InvalidOpEx<BasicCoreImpl<CilCompilationOutput>>("Compiler core must be BasicCoreImpl<CilCompilationOutput>.");
 
     public static BasicCoreImpl<IAbstractIR> GetInterpreterCore(WistDialectExecutionHost host) =>

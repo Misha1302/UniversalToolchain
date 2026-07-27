@@ -1,4 +1,5 @@
 using System.Reflection;
+using UniversalToolchain.Dialects.Wist.Presets;
 
 namespace UniversalToolchain.Wist;
 
@@ -8,24 +9,15 @@ namespace UniversalToolchain.Wist;
 public sealed class WistEngineOptions
 {
     /// <summary>
-    ///     Gets or sets the legacy convenience preset used when <see cref="DialectSource" /> is not set.
+    ///     Gets or sets the exact dialect source used by the facade.
     /// </summary>
-    public WistPreset Preset { get; set; } = WistPreset.RestrictedArithmetic;
+    public WistDialectSource DialectSource { get; set; } =
+        WistDialectSource.FromShippedPreset("pricing-restricted");
 
     /// <summary>
-    ///     Gets or sets an open dialect source. Prefer this for custom dialect files or non-enum shipped presets.
+    ///     Gets or sets the canonical backend identifier: "cil" or "interpreter".
     /// </summary>
-    public WistDialectSource? DialectSource { get; set; }
-
-    /// <summary>
-    ///     Gets or sets the legacy convenience backend used when <see cref="BackendAlias" /> is not set.
-    /// </summary>
-    public WistBackend Backend { get; set; } = WistBackend.Compiler;
-
-    /// <summary>
-    ///     Gets or sets an open backend alias, for example "compiler", "interpreter", or a dialect-defined backend id.
-    /// </summary>
-    public string? BackendAlias { get; set; }
+    public string BackendId { get; set; } = "cil";
 
     /// <summary>
     ///     Gets the explicit host assembly allowlist exposed to CLR interop and type directives.
@@ -44,10 +36,15 @@ public sealed class WistEngineOptions
     /// </summary>
     public WistOptimizationOptions Optimization { get; set; } = new();
 
-    public static WistEngineOptions FromPresetId(string presetId) => new()
+    public static WistEngineOptions FromPresetId(string presetId)
     {
-        DialectSource = WistDialectSource.FromShippedPreset(presetId)
-    };
+        var preset = WistShippedDialectPresets.GetRequired(presetId);
+        return new WistEngineOptions
+        {
+            DialectSource = WistDialectSource.FromShippedPreset(preset.Id),
+            BackendId = preset.DefaultBackend
+        };
+    }
 
     public static WistEngineOptions FromDialectFile(string path) => new()
     {

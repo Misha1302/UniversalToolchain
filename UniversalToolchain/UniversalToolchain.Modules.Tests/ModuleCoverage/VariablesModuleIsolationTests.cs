@@ -76,15 +76,15 @@ public class VariablesModuleIsolationTests
     }
 
     [Test]
-    public void Variables_AssignmentToUnknownVariable_IsHandledDeterministically()
+    public void Variables_AssignmentToUnknownVariable_FailsClosedDeterministically()
     {
         using var h = new ModulePipelineTestHelper();
-        var r = h.ExecuteBoth(
+        h.AssertFailsContaining(
             """
             x = 1
             x
             """,
-            _modules);
-        ModulePipelineTestHelper.AssertParity(r.Compiler, r.Interpreter);
+            _modules,
+            "Unknown identifier 'x'");
     }
 }

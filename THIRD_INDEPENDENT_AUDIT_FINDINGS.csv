@@ -1,0 +1,6 @@
+FindingId,Severity,Title,Status,Owner,RegressionEvidence
+R-13,Critical,Installer accepted zero tests for an unmatched VSTest filter,Fixed,Installer and Tools/verify_trx_count.py,Negative missing-filter smoke and exact TRX counts
+R-14,High,Current documentation contradicted removed compatibility contracts,Fixed,Documentation and Tools/check_documentation_status.py,Documentation status and link gates
+R-15,High,PlanFuzz persisted compiler-prefixed current evidence IDs,Fixed,Wist PlanFuzz adapter,PlanFuzz adapter v0.2.0 tests and no-legacy gate
+R-16,High,Parity evidence references were not resolved to real tests,Fixed,WistMigrationGateTests,Roslyn NUnit evidence scan
+R-17,High,Canonical verification count was stale and duplicated,Fixed,eng/test-counts.json docs and installer,Exact 1508 plan/schema/documentation gate

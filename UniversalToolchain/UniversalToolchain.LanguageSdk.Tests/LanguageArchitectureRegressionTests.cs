@@ -249,38 +249,6 @@ public sealed class LanguageArchitectureRegressionTests
     }
 
     [Test]
-    public void LegacyRuntimePath_CannotBypassRestrictivePolicy()
-    {
-        var syntax = new LanguageArtifactKind<int>("legacy.syntax");
-        var backend = new BackendId("legacy");
-        var package = LanguagePackageBuilder.Create("Legacy.Provider", "1")
-            .AddFeature("legacy.core", feature => feature
-                .AddTransformer(
-                    "legacy.parse",
-                    LanguageSlots.FrontendParser,
-                    StandardLanguageArtifactKinds.SourceText,
-                    syntax,
-                    static (source, _) => int.Parse(source),
-                    LanguageRuntimeComponentTraits.DeterministicNoHostInterop)
-                .AddBackend(
-                    backend,
-                    new LanguageContributionId("legacy.backend"),
-                    syntax,
-                    static (value, _) => value,
-                    LanguageRuntimeComponentTraits.DeterministicNoHostInterop))
-            .UseRouteRuntime("Legacy.Provider", "1")
-            .Build();
-        var plan = CompileSinglePackage(package, "legacy.core", backend);
-
-#pragma warning disable CS0618
-        var exception = Assert.Throws<InvalidOperationException>(() =>
-            LanguageRuntime.Create(plan, new UnsafeLegacyRuntimePack(package, backend)));
-#pragma warning restore CS0618
-
-        Assert.That(exception!.Message, Does.Contain("fail-closed runtime-policy validation"));
-    }
-
-    [Test]
     public void WhitespaceSource_ReachesLanguageFrontend()
     {
         var syntax = new LanguageArtifactKind<int>("whitespace.syntax");
@@ -599,17 +567,6 @@ public sealed class LanguageArchitectureRegressionTests
         return current?.FullName ?? throw new InvalidOperationException("Repository root not found.");
     }
 
-#pragma warning disable CS0618
-    private sealed class UnsafeLegacyRuntimePack(AuthoredLanguagePackage package, BackendId backend) : ILanguageRuntimePack
-    {
-        public LanguagePackageId PackageId => package.PackageId;
-        public LanguageVersion PackageVersion => package.PackageVersion;
-        public ToolchainApiVersion ToolchainApiVersion => ToolchainApi.Current;
-        public IReadOnlyCollection<LanguageFeatureId> SupportedFeatures => package.Descriptor.Features.Select(static feature => feature.Id).ToArray();
-        public IReadOnlyCollection<BackendId> SupportedBackends => [backend];
-        public ILanguageRuntimeSession CreateSession(LanguagePlan plan, LanguageRuntimeOptions options) => new EmptySession();
-    }
-#pragma warning restore CS0618
 
     private sealed class ComponentSource(
         LanguagePackageDescriptor descriptor,

@@ -6,12 +6,14 @@
     <LangVersion>14</LangVersion>
     <IsPackable>true</IsPackable>
     <PackageId>UniversalToolchain.Wist.LanguagePack</PackageId>
-    <Version>0.3.0-alpha.1</Version>
-    <Description>Wist contribution pack and legacy-dialect runtime adapter for the external UniversalToolchain Language SDK.</Description>
+    <Version>0.3.0-alpha.2</Version>
+    <Description>Wist typed feature package and runtime provider for the UniversalToolchain Language SDK, composed through the canonical Wist dialect runtime.</Description>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeToolchainFeatureManifest</TargetsForTfmSpecificContentInPackage>
   </PropertyGroup>
   <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="/" />
     <AssemblyMetadata Include="UniversalToolchain.PackageVersion" Value="$(Version)" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.2" />
   </ItemGroup>

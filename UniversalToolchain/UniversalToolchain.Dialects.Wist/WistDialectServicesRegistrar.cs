@@ -7,7 +7,7 @@ namespace UniversalToolchain.Dialects.Wist;
 /// <summary>
 ///     Registers the Wist dialect integration layer into a service collection.
 /// </summary>
-public sealed class WistDialectServicesRegistrar : IDialectServicesRegistrar
+internal sealed class WistDialectServicesRegistrar : IDialectServicesRegistrar
 {
     public void Register(IServiceCollection services)
     {

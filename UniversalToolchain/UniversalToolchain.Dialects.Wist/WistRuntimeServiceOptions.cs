@@ -7,7 +7,7 @@ namespace UniversalToolchain.Dialects.Wist;
 /// <summary>
 ///     Host-owned runtime services that must not be inferred from the process or file system.
 /// </summary>
-public sealed class WistRuntimeServiceOptions
+internal sealed class WistRuntimeServiceOptions
 {
     /// <summary>
     ///     Gets the explicit assembly allowlist available to CLR type and method resolution.

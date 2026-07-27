@@ -28,7 +28,7 @@ public sealed class BytecodeVerifierTests
     }
 
     [Test]
-    public void Verify_WhenBytecodeContainsUnknownPattern_ReturnsDiagnostic()
+    public void Verify_DoesNotInferPatternFromRuntimeMethodName()
     {
         var bytecode = new Bytecode(
         [
@@ -42,7 +42,7 @@ public sealed class BytecodeVerifierTests
             VerificationSeverityProfile.Warn));
 
         Assert.That(result.IsValid, Is.True);
-        Assert.That(result.Diagnostics.Single().Code, Is.EqualTo(ModuleContractDiagnosticCodes.UnknownBytecodePattern));
+        Assert.That(result.Diagnostics, Is.Empty);
     }
 
     [Test]

@@ -1,3 +1,4 @@
+using System.Runtime.Loader;
 using ArithmeticModule.Module;
 
 namespace UniversalToolchain.Dialects.Tests;
@@ -34,35 +35,73 @@ public class RuntimeComponentTypeLoaderTests
     }
 
     [Test]
-    public void TypeLoader_DoesNotUseLocator_WhenAssemblyAlreadyLoaded()
+    public void TypeLoader_UsesConfiguredRoot_WhenAssemblyWithSameIdentityIsAlreadyLoaded()
     {
         _ = typeof(ArithmeticModuleImpl).Assembly;
-        var locator = new CountingLocator(false, null);
-        var loader = CreateLoader(new DefaultRuntimeAssemblyLoadStrategy(locator));
+        var configuredPath = Path.Combine(AppContext.BaseDirectory, "ArithmeticModule.dll");
+        var locator = new CountingLocator(true, configuredPath);
+        using var strategy = new DefaultRuntimeAssemblyLoadStrategy(locator);
+        var loader = CreateLoader(strategy);
 
         var type = loader.LoadType(Entry("ArithmeticModule", "frontend.arithmetic"));
 
         Assert.Multiple(() =>
         {
             Assert.That(type, Is.Not.Null);
-            Assert.That(locator.Calls, Is.EqualTo(0));
+            Assert.That(locator.Calls, Is.EqualTo(1));
+            Assert.That(Path.GetFullPath(type.Assembly.Location), Is.EqualTo(Path.GetFullPath(configuredPath)));
         });
     }
 
     [Test]
-    public void TypeLoader_UsesLocatorFallback_WhenLoadByNameFails()
+    public void TypeLoader_RejectsConfiguredPathWhoseAssemblyIdentityDoesNotMatchRequest()
     {
         var badAssembly = "DefinitelyMissing.Assembly.For.Loader.Test";
         var locator = new CountingLocator(true, Path.Combine(AppContext.BaseDirectory, "ArithmeticModule.dll"));
-        var loader = CreateLoader(new DefaultRuntimeAssemblyLoadStrategy(locator));
+        using var strategy = new DefaultRuntimeAssemblyLoadStrategy(locator);
+        var loader = CreateLoader(strategy);
 
-        var type = loader.LoadType(Entry(badAssembly, "frontend.arithmetic"));
+        var exception = Assert.Throws<InvalidOperationException>(
+            () => loader.LoadType(Entry(badAssembly, "frontend.arithmetic")));
 
         Assert.Multiple(() =>
         {
-            Assert.That(type.FullName, Is.EqualTo("ArithmeticModule.Module.ArithmeticModuleImpl"));
+            Assert.That(exception!.Message, Does.Contain("not requested assembly"));
             Assert.That(locator.Calls, Is.EqualTo(1));
         });
+    }
+
+    [Test]
+    public void TypeLoader_IgnoresSameIdentityAssemblyPreloadedFromDifferentContextAndPath()
+    {
+        var configuredPath = Path.Combine(AppContext.BaseDirectory, "ArithmeticModule.dll");
+        var temporaryDirectory = Path.Combine(Path.GetTempPath(), "wist-loader-hostile-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(temporaryDirectory);
+        var hostilePath = Path.Combine(temporaryDirectory, "ArithmeticModule.dll");
+        File.Copy(configuredPath, hostilePath);
+        var hostileContext = new AssemblyLoadContext("hostile-runtime-preload", isCollectible: true);
+
+        try
+        {
+            var hostileAssembly = hostileContext.LoadFromAssemblyPath(hostilePath);
+            var locator = new CountingLocator(true, configuredPath);
+            using var strategy = new DefaultRuntimeAssemblyLoadStrategy(locator);
+            var loader = CreateLoader(strategy);
+
+            var type = loader.LoadType(Entry("ArithmeticModule", "frontend.arithmetic"));
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(type.Assembly, Is.Not.SameAs(hostileAssembly));
+                Assert.That(Path.GetFullPath(type.Assembly.Location), Is.EqualTo(Path.GetFullPath(configuredPath)));
+                Assert.That(locator.Calls, Is.EqualTo(1));
+            });
+        }
+        finally
+        {
+            hostileContext.Unload();
+            Directory.Delete(temporaryDirectory, recursive: true);
+        }
     }
 
     [Test]
@@ -89,7 +128,17 @@ public class RuntimeComponentTypeLoaderTests
     }
 
     private static RuntimeComponentManifestEntry Entry(string assemblySimpleName, string componentId)
-        => new(RuntimeComponentKind.FrontendModule, "Arithmetic", [], new RuntimeComponentId(componentId), assemblySimpleName);
+        => new(
+            RuntimeComponentKind.FrontendModule,
+            "Arithmetic",
+            [],
+            new RuntimeComponentId(componentId),
+            assemblySimpleName,
+            new RuntimeComponentActivationInfo(new RuntimeTypeReference(
+                assemblySimpleName,
+                componentId == "frontend.arithmetic"
+                    ? typeof(ArithmeticModuleImpl).FullName!
+                    : "Missing.Component.Type")));
 
     private static DefaultRuntimeComponentTypeLoader CreateLoader(IRuntimeAssemblyLoadStrategy strategy)
         => new(new DefaultRuntimeComponentResolver(new DefaultRuntimeAssemblyTypeLoader(strategy)));

@@ -88,7 +88,7 @@ public class DialectCompositionExplanationFormatterTests
         var buildPlan = new DialectBuildPlanExplanation(
             true,
             buildModules ?? ["module-b", "module-a"],
-            [new DialectBackendId("compiler"), new DialectBackendId("interpreter")],
+            [new DialectBackendId("cil"), new DialectBackendId("interpreter")],
             [],
             [new IntrinsicBuildDirective("Math.Abs", true, DialectBackendSelector.Any)],
             [],
@@ -115,7 +115,7 @@ public class DialectCompositionExplanationFormatterTests
             resolutionDiagnostics ?? [Diagnostic("R1")]);
     }
 
-    private static RuntimeComponentManifestEntry Entry(string alias) => new(RuntimeComponentKind.FrontendModule, alias, [], new RuntimeComponentId(alias + "-id"), "Assembly");
+    private static RuntimeComponentManifestEntry Entry(string alias) => new(RuntimeComponentKind.FrontendModule, alias, [], new RuntimeComponentId(alias + "-id"), "Assembly", new RuntimeComponentActivationInfo(new RuntimeTypeReference("Assembly", "Test.Activation.Type")));
 
     private static DialectDiagnostic Diagnostic(string code) => new(code, $"{code}-message", DialectDiagnosticSeverity.Warning);
 }

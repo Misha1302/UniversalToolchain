@@ -18,7 +18,7 @@ The implementation remains non-packable and does not extend the public `Universa
 |---|---|
 | `UniversalToolchain.PlanFuzz.Core` | deterministic PRNG, versioned testcase/observation contracts, exact replay fingerprints, normalized finding-class fingerprints, adapter/oracle registries, seven generic oracle families, explicit surface/activation evidence and language-neutral reduction contracts |
 | `UniversalToolchain.PlanFuzz.Adapter.Acme` | independent structured pricing generator and reducer, registry-order and selected-but-unused extension variants, interpreter/compiled execution and three test-only seeded faults |
-| `UniversalToolchain.PlanFuzz.Adapter.Wist` | structured restricted-`Int32` generator and reducer, opt-in regression corpus, interpreter/compiler variants, SSA `Disabled`/`Prefer`/`Require` policies and Wist-owned route evidence |
+| `UniversalToolchain.PlanFuzz.Adapter.Wist` | structured restricted-`Int32` generator and reducer, opt-in regression corpus, interpreter/CIL variants, SSA `Disabled`/`Prefer`/`Require` policies and Wist-owned route evidence |
 | `UniversalToolchain.PlanFuzz.Cli` | explicit adapter registration, generation, isolated workers, replay, deterministic reduction, bounded campaigns and recursive artifact manifests |
 | `UniversalToolchain.PlanFuzz.Tests` | deterministic contracts, serialization, oracle behavior, evidence-completeness checks, class-fingerprint separation, reduction transforms and direct adapter tests |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | fresh-process Acme/Wist replay, exact-fingerprint reduction and CLI outcome-boundary tests |
@@ -29,7 +29,7 @@ The configuration-complete research graph is declared in `UniversalToolchain/Pla
 
 - PRNG: `xoshiro256starstar-v1` with SHA-256 domain-separated forks.
 - Testcase schema: version 1 with canonical body hashing and recorded case identity.
-- Observation schema: version 4 with fail-closed surface/owner evidence contract v2; schema-v1 through schema-v3 observations remain readable, but legacy surface evidence cannot satisfy current O-004/O-005 proofs.
+- Observation schema: version 4 with fail-closed surface/owner evidence contract v2; only schema-v4 observations are accepted; schema-v1 through schema-v3 inputs are rejected fail-closed.
 - Replay report schema: version 3 with a distinct `inconclusive` state.
 - Campaign summary schema: version 3; it reports `distinctFindingClasses`, `inconclusiveCases` and whether the regression corpus was included.
 - Typed values: `decimal`, `bool`, `string` and `Int32` snapshots without semantic comparison through `ToString()`.
@@ -70,9 +70,9 @@ The only external parameter is exactly `x`. Backend/configuration pairs are vali
 
 ```text
 interpreter + SSA Disabled
-compiler    + SSA Disabled
-compiler    + SSA Prefer
-compiler    + SSA Require
+cil         + SSA Disabled
+cil         + SSA Prefer
+cil         + SSA Require
 ```
 
 The generic core contains no Wist syntax, feature IDs, backend classes or diagnostic allowlist. Wist-specific fallback classification remains inside `UniversalToolchain.PlanFuzz.Adapter.Wist`.
@@ -168,7 +168,7 @@ Phase 3a hardens the two generic surface-oracle families without adding Acme or 
 - `O-004` negative-surface preservation consumes current, complete observed traces and rejects activation of explicitly excluded owners; its status and fingerprint are deterministic under variant permutation;
 - `O-005` extension noninterference derives the additive direction from evidence rather than contract order and requires equal semantics, selected route identity and activated-owner evidence.
 
-Observation schema v4 introduces surface evidence contract v2. Current evidence uses separate selected-surface, selected-owner, excluded-owner, independent-surface and independent-owner sets. Blank, duplicate, contradictory and out-of-domain IDs are rejected. Schema-v3 evidence remains readable for historical replay but is classified `Inconclusive` by current surface oracles.
+Observation schema v4 introduces surface evidence contract v2. Current evidence uses separate selected-surface, selected-owner, excluded-owner, independent-surface and independent-owner sets. Blank, duplicate, contradictory and out-of-domain IDs are rejected. Schema-v3 evidence is no longer accepted by the current adapter; historical evidence requires an external, explicit migration tool.
 
 The Acme adapter records activation at the actual parser, transformer, executor and runtime-provider components. The selected-but-unused extension remains on an unreachable artifact route in clean cases. The two surface faults now execute inside a test-owned runtime-provider wrapper and invoke extension-owned activation/interference logic through the ordinary runtime path; the adapter no longer edits observations after execution.
 
@@ -188,14 +188,14 @@ A clean Acme campaign using seed `20260725` completed 25/25 cases with two fresh
 GitHub Actions executed the canonical repository entrypoint after evidence hardening:
 
 ```text
-Tests:                                       483 passed
+Tests:                                       505 passed
 UniversalToolchain.Modules.Tests:            290 passed
-UniversalToolchain.Dialects.Tests:           588 passed
-UniversalToolchain.LanguageSdk.Tests:         53 passed
+UniversalToolchain.Dialects.Tests:           584 passed
+UniversalToolchain.LanguageSdk.Tests:         78 passed
 UniversalToolchain.PlanFuzz.Tests:             41 passed
 UniversalToolchain.PlanFuzz.IntegrationTests:  10 passed
 --------------------------------------------------------
-Total:                                      1465 passed
+Total:                                      1508 passed
 Failed:                                        0
 Skipped:                                       0
 ```

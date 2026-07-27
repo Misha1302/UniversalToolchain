@@ -13,7 +13,7 @@ public sealed class ModuleContractVerificationOptions
     public ModuleContractVerificationMode Mode { get; init; } = ModuleContractVerificationMode.Strict;
 
     public ModuleContractPipelineOptions PipelineOptions { get; init; } =
-        ModuleContractPipelineProfiles.StrictLegacyCompatible;
+        ModuleContractPipelineProfiles.StrictEnforced;
 
     public IModuleContractDiagnosticSink DiagnosticSink { get; init; } =
         new InMemoryModuleContractDiagnosticSink();

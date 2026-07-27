@@ -29,7 +29,7 @@ For custom dialects there is no `WistRuntimeFacade.Compile<TDelegate>(...)` meth
 ```text
 dialect MyFastFormulaDialect
 use Whitespaces,Numbers,Scopes,Arithmetic
-backend compiler,interpreter
+backend cil,interpreter
 ```
 
 The module list must include every syntax feature used by the source code.
@@ -55,7 +55,7 @@ var result = runtime.Run(
         ["price"] = 100.0,
         ["fee"] = 5.0
     },
-    backend: "compiler");
+    backend: "cil");
 ```
 
 Do not use `Run` inside a tight hot loop when the same code is executed repeatedly. Compile once instead.
@@ -80,7 +80,7 @@ var compiled = runtime.TryCompile(
         ["price"] = typeof(double),
         ["fee"] = typeof(double)
     },
-    backend: "compiler");
+    backend: "cil");
 
 if (!compiled.IsSuccess)
     throw compiled.Exception!;
@@ -116,7 +116,7 @@ double second = session.Run<double>();
 
 This section is an escape hatch for backend/runtime authors and performance investigations, not the package-first stable facade. Prefer artifact sessions unless you have verified the exact CIL artifact shape.
 
-For the lowest-overhead CIL path, compile with the `compiler` backend, cast the artifact to `ICompiledArtifact<DynamicMethod>`, and wrap the generated method in `DynamicMethodInvoker`.
+For the lowest-overhead CIL path, compile with the `cil` backend, cast the artifact to `ICompiledArtifact<DynamicMethod>`, and wrap the generated method in `DynamicMethodInvoker`.
 
 ```csharp
 using System.Reflection.Emit;
@@ -136,7 +136,7 @@ var compiled = runtime.TryCompile(
         ["price"] = typeof(double),
         ["fee"] = typeof(double)
     },
-    backend: "compiler");
+    backend: "cil");
 
 if (!compiled.IsSuccess)
     throw compiled.Exception!;
@@ -195,7 +195,7 @@ YourModule.dll
 YourModule.dialect.runtime.json
 ```
 
-If the cast to `ICompiledArtifact<DynamicMethod>` fails, check that you compiled with `backend: "compiler"`. Do not use the `DynamicMethod` path with the interpreter backend.
+If the cast to `ICompiledArtifact<DynamicMethod>` fails, check that you compiled with `backend: "cil"`. Do not use the `DynamicMethod` path with the interpreter backend.
 
 If `Run` works but fast invocation fails, check that the selected dialect exposes the compiler backend and that the custom module supports the compiler path.
 

@@ -7,8 +7,7 @@ public static class ModuleContractPipelineProfiles
         BytecodeProfile = VerificationSeverityProfile.Observe,
         AirProfile = VerificationSeverityProfile.Observe,
         EnforcementPolicy = ModuleContractEnforcementPolicy.AllowUndeclared,
-        BackendPolicy = AirBackendPolicy.CapabilityGated,
-        VerifyLegacyBytecodeOperationNames = false
+        BackendPolicy = AirBackendPolicy.CapabilityGated
     };
 
     public static ModuleContractPipelineOptions Warn => new()
@@ -16,8 +15,7 @@ public static class ModuleContractPipelineProfiles
         BytecodeProfile = VerificationSeverityProfile.Warn,
         AirProfile = VerificationSeverityProfile.Warn,
         EnforcementPolicy = ModuleContractEnforcementPolicy.AllowUndeclared,
-        BackendPolicy = AirBackendPolicy.CapabilityGated,
-        VerifyLegacyBytecodeOperationNames = false
+        BackendPolicy = AirBackendPolicy.CapabilityGated
     };
 
     public static ModuleContractPipelineOptions StrictEnforced => new()
@@ -25,8 +23,7 @@ public static class ModuleContractPipelineProfiles
         BytecodeProfile = VerificationSeverityProfile.Strict,
         AirProfile = VerificationSeverityProfile.Strict,
         EnforcementPolicy = ModuleContractEnforcementPolicy.EnforceNewModules([]),
-        BackendPolicy = AirBackendPolicy.CapabilityGated,
-        VerifyLegacyBytecodeOperationNames = false
+        BackendPolicy = AirBackendPolicy.CapabilityGated
     };
 
     public static ModuleContractPipelineOptions StrictUniversalInterpreter => new()
@@ -34,20 +31,6 @@ public static class ModuleContractPipelineProfiles
         BytecodeProfile = VerificationSeverityProfile.Strict,
         AirProfile = VerificationSeverityProfile.Strict,
         EnforcementPolicy = ModuleContractEnforcementPolicy.EnforceNewModules([]),
-        BackendPolicy = AirBackendPolicy.UniversalInterpreter,
-        VerifyLegacyBytecodeOperationNames = false
-    };
-
-    /// <summary>
-    /// Fail-closed verification severity while retaining the explicitly documented alpha legacy allowance.
-    /// New module packages should use StrictEnforced instead.
-    /// </summary>
-    public static ModuleContractPipelineOptions StrictLegacyCompatible => new()
-    {
-        BytecodeProfile = VerificationSeverityProfile.Strict,
-        AirProfile = VerificationSeverityProfile.Strict,
-        EnforcementPolicy = ModuleContractEnforcementPolicy.AllowUndeclared,
-        BackendPolicy = AirBackendPolicy.CapabilityGated,
-        VerifyLegacyBytecodeOperationNames = false
+        BackendPolicy = AirBackendPolicy.UniversalInterpreter
     };
 }

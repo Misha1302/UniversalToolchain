@@ -1,3 +1,4 @@
+using UniversalToolchain.Testing.Infrastructure;
 using System.Globalization;
 using Microsoft.Extensions.DependencyInjection;
 using NumbersModule.Core;
@@ -20,7 +21,7 @@ public class WistDialectMinimalRuntimeSmokeTests
     public void MinimalPath_InterpreterOnly_ComposesAndRunsSuccessfully() => AssertForInlineDialect("dialect Demo\nuse Arithmetic,Numbers,Whitespaces\nbackend interpreter", "2 + 5", "interpreter");
 
     [Test]
-    public void MinimalPath_CilOnly_ComposesAndRunsSuccessfully() => AssertForInlineDialect("dialect Demo\nuse Arithmetic,Numbers,Whitespaces\nbackend compiler", "2 + 5", "compiler");
+    public void MinimalPath_CilOnly_ComposesAndRunsSuccessfully() => AssertForInlineDialect("dialect Demo\nuse Arithmetic,Numbers,Whitespaces\nbackend cil", "2 + 5", "cil");
 
     private static void AssertForExample(string exampleName, string executionMode, double expected)
     {
@@ -60,17 +61,6 @@ public class WistDialectMinimalRuntimeSmokeTests
 
     private static string ResolveExampleDirectory(string name) => TestSourcePaths.WistExampleDirectory(name);
 
-    private static double ToDouble(object? value)
-    {
-        return value switch
-        {
-            RealNumberImpl number => number.GetValue(),
-            int intValue => intValue,
-            long longValue => longValue,
-            double doubleValue => doubleValue,
-            float floatValue => floatValue,
-            decimal decimalValue => (double)decimalValue,
-            _ => Convert.ToDouble(value, CultureInfo.InvariantCulture)
-        };
-    }
+    private static double ToDouble(object? value) => BackendResultAssertions.AsNumber(value);
+
 }

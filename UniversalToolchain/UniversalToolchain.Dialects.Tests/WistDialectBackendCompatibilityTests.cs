@@ -10,7 +10,7 @@ public class WistDialectBackendCompatibilityTests
     public void RuntimeKnownBackendsProvider_ReturnsBackendsFromRuntimeCatalog()
     {
         var catalog = new StaticCatalog(
-            Entry("cil", ["compiler"]),
+            Entry("cil", []),
             Entry("interpreter"),
             Entry("foreign-backend", ["foreign"]));
 
@@ -69,7 +69,8 @@ public class WistDialectBackendCompatibilityTests
             "Arithmetic",
             [],
             RuntimeComponentIdFactory.Create(RuntimeComponentKind.Optimizer, "Arithmetic"),
-            "AnyAssembly");
+            "AnyAssembly",
+            new RuntimeComponentActivationInfo(new RuntimeTypeReference("AnyAssembly", "Test.Activation.Type")));
 
         var exception = Assert.Throws<InvalidOperationException>(() =>
             builder.Build(
@@ -141,7 +142,8 @@ public class WistDialectBackendCompatibilityTests
             alias,
             aliases ?? [],
             RuntimeComponentIdFactory.Create(RuntimeComponentKind.Backend, alias),
-            "AnyAssembly");
+            "AnyAssembly",
+            new RuntimeComponentActivationInfo(new RuntimeTypeReference("AnyAssembly", "Test.Activation.Type")));
 
     private static RuntimeComponentManifestEntry ModuleEntry(string alias) =>
         new(
@@ -149,7 +151,8 @@ public class WistDialectBackendCompatibilityTests
             alias,
             [],
             RuntimeComponentIdFactory.Create(RuntimeComponentKind.FrontendModule, alias),
-            "AnyAssembly");
+            "AnyAssembly",
+            new RuntimeComponentActivationInfo(new RuntimeTypeReference("AnyAssembly", "Test.Activation.Type")));
 
     private static RuntimeComponentManifestEntry OptimizerEntry(string alias) =>
         new(
@@ -157,7 +160,8 @@ public class WistDialectBackendCompatibilityTests
             alias,
             [],
             RuntimeComponentIdFactory.Create(RuntimeComponentKind.Optimizer, alias),
-            "AnyAssembly");
+            "AnyAssembly",
+            new RuntimeComponentActivationInfo(new RuntimeTypeReference("AnyAssembly", "Test.Activation.Type")));
 
     private sealed class StaticCatalog(params RuntimeComponentManifestEntry[] backends) : IRuntimeComponentCatalog
     {

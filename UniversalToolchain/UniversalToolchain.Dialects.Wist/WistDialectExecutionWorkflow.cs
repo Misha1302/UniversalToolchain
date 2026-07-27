@@ -1,5 +1,6 @@
 using ExceptionsManager;
 using UniversalToolchain.Dialects.Abstractions;
+using UniversalToolchain.Dialects.Frontend;
 using UniversalToolchain.Dialects.Integration;
 
 namespace UniversalToolchain.Dialects.Wist;
@@ -7,7 +8,7 @@ namespace UniversalToolchain.Dialects.Wist;
 /// <summary>
 /// Wist adapter over the language-neutral composition workflow and Wist runtime activation.
 /// </summary>
-public sealed class WistDialectExecutionWorkflow
+internal sealed class WistDialectExecutionWorkflow
 {
     private readonly WistDialectExecutionConfigurationBuilder _configurationBuilder;
     private readonly WistDialectServiceProviderFactory _serviceProviderFactory;
@@ -27,6 +28,11 @@ public sealed class WistDialectExecutionWorkflow
 
     public DialectFrameworkCompositionResult ComposeText(string sourceText, string sourceName) =>
         _workflow.ComposeText(sourceText, sourceName);
+
+    public DialectFrameworkCompositionResult ComposeDefinition(
+        string sourceName,
+        DialectDefinitionSlice definition) =>
+        _workflow.ComposeDefinition(sourceName, definition);
 
     public DialectFrameworkCompositionResult ComposeText(
         string sourceText,
@@ -53,14 +59,31 @@ public sealed class WistDialectExecutionWorkflow
     }
 
     public WistDialectExecutionHost CreateHost(DialectFrameworkCompositionResult compositionResult) =>
-        CreateHost(compositionResult, new WistRuntimeServiceOptions());
+        CreateHost(compositionResult, new WistRuntimeServiceOptions(), null);
 
     public WistDialectExecutionHost CreateHost(
         DialectFrameworkCompositionResult compositionResult,
-        WistRuntimeServiceOptions runtimeServiceOptions)
+        WistRuntimeServiceOptions runtimeServiceOptions) =>
+        CreateHost(compositionResult, runtimeServiceOptions, null);
+
+    internal WistDialectExecutionHost CreateHost(
+        DialectFrameworkCompositionResult compositionResult,
+        WistRuntimeServiceOptions runtimeServiceOptions,
+        IDisposable? compositionServicesOwner)
     {
         var configuration = GetConfiguration(compositionResult);
-        return new WistDialectExecutionHost(CreateRuntimeHost(configuration, runtimeServiceOptions), configuration);
+        try
+        {
+            return new WistDialectExecutionHost(
+                CreateRuntimeHost(configuration, runtimeServiceOptions),
+                configuration,
+                compositionServicesOwner);
+        }
+        catch
+        {
+            compositionServicesOwner?.Dispose();
+            throw;
+        }
     }
 
     public ToolchainRuntimeHost CreateRuntimeHost(DialectFrameworkCompositionResult compositionResult) =>

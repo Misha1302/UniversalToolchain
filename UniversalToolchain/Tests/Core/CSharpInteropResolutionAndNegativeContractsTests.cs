@@ -12,7 +12,7 @@ public class CSharpInteropResolutionAndNegativeContractsTests
                                        dialect NativeInterop
                                        use Whitespaces,SemicolonAsNewLine,Comments,Numbers,Identifier,Arithmetic,Equality,Conditions,Loops,Scopes,Variables,Labels,InternalPreprocessorLexemes,CSharpInterop
 
-                                       backend compiler,interpreter
+                                       backend cil,interpreter
                                        """;
 
     [Test]
@@ -68,7 +68,7 @@ public class CSharpInteropResolutionAndNegativeContractsTests
     {
         var exception = Assert.Throws<InvalidOperationException>(() => ExecuteCode<int>("System.String.IsNullOrEmpty(null)"));
 
-        Assert.That(exception!.Message, Does.Contain("Cannot cast").Or.Contain("Storage type for variable 'null' is not fixed before read"));
+        Assert.That(exception!.Message, Does.Contain("Unknown identifier 'null'"));
     }
 
     private static T ExecuteCode<T>(string code)
@@ -78,7 +78,7 @@ public class CSharpInteropResolutionAndNegativeContractsTests
             using var compilerHost = DialectTestHostInfrastructure.CreateCompilerHost(
                 DialectText,
                 [typeof(string).Assembly, typeof(InteropContractsHost).Assembly]);
-            return compilerHost.Run(code, "compiler");
+            return compilerHost.Run(code, "cil");
         });
 
         if (!compilerResult.IsSuccess)

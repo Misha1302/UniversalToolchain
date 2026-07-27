@@ -6,6 +6,7 @@ using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
 using UniversalToolchain.Dialects.Core.ServiceCollection;
 using UniversalToolchain.Dialects.Integration;
+using UniversalToolchain.Dialects.Frontend.Registration;
 using ServiceLifetime = Microsoft.Extensions.DependencyInjection.ServiceLifetime;
 using UniversalToolchain.ModuleContracts;
 using UniversalToolchain.Ssa.Abstractions;
@@ -16,7 +17,7 @@ namespace UniversalToolchain.Dialects.Wist;
 /// <summary>
 ///     Builds a real Wist runtime service provider from resolved dialect execution configuration.
 /// </summary>
-public sealed class WistDialectServiceProviderFactory
+internal sealed class WistDialectServiceProviderFactory
 {
     private readonly IRuntimeBackendRegistrarResolver _backendRegistrarResolver;
     private readonly IntrinsicSemanticBootstrapPlanBuilder _intrinsicBootstrapPlanBuilder;

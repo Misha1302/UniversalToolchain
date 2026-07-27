@@ -43,7 +43,7 @@ public sealed class MyBackendRuntimeRegistrar : IDialectBackendRuntimeRegistrar
 
     public void RegisterRuntime(IServiceCollection services, DialectBackendRuntimeConfiguration configuration)
     {
-        // Register backend compiler, executor, runtime wrappers, and backend-specific services here.
+        // Register backend cil, executor, runtime wrappers, and backend-specific services here.
     }
 }
 ```
