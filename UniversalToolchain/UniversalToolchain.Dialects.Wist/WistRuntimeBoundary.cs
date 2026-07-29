@@ -1,6 +1,7 @@
 using ExceptionsManager;
 using System.Globalization;
 using System.Reflection;
+using UniversalToolchain.Dialects.Integration;
 
 namespace UniversalToolchain.Dialects.Wist;
 
@@ -28,7 +29,7 @@ internal sealed class WistRuntimeBoundary
                 $"Runtime numeric type '{RealNumberTypeName}' does not expose the required public double constructor.");
     }
 
-    public static WistRuntimeBoundary Create(WistDialectExecutionConfiguration configuration)
+    public static WistRuntimeBoundary Create(ToolchainRuntimeConfiguration configuration)
     {
         configuration = configuration.ArgNotNull();
         var numbersAssembly = configuration.RequiredInfrastructureModules

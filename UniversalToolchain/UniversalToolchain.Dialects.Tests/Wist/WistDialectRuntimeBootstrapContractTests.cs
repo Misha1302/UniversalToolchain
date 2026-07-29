@@ -251,7 +251,7 @@ public class WistDialectRuntimeBootstrapContractTests
     {
         var backendEntry = BackendEntry("interpreter", typeof(NoopRegistrar));
         var factory = CreateFactory([new NoopRegistrar("interpreter")]);
-        var config = new WistDialectExecutionConfiguration(
+        var config = new ToolchainRuntimeConfiguration(
             "Demo",
             [],
             [],
@@ -286,7 +286,7 @@ public class WistDialectRuntimeBootstrapContractTests
             new IntrinsicSemanticBootstrapRuntimeValidator(),
             ModuleContractPipelineProfiles.Warn,
             new InMemoryModuleContractDiagnosticSink());
-        var config = new WistDialectExecutionConfiguration(
+        var config = new ToolchainRuntimeConfiguration(
             "Demo",
             [],
             [],
@@ -311,7 +311,7 @@ public class WistDialectRuntimeBootstrapContractTests
     public void CreateHost_ShouldFailClearly_IfBackendConfigurationDoesNotCarryManifestEntry()
     {
         var factory = CreateFactory([]);
-        var config = new WistDialectExecutionConfiguration(
+        var config = new ToolchainRuntimeConfiguration(
             "Demo",
             [],
             [],

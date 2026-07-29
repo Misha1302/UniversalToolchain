@@ -16,7 +16,7 @@ This iteration removes the remaining Wist- and text-shaped assumptions from the 
 - changed manifests and lock snapshots to schema v3 while retaining v1/v2 readers;
 - replaced the Wist-based beginner template with a standalone non-Wist template;
 - replaced the Acme sample with an independent parser and two independent backends;
-- synchronized `Wist.sln` and `Wist.slnx` at 85 projects.
+- synchronized the canonical `Wist.sln` project graph; the redundant `.slnx` mirror was later retired to avoid drift.
 
 ## Compatibility
 

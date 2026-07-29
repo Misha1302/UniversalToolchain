@@ -14,7 +14,7 @@ public sealed class IntrinsicSemanticStartupValidationRuntimeTests
     public void RuntimeFactory_ShouldFail_WhenModuleDeclaresInvalidProviderType()
     {
         var factory = CreateFactory([]);
-        var configuration = new WistDialectExecutionConfiguration(
+        var configuration = new ToolchainRuntimeConfiguration(
             "InvalidProviderType",
             [typeof(InvalidProviderTypeFrontendModule)],
             [],
@@ -52,7 +52,7 @@ public sealed class IntrinsicSemanticStartupValidationRuntimeTests
     public void RuntimeFactory_ShouldSucceed_WhenIntrinsicProvidersCoverSelectedModules()
     {
         var factory = CreateFactory([]);
-        var configuration = new WistDialectExecutionConfiguration(
+        var configuration = new ToolchainRuntimeConfiguration(
             "ValidProviderCoverage",
             [typeof(ValidProviderFrontendModule)],
             [],
@@ -70,7 +70,7 @@ public sealed class IntrinsicSemanticStartupValidationRuntimeTests
 
         var factory = CreateFactory([new CountingBackendRegistrar()]);
         var backendEntry = BackendEntry("counting", typeof(CountingBackendRegistrar));
-        var configuration = new WistDialectExecutionConfiguration(
+        var configuration = new ToolchainRuntimeConfiguration(
             "CountingProvider",
             [],
             [],

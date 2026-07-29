@@ -9,7 +9,7 @@ This page describes the supplied language-authoring hardening baseline plus the 
 
 ## Current public/product surface
 
-`UniversalToolchain.Wist` `0.1.0-alpha.3` provides:
+`UniversalToolchain.Wist` `0.1.0-alpha.4` provides:
 
 - `WistEngine`;
 - restricted arithmetic and broader native presets;
@@ -90,6 +90,6 @@ This tooling is not part of the public Wist package and does not establish publi
 
 ## Verification identity
 
-`VERIFICATION.md` is the canonical checked-in verification record. GitHub Actions additionally enforces the canonical build/test/package path, documentation checks, rollout smoke and recursive manifest equality for the integrated revision.
+`VERIFICATION.md` is the canonical checked-in verification record. GitHub Actions additionally enforces the canonical build/test/package path, documentation checks, rollout smoke and detached package-integrity verification for the integrated revision.
 
 See [Current Verification](/evidence/current-verification) for the evidence boundary.

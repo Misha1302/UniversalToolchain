@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "paths": [
+    "LEGACY_DEPRECATION_REGISTRY.json",
+    "MIGRATION_NOTES_RU.md",
+    "MANIFEST.sha256",
+    "UniversalToolchain/BasicTypesExtensions/EnumGenerator.cs",
+    "UniversalToolchain/LocalVariablesOptimizerModule",
+    "UniversalToolchain/ParserConfigurationModule/Module/BytecodeTranslatorConfigurationModuleImpl.cs",
+    "UniversalToolchain/UniversalToolchain.Wist.LanguagePack/WistLegacyDialectAdapter.cs",
+    "UniversalToolchain/UniversalToolchain.Wist/WistBackend.cs",
+    "UniversalToolchain/UniversalToolchain.Wist/WistBackendAliases.cs",
+    "UniversalToolchain/UniversalToolchain.Wist/WistPreset.cs",
+    "UniversalToolchain/UniversalToolchain.Wist/WistPresetMapper.cs",
+    "UniversalToolchain/UniversalToolchain.Dialects.Wist/WistCilBackendServiceCollectionExtensions.cs",
+    "UniversalToolchain/UniversalToolchain.Dialects.Wist/WistInterpreterBackendServiceCollectionExtensions.cs",
+    "UniversalToolchain/UniversalToolchain.Dialects.Wist/WistDialectExecutionConfiguration.cs",
+    "docs/architecture/legacy-deprecation-gate.md",
+    "docs/migration/WIST_LEGACY_MIGRATION_RU.md"
+  ],
+  "symbols": [
+    {
+      "name": "runtime-pack reference",
+      "pattern": "\\bLanguageRuntimePackReference\\b"
+    },
+    {
+      "name": "runtime-pack interface",
+      "pattern": "\\bILanguageRuntimePack\\b"
+    },
+    {
+      "name": "runtime-pack builder method",
+      "pattern": "\\bUseRuntimePack\\s*\\("
+    },
+    {
+      "name": "legacy dialect adapter",
+      "pattern": "\\bWistLegacyDialectAdapter\\b"
+    },
+    {
+      "name": "preset enum",
+      "pattern": "\\bWistPreset\\b"
+    },
+    {
+      "name": "backend enum",
+      "pattern": "\\bWistBackend\\b"
+    },
+    {
+      "name": "enum facade",
+      "pattern": "\\bEnumGenerator\\b"
+    },
+    {
+      "name": "legacy directive option",
+      "pattern": "\\bEnableLegacyDirectiveDefinitions\\b"
+    },
+    {
+      "name": "legacy contract profile",
+      "pattern": "\\bStrictLegacyCompatible\\b"
+    },
+    {
+      "name": "legacy bytecode option",
+      "pattern": "\\bVerifyLegacyBytecodeOperationNames\\b"
+    },
+    {
+      "name": "retired optimizer",
+      "pattern": "\\bLocalVariablesOptimizer(?:Module)?\\b"
+    },
+    {
+      "name": "retired Wist configuration view",
+      "pattern": "\\bWistDialectExecutionConfiguration\\b"
+    },
+    {
+      "name": "retired CIL registration helper",
+      "pattern": "\\bWistCilBackendServiceCollectionExtensions\\b"
+    },
+    {
+      "name": "retired interpreter registration helper",
+      "pattern": "\\bWistInterpreterBackendServiceCollectionExtensions\\b"
+    }
+  ]
+}

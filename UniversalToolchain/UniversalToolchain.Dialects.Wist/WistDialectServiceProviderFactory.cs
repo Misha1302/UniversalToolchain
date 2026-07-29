@@ -42,11 +42,11 @@ internal sealed class WistDialectServiceProviderFactory
         _moduleContractDiagnosticSink = moduleContractDiagnosticSink.ArgNotNull();
     }
 
-    public IServiceProvider Create(WistDialectExecutionConfiguration configuration) =>
+    public IServiceProvider Create(ToolchainRuntimeConfiguration configuration) =>
         Create(configuration, new WistRuntimeServiceOptions());
 
     public IServiceProvider Create(
-        WistDialectExecutionConfiguration configuration,
+        ToolchainRuntimeConfiguration configuration,
         WistRuntimeServiceOptions runtimeServiceOptions)
     {
         configuration = configuration.ArgNotNull();
@@ -101,7 +101,7 @@ internal sealed class WistDialectServiceProviderFactory
 
     private static void RegisterCapabilityCatalog(
         IServiceCollection services,
-        WistDialectExecutionConfiguration configuration)
+        ToolchainRuntimeConfiguration configuration)
     {
         var componentTypes = configuration.RequiredInfrastructureModules
             .Concat(configuration.FrontendModules)
@@ -171,7 +171,7 @@ internal sealed class WistDialectServiceProviderFactory
         }
     }
 
-    private void RegisterBackendRuntimes(IServiceCollection services, WistDialectExecutionConfiguration configuration)
+    private void RegisterBackendRuntimes(IServiceCollection services, ToolchainRuntimeConfiguration configuration)
     {
         foreach (var backend in configuration.BackendConfigurations)
         {
@@ -183,7 +183,7 @@ internal sealed class WistDialectServiceProviderFactory
         }
     }
 
-    private static void RegisterIntrinsicDescriptorProviders(IServiceCollection services, WistDialectExecutionConfiguration configuration)
+    private static void RegisterIntrinsicDescriptorProviders(IServiceCollection services, ToolchainRuntimeConfiguration configuration)
     {
         var providerTypes = new SortedSet<Type>(TypeFullNameComparer.Instance);
 

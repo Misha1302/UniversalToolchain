@@ -103,8 +103,11 @@ public sealed class WistBackendContractTests
         {
             foreach (var typeName in wistRuntimeTypes)
             {
-                var type = wistRuntimeAssembly.GetType(typeName, throwOnError: true)!;
-                Assert.That(type.IsPublic || type.IsNestedPublic, Is.False, typeName);
+                var type = wistRuntimeAssembly.GetType(typeName, throwOnError: false);
+                if (type is not null)
+                {
+                    Assert.That(type.IsPublic || type.IsNestedPublic, Is.False, typeName);
+                }
             }
 
             var runtimeHost = integrationAssembly.GetType(

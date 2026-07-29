@@ -66,8 +66,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ListExtensions", "ListExten
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ObjectExtensions", "ObjectExtensions\ObjectExtensions.csproj", "{B411A5EE-AE66-42CB-AC8D-ED373106E6E7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LocalVariablesOptimizerModule", "LocalVariablesOptimizerModule\LocalVariablesOptimizerModule.csproj", "{DC420C1D-281C-4FA1-A309-D738560557B0}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AbstractIrConverters", "AbstractIrConverters\AbstractIrConverters.csproj", "{FCFE8C22-E20D-436D-A772-C03C6002A0F6}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NativeMathModule", "NativeMathModule\NativeMathModule.csproj", "{F2191BA5-D994-4B4B-99D9-6926AA83CAB6}"
@@ -576,18 +574,6 @@ Global
 		{B411A5EE-AE66-42CB-AC8D-ED373106E6E7}.Release|x64.Build.0 = Release|Any CPU
 		{B411A5EE-AE66-42CB-AC8D-ED373106E6E7}.Release|x86.ActiveCfg = Release|Any CPU
 		{B411A5EE-AE66-42CB-AC8D-ED373106E6E7}.Release|x86.Build.0 = Release|Any CPU
-		{DC420C1D-281C-4FA1-A309-D738560557B0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{DC420C1D-281C-4FA1-A309-D738560557B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{DC420C1D-281C-4FA1-A309-D738560557B0}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{DC420C1D-281C-4FA1-A309-D738560557B0}.Debug|x64.Build.0 = Debug|Any CPU
-		{DC420C1D-281C-4FA1-A309-D738560557B0}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{DC420C1D-281C-4FA1-A309-D738560557B0}.Debug|x86.Build.0 = Debug|Any CPU
-		{DC420C1D-281C-4FA1-A309-D738560557B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{DC420C1D-281C-4FA1-A309-D738560557B0}.Release|Any CPU.Build.0 = Release|Any CPU
-		{DC420C1D-281C-4FA1-A309-D738560557B0}.Release|x64.ActiveCfg = Release|Any CPU
-		{DC420C1D-281C-4FA1-A309-D738560557B0}.Release|x64.Build.0 = Release|Any CPU
-		{DC420C1D-281C-4FA1-A309-D738560557B0}.Release|x86.ActiveCfg = Release|Any CPU
-		{DC420C1D-281C-4FA1-A309-D738560557B0}.Release|x86.Build.0 = Release|Any CPU
 		{FCFE8C22-E20D-436D-A772-C03C6002A0F6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{FCFE8C22-E20D-436D-A772-C03C6002A0F6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FCFE8C22-E20D-436D-A772-C03C6002A0F6}.Debug|x64.ActiveCfg = Debug|Any CPU

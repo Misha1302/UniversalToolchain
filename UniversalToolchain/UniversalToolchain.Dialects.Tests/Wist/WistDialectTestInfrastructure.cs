@@ -51,7 +51,7 @@ internal static class WistDialectTestInfrastructure
 
     public static string BuildHostSignature(WistDialectExecutionHost host) => BuildConfigurationSignature(host.Configuration);
 
-    public static string BuildConfigurationSignature(WistDialectExecutionConfiguration configuration)
+    public static string BuildConfigurationSignature(ToolchainRuntimeConfiguration configuration)
     {
         return string.Join("|", configuration.FrontendModules.Select(static x => x.FullName))
                + "::"

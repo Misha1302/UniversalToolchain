@@ -1,8 +1,9 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "baselinePackageVersion": "0.1.0-alpha.2",
   "baselineSourceArchive": "Wist-no-legacy-remediated-2026-07-27.zip",
   "baselineSourceArchiveSha256": "cf176cc0999e52886e18ecb56b8ec27a6ef318949b7b8295477be8508c89c780",
   "publicApiSnapshot": "eng/wist-public-api-baseline.txt",
-  "publicApiSnapshotSha256": "0690f0d3d665e849319b0661db815cceccba1dc4f7b7ae4f0db81f53d8687fc6"
+  "publicApiSnapshotSha256": "0690f0d3d665e849319b0661db815cceccba1dc4f7b7ae4f0db81f53d8687fc6",
+  "baselineApiPathInArchive": "UniversalToolchain/UniversalToolchain.Wist/PublicAPI.Shipped.txt"
 }

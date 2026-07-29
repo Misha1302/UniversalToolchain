@@ -5,12 +5,19 @@ using UniversalToolchain.Dialects.Integration;
 
 namespace UniversalToolchain.Dialects.Wist;
 
-internal static class WistInterpreterBackendServiceCollectionExtensions
+/// <summary>
+/// Test-only explicit backend registration for low-level host contract tests.
+/// Product runtime activation remains manifest-backed.
+/// </summary>
+internal static class WistTestBackendServiceCollectionExtensions
 {
-    /// <summary>
-    ///     Registers the Wist interpreter backend registrar as a compatibility convenience. Canonical shipped runtime
-    ///     paths resolve and activate this backend from the selected runtime manifest instead.
-    /// </summary>
+    public static IServiceCollection AddWistCilBackend(this IServiceCollection services)
+    {
+        services = services.ArgNotNull();
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IDialectBackendRuntimeRegistrar, WistCilDialectBackendServiceProvider>());
+        return services;
+    }
+
     public static IServiceCollection AddWistInterpreterBackend(this IServiceCollection services)
     {
         services = services.ArgNotNull();

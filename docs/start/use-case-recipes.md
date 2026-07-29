@@ -14,7 +14,7 @@ rule text -> validate or compile -> numeric result -> host application decides t
 Install the package:
 
 ```bash ci-run=false
-dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.3 --source ./artifacts/packages
+dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.4 --source ./artifacts/packages
 ```
 
 ## Pricing and commission
@@ -121,4 +121,4 @@ Do not use the current restricted arithmetic preset when you need arbitrary C# e
 
 ## Next
 
-Read [Wist alpha stability](/evidence/wist-stability-v0.1.0-alpha.3), the [Performance Model](/reference/performance-model) and [Security](/SECURITY) before integrating the package into a consequential workflow.
+Read [Wist alpha stability](/evidence/wist-stability-v0.1.0-alpha.4), the [Performance Model](/reference/performance-model) and [Security](/SECURITY) before integrating the package into a consequential workflow.

@@ -4,6 +4,8 @@ set -euo pipefail
 configuration="Release"
 skip_docs=false
 skip_pack=false
+baseline_source_archive="${WIST_BASELINE_SOURCE_ARCHIVE:-}"
+previous_package_bundle="${WIST_PREVIOUS_PACKAGE_BUNDLE:-}"
 
 while (($#)); do
   case "$1" in
@@ -18,6 +20,14 @@ while (($#)); do
     --skip-pack)
       skip_pack=true
       shift
+      ;;
+    --baseline-source-archive)
+      baseline_source_archive="${2:?missing baseline source archive path}"
+      shift 2
+      ;;
+    --previous-package-bundle)
+      previous_package_bundle="${2:?missing previous package bundle path}"
+      shift 2
       ;;
     *)
       echo "Unknown argument: $1" >&2
@@ -112,8 +122,20 @@ python3 Tools/test-test-contract-mutants.py \
   --root "$root" \
   --manifest "$test_contract" \
   --results-directory artifacts/test-contract
+python3 Tools/check-retired-surface.py --root "$root"
+python3 Tools/test-retired-surface-mutants.py --root "$root"
+python3 Tools/check_documentation_status.py
+python3 Tools/test-documentation-status-mutants.py --root "$root"
 
 if [[ "$skip_pack" == false ]]; then
+  if [[ -z "$baseline_source_archive" || ! -f "$baseline_source_archive" ]]; then
+    echo "Packaging requires --baseline-source-archive (or WIST_BASELINE_SOURCE_ARCHIVE) pointing to the reviewed previous source ZIP." >&2
+    exit 1
+  fi
+  if [[ -z "$previous_package_bundle" || ! -f "$previous_package_bundle" ]]; then
+    echo "Packaging requires --previous-package-bundle (or WIST_PREVIOUS_PACKAGE_BUNDLE) pointing to the reviewed previous package bundle." >&2
+    exit 1
+  fi
   rm -rf artifacts/packages
   mkdir -p artifacts/packages
   mapfile -t package_projects < <(read_manifest "$package_manifest")
@@ -143,9 +165,19 @@ if [[ "$skip_pack" == false ]]; then
       -p:UseSharedCompilation=false \
       -p:NuGetAudit=false
   done
+  mapfile -t packed_archives < <(find artifacts/packages -maxdepth 1 -type f \
+    \( -name '*.nupkg' -o -name '*.snupkg' \) -print | sort)
+  python3 Tools/repack-nupkg-deterministic.py "${packed_archives[@]}"
 
-  python3 Tools/check-wist-api-compatibility.py
-  python3 Tools/test-wist-api-compatibility-mutants.py --root "$root"
+  python3 Tools/check-package-version-provenance.py \
+    --previous-bundle "$previous_package_bundle" \
+    --current-packages artifacts/packages \
+    --baseline-contract eng/package-release-baseline.json
+  python3 Tools/test-package-version-provenance-mutants.py --root "$root"
+  python3 Tools/check-wist-api-compatibility.py --baseline-source-archive "$baseline_source_archive"
+  python3 Tools/test-wist-api-compatibility-mutants.py \
+    --root "$root" \
+    --baseline-source-archive "$baseline_source_archive"
 
   python3 Tools/check-language-sdk-package-matrix.py \
     --root "$root" \
@@ -155,11 +187,11 @@ if [[ "$skip_pack" == false ]]; then
   wist_version="$(sed -nE 's:.*<Version>([^<]+)</Version>.*:\1:p' UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj)"
   test -n "$wist_version"
   wist_package="artifacts/packages/UniversalToolchain.Wist.${wist_version}.nupkg"
-  wist_reference_assembly="$(find UniversalToolchain/UniversalToolchain.Wist/bin -type f -path "*/$configuration/net10.0/UniversalToolchain.Wist.dll" -print -quit)"
-  test -n "$wist_reference_assembly"
+  wist_reference_assembly="UniversalToolchain/UniversalToolchain.Wist/bin/$configuration/net10.0/UniversalToolchain.Wist.dll"
+  test -f "$wist_reference_assembly"
   wist_reference_dir="$(dirname "$wist_reference_assembly")"
-  wist_compile_reference="$(find UniversalToolchain/UniversalToolchain.Wist/obj -type f -path "*/$configuration/net10.0/ref/UniversalToolchain.Wist.dll" -print -quit)"
-  test -n "$wist_compile_reference"
+  wist_compile_reference="UniversalToolchain/UniversalToolchain.Wist/obj/$configuration/net10.0/ref/UniversalToolchain.Wist.dll"
+  test -f "$wist_compile_reference"
   python3 Tools/check-wist-package-surface.py \
     --reference-dir "$wist_reference_dir" \
     --compile-reference "$wist_compile_reference" \

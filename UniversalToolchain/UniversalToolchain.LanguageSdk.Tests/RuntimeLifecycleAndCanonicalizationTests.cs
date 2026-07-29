@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Security.Cryptography;
+using System.Text.Json;
 using UniversalToolchain.FeatureSdk;
 using UniversalToolchain.Language.Abstractions;
 using UniversalToolchain.LanguageAuthoring;
@@ -348,7 +349,7 @@ public sealed class RuntimeLifecycleAndCanonicalizationTests
     public void CanonicalValidationManifests_ContainAllSdkTestsAndPackages()
     {
         var root = FindRepositoryRoot();
-        var tests = ReadManifest(Path.Combine(root, "eng", "test-projects.txt"));
+        var tests = ReadTestProjects(Path.Combine(root, "eng", "test-counts.json"));
         var packages = ReadManifest(Path.Combine(root, "eng", "package-projects.txt"));
 
         Assert.Multiple(() =>
@@ -417,6 +418,29 @@ public sealed class RuntimeLifecycleAndCanonicalizationTests
                 .EnableBackend(LifecycleBackend)
                 .UseRuntimeProvider(package.RuntimeProvider!.ProviderId, package.RuntimeProvider.Version)
                 .Build()).GetRequiredPlan();
+
+    private static IReadOnlyList<string> ReadTestProjects(string path)
+    {
+        using var document = JsonDocument.Parse(File.ReadAllText(path));
+        return document.RootElement
+            .GetProperty("main")
+            .EnumerateArray()
+            .Concat(document.RootElement.GetProperty("isolated").EnumerateArray())
+            .Select(static entry => entry.GetProperty("path").GetString()!)
+            .Select(static path => path.EndsWith(".dll", StringComparison.Ordinal)
+                ? ToProjectPath(path)
+                : path)
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(static path => path, StringComparer.Ordinal)
+            .ToArray();
+    }
+
+    private static string ToProjectPath(string assemblyPath)
+    {
+        var projectDirectory = assemblyPath[..assemblyPath.IndexOf("/bin/", StringComparison.Ordinal)];
+        var projectName = projectDirectory[(projectDirectory.LastIndexOf('/') + 1)..];
+        return $"{projectDirectory}/{projectName}.csproj";
+    }
 
     private static IReadOnlyList<string> ReadManifest(string path) =>
         File.ReadAllLines(path)

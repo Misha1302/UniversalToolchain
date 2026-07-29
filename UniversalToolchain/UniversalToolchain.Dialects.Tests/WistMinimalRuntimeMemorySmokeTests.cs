@@ -40,7 +40,6 @@ public class WistMinimalRuntimeMemorySmokeTests
         {
             Assert.That(afterCompose.Contains("CommentsModule"), Is.EqualTo(before.Contains("CommentsModule")));
             Assert.That(afterCompose.Contains("LabelsModule"), Is.EqualTo(before.Contains("LabelsModule")));
-            Assert.That(afterCompose.Contains("LocalVariablesOptimizerModule"), Is.EqualTo(before.Contains("LocalVariablesOptimizerModule")));
         });
     }
 
@@ -61,7 +60,6 @@ public class WistMinimalRuntimeMemorySmokeTests
             Assert.That(afterCompose.Contains("CSharpInteropModule"), Is.EqualTo(before.Contains("CSharpInteropModule")));
             Assert.That(afterCompose.Contains("LoopsModule"), Is.EqualTo(before.Contains("LoopsModule")));
             Assert.That(afterCompose.Contains("ParametersSetterModule"), Is.EqualTo(before.Contains("ParametersSetterModule")));
-            Assert.That(afterCompose.Contains("LocalVariablesOptimizerModule"), Is.EqualTo(before.Contains("LocalVariablesOptimizerModule")));
         });
     }
 

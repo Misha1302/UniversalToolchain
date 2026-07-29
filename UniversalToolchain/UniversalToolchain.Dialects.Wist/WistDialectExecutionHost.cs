@@ -13,14 +13,14 @@ internal sealed class WistDialectExecutionHost : IDisposable
     private readonly ToolchainRuntimeHost _runtimeHost;
     private readonly IDisposable? _compositionServicesOwner;
 
-    internal WistDialectExecutionHost(IServiceProvider serviceProvider, WistDialectExecutionConfiguration configuration)
+    internal WistDialectExecutionHost(IServiceProvider serviceProvider, ToolchainRuntimeConfiguration configuration)
         : this(new ToolchainRuntimeHost(serviceProvider.ArgNotNull(), configuration.ArgNotNull()), configuration, null)
     {
     }
 
     internal WistDialectExecutionHost(
         ToolchainRuntimeHost runtimeHost,
-        WistDialectExecutionConfiguration configuration,
+        ToolchainRuntimeConfiguration configuration,
         IDisposable? compositionServicesOwner = null)
     {
         runtimeHost = runtimeHost.ArgNotNull();
@@ -31,7 +31,7 @@ internal sealed class WistDialectExecutionHost : IDisposable
         _compositionServicesOwner = compositionServicesOwner;
     }
 
-    public WistDialectExecutionConfiguration Configuration { get; }
+    public ToolchainRuntimeConfiguration Configuration { get; }
 
     public void Dispose()
     {

@@ -98,7 +98,7 @@ internal sealed class WistDialectExecutionWorkflow
     }
 
     private ToolchainRuntimeHost CreateRuntimeHost(
-        WistDialectExecutionConfiguration configuration,
+        ToolchainRuntimeConfiguration configuration,
         WistRuntimeServiceOptions runtimeServiceOptions)
     {
         runtimeServiceOptions = runtimeServiceOptions.ArgNotNull();
@@ -106,7 +106,7 @@ internal sealed class WistDialectExecutionWorkflow
         return new ToolchainRuntimeHost(provider, configuration, ServiceProviderOwnership.Owned);
     }
 
-    private WistDialectExecutionConfiguration GetConfiguration(DialectFrameworkCompositionResult compositionResult)
+    private ToolchainRuntimeConfiguration GetConfiguration(DialectFrameworkCompositionResult compositionResult)
     {
         compositionResult = compositionResult.ArgNotNull();
         if (!compositionResult.IsSuccess || compositionResult.BuildPlan == null)

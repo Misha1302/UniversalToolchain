@@ -350,7 +350,7 @@ public sealed class WistEngine : IDisposable
         new(File.ReadAllText(path), Path.GetFileName(path));
 
     private static void EnsureBackendEnabled(
-        WistDialectExecutionConfiguration configuration,
+        ToolchainRuntimeConfiguration configuration,
         string backend)
     {
         if (configuration.TryResolveKnownBackendId(backend, out var backendId) &&

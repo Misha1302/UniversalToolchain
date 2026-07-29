@@ -182,42 +182,26 @@ public sealed partial class WistMigrationGateTests
     public void RemovedLegacySurface_CannotReturn()
     {
         var root = FindRepositoryRoot();
+        var registryPath = Path.Combine(root, "eng", "retired-surface.json");
+        using var document = JsonDocument.Parse(File.ReadAllText(registryPath));
+        var registry = document.RootElement;
+        Assert.That(registry.GetProperty("schemaVersion").GetInt32(), Is.EqualTo(1));
+
         var violations = new List<string>();
-        var removedPaths = new[]
+        foreach (var entry in registry.GetProperty("paths").EnumerateArray())
         {
-            "LEGACY_DEPRECATION_REGISTRY.json",
-            "MIGRATION_NOTES_RU.md",
-            "UniversalToolchain/BasicTypesExtensions/EnumGenerator.cs",
-            "UniversalToolchain/UniversalToolchain.Wist.LanguagePack/WistLegacyDialectAdapter.cs",
-            "UniversalToolchain/UniversalToolchain.Wist/WistBackend.cs",
-            "UniversalToolchain/UniversalToolchain.Wist/WistBackendAliases.cs",
-            "UniversalToolchain/UniversalToolchain.Wist/WistPreset.cs",
-            "UniversalToolchain/UniversalToolchain.Wist/WistPresetMapper.cs",
-            "docs/architecture/legacy-deprecation-gate.md",
-            "docs/migration/WIST_LEGACY_MIGRATION_RU.md"
-        };
-        foreach (var relativePath in removedPaths)
-        {
-            if (File.Exists(Path.Combine(root, relativePath.Replace('/', Path.DirectorySeparatorChar))))
-                violations.Add($"Removed legacy file returned: {relativePath}");
+            var relativePath = entry.GetString()!;
+            var absolutePath = Path.Combine(root, relativePath.Replace('/', Path.DirectorySeparatorChar));
+            if (File.Exists(absolutePath) || Directory.Exists(absolutePath))
+                violations.Add($"Retired path returned: {relativePath}");
         }
 
-        var prohibitedPatterns = new (string Name, Regex Pattern)[]
-        {
-            ("runtime-pack reference", new Regex(@"\bLanguageRuntimePackReference\b", RegexOptions.CultureInvariant)),
-            ("runtime-pack interface", new Regex(@"\bILanguageRuntimePack\b", RegexOptions.CultureInvariant)),
-            ("runtime-pack builder method", new Regex(@"\bUseRuntimePack\s*\(", RegexOptions.CultureInvariant)),
-            ("legacy dialect adapter", new Regex(@"\bWistLegacyDialectAdapter\b", RegexOptions.CultureInvariant)),
-            ("preset enum", new Regex(@"\bWistPreset\b", RegexOptions.CultureInvariant)),
-            ("backend enum", new Regex(@"\bWistBackend\b", RegexOptions.CultureInvariant)),
-            ("enum facade", new Regex(@"\bEnumGenerator\b", RegexOptions.CultureInvariant)),
-            ("legacy directive option", new Regex(@"\bEnableLegacyDirectiveDefinitions\b", RegexOptions.CultureInvariant)),
-            ("legacy contract profile", new Regex(@"\bStrictLegacyCompatible\b", RegexOptions.CultureInvariant)),
-            ("legacy bytecode option", new Regex(@"\bVerifyLegacyBytecodeOperationNames\b", RegexOptions.CultureInvariant)),
-            ("compiler backend alias attribute", new Regex(@"DialectRuntimeAlias\s*\(\s*""compiler""", RegexOptions.CultureInvariant)),
-            ("compiler backend alias literal", new Regex(@"""compiler""", RegexOptions.CultureInvariant)),
-            ("compiler PlanFuzz variant prefix", new Regex(@"\bcompiler\.(?:disabled|ssa-[a-z0-9-]+)\b", RegexOptions.CultureInvariant))
-        };
+        var prohibitedPatterns = registry.GetProperty("symbols")
+            .EnumerateArray()
+            .Select(static entry => (
+                Name: entry.GetProperty("name").GetString()!,
+                Pattern: new Regex(entry.GetProperty("pattern").GetString()!, RegexOptions.CultureInvariant)))
+            .ToArray();
 
         foreach (var path in EnumerateProductionSources(root))
         {

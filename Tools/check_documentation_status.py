@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import argparse
 import json
 import re
 import sys
@@ -61,7 +62,15 @@ def extract_bash_fences(text: str) -> list[tuple[int, str, str]]:
     return fences
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    global ROOT, DOCS, INTERNAL
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--root', type=Path, default=ROOT)
+    args = parser.parse_args(argv)
+    ROOT = args.root.resolve()
+    DOCS = ROOT / 'docs'
+    INTERNAL = ROOT / 'internal-docs'
+
     errors: list[str] = []
     public_files = iter_markdown_files(DOCS)
     internal_files = iter_markdown_files(INTERNAL)
@@ -112,7 +121,7 @@ def main() -> int:
         'evidence/maintainer-guide.md',
         'evidence/current-verification.md',
         'evidence/language-authoring-alpha.md',
-        'evidence/wist-stability-v0.1.0-alpha.3.md',
+        'evidence/wist-stability-v0.1.0-alpha.4.md',
         'CURRENT_ARCHITECTURE_STATUS.md',
         'SECURITY.md',
         'limitations.md',
@@ -177,6 +186,44 @@ def main() -> int:
             total_row = f'| **Total** | **{total:,}** | **0** | **0** |'
             if total_row not in text:
                 errors.append(f'{doc_name}: canonical total row is missing: {total_row}')
+
+
+    if test_counts is not None:
+        expected_total = int(test_counts['totalPassed'])
+        claim_paths = [
+            ROOT / 'VERIFICATION.md',
+            ROOT / 'RELEASE_NOTES_RU.md',
+            ROOT / 'RELEASE_CHECKLIST.md',
+            DOCS / 'evidence' / 'current-verification.md',
+            DOCS / 'evidence' / 'maintainer-guide.md',
+            DOCS / 'CURRENT_ARCHITECTURE_STATUS.md',
+            DOCS / 'architecture' / 'project-map.md',
+        ]
+        total_patterns = [
+            re.compile(r'(?i)\b([0-9][0-9,]{2,7})\s+passed\b'),
+            re.compile(r'(?i)\bcurrent verification:\s*([0-9][0-9,]{2,7})\s+tests?\b'),
+            re.compile(r'(?i)\b([0-9][0-9,]{2,7})\s+tests?\s+(?:passed|succeeded)\b'),
+            re.compile(r'(?i)\b([0-9][0-9,]{2,7})\s+тест(?:ов|а)?\b'),
+        ]
+        obsolete_manifest = re.compile(
+            r'(?i)(?:repository-wide|source|clean-unpack|input archive|recursive)'
+            r'[^\n]{0,100}(?:MANIFEST\.sha256|recursive manifest)'
+        )
+        for claim_path in claim_paths:
+            if not claim_path.exists():
+                continue
+            text = claim_path.read_text(encoding='utf-8')
+            for pattern in total_patterns:
+                for match in pattern.finditer(text):
+                    actual = int(match.group(1).replace(',', ''))
+                    if actual != expected_total:
+                        errors.append(
+                            f'{rel(claim_path)}: stale active test total {actual}; expected {expected_total}'
+                        )
+            if obsolete_manifest.search(text):
+                errors.append(
+                    f'{rel(claim_path)}: obsolete repository/source recursive-manifest claim remains active'
+                )
 
     current_public_files = [
         path for path in public_files

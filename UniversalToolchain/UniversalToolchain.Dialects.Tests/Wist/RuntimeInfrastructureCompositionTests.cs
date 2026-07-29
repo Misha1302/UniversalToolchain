@@ -108,7 +108,7 @@ public class RuntimeInfrastructureCompositionTests
         var descriptor = new RuntimeBackendDescriptor(new DialectBackendId("noop"), typeof(NoopRegistrar), ["noop"]);
         var backendEntry = BackendEntry("noop", typeof(NoopRegistrar));
         var factory = CreateFactory([new NoopRegistrar(descriptor.BackendId)]);
-        var configuration = new WistDialectExecutionConfiguration(
+        var configuration = new ToolchainRuntimeConfiguration(
             "Demo",
             [],
             [],

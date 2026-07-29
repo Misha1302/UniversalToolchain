@@ -98,7 +98,7 @@ public class IntrinsicDescriptorProviderRegistrationTests
         IReadOnlyList<Type>? optimizers = null)
     {
         var factory = CreateFactory([]);
-        var configuration = new WistDialectExecutionConfiguration(
+        var configuration = new ToolchainRuntimeConfiguration(
             "Test",
             frontendModules ?? [],
             irModules ?? [],

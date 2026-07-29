@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <LangVersion>14</LangVersion>
         <PackageId>UniversalToolchain.Wist</PackageId>
-        <Version>0.1.0-alpha.3</Version>
+        <Version>0.1.0-alpha.4</Version>
         <Title>UniversalToolchain Wist</Title>
         <Description>Restricted formulas for .NET: validate rules, evaluate diagnostics, and compile approved formulas into typed delegates while the host owns inputs and side effects.</Description>
         <Authors>Mikhail Razakov</Authors>
@@ -17,11 +17,10 @@
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <PackageTags>dotnet;csharp;rule-engine;expression-engine;embedded-dsl;business-rules;formula;compiler;interpreter;cil;runtime;language-tooling;ssa;wist</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
-        <PackageReleaseNotes>Hardening alpha: backend-consistent compilation, fail-fast preset/backend validation, isolated root-authoritative runtime loading, runtime identity generation 2, exact package closure validation, and clean-package consumer smoke coverage. This release intentionally does not provide binary compatibility with pre-hardening 1.0.0.0 runtime assemblies.</PackageReleaseNotes>
+        <PackageReleaseNotes>Immutable pruning alpha: advances the package identity after removing retired runtime assemblies, binds API compatibility to the reviewed parent source archive, rejects package-version reuse, and produces path-normalized deterministic package artifacts. This release intentionally does not provide binary compatibility with pre-hardening 1.0.0.0 runtime assemblies.</PackageReleaseNotes>
         <IncludeSymbols>true</IncludeSymbols>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
         <DebugType>portable</DebugType>
-        <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
         <!-- NU5131 normally expects a matching ref assembly for every lib assembly. This
              package intentionally exposes only the facade in ref/ while keeping the
              implementation closure runtime-only in lib/. The package-surface checker
@@ -34,7 +33,6 @@
     <ItemGroup>
         <ProjectReference Include="..\BasicCilCompiler\BasicCilCompiler.csproj" PrivateAssets="all"/>
         <ProjectReference Include="..\BasicCore\BasicCore.csproj" PrivateAssets="all"/>
-        <ProjectReference Include="..\DynamicMethodCalling\DynamicMethodCalling.csproj" PrivateAssets="all"/>
         <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj" PrivateAssets="all"/>
         <ProjectReference Include="..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj" PrivateAssets="all"/>
     </ItemGroup>

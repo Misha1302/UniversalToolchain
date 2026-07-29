@@ -12,7 +12,7 @@ This repository separates public current documentation from repository-only poli
 | Evidence and releases | `docs/evidence/`, `docs/releases/`, `VERIFICATION.md` | claims tied to a named verification baseline or release |
 | Proposals | `internal-docs/proposals/` | design input only until implemented and tested |
 | Dated reviews | `internal-docs/reviews/` | review snapshots; findings may be superseded |
-| Archive and talks | `internal-docs/archive/`, `internal-docs/talks/`, `internal-docs/vision/` | historical or presentation context only |
+| Archive and talks | external history/evidence bundle and `internal-docs/vision/` | historical or presentation context only |
 
 ## Required reading by task
 
@@ -60,8 +60,8 @@ This repository separates public current documentation from repository-only poli
 - Repository-only policies and maintainer instructions belong under `internal-docs/policies-and-reports/` or `internal-docs/maintainers/`.
 - Future designs belong under `internal-docs/proposals/`.
 - Dated reviews belong under `internal-docs/reviews/`.
-- Historical snapshots belong under `internal-docs/archive/`.
-- Conference material belongs under `internal-docs/talks/`.
+- Historical snapshots belong in Git history or a detached history/evidence bundle.
+- Conference material belongs in a separate talks/release asset bundle.
 
 Moving a document requires updating Markdown links, inline repository paths, navigation, authority indexes and documentation checks in the same change.
 

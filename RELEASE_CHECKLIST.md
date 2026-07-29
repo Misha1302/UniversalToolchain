@@ -4,7 +4,7 @@ Validation date: 2026-07-14.
 
 ## Source and behavior
 
-- [x] input archive and recursive manifest verified before editing
+- [x] input source archive SHA-256 and safe ZIP structure verified before editing
 - [x] frontend configuration modules remain instance-stateless
 - [x] lexer configuration replacement is strict and transactional
 - [x] regex and lexeme-type ownership collisions are rejected before publication
@@ -41,8 +41,8 @@ Validation date: 2026-07-14.
 - [x] stale `CHANGELOG.md` excluded
 - [x] `bin`, `obj`, Git metadata, caches and logs removed
 - [x] secret-like and unsafe archive paths rejected
-- [x] recursive manifest regenerated after cleanup
-- [x] clean-unpack recursive manifest verification passed
+- [x] detached release-integrity manifest regenerated after packaging
+- [x] clean-unpack build and detached package-integrity verification passed
 - [x] final archive SHA-256 generated and rechecked
 
 ## Not revalidated in this cycle

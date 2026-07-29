@@ -58,9 +58,7 @@ Current-state documents describe what the repository supports now.
 
 Future or historical documents may describe planned or removed behavior, but they must not contain executable `bash` blocks for commands that do not exist in the current branch.
 
-Use `internal-docs/proposals/` for future designs and `internal-docs/archive/` for historical
-context. These directories are repository-only and excluded from the public site. Do not treat either location as current runtime truth unless a
-current-state document and tests explicitly promote the behavior.
+Use `internal-docs/proposals/` for future designs. Preserve historical context in Git history or a detached history/evidence bundle rather than the product source tree. Neither proposals nor historical bundles are current runtime truth unless a current-state document and tests explicitly promote the behavior.
 
 ## Documentation authority and fitness
 

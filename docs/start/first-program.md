@@ -15,7 +15,7 @@ This page shows the shortest practical checks for Wist:
 Install the published package first:
 
 ```bash ci-run=false
-dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.3 --source ./artifacts/packages
+dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.4 --source ./artifacts/packages
 ```
 
 For a clean-room NuGet.org check, set `PUBLISHED_WIST_VERSION` to the version shown on the package page and run `./Tools/smoke-published-wist-package.sh "$PUBLISHED_WIST_VERSION"` from a repository checkout.

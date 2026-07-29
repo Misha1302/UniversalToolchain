@@ -73,7 +73,7 @@ Important registered services include:
 | `IntrinsicSemanticBootstrapPreProviderValidator` | validates intrinsic bootstrap before provider construction |
 | `IntrinsicSemanticBootstrapRuntimeValidator` | validates intrinsic bootstrap after provider construction |
 | `IDialectCompiledDialectBuildPlanBuilder` | builds compiled dialect build plans |
-| `WistDialectExecutionConfigurationBuilder` | builds execution configuration |
+| `ToolchainRuntimeConfigurationBuilder` | builds execution configuration |
 | `WistDialectServiceProviderFactory` | creates the selected runtime service provider |
 | `WistDialectExecutionWorkflow` | composes dialect text/files and creates execution hosts |
 

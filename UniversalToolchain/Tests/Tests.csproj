@@ -31,13 +31,13 @@
         <ProjectReference Include="..\BasicStdLib\BasicStdLib.csproj"/>
         <ProjectReference Include="..\BasicTypesExtensions\BasicTypesExtensions.csproj"/>
         <ProjectReference Include="..\BytecodeDynamicMethodsCompiler\BytecodeDynamicMethodsCompiler.csproj"/>
+        <ProjectReference Include="..\DynamicMethodCalling\DynamicMethodCalling.csproj"/>
         <ProjectReference Include="..\AbstractIrConverters\AbstractIrConverters.csproj"/>
         <ProjectReference Include="..\ConditionsModule\ConditionsModule.csproj"/>
         <ProjectReference Include="..\CSharpInteropModule\CSharpInteropModule.csproj"/>
         <ProjectReference Include="..\IdentifierModule\IdentifierModule.csproj"/>
         <ProjectReference Include="..\InternalPreprocessorLexemesModule\InternalPreprocessorLexemesModule.csproj"/>
         <ProjectReference Include="..\LabelsModule\LabelsModule.csproj"/>
-        <ProjectReference Include="..\LocalVariablesOptimizerModule\LocalVariablesOptimizerModule.csproj"/>
         <ProjectReference Include="..\LoopsModule\LoopsModule.csproj"/>
         <ProjectReference Include="..\NativeMathModule\NativeMathModule.csproj"/>
         <ProjectReference Include="..\NumbersModule\NumbersModule.csproj"/>

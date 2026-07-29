@@ -19,9 +19,9 @@ This page is the public entry point for release maintenance. Repository-only pol
 | coding and architecture policy | `internal-docs/policies-and-reports/PROJECT_RULES.md` and `ARCHITECTURE_RULES.md` |
 | documentation authority | `internal-docs/policies-and-reports/DOCUMENTATION_INDEX.md` and `DOCUMENTATION_RULES.md` |
 | package matrix | `eng/package-projects.txt` |
-| test-project matrix | `eng/test-projects.txt` |
+| exact test matrix | `eng/test-counts.json` |
 | verified results | `VERIFICATION.md` and `docs/evidence/` |
-| recursive artifact integrity | `MANIFEST.sha256` |
+| source-tree integrity | Git commit/tree identity |
 
 ## Documentation change gate
 
@@ -58,7 +58,7 @@ Before updating current verification claims:
 7. build the clean cross-package Language SDK consumer;
 8. install and run the `ut-language` template from the produced package;
 9. run documentation checks;
-10. verify `MANIFEST.sha256` from a clean unpack.
+10. verify the detached package integrity metadata produced by the canonical build from a clean unpack.
 
 Update `VERIFICATION.md` and [Current Verification](/evidence/current-verification) together. A historical test count must not be labeled current after the tree changes.
 
@@ -77,7 +77,7 @@ Reviews, proposals and talks must not appear in the public source tree merely be
 
 ## Package version synchronization
 
-The generic SDK/template family remains `0.3.0-alpha.1`; `UniversalToolchain.Wist.LanguagePack` is `0.3.0-alpha.2`; the Wist facade is `0.1.0-alpha.3`. Do not duplicate version strings in additional tutorials without updating the documentation status checker or deriving them from one build metadata source.
+The generic SDK/template family remains `0.3.0-alpha.2`; `UniversalToolchain.Wist.LanguagePack` is `0.3.0-alpha.3`; the Wist facade is `0.1.0-alpha.4`. Do not duplicate version strings in additional tutorials without updating the documentation status checker or deriving them from one build metadata source.
 
 For generic package migrations, follow [Package Versioning and Migrations](/language-authoring/versioning-and-migrations).
 
@@ -87,7 +87,7 @@ For generic package migrations, follow [Package Versioning and Migrations](/lang
 - no generated documentation output unless explicitly part of the release;
 - one top-level directory;
 - safe relative archive paths;
-- recursive manifest regenerated after all intended changes;
+- detached package-integrity manifest regenerated after all intended changes;
 - manifest checked from a clean extraction;
 - archive SHA-256 published beside the archive;
 - final diff confirms that unrelated production code was not changed by documentation-only work.

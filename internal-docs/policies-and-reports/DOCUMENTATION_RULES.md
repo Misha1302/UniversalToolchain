@@ -60,7 +60,7 @@ states which parts are implemented now. Use `internal-docs/proposals/` for desig
 are not current runtime behavior.
 
 Do not place historical project snapshots in the public guide tree. Use
-`internal-docs/archive/` and keep a short pointer from the old path only when link
+Git history or a detached history/evidence bundle, and keep a short pointer from the old path only when link
 compatibility matters.
 
 ## Documentation fitness checks

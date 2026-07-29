@@ -11,7 +11,7 @@ public sealed class IntrinsicSemanticCompositionGuardTests
     public void RuntimeFactory_ShouldFailFast_WhenDuplicateIntrinsicSymbolsAreRegistered()
     {
         var factory = CreateFactory([]);
-        var configuration = new WistDialectExecutionConfiguration(
+        var configuration = new ToolchainRuntimeConfiguration(
             "DuplicateIntrinsicGuard",
             [typeof(DuplicateAlphaFrontendModule), typeof(DuplicateBetaFrontendModule)],
             [],

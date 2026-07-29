@@ -16,7 +16,7 @@ internal sealed class WistRuntimeFacade : IDisposable
         Composition = composition.ArgNotNull();
     }
 
-    internal WistDialectExecutionConfiguration Configuration => _host.Configuration;
+    internal ToolchainRuntimeConfiguration Configuration => _host.Configuration;
 
     internal DialectFrameworkCompositionResult Composition { get; }
 

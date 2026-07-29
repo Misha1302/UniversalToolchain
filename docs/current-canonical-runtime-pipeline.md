@@ -8,7 +8,7 @@ It is intentionally limited to behavior that exists today.
 1. **Dialect DSL compilation** — compile `.wistdialect` text or file into a dialect model.
 2. **Build-plan projection** — convert the dialect model into `DialectBuildPlan`.
 3. **Manifest-backed runtime selection** — resolve a deterministic `SelectedRuntimePlan` from runtime manifests.
-4. **Wist execution configuration** — map the selected runtime plan to `WistDialectExecutionConfiguration`.
+4. **Wist execution configuration** — map the selected runtime plan to `ToolchainRuntimeConfiguration`.
 5. **Host creation with selected activation only** — create `WistDialectExecutionHost` from that configuration and activate only selected runtime components/backends; backend registrars are resolved from selected backend manifest entries.
 6. **Execution** — run source text through the created host in the selected mode.
 

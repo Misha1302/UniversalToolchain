@@ -35,7 +35,7 @@ This page maps conceptual architecture to the repository. It is a navigation aid
 
 These projects are non-packable experimental research tooling. They do not extend the public Wist package surface.
 
-They are grouped in `UniversalToolchain/PlanFuzz.sln`; `build.sh` and `build.ps1` build this configuration-complete research solution alongside `Wist.sln` before executing `eng/test-projects.txt`.
+They are grouped in `UniversalToolchain/PlanFuzz.sln`; `build.sh` and `build.ps1` build this configuration-complete research solution alongside `Wist.sln` before executing the exact entries in `eng/test-counts.json`.
 
 ## Wist compiler/runtime stack
 
@@ -57,7 +57,7 @@ They are grouped in `UniversalToolchain/PlanFuzz.sln`; `build.sh` and `build.ps1
 
 ## Test projects
 
-The canonical test list is declared in `eng/test-projects.txt` and contains:
+The canonical test matrix is declared in `eng/test-counts.json`; project paths are derived from its `main` and `isolated` entries and include:
 
 - `Tests`;
 - `UniversalToolchain.Modules.Tests`;
@@ -66,4 +66,4 @@ The canonical test list is declared in `eng/test-projects.txt` and contains:
 - `UniversalToolchain.PlanFuzz.Tests`;
 - `UniversalToolchain.PlanFuzz.IntegrationTests`.
 
-Do not infer coverage from project count alone. The checked-in `VERIFICATION.md`, canonical GitHub Actions run and recursive manifest jointly define the tied evidence record.
+Do not infer coverage from project count alone. The checked-in `VERIFICATION.md`, canonical test-count contract and detached package-integrity manifest jointly define the tied evidence record.

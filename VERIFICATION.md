@@ -8,7 +8,7 @@
 - Canonical command: `./build.sh --skip-docs`.
 - Package dependency mode: repository `NuGet.config`; the optional repository-local feed is materialized as an empty directory in clean checkouts before restore.
 
-The recursive manifest is verified independently from generated build outputs. `MANIFEST.sha256` covers every tracked source file except the manifest itself.
+Source integrity is owned by the Git tree/commit. Release packages use the detached integrity chain produced by the canonical build; no mutable repository-wide hash manifest is committed.
 
 ## Integrated contracts
 
@@ -58,12 +58,12 @@ Build servers and MSBuild node reuse are explicitly disabled by the canonical sc
 | Test project | Passed | Failed | Skipped |
 |---|---:|---:|---:|
 | `Tests` | 507 | 0 | 0 |
-| `UniversalToolchain.Modules.Tests` | 293 | 0 | 0 |
+| `UniversalToolchain.Modules.Tests` | 292 | 0 | 0 |
 | `UniversalToolchain.Dialects.Tests` | 614 | 0 | 0 |
 | `UniversalToolchain.LanguageSdk.Tests` | 80 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.Tests` | 41 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
-| **Total** | **1,545** | **0** | **0** |
+| **Total** | **1,544** | **0** | **0** |
 
 The PlanFuzz suites include dedicated coverage for:
 
@@ -87,7 +87,7 @@ The language-SDK suite continues to cover cross-package route execution, exact p
 
 The canonical matrix produced and verified **9** packages.
 
-Core SDK/template family `0.3.0-alpha.1`:
+Core SDK/template family `0.3.0-alpha.2`:
 
 - `UniversalToolchain.Language.Abstractions`;
 - `UniversalToolchain.FeatureSdk`;
@@ -103,12 +103,12 @@ Wist typed language pack `0.3.0-alpha.2`:
 
 Facade:
 
-- `UniversalToolchain.Wist` `0.1.0-alpha.3`.
+- `UniversalToolchain.Wist` `0.1.0-alpha.4`.
 
 Observed package checks:
 
 - exact package set: **9/9**;
-- Wist facade surface: exact **1 compile DLL and 64 runtime DLLs**, byte-bound to trusted build outputs;
+- Wist facade surface: exact **1 compile DLL and 62 runtime DLLs**, byte-bound to trusted build outputs;
 - Wist LanguagePack embedded descriptor: schema v5, `universaltoolchain-json-v1`, SHA-256, matching package ID/version;
 - clean `dotnet new ut-language -n Contoso.RuleLanguage` restore/run result: `42`;
 - clean external cross-package NuGet consumer result: `cross-package-consumer: 42`.
@@ -121,9 +121,7 @@ GitHub Actions separately enforces:
 - runnable Markdown Bash blocks;
 - the Wist rollout sample output contract;
 - upload of the canonical build log for actionable failures;
-- equality between the checked-in recursive manifest and a freshly generated candidate.
-
-The workflow-only manifest refresh path is explicit `workflow_dispatch`; no one-shot bootstrap trigger remains in the normal CI path.
+- detached release-integrity verification for produced package artifacts.
 
 ## PlanFuzz evidence boundary
 

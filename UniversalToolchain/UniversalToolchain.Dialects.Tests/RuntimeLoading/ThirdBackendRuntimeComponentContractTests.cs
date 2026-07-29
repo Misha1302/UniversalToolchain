@@ -98,7 +98,7 @@ public sealed class ThirdBackendRuntimeComponentContractTests
         Assert.That(typeof(DialectBackendRuntimeRegistrarBase<>).IsPublic, Is.True);
     }
 
-    private static void AssertBackendName(WistDialectExecutionConfiguration configuration, string nameOrAlias)
+    private static void AssertBackendName(ToolchainRuntimeConfiguration configuration, string nameOrAlias)
     {
         var resolved = configuration.TryResolveKnownBackendId(nameOrAlias, out var backendId);
 
@@ -109,7 +109,7 @@ public sealed class ThirdBackendRuntimeComponentContractTests
         });
     }
 
-    private static WistDialectExecutionConfiguration ConfigurationFor(RuntimeComponentManifestEntry backendEntry)
+    private static ToolchainRuntimeConfiguration ConfigurationFor(RuntimeComponentManifestEntry backendEntry)
     {
         var descriptor = new RuntimeBackendDescriptor(
             new DialectBackendId(backendEntry.CanonicalAlias),
@@ -123,7 +123,7 @@ public sealed class ThirdBackendRuntimeComponentContractTests
             [],
             false);
 
-        return new WistDialectExecutionConfiguration(
+        return new ToolchainRuntimeConfiguration(
             "third-backend-test-dialect",
             [],
             [],

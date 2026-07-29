@@ -20,7 +20,7 @@ internal sealed class WistDialectExecutionConfigurationBuilder
         _backendConfigurationBuilder = backendConfigurationBuilder;
     }
 
-    public WistDialectExecutionConfiguration Build(DialectBuildPlan buildPlan, SelectedRuntimePlan selectedRuntimePlan)
+    public ToolchainRuntimeConfiguration Build(DialectBuildPlan buildPlan, SelectedRuntimePlan selectedRuntimePlan)
     {
         buildPlan = buildPlan.ArgNotNull();
         selectedRuntimePlan = selectedRuntimePlan.ArgNotNull();
@@ -35,7 +35,7 @@ internal sealed class WistDialectExecutionConfigurationBuilder
         var requiredInfrastructure = DeduplicateStable(
             shape.RequiredFrontendInfrastructureModuleTypes.Concat(shape.RequiredIrInfrastructureModuleTypes));
 
-        return new WistDialectExecutionConfiguration(
+        return new ToolchainRuntimeConfiguration(
             shape.DialectName,
             shape.FrontendModuleTypes,
             shape.IrModuleTypes,

@@ -2,7 +2,9 @@ param(
     [ValidateSet("Debug", "Release")]
     [string]$Configuration = "Release",
     [switch]$SkipDocs,
-    [switch]$SkipPack
+    [switch]$SkipPack,
+    [string]$BaselineSourceArchive = $env:WIST_BASELINE_SOURCE_ARCHIVE,
+    [string]$PreviousPackageBundle = $env:WIST_PREVIOUS_PACKAGE_BUNDLE
 )
 
 $ErrorActionPreference = "Stop"
@@ -111,8 +113,18 @@ Invoke-CheckedNative "python" @(
     "--manifest", $testContract,
     "--results-directory", "artifacts/test-contract"
 )
+Invoke-CheckedNative "python" @("Tools/check-retired-surface.py", "--root", $root)
+Invoke-CheckedNative "python" @("Tools/test-retired-surface-mutants.py", "--root", $root)
+Invoke-CheckedNative "python" @("Tools/check_documentation_status.py")
+Invoke-CheckedNative "python" @("Tools/test-documentation-status-mutants.py", "--root", $root)
 
 if (-not $SkipPack) {
+    if (-not $BaselineSourceArchive -or -not (Test-Path -LiteralPath $BaselineSourceArchive -PathType Leaf)) {
+        throw "Packaging requires -BaselineSourceArchive (or WIST_BASELINE_SOURCE_ARCHIVE) pointing to the reviewed previous source ZIP."
+    }
+    if (-not $PreviousPackageBundle -or -not (Test-Path -LiteralPath $PreviousPackageBundle -PathType Leaf)) {
+        throw "Packaging requires -PreviousPackageBundle (or WIST_PREVIOUS_PACKAGE_BUNDLE) pointing to the reviewed previous package bundle."
+    }
     Remove-Item "artifacts/packages" -Recurse -Force -ErrorAction SilentlyContinue
     New-Item -ItemType Directory -Force -Path "artifacts/packages" | Out-Null
     $packageProjects = Read-ValidationManifest $packageManifest
@@ -137,9 +149,25 @@ if (-not $SkipPack) {
             "-p:NuGetAudit=false"
         )
     }
+    $packedArchives = @(Get-ChildItem "artifacts/packages" -File |
+        Where-Object { $_.Name.EndsWith(".nupkg") -or $_.Name.EndsWith(".snupkg") } |
+        Sort-Object Name |
+        ForEach-Object { $_.FullName })
+    Invoke-CheckedNative "python" (@("Tools/repack-nupkg-deterministic.py") + $packedArchives)
 
-    Invoke-CheckedNative "python" @("Tools/check-wist-api-compatibility.py")
-    Invoke-CheckedNative "python" @("Tools/test-wist-api-compatibility-mutants.py", "--root", $root)
+    Invoke-CheckedNative "python" @(
+        "Tools/check-package-version-provenance.py",
+        "--previous-bundle", $PreviousPackageBundle,
+        "--current-packages", "artifacts/packages",
+        "--baseline-contract", "eng/package-release-baseline.json"
+    )
+    Invoke-CheckedNative "python" @("Tools/test-package-version-provenance-mutants.py", "--root", $root)
+    Invoke-CheckedNative "python" @("Tools/check-wist-api-compatibility.py", "--baseline-source-archive", $BaselineSourceArchive)
+    Invoke-CheckedNative "python" @(
+        "Tools/test-wist-api-compatibility-mutants.py",
+        "--root", $root,
+        "--baseline-source-archive", $BaselineSourceArchive
+    )
 
     Invoke-CheckedNative "python" @(
         "Tools/check-language-sdk-package-matrix.py",
@@ -157,26 +185,22 @@ if (-not $SkipPack) {
         throw "UniversalToolchain.Wist package version was not found."
     }
     $wistPackage = "artifacts/packages/UniversalToolchain.Wist.$wistVersion.nupkg"
-    $wistReferenceAssembly = Get-ChildItem "UniversalToolchain/UniversalToolchain.Wist/bin" -Recurse -File -Filter "UniversalToolchain.Wist.dll" |
-        Where-Object { $_.FullName -match "[\\/]$Configuration[\\/]net10\.0[\\/]UniversalToolchain\.Wist\.dll$" } |
-        Select-Object -First 1
-    if (-not $wistReferenceAssembly) { throw "Trusted Wist build output was not found." }
-    $wistReferenceDir = $wistReferenceAssembly.Directory.FullName
-    $wistCompileReference = Get-ChildItem "UniversalToolchain/UniversalToolchain.Wist/obj" -Recurse -File -Filter "UniversalToolchain.Wist.dll" |
-        Where-Object { $_.FullName -match "[\/]$Configuration[\/]net10\.0[\/]ref[\/]UniversalToolchain\.Wist\.dll$" } |
-        Select-Object -First 1
-    if (-not $wistCompileReference) { throw "Trusted Wist compile reference was not found." }
+    $wistReferenceAssemblyPath = Join-Path $root "UniversalToolchain/UniversalToolchain.Wist/bin/$Configuration/net10.0/UniversalToolchain.Wist.dll"
+    if (-not (Test-Path -LiteralPath $wistReferenceAssemblyPath -PathType Leaf)) { throw "Trusted Wist build output was not found." }
+    $wistReferenceDir = Split-Path -Parent $wistReferenceAssemblyPath
+    $wistCompileReferencePath = Join-Path $root "UniversalToolchain/UniversalToolchain.Wist/obj/$Configuration/net10.0/ref/UniversalToolchain.Wist.dll"
+    if (-not (Test-Path -LiteralPath $wistCompileReferencePath -PathType Leaf)) { throw "Trusted Wist compile reference was not found." }
     Invoke-CheckedNative "python" @(
         "Tools/check-wist-package-surface.py",
         "--reference-dir", $wistReferenceDir,
-        "--compile-reference", $wistCompileReference.FullName,
+        "--compile-reference", $wistCompileReferencePath,
         $wistPackage
     )
     Invoke-CheckedNative "python" @(
         "Tools/test-wist-package-surface-mutants.py",
         "--root", $root,
         "--reference-dir", $wistReferenceDir,
-        "--compile-reference", $wistCompileReference.FullName,
+        "--compile-reference", $wistCompileReferencePath,
         $wistPackage
     )
     Invoke-CheckedNative "python" @(

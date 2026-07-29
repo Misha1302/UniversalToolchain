@@ -24,7 +24,7 @@ It restores and builds both `UniversalToolchain/Wist.sln` and the configuration-
 Release builds succeeded
 0 build warnings
 0 build errors
-1,508 tests succeeded
+1,544 tests succeeded
 0 failed
 0 skipped
 9 NuGet packages checked
@@ -37,12 +37,12 @@ Per-project test counts:
 | Project | Passed | Failed | Skipped |
 |---|---:|---:|---:|
 | `Tests` | 507 | 0 | 0 |
-| `UniversalToolchain.Modules.Tests` | 293 | 0 | 0 |
+| `UniversalToolchain.Modules.Tests` | 292 | 0 | 0 |
 | `UniversalToolchain.Dialects.Tests` | 614 | 0 | 0 |
 | `UniversalToolchain.LanguageSdk.Tests` | 80 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.Tests` | 41 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
-| **Total** | **1,545** | **0** | **0** |
+| **Total** | **1,544** | **0** | **0** |
 
 The root `VERIFICATION.md` is the detailed authority for commands, environment, package checks and the PlanFuzz evidence boundary.
 
@@ -58,7 +58,7 @@ npm run docs:build
 python3 .github/scripts/run-markdown-bash-blocks.py
 ```
 
-GitHub Actions additionally verifies the Wist rollout sample and compares `MANIFEST.sha256` with a freshly generated manifest over all tracked source files except the manifest itself.
+GitHub Actions additionally verifies the Wist rollout sample. Source integrity is represented by the Git tree; produced package artifacts are covered by the detached release-integrity chain.
 
 ## Evidence boundary
 
