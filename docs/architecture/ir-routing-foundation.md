@@ -222,12 +222,14 @@ semantic parity coverage.
 
 ## Build note
 
-All projects currently target `net10.0`, but the local .NET 10 SDK can fail this
-repository's large project-reference graph nondeterministically when restore or
-build traverses it in parallel. `Directory.Build.props` therefore sets
-`BuildInParallel=false` and `RestoreBuildInParallel=false`.
+All projects currently target `net10.0`. The canonical entrypoints build
+`Wist.sln` and `PlanFuzz.sln` sequentially because the solutions share projects
+and output directories, but MSBuild traverses each solution graph in parallel.
+`--jobs N` / `-Jobs N` caps the node count; `--serial --no-build-servers` /
+`-Serial -NoBuildServers` preserves an isolated diagnostic path.
 
-This is a build-system workaround only. It does not change runtime references or
-IR routing behavior. New SSA/AIR projects should still declare every project
-whose public types they consume directly; projects with existing transitive-reference behavior may keep it temporarily
-until their direct public-type dependencies are declared in a separate cleanup.
+This build policy does not change runtime references or IR routing behavior. New
+SSA/AIR projects should still declare every project whose public types they
+consume directly; projects with existing transitive-reference behavior may keep
+it temporarily until their direct public-type dependencies are declared in a
+separate cleanup.

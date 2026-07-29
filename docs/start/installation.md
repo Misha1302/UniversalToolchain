@@ -126,9 +126,9 @@ Use the branch required by your task. For normal validation, use the branch you 
 ./build.sh --skip-docs
 ```
 
-This is the canonical repository build path. It serializes restore/build, runs all three test projects, packs the facade, and checks the package surface. Use `./build.ps1 -SkipDocs` on Windows.
+This is the canonical repository build path. It builds the two solutions sequentially while parallelizing each solution's project graph, runs the declared test contract, packs the facade, and checks the package surface. The default job count is the number of logical processors; use `--jobs N` on Bash or `-Jobs N` on PowerShell to cap it. Use `--serial --no-build-servers` or `-Serial -NoBuildServers` only for isolated diagnostics.
 
-Do not use a bare repository-root `dotnet build` as release evidence; it does not express the repository's serial build contract.
+Do not use a bare repository-root `dotnet build` as release evidence; it does not execute the repository's complete build, test, package, and verification contract.
 
 ### 3. Run tests when changing behavior
 

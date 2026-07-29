@@ -4,6 +4,13 @@ set -euo pipefail
 configuration="Release"
 skip_docs=false
 skip_pack=false
+serial_build=false
+no_build_servers=false
+jobs="${WIST_BUILD_JOBS:-}"
+jobs_explicit=false
+if [[ -n "$jobs" ]]; then
+  jobs_explicit=true
+fi
 baseline_source_archive="${WIST_BASELINE_SOURCE_ARCHIVE:-}"
 previous_package_bundle="${WIST_PREVIOUS_PACKAGE_BUNDLE:-}"
 
@@ -19,6 +26,19 @@ while (($#)); do
       ;;
     --skip-pack)
       skip_pack=true
+      shift
+      ;;
+    --jobs)
+      jobs="${2:?missing jobs value}"
+      jobs_explicit=true
+      shift 2
+      ;;
+    --serial)
+      serial_build=true
+      shift
+      ;;
+    --no-build-servers)
+      no_build_servers=true
       shift
       ;;
     --baseline-source-archive)
@@ -45,8 +65,53 @@ mkdir -p UniversalToolchain/packages
 
 # Environment variables such as Docker's PLATFORM become global MSBuild properties.
 unset PLATFORM || true
-export DOTNET_CLI_DO_NOT_USE_MSBUILD_SERVER=1
-export MSBUILDDISABLENODEREUSE=1
+
+detect_job_count() {
+  local detected=""
+  if command -v nproc >/dev/null 2>&1; then
+    detected="$(nproc)"
+  elif command -v getconf >/dev/null 2>&1; then
+    detected="$(getconf _NPROCESSORS_ONLN 2>/dev/null || true)"
+  elif command -v sysctl >/dev/null 2>&1; then
+    detected="$(sysctl -n hw.logicalcpu 2>/dev/null || true)"
+  fi
+  if [[ ! "$detected" =~ ^[1-9][0-9]*$ ]]; then
+    detected=1
+  fi
+  printf '%s\n' "$detected"
+}
+
+if [[ -z "$jobs" ]]; then
+  jobs="$(detect_job_count)"
+fi
+if [[ ! "$jobs" =~ ^[1-9][0-9]*$ ]]; then
+  echo "--jobs/WIST_BUILD_JOBS must be a positive integer, got: $jobs" >&2
+  exit 2
+fi
+if [[ "$serial_build" == true && "$jobs_explicit" == true && "$jobs" != "1" ]]; then
+  echo "--serial conflicts with an explicit job count of $jobs; remove --jobs/WIST_BUILD_JOBS or set it to 1." >&2
+  exit 2
+fi
+
+build_in_parallel=true
+restore_in_parallel=true
+shared_compilation=true
+restore_mode_args=()
+build_server_args=()
+
+if [[ "$serial_build" == true ]]; then
+  jobs=1
+  build_in_parallel=false
+  restore_in_parallel=false
+  restore_mode_args+=(--disable-parallel)
+fi
+
+if [[ "$no_build_servers" == true ]]; then
+  shared_compilation=false
+  build_server_args+=(--disable-build-servers)
+  export DOTNET_CLI_DO_NOT_USE_MSBUILD_SERVER=1
+  export MSBUILDDISABLENODEREUSE=1
+fi
 
 dotnet_command="${DOTNET:-dotnet}"
 solutions=(
@@ -71,21 +136,21 @@ read_manifest() {
 
 for solution in "${solutions[@]}"; do
   "$dotnet_command" restore "$solution" \
-    --disable-parallel \
-    --disable-build-servers \
+    "${restore_mode_args[@]}" \
+    "${build_server_args[@]}" \
     "${restore_source_args[@]}" \
-    -p:RestoreBuildInParallel=false \
-    -p:UseSharedCompilation=false \
+    "-p:RestoreBuildInParallel=$restore_in_parallel" \
+    "-p:UseSharedCompilation=$shared_compilation" \
     -p:NuGetAudit=false
 done
 
 for sample_project in "${markdown_sample_projects[@]}"; do
   "$dotnet_command" restore "$sample_project" \
-    --disable-parallel \
-    --disable-build-servers \
+    "${restore_mode_args[@]}" \
+    "${build_server_args[@]}" \
     "${restore_source_args[@]}" \
-    -p:RestoreBuildInParallel=false \
-    -p:UseSharedCompilation=false \
+    "-p:RestoreBuildInParallel=$restore_in_parallel" \
+    "-p:UseSharedCompilation=$shared_compilation" \
     -p:NuGetAudit=false
 done
 
@@ -93,10 +158,10 @@ for solution in "${solutions[@]}"; do
   "$dotnet_command" build "$solution" \
     -c "$configuration" \
     --no-restore \
-    --disable-build-servers \
-    -m:1 \
-    -p:BuildInParallel=false \
-    -p:UseSharedCompilation=false \
+    "${build_server_args[@]}" \
+    "-m:$jobs" \
+    "-p:BuildInParallel=$build_in_parallel" \
+    "-p:UseSharedCompilation=$shared_compilation" \
     -p:NuGetAudit=false
 done
 
@@ -106,10 +171,10 @@ for sample_project in "${markdown_sample_projects[@]}"; do
   "$dotnet_command" build "$sample_project" \
     -c "$configuration" \
     --no-restore \
-    --disable-build-servers \
-    -m:1 \
-    -p:BuildInParallel=false \
-    -p:UseSharedCompilation=false \
+    "${build_server_args[@]}" \
+    "-m:$jobs" \
+    "-p:BuildInParallel=$build_in_parallel" \
+    "-p:UseSharedCompilation=$shared_compilation" \
     -p:NuGetAudit=false
 done
 
@@ -148,21 +213,23 @@ if [[ "$skip_pack" == false ]]; then
   # declared package project explicitly before using --no-restore for pack.
   for package_project in "${package_projects[@]}"; do
     "$dotnet_command" restore "$package_project" \
-      --disable-parallel \
-      --disable-build-servers \
+      "${restore_mode_args[@]}" \
+      "${build_server_args[@]}" \
       "${restore_source_args[@]}" \
-      -p:RestoreBuildInParallel=false \
-      -p:UseSharedCompilation=false \
+      "-p:RestoreBuildInParallel=$restore_in_parallel" \
+      "-p:UseSharedCompilation=$shared_compilation" \
       -p:NuGetAudit=false
   done
   for package_project in "${package_projects[@]}"; do
     "$dotnet_command" pack "$package_project" \
       -c "$configuration" \
       --no-restore \
-      --disable-build-servers \
+      "${build_server_args[@]}" \
+      "-m:$jobs" \
+      "-p:BuildInParallel=$build_in_parallel" \
       -o artifacts/packages \
       /p:WarningsAsErrors=NU5118 \
-      -p:UseSharedCompilation=false \
+      "-p:UseSharedCompilation=$shared_compilation" \
       -p:NuGetAudit=false
   done
   mapfile -t packed_archives < <(find artifacts/packages -maxdepth 1 -type f \

@@ -190,9 +190,10 @@ Useful bounded variants:
 ```bash ci-run=false
 ./build.sh --skip-docs
 ./build.sh --skip-docs --skip-pack
+./build.sh --jobs 4 --skip-docs --skip-pack
 ```
 
-The wrapper performs serial restore/build for the current project graph, runs the test projects, packs the public facade, checks package-surface growth, builds documentation, and runs Markdown checks.
+The wrapper restores and builds each solution sequentially, while MSBuild traverses the project graph in parallel. It then runs the test projects, packs the public facade, checks package-surface growth, builds documentation, and runs Markdown checks. The default job count is the number of logical processors; override it with `--jobs N` or `WIST_BUILD_JOBS=N`. For isolated diagnostics, use `--serial --no-build-servers`.
 
 ## Contributing
 

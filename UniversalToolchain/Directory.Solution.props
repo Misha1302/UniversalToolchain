@@ -1,9 +1,9 @@
 <Project>
 
     <PropertyGroup>
-        <!-- Keep solution restore on the deterministic graph path used by this SDK/repository pair. -->
-        <BuildInParallel>false</BuildInParallel>
-        <RestoreBuildInParallel>false</RestoreBuildInParallel>
+        <!-- Default to parallel solution traversal while preserving explicit command-line overrides. -->
+        <BuildInParallel Condition="'$(BuildInParallel)' == ''">true</BuildInParallel>
+        <RestoreBuildInParallel Condition="'$(RestoreBuildInParallel)' == ''">true</RestoreBuildInParallel>
         <RestoreUseStaticGraphEvaluation>true</RestoreUseStaticGraphEvaluation>
         <MSBuildEnableWorkloadResolver>false</MSBuildEnableWorkloadResolver>
     </PropertyGroup>

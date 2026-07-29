@@ -190,6 +190,7 @@ public class WistRuntimeManifestMetadataValidationTests
             Assert.That(source, Does.Not.Contain("bash -lc"));
             Assert.That(source, Does.Not.Contain("*Module"));
             Assert.That(source, Does.Not.Contain("<MSBuild Projects=\"$(DialectRuntimeManifestEmitterProjectPath)\""));
+            Assert.That(source, Does.Not.Contain("SetTargetFramework=\"TargetFramework=$(DialectRuntimeManifestEmitterTargetFramework)\""));
         });
     }
 

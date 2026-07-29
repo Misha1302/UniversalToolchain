@@ -3,6 +3,9 @@ param(
     [string]$Configuration = "Release",
     [switch]$SkipDocs,
     [switch]$SkipPack,
+    [int]$Jobs = 0,
+    [switch]$Serial,
+    [switch]$NoBuildServers,
     [string]$BaselineSourceArchive = $env:WIST_BASELINE_SOURCE_ARCHIVE,
     [string]$PreviousPackageBundle = $env:WIST_PREVIOUS_PACKAGE_BUNDLE
 )
@@ -16,8 +19,38 @@ Set-Location $root
 New-Item -ItemType Directory -Force -Path "UniversalToolchain/packages" | Out-Null
 
 $env:PLATFORM = $null
-$env:DOTNET_CLI_DO_NOT_USE_MSBUILD_SERVER = "1"
-$env:MSBUILDDISABLENODEREUSE = "1"
+
+if ($Jobs -eq 0) {
+    if ($env:WIST_BUILD_JOBS) {
+        if (-not [int]::TryParse($env:WIST_BUILD_JOBS, [ref]$Jobs) -or $Jobs -lt 1) {
+            throw "WIST_BUILD_JOBS must be a positive integer, got: $($env:WIST_BUILD_JOBS)"
+        }
+    }
+    else {
+        $Jobs = [Math]::Max(1, [Environment]::ProcessorCount)
+    }
+}
+elseif ($Jobs -lt 1) {
+    throw "-Jobs must be a positive integer, got: $Jobs"
+}
+
+if ($Serial -and $Jobs -ne 1 -and ($PSBoundParameters.ContainsKey("Jobs") -or $env:WIST_BUILD_JOBS)) {
+    throw "-Serial conflicts with an explicit job count. Remove -Jobs/WIST_BUILD_JOBS or set it to 1."
+}
+
+$buildInParallel = if ($Serial) { "false" } else { "true" }
+$restoreInParallel = if ($Serial) { "false" } else { "true" }
+$sharedCompilation = if ($NoBuildServers) { "false" } else { "true" }
+$restoreModeArguments = if ($Serial) { @("--disable-parallel") } else { @() }
+$buildServerArguments = if ($NoBuildServers) { @("--disable-build-servers") } else { @() }
+if ($Serial) {
+    $Jobs = 1
+}
+if ($NoBuildServers) {
+    $env:DOTNET_CLI_DO_NOT_USE_MSBUILD_SERVER = "1"
+    $env:MSBUILDDISABLENODEREUSE = "1"
+}
+
 $dotnet = if ($env:DOTNET) { $env:DOTNET } else { "dotnet" }
 $solutions = @(
     "UniversalToolchain/Wist.sln",
@@ -53,12 +86,9 @@ function Read-ValidationManifest {
 function New-RestoreArguments {
     param([Parameter(Mandatory = $true)][string]$Project)
 
-    $arguments = @(
-        "restore", $Project,
-        "--disable-parallel",
-        "--disable-build-servers",
-        "-p:RestoreBuildInParallel=false",
-        "-p:UseSharedCompilation=false",
+    $arguments = @("restore", $Project) + $restoreModeArguments + $buildServerArguments + @(
+        "-p:RestoreBuildInParallel=$restoreInParallel",
+        "-p:UseSharedCompilation=$sharedCompilation",
         "-p:NuGetAudit=false"
     )
     if ($env:NUGET_CONFIG) {
@@ -75,29 +105,29 @@ foreach ($project in $markdownSampleProjects) {
 }
 
 foreach ($solution in $solutions) {
-    Invoke-CheckedNative $dotnet @(
+    Invoke-CheckedNative $dotnet (@(
         "build", $solution,
         "-c", $Configuration,
-        "--no-restore",
-        "--disable-build-servers",
-        "-m:1",
-        "-p:BuildInParallel=false",
-        "-p:UseSharedCompilation=false",
+        "--no-restore"
+    ) + $buildServerArguments + @(
+        "-m:$Jobs",
+        "-p:BuildInParallel=$buildInParallel",
+        "-p:UseSharedCompilation=$sharedCompilation",
         "-p:NuGetAudit=false"
-    )
+    ))
 }
 
 foreach ($project in $markdownSampleProjects) {
-    Invoke-CheckedNative $dotnet @(
+    Invoke-CheckedNative $dotnet (@(
         "build", $project,
         "-c", $Configuration,
-        "--no-restore",
-        "--disable-build-servers",
-        "-m:1",
-        "-p:BuildInParallel=false",
-        "-p:UseSharedCompilation=false",
+        "--no-restore"
+    ) + $buildServerArguments + @(
+        "-m:$Jobs",
+        "-p:BuildInParallel=$buildInParallel",
+        "-p:UseSharedCompilation=$sharedCompilation",
         "-p:NuGetAudit=false"
-    )
+    ))
 }
 
 Invoke-CheckedNative "python" @(
@@ -138,16 +168,18 @@ if (-not $SkipPack) {
         Invoke-CheckedNative $dotnet (New-RestoreArguments $project)
     }
     foreach ($project in $packageProjects) {
-        Invoke-CheckedNative $dotnet @(
+        Invoke-CheckedNative $dotnet (@(
             "pack", $project,
             "-c", $Configuration,
-            "--no-restore",
-            "--disable-build-servers",
+            "--no-restore"
+        ) + $buildServerArguments + @(
+            "-m:$Jobs",
+            "-p:BuildInParallel=$buildInParallel",
             "-o", "artifacts/packages",
             "/p:WarningsAsErrors=NU5118",
-            "-p:UseSharedCompilation=false",
+            "-p:UseSharedCompilation=$sharedCompilation",
             "-p:NuGetAudit=false"
-        )
+        ))
     }
     $packedArchives = @(Get-ChildItem "artifacts/packages" -File |
         Where-Object { $_.Name.EndsWith(".nupkg") -or $_.Name.EndsWith(".snupkg") } |

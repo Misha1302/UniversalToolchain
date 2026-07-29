@@ -1,14 +1,14 @@
 <Project>
 
     <PropertyGroup>
-        <!-- The net10 preview SDK used by this repository can fail project-reference graph
-             discovery nondeterministically when restore/build walks this large graph in
-             parallel. Keep project-reference traversal serial for reproducible local and CI
-             builds without changing legacy transitive-reference behavior globally. -->
-        <BuildInParallel>false</BuildInParallel>
-        <RestoreBuildInParallel>false</RestoreBuildInParallel>
+        <!-- Parallel graph traversal is the normal repository mode. Every property remains
+             command-line overridable so diagnostics can reproduce the legacy isolated path.
+             Solutions are still built sequentially because Wist.sln and PlanFuzz.sln share
+             output directories. -->
+        <BuildInParallel Condition="'$(BuildInParallel)' == ''">true</BuildInParallel>
+        <RestoreBuildInParallel Condition="'$(RestoreBuildInParallel)' == ''">true</RestoreBuildInParallel>
         <RestoreUseStaticGraphEvaluation>true</RestoreUseStaticGraphEvaluation>
-        <UseSharedCompilation>false</UseSharedCompilation>
+        <UseSharedCompilation Condition="'$(UseSharedCompilation)' == ''">true</UseSharedCompilation>
 
         <!-- Runtime identity generation 2 intentionally breaks binary unification with
              pre-hardening checkouts. The old graph shipped every assembly as 1.0.0.0,

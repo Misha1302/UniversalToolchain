@@ -10,11 +10,13 @@
     </PropertyGroup>
 
     <ItemGroup Condition="'$(EmitDialectRuntimeManifest)' == 'true' and '$(MSBuildProjectFullPath)' != '$(DialectRuntimeManifestEmitterProjectPath)'">
+        <!-- Keep the emitter on the same outer-build graph identity as its explicit
+             solution entry. Forcing TargetFramework here creates a second inner-build node
+             that can write the same bin/obj outputs concurrently under multi-node MSBuild. -->
         <ProjectReference Include="$(DialectRuntimeManifestEmitterProjectPath)"
                           ReferenceOutputAssembly="false"
                           Private="false"
-                          PrivateAssets="all"
-                          SetTargetFramework="TargetFramework=$(DialectRuntimeManifestEmitterTargetFramework)"/>
+                          PrivateAssets="all"/>
     </ItemGroup>
 
     <Target Name="EmitDialectRuntimeManifest"
