@@ -26,65 +26,42 @@ jobs:
           from pathlib import Path
 
           exact_replacements = {
-              'UniversalToolchain/UniversalToolchain.Language.Abstractions/UniversalToolchain.Language.Abstractions.csproj': [('0.3.0-alpha.2', '0.3.0-alpha.3')],
-              'UniversalToolchain/UniversalToolchain.FeatureSdk/UniversalToolchain.FeatureSdk.csproj': [('0.3.0-alpha.2', '0.3.0-alpha.3')],
-              'UniversalToolchain/UniversalToolchain.LanguageSdk/UniversalToolchain.LanguageSdk.csproj': [('0.3.0-alpha.2', '0.3.0-alpha.3')],
-              'UniversalToolchain/UniversalToolchain.Runtime/UniversalToolchain.Runtime.csproj': [('0.3.0-alpha.2', '0.3.0-alpha.3')],
-              'UniversalToolchain/UniversalToolchain.LanguageAuthoring/UniversalToolchain.LanguageAuthoring.csproj': [('0.3.0-alpha.2', '0.3.0-alpha.3')],
-              'UniversalToolchain/UniversalToolchain.Testing/UniversalToolchain.Testing.csproj': [('0.3.0-alpha.2', '0.3.0-alpha.3')],
-              'UniversalToolchain/UniversalToolchain.Templates/UniversalToolchain.Templates.csproj': [('0.3.0-alpha.2', '0.3.0-alpha.3')],
-              'UniversalToolchain/UniversalToolchain.Wist.LanguagePack/UniversalToolchain.Wist.LanguagePack.csproj': [('0.3.0-alpha.3', '0.3.0-alpha.4')],
-              'UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj': [('0.1.0-alpha.4', '0.1.0-alpha.5')],
-              'UniversalToolchain/UniversalToolchain.Templates/content/ut-language/TemplateLanguage.csproj': [('0.3.0-alpha.2', '0.3.0-alpha.3')],
-              'UniversalToolchain/UniversalToolchain.Templates/README.md': [('0.3.0-alpha.2', '0.3.0-alpha.3')],
-              'docs/language-authoring/quickstart.md': [('0.3.0-alpha.2', '0.3.0-alpha.3')],
-              'docs/language-authoring/testing-and-templates.md': [('0.3.0-alpha.2', '0.3.0-alpha.3')],
-              'VERIFICATION.md': [
-                  ('Core SDK/template family `0.3.0-alpha.2`', 'Core SDK/template family `0.3.0-alpha.3`'),
-                  ('`UniversalToolchain.Wist.LanguagePack` `0.3.0-alpha.3`', '`UniversalToolchain.Wist.LanguagePack` `0.3.0-alpha.4`'),
-                  ('`UniversalToolchain.Wist` `0.1.0-alpha.4`', '`UniversalToolchain.Wist` `0.1.0-alpha.5`'),
-              ],
-              'docs/evidence/current-verification.md': [
-                  ('seven SDK/template packages at `0.3.0-alpha.2`', 'seven SDK/template packages at `0.3.0-alpha.3`'),
-                  ('`UniversalToolchain.Wist.LanguagePack` at `0.3.0-alpha.3`', '`UniversalToolchain.Wist.LanguagePack` at `0.3.0-alpha.4`'),
-                  ('`UniversalToolchain.Wist` at `0.1.0-alpha.4`', '`UniversalToolchain.Wist` at `0.1.0-alpha.5`'),
-              ],
-              'docs/evidence/maintainer-guide.md': [
-                  ('0.3.0-alpha.2', '0.3.0-alpha.3'),
-                  ('0.3.0-alpha.3', '0.3.0-alpha.4'),
-                  ('0.1.0-alpha.4', '0.1.0-alpha.5'),
-              ],
-              'docs/CURRENT_ARCHITECTURE_STATUS.md': [
-                  ('0.3.0-alpha.2', '0.3.0-alpha.3'),
-                  ('0.3.0-alpha.3', '0.3.0-alpha.4'),
-                  ('0.1.0-alpha.4', '0.1.0-alpha.5'),
-              ],
-              'readme.md': [('0.1.0-alpha.4', '0.1.0-alpha.5')],
-              'docs/start/index.md': [('0.1.0-alpha.4', '0.1.0-alpha.5')],
-              'docs/start/use-case-recipes.md': [('0.1.0-alpha.4', '0.1.0-alpha.5')],
-              'docs/start/installation.md': [('0.1.0-alpha.4', '0.1.0-alpha.5')],
-              'docs/start/first-program.md': [('0.1.0-alpha.4', '0.1.0-alpha.5')],
-              'UniversalToolchain/UniversalToolchain.Wist/README.md': [('0.1.0-alpha.4', '0.1.0-alpha.5')],
-              'RELEASE_NOTES_RU.md': [
-                  ('0.1.0-alpha.4', '0.1.0-alpha.5'),
-                  ('Дата source/release artifact: 2026-07-27.', 'Дата source/release artifact: 2026-07-30.'),
-              ],
+              'UniversalToolchain/UniversalToolchain.Language.Abstractions/UniversalToolchain.Language.Abstractions.csproj': ('0.3.0-alpha.2', '0.3.0-alpha.3'),
+              'UniversalToolchain/UniversalToolchain.FeatureSdk/UniversalToolchain.FeatureSdk.csproj': ('0.3.0-alpha.2', '0.3.0-alpha.3'),
+              'UniversalToolchain/UniversalToolchain.LanguageSdk/UniversalToolchain.LanguageSdk.csproj': ('0.3.0-alpha.2', '0.3.0-alpha.3'),
+              'UniversalToolchain/UniversalToolchain.Runtime/UniversalToolchain.Runtime.csproj': ('0.3.0-alpha.2', '0.3.0-alpha.3'),
+              'UniversalToolchain/UniversalToolchain.LanguageAuthoring/UniversalToolchain.LanguageAuthoring.csproj': ('0.3.0-alpha.2', '0.3.0-alpha.3'),
+              'UniversalToolchain/UniversalToolchain.Testing/UniversalToolchain.Testing.csproj': ('0.3.0-alpha.2', '0.3.0-alpha.3'),
+              'UniversalToolchain/UniversalToolchain.Templates/UniversalToolchain.Templates.csproj': ('0.3.0-alpha.2', '0.3.0-alpha.3'),
+              'UniversalToolchain/UniversalToolchain.Wist.LanguagePack/UniversalToolchain.Wist.LanguagePack.csproj': ('0.3.0-alpha.3', '0.3.0-alpha.4'),
+              'UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj': ('0.1.0-alpha.4', '0.1.0-alpha.5'),
+              'UniversalToolchain/UniversalToolchain.Templates/content/ut-language/TemplateLanguage.csproj': ('0.3.0-alpha.2', '0.3.0-alpha.3'),
+              'UniversalToolchain/UniversalToolchain.Templates/README.md': ('0.3.0-alpha.2', '0.3.0-alpha.3'),
+              'docs/language-authoring/quickstart.md': ('0.3.0-alpha.2', '0.3.0-alpha.3'),
+              'docs/language-authoring/testing-and-templates.md': ('0.3.0-alpha.2', '0.3.0-alpha.3'),
+              'UniversalToolchain/UniversalToolchain.Wist/README.md': ('0.1.0-alpha.4', '0.1.0-alpha.5'),
+              'readme.md': ('0.1.0-alpha.4', '0.1.0-alpha.5'),
+              'docs/start/index.md': ('0.1.0-alpha.4', '0.1.0-alpha.5'),
+              'docs/start/use-case-recipes.md': ('0.1.0-alpha.4', '0.1.0-alpha.5'),
+              'docs/start/installation.md': ('0.1.0-alpha.4', '0.1.0-alpha.5'),
+              'docs/start/first-program.md': ('0.1.0-alpha.4', '0.1.0-alpha.5'),
+              'RELEASE_NOTES_RU.md': ('0.1.0-alpha.4', '0.1.0-alpha.5'),
           }
 
-          for name, replacements in exact_replacements.items():
+          for name, (old, new) in exact_replacements.items():
               path = Path(name)
               text = path.read_text(encoding='utf-8-sig')
-              original = text
-              for old, new in replacements:
-                  if old not in text:
-                      raise SystemExit(f'{name}: expected version anchor is missing: {old!r}')
-                  text = text.replace(old, new)
-              if text == original:
-                  raise SystemExit(f'{name}: no version change was applied')
-              path.write_text(text, encoding='utf-8')
+              count = text.count(old)
+              if count == 0:
+                  raise SystemExit(f'{name}: expected version anchor is missing: {old!r}')
+              path.write_text(text.replace(old, new), encoding='utf-8')
 
           notes = Path('RELEASE_NOTES_RU.md')
           text = notes.read_text(encoding='utf-8')
+          text = text.replace(
+              'Дата source/release artifact: 2026-07-27.',
+              'Дата source/release artifact: 2026-07-30.',
+              1)
           marker = '## Основные изменения\n\n'
           addition = (
               '- fail-closed identity для contract-annotated Bytecode emissions;\n'
@@ -118,13 +95,10 @@ jobs:
             UniversalToolchain/UniversalToolchain.Wist/README.md \
             docs/language-authoring/quickstart.md \
             docs/language-authoring/testing-and-templates.md \
-            docs/evidence/current-verification.md \
-            docs/evidence/maintainer-guide.md \
-            docs/CURRENT_ARCHITECTURE_STATUS.md \
             docs/start/index.md \
             docs/start/use-case-recipes.md \
             docs/start/installation.md \
             docs/start/first-program.md \
-            VERIFICATION.md RELEASE_NOTES_RU.md readme.md
+            RELEASE_NOTES_RU.md readme.md
           git commit -m "release: bump review-remediation package versions"
           git push origin HEAD:fix/review-ten-findings-20260730
