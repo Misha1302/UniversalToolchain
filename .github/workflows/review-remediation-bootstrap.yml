@@ -27,105 +27,84 @@ jobs:
         shell: python
         run: |
           from pathlib import Path
+          import re
+          import textwrap
 
           runtime = Path('UniversalToolchain/UniversalToolchain.Runtime/RuntimeContracts.cs')
           text = runtime.read_text(encoding='utf-8-sig')
-          text = text.replace(
-              'using System.Reflection;\nusing System.Runtime.CompilerServices;',
-              'using System.Reflection;\nusing System.Runtime.CompilerServices;\nusing System.Runtime.ExceptionServices;',
-              1)
-          old_catch = '''        catch
-          {
-              DisposeOwnedSynchronously(owned);
-              throw;
-          }
-          '''
-          new_catch = '''        catch (Exception primaryException)
-          {
-              var cleanupErrors = DisposeOwnedSynchronouslyCollect(owned);
-              if (cleanupErrors.Count == 0)
-                  ExceptionDispatchInfo.Capture(primaryException).Throw();
+          if 'using System.Runtime.ExceptionServices;' not in text:
+              text = text.replace(
+                  'using System.Runtime.CompilerServices;\n',
+                  'using System.Runtime.CompilerServices;\nusing System.Runtime.ExceptionServices;\n',
+                  1)
 
-              var combined = new List<Exception> { primaryException };
-              combined.AddRange(cleanupErrors);
-              throw new AggregateException(
-                  "Language runtime session construction failed and cleanup also failed.",
-                  combined);
-          }
-          '''
-          if old_catch not in text:
-              raise SystemExit('RuntimeContracts construction catch anchor not found')
-          text = text.replace(old_catch, new_catch, 1)
+          catch_pattern = re.compile(
+              r'(?m)^        catch\s*\n'
+              r'        \{\s*\n'
+              r'            DisposeOwnedSynchronously\(owned\);\s*\n'
+              r'            throw;\s*\n'
+              r'        \}')
+          catch_replacement = textwrap.dedent('''\
+                  catch (Exception primaryException)
+                  {
+                      var cleanupErrors = DisposeOwnedSynchronouslyCollect(owned);
+                      if (cleanupErrors.Count == 0)
+                          ExceptionDispatchInfo.Capture(primaryException).Throw();
 
-          old_dispose = '''    private static void DisposeOwnedSynchronously(IReadOnlyList<object> components)
-          {
-              List<Exception>? errors = null;
-              for (var index = components.Count - 1; index >= 0; index--)
+                      var combined = new List<Exception> { primaryException };
+                      combined.AddRange(cleanupErrors);
+                      throw new AggregateException(
+                          "Language runtime session construction failed and cleanup also failed.",
+                          combined);
+                  }''')
+          text, count = catch_pattern.subn(catch_replacement, text, count=1)
+          if count != 1:
+              raise SystemExit(f'RuntimeContracts construction catch replacements: {count}')
+
+          dispose_start = text.index('    private static void DisposeOwnedSynchronously(IReadOnlyList<object> components)')
+          dispose_end = text.index('\n}\n\n\npublic interface ILanguageRuntimeSession', dispose_start)
+          dispose_replacement = textwrap.dedent('''\
+              private static void DisposeOwnedSynchronously(IReadOnlyList<object> components)
               {
-                  try
-                  {
-                      switch (components[index])
-                      {
-                          case IDisposable disposable:
-                              disposable.Dispose();
-                              break;
-                          case IAsyncDisposable asyncDisposable:
-                              asyncDisposable.DisposeAsync().AsTask().GetAwaiter().GetResult();
-                              break;
-                      }
-                  }
-                  catch (Exception exception)
-                  {
-                      (errors ??= []).Add(exception);
-                  }
-              }
-              if (errors is { Count: > 0 })
-                  throw new AggregateException("One or more language runtime components failed to dispose.", errors);
-          }
-          '''
-          new_dispose = '''    private static void DisposeOwnedSynchronously(IReadOnlyList<object> components)
-          {
-              var errors = DisposeOwnedSynchronouslyCollect(components);
-              if (errors.Count != 0)
-                  throw new AggregateException("One or more language runtime components failed to dispose.", errors);
-          }
-
-          private static IReadOnlyList<Exception> DisposeOwnedSynchronouslyCollect(IReadOnlyList<object> components)
-          {
-              List<Exception>? errors = null;
-              for (var index = components.Count - 1; index >= 0; index--)
-              {
-                  try
-                  {
-                      switch (components[index])
-                      {
-                          case IDisposable disposable:
-                              disposable.Dispose();
-                              break;
-                          case IAsyncDisposable asyncDisposable:
-                              asyncDisposable.DisposeAsync().AsTask().GetAwaiter().GetResult();
-                              break;
-                      }
-                  }
-                  catch (Exception exception)
-                  {
-                      (errors ??= []).Add(exception);
-                  }
+                  var errors = DisposeOwnedSynchronouslyCollect(components);
+                  if (errors.Count != 0)
+                      throw new AggregateException("One or more language runtime components failed to dispose.", errors);
               }
 
-              return errors ?? [];
-          }
-          '''
-          if old_dispose not in text:
-              raise SystemExit('RuntimeContracts dispose anchor not found')
-          runtime.write_text(text.replace(old_dispose, new_dispose, 1), encoding='utf-8')
+              private static IReadOnlyList<Exception> DisposeOwnedSynchronouslyCollect(IReadOnlyList<object> components)
+              {
+                  List<Exception>? errors = null;
+                  for (var index = components.Count - 1; index >= 0; index--)
+                  {
+                      try
+                      {
+                          switch (components[index])
+                          {
+                              case IDisposable disposable:
+                                  disposable.Dispose();
+                                  break;
+                              case IAsyncDisposable asyncDisposable:
+                                  asyncDisposable.DisposeAsync().AsTask().GetAwaiter().GetResult();
+                                  break;
+                          }
+                      }
+                      catch (Exception exception)
+                      {
+                          (errors ??= []).Add(exception);
+                      }
+                  }
+
+                  return errors ?? [];
+              }
+          ''')
+          text = text[:dispose_start] + dispose_replacement + text[dispose_end:]
+          runtime.write_text(text, encoding='utf-8')
 
           tests = Path('UniversalToolchain/UniversalToolchain.LanguageSdk.Tests/RuntimeLifecycleAndCanonicalizationTests.cs')
           text = tests.read_text(encoding='utf-8-sig')
-          anchor = '''    [Test]
-              public async Task ExternalConcurrentDispose_WaitsForInFlightOperationAndRejectsNewOperations()
-          '''
-          inserted = '''    [Test]
+          marker = '    [Test]\n    public async Task ExternalConcurrentDispose_WaitsForInFlightOperationAndRejectsNewOperations()'
+          inserted = textwrap.dedent('''\
+              [Test]
               public async Task FlowedChildContext_AfterOperationCompletion_DoesNotRetainActiveLease()
               {
                   LanguageRuntime? runtime = null;
@@ -208,19 +187,17 @@ jobs:
                   });
               }
 
-              [Test]
-              public async Task ExternalConcurrentDispose_WaitsForInFlightOperationAndRejectsNewOperations()
-          '''
-          if anchor not in text:
+          ''') + marker
+          if marker not in text:
               raise SystemExit('Lifecycle test insertion anchor not found')
-          text = text.replace(anchor, inserted, 1)
+          text = text.replace(marker, inserted, 1)
 
-          helper_anchor = '''    private sealed class CountingTransformer(
-          '''
-          helper = '''    private sealed class ThrowingDisposeTransformer(
-              string contributionId,
-              LanguageArtifactKind<string> source,
-              LanguageArtifactKind<int> target) : ILanguageArtifactTransformer<string, int>, IDisposable
+          helper_marker = '    private sealed class CountingTransformer('
+          helper = textwrap.dedent('''\
+              private sealed class ThrowingDisposeTransformer(
+                  string contributionId,
+                  LanguageArtifactKind<string> source,
+                  LanguageArtifactKind<int> target) : ILanguageArtifactTransformer<string, int>, IDisposable
               {
                   public LanguageContributionId ContributionId { get; } = new(contributionId);
                   public LanguageArtifactKind<string> TypedSourceKind { get; } = source;
@@ -230,11 +207,10 @@ jobs:
                   public void Dispose() => throw new InvalidOperationException("cleanup disposal failure");
               }
 
-              private sealed class CountingTransformer(
-          '''
-          if helper_anchor not in text:
+          ''') + helper_marker
+          if helper_marker not in text:
               raise SystemExit('Lifecycle helper anchor not found')
-          tests.write_text(text.replace(helper_anchor, helper, 1), encoding='utf-8')
+          tests.write_text(text.replace(helper_marker, helper, 1), encoding='utf-8')
 
       - name: Remove bootstrap workflow and commit
         shell: bash
