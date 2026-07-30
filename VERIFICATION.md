@@ -7,6 +7,7 @@
 - SDK policy: `UniversalToolchain/global.json` with .NET 10 feature-band roll-forward.
 - Ordinary integration command: `./build.sh --skip-docs --skip-pack`.
 - Contract-study command: `CONTRACT_EXPERIMENT_REPLICATES=5 ./Tools/run-contract-experiment.sh artifacts/contract-experiment`.
+- Review-holdout command: `bash ./Tools/run-contract-review-holdout.sh artifacts/contract-review-holdout`.
 - Package dependency mode: repository `NuGet.config`; the optional repository-local feed is materialized as an empty directory before restore.
 
 Source identity is owned by the Git commit. Every contract-study result tree carries its exact workflow commit, runner inputs, environment metadata and a per-file SHA-256 checksum index. Release packages use a separate detached integrity chain and require explicit previous-source and previous-package baseline artifacts; ordinary CI never fabricates or silently bypasses those inputs.
@@ -20,14 +21,20 @@ The repository implements and continuously verifies:
 - exact `(contribution, backend, input contract)` executor resolution;
 - strict selected-module contract enforcement in the Wist composition path;
 - production Bytecode metadata reading plus declared/observed emission verification;
+- mandatory producer-module and source-node identity for every contract-annotated Bytecode emission;
 - AIR structural, stack and backend-capability verification;
 - compiler facts/effects and fail-closed routing of unresolved reverification requests;
+- extension-provided compiler-fact verifier routes with conflict rejection;
+- explicit rejection of repeated module identities until occurrence-sensitive effects are modeled;
 - `PerSession` ownership and explicit `SingletonStateless` lifecycle rules;
+- primary-first preservation of runtime construction failures when cleanup also fails;
+- active-lease tracking that ignores completed leases retained by flowed execution contexts;
 - interpreter/CIL parity on the shared supported surface;
 - PlanFuzz fresh-process replay, evidence-complete classification and exact-fingerprint reduction;
-- a separate production-boundary B0/B1/B2 contract experiment.
+- a separate production-boundary B0/B1/B2 contract experiment;
+- a separately reported post-freeze review-derived holdout set.
 
-The retained product boundary remains a contribution/pass/route/runtime SDK rather than a declarative grammar, binder or type-system workbench. PlanFuzz and the contract experiment are non-packable research layers and do not extend the public Wist NuGet surface.
+The retained product boundary remains a contribution/pass/route/runtime SDK rather than a declarative grammar, binder or type-system workbench. PlanFuzz and the contract experiments are non-packable research layers and do not extend the public Wist NuGet surface.
 
 ## Ordinary build and test gate
 
@@ -43,15 +50,15 @@ Parallel graph traversal and shared compilation are the default. `--jobs`, `--se
 
 | Test project | Passed | Failed | Skipped |
 |---|---:|---:|---:|
-| `Tests` | 507 | 0 | 0 |
+| `Tests` | 512 | 0 | 0 |
 | `UniversalToolchain.Modules.Tests` | 292 | 0 | 0 |
 | `UniversalToolchain.Dialects.Tests` | 614 | 0 | 0 |
-| `UniversalToolchain.LanguageSdk.Tests` | 80 | 0 | 0 |
+| `UniversalToolchain.LanguageSdk.Tests` | 82 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.Tests` | 41 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
-| **Total** | **1,544** | **0** | **0** |
+| **Total** | **1,551** | **0** | **0** |
 
-The test suites include deterministic planning, package identity, route execution, lifecycle/disposal, strict artifact compatibility, Bytecode/AIR contracts, backend parity, PlanFuzz replay/classification/reduction and direct regressions for the historical behaviors tracked by #302, #303 and #307.
+The manifest reflects the seven focused regressions added by the review remediation. These exact counts remain provisional evidence until the current branch and post-merge master runs complete; the gate fails on any drift.
 
 ## Production-boundary contract experiment
 
@@ -75,11 +82,17 @@ The run used 40 primary fault instances representing 32 independent operator sha
 | Challenge operators detected | 1/10 | 10/10 | 10/10 |
 | Valid-control false positives | 0/100 | 0/100 | 0/100 |
 
-Primary exact paired McNemar results were `p = 1.9073486e-06` for B0 versus B2 and `p = 0.125` for B1 versus B2. Across five process-level timing replicates, isolated B2 boundary-kernel overhead had a median of **27.8%**, with a range of **25.6%–31.6%**.
+On this frozen author-designed corpus, the paired B0-versus-B2 difference is 20/32 and the exact McNemar value is `p = 1.9073486e-06`; B1 versus B2 is 4/32 discordant and `p = 0.125`. These values describe the frozen corpus and are not a population-level superiority claim. Across five process-level timing replicates, isolated B2 boundary-kernel overhead had a median of **27.8%**, with a range of **25.6%–31.6%**.
 
-A documentation-only descendant, commit `9b6aa223592f768a6e4abc12b298bdf59bb57d4a`, independently reran the unchanged experiment in workflow `30569244273`. Artifact `contract-experiment-9b6aa223592f768a6e4abc12b298bdf59bb57d4a` (artifact ID `8770101865`, digest `sha256:0669f05b53080b05a93dffe4cd33a3418807270ae7295f8fa9313999a5719019`) has a separately verified 36-file checksum index and reproduces every detection, control and McNemar result above. Its five timing replicates produced a median of **26.4%** and a range of **23.8%–33.5%**. Across the ten replicates from both workflow executions, the descriptive median is **27.7%** and the full range is **23.8%–33.5%**.
+A documentation-only descendant, commit `9b6aa223592f768a6e4abc12b298bdf59bb57d4a`, reran the unchanged experiment in workflow `30569244273`. Artifact `contract-experiment-9b6aa223592f768a6e4abc12b298bdf59bb57d4a` (artifact ID `8770101865`, digest `sha256:0669f05b53080b05a93dffe4cd33a3418807270ae7295f8fa9313999a5719019`) has a separately verified 36-file checksum index and reproduces every detection, control and McNemar result above. Its five timing replicates produced a median of **26.4%** and a range of **23.8%–33.5%**. Across the ten replicates from both workflow executions, the descriptive median is **27.7%** and the full range is **23.8%–33.5%**.
 
 These are author-designed, single-framework, production-boundary results. They do not establish general compiler correctness, end-to-end source-to-execution detection, externally authored unseen-fault effectiveness or external validity across unrelated runtimes. The timing number is an environment-sensitive verifier-kernel microbenchmark, not whole-compilation or application overhead; the cross-run summary is descriptive rather than a controlled pooled performance estimate.
+
+### Post-freeze review holdouts
+
+A separate four-operator holdout executable covers missing Bytecode producer identity, missing source-node identity, repeated pipeline occurrence and extension-provided verifier routing. The protocol was frozen after those findings were obtained from a later adversarial review and before the workflow result was inspected. The cases stay outside the original primary and challenge denominators. They are review-derived holdouts, not an externally authored or statistically representative unseen-fault sample.
+
+The expected matrix is B0 `0/4`, B1 `4/4`, B2 `4/4`, with `0/20` false positives per mode on valid controls. Exact run and artifact identities are added only after a successful workflow artifact is independently inspected.
 
 ## Workflow contract
 
