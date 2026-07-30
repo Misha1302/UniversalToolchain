@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using UniversalToolchain.Capabilities.Core;
 using UniversalToolchain.Dialects.Wist;
 
@@ -323,6 +324,16 @@ ServiceProvider CreateDialectWorkflowProvider()
 {
     var services = new ServiceCollection();
     services.AddWistDialectServices();
+
+    // The CLI hosts the two shipped backend descriptions so composition-time semantic
+    // planning can observe their intrinsic surface. Runtime activation is still resolved
+    // from the exact selected manifest entry; registering this metadata does not activate
+    // an unselected backend.
+    services.TryAddEnumerable(
+        ServiceDescriptor.Singleton<IDialectBackendRuntimeRegistrar, WistCilDialectBackendServiceProvider>());
+    services.TryAddEnumerable(
+        ServiceDescriptor.Singleton<IDialectBackendRuntimeRegistrar, WistInterpreterDialectBackendServiceProvider>());
+
     return services.BuildServiceProvider();
 }
 

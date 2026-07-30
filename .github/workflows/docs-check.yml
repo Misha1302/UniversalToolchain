@@ -14,14 +14,6 @@ on:
     branches:
       - master
       - main
-    paths:
-      - 'docs/**'
-      - 'internal-docs/**'
-      - 'Tools/check_documentation_*.py'
-      - 'package.json'
-      - 'package-lock.json'
-      - '.github/workflows/docs-check.yml'
-      - '.github/workflows/deploy-docs.yml'
 
 permissions:
   contents: read

@@ -5,11 +5,6 @@ on:
     branches:
       - master
       - main
-    paths:
-      - 'docs/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - '.github/workflows/deploy-docs.yml'
   workflow_dispatch:
 
 permissions:

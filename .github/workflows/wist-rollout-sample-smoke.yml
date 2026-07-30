@@ -13,15 +13,6 @@ on:
       - '.github/workflows/wist-rollout-sample-smoke.yml'
   push:
     branches: [ master ]
-    paths:
-      - 'readme.md'
-      - 'samples/Wist.RolloutScoring/**'
-      - 'UniversalToolchain/UniversalToolchain.Wist/**'
-      - 'UniversalToolchain/UniversalToolchain.Dialects.Wist/**'
-      - 'UniversalToolchain/Dialects/examples/wist/pricing-restricted/**'
-      - 'build.sh'
-      - 'build.ps1'
-      - '.github/workflows/wist-rollout-sample-smoke.yml'
 
 permissions:
   contents: read
