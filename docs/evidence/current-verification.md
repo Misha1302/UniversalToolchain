@@ -3,7 +3,7 @@ title: Current Verification
 description: Current build, test, workflow and bounded research-evidence record.
 audience: maintainer-or-evaluator
 status: current
-lastVerifiedAgainst: review-remediation-head-77edfb05
+lastVerifiedAgainst: master-2b0a4d1f
 ---
 
 # Current verification
@@ -28,15 +28,13 @@ It restores and builds both `UniversalToolchain/Wist.sln` and the configuration-
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
 | **Total** | **1,551** | **0** | **0** |
 
-The seven added regressions cover incomplete Bytecode emission identity, repeated pipeline occurrences, extension verifier routing, primary-first construction failure preservation and stale flowed operation leases. `.NET CI` run `30580457345` on review-remediation head `77edfb05047c933665912015af6d242a3a9f7fed` completed successfully with `TEST-CONTRACT COMPLETE passed=1551 entries=14`.
+The seven added regressions cover incomplete Bytecode emission identity, repeated pipeline occurrences, extension verifier routing, primary-first construction failure preservation and stale flowed operation leases. Master `.NET CI` run `30585251901` on commit `2b0a4d1f0e255432daf0d5ddd485269b6490b67e` completed successfully with `TEST-CONTRACT COMPLETE passed=1551 entries=14`. Canonical-build artifact ID `8776313506` has digest `sha256:1a7875efad0bc1fc230f61bd9b4d578e7d626c0230905ecbb193846c742f9e30`.
 
 ## Workflow set
 
 Every `master` revision must start and complete `.NET CI`, `UniversalToolchain validation`, `Docs Check`, documentation deployment, published-package smoke, rollout sample smoke, benchmark smoke and the contract experiment. `CI aggregate` waits for the complete set and publishes the `ci/aggregate` commit status. Master-push triggers are unconditional, preventing a false aggregate timeout caused by a required path-filtered workflow never starting.
 
-Master commit `92028b76b108822c5cdd41432721ac63c4e49b48` is the immutable pre-remediation publication baseline. Aggregate run `30542053062` completed successfully after all eight required workflows reported success.
-
-On review-remediation branch head `77edfb05047c933665912015af6d242a3a9f7fed`, `.NET CI`, validation, Docs Check, published-package smoke, rollout smoke, benchmark smoke, Contract Experiment and Package Compatibility Review all completed successfully. Final master authority is assigned only after the post-merge aggregate.
+Review-remediation master commit `2b0a4d1f0e255432daf0d5ddd485269b6490b67e` completed aggregate run `30585251873` successfully. The exact successful push runs were: Docs Check `30585251865`, published-package smoke `30585251928`, documentation deployment `30585251875`, Contract Experiment `30585251945`, rollout smoke `30585251930`, Benchmark Smoke `30585251904`, UniversalToolchain validation `30585251890`, and `.NET CI` `30585251901`.
 
 ## Production-boundary contract study
 
@@ -46,7 +44,7 @@ The non-packable experiment compares:
 - **B1:** typed selection, ownership, Bytecode and facts/effects in addition to B0;
 - **B2:** B1 with fail-closed unresolved reverification.
 
-Contract workflow run `30580457769` executed through PR merge ref `ea2b99b6edf1ea171f2c6932531d2870f5a2ec0d` for branch head `77edfb05047c933665912015af6d242a3a9f7fed`. Artifact ID `8774419595`, digest `sha256:57f90f0b4b359d7cf98e3549091c2fd7f1387b3fe90b0766faf2b6b40b1cba4f`, contains separately verified main-study and holdout checksum trees; both captured git-status files are empty.
+Master Contract Experiment run `30585251945` executed on commit `2b0a4d1f0e255432daf0d5ddd485269b6490b67e`. Artifact `contract-experiment-2b0a4d1f0e255432daf0d5ddd485269b6490b67e` has ID `8776245456` and digest `sha256:ca1708b8054e63eb9fff0526f9113013a9569121890ff3b0ea19572e5c199961`. Independent extraction verified every entry in both the main-study and holdout checksum trees; both captured git-status files are empty.
 
 | Set | B0 | B1 | B2 |
 |---|---:|---:|---:|
@@ -56,11 +54,11 @@ Contract workflow run `30580457769` executed through PR merge ref `ea2b99b6edf1e
 
 On this frozen author-designed corpus, B0 versus B2 differs on 20/32 operators and exact McNemar is `p = 1.9073486328125e-06`; B1 versus B2 has four discordant operators and `p = 0.125`. These values describe the fixed corpus and do not establish population-level superiority.
 
-The current isolated B2 verifier-kernel microbenchmark is 47.3% median across five process replicates, range 44.4%–50.7%. Earlier functionally identical runs produced materially lower values. This timing is environment-sensitive and is not whole-compilation overhead or a controlled pooled performance estimate.
+The master artifact's isolated B2 verifier-kernel microbenchmark is 46.0% median across five process replicates, range 44.7%-57.1%. Earlier functionally identical runs produced materially different values. This timing is environment-sensitive and is not whole-compilation overhead or a controlled pooled performance estimate.
 
 ## Post-freeze review holdouts
 
-The artifact also contains a four-case post-freeze review-derived holdout set: missing Bytecode producer identity, missing source-node identity, repeated pipeline occurrence and extension-provided verifier routing. Its protocol and expected matrix were frozen before result inspection.
+The master artifact also contains a four-case post-freeze review-derived holdout set: missing Bytecode producer identity, missing source-node identity, repeated pipeline occurrence and extension-provided verifier routing. Its protocol and expected matrix were frozen before result inspection.
 
 | Set | B0 | B1 | B2 |
 |---|---:|---:|---:|
@@ -81,7 +79,7 @@ npm run docs:build
 python3 .github/scripts/run-markdown-bash-blocks.py
 ```
 
-Docs Check run `30580457714` completed successfully on the same review-remediation head.
+Master Docs Check run `30585251865` and the Markdown command smoke in `.NET CI` run `30585251901` completed successfully.
 
 ## Package/release boundary
 
@@ -91,7 +89,7 @@ Package Compatibility Review run `30580457427` deterministically reconstructed r
 
 Artifact ID `8774539955`, digest `sha256:6cfa9d197548887ef8a80e701900d936c4364aa849e70e9c2b8ed420adfd3a7b`, has a verified 27-entry outer checksum manifest. Both baseline artifact hashes verify, and release-integrity root `7069c53758e1735ecf41813d65782dcd76f2d22f8e00e8c193bc42ee50a1457a` covers ten current package artifacts, including the Wist symbols package.
 
-The candidate package versions are validated but were not published to NuGet.org by this workflow.
+The package run was produced on code head `77edfb05047c933665912015af6d242a3a9f7fed`. The only changes from that head to PR head `7600b591813cb0066151204c012ee161ad348d8e` were `VERIFICATION.md`, this page and the internal remediation ledger; the merge commit introduced no file changes relative to that PR head. Therefore the package-affecting source and declared package versions in master are the exact validated candidate source. The candidate packages were not published to NuGet.org by this workflow.
 
 ## PlanFuzz evidence boundary
 
