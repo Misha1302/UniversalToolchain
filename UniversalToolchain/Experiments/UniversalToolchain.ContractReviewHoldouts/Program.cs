@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text.Json;
 using BasicCore.Core;
 using BasicCore.ParserWrapper;
+using BasicCore.TranslatorWrapper;
 using DynamicMethodWrapper;
 using UniversalToolchain.ModuleContracts;
 
