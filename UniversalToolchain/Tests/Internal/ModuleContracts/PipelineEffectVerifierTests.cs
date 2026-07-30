@@ -70,6 +70,45 @@ public sealed class PipelineEffectVerifierTests
     }
 
     [Test]
+    public void Validate_WhenExternalProviderRoutesCustomFact_CreatesCustomReverificationRequest()
+    {
+        var customFact = new CompilerFactId("extension.fact.verified");
+        var customRule = new VerifierRuleId("extension.verifier.contract");
+        var table = new ModuleContractTableBuilder()
+            .AddFacet(new CompilerFactOwnershipFacet(
+                _consumer,
+                [new CompilerFactOwnershipContract(customFact, _consumer)]))
+            .AddFacet(new PipelineEffectFacet(
+                _consumer,
+                [
+                    new PipelineEffectContract(
+                        _effect,
+                        CompilerPipelineStage.Air,
+                        [],
+                        [],
+                        [],
+                        [customFact])
+                ]))
+            .Build();
+        var registry = new CompilerFactVerifierRegistry(
+            [new TestVerifierRuleProvider(customFact, customRule)]);
+
+        var result = new PipelineEffectVerifier().Validate(new PipelineEffectValidationRequest(
+            table,
+            CompilerPipelineStage.Air,
+            new CompilerFactState([customFact], []),
+            registry,
+            [_consumer]));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.Diagnostics, Is.Empty);
+            Assert.That(result.ReverificationRequests.Single().RuleId, Is.EqualTo(customRule));
+            Assert.That(result.ReverificationRequests.Single().InvalidatedFacts, Is.EqualTo(new[] { customFact }));
+        });
+    }
+
+    [Test]
     public void Validate_WhenProducerAppearsAfterConsumer_DoesNotInventAlternativePipelineOrder()
     {
         var producedFact = new CompilerFactId("test.fact.produced-late");
@@ -116,6 +155,35 @@ public sealed class PipelineEffectVerifierTests
         Assert.That(
             result.Diagnostics.Select(static x => x.Code),
             Does.Contain(ModuleContractDiagnosticCodes.MissingRequiredCompilerFact));
+    }
+
+    [Test]
+    public void Validate_WhenPipelineContainsRepeatedModule_RejectsAmbiguousOccurrenceModel()
+    {
+        var table = new ModuleContractTableBuilder()
+            .AddFacet(new PipelineEffectFacet(
+                _consumer,
+                [
+                    new PipelineEffectContract(
+                        _effect,
+                        CompilerPipelineStage.Bytecode,
+                        [],
+                        [],
+                        [],
+                        [])
+                ]))
+            .Build();
+
+        var result = new PipelineEffectVerifier().Validate(new PipelineEffectValidationRequest(
+            table,
+            CompilerPipelineStage.Bytecode,
+            CompilerFactState.Empty,
+            CompilerFactVerifierRegistry.Core,
+            [_consumer, _consumer]));
+
+        Assert.That(
+            result.Diagnostics.Select(static diagnostic => diagnostic.Code),
+            Does.Contain(ModuleContractDiagnosticCodes.DuplicatePipelineModuleOccurrence));
     }
 
     [Test]
@@ -224,4 +292,11 @@ public sealed class PipelineEffectVerifierTests
             Does.Contain(ModuleContractDiagnosticCodes.MissingPipelineOrder));
     }
 
+    private sealed class TestVerifierRuleProvider(
+        CompilerFactId fact,
+        VerifierRuleId rule) : ICompilerFactVerifierRuleProvider
+    {
+        public IReadOnlyDictionary<CompilerFactId, VerifierRuleId> GetRules() =>
+            new Dictionary<CompilerFactId, VerifierRuleId> { [fact] = rule };
+    }
 }
