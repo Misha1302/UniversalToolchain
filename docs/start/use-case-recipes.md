@@ -11,7 +11,7 @@ These examples use the current public `UniversalToolchain.Wist` facade and the r
 rule text -> validate or compile -> numeric result -> host application decides the action
 ```
 
-Install the package:
+Install the review-remediation package candidate from a reviewed local feed:
 
 ```bash ci-run=false
 dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.5 --source ./artifacts/packages
@@ -31,7 +31,6 @@ var commission = rules.Compile<Func<double, double, double, double>>(
     "gross",
     "rate",
     "fixedFee");
-
 double payout = commission.CompiledDelegate(5_000.0, 0.05, 25.0);
 Console.WriteLine(payout); // 225
 ```
@@ -52,7 +51,6 @@ var rolloutScore = rules.Compile<Func<double, double, double, double>>(
     "usage",
     "reliability",
     "incidents");
-
 double score = rolloutScore.CompiledDelegate(100.0, 90.0, 1.0);
 bool enableNewDashboard = score >= 80.0;
 ```
@@ -74,7 +72,6 @@ var finalScore = rules.Compile<Func<double, double, double, double, double>>(
     "pointsPerTask",
     "penalties",
     "penaltyPoints");
-
 double score = finalScore.CompiledDelegate(18.0, 5.0, 2.0, 3.0);
 Console.WriteLine(score); // 84
 ```
@@ -97,7 +94,6 @@ var validation = rules.Validate(
         correct = 18.0,
         pointsPerTask = 5.0
     });
-
 Console.WriteLine(validation.IsValid); // false
 Console.WriteLine(string.Join("; ", validation.Diagnostics.Select(diagnostic => diagnostic.Message)));
 ```
@@ -121,4 +117,4 @@ Do not use the current restricted arithmetic preset when you need arbitrary C# e
 
 ## Next
 
-Read [Wist alpha stability](/evidence/wist-stability-v0.1.0-alpha.5), the [Performance Model](/reference/performance-model) and [Security](/SECURITY) before integrating the package into a consequential workflow.
+Read the latest completed [Wist alpha.4 stability record](/evidence/wist-stability-v0.1.0-alpha.4), the [current verification record](/evidence/current-verification), the [Performance Model](/reference/performance-model) and [Security](/SECURITY) before integrating a newer package candidate into a consequential workflow.
