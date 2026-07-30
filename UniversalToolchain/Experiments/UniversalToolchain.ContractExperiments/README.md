@@ -2,7 +2,7 @@
 
 This non-packable project evaluates executable cross-layer contracts over production UniversalToolchain verifier components. It calls the real contract-table, Bytecode, AIR, facts/effects, ownership, capability, and reverification checks; it does not replace them with a synthetic detector.
 
-The experiment is retained as research infrastructure. It is not part of the public Wist package surface and it is not executed by application consumers.
+The experiment is retained as research infrastructure. It is not part of the public Wist package surface and it is not executed by application consumers. The canonical runner restores and builds the experiment against the exact current production API before collecting any result.
 
 ## Compared modes
 
