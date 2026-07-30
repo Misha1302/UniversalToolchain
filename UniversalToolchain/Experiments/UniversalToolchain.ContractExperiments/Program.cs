@@ -301,7 +301,7 @@ internal static class Program
             {
                 observed = [new ObservedBytecodeEmission(module, node, [emittedTag], [emittedPattern], new StackEffect(0, 1))];
             }
-            var result = new BytecodeVerifier().Verify(new BytecodeVerificationRequest(bytecode, table, VerificationSeverityProfile.Strict, observed, false));
+            var result = new BytecodeVerifier().Verify(new BytecodeVerificationRequest(bytecode, table, VerificationSeverityProfile.Strict, observed));
             var diagnostic = result.Diagnostics.FirstOrDefault(x => x.Code == expectedCode);
             return (diagnostic != null, diagnostic?.Code);
         });
@@ -731,8 +731,7 @@ internal static class Program
                 bytecode,
                 table,
                 VerificationSeverityProfile.Strict,
-                observed,
-                false));
+                observed));
             return (verification.Diagnostics.Count != 0, verification.Diagnostics.FirstOrDefault()?.Code);
         });
 
