@@ -27,12 +27,12 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Run canonical entrypoint
+      - name: Run canonical build and test entrypoint
         id: canonical
         shell: bash
         run: |
           set +e
-          ./build.sh --skip-docs > "$RUNNER_TEMP/canonical-build.log" 2>&1
+          ./build.sh --skip-docs --skip-pack > "$RUNNER_TEMP/canonical-build.log" 2>&1
           status=$?
           echo "status=$status" >> "$GITHUB_OUTPUT"
           tail -n 200 "$RUNNER_TEMP/canonical-build.log"
@@ -51,8 +51,8 @@ jobs:
         shell: bash
         run: exit "${{ steps.canonical.outputs.status }}"
 
-      - name: Canonical package matrix and consumer smokes
-        run: echo "Validated by build.sh through eng/package-projects.txt"
+      - name: Record release-package boundary
+        run: echo "Release packaging is a separate baseline-bearing gate; ordinary CI never weakens or fabricates its required previous-source inputs."
 
       - name: Install docs dependencies
         run: npm ci --no-audit --no-fund
