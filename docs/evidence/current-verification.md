@@ -3,7 +3,7 @@ title: Current Verification
 description: Current build, test, workflow and bounded research-evidence record.
 audience: maintainer-or-evaluator
 status: current
-lastVerifiedAgainst: master-92028b76-publication-baseline
+lastVerifiedAgainst: master-92028b76-baseline-plus-9b6aa223-reproduction
 ---
 
 # Current verification
@@ -43,6 +43,8 @@ Every `master` revision must start and complete `.NET CI`, `UniversalToolchain v
 
 Master commit `92028b76b108822c5cdd41432721ac63c4e49b48` is the immutable publication baseline. Aggregate run `30542053062` completed successfully after all eight required workflows reported success.
 
+Documentation-only descendant commit `9b6aa223592f768a6e4abc12b298bdf59bb57d4a` also completed all eight required workflows in aggregate run `30569244318`. Its `.NET CI` run `30569244264` repeated the exact 1,544-test contract.
+
 ## Production-boundary contract study
 
 The non-packable experiment compares:
@@ -63,7 +65,9 @@ The run used 32 primary operator shapes, 10 post-freeze challenge operators, thr
 
 The exact paired primary comparison gave `p = 1.9073486e-06` for B0 versus B2 and `p = 0.125` for B1 versus B2. The isolated B2 verifier-kernel overhead was 27.8% median across five process replicates, range 25.6%–31.6%.
 
-This is an author-designed production-boundary experiment, not an externally authored unseen-fault study or an end-to-end whole-compiler benchmark. Raw JSONL, runner inputs, environment records, analysis and a per-file checksum index are archived by the workflow for the exact checked-out commit.
+The unchanged experiment was independently repeated on documentation-only descendant `9b6aa223592f768a6e4abc12b298bdf59bb57d4a` in workflow `30569244273`. Artifact ID `8770101865`, digest `sha256:0669f05b53080b05a93dffe4cd33a3418807270ae7295f8fa9313999a5719019`, reproduced all functional and statistical results; its five timing replicates gave 26.4% median and 23.8%–33.5% range. The ten replicates across both workflows have a descriptive 27.7% median and 23.8%–33.5% full range.
+
+This is an author-designed production-boundary experiment, not an externally authored unseen-fault study or an end-to-end whole-compiler benchmark. Raw JSONL, runner inputs, environment records, analysis and a per-file checksum index are archived by the workflow for each exact checked-out commit. The verifier-kernel timing is environment-sensitive and is not whole-compilation overhead or a controlled pooled performance estimate.
 
 ## Documentation gates
 
