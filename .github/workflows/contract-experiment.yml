@@ -60,7 +60,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p artifacts/contract-review-holdout
-          ./Tools/run-contract-review-holdout.sh artifacts/contract-review-holdout 2>&1 \
+          bash ./Tools/run-contract-review-holdout.sh artifacts/contract-review-holdout 2>&1 \
             | tee artifacts/contract-review-holdout-workflow.log
 
       - name: Upload contract experiment evidence
