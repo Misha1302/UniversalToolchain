@@ -34,7 +34,7 @@ internal sealed class RuntimeLifetimeGate
         if (OwnsLeaseInCurrentContext())
         {
             throw new InvalidOperationException(
-                "A runtime cannot be disposed from an execution context that currently owns one of its active operation leases.");
+                "A runtime cannot be disposed from an execution context that currently owns one of its operation leases.");
         }
 
         lock (_gate)
