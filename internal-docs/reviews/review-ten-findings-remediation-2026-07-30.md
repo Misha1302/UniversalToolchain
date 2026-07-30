@@ -1,6 +1,6 @@
 # Review findings remediation ledger
 
-Status: in progress on `fix/review-ten-findings-20260730`.
+Status: implementation and evidence regeneration in progress on `fix/review-ten-findings-20260730`.
 
 This ledger binds the ten requested review outcomes to code, tests, evidence and publication artifacts. It is intentionally not a release claim until the pull request and post-merge master aggregate complete.
 
@@ -16,5 +16,7 @@ This ledger binds the ten requested review outcomes to code, tests, evidence and
 | 8 | A narrow conference draft isolates contract-guided reverification | separate paper draft and PDF |
 | 9 | Package compatibility is run only with reviewed previous source/package identities | canonical full build evidence or explicit blocker |
 | 10 | Post-freeze review holdouts are evaluated separately from the original author-designed corpus | holdout protocol, raw results, and bounded claims |
+
+The package surfaces use monotonic remediation versions: the seven SDK/template packages are `0.3.0-alpha.3`, `UniversalToolchain.Wist.LanguagePack` is `0.3.0-alpha.4`, and `UniversalToolchain.Wist` is `0.1.0-alpha.5`. These versions remain candidates until the baseline-bearing package workflow succeeds.
 
 The original 32-operator primary set and 10-operator challenge set remain immutable. Review-derived holdouts must never be merged into those denominators retroactively.
