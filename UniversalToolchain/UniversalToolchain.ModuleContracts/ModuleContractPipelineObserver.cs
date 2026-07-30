@@ -183,7 +183,6 @@ public sealed class ModuleContractPipelineObserver : ICompilationPipelineObserve
                 KnownCoreModuleIds.CompilerFacts,
                 KnownCoreModuleIds.BackendCapabilities
             ])
-            .Distinct()
             .ToArray();
     }
 }
