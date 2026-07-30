@@ -59,8 +59,28 @@ public static class BytecodeContractMetadata
     {
         instruction = instruction.ArgNotNull();
 
-        return ValidateSingleValue(instruction, ProducerModulePrefix, "producer module")
+        var diagnostics = ValidateSingleValue(instruction, ProducerModulePrefix, "producer module")
             .Concat(ValidateSingleValue(instruction, SourceNodePrefix, "source node"))
+            .ToList();
+        var hasEmissionContract = ReadValues(instruction, PatternPrefix).Count != 0 ||
+                                  ReadValues(instruction, SemanticTagPrefix).Count != 0;
+        if (hasEmissionContract)
+        {
+            diagnostics.AddRange(ValidateRequiredSingleValue(
+                instruction,
+                ProducerModulePrefix,
+                "producer module",
+                "Every contract-annotated Bytecode emission must identify exactly one producing module."));
+            diagnostics.AddRange(ValidateRequiredSingleValue(
+                instruction,
+                SourceNodePrefix,
+                "source node",
+                "Every contract-annotated Bytecode emission must identify exactly one source AST node kind."));
+        }
+
+        return diagnostics
+            .OrderBy(static diagnostic => diagnostic.Code, StringComparer.Ordinal)
+            .ThenBy(static diagnostic => diagnostic.Message, StringComparer.Ordinal)
             .ToArray();
     }
 
@@ -89,6 +109,23 @@ public static class BytecodeContractMetadata
             $"Bytecode instruction '{instruction}' declares multiple contract {displayName} metadata values: {string.Join(", ", values)}.",
             null,
             [new ToolchainDiagnosticHint("Emit exactly one producer module and one source node metadata value per contract-annotated instruction.")]);
+    }
+
+    private static IEnumerable<ToolchainDiagnostic> ValidateRequiredSingleValue(
+        BytecodeInstruction instruction,
+        string prefix,
+        string displayName,
+        string hint)
+    {
+        if (ReadValues(instruction, prefix).Count != 0)
+            yield break;
+
+        yield return new ToolchainDiagnostic(
+            ModuleContractDiagnosticCodes.InvalidBytecodeContractMetadata,
+            ToolchainDiagnosticSeverity.Error,
+            $"Bytecode instruction '{instruction}' declares contract emission metadata without a {displayName}.",
+            null,
+            [new ToolchainDiagnosticHint(hint)]);
     }
 
     private static IReadOnlyList<string> ReadValues(BytecodeInstruction instruction, string prefix) =>
