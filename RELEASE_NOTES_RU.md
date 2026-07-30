@@ -25,7 +25,7 @@
 
 ## Verification
 
-Канонический контракт: **1544 passed, 0 failed, 0 skipped**. Точные counts принадлежат `eng/test-counts.json` и зеркалятся в `VERIFICATION.md`.
+Актуальный review-remediation контракт: **1551 passed, 0 failed, 0 skipped**. Точные counts принадлежат `eng/test-counts.json` и зеркалятся в `VERIFICATION.md`; они становятся release authority только после успешного exact package/release gate для соответствующего commit.
 
 Локально собран `UniversalToolchain.Wist.0.1.0-alpha.4.nupkg`. Публикация на NuGet.org в рамках этой ремедиации не выполнялась.
 
