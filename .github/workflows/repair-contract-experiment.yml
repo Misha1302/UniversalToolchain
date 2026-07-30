@@ -1,0 +1,56 @@
+name: Repair contract experiment source
+
+on:
+  push:
+    branches:
+      - research/publication-readiness-2026-07-30
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: research/publication-readiness-2026-07-30
+          fetch-depth: 0
+
+      - name: Apply current Bytecode request contract and remove transport workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("UniversalToolchain/Experiments/UniversalToolchain.ContractExperiments/Program.cs")
+          source = path.read_text(encoding="utf-8")
+          source = source.replace(
+              "new BytecodeVerificationRequest(bytecode, table, VerificationSeverityProfile.Strict, observed, false)",
+              "new BytecodeVerificationRequest(bytecode, table, VerificationSeverityProfile.Strict, observed)",
+          )
+          source = source.replace(
+              "                observed,\n                false));",
+              "                observed));",
+          )
+          if "BytecodeVerificationRequest(bytecode, table, VerificationSeverityProfile.Strict, observed, false)" in source:
+              raise SystemExit("single-line legacy constructor call remains")
+          if "                observed,\n                false));" in source:
+              raise SystemExit("multi-line legacy constructor call remains")
+          path.write_text(source, encoding="utf-8", newline="\n")
+          PY
+          rm .github/workflows/repair-contract-experiment.yml
+          git diff --check
+
+      - name: Commit repaired source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add UniversalToolchain/Experiments/UniversalToolchain.ContractExperiments/Program.cs \
+                  .github/workflows/repair-contract-experiment.yml
+          git commit -m "fix(research): adapt contract experiment to current request API"
+          git push origin HEAD:research/publication-readiness-2026-07-30
