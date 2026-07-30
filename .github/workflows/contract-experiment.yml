@@ -27,6 +27,15 @@ jobs:
         with:
           global-json-file: UniversalToolchain/global.json
 
+      - name: Diagnose selected SafeMath capability surface
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p UniversalToolchain/packages
+          dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- \
+            features \
+            --dialect-file UniversalToolchain/Dialects/examples/wist/function-calls-safe-math/dialect.wistdialect
+
       - name: Run production-boundary contract study
         env:
           CONTRACT_EXPERIMENT_REPLICATES: 5
