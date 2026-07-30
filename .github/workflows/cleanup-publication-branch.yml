@@ -1,6 +1,7 @@
 name: Clean publication branch diagnostics
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - research/publication-readiness-2026-07-30
@@ -28,7 +29,16 @@ jobs:
           program_path = Path("UniversalToolchain/Wistc/Program.cs")
           program = program_path.read_text(encoding="utf-8")
           program = program.replace("using Microsoft.Extensions.DependencyInjection.Extensions;\n", "", 1)
-          temporary_block = '''\n    // The CLI hosts the two shipped backend descriptions so composition-time semantic\n    // planning can observe their intrinsic surface. Runtime activation is still resolved\n    // from the exact selected manifest entry; registering this metadata does not activate\n    // an unselected backend.\n    services.TryAddEnumerable(\n        ServiceDescriptor.Singleton<IDialectBackendRuntimeRegistrar, WistCilDialectBackendServiceProvider>());\n    services.TryAddEnumerable(\n        ServiceDescriptor.Singleton<IDialectBackendRuntimeRegistrar, WistInterpreterDialectBackendServiceProvider>());\n'''
+          temporary_block = '''
+    // The CLI hosts the two shipped backend descriptions so composition-time semantic
+    // planning can observe their intrinsic surface. Runtime activation is still resolved
+    // from the exact selected manifest entry; registering this metadata does not activate
+    // an unselected backend.
+    services.TryAddEnumerable(
+        ServiceDescriptor.Singleton<IDialectBackendRuntimeRegistrar, WistCilDialectBackendServiceProvider>());
+    services.TryAddEnumerable(
+        ServiceDescriptor.Singleton<IDialectBackendRuntimeRegistrar, WistInterpreterDialectBackendServiceProvider>());
+'''
           if temporary_block not in program:
               raise SystemExit("temporary CLI metadata block was not found")
           program = program.replace(temporary_block, "", 1)
@@ -36,7 +46,16 @@ jobs:
 
           workflow_path = Path(".github/workflows/contract-experiment.yml")
           workflow = workflow_path.read_text(encoding="utf-8")
-          diagnostic_step = '''\n      - name: Diagnose selected SafeMath capability surface\n        shell: bash\n        run: |\n          set -euo pipefail\n          mkdir -p UniversalToolchain/packages\n          dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- \\\n            features \\\n            --dialect-file UniversalToolchain/Dialects/examples/wist/function-calls-safe-math/dialect.wistdialect\n'''
+          diagnostic_step = '''
+      - name: Diagnose selected SafeMath capability surface
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p UniversalToolchain/packages
+          dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- \
+            features \
+            --dialect-file UniversalToolchain/Dialects/examples/wist/function-calls-safe-math/dialect.wistdialect
+'''
           if diagnostic_step not in workflow:
               raise SystemExit("temporary workflow diagnostic step was not found")
           workflow = workflow.replace(diagnostic_step, "", 1)
