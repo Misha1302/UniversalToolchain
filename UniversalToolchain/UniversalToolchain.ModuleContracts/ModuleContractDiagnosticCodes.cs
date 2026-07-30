@@ -20,6 +20,7 @@ public static class ModuleContractDiagnosticCodes
     public const string MissingRequiredCompilerFact = "UT-PIPELINE-EFFECT-002";
     public const string CompilerFactReverificationRequired = "UT-PIPELINE-EFFECT-003";
     public const string MissingPipelineOrder = "UT-PIPELINE-EFFECT-004";
+    public const string DuplicatePipelineModuleOccurrence = "UT-PIPELINE-EFFECT-005";
     public const string UnknownBytecodeTag = "UT-BYTECODE-TAG-001";
     public const string UndeclaredBytecodeProducer = "UT-BYTECODE-TAG-002";
     public const string UnknownBytecodePattern = "UT-BYTECODE-PATTERN-001";
