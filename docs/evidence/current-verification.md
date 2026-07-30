@@ -59,7 +59,7 @@ The refreshed archived run used 32 primary operator shapes, 10 post-freeze chall
 
 The exact paired primary comparison gave `p = 1.9073486e-06` for B0 versus B2 and `p = 0.125` for B1 versus B2. The isolated B2 verifier-kernel overhead was 29.4% median across five process replicates, range 28.9%–31.0%.
 
-This is an author-designed production-boundary experiment, not an externally authored unseen-fault study or an end-to-end whole-compiler benchmark. Raw JSONL, runner sources, environment records, analysis and the recursive manifest are archived by the workflow for the exact checked-out commit.
+This is an author-designed production-boundary experiment, not an externally authored unseen-fault study or an end-to-end whole-compiler benchmark. Raw JSONL, runner inputs, environment records, analysis and a per-file checksum index are archived by the workflow for the exact checked-out commit.
 
 ## Documentation gates
 
