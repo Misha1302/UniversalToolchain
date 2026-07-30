@@ -24,6 +24,7 @@ jobs:
         run: |
           from pathlib import Path
           import json
+          import textwrap
 
           test_file = Path('UniversalToolchain/Tests/Internal/ModuleContracts/PipelineEffectVerifierTests.cs')
           text = test_file.read_text(encoding='utf-8-sig')
@@ -35,34 +36,29 @@ jobs:
 
           observer = Path('UniversalToolchain/UniversalToolchain.ModuleContracts/ModuleContractPipelineObserver.cs')
           text = observer.read_text(encoding='utf-8-sig')
-          old = '''        return frontendModules
-              .Cast<object>()
-              .Concat(optimizers)
-              .SelectMany(SelectedModuleContractTableProvider.ReadSelectedModuleIds)
-              .Concat(backendComponents
-                  .OfType<IModuleContractBackendPipelineComponent>()
-                  .SelectMany(SelectedModuleContractTableProvider.ReadSelectedBackendModuleIds))
-              .Concat([
-                  KnownCoreModuleIds.CompilerFacts,
-                  KnownCoreModuleIds.BackendCapabilities
-              ])
-              .ToArray();'''
-          new = '''        var order = frontendModules
-              .Cast<object>()
-              .Concat(optimizers)
-              .SelectMany(SelectedModuleContractTableProvider.ReadSelectedModuleIds)
-              .Concat(backendComponents
-                  .OfType<IModuleContractBackendPipelineComponent>()
-                  .SelectMany(SelectedModuleContractTableProvider.ReadSelectedBackendModuleIds))
-              .ToList();
-          if (!order.Contains(KnownCoreModuleIds.CompilerFacts))
-              order.Add(KnownCoreModuleIds.CompilerFacts);
-          if (!order.Contains(KnownCoreModuleIds.BackendCapabilities))
-              order.Add(KnownCoreModuleIds.BackendCapabilities);
-          return order;'''
-          if text.count(old) != 1:
-              raise SystemExit(f'pipeline order anchors: {text.count(old)}')
-          observer.write_text(text.replace(old, new, 1), encoding='utf-8')
+          method_start = text.index('    private static IReadOnlyList<ModuleId> BuildPipelineOrder(')
+          method_end = text.index('\n    }\n}', method_start) + len('\n    }')
+          replacement = textwrap.dedent('''\
+              private static IReadOnlyList<ModuleId> BuildPipelineOrder(
+                  IReadOnlyList<IFrontendCoreModule> frontendModules,
+                  IReadOnlyList<IAirOptimizer> optimizers,
+                  IReadOnlyList<IBackendPipelineComponent> backendComponents)
+              {
+                  var order = frontendModules
+                      .Cast<object>()
+                      .Concat(optimizers)
+                      .SelectMany(SelectedModuleContractTableProvider.ReadSelectedModuleIds)
+                      .Concat(backendComponents
+                          .OfType<IModuleContractBackendPipelineComponent>()
+                          .SelectMany(SelectedModuleContractTableProvider.ReadSelectedBackendModuleIds))
+                      .ToList();
+                  if (!order.Contains(KnownCoreModuleIds.CompilerFacts))
+                      order.Add(KnownCoreModuleIds.CompilerFacts);
+                  if (!order.Contains(KnownCoreModuleIds.BackendCapabilities))
+                      order.Add(KnownCoreModuleIds.BackendCapabilities);
+                  return order;
+              }''')
+          observer.write_text(text[:method_start] + replacement + text[method_end:], encoding='utf-8')
 
           manifest_path = Path('eng/test-counts.json')
           manifest = json.loads(manifest_path.read_text(encoding='utf-8'))
