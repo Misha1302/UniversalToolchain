@@ -47,11 +47,15 @@ public sealed class CompilerFactVerifierRegistry
         IEnumerable<ICompilerFactVerifierRuleProvider> providers)
     {
         providers = providers.ArgNotNull();
+        var normalizedProviders = providers
+            .Select(static provider => provider.ArgNotNull())
+            .OrderBy(static provider => provider.GetType().FullName, StringComparer.Ordinal)
+            .ToArray();
         var rules = new Dictionary<CompilerFactId, VerifierRuleId>();
-        foreach (var provider in providers.OrderBy(static provider => provider.GetType().FullName, StringComparer.Ordinal))
+        foreach (var provider in normalizedProviders)
         {
-            provider.ArgNotNull();
-            foreach (var (fact, rule) in provider.GetRules()
+            var providerRules = provider.GetRules().ArgNotNull();
+            foreach (var (fact, rule) in providerRules
                          .OrderBy(static pair => pair.Key.Value, StringComparer.Ordinal))
             {
                 if (rules.TryGetValue(fact, out var existingRule) && existingRule != rule)
