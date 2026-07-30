@@ -96,7 +96,9 @@ public sealed class PipelineEffectVerifierTests
         var result = new PipelineEffectVerifier().Validate(new PipelineEffectValidationRequest(
             table,
             CompilerPipelineStage.Air,
-            new CompilerFactState([customFact], []),
+            new CompilerFactState(
+                new HashSet<CompilerFactId> { customFact },
+                new HashSet<CompilerFactId>()),
             registry,
             [_consumer]));
 
