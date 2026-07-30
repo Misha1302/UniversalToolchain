@@ -650,18 +650,18 @@ public sealed class LanguageRouteRuntimeProvider : ILanguageRuntimeProvider, ILa
                 new ReadOnlyDictionary<BackendId, ILanguageArtifactExecutor>(executors),
                 owned);
         }
-catch (Exception primaryException)
-{
-    var cleanupErrors = DisposeOwnedSynchronouslyCollect(owned);
-    if (cleanupErrors.Count == 0)
-        ExceptionDispatchInfo.Capture(primaryException).Throw();
+        catch (Exception primaryException)
+        {
+            var cleanupErrors = DisposeOwnedSynchronouslyCollect(owned);
+            if (cleanupErrors.Count == 0)
+                ExceptionDispatchInfo.Capture(primaryException).Throw();
 
-    var combined = new List<Exception> { primaryException };
-    combined.AddRange(cleanupErrors);
-    throw new AggregateException(
-        "Language runtime session construction failed and cleanup also failed.",
-        combined);
-}
+            var combined = new List<Exception> { primaryException };
+            combined.AddRange(cleanupErrors);
+            throw new AggregateException(
+                "Language runtime session construction failed and cleanup also failed.",
+                combined);
+        }
     }
 
     private SelectedRouteComponents ValidateRouteImplementations(LanguagePlan plan)
@@ -839,38 +839,38 @@ catch (Exception primaryException)
         }
     }
 
-private static void DisposeOwnedSynchronously(IReadOnlyList<object> components)
-{
-    var errors = DisposeOwnedSynchronouslyCollect(components);
-    if (errors.Count != 0)
-        throw new AggregateException("One or more language runtime components failed to dispose.", errors);
-}
-
-private static IReadOnlyList<Exception> DisposeOwnedSynchronouslyCollect(IReadOnlyList<object> components)
-{
-    List<Exception>? errors = null;
-    for (var index = components.Count - 1; index >= 0; index--)
+    private static void DisposeOwnedSynchronously(IReadOnlyList<object> components)
     {
-        try
-        {
-            switch (components[index])
-            {
-                case IDisposable disposable:
-                    disposable.Dispose();
-                    break;
-                case IAsyncDisposable asyncDisposable:
-                    asyncDisposable.DisposeAsync().AsTask().GetAwaiter().GetResult();
-                    break;
-            }
-        }
-        catch (Exception exception)
-        {
-            (errors ??= []).Add(exception);
-        }
+        var errors = DisposeOwnedSynchronouslyCollect(components);
+        if (errors.Count != 0)
+            throw new AggregateException("One or more language runtime components failed to dispose.", errors);
     }
 
-    return errors ?? [];
-}
+    private static IReadOnlyList<Exception> DisposeOwnedSynchronouslyCollect(IReadOnlyList<object> components)
+    {
+        List<Exception>? errors = null;
+        for (var index = components.Count - 1; index >= 0; index--)
+        {
+            try
+            {
+                switch (components[index])
+                {
+                    case IDisposable disposable:
+                        disposable.Dispose();
+                        break;
+                    case IAsyncDisposable asyncDisposable:
+                        asyncDisposable.DisposeAsync().AsTask().GetAwaiter().GetResult();
+                        break;
+                }
+            }
+            catch (Exception exception)
+            {
+                (errors ??= []).Add(exception);
+            }
+        }
+
+        return errors ?? [];
+    }
 
 }
 
