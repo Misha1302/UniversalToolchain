@@ -1,59 +1,45 @@
-# Wist2 language-authoring and PlanFuzz integration verification record
+# Wist2 verification and research-evidence record
 
-## Environment
+## Environment and authority
 
-- Validation date: 2026-07-27.
-- Target environment: GitHub Actions Ubuntu 24.04, Linux x64.
+- Record refreshed: 2026-07-30.
+- Target CI environment: GitHub Actions Ubuntu 24.04, Linux x64.
 - SDK policy: `UniversalToolchain/global.json` with .NET 10 feature-band roll-forward.
-- Canonical command: `./build.sh --skip-docs`.
-- Package dependency mode: repository `NuGet.config`; the optional repository-local feed is materialized as an empty directory in clean checkouts before restore.
+- Ordinary integration command: `./build.sh --skip-docs --skip-pack`.
+- Contract-study command: `CONTRACT_EXPERIMENT_REPLICATES=5 ./Tools/run-contract-experiment.sh artifacts/contract-experiment`.
+- Package dependency mode: repository `NuGet.config`; the optional repository-local feed is materialized as an empty directory before restore.
 
-Source integrity is owned by the Git tree/commit. Release packages use the detached integrity chain produced by the canonical build; no mutable repository-wide hash manifest is committed.
+Source identity is owned by the Git commit. Every contract-study result tree carries its exact workflow commit, runner sources, environment metadata and a recursive `MANIFEST.sha256`. Release packages use a separate detached integrity chain and require explicit previous-source and previous-package baseline artifacts; ordinary CI never fabricates or silently bypasses those inputs.
 
-## Integrated contracts
+## Current integrated contracts
 
-The repository keeps the P0/P1 language-authoring contracts and adds PlanFuzz as a non-packable research layer:
+The repository implements and continuously verifies:
 
-- `build.sh` and `build.ps1` execute the exact, timeout-bounded `eng/test-counts.json` contract and use `eng/package-projects.txt` for the release package matrix;
-- the canonical package matrix builds and validates all eight SDK/template packages plus the Wist facade;
-- package validation checks filename/nuspec identity, package-family dependency versions, embedded Wist manifest identity and template contents;
-- clean-room package smoke installs `ut-language`, generates a dotted-name project and runs an independently packaged cross-package language;
-- authored runtime catalogs store factories and registrations rather than mutable component instances;
-- `PerSession` is the safe default lifetime, while `SingletonStateless` requires an explicit stateless marker and rejects disposable instances;
-- runtime sessions own per-session components and release synchronous/asynchronous resources in reverse construction order;
-- typed and untyped artifact contracts never connect through wildcard compatibility;
-- typed Wist artifacts carry explicit protocol identities and are executed through the canonical Wist runtime provider;
-- manifest and lock schema v5 use `universaltoolchain-json-v1` canonicalization and SHA-256 over compact UTF-8 bytes without platform-dependent line endings;
-- PlanFuzz core remains language-neutral, while Acme and Wist own their structured generators and execution adapters;
-- PlanFuzz observations are typed and replayed in fresh worker processes with timeout, process-tree termination and bounded output capture;
-- clean, confirmed, flaky, inconclusive and infrastructure outcomes remain distinct;
-- confirmed violations require complete oracle evidence and a stable exact fingerprint across repeated attempts;
-- known Wist regression cases are opt-in and are not injected into default discovery campaigns;
-- normalized finding classes are triage groups, not unique-defect or root-cause identities.
+- exact, timeout-bounded test counts from `eng/test-counts.json`;
+- deterministic language/package planning, schema-v5 locks and exact package-manifest binding;
+- exact `(contribution, backend, input contract)` executor resolution;
+- strict selected-module contract enforcement in the Wist composition path;
+- production Bytecode metadata reading plus declared/observed emission verification;
+- AIR structural, stack and backend-capability verification;
+- compiler facts/effects and fail-closed routing of unresolved reverification requests;
+- `PerSession` ownership and explicit `SingletonStateless` lifecycle rules;
+- interpreter/CIL parity on the shared supported surface;
+- PlanFuzz fresh-process replay, evidence-complete classification and exact-fingerprint reduction;
+- a separate production-boundary B0/B1/B2 contract experiment.
 
-The retained product boundary is unchanged: this remains a contribution/pass/route/runtime SDK rather than a declarative grammar, binder or type-system workbench. PlanFuzz is experimental research tooling and is not part of the public NuGet surface.
+The retained product boundary remains a contribution/pass/route/runtime SDK rather than a declarative grammar, binder or type-system workbench. PlanFuzz and the contract experiment are non-packable research layers and do not extend the public Wist NuGet surface.
 
-## Canonical integration gate
-
-Command:
+## Ordinary build and test gate
 
 ```bash ci-run=false
-./build.sh --skip-docs
+./build.sh --skip-docs --skip-pack
 ```
 
-Observed result on the hardened PlanFuzz Phase 3a surface-evidence revision:
+This gate restores and builds `UniversalToolchain/Wist.sln`, `UniversalToolchain/PlanFuzz.sln` and the runnable samples, then executes the exact test manifest and architecture/documentation-status guards.
 
-- both `UniversalToolchain/Wist.sln` and the configuration-complete `UniversalToolchain/PlanFuzz.sln` restored and built;
-- build warnings: **0**;
-- build errors: **0**;
-- `samples/Acme.PricingLanguage` and `samples/Wist.RolloutScoring` restored and built through the canonical path;
-- every entry declared by `eng/test-counts.json` executed with its own timeout and exact TRX pass/fail/skip verification;
-- all projects declared by `eng/package-projects.txt` were packed and validated;
-- template and external cross-package consumer smoke checks passed.
+Parallel graph traversal and shared compilation are the default. `--jobs`, `--serial` and `--no-build-servers` provide explicit diagnostic fallbacks. The two solutions are still invoked sequentially because they share output directories.
 
-Build servers and MSBuild node reuse are explicitly disabled by the canonical scripts to prevent orphaned workers in constrained and CI environments.
-
-## Regression tests
+### Regression-test contract
 
 | Test project | Passed | Failed | Skipped |
 |---|---:|---:|---:|
@@ -65,27 +51,50 @@ Build servers and MSBuild node reuse are explicitly disabled by the canonical sc
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
 | **Total** | **1,544** | **0** | **0** |
 
-The PlanFuzz suites include dedicated coverage for:
+The test suites include deterministic planning, package identity, route execution, lifecycle/disposal, strict artifact compatibility, Bytecode/AIR contracts, backend parity, PlanFuzz replay/classification/reduction and direct regressions for the historical behaviors tracked by #302, #303 and #307.
 
-- deterministic PRNG and testcase identity;
-- observation and replay serialization compatibility;
-- backend, route, plan, fallback and canonical-lock oracle behavior;
-- strict replay confirmation in fresh processes;
-- incomplete evidence remaining inconclusive rather than clean or flaky;
-- different exact violation fingerprints remaining flaky rather than confirmed;
-- Wist Level 0 backend/configuration fail-closed validation;
-- default discovery generation remaining separate from the opt-in Wist regression corpus;
-- Acme rejecting a Wist-only regression-corpus option;
-- seeded-fault detection without counting the seeded implementation as a product defect;
-- `0 * x` preserving backend parity without consuming part of the external-load sequence;
-- `(0 * 1) - 1` preserving the `System.Int32` contract;
-- `x + (-2)` retaining the external-load descriptor and completing the required SSA route.
+## Production-boundary contract experiment
 
-The language-SDK suite continues to cover cross-package route execution, exact package-manifest binding, pass ordering, feature/capability isolation, executor selection, lifecycle ownership, disposal, strict artifact compatibility and schema-v5 canonicalization.
+The dedicated `Contract Experiment` workflow restores and builds the non-packable experiment against the exact current production API before collecting evidence.
 
-## Package and consumer gate
+### Compared modes
 
-The canonical matrix produced and verified **9** packages.
+- **B0:** structural AIR and target-capability checks only.
+- **B1:** B0 plus typed selection, ownership, Bytecode and facts/effects checks; unresolved reverification is recorded but not fail-closed.
+- **B2:** B1 plus mandatory failure on unresolved reverification requests.
+
+### Archived result
+
+The refreshed PR evidence used 40 primary fault instances representing 32 independent operator shapes in five families, 10 post-freeze challenge operators, three deterministic repetitions per instance/mode and 100 valid controls per mode across five strata.
+
+| Set | B0 | B1 | B2 |
+|---|---:|---:|---:|
+| Primary operators detected | 12/32 | 28/32 | 32/32 |
+| Challenge operators detected | 1/10 | 10/10 | 10/10 |
+| Valid-control false positives | 0/100 | 0/100 | 0/100 |
+
+Primary exact paired McNemar results were `p = 1.9073486e-06` for B0 versus B2 and `p = 0.125` for B1 versus B2. Across five process-level timing replicates, isolated B2 boundary-kernel overhead had a median of **29.4%**, with a range of **28.9%–31.0%**.
+
+These are author-designed, single-framework, production-boundary results. They do not establish general compiler correctness, end-to-end source-to-execution detection, externally authored unseen-fault effectiveness or external validity across unrelated runtimes. The timing number is verifier-kernel cost, not whole-compilation or application overhead.
+
+## Workflow contract
+
+Every `master` revision is required to start and complete:
+
+- `.NET CI`;
+- `UniversalToolchain validation`;
+- `Docs Check`;
+- `Deploy documentation to GitHub Pages`;
+- `Published Wist package smoke`;
+- `Wist Rollout Sample Smoke`;
+- `Benchmark Smoke`;
+- `Contract Experiment`.
+
+`CI aggregate` waits for this complete workflow set and publishes the `ci/aggregate` commit status. Path-filtered pull-request checks remain narrow where appropriate; master-push checks are unconditional so the aggregate cannot wait for a workflow that was never eligible to start.
+
+## Package and release boundary
+
+The package matrix contains nine projects:
 
 Core SDK/template family `0.3.0-alpha.2`:
 
@@ -95,64 +104,49 @@ Core SDK/template family `0.3.0-alpha.2`:
 - `UniversalToolchain.Runtime`;
 - `UniversalToolchain.LanguageAuthoring`;
 - `UniversalToolchain.Testing`;
-- `UniversalToolchain.Templates`;
+- `UniversalToolchain.Templates`.
 
-Wist typed language pack `0.3.0-alpha.2`:
+Additional packages:
 
-- `UniversalToolchain.Wist.LanguagePack`.
-
-Facade:
-
+- `UniversalToolchain.Wist.LanguagePack` `0.3.0-alpha.3`;
 - `UniversalToolchain.Wist` `0.1.0-alpha.4`.
 
-Observed package checks:
+A full package/release run must supply both:
 
-- exact package set: **9/9**;
-- Wist facade surface: exact **1 compile DLL and 62 runtime DLLs**, byte-bound to trusted build outputs;
-- Wist LanguagePack embedded descriptor: schema v5, `universaltoolchain-json-v1`, SHA-256, matching package ID/version;
-- clean `dotnet new ut-language -n Contoso.RuleLanguage` restore/run result: `42`;
-- clean external cross-package NuGet consumer result: `cross-package-consumer: 42`.
+```bash ci-run=false
+./build.sh --skip-docs \
+  --baseline-source-archive /path/to/reviewed-previous-source.zip \
+  --previous-package-bundle /path/to/reviewed-previous-packages.tar.gz
+```
 
-## Documentation and workflow gates
+Without those reviewed baseline identities, packaging intentionally fails closed. The ordinary green CI result therefore proves build/test/docs/smoke/research gates, not a newly regenerated release-compatibility decision. The previously recorded package gate produced 9/9 packages, validated exact nuspec/package identities and passed template and cross-package consumer smokes; it must not be relabelled as an exact rerun for a newer commit.
 
-GitHub Actions separately enforces:
-
-- documentation status, links, anchors, public/internal split and VitePress build;
-- runnable Markdown Bash blocks;
-- the Wist rollout sample output contract;
-- upload of the canonical build log for actionable failures;
-- detached release-integrity verification for produced package artifacts.
+The published-package smoke is intentionally pinned to the actually published `UniversalToolchain.Wist` `0.1.0-alpha.1`. It verifies the external published baseline, not the current source package version.
 
 ## PlanFuzz evidence boundary
 
-Verified:
+Verified PlanFuzz behavior includes:
 
 - language-neutral core with Acme and Wist adapters;
-- seven generic oracle families, including order-independent O-004 negative-surface preservation and structurally oriented O-005 extension noninterference;
-- observation schema v4 with fail-closed surface/owner evidence contract v2 and typed trace completeness;
-- fresh-process replay and campaign artifact manifests;
-- strict evidence-completeness semantics;
-- opt-in regression corpus;
+- seven generic oracle families;
+- schema-v4 fail-closed surface/owner evidence;
+- fresh-process replay and recursive artifact manifests;
+- strict clean/confirmed/flaky/inconclusive/infrastructure separation;
+- opt-in historical regression corpus;
 - separate exact and class fingerprints;
-- owner-layer fixes and direct regressions for the historical behaviors tracked by #302, #303 and #307;
-- adapter-owned structured program reduction and generic plan-contract/variant pruning;
-- fresh-process acceptance only when the original exact fingerprint is preserved;
-- auditable rejection of clean, flaky, inconclusive and infrastructure candidates;
-- test-owned runtime-provider seeded faults for canonical SF-005 and SF-011, confirmed through ordinary observed activation evidence in three fresh processes.
+- structured program/plan reduction accepted only after exact-fingerprint replay;
+- canonical SF-005 and SF-011 seeded faults observed through ordinary runtime activation evidence.
 
-The preserved 25-case Wist pilot included the regression corpus. Its 21 violating cases and two normalized classes are retained as historical evidence and are not presented as clean discovery yield or as a root-cause count. Post-fix discovery-only and regression-inclusive smokes each completed three cases with three fresh-process attempts per case and reported only clean outcomes. An expanded discovery-only stability smoke completed 50 Acme cases with two attempts and 20 Wist cases with one attempt, also with only clean outcomes.
+The historical 25-case Wist pilot included the regression corpus and is not a clean discovery-yield result. Its normalized classes are triage groups, not unique defects. Current post-fix bounded discovery smokes are regression/stability evidence only.
 
 Not yet claimed:
 
-- completion of Phase 3 lifecycle/session/concurrency schedules or schedule reduction;
-- lifecycle and concurrency campaigns;
-- equal-budget baseline superiority;
+- lifecycle/session/concurrency schedule generation or reduction;
+- equal-budget PlanFuzz superiority;
 - a third external adapter;
 - publication novelty or acceptance likelihood;
-- stable 1.0 API compatibility, hostile-extension sandboxing, production workload certification or new performance superiority.
+- stable 1.0 compatibility, hostile-extension sandboxing or production-workload certification.
 
-## Artifact gate
+## Artifact cleanliness
 
-Before a release archive is produced, the tree must be cleaned of `bin`, `obj`, `artifacts`, generated VitePress output, `node_modules`, `.git`, IDE metadata, test outputs, caches and secret-like files. `CHANGELOG.md` remains excluded from this bundle family.
-
-A recursive SHA-256 manifest is generated for every retained file except the manifest itself. Release archives must be extracted to a new directory and checked for manifest equality, forbidden paths and clean restore/build/run behavior before delivery.
+Release archives must exclude `bin`, `obj`, `artifacts`, generated VitePress output, `node_modules`, `.git`, IDE metadata, test outputs, caches and secret-like files. Every retained release file must be covered by a recursive SHA-256 manifest, followed by clean extraction and independent restore/build/run verification.
