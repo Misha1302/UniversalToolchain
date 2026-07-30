@@ -80,6 +80,41 @@ public sealed class BytecodeContractMetadataTests
     }
 
     [Test]
+    public void ReadWithDiagnostics_WhenContractEmissionHasNoProducer_ReturnsDiagnosticAndNoObservedEmission()
+    {
+        var instruction = new BytecodeInstruction(new AbstractMethodImpl("PushNumber_1", (_, _) => { }));
+        instruction.Tags.Add(BytecodeContractMetadata.SourceNode(NumbersContractIds.NumberNode));
+        instruction.Tags.Add(BytecodeContractMetadata.Pattern(NumbersContractIds.PushRealNumber));
+
+        var result = new BytecodeObservedEmissionReader().ReadWithDiagnostics(new Bytecode([instruction]));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ObservedEmissions, Is.Empty);
+            Assert.That(
+                result.Diagnostics.Select(static diagnostic => diagnostic.Code),
+                Does.Contain(ModuleContractDiagnosticCodes.InvalidBytecodeContractMetadata));
+            Assert.That(
+                result.Diagnostics.Select(static diagnostic => diagnostic.Message),
+                Has.Some.Contains("without a producer module"));
+        });
+    }
+
+    [Test]
+    public void ReadWithDiagnostics_WhenContractEmissionHasNoSourceNode_ReturnsDiagnostic()
+    {
+        var instruction = new BytecodeInstruction(new AbstractMethodImpl("PushNumber_1", (_, _) => { }));
+        instruction.Tags.Add(BytecodeContractMetadata.ProducerModule(NumbersContractIds.Module));
+        instruction.Tags.Add(BytecodeContractMetadata.Pattern(NumbersContractIds.PushRealNumber));
+
+        var result = new BytecodeObservedEmissionReader().ReadWithDiagnostics(new Bytecode([instruction]));
+
+        Assert.That(
+            result.Diagnostics.Select(static diagnostic => diagnostic.Message),
+            Has.Some.Contains("without a source node"));
+    }
+
+    [Test]
     public void Observer_WhenVerifierReportsWarning_ReportsDiagnosticsToSink()
     {
         var sink = new RecordingSink();
@@ -131,6 +166,24 @@ public sealed class BytecodeContractMetadataTests
         Assert.That(
             sink.Batches.SelectMany(static x => x.Diagnostics).Select(static x => x.Code),
             Does.Contain(ModuleContractDiagnosticCodes.UnknownBytecodePattern));
+    }
+
+    [Test]
+    public void Observer_WhenStrictContractEmissionOmitsProducer_ThrowsBeforeGlobalPatternAcceptance()
+    {
+        var sink = new RecordingSink();
+        var observer = CreateObserver(ModuleContractPipelineProfiles.StrictEnforced, sink);
+        var instruction = new BytecodeInstruction(new AbstractMethodImpl("PushNumber_1", (_, _) => { }));
+        instruction.Tags.Add(BytecodeContractMetadata.SourceNode(NumbersContractIds.NumberNode));
+        instruction.Tags.Add(BytecodeContractMetadata.Pattern(NumbersContractIds.PushRealNumber));
+
+        Assert.Throws<ModuleContractVerificationException>(() => observer.AfterBytecode(new CompilationPipelineBytecodeContext(
+            new CompilationInput { SourceText = "1" },
+            [new NumbersModule.Module.NumbersModuleImpl()],
+            new Bytecode([instruction]))));
+        Assert.That(
+            sink.Batches.SelectMany(static batch => batch.Diagnostics).Select(static diagnostic => diagnostic.Code),
+            Does.Contain(ModuleContractDiagnosticCodes.InvalidBytecodeContractMetadata));
     }
 
     private static ModuleContractPipelineObserver CreateObserver(
