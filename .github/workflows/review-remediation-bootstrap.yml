@@ -1,0 +1,244 @@
+name: Review remediation bootstrap
+
+on:
+  push:
+    branches:
+      - fix/review-ten-findings-20260730
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/review-ten-findings-20260730
+          fetch-depth: 0
+
+      - name: Apply large-file remediation patches
+        shell: python
+        run: |
+          from pathlib import Path
+
+          runtime = Path('UniversalToolchain/UniversalToolchain.Runtime/RuntimeContracts.cs')
+          text = runtime.read_text(encoding='utf-8-sig')
+          text = text.replace(
+              'using System.Reflection;\nusing System.Runtime.CompilerServices;',
+              'using System.Reflection;\nusing System.Runtime.CompilerServices;\nusing System.Runtime.ExceptionServices;',
+              1)
+          old_catch = '''        catch
+          {
+              DisposeOwnedSynchronously(owned);
+              throw;
+          }
+          '''
+          new_catch = '''        catch (Exception primaryException)
+          {
+              var cleanupErrors = DisposeOwnedSynchronouslyCollect(owned);
+              if (cleanupErrors.Count == 0)
+                  ExceptionDispatchInfo.Capture(primaryException).Throw();
+
+              var combined = new List<Exception> { primaryException };
+              combined.AddRange(cleanupErrors);
+              throw new AggregateException(
+                  "Language runtime session construction failed and cleanup also failed.",
+                  combined);
+          }
+          '''
+          if old_catch not in text:
+              raise SystemExit('RuntimeContracts construction catch anchor not found')
+          text = text.replace(old_catch, new_catch, 1)
+
+          old_dispose = '''    private static void DisposeOwnedSynchronously(IReadOnlyList<object> components)
+          {
+              List<Exception>? errors = null;
+              for (var index = components.Count - 1; index >= 0; index--)
+              {
+                  try
+                  {
+                      switch (components[index])
+                      {
+                          case IDisposable disposable:
+                              disposable.Dispose();
+                              break;
+                          case IAsyncDisposable asyncDisposable:
+                              asyncDisposable.DisposeAsync().AsTask().GetAwaiter().GetResult();
+                              break;
+                      }
+                  }
+                  catch (Exception exception)
+                  {
+                      (errors ??= []).Add(exception);
+                  }
+              }
+              if (errors is { Count: > 0 })
+                  throw new AggregateException("One or more language runtime components failed to dispose.", errors);
+          }
+          '''
+          new_dispose = '''    private static void DisposeOwnedSynchronously(IReadOnlyList<object> components)
+          {
+              var errors = DisposeOwnedSynchronouslyCollect(components);
+              if (errors.Count != 0)
+                  throw new AggregateException("One or more language runtime components failed to dispose.", errors);
+          }
+
+          private static IReadOnlyList<Exception> DisposeOwnedSynchronouslyCollect(IReadOnlyList<object> components)
+          {
+              List<Exception>? errors = null;
+              for (var index = components.Count - 1; index >= 0; index--)
+              {
+                  try
+                  {
+                      switch (components[index])
+                      {
+                          case IDisposable disposable:
+                              disposable.Dispose();
+                              break;
+                          case IAsyncDisposable asyncDisposable:
+                              asyncDisposable.DisposeAsync().AsTask().GetAwaiter().GetResult();
+                              break;
+                      }
+                  }
+                  catch (Exception exception)
+                  {
+                      (errors ??= []).Add(exception);
+                  }
+              }
+
+              return errors ?? [];
+          }
+          '''
+          if old_dispose not in text:
+              raise SystemExit('RuntimeContracts dispose anchor not found')
+          runtime.write_text(text.replace(old_dispose, new_dispose, 1), encoding='utf-8')
+
+          tests = Path('UniversalToolchain/UniversalToolchain.LanguageSdk.Tests/RuntimeLifecycleAndCanonicalizationTests.cs')
+          text = tests.read_text(encoding='utf-8-sig')
+          anchor = '''    [Test]
+              public async Task ExternalConcurrentDispose_WaitsForInFlightOperationAndRejectsNewOperations()
+          '''
+          inserted = '''    [Test]
+              public async Task FlowedChildContext_AfterOperationCompletion_DoesNotRetainActiveLease()
+              {
+                  LanguageRuntime? runtime = null;
+                  Task? childTask = null;
+                  var childReady = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                  var releaseChild = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                  var fixture = CreateLifecycleFixture(
+                      _ => new CallbackTransformer(
+                          "lifecycle.parse",
+                          StandardLanguageArtifactKinds.SourceText,
+                          LifecycleSyntax,
+                          () =>
+                          {
+                              childTask = Task.Run(async () =>
+                              {
+                                  childReady.TrySetResult(true);
+                                  await releaseChild.Task.ConfigureAwait(false);
+                                  runtime!.Dispose();
+                              });
+                          }));
+                  runtime = LanguageRuntime.Create(fixture.Plan, new ILanguageRouteComponentSource[] { fixture.Package });
+
+                  var result = runtime.Run(new LanguageExecutionRequest("ignored", LifecycleBackend));
+                  await childReady.Task.WaitAsync(TimeSpan.FromSeconds(3));
+                  releaseChild.TrySetResult(true);
+                  await childTask!.WaitAsync(TimeSpan.FromSeconds(3));
+
+                  Assert.That(result.Value, Is.EqualTo(1));
+                  Assert.Throws<ObjectDisposedException>(() =>
+                      runtime.Run(new LanguageExecutionRequest("ignored", LifecycleBackend)));
+              }
+
+              [Test]
+              public void SessionConstruction_WhenCleanupAlsoFails_PreservesPrimaryExceptionFirst()
+              {
+                  var cleanupSource = StandardLanguageArtifactKinds.SourceText;
+                  var cleanupSyntax = new LanguageArtifactKind<int>("cleanup.syntax");
+                  var cleanupBackend = new BackendId("cleanup");
+                  var package = LanguagePackageBuilder.Create("Cleanup.Language", "1")
+                      .AddFeature("cleanup.core", feature => feature
+                          .AddTransformerFactory(
+                              "cleanup.a-owned",
+                              LanguageSlots.FrontendParser,
+                              cleanupSource,
+                              cleanupSyntax,
+                              _ => new ThrowingDisposeTransformer(
+                                  "cleanup.a-owned",
+                                  cleanupSource,
+                                  cleanupSyntax),
+                              SafeTraits)
+                          .AddPassFactory(
+                              "cleanup.b-fail",
+                              LanguageSlots.Optimizers,
+                              cleanupSyntax,
+                              static _ => throw new InvalidOperationException("primary construction failure"),
+                              SafeTraits)
+                          .AddBackend(
+                              cleanupBackend,
+                              new LanguageContributionId("cleanup.backend"),
+                              cleanupSyntax,
+                              static (value, _) => value,
+                              SafeTraits))
+                      .UseRouteRuntime("cleanup.runtime", "1")
+                      .Build();
+                  var plan = new LanguageCompiler(new LanguagePackageRegistry().AddPackage(package)).Compile(
+                      LanguageDefinitionBuilder.Create("Cleanup.Language", "1")
+                          .UseFeature("cleanup.core")
+                          .EnableBackend(cleanupBackend)
+                          .UseRuntimeProvider("cleanup.runtime", "1")
+                          .Build()).GetRequiredPlan();
+
+                  var exception = Assert.Throws<AggregateException>(() =>
+                      LanguageRuntime.Create(plan, new ILanguageRouteComponentSource[] { package }));
+
+                  Assert.Multiple(() =>
+                  {
+                      Assert.That(exception!.InnerExceptions, Has.Count.EqualTo(2));
+                      Assert.That(exception.InnerExceptions[0].Message, Is.EqualTo("primary construction failure"));
+                      Assert.That(exception.InnerExceptions[1].Message, Is.EqualTo("cleanup disposal failure"));
+                  });
+              }
+
+              [Test]
+              public async Task ExternalConcurrentDispose_WaitsForInFlightOperationAndRejectsNewOperations()
+          '''
+          if anchor not in text:
+              raise SystemExit('Lifecycle test insertion anchor not found')
+          text = text.replace(anchor, inserted, 1)
+
+          helper_anchor = '''    private sealed class CountingTransformer(
+          '''
+          helper = '''    private sealed class ThrowingDisposeTransformer(
+              string contributionId,
+              LanguageArtifactKind<string> source,
+              LanguageArtifactKind<int> target) : ILanguageArtifactTransformer<string, int>, IDisposable
+              {
+                  public LanguageContributionId ContributionId { get; } = new(contributionId);
+                  public LanguageArtifactKind<string> TypedSourceKind { get; } = source;
+                  public LanguageArtifactKind<int> TypedTargetKind { get; } = target;
+                  public LanguageRuntimeComponentTraits TypedTraits => SafeTraits;
+                  public int Transform(string value, LanguageArtifactTransformationContext context) => 1;
+                  public void Dispose() => throw new InvalidOperationException("cleanup disposal failure");
+              }
+
+              private sealed class CountingTransformer(
+          '''
+          if helper_anchor not in text:
+              raise SystemExit('Lifecycle helper anchor not found')
+          tests.write_text(text.replace(helper_anchor, helper, 1), encoding='utf-8')
+
+      - name: Remove bootstrap workflow and commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/review-remediation-bootstrap.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add UniversalToolchain/UniversalToolchain.Runtime/RuntimeContracts.cs \
+                  UniversalToolchain/UniversalToolchain.LanguageSdk.Tests/RuntimeLifecycleAndCanonicalizationTests.cs
+          git commit -m "runtime: preserve construction failures and harden flowed leases"
+          git push origin HEAD:fix/review-ten-findings-20260730
