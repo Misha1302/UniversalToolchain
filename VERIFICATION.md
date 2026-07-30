@@ -77,7 +77,9 @@ The run used 40 primary fault instances representing 32 independent operator sha
 
 Primary exact paired McNemar results were `p = 1.9073486e-06` for B0 versus B2 and `p = 0.125` for B1 versus B2. Across five process-level timing replicates, isolated B2 boundary-kernel overhead had a median of **27.8%**, with a range of **25.6%–31.6%**.
 
-These are author-designed, single-framework, production-boundary results. They do not establish general compiler correctness, end-to-end source-to-execution detection, externally authored unseen-fault effectiveness or external validity across unrelated runtimes. The timing number is verifier-kernel cost, not whole-compilation or application overhead.
+A documentation-only descendant, commit `9b6aa223592f768a6e4abc12b298bdf59bb57d4a`, independently reran the unchanged experiment in workflow `30569244273`. Artifact `contract-experiment-9b6aa223592f768a6e4abc12b298bdf59bb57d4a` (artifact ID `8770101865`, digest `sha256:0669f05b53080b05a93dffe4cd33a3418807270ae7295f8fa9313999a5719019`) has a separately verified 36-file checksum index and reproduces every detection, control and McNemar result above. Its five timing replicates produced a median of **26.4%** and a range of **23.8%–33.5%**. Across the ten replicates from both workflow executions, the descriptive median is **27.7%** and the full range is **23.8%–33.5%**.
+
+These are author-designed, single-framework, production-boundary results. They do not establish general compiler correctness, end-to-end source-to-execution detection, externally authored unseen-fault effectiveness or external validity across unrelated runtimes. The timing number is an environment-sensitive verifier-kernel microbenchmark, not whole-compilation or application overhead; the cross-run summary is descriptive rather than a controlled pooled performance estimate.
 
 ## Workflow contract
 
@@ -95,6 +97,8 @@ Every `master` revision is required to start and complete:
 `CI aggregate` waits for this complete workflow set and publishes the `ci/aggregate` commit status. Path-filtered pull-request checks remain narrow where appropriate; master-push checks are unconditional so the aggregate cannot wait for a workflow that was never eligible to start.
 
 For the immutable publication baseline commit `92028b76b108822c5cdd41432721ac63c4e49b48`, aggregate run `30542053062` completed successfully after all eight required workflows reported success.
+
+The documentation-only descendant commit `9b6aa223592f768a6e4abc12b298bdf59bb57d4a` also completed all eight required workflows in aggregate run `30569244318`; `.NET CI` run `30569244264` recorded `TEST-CONTRACT COMPLETE passed=1544 entries=14`.
 
 ## Package and release boundary
 
