@@ -172,18 +172,18 @@ public sealed class ModuleContractPipelineObserver : ICompilationPipelineObserve
         IReadOnlyList<IAirOptimizer> optimizers,
         IReadOnlyList<IBackendPipelineComponent> backendComponents)
     {
-        return frontendModules
+        var order = frontendModules
             .Cast<object>()
             .Concat(optimizers)
             .SelectMany(SelectedModuleContractTableProvider.ReadSelectedModuleIds)
             .Concat(backendComponents
                 .OfType<IModuleContractBackendPipelineComponent>()
                 .SelectMany(SelectedModuleContractTableProvider.ReadSelectedBackendModuleIds))
-            .Concat([
-                KnownCoreModuleIds.CompilerFacts,
-                KnownCoreModuleIds.BackendCapabilities
-            ])
-            .Distinct()
-            .ToArray();
+            .ToList();
+        if (!order.Contains(KnownCoreModuleIds.CompilerFacts))
+            order.Add(KnownCoreModuleIds.CompilerFacts);
+        if (!order.Contains(KnownCoreModuleIds.BackendCapabilities))
+            order.Add(KnownCoreModuleIds.BackendCapabilities);
+        return order;
     }
 }

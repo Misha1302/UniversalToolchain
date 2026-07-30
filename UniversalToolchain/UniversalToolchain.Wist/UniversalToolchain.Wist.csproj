@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <LangVersion>14</LangVersion>
         <PackageId>UniversalToolchain.Wist</PackageId>
-        <Version>0.1.0-alpha.4</Version>
+        <Version>0.1.0-alpha.5</Version>
         <Title>UniversalToolchain Wist</Title>
         <Description>Restricted formulas for .NET: validate rules, evaluate diagnostics, and compile approved formulas into typed delegates while the host owns inputs and side effects.</Description>
         <Authors>Mikhail Razakov</Authors>

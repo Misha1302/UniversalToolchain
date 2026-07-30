@@ -6,7 +6,7 @@
     <LangVersion>14</LangVersion>
     <IsPackable>true</IsPackable>
     <PackageId>UniversalToolchain.LanguageSdk</PackageId>
-    <Version>0.3.0-alpha.2</Version>
+    <Version>0.3.0-alpha.3</Version>
     <Description>Validated deterministic contribution graphs and artifact-route plans for external UniversalToolchain DSLs.</Description>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
   </PropertyGroup>

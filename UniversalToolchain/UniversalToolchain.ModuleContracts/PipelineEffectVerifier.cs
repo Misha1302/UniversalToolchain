@@ -30,6 +30,26 @@ public sealed class PipelineEffectVerifier
                 []);
         }
 
+        var duplicateOccurrences = (request.PipelineOrder ?? [])
+            .GroupBy(static moduleId => moduleId)
+            .Where(static group => group.Count() > 1)
+            .OrderBy(static group => group.Key.Value, StringComparer.Ordinal)
+            .ToArray();
+        if (duplicateOccurrences.Length > 0)
+        {
+            diagnostics.AddRange(duplicateOccurrences.Select(group => new ToolchainDiagnostic(
+                ModuleContractDiagnosticCodes.DuplicatePipelineModuleOccurrence,
+                ToolchainDiagnosticSeverity.Error,
+                $"Pipeline order for '{request.Stage}' contains module '{group.Key}' {group.Count()} times, but module-level effects cannot distinguish repeated occurrences.",
+                null,
+                [new ToolchainDiagnosticHint("Use a unique module/pass identity per occurrence or extend the contract model with explicit occurrence identities before repeating a module.")])));
+
+            return new PipelineEffectValidationResult(
+                new CompilerFactState(available, invalidated),
+                diagnostics,
+                []);
+        }
+
         var orderIndex = BuildOrderIndex(request.PipelineOrder);
         effects = effects
             .OrderBy(item => orderIndex.TryGetValue(item.ModuleId, out var index) ? index : int.MaxValue)
@@ -89,7 +109,7 @@ public sealed class PipelineEffectVerifier
 
         var order = new Dictionary<ModuleId, int>();
         for (var i = 0; i < pipelineOrder.Count; i++)
-            order.TryAdd(pipelineOrder[i], i);
+            order.Add(pipelineOrder[i], i);
 
         return order;
     }

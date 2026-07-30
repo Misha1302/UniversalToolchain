@@ -7,8 +7,8 @@
     <LangVersion>14</LangVersion>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="UniversalToolchain.LanguageAuthoring" Version="0.3.0-alpha.2" />
-    <PackageReference Include="UniversalToolchain.LanguageSdk" Version="0.3.0-alpha.2" />
-    <PackageReference Include="UniversalToolchain.Runtime" Version="0.3.0-alpha.2" />
+    <PackageReference Include="UniversalToolchain.LanguageAuthoring" Version="0.3.0-alpha.3" />
+    <PackageReference Include="UniversalToolchain.LanguageSdk" Version="0.3.0-alpha.3" />
+    <PackageReference Include="UniversalToolchain.Runtime" Version="0.3.0-alpha.3" />
   </ItemGroup>
 </Project>

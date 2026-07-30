@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.ExceptionServices;
 using UniversalToolchain.FeatureSdk;
 using UniversalToolchain.Language.Abstractions;
 using UniversalToolchain.LanguageSdk;
@@ -649,10 +650,17 @@ public sealed class LanguageRouteRuntimeProvider : ILanguageRuntimeProvider, ILa
                 new ReadOnlyDictionary<BackendId, ILanguageArtifactExecutor>(executors),
                 owned);
         }
-        catch
+        catch (Exception primaryException)
         {
-            DisposeOwnedSynchronously(owned);
-            throw;
+            var cleanupErrors = DisposeOwnedSynchronouslyCollect(owned);
+            if (cleanupErrors.Count == 0)
+                ExceptionDispatchInfo.Capture(primaryException).Throw();
+
+            var combined = new List<Exception> { primaryException };
+            combined.AddRange(cleanupErrors);
+            throw new AggregateException(
+                "Language runtime session construction failed and cleanup also failed.",
+                combined);
         }
     }
 
@@ -833,6 +841,13 @@ public sealed class LanguageRouteRuntimeProvider : ILanguageRuntimeProvider, ILa
 
     private static void DisposeOwnedSynchronously(IReadOnlyList<object> components)
     {
+        var errors = DisposeOwnedSynchronouslyCollect(components);
+        if (errors.Count != 0)
+            throw new AggregateException("One or more language runtime components failed to dispose.", errors);
+    }
+
+    private static IReadOnlyList<Exception> DisposeOwnedSynchronouslyCollect(IReadOnlyList<object> components)
+    {
         List<Exception>? errors = null;
         for (var index = components.Count - 1; index >= 0; index--)
         {
@@ -853,9 +868,10 @@ public sealed class LanguageRouteRuntimeProvider : ILanguageRuntimeProvider, ILa
                 (errors ??= []).Add(exception);
             }
         }
-        if (errors is { Count: > 0 })
-            throw new AggregateException("One or more language runtime components failed to dispose.", errors);
+
+        return errors ?? [];
     }
+
 }
 
 

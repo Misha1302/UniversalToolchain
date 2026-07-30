@@ -27,7 +27,9 @@ internal static class WistModuleContractServiceCollectionExtensions
         services.TryAddSingleton<IOptimizerAirValidationHook, OptimizerAirValidationHook>();
         services.TryAddSingleton<IModuleContractDiagnosticPolicy, ModuleContractDiagnosticPolicy>();
         services.TryAddSingleton<PipelineEffectVerifier>();
-        services.TryAddSingleton(CompilerFactVerifierRegistry.Core);
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<ICompilerFactVerifierRuleProvider, CoreCompilerFactVerifierRuleProvider>());
+        services.TryAddSingleton<CompilerFactVerifierRegistry>(provider =>
+            new CompilerFactVerifierRegistry(provider.GetServices<ICompilerFactVerifierRuleProvider>()));
         services.TryAddSingleton<ICompilerStageFactSeedProvider, CoreCompilerStageFactSeedProvider>();
         services.TryAddSingleton<ModuleContractSelectionBuilder>();
         services.TryAddSingleton<ISelectedModuleContractTableProvider>(provider => new SelectedModuleContractTableProvider(
