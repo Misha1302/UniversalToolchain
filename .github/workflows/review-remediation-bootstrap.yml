@@ -4,6 +4,11 @@ on:
   push:
     branches:
       - fix/review-ten-findings-20260730
+  pull_request:
+    branches:
+      - master
+    paths:
+      - .github/workflows/review-remediation-bootstrap.yml
 
 permissions:
   contents: write
