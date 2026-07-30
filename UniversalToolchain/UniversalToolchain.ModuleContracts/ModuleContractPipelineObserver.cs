@@ -167,23 +167,23 @@ public sealed class ModuleContractPipelineObserver : ICompilationPipelineObserve
             .ToArray();
     }
 
-private static IReadOnlyList<ModuleId> BuildPipelineOrder(
-    IReadOnlyList<IFrontendCoreModule> frontendModules,
-    IReadOnlyList<IAirOptimizer> optimizers,
-    IReadOnlyList<IBackendPipelineComponent> backendComponents)
-{
-    var order = frontendModules
-        .Cast<object>()
-        .Concat(optimizers)
-        .SelectMany(SelectedModuleContractTableProvider.ReadSelectedModuleIds)
-        .Concat(backendComponents
-            .OfType<IModuleContractBackendPipelineComponent>()
-            .SelectMany(SelectedModuleContractTableProvider.ReadSelectedBackendModuleIds))
-        .ToList();
-    if (!order.Contains(KnownCoreModuleIds.CompilerFacts))
-        order.Add(KnownCoreModuleIds.CompilerFacts);
-    if (!order.Contains(KnownCoreModuleIds.BackendCapabilities))
-        order.Add(KnownCoreModuleIds.BackendCapabilities);
-    return order;
-}
+    private static IReadOnlyList<ModuleId> BuildPipelineOrder(
+        IReadOnlyList<IFrontendCoreModule> frontendModules,
+        IReadOnlyList<IAirOptimizer> optimizers,
+        IReadOnlyList<IBackendPipelineComponent> backendComponents)
+    {
+        var order = frontendModules
+            .Cast<object>()
+            .Concat(optimizers)
+            .SelectMany(SelectedModuleContractTableProvider.ReadSelectedModuleIds)
+            .Concat(backendComponents
+                .OfType<IModuleContractBackendPipelineComponent>()
+                .SelectMany(SelectedModuleContractTableProvider.ReadSelectedBackendModuleIds))
+            .ToList();
+        if (!order.Contains(KnownCoreModuleIds.CompilerFacts))
+            order.Add(KnownCoreModuleIds.CompilerFacts);
+        if (!order.Contains(KnownCoreModuleIds.BackendCapabilities))
+            order.Add(KnownCoreModuleIds.BackendCapabilities);
+        return order;
+    }
 }
