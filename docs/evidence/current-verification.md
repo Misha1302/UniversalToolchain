@@ -3,7 +3,7 @@ title: Current Verification
 description: Current build, test, workflow and bounded research-evidence record.
 audience: maintainer-or-evaluator
 status: current
-lastVerifiedAgainst: publication-readiness-contract-study
+lastVerifiedAgainst: master-92028b76-publication-baseline
 ---
 
 # Current verification
@@ -41,6 +41,8 @@ Release builds succeeded
 
 Every `master` revision must start and complete `.NET CI`, `UniversalToolchain validation`, `Docs Check`, documentation deployment, published-package smoke, rollout sample smoke, benchmark smoke and the contract experiment. `CI aggregate` waits for the complete set and publishes the `ci/aggregate` commit status. Master-push triggers are unconditional, preventing a false aggregate timeout caused by a required path-filtered workflow never starting.
 
+Master commit `92028b76b108822c5cdd41432721ac63c4e49b48` is the immutable publication baseline. Aggregate run `30542053062` completed successfully after all eight required workflows reported success.
+
 ## Production-boundary contract study
 
 The non-packable experiment compares:
@@ -49,7 +51,9 @@ The non-packable experiment compares:
 - **B1:** typed selection, ownership, Bytecode and facts/effects in addition to B0;
 - **B2:** B1 with fail-closed unresolved reverification.
 
-The refreshed archived run used 32 primary operator shapes, 10 post-freeze challenge operators, three repetitions per instance/mode and 100 valid controls per mode across five boundary families.
+The immutable baseline is workflow run `30542053093`, artifact ID `8759126014`, digest `sha256:e87ea19405cce64df8d76ea83fc3b02c5db5c7b83f435ee940d7ee2bb850209f`. Its checksum index covers 36 files and verifies after extraction.
+
+The run used 32 primary operator shapes, 10 post-freeze challenge operators, three repetitions per instance/mode and 100 valid controls per mode across five boundary families.
 
 | Set | B0 | B1 | B2 |
 |---|---:|---:|---:|
@@ -57,7 +61,7 @@ The refreshed archived run used 32 primary operator shapes, 10 post-freeze chall
 | Challenge detections | 1/10 | 10/10 | 10/10 |
 | Control false positives | 0/100 | 0/100 | 0/100 |
 
-The exact paired primary comparison gave `p = 1.9073486e-06` for B0 versus B2 and `p = 0.125` for B1 versus B2. The isolated B2 verifier-kernel overhead was 29.4% median across five process replicates, range 28.9%–31.0%.
+The exact paired primary comparison gave `p = 1.9073486e-06` for B0 versus B2 and `p = 0.125` for B1 versus B2. The isolated B2 verifier-kernel overhead was 27.8% median across five process replicates, range 25.6%–31.6%.
 
 This is an author-designed production-boundary experiment, not an externally authored unseen-fault study or an end-to-end whole-compiler benchmark. Raw JSONL, runner inputs, environment records, analysis and a per-file checksum index are archived by the workflow for the exact checked-out commit.
 

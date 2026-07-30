@@ -63,9 +63,11 @@ The dedicated `Contract Experiment` workflow restores and builds the non-packabl
 - **B1:** B0 plus typed selection, ownership, Bytecode and facts/effects checks; unresolved reverification is recorded but not fail-closed.
 - **B2:** B1 plus mandatory failure on unresolved reverification requests.
 
-### Archived result
+### Immutable master baseline
 
-The refreshed PR evidence used 40 primary fault instances representing 32 independent operator shapes in five families, 10 post-freeze challenge operators, three deterministic repetitions per instance/mode and 100 valid controls per mode across five strata.
+The publication baseline is tied to master commit `92028b76b108822c5cdd41432721ac63c4e49b48`, workflow run `30542053093` and artifact `contract-experiment-92028b76b108822c5cdd41432721ac63c4e49b48` (artifact ID `8759126014`, digest `sha256:e87ea19405cce64df8d76ea83fc3b02c5db5c7b83f435ee940d7ee2bb850209f`). Its 36-file checksum index verifies successfully after extraction.
+
+The run used 40 primary fault instances representing 32 independent operator shapes in five families, 10 post-freeze challenge operators, three deterministic repetitions per instance/mode and 100 valid controls per mode across five strata.
 
 | Set | B0 | B1 | B2 |
 |---|---:|---:|---:|
@@ -73,7 +75,7 @@ The refreshed PR evidence used 40 primary fault instances representing 32 indepe
 | Challenge operators detected | 1/10 | 10/10 | 10/10 |
 | Valid-control false positives | 0/100 | 0/100 | 0/100 |
 
-Primary exact paired McNemar results were `p = 1.9073486e-06` for B0 versus B2 and `p = 0.125` for B1 versus B2. Across five process-level timing replicates, isolated B2 boundary-kernel overhead had a median of **29.4%**, with a range of **28.9%–31.0%**.
+Primary exact paired McNemar results were `p = 1.9073486e-06` for B0 versus B2 and `p = 0.125` for B1 versus B2. Across five process-level timing replicates, isolated B2 boundary-kernel overhead had a median of **27.8%**, with a range of **25.6%–31.6%**.
 
 These are author-designed, single-framework, production-boundary results. They do not establish general compiler correctness, end-to-end source-to-execution detection, externally authored unseen-fault effectiveness or external validity across unrelated runtimes. The timing number is verifier-kernel cost, not whole-compilation or application overhead.
 
@@ -91,6 +93,8 @@ Every `master` revision is required to start and complete:
 - `Contract Experiment`.
 
 `CI aggregate` waits for this complete workflow set and publishes the `ci/aggregate` commit status. Path-filtered pull-request checks remain narrow where appropriate; master-push checks are unconditional so the aggregate cannot wait for a workflow that was never eligible to start.
+
+For the immutable publication baseline commit `92028b76b108822c5cdd41432721ac63c4e49b48`, aggregate run `30542053062` completed successfully after all eight required workflows reported success.
 
 ## Package and release boundary
 
