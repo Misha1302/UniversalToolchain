@@ -1,0 +1,130 @@
+name: Review version bump bootstrap
+
+on:
+  pull_request:
+    branches:
+      - master
+    paths:
+      - .github/workflows/review-version-bump-bootstrap.yml
+
+permissions:
+  contents: write
+
+jobs:
+  bump:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/review-ten-findings-20260730
+          fetch-depth: 0
+
+      - name: Apply monotonic review-remediation package versions
+        shell: python
+        run: |
+          from pathlib import Path
+
+          exact_replacements = {
+              'UniversalToolchain/UniversalToolchain.Language.Abstractions/UniversalToolchain.Language.Abstractions.csproj': [('0.3.0-alpha.2', '0.3.0-alpha.3')],
+              'UniversalToolchain/UniversalToolchain.FeatureSdk/UniversalToolchain.FeatureSdk.csproj': [('0.3.0-alpha.2', '0.3.0-alpha.3')],
+              'UniversalToolchain/UniversalToolchain.LanguageSdk/UniversalToolchain.LanguageSdk.csproj': [('0.3.0-alpha.2', '0.3.0-alpha.3')],
+              'UniversalToolchain/UniversalToolchain.Runtime/UniversalToolchain.Runtime.csproj': [('0.3.0-alpha.2', '0.3.0-alpha.3')],
+              'UniversalToolchain/UniversalToolchain.LanguageAuthoring/UniversalToolchain.LanguageAuthoring.csproj': [('0.3.0-alpha.2', '0.3.0-alpha.3')],
+              'UniversalToolchain/UniversalToolchain.Testing/UniversalToolchain.Testing.csproj': [('0.3.0-alpha.2', '0.3.0-alpha.3')],
+              'UniversalToolchain/UniversalToolchain.Templates/UniversalToolchain.Templates.csproj': [('0.3.0-alpha.2', '0.3.0-alpha.3')],
+              'UniversalToolchain/UniversalToolchain.Wist.LanguagePack/UniversalToolchain.Wist.LanguagePack.csproj': [('0.3.0-alpha.3', '0.3.0-alpha.4')],
+              'UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj': [('0.1.0-alpha.4', '0.1.0-alpha.5')],
+              'UniversalToolchain/UniversalToolchain.Templates/content/ut-language/TemplateLanguage.csproj': [('0.3.0-alpha.2', '0.3.0-alpha.3')],
+              'UniversalToolchain/UniversalToolchain.Templates/README.md': [('0.3.0-alpha.2', '0.3.0-alpha.3')],
+              'docs/language-authoring/quickstart.md': [('0.3.0-alpha.2', '0.3.0-alpha.3')],
+              'docs/language-authoring/testing-and-templates.md': [('0.3.0-alpha.2', '0.3.0-alpha.3')],
+              'VERIFICATION.md': [
+                  ('Core SDK/template family `0.3.0-alpha.2`', 'Core SDK/template family `0.3.0-alpha.3`'),
+                  ('`UniversalToolchain.Wist.LanguagePack` `0.3.0-alpha.3`', '`UniversalToolchain.Wist.LanguagePack` `0.3.0-alpha.4`'),
+                  ('`UniversalToolchain.Wist` `0.1.0-alpha.4`', '`UniversalToolchain.Wist` `0.1.0-alpha.5`'),
+              ],
+              'docs/evidence/current-verification.md': [
+                  ('seven SDK/template packages at `0.3.0-alpha.2`', 'seven SDK/template packages at `0.3.0-alpha.3`'),
+                  ('`UniversalToolchain.Wist.LanguagePack` at `0.3.0-alpha.3`', '`UniversalToolchain.Wist.LanguagePack` at `0.3.0-alpha.4`'),
+                  ('`UniversalToolchain.Wist` at `0.1.0-alpha.4`', '`UniversalToolchain.Wist` at `0.1.0-alpha.5`'),
+              ],
+              'docs/evidence/maintainer-guide.md': [
+                  ('0.3.0-alpha.2', '0.3.0-alpha.3'),
+                  ('0.3.0-alpha.3', '0.3.0-alpha.4'),
+                  ('0.1.0-alpha.4', '0.1.0-alpha.5'),
+              ],
+              'docs/CURRENT_ARCHITECTURE_STATUS.md': [
+                  ('0.3.0-alpha.2', '0.3.0-alpha.3'),
+                  ('0.3.0-alpha.3', '0.3.0-alpha.4'),
+                  ('0.1.0-alpha.4', '0.1.0-alpha.5'),
+              ],
+              'readme.md': [('0.1.0-alpha.4', '0.1.0-alpha.5')],
+              'docs/start/index.md': [('0.1.0-alpha.4', '0.1.0-alpha.5')],
+              'docs/start/use-case-recipes.md': [('0.1.0-alpha.4', '0.1.0-alpha.5')],
+              'docs/start/installation.md': [('0.1.0-alpha.4', '0.1.0-alpha.5')],
+              'docs/start/first-program.md': [('0.1.0-alpha.4', '0.1.0-alpha.5')],
+              'UniversalToolchain/UniversalToolchain.Wist/README.md': [('0.1.0-alpha.4', '0.1.0-alpha.5')],
+              'RELEASE_NOTES_RU.md': [
+                  ('0.1.0-alpha.4', '0.1.0-alpha.5'),
+                  ('Дата source/release artifact: 2026-07-27.', 'Дата source/release artifact: 2026-07-30.'),
+              ],
+          }
+
+          for name, replacements in exact_replacements.items():
+              path = Path(name)
+              text = path.read_text(encoding='utf-8-sig')
+              original = text
+              for old, new in replacements:
+                  if old not in text:
+                      raise SystemExit(f'{name}: expected version anchor is missing: {old!r}')
+                  text = text.replace(old, new)
+              if text == original:
+                  raise SystemExit(f'{name}: no version change was applied')
+              path.write_text(text, encoding='utf-8')
+
+          notes = Path('RELEASE_NOTES_RU.md')
+          text = notes.read_text(encoding='utf-8')
+          marker = '## Основные изменения\n\n'
+          addition = (
+              '- fail-closed identity для contract-annotated Bytecode emissions;\n'
+              '- occurrence-safe compiler-fact effects и расширяемая verifier routing;\n'
+              '- сохранение primary runtime construction failure при cleanup errors;\n'
+              '- защита lifecycle gate от завершённых leases в flowed execution contexts;\n'
+          )
+          if marker not in text:
+              raise SystemExit('release notes insertion anchor is missing')
+          notes.write_text(text.replace(marker, marker + addition, 1), encoding='utf-8')
+
+      - name: Remove bootstrap workflow and commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/review-version-bump-bootstrap.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add \
+            UniversalToolchain/UniversalToolchain.Language.Abstractions/UniversalToolchain.Language.Abstractions.csproj \
+            UniversalToolchain/UniversalToolchain.FeatureSdk/UniversalToolchain.FeatureSdk.csproj \
+            UniversalToolchain/UniversalToolchain.LanguageSdk/UniversalToolchain.LanguageSdk.csproj \
+            UniversalToolchain/UniversalToolchain.Runtime/UniversalToolchain.Runtime.csproj \
+            UniversalToolchain/UniversalToolchain.LanguageAuthoring/UniversalToolchain.LanguageAuthoring.csproj \
+            UniversalToolchain/UniversalToolchain.Testing/UniversalToolchain.Testing.csproj \
+            UniversalToolchain/UniversalToolchain.Templates/UniversalToolchain.Templates.csproj \
+            UniversalToolchain/UniversalToolchain.Wist.LanguagePack/UniversalToolchain.Wist.LanguagePack.csproj \
+            UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj \
+            UniversalToolchain/UniversalToolchain.Templates/content/ut-language/TemplateLanguage.csproj \
+            UniversalToolchain/UniversalToolchain.Templates/README.md \
+            UniversalToolchain/UniversalToolchain.Wist/README.md \
+            docs/language-authoring/quickstart.md \
+            docs/language-authoring/testing-and-templates.md \
+            docs/evidence/current-verification.md \
+            docs/evidence/maintainer-guide.md \
+            docs/CURRENT_ARCHITECTURE_STATUS.md \
+            docs/start/index.md \
+            docs/start/use-case-recipes.md \
+            docs/start/installation.md \
+            docs/start/first-program.md \
+            VERIFICATION.md RELEASE_NOTES_RU.md readme.md
+          git commit -m "release: bump review-remediation package versions"
+          git push origin HEAD:fix/review-ten-findings-20260730
