@@ -1,0 +1,49 @@
+name: Contract Experiment
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+  pull_request:
+    paths:
+      - "UniversalToolchain/Experiments/UniversalToolchain.ContractExperiments/**"
+      - "UniversalToolchain/UniversalToolchain.ModuleContracts/**"
+      - "UniversalToolchain/IntermediateRepresentationAbstractions/**"
+      - "Tools/run-contract-experiment.sh"
+      - ".github/workflows/contract-experiment.yml"
+
+jobs:
+  contract-experiment:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: UniversalToolchain/global.json
+
+      - name: Run production-boundary contract study
+        env:
+          CONTRACT_EXPERIMENT_REPLICATES: 5
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/contract-experiment
+          ./Tools/run-contract-experiment.sh artifacts/contract-experiment 2>&1 \
+            | tee artifacts/contract-experiment-workflow.log
+
+      - name: Upload contract experiment evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: contract-experiment-${{ github.sha }}
+          path: |
+            artifacts/contract-experiment
+            artifacts/contract-experiment-workflow.log
+          if-no-files-found: error
+          retention-days: 90
