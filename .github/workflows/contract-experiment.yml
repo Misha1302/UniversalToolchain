@@ -10,6 +10,9 @@ on:
       - "UniversalToolchain/Experiments/UniversalToolchain.ContractExperiments/**"
       - "UniversalToolchain/UniversalToolchain.ModuleContracts/**"
       - "UniversalToolchain/IntermediateRepresentationAbstractions/**"
+      - "UniversalToolchain/UniversalToolchain.Dialects.Wist/**"
+      - "UniversalToolchain/Wistc/**"
+      - "UniversalToolchain/Dialects/examples/wist/function-calls-safe-math/**"
       - "Tools/run-contract-experiment.sh"
       - ".github/workflows/contract-experiment.yml"
 
@@ -27,14 +30,18 @@ jobs:
         with:
           global-json-file: UniversalToolchain/global.json
 
-      - name: Diagnose selected SafeMath capability surface
+      - name: Verify selected SafeMath capability surface
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p UniversalToolchain/packages
-          dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- \
+          output="$(dotnet run --project UniversalToolchain/Wistc/Wistc.csproj -- \
             features \
-            --dialect-file UniversalToolchain/Dialects/examples/wist/function-calls-safe-math/dialect.wistdialect
+            --dialect-file UniversalToolchain/Dialects/examples/wist/function-calls-safe-math/dialect.wistdialect)"
+          printf '%s\n' "$output"
+          grep -Fq 'Available features:' <<<"$output"
+          grep -Fq 'SafeMathFunctions' <<<"$output"
+          grep -Fq 'Available functions: abs, clamp, max, min, round' <<<"$output"
 
       - name: Run production-boundary contract study
         env:
