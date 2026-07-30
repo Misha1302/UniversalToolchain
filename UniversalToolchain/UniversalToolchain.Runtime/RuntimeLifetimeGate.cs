@@ -3,7 +3,7 @@ namespace UniversalToolchain.Runtime;
 /// <summary>
 /// Coordinates synchronous runtime operations with deterministic one-time disposal.
 /// New operations are rejected once disposal starts; external disposal waits for in-flight operations.
-/// Disposal from a call context that owns a lease fails immediately instead of self-deadlocking.
+/// Disposal from a call context that owns an active lease fails immediately instead of self-deadlocking.
 /// </summary>
 internal sealed class RuntimeLifetimeGate
 {
@@ -34,7 +34,7 @@ internal sealed class RuntimeLifetimeGate
         if (OwnsLeaseInCurrentContext())
         {
             throw new InvalidOperationException(
-                "A runtime cannot be disposed from an execution context that currently owns one of its operation leases.");
+                "A runtime cannot be disposed from an execution context that currently owns one of its active operation leases.");
         }
 
         lock (_gate)
@@ -68,7 +68,7 @@ internal sealed class RuntimeLifetimeGate
     {
         for (var scope = CurrentLease.Value; scope != null; scope = scope.Previous)
         {
-            if (ReferenceEquals(scope.Owner, this))
+            if (scope.IsActive && ReferenceEquals(scope.Owner, this))
                 return true;
         }
         return false;
@@ -77,6 +77,7 @@ internal sealed class RuntimeLifetimeGate
     private void ExitOperation(LeaseScope scope)
     {
         RemoveCurrentScope(scope);
+        scope.Deactivate();
         lock (_gate)
         {
             if (_activeOperations <= 0)
@@ -111,7 +112,16 @@ internal sealed class RuntimeLifetimeGate
         }
     }
 
-    private sealed record LeaseScope(RuntimeLifetimeGate Owner, LeaseScope? Previous);
+    private sealed class LeaseScope(RuntimeLifetimeGate owner, LeaseScope? previous)
+    {
+        private int _active = 1;
+
+        public RuntimeLifetimeGate Owner { get; } = owner;
+        public LeaseScope? Previous { get; } = previous;
+        public bool IsActive => Volatile.Read(ref _active) != 0;
+
+        public void Deactivate() => Interlocked.Exchange(ref _active, 0);
+    }
 
     private enum LifetimeState
     {
