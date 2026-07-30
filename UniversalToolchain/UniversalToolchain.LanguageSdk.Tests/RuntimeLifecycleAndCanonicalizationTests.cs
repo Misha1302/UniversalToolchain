@@ -56,6 +56,89 @@ public sealed class RuntimeLifecycleAndCanonicalizationTests
         runtime.Dispose();
     }
 
+[Test]
+public async Task FlowedChildContext_AfterOperationCompletion_DoesNotRetainActiveLease()
+{
+    LanguageRuntime? runtime = null;
+    Task? childTask = null;
+    var childReady = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var releaseChild = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+    var fixture = CreateLifecycleFixture(
+        _ => new CallbackTransformer(
+            "lifecycle.parse",
+            StandardLanguageArtifactKinds.SourceText,
+            LifecycleSyntax,
+            () =>
+            {
+                childTask = Task.Run(async () =>
+                {
+                    childReady.TrySetResult(true);
+                    await releaseChild.Task.ConfigureAwait(false);
+                    runtime!.Dispose();
+                });
+            }));
+    runtime = LanguageRuntime.Create(fixture.Plan, new ILanguageRouteComponentSource[] { fixture.Package });
+
+    var result = runtime.Run(new LanguageExecutionRequest("ignored", LifecycleBackend));
+    await childReady.Task.WaitAsync(TimeSpan.FromSeconds(3));
+    releaseChild.TrySetResult(true);
+    await childTask!.WaitAsync(TimeSpan.FromSeconds(3));
+
+    Assert.That(result.Value, Is.EqualTo(1));
+    Assert.Throws<ObjectDisposedException>(() =>
+        runtime.Run(new LanguageExecutionRequest("ignored", LifecycleBackend)));
+}
+
+[Test]
+public void SessionConstruction_WhenCleanupAlsoFails_PreservesPrimaryExceptionFirst()
+{
+    var cleanupSource = StandardLanguageArtifactKinds.SourceText;
+    var cleanupSyntax = new LanguageArtifactKind<int>("cleanup.syntax");
+    var cleanupBackend = new BackendId("cleanup");
+    var package = LanguagePackageBuilder.Create("Cleanup.Language", "1")
+        .AddFeature("cleanup.core", feature => feature
+            .AddTransformerFactory(
+                "cleanup.a-owned",
+                LanguageSlots.FrontendParser,
+                cleanupSource,
+                cleanupSyntax,
+                _ => new ThrowingDisposeTransformer(
+                    "cleanup.a-owned",
+                    cleanupSource,
+                    cleanupSyntax),
+                SafeTraits)
+            .AddPassFactory(
+                "cleanup.b-fail",
+                LanguageSlots.Optimizers,
+                cleanupSyntax,
+                static _ => throw new InvalidOperationException("primary construction failure"),
+                SafeTraits)
+            .AddBackend(
+                cleanupBackend,
+                new LanguageContributionId("cleanup.backend"),
+                cleanupSyntax,
+                static (value, _) => value,
+                SafeTraits))
+        .UseRouteRuntime("cleanup.runtime", "1")
+        .Build();
+    var plan = new LanguageCompiler(new LanguagePackageRegistry().AddPackage(package)).Compile(
+        LanguageDefinitionBuilder.Create("Cleanup.Language", "1")
+            .UseFeature("cleanup.core")
+            .EnableBackend(cleanupBackend)
+            .UseRuntimeProvider("cleanup.runtime", "1")
+            .Build()).GetRequiredPlan();
+
+    var exception = Assert.Throws<AggregateException>(() =>
+        LanguageRuntime.Create(plan, new ILanguageRouteComponentSource[] { package }));
+
+    Assert.Multiple(() =>
+    {
+        Assert.That(exception!.InnerExceptions, Has.Count.EqualTo(2));
+        Assert.That(exception.InnerExceptions[0].Message, Is.EqualTo("primary construction failure"));
+        Assert.That(exception.InnerExceptions[1].Message, Is.EqualTo("cleanup disposal failure"));
+    });
+}
+
     [Test]
     public async Task ExternalConcurrentDispose_WaitsForInFlightOperationAndRejectsNewOperations()
     {
@@ -505,6 +588,19 @@ public sealed class RuntimeLifecycleAndCanonicalizationTests
             return 1;
         }
     }
+
+private sealed class ThrowingDisposeTransformer(
+    string contributionId,
+    LanguageArtifactKind<string> source,
+    LanguageArtifactKind<int> target) : ILanguageArtifactTransformer<string, int>, IDisposable
+{
+    public LanguageContributionId ContributionId { get; } = new(contributionId);
+    public LanguageArtifactKind<string> TypedSourceKind { get; } = source;
+    public LanguageArtifactKind<int> TypedTargetKind { get; } = target;
+    public LanguageRuntimeComponentTraits TypedTraits => SafeTraits;
+    public int Transform(string value, LanguageArtifactTransformationContext context) => 1;
+    public void Dispose() => throw new InvalidOperationException("cleanup disposal failure");
+}
 
     private sealed class CountingTransformer(
         string contributionId,
