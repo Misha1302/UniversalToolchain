@@ -9,7 +9,7 @@
 - Contract-study command: `CONTRACT_EXPERIMENT_REPLICATES=5 ./Tools/run-contract-experiment.sh artifacts/contract-experiment`.
 - Package dependency mode: repository `NuGet.config`; the optional repository-local feed is materialized as an empty directory before restore.
 
-Source identity is owned by the Git commit. Every contract-study result tree carries its exact workflow commit, runner sources, environment metadata and a recursive `MANIFEST.sha256`. Release packages use a separate detached integrity chain and require explicit previous-source and previous-package baseline artifacts; ordinary CI never fabricates or silently bypasses those inputs.
+Source identity is owned by the Git commit. Every contract-study result tree carries its exact workflow commit, runner inputs, environment metadata and a per-file SHA-256 checksum index. Release packages use a separate detached integrity chain and require explicit previous-source and previous-package baseline artifacts; ordinary CI never fabricates or silently bypasses those inputs.
 
 ## Current integrated contracts
 
@@ -130,7 +130,7 @@ Verified PlanFuzz behavior includes:
 - language-neutral core with Acme and Wist adapters;
 - seven generic oracle families;
 - schema-v4 fail-closed surface/owner evidence;
-- fresh-process replay and recursive artifact manifests;
+- fresh-process replay with per-file artifact checksums;
 - strict clean/confirmed/flaky/inconclusive/infrastructure separation;
 - opt-in historical regression corpus;
 - separate exact and class fingerprints;
@@ -149,4 +149,4 @@ Not yet claimed:
 
 ## Artifact cleanliness
 
-Release archives must exclude `bin`, `obj`, `artifacts`, generated VitePress output, `node_modules`, `.git`, IDE metadata, test outputs, caches and secret-like files. Every retained release file must be covered by a recursive SHA-256 manifest, followed by clean extraction and independent restore/build/run verification.
+Release archives must exclude `bin`, `obj`, `artifacts`, generated VitePress output, `node_modules`, `.git`, IDE metadata, test outputs, caches and secret-like files. Every retained release file must be covered by a per-file SHA-256 checksum index, followed by clean extraction and independent restore/build/run verification.
