@@ -1,11 +1,15 @@
-# UniversalToolchain.Wist 0.1.0-alpha.4 — runtime-boundary hardening release notes
+# UniversalToolchain.Wist 0.1.0-alpha.5 — runtime-boundary hardening release notes
 
-Дата source/release artifact: 2026-07-27.
+Дата source/release artifact: 2026-07-30.
 
-`0.1.0-alpha.4` supersedes the locally built alpha.2 artifact and closes the second independent review findings. Он не обещает source/binary compatibility с `0.1.0-preview.1`, `0.1.0-alpha.1` или runtime assemblies поколения `1.0.0.0`.
+`0.1.0-alpha.5` supersedes the locally built alpha.2 artifact and closes the second independent review findings. Он не обещает source/binary compatibility с `0.1.0-preview.1`, `0.1.0-alpha.1` или runtime assemblies поколения `1.0.0.0`.
 
 ## Основные изменения
 
+- fail-closed identity для contract-annotated Bytecode emissions;
+- occurrence-safe compiler-fact effects и расширяемая verifier routing;
+- сохранение primary runtime construction failure при cleanup errors;
+- защита lifecycle gate от завершённых leases в flowed execution contexts;
 - единый backend contract для `Validate`, `Evaluate`, `Compile` и `TryCompile`;
 - ранняя проверка preset/backend в `WistEngine.Create`;
 - exact catalog всех 9 поставляемых presets;
@@ -27,6 +31,6 @@
 
 Актуальный review-remediation контракт: **1551 passed, 0 failed, 0 skipped**. Точные counts принадлежат `eng/test-counts.json` и зеркалятся в `VERIFICATION.md`; они становятся release authority только после успешного exact package/release gate для соответствующего commit.
 
-Локально собран `UniversalToolchain.Wist.0.1.0-alpha.4.nupkg`. Публикация на NuGet.org в рамках этой ремедиации не выполнялась.
+Локально собран `UniversalToolchain.Wist.0.1.0-alpha.5.nupkg`. Публикация на NuGet.org в рамках этой ремедиации не выполнялась.
 
 Исторические audit/remediation-материалы вынесены из product source archive в отдельный evidence/history bundle.

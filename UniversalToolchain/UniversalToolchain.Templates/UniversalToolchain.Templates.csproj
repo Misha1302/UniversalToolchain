@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <PackageId>UniversalToolchain.Templates</PackageId>
-    <Version>0.3.0-alpha.2</Version>
+    <Version>0.3.0-alpha.3</Version>
     <PackageType>Template</PackageType>
     <IsPackable>true</IsPackable>
     <IncludeContentInPack>true</IncludeContentInPack>
