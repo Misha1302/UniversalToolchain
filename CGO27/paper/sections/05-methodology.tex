@@ -6,6 +6,7 @@
  \item[RQ3:] Does selective verification match always verification on evaluated cases?
  \item[RQ4:] Does the distinction survive a second language package with different invariants?
  \item[RQ5:] How much verifier work is avoided on clean evaluated boundaries, without inferring whole-compilation performance?
+ \item[RQ6:] Which individual protocol mechanisms are necessary to reject their minimal counterexamples without rejecting matched controls?
 \end{description}
 
 \subsection{Frozen boundary corpus}
@@ -17,5 +18,8 @@ The end-to-end corpus contains 30 programs across arithmetic, pricing, and backe
 \subsection{TensorRules corpus}
 TensorRules freezes two valid programs, two intrinsically invalid programs, and eight post-verification mutations of inner dimensions, output shape, layout, dynamic extent, backend capability, broadcast relation, stale shape, and fact ownership. Four policies produce 48 observations. P2/P3 parity and the additional P3 invocation on clean boundaries are hard gates.
 
+\subsection{Mechanism-level ablation corpus}
+We construct one minimal counterexample and one matched valid control for each of eight implementation mechanisms: producer identity, source-node identity, selected pipeline order, canonical verifier ownership, conflict rejection, fail-closed unresolved obligations, backend capability contracts, and repeated-occurrence rejection. The full validator must emit the predeclared diagnostic for each counterexample. The ablated validator changes only the tested mechanism and must lose that detection. Both validators must accept the matched control. The executable emits raw JSONL and a validated aggregate; the paper tables are regenerated from that aggregate and byte-compared with the committed sources.
+
 \subsection{Evidence and claim control}
-Raw JSONL is written before assertions. Every artifact contains a source snapshot, environment record, exact commit, clean-status receipt, and recursive SHA-256 manifest. Hosted CI is an execution and reproducibility provider, not the main performance environment. An external-author kit exists, but no external corpus was available at analysis time.
+Raw JSONL is written before assertions. Every artifact contains a source snapshot, environment record, exact checked-out commit, clean-status receipt, and recursive SHA-256 manifest. Hosted CI is an execution and reproducibility provider, not the main performance environment. An external-author kit exists, but no external corpus was available at analysis time.
