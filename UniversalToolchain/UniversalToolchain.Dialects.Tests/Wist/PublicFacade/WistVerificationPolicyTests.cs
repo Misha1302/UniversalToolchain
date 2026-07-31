@@ -5,12 +5,13 @@ namespace UniversalToolchain.Dialects.Tests.Wist.PublicFacade;
 [TestFixture]
 public sealed class WistVerificationPolicyTests
 {
-    [TestCase(WistVerificationPolicy.P0Structural)]
-    [TestCase(WistVerificationPolicy.P1Invalidation)]
-    [TestCase(WistVerificationPolicy.P2Selective)]
-    [TestCase(WistVerificationPolicy.P3Always)]
-    public void Create_WithExplicitPolicy_EvaluatesValidProgram(WistVerificationPolicy policy)
+    [TestCase((int)WistVerificationPolicy.P0Structural)]
+    [TestCase((int)WistVerificationPolicy.P1Invalidation)]
+    [TestCase((int)WistVerificationPolicy.P2Selective)]
+    [TestCase((int)WistVerificationPolicy.P3Always)]
+    public void Create_WithExplicitPolicy_EvaluatesValidProgram(int policyValue)
     {
+        var policy = (WistVerificationPolicy)policyValue;
         using var engine = WistEngine.Create(new WistEngineOptions
         {
             DialectSource = WistDialectSource.FromShippedPreset("pricing-restricted"),
