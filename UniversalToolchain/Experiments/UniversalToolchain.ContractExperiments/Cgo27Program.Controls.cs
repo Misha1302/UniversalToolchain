@@ -122,14 +122,21 @@ internal static partial class Cgo27Program
             _activeTelemetry?.RecordPipeline(validation);
             if (validation.Diagnostics.Count != 0)
                 return (true, validation.Diagnostics[0].Code);
-            if (mode == ExperimentPolicy.P2_SELECTIVE && validation.ReverificationRequests.Count != 0)
-                return (true, ModuleContractDiagnosticCodes.CompilerFactReverificationRequired);
-            if (mode == ExperimentPolicy.P3_ALWAYS && !ExecuteSemanticReverification(
-                    KnownCoreVerifierRules.AirContract,
+            var scheduled = VerificationPolicyScheduler.Schedule(
+                mode,
+                AvailableRoutes(CompilerPipelineStage.Air),
+                validation.ReverificationRequests);
+            foreach (var invocation in scheduled)
+            {
+                var succeeded = ExecuteSemanticReverification(
+                    invocation.RuleId,
                     $"clean-facts-{sample}",
                     PipelineMutation.MissingRequirement,
-                    invalidArtifact: false))
-                return (true, ModuleContractDiagnosticCodes.CompilerFactReverificationRequired);
+                    invalidArtifact: invocation.IsObligationDriven);
+                _activeTelemetry?.RecordReverification(invocation.InvalidatedFacts.Count, succeeded);
+                if (!succeeded)
+                    return (true, ModuleContractDiagnosticCodes.CompilerFactReverificationRequired);
+            }
             return (false, (string?)null);
         });
 
