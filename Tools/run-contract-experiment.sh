@@ -41,6 +41,9 @@ for file in \
   Cgo27Program.Validation.cs \
   Cgo27Program.Controls.cs \
   Cgo27Program.Performance.cs \
+  VerificationPolicyScheduler.cs \
+  VerificationPolicySchedulerTests.cs \
+  POLICY_SPEC.md \
   analyze_results.py \
   validate_oracles.py \
   oracles-v3.json \
