@@ -1,5 +1,5 @@
 \section{Introduction}
-Compiler frameworks increasingly compose frontends, dialects, optimizers, plugins, and backends around shared intermediate representations (IRs)~\cite{llvm,mlir}. Such composition scales engineering, but it weakens a common informal argument: ``the IR verifier passed, therefore the selected compiler is valid.'' A generic IR verifier can establish operand schemas, branch targets, stack discipline, or type consistency while missing a relation introduced by the selected system: an optimizer may invalidate a fact produced by another extension; a backend capability may no longer justify an emitted operation; or metadata may remain well formed while describing the wrong producer.
+Compiler frameworks increasingly compose frontends, dialects, optimizers, plugins, and backends around shared intermediate representations (IRs)~\cite{llvm,mlir}. Such composition scales engineering, but it weakens a common informal argument: ``the IR verifier passed, therefore the selected compiler is valid.'' A generic IR verifier can establish operand schemas, branch targets, stack discipline, or type consistency while missing a relation introduced by the selected system: an optimizer may invalidate a fact produced by another extension; a backend capability may no longer justify an emitted operation; or metadata may remain well formed while describing the wrong producer or source node.
 
 Pass managers already track cached analysis validity. LLVM uses \texttt{PreservedAnalyses} and transitive invalidation~\cite{llvmnpm}; MLIR similarly invalidates analyses unless a pass marks them preserved~\cite{mlirpm}. These mechanisms answer whether an analysis result may be reused. They do not generally assign a semantic obligation to a canonical verifier at a later compiler boundary. At the other end of the assurance spectrum, verified compilers and translation validators prove or check semantic preservation~\cite{pnueli98,necula00,leroy06,alive2}. Those techniques provide stronger guarantees for covered transformations, but production extension ecosystems often contain heterogeneous verifiers and components that are not all expressed in one proof system.
 
@@ -7,8 +7,8 @@ This paper studies a middle ground: extensions declare semantic facts, effects, 
 
 This work makes four contributions:
 \begin{itemize}
-  \item a typed contract model for compiler facts, invalidations, canonical verifier owners, and first eligible detection boundaries;
+  \item a typed contract model for compiler facts, producer/source identities, invalidations, canonical verifier owners, and first eligible detection boundaries;
   \item a deterministic fail-closed scheduler implementing four policies over the same production verifiers;
   \item frozen boundary and source-to-result studies in System W, plus a public-SDK TensorRules package with different shape/layout invariants;
-  \item raw JSONL evidence, provider-backed replay, cross-study ablations, and explicit gates that prevent unsupported performance or external-validity claims.
+  \item raw JSONL evidence, provider-backed replay, eight isolated mechanism ablations, policy-level ablations, and explicit gates that prevent unsupported performance or external-validity claims.
 \end{itemize}
