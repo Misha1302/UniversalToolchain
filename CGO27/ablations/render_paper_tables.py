@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+ROW_END = r"\\"
 MECHANISM_LABELS = {
     "M01": "Producer identity",
     "M02": "Source identity",
@@ -32,7 +33,7 @@ def mechanism_table(data: dict[str, Any]) -> str:
     lines = [
         r"\begin{tabular}{@{}lp{0.43\columnwidth}ccc@{}}",
         r"\toprule",
-        r"ID & Removed mechanism & Full & Ablated & Control FP \\",
+        f"ID & Removed mechanism & Full & Ablated & Control FP {ROW_END}",
         r"\midrule",
     ]
     for row in sorted(rows, key=lambda item: item["Id"]):
@@ -40,7 +41,7 @@ def mechanism_table(data: dict[str, Any]) -> str:
             f"{row['Id']} & {MECHANISM_LABELS[row['Id']]} & "
             f"{int(row['FullProtocol']['Detected'])}/1 & "
             f"{int(row['AblatedProtocol']['Detected'])}/1 & "
-            f"{int(row['AblatedControl']['Detected'])}/1 \\\\"
+            f"{int(row['AblatedControl']['Detected'])}/1 {ROW_END}"
         )
     lines.extend([r"\bottomrule", r"\end{tabular}", ""])
     return "\n".join(lines)
@@ -53,15 +54,15 @@ def policy_table(data: dict[str, Any]) -> str:
     lines = [
         r"\begin{tabular}{@{}lrrrr@{}}",
         r"\toprule",
-        r"Variant & Prim. & Chall. & System W & Tensor \\",
+        f"Variant & Prim. & Chall. & System W & Tensor {ROW_END}",
         r"\midrule",
         f"P0 no contracts & {p0['boundaryPrimaryDetected']}/32 & "
         f"{p0['boundaryChallengeDetected']}/10 & "
-        f"{p0['wistEarlyFaultRejections']}/5 & {p0['tensorFaultRejections']}/8 \\\\ ",
+        f"{p0['wistEarlyFaultRejections']}/5 & {p0['tensorFaultRejections']}/8 {ROW_END}",
         f"P1 no discharge & {p1['boundaryPrimaryDetected']}/32 & "
         f"{p1['boundaryChallengeDetected']}/10 & "
-        f"{p1['wistEarlyFaultRejections']}/5 & {p1['tensorFaultRejections']}/8 \\\\ ",
-        r"P2 selective & 32/32 & 10/10 & 5/5 & 8/8 \\",
+        f"{p1['wistEarlyFaultRejections']}/5 & {p1['tensorFaultRejections']}/8 {ROW_END}",
+        f"P2 selective & 32/32 & 10/10 & 5/5 & 8/8 {ROW_END}",
         r"\bottomrule",
         r"\end{tabular}",
         "",
