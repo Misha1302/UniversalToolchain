@@ -32,6 +32,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          mkdir -p artifacts
           ./Tools/run-cgo27-end-to-end.sh artifacts/cgo27-end-to-end 2>&1 \
             | tee artifacts/cgo27-end-to-end-workflow.log
 
