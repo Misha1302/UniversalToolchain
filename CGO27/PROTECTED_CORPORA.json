@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "baselineCommit": "c73b418c6e72e8b92371753a3a7b4a9f7adaa5f1",
+  "protected": [
+    {
+      "path": "UniversalToolchain/Experiments/UniversalToolchain.ContractExperiments/Program.cs",
+      "region": "existing primary and challenge case definitions plus existing control denominators",
+      "rule": "Do not remove, rename, reclassify, or change expected outcomes of frozen cases. New policies may execute the same cases; new corpora must be separate."
+    },
+    {
+      "path": "UniversalToolchain/Experiments/UniversalToolchain.ContractExperiments/STUDY_PROTOCOL_V2.md",
+      "region": "historical three-mode study protocol",
+      "rule": "Preserve as historical evidence. Add a new protocol version rather than rewriting observed methodology."
+    },
+    {
+      "path": "UniversalToolchain/Experiments/UniversalToolchain.ContractReviewHoldouts/**",
+      "region": "post-freeze review holdout corpus and protocol",
+      "rule": "Preserve identifiers, expectations, denominators, and accounting."
+    }
+  ],
+  "initialMutationAllowlist": [
+    "CGO27/**",
+    "UniversalToolchain/Experiments/UniversalToolchain.ContractExperiments/**",
+    "UniversalToolchain/Experiments/UniversalToolchain.Cgo27Experiments/**",
+    "UniversalToolchain/Experiments/UniversalToolchain.Cgo27Experiments.Tests/**",
+    "Tools/run-cgo27-*.sh",
+    ".github/workflows/cgo27-*.yml",
+    "eng/test-counts.json",
+    "UniversalToolchain/Wist.sln"
+  ],
+  "mechanicalCheck": "Before each commit, compare protected paths against the baseline and reject unlisted semantic changes."
+}
