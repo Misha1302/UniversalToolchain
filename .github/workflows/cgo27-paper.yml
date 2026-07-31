@@ -61,6 +61,7 @@ jobs:
           cp "$pdf" artifacts/cgo27-paper/
           cp CGO27/paper/main.tex CGO27/paper/references.tex CGO27/paper/README.md CGO27/paper/Makefile CGO27/paper/RELATED_WORK_LEDGER.md artifacts/cgo27-paper/source/
           cp -a CGO27/paper/sections artifacts/cgo27-paper/source/
+          cp -a CGO27/paper/generated artifacts/cgo27-paper/source/
           pdfinfo "$pdf" > artifacts/cgo27-paper/pdfinfo.txt
           pdffonts "$pdf" > artifacts/cgo27-paper/pdffonts.txt
           git rev-parse HEAD > artifacts/cgo27-paper/COMMIT
