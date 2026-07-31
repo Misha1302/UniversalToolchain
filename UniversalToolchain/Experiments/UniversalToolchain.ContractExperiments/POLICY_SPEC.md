@@ -83,12 +83,6 @@ Backend-input verification is not represented by the historical corpus and must 
 
 ## Executable focused tests
 
-`VerificationPolicySchedulerTests` is run before every canonical experiment by:
+`VerificationPolicySchedulerTests` is invoked by a C# module initializer before the runner can enter `Main`. The gate therefore runs for every canonical main or replicate process and cannot be skipped by an experiment argument.
 
-```bash
- dotnet run -c Release --no-build --no-restore \
-   --project UniversalToolchain/Experiments/UniversalToolchain.ContractExperiments/UniversalToolchain.ContractExperiments.csproj \
-   -- --policy-self-test
-```
-
-The gate covers P0/P1 isolation, selective-only routing, P3 full routing, deterministic ordering, request merging, unknown-route rejection, conflicting-owner rejection, immutability, and the P2-subset-of-P3 invariant. Failure prevents evidence generation.
+The gate covers P0/P1 isolation, selective-only routing, P3 full routing, deterministic ordering, request merging, unknown-route rejection, conflicting-owner rejection, immutability, and the P2-subset-of-P3 invariant. Any failure terminates the process before evidence generation.
