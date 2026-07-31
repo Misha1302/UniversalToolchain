@@ -5,7 +5,7 @@ root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 project="$root/UniversalToolchain/Experiments/UniversalToolchain.EndToEndExperiments/UniversalToolchain.EndToEndExperiments.csproj"
 output="${1:-$root/artifacts/cgo27-end-to-end}"
 rm -rf "$output"
-mkdir -p "$output/source-snapshot"
+mkdir -p "$output/source-snapshot" "$root/UniversalToolchain/packages"
 
 unset PLATFORM || true
 dotnet restore "$project" -p:NuGetAudit=false
