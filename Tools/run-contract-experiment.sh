@@ -9,6 +9,8 @@ replicates="${CONTRACT_EXPERIMENT_REPLICATES:-5}"
 project="UniversalToolchain/Experiments/UniversalToolchain.ContractExperiments/UniversalToolchain.ContractExperiments.csproj"
 experiment_dir="UniversalToolchain/Experiments/UniversalToolchain.ContractExperiments"
 analyzer="$experiment_dir/analyze_results.py"
+oracle_validator="$experiment_dir/validate_oracles.py"
+oracle="$experiment_dir/oracles-v3.json"
 
 if [[ ! "$replicates" =~ ^[1-9][0-9]*$ ]]; then
   echo "CONTRACT_EXPERIMENT_REPLICATES must be a positive integer, got: $replicates" >&2
@@ -40,6 +42,8 @@ for file in \
   Cgo27Program.Controls.cs \
   Cgo27Program.Performance.cs \
   analyze_results.py \
+  validate_oracles.py \
+  oracles-v3.json \
   UniversalToolchain.ContractExperiments.csproj \
   README.md \
   STUDY_PROTOCOL_V2.md \
@@ -62,6 +66,12 @@ for ((index=1; index<=replicates; index++)); do
     dotnet run -c Release --no-build --no-restore --project "$project" -- "$replicate_dir"
   replicate_args+=(--replicate-summary "$replicate_dir/summary.json")
 done
+
+python3 "$oracle_validator" \
+  "$out_dir/main/results.jsonl" \
+  --oracle "$oracle" \
+  --mutations "$out_dir/main/mutations.csv" \
+  --receipt "$out_dir/analysis/oracle-validation.json"
 
 python3 "$analyzer" \
   "$out_dir/main/results.jsonl" \
