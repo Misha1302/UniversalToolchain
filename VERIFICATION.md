@@ -25,6 +25,7 @@ The repository implements and continuously verifies:
 - AIR structural, stack and backend-capability verification;
 - compiler facts/effects and fail-closed routing of unresolved reverification requests;
 - extension-provided compiler-fact verifier routes with conflict rejection;
+- deterministic four-policy semantic-verification scheduling with structural and semantic AIR scopes kept distinct;
 - explicit rejection of repeated module identities until occurrence-sensitive effects are modeled;
 - `PerSession` ownership and explicit `SingletonStateless` lifecycle rules;
 - primary-first preservation of runtime construction failures when cleanup also fails;
@@ -50,15 +51,15 @@ Parallel graph traversal and shared compilation are the default. `--jobs`, `--se
 
 | Test project | Passed | Failed | Skipped |
 |---|---:|---:|---:|
-| `Tests` | 512 | 0 | 0 |
+| `Tests` | 534 | 0 | 0 |
 | `UniversalToolchain.Modules.Tests` | 292 | 0 | 0 |
-| `UniversalToolchain.Dialects.Tests` | 614 | 0 | 0 |
+| `UniversalToolchain.Dialects.Tests` | 620 | 0 | 0 |
 | `UniversalToolchain.LanguageSdk.Tests` | 82 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.Tests` | 41 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
-| **Total** | **1,551** | **0** | **0** |
+| **Total** | **1,579** | **0** | **0** |
 
-The seven focused review-remediation regressions cover incomplete Bytecode emission identity, repeated pipeline occurrences, extension verifier routing, primary-first construction failure preservation and stale flowed operation leases. Master `.NET CI` run `30585251901` on commit `2b0a4d1f0e255432daf0d5ddd485269b6490b67e` completed successfully and recorded `TEST-CONTRACT COMPLETE passed=1551 entries=14`. Its canonical-build artifact has ID `8776313506` and digest `sha256:1a7875efad0bc1fc230f61bd9b4d578e7d626c0230905ecbb193846c742f9e30`.
+The current research branch adds 28 focused policy-scheduling, AIR-scope and Wist integration regressions while preserving the earlier review-remediation tests. The exact manifest is owned by `eng/test-counts.json`; historical master run `30585251901` remains the authority for the preceding 1,551-test revision until this branch is merged and reproduced on master.
 
 ## Production-boundary contract experiment
 
