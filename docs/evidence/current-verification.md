@@ -3,7 +3,7 @@ title: Current Verification
 description: Current build, test, workflow and bounded research-evidence record.
 audience: maintainer-or-evaluator
 status: current
-lastVerifiedAgainst: master-2b0a4d1f
+lastVerifiedAgainst: research-8f2c45bb
 ---
 
 # Current verification
@@ -20,15 +20,15 @@ It restores and builds both `UniversalToolchain/Wist.sln` and the configuration-
 
 | Project | Passed | Failed | Skipped |
 |---|---:|---:|---:|
-| `Tests` | 512 | 0 | 0 |
+| `Tests` | 534 | 0 | 0 |
 | `UniversalToolchain.Modules.Tests` | 292 | 0 | 0 |
-| `UniversalToolchain.Dialects.Tests` | 614 | 0 | 0 |
+| `UniversalToolchain.Dialects.Tests` | 620 | 0 | 0 |
 | `UniversalToolchain.LanguageSdk.Tests` | 82 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.Tests` | 41 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
-| **Total** | **1,551** | **0** | **0** |
+| **Total** | **1,579** | **0** | **0** |
 
-The seven added regressions cover incomplete Bytecode emission identity, repeated pipeline occurrences, extension verifier routing, primary-first construction failure preservation and stale flowed operation leases. Master `.NET CI` run `30585251901` on commit `2b0a4d1f0e255432daf0d5ddd485269b6490b67e` completed successfully with `TEST-CONTRACT COMPLETE passed=1551 entries=14`. Canonical-build artifact ID `8776313506` has digest `sha256:1a7875efad0bc1fc230f61bd9b4d578e7d626c0230905ecbb193846c742f9e30`.
+The current research branch adds 28 policy-scheduling, AIR-scope and Wist integration regressions while preserving the earlier review-remediation tests. The exact manifest belongs to `eng/test-counts.json`. Historical master `.NET CI` run `30585251901` remains the authority for the preceding 1,551-test revision until this branch is merged and reproduced on master.
 
 ## Workflow set
 
