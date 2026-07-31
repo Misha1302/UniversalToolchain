@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "totalPassed": 1551,
+  "totalPassed": 1574,
   "main": [
     {
       "label": "Core",
@@ -8,7 +8,7 @@
       "runner": "assembly",
       "path": "UniversalToolchain/Tests/bin/Release/net10.0/Tests.dll",
       "timeoutSeconds": 480,
-      "expectedPassed": 512
+      "expectedPassed": 529
     },
     {
       "label": "Modules",
@@ -24,7 +24,7 @@
       "runner": "project",
       "path": "UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolchain.Dialects.Tests.csproj",
       "timeoutSeconds": 600,
-      "expectedPassed": 614
+      "expectedPassed": 620
     },
     {
       "label": "LanguageSdk",

@@ -4,6 +4,7 @@ using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
 using UniversalToolchain.Dialects.Wist.Presets;
 using UniversalToolchain.Ssa.Optimization;
+using UniversalToolchain.ModuleContracts;
 
 namespace UniversalToolchain.Wist;
 
@@ -73,7 +74,8 @@ public sealed class WistEngine : IDisposable
             BackendId = RequireBackendId(options.BackendId),
             AllowedAssemblies = allowedAssemblies,
             ResourceLimits = resourceLimits,
-            Optimization = optimization
+            Optimization = optimization,
+            VerificationPolicy = RequireVerificationPolicy(options.VerificationPolicy)
         };
 
         var services = new ServiceCollection();
@@ -98,7 +100,8 @@ public sealed class WistEngine : IDisposable
             {
                 AllowedAssemblies = allowedAssemblies,
                 SsaExecution = CreateSsaExecutionOptions(optimization.Ssa),
-                SsaReportSink = reportCollector
+                SsaReportSink = reportCollector,
+                ModuleContracts = CreateModuleContractOptions(optionsSnapshot.VerificationPolicy)
             };
 
             var compositionOwner = compositionProvider;
@@ -222,9 +225,6 @@ public sealed class WistEngine : IDisposable
         }
     }
 
-
-
-
     private WistProgram<TDelegate> CompileCore<TDelegate>(
         string formula,
         string[] parameterNames,
@@ -273,6 +273,29 @@ public sealed class WistEngine : IDisposable
             profile,
             RuntimeProfileOverridePolicy.StrictNoConflicts);
     }
+
+    private static ModuleContractVerificationOptions CreateModuleContractOptions(WistVerificationPolicy policy) =>
+        new ModuleContractVerificationOptions
+        {
+            Mode = ModuleContractVerificationMode.Strict,
+            PipelineOptions = ModuleContractPipelineProfiles.StrictEnforced with
+            {
+                VerificationPolicy = policy switch
+                {
+                    WistVerificationPolicy.P0Structural => ModuleContractVerificationPolicy.P0Structural,
+                    WistVerificationPolicy.P1Invalidation => ModuleContractVerificationPolicy.P1Invalidation,
+                    WistVerificationPolicy.P2Selective => ModuleContractVerificationPolicy.P2Selective,
+                    WistVerificationPolicy.P3Always => ModuleContractVerificationPolicy.P3Always,
+                    _ => throw new ArgumentOutOfRangeException(nameof(policy), policy, "Unknown Wist verification policy.")
+                }
+            },
+            DiagnosticSink = new InMemoryModuleContractDiagnosticSink()
+        }.SnapshotValidated();
+
+    private static WistVerificationPolicy RequireVerificationPolicy(WistVerificationPolicy policy) =>
+        Enum.IsDefined(policy)
+            ? policy
+            : throw new ArgumentOutOfRangeException(nameof(policy), policy, "Unknown Wist verification policy.");
 
     private static SsaRuntimeExecutionOptions CreateSsaExecutionOptions(WistSsaOptions options) => new()
     {
