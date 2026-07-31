@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://misha1302.github.io/Wist2/schemas/cgo27-contract-result-v3.json",
+  "title": "Wist2 CGO 2027 contract experiment raw result",
+  "type": "object",
+  "additionalProperties": true,
+  "required": [
+    "schema_version",
+    "run_id",
+    "commit_sha",
+    "policy",
+    "corpus_id",
+    "case_id",
+    "case_kind",
+    "language_id",
+    "pipeline_id",
+    "workload_stratum",
+    "expected_outcome",
+    "actual_outcome",
+    "expected_diagnostic_family",
+    "actual_diagnostic_family",
+    "expected_boundary",
+    "first_detection_boundary",
+    "verifier_invocations_total",
+    "verifier_invocations_by_rule",
+    "verification_elapsed_ns",
+    "pipeline_elapsed_ns",
+    "whole_compilation_elapsed_ns",
+    "allocated_bytes",
+    "peak_working_set_bytes",
+    "obligations_created",
+    "obligations_discharged",
+    "obligations_failed",
+    "facts_invalidated",
+    "facts_reverified",
+    "process_exit_code",
+    "repetition",
+    "seed"
+  ],
+  "properties": {
+    "schema_version": { "const": 3 },
+    "run_id": { "type": "string", "minLength": 1 },
+    "commit_sha": { "type": "string", "minLength": 1 },
+    "policy": {
+      "enum": ["P0_STRUCTURAL", "P1_INVALIDATION", "P2_SELECTIVE", "P3_ALWAYS"]
+    },
+    "corpus_id": { "enum": ["primary", "challenge", "control"] },
+    "case_id": { "type": "string", "minLength": 1 },
+    "case_kind": { "enum": ["fault", "valid-control"] },
+    "language_id": { "type": "string", "minLength": 1 },
+    "pipeline_id": { "type": "string", "minLength": 1 },
+    "workload_stratum": { "type": "string", "minLength": 1 },
+    "expected_outcome": { "enum": ["accepted", "rejected"] },
+    "actual_outcome": { "enum": ["accepted", "rejected", "infrastructure-error"] },
+    "expected_diagnostic_family": { "type": ["string", "null"] },
+    "actual_diagnostic_family": { "type": ["string", "null"] },
+    "expected_boundary": { "type": "string", "minLength": 1 },
+    "first_detection_boundary": { "type": ["string", "null"] },
+    "verifier_invocations_total": { "type": "integer", "minimum": 0 },
+    "verifier_invocations_by_rule": {
+      "type": "object",
+      "additionalProperties": { "type": "integer", "minimum": 0 }
+    },
+    "verification_elapsed_ns": { "type": "integer", "minimum": 0 },
+    "pipeline_elapsed_ns": { "type": "integer", "minimum": 0 },
+    "whole_compilation_elapsed_ns": {
+      "description": "Null in the boundary-kernel experiment. Populated only by the separate end-to-end harness.",
+      "type": ["integer", "null"],
+      "minimum": 0
+    },
+    "allocated_bytes": { "type": "integer", "minimum": 0 },
+    "peak_working_set_bytes": { "type": "integer", "minimum": 0 },
+    "obligations_created": { "type": "integer", "minimum": 0 },
+    "obligations_discharged": { "type": "integer", "minimum": 0 },
+    "obligations_failed": { "type": "integer", "minimum": 0 },
+    "facts_invalidated": { "type": "integer", "minimum": 0 },
+    "facts_reverified": { "type": "integer", "minimum": 0 },
+    "process_exit_code": { "type": "integer" },
+    "repetition": { "type": "integer", "minimum": 1 },
+    "seed": { "type": "integer", "minimum": 0 },
+    "measurement_scope": { "enum": ["boundary-kernel", "whole-compilation"] },
+    "operator_id": { "type": "string", "minLength": 1 },
+    "detected": { "type": "boolean" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "measurement_scope": { "const": "boundary-kernel" } } },
+      "then": { "properties": { "whole_compilation_elapsed_ns": { "type": "null" } } }
+    },
+    {
+      "if": { "properties": { "case_kind": { "const": "valid-control" } } },
+      "then": {
+        "properties": {
+          "expected_outcome": { "const": "accepted" },
+          "expected_diagnostic_family": { "type": "null" }
+        }
+      }
+    }
+  ]
+}
