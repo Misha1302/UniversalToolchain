@@ -70,6 +70,25 @@ public sealed class BytecodeVerifierTests
     }
 
     [Test]
+    public void Verify_WhenObservedSourceNodeDoesNotOwnEmission_ReturnsDiagnostic()
+    {
+        var moduleId = new ModuleId("wist.test");
+        var declaredNode = new AstNodeKind("wist.test.ast.declared");
+        var observedNode = new AstNodeKind("wist.test.ast.observed");
+        var pattern = new BytecodePatternId("wist.test.bytecode.pattern");
+        var table = CreateTable(moduleId, declaredNode, pattern);
+
+        var result = new BytecodeVerifier().Verify(new BytecodeVerificationRequest(
+            new Bytecode([]),
+            table,
+            VerificationSeverityProfile.Strict,
+            [new ObservedBytecodeEmission(moduleId, observedNode, [], [pattern])]));
+
+        Assert.That(result.IsValid, Is.False);
+        Assert.That(result.Diagnostics.Single().Code, Is.EqualTo(ModuleContractDiagnosticCodes.UndeclaredBytecodeSource));
+    }
+
+    [Test]
     public void Verify_WhenObservedStackEffectDiffersFromDeclaration_ReturnsDiagnostic()
     {
         var moduleId = new ModuleId("wist.test");
