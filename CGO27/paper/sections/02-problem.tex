@@ -1,0 +1,14 @@
+\section{Problem: IR Validity Is Not System Validity}
+Let a selected compiler system be a tuple $S=(L,P,B,C)$ of language components, ordered passes, backend components, and their declared contracts. Let $x_i$ be the artifact at boundary $i$. A structural verifier establishes $V_{str}(x_i)$, such as legal opcodes and control-flow targets. The selected system also relies on semantic facts $F_i$---for example, bytecode-producer identity, verified stack effects, shape consistency, or backend capability support.
+
+A transformation $t$ has an effect contract
+\[
+E_t=(R_t, P_t, I_t),
+\]
+where $R_t$ is the set of required facts, $P_t$ the set produced or preserved, and $I_t$ the invalidated facts. For every invalidated fact $f$, the selected contract table maps $f$ to at most one canonical verifier rule $owner(f)$. If no route exists, or two components claim the same canonical owner, scheduling fails closed.
+
+The key distinction is:
+\[
+V_{str}(x_i) \centernot\implies Valid(S,x_i).
+\]
+The artifact can be a valid instance of a generic IR and still be invalid for the chosen language/backend relation. A verifier route converts this gap into an executable obligation $o=(f,owner(f),i)$.

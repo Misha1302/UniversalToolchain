@@ -1,0 +1,12 @@
+\section{Related Work}
+\paragraph{Pass invalidation.}
+LLVM and MLIR cache analyses and use explicit preservation to invalidate stale results~\cite{llvmnpm,mlirpm}. Our facts can represent such analyses, but the main addition is a canonical executable verifier owner and a boundary at which the obligation must be discharged. The scheduler also compares selective and unconditional semantic checking through the same routes.
+
+\paragraph{Translation validation and verified compilation.}
+Translation validation checks the output of transformations rather than proving the whole optimizer~\cite{pnueli98,necula00,tristan08}. Alive and Alive2 provide automated LLVM rewrite/IR validation~\cite{alive,alive2}; CompCert proves semantic preservation for a compiler stack~\cite{leroy06,leroy09backend}. Contract-guided reverification offers weaker guarantees than a proof: it is only as sound as its contracts, routes, and verifiers. Its target is different---heterogeneous extensible systems where multiple production verifiers already exist and must be scheduled after composition.
+
+\paragraph{Typed and certifying compilation.}
+Typed assembly languages, proof-carrying code, and certifying compilers attach checkable evidence or invariants to low-level code~\cite{pcc,tal,certcompiler}. Our obligations similarly separate production from checking, but are transient pipeline obligations rather than proofs shipped with binaries.
+
+\paragraph{Compiler testing.}
+Random and metamorphic testing systems such as Csmith, EMI, and YARPGen discover wrong-code bugs~\cite{csmith,emi,yarpgen}. Reduction systems make failures actionable~\cite{creduce,perses,delta}. We use faults to evaluate a detection mechanism rather than propose a new generator. The external-author protocol is intended to reduce author bias, but remains unexecuted and therefore limits our claims.

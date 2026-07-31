@@ -1,0 +1,60 @@
+name: CGO27 Paper
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - master
+    paths:
+      - ".github/workflows/cgo27-paper.yml"
+      - "CGO27/paper/**"
+      - "CGO27/ABLATION_REPORT.md"
+      - "CGO27/CLAIM_EVIDENCE_LEDGER.md"
+      - "CGO27/RESULTS_SUMMARY.md"
+
+permissions:
+  contents: read
+
+jobs:
+  paper:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build anonymous ACM paper
+        uses: xu-cheng/latex-action@v4
+        with:
+          root_file: main.tex
+          working_directory: CGO27/paper
+          args: -pdf -file-line-error -halt-on-error -interaction=nonstopmode
+      - name: Paper preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          pdf="CGO27/paper/main.pdf"
+          log="CGO27/paper/main.log"
+          test -s "$pdf"
+          ! grep -Eq 'Overfull \\hbox|Citation .* undefined|Reference .* undefined|There were undefined references' "$log"
+          pages="$(pdfinfo "$pdf" | awk '/^Pages:/ {print $2}')"
+          [[ "$pages" =~ ^[0-9]+$ ]] && (( pages <= 11 ))
+          pdfinfo "$pdf" | grep -q 'Page size:.*612 x 792 pts'
+          pdffonts "$pdf" | awk 'NR > 2 && $5 != "yes" { bad=1 } END { exit bad }'
+          pdftotext "$pdf" artifacts-paper.txt
+          ! grep -Eiq 'Misha|Razakov|Wist2|github\.com|/home/|/mnt/|Sydney' artifacts-paper.txt
+          grep -q 'Anonymous Author(s)' artifacts-paper.txt
+          mkdir -p artifacts/cgo27-paper/source
+          cp "$pdf" artifacts/cgo27-paper/
+          cp CGO27/paper/main.tex CGO27/paper/references.tex CGO27/paper/README.md CGO27/paper/Makefile CGO27/paper/RELATED_WORK_LEDGER.md artifacts/cgo27-paper/source/
+          cp -a CGO27/paper/sections artifacts/cgo27-paper/source/
+          pdfinfo "$pdf" > artifacts/cgo27-paper/pdfinfo.txt
+          pdffonts "$pdf" > artifacts/cgo27-paper/pdffonts.txt
+          printf '%s\n' "$GITHUB_SHA" > artifacts/cgo27-paper/COMMIT
+          (cd artifacts/cgo27-paper && find . -type f ! -name MANIFEST.sha256 -print0 | sort -z | xargs -0 sha256sum > MANIFEST.sha256 && sha256sum -c MANIFEST.sha256)
+      - name: Upload paper evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: cgo27-paper-${{ github.sha }}
+          path: artifacts/cgo27-paper
+          if-no-files-found: error
+          retention-days: 90

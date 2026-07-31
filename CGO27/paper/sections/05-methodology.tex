@@ -1,0 +1,21 @@
+\section{Methodology}
+\subsection{Research questions}
+\begin{description}
+ \item[RQ1:] What faults are missed when only structural verification is available?
+ \item[RQ2:] What additional faults require actual obligation discharge beyond recording invalidations?
+ \item[RQ3:] Does selective verification match always verification on evaluated cases?
+ \item[RQ4:] Does the distinction survive a second language package with different invariants?
+ \item[RQ5:] How much verifier work is avoided on clean evaluated boundaries, without inferring whole-compilation performance?
+\end{description}
+
+\subsection{Frozen boundary corpus}
+The historical System W corpus is immutable: 40 instances representing 32 primary operator shapes in five families, 10 post-freeze challenge operators, and 100 valid controls per policy. Faults are repeated three times. The v3 study does not rename historical B0/B1/B2 results; it emits a separate four-policy schema and mechanically checks the old mutation catalog.
+
+\subsection{System W source-to-result corpus}
+The end-to-end corpus contains 30 programs across arithmetic, pricing, and backend strata. Five cases enable an optimizer that preserves structural validity while violating a declared semantic relation at optimized AIR. Each case/policy pair runs twice in a fresh process, yielding 240 raw records. CIL faults are designed to produce a wrong result under P0/P1; interpreter faults may reach a later backend/runtime failure. P2/P3 must reject at optimized AIR with the expected capability diagnostic. One non-fault program exhibits a pre-existing mixed-type runtime assertion under all policies and is classified separately, not as a control or protocol fault.
+
+\subsection{TensorRules corpus}
+TensorRules freezes two valid programs, two intrinsically invalid programs, and eight post-verification mutations of inner dimensions, output shape, layout, dynamic extent, backend capability, broadcast relation, stale shape, and fact ownership. Four policies produce 48 observations. P2/P3 parity and the additional P3 invocation on clean boundaries are hard gates.
+
+\subsection{Evidence and claim control}
+Raw JSONL is written before assertions. Every artifact contains a source snapshot, environment record, exact commit, clean-status receipt, and recursive SHA-256 manifest. Hosted CI is an execution and reproducibility provider, not the main performance environment. An external-author kit exists, but no external corpus was available at analysis time.

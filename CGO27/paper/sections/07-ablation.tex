@@ -1,0 +1,19 @@
+\section{Ablation and Verification Work}
+Table~\ref{tab:ablation} isolates mechanism contributions. Removing typed contracts (P0) loses 20 primary and nine challenge detections relative to P2. Keeping invalidation but removing discharge (P1) recovers the challenge set but still loses four primary detection shapes and every targeted early rejection in both source-level studies.
+
+\begin{table}[t]
+\caption{Mechanism ablation. ``Early'' counts rejection at the intended semantic boundary.}
+\label{tab:ablation}
+\scriptsize
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Variant & Prim. & Chall. & System W & Tensor \\
+\midrule
+P0 no contracts & 12/32 & 1/10 & 0/5 & 0/8 \\
+P1 no discharge & 28/32 & 10/10 & 0/5 & 0/8 \\
+P2 selective & 32/32 & 10/10 & 5/5 & 8/8 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+On 100 boundary controls, P2 executes 120 verifier calls and P3 executes 140, a 14.3\% reduction. This result supports the qualitative statement that selective scheduling can avoid unrequested work, but it misses our predeclared 25\% threshold and is not a measurement of whole compilation. Consequently the paper has no efficiency headline.
