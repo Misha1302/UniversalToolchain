@@ -32,6 +32,13 @@ uname -a > "$out_dir/environment/uname.txt"
 
 for file in \
   Program.cs \
+  Cgo27Program.Core.cs \
+  Cgo27Program.Corpus.cs \
+  Cgo27Program.VerificationPipeline.cs \
+  Cgo27Program.AirChallenge.cs \
+  Cgo27Program.Validation.cs \
+  Cgo27Program.Controls.cs \
+  Cgo27Program.Performance.cs \
   analyze_results.py \
   UniversalToolchain.ContractExperiments.csproj \
   README.md \
