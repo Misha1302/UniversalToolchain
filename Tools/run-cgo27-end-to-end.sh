@@ -26,12 +26,13 @@ for case_id in C01 C02 P01 P02 B01; do
   done
 done
 
-python3 "$project_root/run_matrix.py" "$dll" "$output"
+python3 "$project_root/run_matrix_v2.py" "$dll" "$output"
 
 cp "$project" "$output/source-snapshot/"
 cp "$project_root/Program.cs" "$output/source-snapshot/"
 cp "$project_root/Cgo27FaultOptimizer.cs" "$output/source-snapshot/"
 cp "$project_root/run_matrix.py" "$output/source-snapshot/"
+cp "$project_root/run_matrix_v2.py" "$output/source-snapshot/"
 cp "$project_root/README.md" "$output/source-snapshot/"
 cp "$root/Tools/run-cgo27-end-to-end.sh" "$output/source-snapshot/"
 git -C "$root" status --porcelain=v1 > "$output/git-status.txt"
