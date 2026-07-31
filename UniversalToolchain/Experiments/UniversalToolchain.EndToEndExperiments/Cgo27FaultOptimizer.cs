@@ -10,7 +10,7 @@ namespace UniversalToolchain.EndToEndExperiments;
 public sealed class Cgo27FaultOptimizer : IAirOptimizer, IModuleContractDescriptorProvider
 {
     private static readonly ModuleId Module = new("cgo27.optimizer.fault");
-    private static readonly BackendCapabilityId MissingCapability = KnownCoreBackendCapabilities.ObjectConstruction;
+    private static readonly BackendCapabilityId MissingCapability = KnownCoreBackendCapabilities.ConditionalBranches;
     private static readonly IntrinsicSymbolId ReplacementIntrinsic = new("load_i32");
     private static readonly IntrinsicSymbolId ContractOnlyMarker = new("cgo27_contract_only_marker");
 
