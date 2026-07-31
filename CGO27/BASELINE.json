@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "capturedAtUtc": "2026-07-31T10:38:00Z",
+  "repository": "Misha1302/Wist2",
+  "branchBase": {
+    "ref": "master",
+    "commit": "c73b418c6e72e8b92371753a3a7b4a9f7adaa5f1"
+  },
+  "verifiedCodeBaseline": {
+    "commit": "2b0a4d1f0e255432daf0d5ddd485269b6490b67e",
+    "equivalenceToBranchBase": {
+      "status": "DOCUMENTATION_ONLY_DELTA",
+      "changedFiles": [
+        "VERIFICATION.md",
+        "docs/evidence/current-verification.md",
+        "internal-docs/reviews/review-ten-findings-remediation-2026-07-30.md"
+      ]
+    }
+  },
+  "canonicalBuild": {
+    "workflowRunId": 30585251901,
+    "artifactId": 8776313506,
+    "artifactSha256": "1a7875efad0bc1fc230f61bd9b4d578e7d626c0230905ecbb193846c742f9e30",
+    "tests": {
+      "passed": 1551,
+      "failed": 0,
+      "skipped": 0,
+      "contractEntries": 14
+    }
+  },
+  "contractExperiment": {
+    "workflowRunId": 30585251945,
+    "artifactId": 8776245456,
+    "artifactSha256": "ca1708b8054e63eb9fff0526f9113013a9569121890ff3b0ea19572e5c199961",
+    "policies": ["B0", "B1", "B2"],
+    "primaryOperators": 32,
+    "primaryInstances": 40,
+    "challengeOperators": 10,
+    "controlsPerMode": 100,
+    "primaryDetected": {"B0": 12, "B1": 28, "B2": 32},
+    "controlFalsePositives": {"B0": 0, "B1": 0, "B2": 0},
+    "performanceClaimBoundary": "isolated verifier-kernel microbenchmark only"
+  },
+  "packageEvidence": {
+    "artifactId": 8774539955,
+    "artifactSha256": "6cfa9d197548887ef8a80e701900d936c4364aa849e70e9c2b8ed420adfd3a7b",
+    "codeHead": "77edfb05047c933665912015af6d242a3a9f7fed",
+    "wistCandidatePackage": "UniversalToolchain.Wist.0.1.0-alpha.5.nupkg"
+  },
+  "toolchains": {
+    "canonicalCi": {
+      "sdk": "10.0.302",
+      "runtime": "10.0.10",
+      "os": "Ubuntu 24.04",
+      "architecture": "x64"
+    },
+    "localEvidenceReplay": {
+      "sdk": "10.0.301",
+      "runtime": "10.0.9",
+      "os": "Debian 13",
+      "architecture": "x64",
+      "status": "PACKAGE_BOUNDARY_REPLAY_ONLY"
+    }
+  }
+}
