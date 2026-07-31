@@ -17,6 +17,12 @@ if [[ -z "$dll" || ! -f "$dll" ]]; then
   exit 1
 fi
 
+: > "$output/probe-results.jsonl"
+for policy in P0_STRUCTURAL P1_INVALIDATION P2_SELECTIVE P3_ALWAYS; do
+  dotnet "$dll" --child C01 "$policy" 1 1 cgo27-e2e-probe \
+    | tee -a "$output/probe-results.jsonl"
+done
+
 dotnet "$dll" "$output"
 
 cp "$project" "$output/source-snapshot/"
