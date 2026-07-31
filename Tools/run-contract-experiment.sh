@@ -24,7 +24,11 @@ unset PLATFORM || true
 
 commit="$(git -C "$root" rev-parse HEAD 2>/dev/null || true)"
 if [[ -z "$commit" ]]; then
-  commit="${CGO27_EXPERIMENT_COMMIT:-${CONTRACT_EXPERIMENT_COMMIT:-${GITHUB_SHA:-unknown}}}"
+  commit="${CGO27_SOURCE_SHA:-${CGO27_EXPERIMENT_COMMIT:-${CONTRACT_EXPERIMENT_COMMIT:-${GITHUB_SHA:-}}}}"
+fi
+if [[ ! "$commit" =~ ^[0-9a-f]{40}$ ]]; then
+  echo "exact 40-hex source commit could not be resolved" >&2
+  exit 2
 fi
 export CGO27_EXPERIMENT_COMMIT="$commit"
 printf '%s\n' "$commit" > "$out_dir/environment/commit.txt"
