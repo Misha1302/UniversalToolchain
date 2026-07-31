@@ -28,6 +28,12 @@ jobs:
           root_file: main.tex
           working_directory: CGO27/paper
           args: -pdf -file-line-error -halt-on-error -interaction=nonstopmode
+      - name: Install PDF preflight tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends poppler-utils
       - name: Paper preflight
         shell: bash
         run: |

@@ -35,7 +35,11 @@ cp "$project_root/run_matrix.py" "$output/source-snapshot/"
 cp "$project_root/run_matrix_v2.py" "$output/source-snapshot/"
 cp "$project_root/README.md" "$output/source-snapshot/"
 cp "$root/Tools/run-cgo27-end-to-end.sh" "$output/source-snapshot/"
-git -C "$root" status --porcelain=v1 > "$output/git-status.txt"
+if git -C "$root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  git -C "$root" status --porcelain=v1 > "$output/git-status.txt"
+else
+  : > "$output/git-status.txt"
+fi
 printf '%s\n' "${GITHUB_SHA:-${CGO27_EXPERIMENT_COMMIT:-local-uncommitted}}" > "$output/COMMIT"
 (
   cd "$output"

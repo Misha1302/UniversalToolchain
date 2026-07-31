@@ -18,7 +18,11 @@ cp "$(dirname "$project")/Program.cs" "$output/source-snapshot/"
 cp "$(dirname "$project")/README.md" "$output/source-snapshot/"
 cp "$(dirname "$project")/run.sh" "$output/source-snapshot/"
 printf '%s\n' "${GITHUB_SHA:-local-uncommitted}" > "$output/COMMIT"
-git -C "$root" status --porcelain=v1 > "$output/git-status.txt"
+if git -C "$root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  git -C "$root" status --porcelain=v1 > "$output/git-status.txt"
+else
+  : > "$output/git-status.txt"
+fi
 (
   cd "$output"
   find . -type f ! -name MANIFEST.sha256 -print0 | sort -z | xargs -0 sha256sum > MANIFEST.sha256
