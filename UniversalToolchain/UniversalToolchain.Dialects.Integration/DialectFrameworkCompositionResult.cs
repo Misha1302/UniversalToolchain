@@ -45,6 +45,9 @@ public sealed class DialectFrameworkCompositionResult
 
     public IReadOnlyList<DialectDiagnostic> ResolutionDiagnostics => _resolutionDiagnostics;
 
+    internal IReadOnlyList<DialectDiagnostic> Diagnostics =>
+        _semanticDiagnostics.Concat(_resolutionDiagnostics).ToArray();
+
     public bool IsSuccess =>
         CompiledDialect != null &&
         BuildPlan != null &&
