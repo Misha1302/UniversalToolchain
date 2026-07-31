@@ -22,7 +22,15 @@ python3 "$root/CGO27/ablations/analyze_ablations.py" \
   "$inputs/tensorrules/results.json" \
   "$inputs/mechanisms/mechanism-ablations.json" \
   "$output/analysis"
+python3 "$root/CGO27/ablations/render_paper_tables.py" \
+  "$output/analysis/ablations.json" \
+  "$output/paper-tables"
+cmp "$output/paper-tables/mechanism-ablation-table.tex" \
+  "$root/CGO27/paper/generated/mechanism-ablation-table.tex"
+cmp "$output/paper-tables/policy-ablation-table.tex" \
+  "$root/CGO27/paper/generated/policy-ablation-table.tex"
 cp "$root/CGO27/ablations/analyze_ablations.py" "$output/source-snapshot/"
+cp "$root/CGO27/ablations/render_paper_tables.py" "$output/source-snapshot/"
 cp "$root/Tools/run-cgo27-ablations.sh" "$output/source-snapshot/"
 cp "$root/UniversalToolchain/Experiments/UniversalToolchain.ContractExperiments/Cgo27Program.MechanismAblations.cs" "$output/source-snapshot/"
 cp "$root/UniversalToolchain/Experiments/UniversalToolchain.ContractExperiments/UniversalToolchain.MechanismAblations.csproj" "$output/source-snapshot/"
