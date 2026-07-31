@@ -24,15 +24,22 @@ on:
 permissions:
   contents: read
 
+env:
+  CGO27_SOURCE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
 jobs:
   artifact:
     runs-on: ubuntu-24.04
     timeout-minutes: 50
     steps:
-      - name: Checkout complete revision
+      - name: Checkout exact source revision
         uses: actions/checkout@v4
         with:
+          ref: ${{ env.CGO27_SOURCE_SHA }}
           fetch-depth: 0
+      - name: Verify exact source revision
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "$CGO27_SOURCE_SHA"
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -68,7 +75,8 @@ jobs:
           pdftotext "$pdf" artifacts/provider-paper/paper.txt
           ! grep -Eiq 'Misha|Razakov|Wist2|github\.com|/home/|/mnt/|Sydney' artifacts/provider-paper/paper.txt
           grep -q 'Anonymous Author(s)' artifacts/provider-paper/paper.txt
-          printf '%s\n' "$GITHUB_SHA" > artifacts/provider-paper/COMMIT
+          git rev-parse HEAD > artifacts/provider-paper/COMMIT
+          test "$(cat artifacts/provider-paper/COMMIT)" = "$CGO27_SOURCE_SHA"
           (cd artifacts/provider-paper && find . -type f ! -name MANIFEST.sha256 -print0 | sort -z | xargs -0 sha256sum > MANIFEST.sha256 && sha256sum -c MANIFEST.sha256)
           rm -f CGO27/paper/main.aux CGO27/paper/main.log CGO27/paper/main.out CGO27/paper/main.pdf \
             CGO27/paper/main.fdb_latexmk CGO27/paper/main.fls CGO27/paper/main.synctex.gz \
@@ -101,10 +109,18 @@ jobs:
           (cd "$stage" && sha256sum -c MANIFEST.sha256)
           timeout 900 bash "$stage/quick-check.sh" "$workspace/artifacts/clean-unpack-evidence"
           grep -q '^CGO27_ARTIFACT_QUICK_CHECK=PASS$' artifacts/clean-unpack-evidence/QUICK_CHECK_RECEIPT
+      - name: Verify staged source identities
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(cat artifacts/provider-paper/COMMIT)" = "$CGO27_SOURCE_SHA"
+          while IFS= read -r commit_file; do
+            test "$(cat "$commit_file")" = "$CGO27_SOURCE_SHA"
+          done < <(find artifacts/static-a artifacts/static-b -type f -name COMMIT -print)
       - name: Upload complete artifact evidence
         uses: actions/upload-artifact@v4
         with:
-          name: cgo27-artifact-${{ github.sha }}
+          name: cgo27-artifact-${{ env.CGO27_SOURCE_SHA }}
           path: |
             artifacts/static-a
             artifacts/DETERMINISM.sha256
