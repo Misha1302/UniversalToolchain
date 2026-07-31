@@ -22,9 +22,9 @@ mkdir -p "$out_dir/replicates" "$out_dir/analysis" "$out_dir/source" "$out_dir/e
 mkdir -p UniversalToolchain/packages
 unset PLATFORM || true
 
-commit="${GITHUB_SHA:-${CGO27_EXPERIMENT_COMMIT:-${CONTRACT_EXPERIMENT_COMMIT:-}}}"
+commit="$(git -C "$root" rev-parse HEAD 2>/dev/null || true)"
 if [[ -z "$commit" ]]; then
-  commit="$(git rev-parse HEAD 2>/dev/null || printf 'unknown')"
+  commit="${CGO27_EXPERIMENT_COMMIT:-${CONTRACT_EXPERIMENT_COMMIT:-${GITHUB_SHA:-unknown}}}"
 fi
 export CGO27_EXPERIMENT_COMMIT="$commit"
 printf '%s\n' "$commit" > "$out_dir/environment/commit.txt"
