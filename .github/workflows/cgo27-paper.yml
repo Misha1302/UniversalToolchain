@@ -15,13 +15,21 @@ on:
 permissions:
   contents: read
 
+env:
+  CGO27_SOURCE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
 jobs:
   paper:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
-      - name: Checkout
+      - name: Checkout exact source revision
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CGO27_SOURCE_SHA }}
+      - name: Verify exact source revision
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "$CGO27_SOURCE_SHA"
       - name: Build anonymous ACM paper
         uses: xu-cheng/latex-action@v4
         with:
@@ -55,12 +63,13 @@ jobs:
           cp -a CGO27/paper/sections artifacts/cgo27-paper/source/
           pdfinfo "$pdf" > artifacts/cgo27-paper/pdfinfo.txt
           pdffonts "$pdf" > artifacts/cgo27-paper/pdffonts.txt
-          printf '%s\n' "$GITHUB_SHA" > artifacts/cgo27-paper/COMMIT
+          git rev-parse HEAD > artifacts/cgo27-paper/COMMIT
+          test "$(cat artifacts/cgo27-paper/COMMIT)" = "$CGO27_SOURCE_SHA"
           (cd artifacts/cgo27-paper && find . -type f ! -name MANIFEST.sha256 -print0 | sort -z | xargs -0 sha256sum > MANIFEST.sha256 && sha256sum -c MANIFEST.sha256)
       - name: Upload paper evidence
         uses: actions/upload-artifact@v4
         with:
-          name: cgo27-paper-${{ github.sha }}
+          name: cgo27-paper-${{ env.CGO27_SOURCE_SHA }}
           path: artifacts/cgo27-paper
           if-no-files-found: error
           retention-days: 90
