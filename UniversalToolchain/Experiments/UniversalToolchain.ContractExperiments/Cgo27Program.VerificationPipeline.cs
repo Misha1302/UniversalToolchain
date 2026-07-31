@@ -77,34 +77,30 @@ internal static partial class Cgo27Program
             if (diagnostic != null)
                 return (true, diagnostic.Code);
 
-            if (mode == ExperimentPolicy.P1_INVALIDATION)
-                return (false, (string?)null);
-
-            if (result.ReverificationRequests.Count > 0)
+            var scheduled = VerificationPolicyScheduler.Schedule(
+                mode,
+                AvailableRoutes(execution.Stage),
+                result.ReverificationRequests);
+            foreach (var invocation in scheduled)
             {
-                foreach (var request in result.ReverificationRequests)
-                {
-                    var succeeded = ExecuteSemanticReverification(
-                        request.RuleId,
-                        execution.CaseId,
-                        execution.Mutation,
-                        invalidArtifact: true);
-                    _activeTelemetry?.RecordReverification(request.InvalidatedFacts.Count, succeeded);
-                    if (!succeeded)
-                        return (true, ModuleContractDiagnosticCodes.CompilerFactReverificationRequired);
-                }
-            }
-            else if (mode == ExperimentPolicy.P3_ALWAYS)
-            {
-                var rule = execution.Stage == CompilerPipelineStage.Bytecode
-                    ? KnownCoreVerifierRules.BytecodeContract
-                    : KnownCoreVerifierRules.AirContract;
-                if (!ExecuteSemanticReverification(rule, execution.CaseId, execution.Mutation, invalidArtifact: false))
+                var succeeded = ExecuteSemanticReverification(
+                    invocation.RuleId,
+                    execution.CaseId,
+                    execution.Mutation,
+                    invalidArtifact: invocation.IsObligationDriven);
+                _activeTelemetry?.RecordReverification(invocation.InvalidatedFacts.Count, succeeded);
+                if (!succeeded)
                     return (true, ModuleContractDiagnosticCodes.CompilerFactReverificationRequired);
             }
 
             return (false, (string?)null);
         }));
+
+
+    private static IReadOnlyList<VerifierRouteDescriptor> AvailableRoutes(CompilerPipelineStage stage) =>
+        stage == CompilerPipelineStage.Bytecode
+            ? [new VerifierRouteDescriptor(KnownCoreVerifierRules.BytecodeContract, "core.bytecode")]
+            : [new VerifierRouteDescriptor(KnownCoreVerifierRules.AirContract, "core.air")];
 
     private static PipelineMutationExecution RunPipelineMutation(string id, PipelineMutation mutation)
     {
