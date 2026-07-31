@@ -8,14 +8,24 @@ import statistics
 from pathlib import Path
 from typing import Any
 
-MODES = ("B0", "B1", "B2")
+POLICIES = ("P0_STRUCTURAL", "P1_INVALIDATION", "P2_SELECTIVE", "P3_ALWAYS")
 REPETITIONS = 3
 EXPECTED_PRIMARY_INSTANCES = 40
 EXPECTED_PRIMARY_OPERATORS = 32
 EXPECTED_PRIMARY_FAMILIES = 5
 EXPECTED_CHALLENGE_OPERATORS = 10
-EXPECTED_CONTROL_RUNS_PER_MODE = 100
+EXPECTED_CONTROL_RUNS_PER_POLICY = 100
 EXPECTED_CONTROL_FAMILIES = 5
+REQUIRED_FIELDS = {
+    "schema_version", "run_id", "commit_sha", "policy", "corpus_id", "case_id",
+    "case_kind", "language_id", "pipeline_id", "workload_stratum", "expected_outcome",
+    "actual_outcome", "expected_diagnostic_family", "actual_diagnostic_family",
+    "expected_boundary", "first_detection_boundary", "verifier_invocations_total",
+    "verifier_invocations_by_rule", "verification_elapsed_ns", "pipeline_elapsed_ns",
+    "whole_compilation_elapsed_ns", "allocated_bytes", "peak_working_set_bytes",
+    "obligations_created", "obligations_discharged", "obligations_failed",
+    "facts_invalidated", "facts_reverified", "process_exit_code", "repetition", "seed",
+}
 
 
 def load_jsonl(path: Path) -> list[dict[str, Any]]:
@@ -23,273 +33,299 @@ def load_jsonl(path: Path) -> list[dict[str, Any]]:
     for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
         if not line.strip():
             continue
-        row = json.loads(line)
-        required = {
-            "Commit", "MutationId", "OperatorId", "StudySet", "Family", "Mode",
-            "Repetition", "Detected", "DiagnosticCode", "Boundary", "ElapsedTicks",
-        }
-        missing = required.difference(row)
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError as error:
+            raise ValueError(f"{path}:{number}: invalid JSON: {error}") from error
+        if not isinstance(row, dict):
+            raise ValueError(f"{path}:{number}: record must be a JSON object")
+        missing = REQUIRED_FIELDS.difference(row)
         if missing:
             raise ValueError(f"{path}:{number}: missing fields {sorted(missing)}")
-        if row["Mode"] not in MODES:
-            raise ValueError(f"{path}:{number}: unknown mode {row['Mode']!r}")
-        if row["StudySet"] not in {"primary", "challenge", "control"}:
-            raise ValueError(f"{path}:{number}: unknown study set {row['StudySet']!r}")
+        if row["schema_version"] != 3:
+            raise ValueError(f"{path}:{number}: unsupported schema_version {row['schema_version']!r}")
+        if row["policy"] not in POLICIES:
+            raise ValueError(f"{path}:{number}: unknown policy {row['policy']!r}")
+        if row["corpus_id"] not in {"primary", "challenge", "control"}:
+            raise ValueError(f"{path}:{number}: unknown corpus {row['corpus_id']!r}")
+        if row["case_kind"] not in {"fault", "valid-control"}:
+            raise ValueError(f"{path}:{number}: invalid case_kind {row['case_kind']!r}")
+        if row["actual_outcome"] not in {"accepted", "rejected", "infrastructure-error"}:
+            raise ValueError(f"{path}:{number}: invalid actual_outcome {row['actual_outcome']!r}")
+        calls = row["verifier_invocations_by_rule"]
+        if not isinstance(calls, dict) or any(not isinstance(value, int) or value < 0 for value in calls.values()):
+            raise ValueError(f"{path}:{number}: invalid verifier_invocations_by_rule")
+        if row["verifier_invocations_total"] != sum(calls.values()):
+            raise ValueError(f"{path}:{number}: verifier invocation accounting mismatch")
+        for field in (
+            "verification_elapsed_ns", "pipeline_elapsed_ns", "allocated_bytes",
+            "peak_working_set_bytes", "obligations_created", "obligations_discharged",
+            "obligations_failed", "facts_invalidated", "facts_reverified",
+        ):
+            if not isinstance(row[field], int) or row[field] < 0:
+                raise ValueError(f"{path}:{number}: {field} must be a non-negative integer")
+        if row["verification_elapsed_ns"] > row["pipeline_elapsed_ns"]:
+            raise ValueError(f"{path}:{number}: verification time exceeds pipeline time")
+        if row["whole_compilation_elapsed_ns"] is not None:
+            raise ValueError(f"{path}:{number}: boundary study must not claim whole-compilation time")
         rows.append(row)
+    if not rows:
+        raise ValueError(f"{path}: no records")
     return rows
-
-
-def wilson(successes: int, total: int, z: float = 1.959963984540054) -> tuple[float, float]:
-    if total == 0:
-        return (0.0, 0.0)
-    p = successes / total
-    denominator = 1.0 + z * z / total
-    center = (p + z * z / (2.0 * total)) / denominator
-    radius = z * math.sqrt(p * (1.0 - p) / total + z * z / (4.0 * total * total)) / denominator
-    return (max(0.0, center - radius), min(1.0, center + radius))
 
 
 def exact_mcnemar(left: dict[str, bool], right: dict[str, bool]) -> dict[str, Any]:
     ids = sorted(set(left) & set(right))
-    left_only = sum(left[i] and not right[i] for i in ids)
-    right_only = sum(not left[i] and right[i] for i in ids)
-    n = left_only + right_only
-    if n == 0:
+    left_only = sum(left[item] and not right[item] for item in ids)
+    right_only = sum(not left[item] and right[item] for item in ids)
+    discordant = left_only + right_only
+    if discordant == 0:
         p_value = 1.0
     else:
         tail = min(left_only, right_only)
-        one_sided = sum(math.comb(n, k) for k in range(tail + 1)) / (2 ** n)
-        p_value = min(1.0, 2.0 * one_sided)
+        p_value = min(1.0, 2.0 * sum(math.comb(discordant, k) for k in range(tail + 1)) / (2 ** discordant))
     return {
         "left_only": left_only,
         "right_only": right_only,
-        "discordant": n,
+        "discordant": discordant,
         "two_sided_exact_p": p_value,
     }
 
 
-def validate_and_collapse(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    mutation_rows = [r for r in rows if r["StudySet"] in {"primary", "challenge"}]
-    control_rows = [r for r in rows if r["StudySet"] == "control"]
-    commits = {r["Commit"] for r in rows}
+def collapse(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    commits = {row["commit_sha"] for row in rows}
+    run_ids = {row["run_id"] for row in rows}
     if len(commits) != 1:
         raise ValueError(f"mixed commits: {sorted(commits)}")
+    if len(run_ids) != 1:
+        raise ValueError(f"mixed run ids: {sorted(run_ids)}")
 
-    collapsed_instances: list[dict[str, Any]] = []
-    for key in sorted({(r["StudySet"], r["MutationId"], r["Mode"]) for r in mutation_rows}):
-        study_set, mutation_id, mode = key
+    fault_rows = [row for row in rows if row["corpus_id"] in {"primary", "challenge"}]
+    control_rows = [row for row in rows if row["corpus_id"] == "control"]
+    collapsed: list[dict[str, Any]] = []
+    keys = sorted({(row["corpus_id"], row["case_id"], row["policy"]) for row in fault_rows})
+    for corpus, case_id, policy in keys:
         group = [
-            r for r in mutation_rows
-            if r["StudySet"] == study_set and r["MutationId"] == mutation_id and r["Mode"] == mode
+            row for row in fault_rows
+            if row["corpus_id"] == corpus and row["case_id"] == case_id and row["policy"] == policy
         ]
         if len(group) != REPETITIONS:
-            raise ValueError(f"{study_set}/{mutation_id}/{mode}: expected {REPETITIONS} repetitions, found {len(group)}")
+            raise ValueError(f"{corpus}/{case_id}/{policy}: expected {REPETITIONS} repetitions, found {len(group)}")
         classifications = {
-            (r["Detected"], r["DiagnosticCode"], r["Boundary"], r["OperatorId"], r["Family"])
-            for r in group
+            (row["actual_outcome"], row["actual_diagnostic_family"], row["first_detection_boundary"])
+            for row in group
         }
         if len(classifications) != 1:
-            raise ValueError(f"{study_set}/{mutation_id}/{mode}: flaky or inconsistent classification")
-        collapsed_instances.append(group[0])
+            raise ValueError(f"{corpus}/{case_id}/{policy}: flaky classification")
+        collapsed.append(group[0])
 
-    for key in sorted({(r["StudySet"], r["OperatorId"], r["Mode"]) for r in collapsed_instances}):
-        study_set, operator_id, mode = key
-        group = [
-            r for r in collapsed_instances
-            if r["StudySet"] == study_set and r["OperatorId"] == operator_id and r["Mode"] == mode
-        ]
-        if len({bool(r["Detected"]) for r in group}) != 1:
-            raise ValueError(f"{study_set}/{operator_id}/{mode}: instances disagree on detection")
+    for corpus, operator_id, policy in sorted({
+        (row["corpus_id"], row["operator_id"], row["policy"]) for row in collapsed
+    }):
+        outcomes = {
+            row["actual_outcome"] for row in collapsed
+            if row["corpus_id"] == corpus and row["operator_id"] == operator_id and row["policy"] == policy
+        }
+        if len(outcomes) != 1:
+            raise ValueError(f"{corpus}/{operator_id}/{policy}: instances disagree")
 
-    primary = [r for r in collapsed_instances if r["StudySet"] == "primary"]
-    challenge = [r for r in collapsed_instances if r["StudySet"] == "challenge"]
-    if len({r["MutationId"] for r in primary}) != EXPECTED_PRIMARY_INSTANCES:
+    primary = [row for row in collapsed if row["corpus_id"] == "primary"]
+    challenge = [row for row in collapsed if row["corpus_id"] == "challenge"]
+    if len({row["case_id"] for row in primary}) != EXPECTED_PRIMARY_INSTANCES:
         raise ValueError("unexpected primary instance count")
-    if len({r["OperatorId"] for r in primary}) != EXPECTED_PRIMARY_OPERATORS:
+    if len({row["operator_id"] for row in primary}) != EXPECTED_PRIMARY_OPERATORS:
         raise ValueError("unexpected primary operator count")
-    if len({r["Family"] for r in primary}) != EXPECTED_PRIMARY_FAMILIES:
+    if len({row["workload_stratum"] for row in primary}) != EXPECTED_PRIMARY_FAMILIES:
         raise ValueError("unexpected primary family count")
-    if len({r["OperatorId"] for r in challenge}) != EXPECTED_CHALLENGE_OPERATORS:
+    if len({row["operator_id"] for row in challenge}) != EXPECTED_CHALLENGE_OPERATORS:
         raise ValueError("unexpected challenge operator count")
 
-    for mode in MODES:
-        controls = [r for r in control_rows if r["Mode"] == mode]
-        if len(controls) != EXPECTED_CONTROL_RUNS_PER_MODE:
-            raise ValueError(f"{mode}: expected {EXPECTED_CONTROL_RUNS_PER_MODE} controls, found {len(controls)}")
-        if len({r["Family"] for r in controls}) != EXPECTED_CONTROL_FAMILIES:
-            raise ValueError(f"{mode}: expected {EXPECTED_CONTROL_FAMILIES} control families")
-        if any(r["Repetition"] != 1 for r in controls):
-            raise ValueError(f"{mode}: controls must have repetition=1")
-
-    return collapsed_instances, control_rows
-
-
-def collapse_operators(instance_rows: list[dict[str, Any]], study_set: str) -> list[dict[str, Any]]:
-    rows = [r for r in instance_rows if r["StudySet"] == study_set]
-    collapsed: list[dict[str, Any]] = []
-    for key in sorted({(r["OperatorId"], r["Mode"]) for r in rows}):
-        operator_id, mode = key
-        group = [r for r in rows if r["OperatorId"] == operator_id and r["Mode"] == mode]
-        collapsed.append(group[0])
-    return collapsed
+    for policy in POLICIES:
+        policy_controls = [row for row in control_rows if row["policy"] == policy]
+        if len(policy_controls) != EXPECTED_CONTROL_RUNS_PER_POLICY:
+            raise ValueError(f"{policy}: expected {EXPECTED_CONTROL_RUNS_PER_POLICY} controls")
+        if len({row["workload_stratum"] for row in policy_controls}) != EXPECTED_CONTROL_FAMILIES:
+            raise ValueError(f"{policy}: unexpected control family count")
+        if any(row["actual_outcome"] != "accepted" for row in policy_controls):
+            raise ValueError(f"{policy}: valid control rejected")
+    return collapsed, control_rows
 
 
-def summarize_set(operator_rows: list[dict[str, Any]]) -> dict[str, Any]:
-    by_mode: dict[str, Any] = {}
-    detected_by_mode: dict[str, dict[str, bool]] = {}
-    for mode in MODES:
-        rows = [r for r in operator_rows if r["Mode"] == mode]
-        detected = sum(bool(r["Detected"]) for r in rows)
-        low, high = wilson(detected, len(rows))
-        by_mode[mode] = {
-            "operators": len(rows),
-            "detected": detected,
-            "detection_rate": detected / len(rows) if rows else 0.0,
-            "wilson_95": [low, high],
-            "localized": sum(bool(r["Detected"] and r["DiagnosticCode"]) for r in rows),
+def operator_rows(rows: list[dict[str, Any]], corpus: str) -> list[dict[str, Any]]:
+    selected = [row for row in rows if row["corpus_id"] == corpus]
+    return [
+        next(row for row in selected if row["operator_id"] == operator_id and row["policy"] == policy)
+        for operator_id, policy in sorted({(row["operator_id"], row["policy"]) for row in selected})
+    ]
+
+
+def summarize_operators(rows: list[dict[str, Any]]) -> tuple[dict[str, Any], dict[str, dict[str, bool]]]:
+    by_policy: dict[str, Any] = {}
+    detections: dict[str, dict[str, bool]] = {}
+    for policy in POLICIES:
+        policy_rows = [row for row in rows if row["policy"] == policy]
+        rejected = sum(row["actual_outcome"] == "rejected" for row in policy_rows)
+        by_policy[policy] = {
+            "operators": len(policy_rows),
+            "detected": rejected,
+            "localized": sum(
+                row["actual_outcome"] == "rejected" and row["actual_diagnostic_family"] is not None
+                for row in policy_rows
+            ),
         }
-        detected_by_mode[mode] = {r["OperatorId"]: bool(r["Detected"]) for r in rows}
+        detections[policy] = {
+            row["operator_id"]: row["actual_outcome"] == "rejected" for row in policy_rows
+        }
+    return by_policy, detections
 
-    by_family: list[dict[str, Any]] = []
-    for family in sorted({r["Family"] for r in operator_rows}):
-        for mode in MODES:
-            group = [r for r in operator_rows if r["Family"] == family and r["Mode"] == mode]
-            by_family.append({
-                "family": family,
-                "mode": mode,
-                "operators": len(group),
-                "detected": sum(bool(r["Detected"]) for r in group),
-            })
 
-    return {
-        "operator_count": len({r["OperatorId"] for r in operator_rows}),
-        "family_count": len({r["Family"] for r in operator_rows}),
-        "by_mode": by_mode,
-        "by_family": by_family,
-        "detected_by_mode": detected_by_mode,
-    }
+def median(values: list[int | float]) -> float:
+    return float(statistics.median(values)) if values else 0.0
 
 
 def analyze(rows: list[dict[str, Any]], replicate_summaries: list[Path]) -> dict[str, Any]:
-    collapsed_instances, controls = validate_and_collapse(rows)
-    primary = summarize_set(collapse_operators(collapsed_instances, "primary"))
-    challenge = summarize_set(collapse_operators(collapsed_instances, "challenge"))
+    collapsed, controls = collapse(rows)
+    primary_by_policy, primary_detections = summarize_operators(operator_rows(collapsed, "primary"))
+    challenge_by_policy, _ = summarize_operators(operator_rows(collapsed, "challenge"))
 
-    clean_by_mode = {
-        mode: {
-            "runs": sum(r["Mode"] == mode for r in controls),
-            "false_positives": sum(r["Mode"] == mode and bool(r["Detected"]) for r in controls),
+    telemetry: dict[str, Any] = {}
+    for policy in POLICIES:
+        policy_rows = [row for row in rows if row["policy"] == policy]
+        telemetry[policy] = {
+            "records": len(policy_rows),
+            "median_verifier_invocations": median([row["verifier_invocations_total"] for row in policy_rows]),
+            "median_verification_elapsed_ns": median([row["verification_elapsed_ns"] for row in policy_rows]),
+            "median_pipeline_elapsed_ns": median([row["pipeline_elapsed_ns"] for row in policy_rows]),
+            "median_allocated_bytes": median([row["allocated_bytes"] for row in policy_rows]),
+            "obligations_created": sum(row["obligations_created"] for row in policy_rows),
+            "obligations_discharged": sum(row["obligations_discharged"] for row in policy_rows),
+            "obligations_failed": sum(row["obligations_failed"] for row in policy_rows),
+            "facts_invalidated": sum(row["facts_invalidated"] for row in policy_rows),
+            "facts_reverified": sum(row["facts_reverified"] for row in policy_rows),
         }
-        for mode in MODES
+
+    clean = {
+        policy: {
+            "runs": sum(row["policy"] == policy for row in controls),
+            "false_positives": sum(
+                row["policy"] == policy and row["actual_outcome"] == "rejected" for row in controls
+            ),
+        }
+        for policy in POLICIES
     }
-    clean_by_family = []
-    for family in sorted({r["Family"] for r in controls}):
-        for mode in MODES:
-            group = [r for r in controls if r["Family"] == family and r["Mode"] == mode]
-            clean_by_family.append({
-                "family": family,
-                "mode": mode,
-                "runs": len(group),
-                "false_positives": sum(bool(r["Detected"]) for r in group),
-            })
 
     performance_runs: list[dict[str, Any]] = []
     for path in replicate_summaries:
         payload = json.loads(path.read_text(encoding="utf-8"))
-        perf = payload["Performance"]
-        performance_runs.append({
-            "path": str(path),
-            "B1": float(perf["MedianOverheadPercent"]["B1"]),
-            "B2": float(perf["MedianOverheadPercent"]["B2"]),
-        })
+        overhead = payload["Performance"]["MedianOverheadPercent"]
+        performance_runs.append({"path": str(path), **{policy: float(overhead[policy]) for policy in POLICIES}})
     performance = None
     if performance_runs:
         performance = {
+            "scope": "isolated boundary-kernel; not whole compilation",
             "process_replicates": len(performance_runs),
-            "B1_median_overhead_percent": statistics.median(r["B1"] for r in performance_runs),
-            "B1_range_percent": [min(r["B1"] for r in performance_runs), max(r["B1"] for r in performance_runs)],
-            "B2_median_overhead_percent": statistics.median(r["B2"] for r in performance_runs),
-            "B2_range_percent": [min(r["B2"] for r in performance_runs), max(r["B2"] for r in performance_runs)],
+            "by_policy": {
+                policy: {
+                    "median_overhead_percent": median([run[policy] for run in performance_runs]),
+                    "range_percent": [min(run[policy] for run in performance_runs), max(run[policy] for run in performance_runs)],
+                }
+                for policy in POLICIES
+            },
             "runs": performance_runs,
         }
 
-    primary_detected = primary.pop("detected_by_mode")
-    challenge.pop("detected_by_mode")
     return {
-        "commit": rows[0]["Commit"],
-        "repetitions": REPETITIONS,
-        "primary": primary,
-        "challenge": challenge,
-        "clean": clean_by_mode,
-        "clean_by_family": clean_by_family,
-        "mcnemar_primary_B0_vs_B2": exact_mcnemar(primary_detected["B0"], primary_detected["B2"]),
-        "mcnemar_primary_B1_vs_B2": exact_mcnemar(primary_detected["B1"], primary_detected["B2"]),
+        "schema_version": 3,
+        "run_id": rows[0]["run_id"],
+        "commit_sha": rows[0]["commit_sha"],
+        "policies": list(POLICIES),
+        "primary": {"operators": EXPECTED_PRIMARY_OPERATORS, "by_policy": primary_by_policy},
+        "challenge": {"operators": EXPECTED_CHALLENGE_OPERATORS, "by_policy": challenge_by_policy},
+        "clean": clean,
+        "telemetry": telemetry,
+        "paired_tests": {
+            "P0_vs_P2": exact_mcnemar(primary_detections["P0_STRUCTURAL"], primary_detections["P2_SELECTIVE"]),
+            "P1_vs_P2": exact_mcnemar(primary_detections["P1_INVALIDATION"], primary_detections["P2_SELECTIVE"]),
+            "P2_vs_P3": exact_mcnemar(primary_detections["P2_SELECTIVE"], primary_detections["P3_ALWAYS"]),
+        },
         "performance": performance,
     }
 
 
 def write_report(analysis: dict[str, Any], output: Path) -> None:
-    primary = analysis["primary"]["by_mode"]
-    challenge = analysis["challenge"]["by_mode"]
+    primary = analysis["primary"]["by_policy"]
+    challenge = analysis["challenge"]["by_policy"]
+    clean = analysis["clean"]
+    telemetry = analysis["telemetry"]
     lines = [
-        "# Contract experiment analysis v2",
+        "# CGO 2027 four-policy contract experiment",
         "",
-        f"- Commit identity: `{analysis['commit']}`",
-        f"- Primary catalog: {analysis['primary']['operator_count']} operator shapes",
-        f"- Post-freeze challenge set: {analysis['challenge']['operator_count']} operators",
-        f"- Repetitions: {analysis['repetitions']} per mutation instance and mode",
-        f"- Primary B0/B1/B2: {primary['B0']['detected']}/{primary['B0']['operators']}, "
-        f"{primary['B1']['detected']}/{primary['B1']['operators']}, "
-        f"{primary['B2']['detected']}/{primary['B2']['operators']}",
-        f"- Primary exact McNemar B0 vs B2: p={analysis['mcnemar_primary_B0_vs_B2']['two_sided_exact_p']:.8g}",
-        f"- Primary exact McNemar B1 vs B2: p={analysis['mcnemar_primary_B1_vs_B2']['two_sided_exact_p']:.8g}",
-        f"- Challenge B0/B1/B2: {challenge['B0']['detected']}/{challenge['B0']['operators']}, "
-        f"{challenge['B1']['detected']}/{challenge['B1']['operators']}, "
-        f"{challenge['B2']['detected']}/{challenge['B2']['operators']}",
-        f"- Stratified valid controls: B2 false positives {analysis['clean']['B2']['false_positives']}/{analysis['clean']['B2']['runs']}",
-    ]
-    if analysis["performance"]:
-        perf = analysis["performance"]
-        lines.extend([
-            f"- Synthetic B2 boundary-kernel overhead: {perf['B2_median_overhead_percent']:.1f}% median across {perf['process_replicates']} processes",
-            f"- Synthetic B2 range: {perf['B2_range_percent'][0]:.1f}% to {perf['B2_range_percent'][1]:.1f}%",
-        ])
-
-    lines.extend([
+        f"- Commit: `{analysis['commit_sha']}`",
+        f"- Run: `{analysis['run_id']}`",
+        f"- Primary operators: {analysis['primary']['operators']}",
+        f"- Challenge operators: {analysis['challenge']['operators']}",
+        "- Whole-compilation time: not measured by this boundary experiment",
         "",
-        "## Primary family-level detections",
+        "## Detection and controls",
         "",
-        "| Family | B0 | B1 | B2 |",
+        "| Policy | Primary detected | Challenge detected | Control false positives |",
         "|---|---:|---:|---:|",
-    ])
-    families = sorted({r["family"] for r in analysis["primary"]["by_family"]})
-    for family in families:
-        values = {r["mode"]: r for r in analysis["primary"]["by_family"] if r["family"] == family}
+    ]
+    for policy in POLICIES:
         lines.append(
-            f"| {family} | {values['B0']['detected']}/{values['B0']['operators']} | "
-            f"{values['B1']['detected']}/{values['B1']['operators']} | "
-            f"{values['B2']['detected']}/{values['B2']['operators']} |"
+            f"| {policy} | {primary[policy]['detected']}/{primary[policy]['operators']} | "
+            f"{challenge[policy]['detected']}/{challenge[policy]['operators']} | "
+            f"{clean[policy]['false_positives']}/{clean[policy]['runs']} |"
         )
-
     lines.extend([
         "",
-        "## Interpretation boundary",
+        "## Telemetry",
         "",
-        "The primary catalog and post-freeze challenge set are author-designed and execute production verifier components at compiler boundaries. The challenge set uses diagnostic operators absent from the primary catalog, but it is neither blind nor externally authored. The stratified controls vary five valid boundary families; they are not a population-level false-positive estimate. No result establishes general compiler correctness, end-to-end source-to-execution detection, or external validity across unrelated runtimes.",
+        "| Policy | Median verifier calls | Obligations created | Discharged | Failed | Facts reverified |",
+        "|---|---:|---:|---:|---:|---:|",
     ])
-    output.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    for policy in POLICIES:
+        item = telemetry[policy]
+        lines.append(
+            f"| {policy} | {item['median_verifier_invocations']:.1f} | {item['obligations_created']} | "
+            f"{item['obligations_discharged']} | {item['obligations_failed']} | {item['facts_reverified']} |"
+        )
+    paired = analysis["paired_tests"]
+    lines.extend([
+        "",
+        "## Paired exact tests on frozen primary operators",
+        "",
+        f"- P0 vs P2: p={paired['P0_vs_P2']['two_sided_exact_p']:.8g}",
+        f"- P1 vs P2: p={paired['P1_vs_P2']['two_sided_exact_p']:.8g}",
+        f"- P2 vs P3: p={paired['P2_vs_P3']['two_sided_exact_p']:.8g}",
+    ])
+    if analysis["performance"]:
+        lines.extend(["", "## Boundary-kernel timing", ""])
+        for policy in POLICIES:
+            item = analysis["performance"]["by_policy"][policy]
+            lines.append(
+                f"- {policy}: {item['median_overhead_percent']:.1f}% median overhead; "
+                f"range {item['range_percent'][0]:.1f}% to {item['range_percent'][1]:.1f}%"
+            )
+    lines.extend([
+        "",
+        "These timing values are environment-sensitive verifier-kernel measurements. They are not whole-compilation or application overhead.",
+        "",
+    ])
+    output.write_text("\n".join(lines), encoding="utf-8")
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("results", type=Path)
-    parser.add_argument("--replicate-summary", action="append", type=Path, default=[])
-    parser.add_argument("--out-dir", type=Path, required=True)
+    parser.add_argument("--replicate-summary", action="append", default=[], type=Path)
+    parser.add_argument("--out-dir", required=True, type=Path)
     args = parser.parse_args()
+    rows = load_jsonl(args.results)
+    analysis = analyze(rows, args.replicate_summary)
     args.out_dir.mkdir(parents=True, exist_ok=True)
-    analysis = analyze(load_jsonl(args.results), args.replicate_summary)
     (args.out_dir / "analysis.json").write_text(json.dumps(analysis, indent=2) + "\n", encoding="utf-8")
-    write_report(analysis, args.out_dir / "analysis.md")
+    write_report(analysis, args.out_dir / "REPORT.md")
     print(json.dumps(analysis, sort_keys=True))
     return 0
 
