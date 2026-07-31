@@ -40,7 +40,7 @@ if git -C "$root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
 else
   : > "$output/git-status.txt"
 fi
-printf '%s\n' "${GITHUB_SHA:-${CGO27_EXPERIMENT_COMMIT:-local-uncommitted}}" > "$output/COMMIT"
+git -C "$root" rev-parse HEAD > "$output/COMMIT"
 (
   cd "$output"
   find . -type f ! -name MANIFEST.sha256 -print0 \
