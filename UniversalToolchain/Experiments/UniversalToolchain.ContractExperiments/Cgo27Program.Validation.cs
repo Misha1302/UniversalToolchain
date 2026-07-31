@@ -77,8 +77,9 @@ internal static partial class Cgo27Program
         {
             var selective = stable.Single(result => result.MutationId == mutationId && result.Policy == nameof(ExperimentPolicy.P2_SELECTIVE));
             var always = stable.Single(result => result.MutationId == mutationId && result.Policy == nameof(ExperimentPolicy.P3_ALWAYS));
-            if ((selective.Detected, selective.DiagnosticCode) != (always.Detected, always.DiagnosticCode))
-                throw new InvalidOperationException($"Selective/always correctness parity failed for {mutationId}.");
+            if ((selective.Detected, selective.DiagnosticCode, selective.Boundary) !=
+                (always.Detected, always.DiagnosticCode, always.Boundary))
+                throw new InvalidOperationException($"Selective/always outcome-diagnostic-boundary parity failed for {mutationId}.");
         }
 
         if (results.Any(static result => result.StudySet == "control" && result.Detected))
