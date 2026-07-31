@@ -20,32 +20,39 @@ mkdir -p "$out_dir/replicates" "$out_dir/analysis" "$out_dir/source" "$out_dir/e
 mkdir -p UniversalToolchain/packages
 unset PLATFORM || true
 
-commit="${GITHUB_SHA:-${CONTRACT_EXPERIMENT_COMMIT:-}}"
+commit="${GITHUB_SHA:-${CGO27_EXPERIMENT_COMMIT:-${CONTRACT_EXPERIMENT_COMMIT:-}}}"
 if [[ -z "$commit" ]]; then
   commit="$(git rev-parse HEAD 2>/dev/null || printf 'unknown')"
 fi
-export ICSE_EXPERIMENT_COMMIT="$commit"
+export CGO27_EXPERIMENT_COMMIT="$commit"
 printf '%s\n' "$commit" > "$out_dir/environment/commit.txt"
 git status --porcelain=v1 > "$out_dir/environment/git-status.txt" 2>/dev/null || true
 dotnet --info > "$out_dir/environment/dotnet-info.txt"
 uname -a > "$out_dir/environment/uname.txt"
 
-cp "$experiment_dir/Program.cs" "$out_dir/source/Program.cs"
-cp "$experiment_dir/analyze_results.py" "$out_dir/source/analyze_results.py"
-cp "$experiment_dir/UniversalToolchain.ContractExperiments.csproj" "$out_dir/source/UniversalToolchain.ContractExperiments.csproj"
-cp "$experiment_dir/README.md" "$out_dir/source/README.md"
-cp "$experiment_dir/STUDY_PROTOCOL_V2.md" "$out_dir/source/STUDY_PROTOCOL_V2.md"
+for file in \
+  Program.cs \
+  analyze_results.py \
+  UniversalToolchain.ContractExperiments.csproj \
+  README.md \
+  STUDY_PROTOCOL_V2.md \
+  STUDY_PROTOCOL_V3.md \
+  raw-result-schema-v3.json; do
+  cp "$experiment_dir/$file" "$out_dir/source/$file"
+done
 cp "Tools/run-contract-experiment.sh" "$out_dir/source/run-contract-experiment.sh"
 
 dotnet restore "$project" -p:NuGetAudit=false
 dotnet build "$project" -c Release --no-restore -p:NuGetAudit=false
 
-dotnet run -c Release --no-build --no-restore --project "$project" -- "$out_dir/main"
+CGO27_RUN_ID="${commit}-main" \
+  dotnet run -c Release --no-build --no-restore --project "$project" -- "$out_dir/main"
 
 replicate_args=()
 for ((index=1; index<=replicates; index++)); do
   replicate_dir="$out_dir/replicates/run-$index"
-  dotnet run -c Release --no-build --no-restore --project "$project" -- "$replicate_dir"
+  CGO27_RUN_ID="${commit}-replicate-$index" \
+    dotnet run -c Release --no-build --no-restore --project "$project" -- "$replicate_dir"
   replicate_args+=(--replicate-summary "$replicate_dir/summary.json")
 done
 
@@ -53,6 +60,13 @@ python3 "$analyzer" \
   "$out_dir/main/results.jsonl" \
   "${replicate_args[@]}" \
   --out-dir "$out_dir/analysis"
+
+if [[ -n "${CONTRACT_EXPERIMENT_BASELINE_MUTATIONS:-}" ]]; then
+  cmp --silent "$CONTRACT_EXPERIMENT_BASELINE_MUTATIONS" "$out_dir/main/mutations.csv" || {
+    echo "Frozen mutation/operator catalog differs from baseline: $CONTRACT_EXPERIMENT_BASELINE_MUTATIONS" >&2
+    exit 3
+  }
+fi
 
 if [[ -n "${CONTRACT_EXPERIMENT_CI_EVIDENCE_DIR:-}" && -d "${CONTRACT_EXPERIMENT_CI_EVIDENCE_DIR}" ]]; then
   cp -a "${CONTRACT_EXPERIMENT_CI_EVIDENCE_DIR}" "$out_dir/environment/ci-evidence"
