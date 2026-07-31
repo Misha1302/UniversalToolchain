@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using UniversalToolchain.ModuleContracts;
 
 namespace UniversalToolchain.ContractExperiments;
@@ -176,4 +177,10 @@ internal static class VerificationPolicySchedulerTests
         throw new InvalidOperationException(
             $"Policy scheduler self-test failed: expected {typeof(TException).Name}.");
     }
+}
+
+internal static class VerificationPolicyModuleGate
+{
+    [ModuleInitializer]
+    internal static void RunBeforeEvidenceGeneration() => VerificationPolicySchedulerTests.Run();
 }
