@@ -1,6 +1,6 @@
 # CGO 2027 second-language selection report
 
-Status: `IMPLEMENTED_PENDING_PROVIDER`.
+Status: `PROVIDER_BACKED_VALIDATED`.
 
 ## Decision
 
@@ -25,8 +25,22 @@ The study freezes 12 cases:
 - 8 fault operators;
 - 4 policies, producing 48 observations.
 
-The acceptance gate requires P2/P3 classification parity on all 12 cases and separately requires P3 to invoke semantic verification on clean valid boundaries while P2 does not.
+The provider-backed acceptance gate confirms:
+
+- build with warnings as errors;
+- P2/P3 classification parity on all 12 cases;
+- P3 semantic verification on clean valid boundaries while P2 omits unrequested verification;
+- public-SDK dependency boundary;
+- recursive checksum manifest.
+
+## Provider receipt
+
+- exact commit: `acc60612361f240d5bd24f148ea7fa6eb5e1f111`;
+- workflow: `CGO27 TensorRules`, run `30661725387`;
+- artifact ID: `8805405891`;
+- artifact digest: `sha256:07fb7e7e9da11f8875a2bb58b291a01903756de2ccd9af85dc5117adc89dc404`;
+- artifact summary: `VALIDATED`, 2 valid, 2 invalid, 8 faults, 48 observations, P2/P3 parity 12/12, Wist references 0.
 
 ## Claim boundary
 
-TensorRules is model-authored. It must be described as a **second language package**, not an independently authored language. Provider-backed status is assigned only after the dedicated workflow builds the project with warnings as errors, runs the study and verifies its checksum manifest.
+TensorRules is model-authored. It must be described as a **second language package**, not an independently authored language.

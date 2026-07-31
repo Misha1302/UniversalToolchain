@@ -9,28 +9,32 @@ Last updated: 2026-07-31.
 - Research branch: `research/cgo27-selective-reverification`
 - Draft PR: `#322`
 
-## Completed milestones
+## Completed provider-backed milestones
 
-- Four explicit verification policies are implemented and provider-verified.
-- Production policy scheduling is integrated with fail-closed routing while preserving `P3_ALWAYS` as the default.
-- Boundary experiment emits schema-v3 raw evidence and preserves the historical v2 corpus.
-- Production test contract is 1,579/1,579 with package, validation, docs, rollout, benchmark and contract gates green on the production milestone.
-- Wist source-to-result experiment collects 240 fresh-process records over 30 cases and separates five targeted faults, 24 valid controls and one stable pre-existing baseline runtime failure.
-- A deterministic external blind-corpus author/freeze/import kit is present. Independent-corpus status remains `BLOCKED_EXTERNAL` until an external human corpus is frozen.
+- Four explicit verification policies and fail-closed production scheduling.
+- Historical-corpus-preserving boundary experiment with schema-v3 evidence.
+- Production test contract: 1,579/1,579.
+- Wist source-to-result experiment: 30 cases, 240 fresh-process records, five targeted faults, 24 valid controls and one separately reported baseline runtime failure.
+- TensorRules public-SDK second-language package: 12 cases, eight faults, 48 observations and P2/P3 parity 12/12.
+- Exact commit `acc60612361f240d5bd24f148ea7fa6eb5e1f111` passed `.NET CI`, validation, Docs Check, package compatibility, Contract Experiment, Wist end-to-end, TensorRules, rollout, benchmark smoke and published-package smoke.
+- Deterministic external blind-corpus author/freeze/import kit.
 
-## Active validation
+## Canonical evidence owners
 
-- Exact branch head is subject to GitHub provider verification after each research commit.
-- The baseline-aware end-to-end validator is the canonical WP5 accounting owner.
+- `CGO27/RESULTS_SUMMARY.md`
+- `CGO27/CLAIM_EVIDENCE_LEDGER.md`
+- `CGO27/EXPERIMENT_PROTOCOL.md`
+- `CGO27/SECOND_LANGUAGE_REPORT.md`
+- raw/checksummed provider artifacts identified in those ledgers.
 
-## Remaining material results
+## Remaining material blockers and work
 
-- Provider-backed second-language package and report.
-- Pinned-machine whole-compilation performance experiment with raw distributions and confidence intervals.
+- Pinned-machine whole-compilation performance experiment: `BLOCKED_PINNED_MACHINE`.
+- Externally authored blind corpus import and execution: `BLOCKED_EXTERNAL`.
 - Ablations.
-- Related-work and claim/evidence ledger.
-- Anonymous paper and artifact bundle.
-- Externally authored blind corpus import and execution (`BLOCKED_EXTERNAL`).
+- Primary-source related-work ledger.
+- Anonymous paper source/PDF and artifact bundle.
+- Final adversarial review and submission decision.
 
 ## Authority
 
