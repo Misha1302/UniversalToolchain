@@ -18,13 +18,21 @@ on:
 permissions:
   contents: read
 
+env:
+  CGO27_SOURCE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
 jobs:
   tensorrules:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
-      - name: Checkout
+      - name: Checkout exact source revision
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CGO27_SOURCE_SHA }}
+      - name: Verify exact source revision
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "$CGO27_SOURCE_SHA"
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -36,11 +44,12 @@ jobs:
           mkdir -p artifacts
           bash UniversalToolchain/Experiments/UniversalToolchain.TensorRules/run.sh artifacts/cgo27-tensorrules 2>&1 \
             | tee artifacts/cgo27-tensorrules-workflow.log
+          test "$(cat artifacts/cgo27-tensorrules/COMMIT)" = "$CGO27_SOURCE_SHA"
       - name: Upload TensorRules evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: cgo27-tensorrules-${{ github.sha }}
+          name: cgo27-tensorrules-${{ env.CGO27_SOURCE_SHA }}
           path: |
             artifacts/cgo27-tensorrules
             artifacts/cgo27-tensorrules-workflow.log
