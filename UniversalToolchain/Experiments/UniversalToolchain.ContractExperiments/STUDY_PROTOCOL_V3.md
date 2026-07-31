@@ -8,7 +8,7 @@ Historical protocol: `STUDY_PROTOCOL_V2.md` remains immutable evidence for the e
 
 Can typed invalidation obligations preserve the fault-detection behavior of unconditional semantic reverification while executing fewer verifier rules on boundaries whose semantic facts remain valid?
 
-The comparison is meaningful only after both correctness and cost are recorded from the same runner, the same cases, the same oracles, and the same production verifier components.
+The comparison is meaningful only after both correctness and cost are recorded from the same runner, the same cases, the same externally frozen oracle, and the same production verifier components.
 
 ## Policies
 
@@ -19,7 +19,7 @@ The runner exposes exactly four policies:
 - `P2_SELECTIVE`: extends `P1_INVALIDATION`. Every invalidation mapped to a verifier rule creates an obligation. Only requested rules are executed, in deterministic rule-id order, before the boundary can be accepted. An obligation is failed when the routed production verifier rejects the mutated artifact or no executable route exists.
 - `P3_ALWAYS`: extends `P1_INVALIDATION`. At each represented semantic boundary, every verifier applicable to that concrete boundary is executed even when no invalidation created an obligation. It uses the same artifacts and verifier implementations as `P2_SELECTIVE`.
 
-`P2_SELECTIVE` and `P3_ALWAYS` must agree on accepted/rejected classification for every frozen fault and valid-control case. A disagreement invalidates the run.
+`P2_SELECTIVE` and `P3_ALWAYS` must agree on outcome, diagnostic family, and first detection boundary for every frozen fault and valid-control case. A disagreement invalidates the run.
 
 ## Frozen corpora and denominators
 
@@ -34,14 +34,14 @@ The generated `mutations.csv` must be byte-identical to the v2 baseline catalog.
 
 ## Oracle
 
-For each frozen fault, the oracle contains:
+`oracles-v3.json` is a source-controlled artifact separate from the active runner. For each frozen fault, it contains:
 
 - expected rejection;
 - expected diagnostic family;
 - expected first eligible boundary;
-- operator identity and family.
+- operator identity, corpus, and family.
 
-For controls, the oracle is acceptance with no diagnostic family. Runtime observations do not overwrite the oracle. Three repetitions must agree on outcome, diagnostic family, and first detection boundary.
+For controls, the oracle is acceptance with no diagnostic family and a fixed set of five strata. Runtime observations do not overwrite the oracle. `validate_oracles.py` checks raw expected fields, fault identifiers, the historical mutation-catalog SHA-256, triplet stability, and P2/P3 outcome–diagnostic–boundary parity before statistical analysis. A deliberately corrupted oracle/raw pair must be rejected.
 
 ## Reverification execution
 
@@ -58,7 +58,7 @@ The primary output is JSONL conforming to `raw-result-schema-v3.json`. Each line
 
 The boundary experiment deliberately writes `whole_compilation_elapsed_ns: null`. Whole-compilation latency belongs only to the separate end-to-end harness and may not be inferred from the boundary-kernel timing.
 
-Invalid JSON, a missing required field, mixed commits/run IDs, unknown policies, inconsistent invocation totals, negative counters, unstable repetitions, changed denominators, a rejected valid control, `P2/P3` correctness disagreement, or a missing `P3` extra invocation on clean fact boundaries invalidates the run.
+Invalid JSON, a missing required field, mixed commits/run IDs, unknown policies, inconsistent invocation totals, negative counters, unstable repetitions, changed denominators, a changed oracle field or catalog hash, a rejected valid control, `P2/P3` outcome–diagnostic–boundary disagreement, or a missing `P3` extra invocation on clean fact boundaries invalidates the run.
 
 ## Timing scope
 
