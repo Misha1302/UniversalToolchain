@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://wist2.example/cgo27/external-control-case.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "caseId", "family", "languageId", "source", "arguments", "expectedOutcome", "authorPseudonym", "authoredAt", "blindAttestation"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "caseId": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{2,63}$"},
+    "family": {"type": "string", "minLength": 3, "maxLength": 80},
+    "languageId": {"type": "string", "minLength": 1, "maxLength": 80},
+    "source": {"type": "string", "minLength": 1},
+    "arguments": {"type": "object"},
+    "expectedOutcome": {},
+    "authorPseudonym": {"type": "string", "minLength": 2},
+    "authoredAt": {"type": "string", "format": "date-time"},
+    "blindAttestation": {"const": true}
+  }
+}
