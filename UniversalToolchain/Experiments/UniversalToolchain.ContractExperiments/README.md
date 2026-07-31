@@ -1,42 +1,54 @@
 # UniversalToolchain contract-guided reverification experiment
 
-This non-packable project evaluates executable cross-layer contracts over production UniversalToolchain verifier components. It calls the real contract-table, Bytecode, AIR, facts/effects, ownership, capability, and reverification checks; it does not replace them with a synthetic detector.
+This non-packable project evaluates four verification policies over production UniversalToolchain contract-table, ownership, Bytecode, AIR, facts/effects, capability, and reverification components. It does not replace those components with a synthetic detector.
 
-The experiment is retained as research infrastructure. It is not part of the public Wist package surface and it is not executed by application consumers. The canonical runner restores and builds the experiment against the exact current production API before collecting any result.
+The experiment is research infrastructure, not part of the public Wist package surface. The canonical runner restores and builds it against the exact current production API before collecting results.
 
-## Compared modes
+## Compared policies
 
-- **B0 — structural baseline:** AIR structure and target-capability checks only; no module ownership, Bytecode drift, or compiler-fact/effect enforcement.
-- **B1 — typed contracts:** B0 plus selected module/ownership, Bytecode, and facts/effects checks; requested reverification is recorded but unresolved requests are not fail-closed.
-- **B2 — full protocol:** B1 plus mandatory failure on unresolved reverification requests.
+- **`P0_STRUCTURAL`** — structural AIR and target-capability checks; no semantic obligation routing.
+- **`P1_INVALIDATION`** — typed contracts and facts/effects; invalidations are tracked, but requested semantic reverification is not automatic.
+- **`P2_SELECTIVE`** — `P1` plus deterministic discharge of only the verifier rules requested by invalidated facts.
+- **`P3_ALWAYS`** — `P1` plus unconditional execution of every verifier applicable to the represented semantic boundary.
+
+`P2_SELECTIVE` and `P3_ALWAYS` share the same runner, cases, artifacts, oracles, and production verifier implementations. The runner rejects any correctness disagreement between them.
 
 ## Evidence sets
 
-The frozen primary catalog contains **40 fault instances representing 32 independent operator shapes** in five families. Identifier-only paired instances remain in the raw records, but primary statistical inference uses operator shapes rather than renamed copies.
+The historical corpus is preserved exactly:
 
-A separate **10-operator post-freeze challenge set** exercises diagnostic operators absent from the primary catalog. It is robustness evidence, but it is author-designed and neither blind nor independently authored.
+- **40 fault instances / 32 primary operator shapes** in five families;
+- **10 author-designed post-freeze challenge operators**;
+- **100 valid controls per policy**, equally stratified across five families;
+- three repetitions per fault instance and policy.
 
-The negative-control corpus contains **100 valid configurations per mode**, stratified equally across ownership, Bytecode, facts/effects, AIR structure, and capability selection. These controls validate the experiment model; they are not a population-level false-positive estimate.
+`mutations.csv` is mechanically compared with the v2 catalog. New external, end-to-end, second-language, and ablation datasets must remain separate.
 
-Every primary and challenge mutation instance is repeated three times per mode. Any unstable detection, diagnostic, or owner-boundary classification invalidates the run. A secondary microbenchmark uses 33 counterbalanced samples per mode and five process-level replicates.
+## Outputs
+
+The runner emits:
+
+- schema-v3 raw JSONL with exact oracle/actual fields;
+- per-rule verifier invocation counts and verification time;
+- invalidation, obligation, discharge/failure, and fact-reverification counters;
+- pipeline time, per-thread allocation, and process peak working set;
+- generated summaries and exact paired tests;
+- environment metadata, source snapshot, and recursive SHA-256 manifest.
+
+`whole_compilation_elapsed_ns` is intentionally `null` in this boundary experiment. The built-in timing loop is an environment-sensitive verifier-kernel diagnostic, not whole-compilation or application overhead.
 
 ## Canonical run
-
-The dedicated workflow runs and archives the complete study, so this command is excluded from repository-wide Markdown execution:
 
 ```bash ci-run=false
 CONTRACT_EXPERIMENT_REPLICATES=5 \
   ./Tools/run-contract-experiment.sh artifacts/contract-experiment
 ```
 
-The output contains raw JSONL, the mutation/operator catalog, stratified controls, environment metadata, process-level timing replicates, generated analysis, the frozen protocol, exact runner sources, and a recursive SHA-256 manifest.
+The complete policy and evidence contract is in `STUDY_PROTOCOL_V3.md`; `STUDY_PROTOCOL_V2.md` remains immutable historical evidence.
 
-## Interpretation boundary
+## Claim boundary
 
-- Primary and challenge faults are author-designed.
-- The challenge set uses operators absent from the primary catalog, but it was not selected by an independent evaluator.
-- The experiment invokes production verifier components at compiler boundaries; it does not mutate every end-to-end Wist source-to-execution path.
-- The timing result is isolated validation-kernel cost, not whole-compilation or application overhead.
-- Results must not be generalized to unrelated compilers without independent replication.
-- No detection count, significance result, or overhead may be reported unless regenerated from archived raw records for the exact commit.
-- PlanFuzz remains a separate configuration-aware relational testing system; neither experiment substitutes for the other.
+- The primary/challenge sets are not independently authored.
+- Boundary detection is not an end-to-end source-to-result evaluation.
+- Kernel timing is not decision-grade performance evidence.
+- No result may be reported unless regenerated from archived raw records for the exact commit and validated by `analyze_results.py`.
