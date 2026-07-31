@@ -37,8 +37,11 @@ cp "$project_root/README.md" "$output/source-snapshot/"
 cp "$root/Tools/run-cgo27-end-to-end.sh" "$output/source-snapshot/"
 git -C "$root" status --porcelain=v1 > "$output/git-status.txt"
 printf '%s\n' "${GITHUB_SHA:-${CGO27_EXPERIMENT_COMMIT:-local-uncommitted}}" > "$output/COMMIT"
-find "$output" -type f ! -name MANIFEST.sha256 -print0 \
-  | sort -z \
-  | xargs -0 sha256sum \
-  > "$output/MANIFEST.sha256"
-(cd "$output" && sha256sum -c MANIFEST.sha256)
+(
+  cd "$output"
+  find . -type f ! -name MANIFEST.sha256 -print0 \
+    | sort -z \
+    | xargs -0 sha256sum \
+    > MANIFEST.sha256
+  sha256sum -c MANIFEST.sha256
+)

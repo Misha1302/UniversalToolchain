@@ -22,7 +22,7 @@ The author must attest that they did not receive policy detection matrices, impl
 
 Run:
 
-```bash
+```bash ci-run=false
 python3 freeze_corpus.py <author-directory> <output.tar.gz>
 ```
 
