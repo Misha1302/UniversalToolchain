@@ -6,7 +6,7 @@ This artifact reproduces the evaluated, non-performance claims for contract-guid
 
 From a repository checkout or a clean unpacked artifact:
 
-```bash
+```bash ci-run=false
 bash quick-check.sh artifacts/quick-check
 ```
 
@@ -14,7 +14,7 @@ The wrapper extracts the embedded source archive when necessary. It rebuilds and
 
 ## Full reproduction
 
-```bash
+```bash ci-run=false
 bash reproduce.sh artifacts/full
 ```
 
