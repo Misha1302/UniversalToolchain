@@ -3,11 +3,19 @@ set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 output="${1:-$root/artifacts/cgo27-ablations}"
 inputs="$output/inputs"
+commit="$(git -C "$root" rev-parse HEAD 2>/dev/null || true)"
+if [[ -z "$commit" ]]; then
+  commit="${CGO27_SOURCE_SHA:-${CGO27_EXPERIMENT_COMMIT:-}}"
+fi
+if [[ ! "$commit" =~ ^[0-9a-f]{40}$ ]]; then
+  echo "exact 40-hex source commit could not be resolved" >&2
+  exit 2
+fi
+export CGO27_SOURCE_SHA="$commit"
 rm -rf "$output"
 mkdir -p "$inputs" "$output/source-snapshot" "$root/UniversalToolchain/packages"
 CONTRACT_EXPERIMENT_REPLICATES=1 bash "$root/Tools/run-contract-experiment.sh" "$inputs/boundary"
 mechanism_project="$root/UniversalToolchain/Experiments/UniversalToolchain.ContractExperiments/UniversalToolchain.MechanismAblations.csproj"
-commit="$(git -C "$root" rev-parse HEAD)"
 dotnet restore "$mechanism_project" -p:NuGetAudit=false
 dotnet build "$mechanism_project" -c Release --no-restore -p:WarningsAsErrors=true
 CGO27_EXPERIMENT_COMMIT="$commit" dotnet run -c Release --no-build --no-restore --project "$mechanism_project" -- \
