@@ -22,6 +22,16 @@ CGO27_EXPERIMENT_COMMIT="$commit" dotnet run -c Release --no-build --no-restore 
   "$inputs/mechanisms"
 bash "$root/Tools/run-cgo27-end-to-end.sh" "$inputs/wist-end-to-end"
 bash "$root/UniversalToolchain/Experiments/UniversalToolchain.TensorRules/run.sh" "$inputs/tensorrules"
+test "$(cat "$inputs/boundary/environment/commit.txt")" = "$commit"
+test "$(cat "$inputs/wist-end-to-end/COMMIT")" = "$commit"
+test "$(cat "$inputs/tensorrules/COMMIT")" = "$commit"
+python3 - "$inputs/mechanisms/mechanism-ablations.json" "$commit" <<'PY'
+import json,sys
+path,expected=sys.argv[1:]
+data=json.load(open(path,encoding='utf-8'))
+assert data['Status']=='VALIDATED'
+assert data['Commit']==expected
+PY
 python3 "$root/CGO27/ablations/analyze_ablations.py" \
   "$inputs/boundary/analysis/analysis.json" \
   "$inputs/boundary/main/results.jsonl" \
