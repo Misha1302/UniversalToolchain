@@ -150,6 +150,18 @@ def case_catalog(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return catalog
 
 
+def resolve_commit() -> str:
+    commit = (
+        os.environ.get("CGO27_SOURCE_SHA")
+        or os.environ.get("CGO27_EXPERIMENT_COMMIT")
+        or os.environ.get("GITHUB_SHA")
+        or ""
+    )
+    if len(commit) != 40 or any(character not in "0123456789abcdef" for character in commit):
+        raise ValueError("exact 40-hex source commit is required")
+    return commit
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("dll", type=Path)
@@ -159,6 +171,7 @@ def main() -> int:
     output = args.output.resolve()
     output.mkdir(parents=True, exist_ok=True)
     run_id = f"cgo27-e2e-{os.getpid()}"
+    commit = resolve_commit()
 
     records: list[dict[str, Any]] = []
     raw_path = output / "raw-results.jsonl"
@@ -178,6 +191,7 @@ def main() -> int:
             {
                 "schemaVersion": 2,
                 "runId": run_id,
+                "commitSha": commit,
                 "recordsCollected": len(records),
                 "faultExpectations": base.FAULT_EXPECTATIONS,
                 "baselineRuntimeFailures": BASELINE_FAILURES,
@@ -197,7 +211,7 @@ def main() -> int:
     summary = {
         "schemaVersion": 2,
         "runId": run_id,
-        "commitSha": os.environ.get("GITHUB_SHA", os.environ.get("CGO27_EXPERIMENT_COMMIT", "local-uncommitted")),
+        "commitSha": commit,
         "status": "VALIDATED",
         "cases": len(base.CASE_IDS),
         "strata": dict(Counter(item["stratum"] for item in catalog)),
@@ -217,6 +231,7 @@ def main() -> int:
         json.dumps(
             {
                 "schemaVersion": 2,
+                "commitSha": commit,
                 "python": sys.version,
                 "platform": platform.platform(),
                 "processor": platform.processor(),
