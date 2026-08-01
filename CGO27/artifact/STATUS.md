@@ -6,8 +6,11 @@
 - frozen boundary detection counts and valid-control accounting;
 - 30-case Wist source-to-result classification with 240 fresh-process records;
 - TensorRules public-SDK second-language study with 48 observations;
-- cross-study ablations and selective/always classification parity;
-- anonymous paper build and format preflight.
+- eight isolated mechanism ablations: full protocol 8/8, ablated protocol 0/8, matched-control false positives 0/8;
+- policy-level ablations and selective/always classification parity;
+- evidence-generated paper tables byte-compared with committed anonymous sources;
+- anonymous paper build and format preflight;
+- exact checked-out revision preserved through repository and clean-unpack execution.
 
 ## Explicitly blocked claims
 
