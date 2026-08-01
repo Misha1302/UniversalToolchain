@@ -3,6 +3,14 @@ set -euo pipefail
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 project="$root/UniversalToolchain/Experiments/UniversalToolchain.TensorRules/UniversalToolchain.TensorRules.csproj"
 output="${1:-$root/artifacts/cgo27-tensorrules}"
+commit="$(git -C "$root" rev-parse HEAD 2>/dev/null || true)"
+if [[ -z "$commit" ]]; then
+  commit="${CGO27_SOURCE_SHA:-${CGO27_EXPERIMENT_COMMIT:-}}"
+fi
+if [[ ! "$commit" =~ ^[0-9a-f]{40}$ ]]; then
+  echo "exact 40-hex source commit could not be resolved" >&2
+  exit 2
+fi
 rm -rf "$output"
 mkdir -p "$output/source-snapshot" "$root/UniversalToolchain/packages"
 if grep -Eiq 'Wist|ModuleContracts|BasicCore|IntermediateRepresentation' "$project"; then
@@ -17,7 +25,7 @@ cp "$project" "$output/source-snapshot/"
 cp "$(dirname "$project")/Program.cs" "$output/source-snapshot/"
 cp "$(dirname "$project")/README.md" "$output/source-snapshot/"
 cp "$(dirname "$project")/run.sh" "$output/source-snapshot/"
-git -C "$root" rev-parse HEAD > "$output/COMMIT"
+printf '%s\n' "$commit" > "$output/COMMIT"
 if git -C "$root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   git -C "$root" status --porcelain=v1 > "$output/git-status.txt"
 else
