@@ -13,10 +13,15 @@ mkdir -p "$out_dir/source" "$out_dir/environment"
 mkdir -p UniversalToolchain/packages
 unset PLATFORM || true
 
-commit="${GITHUB_SHA:-${CONTRACT_REVIEW_HOLDOUT_COMMIT:-}}"
+commit="$(git -C "$root" rev-parse HEAD 2>/dev/null || true)"
 if [[ -z "$commit" ]]; then
-  commit="$(git rev-parse HEAD 2>/dev/null || printf 'unknown')"
+  commit="${CGO27_SOURCE_SHA:-${CONTRACT_REVIEW_HOLDOUT_COMMIT:-${GITHUB_SHA:-}}}"
 fi
+if [[ ! "$commit" =~ ^[0-9a-f]{40}$ ]]; then
+  echo "exact 40-hex source commit could not be resolved" >&2
+  exit 2
+fi
+unset GITHUB_SHA || true
 export CONTRACT_REVIEW_HOLDOUT_COMMIT="$commit"
 printf '%s\n' "$commit" > "$out_dir/environment/commit.txt"
 git status --porcelain=v1 > "$out_dir/environment/git-status.txt" 2>/dev/null || true

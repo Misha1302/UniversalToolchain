@@ -18,14 +18,26 @@ on:
       - "Tools/run-contract-review-holdout.sh"
       - ".github/workflows/contract-experiment.yml"
 
+permissions:
+  contents: read
+
+env:
+  CGO27_SOURCE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
 jobs:
   contract-experiment:
     runs-on: ubuntu-24.04
     timeout-minutes: 35
 
     steps:
-      - name: Checkout
+      - name: Checkout exact source revision
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CGO27_SOURCE_SHA }}
+
+      - name: Verify exact source revision
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "$CGO27_SOURCE_SHA"
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -54,6 +66,7 @@ jobs:
           mkdir -p artifacts/contract-experiment
           ./Tools/run-contract-experiment.sh artifacts/contract-experiment 2>&1 \
             | tee artifacts/contract-experiment-workflow.log
+          test "$(cat artifacts/contract-experiment/environment/commit.txt)" = "$CGO27_SOURCE_SHA"
 
       - name: Run post-freeze review holdouts
         shell: bash
@@ -62,12 +75,13 @@ jobs:
           mkdir -p artifacts/contract-review-holdout
           bash ./Tools/run-contract-review-holdout.sh artifacts/contract-review-holdout 2>&1 \
             | tee artifacts/contract-review-holdout-workflow.log
+          test "$(cat artifacts/contract-review-holdout/environment/commit.txt)" = "$CGO27_SOURCE_SHA"
 
       - name: Upload contract experiment evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: contract-experiment-${{ github.sha }}
+          name: contract-experiment-${{ env.CGO27_SOURCE_SHA }}
           path: |
             artifacts/contract-experiment
             artifacts/contract-experiment-workflow.log

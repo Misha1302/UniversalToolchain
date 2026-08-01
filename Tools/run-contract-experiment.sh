@@ -30,6 +30,7 @@ if [[ ! "$commit" =~ ^[0-9a-f]{40}$ ]]; then
   echo "exact 40-hex source commit could not be resolved" >&2
   exit 2
 fi
+unset GITHUB_SHA || true
 export CGO27_EXPERIMENT_COMMIT="$commit"
 printf '%s\n' "$commit" > "$out_dir/environment/commit.txt"
 git status --porcelain=v1 > "$out_dir/environment/git-status.txt" 2>/dev/null || true
