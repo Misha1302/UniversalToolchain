@@ -7,6 +7,12 @@ on:
     paths:
       - ".github/workflows/apply-cgo27-submission-strengthening.yml"
       - ".github/patches/cgo27-submission-strengthening.patch.gz.b64"
+  pull_request:
+    branches:
+      - master
+    paths:
+      - ".github/workflows/apply-cgo27-submission-strengthening.yml"
+      - ".github/patches/cgo27-submission-strengthening.patch.gz.b64"
 
 permissions:
   contents: write
@@ -26,7 +32,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD~2)" = "f13ad1310856e5618e1c3042c447ca543e0f3125"
+          base="f13ad1310856e5618e1c3042c447ca543e0f3125"
+          git merge-base --is-ancestor "$base" HEAD
+          test "$(git rev-list --count "$base"..HEAD)" = "3"
           test -f .github/patches/cgo27-submission-strengthening.patch.gz.b64
 
       - name: Apply exact patch and validate scope
