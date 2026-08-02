@@ -120,19 +120,40 @@ public sealed class BytecodeVerifier : IBytecodeVerifier
         {
             declarationsByModule.TryGetValue(emission.ProducerModule, out var declarations);
             declarations ??= [];
+            var declarationsForSource = declarations
+                .Where(declaration => declaration.SourceNode == emission.SourceNode)
+                .ToArray();
 
-            foreach (var tag in emission.Tags.Where(tag => declarations.All(declaration => !declaration.MayEmitTags.Contains(tag))))
-                yield return CreateUndeclaredProducerDiagnostic(emission.ProducerModule, tag.Value, severity);
+            foreach (var tag in emission.Tags)
+            {
+                if (declarations.All(declaration => !declaration.MayEmitTags.Contains(tag)))
+                {
+                    yield return CreateUndeclaredProducerDiagnostic(emission.ProducerModule, tag.Value, severity);
+                    continue;
+                }
 
-            foreach (var pattern in emission.Patterns.Where(pattern => declarations.All(declaration => !declaration.MayEmitPatterns.Contains(pattern))))
-                yield return CreateUndeclaredProducerDiagnostic(emission.ProducerModule, pattern.Value, severity);
+                if (declarationsForSource.All(declaration => !declaration.MayEmitTags.Contains(tag)))
+                    yield return CreateUndeclaredSourceDiagnostic(emission, tag.Value, severity);
+            }
+
+            foreach (var pattern in emission.Patterns)
+            {
+                if (declarations.All(declaration => !declaration.MayEmitPatterns.Contains(pattern)))
+                {
+                    yield return CreateUndeclaredProducerDiagnostic(emission.ProducerModule, pattern.Value, severity);
+                    continue;
+                }
+
+                if (declarationsForSource.All(declaration => !declaration.MayEmitPatterns.Contains(pattern)))
+                    yield return CreateUndeclaredSourceDiagnostic(emission, pattern.Value, severity);
+            }
 
             if (emission.ObservedStackEffect == null)
                 continue;
 
             foreach (var pattern in emission.Patterns)
             {
-                var declaration = declarations.FirstOrDefault(x => x.MayEmitPatterns.Contains(pattern));
+                var declaration = declarationsForSource.FirstOrDefault(x => x.MayEmitPatterns.Contains(pattern));
                 if (declaration == null || !declaration.DeclaredStackEffect.IsKnown)
                     continue;
 
@@ -148,6 +169,17 @@ public sealed class BytecodeVerifier : IBytecodeVerifier
             }
         }
     }
+
+    private static ToolchainDiagnostic CreateUndeclaredSourceDiagnostic(
+        ObservedBytecodeEmission emission,
+        string emittedId,
+        ToolchainDiagnosticSeverity severity) =>
+        new(
+            ModuleContractDiagnosticCodes.UndeclaredBytecodeSource,
+            severity,
+            $"Module '{emission.ProducerModule}' emitted bytecode id '{emittedId}' for source node '{emission.SourceNode}', but that source node does not declare the emission.",
+            null,
+            [new ToolchainDiagnosticHint("Attach the correct source AST node identity or declare the emission for that node.")]);
 
     private static ToolchainDiagnostic CreateUndeclaredProducerDiagnostic(
         ModuleId moduleId,

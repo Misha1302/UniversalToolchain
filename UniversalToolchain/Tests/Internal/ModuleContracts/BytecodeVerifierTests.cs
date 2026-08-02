@@ -46,14 +46,14 @@ public sealed class BytecodeVerifierTests
     }
 
     [Test]
-    public void Verify_WhenObservedProducerEmitsUndeclaredPattern_ReturnsDiagnostic()
+    public void Verify_WhenObservedEmissionViolatesProducerOrSourceIdentity_ReturnsDiagnostic()
     {
         var moduleId = new ModuleId("wist.test");
         var nodeKind = new AstNodeKind("wist.test.ast.node");
         var declaredPattern = new BytecodePatternId("wist.test.bytecode.declared");
         var table = CreateTable(moduleId, nodeKind, declaredPattern);
 
-        var result = new BytecodeVerifier().Verify(new BytecodeVerificationRequest(
+        var undeclaredPatternResult = new BytecodeVerifier().Verify(new BytecodeVerificationRequest(
             new Bytecode([]),
             table,
             VerificationSeverityProfile.Warn,
@@ -65,8 +65,27 @@ public sealed class BytecodeVerifierTests
                     [new BytecodePatternId("wist.test.bytecode.undeclared")])
             ]));
 
-        Assert.That(result.IsValid, Is.True);
-        Assert.That(result.Diagnostics.Single().Code, Is.EqualTo(ModuleContractDiagnosticCodes.UndeclaredBytecodeProducer));
+        Assert.That(undeclaredPatternResult.IsValid, Is.True);
+        Assert.That(
+            undeclaredPatternResult.Diagnostics.Single().Code,
+            Is.EqualTo(ModuleContractDiagnosticCodes.UndeclaredBytecodeProducer));
+
+        var wrongSourceResult = new BytecodeVerifier().Verify(new BytecodeVerificationRequest(
+            new Bytecode([]),
+            table,
+            VerificationSeverityProfile.Strict,
+            [
+                new ObservedBytecodeEmission(
+                    moduleId,
+                    new AstNodeKind("wist.test.ast.other"),
+                    [],
+                    [declaredPattern])
+            ]));
+
+        Assert.That(wrongSourceResult.IsValid, Is.False);
+        Assert.That(
+            wrongSourceResult.Diagnostics.Single().Code,
+            Is.EqualTo(ModuleContractDiagnosticCodes.UndeclaredBytecodeSource));
     }
 
     [Test]

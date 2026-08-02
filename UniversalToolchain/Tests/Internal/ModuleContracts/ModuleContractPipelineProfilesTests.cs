@@ -15,6 +15,7 @@ public sealed class ModuleContractPipelineProfilesTests
         Assert.That(options.AirProfile, Is.EqualTo(VerificationSeverityProfile.Warn));
         Assert.That(options.EnforcementPolicy.RequireNewModulesDeclared, Is.False);
         Assert.That(options.BackendPolicy, Is.EqualTo(AirBackendPolicy.CapabilityGated));
+        Assert.That(options.VerificationPolicy, Is.EqualTo(ModuleContractVerificationPolicy.P3Always));
     }
 
     [Test]
@@ -57,6 +58,22 @@ public sealed class ModuleContractVerificationOptionsTests
     }
 
     [Test]
+    public void SnapshotValidated_RejectsUnknownVerificationPolicy()
+    {
+        var options = new ModuleContractVerificationOptions
+        {
+            Mode = ModuleContractVerificationMode.Strict,
+            PipelineOptions = ModuleContractPipelineProfiles.StrictEnforced with
+            {
+                VerificationPolicy = (ModuleContractVerificationPolicy)int.MaxValue
+            },
+            DiagnosticSink = new InMemoryModuleContractDiagnosticSink()
+        };
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => options.SnapshotValidated());
+    }
+
+    [Test]
     public void WarnProfile_RequiresAndPreservesObservableSink()
     {
         var sink = new InMemoryModuleContractDiagnosticSink();
@@ -75,6 +92,7 @@ public sealed class ModuleContractVerificationOptionsTests
         {
             Assert.That(snapshot.PipelineOptions.Enabled, Is.True);
             Assert.That(snapshot.PipelineOptions.AirProfile, Is.EqualTo(VerificationSeverityProfile.Warn));
+            Assert.That(snapshot.PipelineOptions.VerificationPolicy, Is.EqualTo(ModuleContractVerificationPolicy.P3Always));
             Assert.That(sink.Batches, Has.Count.EqualTo(1));
             Assert.That(sink.Batches[0].Diagnostics.Single().Message, Is.EqualTo("observable warning"));
         });

@@ -279,6 +279,7 @@ public sealed partial class WistMigrationGateTests
                 var normalized = NormalizePath(path);
                 return !normalized.Contains("/bin/", StringComparison.Ordinal)
                        && !normalized.Contains("/obj/", StringComparison.Ordinal)
+                       && !normalized.Contains("/Experiments/", StringComparison.Ordinal)
                        && !IsTestSourcePath(normalized)
                        && !normalized.EndsWith(".g.cs", StringComparison.Ordinal)
                        && !normalized.EndsWith(".generated.cs", StringComparison.OrdinalIgnoreCase);

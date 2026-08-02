@@ -1,0 +1,471 @@
+{
+  "schema_version": 3,
+  "baseline_commit": "c73b418c6e72e8b92371753a3a7b4a9f7adaa5f1",
+  "historical_catalog_sha256": "e830125293770b512e540a4ae3a003c407258916aea2d7f65d95b08cdadbb183",
+  "fault_cases": [
+    {
+      "case_id": "AIR-01",
+      "corpus_id": "primary",
+      "operator_id": "AIR-01",
+      "workload_stratum": "air-structure",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-AIR-SCHEMA-001",
+      "expected_boundary": "air-structure"
+    },
+    {
+      "case_id": "AIR-02",
+      "corpus_id": "primary",
+      "operator_id": "AIR-02",
+      "workload_stratum": "air-structure",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-AIR-BRANCH-001",
+      "expected_boundary": "air-structure"
+    },
+    {
+      "case_id": "AIR-03",
+      "corpus_id": "primary",
+      "operator_id": "AIR-03",
+      "workload_stratum": "air-structure",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-AIR-BRANCH-002",
+      "expected_boundary": "air-structure"
+    },
+    {
+      "case_id": "AIR-04",
+      "corpus_id": "primary",
+      "operator_id": "AIR-04",
+      "workload_stratum": "air-structure",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-AIR-STACK-001",
+      "expected_boundary": "air-structure"
+    },
+    {
+      "case_id": "AIR-05",
+      "corpus_id": "primary",
+      "operator_id": "AIR-05",
+      "workload_stratum": "air-structure",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-AIR-STACK-001",
+      "expected_boundary": "air-structure"
+    },
+    {
+      "case_id": "AIR-06",
+      "corpus_id": "primary",
+      "operator_id": "AIR-06",
+      "workload_stratum": "air-structure",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-AIR-STACK-001",
+      "expected_boundary": "air-structure"
+    },
+    {
+      "case_id": "AIR-07",
+      "corpus_id": "primary",
+      "operator_id": "AIR-07",
+      "workload_stratum": "air-structure",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-AIR-SCHEMA-001",
+      "expected_boundary": "air-structure"
+    },
+    {
+      "case_id": "AIR-08",
+      "corpus_id": "primary",
+      "operator_id": "AIR-08",
+      "workload_stratum": "air-structure",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-AIR-SCHEMA-001",
+      "expected_boundary": "air-structure"
+    },
+    {
+      "case_id": "BYTE-01",
+      "corpus_id": "primary",
+      "operator_id": "BYTE-01",
+      "workload_stratum": "bytecode-drift",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-BYTECODE-TAG-001",
+      "expected_boundary": "bytecode"
+    },
+    {
+      "case_id": "BYTE-02",
+      "corpus_id": "primary",
+      "operator_id": "BYTE-01",
+      "workload_stratum": "bytecode-drift",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-BYTECODE-TAG-001",
+      "expected_boundary": "bytecode"
+    },
+    {
+      "case_id": "BYTE-03",
+      "corpus_id": "primary",
+      "operator_id": "BYTE-02",
+      "workload_stratum": "bytecode-drift",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-BYTECODE-PATTERN-001",
+      "expected_boundary": "bytecode"
+    },
+    {
+      "case_id": "BYTE-04",
+      "corpus_id": "primary",
+      "operator_id": "BYTE-02",
+      "workload_stratum": "bytecode-drift",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-BYTECODE-PATTERN-001",
+      "expected_boundary": "bytecode"
+    },
+    {
+      "case_id": "BYTE-05",
+      "corpus_id": "primary",
+      "operator_id": "BYTE-03",
+      "workload_stratum": "bytecode-drift",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-BYTECODE-TAG-002",
+      "expected_boundary": "bytecode"
+    },
+    {
+      "case_id": "BYTE-06",
+      "corpus_id": "primary",
+      "operator_id": "BYTE-03",
+      "workload_stratum": "bytecode-drift",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-BYTECODE-TAG-002",
+      "expected_boundary": "bytecode"
+    },
+    {
+      "case_id": "BYTE-07",
+      "corpus_id": "primary",
+      "operator_id": "BYTE-04",
+      "workload_stratum": "bytecode-drift",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-BYTECODE-STACK-001",
+      "expected_boundary": "bytecode"
+    },
+    {
+      "case_id": "BYTE-08",
+      "corpus_id": "primary",
+      "operator_id": "BYTE-04",
+      "workload_stratum": "bytecode-drift",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-BYTECODE-STACK-001",
+      "expected_boundary": "bytecode"
+    },
+    {
+      "case_id": "CAP-01",
+      "corpus_id": "primary",
+      "operator_id": "CAP-01",
+      "workload_stratum": "capability-target",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-BACKEND-CAPABILITY-001",
+      "expected_boundary": "capability-target"
+    },
+    {
+      "case_id": "CAP-02",
+      "corpus_id": "primary",
+      "operator_id": "CAP-01",
+      "workload_stratum": "capability-target",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-BACKEND-CAPABILITY-001",
+      "expected_boundary": "capability-target"
+    },
+    {
+      "case_id": "CAP-03",
+      "corpus_id": "primary",
+      "operator_id": "CAP-02",
+      "workload_stratum": "capability-target",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-AIR-INTRINSIC-001",
+      "expected_boundary": "capability-target"
+    },
+    {
+      "case_id": "CAP-04",
+      "corpus_id": "primary",
+      "operator_id": "CAP-02",
+      "workload_stratum": "capability-target",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-AIR-INTRINSIC-001",
+      "expected_boundary": "capability-target"
+    },
+    {
+      "case_id": "CAP-05",
+      "corpus_id": "primary",
+      "operator_id": "CAP-03",
+      "workload_stratum": "capability-target",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-AIR-CAPABILITY-001",
+      "expected_boundary": "capability-target"
+    },
+    {
+      "case_id": "CAP-06",
+      "corpus_id": "primary",
+      "operator_id": "CAP-03",
+      "workload_stratum": "capability-target",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-AIR-CAPABILITY-001",
+      "expected_boundary": "capability-target"
+    },
+    {
+      "case_id": "CAP-07",
+      "corpus_id": "primary",
+      "operator_id": "CAP-04",
+      "workload_stratum": "capability-target",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-AIR-INTRINSIC-002",
+      "expected_boundary": "capability-target"
+    },
+    {
+      "case_id": "CAP-08",
+      "corpus_id": "primary",
+      "operator_id": "CAP-04",
+      "workload_stratum": "capability-target",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-AIR-INTRINSIC-002",
+      "expected_boundary": "capability-target"
+    },
+    {
+      "case_id": "CH-CAP-01",
+      "corpus_id": "challenge",
+      "operator_id": "CH-CAP-01",
+      "workload_stratum": "challenge-capability-selection",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-BACKEND-CAPABILITY-002",
+      "expected_boundary": "challenge-capability-selection"
+    },
+    {
+      "case_id": "CH-FACT-01",
+      "corpus_id": "challenge",
+      "operator_id": "CH-FACT-01",
+      "workload_stratum": "challenge-facts",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-COMPILER-FACT-002",
+      "expected_boundary": "contract-table"
+    },
+    {
+      "case_id": "CH-LOWER-01",
+      "corpus_id": "challenge",
+      "operator_id": "CH-LOWER-01",
+      "workload_stratum": "challenge-ownership",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-MOD-OWNERSHIP-003",
+      "expected_boundary": "challenge-lowerer"
+    },
+    {
+      "case_id": "CH-META-01",
+      "corpus_id": "challenge",
+      "operator_id": "CH-META-01",
+      "workload_stratum": "challenge-bytecode-metadata",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-BYTECODE-METADATA-001",
+      "expected_boundary": "challenge-bytecode-metadata"
+    },
+    {
+      "case_id": "CH-META-02",
+      "corpus_id": "challenge",
+      "operator_id": "CH-META-02",
+      "workload_stratum": "challenge-bytecode-metadata",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-BYTECODE-METADATA-001",
+      "expected_boundary": "challenge-bytecode-metadata"
+    },
+    {
+      "case_id": "CH-NS-01",
+      "corpus_id": "challenge",
+      "operator_id": "CH-NS-01",
+      "workload_stratum": "challenge-contract-selection",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-CONTRACT-003",
+      "expected_boundary": "contract-table"
+    },
+    {
+      "case_id": "CH-SCHEMA-01",
+      "corpus_id": "challenge",
+      "operator_id": "CH-SCHEMA-01",
+      "workload_stratum": "challenge-contract-selection",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-CONTRACT-005",
+      "expected_boundary": "contract-table"
+    },
+    {
+      "case_id": "CH-SELECT-01",
+      "corpus_id": "challenge",
+      "operator_id": "CH-SELECT-01",
+      "workload_stratum": "challenge-contract-selection",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-CONTRACT-007",
+      "expected_boundary": "challenge-selection"
+    },
+    {
+      "case_id": "CH-SELECT-02",
+      "corpus_id": "challenge",
+      "operator_id": "CH-SELECT-02",
+      "workload_stratum": "challenge-contract-selection",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-CONTRACT-008",
+      "expected_boundary": "challenge-selection"
+    },
+    {
+      "case_id": "CH-SELECT-03",
+      "corpus_id": "challenge",
+      "operator_id": "CH-SELECT-03",
+      "workload_stratum": "challenge-contract-selection",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-CONTRACT-006",
+      "expected_boundary": "challenge-selection"
+    },
+    {
+      "case_id": "FACT-01",
+      "corpus_id": "primary",
+      "operator_id": "FACT-01",
+      "workload_stratum": "facts-order-reverification",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-PIPELINE-EFFECT-002",
+      "expected_boundary": "pipeline-effects"
+    },
+    {
+      "case_id": "FACT-02",
+      "corpus_id": "primary",
+      "operator_id": "FACT-02",
+      "workload_stratum": "facts-order-reverification",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-PIPELINE-EFFECT-002",
+      "expected_boundary": "pipeline-effects"
+    },
+    {
+      "case_id": "FACT-03",
+      "corpus_id": "primary",
+      "operator_id": "FACT-03",
+      "workload_stratum": "facts-order-reverification",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-PIPELINE-EFFECT-002",
+      "expected_boundary": "pipeline-effects"
+    },
+    {
+      "case_id": "FACT-04",
+      "corpus_id": "primary",
+      "operator_id": "FACT-04",
+      "workload_stratum": "facts-order-reverification",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-PIPELINE-EFFECT-004",
+      "expected_boundary": "pipeline-effects"
+    },
+    {
+      "case_id": "FACT-05",
+      "corpus_id": "primary",
+      "operator_id": "FACT-05",
+      "workload_stratum": "facts-order-reverification",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-PIPELINE-EFFECT-003",
+      "expected_boundary": "pipeline-effects"
+    },
+    {
+      "case_id": "FACT-06",
+      "corpus_id": "primary",
+      "operator_id": "FACT-06",
+      "workload_stratum": "facts-order-reverification",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-PIPELINE-EFFECT-003",
+      "expected_boundary": "pipeline-effects"
+    },
+    {
+      "case_id": "FACT-07",
+      "corpus_id": "primary",
+      "operator_id": "FACT-07",
+      "workload_stratum": "facts-order-reverification",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-PIPELINE-EFFECT-003",
+      "expected_boundary": "pipeline-effects"
+    },
+    {
+      "case_id": "FACT-08",
+      "corpus_id": "primary",
+      "operator_id": "FACT-08",
+      "workload_stratum": "facts-order-reverification",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-PIPELINE-EFFECT-003",
+      "expected_boundary": "pipeline-effects"
+    },
+    {
+      "case_id": "OWN-01",
+      "corpus_id": "primary",
+      "operator_id": "OWN-01",
+      "workload_stratum": "ownership",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-CONTRACT-001",
+      "expected_boundary": "contract-table"
+    },
+    {
+      "case_id": "OWN-02",
+      "corpus_id": "primary",
+      "operator_id": "OWN-02",
+      "workload_stratum": "ownership",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-CONTRACT-001",
+      "expected_boundary": "contract-table"
+    },
+    {
+      "case_id": "OWN-03",
+      "corpus_id": "primary",
+      "operator_id": "OWN-03",
+      "workload_stratum": "ownership",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-COMPILER-FACT-001",
+      "expected_boundary": "contract-table"
+    },
+    {
+      "case_id": "OWN-04",
+      "corpus_id": "primary",
+      "operator_id": "OWN-04",
+      "workload_stratum": "ownership",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-COMPILER-FACT-003",
+      "expected_boundary": "contract-table"
+    },
+    {
+      "case_id": "OWN-05",
+      "corpus_id": "primary",
+      "operator_id": "OWN-05",
+      "workload_stratum": "ownership",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-MOD-OWNERSHIP-001",
+      "expected_boundary": "ast-ownership"
+    },
+    {
+      "case_id": "OWN-06",
+      "corpus_id": "primary",
+      "operator_id": "OWN-06",
+      "workload_stratum": "ownership",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-MOD-OWNERSHIP-002",
+      "expected_boundary": "ast-ownership"
+    },
+    {
+      "case_id": "OWN-07",
+      "corpus_id": "primary",
+      "operator_id": "OWN-07",
+      "workload_stratum": "ownership",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-PIPELINE-EFFECT-001",
+      "expected_boundary": "contract-table"
+    },
+    {
+      "case_id": "OWN-08",
+      "corpus_id": "primary",
+      "operator_id": "OWN-08",
+      "workload_stratum": "ownership",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-PIPELINE-EFFECT-001",
+      "expected_boundary": "contract-table"
+    }
+  ],
+  "valid_controls": {
+    "expected_outcome": "accepted",
+    "expected_diagnostic_family": null,
+    "expected_boundary": null,
+    "families": [
+      "clean-air",
+      "clean-bytecode",
+      "clean-capability",
+      "clean-facts",
+      "clean-ownership"
+    ],
+    "cases_per_family": 20,
+    "repetitions_per_policy": 1
+  }
+}

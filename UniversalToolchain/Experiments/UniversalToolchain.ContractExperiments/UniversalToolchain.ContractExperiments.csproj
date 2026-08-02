@@ -6,8 +6,12 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <StartupObject>UniversalToolchain.ContractExperiments.Cgo27Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="Program.cs" />
+    <Compile Remove="Cgo27Program.MechanismAblations.cs" />
+    <None Include="Program.cs" />
     <ProjectReference Include="..\..\UniversalToolchain.ModuleContracts\UniversalToolchain.ModuleContracts.csproj" />
   </ItemGroup>
 </Project>

@@ -1,0 +1,7 @@
+\section{Implementation}
+We implemented the model in System W, an extensible .NET compiler framework. Pipeline observers receive bytecode, AIR, and optimized AIR artifacts from the actual compiler path. Fact effects are evaluated against the selected module order; the scheduler returns verifier invocations; and the observer calls production \texttt{BytecodeVerifier} and \texttt{AirVerifier} routes. Telemetry records per-rule invocation counts, invalidations, obligations, first detection boundary, diagnostics, elapsed verification time, allocations, and process identity.
+
+The policy switch is execution-scoped and internal to research/friend assemblies; it does not expand the shipped System W facade. P3 remains the default. The production integration added focused negative tests for unknown policies, unknown routes, owner conflicts, and empty scopes. The exact provider test contract is 1,579 passing tests.
+
+\paragraph{TensorRules.}
+To test whether the mechanism is tied to System W internals, we implemented a second package solely through public language-authoring SDK projects. TensorRules has its own parser, typed \texttt{TensorPlan}, shape/layout/backend facts, optimizer pass, and interpreter. Policy and fault selection travel through a public execution request; no System W project is referenced. TensorRules is model-authored and is not presented as an independently authored language.

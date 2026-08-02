@@ -1,0 +1,57 @@
+name: CGO27 TensorRules
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - master
+    paths:
+      - ".github/workflows/cgo27-tensorrules.yml"
+      - "UniversalToolchain/Experiments/UniversalToolchain.TensorRules/**"
+      - "UniversalToolchain/UniversalToolchain.FeatureSdk/**"
+      - "UniversalToolchain/UniversalToolchain.Language.Abstractions/**"
+      - "UniversalToolchain/UniversalToolchain.LanguageAuthoring/**"
+      - "UniversalToolchain/UniversalToolchain.LanguageSdk/**"
+      - "UniversalToolchain/UniversalToolchain.Runtime/**"
+      - "CGO27/SECOND_LANGUAGE_REPORT.md"
+
+permissions:
+  contents: read
+
+env:
+  CGO27_SOURCE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
+jobs:
+  tensorrules:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact source revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CGO27_SOURCE_SHA }}
+      - name: Verify exact source revision
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "$CGO27_SOURCE_SHA"
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: UniversalToolchain/global.json
+      - name: Run TensorRules second-language study
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          bash UniversalToolchain/Experiments/UniversalToolchain.TensorRules/run.sh artifacts/cgo27-tensorrules 2>&1 \
+            | tee artifacts/cgo27-tensorrules-workflow.log
+          test "$(cat artifacts/cgo27-tensorrules/COMMIT)" = "$CGO27_SOURCE_SHA"
+      - name: Upload TensorRules evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cgo27-tensorrules-${{ env.CGO27_SOURCE_SHA }}
+          path: |
+            artifacts/cgo27-tensorrules
+            artifacts/cgo27-tensorrules-workflow.log
+          if-no-files-found: error
+          retention-days: 90

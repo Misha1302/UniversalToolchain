@@ -36,6 +36,8 @@ public sealed class WistEngineOptions
     /// </summary>
     public WistOptimizationOptions Optimization { get; set; } = new();
 
+    internal WistVerificationPolicy VerificationPolicy { get; set; } = WistVerificationPolicy.P3Always;
+
     public static WistEngineOptions FromPresetId(string presetId)
     {
         var preset = WistShippedDialectPresets.GetRequired(presetId);

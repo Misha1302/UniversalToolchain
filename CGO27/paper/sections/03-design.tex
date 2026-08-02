@@ -1,0 +1,29 @@
+\section{Contract-Guided Reverification}
+\subsection{Typed contracts and ownership}
+Each extension contributes immutable facets: owned AST/bytecode identities, compiler-fact ownership, pipeline effects, AIR emissions, and backend capabilities. Selection constructs one contract table for the actual runtime components. Duplicate owners, unknown facts, impossible effect declarations, and unresolved backend selections are diagnosed before compilation proceeds.
+
+Ownership is not merely documentation. It prevents an arbitrary extension from satisfying another component's obligation with a similarly named check. The scheduler receives canonical rule IDs and executable routes registered by the selected runtime.
+
+\subsection{Four policies}
+Table~\ref{tab:policies} defines the policies evaluated through one runner, corpus, and oracle.
+
+\begin{table}[t]
+\caption{Verification policies. Structural checks are always part of their represented boundary; ``semantic'' refers to selected-system verifier routes.}
+\label{tab:policies}
+\small
+\begin{tabular}{@{}p{0.24\columnwidth}p{0.68\columnwidth}@{}}
+\toprule
+Policy & Semantic scheduling \\
+\midrule
+P0 structural & No typed fact or obligation routing. \\
+P1 invalidation & Record invalidations; do not discharge requests. \\
+P2 selective & Run exactly the requested canonical verifier rules. \\
+P3 always & Run every verifier applicable to the boundary. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The scheduler sorts rule IDs deterministically. P2 creates one invocation for each distinct requested route. P3 uses the same route implementations but takes the set of all applicable rules. Unknown policies, unknown routes, conflicting owners, or an empty verification scope where a check was requested are errors rather than implicit fallbacks.
+
+\subsection{Structural and semantic scopes}
+A monolithic AIR verifier can make a policy comparison meaningless: invoking it for mandatory structure also silently performs all semantic checks. We therefore split the production verifier into non-overlapping structural and semantic scopes. Schema, branch-target, and stack-discipline checks remain mandatory where represented. Capability and selected-contract relations are scheduled by P2/P3. The default production profile is P3, preserving the pre-study behavior.

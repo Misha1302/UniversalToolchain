@@ -1,0 +1,130 @@
+name: CGO27 Artifact
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - master
+    paths:
+      - ".github/workflows/cgo27-artifact.yml"
+      - ".github/workflows/cgo27-paper.yml"
+      - "CGO27/artifact/**"
+      - "CGO27/paper/**"
+      - "CGO27/ablations/**"
+      - "CGO27/external-fault-kit/**"
+      - "CGO27/*.md"
+      - "Tools/build-cgo27-artifact.sh"
+      - "Tools/run-cgo27-ablations.sh"
+      - "Tools/run-cgo27-end-to-end.sh"
+      - "Tools/run-contract-experiment.sh"
+      - "UniversalToolchain/Experiments/UniversalToolchain.ContractExperiments/**"
+      - "UniversalToolchain/Experiments/UniversalToolchain.EndToEndExperiments/**"
+      - "UniversalToolchain/Experiments/UniversalToolchain.TensorRules/**"
+
+permissions:
+  contents: read
+
+env:
+  CGO27_SOURCE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
+jobs:
+  artifact:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - name: Checkout exact source revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CGO27_SOURCE_SHA }}
+          fetch-depth: 0
+      - name: Verify exact source revision
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "$CGO27_SOURCE_SHA"
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: UniversalToolchain/global.json
+      - name: Build anonymous paper
+        uses: xu-cheng/latex-action@v4
+        with:
+          root_file: main.tex
+          working_directory: CGO27/paper
+          args: -pdf -file-line-error -halt-on-error -interaction=nonstopmode
+      - name: Install PDF preflight tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends poppler-utils
+      - name: Preflight and stage paper
+        shell: bash
+        run: |
+          set -euo pipefail
+          pdf="CGO27/paper/main.pdf"
+          log="CGO27/paper/main.log"
+          test -s "$pdf"
+          ! grep -Eq 'Overfull \\hbox|Citation .* undefined|Reference .* undefined|There were undefined references' "$log"
+          pages="$(pdfinfo "$pdf" | awk '/^Pages:/ {print $2}')"
+          [[ "$pages" =~ ^[0-9]+$ ]] && (( pages <= 11 ))
+          pdfinfo "$pdf" | grep -q 'Page size:.*612 x 792 pts'
+          pdffonts "$pdf" | awk 'NR > 2 && $5 != "yes" { bad=1 } END { exit bad }'
+          mkdir -p artifacts/provider-paper
+          cp "$pdf" artifacts/provider-paper/
+          pdfinfo "$pdf" > artifacts/provider-paper/pdfinfo.txt
+          pdffonts "$pdf" > artifacts/provider-paper/pdffonts.txt
+          pdftotext "$pdf" artifacts/provider-paper/paper.txt
+          ! grep -Eiq 'Misha|Razakov|Wist2|github\.com|/home/|/mnt/|Sydney' artifacts/provider-paper/paper.txt
+          grep -q 'Anonymous Author(s)' artifacts/provider-paper/paper.txt
+          git rev-parse HEAD > artifacts/provider-paper/COMMIT
+          test "$(cat artifacts/provider-paper/COMMIT)" = "$CGO27_SOURCE_SHA"
+          (cd artifacts/provider-paper && find . -type f ! -name MANIFEST.sha256 -print0 | sort -z | xargs -0 sha256sum > MANIFEST.sha256 && sha256sum -c MANIFEST.sha256)
+          rm -f CGO27/paper/main.aux CGO27/paper/main.log CGO27/paper/main.out CGO27/paper/main.pdf \
+            CGO27/paper/main.fdb_latexmk CGO27/paper/main.fls CGO27/paper/main.synctex.gz \
+            CGO27/paper/main.bbl CGO27/paper/main.blg
+          test -z "$(git status --porcelain=v1)"
+      - name: Build deterministic static bundle twice
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash Tools/build-cgo27-artifact.sh artifacts/static-a
+          bash Tools/build-cgo27-artifact.sh artifacts/static-b
+          archive_a="$(find artifacts/static-a -maxdepth 1 -type f -name 'cgo27-artifact-*.tar.gz' -print | sort | head -n 1)"
+          archive_b="$(find artifacts/static-b -maxdepth 1 -type f -name 'cgo27-artifact-*.tar.gz' -print | sort | head -n 1)"
+          test -n "$archive_a" && test -n "$archive_b"
+          cmp "$archive_a" "$archive_b"
+          sha256sum "$archive_a" "$archive_b" > artifacts/DETERMINISM.sha256
+          (cd artifacts/static-a && sha256sum -c SHA256SUMS)
+          (cd artifacts/static-b && sha256sum -c SHA256SUMS)
+      - name: Clean-unpack artifact quick check
+        shell: bash
+        run: |
+          set -euo pipefail
+          workspace="$PWD"
+          archive="$(find artifacts/static-a -maxdepth 1 -type f -name 'cgo27-artifact-*.tar.gz' -print | sort | head -n 1)"
+          rm -rf artifacts/clean-unpack
+          mkdir -p artifacts/clean-unpack
+          tar -xzf "$archive" -C artifacts/clean-unpack
+          stage="$(find artifacts/clean-unpack -mindepth 1 -maxdepth 1 -type d -name 'cgo27-artifact-*' -print | sort | head -n 1)"
+          test -n "$stage"
+          (cd "$stage" && sha256sum -c MANIFEST.sha256)
+          timeout 900 bash "$stage/quick-check.sh" "$workspace/artifacts/clean-unpack-evidence"
+          grep -q '^CGO27_ARTIFACT_QUICK_CHECK=PASS$' artifacts/clean-unpack-evidence/QUICK_CHECK_RECEIPT
+      - name: Verify staged source identities
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(cat artifacts/provider-paper/COMMIT)" = "$CGO27_SOURCE_SHA"
+          while IFS= read -r commit_file; do
+            test "$(cat "$commit_file")" = "$CGO27_SOURCE_SHA"
+          done < <(find artifacts/static-a artifacts/static-b -type f -name COMMIT -print)
+      - name: Upload complete artifact evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: cgo27-artifact-${{ env.CGO27_SOURCE_SHA }}
+          path: |
+            artifacts/static-a
+            artifacts/DETERMINISM.sha256
+            artifacts/provider-paper
+            artifacts/clean-unpack-evidence
+          if-no-files-found: error
+          retention-days: 90

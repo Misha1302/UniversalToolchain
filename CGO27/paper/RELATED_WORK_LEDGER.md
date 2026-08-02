@@ -1,0 +1,43 @@
+# CGO 2027 primary-source related-work ledger
+
+Status: primary-source inventory for paper drafting. Official documentation is included where it defines production pass-manager behavior; survey papers are not used as substitutes for original systems.
+
+| ID | Category | Primary source | Stable identifier | Relevance / distinction |
+|---|---|---|---|---|
+| RW01 | Infrastructure | Lattner and Adve, “LLVM: A Compilation Framework for Lifelong Program Analysis & Transformation,” CGO 2004 | DOI 10.1109/CGO.2004.1281665 | Establishes a reusable typed IR and extensible optimization framework; does not provide obligation-guided semantic reverification. |
+| RW02 | Infrastructure | Lattner et al., “MLIR: Scaling Compiler Infrastructure for Domain Specific Computation,” CGO 2021 | DOI 10.1109/CGO51591.2021.9370308 | Multi-level extensible IR/dialect infrastructure; our question is selected-system validity after extension composition. |
+| RW03 | Pass management | LLVM, “Using the New Pass Manager” | Official LLVM documentation | Defines cached analyses, `PreservedAnalyses`, transitive invalidation and pass plugins; preservation declarations are not semantic verifier obligations. |
+| RW04 | Pass management | MLIR, “Pass Management” | Official MLIR documentation | Defines cached analysis invalidation and explicit preservation; does not evaluate whether a selected compiler system remains semantically valid. |
+| RW05 | Translation validation | Pnueli, Siegel, and Singerman, “Translation Validation,” TACAS 1998 | DOI 10.1007/BFB0054170 | Foundational post-hoc validation of transformations. |
+| RW06 | Translation validation | Necula, “Translation Validation for an Optimizing Compiler,” PLDI 2000 | DOI 10.1145/349299.349314 | Practical validation across compiler passes; our mechanism uses declared fact owners and selective verifier scheduling. |
+| RW07 | Verified validators | Tristan and Leroy, “Formal Verification of Translation Validators,” POPL 2008 | DOI 10.1145/1328438.1328444 | Machine-checked instruction-scheduling validators; narrower transformations and stronger proof guarantees than our runtime contract system. |
+| RW08 | Verified compilation | Leroy, “Formal Certification of a Compiler Back-end,” POPL 2006 | DOI 10.1145/1111037.1111042 | Whole-backend semantic preservation proof; our work targets extensible production pipelines without fully verifying every pass. |
+| RW09 | Verified compilation | Leroy, “A Formally Verified Compiler Back-end,” JAR 2009 | DOI 10.1007/s10817-009-9155-4 | Detailed CompCert backend proof and semantic preservation. |
+| RW10 | Verified compilation | Leroy, “Formal Verification of a Realistic Compiler,” CACM 2009 | DOI 10.1145/1538788.1538814 | Overview of CompCert and end-to-end semantic preservation guarantees. |
+| RW11 | Optimization verification | Lopes et al., “Provably Correct Peephole Optimizations with Alive,” PLDI 2015 | DOI 10.1145/2737924.2737965 | DSL and SMT proof for LLVM peephole rewrites; our verifiers cover selected-pipeline relations and extension contracts. |
+| RW12 | Translation validation | Lopes et al., “Alive2: Bounded Translation Validation for LLVM,” PLDI 2021 | DOI 10.1145/3453483.3454030 | Bounded automated translation validation for LLVM IR; our scheduling question is when to invoke heterogeneous verifiers. |
+| RW13 | Optimization verification | Menendez and Nagarakatte, “Alive-Infer,” PLDI 2017 | DOI 10.1145/3062341.3062372 | Infers valid optimization preconditions; complements, rather than replaces, contract-guided verifier routing. |
+| RW14 | Floating-point verification | Menendez, Nagarakatte, and Gupta, “Alive-FP,” SAS 2016 | DOI 10.1007/978-3-662-53413-7_16 | Verification of floating-point peephole optimizations. |
+| RW15 | Certified code | Necula, “Proof-Carrying Code,” POPL 1997 | DOI 10.1145/263699.263712 | Producer-supplied proofs checked by a consumer; analogous separation of obligation production and checking, but different trust and execution model. |
+| RW16 | Typed IR | Morrisett et al., “From System F to Typed Assembly Language,” POPL 1998 | DOI 10.1145/268946.268954 | Type-preserving compilation and low-level typed invariants; typed validity alone does not imply validity of a selected extensible system. |
+| RW17 | Typed IR | Morrisett et al., “From System F to Typed Assembly Language,” TOPLAS 1999 | DOI 10.1145/319301.319345 | Full typed assembly language treatment and type-preserving transformations. |
+| RW18 | Certifying compilation | Necula and Lee, “The Design and Implementation of a Certifying Compiler,” PLDI 1998 | DOI 10.1145/277652.277752 | Compiler plus certifier architecture; our system produces smaller typed reverification obligations at pipeline boundaries. |
+| RW19 | Compiler testing | Yang et al., “Finding and Understanding Bugs in C Compilers,” PLDI 2011 | DOI 10.1145/1993498.1993532 | Csmith randomized differential testing and wrong-code discovery. |
+| RW20 | Metamorphic testing | Le, Afshari, and Su, “Compiler Validation via Equivalence Modulo Inputs,” PLDI 2014 | DOI 10.1145/2594291.2594334 | EMI generates equivalent variants; our frozen faults target explicit invalidation and selected-system contracts. |
+| RW21 | Guided mutation | Le, Sun, and Su, “Finding Deep Compiler Bugs via Guided Stochastic Program Mutation,” OOPSLA 2015 | Primary author publication page / OOPSLA 2015 | Guided EMI mutation for deep compiler bugs; motivates fault diversity but does not localize verifier obligations. |
+| RW22 | Compiler testing | Livinskii, Babokin, and Regehr, “Random Testing for C and C++ Compilers with YARPGen,” OOPSLA 2020 | DOI 10.1145/3428264 | Random generation with optimization-oriented policies. |
+| RW23 | Continuous validation | “Optimization-Directed Compiler Fuzzing for Continuous Translation Validation,” PACMPL 2025 | DOI 10.1145/3729275 | Combines optimization-directed fuzzing and continuous validation; closest recent testing/validation integration. |
+| RW24 | Backend validation | Berger et al., “Translation Validation for LLVM’s AArch64 Backend,” OOPSLA 2025 | DOI 10.1145/3763147 | Extends translation validation to a production backend; our evaluation spans verifier types and two language packages. |
+| RW25 | Reduction | Regehr et al., “Test-case Reduction for C Compiler Bugs,” PLDI 2012 | DOI 10.1145/2254064.2254104 | C-Reduce and domain-specific reduction of compiler failures. |
+| RW26 | Reduction | Sun et al., “Perses: Syntax-Guided Program Reduction,” ICSE 2018 | DOI 10.1145/3180155.3180236 | Grammar-guided language-agnostic reduction; relevant to future external-fault minimization. |
+| RW27 | Debugging | Zeller and Hildebrandt, “Simplifying and Isolating Failure-Inducing Input,” TSE 2002 | DOI 10.1109/32.988498 | Foundational delta debugging and failure-inducing input isolation. |
+| RW28 | Differential testing | McKeeman, “Differential Testing for Software,” Digital Technical Journal / IBM Systems Journal lineage, 1998 | DOI 10.1147/sj.371.0100 | Early differential-testing rationale for independent implementations. |
+| RW29 | Mutation testing | Jia and Harman, “An Analysis and Survey of the Development of Mutation Testing,” TSE 2011 | DOI 10.1109/TSE.2010.62 | Mutation operators and adequacy; informs fault-family accounting, not compiler semantics. |
+| RW30 | Contracts | Meyer, “Applying Design by Contract,” IEEE Computer 1992 | DOI 10.1109/2.161279 | Contract-based software obligations; our contracts are compiler-stage facts with executable verifier ownership. |
+| RW31 | Verified analysis | Jourdan et al., “A Formally-Verified C Static Analyzer,” POPL 2015 | DOI 10.1145/2676726.2676966 | Verified analyzer composition with CompCert; demonstrates modular formal assurance. |
+| RW32 | Trust analysis | Monniaux and Boulmé, “The Trusted Computing Base of the CompCert Verified Compiler,” 2022 | arXiv:2201.10280 | Clarifies residual trust boundaries even in a verified compiler. |
+| RW33 | Superoptimization | Sasnauskas et al., “Souper: A Synthesizing Superoptimizer,” 2017 | arXiv:1711.04422 | Synthesizes LLVM optimizations; generated rewrites still require semantic validation. |
+
+## Synthesis boundary
+
+The closest comparison is not one system alone. Pass managers provide analysis invalidation; translation validators check semantic preservation; typed/certifying compilers carry stronger invariants; compiler testing discovers failures. The contribution evaluated here is the typed bridge between these layers: extension-declared invalidation creates verifier-owned obligations, and one scheduler chooses selective or unconditional discharge at the actual compiler boundary.

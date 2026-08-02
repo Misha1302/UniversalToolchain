@@ -1,0 +1,24 @@
+\section{Ablation and Verification Work}
+We evaluate two complementary ablation levels. The policy-level study removes typed contracts (P0) or keeps invalidation records without discharging their obligations (P1). The mechanism-level study changes one validator behavior at a time while holding fixed one minimal counterexample and one valid control.
+
+\begin{table}[t]
+\caption{Policy-level ablation. ``System W'' and ``Tensor'' count rejection at the intended semantic boundary. This table is regenerated from the provider artifact and byte-compared in CI.}
+\label{tab:policy-ablation}
+\scriptsize
+\centering
+\input{generated/policy-ablation-table.tex}
+\end{table}
+
+Removing typed contracts loses 20 primary and nine challenge detections relative to P2. Keeping invalidation but removing discharge recovers the challenge set but still loses four primary shapes and every targeted early rejection in both source-level studies.
+
+\begin{table}[t]
+\caption{Eight isolated mechanism ablations. ``Full'' and ``Ablated'' report detection of the corresponding minimal counterexample; ``Control FP'' reports rejection of its valid control by the ablated validator. The table is evidence-generated and byte-compared in CI.}
+\label{tab:mechanism-ablation}
+\scriptsize
+\centering
+\input{generated/mechanism-ablation-table.tex}
+\end{table}
+
+The full protocol detects all eight counterexamples. Removing each mechanism independently loses the matching detection, while neither the full nor ablated validators reject the eight controls. These are necessity witnesses for the implemented mechanisms, not estimates of natural fault frequency and not a proof that the mechanisms are jointly minimal for every compiler.
+
+On 100 boundary controls, P2 executes 120 verifier calls and P3 executes 140, a 14.3\% reduction. This supports only the qualitative statement that selective scheduling can avoid unrequested work. It misses our predeclared 25\% threshold and is not whole-compilation timing; therefore the paper makes no efficiency headline.

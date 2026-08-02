@@ -1,0 +1,57 @@
+name: CGO27 End-to-End Experiment
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - master
+    paths:
+      - ".github/workflows/cgo27-end-to-end.yml"
+      - "Tools/run-cgo27-end-to-end.sh"
+      - "UniversalToolchain/Experiments/UniversalToolchain.EndToEndExperiments/**"
+      - "UniversalToolchain/UniversalToolchain.ModuleContracts/**"
+      - "UniversalToolchain/UniversalToolchain.Dialects.Wist/**"
+
+permissions:
+  contents: read
+
+env:
+  CGO27_SOURCE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
+jobs:
+  end-to-end:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout exact source revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CGO27_SOURCE_SHA }}
+      - name: Verify exact source revision
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "$CGO27_SOURCE_SHA"
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: UniversalToolchain/global.json
+
+      - name: Run source-to-result experiment
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          ./Tools/run-cgo27-end-to-end.sh artifacts/cgo27-end-to-end 2>&1 \
+            | tee artifacts/cgo27-end-to-end-workflow.log
+          test "$(cat artifacts/cgo27-end-to-end/COMMIT)" = "$CGO27_SOURCE_SHA"
+
+      - name: Upload end-to-end evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cgo27-end-to-end-${{ env.CGO27_SOURCE_SHA }}
+          path: |
+            artifacts/cgo27-end-to-end
+            artifacts/cgo27-end-to-end-workflow.log
+          if-no-files-found: error
+          retention-days: 90

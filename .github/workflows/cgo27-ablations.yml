@@ -1,0 +1,58 @@
+name: CGO27 Ablations
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - master
+    paths:
+      - ".github/workflows/cgo27-ablations.yml"
+      - "CGO27/ablations/**"
+      - "CGO27/ABLATION_REPORT.md"
+      - "Tools/run-cgo27-ablations.sh"
+      - "Tools/run-contract-experiment.sh"
+      - "Tools/run-cgo27-end-to-end.sh"
+      - "UniversalToolchain/Experiments/UniversalToolchain.ContractExperiments/**"
+      - "UniversalToolchain/Experiments/UniversalToolchain.EndToEndExperiments/**"
+      - "UniversalToolchain/Experiments/UniversalToolchain.TensorRules/**"
+
+permissions:
+  contents: read
+
+env:
+  CGO27_SOURCE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
+jobs:
+  ablations:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout exact source revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CGO27_SOURCE_SHA }}
+      - name: Verify exact source revision
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "$CGO27_SOURCE_SHA"
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: UniversalToolchain/global.json
+      - name: Run cross-study ablations
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          bash Tools/run-cgo27-ablations.sh artifacts/cgo27-ablations 2>&1 \
+            | tee artifacts/cgo27-ablations-workflow.log
+          test "$(cat artifacts/cgo27-ablations/COMMIT)" = "$CGO27_SOURCE_SHA"
+      - name: Upload ablation evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cgo27-ablations-${{ env.CGO27_SOURCE_SHA }}
+          path: |
+            artifacts/cgo27-ablations
+            artifacts/cgo27-ablations-workflow.log
+          if-no-files-found: error
+          retention-days: 90

@@ -4,6 +4,9 @@ public sealed record ModuleContractPipelineOptions
 {
     public bool Enabled { get; init; } = true;
 
+    public ModuleContractVerificationPolicy VerificationPolicy { get; init; } =
+        ModuleContractVerificationPolicy.P3Always;
+
     public required VerificationSeverityProfile BytecodeProfile { get; init; }
 
     public required VerificationSeverityProfile AirProfile { get; init; }

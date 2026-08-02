@@ -23,6 +23,7 @@ public static class ModuleContractDiagnosticCodes
     public const string DuplicatePipelineModuleOccurrence = "UT-PIPELINE-EFFECT-005";
     public const string UnknownBytecodeTag = "UT-BYTECODE-TAG-001";
     public const string UndeclaredBytecodeProducer = "UT-BYTECODE-TAG-002";
+    public const string UndeclaredBytecodeSource = "UT-BYTECODE-SOURCE-001";
     public const string UnknownBytecodePattern = "UT-BYTECODE-PATTERN-001";
     public const string BytecodeStackEffectMismatch = "UT-BYTECODE-STACK-001";
     public const string InvalidBytecodeContractMetadata = "UT-BYTECODE-METADATA-001";

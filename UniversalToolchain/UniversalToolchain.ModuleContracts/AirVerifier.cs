@@ -21,28 +21,45 @@ public sealed class AirVerifier : IAirVerifier
     public AirVerificationResult Verify(AirVerificationRequest request)
     {
         request = request.ArgNotNull();
+        if (request.Scope == AirVerificationScope.None ||
+            (request.Scope & ~AirVerificationScope.Full) != 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(request),
+                request.Scope,
+                "AIR verification scope must select structural, semantic, or full verification.");
+        }
 
         var severity = VerificationSeveritySelector.Select(request.Profile);
         var diagnostics = new List<ToolchainDiagnostic>();
 
-        diagnostics.AddRange(VerifySelectedCapabilitiesExist(
-            request.ContractTable,
-            request.BackendSelection,
-            severity));
+        if ((request.Scope & AirVerificationScope.Semantic) != 0)
+        {
+            diagnostics.AddRange(VerifySelectedCapabilitiesExist(
+                request.ContractTable,
+                request.BackendSelection,
+                severity));
+        }
 
-        var schemaDiagnostics = VerifyInstructionSchemas(request.Air, severity).ToArray();
-        var branchDiagnostics = VerifyBranchTargets(request.Air, severity).ToArray();
-        diagnostics.AddRange(schemaDiagnostics);
-        diagnostics.AddRange(branchDiagnostics);
+        if ((request.Scope & AirVerificationScope.Structural) != 0)
+        {
+            var schemaDiagnostics = VerifyInstructionSchemas(request.Air, severity).ToArray();
+            var branchDiagnostics = VerifyBranchTargets(request.Air, severity).ToArray();
+            diagnostics.AddRange(schemaDiagnostics);
+            diagnostics.AddRange(branchDiagnostics);
 
-        if (schemaDiagnostics.Length == 0 && branchDiagnostics.Length == 0)
-            diagnostics.AddRange(_stackVerifier.Verify(request.Air, severity));
+            if (schemaDiagnostics.Length == 0 && branchDiagnostics.Length == 0)
+                diagnostics.AddRange(_stackVerifier.Verify(request.Air, severity));
+        }
 
-        diagnostics.AddRange(VerifyIntrinsicSupport(
-            request.Air,
-            request.ContractTable,
-            request.BackendSelection,
-            severity));
+        if ((request.Scope & AirVerificationScope.Semantic) != 0)
+        {
+            diagnostics.AddRange(VerifyIntrinsicSupport(
+                request.Air,
+                request.ContractTable,
+                request.BackendSelection,
+                severity));
+        }
 
         var orderedDiagnostics = diagnostics
             .OrderBy(static x => x.Code, StringComparer.Ordinal)

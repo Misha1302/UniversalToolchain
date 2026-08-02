@@ -21,6 +21,13 @@ public sealed class ModuleContractVerificationOptions
     public ModuleContractVerificationOptions SnapshotValidated()
     {
         var pipeline = PipelineOptions ?? throw new ArgumentNullException(nameof(PipelineOptions));
+        if (!Enum.IsDefined(pipeline.VerificationPolicy))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(PipelineOptions),
+                pipeline.VerificationPolicy,
+                "Unknown module-contract verification policy.");
+        }
         var sink = DiagnosticSink ?? throw new ArgumentNullException(nameof(DiagnosticSink));
 
         if (Mode != ModuleContractVerificationMode.Off && sink is NullModuleContractDiagnosticSink)

@@ -2,6 +2,16 @@ namespace UniversalToolchain.ModuleContracts;
 
 public sealed class ModuleContractPipelineObserver : ICompilationPipelineObserver
 {
+    private static readonly IReadOnlyList<ModuleContractVerifierRoute> BytecodeRoutes =
+    [
+        new(KnownCoreVerifierRules.BytecodeContract, "core.bytecode")
+    ];
+
+    private static readonly IReadOnlyList<ModuleContractVerifierRoute> AirRoutes =
+    [
+        new(KnownCoreVerifierRules.AirContract, "core.air")
+    ];
+
     private readonly IBytecodeObservedEmissionReader _observedEmissionReader;
     private readonly IBytecodeVerifier _bytecodeVerifier;
     private readonly IAirVerifier _airVerifier;
@@ -40,7 +50,7 @@ public sealed class ModuleContractPipelineObserver : ICompilationPipelineObserve
     public void AfterBytecode(CompilationPipelineBytecodeContext context)
     {
         context = context.ArgNotNull();
-        if (!_options.Enabled)
+        if (!_options.Enabled || _options.VerificationPolicy == ModuleContractVerificationPolicy.P0Structural)
             return;
 
         var report = _tableProvider.Build(context.FrontendModules, [], context.BackendComponents ?? []);
@@ -48,12 +58,12 @@ public sealed class ModuleContractPipelineObserver : ICompilationPipelineObserve
             return;
 
         _diagnosticPolicy.ReportAndThrowIfErrors("module contract selection", report.Diagnostics);
-        var pipelineValidation = _pipelineEffectVerifier.Validate(new PipelineEffectValidationRequest(
+        var pipelineValidation = ValidatePipelineEffects(
             report.ContractTable,
             CompilerPipelineStage.Bytecode,
-            _stageFactSeedProvider.CreateInitialState(CompilerPipelineStage.Bytecode),
-            _factVerifierRegistry,
-            BuildPipelineOrder(context.FrontendModules, [], context.BackendComponents ?? [])));
+            context.FrontendModules,
+            [],
+            context.BackendComponents ?? []);
         _diagnosticPolicy.ReportAndThrowIfErrors("bytecode pipeline effect verification", pipelineValidation.Diagnostics);
         _diagnosticPolicy.ReportAndThrowIfErrors(
             "bytecode pipeline reverification routing",
@@ -64,28 +74,47 @@ public sealed class ModuleContractPipelineObserver : ICompilationPipelineObserve
 
         var readResult = _observedEmissionReader.ReadWithDiagnostics(context.Bytecode);
         _diagnosticPolicy.ReportAndThrowIfErrors("bytecode contract metadata", readResult.Diagnostics);
+
+        // Bytecode is verified once at its first semantic boundary for P1/P2/P3. Matching
+        // obligations are therefore discharged by this canonical invocation without a duplicate pass.
         var verification = _bytecodeVerifier.Verify(new BytecodeVerificationRequest(
             context.Bytecode,
             report.ContractTable,
             _options.BytecodeProfile,
             readResult.ObservedEmissions));
-
         _diagnosticPolicy.ReportAndThrowIfErrors("bytecode contract verification", verification.Diagnostics);
+
+        if (_options.VerificationPolicy is ModuleContractVerificationPolicy.P2Selective or
+            ModuleContractVerificationPolicy.P3Always)
+        {
+            _ = ModuleContractVerificationScheduler.Schedule(
+                _options.VerificationPolicy,
+                BytecodeRoutes,
+                pipelineValidation.ReverificationRequests);
+        }
     }
 
     public void AfterAir(CompilationPipelineAirContext context)
     {
         context = context.ArgNotNull();
-        VerifyAir(context, "AIR contract verification");
+        VerifyAir(context, CompilerPipelineStage.Air, "AIR contract verification", isOptimizedBoundary: false);
     }
 
     public void AfterOptimizedAir(CompilationPipelineAirContext context)
     {
         context = context.ArgNotNull();
-        VerifyAir(context, "optimized AIR contract verification");
+        VerifyAir(
+            context,
+            CompilerPipelineStage.OptimizedAir,
+            "optimized AIR contract verification",
+            isOptimizedBoundary: true);
     }
 
-    private void VerifyAir(CompilationPipelineAirContext context, string stage)
+    private void VerifyAir(
+        CompilationPipelineAirContext context,
+        CompilerPipelineStage pipelineStage,
+        string stage,
+        bool isOptimizedBoundary)
     {
         if (!_options.Enabled)
             return;
@@ -94,31 +123,92 @@ public sealed class ModuleContractPipelineObserver : ICompilationPipelineObserve
         if (report == null)
             return;
 
-        var pipelineStage = stage.Contains("optimized", StringComparison.OrdinalIgnoreCase)
-            ? CompilerPipelineStage.OptimizedAir
-            : CompilerPipelineStage.Air;
+        PipelineEffectValidationResult? pipelineValidation = null;
+        if (_options.VerificationPolicy != ModuleContractVerificationPolicy.P0Structural)
+        {
+            _diagnosticPolicy.ReportAndThrowIfErrors("module contract selection", report.Diagnostics);
+            pipelineValidation = ValidatePipelineEffects(
+                report.ContractTable,
+                pipelineStage,
+                context.FrontendModules,
+                context.Optimizers,
+                context.BackendComponents ?? []);
+            _diagnosticPolicy.ReportAndThrowIfErrors("AIR pipeline effect verification", pipelineValidation.Diagnostics);
+            _diagnosticPolicy.ReportAndThrowIfErrors(
+                "AIR pipeline reverification routing",
+                CreateUnhandledReverificationDiagnostics(
+                    pipelineValidation,
+                    KnownCoreVerifierRules.AirContract,
+                    _options.AirProfile));
+        }
 
-        _diagnosticPolicy.ReportAndThrowIfErrors("module contract selection", report.Diagnostics);
-        var pipelineValidation = _pipelineEffectVerifier.Validate(new PipelineEffectValidationRequest(
+        var backendSelection = CreateBackendSelection(report.ContractTable, context.CompilerSupportedIntrinsics);
+
+        // Structural validity is invariant across policies and is always checked.
+        VerifyAirScope(
+            context,
             report.ContractTable,
-            pipelineStage,
-            _stageFactSeedProvider.CreateInitialState(pipelineStage),
-            _factVerifierRegistry,
-            BuildPipelineOrder(context.FrontendModules, context.Optimizers, context.BackendComponents ?? [])));
-        _diagnosticPolicy.ReportAndThrowIfErrors("AIR pipeline effect verification", pipelineValidation.Diagnostics);
-        _diagnosticPolicy.ReportAndThrowIfErrors(
-            "AIR pipeline reverification routing",
-            CreateUnhandledReverificationDiagnostics(
-                pipelineValidation,
-                KnownCoreVerifierRules.AirContract,
-                _options.AirProfile));
+            backendSelection,
+            AirVerificationScope.Structural,
+            stage);
 
-        BackendCapabilitySelection backendSelection;
+        if (!isOptimizedBoundary)
+        {
+            // The first AIR boundary establishes the semantic baseline for every contract-aware policy.
+            if (_options.VerificationPolicy != ModuleContractVerificationPolicy.P0Structural)
+            {
+                VerifyAirScope(
+                    context,
+                    report.ContractTable,
+                    backendSelection,
+                    AirVerificationScope.Semantic,
+                    stage);
+            }
+
+            return;
+        }
+
+        var scheduled = ModuleContractVerificationScheduler.Schedule(
+            _options.VerificationPolicy,
+            AirRoutes,
+            pipelineValidation?.ReverificationRequests ?? []);
+        foreach (var invocation in scheduled)
+        {
+            if (invocation.RuleId != KnownCoreVerifierRules.AirContract)
+            {
+                throw new InvalidOperationException(
+                    $"Optimized AIR boundary cannot execute verifier '{invocation.RuleId}'.");
+            }
+
+            VerifyAirScope(
+                context,
+                report.ContractTable,
+                backendSelection,
+                AirVerificationScope.Semantic,
+                stage);
+        }
+    }
+
+    private PipelineEffectValidationResult ValidatePipelineEffects(
+        SelectedModuleContractTable contractTable,
+        CompilerPipelineStage stage,
+        IReadOnlyList<IFrontendCoreModule> frontendModules,
+        IReadOnlyList<IAirOptimizer> optimizers,
+        IReadOnlyList<IBackendPipelineComponent> backendComponents) =>
+        _pipelineEffectVerifier.Validate(new PipelineEffectValidationRequest(
+            contractTable,
+            stage,
+            _stageFactSeedProvider.CreateInitialState(stage),
+            _factVerifierRegistry,
+            BuildPipelineOrder(frontendModules, optimizers, backendComponents)));
+
+    private BackendCapabilitySelection CreateBackendSelection(
+        SelectedModuleContractTable contractTable,
+        IReadOnlyCollection<string> compilerSupportedIntrinsics)
+    {
         try
         {
-            backendSelection = _backendSelectionFactory.Create(
-                report.ContractTable,
-                context.CompilerSupportedIntrinsics);
+            return _backendSelectionFactory.Create(contractTable, compilerSupportedIntrinsics.ToArray());
         }
         catch (InvalidOperationException exception)
         {
@@ -134,12 +224,21 @@ public sealed class ModuleContractPipelineObserver : ICompilationPipelineObserve
                 ]);
             throw;
         }
+    }
+
+    private void VerifyAirScope(
+        CompilationPipelineAirContext context,
+        SelectedModuleContractTable contractTable,
+        BackendCapabilitySelection backendSelection,
+        AirVerificationScope scope,
+        string stage)
+    {
         var verification = _airVerifier.Verify(new AirVerificationRequest(
             context.Air,
-            report.ContractTable,
+            contractTable,
             backendSelection,
-            _options.AirProfile));
-
+            _options.AirProfile,
+            scope));
         _diagnosticPolicy.ReportAndThrowIfErrors(stage, verification.Diagnostics);
     }
 
