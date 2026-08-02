@@ -14,7 +14,7 @@ Last updated: 2026-07-31.
 - Four explicit verification policies and fail-closed production scheduling.
 - Historical-corpus-preserving boundary experiment with schema-v3 evidence.
 - Production test contract: 1,579/1,579.
-- Wist source-to-result experiment: 30 cases, 240 fresh-process records, five targeted faults, 24 valid controls and one separately reported baseline runtime failure.
+- Wist source-to-result experiment: 30 cases, 240 fresh-process records, five targeted faults and 25 valid controls after the mixed numeric-promotion repair.
 - TensorRules public-SDK second-language package: 12 cases, eight faults, 48 observations and P2/P3 parity 12/12.
 - Exact commit `acc60612361f240d5bd24f148ea7fa6eb5e1f111` passed `.NET CI`, validation, Docs Check, package compatibility, Contract Experiment, Wist end-to-end, TensorRules, rollout, benchmark smoke and published-package smoke.
 - Deterministic external blind-corpus author/freeze/import kit.

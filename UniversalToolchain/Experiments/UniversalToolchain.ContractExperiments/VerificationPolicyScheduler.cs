@@ -26,15 +26,7 @@ internal static class VerificationPolicyScheduler
             return [];
 
         var canonicalRoutes = BuildCanonicalRoutes(availableRoutes);
-        var requestsByRule = requests
-            .GroupBy(static request => request.RuleId)
-            .ToDictionary(
-                static group => group.Key,
-                static group => (IReadOnlyList<CompilerFactId>)group
-                    .SelectMany(static request => request.InvalidatedFacts)
-                    .Distinct()
-                    .OrderBy(static fact => fact.Value, StringComparer.Ordinal)
-                    .ToArray());
+        var requestsByRule = GroupInvalidatedFactsByRule(requests);
 
         foreach (var requestedRule in requestsByRule.Keys)
         {
@@ -58,6 +50,53 @@ internal static class VerificationPolicyScheduler
                 requestsByRule.ContainsKey(rule)))
             .ToArray();
     }
+
+    public static IReadOnlyList<ScheduledVerifierInvocation> ScheduleDemandDriven(
+        IReadOnlyList<VerifierRouteDescriptor> availableRoutes,
+        IReadOnlyList<ReverificationRequest> invalidations,
+        IReadOnlyCollection<VerifierRuleId> demandedRules)
+    {
+        ArgumentNullException.ThrowIfNull(availableRoutes);
+        ArgumentNullException.ThrowIfNull(invalidations);
+        ArgumentNullException.ThrowIfNull(demandedRules);
+
+        var canonicalRoutes = BuildCanonicalRoutes(availableRoutes);
+        var invalidationsByRule = GroupInvalidatedFactsByRule(invalidations);
+        var selectedRules = demandedRules
+            .Distinct()
+            .Where(invalidationsByRule.ContainsKey)
+            .OrderBy(static rule => rule.Value, StringComparer.Ordinal)
+            .ToArray();
+
+        foreach (var demandedRule in selectedRules)
+        {
+            if (!canonicalRoutes.ContainsKey(demandedRule))
+            {
+                throw new InvalidOperationException(
+                    $"Demanded invalidated fact route '{demandedRule}' has no canonical executable route.");
+            }
+        }
+
+        return selectedRules
+            .Select(rule => new ScheduledVerifierInvocation(
+                rule,
+                canonicalRoutes[rule],
+                invalidationsByRule[rule],
+                IsObligationDriven: false))
+            .ToArray();
+    }
+
+    private static IReadOnlyDictionary<VerifierRuleId, IReadOnlyList<CompilerFactId>> GroupInvalidatedFactsByRule(
+        IReadOnlyList<ReverificationRequest> requests) =>
+        requests
+            .GroupBy(static request => request.RuleId)
+            .ToDictionary(
+                static group => group.Key,
+                static group => (IReadOnlyList<CompilerFactId>)group
+                    .SelectMany(static request => request.InvalidatedFacts)
+                    .Distinct()
+                    .OrderBy(static fact => fact.Value, StringComparer.Ordinal)
+                    .ToArray());
 
     private static IReadOnlyDictionary<VerifierRuleId, string> BuildCanonicalRoutes(
         IReadOnlyList<VerifierRouteDescriptor> availableRoutes)

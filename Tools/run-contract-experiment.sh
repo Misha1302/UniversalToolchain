@@ -46,6 +46,7 @@ for file in \
   Cgo27Program.Validation.cs \
   Cgo27Program.Controls.cs \
   Cgo27Program.Performance.cs \
+  Cgo27Program.DemandBaseline.cs \
   VerificationPolicyScheduler.cs \
   VerificationPolicySchedulerTests.cs \
   POLICY_SPEC.md \
@@ -66,6 +67,19 @@ dotnet build "$project" -c Release --no-restore -p:NuGetAudit=false
 
 CGO27_RUN_ID="${commit}-main" \
   dotnet run -c Release --no-build --no-restore --project "$project" -- "$out_dir/main"
+
+python3 - "$out_dir/main/demand-baseline.json" <<'PY2'
+import json,sys
+data=json.load(open(sys.argv[1],encoding="utf-8"))
+assert data["Status"] == "VALIDATED"
+assert data["NoDemandVerifierInvocations"] == 0
+assert data["ExplicitDemandVerifierInvocations"] == 1
+assert data["SelectiveVerifierInvocations"] == 1
+assert data["UndemandedInvalidArtifactEscaped"]
+assert data["DemandedInvalidArtifactDetected"]
+assert data["SelectiveInvalidArtifactDetected"]
+assert data["DemandedMatchedControlAccepted"]
+PY2
 
 replicate_args=()
 for ((index=1; index<=replicates; index++)); do

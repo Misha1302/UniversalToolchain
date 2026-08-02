@@ -1,9 +1,9 @@
 \section{Results}
 \subsection{Boundary detection}
-Table~\ref{tab:boundary} reports operator-level detection. P0 detects structural AIR faults and some target-capability faults but misses ownership, bytecode metadata, and fact-reverification relations. P1 closes most of this gap, but misses four primary operators whose invalidations require semantic discharge. P2 and P3 detect every evaluated primary/challenge operator and reject no valid control.
+Table~\ref{tab:boundary} reports operator-level detection. P0 misses ownership, bytecode metadata, fact-reverification, and most selected-capability relations. P1 records enough contract information to reject many malformed selections but misses four primary operators whose invalidations require semantic discharge. P2 and P3 detect every evaluated primary and challenge operator and reject no valid boundary control.
 
 \begin{table}[t]
-\caption{Frozen boundary results. Controls are valid runs rejected by the policy.}
+\caption{Frozen boundary results. Control FP counts valid runs rejected by a policy.}
 \label{tab:boundary}
 \small
 \begin{tabular}{@{}lrrr@{}}
@@ -18,12 +18,13 @@ P3 always & 32/32 & 10/10 & 0/100 \\
 \end{tabular}
 \end{table}
 
-The paired primary comparison has 20 operators detected by P2 but not P0 (two-sided exact McNemar $p=1.91\times10^{-6}$). P2 detects four operators missed by P1; this small fixed set yields $p=0.125$ and should not be read as a population estimate. P2 and P3 have no discordant evaluated operator.
+The paired fixed corpus contains 20 operator shapes detected by P2 but not P0 and four detected by P2 but not P1. P2 and P3 have no discordant evaluated operator. We report these as complete-corpus paired counts rather than as estimates of natural fault prevalence.
+
+\subsection{Invalidation versus demand versus obligation}
+The controlled lazy-demand witness creates one invalidated AIR fact. With no consumer demand, lazy scheduling executes zero semantic verifiers and the invalid artifact escapes. Adding an explicit demand schedules one AIR verifier and detects the fault; its matched valid control is accepted. P2 also schedules one verifier and detects the fault without consumer demand. Thus the observed distinction is not ``eager versus lazy execution'' alone: P2 changes the trigger from consumer demand to a due pipeline obligation.
 
 \subsection{Source-to-result behavior}
-All five targeted System W faults expose the validity gap. Under CIL, P0/P1 accept compilation and produce result 1 instead of the expected result. Under the interpreter, P0/P1 reach a later runtime/backend exception. P2/P3 reject all targeted cases at the optimized-AIR contract boundary before backend execution. Across all 30 source programs, P2/P3 classification, first boundary, diagnostics, and result agree in 30/30 cases.
-
-The 24 valid controls produce expected results under all policies. The remaining program, P07, fails identically under all four policies without fault injection; retaining it as a separate baseline runtime failure avoids both hiding a product defect and miscounting it as a protocol false positive.
+All five targeted System W faults expose the validity gap. Under CIL, P0/P1 accept compilation and produce result 1 instead of the oracle. Under the interpreter, P0/P1 reach a later runtime/backend exception. P2/P3 reject all targeted cases at the optimized-AIR contract boundary before backend execution. Across all 30 programs, P2/P3 classification, first boundary, diagnostics, and result agree in 30/30 cases. After the numeric-promotion repair, all 25 non-fault programs produce their expected results under all policies.
 
 \subsection{Second language}
-In TensorRules, the two valid programs succeed under every policy, and the two intrinsically invalid programs are rejected during initial shape verification. All eight post-verification faults produce wrong results under P0/P1 and are rejected with the expected semantic diagnostic under P2/P3. Selective/always parity is 12/12. On the two clean valid boundaries, P2 invokes no semantic verifier and P3 invokes one, confirming distinct schedules through the public SDK.
+In TensorRules, the two valid programs succeed under every policy, and the two intrinsically invalid programs are rejected during initial shape verification. All eight post-verification faults produce wrong results under P0/P1 and are rejected with the expected semantic diagnostic under P2/P3. Selective/always parity is 12/12. On two clean valid boundaries, P2 invokes no semantic verifier and P3 invokes one, confirming distinct schedules through the public SDK.

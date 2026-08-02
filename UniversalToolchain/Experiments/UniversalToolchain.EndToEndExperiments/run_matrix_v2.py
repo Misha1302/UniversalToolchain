@@ -12,14 +12,7 @@ from typing import Any
 
 import run_matrix as base
 
-BASELINE_FAILURES: dict[str, dict[str, str]] = {
-    "P07": {
-        "classification": "late-failure",
-        "firstDetectionBoundary": "runtime-or-backend",
-        "diagnosticCode": "System.InvalidOperationException",
-        "messageFragment": "Assertion failed: leftType == rightType",
-    }
-}
+BASELINE_FAILURES: dict[str, dict[str, str]] = {}
 
 
 def _group(records: list[dict[str, Any]], case_id: str, policy: str) -> list[dict[str, Any]]:
@@ -224,7 +217,7 @@ def main() -> int:
         "p2P3ParityCases": len(base.CASE_IDS),
         "externallyAuthored": False,
         "corpusLabel": "model-authored-exploratory",
-        "claimBoundary": "Source-to-result and fresh-process reproducible; one pre-existing runtime failure is reported separately and is not a protocol fault or valid control.",
+        "claimBoundary": "Source-to-result and fresh-process reproducible; all 25 non-fault programs are valid controls after the independently tracked numeric-promotion repair.",
     }
     (output / "summary.json").write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     (output / "environment.json").write_text(

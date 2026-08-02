@@ -1,19 +1,23 @@
 \documentclass[sigplan,screen,review,anonymous]{acmart}
 \setcopyright{none}
 \settopmatter{printfolios=true,printacmref=true}
-\renewcommand\footnotetextcopyrightpermission[1]{}\emergencystretch=2em
+\renewcommand\footnotetextcopyrightpermission[1]{}
+\emergencystretch=2em
 \acmConference[CGO '27]{International Symposium on Code Generation and Optimization}{2027}{Anonymous Review}
 \acmYear{2027}
 \acmDOI{}
-\acmISBN{}\hypersetup{pdfauthor={Anonymous},pdftitle={Valid IR, Invalid Compiler: Contract-Guided Reverification for Extensible Pipelines},pdfsubject={Anonymous CGO 2027 research draft}}
+\acmISBN{}
+\hypersetup{pdfauthor={Anonymous},pdftitle={Obligation-Guided Reverification for Composed Compiler Pipelines},pdfsubject={Anonymous CGO 2027 research draft}}
 \begin{document}
-\title{Valid IR, Invalid Compiler: Contract-Guided Reverification for Extensible Pipelines}
+\title{Obligation-Guided Reverification for Composed Compiler Pipelines}
 \author{Anonymous Author(s)}
 
 \begin{abstract}
-An extensible compiler may produce structurally valid intermediate representation while violating a semantic assumption of the selected language, optimization, or backend configuration. Existing pass managers invalidate cached analyses, and translation validators check particular transformations, but neither mechanism by itself answers which semantic checks an extension must re-run after it changes a selected pipeline. We present contract-guided reverification: compiler components declare owned facts, effects, invalidations, and verifier routes; a fail-closed scheduler then supports structural-only, invalidation-only, selective, and always-verify policies over the same boundaries.
+A compiler artifact can satisfy a generic intermediate-representation verifier while violating a semantic relation introduced by the selected language, optimization, or backend composition. Analysis invalidation prevents reuse of stale cached results, but it does not force a semantic check when no later consumer requests the invalidated fact. Always running every verifier avoids that omission at potentially unnecessary cost.
 
-We implement the mechanism in an extensible .NET compiler and evaluate it in two language packages. On a frozen boundary corpus, structural checks detect 12/32 primary operator shapes, invalidation-only detects 28/32, and selective and always verification both detect 32/32; the corresponding challenge counts are 1/10, 10/10, 10/10, and 10/10, with no false positives in 100 valid controls per policy. A source-to-result System W study contains 30 programs and 240 fresh-process records. Five targeted optimizer faults yield wrong results or later runtime failures under structural/invalidation policies, while selective and always verification reject all five at the optimized-IR boundary. A public-SDK TensorRules package contributes eight different semantic faults and 48 observations, again with selective/always classification parity. Eight isolated mechanism ablations each remove one detection while retaining its matched valid control; policy ablations separately attribute gains to typed contracts and obligation discharge. Selective verification executes fewer clean-boundary verifier calls than always verification, but the observed 14.3\% boundary-call reduction is below our predeclared efficiency threshold; we therefore make no whole-compilation speedup claim. External-corpus and pinned-machine performance claims remain explicit blockers.
+We present obligation-guided reverification. Components declare semantic facts, effects, invalidations, canonical verifier owners, and the first pipeline boundary at which each invalidation must be discharged. The scheduler either executes every due obligation or fails closed; under explicit completeness assumptions, a compilation cannot silently cross a due boundary with a registered obligation still pending. We implement the mechanism in an extensible compiler and evaluate structural-only, invalidation-only, selective-obligation, and always-verify policies through the same production verifier routes.
+
+On a frozen boundary corpus, selective and always verification detect all 32 primary and 10 challenge operator shapes, while structural-only and invalidation-only miss 20 and four primary shapes respectively; no policy rejects any of 100 valid controls. Source-to-result studies cover 30 programs in System W and 12 programs in a public-SDK tensor language. Thirteen targeted semantic faults that escape weaker policies are rejected by selective and always verification at the declared boundary. Eight isolated ablations each remove its matching detection without rejecting its control. A separate demand-driven witness shows the key distinction: an invalidated but undemanded fact is not recomputed, whereas a due obligation is discharged independently of consumer demand. We claim relative boundary safety and earlier localization for the evaluated contracts, not general verifier completeness or whole-compilation speedup.
 \end{abstract}
 
 \begin{CCSXML}
@@ -32,7 +36,7 @@ We implement the mechanism in an extensible .NET compiler and evaluate it in two
 \end{CCSXML}
 \ccsdesc[500]{Software and its engineering~Compilers}
 \ccsdesc[300]{Software and its engineering~Software verification and validation}
-\keywords{compiler correctness, extensible compilers, translation validation, pass invalidation, intermediate representation, contracts}
+\keywords{compiler correctness, extensible compilers, pass invalidation, translation validation, intermediate representation, contracts}
 \maketitle
 
 \input{sections/01-introduction}

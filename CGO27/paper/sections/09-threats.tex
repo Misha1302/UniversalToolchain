@@ -1,15 +1,18 @@
 \section{Threats to Validity and Limitations}
 \paragraph{Authorship and corpus size.}
-The primary, challenge, end-to-end, and TensorRules faults are author/model designed. They demonstrate concrete failures but may align with implementation structure. The external blind-corpus claim is blocked until a human-authored archive is frozen before policy execution.
+The primary, challenge, source-to-result, and TensorRules faults are author/model designed. They demonstrate concrete failures but may align with implementation structure. The external-author protocol is executable, yet no human-authored frozen archive is included; independent-fault prevalence and broad generalization remain unsupported.
 
-\paragraph{Contract completeness.}
-A missing invalidation declaration can prevent P2 from scheduling a needed verifier. P3 is a stronger evaluated oracle only for registered applicable routes; neither policy can detect a property for which no verifier exists. Fail-closed handling of unknown routes reduces silent gaps but does not prove contract completeness.
+\paragraph{Relative rather than absolute safety.}
+A missing invalidation declaration can prevent P2 from creating an obligation. P3 is a stronger evaluated oracle only for registered routes; neither policy detects a property for which no verifier exists. The boundary-safety statement is therefore conditional on contract completeness, route uniqueness, scheduler invocation, and verifier soundness.
+
+\paragraph{Baseline scope.}
+The demand-driven comparison is a minimal controlled witness, not a full implementation of every production analysis manager. It isolates the case where an invalidated semantic fact has no later consumer query. A larger demand-driven source-to-result corpus would strengthen the comparison.
 
 \paragraph{Generality.}
-Two packages are stronger evidence than one, but both execute in one framework and share scheduler concepts. TensorRules intentionally differs in syntax and shape/layout facts, yet it is small and model-authored.
+Two packages are stronger evidence than one, but both execute in one framework and share scheduler concepts. TensorRules differs in syntax and shape/layout invariants, yet it is small and model-authored.
 
 \paragraph{Performance.}
-The boundary harness records verifier-kernel timings, and P2 uses fewer calls on clean boundaries. Shared CI is noisy and the reduction is below the frozen threshold. A dedicated capture gate requires a pinned machine, governor, CPU affinity, low background load, 30 process repetitions per cell, and bootstrap intervals. Until that experiment runs, whole-compilation overhead and speedup are unknown.
+The boundary harness records verifier-kernel timings, and P2 uses fewer calls on clean boundaries. Shared CI is noisy and the reduction is below the frozen threshold. Whole-compilation overhead and speedup remain unknown until a pinned-machine experiment controls governor, affinity, background load, process repetitions, and confidence intervals.
 
-\paragraph{Baseline product defect.}
-P07 exposes a pre-existing mixed-type runtime assertion. Separating it avoids contaminating protocol counts, but also reduces the valid-control set from 25 to 24 in the System W end-to-end study.
+\paragraph{Repair during study.}
+The unchanged P07 program revealed mixed numeric promotion missing from native arithmetic. We report the repair and retain the case as a regression control. Historical evidence with the failure remains distinguishable from the new corpus revision; the repair does not affect any fault injection or semantic-verification route.

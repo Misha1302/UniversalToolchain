@@ -1,25 +1,23 @@
 \section{Methodology}
 \subsection{Research questions}
 \begin{description}
- \item[RQ1:] What faults are missed when only structural verification is available?
- \item[RQ2:] What additional faults require actual obligation discharge beyond recording invalidations?
- \item[RQ3:] Does selective verification match always verification on evaluated cases?
- \item[RQ4:] Does the distinction survive a second language package with different invariants?
- \item[RQ5:] How much verifier work is avoided on clean evaluated boundaries, without inferring whole-compilation performance?
- \item[RQ6:] Which individual protocol mechanisms are necessary to reject their minimal counterexamples without rejecting matched controls?
+ \item[RQ1:] Which selected-system faults escape generic structural verification?
+ \item[RQ2:] What does due-boundary obligation discharge add beyond invalidation records and lazy demand-driven recomputation?
+ \item[RQ3:] How do selective and always verification compare in detection, localization, false positives, and verifier work on the evaluated corpora?
+ \item[RQ4:] Does the policy distinction survive source-to-result execution and a second public-SDK language package?
 \end{description}
 
 \subsection{Frozen boundary corpus}
-The historical System W corpus is immutable: 40 instances representing 32 primary operator shapes in five families, 10 post-freeze challenge operators, and 100 valid controls per policy. Faults are repeated three times. The v3 study does not rename historical B0/B1/B2 results; it emits a separate four-policy schema and mechanically checks the old mutation catalog.
+The historical System W corpus is immutable: 40 instances representing 32 primary operator shapes in five families, 10 post-freeze challenge operators, and 100 valid controls per policy. Faults are repeated three times. The v3 study preserves historical B0/B1/B2 labels, emits a separate four-policy schema, and mechanically checks the frozen mutation catalog.
+
+\subsection{Demand-driven witness}
+To compare against a stronger invalidation baseline without changing the frozen matrix, we execute one controlled invalidation through three schedules: lazy demand with no consumer request, lazy demand with an explicit request, and P2 obligation discharge. The same AIR verifier and invalid artifact are used in the demanded and P2 cells, plus a matched valid control. The witness tests the semantic distinction, not population prevalence.
 
 \subsection{System W source-to-result corpus}
-The end-to-end corpus contains 30 programs across arithmetic, pricing, and backend strata. Five cases enable an optimizer that preserves structural validity while violating a declared semantic relation at optimized AIR. Each case/policy pair runs twice in a fresh process, yielding 240 raw records. CIL faults are designed to produce a wrong result under P0/P1; interpreter faults may reach a later backend/runtime failure. P2/P3 must reject at optimized AIR with the expected capability diagnostic. One non-fault program exhibits a pre-existing mixed-type runtime assertion under all policies and is classified separately, not as a control or protocol fault.
+The end-to-end corpus contains 30 programs across arithmetic, pricing, and backend strata. Five cases enable an optimizer that preserves structural validity while violating a declared semantic relation at optimized AIR. Each case/policy pair runs twice in a fresh process, yielding 240 raw records. CIL faults produce a wrong result under P0/P1; interpreter faults may reach a later backend/runtime failure. P2/P3 must reject at optimized AIR with the expected capability diagnostic. After repairing mixed numeric promotion, all 25 non-fault programs remain unchanged and must produce their expected result under every policy.
 
-\subsection{TensorRules corpus}
-TensorRules freezes two valid programs, two intrinsically invalid programs, and eight post-verification mutations of inner dimensions, output shape, layout, dynamic extent, backend capability, broadcast relation, stale shape, and fact ownership. Four policies produce 48 observations. P2/P3 parity and the additional P3 invocation on clean boundaries are hard gates.
-
-\subsection{Mechanism-level ablation corpus}
-We construct one minimal counterexample and one matched valid control for each of eight implementation mechanisms: producer identity, source-node identity, selected pipeline order, canonical verifier ownership, conflict rejection, fail-closed unresolved obligations, backend capability contracts, and repeated-occurrence rejection. The full validator must emit the predeclared diagnostic for each counterexample. The ablated validator changes only the tested mechanism and must lose that detection. Both validators must accept the matched control. The executable emits raw JSONL and a validated aggregate; the paper tables are regenerated from that aggregate and byte-compared with the committed sources.
+\subsection{TensorRules and ablations}
+TensorRules freezes two valid programs, two intrinsically invalid programs, and eight post-verification mutations of dimensions, output shape, layout, dynamic extent, backend capability, broadcast relation, stale shape, and fact ownership. Four policies produce 48 observations. Separately, eight minimal counterexamples and matched controls isolate producer identity, source-node identity, selected pipeline order, canonical ownership, conflict rejection, unresolved obligations, backend capabilities, and repeated-occurrence rejection.
 
 \subsection{Evidence and claim control}
-Raw JSONL is written before assertions. Every artifact contains a source snapshot, environment record, exact checked-out commit, clean-status receipt, and recursive SHA-256 manifest. Hosted CI is an execution and reproducibility provider, not the main performance environment. An external-author kit exists, but no external corpus was available at analysis time.
+Raw JSONL is written before assertions. Artifacts carry source identity, environment records, and SHA-256 manifests. Hosted CI is a reproducibility provider, not a performance environment. An external-author freeze/import kit exists, but no externally authored corpus is included in the reported results; corresponding generalization claims remain blocked.

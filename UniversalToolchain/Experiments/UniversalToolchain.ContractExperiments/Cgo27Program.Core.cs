@@ -169,7 +169,11 @@ internal static partial class Cgo27Program
 
         ValidateRawRecords(results);
         var performance = MeasurePerformance();
-        var summary = BuildSummary(results, performance);
+        var demandBaseline = RunDemandDrivenBaseline();
+        File.WriteAllText(
+            Path.Combine(outputDirectory, "demand-baseline.json"),
+            JsonSerializer.Serialize(demandBaseline, new JsonSerializerOptions { WriteIndented = true }));
+        var summary = BuildSummary(results, performance, demandBaseline);
         var summaryPath = Path.Combine(outputDirectory, "summary.json");
         File.WriteAllText(summaryPath, JsonSerializer.Serialize(summary, new JsonSerializerOptions { WriteIndented = true }));
         File.WriteAllText(Path.Combine(outputDirectory, "mutations.csv"), BuildMutationCatalog(cases));

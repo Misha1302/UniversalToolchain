@@ -1,12 +1,31 @@
 \section{Related Work}
+Table~\ref{tab:related-comparison} isolates the closest conceptual alternatives.
+
+\begin{table*}[t]
+\caption{Conceptual comparison. ``Boundary due'' means a check is required before a declared pipeline boundary independently of later consumer demand.}
+\label{tab:related-comparison}
+\scriptsize
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lccccc@{}}
+\toprule
+Mechanism & Invalidation & Consumer demand & Canonical verifier owner & Boundary due & Semantic check \\
+\midrule
+LLVM/MLIR analysis management & yes & normally yes & no & no & analysis-specific \\
+Generic IR verifier & no & no & fixed implementation & fixed sites & generic IR only \\
+Translation validation & optional & no & validator & post-transform & transformation relation \\
+Always verification & unnecessary & no & yes & every site & registered relations \\
+Obligation-guided P2 & yes & no & yes & first eligible site & registered relations \\
+\bottomrule
+\end{tabular}%
+}
+\end{table*}
+
 \paragraph{Pass invalidation.}
-LLVM and MLIR cache analyses and use explicit preservation to invalidate stale results~\cite{llvmnpm,mlirpm}. Our facts can represent such analyses, but the main addition is a canonical executable verifier owner and a boundary at which the obligation must be discharged. The scheduler also compares selective and unconditional semantic checking through the same routes.
+LLVM and MLIR cache analyses and use explicit preservation to invalidate stale results~\cite{llvmnpm,mlirpm}. This is the strongest material alternative for scheduling work. It answers whether a cached result may be reused and commonly recomputes on demand. Our addition is a verifier-owned obligation whose trigger is a due compiler boundary rather than a subsequent analysis query. The executable demand-driven witness tests this distinction directly.
 
 \paragraph{Translation validation and verified compilation.}
-Translation validation checks the output of transformations rather than proving the whole optimizer~\cite{pnueli98,necula00,tristan08}. Alive and Alive2 provide automated LLVM rewrite/IR validation~\cite{alive,alive2}; CompCert proves semantic preservation for a compiler stack~\cite{leroy06,leroy09backend}. Contract-guided reverification offers weaker guarantees than a proof: it is only as sound as its contracts, routes, and verifiers. Its target is different---heterogeneous extensible systems where multiple production verifiers already exist and must be scheduled after composition.
+Translation validation checks transformation outputs rather than proving the whole optimizer~\cite{pnueli98,necula00,tristan08}. Alive and Alive2 validate LLVM rewrites~\cite{alive,alive2}; CompCert proves semantic preservation for a compiler stack~\cite{leroy06,leroy09backend}. These approaches provide stronger guarantees within their covered relations. Obligation-guided reverification is weaker and only as sound as its declarations, routes, and verifiers; it targets heterogeneous extension ecosystems where several production checks already exist but need composition-aware scheduling.
 
-\paragraph{Typed and certifying compilation.}
-Typed assembly languages, proof-carrying code, and certifying compilers attach checkable evidence or invariants to low-level code~\cite{pcc,tal,certcompiler}. Our obligations similarly separate production from checking, but are transient pipeline obligations rather than proofs shipped with binaries.
-
-\paragraph{Compiler testing.}
-Random and metamorphic testing systems such as Csmith, EMI, and YARPGen discover wrong-code bugs~\cite{csmith,emi,yarpgen}. Reduction systems make failures actionable~\cite{creduce,perses,delta}. We use faults to evaluate a detection mechanism rather than propose a new generator. The external-author protocol is intended to reduce author bias, but remains unexecuted and therefore limits our claims.
+\paragraph{Typed, certifying, and testing systems.}
+Typed assembly languages, proof-carrying code, and certifying compilers attach checkable evidence to low-level code~\cite{pcc,tal,certcompiler}. Our obligations are transient pipeline duties rather than proofs shipped with binaries. Random and metamorphic systems such as Csmith, EMI, and YARPGen discover wrong-code bugs~\cite{csmith,emi,yarpgen}; reduction systems make failures actionable~\cite{creduce,perses,delta}. We use faults to evaluate localization and detection, not to propose a generator.

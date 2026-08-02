@@ -1,19 +1,30 @@
-\section{Problem: IR Validity Is Not System Validity}
-Let a selected compiler system be a tuple $S=(L,P,B,C)$ of language components, ordered passes, backend components, and their declared contracts. Let $x_i$ be the artifact at boundary $i$. A structural verifier establishes $V_{str}(x_i)$, such as legal opcodes and control-flow targets. The selected system additionally relies on semantic facts $F_i$---for example, bytecode-producer and source-node identity, verified stack effects, shape consistency, or backend capability support.
+\section{Problem and Model}
+Let a selected compiler system be a tuple $S=(L,P,B,C)$ of language components, ordered passes, backend components, and their contracts. Let $x_i$ be the artifact at boundary $i$. A structural verifier establishes $V_{str}(x_i)$. The selected system additionally relies on semantic facts $F$, such as producer identity, verified stack effects, shape/layout consistency, or backend capability support.
 
-A transformation $t$ has an effect contract
+Each fact $f\in F$ has a state
 \[
-E_t=(R_t,P_t,I_t),
+\sigma_i(f)\in\{\mathsf{valid},\mathsf{invalid},\mathsf{unknown}\}.
 \]
-where $R_t$ is the set of required facts, $P_t$ the set produced or preserved, and $I_t$ the invalidated facts. For every invalidated fact $f$, the selected contract table maps $f$ to at most one canonical verifier rule $owner(f)$. If no executable route exists, or two components claim the same canonical rule, scheduling fails closed.
+A transformation $t$ declares an effect contract
+\[
+E_t=(R_t,G_t,P_t,I_t),
+\]
+where $R_t$ are required facts, $G_t$ generated facts, $P_t$ preserved facts, and $I_t$ invalidated facts. Every registered verifiable fact has at most one canonical verifier owner $owner(f)$ and one executable route $route(f)$. The contract also defines the first eligible boundary $due(f,i)$ after invalidation at boundary $i$.
+
+Invalidating $f$ creates an obligation
+\[
+o=(f,owner(f),route(f),due(f,i),\mathsf{pending}).
+\]
+A successful verifier changes the fact to $\mathsf{valid}$ and the obligation to $\mathsf{discharged}$; a failed verifier rejects compilation. Missing routes, conflicting owners, and attempts to cross a due boundary with a pending obligation are errors.
 
 The key distinction is
 \[
 V_{str}(x_i) \centernot\implies Valid(S,x_i).
 \]
-The artifact can be a valid instance of a generic IR and still violate the chosen language/pass/backend relation. A verifier route converts this gap into an executable obligation $o=(f,owner(f),i)$.
+For the motivating intrinsic $q$, the opcode and operand schema can satisfy $V_{str}(x_i)$ while $k_q\notin K_B$, where $K_B$ is the capability set of the selected backend. The missing information is a relation between a structurally legal artifact and the selected composition.
 
-\paragraph{Capability counterexample.}
-Assume the generic IR admits a structurally legal instruction $q$, the selected emission contract requires capability $k$ for $q$, and the selected backend capability set $K_B$ does not contain $k$. For an artifact $x$ containing $q$, the opcode and operand schema may satisfy $V_{str}(x)$, while the required relation $k\in K_B$ is false. Hence $V_{str}(x)$ holds but $Valid(S,x)$ does not. This witness does not depend on malformed IR; the missing information is the selected-system relation itself.
+\paragraph{Demand is not obligation.}
+A demand-driven analysis manager may recompute an invalidated fact if a later consumer asks for it. Let $D_i$ be the facts demanded before boundary $i$. If $f\notin D_i$, lazy recomputation performs no work even when $\sigma_i(f)=\mathsf{invalid}$. By contrast, obligation discharge depends on $due(f,i)$, not on $D_i$. This distinction matters precisely when the backend or runtime consumes the artifact without consulting the analysis cache.
 
-The same construction applies to identities and compiler facts: a tag or pattern may be globally declared yet attributed to the wrong producer or source node, and a transformed artifact may remain structurally legal after invalidating a fact that no later stage re-establishes. Our empirical question is therefore not whether generic structure should be checked, but which selected-system obligations must additionally be discharged and where.
+\paragraph{Assumptions.}
+Our guarantee is relative to: (A1) every relevant mutation declares its invalidations; (A2) every registered fact has one correct executable verifier owner; (A3) the verifier is sound for the property it checks; and (A4) boundary transitions invoke the scheduler. We do not prove these assumptions or completeness of the fact universe.

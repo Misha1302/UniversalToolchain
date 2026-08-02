@@ -1,29 +1,48 @@
-\section{Contract-Guided Reverification}
-\subsection{Typed contracts and ownership}
-Each extension contributes immutable facets: owned AST/bytecode identities, compiler-fact ownership, pipeline effects, AIR emissions, and backend capabilities. Selection constructs one contract table for the actual runtime components. Duplicate owners, unknown facts, impossible effect declarations, and unresolved backend selections are diagnosed before compilation proceeds.
+\section{Obligation-Guided Reverification}
+\subsection{Contract construction and ownership}
+Each extension contributes immutable facets: owned AST/bytecode identities, compiler-fact ownership, pipeline effects, AIR emissions, backend capabilities, and verifier routes. Selection constructs one table for the actual runtime components. Duplicate owners, unknown facts, impossible effect declarations, and unresolved backend selections are rejected before compilation proceeds.
 
-Ownership is not merely documentation. It prevents an arbitrary extension from satisfying another component's obligation with a similarly named check. The scheduler receives canonical rule IDs and executable routes registered by the selected runtime.
+Ownership is operational, not documentary. It prevents an arbitrary extension from satisfying another component's obligation with a similarly named check. Routes use stable rule identifiers and point to production verifier implementations.
 
-\subsection{Four policies}
-Table~\ref{tab:policies} defines the policies evaluated through one runner, corpus, and oracle.
+\subsection{Boundary transition}
+At each boundary, the scheduler applies the following deterministic transition:
+\begin{enumerate}
+  \item validate the next component's required facts;
+  \item apply generated, preserved, and invalidated fact effects;
+  \item create or merge obligations for invalidated verifiable facts;
+  \item collect obligations whose due boundary has been reached;
+  \item resolve each to exactly one canonical executable route;
+  \item execute selected routes in stable rule-ID order; reject on route absence, ownership conflict, verifier failure, or remaining due obligation.
+\end{enumerate}
+Multiple invalidations mapped to one rule produce one invocation carrying the union of affected facts. This prevents repeated work while preserving fact-level telemetry.
+
+\paragraph{Relative boundary safety.}
+Under A1--A4, after a successful transition across boundary $i$, no registered obligation due at or before $i$ remains pending.
+
+\paragraph{Proof sketch.}
+Proceed by induction over boundaries. The base state has no overdue obligation. At transition $i$, step 3 materializes every newly invalidated registered fact as an obligation. Steps 4--6 either discharge every obligation due by $i$ or reject the transition. Obligations due later remain pending but are not overdue. Therefore a successful transition preserves the invariant. The result says nothing about undeclared invalidations, missing facts, or unsound verifiers.
+
+\subsection{Compared policies}
+Table~\ref{tab:policies} separates the frozen four-policy experiment from a targeted demand-driven baseline.
 
 \begin{table}[t]
-\caption{Verification policies. Structural checks are always part of their represented boundary; ``semantic'' refers to selected-system verifier routes.}
+\caption{Compared semantic scheduling policies. Generic structural checks remain mandatory at represented boundaries.}
 \label{tab:policies}
 \small
-\begin{tabular}{@{}p{0.24\columnwidth}p{0.68\columnwidth}@{}}
+\begin{tabular}{@{}p{0.22\columnwidth}p{0.70\columnwidth}@{}}
 \toprule
 Policy & Semantic scheduling \\
 \midrule
 P0 structural & No typed fact or obligation routing. \\
-P1 invalidation & Record invalidations; do not discharge requests. \\
-P2 selective & Run exactly the requested canonical verifier rules. \\
-P3 always & Run every verifier applicable to the boundary. \\
+P1 invalidation & Record invalidations; do not execute semantic routes. \\
+Lazy demand & Recompute an invalidated route only when a consumer explicitly demands it. \\
+P2 selective & Execute every canonical route required by obligations due at the boundary. \\
+P3 always & Execute every verifier applicable to the boundary. \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The scheduler sorts rule IDs deterministically. P2 creates one invocation for each distinct requested route. P3 uses the same route implementations but takes the set of all applicable rules. Unknown policies, unknown routes, conflicting owners, or an empty verification scope where a check was requested are errors rather than implicit fallbacks.
+The frozen detection matrix uses P0--P3 through one runner, corpus, and oracle. The lazy-demand witness is reported separately so it does not rewrite historical denominators. P2 and P3 call the same verifier implementations; they differ only in route selection.
 
 \subsection{Structural and semantic scopes}
-A monolithic AIR verifier can make a policy comparison meaningless: invoking it for mandatory structure also silently performs all semantic checks. We therefore split the production verifier into non-overlapping structural and semantic scopes. Schema, branch-target, and stack-discipline checks remain mandatory where represented. Capability and selected-contract relations are scheduled by P2/P3. The default production profile is P3, preserving the pre-study behavior.
+A monolithic IR verifier can make the comparison meaningless by performing semantic checks during mandatory structural validation. We therefore split production verification into non-overlapping scopes. Schema, branch-target, and stack-discipline checks remain structural. Capability, ownership, and selected-contract relations are semantic routes. P3 remains the production default, preserving behavior while P2 is evaluated as a selective alternative.

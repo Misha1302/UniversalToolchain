@@ -1,14 +1,31 @@
 \section{Introduction}
-Compiler frameworks increasingly compose frontends, dialects, optimizers, plugins, and backends around shared intermediate representations (IRs)~\cite{llvm,mlir}. Such composition scales engineering, but it weakens a common informal argument: ``the IR verifier passed, therefore the selected compiler is valid.'' A generic IR verifier can establish operand schemas, branch targets, stack discipline, or type consistency while missing a relation introduced by the selected system: an optimizer may invalidate a fact produced by another extension; a backend capability may no longer justify an emitted operation; or metadata may remain well formed while describing the wrong producer or source node.
+Compiler frameworks increasingly compose frontends, dialects, optimizers, plugins, and backends around shared intermediate representations (IRs)~\cite{llvm,mlir}. This modularity scales engineering, but it breaks the inference that a passing IR verifier makes the selected compiler valid. A generic verifier can establish opcode schemas, branch targets, stack discipline, and type consistency while missing a relation introduced only by the selected composition. An optimizer may invalidate a capability fact produced by another extension; metadata may remain well formed while naming the wrong producer; or a shape-correct operation may violate the selected backend layout contract.
 
-Pass managers already track cached analysis validity. LLVM uses \texttt{PreservedAnalyses} and transitive invalidation~\cite{llvmnpm}; MLIR similarly invalidates analyses unless a pass marks them preserved~\cite{mlirpm}. These mechanisms answer whether an analysis result may be reused. They do not generally assign a semantic obligation to a canonical verifier at a later compiler boundary. At the other end of the assurance spectrum, verified compilers and translation validators prove or check semantic preservation~\cite{pnueli98,necula00,leroy06,alive2}. Those techniques provide stronger guarantees for covered transformations, but production extension ecosystems often contain heterogeneous verifiers and components that are not all expressed in one proof system.
+\paragraph{Motivating failure.}
+Consider an optimizer that replaces a supported operation with a structurally legal intrinsic $q$. The generic IR admits $q$, so structural verification succeeds. The selected backend, however, lacks capability $k_q$. A conventional analysis manager marks a cached capability analysis stale, but no later pass asks for that analysis before backend lowering. Demand-driven recomputation therefore performs no check. The compiler reaches the backend with a valid IR object but an invalid selected system.
 
-This paper studies a middle ground: extensions declare semantic facts, effects, invalidations, and verifier ownership; the runtime scheduler discharges only the obligations created by the selected pipeline, or executes every applicable verifier for comparison. Our thesis is deliberately bounded: on evaluated faults, selective obligation-guided reverification can match always-verify detection while avoiding some unrequested verification. We do not claim general equivalence or a whole-compilation speedup.
+\begin{figure}[t]
+\centering
+\fbox{\begin{minipage}{0.94\columnwidth}
+\footnotesize
+\textbf{Before optimization:} IR valid; fact $backendSupports(x)$ valid.\\
+$\downarrow$ optimizer emits structurally legal $q$ and invalidates the fact\\
+\textbf{Lazy invalidation:} no consumer demand $\Rightarrow$ no recomputation\\
+\textbf{Obligation scheduler:} pending fact reaches its due boundary $\Rightarrow$ canonical verifier runs or compilation fails closed.
+\end{minipage}}
+\caption{Invalidation records staleness; an obligation additionally requires discharge at a boundary even when no consumer requests the fact.}
+\Description{A four-step compiler pipeline: a supported operation becomes a structurally legal but unsupported intrinsic; lazy invalidation performs no check without consumer demand; obligation-guided reverification invokes the canonical verifier at the due boundary.}
+\label{fig:motivation}
+\end{figure}
+
+Pass managers already track cached analysis validity. LLVM uses \texttt{PreservedAnalyses} and transitive invalidation~\cite{llvmnpm}; MLIR similarly invalidates analyses unless a pass marks them preserved~\cite{mlirpm}. These mechanisms answer whether a result may be reused. Translation validation and verified compilation provide stronger semantic guarantees for covered transformations~\cite{pnueli98,necula00,leroy06,alive2}, but extension ecosystems often contain heterogeneous production verifiers that are not expressed in one proof system.
+
+We study the middle layer between those approaches: invalidations create named semantic obligations with canonical owners and due boundaries. The runtime selectively discharges due obligations or executes every applicable verifier for comparison. Our contribution is not the observation that verification is useful, but a typed scheduling contract that makes omission observable and fail-closed.
 
 This work makes four contributions:
 \begin{itemize}
-  \item a typed contract model for compiler facts, producer/source identities, invalidations, canonical verifier owners, and first eligible detection boundaries;
-  \item a deterministic fail-closed scheduler implementing four policies over the same production verifiers;
-  \item frozen boundary and source-to-result studies in System W, plus a public-SDK TensorRules package with different shape/layout invariants;
-  \item raw JSONL evidence, provider-backed replay, eight isolated mechanism ablations, policy-level ablations, and explicit gates that prevent unsupported performance or external-validity claims.
+  \item a model of owned semantic facts, invalidations, due boundaries, and executable verifier routes;
+  \item a deterministic selective scheduler with a relative boundary-safety property and explicit completeness assumptions;
+  \item production-path studies comparing structural, invalidation, demand-driven, selective-obligation, and always verification;
+  \item frozen evidence, source-to-result experiments in two language packages, and mechanism-level ablations that separate detection from false-positive behavior.
 \end{itemize}

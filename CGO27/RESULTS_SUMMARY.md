@@ -26,8 +26,7 @@ Provider-backed artifact for commit `acc60612361f240d5bd24f148ea7fa6eb5e1f111`:
 - two fresh-process repetitions per case/policy;
 - 240 raw records;
 - five targeted optimizer faults;
-- 24 valid controls;
-- one pre-existing baseline runtime failure (`P07`) reported separately.
+- 25 valid controls after the mixed numeric-promotion defect was repaired;
 
 For the five targeted faults:
 
@@ -36,7 +35,7 @@ For the five targeted faults:
 - P2/P3 reject at the optimized-AIR contract boundary;
 - P2/P3 classification parity is 30/30 across all source cases.
 
-The `P07` failure occurs identically under all four policies without fault injection. It is neither a protocol fault nor a valid control.
+Case `P07` is a valid control again after the NativeMath mixed numeric-promotion repair. The end-to-end matrix must now accept all 25 non-fault programs under every policy.
 
 ## TensorRules second-language package
 

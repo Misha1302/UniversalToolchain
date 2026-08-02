@@ -14,6 +14,9 @@ internal static class VerificationPolicySchedulerTests
         ConflictingCanonicalOwnersFailClosed();
         SchedulingDoesNotMutateInputs();
         SelectiveIsSubsetOfAlwaysForSameBoundary();
+        DemandDrivenIgnoresUndemandedInvalidations();
+        DemandDrivenRecomputesOnlyDemandedInvalidations();
+        DemandDrivenUnknownDemandFailsClosed();
     }
 
     private static void StructuralAndInvalidationDoNotScheduleSemanticVerification()
@@ -126,6 +129,37 @@ internal static class VerificationPolicySchedulerTests
             .Select(static item => item.RuleId)
             .ToHashSet();
         AssertTrue(selective.IsSubsetOf(always), "P2 routes must be a subset of P3 routes at the same boundary");
+    }
+
+    private static void DemandDrivenIgnoresUndemandedInvalidations()
+    {
+        var scheduled = VerificationPolicyScheduler.ScheduleDemandDriven(
+            Routes(),
+            Requests(KnownCoreVerifierRules.AirContract, KnownCoreCompilerFacts.AirVerified),
+            []);
+
+        AssertCount(0, scheduled);
+    }
+
+    private static void DemandDrivenRecomputesOnlyDemandedInvalidations()
+    {
+        var scheduled = VerificationPolicyScheduler.ScheduleDemandDriven(
+            Routes(),
+            Requests(KnownCoreVerifierRules.AirContract, KnownCoreCompilerFacts.AirVerified),
+            [KnownCoreVerifierRules.AirContract]);
+
+        AssertCount(1, scheduled);
+        AssertEqual(KnownCoreVerifierRules.AirContract, scheduled[0].RuleId, "demand-driven rule");
+        AssertTrue(!scheduled[0].IsObligationDriven, "demand-driven invocation must not masquerade as boundary obligation discharge");
+    }
+
+    private static void DemandDrivenUnknownDemandFailsClosed()
+    {
+        var unknown = new VerifierRuleId("experiment.demand.unknown");
+        AssertThrows<InvalidOperationException>(() => VerificationPolicyScheduler.ScheduleDemandDriven(
+            Routes(),
+            Requests(unknown, new CompilerFactId("experiment.demand.fact")),
+            [unknown]));
     }
 
     private static IReadOnlyList<VerifierRouteDescriptor> Routes() =>

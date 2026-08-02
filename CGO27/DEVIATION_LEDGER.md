@@ -14,10 +14,11 @@
 - Classification: `BLOCKED_PINNED_MACHINE`.
 - Consequence: no whole-compilation speedup or efficiency headline.
 
-## D3 — Wist baseline runtime failure
+## D3 — Wist baseline runtime failure (resolved)
 
 - Planned: all non-fault source cases accepted by every policy.
-- Actual: case `P07` fails identically under all policies without fault injection because of an existing mixed-type NativeMath assertion.
+- Previous actual: case `P07` failed identically under all policies because NativeMath required identical operand CLR types.
+- Resolution: deterministic binary numeric promotion now selects a common operand type; `P07` must execute as a valid control under all policies.
 - Treatment: separate `baseline-runtime-failure`; excluded from targeted faults and valid-control counts; retained in raw evidence.
 
 ## D4 — Second-language authorship

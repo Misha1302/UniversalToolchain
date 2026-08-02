@@ -102,7 +102,10 @@ internal static partial class Cgo27Program
         return ordered.Length % 2 == 0 ? (ordered[middle - 1] + ordered[middle]) / 2.0 : ordered[middle];
     }
 
-    private static object BuildSummary(IReadOnlyList<ResultRecord> allResults, PerformanceSummary performance)
+    private static object BuildSummary(
+        IReadOnlyList<ResultRecord> allResults,
+        PerformanceSummary performance,
+        DemandBaselineSummary demandBaseline)
     {
         var stable = allResults
             .Where(static x => x.StudySet is "primary" or "challenge")
@@ -177,6 +180,7 @@ internal static partial class Cgo27Program
             Challenge = SummarizeSet(challenge),
             Clean = cleanByPolicy,
             CleanByFamily = cleanByFamily,
+            DemandDrivenBaseline = demandBaseline,
             Performance = performance
         };
     }
