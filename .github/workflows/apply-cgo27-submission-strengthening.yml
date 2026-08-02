@@ -6,13 +6,13 @@ on:
       - research/cgo27-submission-strengthening
     paths:
       - ".github/workflows/apply-cgo27-submission-strengthening.yml"
-      - ".github/patches/cgo27-submission-strengthening.patch.gz.b64"
+      - ".github/patches/cgo27-submission-strengthening.part-*"
   pull_request:
     branches:
       - master
     paths:
       - ".github/workflows/apply-cgo27-submission-strengthening.yml"
-      - ".github/patches/cgo27-submission-strengthening.patch.gz.b64"
+      - ".github/patches/cgo27-submission-strengthening.part-*"
 
 permissions:
   contents: write
@@ -28,21 +28,23 @@ jobs:
           ref: research/cgo27-submission-strengthening
           fetch-depth: 0
 
-      - name: Verify bootstrap ancestry
+      - name: Verify bootstrap ancestry and chunks
         shell: bash
         run: |
           set -euo pipefail
           base="f13ad1310856e5618e1c3042c447ca543e0f3125"
           git merge-base --is-ancestor "$base" HEAD
-          test "$(git rev-list --count "$base"..HEAD)" = "3"
-          test -f .github/patches/cgo27-submission-strengthening.patch.gz.b64
+          for part in 00 01 02 03 04; do
+            test -f ".github/patches/cgo27-submission-strengthening.part-$part"
+          done
+          cat .github/patches/cgo27-submission-strengthening.part-* > /tmp/cgo27-strengthening.patch.gz.b64
+          echo "bee03b8db06dd54ee4ae93aae83901325ffed1beb005cba9c99d4cc457d56fc2  /tmp/cgo27-strengthening.patch.gz.b64" | sha256sum -c -
 
       - name: Apply exact patch and validate scope
         shell: bash
         run: |
           set -euo pipefail
-          base64 -d .github/patches/cgo27-submission-strengthening.patch.gz.b64 \
-            | gzip -d > /tmp/cgo27-strengthening.patch
+          base64 -d /tmp/cgo27-strengthening.patch.gz.b64 | gzip -d > /tmp/cgo27-strengthening.patch
           git apply --check /tmp/cgo27-strengthening.patch
           git apply /tmp/cgo27-strengthening.patch
 
@@ -92,7 +94,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rm .github/patches/cgo27-submission-strengthening.patch.gz.b64
+          rm -f .github/patches/cgo27-submission-strengthening.patch.gz.b64
+          rm -f .github/patches/cgo27-submission-strengthening.part-*
           rm .github/workflows/apply-cgo27-submission-strengthening.yml
           rmdir .github/patches 2>/dev/null || true
           git config user.name "github-actions[bot]"
