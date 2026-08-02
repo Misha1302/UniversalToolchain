@@ -14,6 +14,7 @@ on:
       - "Tools/run-cgo27-end-to-end.sh"
       - "UniversalToolchain/Experiments/UniversalToolchain.ContractExperiments/**"
       - "UniversalToolchain/Experiments/UniversalToolchain.EndToEndExperiments/**"
+      - "UniversalToolchain/NativeMathModule/**"
       - "UniversalToolchain/Experiments/UniversalToolchain.TensorRules/**"
 
 permissions:
