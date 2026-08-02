@@ -9,6 +9,7 @@ on:
       - ".github/workflows/cgo27-end-to-end.yml"
       - "Tools/run-cgo27-end-to-end.sh"
       - "UniversalToolchain/Experiments/UniversalToolchain.EndToEndExperiments/**"
+      - "UniversalToolchain/NativeMathModule/**"
       - "UniversalToolchain/UniversalToolchain.ModuleContracts/**"
       - "UniversalToolchain/UniversalToolchain.Dialects.Wist/**"
 
