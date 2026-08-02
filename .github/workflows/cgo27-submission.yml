@@ -1,0 +1,119 @@
+name: CGO27 Anonymous Submission
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - master
+    paths:
+      - ".github/workflows/cgo27-submission.yml"
+      - "CGO27/submission/**"
+      - "CGO27/paper/**"
+      - "CGO27/ablations/**"
+      - "CGO27/external-fault-kit/**"
+      - "Tools/prepare-cgo27-anonymous-supplement.sh"
+      - "Tools/finalize-cgo27-anonymous-supplement.sh"
+      - "Tools/run-cgo27-ablations.sh"
+      - "Tools/run-contract-experiment.sh"
+      - "Tools/run-cgo27-end-to-end.sh"
+      - "UniversalToolchain/Experiments/UniversalToolchain.ContractExperiments/**"
+      - "UniversalToolchain/Experiments/UniversalToolchain.EndToEndExperiments/**"
+      - "UniversalToolchain/Experiments/UniversalToolchain.TensorRules/**"
+      - "UniversalToolchain/NativeMathModule/**"
+
+permissions:
+  contents: read
+
+env:
+  CGO27_SOURCE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+  SOURCE_DATE_EPOCH: 315532800
+
+jobs:
+  anonymous-submission:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 80
+    steps:
+      - name: Checkout exact source revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.CGO27_SOURCE_SHA }}
+          fetch-depth: 0
+
+      - name: Verify exact source revision
+        shell: bash
+        run: test "$(git rev-parse HEAD)" = "$CGO27_SOURCE_SHA"
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: UniversalToolchain/global.json
+
+      - name: Prepare anonymized source and paper tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash Tools/prepare-cgo27-anonymous-supplement.sh artifacts/cgo27-submission
+          test -s artifacts/cgo27-submission/anonymous-review-supplement/source/anonymous-system-source.tar.gz
+
+      - name: Execute anonymized clean-unpack study
+        shell: bash
+        run: |
+          set -euo pipefail
+          stage="$GITHUB_WORKSPACE/artifacts/cgo27-submission/anonymous-review-supplement"
+          source_hash="$(cut -d: -f2 "$stage/SOURCE_REVISION")"
+          synthetic_revision="${source_hash:0:40}"
+          work="$GITHUB_WORKSPACE/artifacts/cgo27-submission/clean-source"
+          mkdir -p "$work"
+          tar -xzf "$stage/source/anonymous-system-source.tar.gz" -C "$work"
+          unset GITHUB_SHA
+          export CGO27_SOURCE_SHA="$synthetic_revision"
+          bash "$work/Tools/run-cgo27-ablations.sh" \
+            "$GITHUB_WORKSPACE/artifacts/cgo27-submission/provider-evidence" 2>&1 \
+            | tee "$GITHUB_WORKSPACE/artifacts/cgo27-submission/anonymous-execution.log"
+          test "$(cat "$GITHUB_WORKSPACE/artifacts/cgo27-submission/provider-evidence/COMMIT")" = "$synthetic_revision"
+          grep -q '"status": "VALIDATED"' \
+            "$GITHUB_WORKSPACE/artifacts/cgo27-submission/provider-evidence/analysis/ablations.json"
+
+      - name: Build anonymous review PDF
+        uses: xu-cheng/latex-action@v4
+        with:
+          root_file: main.tex
+          working_directory: artifacts/cgo27-submission/anonymous-review-supplement/paper/source
+          args: -pdf -file-line-error -halt-on-error -interaction=nonstopmode
+
+      - name: Install PDF preflight tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends poppler-utils
+
+      - name: Finalize and verify anonymous review supplement
+        shell: bash
+        run: |
+          set -euo pipefail
+          stage="artifacts/cgo27-submission/anonymous-review-supplement"
+          pdf="$stage/paper/source/main.pdf"
+          log="$stage/paper/source/main.log"
+          test -s "$pdf"
+          ! grep -Eq 'Overfull \\hbox|Citation .* undefined|Reference .* undefined|There were undefined references' "$log"
+          pdftotext "$pdf" artifacts/cgo27-submission/anonymous-paper.txt
+          ! grep -Eiq 'Misha|Razakov|Wist2|WistSharp|github\.com/Misha1302|misha1302\.github\.io|/home/|/mnt/' \
+            artifacts/cgo27-submission/anonymous-paper.txt
+          bash Tools/finalize-cgo27-anonymous-supplement.sh artifacts/cgo27-submission
+          mkdir -p artifacts/cgo27-submission/clean-final
+          tar -xzf artifacts/cgo27-submission/anonymous-review-supplement.tar.gz \
+            -C artifacts/cgo27-submission/clean-final
+          bash artifacts/cgo27-submission/clean-final/anonymous-review-supplement/verify.sh \
+            artifacts/cgo27-submission/clean-final/anonymous-review-supplement
+
+      - name: Upload anonymous review supplement
+        uses: actions/upload-artifact@v4
+        with:
+          name: cgo27-anonymous-submission-${{ env.CGO27_SOURCE_SHA }}
+          path: |
+            artifacts/cgo27-submission/anonymous-review-supplement.tar.gz
+            artifacts/cgo27-submission/SHA256SUMS
+            artifacts/cgo27-submission/anonymous-execution.log
+          if-no-files-found: error
+          retention-days: 90
