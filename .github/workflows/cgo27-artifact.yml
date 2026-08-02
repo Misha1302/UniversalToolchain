@@ -19,6 +19,7 @@ on:
       - "Tools/run-contract-experiment.sh"
       - "UniversalToolchain/Experiments/UniversalToolchain.ContractExperiments/**"
       - "UniversalToolchain/Experiments/UniversalToolchain.EndToEndExperiments/**"
+      - "UniversalToolchain/NativeMathModule/**"
       - "UniversalToolchain/Experiments/UniversalToolchain.TensorRules/**"
 
 permissions:
