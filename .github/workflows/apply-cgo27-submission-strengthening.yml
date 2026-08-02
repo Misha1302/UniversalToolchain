@@ -90,13 +90,17 @@ jobs:
           { git diff --name-only; git ls-files --others --exclude-standard; } | sort -u > /tmp/actual-paths
           diff -u /tmp/expected-paths /tmp/actual-paths
 
-      - name: Commit strengthened submission
+      - name: Commit non-workflow strengthening
         shell: bash
         run: |
           set -euo pipefail
+          git checkout HEAD -- \
+            .github/workflows/cgo27-ablations.yml \
+            .github/workflows/cgo27-artifact.yml \
+            .github/workflows/cgo27-end-to-end.yml
+          rm -f .github/workflows/cgo27-submission.yml
           rm -f .github/patches/cgo27-submission-strengthening.patch.gz.b64
           rm -f .github/patches/cgo27-submission-strengthening.part-*
-          rm .github/workflows/apply-cgo27-submission-strengthening.yml
           rmdir .github/patches 2>/dev/null || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
