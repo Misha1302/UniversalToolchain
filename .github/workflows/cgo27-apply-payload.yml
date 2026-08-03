@@ -1,0 +1,52 @@
+name: CGO27 Apply Staged Payload
+
+on:
+  push:
+    branches:
+      - research/cgo27-submission-hardening
+    paths:
+      - ".github/workflows/cgo27-apply-payload.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cgo27-apply-staged-payload
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout working branch
+        uses: actions/checkout@v4
+        with:
+          ref: research/cgo27-submission-hardening
+          fetch-depth: 0
+
+      - name: Verify and apply staged payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          export LC_ALL=C
+
+          test -d .cgo27-payload
+          printf '%s\n' .cgo27-payload/chunk.* | sort | xargs cat > /tmp/cgo27-payload.b64
+          base64 --decode /tmp/cgo27-payload.b64 > /tmp/cgo27-hardening-payload.tar.gz
+          printf '%s  %s\n' \
+            '5311f090ba5b3f3c86f54517aaf1d23d28a3fafe00a67c6462d06684dfa10258' \
+            '/tmp/cgo27-hardening-payload.tar.gz' \
+            | sha256sum --check --strict -
+
+          tar --extract --gzip --file /tmp/cgo27-hardening-payload.tar.gz --directory .
+          rm -rf .cgo27-payload
+
+          git add --all
+          git diff --cached --check
+          test -n "$(git diff --cached --name-only)"
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'CGO27: implement obligation model, demand baseline, and P07 repair'
+          git push origin HEAD:research/cgo27-submission-hardening
