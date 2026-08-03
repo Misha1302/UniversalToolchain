@@ -156,6 +156,14 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("source", type=Path)
     parser.add_argument("destination", type=Path)
+    parser.add_argument(
+        "--skip-project-reference-validation",
+        action="store_true",
+        help=(
+            "Skip reference-closure validation for non-buildable evidence snapshots. "
+            "Identity and path sanitization remain mandatory."
+        ),
+    )
     args = parser.parse_args()
     source = args.source.resolve()
     destination = args.destination.resolve()
@@ -165,7 +173,8 @@ def main() -> int:
     copy_allowed_tree(source, destination)
     sanitize_text_files(destination)
     rename_paths(destination)
-    validate_project_references(destination)
+    if not args.skip_project_reference_validation:
+        validate_project_references(destination)
     validate_identity(destination)
     print(f"ANONYMIZED_SOURCE={destination}")
     return 0
