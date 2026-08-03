@@ -6,7 +6,7 @@ The source uses the ACM SIGPLAN `sigplan,screen,review,anonymous` format. The pa
 
 Build without BibTeX:
 
-```bash
+```bash ci-run=false
 cd CGO27/paper
 pdflatex -interaction=nonstopmode -halt-on-error main.tex
 pdflatex -interaction=nonstopmode -halt-on-error main.tex
