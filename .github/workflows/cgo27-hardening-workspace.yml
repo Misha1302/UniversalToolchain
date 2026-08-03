@@ -1,0 +1,54 @@
+name: CGO27 Hardening Workspace
+
+on:
+  push:
+    branches:
+      - research/cgo27-submission-hardening
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  export-exact-source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact source head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 1
+
+      - name: Assert exact source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(git rev-parse HEAD)"
+          test "$actual" = "${GITHUB_SHA}"
+          printf '%s\n' "$actual" > CGO27-HARDENING-SOURCE-SHA
+
+      - name: Build deterministic source snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          epoch="$(git show -s --format=%ct HEAD)"
+          mkdir -p artifacts
+          git ls-files -z \
+            | LC_ALL=C sort -z \
+            | tar --null --files-from=- \
+                --format=posix \
+                --sort=name \
+                --mtime="@${epoch}" \
+                --owner=0 --group=0 --numeric-owner \
+                -czf artifacts/cgo27-hardening-source.tar.gz
+          cp CGO27-HARDENING-SOURCE-SHA artifacts/
+          (cd artifacts && sha256sum CGO27-HARDENING-SOURCE-SHA cgo27-hardening-source.tar.gz > MANIFEST.sha256)
+
+      - name: Upload exact source snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: cgo27-hardening-source-${{ github.sha }}
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 30
