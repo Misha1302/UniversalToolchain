@@ -50,3 +50,5 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -m 'CGO27: implement obligation model, demand baseline, and P07 repair'
           git push origin HEAD:research/cgo27-submission-hardening
+
+# trigger-version: 2
