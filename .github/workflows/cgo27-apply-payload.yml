@@ -46,15 +46,17 @@ jobs:
             | sha256sum --check --strict -
 
           tar --extract --gzip --file /tmp/cgo27-hardening-payload.tar.gz --directory .
+          git checkout -- .github/workflows/cgo27-hardening-workspace.yml
           rm -rf .cgo27-payload
 
           git add --all
           git diff --cached --check
           test -n "$(git diff --cached --name-only)"
+          test -z "$(git diff --cached --name-only -- '.github/workflows/*')"
 
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -m 'CGO27: implement obligation model, demand baseline, and P07 repair'
           git push origin HEAD:research/cgo27-submission-hardening
 
-# trigger-version: 3
+# trigger-version: 4
