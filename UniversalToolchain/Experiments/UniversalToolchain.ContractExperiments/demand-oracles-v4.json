@@ -1,0 +1,46 @@
+{
+  "schema_version": 4,
+  "catalog_sha256": "59bf35a7f1e974b62fea3863ebb041966bbbcc14635c7911de4b08eff724262a",
+  "repetitions": 3,
+  "corpus_id": "demand-v4",
+  "cases": [
+    {
+      "case_id": "DEMAND-01",
+      "operator_id": "DEMAND-01",
+      "workload_stratum": "facts-order-reverification",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-PIPELINE-EFFECT-003",
+      "expected_boundary": "pipeline-effects",
+      "demand_query": true,
+      "policy_expectations": {
+        "P0_STRUCTURAL": ["accepted", null, null],
+        "P1_INVALIDATION": ["accepted", null, null],
+        "P1D_DEMAND_RECOMPUTATION": ["rejected", "UT-PIPELINE-EFFECT-003", "pipeline-effects"],
+        "P2_SELECTIVE": ["rejected", "UT-PIPELINE-EFFECT-003", "pipeline-effects"],
+        "P3_ALWAYS": ["rejected", "UT-PIPELINE-EFFECT-003", "pipeline-effects"]
+      }
+    },
+    {
+      "case_id": "DEMAND-02",
+      "operator_id": "DEMAND-02",
+      "workload_stratum": "facts-order-reverification",
+      "expected_outcome": "rejected",
+      "expected_diagnostic_family": "UT-PIPELINE-EFFECT-003",
+      "expected_boundary": "pipeline-effects",
+      "demand_query": false,
+      "policy_expectations": {
+        "P0_STRUCTURAL": ["accepted", null, null],
+        "P1_INVALIDATION": ["accepted", null, null],
+        "P1D_DEMAND_RECOMPUTATION": ["accepted", null, null],
+        "P2_SELECTIVE": ["rejected", "UT-PIPELINE-EFFECT-003", "pipeline-effects"],
+        "P3_ALWAYS": ["rejected", "UT-PIPELINE-EFFECT-003", "pipeline-effects"]
+      }
+    }
+  ],
+  "valid_controls": {
+    "workload_stratum": "clean-demand",
+    "runs_per_policy": 20,
+    "expected_outcome": "accepted",
+    "expected_diagnostic_family": null
+  }
+}

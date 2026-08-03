@@ -188,12 +188,23 @@ internal static partial class Cgo27Program
         };
     }
 
-    private static string BuildMutationCatalog(IEnumerable<MutationCase> cases)
+    private static string BuildHistoricalMutationCatalog(IEnumerable<MutationCase> cases)
+    {
+        var lines = new List<string> { "study_set,mutation_id,operator_id,family,expected_diagnostic" };
+        lines.AddRange(cases
+            .Where(static x => x.StudySet is "primary" or "challenge")
+            .OrderBy(static x => x.StudySet, StringComparer.Ordinal)
+            .ThenBy(static x => x.Id, StringComparer.Ordinal)
+            .Select(static x => $"{x.StudySet},{x.Id},{x.OperatorId},{x.Family},{x.ExpectedCode}"));
+        return string.Join(Environment.NewLine, lines) + Environment.NewLine;
+    }
+
+    private static string BuildDemandMutationCatalog(IEnumerable<MutationCase> cases)
     {
         var lines = new List<string> { "study_set,mutation_id,operator_id,family,expected_diagnostic,demand_query" };
         lines.AddRange(cases
-            .OrderBy(static x => x.StudySet, StringComparer.Ordinal)
-            .ThenBy(static x => x.Id, StringComparer.Ordinal)
+            .Where(static x => x.StudySet == "demand-v4")
+            .OrderBy(static x => x.Id, StringComparer.Ordinal)
             .Select(static x => $"{x.StudySet},{x.Id},{x.OperatorId},{x.Family},{x.ExpectedCode},{x.ExplicitDemand.ToString().ToLowerInvariant()}"));
         return string.Join(Environment.NewLine, lines) + Environment.NewLine;
     }

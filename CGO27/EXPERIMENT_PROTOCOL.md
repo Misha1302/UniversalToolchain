@@ -5,21 +5,21 @@ This document identifies canonical protocol owners; it does not duplicate their 
 ## Studies
 
 1. **Wist boundary study**
-   - protocol: `UniversalToolchain/Experiments/UniversalToolchain.ContractExperiments/STUDY_PROTOCOL_V3.md`
-   - raw schema: `raw-result-schema-v3.json`
-   - oracle: `oracles-v3.json`
+   - protocol: `UniversalToolchain/Experiments/UniversalToolchain.ContractExperiments/STUDY_PROTOCOL_V4.md`
+   - active raw schema: `raw-result-schema-v4.json`; historical v3 schema remains immutable
+   - historical oracle: `oracles-v3.json`; demand oracle: `demand-oracles-v4.json`
    - historical v2 protocol remains immutable.
 
 2. **Wist source-to-result study**
    - runner: `UniversalToolchain/Experiments/UniversalToolchain.EndToEndExperiments/run_matrix_v2.py`
    - execution entrypoint: `Tools/run-cgo27-end-to-end.sh`
-   - 30 cases, four policies, two fresh-process repetitions
+   - 32 cases, five policies, two fresh-process repetitions; historical 30-case denominator reported separately
    - provider receipt: workflow `30661725052`, artifact `8805491648`.
 
 3. **TensorRules second-language study**
    - route and oracle: `UniversalToolchain/Experiments/UniversalToolchain.TensorRules/Program.cs`
    - execution entrypoint: `UniversalToolchain/Experiments/UniversalToolchain.TensorRules/run.sh`
-   - 12 cases and 48 observations
+   - 14 cases and 70 observations; historical 12-case denominator reported separately
    - provider receipt: workflow `30661725387`, artifact `8805405891`.
 
 4. **External blind corpus**

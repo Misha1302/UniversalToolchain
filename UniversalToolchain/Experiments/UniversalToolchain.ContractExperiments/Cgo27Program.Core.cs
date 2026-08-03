@@ -181,7 +181,8 @@ internal static partial class Cgo27Program
         var summary = BuildSummary(results, performance);
         var summaryPath = Path.Combine(outputDirectory, "summary.json");
         File.WriteAllText(summaryPath, JsonSerializer.Serialize(summary, new JsonSerializerOptions { WriteIndented = true }));
-        File.WriteAllText(Path.Combine(outputDirectory, "mutations.csv"), BuildMutationCatalog(cases));
+        File.WriteAllText(Path.Combine(outputDirectory, "mutations.csv"), BuildHistoricalMutationCatalog(cases));
+        File.WriteAllText(Path.Combine(outputDirectory, "demand-mutations-v4.csv"), BuildDemandMutationCatalog(cases));
         File.WriteAllText(Path.Combine(outputDirectory, "environment.json"), JsonSerializer.Serialize(new
         {
             SchemaVersion = RawSchemaVersion,

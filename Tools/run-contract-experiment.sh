@@ -10,7 +10,9 @@ project="UniversalToolchain/Experiments/UniversalToolchain.ContractExperiments/U
 experiment_dir="UniversalToolchain/Experiments/UniversalToolchain.ContractExperiments"
 analyzer="$experiment_dir/analyze_results.py"
 oracle_validator="$experiment_dir/validate_oracles.py"
+demand_oracle_validator="$experiment_dir/validate_demand_oracles.py"
 oracle="$experiment_dir/oracles-v3.json"
+demand_oracle="$experiment_dir/demand-oracles-v4.json"
 
 if [[ ! "$replicates" =~ ^[1-9][0-9]*$ ]]; then
   echo "CONTRACT_EXPERIMENT_REPLICATES must be a positive integer, got: $replicates" >&2
@@ -51,12 +53,16 @@ for file in \
   POLICY_SPEC.md \
   analyze_results.py \
   validate_oracles.py \
+  validate_demand_oracles.py \
   oracles-v3.json \
+  demand-oracles-v4.json \
   UniversalToolchain.ContractExperiments.csproj \
   README.md \
   STUDY_PROTOCOL_V2.md \
   STUDY_PROTOCOL_V3.md \
-  raw-result-schema-v3.json; do
+  STUDY_PROTOCOL_V4.md \
+  raw-result-schema-v3.json \
+  raw-result-schema-v4.json; do
   cp "$experiment_dir/$file" "$out_dir/source/$file"
 done
 cp "Tools/run-contract-experiment.sh" "$out_dir/source/run-contract-experiment.sh"
@@ -80,6 +86,12 @@ python3 "$oracle_validator" \
   --oracle "$oracle" \
   --mutations "$out_dir/main/mutations.csv" \
   --receipt "$out_dir/analysis/oracle-validation.json"
+
+python3 "$demand_oracle_validator" \
+  "$out_dir/main/results.jsonl" \
+  --oracle "$demand_oracle" \
+  --catalog "$out_dir/main/demand-mutations-v4.csv" \
+  --receipt "$out_dir/analysis/demand-oracle-validation-v4.json"
 
 python3 "$analyzer" \
   "$out_dir/main/results.jsonl" \

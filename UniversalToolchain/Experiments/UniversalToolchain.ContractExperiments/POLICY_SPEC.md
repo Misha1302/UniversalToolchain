@@ -1,6 +1,6 @@
 # CGO 2027 verification policy specification
 
-Status: executable specification for the four-policy boundary runner.
+Status: executable specification for the five-policy boundary runner.
 Baseline: `master` at `c73b418c6e72e8b92371753a3a7b4a9f7adaa5f1`.
 
 ## Objective
@@ -27,9 +27,13 @@ Runs no semantic verifier through obligation routing. Existing structural/capabi
 
 Computes and records `requires/produces/preserves/invalidates` state, but schedules no semantic verifier automatically. An invalidated fact remains unavailable until an explicit later producer or verifier establishes it.
 
+### `P1D_DEMAND_RECOMPUTATION`
+
+Schedules a canonical verifier only when an explicit downstream query demands a currently invalid fact. A non-demanded invalid fact remains unavailable and its obligation remains unresolved for later boundaries. This policy models realistic lazy recomputation; it does not satisfy the immediate-boundary guarantee of P2.
+
 ### `P2_SELECTIVE`
 
-Schedules exactly the canonical routes requested by invalidated facts:
+Schedules exactly the canonical routes required by boundary obligations:
 
 1. merge duplicate requests for the same rule;
 2. deduplicate and sort invalidated facts;
@@ -57,7 +61,7 @@ failed verifier: keep facts invalidated; fail the boundary
 unresolved obligation at a consuming/final boundary: fail closed
 ```
 
-`P1_INVALIDATION` stops before automatic verifier routing. `P2_SELECTIVE` discharges only created obligations. `P3_ALWAYS` executes all available rules and discharges any matching obligations.
+`P1_INVALIDATION` stops before automatic verifier routing. `P1D_DEMAND_RECOMPUTATION` routes only queried invalid facts. `P2_SELECTIVE` discharges every due obligation. `P3_ALWAYS` executes all available rules and discharges any matching obligations.
 
 ## Boundary route catalog
 
@@ -85,4 +89,4 @@ Backend-input verification is not represented by the historical corpus and must 
 
 `VerificationPolicySchedulerTests` is invoked by a C# module initializer before the runner can enter `Main`. The gate therefore runs for every canonical main or replicate process and cannot be skipped by an experiment argument.
 
-The gate covers P0/P1 isolation, selective-only routing, P3 full routing, deterministic ordering, request merging, unknown-route rejection, conflicting-owner rejection, immutability, and the P2-subset-of-P3 invariant. Any failure terminates the process before evidence generation.
+The gate covers P0/P1 isolation, queried/unqueried P1D routing, selective-only routing, P3 full routing, deterministic ordering, request merging, unknown-route rejection, conflicting-owner rejection, immutability, and the P2-subset-of-P3 invariant. Any failure terminates the process before evidence generation.

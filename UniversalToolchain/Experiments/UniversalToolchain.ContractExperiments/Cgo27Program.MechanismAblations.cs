@@ -10,7 +10,7 @@ using UniversalToolchain.ModuleContracts;
 
 namespace UniversalToolchain.ContractExperiments;
 
-internal enum ExperimentPolicy { P0_STRUCTURAL, P1_INVALIDATION, P2_SELECTIVE, P3_ALWAYS }
+internal enum ExperimentPolicy { P0_STRUCTURAL, P1_INVALIDATION, P1D_DEMAND_RECOMPUTATION, P2_SELECTIVE, P3_ALWAYS }
 
 internal static class MechanismAblationProgram
 {
@@ -373,7 +373,8 @@ internal static class MechanismAblationProgram
             {
                 var diagnostic = exception.Message.Contains("conflicting canonical owners", StringComparison.Ordinal)
                     ? "UT-SCHEDULER-OWNER-002"
-                    : exception.Message.Contains("no canonical owner", StringComparison.Ordinal)
+                    : exception.Message.StartsWith("Verifier route", StringComparison.Ordinal)
+                      && exception.Message.Contains("no canonical owner", StringComparison.Ordinal)
                         ? "UT-SCHEDULER-OWNER-001"
                         : "UT-SCHEDULER-ROUTE-001";
                 return (true, diagnostic, 1);

@@ -8,14 +8,15 @@ import statistics
 from pathlib import Path
 from typing import Any
 
-POLICIES = ("P0_STRUCTURAL", "P1_INVALIDATION", "P2_SELECTIVE", "P3_ALWAYS")
+POLICIES = ("P0_STRUCTURAL", "P1_INVALIDATION", "P1D_DEMAND_RECOMPUTATION", "P2_SELECTIVE", "P3_ALWAYS")
 REPETITIONS = 3
 EXPECTED_PRIMARY_INSTANCES = 40
 EXPECTED_PRIMARY_OPERATORS = 32
 EXPECTED_PRIMARY_FAMILIES = 5
 EXPECTED_CHALLENGE_OPERATORS = 10
-EXPECTED_CONTROL_RUNS_PER_POLICY = 100
-EXPECTED_CONTROL_FAMILIES = 5
+EXPECTED_CONTROL_RUNS_PER_POLICY = 120
+EXPECTED_CONTROL_FAMILIES = 6
+EXPECTED_DEMAND_OPERATORS = 2
 REQUIRED_FIELDS = {
     "schema_version", "run_id", "commit_sha", "policy", "corpus_id", "case_id",
     "case_kind", "language_id", "pipeline_id", "workload_stratum", "expected_outcome",
@@ -25,6 +26,7 @@ REQUIRED_FIELDS = {
     "whole_compilation_elapsed_ns", "allocated_bytes", "peak_working_set_bytes",
     "obligations_created", "obligations_discharged", "obligations_failed",
     "facts_invalidated", "facts_reverified", "process_exit_code", "repetition", "seed",
+    "measurement_scope", "operator_id", "demand_query", "detected",
 }
 
 
@@ -42,11 +44,11 @@ def load_jsonl(path: Path) -> list[dict[str, Any]]:
         missing = REQUIRED_FIELDS.difference(row)
         if missing:
             raise ValueError(f"{path}:{number}: missing fields {sorted(missing)}")
-        if row["schema_version"] != 3:
+        if row["schema_version"] != 4:
             raise ValueError(f"{path}:{number}: unsupported schema_version {row['schema_version']!r}")
         if row["policy"] not in POLICIES:
             raise ValueError(f"{path}:{number}: unknown policy {row['policy']!r}")
-        if row["corpus_id"] not in {"primary", "challenge", "control"}:
+        if row["corpus_id"] not in {"primary", "challenge", "demand-v4", "control"}:
             raise ValueError(f"{path}:{number}: unknown corpus {row['corpus_id']!r}")
         if row["case_kind"] not in {"fault", "valid-control"}:
             raise ValueError(f"{path}:{number}: invalid case_kind {row['case_kind']!r}")
@@ -100,7 +102,7 @@ def collapse(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dic
     if len(run_ids) != 1:
         raise ValueError(f"mixed run ids: {sorted(run_ids)}")
 
-    fault_rows = [row for row in rows if row["corpus_id"] in {"primary", "challenge"}]
+    fault_rows = [row for row in rows if row["corpus_id"] in {"primary", "challenge", "demand-v4"}]
     control_rows = [row for row in rows if row["corpus_id"] == "control"]
     collapsed: list[dict[str, Any]] = []
     keys = sorted({(row["corpus_id"], row["case_id"], row["policy"]) for row in fault_rows})
@@ -139,6 +141,9 @@ def collapse(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], list[dic
         raise ValueError("unexpected primary family count")
     if len({row["operator_id"] for row in challenge}) != EXPECTED_CHALLENGE_OPERATORS:
         raise ValueError("unexpected challenge operator count")
+    demand = [row for row in collapsed if row["corpus_id"] == "demand-v4"]
+    if len({row["operator_id"] for row in demand}) != EXPECTED_DEMAND_OPERATORS:
+        raise ValueError("unexpected demand-baseline operator count")
 
     for policy in POLICIES:
         policy_controls = [row for row in control_rows if row["policy"] == policy]
@@ -187,6 +192,7 @@ def analyze(rows: list[dict[str, Any]], replicate_summaries: list[Path]) -> dict
     collapsed, controls = collapse(rows)
     primary_by_policy, primary_detections = summarize_operators(operator_rows(collapsed, "primary"))
     challenge_by_policy, _ = summarize_operators(operator_rows(collapsed, "challenge"))
+    demand_by_policy, demand_detections = summarize_operators(operator_rows(collapsed, "demand-v4"))
 
     telemetry: dict[str, Any] = {}
     for policy in POLICIES:
@@ -235,18 +241,21 @@ def analyze(rows: list[dict[str, Any]], replicate_summaries: list[Path]) -> dict
         }
 
     return {
-        "schema_version": 3,
+        "schema_version": 4,
         "run_id": rows[0]["run_id"],
         "commit_sha": rows[0]["commit_sha"],
         "policies": list(POLICIES),
         "primary": {"operators": EXPECTED_PRIMARY_OPERATORS, "by_policy": primary_by_policy},
         "challenge": {"operators": EXPECTED_CHALLENGE_OPERATORS, "by_policy": challenge_by_policy},
+        "demand_baseline": {"operators": EXPECTED_DEMAND_OPERATORS, "by_policy": demand_by_policy},
         "clean": clean,
         "telemetry": telemetry,
         "paired_tests": {
             "P0_vs_P2": exact_mcnemar(primary_detections["P0_STRUCTURAL"], primary_detections["P2_SELECTIVE"]),
             "P1_vs_P2": exact_mcnemar(primary_detections["P1_INVALIDATION"], primary_detections["P2_SELECTIVE"]),
+            "P1D_vs_P2": exact_mcnemar(primary_detections["P1D_DEMAND_RECOMPUTATION"], primary_detections["P2_SELECTIVE"]),
             "P2_vs_P3": exact_mcnemar(primary_detections["P2_SELECTIVE"], primary_detections["P3_ALWAYS"]),
+            "demand_P1D_vs_P2": exact_mcnemar(demand_detections["P1D_DEMAND_RECOMPUTATION"], demand_detections["P2_SELECTIVE"]),
         },
         "performance": performance,
     }
@@ -255,26 +264,29 @@ def analyze(rows: list[dict[str, Any]], replicate_summaries: list[Path]) -> dict
 def write_report(analysis: dict[str, Any], output: Path) -> None:
     primary = analysis["primary"]["by_policy"]
     challenge = analysis["challenge"]["by_policy"]
+    demand = analysis["demand_baseline"]["by_policy"]
     clean = analysis["clean"]
     telemetry = analysis["telemetry"]
     lines = [
-        "# CGO 2027 four-policy contract experiment",
+        "# CGO 2027 five-policy contract experiment",
         "",
         f"- Commit: `{analysis['commit_sha']}`",
         f"- Run: `{analysis['run_id']}`",
         f"- Primary operators: {analysis['primary']['operators']}",
         f"- Challenge operators: {analysis['challenge']['operators']}",
+        f"- Matched demand-baseline operators: {analysis['demand_baseline']['operators']}",
         "- Whole-compilation time: not measured by this boundary experiment",
         "",
         "## Detection and controls",
         "",
-        "| Policy | Primary detected | Challenge detected | Control false positives |",
-        "|---|---:|---:|---:|",
+        "| Policy | Primary detected | Challenge detected | Demand detected | Control false positives |",
+        "|---|---:|---:|---:|---:|",
     ]
     for policy in POLICIES:
         lines.append(
             f"| {policy} | {primary[policy]['detected']}/{primary[policy]['operators']} | "
             f"{challenge[policy]['detected']}/{challenge[policy]['operators']} | "
+            f"{demand[policy]['detected']}/{demand[policy]['operators']} | "
             f"{clean[policy]['false_positives']}/{clean[policy]['runs']} |"
         )
     lines.extend([
@@ -297,7 +309,9 @@ def write_report(analysis: dict[str, Any], output: Path) -> None:
         "",
         f"- P0 vs P2: p={paired['P0_vs_P2']['two_sided_exact_p']:.8g}",
         f"- P1 vs P2: p={paired['P1_vs_P2']['two_sided_exact_p']:.8g}",
+        f"- P1D vs P2: p={paired['P1D_vs_P2']['two_sided_exact_p']:.8g}",
         f"- P2 vs P3: p={paired['P2_vs_P3']['two_sided_exact_p']:.8g}",
+        f"- Demand P1D vs P2: p={paired['demand_P1D_vs_P2']['two_sided_exact_p']:.8g}",
     ])
     if analysis["performance"]:
         lines.extend(["", "## Boundary-kernel timing", ""])

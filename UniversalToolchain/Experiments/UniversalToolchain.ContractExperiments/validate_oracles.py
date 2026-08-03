@@ -8,7 +8,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
-POLICIES = {"P0_STRUCTURAL", "P1_INVALIDATION", "P2_SELECTIVE", "P3_ALWAYS"}
+HISTORICAL_POLICIES = {"P0_STRUCTURAL", "P1_INVALIDATION", "P2_SELECTIVE", "P3_ALWAYS"}
 FAULT_CORPORA = {"primary", "challenge"}
 EXPECTED_FAULT_CASES = 50
 EXPECTED_REPETITIONS = 3
@@ -66,8 +66,19 @@ def validate(rows: list[dict[str, Any]], oracle: dict[str, Any], mutations: Path
             f"{oracle.get('historical_catalog_sha256')}"
         )
 
+    historical_rows = [
+        row for row in rows
+        if row.get("policy") in HISTORICAL_POLICIES
+        and (
+            row.get("corpus_id") in FAULT_CORPORA
+            or (
+                row.get("case_kind") == "valid-control"
+                and row.get("workload_stratum") in controls.get("families", [])
+            )
+        )
+    ]
     observed_fault_ids = {
-        row.get("case_id") for row in rows
+        row.get("case_id") for row in historical_rows
         if row.get("case_kind") == "fault"
     }
     if observed_fault_ids != set(expected_by_id):
@@ -76,10 +87,10 @@ def validate(rows: list[dict[str, Any]], oracle: dict[str, Any], mutations: Path
         raise ValueError(f"oracle/corpus mismatch: missing={missing}, extra={extra}")
 
     grouped: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
-    for row in rows:
+    for row in historical_rows:
         policy = row.get("policy")
-        if policy not in POLICIES:
-            raise ValueError(f"unknown policy {policy!r}")
+        if policy not in HISTORICAL_POLICIES:
+            raise ValueError(f"unknown historical policy {policy!r}")
         case_id = row.get("case_id")
         if not isinstance(case_id, str):
             raise ValueError("record without case_id")
@@ -113,7 +124,7 @@ def validate(rows: list[dict[str, Any]], oracle: dict[str, Any], mutations: Path
 
     for case_id in sorted(expected_by_id):
         collapsed: dict[str, tuple[Any, Any, Any]] = {}
-        for policy in POLICIES:
+        for policy in HISTORICAL_POLICIES:
             policy_rows = grouped[(case_id, policy)]
             if len(policy_rows) != EXPECTED_REPETITIONS:
                 raise ValueError(
