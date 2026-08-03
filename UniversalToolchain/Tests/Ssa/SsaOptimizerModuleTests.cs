@@ -1,5 +1,6 @@
 using IntermediateRepresentationAbstractions;
 using Microsoft.Extensions.DependencyInjection;
+using System.Runtime.Loader;
 using Tests.Infrastructure;
 using UniversalToolchain.Dialects.Integration;
 using UniversalToolchain.Dialects.Wist;
@@ -71,7 +72,10 @@ public sealed class SsaOptimizerModuleTests
         Assert.Multiple(() =>
         {
             Assert.That(selection.EnabledOptimizers.Select(static x => x.CanonicalAlias), Does.Contain("Ssa"));
-            Assert.That(host.Configuration.Optimizers, Does.Contain(typeof(SsaOptimizerModule)));
+            var optimizerType = host.Configuration.Optimizers.Single(static type =>
+                type.FullName == "UniversalToolchain.Ssa.Optimization.SsaOptimizerModule");
+            Assert.That(AssemblyLoadContext.GetLoadContext(optimizerType.Assembly)?.Name,
+                Is.EqualTo("UniversalToolchain.Runtime.Isolated"));
         });
     }
 

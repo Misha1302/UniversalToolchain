@@ -16,6 +16,24 @@ on:
       - "eng/wist-api-deltas.csv"
       - "Tools/check-package-version-provenance.py"
       - "Tools/check-wist-api-compatibility.py"
+      - "Tools/package_metadata.py"
+      - "Tools/test-package-metadata-mutants.py"
+      - "VERIFICATION.md"
+      - "RELEASE_NOTES_RU.md"
+      - "docs/evidence/current-verification.md"
+      - "docs/evidence/maintainer-guide.md"
+      - "UniversalToolchain/UniversalToolchain.Dialects.Integration/**"
+      - "UniversalToolchain/UniversalToolchain.Dialects.Tests/**"
+      - "UniversalToolchain/UniversalToolchain.FeatureSdk/**"
+      - "UniversalToolchain/UniversalToolchain.Language.Abstractions/**"
+      - "UniversalToolchain/UniversalToolchain.LanguageAuthoring/**"
+      - "UniversalToolchain/UniversalToolchain.LanguageSdk/**"
+      - "UniversalToolchain/UniversalToolchain.Testing/**"
+      - "UniversalToolchain/UniversalToolchain.Templates/**"
+      - "UniversalToolchain/UniversalToolchain.Wist/**"
+      - "UniversalToolchain/UniversalToolchain.Wist.LanguagePack/**"
+      - "UniversalToolchain/UniversalToolchain.Ssa.Abstractions/**"
+      - "UniversalToolchain/UniversalToolchain.Ssa.Optimization/**"
       - "UniversalToolchain/UniversalToolchain.Runtime/**"
       - "UniversalToolchain/UniversalToolchain.ModuleContracts/**"
       - "UniversalToolchain/UniversalToolchain.Dialects.Wist/**"
@@ -30,9 +48,9 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 70
     env:
-      REVIEW_BASE_SHA: 3abd958fae087e93135e88460ae0c0a2328afad5
-      REVIEW_BASE_SOURCE_NAME: Wist-review-baseline-3abd958.zip
-      REVIEW_BASE_PACKAGES_NAME: UniversalToolchain-review-packages-3abd958.zip
+      REVIEW_BASE_SHA: f13ad1310856e5618e1c3042c447ca543e0f3125
+      REVIEW_BASE_SOURCE_NAME: Wist-review-baseline-f13ad131.zip
+      REVIEW_BASE_PACKAGES_NAME: UniversalToolchain-review-packages-f13ad131.zip
 
     steps:
       - name: Checkout review revision with history
@@ -157,6 +175,9 @@ jobs:
           fi
           if [[ -f artifacts/RELEASE-INTEGRITY.root.sha256 ]]; then
             cp artifacts/RELEASE-INTEGRITY.root.sha256 "$evidence/"
+          fi
+          if [[ -f artifacts/package-metadata-report.json ]]; then
+            cp artifacts/package-metadata-report.json "$evidence/"
           fi
           find "$evidence" -type f ! -name MANIFEST.sha256 -print0 \
             | sort -z \

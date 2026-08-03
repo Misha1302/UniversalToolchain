@@ -91,6 +91,7 @@ public class WistDialectRuntimeBootstrapContractTests
 
         var blockServices = new ServiceCollection();
         blockServices
+            .AddWistRuntimeSharedContractAssemblies()
             .AddWistDialectCoreServices()
             .AddFileSystemRuntimeCatalogServices()
             .AddReflectionRuntimeResolutionServices();

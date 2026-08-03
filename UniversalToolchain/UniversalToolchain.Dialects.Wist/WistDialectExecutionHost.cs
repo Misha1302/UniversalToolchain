@@ -11,6 +11,7 @@ namespace UniversalToolchain.Dialects.Wist;
 internal sealed class WistDialectExecutionHost : IDisposable
 {
     private readonly ToolchainRuntimeHost _runtimeHost;
+    private readonly WistRuntimeBoundary _runtimeBoundary;
     private readonly IDisposable? _compositionServicesOwner;
 
     internal WistDialectExecutionHost(IServiceProvider serviceProvider, ToolchainRuntimeConfiguration configuration)
@@ -28,6 +29,7 @@ internal sealed class WistDialectExecutionHost : IDisposable
 
         Configuration = configuration;
         _runtimeHost = runtimeHost;
+        _runtimeBoundary = WistRuntimeBoundary.Create(configuration);
         _compositionServicesOwner = compositionServicesOwner;
     }
 
@@ -66,7 +68,7 @@ internal sealed class WistDialectExecutionHost : IDisposable
     {
         code = code.ArgNotNull();
 
-        return GetArtifactCompiler(backend).Compile(code, declaredBindings);
+        return GetArtifactCompiler(backend).Compile(code, NormalizeDeclaredBindings(declaredBindings));
     }
 
     public object? Run(
@@ -77,9 +79,38 @@ internal sealed class WistDialectExecutionHost : IDisposable
         code = code.ArgNotNull();
         arguments = arguments.ArgNotNull();
 
-        var declaredBindings = WistDeclaredBindingFactory.FromRuntimeArguments(arguments);
-        return _runtimeHost.Run(code, arguments, declaredBindings, backend);
+        var normalizedArguments = _runtimeBoundary.NormalizeArguments(arguments);
+        var declaredBindings = NormalizeDeclaredBindings(
+            WistDeclaredBindingFactory.FromRuntimeArguments(arguments))!;
+        return _runtimeHost.Run(code, normalizedArguments, declaredBindings, backend);
+    }
+
+    public object? Run(
+        ICompiledArtifact artifact,
+        IReadOnlyDictionary<string, object?> arguments)
+    {
+        artifact = artifact.ArgNotNull();
+        arguments = arguments.ArgNotNull();
+
+        var session = artifact.CreateSession();
+        foreach (var argument in arguments)
+            session.SetArgument(argument.Key, _runtimeBoundary.NormalizeArgument(argument.Value));
+
+        return session.Run();
     }
 
     public object? Run(string code, string backend) => _runtimeHost.Run(code, backend);
+
+    private OrderedDictionary<string, Type>? NormalizeDeclaredBindings(
+        OrderedDictionary<string, Type>? declaredBindings)
+    {
+        if (declaredBindings == null)
+            return null;
+
+        var normalized = new OrderedDictionary<string, Type>(declaredBindings.Count);
+        foreach (var binding in declaredBindings)
+            normalized.Add(binding.Key, _runtimeBoundary.NormalizeDeclaredType(binding.Value));
+
+        return normalized;
+    }
 }

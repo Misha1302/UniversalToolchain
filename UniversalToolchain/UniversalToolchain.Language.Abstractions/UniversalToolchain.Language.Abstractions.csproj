@@ -6,7 +6,7 @@
     <LangVersion>14</LangVersion>
     <IsPackable>true</IsPackable>
     <PackageId>UniversalToolchain.Language.Abstractions</PackageId>
-    <Version>0.3.0-alpha.3</Version>
+    <Version>0.3.0-alpha.4</Version>
     <Description>Immutable language identity, contribution-slot, capability, artifact-route, policy and diagnostic contracts for UniversalToolchain.</Description>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
   </PropertyGroup>

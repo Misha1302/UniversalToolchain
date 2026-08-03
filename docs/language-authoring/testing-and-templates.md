@@ -40,12 +40,12 @@ The repository tests these contracts in `UniversalToolchain.LanguageSdk.Tests`, 
 
 ## Template
 
-The canonical template package version for this alpha is `0.3.0-alpha.3`. The generic SDK family is currently documented as produced release artifacts rather than as a guaranteed NuGet.org publication.
+The canonical template package version for this alpha is `0.3.0-alpha.4`. The generic SDK family is currently documented as produced release artifacts rather than as a guaranteed NuGet.org publication.
 
 The packable `UniversalToolchain.Templates` project provides `ut-language`.
 
 ```bash ci-run=false
-dotnet new install ./artifacts/packages/UniversalToolchain.Templates.0.3.0-alpha.3.nupkg
+dotnet new install ./artifacts/packages/UniversalToolchain.Templates.0.3.0-alpha.4.nupkg
 dotnet new ut-language -n Example.Language
 ```
 

@@ -77,7 +77,21 @@ Reviews, proposals and talks must not appear in the public source tree merely be
 
 ## Package version synchronization
 
-The generic SDK/template family remains `0.3.0-alpha.2`; `UniversalToolchain.Wist.LanguagePack` is `0.3.0-alpha.3`; the Wist facade is `0.1.0-alpha.4`. Do not duplicate version strings in additional tutorials without updating the documentation status checker or deriving them from one build metadata source.
+The generic SDK/template family advances to `0.3.0-alpha.4` because strict package-content provenance rejected reuse of `0.3.0-alpha.3`; the deterministic runtime-boundary candidate advances `UniversalToolchain.Wist.LanguagePack` to `0.3.0-alpha.5` and the Wist facade to `0.1.0-alpha.6`. The canonical matrix below is checked against every package project and built `.nupkg`; do not duplicate active versions outside this block without extending the metadata checker.
+
+<!-- package-matrix:begin -->
+| Package ID | Version |
+|---|---|
+| `UniversalToolchain.Language.Abstractions` | `0.3.0-alpha.4` |
+| `UniversalToolchain.FeatureSdk` | `0.3.0-alpha.4` |
+| `UniversalToolchain.LanguageSdk` | `0.3.0-alpha.4` |
+| `UniversalToolchain.Runtime` | `0.3.0-alpha.4` |
+| `UniversalToolchain.LanguageAuthoring` | `0.3.0-alpha.4` |
+| `UniversalToolchain.Testing` | `0.3.0-alpha.4` |
+| `UniversalToolchain.Templates` | `0.3.0-alpha.4` |
+| `UniversalToolchain.Wist.LanguagePack` | `0.3.0-alpha.5` |
+| `UniversalToolchain.Wist` | `0.1.0-alpha.6` |
+<!-- package-matrix:end -->
 
 For generic package migrations, follow [Package Versioning and Migrations](/language-authoring/versioning-and-migrations).
 

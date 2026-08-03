@@ -1,6 +1,7 @@
 using BasicCore.Compilation;
 using BasicCore.Execution;
-using IntermediateRepresentationAbstractions;
+using System.Reflection;
+using System.Reflection.Emit;
 using UniversalToolchain.Dialects.Wist;
 using UniversalToolchain.Dialects.Wist.Presets;
 
@@ -37,63 +38,36 @@ public sealed class DslPricingCalculator : IDisposable
     public double CalculateWithCompiler(string formula, double price, double fee)
     {
         var compiledArtifact = CompileWithCompiler(formula);
-        var session = compiledArtifact.CreateSession();
-
-        session.SetArgument("price", price);
-        session.SetArgument("fee", fee);
-
-        return (double)session.Run().NotNull();
+        return ConvertResultToDouble(_host.Run(compiledArtifact, CreateArguments(price, fee)));
     }
 
     public double CalculateWithInterpreter(string formula, double price, double fee)
     {
-        var interpreter = _host.GetBackendSpecificArtifactCompiler<IAbstractIR>(InterpreterBackendName);
-        var interpretedArtifact = interpreter.Compile(formula, CreateDeclaredBindings());
-        var session = interpretedArtifact.CreateSession();
-
-        session.SetArgument("price", price);
-        session.SetArgument("fee", fee);
-
-        return (double)session.Run().NotNull();
+        var interpretedArtifact = _host.Compile(formula, CreateDeclaredBindings(), InterpreterBackendName);
+        return ConvertResultToDouble(_host.Run(interpretedArtifact, CreateArguments(price, fee)));
     }
 
     public double CalculateWithFastInvoker(string formula, double price, double fee)
     {
         var compiledArtifact = CompileWithCompiler(formula);
-        var compilation = compiledArtifact.CompilationOutput;
-        var method = compilation.Method;
+        var compilation = GetCompilationOutput(compiledArtifact);
+        var method = compilation.GetType()
+                         .GetProperty("Method", BindingFlags.Instance | BindingFlags.Public)?
+                         .GetValue(compilation) as DynamicMethod
+                     ?? Thrower.InvalidOpEx<DynamicMethod>(
+                         $"Compilation output '{compilation.GetType().FullName}' does not expose a DynamicMethod.");
+        var constantPool = compilation.GetType()
+            .GetProperty("ConstantPool", BindingFlags.Instance | BindingFlags.Public)?
+            .GetValue(compilation);
         var parameters = method.GetParameters();
-        var offset = 0;
-
-        if (parameters.Length > offset && parameters[offset].ParameterType == typeof(ArtifactConstantPool))
-            offset++;
-
-        if (parameters.Length > offset && parameters[offset].ParameterType == typeof(IExecutionEnvironment))
+        if (constantPool is null &&
+            parameters.Select(static parameter => parameter.ParameterType)
+                .SequenceEqual([typeof(double), typeof(double)]))
         {
-            var environment = new ExecutionEnvironment(compiledArtifact.DeclaredBindings);
-            environment.SetExternalValue(compiledArtifact.SlotsByName["price"], price);
-            environment.SetExternalValue(compiledArtifact.SlotsByName["fee"], fee);
-
-            if (compilation.HasConstantPool)
-            {
-                var pooledEnvironmentInvoker = new DynamicMethodInvoker<ArtifactConstantPool, IExecutionEnvironment, double, double, double>(method);
-                return pooledEnvironmentInvoker.Invoke(compilation.ConstantPool.NotNull(), environment, price, fee);
-            }
-
-            var environmentInvoker = new DynamicMethodInvoker<IExecutionEnvironment, double, double, double>(method);
-
-            return environmentInvoker.Invoke(environment, price, fee);
+            return method.CreateDelegate<Func<double, double, double>>()(price, fee);
         }
 
-        if (compilation.HasConstantPool)
-        {
-            var pooledInvoker = new DynamicMethodInvoker<ArtifactConstantPool, double, double, double>(method);
-            return pooledInvoker.Invoke(compilation.ConstantPool.NotNull(), price, fee);
-        }
-
-        var rawFastInvoker = new DynamicMethodInvoker<double, double, double>(method);
-
-        return rawFastInvoker.Invoke(price, fee);
+        return ConvertResultToDouble(_host.Run(compiledArtifact, CreateArguments(price, fee)));
     }
 
     /// <summary>
@@ -103,8 +77,7 @@ public sealed class DslPricingCalculator : IDisposable
     {
         try
         {
-            var interpreter = _host.GetBackendSpecificArtifactCompiler<IAbstractIR>(InterpreterBackendName);
-            _ = interpreter.Compile(formula, CreateDeclaredBindings());
+            _ = _host.Compile(formula, CreateDeclaredBindings(), InterpreterBackendName);
 
             return CompilationAttemptResult.Success();
         }
@@ -146,10 +119,33 @@ public sealed class DslPricingCalculator : IDisposable
             ["fee"] = typeof(double)
         };
 
-    private ICompiledArtifact<CilCompilationOutput> CompileWithCompiler(string formula)
+    private static IReadOnlyDictionary<string, object?> CreateArguments(double price, double fee) =>
+        new Dictionary<string, object?>(StringComparer.Ordinal)
+        {
+            ["price"] = price,
+            ["fee"] = fee
+        };
+
+    private ICompiledArtifact CompileWithCompiler(string formula) =>
+        _host.Compile(formula, CreateDeclaredBindings(), CilBackendName);
+
+    private static object GetCompilationOutput(ICompiledArtifact artifact) =>
+        artifact.GetType()
+            .GetProperty("CompilationOutput", BindingFlags.Instance | BindingFlags.Public)?
+            .GetValue(artifact)
+        ?? Thrower.InvalidOpEx<object>(
+            $"Artifact type '{artifact.GetType().FullName}' does not expose a non-null compilation output.");
+
+    private static double ConvertResultToDouble(object? value)
     {
-        var compiler = _host.GetBackendSpecificArtifactCompiler<CilCompilationOutput>(CilBackendName);
-        return compiler.Compile(formula, CreateDeclaredBindings());
+        value = value.NotNull();
+        if (value is IConvertible convertible)
+            return convertible.ToDouble(System.Globalization.CultureInfo.InvariantCulture);
+
+        var wrapped = value.GetType()
+            .GetMethod("GetValue", BindingFlags.Instance | BindingFlags.Public, null, Type.EmptyTypes, null)?
+            .Invoke(value, null);
+        return Convert.ToDouble(wrapped.NotNull(), System.Globalization.CultureInfo.InvariantCulture);
     }
 
     /// <summary>

@@ -240,14 +240,6 @@ internal static class RuntimeCompiledArtifactTestFactory
         }
     }
 
-    public static BasicCoreImpl<CilCompilationOutput> GetCompilerCore(WistDialectExecutionHost host) =>
-        host.GetCore("cil") as BasicCoreImpl<CilCompilationOutput>
-        ?? Thrower.InvalidOpEx<BasicCoreImpl<CilCompilationOutput>>("Compiler core must be BasicCoreImpl<CilCompilationOutput>.");
-
-    public static BasicCoreImpl<IAbstractIR> GetInterpreterCore(WistDialectExecutionHost host) =>
-        host.GetCore("interpreter") as BasicCoreImpl<IAbstractIR>
-        ?? Thrower.InvalidOpEx<BasicCoreImpl<IAbstractIR>>("Interpreter core must be BasicCoreImpl<IAbstractIR>.");
-
     private static int LoadExternalSlotsThroughProvider(IExecutionEnvironment environment, int unusedFirstArgument, int unusedSecondArgument)
     {
         _ = unusedFirstArgument;

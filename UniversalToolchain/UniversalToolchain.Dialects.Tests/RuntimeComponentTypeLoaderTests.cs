@@ -1,4 +1,6 @@
 using System.Runtime.Loader;
+using BasicCore.Contracts;
+using UniversalToolchain.Dialects.Abstractions;
 using ArithmeticModule.Module;
 
 namespace UniversalToolchain.Dialects.Tests;
@@ -8,7 +10,7 @@ public class RuntimeComponentTypeLoaderTests
     [Test]
     public void TypeLoader_LoadsOnlyRequestedAssembly()
     {
-        var loader = CreateLoader(new DefaultRuntimeAssemblyLoadStrategy(new DefaultRuntimeAssemblyLocator(new RuntimeArtifactLocatorOptions())));
+        var loader = CreateLoader(CreateStrategy(new DefaultRuntimeAssemblyLocator(new RuntimeArtifactLocatorOptions())));
         var entry = Entry("ArithmeticModule", "frontend.arithmetic");
 
         var type = loader.LoadType(entry);
@@ -23,7 +25,7 @@ public class RuntimeComponentTypeLoaderTests
     [Test]
     public void TypeLoader_RepeatedLoad_UsesCache()
     {
-        var loader = CreateLoader(new DefaultRuntimeAssemblyLoadStrategy(new DefaultRuntimeAssemblyLocator(new RuntimeArtifactLocatorOptions())));
+        var loader = CreateLoader(CreateStrategy(new DefaultRuntimeAssemblyLocator(new RuntimeArtifactLocatorOptions())));
         var entry = Entry("ArithmeticModule", "frontend.arithmetic");
 
         var first = loader.LoadType(entry);
@@ -39,8 +41,8 @@ public class RuntimeComponentTypeLoaderTests
     {
         _ = typeof(ArithmeticModuleImpl).Assembly;
         var configuredPath = Path.Combine(AppContext.BaseDirectory, "ArithmeticModule.dll");
-        var locator = new CountingLocator(true, configuredPath);
-        using var strategy = new DefaultRuntimeAssemblyLoadStrategy(locator);
+        var locator = new CountingLocator("ArithmeticModule", true, configuredPath);
+        using var strategy = CreateStrategy(locator);
         var loader = CreateLoader(strategy);
 
         var type = loader.LoadType(Entry("ArithmeticModule", "frontend.arithmetic"));
@@ -57,8 +59,8 @@ public class RuntimeComponentTypeLoaderTests
     public void TypeLoader_RejectsConfiguredPathWhoseAssemblyIdentityDoesNotMatchRequest()
     {
         var badAssembly = "DefinitelyMissing.Assembly.For.Loader.Test";
-        var locator = new CountingLocator(true, Path.Combine(AppContext.BaseDirectory, "ArithmeticModule.dll"));
-        using var strategy = new DefaultRuntimeAssemblyLoadStrategy(locator);
+        var locator = new CountingLocator(badAssembly, true, Path.Combine(AppContext.BaseDirectory, "ArithmeticModule.dll"));
+        using var strategy = CreateStrategy(locator);
         var loader = CreateLoader(strategy);
 
         var exception = Assert.Throws<InvalidOperationException>(
@@ -84,8 +86,8 @@ public class RuntimeComponentTypeLoaderTests
         try
         {
             var hostileAssembly = hostileContext.LoadFromAssemblyPath(hostilePath);
-            var locator = new CountingLocator(true, configuredPath);
-            using var strategy = new DefaultRuntimeAssemblyLoadStrategy(locator);
+            var locator = new CountingLocator("ArithmeticModule", true, configuredPath);
+            using var strategy = CreateStrategy(locator);
             var loader = CreateLoader(strategy);
 
             var type = loader.LoadType(Entry("ArithmeticModule", "frontend.arithmetic"));
@@ -107,7 +109,7 @@ public class RuntimeComponentTypeLoaderTests
     [Test]
     public void TypeLoader_LoadFromAssemblyPath_RequiresAbsolutePath()
     {
-        var loader = CreateLoader(new DefaultRuntimeAssemblyLoadStrategy(new CountingLocator(true, "relative/path/ArithmeticModule.dll")));
+        var loader = CreateLoader(CreateStrategy(new CountingLocator("Missing.Assembly.With.Relative.Path", true, "relative/path/ArithmeticModule.dll")));
         var ex = Assert.Throws<ArgumentException>(() => loader.LoadType(Entry("Missing.Assembly.With.Relative.Path", "frontend.arithmetic")));
         Assert.That(ex!.Message, Does.Contain("non-absolute path"));
     }
@@ -115,7 +117,7 @@ public class RuntimeComponentTypeLoaderTests
     [Test]
     public void TypeLoader_InvalidAssembly_ThrowsClearError()
     {
-        var loader = CreateLoader(new DefaultRuntimeAssemblyLoadStrategy(new DefaultRuntimeAssemblyLocator(new RuntimeArtifactLocatorOptions())));
+        var loader = CreateLoader(CreateStrategy(new DefaultRuntimeAssemblyLocator(new RuntimeArtifactLocatorOptions())));
         var ex = Assert.Throws<FileNotFoundException>(() => loader.LoadType(Entry("NoSuchAssembly", "frontend.missing")));
         Assert.That(ex!.Message, Does.Contain("NoSuchAssembly"));
     }
@@ -123,7 +125,7 @@ public class RuntimeComponentTypeLoaderTests
     [Test]
     public void TypeLoader_InvalidType_ThrowsClearError()
     {
-        var loader = CreateLoader(new DefaultRuntimeAssemblyLoadStrategy(new DefaultRuntimeAssemblyLocator(new RuntimeArtifactLocatorOptions())));
+        var loader = CreateLoader(CreateStrategy(new DefaultRuntimeAssemblyLocator(new RuntimeArtifactLocatorOptions())));
         Assert.Throws<InvalidOperationException>(() => loader.LoadType(Entry("ArithmeticModule", "frontend.missing")));
     }
 
@@ -140,18 +142,37 @@ public class RuntimeComponentTypeLoaderTests
                     ? typeof(ArithmeticModuleImpl).FullName!
                     : "Missing.Component.Type")));
 
+    private static DefaultRuntimeAssemblyLoadStrategy CreateStrategy(IRuntimeAssemblyLocator locator) =>
+        new(
+            locator,
+            new DefaultRuntimeSharedAssemblyResolver(
+            [
+                RuntimeSharedAssemblyDescriptor.Create(typeof(DialectRuntimeExportAttribute).Assembly),
+                RuntimeSharedAssemblyDescriptor.Create(typeof(IFrontendCoreModule).Assembly)
+            ]));
+
     private static DefaultRuntimeComponentTypeLoader CreateLoader(IRuntimeAssemblyLoadStrategy strategy)
         => new(new DefaultRuntimeComponentResolver(new DefaultRuntimeAssemblyTypeLoader(strategy)));
 
-    private sealed class CountingLocator(bool shouldResolve, string? path) : IRuntimeAssemblyLocator
+    private sealed class CountingLocator(
+        string configuredAssemblySimpleName,
+        bool shouldResolve,
+        string? path) : IRuntimeAssemblyLocator
     {
+        private readonly DefaultRuntimeAssemblyLocator _fallback = new(new RuntimeArtifactLocatorOptions());
+
         public int Calls { get; private set; }
 
         public bool TryResolveAssemblyPath(string assemblySimpleName, out string? absolutePath)
         {
-            Calls++;
-            absolutePath = path;
-            return shouldResolve;
+            if (string.Equals(assemblySimpleName, configuredAssemblySimpleName, StringComparison.Ordinal))
+            {
+                Calls++;
+                absolutePath = path;
+                return shouldResolve;
+            }
+
+            return _fallback.TryResolveAssemblyPath(assemblySimpleName, out absolutePath);
         }
     }
 }

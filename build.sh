@@ -250,6 +250,14 @@ if [[ "$skip_pack" == false ]]; then
     --root "$root" \
     --manifest "$package_manifest" \
     --packages artifacts/packages
+  python3 Tools/package_metadata.py \
+    --root "$root" \
+    --manifest "$package_manifest" \
+    --packages artifacts/packages \
+    --previous-bundle "$previous_package_bundle" \
+    --baseline-contract eng/package-release-baseline.json \
+    --report artifacts/package-metadata-report.json
+  python3 Tools/test-package-metadata-mutants.py --root "$root"
 
   wist_version="$(sed -nE 's:.*<Version>([^<]+)</Version>.*:\1:p' UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj)"
   test -n "$wist_version"

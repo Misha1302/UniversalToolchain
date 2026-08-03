@@ -9,12 +9,6 @@ using UniversalToolchain.Ssa.Lowering;
 
 namespace UniversalToolchain.Ssa.Optimization;
 
-public enum SsaDiagnosticMode
-{
-    Default,
-    Verbose
-}
-
 public interface ISsaSemanticExtensionPack
 {
     string Id { get; }
@@ -357,7 +351,7 @@ public sealed class SsaManagedCallablePack : ISsaSemanticExtensionPack
 
 public static class SsaRouteProfiles
 {
-    public const string ProfileId = "preview-int32-managed";
+    public const string ProfileId = SsaRuntimeExecutionDefaults.ProfileId;
 
     public static SsaRouteProfile Create(
         SsaRoutePolicy policy = SsaRoutePolicy.Prefer,

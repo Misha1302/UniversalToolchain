@@ -3,7 +3,7 @@ title: Current Verification
 description: Current build, test, workflow and bounded research-evidence record.
 audience: maintainer-or-evaluator
 status: current
-lastVerifiedAgainst: research-8f2c45bb
+lastVerifiedAgainst: f13ad131-plus-runtime-boundary-candidate
 ---
 
 # Current verification
@@ -22,13 +22,13 @@ It restores and builds both `UniversalToolchain/Wist.sln` and the configuration-
 |---|---:|---:|---:|
 | `Tests` | 534 | 0 | 0 |
 | `UniversalToolchain.Modules.Tests` | 292 | 0 | 0 |
-| `UniversalToolchain.Dialects.Tests` | 620 | 0 | 0 |
+| `UniversalToolchain.Dialects.Tests` | 638 | 0 | 0 |
 | `UniversalToolchain.LanguageSdk.Tests` | 82 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.Tests` | 41 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
-| **Total** | **1,579** | **0** | **0** |
+| **Total** | **1,597** | **0** | **0** |
 
-The current research branch adds 28 policy-scheduling, AIR-scope and Wist integration regressions while preserving the earlier review-remediation tests. The exact manifest belongs to `eng/test-counts.json`. Historical master `.NET CI` run `30585251901` remains the authority for the preceding 1,551-test revision until this branch is merged and reproduced on master.
+This deterministic runtime-boundary change adds 18 resolver, loader, fresh-process, integrity, isolation, concurrency, unload and forbidden-default-fallback regressions beyond the merged 1,579-test baseline. The exact manifest belongs to `eng/test-counts.json`; the 1,597 count is locally confirmed from fresh TRX results and remains pending provider-backed CI confirmation.
 
 ## Workflow set
 
@@ -83,13 +83,25 @@ Master Docs Check run `30585251865` and the Markdown command smoke in `.NET CI` 
 
 ## Package/release boundary
 
-The review-remediation package matrix contains seven SDK/template packages at `0.3.0-alpha.3`, `UniversalToolchain.Wist.LanguagePack` at `0.3.0-alpha.4`, and `UniversalToolchain.Wist` at `0.1.0-alpha.5`. The published-package smoke remains intentionally pinned to actually published facade `0.1.0-alpha.1`.
+The deterministic runtime-boundary package matrix contains seven SDK/template packages at `0.3.0-alpha.4`, `UniversalToolchain.Wist.LanguagePack` at `0.3.0-alpha.5`, and `UniversalToolchain.Wist` at `0.1.0-alpha.6`. The published-package smoke remains intentionally pinned to actually published facade `0.1.0-alpha.1`.
 
-Package Compatibility Review run `30580457427` deterministically reconstructed reviewed previous source and package baselines from commit `3abd958fae087e93135e88460ae0c0a2328afad5`, bound their exact hashes into the compatibility inputs and executed the canonical baseline-bearing package gate. It passed 1,551 tests, monotonic version provenance, exact Wist API delta `removed=0, added=0`, 9/9 package validation, clean facade and cross-package consumers, template creation/run and release-integrity mutation checks.
+<!-- package-matrix:begin -->
+| Package ID | Version |
+|---|---|
+| `UniversalToolchain.Language.Abstractions` | `0.3.0-alpha.4` |
+| `UniversalToolchain.FeatureSdk` | `0.3.0-alpha.4` |
+| `UniversalToolchain.LanguageSdk` | `0.3.0-alpha.4` |
+| `UniversalToolchain.Runtime` | `0.3.0-alpha.4` |
+| `UniversalToolchain.LanguageAuthoring` | `0.3.0-alpha.4` |
+| `UniversalToolchain.Testing` | `0.3.0-alpha.4` |
+| `UniversalToolchain.Templates` | `0.3.0-alpha.4` |
+| `UniversalToolchain.Wist.LanguagePack` | `0.3.0-alpha.5` |
+| `UniversalToolchain.Wist` | `0.1.0-alpha.6` |
+<!-- package-matrix:end -->
 
-Artifact ID `8774539955`, digest `sha256:6cfa9d197548887ef8a80e701900d936c4364aa849e70e9c2b8ed420adfd3a7b`, has a verified 27-entry outer checksum manifest. Both baseline artifact hashes verify, and release-integrity root `7069c53758e1735ecf41813d65782dcd76f2d22f8e00e8c193bc42ee50a1457a` covers ten current package artifacts, including the Wist symbols package.
+The local baseline-aware package gate was replayed against the exact `f13ad1310856e5618e1c3042c447ca543e0f3125` source archive and its deterministic reviewed package bundle. It passed version/content provenance for 9/9 package identities, embedded metadata and active-document synchronization, exact Wist API delta classification, package-surface checks, clean Wist/template/cross-package consumers and detached release-integrity mutation checks.
 
-The package run was produced on code head `77edfb05047c933665912015af6d242a3a9f7fed`. The only changes from that head to PR head `7600b591813cb0066151204c012ee161ad348d8e` were `VERIFICATION.md`, this page and the internal remediation ledger; the merge commit introduced no file changes relative to that PR head. Therefore the package-affecting source and declared package versions in master are the exact validated candidate source. The candidate packages were not published to NuGet.org by this workflow.
+This evidence applies to the local candidate tree and generated package bundle. GitHub Actions and aggregate status remain independent provider-backed confirmation; the packages were not published to NuGet.org.
 
 ## PlanFuzz evidence boundary
 

@@ -57,7 +57,6 @@ internal sealed class ModulePipelineTestHelper : IDisposable
                 AllowedAssemblies =
                 [
                     typeof(int).Assembly,
-                    typeof(NumbersModule.Core.RealNumberImpl).Assembly,
                     typeof(ModulePipelineTestHelper).Assembly
                 ]
             });

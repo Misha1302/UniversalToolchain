@@ -47,6 +47,27 @@
     </ItemGroup>
 
     <ItemGroup>
+        <Compile Remove="FreshProcess\**\*.cs" />
+        <ProjectReference Include="FreshProcess\RuntimeSharedAssemblyFreshProcessHost\RuntimeSharedAssemblyFreshProcessHost.csproj" ReferenceOutputAssembly="false" />
+        <RuntimeSharedAssemblyFreshProcessFixtureProject Include="FreshProcess\HostOnlyContractFixture\HostOnlyContractFixture.csproj" />
+        <RuntimeSharedAssemblyFreshProcessFixtureProject Include="FreshProcess\HostileRuntimeFixture\HostileRuntimeFixture.csproj" />
+        <RuntimeSharedAssemblyFreshProcessFixtureProject Include="FreshProcess\CanonicalRuntimeFixture\CanonicalRuntimeFixture.csproj" />
+        <RuntimeSharedAssemblyFreshProcessFixtureProject Include="FreshProcess\UnregisteredDependencyRuntimeFixture\UnregisteredDependencyRuntimeFixture.csproj" />
+    </ItemGroup>
+
+    <Target Name="BuildRuntimeSharedAssemblyFreshProcessHost"
+            BeforeTargets="Build"
+            Condition="'$(DesignTimeBuild)' != 'true'">
+        <MSBuild Projects="@(RuntimeSharedAssemblyFreshProcessFixtureProject)"
+                 Targets="Build"
+                 Properties="Configuration=$(Configuration)"
+                 BuildInParallel="false" />
+        <MSBuild Projects="FreshProcess\RuntimeSharedAssemblyFreshProcessHost\RuntimeSharedAssemblyFreshProcessHost.csproj"
+                 Targets="Build"
+                 Properties="Configuration=$(Configuration)" />
+    </Target>
+
+    <ItemGroup>
         <Content Include="..\Dialects\examples\wist\full-default-native\dialect.wistdialect">
             <Link>Dialects\examples\wist\full-default-native\dialect.wistdialect</Link>
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>

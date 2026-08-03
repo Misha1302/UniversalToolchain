@@ -1,7 +1,3 @@
-using System.Reflection.Emit;
-using BasicCilCompiler.Execution;
-using BasicCore.Execution;
-using IntermediateRepresentationAbstractions;
 using UniversalToolchain.Dialects.Wist;
 using UniversalToolchain.Testing.Infrastructure;
 
@@ -43,8 +39,7 @@ public sealed class PricingRestrictedDialectExecutionTests
         var result = BackendParityInfrastructure.ExecuteSafely(() =>
         {
             using var host = CreatePricingHost();
-            var interpreter = host.GetBackendSpecificArtifactCompiler<IAbstractIR>("interpreter");
-            _ = interpreter.Compile(StatementStyleBindingFormula, CreateDeclaredBindings());
+            _ = host.Compile(StatementStyleBindingFormula, CreateDeclaredBindings(), "interpreter");
             return null;
         });
 
@@ -80,29 +75,22 @@ public sealed class PricingRestrictedDialectExecutionTests
 
     private static double ExecuteCompilerFormula(WistDialectExecutionHost host)
     {
-        var compiler = host.GetBackendSpecificArtifactCompiler<CilCompilationOutput>("cil");
-        var artifact = compiler.Compile(PricingFormula, CreateDeclaredBindings());
-        var session = artifact.CreateSession();
-        SetPricingArguments(session);
-
-        return BackendParityInfrastructure.AsNumber(session.Run());
+        var artifact = host.Compile(PricingFormula, CreateDeclaredBindings(), "cil");
+        return BackendParityInfrastructure.AsNumber(host.Run(artifact, CreatePricingArguments()));
     }
 
     private static double ExecuteInterpreterFormula(WistDialectExecutionHost host)
     {
-        var interpreter = host.GetBackendSpecificArtifactCompiler<IAbstractIR>("interpreter");
-        var artifact = interpreter.Compile(PricingFormula, CreateDeclaredBindings());
-        var session = artifact.CreateSession();
-        SetPricingArguments(session);
-
-        return BackendParityInfrastructure.AsNumber(session.Run());
+        var artifact = host.Compile(PricingFormula, CreateDeclaredBindings(), "interpreter");
+        return BackendParityInfrastructure.AsNumber(host.Run(artifact, CreatePricingArguments()));
     }
 
-    private static void SetPricingArguments(ICompiledArtifactSession session)
-    {
-        session.SetArgument("price", 100.0d);
-        session.SetArgument("fee", 5.0d);
-    }
+    private static IReadOnlyDictionary<string, object?> CreatePricingArguments() =>
+        new Dictionary<string, object?>
+        {
+            ["price"] = 100.0d,
+            ["fee"] = 5.0d
+        };
 
     private static OrderedDictionary<string, Type> CreateDeclaredBindings() =>
         new()

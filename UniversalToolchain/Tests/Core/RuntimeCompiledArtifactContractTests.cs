@@ -10,7 +10,6 @@ public class RuntimeCompiledArtifactContractTests
     public void Compile_WithDeclaredBindings_ShouldPreserveBindingOrderInSlotsByName()
     {
         using var host = RuntimeCompiledArtifactTestFactory.CreateHost();
-        var compilerCore = RuntimeCompiledArtifactTestFactory.GetCompilerCore(host);
         var declared = new OrderedDictionary<string, Type>
         {
             ["beta"] = typeof(object),
@@ -18,7 +17,7 @@ public class RuntimeCompiledArtifactContractTests
             ["gamma"] = typeof(object)
         };
 
-        var artifact = compilerCore.Compile("alpha", declared);
+        var artifact = host.Compile("alpha", declared, "cil");
 
         Assert.That(artifact.DeclaredBindings.Select(static b => b.Name), Is.EqualTo(new[] { "beta", "alpha", "gamma" }));
         Assert.That(artifact.SlotsByName["beta"], Is.EqualTo(0));

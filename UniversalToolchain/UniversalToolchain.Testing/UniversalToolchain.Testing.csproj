@@ -6,7 +6,7 @@
     <LangVersion>14</LangVersion>
     <IsPackable>true</IsPackable>
     <PackageId>UniversalToolchain.Testing</PackageId>
-    <Version>0.3.0-alpha.3</Version>
+    <Version>0.3.0-alpha.4</Version>
     <Description>Framework-neutral contract and backend parity helpers for UniversalToolchain languages.</Description>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
   </PropertyGroup>
