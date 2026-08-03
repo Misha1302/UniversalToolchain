@@ -18,7 +18,12 @@ python3 "$root/CGO27/submission/sanitize_submission_tree.py" \
   "$tmp/original" "$tmp/sanitized"
 
 cp -a "$tmp/sanitized/CGO27/paper/." "$stage/paper/source/"
-rm -rf "$tmp/sanitized/CGO27/paper"
+
+# The executable source snapshot does not need the paper manuscript, but the
+# ablation runner deliberately byte-compares regenerated tables with the
+# committed neutral baselines. Preserve only those generated tables in-source.
+find "$tmp/sanitized/CGO27/paper" -mindepth 1 -maxdepth 1 \
+  ! -name generated -exec rm -rf {} +
 rm -rf "$tmp/sanitized/CGO27/submission"
 
 # Keep the source snapshot text-only and content-addressed.
