@@ -12,7 +12,12 @@ on:
       - "CGO27/**"
       - "UniversalToolchain/UniversalToolchain.ModuleContracts/**"
       - "UniversalToolchain/UniversalToolchain.Wist/**"
+      - "UniversalToolchain/NativeMathModule/**"
+      - "UniversalToolchain/Tests/**"
+      - "UniversalToolchain/UniversalToolchain.Modules.Tests/**"
+      - "UniversalToolchain/UniversalToolchain.Dialects.Tests/**"
       - "UniversalToolchain/Experiments/**"
+      - "Tools/run-cgo27-end-to-end.sh"
       - "eng/test-counts.json"
   workflow_dispatch:
 
@@ -63,5 +68,45 @@ jobs:
         with:
           name: cgo27-hardening-source-${{ env.SOURCE_HEAD_SHA }}
           path: artifacts/
+          if-no-files-found: error
+          retention-days: 30
+
+  export-prestudy-historical-source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      HISTORICAL_SOURCE_SHA: eb851d4bf80f363969e04abdb4bcddf3e56830f3
+    steps:
+      - name: Checkout exact pre-fix historical source
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.HISTORICAL_SOURCE_SHA }}
+          fetch-depth: 1
+
+      - name: Assert and archive exact historical source
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual="$(git rev-parse HEAD)"
+          test "$actual" = "${HISTORICAL_SOURCE_SHA}"
+          printf '%s\n' "$actual" > HISTORICAL-SOURCE-SHA
+          epoch="$(git show -s --format=%ct HEAD)"
+          mkdir -p historical-artifacts
+          git ls-files -z \
+            | LC_ALL=C sort -z \
+            | tar --null --files-from=- \
+                --format=posix \
+                --sort=name \
+                --mtime="@${epoch}" \
+                --owner=0 --group=0 --numeric-owner \
+                -czf historical-artifacts/historical-source.tar.gz
+          cp HISTORICAL-SOURCE-SHA historical-artifacts/
+          (cd historical-artifacts && sha256sum HISTORICAL-SOURCE-SHA historical-source.tar.gz > MANIFEST.sha256)
+
+      - name: Upload exact historical snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: cgo27-historical-source-${{ env.HISTORICAL_SOURCE_SHA }}
+          path: historical-artifacts/
           if-no-files-found: error
           retention-days: 30
