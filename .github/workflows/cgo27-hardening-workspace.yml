@@ -4,10 +4,23 @@ on:
   push:
     branches:
       - research/cgo27-submission-hardening
+  pull_request:
+    branches:
+      - master
+    paths:
+      - ".github/workflows/cgo27-hardening-workspace.yml"
+      - "CGO27/**"
+      - "UniversalToolchain/UniversalToolchain.ModuleContracts/**"
+      - "UniversalToolchain/UniversalToolchain.Wist/**"
+      - "UniversalToolchain/Experiments/**"
+      - "eng/test-counts.json"
   workflow_dispatch:
 
 permissions:
   contents: read
+
+env:
+  SOURCE_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 
 jobs:
   export-exact-source:
@@ -17,7 +30,7 @@ jobs:
       - name: Checkout exact source head
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ env.SOURCE_HEAD_SHA }}
           fetch-depth: 1
 
       - name: Assert exact source identity
@@ -25,7 +38,7 @@ jobs:
         run: |
           set -euo pipefail
           actual="$(git rev-parse HEAD)"
-          test "$actual" = "${GITHUB_SHA}"
+          test "$actual" = "${SOURCE_HEAD_SHA}"
           printf '%s\n' "$actual" > CGO27-HARDENING-SOURCE-SHA
 
       - name: Build deterministic source snapshot
@@ -48,7 +61,7 @@ jobs:
       - name: Upload exact source snapshot
         uses: actions/upload-artifact@v4
         with:
-          name: cgo27-hardening-source-${{ github.sha }}
+          name: cgo27-hardening-source-${{ env.SOURCE_HEAD_SHA }}
           path: artifacts/
           if-no-files-found: error
           retention-days: 30
