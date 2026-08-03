@@ -10,3 +10,4 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("UniversalToolchain.Wist")]
 [assembly: InternalsVisibleTo("UniversalToolchain.Wist.LanguagePack")]
 [assembly: InternalsVisibleTo("Wistc")]
+[assembly: InternalsVisibleTo("UniversalToolchain.Dialects.FreshProcessHost")]

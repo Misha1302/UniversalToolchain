@@ -29,7 +29,7 @@ The repository implements:
 - `UniversalToolchain.Runtime` for route assembly, exact executor selection, policy validation and lifecycle;
 - `UniversalToolchain.Testing` for backend parity helpers;
 - `UniversalToolchain.Templates` with `ut-language`;
-- `UniversalToolchain.Wist.LanguagePack` `0.3.0-alpha.3` as the typed Wist package boundary;
+- `UniversalToolchain.Wist.LanguagePack` `0.3.0-alpha.5` as the typed Wist package boundary;
 - `samples/Acme.PricingLanguage` as a non-Wist sample.
 
 ## Implemented generic contracts

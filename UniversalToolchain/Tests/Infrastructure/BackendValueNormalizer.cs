@@ -1,4 +1,4 @@
-using NumbersModule.Core;
+using System.Reflection;
 
 namespace Tests.Infrastructure;
 
@@ -8,9 +8,6 @@ internal static class BackendValueNormalizer
     {
         if (value is null)
             return null;
-
-        if (value is RealNumberImpl number)
-            return number.GetValue();
 
         if (value is int intValue)
             return intValue;
@@ -29,6 +26,18 @@ internal static class BackendValueNormalizer
 
         if (value is bool boolValue)
             return boolValue;
+
+        var getValue = value.GetType().GetMethod(
+            "GetValue",
+            BindingFlags.Instance | BindingFlags.Public,
+            binder: null,
+            Type.EmptyTypes,
+            modifiers: null);
+        if (getValue?.Invoke(value, null) is { } wrappedValue &&
+            !ReferenceEquals(wrappedValue, value))
+        {
+            return Normalize(wrappedValue);
+        }
 
         return value;
     }

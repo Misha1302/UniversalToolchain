@@ -54,7 +54,7 @@ internal sealed class WistRuntimeBoundary
     public Type NormalizeDeclaredType(Type publicType)
     {
         publicType = publicType.ArgNotNull();
-        return _realNumberType != null && IsClrNumericType(publicType)
+        return _realNumberType != null && (IsClrNumericType(publicType) || IsRealNumberType(publicType))
             ? _realNumberType
             : publicType;
     }
@@ -64,10 +64,24 @@ internal sealed class WistRuntimeBoundary
         if (value == null || _realNumberType == null || _realNumberType.IsInstanceOfType(value))
             return value;
 
-        if (!IsClrNumericType(value.GetType()))
+        var valueType = value.GetType();
+        double numericValue;
+        if (IsClrNumericType(valueType))
+        {
+            numericValue = Convert.ToDouble(value, CultureInfo.InvariantCulture);
+        }
+        else if (IsRealNumberType(valueType))
+        {
+            var getValue = valueType.GetMethod("GetValue", BindingFlags.Public | BindingFlags.Instance, Type.EmptyTypes)
+                ?? throw new InvalidOperationException(
+                    $"Host numeric value '{valueType.AssemblyQualifiedName}' does not expose the required GetValue() method.");
+            numericValue = Convert.ToDouble(getValue.Invoke(value, null), CultureInfo.InvariantCulture);
+        }
+        else
+        {
             return value;
+        }
 
-        var numericValue = Convert.ToDouble(value, CultureInfo.InvariantCulture);
         return _realNumberConstructor!.Invoke([numericValue]);
     }
 
@@ -80,6 +94,10 @@ internal sealed class WistRuntimeBoundary
             normalized.Add(argument.Key, NormalizeArgument(argument.Value));
         return normalized;
     }
+
+    private static bool IsRealNumberType(Type type) =>
+        string.Equals(type.FullName, RealNumberTypeName, StringComparison.Ordinal) &&
+        string.Equals(type.Assembly.GetName().Name, RealNumberAssemblyName, StringComparison.Ordinal);
 
     private static bool IsClrNumericType(Type type)
     {

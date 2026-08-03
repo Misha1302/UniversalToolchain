@@ -24,7 +24,7 @@ public class ExecutionRepeatabilitySmokeTests
         var first = RunInBoth(code);
         var second = RunInBoth(code);
 
-        Assert.That(second, Is.EqualTo(first));
+        BackendResultAssertions.AssertEquivalent(second, first);
     }
 
     private static object? RunInBoth(string code)

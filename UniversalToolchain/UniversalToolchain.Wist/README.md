@@ -20,10 +20,10 @@ admin / config / LLM suggestion
 
 ## Install
 
-This source tree builds the verified `UniversalToolchain.Wist` `0.1.0-alpha.5` release artifact. This statement does not imply that the package has already been published to NuGet.org.
+This source tree builds the verified `UniversalToolchain.Wist` `0.1.0-alpha.6` release artifact. This statement does not imply that the package has already been published to NuGet.org.
 
 ```bash ci-run=false
-dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.5 --source ./artifacts/packages
+dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.6 --source ./artifacts/packages
 ```
 
 For a clean-room install and execution check, follow the [package installation guide](https://misha1302.github.io/Wist2/start/installation).

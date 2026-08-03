@@ -2,7 +2,7 @@
 
 ## Environment and authority
 
-- Record refreshed: 2026-07-31.
+- Record refreshed: 2026-08-03.
 - Target CI environment: GitHub Actions Ubuntu 24.04, Linux x64.
 - SDK policy: `UniversalToolchain/global.json` with .NET 10 feature-band roll-forward.
 - Ordinary integration command: `./build.sh --skip-docs --skip-pack`.
@@ -53,13 +53,13 @@ Parallel graph traversal and shared compilation are the default. `--jobs`, `--se
 |---|---:|---:|---:|
 | `Tests` | 534 | 0 | 0 |
 | `UniversalToolchain.Modules.Tests` | 292 | 0 | 0 |
-| `UniversalToolchain.Dialects.Tests` | 620 | 0 | 0 |
+| `UniversalToolchain.Dialects.Tests` | 638 | 0 | 0 |
 | `UniversalToolchain.LanguageSdk.Tests` | 82 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.Tests` | 41 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
-| **Total** | **1,579** | **0** | **0** |
+| **Total** | **1,597** | **0** | **0** |
 
-The current research branch adds 28 focused policy-scheduling, AIR-scope and Wist integration regressions while preserving the earlier review-remediation tests. The exact manifest is owned by `eng/test-counts.json`; historical master run `30585251901` remains the authority for the preceding 1,551-test revision until this branch is merged and reproduced on master.
+The deterministic runtime-boundary candidate adds 18 resolver, loader, hostile-preload, fresh-process, package-metadata and boundary-regression tests over merged baseline `f13ad1310856e5618e1c3042c447ca543e0f3125`. The exact manifest is owned by `eng/test-counts.json`; local TRX evidence verifies all 1,597 tests, while GitHub Actions remains a separate provider-backed gate.
 
 ## Production-boundary contract experiment
 
@@ -121,36 +121,33 @@ Review-remediation master commit `2b0a4d1f0e255432daf0d5ddd485269b6490b67e` comp
 
 ## Package and release boundary
 
-The review-remediation package matrix contains nine identities.
+The deterministic shared-contract boundary candidate contains nine package identities. Strict content provenance showed that every package payload changed relative to the reviewed `f13ad131` candidate, so all affected versions were advanced rather than reused.
 
-Core SDK/template family `0.3.0-alpha.3`:
+<!-- package-matrix:begin -->
+| Package ID | Version |
+|---|---|
+| `UniversalToolchain.Language.Abstractions` | `0.3.0-alpha.4` |
+| `UniversalToolchain.FeatureSdk` | `0.3.0-alpha.4` |
+| `UniversalToolchain.LanguageSdk` | `0.3.0-alpha.4` |
+| `UniversalToolchain.Runtime` | `0.3.0-alpha.4` |
+| `UniversalToolchain.LanguageAuthoring` | `0.3.0-alpha.4` |
+| `UniversalToolchain.Testing` | `0.3.0-alpha.4` |
+| `UniversalToolchain.Templates` | `0.3.0-alpha.4` |
+| `UniversalToolchain.Wist.LanguagePack` | `0.3.0-alpha.5` |
+| `UniversalToolchain.Wist` | `0.1.0-alpha.6` |
+<!-- package-matrix:end -->
 
-- `UniversalToolchain.Language.Abstractions`;
-- `UniversalToolchain.FeatureSdk`;
-- `UniversalToolchain.LanguageSdk`;
-- `UniversalToolchain.Runtime`;
-- `UniversalToolchain.LanguageAuthoring`;
-- `UniversalToolchain.Testing`;
-- `UniversalToolchain.Templates`.
+The local baseline-aware package gate uses the exact `f13ad1310856e5618e1c3042c447ca543e0f3125` source archive and a deterministic bundle of its nine reviewed packages. It verifies:
 
-Additional packages:
+- monotonic version/content provenance for 9/9 identities;
+- project, filename and embedded `.nuspec` identity agreement;
+- exact synchronization of the four active package matrices;
+- Wist compile/runtime package-surface separation;
+- exact public API delta classification (`removed=0`, `added=0`);
+- clean Wist consumer, template consumer and cross-package consumer;
+- detached release-integrity manifest and mutation tests.
 
-- `UniversalToolchain.Wist.LanguagePack` `0.3.0-alpha.4`;
-- `UniversalToolchain.Wist` `0.1.0-alpha.5`.
-
-Package Compatibility Review run `30580457427` built deterministic previous source/package baselines from reviewed commit `3abd958fae087e93135e88460ae0c0a2328afad5`, bound their exact hashes into the compatibility inputs and ran:
-
-```bash ci-run=false
-./build.sh --skip-docs \
-  --baseline-source-archive /path/to/reviewed-previous-source.zip \
-  --previous-package-bundle /path/to/reviewed-previous-packages.zip
-```
-
-The run succeeded: 1,551 tests, monotonic version provenance for all nine package identities, exact Wist API delta `removed=0, added=0`, package matrix 9/9, clean facade consumer, incompatible-checkout rejection, template smoke, cross-package consumer and release-integrity mutants. Artifact `package-compatibility-review-ea2b99b6edf1ea171f2c6932531d2870f5a2ec0d` has artifact ID `8774539955`, digest `sha256:6cfa9d197548887ef8a80e701900d936c4364aa849e70e9c2b8ed420adfd3a7b`. Its 27-entry outer checksum manifest, both baseline hashes and release-integrity root verify after extraction. The release-integrity root is `7069c53758e1735ecf41813d65782dcd76f2d22f8e00e8c193bc42ee50a1457a` and covers ten current package artifacts, including the Wist symbols package.
-
-The package run was produced on code head `77edfb05047c933665912015af6d242a3a9f7fed`. The only changes from that head to PR head `7600b591813cb0066151204c012ee161ad348d8e` were this file, `docs/evidence/current-verification.md` and the internal remediation ledger; the merge commit introduced no file changes relative to the PR head. Therefore the package-affecting source and declared package versions in master are the exact validated candidate source.
-
-The published-package smoke remains intentionally pinned to actually published `UniversalToolchain.Wist` `0.1.0-alpha.1`; the review-remediation package versions are validated candidates, not a claim that they were published to NuGet.org.
+The package candidate is locally validated but is not published. NuGet publication, merge and conference submission remain separately authorized actions. GitHub aggregate CI must complete before the result may be called release-clean.
 
 ## PlanFuzz evidence boundary
 

@@ -1,5 +1,4 @@
 using BasicCore.Binding;
-using NumbersModule.Core;
 using Tests.Infrastructure;
 using UniversalToolchain.Dialects.Wist;
 using UniversalToolchain.Testing.Infrastructure;
@@ -18,13 +17,13 @@ public class InterpreterBindingsParityTests
 
         var declared = new OrderedDictionary<string, Type>
         {
-            ["price"] = typeof(RealNumberImpl),
-            ["fee"] = typeof(RealNumberImpl)
+            ["price"] = typeof(double),
+            ["fee"] = typeof(double)
         };
 
         var result = RunWithBindingsInBothBackends(code, declared, [
-            new NamedArgument("price", new RealNumberImpl(10.0)),
-            new NamedArgument("fee", new RealNumberImpl(2.0))
+            new NamedArgument("price", (10.0)),
+            new NamedArgument("fee", (2.0))
         ]);
 
         Assert.That(result.CompilerNumeric, Is.EqualTo(result.InterpreterNumeric).Within(1e-9));
@@ -43,13 +42,13 @@ public class InterpreterBindingsParityTests
                             """;
         var declared = new OrderedDictionary<string, Type>
         {
-            ["price"] = typeof(RealNumberImpl),
-            ["fee"] = typeof(RealNumberImpl)
+            ["price"] = typeof(double),
+            ["fee"] = typeof(double)
         };
 
         var result = RunWithBindingsInBothBackends(code, declared, [
-            new NamedArgument("price", new RealNumberImpl(100.0)),
-            new NamedArgument("fee", new RealNumberImpl(2.5))
+            new NamedArgument("price", (100.0)),
+            new NamedArgument("fee", (2.5))
         ]);
 
         Assert.That(result.CompilerNumeric, Is.EqualTo(result.InterpreterNumeric).Within(1e-9));
@@ -67,23 +66,23 @@ public class InterpreterBindingsParityTests
                             """;
         var declared = new OrderedDictionary<string, Type>
         {
-            ["price"] = typeof(RealNumberImpl),
-            ["fee"] = typeof(RealNumberImpl),
-            ["unusedAlpha"] = typeof(RealNumberImpl),
+            ["price"] = typeof(double),
+            ["fee"] = typeof(double),
+            ["unusedAlpha"] = typeof(double),
             ["unusedBeta"] = typeof(string)
         };
 
         var first = RunWithBindingsInBothBackends(code, declared, [
-            new NamedArgument("price", new RealNumberImpl(5.0)),
-            new NamedArgument("fee", new RealNumberImpl(1.5)),
-            new NamedArgument("unusedAlpha", new RealNumberImpl(999.0)),
+            new NamedArgument("price", (5.0)),
+            new NamedArgument("fee", (1.5)),
+            new NamedArgument("unusedAlpha", (999.0)),
             new NamedArgument("unusedBeta", "ignored")
         ]);
 
         var second = RunWithBindingsInBothBackends(code, declared, [
-            new NamedArgument("price", new RealNumberImpl(5.0)),
-            new NamedArgument("fee", new RealNumberImpl(1.5)),
-            new NamedArgument("unusedAlpha", new RealNumberImpl(-321.0)),
+            new NamedArgument("price", (5.0)),
+            new NamedArgument("fee", (1.5)),
+            new NamedArgument("unusedAlpha", (-321.0)),
             new NamedArgument("unusedBeta", "still-ignored")
         ]);
 
@@ -107,23 +106,23 @@ public class InterpreterBindingsParityTests
 
         var declaredPriceThenFee = new OrderedDictionary<string, Type>
         {
-            ["price"] = typeof(RealNumberImpl),
-            ["fee"] = typeof(RealNumberImpl)
+            ["price"] = typeof(double),
+            ["fee"] = typeof(double)
         };
         var declaredFeeThenPrice = new OrderedDictionary<string, Type>
         {
-            ["fee"] = typeof(RealNumberImpl),
-            ["price"] = typeof(RealNumberImpl)
+            ["fee"] = typeof(double),
+            ["price"] = typeof(double)
         };
 
         var ordered = RunWithBindingsInBothBackends(code, declaredPriceThenFee, [
-            new NamedArgument("price", new RealNumberImpl(7.0)),
-            new NamedArgument("fee", new RealNumberImpl(0.75))
+            new NamedArgument("price", (7.0)),
+            new NamedArgument("fee", (0.75))
         ]);
 
         var reordered = RunWithBindingsInBothBackends(code, declaredFeeThenPrice, [
-            new NamedArgument("price", new RealNumberImpl(7.0)),
-            new NamedArgument("fee", new RealNumberImpl(0.75))
+            new NamedArgument("price", (7.0)),
+            new NamedArgument("fee", (0.75))
         ]);
 
         Assert.That(ordered.CompilerNumeric, Is.EqualTo(ordered.InterpreterNumeric).Within(1e-9));
@@ -149,13 +148,13 @@ public class InterpreterBindingsParityTests
                                        """;
         var declared = new OrderedDictionary<string, Type>
         {
-            ["price"] = typeof(RealNumberImpl),
-            ["fee"] = typeof(RealNumberImpl)
+            ["price"] = typeof(double),
+            ["fee"] = typeof(double)
         };
         var arguments = new[]
         {
-            new NamedArgument("price", new RealNumberImpl(10.0)),
-            new NamedArgument("fee", new RealNumberImpl(1.0))
+            new NamedArgument("price", (10.0)),
+            new NamedArgument("fee", (1.0))
         };
 
         AssertDeterministicParity(shadowingCode, declared, arguments);
@@ -191,13 +190,13 @@ public class InterpreterBindingsParityTests
 
         var declared = new OrderedDictionary<string, Type>
         {
-            ["price"] = typeof(RealNumberImpl),
-            ["fee"] = typeof(RealNumberImpl)
+            ["price"] = typeof(double),
+            ["fee"] = typeof(double)
         };
 
         var result = RunWithBindingsInBothBackends(code, declared, [
-            new NamedArgument("price", new RealNumberImpl(100.0)),
-            new NamedArgument("fee", new RealNumberImpl(2.5))
+            new NamedArgument("price", (100.0)),
+            new NamedArgument("fee", (2.5))
         ]);
 
         Assert.That(result.CompilerNumeric, Is.EqualTo(result.InterpreterNumeric).Within(1e-9));
@@ -226,11 +225,11 @@ public class InterpreterBindingsParityTests
         using var host = CreateHost();
         var declared = new OrderedDictionary<string, Type>
         {
-            ["price"] = typeof(RealNumberImpl)
+            ["price"] = typeof(double)
         };
         var arguments = new List<KeyValuePair<string, object>>
         {
-            new("price", new RealNumberImpl(2.0))
+            new("price", (2.0))
         };
 
         var exception = Assert.Throws<InvalidOperationException>(() =>

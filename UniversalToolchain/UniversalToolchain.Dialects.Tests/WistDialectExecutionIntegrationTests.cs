@@ -1,7 +1,6 @@
 using UniversalToolchain.Testing.Infrastructure;
 using ExceptionsManager;
 using Microsoft.Extensions.DependencyInjection;
-using NumbersModule.Core;
 using UniversalToolchain.Dialects.Wist;
 
 namespace UniversalToolchain.Dialects.Tests;
@@ -110,9 +109,9 @@ public class WistDialectExecutionIntegrationTests
             result,
             new WistRuntimeServiceOptions
             {
-                AllowedAssemblies = [typeof(RealNumberImpl).Assembly]
+                AllowedAssemblies = [typeof(CSharpInteropContractHost).Assembly]
             });
-        const string code = "NumbersModule.Core.RealNumberImpl.Add(2, 5)";
+        const string code = "UniversalToolchain.Dialects.Tests.CSharpInteropContractHost.Add(2, 5)";
 
         var interpreterValue = host.Run(code, "interpreter");
         var compilerValue = host.Run(code, "cil");
@@ -202,4 +201,8 @@ public class WistDialectExecutionIntegrationTests
 
     private static double ToDouble(object? value) => BackendResultAssertions.AsNumber(value);
 
+}
+public static class CSharpInteropContractHost
+{
+    public static double Add(double left, double right) => left + right;
 }

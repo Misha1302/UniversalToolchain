@@ -6,7 +6,7 @@
         <Nullable>enable</Nullable>
         <LangVersion>14</LangVersion>
         <PackageId>UniversalToolchain.Wist</PackageId>
-        <Version>0.1.0-alpha.5</Version>
+        <Version>0.1.0-alpha.6</Version>
         <Title>UniversalToolchain Wist</Title>
         <Description>Restricted formulas for .NET: validate rules, evaluate diagnostics, and compile approved formulas into typed delegates while the host owns inputs and side effects.</Description>
         <Authors>Mikhail Razakov</Authors>
@@ -17,7 +17,7 @@
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <PackageTags>dotnet;csharp;rule-engine;expression-engine;embedded-dsl;business-rules;formula;compiler;interpreter;cil;runtime;language-tooling;ssa;wist</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
-        <PackageReleaseNotes>Immutable pruning alpha: advances the package identity after removing retired runtime assemblies, binds API compatibility to the reviewed parent source archive, rejects package-version reuse, and produces path-normalized deterministic package artifacts. This release intentionally does not provide binary compatibility with pre-hardening 1.0.0.0 runtime assemblies.</PackageReleaseNotes>
+        <PackageReleaseNotes>Deterministic shared-contract boundary alpha: replaces process-history-dependent default-context sharing with an explicit immutable host registry, full assembly identity matching, strict SHA-256 validation, collectible implementation isolation, fresh-process preload invariance tests, and package metadata consistency gates. This release intentionally does not provide binary compatibility with pre-hardening 1.0.0.0 runtime assemblies.</PackageReleaseNotes>
         <IncludeSymbols>true</IncludeSymbols>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
         <DebugType>portable</DebugType>

@@ -6,7 +6,7 @@
     <LangVersion>14</LangVersion>
     <IsPackable>true</IsPackable>
     <PackageId>UniversalToolchain.FeatureSdk</PackageId>
-    <Version>0.3.0-alpha.3</Version>
+    <Version>0.3.0-alpha.4</Version>
     <Description>Explicit feature and contribution descriptors, transactional registries and deterministic schema-v5 manifests for UniversalToolchain.</Description>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
   </PropertyGroup>

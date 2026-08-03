@@ -1,3 +1,4 @@
+using System.Runtime.Loader;
 using Tests.Infrastructure;
 
 namespace Tests.Backends;
@@ -6,19 +7,23 @@ namespace Tests.Backends;
 public class RuntimeCompiledArtifactBackendSpecificTests
 {
     [Test]
-    public void GetBackendSpecificArtifactCompiler_WithCilCompilationOutput_ReturnsWorkingCompilerArtifactPath()
+    public void Compile_WithImplementationOwnedCilOutput_UsesUntypedContractAndKeepsOutputIsolated()
     {
         using var host = RuntimeCompiledArtifactTestFactory.CreateHost();
-        var compiler = host.GetBackendSpecificArtifactCompiler<CilCompilationOutput>("cil");
-        var artifact = compiler.Compile("1", new OrderedDictionary<string, Type>());
+        var artifact = host.Compile("1", new OrderedDictionary<string, Type>(), "cil");
         var session = artifact.CreateSession();
+        var output = BackendArtifactIntrospection.GetCompilationOutput(artifact);
 
         Assert.Multiple(() =>
         {
-            Assert.That(artifact.CompilationOutput, Is.Not.Null);
-            Assert.That(artifact.CompilationOutput.Method, Is.Not.Null);
+            Assert.That(output, Is.Not.Null);
+            Assert.That(BackendArtifactIntrospection.GetDynamicMethod(artifact), Is.Not.Null);
+            Assert.That(BackendArtifactIntrospection.GetOutputLoadContextName(artifact),
+                Is.EqualTo("UniversalToolchain.Runtime.Isolated"));
             Assert.That(artifact.SlotsByName, Is.Empty);
             Assert.That(session, Is.Not.Null);
+            Assert.Throws<InvalidOperationException>(() =>
+                host.GetBackendSpecificArtifactCompiler<CilCompilationOutput>("cil"));
         });
     }
 

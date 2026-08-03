@@ -152,13 +152,22 @@ public class WistDialectExecutionHostContractTests
 
     private static WistDialectExecutionHost ComposeAndCreateHost(string dialect)
     {
-        using var provider = CreateWorkflowProvider();
-        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var composition = workflow.ComposeText(dialect, "inline");
-        if (!composition.IsSuccess)
-            throw new InvalidOperationException(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
+        ServiceProvider? provider = CreateWorkflowProvider();
+        try
+        {
+            var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
+            var composition = workflow.ComposeText(dialect, "inline");
+            if (!composition.IsSuccess)
+                throw new InvalidOperationException(DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(composition)));
 
-        return workflow.CreateHost(composition);
+            var owner = provider;
+            provider = null;
+            return workflow.CreateHost(composition, new WistRuntimeServiceOptions(), owner);
+        }
+        finally
+        {
+            provider?.Dispose();
+        }
     }
 
     private static ServiceProvider CreateWorkflowProvider()

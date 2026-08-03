@@ -1,4 +1,5 @@
 using System.Reflection.Emit;
+using Tests.Infrastructure;
 using UniversalToolchain.Dialects.Wist;
 using UniversalToolchain.Dialects.Wist.Presets;
 
@@ -54,17 +55,18 @@ public sealed class CilBackendPureSignatureTests
         Assert.That(composition.IsSuccess, Is.True);
 
         using var host = workflow.CreateHost(composition);
-        var compiler = host.GetBackendSpecificArtifactCompiler<CilCompilationOutput>("cil");
-        var compiled = compiler.Compile(
+        var compiled = host.Compile(
             "(A * 1.5 + B * 2.0 - C * 3.0 + D / 4.0 + E / 5.0) * 0.75 + F",
             new OrderedDictionary<string, Type>
             {
                 ["A"] = typeof(double), ["B"] = typeof(double), ["C"] = typeof(double),
                 ["D"] = typeof(double), ["E"] = typeof(double), ["F"] = typeof(double)
-            });
+            },
+            "cil");
 
-        var parameterTypes = compiled.CompilationOutput.Method.GetParameters().Select(static x => x.ParameterType).ToArray();
-        var invoker = new DynamicMethodInvoker<double, double, double, double, double, double, double>(compiled.CompilationOutput.Method);
+        var method = BackendArtifactIntrospection.GetDynamicMethod(compiled);
+        var parameterTypes = method.GetParameters().Select(static x => x.ParameterType).ToArray();
+        var invoker = new DynamicMethodInvoker<double, double, double, double, double, double, double>(method);
         var result = invoker.Invoke(10.0, 20.0, 3.0, 8.0, 5.0, 1.5);
         var expected = (10.0 * 1.5 + 20.0 * 2.0 - 3.0 * 3.0 + 8.0 / 4.0 + 5.0 / 5.0) * 0.75 + 1.5;
 

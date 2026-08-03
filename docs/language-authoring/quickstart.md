@@ -163,12 +163,12 @@ Runtime assembly verifies the exact package identity captured by the plan, contr
 
 ## 7. Create a project from release packages
 
-The generic SDK package family is currently verified as release artifacts at version `0.3.0-alpha.3`; only the Wist facade is documented as published on NuGet.org. Build or obtain the release package directory first.
+The generic SDK package family is currently verified as release artifacts at version `0.3.0-alpha.4`; only the Wist facade is documented as published on NuGet.org. Build or obtain the release package directory first.
 
 After the canonical repository build, install the template from the produced package:
 
 ```bash ci-run=false
-dotnet new install ./artifacts/packages/UniversalToolchain.Templates.0.3.0-alpha.3.nupkg
+dotnet new install ./artifacts/packages/UniversalToolchain.Templates.0.3.0-alpha.4.nupkg
 dotnet new ut-language -n MyCompany.MyLanguage
 cd MyCompany.MyLanguage
 dotnet run
@@ -185,9 +185,9 @@ To create a project without the template:
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="UniversalToolchain.LanguageAuthoring" Version="0.3.0-alpha.3" />
-    <PackageReference Include="UniversalToolchain.LanguageSdk" Version="0.3.0-alpha.3" />
-    <PackageReference Include="UniversalToolchain.Runtime" Version="0.3.0-alpha.3" />
+    <PackageReference Include="UniversalToolchain.LanguageAuthoring" Version="0.3.0-alpha.4" />
+    <PackageReference Include="UniversalToolchain.LanguageSdk" Version="0.3.0-alpha.4" />
+    <PackageReference Include="UniversalToolchain.Runtime" Version="0.3.0-alpha.4" />
   </ItemGroup>
 </Project>
 ```

@@ -1,7 +1,3 @@
-using System.Reflection.Emit;
-using BasicCilCompiler.Execution;
-using BasicCore.Execution;
-using IntermediateRepresentationAbstractions;
 using Microsoft.Extensions.DependencyInjection;
 using NumbersModule.Core;
 using UniversalToolchain.Dialects.Wist;
@@ -22,8 +18,8 @@ public class DeclaredBindingsExecutionContractTests
     {
         using var host = ComposeHost(DeclaredBindingsDialectText);
 
-        var artifact = host.GetBackendSpecificArtifactCompiler<CilCompilationOutput>("cil").Compile("left + right", CreateDeclaredBindings());
-        var result = artifact.CreateSession().InvokeNamed<object>(CreateArguments(new RealNumberImpl(7), new RealNumberImpl(5)));
+        var artifact = host.Compile("left + right", CreateDeclaredBindings(), "cil");
+        var result = host.Run(artifact, CreateArguments(new RealNumberImpl(7), new RealNumberImpl(5)));
 
         Assert.That(BackendParityInfrastructure.AsNumber(result), Is.EqualTo(12d).Within(1e-9));
     }
@@ -33,8 +29,8 @@ public class DeclaredBindingsExecutionContractTests
     {
         using var host = ComposeHost(DeclaredBindingsDialectText);
 
-        var artifact = host.GetBackendSpecificArtifactCompiler<IAbstractIR>("interpreter").Compile("left + right", CreateDeclaredBindings());
-        var result = artifact.CreateSession().InvokeNamed<object>(CreateArguments(new RealNumberImpl(7), new RealNumberImpl(5)));
+        var artifact = host.Compile("left + right", CreateDeclaredBindings(), "interpreter");
+        var result = host.Run(artifact, CreateArguments(new RealNumberImpl(7), new RealNumberImpl(5)));
 
         Assert.That(BackendParityInfrastructure.AsNumber(result), Is.EqualTo(12d).Within(1e-9));
     }
@@ -44,7 +40,7 @@ public class DeclaredBindingsExecutionContractTests
     {
         using var host = ComposeHost(DeclaredBindingsDialectText);
 
-        var artifact = host.GetBackendSpecificArtifactCompiler<CilCompilationOutput>("cil").Compile("right - left", CreateDeclaredBindings());
+        var artifact = host.Compile("right - left", CreateDeclaredBindings(), "cil");
 
         Assert.Multiple(() =>
         {
@@ -100,7 +96,7 @@ public class DeclaredBindingsExecutionContractTests
     {
         try
         {
-            _ = host.GetBackendSpecificArtifactCompiler<CilCompilationOutput>("cil").Compile("left + right", CreateDeclaredBindings());
+            _ = host.Compile("left + right", CreateDeclaredBindings(), "cil");
         }
         catch (Exception exception)
         {

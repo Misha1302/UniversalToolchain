@@ -1,31 +1,40 @@
 using System.Collections.Concurrent;
+using System.Collections.Immutable;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Runtime.Loader;
 using ExceptionsManager;
 
 namespace UniversalToolchain.Dialects.Integration;
 
 /// <summary>
-/// Loads the runtime closure only from the configured locator roots.
-/// Every strategy owns an isolated load context, while assemblies already loaded
-/// from the exact same file are shared through the default context. A same-name
-/// process preload from any other path is never treated as authoritative.
+/// Loads runtime implementations from configured roots into one collectible context.
+/// Default-context identity is used only when the host explicitly registered and validated
+/// the configured assembly through <see cref="IRuntimeSharedAssemblyResolver"/>.
 /// </summary>
 public sealed class DefaultRuntimeAssemblyLoadStrategy : IRuntimeAssemblyLoadStrategy, IDisposable
 {
     private readonly ConcurrentDictionary<string, Lazy<Assembly>> _assemblyCache = new(StringComparer.Ordinal);
     private readonly ConfiguredRuntimeAssemblyLoadContext _loadContext;
-    private bool _disposed;
+    private int _disposeState;
 
     public DefaultRuntimeAssemblyLoadStrategy(IRuntimeAssemblyLocator locator)
+        : this(locator, new DefaultRuntimeSharedAssemblyResolver([]))
+    {
+    }
+
+    public DefaultRuntimeAssemblyLoadStrategy(
+        IRuntimeAssemblyLocator locator,
+        IRuntimeSharedAssemblyResolver sharedAssemblyResolver)
     {
         locator = locator.ArgNotNull();
-        _loadContext = new ConfiguredRuntimeAssemblyLoadContext(locator);
+        sharedAssemblyResolver = sharedAssemblyResolver.ArgNotNull();
+        _loadContext = new ConfiguredRuntimeAssemblyLoadContext(locator, sharedAssemblyResolver);
     }
 
     public Assembly LoadAssembly(string assemblySimpleName)
     {
-        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed), this);
+        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposeState) != 0, this);
         if (string.IsNullOrWhiteSpace(assemblySimpleName))
             Thrower.Argument(nameof(assemblySimpleName), "Assembly simple name must not be empty.");
 
@@ -41,34 +50,85 @@ public sealed class DefaultRuntimeAssemblyLoadStrategy : IRuntimeAssemblyLoadStr
 
     public void Dispose()
     {
-        if (_disposed)
+        if (Interlocked.Exchange(ref _disposeState, 1) != 0)
             return;
 
-        _disposed = true;
         _assemblyCache.Clear();
         _loadContext.Unload();
+    }
+
+
+    private static class RuntimePlatformAssemblyPolicy
+    {
+        private static readonly ImmutableHashSet<RuntimeAssemblyIdentity> RuntimeOwnedIdentities =
+            BuildRuntimeOwnedIdentitySnapshot();
+
+        public static bool IsRuntimeOwnedPlatformAssembly(AssemblyName requestedIdentity) =>
+            RuntimeOwnedIdentities.Contains(RuntimeAssemblyIdentity.FromAssemblyName(requestedIdentity));
+
+        private static ImmutableHashSet<RuntimeAssemblyIdentity> BuildRuntimeOwnedIdentitySnapshot()
+        {
+            var trustedPlatformAssemblies = AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES") as string;
+            if (string.IsNullOrWhiteSpace(trustedPlatformAssemblies))
+                return ImmutableHashSet<RuntimeAssemblyIdentity>.Empty;
+
+            var runtimeDirectory = Path.GetFullPath(RuntimeEnvironment.GetRuntimeDirectory());
+            var builder = ImmutableHashSet.CreateBuilder<RuntimeAssemblyIdentity>();
+            foreach (var path in trustedPlatformAssemblies.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries))
+            {
+                try
+                {
+                    var absolutePath = Path.GetFullPath(path);
+                    if (!IsWithinDirectory(absolutePath, runtimeDirectory))
+                        continue;
+
+                    builder.Add(RuntimeAssemblyIdentity.FromAssemblyName(AssemblyName.GetAssemblyName(absolutePath)));
+                }
+                catch (Exception exception) when (
+                    exception is FileNotFoundException or
+                    BadImageFormatException or
+                    FileLoadException or
+                    UnauthorizedAccessException)
+                {
+                    // Ignore malformed runtime entries. A non-snapshotted identity remains fail-closed.
+                }
+            }
+
+            return builder.ToImmutable();
+        }
+
+        private static bool IsWithinDirectory(string path, string directory)
+        {
+            var relative = Path.GetRelativePath(directory, path);
+            return !Path.IsPathRooted(relative) &&
+                   !relative.Equals("..", StringComparison.Ordinal) &&
+                   !relative.StartsWith($"..{Path.DirectorySeparatorChar}", StringComparison.Ordinal) &&
+                   !relative.StartsWith($"..{Path.AltDirectorySeparatorChar}", StringComparison.Ordinal);
+        }
     }
 
     private sealed class ConfiguredRuntimeAssemblyLoadContext : AssemblyLoadContext
     {
         private readonly IRuntimeAssemblyLocator _locator;
+        private readonly IRuntimeSharedAssemblyResolver _sharedAssemblyResolver;
 
-        public ConfiguredRuntimeAssemblyLoadContext(IRuntimeAssemblyLocator locator)
+        public ConfiguredRuntimeAssemblyLoadContext(
+            IRuntimeAssemblyLocator locator,
+            IRuntimeSharedAssemblyResolver sharedAssemblyResolver)
             : base("UniversalToolchain.Runtime.Isolated", isCollectible: true)
         {
             _locator = locator;
+            _sharedAssemblyResolver = sharedAssemblyResolver;
         }
 
         public Assembly LoadRootAssembly(string assemblySimpleName)
         {
             var absolutePath = ResolveRequiredPath(assemblySimpleName);
             var fileIdentity = ReadAndValidateIdentity(absolutePath, assemblySimpleName, requestedIdentity: null);
-
-            var exactDefaultAssembly = FindDefaultAssemblyLoadedFrom(absolutePath, fileIdentity);
-            if (exactDefaultAssembly != null)
-                return exactDefaultAssembly;
-
-            return LoadFromAssemblyPath(absolutePath);
+            var shared = _sharedAssemblyResolver.Resolve(fileIdentity, absolutePath);
+            return shared.Kind == RuntimeSharedAssemblyResolutionKind.Shared
+                ? shared.Assembly!
+                : LoadFromAssemblyPath(absolutePath);
         }
 
         protected override Assembly? Load(AssemblyName assemblyName)
@@ -78,108 +138,23 @@ public sealed class DefaultRuntimeAssemblyLoadStrategy : IRuntimeAssemblyLoadStr
                 return null;
 
             if (!_locator.TryResolveAssemblyPath(simpleName, out var path) || string.IsNullOrWhiteSpace(path))
-                return null;
+            {
+                if (RuntimePlatformAssemblyPolicy.IsRuntimeOwnedPlatformAssembly(assemblyName))
+                    return null;
+
+                throw new FileNotFoundException(
+                    $"Runtime dependency '{assemblyName.FullName}' was not found in configured runtime assembly locator search roots. " +
+                    "Fallback to an assembly from the default context is forbidden unless the host explicitly registered it as shared.");
+            }
             if (!Path.IsPathRooted(path))
                 Thrower.Argument(nameof(path), $"Assembly locator returned non-absolute path '{path}'.");
 
             var absolutePath = Path.GetFullPath(path);
-            var fileIdentity = ReadAndValidateIdentity(absolutePath, simpleName, assemblyName);
-            var exactDefaultAssembly = FindDefaultAssemblyLoadedFrom(absolutePath, fileIdentity);
-            if (exactDefaultAssembly != null)
-                return exactDefaultAssembly;
-
-            // A runtime implementation can reference a contract type whose owning
-            // assembly is already shared with the host. Loading that referenced
-            // contract into this isolated context would create a split type identity
-            // (for example, a constructor parameter from a second copy of the same
-            // contract assembly). Share only dependencies proven to be referenced by
-            // an exact configured assembly already loaded in the default context.
-            var trustedSharedDependency = TryLoadTrustedDefaultDependency(absolutePath, fileIdentity);
-            if (trustedSharedDependency != null)
-                return trustedSharedDependency;
-
-            return LoadFromAssemblyPath(absolutePath);
-        }
-
-        private Assembly? TryLoadTrustedDefaultDependency(string absolutePath, AssemblyName fileIdentity)
-        {
-            foreach (var defaultAssembly in Default.Assemblies
-                         .Where(static assembly => !assembly.IsDynamic && !string.IsNullOrWhiteSpace(assembly.Location))
-                         .OrderBy(static assembly => assembly.FullName, StringComparer.Ordinal))
-            {
-                if (!IsExactConfiguredDefaultAssembly(defaultAssembly))
-                    continue;
-
-                if (!defaultAssembly.GetReferencedAssemblies()
-                        .Any(reference => ReferenceMatchesExactly(reference, fileIdentity)))
-                {
-                    continue;
-                }
-
-                var conflictingAssembly = Default.Assemblies.FirstOrDefault(assembly =>
-                    !assembly.IsDynamic &&
-                    string.Equals(assembly.GetName().Name, fileIdentity.Name, StringComparison.Ordinal));
-                if (conflictingAssembly != null)
-                {
-                    if (ReferenceMatchesExactly(fileIdentity, conflictingAssembly.GetName()) &&
-                        !string.IsNullOrWhiteSpace(conflictingAssembly.Location) &&
-                        string.Equals(
-                            Path.GetFullPath(conflictingAssembly.Location),
-                            Path.GetFullPath(absolutePath),
-                            StringComparison.Ordinal))
-                    {
-                        return conflictingAssembly;
-                    }
-
-                    throw new InvalidOperationException(
-                        $"Configured runtime dependency '{fileIdentity.FullName}' at '{absolutePath}' conflicts with " +
-                        $"default-context assembly '{conflictingAssembly.FullName}' at '{conflictingAssembly.Location}'.");
-                }
-
-                var loaded = Default.LoadFromAssemblyPath(absolutePath);
-                if (!ReferenceMatchesExactly(fileIdentity, loaded.GetName()) ||
-                    loaded.IsDynamic ||
-                    string.IsNullOrWhiteSpace(loaded.Location) ||
-                    !string.Equals(
-                        Path.GetFullPath(loaded.Location),
-                        Path.GetFullPath(absolutePath),
-                        StringComparison.Ordinal))
-                {
-                    throw new InvalidOperationException(
-                        $"Default-context load of configured runtime dependency '{fileIdentity.FullName}' did not preserve exact path and identity.");
-                }
-
-                return loaded;
-            }
-
-            return null;
-        }
-
-        private bool IsExactConfiguredDefaultAssembly(Assembly assembly)
-        {
-            var simpleName = assembly.GetName().Name;
-            if (string.IsNullOrWhiteSpace(simpleName) ||
-                !_locator.TryResolveAssemblyPath(simpleName, out var configuredPath) ||
-                string.IsNullOrWhiteSpace(configuredPath) ||
-                !Path.IsPathRooted(configuredPath))
-            {
-                return false;
-            }
-
-            var absoluteConfiguredPath = Path.GetFullPath(configuredPath);
-            if (!string.Equals(
-                    Path.GetFullPath(assembly.Location),
-                    absoluteConfiguredPath,
-                    StringComparison.Ordinal))
-            {
-                return false;
-            }
-
-            var configuredIdentity = ReadAndValidateIdentity(
-                absoluteConfiguredPath,
-                simpleName,
-                requestedIdentity: null);
-            return ReferenceMatchesExactly(configuredIdentity, assembly.GetName());
+            ReadAndValidateIdentity(absolutePath, simpleName, assemblyName);
+            var shared = _sharedAssemblyResolver.Resolve(assemblyName, absolutePath);
+            return shared.Kind == RuntimeSharedAssemblyResolutionKind.Shared
+                ? shared.Assembly!
+                : LoadFromAssemblyPath(absolutePath);
         }
 
         private string ResolveRequiredPath(string assemblySimpleName)
@@ -222,7 +197,8 @@ public sealed class DefaultRuntimeAssemblyLoadStrategy : IRuntimeAssemblyLoadStr
                     $"Configured runtime path '{absolutePath}' contains assembly '{fileIdentity.Name}', not requested assembly '{expectedSimpleName}'.");
             }
 
-            if (requestedIdentity != null && !ReferenceMatchesExactly(requestedIdentity, fileIdentity))
+            if (requestedIdentity != null &&
+                RuntimeAssemblyIdentity.FromAssemblyName(requestedIdentity) != RuntimeAssemblyIdentity.FromAssemblyName(fileIdentity))
             {
                 return Thrower.InvalidOpEx<AssemblyName>(
                     $"Configured runtime assembly '{absolutePath}' has identity '{fileIdentity.FullName}', which does not satisfy requested identity '{requestedIdentity.FullName}'.");
@@ -230,39 +206,5 @@ public sealed class DefaultRuntimeAssemblyLoadStrategy : IRuntimeAssemblyLoadStr
 
             return fileIdentity;
         }
-
-        private static Assembly? FindDefaultAssemblyLoadedFrom(string absolutePath, AssemblyName expectedIdentity)
-        {
-            var normalizedPath = Path.GetFullPath(absolutePath);
-            foreach (var assembly in Default.Assemblies)
-            {
-                var identity = assembly.GetName();
-                if (!ReferenceMatchesExactly(expectedIdentity, identity))
-                    continue;
-
-                if (assembly.IsDynamic || string.IsNullOrWhiteSpace(assembly.Location))
-                    continue;
-
-                if (string.Equals(Path.GetFullPath(assembly.Location), normalizedPath, StringComparison.Ordinal))
-                    return assembly;
-            }
-
-            return null;
-        }
-
-        private static bool ReferenceMatchesExactly(AssemblyName expected, AssemblyName actual)
-        {
-            if (!string.Equals(expected.Name, actual.Name, StringComparison.Ordinal) ||
-                expected.Version != actual.Version ||
-                !string.Equals(NormalizeCulture(expected.CultureName), NormalizeCulture(actual.CultureName), StringComparison.Ordinal))
-            {
-                return false;
-            }
-
-            return expected.GetPublicKeyToken().AsSpan().SequenceEqual(actual.GetPublicKeyToken());
-        }
-
-        private static string NormalizeCulture(string? value) =>
-            string.IsNullOrWhiteSpace(value) ? string.Empty : value;
     }
 }

@@ -17,6 +17,7 @@ public static class ReflectionRuntimeResolutionServiceCollectionExtensions
         services = services.ArgNotNull();
 
         services.TryAddSingleton<IRuntimeAssemblyLocator, DefaultRuntimeAssemblyLocator>();
+        services.TryAddSingleton<IRuntimeSharedAssemblyResolver, DefaultRuntimeSharedAssemblyResolver>();
         services.TryAddSingleton<IRuntimeAssemblyLoadStrategy, DefaultRuntimeAssemblyLoadStrategy>();
         services.TryAddSingleton<IRuntimeAssemblyTypeLoader, DefaultRuntimeAssemblyTypeLoader>();
         services.TryAddSingleton<IRuntimeComponentResolver>(provider => new DefaultRuntimeComponentResolver(
