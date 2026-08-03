@@ -6,6 +6,11 @@ on:
       - research/cgo27-submission-hardening
     paths:
       - ".github/workflows/cgo27-apply-payload.yml"
+  pull_request:
+    branches:
+      - master
+    paths:
+      - ".github/workflows/cgo27-apply-payload.yml"
 
 permissions:
   contents: write
@@ -16,6 +21,7 @@ concurrency:
 
 jobs:
   apply:
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -51,4 +57,4 @@ jobs:
           git commit -m 'CGO27: implement obligation model, demand baseline, and P07 repair'
           git push origin HEAD:research/cgo27-submission-hardening
 
-# trigger-version: 2
+# trigger-version: 3
