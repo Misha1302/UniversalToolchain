@@ -1,7 +1,19 @@
 \section{Implementation}
-We implemented the model in System W, an extensible .NET compiler framework. Pipeline observers receive bytecode, AIR, and optimized AIR artifacts from the actual compiler path. Fact effects are evaluated against the selected module order; the scheduler returns verifier invocations; and the observer calls production \texttt{BytecodeVerifier} and \texttt{AirVerifier} routes. Telemetry records per-rule invocation counts, invalidations, obligations, first detection boundary, diagnostics, elapsed verification time, allocations, and process identity.
+We implement the model in System W, an extensible .NET compiler. The contract owner is a production module shared by selection, compilation observers, and experiment runners. A fact state exposes \texttt{valid}, \texttt{invalid}, and \texttt{unknown}; an effect contract contains normalized \texttt{requires}, \texttt{produces}, \texttt{preserves}, and \texttt{invalidates} sets; and each \texttt{VerificationObligation} stores fact, rule, canonical owner, creation boundary, and first eligible boundary.
 
-The policy switch is execution-scoped and internal to research/friend assemblies; it does not expand the shipped System W facade. P3 remains the default. The production integration added focused negative tests for unknown policies, unknown routes, owner conflicts, and empty scopes. The exact provider test contract is 1,579 passing tests.
+Pipeline observers receive actual bytecode, AIR, and optimized AIR artifacts. Effect validation follows selected module occurrence order rather than sorting by module name. It rejects missing requirements, invalid preservation claims, repeated ambiguous occurrences, and invalidations without a canonical verifier route. The scheduler uses deterministic rule/fact ordering and rejects unknown policies, unknown demand queries, route conflicts, owner mismatches, and missed deadlines.
 
-\paragraph{TensorRules.}
-To test whether the mechanism is tied to System W internals, we implemented a second package solely through public language-authoring SDK projects. TensorRules has its own parser, typed \texttt{TensorPlan}, shape/layout/backend facts, optimizer pass, and interpreter. Policy and fault selection travel through a public execution request; no System W project is referenced. TensorRules is model-authored and is not presented as an independently authored language.
+The production verifier registry currently exposes canonical bytecode, AIR, and backend-input owners. The studied integration chooses an immediate deadline for each observed invalidation because the owning verifier is executable at the same boundary. This is a conservative implementation of the general model: it does not claim deferred multi-boundary obligation persistence.
+
+P0, P1, P1D, P2, and P3 share the same structural and semantic verifier implementations. P1D adds only an execution-scoped demand set; it does not alter the artifact or oracle. P2 schedules due obligation routes. P3 schedules all routes applicable at the boundary. Telemetry records policy, fact invalidations, obligations, demand queries, verifier invocations, first detection boundary, diagnostics, elapsed verifier time, allocations, and process identity.
+
+\paragraph{System W language path.}
+The source-to-result runner executes the normal dialect engine, optimizer, production verifier, and CIL/interpreter backends in fresh processes. Research policy switches remain internal/friend APIs and do not expand the shipped facade. P3 remains the normal strongest checking profile.
+
+\paragraph{Language T public-SDK path.}
+A separate small language package uses only the public extension SDK. Its shape/layout facts and verifier route differ from System W's arithmetic/capability relations, while the scheduler and contract representations are shared. We do not call the package independently authored: its cases were created during this study.
+
+\paragraph{Baseline defect repair.}
+Historical source-to-result case P07 mixed double parameters with an integer literal and failed under every policy before a result. We retained the historical receipt, repaired the independent numeric-dispatch defect with an explicit finite promotion matrix, added CIL/interpreter regression coverage, versioned the corpus, and reran the unchanged source and oracle. P07 now produces 13 under every policy and is counted as a valid control only in the new protocol.
+
+The exact pre-hardening master contract was 1,597 passing tests. New test counts are reported only after mechanical discovery on the final branch head; the historical count is not rewritten.

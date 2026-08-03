@@ -20,15 +20,15 @@ It restores and builds both `UniversalToolchain/Wist.sln` and the configuration-
 
 | Project | Passed | Failed | Skipped |
 |---|---:|---:|---:|
-| `Tests` | 534 | 0 | 0 |
-| `UniversalToolchain.Modules.Tests` | 292 | 0 | 0 |
-| `UniversalToolchain.Dialects.Tests` | 638 | 0 | 0 |
+| `Tests` | 546 | 0 | 0 |
+| `UniversalToolchain.Modules.Tests` | 305 | 0 | 0 |
+| `UniversalToolchain.Dialects.Tests` | 639 | 0 | 0 |
 | `UniversalToolchain.LanguageSdk.Tests` | 82 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.Tests` | 41 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
-| **Total** | **1,597** | **0** | **0** |
+| **Total** | **1,623** | **0** | **0** |
 
-This deterministic runtime-boundary change adds 18 resolver, loader, fresh-process, integrity, isolation, concurrency, unload and forbidden-default-fallback regressions beyond the merged 1,579-test baseline. The exact manifest belongs to `eng/test-counts.json`; the 1,597 count is locally confirmed from fresh TRX results and remains pending provider-backed CI confirmation.
+The CGO27 hardening branch retains the 1,597-test runtime-boundary baseline and adds 26 obligation-scheduler, demand-recomputation, numeric-promotion and P07 regression cases. The exact manifest belongs to `eng/test-counts.json`; the 1,623 count is locally confirmed from fresh TRX results and remains pending provider-backed CI confirmation.
 
 ## Workflow set
 

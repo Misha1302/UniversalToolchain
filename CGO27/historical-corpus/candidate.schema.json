@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://anonymous.invalid/cgo27/historical-candidate-v1.schema.json",
+  "title": "Historical semantic bug candidate v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "candidateId", "evidenceKind", "evidenceId", "originalDateUtc",
+    "originalRevision", "symptom", "oracleSource", "status", "statusReason"
+  ],
+  "properties": {
+    "candidateId": {"type": "string", "pattern": "^H[0-9]{3}$"},
+    "evidenceKind": {"enum": ["issue", "commit", "test", "review-note"]},
+    "evidenceId": {"type": "string", "minLength": 1},
+    "originalDateUtc": {"type": "string", "format": "date-time"},
+    "originalRevision": {"type": ["string", "null"]},
+    "fixRevision": {"type": ["string", "null"]},
+    "symptom": {"type": "string", "minLength": 1},
+    "oracleSource": {"type": "string", "minLength": 1},
+    "mappedFact": {"type": ["string", "null"]},
+    "canonicalOwner": {"type": ["string", "null"]},
+    "firstEligibleBoundary": {"type": ["string", "null"]},
+    "reproductionMode": {"enum": ["not-run", "exact-revision", "minimal-backport", "unavailable"]},
+    "status": {"enum": ["candidate", "included", "excluded", "invalid-replay", "blocked"]},
+    "statusReason": {"type": "string", "minLength": 1},
+    "policyResults": {"type": "array", "items": {"type": "object"}}
+  }
+}

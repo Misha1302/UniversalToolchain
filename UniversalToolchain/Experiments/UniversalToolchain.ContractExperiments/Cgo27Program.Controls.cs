@@ -20,6 +20,7 @@ internal static partial class Cgo27Program
             ("clean-ownership", RunCleanOwnership),
             ("clean-bytecode", RunCleanBytecode),
             ("clean-facts", RunCleanFacts),
+            ("clean-demand", RunCleanDemand),
             ("clean-air", RunCleanAir),
             ("clean-capability", RunCleanCapability)
         };
@@ -124,8 +125,10 @@ internal static partial class Cgo27Program
                 return (true, validation.Diagnostics[0].Code);
             var scheduled = VerificationPolicyScheduler.Schedule(
                 mode,
+                CompilerPipelineStage.Air,
                 AvailableRoutes(CompilerPipelineStage.Air),
-                validation.ReverificationRequests);
+                validation.ReverificationRequests,
+                new HashSet<CompilerFactId>());
             foreach (var invocation in scheduled)
             {
                 var succeeded = ExecuteSemanticReverification(
@@ -134,6 +137,32 @@ internal static partial class Cgo27Program
                     PipelineMutation.MissingRequirement,
                     invalidArtifact: invocation.IsObligationDriven);
                 _activeTelemetry?.RecordReverification(invocation.InvalidatedFacts.Count, succeeded);
+                if (!succeeded)
+                    return (true, ModuleContractDiagnosticCodes.CompilerFactReverificationRequired);
+            }
+            return (false, (string?)null);
+        });
+
+
+    private static ExperimentOutcome RunCleanDemand(int sample, ExperimentPolicy mode) =>
+        Timed(mode, "clean-demand", () =>
+        {
+            if (mode == ExperimentPolicy.P0_STRUCTURAL)
+                return (false, (string?)null);
+            var demanded = new HashSet<CompilerFactId> { KnownCoreCompilerFacts.AirVerified };
+            var scheduled = VerificationPolicyScheduler.Schedule(
+                mode,
+                CompilerPipelineStage.Air,
+                AvailableRoutes(CompilerPipelineStage.Air),
+                [],
+                demanded);
+            foreach (var invocation in scheduled)
+            {
+                var succeeded = ExecuteSemanticReverification(
+                    invocation.RuleId,
+                    $"clean-demand-{sample}",
+                    PipelineMutation.MissingRequirement,
+                    invalidArtifact: false);
                 if (!succeeded)
                     return (true, ModuleContractDiagnosticCodes.CompilerFactReverificationRequired);
             }

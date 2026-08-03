@@ -12,6 +12,7 @@ namespace UniversalToolchain.EndToEndExperiments;
 internal sealed record EndToEndCase(
     string Id,
     string Stratum,
+    string StudySet,
     string Source,
     IReadOnlyDictionary<string, double> Arguments,
     double ExpectedResult,
@@ -21,7 +22,8 @@ internal sealed record EndToEndCase(
     string MutationId,
     string ExpectedWithoutProtocol,
     string ExpectedDetectionBoundary,
-    string ExpectedDiagnosticCode);
+    string ExpectedDiagnosticCode,
+    bool ExplicitDemand);
 
 internal sealed record EndToEndRecord(
     int SchemaVersion,
@@ -29,6 +31,7 @@ internal sealed record EndToEndRecord(
     string CommitSha,
     string CaseId,
     string Stratum,
+    string StudySet,
     string Source,
     IReadOnlyDictionary<string, double> Arguments,
     string PresetId,
@@ -38,6 +41,7 @@ internal sealed record EndToEndRecord(
     int Seed,
     bool FaultInjected,
     string MutationId,
+    bool DemandQuery,
     double ExpectedResult,
     double? ActualResult,
     string Classification,
@@ -51,7 +55,7 @@ internal sealed record EndToEndRecord(
 
 internal static class Program
 {
-    private const int SchemaVersion = 1;
+    private const int SchemaVersion = 3;
     private const int Repetitions = 2;
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -202,7 +206,10 @@ internal static class Program
                 Mode = ModuleContractVerificationMode.Strict,
                 PipelineOptions = ModuleContractPipelineProfiles.StrictEnforced with
                 {
-                    VerificationPolicy = ParsePolicy(policyName)
+                    VerificationPolicy = ParsePolicy(policyName),
+                    DemandedFacts = @case.ExplicitDemand
+                        ? new HashSet<CompilerFactId> { KnownCoreCompilerFacts.AirVerified }
+                        : new HashSet<CompilerFactId>()
                 },
                 DiagnosticSink = sink
             }.SnapshotValidated();
@@ -294,6 +301,7 @@ internal static class Program
             commit,
             @case.Id,
             @case.Stratum,
+            @case.StudySet,
             @case.Source,
             @case.Arguments,
             @case.PresetId,
@@ -303,6 +311,7 @@ internal static class Program
             seed,
             @case.InjectFault,
             @case.MutationId,
+            @case.ExplicitDemand,
             @case.ExpectedResult,
             actualResult,
             classification,
@@ -373,13 +382,20 @@ internal static class Program
 
     private static void ValidateCaseCatalog(IReadOnlyList<EndToEndCase> cases)
     {
-        if (cases.Count != 30)
-            throw new InvalidOperationException($"Expected 30 cases, found {cases.Count}.");
-        if (cases.Select(static item => item.Id).Distinct(StringComparer.Ordinal).Count() != 30)
+        if (cases.Count != 32)
+            throw new InvalidOperationException($"Expected 32 cases, found {cases.Count}.");
+        if (cases.Select(static item => item.Id).Distinct(StringComparer.Ordinal).Count() != 32)
             throw new InvalidOperationException("Case ids must be unique.");
-        var strata = cases.GroupBy(static item => item.Stratum).ToDictionary(static group => group.Key, static group => group.Count());
-        if (strata.Count != 3 || strata.Values.Any(static count => count != 10))
-            throw new InvalidOperationException("Expected exactly three strata with ten cases each.");
+        var historical = cases.Where(static item => item.StudySet == "historical-v2").ToArray();
+        if (historical.Length != 30)
+            throw new InvalidOperationException($"Historical v2 set must remain exactly 30 cases; found {historical.Length}.");
+        var historicalStrata = historical.GroupBy(static item => item.Stratum)
+            .ToDictionary(static group => group.Key, static group => group.Count());
+        if (historicalStrata.Count != 3 || historicalStrata.Values.Any(static count => count != 10))
+            throw new InvalidOperationException("Historical v2 set must retain three strata with ten cases each.");
+        var demand = cases.Where(static item => item.StudySet == "demand-v3").ToArray();
+        if (demand.Length != 2 || demand.Count(static item => item.ExplicitDemand) != 1)
+            throw new InvalidOperationException("Demand v3 set must contain one queried and one unqueried matched fault.");
         if (cases.Count(static item => item.InjectFault) < 5)
             throw new InvalidOperationException("Expected at least five fault-bearing end-to-end cases.");
         if (cases.Where(static item => item.InjectFault).Any(static item => Math.Abs(item.ExpectedResult - 1d) <= 1e-9))
@@ -421,13 +437,25 @@ internal static class Program
                     continue;
                 }
 
-                if (policy is "P0_STRUCTURAL" or "P1_INVALIDATION")
+                var protocolShouldDetect = policy is "P2_SELECTIVE" or "P3_ALWAYS" ||
+                                           policy == "P1D_DEMAND_RECOMPUTATION" && @case.ExplicitDemand;
+                if (!protocolShouldDetect)
                 {
-                    if (first.Classification != "wrong-result" || first.ActualResult is null ||
-                        Math.Abs(first.ActualResult.Value - 1d) > 1e-9)
+                    if (first.Classification != @case.ExpectedWithoutProtocol)
                     {
                         throw new InvalidOperationException(
-                            $"Fault case {@case.Id}/{policy} did not demonstrate silent wrong-result behavior.");
+                            $"Fault case {@case.Id}/{policy} did not preserve its no-protocol symptom.");
+                    }
+                    if (@case.ExpectedWithoutProtocol == "wrong-result" &&
+                        (first.ActualResult is null || Math.Abs(first.ActualResult.Value - 1d) > 1e-9))
+                    {
+                        throw new InvalidOperationException(
+                            $"Fault case {@case.Id}/{policy} did not demonstrate the expected wrong result.");
+                    }
+                    if (@case.ExpectedWithoutProtocol == "late-failure" && first.FirstDetectionBoundary != "runtime-or-backend")
+                    {
+                        throw new InvalidOperationException(
+                            $"Fault case {@case.Id}/{policy} did not fail at runtime/backend as expected.");
                     }
                 }
                 else
@@ -468,6 +496,8 @@ internal static class Program
                 .OrderBy(static group => group.Key, StringComparer.Ordinal)
                 .ToDictionary(static group => group.Key, static group => group.Count()),
             faultCases = cases.Count(static item => item.InjectFault),
+            historicalV2Cases = cases.Count(static item => item.StudySet == "historical-v2"),
+            demandV3Cases = cases.Count(static item => item.StudySet == "demand-v3"),
             freshProcessRepetitions = Repetitions,
             rawRecords = records.Count,
             policyOutcomes = PolicyNames().ToDictionary(
@@ -476,6 +506,16 @@ internal static class Program
                     .GroupBy(static item => item.Classification)
                     .ToDictionary(static group => group.Key, static group => group.Count())),
             p2P3ParityCases = cases.Count,
+            demandBaseline = new
+            {
+                queriedCase = "D01",
+                unqueriedCase = "D02",
+                p1dQueriedDetection = records.First(static item => item.CaseId == "D01" && item.Policy == "P1D_DEMAND_RECOMPUTATION").Classification,
+                p1dUnqueriedDetection = records.First(static item => item.CaseId == "D02" && item.Policy == "P1D_DEMAND_RECOMPUTATION").Classification
+            },
+            p07Status = PolicyNames().ToDictionary(
+                static policy => policy,
+                policy => records.First(item => item.CaseId == "P07" && item.Policy == policy).Classification),
             externallyAuthored = false,
             corpusLabel = "model-authored-exploratory",
             claimBoundary = "This corpus is source-to-result and fresh-process reproducible, but it is not externally authored."
@@ -516,6 +556,8 @@ internal static class Program
         Add(cases, "B08", "backend-crosscheck", "(4 + 5) * 3", 27, "cil");
         Add(cases, "B09", "backend-crosscheck", "90 - 12 * 3", 54, "interpreter");
         Add(cases, "B10", "backend-crosscheck", "90 - 12 * 3", 54, "cil");
+        AddDemand(cases, "D01", true);
+        AddDemand(cases, "D02", false);
         return cases;
     }
 
@@ -532,6 +574,7 @@ internal static class Program
         target.Add(new EndToEndCase(
             id,
             stratum,
+            "historical-v2",
             source,
             arguments.ToDictionary(static item => item.Name, static item => item.Value, StringComparer.Ordinal),
             expected,
@@ -539,18 +582,43 @@ internal static class Program
             fault,
             "pricing-restricted",
             fault ? "cgo27.replace-result-v1" : "none",
-            fault ? "wrong-result" : "accepted",
+            fault ? (backend == "interpreter" ? "late-failure" : "wrong-result") : "accepted",
             fault ? "optimized AIR contract verification" : "result",
-            fault ? ModuleContractDiagnosticCodes.MissingBackendCapability : string.Empty));
+            fault ? ModuleContractDiagnosticCodes.MissingBackendCapability : string.Empty,
+            false));
+    }
+
+    private static void AddDemand(ICollection<EndToEndCase> target, string id, bool explicitDemand)
+    {
+        target.Add(new EndToEndCase(
+            id,
+            "demand-baseline",
+            "demand-v3",
+            "x + y",
+            new Dictionary<string, double>(StringComparer.Ordinal)
+            {
+                ["x"] = 2,
+                ["y"] = 8
+            },
+            10,
+            "cil",
+            true,
+            "pricing-restricted",
+            "cgo27.replace-result-v1",
+            "wrong-result",
+            "optimized AIR contract verification",
+            ModuleContractDiagnosticCodes.MissingBackendCapability,
+            explicitDemand));
     }
 
     private static IReadOnlyList<string> PolicyNames() =>
-        ["P0_STRUCTURAL", "P1_INVALIDATION", "P2_SELECTIVE", "P3_ALWAYS"];
+        ["P0_STRUCTURAL", "P1_INVALIDATION", "P1D_DEMAND_RECOMPUTATION", "P2_SELECTIVE", "P3_ALWAYS"];
 
     private static ModuleContractVerificationPolicy ParsePolicy(string value) => value switch
     {
         "P0_STRUCTURAL" => ModuleContractVerificationPolicy.P0Structural,
         "P1_INVALIDATION" => ModuleContractVerificationPolicy.P1Invalidation,
+        "P1D_DEMAND_RECOMPUTATION" => ModuleContractVerificationPolicy.P1DemandRecomputation,
         "P2_SELECTIVE" => ModuleContractVerificationPolicy.P2Selective,
         "P3_ALWAYS" => ModuleContractVerificationPolicy.P3Always,
         _ => throw new ArgumentOutOfRangeException(nameof(value), value, "Unknown policy.")

@@ -1,19 +1,20 @@
 \documentclass[sigplan,screen,review,anonymous]{acmart}
+\newtheorem{theorem}{Theorem}
 \setcopyright{none}
 \settopmatter{printfolios=true,printacmref=true}
 \renewcommand\footnotetextcopyrightpermission[1]{}\emergencystretch=2em
 \acmConference[CGO '27]{International Symposium on Code Generation and Optimization}{2027}{Anonymous Review}
 \acmYear{2027}
 \acmDOI{}
-\acmISBN{}\hypersetup{pdfauthor={Anonymous},pdftitle={Valid IR, Invalid Compiler: Contract-Guided Reverification for Extensible Pipelines},pdfsubject={Anonymous CGO 2027 research draft}}
+\acmISBN{}\hypersetup{pdfauthor={Anonymous},pdftitle={Obligation-Guided Reverification for Composed Compiler Pipelines},pdfsubject={Anonymous CGO 2027 research draft}}
 \begin{document}
-\title{Valid IR, Invalid Compiler: Contract-Guided Reverification for Extensible Pipelines}
+\title{Obligation-Guided Reverification for Composed Compiler Pipelines}
 \author{Anonymous Author(s)}
 
 \begin{abstract}
-An extensible compiler may produce structurally valid intermediate representation while violating a semantic assumption of the selected language, optimization, or backend configuration. Existing pass managers invalidate cached analyses, and translation validators check particular transformations, but neither mechanism by itself answers which semantic checks an extension must re-run after it changes a selected pipeline. We present contract-guided reverification: compiler components declare owned facts, effects, invalidations, and verifier routes; a fail-closed scheduler then supports structural-only, invalidation-only, selective, and always-verify policies over the same boundaries.
+A composed compiler can preserve generic IR structure while violating a semantic relation introduced by its selected language, optimizer, or backend. Structural verification cannot check an absent selected-system relation, while lazy analysis invalidation only recomputes a fact when some downstream consumer asks for it. We present obligation-guided reverification: transformations declare required, produced, preserved, and invalidated facts; each invalidation creates a named obligation with a canonical verifier owner and first eligible boundary; and a fail-closed scheduler must discharge every due obligation before the artifact crosses that boundary. Under explicit effect-completeness, unique-route, scheduler, and verifier-soundness assumptions, selective policy P2 cannot cross a modeled boundary with a due false or undischarged considered fact.
 
-We implement the mechanism in an extensible .NET compiler and evaluate it in two language packages. On a frozen boundary corpus, structural checks detect 12/32 primary operator shapes, invalidation-only detects 28/32, and selective and always verification both detect 32/32; the corresponding challenge counts are 1/10, 10/10, 10/10, and 10/10, with no false positives in 100 valid controls per policy. A source-to-result System W study contains 30 programs and 240 fresh-process records. Five targeted optimizer faults yield wrong results or later runtime failures under structural/invalidation policies, while selective and always verification reject all five at the optimized-IR boundary. A public-SDK TensorRules package contributes eight different semantic faults and 48 observations, again with selective/always classification parity. Eight isolated mechanism ablations each remove one detection while retaining its matched valid control; policy ablations separately attribute gains to typed contracts and obligation discharge. Selective verification executes fewer clean-boundary verifier calls than always verification, but the observed 14.3\% boundary-call reduction is below our predeclared efficiency threshold; we therefore make no whole-compilation speedup claim. External-corpus and pinned-machine performance claims remain explicit blockers.
+We implement the model in a composed .NET compiler and compare structural-only, passive-invalidation, demand-recomputation, selective, and always-verify policies. A matched counterexample shows the central distinction: demand recomputation rejects an invalidated fact when queried but misses the otherwise identical unqueried fault, whereas P2 rejects both at the declared boundary. In a 32-program source-to-result study with 320 fresh-process records, P2 and always verification agree on all classifications and first detection boundaries; both reject seven targeted faults before backend execution, while demand recomputation catches only the explicitly queried demand fault. A second public-SDK language reproduces the queried/unqueried distinction. The corpora are study-authored, external independence remains blocked, and we make no whole-compilation speedup claim.
 \end{abstract}
 
 \begin{CCSXML}
@@ -32,7 +33,7 @@ We implement the mechanism in an extensible .NET compiler and evaluate it in two
 \end{CCSXML}
 \ccsdesc[500]{Software and its engineering~Compilers}
 \ccsdesc[300]{Software and its engineering~Software verification and validation}
-\keywords{compiler correctness, extensible compilers, translation validation, pass invalidation, intermediate representation, contracts}
+\keywords{compiler verification, composed compilers, analysis invalidation, semantic obligations, intermediate representation, contracts}
 \maketitle
 
 \input{sections/01-introduction}

@@ -1,15 +1,21 @@
 \section{Threats to Validity and Limitations}
-\paragraph{Authorship and corpus size.}
-The primary, challenge, end-to-end, and TensorRules faults are author/model designed. They demonstrate concrete failures but may align with implementation structure. The external blind-corpus claim is blocked until a human-authored archive is frozen before policy execution.
+\paragraph{Constructed corpora and author/model involvement.}
+The primary, challenge, demand, source-to-result, and Language T faults were designed during the study and may align with implementation structure. Repetitions test reproducibility, not independent semantic sampling. We report paired case counts and all misses; we do not infer prevalence or generality. A human-authored frozen corpus remains \texttt{BLOCKED\_EXTERNAL}.
 
-\paragraph{Contract completeness.}
-A missing invalidation declaration can prevent P2 from scheduling a needed verifier. P3 is a stronger evaluated oracle only for registered applicable routes; neither policy can detect a property for which no verifier exists. Fail-closed handling of unknown routes reduces silent gaps but does not prove contract completeness.
+\paragraph{Historical selection.}
+A historical corpus can reduce direct construction bias, but author-selected inclusion and backporting introduce their own bias. We therefore freeze criteria before search, include every eligible case, derive the oracle from the original report/fix rather than P2 output, and publish exclusions and failed replays. We do not call this corpus independent.
+
+\paragraph{Fact and effect completeness.}
+The theorem is conditional. An omitted fact, missing invalidation, or false preservation declaration can prevent obligation creation. Fail-closed missing-route handling protects only facts that are declared as invalidated; it cannot discover an unmodeled relation.
+
+\paragraph{Verifier soundness.}
+A uniquely owned route can still contain a bug. P2 and P3 share verifier implementations, so their parity cannot validate verifier soundness. The study tests selected negative and control cases but does not prove the verifier.
 
 \paragraph{Generality.}
-Two packages are stronger evidence than one, but both execute in one framework and share scheduler concepts. TensorRules intentionally differs in syntax and shape/layout facts, yet it is small and model-authored.
+System W and Language T use different fact vocabularies and language paths, but share one scheduler/framework. Evaluated backends and optimizers are limited. P2/P3 parity is explicitly corpus-bounded.
 
 \paragraph{Performance.}
-The boundary harness records verifier-kernel timings, and P2 uses fewer calls on clean boundaries. Shared CI is noisy and the reduction is below the frozen threshold. A dedicated capture gate requires a pinned machine, governor, CPU affinity, low background load, 30 process repetitions per cell, and bootstrap intervals. Until that experiment runs, whole-compilation overhead and speedup are unknown.
+Verifier-work counts and boundary-kernel timing do not establish whole-compilation performance. Shared hosted runners are not pinned. Until the machine protocol runs, overhead and speedup remain unknown and absent from the headline claims.
 
-\paragraph{Baseline product defect.}
-P07 exposes a pre-existing mixed-type runtime assertion. Separating it avoids contaminating protocol counts, but also reduces the valid-control set from 25 to 24 in the System W end-to-end study.
+\paragraph{Anonymity.}
+The public project and earlier research title can be found through search. Rewriting public history would be misleading. The submission instead uses a new title and a separately sanitized package, but search-based de-anonymization risk cannot be eliminated completely.

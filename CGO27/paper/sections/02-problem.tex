@@ -1,19 +1,71 @@
-\section{Problem: IR Validity Is Not System Validity}
-Let a selected compiler system be a tuple $S=(L,P,B,C)$ of language components, ordered passes, backend components, and their declared contracts. Let $x_i$ be the artifact at boundary $i$. A structural verifier establishes $V_{str}(x_i)$, such as legal opcodes and control-flow targets. The selected system additionally relies on semantic facts $F_i$---for example, bytecode-producer and source-node identity, verified stack effects, shape consistency, or backend capability support.
-
-A transformation $t$ has an effect contract
+\section{Formal Model and Relative Guarantee}
+\subsection{Selected systems, facts, and boundaries}
+A selected compiler system is a tuple $S=(L,T,B,C)$ containing the chosen language components, ordered transformations, backend components, and their resolved contracts. Let
 \[
-E_t=(R_t,P_t,I_t),
+  B = \langle b_0,b_1,\ldots,b_n\rangle
 \]
-where $R_t$ is the set of required facts, $P_t$ the set produced or preserved, and $I_t$ the invalidated facts. For every invalidated fact $f$, the selected contract table maps $f$ to at most one canonical verifier rule $owner(f)$. If no executable route exists, or two components claim the same canonical rule, scheduling fails closed.
+be the totally ordered observable pipeline boundaries, and let $x_i$ be the artifact presented at $b_i$. The implementation studied here uses bytecode, AIR, optimized AIR, and backend-input boundaries.
 
-The key distinction is
+Let $F$ be the finite set of modeled semantic facts for the selected system. A fact state at boundary $b_i$ is
 \[
-V_{str}(x_i) \centernot\implies Valid(S,x_i).
+  \sigma_i : F \rightarrow \{\mathsf{valid},\mathsf{invalid},\mathsf{unknown}\}.
 \]
-The artifact can be a valid instance of a generic IR and still violate the chosen language/pass/backend relation. A verifier route converts this gap into an executable obligation $o=(f,owner(f),i)$.
+A fact is \emph{unknown} when the selected contract state neither establishes it nor records an invalidation. This distinction matters: treating absence as validity would silently satisfy obligations that no component proved.
 
-\paragraph{Capability counterexample.}
-Assume the generic IR admits a structurally legal instruction $q$, the selected emission contract requires capability $k$ for $q$, and the selected backend capability set $K_B$ does not contain $k$. For an artifact $x$ containing $q$, the opcode and operand schema may satisfy $V_{str}(x)$, while the required relation $k\in K_B$ is false. Hence $V_{str}(x)$ holds but $Valid(S,x)$ does not. This witness does not depend on malformed IR; the missing information is the selected-system relation itself.
+A generic structural verifier establishes predicates such as legal opcodes, operand schemas, branch targets, or stack discipline. Selected-system validity additionally depends on facts such as producer/source identity, a shape relation, or support for an emitted intrinsic. Therefore
+\[
+  V_{str}(x_i) \centernot\implies Valid(S,x_i).
+\]
+Our running counterexample is a structurally legal optimized AIR instruction whose selected backend does not support the capability declared by the chosen language/optimizer composition.
 
-The same construction applies to identities and compiler facts: a tag or pattern may be globally declared yet attributed to the wrong producer or source node, and a transformed artifact may remain structurally legal after invalidating a fact that no later stage re-establishes. Our empirical question is therefore not whether generic structure should be checked, but which selected-system obligations must additionally be discharged and where.
+\subsection{Transformation effects}
+Each transformation $t$ declares an effect contract
+\[
+ E_t=(requires_t, produces_t, preserves_t, invalidates_t),
+\]
+where every component is a subset of $F$. Before applying the effect, each required or preserved fact must be valid. Producing $f$ establishes $\sigma(f)=\mathsf{valid}$ and clears a pending invalidation for $f$. Invalidating $f$ changes it to $\mathsf{invalid}$ and creates a verification obligation unless the same transition re-establishes it.
+
+The route map is a partial function
+\[
+ \rho : F \rightharpoonup (rule,owner),
+\]
+resolved from the selected components. A route has exactly one canonical owner. A missing route, conflicting owners, or a route that cannot execute at the required boundary is a compilation error rather than a fallback.
+
+An obligation is
+\[
+ o=(f,rule,owner,b_c,b_e),
+\]
+where $f$ is the invalidated fact, $b_c$ is its creation boundary, and $b_e\ge b_c$ is its first eligible boundary. The implementation uses the conservative immediate-deadline instance $b_e=b_c$ because its canonical production routes are executable at the observed boundary. The scheduler interface nevertheless represents both fields and rejects an obligation presented after $b_e$.
+
+\subsection{Policies}
+The five policies differ only in semantic scheduling; mandatory structural checks remain identical.
+
+\begin{table}[t]
+\caption{Policies over the same fact effects and verifier routes.}
+\label{tab:policies}
+\small
+\begin{tabular}{@{}p{0.18\columnwidth}p{0.74\columnwidth}@{}}
+\toprule
+Policy & Semantic behavior \\
+\midrule
+P0 & Structural verification only; no fact transition is used for scheduling. \\
+P1 & Record typed invalidation, but do not execute a semantic route. \\
+P1D & Recompute an invalidated fact only after an explicit downstream query; there is no boundary deadline. \\
+P2 & Execute every obligation due at the current first eligible boundary; reject missing, conflicting, or overdue routes. \\
+P3 & Execute every route applicable to the boundary; due obligations retain the same fact/owner lineage. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+P1D is a strong lazy-invalidation baseline: it prevents use of a stale cached result when a consumer asks for that result. It intentionally cannot protect a semantic boundary that must be checked even when no consumer performs a query.
+
+\subsection{Relative guarantee}
+\begin{theorem}[First-eligible-boundary safety]
+Fix a selected fact set $F$. Assume (1) transformation effect contracts are complete relative to $F$; (2) every created obligation has exactly one executable canonical route at its first eligible boundary; (3) the scheduler is invoked at every modeled boundary and executes every due obligation no later than that boundary; (4) successful verification is sound for the owned fact; and (5) verifier rejection or any routing/scheduling error stops compilation. Then P2 does not allow an artifact to cross a boundary $b_i$ with a considered fact that is both due at or before $b_i$ and false or undischarged.
+\end{theorem}
+
+\paragraph{Proof sketch.}
+Proceed by induction over the ordered boundaries. Before $b_0$, the selected seed state contains only facts explicitly established by the system. For the induction step, assume no due false or undischarged considered fact crossed $b_{i-1}$. Apply every transformation effect observed before $b_i$. Requirements and invalid preservation claims fail immediately. A produced fact is valid by the effect contract. Every invalidated fact creates a uniquely owned obligation; completeness excludes an unrecorded considered invalidation, and route resolution fails closed if the route is absent or ambiguous. If its first eligible boundary is $b_i$, P2 executes the route before crossing. Sound acceptance re-establishes the fact for this crossing; rejection stops compilation. An obligation with an earlier deadline is rejected as overdue, and one with a later deadline is not yet due. Thus no due false or undischarged considered fact crosses $b_i$.
+
+\paragraph{What the theorem does not prove.}
+The result does not establish completeness of $F$, completeness or truth of effect contracts, correctness of verifier implementations, correctness of transformations outside the modeled relations, or whole-compiler correctness. P3 is not an oracle for unregistered facts, and empirical P2/P3 parity is not a universal theorem.

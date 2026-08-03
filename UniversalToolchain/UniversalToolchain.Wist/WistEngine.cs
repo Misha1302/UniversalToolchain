@@ -284,6 +284,7 @@ public sealed class WistEngine : IDisposable
                 {
                     WistVerificationPolicy.P0Structural => ModuleContractVerificationPolicy.P0Structural,
                     WistVerificationPolicy.P1Invalidation => ModuleContractVerificationPolicy.P1Invalidation,
+                    WistVerificationPolicy.P1DemandRecomputation => ModuleContractVerificationPolicy.P1DemandRecomputation,
                     WistVerificationPolicy.P2Selective => ModuleContractVerificationPolicy.P2Selective,
                     WistVerificationPolicy.P3Always => ModuleContractVerificationPolicy.P3Always,
                     _ => throw new ArgumentOutOfRangeException(nameof(policy), policy, "Unknown Wist verification policy.")

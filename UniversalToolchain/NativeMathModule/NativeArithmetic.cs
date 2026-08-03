@@ -19,6 +19,34 @@ public static class NativeArithmetic
     public static T Divide<T>(T a, T b) where T : INumber<T> => a / b;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    private static TResult AddPromoted<TLeft, TRight, TResult>(TLeft a, TRight b)
+        where TLeft : INumberBase<TLeft>
+        where TRight : INumberBase<TRight>
+        where TResult : INumber<TResult> =>
+        TResult.CreateChecked(a) + TResult.CreateChecked(b);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    private static TResult SubtractPromoted<TLeft, TRight, TResult>(TLeft a, TRight b)
+        where TLeft : INumberBase<TLeft>
+        where TRight : INumberBase<TRight>
+        where TResult : INumber<TResult> =>
+        TResult.CreateChecked(a) - TResult.CreateChecked(b);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    private static TResult MultiplyPromoted<TLeft, TRight, TResult>(TLeft a, TRight b)
+        where TLeft : INumberBase<TLeft>
+        where TRight : INumberBase<TRight>
+        where TResult : INumber<TResult> =>
+        TResult.CreateChecked(a) * TResult.CreateChecked(b);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    private static TResult DividePromoted<TLeft, TRight, TResult>(TLeft a, TRight b)
+        where TLeft : INumberBase<TLeft>
+        where TRight : INumberBase<TRight>
+        where TResult : INumber<TResult> =>
+        TResult.CreateChecked(a) / TResult.CreateChecked(b);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     [UsedImplicitly]
     public static T Negate<T>(T value) where T : INumber<T> => -value;
 

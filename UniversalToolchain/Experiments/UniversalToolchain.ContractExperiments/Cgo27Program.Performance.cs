@@ -50,10 +50,11 @@ internal static partial class Cgo27Program
 
         var counterbalancedOrders = new[]
         {
-            new[] { ExperimentPolicy.P0_STRUCTURAL, ExperimentPolicy.P1_INVALIDATION, ExperimentPolicy.P2_SELECTIVE, ExperimentPolicy.P3_ALWAYS },
-            new[] { ExperimentPolicy.P1_INVALIDATION, ExperimentPolicy.P2_SELECTIVE, ExperimentPolicy.P3_ALWAYS, ExperimentPolicy.P0_STRUCTURAL },
-            new[] { ExperimentPolicy.P2_SELECTIVE, ExperimentPolicy.P3_ALWAYS, ExperimentPolicy.P0_STRUCTURAL, ExperimentPolicy.P1_INVALIDATION },
-            new[] { ExperimentPolicy.P3_ALWAYS, ExperimentPolicy.P0_STRUCTURAL, ExperimentPolicy.P1_INVALIDATION, ExperimentPolicy.P2_SELECTIVE }
+            new[] { ExperimentPolicy.P0_STRUCTURAL, ExperimentPolicy.P1_INVALIDATION, ExperimentPolicy.P1D_DEMAND_RECOMPUTATION, ExperimentPolicy.P2_SELECTIVE, ExperimentPolicy.P3_ALWAYS },
+            new[] { ExperimentPolicy.P1_INVALIDATION, ExperimentPolicy.P1D_DEMAND_RECOMPUTATION, ExperimentPolicy.P2_SELECTIVE, ExperimentPolicy.P3_ALWAYS, ExperimentPolicy.P0_STRUCTURAL },
+            new[] { ExperimentPolicy.P1D_DEMAND_RECOMPUTATION, ExperimentPolicy.P2_SELECTIVE, ExperimentPolicy.P3_ALWAYS, ExperimentPolicy.P0_STRUCTURAL, ExperimentPolicy.P1_INVALIDATION },
+            new[] { ExperimentPolicy.P2_SELECTIVE, ExperimentPolicy.P3_ALWAYS, ExperimentPolicy.P0_STRUCTURAL, ExperimentPolicy.P1_INVALIDATION, ExperimentPolicy.P1D_DEMAND_RECOMPUTATION },
+            new[] { ExperimentPolicy.P3_ALWAYS, ExperimentPolicy.P0_STRUCTURAL, ExperimentPolicy.P1_INVALIDATION, ExperimentPolicy.P1D_DEMAND_RECOMPUTATION, ExperimentPolicy.P2_SELECTIVE }
         };
 
         for (var sample = 0; sample < samples; sample++)
@@ -149,6 +150,11 @@ internal static partial class Cgo27Program
 
         var primary = stable.Where(static x => x.StudySet == "primary").ToArray();
         var challenge = stable.Where(static x => x.StudySet == "challenge").ToArray();
+        var demand = allResults
+            .Where(static x => x.StudySet == "demand-v4")
+            .GroupBy(static x => (x.MutationId, x.Policy))
+            .Select(static group => group.First())
+            .ToArray();
         var cleanByPolicy = controls.GroupBy(static x => x.Policy).ToDictionary(
             static g => g.Key,
             static g => new
@@ -175,6 +181,7 @@ internal static partial class Cgo27Program
             Repetitions,
             Primary = SummarizeSet(primary),
             Challenge = SummarizeSet(challenge),
+            DemandBaseline = SummarizeSet(demand),
             Clean = cleanByPolicy,
             CleanByFamily = cleanByFamily,
             Performance = performance
@@ -183,11 +190,11 @@ internal static partial class Cgo27Program
 
     private static string BuildMutationCatalog(IEnumerable<MutationCase> cases)
     {
-        var lines = new List<string> { "study_set,mutation_id,operator_id,family,expected_diagnostic" };
+        var lines = new List<string> { "study_set,mutation_id,operator_id,family,expected_diagnostic,demand_query" };
         lines.AddRange(cases
             .OrderBy(static x => x.StudySet, StringComparer.Ordinal)
             .ThenBy(static x => x.Id, StringComparer.Ordinal)
-            .Select(static x => $"{x.StudySet},{x.Id},{x.OperatorId},{x.Family},{x.ExpectedCode}"));
+            .Select(static x => $"{x.StudySet},{x.Id},{x.OperatorId},{x.Family},{x.ExpectedCode},{x.ExplicitDemand.ToString().ToLowerInvariant()}"));
         return string.Join(Environment.NewLine, lines) + Environment.NewLine;
     }
 

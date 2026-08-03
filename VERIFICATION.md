@@ -51,15 +51,15 @@ Parallel graph traversal and shared compilation are the default. `--jobs`, `--se
 
 | Test project | Passed | Failed | Skipped |
 |---|---:|---:|---:|
-| `Tests` | 534 | 0 | 0 |
-| `UniversalToolchain.Modules.Tests` | 292 | 0 | 0 |
-| `UniversalToolchain.Dialects.Tests` | 638 | 0 | 0 |
+| `Tests` | 546 | 0 | 0 |
+| `UniversalToolchain.Modules.Tests` | 305 | 0 | 0 |
+| `UniversalToolchain.Dialects.Tests` | 639 | 0 | 0 |
 | `UniversalToolchain.LanguageSdk.Tests` | 82 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.Tests` | 41 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
-| **Total** | **1,597** | **0** | **0** |
+| **Total** | **1,623** | **0** | **0** |
 
-The deterministic runtime-boundary candidate adds 18 resolver, loader, hostile-preload, fresh-process, package-metadata and boundary-regression tests over merged baseline `f13ad1310856e5618e1c3042c447ca543e0f3125`. The exact manifest is owned by `eng/test-counts.json`; local TRX evidence verifies all 1,597 tests, while GitHub Actions remains a separate provider-backed gate.
+The CGO27 hardening branch retains the 1,597-test runtime-boundary baseline and adds 26 obligation-scheduler, demand-recomputation, numeric-promotion and P07 regression cases. The exact manifest is owned by `eng/test-counts.json`; local TRX evidence verifies all 1,623 tests, while GitHub Actions remains a separate provider-backed gate.
 
 ## Production-boundary contract experiment
 

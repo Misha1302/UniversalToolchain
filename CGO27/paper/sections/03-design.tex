@@ -1,29 +1,49 @@
-\section{Contract-Guided Reverification}
-\subsection{Typed contracts and ownership}
-Each extension contributes immutable facets: owned AST/bytecode identities, compiler-fact ownership, pipeline effects, AIR emissions, and backend capabilities. Selection constructs one contract table for the actual runtime components. Duplicate owners, unknown facts, impossible effect declarations, and unresolved backend selections are diagnosed before compilation proceeds.
+\section{Scheduler and Running Example}
+\subsection{Typed ownership and route resolution}
+Each selected extension contributes immutable contract facets for fact ownership, pipeline effects, IR identities, and backend capabilities. Selection constructs one table for the actual runtime components. Duplicate fact owners, unknown facts, foreign production, impossible preservation, and ambiguous repeated module occurrences are rejected before semantic scheduling.
 
-Ownership is not merely documentation. It prevents an arbitrary extension from satisfying another component's obligation with a similarly named check. The scheduler receives canonical rule IDs and executable routes registered by the selected runtime.
+For every routable fact, the verifier registry resolves a pair $(rule,owner)$. The rule names executable verification logic; the owner prevents an unrelated extension from satisfying the obligation with a similarly named check. Registry construction rejects conflicting owners. Effect validation rejects an invalidation that has no route, so a missing route cannot disappear before reaching the scheduler.
 
-\subsection{Four policies}
-Table~\ref{tab:policies} defines the policies evaluated through one runner, corpus, and oracle.
+\subsection{Obligation creation and discharge}
+When a selected transformation invalidates $f$, effect validation changes its state from valid to invalid and emits $o=(f,rule,owner,b_c,b_e)$. Obligations are normalized by deadline, rule, and fact. P2 selects exactly those whose first eligible boundary is current. It rejects an overdue obligation, an absent route, or an owner mismatch. P3 selects all boundary routes, but any due obligation remains attached to the corresponding invocation for lineage and diagnostics.
 
-\begin{table}[t]
-\caption{Verification policies. Structural checks are always part of their represented boundary; ``semantic'' refers to selected-system verifier routes.}
-\label{tab:policies}
+A successful production verifier invocation is the discharge event. The observer reports verifier diagnostics through the normal compiler error policy; rejection prevents backend execution. Structural and semantic scopes are separate, avoiding a comparison in which a mandatory structural call silently performs every semantic check.
+
+\subsection{Demand recomputation}
+P1D receives an explicit set of queried facts. A query for an unknown fact fails closed. A query for an invalidated known fact schedules its canonical route. Without a query, P1D leaves the invalidation pending even if the pipeline reaches a semantic boundary. This is not an intentionally broken baseline: it models the normal guarantee of lazy analysis invalidation, where recomputation is demand-triggered rather than deadline-triggered.
+
+\subsection{Running example}
+Figure~\ref{fig:running-example} follows one fault through the policies. A frontend produces AIR satisfying structural and selected capability facts. An optimizer performs a structurally legal rewrite to an intrinsic unsupported by the selected backend and invalidates \texttt{air.intrinsics-supported}. The generic AIR verifier still accepts the instruction schema.
+
+P0 sees valid structure and proceeds. P1 records the invalidation but executes no semantic route. P1D rejects only in the variant where a downstream component explicitly queries the invalidated capability fact; in the matched unqueried variant it proceeds. P2 creates an obligation owned by \texttt{core.air} and executes it at optimized AIR, the first eligible boundary, before backend execution. P3 executes the same semantic verifier plus every other applicable route and yields the same correctness outcome on this case.
+
+\begin{figure}[t]
+\centering
+\fbox{\begin{minipage}{0.94\columnwidth}
 \small
-\begin{tabular}{@{}p{0.24\columnwidth}p{0.68\columnwidth}@{}}
-\toprule
-Policy & Semantic scheduling \\
-\midrule
-P0 structural & No typed fact or obligation routing. \\
-P1 invalidation & Record invalidations; do not discharge requests. \\
-P2 selective & Run exactly the requested canonical verifier rules. \\
-P3 always & Run every verifier applicable to the boundary. \\
-\bottomrule
-\end{tabular}
-\end{table}
+source $\rightarrow$ frontend $\rightarrow$ valid AIR
+$\rightarrow$ optimizer emits unsupported intrinsic
+$\rightarrow$ optimized-AIR boundary
+$\rightarrow$ backend\\[2pt]
+\textbf{selected facts:} schema valid; branch targets valid; intrinsics supported\\
+\textbf{effect:} invalidate intrinsics-supported\\
+\textbf{P0/P1:} proceed \quad
+\textbf{P1D:} reject iff queried \quad
+\textbf{P2/P3:} reject at optimized AIR
+\end{minipage}}
+\caption{Composed pipeline and the selected contract relation in the running example. The rewrite is structurally legal; the violated relation is selected-backend capability support.}
+\label{fig:running-example}
+\end{figure}
 
-The scheduler sorts rule IDs deterministically. P2 creates one invocation for each distinct requested route. P3 uses the same route implementations but takes the set of all applicable rules. Unknown policies, unknown routes, conflicting owners, or an empty verification scope where a check was requested are errors rather than implicit fallbacks.
-
-\subsection{Structural and semantic scopes}
-A monolithic AIR verifier can make a policy comparison meaningless: invoking it for mandatory structure also silently performs all semantic checks. We therefore split the production verifier into non-overlapping structural and semantic scopes. Schema, branch-target, and stack-discipline checks remain mandatory where represented. Capability and selected-contract relations are scheduled by P2/P3. The default production profile is P3, preserving the pre-study behavior.
+\begin{figure}[t]
+\centering
+\fbox{\begin{minipage}{0.90\columnwidth}
+\small
+$\mathsf{valid}$ $\xrightarrow{invalidate}$ $\mathsf{invalid}$
+$\xrightarrow{create\ o}$ $\mathsf{pending}$
+$\xrightarrow[\text{sound accept}]{owner\ route}$ $\mathsf{discharged}$\\[-1pt]
+\hfill $\searrow$ \textsf{rejected} (false fact, missing route, owner conflict, or missed boundary)
+\end{minipage}}
+\caption{Fact/obligation lifecycle. Meaning does not depend on color.}
+\label{fig:obligation-lifecycle}
+\end{figure}

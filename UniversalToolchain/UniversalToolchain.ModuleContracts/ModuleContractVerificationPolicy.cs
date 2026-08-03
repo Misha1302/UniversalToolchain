@@ -7,6 +7,7 @@ public enum ModuleContractVerificationPolicy
 {
     P0Structural,
     P1Invalidation,
+    P1DemandRecomputation,
     P2Selective,
     P3Always
 }

@@ -65,8 +65,17 @@ public sealed class PipelineEffectVerifierTests
             CompilerFactVerifierRegistry.Core,
             [_consumer]));
 
-        Assert.That(result.ReverificationRequests.Single().RuleId, Is.EqualTo(KnownCoreVerifierRules.AirContract));
-        Assert.That(result.ReverificationRequests.Single().InvalidatedFacts, Does.Contain(KnownCoreCompilerFacts.AirVerified));
+        var obligation = result.VerificationObligations.Single();
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.ReverificationRequests.Single().RuleId, Is.EqualTo(KnownCoreVerifierRules.AirContract));
+            Assert.That(result.ReverificationRequests.Single().InvalidatedFacts, Does.Contain(KnownCoreCompilerFacts.AirVerified));
+            Assert.That(obligation.FactId, Is.EqualTo(KnownCoreCompilerFacts.AirVerified));
+            Assert.That(obligation.RuleId, Is.EqualTo(KnownCoreVerifierRules.AirContract));
+            Assert.That(obligation.CanonicalOwner, Is.EqualTo("core.air"));
+            Assert.That(obligation.CreationBoundary, Is.EqualTo(CompilerPipelineStage.Air));
+            Assert.That(obligation.FirstEligibleBoundary, Is.EqualTo(CompilerPipelineStage.Air));
+        });
     }
 
     [Test]
@@ -107,6 +116,45 @@ public sealed class PipelineEffectVerifierTests
             Assert.That(result.Diagnostics, Is.Empty);
             Assert.That(result.ReverificationRequests.Single().RuleId, Is.EqualTo(customRule));
             Assert.That(result.ReverificationRequests.Single().InvalidatedFacts, Is.EqualTo(new[] { customFact }));
+        });
+    }
+
+    [Test]
+    public void Validate_WhenInvalidatedFactHasNoVerifierRoute_FailsClosedWithDiagnostic()
+    {
+        var customFact = new CompilerFactId("extension.fact.unrouted");
+        var table = new ModuleContractTableBuilder()
+            .AddFacet(new CompilerFactOwnershipFacet(
+                _consumer,
+                [new CompilerFactOwnershipContract(customFact, _consumer)]))
+            .AddFacet(new PipelineEffectFacet(
+                _consumer,
+                [
+                    new PipelineEffectContract(
+                        _effect,
+                        CompilerPipelineStage.Air,
+                        [],
+                        [],
+                        [],
+                        [customFact])
+                ]))
+            .Build();
+
+        var result = new PipelineEffectVerifier().Validate(new PipelineEffectValidationRequest(
+            table,
+            CompilerPipelineStage.Air,
+            new CompilerFactState(
+                new HashSet<CompilerFactId> { customFact },
+                new HashSet<CompilerFactId>()),
+            new CompilerFactVerifierRegistry(new Dictionary<CompilerFactId, VerifierRuleId>()),
+            [_consumer]));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(result.VerificationObligations, Is.Empty);
+            Assert.That(
+                result.Diagnostics.Select(static diagnostic => diagnostic.Code),
+                Does.Contain(ModuleContractDiagnosticCodes.MissingCompilerFactVerifierRoute));
         });
     }
 

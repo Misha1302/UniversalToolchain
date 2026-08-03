@@ -1,25 +1,29 @@
 \section{Methodology}
 \subsection{Research questions}
 \begin{description}
- \item[RQ1:] What faults are missed when only structural verification is available?
- \item[RQ2:] What additional faults require actual obligation discharge beyond recording invalidations?
- \item[RQ3:] Does selective verification match always verification on evaluated cases?
- \item[RQ4:] Does the distinction survive a second language package with different invariants?
- \item[RQ5:] How much verifier work is avoided on clean evaluated boundaries, without inferring whole-compilation performance?
- \item[RQ6:] Which individual protocol mechanisms are necessary to reject their minimal counterexamples without rejecting matched controls?
+ \item[RQ1:] Which declared semantic faults are missed by generic structural verification?
+ \item[RQ2:] What enforcement does boundary-indexed obligation discharge add beyond passive invalidation and demand-driven recomputation?
+ \item[RQ3:] How do selective P2 and always P3 compare in detection, localization, and verifier work on the evaluated cases?
+ \item[RQ4:] Do the policy distinctions persist in a public-SDK language and in external or historical cases?
 \end{description}
 
-\subsection{Frozen boundary corpus}
-The historical System W corpus is immutable: 40 instances representing 32 primary operator shapes in five families, 10 post-freeze challenge operators, and 100 valid controls per policy. Faults are repeated three times. The v3 study does not rename historical B0/B1/B2 results; it emits a separate four-policy schema and mechanically checks the old mutation catalog.
+\subsection{Versioning and accounting}
+Historical raw evidence, manifests, and P0--P3 denominators remain immutable. New policies and cases use new schema/protocol versions. Each aggregate separates the historical study set from demand-specific additions. Raw JSONL is opened and flushed before validation; failed assertions therefore retain the observations that caused them. Repetitions check process isolation and determinism, but are not counted as independent semantic cases.
+
+\subsection{Boundary corpus}
+The historical primary set contains 32 operator shapes, the post-freeze challenge set contains 10, and the historical valid-control set contains 100 controls per policy. Protocol v4 adds P1D, two matched demand cases, and 20 new controls per policy without changing historical denominators. The demand cases differ only in whether a downstream query is issued. The oracle requires P1D to reject the queried case and miss the unqueried case; P2/P3 must reject both at the first eligible boundary.
 
 \subsection{System W source-to-result corpus}
-The end-to-end corpus contains 30 programs across arithmetic, pricing, and backend strata. Five cases enable an optimizer that preserves structural validity while violating a declared semantic relation at optimized AIR. Each case/policy pair runs twice in a fresh process, yielding 240 raw records. CIL faults are designed to produce a wrong result under P0/P1; interpreter faults may reach a later backend/runtime failure. P2/P3 must reject at optimized AIR with the expected capability diagnostic. One non-fault program exhibits a pre-existing mixed-type runtime assertion under all policies and is classified separately, not as a control or protocol fault.
+Protocol v3 retains the historical 30 programs as a named study set and adds two matched demand programs. The repaired P07 source and expected value are unchanged. The resulting 32 programs contain 25 valid controls and seven targeted faults. Every case/policy pair runs twice in a fresh process: $32\times5\times2=320$ raw records. The oracle records classification, result, diagnostic family, and first detection boundary. CIL faults can compile to wrong results under non-enforcing policies; interpreter faults can reach a later runtime failure.
 
-\subsection{TensorRules corpus}
-TensorRules freezes two valid programs, two intrinsically invalid programs, and eight post-verification mutations of inner dimensions, output shape, layout, dynamic extent, backend capability, broadcast relation, stale shape, and fact ownership. Four policies produce 48 observations. P2/P3 parity and the additional P3 invocation on clean boundaries are hard gates.
+\subsection{Language T corpus}
+Schema v2 retains 12 historical cases and adds two matched demand cases. The 14 cases comprise two valid programs, two intrinsically invalid programs rejected before post-verification mutation, and ten post-verification faults. Five policies produce 70 observations. P2/P3 classification parity and the P1D queried/unqueried split are hard validation gates.
 
-\subsection{Mechanism-level ablation corpus}
-We construct one minimal counterexample and one matched valid control for each of eight implementation mechanisms: producer identity, source-node identity, selected pipeline order, canonical verifier ownership, conflict rejection, fail-closed unresolved obligations, backend capability contracts, and repeated-occurrence rejection. The full validator must emit the predeclared diagnostic for each counterexample. The ablated validator changes only the tested mechanism and must lose that detection. Both validators must accept the matched control. The executable emits raw JSONL and a validated aggregate; the paper tables are regenerated from that aggregate and byte-compared with the committed sources.
+\subsection{Mechanism ablations}
+Eight minimal counterexamples each have a matched valid control. For producer identity, source identity, selected order, canonical ownership, conflict rejection, unresolved routing, backend capability, and repeated occurrence, the full mechanism must emit the predeclared diagnostic and the corresponding one-mechanism ablation must lose that detection without rejecting the control. These are necessity witnesses for the constructed cases, not estimates of real-world prevalence.
 
-\subsection{Evidence and claim control}
-Raw JSONL is written before assertions. Every artifact contains a source snapshot, environment record, exact checked-out commit, clean-status receipt, and recursive SHA-256 manifest. Hosted CI is an execution and reproducibility provider, not the main performance environment. An external-author kit exists, but no external corpus was available at analysis time.
+\subsection{External and historical validity}
+The external-author packet specifies public information, allowed SDK surface, fault/control schema, freeze/checksum procedure, safe import validation, and complete accounting. No human-authored frozen archive was available, so that result is \texttt{BLOCKED\_EXTERNAL}. In parallel, we predeclare historical-bug inclusion criteria before searching issues and commits: the defect must predate the study, concern a semantic contract/invalidation/ownership/capability relation, have an oracle derivable from the original report or fix, and be reproducible on a historical revision or minimal documented backport. Every eligible case, including misses and invalid replays, remains in the provenance table.
+
+\subsection{Cost evidence}
+We report verifier invocations and boundary-kernel timing only as qualitative work evidence. Hosted CI is a reproducibility provider, not a decision-grade performance host. Whole-compilation timing remains blocked until a pinned-machine protocol records affinity, governor, load, runtime/toolchain, at least 30 independent process replicates per cell, raw distributions, and paired bootstrap intervals.

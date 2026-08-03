@@ -54,18 +54,18 @@ Every commit must mechanically compare protected paths against baseline and reco
 | Result | Status | Observable done condition | Validation |
 |---|---|---|---|
 | Current baseline and CFP | DONE | exact `master` and official rules recorded | GitHub commit comparison; official CFP inspection |
-| Formal obligation model | IN_PROGRESS | definitions, theorem, assumptions, induction sketch agree with code | model/code trace audit; adversarial theorem review |
-| Demand-driven baseline | IN_PROGRESS | executable P1D policy, focused tests, versioned schema and corpus results | targeted tests; boundary, Wist E2E, TensorRules where applicable |
+| Formal obligation model | DONE_LOCAL | definitions, theorem, assumptions, induction sketch agree with code | model/code trace audit; adversarial theorem review |
+| Demand-driven baseline | DONE_LOCAL | executable P1D policy, focused tests, versioned schema and corpus results | targeted tests; boundary, Wist E2E, TensorRules where applicable |
 | Historical bug corpus | IN_PROGRESS | predeclared inclusion criteria and complete provenance table over eligible pre-study bugs | Git history/issues scan; replay/backport accounting |
 | External frozen corpus | BLOCKED_EXTERNAL | validated human-authored frozen archive exists before policy execution | freeze/import receipt and full accounting |
-| P07 repair | PENDING | root cause fixed separately, regression added, E2E corpus versioned and rerun | focused regression; all-policy fresh-process matrix |
-| Running example/figures | PENDING | one code-backed example and two monochrome print-scale figures | source trace; PDF visual inspection |
+| P07 repair | DONE_LOCAL | root cause fixed separately, regression added, E2E corpus versioned and rerun | focused regression; all-policy fresh-process matrix |
+| Running example/figures | IN_PROGRESS | one code-backed example and two monochrome print-scale figures | source trace; PDF visual inspection |
 | Primary-source related work | PENDING | manually verified bibliography and strongest-alternative comparison | DOI/title/venue audit |
 | Pinned-machine performance | BLOCKED_PINNED_MACHINE | machine protocol passes and >=30 process replicates/configuration exist | environment receipt; raw distributions; paired bootstrap CIs |
-| Full paper rewrite | PENDING | 9--11 substantive main-text pages, claims bounded by evidence/theorem | paper preflight; claim audit; visual PDF review |
+| Full paper rewrite | IN_PROGRESS | 9--11 substantive main-text pages, claims bounded by evidence/theorem | paper preflight; claim audit; visual PDF review |
 | Anonymous supplement | PENDING | sanitized deterministic archive, quick/full clean replay | marker + manual identity review; manifests; clean unpack |
 | Three review passes | PENDING | no unresolved blocking scientific/experimental/submission findings | bounded repair and full revalidation |
-| Draft PR | PENDING | branch commits pushed and draft PR accurately describes evidence/blockers | exact-head CI and artifact identities |
+| Draft PR | IN_PROGRESS | branch commits pushed and draft PR accurately describes evidence/blockers | exact-head CI and artifact identities |
 
 ## Initial confirmed gaps
 
@@ -84,3 +84,11 @@ Every commit must mechanically compare protected paths against baseline and reco
 - 2026-08-03: resolved `master` as `7840550ddbc8eb3762bd60babde3427eab02ab48`, three commits ahead of historical evidence source; PR #324 changed runtime/package behavior and canonical tests from 1,579 to 1,597.
 - 2026-08-03: confirmed official second-round deadline and submission-format/anonymity constraints.
 - 2026-08-03: created hardening branch from exact current `master`.
+
+- 2026-08-03: introduced first-class `valid`/`invalid`/`unknown` fact state, canonical-owner verification obligations, fail-closed missing-route diagnostic `UT-PIPELINE-EFFECT-006`, and conservative immediate first-eligible-boundary enforcement. Focused contract tests: 23 passed.
+- 2026-08-03: implemented executable `P1DemandRecomputation`; protocol v4 preserves historical P0--P3 denominators and adds matched queried/unqueried demand cases. Local preliminary boundary result: P1D detects queried `1/2`, P2/P3 detect `2/2`, with `0/120` controls rejected by every policy.
+- 2026-08-03: repaired the independent P07 numeric-promotion defect without changing the historical case or oracle. E2E schema v3 produced 320 fresh-process records; P07 is accepted by all five policies and P2/P3 parity is `32/32`.
+- 2026-08-03: Language T schema v2 produced 70 observations over 14 cases; P1D distinguishes queried/unqueried demand and P2/P3 parity is `14/14`.
+- 2026-08-03: mechanically verified affected assemblies from TRX: Core `546/546`, Modules `305/305`, Dialects `639/639`, all with zero failed/skipped. With unchanged LanguageSdk 82, PlanFuzz 41 and isolated integration 10, canonical total is `1,623`.
+- 2026-08-03: first rewritten paper build is Letter, anonymous review format and 8 pages including references. It is mechanically clean enough for iteration but remains under the target substantive main-text length.
+- 2026-08-03: froze historical-corpus protocol/schema before candidate policy execution; issue/commit discovery and exact pre-fix replay remain in progress. External independence and pinned-machine performance remain explicitly blocked.

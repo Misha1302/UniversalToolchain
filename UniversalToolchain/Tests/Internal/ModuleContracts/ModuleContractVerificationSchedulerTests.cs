@@ -135,11 +135,96 @@ public sealed class ModuleContractVerificationSchedulerTests
         Assert.That(selective.IsSubsetOf(always), Is.True);
     }
 
+
+    [Test]
+    public void DemandRecomputation_WithoutExplicitQuery_LeavesInvalidatedFactPending()
+    {
+        var scheduled = ModuleContractVerificationScheduler.Schedule(
+            ModuleContractVerificationPolicy.P1DemandRecomputation,
+            CompilerPipelineStage.OptimizedAir,
+            Routes(),
+            [AirObligation()],
+            new HashSet<CompilerFactId>(),
+            CompilerFactVerifierRegistry.Core.KnownFacts);
+
+        Assert.That(scheduled, Is.Empty);
+    }
+
+    [Test]
+    public void DemandRecomputation_WithExplicitQuery_SchedulesCanonicalOwner()
+    {
+        var scheduled = ModuleContractVerificationScheduler.Schedule(
+            ModuleContractVerificationPolicy.P1DemandRecomputation,
+            CompilerPipelineStage.OptimizedAir,
+            Routes(),
+            [AirObligation()],
+            new HashSet<CompilerFactId> { KnownCoreCompilerFacts.AirVerified },
+            CompilerFactVerifierRegistry.Core.KnownFacts);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(scheduled, Has.Count.EqualTo(1));
+            Assert.That(scheduled[0].CanonicalOwner, Is.EqualTo("core.air"));
+            Assert.That(scheduled[0].InvalidatedFacts, Is.EqualTo(new[] { KnownCoreCompilerFacts.AirVerified }));
+        });
+    }
+
+    [Test]
+    public void DemandRecomputation_UnknownQuery_FailsClosed()
+    {
+        Assert.Throws<InvalidOperationException>(() => ModuleContractVerificationScheduler.Schedule(
+            ModuleContractVerificationPolicy.P1DemandRecomputation,
+            CompilerPipelineStage.OptimizedAir,
+            Routes(),
+            [AirObligation()],
+            new HashSet<CompilerFactId> { new("test.fact.unknown-query") },
+            CompilerFactVerifierRegistry.Core.KnownFacts));
+    }
+
+    [Test]
+    public void Selective_ObligationPastFirstEligibleBoundary_FailsClosed()
+    {
+        var obligation = AirObligation() with
+        {
+            CreationBoundary = CompilerPipelineStage.Air,
+            FirstEligibleBoundary = CompilerPipelineStage.Air
+        };
+
+        Assert.Throws<InvalidOperationException>(() => ModuleContractVerificationScheduler.Schedule(
+            ModuleContractVerificationPolicy.P2Selective,
+            CompilerPipelineStage.OptimizedAir,
+            Routes(),
+            [obligation],
+            new HashSet<CompilerFactId>(),
+            CompilerFactVerifierRegistry.Core.KnownFacts));
+    }
+
+    [Test]
+    public void Selective_ObligationOwnerMismatch_FailsClosed()
+    {
+        var obligation = AirObligation() with { CanonicalOwner = "extension.claimed-owner" };
+
+        Assert.Throws<InvalidOperationException>(() => ModuleContractVerificationScheduler.Schedule(
+            ModuleContractVerificationPolicy.P2Selective,
+            CompilerPipelineStage.OptimizedAir,
+            Routes(),
+            [obligation],
+            new HashSet<CompilerFactId>(),
+            CompilerFactVerifierRegistry.Core.KnownFacts));
+    }
+
     private static IReadOnlyList<ModuleContractVerifierRoute> Routes() =>
     [
         new(KnownCoreVerifierRules.BytecodeContract, "core.bytecode"),
         new(KnownCoreVerifierRules.AirContract, "core.air")
     ];
+
+    private static VerificationObligation AirObligation() => new(
+        KnownCoreCompilerFacts.AirVerified,
+        KnownCoreVerifierRules.AirContract,
+        "core.air",
+        CompilerPipelineStage.OptimizedAir,
+        CompilerPipelineStage.OptimizedAir);
 
     private static IReadOnlyList<ReverificationRequest> Requests(VerifierRuleId rule, CompilerFactId fact) =>
         [new ReverificationRequest(rule, [fact])];

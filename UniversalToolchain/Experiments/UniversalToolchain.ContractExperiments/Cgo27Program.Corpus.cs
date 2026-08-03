@@ -95,6 +95,23 @@ internal static partial class Cgo27Program
         cases.Add(PipelineCase("FACT-08", ModuleContractDiagnosticCodes.CompilerFactReverificationRequired, PipelineMutation.InvalidateAirIntrinsics));
     }
 
+
+    private static void AddDemandBaselineCases(List<MutationCase> cases)
+    {
+        cases.Add(PipelineCase(
+            "DEMAND-01",
+            ModuleContractDiagnosticCodes.CompilerFactReverificationRequired,
+            PipelineMutation.InvalidateAirVerified,
+            studySet: "demand-v4",
+            explicitDemand: true));
+        cases.Add(PipelineCase(
+            "DEMAND-02",
+            ModuleContractDiagnosticCodes.CompilerFactReverificationRequired,
+            PipelineMutation.InvalidateAirVerified,
+            studySet: "demand-v4",
+            explicitDemand: false));
+    }
+
     private static void AddAirStructureCases(List<MutationCase> cases)
     {
         cases.Add(AirCase("AIR-01", "air-structure", ModuleContractDiagnosticCodes.InvalidAirOperandSchema, static air => air.AppendInstructions([new Instruction(UOpCode.Jmp, ["bad-target"])])));

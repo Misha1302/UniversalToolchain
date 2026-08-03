@@ -7,6 +7,7 @@ public sealed class ModuleContractPipelinePolicyTests
 {
     [TestCase(ModuleContractVerificationPolicy.P0Structural, AirVerificationScope.Structural)]
     [TestCase(ModuleContractVerificationPolicy.P1Invalidation, AirVerificationScope.Structural | AirVerificationScope.Semantic)]
+    [TestCase(ModuleContractVerificationPolicy.P1DemandRecomputation, AirVerificationScope.Structural | AirVerificationScope.Semantic)]
     [TestCase(ModuleContractVerificationPolicy.P2Selective, AirVerificationScope.Structural | AirVerificationScope.Semantic)]
     [TestCase(ModuleContractVerificationPolicy.P3Always, AirVerificationScope.Structural | AirVerificationScope.Semantic)]
     public void InitialAirBoundary_EstablishesExpectedBaseline(
@@ -23,6 +24,7 @@ public sealed class ModuleContractPipelinePolicyTests
 
     [TestCase(ModuleContractVerificationPolicy.P0Structural, AirVerificationScope.Structural)]
     [TestCase(ModuleContractVerificationPolicy.P1Invalidation, AirVerificationScope.Structural)]
+    [TestCase(ModuleContractVerificationPolicy.P1DemandRecomputation, AirVerificationScope.Structural)]
     [TestCase(ModuleContractVerificationPolicy.P2Selective, AirVerificationScope.Structural)]
     [TestCase(ModuleContractVerificationPolicy.P3Always, AirVerificationScope.Structural | AirVerificationScope.Semantic)]
     public void CleanOptimizedBoundary_OnlyAlwaysRunsSemanticVerification(
@@ -75,14 +77,52 @@ public sealed class ModuleContractPipelinePolicyTests
             Is.EqualTo(new[] { AirVerificationScope.Structural }));
     }
 
+
+    [Test]
+    public void DemandRecomputationWithoutDownstreamQuery_DoesNotDischargeSemanticObligation()
+    {
+        var optimizer = new InvalidatingOptimizer();
+        var verifier = new RecordingAirVerifier();
+        var observer = CreateObserver(
+            ModuleContractVerificationPolicy.P1DemandRecomputation,
+            CreateTable(optimizer),
+            verifier);
+
+        observer.AfterOptimizedAir(CreateContext([optimizer]));
+
+        Assert.That(
+            verifier.Requests.Select(static request => request.Scope),
+            Is.EqualTo(new[] { AirVerificationScope.Structural }));
+    }
+
+    [Test]
+    public void DemandRecomputationWithExplicitDownstreamQuery_RecomputesInvalidatedFact()
+    {
+        var optimizer = new InvalidatingOptimizer();
+        var verifier = new RecordingAirVerifier();
+        var observer = CreateObserver(
+            ModuleContractVerificationPolicy.P1DemandRecomputation,
+            CreateTable(optimizer),
+            verifier,
+            new HashSet<CompilerFactId> { KnownCoreCompilerFacts.AirVerified });
+
+        observer.AfterOptimizedAir(CreateContext([optimizer]));
+
+        Assert.That(
+            verifier.Requests.Select(static request => request.Scope),
+            Is.EqualTo(new[] { AirVerificationScope.Structural, AirVerificationScope.Semantic }));
+    }
+
     private static ModuleContractPipelineObserver CreateObserver(
         ModuleContractVerificationPolicy policy,
         SelectedModuleContractTable table,
-        RecordingAirVerifier verifier)
+        RecordingAirVerifier verifier,
+        IReadOnlySet<CompilerFactId>? demandedFacts = null)
     {
         var options = ModuleContractPipelineProfiles.StrictEnforced with
         {
-            VerificationPolicy = policy
+            VerificationPolicy = policy,
+            DemandedFacts = demandedFacts ?? new HashSet<CompilerFactId>()
         };
         return new ModuleContractPipelineObserver(
             options,

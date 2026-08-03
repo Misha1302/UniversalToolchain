@@ -8,6 +8,8 @@ public sealed record CompilerFactState
     {
         Available = available.ArgNotNull();
         Invalidated = invalidated.ArgNotNull();
+        if (Available.Overlaps(Invalidated))
+            throw new ArgumentException("A compiler fact cannot be both valid and invalid.");
     }
 
     public static CompilerFactState Empty { get; } = new(
@@ -17,4 +19,13 @@ public sealed record CompilerFactState
     public IReadOnlySet<CompilerFactId> Available { get; }
 
     public IReadOnlySet<CompilerFactId> Invalidated { get; }
+
+    public CompilerFactValidity GetValidity(CompilerFactId factId)
+    {
+        if (Available.Contains(factId))
+            return CompilerFactValidity.Valid;
+        return Invalidated.Contains(factId)
+            ? CompilerFactValidity.Invalid
+            : CompilerFactValidity.Unknown;
+    }
 }

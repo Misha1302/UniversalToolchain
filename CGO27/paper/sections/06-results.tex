@@ -1,29 +1,37 @@
 \section{Results}
-\subsection{Boundary detection}
-Table~\ref{tab:boundary} reports operator-level detection. P0 detects structural AIR faults and some target-capability faults but misses ownership, bytecode metadata, and fact-reverification relations. P1 closes most of this gap, but misses four primary operators whose invalidations require semantic discharge. P2 and P3 detect every evaluated primary/challenge operator and reject no valid control.
+\subsection{RQ1: structural versus selected-system validity}
+Table~\ref{tab:boundary} preserves the historical primary/challenge denominators and reports the new demand set separately. P0 detects 12/32 primary shapes and 1/10 challenge shapes. Passive invalidation P1 detects 28/32 and 10/10 but does not discharge the four remaining primary obligations. P2/P3 detect every evaluated primary and challenge case. No policy rejects a valid control in protocol v4.
 
 \begin{table}[t]
-\caption{Frozen boundary results. Controls are valid runs rejected by the policy.}
+\caption{Boundary protocol v4. Primary/challenge are historical denominators; demand and controls are v4 study sets.}
 \label{tab:boundary}
 \small
-\begin{tabular}{@{}lrrr@{}}
+\begin{tabular}{@{}lrrrr@{}}
 \toprule
-Policy & Primary & Chall. & Control FP \\
+Policy & Primary & Chall. & Demand & Control FP \\
 \midrule
-P0 structural & 12/32 & 1/10 & 0/100 \\
-P1 invalidation & 28/32 & 10/10 & 0/100 \\
-P2 selective & 32/32 & 10/10 & 0/100 \\
-P3 always & 32/32 & 10/10 & 0/100 \\
+P0 structural & 12/32 & 1/10 & 0/2 & 0/120 \\
+P1 invalidation & 28/32 & 10/10 & 0/2 & 0/120 \\
+P1D demand & 28/32 & 10/10 & 1/2 & 0/120 \\
+P2 selective & 32/32 & 10/10 & 2/2 & 0/120 \\
+P3 always & 32/32 & 10/10 & 2/2 & 0/120 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-The paired primary comparison has 20 operators detected by P2 but not P0 (two-sided exact McNemar $p=1.91\times10^{-6}$). P2 detects four operators missed by P1; this small fixed set yields $p=0.125$ and should not be read as a population estimate. P2 and P3 have no discordant evaluated operator.
+The primary paired difference between P2 and P0 is 20 cases; between P2 and P1/P1D it is four. These are absolute discordance counts on a fixed constructed corpus, not population estimates. P2 and P3 have no discordant evaluated boundary case.
 
-\subsection{Source-to-result behavior}
-All five targeted System W faults expose the validity gap. Under CIL, P0/P1 accept compilation and produce result 1 instead of the expected result. Under the interpreter, P0/P1 reach a later runtime/backend exception. P2/P3 reject all targeted cases at the optimized-AIR contract boundary before backend execution. Across all 30 source programs, P2/P3 classification, first boundary, diagnostics, and result agree in 30/30 cases.
+\subsection{RQ2: demand versus obligation}
+The matched demand cases isolate the scheduling distinction. Both invalidate the same selected capability fact and use the same production verifier route. In the queried case, P1D recomputes and rejects. In the unqueried case, P1D proceeds to a wrong result. P2 rejects both at optimized AIR because the obligation deadline is independent of consumer demand. This is the minimal executable counterexample to treating lazy invalidation as equivalent to boundary enforcement.
 
-The 24 valid controls produce expected results under all policies. The remaining program, P07, fails identically under all four policies without fault injection; retaining it as a separate baseline runtime failure avoids both hiding a product defect and miscounting it as a protocol false positive.
+\subsection{RQ3: source-to-result behavior}
+The source-to-result run produced and validated 320 raw fresh-process records. All 25 valid controls, including repaired P07, return the expected result under all five policies. P1 and P0 miss all seven targeted faults. P1D rejects the one explicitly queried demand fault but otherwise exhibits the same wrong-result or late-failure behavior as P1. P2/P3 reject all seven targeted faults before backend execution. Across all 32 programs, P2 and P3 agree on classification, diagnostic family, and first detection boundary (32/32).
 
-\subsection{Second language}
-In TensorRules, the two valid programs succeed under every policy, and the two intrinsically invalid programs are rejected during initial shape verification. All eight post-verification faults produce wrong results under P0/P1 and are rejected with the expected semantic diagnostic under P2/P3. Selective/always parity is 12/12. On the two clean valid boundaries, P2 invokes no semantic verifier and P3 invokes one, confirming distinct schedules through the public SDK.
+P07 is no longer an excluded baseline failure: the unchanged expression \texttt{x * 2 + y} with $x=5$, $y=3$ returns 13 under CIL and interpreter. Historical evidence recording the previous all-policy assertion remains immutable and is linked from the new protocol receipt.
+
+P2 invokes fewer semantic routes than P3 on clean boundaries because P3 also runs routes without due obligations. Boundary-kernel tick counts are retained as qualitative work evidence only; no whole-compilation speedup is claimed.
+
+\subsection{RQ4: public-SDK language and external validity}
+Language T schema v2 produced 70 observations over 14 cases. P2/P3 agree on all 14 classifications. Both reject the ten post-verification faults; P1D rejects the queried demand fault and misses the matched unqueried one. The result shows that the scheduling distinction survives a different shape/layout fact vocabulary through the public SDK, but the package and cases remain study-authored and share the framework scheduler.
+
+No human-authored frozen corpus is available. External independence therefore remains blocked rather than inferred from Language T or model-generated cases. Historical-bug results are reported only after complete predeclared provenance accounting.

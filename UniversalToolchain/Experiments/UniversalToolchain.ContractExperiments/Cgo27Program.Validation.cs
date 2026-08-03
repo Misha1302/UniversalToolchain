@@ -94,6 +94,33 @@ internal static partial class Cgo27Program
         if (alwaysCleanFacts <= selectiveCleanFacts)
             throw new InvalidOperationException("AlwaysVerify must invoke more semantic verifiers than Selective on clean fact boundaries.");
 
+
+        var demandStable = results
+            .Where(static result => result.StudySet == "demand-v4")
+            .GroupBy(static result => (result.MutationId, result.Policy))
+            .Select(static group => group.First())
+            .ToArray();
+        var queriedDemand = demandStable.Single(static result =>
+            result.MutationId == "DEMAND-01" &&
+            result.Policy == nameof(ExperimentPolicy.P1D_DEMAND_RECOMPUTATION));
+        var unqueriedDemand = demandStable.Single(static result =>
+            result.MutationId == "DEMAND-02" &&
+            result.Policy == nameof(ExperimentPolicy.P1D_DEMAND_RECOMPUTATION));
+        if (!queriedDemand.Detected || unqueriedDemand.Detected)
+        {
+            throw new InvalidOperationException(
+                "Demand baseline must detect the queried invalidation and miss the otherwise identical unqueried invalidation.");
+        }
+        foreach (var caseId in new[] { "DEMAND-01", "DEMAND-02" })
+        {
+            var selective = demandStable.Single(result =>
+                result.MutationId == caseId && result.Policy == nameof(ExperimentPolicy.P2_SELECTIVE));
+            var always = demandStable.Single(result =>
+                result.MutationId == caseId && result.Policy == nameof(ExperimentPolicy.P3_ALWAYS));
+            if (!selective.Detected || !always.Detected)
+                throw new InvalidOperationException($"Obligation-enforcing policies must detect {caseId}.");
+        }
+
         var invalidationCases = new[] { "FACT-05", "FACT-06", "FACT-07", "FACT-08" };
         foreach (var caseId in invalidationCases)
         {

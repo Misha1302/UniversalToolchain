@@ -36,7 +36,7 @@
 
 ## Проверка
 
-Локальный exact test contract: **1,597 passed, 0 failed, 0 skipped**. Обе solution собраны в `Release` с **0 warnings, 0 errors**.
+Локальный exact test contract для текущей hardening-ветки: **1,623 passed, 0 failed, 0 skipped**. Обе solution собраны в `Release` с **0 warnings, 0 errors**.
 
 Fresh-process SafeMath receipts подтверждают `DIALECT_INSPECT=PASS`, Interpreter/CIL result `255`, одинаковую CLR value category, negative dialect rejection, hostile preload rejection и отсутствие незарегистрированного default-context fallback.
 

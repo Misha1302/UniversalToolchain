@@ -60,7 +60,7 @@ internal static class Program
         File.WriteAllText(Path.Combine(output, "results.json"), JsonSerializer.Serialize(result, JsonOptions) + "\n");
         File.WriteAllText(Path.Combine(output, "summary.json"), JsonSerializer.Serialize(new
         {
-            schemaVersion = 1,
+            schemaVersion = 2,
             status = "VALIDATED",
             languageId = "TensorRules",
             validExamples = result.ValidExamples,
@@ -68,6 +68,13 @@ internal static class Program
             faultCases = result.FaultCases,
             observations = result.Observations,
             selectiveAlwaysParity = result.SelectiveAlwaysParity,
+            historicalV1Cases = cases.Count(static item => item.StudySet == "historical-v1"),
+            demandV2Cases = cases.Count(static item => item.StudySet == "demand-v2"),
+            demandBaseline = new
+            {
+                queried = observations.Single(static item => item.CaseId == "demand-query" && item.Policy == TensorPolicy.P1D_DEMAND_RECOMPUTATION).Classification,
+                unqueried = observations.Single(static item => item.CaseId == "demand-no-query" && item.Policy == TensorPolicy.P1D_DEMAND_RECOMPUTATION).Classification
+            },
             publicSdkBoundary = result.PublicSdkBoundary,
             independentlyAuthored = false,
             label = "second-language-package"
@@ -115,7 +122,8 @@ internal static class Program
         var arguments = new Dictionary<string, object?>(StringComparer.Ordinal)
         {
             ["policy"] = policy.ToString(),
-            ["fault"] = @case.FaultId
+            ["fault"] = @case.FaultId,
+            ["demand"] = @case.ExplicitDemand
         };
         try
         {
@@ -124,7 +132,9 @@ internal static class Program
                 ?? throw new InvalidOperationException("TensorRules backend returned an unexpected value type.");
             return new Observation(
                 @case.Id,
+                @case.StudySet,
                 policy,
+                @case.ExplicitDemand,
                 execution.Output == @case.ExpectedOutput ? "accepted" : "wrong-result",
                 execution.Output,
                 null,
@@ -133,7 +143,15 @@ internal static class Program
         catch (Exception exception)
         {
             var failure = FindFailure(exception);
-            return new Observation(@case.Id, policy, "rejected", null, failure.Code, failure.VerifierInvocations);
+            return new Observation(
+                @case.Id,
+                @case.StudySet,
+                policy,
+                @case.ExplicitDemand,
+                "rejected",
+                null,
+                failure.Code,
+                failure.VerifierInvocations);
         }
     }
 
@@ -149,14 +167,18 @@ internal static class Program
 
     private static void Validate(IReadOnlyList<TensorCase> cases, IReadOnlyList<Observation> observations)
     {
-        if (cases.Count != 12 || observations.Count != 48)
+        if (cases.Count != 14 || observations.Count != 70)
             throw new InvalidOperationException("TensorRules study cardinality changed.");
+
+        if (cases.Count(static item => item.StudySet == "historical-v1") != 12 ||
+            cases.Count(static item => item.StudySet == "demand-v2") != 2)
+            throw new InvalidOperationException("TensorRules versioned study-set cardinality changed.");
 
         foreach (var @case in cases)
         {
             var rows = observations.Where(item => item.CaseId == @case.Id).ToArray();
-            if (rows.Length != 4)
-                throw new InvalidOperationException($"{@case.Id}: expected four policies.");
+            if (rows.Length != 5)
+                throw new InvalidOperationException($"{@case.Id}: expected five policies.");
             var selective = rows.Single(item => item.Policy == TensorPolicy.P2_SELECTIVE);
             var always = rows.Single(item => item.Policy == TensorPolicy.P3_ALWAYS);
             if ((selective.Classification, selective.Output, selective.DiagnosticCode) !=
@@ -179,6 +201,10 @@ internal static class Program
                         if (row.Classification != "wrong-result" || row.Output == @case.ExpectedOutput)
                             throw new InvalidOperationException($"{@case.Id}/{row.Policy}: no-protocol fault symptom missing.");
                         break;
+                    case CaseRole.Fault when row.Policy == TensorPolicy.P1D_DEMAND_RECOMPUTATION && !@case.ExplicitDemand:
+                        if (row.Classification != "wrong-result" || row.Output == @case.ExpectedOutput)
+                            throw new InvalidOperationException($"{@case.Id}/{row.Policy}: unqueried demand baseline unexpectedly verified.");
+                        break;
                     case CaseRole.Fault:
                         if (row.Classification != "rejected" || row.DiagnosticCode != @case.ExpectedDiagnostic)
                             throw new InvalidOperationException($"{@case.Id}/{row.Policy}: protocol did not reject the fault.");
@@ -194,29 +220,39 @@ internal static class Program
             if (selective.VerifierInvocations != 0 || always.VerifierInvocations != 1)
                 throw new InvalidOperationException($"{valid.Id}: clean-boundary policy scheduling is not distinct.");
         }
+
+
+        var queried = observations.Single(static item =>
+            item.CaseId == "demand-query" && item.Policy == TensorPolicy.P1D_DEMAND_RECOMPUTATION);
+        var unqueried = observations.Single(static item =>
+            item.CaseId == "demand-no-query" && item.Policy == TensorPolicy.P1D_DEMAND_RECOMPUTATION);
+        if (queried.Classification != "rejected" || unqueried.Classification != "wrong-result")
+            throw new InvalidOperationException("TensorRules demand-baseline counterexample changed.");
     }
 
     private static IReadOnlyList<TensorCase> BuildCases() =>
     [
-        new("valid-1", CaseRole.Valid, "matmul 2x3 3x4 row", "2x4:row", "none", null),
-        new("valid-2", CaseRole.Valid, "matmul 1x8 8x2 column", "1x2:column", "none", null),
-        new("invalid-shape", CaseRole.Invalid, "matmul 2x3 4x5 row", null, "none", "TR-SHAPE-001"),
-        new("invalid-extent", CaseRole.Invalid, "matmul 0x3 3x4 row", null, "none", "TR-SHAPE-002"),
-        new("fault-inner", CaseRole.Fault, "matmul 2x3 3x4 row", "2x4:row", "inner", "TR-SHAPE-001"),
-        new("fault-output", CaseRole.Fault, "matmul 2x3 3x4 row", "2x4:row", "output", "TR-SHAPE-002"),
-        new("fault-layout", CaseRole.Fault, "matmul 2x3 3x4 row", "2x4:row", "layout", "TR-LAYOUT-001"),
-        new("fault-dynamic", CaseRole.Fault, "matmul 2x3 3x4 row", "2x4:row", "dynamic", "TR-SHAPE-002"),
-        new("fault-backend", CaseRole.Fault, "matmul 2x3 3x4 row", "2x4:row", "backend", "TR-BACKEND-001"),
-        new("fault-broadcast", CaseRole.Fault, "matmul 2x3 3x4 row", "2x4:row", "broadcast", "TR-SHAPE-001"),
-        new("fault-stale", CaseRole.Fault, "matmul 2x3 3x4 row", "2x4:row", "stale", "TR-SHAPE-002"),
-        new("fault-owner", CaseRole.Fault, "matmul 2x3 3x4 row", "2x4:row", "owner", "TR-OWNER-001")
+        new("valid-1", "historical-v1", CaseRole.Valid, "matmul 2x3 3x4 row", "2x4:row", "none", null, false),
+        new("valid-2", "historical-v1", CaseRole.Valid, "matmul 1x8 8x2 column", "1x2:column", "none", null, false),
+        new("invalid-shape", "historical-v1", CaseRole.Invalid, "matmul 2x3 4x5 row", null, "none", "TR-SHAPE-001", false),
+        new("invalid-extent", "historical-v1", CaseRole.Invalid, "matmul 0x3 3x4 row", null, "none", "TR-SHAPE-002", false),
+        new("fault-inner", "historical-v1", CaseRole.Fault, "matmul 2x3 3x4 row", "2x4:row", "inner", "TR-SHAPE-001", false),
+        new("fault-output", "historical-v1", CaseRole.Fault, "matmul 2x3 3x4 row", "2x4:row", "output", "TR-SHAPE-002", false),
+        new("fault-layout", "historical-v1", CaseRole.Fault, "matmul 2x3 3x4 row", "2x4:row", "layout", "TR-LAYOUT-001", false),
+        new("fault-dynamic", "historical-v1", CaseRole.Fault, "matmul 2x3 3x4 row", "2x4:row", "dynamic", "TR-SHAPE-002", false),
+        new("fault-backend", "historical-v1", CaseRole.Fault, "matmul 2x3 3x4 row", "2x4:row", "backend", "TR-BACKEND-001", false),
+        new("fault-broadcast", "historical-v1", CaseRole.Fault, "matmul 2x3 3x4 row", "2x4:row", "broadcast", "TR-SHAPE-001", false),
+        new("fault-stale", "historical-v1", CaseRole.Fault, "matmul 2x3 3x4 row", "2x4:row", "stale", "TR-SHAPE-002", false),
+        new("fault-owner", "historical-v1", CaseRole.Fault, "matmul 2x3 3x4 row", "2x4:row", "owner", "TR-OWNER-001", false),
+        new("demand-query", "demand-v2", CaseRole.Fault, "matmul 2x3 3x4 row", "2x4:row", "stale", "TR-SHAPE-002", true),
+        new("demand-no-query", "demand-v2", CaseRole.Fault, "matmul 2x3 3x4 row", "2x4:row", "stale", "TR-SHAPE-002", false)
     ];
 }
 
-internal enum TensorPolicy { P0_STRUCTURAL, P1_INVALIDATION, P2_SELECTIVE, P3_ALWAYS }
+internal enum TensorPolicy { P0_STRUCTURAL, P1_INVALIDATION, P1D_DEMAND_RECOMPUTATION, P2_SELECTIVE, P3_ALWAYS }
 internal enum CaseRole { Valid, Invalid, Fault }
-internal sealed record TensorCase(string Id, CaseRole Role, string Source, string? ExpectedOutput, string FaultId, string? ExpectedDiagnostic);
-internal sealed record Observation(string CaseId, TensorPolicy Policy, string Classification, string? Output, string? DiagnosticCode, int VerifierInvocations);
+internal sealed record TensorCase(string Id, string StudySet, CaseRole Role, string Source, string? ExpectedOutput, string FaultId, string? ExpectedDiagnostic, bool ExplicitDemand);
+internal sealed record Observation(string CaseId, string StudySet, TensorPolicy Policy, bool DemandQuery, string Classification, string? Output, string? DiagnosticCode, int VerifierInvocations);
 internal sealed record StudyResult(int ValidExamples, int InvalidExamples, int FaultCases, int Observations, int SelectiveAlwaysParity, bool PublicSdkBoundary, int WistReferences, IReadOnlyList<TensorCase> Cases, IReadOnlyList<Observation> Results);
 internal sealed record TensorSyntax(int LeftRows, int Inner, int RightRows, int RightColumns, string Layout)
 {
@@ -285,9 +321,12 @@ internal static class TensorPolicyPass
     {
         var policy = ParsePolicy(context.Request.Arguments);
         var fault = ReadString(context.Request.Arguments, "fault", "none");
+        var demand = ReadBool(context.Request.Arguments, "demand");
         var mutated = ApplyFault(input, fault);
         var invalidated = fault != "none";
-        var shouldVerify = policy == TensorPolicy.P3_ALWAYS || (policy == TensorPolicy.P2_SELECTIVE && invalidated);
+        var shouldVerify = policy == TensorPolicy.P3_ALWAYS ||
+                           policy == TensorPolicy.P2_SELECTIVE && invalidated ||
+                           policy == TensorPolicy.P1D_DEMAND_RECOMPUTATION && invalidated && demand;
         if (!shouldVerify)
             return mutated with { VerifierInvocations = 0 };
         TensorVerifier.VerifySemantic(mutated, 1);
@@ -304,6 +343,9 @@ internal static class TensorPolicyPass
 
     private static string ReadString(IReadOnlyDictionary<string, object?> arguments, string key, string fallback) =>
         arguments.TryGetValue(key, out var value) && value is string text ? text : fallback;
+
+    private static bool ReadBool(IReadOnlyDictionary<string, object?> arguments, string key) =>
+        arguments.TryGetValue(key, out var value) && value is true;
 
     private static TensorPlan ApplyFault(TensorPlan plan, string fault) => fault switch
     {

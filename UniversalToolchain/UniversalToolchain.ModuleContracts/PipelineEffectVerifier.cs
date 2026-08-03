@@ -9,7 +9,7 @@ public sealed class PipelineEffectVerifier
         var available = request.InputFacts.Available.ToHashSet();
         var invalidated = request.InputFacts.Invalidated.ToHashSet();
         var diagnostics = new List<ToolchainDiagnostic>();
-        var reverification = new Dictionary<VerifierRuleId, List<CompilerFactId>>();
+        var obligations = new HashSet<VerificationObligation>();
 
         var effects = request.ContractTable.PipelineEffectFacets
             .SelectMany(static facet => facet.Effects.Select(effect => (facet.ModuleId, effect)))
@@ -81,10 +81,11 @@ public sealed class PipelineEffectVerifier
             ApplyEffect(
                 item.ModuleId,
                 item.effect,
+                request.Stage,
                 available,
                 invalidated,
                 diagnostics,
-                reverification,
+                obligations,
                 request.VerifierRegistry);
         }
 
@@ -94,11 +95,10 @@ public sealed class PipelineEffectVerifier
                 .OrderBy(static x => x.Code, StringComparer.Ordinal)
                 .ThenBy(static x => x.Message, StringComparer.Ordinal)
                 .ToArray(),
-            reverification
-                .OrderBy(static x => x.Key.Value, StringComparer.Ordinal)
-                .Select(static x => new ReverificationRequest(
-                    x.Key,
-                    x.Value.OrderBy(static fact => fact.Value, StringComparer.Ordinal).Distinct().ToArray()))
+            obligations
+                .OrderBy(static obligation => obligation.FirstEligibleBoundary)
+                .ThenBy(static obligation => obligation.RuleId.Value, StringComparer.Ordinal)
+                .ThenBy(static obligation => obligation.FactId.Value, StringComparer.Ordinal)
                 .ToArray());
     }
 
@@ -117,10 +117,11 @@ public sealed class PipelineEffectVerifier
     private static void ApplyEffect(
         ModuleId moduleId,
         PipelineEffectContract effect,
+        CompilerPipelineStage creationBoundary,
         HashSet<CompilerFactId> available,
         HashSet<CompilerFactId> invalidated,
         List<ToolchainDiagnostic> diagnostics,
-        Dictionary<VerifierRuleId, List<CompilerFactId>> reverification,
+        HashSet<VerificationObligation> obligations,
         CompilerFactVerifierRegistry verifierRegistry)
     {
         foreach (var fact in effect.Preserves.Where(fact => !available.Contains(fact)))
@@ -138,22 +139,31 @@ public sealed class PipelineEffectVerifier
             available.Remove(fact);
             invalidated.Add(fact);
 
-            if (!verifierRegistry.TryGetVerifier(fact, out var verifierRule))
-                continue;
-
-            if (!reverification.TryGetValue(verifierRule, out var facts))
+            if (!verifierRegistry.TryGetRoute(fact, out var route))
             {
-                facts = [];
-                reverification[verifierRule] = facts;
+                diagnostics.Add(new ToolchainDiagnostic(
+                    ModuleContractDiagnosticCodes.MissingCompilerFactVerifierRoute,
+                    ToolchainDiagnosticSeverity.Error,
+                    $"Module '{moduleId}' pipeline effect '{effect.EffectId}' invalidates compiler fact '{fact}', but no canonical verifier route is registered.",
+                    null,
+                    [new ToolchainDiagnosticHint(
+                        "Register exactly one executable verifier route and canonical owner for the fact, or stop declaring the invalidation.")]));
+                continue;
             }
 
-            facts.Add(fact);
+            obligations.Add(new VerificationObligation(
+                fact,
+                route.RuleId,
+                route.CanonicalOwner,
+                creationBoundary,
+                creationBoundary));
         }
 
         foreach (var fact in effect.Produces)
         {
             available.Add(fact);
             invalidated.Remove(fact);
+            obligations.RemoveWhere(obligation => obligation.FactId == fact);
         }
     }
 }

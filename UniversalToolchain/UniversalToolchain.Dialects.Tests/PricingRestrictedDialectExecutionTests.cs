@@ -8,6 +8,8 @@ public sealed class PricingRestrictedDialectExecutionTests
 {
     private const string PricingFormula = "price * 0.9 + fee";
 
+    private const string MixedParameterLiteralFormula = "x * 2 + y";
+
     private const string StatementStyleBindingFormula = """
                                                         let discount = 0.9
                                                         price * discount + fee
@@ -70,6 +72,34 @@ public sealed class PricingRestrictedDialectExecutionTests
         {
             Assert.That(compilerResult, Is.EqualTo(interpreterResult).Within(1e-9));
             Assert.That(compilerResult, Is.EqualTo(95.0d).Within(1e-9));
+        });
+    }
+
+    [Test]
+    public void PricingRestricted_Dialect_MixedDoubleParametersAndIntegerLiteral_HasBackendParity()
+    {
+        using var host = CreatePricingHost();
+        var bindings = new OrderedDictionary<string, Type>
+        {
+            ["x"] = typeof(double),
+            ["y"] = typeof(double)
+        };
+        var arguments = new Dictionary<string, object?>
+        {
+            ["x"] = 5.0d,
+            ["y"] = 3.0d
+        };
+
+        var compilerArtifact = host.Compile(MixedParameterLiteralFormula, bindings, "cil");
+        var interpreterArtifact = host.Compile(MixedParameterLiteralFormula, bindings, "interpreter");
+        var compilerResult = BackendParityInfrastructure.AsNumber(host.Run(compilerArtifact, arguments));
+        var interpreterResult = BackendParityInfrastructure.AsNumber(host.Run(interpreterArtifact, arguments));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(compilerResult, Is.EqualTo(13.0d).Within(1e-9));
+            Assert.That(interpreterResult, Is.EqualTo(13.0d).Within(1e-9));
+            Assert.That(compilerResult, Is.EqualTo(interpreterResult).Within(1e-9));
         });
     }
 

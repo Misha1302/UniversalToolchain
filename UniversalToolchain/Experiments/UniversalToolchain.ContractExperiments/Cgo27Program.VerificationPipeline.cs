@@ -65,8 +65,13 @@ internal static partial class Cgo27Program
         PipelineMutation Mutation,
         string CaseId);
 
-    private static MutationCase PipelineCase(string id, string expectedCode, PipelineMutation mutation) =>
-        new(id, id, "primary", "facts-order-reverification", expectedCode, mode => Timed(mode, "pipeline-effects", () =>
+    private static MutationCase PipelineCase(
+        string id,
+        string expectedCode,
+        PipelineMutation mutation,
+        string studySet = "primary",
+        bool explicitDemand = false) =>
+        new(id, id, studySet, "facts-order-reverification", expectedCode, mode => Timed(mode, "pipeline-effects", () =>
         {
             if (mode == ExperimentPolicy.P0_STRUCTURAL)
                 return (false, (string?)null);
@@ -79,8 +84,12 @@ internal static partial class Cgo27Program
 
             var scheduled = VerificationPolicyScheduler.Schedule(
                 mode,
+                execution.Stage,
                 AvailableRoutes(execution.Stage),
-                result.ReverificationRequests);
+                result.ReverificationRequests,
+                explicitDemand
+                    ? result.ReverificationRequests.SelectMany(static request => request.InvalidatedFacts).ToHashSet()
+                    : new HashSet<CompilerFactId>());
             foreach (var invocation in scheduled)
             {
                 var succeeded = ExecuteSemanticReverification(
@@ -94,7 +103,7 @@ internal static partial class Cgo27Program
             }
 
             return (false, (string?)null);
-        }));
+        }), explicitDemand);
 
 
     private static IReadOnlyList<VerifierRouteDescriptor> AvailableRoutes(CompilerPipelineStage stage) =>

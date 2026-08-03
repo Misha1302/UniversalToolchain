@@ -11,7 +11,14 @@ using UniversalToolchain.ModuleContracts;
 
 namespace UniversalToolchain.ContractExperiments;
 
-internal enum ExperimentPolicy { P0_STRUCTURAL, P1_INVALIDATION, P2_SELECTIVE, P3_ALWAYS }
+internal enum ExperimentPolicy
+{
+    P0_STRUCTURAL,
+    P1_INVALIDATION,
+    P1D_DEMAND_RECOMPUTATION,
+    P2_SELECTIVE,
+    P3_ALWAYS
+}
 
 internal sealed record MutationCase(
     string Id,
@@ -19,7 +26,8 @@ internal sealed record MutationCase(
     string StudySet,
     string Family,
     string ExpectedCode,
-    Func<ExperimentPolicy, ExperimentOutcome> Execute);
+    Func<ExperimentPolicy, ExperimentOutcome> Execute,
+    bool ExplicitDemand = false);
 
 internal sealed record TelemetrySnapshot(
     int VerifierInvocationsTotal,
@@ -56,12 +64,13 @@ internal sealed record ResultRecord(
     long ElapsedTicks,
     string? ExpectedDiagnosticCode,
     string ExpectedBoundary,
-    TelemetrySnapshot Telemetry);
+    TelemetrySnapshot Telemetry,
+    bool ExplicitDemand);
 
 internal static partial class Cgo27Program
 {
     private const int Repetitions = 3;
-    private const int RawSchemaVersion = 3;
+    private const int RawSchemaVersion = 4;
 
     [ThreadStatic]
     private static TelemetryCollector? _activeTelemetry;
@@ -96,7 +105,7 @@ internal static partial class Cgo27Program
         public void RecordPipeline(PipelineEffectValidationResult result)
         {
             FactsInvalidated += result.OutputFacts.Invalidated.Count;
-            ObligationsCreated += result.ReverificationRequests.Sum(static request => request.InvalidatedFacts.Count);
+            ObligationsCreated += result.VerificationObligations.Count;
         }
 
         public void RecordReverification(int factCount, bool succeeded)
@@ -213,7 +222,8 @@ internal static partial class Cgo27Program
             outcome.ElapsedTicks,
             mutation.ExpectedCode,
             ExpectedBoundary(mutation.Id, mutation.Family),
-            outcome.Telemetry);
+            outcome.Telemetry,
+            mutation.ExplicitDemand);
 
     private static ResultRecord CreateControlRecord(
         string runId,
@@ -237,7 +247,8 @@ internal static partial class Cgo27Program
             outcome.ElapsedTicks,
             null,
             ExpectedBoundary(caseId, family),
-            outcome.Telemetry);
+            outcome.Telemetry,
+            family == "clean-demand");
 
     private static string ExpectedBoundary(string caseId, string family)
     {
@@ -245,7 +256,8 @@ internal static partial class Cgo27Program
             return caseId is "OWN-05" or "OWN-06" ? "ast-ownership" : "contract-table";
         if (caseId.StartsWith("BYTE-", StringComparison.Ordinal))
             return "bytecode";
-        if (caseId.StartsWith("FACT-", StringComparison.Ordinal))
+        if (caseId.StartsWith("FACT-", StringComparison.Ordinal) ||
+            caseId.StartsWith("DEMAND-", StringComparison.Ordinal))
             return "pipeline-effects";
         if (caseId.StartsWith("AIR-", StringComparison.Ordinal))
             return "air-structure";
@@ -303,6 +315,7 @@ internal static partial class Cgo27Program
             ["seed"] = 0,
             ["measurement_scope"] = "boundary-kernel",
             ["operator_id"] = result.OperatorId,
+            ["demand_query"] = result.ExplicitDemand,
             ["detected"] = result.Detected
         };
         return JsonSerializer.Serialize(payload);
@@ -319,7 +332,7 @@ internal static partial class Cgo27Program
             "verification_elapsed_ns", "pipeline_elapsed_ns", "whole_compilation_elapsed_ns",
             "allocated_bytes", "peak_working_set_bytes", "obligations_created", "obligations_discharged",
             "obligations_failed", "facts_invalidated", "facts_reverified", "process_exit_code",
-            "repetition", "seed"
+            "repetition", "seed", "demand_query"
         };
         foreach (var result in results)
         {
@@ -350,6 +363,7 @@ internal static partial class Cgo27Program
         AddAirStructureCases(cases);
         AddCapabilityCases(cases);
         AddChallengeCases(cases);
+        AddDemandBaselineCases(cases);
         return cases;
     }
 

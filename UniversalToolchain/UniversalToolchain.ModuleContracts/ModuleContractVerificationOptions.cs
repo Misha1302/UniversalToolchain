@@ -28,6 +28,7 @@ public sealed class ModuleContractVerificationOptions
                 pipeline.VerificationPolicy,
                 "Unknown module-contract verification policy.");
         }
+        var demandedFacts = pipeline.DemandedFacts ?? throw new ArgumentNullException(nameof(PipelineOptions));
         var sink = DiagnosticSink ?? throw new ArgumentNullException(nameof(DiagnosticSink));
 
         if (Mode != ModuleContractVerificationMode.Off && sink is NullModuleContractDiagnosticSink)
@@ -43,15 +44,21 @@ public sealed class ModuleContractVerificationOptions
             {
                 Enabled = true,
                 BytecodeProfile = VerificationSeverityProfile.Strict,
-                AirProfile = VerificationSeverityProfile.Strict
+                AirProfile = VerificationSeverityProfile.Strict,
+                DemandedFacts = demandedFacts.ToHashSet()
             },
             ModuleContractVerificationMode.Warn => pipeline with
             {
                 Enabled = true,
                 BytecodeProfile = VerificationSeverityProfile.Warn,
-                AirProfile = VerificationSeverityProfile.Warn
+                AirProfile = VerificationSeverityProfile.Warn,
+                DemandedFacts = demandedFacts.ToHashSet()
             },
-            ModuleContractVerificationMode.Off => pipeline with { Enabled = false },
+            ModuleContractVerificationMode.Off => pipeline with
+            {
+                Enabled = false,
+                DemandedFacts = demandedFacts.ToHashSet()
+            },
             _ => throw new ArgumentOutOfRangeException(nameof(Mode), Mode, "Unknown verification mode.")
         };
 

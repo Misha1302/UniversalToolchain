@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "totalPassed": 1597,
+  "totalPassed": 1623,
   "main": [
     {
       "label": "Core",
@@ -8,7 +8,7 @@
       "runner": "assembly",
       "path": "UniversalToolchain/Tests/bin/Release/net10.0/Tests.dll",
       "timeoutSeconds": 480,
-      "expectedPassed": 534
+      "expectedPassed": 546
     },
     {
       "label": "Modules",
@@ -16,7 +16,7 @@
       "runner": "project",
       "path": "UniversalToolchain/UniversalToolchain.Modules.Tests/UniversalToolchain.Modules.Tests.csproj",
       "timeoutSeconds": 600,
-      "expectedPassed": 292
+      "expectedPassed": 305
     },
     {
       "label": "Dialects",
@@ -24,7 +24,7 @@
       "runner": "project",
       "path": "UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolchain.Dialects.Tests.csproj",
       "timeoutSeconds": 600,
-      "expectedPassed": 638
+      "expectedPassed": 639
     },
     {
       "label": "LanguageSdk",

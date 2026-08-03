@@ -27,20 +27,21 @@ if [[ -z "$dll" || ! -f "$dll" ]]; then
 fi
 
 : > "$output/probe-results.jsonl"
-for case_id in C01 C02 P01 P02 B01; do
-  for policy in P0_STRUCTURAL P1_INVALIDATION P2_SELECTIVE P3_ALWAYS; do
+for case_id in C01 C02 P01 P02 B01 P07 D01 D02; do
+  for policy in P0_STRUCTURAL P1_INVALIDATION P1D_DEMAND_RECOMPUTATION P2_SELECTIVE P3_ALWAYS; do
     dotnet "$dll" --child "$case_id" "$policy" 1 1 cgo27-e2e-probe \
       | tee -a "$output/probe-results.jsonl"
   done
 done
 
-python3 "$project_root/run_matrix_v2.py" "$dll" "$output"
+python3 "$project_root/run_matrix_v3.py" "$dll" "$output"
 
 cp "$project" "$output/source-snapshot/"
 cp "$project_root/Program.cs" "$output/source-snapshot/"
 cp "$project_root/Cgo27FaultOptimizer.cs" "$output/source-snapshot/"
 cp "$project_root/run_matrix.py" "$output/source-snapshot/"
 cp "$project_root/run_matrix_v2.py" "$output/source-snapshot/"
+cp "$project_root/run_matrix_v3.py" "$output/source-snapshot/"
 cp "$project_root/README.md" "$output/source-snapshot/"
 cp "$root/Tools/run-cgo27-end-to-end.sh" "$output/source-snapshot/"
 if git -C "$root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then

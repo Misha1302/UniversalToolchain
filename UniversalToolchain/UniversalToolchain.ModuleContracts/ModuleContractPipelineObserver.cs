@@ -170,8 +170,11 @@ public sealed class ModuleContractPipelineObserver : ICompilationPipelineObserve
 
         var scheduled = ModuleContractVerificationScheduler.Schedule(
             _options.VerificationPolicy,
+            pipelineStage,
             AirRoutes,
-            pipelineValidation?.ReverificationRequests ?? []);
+            pipelineValidation?.VerificationObligations ?? [],
+            _options.DemandedFacts,
+            _factVerifierRegistry.KnownFacts);
         foreach (var invocation in scheduled)
         {
             if (invocation.RuleId != KnownCoreVerifierRules.AirContract)
@@ -248,18 +251,19 @@ public sealed class ModuleContractPipelineObserver : ICompilationPipelineObserve
         VerificationSeverityProfile profile)
     {
         var severity = VerificationSeveritySelector.Select(profile);
-        return validationResult.ReverificationRequests
-            .Where(request => request.RuleId != handledRule)
-            .Select(request => new ToolchainDiagnostic(
+        return validationResult.VerificationObligations
+            .GroupBy(static obligation => obligation.RuleId)
+            .Where(group => group.Key != handledRule)
+            .Select(group => new ToolchainDiagnostic(
                 ModuleContractDiagnosticCodes.CompilerFactReverificationRequired,
                 severity,
-                $"Pipeline effects invalidated facts requiring verifier '{request.RuleId}', but the current observer stage only runs '{handledRule}'.",
+                $"Pipeline effects created obligations for verifier '{group.Key}', but the current observer stage only runs '{handledRule}'.",
                 null,
                 [
                     new ToolchainDiagnosticHint(
-                        "Route this invalidation to the matching verifier stage or stop invalidating facts owned by a different semantic boundary."),
+                        "Route this obligation to the matching verifier stage or stop invalidating facts owned by a different semantic boundary."),
                     new ToolchainDiagnosticHint(
-                        $"Invalidated facts: {string.Join(", ", request.InvalidatedFacts.Select(static fact => fact.Value))}.")
+                        $"Invalidated facts: {string.Join(", ", group.Select(static obligation => obligation.FactId.Value))}.")
                 ]))
             .OrderBy(static diagnostic => diagnostic.Code, StringComparer.Ordinal)
             .ThenBy(static diagnostic => diagnostic.Message, StringComparer.Ordinal)
