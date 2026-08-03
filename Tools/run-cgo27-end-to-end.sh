@@ -16,6 +16,10 @@ fi
 rm -rf "$output"
 mkdir -p "$output/source-snapshot" "$root/UniversalToolchain/packages"
 
+# Pull-request jobs inherit a synthetic merge GITHUB_SHA. All experiment
+# processes must instead record the exact checked-out source revision.
+unset GITHUB_SHA || true
+export CGO27_EXPERIMENT_COMMIT="$commit"
 unset PLATFORM || true
 dotnet restore "$project" -p:NuGetAudit=false
 dotnet build "$project" -c Release --no-restore -p:WarningsAsErrors=true
