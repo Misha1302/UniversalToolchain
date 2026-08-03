@@ -1,22 +1,32 @@
 # CGO 2027 ablation report
 
-Status: `PROVIDER_BACKED_VALIDATED`.
+Status: `VALIDATED_INPUTS_PENDING_FINAL_EXACT_HEAD_PROVIDER_RECEIPT`.
 
-| Ablation | Boundary primary | Boundary challenge | System W early fault rejection | Tensor fault rejection |
-|---|---:|---:|---:|---:|
-| Remove typed contracts (`P0`) | 12/32 | 1/10 | 0/5 | 0/8 |
-| Keep invalidation, remove discharge (`P1`) | 28/32 | 10/10 | 0/5 | 0/8 |
-| Selective (`P2`) | 32/32 | 10/10 | 5/5 | 8/8 |
+## Mechanism isolation
 
-`P2` and `P3` retain parity on 42 boundary shapes, 30 System W source cases and 12 TensorRules cases. On the 100 boundary controls, P2 executed 120 verifier calls and P3 executed 140, a reduction of 14.3%. This is below the frozen 25% headline threshold and is not whole-compilation timing.
+The full protocol detects all eight predeclared counterexamples. Removing each mechanism independently loses its matching detection, while the eight matched controls remain accepted by both the full and ablated validators:
 
-## Provider receipt
+- full protocol: 8/8;
+- corresponding single-mechanism ablation: 0/8;
+- ablated-control false positives: 0/8.
 
-- branch head: `f6d9b830105609306bf698732b00ea2fa2341c99`;
-- workflow: `CGO27 Ablations`, run `30662796314`;
-- artifact ID: `8805860476`;
-- artifact digest: `sha256:ad6097480099a370499e7464f28013a6cdc888b639813d1d28d8d8fa964e19`;
-- regenerated input commit recorded by the artifact: `1af9335e57553865a8fcd79ddd66a3f987c39e91`;
-- recursive outer and nested checksum manifests: PASS.
+These are necessity witnesses for the implemented checks, not prevalence estimates.
 
-Removing TensorRules does not change System W results, but it removes support for the bounded two-package applicability claim. Performance and external-validity claims remain blocked.
+## Policy ablation
+
+| Variant | Primary | Challenge | Historical Wist | Historical Tensor | Demand Wist/Tensor |
+|---|---:|---:|---:|---:|---:|
+| P0 no typed contracts | 12/32 | 1/10 | 0/5 | 0/8 | 0/2, 0/2 |
+| P1 invalidation without discharge | 28/32 | 10/10 | 0/5 | 0/8 | 0/2, 0/2 |
+| P1D demand-only discharge | 28/32 | 10/10 | 0/5 | 0/8 | 1/2, 1/2 |
+| P2 first-eligible-boundary discharge | 32/32 | 10/10 | 5/5 | 8/8 | 2/2, 2/2 |
+
+P2 and P3 retain classification parity on 42 historical boundary shapes plus the two demand cases, 32 Wist source cases, and 14 TensorRules cases.
+
+## Verification work
+
+On 120 boundary controls, P2 executes 120 verifier calls and P3 executes 160, a 25% reduction. The isolated threshold is met, but this is not pinned-machine or whole-compilation timing. The efficiency headline therefore remains forbidden and whole-compilation performance remains `BLOCKED_PINNED_MACHINE`.
+
+## Evidence identity
+
+The repaired schema-v3 analyzer was validated locally against the exact-head ablation artifact for `372f03e41495d6454ac989e1ed9796fd5a854fd9`. Final workflow run, artifact ID and digest will be recorded only after all repaired workflows succeed on one post-repair head.

@@ -19,19 +19,24 @@ P3 always & 32/32 & 10/10 & 2/2 & 0/120 \\
 \end{tabular}
 \end{table}
 
-The primary paired difference between P2 and P0 is 20 cases; between P2 and P1/P1D it is four. These are absolute discordance counts on a fixed constructed corpus, not population estimates. P2 and P3 have no discordant evaluated boundary case.
+The primary paired difference between P2 and P0 is 20 cases; between P2 and P1/P1D it is four. These are absolute discordance counts on a fixed constructed corpus, not population estimates. P2 and P3 have no discordant evaluated boundary case.  The false-positive column is a necessary but weak check: the controls cover selected valid relations, not every legal compiler state.
 
 \subsection{RQ2: demand versus obligation}
 The matched demand cases isolate the scheduling distinction. Both invalidate the same selected capability fact and use the same production verifier route. In the queried case, P1D recomputes and rejects. In the unqueried case, P1D proceeds to a wrong result. P2 rejects both at optimized AIR because the obligation deadline is independent of consumer demand. This is the minimal executable counterexample to treating lazy invalidation as equivalent to boundary enforcement.
 
+The result is intentionally asymmetric.  It does not show that demand-driven invalidation is unsound in general: a system whose every semantically relevant use performs a query will reject both cases.  It shows that the demand guarantee alone does not imply a boundary guarantee.  P2 trades additional contract obligations for that stronger conditional property.
+
 \subsection{RQ3: source-to-result behavior}
 The source-to-result run produced and validated 320 raw fresh-process records. All 25 valid controls, including repaired P07, return the expected result under all five policies. P1 and P0 miss all seven targeted faults. P1D rejects the one explicitly queried demand fault but otherwise exhibits the same wrong-result or late-failure behavior as P1. P2/P3 reject all seven targeted faults before backend execution. Across all 32 programs, P2 and P3 agree on classification, diagnostic family, and first detection boundary (32/32).
 
-P07 is no longer an excluded baseline failure: the unchanged expression \texttt{x * 2 + y} with $x=5$, $y=3$ returns 13 under CIL and interpreter. Historical evidence recording the previous all-policy assertion remains immutable and is linked from the new protocol receipt.
+P07 is no longer an excluded baseline failure: the unchanged expression \texttt{x * 2 + y} with $x=5$, $y=3$ returns 13 under CIL and interpreter. Historical evidence recording the previous all-policy assertion remains immutable and is linked from the new protocol receipt.  The repair is evaluated separately from the scheduler so that accepting P07 cannot inflate any policy's fault-detection count.
 
 P2 invokes fewer semantic routes than P3 on clean boundaries because P3 also runs routes without due obligations. Boundary-kernel tick counts are retained as qualitative work evidence only; no whole-compilation speedup is claimed.
 
-\subsection{RQ4: public-SDK language and external validity}
+\subsection{RQ4: public-SDK language and validity boundary}
 Language T schema v2 produced 70 observations over 14 cases. P2/P3 agree on all 14 classifications. Both reject the ten post-verification faults; P1D rejects the queried demand fault and misses the matched unqueried one. The result shows that the scheduling distinction survives a different shape/layout fact vocabulary through the public SDK, but the package and cases remain study-authored and share the framework scheduler.
 
-No human-authored frozen corpus is available. External independence therefore remains blocked rather than inferred from Language T or model-generated cases. Historical-bug results are reported only after complete predeclared provenance accounting.
+No human-authored frozen corpus is available. External independence therefore remains blocked rather than inferred from Language T or model-generated cases.  Historical screening found three issue-defined pre-study regressions with stable original 3/3 evidence, but the new exact-revision campaign did not start before the bounded host terminated compilation.  Consequently the historical corpus contributes provenance and feasibility evidence only, not a policy-comparison result.  The main quantitative claims remain confined to the constructed boundary, source-to-result, and Language T corpora.
+
+\subsection{Evidence consistency}
+Every reported aggregate is regenerated from versioned machine-readable records.  CI checks immutable historical catalogue hashes, validates the separate v4 demand catalogue, rejects mixed schema versions, byte-compares generated ablation tables, and runs the source-to-result and Language T hard gates.  These checks protect result lineage; they do not make the study independent or prove that the selected oracles are complete.

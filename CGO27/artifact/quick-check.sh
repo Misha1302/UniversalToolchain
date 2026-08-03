@@ -62,7 +62,7 @@ import json,sys
 path=sys.argv[1]
 data=json.load(open(path,encoding='utf-8'))
 assert data['status']=='VALIDATED'
-assert data['schemaVersion']==2
+assert data['schemaVersion']==3
 a=data['ablations']
 m=a['A0_MECHANISM_ISOLATION']
 assert m['mechanisms']==8
@@ -72,9 +72,14 @@ assert m['controlFalsePositives']==0
 assert a['A1_NO_TYPED_CONTRACTS']['boundaryPrimaryDetected']==12
 assert a['A2_NO_REVERIFICATION_DISCHARGE']['boundaryPrimaryDetected']==28
 assert a['A3_SELECTIVE_VS_ALWAYS']['boundaryParityCases']==42
-assert a['A3_SELECTIVE_VS_ALWAYS']['wistParityCases']==30
-assert a['A3_SELECTIVE_VS_ALWAYS']['tensorParityCases']==12
-assert not a['A3_SELECTIVE_VS_ALWAYS']['efficiencyHeadlineThresholdMet']
+assert a['A2D_DEMAND_ONLY_DISCHARGE']['wistDemandRejections']==1
+assert a['A2D_DEMAND_ONLY_DISCHARGE']['tensorDemandRejections']==1
+assert a['A3_SELECTIVE_VS_ALWAYS']['wistParityCases']==32
+assert a['A3_SELECTIVE_VS_ALWAYS']['tensorParityCases']==14
+assert a['A3_SELECTIVE_VS_ALWAYS']['boundaryControlVerifierCallsP2']==120
+assert a['A3_SELECTIVE_VS_ALWAYS']['boundaryControlVerifierCallsP3']==160
+assert a['A3_SELECTIVE_VS_ALWAYS']['efficiencyHeadlineThresholdMet']
+assert not data['claimBoundary']['efficiencyHeadlineAllowed']
 PY
 
 printf '%s\n' "CGO27_ARTIFACT_QUICK_CHECK=PASS" | tee "$output/QUICK_CHECK_RECEIPT"

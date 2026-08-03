@@ -6,8 +6,31 @@ import json
 from pathlib import Path
 from typing import Any
 
-POLICIES = ("P0_STRUCTURAL", "P1_INVALIDATION", "P2_SELECTIVE", "P3_ALWAYS")
-TENSOR_POLICY = {0: "P0_STRUCTURAL", 1: "P1_INVALIDATION", 2: "P2_SELECTIVE", 3: "P3_ALWAYS"}
+MECHANISM_LABELS = {
+    "M01": "Producer identity",
+    "M02": "Source identity",
+    "M03": "Selected order",
+    "M04": "Canonical owner",
+    "M05": "Route conflict",
+    "M06": "Fail-closed route",
+    "M07": "Capability contract",
+    "M08": "Repeated occurrence",
+}
+
+POLICIES = (
+    "P0_STRUCTURAL",
+    "P1_INVALIDATION",
+    "P1D_DEMAND_RECOMPUTATION",
+    "P2_SELECTIVE",
+    "P3_ALWAYS",
+)
+TENSOR_POLICY = {
+    0: "P0_STRUCTURAL",
+    1: "P1_INVALIDATION",
+    2: "P1D_DEMAND_RECOMPUTATION",
+    3: "P2_SELECTIVE",
+    4: "P3_ALWAYS",
+}
 
 
 def load_json(path: Path) -> Any:
@@ -47,13 +70,16 @@ def early_rejections(rows: list[dict[str, Any]], policy: str, fault_ids: set[str
     )
 
 
-def tensor_fault_rejections(data: dict[str, Any], policy: str) -> int:
-    roles = {case["Id"]: case["Role"] for case in data["Cases"]}
+def tensor_rejections(
+    data: dict[str, Any], policy: str, case_ids: set[str]
+) -> int:
     rows = [
         row
         for row in data["Results"]
-        if roles[row["CaseId"]] == 2 and TENSOR_POLICY[row["Policy"]] == policy
+        if row["CaseId"] in case_ids and TENSOR_POLICY[row["Policy"]] == policy
     ]
+    if {row["CaseId"] for row in rows} != case_ids:
+        raise ValueError(f"missing TensorRules rows for {policy}")
     return sum(row["Classification"] == "rejected" for row in rows)
 
 
@@ -113,14 +139,14 @@ def write_tex_tables(
     ablations: dict[str, Any],
 ) -> None:
     mechanism_lines = [
-        r"\begin{tabular}{@{}llccc@{}}",
+        r"\begin{tabular}{@{}lp{0.43\columnwidth}ccc@{}}",
         r"\toprule",
         r"ID & Removed mechanism & Full & Ablated & Control FP \\",
         r"\midrule",
     ]
     for row in mechanisms:
         mechanism_lines.append(
-            f"{row['Id']} & {tex_escape(row['Mechanism'])} & "
+            f"{row['Id']} & {MECHANISM_LABELS[row['Id']]} & "
             f"{int(row['FullProtocol']['Detected'])}/1 & "
             f"{int(row['AblatedProtocol']['Detected'])}/1 & "
             f"{int(row['AblatedControl']['Detected'])}/1 \\\\"
@@ -132,18 +158,25 @@ def write_tex_tables(
 
     a1 = ablations["A1_NO_TYPED_CONTRACTS"]
     a2 = ablations["A2_NO_REVERIFICATION_DISCHARGE"]
+    a2d = ablations["A2D_DEMAND_ONLY_DISCHARGE"]
+    a3 = ablations["A3_SELECTIVE_VS_ALWAYS"]
     policy_lines = [
-        r"\begin{tabular}{@{}lrrrr@{}}",
+        r"\begin{tabular}{@{}lrrrrr@{}}",
         r"\toprule",
-        r"Policy ablation & Primary & Challenge & Wist early & Tensor \\",
+        r"Variant & Prim. & Chall. & Hist. W & Hist. T & Demand W/T \\",
         r"\midrule",
-        f"Remove typed contracts (P0) & {a1['boundaryPrimaryDetected']}/32 & "
+        f"P0 no contracts & {a1['boundaryPrimaryDetected']}/32 & "
         f"{a1['boundaryChallengeDetected']}/10 & {a1['wistEarlyFaultRejections']}/5 & "
-        f"{a1['tensorFaultRejections']}/8 \\\\ ",
-        f"Keep invalidation only (P1) & {a2['boundaryPrimaryDetected']}/32 & "
+        rf"{a1['tensorFaultRejections']}/8 & 0/2, 0/2 \\",
+        f"P1 no discharge & {a2['boundaryPrimaryDetected']}/32 & "
         f"{a2['boundaryChallengeDetected']}/10 & {a2['wistEarlyFaultRejections']}/5 & "
-        f"{a2['tensorFaultRejections']}/8 \\\\ ",
-        r"Selective (P2) & 32/32 & 10/10 & 5/5 & 8/8 \\",
+        rf"{a2['tensorFaultRejections']}/8 & 0/2, 0/2 \\",
+        f"P1D demand only & {a2d['boundaryPrimaryDetected']}/32 & "
+        f"{a2d['boundaryChallengeDetected']}/10 & {a2d['wistEarlyFaultRejections']}/5 & "
+        f"{a2d['tensorFaultRejections']}/8 & "
+        rf"{a2d['wistDemandRejections']}/2, {a2d['tensorDemandRejections']}/2 \\",
+        f"P2 selective & 32/32 & 10/10 & 5/5 & 8/8 & "
+        rf"{a3['wistDemandRejectionsP2']}/2, {a3['tensorDemandRejectionsP2']}/2 \\",
         r"\bottomrule",
         r"\end{tabular}",
         "",
@@ -172,20 +205,54 @@ def main() -> int:
     tensor = load_json(args.tensor_results)
     mechanisms_data = load_json(args.mechanism_results)
 
-    if boundary.get("schema_version") != 3:
-        raise ValueError("boundary schema mismatch")
+    if boundary.get("schema_version") != 4:
+        raise ValueError("boundary schema mismatch: expected v4")
     commit = str(boundary["commit_sha"])
     if e2e.get("commitSha") != commit:
         raise ValueError("boundary/e2e commit mismatch")
-    if e2e.get("status") != "VALIDATED" or e2e.get("rawRecords") != 240:
-        raise ValueError("e2e evidence is not validated 240-record evidence")
-    if tensor.get("Observations") != 48 or tensor.get("FaultCases") != 8:
-        raise ValueError("TensorRules cardinality mismatch")
+    if (
+        e2e.get("status") != "VALIDATED"
+        or e2e.get("schemaVersion") != 3
+        or e2e.get("rawRecords") != 320
+        or e2e.get("historicalV2Cases") != 30
+        or e2e.get("demandV3Cases") != 2
+    ):
+        raise ValueError("e2e evidence is not validated v3 320-record evidence")
+    if (
+        tensor.get("Observations") != 70
+        or tensor.get("FaultCases") != 10
+        or tensor.get("SelectiveAlwaysParity") != 14
+    ):
+        raise ValueError("TensorRules v2 cardinality mismatch")
     mechanisms = validate_mechanisms(mechanisms_data, commit)
 
-    fault_ids = {row["caseId"] for row in e2e_rows if row.get("faultInjected")}
-    if len(fault_ids) != 5:
-        raise ValueError("expected five Wist targeted faults")
+    historical_fault_ids = {
+        row["caseId"]
+        for row in e2e_rows
+        if row.get("faultInjected") and row.get("studySet") == "historical-v2"
+    }
+    demand_fault_ids = {
+        row["caseId"]
+        for row in e2e_rows
+        if row.get("faultInjected") and row.get("studySet") == "demand-v3"
+    }
+    if len(historical_fault_ids) != 5 or len(demand_fault_ids) != 2:
+        raise ValueError("Wist historical/demand fault denominators changed")
+
+    tensor_study_sets = {case["Id"]: case["StudySet"] for case in tensor["Cases"]}
+    tensor_roles = {case["Id"]: case["Role"] for case in tensor["Cases"]}
+    tensor_historical_fault_ids = {
+        case_id
+        for case_id, role in tensor_roles.items()
+        if role == 2 and tensor_study_sets[case_id] == "historical-v1"
+    }
+    tensor_demand_fault_ids = {
+        case_id
+        for case_id, role in tensor_roles.items()
+        if role == 2 and tensor_study_sets[case_id] == "demand-v2"
+    }
+    if len(tensor_historical_fault_ids) != 8 or len(tensor_demand_fault_ids) != 2:
+        raise ValueError("TensorRules historical/demand fault denominators changed")
 
     control_calls = {
         policy: sum(
@@ -203,8 +270,8 @@ def main() -> int:
         )
         for policy in POLICIES
     }
-    if any(control_runs[policy] != 100 for policy in POLICIES):
-        raise ValueError("boundary control denominators changed")
+    if any(control_runs[policy] != 120 for policy in POLICIES):
+        raise ValueError("boundary v4 control denominators changed")
     p2_calls = control_calls["P2_SELECTIVE"]
     p3_calls = control_calls["P3_ALWAYS"]
     reduction = (p3_calls - p2_calls) / p3_calls if p3_calls else 0.0
@@ -225,8 +292,8 @@ def main() -> int:
             "boundaryChallengeDetected": detect_count(boundary, "challenge", "P0_STRUCTURAL"),
             "boundaryChallengeLossVsP2": detect_count(boundary, "challenge", "P2_SELECTIVE")
             - detect_count(boundary, "challenge", "P0_STRUCTURAL"),
-            "wistEarlyFaultRejections": early_rejections(e2e_rows, "P0_STRUCTURAL", fault_ids),
-            "tensorFaultRejections": tensor_fault_rejections(tensor, "P0_STRUCTURAL"),
+            "wistEarlyFaultRejections": early_rejections(e2e_rows, "P0_STRUCTURAL", historical_fault_ids),
+            "tensorFaultRejections": tensor_rejections(tensor, "P0_STRUCTURAL", tensor_historical_fault_ids),
         },
         "A2_NO_REVERIFICATION_DISCHARGE": {
             "proxyPolicy": "P1_INVALIDATION",
@@ -236,13 +303,48 @@ def main() -> int:
             "boundaryChallengeDetected": detect_count(boundary, "challenge", "P1_INVALIDATION"),
             "boundaryChallengeLossVsP2": detect_count(boundary, "challenge", "P2_SELECTIVE")
             - detect_count(boundary, "challenge", "P1_INVALIDATION"),
-            "wistEarlyFaultRejections": early_rejections(e2e_rows, "P1_INVALIDATION", fault_ids),
-            "tensorFaultRejections": tensor_fault_rejections(tensor, "P1_INVALIDATION"),
+            "wistEarlyFaultRejections": early_rejections(e2e_rows, "P1_INVALIDATION", historical_fault_ids),
+            "tensorFaultRejections": tensor_rejections(tensor, "P1_INVALIDATION", tensor_historical_fault_ids),
+        },
+        "A2D_DEMAND_ONLY_DISCHARGE": {
+            "proxyPolicy": "P1D_DEMAND_RECOMPUTATION",
+            "boundaryPrimaryDetected": detect_count(
+                boundary, "primary", "P1D_DEMAND_RECOMPUTATION"
+            ),
+            "boundaryPrimaryLossVsP2": detect_count(
+                boundary, "primary", "P2_SELECTIVE"
+            )
+            - detect_count(boundary, "primary", "P1D_DEMAND_RECOMPUTATION"),
+            "boundaryChallengeDetected": detect_count(
+                boundary, "challenge", "P1D_DEMAND_RECOMPUTATION"
+            ),
+            "boundaryChallengeLossVsP2": detect_count(
+                boundary, "challenge", "P2_SELECTIVE"
+            )
+            - detect_count(boundary, "challenge", "P1D_DEMAND_RECOMPUTATION"),
+            "wistEarlyFaultRejections": early_rejections(
+                e2e_rows, "P1D_DEMAND_RECOMPUTATION", historical_fault_ids
+            ),
+            "tensorFaultRejections": tensor_rejections(
+                tensor, "P1D_DEMAND_RECOMPUTATION", tensor_historical_fault_ids
+            ),
+            "wistDemandRejections": early_rejections(
+                e2e_rows, "P1D_DEMAND_RECOMPUTATION", demand_fault_ids
+            ),
+            "tensorDemandRejections": tensor_rejections(
+                tensor, "P1D_DEMAND_RECOMPUTATION", tensor_demand_fault_ids
+            ),
         },
         "A3_SELECTIVE_VS_ALWAYS": {
             "boundaryParityCases": 42,
             "wistParityCases": int(e2e["p2P3ParityCases"]),
             "tensorParityCases": int(tensor["SelectiveAlwaysParity"]),
+            "wistDemandRejectionsP2": early_rejections(
+                e2e_rows, "P2_SELECTIVE", demand_fault_ids
+            ),
+            "tensorDemandRejectionsP2": tensor_rejections(
+                tensor, "P2_SELECTIVE", tensor_demand_fault_ids
+            ),
             "boundaryControlVerifierCallsP2": p2_calls,
             "boundaryControlVerifierCallsP3": p3_calls,
             "boundaryControlInvocationReduction": reduction,
@@ -253,8 +355,8 @@ def main() -> int:
         "A4_REMOVE_SECOND_LANGUAGE": {
             "wistEvidenceRemains": True,
             "crossLanguageClaimSupported": False,
-            "removedTensorCases": 12,
-            "removedTensorFaults": 8,
+            "removedTensorCases": 14,
+            "removedTensorFaults": 10,
             "interpretation": (
                 "Removing TensorRules leaves Wist evidence intact but removes the "
                 "two-package applicability claim."
@@ -263,7 +365,7 @@ def main() -> int:
     }
 
     result = {
-        "schemaVersion": 2,
+        "schemaVersion": 3,
         "status": "VALIDATED",
         "inputCommit": commit,
         "ablations": ablations,
@@ -301,9 +403,10 @@ The full protocol detected all 8/8 minimal counterexamples. Removing each mechan
 |---|---:|---:|---:|---:|
 | Remove typed contracts (`P0`) | {ablations['A1_NO_TYPED_CONTRACTS']['boundaryPrimaryDetected']}/32 | {ablations['A1_NO_TYPED_CONTRACTS']['boundaryChallengeDetected']}/10 | 0/5 | 0/8 |
 | Keep invalidation, remove discharge (`P1`) | {ablations['A2_NO_REVERIFICATION_DISCHARGE']['boundaryPrimaryDetected']}/32 | {ablations['A2_NO_REVERIFICATION_DISCHARGE']['boundaryChallengeDetected']}/10 | 0/5 | 0/8 |
+| Discharge only on explicit demand (`P1D`) | {ablations['A2D_DEMAND_ONLY_DISCHARGE']['boundaryPrimaryDetected']}/32 | {ablations['A2D_DEMAND_ONLY_DISCHARGE']['boundaryChallengeDetected']}/10 | 0/5 | 0/8 |
 | Selective (`P2`) | 32/32 | 10/10 | 5/5 | 8/8 |
 
-`P2` and `P3` retain parity on 42 boundary shapes, {e2e['p2P3ParityCases']} Wist source cases and {tensor['SelectiveAlwaysParity']} TensorRules cases. On the 100 boundary controls, P2 executed {p2_calls} verifier calls and P3 executed {p3_calls}, a reduction of {reduction:.1%}. This is below the frozen 25% headline threshold and is not whole-compilation timing.
+On the matched demand pairs, P1D rejects the queried case but defers the otherwise identical unqueried case in both systems (1/2 in each); P2 rejects both (2/2 in each). `P2` and `P3` retain parity on 42 boundary shapes, {e2e['p2P3ParityCases']} Wist source cases and {tensor['SelectiveAlwaysParity']} TensorRules cases. On the 120 boundary controls, P2 executed {p2_calls} verifier calls and P3 executed {p3_calls}, a reduction of {reduction:.1%}. The isolated-kernel threshold is met, but this is not whole-compilation timing and does not authorize an efficiency headline.
 
 Removing TensorRules does not change Wist results, but it removes support for the bounded two-package applicability claim. Performance and external-validity claims remain blocked.
 """

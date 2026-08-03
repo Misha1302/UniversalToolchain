@@ -32,6 +32,7 @@ $\rightarrow$ backend\\[2pt]
 \textbf{P2/P3:} reject at optimized AIR
 \end{minipage}}
 \caption{Composed pipeline and the selected contract relation in the running example. The rewrite is structurally legal; the violated relation is selected-backend capability support.}
+\Description{A left-to-right compiler pipeline. An optimizer invalidates the selected backend capability fact. P0 and P1 proceed, P1D rejects only when queried, and P2 and P3 reject at the optimized-AIR boundary.}
 \label{fig:running-example}
 \end{figure}
 
@@ -45,5 +46,6 @@ $\xrightarrow[\text{sound accept}]{owner\ route}$ $\mathsf{discharged}$\\[-1pt]
 \hfill $\searrow$ \textsf{rejected} (false fact, missing route, owner conflict, or missed boundary)
 \end{minipage}}
 \caption{Fact/obligation lifecycle. Meaning does not depend on color.}
+\Description{A state transition diagram from valid fact to invalid fact, pending obligation, and either discharged or rejected.}
 \label{fig:obligation-lifecycle}
 \end{figure}

@@ -2,20 +2,20 @@
 \paragraph{Constructed corpora and author/model involvement.}
 The primary, challenge, demand, source-to-result, and Language T faults were designed during the study and may align with implementation structure. Repetitions test reproducibility, not independent semantic sampling. We report paired case counts and all misses; we do not infer prevalence or generality. A human-authored frozen corpus remains \texttt{BLOCKED\_EXTERNAL}.
 
-\paragraph{Historical selection.}
-A historical corpus can reduce direct construction bias, but author-selected inclusion and backporting introduce their own bias. We therefore freeze criteria before search, include every eligible case, derive the oracle from the original report/fix rather than P2 output, and publish exclusions and failed replays. We do not call this corpus independent.
+\paragraph{Historical selection and replay.}
+A historical corpus can reduce direct construction bias, but author-selected inclusion and backporting introduce their own bias. We froze criteria before search, retained exclusions and blocked aggregate fixes, and derived the three included oracles from original issue reports rather than P2 output.  However, the new exact-revision replay was terminated during old-graph compilation, before policy execution.  Original issue confirmations are not independent evidence for this study and are not folded into detection totals.
 
 \paragraph{Fact and effect completeness.}
-The theorem is conditional. An omitted fact, missing invalidation, or false preservation declaration can prevent obligation creation. Fail-closed missing-route handling protects only facts that are declared as invalidated; it cannot discover an unmodeled relation.
+The theorem is conditional. An omitted fact, missing invalidation, or false preservation declaration can prevent obligation creation. Fail-closed missing-route handling protects only facts that are declared as invalidated; it cannot discover an unmodeled relation.  The evaluated effect vocabulary is deliberately finite and cannot justify a whole-compiler correctness claim.
 
-\paragraph{Verifier soundness.}
-A uniquely owned route can still contain a bug. P2 and P3 share verifier implementations, so their parity cannot validate verifier soundness. The study tests selected negative and control cases but does not prove the verifier.
+\paragraph{Verifier soundness and shared implementation.}
+A uniquely owned route can still contain a bug. P2 and P3 share verifier implementations, so their parity cannot validate verifier soundness. The study tests selected negative and control cases but does not prove the verifier.  System W and Language T also share scheduler code, so the second package tests public extensibility and a different fact vocabulary, not an independent scheduler implementation.
 
-\paragraph{Generality.}
-System W and Language T use different fact vocabularies and language paths, but share one scheduler/framework. Evaluated backends and optimizers are limited. P2/P3 parity is explicitly corpus-bounded.
+\paragraph{Baseline choice.}
+P1D is a realistic lazy-recomputation baseline, but implementations differ in which uses trigger queries and whether passes eagerly update analyses.  The unqueried counterexample establishes a separation between two guarantees; it does not claim that LLVM, MLIR, or every demand-driven compiler accepts the concrete study fault.  An always-verify compiler may already obtain P3 behavior without obligation metadata.
 
 \paragraph{Performance.}
-Verifier-work counts and boundary-kernel timing do not establish whole-compilation performance. Shared hosted runners are not pinned. Until the machine protocol runs, overhead and speedup remain unknown and absent from the headline claims.
+Verifier-work counts and boundary-kernel timing do not establish whole-compilation performance. Shared hosted runners are not pinned. Until the machine protocol runs, overhead and speedup remain unknown and absent from the headline claims.  The observed 25\% control-call reduction meets the isolated-work threshold, but does not establish whole-compilation speedup.
 
 \paragraph{Anonymity.}
-The public project and earlier research title can be found through search. Rewriting public history would be misleading. The submission instead uses a new title and a separately sanitized package, but search-based de-anonymization risk cannot be eliminated completely.
+The public project and earlier research title can be found through search. Rewriting public history would be misleading. The submission instead uses a new title and a separately sanitized package, but search-based de-anonymization risk cannot be eliminated completely.  The anonymous archive must therefore be treated as a convenience for review, not as proof that motivated deanonymization is impossible.
