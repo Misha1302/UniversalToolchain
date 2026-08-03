@@ -12,12 +12,16 @@ test -s "$stage/paper/source/main.pdf"
 cp "$stage/paper/source/main.pdf" "$stage/paper/paper.pdf"
 rm -f "$stage/paper/source/"{main.aux,main.log,main.out,main.pdf,main.fdb_latexmk,main.fls,main.synctex.gz,main.bbl,main.blg}
 
-# Evidence is provider-generated from the anonymized snapshot, then normalized again.
+# Evidence is provider-generated from the already validated anonymized source.
+# Its source-snapshot projects are intentionally partial provenance records, not
+# standalone build roots, so sanitize identities and paths without requiring
+# their ProjectReference graphs to be closed a second time.
 if [[ -d "$output/provider-evidence" ]]; then
   cp -a "$output/provider-evidence/." "$stage/evidence/"
 fi
 python3 "$root/CGO27/submission/sanitize_submission_tree.py" \
-  "$stage/evidence" "$output/.evidence-sanitized"
+  "$stage/evidence" "$output/.evidence-sanitized" \
+  --skip-project-reference-validation
 rm -rf "$stage/evidence"
 mv "$output/.evidence-sanitized" "$stage/evidence"
 
