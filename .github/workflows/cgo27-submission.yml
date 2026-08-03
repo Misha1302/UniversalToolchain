@@ -62,7 +62,8 @@ jobs:
           stage="$GITHUB_WORKSPACE/artifacts/cgo27-submission/anonymous-review-supplement"
           source_hash="$(cut -d: -f2 "$stage/SOURCE_REVISION")"
           synthetic_revision="${source_hash:0:40}"
-          work="$GITHUB_WORKSPACE/artifacts/cgo27-submission/clean-source"
+          work="$RUNNER_TEMP/cgo27-anonymous-clean-source"
+          rm -rf "$work"
           mkdir -p "$work"
           tar -xzf "$stage/source/anonymous-system-source.tar.gz" -C "$work"
           unset GITHUB_SHA
