@@ -24,7 +24,6 @@ public class NativeArithmeticAstVisitor : IAstVisitor
             nodeType != ExtensibleEnum<AstNodeTag>.CreateOrGet("NativeDivision"))
             return;
 
-        // Process both operands first to keep stack typing deterministic.
         data.AstToBytecodeTranslator.Translate(data.Node.Children[0]);
         data.AstToBytecodeTranslator.Translate(data.Node.Children[1]);
 
@@ -49,6 +48,14 @@ public class NativeArithmeticAstVisitor : IAstVisitor
     {
         var operandType = ResolveBinaryNumericType(leftType, rightType);
 
+        if (leftType != operandType || rightType != operandType)
+        {
+            return typeof(NativeArithmetic)
+                .GetMethod(methodName + "Promoted", BindingFlags.Static | BindingFlags.Public)
+                .NotNull()
+                .MakeGenericMethod(leftType, rightType, operandType);
+        }
+
         if (operandType == typeof(decimal))
         {
             return typeof(NativeArithmetic)
@@ -64,15 +71,15 @@ public class NativeArithmeticAstVisitor : IAstVisitor
 
     internal static Type ResolveBinaryNumericType(Type leftType, Type rightType)
     {
-        leftType = NormalizeSmallIntegral(leftType);
-        rightType = NormalizeSmallIntegral(rightType);
+        var normalizedLeft = NormalizeSmallIntegral(leftType);
+        var normalizedRight = NormalizeSmallIntegral(rightType);
 
-        if (leftType == rightType)
-            return leftType;
+        if (normalizedLeft == normalizedRight)
+            return normalizedLeft;
 
-        if (leftType == typeof(decimal) || rightType == typeof(decimal))
+        if (normalizedLeft == typeof(decimal) || normalizedRight == typeof(decimal))
         {
-            if (IsBinaryFloatingPoint(leftType) || IsBinaryFloatingPoint(rightType))
+            if (IsBinaryFloatingPoint(normalizedLeft) || IsBinaryFloatingPoint(normalizedRight))
             {
                 return Thrower.NotSupported<Type>(
                     $"Native arithmetic does not implicitly combine decimal with binary floating-point type(s) '{leftType}' and '{rightType}'.");
@@ -81,23 +88,23 @@ public class NativeArithmeticAstVisitor : IAstVisitor
             return typeof(decimal);
         }
 
-        if (leftType == typeof(double) || rightType == typeof(double))
+        if (normalizedLeft == typeof(double) || normalizedRight == typeof(double))
             return typeof(double);
-        if (leftType == typeof(float) || rightType == typeof(float))
+        if (normalizedLeft == typeof(float) || normalizedRight == typeof(float))
             return typeof(float);
-        if (leftType == typeof(Half) || rightType == typeof(Half))
+        if (normalizedLeft == typeof(Half) || normalizedRight == typeof(Half))
             return typeof(float);
 
-        if (leftType == typeof(nint) || leftType == typeof(nuint) ||
-            rightType == typeof(nint) || rightType == typeof(nuint))
+        if (normalizedLeft == typeof(nint) || normalizedLeft == typeof(nuint) ||
+            normalizedRight == typeof(nint) || normalizedRight == typeof(nuint))
         {
             return Thrower.NotSupported<Type>(
                 $"Native arithmetic requires identical native-integer operand types, but received '{leftType}' and '{rightType}'.");
         }
 
-        if (leftType == typeof(ulong) || rightType == typeof(ulong))
+        if (normalizedLeft == typeof(ulong) || normalizedRight == typeof(ulong))
         {
-            if (IsSignedIntegral(leftType) || IsSignedIntegral(rightType))
+            if (IsSignedIntegral(normalizedLeft) || IsSignedIntegral(normalizedRight))
             {
                 return Thrower.NotSupported<Type>(
                     $"Native arithmetic does not implicitly combine signed integral and UInt64 operands '{leftType}' and '{rightType}'.");
@@ -106,13 +113,13 @@ public class NativeArithmeticAstVisitor : IAstVisitor
             return typeof(ulong);
         }
 
-        if (leftType == typeof(long) || rightType == typeof(long))
+        if (normalizedLeft == typeof(long) || normalizedRight == typeof(long))
             return typeof(long);
 
-        if (leftType == typeof(uint) || rightType == typeof(uint))
-            return leftType == typeof(int) || rightType == typeof(int) ? typeof(long) : typeof(uint);
+        if (normalizedLeft == typeof(uint) || normalizedRight == typeof(uint))
+            return normalizedLeft == typeof(int) || normalizedRight == typeof(int) ? typeof(long) : typeof(uint);
 
-        if (leftType == typeof(int) && rightType == typeof(int))
+        if (normalizedLeft == typeof(int) && normalizedRight == typeof(int))
             return typeof(int);
 
         return Thrower.NotSupported<Type>(
