@@ -13,8 +13,9 @@ if [[ ! "$commit" =~ ^[0-9a-f]{40}$ ]]; then
   echo "exact 40-hex source commit could not be resolved" >&2
   exit 2
 fi
-if [[ -n "${GITHUB_SHA:-}" && "$GITHUB_SHA" != "$commit" ]]; then
-  echo "GITHUB_SHA does not match the resolved source commit" >&2
+declared_commit="${CGO27_SOURCE_SHA:-${CGO27_EXPERIMENT_COMMIT:-}}"
+if [[ -n "$declared_commit" && "$declared_commit" != "$commit" ]]; then
+  echo "declared source commit does not match the checked-out revision" >&2
   exit 2
 fi
 export CGO27_EXPERIMENT_COMMIT="$commit"
