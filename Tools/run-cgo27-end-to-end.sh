@@ -19,6 +19,9 @@ if [[ -n "$declared_commit" && "$declared_commit" != "$commit" ]]; then
   exit 2
 fi
 export CGO27_EXPERIMENT_COMMIT="$commit"
+# GitHub sets GITHUB_SHA to a synthetic merge commit for pull_request events.
+# Child processes must record the explicitly checked-out source revision instead.
+unset GITHUB_SHA || true
 rm -rf "$output"
 mkdir -p "$output/source-snapshot" "$root/UniversalToolchain/packages"
 

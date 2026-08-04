@@ -25,6 +25,15 @@ EXPECTED_BOUNDARY = "optimized AIR contract verification"
 EXPECTED_CAPABILITY_CODE = "UT-AIR-CAPABILITY-001"
 
 
+def resolve_commit() -> str:
+    return (
+        os.environ.get("CGO27_SOURCE_SHA")
+        or os.environ.get("CGO27_EXPERIMENT_COMMIT")
+        or os.environ.get("GITHUB_SHA")
+        or "local-uncommitted"
+    )
+
+
 def run_child(dll: Path, case_id: str, policy: str, repetition: int, run_id: str) -> dict[str, Any]:
     seed = stable_seed(case_id, policy, repetition)
     completed = subprocess.run(
@@ -34,7 +43,7 @@ def run_child(dll: Path, case_id: str, policy: str, repetition: int, run_id: str
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         timeout=120,
-        env={**os.environ, "CGO27_EXPERIMENT_COMMIT": os.environ.get("GITHUB_SHA", os.environ.get("CGO27_EXPERIMENT_COMMIT", "local-uncommitted"))},
+        env={**os.environ, "CGO27_EXPERIMENT_COMMIT": resolve_commit()},
     )
     if completed.returncode != 0:
         raise RuntimeError(f"child failed {case_id}/{policy}/r{repetition}: exit={completed.returncode}; stderr={completed.stderr}")
@@ -204,7 +213,7 @@ def main() -> int:
     summary = {
         "schemaVersion": 1,
         "runId": run_id,
-        "commitSha": os.environ.get("GITHUB_SHA", os.environ.get("CGO27_EXPERIMENT_COMMIT", "local-uncommitted")),
+        "commitSha": resolve_commit(),
         "status": "VALIDATED",
         "cases": len(CASE_IDS),
         "strata": dict(Counter(item["stratum"] for item in catalog)),

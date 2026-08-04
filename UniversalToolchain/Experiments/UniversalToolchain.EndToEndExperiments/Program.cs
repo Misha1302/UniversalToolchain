@@ -80,9 +80,7 @@ internal static class Program
         var cases = BuildCases();
         ValidateCaseCatalog(cases);
         var runId = $"cgo27-e2e-{DateTimeOffset.UtcNow:yyyyMMddTHHmmssZ}-{Environment.ProcessId}";
-        var commit = Environment.GetEnvironmentVariable("GITHUB_SHA")
-                     ?? Environment.GetEnvironmentVariable("CGO27_EXPERIMENT_COMMIT")
-                     ?? "local-uncommitted";
+        var commit = ResolveCommit();
         var records = new List<EndToEndRecord>();
 
         foreach (var @case in cases.OrderBy(static item => item.Id, StringComparer.Ordinal))
@@ -150,13 +148,17 @@ internal static class Program
             return 66;
         }
         var runId = args[5];
-        var commit = Environment.GetEnvironmentVariable("GITHUB_SHA")
-                     ?? Environment.GetEnvironmentVariable("CGO27_EXPERIMENT_COMMIT")
-                     ?? "local-uncommitted";
+        var commit = ResolveCommit();
         var record = ExecuteCase(@case, policyName, repetition, seed, runId, commit);
         Console.WriteLine(JsonSerializer.Serialize(record, JsonOptions));
         return 0;
     }
+
+    private static string ResolveCommit() =>
+        Environment.GetEnvironmentVariable("CGO27_EXPERIMENT_COMMIT")
+        ?? Environment.GetEnvironmentVariable("CGO27_SOURCE_SHA")
+        ?? Environment.GetEnvironmentVariable("GITHUB_SHA")
+        ?? "local-uncommitted";
 
     private static EndToEndRecord ExecuteCase(
         EndToEndCase @case,
