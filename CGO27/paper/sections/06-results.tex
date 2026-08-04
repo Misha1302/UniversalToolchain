@@ -1,4 +1,7 @@
 \section{Results}
+\subsection{Implementation conformance}
+The production-path conformance cases distinguish immediate execution from true carry-forward. The deferred case creates \texttt{backend.input-verified} at optimized AIR with first eligibility at backend input. No backend semantic route runs at creation; the same compilation-scoped state reaches the pre-backend hook, where P2 invokes the canonical owner and discharges the obligation before backend compilation. The orchestration test independently fixes the callback order, and failure-path tests prevent retained state from contaminating a retry. This closes the implementation/model gap for deferred scheduling mechanics, while leaving effect truth and verifier soundness as explicit assumptions.
+
 \subsection{RQ1: structural versus selected-system validity}
 Table~\ref{tab:boundary} preserves the historical primary/challenge denominators and reports the new demand set separately. P0 detects 12/32 primary shapes and 1/10 challenge shapes. Passive invalidation P1 detects 28/32 and 10/10 but does not discharge the four remaining primary obligations. P2/P3 detect every evaluated primary and challenge case. No policy rejects a valid control in protocol v4.
 
@@ -19,12 +22,12 @@ P3 always & 32/32 & 10/10 & 2/2 & 0/120 \\
 \end{tabular}
 \end{table}
 
-The primary paired difference between P2 and P0 is 20 cases; between P2 and P1/P1D it is four. These are absolute discordance counts on a fixed constructed corpus, not population estimates. P2 and P3 have no discordant evaluated boundary case.  The false-positive column is a necessary but weak check: the controls cover selected valid relations, not every legal compiler state.
+P2 differs from P0 on 20 primary cases and from P1/P1D on four; these are fixed-corpus discordances, not population estimates. P2 and P3 have no evaluated discordance. Controls cover selected valid relations, not every legal state.
 
 \subsection{RQ2: demand versus obligation}
 The matched demand cases isolate the scheduling distinction. Both invalidate the same selected capability fact and use the same production verifier route. In the queried case, P1D recomputes and rejects. In the unqueried case, P1D proceeds to a wrong result. P2 rejects both at optimized AIR because the obligation deadline is independent of consumer demand. This is the minimal executable counterexample to treating lazy invalidation as equivalent to boundary enforcement.
 
-The result is intentionally asymmetric.  It does not show that demand-driven invalidation is unsound in general: a system whose every semantically relevant use performs a query will reject both cases.  It shows that the demand guarantee alone does not imply a boundary guarantee.  P2 trades additional contract obligations for that stronger conditional property.
+This does not make demand invalidation unsound: a system whose every relevant use queries the fact rejects both cases. It shows only that a demand guarantee does not imply a boundary guarantee.
 
 \subsection{RQ3: source-to-result behavior}
 The source-to-result run produced and validated 320 raw fresh-process records. All 25 valid controls, including repaired P07, return the expected result under all five policies. P1 and P0 miss all seven targeted faults. P1D rejects the one explicitly queried demand fault but otherwise exhibits the same wrong-result or late-failure behavior as P1. P2/P3 reject all seven targeted faults before backend execution. Across all 32 programs, P2 and P3 agree on classification, diagnostic family, and first detection boundary (32/32).
@@ -36,13 +39,13 @@ P2 invokes fewer semantic routes than P3 on clean boundaries because P3 also run
 \subsection{RQ4: public-SDK language and validity boundary}
 Language T schema v2 produced 70 observations over 14 cases. P2/P3 agree on all 14 classifications. Both reject the ten post-verification faults; P1D rejects the queried demand fault and misses the matched unqueried one. The result shows that the scheduling distinction survives a different shape/layout fact vocabulary through the public SDK, but the package and cases remain study-authored and share the framework scheduler.
 
-No human-authored frozen corpus is available. External independence therefore remains blocked rather than inferred from Language T or model-generated cases.  Historical screening found three issue-defined pre-study regressions with stable original 3/3 evidence, but the new exact-revision campaign did not start before the bounded host terminated compilation.  Consequently the historical corpus contributes provenance and feasibility evidence only, not a policy-comparison result.  The main quantitative claims remain confined to the constructed boundary, source-to-result, and Language T corpora.
+No human-authored frozen corpus is available. Three pre-study issues provide provenance and exact pre-fix reproducibility, but no historical P2 result. Policy-effectiveness claims therefore remain confined to the constructed corpora.
 
 \subsection{Historical screening outcome}
 The frozen historical search retained every screened candidate, including exclusions and resource-blocked aggregate fixes. Table~\ref{tab:historical-accounting} reports the complete accounting. The three included records are pre-study issues with a concrete source program, expected result or diagnostic family, a fixing revision, and stable original fresh-process evidence. Eleven candidates fail the predeclared semantic-contract, provenance, or reproducibility criteria. Ten broader fix records remain blocked because the exported history does not provide a one-root reproducer and independently derivable oracle without author reconstruction.
 
 \begin{table}[t]
-\caption{Predeclared historical-corpus accounting. Included records are not added to policy-detection totals because the new exact-revision replay was resource-blocked before policy execution.}
+\caption{Historical-corpus accounting. The three included regressions reproduce exactly but are not added to P2 detection totals.}
 \label{tab:historical-accounting}
 \small
 \centering
@@ -50,7 +53,7 @@ The frozen historical search retained every screened candidate, including exclus
 \toprule
 Status & Count & Quantitative use \\
 \midrule
-Included & 3 & provenance / feasibility only \\
+Included & 3 & exact pre-fix reproduction \\
 Excluded & 11 & retained with frozen reason \\
 Blocked & 10 & retained; missing bounded replay \\
 Invalid replay & 0 & none silently removed \\
@@ -58,7 +61,7 @@ Invalid replay & 0 & none silently removed \\
 \end{tabular}
 \end{table}
 
-This negative result changes the submission claim. The study can say that three author-selected historical defects map to the modeled fact vocabulary and have issue-defined pre-study evidence. It cannot report a historical P2 detection rate, call the set independent, or use the original confirmations as a new experiment. The exact-revision attempt is preserved as a resource-blocked receipt so a later machine can resume from the same source and dependency state without changing the frozen candidate table.
+The exact pre-fix campaign reproduced 3/3 cases in 9/9 fresh-process attempts, with zero flaky, inconclusive, or infrastructure outcomes. The revision predates P2, so this result is not a historical policy rate and the author-selected set is not called independent.
 
 \subsection{Evidence consistency}
-Every reported aggregate is regenerated from versioned machine-readable records.  CI checks immutable historical catalogue hashes, validates the separate v4 demand catalogue, rejects mixed schema versions, byte-compares generated ablation tables, and runs the source-to-result and Language T hard gates.  These checks protect result lineage; they do not make the study independent or prove that the selected oracles are complete.
+CI regenerates aggregates, checks catalogue hashes and schema separation, byte-compares ablation tables, and runs source-to-result and Language T gates. This protects lineage, not independence or oracle completeness.

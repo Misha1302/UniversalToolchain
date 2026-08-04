@@ -77,11 +77,15 @@ public class BasicCoreOrchestrationInternalBehaviorTests
         Assert.That(calls, Does.Contain("observer.AfterBytecode"));
         Assert.That(calls, Does.Contain("observer.AfterAir"));
         Assert.That(calls, Does.Contain("observer.AfterOptimizedAir"));
+        Assert.That(calls, Does.Contain("observer.BeforeBackend"));
         Assert.That(calls.IndexOf("module.ProcessBytecode"), Is.LessThan(calls.IndexOf("observer.AfterBytecode")));
         Assert.That(calls.IndexOf("observer.AfterBytecode"), Is.LessThan(calls.IndexOf("methodsTranslator.Translate")));
         Assert.That(calls.IndexOf("methodsTranslator.Translate"), Is.LessThan(calls.IndexOf("observer.AfterAir")));
         Assert.That(calls.IndexOf("optimizer.Optimize"), Is.LessThan(calls.IndexOf("observer.AfterOptimizedAir")));
-        Assert.That(calls.IndexOf("observer.AfterOptimizedAir"), Is.LessThan(calls.IndexOf("compiler.Compile")));
+        Assert.That(calls.IndexOf("observer.AfterOptimizedAir"), Is.LessThan(calls.IndexOf("observer.BeforeBackend")));
+        Assert.That(calls.IndexOf("observer.BeforeBackend"), Is.LessThan(calls.IndexOf("compiler.Compile")));
+        Assert.That(observer.Inputs, Has.Count.EqualTo(4));
+        Assert.That(observer.Inputs, Is.All.SameAs(observer.Inputs[0]));
     }
 
     [Test]
@@ -363,11 +367,31 @@ public class BasicCoreOrchestrationInternalBehaviorTests
 
     private sealed class TrackingPipelineObserver(List<string> calls) : ICompilationPipelineObserver
     {
-        public void AfterBytecode(CompilationPipelineBytecodeContext context) => calls.Add("observer.AfterBytecode");
+        public List<CompilationInput> Inputs { get; } = [];
 
-        public void AfterAir(CompilationPipelineAirContext context) => calls.Add("observer.AfterAir");
+        public void AfterBytecode(CompilationPipelineBytecodeContext context)
+        {
+            calls.Add("observer.AfterBytecode");
+            Inputs.Add(context.Input);
+        }
 
-        public void AfterOptimizedAir(CompilationPipelineAirContext context) => calls.Add("observer.AfterOptimizedAir");
+        public void AfterAir(CompilationPipelineAirContext context)
+        {
+            calls.Add("observer.AfterAir");
+            Inputs.Add(context.Input);
+        }
+
+        public void AfterOptimizedAir(CompilationPipelineAirContext context)
+        {
+            calls.Add("observer.AfterOptimizedAir");
+            Inputs.Add(context.Input);
+        }
+
+        public void BeforeBackend(CompilationPipelineAirContext context)
+        {
+            calls.Add("observer.BeforeBackend");
+            Inputs.Add(context.Input);
+        }
     }
 
     private sealed class TrackingLexer(List<string> calls) : ILexer

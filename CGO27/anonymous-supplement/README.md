@@ -1,6 +1,6 @@
 # Anonymous CGO 2027 supplementary package
 
-This package is the double-blind companion to the paper **Obligation-Guided Reverification for Composed Compiler Pipelines**. It contains the raw bounded-study observations needed to recompute the cross-study ablation summary, the anonymous paper source, and the protocols that delimit every claim.
+This package is the double-blind companion to the paper **Obligation-Guided Reverification for Composed Compiler Pipelines**. It contains the raw bounded-study observations needed to recompute the cross-study ablation summary, an identity-neutral exact-prefix historical replay receipt, the anonymous paper source, and the protocols that delimit every claim.
 
 It intentionally does **not** contain the public repository URL, author identity, exact Git revision, package branding, local paths, or a whole-compilation performance result. System names are neutralized as **System W** and **System T**. The non-anonymous archival artifact remains separate and must not be uploaded during double-blind review.
 

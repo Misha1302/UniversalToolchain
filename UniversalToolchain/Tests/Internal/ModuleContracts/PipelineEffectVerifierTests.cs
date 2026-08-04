@@ -342,6 +342,65 @@ public sealed class PipelineEffectVerifierTests
             Does.Contain(ModuleContractDiagnosticCodes.MissingPipelineOrder));
     }
 
+    [Test]
+    public void Validate_WhenRouteBecomesExecutableLater_CreatesDeferredObligation()
+    {
+        var fact = KnownCoreCompilerFacts.BackendInputVerified;
+        var table = new ModuleContractTableBuilder()
+            .AddFacet(new PipelineEffectFacet(
+                _consumer,
+                [
+                    new PipelineEffectContract(
+                        new CompilerEffectId("test.effect.defer-to-backend"),
+                        CompilerPipelineStage.OptimizedAir,
+                        [],
+                        [],
+                        [],
+                        [fact])
+                ]))
+            .Build();
+
+        var result = new PipelineEffectVerifier().Validate(new PipelineEffectValidationRequest(
+            table,
+            CompilerPipelineStage.OptimizedAir,
+            new CompilerFactState(
+                new HashSet<CompilerFactId> { fact },
+                new HashSet<CompilerFactId>()),
+            CompilerFactVerifierRegistry.Core,
+            [_consumer]));
+
+        var obligation = result.VerificationObligations.Single();
+        Assert.Multiple(() =>
+        {
+            Assert.That(obligation.CreationBoundary, Is.EqualTo(CompilerPipelineStage.OptimizedAir));
+            Assert.That(obligation.FirstEligibleBoundary, Is.EqualTo(CompilerPipelineStage.BackendInput));
+            Assert.That(obligation.RuleId, Is.EqualTo(KnownCoreVerifierRules.BackendInputContract));
+            Assert.That(obligation.CanonicalOwner, Is.EqualTo("core.backend-input"));
+        });
+    }
+
+    [Test]
+    public void Validate_WhenPendingObligationIsNotReproduced_CarriesItForward()
+    {
+        var pending = new VerificationObligation(
+            KnownCoreCompilerFacts.BackendInputVerified,
+            KnownCoreVerifierRules.BackendInputContract,
+            "core.backend-input",
+            CompilerPipelineStage.OptimizedAir,
+            CompilerPipelineStage.BackendInput);
+        var table = new ModuleContractTableBuilder().Build();
+
+        var result = new PipelineEffectVerifier().Validate(new PipelineEffectValidationRequest(
+            table,
+            CompilerPipelineStage.BackendInput,
+            CompilerFactState.Empty,
+            CompilerFactVerifierRegistry.Core,
+            [],
+            [pending]));
+
+        Assert.That(result.VerificationObligations, Is.EqualTo(new[] { pending }));
+    }
+
     private sealed class TestVerifierRuleProvider(
         CompilerFactId fact,
         VerifierRuleId rule) : ICompilerFactVerifierRuleProvider

@@ -52,6 +52,7 @@ cp "$root/CGO27/ablations/render_paper_tables.py" "$output/source-snapshot/"
 cp "$root/Tools/run-cgo27-ablations.sh" "$output/source-snapshot/"
 cp "$root/UniversalToolchain/Experiments/UniversalToolchain.ContractExperiments/Cgo27Program.MechanismAblations.cs" "$output/source-snapshot/"
 cp "$root/UniversalToolchain/Experiments/UniversalToolchain.ContractExperiments/UniversalToolchain.MechanismAblations.csproj" "$output/source-snapshot/"
+cp "$root/UniversalToolchain/Experiments/UniversalToolchain.ContractExperiments/Directory.Build.props" "$output/source-snapshot/"
 printf '%s\n' "$commit" > "$output/COMMIT"
 if git -C "$root" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   git -C "$root" status --porcelain=v1 > "$output/git-status.txt"

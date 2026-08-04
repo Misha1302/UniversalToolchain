@@ -5,4 +5,5 @@ public sealed record PipelineEffectValidationRequest(
     CompilerPipelineStage Stage,
     CompilerFactState InputFacts,
     CompilerFactVerifierRegistry VerifierRegistry,
-    IReadOnlyList<ModuleId>? PipelineOrder = null);
+    IReadOnlyList<ModuleId>? PipelineOrder = null,
+    IReadOnlyList<VerificationObligation>? PendingObligations = null);

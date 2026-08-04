@@ -2,7 +2,7 @@
 
 ## Environment and authority
 
-- Record refreshed: 2026-08-03.
+- Record refreshed: 2026-08-04.
 - Target CI environment: GitHub Actions Ubuntu 24.04, Linux x64.
 - SDK policy: `UniversalToolchain/global.json` with .NET 10 feature-band roll-forward.
 - Ordinary integration command: `./build.sh --skip-docs --skip-pack`.
@@ -23,9 +23,10 @@ The repository implements and continuously verifies:
 - production Bytecode metadata reading plus declared/observed emission verification;
 - mandatory producer-module and source-node identity for every contract-annotated Bytecode emission;
 - AIR structural, stack and backend-capability verification;
-- compiler facts/effects and fail-closed routing of unresolved reverification requests;
+- compilation-scoped compiler facts/effects with pending obligations carried through bytecode, AIR, optimized-AIR and backend-input boundaries;
+- fail-closed routing of unresolved, conflicting, overdue or final-undischarged reverification obligations;
 - extension-provided compiler-fact verifier routes with conflict rejection;
-- deterministic four-policy semantic-verification scheduling with structural and semantic AIR scopes kept distinct;
+- deterministic five-policy semantic-verification scheduling with structural and semantic AIR scopes kept distinct;
 - explicit rejection of repeated module identities until occurrence-sensitive effects are modeled;
 - `PerSession` ownership and explicit `SingletonStateless` lifecycle rules;
 - primary-first preservation of runtime construction failures when cleanup also fails;
@@ -51,15 +52,15 @@ Parallel graph traversal and shared compilation are the default. `--jobs`, `--se
 
 | Test project | Passed | Failed | Skipped |
 |---|---:|---:|---:|
-| `Tests` | 546 | 0 | 0 |
+| `Tests` | 555 | 0 | 0 |
 | `UniversalToolchain.Modules.Tests` | 305 | 0 | 0 |
 | `UniversalToolchain.Dialects.Tests` | 639 | 0 | 0 |
 | `UniversalToolchain.LanguageSdk.Tests` | 82 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.Tests` | 41 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
-| **Total** | **1,623** | **0** | **0** |
+| **Total** | **1,632** | **0** | **0** |
 
-The CGO27 hardening branch retains the 1,597-test runtime-boundary baseline and adds 26 obligation-scheduler, demand-recomputation, numeric-promotion and P07 regression cases. The exact manifest is owned by `eng/test-counts.json`; local TRX evidence verifies all 1,623 tests, while GitHub Actions remains a separate provider-backed gate.
+The CGO27 hardening branch retains the 1,597-test runtime-boundary baseline and adds 35 obligation-lifecycle, scheduler, demand-recomputation, numeric-promotion and P07 regression cases. The exact manifest is owned by `eng/test-counts.json`; local TRX evidence verifies all 1,632 tests, while GitHub Actions remains a separate provider-backed gate.
 
 ## Production-boundary contract experiment
 

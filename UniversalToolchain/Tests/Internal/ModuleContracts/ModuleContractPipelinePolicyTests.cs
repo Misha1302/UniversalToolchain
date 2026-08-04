@@ -113,6 +113,152 @@ public sealed class ModuleContractPipelinePolicyTests
             Is.EqualTo(new[] { AirVerificationScope.Structural, AirVerificationScope.Semantic }));
     }
 
+    [TestCase(ModuleContractVerificationPolicy.P1Invalidation)]
+    [TestCase(ModuleContractVerificationPolicy.P1DemandRecomputation)]
+    public void NonEnforcingPolicies_CarryPassiveStateWithoutTurningItIntoABoundaryFailure(
+        ModuleContractVerificationPolicy policy)
+    {
+        var optimizer = new BackendInputInvalidatingOptimizer();
+        var input = new CompilationInput { SourceText = "1" };
+        var airVerifier = new RecordingAirVerifier();
+        var observer = CreateObserver(
+            policy,
+            CreateTable(optimizer),
+            airVerifier);
+        var context = CreateContext(input, [optimizer]);
+
+        Assert.DoesNotThrow(() =>
+        {
+            observer.AfterAir(context);
+            observer.AfterOptimizedAir(context);
+            observer.BeforeBackend(context);
+        });
+        Assert.That(
+            airVerifier.Requests.Count(static request => request.Scope.HasFlag(AirVerificationScope.Semantic)),
+            Is.EqualTo(1));
+    }
+
+    [Test]
+    public void Selective_CarriesDeferredBackendObligationAcrossBoundaries()
+    {
+        var optimizer = new BackendInputInvalidatingOptimizer();
+        var verifier = new RecordingAirVerifier();
+        var observer = CreateObserver(
+            ModuleContractVerificationPolicy.P2Selective,
+            CreateTable(optimizer),
+            verifier);
+        var input = new CompilationInput { SourceText = "1" };
+        var context = CreateContext(input, [optimizer]);
+
+        observer.AfterAir(context);
+        observer.AfterOptimizedAir(context);
+        observer.BeforeBackend(context);
+
+        Assert.That(
+            verifier.Requests.Select(static request => request.Scope),
+            Is.EqualTo(new[]
+            {
+                AirVerificationScope.Structural,
+                AirVerificationScope.Semantic,
+                AirVerificationScope.Structural,
+                AirVerificationScope.Semantic
+            }));
+    }
+
+    [Test]
+    public void InterleavedCompilations_KeepLifecycleStateIsolatedByInputIdentity()
+    {
+        var optimizer = new BackendInputInvalidatingOptimizer();
+        var verifier = new RecordingAirVerifier();
+        var observer = CreateObserver(
+            ModuleContractVerificationPolicy.P2Selective,
+            CreateTable(optimizer),
+            verifier);
+        var first = CreateContext(new CompilationInput { SourceText = "1" }, [optimizer]);
+        var second = CreateContext(new CompilationInput { SourceText = "2" }, [optimizer]);
+
+        Assert.DoesNotThrow(() =>
+        {
+            observer.AfterAir(first);
+            observer.AfterAir(second);
+            observer.AfterOptimizedAir(first);
+            observer.AfterOptimizedAir(second);
+            observer.BeforeBackend(second);
+            observer.BeforeBackend(first);
+        });
+        Assert.Multiple(() =>
+        {
+            Assert.That(
+                verifier.Requests.Count(static request => request.Scope == AirVerificationScope.Structural),
+                Is.EqualTo(4));
+            Assert.That(
+                verifier.Requests.Count(static request => request.Scope == AirVerificationScope.Semantic),
+                Is.EqualTo(4));
+        });
+    }
+
+    [Test]
+    public void OutOfOrderBoundary_RemovesFailedLifecycleBeforeRetry()
+    {
+        var verifier = new RecordingAirVerifier();
+        var observer = CreateObserver(
+            ModuleContractVerificationPolicy.P2Selective,
+            CreateTable(),
+            verifier);
+        var input = new CompilationInput { SourceText = "1" };
+        var context = CreateContext(input, []);
+
+        observer.AfterOptimizedAir(context);
+
+        Assert.That(() => observer.AfterAir(context), Throws.TypeOf<InvalidOperationException>());
+        Assert.That(
+            () => observer.AfterAir(context),
+            Throws.Nothing,
+            "A failed lifecycle must not contaminate a retry with the same input identity.");
+    }
+
+    [Test]
+    public void FinalBoundary_RemovesLifecycleSoInputCanBeCompiledAgain()
+    {
+        var verifier = new RecordingAirVerifier();
+        var observer = CreateObserver(
+            ModuleContractVerificationPolicy.P2Selective,
+            CreateTable(),
+            verifier);
+        var input = new CompilationInput { SourceText = "1" };
+        var context = CreateContext(input, []);
+
+        static void ExecuteLifecycle(
+            ModuleContractPipelineObserver pipelineObserver,
+            CompilationPipelineAirContext pipelineContext)
+        {
+            pipelineObserver.AfterAir(pipelineContext);
+            pipelineObserver.AfterOptimizedAir(pipelineContext);
+            pipelineObserver.BeforeBackend(pipelineContext);
+        }
+
+        ExecuteLifecycle(observer, context);
+
+        Assert.That(() => ExecuteLifecycle(observer, context), Throws.Nothing);
+    }
+
+    [Test]
+    public void AlwaysPolicy_RunsBackendInputRouteWithoutAnObligation()
+    {
+        var verifier = new RecordingAirVerifier();
+        var observer = CreateObserver(
+            ModuleContractVerificationPolicy.P3Always,
+            CreateTable(),
+            verifier);
+        var context = CreateContext([]);
+
+        observer.BeforeBackend(context);
+
+        Assert.That(
+            verifier.Requests.Select(static request => request.Scope),
+            Is.EqualTo(new[] { AirVerificationScope.Semantic }));
+    }
+
     private static ModuleContractPipelineObserver CreateObserver(
         ModuleContractVerificationPolicy policy,
         SelectedModuleContractTable table,
@@ -138,20 +284,25 @@ public sealed class ModuleContractPipelinePolicyTests
     }
 
     private static CompilationPipelineAirContext CreateContext(IReadOnlyList<IAirOptimizer> optimizers) =>
+        CreateContext(new CompilationInput { SourceText = "1" }, optimizers);
+
+    private static CompilationPipelineAirContext CreateContext(
+        CompilationInput input,
+        IReadOnlyList<IAirOptimizer> optimizers) =>
         new(
-            new CompilationInput { SourceText = "1" },
+            input,
             [],
             optimizers,
             new AbstractIR(),
             [],
             []);
 
-    private static SelectedModuleContractTable CreateTable(InvalidatingOptimizer? optimizer = null)
+    private static SelectedModuleContractTable CreateTable(IModuleContractDescriptorProvider? descriptor = null)
     {
         var builder = new ModuleContractTableBuilder()
             .AddFacet(KnownCoreCompilerFacts.CreateOwnershipFacet());
-        if (optimizer != null)
-            builder.AddFacets(optimizer.GetFacets());
+        if (descriptor != null)
+            builder.AddFacets(descriptor.GetFacets());
         var table = builder.Build();
         Assert.That(table.Diagnostics, Is.Empty);
         return table;
@@ -206,6 +357,28 @@ public sealed class ModuleContractPipelinePolicyTests
                         [],
                         [],
                         [KnownCoreCompilerFacts.AirVerified])
+                ])
+        ];
+    }
+
+    private sealed class BackendInputInvalidatingOptimizer : IAirOptimizer, IModuleContractDescriptorProvider
+    {
+        private static readonly ModuleId Module = new("test.optimizer.defer-backend-input");
+
+        public IAbstractIR Optimize(IAbstractIR current) => current;
+
+        public IReadOnlyList<IModuleContractFacet> GetFacets() =>
+        [
+            new PipelineEffectFacet(
+                Module,
+                [
+                    new PipelineEffectContract(
+                        new CompilerEffectId("test.optimizer.defer-backend-input.effect"),
+                        CompilerPipelineStage.OptimizedAir,
+                        [],
+                        [],
+                        [],
+                        [KnownCoreCompilerFacts.BackendInputVerified])
                 ])
         ];
     }

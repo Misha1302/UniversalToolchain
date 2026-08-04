@@ -6,7 +6,7 @@ This legacy entry point is retained for compatibility. The canonical resumable l
 
 Current branch: `research/cgo27-submission-hardening` (draft PR #325).
 
-Current completed local results include the obligation model, P1D baseline, P07 repair, schema-v4/v3/v2 experiments, historical-corpus accounting, nine-page anonymous paper build, and repaired schema-v3 ablation aggregation. Final exact-head provider validation, anonymous supplement closure and final adversarial reports remain the active gates.
+Current completed local results include the obligation model, P1D baseline, P07 repair, schema-v4/v3/v2 experiments, historical-corpus accounting with exact pre-fix reproduction, an 11-page anonymous paper build, and repaired schema-v3 ablation aggregation. Final exact-head provider validation and human signoff remain the active gates.
 
 Permanent blockers:
 

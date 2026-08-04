@@ -1,0 +1,14 @@
+<Project>
+  <PropertyGroup>
+    <!--
+      Two executable projects intentionally share this source directory. Keep
+      NuGet restore state and build outputs isolated by project name so a later
+      run without rebuilding cannot pick up the other executable's assets,
+      apphost, deps file, or runtimeconfig.
+    -->
+    <MSBuildProjectExtensionsPath>$(MSBuildThisFileDirectory)obj/$(MSBuildProjectName)/</MSBuildProjectExtensionsPath>
+    <BaseIntermediateOutputPath>$(MSBuildProjectExtensionsPath)</BaseIntermediateOutputPath>
+    <BaseOutputPath>$(MSBuildThisFileDirectory)bin/$(MSBuildProjectName)/</BaseOutputPath>
+    <DefaultItemExcludes>$(DefaultItemExcludes);$(MSBuildThisFileDirectory)obj/**;$(MSBuildThisFileDirectory)bin/**</DefaultItemExcludes>
+  </PropertyGroup>
+</Project>

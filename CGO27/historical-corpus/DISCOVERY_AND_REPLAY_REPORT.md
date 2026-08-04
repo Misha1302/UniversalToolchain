@@ -17,15 +17,22 @@ The frozen table contains 24 records:
 
 No record was silently dropped after policy output. The three included cases are issue-specified regressions #302, #303 and #307. Their source programs, expected outcomes or diagnostic families, pre-fix evidence, and fixing revision were recorded before this study. Each issue reports stable fresh-process confirmation of 3/3 with zero flaky or infrastructure attempts.
 
-## Exact-revision attempt
+## Exact-revision replay
 
-Exact source for `eb851d4bf80f363969e04abdb4bcddf3e56830f3` was exported and manifest-checked. The historical regression corpus contains all three issue programs. An offline `--no-restore` build reached Roslyn compilation of the old dialect frontend after building most of the dependency graph, but the bounded execution environment terminated the compiler before the campaign began. Therefore:
+Exact source for `eb851d4bf80f363969e04abdb4bcddf3e56830f3` was exported, manifest-checked, restored from an offline package feed, and built with .NET SDK 10.0.301/runtime 10.0.9. The exact historical graph completed with zero warnings and zero errors. The frozen three-case regression campaign then ran each case in three fresh processes.
 
-- exact-revision replay: **`BLOCKED_RESOURCE`**;
-- no new reproduction success is claimed;
-- original pre-study 3/3 issue evidence remains the only positive replay evidence;
-- the blocked attempt remains in every included case's accounting.
+Outcome:
+
+- exact-revision replay: **`REPRODUCED_EXACT_PREFIX`**;
+- included cases reproduced: 3/3;
+- stable attempts: 9/9;
+- flaky cases: 0;
+- inconclusive cases: 0;
+- infrastructure failures: 0;
+- distinct finding classes: 2.
+
+The detailed immutable receipt is `EXACT_REPLAY_RECEIPT_2026-08-04.md`; the machine-readable summary is `exact-replay-summary.json`.
 
 ## Claim boundary
 
-This corpus supports only the statement that three author-selected historical defects have issue-defined stable pre-study observations and map to modeled facts. It does not establish independent selection, natural-defect prevalence, complete repository history, or successful new replay on the current execution host.
+This corpus supports the statement that all three frozen, author-selected historical defects reproduce on the exact pre-fix revision under the issue-defined oracles. It does not establish a historical P2 detection rate because the replayed revision predates P2 and no policy backport was executed. It also does not establish independent selection, natural-defect prevalence, or complete repository-history coverage.

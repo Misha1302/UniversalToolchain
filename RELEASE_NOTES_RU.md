@@ -16,7 +16,9 @@
 - SSA runtime report/options/sink перенесены в abstractions owner без sharing optimizer implementation;
 - добавлены fresh-process preload-order, hostile same-name, concurrency, disposal и unload regressions;
 - добавлен `Tools/package_metadata.py` и negative mutants для project/docs/nupkg drift;
-- public value boundary нормализует implementation-owned numeric values до стабильных CLR categories.
+- public value boundary нормализует implementation-owned numeric values до стабильных CLR categories;
+- production observer сохраняет compiler-fact state и pending verification obligations на протяжении одной compilation;
+- добавлена реальная pre-backend boundary: deferred route может быть создан на optimized AIR и обязан разрядиться до backend compilation.
 
 ## Матрица candidate packages
 
@@ -36,7 +38,7 @@
 
 ## Проверка
 
-Локальный exact test contract для текущей hardening-ветки: **1,623 passed, 0 failed, 0 skipped**. Обе solution собраны в `Release` с **0 warnings, 0 errors**.
+Локальный exact test contract для текущей hardening-ветки: **1,632 passed, 0 failed, 0 skipped**. Обе solution собраны в `Release` с **0 warnings, 0 errors**.
 
 Fresh-process SafeMath receipts подтверждают `DIALECT_INSPECT=PASS`, Interpreter/CIL result `255`, одинаковую CLR value category, negative dialect rejection, hostile preload rejection и отсутствие незарегистрированного default-context fallback.
 

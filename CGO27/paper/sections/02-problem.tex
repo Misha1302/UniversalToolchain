@@ -4,13 +4,13 @@ A selected compiler system is a tuple $S=(L,T,B,C)$ containing the chosen langua
 \[
   B = \langle b_0,b_1,\ldots,b_n\rangle
 \]
-be the totally ordered observable pipeline boundaries, and let $x_i$ be the artifact presented at $b_i$. The implementation studied here uses bytecode, AIR, optimized AIR, and backend-input boundaries.
+be the totally ordered observable pipeline boundaries, and let $x_i$ be the artifact presented at $b_i$. The implementation studied here observes bytecode, AIR, optimized AIR, and backend-input boundaries.
 
-Let $F$ be the finite set of modeled semantic facts for the selected system. A fact state at boundary $b_i$ is
+Let $F$ be the finite set of modeled semantic facts for the selected system. The semantic judgment $S,x_i\models f$ means that fact $f$ is true of artifact $x_i$ under the selected system. Separately, the runtime contract state is
 \[
   \sigma_i : F \rightarrow \{\mathsf{valid},\mathsf{invalid},\mathsf{unknown}\}.
 \]
-A fact is \emph{unknown} when the selected contract state neither establishes it nor records an invalidation. This distinction matters: treating absence as validity would silently satisfy obligations that no component proved.
+A \textsf{valid} entry is a claim backed by a seed, transformation contract, or verifier result; \textsf{invalid} records that the claim may no longer be used; and \textsf{unknown} means that the selected state neither establishes nor invalidates it. Keeping the semantic judgment separate from $\sigma$ exposes the trust assumptions: a declaration can be present yet false.
 
 A generic structural verifier establishes predicates such as legal opcodes, operand schemas, branch targets, or stack discipline. Selected-system validity additionally depends on facts such as producer/source identity, a shape relation, or support for an emitted intrinsic. Therefore
 \[
@@ -18,24 +18,26 @@ A generic structural verifier establishes predicates such as legal opcodes, oper
 \]
 Our running counterexample is a structurally legal optimized AIR instruction whose selected backend does not support the capability declared by the chosen language/optimizer composition.
 
-\subsection{Transformation effects}
+\subsection{Transformation effects and trust boundary}
 Each transformation $t$ declares an effect contract
 \[
  E_t=(requires_t, produces_t, preserves_t, invalidates_t),
 \]
-where every component is a subset of $F$. Before applying the effect, each required or preserved fact must be valid. Producing $f$ establishes $\sigma(f)=\mathsf{valid}$ and clears a pending invalidation for $f$. Invalidating $f$ changes it to $\mathsf{invalid}$ and creates a verification obligation unless the same transition re-establishes it.
+where every component is a subset of $F$. The scheduler interprets these declarations operationally: requirements and preservation claims need a valid incoming state; producing $f$ records $\sigma(f)=\mathsf{valid}$ and clears a pending invalidation; invalidating $f$ records $\sigma(f)=\mathsf{invalid}$ and creates an obligation unless the same transition re-establishes it.
+
+The theorem below needs two distinct properties that the implementation cannot derive from declarations alone. \emph{Effect soundness} means that every declared produced or preserved fact is semantically true after the transformation. \emph{Invalidation completeness relative to $F$} means that every considered fact whose truth the transformation may destroy is declared invalidated unless it is soundly re-established. Likewise, an initial seed is sound only when every fact marked valid is semantically true. These are explicit assumptions, not outcomes of route scheduling.
 
 The route map is a partial function
 \[
- \rho : F \rightharpoonup (rule,owner),
+ \rho : F \rightharpoonup (rule,owner,b_{min}),
 \]
-resolved from the selected components. A route has exactly one canonical owner. A missing route, conflicting owners, or a route that cannot execute at the required boundary is a compilation error rather than a fallback.
+resolved from the selected components. Here $b_{min}$ is the earliest boundary at which the route has the required artifact. A route has exactly one canonical owner. A missing route, conflicting owners, or a route that cannot execute at the required boundary is a compilation error rather than a fallback.
 
 An obligation is
 \[
  o=(f,rule,owner,b_c,b_e),
 \]
-where $f$ is the invalidated fact, $b_c$ is its creation boundary, and $b_e\ge b_c$ is its first eligible boundary. The implementation uses the conservative immediate-deadline instance $b_e=b_c$ because its canonical production routes are executable at the observed boundary. The scheduler interface nevertheless represents both fields and rejects an obligation presented after $b_e$.
+where $f$ is the invalidated fact, $b_c$ is its creation boundary, and $b_e=\max(b_c,b_{min})$ is its first eligible boundary. The production observer preserves fact state and pending obligations across compilation boundaries. Thus $b_e$ may equal $b_c$ for an immediately executable AIR route or be later, as when an optimized-AIR effect creates an obligation whose canonical route first becomes executable at backend input.
 
 \subsection{Policies}
 The five policies differ only in semantic scheduling; mandatory structural checks remain identical.
@@ -59,13 +61,13 @@ P3 & Execute every route applicable to the boundary; due obligations retain the 
 
 P1D is a strong lazy-invalidation baseline: it prevents use of a stale cached result when a consumer asks for that result. It intentionally cannot protect a semantic boundary that must be checked even when no consumer performs a query.
 
-\subsection{Relative guarantee}
-\begin{theorem}[First-eligible-boundary safety]
-Fix a selected fact set $F$. Assume (1) transformation effect contracts are complete relative to $F$; (2) every created obligation has exactly one executable canonical route at its first eligible boundary; (3) the scheduler is invoked at every modeled boundary and executes every due obligation no later than that boundary; (4) successful verification is sound for the owned fact; and (5) verifier rejection or any routing/scheduling error stops compilation. Then P2 does not allow an artifact to cross a boundary $b_i$ with a considered fact that is both due at or before $b_i$ and false or undischarged.
+\subsection{Relative enforcement guarantee}
+\begin{theorem}[First-eligible-boundary enforcement]
+Fix a selected fact set $F$. Assume (1) every initial valid seed is semantically sound; (2) transformation effect contracts are sound and invalidation-complete relative to $F$; (3) every created obligation has exactly one executable canonical route at its first eligible boundary; (4) the scheduler observes every modeled boundary and executes every due obligation no later than that boundary; (5) successful verification is sound for the owned fact; and (6) verifier rejection or any contract, routing, or scheduling error stops compilation. Then P2 does not allow an artifact to cross a boundary $b_i$ with a considered fact that is both due at or before $b_i$ and false or undischarged.
 \end{theorem}
 
 \paragraph{Proof sketch.}
-Proceed by induction over the ordered boundaries. Before $b_0$, the selected seed state contains only facts explicitly established by the system. For the induction step, assume no due false or undischarged considered fact crossed $b_{i-1}$. Apply every transformation effect observed before $b_i$. Requirements and invalid preservation claims fail immediately. A produced fact is valid by the effect contract. Every invalidated fact creates a uniquely owned obligation; completeness excludes an unrecorded considered invalidation, and route resolution fails closed if the route is absent or ambiguous. If its first eligible boundary is $b_i$, P2 executes the route before crossing. Sound acceptance re-establishes the fact for this crossing; rejection stops compilation. An obligation with an earlier deadline is rejected as overdue, and one with a later deadline is not yet due. Thus no due false or undischarged considered fact crosses $b_i$.
+Proceed by induction over the ordered boundaries. Sound seeds establish the base case. For the step, assume no due false or undischarged considered fact crossed $b_{i-1}$. Apply every selected transformation effect before $b_i$. Requirements and invalid preservation claims fail immediately. By effect soundness, produced and preserved valid facts are true after the transformation. By invalidation completeness, every considered fact that may have become false without being re-established is marked invalid and creates a uniquely owned obligation; route resolution fails closed if the route is absent or ambiguous. An obligation with $b_e=b_i$ is executed before crossing. Sound acceptance re-establishes the owned fact; rejection stops compilation. An earlier deadline is rejected as overdue, and a later one remains pending without yet being due. Hence no due false or undischarged considered fact crosses $b_i$.
 
 \paragraph{What the theorem does not prove.}
-The result does not establish completeness of $F$, completeness or truth of effect contracts, correctness of verifier implementations, correctness of transformations outside the modeled relations, or whole-compiler correctness. P3 is not an oracle for unregistered facts, and empirical P2/P3 parity is not a universal theorem.
+The result does not establish completeness of $F$, truth or completeness of the supplied seeds/effect contracts, correctness of verifier implementations, correctness of transformations outside the modeled relations, or whole-compiler correctness. Instead it isolates the scheduler's contribution conditional on those semantic inputs. P3 is not an oracle for unregistered facts, and empirical P2/P3 parity is not a universal theorem.

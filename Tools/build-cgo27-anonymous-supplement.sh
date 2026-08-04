@@ -63,6 +63,45 @@ json.dump(result, open(sys.argv[2], 'w', encoding='utf-8'), indent=2, sort_keys=
 open(sys.argv[2], 'a', encoding='utf-8').write('\n')
 PY
 
+python3 - "$root/CGO27/historical-corpus/exact-replay-summary.json" \
+  "$stage/historical/exact-replay-summary.json" <<'PY'
+import json, sys
+source = json.load(open(sys.argv[1], encoding='utf-8'))
+campaign = source['campaignSummary']
+cases = source['cases']
+result = {
+    'schemaVersion': 1,
+    'campaign': {
+        'requestedCases': campaign['requestedCases'],
+        'completedCases': campaign['completedCases'],
+        'confirmedFindings': campaign['confirmedFindings'],
+        'distinctFindingClasses': campaign['distinctFindingClasses'],
+        'flakyCases': campaign['flakyCases'],
+        'inconclusiveCases': campaign['inconclusiveCases'],
+        'infrastructureFailures': campaign['infrastructureFailures'],
+        'freshProcessAttempts': sum(case['attempts'] for case in cases),
+    },
+    'cases': [
+        {
+            'anonymousCaseId': f'H{index:02d}',
+            'attempts': case['attempts'],
+            'confirmedViolation': case['confirmedViolation'],
+            'flaky': case['flaky'],
+            'inconclusive': case['inconclusive'],
+            'infrastructureFailure': case['infrastructureFailure'],
+        }
+        for index, case in enumerate(cases, 1)
+    ],
+    'claimBoundary': {
+        'exactPrefixReproduction': True,
+        'historicalP2RateAvailable': False,
+        'independentlyAuthored': False,
+    },
+}
+json.dump(result, open(sys.argv[2], 'w', encoding='utf-8'), indent=2, sort_keys=True)
+open(sys.argv[2], 'a', encoding='utf-8').write('\n')
+PY
+
 python3 - "$stage" <<'PY'
 from pathlib import Path
 import re, sys

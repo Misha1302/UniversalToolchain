@@ -13,6 +13,11 @@ if [[ ! "$commit" =~ ^[0-9a-f]{40}$ ]]; then
   echo "exact 40-hex source commit could not be resolved" >&2
   exit 2
 fi
+if [[ -n "${GITHUB_SHA:-}" && "$GITHUB_SHA" != "$commit" ]]; then
+  echo "GITHUB_SHA does not match the resolved source commit" >&2
+  exit 2
+fi
+export CGO27_EXPERIMENT_COMMIT="$commit"
 rm -rf "$output"
 mkdir -p "$output/source-snapshot" "$root/UniversalToolchain/packages"
 
@@ -35,6 +40,21 @@ for case_id in C01 C02 P01 P02 B01 P07 D01 D02; do
 done
 
 python3 "$project_root/run_matrix_v3.py" "$dll" "$output"
+
+python3 - "$output/probe-results.jsonl" "$output/raw-results.jsonl" "$commit" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+for path_text in sys.argv[1:3]:
+    path = Path(path_text)
+    rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    if not rows:
+        raise SystemExit(f"no records in {path}")
+    mismatches = sorted({row.get("commitSha") for row in rows if row.get("commitSha") != sys.argv[3]})
+    if mismatches:
+        raise SystemExit(f"commit mismatch in {path}: {mismatches}")
+PY
 
 cp "$project" "$output/source-snapshot/"
 cp "$project_root/Program.cs" "$output/source-snapshot/"

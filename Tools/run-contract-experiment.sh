@@ -62,7 +62,8 @@ for file in \
   STUDY_PROTOCOL_V3.md \
   STUDY_PROTOCOL_V4.md \
   raw-result-schema-v3.json \
-  raw-result-schema-v4.json; do
+  raw-result-schema-v4.json \
+  Directory.Build.props; do
   cp "$experiment_dir/$file" "$out_dir/source/$file"
 done
 cp "Tools/run-contract-experiment.sh" "$out_dir/source/run-contract-experiment.sh"

@@ -5,7 +5,7 @@ Analysis invalidation addresses a related but narrower problem. A pass manager c
 
 We study \emph{obligation-guided reverification}. Transformations declare typed effect contracts over semantic facts. Invalidating a fact creates a named verification obligation carrying its canonical verifier owner, creation boundary, and first eligible boundary. The scheduler must execute every due obligation through the unique canonical route, or fail closed before the artifact crosses that boundary. This turns ``an analysis became stale'' into ``this selected-system fact must be re-established here.''
 
-Our guarantee is intentionally relative. If the fact vocabulary and transformation effects are complete for the considered relation, the route is unique and executable, the scheduler runs at every modeled boundary, and the verifier is sound for its fact, then selective policy P2 cannot let an artifact cross its first eligible boundary with a due false or undischarged considered fact. The guarantee does not prove effect completeness, verifier correctness, or whole-compiler correctness.
+Our guarantee is intentionally relative. If initial seeds are true, effect contracts soundly describe produced/preserved facts and completely declare considered invalidations, the route is unique and executable, the scheduler runs at every modeled boundary, and the verifier is sound for its fact, then selective policy P2 cannot let an artifact cross its first eligible boundary with a due false or undischarged considered fact. The guarantee isolates enforcement: it does not prove the supplied contracts, verifier implementations, or whole compiler.
 
 We compare five policies over the same production verifiers: structural-only P0; passive invalidation P1; demand-driven recomputation P1D; obligation-guided selective verification P2; and always verification P3. The strongest competing baseline, P1D, safely recomputes an invalidated fact when it is explicitly queried. A matched counterexample isolates the difference: with no downstream query, P1D leaves a false fact pending, while P2 rejects at the declared semantic boundary.
 
@@ -13,7 +13,7 @@ This paper makes four contributions:
 \begin{itemize}
   \item a model of owned, boundary-indexed verification obligations over explicit compiler-fact effects;
   \item a deterministic fail-closed selective scheduler and a conditional guarantee proved by induction over pipeline boundaries;
-  \item an implementation in a composed .NET compiler and its public extension boundary, including an executable demand-recomputation baseline;
+  \item a compilation-scoped implementation in a composed .NET compiler that persists obligations across bytecode, AIR, optimized-AIR, and backend-input boundaries, plus a public extension boundary and executable demand-recomputation baseline;
   \item versioned boundary and source-to-result evaluations with matched controls, mechanism ablations, and a separately reported historical/external-validity track.
 \end{itemize}
 

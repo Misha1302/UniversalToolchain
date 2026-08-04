@@ -7,7 +7,8 @@ public interface ICompilerFactVerifierRuleProvider
 
 public sealed record CompilerFactVerifierRouteDescriptor(
     VerifierRuleId RuleId,
-    string CanonicalOwner);
+    string CanonicalOwner,
+    CompilerPipelineStage EarliestExecutableBoundary = CompilerPipelineStage.Bytecode);
 
 public interface ICompilerFactVerifierRouteProvider
 {
@@ -60,14 +61,38 @@ public sealed class CompilerFactVerifierRegistry
     internal static IReadOnlyDictionary<CompilerFactId, CompilerFactVerifierRouteDescriptor> CreateCoreRoutes() =>
         new Dictionary<CompilerFactId, CompilerFactVerifierRouteDescriptor>
         {
-            [KnownCoreCompilerFacts.BytecodeVerified] = new(KnownCoreVerifierRules.BytecodeContract, "core.bytecode"),
-            [KnownCoreCompilerFacts.AirSchemaValid] = new(KnownCoreVerifierRules.AirContract, "core.air"),
-            [KnownCoreCompilerFacts.AirBranchTargetsValid] = new(KnownCoreVerifierRules.AirContract, "core.air"),
-            [KnownCoreCompilerFacts.AirStackBalanced] = new(KnownCoreVerifierRules.AirContract, "core.air"),
-            [KnownCoreCompilerFacts.AirBranchStackCompatible] = new(KnownCoreVerifierRules.AirContract, "core.air"),
-            [KnownCoreCompilerFacts.AirIntrinsicsSupported] = new(KnownCoreVerifierRules.AirContract, "core.air"),
-            [KnownCoreCompilerFacts.AirVerified] = new(KnownCoreVerifierRules.AirContract, "core.air"),
-            [KnownCoreCompilerFacts.BackendInputVerified] = new(KnownCoreVerifierRules.BackendInputContract, "core.backend-input")
+            [KnownCoreCompilerFacts.BytecodeVerified] = new(
+                KnownCoreVerifierRules.BytecodeContract,
+                "core.bytecode",
+                CompilerPipelineStage.Bytecode),
+            [KnownCoreCompilerFacts.AirSchemaValid] = new(
+                KnownCoreVerifierRules.AirContract,
+                "core.air",
+                CompilerPipelineStage.Air),
+            [KnownCoreCompilerFacts.AirBranchTargetsValid] = new(
+                KnownCoreVerifierRules.AirContract,
+                "core.air",
+                CompilerPipelineStage.Air),
+            [KnownCoreCompilerFacts.AirStackBalanced] = new(
+                KnownCoreVerifierRules.AirContract,
+                "core.air",
+                CompilerPipelineStage.Air),
+            [KnownCoreCompilerFacts.AirBranchStackCompatible] = new(
+                KnownCoreVerifierRules.AirContract,
+                "core.air",
+                CompilerPipelineStage.Air),
+            [KnownCoreCompilerFacts.AirIntrinsicsSupported] = new(
+                KnownCoreVerifierRules.AirContract,
+                "core.air",
+                CompilerPipelineStage.Air),
+            [KnownCoreCompilerFacts.AirVerified] = new(
+                KnownCoreVerifierRules.AirContract,
+                "core.air",
+                CompilerPipelineStage.Air),
+            [KnownCoreCompilerFacts.BackendInputVerified] = new(
+                KnownCoreVerifierRules.BackendInputContract,
+                "core.backend-input",
+                CompilerPipelineStage.BackendInput)
         };
 
     public bool TryGetVerifier(CompilerFactId factId, out VerifierRuleId ruleId)
@@ -86,6 +111,17 @@ public sealed class CompilerFactVerifierRegistry
         CompilerFactId factId,
         out CompilerFactVerifierRouteDescriptor route) =>
         _routesByFact.TryGetValue(factId, out route!);
+
+    public IReadOnlyList<CompilerFactId> GetFactsForRoute(
+        VerifierRuleId ruleId,
+        CompilerPipelineStage boundary) =>
+        _routesByFact
+            .Where(pair =>
+                pair.Value.RuleId == ruleId &&
+                pair.Value.EarliestExecutableBoundary <= boundary)
+            .Select(static pair => pair.Key)
+            .OrderBy(static fact => fact.Value, StringComparer.Ordinal)
+            .ToArray();
 
     private static IReadOnlyDictionary<CompilerFactId, CompilerFactVerifierRouteDescriptor> BuildRoutes(
         IEnumerable<ICompilerFactVerifierRuleProvider> providers)
@@ -111,8 +147,8 @@ public sealed class CompilerFactVerifierRegistry
                 {
                     throw new InvalidOperationException(
                         $"Compiler fact '{fact}' is routed to conflicting verifier routes " +
-                        $"'{existing.RuleId}'/'{existing.CanonicalOwner}' and " +
-                        $"'{route.RuleId}'/'{route.CanonicalOwner}'.");
+                        $"'{existing.RuleId}'/'{existing.CanonicalOwner}'@'{existing.EarliestExecutableBoundary}' and " +
+                        $"'{route.RuleId}'/'{route.CanonicalOwner}'@'{route.EarliestExecutableBoundary}'.");
                 }
 
                 routes[fact] = route;
@@ -129,6 +165,12 @@ public sealed class CompilerFactVerifierRegistry
         descriptor = descriptor.ArgNotNull();
         if (string.IsNullOrWhiteSpace(descriptor.CanonicalOwner))
             throw new InvalidOperationException($"Compiler fact '{fact}' has no canonical verifier owner.");
+        if (!Enum.IsDefined(descriptor.EarliestExecutableBoundary))
+        {
+            throw new InvalidOperationException(
+                $"Compiler fact '{fact}' has unknown earliest executable boundary " +
+                $"'{descriptor.EarliestExecutableBoundary}'.");
+        }
         return descriptor;
     }
 }

@@ -9,7 +9,8 @@ public sealed class PipelineEffectVerifier
         var available = request.InputFacts.Available.ToHashSet();
         var invalidated = request.InputFacts.Invalidated.ToHashSet();
         var diagnostics = new List<ToolchainDiagnostic>();
-        var obligations = new HashSet<VerificationObligation>();
+        var obligations = new HashSet<VerificationObligation>(
+            request.PendingObligations ?? []);
 
         var effects = request.ContractTable.PipelineEffectFacets
             .SelectMany(static facet => facet.Effects.Select(effect => (facet.ModuleId, effect)))
@@ -151,12 +152,15 @@ public sealed class PipelineEffectVerifier
                 continue;
             }
 
+            var firstEligibleBoundary = route.EarliestExecutableBoundary < creationBoundary
+                ? creationBoundary
+                : route.EarliestExecutableBoundary;
             obligations.Add(new VerificationObligation(
                 fact,
                 route.RuleId,
                 route.CanonicalOwner,
                 creationBoundary,
-                creationBoundary));
+                firstEligibleBoundary));
         }
 
         foreach (var fact in effect.Produces)

@@ -1,0 +1,93 @@
+{
+  "campaignSummary": {
+    "adapterId": "wist-restricted-int32",
+    "campaignSeed": 1,
+    "cleanCases": 0,
+    "completedCases": 3,
+    "confirmedFindings": 3,
+    "distinctFindingClasses": 2,
+    "flakyCases": 0,
+    "includedRegressionCorpus": true,
+    "inconclusiveCases": 0,
+    "infrastructureFailures": 0,
+    "requestedCases": 3,
+    "schemaVersion": 3
+  },
+  "cases": [
+    {
+      "attempts": 3,
+      "caseId": "7904cb30dbaf72a5a6d047a90ca79d05820a1387ece13fe444601b3ed4abb58f",
+      "confirmedClassFingerprint": "bb233469745ba18fd24fe496005dc033e3e4917cdde2a37b01df9e462c9253b4",
+      "confirmedFingerprint": "843bae30fc137fa6db72406153ac8bff4148cf2aa2caf095ee37c57f3f73e3eb",
+      "confirmedViolation": true,
+      "flaky": false,
+      "inconclusive": false,
+      "infrastructureFailure": false,
+      "origin": "regression-corpus:issue-303",
+      "sourceText": "((0 * 1) - 1)",
+      "violatedContracts": [
+        "backend-parity.disabled",
+        "controlled-fallback.prefer",
+        "route-parity.prefer",
+        "route-parity.require"
+      ]
+    },
+    {
+      "attempts": 3,
+      "caseId": "a04b3a1cc03d15a22a1493548276723a0c02c45c2b2e75dcb52eb467c5a7f444",
+      "confirmedClassFingerprint": "bb233469745ba18fd24fe496005dc033e3e4917cdde2a37b01df9e462c9253b4",
+      "confirmedFingerprint": "87fa502e1fcf962edb4925ace8b10fee887cf7d4634fa60edc936f58db00a132",
+      "confirmedViolation": true,
+      "flaky": false,
+      "inconclusive": false,
+      "infrastructureFailure": false,
+      "origin": "regression-corpus:issue-302",
+      "sourceText": "(0 * x)",
+      "violatedContracts": [
+        "backend-parity.disabled",
+        "controlled-fallback.prefer",
+        "route-parity.prefer",
+        "route-parity.require"
+      ]
+    },
+    {
+      "attempts": 3,
+      "caseId": "dff3feb4550641d8cbb67b2882c2afe505f4a51b2210bccc4f705168bc8d05a4",
+      "confirmedClassFingerprint": "9076590930c54e482e22f69ab2bd799e1cc171ff0f4a755db1123410bdcdbee0",
+      "confirmedFingerprint": "0018ed6927220a30a045f833e9049ad19dd2449db03597c0048c8bf95d0e6d0b",
+      "confirmedViolation": true,
+      "flaky": false,
+      "inconclusive": false,
+      "infrastructureFailure": false,
+      "origin": "regression-corpus:issue-307",
+      "sourceText": "(x + (-2))",
+      "violatedContracts": [
+        "controlled-fallback.prefer",
+        "route-parity.require"
+      ]
+    }
+  ],
+  "claimBoundary": {
+    "notSupported": [
+      "historical P2 detection rate",
+      "independent corpus authorship",
+      "natural-defect prevalence",
+      "whole-repository completeness"
+    ],
+    "supported": "The exact pre-fix revision reproduces all three frozen issue-defined regressions in three fresh-process attempts per case."
+  },
+  "command": "campaign --adapter wist-restricted-int32 --seed 1 --cases 3 --repeat 3 --timeout-seconds 60 --include-regressions",
+  "environment": {
+    "buildErrors": 0,
+    "buildWarnings": 0,
+    "dotnetRuntime": "10.0.9",
+    "dotnetSdk": "10.0.301",
+    "restoreMode": "offline local package feed"
+  },
+  "exactSourceArchiveSha256": "550abe24a08c9967f2add03fed5b1fdaa514e0b52f35509c3f60ba2493dc8b7a",
+  "exactSourceRevision": "eb851d4bf80f363969e04abdb4bcddf3e56830f3",
+  "executedAt": "2026-08-04",
+  "replayManifestSha256": "dc87966af2e73ae9f787f9976ab86b6929449a963dff5b34dfb551eefbab3623",
+  "replaySummarySha256": "45eb7f0581cd6e8667f3c5d02690728d557334c8365925759694ce8eb4c025e6",
+  "schemaVersion": 1
+}

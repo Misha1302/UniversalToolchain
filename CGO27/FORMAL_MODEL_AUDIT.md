@@ -1,64 +1,52 @@
 # Formal model to implementation audit
 
-Status: first implementation-backed audit for CGO 2027 hardening.
+Status: implementation-backed audit after deferred-lifecycle repair.
 
 ## Central claim
 
-Obligation-guided reverification turns selected compiler-state changes into named, boundary-indexed verification obligations with canonical owners. Under the stated relative assumptions, an obligation-enforcing scheduler either discharges every due obligation through its unique route or stops compilation before the artifact crosses the first eligible boundary.
-
-This is a relative, selected-fact guarantee. It is not a correctness proof for the compiler.
+Obligation-guided reverification turns declared compiler-state invalidations into named obligations with canonical owners and earliest executable boundaries. Under explicit trust assumptions, P2 either discharges each due obligation through its unique route or stops compilation before the artifact crosses that boundary. This is a selected-fact scheduling/enforcement guarantee, not a compiler-correctness proof.
 
 ## Typed correspondence
 
 | Paper object | Implementation owner | Enforced property | Focused evidence |
 |---|---|---|---|
-| Fact set `F` and IDs | `CompilerFactId`, selected contract table | facts are typed/named rather than free-form telemetry labels | module-contract builder tests |
-| `valid`, `invalid`, `unknown` | `CompilerFactValidity`, `CompilerFactState.GetValidity` | one fact cannot be simultaneously valid and invalid; absent facts are unknown | `CompilerFactStateTests` |
-| Ordered boundaries `B` | `CompilerPipelineStage` | bytecode, AIR, optimized AIR, backend input have deterministic order | scheduler boundary tests |
-| Effect contract `(requires, produces, preserves, invalidates)` | `PipelineEffectContract` | normalized finite sets and explicit stage | pipeline-effect tests |
-| Effect transition | `PipelineEffectVerifier` | missing requirements and invalid preservation fail; invalidation changes state; production restores validity | `PipelineEffectVerifierTests` |
-| Canonical route map | `CompilerFactVerifierRegistry` | one route descriptor `(rule, canonical owner)` per fact; conflicts or empty owner fail | registry/scheduler tests |
-| Obligation `(fact, rule, owner, creation, first eligible)` | `VerificationObligation` | each invalidation with a route yields a named boundary-indexed obligation | `Validate_WhenVerifiableFactIsInvalidated_CreatesReverificationRequest` |
-| Missing route fail-closed | `PipelineEffectVerifier`, `UT-PIPELINE-EFFECT-006` | invalidation without an executable canonical route is an error, not a silent omission | `Validate_WhenInvalidatedFactHasNoVerifierRoute_FailsClosedWithDiagnostic` |
-| Demand recomputation | `P1DemandRecomputation`, `DemandedFacts` | only an explicit query schedules an invalidated fact; unknown query fails closed | P1D scheduler/pipeline tests |
-| Due-obligation scheduling | `ModuleContractVerificationScheduler` | P2 selects obligations whose first eligible boundary is current; overdue obligation fails | selective deadline tests |
-| Always verification | `P3Always` | all exposed routes run; due obligations retain owner/fact lineage | P3 deterministic-order tests |
-| Discharge/rejection | `ModuleContractPipelineObserver` + production verifier | a successful route invocation discharges the obligation for that crossing; a diagnostic stops compilation | Wist boundary/E2E studies |
+| Fact set and three-valued state | `CompilerFactId`, `CompilerFactState` | facts are named; absent facts remain unknown | fact-state tests |
+| Ordered boundaries | `CompilerPipelineStage` plus `PreparedExecutionBuilder` callbacks | bytecode, AIR, optimized AIR, backend input, then backend compilation | orchestration-order test |
+| Effects | `PipelineEffectContract`, `PipelineEffectVerifier` | requirements/preservation checked; production restores; invalidation creates an obligation | pipeline-effect tests |
+| Route map `(rule, owner, earliest)` | `CompilerFactVerifierRouteDescriptor`, `CompilerFactVerifierRegistry` | one normalized owner and earliest executable boundary per fact | registry and deferred-route tests |
+| Pending lifecycle | `ConditionalWeakTable<CompilationInput, CompilationLifecycleState>` | facts and obligations survive observer returns within one compilation and are isolated by input identity | carry-forward, retry, and cleanup tests |
+| Obligation `(fact, rule, owner, creation, first eligible)` | `VerificationObligation` | first eligibility is `max(creation, route.earliest)` | immediate and deferred obligation tests |
+| P1/P1D | scheduler plus demanded-fact set | passive invalidation does not enforce a deadline; P1D executes only demanded invalid facts | non-enforcing lifecycle and demand-pair tests |
+| P2/P3 | `ModuleContractVerificationScheduler` | P2 selects due obligations; P3 invokes every route exposed at the current modeled boundary; overdue/mismatched routes fail | scheduler and policy tests |
+| Production discharge | `ModuleContractPipelineObserver.BeforeBackend` and production AIR verifier | a backend-input obligation created at optimized AIR is discharged immediately before backend compilation | `Selective_CarriesDeferredBackendObligationAcrossBoundaries` |
 
-## Conservative implementation instance
+## Concrete deferred instance
 
-The general model permits `creation_boundary <= first_eligible_boundary`. The current production integration chooses the conservative instance
+The production path now contains a nontrivial lifecycle:
 
-`first_eligible_boundary = creation_boundary`
+`OptimizedAir: invalidate backend.input-verified -> pending(firstEligible=BackendInput)`
 
-for obligations created by observed bytecode/AIR effects, because the canonical production verifier is executable at that boundary. The scheduler nevertheless rejects an obligation presented after its deadline, and tests exercise that fail-closed branch. The paper must not claim that the current implementation defers obligations across multiple boundaries.
+`BackendInput: invoke core.backend-input -> valid/discharged -> backend compile`
+
+The observer stores state per `CompilationInput`, requires strictly increasing callbacks, merges later stage seeds without overwriting invalidated facts, and removes state after the final boundary or any failed callback. P1/P1D may retain passive invalidation state without converting it into a mandatory boundary failure; only P2/P3 enforce deadlines.
 
 ## Relative guarantee assumptions
 
-The guarantee depends on all of the following:
-
-1. the modeled fact set contains the semantic relation at issue;
-2. every transformation effect contract is complete relative to that fact set;
-3. every invalidated fact has exactly one executable canonical route at its first eligible boundary;
-4. the scheduler is invoked at every modeled boundary and executes every due obligation before crossing;
-5. the verifier route is sound for the fact it owns;
-6. successful verifier completion is treated as discharge and verifier rejection stops compilation.
+1. Initial fact seeds are semantically sound.
+2. Effect declarations are truthful and invalidation-complete relative to the selected finite fact vocabulary.
+3. Every created obligation has exactly one sound executable canonical route at its first eligible boundary.
+4. The production observer is invoked at every modeled boundary in order and retains state across them.
+5. Every due P2 obligation is scheduled before crossing its deadline.
+6. Verifier rejection, unknown routing, owner conflict, or missed deadline stops compilation.
 
 ## Explicit non-claims
 
-The theorem does not establish:
+The mechanism does not prove seed/effect metadata, discover unmodeled relations, prove verifier implementations, establish whole-compiler correctness, show universal P2/P3 equivalence, or establish a performance advantage over MLIR-style verification after every pass.
 
-- completeness of the fact vocabulary;
-- completeness or correctness of declared effects;
-- correctness of verifier implementations;
-- correctness of transformations outside the modeled relations;
-- whole-compiler semantic correctness;
-- universal P2/P3 equivalence;
-- whole-compilation performance improvement.
+## Closed review findings
 
-## Adversarial consistency findings
-
-- **Repaired:** a fact invalidation with no registry route previously produced no obligation. This contradicted fail-closed missing-route language. `UT-PIPELINE-EFFECT-006` now makes the transition an error.
-- **Bounded:** the implementation does not persist deferred obligations across observer boundaries. The paper therefore identifies the implementation as the immediate-deadline instance of the more general model.
-- **Bounded:** P3 is an empirical comparison policy over registered routes, not a proof oracle for unmodeled facts.
-- **Bounded:** P1D protects against stale cached results only when a consumer explicitly queries the fact. It intentionally has no semantic-boundary deadline.
+- **Closed:** the previous production observer recreated state independently at each stage. State is now compilation-scoped and a real deferred route crosses observer callbacks.
+- **Closed:** the proof previously treated declared production as semantic truth. Sound seeds and truthful/complete effects are now explicit assumptions.
+- **Closed:** passive P1 obligations initially became routing failures after persistence was added. Enforcement diagnostics are now restricted to P2/P3; P1/P1D behavior is covered end-to-end.
+- **Closed:** related work previously omitted verifier-after-every-pass. The paper now treats it as the strongest operational alternative and narrows novelty accordingly.
+- **Still bounded:** external validity, historical policy replay, pinned-machine cost, and motivated deanonymization remain unresolved external conditions.

@@ -2,6 +2,12 @@
 
 Status: validated bounded evidence summary. Exact-head provider identities are recorded in the draft PR and delivered readiness report rather than embedded recursively in the source revision.
 
+## Production lifecycle conformance
+
+The production observer now owns compilation-scoped fact state and pending obligations across bytecode, AIR, optimized AIR, and backend-input callbacks. A focused deferred-route case invalidates `backend.input-verified` at optimized AIR, records `BackendInput` as the earliest executable boundary, carries the obligation after the callback returns, and discharges it through the canonical backend-input route immediately before backend compilation. Tests also cover strict callback order, overdue/missing/conflicting routes, failure cleanup, and safe reuse of the same compilation input identity.
+
+This validates scheduler/orchestration correspondence only. Sound initial seeds, truthful and complete effect declarations, and verifier soundness remain explicit assumptions.
+
 ## Boundary study
 
 The historical System W boundary corpus preserves its identifiers and denominators; the demand pair is versioned separately.
@@ -42,7 +48,7 @@ The frozen accounting contains 24 candidates:
 - 10 blocked aggregate fixes without a bounded one-root reproducer and independently derivable oracle in the available export;
 - 0 invalid cases silently removed.
 
-A new exact-revision replay was attempted but terminated during old dependency-graph compilation before policy execution. The historical set therefore supports provenance and feasibility claims only; it contributes no new P2 detection rate and is not described as independent.
+The exact pre-fix revision was restored and built offline with zero warnings/errors. All three frozen issue-defined regressions reproduced in three fresh-process attempts each (3/3 cases, 9/9 attempts), with zero flaky, inconclusive, or infrastructure outcomes. This establishes exact pre-fix reproducibility, not a historical P2 rate: the revision predates P2 and no policy backport was executed. The set remains author-selected and is not described as independent.
 
 ## Ablations and work counts
 
@@ -56,5 +62,5 @@ The final delivered branch head is acceptable only when all 13 required exact-he
 
 - Whole-compilation performance remains `BLOCKED_PINNED_MACHINE`.
 - Independent external validity remains `BLOCKED_EXTERNAL`.
-- Historical policy replay remains `BLOCKED_RESOURCE`.
+- Exact pre-fix reproduction is complete; historical P2 effectiveness remains unmeasured because no policy backport was executed.
 - Finite parity observations do not prove general P2/P3 equivalence.

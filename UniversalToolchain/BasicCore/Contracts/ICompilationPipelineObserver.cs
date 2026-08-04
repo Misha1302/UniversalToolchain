@@ -16,6 +16,10 @@ public interface ICompilationPipelineObserver
     void AfterOptimizedAir(CompilationPipelineAirContext context)
     {
     }
+
+    void BeforeBackend(CompilationPipelineAirContext context)
+    {
+    }
 }
 
 public sealed record CompilationPipelineBytecodeContext(

@@ -87,6 +87,7 @@ internal sealed class PreparedExecutionBuilder<TCompilationOutput>(
         var irPipeline = new AirOnlyIrPipelineExecutor(optimizers);
         var targetIr = irPipeline.Optimize(air);
         NotifyAfterOptimizedAir(input, targetIr, compiler.SupportedIntrinsics);
+        NotifyBeforeBackend(input, targetIr, compiler.SupportedIntrinsics);
         var allowedRuntimeProviderTypes = ResolveAllowedRuntimeProviderTypes();
         middleEndModules.ForEach(module => module.InitMethodsCompiler(compiler));
         var compiled = compiler.Compile(targetIr, input);
@@ -148,6 +149,25 @@ internal sealed class PreparedExecutionBuilder<TCompilationOutput>(
             _backendComponents);
         foreach (var observer in _pipelineObservers)
             observer.AfterOptimizedAir(context);
+    }
+
+    private void NotifyBeforeBackend(
+        CompilationInput input,
+        IAbstractIR air,
+        IReadOnlyList<string> compilerSupportedIntrinsics)
+    {
+        if (_pipelineObservers.Count == 0)
+            return;
+
+        var context = new CompilationPipelineAirContext(
+            input,
+            modules,
+            optimizers,
+            air,
+            compilerSupportedIntrinsics,
+            _backendComponents);
+        foreach (var observer in _pipelineObservers)
+            observer.BeforeBackend(context);
     }
 
     private IReadOnlyList<Type> ResolveAllowedRuntimeProviderTypes() =>

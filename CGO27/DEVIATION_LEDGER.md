@@ -35,9 +35,9 @@
 ## D6 — Exact pre-fix historical replay
 
 - Planned: replay every included defect on the exact pre-fix revision.
-- Actual: dependency restoration succeeded sufficiently to start the old graph, but the historical Roslyn build was resource-terminated before the bounded campaign completed.
-- Classification: `BLOCKED_RESOURCE`.
-- Consequence: no new replay-success claim; the three included defects retain only their pre-study fresh-process evidence.
+- Actual: the exact source was restored and built offline with zero warnings/errors; all three frozen regressions reproduced in three fresh-process attempts each, with zero flaky, inconclusive, or infrastructure outcomes.
+- Classification: `RESOLVED_EXACT_PREFIX_REPRODUCTION`.
+- Consequence: exact pre-fix reproducibility is supported. No historical P2 detection rate is claimed because that revision predates P2 and no policy backport was executed.
 
 ## D7 — Local monolithic full replay
 

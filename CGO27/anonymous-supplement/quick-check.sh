@@ -26,10 +26,13 @@ cmp "$output/analysis/policy-ablation-table.tex" \
 cmp "$output/analysis/mechanism-ablation-table.tex" \
   "$self_dir/paper/source/generated/mechanism-ablation-table.tex"
 
-python3 - "$self_dir/historical/screening-summary.json" "$output/analysis/ablations.json" <<'PY'
+python3 - "$self_dir/historical/screening-summary.json" \
+  "$self_dir/historical/exact-replay-summary.json" \
+  "$output/analysis/ablations.json" <<'PY'
 import json, sys
 historical = json.load(open(sys.argv[1], encoding='utf-8'))
-analysis = json.load(open(sys.argv[2], encoding='utf-8'))
+replay = json.load(open(sys.argv[2], encoding='utf-8'))
+analysis = json.load(open(sys.argv[3], encoding='utf-8'))
 assert historical == {
     'blocked': 10,
     'excluded': 11,
@@ -37,6 +40,24 @@ assert historical == {
     'invalid': 0,
     'schemaVersion': 1,
     'total': 24,
+}
+assert replay['schemaVersion'] == 1
+assert replay['campaign'] == {
+    'completedCases': 3,
+    'confirmedFindings': 3,
+    'distinctFindingClasses': 2,
+    'flakyCases': 0,
+    'freshProcessAttempts': 9,
+    'inconclusiveCases': 0,
+    'infrastructureFailures': 0,
+    'requestedCases': 3,
+}
+assert len(replay['cases']) == 3
+assert all(case['attempts'] == 3 and case['confirmedViolation'] for case in replay['cases'])
+assert replay['claimBoundary'] == {
+    'exactPrefixReproduction': True,
+    'historicalP2RateAvailable': False,
+    'independentlyAuthored': False,
 }
 assert analysis['status'] == 'VALIDATED'
 assert analysis['schemaVersion'] == 3
