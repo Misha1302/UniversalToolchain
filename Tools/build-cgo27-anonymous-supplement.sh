@@ -70,6 +70,8 @@ root = Path(sys.argv[1])
 text_suffixes = {'.cs', '.csproj', '.csv', '.json', '.jsonl', '.md', '.py', '.sh', '.tex', '.txt', '.yml', '.yaml'}
 replacements = (
     (re.compile(r'https?://[^\s"<>]*github[^\s"<>]*', re.I), 'https://example.invalid/anonymized'),
+    (re.compile(r'/(?:home|mnt|Users|runner)/[^\s"<>]*'), '/ANONYMIZED_PATH'),
+    (re.compile(r'[A-Za-z]:(?:\\\\)+(?:Users|home|runner|mnt)(?:\\\\)+[^\s"<>]*', re.I), r'C:\\ANONYMIZED_PATH'),
     (re.compile(r'misha1302', re.I), 'anonymous-account'),
     (re.compile(r'razakov', re.I), 'anonymous-author'),
     (re.compile(r'Wist2'), 'SystemW'),
