@@ -25,10 +25,13 @@ rm -f "$stage/paper/source/"{main.aux,main.log,main.out,main.pdf,main.fdb_latexm
 
 for file in \
   00_WORKSTATE.md RESULTS_SUMMARY.md CLAIM_EVIDENCE_LEDGER.md DEVIATION_LEDGER.md \
-  EXPERIMENT_PROTOCOL.md PERFORMANCE_ENVIRONMENT.md SECOND_LANGUAGE_REPORT.md ABLATION_REPORT.md; do
+  EXPERIMENT_PROTOCOL.md PERFORMANCE_ENVIRONMENT.md SECOND_LANGUAGE_REPORT.md ABLATION_REPORT.md \
+  SUBMISSION_READINESS.md; do
   cp "$root/CGO27/$file" "$stage/protocols/$file"
 done
 cp -a "$root/CGO27/external-fault-kit" "$stage/protocols/"
+cp -a "$root/CGO27/historical-corpus" "$stage/protocols/"
+cp -a "$root/CGO27/reviews" "$stage/protocols/"
 
 printf '%s\n' "$commit" > "$stage/COMMIT"
 git -C "$root" status --porcelain=v1 > "$stage/BUILD_GIT_STATUS"

@@ -2,7 +2,7 @@
 
 Status: evidence-backed anonymous draft; not a submission receipt.
 
-The source uses the current CGO 2027 ACM SIGPLAN `sigplan,screen,review,anonymous` format. The official limit is 11 pages of text excluding references; the current PDF contains five total pages. The paper deliberately uses the neutral name **System W** instead of the public repository/project identity.
+The source uses the current CGO 2027 ACM SIGPLAN `sigplan,screen,review,anonymous` format. The official limit is 11 pages of text excluding references; the current PDF contains nine total pages. The paper deliberately uses the neutral name **System W** instead of the public repository/project identity.
 
 Build without BibTeX:
 

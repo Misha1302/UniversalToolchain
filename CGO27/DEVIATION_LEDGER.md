@@ -31,3 +31,24 @@
 - Earlier planning text required rechecking official rules.
 - Current official rule recorded for the paper workspace: ACM SIGPLAN format, Letter paper, 11 pages of text excluding references, second-round deadline 10 September 2026 AoE.
 - Consequence: paper build must target the current 11-page rule, not an inherited page limit.
+
+## D6 — Exact pre-fix historical replay
+
+- Planned: replay every included defect on the exact pre-fix revision.
+- Actual: dependency restoration succeeded sufficiently to start the old graph, but the historical Roslyn build was resource-terminated before the bounded campaign completed.
+- Classification: `BLOCKED_RESOURCE`.
+- Consequence: no new replay-success claim; the three included defects retain only their pre-study fresh-process evidence.
+
+## D7 — Local monolithic full replay
+
+- Planned: one local end-to-end command in addition to provider workflows.
+- Actual: the 20-minute local envelope expired during the fresh-process matrix after contract and mechanism evidence had completed.
+- Classification: `BLOCKED_LOCAL_ENVELOPE`.
+- Consequence: final reproduction authority is the exact-head provider workflows, each with its own bounded timeout and uploaded artifact.
+
+## D8 — Double-blind supplementary material
+
+- Planned: one reproducibility artifact.
+- Actual: reproducibility and double-blind constraints require two deliverables: a full non-anonymous archival artifact and a neutral anonymous supplement.
+- Classification: `RESOLVED_BY_SEPARATION`.
+- Consequence: only the neutral supplement is suitable for review upload; the archival artifact remains private during double-blind review.
