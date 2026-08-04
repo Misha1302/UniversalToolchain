@@ -9,11 +9,14 @@ on:
       - ".github/workflows/cgo27-artifact.yml"
       - ".github/workflows/cgo27-paper.yml"
       - "CGO27/artifact/**"
+      - "CGO27/anonymous-supplement/**"
       - "CGO27/paper/**"
       - "CGO27/ablations/**"
       - "CGO27/external-fault-kit/**"
       - "CGO27/*.md"
       - "Tools/build-cgo27-artifact.sh"
+      - "Tools/build-cgo27-anonymous-supplement.sh"
+      - "Tools/check-cgo27-anonymous-supplement.py"
       - "Tools/run-cgo27-ablations.sh"
       - "Tools/run-cgo27-end-to-end.sh"
       - "Tools/run-contract-experiment.sh"
@@ -109,6 +112,32 @@ jobs:
           (cd "$stage" && sha256sum -c MANIFEST.sha256)
           timeout 900 bash "$stage/quick-check.sh" "$workspace/artifacts/clean-unpack-evidence"
           grep -q '^CGO27_ARTIFACT_QUICK_CHECK=PASS$' artifacts/clean-unpack-evidence/QUICK_CHECK_RECEIPT
+      - name: Build deterministic anonymous supplement twice
+        shell: bash
+        run: |
+          set -euo pipefail
+          evidence="$PWD/artifacts/clean-unpack-evidence/evidence"
+          bash Tools/build-cgo27-anonymous-supplement.sh artifacts/anonymous-a "$evidence"
+          bash Tools/build-cgo27-anonymous-supplement.sh artifacts/anonymous-b "$evidence"
+          archive_a="artifacts/anonymous-a/cgo27-anonymous-supplement.tar.gz"
+          archive_b="artifacts/anonymous-b/cgo27-anonymous-supplement.tar.gz"
+          cmp "$archive_a" "$archive_b"
+          sha256sum "$archive_a" "$archive_b" > artifacts/ANONYMOUS_DETERMINISM.sha256
+          (cd artifacts/anonymous-a && sha256sum -c SHA256SUMS)
+          (cd artifacts/anonymous-b && sha256sum -c SHA256SUMS)
+      - name: Clean-unpack anonymous supplement quick check
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf artifacts/anonymous-clean-unpack artifacts/anonymous-clean-evidence
+          mkdir -p artifacts/anonymous-clean-unpack
+          tar -xzf artifacts/anonymous-a/cgo27-anonymous-supplement.tar.gz \
+            -C artifacts/anonymous-clean-unpack
+          stage="artifacts/anonymous-clean-unpack/cgo27-anonymous-supplement"
+          (cd "$stage" && sha256sum -c MANIFEST.sha256)
+          bash "$stage/quick-check.sh" "$PWD/artifacts/anonymous-clean-evidence"
+          grep -q '^CGO27_ANONYMOUS_SUPPLEMENT_QUICK_CHECK=PASS$' \
+            artifacts/anonymous-clean-evidence/QUICK_CHECK_RECEIPT
       - name: Verify staged source identities
         shell: bash
         run: |
@@ -126,5 +155,8 @@ jobs:
             artifacts/DETERMINISM.sha256
             artifacts/provider-paper
             artifacts/clean-unpack-evidence
+            artifacts/anonymous-a
+            artifacts/ANONYMOUS_DETERMINISM.sha256
+            artifacts/anonymous-clean-evidence
           if-no-files-found: error
           retention-days: 90
