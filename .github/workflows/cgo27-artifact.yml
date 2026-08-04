@@ -113,18 +113,52 @@ jobs:
           timeout 900 bash "$stage/quick-check.sh" "$workspace/artifacts/clean-unpack-evidence"
           grep -q '^CGO27_ARTIFACT_QUICK_CHECK=PASS$' artifacts/clean-unpack-evidence/QUICK_CHECK_RECEIPT
       - name: Build deterministic anonymous supplement twice
+        id: anonymous_build
+        continue-on-error: true
         shell: bash
         run: |
-          set -euo pipefail
+          set -uo pipefail
           evidence="$PWD/artifacts/clean-unpack-evidence/evidence"
-          bash Tools/build-cgo27-anonymous-supplement.sh artifacts/anonymous-a "$evidence"
-          bash Tools/build-cgo27-anonymous-supplement.sh artifacts/anonymous-b "$evidence"
+          mkdir -p artifacts/anonymous-diagnostics
+          find "$evidence" -maxdepth 4 -type f -printf '%P\t%s bytes\n' \
+            | LC_ALL=C sort > artifacts/anonymous-diagnostics/evidence-inventory.txt
+          set +e
+          bash -x Tools/build-cgo27-anonymous-supplement.sh artifacts/anonymous-a "$evidence" \
+            > artifacts/anonymous-diagnostics/build-a.log 2>&1
+          status_a=$?
+          if (( status_a == 0 )); then
+            bash -x Tools/build-cgo27-anonymous-supplement.sh artifacts/anonymous-b "$evidence" \
+              > artifacts/anonymous-diagnostics/build-b.log 2>&1
+            status_b=$?
+          else
+            status_b=99
+          fi
+          set -e
+          printf 'status_a=%s\nstatus_b=%s\n' "$status_a" "$status_b" \
+            > artifacts/anonymous-diagnostics/status.txt
+          if (( status_a != 0 || status_b != 0 )); then
+            tail -n 120 artifacts/anonymous-diagnostics/build-a.log || true
+            tail -n 120 artifacts/anonymous-diagnostics/build-b.log || true
+            exit 1
+          fi
           archive_a="artifacts/anonymous-a/cgo27-anonymous-supplement.tar.gz"
           archive_b="artifacts/anonymous-b/cgo27-anonymous-supplement.tar.gz"
           cmp "$archive_a" "$archive_b"
           sha256sum "$archive_a" "$archive_b" > artifacts/ANONYMOUS_DETERMINISM.sha256
           (cd artifacts/anonymous-a && sha256sum -c SHA256SUMS)
           (cd artifacts/anonymous-b && sha256sum -c SHA256SUMS)
+      - name: Upload anonymous supplement diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cgo27-anonymous-diagnostics-${{ env.CGO27_SOURCE_SHA }}
+          path: artifacts/anonymous-diagnostics
+          if-no-files-found: error
+          retention-days: 30
+      - name: Enforce anonymous supplement build success
+        if: steps.anonymous_build.outcome != 'success'
+        shell: bash
+        run: exit 1
       - name: Clean-unpack anonymous supplement quick check
         shell: bash
         run: |
