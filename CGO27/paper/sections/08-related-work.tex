@@ -11,5 +11,28 @@ CompCert proves semantic preservation for a substantial compiler stack~\cite{ler
 \paragraph{Compiler testing and reduction.}
 Differential, random, and metamorphic systems such as Csmith, EMI, and YARPGen discover wrong-code and crash-inducing programs~\cite{csmith,emi,yarpgen}.  C-Reduce, Perses, and delta debugging make failures smaller and reproducible~\cite{creduce,perses,delta}.  Our evaluation uses targeted faults and controls to test a scheduling mechanism; it does not propose a new generator or claim natural defect prevalence.  The distinction matters for interpretation: a detected study fault is evidence that a declared obligation reaches its verifier, not evidence that the mechanism discovers more unknown compiler bugs than fuzzing.  Conversely, fuzzing can supply future historical or externally authored cases, but it does not by itself enforce that a selected semantic relation is checked before a backend consumes an artifact.
 
+\begin{table*}[t]
+\caption{Feature comparison with the strongest material alternatives. ``Query'' means consumer-triggered execution; ``boundary'' means a declared compiler deadline. This table compares mechanisms, not assurance strength: verified compilation provides a substantially stronger whole-compiler result than our conditional theorem.}
+\label{tab:related-comparison}
+\scriptsize
+\centering
+\setlength{\tabcolsep}{2.5pt}
+\begin{tabular}{@{}p{0.225\textwidth}cccccccc@{}}
+\toprule
+Mechanism & Inval. & Sem. facts & Canon. owner & Deadline & Missing route & Selective & S2R gate & Indep. ext. \\
+\midrule
+LLVM/MLIR analysis managers & yes & analysis & no & query & n/a & query & no & yes \\
+Generic IR verifier & no & schema & fixed & call site & n/a & no & no & limited \\
+Translation validation / Alive2 & per transform & relation & validator & transform & n/a & per transform & usually no & relation-specific \\
+Verified / certifying compiler & proof state & yes & proof/checker & proof boundary & proof failure & proof-guided & yes & proof interface \\
+P1D demand recomputation & yes & selected & route owner & query & fail closed on query & query & no mandatory gate & yes \\
+P2 obligation-guided & yes & selected & unique & boundary & fail closed & due only & yes & yes \\
+P3 always verify & yes & selected & unique & every boundary & fail closed & all routes & yes & yes \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+The table exposes the precise novelty boundary. Pass managers already provide selective invalidation and lazy recomputation, while translation validators and verified compilers provide stronger semantic checkers or proofs. Our contribution is neither a new semantic relation nor a replacement for those systems. It is the composition contract that turns a selected-system invalidation into a uniquely owned, boundary-deadlined execution obligation and makes failure to resolve that route a compilation error. The source-to-result gate is consequently a property of the scheduler integration: the same production verifier that may be optional or consumer-triggered elsewhere becomes mandatory for a due fact before backend consumption.
+
 \paragraph{Positioning.}
 The closest material alternative is a composition of established techniques: lazy pass-manager invalidation, production semantic validators, and aggressive compiler testing.  That combination is attractive and often sufficient.  The matched queried/unqueried case identifies its remaining gap: a known-invalid semantic fact can cross a meaningful boundary when no consumer asks for it.  P2 adds a typed deadline and canonical owner to close exactly that gap.  Its benefit is therefore conditional on a pipeline having meaningful selected-system relations and executable verifiers; for a monolithic compiler with one always-run validator, or for a fact whose first use always queries its analysis, P2 may add little beyond existing practice.
