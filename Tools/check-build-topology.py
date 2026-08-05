@@ -199,7 +199,6 @@ def require_language_pack_provider_contract(root: Path) -> None:
     if resolver is None:
         raise BuildTopologyError("language pack lacks ResolveLanguagePackBuildProviders")
     required_before_targets = {
-        "ResolveProjectReferences",
         "EmitToolchainFeatureManifest",
         "ExposeWistRuntimeClosureToProjectReferences",
         "CollectWistRuntimeManifests",
@@ -207,6 +206,11 @@ def require_language_pack_provider_contract(root: Path) -> None:
     actual_before_targets = set(resolver.attrib.get("BeforeTargets", "").split(";"))
     if not required_before_targets.issubset(actual_before_targets):
         raise BuildTopologyError("language pack provider resolution is missing required BeforeTargets")
+    if "ResolveProjectReferences" in actual_before_targets:
+        raise BuildTopologyError("language pack provider resolution must not race ResolveProjectReferences")
+    after_targets = set(resolver.attrib.get("AfterTargets", "").split(";"))
+    if "ResolveProjectReferences" not in after_targets:
+        raise BuildTopologyError("language pack provider resolution must run after ResolveProjectReferences")
     expected_condition = normalized_expression("'$(DesignTimeBuild)' != 'true'")
     if normalized_expression(resolver.attrib.get("Condition", "")) != expected_condition:
         raise BuildTopologyError("language pack provider resolution must be disabled only for DesignTimeBuild=true")
