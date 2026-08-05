@@ -11,6 +11,7 @@
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeToolchainFeatureManifest</TargetsForTfmSpecificContentInPackage>
+    <FeatureManifestEmitterProjectPath>$(MSBuildThisFileDirectory)..\UniversalToolchain.FeatureManifestEmitter\UniversalToolchain.FeatureManifestEmitter.csproj</FeatureManifestEmitterProjectPath>
   </PropertyGroup>
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="/" />
@@ -21,9 +22,19 @@
     <ProjectReference Include="..\UniversalToolchain.FeatureSdk\UniversalToolchain.FeatureSdk.csproj" />
     <ProjectReference Include="..\UniversalToolchain.Runtime\UniversalToolchain.Runtime.csproj" />
     <ProjectReference Include="..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj" PrivateAssets="all" />
-    <ProjectReference Include="..\UniversalToolchain.FeatureManifestEmitter\UniversalToolchain.FeatureManifestEmitter.csproj" ReferenceOutputAssembly="false" PrivateAssets="all" />
+    <ProjectReference Include="$(FeatureManifestEmitterProjectPath)"
+                      ReferenceOutputAssembly="false"
+                      Private="false"
+                      PrivateAssets="all" />
     <ProjectReference Include="..\UniversalToolchain.Wist\UniversalToolchain.Wist.csproj" />
   </ItemGroup>
+  <Target Name="BuildFeatureManifestEmitterForIsolatedBuild"
+          BeforeTargets="EmitToolchainFeatureManifest"
+          Condition="'$(DesignTimeBuild)' != 'true' and '$(BuildProjectReferences)' == 'false'">
+    <MSBuild Projects="$(FeatureManifestEmitterProjectPath)"
+             Targets="Build"
+             Properties="Configuration=$(Configuration)" />
+  </Target>
   <Target Name="EmitToolchainFeatureManifest" AfterTargets="Build" Condition="'$(DesignTimeBuild)' != 'true'">
     <PropertyGroup>
       <ToolchainFeatureManifestPath>$(TargetDir)$(AssemblyName).toolchain.feature.json</ToolchainFeatureManifestPath>
