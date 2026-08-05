@@ -277,17 +277,25 @@ def require_language_pack_provider_contract(root: Path) -> None:
     expose_target = targets.get("ExposeWistRuntimeClosureToProjectReferences")
     if expose_target is None:
         raise BuildTopologyError("language pack lacks ExposeWistRuntimeClosureToProjectReferences")
-    content_items = [
+    runtime_files = [
         element
         for element in expose_target.iter()
-        if local_name(element.tag) == "ContentWithTargetPath"
+        if local_name(element.tag) == "WistRuntimeFileForCopy"
     ]
     expected_closure = (
         "$(WistRuntimeOutputDirectory)*.dll;"
         "$(WistRuntimeOutputDirectory)*.dialect.runtime.json"
     )
-    if len(content_items) != 1 or content_items[0].attrib.get("Include") != expected_closure:
+    if len(runtime_files) != 1 or runtime_files[0].attrib.get("Include") != expected_closure:
         raise BuildTopologyError("runtime closure must come from the provider-returned Wist output directory")
+    assign_tasks = direct_children(expose_target, "AssignTargetPath")
+    if len(assign_tasks) != 1 or assign_tasks[0].attrib.get("Files") != "@(WistRuntimeFileForCopy)" or \
+       assign_tasks[0].attrib.get("RootFolder") != "$(WistRuntimeOutputDirectory)":
+        raise BuildTopologyError("runtime closure must preserve file-relative target paths")
+    assigned_outputs = direct_children(assign_tasks[0], "Output")
+    if len(assigned_outputs) != 1 or assigned_outputs[0].attrib.get("TaskParameter") != "AssignedFiles" or \
+       assigned_outputs[0].attrib.get("ItemName") != "ContentWithTargetPath":
+        raise BuildTopologyError("runtime closure must publish AssignTargetPath outputs")
 
     collect_target = targets.get("CollectWistRuntimeManifests")
     if collect_target is None:
