@@ -9,17 +9,19 @@ on:
       - master
   pull_request:
     paths:
+      - readme.md
       - .github/workflows/published-package-smoke.yml
+      - Tools/check_documentation_release_state.py
       - Tools/smoke-published-wist-package.sh
+      - eng/documentation-release-state.json
       - UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj
       - UniversalToolchain/UniversalToolchain.Wist/README.md
       - docs/start/installation.md
+      - docs/start/first-program.md
+      - docs/start/use-case-recipes.md
 
 permissions:
   contents: read
-
-env:
-  PUBLISHED_WIST_VERSION: 0.1.0-alpha.1
 
 jobs:
   smoke:
@@ -35,5 +37,12 @@ jobs:
         with:
           global-json-file: UniversalToolchain/global.json
 
+      - name: Resolve published package version
+        id: release-state
+        shell: bash
+        run: |
+          version="$(python3 Tools/check_documentation_release_state.py --print-published-version)"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
       - name: Install and execute the published package
-        run: ./Tools/smoke-published-wist-package.sh "$PUBLISHED_WIST_VERSION"
+        run: ./Tools/smoke-published-wist-package.sh "${{ steps.release-state.outputs.version }}"
