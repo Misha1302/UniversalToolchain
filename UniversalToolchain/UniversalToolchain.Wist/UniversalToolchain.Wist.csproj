@@ -93,4 +93,8 @@
         </ItemGroup>
     </Target>
 
+    <Target Name="GetBuiltWistOutputDirectory"
+            DependsOnTargets="Build"
+            Returns="$(TargetDir)" />
+
 </Project>
