@@ -12,6 +12,11 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeToolchainFeatureManifest</TargetsForTfmSpecificContentInPackage>
     <FeatureManifestEmitterProjectPath>$(MSBuildThisFileDirectory)..\UniversalToolchain.FeatureManifestEmitter\UniversalToolchain.FeatureManifestEmitter.csproj</FeatureManifestEmitterProjectPath>
+    <FeatureManifestEmitterTargetFramework>net10.0</FeatureManifestEmitterTargetFramework>
+    <FeatureManifestEmitterPlatformSegment Condition="'$(Platform)' != '' and '$(Platform)' != 'AnyCPU'">$(Platform)/</FeatureManifestEmitterPlatformSegment>
+    <FeatureManifestEmitterProjectBinDll>$(MSBuildThisFileDirectory)..\UniversalToolchain.FeatureManifestEmitter\bin\$(FeatureManifestEmitterPlatformSegment)$(Configuration)\$(FeatureManifestEmitterTargetFramework)\UniversalToolchain.FeatureManifestEmitter.dll</FeatureManifestEmitterProjectBinDll>
+    <FeatureManifestEmitterConfiguredOutputDll>$(MSBuildThisFileDirectory)..\UniversalToolchain.FeatureManifestEmitter\$(OutputPath)UniversalToolchain.FeatureManifestEmitter.dll</FeatureManifestEmitterConfiguredOutputDll>
+    <FeatureManifestEmitterTargetDirDll>$(TargetDir)UniversalToolchain.FeatureManifestEmitter.dll</FeatureManifestEmitterTargetDirDll>
   </PropertyGroup>
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="/" />
@@ -33,14 +38,20 @@
           Condition="'$(DesignTimeBuild)' != 'true' and '$(BuildProjectReferences)' == 'false'">
     <MSBuild Projects="$(FeatureManifestEmitterProjectPath)"
              Targets="Build"
-             Properties="Configuration=$(Configuration)" />
+             Properties="Configuration=$(Configuration)"
+             BuildInParallel="false" />
   </Target>
   <Target Name="EmitToolchainFeatureManifest" AfterTargets="Build" Condition="'$(DesignTimeBuild)' != 'true'">
     <PropertyGroup>
       <ToolchainFeatureManifestPath>$(TargetDir)$(AssemblyName).toolchain.feature.json</ToolchainFeatureManifestPath>
-      <FeatureEmitterPath>$(MSBuildThisFileDirectory)..\UniversalToolchain.FeatureManifestEmitter\$(OutputPath)UniversalToolchain.FeatureManifestEmitter.dll</FeatureEmitterPath>
+      <FeatureManifestEmitterResolvedDll></FeatureManifestEmitterResolvedDll>
+      <FeatureManifestEmitterResolvedDll Condition="Exists('$(FeatureManifestEmitterTargetDirDll)')">$(FeatureManifestEmitterTargetDirDll)</FeatureManifestEmitterResolvedDll>
+      <FeatureManifestEmitterResolvedDll Condition="'$(FeatureManifestEmitterResolvedDll)' == '' and Exists('$(FeatureManifestEmitterConfiguredOutputDll)')">$(FeatureManifestEmitterConfiguredOutputDll)</FeatureManifestEmitterResolvedDll>
+      <FeatureManifestEmitterResolvedDll Condition="'$(FeatureManifestEmitterResolvedDll)' == '' and Exists('$(FeatureManifestEmitterProjectBinDll)')">$(FeatureManifestEmitterProjectBinDll)</FeatureManifestEmitterResolvedDll>
     </PropertyGroup>
-    <Exec Command="&quot;$(DOTNET_HOST_PATH)&quot; &quot;$(FeatureEmitterPath)&quot; &quot;$(TargetPath)&quot; &quot;$(ToolchainFeatureManifestPath)&quot;" />
+    <Error Condition="'$(FeatureManifestEmitterResolvedDll)' == ''"
+           Text="Feature manifest emitter was not found. Checked '$(FeatureManifestEmitterTargetDirDll)', '$(FeatureManifestEmitterConfiguredOutputDll)', and '$(FeatureManifestEmitterProjectBinDll)'." />
+    <Exec Command="&quot;$(DOTNET_HOST_PATH)&quot; &quot;$(FeatureManifestEmitterResolvedDll)&quot; &quot;$(TargetPath)&quot; &quot;$(ToolchainFeatureManifestPath)&quot;" />
   </Target>
   <Target Name="ExposeWistRuntimeClosureToProjectReferences" BeforeTargets="_GetCopyToOutputDirectoryItemsFromThisProject">
     <PropertyGroup>
