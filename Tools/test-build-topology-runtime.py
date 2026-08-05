@@ -187,7 +187,11 @@ def language_pack_cases(temporary_root: Path) -> tuple[LayoutCase, ...]:
     base_output_path = temporary_root / "base-output-path"
     artifacts_path = temporary_root / "artifacts-output"
     return (
-        LayoutCase("platform", ("-p:Platform=x64",)),
+        LayoutCase(
+            "platform",
+            ("-p:Platform=x64",),
+            build_project_references=True,
+        ),
         LayoutCase(
             "output-path",
             (f"-p:OutputPath={output_path}{os.sep}",),
@@ -215,6 +219,7 @@ def language_pack_cases(temporary_root: Path) -> tuple[LayoutCase, ...]:
                 f"-p:ArtifactsPath={artifacts_path}",
             ),
             external_output_root=artifacts_path,
+            build_project_references=True,
         ),
         # Restore and rebuild the canonical layout last so later test-contract and
         # packaging phases observe the same default assets and outputs as normal CI.
