@@ -134,6 +134,9 @@ read_manifest() {
   sed -e 's/[[:space:]]*$//' -e '/^[[:space:]]*#/d' -e '/^[[:space:]]*$/d' "$path"
 }
 
+python3 Tools/check-build-topology.py --root "$root"
+python3 Tools/test-build-topology-mutants.py --root "$root"
+
 for solution in "${solutions[@]}"; do
   "$dotnet_command" restore "$solution" \
     "${restore_mode_args[@]}" \
@@ -165,6 +168,11 @@ for solution in "${solutions[@]}"; do
     -p:NuGetAudit=false
 done
 
+python3 Tools/test-build-topology-runtime.py \
+  --root "$root" \
+  --dotnet "$dotnet_command" \
+  --configuration "$configuration"
+
 # Runnable Markdown samples are built by the canonical entrypoint so docs checks
 # can execute with --no-build --no-restore.
 for sample_project in "${markdown_sample_projects[@]}"; do
@@ -191,8 +199,6 @@ python3 Tools/check-retired-surface.py --root "$root"
 python3 Tools/test-retired-surface-mutants.py --root "$root"
 python3 Tools/check_documentation_status.py
 python3 Tools/test-documentation-status-mutants.py --root "$root"
-python3 Tools/check-build-topology.py --root "$root"
-python3 Tools/test-build-topology-mutants.py --root "$root"
 
 if [[ "$skip_pack" == false ]]; then
   if [[ -z "$baseline_source_archive" || ! -f "$baseline_source_archive" ]]; then
