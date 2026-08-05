@@ -30,7 +30,8 @@
     <ProjectReference Include="$(WistProjectPath)" />
   </ItemGroup>
   <Target Name="ResolveLanguagePackBuildProviders"
-          BeforeTargets="ResolveProjectReferences;EmitToolchainFeatureManifest;ExposeWistRuntimeClosureToProjectReferences;CollectWistRuntimeManifests"
+          AfterTargets="ResolveProjectReferences"
+          BeforeTargets="EmitToolchainFeatureManifest;ExposeWistRuntimeClosureToProjectReferences;CollectWistRuntimeManifests"
           Condition="'$(DesignTimeBuild)' != 'true'">
     <MSBuild Projects="$(FeatureManifestEmitterProjectPath)"
              Targets="GetBuiltFeatureManifestEmitterTargetPath"
