@@ -196,11 +196,13 @@ def language_pack_cases(temporary_root: Path) -> tuple[LayoutCase, ...]:
             "output-path",
             (f"-p:OutputPath={output_path}{os.sep}",),
             external_output_root=output_path,
+            build_project_references=True,
         ),
         LayoutCase(
             "base-output-path",
             (f"-p:BaseOutputPath={base_output_path}{os.sep}",),
             external_output_root=base_output_path,
+            build_project_references=True,
         ),
         LayoutCase(
             "runtime-identifier",
@@ -211,6 +213,7 @@ def language_pack_cases(temporary_root: Path) -> tuple[LayoutCase, ...]:
         LayoutCase(
             "no-target-framework-segment",
             ("-p:AppendTargetFrameworkToOutputPath=false",),
+            build_project_references=True,
         ),
         LayoutCase(
             "artifacts-output",
@@ -221,8 +224,8 @@ def language_pack_cases(temporary_root: Path) -> tuple[LayoutCase, ...]:
             external_output_root=artifacts_path,
             build_project_references=True,
         ),
-        # Restore and rebuild the canonical layout last so later test-contract and
-        # packaging phases observe the same default assets and outputs as normal CI.
+        # The canonical layout remains the dedicated IDE-style regression where
+        # project references were built by the preceding solution build.
         LayoutCase("default", requires_restore=True),
     )
 
