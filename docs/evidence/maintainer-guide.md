@@ -3,7 +3,7 @@ title: Maintainer and Release Guide
 description: Keep public documentation, package evidence, manifests and clean artifacts synchronized.
 audience: maintainer-release-engineer
 status: current
-lastVerifiedAgainst: language-authoring-p0-p1-hardening-2026-07-23.1
+lastVerifiedAgainst: wist-release-state-2026-08-06
 ---
 
 # Maintainer and release guide
@@ -18,10 +18,13 @@ This page is the public entry point for release maintenance. Repository-only pol
 | public trust boundary | `docs/SECURITY.md` and `docs/limitations.md` |
 | coding and architecture policy | `internal-docs/policies-and-reports/PROJECT_RULES.md` and `ARCHITECTURE_RULES.md` |
 | documentation authority | `internal-docs/policies-and-reports/DOCUMENTATION_INDEX.md` and `DOCUMENTATION_RULES.md` |
-| package matrix | `eng/package-projects.txt` |
+| published/source Wist release state | `eng/documentation-release-state.json` plus `UniversalToolchain.Wist.csproj` |
+| package matrix | `eng/package-projects.txt` and package project metadata |
 | exact test matrix | `eng/test-counts.json` |
-| verified results | `VERIFICATION.md` and `docs/evidence/` |
+| pinned verified results | `VERIFICATION.md` and `docs/evidence/` |
 | source-tree integrity | Git commit/tree identity |
+
+`eng/documentation-release-state.json` distinguishes the package verified from NuGet.org from the newer source candidate. It binds the target framework, first-contact install pages, package README, published-package smoke workflow and active Wist stability record.
 
 ## Documentation change gate
 
@@ -38,29 +41,69 @@ The checks cover:
 - public/internal split;
 - role-specific navigation targets;
 - Markdown links and anchors;
+- root README local links and release commands;
 - repository paths in current public/maintainer documents;
 - orphan public pages;
 - required current pages and front matter;
+- published/source version synchronization;
+- active stability-record existence;
+- contributor build commands that must not accidentally enter the release package gate;
 - VitePress compilation.
 
-A green build does not validate every C# example. When a public snippet changes an API contract, build a clean consumer or add a focused executable test.
+The canonical build also runs both documentation-status mutant suites. They must reject source-version drift, published-install drift, missing stability evidence, unsafe source build commands and a workflow-local published-version literal.
+
+A green documentation build does not validate every C# example. When a public snippet changes an API contract, build a clean consumer or add a focused executable test.
+
+## Contributor build versus release packaging
+
+Normal source validation must disable packaging unless the reviewed release inputs are available:
+
+```bash ci-run=false
+./build.sh --skip-docs --skip-pack
+```
+
+Release packaging is intentionally fail-closed. It requires both the reviewed previous source archive and previous package bundle:
+
+```bash ci-run=false
+./build.sh \
+  --baseline-source-archive /path/to/previous-source.zip \
+  --previous-package-bundle /path/to/previous-packages.tar.gz
+```
+
+Do not document `./build.sh`, `./build.sh --skip-docs` or `./build.ps1 -SkipDocs` as ordinary contributor commands. Without `--skip-pack`/`-SkipPack`, those commands enter the baseline-bearing release gate by design.
 
 ## Release evidence gate
 
-Before updating current verification claims:
+Before updating verification claims:
 
 1. record the exact source artifact or commit;
 2. run the canonical build without weakening warnings or tests;
 3. record each test-project total, failures and skips;
-4. pack every project in `eng/package-projects.txt`;
+4. pack every project in `eng/package-projects.txt` using reviewed baseline inputs;
 5. verify package IDs, versions and dependency closure;
 6. build the clean Wist consumer;
 7. build the clean cross-package Language SDK consumer;
-8. install and run the `ut-language` template from the produced package;
-9. run documentation checks;
-10. verify the detached package integrity metadata produced by the canonical build from a clean unpack.
+8. install and run the `ut-language` template from produced packages;
+9. run documentation and release-state checks;
+10. verify detached package integrity from a clean unpack;
+11. publish only the intended artifacts;
+12. run the clean-room NuGet.org smoke for the exact published version.
 
-Update `VERIFICATION.md` and [Current Verification](/evidence/current-verification) together. A historical test count must not be labeled current after the tree changes.
+A verification page must identify its exact commit/artifact and status as a pinned snapshot. A historical test count must not be presented as live HEAD state.
+
+## Promoting a Wist candidate to published
+
+The source project version and published version are allowed to differ. To promote a candidate:
+
+1. publish the exact reviewed package artifact;
+2. confirm the NuGet.org package identity;
+3. update `publishedVersion` in `eng/documentation-release-state.json`;
+4. run `.github/workflows/published-package-smoke.yml` against that value;
+5. update wording only where the candidate/published distinction changed;
+6. keep historical stability pages immutable;
+7. run release-state mutants before merging.
+
+Do not copy version literals into workflow `env`, README snippets or navigation independently. The release-state checker must remain the single synchronization gate.
 
 ## Public/internal movement
 
@@ -77,7 +120,7 @@ Reviews, proposals and talks must not appear in the public source tree merely be
 
 ## Package version synchronization
 
-The generic SDK/template family advances to `0.3.0-alpha.4` because strict package-content provenance rejected reuse of `0.3.0-alpha.3`; the deterministic runtime-boundary candidate advances `UniversalToolchain.Wist.LanguagePack` to `0.3.0-alpha.5` and the Wist facade to `0.1.0-alpha.6`. The canonical matrix below is checked against every package project and built `.nupkg`; do not duplicate active versions outside this block without extending the metadata checker.
+The generic SDK/template family is `0.3.0-alpha.4`; `UniversalToolchain.Wist.LanguagePack` is `0.3.0-alpha.5`; the Wist facade source candidate is `0.1.0-alpha.6`.
 
 <!-- package-matrix:begin -->
 | Package ID | Version |
@@ -104,4 +147,4 @@ For generic package migrations, follow [Package Versioning and Migrations](/lang
 - detached package-integrity manifest regenerated after all intended changes;
 - manifest checked from a clean extraction;
 - archive SHA-256 published beside the archive;
-- final diff confirms that unrelated production code was not changed by documentation-only work.
+- final diff confirms unrelated production code was not changed by documentation-only work.
