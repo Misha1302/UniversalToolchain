@@ -222,6 +222,7 @@ def language_pack_cases(temporary_root: Path) -> tuple[LayoutCase, ...]:
                 f"-p:ArtifactsPath={artifacts_path}",
             ),
             external_output_root=artifacts_path,
+            requires_restore=True,
             build_project_references=True,
         ),
         # The canonical layout remains the dedicated IDE-style regression where
