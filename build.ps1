@@ -97,6 +97,9 @@ function New-RestoreArguments {
     return $arguments
 }
 
+Invoke-CheckedNative "python" @("Tools/check-build-topology.py", "--root", $root)
+Invoke-CheckedNative "python" @("Tools/test-build-topology-mutants.py", "--root", $root)
+
 foreach ($solution in $solutions) {
     Invoke-CheckedNative $dotnet (New-RestoreArguments $solution)
 }
@@ -116,6 +119,13 @@ foreach ($solution in $solutions) {
         "-p:NuGetAudit=false"
     ))
 }
+
+Invoke-CheckedNative "python" @(
+    "Tools/test-build-topology-runtime.py",
+    "--root", $root,
+    "--dotnet", $dotnet,
+    "--configuration", $Configuration
+)
 
 foreach ($project in $markdownSampleProjects) {
     Invoke-CheckedNative $dotnet (@(
@@ -147,8 +157,6 @@ Invoke-CheckedNative "python" @("Tools/check-retired-surface.py", "--root", $roo
 Invoke-CheckedNative "python" @("Tools/test-retired-surface-mutants.py", "--root", $root)
 Invoke-CheckedNative "python" @("Tools/check_documentation_status.py")
 Invoke-CheckedNative "python" @("Tools/test-documentation-status-mutants.py", "--root", $root)
-Invoke-CheckedNative "python" @("Tools/check-build-topology.py", "--root", $root)
-Invoke-CheckedNative "python" @("Tools/test-build-topology-mutants.py", "--root", $root)
 
 if (-not $SkipPack) {
     if (-not $BaselineSourceArchive -or -not (Test-Path -LiteralPath $BaselineSourceArchive -PathType Leaf)) {
