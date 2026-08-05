@@ -5,7 +5,9 @@
 
 **Tiny controlled rules for .NET applications.**
 
-`UniversalToolchain.Wist` is the first-contact facade for restricted formula execution without exposing the lower-level compiler pipeline, dialect host, manifests, `DynamicMethod`, AIR or session APIs.
+`UniversalToolchain.Wist` is the first-contact package for UniversalToolchain. It gives .NET applications a small facade for restricted formula execution without exposing the lower-level compiler pipeline, dialect host, manifests, `DynamicMethod`, AIR, or session APIs.
+
+Use it when configuration starts turning into logic:
 
 ```text
 admin / config / LLM suggestion
@@ -16,16 +18,20 @@ admin / config / LLM suggestion
         -> your application decides the side effect
 ```
 
-## Artifact identity
+## Install
 
-<!-- wist-source-candidate:begin -->
-This README is embedded in the source candidate `UniversalToolchain.Wist` `0.1.0-alpha.6`. That candidate is **not published on NuGet.org**. Consume it only from the reviewed feed that contains this exact package artifact. For the version currently available from NuGet.org, use the [public installation guide](https://misha1302.github.io/Wist2/start/installation).
-<!-- wist-source-candidate:end -->
+This source tree builds the verified `UniversalToolchain.Wist` `0.1.0-alpha.6` release artifact. This statement does not imply that the package has already been published to NuGet.org.
+
+```bash ci-run=false
+dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.6 --source ./artifacts/packages
+```
+
+For a clean-room install and execution check, follow the [package installation guide](https://misha1302.github.io/Wist2/start/installation).
 
 Requirements:
 
 - target framework: `net10.0`;
-- .NET SDK `10.0.103` or a compatible SDK accepted by the repository `global.json`.
+- .NET SDK `10.0.103` or a compatible prerelease SDK accepted by the repository `global.json`.
 
 ## 30-second example
 
@@ -70,11 +76,11 @@ if (!validation.IsValid)
 }
 ```
 
-The restricted arithmetic preset intentionally rejects statement-style bindings such as `let`. `Compile` also validates and throws on failure; use `Validate` or `TryCompile` when invalid author input is expected.
+The current restricted arithmetic preset starts narrow. Statement-style bindings such as `let` are rejected by that restricted surface.
 
 ## Hot path vs convenience path
 
-Use `Evaluate<T>` for one-off trial runs, admin tools, tests and non-hot paths:
+Use `Evaluate<T>` for one-off trial runs, admin tools, tests, and non-hot paths:
 
 ```csharp
 double score = rules.Evaluate<double>(
@@ -100,6 +106,8 @@ for (var i = 0; i < usages.Length; i++)
 }
 ```
 
+Rule of thumb:
+
 ```text
 Use Evaluate for one-off execution.
 Use Compile<TDelegate> for hot paths.
@@ -109,7 +117,7 @@ Invocation is the performance-oriented path.
 
 ## Experimental SSA route
 
-SSA is opt-in and remains an experimental compiler feature:
+SSA is opt-in and remains an experimental compiler feature. Enable it through the facade; a physical dialect file is not required:
 
 ```csharp
 using UniversalToolchain.Wist;
@@ -138,11 +146,13 @@ Console.WriteLine(string.Join(", ", report.ExecutedPasses));
 Policy semantics:
 
 - `Disabled`: do not attempt the SSA route;
-- `Prefer`: attempt SSA and return to original AIR only for known unsupported-route diagnostics;
+- `Prefer`: attempt SSA and return to the original AIR only for known unsupported-route diagnostics;
 - `Require`: fail compilation when the supported SSA route cannot complete;
 - `Debug`: behave like `Require` and retain detailed stage trace entries.
 
-Unexpected optimizer defects never become a silent `Prefer` fallback. The SSA route is not a sandbox, an SSA-native backend or a performance guarantee; it is a verifier-gated `AIR -> SSA -> AIR` boundary for a supported subset.
+`TryCompile` and `Validate` preserve the optimization report even when `Require` or `Debug` fails. Unexpected optimizer defects never become a silent `Prefer` fallback.
+
+The current SSA route is not a sandbox, not an SSA-native backend, and not a performance guarantee. It is a verifier-gated `AIR -> SSA -> AIR` optimization boundary for the currently supported subset.
 
 ## Presets
 
@@ -155,27 +165,32 @@ using var trustedInterop = WistEngine.Create(new WistEngineOptions
     DialectSource = WistDialectSource.FromShippedPreset("full-default-native"),
     AllowedAssemblies = [typeof(Math).Assembly]
 });
+
 ```
 
-`CreateRestrictedArithmetic` is the recommended first-contact preset. `CreateFullNative` selects the broad language profile but does not implicitly expose CLR assemblies.
+`CreateRestrictedArithmetic` is the recommended first-contact preset for restricted formulas.
+
+`CreateFullNative` selects the broad language profile, but it does not implicitly expose CLR assemblies. Add only reviewed assemblies through `AllowedAssemblies`. The facade deliberately does not expose ambiguous “safe”, “trusted”, or “business rules” aliases.
 
 ## Security and trust
 
-Restricted presets limit the selected language/runtime surface. They are not hardened sandboxes for arbitrary untrusted code. Compiled execution is a performance feature, not a sandbox boundary. Isolate hostile execution at the process/environment level.
+Restricted presets limit the selected language/runtime surface. They are not hardened sandboxes for arbitrary untrusted code. Compiled execution is a performance feature, not a sandbox boundary. Treat untrusted script execution as high risk and isolate it at the process/environment level when needed.
 
 ## Current alpha scope
 
-The facade exposes:
+This facade currently exposes:
 
 - convenience `Evaluate<T>`;
 - non-throwing `Validate`;
-- typed `Compile<TDelegate>` and `TryCompile<TDelegate>`;
-- backend-neutral compiled program metadata;
-- host-owned source-length and parameter-count preflight limits;
-- structured diagnostics and opt-in SSA reports.
+- typed fast `Compile<TDelegate>` and `TryCompile<TDelegate>`;
+- backend-neutral compiled program metadata.
 
-The larger direction is controlled application DSLs for .NET. The current claim is restricted numeric/formula execution, validation and typed compiled invocation for supported shapes.
+The larger direction is controlled application DSLs for .NET. The current alpha claim is restricted numeric/formula execution, validation, and typed compiled invocation for supported shapes.
 
-CLR interop and type directives resolve only against the shipped `BasicStdLib` assembly plus the immutable host allowlist in `WistEngineOptions.AllowedAssemblies`; dialect implementation assemblies, the AppDomain and output directory are not discovery sources.
+## Resource limits and diagnostics
 
-Only the facade reference assembly under `ref/net10.0/UniversalToolchain.Wist.dll` is the supported compile-time API boundary. Runtime-closure assemblies under `lib/net10.0` are implementation dependencies, not compatibility promises.
+`WistEngineOptions.ResourceLimits` enforces host-owned preflight limits for source length and parameter count. `Validate` and `TryCompile` return structured `WistDiagnostic` values with stable codes, severity, stage, span when available, message, and hints. These limits do not provide execution timeouts, memory quotas, or process isolation.
+
+CLR interop and type directives resolve only against the shipped `BasicStdLib` assembly plus the immutable host allowlist in `WistEngineOptions.AllowedAssemblies`; dialect implementation assemblies, the AppDomain, and the output directory are not discovery sources.
+
+Only the facade reference assembly under `ref/net10.0/UniversalToolchain.Wist.dll` is the supported compile-time API boundary. Its reviewed exported surface is recorded in `PublicAPI.Shipped.txt` in the source repository. The 64 assemblies under `lib/net10.0` form the runtime closure; all except the facade are implementation dependencies and are not compatibility promises.
