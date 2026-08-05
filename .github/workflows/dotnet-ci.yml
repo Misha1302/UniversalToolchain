@@ -63,3 +63,22 @@ jobs:
       - name: Markdown bash smoke checks
         shell: bash
         run: python3 .github/scripts/run-markdown-bash-blocks.py
+
+  windows-build-test:
+    if: github.event_name != 'workflow_dispatch'
+    permissions:
+      contents: read
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: UniversalToolchain/global.json
+
+      - name: Run canonical PowerShell build and test entrypoint
+        shell: pwsh
+        run: ./build.ps1 -SkipDocs -SkipPack
