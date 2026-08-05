@@ -10,4 +10,7 @@
   <ItemGroup>
     <ProjectReference Include="..\UniversalToolchain.FeatureSdk\UniversalToolchain.FeatureSdk.csproj" />
   </ItemGroup>
+  <Target Name="GetBuiltFeatureManifestEmitterTargetPath"
+          DependsOnTargets="Build"
+          Returns="$(TargetPath)" />
 </Project>
