@@ -12,11 +12,7 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeToolchainFeatureManifest</TargetsForTfmSpecificContentInPackage>
     <FeatureManifestEmitterProjectPath>$(MSBuildThisFileDirectory)..\UniversalToolchain.FeatureManifestEmitter\UniversalToolchain.FeatureManifestEmitter.csproj</FeatureManifestEmitterProjectPath>
-    <FeatureManifestEmitterTargetFramework>net10.0</FeatureManifestEmitterTargetFramework>
-    <FeatureManifestEmitterPlatformSegment Condition="'$(Platform)' != '' and '$(Platform)' != 'AnyCPU'">$(Platform)/</FeatureManifestEmitterPlatformSegment>
-    <FeatureManifestEmitterProjectBinDll>$(MSBuildThisFileDirectory)..\UniversalToolchain.FeatureManifestEmitter\bin\$(FeatureManifestEmitterPlatformSegment)$(Configuration)\$(FeatureManifestEmitterTargetFramework)\UniversalToolchain.FeatureManifestEmitter.dll</FeatureManifestEmitterProjectBinDll>
-    <FeatureManifestEmitterConfiguredOutputDll>$(MSBuildThisFileDirectory)..\UniversalToolchain.FeatureManifestEmitter\$(OutputPath)UniversalToolchain.FeatureManifestEmitter.dll</FeatureManifestEmitterConfiguredOutputDll>
-    <FeatureManifestEmitterTargetDirDll>$(TargetDir)UniversalToolchain.FeatureManifestEmitter.dll</FeatureManifestEmitterTargetDirDll>
+    <WistProjectPath>$(MSBuildThisFileDirectory)..\UniversalToolchain.Wist\UniversalToolchain.Wist.csproj</WistProjectPath>
   </PropertyGroup>
   <ItemGroup>
     <None Include="README.md" Pack="true" PackagePath="/" />
@@ -31,44 +27,49 @@
                       ReferenceOutputAssembly="false"
                       Private="false"
                       PrivateAssets="all" />
-    <ProjectReference Include="..\UniversalToolchain.Wist\UniversalToolchain.Wist.csproj" />
+    <ProjectReference Include="$(WistProjectPath)" />
   </ItemGroup>
-  <Target Name="BuildFeatureManifestEmitterForIsolatedBuild"
-          BeforeTargets="EmitToolchainFeatureManifest"
-          Condition="'$(DesignTimeBuild)' != 'true' and '$(BuildProjectReferences)' == 'false'">
+  <Target Name="ResolveLanguagePackBuildProviders"
+          BeforeTargets="ResolveProjectReferences;EmitToolchainFeatureManifest;ExposeWistRuntimeClosureToProjectReferences;CollectWistRuntimeManifests"
+          Condition="'$(DesignTimeBuild)' != 'true'">
     <MSBuild Projects="$(FeatureManifestEmitterProjectPath)"
-             Targets="Build"
-             Properties="Configuration=$(Configuration)"
-             BuildInParallel="false" />
+             Targets="GetBuiltFeatureManifestEmitterTargetPath"
+             Properties="BuildProjectReferences=true"
+             BuildInParallel="false">
+      <Output TaskParameter="TargetOutputs" ItemName="_FeatureManifestEmitterTargetPath" />
+    </MSBuild>
+    <MSBuild Projects="$(WistProjectPath)"
+             Targets="GetBuiltWistOutputDirectory"
+             Properties="BuildProjectReferences=true"
+             BuildInParallel="false">
+      <Output TaskParameter="TargetOutputs" ItemName="_WistOutputDirectory" />
+    </MSBuild>
+    <PropertyGroup>
+      <FeatureManifestEmitterResolvedDll>@(_FeatureManifestEmitterTargetPath)</FeatureManifestEmitterResolvedDll>
+      <WistRuntimeOutputDirectory>@(_WistOutputDirectory)</WistRuntimeOutputDirectory>
+    </PropertyGroup>
+    <Error Condition="'$(FeatureManifestEmitterResolvedDll)' == '' or !Exists('$(FeatureManifestEmitterResolvedDll)')"
+           Text="Feature manifest emitter target path was not returned or does not exist: '$(FeatureManifestEmitterResolvedDll)'." />
+    <Error Condition="'$(WistRuntimeOutputDirectory)' == '' or !Exists('$(WistRuntimeOutputDirectory)')"
+           Text="Wist output directory was not returned or does not exist: '$(WistRuntimeOutputDirectory)'." />
   </Target>
   <Target Name="EmitToolchainFeatureManifest" AfterTargets="Build" Condition="'$(DesignTimeBuild)' != 'true'">
     <PropertyGroup>
       <ToolchainFeatureManifestPath>$(TargetDir)$(AssemblyName).toolchain.feature.json</ToolchainFeatureManifestPath>
-      <FeatureManifestEmitterResolvedDll></FeatureManifestEmitterResolvedDll>
-      <FeatureManifestEmitterResolvedDll Condition="Exists('$(FeatureManifestEmitterTargetDirDll)')">$(FeatureManifestEmitterTargetDirDll)</FeatureManifestEmitterResolvedDll>
-      <FeatureManifestEmitterResolvedDll Condition="'$(FeatureManifestEmitterResolvedDll)' == '' and Exists('$(FeatureManifestEmitterConfiguredOutputDll)')">$(FeatureManifestEmitterConfiguredOutputDll)</FeatureManifestEmitterResolvedDll>
-      <FeatureManifestEmitterResolvedDll Condition="'$(FeatureManifestEmitterResolvedDll)' == '' and Exists('$(FeatureManifestEmitterProjectBinDll)')">$(FeatureManifestEmitterProjectBinDll)</FeatureManifestEmitterResolvedDll>
     </PropertyGroup>
-    <Error Condition="'$(FeatureManifestEmitterResolvedDll)' == ''"
-           Text="Feature manifest emitter was not found. Checked '$(FeatureManifestEmitterTargetDirDll)', '$(FeatureManifestEmitterConfiguredOutputDll)', and '$(FeatureManifestEmitterProjectBinDll)'." />
     <Exec Command="&quot;$(DOTNET_HOST_PATH)&quot; &quot;$(FeatureManifestEmitterResolvedDll)&quot; &quot;$(TargetPath)&quot; &quot;$(ToolchainFeatureManifestPath)&quot;" />
   </Target>
   <Target Name="ExposeWistRuntimeClosureToProjectReferences" BeforeTargets="_GetCopyToOutputDirectoryItemsFromThisProject">
-    <PropertyGroup>
-      <WistRuntimeOutputDirectory>$(MSBuildThisFileDirectory)..\UniversalToolchain.Wist\$(OutputPath)</WistRuntimeOutputDirectory>
-    </PropertyGroup>
     <ItemGroup>
-      <WistRuntimeFileForCopy Include="$(WistRuntimeOutputDirectory)*.dll;$(WistRuntimeOutputDirectory)*.dialect.runtime.json">
+      <ContentWithTargetPath Include="$(WistRuntimeOutputDirectory)*.dll;$(WistRuntimeOutputDirectory)*.dialect.runtime.json">
+        <TargetPath>%(Filename)%(Extension)</TargetPath>
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </WistRuntimeFileForCopy>
+      </ContentWithTargetPath>
     </ItemGroup>
-    <AssignTargetPath Files="@(WistRuntimeFileForCopy)" RootFolder="$(WistRuntimeOutputDirectory)">
-      <Output TaskParameter="AssignedFiles" ItemName="ContentWithTargetPath" />
-    </AssignTargetPath>
   </Target>
   <Target Name="CollectWistRuntimeManifests" AfterTargets="Build">
     <ItemGroup>
-      <WistRuntimeManifest Include="$(MSBuildThisFileDirectory)..\UniversalToolchain.Wist\$(OutputPath)*.dialect.runtime.json" />
+      <WistRuntimeManifest Include="$(WistRuntimeOutputDirectory)*.dialect.runtime.json" />
     </ItemGroup>
     <Error Condition="'@(WistRuntimeManifest)' == ''" Text="The Wist runtime manifest closure was not produced before the language pack build." />
     <Copy SourceFiles="@(WistRuntimeManifest)" DestinationFolder="$(TargetDir)" SkipUnchangedFiles="true" />
