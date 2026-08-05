@@ -9,17 +9,37 @@
 
 **Validate restricted formulas, then compile approved rules into typed .NET delegates.**
 
-`UniversalToolchain.Wist` is the first-contact package for .NET applications that need configurable numeric logic without exposing a broad scripting language. Your application owns inputs, authorization, persistence, resource isolation, and side effects.
+`UniversalToolchain.Wist` is the first-contact package for .NET applications that need configurable numeric logic without exposing a broad scripting language. Your application owns inputs, authorization, persistence, resource isolation and side effects.
 
-UniversalToolchain is the modular compiler/runtime framework underneath Wist. Start with the package and practical formula API; explore dialect composition, AIR, backends, and experimental SSA only when you need the framework internals.
+UniversalToolchain is the modular compiler/runtime framework underneath Wist. Start with the package and practical formula API; explore dialect composition, AIR, backends and experimental SSA only when you need framework internals.
 
-## Try Wist in 60 seconds
+## Choose the correct installation path
 
-Install the public alpha:
+The repository distinguishes the package currently available on NuGet.org from the newer source candidate in this tree.
+
+### Published package
+
+<!-- wist-published-install:begin -->
+The clean-room published-package smoke currently verifies `UniversalToolchain.Wist` `0.1.0-alpha.1` directly from NuGet.org:
 
 ```bash ci-run=false
-dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.5 --source ./artifacts/packages
+dotnet add package UniversalToolchain.Wist \
+  --version 0.1.0-alpha.1 \
+  --source https://api.nuget.org/v3/index.json
 ```
+<!-- wist-published-install:end -->
+
+Use this path when you want an installable package without cloning the repository.
+
+### Current source candidate
+
+<!-- wist-source-candidate:begin -->
+This source tree defines `UniversalToolchain.Wist` `0.1.0-alpha.6`. That candidate is **not published on NuGet.org**. Do not replace the published command above with `0.1.0-alpha.6` unless you have a reviewed package feed containing that exact artifact.
+<!-- wist-source-candidate:end -->
+
+To evaluate the current repository implementation, clone the repository and use the source build/sample path below. Release packaging is a separate baseline-bearing maintainer gate.
+
+## Try Wist in 60 seconds
 
 Compile a reviewed rollout formula once and invoke the typed delegate repeatedly:
 
@@ -47,6 +67,8 @@ var rolloutScore = rules.Compile<Func<double, double, double, double>>(
 double score = rolloutScore.CompiledDelegate(100.0, 90.0, 1.0);
 bool enableNewDashboard = score >= 80.0;
 ```
+
+`Compile` also validates and throws when compilation fails. Use `Validate` or `TryCompile` when invalid user/admin input is an expected outcome and you need structured diagnostics without replacing the active rule.
 
 The formula returns data. The host application decides what the result means and performs the action.
 
@@ -85,7 +107,7 @@ Console.WriteLine(rejected.IsValid); // false
 Console.WriteLine(rejected.Message); // structured validation failure
 ```
 
-This is language-surface restriction, not a hardened sandbox. Arbitrary hostile input still requires process/environment isolation, resource limits, and an explicit threat model.
+This is language-surface restriction, not a hardened sandbox. Arbitrary hostile input still requires process/environment isolation, resource limits and an explicit threat model.
 
 ## What Wist gives a .NET host
 
@@ -107,7 +129,7 @@ Use Wist when:
 - JSON or configuration is starting to become logic;
 - an expression evaluator is too small for the product direction;
 - C# scripting exposes more language surface than the application wants to own;
-- user, admin, configuration, or LLM-suggested formulas must be validated before execution;
+- user, admin, configuration or LLM-suggested formulas must be validated before execution;
 - the same approved formula should become a typed delegate for repeated invocation;
 - interpreter/compiler semantic parity matters for the language contract.
 
@@ -122,19 +144,21 @@ Do not use the current alpha when:
 
 | Capability | Status |
 |---|---|
-| `WistEngine` facade | available in `UniversalToolchain.Wist` |
+| Published NuGet package | `UniversalToolchain.Wist` `0.1.0-alpha.1`, clean-room smoke verified |
+| Current source candidate | `UniversalToolchain.Wist` `0.1.0-alpha.6`, not published on NuGet.org |
+| `WistEngine` facade | available |
 | Restricted arithmetic preset | `CreateRestrictedArithmetic()` |
 | Broad native preview preset | `CreateFullNative()` with explicit host assembly allowlist |
 | Typed compiled hot path | `Compile<TDelegate>()` |
-| Interpreter path | diagnostics, fallback, and semantic parity work |
+| Interpreter path | diagnostics, fallback and semantic parity work |
 | Dialect composition | shipped `.wistdialect` profiles and lower-level APIs |
-| Experimental SSA route | opt-in, observable, verifier-gated |
+| Experimental SSA route | opt-in, observable and verifier-gated |
 | Full business-rule platform | direction, not a current claim |
 | Hardened sandboxing | not claimed |
 
 ## Performance model
 
-Use `Evaluate<T>` for onboarding, admin trial runs, tests, and non-hot paths. Use `Compile<TDelegate>` when the same formula is invoked repeatedly:
+Use `Evaluate<T>` for onboarding, admin trial runs, tests and non-hot paths. Use `Compile<TDelegate>` when the same formula is invoked repeatedly:
 
 ```csharp
 var formula = rules.Compile<Func<double, double, double>>(
@@ -152,7 +176,9 @@ See [the performance model](docs/reference/performance-model.md) for benchmark b
 
 ## External language authoring alpha
 
-External .NET projects can define non-Wist languages through `UniversalToolchain.LanguageAuthoring`. A single typed registration creates both descriptor metadata and immutable runtime components; independently shipped packages are assembled against the exact manifest hashes captured by the plan. The planner supports configurable entry artifacts, package-level extensions, deterministic same-artifact pass ordering, planning-only definitions, exact backend executor selection and fail-closed runtime policy. The Wist adapter rejects routes it cannot faithfully execute instead of ignoring them. Start with the [External Language Authoring quickstart](docs/language-authoring/quickstart.md), then use the [deep SDK architecture reference](docs/architecture/external-language-authoring-sdk.md). The independent `samples/Acme.PricingLanguage` and `dotnet new ut-language` exercise the non-Wist path. High-level grammar, binder and operation authoring remain future work.
+External .NET projects can define non-Wist languages through `UniversalToolchain.LanguageAuthoring`. A single typed registration creates descriptor metadata and immutable runtime components; independently shipped packages are assembled against the exact manifest hashes captured by the plan. The planner supports configurable entry artifacts, package-level extensions, deterministic same-artifact pass ordering, planning-only definitions, exact backend executor selection and fail-closed runtime policy. The Wist adapter rejects routes it cannot faithfully execute instead of ignoring them.
+
+Start with the [External Language Authoring quickstart](docs/language-authoring/quickstart.md), then use the [deep SDK architecture reference](docs/architecture/external-language-authoring-sdk.md). The independent `samples/Acme.PricingLanguage` and `dotnet new ut-language` exercise the non-Wist path. High-level grammar, binder and operation authoring remain future work.
 
 ## UniversalToolchain underneath Wist
 
@@ -167,33 +193,36 @@ Source
   -> Execution
 ```
 
-The framework keeps language features composable, runtime selection dialect-driven, and shared semantics protected by interpreter/CIL parity tests. Wist is the reference language and the packaged first-contact experience.
+The framework keeps language features composable, runtime selection dialect-driven and shared semantics protected by interpreter/CIL parity tests. Wist is the reference language and packaged first-contact experience.
 
 Technical material:
 
 - [Project documentation](docs/index.md)
 - [Installation and clean-room smoke](docs/start/installation.md)
 - [Use-case recipes](docs/start/use-case-recipes.md)
-- [Wist alpha stability contract](docs/evidence/wist-stability-v0.1.0-alpha.5.md)
+- [Wist `0.1.0-alpha.6` candidate stability contract](docs/evidence/wist-stability-v0.1.0-alpha.6.md)
 - [External Language Authoring quickstart](docs/language-authoring/quickstart.md)
 - [Architecture and project map](docs/architecture/project-map.md)
+
 ## Build and verify from source
 
-Use the canonical repository entrypoint:
+Normal contributors should not enter the release packaging gate, which requires reviewed previous-source and previous-package artifacts. Use the canonical build with packaging disabled:
 
 ```bash ci-run=false
-./build.sh
+./build.sh --skip-pack
 ```
 
 Useful bounded variants:
 
 ```bash ci-run=false
-./build.sh --skip-docs
 ./build.sh --skip-docs --skip-pack
 ./build.sh --jobs 4 --skip-docs --skip-pack
+./build.sh --serial --no-build-servers --skip-docs --skip-pack
 ```
 
-The wrapper restores and builds each solution sequentially, while MSBuild traverses the project graph in parallel. It then runs the test projects, packs the public facade, checks package-surface growth, builds documentation, and runs Markdown checks. The default job count is the number of logical processors; override it with `--jobs N` or `WIST_BUILD_JOBS=N`. For isolated diagnostics, use `--serial --no-build-servers`.
+The wrapper restores and builds each solution sequentially while MSBuild traverses each project graph in parallel. It then runs the exact test contract, architecture guards and documentation checks unless explicitly skipped. The default job count is the number of logical processors; override it with `--jobs N` or `WIST_BUILD_JOBS=N`.
+
+Release packaging is intentionally separate. It requires `--baseline-source-archive` and `--previous-package-bundle`; follow the [Maintainer and Release Guide](docs/evidence/maintainer-guide.md) instead of fabricating or bypassing those inputs.
 
 ## Contributing
 
@@ -205,7 +234,7 @@ External feedback is most useful when it describes observed behavior:
 - which diagnostic or trust boundary was unclear;
 - what would stop you from using Wist in a small internal tool.
 
-Read [the contribution guide](docs/CONTRIBUTING.md). Small documentation, diagnostics, examples, and clean-room compatibility improvements are welcome.
+Read [the contribution guide](docs/CONTRIBUTING.md). Small documentation, diagnostics, examples and clean-room compatibility improvements are welcome.
 
 ## Maintainer launch material
 

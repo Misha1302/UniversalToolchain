@@ -1,12 +1,15 @@
 ---
-title: Current Verification
-description: Current build, test, workflow and bounded research-evidence record.
+title: Verification Snapshot
+description: Pinned build, test, workflow and bounded research-evidence record for a named repository baseline.
 audience: maintainer-or-evaluator
-status: current
-lastVerifiedAgainst: f13ad131-plus-runtime-boundary-candidate
+status: pinned-snapshot
+lastVerifiedAgainst: 99d9c81aadf3b335524b5bd1e77533612cc2ed93
+snapshotCommit: 99d9c81aadf3b335524b5bd1e77533612cc2ed93
 ---
 
-# Current verification
+# Verification snapshot
+
+This page is a pinned evidence record, not a live claim about whichever commit is currently at `master`. The code-bearing baseline is commit `99d9c81aadf3b335524b5bd1e77533612cc2ed93`. Later documentation-only changes must pass their own CI, but they do not silently rewrite the runtime evidence below.
 
 ## Ordinary integration gate
 
@@ -16,7 +19,7 @@ The canonical non-release GitHub Actions gate runs:
 ./build.sh --skip-docs --skip-pack
 ```
 
-It restores and builds both `UniversalToolchain/Wist.sln` and the configuration-complete `UniversalToolchain/PlanFuzz.sln`, builds the runnable samples, executes the shared test manifest and runs architecture/documentation-status guards. Parallel project-graph traversal and shared compilation are the defaults; serial and no-build-server modes remain explicit diagnostic options.
+It restores and builds both `UniversalToolchain/Wist.sln` and `UniversalToolchain/PlanFuzz.sln`, builds runnable samples, executes the shared test manifest and runs architecture/documentation-status guards. Parallel project-graph traversal and shared compilation are the defaults; serial/no-build-server modes remain explicit diagnostics.
 
 | Project | Passed | Failed | Skipped |
 |---|---:|---:|---:|
@@ -28,13 +31,24 @@ It restores and builds both `UniversalToolchain/Wist.sln` and the configuration-
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
 | **Total** | **1,597** | **0** | **0** |
 
-This deterministic runtime-boundary change adds 18 resolver, loader, fresh-process, integrity, isolation, concurrency, unload and forbidden-default-fallback regressions beyond the merged 1,579-test baseline. The exact manifest belongs to `eng/test-counts.json`; the 1,597 count is locally confirmed from fresh TRX results and remains pending provider-backed CI confirmation.
+The exact manifest belongs to `eng/test-counts.json`. `.NET CI` run `31049607823` completed the canonical entrypoint for the pinned commit. Because the entrypoint enforces the manifest, a stale or partial test total cannot satisfy that gate.
 
 ## Workflow set
 
-Every `master` revision must start and complete `.NET CI`, `UniversalToolchain validation`, `Docs Check`, documentation deployment, published-package smoke, rollout sample smoke, benchmark smoke and the contract experiment. `CI aggregate` waits for the complete set and publishes the `ci/aggregate` commit status. Master-push triggers are unconditional, preventing a false aggregate timeout caused by a required path-filtered workflow never starting.
+Aggregate run `31049607752` completed successfully for commit `99d9c81aadf3b335524b5bd1e77533612cc2ed93`. The required push runs were:
 
-Review-remediation master commit `2b0a4d1f0e255432daf0d5ddd485269b6490b67e` completed aggregate run `30585251873` successfully. The exact successful push runs were: Docs Check `30585251865`, published-package smoke `30585251928`, documentation deployment `30585251875`, Contract Experiment `30585251945`, rollout smoke `30585251930`, Benchmark Smoke `30585251904`, UniversalToolchain validation `30585251890`, and `.NET CI` `30585251901`.
+| Workflow | Run | Result |
+|---|---:|---|
+| Docs Check | `31049609290` | success |
+| Published Wist package smoke | `31049608876` | success |
+| Documentation deployment | `31049608971` | success |
+| Contract Experiment | `31049608582` | success |
+| Wist Rollout Sample Smoke | `31049608089` | success |
+| Benchmark Smoke | `31049608154` | success |
+| UniversalToolchain validation | `31049608038` | success |
+| .NET CI | `31049607823` | success |
+
+`ci/aggregate` waits for the complete required workflow set and fails when a required workflow is missing, active beyond the deadline or completes with a non-acceptable conclusion.
 
 ## Production-boundary contract study
 
@@ -54,22 +68,22 @@ Master Contract Experiment run `30585251945` executed on commit `2b0a4d1f0e25543
 
 On this frozen author-designed corpus, B0 versus B2 differs on 20/32 operators and exact McNemar is `p = 1.9073486328125e-06`; B1 versus B2 has four discordant operators and `p = 0.125`. These values describe the fixed corpus and do not establish population-level superiority.
 
-The master artifact's isolated B2 verifier-kernel microbenchmark is 46.0% median across five process replicates, range 44.7%-57.1%. Earlier functionally identical runs produced materially different values. This timing is environment-sensitive and is not whole-compilation overhead or a controlled pooled performance estimate.
+The isolated B2 verifier-kernel microbenchmark was 46.0% median across five process replicates, range 44.7%-57.1%. This timing is environment-sensitive and is not whole-compilation overhead or a controlled pooled performance estimate.
 
 ## Post-freeze review holdouts
 
-The master artifact also contains a four-case post-freeze review-derived holdout set: missing Bytecode producer identity, missing source-node identity, repeated pipeline occurrence and extension-provided verifier routing. Its protocol and expected matrix were frozen before result inspection.
+The artifact contains a four-case post-freeze review-derived holdout set: missing Bytecode producer identity, missing source-node identity, repeated pipeline occurrence and extension-provided verifier routing. Its protocol and expected matrix were frozen before result inspection.
 
 | Set | B0 | B1 | B2 |
 |---|---:|---:|---:|
 | Review-derived holdouts | 0/4 | 4/4 | 4/4 |
 | Valid-control false positives | 0/20 | 0/20 | 0/20 |
 
-These holdouts remain separate from the original primary and challenge denominators. They are bounded evidence against overfitting to the earlier corpus, but they are not independently authored, statistically representative or sufficient for a general unseen-fault claim.
+These holdouts remain separate from the original denominators. They are bounded evidence against overfitting to the earlier corpus, not an independently authored or statistically representative population sample.
 
 ## Documentation gates
 
-The integrated revision also runs:
+The pinned revision ran:
 
 ```bash ci-run=false
 npm ci --no-audit --no-fund
@@ -79,11 +93,11 @@ npm run docs:build
 python3 .github/scripts/run-markdown-bash-blocks.py
 ```
 
-Master Docs Check run `30585251865` and the Markdown command smoke in `.NET CI` run `30585251901` completed successfully.
+The documentation-only remediation following this snapshot adds a release-state contract so root/package README, first-contact install pages, published-package smoke and the active stability document cannot drift independently.
 
 ## Package/release boundary
 
-The deterministic runtime-boundary package matrix contains seven SDK/template packages at `0.3.0-alpha.4`, `UniversalToolchain.Wist.LanguagePack` at `0.3.0-alpha.5`, and `UniversalToolchain.Wist` at `0.1.0-alpha.6`. The published-package smoke remains intentionally pinned to actually published facade `0.1.0-alpha.1`.
+The deterministic runtime-boundary package matrix contains seven SDK/template packages at `0.3.0-alpha.4`, `UniversalToolchain.Wist.LanguagePack` at `0.3.0-alpha.5`, and the `UniversalToolchain.Wist` source candidate at `0.1.0-alpha.6`.
 
 <!-- package-matrix:begin -->
 | Package ID | Version |
@@ -99,9 +113,9 @@ The deterministic runtime-boundary package matrix contains seven SDK/template pa
 | `UniversalToolchain.Wist` | `0.1.0-alpha.6` |
 <!-- package-matrix:end -->
 
-The local baseline-aware package gate was replayed against the exact `f13ad1310856e5618e1c3042c447ca543e0f3125` source archive and its deterministic reviewed package bundle. It passed version/content provenance for 9/9 package identities, embedded metadata and active-document synchronization, exact Wist API delta classification, package-surface checks, clean Wist/template/cross-package consumers and detached release-integrity mutation checks.
+The published-package smoke is a different boundary: it installs `0.1.0-alpha.1` from NuGet.org in a clean temporary project. `0.1.0-alpha.6` was not published by the candidate verification work.
 
-This evidence applies to the local candidate tree and generated package bundle. GitHub Actions and aggregate status remain independent provider-backed confirmation; the packages were not published to NuGet.org.
+The local baseline-aware package gate was replayed against the exact `f13ad1310856e5618e1c3042c447ca543e0f3125` source archive and its deterministic reviewed package bundle. It passed version/content provenance for 9/9 package identities, embedded metadata and active-document synchronization, exact Wist API delta classification, package-surface checks, clean Wist/template/cross-package consumers and detached release-integrity mutation checks.
 
 ## PlanFuzz evidence boundary
 
@@ -111,4 +125,4 @@ The preserved Wist pilot included the regression corpus. Its violating-case coun
 
 Schedule reduction, lifecycle/concurrency campaigns, equal-budget baselines, a third adapter and publication novelty remain unverified future work.
 
-The root `VERIFICATION.md` is the detailed authority for commands, package boundaries, claim limits and artifact requirements.
+The root `VERIFICATION.md` remains the detailed authority for commands, package boundaries, claim limits and artifact requirements.

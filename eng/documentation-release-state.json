@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "packageId": "UniversalToolchain.Wist",
+  "project": "UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj",
+  "sourceVersion": "0.1.0-alpha.6",
+  "publishedVersion": "0.1.0-alpha.1",
+  "targetFramework": "net10.0",
+  "stabilityDocument": "docs/evidence/wist-stability-v0.1.0-alpha.6.md",
+  "publishedSmokeWorkflow": ".github/workflows/published-package-smoke.yml",
+  "publishedInstallDocuments": [
+    "readme.md",
+    "docs/start/installation.md",
+    "docs/start/first-program.md",
+    "docs/start/use-case-recipes.md"
+  ],
+  "sourceCandidateDocuments": [
+    "readme.md",
+    "docs/start/installation.md"
+  ],
+  "sourceBuildDocuments": [
+    "readme.md",
+    "docs/start/installation.md"
+  ],
+  "stabilityLinkDocuments": [
+    "readme.md",
+    "docs/evidence/index.md",
+    "docs/.vitepress/config.mts"
+  ]
+}

@@ -1,58 +1,64 @@
 ---
 title: Installation
-description: Show how to install UniversalToolchain.Wist from NuGet.org or prepare the repository locally.
+description: Install the published Wist package or prepare the current repository source safely.
+audience: wist-application-developer
+status: current
+lastVerifiedAgainst: wist-release-state-2026-08-06
 ---
 
 # Installation
 
-This page shows two installation paths:
+There are three different operations that must not be confused:
 
-- install the published `UniversalToolchain.Wist` package from NuGet.org;
-- clone and build the repository for framework development, tests and documentation work.
+1. install the package currently published on NuGet.org;
+2. build and run the current repository source;
+3. produce a reviewed release-candidate package bundle as a maintainer.
 
-## Package-first installation
+## Install the published package
 
-`UniversalToolchain.Wist` is the intended first-contact package for .NET developers. This source tree builds and verifies version `0.1.0-alpha.5`; that is a local release-artifact statement, not a claim that the same version is already published on NuGet.org. The package exposes the `WistEngine` facade and hides the lower-level dialect/runtime pipeline for normal formula usage.
-
-The current alpha package is:
-
-```text
-PackageId: UniversalToolchain.Wist
-Version: 0.1.0-alpha.5
-Target framework: net10.0
-```
-
-From a clean .NET project:
+<!-- wist-published-install:begin -->
+The clean-room package smoke currently verifies `UniversalToolchain.Wist` `0.1.0-alpha.1` from the NuGet.org v3 feed:
 
 ```bash ci-run=false
-dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.5 --source ./artifacts/packages
+dotnet add package UniversalToolchain.Wist \
+  --version 0.1.0-alpha.1 \
+  --source https://api.nuget.org/v3/index.json
 ```
+<!-- wist-published-install:end -->
 
-The NuGet.org package page is <https://www.nuget.org/packages/UniversalToolchain.Wist>. Use its displayed version for published-package checks.
-
-### Clean-room published-package check
-
-The repository includes a smoke script that creates a temporary `net10.0` console project, uses an isolated NuGet package cache, restores only from NuGet.org, compiles a formula, evaluates it and verifies a rejected statement-style rule:
-
-```bash ci-run=false
-./Tools/smoke-published-wist-package.sh "$PUBLISHED_WIST_VERSION"
-```
-
-Expected final line:
-
-```text
-Published UniversalToolchain.Wist <explicit-version> smoke passed.
-```
-
-Use a `net10.0` project while this alpha targets .NET 10:
+Use a `net10.0` project while the published alpha targets .NET 10:
 
 ```xml
 <TargetFramework>net10.0</TargetFramework>
 ```
 
+The package page is <https://www.nuget.org/packages/UniversalToolchain.Wist>.
+
+### Clean-room published-package check
+
+The repository smoke script creates a temporary `net10.0` project, isolates NuGet caches, restores only from NuGet.org, compiles and evaluates formulas and verifies a rejected statement-style rule:
+
+```bash ci-run=false
+./Tools/smoke-published-wist-package.sh 0.1.0-alpha.1
+```
+
+Expected final line:
+
+```text
+Published UniversalToolchain.Wist 0.1.0-alpha.1 smoke passed.
+```
+
+## Current source candidate
+
+<!-- wist-source-candidate:begin -->
+The current source project defines `UniversalToolchain.Wist` `0.1.0-alpha.6`. This candidate is **not published on NuGet.org**. The repository does not present `./artifacts/packages` as a public feed: that directory exists only after the baseline-bearing maintainer packaging gate succeeds.
+<!-- wist-source-candidate:end -->
+
+To evaluate the current implementation, clone the repository and build/run it as source. Do not change the published install command to `0.1.0-alpha.6` unless you were given a reviewed feed containing that exact package.
+
 ## Minimal package smoke test
 
-After installing the package, create a small console program:
+After installing the published package, create a small console program:
 
 ```csharp
 using UniversalToolchain.Wist;
@@ -68,11 +74,11 @@ double result = formula.CompiledDelegate(100.0, 5.0);
 Console.WriteLine(result); // 95
 ```
 
-This is the recommended first-contact shape for alpha.1: use `Compile<TDelegate>`, compile once, keep the returned typed program and call `CompiledDelegate` from the hot path.
+`Compile<TDelegate>` validates and compiles once. Keep the returned typed program and call `CompiledDelegate` from the hot path. Use `Validate` or `TryCompile` for expected authoring failures that should not throw.
 
 ## Trusted interop example
 
-Use the full native alpha only when the Wist source is trusted by the host application. CLR interop is available only for assemblies explicitly selected by the host.
+Use the full native profile only when the Wist source is trusted by the host application. CLR interop is available only for assemblies explicitly selected by the host:
 
 ```csharp
 using UniversalToolchain.Wist;
@@ -92,20 +98,20 @@ double result = calcHypotenuse.CompiledDelegate(7.0, 24.0);
 Console.WriteLine(result); // 25
 ```
 
-Do not expose CLR assemblies to arbitrary user-authored code. For untrusted or semi-trusted formula input, start with `CreateRestrictedArithmetic` and use external process/resource isolation when needed.
+Do not expose CLR assemblies to arbitrary user-authored code. Restricted composition is not a hardened sandbox.
 
 ## Repository development prerequisites
 
-Use the repository path when you want to modify UniversalToolchain, run the full test suite, edit docs or validate packaging.
+Use the repository path when you want to modify UniversalToolchain, run the full test contract, edit docs or validate the current source candidate.
 
 Prerequisites:
 
-- Git.
-- .NET SDK `10.0.103` or a compatible SDK accepted by `UniversalToolchain/global.json`.
-- Node.js and npm for VitePress documentation.
-- A checked-out working branch for the change you are validating.
+- Git;
+- .NET SDK `10.0.103` or a compatible SDK accepted by `UniversalToolchain/global.json`;
+- Node.js and npm for VitePress documentation;
+- a checked-out working branch for the change you are validating.
 
-The current validation baseline is .NET 10 and target framework `net10.0`. Older target frameworks are not the current compatibility target.
+The current validation target is `net10.0`.
 
 ## Repository development steps
 
@@ -118,21 +124,19 @@ git status
 git branch --show-current
 ```
 
-Use the branch required by your task. For normal validation, use the branch you plan to push or open a pull request from.
-
-### 2. Restore and build the .NET solution
+### 2. Restore, build and test the .NET source
 
 ```bash ci-run=false
-./build.sh --skip-docs
+./build.sh --skip-docs --skip-pack
 ```
 
-This is the canonical repository build path. It builds the two solutions sequentially while parallelizing each solution's project graph, runs the declared test contract, packs the facade, and checks the package surface. The default job count is the number of logical processors; use `--jobs N` on Bash or `-Jobs N` on PowerShell to cap it. Use `--serial --no-build-servers` or `-Serial -NoBuildServers` only for isolated diagnostics.
+This is the canonical contributor path when release packaging inputs are not present. It builds both solutions and runnable samples, executes the exact test-count contract and runs architecture/documentation-status guards.
 
-Do not use a bare repository-root `dotnet build` as release evidence; it does not execute the repository's complete build, test, package, and verification contract.
+Do not use `./build.sh --skip-docs` by itself: without `--skip-pack`, the command intentionally enters the release package gate and requires reviewed previous-source and previous-package artifacts.
 
-### 3. Run tests when changing behavior
+### 3. Run focused tests when changing behavior
 
-For documentation-only changes, tests may not be necessary. For code, module, dialect or runtime changes, run the relevant test projects:
+After the canonical build, focused diagnostics can reuse the build outputs:
 
 ```bash ci-run=false
 dotnet test UniversalToolchain/Tests/Tests.csproj -c Release --no-build
@@ -140,12 +144,10 @@ dotnet test UniversalToolchain/UniversalToolchain.Modules.Tests/UniversalToolcha
 dotnet test UniversalToolchain/UniversalToolchain.Dialects.Tests/UniversalToolchain.Dialects.Tests.csproj -c Release --no-build
 ```
 
-The Markdown command runner intentionally skips this block because it is a local validation checklist, not a small documentation smoke command. The main `.NET CI` workflow already runs the full solution test step with `dotnet test UniversalToolchain/Wist.sln -c Release --no-build` before Markdown command validation.
-
 ### 4. Install documentation dependencies
 
 ```bash ci-run=false
-npm ci
+npm ci --no-audit --no-fund
 ```
 
 ### 5. Run the documentation site locally
@@ -154,41 +156,50 @@ npm ci
 npm run docs:dev
 ```
 
-This starts the VitePress development server for the `docs/` directory. The command keeps running until stopped manually with `Ctrl+C`, so it is intentionally skipped by Markdown command validation in CI.
+This command keeps running until stopped with `Ctrl+C`, so it is not a CI smoke command.
 
-### 6. Build the documentation site
+### 6. Validate the documentation
 
 ```bash ci-run=false
-npm run docs:build
+npm run docs:check
 ```
 
-This must pass before merging documentation changes.
+The documentation gate validates structure, navigation, links, release-state synchronization and VitePress compilation.
+
+## Maintainer candidate packaging
+
+Producing `artifacts/packages` is a release operation, not a normal installation prerequisite. The canonical package gate requires both:
+
+- `--baseline-source-archive` pointing to the reviewed previous source archive;
+- `--previous-package-bundle` pointing to the reviewed previous package bundle.
+
+It then verifies package provenance, API compatibility, package identities, clean consumers and detached integrity metadata. Follow the [Maintainer and Release Guide](/evidence/maintainer-guide).
 
 ## Expected result
 
-After completing the package path:
+After the published-package path:
 
-- the host project references `UniversalToolchain.Wist`;
+- the host project references `UniversalToolchain.Wist` `0.1.0-alpha.1` from NuGet.org;
 - `using UniversalToolchain.Wist;` resolves;
 - `WistEngine.CreateRestrictedArithmetic()` can compile and invoke a typed formula.
 
-After completing the repository path:
+After the repository path:
 
-- the .NET solution builds;
-- the Wist CLI can run examples;
-- the VitePress documentation site can be served locally;
-- `npm run docs:build` produces a static documentation build without broken internal links.
+- both solutions and samples build;
+- the exact test contract passes;
+- source demos and CLI commands can run;
+- documentation checks can be executed without pretending that a release package was produced.
 
 ## Common mistakes
 
-- Installing the package into a project that does not target `net10.0`.
-- Exposing CLR assemblies to untrusted user input.
-- Expecting C# interop to be available in restricted formula presets.
-- Running repository commands from inside `docs/` instead of the repository root.
-- Validating a different branch from the one you plan to push or open a pull request from.
-- Installing an older .NET SDK that cannot build `net10.0` projects.
-- Forgetting `npm ci` before `npm run docs:dev` or `npm run docs:build`.
-- Treating docs build success as runtime validation. Documentation build does not replace .NET tests.
+- replacing the published version with the newer source version even though that candidate is not on NuGet.org;
+- using `--source ./artifacts/packages` from a clean external checkout where no reviewed package bundle exists;
+- running `./build.sh` or `./build.sh --skip-docs` without the required release-package baseline inputs;
+- installing into a project that does not target `net10.0`;
+- exposing CLR assemblies to untrusted user input;
+- treating restricted dialects as security sandboxes;
+- running repository commands from inside `docs/` instead of the repository root;
+- treating docs build success as runtime validation.
 
 ## Next
 

@@ -1,21 +1,30 @@
 ---
 title: Use-case Recipes
 description: Copy-ready Wist examples for pricing, rollout scoring and LMS scoring.
+audience: wist-application-developer
+status: current
+lastVerifiedAgainst: wist-release-state-2026-08-06
 ---
 
 # Use-case Recipes
 
-These examples use the current public `UniversalToolchain.Wist` facade and the restricted arithmetic preset. They deliberately keep side effects in the .NET host:
+These examples use the public `UniversalToolchain.Wist` facade and the restricted arithmetic preset. They deliberately keep side effects in the .NET host:
 
 ```text
 rule text -> validate or compile -> numeric result -> host application decides the action
 ```
 
-Install the review-remediation package candidate from a reviewed local feed:
+<!-- wist-published-install:begin -->
+Install the package currently exercised by the clean-room NuGet.org smoke:
 
 ```bash ci-run=false
-dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.5 --source ./artifacts/packages
+dotnet add package UniversalToolchain.Wist \
+  --version 0.1.0-alpha.1 \
+  --source https://api.nuget.org/v3/index.json
 ```
+<!-- wist-published-install:end -->
+
+The repository may contain a newer unpublished source candidate. Recipes do not silently switch package feeds or versions.
 
 ## Pricing and commission
 
@@ -55,7 +64,7 @@ double score = rolloutScore.CompiledDelegate(100.0, 90.0, 1.0);
 bool enableNewDashboard = score >= 80.0;
 ```
 
-The threshold and the feature switch remain ordinary reviewed .NET code.
+The threshold and feature switch remain ordinary reviewed .NET code.
 
 ## LMS or autograding score
 
@@ -108,13 +117,13 @@ Before using a configurable rule in an application:
 2. Validate the text before storing or activating it.
 3. Compile once after approval; do not compile inside the hot loop.
 4. Keep side effects, authorization and persistence in ordinary .NET code.
-5. Store the last known-good rule so an invalid update does not replace working behavior.
+5. Store the last-known-good rule so an invalid update does not replace working behavior.
 6. Treat restricted syntax as a language-surface limit, not as process isolation or a hardened sandbox.
 
 ## When not to use this alpha
 
-Do not use the current restricted arithmetic preset when you need arbitrary C# execution, process isolation, execution timeouts, memory quotas or a stable full business-rule language. Those are outside the current alpha claim.
+Do not use the restricted arithmetic preset when you need arbitrary C# execution, process isolation, execution timeouts, memory quotas or a stable full business-rule language.
 
 ## Next
 
-Read the latest completed [Wist alpha.4 stability record](/evidence/wist-stability-v0.1.0-alpha.4), the [current verification record](/evidence/current-verification), the [Performance Model](/reference/performance-model) and [Security](/SECURITY) before integrating a newer package candidate into a consequential workflow.
+Read the [Wist `0.1.0-alpha.6` source-candidate stability record](/evidence/wist-stability-v0.1.0-alpha.6), the pinned [verification snapshot](/evidence/current-verification), the [Performance Model](/reference/performance-model) and [Security](/SECURITY) before moving beyond the currently published package.

@@ -3,7 +3,7 @@ title: Start Here
 description: Choose the Wist, external language-authoring or framework-internals route.
 audience: wist-application-developer
 status: current
-lastVerifiedAgainst: language-authoring-p0-p1-hardening-2026-07-23.1
+lastVerifiedAgainst: wist-release-state-2026-08-06
 ---
 
 # Start here
@@ -34,7 +34,9 @@ The generic SDK does not force every language through Wist AST, Bytecode or AIR.
 
 ## Current maturity
 
-- Wist `0.1.0-alpha.5` is a controlled-evaluation/prototype package, not a stable 1.0 contract.
+- The package currently verified from NuGet.org is `UniversalToolchain.Wist` `0.1.0-alpha.1`.
+- The repository source candidate is `0.1.0-alpha.6`; it is not published on NuGet.org.
+- Both are alpha surfaces for controlled evaluation and prototypes, not stable 1.0 contracts.
 - Generic language authoring is a low-level alpha with typed routing, deterministic planning and runtime lifecycle contracts.
 - Restricted composition is not a hardened sandbox.
 - Public evidence and current gaps are tracked under [Evidence and Release Status](/evidence/).

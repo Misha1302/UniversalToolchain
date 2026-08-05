@@ -229,9 +229,9 @@ const evidenceSidebar = [
         items: [
             { text: 'Evidence Home', link: '/evidence/' },
             { text: 'Maintainer and Release Guide', link: '/evidence/maintainer-guide' },
-            { text: 'Current Verification', link: '/evidence/current-verification' },
+            { text: 'Verification Snapshot', link: '/evidence/current-verification' },
             { text: 'Language Authoring Alpha', link: '/evidence/language-authoring-alpha' },
-            { text: 'Wist Alpha Stability', link: '/evidence/wist-stability-v0.1.0-alpha.4' },
+            { text: 'Wist 0.1.0-alpha.6 Candidate Stability', link: '/evidence/wist-stability-v0.1.0-alpha.6' },
             { text: 'External Authoring Hardening', link: '/releases/external-language-authoring-hardening-2026-07-21' },
             { text: 'Composition Hardening', link: '/releases/external-language-composition-hardening-2026-07-22' },
             { text: 'Contribution Planning', link: '/releases/external-language-contribution-planning-2026-07-21' },
