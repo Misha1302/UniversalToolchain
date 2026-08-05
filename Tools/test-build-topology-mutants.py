@@ -289,6 +289,15 @@ def main() -> int:
             "instead of guessing output layout",
         ),
         (
+            "runtime-target-path-root-redirected",
+            lambda path: replace_once(
+                path / LANGUAGE_PACK_PROJECT,
+                'RootFolder="$(WistRuntimeOutputDirectory)"',
+                'RootFolder="$(TargetDir)"',
+            ),
+            "preserve file-relative target paths",
+        ),
+        (
             "powershell-package-gate-disabled",
             lambda path: replace_once(
                 path / "build.ps1",
