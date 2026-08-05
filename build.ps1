@@ -147,6 +147,8 @@ Invoke-CheckedNative "python" @("Tools/check-retired-surface.py", "--root", $roo
 Invoke-CheckedNative "python" @("Tools/test-retired-surface-mutants.py", "--root", $root)
 Invoke-CheckedNative "python" @("Tools/check_documentation_status.py")
 Invoke-CheckedNative "python" @("Tools/test-documentation-status-mutants.py", "--root", $root)
+Invoke-CheckedNative "python" @("Tools/check-build-topology.py", "--root", $root)
+Invoke-CheckedNative "python" @("Tools/test-build-topology-mutants.py", "--root", $root)
 
 if (-not $SkipPack) {
     if (-not $BaselineSourceArchive -or -not (Test-Path -LiteralPath $BaselineSourceArchive -PathType Leaf)) {
@@ -207,6 +209,17 @@ if (-not $SkipPack) {
         "--manifest", $packageManifest,
         "--packages", "artifacts/packages"
     )
+
+    Invoke-CheckedNative "python" @(
+        "Tools/package_metadata.py",
+        "--root", $root,
+        "--manifest", $packageManifest,
+        "--packages", "artifacts/packages",
+        "--previous-bundle", $PreviousPackageBundle,
+        "--baseline-contract", "eng/package-release-baseline.json",
+        "--report", "artifacts/package-metadata-report.json"
+    )
+    Invoke-CheckedNative "python" @("Tools/test-package-metadata-mutants.py", "--root", $root)
 
     $wistVersionNode = Select-Xml `
         -Path "UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj" `
