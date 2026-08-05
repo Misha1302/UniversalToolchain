@@ -48,7 +48,9 @@
 
     <ItemGroup>
         <Compile Remove="FreshProcess\**\*.cs" />
-        <ProjectReference Include="FreshProcess\RuntimeSharedAssemblyFreshProcessHost\RuntimeSharedAssemblyFreshProcessHost.csproj" ReferenceOutputAssembly="false" />
+        <ProjectReference Include="FreshProcess\RuntimeSharedAssemblyFreshProcessHost\RuntimeSharedAssemblyFreshProcessHost.csproj"
+                          ReferenceOutputAssembly="false"
+                          Private="false" />
         <RuntimeSharedAssemblyFreshProcessFixtureProject Include="FreshProcess\HostOnlyContractFixture\HostOnlyContractFixture.csproj" />
         <RuntimeSharedAssemblyFreshProcessFixtureProject Include="FreshProcess\HostileRuntimeFixture\HostileRuntimeFixture.csproj" />
         <RuntimeSharedAssemblyFreshProcessFixtureProject Include="FreshProcess\CanonicalRuntimeFixture\CanonicalRuntimeFixture.csproj" />
