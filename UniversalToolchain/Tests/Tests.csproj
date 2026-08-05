@@ -63,7 +63,9 @@
         <ProjectReference Include="..\CommentsModule\CommentsModule.csproj"/>
         <ProjectReference Include="..\Example\Example.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Testing.Infrastructure\UniversalToolchain.Testing.Infrastructure.csproj"/>
-        <ProjectReference Include="..\Wistc\Wistc.csproj" ReferenceOutputAssembly="false"/>
+        <ProjectReference Include="..\Wistc\Wistc.csproj"
+                          ReferenceOutputAssembly="false"
+                          Private="false"/>
     </ItemGroup>
 
     <ItemGroup>
