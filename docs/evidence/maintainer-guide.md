@@ -50,7 +50,7 @@ The checks cover:
 - contributor build commands that must not accidentally enter the release package gate;
 - VitePress compilation.
 
-The canonical build also runs both documentation-status mutant suites. They must reject source-version drift, published-install drift, missing stability evidence, unsafe source build commands and a workflow-local published-version literal.
+The canonical build runs the established documentation-status mutants, while `Docs Check` also runs the release-state mutant suite. Together they reject source-version drift, published-install drift, missing stability evidence, unsafe source build commands and a workflow-local published-version literal.
 
 A green documentation build does not validate every C# example. When a public snippet changes an API contract, build a clean consumer or add a focused executable test.
 
