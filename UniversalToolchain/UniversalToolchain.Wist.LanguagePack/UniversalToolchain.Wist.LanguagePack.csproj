@@ -61,11 +61,13 @@
   </Target>
   <Target Name="ExposeWistRuntimeClosureToProjectReferences" BeforeTargets="_GetCopyToOutputDirectoryItemsFromThisProject">
     <ItemGroup>
-      <ContentWithTargetPath Include="$(WistRuntimeOutputDirectory)*.dll;$(WistRuntimeOutputDirectory)*.dialect.runtime.json">
-        <TargetPath>%(Filename)%(Extension)</TargetPath>
+      <WistRuntimeFileForCopy Include="$(WistRuntimeOutputDirectory)*.dll;$(WistRuntimeOutputDirectory)*.dialect.runtime.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </ContentWithTargetPath>
+      </WistRuntimeFileForCopy>
     </ItemGroup>
+    <AssignTargetPath Files="@(WistRuntimeFileForCopy)" RootFolder="$(WistRuntimeOutputDirectory)">
+      <Output TaskParameter="AssignedFiles" ItemName="ContentWithTargetPath" />
+    </AssignTargetPath>
   </Target>
   <Target Name="CollectWistRuntimeManifests" AfterTargets="Build">
     <ItemGroup>
