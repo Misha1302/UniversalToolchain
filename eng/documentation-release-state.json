@@ -15,8 +15,7 @@
   ],
   "sourceCandidateDocuments": [
     "readme.md",
-    "docs/start/installation.md",
-    "UniversalToolchain/UniversalToolchain.Wist/README.md"
+    "docs/start/installation.md"
   ],
   "sourceBuildDocuments": [
     "readme.md",
