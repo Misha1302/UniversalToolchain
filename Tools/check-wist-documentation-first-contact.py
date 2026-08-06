@@ -22,7 +22,9 @@ RUNTIME_ASSEMBLY_COUNT = re.compile(
 )
 TEMPORAL_PUBLICATION_CLAIM = re.compile(
     r"\b(?:not\s+published|unpublished|not\s+on\s+nuget\.org|"
-    r"currently\s+(?:published|available)|version\s+currently\s+published|"
+    r"(?:currently\s+)?(?:published|available)\s+on\s+nuget\.org|"
+    r"(?:is|was|has\s+been)\s+published|currently\s+(?:published|available)|"
+    r"version\s+currently\s+published|"
     r"(?:after|before|once|when)\s+(?:the\s+package|this\s+version|it)\s+is\s+published)\b",
     re.IGNORECASE,
 )
