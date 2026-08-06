@@ -58,7 +58,7 @@ jobs:
         run: npm ci --no-audit --no-fund
 
       - name: Validate and build docs
-        run: npm run docs:status && npm run docs:links && npm run docs:build
+        run: npm run docs:status && npm run docs:links && npm run docs:first-contact && npm run docs:build
 
       - name: Markdown bash smoke checks
         shell: bash
