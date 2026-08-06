@@ -54,6 +54,9 @@ def main() -> int:
     state = json.loads(state_path.read_text(encoding="utf-8"))
     source_version = state["sourceVersion"]
     package_readme = root / state["packageReadmeDocuments"][0]
+    package_readme_identity = (
+        f"This README describes `UniversalToolchain.Wist` `{source_version}`."
+    )
 
     positive = run(checker, root)
     if positive.returncode != 0:
@@ -107,21 +110,30 @@ def main() -> int:
         "package-readme-source-marker",
         lambda mutant: replace(
             mutant / package_readme.relative_to(root),
-            "This README describes `UniversalToolchain.Wist` `0.1.0-alpha.6`.",
+            package_readme_identity,
             (
                 "<!-- wist-source-candidate:begin -->\n"
-                "This README describes `UniversalToolchain.Wist` `0.1.0-alpha.6`.\n"
+                f"{package_readme_identity}\n"
                 "<!-- wist-source-candidate:end -->"
             ),
         ),
     )
     require_killed(
         root,
-        "temporal-publication-claim",
+        "temporal-unpublished-claim",
         lambda mutant: replace(
             mutant / package_readme.relative_to(root),
-            "This README describes `UniversalToolchain.Wist` `0.1.0-alpha.6`.",
+            package_readme_identity,
             "This candidate is not published on NuGet.org.",
+        ),
+    )
+    require_killed(
+        root,
+        "temporal-published-claim",
+        lambda mutant: replace(
+            mutant / package_readme.relative_to(root),
+            package_readme_identity,
+            "This version is published on NuGet.org.",
         ),
     )
     require_killed(
