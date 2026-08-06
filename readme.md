@@ -45,6 +45,8 @@ Compile a reviewed rollout formula once and invoke the typed delegate repeatedly
 
 <!-- wist-source-quickstart-csharp:begin -->
 ```csharp
+using System;
+using System.Linq;
 using UniversalToolchain.Wist;
 
 using var rules = WistEngine.CreateRestrictedArithmetic();
