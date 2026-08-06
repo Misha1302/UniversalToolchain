@@ -20,15 +20,13 @@ admin / config / LLM suggestion
 
 ## Install
 
-<!-- wist-source-candidate:begin -->
-This source tree defines `UniversalToolchain.Wist` `0.1.0-alpha.6`. This candidate is **not published on NuGet.org**. The package-facing command below applies only after that exact version is available on a reviewed NuGet feed; it is not a claim that NuGet.org already serves the candidate.
-<!-- wist-source-candidate:end -->
+This README describes `UniversalToolchain.Wist` `0.1.0-alpha.6`. Install that exact artifact from a reviewed package feed:
 
 ```bash ci-run=false
 dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.6
 ```
 
-For the version currently published on NuGet.org, source-build evaluation and clean-room checks, follow the [package installation guide](https://misha1302.github.io/Wist2/start/installation). Do not assume a repository-local package output directory exists in an external consumer project.
+For current NuGet.org availability, source-build evaluation and clean-room checks, follow the [package installation guide](https://misha1302.github.io/Wist2/start/installation). Do not assume a repository-local package output directory exists in an external consumer project.
 
 Requirements:
 
