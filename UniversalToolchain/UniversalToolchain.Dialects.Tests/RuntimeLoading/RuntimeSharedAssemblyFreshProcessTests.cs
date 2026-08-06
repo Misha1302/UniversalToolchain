@@ -32,7 +32,7 @@ public sealed class RuntimeSharedAssemblyFreshProcessTests
         var hostile = ResolveFixtureAssembly("HostileRuntimeFixture", "RuntimeHostileFixture.dll", configuration, platform);
         var receipt = RunFreshProcess("hostile", canonical, hostile);
 
-        Assert.That(receipt, Is.EqualTo("HOSTILE_PRELOAD=PASS" + Environment.NewLine));
+        Assert.That(receipt, Is.EqualTo("HOSTILE_PRELOAD=PASS\n"));
     }
 
     [Test]
@@ -47,7 +47,7 @@ public sealed class RuntimeSharedAssemblyFreshProcessTests
             platform);
         var receipt = RunFreshProcess("unregistered-default-fallback", runtime);
 
-        Assert.That(receipt, Is.EqualTo("UNREGISTERED_DEFAULT_FALLBACK=PASS" + Environment.NewLine));
+        Assert.That(receipt, Is.EqualTo("UNREGISTERED_DEFAULT_FALLBACK=PASS\n"));
     }
 
     private static string RunFreshProcess(params string[] arguments)
