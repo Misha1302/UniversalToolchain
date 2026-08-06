@@ -31,7 +31,6 @@ jobs:
               '.NET CI',
               'UniversalToolchain validation',
               'Docs Check',
-              'Deploy documentation to GitHub Pages',
               'Published Wist package smoke',
               'Wist Rollout Sample Smoke',
               'Benchmark Smoke',
@@ -68,9 +67,10 @@ jobs:
               const runs = response.data.workflow_runs.filter(
                 run => run.id !== context.runId && run.name !== context.workflow,
               );
-              const names = new Set(runs.map(run => run.name));
+              const requiredRuns = runs.filter(run => requiredWorkflows.has(run.name));
+              const names = new Set(requiredRuns.map(run => run.name));
               const missingRequired = [...requiredWorkflows].filter(name => !names.has(name));
-              const active = runs.filter(run => run.status !== 'completed');
+              const active = requiredRuns.filter(run => run.status !== 'completed');
 
               if (missingRequired.length > 0 || active.length > 0) {
                 stableCompletedSnapshots = 0;
@@ -85,7 +85,7 @@ jobs:
                 continue;
               }
 
-              const completedIds = runs.map(run => run.id).sort((a, b) => a - b).join(',');
+              const completedIds = requiredRuns.map(run => run.id).sort((a, b) => a - b).join(',');
               if (completedIds === previousCompletedIds) {
                 stableCompletedSnapshots += 1;
               } else {
@@ -99,7 +99,7 @@ jobs:
                 continue;
               }
 
-              const failed = runs.filter(run => !acceptableConclusions.has(run.conclusion));
+              const failed = requiredRuns.filter(run => !acceptableConclusions.has(run.conclusion));
               if (failed.length > 0) {
                 const primary = failed[0];
                 const summary = failed.map(run => `${run.name}#${run.id}:${run.conclusion}`).join(', ');
@@ -112,9 +112,9 @@ jobs:
                 return;
               }
 
-              const summary = runs.map(run => `${run.name}#${run.id}:${run.conclusion}`).join(', ');
+              const summary = requiredRuns.map(run => `${run.name}#${run.id}:${run.conclusion}`).join(', ');
               core.info(`All workflows succeeded: ${summary}`);
-              await publish('success', `${runs.length} workflows completed successfully`);
+              await publish('success', `${requiredRuns.length} workflows completed successfully`);
               return;
             }
 
