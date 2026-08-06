@@ -13,13 +13,17 @@ from pathlib import Path
 from xml.sax.saxutils import escape
 
 DEFAULT_STATE = Path("eng/documentation-release-state.json")
-SOURCE_MARKER_BEGIN = "<!-- wist-source-candidate:begin -->"
-SOURCE_MARKER_END = "<!-- wist-source-candidate:end -->"
 CSHARP_FENCE = re.compile(r"```csharp[^\n]*\n(.*?)\n```", re.DOTALL)
 LOCAL_ARTIFACT_FEED = re.compile(r"(?:--source\s+)?\.?/?artifacts/packages", re.IGNORECASE)
 VALIDATION_MESSAGE_ACCESS = re.compile(r"\b(?:validation|rejected)\.Message\b")
 RUNTIME_ASSEMBLY_COUNT = re.compile(
     r"\b(?:the\s+)?\d+\s+(?:runtime\s+)?assemblies\s+under\s+`lib/net10\.0`",
+    re.IGNORECASE,
+)
+TEMPORAL_PUBLICATION_CLAIM = re.compile(
+    r"\b(?:not\s+published|unpublished|not\s+on\s+nuget\.org|"
+    r"currently\s+(?:published|available)|version\s+currently\s+published|"
+    r"(?:after|before|once|when)\s+(?:the\s+package|this\s+version|it)\s+is\s+published)\b",
     re.IGNORECASE,
 )
 
@@ -106,15 +110,14 @@ def validate_package_project(
 def validate_package_readmes(root: Path, state: dict[str, object]) -> tuple[list[Path], Path]:
     package_id = require_string(state, "packageId")
     source_version = require_string(state, "sourceVersion")
-    published_version = require_string(state, "publishedVersion")
     package_readmes = require_string_list(state, "packageReadmeDocuments")
     source_documents = set(require_string_list(state, "sourceCandidateDocuments"))
 
-    missing_from_source_contract = sorted(set(package_readmes) - source_documents)
-    if missing_from_source_contract:
+    source_contract_overlap = sorted(set(package_readmes) & source_documents)
+    if source_contract_overlap:
         raise FirstContactError(
-            "package README documents are not release-state source candidates: "
-            + ", ".join(missing_from_source_contract)
+            "package README documents must remain publication-neutral and must not be "
+            "sourceCandidateDocuments: " + ", ".join(source_contract_overlap)
         )
 
     project = validate_package_project(root, state, package_readmes)
@@ -130,23 +133,15 @@ def validate_package_readmes(root: Path, state: dict[str, object]) -> tuple[list
         if not document.is_file():
             raise FirstContactError(f"package README does not exist: {relative}")
         text = document.read_text(encoding="utf-8")
-        candidate = marked_block(text, SOURCE_MARKER_BEGIN, SOURCE_MARKER_END, document)
-        if source_version not in candidate:
+        if "<!-- wist-source-candidate:" in text:
             raise FirstContactError(
-                f"{relative}: source-candidate block does not identify {source_version}"
+                f"{relative}: packed README must not contain source-candidate markers"
             )
-        candidate_lower = candidate.lower()
-        says_unpublished = any(
-            phrase in candidate_lower
-            for phrase in ("not published", "unpublished", "not on nuget.org")
-        )
-        if source_version != published_version and not says_unpublished:
+        temporal_claim = TEMPORAL_PUBLICATION_CLAIM.search(text)
+        if temporal_claim:
             raise FirstContactError(
-                f"{relative}: unpublished source candidate is not explicitly labeled unpublished"
-            )
-        if source_version == published_version and says_unpublished:
-            raise FirstContactError(
-                f"{relative}: published version {source_version} is still labeled unpublished"
+                f"{relative}: packed README contains a time-sensitive publication claim: "
+                f"{temporal_claim.group(0)}"
             )
         if not install.search(text):
             raise FirstContactError(
