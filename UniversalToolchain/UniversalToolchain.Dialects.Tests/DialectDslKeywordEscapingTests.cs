@@ -1,4 +1,7 @@
 using System.Text;
+using BasicCore.LexerWrapper;
+using BasicLexer.Core;
+using BasicTypesExtensions;
 using UniversalToolchain.Dialects.Frontend;
 using UniversalToolchain.Dialects.Frontend.Composition;
 
@@ -26,6 +29,23 @@ public class DialectDslKeywordEscapingTests
         var matchingCrKeyword = matchingCrLexemes.Single(x =>
             x.Text == keyword && x.LexemePattern!.LexemeType.GetName() == $"DialectDirectiveKeyword.{keyword}");
 
+        var customLexer = new BasicLexerImpl(new LexerConfiguration([]));
+        customLexer.Configuration.AddPattern(new LexemePattern(
+            @"[A-Za-z]+",
+            ExtensibleEnum<LexemeTag>.CreateOrGet("Tests.Identifier")));
+        customLexer.Configuration.AddPattern(new LexemePattern(
+            @"\r\n",
+            ExtensibleEnum<LexemeTag>.CreateOrGet("Tests.CrLf")));
+        const string customCrLfSource = "a\r\nb";
+        var customCrLfLexemes = customLexer.Lexemize(customCrLfSource);
+
+        const string invalidAfterTwoCrLf = "dialect Demo\r\nuse Arithmetic\r\n@";
+        var invalidLexeme = new LexemeValue(
+            "@",
+            null,
+            invalidAfterTwoCrLf.IndexOf('@'),
+            invalidAfterTwoCrLf);
+
         Assert.Multiple(() =>
         {
             Assert.That(matchingCrLfKeyword.StartIndex, Is.EqualTo(matchingCrLfSource.IndexOf(keyword, StringComparison.Ordinal)));
@@ -36,6 +56,13 @@ public class DialectDslKeywordEscapingTests
             Assert.That(matchingCrKeyword.LineNumber, Is.EqualTo(2));
             Assert.That(matchingCrKeyword.CharNumber, Is.Zero);
             Assert.That(matchingCrSource.Substring(matchingCrKeyword.StartIndex, matchingCrKeyword.Text.Length), Is.EqualTo(keyword));
+            Assert.That(customCrLfLexemes.Select(x => x.Text), Is.EqualTo(new[] { "a", "\r\n", "b" }));
+            Assert.That(customCrLfLexemes[1].StartIndex, Is.EqualTo(1));
+            Assert.That(customCrLfLexemes[2].StartIndex, Is.EqualTo(customCrLfSource.IndexOf('b')));
+            Assert.That(customCrLfLexemes[2].LineNumber, Is.EqualTo(2));
+            Assert.That(customCrLfLexemes[2].CharNumber, Is.Zero);
+            Assert.That(invalidLexeme.LineNumber, Is.EqualTo(3));
+            Assert.That(invalidLexeme.CharNumber, Is.Zero);
             Assert.That(nonMatchingLexemes.Any(x => x.LexemePattern!.LexemeType.GetName() == $"DialectDirectiveKeyword.{keyword}"), Is.False);
         });
     }
