@@ -10,6 +10,7 @@ lastVerifiedAgainst: language-authoring-p0-p1-hardening-2026-07-23.1
 
 ## Public/runtime contracts
 
+- [Wist facade API](/reference/wist-facade-api)
 - [Diagnostics](/reference/diagnostics)
 - [Lifecycle, concurrency and privacy](/reference/lifecycle-concurrency-privacy)
 - [Runtime profiles](/reference/runtime-profiles)
