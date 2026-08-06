@@ -39,6 +39,7 @@ Requirements:
 
 <!-- wist-package-quickstart-csharp:begin -->
 ```csharp
+using System;
 using UniversalToolchain.Wist;
 
 using var rules = WistEngine.CreateRestrictedArithmetic();
@@ -61,6 +62,8 @@ The formula returns data. The host application performs the action.
 Use `Validate` before storing or executing user/admin/config-supplied formulas:
 
 ```csharp
+using System;
+using System.Linq;
 using UniversalToolchain.Wist;
 
 using var rules = WistEngine.CreateRestrictedArithmetic();
