@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import os
 import platform
+import re
 import shutil
 import subprocess
 import sys
@@ -29,6 +30,8 @@ FEATURE_EMITTER = Path("UniversalToolchain/UniversalToolchain.FeatureManifestEmi
 WIST = Path("UniversalToolchain/UniversalToolchain.Wist")
 CORE_TESTS = Path("UniversalToolchain/Tests/Tests.csproj")
 WISTC = Path("UniversalToolchain/Wistc")
+DOTNET_CI = Path(".github/workflows/dotnet-ci.yml")
+CI_AGGREGATE = Path(".github/workflows/ci-aggregate.yml")
 
 
 @dataclass(frozen=True)
@@ -40,18 +43,95 @@ class LayoutCase:
     build_project_references: bool = False
 
 
-def remove_project_outputs(project_directory: Path, configuration: str) -> None:
-    shutil.rmtree(project_directory / "bin", ignore_errors=True)
-    obj = project_directory / "obj"
-    if not obj.is_dir():
-        return
-    candidates = sorted(
-        (path for path in obj.rglob(configuration) if path.is_dir()),
-        key=lambda path: len(path.parts),
-        reverse=True,
+def remove_configuration_outputs(project_directory: Path, configuration: str) -> None:
+    configuration_key = configuration.casefold()
+    for output_root_name in ("bin", "obj"):
+        output_root = project_directory / output_root_name
+        if not output_root.is_dir():
+            continue
+        candidates = sorted(
+            (
+                path
+                for path in output_root.rglob("*")
+                if path.is_dir() and path.name.casefold() == configuration_key
+            ),
+            key=lambda path: len(path.parts),
+            reverse=True,
+        )
+        for candidate in candidates:
+            shutil.rmtree(candidate)
+
+
+def verify_cleanup_scope() -> None:
+    with tempfile.TemporaryDirectory(prefix="wist-topology-cleanup-") as temporary:
+        project = Path(temporary) / "project"
+        debug_sentinels = (
+            project / "bin" / "Debug" / "sentinel.txt",
+            project / "bin" / "x64" / "Debug" / "sentinel.txt",
+            project / "obj" / "Debug" / "sentinel.txt",
+            project / "obj" / "x64" / "Debug" / "sentinel.txt",
+        )
+        release_sentinels = (
+            project / "bin" / "Release" / "delete.txt",
+            project / "bin" / "x64" / "Release" / "delete.txt",
+            project / "obj" / "Release" / "delete.txt",
+            project / "obj" / "x64" / "Release" / "delete.txt",
+        )
+        for sentinel in (*debug_sentinels, *release_sentinels):
+            sentinel.parent.mkdir(parents=True, exist_ok=True)
+            sentinel.write_text("sentinel", encoding="utf-8")
+
+        remove_configuration_outputs(project, "Release")
+
+        missing_debug = [str(path) for path in debug_sentinels if not path.is_file()]
+        surviving_release = [str(path) for path in release_sentinels if path.exists()]
+        if missing_debug or surviving_release:
+            raise RuntimeTopologyError(
+                "configuration-scoped cleanup changed protected outputs: "
+                f"missing_debug={missing_debug}, surviving_release={surviving_release}"
+            )
+
+
+def verify_ci_contract(root: Path) -> None:
+    dotnet_ci = (root / DOTNET_CI).read_text(encoding="utf-8-sig")
+    if not re.search(r"(?m)^  workflow_dispatch:\s*$", dotnet_ci):
+        raise RuntimeTopologyError(".NET CI must expose workflow_dispatch")
+    if re.search(
+        r"(?m)^    if:\s*github\.event_name\s*!=\s*['\"]workflow_dispatch['\"]\s*$",
+        dotnet_ci,
+    ):
+        raise RuntimeTopologyError(
+            ".NET CI canonical jobs must execute, not skip, under workflow_dispatch"
+        )
+
+    aggregate = (root / CI_AGGREGATE).read_text(encoding="utf-8-sig")
+    required_block = re.search(
+        r"const requiredWorkflows = new Set\(\[(.*?)\]\);",
+        aggregate,
+        flags=re.DOTALL,
     )
-    for candidate in candidates:
-        shutil.rmtree(candidate)
+    if required_block is None:
+        raise RuntimeTopologyError("CI aggregate lacks the requiredWorkflows contract")
+    if "Deploy documentation to GitHub Pages" in required_block.group(1):
+        raise RuntimeTopologyError(
+            "CI aggregate must not make the external GitHub Pages deployment a code-verification gate"
+        )
+
+    required_markers = (
+        "const requiredRuns = runs.filter(",
+        "requiredWorkflows.has(run.name)",
+        "const names = new Set(requiredRuns.map(run => run.name));",
+        "const active = requiredRuns.filter(run => run.status !== 'completed');",
+        "const completedIds = requiredRuns.map(run => run.id)",
+        "const failed = requiredRuns.filter(run => !acceptableConclusions.has(run.conclusion));",
+        "const summary = requiredRuns.map(run =>",
+    )
+    missing = [marker for marker in required_markers if marker not in aggregate]
+    if missing:
+        raise RuntimeTopologyError(
+            "CI aggregate must evaluate only explicitly required workflows; missing markers: "
+            + ", ".join(missing)
+        )
 
 
 def build_server_arguments() -> list[str]:
@@ -131,6 +211,28 @@ def run_build(
             f"isolated build for {project} "
             f"(BuildProjectReferences={build_project_references}, properties={properties})"
         ),
+    )
+
+
+def verify_language_pack_design_time(
+    dotnet: str,
+    root: Path,
+    configuration: str,
+) -> None:
+    run_dotnet(
+        [
+            dotnet,
+            "msbuild",
+            str(root / LANGUAGE_PACK),
+            "-t:_GetCopyToOutputDirectoryItemsFromThisProject",
+            f"-p:Configuration={configuration}",
+            "-p:DesignTimeBuild=true",
+            "-p:BuildProjectReferences=false",
+            "-p:NuGetAudit=false",
+        ],
+        root=root,
+        description="LanguagePack design-time copy-item evaluation",
+        timeout=180,
     )
 
 
@@ -248,7 +350,7 @@ def verify_language_pack_layouts(
                 emitter_directory,
                 wist_directory,
             ):
-                remove_project_outputs(project_directory, configuration)
+                remove_configuration_outputs(project_directory, configuration)
             if case.external_output_root is not None:
                 shutil.rmtree(case.external_output_root, ignore_errors=True)
             if case.requires_restore:
@@ -311,10 +413,14 @@ def main() -> int:
     root = args.root.resolve()
     configuration = args.configuration
     try:
+        verify_cleanup_scope()
+        verify_ci_contract(root)
+        verify_language_pack_design_time(args.dotnet, root, configuration)
+
         dialect_directory = (root / DIALECT_TESTS).parent
-        remove_project_outputs(dialect_directory, configuration)
+        remove_configuration_outputs(dialect_directory, configuration)
         for relative in FRESH_PROCESS_PROJECTS:
-            remove_project_outputs(root / relative, configuration)
+            remove_configuration_outputs(root / relative, configuration)
         run_build(args.dotnet, root, DIALECT_TESTS, configuration, build_project_references=False)
         require_output(
             (root / FRESH_PROCESS_PROJECTS[-1],),
@@ -326,8 +432,8 @@ def main() -> int:
         verify_language_pack_layouts(args.dotnet, root, configuration)
 
         tests_directory = (root / CORE_TESTS).parent
-        remove_project_outputs(tests_directory, configuration)
-        remove_project_outputs(root / WISTC, configuration)
+        remove_configuration_outputs(tests_directory, configuration)
+        remove_configuration_outputs(root / WISTC, configuration)
         run_build(args.dotnet, root, CORE_TESTS, configuration, build_project_references=False)
         require_output(
             (tests_directory,),
