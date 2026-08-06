@@ -8,6 +8,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from xml.sax.saxutils import escape
 
@@ -18,13 +19,26 @@ CSHARP_FENCE = re.compile(r"```csharp[^\n]*\n(.*?)\n```", re.DOTALL)
 LOCAL_ARTIFACT_FEED = re.compile(r"(?:--source\s+)?\.?/?artifacts/packages", re.IGNORECASE)
 VALIDATION_MESSAGE_ACCESS = re.compile(r"\b(?:validation|rejected)\.Message\b")
 RUNTIME_ASSEMBLY_COUNT = re.compile(
-    r"\b(?:The\s+)?(?P<count>\d+)\s+assemblies\s+under\s+`lib/net10\.0`",
+    r"\b(?:the\s+)?\d+\s+(?:runtime\s+)?assemblies\s+under\s+`lib/net10\.0`",
     re.IGNORECASE,
 )
 
 
 class FirstContactError(ValueError):
     pass
+
+
+def local_name(tag: str) -> str:
+    return tag.rsplit("}", 1)[-1]
+
+
+def child_text(root: ET.Element, name: str) -> str | None:
+    for element in root.iter():
+        if local_name(element.tag) == name:
+            value = (element.text or "").strip()
+            if value:
+                return value
+    return None
 
 
 def require_string(data: dict[str, object], key: str) -> str:
@@ -61,7 +75,35 @@ def marked_block(text: str, begin: str, end: str, document: Path) -> str:
     return text.split(begin, 1)[1].split(end, 1)[0]
 
 
-def validate_package_readmes(root: Path, state: dict[str, object]) -> list[Path]:
+def validate_package_project(
+    root: Path,
+    state: dict[str, object],
+    package_readmes: list[str],
+) -> Path:
+    project = root / require_string(state, "project")
+    if not project.is_file():
+        raise FirstContactError(f"Wist package project does not exist: {project.relative_to(root)}")
+    try:
+        project_root = ET.parse(project).getroot()
+    except ET.ParseError as exc:
+        raise FirstContactError(f"invalid Wist package project XML: {exc}") from exc
+
+    package_readme_file = child_text(project_root, "PackageReadmeFile")
+    if not package_readme_file:
+        raise FirstContactError(f"{project.relative_to(root)}: PackageReadmeFile is missing")
+    resolved = (project.parent / package_readme_file).resolve()
+    declared = {(root / relative).resolve() for relative in package_readmes}
+    if resolved not in declared:
+        raise FirstContactError(
+            f"{project.relative_to(root)}: packed README {resolved.relative_to(root)} "
+            "is not listed in packageReadmeDocuments"
+        )
+    if not resolved.is_file():
+        raise FirstContactError(f"packed README does not exist: {resolved.relative_to(root)}")
+    return project
+
+
+def validate_package_readmes(root: Path, state: dict[str, object]) -> tuple[list[Path], Path]:
     package_id = require_string(state, "packageId")
     source_version = require_string(state, "sourceVersion")
     package_readmes = require_string_list(state, "packageReadmeDocuments")
@@ -74,12 +116,14 @@ def validate_package_readmes(root: Path, state: dict[str, object]) -> list[Path]
             + ", ".join(missing_from_source_contract)
         )
 
-    paths: list[Path] = []
+    project = validate_package_project(root, state, package_readmes)
     install = re.compile(
         rf"dotnet\s+add\s+package\s+{re.escape(package_id)}\b"
         rf"(?:(?!dotnet\s+add\s+package).)*?--version\s+{re.escape(source_version)}\b",
         re.DOTALL,
     )
+
+    paths: list[Path] = []
     for relative in package_readmes:
         document = root / relative
         if not document.is_file():
@@ -99,24 +143,29 @@ def validate_package_readmes(root: Path, state: dict[str, object]) -> list[Path]
             )
         if not install.search(text):
             raise FirstContactError(
-                f"{relative}: package-facing install command does not pin {package_id} {source_version}"
+                f"{relative}: package-facing install command does not pin "
+                f"{package_id} {source_version}"
             )
         if LOCAL_ARTIFACT_FEED.search(text):
             raise FirstContactError(
                 f"{relative}: package README must not assume a repository-local artifacts/packages feed"
             )
         paths.append(document)
-    return paths
+    return paths, project
 
 
 def validate_first_contact_text(root: Path, package_readmes: list[Path]) -> None:
     documents = [root / "readme.md", *package_readmes]
-    surface_path = root / "eng/wist-package-surface.json"
+    surface = root / "eng/wist-package-surface.json"
+    if not surface.is_file():
+        raise FirstContactError("eng/wist-package-surface.json does not exist")
     try:
-        surface = json.loads(surface_path.read_text(encoding="utf-8"))
-        expected_runtime_count = len(surface["runtimeAssemblies"])
-    except (OSError, json.JSONDecodeError, KeyError, TypeError) as exc:
-        raise FirstContactError(f"cannot read runtime package surface: {exc}") from exc
+        surface_data = json.loads(surface.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise FirstContactError(f"invalid Wist package surface JSON: {exc}") from exc
+    runtime_assemblies = surface_data.get("runtimeAssemblies")
+    if not isinstance(runtime_assemblies, list) or not runtime_assemblies:
+        raise FirstContactError("Wist package surface has no runtimeAssemblies contract")
 
     for document in documents:
         text = document.read_text(encoding="utf-8")
@@ -126,13 +175,11 @@ def validate_first_contact_text(root: Path, package_readmes: list[Path]) -> None
                 f"{document.relative_to(root)}: validation result has no aggregate Message property: "
                 f"{bad_member.group(0)}"
             )
-        for match in RUNTIME_ASSEMBLY_COUNT.finditer(text):
-            actual = int(match.group("count"))
-            if actual != expected_runtime_count:
-                raise FirstContactError(
-                    f"{document.relative_to(root)}: stale runtime assembly count {actual}; "
-                    f"expected {expected_runtime_count} from eng/wist-package-surface.json"
-                )
+        if RUNTIME_ASSEMBLY_COUNT.search(text):
+            raise FirstContactError(
+                f"{document.relative_to(root)}: do not hard-code the runtime assembly count; "
+                "eng/wist-package-surface.json owns the exact closure"
+            )
 
 
 def extract_snippets(root: Path, state: dict[str, object]) -> list[tuple[str, str]]:
@@ -140,6 +187,7 @@ def extract_snippets(root: Path, state: dict[str, object]) -> list[tuple[str, st
     if not isinstance(raw_specs, list) or not raw_specs:
         raise FirstContactError("firstContactCsharpSnippets must be a non-empty list")
 
+    seen: set[tuple[str, str]] = set()
     snippets: list[tuple[str, str]] = []
     for index, raw in enumerate(raw_specs):
         if not isinstance(raw, dict):
@@ -150,18 +198,23 @@ def extract_snippets(root: Path, state: dict[str, object]) -> list[tuple[str, st
             raise FirstContactError(f"snippet specification {index} has no document")
         if not isinstance(marker, str) or not marker.strip():
             raise FirstContactError(f"snippet specification {index} has no marker")
-        document = root / relative
+        key = (relative.strip(), marker.strip())
+        if key in seen:
+            raise FirstContactError(f"duplicate first-contact snippet specification: {key}")
+        seen.add(key)
+
+        document = root / key[0]
         if not document.is_file():
-            raise FirstContactError(f"snippet document does not exist: {relative}")
-        begin = f"<!-- {marker}:begin -->"
-        end = f"<!-- {marker}:end -->"
+            raise FirstContactError(f"snippet document does not exist: {key[0]}")
+        begin = f"<!-- {key[1]}:begin -->"
+        end = f"<!-- {key[1]}:end -->"
         block = marked_block(document.read_text(encoding="utf-8"), begin, end, document)
         matches = CSHARP_FENCE.findall(block)
         if len(matches) != 1:
             raise FirstContactError(
-                f"{relative}: marker {marker!r} must contain exactly one C# fence"
+                f"{key[0]}: marker {key[1]!r} must contain exactly one C# fence"
             )
-        snippets.append((f"{relative}:{marker}", matches[0].strip() + "\n"))
+        snippets.append((f"{key[0]}:{key[1]}", matches[0].strip() + "\n"))
     return snippets
 
 
@@ -184,13 +237,10 @@ def split_usings(code: str) -> tuple[list[str], str]:
 
 def compile_snippets(
     root: Path,
-    state: dict[str, object],
+    project: Path,
     snippets: list[tuple[str, str]],
     dotnet: str,
 ) -> None:
-    project = (root / require_string(state, "project")).resolve()
-    if not project.is_file():
-        raise FirstContactError(f"Wist project does not exist: {project}")
     executable = shutil.which(dotnet)
     if executable is None:
         raise FirstContactError(f"dotnet executable not found: {dotnet}")
@@ -202,12 +252,12 @@ def compile_snippets(
             "<Project Sdk=\"Microsoft.NET.Sdk\">\n"
             "  <PropertyGroup>\n"
             "    <TargetFramework>net10.0</TargetFramework>\n"
-            "    <ImplicitUsings>enable</ImplicitUsings>\n"
+            "    <ImplicitUsings>disable</ImplicitUsings>\n"
             "    <Nullable>enable</Nullable>\n"
             "    <LangVersion>14</LangVersion>\n"
             "  </PropertyGroup>\n"
             "  <ItemGroup>\n"
-            f"    <ProjectReference Include=\"{escape(str(project))}\" />\n"
+            f"    <ProjectReference Include=\"{escape(str(project.resolve()))}\" />\n"
             "  </ItemGroup>\n"
             "</Project>\n",
             encoding="utf-8",
@@ -236,8 +286,10 @@ def compile_snippets(
         env = os.environ.copy()
         env.update(
             {
+                "DOTNET_CLI_HOME": str(temp / "dotnet-home"),
                 "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
                 "DOTNET_NOLOGO": "1",
+                "DOTNET_SKIP_FIRST_TIME_EXPERIENCE": "1",
                 "NuGetAudit": "false",
             }
         )
@@ -268,11 +320,11 @@ def compile_snippets(
 
 def validate(root: Path, state_path: Path, *, skip_compile: bool, dotnet: str) -> dict[str, int]:
     state = load_state(state_path)
-    package_readmes = validate_package_readmes(root, state)
+    package_readmes, project = validate_package_readmes(root, state)
     validate_first_contact_text(root, package_readmes)
     snippets = extract_snippets(root, state)
     if not skip_compile:
-        compile_snippets(root, state, snippets, dotnet)
+        compile_snippets(root, project, snippets, dotnet)
     return {"packageReadmes": len(package_readmes), "snippets": len(snippets)}
 
 
@@ -294,10 +346,10 @@ def main() -> int:
         print(f"wist-documentation-first-contact: ERROR: {exc}", file=os.sys.stderr)
         return 1
 
-    suffix = "static-only" if args.skip_compile else "compiled"
+    mode = "static-only" if args.skip_compile else "compiled"
     print(
         "wist-documentation-first-contact: PASS "
-        f"package-readmes={result['packageReadmes']} snippets={result['snippets']} mode={suffix}"
+        f"package-readmes={result['packageReadmes']} snippets={result['snippets']} mode={mode}"
     )
     return 0
 
