@@ -10,6 +10,8 @@ namespace UniversalToolchain.Dialects.Tests.RuntimeLoading;
 public sealed class RuntimeSharedAssemblyResolverTests
 {
     private static readonly Assembly HostAssembly = typeof(IRuntimeSharedAssemblyResolver).Assembly;
+    private static readonly object CleanupLock = new();
+    private static readonly List<string> DeferredCleanupDirectories = [];
 
     [Test]
     public void Resolve_CompatibleSharedAssembly_ReturnsHostAssembly()
@@ -228,6 +230,50 @@ public sealed class RuntimeSharedAssemblyResolverTests
         Assert.That(context.IsAlive, Is.False);
     }
 
+    [OneTimeTearDown]
+    public void CleanupDeferredConfiguredCopies()
+    {
+        for (var attempt = 0; attempt < 80; attempt++)
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+
+            string[] pending;
+            lock (CleanupLock)
+                pending = DeferredCleanupDirectories.ToArray();
+
+            foreach (var directory in pending)
+            {
+                try
+                {
+                    Directory.Delete(directory, recursive: true);
+                    lock (CleanupLock)
+                        DeferredCleanupDirectories.Remove(directory);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                }
+                catch (IOException)
+                {
+                }
+            }
+
+            lock (CleanupLock)
+            {
+                if (DeferredCleanupDirectories.Count == 0)
+                    return;
+            }
+
+            Thread.Sleep(10);
+        }
+
+        string remaining;
+        lock (CleanupLock)
+            remaining = string.Join(", ", DeferredCleanupDirectories);
+        Assert.Fail($"Collectible runtime fixture directories remained locked: {remaining}");
+    }
+
     private static DefaultRuntimeSharedAssemblyResolver Resolver(params Assembly[] assemblies) =>
         new(assemblies.Select(RuntimeSharedAssemblyDescriptor.Create));
 
@@ -245,6 +291,30 @@ public sealed class RuntimeSharedAssemblyResolverTests
         var weak = new WeakReference(context, trackResurrection: false);
         strategy.Dispose();
         return weak;
+    }
+
+    private static void DeleteOrDefer(string directory)
+    {
+        try
+        {
+            Directory.Delete(directory, recursive: true);
+        }
+        catch (UnauthorizedAccessException)
+        {
+            lock (CleanupLock)
+            {
+                if (!DeferredCleanupDirectories.Contains(directory, StringComparer.Ordinal))
+                    DeferredCleanupDirectories.Add(directory);
+            }
+        }
+        catch (IOException)
+        {
+            lock (CleanupLock)
+            {
+                if (!DeferredCleanupDirectories.Contains(directory, StringComparer.Ordinal))
+                    DeferredCleanupDirectories.Add(directory);
+            }
+        }
     }
 
     private sealed class SingleAssemblyLocator(string simpleName, string path) : IRuntimeAssemblyLocator
@@ -283,6 +353,6 @@ public sealed class RuntimeSharedAssemblyResolverTests
             return new ConfiguredCopy(directory, path);
         }
 
-        public void Dispose() => Directory.Delete(_directory, recursive: true);
+        public void Dispose() => DeleteOrDefer(_directory);
     }
 }
