@@ -106,6 +106,7 @@ def validate_package_project(
 def validate_package_readmes(root: Path, state: dict[str, object]) -> tuple[list[Path], Path]:
     package_id = require_string(state, "packageId")
     source_version = require_string(state, "sourceVersion")
+    published_version = require_string(state, "publishedVersion")
     package_readmes = require_string_list(state, "packageReadmeDocuments")
     source_documents = set(require_string_list(state, "sourceCandidateDocuments"))
 
@@ -134,12 +135,18 @@ def validate_package_readmes(root: Path, state: dict[str, object]) -> tuple[list
             raise FirstContactError(
                 f"{relative}: source-candidate block does not identify {source_version}"
             )
-        if not any(
-            phrase in candidate.lower()
+        candidate_lower = candidate.lower()
+        says_unpublished = any(
+            phrase in candidate_lower
             for phrase in ("not published", "unpublished", "not on nuget.org")
-        ):
+        )
+        if source_version != published_version and not says_unpublished:
             raise FirstContactError(
-                f"{relative}: source candidate is not explicitly labeled unpublished"
+                f"{relative}: unpublished source candidate is not explicitly labeled unpublished"
+            )
+        if source_version == published_version and says_unpublished:
+            raise FirstContactError(
+                f"{relative}: published version {source_version} is still labeled unpublished"
             )
         if not install.search(text):
             raise FirstContactError(
