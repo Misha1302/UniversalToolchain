@@ -12,6 +12,12 @@ This page describes the supported compile-time facade exposed by `UniversalToolc
 
 The authoritative exported surface is `UniversalToolchain/UniversalToolchain.Wist/PublicAPI.Shipped.txt`. Runtime implementation assemblies are not public compatibility contracts.
 
+## Stability and package boundary
+
+The facade types documented here are the intended application-facing surface for the named alpha candidate. Alpha versions may still make reviewed breaking changes; pin the exact package version and read its stability record before upgrading.
+
+Only `ref/net10.0/UniversalToolchain.Wist.dll` is the supported compile-time contract. Assemblies carried under `lib/net10.0` are runtime implementation dependencies. Do not reference their types directly or treat their assembly count, names or layout as a stable application API.
+
 ## Create an engine
 
 ```csharp
