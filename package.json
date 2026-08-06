@@ -5,9 +5,10 @@
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs --host 0.0.0.0",
     "docs:release-state": "python3 Tools/check_documentation_release_state.py",
+    "docs:first-contact": "python3 Tools/check-wist-documentation-first-contact.py",
     "docs:status": "python3 Tools/check_documentation_status.py && npm run docs:release-state",
     "docs:links": "python3 Tools/check_documentation_links.py",
-    "docs:check": "npm run docs:status && npm run docs:links && npm run docs:build"
+    "docs:check": "npm run docs:status && npm run docs:links && npm run docs:first-contact && npm run docs:build"
   },
   "devDependencies": {
     "vitepress": "1.6.4"
