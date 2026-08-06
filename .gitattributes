@@ -1,0 +1,4 @@
+# Keep repository text deterministic across Linux, macOS, and Windows.
+# This is especially important for C# raw string literals that embed DSL source:
+# checkout line-ending conversion must not change their runtime contents.
+* text=auto eol=lf
