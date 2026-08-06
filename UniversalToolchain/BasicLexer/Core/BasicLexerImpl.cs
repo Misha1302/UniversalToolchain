@@ -1,11 +1,11 @@
-using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 
 namespace BasicLexer.Core;
 
 public class BasicLexerImpl(LexerConfiguration configuration) : ILexer
 {
     private static readonly TimeSpan MatchTimeout = TimeSpan.FromMilliseconds(1000);
-    private readonly ConcurrentDictionary<string, Regex> _compiledPatterns = new(StringComparer.Ordinal);
+    private readonly ConditionalWeakTable<LexemePattern, Regex> _compiledPatterns = new();
 
     public BasicLexerImpl() : this(new LexerConfiguration([]))
     {
@@ -16,24 +16,18 @@ public class BasicLexerImpl(LexerConfiguration configuration) : ILexer
     // Method that performs lexical analysis on the input code and returns a list of tokens.
     public List<LexemeValue> Lexemize(string code)
     {
-        // Lexer patterns and source locations use LF as the canonical line break.
-        // Normalize Windows CRLF and legacy CR inputs before matching so the
-        // same source text has identical lexical behavior on every platform.
-        if (code.Contains('\r'))
-            code = code.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n');
-
         var patterns = Configuration.Patterns.ToList();
 
         var allMatches = new List<LexemeValue>(); // Initialize a list to store all matches found by regex patterns.
 
-        // Regex instances are safe for concurrent matching. Cache them by pattern
-        // text so parallel compilations do not repeatedly pay RegexOptions.Compiled
-        // startup cost while preserving the per-match timeout boundary.
+        // Regex instances are safe for concurrent matching. Cache them by the
+        // LexemePattern object without retaining patterns removed by configuration
+        // replacement, while preserving the original source text and offsets.
         foreach (var pattern in patterns)
         {
-            var regex = _compiledPatterns.GetOrAdd(
-                pattern.Pattern,
-                static patternText => new Regex(patternText, RegexOptions.Compiled, MatchTimeout));
+            var regex = _compiledPatterns.GetValue(
+                pattern,
+                static item => new Regex(item.Pattern, RegexOptions.Compiled, MatchTimeout));
             allMatches.AddRange(
                 regex.Matches(code)
                     .Select(match =>
