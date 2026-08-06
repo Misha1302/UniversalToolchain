@@ -60,7 +60,9 @@
     </PropertyGroup>
     <Exec Command="&quot;$(DOTNET_HOST_PATH)&quot; &quot;$(FeatureManifestEmitterResolvedDll)&quot; &quot;$(TargetPath)&quot; &quot;$(ToolchainFeatureManifestPath)&quot;" />
   </Target>
-  <Target Name="ExposeWistRuntimeClosureToProjectReferences" BeforeTargets="_GetCopyToOutputDirectoryItemsFromThisProject">
+  <Target Name="ExposeWistRuntimeClosureToProjectReferences"
+          BeforeTargets="_GetCopyToOutputDirectoryItemsFromThisProject"
+          Condition="'$(DesignTimeBuild)' != 'true'">
     <ItemGroup>
       <WistRuntimeFileForCopy Include="$(WistRuntimeOutputDirectory)*.dll;$(WistRuntimeOutputDirectory)*.dialect.runtime.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -70,7 +72,9 @@
       <Output TaskParameter="AssignedFiles" ItemName="ContentWithTargetPath" />
     </AssignTargetPath>
   </Target>
-  <Target Name="CollectWistRuntimeManifests" AfterTargets="Build">
+  <Target Name="CollectWistRuntimeManifests"
+          AfterTargets="Build"
+          Condition="'$(DesignTimeBuild)' != 'true'">
     <ItemGroup>
       <WistRuntimeManifest Include="$(WistRuntimeOutputDirectory)*.dialect.runtime.json" />
     </ItemGroup>
