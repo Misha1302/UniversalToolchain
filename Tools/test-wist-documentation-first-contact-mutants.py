@@ -82,22 +82,48 @@ def main() -> int:
         ),
     )
 
-    def omit_package_readme(mutant: Path) -> None:
+    def misregister_package_readme(mutant: Path) -> None:
+        mutant_state_path = mutant / "eng/documentation-release-state.json"
+        mutant_state = json.loads(mutant_state_path.read_text(encoding="utf-8"))
+        mutant_state["packageReadmeDocuments"] = ["readme.md"]
+        mutant_state_path.write_text(json.dumps(mutant_state, indent=2) + "\n", encoding="utf-8")
+
+    require_killed(root, "packed-readme-unregistered", misregister_package_readme)
+
+    def overlap_package_readme_with_source_contract(mutant: Path) -> None:
         mutant_state_path = mutant / "eng/documentation-release-state.json"
         mutant_state = json.loads(mutant_state_path.read_text(encoding="utf-8"))
         package_path = mutant_state["packageReadmeDocuments"][0]
-        mutant_state["sourceCandidateDocuments"].remove(package_path)
+        mutant_state["sourceCandidateDocuments"].append(package_path)
         mutant_state_path.write_text(json.dumps(mutant_state, indent=2) + "\n", encoding="utf-8")
 
-    require_killed(root, "package-readme-unregistered", omit_package_readme)
-
-    def publish_without_updating_readme(mutant: Path) -> None:
-        mutant_state_path = mutant / "eng/documentation-release-state.json"
-        mutant_state = json.loads(mutant_state_path.read_text(encoding="utf-8"))
-        mutant_state["publishedVersion"] = mutant_state["sourceVersion"]
-        mutant_state_path.write_text(json.dumps(mutant_state, indent=2) + "\n", encoding="utf-8")
-
-    require_killed(root, "stale-unpublished-package-claim", publish_without_updating_readme)
+    require_killed(
+        root,
+        "package-readme-source-contract-overlap",
+        overlap_package_readme_with_source_contract,
+    )
+    require_killed(
+        root,
+        "package-readme-source-marker",
+        lambda mutant: replace(
+            mutant / package_readme.relative_to(root),
+            "This README describes `UniversalToolchain.Wist` `0.1.0-alpha.6`.",
+            (
+                "<!-- wist-source-candidate:begin -->\n"
+                "This README describes `UniversalToolchain.Wist` `0.1.0-alpha.6`.\n"
+                "<!-- wist-source-candidate:end -->"
+            ),
+        ),
+    )
+    require_killed(
+        root,
+        "temporal-publication-claim",
+        lambda mutant: replace(
+            mutant / package_readme.relative_to(root),
+            "This README describes `UniversalToolchain.Wist` `0.1.0-alpha.6`.",
+            "This candidate is not published on NuGet.org.",
+        ),
+    )
     require_killed(
         root,
         "stale-runtime-assembly-count",
