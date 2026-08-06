@@ -1,6 +1,9 @@
 ---
 title: Performance Model
 description: Separate Wist compilation, convenience execution and prepared hot invocation; avoid generic claims.
+audience: all-technical-users
+status: current-reference
+lastVerifiedAgainst: wist-release-state-2026-08-06
 ---
 
 # Performance model

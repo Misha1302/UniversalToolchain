@@ -20,22 +20,24 @@ admin / config / LLM suggestion
 
 ## Install
 
-This source tree builds the verified `UniversalToolchain.Wist` `0.1.0-alpha.6` release artifact. This statement does not imply that the package has already been published to NuGet.org.
+This README describes `UniversalToolchain.Wist` `0.1.0-alpha.6`. Install that exact artifact from a reviewed package feed:
 
 ```bash ci-run=false
-dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.6 --source ./artifacts/packages
+dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.6
 ```
 
-For a clean-room install and execution check, follow the [package installation guide](https://misha1302.github.io/Wist2/start/installation).
+For current NuGet.org availability, source-build evaluation and clean-room checks, follow the [package installation guide](https://misha1302.github.io/Wist2/start/installation). Do not assume a repository-local package output directory exists in an external consumer project.
 
 Requirements:
 
 - target framework: `net10.0`;
-- .NET SDK `10.0.103` or a compatible prerelease SDK accepted by the repository `global.json`.
+- .NET SDK `10.0.103` or a compatible SDK accepted by the repository `global.json`.
 
 ## 30-second example
 
+<!-- wist-package-quickstart-csharp:begin -->
 ```csharp
+using System;
 using UniversalToolchain.Wist;
 
 using var rules = WistEngine.CreateRestrictedArithmetic();
@@ -49,6 +51,7 @@ var rolloutScore = rules.Compile<Func<double, double, double, double>>(
 double score = rolloutScore.CompiledDelegate(100.0, 90.0, 1.0);
 bool enableNewDashboard = score >= 80.0;
 ```
+<!-- wist-package-quickstart-csharp:end -->
 
 The formula returns data. The host application performs the action.
 
@@ -57,6 +60,8 @@ The formula returns data. The host application performs the action.
 Use `Validate` before storing or executing user/admin/config-supplied formulas:
 
 ```csharp
+using System;
+using System.Linq;
 using UniversalToolchain.Wist;
 
 using var rules = WistEngine.CreateRestrictedArithmetic();
@@ -165,7 +170,6 @@ using var trustedInterop = WistEngine.Create(new WistEngineOptions
     DialectSource = WistDialectSource.FromShippedPreset("full-default-native"),
     AllowedAssemblies = [typeof(Math).Assembly]
 });
-
 ```
 
 `CreateRestrictedArithmetic` is the recommended first-contact preset for restricted formulas.
@@ -193,4 +197,6 @@ The larger direction is controlled application DSLs for .NET. The current alpha 
 
 CLR interop and type directives resolve only against the shipped `BasicStdLib` assembly plus the immutable host allowlist in `WistEngineOptions.AllowedAssemblies`; dialect implementation assemblies, the AppDomain, and the output directory are not discovery sources.
 
-Only the facade reference assembly under `ref/net10.0/UniversalToolchain.Wist.dll` is the supported compile-time API boundary. Its reviewed exported surface is recorded in `PublicAPI.Shipped.txt` in the source repository. The 64 assemblies under `lib/net10.0` form the runtime closure; all except the facade are implementation dependencies and are not compatibility promises.
+Only the facade reference assembly under `ref/net10.0/UniversalToolchain.Wist.dll` is the supported compile-time API boundary. Its reviewed exported surface is recorded in `PublicAPI.Shipped.txt` in the source repository. Assemblies under `lib/net10.0` form the runtime implementation closure; all except the facade are implementation dependencies and are not compatibility promises.
+
+See the [Wist facade API reference](https://misha1302.github.io/Wist2/reference/wist-facade-api) for the supported entry points, result types and ownership rules.

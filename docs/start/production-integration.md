@@ -3,7 +3,7 @@ title: Wist Production Integration
 description: Validate, approve, compile, activate and roll back Wist formulas without losing the last-known-good program.
 audience: wist-application-developer
 status: current-alpha-guidance
-lastVerifiedAgainst: language-authoring-p0-p1-hardening-2026-07-23.1
+lastVerifiedAgainst: wist-release-state-2026-08-06
 ---
 
 # Wist production integration

@@ -43,7 +43,10 @@ To evaluate the current repository implementation, clone the repository and use 
 
 Compile a reviewed rollout formula once and invoke the typed delegate repeatedly:
 
+<!-- wist-source-quickstart-csharp:begin -->
 ```csharp
+using System;
+using System.Linq;
 using UniversalToolchain.Wist;
 
 using var rules = WistEngine.CreateRestrictedArithmetic();
@@ -56,7 +59,10 @@ var validation = rules.Validate(
     new { usage = 100.0, reliability = 90.0, incidents = 1.0 });
 
 if (!validation.IsValid)
-    throw new InvalidOperationException(validation.Message);
+{
+    throw new InvalidOperationException(
+        string.Join("; ", validation.Diagnostics.Select(diagnostic => diagnostic.Message)));
+}
 
 var rolloutScore = rules.Compile<Func<double, double, double, double>>(
     formula,
@@ -67,6 +73,7 @@ var rolloutScore = rules.Compile<Func<double, double, double, double>>(
 double score = rolloutScore.CompiledDelegate(100.0, 90.0, 1.0);
 bool enableNewDashboard = score >= 80.0;
 ```
+<!-- wist-source-quickstart-csharp:end -->
 
 `Compile` also validates and throws when compilation fails. Use `Validate` or `TryCompile` when invalid user/admin input is an expected outcome and you need structured diagnostics without replacing the active rule.
 
@@ -104,7 +111,7 @@ var rejected = rules.Validate(
     new { usage = 100.0, reliability = 90.0, incidents = 1.0 });
 
 Console.WriteLine(rejected.IsValid); // false
-Console.WriteLine(rejected.Message); // structured validation failure
+Console.WriteLine(string.Join("; ", rejected.Diagnostics.Select(diagnostic => diagnostic.Message)));
 ```
 
 This is language-surface restriction, not a hardened sandbox. Arbitrary hostile input still requires process/environment isolation, resource limits and an explicit threat model.
@@ -199,6 +206,7 @@ Technical material:
 
 - [Project documentation](docs/index.md)
 - [Installation and clean-room smoke](docs/start/installation.md)
+- [Wist facade API reference](docs/reference/wist-facade-api.md)
 - [Use-case recipes](docs/start/use-case-recipes.md)
 - [Wist `0.1.0-alpha.6` candidate stability contract](docs/evidence/wist-stability-v0.1.0-alpha.6.md)
 - [External Language Authoring quickstart](docs/language-authoring/quickstart.md)

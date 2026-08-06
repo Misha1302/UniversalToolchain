@@ -25,5 +25,18 @@
     "readme.md",
     "docs/evidence/index.md",
     "docs/.vitepress/config.mts"
+  ],
+  "packageReadmeDocuments": [
+    "UniversalToolchain/UniversalToolchain.Wist/README.md"
+  ],
+  "firstContactCsharpSnippets": [
+    {
+      "document": "readme.md",
+      "marker": "wist-source-quickstart-csharp"
+    },
+    {
+      "document": "UniversalToolchain/UniversalToolchain.Wist/README.md",
+      "marker": "wist-package-quickstart-csharp"
+    }
   ]
 }
