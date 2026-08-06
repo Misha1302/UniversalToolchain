@@ -1,7 +1,12 @@
+using System.Collections.Concurrent;
+
 namespace BasicLexer.Core;
 
 public class BasicLexerImpl(LexerConfiguration configuration) : ILexer
 {
+    private static readonly TimeSpan MatchTimeout = TimeSpan.FromMilliseconds(1000);
+    private readonly ConcurrentDictionary<string, Regex> _compiledPatterns = new(StringComparer.Ordinal);
+
     public BasicLexerImpl() : this(new LexerConfiguration([]))
     {
     }
@@ -21,13 +26,16 @@ public class BasicLexerImpl(LexerConfiguration configuration) : ILexer
 
         var allMatches = new List<LexemeValue>(); // Initialize a list to store all matches found by regex patterns.
 
-        // Iterate over each pattern defined in the configuration.
+        // Regex instances are safe for concurrent matching. Cache them by pattern
+        // text so parallel compilations do not repeatedly pay RegexOptions.Compiled
+        // startup cost while preserving the per-match timeout boundary.
         foreach (var pattern in patterns)
-            // Find all occurrences of the current pattern in the input code using regular expressions.
-
         {
+            var regex = _compiledPatterns.GetOrAdd(
+                pattern.Pattern,
+                static patternText => new Regex(patternText, RegexOptions.Compiled, MatchTimeout));
             allMatches.AddRange(
-                Regex.Matches(code, pattern.Pattern, RegexOptions.Compiled, TimeSpan.FromMilliseconds(1000))
+                regex.Matches(code)
                     .Select(match =>
                         // Create a LexemeValue object for each match.
                         new LexemeValue(match.Value, pattern, match.Index, code))
