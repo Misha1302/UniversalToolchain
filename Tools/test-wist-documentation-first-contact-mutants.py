@@ -90,6 +90,14 @@ def main() -> int:
         mutant_state_path.write_text(json.dumps(mutant_state, indent=2) + "\n", encoding="utf-8")
 
     require_killed(root, "package-readme-unregistered", omit_package_readme)
+
+    def publish_without_updating_readme(mutant: Path) -> None:
+        mutant_state_path = mutant / "eng/documentation-release-state.json"
+        mutant_state = json.loads(mutant_state_path.read_text(encoding="utf-8"))
+        mutant_state["publishedVersion"] = mutant_state["sourceVersion"]
+        mutant_state_path.write_text(json.dumps(mutant_state, indent=2) + "\n", encoding="utf-8")
+
+    require_killed(root, "stale-unpublished-package-claim", publish_without_updating_readme)
     require_killed(
         root,
         "stale-runtime-assembly-count",
