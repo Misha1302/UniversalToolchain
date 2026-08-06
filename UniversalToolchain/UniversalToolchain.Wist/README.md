@@ -28,7 +28,7 @@ This source tree defines `UniversalToolchain.Wist` `0.1.0-alpha.6`. This candida
 dotnet add package UniversalToolchain.Wist --version 0.1.0-alpha.6
 ```
 
-For the version currently published on NuGet.org, source-build evaluation and clean-room checks, follow the [package installation guide](https://misha1302.github.io/Wist2/start/installation). Do not assume a repository-local `./artifacts/packages` directory exists in an external consumer project.
+For the version currently published on NuGet.org, source-build evaluation and clean-room checks, follow the [package installation guide](https://misha1302.github.io/Wist2/start/installation). Do not assume a repository-local package output directory exists in an external consumer project.
 
 Requirements:
 
