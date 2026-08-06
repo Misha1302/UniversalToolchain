@@ -11,6 +11,12 @@ public class BasicLexerImpl(LexerConfiguration configuration) : ILexer
     // Method that performs lexical analysis on the input code and returns a list of tokens.
     public List<LexemeValue> Lexemize(string code)
     {
+        // Lexer patterns and source locations use LF as the canonical line break.
+        // Normalize Windows CRLF and legacy CR inputs before matching so the
+        // same source text has identical lexical behavior on every platform.
+        if (code.Contains('\r'))
+            code = code.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n');
+
         var patterns = Configuration.Patterns.ToList();
 
         var allMatches = new List<LexemeValue>(); // Initialize a list to store all matches found by regex patterns.
