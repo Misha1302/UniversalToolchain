@@ -9,8 +9,11 @@ on:
       - 'UniversalToolchain/UniversalToolchain.Wist/README.md'
       - 'UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj'
       - 'eng/documentation-release-state.json'
+      - 'eng/wist-package-surface.json'
       - 'Tools/check_documentation_*.py'
       - 'Tools/test-documentation-*.py'
+      - 'Tools/check-wist-documentation-*.py'
+      - 'Tools/test-wist-documentation-*.py'
       - 'package.json'
       - 'package-lock.json'
       - '.github/workflows/docs-check.yml'
@@ -37,14 +40,25 @@ jobs:
         with:
           node-version: 22
 
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: UniversalToolchain/global.json
+
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
 
       - name: Validate documentation structure, release state and links
         run: npm run docs:status && npm run docs:links
 
+      - name: Compile first-contact Wist documentation snippets
+        run: npm run docs:first-contact
+
       - name: Reject documentation release-state mutants
         run: python3 Tools/test-documentation-release-state-mutants.py --root .
+
+      - name: Reject Wist first-contact documentation mutants
+        run: python3 Tools/test-wist-documentation-first-contact-mutants.py --root .
 
       - name: Build documentation
         run: npm run docs:build
