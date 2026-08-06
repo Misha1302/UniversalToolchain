@@ -101,19 +101,7 @@ public sealed class RuntimeSharedAssemblyResolverTests
     public void Descriptor_CustomLoadContextAssembly_IsRejected()
     {
         using var fixture = ConfiguredCopy.Create(HostAssembly);
-        var context = new AssemblyLoadContext("RuntimeSharedAssemblyResolverTests.Custom", isCollectible: true);
-        try
-        {
-            var customAssembly = context.LoadFromAssemblyPath(fixture.Path);
-
-            var ex = Assert.Throws<InvalidOperationException>(() => RuntimeSharedAssemblyDescriptor.Create(customAssembly));
-
-            Assert.That(ex!.Message, Does.Contain("AssemblyLoadContext.Default"));
-        }
-        finally
-        {
-            context.Unload();
-        }
+        AssertCustomContextAssemblyIsRejected(fixture.Path);
     }
 
     [Test]
@@ -152,18 +140,7 @@ public sealed class RuntimeSharedAssemblyResolverTests
     public void Loader_UnregisteredRoot_RemainsInCollectibleIsolatedContext()
     {
         using var fixture = ConfiguredCopy.Create(HostAssembly);
-        using var strategy = new DefaultRuntimeAssemblyLoadStrategy(
-            new SingleAssemblyLocator(HostAssembly.GetName().Name!, fixture.Path),
-            new DefaultRuntimeSharedAssemblyResolver([]));
-
-        var loaded = strategy.LoadAssembly(HostAssembly.GetName().Name!);
-
-        Assert.Multiple(() =>
-        {
-            Assert.That(loaded, Is.Not.SameAs(HostAssembly));
-            Assert.That(AssemblyLoadContext.GetLoadContext(loaded)?.Name, Is.EqualTo("UniversalToolchain.Runtime.Isolated"));
-            Assert.That(AssemblyLoadContext.GetLoadContext(loaded)?.IsCollectible, Is.True);
-        });
+        AssertUnregisteredRootRemainsCollectible(fixture.Path);
     }
 
     [Test]
@@ -184,19 +161,10 @@ public sealed class RuntimeSharedAssemblyResolverTests
     }
 
     [Test]
-    public async Task Loader_ParallelRootLoad_PublishesSingleAssemblyInstance()
+    public void Loader_ParallelRootLoad_PublishesSingleAssemblyInstance()
     {
         using var fixture = ConfiguredCopy.Create(HostAssembly);
-        using var strategy = new DefaultRuntimeAssemblyLoadStrategy(
-            new SingleAssemblyLocator(HostAssembly.GetName().Name!, fixture.Path),
-            new DefaultRuntimeSharedAssemblyResolver([]));
-
-        var tasks = Enumerable.Range(0, 32)
-            .Select(_ => Task.Run(() => strategy.LoadAssembly(HostAssembly.GetName().Name!)))
-            .ToArray();
-        var assemblies = await Task.WhenAll(tasks);
-
-        Assert.That(assemblies.All(assembly => ReferenceEquals(assembly, assemblies[0])), Is.True);
+        AssertParallelRootLoadPublishesSingleInstance(fixture.Path);
     }
 
     [Test]
@@ -234,6 +202,54 @@ public sealed class RuntimeSharedAssemblyResolverTests
     private static AssemblyName CloneIdentity(AssemblyName source) => new(source.FullName!);
 
     [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void AssertCustomContextAssemblyIsRejected(string path)
+    {
+        var context = new AssemblyLoadContext("RuntimeSharedAssemblyResolverTests.Custom", isCollectible: true);
+        try
+        {
+            var customAssembly = context.LoadFromAssemblyPath(path);
+            var ex = Assert.Throws<InvalidOperationException>(() =>
+                RuntimeSharedAssemblyDescriptor.Create(customAssembly));
+            Assert.That(ex!.Message, Does.Contain("AssemblyLoadContext.Default"));
+        }
+        finally
+        {
+            context.Unload();
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void AssertUnregisteredRootRemainsCollectible(string path)
+    {
+        using var strategy = new DefaultRuntimeAssemblyLoadStrategy(
+            new SingleAssemblyLocator(HostAssembly.GetName().Name!, path),
+            new DefaultRuntimeSharedAssemblyResolver([]));
+
+        var loaded = strategy.LoadAssembly(HostAssembly.GetName().Name!);
+        Assert.Multiple(() =>
+        {
+            Assert.That(loaded, Is.Not.SameAs(HostAssembly));
+            Assert.That(AssemblyLoadContext.GetLoadContext(loaded)?.Name, Is.EqualTo("UniversalToolchain.Runtime.Isolated"));
+            Assert.That(AssemblyLoadContext.GetLoadContext(loaded)?.IsCollectible, Is.True);
+        });
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void AssertParallelRootLoadPublishesSingleInstance(string path)
+    {
+        using var strategy = new DefaultRuntimeAssemblyLoadStrategy(
+            new SingleAssemblyLocator(HostAssembly.GetName().Name!, path),
+            new DefaultRuntimeSharedAssemblyResolver([]));
+
+        var tasks = Enumerable.Range(0, 32)
+            .Select(_ => Task.Run(() => strategy.LoadAssembly(HostAssembly.GetName().Name!)))
+            .ToArray();
+        var assemblies = Task.WhenAll(tasks).GetAwaiter().GetResult();
+
+        Assert.That(assemblies.All(assembly => ReferenceEquals(assembly, assemblies[0])), Is.True);
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
     private static WeakReference LoadAndDispose(string path)
     {
         var simpleName = HostAssembly.GetName().Name!;
@@ -245,6 +261,31 @@ public sealed class RuntimeSharedAssemblyResolverTests
         var weak = new WeakReference(context, trackResurrection: false);
         strategy.Dispose();
         return weak;
+    }
+
+    private static void DeleteDirectoryAfterCollectibleUnload(string directory)
+    {
+        for (var attempt = 0; attempt < 80; attempt++)
+        {
+            try
+            {
+                Directory.Delete(directory, recursive: true);
+                return;
+            }
+            catch (UnauthorizedAccessException) when (attempt < 79)
+            {
+            }
+            catch (IOException) when (attempt < 79)
+            {
+            }
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+            Thread.Sleep(10);
+        }
+
+        Directory.Delete(directory, recursive: true);
     }
 
     private sealed class SingleAssemblyLocator(string simpleName, string path) : IRuntimeAssemblyLocator
@@ -283,6 +324,6 @@ public sealed class RuntimeSharedAssemblyResolverTests
             return new ConfiguredCopy(directory, path);
         }
 
-        public void Dispose() => Directory.Delete(_directory, recursive: true);
+        public void Dispose() => DeleteDirectoryAfterCollectibleUnload(_directory);
     }
 }

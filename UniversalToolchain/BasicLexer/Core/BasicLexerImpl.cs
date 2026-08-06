@@ -1,7 +1,12 @@
+using System.Runtime.CompilerServices;
+
 namespace BasicLexer.Core;
 
 public class BasicLexerImpl(LexerConfiguration configuration) : ILexer
 {
+    private static readonly TimeSpan MatchTimeout = TimeSpan.FromMilliseconds(1000);
+    private readonly ConditionalWeakTable<LexemePattern, Regex> _compiledPatterns = new();
+
     public BasicLexerImpl() : this(new LexerConfiguration([]))
     {
     }
@@ -15,13 +20,16 @@ public class BasicLexerImpl(LexerConfiguration configuration) : ILexer
 
         var allMatches = new List<LexemeValue>(); // Initialize a list to store all matches found by regex patterns.
 
-        // Iterate over each pattern defined in the configuration.
+        // Regex instances are safe for concurrent matching. Cache them by the
+        // LexemePattern object without retaining patterns removed by configuration
+        // replacement, while preserving the original source text and offsets.
         foreach (var pattern in patterns)
-            // Find all occurrences of the current pattern in the input code using regular expressions.
-
         {
+            var regex = _compiledPatterns.GetValue(
+                pattern,
+                static item => new Regex(item.Pattern, RegexOptions.Compiled, MatchTimeout));
             allMatches.AddRange(
-                Regex.Matches(code, pattern.Pattern, RegexOptions.Compiled, TimeSpan.FromMilliseconds(1000))
+                regex.Matches(code)
                     .Select(match =>
                         // Create a LexemeValue object for each match.
                         new LexemeValue(match.Value, pattern, match.Index, code))

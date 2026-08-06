@@ -9,13 +9,22 @@ if (args.Length != 2)
 }
 
 var assemblyPath = Path.GetFullPath(args[0]);
+var assemblyDirectory = Path.GetDirectoryName(assemblyPath)
+                        ?? throw new InvalidOperationException($"Assembly path has no directory: '{assemblyPath}'.");
 var outputPath = Path.GetFullPath(args[1]);
 var resolver = new AssemblyDependencyResolver(assemblyPath);
 var context = new AssemblyLoadContext("toolchain-feature-emitter", isCollectible: true);
 context.Resolving += (_, name) =>
 {
-    var path = resolver.ResolveAssemblyToPath(name);
-    return path == null ? null : context.LoadFromAssemblyPath(path);
+    var resolvedPath = resolver.ResolveAssemblyToPath(name);
+    if (resolvedPath != null)
+        return context.LoadFromAssemblyPath(resolvedPath);
+
+    // Library projects do not always emit a component .deps.json. In custom
+    // OutputPath/artifacts layouts their runtime closure is still copied beside
+    // the inspected assembly, so use that directory as the deterministic fallback.
+    var localPath = Path.Combine(assemblyDirectory, $"{name.Name}.dll");
+    return File.Exists(localPath) ? context.LoadFromAssemblyPath(localPath) : null;
 };
 
 try

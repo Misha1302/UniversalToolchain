@@ -24,9 +24,29 @@ public class LexemeValue
 
     private static (int, int) CalcLineAndCharNums(string code, int startIndex)
     {
-        var codePart = string.Join("", code.Take(startIndex));
-        var lineNumber = codePart.Count(c => c == '\n') + 1;
-        var charNumber = codePart.Split("\n")[^1].Length;
+        var lineNumber = 1;
+        var charNumber = 0;
+
+        for (var index = 0; index < startIndex; index++)
+        {
+            switch (code[index])
+            {
+                case '\r':
+                    if (index + 1 < startIndex && code[index + 1] == '\n')
+                        index++;
+                    lineNumber++;
+                    charNumber = 0;
+                    break;
+                case '\n':
+                    lineNumber++;
+                    charNumber = 0;
+                    break;
+                default:
+                    charNumber++;
+                    break;
+            }
+        }
+
         return (lineNumber, charNumber);
     }
 

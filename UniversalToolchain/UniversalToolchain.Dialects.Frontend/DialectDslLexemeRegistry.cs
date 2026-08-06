@@ -20,11 +20,9 @@ public static class DialectDslLexemeRegistry
 
         registrations.AddRange(registry.DirectiveFeatures.Select(x => new LexemeRegistration(CreateKeywordPattern(x.Keyword), x.LexemeTag)));
         registrations.Add(new LexemeRegistration(@",", DialectLexemeTags.CommaToken));
-        registrations.Add(new LexemeRegistration(@"
-?
-", DialectLexemeTags.NewLine));
+        registrations.Add(new LexemeRegistration(@"\r\n|\n|\r", DialectLexemeTags.NewLine));
         registrations.Add(new LexemeRegistration(@"[A-Za-z_][A-Za-z0-9_\.-]*", DialectLexemeTags.Identifier));
-        registrations.Add(new LexemeRegistration(@"[ 	]+", "Whitespace", true));
+        registrations.Add(new LexemeRegistration(@"[ \t]+", "Whitespace", true));
         return registrations;
     }
 

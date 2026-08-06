@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Runtime.Loader;
 using BasicCore.Contracts;
 using UniversalToolchain.Dialects.Abstractions;
@@ -81,28 +82,14 @@ public class RuntimeComponentTypeLoaderTests
         Directory.CreateDirectory(temporaryDirectory);
         var hostilePath = Path.Combine(temporaryDirectory, "ArithmeticModule.dll");
         File.Copy(configuredPath, hostilePath);
-        var hostileContext = new AssemblyLoadContext("hostile-runtime-preload", isCollectible: true);
 
         try
         {
-            var hostileAssembly = hostileContext.LoadFromAssemblyPath(hostilePath);
-            var locator = new CountingLocator("ArithmeticModule", true, configuredPath);
-            using var strategy = CreateStrategy(locator);
-            var loader = CreateLoader(strategy);
-
-            var type = loader.LoadType(Entry("ArithmeticModule", "frontend.arithmetic"));
-
-            Assert.Multiple(() =>
-            {
-                Assert.That(type.Assembly, Is.Not.SameAs(hostileAssembly));
-                Assert.That(Path.GetFullPath(type.Assembly.Location), Is.EqualTo(Path.GetFullPath(configuredPath)));
-                Assert.That(locator.Calls, Is.EqualTo(1));
-            });
+            AssertConfiguredPathWinsOverHostilePreload(hostilePath, configuredPath);
         }
         finally
         {
-            hostileContext.Unload();
-            Directory.Delete(temporaryDirectory, recursive: true);
+            DeleteDirectoryAfterCollectibleUnload(temporaryDirectory);
         }
     }
 
@@ -127,6 +114,57 @@ public class RuntimeComponentTypeLoaderTests
     {
         var loader = CreateLoader(CreateStrategy(new DefaultRuntimeAssemblyLocator(new RuntimeArtifactLocatorOptions())));
         Assert.Throws<InvalidOperationException>(() => loader.LoadType(Entry("ArithmeticModule", "frontend.missing")));
+    }
+
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void AssertConfiguredPathWinsOverHostilePreload(string hostilePath, string configuredPath)
+    {
+        var hostileContext = new AssemblyLoadContext("hostile-runtime-preload", isCollectible: true);
+        try
+        {
+            var hostileAssembly = hostileContext.LoadFromAssemblyPath(hostilePath);
+            var locator = new CountingLocator("ArithmeticModule", true, configuredPath);
+            using var strategy = CreateStrategy(locator);
+            var loader = CreateLoader(strategy);
+
+            var type = loader.LoadType(Entry("ArithmeticModule", "frontend.arithmetic"));
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(type.Assembly, Is.Not.SameAs(hostileAssembly));
+                Assert.That(Path.GetFullPath(type.Assembly.Location), Is.EqualTo(Path.GetFullPath(configuredPath)));
+                Assert.That(locator.Calls, Is.EqualTo(1));
+            });
+        }
+        finally
+        {
+            hostileContext.Unload();
+        }
+    }
+
+    private static void DeleteDirectoryAfterCollectibleUnload(string directory)
+    {
+        for (var attempt = 0; attempt < 80; attempt++)
+        {
+            try
+            {
+                Directory.Delete(directory, recursive: true);
+                return;
+            }
+            catch (UnauthorizedAccessException) when (attempt < 79)
+            {
+            }
+            catch (IOException) when (attempt < 79)
+            {
+            }
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+            Thread.Sleep(10);
+        }
+
+        Directory.Delete(directory, recursive: true);
     }
 
     private static RuntimeComponentManifestEntry Entry(string assemblySimpleName, string componentId)
