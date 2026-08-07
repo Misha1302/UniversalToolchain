@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "seedPolicy": {
+    "deterministicSeeds": [1701, 20260807, 424242],
+    "generatedProgramOrder": "seed then ordinal",
+    "comparison": "semantic projection; never PlanHash equality"
+  },
+  "observation": {
+    "requiredFields": [
+      "scenarioId",
+      "backend",
+      "operation",
+      "success",
+      "resultType",
+      "resultValue",
+      "exceptionCategory",
+      "diagnostics",
+      "optimization",
+      "metadata"
+    ],
+    "diagnosticProjection": ["code", "severity", "stage"],
+    "metadataProjection": ["backend", "parameterNames", "parameterTypes", "returnType"],
+    "optimizationProjection": ["ssaRequestedPolicy", "ssaUsed", "ssaFellBack", "executedPasses"]
+  },
+  "baselineScenarios": [
+    "arithmetic",
+    "variables",
+    "conditions",
+    "loops",
+    "function-calls",
+    "invalid-source",
+    "interpreter",
+    "cil",
+    "ssa-disabled",
+    "ssa-prefer",
+    "ssa-require",
+    "ssa-debug",
+    "resource-limits",
+    "argument-normalization",
+    "shipped-presets"
+  ],
+  "lifecycle": {
+    "beforeS11": "Legacy may be invoked only by differential test harnesses.",
+    "afterS11": "Legacy production assemblies are not retained for the harness; compare against frozen observations/fixtures."
+  }
+}
