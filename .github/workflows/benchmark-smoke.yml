@@ -12,6 +12,10 @@ on:
       - "UniversalToolchain/UniversalToolchain.Wist/**/*.csproj"
       - "UniversalToolchain/UniversalToolchain.Dialects.Wist/**/*.cs"
       - "UniversalToolchain/UniversalToolchain.Dialects.Wist/**/*.csproj"
+      - "UniversalToolchain/UniversalToolchain.LanguageSdk/**/*.cs"
+      - "UniversalToolchain/UniversalToolchain.LanguageSdk/**/*.csproj"
+      - "UniversalToolchain/UniversalToolchain.Wist.LanguagePack/**/*.cs"
+      - "UniversalToolchain/UniversalToolchain.Wist.LanguagePack/**/*.csproj"
       - ".github/workflows/benchmark-smoke.yml"
 
 jobs:
@@ -43,7 +47,31 @@ jobs:
           --
           --self-test
 
-      - name: Benchmark discovery dry run
+      - name: Architecture boundary dry run
+        run: >
+          dotnet run -c Release --no-build
+          --project UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj
+          --
+          --job dry
+          --filter "*MigrationArchitectureBoundaryBenchmarks*"
+
+      - name: Compilation boundary dry run
+        run: >
+          dotnet run -c Release --no-build
+          --project UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj
+          --
+          --job dry
+          --filter "*FormulaCompilationBenchmarks*"
+
+      - name: Convenience Evaluate dry run
+        run: >
+          dotnet run -c Release --no-build
+          --project UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj
+          --
+          --job dry
+          --filter "*FormulaConvenienceBenchmarks*"
+
+      - name: Hot invocation dry run
         run: >
           dotnet run -c Release --no-build
           --project UniversalToolchain/Benchmarks/UniversalToolchain.Benchmarks/UniversalToolchain.Benchmarks.csproj
