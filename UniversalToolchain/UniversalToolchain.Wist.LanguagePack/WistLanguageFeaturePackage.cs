@@ -146,7 +146,11 @@ public sealed class WistLanguageFeaturePackage : ILanguageExtensionPackage
         Feature(WistFeatureIds.SsaOptimization, WistContributionIds.SsaOptimizer),
         PolicyFeature(WistInternalFeatureIds.TrustedSecurity, WistInternalFeatureIds.RestrictedSecurity),
         PolicyFeature(WistInternalFeatureIds.RestrictedSecurity, WistInternalFeatureIds.TrustedSecurity),
-        PolicyFeature(WistInternalFeatureIds.CompositionRestricted)
+        PolicyFeature(WistInternalFeatureIds.CompositionRestricted),
+        SsaPolicyFeature(WistSsaPolicyFeatureIds.Disabled),
+        SsaPolicyFeature(WistSsaPolicyFeatureIds.Prefer),
+        SsaPolicyFeature(WistSsaPolicyFeatureIds.Require),
+        SsaPolicyFeature(WistSsaPolicyFeatureIds.Debug)
     ];
 
     private static IReadOnlyList<LanguageContributionDescriptor> CreateContributions()
@@ -244,6 +248,11 @@ public sealed class WistLanguageFeaturePackage : ILanguageExtensionPackage
         conflicts: conflicts,
         supportedBackends: BothBackends);
 
+    private static LanguageFeatureDescriptor SsaPolicyFeature(LanguageFeatureId id) => new(
+        id,
+        conflicts: WistSsaPolicyFeatureIds.All.Where(other => other != id),
+        supportedBackends: BothBackends);
+
     private static IReadOnlyList<LanguageFeatureId> GetRequiredFeatures(LanguageFeatureId id)
     {
         if (id == WistFeatureIds.Arithmetic)
@@ -294,6 +303,10 @@ public sealed class WistLanguageFeaturePackage : ILanguageExtensionPackage
         LanguageSlots.Optimizers,
         requiresCapabilities: [new LanguageCapabilityId("lowering:air")],
         supportedBackends: BothBackends,
+        transformation: new ArtifactTransformationDescriptor(
+            WistArtifactKinds.AirContract,
+            WistArtifactKinds.AirContract,
+            10),
         order: component.Order,
         metadata: new Dictionary<string, string> { ["wist.optimizerAlias"] = component.Alias });
 }
