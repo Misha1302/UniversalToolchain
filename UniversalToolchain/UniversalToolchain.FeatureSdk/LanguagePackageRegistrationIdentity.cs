@@ -38,11 +38,7 @@ public sealed class LanguagePackageRegistrationIdentity
         return ImplementationType == expectedType;
     }
 
-    /// <summary>
-    /// Returns true only for the exact implementation object registered in the package registry.
-    /// Matching package id/version, manifest or implementation type is intentionally insufficient.
-    /// </summary>
-    public bool IsImplementation(object expectedImplementation)
+    internal bool IsImplementationInstance(object expectedImplementation)
     {
         ArgumentNullException.ThrowIfNull(expectedImplementation);
         return ReferenceEquals(_implementation, expectedImplementation);
