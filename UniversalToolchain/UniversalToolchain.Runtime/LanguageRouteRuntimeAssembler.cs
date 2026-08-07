@@ -156,7 +156,7 @@ public static class LanguageRouteRuntimeAssembler
                 $"Runtime component source '{contribution.PackageId.Value}' version '{contribution.PackageVersion.Value}' " +
                 "does not match the exact package manifest captured by the language plan.");
         }
-        if (!contribution.PackageIdentity.IsImplementation(source))
+        if (!contribution.PackageIdentity.IsImplementationInstance(source))
         {
             throw new InvalidOperationException(
                 $"Runtime component source '{contribution.PackageId.Value}' version '{contribution.PackageVersion.Value}' " +
