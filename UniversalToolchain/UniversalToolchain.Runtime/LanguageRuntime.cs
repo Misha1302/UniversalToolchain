@@ -88,24 +88,65 @@ public sealed class LanguageRuntime : IDisposable, IAsyncDisposable
         return new LanguageRuntime(plan, provider.CreateSession(plan, options));
     }
 
-
     public LanguageExecutionResult Run(LanguageExecutionRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
         using var operation = _lifetime.EnterOperation(this);
-        if (!_plan.Definition.Backends.Contains(request.Backend))
-            throw new InvalidOperationException($"Backend '{request.Backend.Value}' is not enabled by language plan '{_plan.PlanHash}'.");
-        if (!LanguageArtifactRoute.ContractsConnect(request.Input.Contract, _plan.Definition.EntryArtifact))
+        ValidateInput(request.Input, request.Backend, request.Arguments.Count, "Execution");
+        return _session.Run(request);
+    }
+
+    public LanguageArtifactBuildResult Build(LanguageArtifactBuildRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        using var operation = _lifetime.EnterOperation(this);
+        ValidateInput(request.Input, request.Backend, request.Bindings.Count, "Build");
+        var buildSession = _session as ILanguageArtifactBuildSession
+            ?? throw new InvalidOperationException("The selected runtime provider does not support artifact-only build operations.");
+        return buildSession.Build(request);
+    }
+
+    public LanguageExecutionResult ExecuteBuilt(LanguageArtifactBuildResult artifact)
+    {
+        ArgumentNullException.ThrowIfNull(artifact);
+        using var operation = _lifetime.EnterOperation(this);
+        var buildSession = _session as ILanguageArtifactBuildSession
+            ?? throw new InvalidOperationException("The selected runtime provider does not support built-artifact execution.");
+        return buildSession.ExecuteBuilt(artifact);
+    }
+
+    public T GetBuiltArtifactValue<T>(
+        LanguageArtifactBuildResult artifact,
+        LanguageArtifactKind<T> expectedKind)
+    {
+        ArgumentNullException.ThrowIfNull(artifact);
+        ArgumentNullException.ThrowIfNull(expectedKind);
+        using var operation = _lifetime.EnterOperation(this);
+        var buildSession = _session as ILanguageArtifactBuildSession
+            ?? throw new InvalidOperationException("The selected runtime provider does not support built-artifact access.");
+        return buildSession.GetBuiltArtifactValue(artifact, expectedKind);
+    }
+
+    private void ValidateInput(
+        LanguageArtifact input,
+        BackendId backend,
+        int externalParameterCount,
+        string operationName)
+    {
+        if (!_plan.Definition.Backends.Contains(backend))
+            throw new InvalidOperationException($"Backend '{backend.Value}' is not enabled by language plan '{_plan.PlanHash}'.");
+        if (!LanguageArtifactRoute.ContractsConnect(input.Contract, _plan.Definition.EntryArtifact))
+        {
             throw new InvalidOperationException(
-                $"Execution input '{request.Input.Contract}' does not match language entry artifact '{_plan.Definition.EntryArtifact}'.");
+                $"{operationName} input '{input.Contract}' does not match language entry artifact '{_plan.Definition.EntryArtifact}'.");
+        }
         if (_plan.Definition.RuntimePolicy.MaximumSourceLength is int maxSource &&
-            request.Input is LanguageArtifact<string> sourceArtifact && sourceArtifact.Value.Length > maxSource)
+            input is LanguageArtifact<string> sourceArtifact && sourceArtifact.Value.Length > maxSource)
         {
             throw new InvalidOperationException($"Source length {sourceArtifact.Value.Length} exceeds language policy limit {maxSource}.");
         }
-        if (_plan.Definition.RuntimePolicy.MaximumExternalParameters is int maxParameters && request.Arguments.Count > maxParameters)
-            throw new InvalidOperationException($"External parameter count {request.Arguments.Count} exceeds language policy limit {maxParameters}.");
-        return _session.Run(request);
+        if (_plan.Definition.RuntimePolicy.MaximumExternalParameters is int maxParameters && externalParameterCount > maxParameters)
+            throw new InvalidOperationException($"External parameter count {externalParameterCount} exceeds language policy limit {maxParameters}.");
     }
 
     public void Dispose()
