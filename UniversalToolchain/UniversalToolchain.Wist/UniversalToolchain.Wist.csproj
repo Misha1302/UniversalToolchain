@@ -17,20 +17,21 @@
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <PackageTags>dotnet;csharp;rule-engine;expression-engine;embedded-dsl;business-rules;formula;compiler;interpreter;cil;runtime;language-tooling;ssa;wist</PackageTags>
         <PackageReadmeFile>README.md</PackageReadmeFile>
-        <PackageReleaseNotes>Deterministic shared-contract boundary alpha: replaces process-history-dependent default-context sharing with an explicit immutable host registry, full assembly identity matching, strict SHA-256 validation, collectible implementation isolation, fresh-process preload invariance tests, and package metadata consistency gates. This release intentionally does not provide binary compatibility with pre-hardening 1.0.0.0 runtime assemblies.</PackageReleaseNotes>
+        <PackageReleaseNotes>Canonical LanguagePlan/LanguageRuntime facade migration candidate. This release intentionally does not provide binary compatibility with pre-hardening 1.0.0.0 runtime assemblies.</PackageReleaseNotes>
         <IncludeSymbols>true</IncludeSymbols>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
         <DebugType>portable</DebugType>
-        <!-- NU5131 normally expects a matching ref assembly for every lib assembly. This
-             package intentionally exposes only the facade in ref/ while keeping the
-             implementation closure runtime-only in lib/. The package-surface checker
-             verifies that boundary explicitly. -->
         <NoWarn>$(NoWarn);NU5131</NoWarn>
         <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);IncludeProjectReferenceAssembliesInPackage</TargetsForTfmSpecificBuildOutput>
         <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);IncludeFacadeReferenceAssemblyInPackage;IncludeRuntimeManifestsInPackage</TargetsForTfmSpecificContentInPackage>
     </PropertyGroup>
 
     <ItemGroup>
+        <ProjectReference Include="..\UniversalToolchain.Wist.LanguagePack\UniversalToolchain.Wist.LanguagePack.csproj" PrivateAssets="all" />
+        <ProjectReference Include="..\UniversalToolchain.Runtime\UniversalToolchain.Runtime.csproj" PrivateAssets="all" />
+        <ProjectReference Include="..\UniversalToolchain.LanguageSdk\UniversalToolchain.LanguageSdk.csproj" PrivateAssets="all" />
+        <ProjectReference Include="..\UniversalToolchain.Language.Abstractions\UniversalToolchain.Language.Abstractions.csproj" PrivateAssets="all" />
+        <ProjectReference Include="..\UniversalToolchain.FeatureSdk\UniversalToolchain.FeatureSdk.csproj" PrivateAssets="all" />
         <ProjectReference Include="..\BasicCilCompiler\BasicCilCompiler.csproj" PrivateAssets="all"/>
         <ProjectReference Include="..\BasicCore\BasicCore.csproj" PrivateAssets="all"/>
         <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj" PrivateAssets="all"/>
@@ -60,8 +61,6 @@
 
     <Target Name="IncludeProjectReferenceAssembliesInPackage" DependsOnTargets="ResolveReferences">
         <ItemGroup>
-            <!-- Runtime implementation closure. The facade reference assembly under ref/
-                 is the only compile-time contract selected by NuGet. -->
             <BuildOutputInPackage
                 Include="@(ReferenceCopyLocalPaths)"
                 Condition="'%(ReferenceCopyLocalPaths.ReferenceSourceTarget)' == 'ProjectReference' and '%(ReferenceCopyLocalPaths.Extension)' == '.dll'" />
@@ -84,7 +83,7 @@
 
     <Target Name="IncludeRuntimeManifestsInPackage">
         <ItemGroup>
-            <TfmSpecificPackageFile Include="$(TargetDir)*.dialect.runtime.json">
+            <TfmSpecificPackageFile Include="$(TargetDir)*.toolchain.feature.json;$(TargetDir)*.dialect.runtime.json">
                 <PackagePath>contentFiles/any/$(TargetFramework)</PackagePath>
                 <BuildAction>Content</BuildAction>
                 <PackageCopyToOutput>true</PackageCopyToOutput>
