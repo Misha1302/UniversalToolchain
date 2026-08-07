@@ -15,7 +15,7 @@ public sealed class ArtifactBuildApiTests
     [Test]
     public void Build_DoesNotInvokeExecutorUntilExecuteBuilt()
     {
-        var executions = 0;
+        ExecutorObservation.Reset();
         var executable = new LanguageArtifactKind<Func<int>>("build.executable");
         var package = LanguagePackageBuilder.Create("Build.Independent", "1")
             .AddFeature("build.core", feature => feature
@@ -40,9 +40,9 @@ public sealed class ArtifactBuildApiTests
                     CompiledBackend,
                     new LanguageContributionId("build.backend"),
                     executable,
-                    (program, _) =>
+                    static (program, _) =>
                     {
-                        executions++;
+                        ExecutorObservation.RecordExecution();
                         return program();
                     },
                     LanguageRuntimeComponentTraits.DeterministicNoHostInterop))
@@ -53,12 +53,12 @@ public sealed class ArtifactBuildApiTests
 
         var built = runtime.Build(LanguageArtifactBuildRequest.FromText("21", CompiledBackend));
 
-        Assert.That(executions, Is.Zero);
+        Assert.That(ExecutorObservation.Count, Is.Zero);
         var result = runtime.ExecuteBuilt(built);
         Assert.Multiple(() =>
         {
             Assert.That(result.Value, Is.EqualTo(21));
-            Assert.That(executions, Is.EqualTo(1));
+            Assert.That(ExecutorObservation.Count, Is.EqualTo(1));
         });
     }
 
@@ -222,6 +222,14 @@ public sealed class ArtifactBuildApiTests
                 .EnableBackend(backend)
                 .Build())
             .GetRequiredPlan();
+
+    private static class ExecutorObservation
+    {
+        private static int _count;
+        public static int Count => Volatile.Read(ref _count);
+        public static void Reset() => Interlocked.Exchange(ref _count, 0);
+        public static void RecordExecution() => Interlocked.Increment(ref _count);
+    }
 
     private sealed class BuildAwarePackage : ILanguageExtensionPackage, ILanguageRouteComponentSource
     {
