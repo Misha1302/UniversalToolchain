@@ -4,23 +4,40 @@ using UniversalToolchain.LanguageSdk;
 
 namespace UniversalToolchain.Runtime;
 
+/// <summary>
+/// Compile-time binding declaration used by build-only artifact construction. A binding may carry
+/// an optional sample/runtime value, but its declared CLR type is always explicit and is never
+/// inferred from that value.
+/// </summary>
 public sealed class LanguageBuildBinding
 {
-    public LanguageBuildBinding(string name, Type valueType, object? value)
+    private LanguageBuildBinding(string name, Type valueType, bool hasValue, object? value)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Build binding name must not be empty.", nameof(name));
         Name = name;
         ValueType = valueType ?? throw new ArgumentNullException(nameof(valueType));
-        ValidateValue(valueType, value, nameof(value));
+        HasValue = hasValue;
+        if (hasValue)
+            ValidateValue(valueType, value, nameof(value));
         Value = value;
     }
 
     public string Name { get; }
     public Type ValueType { get; }
+    public bool HasValue { get; }
     public object? Value { get; }
 
-    public static LanguageBuildBinding Create<T>(string name, T value) => new(name, typeof(T), value);
+    public static LanguageBuildBinding Declare<T>(string name) => new(name, typeof(T), false, null);
+
+    public static LanguageBuildBinding Declare(string name, Type valueType) =>
+        new(name, valueType, false, null);
+
+    public static LanguageBuildBinding Create<T>(string name, T value) =>
+        new(name, typeof(T), true, value);
+
+    public static LanguageBuildBinding Create(string name, Type valueType, object? value) =>
+        new(name, valueType, true, value);
 
     private static void ValidateValue(Type valueType, object? value, string parameterName)
     {
@@ -53,19 +70,25 @@ public sealed class LanguageArtifactBuildRequest
         Input = input ?? throw new ArgumentNullException(nameof(input));
         Backend = backend;
         var snapshot = (bindings ?? []).ToArray();
+        if (snapshot.Any(static binding => binding == null))
+            throw new ArgumentException("Build bindings must not contain null entries.", nameof(bindings));
         var duplicate = snapshot.GroupBy(static binding => binding.Name, StringComparer.Ordinal)
             .FirstOrDefault(static group => group.Count() > 1);
         if (duplicate != null)
             throw new ArgumentException($"Build binding '{duplicate.Key}' is declared more than once.", nameof(bindings));
         Bindings = new ReadOnlyCollection<LanguageBuildBinding>(snapshot);
-        Arguments = new ReadOnlyDictionary<string, object?>(
-            snapshot.ToDictionary(static binding => binding.Name, static binding => binding.Value, StringComparer.Ordinal));
+        DeclaredBindingTypes = new ReadOnlyDictionary<string, Type>(
+            snapshot.ToDictionary(static binding => binding.Name, static binding => binding.ValueType, StringComparer.Ordinal));
+        RuntimeArguments = new ReadOnlyDictionary<string, object?>(
+            snapshot.Where(static binding => binding.HasValue)
+                .ToDictionary(static binding => binding.Name, static binding => binding.Value, StringComparer.Ordinal));
     }
 
     public LanguageArtifact Input { get; }
     public BackendId Backend { get; }
     public IReadOnlyList<LanguageBuildBinding> Bindings { get; }
-    public IReadOnlyDictionary<string, object?> Arguments { get; }
+    public IReadOnlyDictionary<string, Type> DeclaredBindingTypes { get; }
+    public IReadOnlyDictionary<string, object?> RuntimeArguments { get; }
 
     public static LanguageArtifactBuildRequest FromText(
         string input,
@@ -79,13 +102,53 @@ public sealed class LanguageArtifactBuildRequest
             bindings);
     }
 
-    internal LanguageExecutionRequest ToExecutionRequest() => new(Input, Backend, Arguments);
+    internal LanguageExecutionRequest ToExecutionRequest() => new(Input, Backend, RuntimeArguments);
+}
+
+/// <summary>
+/// Context available only to build-aware transformers. It carries explicit compile-time bindings
+/// separately from runtime argument values; arbitrary metadata strings are not a semantic channel.
+/// </summary>
+public sealed class LanguageArtifactBuildContext
+{
+    internal LanguageArtifactBuildContext(
+        LanguagePlan plan,
+        LanguageArtifactBuildRequest request,
+        LanguageRuntimeOptions options,
+        LanguageExecutionRequest executionRequest)
+    {
+        Plan = plan ?? throw new ArgumentNullException(nameof(plan));
+        Request = request ?? throw new ArgumentNullException(nameof(request));
+        Options = options ?? throw new ArgumentNullException(nameof(options));
+        ExecutionRequest = executionRequest ?? throw new ArgumentNullException(nameof(executionRequest));
+        TransformationContext = new LanguageArtifactTransformationContext(plan, executionRequest, options);
+    }
+
+    public LanguagePlan Plan { get; }
+    public LanguageArtifactBuildRequest Request { get; }
+    public LanguageRuntimeOptions Options { get; }
+    public LanguageArtifactTransformationContext TransformationContext { get; }
+    internal LanguageExecutionRequest ExecutionRequest { get; }
+}
+
+/// <summary>
+/// Optional transformer contract for stages whose compile-time behavior depends on declared
+/// bindings. Stages that do not implement it receive the ordinary transformation context.
+/// </summary>
+public interface ILanguageArtifactBuildTransformer
+{
+    LanguageArtifact TransformForBuild(LanguageArtifact source, LanguageArtifactBuildContext context);
 }
 
 public sealed record LanguageArtifactBuildStep(
     LanguageContributionId ContributionId,
     LanguageArtifactContract SourceContract,
     LanguageArtifactContract TargetContract);
+
+public enum LanguageBuiltArtifactLifetime
+{
+    OriginatingRuntime
+}
 
 public sealed class LanguageArtifactBuildResult
 {
@@ -119,6 +182,7 @@ public sealed class LanguageArtifactBuildResult
     public string PlanHash { get; }
     public BackendId Backend { get; }
     public LanguageArtifactContract ArtifactContract { get; }
+    public LanguageBuiltArtifactLifetime Lifetime => LanguageBuiltArtifactLifetime.OriginatingRuntime;
     public IReadOnlyList<LanguageArtifactBuildStep> Steps { get; }
     public IReadOnlyList<LanguageDiagnostic> Diagnostics { get; }
 
