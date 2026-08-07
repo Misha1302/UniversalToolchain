@@ -6,6 +6,7 @@ using BasicCore.TranslatorWrapper;
 using IntermediateRepresentationAbstractions;
 using UniversalToolchain.Language.Abstractions;
 using UniversalToolchain.Runtime;
+using UniversalToolchain.Ssa.Optimization;
 
 namespace UniversalToolchain.Wist.LanguagePack;
 
@@ -24,10 +25,6 @@ internal static class WistDirectArtifactKinds
         WistArtifactKinds.AirContract.ValueTypeIdentity!);
 }
 
-/// <summary>
-/// Wist-owned adapter for the host value boundary. Declared/runtime binding normalization remains
-/// delegated to the canonical BasicCore input normalizer and never depends on assembly names.
-/// </summary>
 internal sealed class WistHostBindingAdapter
 {
     private readonly CompilationInputNormalizer _normalizer = new();
@@ -59,11 +56,6 @@ internal sealed class WistHostBindingAdapter
     }
 }
 
-/// <summary>
-/// Per-compilation syntax artifact. Frontend module instances are owned by this compilation and are
-/// carried only until AST-to-Bytecode lowering so lexer/parser and translator initialization share
-/// the exact same module state without any ambient registry.
-/// </summary>
 internal sealed class WistSyntaxArtifact(
     CompilationInput input,
     AstNode root,
@@ -81,17 +73,16 @@ internal sealed class WistBytecodeArtifact(CompilationInput input, Bytecode byte
     public Bytecode Bytecode { get; } = bytecode ?? throw new ArgumentNullException(nameof(bytecode));
 }
 
-internal sealed class WistAirArtifact(CompilationInput input, IAbstractIR air)
+internal sealed class WistAirArtifact(
+    CompilationInput input,
+    IAbstractIR air,
+    SsaRouteReport? ssaReport = null)
 {
     public CompilationInput Input { get; } = input ?? throw new ArgumentNullException(nameof(input));
     public IAbstractIR Air { get; } = air ?? throw new ArgumentNullException(nameof(air));
+    public SsaRouteReport? SsaReport { get; } = ssaReport;
 }
 
-/// <summary>
-/// Creates independent Wist direct-stage component instances. Planning/order are supplied by the
-/// caller; this factory only materializes the already-selected module factories and canonical
-/// compiler implementations.
-/// </summary>
 internal sealed class WistDirectArtifactStageFactory(
     Func<ILexer> lexerFactory,
     Func<IParser> parserFactory,
