@@ -122,18 +122,21 @@
           "id": "dispose-idempotent",
           "contract": "Dispose is idempotent and releases the owned execution host once.",
           "evidenceCode": "UniversalToolchain/UniversalToolchain.Wist/WistEngine.cs#Dispose",
-          "testCoverage": "GAP"
+          "evidenceTests": ["WistEngineLifetimeBaselineTests.Dispose_IsIdempotent"],
+          "testCoverage": "COVERED"
         },
         {
           "id": "post-dispose-operations",
           "contract": "Facade operations requiring host/runtime state fail with ObjectDisposedException after disposal.",
           "evidenceCode": "UniversalToolchain/UniversalToolchain.Wist/WistEngine.cs#ThrowIfDisposed",
-          "testCoverage": "GAP"
+          "evidenceTests": ["WistEngineLifetimeBaselineTests.Evaluate_AfterDispose_ThrowsObjectDisposedException", "WistEngineLifetimeBaselineTests.Compile_AfterDispose_ThrowsObjectDisposedException"],
+          "testCoverage": "COVERED"
         },
         {
           "id": "compiled-program-after-engine-dispose",
-          "contract": "Artifact/delegate lifetime after originating engine disposal must be explicitly frozen before S09 cutover.",
-          "testCoverage": "GAP",
+          "contract": "A compiled delegate remains usable after the originating WistEngine is disposed.",
+          "evidenceTests": ["WistEngineLifetimeBaselineTests.CompiledDelegate_RemainsUsableAfterOriginatingEngineIsDisposed"],
+          "testCoverage": "COVERED",
           "ownerStage": "S00"
         }
       ]
