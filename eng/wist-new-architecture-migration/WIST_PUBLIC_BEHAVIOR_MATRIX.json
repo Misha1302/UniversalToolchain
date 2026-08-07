@@ -1,0 +1,142 @@
+{
+  "schemaVersion": 1,
+  "baselineRevision": "8b8b91b80f45ff10680b3a8ee826ebf436df1381",
+  "ownerStages": ["S00", "S09", "S15"],
+  "surfaceGateIsSufficient": false,
+  "requiredDimensions": [
+    "success/failure",
+    "public exception category",
+    "structured diagnostic code/stage",
+    "resource-limit preflight ordering",
+    "backend selection",
+    "argument/declared-type normalization",
+    "optimization report",
+    "compiled program metadata",
+    "post-dispose behavior"
+  ],
+  "operations": [
+    {
+      "operation": "Create",
+      "cases": [
+        {
+          "id": "create-preset-snapshot",
+          "contract": "Create snapshots mutable resource/optimization options; later caller mutation does not alter engine behavior.",
+          "evidenceTests": ["Create_SnapshotsMutableHostOptions", "Create_SnapshotsMutableOptimizationOptions"]
+        },
+        {
+          "id": "create-inline-dialect",
+          "contract": "Inline .wistdialect text is accepted without a temporary file and creates an executable engine.",
+          "evidenceTests": ["Create_FromInlineDialectText_ComposesWithoutTemporaryFile"]
+        },
+        {
+          "id": "create-backend-validation",
+          "contract": "Unsupported public backend IDs fail during creation/configuration instead of silently selecting another backend.",
+          "evidenceCode": "UniversalToolchain/UniversalToolchain.Wist/WistEngine.cs#RequireBackendId"
+        }
+      ]
+    },
+    {
+      "operation": "Evaluate",
+      "cases": [
+        {
+          "id": "evaluate-arithmetic-arguments",
+          "contract": "Restricted arithmetic with anonymous CLR numeric arguments evaluates deterministically to the expected CLR numeric result.",
+          "evidenceTests": ["Evaluate_WithAnonymousArguments_ReturnsExpectedDouble", "Evaluate_WithExplicitPresetFactories_ReturnsExpectedDouble"]
+        },
+        {
+          "id": "evaluate-source-limit-preflight",
+          "contract": "Source limits are checked by the facade before host execution.",
+          "evidenceCode": "UniversalToolchain/UniversalToolchain.Wist/WistEngine.cs#EnsureSourceWithinLimits"
+        },
+        {
+          "id": "evaluate-argument-normalization",
+          "contract": "Host arguments cross the Wist value boundary before execution; migration may replace the implementation but must preserve public value behavior.",
+          "evidenceCode": "UniversalToolchain/UniversalToolchain.Wist/WistEngine.cs#Evaluate; UniversalToolchain/UniversalToolchain.Dialects.Wist/WistRuntimeBoundary.cs"
+        }
+      ]
+    },
+    {
+      "operation": "Validate",
+      "cases": [
+        {
+          "id": "validate-success",
+          "contract": "Valid source returns IsValid=true, empty diagnostics and null Exception.",
+          "evidenceTests": ["Validate_ValidFormulaWithSampleArguments_ReturnsSuccess"]
+        },
+        {
+          "id": "validate-failure-no-throw",
+          "contract": "Invalid source is represented as a failed WistValidationResult with diagnostics and Exception rather than escaping the public method.",
+          "evidenceTests": ["Validate_InvalidFormula_ReturnsFailureWithoutThrowing"]
+        },
+        {
+          "id": "validate-source-limit-diagnostic",
+          "contract": "Source-limit failure produces exactly one structured policy diagnostic with code UTC-WIST-001 and a WistResourceLimitException.",
+          "evidenceTests": ["Validate_WhenSourceLimitIsExceeded_ReturnsStableStructuredDiagnostic"]
+        }
+      ]
+    },
+    {
+      "operation": "Compile",
+      "cases": [
+        {
+          "id": "compile-delegate-metadata",
+          "contract": "Compile returns an invokable typed delegate and metadata matching backend, parameter order/types and return type.",
+          "evidenceTests": ["Compile_Delegate_ReturnsExpectedResultAndMetadata", "Compile_Delegate_InvokeRepeatedly_ReturnsStableResults"]
+        },
+        {
+          "id": "compile-duplicate-parameter",
+          "contract": "Duplicate parameter names fail clearly instead of being silently reordered or deduplicated.",
+          "evidenceTests": ["Compile_Delegate_WhenParameterNamesAreDuplicated_FailsClearly"]
+        },
+        {
+          "id": "compile-ssa-report",
+          "contract": "SSA policy/report fields describe the route actually used; Prefer/Debug success is observable and no fallback is fabricated.",
+          "evidenceTests": ["Compile_WithSsaPrefer_UsesRouteForAlreadyOptimizedInt32Arithmetic", "Compile_WithSsaPrefer_ParameterExpressionUsesExternalSlotWithoutFallback", "Compile_WithSsaDebug_PreservesManagedDivisionBindingWithoutFallback"]
+        }
+      ]
+    },
+    {
+      "operation": "TryCompile",
+      "cases": [
+        {
+          "id": "trycompile-invalid-formula",
+          "contract": "Compilation failure is returned as IsSuccess=false with null Program, non-null Exception and structured diagnostics; it does not throw from TryCompile.",
+          "evidenceTests": ["TryCompile_Delegate_WhenFormulaInvalid_ReturnsFailureWithoutThrowing"]
+        },
+        {
+          "id": "trycompile-invalid-delegate",
+          "contract": "Unsupported delegate signatures are returned as failure with diagnostics rather than escaping TryCompile.",
+          "evidenceTests": ["TryCompile_Delegate_WhenDelegateReturnsVoid_ReturnsFailureWithoutThrowing"]
+        },
+        {
+          "id": "trycompile-parameter-limit",
+          "contract": "Parameter-limit failure produces exactly one structured Policy diagnostic with code UTC-WIST-002.",
+          "evidenceTests": ["TryCompile_WhenParameterLimitIsExceeded_ReturnsStableStructuredDiagnostic"]
+        }
+      ]
+    },
+    {
+      "operation": "Dispose",
+      "cases": [
+        {
+          "id": "dispose-idempotent",
+          "contract": "Dispose is idempotent and releases the owned execution host once.",
+          "evidenceCode": "UniversalToolchain/UniversalToolchain.Wist/WistEngine.cs#Dispose",
+          "testCoverage": "GAP"
+        },
+        {
+          "id": "post-dispose-operations",
+          "contract": "Facade operations requiring host/runtime state fail with ObjectDisposedException after disposal.",
+          "evidenceCode": "UniversalToolchain/UniversalToolchain.Wist/WistEngine.cs#ThrowIfDisposed",
+          "testCoverage": "GAP"
+        },
+        {
+          "id": "compiled-program-after-engine-dispose",
+          "contract": "Artifact/delegate lifetime after originating engine disposal must be explicitly frozen before S09 cutover.",
+          "testCoverage": "GAP",
+          "ownerStage": "S00"
+        }
+      ]
+    }
+  ]
+}
