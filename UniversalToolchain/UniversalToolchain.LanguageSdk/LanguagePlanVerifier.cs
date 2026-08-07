@@ -137,10 +137,10 @@ public static class LanguagePlanVerifier
         }
         if (!LanguageArtifactRoute.ContractsConnect(route.TargetContract, expectedTarget))
             Fail($"Route for backend '{backend.Value}' does not end at the verified backend execution contract.");
-        if (route.Steps[^1].ContributionId != backendOwner.Id)
+        if (backendOwner.Transformation != null && route.Steps[^1].ContributionId != backendOwner.Id)
         {
             Fail(
-                $"Route for backend '{backend.Value}' does not terminate with its selected backend contribution '{backendOwner.Id.Value}'.");
+                $"Route for backend '{backend.Value}' does not terminate with its selected transforming backend contribution '{backendOwner.Id.Value}'.");
         }
 
         var stepIndexes = new Dictionary<LanguageContributionId, int>();
