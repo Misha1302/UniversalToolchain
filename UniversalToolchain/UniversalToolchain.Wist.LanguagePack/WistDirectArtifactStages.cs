@@ -44,6 +44,19 @@ internal sealed class WistHostBindingAdapter
             parameters.Add(pair.Key, pair.Value!);
         return _normalizer.NormalizeRuntimeInput(source, parameters);
     }
+
+    public CompilationInput CreateDeclaredInput(
+        string source,
+        IReadOnlyList<LanguageBuildBinding> bindings)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(bindings);
+
+        var parameters = new OrderedDictionary<string, Type>(bindings.Count, StringComparer.Ordinal);
+        foreach (var binding in bindings)
+            parameters.Add(binding.Name, binding.ValueType);
+        return _normalizer.NormalizeDeclaredInput(source, parameters);
+    }
 }
 
 /// <summary>
@@ -110,7 +123,9 @@ internal sealed class WistDirectFrontendTransformer(
     Func<ILexer> lexerFactory,
     Func<IParser> parserFactory,
     IReadOnlyList<Func<IFrontendCoreModule>> moduleFactories,
-    WistHostBindingAdapter hostBindingAdapter) : ILanguageArtifactTransformer<string, WistSyntaxArtifact>
+    WistHostBindingAdapter hostBindingAdapter) :
+    ILanguageArtifactTransformer<string, WistSyntaxArtifact>,
+    ILanguageArtifactBuildTransformer
 {
     private static readonly LanguageRuntimeComponentTraits Traits = LanguageRuntimeComponentTraits.Unknown;
     private readonly Func<ILexer> _lexerFactory = lexerFactory ?? throw new ArgumentNullException(nameof(lexerFactory));
@@ -128,7 +143,20 @@ internal sealed class WistDirectFrontendTransformer(
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(context);
+        return TransformCore(_hostBindingAdapter.CreateRuntimeInput(source, context.Request.Arguments));
+    }
 
+    public LanguageArtifact TransformForBuild(LanguageArtifact source, LanguageArtifactBuildContext context)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(context);
+        var sourceText = source.GetRequiredValue<string>();
+        var result = TransformCore(_hostBindingAdapter.CreateDeclaredInput(sourceText, context.Request.Bindings));
+        return new LanguageArtifact<WistSyntaxArtifact>(WistDirectArtifactKinds.Syntax, result);
+    }
+
+    private WistSyntaxArtifact TransformCore(CompilationInput input)
+    {
         var modules = new IFrontendCoreModule[_moduleFactories.Count];
         for (var i = 0; i < _moduleFactories.Count; i++)
         {
@@ -136,7 +164,6 @@ internal sealed class WistDirectFrontendTransformer(
                 ?? throw new InvalidOperationException($"Wist frontend module factory at index {i} returned null.");
         }
 
-        var input = _hostBindingAdapter.CreateRuntimeInput(source, context.Request.Arguments);
         var root = CanonicalArtifactStages.ParseAndBind(input, _lexerFactory(), _parserFactory(), modules);
         return new WistSyntaxArtifact(input, root, modules);
     }
