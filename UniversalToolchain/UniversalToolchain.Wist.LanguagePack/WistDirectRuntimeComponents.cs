@@ -77,7 +77,14 @@ internal static class WistDirectRuntimeComponents
             DirectTraits,
             context =>
             {
-                var services = new ServiceCollection().BuildServiceProvider();
+                var exposedAssemblies = context.Options.AllowedAssemblies
+                    .Append(typeof(BasicStdLib.Main).Assembly)
+                    .Distinct()
+                    .ToArray();
+                var serviceCollection = new ServiceCollection();
+                serviceCollection.AddSingleton<ITypeCatalog>(TypeCatalogFactory.Create(exposedAssemblies));
+                serviceCollection.AddSingleton<IMethodResolver, DeterministicMethodResolver>();
+                var services = serviceCollection.BuildServiceProvider();
                 var moduleFactories = WistFrontendModuleActivation.CreateOrderedFactories(
                     context.Plan,
                     [WistFrontendModuleActivation.CreateBuiltInSource(package)],
