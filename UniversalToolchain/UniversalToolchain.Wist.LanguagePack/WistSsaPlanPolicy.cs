@@ -30,10 +30,24 @@ internal static class WistSsaPlanPolicy
             .Where(static feature => WistSsaPolicyFeatureIds.All.Contains(feature.Feature.Id))
             .Select(static feature => feature.Feature.Id)
             .ToArray();
+        var selectsSsaPass = plan.Contributions.Any(static contribution =>
+            contribution.Contribution.Id == WistContributionIds.SsaOptimizer);
+
+        // Backward-compatible custom definitions that never selected the SSA pass have exactly one
+        // safe implicit meaning: SSA is off. Absence must never enable SSA or choose a fallback route.
+        if (selected.Length == 0)
+        {
+            if (selectsSsaPass)
+            {
+                throw new InvalidOperationException(
+                    "Wist LanguagePlan selects the SSA optimizer contribution but does not select an explicit typed SSA policy feature.");
+            }
+            return SsaRoutePolicy.Off;
+        }
         if (selected.Length != 1)
         {
             throw new InvalidOperationException(
-                $"Wist LanguagePlan must select exactly one typed SSA policy feature, but {selected.Length} were selected.");
+                $"Wist LanguagePlan must select at most one typed SSA policy feature, but {selected.Length} were selected.");
         }
 
         var policy = selected[0] == WistSsaPolicyFeatureIds.Disabled
@@ -46,8 +60,6 @@ internal static class WistSsaPlanPolicy
                         ? SsaRoutePolicy.Debug
                         : throw new InvalidOperationException($"Unknown Wist SSA policy feature '{selected[0].Value}'.");
 
-        var selectsSsaPass = plan.Contributions.Any(static contribution =>
-            contribution.Contribution.Id == WistContributionIds.SsaOptimizer);
         if (policy == SsaRoutePolicy.Off && selectsSsaPass)
             throw new InvalidOperationException("Wist LanguagePlan disables SSA but still selects the SSA optimizer contribution.");
         if (policy != SsaRoutePolicy.Off && !selectsSsaPass)
