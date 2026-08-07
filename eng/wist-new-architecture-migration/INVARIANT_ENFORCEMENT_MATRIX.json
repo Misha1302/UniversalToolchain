@@ -49,7 +49,7 @@
     {"id":"INV-044","ownerStage":"S03","status":"OBSERVED_PARTIAL","evidence":"Generic runtime has Unknown traits and explicit stronger trait values; Wist evidence remains to prove."},
     {"id":"INV-045","ownerStage":"S02","status":"EVIDENCE_GAP"},
     {"id":"INV-046","ownerStage":"S00","status":"CONFIRMED_DEBT","evidence":"WistMigrationGateTests/WIST_PARITY_MATRIX still assert canonical dialect-runtime positioning; classified as transitional oracle for S10/S11 retirement."},
-    {"id":"INV-047","ownerStage":"S00","status":"OBSERVED_PARTIAL","evidence":"WIST_PUBLIC_BEHAVIOR_MATRIX covers Create/Evaluate/Validate/Compile/TryCompile/Dispose; lifetime cases are backed by WistEngineLifetimeBaselineTests and were observed green in the 540/540 Core run. Exact final S00-head validation is still required."},
+    {"id":"INV-047","ownerStage":"S00","status":"OBSERVED_PARTIAL","evidence":"WIST_PUBLIC_BEHAVIOR_MATRIX covers Create/Evaluate/Validate/Compile/TryCompile/Dispose. The first Dialects run discovered 642 tests and exposed an invalid lifetime-test setup before disposal; the setup was repaired to reuse the existing proven compiled-delegate scenario. Exact final S00-head validation is still required before this evidence is green."},
     {"id":"INV-048","ownerStage":"S00","status":"OBSERVED_PARTIAL","evidence":"Benchmark Smoke now covers engine creation, LanguagePlan compilation, backend compilation, convenience Evaluate and hot compiled invocation with allocation evidence. Dry N=1 is smoke evidence only; final migration comparison is S15-owned."},
     {"id":"INV-049","ownerStage":"S05","status":"EVIDENCE_GAP"},
     {"id":"INV-050","ownerStage":"S04","status":"EVIDENCE_GAP"}
