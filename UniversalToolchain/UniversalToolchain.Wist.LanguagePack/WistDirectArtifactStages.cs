@@ -5,6 +5,7 @@ using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
 using IntermediateRepresentationAbstractions;
 using UniversalToolchain.Language.Abstractions;
+using UniversalToolchain.LanguageSdk;
 using UniversalToolchain.Runtime;
 using UniversalToolchain.Ssa.Optimization;
 
@@ -25,8 +26,9 @@ internal static class WistDirectArtifactKinds
         WistArtifactKinds.AirContract.ValueTypeIdentity!);
 }
 
-internal sealed class WistHostBindingAdapter
+internal sealed class WistHostBindingAdapter(LanguagePlan plan)
 {
+    private readonly LanguagePlan _plan = plan ?? throw new ArgumentNullException(nameof(plan));
     private readonly CompilationInputNormalizer _normalizer = new();
 
     public CompilationInput CreateRuntimeInput(
@@ -38,7 +40,7 @@ internal sealed class WistHostBindingAdapter
 
         var parameters = new Dictionary<string, object>(arguments.Count, StringComparer.Ordinal);
         foreach (var pair in arguments)
-            parameters.Add(pair.Key, pair.Value!);
+            parameters.Add(pair.Key, WistRuntimeValueAdapterActivation.NormalizeInput(_plan, pair.Value)!);
         return _normalizer.NormalizeRuntimeInput(source, parameters);
     }
 
@@ -51,7 +53,11 @@ internal sealed class WistHostBindingAdapter
 
         var parameters = new OrderedDictionary<string, Type>(bindings.Count, StringComparer.Ordinal);
         foreach (var binding in bindings)
-            parameters.Add(binding.Name, binding.ValueType);
+        {
+            parameters.Add(
+                binding.Name,
+                WistRuntimeValueAdapterActivation.NormalizeDeclaredType(_plan, binding.ValueType));
+        }
         return _normalizer.NormalizeDeclaredInput(source, parameters);
     }
 }
@@ -89,7 +95,7 @@ internal sealed class WistDirectArtifactStageFactory(
     Func<IAstToBytecodeTranslator> astTranslatorFactory,
     Func<IAbstractMethodsTranslator> abstractMethodsTranslatorFactory,
     IReadOnlyList<Func<IFrontendCoreModule>> moduleFactories,
-    WistHostBindingAdapter? hostBindingAdapter = null)
+    WistHostBindingAdapter hostBindingAdapter)
 {
     private readonly Func<ILexer> _lexerFactory = lexerFactory ?? throw new ArgumentNullException(nameof(lexerFactory));
     private readonly Func<IParser> _parserFactory = parserFactory ?? throw new ArgumentNullException(nameof(parserFactory));
@@ -97,7 +103,7 @@ internal sealed class WistDirectArtifactStageFactory(
     private readonly Func<IAbstractMethodsTranslator> _abstractMethodsTranslatorFactory = abstractMethodsTranslatorFactory ?? throw new ArgumentNullException(nameof(abstractMethodsTranslatorFactory));
     private readonly IReadOnlyList<Func<IFrontendCoreModule>> _moduleFactories = moduleFactories?.ToArray()
         ?? throw new ArgumentNullException(nameof(moduleFactories));
-    private readonly WistHostBindingAdapter _hostBindingAdapter = hostBindingAdapter ?? new WistHostBindingAdapter();
+    private readonly WistHostBindingAdapter _hostBindingAdapter = hostBindingAdapter ?? throw new ArgumentNullException(nameof(hostBindingAdapter));
 
     public WistDirectFrontendTransformer CreateFrontend() => new(
         _lexerFactory,
