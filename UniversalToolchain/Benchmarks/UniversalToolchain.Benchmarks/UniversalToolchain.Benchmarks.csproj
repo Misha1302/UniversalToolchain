@@ -11,6 +11,8 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\UniversalToolchain.Wist\UniversalToolchain.Wist.csproj"/>
+        <ProjectReference Include="..\..\UniversalToolchain.LanguageSdk\UniversalToolchain.LanguageSdk.csproj"/>
+        <ProjectReference Include="..\..\UniversalToolchain.Wist.LanguagePack\UniversalToolchain.Wist.LanguagePack.csproj"/>
 
         <!-- Keep source-tree benchmark runs behaviorally equivalent to package-consumer runs.
              UniversalToolchain.Wist package consumers receive the module assemblies/manifests as package content;
