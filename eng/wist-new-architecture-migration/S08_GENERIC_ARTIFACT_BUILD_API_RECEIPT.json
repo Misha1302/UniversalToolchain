@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "stage": "S08",
+  "status": "candidate-awaiting-exact-head-ci",
+  "dependsOn": {
+    "stage": "S07",
+    "verifiedRevision": "b6176abaf422a9d4d3db70421f164b2824061884"
+  },
+  "objective": "Provide a Wist-neutral input-to-backend-artifact build operation that never invokes the backend executor during artifact construction.",
+  "ownerChanges": {
+    "buildContracts": "UniversalToolchain.Runtime owns typed build requests, declared bindings, build metadata and originating-runtime artifact lifetime.",
+    "exactBinding": "LanguageRouteRuntimeAssembler reuses the exact planned component registry for execution and build materialization; no discovery or replanning is introduced.",
+    "buildPipeline": "LanguageArtifactBuildPipeline materializes planned transformers, records route metadata and creates executors only when ExecuteBuilt is requested.",
+    "publicEntry": "LanguageRuntime exposes Build/ExecuteBuilt/GetBuiltArtifactValue only when constructed from exact component sources."
+  },
+  "lifecycleContract": {
+    "artifactValidity": "Built artifacts are usable through the originating LanguageRuntime until it is disposed.",
+    "crossRuntimeUse": "rejected even when plan identity is equivalent",
+    "componentOwnership": "per-session build components are owned and reverse-disposed by the build pipeline",
+    "concurrency": "build/execute operations participate in RuntimeLifetimeGate; executor creation is serialized per backend",
+    "failedConstructionCleanup": "already-created build components are disposed if build-pipeline construction fails"
+  },
+  "guards": [
+    "Build does not invoke executor side effects",
+    "independent non-Wist language uses the generic build API",
+    "declared build binding types are separate from runtime values",
+    "plan/backend/artifact/runtime ownership mismatches fail closed",
+    "post-dispose built artifact access fails",
+    "Wist CIL backend artifact builds without execution"
+  ],
+  "mutationCoverage": {
+    "MUT-016": "killed by executor-side-effect counter remaining zero until ExecuteBuilt",
+    "MUT-017": "generic Runtime build contracts contain no Wist-specific types or IDs",
+    "MUT-041": "originating-runtime lifetime and cross-runtime/post-dispose tests"
+  },
+  "testManifestCandidate": {
+    "total": 1666,
+    "languageSdk": 141
+  },
+  "providerEvidence": null,
+  "note": "This receipt intentionally does not claim S08 verification until all required workflows succeed on the exact candidate revision."
+}
