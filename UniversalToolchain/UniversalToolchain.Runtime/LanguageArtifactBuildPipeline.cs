@@ -1,5 +1,4 @@
 using System.Collections.ObjectModel;
-using System.Runtime.ExceptionServices;
 using UniversalToolchain.Language.Abstractions;
 using UniversalToolchain.LanguageSdk;
 
@@ -9,13 +8,14 @@ internal sealed class LanguageArtifactBuildPipeline : ILanguageArtifactBuildSess
 {
     private readonly LanguagePlan _plan;
     private readonly LanguageRuntimeOptions _options;
-    private readonly IReadOnlyDictionary<LanguageContributionId, ILanguageArtifactTransformer> _transformers;
+    private readonly IReadOnlyDictionary<LanguageContributionId, LanguageTransformerRegistration> _transformerRegistrations;
     private readonly IReadOnlyDictionary<BackendId, LanguageExecutorRegistration> _executorRegistrations;
+    private readonly Dictionary<LanguageContributionId, ILanguageArtifactTransformer> _transformers = [];
     private readonly Dictionary<BackendId, ILanguageArtifactExecutor> _executors = [];
     private readonly LanguageRuntimeComponentContext _componentContext;
     private readonly List<object> _ownedComponents = [];
     private readonly HashSet<object> _ownedSet = new(ReferenceEqualityComparer.Instance);
-    private readonly object _executorGate = new();
+    private readonly object _componentGate = new();
     private readonly RuntimeLifetimeGate _lifetime = new();
     private readonly object _ownerToken = new();
 
@@ -29,34 +29,10 @@ internal sealed class LanguageArtifactBuildPipeline : ILanguageArtifactBuildSess
         ArgumentNullException.ThrowIfNull(components);
 
         _componentContext = new LanguageRuntimeComponentContext(plan, options);
-        var transformerRegistrations = components.SnapshotTransformers();
-        var executorRegistrations = components.SnapshotExecutors();
-        var transformers = new Dictionary<LanguageContributionId, ILanguageArtifactTransformer>();
-        try
-        {
-            foreach (var registration in transformerRegistrations.Values.OrderBy(static item => item.ContributionId.Value, StringComparer.Ordinal))
-            {
-                var transformer = registration.Create(_componentContext);
-                transformers.Add(registration.ContributionId, transformer);
-                TrackOwned(registration.IsOwnedBySession, transformer);
-            }
-        }
-        catch (Exception primaryException)
-        {
-            var cleanupErrors = DisposeOwnedSynchronouslyCollect(_ownedComponents);
-            if (cleanupErrors.Count == 0)
-                ExceptionDispatchInfo.Capture(primaryException).Throw();
-
-            var combined = new List<Exception> { primaryException };
-            combined.AddRange(cleanupErrors);
-            throw new AggregateException(
-                "Language artifact build pipeline construction failed and cleanup also failed.",
-                combined);
-        }
-
-        _transformers = new ReadOnlyDictionary<LanguageContributionId, ILanguageArtifactTransformer>(transformers);
+        _transformerRegistrations = new ReadOnlyDictionary<LanguageContributionId, LanguageTransformerRegistration>(
+            new Dictionary<LanguageContributionId, LanguageTransformerRegistration>(components.SnapshotTransformers()));
         _executorRegistrations = new ReadOnlyDictionary<BackendId, LanguageExecutorRegistration>(
-            BindExecutorRegistrations(plan, executorRegistrations));
+            BindExecutorRegistrations(plan, components.SnapshotExecutors()));
     }
 
     public LanguageArtifactBuildResult Build(LanguageArtifactBuildRequest request)
@@ -82,7 +58,7 @@ internal sealed class LanguageArtifactBuildPipeline : ILanguageArtifactBuildSess
                 throw new InvalidOperationException(
                     $"Build reached '{current.Contract}', but transformer '{step.ContributionId.Value}' expects '{step.SourceContract}'.");
             }
-            var transformer = _transformers[step.ContributionId];
+            var transformer = GetOrCreateTransformer(step.ContributionId);
             current = transformer is ILanguageArtifactBuildTransformer buildTransformer
                 ? buildTransformer.TransformForBuild(current, buildContext)
                 : transformer.Transform(current, buildContext.TransformationContext);
@@ -187,9 +163,24 @@ internal sealed class LanguageArtifactBuildPipeline : ILanguageArtifactBuildSess
         }
     }
 
+    private ILanguageArtifactTransformer GetOrCreateTransformer(LanguageContributionId contributionId)
+    {
+        lock (_componentGate)
+        {
+            if (_transformers.TryGetValue(contributionId, out var transformer))
+                return transformer;
+
+            var registration = _transformerRegistrations[contributionId];
+            transformer = registration.Create(_componentContext);
+            _transformers.Add(contributionId, transformer);
+            TrackOwnedLocked(registration.IsOwnedBySession, transformer);
+            return transformer;
+        }
+    }
+
     private ILanguageArtifactExecutor GetOrCreateExecutor(BackendId backend)
     {
-        lock (_executorGate)
+        lock (_componentGate)
         {
             if (_executors.TryGetValue(backend, out var executor))
                 return executor;
@@ -197,12 +188,12 @@ internal sealed class LanguageArtifactBuildPipeline : ILanguageArtifactBuildSess
             var registration = _executorRegistrations[backend];
             executor = registration.Create(_componentContext);
             _executors.Add(backend, executor);
-            TrackOwned(registration.IsOwnedBySession, executor);
+            TrackOwnedLocked(registration.IsOwnedBySession, executor);
             return executor;
         }
     }
 
-    private void TrackOwned(bool owned, object component)
+    private void TrackOwnedLocked(bool owned, object component)
     {
         if (owned && _ownedSet.Add(component))
             _ownedComponents.Add(component);
