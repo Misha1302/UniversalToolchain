@@ -281,15 +281,20 @@ internal static class WistDirectRuntimeComponents
     }
 
     private sealed class OwnedFrontendTransformer(
-        ILanguageArtifactTransformer<string, WistSyntaxArtifact> inner,
+        WistDirectFrontendTransformer inner,
         ServiceProvider owner,
-        LanguageRuntimeComponentTraits traits) : ILanguageArtifactTransformer<string, WistSyntaxArtifact>, IDisposable
+        LanguageRuntimeComponentTraits traits) :
+        ILanguageArtifactTransformer<string, WistSyntaxArtifact>,
+        ILanguageArtifactBuildTransformer,
+        IDisposable
     {
         public LanguageContributionId ContributionId => inner.ContributionId;
         public LanguageArtifactKind<string> TypedSourceKind => inner.TypedSourceKind;
         public LanguageArtifactKind<WistSyntaxArtifact> TypedTargetKind => inner.TypedTargetKind;
         public LanguageRuntimeComponentTraits TypedTraits { get; } = traits;
         public WistSyntaxArtifact Transform(string source, LanguageArtifactTransformationContext context) => inner.Transform(source, context);
+        public LanguageArtifact TransformForBuild(LanguageArtifact source, LanguageArtifactBuildContext context) =>
+            inner.TransformForBuild(source, context);
         public void Dispose() => owner.Dispose();
     }
 }
