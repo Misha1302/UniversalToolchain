@@ -26,6 +26,7 @@ public sealed class WistLanguageRuntimeProvider : ILanguageRuntimeProvider, ILan
         ArgumentNullException.ThrowIfNull(options);
         ValidateCanonicalRoute(plan);
         WistModuleSelection.ValidateCanonicalPackageProvenance(plan);
+        _ = WistSsaPlanPolicy.GetRequiredPolicy(plan);
         if (policy.RequireDeterminism)
         {
             throw new InvalidOperationException(
@@ -61,6 +62,10 @@ public sealed class WistLanguageRuntimeProvider : ILanguageRuntimeProvider, ILan
         if (plan.RuntimeProviderContribution?.Contribution.Id != WistContributionIds.RuntimeProvider)
             throw new InvalidOperationException("The Wist provider requires the canonical runtime-provider contribution.");
 
+        var plannedOptimizers = plan.Contributions
+            .Where(static contribution => contribution.Contribution.Slot == LanguageSlots.Optimizers)
+            .Select(static contribution => contribution.Contribution.Id)
+            .ToArray();
         foreach (var route in plan.Routes.Values)
         {
             var backendContribution = route.Backend == InterpreterBackend
@@ -72,9 +77,11 @@ public sealed class WistLanguageRuntimeProvider : ILanguageRuntimeProvider, ILan
             {
                 WistContributionIds.Frontend,
                 WistContributionIds.LoweringToBytecode,
-                WistContributionIds.LoweringToAir,
-                backendContribution
-            };
+                WistContributionIds.LoweringToAir
+            }
+                .Concat(plannedOptimizers)
+                .Append(backendContribution)
+                .ToArray();
             var actual = route.Steps.Select(static step => step.ContributionId).ToArray();
             if (!actual.SequenceEqual(expected))
             {
@@ -118,7 +125,11 @@ public sealed class WistLanguageRuntimeProvider : ILanguageRuntimeProvider, ILan
                 provider = null;
                 _host = workflow.CreateHost(
                     composition,
-                    new WistRuntimeServiceOptions { AllowedAssemblies = options.AllowedAssemblies },
+                    new WistRuntimeServiceOptions
+                    {
+                        AllowedAssemblies = options.AllowedAssemblies,
+                        SsaExecution = WistSsaPlanPolicy.CreateRuntimeOptions(plan)
+                    },
                     owner);
             }
             finally
