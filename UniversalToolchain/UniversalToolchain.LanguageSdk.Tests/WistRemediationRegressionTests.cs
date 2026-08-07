@@ -20,8 +20,11 @@ public sealed class WistRemediationRegressionTests
         var featureId = new LanguageFeatureId("external.injected-feature");
         var source = StandardLanguageArtifactKinds.SourceText.Contract;
         var syntax = WistArtifactKinds.SyntaxTreeContract;
+        var bytecode = WistArtifactKinds.BytecodeContract;
         var air = WistArtifactKinds.AirContract;
         var output = WistArtifactKinds.InterpreterArtifactContract;
+        var syntaxToBytecodeSlot = new LanguageSlotId("wist.lowering.syntax-to-bytecode");
+        var bytecodeToAirSlot = new LanguageSlotId("wist.lowering.bytecode-to-air");
 
         LanguageContributionDescriptor Module(string id, string alias) =>
             new(
@@ -38,11 +41,17 @@ public sealed class WistRemediationRegressionTests
                 ContributionMergePolicy.RejectDuplicate,
                 transformation: new ArtifactTransformationDescriptor(source, syntax, 1)),
             new(
-                WistContributionIds.LoweringToAir,
-                LanguageSlots.Lowering,
+                WistContributionIds.LoweringToBytecode,
+                syntaxToBytecodeSlot,
                 LanguageSlotMultiplicity.Single,
                 ContributionMergePolicy.RejectDuplicate,
-                transformation: new ArtifactTransformationDescriptor(syntax, air, 1)),
+                transformation: new ArtifactTransformationDescriptor(syntax, bytecode, 1)),
+            new(
+                WistContributionIds.LoweringToAir,
+                bytecodeToAirSlot,
+                LanguageSlotMultiplicity.Single,
+                ContributionMergePolicy.RejectDuplicate,
+                transformation: new ArtifactTransformationDescriptor(bytecode, air, 1)),
             new(
                 WistContributionIds.InterpreterBackend,
                 LanguageSlots.Backends,
