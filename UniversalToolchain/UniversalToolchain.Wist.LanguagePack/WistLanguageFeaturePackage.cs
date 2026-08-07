@@ -1,5 +1,6 @@
 using UniversalToolchain.FeatureSdk;
 using UniversalToolchain.Language.Abstractions;
+using UniversalToolchain.Runtime;
 
 namespace UniversalToolchain.Wist.LanguagePack;
 
@@ -44,6 +45,7 @@ public static class WistContributionIds
     public static LanguageContributionId InterpreterBackend { get; } = new("wist.backend.interpreter");
     public static LanguageContributionId CilBackend { get; } = new("wist.backend.cil");
     public static LanguageContributionId RuntimeProvider { get; } = new("wist.runtime.provider");
+    public static LanguageContributionId RealNumberValueAdapter { get; } = new("wist.value-adapter.real-number");
     public static LanguageContributionId WhitespacesModule { get; } = new("wist.module.whitespaces");
     public static LanguageContributionId ScopesModule { get; } = new("wist.module.scopes");
     public static LanguageContributionId NumbersModule { get; } = new("wist.module.numbers");
@@ -87,7 +89,7 @@ public static class WistArtifactKinds
     public static LanguageArtifactContract CilArtifactContract { get; } = new(CilArtifact, "wist.cil-artifact/v1");
 }
 
-public sealed class WistLanguageFeaturePackage : ILanguageExtensionPackage
+public sealed class WistLanguageFeaturePackage : ILanguageExtensionPackage, ILanguageRouteComponentSource
 {
     private static readonly BackendId Cil = new("cil");
     private static readonly BackendId Interpreter = new("interpreter");
@@ -99,6 +101,11 @@ public sealed class WistLanguageFeaturePackage : ILanguageExtensionPackage
     public static LanguageVersion PackageVersion { get; } = new(WistLanguagePackIdentity.Version);
     public static LanguageRuntimeProviderId RuntimeProviderId { get; } = new(PackageId.Value);
 
+    public WistLanguageFeaturePackage()
+    {
+        Components = WistDirectRuntimeComponents.CreateCatalog(this);
+    }
+
     public LanguagePackageDescriptor Descriptor { get; } = new(
         PackageId,
         PackageVersion,
@@ -108,15 +115,17 @@ public sealed class WistLanguageFeaturePackage : ILanguageExtensionPackage
         {
             ["language"] = "Wist",
             ["status"] = "typed-authoring-runtime-provider",
-            ["positioning"] = "Typed Wist authoring package over the canonical Wist dialect runtime with shipped-preset parity"
+            ["positioning"] = "Typed Wist authoring package over the canonical Wist runtime with shipped-preset parity"
         },
         CreateContributions());
+
+    public LanguageRouteComponentCatalog Components { get; }
 
     private static IReadOnlyList<LanguageFeatureDescriptor> CreateFeatures() =>
     [
         Feature(WistFeatureIds.Whitespaces, WistContributionIds.WhitespacesModule),
         Feature(WistFeatureIds.Scopes, WistContributionIds.ScopesModule),
-        Feature(WistFeatureIds.Numbers, WistContributionIds.NumbersModule),
+        Feature(WistFeatureIds.Numbers, [WistContributionIds.NumbersModule, WistContributionIds.RealNumberValueAdapter]),
         Feature(WistFeatureIds.Arithmetic, WistContributionIds.ArithmeticModule),
         Feature(WistFeatureIds.Identifiers, WistContributionIds.IdentifiersModule),
         Feature(WistFeatureIds.Variables, WistContributionIds.VariablesModule),
@@ -221,7 +230,12 @@ public sealed class WistLanguageFeaturePackage : ILanguageExtensionPackage
                 {
                     [Interpreter] = WistArtifactKinds.InterpreterArtifactContract,
                     [Cil] = WistArtifactKinds.CilArtifactContract
-                })
+                }),
+            new(
+                WistContributionIds.RealNumberValueAdapter,
+                WistLanguageSlots.RuntimeValueAdapters,
+                supportedBackends: BothBackends,
+                order: 100)
         };
 
         contributions.AddRange(WistRuntimeComponentCatalog.Modules.Select(Module));
