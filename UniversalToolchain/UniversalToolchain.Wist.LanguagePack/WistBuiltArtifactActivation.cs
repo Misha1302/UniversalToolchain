@@ -4,6 +4,7 @@ using BasicCore.Execution;
 using BasicInterpreter;
 using UniversalToolchain.LanguageSdk;
 using UniversalToolchain.Runtime;
+using UniversalToolchain.Ssa.Optimization;
 
 namespace UniversalToolchain.Wist.LanguagePack;
 
@@ -37,6 +38,20 @@ internal static class WistBuiltArtifactActivation
         }
         throw new InvalidOperationException(
             $"Wist built artifact backend '{result.Backend.Value}' cannot be materialized as a durable program.");
+    }
+
+    public static SsaRouteReport? GetSsaReport(
+        LanguageRuntime runtime,
+        LanguageArtifactBuildResult result)
+    {
+        ArgumentNullException.ThrowIfNull(runtime);
+        ArgumentNullException.ThrowIfNull(result);
+        if (result.Backend == CilBackend)
+            return runtime.GetBuiltArtifactValue(result, WistDirectBackendArtifactKinds.Cil).SsaReport;
+        if (result.Backend == InterpreterBackend)
+            return runtime.GetBuiltArtifactValue(result, WistDirectBackendArtifactKinds.Interpreter).SsaReport;
+        throw new InvalidOperationException(
+            $"Wist built artifact backend '{result.Backend.Value}' has no Wist optimization report projection.");
     }
 
     private abstract class ProgramBase(IReadOnlyList<ExternalBinding> bindings, LanguagePlan plan) : IWistDurableProgram
