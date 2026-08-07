@@ -27,6 +27,7 @@
     <ProjectReference Include="..\ArithmeticModule\ArithmeticModule.csproj" />
     <ProjectReference Include="..\NumbersModule\NumbersModule.csproj" />
     <ProjectReference Include="..\WhitespacesModule\WhitespacesModule.csproj" />
+    <ProjectReference Include="..\CommonExceptions\CommonExceptions.csproj" />
   </ItemGroup>
   <ItemGroup><Using Include="NUnit.Framework" /></ItemGroup>
 </Project>
