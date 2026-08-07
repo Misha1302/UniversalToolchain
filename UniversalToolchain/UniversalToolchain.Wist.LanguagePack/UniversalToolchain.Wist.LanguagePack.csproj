@@ -23,6 +23,7 @@
     <ProjectReference Include="..\UniversalToolchain.FeatureSdk\UniversalToolchain.FeatureSdk.csproj" />
     <ProjectReference Include="..\UniversalToolchain.Runtime\UniversalToolchain.Runtime.csproj" />
     <ProjectReference Include="..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\AssemblyFinder\AssemblyFinder.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\BasicCore\BasicCore.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\BasicLexer\BasicLexer.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\BasicParser\BasicParser.csproj" PrivateAssets="all" />
@@ -31,6 +32,7 @@
     <ProjectReference Include="..\BasicInterpreter\BasicInterpreter.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\BasicCilCompiler\BasicCilCompiler.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\BytecodeDynamicMethodsCompiler\BytecodeDynamicMethodsCompiler.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\BasicStdLib\BasicStdLib.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\ConditionsModule\ConditionsModule.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\NativeMathModule\NativeMathModule.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\NumbersModule\NumbersModule.csproj" PrivateAssets="all" />
