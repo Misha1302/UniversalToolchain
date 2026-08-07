@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "stage": "S05",
+  "status": "candidate-awaiting-exact-head-ci",
+  "dependsOn": {
+    "stage": "S04",
+    "verifiedRevision": "1a8457c87c293d9488c8456dc26e8dc8b5dcb328"
+  },
+  "objective": "Make LanguagePlan-owned Wist frontend contribution identities the only semantic module-selection authority while providing an explicit third-party Wist module activation seam.",
+  "implementation": {
+    "selectionSource": "LanguagePlan.Contributions in planner-owned order",
+    "activationKey": "LanguageContributionId",
+    "packageBinding": "exact registered package object plus package id/version and manifest SHA-256",
+    "builtInInventoryOwner": "WistRuntimeComponentCatalog",
+    "extensionContract": "IWistFrontendModuleSource / WistFrontendModuleRegistration",
+    "genericSdkChangesRequiredForExternalModule": false,
+    "aliasOrAssemblyScanUsedAsDirectActivationAuthority": false
+  },
+  "guards": [
+    "registration order cannot reorder planned modules",
+    "a new external Wist contribution id can activate without generic SDK changes",
+    "missing selected registration fails closed",
+    "duplicate selected registration fails closed",
+    "canonical contribution-id spoofing is rejected",
+    "Interpreter and CIL observe the same selected module set/order",
+    "concurrent activation creates independent module instances",
+    "missing required contribution is rejected by LanguageCompiler"
+  ],
+  "testManifestCandidate": {
+    "total": 1638,
+    "languageSdk": 113
+  },
+  "providerEvidence": null,
+  "note": "This receipt intentionally does not claim S05 verification until all required workflows succeed on this exact candidate revision."
+}
