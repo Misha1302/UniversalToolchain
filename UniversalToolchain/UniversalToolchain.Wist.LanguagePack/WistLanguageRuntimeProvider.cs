@@ -31,20 +31,13 @@ public sealed class WistLanguageRuntimeProvider : ILanguageRuntimeProvider, ILan
             throw new InvalidOperationException(
                 "The Wist runtime provider cannot satisfy required determinism evidence for its composed module pipeline.");
         }
-        var selectedModules = WistModuleSelection.GetModuleAliases(plan);
-        var selectsCSharpInterop = selectedModules.Contains("CSharpInterop", StringComparer.Ordinal);
-        var unsafeInteropDirective = ReadBooleanMetadata(plan, "wist.capability.unsafe-interop");
 
-        if (!policy.AllowHostInterop &&
-            (selectsCSharpInterop || unsafeInteropDirective == true || options.AllowedAssemblies.Count != 0))
+        var selectsCSharpInterop = plan.Contributions.Any(static contribution =>
+            contribution.Contribution.Id == WistContributionIds.CSharpInteropModule);
+        if (!policy.AllowHostInterop && (selectsCSharpInterop || options.AllowedAssemblies.Count != 0))
         {
             throw new InvalidOperationException(
-                "The Wist language plan forbids host interop, but CSharp interop, the unsafe-interop capability, or allowed host assemblies were selected.");
-        }
-        if (selectsCSharpInterop && unsafeInteropDirective == false)
-        {
-            throw new InvalidOperationException(
-                "The Wist language plan selects CSharpInterop while explicitly disabling the unsafe-interop capability.");
+                "The Wist language plan forbids host interop, but CSharp interop or allowed host assemblies were selected.");
         }
     }
 
@@ -56,16 +49,6 @@ public sealed class WistLanguageRuntimeProvider : ILanguageRuntimeProvider, ILan
         // callers cannot bypass policy enforcement by skipping LanguageRuntime.Create.
         ValidatePolicy(plan, plan.Definition.RuntimePolicy, options);
         return new WistLanguageRuntimeSession(plan, options);
-    }
-
-
-    private static bool? ReadBooleanMetadata(LanguagePlan plan, string key)
-    {
-        if (!plan.Definition.Metadata.TryGetValue(key, out var value))
-            return null;
-        return bool.TryParse(value, out var parsed)
-            ? parsed
-            : throw new InvalidOperationException($"Wist metadata '{key}' must contain a Boolean value.");
     }
 
     private static void ValidateCanonicalRoute(LanguagePlan plan)
@@ -149,24 +132,27 @@ public sealed class WistLanguageRuntimeProvider : ILanguageRuntimeProvider, ILan
             if (selectedRuntimePlan == null || !selectedRuntimePlan.IsResolved)
                 throw new InvalidOperationException("Typed Wist plan did not produce a resolved runtime selection.");
 
-            var expectedModules = WistModuleSelection.GetModuleAliases(plan).ToHashSet(StringComparer.Ordinal);
+            var expectedModules = WistModuleSelection.GetModuleAliases(plan);
             var actualModules = selectedRuntimePlan.OrderedModules
                 .Select(static entry => entry.CanonicalAlias)
-                .ToHashSet(StringComparer.Ordinal);
-            if (!expectedModules.SetEquals(actualModules))
+                .ToArray();
+            if (!actualModules.SequenceEqual(expectedModules, StringComparer.Ordinal))
             {
                 throw new InvalidOperationException(
-                    $"Wist runtime module selection differs from the verified language plan. " +
-                    $"Expected [{string.Join(", ", expectedModules.OrderBy(static x => x, StringComparer.Ordinal))}], " +
-                    $"actual [{string.Join(", ", actualModules.OrderBy(static x => x, StringComparer.Ordinal))}].");
+                    $"Wist runtime module order differs from the verified language plan. " +
+                    $"Expected [{string.Join(", ", expectedModules)}], actual [{string.Join(", ", actualModules)}].");
             }
 
-            var expectedOptimizers = WistModuleSelection.GetOptimizerAliases(plan).ToHashSet(StringComparer.Ordinal);
+            var expectedOptimizers = WistModuleSelection.GetOptimizerAliases(plan);
             var actualOptimizers = selectedRuntimePlan.EnabledOptimizers
                 .Select(static entry => entry.CanonicalAlias)
-                .ToHashSet(StringComparer.Ordinal);
-            if (!expectedOptimizers.SetEquals(actualOptimizers))
-                throw new InvalidOperationException("Wist runtime optimizer selection differs from the verified language plan.");
+                .ToArray();
+            if (!actualOptimizers.SequenceEqual(expectedOptimizers, StringComparer.Ordinal))
+            {
+                throw new InvalidOperationException(
+                    $"Wist runtime optimizer order differs from the verified language plan. " +
+                    $"Expected [{string.Join(", ", expectedOptimizers)}], actual [{string.Join(", ", actualOptimizers)}].");
+            }
 
             var expectedBackends = WistModuleSelection.GetExpectedRuntimeBackendAliases(plan);
             var actualBackends = selectedRuntimePlan.EnabledBackends
