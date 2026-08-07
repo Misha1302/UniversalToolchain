@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "totalPassed": 1612,
+  "totalPassed": 1618,
   "main": [
     {
       "label": "Core",
@@ -32,7 +32,7 @@
       "runner": "assembly",
       "path": "UniversalToolchain/UniversalToolchain.LanguageSdk.Tests/bin/Release/net10.0/UniversalToolchain.LanguageSdk.Tests.dll",
       "timeoutSeconds": 420,
-      "expectedPassed": 87
+      "expectedPassed": 93
     },
     {
       "label": "PlanFuzz",
