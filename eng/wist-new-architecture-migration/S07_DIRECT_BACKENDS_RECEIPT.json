@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "stage": "S07",
+  "status": "candidate-awaiting-exact-head-ci",
+  "dependsOn": {
+    "stage": "S06",
+    "verifiedRevision": "7cf4ea2a6fbe6b8e6395519cb56e436b65b877a3"
+  },
+  "objective": "Execute canonical Wist plans through generic exact route transformers/executors for Interpreter and CIL without the dialect execution host.",
+  "implementation": {
+    "routeRuntime": "LanguageRouteRuntimeAssembler + LanguageRouteRuntimeProvider",
+    "packageSourceBinding": "exact WistLanguageFeaturePackage instance planned by LanguageCompiler",
+    "frontend": "direct canonical lexer/parser/binder stage with explicit planned module factories",
+    "lowering": "direct canonical Syntax->Bytecode->AIR stages",
+    "optimizers": "fresh plan-selected AIR pass components with backend intrinsic capability context",
+    "interpreter": "AIR artifact -> BasicInterpreter executor",
+    "cil": "AIR -> CilCompilationOutput -> DynamicMethodExecutor",
+    "valueBoundary": "explicit plan-selected RealNumberImpl adapter; no reflection/type-name/assembly-name fallback on direct path",
+    "hiddenFrontendServices": "explicit immutable ITypeCatalog over host-allowed assemblies plus shipped BasicStdLib and DeterministicMethodResolver",
+    "dialectExecutionWorkflowOnDirectPath": false,
+    "dialectExecutionHostOnDirectPath": false,
+    "basicCoreImplOnDirectPath": false
+  },
+  "guards": [
+    "Interpreter executes through generic route provider",
+    "Interpreter and CIL expose identical public numeric value categories",
+    "Numbers feature selects exact value-adapter contribution",
+    "missing and duplicate value-adapter registrations fail closed",
+    "implementation-owned numeric value without planned adapter fails closed",
+    "forbidden host interop fails before execution",
+    "equivalent but different package instance is rejected",
+    "SSA planned route executes through both direct backends"
+  ],
+  "testManifestCandidate": {
+    "total": 1658,
+    "languageSdk": 133
+  },
+  "transitionalLegacy": {
+    "WistLanguageRuntimeProvider": "still present for pre-cutover callers; S09/S11 remove production reachability",
+    "WistRuntimeValueNormalizer": "still present only on legacy path; S15 final source lock must reject its reflection fallback",
+    "externalWistModuleSources": "S05 seam remains; public direct-runtime plumbing is deferred to WistEngine cutover where caller/runtime composition inputs are owned"
+  },
+  "providerEvidence": null,
+  "note": "This receipt intentionally does not claim S07 verification until all required workflows succeed on the exact candidate revision."
+}
