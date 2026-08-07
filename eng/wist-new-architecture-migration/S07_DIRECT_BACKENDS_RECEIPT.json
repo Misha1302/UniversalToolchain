@@ -35,6 +35,14 @@
     "total": 1658,
     "languageSdk": 133
   },
+  "intermediateEvidence": {
+    "revision": "390da52a76dfd56d9b7ee8d7634dbf5d476a8b2a",
+    "packageCompatibilityRun": 31218459004,
+    "artifactId": 9009638327,
+    "artifactDigest": "sha256:7c505297b1c08ed746cc49236d0b23ca8c7658af4e51c064c9626e91a47593c6",
+    "canonicalTests": "1658/1658 passed",
+    "remainingFailure": "documentation manifest still contained the previous 1648 total; corrected in this candidate"
+  },
   "transitionalLegacy": {
     "WistLanguageRuntimeProvider": "still present for pre-cutover callers; S09/S11 remove production reachability",
     "WistRuntimeValueNormalizer": "still present only on legacy path; S15 final source lock must reject its reflection fallback",
