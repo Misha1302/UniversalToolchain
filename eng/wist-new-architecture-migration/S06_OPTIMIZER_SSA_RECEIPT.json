@@ -13,6 +13,8 @@
     "ssaPolicyAuthority": "typed Wist policy feature selected in LanguageDefinition and retained in LanguagePlan",
     "shippedSsaPolicy": "Require",
     "shippedNonSsaPolicy": "Off",
+    "legacyCustomDefinitionNoSsaPolicy": "canonical Off only when no SSA optimizer contribution is selected",
+    "missingPolicyWithSsaPass": "fail-closed; no implicit Prefer/Require/Debug fallback",
     "runtimeProjection": "WistLanguageRuntimeProvider derives SsaRuntimeExecutionOptions from LanguagePlan",
     "opaqueMetadataBehavioralAuthority": false,
     "runtimeProfileReorderingAuthority": false
@@ -22,14 +24,16 @@
     "Interpreter and CIL routes contain identical planned optimizer order before backend lowering",
     "all shipped presets select exactly one typed SSA policy",
     "Disabled/Prefer/Require/Debug project deterministically for both backends",
+    "legacy custom definitions without SSA preserve the unique safe Off meaning",
+    "SSA pass without typed policy fails closed instead of choosing a runtime fallback",
     "conflicting SSA policies fail during planning",
     "SSA policy changes plan identity without changing pass selection",
     "opaque wist.ssa.policy metadata cannot override typed policy",
     "Require executes the same representative program on Interpreter and CIL"
   ],
   "testManifestCandidate": {
-    "total": 1646,
-    "languageSdk": 121
+    "total": 1648,
+    "languageSdk": 123
   },
   "providerEvidence": null,
   "note": "This receipt intentionally does not claim S06 verification until all required workflows succeed on the exact candidate revision."
