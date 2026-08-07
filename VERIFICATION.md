@@ -54,12 +54,12 @@ Parallel graph traversal and shared compilation are the default. `--jobs`, `--se
 | `Tests` | 540 | 0 | 0 |
 | `UniversalToolchain.Modules.Tests` | 292 | 0 | 0 |
 | `UniversalToolchain.Dialects.Tests` | 642 | 0 | 0 |
-| `UniversalToolchain.LanguageSdk.Tests` | 87 | 0 | 0 |
+| `UniversalToolchain.LanguageSdk.Tests` | 93 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.Tests` | 41 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
-| **Total** | **1,612** | **0** | **0** |
+| **Total** | **1,618** | **0** | **0** |
 
-The deterministic runtime-boundary candidate adds 18 resolver, loader, hostile-preload, fresh-process, package-metadata and boundary-regression tests over merged baseline `f13ad1310856e5618e1c3042c447ca543e0f3125`. The exact manifest is owned by `eng/test-counts.json`; local TRX evidence verifies all 1,612 tests, while GitHub Actions remains a separate provider-backed gate.
+The deterministic runtime-boundary candidate adds 18 resolver, loader, hostile-preload, fresh-process, package-metadata and boundary-regression tests over merged baseline `f13ad1310856e5618e1c3042c447ca543e0f3125`. The exact manifest is owned by `eng/test-counts.json`; local TRX evidence verifies all 1,618 tests, while GitHub Actions remains a separate provider-backed gate.
 
 ## Production-boundary contract experiment
 
