@@ -11,6 +11,7 @@
   "repository": {
     "baselineRevision": "8b8b91b80f45ff10680b3a8ee826ebf436df1381",
     "branch": "migration/languageplan-single-runtime-20260807",
+    "draftPullRequest": 332,
     "baselineDriftFromContract": {
       "aheadBy": 5,
       "behindBy": 0,
@@ -79,7 +80,8 @@
     "baselineContract": "eng/wist-api-baseline.json",
     "snapshot": "eng/wist-public-api-baseline.txt",
     "surfaceGate": "UniversalToolchain/UniversalToolchain.Dialects.Tests/Wist/PublicFacade/WistPublicApiBaselineTests.cs",
-    "behaviorContract": "eng/wist-new-architecture-migration/WIST_PUBLIC_BEHAVIOR_MATRIX.json"
+    "behaviorContract": "eng/wist-new-architecture-migration/WIST_PUBLIC_BEHAVIOR_MATRIX.json",
+    "lifetimeRegressionTests": "UniversalToolchain/UniversalToolchain.Dialects.Tests/Wist/PublicFacade/WistEngineLifetimeBaselineTests.cs"
   },
   "baselineCi": {
     "aggregateRunId": 31133770339,
@@ -123,44 +125,97 @@
     ],
     "scope": "PRE_MIGRATION_BASELINE_ONLY"
   },
+  "testBaseline": {
+    "factualCoreRunRevision": "dee5e1b6d1f701dfcf9f5e3fcc1bd805759193b1",
+    "corePassed": 540,
+    "coreFailed": 0,
+    "coreSkipped": 0,
+    "strictCountContract": "eng/test-counts.json",
+    "strictCoreExpected": 540,
+    "strictTotalExpected": 1603,
+    "note": "The preceding canonical run executed 540 Core tests successfully and exposed the prior expected count 534 as stale; the strict count guard was updated from that factual run rather than weakened or removed."
+  },
   "performanceBaseline": {
-    "runId": 31133768753,
+    "originalMasterHotPathRunId": 31133768753,
+    "expandedBoundaryRunId": 31181493371,
+    "expandedBoundaryEvidenceRevision": "dee5e1b6d1f701dfcf9f5e3fcc1bd805759193b1",
     "environment": {
       "os": "Ubuntu 24.04.4 LTS",
-      "cpu": "Intel Xeon Platinum 8573C",
+      "cpu": "AMD EPYC 9V74",
       "dotnetSdk": "10.0.302",
       "runtime": ".NET 10.0.10",
       "benchmarkDotNet": "0.15.6",
       "job": "Dry; IterationCount=1; LaunchCount=1"
     },
-    "formulaHotPath": [
+    "architectureBoundaries": [
+      {
+        "method": "WistEngine_CreateAndDispose",
+        "meanMilliseconds": 410.98,
+        "allocatedKilobytesPerOperation": 1997.75
+      },
+      {
+        "method": "LanguagePlan_Compile",
+        "meanMilliseconds": 82.25,
+        "allocatedKilobytesPerOperation": 127.37
+      }
+    ],
+    "compilationBoundaries": [
+      {
+        "method": "Wist_CompileOnExistingEngine",
+        "meanMilliseconds": 456.7947,
+        "allocatedBytesPerOperation": 980840
+      },
+      {
+        "method": "Wist_CreateEngineAndCompile",
+        "meanMilliseconds": 517.1142,
+        "allocatedBytesPerOperation": 3855744
+      }
+    ],
+    "convenienceEvaluate": [
+      {
+        "method": "Wist_CompilerEvaluateWithDictionary",
+        "meanMilliseconds": 25.866136,
+        "allocatedBytesPerOperation": 952461
+      },
+      {
+        "method": "Wist_InterpreterEvaluateWithDictionary",
+        "meanMilliseconds": 25.509506,
+        "allocatedBytesPerOperation": 896384
+      }
+    ],
+    "hotCompiledInvocation": [
       {
         "workload": "SimpleArithmetic",
         "method": "Wist_CompiledDelegate",
-        "meanNanoseconds": 1715.4,
+        "meanNanoseconds": 2459.7,
         "allocatedBytesPerOperation": 1328
       },
       {
         "workload": "DeepArithmetic",
         "method": "Wist_CompiledDelegate",
-        "meanNanoseconds": 1686.2,
+        "meanNanoseconds": 2394.5,
         "allocatedBytesPerOperation": 1328
       },
       {
         "workload": "RepeatedSubexpressions",
         "method": "Wist_CompiledDelegate",
-        "meanNanoseconds": 1685.0,
+        "meanNanoseconds": 2355.8,
         "allocatedBytesPerOperation": 1328
       }
     ],
-    "gaps": [
-      "engine/runtime creation reproducible measurement",
-      "LanguagePlan compilation reproducible measurement",
-      "formula/backend artifact compilation reproducible measurement",
-      "convenience Evaluate reproducible measurement",
-      "boundary-specific allocations beyond FormulaHotPath dry run"
-    ],
-    "note": "Dry N=1 results are smoke evidence only and are not a small-delta performance gate."
+    "gaps": [],
+    "note": "Dry N=1 results are reproducible smoke evidence for detecting large/order-of-magnitude regressions only; they are not a +/-5% CI gate. Final post-migration comparison remains required at S15."
   },
-  "evidencePolicy": "Any production mutation invalidates green evidence for the affected scope; stages become VERIFIED only on their exact final revision."
+  "verification": {
+    "finalEvidenceRevision": null,
+    "requiredExactHeadChecks": [
+      ".NET CI Linux canonical build/test",
+      ".NET CI Windows canonical build/test",
+      "UniversalToolchain validation",
+      "Package Compatibility Review",
+      "Benchmark Smoke"
+    ],
+    "state": "WAITING_FOR_EXACT_HEAD_AFTER_LAST_S00_MUTATION"
+  },
+  "evidencePolicy": "Any production or evidence-contract mutation invalidates green evidence for the affected scope; S00 becomes VERIFIED only after required checks pass on the exact final S00 revision."
 }
