@@ -106,7 +106,10 @@ public static class WistLanguageDefinitions
             .UseRuntimeProvider(WistLanguageFeaturePackage.RuntimeProviderId, WistLanguageFeaturePackage.PackageVersion)
             .WithRuntimePolicy(new LanguageRuntimePolicy(AllowHostInterop: preset.AllowHostInterop))
             .WithMetadata("wist.preset", canonicalPresetId)
-            .UseFeature(preset.SecurityFeature);
+            .UseFeature(preset.SecurityFeature)
+            .UseFeature(canonicalPresetId == SsaId
+                ? WistSsaPolicyFeatureIds.Require
+                : WistSsaPolicyFeatureIds.Disabled);
 
         if (preset.CompositionRestricted)
             builder.UseFeature(WistInternalFeatureIds.CompositionRestricted);
