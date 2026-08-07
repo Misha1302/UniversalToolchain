@@ -75,25 +75,53 @@ public sealed class WistNewArchitectureBaselineTests
     }
 
     [Test]
-    public void S00_ArchitectureInventory_DetectsKnownActiveLegacyOwners()
+    public void S00_ArchitectureInventory_DetectsKnownActiveLegacyOwnersAndCallsites()
     {
         using var inventory = ReadMigrationJson("LEGACY_ARCHITECTURE_INVENTORY.json");
-        var expected = inventory.RootElement.GetProperty("owners")
-            .EnumerateArray()
-            .Select(static owner => owner.GetProperty("symbol").GetString()!)
-            .ToArray();
+        var owners = inventory.RootElement.GetProperty("owners").EnumerateArray().ToArray();
         var root = FindRepositoryRoot();
-        var productionSources = EnumerateProductionSources(root).ToArray();
-        var missing = expected
-            .Where(symbol => !productionSources.Any(path => File.ReadAllText(path).Contains(symbol, StringComparison.Ordinal)))
-            .ToArray();
+        var failures = new List<string>();
+
+        foreach (var owner in owners)
+        {
+            var symbol = owner.GetProperty("symbol").GetString()!;
+            var definition = owner.GetProperty("definition").GetString()!;
+            var definitionPath = Path.Combine(root, definition.Replace('/', Path.DirectorySeparatorChar));
+
+            if (!File.Exists(definitionPath))
+            {
+                failures.Add($"Missing production definition for {symbol}: {definition}");
+                continue;
+            }
+
+            if (!File.ReadAllText(definitionPath).Contains(symbol, StringComparison.Ordinal))
+                failures.Add($"Definition file does not contain {symbol}: {definition}");
+
+            if (!owner.TryGetProperty("knownProductionCallsites", out var callsites))
+                continue;
+
+            foreach (var callsite in callsites.EnumerateArray())
+            {
+                var relativePath = callsite.GetString()!;
+                var callsitePath = Path.Combine(root, relativePath.Replace('/', Path.DirectorySeparatorChar));
+                if (!File.Exists(callsitePath))
+                {
+                    failures.Add($"Missing known production callsite for {symbol}: {relativePath}");
+                    continue;
+                }
+
+                if (!File.ReadAllText(callsitePath).Contains(symbol, StringComparison.Ordinal))
+                    failures.Add($"Known production callsite no longer references {symbol}: {relativePath}");
+            }
+        }
 
         Assert.Multiple(() =>
         {
-            Assert.That(expected, Has.Length.EqualTo(7));
-            Assert.That(expected.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(expected.Length));
-            Assert.That(missing, Is.Empty,
-                "S00 is a baseline inventory: these legacy owners are intentionally expected to exist before their owning deletion stages.");
+            Assert.That(owners, Has.Length.EqualTo(7));
+            Assert.That(owners.Select(static owner => owner.GetProperty("symbol").GetString()).Distinct(StringComparer.Ordinal).Count(),
+                Is.EqualTo(owners.Length));
+            Assert.That(failures, Is.Empty,
+                "S00 freezes actual buildable legacy ownership and known production callsites. Later deletion stages replace this positive baseline with negative guards.");
         });
     }
 
@@ -154,18 +182,6 @@ public sealed class WistNewArchitectureBaselineTests
             "eng",
             "wist-new-architecture-migration",
             fileName)));
-
-    private static IEnumerable<string> EnumerateProductionSources(string root) =>
-        Directory.EnumerateFiles(Path.Combine(root, "UniversalToolchain"), "*.cs", SearchOption.AllDirectories)
-            .Where(static path =>
-            {
-                var normalized = path.Replace(Path.DirectorySeparatorChar, '/');
-                return !normalized.Contains("/bin/", StringComparison.Ordinal)
-                       && !normalized.Contains("/obj/", StringComparison.Ordinal)
-                       && !normalized.Contains("/Tests/", StringComparison.Ordinal)
-                       && !normalized.Contains(".Tests/", StringComparison.Ordinal)
-                       && !normalized.Contains("/Experiments/", StringComparison.Ordinal);
-            });
 
     private static string FindRepositoryRoot()
     {
