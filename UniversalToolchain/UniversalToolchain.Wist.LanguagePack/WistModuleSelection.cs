@@ -11,11 +11,27 @@ internal static class WistModuleSelection
     private static readonly IReadOnlySet<LanguageContributionId> CanonicalContributionIds = CanonicalDescriptor.Contributions.Select(static x => x.Id).ToHashSet();
     private static readonly IReadOnlySet<LanguageFeatureId> CanonicalFeatureIds = CanonicalDescriptor.Features.Select(static x => x.Id).ToHashSet();
 
-    public static IReadOnlyList<string> GetModuleAliases(LanguagePlan plan) =>
-        GetAliases(plan, LanguageSlots.FrontendSyntax, "wist.moduleAlias", "module");
+    public static IReadOnlyList<string> GetModuleAliases(LanguagePlan plan)
+    {
+        ValidateCanonicalPackageProvenance(plan);
+        return ProjectModuleAliases(plan.Contributions
+            .Where(static contribution => contribution.Contribution.Slot == LanguageSlots.FrontendSyntax)
+            .Select(static contribution => contribution.Contribution.Id));
+    }
 
-    public static IReadOnlyList<string> GetOptimizerAliases(LanguagePlan plan) =>
-        GetAliases(plan, LanguageSlots.Optimizers, "wist.optimizerAlias", "optimizer");
+    public static IReadOnlyList<string> GetOptimizerAliases(LanguagePlan plan)
+    {
+        ValidateCanonicalPackageProvenance(plan);
+        return ProjectOptimizerAliases(plan.Contributions
+            .Where(static contribution => contribution.Contribution.Slot == LanguageSlots.Optimizers)
+            .Select(static contribution => contribution.Contribution.Id));
+    }
+
+    internal static IReadOnlyList<string> ProjectModuleAliases(IEnumerable<LanguageContributionId> plannedContributionIds) =>
+        ProjectAliases(plannedContributionIds, WistRuntimeComponentKind.Module);
+
+    internal static IReadOnlyList<string> ProjectOptimizerAliases(IEnumerable<LanguageContributionId> plannedContributionIds) =>
+        ProjectAliases(plannedContributionIds, WistRuntimeComponentKind.Optimizer);
 
     public static void ValidateCanonicalPackageProvenance(LanguagePlan plan)
     {
@@ -67,21 +83,13 @@ internal static class WistModuleSelection
             })
             .ToHashSet(StringComparer.Ordinal);
 
-    private static IReadOnlyList<string> GetAliases(
-        LanguagePlan plan,
-        LanguageSlotId slot,
-        string metadataKey,
-        string kind)
+    private static IReadOnlyList<string> ProjectAliases(
+        IEnumerable<LanguageContributionId> plannedContributionIds,
+        WistRuntimeComponentKind kind)
     {
-        ValidateCanonicalPackageProvenance(plan);
-        return plan.Contributions
-            .Where(x => x.Contribution.Slot == slot)
-            .Select(x => x.Contribution.Metadata.TryGetValue(metadataKey, out var alias) && !string.IsNullOrWhiteSpace(alias)
-                ? alias
-                : throw new InvalidOperationException(
-                    $"Wist runtime cannot activate {kind} contribution '{x.Contribution.Id.Value}' without '{metadataKey}'."))
-            .Distinct(StringComparer.Ordinal)
-            .OrderBy(static alias => alias, StringComparer.Ordinal)
+        ArgumentNullException.ThrowIfNull(plannedContributionIds);
+        return plannedContributionIds
+            .Select(contributionId => WistRuntimeComponentCatalog.GetRequired(contributionId, kind).Alias)
             .ToArray();
     }
 }
