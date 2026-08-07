@@ -88,6 +88,7 @@ public sealed class WistLanguageRuntimeProvider : ILanguageRuntimeProvider, ILan
             var expected = new[]
             {
                 WistContributionIds.Frontend,
+                WistContributionIds.LoweringToBytecode,
                 WistContributionIds.LoweringToAir,
                 backendContribution
             };

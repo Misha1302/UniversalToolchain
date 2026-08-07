@@ -39,6 +39,7 @@ public static class WistFeatureIds
 public static class WistContributionIds
 {
     public static LanguageContributionId Frontend { get; } = new("wist.frontend.parser");
+    public static LanguageContributionId LoweringToBytecode { get; } = new("wist.lowering.bytecode");
     public static LanguageContributionId LoweringToAir { get; } = new("wist.lowering.air");
     public static LanguageContributionId InterpreterBackend { get; } = new("wist.backend.interpreter");
     public static LanguageContributionId CilBackend { get; } = new("wist.backend.cil");
@@ -76,9 +77,11 @@ public static class WistContributionIds
 public static class WistArtifactKinds
 {
     public static LanguageArtifactKindId SyntaxTree { get; } = new("wist.syntax-tree");
+    public static LanguageArtifactKindId Bytecode { get; } = new("wist.bytecode");
     public static LanguageArtifactKindId InterpreterArtifact { get; } = new("wist.interpreter.artifact");
     public static LanguageArtifactKindId CilArtifact { get; } = new("wist.cil-artifact");
     public static LanguageArtifactContract SyntaxTreeContract { get; } = new(SyntaxTree, "wist.syntax-tree/v1");
+    public static LanguageArtifactContract BytecodeContract { get; } = new(Bytecode, "wist.bytecode/v1");
     public static LanguageArtifactContract AirContract { get; } = new(LanguageArtifacts.Air, "wist.air/v1");
     public static LanguageArtifactContract InterpreterArtifactContract { get; } = new(InterpreterArtifact, "wist.interpreter-artifact/v1");
     public static LanguageArtifactContract CilArtifactContract { get; } = new(CilArtifact, "wist.cil-artifact/v1");
@@ -89,6 +92,8 @@ public sealed class WistLanguageFeaturePackage : ILanguageExtensionPackage
     private static readonly BackendId Cil = new("cil");
     private static readonly BackendId Interpreter = new("interpreter");
     private static readonly BackendId[] BothBackends = [Cil, Interpreter];
+    private static readonly LanguageSlotId SyntaxToBytecodeSlot = new("wist.lowering.syntax-to-bytecode");
+    private static readonly LanguageSlotId BytecodeToAirSlot = new("wist.lowering.bytecode-to-air");
 
     public static LanguagePackageId PackageId { get; } = new("UniversalToolchain.Wist.LanguagePack");
     public static LanguageVersion PackageVersion { get; } = new(WistLanguagePackIdentity.Version);
@@ -154,14 +159,25 @@ public sealed class WistLanguageFeaturePackage : ILanguageExtensionPackage
                 WistArtifactKinds.SyntaxTreeContract,
                 10)),
         new(
-            WistContributionIds.LoweringToAir,
-            LanguageSlots.Lowering,
+            WistContributionIds.LoweringToBytecode,
+            SyntaxToBytecodeSlot,
             LanguageSlotMultiplicity.Single,
             ContributionMergePolicy.RejectDuplicate,
             requiresCapabilities: [new LanguageCapabilityId("frontend:wist")],
-            providesCapabilities: [new LanguageCapabilityId("lowering:air")],
+            providesCapabilities: [new LanguageCapabilityId("lowering:bytecode")],
             transformation: new ArtifactTransformationDescriptor(
                 WistArtifactKinds.SyntaxTreeContract,
+                WistArtifactKinds.BytecodeContract,
+                10)),
+        new(
+            WistContributionIds.LoweringToAir,
+            BytecodeToAirSlot,
+            LanguageSlotMultiplicity.Single,
+            ContributionMergePolicy.RejectDuplicate,
+            requiresCapabilities: [new LanguageCapabilityId("lowering:bytecode")],
+            providesCapabilities: [new LanguageCapabilityId("lowering:air")],
+            transformation: new ArtifactTransformationDescriptor(
+                WistArtifactKinds.BytecodeContract,
                 WistArtifactKinds.AirContract,
                 10)),
         new(
