@@ -6,33 +6,28 @@ namespace UniversalToolchain.Wist.LanguagePack;
 
 internal static class WistDialectPlanFactory
 {
-    private const string SecurityMetadata = "wist.security";
-    private const string CapabilityPrefix = "wist.capability.";
-
     public static DialectDefinitionSlice Create(LanguagePlan plan)
     {
         ArgumentNullException.ThrowIfNull(plan);
         WistModuleSelection.ValidateCanonicalPackageProvenance(plan);
 
-        var security = plan.Definition.Metadata.TryGetValue(SecurityMetadata, out var securityValue)
-            ? securityValue switch
-            {
-                "trusted" => DialectSecurityProfile.Trusted,
-                "restricted" => DialectSecurityProfile.Restricted,
-                _ => throw new InvalidOperationException($"Unsupported Wist security profile '{securityValue}'.")
-            }
-            : (DialectSecurityProfile?)null;
+        var trusted = plan.Features.Any(static feature => feature.Feature.Id == WistInternalFeatureIds.TrustedSecurity);
+        var restricted = plan.Features.Any(static feature => feature.Feature.Id == WistInternalFeatureIds.RestrictedSecurity);
+        if (trusted && restricted)
+            throw new InvalidOperationException("Wist language plan contains conflicting typed security profiles.");
+        var security = trusted
+            ? DialectSecurityProfile.Trusted
+            : restricted
+                ? DialectSecurityProfile.Restricted
+                : (DialectSecurityProfile?)null;
 
-        var capabilities = plan.Definition.Metadata
-            .Where(static pair => pair.Key.StartsWith(CapabilityPrefix, StringComparison.Ordinal))
-            .ToDictionary(
-                static pair => pair.Key[CapabilityPrefix.Length..],
-                static pair => bool.Parse(pair.Value),
-                StringComparer.Ordinal);
+        var capabilities = new List<DialectCapabilityDirective>();
+        if (plan.Features.Any(static feature => feature.Feature.Id == WistInternalFeatureIds.CompositionRestricted))
+            capabilities.Add(new DialectCapabilityDirective("composition-restricted", true));
         if (plan.Definition.RuntimePolicy.AllowHostInterop &&
-            WistModuleSelection.GetModuleAliases(plan).Contains("CSharpInterop", StringComparer.Ordinal))
+            plan.Contributions.Any(static contribution => contribution.Contribution.Id == WistContributionIds.CSharpInteropModule))
         {
-            capabilities["unsafe-interop"] = true;
+            capabilities.Add(new DialectCapabilityDirective("unsafe-interop", true));
         }
 
         return new DialectDefinitionSlice(
@@ -46,10 +41,7 @@ internal static class WistDialectPlanFactory
             WistModuleSelection.GetOptimizerAliases(plan).Select(static alias =>
                 new DialectOptimizerDirective(alias, enabled: true, DialectBackendSelector.Any)),
             security,
-            capabilities
-                .OrderBy(static pair => pair.Key, StringComparer.Ordinal)
-                .Select(static pair => new DialectCapabilityDirective(pair.Key, pair.Value))
-                .ToArray(),
+            capabilities,
             version: plan.Definition.Version.Value);
     }
 }
