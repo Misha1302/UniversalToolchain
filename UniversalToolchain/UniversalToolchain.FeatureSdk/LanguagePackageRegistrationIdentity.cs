@@ -8,14 +8,17 @@ namespace UniversalToolchain.FeatureSdk;
 /// </summary>
 public sealed class LanguagePackageRegistrationIdentity
 {
+    private readonly object? _implementation;
+
     internal LanguagePackageRegistrationIdentity(
         LanguagePackageDescriptor descriptor,
-        Type? implementationType)
+        object? implementation)
     {
         PackageId = descriptor.Id;
         PackageVersion = descriptor.Version;
         ManifestSha256 = LanguageFeatureManifestSerializer.ComputeSha256(descriptor);
-        ImplementationType = implementationType;
+        _implementation = implementation;
+        ImplementationType = implementation?.GetType();
     }
 
     public LanguagePackageId PackageId { get; }
@@ -33,5 +36,15 @@ public sealed class LanguagePackageRegistrationIdentity
     {
         ArgumentNullException.ThrowIfNull(expectedType);
         return ImplementationType == expectedType;
+    }
+
+    /// <summary>
+    /// Returns true only for the exact implementation object registered in the package registry.
+    /// Matching package id/version, manifest or implementation type is intentionally insufficient.
+    /// </summary>
+    public bool IsImplementation(object expectedImplementation)
+    {
+        ArgumentNullException.ThrowIfNull(expectedImplementation);
+        return ReferenceEquals(_implementation, expectedImplementation);
     }
 }
