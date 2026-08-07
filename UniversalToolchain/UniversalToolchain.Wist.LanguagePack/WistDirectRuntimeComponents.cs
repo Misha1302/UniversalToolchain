@@ -15,6 +15,7 @@ using IntermediateRepresentationAbstractions;
 using Microsoft.Extensions.DependencyInjection;
 using NativeMathModule;
 using UniversalToolchain.Language.Abstractions;
+using UniversalToolchain.LanguageSdk;
 using UniversalToolchain.Runtime;
 using UniversalToolchain.Ssa.Abstractions;
 using UniversalToolchain.Ssa.Optimization;
@@ -32,16 +33,24 @@ internal static class WistDirectBackendArtifactKinds
         WistArtifactKinds.CilArtifactContract.ValueTypeIdentity!);
 }
 
-internal sealed class WistInterpreterArtifact(CompilationInput input, IAbstractIR air)
+internal sealed class WistInterpreterArtifact(
+    CompilationInput input,
+    IAbstractIR air,
+    SsaRouteReport? ssaReport = null)
 {
     public CompilationInput Input { get; } = input ?? throw new ArgumentNullException(nameof(input));
     public IAbstractIR Air { get; } = air ?? throw new ArgumentNullException(nameof(air));
+    public SsaRouteReport? SsaReport { get; } = ssaReport;
 }
 
-internal sealed class WistCilArtifact(CompilationInput input, CilCompilationOutput compilation)
+internal sealed class WistCilArtifact(
+    CompilationInput input,
+    CilCompilationOutput compilation,
+    SsaRouteReport? ssaReport = null)
 {
     public CompilationInput Input { get; } = input ?? throw new ArgumentNullException(nameof(input));
     public CilCompilationOutput Compilation { get; } = compilation ?? throw new ArgumentNullException(nameof(compilation));
+    public SsaRouteReport? SsaReport { get; } = ssaReport;
 }
 
 internal static class WistDirectRuntimeComponents
@@ -126,7 +135,7 @@ internal static class WistDirectRuntimeComponents
             DirectTraits,
             context => new WistDirectOptimizerTransformer(
                 component.ContributionId,
-                () => CreateOptimizer(component.ContributionId, context.Plan),
+                context.Plan,
                 DirectTraits));
 
     private static LanguageTransformerRegistration CreateInterpreterBackendRegistration() =>
@@ -139,7 +148,7 @@ internal static class WistDirectRuntimeComponents
                 WistContributionIds.InterpreterBackend,
                 WistDirectArtifactKinds.Air,
                 WistDirectBackendArtifactKinds.Interpreter,
-                static (source, _) => new WistInterpreterArtifact(source.Input, source.Air),
+                static (source, _) => new WistInterpreterArtifact(source.Input, source.Air, source.SsaReport),
                 DirectTraits));
 
     private static LanguageExecutorRegistration CreateInterpreterExecutorRegistration() =>
@@ -172,7 +181,8 @@ internal static class WistDirectRuntimeComponents
                 WistDirectBackendArtifactKinds.Cil,
                 static (source, _) => new WistCilArtifact(
                     source.Input,
-                    new AbstractMethodsCompilerImpl().Compile(source.Air, source.Input)),
+                    new AbstractMethodsCompilerImpl().Compile(source.Air, source.Input),
+                    source.SsaReport),
                 DirectTraits));
 
     private static LanguageExecutorRegistration CreateCilExecutorRegistration() =>
@@ -193,7 +203,10 @@ internal static class WistDirectRuntimeComponents
                 },
                 DirectTraits));
 
-    private static IAirOptimizer CreateOptimizer(LanguageContributionId contributionId, UniversalToolchain.LanguageSdk.LanguagePlan plan)
+    private static IAirOptimizer CreateOptimizer(
+        LanguageContributionId contributionId,
+        LanguagePlan plan,
+        ISsaRouteReportSink? ssaReportSink = null)
     {
         if (contributionId == WistContributionIds.ArithmeticOptimizer)
             return new ArithmeticOptimizerModule();
@@ -211,7 +224,7 @@ internal static class WistDirectRuntimeComponents
         {
             return new SsaOptimizerModule(
                 WistSsaPlanPolicy.CreateRuntimeOptions(plan),
-                NullSsaRouteReportSink.Instance,
+                ssaReportSink ?? NullSsaRouteReportSink.Instance,
                 []);
         }
 
@@ -246,7 +259,7 @@ internal static class WistDirectRuntimeComponents
 
     private sealed class WistDirectOptimizerTransformer(
         LanguageContributionId contributionId,
-        Func<IAirOptimizer> optimizerFactory,
+        LanguagePlan plan,
         LanguageRuntimeComponentTraits traits) : ILanguageArtifactTransformer<WistAirArtifact, WistAirArtifact>
     {
         public LanguageContributionId ContributionId { get; } = contributionId;
@@ -259,13 +272,34 @@ internal static class WistDirectRuntimeComponents
             ArgumentNullException.ThrowIfNull(source);
             ArgumentNullException.ThrowIfNull(context);
 
-            var optimizer = optimizerFactory() ?? throw new InvalidOperationException(
-                $"Wist optimizer factory '{ContributionId.Value}' returned null.");
-            optimizer.InitMethodsTranslator(CreateMethodsTranslator());
-            optimizer.InitIntrinsicCapabilityContext(CreateCapabilityContext(context.Request.Backend));
-            var result = optimizer.Optimize(source.Air)
-                ?? throw new InvalidOperationException($"Wist optimizer '{ContributionId.Value}' returned null AIR.");
-            return new WistAirArtifact(source.Input, result);
+            SsaRouteReport? report = source.SsaReport;
+            IAirOptimizer optimizer;
+            SsaRouteReportCollector.Capture? capture = null;
+            if (ContributionId == WistContributionIds.SsaOptimizer)
+            {
+                var collector = new SsaRouteReportCollector();
+                capture = collector.BeginCapture();
+                optimizer = CreateOptimizer(ContributionId, plan, collector);
+            }
+            else
+            {
+                optimizer = CreateOptimizer(ContributionId, plan);
+            }
+
+            try
+            {
+                optimizer.InitMethodsTranslator(CreateMethodsTranslator());
+                optimizer.InitIntrinsicCapabilityContext(CreateCapabilityContext(context.Request.Backend));
+                var result = optimizer.Optimize(source.Air)
+                    ?? throw new InvalidOperationException($"Wist optimizer '{ContributionId.Value}' returned null AIR.");
+                if (capture?.Report is { } published)
+                    report = published;
+                return new WistAirArtifact(source.Input, result, report);
+            }
+            finally
+            {
+                capture?.Dispose();
+            }
         }
     }
 
