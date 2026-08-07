@@ -54,10 +54,10 @@ Parallel graph traversal and shared compilation are the default. `--jobs`, `--se
 | `Tests` | 540 | 0 | 0 |
 | `UniversalToolchain.Modules.Tests` | 292 | 0 | 0 |
 | `UniversalToolchain.Dialects.Tests` | 642 | 0 | 0 |
-| `UniversalToolchain.LanguageSdk.Tests` | 133 | 0 | 0 |
+| `UniversalToolchain.LanguageSdk.Tests` | 141 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.Tests` | 41 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
-| **Total** | **1,658** | **0** | **0** |
+| **Total** | **1,666** | **0** | **0** |
 
 The deterministic runtime-boundary candidate adds resolver, loader, hostile-preload, fresh-process, package-metadata and boundary-regression coverage over merged baseline `f13ad1310856e5618e1c3042c447ca543e0f3125`. The exact manifest is owned by `eng/test-counts.json`; provider-backed exact-head results for the active migration stage are recorded against their commit/run identities rather than inferred from an older local TRX snapshot.
 
