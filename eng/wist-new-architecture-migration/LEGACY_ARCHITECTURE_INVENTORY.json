@@ -3,7 +3,7 @@
   "baselineRevision": "8b8b91b80f45ff10680b3a8ee826ebf436df1381",
   "classification": "S00_BASELINE_ONLY",
   "owners": [
-    {"symbol":"DialectBuildPlan","deletionStage":"S11","definition":"UniversalToolchain/UniversalToolchain.Dialects.Core/DialectBuildPlan.cs"},
+    {"symbol":"DialectBuildPlan","deletionStage":"S11","definition":"UniversalToolchain/UniversalToolchain.Dialects.Abstractions/DialectBuildPlan.cs"},
     {"symbol":"SelectedRuntimePlan","deletionStage":"S11","definition":"UniversalToolchain/UniversalToolchain.Dialects.Integration/SelectedRuntimePlan.cs"},
     {"symbol":"SelectedRuntimePlanResolver","deletionStage":"S11","definition":"UniversalToolchain/UniversalToolchain.Dialects.Integration/SelectedRuntimePlanResolver.cs"},
     {"symbol":"ToolchainCompositionWorkflow","deletionStage":"S11","definition":"UniversalToolchain/UniversalToolchain.Dialects.Integration/ToolchainCompositionWorkflow.cs"},
