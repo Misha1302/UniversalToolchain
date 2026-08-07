@@ -45,7 +45,7 @@
       },
       {
         "symbol": "SelectedRuntimePlan",
-        "path": "UniversalToolchain/UniversalToolchain.Dialects.Core",
+        "path": "UniversalToolchain/UniversalToolchain.Dialects.Integration/SelectedRuntimePlan.cs",
         "state": "ACTIVE_PRODUCTION"
       }
     ],
@@ -87,53 +87,41 @@
     "aggregateRunId": 31133770339,
     "aggregateStatus": "success",
     "requiredWorkflowRuns": [
-      {
-        "name": "Contract Experiment",
-        "runId": 31133769467,
-        "status": "success"
-      },
-      {
-        "name": ".NET CI",
-        "runId": 31133768861,
-        "status": "success"
-      },
-      {
-        "name": "Published Wist package smoke",
-        "runId": 31133768751,
-        "status": "success"
-      },
-      {
-        "name": "Docs Check",
-        "runId": 31133768622,
-        "status": "success"
-      },
-      {
-        "name": "Benchmark Smoke",
-        "runId": 31133768753,
-        "status": "success"
-      },
-      {
-        "name": "Wist Rollout Sample Smoke",
-        "runId": 31133768729,
-        "status": "success"
-      },
-      {
-        "name": "UniversalToolchain validation",
-        "runId": 31133768594,
-        "status": "success"
-      }
+      { "name": "Contract Experiment", "runId": 31133769467, "status": "success" },
+      { "name": ".NET CI", "runId": 31133768861, "status": "success" },
+      { "name": "Published Wist package smoke", "runId": 31133768751, "status": "success" },
+      { "name": "Docs Check", "runId": 31133768622, "status": "success" },
+      { "name": "Benchmark Smoke", "runId": 31133768753, "status": "success" },
+      { "name": "Wist Rollout Sample Smoke", "runId": 31133768729, "status": "success" },
+      { "name": "UniversalToolchain validation", "runId": 31133768594, "status": "success" }
     ],
     "scope": "PRE_MIGRATION_BASELINE_ONLY"
   },
   "testBaseline": {
-    "factualCoreRunRevision": "dee5e1b6d1f701dfcf9f5e3fcc1bd805759193b1",
-    "corePassed": 540,
-    "coreFailed": 0,
-    "coreSkipped": 0,
+    "factualCanonicalRunRevision": "76f890be426b52ddc3c2151de0a23dd24d44f7e3",
+    "factualCanonicalRunId": 31184390583,
+    "counts": {
+      "corePassed": 540,
+      "modulesPassed": 292,
+      "dialectsPassed": 642,
+      "languageSdkPassed": 82,
+      "planFuzzPassed": 41,
+      "isolatedPassed": 10,
+      "totalPassed": 1607,
+      "failed": 0,
+      "skipped": 0
+    },
     "strictCountContract": "eng/test-counts.json",
-    "strictCoreExpected": 540,
-    "strictTotalExpected": 1603,
-    "note": "The preceding canonical run executed 540 Core tests successfully and exposed the prior expected count 534 as stale; the strict count guard was updated from that factual run rather than weakened or removed."
+    "strictTotalExpected": 1607,
+    "testContractMutants": [
+      "test-contract-total-drift",
+      "trx-deleted-test-count",
+      "trx-skipped-outcome",
+      "per-entry-timeout"
+    ],
+    "testContractMutantsResult": "KILLED",
+    "runConclusion": "FAIL_AFTER_TESTS_ON_STALE_DOCUMENTATION_STATUS",
+    "note": "The canonical run completed the exact 1,607-test contract and its count/timeout mutants successfully. The workflow then failed only because VERIFICATION.md, docs/evidence/current-verification.md and RELEASE_NOTES_RU.md still stated the former 1,597-test snapshot. Those evidence documents are synchronized in the next S00 candidate; no test gate was weakened."
   },
   "performanceBaseline": {
     "originalMasterHotPathRunId": 31133768753,
@@ -148,60 +136,21 @@
       "job": "Dry; IterationCount=1; LaunchCount=1"
     },
     "architectureBoundaries": [
-      {
-        "method": "WistEngine_CreateAndDispose",
-        "meanMilliseconds": 410.98,
-        "allocatedKilobytesPerOperation": 1997.75
-      },
-      {
-        "method": "LanguagePlan_Compile",
-        "meanMilliseconds": 82.25,
-        "allocatedKilobytesPerOperation": 127.37
-      }
+      { "method": "WistEngine_CreateAndDispose", "meanMilliseconds": 410.98, "allocatedKilobytesPerOperation": 1997.75 },
+      { "method": "LanguagePlan_Compile", "meanMilliseconds": 82.25, "allocatedKilobytesPerOperation": 127.37 }
     ],
     "compilationBoundaries": [
-      {
-        "method": "Wist_CompileOnExistingEngine",
-        "meanMilliseconds": 456.7947,
-        "allocatedBytesPerOperation": 980840
-      },
-      {
-        "method": "Wist_CreateEngineAndCompile",
-        "meanMilliseconds": 517.1142,
-        "allocatedBytesPerOperation": 3855744
-      }
+      { "method": "Wist_CompileOnExistingEngine", "meanMilliseconds": 456.7947, "allocatedBytesPerOperation": 980840 },
+      { "method": "Wist_CreateEngineAndCompile", "meanMilliseconds": 517.1142, "allocatedBytesPerOperation": 3855744 }
     ],
     "convenienceEvaluate": [
-      {
-        "method": "Wist_CompilerEvaluateWithDictionary",
-        "meanMilliseconds": 25.866136,
-        "allocatedBytesPerOperation": 952461
-      },
-      {
-        "method": "Wist_InterpreterEvaluateWithDictionary",
-        "meanMilliseconds": 25.509506,
-        "allocatedBytesPerOperation": 896384
-      }
+      { "method": "Wist_CompilerEvaluateWithDictionary", "meanMilliseconds": 25.866136, "allocatedBytesPerOperation": 952461 },
+      { "method": "Wist_InterpreterEvaluateWithDictionary", "meanMilliseconds": 25.509506, "allocatedBytesPerOperation": 896384 }
     ],
     "hotCompiledInvocation": [
-      {
-        "workload": "SimpleArithmetic",
-        "method": "Wist_CompiledDelegate",
-        "meanNanoseconds": 2459.7,
-        "allocatedBytesPerOperation": 1328
-      },
-      {
-        "workload": "DeepArithmetic",
-        "method": "Wist_CompiledDelegate",
-        "meanNanoseconds": 2394.5,
-        "allocatedBytesPerOperation": 1328
-      },
-      {
-        "workload": "RepeatedSubexpressions",
-        "method": "Wist_CompiledDelegate",
-        "meanNanoseconds": 2355.8,
-        "allocatedBytesPerOperation": 1328
-      }
+      { "workload": "SimpleArithmetic", "method": "Wist_CompiledDelegate", "meanNanoseconds": 2459.7, "allocatedBytesPerOperation": 1328 },
+      { "workload": "DeepArithmetic", "method": "Wist_CompiledDelegate", "meanNanoseconds": 2394.5, "allocatedBytesPerOperation": 1328 },
+      { "workload": "RepeatedSubexpressions", "method": "Wist_CompiledDelegate", "meanNanoseconds": 2355.8, "allocatedBytesPerOperation": 1328 }
     ],
     "gaps": [],
     "note": "Dry N=1 results are reproducible smoke evidence for detecting large/order-of-magnitude regressions only; they are not a +/-5% CI gate. Final post-migration comparison remains required at S15."
@@ -215,7 +164,7 @@
       "Package Compatibility Review",
       "Benchmark Smoke"
     ],
-    "state": "WAITING_FOR_EXACT_HEAD_AFTER_LAST_S00_MUTATION"
+    "state": "WAITING_FOR_EXACT_HEAD_AFTER_DOCUMENTATION_SYNC"
   },
   "evidencePolicy": "Any production or evidence-contract mutation invalidates green evidence for the affected scope; S00 becomes VERIFIED only after required checks pass on the exact final S00 revision."
 }
