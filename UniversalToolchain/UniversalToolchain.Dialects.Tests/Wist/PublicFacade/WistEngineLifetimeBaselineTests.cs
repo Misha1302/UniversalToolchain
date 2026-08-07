@@ -39,9 +39,12 @@ public sealed class WistEngineLifetimeBaselineTests
     public void CompiledDelegate_RemainsUsableAfterOriginatingEngineIsDisposed()
     {
         var wist = WistEngine.CreateRestrictedArithmetic();
-        var program = wist.Compile<Func<double, double>>("value + 1", "value");
+        var program = wist.Compile<Func<double, double, double>>(
+            "price * 0.9 + fee",
+            "price",
+            "fee");
         wist.Dispose();
 
-        Assert.That(program.CompiledDelegate(41), Is.EqualTo(42).Within(1e-9));
+        Assert.That(program.CompiledDelegate(100.0d, 5.0d), Is.EqualTo(95.0d).Within(1e-9));
     }
 }
