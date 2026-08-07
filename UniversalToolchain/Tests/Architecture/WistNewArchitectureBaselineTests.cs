@@ -77,21 +77,24 @@ public sealed class WistNewArchitectureBaselineTests
     [Test]
     public void S00_ArchitectureInventory_DetectsKnownActiveLegacyOwners()
     {
+        using var inventory = ReadMigrationJson("LEGACY_ARCHITECTURE_INVENTORY.json");
+        var expected = inventory.RootElement.GetProperty("owners")
+            .EnumerateArray()
+            .Select(static owner => owner.GetProperty("symbol").GetString()!)
+            .ToArray();
         var root = FindRepositoryRoot();
-        var expected = new[]
-        {
-            "BasicCoreImpl",
-            "WistDialectExecutionWorkflow",
-            "WistDialectPlanFactory",
-            "SelectedRuntimePlan"
-        };
         var productionSources = EnumerateProductionSources(root).ToArray();
         var missing = expected
             .Where(symbol => !productionSources.Any(path => File.ReadAllText(path).Contains(symbol, StringComparison.Ordinal)))
             .ToArray();
 
-        Assert.That(missing, Is.Empty,
-            "S00 is a baseline inventory: these legacy owners are intentionally expected to exist before their owning deletion stages.");
+        Assert.Multiple(() =>
+        {
+            Assert.That(expected, Has.Length.EqualTo(7));
+            Assert.That(expected.Distinct(StringComparer.Ordinal), Has.Count.EqualTo(expected.Length));
+            Assert.That(missing, Is.Empty,
+                "S00 is a baseline inventory: these legacy owners are intentionally expected to exist before their owning deletion stages.");
+        });
     }
 
     [Test]
