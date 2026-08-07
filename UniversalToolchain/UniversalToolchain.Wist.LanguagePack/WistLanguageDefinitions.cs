@@ -26,8 +26,7 @@ public static class WistLanguageDefinitions
                  WistFeatureIds.Numbers, WistFeatureIds.Scopes, WistFeatureIds.SemicolonAsNewLine,
                  WistFeatureIds.Variables, WistFeatureIds.Whitespaces,
                  WistFeatureIds.BooleanOptimization, WistFeatureIds.ComparisonIntrinsicOptimization],
-                ["cil", "interpreter"], "trusted", AllowHostInterop: true,
-                CapabilityValues: ["unsafe-interop"]),
+                ["cil", "interpreter"], WistInternalFeatureIds.TrustedSecurity, AllowHostInterop: true),
             [FullDefaultNativeId] = new(
                 [WistFeatureIds.BooleanLogic, WistFeatureIds.Comments, WistFeatureIds.Comparisons,
                  WistFeatureIds.ConditionalControlFlow, WistFeatureIds.CSharpInterop, WistFeatureIds.Equality,
@@ -36,8 +35,7 @@ public static class WistLanguageDefinitions
                  WistFeatureIds.Whitespaces, WistFeatureIds.ArithmeticOptimization, WistFeatureIds.BooleanOptimization,
                  WistFeatureIds.ComparisonIntrinsicOptimization, WistFeatureIds.EGraphOptimization,
                  WistFeatureIds.NativeCilOptimization, WistFeatureIds.NativeTypesOptimization],
-                ["cil", "interpreter"], "trusted", AllowHostInterop: true,
-                CapabilityValues: ["unsafe-interop"]),
+                ["cil", "interpreter"], WistInternalFeatureIds.TrustedSecurity, AllowHostInterop: true),
             [FunctionCallsSafeMathId] = new(
                 [WistFeatureIds.Arithmetic, WistFeatureIds.BooleanLogic, WistFeatureIds.Comments,
                  WistFeatureIds.Comparisons, WistFeatureIds.ConditionalControlFlow, WistFeatureIds.Equality,
@@ -45,36 +43,36 @@ public static class WistLanguageDefinitions
                  WistFeatureIds.SafeMathFunctions, WistFeatureIds.Scopes, WistFeatureIds.SemicolonAsNewLine,
                  WistFeatureIds.Variables, WistFeatureIds.Whitespaces, WistFeatureIds.BooleanOptimization,
                  WistFeatureIds.ComparisonIntrinsicOptimization],
-                ["cil", "interpreter"], "restricted", AllowHostInterop: false),
+                ["cil", "interpreter"], WistInternalFeatureIds.RestrictedSecurity, AllowHostInterop: false),
             [MinimalArithmeticId] = new(
                 [WistFeatureIds.Arithmetic, WistFeatureIds.Numbers, WistFeatureIds.Scopes, WistFeatureIds.Whitespaces],
-                ["interpreter"], "restricted", AllowHostInterop: false),
+                ["interpreter"], WistInternalFeatureIds.RestrictedSecurity, AllowHostInterop: false),
             [MinimalArithmeticGroupedId] = new(
                 [WistFeatureIds.Arithmetic, WistFeatureIds.Numbers, WistFeatureIds.Scopes, WistFeatureIds.Whitespaces],
-                ["interpreter"], "restricted", AllowHostInterop: false),
+                ["interpreter"], WistInternalFeatureIds.RestrictedSecurity, AllowHostInterop: false),
             [MinimalArithmeticNativeId] = new(
                 [WistFeatureIds.NativeTypes, WistFeatureIds.Numbers, WistFeatureIds.Scopes, WistFeatureIds.Whitespaces,
                  WistFeatureIds.ArithmeticOptimization, WistFeatureIds.EGraphOptimization,
                  WistFeatureIds.NativeCilOptimization, WistFeatureIds.NativeTypesOptimization],
-                ["cil"], "restricted", AllowHostInterop: false),
+                ["cil"], WistInternalFeatureIds.RestrictedSecurity, AllowHostInterop: false),
             [PricingRestrictedId] = new(
                 [WistFeatureIds.Identifiers, WistFeatureIds.NativeTypes, WistFeatureIds.Scopes,
                  WistFeatureIds.Variables, WistFeatureIds.Whitespaces, WistFeatureIds.ArithmeticOptimization,
                  WistFeatureIds.EGraphOptimization, WistFeatureIds.NativeCilOptimization,
                  WistFeatureIds.NativeTypesOptimization],
-                ["cil", "interpreter"], "restricted", AllowHostInterop: false),
+                ["cil", "interpreter"], WistInternalFeatureIds.RestrictedSecurity, AllowHostInterop: false),
             [SsaId] = new(
                 [WistFeatureIds.Identifiers, WistFeatureIds.NativeTypes, WistFeatureIds.Scopes,
                  WistFeatureIds.Variables, WistFeatureIds.Whitespaces, WistFeatureIds.ArithmeticOptimization,
                  WistFeatureIds.EGraphOptimization, WistFeatureIds.NativeCilOptimization,
                  WistFeatureIds.NativeTypesOptimization, WistFeatureIds.SsaOptimization],
-                ["cil", "interpreter"], "restricted", AllowHostInterop: false),
+                ["cil", "interpreter"], WistInternalFeatureIds.RestrictedSecurity, AllowHostInterop: false),
             [CompositionRestrictedId] = new(
                 [WistFeatureIds.Arithmetic, WistFeatureIds.BooleanLogic, WistFeatureIds.Comments,
                  WistFeatureIds.Comparisons, WistFeatureIds.ConditionalControlFlow, WistFeatureIds.Equality,
                  WistFeatureIds.Numbers, WistFeatureIds.Scopes, WistFeatureIds.Whitespaces],
-                ["interpreter"], "restricted", AllowHostInterop: false,
-                CapabilityValues: ["composition-restricted"])
+                ["interpreter"], WistInternalFeatureIds.RestrictedSecurity, AllowHostInterop: false,
+                CompositionRestricted: true)
         };
 
     public static IReadOnlyCollection<string> PresetIds => Presets.Keys.OrderBy(static x => x, StringComparer.Ordinal).ToArray();
@@ -108,14 +106,14 @@ public static class WistLanguageDefinitions
             .UseRuntimeProvider(WistLanguageFeaturePackage.RuntimeProviderId, WistLanguageFeaturePackage.PackageVersion)
             .WithRuntimePolicy(new LanguageRuntimePolicy(AllowHostInterop: preset.AllowHostInterop))
             .WithMetadata("wist.preset", canonicalPresetId)
-            .WithMetadata("wist.security", preset.Security);
+            .UseFeature(preset.SecurityFeature);
 
+        if (preset.CompositionRestricted)
+            builder.UseFeature(WistInternalFeatureIds.CompositionRestricted);
         foreach (var feature in preset.Features)
             builder.UseFeature(feature);
         foreach (var backend in preset.Backends)
             builder.EnableBackend(backend);
-        foreach (var capability in preset.Capabilities)
-            builder.WithMetadata($"wist.capability.{capability}", bool.TrueString);
 
         definition = builder.Build();
         return true;
@@ -124,10 +122,7 @@ public static class WistLanguageDefinitions
     private sealed record PresetDefinition(
         IReadOnlyList<LanguageFeatureId> Features,
         IReadOnlyList<string> Backends,
-        string Security,
+        LanguageFeatureId SecurityFeature,
         bool AllowHostInterop,
-        IReadOnlyList<string>? CapabilityValues = null)
-    {
-        public IReadOnlyList<string> Capabilities { get; } = CapabilityValues ?? [];
-    }
+        bool CompositionRestricted = false);
 }
