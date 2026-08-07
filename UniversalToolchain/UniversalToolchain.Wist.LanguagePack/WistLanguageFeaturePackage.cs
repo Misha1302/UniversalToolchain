@@ -1,5 +1,6 @@
 using UniversalToolchain.FeatureSdk;
 using UniversalToolchain.Language.Abstractions;
+using UniversalToolchain.Runtime;
 
 namespace UniversalToolchain.Wist.LanguagePack;
 
@@ -88,17 +89,23 @@ public static class WistArtifactKinds
     public static LanguageArtifactContract CilArtifactContract { get; } = new(CilArtifact, "wist.cil-artifact/v1");
 }
 
-public sealed class WistLanguageFeaturePackage : ILanguageExtensionPackage
+public sealed class WistLanguageFeaturePackage : ILanguageExtensionPackage, ILanguageRouteComponentSource
 {
     private static readonly BackendId Cil = new("cil");
     private static readonly BackendId Interpreter = new("interpreter");
     private static readonly BackendId[] BothBackends = [Cil, Interpreter];
     private static readonly LanguageSlotId SyntaxToBytecodeSlot = new("wist.lowering.syntax-to-bytecode");
     private static readonly LanguageSlotId BytecodeToAirSlot = new("wist.lowering.bytecode-to-air");
+    private readonly LanguageRouteComponentCatalog _components;
 
     public static LanguagePackageId PackageId { get; } = new("UniversalToolchain.Wist.LanguagePack");
     public static LanguageVersion PackageVersion { get; } = new(WistLanguagePackIdentity.Version);
     public static LanguageRuntimeProviderId RuntimeProviderId { get; } = new(PackageId.Value);
+
+    public WistLanguageFeaturePackage()
+    {
+        _components = WistDirectRuntimeComponents.CreateCatalog(this);
+    }
 
     public LanguagePackageDescriptor Descriptor { get; } = new(
         PackageId,
@@ -112,6 +119,8 @@ public sealed class WistLanguageFeaturePackage : ILanguageExtensionPackage
             ["positioning"] = "Typed Wist authoring package over the canonical Wist runtime with shipped-preset parity"
         },
         CreateContributions());
+
+    LanguageRouteComponentCatalog ILanguageRouteComponentSource.Components => _components;
 
     private static IReadOnlyList<LanguageFeatureDescriptor> CreateFeatures() =>
     [
