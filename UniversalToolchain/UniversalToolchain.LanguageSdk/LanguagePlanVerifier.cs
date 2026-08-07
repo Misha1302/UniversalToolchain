@@ -114,18 +114,34 @@ public static class LanguagePlanVerifier
             Fail($"Backend '{backend.Value}' must have exactly one verified contribution owner, but {backendOwners.Length} are present.");
 
         var backendOwner = backendOwners[0].Contribution;
+        var runtimeInputs = plan.RuntimeProviderContribution!.Contribution.RuntimeInputContracts;
+        var hasRuntimeInput = runtimeInputs.TryGetValue(backend, out var runtimeInputContract);
         LanguageArtifactContract expectedTarget;
         if (backendOwner.BackendInputContract is { } backendInputContract)
         {
             expectedTarget = backendInputContract;
+            if (hasRuntimeInput && runtimeInputContract != backendInputContract)
+            {
+                Fail(
+                    $"Backend '{backend.Value}' execution contract '{backendInputContract}' conflicts with runtime-provider input '{runtimeInputContract}'.");
+            }
         }
-        else if (plan.RuntimeProviderContribution?.Contribution.RuntimeInputContracts.TryGetValue(backend, out expectedTarget) != true)
+        else if (hasRuntimeInput)
+        {
+            expectedTarget = runtimeInputContract;
+        }
+        else
         {
             Fail($"Backend '{backend.Value}' has no verified execution input contract.");
             return;
         }
         if (!LanguageArtifactRoute.ContractsConnect(route.TargetContract, expectedTarget))
             Fail($"Route for backend '{backend.Value}' does not end at the verified backend execution contract.");
+        if (route.Steps[^1].ContributionId != backendOwner.Id)
+        {
+            Fail(
+                $"Route for backend '{backend.Value}' does not terminate with its selected backend contribution '{backendOwner.Id.Value}'.");
+        }
 
         var stepIndexes = new Dictionary<LanguageContributionId, int>();
         for (var index = 0; index < route.Steps.Count; index++)
