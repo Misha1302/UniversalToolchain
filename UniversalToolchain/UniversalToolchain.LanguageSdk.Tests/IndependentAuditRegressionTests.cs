@@ -37,7 +37,7 @@ public sealed class IndependentAuditRegressionTests
     }
 
     [Test]
-    public void ShippedInteropPresets_DeclareUnsafeInteropCapability()
+    public void ShippedInteropPresets_DeclareTypedHostInteropPolicyWithoutBehavioralMetadata()
     {
         foreach (var presetId in new[]
                  {
@@ -46,10 +46,13 @@ public sealed class IndependentAuditRegressionTests
                  })
         {
             var definition = WistLanguageDefinitions.Create(presetId);
-            Assert.That(
-                definition.Metadata.GetValueOrDefault("wist.capability.unsafe-interop"),
-                Is.EqualTo(bool.TrueString),
-                presetId);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(definition.RuntimePolicy.AllowHostInterop, Is.True, presetId);
+                Assert.That(definition.SelectedFeatures, Does.Contain(WistFeatureIds.CSharpInterop), presetId);
+                Assert.That(definition.Metadata.Keys, Does.Not.Contain("wist.capability.unsafe-interop"), presetId);
+            });
         }
     }
 
