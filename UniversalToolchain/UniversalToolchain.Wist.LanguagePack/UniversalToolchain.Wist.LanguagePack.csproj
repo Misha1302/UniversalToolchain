@@ -23,6 +23,8 @@
     <ProjectReference Include="..\UniversalToolchain.FeatureSdk\UniversalToolchain.FeatureSdk.csproj" />
     <ProjectReference Include="..\UniversalToolchain.Runtime\UniversalToolchain.Runtime.csproj" />
     <ProjectReference Include="..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\BasicCore\BasicCore.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\IntermediateRepresentationAbstractions\IntermediateRepresentationAbstractions.csproj" PrivateAssets="all" />
     <ProjectReference Include="$(FeatureManifestEmitterProjectPath)"
                       ReferenceOutputAssembly="false"
                       Private="false"
