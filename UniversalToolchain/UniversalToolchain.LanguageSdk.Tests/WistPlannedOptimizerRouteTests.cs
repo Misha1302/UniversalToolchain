@@ -88,6 +88,71 @@ public sealed class WistPlannedOptimizerRouteTests
     }
 
     [Test]
+    public void TypedSsaPolicyMatrix_ProjectsAllModesForBothBackends()
+    {
+        var compiler = CreateCompiler();
+        var cases = new[]
+        {
+            (Feature: WistSsaPolicyFeatureIds.Disabled, Runtime: "Off", SelectSsa: false),
+            (Feature: WistSsaPolicyFeatureIds.Prefer, Runtime: "Prefer", SelectSsa: true),
+            (Feature: WistSsaPolicyFeatureIds.Require, Runtime: "Require", SelectSsa: true),
+            (Feature: WistSsaPolicyFeatureIds.Debug, Runtime: "Debug", SelectSsa: true)
+        };
+
+        foreach (var item in cases)
+        {
+            LanguageDefinition definition;
+            if (item.SelectSsa)
+            {
+                definition = CreateSsaDefinition($"wist.ssa.matrix.{item.Runtime}", item.Feature);
+            }
+            else
+            {
+                definition = LanguageDefinitionBuilder
+                    .Create($"wist.ssa.matrix.{item.Runtime}", WistLanguageFeaturePackage.PackageVersion.Value)
+                    .UseRuntimeProvider(WistLanguageFeaturePackage.RuntimeProviderId, WistLanguageFeaturePackage.PackageVersion)
+                    .UseFeature(WistFeatureIds.Arithmetic)
+                    .UseFeature(item.Feature)
+                    .EnableBackend(Interpreter)
+                    .EnableBackend(Cil)
+                    .Build();
+            }
+
+            var plan = compiler.Compile(definition).GetRequiredPlan();
+            var options = WistSsaPlanPolicy.CreateRuntimeOptions(plan);
+
+            Assert.Multiple(() =>
+            {
+                Assert.That(options.Policy.ToString(), Is.EqualTo(item.Runtime), item.Runtime);
+                Assert.That(plan.Routes.ContainsKey(Interpreter), Is.True, item.Runtime);
+                Assert.That(plan.Routes.ContainsKey(Cil), Is.True, item.Runtime);
+                Assert.That(plan.Contributions.Any(static contribution =>
+                    contribution.Contribution.Id == WistContributionIds.SsaOptimizer), Is.EqualTo(item.SelectSsa), item.Runtime);
+                Assert.That(options.Diagnostics.ToString(), Is.EqualTo(item.Runtime == "Debug" ? "Verbose" : "Default"), item.Runtime);
+            });
+        }
+    }
+
+    [Test]
+    public void SsaRequire_RuntimeExecutesSameProgramOnInterpreterAndCil()
+    {
+        var plan = CreateCompiler().Compile(WistLanguageDefinitions.Create(WistLanguageDefinitions.SsaId)).GetRequiredPlan();
+        using var runtime = LanguageRuntime.Create(
+            plan,
+            new LanguageRuntimeProviderRegistry().AddProvider(new WistLanguageRuntimeProvider()));
+
+        var interpreter = runtime.Run(new LanguageExecutionRequest("2 + 3", Interpreter)).Value;
+        var cil = runtime.Run(new LanguageExecutionRequest("2 + 3", Cil)).Value;
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(interpreter?.ToString(), Is.EqualTo("5"));
+            Assert.That(cil?.ToString(), Is.EqualTo("5"));
+            Assert.That(cil?.GetType(), Is.EqualTo(interpreter?.GetType()));
+        });
+    }
+
+    [Test]
     public void ConflictingTypedSsaPolicies_FailDuringPlanning()
     {
         var definition = CreateSsaDefinition(
