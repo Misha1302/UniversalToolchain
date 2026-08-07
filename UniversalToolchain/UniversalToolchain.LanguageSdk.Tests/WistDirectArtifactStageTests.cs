@@ -139,9 +139,9 @@ public sealed class WistDirectArtifactStageTests
         Assert.Multiple(() =>
         {
             Assert.That(instances, Has.Count.EqualTo(24));
-            Assert.That(instances.Distinct(), Has.Count.EqualTo(24));
-            Assert.That(artifacts.SelectMany(static artifact => artifact.Modules.OfType<SessionMarkerModule>()), Has.Count.EqualTo(24));
-            Assert.That(artifacts.Select(static artifact => artifact.Root), Has.All.Not.Null);
+            Assert.That(instances.Distinct().Count(), Is.EqualTo(24));
+            Assert.That(artifacts.SelectMany(static artifact => artifact.Modules.OfType<SessionMarkerModule>()).Count(), Is.EqualTo(24));
+            Assert.That(artifacts.All(static artifact => artifact.Root != null), Is.True);
         });
     }
 
@@ -163,8 +163,8 @@ public sealed class WistDirectArtifactStageTests
         Assert.Multiple(() =>
         {
             Assert.That(types.Select(static type => type.Assembly).Distinct(), Is.EqualTo(new[] { assembly }));
-            Assert.That(types, Has.All.Matches<Type>(static type => !type.IsPublic));
-            Assert.That(types.Select(static type => type.Namespace), Has.All.EqualTo(typeof(WistLanguageFeaturePackage).Namespace));
+            Assert.That(types.All(static type => !type.IsPublic), Is.True);
+            Assert.That(types.All(type => type.Namespace == typeof(WistLanguageFeaturePackage).Namespace), Is.True);
             Assert.That(assembly, Is.Not.EqualTo(typeof(BasicCoreImpl<>).Assembly));
         });
     }
