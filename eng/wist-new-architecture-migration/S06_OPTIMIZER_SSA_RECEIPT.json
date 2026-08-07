@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "stage": "S06",
+  "status": "candidate-awaiting-exact-head-ci",
+  "dependsOn": {
+    "stage": "S05",
+    "verifiedRevision": "f0e524dea25fdf1f6804359c16113863a9d948c5"
+  },
+  "objective": "Make selected Wist optimizers explicit planner-owned AIR passes and compile SSA policy into LanguagePlan instead of a runtime overlay.",
+  "implementation": {
+    "optimizerContract": "wist.air/v1 -> wist.air/v1",
+    "optimizerOrderOwner": "LanguageCompiler pass insertion using contribution Order/Before/After",
+    "ssaPolicyAuthority": "typed Wist policy feature selected in LanguageDefinition and retained in LanguagePlan",
+    "shippedSsaPolicy": "Require",
+    "shippedNonSsaPolicy": "Off",
+    "runtimeProjection": "WistLanguageRuntimeProvider derives SsaRuntimeExecutionOptions from LanguagePlan",
+    "opaqueMetadataBehavioralAuthority": false,
+    "runtimeProfileReorderingAuthority": false
+  },
+  "guards": [
+    "all selected optimizer contributions are explicit AIR passes",
+    "Interpreter and CIL routes contain identical planned optimizer order before backend lowering",
+    "all shipped presets select exactly one typed SSA policy",
+    "Disabled/Prefer/Require/Debug project deterministically for both backends",
+    "conflicting SSA policies fail during planning",
+    "SSA policy changes plan identity without changing pass selection",
+    "opaque wist.ssa.policy metadata cannot override typed policy",
+    "Require executes the same representative program on Interpreter and CIL"
+  ],
+  "testManifestCandidate": {
+    "total": 1646,
+    "languageSdk": 121
+  },
+  "providerEvidence": null,
+  "note": "This receipt intentionally does not claim S06 verification until all required workflows succeed on the exact candidate revision."
+}
