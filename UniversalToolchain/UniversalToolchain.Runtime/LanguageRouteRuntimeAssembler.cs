@@ -15,10 +15,35 @@ public static class LanguageRouteRuntimeAssembler
         LanguagePlan plan,
         IEnumerable<ILanguageRouteComponentSource> componentSources)
     {
+        var registry = CreateRegistry(plan, componentSources);
+        return CreateProvider(plan, registry);
+    }
+
+    internal static LanguageRouteRuntimeProvider CreateProvider(
+        LanguagePlan plan,
+        LanguageRouteComponentRegistry registry)
+    {
+        ArgumentNullException.ThrowIfNull(plan);
+        ArgumentNullException.ThrowIfNull(registry);
+        if (plan.RuntimeProvider == null || plan.RuntimeProviderContribution == null)
+            throw new InvalidOperationException("A planning-only language plan cannot assemble a route runtime provider.");
+
+        return new LanguageRouteRuntimeProvider(
+            plan.RuntimeProvider.ProviderId,
+            plan.RuntimeProvider.Version,
+            plan.Definition.ToolchainApiVersion,
+            plan.RuntimeProviderContribution.Contribution.Id,
+            registry);
+    }
+
+    internal static LanguageRouteComponentRegistry CreateRegistry(
+        LanguagePlan plan,
+        IEnumerable<ILanguageRouteComponentSource> componentSources)
+    {
         ArgumentNullException.ThrowIfNull(plan);
         ArgumentNullException.ThrowIfNull(componentSources);
         if (plan.RuntimeProvider == null || plan.RuntimeProviderContribution == null)
-            throw new InvalidOperationException("A planning-only language plan cannot assemble a route runtime provider.");
+            throw new InvalidOperationException("A planning-only language plan cannot assemble route runtime components.");
 
         var sources = componentSources.ToArray();
         if (sources.Any(static source => source == null))
@@ -41,14 +66,7 @@ public static class LanguageRouteRuntimeAssembler
             .ToDictionary(static source => (source.Descriptor.Id, source.Descriptor.Version));
 
         ValidateSourceBindings(plan, selectedSources);
-        var registry = BindSelectedImplementations(plan, selectedSources);
-
-        return new LanguageRouteRuntimeProvider(
-            plan.RuntimeProvider.ProviderId,
-            plan.RuntimeProvider.Version,
-            plan.Definition.ToolchainApiVersion,
-            plan.RuntimeProviderContribution.Contribution.Id,
-            registry);
+        return BindSelectedImplementations(plan, selectedSources);
     }
 
     private static void ValidateSourceBindings(
