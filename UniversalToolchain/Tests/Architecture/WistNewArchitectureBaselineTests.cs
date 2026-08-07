@@ -17,7 +17,7 @@ public sealed class WistNewArchitectureBaselineTests
         Assert.Multiple(() =>
         {
             Assert.That(entries, Has.Length.EqualTo(50));
-            Assert.That(entries.Distinct(StringComparer.Ordinal), Has.Count.EqualTo(50));
+            Assert.That(entries.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(50));
             Assert.That(entries, Is.EqualTo(Enumerable.Range(1, 50).Select(static index => $"INV-{index:000}")));
         });
     }
@@ -91,7 +91,7 @@ public sealed class WistNewArchitectureBaselineTests
         Assert.Multiple(() =>
         {
             Assert.That(expected, Has.Length.EqualTo(7));
-            Assert.That(expected.Distinct(StringComparer.Ordinal), Has.Count.EqualTo(expected.Length));
+            Assert.That(expected.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(expected.Length));
             Assert.That(missing, Is.Empty,
                 "S00 is a baseline inventory: these legacy owners are intentionally expected to exist before their owning deletion stages.");
         });
