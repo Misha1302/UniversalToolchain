@@ -62,26 +62,13 @@ internal sealed class PreparedExecutionBuilder<TCompilationOutput>(
         var intrinsicCapabilitySet = (intrinsicCapabilitySetFactory ?? new CompilerIntrinsicCapabilitySetFactory()).Create(compiler);
         var optimizerCapabilityContext = new OptimizerIntrinsicCapabilityContext(intrinsicCapabilitySet);
 
-        var targetCode = modules.Aggregate(input.SourceText, (current, module) => module.ProcessText(current));
-        modules.ForEach(module => module.InitLexer(lexer));
-        var lexemes = lexer.Lexemize(targetCode);
-
-        var targetLexemes = modules.Aggregate(lexemes, (current, module) => module.ProcessLexemes(current));
-        modules.ForEach(module => module.InitParser(parser));
-        var astRoot = parser.Parse(targetLexemes);
-
-        var targetRoot = modules.Aggregate(astRoot, (current, module) => module.ProcessAst(current));
-        var bindingRules = modules.SelectMany(static module => module.GetAstBindingRules()).ToArray();
-        var boundRoot = new Binder(input.ExternalBindings, bindingRules).Bind(targetRoot);
-
-        modules.ForEach(module => module.InitAstTranslator(astTranslator, modules));
-        var bytecode = astTranslator.Translate(boundRoot);
-
-        var targetBytecode = modules.Aggregate(bytecode, (current, module) => module.ProcessBytecode(current));
+        var boundRoot = CanonicalArtifactStages.ParseAndBind(input, lexer, parser, modules);
+        var targetBytecode = CanonicalArtifactStages.LowerToBytecode(boundRoot, astTranslator, modules);
         NotifyAfterBytecode(input, targetBytecode);
+
         optimizers.ForEach(module => module.InitMethodsTranslator(methodsTranslator));
         optimizers.ForEach(module => module.InitIntrinsicCapabilityContext(optimizerCapabilityContext));
-        var air = methodsTranslator.Translate(targetBytecode);
+        var air = CanonicalArtifactStages.LowerToAir(targetBytecode, methodsTranslator);
         NotifyAfterAir(input, air, compiler.SupportedIntrinsics);
 
         var irPipeline = new AirOnlyIrPipelineExecutor(optimizers);
