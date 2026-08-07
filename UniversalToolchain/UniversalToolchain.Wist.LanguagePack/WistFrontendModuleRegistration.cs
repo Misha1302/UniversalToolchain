@@ -30,10 +30,28 @@ public sealed class WistFrontendModuleRegistration
 }
 
 /// <summary>
-/// Wist-specific extension seam for packages that contribute frontend modules.
-/// Implementations are bound to exact package registrations captured by LanguagePlan.
+/// Wist-specific extension seam that binds frontend registrations to the exact feature-package object
+/// used during LanguagePlan compilation.
 /// </summary>
-public interface IWistFrontendModuleSource : ILanguageFeaturePackage
+public interface IWistFrontendModuleSource
 {
+    ILanguageFeaturePackage Package { get; }
     IReadOnlyList<WistFrontendModuleRegistration> FrontendModules { get; }
+}
+
+public sealed class WistFrontendModuleSource : IWistFrontendModuleSource
+{
+    public WistFrontendModuleSource(
+        ILanguageFeaturePackage package,
+        IEnumerable<WistFrontendModuleRegistration> frontendModules)
+    {
+        Package = package ?? throw new ArgumentNullException(nameof(package));
+        ArgumentNullException.ThrowIfNull(frontendModules);
+        FrontendModules = frontendModules.ToArray();
+        if (FrontendModules.Any(static registration => registration == null))
+            throw new ArgumentException("Wist frontend registrations must not contain null entries.", nameof(frontendModules));
+    }
+
+    public ILanguageFeaturePackage Package { get; }
+    public IReadOnlyList<WistFrontendModuleRegistration> FrontendModules { get; }
 }
