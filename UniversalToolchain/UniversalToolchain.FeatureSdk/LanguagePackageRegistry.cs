@@ -41,7 +41,7 @@ public sealed class LanguagePackageRegistry
         {
             var sameImplementation = implementation == null
                 ? existing.Identity.ImplementationType == null
-                : existing.Identity.IsImplementation(implementation);
+                : existing.Identity.IsImplementationInstance(implementation);
             if (existing.Descriptor.Version == package.Version &&
                 ReferenceEquals(existing.Descriptor, package) &&
                 sameImplementation)
