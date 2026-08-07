@@ -21,17 +21,19 @@ The canonical non-release GitHub Actions gate runs:
 
 It restores and builds both `UniversalToolchain/Wist.sln` and `UniversalToolchain/PlanFuzz.sln`, builds runnable samples, executes the shared test manifest and runs architecture/documentation-status guards. Parallel project-graph traversal and shared compilation are the defaults; serial/no-build-server modes remain explicit diagnostics.
 
+The documentation guard requires this table to mirror the repository's current exact test manifest even though the workflow receipt immediately below remains tied to the pinned snapshot commit.
+
 | Project | Passed | Failed | Skipped |
 |---|---:|---:|---:|
 | `Tests` | 540 | 0 | 0 |
 | `UniversalToolchain.Modules.Tests` | 292 | 0 | 0 |
 | `UniversalToolchain.Dialects.Tests` | 642 | 0 | 0 |
-| `UniversalToolchain.LanguageSdk.Tests` | 93 | 0 | 0 |
+| `UniversalToolchain.LanguageSdk.Tests` | 99 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.Tests` | 41 | 0 | 0 |
 | `UniversalToolchain.PlanFuzz.IntegrationTests` | 10 | 0 | 0 |
-| **Total** | **1,618** | **0** | **0** |
+| **Total** | **1,624** | **0** | **0** |
 
-The exact manifest belongs to `eng/test-counts.json`. `.NET CI` run `31049607823` completed the canonical entrypoint for the pinned commit. Because the entrypoint enforces the manifest, a stale or partial test total cannot satisfy that gate.
+The exact manifest belongs to `eng/test-counts.json`. `.NET CI` run `31049607823` completed the canonical entrypoint for the pinned commit. Because the entrypoint enforces the manifest associated with its own revision, a stale or partial test total cannot satisfy that gate.
 
 ## Workflow set
 
