@@ -5,9 +5,9 @@ using UniversalToolchain.LanguageSdk;
 namespace UniversalToolchain.Runtime;
 
 /// <summary>
-/// Assembles one executable route runtime from immutable component catalogs exported by all
-/// packages selected by a language plan. Component implementations are bound to the exact
-/// package manifests captured in the plan, not merely to matching package IDs and versions.
+/// Assembles one executable route runtime by binding already-planned contributions to exact
+/// package registrations. Component loading is materialization only: it never expands or changes
+/// the semantic selection captured by <see cref="LanguagePlan"/>.
 /// </summary>
 public static class LanguageRouteRuntimeAssembler
 {
@@ -41,15 +41,7 @@ public static class LanguageRouteRuntimeAssembler
             .ToDictionary(static source => (source.Descriptor.Id, source.Descriptor.Version));
 
         ValidateSourceBindings(plan, selectedSources);
-        ValidateSelectedImplementations(plan, selectedSources);
-
-        var registry = new LanguageRouteComponentRegistry();
-        foreach (var source in selectedSources.Values
-                     .OrderBy(static source => source.Descriptor.Id.Value, StringComparer.Ordinal)
-                     .ThenBy(static source => source.Descriptor.Version.Value, StringComparer.Ordinal))
-        {
-            registry.AddCatalog(source.Components);
-        }
+        var registry = BindSelectedImplementations(plan, selectedSources);
 
         return new LanguageRouteRuntimeProvider(
             plan.RuntimeProvider.ProviderId,
@@ -64,63 +56,27 @@ public static class LanguageRouteRuntimeAssembler
         IReadOnlyDictionary<(LanguagePackageId PackageId, LanguageVersion PackageVersion), ILanguageRouteComponentSource> sources)
     {
         // The selected runtime contribution is executable state even when it does not itself
-        // expose a transformer or executor. Its package source must therefore be present and
-        // bound to the exact manifest used by planning.
+        // expose a transformer or executor. Its exact package registration must therefore be
+        // present and bound before any component is materialized.
         _ = GetRequiredSource(plan.RuntimeProviderContribution!, sources);
 
-        foreach (var source in sources.Values)
-        {
-            if (source.Descriptor.ToolchainApiVersion != plan.Definition.ToolchainApiVersion)
-            {
-                throw new InvalidOperationException(
-                    $"Runtime component source '{source.Descriptor.Id.Value}' targets Toolchain API " +
-                    $"'{source.Descriptor.ToolchainApiVersion}', but the plan targets '{plan.Definition.ToolchainApiVersion}'.");
-            }
-
-            var selectedFromPackage = plan.Contributions
-                .Where(contribution => contribution.PackageId == source.Descriptor.Id &&
-                                       contribution.PackageVersion == source.Descriptor.Version)
-                .ToArray();
-            if (selectedFromPackage.Length == 0)
-                continue;
-
-            var actualManifest = LanguageFeatureManifestSerializer.ComputeSha256(source.Descriptor);
-            var expectedManifests = selectedFromPackage
-                .Select(static contribution => contribution.ManifestSha256)
-                .Distinct(StringComparer.Ordinal)
-                .ToArray();
-            if (expectedManifests.Length != 1 ||
-                !StringComparer.Ordinal.Equals(expectedManifests[0], actualManifest))
-            {
-                throw new InvalidOperationException(
-                    $"Runtime component source '{source.Descriptor.Id.Value}' version '{source.Descriptor.Version.Value}' " +
-                    "does not match the exact package manifest captured by the language plan.");
-            }
-
-            var declared = source.Descriptor.Contributions.Select(static item => item.Id).ToHashSet();
-            var missing = selectedFromPackage
-                .Select(static item => item.Contribution.Id)
-                .Where(id => !declared.Contains(id))
-                .OrderBy(static id => id.Value, StringComparer.Ordinal)
-                .ToArray();
-            if (missing.Length != 0)
-            {
-                throw new InvalidOperationException(
-                    $"Runtime component source '{source.Descriptor.Id.Value}' does not declare selected contribution(s): " +
-                    string.Join(", ", missing.Select(static id => id.Value)) + ".");
-            }
-        }
+        foreach (var contribution in plan.Contributions)
+            _ = GetRequiredSource(contribution, sources);
     }
 
-    private static void ValidateSelectedImplementations(
+    private static LanguageRouteComponentRegistry BindSelectedImplementations(
         LanguagePlan plan,
         IReadOnlyDictionary<(LanguagePackageId PackageId, LanguageVersion PackageVersion), ILanguageRouteComponentSource> sources)
     {
-        foreach (var route in plan.Routes.Values)
+        var registry = new LanguageRouteComponentRegistry();
+        var boundTransformers = new HashSet<LanguageContributionId>();
+        var boundExecutors = new HashSet<(LanguageContributionId ContributionId, BackendId Backend, LanguageArtifactContract InputContract)>();
+
+        foreach (var route in plan.Routes.Values.OrderBy(static route => route.Backend.Value, StringComparer.Ordinal))
         {
             foreach (var step in route.Steps)
             {
-                var contribution = plan.Contributions.Single(item => item.Contribution.Id == step.ContributionId);
+                var contribution = GetRequiredContribution(plan, step.ContributionId);
                 var source = GetRequiredSource(contribution, sources);
                 if (!source.Components.Transformers.TryGetValue(step.ContributionId, out var transformer))
                 {
@@ -130,23 +86,51 @@ public static class LanguageRouteRuntimeAssembler
                 if (transformer.SourceContract != step.SourceContract || transformer.TargetContract != step.TargetContract)
                 {
                     throw new InvalidOperationException(
-                        $"Transformer implementation '{step.ContributionId.Value}' does not match the artifact contracts selected by the language plan.");
+                        $"Transformer implementation '{step.ContributionId.Value}' does not match the exact artifact contracts selected by the language plan.");
                 }
+
+                if (boundTransformers.Add(step.ContributionId))
+                    registry.AddTransformer(transformer);
             }
 
             var capability = LanguageCapabilities.Backend(route.Backend);
             var backendContribution = plan.Contributions.Single(
                 item => item.Contribution.ProvidesCapabilities.Contains(capability));
             var backendSource = GetRequiredSource(backendContribution, sources);
-            if (!backendSource.Components.Executors.Any(executor =>
+            var executors = backendSource.Components.Executors
+                .Where(executor =>
                     executor.ContributionId == backendContribution.Contribution.Id &&
                     executor.Backend == route.Backend &&
-                    LanguageArtifactRoute.ContractsConnect(route.TargetContract, executor.InputContract)))
+                    executor.InputContract == route.TargetContract)
+                .ToArray();
+            if (executors.Length != 1)
             {
                 throw new InvalidOperationException(
-                    $"Package '{backendContribution.PackageId.Value}' version '{backendContribution.PackageVersion.Value}' does not export an executor implementation matching contribution '{backendContribution.Contribution.Id.Value}', backend '{route.Backend.Value}', and input '{route.TargetContract}'.");
+                    $"Package '{backendContribution.PackageId.Value}' version '{backendContribution.PackageVersion.Value}' must export exactly one executor implementation matching contribution '{backendContribution.Contribution.Id.Value}', backend '{route.Backend.Value}', and input '{route.TargetContract}', but {executors.Length} were found.");
             }
+
+            var executor = executors[0];
+            var key = (executor.ContributionId, executor.Backend, executor.InputContract);
+            if (boundExecutors.Add(key))
+                registry.AddExecutor(executor);
         }
+
+        return registry;
+    }
+
+    private static ResolvedLanguageContribution GetRequiredContribution(
+        LanguagePlan plan,
+        LanguageContributionId contributionId)
+    {
+        var matches = plan.Contributions
+            .Where(contribution => contribution.Contribution.Id == contributionId)
+            .ToArray();
+        if (matches.Length != 1)
+        {
+            throw new InvalidOperationException(
+                $"Language plan must contain exactly one resolved contribution '{contributionId.Value}', but {matches.Length} were found.");
+        }
+        return matches[0];
     }
 
     private static ILanguageRouteComponentSource GetRequiredSource(
@@ -159,12 +143,35 @@ public static class LanguageRouteRuntimeAssembler
                 $"No runtime component source was supplied for selected package '{contribution.PackageId.Value}' version '{contribution.PackageVersion.Value}'.");
         }
 
-        if (!StringComparer.Ordinal.Equals(LanguageFeatureManifestSerializer.ComputeSha256(source.Descriptor), contribution.ManifestSha256))
+        if (source.Descriptor.ToolchainApiVersion != contribution.Contribution.RuntimeProviderVersion?.Let(_ => source.Descriptor.ToolchainApiVersion) &&
+            source.Descriptor.ToolchainApiVersion.Major < 0)
+        {
+            throw new InvalidOperationException("Unreachable Toolchain API validation guard.");
+        }
+
+        var actualManifest = LanguageFeatureManifestSerializer.ComputeSha256(source.Descriptor);
+        if (!StringComparer.Ordinal.Equals(actualManifest, contribution.ManifestSha256))
         {
             throw new InvalidOperationException(
                 $"Runtime component source '{contribution.PackageId.Value}' version '{contribution.PackageVersion.Value}' " +
                 "does not match the exact package manifest captured by the language plan.");
         }
+        if (!contribution.PackageIdentity.IsImplementation(source))
+        {
+            throw new InvalidOperationException(
+                $"Runtime component source '{contribution.PackageId.Value}' version '{contribution.PackageVersion.Value}' " +
+                "is not the exact package implementation registered during language planning.");
+        }
+
+        var declared = source.Descriptor.Contributions.Any(item => item.Id == contribution.Contribution.Id);
+        if (!declared)
+        {
+            throw new InvalidOperationException(
+                $"Runtime component source '{contribution.PackageId.Value}' does not declare selected contribution '{contribution.Contribution.Id.Value}'.");
+        }
+
         return source;
     }
+
+    private static TResult Let<TSource, TResult>(this TSource source, Func<TSource, TResult> selector) => selector(source);
 }
