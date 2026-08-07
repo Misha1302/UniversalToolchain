@@ -26,22 +26,25 @@ public sealed class LanguagePackageRegistry
     public LanguagePackageRegistry AddPackage(ILanguageFeaturePackage package)
     {
         ArgumentNullException.ThrowIfNull(package);
-        return AddPackage(package.Descriptor, package.GetType());
+        return AddPackage(package.Descriptor, package);
     }
 
     public LanguagePackageRegistry AddPackage(LanguagePackageDescriptor package)
     {
         ArgumentNullException.ThrowIfNull(package);
-        return AddPackage(package, implementationType: null);
+        return AddPackage(package, implementation: null);
     }
 
-    private LanguagePackageRegistry AddPackage(LanguagePackageDescriptor package, Type? implementationType)
+    private LanguagePackageRegistry AddPackage(LanguagePackageDescriptor package, object? implementation)
     {
         if (_packages.TryGetValue(package.Id, out var existing))
         {
+            var sameImplementation = implementation == null
+                ? existing.Identity.ImplementationType == null
+                : existing.Identity.IsImplementation(implementation);
             if (existing.Descriptor.Version == package.Version &&
                 ReferenceEquals(existing.Descriptor, package) &&
-                existing.Identity.ImplementationType == implementationType)
+                sameImplementation)
             {
                 return this;
             }
@@ -69,7 +72,7 @@ public sealed class LanguagePackageRegistry
 
         var registration = new RegisteredPackage(
             package,
-            new LanguagePackageRegistrationIdentity(package, implementationType));
+            new LanguagePackageRegistrationIdentity(package, implementation));
         _packages.Add(package.Id, registration);
         foreach (var feature in package.Features)
             _features.Add(feature.Id, (registration, feature));
