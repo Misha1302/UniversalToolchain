@@ -55,11 +55,17 @@ public static class LanguageRouteRuntimeAssembler
         LanguagePlan plan,
         IReadOnlyDictionary<(LanguagePackageId PackageId, LanguageVersion PackageVersion), ILanguageRouteComponentSource> sources)
     {
-        // The selected runtime contribution is executable state even when it does not itself
-        // expose a transformer or executor. Its exact package registration must therefore be
-        // present and bound before any component is materialized.
-        _ = GetRequiredSource(plan.RuntimeProviderContribution!, sources);
+        foreach (var source in sources.Values)
+        {
+            if (source.Descriptor.ToolchainApiVersion != plan.Definition.ToolchainApiVersion)
+            {
+                throw new InvalidOperationException(
+                    $"Runtime component source '{source.Descriptor.Id.Value}' targets Toolchain API " +
+                    $"'{source.Descriptor.ToolchainApiVersion}', but the plan targets '{plan.Definition.ToolchainApiVersion}'.");
+            }
+        }
 
+        _ = GetRequiredSource(plan.RuntimeProviderContribution!, sources);
         foreach (var contribution in plan.Contributions)
             _ = GetRequiredSource(contribution, sources);
     }
@@ -143,12 +149,6 @@ public static class LanguageRouteRuntimeAssembler
                 $"No runtime component source was supplied for selected package '{contribution.PackageId.Value}' version '{contribution.PackageVersion.Value}'.");
         }
 
-        if (source.Descriptor.ToolchainApiVersion != contribution.Contribution.RuntimeProviderVersion?.Let(_ => source.Descriptor.ToolchainApiVersion) &&
-            source.Descriptor.ToolchainApiVersion.Major < 0)
-        {
-            throw new InvalidOperationException("Unreachable Toolchain API validation guard.");
-        }
-
         var actualManifest = LanguageFeatureManifestSerializer.ComputeSha256(source.Descriptor);
         if (!StringComparer.Ordinal.Equals(actualManifest, contribution.ManifestSha256))
         {
@@ -162,9 +162,7 @@ public static class LanguageRouteRuntimeAssembler
                 $"Runtime component source '{contribution.PackageId.Value}' version '{contribution.PackageVersion.Value}' " +
                 "is not the exact package implementation registered during language planning.");
         }
-
-        var declared = source.Descriptor.Contributions.Any(item => item.Id == contribution.Contribution.Id);
-        if (!declared)
+        if (!source.Descriptor.Contributions.Any(item => item.Id == contribution.Contribution.Id))
         {
             throw new InvalidOperationException(
                 $"Runtime component source '{contribution.PackageId.Value}' does not declare selected contribution '{contribution.Contribution.Id.Value}'.");
@@ -172,6 +170,4 @@ public static class LanguageRouteRuntimeAssembler
 
         return source;
     }
-
-    private static TResult Let<TSource, TResult>(this TSource source, Func<TSource, TResult> selector) => selector(source);
 }
