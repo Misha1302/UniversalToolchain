@@ -1,0 +1,166 @@
+{
+  "schemaVersion": 1,
+  "stage": "S00",
+  "status": "IN_PROGRESS",
+  "migrationContract": {
+    "archive": "Wist2-new-architecture-migration-spec-2026-08-07.2.tar.gz",
+    "sha256": "95124cc7f40aa4e6b3934954ea1ac6586386dcd9cd7c01aeb0b68ac041372695",
+    "archiveBaselineRevision": "2e6c5762601fb480c36a57d0028c06dfce2ec680",
+    "validator": "VALIDATION=PASS stages=16 invariants=50 mutants=47 files=44"
+  },
+  "repository": {
+    "baselineRevision": "8b8b91b80f45ff10680b3a8ee826ebf436df1381",
+    "branch": "migration/languageplan-single-runtime-20260807",
+    "baselineDriftFromContract": {
+      "aheadBy": 5,
+      "behindBy": 0,
+      "changedFiles": [
+        ".github/workflows/ci-aggregate.yml",
+        ".github/workflows/dotnet-ci.yml",
+        "Tools/test-build-topology-runtime.py",
+        "UniversalToolchain/UniversalToolchain.Wist.LanguagePack/UniversalToolchain.Wist.LanguagePack.csproj"
+      ]
+    }
+  },
+  "observedArchitecture": {
+    "canonicalGenericPlanner": "UniversalToolchain.LanguageSdk.LanguageCompiler",
+    "canonicalGenericPlan": "UniversalToolchain.LanguageSdk.LanguagePlan",
+    "genericRuntime": "UniversalToolchain.Runtime.LanguageRuntime",
+    "legacyProductionOwners": [
+      {
+        "symbol": "BasicCoreImpl",
+        "path": "UniversalToolchain/BasicCore/Core/BasicCoreImpl.cs",
+        "state": "BUILDABLE_PRODUCTION"
+      },
+      {
+        "symbol": "WistDialectExecutionWorkflow",
+        "path": "UniversalToolchain/UniversalToolchain.Dialects.Wist/WistDialectExecutionWorkflow.cs",
+        "state": "ACTIVE_PRODUCTION"
+      },
+      {
+        "symbol": "WistDialectPlanFactory",
+        "path": "UniversalToolchain/UniversalToolchain.Wist.LanguagePack/WistDialectPlanFactory.cs",
+        "state": "ACTIVE_PRODUCTION"
+      },
+      {
+        "symbol": "SelectedRuntimePlan",
+        "path": "UniversalToolchain/UniversalToolchain.Dialects.Core",
+        "state": "ACTIVE_PRODUCTION"
+      }
+    ],
+    "confirmedDebts": [
+      {
+        "id": "S01-bytecode-hidden",
+        "evidence": "WistLanguageFeaturePackage declares SourceText -> SyntaxTree -> AIR -> backend artifact; no distinct Bytecode artifact contract."
+      },
+      {
+        "id": "S09-engine-legacy-entry",
+        "evidence": "WistEngine.Create resolves WistDialectExecutionWorkflow and creates WistDialectExecutionHost directly."
+      },
+      {
+        "id": "S08-compile-legacy-bypass",
+        "evidence": "WistEngine.Compile<TDelegate> delegates to WistBackendDelegateCompiler over WistDialectExecutionHost."
+      },
+      {
+        "id": "INV-041-value-boundary",
+        "evidence": "WistRuntimeBoundary identifies NumbersModule and NumbersModule.Core.RealNumberImpl by assembly/type name and reflection."
+      },
+      {
+        "id": "INV-042-metadata-control",
+        "evidence": "WistLanguageRuntimeProvider reads wist.capability.unsafe-interop from LanguageDefinition.Metadata for runtime policy."
+      },
+      {
+        "id": "S11-second-planner",
+        "evidence": "WistLanguageRuntimeProvider.CreateSession creates WistDialectPlanFactory output and calls WistDialectExecutionWorkflow.ComposeDefinition, then compares SelectedRuntimePlan."
+      }
+    ]
+  },
+  "publicApi": {
+    "baselineContract": "eng/wist-api-baseline.json",
+    "snapshot": "eng/wist-public-api-baseline.txt",
+    "surfaceGate": "UniversalToolchain/UniversalToolchain.Dialects.Tests/Wist/PublicFacade/WistPublicApiBaselineTests.cs",
+    "behaviorContract": "eng/wist-new-architecture-migration/WIST_PUBLIC_BEHAVIOR_MATRIX.json"
+  },
+  "baselineCi": {
+    "aggregateRunId": 31133770339,
+    "aggregateStatus": "success",
+    "requiredWorkflowRuns": [
+      {
+        "name": "Contract Experiment",
+        "runId": 31133769467,
+        "status": "success"
+      },
+      {
+        "name": ".NET CI",
+        "runId": 31133768861,
+        "status": "success"
+      },
+      {
+        "name": "Published Wist package smoke",
+        "runId": 31133768751,
+        "status": "success"
+      },
+      {
+        "name": "Docs Check",
+        "runId": 31133768622,
+        "status": "success"
+      },
+      {
+        "name": "Benchmark Smoke",
+        "runId": 31133768753,
+        "status": "success"
+      },
+      {
+        "name": "Wist Rollout Sample Smoke",
+        "runId": 31133768729,
+        "status": "success"
+      },
+      {
+        "name": "UniversalToolchain validation",
+        "runId": 31133768594,
+        "status": "success"
+      }
+    ],
+    "scope": "PRE_MIGRATION_BASELINE_ONLY"
+  },
+  "performanceBaseline": {
+    "runId": 31133768753,
+    "environment": {
+      "os": "Ubuntu 24.04.4 LTS",
+      "cpu": "Intel Xeon Platinum 8573C",
+      "dotnetSdk": "10.0.302",
+      "runtime": ".NET 10.0.10",
+      "benchmarkDotNet": "0.15.6",
+      "job": "Dry; IterationCount=1; LaunchCount=1"
+    },
+    "formulaHotPath": [
+      {
+        "workload": "SimpleArithmetic",
+        "method": "Wist_CompiledDelegate",
+        "meanNanoseconds": 1715.4,
+        "allocatedBytesPerOperation": 1328
+      },
+      {
+        "workload": "DeepArithmetic",
+        "method": "Wist_CompiledDelegate",
+        "meanNanoseconds": 1686.2,
+        "allocatedBytesPerOperation": 1328
+      },
+      {
+        "workload": "RepeatedSubexpressions",
+        "method": "Wist_CompiledDelegate",
+        "meanNanoseconds": 1685.0,
+        "allocatedBytesPerOperation": 1328
+      }
+    ],
+    "gaps": [
+      "engine/runtime creation reproducible measurement",
+      "LanguagePlan compilation reproducible measurement",
+      "formula/backend artifact compilation reproducible measurement",
+      "convenience Evaluate reproducible measurement",
+      "boundary-specific allocations beyond FormulaHotPath dry run"
+    ],
+    "note": "Dry N=1 results are smoke evidence only and are not a small-delta performance gate."
+  },
+  "evidencePolicy": "Any production mutation invalidates green evidence for the affected scope; stages become VERIFIED only on their exact final revision."
+}
