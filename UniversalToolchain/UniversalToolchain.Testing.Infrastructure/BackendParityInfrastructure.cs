@@ -1,12 +1,18 @@
-using UniversalToolchain.Wist;
+using UniversalToolchain.Language.Abstractions;
+using UniversalToolchain.LanguageSdk;
+using UniversalToolchain.Runtime;
+using UniversalToolchain.Wist.LanguagePack;
 
 namespace UniversalToolchain.Testing.Infrastructure;
 
 /// <summary>
-/// Unified parity infrastructure over the canonical Wist public facade.
+/// Unified parity infrastructure over one canonical Wist LanguagePlan and LanguageRuntime.
 /// </summary>
 public static class BackendParityInfrastructure
 {
+    private static readonly BackendId Cil = new("cil");
+    private static readonly BackendId Interpreter = new("interpreter");
+
     public static (BackendExecutionResult CompilerResult, BackendExecutionResult InterpreterResult) RunBoth(
         string dialectText,
         string code)
@@ -14,16 +20,23 @@ public static class BackendParityInfrastructure
         ArgumentException.ThrowIfNullOrWhiteSpace(dialectText);
         ArgumentNullException.ThrowIfNull(code);
 
+        var package = new WistLanguageFeaturePackage();
+        var definition = CreateDualBackendDefinition(dialectText);
+        var plan = new LanguageCompiler(new LanguagePackageRegistry().AddPackage(package))
+            .Compile(definition)
+            .GetRequiredPlan();
+        using var runtime = LanguageRuntime.Create(
+            plan,
+            new LanguageRuntimeProviderRegistry().AddProvider(new WistLanguageRuntimeProvider()));
+
         var compilerResult = ExecuteSafely(() =>
-        {
-            using var engine = CreateEngine(dialectText, "cil");
-            return engine.Evaluate<object?>(code);
-        });
+            WistRuntimeValueAdapterActivation.Normalize(
+                plan,
+                runtime.Run(new LanguageExecutionRequest(code, Cil)).Value));
         var interpreterResult = ExecuteSafely(() =>
-        {
-            using var engine = CreateEngine(dialectText, "interpreter");
-            return engine.Evaluate<object?>(code);
-        });
+            WistRuntimeValueAdapterActivation.Normalize(
+                plan,
+                runtime.Run(new LanguageExecutionRequest(code, Interpreter)).Value));
         return (compilerResult, interpreterResult);
     }
 
@@ -63,11 +76,44 @@ public static class BackendParityInfrastructure
         }
     }
 
-    private static WistEngine CreateEngine(string dialectText, string backend)
+    private static LanguageDefinition CreateDualBackendDefinition(string dialectText)
     {
-        var options = WistEngineOptions.FromDialectText(dialectText, "backend-parity-inline");
-        options.BackendId = backend;
-        return WistEngine.Create(options);
+        const string sourceName = "backend-parity-inline";
+        var cilDefinition = WistFacadeLanguageDefinitionFactory.FromDialectText(
+            dialectText,
+            sourceName,
+            Cil.Value,
+            WistFacadeSsaPolicy.Disabled);
+        var interpreterDefinition = WistFacadeLanguageDefinitionFactory.FromDialectText(
+            dialectText,
+            sourceName,
+            Interpreter.Value,
+            WistFacadeSsaPolicy.Disabled);
+
+        if (!cilDefinition.SelectedFeatures.SequenceEqual(interpreterDefinition.SelectedFeatures) ||
+            cilDefinition.RuntimePolicy != interpreterDefinition.RuntimePolicy ||
+            !cilDefinition.ContributionOrderConstraints.SequenceEqual(interpreterDefinition.ContributionOrderConstraints) ||
+            !cilDefinition.IntrinsicPolicy.SequenceEqual(interpreterDefinition.IntrinsicPolicy))
+        {
+            throw new InvalidOperationException(
+                "Wist parity translation produced backend-dependent language semantics before canonical planning.");
+        }
+
+        return new LanguageDefinition(
+            cilDefinition.Id,
+            cilDefinition.Version,
+            cilDefinition.ToolchainApiVersion,
+            cilDefinition.SelectedFeatures,
+            [Cil, Interpreter],
+            cilDefinition.RuntimeProvider,
+            cilDefinition.RuntimePolicy,
+            cilDefinition.Metadata,
+            cilDefinition.SlotOverrides,
+            cilDefinition.CapabilityProviders,
+            cilDefinition.ExcludedContributions,
+            cilDefinition.EntryArtifact,
+            cilDefinition.ContributionOrderConstraints,
+            cilDefinition.IntrinsicPolicy);
     }
 }
 
