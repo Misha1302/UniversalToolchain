@@ -5,6 +5,15 @@ namespace UniversalToolchain.Dialects.Frontend;
 public sealed class DialectOrderDirective
 {
     public DialectOrderDirective(DialectOrderDirectiveKind kind, string sourceModule, string targetModule)
+        : this(kind, sourceModule, targetModule, null)
+    {
+    }
+
+    public DialectOrderDirective(
+        DialectOrderDirectiveKind kind,
+        string sourceModule,
+        string targetModule,
+        DialectSourceLocation? sourceLocation)
     {
         if (string.IsNullOrWhiteSpace(sourceModule))
             Thrower.Argument(nameof(sourceModule), "Source module must not be empty.");
@@ -15,6 +24,7 @@ public sealed class DialectOrderDirective
         Kind = kind;
         SourceModule = sourceModule;
         TargetModule = targetModule;
+        SourceLocation = sourceLocation;
     }
 
     public DialectOrderDirectiveKind Kind { get; }
@@ -30,4 +40,6 @@ public sealed class DialectOrderDirective
     public string SourceModule { get; }
 
     public string TargetModule { get; }
+
+    public DialectSourceLocation? SourceLocation { get; }
 }
