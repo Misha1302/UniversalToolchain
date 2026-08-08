@@ -20,6 +20,18 @@ internal static class WistSsaPolicyFeatureIds
     ];
 }
 
+internal static class WistSsaDiagnosticFeatureIds
+{
+    public static LanguageFeatureId Summary { get; } = new("wist.policy.ssa-diagnostics.summary");
+    public static LanguageFeatureId Detailed { get; } = new("wist.policy.ssa-diagnostics.detailed");
+
+    public static IReadOnlyList<LanguageFeatureId> All { get; } =
+    [
+        Summary,
+        Detailed
+    ];
+}
+
 internal static class WistSsaPlanPolicy
 {
     public static SsaRoutePolicy GetRequiredPolicy(LanguagePlan plan)
@@ -33,8 +45,6 @@ internal static class WistSsaPlanPolicy
         var selectsSsaPass = plan.Contributions.Any(static contribution =>
             contribution.Contribution.Id == WistContributionIds.SsaOptimizer);
 
-        // Backward-compatible custom definitions that never selected the SSA pass have exactly one
-        // safe implicit meaning: SSA is off. Absence must never enable SSA or choose a fallback route.
         if (selected.Length == 0)
         {
             if (selectsSsaPass)
@@ -68,15 +78,37 @@ internal static class WistSsaPlanPolicy
         return policy;
     }
 
+    public static SsaDiagnosticMode GetRequiredDiagnosticMode(LanguagePlan plan)
+    {
+        ArgumentNullException.ThrowIfNull(plan);
+        var selected = plan.Features
+            .Where(static feature => WistSsaDiagnosticFeatureIds.All.Contains(feature.Feature.Id))
+            .Select(static feature => feature.Feature.Id)
+            .ToArray();
+        if (selected.Length == 0)
+            return SsaDiagnosticMode.Default;
+        if (selected.Length != 1)
+        {
+            throw new InvalidOperationException(
+                $"Wist LanguagePlan must select at most one typed SSA diagnostic feature, but {selected.Length} were selected.");
+        }
+        return selected[0] == WistSsaDiagnosticFeatureIds.Detailed
+            ? SsaDiagnosticMode.Verbose
+            : selected[0] == WistSsaDiagnosticFeatureIds.Summary
+                ? SsaDiagnosticMode.Default
+                : throw new InvalidOperationException($"Unknown Wist SSA diagnostic feature '{selected[0].Value}'.");
+    }
+
     public static SsaRuntimeExecutionOptions CreateRuntimeOptions(LanguagePlan plan)
     {
         var policy = GetRequiredPolicy(plan);
+        var diagnostics = GetRequiredDiagnosticMode(plan);
+        if (policy == SsaRoutePolicy.Debug)
+            diagnostics = SsaDiagnosticMode.Verbose;
         return new SsaRuntimeExecutionOptions
         {
             Policy = policy,
-            Diagnostics = policy == SsaRoutePolicy.Debug
-                ? SsaDiagnosticMode.Verbose
-                : SsaDiagnosticMode.Default,
+            Diagnostics = diagnostics,
             ProfileId = SsaRuntimeExecutionDefaults.ProfileId
         };
     }
