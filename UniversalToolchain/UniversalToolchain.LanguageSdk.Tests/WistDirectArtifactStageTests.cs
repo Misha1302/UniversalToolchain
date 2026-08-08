@@ -18,7 +18,6 @@ using IntermediateRepresentationAbstractions;
 using Microsoft.Extensions.DependencyInjection;
 using NumbersModule.Core;
 using NumbersModule.Module;
-using UniversalToolchain.Dialects.Wist;
 using UniversalToolchain.FeatureSdk;
 using UniversalToolchain.Language.Abstractions;
 using UniversalToolchain.LanguageSdk;
@@ -241,7 +240,7 @@ public sealed class WistDirectArtifactStageTests
     {
         var modules = new List<IFrontendCoreModule>
         {
-            new ProgramStructureFrontendModule(),
+            new WistProgramStructureFrontendModule(),
             new ArithmeticModuleImpl(),
             new NumbersModuleImpl(),
             new WhitespaceModuleImpl()
@@ -256,7 +255,7 @@ public sealed class WistDirectArtifactStageTests
     {
         var factories = new List<Func<IFrontendCoreModule>>
         {
-            static () => new ProgramStructureFrontendModule(),
+            static () => new WistProgramStructureFrontendModule(),
             static () => new ArithmeticModuleImpl(),
             static () => new NumbersModuleImpl(),
             static () => new WhitespaceModuleImpl()
