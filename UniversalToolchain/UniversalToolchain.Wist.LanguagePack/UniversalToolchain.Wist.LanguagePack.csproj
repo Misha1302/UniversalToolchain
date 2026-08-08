@@ -24,7 +24,6 @@
     <ProjectReference Include="..\UniversalToolchain.Capabilities.Core\UniversalToolchain.Capabilities.Core.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\UniversalToolchain.Diagnostics.Abstractions\UniversalToolchain.Diagnostics.Abstractions.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\UniversalToolchain.Dialects.Frontend\UniversalToolchain.Dialects.Frontend.csproj" PrivateAssets="all" />
-    <ProjectReference Include="..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\AssemblyFinder\AssemblyFinder.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\BasicCore\BasicCore.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\BasicLexer\BasicLexer.csproj" PrivateAssets="all" />

@@ -1,5 +1,5 @@
 using System.Reflection;
-using UniversalToolchain.Dialects.Wist.Presets;
+using UniversalToolchain.Wist.LanguagePack;
 
 namespace UniversalToolchain.Wist;
 
@@ -12,7 +12,7 @@ public sealed class WistEngineOptions
     ///     Gets or sets the exact dialect source used by the facade.
     /// </summary>
     public WistDialectSource DialectSource { get; set; } =
-        WistDialectSource.FromShippedPreset("pricing-restricted");
+        WistDialectSource.FromShippedPreset(WistLanguageDefinitions.PricingRestrictedId);
 
     /// <summary>
     ///     Gets or sets the canonical backend identifier: "cil" or "interpreter".
@@ -38,15 +38,11 @@ public sealed class WistEngineOptions
 
     internal WistVerificationPolicy VerificationPolicy { get; set; } = WistVerificationPolicy.P3Always;
 
-    public static WistEngineOptions FromPresetId(string presetId)
+    public static WistEngineOptions FromPresetId(string presetId) => new()
     {
-        var preset = WistShippedDialectPresets.GetRequired(presetId);
-        return new WistEngineOptions
-        {
-            DialectSource = WistDialectSource.FromShippedPreset(preset.Id),
-            BackendId = preset.DefaultBackend
-        };
-    }
+        DialectSource = WistDialectSource.FromShippedPreset(presetId),
+        BackendId = WistLanguageDefinitions.GetDefaultBackendId(presetId)
+    };
 
     public static WistEngineOptions FromDialectFile(string path) => new()
     {

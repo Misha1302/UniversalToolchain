@@ -1,6 +1,5 @@
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using UniversalToolchain.Capabilities.Core;
-using UniversalToolchain.Dialects.Wist;
+using UniversalToolchain.Wist;
+using UniversalToolchain.Wist.LanguagePack;
 
 if (TryRejectRemovedDialectMutationOption(args, out var removedDialectMutationExitCode))
     return removedDialectMutationExitCode;
@@ -21,7 +20,6 @@ if (!parseResult.IsSuccess)
             Console.Error.WriteLine(error.Message);
         }
     }
-
     return hasHelp ? 0 : 1;
 }
 
@@ -48,15 +46,12 @@ static bool TryRejectRemovedDialectMutationOption(string[] args, out int exitCod
             _ when arg.StartsWith("--exclude-module=", StringComparison.Ordinal) => "exclude-module",
             _ => null
         };
-
         if (optionName == null)
             continue;
-
         Console.Error.WriteLine($"Option '{optionName}' is unknown");
         exitCode = 1;
         return true;
     }
-
     exitCode = 0;
     return false;
 }
@@ -78,23 +73,11 @@ int RunCommand(RunOptions options)
             return 1;
         }
 
-        if (!string.IsNullOrWhiteSpace(options.DialectFile))
-        {
-            using var dialectHost = CreateDialectHost(options.DialectFile);
-            var result = dialectHost.Run(code, options.Backend);
-            if (result != null)
-                Console.WriteLine(result);
-
-            WriteTraceIfRequested(options, code, dialectHost.Configuration.DialectName, result);
-            return 0;
-        }
-
-        using var host = CreateDefaultHost(options);
-        var runtimeResult = host.Run(code, options.Backend);
-        if (runtimeResult != null)
-            Console.WriteLine(runtimeResult);
-
-        WriteTraceIfRequested(options, code, host.Configuration.DialectName, runtimeResult);
+        using var engine = CreateEngine(options);
+        var result = engine.Evaluate<object?>(code);
+        if (result != null)
+            Console.WriteLine(result);
+        WriteTraceIfRequested(options, code, ResolveDialectLabel(options), result);
         return 0;
     }
     catch (WistException ex)
@@ -103,7 +86,6 @@ int RunCommand(RunOptions options)
         Console.Error.WriteLine(ex.ToString());
         if (Debugger.IsAttached)
             Console.Error.WriteLine(ex.StackTrace);
-
         return 1;
     }
     catch (Exception ex)
@@ -112,117 +94,18 @@ int RunCommand(RunOptions options)
         Console.Error.WriteLine($"Error: {ex.Message}");
         if (Debugger.IsAttached)
             Console.Error.WriteLine(ex.StackTrace);
-
         return 1;
     }
-}
-
-void WriteTraceIfRequested(RunOptions options, string code, string dialect, object? result)
-{
-    if (string.IsNullOrWhiteSpace(options.TracePath))
-        return;
-
-    WistCliTraceWriter.WriteSuccess(options.TracePath, code, dialect, options.Backend, result);
-}
-
-void WriteFailureTraceIfRequested(RunOptions options, Exception exception)
-{
-    if (string.IsNullOrWhiteSpace(options.TracePath))
-        return;
-
-    WistCliTraceWriter.WriteFailure(options.TracePath, options.Code ?? string.Empty, options.DialectFile ?? "unknown", options.Backend, exception);
 }
 
 int ReplCommand(ReplOptions options)
 {
     try
     {
-        if (!string.IsNullOrWhiteSpace(options.DialectFile))
-        {
-            using var dialectHost = CreateDialectHost(options.DialectFile);
-            Console.WriteLine("Wist REPL (Ctrl+C to exit)");
-            Console.WriteLine($"Backend: {options.Backend}");
-
-            var dialectRepl = new Repl(dialectHost.GetCore(options.Backend), options.HistoryFile);
-            return dialectRepl.Run();
-        }
-
-        using var defaultHost = CreateDefaultHost(options);
-
+        using var engine = CreateEngine(options);
         Console.WriteLine("Wist REPL (Ctrl+C to exit)");
         Console.WriteLine($"Backend: {options.Backend}");
-
-        var defaultRepl = new Repl(defaultHost.GetCore(options.Backend), options.HistoryFile);
-        return defaultRepl.Run();
-    }
-    catch (WistException ex)
-    {
-        Console.Error.WriteLine(ex.ToString());
-        return 1;
-    }
-    catch (Exception ex)
-    {
-        Console.Error.WriteLine($"Error: {ex.Message}");
-        return 1;
-    }
-}
-
-int DialectDemoCommand(DialectDemoOptions options)
-{
-    try
-    {
-        using var provider = CreateDialectWorkflowProvider();
-        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var report = string.IsNullOrWhiteSpace(options.File)
-            ? workflow.ComposeText("""
-                                   dialect Demo
-                                   use Arithmetic,Numbers
-                                   backend interpreter
-                                   """, "demo-inline")
-            : workflow.ComposeFile(options.File);
-
-        Console.WriteLine(FormatComposition(report));
-        return report.IsSuccess ? 0 : 1;
-    }
-    catch (WistException ex)
-    {
-        Console.Error.WriteLine(ex.ToString());
-        return 1;
-    }
-    catch (Exception ex)
-    {
-        Console.Error.WriteLine($"Error: {ex.Message}");
-        return 1;
-    }
-}
-
-int FeaturesCommand(FeaturesOptions options)
-{
-    try
-    {
-        using var provider = CreateDialectWorkflowProvider();
-        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var runtimeComponentCatalog = provider.GetRequiredService<IRuntimeComponentCatalog>();
-        var typeLoader = provider.GetRequiredService<IRuntimeComponentTypeLoader>();
-        var composition = workflow.ComposeFile(options.DialectFile);
-
-        if (!composition.IsSuccess)
-        {
-            Console.Error.WriteLine(FormatComposition(composition));
-            return 1;
-        }
-
-        var selectedRuntimePlan = (SelectedRuntimePlan)composition.RuntimeSelection!;
-        var knownCatalog = new KnownCapabilityCatalogBuilder(typeLoader).Build(runtimeComponentCatalog);
-        var selectedCatalog = new SelectedCapabilityCatalogBuilder(typeLoader).Build(selectedRuntimePlan);
-        var explanation = DialectFeatureExplanationProjector.Project(
-            knownCatalog,
-            selectedCatalog,
-            selectedRuntimePlan,
-            composition.BuildPlan!.Name);
-
-        Console.WriteLine(DialectFeatureExplanationFormatter.FormatDeterministic(explanation));
-        return 0;
+        return new Repl(code => engine.Evaluate<object?>(code), options.HistoryFile).Run();
     }
     catch (WistException ex)
     {
@@ -240,16 +123,15 @@ int DialectInspectCommand(DialectInspectOptions options)
 {
     try
     {
-        using var provider = CreateDialectWorkflowProvider();
-        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var result = workflow.ComposeFile(options.File);
-        Console.WriteLine(FormatComposition(result));
-        return result.IsSuccess ? 0 : 1;
-    }
-    catch (WistException ex)
-    {
-        Console.Error.WriteLine(ex.ToString());
-        return 1;
+        var slice = CompileDialectFile(options.File);
+        var backend = GetFirstEnabledBackend(slice);
+        var engineOptions = WistEngineOptions.FromDialectFile(options.File);
+        engineOptions.BackendId = backend;
+        using var engine = WistEngine.Create(engineOptions);
+        Console.WriteLine("Success: True");
+        Console.WriteLine($"Dialect: {slice.Name}");
+        Console.WriteLine($"Backend: {backend}");
+        return 0;
     }
     catch (Exception ex)
     {
@@ -258,93 +140,114 @@ int DialectInspectCommand(DialectInspectOptions options)
     }
 }
 
+int DialectDemoCommand(DialectDemoOptions options)
+{
+    try
+    {
+        const string inlineDialect = "dialect Demo\nuse Arithmetic,Numbers\nbackend interpreter\nsecurity restricted";
+        var source = string.IsNullOrWhiteSpace(options.File)
+            ? inlineDialect
+            : ReadRequiredFile(options.File);
+        var sourceName = string.IsNullOrWhiteSpace(options.File) ? "demo-inline" : Path.GetFileName(options.File);
+        using var compiler = new DialectDslCompiler();
+        var slice = compiler.Compile(source);
+        var backend = GetFirstEnabledBackend(slice);
+        var engineOptions = WistEngineOptions.FromDialectText(source, sourceName);
+        engineOptions.BackendId = backend;
+        using var engine = WistEngine.Create(engineOptions);
+        Console.WriteLine("Success: True");
+        Console.WriteLine($"Dialect: {slice.Name}");
+        Console.WriteLine($"Backend: {backend}");
+        return 0;
+    }
+    catch (Exception ex)
+    {
+        Console.Error.WriteLine($"Error: {ex.Message}");
+        return 1;
+    }
+}
+
+int FeaturesCommand(FeaturesOptions options)
+{
+    try
+    {
+        var slice = CompileDialectFile(options.DialectFile);
+        Console.WriteLine($"Dialect: {slice.Name}");
+        Console.WriteLine($"Modules: {string.Join(", ", slice.UseModules.OrderBy(static x => x, StringComparer.Ordinal))}");
+        Console.WriteLine($"Backends: {string.Join(", ", slice.BackendDirectives.Where(static x => x.Enabled).Select(static x => x.Backend.Value).OrderBy(static x => x, StringComparer.Ordinal))}");
+        return 0;
+    }
+    catch (Exception ex)
+    {
+        Console.Error.WriteLine($"Error: {ex.Message}");
+        return 1;
+    }
+}
+
+WistEngine CreateEngine(CommonOptions options)
+{
+    WistEngineOptions engineOptions;
+    if (!string.IsNullOrWhiteSpace(options.DialectFile))
+    {
+        EnsureFileExists(options.DialectFile);
+        engineOptions = WistEngineOptions.FromDialectFile(options.DialectFile);
+    }
+    else
+    {
+        engineOptions = WistEngineOptions.FromPresetId(WistLanguageDefinitions.FullDefaultId);
+    }
+    engineOptions.BackendId = options.Backend;
+    return WistEngine.Create(engineOptions);
+}
+
+static DialectDefinitionSlice CompileDialectFile(string path)
+{
+    var source = ReadRequiredFile(path);
+    using var compiler = new DialectDslCompiler();
+    return compiler.Compile(source);
+}
+
+static string GetFirstEnabledBackend(DialectDefinitionSlice slice) =>
+    slice.BackendDirectives.FirstOrDefault(static directive => directive.Enabled)?.Backend.Value
+    ?? throw new InvalidOperationException($"Dialect '{slice.Name}' does not enable any backend.");
+
 string GetCode(RunOptions options)
 {
     if (!string.IsNullOrEmpty(options.File))
-    {
-        if (!File.Exists(options.File))
-            Thrower.FileNotFound(options.File);
-
-        return File.ReadAllText(options.File);
-    }
-
+        return ReadRequiredFile(options.File);
     if (options.Evaluate && !string.IsNullOrEmpty(options.Code))
         return options.Code;
-
     return options.Code ?? string.Empty;
 }
 
-WistDialectExecutionHost CreateDefaultHost(CommonOptions options)
+static string ReadRequiredFile(string path)
 {
-    ServiceProvider? provider = CreateDialectWorkflowProvider();
-    try
-    {
-        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var plan = new WistCliDialectPlanBuilder().Build(options);
-        if (plan.Kind != WistCliDialectPlanKind.Preset)
-            return Thrower.ArgumentOutOfRange<WistDialectExecutionHost>(nameof(plan.Kind), $"Unsupported CLI dialect plan kind '{plan.Kind}'.");
-
-        var dialectFilePath = new WistShippedDialectFileResolver().Resolve(plan.BasePreset);
-        var composition = workflow.ComposeFile(dialectFilePath);
-        if (!composition.IsSuccess)
-            Thrower.InvalidOpEx(FormatComposition(composition));
-
-        var owner = provider;
-        provider = null;
-        return workflow.CreateHost(composition, new WistRuntimeServiceOptions(), owner);
-    }
-    finally
-    {
-        provider?.Dispose();
-    }
+    EnsureFileExists(path);
+    return File.ReadAllText(path);
 }
 
-WistDialectExecutionHost CreateDialectHost(string dialectFile)
+static void EnsureFileExists(string path)
 {
-    ServiceProvider? provider = CreateDialectWorkflowProvider();
-    try
-    {
-        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var result = workflow.ComposeFile(dialectFile);
-
-        if (!result.IsSuccess)
-            Thrower.InvalidOpEx(FormatComposition(result));
-
-        var owner = provider;
-        provider = null;
-        return workflow.CreateHost(result, new WistRuntimeServiceOptions(), owner);
-    }
-    finally
-    {
-        provider?.Dispose();
-    }
+    if (!File.Exists(path))
+        Thrower.FileNotFound(path);
 }
 
-ServiceProvider CreateDialectWorkflowProvider()
+static string ResolveDialectLabel(CommonOptions options) =>
+    string.IsNullOrWhiteSpace(options.DialectFile)
+        ? WistLanguageDefinitions.FullDefaultId
+        : Path.GetFileName(options.DialectFile);
+
+void WriteTraceIfRequested(RunOptions options, string code, string dialect, object? result)
 {
-    var services = new ServiceCollection();
-    services.AddWistDialectServices();
-
-    // The CLI hosts the two shipped backend descriptions so composition-time semantic
-    // planning can observe their intrinsic surface. Runtime activation is still resolved
-    // from the exact selected manifest entry; registering this metadata does not activate
-    // an unselected backend.
-    services.TryAddEnumerable(
-        ServiceDescriptor.Singleton<IDialectBackendRuntimeRegistrar, WistCilDialectBackendServiceProvider>());
-    services.TryAddEnumerable(
-        ServiceDescriptor.Singleton<IDialectBackendRuntimeRegistrar, WistInterpreterDialectBackendServiceProvider>());
-
-    return services.BuildServiceProvider();
+    if (!string.IsNullOrWhiteSpace(options.TracePath))
+        WistCliTraceWriter.WriteSuccess(options.TracePath, code, dialect, options.Backend, result);
 }
 
-static string FormatComposition(DialectFrameworkCompositionResult result)
+void WriteFailureTraceIfRequested(RunOptions options, Exception exception)
 {
-    return DialectCompositionExplanationFormatter.FormatDeterministic(DialectCompositionExplanationProjector.Project(result));
+    if (!string.IsNullOrWhiteSpace(options.TracePath))
+        WistCliTraceWriter.WriteFailure(options.TracePath, options.Code ?? string.Empty, options.DialectFile ?? "unknown", options.Backend, exception);
 }
 
-void ListAllModules()
-{
-    using var provider = CreateDialectWorkflowProvider();
-    var catalog = provider.GetRequiredService<IRuntimeComponentCatalog>();
-    Console.Write(WistCliRuntimeListingFormatter.Format(catalog));
-}
+void ListAllModules() =>
+    Console.Write(WistCliRuntimeListingFormatter.Format(new WistLanguageFeaturePackage().Descriptor));

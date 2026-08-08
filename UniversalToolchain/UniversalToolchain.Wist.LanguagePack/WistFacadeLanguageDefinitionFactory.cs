@@ -1,5 +1,4 @@
 using UniversalToolchain.Dialects.Frontend;
-using UniversalToolchain.Dialects.Wist.Groups;
 using UniversalToolchain.Language.Abstractions;
 
 namespace UniversalToolchain.Wist.LanguagePack;
@@ -58,8 +57,7 @@ internal static class WistFacadeLanguageDefinitionFactory
                 "Wist facade LanguageDefinition translation does not inherit base dialects; base-dialect ownership must be translated before planning.");
         }
 
-        var groups = new WistDialectGroupProvider().GetGroups()
-            .ToDictionary(static group => group.Alias, StringComparer.Ordinal);
+        var groups = WistDialectGroupCatalog.Groups;
         var selectedFeatures = new List<LanguageFeatureId>();
         var selectedAliases = new HashSet<string>(StringComparer.Ordinal);
         var excludedAliases = ExpandModuleAliases(slice.ExcludeModules, groups).ToHashSet(StringComparer.Ordinal);
@@ -181,13 +179,13 @@ internal static class WistFacadeLanguageDefinitionFactory
 
     private static IEnumerable<string> ExpandModuleAliases(
         IEnumerable<string> aliases,
-        IReadOnlyDictionary<string, UniversalToolchain.Dialects.Abstractions.DialectGroupDescriptor> groups)
+        IReadOnlyDictionary<string, IReadOnlyList<string>> groups)
     {
         foreach (var alias in aliases)
         {
-            if (groups.TryGetValue(alias, out var group))
+            if (groups.TryGetValue(alias, out var includedModules))
             {
-                foreach (var included in group.IncludedModules)
+                foreach (var included in includedModules)
                     yield return included;
                 continue;
             }
@@ -198,7 +196,7 @@ internal static class WistFacadeLanguageDefinitionFactory
 
     private static LanguageContributionId ResolveOrderedModuleContribution(
         string alias,
-        IReadOnlyDictionary<string, UniversalToolchain.Dialects.Abstractions.DialectGroupDescriptor> groups,
+        IReadOnlyDictionary<string, IReadOnlyList<string>> groups,
         DialectSourceLocation? sourceLocation)
     {
         if (groups.ContainsKey(alias))

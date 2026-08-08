@@ -43,4 +43,14 @@ public sealed class LanguagePackageRegistrationIdentity
         ArgumentNullException.ThrowIfNull(expectedImplementation);
         return ReferenceEquals(_implementation, expectedImplementation);
     }
+
+    internal TImplementation GetRequiredImplementation<TImplementation>()
+        where TImplementation : class
+    {
+        if (_implementation is TImplementation implementation && _implementation.GetType() == typeof(TImplementation))
+            return implementation;
+
+        throw new InvalidOperationException(
+            $"Package '{PackageId.Value}' version '{PackageVersion.Value}' was not registered with exact implementation type '{typeof(TImplementation).FullName}'.");
+    }
 }

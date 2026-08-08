@@ -35,7 +35,6 @@
         <ProjectReference Include="..\BasicCilCompiler\BasicCilCompiler.csproj" PrivateAssets="all"/>
         <ProjectReference Include="..\BasicCore\BasicCore.csproj" PrivateAssets="all"/>
         <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj" PrivateAssets="all"/>
-        <ProjectReference Include="..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj" PrivateAssets="all"/>
         <ProjectReference Include="..\UniversalToolchain.ModuleContracts\UniversalToolchain.ModuleContracts.csproj" PrivateAssets="all"/>
     </ItemGroup>
 

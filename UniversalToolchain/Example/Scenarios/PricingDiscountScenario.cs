@@ -1,4 +1,4 @@
-using UniversalToolchain.Dialects.Wist.Presets;
+using UniversalToolchain.Wist.LanguagePack;
 
 namespace Example.Scenarios;
 
@@ -14,24 +14,18 @@ public static class PricingDiscountScenario
         var printer = new ScenarioConsolePrinter();
         var hardcodedPricingCalculator = new HardcodedPricingCalculator();
         using var generalDslPricingCalculator = new DslPricingCalculator();
-        using var restrictedDslPricingCalculator = new DslPricingCalculator(WistShippedDialectPresets.PricingRestricted);
+        using var restrictedDslPricingCalculator = new DslPricingCalculator(WistLanguageDefinitions.PricingRestrictedId);
 
         printer.PrintTitle("Pricing and Discount Demo");
         printer.PrintFormula(Formula, Price, Fee);
 
         var hardcodedResult = hardcodedPricingCalculator.Calculate(Price, Fee);
-
         var generalCompilerResult = generalDslPricingCalculator.CalculateWithCompiler(Formula, Price, Fee);
         var generalInterpreterResult = generalDslPricingCalculator.CalculateWithInterpreter(Formula, Price, Fee);
         var generalFastInvokerResult = generalDslPricingCalculator.CalculateWithFastInvoker(Formula, Price, Fee);
-        var generalDialectResult = generalCompilerResult;
-
         var restrictedCompilerResult = restrictedDslPricingCalculator.CalculateWithCompiler(Formula, Price, Fee);
         var restrictedInterpreterResult = restrictedDslPricingCalculator.CalculateWithInterpreter(Formula, Price, Fee);
-        var restrictedPricingResult = restrictedCompilerResult;
-
         var restrictedPositiveAttempt = restrictedDslPricingCalculator.TryCompileWithInterpreter(Formula);
-
         var restrictedStatementStyleBindingAttempt = restrictedDslPricingCalculator.TryCompileWithInterpreter(DisallowedFormula);
         var restrictedRejectsUnsupportedStatementStyleBindings = !restrictedStatementStyleBindingAttempt.IsSuccess;
 
@@ -45,8 +39,8 @@ public static class PricingDiscountScenario
 
         printer.PrintProductSummary(
             hardcodedResult,
-            generalDialectResult,
-            restrictedPricingResult,
+            generalCompilerResult,
+            restrictedCompilerResult,
             restrictedRejectsUnsupportedStatementStyleBindings,
             allResultsMatch);
 

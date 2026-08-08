@@ -1,5 +1,4 @@
 using BasicCore.Contracts;
-using UniversalToolchain.Dialects.Wist;
 using UniversalToolchain.FeatureSdk;
 using UniversalToolchain.Language.Abstractions;
 using UniversalToolchain.LanguageSdk;
@@ -50,7 +49,7 @@ internal static class WistFrontendModuleActivation
             .ToArray();
         var result = new List<Func<IFrontendCoreModule>>(selectedModules.Length + 1)
         {
-            static () => new ProgramStructureFrontendModule()
+            static () => new WistProgramStructureFrontendModule()
         };
 
         foreach (var contribution in selectedModules)

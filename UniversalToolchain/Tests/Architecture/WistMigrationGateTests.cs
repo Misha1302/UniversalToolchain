@@ -88,6 +88,62 @@ public sealed class WistMigrationGateTests
     }
 
     [Test]
+    public void SecondPlanner_IsPhysicallyAbsentFromProduction()
+    {
+        var root = FindRepositoryRoot();
+        string[] forbiddenSymbols =
+        [
+            "DialectBuildPlan",
+            "SelectedRuntimePlan",
+            "SelectedRuntimePlanResolver",
+            "ToolchainCompositionWorkflow",
+            "WistDialectExecutionWorkflow",
+            "WistDialectPlanFactory"
+        ];
+        string[] retiredPaths =
+        [
+            "UniversalToolchain/UniversalToolchain.Dialects.Abstractions/DialectBuildPlan.cs",
+            "UniversalToolchain/UniversalToolchain.Dialects.Integration/SelectedRuntimePlan.cs",
+            "UniversalToolchain/UniversalToolchain.Dialects.Integration/SelectedRuntimePlanResolver.cs",
+            "UniversalToolchain/UniversalToolchain.Dialects.Integration/ToolchainCompositionWorkflow.cs",
+            "UniversalToolchain/UniversalToolchain.Dialects.Wist/WistDialectExecutionWorkflow.cs",
+            "UniversalToolchain/UniversalToolchain.Wist.LanguagePack/WistDialectPlanFactory.cs"
+        ];
+
+        var violations = new List<string>();
+        foreach (var path in retiredPaths)
+        {
+            if (File.Exists(Path.Combine(root, path.Replace('/', Path.DirectorySeparatorChar))))
+                violations.Add($"Retired planner path returned: {path}");
+        }
+        foreach (var path in EnumerateProductionSources(root))
+        {
+            var source = File.ReadAllText(path);
+            foreach (var symbol in forbiddenSymbols)
+            {
+                if (source.Contains(symbol, StringComparison.Ordinal))
+                    violations.Add($"Forbidden planner symbol {symbol} found in {NormalizePath(Path.GetRelativePath(root, path))}");
+            }
+        }
+
+        string[] canonicalProjects =
+        [
+            "UniversalToolchain/UniversalToolchain.Wist/UniversalToolchain.Wist.csproj",
+            "UniversalToolchain/UniversalToolchain.Wist.LanguagePack/UniversalToolchain.Wist.LanguagePack.csproj",
+            "UniversalToolchain/Wistc/Wistc.csproj",
+            "UniversalToolchain/Example/Example.csproj"
+        ];
+        foreach (var project in canonicalProjects)
+        {
+            var text = File.ReadAllText(Path.Combine(root, project.Replace('/', Path.DirectorySeparatorChar)));
+            if (text.Contains("UniversalToolchain.Dialects.Wist", StringComparison.Ordinal))
+                violations.Add($"Canonical project still depends on legacy Wist runtime project: {project}");
+        }
+
+        Assert.That(violations, Is.Empty, string.Join(Environment.NewLine, violations));
+    }
+
+    [Test]
     public void RemovedLegacySurface_CannotReturn()
     {
         var root = FindRepositoryRoot();

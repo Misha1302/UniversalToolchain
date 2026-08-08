@@ -1,6 +1,5 @@
-using UniversalToolchain.Dialects.Integration;
-using UniversalToolchain.Dialects.Wist.Presets;
 using UniversalToolchain.Wist;
+using UniversalToolchain.Wist.LanguagePack;
 
 namespace UniversalToolchain.Dialects.Tests.Wist.PublicFacade;
 
@@ -8,14 +7,13 @@ namespace UniversalToolchain.Dialects.Tests.Wist.PublicFacade;
 public sealed class WistBackendContractTests
 {
     [Test]
-    public void Compile_WhenInterpreterRequested_UsesInterpreterArtifactAndMetadata()
+    public void Compile_WhenInterpreterRequested_UsesInterpreterMetadata()
     {
         using var wist = WistEngine.Create(new WistEngineOptions
         {
-            DialectSource = WistDialectSource.FromShippedPreset("pricing-restricted"),
+            DialectSource = WistDialectSource.FromShippedPreset(WistLanguageDefinitions.PricingRestrictedId),
             BackendId = "interpreter"
         });
-
         var program = wist.Compile<Func<int>>("2 + 3");
 
         Assert.Multiple(() =>
@@ -29,8 +27,7 @@ public sealed class WistBackendContractTests
     [Test]
     public void FullDefault_EvaluateAndCompile_HaveExactValueAndTypeParity()
     {
-        using var wist = WistEngine.Create(WistEngineOptions.FromPresetId("full-default"));
-
+        using var wist = WistEngine.Create(WistEngineOptions.FromPresetId(WistLanguageDefinitions.FullDefaultId));
         var evaluated = wist.Evaluate<int>("2 + 3");
         var program = wist.Compile<Func<int>>("2 + 3");
         var compiled = program.CompiledDelegate();
@@ -45,10 +42,10 @@ public sealed class WistBackendContractTests
         });
     }
 
-    [TestCase("minimal-arithmetic", "cil")]
-    [TestCase("minimal-arithmetic-grouped", "cil")]
-    [TestCase("minimal-arithmetic-native", "interpreter")]
-    [TestCase("composition-restricted", "cil")]
+    [TestCase(WistLanguageDefinitions.MinimalArithmeticId, "cil")]
+    [TestCase(WistLanguageDefinitions.MinimalArithmeticGroupedId, "cil")]
+    [TestCase(WistLanguageDefinitions.MinimalArithmeticNativeId, "interpreter")]
+    [TestCase(WistLanguageDefinitions.CompositionRestrictedId, "cil")]
     public void Create_WhenPresetDoesNotSupportBackend_FailsBeforeFirstOperation(
         string presetId,
         string backendId)
@@ -59,61 +56,39 @@ public sealed class WistBackendContractTests
                 DialectSource = WistDialectSource.FromShippedPreset(presetId),
                 BackendId = backendId
             }));
-
         Assert.That(exception!.Message, Does.Contain($"does not enable backend '{backendId}'"));
     }
 
     [Test]
     public void EveryShippedPreset_DefaultBackend_CreatesAndExecutes()
     {
-        foreach (var preset in WistShippedDialectPresets.All)
+        foreach (var presetId in WistLanguageDefinitions.PresetIds)
         {
-            using var wist = WistEngine.Create(WistEngineOptions.FromPresetId(preset.Id));
+            var options = WistEngineOptions.FromPresetId(presetId);
+            using var wist = WistEngine.Create(options);
             var evaluated = wist.Evaluate<int>("2 + 3");
             var program = wist.Compile<Func<int>>("2 + 3");
 
             Assert.Multiple(() =>
             {
-                Assert.That(evaluated, Is.EqualTo(5), preset.Id);
-                Assert.That(program.CompiledDelegate(), Is.EqualTo(5), preset.Id);
-                Assert.That(program.Metadata.Backend, Is.EqualTo(preset.DefaultBackend), preset.Id);
+                Assert.That(evaluated, Is.EqualTo(5), presetId);
+                Assert.That(program.CompiledDelegate(), Is.EqualTo(5), presetId);
+                Assert.That(program.Metadata.Backend, Is.EqualTo(options.BackendId), presetId);
             });
         }
     }
 
     [Test]
-    public void LowLevelWistExecutionTypes_AreNotExportedPolicyBypasses()
+    public void CanonicalFacadeAssemblies_DoNotReferenceLegacyWistRuntimeProject()
     {
-        var wistRuntimeAssembly = typeof(WistShippedDialectPresets).Assembly;
-        var integrationAssembly = typeof(IRuntimeAssemblyLoadStrategy).Assembly;
-        string[] wistRuntimeTypes =
-        [
-            "UniversalToolchain.Dialects.Wist.WistDialectExecutionConfiguration",
-            "UniversalToolchain.Dialects.Wist.WistDialectExecutionHost",
-            "UniversalToolchain.Dialects.Wist.WistDialectExecutionWorkflow",
-            "UniversalToolchain.Dialects.Wist.Facade.WistRuntimeFacade",
-            "UniversalToolchain.Dialects.Wist.Facade.WistRuntimeFacadeBuilder",
-            "UniversalToolchain.Dialects.Wist.Facade.WistRunRequest",
-            "UniversalToolchain.Dialects.Wist.Facade.WistTryCompileResult",
-            "UniversalToolchain.Dialects.Wist.WistCilBackendServiceCollectionExtensions",
-            "UniversalToolchain.Dialects.Wist.WistInterpreterBackendServiceCollectionExtensions"
-        ];
+        static bool ReferencesLegacyWistRuntime(System.Reflection.Assembly assembly) =>
+            assembly.GetReferencedAssemblies().Any(static reference =>
+                string.Equals(reference.Name, "UniversalToolchain.Dialects.Wist", StringComparison.Ordinal));
 
         Assert.Multiple(() =>
         {
-            foreach (var typeName in wistRuntimeTypes)
-            {
-                var type = wistRuntimeAssembly.GetType(typeName, throwOnError: false);
-                if (type is not null)
-                {
-                    Assert.That(type.IsPublic || type.IsNestedPublic, Is.False, typeName);
-                }
-            }
-
-            var runtimeHost = integrationAssembly.GetType(
-                "UniversalToolchain.Dialects.Integration.ToolchainRuntimeHost",
-                throwOnError: true)!;
-            Assert.That(runtimeHost.IsPublic || runtimeHost.IsNestedPublic, Is.False, runtimeHost.FullName);
+            Assert.That(ReferencesLegacyWistRuntime(typeof(WistEngine).Assembly), Is.False);
+            Assert.That(ReferencesLegacyWistRuntime(typeof(WistLanguageFeaturePackage).Assembly), Is.False);
         });
     }
 }

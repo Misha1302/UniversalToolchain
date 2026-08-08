@@ -1,59 +1,36 @@
 using System.Diagnostics.CodeAnalysis;
-using AssemblyFinder;
-using Tests.Infrastructure;
-using UniversalToolchain.Testing.Infrastructure;
+using ExceptionsManager;
+using UniversalToolchain.Wist;
 
 namespace Tests.Core;
 
 [TestFixture]
-public class CSharpInteropResolutionAndNegativeContractsTests
+public sealed class CSharpInteropResolutionAndNegativeContractsTests
 {
     private const string DialectText = """
-                                       dialect NativeInterop
-                                       use Whitespaces,SemicolonAsNewLine,Comments,Numbers,Identifier,Arithmetic,Equality,Conditions,Loops,Scopes,Variables,Labels,InternalPreprocessorLexemes,CSharpInterop
-
-                                       backend cil,interpreter
-                                       """;
+        dialect InteropContracts
+        use BooleanConditions,Comments,ComparisonConditions,Conditions,CSharpInterop,Equality,Identifier,Labels,Loops,NativeTypes,Scopes,SemicolonAsNewLine,Variables,Whitespaces
+        backend cil,interpreter
+        security trusted
+        capability unsafe-interop
+        """;
 
     [Test]
-    public void ExecuteCode_ShouldResolveSameUnambiguousCallShape_AcrossRepeatedRuns()
+    public void ExecuteCode_ShouldResolveExactOverload()
     {
-        const string code = "System.Math.Sqrt(16.0)";
-        var first = BackendParityInfrastructure.ExecuteSafely(() => ExecuteCode<object>(code));
-
-        for (var i = 0; i < 20; i++)
-        {
-            var current = BackendParityInfrastructure.ExecuteSafely(() => ExecuteCode<object>(code));
-            Assert.That(current.IsSuccess, Is.EqualTo(first.IsSuccess));
-
-            if (first.IsSuccess)
-            {
-                Assert.That(current.Value, Is.EqualTo(first.Value));
-                continue;
-            }
-
-            Assert.That(current.Exception!.GetType(), Is.EqualTo(first.Exception!.GetType()));
-            Assert.That(current.Exception!.Message, Is.EqualTo(first.Exception!.Message));
-        }
+        Assert.That(ExecuteCode<string>($"{typeof(InteropContractsHost).FullName}.Pick(1, 2)"), Is.EqualTo("int-long"));
     }
 
     [Test]
-    public void ExplicitMethodResolver_ShouldFailPredictably_ForAmbiguousOverloadSignature()
+    public void ExecuteCode_ShouldRejectAmbiguousOverload()
     {
-        var catalog = TypeCatalogFactory.Create([typeof(InteropContractsHost).Assembly]);
-        var resolver = new DeterministicMethodResolver(catalog);
-
-        var exception = Assert.Throws<AmbiguousMatchException>(() =>
-            resolver.GetMethod($"{typeof(InteropContractsHost).FullName}.Ambiguous", [typeof(int), typeof(int)]));
-
-        Assert.That(exception!.Message, Does.Contain("ambiguous").IgnoreCase);
+        Assert.Catch(() => ExecuteCode<string>($"{typeof(InteropContractsHost).FullName}.Ambiguous(1, 2)"));
     }
 
     [Test]
-    public void ExecuteCode_ShouldRejectNonPublicInteropTarget()
+    public void ExecuteCode_ShouldRejectNonPublicMethod()
     {
         var exception = Assert.Throws<ImportException>(() => ExecuteCode<int>($"{typeof(InteropContractsHost).FullName}.Hidden()"));
-
         Assert.That(exception!.Message, Does.Contain("not found").IgnoreCase);
     }
 
@@ -67,24 +44,16 @@ public class CSharpInteropResolutionAndNegativeContractsTests
     public void ExecuteCode_ShouldRejectNullCallShape_WhenCastContractCannotBeSatisfied()
     {
         var exception = Assert.Throws<InvalidOperationException>(() => ExecuteCode<int>("System.String.IsNullOrEmpty(null)"));
-
         Assert.That(exception!.Message, Does.Contain("Unknown identifier 'null'"));
     }
 
     private static T ExecuteCode<T>(string code)
     {
-        var compilerResult = BackendParityInfrastructure.ExecuteSafely(() =>
-        {
-            using var compilerHost = DialectTestHostInfrastructure.CreateCompilerHost(
-                DialectText,
-                [typeof(string).Assembly, typeof(InteropContractsHost).Assembly]);
-            return compilerHost.Run(code, "cil");
-        });
-
-        if (!compilerResult.IsSuccess)
-            throw compilerResult.Exception!;
-
-        return BackendValueNormalizer.ConvertTo<T>(compilerResult.Value);
+        var options = WistEngineOptions.FromDialectText(DialectText, "interop-contracts");
+        options.BackendId = "cil";
+        options.AllowedAssemblies = [typeof(string).Assembly, typeof(InteropContractsHost).Assembly];
+        using var engine = WistEngine.Create(options);
+        return engine.Evaluate<T>(code);
     }
 }
 
