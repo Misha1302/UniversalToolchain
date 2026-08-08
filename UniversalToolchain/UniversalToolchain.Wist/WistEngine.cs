@@ -1,40 +1,36 @@
 using ExceptionsManager;
-using Microsoft.Extensions.DependencyInjection;
-using UniversalToolchain.Dialects.Integration;
-using UniversalToolchain.Dialects.Wist;
-using UniversalToolchain.Dialects.Wist.Presets;
-using UniversalToolchain.Ssa.Optimization;
-using UniversalToolchain.ModuleContracts;
+using UniversalToolchain.FeatureSdk;
+using UniversalToolchain.Language.Abstractions;
+using UniversalToolchain.LanguageSdk;
+using UniversalToolchain.Runtime;
+using UniversalToolchain.Wist.LanguagePack;
 
 namespace UniversalToolchain.Wist;
 
 /// <summary>
-/// Public Wist facade for convenient evaluation and typed compiled functions.
+/// Public Wist facade over one canonical LanguagePlan and LanguageRuntime.
 /// </summary>
 public sealed class WistEngine : IDisposable
 {
-    private WistDialectExecutionHost? _host;
+    private LanguageRuntime? _runtime;
+    private readonly LanguagePlan _plan;
+    private readonly BackendId _backend;
     private readonly WistEngineOptions _options;
-    private readonly IWistDelegateCompiler _delegateCompiler;
     private readonly WistResourceLimits _resourceLimits;
-    private WistRuntimeBoundary? _runtimeBoundary;
-    private readonly SsaRouteReportCollector _ssaReportCollector;
     private bool _disposed;
 
     private WistEngine(
-        WistDialectExecutionHost host,
+        LanguageRuntime runtime,
+        LanguagePlan plan,
+        BackendId backend,
         WistEngineOptions options,
-        IWistDelegateCompiler delegateCompiler,
-        WistResourceLimits resourceLimits,
-        WistRuntimeBoundary runtimeBoundary,
-        SsaRouteReportCollector ssaReportCollector)
+        WistResourceLimits resourceLimits)
     {
-        _host = host;
-        _options = options;
-        _delegateCompiler = delegateCompiler;
-        _resourceLimits = resourceLimits;
-        _runtimeBoundary = runtimeBoundary;
-        _ssaReportCollector = ssaReportCollector;
+        _runtime = runtime ?? throw new ArgumentNullException(nameof(runtime));
+        _plan = plan ?? throw new ArgumentNullException(nameof(plan));
+        _backend = backend;
+        _options = options ?? throw new ArgumentNullException(nameof(options));
+        _resourceLimits = resourceLimits ?? throw new ArgumentNullException(nameof(resourceLimits));
     }
 
     public void Dispose()
@@ -43,20 +39,20 @@ public sealed class WistEngine : IDisposable
             return;
 
         _disposed = true;
-        var host = _host;
-        _host = null;
-        _runtimeBoundary = null;
-        host?.Dispose();
+        var runtime = _runtime;
+        _runtime = null;
+        runtime?.Dispose();
     }
 
     public static WistEngine CreateRestrictedArithmetic() =>
-        Create(WistEngineOptions.FromPresetId("pricing-restricted"));
+        Create(WistEngineOptions.FromPresetId(WistLanguageDefinitions.PricingRestrictedId));
 
     public static WistEngine CreateFullNative() =>
-        Create(WistEngineOptions.FromPresetId("full-default-native"));
+        Create(WistEngineOptions.FromPresetId(WistLanguageDefinitions.FullDefaultNativeId));
 
     /// <summary>
     /// Creates a Wist engine from public facade options. Options are snapshotted at creation time.
+    /// Planning happens exactly once here; Evaluate/Validate/Compile reuse the same LanguagePlan.
     /// </summary>
     public static WistEngine Create(WistEngineOptions options)
     {
@@ -68,65 +64,35 @@ public sealed class WistEngine : IDisposable
         if (allowedAssemblies.Any(static assembly => assembly is null))
             Thrower.Argument(nameof(options.AllowedAssemblies), "The allowed assembly collection must not contain null values.");
 
+        var backend = new BackendId(RequireBackendId(options.BackendId));
         var optionsSnapshot = new WistEngineOptions
         {
             DialectSource = options.DialectSource.ArgNotNull(),
-            BackendId = RequireBackendId(options.BackendId),
+            BackendId = backend.Value,
             AllowedAssemblies = allowedAssemblies,
             ResourceLimits = resourceLimits,
             Optimization = optimization,
             VerificationPolicy = RequireVerificationPolicy(options.VerificationPolicy)
         };
 
-        var services = new ServiceCollection();
-        services.AddWistDialectServices();
+        var package = new WistLanguageFeaturePackage();
+        var definition = ResolveLanguageDefinition(optionsSnapshot);
+        var plan = new LanguageCompiler(new LanguagePackageRegistry().AddPackage(package))
+            .Compile(definition)
+            .GetRequiredPlan();
+        var runtime = LanguageRuntime.Create(
+            plan,
+            new ILanguageRouteComponentSource[] { package },
+            new LanguageRuntimeOptions(allowedAssemblies));
 
-        ServiceProvider? compositionProvider = services.BuildServiceProvider();
         try
         {
-            var workflow = compositionProvider.GetRequiredService<WistDialectExecutionWorkflow>();
-            var source = ResolveDialectSource(optionsSnapshot);
-            var composition = Compose(workflow, source, optimization.Ssa);
-
-            if (!composition.IsSuccess)
-            {
-                Thrower.InvalidOpEx(
-                    DialectCompositionExplanationFormatter.FormatDeterministic(
-                        DialectCompositionExplanationProjector.Project(composition)));
-            }
-
-            var reportCollector = new SsaRouteReportCollector();
-            var runtimeServiceOptions = new WistRuntimeServiceOptions
-            {
-                AllowedAssemblies = allowedAssemblies,
-                SsaExecution = CreateSsaExecutionOptions(optimization.Ssa),
-                SsaReportSink = reportCollector,
-                ModuleContracts = CreateModuleContractOptions(optionsSnapshot.VerificationPolicy)
-            };
-
-            var compositionOwner = compositionProvider;
-            compositionProvider = null;
-            var host = workflow.CreateHost(composition, runtimeServiceOptions, compositionOwner);
-            try
-            {
-                EnsureBackendEnabled(host.Configuration, optionsSnapshot.BackendId);
-                return new WistEngine(
-                    host,
-                    optionsSnapshot,
-                    new WistBackendDelegateCompiler(),
-                    resourceLimits,
-                    WistRuntimeBoundary.Create(host.Configuration),
-                    reportCollector);
-            }
-            catch
-            {
-                host.Dispose();
-                throw;
-            }
+            return new WistEngine(runtime, plan, backend, optionsSnapshot, resourceLimits);
         }
-        finally
+        catch
         {
-            compositionProvider?.Dispose();
+            runtime.Dispose();
+            throw;
         }
     }
 
@@ -134,7 +100,8 @@ public sealed class WistEngine : IDisposable
     {
         ThrowIfDisposed();
         EnsureSourceWithinLimits(code);
-        return WistResultConverter.ConvertTo<T>(Host.Run(code, _options.BackendId));
+        var result = Runtime.Run(new LanguageExecutionRequest(code, _backend));
+        return WistResultConverter.ConvertTo<T>(result.Value);
     }
 
     public T Evaluate<T>(string code, object arguments)
@@ -149,51 +116,50 @@ public sealed class WistEngine : IDisposable
         EnsureSourceWithinLimits(code);
         arguments = arguments.ArgNotNull();
         EnsureParameterCountWithinLimits(arguments.Count);
-        var normalizedArguments = RuntimeBoundary.NormalizeArguments(arguments);
-        return WistResultConverter.ConvertTo<T>(Host.Run(code, normalizedArguments, _options.BackendId));
+        var normalized = NormalizeArguments(arguments);
+        var result = Runtime.Run(new LanguageExecutionRequest(code, _backend, normalized));
+        return WistResultConverter.ConvertTo<T>(result.Value);
     }
 
     public WistValidationResult Validate(string code)
     {
         ThrowIfDisposed();
-        using var capture = _ssaReportCollector.BeginCapture();
-
         try
         {
             EnsureSourceWithinLimits(code);
-            _ = Host.Compile(code, null, _options.BackendId);
-            return WistValidationResult.Success(CreateOptimizationReport(capture.Report));
+            var built = Runtime.Build(LanguageArtifactBuildRequest.FromText(code, _backend));
+            return WistValidationResult.Success(CreateOptimizationReport(
+                WistBuiltArtifactActivation.GetSsaReport(Runtime, built)));
         }
         catch (Exception exception)
         {
             return WistValidationResult.Failure(
                 exception,
                 WistDiagnosticFactory.FromException(exception, "Validation"),
-                CreateOptimizationReport(capture.Report));
+                CreateOptimizationReport(WistBuiltArtifactActivation.TryGetSsaReport(exception)));
         }
     }
 
     public WistValidationResult Validate(string code, object sampleArguments)
     {
         ThrowIfDisposed();
-        using var capture = _ssaReportCollector.BeginCapture();
-
         try
         {
             EnsureSourceWithinLimits(code);
             sampleArguments = sampleArguments.ArgNotNull();
-            var argumentTypes = RuntimeBoundary.NormalizeArguments(WistArgumentReader.FromObject(sampleArguments));
-            EnsureParameterCountWithinLimits(argumentTypes.Count);
-            var declaredBindings = CreateDeclaredBindings(argumentTypes);
-            _ = Host.Compile(code, declaredBindings, _options.BackendId);
-            return WistValidationResult.Success(CreateOptimizationReport(capture.Report));
+            var arguments = WistArgumentReader.FromObject(sampleArguments);
+            EnsureParameterCountWithinLimits(arguments.Count);
+            var bindings = CreateBuildBindings(arguments);
+            var built = Runtime.Build(LanguageArtifactBuildRequest.FromText(code, _backend, bindings));
+            return WistValidationResult.Success(CreateOptimizationReport(
+                WistBuiltArtifactActivation.GetSsaReport(Runtime, built)));
         }
         catch (Exception exception)
         {
             return WistValidationResult.Failure(
                 exception,
                 WistDiagnosticFactory.FromException(exception, "Validation"),
-                CreateOptimizationReport(capture.Report));
+                CreateOptimizationReport(WistBuiltArtifactActivation.TryGetSsaReport(exception)));
         }
     }
 
@@ -201,34 +167,29 @@ public sealed class WistEngine : IDisposable
         where TDelegate : Delegate
     {
         ThrowIfDisposed();
-        using var capture = _ssaReportCollector.BeginCapture();
-        return CompileCore<TDelegate>(formula, parameterNames, () => CreateOptimizationReport(capture.Report));
+        return CompileCore<TDelegate>(formula, parameterNames);
     }
 
     public WistCompileResult<TDelegate> TryCompile<TDelegate>(string formula, params string[] parameterNames)
         where TDelegate : Delegate
     {
         ThrowIfDisposed();
-        using var capture = _ssaReportCollector.BeginCapture();
-
         try
         {
-            var program = CompileCore<TDelegate>(formula, parameterNames, () => CreateOptimizationReport(capture.Report));
-            return WistCompileResult<TDelegate>.Success(program);
+            return WistCompileResult<TDelegate>.Success(CompileCore<TDelegate>(formula, parameterNames));
         }
         catch (Exception exception)
         {
             return WistCompileResult<TDelegate>.Failure(
                 exception,
                 WistDiagnosticFactory.FromException(exception, "Compilation"),
-                CreateOptimizationReport(capture.Report));
+                CreateOptimizationReport(WistBuiltArtifactActivation.TryGetSsaReport(exception)));
         }
     }
 
     private WistProgram<TDelegate> CompileCore<TDelegate>(
         string formula,
-        string[] parameterNames,
-        Func<WistOptimizationReport> reportFactory)
+        string[] parameterNames)
         where TDelegate : Delegate
     {
         EnsureSourceWithinLimits(formula);
@@ -236,12 +197,15 @@ public sealed class WistEngine : IDisposable
         EnsureParameterCountWithinLimits(parameterNames.Length);
 
         var signature = WistDelegateSignature.FromDelegate<TDelegate>(parameterNames);
-        var compiledDelegate = _delegateCompiler.CompileDelegate<TDelegate>(
-            Host,
-            formula,
-            CreateDeclaredBindings(signature.BindingTypes, RuntimeBoundary.NormalizeDeclaredType),
-            _options.BackendId,
-            RuntimeBoundary);
+        var bindings = signature.BindingTypes
+            .Select(binding => LanguageBuildBinding.Declare(
+                binding.Key,
+                WistRuntimeValueAdapterActivation.NormalizeDeclaredType(_plan, binding.Value)))
+            .ToArray();
+        var built = Runtime.Build(LanguageArtifactBuildRequest.FromText(formula, _backend, bindings));
+        var durableProgram = WistBuiltArtifactActivation.Materialize(Runtime, built);
+        var compiledDelegate = WistDurableDelegateFactory.Create<TDelegate>(durableProgram);
+        var report = CreateOptimizationReport(WistBuiltArtifactActivation.GetSsaReport(Runtime, built));
 
         return new WistProgram<TDelegate>(
             compiledDelegate,
@@ -251,72 +215,74 @@ public sealed class WistEngine : IDisposable
                 signature.ParameterNames,
                 signature.ParameterTypes,
                 signature.ReturnType,
-                reportFactory()));
+                report));
     }
 
-    private static DialectFrameworkCompositionResult Compose(
-        WistDialectExecutionWorkflow workflow,
-        ResolvedDialectSource source,
-        WistSsaOptions ssa)
+    private static LanguageDefinition ResolveLanguageDefinition(WistEngineOptions options)
     {
-        if (ssa.Policy == WistSsaPolicy.Disabled)
-            return workflow.ComposeText(source.SourceText, source.SourceName);
+        var policy = options.Optimization.Ssa.Policy switch
+        {
+            WistSsaPolicy.Disabled => WistFacadeSsaPolicy.Disabled,
+            WistSsaPolicy.Prefer => WistFacadeSsaPolicy.Prefer,
+            WistSsaPolicy.Require => WistFacadeSsaPolicy.Require,
+            WistSsaPolicy.Debug => WistFacadeSsaPolicy.Debug,
+            _ => throw new ArgumentOutOfRangeException(nameof(options.Optimization.Ssa.Policy))
+        };
 
-        var profile = RuntimeProfileDefinitionBuilder
-            .Create("wist-public-ssa")
-            .Describe("Enables the experimental verifier-gated SSA route selected by WistEngineOptions.")
-            .EnableOptimizer("Ssa")
-            .Build();
-        return workflow.ComposeText(
-            source.SourceText,
-            source.SourceName,
-            profile,
-            RuntimeProfileOverridePolicy.StrictNoConflicts);
+        return options.DialectSource switch
+        {
+            WistDialectSource.ShippedPreset preset =>
+                WistFacadeLanguageDefinitionFactory.FromPreset(preset.PresetId, options.BackendId, policy),
+            WistDialectSource.File file => FromDialectFile(file, options.BackendId, policy),
+            WistDialectSource.Text text => WistFacadeLanguageDefinitionFactory.FromDialectText(
+                text.SourceText,
+                text.SourceName,
+                options.BackendId,
+                policy),
+            _ => throw new InvalidOperationException("Unsupported Wist dialect source.")
+        };
     }
 
-    private static ModuleContractVerificationOptions CreateModuleContractOptions(WistVerificationPolicy policy) =>
-        new ModuleContractVerificationOptions
-        {
-            Mode = ModuleContractVerificationMode.Strict,
-            PipelineOptions = ModuleContractPipelineProfiles.StrictEnforced with
-            {
-                VerificationPolicy = policy switch
-                {
-                    WistVerificationPolicy.P0Structural => ModuleContractVerificationPolicy.P0Structural,
-                    WistVerificationPolicy.P1Invalidation => ModuleContractVerificationPolicy.P1Invalidation,
-                    WistVerificationPolicy.P2Selective => ModuleContractVerificationPolicy.P2Selective,
-                    WistVerificationPolicy.P3Always => ModuleContractVerificationPolicy.P3Always,
-                    _ => throw new ArgumentOutOfRangeException(nameof(policy), policy, "Unknown Wist verification policy.")
-                }
-            },
-            DiagnosticSink = new InMemoryModuleContractDiagnosticSink()
-        }.SnapshotValidated();
-
-    private static WistVerificationPolicy RequireVerificationPolicy(WistVerificationPolicy policy) =>
-        Enum.IsDefined(policy)
-            ? policy
-            : throw new ArgumentOutOfRangeException(nameof(policy), policy, "Unknown Wist verification policy.");
-
-    private static SsaRuntimeExecutionOptions CreateSsaExecutionOptions(WistSsaOptions options) => new()
+    private static LanguageDefinition FromDialectFile(
+        WistDialectSource.File file,
+        string backend,
+        WistFacadeSsaPolicy policy)
     {
-        Policy = options.Policy switch
-        {
-            WistSsaPolicy.Disabled => SsaRoutePolicy.Off,
-            WistSsaPolicy.Prefer => SsaRoutePolicy.Prefer,
-            WistSsaPolicy.Require => SsaRoutePolicy.Require,
-            WistSsaPolicy.Debug => SsaRoutePolicy.Debug,
-            _ => throw new ArgumentOutOfRangeException(nameof(options.Policy))
-        },
-        Diagnostics = options.DiagnosticLevel == WistSsaDiagnosticLevel.Detailed
-            ? SsaDiagnosticMode.Verbose
-            : SsaDiagnosticMode.Default,
-        ProfileId = SsaRouteProfiles.ProfileId
-    };
+        var path = Path.GetFullPath(file.Path);
+        return WistFacadeLanguageDefinitionFactory.FromDialectText(
+            File.ReadAllText(path),
+            Path.GetFileName(path),
+            backend,
+            policy);
+    }
 
-    private WistOptimizationReport CreateOptimizationReport(SsaRouteReport? report)
+    private IReadOnlyDictionary<string, object?> NormalizeArguments(
+        IReadOnlyDictionary<string, object?> arguments)
+    {
+        var normalized = new Dictionary<string, object?>(arguments.Count, StringComparer.Ordinal);
+        foreach (var argument in arguments)
+            normalized.Add(argument.Key, WistRuntimeValueAdapterActivation.NormalizeInput(_plan, argument.Value));
+        return normalized;
+    }
+
+    private IReadOnlyList<LanguageBuildBinding> CreateBuildBindings(
+        IReadOnlyDictionary<string, object?> arguments)
+    {
+        var bindings = new List<LanguageBuildBinding>(arguments.Count);
+        foreach (var argument in arguments)
+        {
+            var normalizedValue = WistRuntimeValueAdapterActivation.NormalizeInput(_plan, argument.Value);
+            var publicType = argument.Value?.GetType() ?? typeof(object);
+            var declaredType = WistRuntimeValueAdapterActivation.NormalizeDeclaredType(_plan, publicType);
+            bindings.Add(LanguageBuildBinding.Create(argument.Key, declaredType, normalizedValue));
+        }
+        return bindings;
+    }
+
+    private WistOptimizationReport CreateOptimizationReport(WistSsaReportSnapshot? report)
     {
         var requested = _options.Optimization.Ssa.Policy;
-        if (report is null)
+        if (report == null)
         {
             if (requested == WistSsaPolicy.Disabled)
                 return WistOptimizationReport.Disabled;
@@ -338,6 +304,8 @@ public sealed class WistEngine : IDisposable
                     ]));
         }
 
+        var exposeTrace = requested == WistSsaPolicy.Debug ||
+                          _options.Optimization.Ssa.DiagnosticLevel == WistSsaDiagnosticLevel.Detailed;
         return new WistOptimizationReport(
             new WistSsaOptimizationReport(
                 requested,
@@ -348,49 +316,17 @@ public sealed class WistEngine : IDisposable
                 report.OutputAirInstructionCount,
                 report.ExecutedPasses,
                 report.Diagnostics.Select(static diagnostic =>
-                    new WistSsaRouteDiagnostic(
-                        diagnostic.Code,
-                        diagnostic.Message,
-                        diagnostic.Stage)),
-                report.Trace.Select(static entry =>
-                    new WistSsaTraceEntry(entry.Stage, entry.Message, entry.InstructionCount))));
+                    new WistSsaRouteDiagnostic(diagnostic.Code, diagnostic.Message, diagnostic.Stage)),
+                exposeTrace
+                    ? report.Trace.Select(static entry =>
+                        new WistSsaTraceEntry(entry.Stage, entry.Message, entry.InstructionCount))
+                    : []));
     }
 
-    private static ResolvedDialectSource ResolveDialectSource(WistEngineOptions options)
-    {
-        var resolver = new WistShippedDialectFileResolver();
-        return options.DialectSource switch
-        {
-            WistDialectSource.File file => ReadDialectFile(Path.GetFullPath(file.Path)),
-            WistDialectSource.ShippedPreset preset =>
-                ReadDialectFile(resolver.Resolve(WistShippedDialectPresets.GetRequired(preset.PresetId))),
-            WistDialectSource.Text text => new ResolvedDialectSource(text.SourceText, text.SourceName),
-            _ => Thrower.InvalidOpEx<ResolvedDialectSource>("Unsupported Wist dialect source.")
-        };
-    }
-
-    private static ResolvedDialectSource ReadDialectFile(string path) =>
-        new(File.ReadAllText(path), Path.GetFileName(path));
-
-    private static void EnsureBackendEnabled(
-        ToolchainRuntimeConfiguration configuration,
-        string backend)
-    {
-        if (configuration.TryResolveKnownBackendId(backend, out var backendId) &&
-            configuration.TryGetEnabledBackend(backendId, out _))
-        {
-            return;
-        }
-
-        var enabled = string.Join(
-            ", ",
-            configuration.EnabledBackends
-                .Select(static descriptor => descriptor.CanonicalId)
-                .OrderBy(static id => id, StringComparer.Ordinal));
-        Thrower.ArgumentOutOfRange<object>(
-            nameof(WistEngineOptions.BackendId),
-            $"Dialect '{configuration.DialectName}' does not enable backend '{backend}'. Enabled backends: {enabled}.");
-    }
+    private static WistVerificationPolicy RequireVerificationPolicy(WistVerificationPolicy policy) =>
+        Enum.IsDefined(policy)
+            ? policy
+            : throw new ArgumentOutOfRangeException(nameof(policy), policy, "Unknown Wist verification policy.");
 
     private static string RequireBackendId(string backendId)
     {
@@ -424,45 +360,14 @@ public sealed class WistEngine : IDisposable
             $"Wist parameter count {count} exceeds the configured maximum of {_resourceLimits.MaxParameterCount}.");
     }
 
-    private WistDialectExecutionHost Host
+    private LanguageRuntime Runtime
     {
         get
         {
             ThrowIfDisposed();
-            return _host!;
-        }
-    }
-
-    private WistRuntimeBoundary RuntimeBoundary
-    {
-        get
-        {
-            ThrowIfDisposed();
-            return _runtimeBoundary!;
+            return _runtime!;
         }
     }
 
     private void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(_disposed, this);
-
-    private static OrderedDictionary<string, Type> CreateDeclaredBindings(IReadOnlyDictionary<string, object?> arguments)
-    {
-        var bindings = new OrderedDictionary<string, Type>();
-        foreach (var argument in arguments)
-            bindings[argument.Key] = argument.Value?.GetType() ?? typeof(object);
-
-        return bindings;
-    }
-
-    private static OrderedDictionary<string, Type> CreateDeclaredBindings(
-        IReadOnlyDictionary<string, Type> bindingTypes,
-        Func<Type, Type>? typeNormalizer = null)
-    {
-        var bindings = new OrderedDictionary<string, Type>();
-        foreach (var binding in bindingTypes)
-            bindings[binding.Key] = typeNormalizer?.Invoke(binding.Value) ?? binding.Value;
-
-        return bindings;
-    }
-
-    private sealed record ResolvedDialectSource(string SourceText, string SourceName);
 }
