@@ -205,6 +205,7 @@ public sealed class WistRemediationRegressionTests
         var plan = new LanguageCompiler(new LanguagePackageRegistry().AddPackage(package)).Compile(
             LanguageDefinitionBuilder.Create("Conditions.Runtime.Check", "1")
                 .UseFeature(WistFeatureIds.Conditions)
+                .UseFeature(WistFeatureIds.Numbers)
                 .EnableBackend(interpreter)
                 .EnableBackend(cil)
                 .UseRuntimeProvider(WistLanguageFeaturePackage.RuntimeProviderId, WistLanguageFeaturePackage.PackageVersion)
@@ -256,7 +257,6 @@ public sealed class WistRemediationRegressionTests
             Assert.That(genericResult?.ToString(), Is.EqualTo(legacyResult?.ToString()));
         });
     }
-
 
     [TestCase(WistLanguageDefinitions.FullDefaultId)]
     [TestCase(WistLanguageDefinitions.FullDefaultNativeId)]
