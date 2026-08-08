@@ -1,5 +1,3 @@
-using UniversalToolchain.Dialects.Wist.Facade;
-using UniversalToolchain.Dialects.Wist.Presets;
 using UniversalToolchain.FeatureSdk;
 using UniversalToolchain.Language.Abstractions;
 using UniversalToolchain.LanguageSdk;
@@ -67,8 +65,9 @@ public sealed class IndependentAuditRegressionTests
             Assert.That(definition.Metadata["wist.preset"], Is.EqualTo("full-default"));
         });
     }
+
     [Test]
-    public void ShippedPresets_ExecuteRepresentativeParityCases()
+    public void ShippedPresets_ProviderFacadeMatchesExactRouteRuntime()
     {
         var cases = new (string PresetId, string Source, IReadOnlyDictionary<string, object?> Arguments)[]
         {
@@ -84,7 +83,8 @@ public sealed class IndependentAuditRegressionTests
             (WistLanguageDefinitions.CompositionRestrictedId, "if 2 == 2 (1) else (2)",
                 new Dictionary<string, object?>())
         };
-        var packageRegistry = new LanguagePackageRegistry().AddPackage(new WistLanguageFeaturePackage());
+        var package = new WistLanguageFeaturePackage();
+        var packageRegistry = new LanguagePackageRegistry().AddPackage(package);
         var providerRegistry = new LanguageRuntimeProviderRegistry().AddProvider(new WistLanguageRuntimeProvider());
 
         foreach (var testCase in cases)
@@ -92,31 +92,30 @@ public sealed class IndependentAuditRegressionTests
             var plan = new LanguageCompiler(packageRegistry)
                 .Compile(WistLanguageDefinitions.Create(testCase.PresetId))
                 .GetRequiredPlan();
-            using var typedRuntime = LanguageRuntime.Create(plan, providerRegistry);
-            using var shippedRuntime = WistRuntimeFacadeBuilder.CreateDefault()
-                .WithShippedDialectPreset(WistShippedDialectPresets.GetRequired(testCase.PresetId))
-                .Build();
+            using var providerRuntime = LanguageRuntime.Create(plan, providerRegistry);
+            using var exactRouteRuntime = LanguageRuntime.Create(
+                plan,
+                new ILanguageRouteComponentSource[] { package });
 
             foreach (var backend in plan.Definition.Backends)
             {
-                var typed = typedRuntime.Run(new LanguageExecutionRequest(
+                var providerValue = providerRuntime.Run(new LanguageExecutionRequest(
                     testCase.Source,
                     backend,
                     testCase.Arguments)).Value;
-                var shipped = shippedRuntime.Run(new WistRunRequest(
+                var exactRouteValue = exactRouteRuntime.Run(new LanguageExecutionRequest(
                     testCase.Source,
-                    testCase.Arguments,
-                    backend.Value));
+                    backend,
+                    testCase.Arguments)).Value;
 
                 Assert.Multiple(() =>
                 {
-                    Assert.That(typed?.GetType(), Is.EqualTo(shipped?.GetType()),
+                    Assert.That(providerValue?.GetType(), Is.EqualTo(exactRouteValue?.GetType()),
                         $"{testCase.PresetId}/{backend.Value}: runtime value type differs.");
-                    Assert.That(typed, Is.EqualTo(shipped),
+                    Assert.That(providerValue, Is.EqualTo(exactRouteValue),
                         $"{testCase.PresetId}/{backend.Value}: runtime value differs.");
                 });
             }
         }
     }
-
 }
