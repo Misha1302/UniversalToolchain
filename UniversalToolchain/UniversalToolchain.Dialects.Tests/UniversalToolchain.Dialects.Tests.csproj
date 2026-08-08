@@ -28,6 +28,7 @@
         <ProjectReference Include="..\UniversalToolchain.Dialects.Frontend\UniversalToolchain.Dialects.Frontend.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Dialects.Wist\UniversalToolchain.Dialects.Wist.csproj"/>
         <ProjectReference Include="..\UniversalToolchain.Wist\UniversalToolchain.Wist.csproj"/>
+        <ProjectReference Include="..\UniversalToolchain.Ssa.Optimization\UniversalToolchain.Ssa.Optimization.csproj"/>
         <ProjectReference Include="..\Wistc\Wistc.csproj"/>
         <ProjectReference Include="..\ArithmeticModule\ArithmeticModule.csproj"/>
         <ProjectReference Include="..\CSharpInteropModule\CSharpInteropModule.csproj"/>
