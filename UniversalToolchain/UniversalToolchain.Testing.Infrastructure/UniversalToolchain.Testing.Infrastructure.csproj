@@ -10,6 +10,7 @@
     <PackageReference Include="NUnit" Version="4.2.2" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj" />
     <ProjectReference Include="..\UniversalToolchain.Wist\UniversalToolchain.Wist.csproj" />
   </ItemGroup>
 </Project>
