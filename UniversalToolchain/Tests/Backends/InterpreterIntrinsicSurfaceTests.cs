@@ -1,4 +1,5 @@
-using UniversalToolchain.Wist;
+using Tests.Infrastructure;
+using UniversalToolchain.Testing.Infrastructure;
 
 namespace Tests.Backends;
 
@@ -103,12 +104,11 @@ public sealed class InterpreterIntrinsicSurfaceTests
             enable EGraphOptimization
             security restricted
             """;
-        var options = WistEngineOptions.FromDialectText(dialect);
-        options.BackendId = "interpreter";
 
-        using var engine = WistEngine.Create(options);
+        using var host = new CanonicalWistTestHost(dialect, "interpreter");
+        var result = host.Run("(1 + 2) > 0 and true", "interpreter");
 
-        Assert.That(engine.Evaluate<bool>("(1 + 2) > 0 and true"), Is.True);
+        Assert.That(BackendParityInfrastructure.AsBool(result), Is.True);
     }
 
     private static object? ExecuteInInterpreter(IAbstractIR ir) =>
