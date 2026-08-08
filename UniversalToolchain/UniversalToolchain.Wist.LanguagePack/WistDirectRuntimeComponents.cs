@@ -240,7 +240,7 @@ internal static class WistDirectRuntimeComponents
         if (contributionId == WistContributionIds.SsaOptimizer)
         {
             return new SsaOptimizerModule(
-                WistSsaPlanPolicy.CreateRuntimeOptions(plan),
+                WistSsaPlanPolicy.CreateRuntimeOptions(plan, captureTrace: true),
                 ssaReportSink ?? NullSsaRouteReportSink.Instance,
                 []);
         }
