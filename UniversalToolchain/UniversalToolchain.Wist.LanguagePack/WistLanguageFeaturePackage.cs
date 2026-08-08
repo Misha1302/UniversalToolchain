@@ -277,7 +277,7 @@ public sealed class WistLanguageFeaturePackage : ILanguageExtensionPackage, ILan
         if (id == WistFeatureIds.Variables)
             return [WistFeatureIds.Identifiers, WistFeatureIds.Scopes, WistFeatureIds.Whitespaces];
         if (id == WistFeatureIds.Comparisons)
-            return [WistFeatureIds.Numbers, WistFeatureIds.Scopes, WistFeatureIds.Whitespaces];
+            return [WistFeatureIds.Scopes, WistFeatureIds.Whitespaces];
         if (id == WistFeatureIds.BooleanLogic || id == WistFeatureIds.ConditionalControlFlow)
             return [WistFeatureIds.Scopes, WistFeatureIds.Whitespaces];
         if (id == WistFeatureIds.Conditions)
@@ -286,7 +286,6 @@ public sealed class WistLanguageFeaturePackage : ILanguageExtensionPackage, ILan
                 WistFeatureIds.Comparisons,
                 WistFeatureIds.BooleanLogic,
                 WistFeatureIds.ConditionalControlFlow,
-                WistFeatureIds.Numbers,
                 WistFeatureIds.Scopes,
                 WistFeatureIds.Whitespaces
             ];
