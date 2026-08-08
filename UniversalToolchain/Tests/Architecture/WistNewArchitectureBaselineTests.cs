@@ -97,21 +97,39 @@ public sealed class WistNewArchitectureBaselineTests
             if (!File.ReadAllText(definitionPath).Contains(symbol, StringComparison.Ordinal))
                 failures.Add($"Definition file does not contain {symbol}: {definition}");
 
-            if (!owner.TryGetProperty("knownProductionCallsites", out var callsites))
+            if (owner.TryGetProperty("knownProductionCallsites", out var callsites))
+            {
+                foreach (var callsite in callsites.EnumerateArray())
+                {
+                    var relativePath = callsite.GetString()!;
+                    var callsitePath = Path.Combine(root, relativePath.Replace('/', Path.DirectorySeparatorChar));
+                    if (!File.Exists(callsitePath))
+                    {
+                        failures.Add($"Missing known production callsite for {symbol}: {relativePath}");
+                        continue;
+                    }
+
+                    if (!File.ReadAllText(callsitePath).Contains(symbol, StringComparison.Ordinal))
+                        failures.Add($"Known production callsite no longer references {symbol}: {relativePath}");
+                }
+            }
+
+            if (!owner.TryGetProperty("retiredProductionCallsites", out var retiredCallsites))
                 continue;
 
-            foreach (var callsite in callsites.EnumerateArray())
+            foreach (var retiredCallsite in retiredCallsites.EnumerateArray())
             {
-                var relativePath = callsite.GetString()!;
+                var relativePath = retiredCallsite.GetProperty("path").GetString()!;
+                var retiredStage = retiredCallsite.GetProperty("retiredStage").GetString()!;
                 var callsitePath = Path.Combine(root, relativePath.Replace('/', Path.DirectorySeparatorChar));
                 if (!File.Exists(callsitePath))
                 {
-                    failures.Add($"Missing known production callsite for {symbol}: {relativePath}");
+                    failures.Add($"Missing retired production callsite path for {symbol} at {retiredStage}: {relativePath}");
                     continue;
                 }
 
-                if (!File.ReadAllText(callsitePath).Contains(symbol, StringComparison.Ordinal))
-                    failures.Add($"Known production callsite no longer references {symbol}: {relativePath}");
+                if (File.ReadAllText(callsitePath).Contains(symbol, StringComparison.Ordinal))
+                    failures.Add($"Retired production callsite still references {symbol} after {retiredStage}: {relativePath}");
             }
         }
 
@@ -121,7 +139,7 @@ public sealed class WistNewArchitectureBaselineTests
             Assert.That(owners.Select(static owner => owner.GetProperty("symbol").GetString()).Distinct(StringComparer.Ordinal).Count(),
                 Is.EqualTo(owners.Length));
             Assert.That(failures, Is.Empty,
-                "S00 freezes actual buildable legacy ownership and known production callsites. Later deletion stages replace this positive baseline with negative guards.");
+                "S00 freezes active legacy ownership while stage-specific cutovers are converted to explicit negative guards.");
         });
     }
 
