@@ -75,7 +75,7 @@ public sealed class WistNewArchitectureBaselineTests
     }
 
     [Test]
-    public void S11_ArchitectureInventory_FormerLegacyOwnersArePhysicallyRetired()
+    public void S11_ArchitectureInventory_EnforcesStageAwareOwnerRetirement()
     {
         using var inventory = ReadMigrationJson("LEGACY_ARCHITECTURE_INVENTORY.json");
         var owners = inventory.RootElement.GetProperty("owners").EnumerateArray().ToArray();
@@ -85,32 +85,33 @@ public sealed class WistNewArchitectureBaselineTests
         foreach (var owner in owners)
         {
             var symbol = owner.GetProperty("symbol").GetString()!;
+            var deletionStage = owner.GetProperty("deletionStage").GetString()!;
             var definition = owner.GetProperty("definition").GetString()!;
             var definitionPath = Path.Combine(root, definition.Replace('/', Path.DirectorySeparatorChar));
+            var shouldBeRetired = deletionStage == "S11";
 
-            if (File.Exists(definitionPath))
-                failures.Add($"Retired production definition returned for {symbol}: {definition}");
-
-            if (owner.TryGetProperty("knownProductionCallsites", out var callsites))
+            if (shouldBeRetired)
             {
-                foreach (var callsite in callsites.EnumerateArray())
-                {
-                    var relativePath = callsite.GetString()!;
-                    var callsitePath = Path.Combine(root, relativePath.Replace('/', Path.DirectorySeparatorChar));
-                    if (File.Exists(callsitePath) && File.ReadAllText(callsitePath).Contains(symbol, StringComparison.Ordinal))
-                        failures.Add($"Retired production callsite still references {symbol}: {relativePath}");
-                }
+                if (File.Exists(definitionPath))
+                    failures.Add($"S11-retired production definition returned for {symbol}: {definition}");
+            }
+            else
+            {
+                if (!File.Exists(definitionPath))
+                    failures.Add($"Future-stage owner {symbol} was removed before {deletionStage}: {definition}");
+                else if (!File.ReadAllText(definitionPath).Contains(symbol, StringComparison.Ordinal))
+                    failures.Add($"Future-stage definition no longer contains {symbol}: {definition}");
             }
 
-            if (!owner.TryGetProperty("retiredProductionCallsites", out var retiredCallsites))
+            if (!shouldBeRetired || !owner.TryGetProperty("knownProductionCallsites", out var callsites))
                 continue;
 
-            foreach (var retiredCallsite in retiredCallsites.EnumerateArray())
+            foreach (var callsite in callsites.EnumerateArray())
             {
-                var relativePath = retiredCallsite.GetProperty("path").GetString()!;
+                var relativePath = callsite.GetString()!;
                 var callsitePath = Path.Combine(root, relativePath.Replace('/', Path.DirectorySeparatorChar));
                 if (File.Exists(callsitePath) && File.ReadAllText(callsitePath).Contains(symbol, StringComparison.Ordinal))
-                    failures.Add($"Retired production callsite still references {symbol}: {relativePath}");
+                    failures.Add($"S11-retired production callsite still references {symbol}: {relativePath}");
             }
         }
 
@@ -120,7 +121,7 @@ public sealed class WistNewArchitectureBaselineTests
             Assert.That(owners.Select(static owner => owner.GetProperty("symbol").GetString()).Distinct(StringComparer.Ordinal).Count(),
                 Is.EqualTo(owners.Length));
             Assert.That(failures, Is.Empty,
-                "The S00 inventory is historical evidence; after S11 every listed legacy owner must be physically absent from production reachability.");
+                "The historical S00 inventory must be interpreted by each owner's deletionStage; S11 must not retire S12 owners early.");
         });
     }
 
