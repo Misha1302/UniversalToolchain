@@ -80,10 +80,13 @@ public sealed class WistEngine : IDisposable
         var plan = new LanguageCompiler(new LanguagePackageRegistry().AddPackage(package))
             .Compile(definition)
             .GetRequiredPlan();
+        var runtimeAssemblies = plan.Definition.RuntimePolicy.AllowHostInterop
+            ? allowedAssemblies
+            : Array.Empty<System.Reflection.Assembly>();
         var runtime = LanguageRuntime.Create(
             plan,
             new ILanguageRouteComponentSource[] { package },
-            new LanguageRuntimeOptions(allowedAssemblies));
+            new LanguageRuntimeOptions(runtimeAssemblies));
 
         try
         {
