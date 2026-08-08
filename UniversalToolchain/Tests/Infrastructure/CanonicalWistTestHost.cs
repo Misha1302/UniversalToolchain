@@ -12,14 +12,39 @@ internal sealed class CanonicalWistTestHost : IDisposable
     private readonly LanguageRuntime _runtime;
 
     public CanonicalWistTestHost()
+        : this(WistLanguageDefinitions.Create(WistLanguageDefinitions.FullDefaultNativeId), [])
+    {
+    }
+
+    public CanonicalWistTestHost(
+        string dialectText,
+        string backendName,
+        IReadOnlyList<Assembly>? allowedAssemblies = null)
+        : this(
+            WistFacadeLanguageDefinitionFactory.FromDialectText(
+                dialectText,
+                "canonical-test-inline",
+                RequireBackend(backendName).Value,
+                WistFacadeSsaPolicy.Disabled),
+            allowedAssemblies ?? [])
+    {
+    }
+
+    private CanonicalWistTestHost(
+        LanguageDefinition definition,
+        IReadOnlyList<Assembly> allowedAssemblies)
     {
         _package = new WistLanguageFeaturePackage();
         Plan = new LanguageCompiler(new LanguagePackageRegistry().AddPackage(_package))
-            .Compile(WistLanguageDefinitions.Create(WistLanguageDefinitions.FullDefaultNativeId))
+            .Compile(definition)
             .GetRequiredPlan();
+        var runtimeAssemblies = Plan.Definition.RuntimePolicy.AllowHostInterop
+            ? allowedAssemblies.ToArray()
+            : [];
         _runtime = LanguageRuntime.Create(
             Plan,
-            new ILanguageRouteComponentSource[] { _package });
+            new ILanguageRouteComponentSource[] { _package },
+            new LanguageRuntimeOptions(runtimeAssemblies));
     }
 
     public LanguagePlan Plan { get; }
