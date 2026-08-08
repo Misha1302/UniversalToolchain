@@ -6,7 +6,7 @@ namespace UniversalToolchain.LanguageSdk;
 
 public static class LanguageLockFile
 {
-    public const int SchemaVersion = 5;
+    public const int SchemaVersion = 6;
     public const string Canonicalization = "universaltoolchain-json-v1";
 
     public static string Serialize(LanguagePlan plan)
@@ -106,6 +106,29 @@ public static class LanguageLockFile
                     writer.WriteEndObject();
                 }
                 writer.WriteEndArray();
+                writer.WriteEndObject();
+            }
+            writer.WriteEndArray();
+            writer.WritePropertyName("contributionOrderConstraints");
+            writer.WriteStartArray();
+            foreach (var constraint in plan.Definition.ContributionOrderConstraints)
+            {
+                writer.WriteStartObject();
+                writer.WriteString("kind", constraint.Kind.ToString());
+                writer.WriteString("source", constraint.Source.Value);
+                writer.WriteString("target", constraint.Target.Value);
+                writer.WriteEndObject();
+            }
+            writer.WriteEndArray();
+            writer.WritePropertyName("intrinsicPolicy");
+            writer.WriteStartArray();
+            foreach (var directive in plan.Definition.IntrinsicPolicy)
+            {
+                writer.WriteStartObject();
+                writer.WriteString("intrinsic", directive.Intrinsic.Value);
+                writer.WriteBoolean("allowed", directive.Allowed);
+                if (directive.Backend is { } backend)
+                    writer.WriteString("backend", backend.Value);
                 writer.WriteEndObject();
             }
             writer.WriteEndArray();
