@@ -75,7 +75,7 @@ public sealed class WistNewArchitectureBaselineTests
     }
 
     [Test]
-    public void S00_ArchitectureInventory_DetectsKnownActiveLegacyOwnersAndCallsites()
+    public void S11_ArchitectureInventory_FormerLegacyOwnersArePhysicallyRetired()
     {
         using var inventory = ReadMigrationJson("LEGACY_ARCHITECTURE_INVENTORY.json");
         var owners = inventory.RootElement.GetProperty("owners").EnumerateArray().ToArray();
@@ -88,14 +88,8 @@ public sealed class WistNewArchitectureBaselineTests
             var definition = owner.GetProperty("definition").GetString()!;
             var definitionPath = Path.Combine(root, definition.Replace('/', Path.DirectorySeparatorChar));
 
-            if (!File.Exists(definitionPath))
-            {
-                failures.Add($"Missing production definition for {symbol}: {definition}");
-                continue;
-            }
-
-            if (!File.ReadAllText(definitionPath).Contains(symbol, StringComparison.Ordinal))
-                failures.Add($"Definition file does not contain {symbol}: {definition}");
+            if (File.Exists(definitionPath))
+                failures.Add($"Retired production definition returned for {symbol}: {definition}");
 
             if (owner.TryGetProperty("knownProductionCallsites", out var callsites))
             {
@@ -103,14 +97,8 @@ public sealed class WistNewArchitectureBaselineTests
                 {
                     var relativePath = callsite.GetString()!;
                     var callsitePath = Path.Combine(root, relativePath.Replace('/', Path.DirectorySeparatorChar));
-                    if (!File.Exists(callsitePath))
-                    {
-                        failures.Add($"Missing known production callsite for {symbol}: {relativePath}");
-                        continue;
-                    }
-
-                    if (!File.ReadAllText(callsitePath).Contains(symbol, StringComparison.Ordinal))
-                        failures.Add($"Known production callsite no longer references {symbol}: {relativePath}");
+                    if (File.Exists(callsitePath) && File.ReadAllText(callsitePath).Contains(symbol, StringComparison.Ordinal))
+                        failures.Add($"Retired production callsite still references {symbol}: {relativePath}");
                 }
             }
 
@@ -120,16 +108,9 @@ public sealed class WistNewArchitectureBaselineTests
             foreach (var retiredCallsite in retiredCallsites.EnumerateArray())
             {
                 var relativePath = retiredCallsite.GetProperty("path").GetString()!;
-                var retiredStage = retiredCallsite.GetProperty("retiredStage").GetString()!;
                 var callsitePath = Path.Combine(root, relativePath.Replace('/', Path.DirectorySeparatorChar));
-                if (!File.Exists(callsitePath))
-                {
-                    failures.Add($"Missing retired production callsite path for {symbol} at {retiredStage}: {relativePath}");
-                    continue;
-                }
-
-                if (File.ReadAllText(callsitePath).Contains(symbol, StringComparison.Ordinal))
-                    failures.Add($"Retired production callsite still references {symbol} after {retiredStage}: {relativePath}");
+                if (File.Exists(callsitePath) && File.ReadAllText(callsitePath).Contains(symbol, StringComparison.Ordinal))
+                    failures.Add($"Retired production callsite still references {symbol}: {relativePath}");
             }
         }
 
@@ -139,7 +120,7 @@ public sealed class WistNewArchitectureBaselineTests
             Assert.That(owners.Select(static owner => owner.GetProperty("symbol").GetString()).Distinct(StringComparer.Ordinal).Count(),
                 Is.EqualTo(owners.Length));
             Assert.That(failures, Is.Empty,
-                "S00 freezes active legacy ownership while stage-specific cutovers are converted to explicit negative guards.");
+                "The S00 inventory is historical evidence; after S11 every listed legacy owner must be physically absent from production reachability.");
         });
     }
 
