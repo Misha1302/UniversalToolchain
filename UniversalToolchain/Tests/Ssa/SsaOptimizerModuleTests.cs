@@ -1,12 +1,13 @@
 using IntermediateRepresentationAbstractions;
-using Microsoft.Extensions.DependencyInjection;
-using System.Runtime.Loader;
 using Tests.Infrastructure;
-using UniversalToolchain.Dialects.Integration;
-using UniversalToolchain.Dialects.Wist;
+using UniversalToolchain.FeatureSdk;
 using UniversalToolchain.Ir.Abstractions;
+using UniversalToolchain.Language.Abstractions;
+using UniversalToolchain.LanguageSdk;
+using UniversalToolchain.Runtime;
 using UniversalToolchain.Ssa.Lowering;
 using UniversalToolchain.Ssa.Optimization;
+using UniversalToolchain.Wist.LanguagePack;
 using UniversalIntermediateRepresentation;
 
 namespace Tests.Ssa;
@@ -14,6 +15,8 @@ namespace Tests.Ssa;
 [TestFixture]
 public sealed class SsaOptimizerModuleTests
 {
+    private static readonly BackendId Interpreter = new("interpreter");
+
     [Test]
     public void ProcessIr_WhenAirUsesSupportedSubset_ReturnsVerifiableAir()
     {
@@ -50,53 +53,41 @@ public sealed class SsaOptimizerModuleTests
     }
 
     [Test]
-    public void ComposeText_WithSsaOptimizerDirective_ResolvesManifestOptimizer()
+    public void Dsl_WithSsaOptimizerDirective_SelectsCanonicalSsaContribution()
     {
-        using var provider = CreateProvider();
-        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-
-        var composition = workflow.ComposeText(
+        var (package, plan) = Compile(
             """
             dialect Ssa
             use Arithmetic,Numbers,Scopes,Whitespaces
             backend interpreter
             enable Ssa
-            """,
-            "ssa");
+            """);
 
-        Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
-
-        var selection = (SelectedRuntimePlan)composition.RuntimeSelection!;
-        using var host = workflow.CreateHost(composition);
+        var selectedTypes = WistRuntimeComponentCatalog.GetSelectedImplementationTypes(plan);
 
         Assert.Multiple(() =>
         {
-            Assert.That(selection.EnabledOptimizers.Select(static x => x.CanonicalAlias), Does.Contain("Ssa"));
-            var optimizerType = host.Configuration.Optimizers.Single(static type =>
-                type.FullName == "UniversalToolchain.Ssa.Optimization.SsaOptimizerModule");
-            Assert.That(AssemblyLoadContext.GetLoadContext(optimizerType.Assembly)?.Name,
-                Is.EqualTo("UniversalToolchain.Runtime.Isolated"));
+            Assert.That(
+                plan.Contributions.Select(static contribution => contribution.Contribution.Id),
+                Does.Contain(WistContributionIds.SsaOptimizer));
+            Assert.That(selectedTypes, Does.Contain(typeof(SsaOptimizerModule)));
         });
+        GC.KeepAlive(package);
     }
 
     [Test]
     public void Run_WithSsaOptimizerDirectiveAndSupportedBooleanProgram_ExecutesThroughInterpreter()
     {
-        using var provider = CreateProvider();
-        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var composition = workflow.ComposeText(
+        var (package, plan) = Compile(
             """
             dialect Ssa
             use BooleanConditions,Conditions,Scopes,Whitespaces
             backend interpreter
             enable Ssa
-            """,
-            "ssa");
+            """);
+        using var runtime = LanguageRuntime.Create(plan, new ILanguageRouteComponentSource[] { package });
 
-        Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
-
-        using var host = workflow.CreateHost(composition);
-        var result = host.Run("true", "interpreter");
+        var result = runtime.Run(new LanguageExecutionRequest("true", Interpreter)).Value;
 
         Assert.That(result, Is.EqualTo(true));
     }
@@ -104,34 +95,32 @@ public sealed class SsaOptimizerModuleTests
     [Test]
     public void Run_WithSsaOptimizerDirectiveAndManagedNumericLiteral_ReturnsNumericValue()
     {
-        using var provider = CreateProvider();
-        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var composition = workflow.ComposeText(
+        var (package, plan) = Compile(
             """
             dialect Ssa
             use Arithmetic,Numbers,Scopes,Whitespaces
             backend interpreter
             enable Ssa
-            """,
-            "ssa");
+            """);
+        using var runtime = LanguageRuntime.Create(plan, new ILanguageRouteComponentSource[] { package });
 
-        Assert.That(composition.IsSuccess, Is.True, FormatComposition(composition));
+        var result = runtime.Run(new LanguageExecutionRequest("42", Interpreter)).Value;
+        var normalized = WistRuntimeValueAdapterActivation.Normalize(plan, result);
 
-        using var host = workflow.CreateHost(composition);
-        var result = host.Run("42", "interpreter");
-
-        Assert.That(BackendValueNormalizer.Normalize(result), Is.EqualTo(42.0));
+        Assert.That(BackendValueNormalizer.Normalize(normalized), Is.EqualTo(42.0));
     }
 
-    private static ServiceProvider CreateProvider()
+    private static (WistLanguageFeaturePackage Package, LanguagePlan Plan) Compile(string source)
     {
-        var services = new ServiceCollection();
-        services.AddWistDialectServices();
-        return services.BuildServiceProvider();
+        var package = new WistLanguageFeaturePackage();
+        var definition = WistFacadeLanguageDefinitionFactory.FromDialectText(
+            source,
+            "ssa.wistdialect",
+            Interpreter.Value,
+            WistFacadeSsaPolicy.Require);
+        var plan = new LanguageCompiler(new LanguagePackageRegistry().AddPackage(package))
+            .Compile(definition)
+            .GetRequiredPlan();
+        return (package, plan);
     }
-
-    private static string FormatComposition(DialectFrameworkCompositionResult composition) =>
-        DialectCompositionExplanationFormatter.FormatDeterministic(
-            DialectCompositionExplanationProjector.Project(composition));
-
 }
