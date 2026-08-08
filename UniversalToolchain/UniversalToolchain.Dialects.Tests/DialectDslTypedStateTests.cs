@@ -119,6 +119,24 @@ public class DialectDslTypedStateTests
     }
 
     [Test]
+    public void TypedStateKeys_ShouldRejectNullOrWhitespaceNames()
+    {
+        var accumulation = new DialectDirectiveAccumulation();
+        var validationContext = new DialectDirectiveValidationContext();
+
+        var accumulationException = Assert.Throws<ArgumentException>(() =>
+            accumulation.GetOrCreateList(new DialectListStateKey<string>(" ")));
+        var validationException = Assert.Throws<ArgumentException>(() =>
+            validationContext.GetOrAddState(new DialectValueStateKey<List<string>>(string.Empty), static () => []));
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(accumulationException!.Message, Does.Contain("must not be empty"));
+            Assert.That(validationException!.Message, Does.Contain("must not be empty"));
+        });
+    }
+
+    [Test]
     public void BuiltInValidationState_ShouldNotLeakAcrossIntrinsicAndOptimizerNamespaces_WhenNamesMatch()
     {
         var slice = DialectDslTestComposition.CreateCompiler().Compile(
