@@ -1,6 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using ExceptionsManager;
-using UniversalToolchain.Wist;
+using Tests.Infrastructure;
 
 namespace Tests.Core;
 
@@ -49,11 +49,14 @@ public sealed class CSharpInteropResolutionAndNegativeContractsTests
 
     private static T ExecuteCode<T>(string code)
     {
-        var options = WistEngineOptions.FromDialectText(DialectText, "interop-contracts");
-        options.BackendId = "cil";
-        options.AllowedAssemblies = [typeof(string).Assembly, typeof(InteropContractsHost).Assembly];
-        using var engine = WistEngine.Create(options);
-        return engine.Evaluate<T>(code);
+        using var host = new CanonicalWistTestHost(
+            DialectText,
+            "cil",
+            [typeof(string).Assembly, typeof(InteropContractsHost).Assembly]);
+        var result = host.Run(code, "cil");
+        return result is T typed
+            ? typed
+            : (T)Convert.ChangeType(result!, typeof(T), System.Globalization.CultureInfo.InvariantCulture);
     }
 }
 
