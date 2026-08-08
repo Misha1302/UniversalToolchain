@@ -17,7 +17,6 @@ public sealed class WistEngine : IDisposable
     private readonly BackendId _backend;
     private readonly WistEngineOptions _options;
     private readonly WistResourceLimits _resourceLimits;
-    private bool _disposed;
 
     private WistEngine(
         LanguageRuntime runtime,
@@ -35,12 +34,7 @@ public sealed class WistEngine : IDisposable
 
     public void Dispose()
     {
-        if (_disposed)
-            return;
-
-        _disposed = true;
-        var runtime = _runtime;
-        _runtime = null;
+        var runtime = Interlocked.Exchange(ref _runtime, null);
         runtime?.Dispose();
     }
 
@@ -363,14 +357,10 @@ public sealed class WistEngine : IDisposable
             $"Wist parameter count {count} exceeds the configured maximum of {_resourceLimits.MaxParameterCount}.");
     }
 
-    private LanguageRuntime Runtime
-    {
-        get
-        {
-            ThrowIfDisposed();
-            return _runtime!;
-        }
-    }
+    private LanguageRuntime Runtime =>
+        Volatile.Read(ref _runtime)
+        ?? throw new ObjectDisposedException(nameof(WistEngine));
 
-    private void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(_disposed, this);
+    private void ThrowIfDisposed() =>
+        ObjectDisposedException.ThrowIf(Volatile.Read(ref _runtime) is null, this);
 }
