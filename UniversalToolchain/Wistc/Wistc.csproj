@@ -9,8 +9,10 @@
   <ItemGroup>
     <ProjectReference Include="..\CommonExceptions\CommonExceptions.csproj" />
     <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj" />
+    <ProjectReference Include="..\UniversalToolchain.Capabilities.Core\UniversalToolchain.Capabilities.Core.csproj" />
     <ProjectReference Include="..\UniversalToolchain.Dialects.Frontend\UniversalToolchain.Dialects.Frontend.csproj" />
     <ProjectReference Include="..\UniversalToolchain.FeatureSdk\UniversalToolchain.FeatureSdk.csproj" />
+    <ProjectReference Include="..\UniversalToolchain.LanguageSdk\UniversalToolchain.LanguageSdk.csproj" />
     <ProjectReference Include="..\UniversalToolchain.Wist.LanguagePack\UniversalToolchain.Wist.LanguagePack.csproj" />
     <ProjectReference Include="..\UniversalToolchain.Wist\UniversalToolchain.Wist.csproj" />
   </ItemGroup>
