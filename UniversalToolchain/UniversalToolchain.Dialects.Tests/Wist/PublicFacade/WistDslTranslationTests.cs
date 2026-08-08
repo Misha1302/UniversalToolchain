@@ -84,4 +84,23 @@ public sealed class WistDslTranslationTests
 
         Assert.That(exception!.Message, Does.Contain("magic-runtime-switch"));
     }
+
+    [Test]
+    public void InlineDialect_ForbiddenIntrinsic_IsEnforcedByCanonicalRuntime()
+    {
+        const string dialect = """
+            dialect NoIntegerAdd
+            use Arithmetic,Numbers,Scopes,Whitespaces
+            backend interpreter
+            forbid add_i32
+            security restricted
+            """;
+        var options = WistEngineOptions.FromDialectText(dialect);
+        options.BackendId = "interpreter";
+
+        using var wist = WistEngine.Create(options);
+        var exception = Assert.Throws<InvalidOperationException>(() => wist.Evaluate<int>("2 + 3"));
+
+        Assert.That(exception!.Message, Does.Contain("add_i32").And.Contain("forbidden"));
+    }
 }
