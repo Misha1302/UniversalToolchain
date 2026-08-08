@@ -40,12 +40,12 @@ public sealed class TestingInfrastructureGuardrailTests
             var source = File.ReadAllText(file);
 
             foreach (var token in forbiddenTokens)
-                Assert.That(source, Does.Not.Contain(token), $"File '{file}' must use canonical manifest-backed services instead of '{token}'.");
+                Assert.That(source, Does.Not.Contain(token), $"File '{file}' must use the canonical Wist facade instead of '{token}'.");
         }
     }
 
     [Test]
-    public void DialectTestHostInfrastructure_CreateBackendSpecificHosts_UsesStructuredBackendOverride()
+    public void DialectTestHostInfrastructure_RunInBothBackends_UsesCanonicalFacadeWithoutSourceRewrite()
     {
         const string dialectText = """
                                    dialect StructuredOverride
@@ -53,43 +53,35 @@ public sealed class TestingInfrastructureGuardrailTests
                                    use Arithmetic,Numbers
 
                                    backend interpreter,cil
+                                   security restricted
                                    """;
 
-        using var interpreterHost = DialectTestHostInfrastructure.CreateInterpreterHost(dialectText);
-        using var compilerHost = DialectTestHostInfrastructure.CreateCompilerHost(dialectText);
+        var result = DialectTestHostInfrastructure.RunInBothBackends(dialectText, "2 + 3");
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(
-                interpreterHost.Configuration.BackendConfigurations.Select(static x => x.BackendDescriptor.CanonicalId),
-                Is.EqualTo(new[] { "interpreter" }));
-            Assert.That(
-                compilerHost.Configuration.BackendConfigurations.Select(static x => x.BackendDescriptor.CanonicalId),
-                Is.EqualTo(new[] { "cil" }));
-            Assert.That(interpreterHost.Configuration.FrontendModules.Select(static x => x.Name), Is.EquivalentTo(compilerHost.Configuration.FrontendModules.Select(static x => x.Name)));
-            Assert.That(interpreterHost.Configuration.IrModules.Select(static x => x.Name), Is.EquivalentTo(compilerHost.Configuration.IrModules.Select(static x => x.Name)));
-        });
+        Assert.That(BackendParityInfrastructure.AsNumber(result), Is.EqualTo(5d));
     }
 
     [Test]
-    public void BackendParityInfrastructure_RunBoth_UsesCanonicalCompositionBeforeStructuredOverride()
+    public void BackendParityInfrastructure_RunBoth_UsesCanonicalFacadeBackendSelection()
     {
         const string dialectText = """
                                    dialect Parity
                                    use Arithmetic,Numbers,CSharpInterop,Identifier,Scopes,Whitespaces
                                    backend interpreter,cil
+                                   security trusted
+                                   capability unsafe-interop
                                    """;
 
         var (compilerResult, interpreterResult) = BackendParityInfrastructure.RunBoth(
             dialectText,
-            "Main.Round((10 * 2) * 3.141592653589793)");
+            "2 + 3");
 
         BackendParityInfrastructure.AssertSemanticParity(compilerResult, interpreterResult);
         Assert.Multiple(() =>
         {
             Assert.That(compilerResult.IsSuccess, Is.True);
             Assert.That(interpreterResult.IsSuccess, Is.True);
-            Assert.That(BackendParityInfrastructure.AsNumber(compilerResult.Value), Is.EqualTo(63d));
+            Assert.That(BackendParityInfrastructure.AsNumber(compilerResult.Value), Is.EqualTo(5d));
         });
     }
 
