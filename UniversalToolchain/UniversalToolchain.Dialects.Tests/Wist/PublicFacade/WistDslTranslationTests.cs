@@ -88,27 +88,36 @@ public sealed class WistDslTranslationTests
             Assert.That(exception!.Message, Does.Contain("magic-runtime-switch"));
             Assert.That(exception.Stage, Is.EqualTo("Parser"));
             Assert.That(exception.Location, Is.Not.Null);
-            Assert.That(exception.Location!.Line, Is.EqualTo(5));
-            Assert.That(exception.Location.Column, Is.EqualTo(0));
+            Assert.That(exception.Location!.Value.Line, Is.EqualTo(5));
+            Assert.That(exception.Location.Value.Column, Is.EqualTo(0));
         });
     }
 
     [Test]
-    public void InlineDialect_ForbiddenIntrinsic_IsEnforcedByCanonicalRuntime()
+    public void InlineDialect_ForbiddenOptimizerIntrinsic_UsesSemanticFallback()
     {
         const string dialect = """
-            dialect NoIntegerAdd
-            use Arithmetic,Numbers,Scopes,Whitespaces
-            backend interpreter
+            dialect NoIntegerAddIntrinsic
+            use NativeTypes,Numbers,Scopes,Whitespaces
+            backend cil
+            enable ArithmeticOptimization
+            enable EGraphOptimization
+            enable NativeCilOptimization
+            enable NativeTypesOptimization
             forbid add_i32
             security restricted
             """;
         var options = WistEngineOptions.FromDialectText(dialect);
-        options.BackendId = "interpreter";
+        options.BackendId = "cil";
 
         using var wist = WistEngine.Create(options);
-        var exception = Assert.Throws<InvalidOperationException>(() => wist.Evaluate<int>("2 + 3"));
+        var evaluated = wist.Evaluate<int>("2 + 3");
+        var compiled = wist.Compile<Func<int>>("2 + 3");
 
-        Assert.That(exception!.Message, Does.Contain("add_i32").And.Contain("forbidden"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(evaluated, Is.EqualTo(5));
+            Assert.That(compiled.CompiledDelegate(), Is.EqualTo(5));
+        });
     }
 }
