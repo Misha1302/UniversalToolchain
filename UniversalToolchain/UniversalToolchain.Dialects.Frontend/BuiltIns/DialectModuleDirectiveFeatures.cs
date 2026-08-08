@@ -69,7 +69,10 @@ internal abstract class OrderDialectDirectiveFeatureBase : IdentifierListDialect
     }
 
     public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive) =>
-        [new OrderAirAnnotation(OrderKind, GetIdentifierListArgument(directive))];
+        [new OrderAirAnnotation(
+            OrderKind,
+            GetIdentifierListArgument(directive),
+            DialectSourceLocation.From(directive.LexemeValue))];
 }
 
 internal sealed class RequiresModulesDialectDirectiveFeature : OrderDialectDirectiveFeatureBase
@@ -174,7 +177,9 @@ internal sealed class CapabilityDialectDirectiveFeature : IdentifierListDialectD
     }
 
     public override IReadOnlyList<IDialectDefinitionSliceAnnotation> Lower(DialectDirectiveAstNode directive) =>
-        [new CapabilityAirAnnotation(GetIdentifierListArgument(directive))];
+        [new CapabilityAirAnnotation(
+            GetIdentifierListArgument(directive),
+            DialectSourceLocation.From(directive.LexemeValue))];
 }
 
 internal sealed class UseExcludeConflictDocumentValidationRule : IDialectDocumentValidationRule
