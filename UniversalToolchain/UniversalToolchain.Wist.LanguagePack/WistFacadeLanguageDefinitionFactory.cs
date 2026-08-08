@@ -110,8 +110,13 @@ internal static class WistFacadeLanguageDefinitionFactory
         {
             if (unsafeInterop && slice.SecurityProfile != DialectSecurityProfile.Trusted)
             {
-                throw new InvalidOperationException(
-                    "Wist capability 'unsafe-interop' requires security trusted; restricted dialects cannot enable host interop.");
+                var location = slice.CapabilityDirectives
+                    .LastOrDefault(static directive => directive.Name == UnsafeInteropCapability && directive.Value)
+                    ?.SourceLocation;
+                DialectDefinitionTranslationErrors.Fail(
+                    "Wist capability 'unsafe-interop' requires security trusted; restricted dialects cannot enable host interop.",
+                    location);
+                throw new InvalidOperationException("Unreachable dialect translation error path.");
             }
             allowHostInterop = unsafeInterop;
         }
@@ -130,16 +135,18 @@ internal static class WistFacadeLanguageDefinitionFactory
                     DialectOrderDirectiveKind.After => LanguageContributionOrderKind.After,
                     _ => throw new InvalidOperationException($"Unknown Wist order directive '{directive.Kind}'.")
                 },
-                ResolveOrderedModuleContribution(directive.SourceModule, groups),
-                ResolveOrderedModuleContribution(directive.TargetModule, groups)))
+                ResolveOrderedModuleContribution(directive.SourceModule, groups, directive.SourceLocation),
+                ResolveOrderedModuleContribution(directive.TargetModule, groups, directive.SourceLocation)))
             .ToArray();
         var intrinsicPolicy = slice.IntrinsicDirectives
             .Select(directive =>
             {
                 if (!directive.Target.IsAny && !enabledBackends.Contains(directive.Target.BackendId.Value, StringComparer.Ordinal))
                 {
-                    throw new InvalidOperationException(
-                        $"Wist intrinsic policy for '{directive.Name}' targets disabled backend '{directive.Target.BackendId.Value}'.");
+                    DialectDefinitionTranslationErrors.Fail(
+                        $"Wist intrinsic policy for '{directive.Name}' targets disabled backend '{directive.Target.BackendId.Value}'.",
+                        directive.SourceLocation);
+                    throw new InvalidOperationException("Unreachable dialect translation error path.");
                 }
 
                 return new LanguageIntrinsicPolicyDirective(
@@ -191,17 +198,26 @@ internal static class WistFacadeLanguageDefinitionFactory
 
     private static LanguageContributionId ResolveOrderedModuleContribution(
         string alias,
-        IReadOnlyDictionary<string, UniversalToolchain.Dialects.Abstractions.DialectGroupDescriptor> groups)
+        IReadOnlyDictionary<string, UniversalToolchain.Dialects.Abstractions.DialectGroupDescriptor> groups,
+        DialectSourceLocation? sourceLocation)
     {
         if (groups.ContainsKey(alias))
         {
-            throw new NotSupportedException(
-                $"Wist order directive cannot target group '{alias}' as one contribution; order the expanded module aliases explicitly.");
+            DialectDefinitionTranslationErrors.Fail(
+                $"Wist order directive cannot target group '{alias}' as one contribution; order the expanded module aliases explicitly.",
+                sourceLocation);
+            throw new InvalidOperationException("Unreachable dialect translation error path.");
         }
 
-        return WistRuntimeComponentCatalog
-            .GetRequiredAlias(alias, WistRuntimeComponentKind.Module)
-            .ContributionId;
+        if (!WistRuntimeComponentCatalog.TryGetAlias(alias, WistRuntimeComponentKind.Module, out var component))
+        {
+            DialectDefinitionTranslationErrors.Fail(
+                $"Wist alias '{alias}' is not a canonical module component.",
+                sourceLocation);
+            throw new InvalidOperationException("Unreachable dialect translation error path.");
+        }
+
+        return component!.ContributionId;
     }
 
     private static IReadOnlyDictionary<string, bool> NormalizeCapabilities(
@@ -212,14 +228,18 @@ internal static class WistFacadeLanguageDefinitionFactory
         {
             if (directive.Name is not UnsafeInteropCapability and not CompositionRestrictedCapability)
             {
-                throw new NotSupportedException(
-                    $"Wist capability '{directive.Name}' has no typed LanguageDefinition policy mapping.");
+                DialectDefinitionTranslationErrors.Fail(
+                    $"Wist capability '{directive.Name}' has no typed LanguageDefinition policy mapping.",
+                    directive.SourceLocation);
+                continue;
             }
 
             if (result.TryGetValue(directive.Name, out var existing) && existing != directive.Value)
             {
-                throw new InvalidOperationException(
-                    $"Wist capability '{directive.Name}' is declared with contradictory values.");
+                DialectDefinitionTranslationErrors.Fail(
+                    $"Wist capability '{directive.Name}' is declared with contradictory values.",
+                    directive.SourceLocation);
+                continue;
             }
             result[directive.Name] = directive.Value;
         }
