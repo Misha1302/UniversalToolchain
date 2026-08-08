@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using UniversalToolchain.Dialects.Abstractions;
 
 namespace UniversalToolchain.Dialects.Tests.RuntimeCatalog;
 
