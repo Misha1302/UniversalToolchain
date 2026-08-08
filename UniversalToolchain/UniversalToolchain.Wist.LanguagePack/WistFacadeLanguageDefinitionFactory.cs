@@ -1,4 +1,5 @@
 using UniversalToolchain.Dialects.Frontend;
+using UniversalToolchain.Dialects.Wist.Groups;
 using UniversalToolchain.Language.Abstractions;
 
 namespace UniversalToolchain.Wist.LanguagePack;
@@ -12,12 +13,14 @@ internal enum WistFacadeSsaPolicy
 }
 
 /// <summary>
-/// Staged facade adapter. It produces only LanguageDefinition; LanguageCompiler remains the sole
-/// resolver of dependencies, providers, routes and order. S10 replaces the temporary legacy DSL
-/// parser used for text/file sources without changing this translation contract.
+/// Wist configuration frontend. It translates parsed dialect semantics into LanguageDefinition;
+/// LanguageCompiler remains the sole resolver of dependencies, providers, routes and order.
 /// </summary>
 internal static class WistFacadeLanguageDefinitionFactory
 {
+    private const string UnsafeInteropCapability = "unsafe-interop";
+    private const string CompositionRestrictedCapability = "composition-restricted";
+
     public static LanguageDefinition FromPreset(
         string presetId,
         string backend,
@@ -52,28 +55,37 @@ internal static class WistFacadeLanguageDefinitionFactory
         if (slice.BaseDialectName != null)
         {
             throw new NotSupportedException(
-                "Wist facade LanguageDefinition translation does not inherit base dialects; S10 requires explicit feature ownership.");
+                "Wist facade LanguageDefinition translation does not inherit base dialects; base-dialect ownership must be translated before planning.");
         }
-        if (slice.OrderDirectives.Count != 0 || slice.IntrinsicDirectives.Count != 0 || slice.CapabilityDirectives.Count != 0)
+        if (slice.OrderDirectives.Count != 0)
         {
             throw new NotSupportedException(
-                "This Wist dialect uses directives whose canonical LanguageDefinition translation is not available in the S09 facade cutover.");
+                "Wist dialect order directives require definition-level typed contribution-order constraints; they are not represented as metadata or pre-resolved here.");
+        }
+        if (slice.IntrinsicDirectives.Count != 0)
+        {
+            throw new NotSupportedException(
+                "Wist intrinsic directives require typed backend-scoped intrinsic policy in LanguageDefinition; they are not dropped during translation.");
         }
 
+        var groups = new WistDialectGroupProvider().GetGroups()
+            .ToDictionary(static group => group.Alias, StringComparer.Ordinal);
         var selectedFeatures = new List<LanguageFeatureId>();
         var selectedAliases = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var alias in slice.UseModules)
+        var excludedAliases = ExpandModuleAliases(slice.ExcludeModules, groups).ToHashSet(StringComparer.Ordinal);
+
+        foreach (var alias in ExpandModuleAliases(slice.UseModules, groups))
         {
+            if (excludedAliases.Contains(alias))
+                throw new InvalidOperationException($"Wist dialect both uses and excludes module '{alias}'.");
+
             var component = WistRuntimeComponentCatalog.GetRequiredAlias(alias, WistRuntimeComponentKind.Module);
             if (selectedAliases.Add(alias))
                 selectedFeatures.Add(component.FeatureId);
         }
-        foreach (var alias in slice.ExcludeModules)
-        {
+        foreach (var alias in excludedAliases)
             _ = WistRuntimeComponentCatalog.GetRequiredAlias(alias, WistRuntimeComponentKind.Module);
-            if (selectedAliases.Contains(alias))
-                throw new InvalidOperationException($"Wist dialect both uses and excludes module '{alias}'.");
-        }
+
         foreach (var optimizer in slice.OptimizerDirectives)
         {
             var component = WistRuntimeComponentCatalog.GetRequiredAlias(optimizer.Name, WistRuntimeComponentKind.Optimizer);
@@ -96,6 +108,7 @@ internal static class WistFacadeLanguageDefinitionFactory
                 $"Wist dialect '{slice.Name}' does not enable backend '{backend}'. Enabled backends: {string.Join(", ", enabledBackends)}.");
         }
 
+        var capabilityPolicy = NormalizeCapabilities(slice.CapabilityDirectives);
         var securityFeature = slice.SecurityProfile switch
         {
             DialectSecurityProfile.Trusted => WistInternalFeatureIds.TrustedSecurity,
@@ -103,6 +116,18 @@ internal static class WistFacadeLanguageDefinitionFactory
             _ => throw new InvalidOperationException($"Unknown Wist security profile '{slice.SecurityProfile}'.")
         };
         var allowHostInterop = slice.SecurityProfile == DialectSecurityProfile.Trusted;
+        if (capabilityPolicy.TryGetValue(UnsafeInteropCapability, out var unsafeInterop))
+        {
+            if (unsafeInterop && slice.SecurityProfile != DialectSecurityProfile.Trusted)
+            {
+                throw new InvalidOperationException(
+                    "Wist capability 'unsafe-interop' requires security trusted; restricted dialects cannot enable host interop.");
+            }
+            allowHostInterop = unsafeInterop;
+        }
+        if (capabilityPolicy.GetValueOrDefault(CompositionRestrictedCapability))
+            selectedFeatures.Add(WistInternalFeatureIds.CompositionRestricted);
+
         selectedFeatures.Add(securityFeature);
         ApplySsaPolicy(selectedFeatures, ssaPolicy);
 
@@ -121,6 +146,45 @@ internal static class WistFacadeLanguageDefinitionFactory
                 ["wist.source-name"] = sourceName,
                 ["wist.dsl-name"] = slice.Name
             });
+    }
+
+    private static IEnumerable<string> ExpandModuleAliases(
+        IEnumerable<string> aliases,
+        IReadOnlyDictionary<string, UniversalToolchain.Dialects.Abstractions.DialectGroupDescriptor> groups)
+    {
+        foreach (var alias in aliases)
+        {
+            if (groups.TryGetValue(alias, out var group))
+            {
+                foreach (var included in group.IncludedModules)
+                    yield return included;
+                continue;
+            }
+
+            yield return alias;
+        }
+    }
+
+    private static IReadOnlyDictionary<string, bool> NormalizeCapabilities(
+        IReadOnlyList<DialectCapabilityDirective> directives)
+    {
+        var result = new Dictionary<string, bool>(StringComparer.Ordinal);
+        foreach (var directive in directives)
+        {
+            if (directive.Name is not UnsafeInteropCapability and not CompositionRestrictedCapability)
+            {
+                throw new NotSupportedException(
+                    $"Wist capability '{directive.Name}' has no typed LanguageDefinition policy mapping.");
+            }
+
+            if (result.TryGetValue(directive.Name, out var existing) && existing != directive.Value)
+            {
+                throw new InvalidOperationException(
+                    $"Wist capability '{directive.Name}' is declared with contradictory values.");
+            }
+            result[directive.Name] = directive.Value;
+        }
+        return result;
     }
 
     private static LanguageDefinition Narrow(
