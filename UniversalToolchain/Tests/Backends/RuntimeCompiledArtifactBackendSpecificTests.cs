@@ -8,7 +8,7 @@ public class RuntimeCompiledArtifactBackendSpecificTests
     [Test]
     public void Compile_CilArtifact_ExposesTypedCanonicalBackendOutputAndNativeDelegate()
     {
-        using var host = RuntimeCompiledArtifactTestFactory.CreateHost();
+        using var host = CanonicalWistTestHost.CreateFullNative();
         var program = host.Compile("1", new OrderedDictionary<string, Type>(), "cil");
         var artifact = host.GetCilArtifact(program);
 
