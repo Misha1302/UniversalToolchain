@@ -1,5 +1,5 @@
+using BasicCore.Compilation;
 using BasicCore.Contracts;
-using BasicCore.Core;
 using BasicCore.LexerWrapper;
 using BasicCore.ParserWrapper;
 using BasicCore.TranslatorWrapper;
@@ -11,7 +11,11 @@ namespace UniversalToolchain.Dialects.Frontend;
 
 public sealed class DialectDslCompiler : IDisposable
 {
-    private readonly BasicCoreImpl<DialectDefinitionSlice> _core;
+    private readonly Func<ILexer> _lexerFactory;
+    private readonly Func<IParser> _parserFactory;
+    private readonly Func<IAstToBytecodeTranslator> _astTranslatorFactory;
+    private readonly Func<IAbstractMethodsTranslator> _abstractMethodsTranslatorFactory;
+    private readonly IFrontendCoreModule _frontendModule;
     private readonly ServiceProvider _serviceProvider;
 
     public DialectDslCompiler()
@@ -26,31 +30,25 @@ public sealed class DialectDslCompiler : IDisposable
         var services = new ServiceCollection();
         services.AddDialectDslFrontendCompilerServices(frontendModule);
         _serviceProvider = services.BuildServiceProvider();
-
-        var lexerFactory = _serviceProvider.GetRequiredService<Func<ILexer>>();
-        var parserFactory = _serviceProvider.GetRequiredService<Func<IParser>>();
-        var astTranslatorFactory = _serviceProvider.GetRequiredService<Func<IAstToBytecodeTranslator>>();
-        var abstractMethodsTranslatorFactory = _serviceProvider.GetRequiredService<Func<IAbstractMethodsTranslator>>();
-        var compiler = new DialectDefinitionSliceCompiler();
-
-        _core = new BasicCoreImpl<DialectDefinitionSlice>(
-            lexerFactory,
-            parserFactory,
-            astTranslatorFactory,
-            abstractMethodsTranslatorFactory,
-            () => compiler,
-            () => new DialectDefinitionSliceExecutor(),
-            [_serviceProvider.GetRequiredService<IFrontendCoreModule>()],
-            [],
-            []);
+        _lexerFactory = _serviceProvider.GetRequiredService<Func<ILexer>>();
+        _parserFactory = _serviceProvider.GetRequiredService<Func<IParser>>();
+        _astTranslatorFactory = _serviceProvider.GetRequiredService<Func<IAstToBytecodeTranslator>>();
+        _abstractMethodsTranslatorFactory = _serviceProvider.GetRequiredService<Func<IAbstractMethodsTranslator>>();
+        _frontendModule = _serviceProvider.GetRequiredService<IFrontendCoreModule>();
     }
 
-    public void Dispose()
+    public void Dispose() => _serviceProvider.Dispose();
+
+    public DialectDefinitionSlice Compile(string sourceText)
     {
-        _serviceProvider.Dispose();
+        sourceText = sourceText.ArgNotNull();
+        var input = new CompilationInputNormalizer().NormalizeRuntimeInput(sourceText);
+        IFrontendCoreModule[] modules = [_frontendModule];
+        var root = CanonicalArtifactStages.ParseAndBind(input, _lexerFactory(), _parserFactory(), modules);
+        var bytecode = CanonicalArtifactStages.LowerToBytecode(root, _astTranslatorFactory(), modules);
+        var air = CanonicalArtifactStages.LowerToAir(bytecode, _abstractMethodsTranslatorFactory());
+        return new DialectDefinitionSliceCompiler().Compile(air, input);
     }
-
-    public DialectDefinitionSlice Compile(string sourceText) => _core.GetExecutable(sourceText);
 
     private static DialectDslFrontendModule CreateDefaultFrontendModule() => DialectDslStandaloneComposition.CreateFrontendModule();
 }
