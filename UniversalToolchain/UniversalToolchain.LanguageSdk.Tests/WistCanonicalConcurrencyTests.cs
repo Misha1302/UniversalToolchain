@@ -67,7 +67,7 @@ public sealed class WistCanonicalConcurrencyTests
             .Select(index => Compile(source, $"stable-{index}.wistdialect").PlanHash)
             .ToArray();
 
-        Assert.That(hashes.Distinct(StringComparer.Ordinal), Has.Count.EqualTo(1));
+        Assert.That(hashes.Distinct(StringComparer.Ordinal).ToArray(), Has.Length.EqualTo(1));
     }
 
     [Test]
