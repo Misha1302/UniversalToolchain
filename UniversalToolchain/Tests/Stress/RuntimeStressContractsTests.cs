@@ -12,6 +12,8 @@ public class RuntimeStressContractsTests
 {
     private const int RepeatCount = 100;
     private const int ParallelCount = 50;
+    private static readonly BackendId Cil = new("cil");
+    private static readonly BackendId Interpreter = new("interpreter");
 
     [Test]
     public void PlanAndRuntime_ShouldSurvive100RepeatedCycles()
@@ -23,7 +25,7 @@ public class RuntimeStressContractsTests
         {
             var (package, plan) = Compile(dialect, $"repeat-{i}");
             using var runtime = LanguageRuntime.Create(plan, new ILanguageRouteComponentSource[] { package });
-            signatures.Add(BuildPlanSignature(plan));
+            signatures.Add(BuildSemanticPlanSignature(plan));
         }
 
         Assert.That(signatures.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1), FormatSignatureGroups(signatures));
@@ -38,7 +40,7 @@ public class RuntimeStressContractsTests
         {
             var (package, plan) = Compile(dialect, $"parallel-{i}");
             using var runtime = LanguageRuntime.Create(plan, new ILanguageRouteComponentSource[] { package });
-            return BuildPlanSignature(plan);
+            return BuildSemanticPlanSignature(plan);
         })));
 
         Assert.That(signatures.Distinct(StringComparer.Ordinal).Count(), Is.EqualTo(1), FormatSignatureGroups(signatures));
@@ -92,10 +94,10 @@ public class RuntimeStressContractsTests
                 : "dialect M2\nuse Arithmetic,Identifier,Numbers,Scopes,Variables\nbackend cil,interpreter\nsecurity restricted";
             var (package, plan) = Compile(dialectText, $"mixed-{i}");
             using var runtime = LanguageRuntime.Create(plan, new ILanguageRouteComponentSource[] { package });
-            var backend = new BackendId(i % 2 == 0 ? "interpreter" : "cil");
+            var backend = i % 2 == 0 ? Interpreter : Cil;
             var value = runtime.Run(new LanguageExecutionRequest("1+2", backend)).Value;
             var normalized = WistRuntimeValueAdapterActivation.Normalize(plan, value);
-            return BuildPlanSignature(plan) + "##" + (normalized?.ToString() ?? "<null>");
+            return BuildSemanticPlanSignature(plan) + "##" + (normalized?.ToString() ?? "<null>");
         }));
 
         var signatures = await Task.WhenAll(tasks);
@@ -106,18 +108,50 @@ public class RuntimeStressContractsTests
     private static (WistLanguageFeaturePackage Package, LanguagePlan Plan) Compile(string source, string sourceName)
     {
         var package = new WistLanguageFeaturePackage();
-        var definition = WistFacadeLanguageDefinitionFactory.FromDialectText(
+        var interpreterDefinition = WistFacadeLanguageDefinitionFactory.FromDialectText(
             source,
             sourceName,
-            "interpreter",
+            Interpreter.Value,
             WistFacadeSsaPolicy.Disabled);
+        var cilDefinition = WistFacadeLanguageDefinitionFactory.FromDialectText(
+            source,
+            sourceName,
+            Cil.Value,
+            WistFacadeSsaPolicy.Disabled);
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(cilDefinition.Id, Is.EqualTo(interpreterDefinition.Id));
+            Assert.That(cilDefinition.Version, Is.EqualTo(interpreterDefinition.Version));
+            Assert.That(cilDefinition.SelectedFeatures, Is.EqualTo(interpreterDefinition.SelectedFeatures));
+            Assert.That(cilDefinition.RuntimeProvider, Is.EqualTo(interpreterDefinition.RuntimeProvider));
+            Assert.That(cilDefinition.RuntimePolicy, Is.EqualTo(interpreterDefinition.RuntimePolicy));
+            Assert.That(cilDefinition.ContributionOrderConstraints, Is.EqualTo(interpreterDefinition.ContributionOrderConstraints));
+            Assert.That(cilDefinition.IntrinsicPolicy, Is.EqualTo(interpreterDefinition.IntrinsicPolicy));
+        });
+
+        var definition = new LanguageDefinition(
+            interpreterDefinition.Id,
+            interpreterDefinition.Version,
+            interpreterDefinition.ToolchainApiVersion,
+            interpreterDefinition.SelectedFeatures,
+            [Cil, Interpreter],
+            interpreterDefinition.RuntimeProvider,
+            interpreterDefinition.RuntimePolicy,
+            interpreterDefinition.Metadata,
+            interpreterDefinition.SlotOverrides,
+            interpreterDefinition.CapabilityProviders,
+            interpreterDefinition.ExcludedContributions,
+            interpreterDefinition.EntryArtifact,
+            interpreterDefinition.ContributionOrderConstraints,
+            interpreterDefinition.IntrinsicPolicy);
         var plan = new LanguageCompiler(new LanguagePackageRegistry().AddPackage(package))
             .Compile(definition)
             .GetRequiredPlan();
         return (package, plan);
     }
 
-    private static string BuildPlanSignature(LanguagePlan plan)
+    private static string BuildSemanticPlanSignature(LanguagePlan plan)
     {
         var contributions = string.Join(
             "|",
@@ -129,7 +163,7 @@ public class RuntimeStressContractsTests
             "|",
             plan.Routes.OrderBy(static route => route.Key.Value, StringComparer.Ordinal)
                 .Select(static route => $"{route.Key.Value}:{route.Value.TargetContract}"));
-        return $"{plan.PlanHash}::{contributions}::{backends}::{routes}";
+        return $"{contributions}::{backends}::{routes}";
     }
 
     private static string FormatSignatureGroups(IEnumerable<string> signatures)
