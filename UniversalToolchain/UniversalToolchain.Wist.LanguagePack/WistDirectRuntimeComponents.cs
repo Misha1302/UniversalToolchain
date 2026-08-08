@@ -103,7 +103,8 @@ internal static class WistDirectRuntimeComponents
                     static () => new BasicParserImpl(),
                     static () => new BasicAstToBytecodeTranslatorImpl(),
                     CreateMethodsTranslator,
-                    moduleFactories);
+                    moduleFactories,
+                    new WistHostBindingAdapter(context.Plan));
                 return new OwnedFrontendTransformer(stageFactory.CreateFrontend(), services, DirectTraits);
             });
 
