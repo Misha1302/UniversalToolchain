@@ -32,7 +32,7 @@
         <ProjectReference Include="..\UniversalToolchain.LanguageSdk\UniversalToolchain.LanguageSdk.csproj" PrivateAssets="all" />
         <ProjectReference Include="..\UniversalToolchain.Language.Abstractions\UniversalToolchain.Language.Abstractions.csproj" PrivateAssets="all" />
         <ProjectReference Include="..\UniversalToolchain.FeatureSdk\UniversalToolchain.FeatureSdk.csproj" PrivateAssets="all" />
-        <ProjectReference Include="..\UniversalToolchain.Ssa.Abstractions\UniversalToolchain.Ssa.Abstractions.csproj" PrivateAssets="all" />
+        <ProjectReference Include="..\UniversalToolchain.Ssa.Optimization\UniversalToolchain.Ssa.Optimization.csproj" PrivateAssets="all" />
         <ProjectReference Include="..\BasicCilCompiler\BasicCilCompiler.csproj" PrivateAssets="all"/>
         <ProjectReference Include="..\BasicCore\BasicCore.csproj" PrivateAssets="all"/>
         <ProjectReference Include="..\CommonExceptions\CommonExceptions.csproj" PrivateAssets="all"/>
