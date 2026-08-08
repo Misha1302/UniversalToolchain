@@ -37,8 +37,11 @@ internal sealed record WistRuntimeComponentDescriptor(
     string Alias,
     int Order,
     WistRuntimeComponentKind Kind,
-    Type ImplementationType,
-    Func<IServiceProvider, object>? ModuleFactory = null);
+    Func<Type> ImplementationTypeFactory,
+    Func<IServiceProvider, object>? ModuleFactory = null)
+{
+    public Type ImplementationType => ImplementationTypeFactory();
+}
 
 internal static class WistInternalFeatureIds
 {
@@ -51,38 +54,87 @@ internal static class WistRuntimeComponentCatalog
 {
     public static IReadOnlyList<WistRuntimeComponentDescriptor> Modules { get; } =
     [
-        Module<ArithmeticModuleImpl>(WistContributionIds.ArithmeticModule, WistFeatureIds.Arithmetic, "Arithmetic", 10),
-        Module<BooleanOperations>(WistContributionIds.BooleanLogicModule, WistFeatureIds.BooleanLogic, "BooleanConditions", 20),
-        Module<CSharpInteropModuleImpl>(WistContributionIds.CSharpInteropModule, WistFeatureIds.CSharpInterop, "CSharpInterop", 30),
-        Module<CommentsModuleImpl>(WistContributionIds.CommentsModule, WistFeatureIds.Comments, "Comments", 40),
-        Module<ComparisonOperations>(WistContributionIds.ComparisonsModule, WistFeatureIds.Comparisons, "ComparisonConditions", 50),
-        Module<ConditionsModuleImpl>(WistContributionIds.ConditionalControlFlowModule, WistFeatureIds.ConditionalControlFlow, "Conditions", 60),
-        Module<EqualityModuleImpl>(WistContributionIds.EqualityModule, WistFeatureIds.Equality, "Equality", 70),
-        Module<FunctionCallsModuleImpl>(WistContributionIds.FunctionCallsModule, WistFeatureIds.FunctionCalls, "FunctionCalls", 80),
-        Module<IdentifierModuleImpl>(WistContributionIds.IdentifiersModule, WistFeatureIds.Identifiers, "Identifier", 90),
-        Module<InternalPreprocessorLexemesModuleImpl>(WistContributionIds.InternalPreprocessorLexemesModule, WistFeatureIds.InternalPreprocessorLexemes, "InternalPreprocessorLexemes", 100),
-        Module<LabelsModuleImpl>(WistContributionIds.LabelsModule, WistFeatureIds.Labels, "Labels", 110),
-        Module<LoopsModuleImpl>(WistContributionIds.LoopsModule, WistFeatureIds.Loops, "Loops", 120),
-        Module<NativeTypesModuleImpl>(WistContributionIds.NativeTypesModule, WistFeatureIds.NativeTypes, "NativeTypes", 130),
-        Module<NumbersModuleImpl>(WistContributionIds.NumbersModule, WistFeatureIds.Numbers, "Numbers", 140),
-        Module<ParametersSetterModuleImpl>(WistContributionIds.ParametersSetterModule, WistFeatureIds.ParametersSetter, "ParametersSetter", 150),
-        Module<SafeMathFunctionsModuleImpl>(WistContributionIds.SafeMathFunctionsModule, WistFeatureIds.SafeMathFunctions, "SafeMathFunctions", 160),
-        Module<ScopesModuleImpl>(WistContributionIds.ScopesModule, WistFeatureIds.Scopes, "Scopes", 170),
-        Module<SemicolonAsNewLineModuleImpl>(WistContributionIds.SemicolonAsNewLineModule, WistFeatureIds.SemicolonAsNewLine, "SemicolonAsNewLine", 180),
-        Module<TextualAdditionModuleImpl>(WistContributionIds.TextualAdditionModule, WistFeatureIds.TextualAddition, "TextualAddition", 190),
-        Module<VariablesModuleImpl>(WistContributionIds.VariablesModule, WistFeatureIds.Variables, "Variables", 200),
-        Module<WhitespaceModuleImpl>(WistContributionIds.WhitespacesModule, WistFeatureIds.Whitespaces, "Whitespaces", 210)
+        Module(WistContributionIds.ArithmeticModule, WistFeatureIds.Arithmetic, "Arithmetic", 10,
+            static () => typeof(ArithmeticModuleImpl),
+            static services => ActivatorUtilities.CreateInstance<ArithmeticModuleImpl>(services)),
+        Module(WistContributionIds.BooleanLogicModule, WistFeatureIds.BooleanLogic, "BooleanConditions", 20,
+            static () => typeof(BooleanOperations),
+            static services => ActivatorUtilities.CreateInstance<BooleanOperations>(services)),
+        Module(WistContributionIds.CSharpInteropModule, WistFeatureIds.CSharpInterop, "CSharpInterop", 30,
+            static () => typeof(CSharpInteropModuleImpl),
+            static services => ActivatorUtilities.CreateInstance<CSharpInteropModuleImpl>(services)),
+        Module(WistContributionIds.CommentsModule, WistFeatureIds.Comments, "Comments", 40,
+            static () => typeof(CommentsModuleImpl),
+            static services => ActivatorUtilities.CreateInstance<CommentsModuleImpl>(services)),
+        Module(WistContributionIds.ComparisonsModule, WistFeatureIds.Comparisons, "ComparisonConditions", 50,
+            static () => typeof(ComparisonOperations),
+            static services => ActivatorUtilities.CreateInstance<ComparisonOperations>(services)),
+        Module(WistContributionIds.ConditionalControlFlowModule, WistFeatureIds.ConditionalControlFlow, "Conditions", 60,
+            static () => typeof(ConditionsModuleImpl),
+            static services => ActivatorUtilities.CreateInstance<ConditionsModuleImpl>(services)),
+        Module(WistContributionIds.EqualityModule, WistFeatureIds.Equality, "Equality", 70,
+            static () => typeof(EqualityModuleImpl),
+            static services => ActivatorUtilities.CreateInstance<EqualityModuleImpl>(services)),
+        Module(WistContributionIds.FunctionCallsModule, WistFeatureIds.FunctionCalls, "FunctionCalls", 80,
+            static () => typeof(FunctionCallsModuleImpl),
+            static services => ActivatorUtilities.CreateInstance<FunctionCallsModuleImpl>(services)),
+        Module(WistContributionIds.IdentifiersModule, WistFeatureIds.Identifiers, "Identifier", 90,
+            static () => typeof(IdentifierModuleImpl),
+            static services => ActivatorUtilities.CreateInstance<IdentifierModuleImpl>(services)),
+        Module(WistContributionIds.InternalPreprocessorLexemesModule, WistFeatureIds.InternalPreprocessorLexemes, "InternalPreprocessorLexemes", 100,
+            static () => typeof(InternalPreprocessorLexemesModuleImpl),
+            static services => ActivatorUtilities.CreateInstance<InternalPreprocessorLexemesModuleImpl>(services)),
+        Module(WistContributionIds.LabelsModule, WistFeatureIds.Labels, "Labels", 110,
+            static () => typeof(LabelsModuleImpl),
+            static services => ActivatorUtilities.CreateInstance<LabelsModuleImpl>(services)),
+        Module(WistContributionIds.LoopsModule, WistFeatureIds.Loops, "Loops", 120,
+            static () => typeof(LoopsModuleImpl),
+            static services => ActivatorUtilities.CreateInstance<LoopsModuleImpl>(services)),
+        Module(WistContributionIds.NativeTypesModule, WistFeatureIds.NativeTypes, "NativeTypes", 130,
+            static () => typeof(NativeTypesModuleImpl),
+            static services => ActivatorUtilities.CreateInstance<NativeTypesModuleImpl>(services)),
+        Module(WistContributionIds.NumbersModule, WistFeatureIds.Numbers, "Numbers", 140,
+            static () => typeof(NumbersModuleImpl),
+            static services => ActivatorUtilities.CreateInstance<NumbersModuleImpl>(services)),
+        Module(WistContributionIds.ParametersSetterModule, WistFeatureIds.ParametersSetter, "ParametersSetter", 150,
+            static () => typeof(ParametersSetterModuleImpl),
+            static services => ActivatorUtilities.CreateInstance<ParametersSetterModuleImpl>(services)),
+        Module(WistContributionIds.SafeMathFunctionsModule, WistFeatureIds.SafeMathFunctions, "SafeMathFunctions", 160,
+            static () => typeof(SafeMathFunctionsModuleImpl),
+            static services => ActivatorUtilities.CreateInstance<SafeMathFunctionsModuleImpl>(services)),
+        Module(WistContributionIds.ScopesModule, WistFeatureIds.Scopes, "Scopes", 170,
+            static () => typeof(ScopesModuleImpl),
+            static services => ActivatorUtilities.CreateInstance<ScopesModuleImpl>(services)),
+        Module(WistContributionIds.SemicolonAsNewLineModule, WistFeatureIds.SemicolonAsNewLine, "SemicolonAsNewLine", 180,
+            static () => typeof(SemicolonAsNewLineModuleImpl),
+            static services => ActivatorUtilities.CreateInstance<SemicolonAsNewLineModuleImpl>(services)),
+        Module(WistContributionIds.TextualAdditionModule, WistFeatureIds.TextualAddition, "TextualAddition", 190,
+            static () => typeof(TextualAdditionModuleImpl),
+            static services => ActivatorUtilities.CreateInstance<TextualAdditionModuleImpl>(services)),
+        Module(WistContributionIds.VariablesModule, WistFeatureIds.Variables, "Variables", 200,
+            static () => typeof(VariablesModuleImpl),
+            static services => ActivatorUtilities.CreateInstance<VariablesModuleImpl>(services)),
+        Module(WistContributionIds.WhitespacesModule, WistFeatureIds.Whitespaces, "Whitespaces", 210,
+            static () => typeof(WhitespaceModuleImpl),
+            static services => ActivatorUtilities.CreateInstance<WhitespaceModuleImpl>(services))
     ];
 
     public static IReadOnlyList<WistRuntimeComponentDescriptor> Optimizers { get; } =
     [
-        Optimizer<ArithmeticOptimizerModule>(WistContributionIds.ArithmeticOptimizer, WistFeatureIds.ArithmeticOptimization, "ArithmeticOptimization", 10),
-        Optimizer<BooleanOptimizerModule>(WistContributionIds.BooleanOptimizer, WistFeatureIds.BooleanOptimization, "BooleanOptimization", 20),
-        Optimizer<ComparisonIntrinsicOptimizerModule>(WistContributionIds.ComparisonIntrinsicOptimizer, WistFeatureIds.ComparisonIntrinsicOptimization, "ComparisonIntrinsicOptimization", 30),
-        Optimizer<EGraphOptimizerModule>(WistContributionIds.EGraphOptimizer, WistFeatureIds.EGraphOptimization, "EGraphOptimization", 40),
-        Optimizer<NativeCilOptimizerModule>(WistContributionIds.NativeCilOptimizer, WistFeatureIds.NativeCilOptimization, "NativeCilOptimization", 50),
-        Optimizer<NativeTypesOptimizerModule>(WistContributionIds.NativeTypesOptimizer, WistFeatureIds.NativeTypesOptimization, "NativeTypesOptimization", 60),
-        Optimizer<SsaOptimizerModule>(WistContributionIds.SsaOptimizer, WistFeatureIds.SsaOptimization, "Ssa", 70)
+        Optimizer(WistContributionIds.ArithmeticOptimizer, WistFeatureIds.ArithmeticOptimization, "ArithmeticOptimization", 10,
+            static () => typeof(ArithmeticOptimizerModule)),
+        Optimizer(WistContributionIds.BooleanOptimizer, WistFeatureIds.BooleanOptimization, "BooleanOptimization", 20,
+            static () => typeof(BooleanOptimizerModule)),
+        Optimizer(WistContributionIds.ComparisonIntrinsicOptimizer, WistFeatureIds.ComparisonIntrinsicOptimization, "ComparisonIntrinsicOptimization", 30,
+            static () => typeof(ComparisonIntrinsicOptimizerModule)),
+        Optimizer(WistContributionIds.EGraphOptimizer, WistFeatureIds.EGraphOptimization, "EGraphOptimization", 40,
+            static () => typeof(EGraphOptimizerModule)),
+        Optimizer(WistContributionIds.NativeCilOptimizer, WistFeatureIds.NativeCilOptimization, "NativeCilOptimization", 50,
+            static () => typeof(NativeCilOptimizerModule)),
+        Optimizer(WistContributionIds.NativeTypesOptimizer, WistFeatureIds.NativeTypesOptimization, "NativeTypesOptimization", 60,
+            static () => typeof(NativeTypesOptimizerModule)),
+        Optimizer(WistContributionIds.SsaOptimizer, WistFeatureIds.SsaOptimization, "Ssa", 70,
+            static () => typeof(SsaOptimizerModule))
     ];
 
     private static readonly IReadOnlyDictionary<LanguageContributionId, WistRuntimeComponentDescriptor> ByContributionId =
@@ -144,29 +196,33 @@ internal static class WistRuntimeComponentCatalog
             .ToArray();
     }
 
-    private static WistRuntimeComponentDescriptor Module<TModule>(
+    private static WistRuntimeComponentDescriptor Module(
         LanguageContributionId contributionId,
         LanguageFeatureId featureId,
         string alias,
-        int order) where TModule : class =>
+        int order,
+        Func<Type> implementationTypeFactory,
+        Func<IServiceProvider, object> moduleFactory) =>
         new(
             contributionId,
             featureId,
             alias,
             order,
             WistRuntimeComponentKind.Module,
-            typeof(TModule),
-            static services => ActivatorUtilities.CreateInstance<TModule>(services));
+            implementationTypeFactory,
+            moduleFactory);
 
-    private static WistRuntimeComponentDescriptor Optimizer<TOptimizer>(
+    private static WistRuntimeComponentDescriptor Optimizer(
         LanguageContributionId contributionId,
         LanguageFeatureId featureId,
         string alias,
-        int order) => new(
-        contributionId,
-        featureId,
-        alias,
-        order,
-        WistRuntimeComponentKind.Optimizer,
-        typeof(TOptimizer));
+        int order,
+        Func<Type> implementationTypeFactory) =>
+        new(
+            contributionId,
+            featureId,
+            alias,
+            order,
+            WistRuntimeComponentKind.Optimizer,
+            implementationTypeFactory);
 }
