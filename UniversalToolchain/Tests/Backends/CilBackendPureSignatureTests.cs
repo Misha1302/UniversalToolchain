@@ -1,7 +1,5 @@
 using System.Reflection.Emit;
 using Tests.Infrastructure;
-using UniversalToolchain.Dialects.Wist;
-using UniversalToolchain.Dialects.Wist.Presets;
 
 namespace Tests.Backends;
 
@@ -40,22 +38,11 @@ public sealed class CilBackendPureSignatureTests
         });
     }
 
-
     [Test]
     public void Compile_ExternalConstantsHeavyFormula_ShouldProduceSixParameterDynamicMethodWithoutExecutionEnvironment()
     {
-        var services = new ServiceCollection();
-        services.AddWistDialectServices();
-        services.AddWistCilBackend();
-
-        using var provider = services.BuildServiceProvider();
-        var workflow = provider.GetRequiredService<WistDialectExecutionWorkflow>();
-        var dialectPath = new WistShippedDialectFileResolver().Resolve(WistShippedDialectPresets.FullDefaultNative);
-        var composition = workflow.ComposeFile(dialectPath);
-        Assert.That(composition.IsSuccess, Is.True);
-
-        using var host = workflow.CreateHost(composition);
-        var compiled = host.Compile(
+        using var host = RuntimeCompiledArtifactTestFactory.CreateHost();
+        var program = host.Compile(
             "(A * 1.5 + B * 2.0 - C * 3.0 + D / 4.0 + E / 5.0) * 0.75 + F",
             new OrderedDictionary<string, Type>
             {
@@ -63,8 +50,7 @@ public sealed class CilBackendPureSignatureTests
                 ["D"] = typeof(double), ["E"] = typeof(double), ["F"] = typeof(double)
             },
             "cil");
-
-        var method = BackendArtifactIntrospection.GetDynamicMethod(compiled);
+        var method = host.GetCilArtifact(program).Compilation.Method;
         var parameterTypes = method.GetParameters().Select(static x => x.ParameterType).ToArray();
         var invoker = new DynamicMethodInvoker<double, double, double, double, double, double, double>(method);
         var result = invoker.Invoke(10.0, 20.0, 3.0, 8.0, 5.0, 1.5);
