@@ -1,3 +1,5 @@
+using UniversalToolchain.Wist;
+
 namespace UniversalToolchain.Modules.Tests.ModuleCoverage;
 
 [TestFixture]
@@ -13,26 +15,21 @@ public class ParserConfigurationModulePipelineTests
     }
 
     [Test]
-    public void DialectComposition_WithUnresolvedModuleAlias_ReportsExpectedCompositionDiagnostic()
+    public void DialectComposition_WithUnresolvedLegacyModuleAlias_FailsClosed()
     {
         using var h = new ModulePipelineTestHelper();
-        var composition = h.Compose(ModulePipelineTestHelper.FullUniversalModules.Concat(["ParserConfiguration"]));
+        var dialect = h.BuildDialectText(
+            "UnknownParserConfiguration",
+            ModulePipelineTestHelper.FullUniversalModules.Concat(["ParserConfiguration"]),
+            backends: ["interpreter"]);
+        var options = WistEngineOptions.FromDialectText(dialect, "parser-configuration-legacy-alias-test");
+        options.BackendId = "interpreter";
+        options.AllowedAssemblies = [typeof(int).Assembly, typeof(ParserConfigurationModulePipelineTests).Assembly];
 
-        Assert.That(composition.IsSuccess, Is.False);
+        var exception = Assert.Catch(() => WistEngine.Create(options));
 
-        var diagnostics = composition.SemanticDiagnostics
-            .Concat(composition.ResolutionDiagnostics)
-            .Select(static d => d.Message)
-            .ToArray();
-
-        Assert.That(diagnostics, Is.Not.Empty);
-        Assert.That(
-            diagnostics.Any(static message => message.Contains("module descriptor", StringComparison.OrdinalIgnoreCase)),
-            Is.True);
-        Assert.That(
-            diagnostics.Any(static message => message.Contains("not registered", StringComparison.OrdinalIgnoreCase)),
-            Is.True);
-        Assert.That(diagnostics.Any(static message => message.Contains("ParserConfiguration", StringComparison.OrdinalIgnoreCase)), Is.True);
+        Assert.That(exception, Is.Not.Null);
+        Assert.That(exception!.ToString(), Does.Contain("ParserConfiguration"));
     }
 
     [Test]
