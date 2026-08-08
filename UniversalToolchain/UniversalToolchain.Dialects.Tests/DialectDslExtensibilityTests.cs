@@ -96,6 +96,17 @@ public class DialectDslExtensibilityTests
     }
 
     [Test]
+    public void RegistryFactory_ShouldRejectNullProviderEntries()
+    {
+        var nullProviders = new List<IDialectDslFeatureProvider> { null! };
+        var factory = new DialectDslRegistryFactory([], [], nullProviders);
+
+        var exception = Assert.Throws<ArgumentException>(() => factory.CreateRegistry());
+
+        Assert.That(exception!.Message, Does.Contain("Collection must not contain null values"));
+    }
+
+    [Test]
     public void DuplicateCustomKeywords_ShouldFailFast_DuringRegistryConstruction()
     {
         var services = new ServiceCollection();
