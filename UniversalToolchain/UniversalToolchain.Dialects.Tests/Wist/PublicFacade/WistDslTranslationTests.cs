@@ -88,8 +88,8 @@ public sealed class WistDslTranslationTests
             Assert.That(exception!.Message, Does.Contain("magic-runtime-switch"));
             Assert.That(exception.Stage, Is.EqualTo("Parser"));
             Assert.That(exception.Location, Is.Not.Null);
-            Assert.That(exception.Location!.Line, Is.EqualTo(5));
-            Assert.That(exception.Location.Column, Is.EqualTo(0));
+            Assert.That(exception.Location!.Value.Line, Is.EqualTo(5));
+            Assert.That(exception.Location.Value.Column, Is.EqualTo(0));
         });
     }
 
