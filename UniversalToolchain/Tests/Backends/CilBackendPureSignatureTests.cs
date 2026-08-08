@@ -41,7 +41,7 @@ public sealed class CilBackendPureSignatureTests
     [Test]
     public void Compile_ExternalConstantsHeavyFormula_ShouldProduceSixParameterDynamicMethodWithoutExecutionEnvironment()
     {
-        using var host = RuntimeCompiledArtifactTestFactory.CreateHost();
+        using var host = CanonicalWistTestHost.CreateFullNative();
         var program = host.Compile(
             "(A * 1.5 + B * 2.0 - C * 3.0 + D / 4.0 + E / 5.0) * 0.75 + F",
             new OrderedDictionary<string, Type>
