@@ -90,7 +90,9 @@ internal static class WistFacadeLanguageDefinitionFactory
             .ToArray();
         if (!enabledBackends.Contains(backend, StringComparer.Ordinal))
         {
-            throw new InvalidOperationException(
+            throw new ArgumentOutOfRangeException(
+                nameof(backend),
+                backend,
                 $"Wist dialect '{slice.Name}' does not enable requested backend '{backend}'. Enabled backends: {string.Join(", ", enabledBackends)}.");
         }
 
@@ -131,7 +133,9 @@ internal static class WistFacadeLanguageDefinitionFactory
         var backendId = new BackendId(backend);
         if (!baseline.Backends.Contains(backendId))
         {
-            throw new InvalidOperationException(
+            throw new ArgumentOutOfRangeException(
+                nameof(backend),
+                backend,
                 $"Wist definition '{baseline.Id.Value}' does not enable requested backend '{backend}'.");
         }
 
