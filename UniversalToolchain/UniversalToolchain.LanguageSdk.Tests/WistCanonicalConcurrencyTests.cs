@@ -156,18 +156,7 @@ public sealed class WistCanonicalConcurrencyTests
         var baseline = definitions[0];
 
         foreach (var candidate in definitions.Skip(1))
-        {
-            Assert.Multiple(() =>
-            {
-                Assert.That(candidate.Id, Is.EqualTo(baseline.Id));
-                Assert.That(candidate.Version, Is.EqualTo(baseline.Version));
-                Assert.That(candidate.SelectedFeatures, Is.EqualTo(baseline.SelectedFeatures));
-                Assert.That(candidate.RuntimeProvider, Is.EqualTo(baseline.RuntimeProvider));
-                Assert.That(candidate.RuntimePolicy, Is.EqualTo(baseline.RuntimePolicy));
-                Assert.That(candidate.ContributionOrderConstraints, Is.EqualTo(baseline.ContributionOrderConstraints));
-                Assert.That(candidate.IntrinsicPolicy, Is.EqualTo(baseline.IntrinsicPolicy));
-            });
-        }
+            EnsureBackendIndependentSemantics(baseline, candidate);
 
         var definition = new LanguageDefinition(
             baseline.Id,
@@ -188,6 +177,23 @@ public sealed class WistCanonicalConcurrencyTests
         return new LanguageCompiler(new LanguagePackageRegistry().AddPackage(package))
             .Compile(definition)
             .GetRequiredPlan();
+    }
+
+    private static void EnsureBackendIndependentSemantics(
+        LanguageDefinition baseline,
+        LanguageDefinition candidate)
+    {
+        if (candidate.Id != baseline.Id ||
+            candidate.Version != baseline.Version ||
+            !candidate.SelectedFeatures.SequenceEqual(baseline.SelectedFeatures) ||
+            candidate.RuntimeProvider != baseline.RuntimeProvider ||
+            candidate.RuntimePolicy != baseline.RuntimePolicy ||
+            !candidate.ContributionOrderConstraints.SequenceEqual(baseline.ContributionOrderConstraints) ||
+            !candidate.IntrinsicPolicy.SequenceEqual(baseline.IntrinsicPolicy))
+        {
+            throw new InvalidOperationException(
+                "Wist concurrency fixture produced backend-dependent semantics before canonical planning.");
+        }
     }
 
     private sealed record DialectCase(
