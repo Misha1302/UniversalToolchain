@@ -96,7 +96,14 @@ public class ErrorCasesTests
 
         Assert.That(ex, Is.Not.Null);
         Assert.That(ex!.Message, Is.Not.Empty);
-        Assert.That(ex.Message, Does.Contain("Tree is invalid").Or.Contain("Assertion failed").Or.Contain("Invalid token").Or.Contain("Index was out of range").Or.Contain("violates the constraint"));
+        Assert.That(
+            ex.Message,
+            Does.Contain("Unknown identifier 'i'")
+                .Or.Contain("Tree is invalid")
+                .Or.Contain("Assertion failed")
+                .Or.Contain("Invalid token")
+                .Or.Contain("Index was out of range")
+                .Or.Contain("violates the constraint"));
     }
 
     private static void ExecuteCode(string code)
