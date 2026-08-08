@@ -10,6 +10,8 @@ public sealed class LanguageDefinitionBuilder
     private readonly SortedDictionary<LanguageSlotId, LanguageSlotOverride> _slotOverrides = new(Comparer<LanguageSlotId>.Create(static (a, b) => StringComparer.Ordinal.Compare(a.Value, b.Value)));
     private readonly SortedDictionary<LanguageCapabilityId, LanguageContributionId> _capabilityProviders = new(Comparer<LanguageCapabilityId>.Create(static (a, b) => StringComparer.Ordinal.Compare(a.Value, b.Value)));
     private readonly SortedSet<LanguageContributionId> _excludedContributions = new(Comparer<LanguageContributionId>.Create(static (a, b) => StringComparer.Ordinal.Compare(a.Value, b.Value)));
+    private readonly List<LanguageContributionOrderConstraint> _contributionOrderConstraints = [];
+    private readonly List<LanguageIntrinsicPolicyDirective> _intrinsicPolicy = [];
     private readonly LanguageId _id;
     private readonly LanguageVersion _version;
     private LanguageRuntimeProviderReference? _runtimeProvider;
@@ -87,6 +89,30 @@ public sealed class LanguageDefinitionBuilder
         return this;
     }
 
+    public LanguageDefinitionBuilder RequireContributionOrder(
+        LanguageContributionId source,
+        LanguageContributionId target) =>
+        AddContributionOrder(LanguageContributionOrderKind.Requires, source, target);
+
+    public LanguageDefinitionBuilder OrderContributionBefore(
+        LanguageContributionId source,
+        LanguageContributionId target) =>
+        AddContributionOrder(LanguageContributionOrderKind.Before, source, target);
+
+    public LanguageDefinitionBuilder OrderContributionAfter(
+        LanguageContributionId source,
+        LanguageContributionId target) =>
+        AddContributionOrder(LanguageContributionOrderKind.After, source, target);
+
+    public LanguageDefinitionBuilder ConfigureIntrinsic(
+        LanguageIntrinsicId intrinsic,
+        bool allowed,
+        BackendId? backend = null)
+    {
+        _intrinsicPolicy.Add(new LanguageIntrinsicPolicyDirective(intrinsic, allowed, backend));
+        return this;
+    }
+
     public LanguageDefinitionBuilder TargetToolchainApi(int major)
     {
         _toolchainApi = new ToolchainApiVersion(major);
@@ -119,5 +145,16 @@ public sealed class LanguageDefinitionBuilder
         _slotOverrides.Values,
         _capabilityProviders,
         _excludedContributions,
-        _entryArtifact);
+        _entryArtifact,
+        _contributionOrderConstraints,
+        _intrinsicPolicy);
+
+    private LanguageDefinitionBuilder AddContributionOrder(
+        LanguageContributionOrderKind kind,
+        LanguageContributionId source,
+        LanguageContributionId target)
+    {
+        _contributionOrderConstraints.Add(new LanguageContributionOrderConstraint(kind, source, target));
+        return this;
+    }
 }
