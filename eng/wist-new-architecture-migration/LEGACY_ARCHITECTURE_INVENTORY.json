@@ -7,10 +7,24 @@
     {"symbol":"SelectedRuntimePlan","deletionStage":"S11","definition":"UniversalToolchain/UniversalToolchain.Dialects.Integration/SelectedRuntimePlan.cs"},
     {"symbol":"SelectedRuntimePlanResolver","deletionStage":"S11","definition":"UniversalToolchain/UniversalToolchain.Dialects.Integration/SelectedRuntimePlanResolver.cs"},
     {"symbol":"ToolchainCompositionWorkflow","deletionStage":"S11","definition":"UniversalToolchain/UniversalToolchain.Dialects.Integration/ToolchainCompositionWorkflow.cs"},
-    {"symbol":"WistDialectExecutionWorkflow","deletionStage":"S11","definition":"UniversalToolchain/UniversalToolchain.Dialects.Wist/WistDialectExecutionWorkflow.cs","knownProductionCallsites":["UniversalToolchain/UniversalToolchain.Wist/WistEngine.cs","UniversalToolchain/UniversalToolchain.Wist.LanguagePack/WistLanguageRuntimeProvider.cs","UniversalToolchain/Wistc/Program.cs"]},
+    {
+      "symbol":"WistDialectExecutionWorkflow",
+      "deletionStage":"S11",
+      "definition":"UniversalToolchain/UniversalToolchain.Dialects.Wist/WistDialectExecutionWorkflow.cs",
+      "knownProductionCallsites":[
+        "UniversalToolchain/UniversalToolchain.Wist.LanguagePack/WistLanguageRuntimeProvider.cs",
+        "UniversalToolchain/Wistc/Program.cs"
+      ],
+      "retiredProductionCallsites":[
+        {
+          "path":"UniversalToolchain/UniversalToolchain.Wist/WistEngine.cs",
+          "retiredStage":"S09"
+        }
+      ]
+    },
     {"symbol":"WistDialectPlanFactory","deletionStage":"S11","definition":"UniversalToolchain/UniversalToolchain.Wist.LanguagePack/WistDialectPlanFactory.cs","knownProductionCallsites":["UniversalToolchain/UniversalToolchain.Wist.LanguagePack/WistLanguageRuntimeProvider.cs"]},
     {"symbol":"BasicCoreImpl","deletionStage":"S12","definition":"UniversalToolchain/BasicCore/Core/BasicCoreImpl.cs"}
   ],
   "forbiddenAfterS15": true,
-  "note": "Presence is expected at S00. S11/S12 replace this positive inventory with negative guards; this file must not be used as target architecture authority."
+  "note": "Presence is expected at S00. Stage-specific cutovers move individual callsites to retiredProductionCallsites, which are then guarded negatively; S11/S12 replace the remaining positive owner inventory with final negative guards. This file must not be used as target architecture authority."
 }
