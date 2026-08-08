@@ -93,7 +93,7 @@ internal static class WistFacadeLanguageDefinitionFactory
             throw new ArgumentOutOfRangeException(
                 nameof(backend),
                 backend,
-                $"Wist dialect '{slice.Name}' does not enable requested backend '{backend}'. Enabled backends: {string.Join(", ", enabledBackends)}.");
+                $"Wist dialect '{slice.Name}' does not enable backend '{backend}'. Enabled backends: {string.Join(", ", enabledBackends)}.");
         }
 
         var securityFeature = slice.SecurityProfile switch
@@ -136,7 +136,7 @@ internal static class WistFacadeLanguageDefinitionFactory
             throw new ArgumentOutOfRangeException(
                 nameof(backend),
                 backend,
-                $"Wist definition '{baseline.Id.Value}' does not enable requested backend '{backend}'.");
+                $"Wist definition '{baseline.Id.Value}' does not enable backend '{backend}'.");
         }
 
         var selectedFeatures = baseline.SelectedFeatures
