@@ -12,7 +12,7 @@ internal sealed class CanonicalWistTestHost : IDisposable
     private readonly LanguageRuntime _runtime;
 
     public CanonicalWistTestHost()
-        : this(WistLanguageDefinitions.Create(WistLanguageDefinitions.FullDefaultNativeId), [])
+        : this(WistLanguageDefinitions.Create(WistLanguageDefinitions.FullDefaultId), [])
     {
     }
 
@@ -21,11 +21,17 @@ internal sealed class CanonicalWistTestHost : IDisposable
         string backendName,
         IReadOnlyList<Assembly>? allowedAssemblies = null)
         : this(
-            WistFacadeLanguageDefinitionFactory.FromDialectText(
-                dialectText,
-                "canonical-test-inline",
-                RequireBackend(backendName).Value,
-                WistFacadeSsaPolicy.Disabled),
+            CreateDefinition(dialectText, [backendName]),
+            allowedAssemblies ?? [])
+    {
+    }
+
+    public CanonicalWistTestHost(
+        string dialectText,
+        IReadOnlyList<string> backendNames,
+        IReadOnlyList<Assembly>? allowedAssemblies = null)
+        : this(
+            CreateDefinition(dialectText, backendNames),
             allowedAssemblies ?? [])
     {
     }
@@ -105,6 +111,62 @@ internal sealed class CanonicalWistTestHost : IDisposable
     }
 
     public void Dispose() => _runtime.Dispose();
+
+    private static LanguageDefinition CreateDefinition(
+        string dialectText,
+        IReadOnlyList<string> backendNames)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(dialectText);
+        ArgumentNullException.ThrowIfNull(backendNames);
+        if (backendNames.Count == 0)
+            throw new ArgumentException("At least one backend is required.", nameof(backendNames));
+
+        var backends = backendNames
+            .Select(RequireBackend)
+            .Distinct()
+            .ToArray();
+        var definitions = backends
+            .Select(backend => WistFacadeLanguageDefinitionFactory.FromDialectText(
+                dialectText,
+                "canonical-test-inline",
+                backend.Value,
+                WistFacadeSsaPolicy.Disabled))
+            .ToArray();
+        var baseline = definitions[0];
+
+        foreach (var candidate in definitions.Skip(1))
+        {
+            if (candidate.Id != baseline.Id ||
+                candidate.Version != baseline.Version ||
+                !candidate.SelectedFeatures.SequenceEqual(baseline.SelectedFeatures) ||
+                candidate.RuntimeProvider != baseline.RuntimeProvider ||
+                candidate.RuntimePolicy != baseline.RuntimePolicy ||
+                !candidate.Metadata.OrderBy(static item => item.Key, StringComparer.Ordinal)
+                    .SequenceEqual(baseline.Metadata.OrderBy(static item => item.Key, StringComparer.Ordinal)) ||
+                !candidate.ContributionOrderConstraints.SequenceEqual(baseline.ContributionOrderConstraints) ||
+                !candidate.IntrinsicPolicy.SequenceEqual(baseline.IntrinsicPolicy))
+            {
+                throw new InvalidOperationException(
+                    "Wist test translation produced backend-dependent semantics before canonical planning.");
+            }
+        }
+
+        return new LanguageDefinition(
+            baseline.Id,
+            baseline.Version,
+            baseline.ToolchainApiVersion,
+            baseline.SelectedFeatures,
+            backends,
+            baseline.RuntimeProvider,
+            baseline.RuntimePolicy,
+            baseline.Metadata,
+            baseline.SlotOverrides,
+            baseline.CapabilityProviders,
+            baseline.ExcludedContributions,
+            baseline.EntryArtifact,
+            baseline.ContributionOrderConstraints,
+            baseline.IntrinsicPolicy);
+    }
 
     private static BackendId RequireBackend(string backendName) => backendName switch
     {
