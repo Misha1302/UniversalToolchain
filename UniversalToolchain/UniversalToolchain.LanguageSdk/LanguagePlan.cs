@@ -44,7 +44,6 @@ public sealed record LanguageArtifactRouteStep(
     LanguageArtifactContract TargetContract,
     int Cost)
 {
-
     public LanguageArtifactKindId Source => SourceContract.Kind;
     public LanguageArtifactKindId Target => TargetContract.Kind;
 }
@@ -75,7 +74,6 @@ public sealed class LanguageArtifactRoute
             throw new ArgumentException("Artifact route does not reach its declared target contract.", nameof(steps));
     }
 
-
     public BackendId Backend { get; }
     public LanguageArtifactContract SourceContract { get; }
     public LanguageArtifactContract TargetContract { get; }
@@ -105,11 +103,7 @@ public sealed class LanguagePlan
     {
         Definition = definition ?? throw new ArgumentNullException(nameof(definition));
         Features = new ReadOnlyCollection<ResolvedLanguageFeature>(features.ToList());
-        Contributions = new ReadOnlyCollection<ResolvedLanguageContribution>(
-            contributions.OrderBy(static x => x.Contribution.Slot.Value, StringComparer.Ordinal)
-                .ThenBy(static x => x.Contribution.Order)
-                .ThenBy(static x => x.Contribution.Id.Value, StringComparer.Ordinal)
-                .ToList());
+        Contributions = new ReadOnlyCollection<ResolvedLanguageContribution>(contributions.ToList());
         RuntimeProviderContribution = runtimeProviderContribution;
         Routes = new ReadOnlyDictionary<BackendId, LanguageArtifactRoute>(
             routes.ToDictionary(static x => x.Backend));
