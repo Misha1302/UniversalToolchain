@@ -42,6 +42,14 @@ internal sealed class CanonicalWistTestHost : IDisposable
         return new CanonicalWistBuiltProgram(built, program);
     }
 
+    public WistCilArtifact GetCilArtifact(CanonicalWistBuiltProgram program)
+    {
+        ArgumentNullException.ThrowIfNull(program);
+        if (program.BuildResult.Backend.Value != "cil")
+            throw new InvalidOperationException("Built program is not a CIL artifact.");
+        return _runtime.GetBuiltArtifactValue(program.BuildResult, WistDirectBackendArtifactKinds.Cil);
+    }
+
     public object? Run(
         string code,
         string backendName,
