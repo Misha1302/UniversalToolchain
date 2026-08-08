@@ -13,4 +13,7 @@
     <ProjectReference Include="..\ExceptionsManager\ExceptionsManager.csproj" />
     <ProjectReference Include="..\UniversalToolchain.Wist\UniversalToolchain.Wist.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <Using Include="NUnit.Framework" />
+  </ItemGroup>
 </Project>
