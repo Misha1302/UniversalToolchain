@@ -107,7 +107,7 @@ internal static class WistFacadeLanguageDefinitionFactory
         return new LanguageDefinition(
             new LanguageId($"wist.dsl.{slice.Name}"),
             new LanguageVersion(slice.Version ?? WistLanguageFeaturePackage.PackageVersion.Value),
-            UniversalToolchain.FeatureSdk.ToolchainApi.Current,
+            ToolchainApi.Current,
             selectedFeatures,
             [new BackendId(backend)],
             runtimeProvider: new LanguageRuntimeProviderReference(
