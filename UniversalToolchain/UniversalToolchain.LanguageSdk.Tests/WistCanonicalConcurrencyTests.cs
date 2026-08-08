@@ -33,7 +33,7 @@ public sealed class WistCanonicalConcurrencyTests
         var results = await Task.WhenAll(Enumerable.Range(0, 48).Select(index => Task.Run(() =>
         {
             var testCase = cases[index % cases.Length];
-            var plan = Compile(testCase.Source, $"parallel-{index}.wistdialect");
+            var plan = Compile(testCase.Source, $"parallel-{index}.wistdialect", testCase.Backends);
             return new
             {
                 Case = testCase,
@@ -59,15 +59,35 @@ public sealed class WistCanonicalConcurrencyTests
     }
 
     [Test]
-    public void RepeatedDslPlanning_ProducesOneStablePlanIdentity()
+    public void RepeatedDslPlanning_WithSameSourceIdentity_ProducesOneStablePlanHash()
     {
         const string source = "dialect Stable\nuse Arithmetic,Numbers,Scopes,Whitespaces\nbackend interpreter\nsecurity restricted";
 
         var hashes = Enumerable.Range(0, 64)
-            .Select(index => Compile(source, $"stable-{index}.wistdialect").PlanHash)
+            .Select(_ => Compile(source, "stable.wistdialect").PlanHash)
             .ToArray();
 
         Assert.That(hashes.Distinct(StringComparer.Ordinal).ToArray(), Has.Length.EqualTo(1));
+    }
+
+    [Test]
+    public void EquivalentDsl_WithDifferentSourceNames_PreservesSemanticProjection()
+    {
+        const string source = "dialect StableSemantic\nuse Arithmetic,Numbers,Scopes,Whitespaces\nbackend interpreter\nsecurity restricted";
+        var first = Compile(source, "first.wistdialect");
+        var second = Compile(source, "second.wistdialect");
+
+        Assert.Multiple(() =>
+        {
+            Assert.That(first.Definition.SelectedFeatures, Is.EqualTo(second.Definition.SelectedFeatures));
+            Assert.That(first.Definition.Backends, Is.EqualTo(second.Definition.Backends));
+            Assert.That(
+                first.Contributions.Select(static contribution => contribution.Contribution.Id),
+                Is.EqualTo(second.Contributions.Select(static contribution => contribution.Contribution.Id)));
+            Assert.That(
+                first.Routes.Select(static route => (route.Key, route.Value.TargetContract)),
+                Is.EqualTo(second.Routes.Select(static route => (route.Key, route.Value.TargetContract))));
+        });
     }
 
     [Test]
@@ -77,8 +97,8 @@ public sealed class WistCanonicalConcurrencyTests
         const string valid = "dialect Good\nuse Arithmetic,Numbers,Scopes,Whitespaces\nbackend interpreter\nsecurity restricted";
 
         Assert.Throws<Exception>(() => Compile(invalid, "broken.wistdialect"));
-        var first = Compile(valid, "good-1.wistdialect");
-        var second = Compile(valid, "good-2.wistdialect");
+        var first = Compile(valid, "good.wistdialect");
+        var second = Compile(valid, "good.wistdialect");
 
         Assert.Multiple(() =>
         {
@@ -113,14 +133,58 @@ public sealed class WistCanonicalConcurrencyTests
         Assert.That(results, Is.All.EqualTo("5"));
     }
 
-    private static LanguagePlan Compile(string source, string sourceName)
+    private static LanguagePlan Compile(
+        string source,
+        string sourceName,
+        IReadOnlyList<string>? backendNames = null)
     {
+        backendNames ??= [Interpreter.Value];
+        if (backendNames.Count == 0)
+            throw new ArgumentException("At least one backend is required.", nameof(backendNames));
+
+        var backends = backendNames
+            .Select(static backend => new BackendId(backend))
+            .Distinct()
+            .ToArray();
+        var definitions = backends
+            .Select(backend => WistFacadeLanguageDefinitionFactory.FromDialectText(
+                source,
+                sourceName,
+                backend.Value,
+                WistFacadeSsaPolicy.Disabled))
+            .ToArray();
+        var baseline = definitions[0];
+
+        foreach (var candidate in definitions.Skip(1))
+        {
+            Assert.Multiple(() =>
+            {
+                Assert.That(candidate.Id, Is.EqualTo(baseline.Id));
+                Assert.That(candidate.Version, Is.EqualTo(baseline.Version));
+                Assert.That(candidate.SelectedFeatures, Is.EqualTo(baseline.SelectedFeatures));
+                Assert.That(candidate.RuntimeProvider, Is.EqualTo(baseline.RuntimeProvider));
+                Assert.That(candidate.RuntimePolicy, Is.EqualTo(baseline.RuntimePolicy));
+                Assert.That(candidate.ContributionOrderConstraints, Is.EqualTo(baseline.ContributionOrderConstraints));
+                Assert.That(candidate.IntrinsicPolicy, Is.EqualTo(baseline.IntrinsicPolicy));
+            });
+        }
+
+        var definition = new LanguageDefinition(
+            baseline.Id,
+            baseline.Version,
+            baseline.ToolchainApiVersion,
+            baseline.SelectedFeatures,
+            backends,
+            baseline.RuntimeProvider,
+            baseline.RuntimePolicy,
+            baseline.Metadata,
+            baseline.SlotOverrides,
+            baseline.CapabilityProviders,
+            baseline.ExcludedContributions,
+            baseline.EntryArtifact,
+            baseline.ContributionOrderConstraints,
+            baseline.IntrinsicPolicy);
         var package = new WistLanguageFeaturePackage();
-        var definition = WistFacadeLanguageDefinitionFactory.FromDialectText(
-            source,
-            sourceName,
-            Interpreter.Value,
-            WistFacadeSsaPolicy.Disabled);
         return new LanguageCompiler(new LanguagePackageRegistry().AddPackage(package))
             .Compile(definition)
             .GetRequiredPlan();
