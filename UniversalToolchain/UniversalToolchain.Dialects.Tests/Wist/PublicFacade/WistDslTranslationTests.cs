@@ -1,3 +1,4 @@
+using CommonExceptions;
 using UniversalToolchain.Wist;
 
 namespace UniversalToolchain.Dialects.Tests.Wist.PublicFacade;
@@ -68,7 +69,7 @@ public sealed class WistDslTranslationTests
     }
 
     [Test]
-    public void InlineDialect_UnknownCapability_FailsClosedInsteadOfUsingMetadata()
+    public void InlineDialect_UnknownCapability_FailsClosedWithSourceLocation()
     {
         const string dialect = """
             dialect UnknownCapability
@@ -80,9 +81,16 @@ public sealed class WistDslTranslationTests
         var options = WistEngineOptions.FromDialectText(dialect);
         options.BackendId = "interpreter";
 
-        var exception = Assert.Throws<NotSupportedException>(() => WistEngine.Create(options));
+        var exception = Assert.Throws<ParserException>(() => WistEngine.Create(options));
 
-        Assert.That(exception!.Message, Does.Contain("magic-runtime-switch"));
+        Assert.Multiple(() =>
+        {
+            Assert.That(exception!.Message, Does.Contain("magic-runtime-switch"));
+            Assert.That(exception.Stage, Is.EqualTo("Parser"));
+            Assert.That(exception.Location, Is.Not.Null);
+            Assert.That(exception.Location!.Line, Is.EqualTo(5));
+            Assert.That(exception.Location.Column, Is.EqualTo(0));
+        });
     }
 
     [Test]
