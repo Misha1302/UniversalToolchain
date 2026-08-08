@@ -161,11 +161,15 @@ internal static class WistDirectRuntimeComponents
             WistDirectArtifactKinds.Air,
             WistDirectBackendArtifactKinds.Interpreter,
             DirectTraits,
-            _ => new DelegateLanguageArtifactTransformer<WistAirArtifact, WistInterpreterArtifact>(
+            context => new DelegateLanguageArtifactTransformer<WistAirArtifact, WistInterpreterArtifact>(
                 WistContributionIds.InterpreterBackend,
                 WistDirectArtifactKinds.Air,
                 WistDirectBackendArtifactKinds.Interpreter,
-                static (source, _) => new WistInterpreterArtifact(source.Input, source.Air, source.SsaReport),
+                (source, _) =>
+                {
+                    WistIntrinsicPlanPolicy.Create(context.Plan, InterpreterBackend).Validate(source.Air);
+                    return new WistInterpreterArtifact(source.Input, source.Air, source.SsaReport);
+                },
                 DirectTraits));
 
     private static LanguageExecutorRegistration CreateInterpreterExecutorRegistration() =>
@@ -192,14 +196,18 @@ internal static class WistDirectRuntimeComponents
             WistDirectArtifactKinds.Air,
             WistDirectBackendArtifactKinds.Cil,
             DirectTraits,
-            _ => new DelegateLanguageArtifactTransformer<WistAirArtifact, WistCilArtifact>(
+            context => new DelegateLanguageArtifactTransformer<WistAirArtifact, WistCilArtifact>(
                 WistContributionIds.CilBackend,
                 WistDirectArtifactKinds.Air,
                 WistDirectBackendArtifactKinds.Cil,
-                static (source, _) => new WistCilArtifact(
-                    source.Input,
-                    new AbstractMethodsCompilerImpl().Compile(source.Air, source.Input),
-                    source.SsaReport),
+                (source, _) =>
+                {
+                    WistIntrinsicPlanPolicy.Create(context.Plan, CilBackend).Validate(source.Air);
+                    return new WistCilArtifact(
+                        source.Input,
+                        new AbstractMethodsCompilerImpl().Compile(source.Air, source.Input),
+                        source.SsaReport);
+                },
                 DirectTraits));
 
     private static LanguageExecutorRegistration CreateCilExecutorRegistration() =>
@@ -259,19 +267,27 @@ internal static class WistDirectRuntimeComponents
             services.GetRequiredService<IIntrinsicTypeStackProcessor>());
     }
 
-    private static IOptimizerIntrinsicCapabilityContext CreateCapabilityContext(BackendId backend)
+    private static IOptimizerIntrinsicCapabilityContext CreateCapabilityContext(
+        LanguagePlan plan,
+        BackendId backend)
     {
+        IOptimizerIntrinsicCapabilityContext inner;
         if (backend == CilBackend)
         {
-            return new OptimizerIntrinsicCapabilityContext(
+            inner = new OptimizerIntrinsicCapabilityContext(
                 new CompilerIntrinsicCapabilitySetFactory().Create(new AbstractMethodsCompilerImpl()));
         }
-        if (backend == InterpreterBackend)
+        else if (backend == InterpreterBackend)
         {
-            return new OptimizerIntrinsicCapabilityContext(
+            inner = new OptimizerIntrinsicCapabilityContext(
                 new CompilerIntrinsicCapabilitySetFactory().Create(new AbstractIrToAbstractIrStub()));
         }
-        throw new InvalidOperationException($"Backend '{backend.Value}' is not supported by direct Wist optimization.");
+        else
+        {
+            throw new InvalidOperationException($"Backend '{backend.Value}' is not supported by direct Wist optimization.");
+        }
+
+        return WistIntrinsicPlanPolicy.Create(plan, backend).ApplyTo(inner);
     }
 
     private sealed class WistDirectOptimizerTransformer(
@@ -306,7 +322,7 @@ internal static class WistDirectRuntimeComponents
             try
             {
                 optimizer.InitMethodsTranslator(CreateMethodsTranslator());
-                optimizer.InitIntrinsicCapabilityContext(CreateCapabilityContext(context.Request.Backend));
+                optimizer.InitIntrinsicCapabilityContext(CreateCapabilityContext(plan, context.Request.Backend));
                 var result = optimizer.Optimize(source.Air)
                     ?? throw new InvalidOperationException($"Wist optimizer '{ContributionId.Value}' returned null AIR.");
                 if (capture?.Report is { } published)
