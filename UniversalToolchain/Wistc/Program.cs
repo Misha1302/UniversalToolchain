@@ -1,3 +1,6 @@
+using UniversalToolchain.Capabilities.Core;
+using UniversalToolchain.FeatureSdk;
+using UniversalToolchain.LanguageSdk;
 using UniversalToolchain.Wist;
 using UniversalToolchain.Wist.LanguagePack;
 
@@ -171,10 +174,29 @@ int FeaturesCommand(FeaturesOptions options)
 {
     try
     {
-        var slice = CompileDialectFile(options.DialectFile);
+        var source = ReadRequiredFile(options.DialectFile);
+        using var compiler = new DialectDslCompiler();
+        var slice = compiler.Compile(source);
+        var backend = GetFirstEnabledBackend(slice);
+        var package = new WistLanguageFeaturePackage();
+        var definition = WistFacadeLanguageDefinitionFactory.FromDialectText(
+            source,
+            Path.GetFileName(options.DialectFile),
+            backend,
+            WistFacadeSsaPolicy.Disabled);
+        var plan = new LanguageCompiler(new LanguagePackageRegistry().AddPackage(package))
+            .Compile(definition)
+            .GetRequiredPlan();
+        var capabilities = new SelectedCapabilityCatalogBuilder()
+            .Build(WistRuntimeComponentCatalog.GetSelectedImplementationTypes(plan));
+
         Console.WriteLine($"Dialect: {slice.Name}");
-        Console.WriteLine($"Modules: {string.Join(", ", slice.UseModules.OrderBy(static x => x, StringComparer.Ordinal))}");
-        Console.WriteLine($"Backends: {string.Join(", ", slice.BackendDirectives.Where(static x => x.Enabled).Select(static x => x.Backend.Value).OrderBy(static x => x, StringComparer.Ordinal))}");
+        Console.WriteLine($"Modules: {Join(slice.UseModules)}");
+        Console.WriteLine($"Backends: {Join(slice.BackendDirectives.Where(static x => x.Enabled).Select(static x => x.Backend.Value))}");
+        Console.WriteLine($"Available features: {Join(capabilities.LanguageFeatures.Select(static x => x.FeatureId.Value))}");
+        Console.WriteLine($"Available symbols: {Join(capabilities.LanguageFeatures.SelectMany(static x => x.ProvidedSymbols).Select(static x => x.Name))}");
+        Console.WriteLine($"Available functions: {Join(capabilities.BuiltinFunctionDescriptors.Select(static x => x.Name))}");
+        Console.WriteLine($"Backend support: {Join(capabilities.LanguageFeatures.SelectMany(static x => x.SupportedBackendAliases))}");
         return 0;
     }
     catch (Exception ex)
@@ -230,6 +252,15 @@ static void EnsureFileExists(string path)
 {
     if (!File.Exists(path))
         Thrower.FileNotFound(path);
+}
+
+static string Join(IEnumerable<string> values)
+{
+    var materialized = values
+        .Distinct(StringComparer.Ordinal)
+        .OrderBy(static value => value, StringComparer.Ordinal)
+        .ToArray();
+    return materialized.Length == 0 ? "none" : string.Join(", ", materialized);
 }
 
 static string ResolveDialectLabel(CommonOptions options) =>
