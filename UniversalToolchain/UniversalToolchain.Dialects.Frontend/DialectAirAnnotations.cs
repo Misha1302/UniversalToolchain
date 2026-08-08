@@ -80,26 +80,35 @@ public sealed class ExcludeModulesAirAnnotation(IReadOnlyList<string> modules) :
 
 public sealed class OrderAirAnnotation : IDialectDefinitionSliceAnnotation
 {
-    public OrderAirAnnotation(DialectOrderDirectiveKind kind, IReadOnlyList<string> modules)
+    public OrderAirAnnotation(
+        DialectOrderDirectiveKind kind,
+        IReadOnlyList<string> modules,
+        DialectSourceLocation? sourceLocation = null)
     {
         Kind = kind;
         Modules = DialectAnnotationValueGuard.RequireList(modules, nameof(modules), "Order annotation must not contain empty values.");
+        SourceLocation = sourceLocation;
     }
 
     public DialectOrderDirectiveKind Kind { get; }
 
     public IReadOnlyList<string> Modules { get; }
 
+    public DialectSourceLocation? SourceLocation { get; }
+
     public void Apply(DialectDefinitionAggregation aggregation)
     {
-        aggregation.AddOrderDirectives(BuildOrderDirectives(Kind, Modules));
+        aggregation.AddOrderDirectives(BuildOrderDirectives(Kind, Modules, SourceLocation));
     }
 
-    private static IReadOnlyList<DialectOrderDirective> BuildOrderDirectives(DialectOrderDirectiveKind kind, IReadOnlyList<string> modules)
+    private static IReadOnlyList<DialectOrderDirective> BuildOrderDirectives(
+        DialectOrderDirectiveKind kind,
+        IReadOnlyList<string> modules,
+        DialectSourceLocation? sourceLocation)
     {
         var result = new List<DialectOrderDirective>();
         for (var i = 0; i + 1 < modules.Count; i++)
-            result.Add(new DialectOrderDirective(kind, modules[i], modules[i + 1]));
+            result.Add(new DialectOrderDirective(kind, modules[i], modules[i + 1], sourceLocation));
 
         return result;
     }
@@ -122,11 +131,16 @@ public sealed class BackendAirAnnotation : IDialectDefinitionSliceAnnotation
 
 public sealed class IntrinsicAirAnnotation : IDialectDefinitionSliceAnnotation
 {
-    public IntrinsicAirAnnotation(string intrinsicName, bool allowed, DialectBackendSelector? target = null)
+    public IntrinsicAirAnnotation(
+        string intrinsicName,
+        bool allowed,
+        DialectBackendSelector? target = null,
+        DialectSourceLocation? sourceLocation = null)
     {
         IntrinsicName = DialectAnnotationValueGuard.RequireValue(intrinsicName, nameof(intrinsicName), "Intrinsic annotation must not be empty.");
         Allowed = allowed;
         Target = target ?? DialectBackendSelector.Any;
+        SourceLocation = sourceLocation;
     }
 
     public string IntrinsicName { get; }
@@ -135,9 +149,11 @@ public sealed class IntrinsicAirAnnotation : IDialectDefinitionSliceAnnotation
 
     public DialectBackendSelector Target { get; }
 
+    public DialectSourceLocation? SourceLocation { get; }
+
     public void Apply(DialectDefinitionAggregation aggregation)
     {
-        aggregation.AddIntrinsicDirectives([new DialectIntrinsicDirective(IntrinsicName, Allowed, Target)]);
+        aggregation.AddIntrinsicDirectives([new DialectIntrinsicDirective(IntrinsicName, Allowed, Target, SourceLocation)]);
     }
 }
 
@@ -172,13 +188,23 @@ public sealed class SecurityAirAnnotation(DialectSecurityProfile profile) : IDia
     }
 }
 
-public sealed class CapabilityAirAnnotation(IReadOnlyList<string> capabilities) : IDialectDefinitionSliceAnnotation
+public sealed class CapabilityAirAnnotation : IDialectDefinitionSliceAnnotation
 {
-    public IReadOnlyList<string> Capabilities { get; } = DialectAnnotationValueGuard.RequireList(capabilities, nameof(capabilities), "Capability annotation must not contain empty values.");
+    public CapabilityAirAnnotation(
+        IReadOnlyList<string> capabilities,
+        DialectSourceLocation? sourceLocation = null)
+    {
+        Capabilities = DialectAnnotationValueGuard.RequireList(capabilities, nameof(capabilities), "Capability annotation must not contain empty values.");
+        SourceLocation = sourceLocation;
+    }
+
+    public IReadOnlyList<string> Capabilities { get; }
+
+    public DialectSourceLocation? SourceLocation { get; }
 
     public void Apply(DialectDefinitionAggregation aggregation)
     {
-        aggregation.AddCapabilities(Capabilities.Select(x => new DialectCapabilityDirective(x, true)).ToList());
+        aggregation.AddCapabilities(Capabilities.Select(x => new DialectCapabilityDirective(x, true, SourceLocation)).ToList());
     }
 }
 
