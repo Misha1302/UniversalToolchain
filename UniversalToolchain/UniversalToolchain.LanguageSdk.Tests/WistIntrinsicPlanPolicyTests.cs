@@ -1,5 +1,6 @@
 using BasicCore.Builtins;
 using BasicCore.Capabilities;
+using BasicCore.Contracts;
 using UniversalIntermediateRepresentation;
 using UniversalToolchain.FeatureSdk;
 using UniversalToolchain.Language.Abstractions;
