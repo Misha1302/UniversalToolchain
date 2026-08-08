@@ -2,6 +2,7 @@ using ArithmeticModule.Module;
 using CommentsModule;
 using ConditionsModule.Enums;
 using ConditionsModule.Module;
+using ConditionsModule.Optimizers;
 using CSharpInteropModule.Module;
 using EqualityModule;
 using FunctionCallsModule;
@@ -17,6 +18,8 @@ using SafeMathFunctionsModule;
 using ScopesModule.Module;
 using SemicolonAsNewLineModule;
 using UniversalToolchain.Language.Abstractions;
+using UniversalToolchain.LanguageSdk;
+using UniversalToolchain.Ssa.Optimization;
 using VariablesModule;
 using WhitespacesModule;
 
@@ -34,6 +37,7 @@ internal sealed record WistRuntimeComponentDescriptor(
     string Alias,
     int Order,
     WistRuntimeComponentKind Kind,
+    Type ImplementationType,
     Func<IServiceProvider, object>? ModuleFactory = null);
 
 internal static class WistInternalFeatureIds
@@ -72,13 +76,13 @@ internal static class WistRuntimeComponentCatalog
 
     public static IReadOnlyList<WistRuntimeComponentDescriptor> Optimizers { get; } =
     [
-        Optimizer(WistContributionIds.ArithmeticOptimizer, WistFeatureIds.ArithmeticOptimization, "ArithmeticOptimization", 10),
-        Optimizer(WistContributionIds.BooleanOptimizer, WistFeatureIds.BooleanOptimization, "BooleanOptimization", 20),
-        Optimizer(WistContributionIds.ComparisonIntrinsicOptimizer, WistFeatureIds.ComparisonIntrinsicOptimization, "ComparisonIntrinsicOptimization", 30),
-        Optimizer(WistContributionIds.EGraphOptimizer, WistFeatureIds.EGraphOptimization, "EGraphOptimization", 40),
-        Optimizer(WistContributionIds.NativeCilOptimizer, WistFeatureIds.NativeCilOptimization, "NativeCilOptimization", 50),
-        Optimizer(WistContributionIds.NativeTypesOptimizer, WistFeatureIds.NativeTypesOptimization, "NativeTypesOptimization", 60),
-        Optimizer(WistContributionIds.SsaOptimizer, WistFeatureIds.SsaOptimization, "Ssa", 70)
+        Optimizer<ArithmeticOptimizerModule>(WistContributionIds.ArithmeticOptimizer, WistFeatureIds.ArithmeticOptimization, "ArithmeticOptimization", 10),
+        Optimizer<BooleanOptimizerModule>(WistContributionIds.BooleanOptimizer, WistFeatureIds.BooleanOptimization, "BooleanOptimization", 20),
+        Optimizer<ComparisonIntrinsicOptimizerModule>(WistContributionIds.ComparisonIntrinsicOptimizer, WistFeatureIds.ComparisonIntrinsicOptimization, "ComparisonIntrinsicOptimization", 30),
+        Optimizer<EGraphOptimizerModule>(WistContributionIds.EGraphOptimizer, WistFeatureIds.EGraphOptimization, "EGraphOptimization", 40),
+        Optimizer<NativeCilOptimizerModule>(WistContributionIds.NativeCilOptimizer, WistFeatureIds.NativeCilOptimization, "NativeCilOptimization", 50),
+        Optimizer<NativeTypesOptimizerModule>(WistContributionIds.NativeTypesOptimizer, WistFeatureIds.NativeTypesOptimization, "NativeTypesOptimization", 60),
+        Optimizer<SsaOptimizerModule>(WistContributionIds.SsaOptimizer, WistFeatureIds.SsaOptimization, "Ssa", 70)
     ];
 
     private static readonly IReadOnlyDictionary<LanguageContributionId, WistRuntimeComponentDescriptor> ByContributionId =
@@ -128,6 +132,18 @@ internal static class WistRuntimeComponentCatalog
     public static bool IsCanonicalModule(LanguageContributionId contributionId) =>
         ByContributionId.TryGetValue(contributionId, out var component) && component.Kind == WistRuntimeComponentKind.Module;
 
+    public static IReadOnlyList<Type> GetSelectedImplementationTypes(LanguagePlan plan)
+    {
+        ArgumentNullException.ThrowIfNull(plan);
+        return plan.Contributions
+            .Select(static contribution => contribution.Contribution.Id)
+            .Where(ByContributionId.ContainsKey)
+            .Select(id => ByContributionId[id].ImplementationType)
+            .Distinct()
+            .OrderBy(static type => type.FullName, StringComparer.Ordinal)
+            .ToArray();
+    }
+
     private static WistRuntimeComponentDescriptor Module<TModule>(
         LanguageContributionId contributionId,
         LanguageFeatureId featureId,
@@ -139,11 +155,18 @@ internal static class WistRuntimeComponentCatalog
             alias,
             order,
             WistRuntimeComponentKind.Module,
+            typeof(TModule),
             static services => ActivatorUtilities.CreateInstance<TModule>(services));
 
-    private static WistRuntimeComponentDescriptor Optimizer(
+    private static WistRuntimeComponentDescriptor Optimizer<TOptimizer>(
         LanguageContributionId contributionId,
         LanguageFeatureId featureId,
         string alias,
-        int order) => new(contributionId, featureId, alias, order, WistRuntimeComponentKind.Optimizer);
+        int order) => new(
+        contributionId,
+        featureId,
+        alias,
+        order,
+        WistRuntimeComponentKind.Optimizer,
+        typeof(TOptimizer));
 }
