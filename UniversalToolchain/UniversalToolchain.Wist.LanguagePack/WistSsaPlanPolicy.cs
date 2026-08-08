@@ -66,18 +66,17 @@ internal static class WistSsaPlanPolicy
         return policy;
     }
 
-    public static SsaRuntimeExecutionOptions CreateRuntimeOptions(LanguagePlan plan)
+    public static SsaRuntimeExecutionOptions CreateRuntimeOptions(
+        LanguagePlan plan,
+        bool captureTrace = false)
     {
         var policy = GetRequiredPolicy(plan);
         return new SsaRuntimeExecutionOptions
         {
             Policy = policy,
-            // Route trace is observational evidence carried by the immutable Wist artifact.
-            // The public facade decides whether to expose it as Summary or Detailed; it must
-            // not change Prefer/Require semantics just to obtain diagnostics.
-            Diagnostics = policy == SsaRoutePolicy.Off
-                ? SsaDiagnosticMode.Default
-                : SsaDiagnosticMode.Verbose,
+            Diagnostics = policy == SsaRoutePolicy.Debug || captureTrace && policy != SsaRoutePolicy.Off
+                ? SsaDiagnosticMode.Verbose
+                : SsaDiagnosticMode.Default,
             ProfileId = SsaRuntimeExecutionDefaults.ProfileId
         };
     }
