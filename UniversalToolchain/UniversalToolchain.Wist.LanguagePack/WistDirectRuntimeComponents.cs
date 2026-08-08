@@ -14,6 +14,8 @@ using ConditionsModule.Optimizers;
 using IntermediateRepresentationAbstractions;
 using Microsoft.Extensions.DependencyInjection;
 using NativeMathModule;
+using UniversalToolchain.Capabilities.Core;
+using UniversalToolchain.Diagnostics.Abstractions;
 using UniversalToolchain.Language.Abstractions;
 using UniversalToolchain.LanguageSdk;
 using UniversalToolchain.Runtime;
@@ -90,9 +92,23 @@ internal static class WistDirectRuntimeComponents
                     .Append(typeof(BasicStdLib.Main).Assembly)
                     .Distinct()
                     .ToArray();
+                var capabilityCatalog = new SelectedCapabilityCatalogBuilder()
+                    .Build(WistRuntimeComponentCatalog.GetSelectedImplementationTypes(context.Plan));
+                var capabilityErrors = capabilityCatalog.Diagnostics
+                    .Where(static diagnostic => diagnostic.Severity == ToolchainDiagnosticSeverity.Error)
+                    .ToArray();
+                if (capabilityErrors.Length != 0)
+                {
+                    throw new InvalidOperationException(
+                        "Selected Wist capability catalog is invalid:" + Environment.NewLine +
+                        string.Join(Environment.NewLine, capabilityErrors.Select(static diagnostic =>
+                            $"[{diagnostic.Code}] {diagnostic.Message}")));
+                }
+
                 var serviceCollection = new ServiceCollection();
                 serviceCollection.AddSingleton<ITypeCatalog>(TypeCatalogFactory.Create(exposedAssemblies));
                 serviceCollection.AddSingleton<IMethodResolver, DeterministicMethodResolver>();
+                serviceCollection.AddSingleton(capabilityCatalog);
                 var services = serviceCollection.BuildServiceProvider();
                 var moduleFactories = WistFrontendModuleActivation.CreateOrderedFactories(
                     context.Plan,
