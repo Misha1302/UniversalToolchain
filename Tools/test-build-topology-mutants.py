@@ -101,6 +101,21 @@ def mutate_project_reference(path: Path, include_fragment: str) -> None:
     tree.write(path, encoding="unicode")
 
 
+def remove_project_reference(path: Path, include_fragment: str) -> None:
+    tree = ET.parse(path)
+    parents = [element for element in tree.getroot().iter()]
+    matches: list[tuple[ET.Element, ET.Element]] = []
+    for parent in parents:
+        for child in list(parent):
+            if child.tag.rsplit("}", 1)[-1] == "ProjectReference" and \
+               include_fragment in child.attrib.get("Include", ""):
+                matches.append((parent, child))
+    if len(matches) != 1:
+        raise AssertionError(f"expected one ProjectReference containing {include_fragment!r} in {path}")
+    matches[0][0].remove(matches[0][1])
+    tree.write(path, encoding="unicode")
+
+
 def rename_target(path: Path, old_name: str, new_name: str) -> None:
     tree = ET.parse(path)
     find_target(tree, old_name).set("Name", new_name)
@@ -220,11 +235,11 @@ def main() -> int:
             "unexpected project set",
         ),
         (
-            "wist-provider-target-redirected",
+            "emitter-target-redirected",
             lambda path: set_msbuild_attribute(
                 path / LANGUAGE_PACK_PROJECT,
                 "ResolveLanguagePackBuildProviders",
-                "$(WistProjectPath)",
+                "$(FeatureManifestEmitterProjectPath)",
                 "Targets",
                 "Build",
             ),
@@ -261,14 +276,12 @@ def main() -> int:
             "return the evaluated $(TargetPath)",
         ),
         (
-            "wist-returns-guessed-directory",
-            lambda path: set_target_attribute(
+            "facade-language-pack-reference-removed",
+            lambda path: remove_project_reference(
                 path / WIST_PROJECT,
-                "GetBuiltWistOutputDirectory",
-                "Returns",
-                "$(MSBuildProjectDirectory)\\bin\\Release\\net10.0\\",
+                "UniversalToolchain.Wist.LanguagePack.csproj",
             ),
-            "return the evaluated $(TargetDir)",
+            "facade must declare exactly one LanguagePack ProjectReference",
         ),
         (
             "language-pack-reintroduces-emitter-layout-guess",
@@ -280,6 +293,15 @@ def main() -> int:
             "instead of guessing output layout",
         ),
         (
+            "language-pack-reintroduces-wist-project-path",
+            lambda path: add_top_level_property(
+                path / LANGUAGE_PACK_PROJECT,
+                "WistProjectPath",
+                "$(MSBuildThisFileDirectory)..\\UniversalToolchain.Wist\\UniversalToolchain.Wist.csproj",
+            ),
+            "must not declare legacy WistProjectPath",
+        ),
+        (
             "language-pack-reintroduces-wist-layout-guess",
             lambda path: add_top_level_property(
                 path / LANGUAGE_PACK_PROJECT,
@@ -287,15 +309,6 @@ def main() -> int:
                 "$(MSBuildThisFileDirectory)..\\UniversalToolchain.Wist\\$(OutputPath)",
             ),
             "instead of guessing output layout",
-        ),
-        (
-            "runtime-target-path-root-redirected",
-            lambda path: replace_once(
-                path / LANGUAGE_PACK_PROJECT,
-                'RootFolder="$(WistRuntimeOutputDirectory)"',
-                'RootFolder="$(TargetDir)"',
-            ),
-            "preserve file-relative target paths",
         ),
         (
             "powershell-package-gate-disabled",
