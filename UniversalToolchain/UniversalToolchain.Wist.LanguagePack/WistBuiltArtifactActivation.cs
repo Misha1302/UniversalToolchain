@@ -15,6 +15,41 @@ internal interface IWistDurableProgram
     object? Invoke(IReadOnlyList<object?> arguments);
 }
 
+internal sealed record WistSsaDiagnosticSnapshot(string Code, string Message, string? Stage);
+internal sealed record WistSsaTraceSnapshot(string Stage, string Message, int? InstructionCount);
+
+internal sealed class WistSsaReportSnapshot
+{
+    public WistSsaReportSnapshot(
+        bool usedSsa,
+        bool fellBackToInput,
+        string profileId,
+        int inputAirInstructionCount,
+        int outputAirInstructionCount,
+        IEnumerable<string> executedPasses,
+        IEnumerable<WistSsaDiagnosticSnapshot> diagnostics,
+        IEnumerable<WistSsaTraceSnapshot> trace)
+    {
+        UsedSsa = usedSsa;
+        FellBackToInput = fellBackToInput;
+        ProfileId = profileId ?? throw new ArgumentNullException(nameof(profileId));
+        InputAirInstructionCount = inputAirInstructionCount;
+        OutputAirInstructionCount = outputAirInstructionCount;
+        ExecutedPasses = executedPasses?.ToArray() ?? throw new ArgumentNullException(nameof(executedPasses));
+        Diagnostics = diagnostics?.ToArray() ?? throw new ArgumentNullException(nameof(diagnostics));
+        Trace = trace?.ToArray() ?? throw new ArgumentNullException(nameof(trace));
+    }
+
+    public bool UsedSsa { get; }
+    public bool FellBackToInput { get; }
+    public string ProfileId { get; }
+    public int InputAirInstructionCount { get; }
+    public int OutputAirInstructionCount { get; }
+    public IReadOnlyList<string> ExecutedPasses { get; }
+    public IReadOnlyList<WistSsaDiagnosticSnapshot> Diagnostics { get; }
+    public IReadOnlyList<WistSsaTraceSnapshot> Trace { get; }
+}
+
 internal static class WistBuiltArtifactActivation
 {
     private static readonly BackendId CilBackend = new("cil");
@@ -40,18 +75,49 @@ internal static class WistBuiltArtifactActivation
             $"Wist built artifact backend '{result.Backend.Value}' cannot be materialized as a durable program.");
     }
 
-    public static SsaRouteReport? GetSsaReport(
+    public static WistSsaReportSnapshot? GetSsaReport(
         LanguageRuntime runtime,
         LanguageArtifactBuildResult result)
     {
         ArgumentNullException.ThrowIfNull(runtime);
         ArgumentNullException.ThrowIfNull(result);
+        SsaRouteReport? report;
         if (result.Backend == CilBackend)
-            return runtime.GetBuiltArtifactValue(result, WistDirectBackendArtifactKinds.Cil).SsaReport;
-        if (result.Backend == InterpreterBackend)
-            return runtime.GetBuiltArtifactValue(result, WistDirectBackendArtifactKinds.Interpreter).SsaReport;
-        throw new InvalidOperationException(
-            $"Wist built artifact backend '{result.Backend.Value}' has no Wist optimization report projection.");
+            report = runtime.GetBuiltArtifactValue(result, WistDirectBackendArtifactKinds.Cil).SsaReport;
+        else if (result.Backend == InterpreterBackend)
+            report = runtime.GetBuiltArtifactValue(result, WistDirectBackendArtifactKinds.Interpreter).SsaReport;
+        else
+            throw new InvalidOperationException(
+                $"Wist built artifact backend '{result.Backend.Value}' has no Wist optimization report projection.");
+        return Project(report);
+    }
+
+    public static WistSsaReportSnapshot? TryGetSsaReport(Exception exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+        for (var current = exception; current != null; current = current.InnerException)
+        {
+            if (current is SsaRouteException ssa)
+                return Project(ssa.Report);
+        }
+        return null;
+    }
+
+    private static WistSsaReportSnapshot? Project(SsaRouteReport? report)
+    {
+        if (report == null)
+            return null;
+        return new WistSsaReportSnapshot(
+            report.UsedSsa,
+            report.FellBackToInput,
+            report.ProfileId,
+            report.InputAirInstructionCount,
+            report.OutputAirInstructionCount,
+            report.ExecutedPasses,
+            report.Diagnostics.Select(static diagnostic =>
+                new WistSsaDiagnosticSnapshot(diagnostic.Code, diagnostic.Message, diagnostic.Stage)),
+            report.Trace.Select(static entry =>
+                new WistSsaTraceSnapshot(entry.Stage, entry.Message, entry.InstructionCount)));
     }
 
     private abstract class ProgramBase(IReadOnlyList<ExternalBinding> bindings, LanguagePlan plan) : IWistDurableProgram
@@ -75,9 +141,14 @@ internal static class WistBuiltArtifactActivation
                     $"Compiled Wist program expects {DeclaredBindings.Count} arguments, but {arguments.Count} were supplied.",
                     nameof(arguments));
             }
+
+            var normalized = new object?[arguments.Count];
             for (var i = 0; i < arguments.Count; i++)
-                ValidateAssignment(DeclaredBindings[i], arguments[i], i);
-            return InvokeValidated(arguments);
+            {
+                normalized[i] = WistRuntimeValueAdapterActivation.NormalizeInput(Plan, arguments[i]);
+                ValidateAssignment(DeclaredBindings[i], normalized[i], i);
+            }
+            return InvokeValidated(normalized);
         }
 
         protected abstract object? InvokeValidated(IReadOnlyList<object?> arguments);
