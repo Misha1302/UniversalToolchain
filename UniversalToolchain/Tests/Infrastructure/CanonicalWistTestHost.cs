@@ -36,6 +36,9 @@ internal sealed class CanonicalWistTestHost : IDisposable
     {
     }
 
+    public static CanonicalWistTestHost CreateFullNative() =>
+        new(WistLanguageDefinitions.Create(WistLanguageDefinitions.FullDefaultNativeId), []);
+
     private CanonicalWistTestHost(
         LanguageDefinition definition,
         IReadOnlyList<Assembly> allowedAssemblies)
