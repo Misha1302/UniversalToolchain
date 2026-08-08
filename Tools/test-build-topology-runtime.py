@@ -273,6 +273,19 @@ def require_output(
     return matches[0]
 
 
+def require_absent_output(
+    search_roots: tuple[Path, ...],
+    pattern: str,
+    case_name: str,
+) -> None:
+    matches = matching_outputs(search_roots, pattern)
+    if matches:
+        raise RuntimeTopologyError(
+            f"unexpected {pattern} for {case_name}; LanguagePack must not rebuild/copy the facade: "
+            + ", ".join(str(path) for path in matches)
+        )
+
+
 def runtime_identifier() -> str:
     system = platform.system().lower()
     machine = platform.machine().lower()
@@ -327,8 +340,6 @@ def language_pack_cases(temporary_root: Path) -> tuple[LayoutCase, ...]:
             requires_restore=True,
             build_project_references=True,
         ),
-        # The canonical layout remains the dedicated IDE-style regression where
-        # project references were built by the preceding solution build.
         LayoutCase("default", requires_restore=True),
     )
 
@@ -368,12 +379,15 @@ def verify_language_pack_layouts(
             if case.external_output_root is None:
                 language_pack_roots = (language_pack_directory,)
                 emitter_roots = (emitter_directory,)
-                wist_roots = (wist_directory,)
             else:
                 language_pack_roots = (case.external_output_root,)
                 emitter_roots = (case.external_output_root,)
-                wist_roots = (case.external_output_root,)
 
+            language_pack = require_output(
+                language_pack_roots,
+                "UniversalToolchain.Wist.LanguagePack.dll",
+                case.name,
+            )
             feature_manifest = require_output(
                 language_pack_roots,
                 "UniversalToolchain.Wist.LanguagePack.toolchain.feature.json",
@@ -384,17 +398,12 @@ def verify_language_pack_layouts(
                 "UniversalToolchain.FeatureManifestEmitter.dll",
                 case.name,
             )
-            wist = require_output(
-                wist_roots,
+            require_absent_output(
+                language_pack_roots,
                 "UniversalToolchain.Wist.dll",
                 case.name,
             )
-            runtime_manifest = require_output(
-                (feature_manifest.parent,),
-                "*.dialect.runtime.json",
-                f"{case.name} language-pack runtime closure",
-            )
-            for artifact in (feature_manifest, emitter, wist, runtime_manifest):
+            for artifact in (language_pack, feature_manifest, emitter):
                 if artifact.stat().st_size == 0:
                     raise RuntimeTopologyError(
                         f"layout case {case.name} produced an empty artifact: {artifact}"
