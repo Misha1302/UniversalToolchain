@@ -119,16 +119,7 @@ public class RuntimeStressContractsTests
             Cil.Value,
             WistFacadeSsaPolicy.Disabled);
 
-        Assert.Multiple(() =>
-        {
-            Assert.That(cilDefinition.Id, Is.EqualTo(interpreterDefinition.Id));
-            Assert.That(cilDefinition.Version, Is.EqualTo(interpreterDefinition.Version));
-            Assert.That(cilDefinition.SelectedFeatures, Is.EqualTo(interpreterDefinition.SelectedFeatures));
-            Assert.That(cilDefinition.RuntimeProvider, Is.EqualTo(interpreterDefinition.RuntimeProvider));
-            Assert.That(cilDefinition.RuntimePolicy, Is.EqualTo(interpreterDefinition.RuntimePolicy));
-            Assert.That(cilDefinition.ContributionOrderConstraints, Is.EqualTo(interpreterDefinition.ContributionOrderConstraints));
-            Assert.That(cilDefinition.IntrinsicPolicy, Is.EqualTo(interpreterDefinition.IntrinsicPolicy));
-        });
+        EnsureBackendIndependentSemantics(interpreterDefinition, cilDefinition);
 
         var definition = new LanguageDefinition(
             interpreterDefinition.Id,
@@ -149,6 +140,23 @@ public class RuntimeStressContractsTests
             .Compile(definition)
             .GetRequiredPlan();
         return (package, plan);
+    }
+
+    private static void EnsureBackendIndependentSemantics(
+        LanguageDefinition interpreterDefinition,
+        LanguageDefinition cilDefinition)
+    {
+        if (cilDefinition.Id != interpreterDefinition.Id ||
+            cilDefinition.Version != interpreterDefinition.Version ||
+            !cilDefinition.SelectedFeatures.SequenceEqual(interpreterDefinition.SelectedFeatures) ||
+            cilDefinition.RuntimeProvider != interpreterDefinition.RuntimeProvider ||
+            cilDefinition.RuntimePolicy != interpreterDefinition.RuntimePolicy ||
+            !cilDefinition.ContributionOrderConstraints.SequenceEqual(interpreterDefinition.ContributionOrderConstraints) ||
+            !cilDefinition.IntrinsicPolicy.SequenceEqual(interpreterDefinition.IntrinsicPolicy))
+        {
+            throw new InvalidOperationException(
+                "Wist stress fixture produced backend-dependent semantics before canonical planning.");
+        }
     }
 
     private static string BuildSemanticPlanSignature(LanguagePlan plan)
