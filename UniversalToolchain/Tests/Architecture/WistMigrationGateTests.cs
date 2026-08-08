@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using UniversalToolchain.Language.Abstractions;
 using UniversalToolchain.Wist.LanguagePack;
 
 namespace Tests.Architecture;
@@ -23,7 +24,9 @@ public sealed class WistMigrationGateTests
             .Where(static value => !string.IsNullOrWhiteSpace(value))
             .Select(static value => value!)
             .ToHashSet(StringComparer.Ordinal);
-        var providerBackends = new WistLanguageRuntimeProvider().SupportedBackends
+        var packageBackends = new WistLanguageFeaturePackage().Descriptor.Contributions
+            .Where(static contribution => contribution.Slot == LanguageSlots.Backends)
+            .SelectMany(static contribution => contribution.SupportedBackends)
             .Select(static backend => backend.Value)
             .ToHashSet(StringComparer.Ordinal);
         var matrixPresets = matrix.GetProperty("presets")
@@ -41,7 +44,7 @@ public sealed class WistMigrationGateTests
                 matrix.GetProperty("positioning").GetString(),
                 Is.EqualTo("LanguageDefinition -> LanguageCompiler -> LanguagePlan -> LanguageRuntime"));
             Assert.That(matrix.GetProperty("parityBasis").GetString(), Is.EqualTo("typed-semantic-projection"));
-            Assert.That(matrixBackends, Is.EquivalentTo(providerBackends));
+            Assert.That(matrixBackends, Is.EquivalentTo(packageBackends));
             Assert.That(matrixPresets, Is.EquivalentTo(typedPresets));
             Assert.That(contracts.GetProperty("syntax").GetString(), Is.EqualTo(WistArtifactKinds.SyntaxTreeContract.ValueTypeIdentity));
             Assert.That(contracts.GetProperty("bytecode").GetString(), Is.EqualTo(WistArtifactKinds.BytecodeContract.ValueTypeIdentity));
@@ -71,7 +74,8 @@ public sealed class WistMigrationGateTests
             "SelectedRuntimePlan",
             "SelectedRuntimePlanResolver",
             "ToolchainCompositionWorkflow",
-            "WistDialectExecutionWorkflow"
+            "WistDialectExecutionWorkflow",
+            "WistLanguageRuntimeProvider"
         };
         foreach (var symbol in forbidden)
         {
