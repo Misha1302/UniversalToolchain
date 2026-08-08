@@ -18,7 +18,7 @@ public sealed class CSharpInteropResolutionAndNegativeContractsTests
     [Test]
     public void ExecuteCode_ShouldResolveExactOverload()
     {
-        Assert.That(ExecuteCode<string>($"{typeof(InteropContractsHost).FullName}.Pick(1, 2)"), Is.EqualTo("int-long"));
+        Assert.That(ExecuteCode<string>($"{typeof(InteropContractsHost).FullName}.Pick(1, 2)"), Is.EqualTo("int-int"));
     }
 
     [Test]
@@ -62,6 +62,7 @@ public sealed class CSharpInteropResolutionAndNegativeContractsTests
 
 internal static class InteropContractsHost
 {
+    public static string Pick(int left, int right) => "int-int";
     public static string Pick(int left, long right) => "int-long";
     public static string Pick(long left, int right) => "long-int";
     public static string Ambiguous(IComparable left, object right) => "comparable-object";
