@@ -57,16 +57,6 @@ internal static class WistFacadeLanguageDefinitionFactory
             throw new NotSupportedException(
                 "Wist facade LanguageDefinition translation does not inherit base dialects; base-dialect ownership must be translated before planning.");
         }
-        if (slice.OrderDirectives.Count != 0)
-        {
-            throw new NotSupportedException(
-                "Wist dialect order directives require definition-level typed contribution-order constraints; they are not represented as metadata or pre-resolved here.");
-        }
-        if (slice.IntrinsicDirectives.Count != 0)
-        {
-            throw new NotSupportedException(
-                "Wist intrinsic directives require typed backend-scoped intrinsic policy in LanguageDefinition; they are not dropped during translation.");
-        }
 
         var groups = new WistDialectGroupProvider().GetGroups()
             .ToDictionary(static group => group.Alias, StringComparer.Ordinal);
@@ -131,21 +121,55 @@ internal static class WistFacadeLanguageDefinitionFactory
         selectedFeatures.Add(securityFeature);
         ApplySsaPolicy(selectedFeatures, ssaPolicy);
 
+        var orderConstraints = slice.OrderDirectives
+            .Select(directive => new LanguageContributionOrderConstraint(
+                directive.Kind switch
+                {
+                    DialectOrderDirectiveKind.Requires => LanguageContributionOrderKind.Requires,
+                    DialectOrderDirectiveKind.Before => LanguageContributionOrderKind.Before,
+                    DialectOrderDirectiveKind.After => LanguageContributionOrderKind.After,
+                    _ => throw new InvalidOperationException($"Unknown Wist order directive '{directive.Kind}'.")
+                },
+                ResolveOrderedModuleContribution(directive.SourceModule, groups),
+                ResolveOrderedModuleContribution(directive.TargetModule, groups)))
+            .ToArray();
+        var intrinsicPolicy = slice.IntrinsicDirectives
+            .Select(directive =>
+            {
+                if (!directive.Target.IsAny && !enabledBackends.Contains(directive.Target.BackendId.Value, StringComparer.Ordinal))
+                {
+                    throw new InvalidOperationException(
+                        $"Wist intrinsic policy for '{directive.Name}' targets disabled backend '{directive.Target.BackendId.Value}'.");
+                }
+
+                return new LanguageIntrinsicPolicyDirective(
+                    new LanguageIntrinsicId(directive.Name),
+                    directive.Allowed,
+                    directive.Target.IsAny ? null : new BackendId(directive.Target.BackendId.Value));
+            })
+            .ToArray();
+
         return new LanguageDefinition(
             new LanguageId($"wist.dsl.{slice.Name}"),
             new LanguageVersion(slice.Version ?? WistLanguageFeaturePackage.PackageVersion.Value),
             ToolchainApi.Current,
             selectedFeatures,
             [new BackendId(backend)],
-            runtimeProvider: new LanguageRuntimeProviderReference(
+            new LanguageRuntimeProviderReference(
                 WistLanguageFeaturePackage.RuntimeProviderId,
                 WistLanguageFeaturePackage.PackageVersion),
-            runtimePolicy: new LanguageRuntimePolicy(AllowHostInterop: allowHostInterop),
-            metadata: new Dictionary<string, string>(StringComparer.Ordinal)
+            new LanguageRuntimePolicy(AllowHostInterop: allowHostInterop),
+            new Dictionary<string, string>(StringComparer.Ordinal)
             {
                 ["wist.source-name"] = sourceName,
                 ["wist.dsl-name"] = slice.Name
-            });
+            },
+            null,
+            null,
+            null,
+            StandardLanguageArtifactKinds.SourceText.Contract,
+            orderConstraints,
+            intrinsicPolicy);
     }
 
     private static IEnumerable<string> ExpandModuleAliases(
@@ -163,6 +187,21 @@ internal static class WistFacadeLanguageDefinitionFactory
 
             yield return alias;
         }
+    }
+
+    private static LanguageContributionId ResolveOrderedModuleContribution(
+        string alias,
+        IReadOnlyDictionary<string, UniversalToolchain.Dialects.Abstractions.DialectGroupDescriptor> groups)
+    {
+        if (groups.ContainsKey(alias))
+        {
+            throw new NotSupportedException(
+                $"Wist order directive cannot target group '{alias}' as one contribution; order the expanded module aliases explicitly.");
+        }
+
+        return WistRuntimeComponentCatalog
+            .GetRequiredAlias(alias, WistRuntimeComponentKind.Module)
+            .ContributionId;
     }
 
     private static IReadOnlyDictionary<string, bool> NormalizeCapabilities(
@@ -215,13 +254,15 @@ internal static class WistFacadeLanguageDefinitionFactory
             baseline.ToolchainApiVersion,
             selectedFeatures,
             [backendId],
-            runtimeProvider: baseline.RuntimeProvider,
-            runtimePolicy: baseline.RuntimePolicy,
-            metadata: baseline.Metadata,
-            slotOverrides: baseline.SlotOverrides,
-            capabilityProviders: baseline.CapabilityProviders,
-            excludedContributions: baseline.ExcludedContributions,
-            entryArtifact: baseline.EntryArtifact);
+            baseline.RuntimeProvider,
+            baseline.RuntimePolicy,
+            baseline.Metadata,
+            baseline.SlotOverrides,
+            baseline.CapabilityProviders,
+            baseline.ExcludedContributions,
+            baseline.EntryArtifact,
+            baseline.ContributionOrderConstraints,
+            baseline.IntrinsicPolicy);
     }
 
     private static void ApplySsaPolicy(List<LanguageFeatureId> selectedFeatures, WistFacadeSsaPolicy policy)
