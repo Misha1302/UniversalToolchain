@@ -16,6 +16,7 @@ using BasicParser.Core;
 using CommonExceptions;
 using IntermediateRepresentationAbstractions;
 using Microsoft.Extensions.DependencyInjection;
+using NumbersModule.Core;
 using NumbersModule.Module;
 using UniversalToolchain.Dialects.Wist;
 using UniversalToolchain.FeatureSdk;
@@ -72,7 +73,7 @@ public sealed class WistDirectArtifactStageTests
     {
         const string source = "1 + @\n2";
         var plan = CreatePlan();
-        var directFactory = CreateDirectFactory(CreateCanonicalModuleFactories());
+        var directFactory = CreateDirectFactory(CreateCanonicalModuleFactories(), plan);
         var frontend = directFactory.CreateFrontend();
         var context = CreateContext(plan, source);
 
@@ -93,7 +94,8 @@ public sealed class WistDirectArtifactStageTests
     [Test]
     public void DirectStages_KeepCanonicalArtifactContractsAndExplicitHostBindings()
     {
-        var input = new WistHostBindingAdapter().CreateRuntimeInput(
+        var plan = CreatePlan();
+        var input = new WistHostBindingAdapter(plan).CreateRuntimeInput(
             "price + fee",
             new Dictionary<string, object?>
             {
@@ -109,7 +111,7 @@ public sealed class WistDirectArtifactStageTests
             Assert.That(WistDirectArtifactKinds.Syntax.Contract, Is.Not.EqualTo(WistDirectArtifactKinds.Bytecode.Contract));
             Assert.That(WistDirectArtifactKinds.Bytecode.Contract, Is.Not.EqualTo(WistDirectArtifactKinds.Air.Contract));
             Assert.That(input.ExternalBindings.Select(static binding => binding.Name), Is.EqualTo(new[] { "price", "fee" }));
-            Assert.That(input.ExternalBindings.Select(static binding => binding.Type), Is.EqualTo(new[] { typeof(double), typeof(int) }));
+            Assert.That(input.ExternalBindings.Select(static binding => binding.Type), Is.EqualTo(new[] { typeof(RealNumberImpl), typeof(RealNumberImpl) }));
         });
     }
 
@@ -123,8 +125,8 @@ public sealed class WistDirectArtifactStageTests
             instances.Add(module);
             return module;
         });
-        var frontend = CreateDirectFactory(factories).CreateFrontend();
         var plan = CreatePlan();
+        var frontend = CreateDirectFactory(factories, plan).CreateFrontend();
 
         var tasks = Enumerable.Range(0, 24)
             .Select(index => Task.Run(() =>
@@ -173,8 +175,8 @@ public sealed class WistDirectArtifactStageTests
         string source,
         IReadOnlyList<Func<IFrontendCoreModule>> moduleFactories)
     {
-        var factory = CreateDirectFactory(moduleFactories);
         var plan = CreatePlan();
+        var factory = CreateDirectFactory(moduleFactories, plan);
         var context = CreateContext(plan, source);
         var syntax = factory.CreateFrontend().Transform(source, context);
         var bytecode = factory.CreateBytecodeLowering().Transform(syntax, context);
@@ -205,12 +207,14 @@ public sealed class WistDirectArtifactStageTests
     }
 
     private static WistDirectArtifactStageFactory CreateDirectFactory(
-        IReadOnlyList<Func<IFrontendCoreModule>> moduleFactories) => new(
+        IReadOnlyList<Func<IFrontendCoreModule>> moduleFactories,
+        LanguagePlan plan) => new(
         static () => new BasicLexerImpl(),
         static () => new BasicParserImpl(),
         static () => new BasicAstToBytecodeTranslatorImpl(),
         CreateMethodsTranslator,
-        moduleFactories);
+        moduleFactories,
+        new WistHostBindingAdapter(plan));
 
     private static IAbstractMethodsTranslator CreateMethodsTranslator()
     {
