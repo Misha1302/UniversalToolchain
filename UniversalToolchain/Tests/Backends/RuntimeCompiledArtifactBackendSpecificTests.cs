@@ -1,4 +1,3 @@
-using System.Runtime.Loader;
 using Tests.Infrastructure;
 
 namespace Tests.Backends;
@@ -7,31 +6,33 @@ namespace Tests.Backends;
 public class RuntimeCompiledArtifactBackendSpecificTests
 {
     [Test]
-    public void Compile_WithImplementationOwnedCilOutput_UsesUntypedContractAndKeepsOutputIsolated()
+    public void Compile_CilArtifact_ExposesTypedCanonicalBackendOutputAndNativeDelegate()
     {
         using var host = RuntimeCompiledArtifactTestFactory.CreateHost();
-        var artifact = host.Compile("1", new OrderedDictionary<string, Type>(), "cil");
-        var session = artifact.CreateSession();
-        var output = BackendArtifactIntrospection.GetCompilationOutput(artifact);
+        var program = host.Compile("1", new OrderedDictionary<string, Type>(), "cil");
+        var artifact = host.GetCilArtifact(program);
+
+        var created = program.Program.TryCreateNativeDelegate(typeof(Func<int>), out var compiledDelegate);
 
         Assert.Multiple(() =>
         {
-            Assert.That(output, Is.Not.Null);
-            Assert.That(BackendArtifactIntrospection.GetDynamicMethod(artifact), Is.Not.Null);
-            Assert.That(BackendArtifactIntrospection.GetOutputLoadContextName(artifact),
-                Is.EqualTo("UniversalToolchain.Runtime.Isolated"));
-            Assert.That(artifact.SlotsByName, Is.Empty);
-            Assert.That(session, Is.Not.Null);
-            Assert.Throws<InvalidOperationException>(() =>
-                host.GetBackendSpecificArtifactCompiler<CilCompilationOutput>("cil"));
+            Assert.That(artifact.Compilation, Is.Not.Null);
+            Assert.That(artifact.Compilation.Method, Is.Not.Null);
+            Assert.That(program.SlotsByName, Is.Empty);
+            Assert.That(created, Is.True);
+            Assert.That(compiledDelegate, Is.TypeOf<Func<int>>());
+            Assert.That(((Func<int>)compiledDelegate!)(), Is.EqualTo(1));
         });
     }
 
     [Test]
-    public void GetBackendSpecificArtifactCompiler_WithMismatchedCompilationOutput_ThrowsInvalidOperationException()
+    public void GetCilArtifact_ForInterpreterBuild_FailsClosed()
     {
         using var host = RuntimeCompiledArtifactTestFactory.CreateHost();
+        var program = host.Compile("1", new OrderedDictionary<string, Type>(), "interpreter");
 
-        Assert.Throws<InvalidOperationException>(() => host.GetBackendSpecificArtifactCompiler<IAbstractIR>("cil"));
+        var exception = Assert.Throws<InvalidOperationException>(() => host.GetCilArtifact(program));
+
+        Assert.That(exception!.Message, Does.Contain("not a CIL artifact"));
     }
 }
